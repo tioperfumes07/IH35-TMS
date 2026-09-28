@@ -116,14 +116,20 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const row = await withCurrentUser(String(user.uuid), async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
+      // B10 (Devin sweep, 2026-09-28): assertCompanyAccess now runs BEFORE the GUC is set (was
+      // after -- the same wrong-order class setScopedCompanyContext's own doc comment warns
+      // against). The inner BEGIN/COMMIT/ROLLBACK is removed: withCurrentUser already wraps this
+      // whole callback in its own transaction, so the inner BEGIN was a no-op and the inner COMMIT
+      // committed that OUTER transaction early -- any after-commit work queued later in the same
+      // callback, or withCurrentUser's own commit bookkeeping, ran against a transaction that had
+      // already ended. A thrown error now rolls back via withCurrentUser's own catch, same as
+      // every other route in this codebase.
       const allowed = await assertCompanyAccess(client, String(user.uuid), body.operating_company_id);
       if (!allowed) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
 
-      await client.query("BEGIN");
-      try {
-        const inserted = await client.query<{ id: string }>(
-          `
+      const inserted = await client.query<{ id: string }>(
+        `
             INSERT INTO mdata.qbo_vendors (
               operating_company_id,
               qbo_id,
@@ -138,47 +144,42 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
             ) VALUES ($1, NULL, $2, $3, $4, $5, true, true, $6::jsonb, COALESCE($7, false))
             RETURNING id
           `,
-          [
-            body.operating_company_id,
-            body.display_name,
-            body.company_name ?? null,
-            body.primary_email ?? null,
-            body.primary_phone ?? null,
-            JSON.stringify({
-              billing_address_line1: body.billing_address_line1 ?? null,
-              billing_city: body.billing_city ?? null,
-              billing_state: body.billing_state ?? null,
-              billing_postal_code: body.billing_postal_code ?? null,
-              account_number: body.account_number ?? null,
-              terms: body.terms ?? null,
-              tax_id: body.tax_id ?? null,
-              track_1099: body.track_1099 ?? false,
-              default_expense_account_qbo_id: body.default_expense_account_qbo_id ?? null,
-            }),
-            body.track_1099 ?? null,
-          ]
-        );
-        const mirrorId = String(inserted.rows[0]?.id ?? "");
-        await enqueueQboMasterEntityPush(client, {
-          operating_company_id: body.operating_company_id,
-          mirror_row_id: mirrorId,
-          entity: "vendor",
-          operation: "create",
-        });
-        await appendCrudAudit(
-          client,
-          String(user.uuid),
-          "accounting.qbo.vendor.created_tms",
-          { mirror_row_id: mirrorId },
-          "info",
-          "ACCT-F06"
-        );
-        await client.query("COMMIT");
-        return { id: mirrorId };
-      } catch (error) {
-        await client.query("ROLLBACK").catch(() => undefined);
-        throw error;
-      }
+        [
+          body.operating_company_id,
+          body.display_name,
+          body.company_name ?? null,
+          body.primary_email ?? null,
+          body.primary_phone ?? null,
+          JSON.stringify({
+            billing_address_line1: body.billing_address_line1 ?? null,
+            billing_city: body.billing_city ?? null,
+            billing_state: body.billing_state ?? null,
+            billing_postal_code: body.billing_postal_code ?? null,
+            account_number: body.account_number ?? null,
+            terms: body.terms ?? null,
+            tax_id: body.tax_id ?? null,
+            track_1099: body.track_1099 ?? false,
+            default_expense_account_qbo_id: body.default_expense_account_qbo_id ?? null,
+          }),
+          body.track_1099 ?? null,
+        ]
+      );
+      const mirrorId = String(inserted.rows[0]?.id ?? "");
+      await enqueueQboMasterEntityPush(client, {
+        operating_company_id: body.operating_company_id,
+        mirror_row_id: mirrorId,
+        entity: "vendor",
+        operation: "create",
+      });
+      await appendCrudAudit(
+        client,
+        String(user.uuid),
+        "accounting.qbo.vendor.created_tms",
+        { mirror_row_id: mirrorId },
+        "info",
+        "ACCT-F06"
+      );
+      return { id: mirrorId };
     });
 
     if (!row) return reply.code(403).send({ error: "forbidden" });
@@ -197,14 +198,13 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const updated = await withCurrentUser(String(user.uuid), async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
+      // B10 (Devin sweep) -- see the vendor-create handler above for the full explanation.
       const allowed = await assertCompanyAccess(client, String(user.uuid), body.operating_company_id);
       if (!allowed) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
 
-      await client.query("BEGIN");
-      try {
-        const res = await client.query(
-          `
+      const res = await client.query(
+        `
             UPDATE mdata.qbo_vendors
             SET
               display_name = COALESCE($3, display_name),
@@ -216,40 +216,34 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
             WHERE id = $1::uuid AND operating_company_id = $2::uuid
             RETURNING id
           `,
-          [
-            params.data.id,
-            body.operating_company_id,
-            body.display_name ?? null,
-            body.company_name ?? null,
-            body.primary_email ?? null,
-            body.primary_phone ?? null,
-            body.active ?? null,
-          ]
-        );
-        if (res.rowCount === 0) {
-          await client.query("ROLLBACK");
-          return { kind: "missing" as const };
-        }
-        await enqueueQboMasterEntityPush(client, {
-          operating_company_id: body.operating_company_id,
-          mirror_row_id: params.data.id,
-          entity: "vendor",
-          operation: "update",
-        });
-        await appendCrudAudit(
-          client,
-          String(user.uuid),
-          "accounting.qbo.vendor.updated_tms",
-          { mirror_row_id: params.data.id },
-          "info",
-          "ACCT-F06"
-        );
-        await client.query("COMMIT");
-        return { kind: "ok" as const };
-      } catch (error) {
-        await client.query("ROLLBACK").catch(() => undefined);
-        throw error;
+        [
+          params.data.id,
+          body.operating_company_id,
+          body.display_name ?? null,
+          body.company_name ?? null,
+          body.primary_email ?? null,
+          body.primary_phone ?? null,
+          body.active ?? null,
+        ]
+      );
+      if (res.rowCount === 0) {
+        return { kind: "missing" as const };
       }
+      await enqueueQboMasterEntityPush(client, {
+        operating_company_id: body.operating_company_id,
+        mirror_row_id: params.data.id,
+        entity: "vendor",
+        operation: "update",
+      });
+      await appendCrudAudit(
+        client,
+        String(user.uuid),
+        "accounting.qbo.vendor.updated_tms",
+        { mirror_row_id: params.data.id },
+        "info",
+        "ACCT-F06"
+      );
+      return { kind: "ok" as const };
     });
 
     if (!updated) return reply.code(403).send({ error: "forbidden" });
@@ -267,14 +261,13 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const row = await withCurrentUser(String(user.uuid), async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
+      // B10 (Devin sweep) -- see the vendor-create handler above for the full explanation.
       const allowed = await assertCompanyAccess(client, String(user.uuid), body.operating_company_id);
       if (!allowed) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
 
-      await client.query("BEGIN");
-      try {
-        const inserted = await client.query<{ id: string }>(
-          `
+      const inserted = await client.query<{ id: string }>(
+        `
             INSERT INTO mdata.qbo_customers (
               operating_company_id,
               qbo_id,
@@ -289,29 +282,24 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
             ) VALUES ($1, NULL, $2, $3, $4, $5, $6, true, true, '{}'::jsonb)
             RETURNING id
           `,
-          [
-            body.operating_company_id,
-            body.display_name,
-            body.company_name ?? null,
-            body.primary_email ?? null,
-            body.primary_phone ?? null,
-            body.mc_number ?? null,
-          ]
-        );
-        const mirrorId = String(inserted.rows[0]?.id ?? "");
-        await enqueueQboMasterEntityPush(client, {
-          operating_company_id: body.operating_company_id,
-          mirror_row_id: mirrorId,
-          entity: "customer",
-          operation: "create",
-        });
-        await appendCrudAudit(client, String(user.uuid), "mdata.qbo.customer.created_tms", { mirror_row_id: mirrorId }, "info", "P6-T11182");
-        await client.query("COMMIT");
-        return { id: mirrorId };
-      } catch (error) {
-        await client.query("ROLLBACK").catch(() => undefined);
-        throw error;
-      }
+        [
+          body.operating_company_id,
+          body.display_name,
+          body.company_name ?? null,
+          body.primary_email ?? null,
+          body.primary_phone ?? null,
+          body.mc_number ?? null,
+        ]
+      );
+      const mirrorId = String(inserted.rows[0]?.id ?? "");
+      await enqueueQboMasterEntityPush(client, {
+        operating_company_id: body.operating_company_id,
+        mirror_row_id: mirrorId,
+        entity: "customer",
+        operation: "create",
+      });
+      await appendCrudAudit(client, String(user.uuid), "mdata.qbo.customer.created_tms", { mirror_row_id: mirrorId }, "info", "P6-T11182");
+      return { id: mirrorId };
     });
 
     if (!row) return reply.code(403).send({ error: "forbidden" });
@@ -330,14 +318,13 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const updated = await withCurrentUser(String(user.uuid), async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
+      // B10 (Devin sweep) -- see the vendor-create handler above for the full explanation.
       const allowed = await assertCompanyAccess(client, String(user.uuid), body.operating_company_id);
       if (!allowed) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
 
-      await client.query("BEGIN");
-      try {
-        const res = await client.query(
-          `
+      const res = await client.query(
+        `
             UPDATE mdata.qbo_customers
             SET
               display_name = COALESCE($3, display_name),
@@ -350,34 +337,28 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
             WHERE id = $1::uuid AND operating_company_id = $2::uuid
             RETURNING id
           `,
-          [
-            params.data.id,
-            body.operating_company_id,
-            body.display_name ?? null,
-            body.company_name ?? null,
-            body.primary_email ?? null,
-            body.primary_phone ?? null,
-            body.mc_number ?? null,
-            body.active ?? null,
-          ]
-        );
-        if (res.rowCount === 0) {
-          await client.query("ROLLBACK");
-          return { kind: "missing" as const };
-        }
-        await enqueueQboMasterEntityPush(client, {
-          operating_company_id: body.operating_company_id,
-          mirror_row_id: params.data.id,
-          entity: "customer",
-          operation: "update",
-        });
-        await appendCrudAudit(client, String(user.uuid), "mdata.qbo.customer.updated_tms", { mirror_row_id: params.data.id }, "info", "P6-T11182");
-        await client.query("COMMIT");
-        return { kind: "ok" as const };
-      } catch (error) {
-        await client.query("ROLLBACK").catch(() => undefined);
-        throw error;
+        [
+          params.data.id,
+          body.operating_company_id,
+          body.display_name ?? null,
+          body.company_name ?? null,
+          body.primary_email ?? null,
+          body.primary_phone ?? null,
+          body.mc_number ?? null,
+          body.active ?? null,
+        ]
+      );
+      if (res.rowCount === 0) {
+        return { kind: "missing" as const };
       }
+      await enqueueQboMasterEntityPush(client, {
+        operating_company_id: body.operating_company_id,
+        mirror_row_id: params.data.id,
+        entity: "customer",
+        operation: "update",
+      });
+      await appendCrudAudit(client, String(user.uuid), "mdata.qbo.customer.updated_tms", { mirror_row_id: params.data.id }, "info", "P6-T11182");
+      return { kind: "ok" as const };
     });
 
     if (!updated) return reply.code(403).send({ error: "forbidden" });
@@ -395,15 +376,14 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const row = await withCurrentUser(String(user.uuid), async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
+      // B10 (Devin sweep) -- see the vendor-create handler above for the full explanation.
       const allowed = await assertCompanyAccess(client, String(user.uuid), body.operating_company_id);
       if (!allowed) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
 
-      await client.query("BEGIN");
-      try {
-        const payloadJson = JSON.stringify({ income_account_qbo_id: body.income_account_qbo_id });
-        const inserted = await client.query<{ id: string }>(
-          `
+      const payloadJson = JSON.stringify({ income_account_qbo_id: body.income_account_qbo_id });
+      const inserted = await client.query<{ id: string }>(
+        `
             INSERT INTO mdata.qbo_items (
               operating_company_id,
               qbo_id,
@@ -416,22 +396,17 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
             ) VALUES ($1, NULL, $2, $3, $4, true, true, $5::jsonb)
             RETURNING id
           `,
-          [body.operating_company_id, body.name, body.sku ?? null, body.unit_price_cents ?? null, payloadJson]
-        );
-        const mirrorId = String(inserted.rows[0]?.id ?? "");
-        await enqueueQboMasterEntityPush(client, {
-          operating_company_id: body.operating_company_id,
-          mirror_row_id: mirrorId,
-          entity: "item",
-          operation: "create",
-        });
-        await appendCrudAudit(client, String(user.uuid), "mdata.qbo.item.created_tms", { mirror_row_id: mirrorId }, "info", "P6-T11182");
-        await client.query("COMMIT");
-        return { id: mirrorId };
-      } catch (error) {
-        await client.query("ROLLBACK").catch(() => undefined);
-        throw error;
-      }
+        [body.operating_company_id, body.name, body.sku ?? null, body.unit_price_cents ?? null, payloadJson]
+      );
+      const mirrorId = String(inserted.rows[0]?.id ?? "");
+      await enqueueQboMasterEntityPush(client, {
+        operating_company_id: body.operating_company_id,
+        mirror_row_id: mirrorId,
+        entity: "item",
+        operation: "create",
+      });
+      await appendCrudAudit(client, String(user.uuid), "mdata.qbo.item.created_tms", { mirror_row_id: mirrorId }, "info", "P6-T11182");
+      return { id: mirrorId };
     });
 
     if (!row) return reply.code(403).send({ error: "forbidden" });
@@ -450,27 +425,26 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const updated = await withCurrentUser(String(user.uuid), async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
+      // B10 (Devin sweep) -- see the vendor-create handler above for the full explanation.
       const allowed = await assertCompanyAccess(client, String(user.uuid), body.operating_company_id);
       if (!allowed) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
 
-      await client.query("BEGIN");
-      try {
-        const existing = await client.query<{ payload_json: unknown }>(
-          `SELECT payload_json FROM mdata.qbo_items WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
-          [params.data.id, body.operating_company_id]
-        );
-        const priorPayload =
-          existing.rows[0]?.payload_json && typeof existing.rows[0].payload_json === "object" && !Array.isArray(existing.rows[0].payload_json)
-            ? (existing.rows[0].payload_json as Record<string, unknown>)
-            : {};
-        const nextPayload = {
-          ...priorPayload,
-          ...(body.income_account_qbo_id ? { income_account_qbo_id: body.income_account_qbo_id } : {}),
-        };
+      const existing = await client.query<{ payload_json: unknown }>(
+        `SELECT payload_json FROM mdata.qbo_items WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+        [params.data.id, body.operating_company_id]
+      );
+      const priorPayload =
+        existing.rows[0]?.payload_json && typeof existing.rows[0].payload_json === "object" && !Array.isArray(existing.rows[0].payload_json)
+          ? (existing.rows[0].payload_json as Record<string, unknown>)
+          : {};
+      const nextPayload = {
+        ...priorPayload,
+        ...(body.income_account_qbo_id ? { income_account_qbo_id: body.income_account_qbo_id } : {}),
+      };
 
-        const res = await client.query(
-          `
+      const res = await client.query(
+        `
             UPDATE mdata.qbo_items
             SET
               name = COALESCE($3, name),
@@ -482,33 +456,27 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
             WHERE id = $1::uuid AND operating_company_id = $2::uuid
             RETURNING id
           `,
-          [
-            params.data.id,
-            body.operating_company_id,
-            body.name ?? null,
-            body.sku ?? null,
-            body.unit_price_cents ?? null,
-            body.active ?? null,
-            JSON.stringify(nextPayload),
-          ]
-        );
-        if (res.rowCount === 0) {
-          await client.query("ROLLBACK");
-          return { kind: "missing" as const };
-        }
-        await enqueueQboMasterEntityPush(client, {
-          operating_company_id: body.operating_company_id,
-          mirror_row_id: params.data.id,
-          entity: "item",
-          operation: "update",
-        });
-        await appendCrudAudit(client, String(user.uuid), "mdata.qbo.item.updated_tms", { mirror_row_id: params.data.id }, "info", "P6-T11182");
-        await client.query("COMMIT");
-        return { kind: "ok" as const };
-      } catch (error) {
-        await client.query("ROLLBACK").catch(() => undefined);
-        throw error;
+        [
+          params.data.id,
+          body.operating_company_id,
+          body.name ?? null,
+          body.sku ?? null,
+          body.unit_price_cents ?? null,
+          body.active ?? null,
+          JSON.stringify(nextPayload),
+        ]
+      );
+      if (res.rowCount === 0) {
+        return { kind: "missing" as const };
       }
+      await enqueueQboMasterEntityPush(client, {
+        operating_company_id: body.operating_company_id,
+        mirror_row_id: params.data.id,
+        entity: "item",
+        operation: "update",
+      });
+      await appendCrudAudit(client, String(user.uuid), "mdata.qbo.item.updated_tms", { mirror_row_id: params.data.id }, "info", "P6-T11182");
+      return { kind: "ok" as const };
     });
 
     if (!updated) return reply.code(403).send({ error: "forbidden" });
@@ -526,14 +494,13 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const row = await withCurrentUser(String(user.uuid), async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
+      // B10 (Devin sweep) -- see the vendor-create handler above for the full explanation.
       const allowed = await assertCompanyAccess(client, String(user.uuid), body.operating_company_id);
       if (!allowed) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
 
-      await client.query("BEGIN");
-      try {
-        const inserted = await client.query<{ id: string }>(
-          `
+      const inserted = await client.query<{ id: string }>(
+        `
             INSERT INTO mdata.qbo_accounts (
               operating_company_id,
               qbo_id,
@@ -547,28 +514,23 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
             ) VALUES ($1, NULL, $2, $3, $4, $5, true, true, '{}'::jsonb)
             RETURNING id
           `,
-          [
-            body.operating_company_id,
-            body.name,
-            body.full_qualified_name ?? null,
-            body.account_type,
-            body.account_sub_type ?? null,
-          ]
-        );
-        const mirrorId = String(inserted.rows[0]?.id ?? "");
-        await enqueueQboMasterEntityPush(client, {
-          operating_company_id: body.operating_company_id,
-          mirror_row_id: mirrorId,
-          entity: "account",
-          operation: "create",
-        });
-        await appendCrudAudit(client, String(user.uuid), "mdata.qbo.account.created_tms", { mirror_row_id: mirrorId }, "info", "P6-T11182");
-        await client.query("COMMIT");
-        return { id: mirrorId };
-      } catch (error) {
-        await client.query("ROLLBACK").catch(() => undefined);
-        throw error;
-      }
+        [
+          body.operating_company_id,
+          body.name,
+          body.full_qualified_name ?? null,
+          body.account_type,
+          body.account_sub_type ?? null,
+        ]
+      );
+      const mirrorId = String(inserted.rows[0]?.id ?? "");
+      await enqueueQboMasterEntityPush(client, {
+        operating_company_id: body.operating_company_id,
+        mirror_row_id: mirrorId,
+        entity: "account",
+        operation: "create",
+      });
+      await appendCrudAudit(client, String(user.uuid), "mdata.qbo.account.created_tms", { mirror_row_id: mirrorId }, "info", "P6-T11182");
+      return { id: mirrorId };
     });
 
     if (!row) return reply.code(403).send({ error: "forbidden" });
@@ -587,14 +549,13 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
     const body = parsed.data;
 
     const updated = await withCurrentUser(String(user.uuid), async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
+      // B10 (Devin sweep) -- see the vendor-create handler above for the full explanation.
       const allowed = await assertCompanyAccess(client, String(user.uuid), body.operating_company_id);
       if (!allowed) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
 
-      await client.query("BEGIN");
-      try {
-        const res = await client.query(
-          `
+      const res = await client.query(
+        `
             UPDATE mdata.qbo_accounts
             SET
               name = COALESCE($3, name),
@@ -606,33 +567,27 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
             WHERE id = $1::uuid AND operating_company_id = $2::uuid
             RETURNING id
           `,
-          [
-            params.data.id,
-            body.operating_company_id,
-            body.name ?? null,
-            body.full_qualified_name ?? null,
-            body.account_type ?? null,
-            body.account_sub_type ?? null,
-            body.active ?? null,
-          ]
-        );
-        if (res.rowCount === 0) {
-          await client.query("ROLLBACK");
-          return { kind: "missing" as const };
-        }
-        await enqueueQboMasterEntityPush(client, {
-          operating_company_id: body.operating_company_id,
-          mirror_row_id: params.data.id,
-          entity: "account",
-          operation: "update",
-        });
-        await appendCrudAudit(client, String(user.uuid), "mdata.qbo.account.updated_tms", { mirror_row_id: params.data.id }, "info", "P6-T11182");
-        await client.query("COMMIT");
-        return { kind: "ok" as const };
-      } catch (error) {
-        await client.query("ROLLBACK").catch(() => undefined);
-        throw error;
+        [
+          params.data.id,
+          body.operating_company_id,
+          body.name ?? null,
+          body.full_qualified_name ?? null,
+          body.account_type ?? null,
+          body.account_sub_type ?? null,
+          body.active ?? null,
+        ]
+      );
+      if (res.rowCount === 0) {
+        return { kind: "missing" as const };
       }
+      await enqueueQboMasterEntityPush(client, {
+        operating_company_id: body.operating_company_id,
+        mirror_row_id: params.data.id,
+        entity: "account",
+        operation: "update",
+      });
+      await appendCrudAudit(client, String(user.uuid), "mdata.qbo.account.updated_tms", { mirror_row_id: params.data.id }, "info", "P6-T11182");
+      return { kind: "ok" as const };
     });
 
     if (!updated) return reply.code(403).send({ error: "forbidden" });

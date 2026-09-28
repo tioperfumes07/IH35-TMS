@@ -27,8 +27,10 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
     }).parse(req.body);
 
     return withCurrentUser(user.uuid, async (client) => {
+      // B10 (Devin sweep, 2026-09-28): withCurrentUser already manages the transaction; a nested
+      // BEGIN/COMMIT on the same connection is redundant and commits it early (see
+      // qbo-master-write.routes.ts's fix for the full explanation).
       await (client as Queryable).query("SELECT set_config('app.current_operating_company_id', $1::text, true)", [input.operating_company_id]);
-      await (client as Queryable).query("BEGIN");
 
       const { rows } = await (client as Queryable).query<{ id: string }>(
         `INSERT INTO driveralert.dispatch
@@ -62,7 +64,6 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
         ]
       );
 
-      await (client as Queryable).query("COMMIT");
       return reply.status(201).send({ id: dispatchId });
     });
   });
@@ -105,8 +106,8 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
     }).parse(req.body);
 
     return withCurrentUser(user.uuid, async (client) => {
+      // B10 (Devin sweep) -- see the dispatch-create handler above for the full explanation.
       await (client as Queryable).query("SELECT set_config('app.current_operating_company_id', $1::text, true)", [input.operating_company_id]);
-      await (client as Queryable).query("BEGIN");
 
       const { rows } = await (client as Queryable).query<{ id: string }>(
         `UPDATE driveralert.dispatch
@@ -122,7 +123,6 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
       );
 
       if (rows.length === 0) {
-        await (client as Queryable).query("ROLLBACK");
         return reply.status(404).send({ error: "Alert not found or already acknowledged" });
       }
 
@@ -133,7 +133,6 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
         [input.operating_company_id, id, user.uuid, JSON.stringify({ ack_method: input.ack_method })]
       );
 
-      await (client as Queryable).query("COMMIT");
       return reply.send({ acknowledged: true });
     });
   });
@@ -148,8 +147,8 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
       .parse(req.body);
 
     return withCurrentUser(user.uuid, async (client) => {
+      // B10 (Devin sweep) -- see the dispatch-create handler above for the full explanation.
       await (client as Queryable).query("SELECT set_config('app.current_operating_company_id', $1::text, true)", [operating_company_id]);
-      await (client as Queryable).query("BEGIN");
 
       const { rows } = await (client as Queryable).query<{ id: string }>(
         `UPDATE driveralert.dispatch
@@ -165,7 +164,6 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
       );
 
       if (rows.length === 0) {
-        await (client as Queryable).query("ROLLBACK");
         return reply.status(404).send({ error: "Alert not found, already acked, or inactive" });
       }
 
@@ -176,7 +174,6 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
         [operating_company_id, id, user.uuid, JSON.stringify({ triggered_by: user.uuid })]
       );
 
-      await (client as Queryable).query("COMMIT");
       return reply.send({ re_alarmed: true });
     });
   });

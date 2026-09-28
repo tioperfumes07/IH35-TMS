@@ -2872,7 +2872,11 @@ export async function payBill(input: PayBillInput, userId: string) {
 
     const newPaidCents = Number(bill.paid_cents) + input.amountCents;
     const storageStatus = storageStatusForPaid(Number(bill.amount_cents), newPaidCents);
-    await client.query(
+    // B9 (Devin sweep, 2026-09-28) -- same shape as the void-payment path's fix below in this file:
+    // was WHERE id = $1 alone, no operating_company_id predicate and no rowCount check. Safe today
+    // only because `bill` above was already fetched FOR UPDATE scoped to (id, operating_company_id)
+    // -- this repeats that scope and asserts the write actually landed.
+    const billPayUpdateRes = await client.query(
       `
         UPDATE accounting.bills
         SET paid_cents = $2,
@@ -2880,9 +2884,13 @@ export async function payBill(input: PayBillInput, userId: string) {
             status = $4,
             updated_at = now()
         WHERE id = $1
+          AND operating_company_id = $5::uuid
       `,
-      [bill.id, newPaidCents, newPaidCents / 100, storageStatus]
+      [bill.id, newPaidCents, newPaidCents / 100, storageStatus, input.operatingCompanyId]
     );
+    if (billPayUpdateRes.rowCount !== 1) {
+      throw new Error(`bill_update_failed_unexpected_rowcount:${billPayUpdateRes.rowCount}`);
+    }
 
     if (input.fromBankAccountId) {
       // PETTY_CASH_CHECK_TRANSFER: when the flag is ON, a petty cash account exists, and this is a
@@ -3388,7 +3396,12 @@ export async function voidBillPaymentInClientTx(
       [input.paymentId, input.operatingCompanyId, input.userId, input.reason]
     );
 
-    await client.query(
+    // B9 (Devin sweep, 2026-09-28): was WHERE id = $1 alone, no operating_company_id predicate and
+    // no rowCount check. Safe today only because `bill` above was already fetched FOR UPDATE
+    // scoped to (id, operating_company_id) -- this repeats that scope and asserts the write
+    // actually landed, so a future refactor that drops or reorders the upstream lock cannot leave
+    // a bill with stale paid_cents/status while its payment is voided and the bank is credited.
+    const billUpdateRes = await client.query(
       `
         UPDATE accounting.bills
         SET paid_cents = $2,
@@ -3396,9 +3409,13 @@ export async function voidBillPaymentInClientTx(
             status = $4,
             updated_at = now()
         WHERE id = $1
+          AND operating_company_id = $5::uuid
       `,
-      [payment.bill_id, newPaidCents, newPaidCents / 100, storageStatus]
+      [payment.bill_id, newPaidCents, newPaidCents / 100, storageStatus, input.operatingCompanyId]
     );
+    if (billUpdateRes.rowCount !== 1) {
+      throw new Error(`bill_update_failed_unexpected_rowcount:${billUpdateRes.rowCount}`);
+    }
 
     if (payment.from_bank_account_id) {
       await updateBankBalance(client, input.operatingCompanyId, payment.from_bank_account_id, Math.abs(paymentAmountCents));
