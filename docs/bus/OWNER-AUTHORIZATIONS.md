@@ -2130,10 +2130,18 @@ FK clear the owner just authorized, in one script, so both clauses are fixed tog
 — CC-1
 
 
-## AUTH-074
+## AUTH-075
+_(CLAIM COLLISION NOTE, added by CC-2 at merge of this correction: this authorization was originally
+appended under the heading "## AUTH-074", the same number CC-1 claimed within the same window for an
+unrelated settlement_lines/driver_bills fix (see the AUTH-074 block above). Both landed on main as
+duplicate "## AUTH-074" headings; verify-owner-authorization.mjs's regex matches the FIRST occurrence
+only, so this block was silently unreachable under that number -- caught live before the stamping
+script ran (never executed under the collided number). Renamed to AUTH-075, the next truly free
+number after this correction lands. scope/action/expires_at below are unchanged from the original._
+
 issued_at: 2026-09-28T03:39:13.000Z
 scope: header-stamp only (voided_at, void_reason, voided_by_user_id) on exactly the 242 USMCA documents verify-void-is-whole.mjs reports as Direction-1 silent voids (218 fuel.fuel_transactions + 24 accounting.invoices) via the existing single writer stampDocumentVoided() -- no GL, no journal entry, no new reversal, no other rows -- operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
-action: OWNER_AUTH_ID=AUTH-074 npx tsx scripts/ops/2026-09-28-cc2-r148-void-stamp-242-silent-voids.ts
+action: OWNER_AUTH_ID=AUTH-075 npx tsx scripts/ops/2026-09-28-cc2-r148-void-stamp-242-silent-voids.ts
 expires_at: 2026-09-28T09:39:13.000Z
 status: OPEN
 
@@ -2146,5 +2154,7 @@ linked journal entries are still exactly live_jes=0 / dead_jes>0 (the guard's ow
 test) before writing anything -- any row that no longer measures that way is skipped and named, never
 forced. void_reason for every stamped row: "E10 fuel-void-runner R-102-C: GL reversed, header stamp
 completed 2026-09-28 under Lead ruling 148-02."
+
+— Claude-2 (AUTH-074->AUTH-075 collision fix)
 
 — Claude-2
