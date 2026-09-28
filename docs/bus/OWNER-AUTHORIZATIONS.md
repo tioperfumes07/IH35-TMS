@@ -3441,3 +3441,25 @@ status: DONE -- executed live 2026-09-28. Faro --faro-only --apply through accep
 — Cursor
 
 ---
+
+## AUTH-111
+issued_at: 2026-09-28T15:40:00.000Z
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only — bank match accept via
+apps/backend/src/accounting/bank-recon/match.service.ts acceptMatchWithResolveDifference ONLY
+(never a raw INSERT into banking.reconciliation_matches). Clears closed
+driver_finance.driver_settlements whose net_pay (dollars→cents) equals an unmatched Bank of
+America USMCA FREIGHT debit (account e83028a5-dcda-4233-b660-5b9923b3d39c), amount EXACT,
+unambiguous both directions, date gap abs(period_end → bank transaction_date) <= 10 days.
+Amount-exact hits beyond 10 days are listed on the Resolve worklist only — not auto-accepted
+(settlement payment lag is real). Writes matched_settlement_id + review_state=matched through
+the existing accept handler path; ledger_entry_kind='settlement' (already in the live CHECK).
+No QBO write-back. No void. No delete. No new GL math beyond the accept handler's existing
+zero-variance path. ROUND 186 addendum; gated on CC-1 ROUND 185 window/accept-handler guard
+already on main (#23016).
+action: OWNER_AUTH_ID=AUTH-111 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cursor-r186-bulk-accept-through-engine.ts --settlement-only --apply
+expires_at: 2026-09-29T03:40:00.000Z
+status: OPEN
+
+— Cursor
+
+---
