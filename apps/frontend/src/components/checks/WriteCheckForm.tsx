@@ -1,5 +1,6 @@
-// R-154 §5 (PR 4/7) — Write Check form. QBO layout inside the shared ParityDrawer shell (A3): payee,
-// bank account, check date, check number / print-later, memo, then a category/item line table.
+// R-154 §5 (PR 4/7) — Write Check form. QBO layout inside the shared centered Modal (ROUND 155.11-B,
+// PR #22949): payee, bank account, check date, check number / print-later, memo, then a category/item
+// line table.
 //
 // Scope of this PR: the create flow only (matches PR 3/7's backend scope). Explicitly OUT of scope,
 // disclosed rather than silently missing:
