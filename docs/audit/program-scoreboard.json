@@ -1,10 +1,10 @@
 {
-  "healthzSha": "7f27ac4",
-  "generated_at": "2026-09-28T04:08:42.427Z",
+  "healthzSha": "b075c34",
+  "generated_at": "2026-09-28T04:33:55.062Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "7f27ac4",
+    "deployedSha": "b075c34",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 22898,
+      "title": "FINDING: ROUND 149 — USMCA document expenses 75/$5,203.67 of PDF control 255/$12,764.27; 326 expense_lines item_id NULL; newest expense still 2026-09-26.",
+      "state": "merged",
+      "mergedAtCt": "09/27/2026, 11:16 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22898",
+      "sha": "b075c34280",
+      "committedAtIso": "2026-09-27T23:16:11-05:00"
+    },
+    {
+      "number": 22897,
+      "title": "FINDING: ACCT-F2026092707 LANE: DOCS (5814 has no variance -- order compared unlike figures; 3 short-pays contradict a CLOSED decision, not posting)",
+      "state": "merged",
+      "mergedAtCt": "09/27/2026, 11:11 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22897",
+      "sha": "0c663f2365",
+      "committedAtIso": "2026-09-27T23:11:58-05:00"
+    },
+    {
       "number": 22896,
       "title": "FINDING: ACCT-F2026092706 LANE: DOCS (A/P adoption blocked on a real GL-flag conflict, not a code gap -- reporting before executing)",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22889",
       "sha": "0b30a84848",
       "committedAtIso": "2026-09-27T22:06:37-05:00"
-    },
-    {
-      "number": 22888,
-      "title": "FINDING: ACCT-F2026092702 LANE: DOCS (views.live_loads has a second exclusion clause AUTH-073's settlement_lines void cannot fix)",
-      "state": "merged",
-      "mergedAtCt": "09/27/2026, 09:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22888",
-      "sha": "88ecb78da9",
-      "committedAtIso": "2026-09-27T21:59:48-05:00"
-    },
-    {
-      "number": 22887,
-      "title": "FINDING: N/A LANE: DOCS (CC-2 ROUND 144 status -- corrected Lead's check-series counts, boarded $19,329.95 unmatched-check gap for CC-1, sequenced the registry-backfill build)",
-      "state": "merged",
-      "mergedAtCt": "09/27/2026, 09:50 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22887",
-      "sha": "46e9c0e079",
-      "committedAtIso": "2026-09-27T21:50:31-05:00"
     }
   ]
 }

@@ -2172,3 +2172,22 @@ ROUND 149 (owner). Re-point all 326 NULL-item expense lines by canonical item UU
 LIVE CHECK 2026-09-28: loads 13627 and 13638 do NOT exist in mdata.loads (any opco) — rate-con add from ROUND 149 order is NOT executed (order defect; report, do not invent). Nearest live: 13620 rate_total $4,300.00 · 13621 rate_total $4,900.00. AUTH-074 (CC-1 live_loads) and AUTH-075 (Claude-2 silent-void header stamp) are separate OPEN entries — this is AUTH-076 for the R149/R150 document-expense seed.
 
 — Cursor
+
+---
+
+## AUTH-077
+issued_at: 2026-09-28T04:33:15.000Z
+scope: accounting.bills / accounting.bill_lines / accounting.bill_payments (INSERT only, posting_hold_reason stamped on every bill) + driver_finance.driver_bills (status/settled_in_settlement_id stamp) + driver_finance.driver_settlement_gl_runs / driver_settlement_gl_bills (INSERT/UPDATE, both currently 0 rows) for exactly the 47 settlements driver_finance.payrun_gl_runs already shows posted with a journal_entry_id, USMCA 5c854333-6ea5-4faa-af31-67cb272fef80. Also: lib.feature_flag_overrides, a PER-USER (not per-entity) override on BILL_GL_POSTING_ENABLED and BILL_PAYMENT_GL_POSTING_ENABLED for exactly one adoption actor user, installed immediately before the batch and removed immediately after in the same run.
+action: OWNER_AUTH_ID=AUTH-077 npx tsx scripts/ops/2026-09-28-cc1-round154-ap-adoption-held.ts — adopts the 47 payrun-closed settlements' driver bills as real accounting.bills/bill_lines/bill_payments documents via adoptSettlementBillPayment (settlement-bill-payment-adopt.service.ts), with GL posting explicitly HELD (posting_hold_reason names the exact payrun_gl_runs row + journal_entry_id the real money already posted under). ZERO new journal_entry_postings rows — verified per-bill (createBill/payBill must return gl_posting.posted===false or the whole run aborts) and for the whole batch (trial balance dr/cr/row-count identical before and after). Never calls postSettlementBillPayment itself (its SETTLEMENT_ALREADY_POSTED_BY_OTHER_POSTER refusal stays untouched, the safety net against ever double-posting an adopted settlement). Refuses per-settlement (not_adoptable) if the payrun JE is not balanced, the driver has no vendor link, or totals are inconsistent — does not force any row.
+expires_at: 2026-09-28T10:00:00.000Z
+status: OPEN
+
+Owner ROUND 154.2 (quoted, the authorization): "Your A/P blocker has a designed answer already in the
+repo. ... ADOPT THE A/P DOCUMENTS WITH THE POSTING HELD. Zero new journal lines." Cites
+bill-gl.service.ts's flag-OFF-does-not-block-bill-creation design and accounting.bills.
+posting_hold_reason as "the durable marker for 'document adopted, GL already exists elsewhere'".
+Supersedes AUTH-075/AUTH-076's numbers were already taken by other seats' concurrent work (Claude-2
+silent-void header stamp; Cursor's R149/R150 document-expense seed) — this is AUTH-077, the next free
+number, for this action specifically.
+
+— CC-1
