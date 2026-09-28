@@ -1236,11 +1236,14 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
         `UPDATE banking.bank_transactions
             SET review_state = 'matched',
                 reviewed_at = now(),
+                categorized_by_user_id = $4::uuid,
+                categorized_at = now(),
+                updated_at = now(),
                 ${matchedColumn} = $3::uuid
           WHERE id = $1::uuid
             AND operating_company_id = $2::uuid
             AND review_state <> 'matched'`,
-        [input.bank_transaction_id, input.operating_company_id, input.ledger_entry_id]
+        [input.bank_transaction_id, input.operating_company_id, input.ledger_entry_id, input.actor_user_uuid]
       );
       if (cleared.rowCount === 0) {
         throw new Error("bank_transaction_already_matched");
@@ -1468,11 +1471,14 @@ export async function acceptExactMultiDocumentMatch(input: {
         `UPDATE banking.bank_transactions
             SET review_state = 'matched',
                 reviewed_at = now(),
+                categorized_by_user_id = $4::uuid,
+                categorized_at = now(),
+                updated_at = now(),
                 ${matchedColumn} = $3::uuid
           WHERE id = $1::uuid
             AND operating_company_id = $2::uuid
             AND review_state <> 'matched'`,
-        [input.bank_transaction_id, input.operating_company_id, first.ledger_entry_id]
+        [input.bank_transaction_id, input.operating_company_id, first.ledger_entry_id, input.actor_user_uuid]
       );
       if (cleared.rowCount === 0) throw new Error("bank_transaction_already_matched");
     }

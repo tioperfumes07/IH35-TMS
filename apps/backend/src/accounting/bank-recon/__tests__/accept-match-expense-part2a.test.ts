@@ -65,6 +65,10 @@ describe("BLOCK-01 Part 2a — expense-link accept", () => {
     expect(clear).toBeDefined();
     expect(String(clear?.[0])).toContain("matched_expense_id");
     expect(String(clear?.[0])).toContain("review_state = 'matched'");
+    expect(String(clear?.[0])).toContain("categorized_by_user_id");
+    expect(String(clear?.[0])).toContain("categorized_at");
+    expect(String(clear?.[0])).toContain("updated_at");
+    expect(clear?.[1]).toEqual([BANK_TX, OPCO, EXPENSE, ACTOR]);
   });
 
   it("rejects an unposted expense (would orphan the expense's own JE)", async () => {
