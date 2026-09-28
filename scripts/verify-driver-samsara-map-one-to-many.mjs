@@ -8,7 +8,10 @@
 //   C. No code path resolves a driver via mdata.drivers.samsara_driver_id as the KEY (legacy column
 //      is read-only; the map is canonical). Static scan of apps/backend/src for SELECT/WHERE
 //      clauses that treat d.samsara_driver_id as the join key.
-//   D. Live: every driver with a legacy samsara_driver_id has at least one row in the map.
+//   D. Live: every *unmerged* driver with a legacy samsara_driver_id has at least one row in the
+//      map. AUTH-081 (and later merges) leave losers Inactive with merged_into_driver_id set and
+//      the map repointed to the survivor — losers keep the legacy column for audit and must not
+//      fail the backfill equality.
 //   E. Live: no Samsara id maps to 2 drivers.
 //
 // Self-arming POPULATION check. Read-only. Never writes.
@@ -181,12 +184,13 @@ async function measureLive() {
     );
     const uniqueConstraint = constraintRes.rows.length > 0;
 
-    // D. Legacy backfill: drivers with legacy samsara_driver_id vs map rows
+    // D. Legacy backfill: unmerged drivers with legacy samsara_driver_id vs map rows
+    // (merged losers keep legacy samsara_driver_id for audit; map lives on the survivor — AUTH-081)
     const legacyRes = await client.query(
-      `SELECT count(*)::int AS cnt FROM mdata.drivers WHERE samsara_driver_id IS NOT NULL AND operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'` /* R-188: USMCA only — TRANSPORTATION/TRUCKING are frozen and never mapped */,
+      `SELECT count(*)::int AS cnt FROM mdata.drivers WHERE samsara_driver_id IS NOT NULL AND operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80' AND merged_into_driver_id IS NULL` /* R-188: USMCA only — TRANSPORTATION/TRUCKING are frozen and never mapped */,
     );
     const mapRes = await client.query(
-      `SELECT count(DISTINCT m.driver_id)::int AS cnt FROM mdata.driver_samsara_accounts m JOIN mdata.drivers d ON d.id = m.driver_id WHERE d.operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80' AND d.samsara_driver_id IS NOT NULL`,
+      `SELECT count(DISTINCT m.driver_id)::int AS cnt FROM mdata.driver_samsara_accounts m JOIN mdata.drivers d ON d.id = m.driver_id WHERE d.operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80' AND d.samsara_driver_id IS NOT NULL AND d.merged_into_driver_id IS NULL`,
     );
     const liveDriversWithLegacySamsara = legacyRes.rows[0].cnt;
     const liveDriversWithMapRow = mapRes.rows[0].cnt;

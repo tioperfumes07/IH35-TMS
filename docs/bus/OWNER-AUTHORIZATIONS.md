@@ -2257,9 +2257,13 @@ issued_at: 2026-09-28T05:35:00.000Z
 scope: void every live USMCA accounting.expenses header (5769–5816, source_fuel_transaction_id IS NULL, memo NOT LIKE 'R145 SETTL%') that is superseded by an AUTH-076 R145 set-based twin on the same source_settlement_ref + expense_line (amount_cents, item_id); via existing voidDocument(type='expense') only; void-not-delete; no new rows — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA). Measured before void: 62 headers / $4,042.56.
 action: OWNER_AUTH_ID=AUTH-080 npx tsx scripts/feed/r145-void-pre-r145-superseded-dups.mts --apply
 expires_at: 2026-09-28T11:35:00.000Z
-status: OPEN
+status: CONSUMED
 
 ROUND 154.4. AUTH-076 set-based seed used natural key (settlement, AT date, amount, item). Prior R-164/gapfill rows kept wrong dates, so the seed inserted AT-dated twins and verify-alwaystrack-parity expenses went ~2x (16565 vs 8487). Void the pre-R145 superseded headers; keep R145 AT-dated rows. Same class as AUTH-078 one-row void, set-identified.
+
+CONSUMED — AUTH-080 — 2026-09-28T05:47Z Cursor. Applied after script import/actor/stamp fix:
+voided=62 cents=404256; left-superseded-by-ref+item_id=0. 5812 live company-exp still
+66452 (AT PDF Exp 21362 + owner-ruled GAS/COMIDAS 38000 + 2 residual dups 7090 — AUTH-082).
 
 — Cursor
 
@@ -2295,3 +2299,29 @@ shell. v5 adds a load-count guard that refuses any survivor<loser pair without a
 documented overrideReason (the ALFONSO exception is the only one carrying one).
 
 — CC-1
+
+---
+
+## AUTH-082
+issued_at: 2026-09-28T05:55:00.000Z
+scope: void exactly two live USMCA accounting.expenses headers that AUTH-080's ref+item_id identify set missed — (1) 13600-10 id 3d07eb3f-3888-4061-b28a-e6d22e89e90f $15.69 Fuel-DEF reissued R-175 with source_settlement_ref NULL (AUTH-080 required a 4-digit ref), twin is R145 13600-13 same amount+item_id; (2) 13600-1 id 955cb68d-f6c0-49fe-b98c-1cb01fb0c39f $55.21 Reefer-Trailer Washout item_id aa07ce99 (AUTH-080 required matching item_id; R145 twin 13588-4 is TRACTOR-Washout 40d73df6, same amount on settlement 5812). Via existing voidDocument(type='expense') + stampDocumentVoided only; void-not-delete; no new rows — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA). Measured: 2 headers / $70.90; after void 5812 live company-exp = 59362 (AT PDF Exp 21362 + AUTH-076 owner-ruled GAS/COMIDAS 38000).
+action: OWNER_AUTH_ID=AUTH-082 npx tsx scripts/feed/r145-void-5812-residual-dups.mts --apply
+expires_at: 2026-09-28T12:00:00.000Z
+status: OPEN
+
+ROUND 154.4 residual after AUTH-080. Same class (pre-R145 / non-R145 superseded by AUTH-076 R145 twin); identify-set holes were NULL ref and washout item rename.
+
+— Cursor
+
+---
+
+## AUTH-083
+issued_at: 2026-09-28T06:05:00.000Z
+scope: driver_finance.escrow_ledger INSERT exactly one row for driver 52037e93-484a-4659-ab60-cf2a78f4c647 (USMCA Angel Alfonso Sosa Perez survivor) — amount_cents=+7500, running_balance_cents=20000, description names AUTH-083 — so the ledger tip equals canonical accounting.escrow_accounts.balance_cents=20000 and driver_finance.escrow_balances.current_balance_cents=20000 (already equal). No UPDATE/DELETE; no journal_entry; no change to accounting.escrow_accounts or escrow_balances — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA). Measured: 1 mismatch (projection 20000 ≠ ledger tip 12500); GL already 20000.
+action: OWNER_AUTH_ID=AUTH-083 npx tsx scripts/feed/r145-sync-angel-escrow-ledger-tip.mts --apply
+expires_at: 2026-09-28T12:30:00.000Z
+status: OPEN
+
+ROUND 154.4 unblock. Pre-existing projection/ledger tip drift on this driver (ledger tip stuck at 12500 after Sep-24 settlement churn while GL/projection sit at 20000) fails alwaysRun verify-escrow-balance-reconciles-gl and blocks every money push. Canonical is accounting.escrow_accounts (owner 2026-09-05) — bring the ledger tip to the GL, do not move the GL.
+
+— Cursor
