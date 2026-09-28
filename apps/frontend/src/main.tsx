@@ -9,6 +9,7 @@ import { StaleDeployBanner } from "./components/StaleDeployBanner";
 import { ToastProvider } from "./components/Toast";
 import { initFrontendSentry } from "./observability/sentry-client";
 import "./index.css";
+import "./design/design-tokens.css";
 import "./styles/tokens-load-detail.css";
 import i18n from "./i18n";
 

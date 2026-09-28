@@ -19,14 +19,26 @@ export const colors = {
   sidebarTextMuted: "#9CA3AF",
   sidebarTextActive: "#FFFFFF",
   sidebarActiveBorder: "#3B82F6",
-  bodyBg: "#F7F8FA",
+  // ROUND 150 palette (owner 2026-09-28) — canvas #F4F6F8 · cards #FFFFFF · borders #E3E8EF ·
+  // text #1A2233 · secondary #5A6779 · accent #1E63C4 · success #0E7C5A · warning #B45309 ·
+  // danger #C0392F · row hover #EEF2F7. Prefer CSS var(--color-*) in components; these JS mirrors
+  // stay for call sites that still import colors.* until they migrate.
+  bodyBg: "#F4F6F8",
   cardBg: "#FFFFFF",
-  cardBorder: "#E5E7EB",
+  cardBorder: "#E3E8EF",
   cardBorderStrong: "#D1D5DB",
-  pageHeading: "#0F1219",
-  bodyText: "#1F2937",
-  mutedText: "#6B7280",
+  pageHeading: "#1A2233",
+  bodyText: "#1A2233",
+  mutedText: "#5A6779",
   tinyLabel: "#9CA3AF",
+  accent: "#1E63C4",
+  success: "#0E7C5A",
+  warning: "#B45309",
+  danger: "#C0392F",
+  rowHover: "#EEF2F7",
+  darkCanvas: "#0F141B",
+  darkCard: "#181F29",
+  darkText: "#E6EBF2",
   // GLOBAL-TYPE-SIZE-BASELINE.md: section labels stay 11px/700/UPPERCASE/#4B5563.
   // TABLE-HEADER-RETIRE-NAVY LAW (owner ruling 2026-09-04, verbatim: "in the columns headers i
   // want all centered, and also light background color, the blue is too aggressive, and regular
