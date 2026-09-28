@@ -21,7 +21,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const ALLOW_OFFLINE_SKIP = true;
+export const ALLOW_OFFLINE_SKIP = "the static writer check above already runs unconditionally and is sufficient offline; the live half is a live-data invariant by design";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SVC = "apps/backend/src/feed/seed-settlement-document.service.ts";

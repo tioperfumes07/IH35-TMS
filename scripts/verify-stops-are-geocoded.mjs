@@ -7,6 +7,8 @@
 // this chain; this guard is scoped to geocoding specifically, not telematics.
 import pg from "pg";
 
+export const ALLOW_OFFLINE_SKIP = "live-data invariant by design, no static-only path";
+
 const LABEL = "verify-stops-are-geocoded";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const DISPATCHABLE_STATUSES = [

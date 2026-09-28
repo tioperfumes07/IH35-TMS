@@ -3,11 +3,26 @@
 // real load in the Faro reconciliation). Its $0.00 driver bill was already voided by the Lead. The
 // $350 invoice is REAL (Faro bought it) -- detach it from the fake load (never delete it), then
 // void the fabricated load itself.
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { register } from "tsx/esm/api";
 register();
 const { withCurrentUser } = await import("../../apps/backend/src/auth/db.ts");
 const { setScopedCompanyContext } = await import("../../apps/backend/src/_helpers/scoped-company-context.ts");
 const { cancelLoadInClientTx } = await import("../../apps/backend/src/dispatch/cancellation.service.ts");
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+// AUTH-100 (docs/bus/OWNER-AUTHORIZATIONS.md) authorized this script's one-time run, already
+// executed and closed. Added retroactively (ROUND 133 P0) so a bare re-run correctly refuses now
+// that AUTH-100 is closed, rather than silently re-running unauthorized.
+const AUTH_ID = "AUTH-100";
+try {
+  execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), AUTH_ID], { stdio: "inherit" });
+} catch {
+  console.error(`ROUND 133 P0: ${AUTH_ID} rejected by verify-owner-authorization.mjs -- see docs/bus/OWNER-AUTHORIZATIONS.md.`);
+  process.exit(1);
+}
 
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER = "e4117991-d2c0-406d-8cda-74e98d95bccd";

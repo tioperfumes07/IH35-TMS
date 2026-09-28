@@ -26,6 +26,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 
+export const ALLOW_OFFLINE_SKIP = "live A/R-to-QBO tie-out; static parse still runs and is reported";
+
 const LABEL = "verify-ar-ties-to-qbo-invoice-list";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CSV_PATH = path.join(ROOT, "feed-input/qbo-invoice-list-2026-08-07-to-2026-09-27.csv");

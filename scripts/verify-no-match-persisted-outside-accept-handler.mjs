@@ -13,6 +13,8 @@
 // reliable "this went through the accept handler" signal this guard checks for.
 import pg from "pg";
 
+export const ALLOW_OFFLINE_SKIP = "live-data invariant by design, no static-only path";
+
 const LABEL = "verify-no-match-persisted-outside-accept-handler";
 
 function selftest() {

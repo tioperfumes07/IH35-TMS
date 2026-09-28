@@ -27,6 +27,8 @@
 // that same due_date -- proving the service function actually reads it once the invoice is
 // visible to it at all.
 import { register } from "tsx/esm/api";
+
+export const ALLOW_OFFLINE_SKIP = "live-data invariant by design, no static-only path";
 register();
 
 const LABEL = "verify-cash-flow-reads-delivery-date";

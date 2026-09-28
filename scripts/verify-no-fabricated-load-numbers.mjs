@@ -8,6 +8,8 @@
 // discovered months later.
 import pg from "pg";
 
+export const ALLOW_OFFLINE_SKIP = "live-data invariant by design, no static-only path";
+
 const LABEL = "verify-no-fabricated-load-numbers";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const SANCTIONED_PATTERN = /^13\d{3}$/;

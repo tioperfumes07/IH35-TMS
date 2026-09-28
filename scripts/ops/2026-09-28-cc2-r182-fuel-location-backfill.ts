@@ -25,11 +25,19 @@
  *   DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r182-fuel-location-backfill.ts            # dry-run
  *   DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r182-fuel-location-backfill.ts --apply
  */
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import pg from "pg";
 
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const KNOWN_LOCATION_PRODUCT_TERMS = ["fuel", "def", "diesel", "reefer", "lumper", "scale", "tire", "washout"];
 const APPLY = process.argv.includes("--apply");
+// AUTH-109 (docs/bus/OWNER-AUTHORIZATIONS.md) authorized this script's one-time run, already
+// executed and closed 2026-09-28. Added retroactively (ROUND 133 P0) so a bare --apply re-run
+// correctly refuses now that AUTH-109 is closed, rather than silently re-running unauthorized.
+const AUTH_ID = "AUTH-109";
 
 function sanitizeFuelLocation(raw: string | null): { city: string | null; state: string | null } {
   const text = (raw ?? "").trim();
@@ -47,6 +55,14 @@ function sanitizeFuelLocation(raw: string | null): { city: string | null; state:
 
 async function main() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL required");
+  if (APPLY) {
+    try {
+      execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), AUTH_ID], { stdio: "inherit" });
+    } catch {
+      console.error(`ROUND 133 P0: ${AUTH_ID} rejected by verify-owner-authorization.mjs -- see docs/bus/OWNER-AUTHORIZATIONS.md.`);
+      process.exit(1);
+    }
+  }
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 3 });
   const client = await pool.connect();
   try {
