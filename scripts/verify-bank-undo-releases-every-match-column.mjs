@@ -52,6 +52,8 @@ const HALF_RELEASED_COLUMNS = [
   "matched_settlement_id",
   "matched_advance_id",
   "matched_factoring_advance_id",
+  "matched_fuel_transaction_id",
+  "matched_relay_fuel_transaction_id",
   "matched_journal_entry_id",
   "categorization_customer_id",
   "categorization_vendor_id",

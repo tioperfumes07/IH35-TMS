@@ -1508,6 +1508,8 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
                   matched_settlement_id = NULL,
                   matched_advance_id = NULL,
                   matched_factoring_advance_id = NULL,
+                  matched_fuel_transaction_id = NULL,
+                  matched_relay_fuel_transaction_id = NULL,
                   matched_journal_entry_id = NULL,
                   category = NULL,
                   category_kind = NULL,
