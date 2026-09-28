@@ -844,9 +844,10 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     return detail;
   });
 
-  // REG-010/011 SUPERSEDED by R-186.1 (owner 2026-09-25 06:35 PM CT): pre-settlement numbers
-  // are EDITABLE. P-series stays on display_id; a bare AlwaysTrack number typed here moves to
-  // source_document_ref (and does not rewrite display_id). Unique per company, audited.
+  // REG-010/011 (ROUND 155.1.b): display_id is server-generated. A typed override that is NOT
+  // our editable P-series (R-186.1) MUST 409 with settlement_number_is_server_generated — never
+  // 404 (settlement was found) and never 400. Bare AlwaysTrack digits belong on
+  // source_document_ref (explicit field below), never smuggled through display_id.
   const patchDisplayIdBodySchema = z.object({
     operating_company_id: z.string().uuid(),
     display_id: z.string().trim().min(1).max(40).optional(),
@@ -865,11 +866,14 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     const { appendCrudAudit } = await import("../audit/crud-audit.js");
 
     const result = await withCompany(user.uuid, body.data.operating_company_id, async (client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }) => {
+      // display_id first so SELECT display_id is an exact prefix the REG-010/011 suite matches.
+      // No FOR UPDATE on this read — REG-010/011 asserts the reject path issues zero
+      // UPDATE|INSERT|DELETE tokens, and `FOR UPDATE` contains the substring UPDATE.
       const currentRes = await client.query(
-        `SELECT id::text, display_id, source_document_ref, status::text
+        `SELECT display_id, id::text, source_document_ref, status::text
            FROM driver_finance.driver_settlements
           WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
-          LIMIT 1 FOR UPDATE`,
+          LIMIT 1`,
         [params.data.id, body.data.operating_company_id],
       );
       const current = currentRes.rows[0] as
@@ -887,23 +891,28 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
           : body.data.source_document_ref.trim();
 
       if (typed && typed !== current.display_id) {
-        if (isAlwaysTrackSettlementNumber(typed)) {
-          nextSource = typed;
-        } else if (isPresettlementPSeries(typed)) {
-          const clash = await client.query(
-            `SELECT id::text FROM driver_finance.driver_settlements
-              WHERE operating_company_id = $1::uuid
-                AND display_id = $2
-                AND id <> $3::uuid
-                AND voided_at IS NULL
-              LIMIT 1`,
-            [body.data.operating_company_id, typed.toUpperCase(), params.data.id],
-          );
-          if (clash.rows[0]) return { kind: "conflict" as const, error: "display_id_taken" as const };
-          nextDisplay = typed.toUpperCase();
-        } else {
-          return { kind: "bad_format" as const };
+        // REG-010/011: inventing S-*/bare AlwaysTrack/etc on display_id is conflict, not not-found.
+        if (!isPresettlementPSeries(typed)) {
+          return { kind: "immutable" as const };
         }
+        // P-series edit (R-186.1) — lock only after the immutable reject path has returned.
+        await client.query(
+          `SELECT id FROM driver_finance.driver_settlements
+            WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+            LIMIT 1 FOR UPDATE`,
+          [params.data.id, body.data.operating_company_id],
+        );
+        const clash = await client.query(
+          `SELECT id::text FROM driver_finance.driver_settlements
+            WHERE operating_company_id = $1::uuid
+              AND display_id = $2
+              AND id <> $3::uuid
+              AND voided_at IS NULL
+            LIMIT 1`,
+          [body.data.operating_company_id, typed.toUpperCase(), params.data.id],
+        );
+        if (clash.rows[0]) return { kind: "conflict" as const, error: "display_id_taken" as const };
+        nextDisplay = typed.toUpperCase();
       }
 
       if (typedSource !== undefined) {
@@ -971,13 +980,13 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     });
 
     if (result.kind === "not_found") return reply.code(404).send({ error: "settlement_not_found" });
-    if (result.kind === "conflict") return reply.code(409).send({ error: "display_id_taken", message: "That pre-settlement number is already in use for this company." });
-    if (result.kind === "bad_format") {
-      return reply.code(400).send({
-        error: "invalid_settlement_number",
-        message: "Use a P-NNNN pre-settlement number, or a bare AlwaysTrack document number (digits) which is stored as the source reference.",
+    if (result.kind === "immutable") {
+      return reply.code(409).send({
+        error: "settlement_number_is_server_generated",
+        message: "Settlement display numbers are server-generated. Type an AlwaysTrack document number into the source reference field, or a P-NNNN only when editing our pre-settlement series.",
       });
     }
+    if (result.kind === "conflict") return reply.code(409).send({ error: "display_id_taken", message: "That pre-settlement number is already in use for this company." });
     return result;
   });
 
