@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { ensureDriverVendor } from "./ensure-driver-vendor.shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { randomBytes } from "crypto";
+import { hashInviteToken } from "../auth/invite-token.js";
 import { z } from "zod";
 
 type DriverConflictBody = {
@@ -1127,7 +1128,7 @@ export async function createDriverCanonical(
               VALUES ($1, $2, $3, $4, $5, now() + interval '72 hours', $6)
               RETURNING expires_at
             `,
-          [resolvedOperatingCompanyId, row.id, identityUserId, inviteToken, b.phone, authUser.uuid]
+          [resolvedOperatingCompanyId, row.id, identityUserId, hashInviteToken(inviteToken), b.phone, authUser.uuid]
         );
         inviteExpiresAt = inviteRes.rows[0]?.expires_at ?? null;
 
@@ -1896,7 +1897,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             )
             VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5, now() + interval '72 hours', $6::uuid)
           `,
-          [access.operatingCompanyId, access.driverId, access.identityUserId, inviteToken, access.phone, authUser.uuid]
+          [access.operatingCompanyId, access.driverId, access.identityUserId, hashInviteToken(inviteToken), access.phone, authUser.uuid]
         );
 
         if (channel === "whatsapp") {
@@ -2088,7 +2089,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5, now() + interval '72 hours', $6::uuid)
           RETURNING expires_at
         `,
-        [access.operatingCompanyId, access.driverId, access.identityUserId, inviteToken, access.phone, authUser.uuid]
+        [access.operatingCompanyId, access.driverId, access.identityUserId, hashInviteToken(inviteToken), access.phone, authUser.uuid]
       );
       const inviteExpiresAt = inviteRes.rows[0]?.expires_at ?? null;
 
