@@ -21,7 +21,14 @@
 -- (live-confirmed none of the 14 affected loads have a settled driver bill -- that half is not the
 -- bug here).
 --
--- Idempotent: CREATE OR REPLACE VIEW, same pattern as 202614180000's own migration. Safe to re-run.
+-- DROP + CREATE, not CREATE OR REPLACE: mdata.loads has gained columns via ALTER TABLE since
+-- 202614180000 last (re)created this view (e.g. empty_miles, 202614250000), so the view's own
+-- frozen output-column list no longer matches a fresh `l.*` expansion at the position where
+-- `live_state` sits -- CREATE OR REPLACE VIEW refuses that as a column rename/reorder ("cannot
+-- change name of view column ... to ..."), live-confirmed by this exact migration's first
+-- deploy attempt. DROP + CREATE has no such restriction; no other SQL view or table depends on
+-- views.live_loads (only backend TS query code does, confirmed via repo-wide grep), so a brief
+-- drop inside this same transaction is safe. Idempotent via IF EXISTS. Safe to re-run.
 BEGIN;
 
 DO $$
@@ -31,8 +38,9 @@ BEGIN
      AND to_regclass('driver_finance.driver_settlements') IS NOT NULL
      AND to_regclass('driver_finance.driver_bills') IS NOT NULL
      AND to_regclass('accounting.invoices') IS NOT NULL THEN
+    EXECUTE 'DROP VIEW IF EXISTS views.live_loads';
     EXECUTE $VIEW$
-      CREATE OR REPLACE VIEW views.live_loads
+      CREATE VIEW views.live_loads
       WITH (security_invoker = true) AS
       SELECT
         l.*,
