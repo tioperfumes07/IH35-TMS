@@ -16,7 +16,7 @@
     "eld": { "status": "N/A", "reason": "No CollapsedListFilters consumer" },
     "cash-flow": { "status": "N/A", "reason": "No CollapsedListFilters consumer" },
     "settlements": { "status": "COVERED", "evidence": "apps/frontend/src/pages/drivers/SettlementDisputeList.tsx" },
-    "accounting": { "status": "COVERED", "evidence": "apps/frontend/src/pages/accounting/BillsPage.tsx" },
+    "accounting": { "status": "COVERED", "evidence": "apps/frontend/src/pages/accounting/TransactionRegisterPage.tsx" },
     "bank": { "status": "COVERED", "evidence": "apps/frontend/src/pages/banking/TransfersListPage.tsx" },
     "factoring": { "status": "COVERED", "evidence": "apps/frontend/src/pages/accounting/FactoringListPage.tsx" },
     "finance": { "status": "COVERED", "evidence": "apps/frontend/src/pages/finance/ArApAgingPage.tsx" },

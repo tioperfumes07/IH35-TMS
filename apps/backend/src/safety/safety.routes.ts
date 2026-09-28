@@ -956,14 +956,21 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
             `SELECT section, description, amount_cents FROM safety.accident_cost_lines WHERE accident_id = $1 AND operating_company_id = $2::uuid`,
             [params.data.id, companyId]
           );
+          // ROUND 155 (same defect class as the settlement-document feed's NUL-byte keys):
+          // this dedup key used to be space-joined with the free-text description in the MIDDLE,
+          // so ("A B", "C", 100) and ("A", "B C", 100) produced an identical key and one of two
+          // genuinely different accident cost lines was silently skipped. JSON.stringify quotes
+          // and escapes every part, so the key cannot collide.
+          const costLineKey = (section: unknown, description: unknown, amountCents: unknown) =>
+            JSON.stringify([String(section ?? ""), String(description ?? ""), Number(amountCents ?? 0)]);
           const existingKeys = new Set(
-            existingRes.rows.map((r) => `${r.section} ${r.description} ${r.amount_cents}`)
+            existingRes.rows.map((r) => costLineKey(r.section, r.description, r.amount_cents))
           );
           let ord = existingRes.rows.length;
           for (const line of body.data.cost_lines) {
             const description = line.description ?? "";
             const amountCents = Number(line.amount_cents ?? 0);
-            const key = `${line.section} ${description} ${amountCents}`;
+            const key = costLineKey(line.section, description, amountCents);
             if (existingKeys.has(key)) continue;
             await client.query(
               `
