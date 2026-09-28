@@ -461,6 +461,8 @@ export type MatchWindowInfo = {
 export type FindCandidatesResult = {
   candidates: MatchCandidate[];
   window: MatchWindowInfo;
+  /** Abs bank amount (cents) — FE multi-doc Resolve sums selected ledger amounts against this. */
+  bank_amount_cents: number;
 };
 
 const MAX_CUSTOM_SPAN_DAYS = 730;
@@ -1002,11 +1004,17 @@ export async function findCandidates(input: {
       return {
         candidates: [],
         window: { step: 1, from: "", to: "", auto_widened: false },
+        bank_amount_cents: 0,
       };
     }
 
     const toleranceCents = toleranceForAmount(txn.amount_cents);
     const txnAmountAbs = Math.abs(Number(txn.amount_cents ?? 0));
+    const pack = (candidates: MatchCandidate[], window: MatchWindowInfo): FindCandidatesResult => ({
+      candidates,
+      window,
+      bank_amount_cents: txnAmountAbs,
+    });
     const txnMemo = `${txn.merchant_name ?? ""} ${txn.description ?? ""} ${txn.notes ?? ""}`.trim();
     const txnDate = txn.transaction_date;
 
@@ -1073,7 +1081,7 @@ export async function findCandidates(input: {
       const from = shiftDate(txnDate, -days);
       const to = shiftDate(txnDate, days);
       const candidates = rank(await fetchAt(from, to, { windowDays: days }));
-      return { candidates, window: { step: "custom", from, to, auto_widened: false } };
+      return pack(candidates, { step: "custom", from, to, auto_widened: false });
     }
 
     // ANY explicit filter overrides the cascade. From/To exact; other filters use Step 2 bounds.
@@ -1091,38 +1099,32 @@ export async function findCandidates(input: {
         ({ from, to } = boundsForStep(txnDate, 2));
       }
       const candidates = rank(await fetchAt(from, to));
-      return { candidates, window: { step: "custom", from, to, auto_widened: false } };
+      return pack(candidates, { step: "custom", from, to, auto_widened: false });
     }
 
     // Forced Step 2 (FE "Search 7 days") — no further auto-widen.
     if (input.window_step === 2) {
       const { from, to } = boundsForStep(txnDate, 2);
       const candidates = rank(await fetchAt(from, to));
-      return { candidates, window: { step: 2, from, to, auto_widened: false } };
+      return pack(candidates, { step: 2, from, to, auto_widened: false });
     }
 
     // Forced Step 1 only (no auto-widen) when window_step === 1.
     if (input.window_step === 1) {
       const { from, to } = boundsForStep(txnDate, 1);
       const candidates = rank(await fetchAt(from, to));
-      return { candidates, window: { step: 1, from, to, auto_widened: false } };
+      return pack(candidates, { step: 1, from, to, auto_widened: false });
     }
 
     // DEFAULT cascade: Step 1 → if ZERO, Step 2 with auto_widened. Never auto-advance past Step 2.
     const step1 = boundsForStep(txnDate, 1);
     const step1Ranked = rank(await fetchAt(step1.from, step1.to));
     if (step1Ranked.length > 0) {
-      return {
-        candidates: step1Ranked,
-        window: { step: 1, from: step1.from, to: step1.to, auto_widened: false },
-      };
+      return pack(step1Ranked, { step: 1, from: step1.from, to: step1.to, auto_widened: false });
     }
     const step2 = boundsForStep(txnDate, 2);
     const step2Ranked = rank(await fetchAt(step2.from, step2.to));
-    return {
-      candidates: step2Ranked,
-      window: { step: 2, from: step2.from, to: step2.to, auto_widened: true },
-    };
+    return pack(step2Ranked, { step: 2, from: step2.from, to: step2.to, auto_widened: true });
   });
 }
 

@@ -243,6 +243,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
       candidates: result.candidates,
       match_candidates_count: result.candidates.length,
       window: result.window,
+      bank_amount_cents: result.bank_amount_cents,
       // Compat mirrors for older FE — derived from MATCH_WINDOW_STEPS, never 90/20.
       days_before:
         result.window.step === 1
