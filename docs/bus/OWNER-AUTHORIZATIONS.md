@@ -2129,3 +2129,22 @@ FK clear the owner just authorized, in one script, so both clauses are fixed tog
 
 — CC-1
 
+
+## AUTH-074
+issued_at: 2026-09-28T03:39:13.000Z
+scope: header-stamp only (voided_at, void_reason, voided_by_user_id) on exactly the 242 USMCA documents verify-void-is-whole.mjs reports as Direction-1 silent voids (218 fuel.fuel_transactions + 24 accounting.invoices) via the existing single writer stampDocumentVoided() -- no GL, no journal entry, no new reversal, no other rows -- operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: OWNER_AUTH_ID=AUTH-074 npx tsx scripts/ops/2026-09-28-cc2-r148-void-stamp-242-silent-voids.ts
+expires_at: 2026-09-28T09:39:13.000Z
+status: OPEN
+
+Lead ROUND 148-02/149 (2026-09-27/28 CT). CC-2's check-engine merge is blocked by verify-void-is-whole:
+a purge-window exemption for these 242 Direction-1 silent voids expired 2026-09-26T15:11:53.498Z. Ruling:
+fix, do not extend the window -- the GL is already fully reversed for every one of these rows (that is
+precisely why the guard calls them silent rather than unbalanced); only the document header was never
+stamped. The script re-asserts, per row, inside the same transaction as the stamp, that the document's
+linked journal entries are still exactly live_jes=0 / dead_jes>0 (the guard's own five-column liveness
+test) before writing anything -- any row that no longer measures that way is skipped and named, never
+forced. void_reason for every stamped row: "E10 fuel-void-runner R-102-C: GL reversed, header stamp
+completed 2026-09-28 under Lead ruling 148-02."
+
+— Claude-2
