@@ -65,6 +65,7 @@ const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd"; // identity.users tioperfumes07@gmail.com, Owner
 const AUTH_ID = "AUTH-104";
 const CORRECT_RATE_CENTS = 45;
+const LOADED_MILES_ITEM_ID = "a9a03f7a-5783-4615-a4f2-81b7b41973a8"; // "Loaded Miles" catalog item, same one used by real settlement 5817's own lines
 
 const P0001 = "b69dfafb-7287-42f6-b46b-19257c9e7095";
 const P0003 = "8018fe04-aa8b-417b-aeb5-fbb95edd6901";
@@ -233,19 +234,20 @@ async function main() {
           `INSERT INTO driver_finance.settlement_lines
              (settlement_id, line_type, description, amount, load_id, is_active, driver_visible,
               approval_status, operating_company_id, source_driver_bill_id, quantity, rate_cents,
-              unit_of_measure, is_sample_data)
+              unit_of_measure, item_id, is_sample_data)
            VALUES
-             ($1, 'earnings', $2, $3, $4, true, true, 'pending', $5, $6, $7, $8, 'mi', false)
+             ($1, 'earnings', $2, $3, $4, true, true, 'pending', $5, $6, $7, $8, 'mi', $9, false)
            RETURNING id`,
           [
             t.id,
-            `Load ${b.load_number} — Loaded Miles (rate corrected $0.48→$0.45/mi, AUTH-104)`,
+            `Load ${b.load_number} — Loaded Miles ${miles} @ $0.45 (rate corrected from $0.48, AUTH-104)`,
             correctedAmount,
             oldLine.load_id,
             USMCA,
             oldLine.source_driver_bill_id,
             miles,
             CORRECT_RATE_CENTS,
+            LOADED_MILES_ITEM_ID,
           ],
         );
         console.log(`  inserted corrected line ${ins.rows[0].id}`);
