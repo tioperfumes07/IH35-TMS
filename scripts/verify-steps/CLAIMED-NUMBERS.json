@@ -9194,5 +9194,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-28",
     "purpose": "verify-cash-flow-reads-delivery-date"
+  },
+  "11679": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-28",
+    "purpose": "verify-fuel-location-is-a-city"
   }
 }
