@@ -2358,3 +2358,20 @@ for the same load — a pre-existing data-quality defect, reported, not guessed 
 22+68+8+6 = 104, full accounting for every row.
 
 — CC-1
+
+---
+
+## AUTH-081
+issued_at: 2026-09-28T06:41:51.000Z
+scope: catalogs.accounts INSERT ONLY — create the 6 missing 2175-00-NNN "Driver Reimbursements" leaves for ANGEL ALFONSO SOSA PEREZ, CONCEPCION CORDOVA DOMINGUEZ, LUIS ARMANDO SOSA PEREZ, RAFAEL ROGELIO RIVERO REYNOSO, RUBEN PEDRO PEREZ GARCIA, VICENTE SANTOS CONTRERAS, in the exact shape of the 10 already live (Liability / Other Current Liabilities, parent e91e1781-c980-4983-b398-43a2c28fe25a). No journal line, no posting, no balance — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: OWNER_AUTH_ID=AUTH-081 npx tsx scripts/ops/2026-09-28-lead-r150-create-6-missing-2175-leaves.ts
+expires_at: 2026-09-28T09:41:51.000Z
+status: OPEN
+
+R-150 (Claude-Lead). AUTH-079 refused its entire run on its own pre-flight — "1 reimbursable row(s) have no
+single 2175 leaf for their driver: doc 5800 exp f4056ff7". Measured: 6 drivers carry a live settlement and
+have no leaf, so their reimbursable expenses have nowhere to credit and the funding fix cannot complete.
+Refuses unless exactly 6 such drivers, no duplicate account number, zero left without a leaf afterwards, and
+the trial balance sum and posting row count unchanged.
+
+— Claude-Lead
