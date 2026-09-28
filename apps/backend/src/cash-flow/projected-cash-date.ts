@@ -3,8 +3,9 @@
 //
 //   projected_cash_date = effective_delivery_date + receivable_lag
 //   effective_delivery_date = COALESCE(loads.predicted_delivery_date, <delivery stop scheduled>)
-//   receivable_lag (days)   = factored customer → factoring advance (~T+1); else customer net terms
-//                             (catalogs.payment_terms.days_until_due), NET-30 fallback. Never 0.
+//   receivable_lag (days)   = factored customer → 0 (ROUND 195.1, owner law 2026-09-28: Faro buys
+//                             at delivery, no lag); else customer net terms
+//                             (catalogs.payment_terms.days_until_due), NET-30 fallback, never 0.
 //
 // FORECAST/SCHEDULING ONLY — this shifts a prediction bucket, never a posted invoice/AR/QBO entry.
 // Gated behind CASH_FOLLOWS_ETA_ENABLED at the call site: when OFF, consumers keep bucketing by the
