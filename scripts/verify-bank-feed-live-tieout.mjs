@@ -16,12 +16,42 @@
 //
 // Read-only. Never connects to prod (SS1.5) -- uses DATABASE_DIRECT_URL/DATABASE_URL exactly like
 // every other db-verify-*.mjs script, intended for CI's ephemeral Postgres or local dev.
+//
+// ROUND 202 (owner/Lead 2026-09-28) — CANONICAL vs MIRROR:
+//   - banking.reconciliation_matches is the canonical match event (accept handler writes it).
+//   - banking.bank_transactions.matched_*_id is the required denormalized mirror, stamped in the
+//     SAME accept UPDATE keyed by MATCHED_COLUMN_BY_KIND (match.service.ts). Not legacy.
+//   - This guard must read EVERY matched_* column the accept handler can set. A prior incomplete
+//     6-column list went red on 108 live USMCA rows that already carried
+//     matched_factoring_advance_id / matched_relay_fuel_transaction_id — blocking unrelated seats.
+//     Column list kept in lockstep with scripts/verify-matched-state-requires-matched-id.mjs.
 import dotenv from "dotenv";
 import pg from "pg";
 export const REQUIRES_LIVE_DB =
   "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
 dotenv.config();
+
+// Full matched_* set — same roster as verify-matched-state-requires-matched-id.mjs /
+// MATCHED_COLUMN_BY_KIND in apps/backend/src/accounting/bank-recon/match.service.ts.
+// ROUND 202: never regress to a partial list; factoring_advance / fuel / relay_fuel are real.
+export const MATCHED_ID_COLUMNS = [
+  "matched_load_id",
+  "matched_bill_id",
+  "matched_bill_payment_id",
+  "matched_settlement_id",
+  "matched_expense_id",
+  "matched_invoice_id",
+  "matched_advance_id",
+  "matched_factoring_advance_id",
+  "matched_fuel_transaction_id",
+  "matched_relay_fuel_transaction_id",
+  "matched_payment_id",
+  "matched_transfer_id",
+  "matched_journal_entry_id",
+];
+
+const MATCHED_ALL_NULL_SQL = MATCHED_ID_COLUMNS.map((c) => `${c} IS NULL`).join("\n      AND ");
 
 // BANK-F10000 (2026-09-03) — this guard's own check #2 already asserted the exact invariant that
 // caught 126 USMCA rows sitting review_state='matched' with every matched_*_id NULL (a raw SQL
@@ -31,47 +61,51 @@ dotenv.config();
 // pattern earlier this session. Pure predicate extracted below so --selftest can prove the logic
 // with planted fixtures, not a live DB connection.
 export function isOrphanMatchedRow(row) {
-  return (
-    row.review_state === "matched" &&
-    row.matched_invoice_id == null &&
-    row.matched_bill_id == null &&
-    row.matched_payment_id == null &&
-    row.matched_bill_payment_id == null &&
-    row.matched_transfer_id == null &&
-    row.matched_journal_entry_id == null &&
-    row.matched_load_id == null &&
-    row.matched_settlement_id == null &&
-    row.matched_expense_id == null &&
-    row.matched_advance_id == null
-  );
+  if (row.review_state !== "matched") return false;
+  return MATCHED_ID_COLUMNS.every((col) => row[col] == null);
 }
 
 function runSelftest() {
-  const allNull = {
-    review_state: "matched",
-    matched_invoice_id: null,
-    matched_bill_id: null,
-    matched_payment_id: null,
-    matched_bill_payment_id: null,
-    matched_transfer_id: null,
-    matched_journal_entry_id: null,
-    matched_load_id: null,
-    matched_settlement_id: null,
-    matched_expense_id: null,
-    matched_advance_id: null,
-  };
+  const allNull = Object.fromEntries([
+    ["review_state", "matched"],
+    ...MATCHED_ID_COLUMNS.map((c) => [c, null]),
+  ]);
   if (!isOrphanMatchedRow(allNull)) {
     throw new Error("selftest: matched with every matched_*_id NULL must be detected as orphaned — it was not");
   }
-  const realMatch = { ...allNull, matched_bill_id: "11111111-1111-4111-8111-111111111111" };
-  if (isOrphanMatchedRow(realMatch)) {
+  const realBill = { ...allNull, matched_bill_id: "11111111-1111-4111-8111-111111111111" };
+  if (isOrphanMatchedRow(realBill)) {
     throw new Error("selftest: a row with a real matched_bill_id must NOT be flagged orphaned — it was");
+  }
+  // ROUND 202 — factoring / relay_fuel mirrors are real accept-handler stamps; must not false-red.
+  const realFactoring = {
+    ...allNull,
+    matched_factoring_advance_id: "22222222-2222-4222-8222-222222222222",
+  };
+  if (isOrphanMatchedRow(realFactoring)) {
+    throw new Error(
+      "selftest: matched_factoring_advance_id alone must NOT be flagged orphaned (ROUND 202) — it was"
+    );
+  }
+  const realRelay = {
+    ...allNull,
+    matched_relay_fuel_transaction_id: "33333333-3333-4333-8333-333333333333",
+  };
+  if (isOrphanMatchedRow(realRelay)) {
+    throw new Error(
+      "selftest: matched_relay_fuel_transaction_id alone must NOT be flagged orphaned (ROUND 202) — it was"
+    );
   }
   const notMatched = { ...allNull, review_state: "for_review" };
   if (isOrphanMatchedRow(notMatched)) {
     throw new Error("selftest: review_state='for_review' must never be flagged as an orphaned match — it was");
   }
-  console.log("[verify-bank-feed-live-tieout] --selftest OK (orphan-matched fixture + real-match fixture + non-matched fixture all behave as expected)");
+  if (MATCHED_ID_COLUMNS.length < 13) {
+    throw new Error(`selftest: MATCHED_ID_COLUMNS must stay at full roster (got ${MATCHED_ID_COLUMNS.length})`);
+  }
+  console.log(
+    "[verify-bank-feed-live-tieout] --selftest OK (orphan-matched + bill + factoring + relay_fuel + non-matched fixtures; full matched_* roster)"
+  );
 }
 
 if (process.argv.includes("--selftest")) {
@@ -125,12 +159,7 @@ async function main() {
       AND coa_account_id IS NULL
       AND categorization_gl_account_id IS NULL
       AND linked_entity_id IS NULL
-      AND matched_invoice_id IS NULL
-      AND matched_bill_id IS NULL
-      AND matched_payment_id IS NULL
-      AND matched_bill_payment_id IS NULL
-      AND matched_transfer_id IS NULL
-      AND matched_journal_entry_id IS NULL
+      AND ${MATCHED_ALL_NULL_SQL}
       AND COALESCE(lower(category_kind), '') NOT IN ('transfer', 'fuel')
       AND COALESCE(lower(category), '') NOT IN ('transfer', 'fuel', 'insurance', 'bill')
   `);
@@ -143,12 +172,7 @@ async function main() {
         AND coa_account_id IS NULL
         AND categorization_gl_account_id IS NULL
         AND linked_entity_id IS NULL
-        AND matched_invoice_id IS NULL
-        AND matched_bill_id IS NULL
-        AND matched_payment_id IS NULL
-        AND matched_bill_payment_id IS NULL
-        AND matched_transfer_id IS NULL
-        AND matched_journal_entry_id IS NULL
+        AND ${MATCHED_ALL_NULL_SQL}
         AND COALESCE(lower(category_kind), '') NOT IN ('transfer', 'fuel')
         AND COALESCE(lower(category), '') NOT IN ('transfer', 'fuel', 'insurance', 'bill')
       LIMIT 5
@@ -162,23 +186,23 @@ async function main() {
     );
   }
 
-  // 2. matched rows must reference something real.
+  // 2. matched rows must reference something real — EVERY matched_* column the accept handler
+  //    can stamp (ROUND 202). reconciliation_matches is the canonical event; matched_* is the
+  //    required mirror. A red here means a true orphan (no mirror), not a missing column in this
+  //    predicate. Do NOT "fix" live money to silence a partial-column false red.
   const orphanMatched = await client.query(`
     SELECT count(*)::int AS n
     FROM banking.bank_transactions
     WHERE review_state = 'matched'
-      AND matched_invoice_id IS NULL
-      AND matched_bill_id IS NULL
-      AND matched_payment_id IS NULL
-      AND matched_bill_payment_id IS NULL
-      AND matched_transfer_id IS NULL
-      AND matched_journal_entry_id IS NULL
+      AND ${MATCHED_ALL_NULL_SQL}
   `);
   const orphanMatchedCount = Number(orphanMatched.rows[0]?.n ?? 0);
   if (orphanMatchedCount > 0) {
     fail(
       `${orphanMatchedCount} row(s) have review_state='matched' but no matched_*_id column is set -- ` +
-        `the match step is a label with nothing actually matched.`
+        `the match step is a label with nothing actually matched. ` +
+        `(Checked all ${MATCHED_ID_COLUMNS.length} matched_* columns incl. factoring_advance/fuel/relay_fuel; ` +
+        `canonical event is banking.reconciliation_matches — backfill mirror from there if true orphans exist.)`
     );
   }
 

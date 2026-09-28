@@ -1,9 +1,14 @@
-# NOW-CURSOR — 2026-09-28 ROUND 197
+# NOW-CURSOR — 2026-09-28 ROUND 202
 
-## DONE — G-16 CHECK CREATOR (#23037 MERGED)
-- WHY closed unmerged: mistake as superseded by #23040 (not conflict/gate)
-- Merge sha: `0da6b26dec`
-- AUTH-120 LIVE: createCheck #1002 → registry `3c78afc0` via allocator (not raw INSERT); stock 1002→1003; voided; registry_count=2
+## DONE — ROUND 202 bank-feed orphan false red
+- Mechanism measured: accept handler already stamps matched_* (factoring_advance / relay_fuel).
+- Guard `verify-bank-feed-live-tieout` used a 6-col orphan SQL → false red on 108 rows; true
+  orphans with full 13-col roster = 0. Fixed guard. No data backfill.
+- Doc: `docs/bus/ROUND-202-BANK-FEED-MATCHED-MIRROR-CANONICAL.md`
+- Decision for CC-2: reconciliation_matches = canonical event; matched_* = required mirror.
+
+## DONE earlier — G-16 CHECK CREATOR (#23037)
+- Merge `0da6b26dec` · AUTH-120 createCheck #1002 → registry via allocator
 
 ## NEXT — Resolve fully wired (item 3)
 differences, write-off account, partial match, one bank line → many documents

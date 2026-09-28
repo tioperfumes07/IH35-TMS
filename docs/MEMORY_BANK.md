@@ -258,6 +258,22 @@ Measured (Neon `br-fancy-credit-akjnd07a`, bypass_rls=lucia, tip `6d18a73826`):
 
 ## Known Quirks & Blockers
 
+### ROUND 202 — bank-feed orphan-match false red (Cursor, 2026-09-28)
+
+`verify-bank-feed-live-tieout` went red on ~108 USMCA `review_state='matched'` rows and blocked
+unrelated seats. Lead measured "all matched_* NULL" — incomplete column list.
+
+**Measured:** true orphans with the full 13-column roster = **0**. The 79 hits under the old
+predicate already carried `matched_relay_fuel_transaction_id` (64) or
+`matched_factoring_advance_id` (15). Accept handler already stamps the mirror via
+`MATCHED_COLUMN_BY_KIND` in the same UPDATE as `review_state` + `categorized_by` (#23026).
+
+**Canonical:** `banking.reconciliation_matches` = event. `matched_*_id` = required mirror (not
+legacy). Guard must read every matched_* column (lockstep with
+`verify-matched-state-requires-matched-id`). Fix the guard. Never the data. No backfill.
+
+Bus: `docs/bus/ROUND-202-BANK-FEED-MATCHED-MIRROR-CANONICAL.md`.
+
 ### ROUND 157-C / 156 — $7,150.08 closed net_pay vs settlement bill_payments (Cursor, 2026-09-28)
 
 Measured live (`neondb_owner` + `bypass_rls=lucia`, USMCA):
