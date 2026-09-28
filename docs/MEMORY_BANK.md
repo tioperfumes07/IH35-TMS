@@ -674,6 +674,22 @@ prod post is a separate, intentional, owner-authorized action, not a repoint of 
   real loads; inv 7/68747→90007 is fabricated (AUTH-103)=NO_REAL_LOAD. Register:
   `docs/registers/09-28-2026-R206-G13-G14-RESOLUTION.md`. No factoring writes.
 
+## Active Architectural Decisions — ROUND 213 purge-era REPORT-ONLY (Cursor, 2026-09-28)
+
+- **Owner:** not closing books reconciling — create docs, match what is possible, fix the app.
+  Cash basis ops; report accrual + cash like QuickBooks.
+- **`verify-purge-era-closures-still-hold.mjs` = REPORT-ONLY.** Still runs, still prints every arm
+  and every number. No silence, no baseline growth, no exclusion list, no arm weakened. Removed
+  from the blocking gate only. **Devin-B** owns the unwire + arm 21 proforma exclusion (ONE PR).
+  Cursor does not steal that file.
+- **arm 31 → Cursor (AUTH-124):** void 4 Check Creator test expenses ($28) via `voidCheck`.
+  Ids: a7671a67… / 9b5fcc6c… / 7728cf89… ($1 each, already voided AUTH-117/120/122) +
+  f9c5b0e4… ($25 Smithfield trace 2099, live draft+posted). Script:
+  `scripts/ops/r213-arm31-void-check-creator-tests.ts`. Law:
+  `docs/bus/00-ROUND-213-PURGE-ERA-REPORT-ONLY.md`.
+- **arm 39 → CC-3** (after pre-settlement editor). **arm 21 residual $52,960 ≠ defect** — stop
+  raising. **CC-1 Faro 87** unchanged P0. Every other money guard stays hard-blocking.
+
 ## Active Architectural Decisions — Universal unvoid / reinstate (Cursor, 2026-09-28 R-191)
 
 - **Counterpart to voidDocument.** `reinstateDocument()` in `reinstate-document.service.ts` is the
