@@ -32,32 +32,47 @@ import {
  * Candidate universe = settlement-born only (see settlement-born-candidates.ts). BUILD NO TYPE FILTER.
  */
 
-export type LedgerEntryKind = "payment" | "bill_payment" | "transfer" | "je" | "bill" | "expense";
+export type LedgerEntryKind =
+  | "payment"
+  | "bill_payment"
+  | "transfer"
+  | "je"
+  | "bill"
+  | "expense"
+  | "factoring_advance"
+  | "fuel_transaction";
 export type MatchState = "auto_matched" | "user_matched" | "rejected";
 
 // banking.reconciliation_matches.ledger_entry_kind has a CHECK constraint. Migration
 // 202607011600_bank_recon_expense_match_part2a.sql widened it to permit 'expense' (BLOCK-01
-// Part 2a: expense-link accept). 'bill' remains NON-persistable: recording a bill payment with
-// no GL JE is an orphan write — that's Part 2b (BLOCK-02 CHAIN-04), still gated. Inserting a kind
-// outside this set would violate the CHECK and 500 at runtime, so keep this guard as the source of
-// truth and keep it in lockstep with the migration's CHECK list.
+// Part 2a: expense-link accept). Lead extended production CHECK 2026-09-28 for factoring_advance /
+// fuel_transaction / invoice / driver_bill / settlement / load (ROUND 186 bulk-accept).
+// 'bill' remains NON-persistable: recording a bill payment with no GL JE is an orphan write —
+// that's Part 2b (BLOCK-02 CHAIN-04), still gated.
 export const PERSISTABLE_MATCH_KINDS: ReadonlySet<LedgerEntryKind> = new Set<LedgerEntryKind>([
   "payment",
   "bill_payment",
   "transfer",
   "je",
   "expense",
+  "factoring_advance",
+  // fuel_transaction is persistable in the CHECK, but has no matched_* clear-column yet —
+  // accept stores the match + audit and leaves review_state uncleared until that column lands.
+  "fuel_transaction",
 ]);
 
 // Denormalized convenience FK on banking.bank_transactions (migration 0182 + Part 2a's
 // matched_expense_id) set to 'matched' on accept, so the Accounting Bills/Expenses lists and the
 // worklist can show clear status without re-deriving from banking.reconciliation_matches.
+// NOTE: matched_advance_id references driver_finance.driver_advances — NEVER reuse it for
+// factoring_advance. ROUND 186 added matched_factoring_advance_id for that.
 const MATCHED_COLUMN_BY_KIND: Partial<Record<LedgerEntryKind, string>> = {
   payment: "matched_payment_id",
   bill_payment: "matched_bill_payment_id",
   transfer: "matched_transfer_id",
   je: "matched_journal_entry_id",
   expense: "matched_expense_id",
+  factoring_advance: "matched_factoring_advance_id",
 };
 
 // ROUND 141.4 — A kind that findCandidates can RETURN but that cannot be accepted
@@ -636,6 +651,33 @@ async function loadLedgerAmountCents(client: DbClient, operatingCompanyId: strin
     );
     return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
   }
+  if (kind === "factoring_advance") {
+    // Expected wire net = invoice − reserve − factor fee − wire fee − cash_rsv (ROUND 186 formula).
+    const res = await client.query<{ amount_cents: number }>(
+      `SELECT (
+          COALESCE(invoice_total_cents, 0)
+          - COALESCE(reserve_amount_cents, 0)
+          - COALESCE(factor_fee_cents, 0)
+          - COALESCE(wire_fee_cents, 0)
+          - COALESCE(cash_rsv_cents, 0)
+        )::int AS amount_cents
+         FROM accounting.factoring_advances
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+        LIMIT 1`,
+      [entryId, operatingCompanyId]
+    );
+    return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
+  }
+  if (kind === "fuel_transaction") {
+    const res = await client.query<{ amount_cents: number }>(
+      `SELECT ROUND(COALESCE(total_cost, 0) * 100)::int AS amount_cents
+         FROM fuel.fuel_transactions
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+        LIMIT 1`,
+      [entryId, operatingCompanyId]
+    );
+    return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
+  }
   const res = await client.query<{ amount_cents: number }>(
     `
       SELECT COALESCE(SUM(jep.amount_cents) FILTER (WHERE jep.debit_or_credit = 'debit'), 0)::int AS amount_cents
@@ -1151,6 +1193,9 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
     // Clear the bank line: mark it 'matched' + stamp the denormalized matched_<kind>_id so the
     // worklist and the Accounting Bills/Expenses lists show status without re-deriving from
     // banking.reconciliation_matches. Column name comes from a fixed whitelist (never user input).
+    // Kinds without a matched_* column (fuel_transaction today) still get the match + audit above;
+    // they do NOT flip review_state here — verify-matched-state-requires-matched-id forbids a
+    // review_state='matched' write with no matched_*_id in the same statement.
     const matchedColumn = MATCHED_COLUMN_BY_KIND[input.ledger_entry_kind];
     if (matchedColumn) {
       // ACCT-F5647 — belt-and-suspenders alongside the row lock above: WHERE review_state <> 'matched',
@@ -1284,6 +1329,128 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
       difference_posted: varianceCents !== 0,
       journal_entry_id: journalEntryId,
       cash_basis_revenue_cents: cashBasisRevenueCents,
+    };
+  });
+}
+
+/**
+ * ROUND 186 — multi-document exact accept (Faro purchase-batch = one wire).
+ *
+ * One bank wire clears N factoring advances whose nets SUM to the wire exactly (zero variance).
+ * Each advance gets its own reconciliation_matches row + bank_match.accepted audit (same as the
+ * 1:1 handler). The bank line is cleared once. Variance ≠ 0 refuses — those go to Resolve.
+ *
+ * Must go through storeMatch + appendCrudAudit here (same primitives as
+ * acceptMatchWithResolveDifference) so verify-no-match-persisted-outside-accept-handler stays green.
+ */
+export async function acceptExactMultiDocumentMatch(input: {
+  operating_company_id: string;
+  bank_transaction_id: string;
+  actor_user_uuid: string;
+  entries: Array<{ ledger_entry_kind: LedgerEntryKind; ledger_entry_id: string }>;
+}): Promise<{
+  variance_cents: number;
+  match_ids: string[];
+  cleared_matched_column: string | null;
+  cleared_ledger_entry_id: string | null;
+}> {
+  if (!input.entries.length) throw new Error("multi_match_requires_entries");
+
+  return withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+    const txn = await loadTransaction(client, input.operating_company_id, input.bank_transaction_id, true);
+    if (!txn) throw new Error("bank_transaction_not_found");
+    await assertBankTxnNotInReconciledSession(client, input.bank_transaction_id, input.operating_company_id);
+    if (txn.review_state === "matched") throw new Error("bank_transaction_already_matched");
+
+    for (const entry of input.entries) {
+      if (!PERSISTABLE_MATCH_KINDS.has(entry.ledger_entry_kind)) {
+        throw new Error(`match_kind_not_acceptable:${entry.ledger_entry_kind}`);
+      }
+    }
+
+    let ledgerSum = 0;
+    const amounts: number[] = [];
+    for (const entry of input.entries) {
+      const amt = await loadLedgerAmountCents(
+        client,
+        input.operating_company_id,
+        entry.ledger_entry_kind,
+        entry.ledger_entry_id
+      );
+      amounts.push(amt);
+      ledgerSum += amt;
+    }
+
+    const txnAmountAbs = Math.abs(Number(txn.amount_cents ?? 0));
+    const varianceCents = txnAmountAbs - ledgerSum;
+    if (varianceCents !== 0) {
+      throw new Error(`multi_match_nonzero_variance:${varianceCents}`);
+    }
+
+    const toleranceCents = toleranceForAmount(txn.amount_cents);
+    const txnMemo = `${txn.merchant_name ?? ""} ${txn.description ?? ""}`.trim();
+    const matchIds: string[] = [];
+
+    for (let i = 0; i < input.entries.length; i++) {
+      const entry = input.entries[i]!;
+      const score = computeMatchScore({
+        amountGapCents: 0,
+        toleranceCents,
+        dateGapDays: 0,
+        similarity: Math.max(memoSimilarity(txnMemo, "FARO FACTORING"), 0.5),
+        txnAmountCents: txnAmountAbs,
+      });
+      const reconciliationMatchId = await storeMatch(client, {
+        operating_company_id: input.operating_company_id,
+        bank_transaction_id: input.bank_transaction_id,
+        ledger_entry_kind: entry.ledger_entry_kind,
+        ledger_entry_id: entry.ledger_entry_id,
+        match_score: score,
+        match_state: "user_matched",
+        actor_user_uuid: input.actor_user_uuid,
+      });
+      await appendCrudAudit(
+        client,
+        input.actor_user_uuid,
+        "bank_match.accepted",
+        {
+          reconciliation_match_id: reconciliationMatchId,
+          bank_transaction_id: input.bank_transaction_id,
+          ledger_entry_kind: entry.ledger_entry_kind,
+          ledger_entry_id: entry.ledger_entry_id,
+          multi_document: true,
+          multi_document_count: input.entries.length,
+          entry_amount_cents: amounts[i],
+        },
+        "info",
+        "BANK-RECON-ACCEPT-HANDLER"
+      );
+      matchIds.push(reconciliationMatchId);
+    }
+
+    // Stamp the first entry's clear-column (multi-doc has one bank line → one denormalized FK).
+    const first = input.entries[0]!;
+    const matchedColumn = MATCHED_COLUMN_BY_KIND[first.ledger_entry_kind] ?? null;
+    if (matchedColumn) {
+      const cleared = await client.query(
+        `UPDATE banking.bank_transactions
+            SET review_state = 'matched',
+                reviewed_at = now(),
+                ${matchedColumn} = $3::uuid
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
+            AND review_state <> 'matched'`,
+        [input.bank_transaction_id, input.operating_company_id, first.ledger_entry_id]
+      );
+      if (cleared.rowCount === 0) throw new Error("bank_transaction_already_matched");
+    }
+
+    return {
+      variance_cents: 0,
+      match_ids: matchIds,
+      cleared_matched_column: matchedColumn,
+      cleared_ledger_entry_id: matchedColumn ? first.ledger_entry_id : null,
     };
   });
 }

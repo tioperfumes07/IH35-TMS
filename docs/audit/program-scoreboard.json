@@ -1,10 +1,10 @@
 {
-  "healthzSha": "b075c34",
-  "generated_at": "2026-09-28T04:33:55.062Z",
+  "healthzSha": "9f71408",
+  "generated_at": "2026-09-28T15:19:08.058Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "b075c34",
+    "deployedSha": "9f71408",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 22898,
-      "title": "FINDING: ROUND 149 — USMCA document expenses 75/$5,203.67 of PDF control 255/$12,764.27; 326 expense_lines item_id NULL; newest expense still 2026-09-26.",
+      "number": 23014,
+      "title": "FINDING: ACCT-F2026092825 LANE: MONEY -- ROUND 182 item 5: fuel_transactions location_city parser fixed, 120 rows backfilled, AUTH-109",
       "state": "merged",
-      "mergedAtCt": "09/27/2026, 11:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22898",
-      "sha": "b075c34280",
-      "committedAtIso": "2026-09-27T23:16:11-05:00"
+      "mergedAtCt": "09/28/2026, 09:47 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23014",
+      "sha": "9f71408390",
+      "committedAtIso": "2026-09-28T09:47:55-05:00"
     },
     {
-      "number": 22897,
-      "title": "FINDING: ACCT-F2026092707 LANE: DOCS (5814 has no variance -- order compared unlike figures; 3 short-pays contradict a CLOSED decision, not posting)",
+      "number": 23016,
+      "title": "FINDING: ACCT-F2026092825 LANE: MONEY -- ROUND 185: match-engine default window already fixed (ROUND 207/157-C); shipping the requested accept-handler guard",
       "state": "merged",
-      "mergedAtCt": "09/27/2026, 11:11 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22897",
-      "sha": "0c663f2365",
-      "committedAtIso": "2026-09-27T23:11:58-05:00"
+      "mergedAtCt": "09/28/2026, 09:44 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23016",
+      "sha": "1c59781aef",
+      "committedAtIso": "2026-09-28T09:44:40-05:00"
     },
     {
-      "number": 22896,
-      "title": "FINDING: ACCT-F2026092706 LANE: DOCS (A/P adoption blocked on a real GL-flag conflict, not a code gap -- reporting before executing)",
+      "number": 23015,
+      "title": "FINDING: N/A LANE: DOCS -- claim verify-step 11683 (verify-no-match-persisted-outside-accept-handler)",
       "state": "merged",
-      "mergedAtCt": "09/27/2026, 11:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22896",
-      "sha": "7f27ac47be",
-      "committedAtIso": "2026-09-27T23:05:01-05:00"
+      "mergedAtCt": "09/28/2026, 09:43 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23015",
+      "sha": "71811a10cb",
+      "committedAtIso": "2026-09-28T09:43:15-05:00"
     },
     {
-      "number": 22895,
-      "title": "FINDING: N/A LANE: DOCS (NOW-CC-1 update -- ROUND 150 ack, pivoting fully to A/P adoption)",
+      "number": 23013,
+      "title": "CLAIM-RESERVE: reserve 11679 for verify-fuel-location-is-a-city (cc-2)",
       "state": "merged",
-      "mergedAtCt": "09/27/2026, 10:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22895",
-      "sha": "8e0a1368f8",
-      "committedAtIso": "2026-09-27T22:57:51-05:00"
+      "mergedAtCt": "09/28/2026, 09:37 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23013",
+      "sha": "d5cc12fecf",
+      "committedAtIso": "2026-09-28T09:37:28-05:00"
     },
     {
-      "number": 22894,
-      "title": "Claude-1- fix reconcile-feed-day text=uuid crash; assertion 14 is not a scoping bug",
+      "number": 23009,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL -- ROUND 181/182 JOB 4: 6 Relay top-up bank lines categorized as transfers, AUTH-108",
       "state": "merged",
-      "mergedAtCt": "09/27/2026, 10:52 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22894",
-      "sha": "d4ab7531b9",
-      "committedAtIso": "2026-09-27T22:52:35-05:00"
+      "mergedAtCt": "09/28/2026, 09:37 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23009",
+      "sha": "cd8c9437cf",
+      "committedAtIso": "2026-09-28T09:37:15-05:00"
     },
     {
-      "number": 22893,
-      "title": "FINDING: N/A LANE: DOCS (fix AUTH-074/AUTH-075 numbering collision with CC-1 -- caught live before the stamping script ran)",
+      "number": 23012,
+      "title": "FINDING: N/A LANE: DOCS -- claim migration 202614500000 (settlement_document_type_exceptions, ROUND 178)",
       "state": "merged",
-      "mergedAtCt": "09/27/2026, 10:52 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22893",
-      "sha": "67f8dc827c",
-      "committedAtIso": "2026-09-27T22:52:24-05:00"
+      "mergedAtCt": "09/28/2026, 09:34 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23012",
+      "sha": "22fd3255c4",
+      "committedAtIso": "2026-09-28T09:34:51-05:00"
     },
     {
-      "number": 22892,
-      "title": "FINDING: N/A LANE: DOCS (AUTH-074 -- authorize header-stamp-only void fix for 242 pre-existing silent voids, ruled 148-02/149)",
+      "number": 23011,
+      "title": "FINDING: ACCT-F2026092824 LANE: MONEY -- ROUND 177 JOB 3: verify-cash-flow-reads-delivery-date.mjs",
       "state": "merged",
-      "mergedAtCt": "09/27/2026, 10:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22892",
-      "sha": "ef1cbae2e9",
-      "committedAtIso": "2026-09-27T22:47:45-05:00"
+      "mergedAtCt": "09/28/2026, 09:31 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23011",
+      "sha": "e8bcda83f5",
+      "committedAtIso": "2026-09-28T09:31:53-05:00"
     },
     {
-      "number": 22891,
-      "title": "FINDING: ACCT-F2026092704 LANE: DOCS (AUTH-074 executed live -- views.live_loads restored for 6 ROUND-189 loads; plus a repo-wide purge-window-expiry blocker discovered while shipping it)",
+      "number": 23010,
+      "title": "FINDING: N/A LANE: DOCS -- claim verify-step 11675 (verify-cash-flow-reads-delivery-date)",
       "state": "merged",
-      "mergedAtCt": "09/27/2026, 10:43 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22891",
-      "sha": "b0519b0036",
-      "committedAtIso": "2026-09-27T22:43:11-05:00"
+      "mergedAtCt": "09/28/2026, 09:30 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23010",
+      "sha": "a4bc9fa2c6",
+      "committedAtIso": "2026-09-28T09:30:19-05:00"
     },
     {
-      "number": 22890,
-      "title": "FINDING: N/A LANE: DOCS (AUTH-074 issued -- views.live_loads both-clause fix, per owner ROUND 146 ruling; AUTH-073 marked CONSUMED with its rollback outcome)",
+      "number": 0,
+      "title": "FINDING: N/A LANE: DOCS -- AUTH-105/106 claim: OWNER-AUTHORIZATIONS.md append (docs only)",
       "state": "merged",
-      "mergedAtCt": "09/27/2026, 10:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22890",
-      "sha": "1660371828",
-      "committedAtIso": "2026-09-27T22:27:52-05:00"
+      "mergedAtCt": "09/28/2026, 09:25 AM CT",
+      "url": "",
+      "sha": "0903110af5",
+      "committedAtIso": "2026-09-28T09:25:32-05:00"
     },
     {
-      "number": 22889,
-      "title": "Claude-1- CORRECTION: ROUND 144's 5819 driver is wrong per the actual signed PDF",
+      "number": 0,
+      "title": "FINDING: N/A LANE: DOCS -- AUTH-105 claim doc: stale load-status sync ruling (docs only)",
       "state": "merged",
-      "mergedAtCt": "09/27/2026, 10:06 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22889",
-      "sha": "0b30a84848",
-      "committedAtIso": "2026-09-27T22:06:37-05:00"
+      "mergedAtCt": "09/28/2026, 09:25 AM CT",
+      "url": "",
+      "sha": "e86108081f",
+      "committedAtIso": "2026-09-28T09:25:16-05:00"
     }
   ]
 }

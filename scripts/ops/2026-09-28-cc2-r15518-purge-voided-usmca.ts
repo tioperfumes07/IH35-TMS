@@ -340,13 +340,18 @@ async function deletePostingsForJeSet(client: pg.Client, jeIds: string[]): Promi
   if (jeIds.length === 0) return 0;
   await client.query(
     `DELETE FROM accounting.transaction_source_links
-      WHERE journal_entry_posting_id IN (
-        SELECT id FROM accounting.journal_entry_postings WHERE journal_entry_uuid = ANY($1::uuid[])
+      WHERE operating_company_id IS NOT NULL
+        AND journal_entry_posting_id IN (
+        SELECT id FROM accounting.journal_entry_postings
+         WHERE journal_entry_uuid = ANY($1::uuid[])
+           AND operating_company_id IS NOT NULL
       )`,
     [jeIds],
   );
   const del = await client.query(
-    `DELETE FROM accounting.journal_entry_postings WHERE journal_entry_uuid = ANY($1::uuid[])`,
+    `DELETE FROM accounting.journal_entry_postings
+      WHERE journal_entry_uuid = ANY($1::uuid[])
+        AND operating_company_id IS NOT NULL`,
     [jeIds],
   );
   return del.rowCount ?? 0;

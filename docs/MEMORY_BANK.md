@@ -628,6 +628,20 @@ prod post is a separate, intentional, owner-authorized action, not a repoint of 
 - #21408 — claim-reserve 11078 (MERGED) · #21412 — settlement triple-figure display fix (MERGED)
 - #21414 — MEMORY_BANK.md (MERGED) · #21416 — preview harness + doc 5780 tie-out 21/21 (MERGED)
 
+## Active Architectural Decisions — Banking ROUND 186 bulk-accept (Cursor, 2026-09-28)
+
+- **One accept handler.** Bulk matches MUST call `acceptMatchWithResolveDifference` (1:1) or
+  `acceptExactMultiDocumentMatch` (Faro batch = many advances : one wire). Never raw INSERT into
+  `banking.reconciliation_matches`. Guard: `verify-no-match-persisted-outside-accept-handler.mjs`.
+- **matched_factoring_advance_id** (live on fancy-credit 2026-09-28). Distinct from
+  `matched_advance_id` (FK → `driver_finance.driver_advances`). Factoring clears use the new column.
+- **Faro formula:** net = invoice − reserve − factor_fee − wire_fee − cash_rsv. Auto-accept only when
+  batch net == same-day ORIG:FARO wire exactly (zero variance). Named Resolve: 08/13, 08/14, 09/21
+  (surface every reserve movement on 09/21 — never net).
+- **Runner:** `scripts/ops/2026-09-28-cursor-r186-bulk-accept-through-engine.ts` (`--faro-only` /
+  `--apply`, AUTH-110). Confidence bar: exact amount + date≤5 + sim≥0.5 + unambiguous both ways +
+  zero variance.
+
 ## Active Architectural Decisions — Banking (CC-2, 2026-09-08)
 
 - **Bank reconciliation — cleared_date:** `accounting.payments`/`accounting.bill_payments` carry
