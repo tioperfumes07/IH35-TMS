@@ -152,6 +152,20 @@ export type PlaidBankTransaction = {
   suggested_confidence?: "high" | "medium" | "low" | null;
   suggested_source?: string | null;
   /**
+   * ROUND 197 (owner-raised, 2026-09-28) — the row's already-PERSISTED categorization, distinct
+   * from the SUGGESTED fields above. Written by categorization.routes.ts on every Post; read back
+   * here so the row-detail draft can re-hydrate an already-categorized row instead of re-opening
+   * to a blank account/vendor/customer/item and failing "Choose an account" on re-Post.
+   */
+  categorization_gl_account_id?: string | null;
+  categorization_gl_account_number?: string | null;
+  categorization_gl_account_name?: string | null;
+  categorization_vendor_id?: string | null;
+  categorization_vendor_name?: string | null;
+  categorization_customer_name?: string | null;
+  categorization_item_id?: string | null;
+  categorization_item_name?: string | null;
+  /**
    * Relay Fuel Wallet: product lines from integrations.relay_fuel_transaction_lines
    * (diesel truck / reefer / DEF / fee) when source_ref is relay_fuel:*.
    */

@@ -750,6 +750,23 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           sa.account_name AS suggested_account_name,
           bt.suggested_confidence,
           bt.suggested_source,
+          -- ROUND 197 (owner-raised) — the SUGGESTED gl_account/vendor/customer/item were selected
+          -- above, but the row's already-PERSISTED categorization (written by categorization.routes.ts
+          -- SET categorization_gl_account_id/_vendor_id/_customer_id/_item_id on every Post) was never
+          -- read back here. The frontend's row-detail draft (BankingTransactionsDesignView.makeDefaultDraft)
+          -- always initialized accountId/vendorId/customerId/itemId to "", so re-opening an already-
+          -- categorized row and clicking Post again failed "Choose an account to categorize this
+          -- transaction" (accountId empty) even though the account name displayed as plain text from
+          -- the plain 'category' text column. Same human-label join convention as every other FK here.
+          bt.categorization_gl_account_id::text AS categorization_gl_account_id,
+          cga.account_number AS categorization_gl_account_number,
+          cga.account_name AS categorization_gl_account_name,
+          bt.categorization_vendor_id::text AS categorization_vendor_id,
+          cve.vendor_name AS categorization_vendor_name,
+          bt.categorization_customer_id::text AS categorization_customer_id,
+          ccu.customer_name AS categorization_customer_name,
+          bt.categorization_item_id::text AS categorization_item_id,
+          cit.item_name AS categorization_item_name,
           bt.categorization_driver_id::text AS categorization_driver_id,
           NULLIF(TRIM(CONCAT(d.first_name, ' ', d.last_name)), '') AS categorization_driver_name,
           bt.categorization_unit_id::text AS categorization_unit_id,
@@ -862,6 +879,18 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
         LEFT JOIN catalogs.accounts sa
           ON sa.id = bt.suggested_account_id
          AND sa.operating_company_id = bt.operating_company_id
+        LEFT JOIN catalogs.accounts cga
+          ON cga.id = bt.categorization_gl_account_id
+         AND cga.operating_company_id = bt.operating_company_id
+        LEFT JOIN mdata.vendors cve
+          ON cve.id = bt.categorization_vendor_id
+         AND cve.operating_company_id = bt.operating_company_id
+        LEFT JOIN mdata.customers ccu
+          ON ccu.id = bt.categorization_customer_id
+         AND ccu.operating_company_id = bt.operating_company_id
+        LEFT JOIN catalogs.items cit
+          ON cit.id = bt.categorization_item_id
+         AND cit.operating_company_id = bt.operating_company_id
         WHERE ${predicates.join(" AND ")}
         ORDER BY ${sortSql}
         LIMIT $${limitIdx} OFFSET $${offsetIdx}

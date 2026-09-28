@@ -57,6 +57,13 @@ import { RecordTransferModal } from "../RecordTransferModal";
 import { RecordCCPaymentModal } from "../RecordCCPaymentModal";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import {
+  BankingControlBox,
+  BankingControlGroup,
+  BankingControlSegment,
+  BANKING_CONTROL_LABEL_CLASS,
+  bankingControlBoxClass,
+} from "./BankingControlBox";
 import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
@@ -1211,18 +1218,24 @@ export function BankingTransactionsDesignView({
       fromTo: "",
       fromAccountId: "",
       toAccountId: "",
-      accountId: "",
+      // ROUND 197 (owner-raised) — accountId used to always start empty, even for an already-
+      // categorized row: categorization_gl_account_id was written on every Post but never selected
+      // back by the company-transactions list, so re-opening a categorized row and clicking Post
+      // again failed "Choose an account to categorize this transaction" although the account NAME
+      // displayed as plain text elsewhere. Hydrate it now that the field is selected (see
+      // link.routes.ts company-transactions SELECT).
+      accountId: tx.categorization_gl_account_id ?? "",
       // 0441-mod8-tx-fields-captured-not-sent — hydrate the persisted capture fields (held migration
       // 202607690000) so a categorized row re-opens with what the operator saved, not blanks.
       className: tx.categorization_class_name ?? "",
       classId: tx.categorization_class_id ?? "",
       location: tx.categorization_location ?? "",
-      productService: "",
-      itemId: "",
-      customerProject: "",
-      customerId: "",
-      payee: tx.merchant_name || "",
-      vendorId: "",
+      productService: tx.categorization_item_name ?? "",
+      itemId: tx.categorization_item_id ?? "",
+      customerProject: tx.categorization_customer_name ?? "",
+      customerId: tx.categorization_customer_id ?? "",
+      payee: tx.categorization_vendor_name || tx.merchant_name || "",
+      vendorId: tx.categorization_vendor_id ?? "",
       checkNo: tx.check_number ?? "",
       billable: Boolean(tx.is_billable),
       tags: tx.tags ?? "",
@@ -3256,8 +3269,8 @@ export function BankingTransactionsDesignView({
                 type="button"
                 className={`border px-2 py-1 text-left text-xs transition ${onReorderAccount ? "" : "rounded"} ${
                   account.id === selectedAccount?.id
-                    ? "border-[#1f2a44] bg-[#1f2a44] text-white"
-                    : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                    ? "border-[#14314F] bg-[#14314F] text-white"
+                    : "border-[#E5E7EB] bg-white text-[#1F2A44] hover:bg-[#F7F8FA]"
                 }`}
                 onClick={() => onSelectAccount(account.id)}
               >
@@ -3346,23 +3359,24 @@ export function BankingTransactionsDesignView({
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <div className="mb-2 flex flex-wrap items-center gap-1.5 border-b border-gray-100 pb-2">
-          {BANKING_REVIEW_TABS.map((tab) => {
-            const count = reviewTabBuckets[tab.id as ReviewTabId]?.length ?? 0;
-            const active = activeReviewTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                className={`rounded px-2 py-1 text-xs font-semibold ${
-                  active ? "bg-[#1f2a44] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-                onClick={() => setActiveReviewTab(tab.id as ReviewTabId)}
-              >
-                {tab.label} · {count}
-              </button>
-            );
-          })}
+        <div className="mb-2 flex flex-wrap items-center gap-1.5 border-b border-[#E5E7EB] pb-2">
+          <BankingControlGroup>
+            {BANKING_REVIEW_TABS.map((tab) => {
+              const count = reviewTabBuckets[tab.id as ReviewTabId]?.length ?? 0;
+              const active = activeReviewTab === tab.id;
+              return (
+                <BankingControlSegment
+                  key={tab.id}
+                  active={active}
+                  aria-current={active ? "true" : undefined}
+                  data-testid={`banking-review-tab-${tab.id}`}
+                  onClick={() => setActiveReviewTab(tab.id as ReviewTabId)}
+                >
+                  {tab.label} · {count}
+                </BankingControlSegment>
+              );
+            })}
+          </BankingControlGroup>
         </div>
         {/* B.2 (owner order 2026-09-05) — one 28px (h-7) height for every control in this toolbar,
         including the "Money in/out" grouping toggle below. Was a h-7/h-8 mix (measured live). */}
@@ -3378,21 +3392,18 @@ export function BankingTransactionsDesignView({
               dataTestId="banking-transactions-description-filter"
             />
           </div>
-          <div className="inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
+          <BankingControlGroup>
             {(["all", "spent", "received"] as const).map((option) => (
-              <button
+              <BankingControlSegment
                 key={option}
-                type="button"
                 data-testid={`banking-amount-filter-${option}`}
-                className={`flex h-7 items-center px-2.5 ${option !== "all" ? "border-l border-gray-300" : ""} ${
-                  amountFilter === option ? "bg-[#1f2a44] text-white" : "text-gray-700"
-                }`}
+                active={amountFilter === option}
                 onClick={() => setAmountFilter(option)}
               >
                 {option === "all" ? "All" : option === "spent" ? "Spent" : "Received"}
-              </button>
+              </BankingControlSegment>
             ))}
-          </div>
+          </BankingControlGroup>
           {/* B.2 (owner order 2026-09-05, verify-banking-toolbar-uniform-height.mjs) — date range
           VISIBLE ON LANDING: both fields render unconditionally, never gated behind a click. This
           law predates and overrides ROUND 16.19's "Dates▾" phrasing for the From/To fields
@@ -3401,25 +3412,20 @@ export function BankingTransactionsDesignView({
           separate Presets button AND a separate By-month/Money-in-out/All-dates segmented control
           sitting in the row. */}
           <div className="flex h-7 items-center gap-1">
-            <label htmlFor="tx-date-from" className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+            <label htmlFor="tx-date-from" className={BANKING_CONTROL_LABEL_CLASS}>
               From
             </label>
             <DatePicker id="tx-date-from" value={dateFrom} onChange={setDateFrom} className="h-7 w-[130px]" />
-            <label htmlFor="tx-date-to" className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+            <label htmlFor="tx-date-to" className={BANKING_CONTROL_LABEL_CLASS}>
               To
             </label>
             <DatePicker id="tx-date-to" value={dateTo} onChange={setDateTo} className="h-7 w-[130px]" />
             <div className="relative">
-              <button
-                type="button"
-                className="flex h-7 items-center rounded-sm border border-gray-300 px-2 text-xs text-gray-700"
-                onClick={() => setShowDateFilterMenu((open) => !open)}
-                data-testid="bank-date-filter-button"
-              >
+              <BankingControlBox onClick={() => setShowDateFilterMenu((open) => !open)} data-testid="bank-date-filter-button">
                 Presets ▾
-              </button>
+              </BankingControlBox>
               {showDateFilterMenu ? (
-                <div className="absolute left-0 z-20 mt-1 w-56 rounded-sm border border-gray-200 bg-white p-2 shadow-sm">
+                <div className="absolute left-0 z-20 mt-1 w-56 rounded-sm border border-[#E5E7EB] bg-white p-2 shadow-sm">
                   <div className="flex flex-wrap gap-1">
                     {(
                       [
@@ -3459,51 +3465,47 @@ export function BankingTransactionsDesignView({
                         }],
                       ] as Array<[string, () => void]>
                     ).map(([label, apply]) => (
-                      <button
+                      <BankingControlBox
                         key={label}
-                        type="button"
-                        className="rounded-sm border border-gray-300 px-1.5 py-0.5 text-xs text-gray-700 hover:bg-gray-50"
+                        className="!h-6 px-1.5 text-xs"
                         onClick={() => { apply(); setShowDateFilterMenu(false); }}
                       >
                         {label}
-                      </button>
+                      </BankingControlBox>
                     ))}
                   </div>
                   {/* DEFECT-9b + audit gap #5 — QBO grouping: By month | Money in/out | All dates
                   (flat). Pipeline sorts the full set, then groups, then pages. turnOffGrouping
                   remains the flat-list switch. BANK-TOOLBAR-ONE (ROUND 16.19): folded into this
                   same Presets popover instead of its own separate segmented control in the row. */}
-                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Group by</p>
-                  <div className="mt-1 inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
-                    <button
-                      type="button"
-                      className={`flex h-7 items-center px-2.5 ${!viewSettings.turnOffGrouping && viewSettings.groupMode === "month" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
+                  <p className={`mt-2 ${BANKING_CONTROL_LABEL_CLASS}`}>Group by</p>
+                  <BankingControlGroup className="mt-1">
+                    <BankingControlSegment
+                      active={!viewSettings.turnOffGrouping && viewSettings.groupMode === "month"}
                       onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: false, groupMode: "month" }))}
                     >
                       By month
-                    </button>
-                    <button
-                      type="button"
-                      className={`flex h-7 items-center border-l border-gray-300 px-2.5 ${!viewSettings.turnOffGrouping && viewSettings.groupMode === "money" ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
+                    </BankingControlSegment>
+                    <BankingControlSegment
+                      active={!viewSettings.turnOffGrouping && viewSettings.groupMode === "money"}
                       onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: false, groupMode: "money" }))}
                     >
                       Money in/out
-                    </button>
-                    <button
-                      type="button"
-                      className={`flex h-7 items-center border-l border-gray-300 px-2.5 ${viewSettings.turnOffGrouping ? "bg-[#1f2a44] text-white" : "text-gray-700"}`}
+                    </BankingControlSegment>
+                    <BankingControlSegment
+                      active={viewSettings.turnOffGrouping}
                       onClick={() => setViewSettings((prev) => ({ ...prev, turnOffGrouping: true }))}
                     >
                       All dates
-                    </button>
-                  </div>
+                    </BankingControlSegment>
+                  </BankingControlGroup>
                 </div>
               ) : null}
             </div>
           </div>
-          <button
-            type="button"
-            className="flex h-7 items-center rounded-sm border border-gray-300 px-2 text-xs text-gray-700"
+          <BankingControlBox
+            active={collapsedAllGroupings}
+            data-testid="banking-collapse-all-groupings"
             onClick={() => {
               const next = !collapsedAllGroupings;
               setCollapsedAllGroupings(next);
@@ -3517,18 +3519,16 @@ export function BankingTransactionsDesignView({
             }}
           >
             Collapse all groupings
-          </button>
+          </BankingControlBox>
           {/* B.1 — bulk-suggest matches (exact cents, +-5d, expense/bill) for the visible page.
           Read-only; Accept still goes through the existing Match drawer, unchanged. */}
-          <button
-            type="button"
-            className="flex h-7 items-center rounded-sm border border-gray-300 px-2 text-xs text-gray-700 disabled:cursor-not-allowed disabled:text-gray-400"
+          <BankingControlBox
             onClick={() => void suggestMatchesForVisibleRows()}
             disabled={suggestingMatches}
             data-testid="banking-suggest-matches-button"
           >
             {suggestingMatches ? "Suggesting..." : "Suggest matches"}
-          </button>
+          </BankingControlBox>
           {/* B.2 — transaction TYPE filter on the register (not the Match panel). MultiSelectDropdown
               satisfies FILTER-MULTI-01. Match panel itself has BUILD NO TYPE FILTER (settlement-born only). */}
           <div data-testid="banking-transaction-type-filter">
@@ -3542,76 +3542,69 @@ export function BankingTransactionsDesignView({
               onChange={(next) => setSelectedTransactionTypes(next)}
               allLabel="All transaction types"
               data-testid="banking-transaction-type-filter-dropdown"
+              className="mt-0"
+              triggerClassName={bankingControlBoxClass({ active: selectedTransactionTypes.length > 0 })}
             />
           </div>
           <div className="ml-auto flex h-7 items-center gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Categorize by</span>
-            <div className="inline-flex h-7 overflow-hidden rounded-sm border border-gray-300 bg-white text-xs">
+            <span className={BANKING_CONTROL_LABEL_CLASS}>Categorize by</span>
+            <BankingControlGroup>
               {(["category", "item"] as const).map((option) => (
-                <button
+                <BankingControlSegment
                   key={option}
-                  type="button"
-                  className={`flex h-7 items-center px-2.5 ${option === "item" ? "border-l border-gray-300" : ""} ${
-                    categorizeBy === option ? "bg-[#1f2a44] text-white" : "text-gray-700"
-                  }`}
+                  active={categorizeBy === option}
                   onClick={() => setCategorizeBy(option)}
                 >
                   {option === "category" ? "Category" : "Item"}
-                </button>
+                </BankingControlSegment>
               ))}
-            </div>
-            <span className="text-xs text-gray-500">
+            </BankingControlGroup>
+            <span className="text-xs text-[#6B7280]">
               {pageRangeStart > 0
                 ? `${pageRangeStart}-${pageRangeEnd} of ${pagedGroups.totalRows}`
                 : `0 of ${pagedGroups.totalRows}`}
             </span>
-            <div className="inline-flex h-7 items-center gap-1 rounded-sm border border-gray-300 bg-white px-1 text-xs text-gray-700">
-              <button
-                type="button"
+            <BankingControlGroup className="items-center gap-0 px-1">
+              <BankingControlSegment
                 data-testid="banking-pager-first"
-                className="h-7 rounded-sm px-1.5 text-xs hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400"
+                className="!px-1.5 disabled:hover:bg-transparent"
                 disabled={safeCurrentPage <= 1}
                 onClick={() => setCurrentPage(1)}
               >
                 First
-              </button>
-              <button
-                type="button"
+              </BankingControlSegment>
+              <BankingControlSegment
                 data-testid="banking-pager-previous"
-                className="h-7 rounded-sm px-1.5 text-xs hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400"
+                className="!px-1.5 disabled:hover:bg-transparent"
                 disabled={safeCurrentPage <= 1}
                 onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
               >
                 Previous
-              </button>
-              <span className="px-1 text-gray-500">{`Page ${safeCurrentPage} of ${totalPages}`}</span>
-              <button
-                type="button"
+              </BankingControlSegment>
+              {/* Page N of M is derived from safeCurrentPage / totalPages, which are themselves
+              derived from pagedGroups.totalRows (a real fetched-row count) below — never a literal. */}
+              <span className="border-l border-[#E5E7EB] px-2 text-[#6B7280]">{`Page ${safeCurrentPage} of ${totalPages}`}</span>
+              <BankingControlSegment
                 data-testid="banking-pager-next"
-                className="h-7 rounded-sm px-1.5 text-xs hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400"
+                className="!px-1.5 border-l border-[#E5E7EB] disabled:hover:bg-transparent"
                 disabled={safeCurrentPage >= totalPages}
                 onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
               >
                 Next
-              </button>
-              <button
-                type="button"
+              </BankingControlSegment>
+              <BankingControlSegment
                 data-testid="banking-pager-last"
-                className="h-7 rounded-sm px-1.5 text-xs hover:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-400"
+                className="!px-1.5 disabled:hover:bg-transparent"
                 disabled={safeCurrentPage >= totalPages}
                 onClick={() => setCurrentPage(totalPages)}
               >
                 Last
-              </button>
-            </div>
+              </BankingControlSegment>
+            </BankingControlGroup>
             <div className="relative">
-              <button
-                type="button"
-                className="flex h-7 items-center rounded-sm border border-gray-300 px-2 text-gray-700"
-                onClick={() => setPrintExportMenuOpen((open) => !open)}
-              >
+              <BankingControlBox onClick={() => setPrintExportMenuOpen((open) => !open)}>
                 <Download className="h-4 w-4" />
-              </button>
+              </BankingControlBox>
               {printExportMenuOpen ? (
                 <div className="absolute right-0 z-20 mt-1 w-44 rounded-sm border border-gray-200 bg-white p-1 shadow-sm">
                   <button
@@ -3747,7 +3740,7 @@ export function BankingTransactionsDesignView({
                 <button
                   key={size}
                   type="button"
-                  className={`rounded-sm border px-2 py-1 text-xs ${viewSettings.pageSize === size ? "border-[#1f2a44] bg-[#1f2a44] text-white" : "border-gray-300 text-gray-700"}`}
+                  className={`rounded-sm border px-2 py-1 text-xs ${viewSettings.pageSize === size ? "border-[#14314F] bg-[#14314F] text-white" : "border-[#E5E7EB] text-[#1F2A44]"}`}
                   onClick={() => setViewSettings((prev) => ({ ...prev, pageSize: size }))}
                 >
                   {size}
