@@ -1,30 +1,27 @@
 #!/usr/bin/env node
-// ROUND 191 item 4 (Lead order) -- verify-settlement-line-posting-account-complete.mjs
+// ROUND 191 item 4, tightened in ROUND 198 -- verify-settlement-line-posting-account-complete.mjs
 //
 // Owner's own words: "Zero NULL posting_account_id on any active settlement line, per entity."
-// Scope is CLOSED settlements -- posting to GL happens at close, and the order's own accrual-tie
-// split (CLOSED 51 vs OPEN 12 pre-settlements) treats OPEN settlements as still-being-built, same
-// treatment the Lead's ROUND 176 ruling gave open pre-settlements on undelivered loads (zero lines
-// there is correct, not a defect). A CLOSED settlement is the one that must be complete.
+// Scope is CLOSED settlements -- posting to GL happens at close, and the accrual-tie split (CLOSED
+// vs OPEN pre-settlements) treats OPEN settlements as still-being-built, same treatment the Lead's
+// ROUND 176 ruling gave open pre-settlements on undelivered loads. A CLOSED settlement is the one
+// that must be complete.
 //
-// ROUND 191 item 2 backfill (this same round) ran the existing, canonical
-// backfillExistingSettlementLineAccounts (settlement-lines-materialize.service.ts) across all 66
-// live USMCA settlements and resolved 332 of 347 NULL posting_account_id rows. The 15 that remain
-// on CLOSED settlements (13 reimbursement + 2 deduction) have NO upstream source record at all --
-// source_table/source_reference_id both NULL, confirmed live against
-// driver_finance.driver_reimbursements / driver_settlement_deductions -- inserted that way by
-// settlement-creator.service.ts's bare-AlwaysTrack-digit path (postSettlementCreatorInClientTx),
-// which never wires source linkage for these two line types. Forcing a generic account onto them
-// would mean guessing a reimbursement/deduction TYPE that is nowhere recorded -- exactly the "bulk-
-// set EVERY still-unresolved reimbursement line to the one generic account, regardless of type"
-// pattern the owner's 2026-09-10 ruling (cited in settlement-lines-materialize.service.ts itself)
-// already banned. So this guard does not fail on that specific, structural, always-re-evaluated
-// condition (line_type IN ('reimbursement','deduction') AND source_reference_id IS NULL) -- it is
-// not a hand-picked ID exclusion list (the kind the Lead's ROUND 176 ruling refused); it is the same
-// shape of fix the ruling itself applied (skip by a real structural predicate, not a name list) --
-// and it prints every such row by name so the gap stays visible, never silently buried. Any OTHER
-// NULL posting_account_id on a CLOSED settlement's active line (unresolved despite having a real
-// source, or on a line_type that never needs one) is a real regression and fails the build.
+// ROUND 191 backfilled 332 of 347 NULL rows via the canonical
+// backfillExistingSettlementLineAccounts. The remaining 15 (13 reimbursement + 2 deduction) had no
+// upstream source record to auto-resolve from (source_table/source_reference_id both NULL) --
+// inserted that way by settlement-creator.service.ts's bare-AlwaysTrack-digit path. ROUND 197 first
+// reported these 15 honestly rather than rounding to zero; ROUND 198 (Lead) correctly pushed back:
+// missing an AUTOMATED source document does not mean the account is undiscoverable BY READING THE
+// ROW. Every one of the 15 was resolved by hand against real corroborating evidence (matching
+// accounting.expenses memos for the reimbursements -- e.g. "R145 SETTL 5775 $15.25 ... TPE-Scale
+// Expense" backing "AlwaysTrack reimbursement load 13514 settl 5775" -- and an exact existing
+// precedent row, "AlwaysTrack settl 5788 load 13546: Admin fee - PAGO DE TELEFONO PERSONAL" already
+// posted to "Driver Admin Fee & Chargeback Income", for the deduction wording), never a blind
+// generic-account guess. See the ROUND 198 status report for the full per-row account + reasoning.
+//
+// So this guard is now a HARD, unconditional zero -- no exemption set, no named-but-passing gap
+// list. Any NULL posting_account_id on a CLOSED settlement's active line is a real regression.
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 export const ALLOW_OFFLINE_SKIP = "live-data invariant by design, no static-only path";
@@ -32,21 +29,8 @@ const LABEL = "verify-settlement-line-posting-account-complete";
 export const REQUIRES_LIVE_DB =
   "live-data money guard (settlement_lines.posting_account_id completeness on closed settlements); fails closed via requireLiveDbOrExit with no DATABASE_URL (ROUND 29.9-B)";
 
-const SOURCELESS_EXEMPT_LINE_TYPES = new Set(["reimbursement", "deduction"]);
-
 function selftest() {
-  const failures = [];
-  if (!(SOURCELESS_EXEMPT_LINE_TYPES.has("reimbursement") && SOURCELESS_EXEMPT_LINE_TYPES.has("deduction"))) {
-    failures.push("expected exemption set to cover reimbursement + deduction only");
-  }
-  if (SOURCELESS_EXEMPT_LINE_TYPES.size !== 2) {
-    failures.push("exemption set must be exactly {reimbursement, deduction} -- earnings/deadhead_pay/extra_pay/escrow_contribution always resolve via role/driver, no source needed");
-  }
-  if (failures.length) {
-    console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
-    process.exit(1);
-  }
-  console.log(`${LABEL} selftest OK — exemption scoped to {reimbursement, deduction} with NULL source only`);
+  console.log(`${LABEL} selftest OK — hard zero-tolerance check, no exemptions`);
 }
 
 if (process.argv.includes("--selftest")) {
@@ -65,14 +49,11 @@ async function main() {
     );
 
     const failures = [];
-    const knownGaps = [];
 
     for (const co of companies.rows) {
       const res = await client.query(
         `
-          SELECT sl.id::text AS line_id, sl.line_type, sl.description,
-                 sl.source_reference_id::text AS source_reference_id, sl.source_table,
-                 ds.display_id
+          SELECT sl.id::text AS line_id, sl.line_type, sl.description, ds.display_id
             FROM driver_finance.settlement_lines sl
             JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
            WHERE ds.operating_company_id = $1::uuid
@@ -85,33 +66,21 @@ async function main() {
       );
 
       for (const row of res.rows) {
-        const isSourcelessExempt =
-          SOURCELESS_EXEMPT_LINE_TYPES.has(row.line_type) && !row.source_reference_id && !row.source_table;
-        const label = `${co.short_name}/${row.display_id}: ${row.line_type} "${row.description}" (line ${row.line_id})`;
-        if (isSourcelessExempt) {
-          knownGaps.push(`${label} — no upstream source record (source_reference_id/source_table both NULL); never guessed an account`);
-        } else {
-          failures.push(`${label} — NULL posting_account_id on a CLOSED settlement with a resolvable source; real regression`);
-        }
+        failures.push(
+          `${co.short_name}/${row.display_id}: ${row.line_type} "${row.description}" (line ${row.line_id}) — NULL posting_account_id on a CLOSED settlement`
+        );
       }
     }
 
     await client.query("ROLLBACK");
 
-    if (knownGaps.length) {
-      console.log(`${LABEL}: ${knownGaps.length} known, non-failing gap(s) — sourceless reimbursement/deduction line(s):`);
-      for (const g of knownGaps) console.log(`  ⚠ ${g}`);
-    }
-
     if (failures.length) {
-      console.error(`${LABEL}: FAIL — ${failures.length} closed-settlement active line(s) missing posting_account_id despite a resolvable source:`);
+      console.error(`${LABEL}: FAIL — ${failures.length} closed-settlement active line(s) missing posting_account_id:`);
       for (const f of failures.slice(0, 30)) console.error(`  ✗ ${f}`);
       if (failures.length > 30) console.error(`  ...and ${failures.length - 30} more`);
       process.exit(1);
     }
-    console.log(
-      `${LABEL}: PASS — every CLOSED settlement's active line has posting_account_id, except ${knownGaps.length} named, sourceless gap(s) above (not guessed, per owner 2026-09-10 ruling).`
-    );
+    console.log(`${LABEL}: PASS — every CLOSED settlement's active line has posting_account_id. Zero exceptions.`);
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
     console.error(`${LABEL}: FAIL — ${err.message}`);
