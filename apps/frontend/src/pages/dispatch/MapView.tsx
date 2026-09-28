@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { MapPin } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
-import { resolveApiUrl } from "../../api/client";
+import { apiRequest } from "../../api/client";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -18,12 +18,12 @@ type MapPosition = {
   stale: boolean;
 };
 
+// ROUND 203 F19 — use apiRequest (shared error/telemetry), encode companyId, always render
+// position list when data exists (including when mapConfigured — was a dead path).
 async function fetchPositions(companyId: string) {
-  const res = await fetch(resolveApiUrl(`/api/integrations/samsara/positions/active-loads?operating_company_id=${companyId}`), {
-    credentials: "include",
-  });
-  if (!res.ok) throw new Error("fetch_failed");
-  return res.json() as Promise<{ positions?: MapPosition[] }>;
+  return apiRequest<{ positions?: MapPosition[] }>(
+    `/api/integrations/samsara/positions/active-loads?operating_company_id=${encodeURIComponent(companyId)}`
+  );
 }
 
 export function MapView() {
@@ -51,10 +51,10 @@ export function MapView() {
     return false;
   });
   const hasFocus = Boolean(focusLoadId || focusDriverId || focusUnitId);
+  const listRows = hasFocus ? focused : positions;
 
   return (
     <div className="space-y-3 p-4" data-testid="dispatch-map-view">
-      {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
       <PageHeader title="Active Load Map" breadcrumb={[{ label: "Dispatch" }, { label: "Map" }]} backHref="/dispatch" />
       {!companyId ? (
         <p
@@ -73,7 +73,7 @@ export function MapView() {
       {hasFocus ? (
         <p className="text-xs text-slate-600" data-testid="dispatch-map-focus">
           {focused.length > 0
-            ? `${focused.length} matching position(s) from Samsara — map plotting unavailable until a map provider is configured.`
+            ? `${focused.length} matching position(s) from Samsara${mapConfigured ? "" : " — map plotting unavailable until a map provider is configured"}.`
             : "No GPS match for this driver/load/unit yet."}
         </p>
       ) : null}
@@ -92,19 +92,42 @@ export function MapView() {
             Contact the owner or administrator to configure a map provider (Mapbox) before this view can plot
             vehicle positions.
           </p>
-          {!query.isError && positions.length > 0 ? (
-            <p className="mt-3 text-xs text-slate-600">
-              {positions.length} active load{positions.length === 1 ? "" : "s"} with GPS — positions are not shown here
-              until map rendering is enabled (no fake map pins).
-            </p>
-          ) : null}
-          {!query.isError && !query.isLoading && positions.length === 0 ? (
-            <p className="mt-3 text-xs text-slate-700" data-testid="dispatch-map-positions-honest-empty">
-              No in-transit loads with GPS for this company right now. Positions appear when Samsara reports an active
-              load with coordinates.
-            </p>
-          ) : null}
         </section>
+      ) : null}
+      {companyId && mapConfigured ? (
+        <section
+          className="rounded-sm border border-gray-200 bg-white p-4"
+          data-testid="dispatch-map-configured"
+        >
+          <p className="text-xs text-slate-600">
+            Map provider is configured. Position list below is live from Samsara; geographic tiles land in a
+            follow-up once the Mapbox surface is wired to these coordinates.
+          </p>
+        </section>
+      ) : null}
+      {companyId && !query.isError && listRows.length > 0 ? (
+        <ul
+          className="rounded-sm border border-gray-200 bg-white divide-y divide-gray-100 text-xs"
+          data-testid="dispatch-map-positions-list"
+        >
+          {listRows.map((p) => (
+            <li key={`${p.load_uuid}-${p.unit_uuid}`} className="flex flex-wrap gap-3 px-3 py-2 text-slate-700">
+              <span>Load {p.load_uuid.slice(0, 8)}</span>
+              <span>Unit {p.unit_uuid.slice(0, 8)}</span>
+              <span>
+                {p.lat.toFixed(4)}, {p.lng.toFixed(4)}
+              </span>
+              <span>{p.speed_mph != null ? `${p.speed_mph} mph` : "—"}</span>
+              {p.stale ? <span className="text-slate-600">stale</span> : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {companyId && !query.isError && !query.isLoading && positions.length === 0 ? (
+        <p className="text-xs text-slate-700" data-testid="dispatch-map-positions-honest-empty">
+          No in-transit loads with GPS for this company right now. Positions appear when Samsara reports an active
+          load with coordinates.
+        </p>
       ) : null}
     </div>
   );

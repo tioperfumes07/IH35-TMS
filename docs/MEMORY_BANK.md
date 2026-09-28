@@ -683,6 +683,22 @@ prod post is a separate, intentional, owner-authorized action, not a repoint of 
 - **Period-close prerequisite:** a lock with no reopen path traps the book — this engine is that
   reopen path for money documents.
 
+
+## Active Architectural Decisions — Dispatch ROUND 203 Devin sweep (Cursor, 2026-09-28)
+
+- **window.open + noopener:** feature string `noopener` makes `window.open()` ALWAYS return `null`
+  (HTML spec), even when the tab opens. Factoring package / driver-instructions used the handle →
+  blank tab + false "popup blocked". Law: drop `noopener` from features; set `win.opener = null`
+  after open. Guard: `scripts/verify-dispatch-query-keys-and-boundaries.mjs`.
+- **RQ invalidation:** never `["dispatch","loads"]` (matches nothing). Real prefixes: `["loads"]`,
+  `["dispatch","units-without-load"]`, `["dispatch-board"]` (board's own units-without-load key).
+- **rowOverrides:** clear on success after invalidate (not only catch). Inline pickers call
+  `onRollback()` alone — never write `unitId: ""` / `driverId: ""` (empty string ≠ undefined →
+  permanent override of assigned_*_id).
+- **Bulk mark_paid:** `delivered_pending_docs` alone is not enough — require a non-voided
+  `accounting.payments` row applied to a load invoice (`E_NO_RECEIVED_PAYMENT`).
+- **SectionErrorBoundary** wraps Dispatch board / kanban / LoadDetailDrawer / CmdK results.
+
 ## Active Architectural Decisions — Banking (CC-2, 2026-09-08)
 
 - **Bank reconciliation — cleared_date:** `accounting.payments`/`accounting.bill_payments` carry

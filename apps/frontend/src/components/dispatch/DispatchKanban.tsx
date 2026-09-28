@@ -1123,6 +1123,16 @@ export function KanbanDispatchColumn({
   // load/route text. This ref + pointer-drag handle lets each lane be resized; the width persists per
   // lane key (see DispatchKanban.setColumnWidth) so the board keeps the operator's layout across reloads.
   const sectionRef = useRef<HTMLElement | null>(null);
+  // ROUND 203 F18 — unmount mid-drag must remove window listeners.
+  const resizeListenersRef = useRef<{ move?: (ev: PointerEvent) => void; up?: () => void }>({});
+  useEffect(() => {
+    return () => {
+      const { move, up } = resizeListenersRef.current;
+      if (move) window.removeEventListener("pointermove", move);
+      if (up) window.removeEventListener("pointerup", up);
+      resizeListenersRef.current = {};
+    };
+  }, []);
   const onResizePointerDown = useCallback(
     (e: React.PointerEvent) => {
       if (!onResize) return;
@@ -1131,11 +1141,16 @@ export function KanbanDispatchColumn({
       e.stopPropagation();
       const startX = e.clientX;
       const startWidth = sectionRef.current?.getBoundingClientRect().width ?? width ?? 290;
+      const prev = resizeListenersRef.current;
+      if (prev.move) window.removeEventListener("pointermove", prev.move);
+      if (prev.up) window.removeEventListener("pointerup", prev.up);
       const handleMove = (ev: PointerEvent) => onResize(column.key, startWidth + (ev.clientX - startX));
       const handleUp = () => {
         window.removeEventListener("pointermove", handleMove);
         window.removeEventListener("pointerup", handleUp);
+        resizeListenersRef.current = {};
       };
+      resizeListenersRef.current = { move: handleMove, up: handleUp };
       window.addEventListener("pointermove", handleMove);
       window.addEventListener("pointerup", handleUp);
     },
@@ -1328,6 +1343,16 @@ function KanbanSwimLaneColumn({
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `column:${column.key}` });
   const sectionRef = useRef<HTMLElement | null>(null);
+  // ROUND 203 F18 — unmount mid-drag must remove window listeners (truck-centric lane).
+  const resizeListenersRef = useRef<{ move?: (ev: PointerEvent) => void; up?: () => void }>({});
+  useEffect(() => {
+    return () => {
+      const { move, up } = resizeListenersRef.current;
+      if (move) window.removeEventListener("pointermove", move);
+      if (up) window.removeEventListener("pointerup", up);
+      resizeListenersRef.current = {};
+    };
+  }, []);
   const onResizePointerDown = useCallback(
     (e: React.PointerEvent) => {
       if (!onResize) return;
@@ -1335,11 +1360,16 @@ function KanbanSwimLaneColumn({
       e.stopPropagation();
       const startX = e.clientX;
       const startWidth = sectionRef.current?.getBoundingClientRect().width ?? width ?? 290;
+      const prev = resizeListenersRef.current;
+      if (prev.move) window.removeEventListener("pointermove", prev.move);
+      if (prev.up) window.removeEventListener("pointerup", prev.up);
       const handleMove = (ev: PointerEvent) => onResize(column.key, startWidth + (ev.clientX - startX));
       const handleUp = () => {
         window.removeEventListener("pointermove", handleMove);
         window.removeEventListener("pointerup", handleUp);
+        resizeListenersRef.current = {};
       };
+      resizeListenersRef.current = { move: handleMove, up: handleUp };
       window.addEventListener("pointermove", handleMove);
       window.addEventListener("pointerup", handleUp);
     },

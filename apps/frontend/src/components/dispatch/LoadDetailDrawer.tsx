@@ -599,11 +599,15 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
     // package window ever actually opened. A blocked popup therefore recorded and announced a
     // package that was never presented to the user. Only stamp/announce success when a real window
     // was returned; otherwise bail out honestly without touching persisted state.
-    const win = window.open("", "_blank", "noopener,noreferrer,width=1000,height=800");
+    // ROUND 203 F1 — `noopener` in the feature string makes window.open() ALWAYS return null
+    // (HTML spec), even when the tab opens — so we wrote nothing and toasted a false "blocked".
+    // Drop noopener from the feature string; null opener after open for the same isolation.
+    const win = window.open("", "_blank", "noreferrer,width=1000,height=800");
     if (!win) {
       if (!auto) pushToast("Factoring package popup was blocked — allow popups for this site and try again", "error");
       return;
     }
+    win.opener = null;
     win.document.write(html);
     win.document.close();
     // DSP-MONEY-F7276 — persistPackageMeta's mutateAsync was awaited with no rejection handler here,
@@ -629,8 +633,10 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
     if (!load?.driver_instructions_file_id) return;
     try {
       const result = await getDownloadUrl(load.driver_instructions_file_id);
-      const popup = window.open(result.presigned_url, "_blank", "noopener,noreferrer");
+      // ROUND 203 F1 — same noopener-returns-null trap as the factoring package.
+      const popup = window.open(result.presigned_url, "_blank", "noreferrer");
       if (!popup) throw new Error("Your browser blocked the driver instructions window. Allow pop-ups and retry.");
+      popup.opener = null;
     } catch (error) {
       pushToast(userFacingApiError(error, "Driver instructions download failed"), "error");
     }
@@ -971,10 +977,18 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                               value={load.dispatch_flag_color_id}
                               onChange={(value) => {
                                 if (!value) return;
-                                void updateMutation.mutateAsync({ id: load.id, operatingCompanyId: load.operating_company_id, body: { dispatch_flag_color_id: value } }).then(() => {
-                                  refetchLoad();
-                                  void queryClient.invalidateQueries({ queryKey: ["loads"] });
-                                });
+                                void updateMutation
+                                  .mutateAsync({
+                                    id: load.id,
+                                    operatingCompanyId: load.operating_company_id,
+                                    body: { dispatch_flag_color_id: value },
+                                  })
+                                  .then(() => {
+                                    refetchLoad();
+                                    void queryClient.invalidateQueries({ queryKey: ["loads"] });
+                                  })
+                                  // ROUND 203 F12 — voided mutateAsync().then() re-rejects unhandled.
+                                  .catch(() => {});
                               }}
                               options={(flagColorsQuery.data?.flags ?? []).map((flag) => ({ value: flag.id, label: flag.display_name }))}
                               createKind="dispatch_flag_color"

@@ -26,6 +26,7 @@ import { RoundTrips } from "./dispatch/RoundTrips";
 import { DispatchSubnav } from "../components/dispatch/DispatchSubnav";
 import { PreSettlementsPanel } from "../components/driver-finance/PreSettlementsPanel";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
+import { SectionErrorBoundary } from "../components/SectionErrorBoundary";
 import { userFacingApiError } from "../lib/api-error-message";
 import { companyToday, addDaysIso } from "../lib/businessDate";
 import { dispatchSecondaryTabFromPath } from "../router/route-manifest";
@@ -639,6 +640,7 @@ export function DispatchPage({
             deepLink={roundTripsRoute}
           />
         ) : view === "list" ? (
+          <SectionErrorBoundary name="Dispatch board">
           <DispatchBoard
             loads={loads}
             boardScope={boardScope}
@@ -684,7 +686,9 @@ export function DispatchPage({
               openBookLoadModal();
             }}
           />
+          </SectionErrorBoundary>
         ) : (
+          <SectionErrorBoundary name="Dispatch kanban">
           <DispatchKanban
             loads={loads}
             awaitingTrucks={awaitingTrucks}
@@ -725,6 +729,7 @@ export function DispatchPage({
               return statusMutation.mutateAsync({ id, body: { new_status: nextStatus } });
             }}
           />
+          </SectionErrorBoundary>
         )
       ) : subTab === "book_load" ? (
         <DataPanel title="Book load">
@@ -814,6 +819,7 @@ export function DispatchPage({
 
       {showFleetOosStrip ? <FleetOosStrip operatingCompanyId={defaultCompanyIds[0] ?? ""} /> : null}
 
+      <SectionErrorBoundary name="Load detail drawer">
       <LoadDetailDrawer
         loadId={loadId}
         isOpen={Boolean(loadId)}
@@ -836,6 +842,7 @@ export function DispatchPage({
           setSearchParams(next);
         }}
       />
+      </SectionErrorBoundary>
 
       <BookLoadModal
         open={newLoadOpen}
