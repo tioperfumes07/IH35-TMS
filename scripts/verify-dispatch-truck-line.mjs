@@ -126,17 +126,12 @@ export function verify(files) {
   if (!/is_active = true/.test(archTabsService)) problems.push("(i) the reason_id lookup must filter is_active = true");
   if (/UPDATE\s+mdata\.loads\b/i.test(archTabsService)) problems.push("(i) arch-tabs.service.ts (intransit-issues) must never write mdata.loads — Other never changes loads.status");
 
-  // (j) V4 auto-fit grid (ROUND 18.4) -- the Line column must be `1fr` so it re-spaces at every
-  // screen size, and this board must never regress back to a resizable/reorderable/stateful
-  // ParityTable (the owner's explicit ruling: "this one time the columns do not need to adjust").
-  // Checks are on actual CODE (a JS string constant, an import statement, a JSX prop) — not on
-  // prose in comments, which may legitimately mention "ParityTable" or "storageKey" while
-  // explaining the V4 change without either being wired up.
+  // (j) ROUND 155.6 grid — Truck | Load | PU | DEL | Leg | Tour # | Live signal (1fr).
+  // Still never a ParityTable / storageKey.
   const gridColumnsConst = boardTsx.match(/const GRID_TEMPLATE_COLUMNS\s*=\s*(["'`])([\s\S]*?)\1/);
-  if (!gridColumnsConst || !/minmax\(140px,10vw\)\s*minmax\(160px,12vw\)\s*1fr\s*minmax\(158px,12vw\)\s*minmax\(156px,12vw\)/.test(gridColumnsConst[2])) {
+  if (!gridColumnsConst || !/\b1fr\b/.test(gridColumnsConst[2])) {
     problems.push(
-      "(j) TruckLineBoard.tsx must define a GRID_TEMPLATE_COLUMNS constant with a 1fr Line column " +
-        "(minmax(140px,10vw) minmax(160px,12vw) 1fr minmax(158px,12vw) minmax(156px,12vw))"
+      "(j) TruckLineBoard.tsx must define GRID_TEMPLATE_COLUMNS with a 1fr column (Live signal residual)"
     );
   }
   if (!gridColumnsConst || !/grid-template-columns:\s*\$\{GRID_TEMPLATE_COLUMNS\}/.test(boardTsx)) {
@@ -176,8 +171,8 @@ export function verify(files) {
   if (/no load on this truck/.test(codeOnly)) {
     problems.push('(l) TruckLineBoard.tsx must never render the retired "no load on this truck" string — THE AVAILABLE TRUCK replaces every such row');
   }
-  if (!/text-align:\s*center/.test(boardTsx) || !/truck-line-v4-appt-header|truck-line-v4-appt-cell/.test(boardTsx)) {
-    problems.push("(l) TruckLineBoard.tsx must center-align the Next appointment / Live signal columns (owner ruling 21:30 CT)");
+  if (!/text-align:\s*center/.test(boardTsx) || !/truck-line-v4-signal-header|truck-line-v4-signal-cell/.test(boardTsx)) {
+    problems.push("(l) TruckLineBoard.tsx must center-align Live signal (and ROUND 155.6 PU/DEL/Leg/Tour) columns");
   }
   if (!/Assign a load/.test(codeOnly) || !/onAssignDriver/.test(codeOnly)) {
     problems.push('(l) TruckLineBoard.tsx must render a real "Assign a load" action wired to an onAssignDriver callback — a dead button fails this box');
@@ -191,21 +186,44 @@ export function verify(files) {
     problems.push('(l) TruckLineBoard.tsx must branch on r.kind === "available" to render THE AVAILABLE TRUCK — the row scope change is not optional styling');
   }
 
-  // (m) CURRENT load predicate — hide stamp-less dispatched shells whose delivery is already
-  // >48h past (AUTH-061 13609/16/17/18/20/21 class). Same constant must gate BOTH the unit
-  // live_loads lateral AND busy_drivers so a shell cannot paint as LOADED or block AVAILABLE.
-  if (!/const CURRENT_TRUCK_LINE_LOAD_SQL\s*=/.test(truckLineRoutes)) {
-    problems.push("(m) truck-line.routes.ts must declare CURRENT_TRUCK_LINE_LOAD_SQL (CURRENT load vs stamp-less dispatched shell)");
+  // (m) CURRENT load predicate — ONE named helper in current-truck-line-load.ts (ROUND 155.6 /
+  // ruling 155.3a). Truck Line imports it; never forks the SQL. Same constant must gate busy_drivers.
+  if (!/from ["'].*current-truck-line-load/.test(truckLineRoutes)) {
+    problems.push("(m) truck-line.routes.ts must import CURRENT_TRUCK_LINE_LOAD_SQL from current-truck-line-load.ts");
   }
-  if (!/interval '48 hours'/.test(truckLineRoutes)) {
-    problems.push("(m) CURRENT_TRUCK_LINE_LOAD_SQL must keep the 48-hour delivery window for stamp-less dispatched shells");
+  const helperPath = "apps/backend/src/dispatch/current-truck-line-load.ts";
+  let helperSrc = "";
+  try {
+    helperSrc = read(helperPath);
+  } catch {
+    problems.push(`(m) missing ${helperPath} — the ONE CURRENT-load helper CC-3 must import`);
   }
-  if (!/actual_arrival_at IS NOT NULL OR s\.actual_departure_at IS NOT NULL/.test(truckLineRoutes)) {
-    problems.push("(m) CURRENT_TRUCK_LINE_LOAD_SQL must treat any stop stamp as evidence the dispatched load is real work");
+  if (helperSrc && !/export function currentTruckLineLoadSql/.test(helperSrc)) {
+    problems.push("(m) current-truck-line-load.ts must export currentTruckLineLoadSql");
+  }
+  if (helperSrc && !/export const CURRENT_TRUCK_LINE_LOAD_SQL/.test(helperSrc)) {
+    problems.push("(m) current-truck-line-load.ts must export CURRENT_TRUCK_LINE_LOAD_SQL");
+  }
+  if (helperSrc && !/interval '48 hours'/.test(helperSrc)) {
+    problems.push("(m) CURRENT helper must keep the 48-hour delivery window for stamp-less dispatched shells");
+  }
+  if (helperSrc && !/actual_arrival_at IS NOT NULL OR s\.actual_departure_at IS NOT NULL/.test(helperSrc)) {
+    problems.push("(m) CURRENT helper must treat any stop stamp as evidence the dispatched load is real work");
   }
   const currentSqlUses = (truckLineRoutes.match(/\$\{CURRENT_TRUCK_LINE_LOAD_SQL\}/g) ?? []).length;
-  if (currentSqlUses < 3) {
-    problems.push(`(m) CURRENT_TRUCK_LINE_LOAD_SQL must be interpolated into the unit live_loads lateral AND both busy_drivers unions (found ${currentSqlUses}, need >=3)`);
+  if (currentSqlUses < 2) {
+    problems.push(`(m) CURRENT_TRUCK_LINE_LOAD_SQL must be interpolated into busy_drivers unions (found ${currentSqlUses}, need >=2)`);
+  }
+
+  // (n) ROUND 155.6 — columns + sections + empty state (delegate detail to the dedicated guard).
+  if (!/groupTruckLineByUnit/.test(truckLineRoutes)) {
+    problems.push("(n) truck-line.routes.ts must group by unit via groupTruckLineByUnit");
+  }
+  if (!/tour_display_id/.test(truckLineRoutes)) {
+    problems.push("(n) truck-line.routes.ts must select tour_display_id from driver_settlements.display_id (P-series)");
+  }
+  if (!/truck-line-empty/.test(boardTsx) || !/truck-line-section-\$\{section\}/.test(boardTsx) || !/"tour"/.test(boardTsx)) {
+    problems.push("(n) TruckLineBoard must render empty state + TOUR/IN TRANSIT/AVAILABLE sections (ROUND 155.6)");
   }
 
   return problems;
@@ -251,25 +269,21 @@ function runSelftest() {
     ["(i) reason validation removed", { ...good, archTabsService: good.archTabsService.replace("reason_not_found", "REMOVED") }],
     ["(h) mapReachedIndexToV7 removed", { ...good, boardTsx: good.boardTsx.replace("function mapReachedIndexToV7", "function REMOVEDmapReachedIndexToV7") }],
     ["(h) an 8th V7 station planted", { ...good, boardTsx: good.boardTsx.replace('{ name: "Delivered", backendIndex: 6 },', '{ name: "Delivered", backendIndex: 6 },\n  { name: "Extra", backendIndex: 7 },') }],
-    ["(j) 1fr Line column removed from the grid", { ...good, boardTsx: good.boardTsx.replace("minmax(160px,12vw) 1fr minmax(158px,12vw)", "minmax(160px,12vw) minmax(200px,20vw) minmax(158px,12vw)") }],
+    ["(j) 1fr column removed from the grid", { ...good, boardTsx: good.boardTsx.replace(/\b1fr\b/g, "minmax(200px,20vw)") }],
     ["(j) narrow-grid fold removed", { ...good, boardTsx: good.boardTsx.replace("const GRID_TEMPLATE_COLUMNS_NARROW", "const REMOVED_GRID_TEMPLATE_COLUMNS_NARROW").replace(/@media \(max-width: \$\{FOLD_BREAKPOINT_PX\}px\)/, "@media (max-width: 999999px) /* REMOVED */") }],
     ["(j) ParityTable reintroduced", { ...good, boardTsx: good.boardTsx + '\nimport { ParityTable } from "../../components/parity/ParityTable";\n' }],
     ["(j) storageKey column state reintroduced", { ...good, boardTsx: good.boardTsx + '\nconst x = { storageKey: "dispatch-truck-line-v1" };\n' }],
     ["(k) resolveTruckLineException removed", { ...good, boardTsx: good.boardTsx.replaceAll("resolveTruckLineException", "REMOVED") }],
     ["(k) open_exception_id no longer read", { ...good, boardTsx: good.boardTsx.replaceAll("open_exception_id", "REMOVED") }],
     ["(l) retired 'no load on this truck' string reintroduced", { ...good, boardTsx: good.boardTsx.replace("— unexpected: this row has no load data", "— no load on this truck") }],
-    ["(l) center-align removed", { ...good, boardTsx: good.boardTsx.replace("text-align: center;", "text-align: left;") }],
+    ["(l) center-align removed", { ...good, boardTsx: good.boardTsx.replace(/text-align:\s*center/g, "text-align: left") }],
     ["(l) Assign a load pill removed", { ...good, boardTsx: good.boardTsx.replaceAll("Assign a load →", "REMOVED") }],
     ["(l) onAssignDriver wiring removed", { ...good, boardTsx: good.boardTsx.replaceAll("onAssignDriver", "REMOVED") }],
     ["(l) available-row branch removed", { ...good, boardTsx: good.boardTsx.replaceAll('r.kind === "available"', "false") }],
-    ["(m) CURRENT_TRUCK_LINE_LOAD_SQL removed", { ...good, truckLineRoutes: good.truckLineRoutes.replace(/const CURRENT_TRUCK_LINE_LOAD_SQL\s*=/, "const REMOVED_CURRENT_TRUCK_LINE_LOAD_SQL =") }],
-    ["(m) 48h window removed", { ...good, truckLineRoutes: good.truckLineRoutes.replace(/interval '48 hours'/g, "interval '7 days'") }],
-    ["(m) busy_drivers stopped using CURRENT predicate", { ...good, truckLineRoutes: good.truckLineRoutes.replace(/\$\{CURRENT_TRUCK_LINE_LOAD_SQL\}/g, (m, offset, src) => {
-      // Keep the first use (unit lateral); blank the rest so busy_drivers unions lose it.
-      const before = src.slice(0, offset);
-      const prior = (before.match(/\$\{CURRENT_TRUCK_LINE_LOAD_SQL\}/g) ?? []).length;
-      return prior === 0 ? m : "TRUE /* REMOVED */";
-    }) }],
+    ["(m) CURRENT import removed", { ...good, truckLineRoutes: good.truckLineRoutes.replace(/from ["'].*current-truck-line-load\.js["']/, 'from "./MISSING.js"') }],
+    ["(m) busy_drivers stopped using CURRENT predicate", { ...good, truckLineRoutes: good.truckLineRoutes.replace(/\$\{CURRENT_TRUCK_LINE_LOAD_SQL\}/g, "TRUE /* REMOVED */") }],
+    ["(n) groupTruckLineByUnit removed", { ...good, truckLineRoutes: good.truckLineRoutes.replaceAll("groupTruckLineByUnit", "REMOVED") }],
+    ["(n) empty state removed", { ...good, boardTsx: good.boardTsx.replaceAll("truck-line-empty", "REMOVED") }],
   ];
   let failed = 0;
   for (const [name, mutated] of cases) {

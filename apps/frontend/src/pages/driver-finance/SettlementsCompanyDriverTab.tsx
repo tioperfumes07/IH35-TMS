@@ -127,7 +127,14 @@ export function CompanySettlementsRegisterTab({
   const rows = q.data?.company_settlements ?? [];
   const columns = useMemo<ParityColumn<CompanySettlementListRow>[]>(
     () => [
-      { key: "display_id", label: "Number", minWidth: 100, sortValue: (r) => settlementLabel(r), render: (r) => <span className="ldt-mono">{settlementLabel(r)}</span> },
+      // FIX A (ROUND 155.15 / 157-D item 1): accounting.company_settlements.display_id IS the
+      // real AlwaysTrack document number (5808, 5811, 5813, 5814, 5815, 5816…) for this table --
+      // unlike driver_finance.driver_settlements.display_id, an internal S-YYYY-NNNN counter
+      // (ACCT-F20260911) that settlementLabel()/settlementNumber() exist to hide. This row type
+      // (CompanySettlementListRow) has neither source_document_ref nor settlement_number, so
+      // calling settlementLabel(r) here silently returned "-" on every one of the 48 rows even
+      // though the real number was sitting right there in r.display_id. Render it directly.
+      { key: "display_id", label: "Number", minWidth: 100, sortValue: (r) => r.display_id ?? null, render: (r) => <span className="ldt-mono">{r.display_id || DASH}</span> },
       { key: "period_start", label: "Period", minWidth: 150, className: "whitespace-nowrap", sortValue: (r) => r.period_start, render: (r) => `${date(r.period_start)} – ${date(r.period_end)}` },
       { key: "driver_settlement_count", label: "Driver settlements", cellClass: "text-right tabular-nums", minWidth: 90, maxWidth: 130, sortValue: (r) => r.driver_settlement_count, render: (r) => r.driver_settlement_count },
       { key: "net_revenue_cents", label: "Net revenue", cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 110, maxWidth: 150, sortValue: (r) => (r.net_revenue_cents === null ? null : r.net_revenue_cents), render: (r) => money(r.net_revenue_cents) },
@@ -170,14 +177,14 @@ function CompanyDriverPicker({
   const columns = useMemo<ParityColumn<TourListRow>[]>(
     () => [
       { key: "display_id", label: "Settlement/Tour", alwaysVisible: true, minWidth: 100, sortValue: (r) => settlementLabel(r), render: (r) => <span className="ldt-mono">{settlementLabel(r)}</span> },
-      ...tourLoadColumns("company-driver-col"),
+      ...tourLoadColumns("company-driver-col", rows),
       { key: "driver_name", label: "Driver", minWidth: 120, maxWidth: 200, cellClass: "whitespace-nowrap", sortValue: (r) => r.driver_name ?? "", render: (r) => <span className="block max-w-[200px] truncate" title={r.driver_name ?? ""}>{r.driver_name ?? DASH}</span> },
       { key: "trip_started_at", label: "Started", sortable: true, sortValue: r => r.trip_started_at ?? "", render: r => date(r.trip_started_at) },
       { key: "trip_closed_at", label: "Closed", sortable: true, sortValue: r => r.trip_closed_at ?? "", render: r => date(r.trip_closed_at) },
       { key: "driver_net_cents", label: "Driver net", cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: (r) => r.driver_net_cents ?? 0, render: (r) => money(r.driver_net_cents) },
       { key: "company", label: "Company settlement", minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", render: (r) => (r.company_settlement_display_id ? r.company_settlement_display_id : <span className="ldt-pill warn">not opened</span>) },
     ],
-    []
+    [rows]
   );
   return (
     <div className="space-y-2" data-testid="company-driver-picker">

@@ -19,8 +19,6 @@ export type TruckLinePosition = {
   engine_state: string | null;
   city: string | null;
   state: string | null;
-  // ROUND 23.1 D3 — the richest position string (street + city + state + zip when Samsara has it);
-  // prefer this over city/state when present.
   formatted_location: string | null;
   captured_at: string;
   stale_minutes: number | null;
@@ -34,9 +32,6 @@ export type TruckLineNextAppointment = {
   late: boolean;
 };
 
-// ROUND 23.1 D4 (owner, 2026-09-13: "next appointment should show pick up and delivery") — BOTH
-// legs of the current load, independent of which is still outstanding. next_appointment above
-// stays for one release so nothing else breaks; this is the new field the board's cell now reads.
 export type TruckLineAppointmentLeg = {
   at: string;
   at_source: "appointment_start_at" | "scheduled_arrival_at" | null;
@@ -60,11 +55,6 @@ export type TruckLineLoad = {
   delivery: { city: string | null; state: string | null };
 };
 
-// V10 (ROUND 18.6) — a row is either a loaded truck (unit_id always present) or an available
-// driver (unit_id may be null — "Unit = the unit on their most recent load, may be null"). Raw
-// HOS minutes are exposed as-is (samsara.hos_snapshots' *_hours_remaining columns are misleadingly
-// named; verified live they store minutes) so the frontend's own "11h 00m" formatting is the ONLY
-// place that conversion happens.
 export type TruckLineAvailable = {
   driver_id: string;
   driving_minutes_remaining: number | null;
@@ -79,6 +69,8 @@ export type TruckLineRow = {
   kind: "loaded" | "available";
   unit_id: string | null;
   unit_number: string | null;
+  /** P-series tour / pre-settlement number — never a UUID (ROUND 155.6). */
+  tour_display_id?: string | null;
   load: TruckLineLoad | null;
   drivers: TruckLineDriver[];
   station: TruckLineStation | null;
@@ -88,13 +80,27 @@ export type TruckLineRow = {
   available?: TruckLineAvailable;
 };
 
+export type TruckLineSection = "tour" | "in_transit" | "available";
+
+/** Top-level unit group — unit_id appears once. Tour legs stack under `legs`. */
+export type TruckLineGroup = {
+  section: TruckLineSection;
+  unit_id: string;
+  unit_number: string;
+  tour_display_id: string | null;
+  legs: TruckLineRow[];
+};
+
 export type TruckLineStationDef = { key: string; index: number; label: string };
 
 export type TruckLineResponse = {
+  groups: TruckLineGroup[];
   rows: TruckLineRow[];
   total_count: number;
   loaded_count: number;
   available_count: number;
+  tour_count?: number;
+  in_transit_count?: number;
   stations: TruckLineStationDef[];
   catalog_ready: boolean;
 };
@@ -117,10 +123,6 @@ export function stampTruckLineDeparture(loadId: string, stopId: string, operatin
   );
 }
 
-// DO NOT hardcode reason names/codes here — the "Other" pop-up shows only what
-// GET /api/v1/catalogs/load-exception-reasons actually returns from the live catalog table. Until
-// CC-1's migration lands, that endpoint returns an empty list and the pop-up renders an honest
-// "reason catalog not yet available" state — never a guessed/typed-in-React list.
 export type LoadExceptionReason = {
   id: string;
   code: string;

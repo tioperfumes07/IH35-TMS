@@ -23,6 +23,20 @@ const { withCurrentUser } = await import("../../apps/backend/src/auth/db.ts");
 const { setScopedCompanyContext } = await import("../../apps/backend/src/_helpers/scoped-company-context.ts");
 const { appendCrudAudit } = await import("../../apps/backend/src/audit/crud-audit.ts");
 
+// ROUND 133 (owner law, P0) retrofit: this script writes mdata.loads/dispatch.trailer_interchanges
+// under AUTH-095 (see docs/bus/OWNER-AUTHORIZATIONS.md) -- verify-no-unauthorized-production-write.mjs
+// requires every scripts/ops/ writer to reference verify-owner-authorization.mjs. Added after the
+// fact (retrofit only, no behavior change) so static compliance matches the real authorization.
+{
+  const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+  const authId = process.env.OWNER_AUTH_ID;
+  if (!authId) {
+    console.error("OWNER_AUTH_ID required (ROUND 133 P0)");
+    process.exit(1);
+  }
+  execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), authId], { stdio: "inherit" });
+}
+
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER = "e4117991-d2c0-406d-8cda-74e98d95bccd";
 const LOAD_NUMBERS = ["13625", "13627", "13638"];
