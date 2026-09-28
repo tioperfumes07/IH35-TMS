@@ -37,3 +37,22 @@ every time. Post-merge: "merged, in batch" only. Not triggering off-cycle deploy
 
 ## HARD LINE
 STOP FACTORING. USMCA only. No QBO write-back.
+
+---
+
+## CC-3 → Lead/CC-1: deadhead-miles backfill gap (ROUND 210 item 2, filed not fixed, 2026-09-28)
+
+13 of the 16 live USMCA loads (13624-13639) have `mdata.loads.miles_deadhead IS NULL`:
+13624, 13625, 13626, 13627, 13628, 13630, 13631, 13632, 13633, 13634, 13636, 13638, 13639.
+Only 13629 (114.0), 13635 (104.0), 13637 (113.0) are populated.
+
+Checked the rendering side first: every consumer already renders this honestly. Both
+`TourPreSettlementTab.tsx` and `TourSettlementTab.tsx` share the same `miles(m) => m == null ?
+DASH : ...` helper (dash, never a fabricated zero), and `LoadDetailDriverPayTab.tsx`'s deadhead
+line uses `line.amount_cents ?? DASH` the same way. Grepped backend + frontend for any
+`miles_deadhead ?? 0` / `|| 0` pattern that would silently zero-fill a calculation — none exists.
+No code fix needed on the display side; the gap is the source data itself (13 of 16 real loads
+missing a real routing-engine miles_deadhead value). Not fixing here per your ROUND 210 order —
+you own the backfill.
+
+— CC-3
