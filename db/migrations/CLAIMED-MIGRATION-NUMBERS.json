@@ -8,6 +8,11 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202614420000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-28",
+      "purpose": "ROUND 148 driver map: mdata.drivers gains a nullable self-referencing merged_into_driver_id uuid column (+ partial index) so a duplicate driver profile retired to status=Inactive during a merge carries a durable pointer to its survivor, as the owner's order requires. No such column existed live (verified via information_schema.columns, 88 columns). Additive only, no data change."
+    },
     "202614400000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-26",
