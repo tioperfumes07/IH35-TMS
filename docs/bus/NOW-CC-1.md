@@ -1,57 +1,31 @@
-# CC-1 STARTUP after ~39h down — prior FLAG re-verified LIVE, still unresolved — 2026-09-27 5:24 PM CT (22:24Z).
-Prior content archived: `docs/bus/archive/NOW-CC-1-2026-09-27-16.md` (WORM).
+# ROUND 143 STEP 1 MERGED — three seats unblocked — CC-1 — 2026-09-27 9:38 PM CT (02:38Z 09-28).
+Prior content archived: `docs/bus/archive/NOW-CC-1-2026-09-27-17.md` (WORM).
 
-CC-1 | STARTUP | READ, NOT BUILDING YET | branch `cc-1/session-2026-09-27-startup` off origin/main
-tip `3ed4e85150` (last 7 commits are the automated `chore(tracker)` job; no seat has committed in
-~39h). No WIP on disk — clean checkout.
+CC-1 | ROUND 143 STEP 1 | MERGED | #22883 (`40f58065b5`, squash+admin per Fast Merge Law). Fixed
+`verify-ldt-4-factoring-money.mjs`'s reconciliation identity — added `cash_rsv_cents` (invoice_total
+= advance + reserve + factor_fee + wire_fee + cash_rsv). Live proof: 89/89 USMCA factoring advances
+now reconcile (was 83/89). No baseline, no exclusion — fixed the math itself, per order.
 
-Read in full, in order: README-START-HERE (Desktop), `capability-registry.json`,
-`00-CLOSED-ASKED-AND-ANSWERED-NEVER-REOPEN.md`, `IH35-CLAUDE-JOURNAL.md` (last 3 entries through
-09-26 01:27Z), `00-TO-THE-NEW-LEAD` (five traps), `01-DATA-SOURCE-REGISTER`,
-`03-RULING-THE-RECONCILER`, `04-RULING-FEED-PARITY`, `02-RULING-LIVE-LOADS-VIEW`,
-`09-22-2026-IH35-FULL-LINKAGE-PROCESS-AND-MAPPING`, `docs/bus/LANES.md`,
-`docs/bus/OWNER-AUTHORIZATIONS.md` tail (AUTH-051..072, all CONSUMED), and this file's own history
-(archives -11 through -16).
+**NOTE:** `00-LEAD-ORDERS-READ-NOW.md` (ROUND 143) and `00-LEAD-RULING-READ-BEFORE-ORDERS.md`
+(ROUND 144) were both referenced as "read this first / in your checkout" but neither exists in this
+checkout, on origin/main, or on ~/Desktop or ~/Downloads. Proceeding directly on the pasted order
+text (fully explicit, both rounds) since it is self-contained — flagging per Trap 4 so this isn't
+silently assumed delivered.
 
-**MY CURRENT ITEM, as I understand it:** the last thing this seat did (09-26 06:52Z, archived
-`NOW-CC-1-2026-09-27-16.md`) was FLAG a live regression and explicitly HOLD without writing:
-`views.live_loads` (migration 202614180000) excludes a load from both live_state buckets the
-instant it has an active `driver_finance.settlement_lines` row. A follow-up fix that materialized
-an earnings line via `appendSettlementLineFromDriverBillIfMissing` (to satisfy
-`verify-no-empty-zero-settlement`) did that to all 6 ROUND 189 loads while they are still
-`dispatched`/in-transit, not delivered — the opposite of what the live Dispatch board should show.
+ROUND 144 changes read and applied to my queue:
+- STEP 2 CANCELLED — QBO is reference-only forever, not a USMCA A/P source. Not reading the 499 bills.
+- NEW: 5819 wrongly voided (destroyed on a wrong "6 loads belong to 5 other drivers" assumption) —
+  restore via the existing engine, next up.
+- NEW: 5817 and 5818 missing entirely (both signed) — create both.
+- NEW: CC-2's 18 cleared checks / $19,329.95 matching no TMS money table — mine, A/P.
+- NEW: 5814 $100 variance (app 2,002.65 vs signed PDF 1,902.65).
+- NEW: 3 real short-pays (014 $250, 015 $1,000, 018 $2,500 = $3,750) → 4970 customer_short_pay_writeoff.
+- Unchanged: role bindings (172 dup account numbers / 358 rows), then A/P adoption (47 payrun_gl_runs).
+- STEP 5 (approved, ROUND 143): void 12 premature settlement_lines on P-0002/4/8/9/10/11 +
+  aggregateSettlementTotals + baseline — still queued, unaffected by ROUND 144.
 
-**I RE-VERIFIED THIS LIVE JUST NOW (read-only, `SET LOCAL app.bypass_rls='lucia'`, USMCA
-`5c854333-6ea5-4faa-af31-67cb272fef80`, br-fancy-credit-akjnd07a) — the regression is STILL LIVE,
-unchanged since 06:52Z:**
-```
-load    status       settlement_line_rows(active)  in_live_loads_view
-13609   dispatched   2                              false
-13616   dispatched   2                              false
-13617   dispatched   2                              false
-13618   dispatched   2                              false
-13620   dispatched   2                              false
-13621   dispatched   2                              false
-```
-All 6 are currently-dispatched loads, invisible on the live Dispatch board, for ~39+ hours, because
-nobody was here to answer the hold.
+Working in isolated worktrees off a fresh `origin/main` for every step (shared-checkout collision
+landmine hit earlier this session, now in memory). Fast merge is on — gate → push → PR → merge, same
+turn, no CI babysit, per owner's explicit invocation this session.
 
-The proposed fix in the archived FLAG (void the 6 settlement_lines rows I added; add
-P-0008/9/10/11 to `verify-no-empty-zero-settlement.baseline.json` as known-open+loaded per the
-guard's own documented exception; re-confirm the board shows all 6) is still what I believe is
-correct — the guard conflict is real (a legitimately-open pre-settlement IS the guard's own
-documented exception), and AUTH-071 (the concurrent bill-linking work this was originally held for)
-is now CONSUMED, so that specific blocker is gone.
-
-**WHAT IS BLOCKING ME:** per this session's startup instruction, I do not act until the Lead
-confirms this is still my current item (not superseded by something from the down window) and
-authorizes the fix under this project's AUTH mechanism (`docs/bus/OWNER-AUTHORIZATIONS.md`) — I am
-not self-issuing an AUTH for a live-board-visibility write. Also open, unverified by me this
-session: G4 Sch Fee GL ruling (3 invoices), G3a (Lead/owner call), ROUND 202 STEP 3 close-status
-confirmation for settlement 5812's header, 13619 customer/WO mismatch (pre-existing).
-
-## Still open
-Same four items as the archived FLAG: G4 Sch Fee GL ruling · G3a · ROUND 202 c/d+STEP3 (5812 header
-close unconfirmed by me) · 13619 customer/WO mismatch.
-
-CC-1 | 22:24Z | Holding on the 6 settlement lines fix. WAITING for Lead confirmation before building.
+CC-1 | 02:38Z | Moving to 5819 restoration now.
