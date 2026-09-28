@@ -2608,3 +2608,54 @@ rolled-back transaction, confirming every row is a genuine, unvoided, matching t
 count).
 
 — Claude
+
+---
+
+## AUTH-092
+
+issued_at: 2026-09-28T09:47:46.000Z
+scope: accounting.expenses UPDATE ONLY (voided_at/void_reason/voided_by_user_id, via the existing
+stampDocumentVoided() single writer only — no direct UPDATE, no INSERT, no DELETE), exactly the
+rows a deterministic (settlement document, total_amount_cents) clustering identifies as a
+cross-load duplicate of the same real purchase already counted by another live "R145 SETTL"-memo
+row for the same document — 79 clusters, 79 rows, $3,513.69, live-measured and dry-run-verified
+this round. Within each cluster: the "R145 SETTL"-memo row is kept (the current canonical
+AlwaysTrack-fed row, same precedent AUTH-076/078/080/082/090 already established and executed for
+this reconciliation class); the paired non-R145 row is voided, 1:1, never more others voided than
+there are R145 rows to supersede them. No journal_entry touched, no GL posting changed, no
+amount_cents changed on any surviving row — operating_company_id
+5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA) only.
+action: OWNER_AUTH_ID=AUTH-092 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc3-void-cross-load-duplicate-expenses.ts
+expires_at: 2026-09-28T15:47:46.000Z
+status: OPEN
+
+verify-alwaystrack-parity re-measured after AUTH-090's void run (this round, USMCA): 25 of 34
+in-scope documents still mismatched, EXPENSES dimension only. Live investigation (not assumed)
+found a SECOND, distinct duplicate-expense shape AUTH-090's (load_id, total_amount_cents)
+clustering could not catch: the SAME real purchase fed once by the R145 settlement bulk feed
+(2026-09-28 05:15:05Z) and once by an older per-fuel-transaction or manual-reissue path, landing on
+TWO DIFFERENT LOADS that both belong to the SAME document — e.g. settlement 5769's $67.84 DEF
+purchase (invoice 2870483) exists as expense row c222249d... on load 13498 ("R145 SETTL 5769
+$67.84...") AND as row a8a6b0cd... on load 13508 ("def purchase ... document created from fuel
+transaction e91dccc4...", source_fuel_transaction_id set) — same vendor invoice, same amount, same
+document, different load. AUTH-090's clustering required an exact load_id match, so cross-load
+pairs like this were invisible to it. This script clusters by document instead: the R145 row's own
+source_settlement_ref column gives its document directly; the other row's document comes from a
+load_number -> settlement_no map built once from every document in
+data/alwaystrack/settlements-truth-2026-09-13.json (the script refuses if any load is claimed by
+more than one document in that file, rather than guessing).
+
+Owner order (2026-09-28, verbatim, in chat, still in force): "THE PARITY BLOCKER — STOP WAITING ON
+CURSOR. Lane rule is SUSPENDED by owner order... FIX IT YOURSELF, add LANE-CROSS to the commit,
+ship your queued work." ROUND 133 P0 itself (this AUTH file's own claim-before-write law) was not
+suspended and still governs — this entry lands on main via a minimal, docs-only commit (no money
+path touched, so verify-alwaystrack-parity does not gate this specific push) BEFORE the void
+script's --apply run, exactly as every other AUTH this session has required.
+
+DRY_RUN=1 verified clean this round: unmapped_rows=21 (loads outside the 34 in-scope documents'
+own loads lists — left untouched, not this class), clusters=79, planned_void_count=79,
+planned_void_cents=351369, actually_voided=79 (stampDocumentVoided ran for real inside the
+rolled-back transaction, confirming every row is a genuine, unvoided, matching-signature row — not
+just a count).
+
+— Claude
