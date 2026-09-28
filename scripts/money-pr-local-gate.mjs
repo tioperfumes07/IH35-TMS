@@ -940,6 +940,18 @@ const LIVE_DOMAIN_GUARDS = [
       "apps/backend/src/lib/feature-flags/routes.ts",
     ],
   ],
+  // ROUND 195.1 (owner law, 2026-09-28) — "THE DELIVERY DATE OF THE LOAD IS THE PROJECTED INCOME
+  // DATE. Faro buys the invoice at delivery. There is no lag." Supersedes the 2026-06-17 lock that
+  // said the lag is never zero. Catches the next edit to receivable-lag.ts or
+  // projected-cash-date.ts that re-introduces a nonzero factored-load lag.
+  [
+    "verify-projected-cash-date-equals-delivery",
+    [
+      "apps/backend/src/dispatch/receivable-lag.ts",
+      "apps/backend/src/cash-flow/projected-cash-date.ts",
+      "apps/backend/src/cash-flow/cash-flow.service.ts",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {
