@@ -1,0 +1,6 @@
+{
+  "_comment": "ROUND 155.23/157-A item 6 fixed 13614 specifically (real destination CONLEY, GA per its signed settlement PDF Driver_Settlement_5818.pdf). Running the new guard against live data found the SAME copy-artifact defect (delivery stop is a literal copy of the pickup stop) on 6 MORE historical loads, discovered as a side effect of this fix, not yet individually corrected against their own real source documents. This is a genuine, wider pre-existing data-import defect, not invented debt. Fix each by reading its own real rate con / settlement document before removing it from this baseline -- never by silently zeroing its miles or guessing a destination from the mileage.",
+  "load_numbers": ["13610", "13612", "13613", "13615", "13619", "13541"],
+  "established": "2026-09-28",
+  "measured_at": "2026-09-28T11:15:00Z"
+}
