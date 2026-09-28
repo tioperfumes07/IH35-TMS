@@ -92,26 +92,35 @@ export async function correctOpenDriverBillMileage(
     throw new DriverBillVoidRefusedError(`driver_bills ${bill.id} has status='${bill.status}', not 'open' — refusing to correct a non-draft bill`);
   }
 
-  const linesRes = await client.query<{ id: string; settlement_id: string; line_type: string; approval_status: string | null }>(
+  // ROUND 155.12 FIX 4 — an open $0 bill can end up with ZERO live lines: a prior, unrelated
+  // cleanup voided its settlement_lines (real voided_at timestamps, confirmed live) without ever
+  // touching the parent driver_bills row, orphaning it at open/$0 with nothing live pointing at
+  // it. That is a DIFFERENT state from "no lines ever existed" and does not need a different
+  // safety story — the settlement/approval checks below apply identically to a wholly-voided line
+  // set (there is trivially nothing approved left to protect). Selects ALL lines (not just live
+  // ones) so the settlement_id can still be recovered from already-voided lines; only the
+  // currently-active ones get voided again below.
+  const linesRes = await client.query<{ id: string; settlement_id: string; line_type: string; approval_status: string | null; is_active: boolean }>(
     `
-      SELECT sl.id::text, sl.settlement_id::text, sl.line_type, sl.approval_status
+      SELECT sl.id::text, sl.settlement_id::text, sl.line_type, sl.approval_status, sl.is_active
         FROM driver_finance.settlement_lines sl
-       WHERE sl.source_driver_bill_id = $1::uuid AND sl.is_active = true
+       WHERE sl.source_driver_bill_id = $1::uuid
     `,
     [bill.id]
   );
   if (linesRes.rows.length === 0) {
-    throw new DriverBillVoidRefusedError(`driver_bills ${bill.id} has no live settlement_lines — nothing to correct through this path`);
+    throw new DriverBillVoidRefusedError(`driver_bills ${bill.id} has no settlement_lines at all (live or voided) — nothing to correct through this path`);
   }
   const settlementId = linesRes.rows[0]!.settlement_id;
   for (const line of linesRes.rows) {
-    if (line.approval_status === "approved") {
+    if (line.is_active && line.approval_status === "approved") {
       throw new DriverBillVoidRefusedError(`settlement_lines ${line.id} is already approval_status='approved' — refusing to void an approved line`);
     }
     if (line.settlement_id !== settlementId) {
       throw new DriverBillVoidRefusedError(`bill ${bill.id}'s lines span more than one settlement — refusing an ambiguous correction`);
     }
   }
+  const liveLines = linesRes.rows.filter((l) => l.is_active);
   const settlementRes = await client.query<{ status: string }>(
     `SELECT status::text FROM driver_finance.driver_settlements WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
     [settlementId, input.operatingCompanyId]
@@ -127,7 +136,7 @@ export async function correctOpenDriverBillMileage(
     [bill.id, input.reason, input.actorUserId]
   );
   const voidedLineIds: string[] = [];
-  for (const line of linesRes.rows) {
+  for (const line of liveLines) {
     await client.query(
       `UPDATE driver_finance.settlement_lines SET is_active = false, voided_at = now(), void_reason = $2, voided_by_user_id = $3::uuid WHERE id = $1::uuid AND is_active = true`,
       [line.id, input.reason, input.actorUserId]

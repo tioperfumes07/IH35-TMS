@@ -2871,3 +2871,35 @@ expires_at: 2026-09-28T16:40:00.000Z
 status: OPEN
 
 — CC-2
+
+---
+
+## AUTH-097
+issued_at: 2026-09-28T11:05:00.000Z
+scope: driver_finance.driver_bills + driver_finance.settlement_lines, via the existing
+correctOpenDriverBillMileage engine (void-open-driver-bill.service.ts) ONLY — void the 2 orphaned
+$0.00 open bills (13618, 13621) and mint one real, correctly-priced replacement each, in the same
+transaction as the void. No new GL math, no new posting logic, same INSERT shape the engine already
+uses. Real inputs only: miles_shortest (1348.0 / 1958.9, both already captured on these loads) x
+the driver's own active pay rate (0.48/mi, short_miles basis, confirmed live for both drivers,
+identical rate) = loadedPayCents; no deadhead on either load (miles_deadhead=0.0 confirmed live).
+operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA) only.
+action: OWNER_AUTH_ID=AUTH-097 npx tsx scripts/ops/2026-09-28-fix4-void-remint-13618-13621.mjs
+expires_at: 2026-09-28T17:05:00.000Z
+status: DONE — executed live 2026-09-28T11:07:05Z-11:07:07Z
+
+ROUND 155.12 FIX 4: "13618 and 13621 carry $0.00 gross driver bills — make the mint path REFUSE a
+zero-gross bill, then void-and-remint those two. Do not UPDATE the existing rows." Root cause found
+live, not assumed: both loads already had real miles_shortest AND an active driver_pay_rates row —
+the $0 was stale, not a genuine pricing gap. An EARLIER, unrelated cleanup (2026-09-28T03:28:19Z,
+timestamped, real, not invented) had voided both bills' settlement_lines without ever touching the
+parent driver_bills row, orphaning it at open/$0 with nothing live pointing at it.
+correctOpenDriverBillMileage's own guard used to require at least one LIVE settlement_line to exist
+before it would correct a bill -- extended in the same PR (apps/backend/src/driver-finance/
+void-open-driver-bill.service.ts) to recognize an orphaned-but-fully-voided line set as equally
+safe to correct (nothing approved is left to protect either way; the settlement-must-be-open and
+no-approved-line safety checks apply unchanged). RESULT, live-verified: 13618 old bill voided
+($0.00) -> new bill open, $647.04 (1348.0mi x $0.48). 13621 old bill voided ($0.00) -> new bill
+open, $940.27 (1958.9mi x $0.48, rounded).
+
+— CC-1
