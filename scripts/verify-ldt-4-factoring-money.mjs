@@ -7,7 +7,9 @@
 //   SOURCE: "Packet" card with real attachment chips (no "upload under Documents" text)
 //   SOURCE: Submit disabled until POD
 //   SOURCE: .ldt-* palette classes
-//   LIVE (degrade-safe): advance + reserve + fee reconcile to purchased amount (advance_amount + reserve_amount + factor_fee = invoice_total)
+//   LIVE (degrade-safe): advance + reserve + fee + wire + cash_rsv reconcile to purchased amount
+//     (advance_amount + reserve_amount + factor_fee + wire_fee + cash_rsv = invoice_total; Lead
+//     ROUND 143 STEP 1 — 6 of 89 USMCA advances carry a Cash Rsv leg the prior identity omitted)
 //   LIVE (degrade-safe): A/R row unchanged after submission (no derecognition — invoice.status stays 'sent', not 'factored')
 //   SELFTEST: poisons the reconciliation check → FAIL
 //
@@ -131,7 +133,8 @@ async function verifyLive() {
     // "the guard must reconcile ... for ALL 21 R-159 rows consistently".
     const advRes = await client.query(`
       SELECT fa.id, fa.display_id, fa.invoice_total_cents, fa.advance_amount_cents, fa.reserve_amount_cents,
-             fa.factor_fee_cents, fa.wire_fee_cents, fa.advance_rate_pct, fa.reserve_pct, fa.factor_fee_pct, fa.status
+             fa.factor_fee_cents, fa.wire_fee_cents, fa.cash_rsv_cents, fa.advance_rate_pct, fa.reserve_pct,
+             fa.factor_fee_pct, fa.status
       FROM accounting.factoring_advances fa
       WHERE fa.operating_company_id = $1 AND fa.status <> 'voided'
     `, [USMCA_COMPANY_ID]);
@@ -155,17 +158,22 @@ async function verifyLive() {
       // wire_fee_cents is NULL for any advance funded before this column existed and for any
       // advance with no wire fee at all — both cases contribute 0, never a NULL-poisoned sum.
       const wireFee = Number(adv.wire_fee_cents ?? 0);
-      const sum = advanceAmount + reserveAmount + factorFee + wireFee;
+      // cash_rsv_cents (Lead ROUND 143 STEP 1): 6 of 89 USMCA advances carry a Cash Rsv leg in the
+      // owner's own Faro reconciliation that this identity omitted, leaving those 6 off by exactly
+      // their cash-reserve amount. Omitting it is the defect, not a rounding gap — do not baseline
+      // or exclude these rows, the math itself was incomplete.
+      const cashRsv = Number(adv.cash_rsv_cents ?? 0);
+      const sum = advanceAmount + reserveAmount + factorFee + wireFee + cashRsv;
 
-      // Reconciliation: advance + reserve + fee + wire should equal invoice_total (purchased amount)
+      // Reconciliation: advance + reserve + fee + wire + cash_rsv should equal invoice_total (purchased amount)
       // Allow 1 cent tolerance for rounding
       if (Math.abs(sum - invoiceTotal) > 1) {
         violations.push(
-          `Advance ${adv.display_id ?? adv.id}: advance(${advanceAmount}) + reserve(${reserveAmount}) + fee(${factorFee}) + wire(${wireFee}) = ${sum} ≠ invoice_total(${invoiceTotal})`
+          `Advance ${adv.display_id ?? adv.id}: advance(${advanceAmount}) + reserve(${reserveAmount}) + fee(${factorFee}) + wire(${wireFee}) + cash_rsv(${cashRsv}) = ${sum} ≠ invoice_total(${invoiceTotal})`
         );
-        console.log(`  ✗ Advance ${adv.display_id ?? adv.id}: advance=${advanceAmount} reserve=${reserveAmount} fee=${factorFee} wire=${wireFee} sum=${sum} invoice_total=${invoiceTotal}`);
+        console.log(`  ✗ Advance ${adv.display_id ?? adv.id}: advance=${advanceAmount} reserve=${reserveAmount} fee=${factorFee} wire=${wireFee} cash_rsv=${cashRsv} sum=${sum} invoice_total=${invoiceTotal}`);
       } else {
-        console.log(`  Advance ${adv.display_id ?? adv.id}: advance=${advanceAmount} reserve=${reserveAmount} fee=${factorFee} wire=${wireFee} sum=${sum} invoice_total=${invoiceTotal} ✓`);
+        console.log(`  Advance ${adv.display_id ?? adv.id}: advance=${advanceAmount} reserve=${reserveAmount} fee=${factorFee} wire=${wireFee} cash_rsv=${cashRsv} sum=${sum} invoice_total=${invoiceTotal} ✓`);
       }
     }
     if (violations.length > 0) {
