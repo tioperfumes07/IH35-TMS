@@ -59,6 +59,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { transitionDispatchLoad } from "../../api/dispatch";
 import { formatMoneyCents } from "../../components/dispatch/constants";
 import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
+import { LOCKED_BORDER, LOCKED_TEXT_SECONDARY } from "../../design/locked-baseline-tokens";
 import {
   getTruckLine,
   listLoadExceptionReasons,
@@ -136,7 +137,7 @@ const AVAILABLE_ROW_TINT = "color-mix(in srgb, #16A34A 4%, #fff)";
 // ROUND-20.4 -- 3px left spine per row, colored by the unit's current trip leg, so a unit's row is
 // identifiable at a glance without reading its text. No load (including the available-truck rows,
 // which never carry r.load) gets the neutral border color, never a semantic one.
-const ROW_SPINE_NO_LOAD = "#C7D2DC";
+const ROW_SPINE_NO_LOAD = "#E5E7EB";
 const ROW_SPINE_BY_TRIP_TYPE: Record<string, string> = { NB: "#1f2a44", TR: "#b45309", SB: "#475569" };
 function rowSpineColor(tripType: string | null | undefined): string {
   return (tripType && ROW_SPINE_BY_TRIP_TYPE[tripType]) || ROW_SPINE_NO_LOAD;
@@ -500,7 +501,7 @@ function TruckLineTrack({
     // string (the guard checks the whole file for it).
     return (
       <div className="relative h-[62px]" data-testid={`truck-line-track-empty-${row.unit_id}`}>
-        <div className="absolute left-0 right-0 top-[41px] h-[3px] rounded bg-[#C7D2DC]" />
+        <div className="absolute left-0 right-0 top-[41px] h-[3px] rounded bg-[#E5E7EB]" />
         <span className="truck-line-v4-sub absolute left-2 top-6 text-[#6B7280]">— unexpected: this row has no load data</span>
       </div>
     );
@@ -535,7 +536,7 @@ function TruckLineTrack({
         <WarehouseDockSvg roof="#475569" />
       </div>
 
-      <div className="absolute left-0 right-0 top-[41px] h-[3px] rounded bg-[#C7D2DC]" />
+      <div className="absolute left-0 right-0 top-[41px] h-[3px] rounded bg-[#E5E7EB]" />
       {v7Reached >= 0 ? (
         <div className="absolute top-[41px] h-[3px] rounded" style={{ left: 0, width: `${reachedPct}%`, background: GREEN }} />
       ) : null}
@@ -574,11 +575,11 @@ function TruckLineTrack({
 
               {isOtherOpen ? (
                 <div
-                  className="absolute z-50 rounded-md border border-[#C7D2DC] bg-white text-xs shadow-lg"
+                  className="absolute z-50 rounded-md border border-[#E5E7EB] bg-white text-xs shadow-lg"
                   style={{ bottom: 78, left: "50%", transform: "translateX(-50%)", width: "min(260px,64vw)" }}
                   data-testid={`truck-line-status-popover-${row.unit_id}`}
                 >
-                  <div className="flex h-[26px] items-center justify-between bg-[rgb(228,234,241)] px-2 font-semibold text-[#374151]">
+                  <div className="flex h-[26px] items-center justify-between bg-[rgb(228,234,241)] px-2 font-semibold text-[#1F2A44]">
                     <span className="truck-line-v4-cap">{row.unit_number} · {row.load?.load_number} · Exception</span>
                     <button type="button" onClick={onCloseOther}>✕</button>
                   </div>
@@ -609,7 +610,7 @@ function TruckLineTrack({
                   {otherReasonId ? (
                     <div className="flex items-center justify-between border-t border-[#E5E7EB] p-1.5">
                       <input
-                        className="h-6 flex-1 rounded border border-[#C7D2DC] px-1.5"
+                        className="h-6 flex-1 rounded border border-[#E5E7EB] px-1.5"
                         placeholder="Note…"
                         value={otherNote}
                         onChange={(e) => onNoteChange(e.target.value)}
@@ -661,7 +662,7 @@ function TruckLineTrack({
                 cursor: isNext ? "pointer" : "default",
               }}
             />
-            <span className="truck-line-v4-cap absolute whitespace-nowrap text-[#374151]" style={{ top: 54, left: "50%", transform: "translateX(-50%)" }}>
+            <span className="truck-line-v4-cap absolute whitespace-nowrap text-[#1F2A44]" style={{ top: 54, left: "50%", transform: "translateX(-50%)" }}>
               <span className="truck-line-v4-cap-full">{st.name}</span>
               <span className="truck-line-v4-cap-narrow">{NARROW_STATION_CAPTIONS[st.name] ?? st.name}</span>
             </span>
@@ -934,13 +935,13 @@ export function TruckLineBoard({
           height: 26px;
           padding: 0 10px;
           background: rgb(228,234,241);
-          border-bottom: 1px solid #C7D2DC;
+          border-bottom: 1px solid ${LOCKED_BORDER};
           font-weight: 600;
-          color: #374151;
+          color: ${LOCKED_TEXT_SECONDARY};
         }
         .truck-line-v4-row {
           padding: 6px 10px 6px 13px;
-          border-bottom: 1px solid #C7D2DC;
+          border-bottom: 1px solid ${LOCKED_BORDER};
           min-height: 88px;
         }
         /* ROUND-20.4 -- row rules the owner can actually see: an every-other-row tint and a hover
@@ -1032,7 +1033,7 @@ export function TruckLineBoard({
       `}</style>
 
       {!catalogReady ? (
-        <div className="mb-2 rounded border border-[#C7D2DC] bg-[#F4F7FA] px-3 py-1.5 text-xs text-[#6B7280]" data-testid="truck-line-catalog-pending">
+        <div className="mb-2 rounded border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-1.5 text-xs text-[#6B7280]" data-testid="truck-line-catalog-pending">
           Reason catalog not yet available — "Other" will list reasons as soon as it's published.
         </div>
       ) : null}
@@ -1042,7 +1043,7 @@ export function TruckLineBoard({
         </div>
       ) : null}
 
-      <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#374151]" data-testid="truck-line-top-bar">
+      <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#1F2A44]" data-testid="truck-line-top-bar">
         <span>
           All trucks (<b>{topBarStats.allTrucks}</b>)
         </span>
@@ -1069,13 +1070,13 @@ export function TruckLineBoard({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Truck, load #, customer, stop city…"
-          className="h-7 w-64 rounded border border-[#C7D2DC] px-2 text-xs"
+          className="h-7 w-64 rounded border border-[#E5E7EB] px-2 text-xs"
           data-testid="truck-line-search"
         />
         <span className="ml-2 text-xs text-[#6B7280]">{rowCount} rows</span>
       </div>
 
-      <div className="rounded border border-[#C7D2DC] bg-white" data-testid="truck-line-board-v4">
+      <div className="rounded border border-[#E5E7EB] bg-white" data-testid="truck-line-board-v4">
         <div className="truck-line-v4-header">
           <TruckLineSortHeader label="Truck" sortKey="truck" active={sort?.key === "truck" ? sort.dir : null} onClick={cycleSort} />
           <TruckLineSortHeader label="Load" sortKey="load" active={sort?.key === "load" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-load-header" />
@@ -1099,7 +1100,7 @@ export function TruckLineBoard({
             return (
               <div key={section} data-testid={`truck-line-section-${section}`}>
                 <div
-                  className="truck-line-v4-unit border-b border-[#C7D2DC] bg-[#F4F7FA] px-2.5 py-1 font-semibold uppercase text-[#4B5563]"
+                  className="truck-line-v4-unit border-b border-[#E5E7EB] bg-[#F7F8FA] px-2.5 py-1 font-semibold uppercase text-[#4B5563]"
                   style={{ fontSize: 11, letterSpacing: "0.02em" }}
                   data-testid={`truck-line-section-header-${section}`}
                 >
@@ -1125,7 +1126,7 @@ export function TruckLineBoard({
                           data-unit-id={g.unit_id}
                         >
                           <div>
-                            <div className="truck-line-v4-unit font-semibold text-[#1F2937]">{showTruck ? r.unit_number : ""}</div>
+                            <div className="truck-line-v4-unit font-semibold text-[#0F1219]">{showTruck ? r.unit_number : ""}</div>
                             {showTruck ? <div className="truck-line-v4-sub text-[#6B7280]">available truck</div> : null}
                           </div>
                           <div className="truck-line-v4-load-cell">
@@ -1174,7 +1175,7 @@ export function TruckLineBoard({
                       >
                         <div>
                           {showTruck ? (
-                            <div className="truck-line-v4-unit font-semibold text-[#1F2937]">{g.unit_number}</div>
+                            <div className="truck-line-v4-unit font-semibold text-[#0F1219]">{g.unit_number}</div>
                           ) : (
                             <div className="truck-line-v4-sub text-[#6B7280]" aria-hidden>↳</div>
                           )}
@@ -1187,7 +1188,7 @@ export function TruckLineBoard({
                         >
                           {r.load ? (
                             <>
-                              <div className="truck-line-v4-unit font-semibold text-[#1F2937]">{r.load.load_number}</div>
+                              <div className="truck-line-v4-unit font-semibold text-[#0F1219]">{r.load.load_number}</div>
                               <div className="truck-line-v4-sub text-[#6B7280]">{r.load.customer_name ?? "—"}</div>
                               <div className="truck-line-v4-sub text-[#6B7280]">
                                 Net {(() => {
@@ -1201,12 +1202,12 @@ export function TruckLineBoard({
                           )}
                         </div>
                         <div className="truck-line-v4-pu-cell">
-                          <div className="truck-line-v4-sub text-[#1F2937]">
+                          <div className="truck-line-v4-sub text-[#0F1219]">
                             {formatLocationLabel({ city: r.load?.pickup.city ?? null, state: r.load?.pickup.state ?? null })}
                           </div>
                         </div>
                         <div className="truck-line-v4-del-cell">
-                          <div className="truck-line-v4-sub text-[#1F2937]">
+                          <div className="truck-line-v4-sub text-[#0F1219]">
                             {formatLocationLabel({ city: r.load?.delivery.city ?? null, state: r.load?.delivery.state ?? null })}
                           </div>
                         </div>
@@ -1223,7 +1224,7 @@ export function TruckLineBoard({
                           )}
                         </div>
                         <div className="truck-line-v4-tour-cell" data-testid={`truck-line-tour-${g.unit_id}`}>
-                          <span className="truck-line-v4-sub font-semibold text-[#1F2937]">{tourSafe ?? "—"}</span>
+                          <span className="truck-line-v4-sub font-semibold text-[#0F1219]">{tourSafe ?? "—"}</span>
                         </div>
                         <div className="truck-line-v4-signal-cell">
                           {live ? (
@@ -1288,8 +1289,8 @@ export function TruckLineBoard({
       </div>
 
       {stampPrompt ? (
-        <div className="fixed right-6 top-[118px] z-50 w-[350px] rounded-md border border-[#C7D2DC] bg-white text-xs shadow-lg" data-testid="truck-line-stamp-popover">
-          <div className="flex h-[30px] items-center justify-between bg-[rgb(228,234,241)] px-2.5 font-semibold text-[#374151]">
+        <div className="fixed right-6 top-[118px] z-50 w-[350px] rounded-md border border-[#E5E7EB] bg-white text-xs shadow-lg" data-testid="truck-line-stamp-popover">
+          <div className="flex h-[30px] items-center justify-between bg-[rgb(228,234,241)] px-2.5 font-semibold text-[#1F2A44]">
             <span>
               {stampPrompt.row.unit_number} · {stampPrompt.row.load?.load_number} · {stampPrompt.label}
             </span>
@@ -1311,7 +1312,7 @@ export function TruckLineBoard({
             ) : null}
           </div>
           <div className="flex justify-end gap-1.5 border-t border-[#E5E7EB] p-2">
-            <button type="button" className="h-7 rounded border border-[#C7D2DC] px-2.5" onClick={() => { setStampPrompt(null); setStampError(null); }}>
+            <button type="button" className="h-7 rounded border border-[#E5E7EB] px-2.5" onClick={() => { setStampPrompt(null); setStampError(null); }}>
               Cancel
             </button>
             <button

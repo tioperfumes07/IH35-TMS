@@ -80,7 +80,15 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
         `
           SELECT
             s.id            AS settlement_id,
-            s.source_document_ref AS settlement_number,
+            -- ROUND 206 (owner, dispatch board Pre-Settlement column empty on a real, open,
+            -- linked settlement): this only selected source_document_ref, which stays NULL until
+            -- the owner sets the real AlwaysTrack number (setSettlementSourceDocumentRef) -- a
+            -- brand-new settlement minted through the sanctioned allocator (e.g. P-0018) has no
+            -- source_document_ref yet by design, so the column silently rendered nothing even
+            -- though the settlement is real, open, and linked. Same P-series-stays convention
+            -- already used by SettlementNumberBox.tsx and TruckLineBoard.tsx's Tour # column:
+            -- show the provisional P-number until a real number replaces it, never blank.
+            COALESCE(s.source_document_ref, s.display_id) AS settlement_number,
             s.driver_id,
             trim(both from concat_ws(' ', d.first_name, d.last_name)) AS driver_name,
             s.first_load_id,
