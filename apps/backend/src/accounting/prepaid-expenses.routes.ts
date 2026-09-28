@@ -21,6 +21,10 @@ import { requireVoidCancelExecutorWired } from "../lib/authz/void-cancel-authz.j
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { AmortizationPostingError } from "./amortization-posting/amortization-posting.math.js";
 import { postPrepaidPurchase, type PrepaidPurchasePostingResult } from "./amortization-posting/amortization-posting.service.js";
+import {
+  reinstateDocumentThenVoidReversal,
+  ReinstateDocumentError,
+} from "./reinstate-document.service.js";
 
 const PREPAID_POST_FLAG = "PREPAID_EXPENSES_POST_ENABLED";
 
@@ -690,6 +694,64 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
           amortization_reversed_line_count: amortizationReversal.reversed_line_count,
         };
       });
+    }
+  );
+
+  // R-191 — universal unvoid counterpart to prepaid /void.
+  app.post(
+    "/api/v1/accounting/prepaid-expenses/:id/unvoid",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+
+      const pp = detailParamsSchema.safeParse(req.params);
+      if (!pp.success) return validationError(reply, pp.error);
+      const qp = companyQuerySchema.safeParse(req.query ?? {});
+      if (!qp.success) return validationError(reply, qp.error);
+      const body = z.object({ reason: z.string().trim().min(1).max(500) }).safeParse(req.body ?? {});
+      if (!body.success) return validationError(reply, body.error);
+
+      const oci = qp.data.operating_company_id;
+      const allowed = await withCompanyScope(user.uuid, oci, async (client) =>
+        requireVoidCancelExecutorWired(reply, {
+          role: String(user.role ?? ""),
+          client,
+          permissionKey: "expense.void",
+          operatingCompanyId: oci,
+          userUuid: user.uuid,
+        })
+      );
+      if (!allowed) return;
+
+      try {
+        const result = await reinstateDocumentThenVoidReversal(
+          (fn) =>
+            withCompanyScope(user.uuid, oci, async (client) => {
+              await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oci]);
+              return fn(client as never);
+            }),
+          {
+            operatingCompanyId: oci,
+            type: "prepaid_purchase",
+            id: pp.data.id,
+            reason: body.data.reason,
+            actor: { userId: String(user.uuid), role: String(user.role ?? "") },
+          }
+        );
+        return {
+          prepaid_asset_id: pp.data.id,
+          reinstated_at: result.reinstatedAt,
+          reinstated_from_void_je_id: result.reinstatedFromVoidJeId,
+          status: result.restoreStatus,
+        };
+      } catch (error) {
+        if (error instanceof ReinstateDocumentError) {
+          const code = error.code.includes("not_found") ? 404 : error.code.includes("not_void") ? 409 : 400;
+          return reply.code(code).send({ error: error.code, message: error.message });
+        }
+        throw error;
+      }
     }
   );
 }

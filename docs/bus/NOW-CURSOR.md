@@ -1,19 +1,23 @@
-# NOW-CURSOR — 2026-09-28 ROUND 190
+# NOW-CURSOR — 2026-09-28 ROUND 191
 
-## CURRENT — ROUND 190.2 FIRST (owner order)
-**DONE this turn:** acceptMatchWithResolveDifference now stamps `categorized_by_user_id`,
-`categorized_at`, `updated_at` in the same UPDATE as the match clear. Backfilled 108 USMCA
-bank rows (Lead measured 76 at cut; more relay accepts landed after) to actor
-`e4117991-d2c0-406d-8cda-74e98d95bccd` from `bank_match.accepted` audit.
-`verify-control-totals` **PASS** (suggest-only check = 0).
+## CURRENT — UNIVERSAL UNVOID / REINSTATE ENGINE (item 2)
+**IN FLIGHT this turn:** reinstateDocument dispatcher + stampDocumentReinstated parity + /unvoid routes.
+- REINSTATE_DOCUMENT_FAMILIES: bill, bill_payment, customer_payment, credit_memo, prepaid_purchase + the seven void families
+- reinstateDocumentThenVoidReversal (Option-1 void of reversing JE)
+- /unvoid beside /void: bills, bill_payments, expenses, invoices, payments, credit_memos, prepaid
+- Factoring refused by default (AUTH-113)
+- AUTH-118 OPEN for live proof on check #1001 via reinstateDocument(expense)
 
-## ROUND 190 QUEUE (after 190.2)
-1. Bulk accept every counterparty through acceptMatchWithResolveDifference (AUTH-112 / runner)
-2. Resolve section fully wired (difference / write-off / partial / 1→many)
-3. Check Creator (registry 0 LIVE — owner confirmed CREATE)
-4. Universal unvoid/reinstate engine
+## ROUND 191 QUEUE
+1. G-16 CHECK CREATOR — DONE (#23037 / AUTH-117)
+2. **Universal unvoid/reinstate** — THIS TURN (shipping)
+3. Resolve fully wired
+4. Bulk accept remaining counterparties (812 unmatched) — report before/after/Resolve
 5. G-13 $34,210 no-load · G-14 invoice 87 / load 13604
 6. Guard cleanup from d4985591bb
 
+## HARD LINE
+BEFORE touching factoring: read AUTH-113. Twins FAC-2026-00091..~00132 already live — do not repost/void/fix.
+
 ## COORD
-USMCA only · Never POST Book Load · No QBO write-back · merge freeze VOID · push normally
+USMCA only · Never POST Book Load · No QBO write-back · push normally

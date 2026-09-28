@@ -3643,3 +3643,39 @@ that produced Rafael's own $0/no-lines 13595, untouched by this run).
 GUARD: verify-close-recalculates-bills-from-real-mileage.mjs -- open, tracked separately.
 
 — CC-2
+
+## AUTH-117
+issued_at: 2026-09-28T17:20:00.000Z
+scope: Round 191 G-16 Check Creator LIVE proof — USMCA only
+  (5c854333-6ea5-4faa-af31-67cb272fef80). Owner order R-191 item 1: banking.check_number_registry
+  was 0; company could not issue a check. Authorize ONE create→void→unvoid→void walk through
+  createCheck / voidCheck / unvoidCheck / upsertCheckStockSettings for BoA USMCA FREIGHT
+  (e83028a5-dcda-4233-b660-5b9923b3d39c), check #1001, vendor AMPARTS, $1.00 maintenance line.
+  Leaves the proof check VOIDED same session (seat-fixtures law). Seeds check_stock_settings
+  next_check_number=1001 (owner-typed starting number — registry was empty, never a mid-sequence guess).
+action: OWNER_AUTH_ID=AUTH-117 DATABASE_URL=<prod> npx tsx scripts/ops/r191-g16-check-creator-live-proof.ts
+expires_at: 2026-09-29T05:00:00.000Z
+status: DONE -- executed live 2026-09-28. createCheck #1001 AMPARTS $1.00 posted
+  (expense 9b5fcc6c, JE 0584e631); registry row issued; stock advanced 1001→1002; voidCheck
+  (reversal JE 267a4a86); unvoidCheck stamped reinstated_at + reinstate_reason; final voidCheck
+  left voided (seat-fixtures law). registry=1 voided row; stock next=1002.
+
+— Cursor (R-191 G-16)
+
+## AUTH-118
+issued_at: 2026-09-28T17:50:00.000Z
+scope: Round 191 item 2 — Universal unvoid / reinstate engine LIVE proof — USMCA only
+  (5c854333-6ea5-4faa-af31-67cb272fef80). Owner order: void path exists with no counterpart;
+  reinstated_* columns already on bills/bill_payments — bring writers to parity. Authorize ONE
+  reinstate→re-void walk through reinstateDocument (expense family) on the AUTH-117 proof check
+  #1001 (expense 9b5fcc6c-6d8c-4e14-83ab-49c79c9132e9), currently voided. Proves the universal
+  dispatcher + stampDocumentReinstated reinstated_* write + Option-1 void of reversing JE.
+  Leaves the proof check VOIDED same session (seat-fixtures law). Does NOT touch factoring
+  (AUTH-113 hard line).
+action: OWNER_AUTH_ID=AUTH-118 DATABASE_URL=<prod> npx tsx scripts/ops/r191-universal-unvoid-live-proof.ts
+expires_at: 2026-09-29T06:00:00.000Z
+status: OPEN
+
+— Cursor (R-191 universal unvoid)
+
+---

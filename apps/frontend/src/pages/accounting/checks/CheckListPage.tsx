@@ -70,9 +70,14 @@ export function CheckListPage() {
       title="Checks"
       subtitle="All checks"
       createControl={
-        <Link to="/accounting/checks/new">
-          <Button variant="primary">+ Check</Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link to="/accounting/checks/print">
+            <Button variant="tertiary">Print checks</Button>
+          </Link>
+          <Link to="/accounting/checks/new">
+            <Button variant="primary">+ Check</Button>
+          </Link>
+        </div>
       }
     >
       {!companyId ? (

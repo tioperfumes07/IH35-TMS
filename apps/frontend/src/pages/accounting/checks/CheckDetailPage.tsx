@@ -12,7 +12,7 @@ import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal"
 import { VoidedBanner } from "../../../components/accounting/VoidedBanner";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { formatDateUS } from "../../../lib/formatDate";
-import { getCheck, voidCheckApi, type CheckDetailLine } from "../../../api/checks";
+import { getCheck, voidCheckApi, unvoidCheckApi, type CheckDetailLine } from "../../../api/checks";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { MoreActionsMenu } from "../../../components/shared/MoreActionsMenu";
 
@@ -28,6 +28,7 @@ export function CheckDetailPage() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [voidOpen, setVoidOpen] = useState(false);
+  const [unvoidBusy, setUnvoidBusy] = useState(false);
 
   const query = useQuery({
     queryKey: ["checks", "detail", companyId, id],
@@ -105,6 +106,28 @@ export function CheckDetailPage() {
               onSelect: () => navigate(`/accounting/audit-trail?source_type=expense&source_id=${check.id}`),
             },
             { key: "void", label: isVoided ? "Voided" : "Void", disabled: isVoided, onSelect: () => setVoidOpen(true) },
+            {
+              key: "unvoid",
+              label: unvoidBusy ? "Reinstating…" : "Unvoid / reinstate",
+              disabled: !isVoided || unvoidBusy,
+              onSelect: () => {
+                void (async () => {
+                  setUnvoidBusy(true);
+                  try {
+                    await unvoidCheckApi(companyId, check.id, "Owner reinstate via Check detail");
+                    pushToast({ kind: "success", message: "Check reinstated." });
+                    await queryClient.invalidateQueries({ queryKey: ["checks"] });
+                  } catch (err) {
+                    pushToast({
+                      kind: "error",
+                      message: err instanceof Error ? err.message : "Could not reinstate this check.",
+                    });
+                  } finally {
+                    setUnvoidBusy(false);
+                  }
+                })();
+              },
+            },
           ]}
         />
       }

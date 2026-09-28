@@ -19,6 +19,10 @@ import { nextExpenseDisplayId } from "./display-id.js";
 import { parseOperatorDocumentNumber, suggestFromLastSaved } from "../lib/qbo-custom-document-number.js";
 import { buildListSearchClause, expenseListSearchFields } from "../lib/list-search/build-list-search.js";
 import { cascadeVoidChildren } from "./cascade-void-engine.service.js";
+import {
+  reinstateDocumentThenVoidReversal,
+  ReinstateDocumentError,
+} from "./reinstate-document.service.js";
 
 export const EXPENSE_GL_POSTING_FLAG_KEY = "EXPENSE_GL_POSTING_ENABLED";
 
@@ -1769,6 +1773,48 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       return reply.code(200).send({ expense_id: expenseId, status: "void", reversing_journal_entry_id: voided.reversingJeId });
     } catch (err) {
       if (err instanceof PostingEngineError && err.code === "PERIOD_LOCKED") return reply.code(409).send({ error: "period_locked" });
+      throw err;
+    }
+  });
+
+  // R-191 — universal unvoid counterpart to /void. Clears void stamps + reinstated_*; voids the
+  // reversing JE via Option-1 so the original expense JE stands alone again.
+  app.post("/api/v1/expenses/:expenseId/unvoid", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const params = z.object({ expenseId: z.string().uuid() }).safeParse(req.params ?? {});
+    if (!params.success) return reply.code(400).send({ error: "validation_error" });
+    const body = z.object({ operating_company_id: z.string().uuid(), reason: z.string().trim().min(1) }).safeParse(req.body ?? {});
+    if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
+    const oci = body.data.operating_company_id;
+    if (!canVoidCancel(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden_owner_or_accountant_only" });
+
+    try {
+      const result = await reinstateDocumentThenVoidReversal(
+        (fn) =>
+          withCompanyScope(user.uuid, oci, async (client) => {
+            await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [oci]);
+            return fn(client as never);
+          }),
+        {
+          operatingCompanyId: oci,
+          type: "expense",
+          id: params.data.expenseId,
+          reason: body.data.reason,
+          actor: { userId: String(user.uuid), role: String(user.role ?? "") },
+        }
+      );
+      return reply.code(200).send({
+        expense_id: params.data.expenseId,
+        reinstated_at: result.reinstatedAt,
+        reinstated_from_void_je_id: result.reinstatedFromVoidJeId,
+        status: result.restoreStatus,
+      });
+    } catch (err) {
+      if (err instanceof ReinstateDocumentError) {
+        const code = err.code.includes("not_found") ? 404 : err.code.includes("not_void") ? 409 : 400;
+        return reply.code(code).send({ error: err.code, message: err.message });
+      }
       throw err;
     }
   });

@@ -3,7 +3,8 @@
   "fingerprints": [
     "apps/frontend/src/pages/accounting/AccountingAuditTrailPage.tsx::staged.draft.accountId",
     "apps/frontend/src/pages/accounting/ExpenseCategoryMapPage.tsx::form.category_kind",
-    "apps/frontend/src/pages/accounting/ReconciliationWorkspacePage.tsx::effectiveAccountId"
+    "apps/frontend/src/pages/accounting/ReconciliationWorkspacePage.tsx::effectiveAccountId",
+    "apps/frontend/src/pages/accounting/checks/CheckPrintPage.tsx::bankAccountId"
   ],
-  "measured_at": "2026-09-24T00:30:00Z"
+  "measured_at": "2026-09-28T17:30:00Z"
 }

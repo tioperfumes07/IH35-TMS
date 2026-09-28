@@ -23,6 +23,10 @@ import {
   voidBill,
   voidBillPayment,
 } from "./bills.service.js";
+import {
+  reinstateDocumentThenVoidReversal,
+  ReinstateDocumentError,
+} from "./reinstate-document.service.js";
 import { nextBillDisplayId } from "./display-id.js";
 import {
   DuplicateDocumentNumberError,
@@ -697,6 +701,55 @@ export async function registerBillsRoutes(app: FastifyInstance) {
     }
   });
 
+  app.post("/api/v1/accounting/bills/:id/unvoid", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const body = voidBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+
+    const allowed = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+      requireVoidCancelExecutorWired(reply, {
+        role: String(user.role ?? ""),
+        client,
+        permissionKey: "bill.void",
+        operatingCompanyId: query.data.operating_company_id,
+        userUuid: user.uuid,
+      })
+    );
+    if (!allowed) return;
+    await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
+
+    try {
+      const result = await reinstateDocumentThenVoidReversal(
+        (fn) =>
+          withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+            await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+              query.data.operating_company_id,
+            ]);
+            return fn(client as never);
+          }),
+        {
+          operatingCompanyId: query.data.operating_company_id,
+          type: "bill",
+          id: params.data.id,
+          reason: body.data.reason,
+          actor: { userId: String(user.uuid), role: String(user.role ?? "") },
+        }
+      );
+      return { ok: true, reinstated_at: result.reinstatedAt, reinstated_from_void_je_id: result.reinstatedFromVoidJeId };
+    } catch (error) {
+      if (error instanceof ReinstateDocumentError) {
+        const code = error.code.includes("not_found") ? 404 : error.code.includes("not_void") ? 409 : 400;
+        return reply.code(code).send({ error: error.code, message: error.message });
+      }
+      throw error;
+    }
+  });
+
   app.post("/api/v1/accounting/bill-payments/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
@@ -730,6 +783,59 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       if (message === "bill_payment_not_found") return reply.code(404).send({ error: message });
       if (message === "bill_payment_already_voided" || message === "bill_not_found") return reply.code(409).send({ error: message });
       if (message === "bank_account_not_found_for_payment") return reply.code(409).send({ error: message });
+      throw error;
+    }
+  });
+
+  app.post("/api/v1/accounting/bill-payments/:id/unvoid", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const body = voidBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+
+    const allowed = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+      requireVoidCancelExecutorWired(reply, {
+        role: String(user.role ?? ""),
+        client,
+        permissionKey: "bill_payment.void",
+        operatingCompanyId: query.data.operating_company_id,
+        userUuid: user.uuid,
+      })
+    );
+    if (!allowed) return;
+    await assertCompanyMembership(String(user.uuid), query.data.operating_company_id);
+
+    try {
+      const result = await reinstateDocumentThenVoidReversal(
+        (fn) =>
+          withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+            await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+              query.data.operating_company_id,
+            ]);
+            return fn(client as never);
+          }),
+        {
+          operatingCompanyId: query.data.operating_company_id,
+          type: "bill_payment",
+          id: params.data.id,
+          reason: body.data.reason,
+          actor: { userId: String(user.uuid), role: String(user.role ?? "") },
+        }
+      );
+      return { ok: true, reinstated_at: result.reinstatedAt, reinstated_from_void_je_id: result.reinstatedFromVoidJeId };
+    } catch (error) {
+      if (error instanceof ReinstateDocumentError) {
+        const code = error.code.includes("not_found")
+          ? 404
+          : error.code.includes("not_void") || error.code.includes("parent_bill")
+            ? 409
+            : 400;
+        return reply.code(code).send({ error: error.code, message: error.message });
+      }
       throw error;
     }
   });

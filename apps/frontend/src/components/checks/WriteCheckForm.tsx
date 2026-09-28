@@ -383,6 +383,15 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
     enabled: open && Boolean(operatingCompanyId) && Boolean(bankAccountId) && !printLater,
   });
 
+  // R-190 — QBO parity: Check no. auto-fills from stock next_check_number and stays editable.
+  // Only fills when the field is empty so an operator edit is never overwritten.
+  useEffect(() => {
+    if (printLater) return;
+    const next = nextNumberQuery.data?.next_check_number;
+    if (!next) return;
+    setCheckNumber((prev) => (prev.trim() === "" ? next : prev));
+  }, [nextNumberQuery.data?.next_check_number, printLater, bankAccountId]);
+
   // R-172 step 6 -- "warn on a duplicate check number for the same bank account" (spec §6).
   const checkNumberStatusQuery = useQuery({
     queryKey: ["checks", "check-number-status", operatingCompanyId, bankAccountId, checkNumber.trim()],
