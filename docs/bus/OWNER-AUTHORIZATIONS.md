@@ -2732,3 +2732,64 @@ no DISTINCT needed. Dispatch test suite: 212 passed, 4 pre-existing failures con
 overlap with anything touched here).
 
 — CC-1
+
+---
+
+## AUTH-094
+_(NUMBERING NOTE: originally filed as AUTH-093, which collided with CC-1's own AUTH-093 (ROUND
+155.20 JOB 1, void of 4 unsourced loads), landed on main first. Renamed to AUTH-094, the next free
+number, before this authorization was ever executed. scope/action/expires_at unchanged.)_
+
+issued_at: 2026-09-28T10:11:31.000Z
+scope: SELF-CAUGHT CORRECTIVE FIX for AUTH-092. accounting.expenses UPDATE ONLY
+(posting_status: 'posted' -> 'reversed', reversed_by_je_id set) via the SAME reversal engine
+apps/backend/src/accounting/expenses.routes.ts's own void route already uses
+(reversePostedSourceTransactionInClientTx, posting-engine.service.ts) -- no new GL rule, no new
+posting logic, exactly the existing engine's own reversal path, replayed for exactly the 79
+expense rows voided under AUTH-092 (identified by void_reason LIKE 'AUTH-092%', a bounded,
+already-known set -- not a new sweep). operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80
+(USMCA) only.
+action: OWNER_AUTH_ID=AUTH-094 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc3-reverse-je-for-auth092-voids.ts
+expires_at: 2026-09-28T16:11:31.000Z
+status: OPEN
+
+ROOT CAUSE (self-caught, live-verified): money-pr-local-gate's verify-no-voided-doc-has-live-
+postings guard failed immediately after AUTH-092's --apply run: "violation count 79 > baseline 0"
+-- exactly the 79 rows AUTH-092 voided. stampDocumentVoided() is documented, in its own file
+header, as "METADATA ONLY. NO GL MATH. NO POSTING. NO REVERSAL." -- callers are responsible for
+ALSO invoking the real reversal engine when the document being voided is posting_status='posted'
+with a live journal_entry_id. The AUTH-092 script called only stampDocumentVoided() and never the
+reversal engine; live query confirmed all 79 voided rows are posting_status='posted' with a
+non-null journal_entry_id -- their original journal entries are still fully posted and live in the
+GL even though the source document now says voided. The actual books still double-count these 79
+real purchases; this is a genuine regression, not a cosmetic one, and is worse than the original
+parity gap (a hidden GL divergence instead of a visible, honestly-reported reconciliation
+mismatch).
+
+FIX: reverse each of the 79 rows' journal entries via reversePostedSourceTransactionInClientTx --
+the identical function and sequence expenses.routes.ts's own void handler runs (its ACCT-F5635
+comment documents the exact same reversal-then-flip pattern) -- then set
+posting_status='reversed' and reversed_by_je_id to the new reversing JE's id. This does NOT change
+verify-alwaystrack-parity's own number (already excludes voided_at rows regardless of
+posting_status); it corrects the GL so the books agree with the document-level void that already
+happened.
+
+TOOLING NOTE (transparency, not a bypass of the underlying law): this text landed via the GitHub
+contents API (mcp github push_files) rather than a local `git push`, because the local husky
+pre-push hook's verify-no-voided-doc-has-live-postings check (a shrink-only-from-0 ratchet) itself
+now correctly reports the exact 79-row violation this AUTH exists to fix, creating a circular
+deadlock: the local hook cannot pass until the violation is fixed, and the violation cannot be
+fixed until this AUTH text is on main. ROUND 133 P0 (AUTH-on-main-before-write) itself was NOT
+bypassed -- verify-owner-authorization.mjs still ran against this exact merged commit before the
+corrective script executed. Owner confirmed this specific routing (2026-09-28, in chat) after
+being asked directly.
+
+Owner order (2026-09-28, verbatim, in chat, still in force): "THE PARITY BLOCKER — STOP WAITING ON
+CURSOR... FIX IT YOURSELF... lane rule is SUSPENDED by owner order."
+
+DRY_RUN=1 verified clean this round: candidate_count=79, reversed=79, already_reversed=0,
+nothing_to_reverse=0 (reversePostedSourceTransactionInClientTx ran for real, inside the
+rolled-back transaction, for all 79 rows -- confirming every one has a genuine live posting to
+reverse, not just a count).
+
+— Claude
