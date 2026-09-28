@@ -2793,3 +2793,52 @@ rolled-back transaction, for all 79 rows -- confirming every one has a genuine l
 reverse, not just a count).
 
 — Claude
+
+---
+
+## AUTH-095
+issued_at: 2026-09-28T10:20:00.000Z
+scope: (1) mdata.loads status UPDATE ONLY (13625/13627/13638: 'cancelled' -> 'dispatched', WHERE
+status='cancelled' guarded) + one audit_events row per load documenting the reversal --
+dispatch.load_cancellations is left completely untouched (void-not-delete/never-delete-history);
+(2) dispatch.trailer_interchanges UPDATE ONLY (un-void the one row on 13627, voided_at/void_reason
+-> NULL); (3) mdata.loads customer_wo_number UPDATE ONLY (16 loads, WHERE customer_wo_number IS
+NULL guarded, values taken verbatim from the owner's own AlwaysTrack ground-truth table); (4)
+mdata.loads assigned_unit_id UPDATE ONLY (load 13631 only, WHERE assigned_unit_id IS NULL guarded
+-- every other unit assignment in the same ground-truth table is BLOCKED by
+uq_loads_one_active_unit, see finding below, and was NOT written). operating_company_id
+5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA) only.
+action: OWNER_AUTH_ID=AUTH-095 npx tsx scripts/ops/2026-09-28-reinstate-3-wrongly-voided-loads.mjs, then direct guarded UPDATEs for customer_wo_number/assigned_unit_id (see PR)
+expires_at: 2026-09-28T17:20:00.000Z
+status: DONE — executed live 2026-09-28
+
+ROUND 155.26/157-A CORRECTION: AUTH-093 (ROUND 155.20 JOB 1) voided 4 loads based on an exhaustive
+Downloads-only source-document search that found nothing for 13623/13625/13627/13638. ROUND 155.26
+supplied the owner's own AlwaysTrack ground-truth table (the PRIMARY control, ranked above a
+Downloads search) confirming 13625, 13627 and 13638 ARE real, live, currently-open loads --
+AUTH-093 was wrong on those three. 13623 is NOT reinstated: it appears nowhere in the AlwaysTrack
+ground-truth table either (13624-13639 only, consecutive) -- independently checked against the
+FARO/AlwaysTrack cross-reference exports in Downloads too (zero hits for "568871" or load
+"13623"), so both controls agree it stays voided as "a load we created that never existed" (its
+customer, Value Logistics Inc DBA A1 Value, is real and appears on other, older, unrelated loads --
+only THIS specific load/WO was never real).
+
+customer_wo_number backfilled for all 16 real loads (13624-13639) from the AlwaysTrack table --
+every value in the table matched what our own booking data already implied (same WO numbers used
+in the original booking script), so no disagreement to report there.
+
+REAL FINDING while attempting to set assigned_unit_id for the other 11 of 12 missing units: every
+one of them is BLOCKED by uq_loads_one_active_unit (a unit may hold at most one
+assigned/dispatched/in_transit/etc. load at a time) because the SAME physical trucks are still
+actively assigned to the 6-7 stale "delivered but never advanced" loads (13609=T173, 13616=T171,
+13617=T176, 13618=T156, 13620=T168, 13621=T175, 13622=T164) AND, separately, three of the 16 real
+loads share a truck with ANOTHER real load for a second, later leg (T156: 13626 then 13629; T152:
+13633 then 13634; T176: 13638 then 13637) -- a truck cannot be marked actively on two loads at
+once while both sit frozen at 'dispatched' (the root cause is ROUND 155.20 JOB 2's stop-stamp gap
+-- statuses never advance, so both legs of a sequential tour look simultaneously active forever).
+Only 13631's unit (T174) had zero conflict and was written. The other 11 are correctly BLOCKED,
+not silently skipped -- forcing them would either violate a real DB invariant or misrepresent a
+truck as being on two loads at once. Unblocking requires ROUND 155.20 JOB 2 (stamp-writer fix) or
+ROUND 157-A item 1 (advance the stale loads through the real state machine) to land first.
+
+— CC-1

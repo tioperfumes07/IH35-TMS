@@ -81,7 +81,22 @@ export type TourCost = {
 };
 export type ReadyItem = { key: string; label: string; ok: boolean; detail: string; hard: boolean };
 
-export async function buildTourReadout(client: Db, companyId: string, settlementId: string, thisLoadId: string | null) {
+/**
+ * ROUND 155.23 (owner P0, 2026-09-28, restated twice: "ONLY CURRENT LOAD DATA AND CURRENT TOUR
+ * SETTLEMENT DATA SHOULD BE APPEARING"). Root cause, live-confirmed: settlement-creator.service.ts
+ * writes `mdata.loads.presettlement_link_id` onto every load a settlement DRAFT names, with no
+ * tour_id check at all — three loads on three different tours (13609 tour_id NULL, 13614 tour_id
+ * B, 13639 tour_id C) all carry presettlement_link_id pointing at the SAME settlement (2ef96b64)
+ * purely because they share a driver. The read model (this function) then trusted that link
+ * blindly, rendering a fabricated "tour" mixing a CLOSED load's revenue/pay into an OPEN
+ * settlement's totals — a real double-pay risk once that settlement closes.
+ *
+ * `scopeToTourId`, when provided (the per-load tour-readout route passes the SUBJECT load's own
+ * tour_id), is the ONLY additional grouping key applied on top of the existing membership tests —
+ * never driver_id, never unit_id. `undefined` preserves the close-tour route's own call (which
+ * legitimately wants every real leg of an already-resolved settlement, not scoped to one load).
+ */
+export async function buildTourReadout(client: Db, companyId: string, settlementId: string, thisLoadId: string | null, scopeToTourId?: string | null) {
   const sRes = await client.query<{
     id: string; display_id: string | null; source_document_ref: string | null; status: string; settlement_model: string | null; trip_started_at: string | null; trip_closed_at: string | null;
     period_start: string | null; period_end: string | null; driver_id: string; driver_name: string | null; tour_id: string | null;
@@ -141,6 +156,14 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
                  AND s2.id <> $1::uuid AND s2.operating_company_id = $2::uuid
                  AND s2.reversed_at IS NULL AND s2.voided_at IS NULL AND s2.status <> 'cancelled'
                  AND (s2.trip_closed_at IS NOT NULL OR s2.locked_at IS NOT NULL)))
+          -- ROUND 155.23 JOB 1 — tour_id is the ONLY additional grouping key. Never driver_id,
+          -- never unit_id. NULL scopeToTourId (the close-tour route's own full-settlement call)
+          -- is a no-op here; the per-load route always passes the subject load's own tour_id.
+          AND ($6::uuid IS NULL OR l.tour_id = $6::uuid)
+          -- ROUND 155.23 JOB 2 — a CLOSED load must never appear in an OPEN settlement's legs or
+          -- totals, full stop, regardless of what presettlement_link_id (or anything else) says.
+          -- A closed settlement's own real historical legs (including closed loads) are untouched.
+          AND ($7::boolean IS FALSE OR l.status <> 'closed')
      )
      SELECT l.id::text AS load_id, l.load_number, l.trip_type::text, l.status::text, l.rate_total_cents,
             l.miles_practical, l.miles_shortest, l.miles_deadhead,
@@ -182,7 +205,17 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
        ) tr ON true
        ${loadCostRollupLateral("l.id", "l.operating_company_id")}
       ORDER BY CASE l.trip_type::text WHEN 'NB' THEN 1 WHEN 'TR' THEN 2 WHEN 'SB' THEN 3 ELSE 4 END, l.created_at ASC`,
-    [settlementId, companyId, s.first_load_id, s.last_load_id, s.trip_closed_at == null]
+    [
+      settlementId,
+      companyId,
+      s.first_load_id,
+      s.last_load_id,
+      s.trip_closed_at == null,
+      scopeToTourId ?? null,
+      // settlementIsOpen — same "closedAlready" test used later in this function, computed here so
+      // the JOB 2 exclusion above and the rest of this function never disagree on open-vs-closed.
+      !(Boolean(s.trip_closed_at) || !["open"].includes(String(s.status))),
+    ]
   );
   // A cancelled leg stays visible (it happened) but carries no money into the tour: measured live 02:19Z, TR 13527
   // (cancelled) was adding $3,000 revenue and 100% margin to S-13646's totals.
@@ -525,6 +558,22 @@ export async function registerTourReadoutRoutes(app: FastifyInstance) {
     const p = loadParams.safeParse(req.params ?? {}); if (!p.success) return validationError(reply, p.error);
     const q = companyQuery.safeParse(req.query ?? {}); if (!q.success) return validationError(reply, q.error);
     return withCompany(user.uuid, q.data.operating_company_id, async (client) => {
+      // ROUND 155.23 (owner P0, restated twice, 2026-09-28): "ONLY CURRENT LOAD DATA AND CURRENT
+      // TOUR SETTLEMENT DATA." A load with NO tour_id belongs to NO tour — never assemble one out
+      // of a driver's other work (that is exactly how 13609, tour_id NULL, rendered a fabricated
+      // 3-leg "tour" pulling in 13614 (closed, a different tour) and 13639 (a third, different
+      // tour) — root cause was settlement-creator.service.ts stamping presettlement_link_id onto
+      // all three purely because they share a driver, no tour_id check at all). Checked BEFORE any
+      // settlement resolution runs, so a NULL tour_id can never fall through to one.
+      const subjectRes = await client.query<{ tour_id: string | null; found: boolean }>(
+        `SELECT tour_id::text, true AS found FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL`,
+        [p.data.loadId, q.data.operating_company_id]
+      );
+      const subject = subjectRes.rows[0];
+      if (!subject) return reply.code(404).send({ error: "load_not_found" });
+      if (!subject.tour_id) {
+        return { tour: null, reason: "this load is not on a tour", legs: [], costs: [], ready: [], can_close: false, close_blockers: ["this load has no tour_id"], soft_warnings: [] };
+      }
       // DISPATCH-NO-HISTORY (owner 2026-09-11): the load's Settlement tab shows the load's OWN tour only. A load
       // that already carries an active line on a locked/closed LIVE settlement is settled — that settlement is
       // its tour, even when a stale presettlement_link_id still points at a later open tour (measured on prod:
@@ -551,7 +600,7 @@ export async function registerTourReadoutRoutes(app: FastifyInstance) {
         // Honest empty state (register § LDT-5): say WHY, never "No active pre-settlement found".
         return { tour: null, reason: "load not assigned to a tour — the link is automatic at dispatch when a driver is assigned; see Audit", legs: [], costs: [], ready: [], can_close: false, close_blockers: ["no pre-settlement linked to this load"], soft_warnings: [] };
       }
-      const out = await buildTourReadout(client, q.data.operating_company_id, row.settlement_id, p.data.loadId);
+      const out = await buildTourReadout(client, q.data.operating_company_id, row.settlement_id, p.data.loadId, subject.tour_id);
       return out ?? reply.code(404).send({ error: "settlement_not_found" });
     });
   });

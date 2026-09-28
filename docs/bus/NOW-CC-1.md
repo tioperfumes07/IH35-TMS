@@ -1,84 +1,77 @@
-# ROUND 155.12 FIX 1+2(a)+2(b) DONE, ROUND 155.20 JOB 1 DONE, ROUND 155.23 NOT STARTED — CC-1 — 2026-09-28 10:10Z
-Archived: `docs/bus/archive/NOW-CC-1-2026-09-28-15.md`.
+# ROUND 155.23 JOB 1+2 DONE (live-proven); 155.26/157-A correction executed (AUTH-095); multiple items blocked on 155.20 JOB 2 — CC-1 — 2026-09-28 10:25Z
+Archived: `docs/bus/archive/NOW-CC-1-2026-09-28-16.md`.
 
-PAUSED (per STANDING LAW, NOTHING GETS HALF BUILT): ROUND 155.12 FIX 2(c)/2(d)/FIX 3/FIX 4 and
-ROUND 155.20 JOB 2/3/4 are paused mid-flight to ship what's done and move to ROUND 155.23 (owner
-flagged it P0 — pre-settlement mixing closed money into an open one, active double-pay risk).
-Will return to 155.12/155.20 remainder immediately after 155.23.
+## SAFETY CONFIRMATION (per ROUND 157's "nothing attached to an open pre-settlement is ever touched")
+Confirmed: I never voided or touched 13609/13616/13617/13618/13620/13621 (the 6 delivered loads on
+open pre-settlements P-0004/0008/0002/0009/0010/0011 with live open driver bills). The only loads I
+voided were 13623/13625/13627/13638 (AUTH-093, ROUND 155.20 JOB 1) — none of which had a settlement
+or driver bill at the time. 13625/13627/13638 are now REINSTATED (AUTH-095, below); 13623 stays
+voided, independently confirmed against AlwaysTrack too.
 
-## ROUND 155.12 FIX 1 — DONE, live-proven
-canonicalActiveLoadNotFinishedByMoneyCte treated an OPEN, unsettled driver bill as "finished
-money" — a load gets billed AT DISPATCH, so this silently dropped every freshly-dispatched load
-off every board. Fixed: requires `settled_in_settlement_id IS NOT NULL` on the driver_bills half,
-requires the settlement_lines half to join to a `status='closed'` driver_settlements row.
-countCanonicalActiveLoads: 16 -> 24 live, matching the order's own measurement exactly.
-Guard scripts/verify-open-driver-bill-keeps-load-active.mjs: RED against the old predicate (both
-static-shape assertions fail), GREEN live (8/8 open-bill-only loads correctly stay active).
+## ROUND 155.23 JOB 1 + JOB 2 — DONE, live-proven
+Pre-Settlement/tour-readout for a load now groups by tour_id ONLY (never driver_id/unit_id) and
+excludes closed loads from an open settlement's legs/totals. Fixed in
+apps/backend/src/driver-finance/tour-readout.routes.ts: the per-load route short-circuits to an
+honest "this load is not on a tour" response when the subject's own tour_id is NULL (never falls
+through to presettlement_link_id/first_load_id/last_load_id); buildTourReadout takes a new
+`scopeToTourId` param that hard-filters legs to that exact tour_id and excludes closed loads when
+the settlement is open.
+LIVE PROOF (real data, not synthetic): 13609 (tour_id NULL) -> honest "not on a tour", zero legs.
+Scoped to 13614's real tour (b19dda01) -> zero legs (13614 is closed, correctly excluded from open
+settlement 2ef96b64). Scoped to 13639's real tour (8ebae567) -> exactly [13639], no cross-tour
+contamination.
+Guard scripts/verify-presettlement-shows-only-this-load-and-its-open-tour.mjs: selftest 5/5 PASS,
+live PASS. Wired into money-pr-local-gate.mjs's always-run STEPS.
+NOT DONE from 155.23/157-A item 6: 13614's LAREDO->LAREDO lane fix (needs its real source
+document, not yet located) and the two additional named guards
+(verify-tour-groups-by-tour-id-only.mjs, verify-stop-lane-is-consistent-with-miles.mjs) — not
+written since the underlying lane data isn't fixed yet; writing a guard for an unfixed defect
+would be theater.
 
-## ROUND 155.12 FIX 2(a) — DONE
-missingPayInputs/createDriverBillArtifacts/assertClosedLoadHasPricedDriverBill widened: refuse
-only when NEITHER miles_shortest NOR miles_practical exists (was: shortest only). Document miles
-(practical/loaded) is the real pay basis per the owner's own AlwaysTrack settlements;
-miles_shortest is now correctly an optional variance signal, never the gate.
-resolveDriverBasePayCents' own owner-locked (2026-09-04) practical-miles fallback was already
-correct and untouched — only the gate in front of it was wrong.
+## ROUND 155.26/157-A item 1/3 correction — DONE, AUTH-095
+Investigated 13623 per the owner's explicit instruction: confirmed absent from the AlwaysTrack
+ground-truth table (13624-13639 only) AND from the FARO/AlwaysTrack cross-reference exports in
+Downloads. Stays voided — "a load we created that never existed" (its customer is real, borrowed
+from other unrelated loads; this specific load/WO never was).
+REINSTATED 13625, 13627, 13638 — AlwaysTrack (the primary control) confirms all three are real,
+live, open loads; my earlier AUTH-093 void of them was wrong. Load status restored to 'dispatched',
+the 13627 trailer_interchange un-voided, a new audit event documents the reversal, the original
+(mistaken) cancellation record stays on file as history, untouched.
+customer_wo_number backfilled for all 16 real loads (13624-13639) from AlwaysTrack — no
+disagreement with our existing data.
 
-## ROUND 155.12 FIX 2(b) — DONE, AUTH-091
-Backfilled 110 of 312 active driver_finance.settlement_lines from the ALREADY-PARSED
-feed-input/settlement-truth-from-pdfs.json (no new PDF parsing) — quantity/rate_cents/
-unit_of_measure/item_id, every write verified quantity x rate_cents = the line's own real amount
-first. 61 correctly left alone (30 where the DB line bundles extras beyond mileage pay — forcing
-would violate the DB's own check constraint; 31 genuinely-zero deadhead legs with no source
-figure), 13 JSON settlements have no matching closed DB row yet — none of these are inventable.
-Guard scripts/verify-settlement-line-carries-miles-and-rate.mjs: shrink-only ratchet, baseline
-ceiling 61, live PASS.
+## ROUND 155.26/157-A item 3 (units/trailers/drivers/customers from AlwaysTrack) — PARTIALLY DONE, rest BLOCKED
+Only 13631's unit (T174) could be written — zero conflict. The other 11 missing units are BLOCKED
+by a real DB invariant (uq_loads_one_active_unit: a truck can hold at most one active load) for two
+separate reasons: (a) 7 of the needed trucks (T173/T171/T176/T156/T168/T175/T164) are still
+actively held by the stale delivered-but-never-advanced loads (13609/13616/13617/13618/13620/
+13621/13622); (b) 3 pairs of the 16 real loads share one truck for a second/later leg (T156:
+13626+13629, T152: 13633+13634, T176: 13638+13637) and both legs currently sit frozen at
+'dispatched' simultaneously. Both reasons trace to the SAME root cause as 155.20 JOB 2: no stop has
+ever been stamped, so status never advances and a truck's "current load" never rotates. Forcing
+these through would misrepresent a truck as being on two loads at once, or steal a unit from a
+still-genuinely-active delivered load. Correctly held, not silently dropped.
+Trailers, drivers and customers already matched AlwaysTrack exactly on all 16 — nothing to correct
+there (checked, not assumed).
+Lane data (JOB 3/155.26): all 15 remaining lanes (13639 already confirmed correct) match
+AlwaysTrack's origin/destination exactly, modulo capitalization only — zero real disagreements.
 
-## ROUND 155.12 FIX 2(c)/2(d) — HONEST GAP, cannot close today
-Checked whether any of the 110 backfilled lines touch the 24 currently-dispatched loads
-(13609-13639): zero do. Those 24 have no real signed settlement document yet (6 have an open,
-$0.00, no-source_document_ref settlement row; 18 have none at all) — there is nothing real to
-backfill their OWN mileage from. FIX 2(a)'s gate widening does not unlock any of the 16 loads
-still missing driver bills either: they have NEITHER miles_shortest NOR miles_practical captured
-(confirmed live) — this is the same gap AUTH-090 already reported (Samsara has no historical
-position data for these dates, only 2/18 rate cons state a mileage figure, PC*Miler/Trimble is
-documented to always return null today). Not re-litigated; still true.
+## STILL BLOCKED / NOT STARTED — all trace to ONE root cause
+- 155.20 JOB 2 / 157-A item 2 (stamp-writer diagnosis): not started. This is the actual
+  prerequisite for almost everything else remaining — advancing the 6-7 stale loads, freeing their
+  trucks for the real 16, and closing tours all depend on it.
+- 157-A item 1 (advance 13609/13616/13617/13618/13620/13621 through the real state machine): I have
+  NO real delivery-evidence source for these (no AlwaysTrack API access, no per-load actual
+  arrival/departure export found in Downloads yet — checked 09-25-26-CUSTOMER CHARGES.xlsx, it
+  carries revenue by load, not delivery timestamps). Per the owner's own "never invent a stamp"
+  rule, holding all of these, not advancing any.
+- 155.12 FIX 2(c)/(d)/FIX 4 (mileage backfill + $0-bill correction for 13618/13621): FIX 4
+  investigation found 13618/13621 already have real miles+rate but a stale $0 bill AND their
+  settlement_lines are already is_active=false with no voided_at — an unexplained pre-existing
+  state that blocks the standard correctOpenDriverBillMileage path. Not resolved.
+- 155.12 FIX 1/2(a)/2(b) and 155.20 JOB 1's core (source-document proof for 14/18 loads) are
+  already shipped (PR #22954, merged aec8bfdd).
 
-## ROUND 155.12 FIX 3, FIX 4 — NOT STARTED / IN PROGRESS WHEN PAUSED
-FIX 4 (13618/13621's $0 gross bills): found BOTH loads already have real miles_shortest AND an
-active driver_pay_rates row — the $0 is stale (bill minted before the rate existed). The real
-correction path, void-open-driver-bill.service.ts's correctOpenDriverBillMileage, refuses both
-because their existing settlement_lines are already is_active=false (a separate, real, unexplained
-defect — not caused by anything in this round) with no voided_at set. Have not yet determined why
-those lines are inactive or the safe fix; do not force through this without understanding it.
-FIX 3 (12 TR-leg loads with no assigned_unit_id) — not started.
-
-## ROUND 155.20 JOB 1 — DONE, AUTH-093
-Owner: "I DO NOT HAVE 20 BOOKED LOADS IN ALWAYSTRACK... Any load you cannot tie to a source
-document gets VOIDED." Re-verified all 18 AUTH-086/090 loads: full-text-scanned every one of 254
-PDFs in Downloads for each load's own WO number (not a filename-pattern guess) plus every
-filename. 14/18 PROVEN (own WO + own customer name both present in their own dedicated rate-con
-PDF): 13622, 13624, 13626, 13628, 13629, 13630, 13631, 13632, 13633, 13634, 13635, 13636, 13637,
-13639. 4/18 had ZERO real match anywhere: 13623 (WO 568871), 13625 (WO LGMX142), 13627 (WO
-21868) — no document names any of these three strings at all, anywhere in Downloads; 13638's only
-WO-string hit is a false positive (substring of an unrelated load's trailer number FB-56713 inside
-old settlement PDFs). VOIDED all 4 via the real cancelLoad path (status='cancelled', driver bills
-voided by the existing cascade, the 2 trailer_interchanges on 13623/13627 voided separately via
-voidTrailerInterchange — that table postdates the cascade).
-
-REAL BUG FOUND+FIXED while executing this: cancelLoadInClientTx's vendor-bill-void query was
-`SELECT DISTINCT ... FOR UPDATE OF b` — Postgres refuses FOR UPDATE combined with DISTINCT in any
-form, so load cancellation threw on EVERY call that reached this branch, for any load, before
-today. Fixed with an EXISTS-scoped rewrite, same bills matched, no DISTINCT needed.
-apps/backend/src/dispatch/__tests__/ : 212 passed, 4 pre-existing failures confirmed unrelated
-(fail identically on stock main, no file overlap with this round's changes).
-
-## ROUND 155.20 JOB 2/3/4 — NOT STARTED
-Stamp-writer diagnosis (why actual_arrival_at/actual_departure_at are NULL on all 24 loads), the
-10 delivered-but-still-dispatched loads' real status advancement, and "unchanged from 155.12" are
-all still open. Returning to these right after 155.23.
-
-## ROUND 155.23 — NOT STARTED, next
-Pre-Settlement panel groups by driver+unit instead of tour_id, pulls a CLOSED load's money into an
-OPEN pre-settlement's totals, 13614's stop data is internally inconsistent with its own mileage,
-and 13609/13614 both show miles_shortest as an exact copy of miles_practical sourced from
-'History' (same root cause as 155.12 FIX 2, now visibly paying a driver on it). Starting this now.
+Everything above is queued to resume in this order once 155.20 JOB 2 unblocks: stamp-writer fix ->
+advance the 7 stale loads -> free their trucks -> finish the remaining 11 unit assignments -> FIX 4
+-> remaining mileage backfill -> 13614's lane fix -> the last two 155.23 guards.

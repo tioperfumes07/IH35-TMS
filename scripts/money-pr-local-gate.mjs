@@ -36,6 +36,10 @@ const STEPS = [
   // identical inputs (ROUND 155.2, 2026-09-28) before this was wired in. Shrink-only baseline for the
   // 44 pre-existing offenders; a brand-new one is a hard FAIL.
   ["verify-no-session-scoped-rls-bypass", "scripts/verify-no-session-scoped-rls-bypass.mjs"],
+  // ROUND 155.23 — the per-load Pre-Settlement/tour tab must group by tour_id only (never
+  // driver_id/unit_id) and must never mix a closed load into an open settlement's legs/totals.
+  // Static source-shape check; the live proof (13609/13614/13639) lives in the round's own PR.
+  ["verify-presettlement-shows-only-this-load-and-its-open-tour", "scripts/verify-presettlement-shows-only-this-load-and-its-open-tour.mjs"],
   ["verify-no-posting-to-inactive-account", "scripts/verify-no-posting-to-inactive-account.mjs"],
   ["verify-expense-item-lines", "scripts/verify-expense-item-lines.mjs"],
   ["verify-account-number-hidden-by-default", "scripts/verify-account-number-hidden-by-default.mjs"],
