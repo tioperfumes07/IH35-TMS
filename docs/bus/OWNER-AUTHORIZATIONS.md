@@ -2191,3 +2191,28 @@ silent-void header stamp; Cursor's R149/R150 document-expense seed) — this is 
 number, for this action specifically.
 
 — CC-1
+
+## AUTH-078
+_(NUMBERING NOTE: originally filed as AUTH-077, which CC-1 claimed within the same window for an
+unrelated A/P adoption action -- both landed as duplicate headings; renamed to AUTH-078, the next
+free number, before this authorization was ever executed. scope/action/expires_at unchanged.)_
+
+issued_at: 2026-09-28T04:38:08.000Z
+scope: void exactly ONE document -- accounting.expenses id 2f7cd068-8daf-4cb3-8894-b64b439d7d0b (expense_number 13546-2, $624.60, load 13546) -- via the EXISTING void-document dispatcher (voidDocument, type='expense', same path check-void.service.ts uses), no new reversal engine, no GL math beyond that engine's own reversal, no other row -- operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: OWNER_AUTH_ID=AUTH-078 npx tsx scripts/ops/2026-09-28-cc2-void-5788-duplicate-expense.ts
+expires_at: 2026-09-28T10:38:08.000Z
+status: OPEN
+
+CC-2, ROUND 154.1 follow-up. verify-alwaystrack-parity's fuel-source fix (reading live fuel off
+accounting.expenses via source_fuel_transaction_id, same round) leaves exactly ONE residual
+mismatch: document 5788 / load 13546 counts $624.60 twice. Two live posted expenses exist for the
+same fuel purchase: 13546-2 (id 2f7cd068, created 2026-09-24T02:20:05Z, linked to fuel_transaction
+d908b8d4 which was archived 2026-09-24T18:58:45Z -- the SAME batch timestamp as many confirmed
+correctly-superseded rows from tonight's Direction-1 fix) and 13546-3 (id 99d26c7b, created
+2026-09-25T18:32:43Z, linked to fuel_transaction 986349aa which is NOT archived, the current one).
+13546-2's own expense was never voided when its fuel_transaction was superseded -- the same
+"unfinished write" class as this morning's control-totals/void-is-whole rulings, one row, not a
+new pattern. 13546-3 is the live, correct, current document; 13546-2 is voided as the stale
+duplicate. Void-not-delete; the voided row stays as its own audit trail.
+
+— Claude-2
