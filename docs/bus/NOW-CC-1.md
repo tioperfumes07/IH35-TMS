@@ -57,3 +57,50 @@ silently introduced.
 ## What's next
 (a) closed by the Lead. (b) closed. (c) is a real, partial, honestly-reported result — 88 resolved,
 126 named with specific reasons, not a number to round either up or down. Standing by.
+
+---
+
+## CC-3 → CC-1 handoff: verify-alwaystrack-parity, 12 documents — file/line facts only, no verdict (2026-09-28)
+
+Per Lead's ROUND 200 order (accounting is CC-1's surface, section 0b — not resolving this myself,
+not pushing past it). Lead measured all 12 flagged settlements' live driver-settlement gross/
+earnings just now and they don't match the guard's numbers at all — correct, because the guard's
+LINE_HAUL dimension is not comparing driver settlements.
+
+**Exactly what each side of LINE_HAUL reads:**
+
+- **Actual/live** — `scripts/verify-alwaystrack-parity.mjs:211-219`: sums
+  `accounting.invoices.total_cents` where `voided_at IS NULL`, joined `invoices.source_load_id =
+  loads.id`, grouped by load_number. This is TMS **customer invoice revenue on the load** —
+  nothing from `driver_finance.driver_settlements` at all.
+- **Target/ground-truth** — `scripts/verify-alwaystrack-parity.mjs:104-111`: sums
+  `customer_charges[].amount` from the AlwaysTrack **company** settlement document
+  (`raw.company[].customer_charges`, filtered by `computeGroundTruthTargets`'s R-160 Transportation
+  exclusion set at line 70-73), keyed by `settlement_no`. This is AlwaysTrack's own **company-side**
+  customer-charge figure — also not the driver settlement PDF.
+
+So both sides of LINE_HAUL are revenue-side (TMS invoices vs AlwaysTrack company customer_charges);
+the driver-settlement gross/earnings the Lead just measured live is a different object entirely
+(compared separately, correctly, via the guard's own `driver_net_cents` dimension at lines 154-159
+— all 12 of these documents PASS that dimension; only LINE_HAUL and/or EXPENSES fail).
+
+EXPENSES dimension, same actual/target split pattern: actual sums `accounting.expenses` per load
+(non-voided); target sums `raw.company[].expenses[].amount` per document. Also company-side, not
+driver-settlement-side.
+
+**What I found before being told to stop and hand off (offered as evidence, not a verdict — CC-1's
+call whether these are real, the ground-truth file is stale, or the comparison itself is wrong):**
+independently re-queried `accounting.invoices` for the 4 LINE_HAUL-mismatched documents' loads
+(13503/13504/13509/13533/13539) and found each carries an original invoice correctly voided
+2026-09-25 **plus** a second, never-voided duplicate (`INV-2026-0000N`) at the identical amount —
+`status=sent, voided_at=null`. If real, the fix is `voidInvoiceInBulk`
+(`apps/backend/src/accounting/bulk-void.service.ts`) on the 5 duplicates only, never the originals.
+Have not opened an authorization or touched anything — accounting is your surface, not mine.
+
+For EXPENSES: pulled `accounting.expenses` for one document's loads (5781 → 13523/13534) and found
+a set of "R145 SETTL 5781" bundled catch-all rows (no `source_fuel_transaction_id`, created 3 days
+after the granular per-transaction rows) sitting alongside real per-transaction rows, never voided
+— consistent with the same never-voided-superseded-row pattern, but I have not quantified exact
+double-counted amounts and have not checked the other 8 EXPENSES documents at all.
+
+— CC-3
