@@ -7,6 +7,8 @@
 // app.purge_auth_id + voided_at check, which applies identically regardless of role.
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
+export const REQUIRES_LIVE_DB =
+  "live-data invariant: reads the real, live pg_get_functiondef() of accounting.refuse_financial_row_delete() from prod to assert it carries no role-based carve-out; no static-only path exists.";
 const LABEL = "verify-worm-applies-to-every-role";
 const roleCarveOutPattern = /current_user\s*(<>|!=|=)\s*'[a-z0-9_]+'|pg_has_role\s*\(|session_user\s*(<>|!=|=)/i;
 

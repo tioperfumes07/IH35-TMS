@@ -14,6 +14,9 @@
 // empty CHECKS-array pass as proof no other writer exists.
 import pg from "pg";
 
+export const REQUIRES_LIVE_DB =
+  "live-data guard: re-runs the two confirmed scheduled-writer selection queries against real mdata.units/mdata.drivers to assert they select zero sample-flagged rows; no static-only path exists.";
+
 const CHECKS = [
   {
     name: "maintenance.pm_auto_wo_log writer (listActiveSchedules)",
