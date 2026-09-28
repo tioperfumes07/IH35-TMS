@@ -140,6 +140,27 @@ Flagged for whoever builds the actual fix: insert a pickup stop (sequence 2, cit
 customer, amount and lane; already correctly funded by Faro invoice 92. 13615/13616/13619 are
 unchanged from the (b) findings above — cited, not re-derived.
 
+## (f) Addendum, 2026-09-28 — cancelled load still bundled into a live tour pre-settlement (13623)
+
+Seeded by the Lead's ROUND 176 settlement-guard ruling (`docs/bus/00-LEAD-ROUND-176-SETTLEMENT-GUARD-RULING.md`),
+posted here per that ruling's instruction. Confirmed live, `bypass_rls='lucia'`:
+
+- **Load 13623** — `status = 'cancelled'`.
+- **Tour `ec4023fd-f208-4553-907c-b967fae9b418`** bundles exactly two loads: **13623 (cancelled)**
+  and **13631 (dispatched, in-flight)**.
+- **Pre-settlement P-0012** (`855834c2-652d-4957-bf96-43d79ba80ecf`, `status = 'open'`,
+  `is_presettlement = true`) is minted for that tour. Its `first_load_id`/`last_load_id` both point
+  to 13631 and its one real `settlement_lines` row (`earnings`, "Load 13631", $606.24) is for 13631
+  only — 13623 contributes zero lines, correctly, since it never delivered.
+
+**The defect:** cancelling 13623 never touched the tour or its pre-settlement. P-0012 is not itself
+wrong (it correctly reflects only the surviving leg, 13631), but nothing recorded that the tour lost
+a leg — a cancelled load stays silently bundled into a tour whose other leg is still being settled.
+Not repaired here, per this register's own standing scope (register-only, no row fixed in this PR).
+Flagged for whoever owns tour/settlement cascade logic: a load cancellation should either detach the
+load from its tour explicitly or stamp the tour/pre-settlement with a visible note that a leg was
+cancelled, so the gap doesn't have to be re-discovered by cross-referencing three tables by hand.
+
 ## Reproduce
 
 ```
