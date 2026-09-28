@@ -171,6 +171,25 @@ export function patchSettlementDisplayId(id: string, companyId: string, displayI
   });
 }
 
+// ROUND 210 (owner order): "give those pre-settlements internal numbers editable and I'll edit
+// when I have the final settlement numbers." One typed value, routed to the RIGHT field —
+// display_id (our P-series, e.g. P-0018) when it matches that shape, source_document_ref (the
+// real AlwaysTrack number, e.g. 5820) otherwise. The backend route (settlements.routes.ts) already
+// accepts both fields on the same PATCH and applies the identical Owner-role gate + audit trail to
+// either; this just picks the field so a typed bare number is never rejected as
+// settlement_number_is_server_generated (display_id is P-series-only).
+const PRESETTLEMENT_P_SERIES_RE = /^P-\d{4,}$/i;
+export function patchSettlementNumber(id: string, companyId: string, typed: string) {
+  const value = typed.trim();
+  const body = PRESETTLEMENT_P_SERIES_RE.test(value)
+    ? { operating_company_id: companyId, display_id: value.toUpperCase() }
+    : { operating_company_id: companyId, source_document_ref: value };
+  return apiRequest<{ updated: boolean; display_id: string; source_document_ref: string | null }>(
+    `/api/v1/driver-finance/settlements/${id}/display-id?${q(companyId)}`,
+    { method: "PATCH", body },
+  );
+}
+
 export function acknowledgeSettlement(id: string, companyId: string, etag?: string) {
   return apiRequest<Record<string, unknown>>(`/api/v1/driver-finance/settlements/${id}/acknowledge?${q(companyId)}`, {
     method: "PATCH",
