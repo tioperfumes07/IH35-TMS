@@ -420,6 +420,13 @@ const LIVE_DOMAIN_GUARDS = [
       "apps/backend/src/dispatch/live-loads-view.ts",
     ],
   ],
+  // ROUND 177 JOB 3 — the current 16-load batch's invoices must keep issue_date=due_date=
+  // delivery_date (the delivery-date-invoicing policy, not net-30); any of them that IS sent/
+  // partial must show that same due_date in the real cash-flow rolling ledger.
+  [
+    "verify-cash-flow-reads-delivery-date",
+    ["apps/backend/src/cash-flow/cash-flow.service.ts", "apps/backend/src/accounting/from-load.ts"],
+  ],
   // ROUND 166 JOB 1(e) (P0) — the permanent alarm: fails when no USMCA unit has a fresh telematics
   // position during operating hours. USMCA's Samsara feed was off for weeks with zero stamps
   // accumulating and nobody noticed; this is the gate that catches the next silent death.
