@@ -23,6 +23,8 @@ export const REQUIRES_LIVE_DB =
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 function selftest() {
+  // STALE-LITERAL-OK: 36 is a UUID's fixed string length (8-4-4-4-12 + 4 hyphens), not a
+  // measured/derived count subject to drift — a structural shape check, not a purge-window count.
   if (!USMCA || USMCA.length !== 36) {
     console.error(`${LABEL} SELFTEST FAILED:\n  - USMCA company id malformed`);
     process.exit(1);

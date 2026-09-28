@@ -20,6 +20,21 @@ export function SettlementNumberBox({
   const [draft, setDraft] = useState(displayId ?? "");
   const [busy, setBusy] = useState(false);
 
+  // ROUND 196 item 3 (owner ruling): a P-number is a sanctioned INTERNAL PROVISIONAL number, not
+  // the real settlement identity — visibly mark it as such until the owner sets the real
+  // AlwaysTrack number in source_document_ref. Once source_document_ref is set, the real number is
+  // the identity shown ("AT {ref}") and the P-number is no longer the headline, so no badge.
+  const isProvisional = Boolean(displayId) && !sourceDocumentRef;
+  const provisionalBadge = isProvisional ? (
+    <span
+      className="ml-2 rounded-sm bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.3px] text-amber-800"
+      data-testid="settlement-number-box-provisional"
+      title="Internal provisional number — the owner sets the real AlwaysTrack number when it is known"
+    >
+      Provisional
+    </span>
+  ) : null;
+
   if (!editable || !onSave) {
     return (
       <div data-testid="settlement-number-box">
@@ -28,7 +43,9 @@ export function SettlementNumberBox({
           {displayId ?? "—"}
           {sourceDocumentRef ? (
             <span className="ml-2 font-normal text-[#6B7280]">AT {sourceDocumentRef}</span>
-          ) : null}
+          ) : (
+            provisionalBadge
+          )}
         </div>
       </div>
     );
@@ -80,7 +97,9 @@ export function SettlementNumberBox({
           {displayId ?? "—"}
           {sourceDocumentRef ? (
             <span className="ml-2 font-normal text-[#6B7280]">AT {sourceDocumentRef}</span>
-          ) : null}
+          ) : (
+            provisionalBadge
+          )}
         </button>
       )}
     </div>

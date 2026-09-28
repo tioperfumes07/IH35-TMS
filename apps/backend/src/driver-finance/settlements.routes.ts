@@ -856,6 +856,12 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
   app.patch("/api/v1/driver-finance/settlements/:id/display-id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
+    // ROUND 196 item 3 (owner ruling) — the owner sets the real AlwaysTrack number himself; this
+    // edit is Owner-role only, same strict single-role gate cash-advance-requests.routes.ts:179
+    // already uses for an equivalent owner-only decision.
+    if (String(user.role ?? "") !== "Owner") {
+      return reply.code(403).send({ error: "owner_role_required" });
+    }
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const body = patchDisplayIdBodySchema.safeParse(req.body ?? {});
