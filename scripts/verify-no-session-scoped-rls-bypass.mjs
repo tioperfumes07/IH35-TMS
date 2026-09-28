@@ -31,11 +31,12 @@
  * using transaction-local GUCs (is_local=true inside an explicit BEGIN), or going through the
  * backend's withLuciaBypass helper.
  */
-import { readdirSync, readFileSync, existsSync } from "node:fs";
+import { readdirSync, readFileSync, existsSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const LABEL = "verify:no-session-scoped-rls-bypass";
 const ROOT = "scripts";
+const BASELINE_PATH = join(ROOT, "verify-no-session-scoped-rls-bypass.baseline.json");
 
 /** set_config('app.bypass_rls', <anything>, false) — the session-scoped form. */
 const SESSION_BYPASS = /set_config\(\s*['"`]app\.bypass_rls['"`]\s*,[^,]+,\s*false\s*\)/;
@@ -88,6 +89,20 @@ export function analyse(files) {
     );
   }
   return problems;
+}
+
+/** Same predicate as analyse(), but returns the violating file paths for baseline comparison. */
+export function violatingFiles(files) {
+  const out = new Set();
+  for (const [path, src] of Object.entries(files)) {
+    if (src == null) continue;
+    const args = extractQueryArguments(src);
+    const usesSessionBypass = args.some((a) => SESSION_BYPASS.test(a) || BARE_SET_BYPASS.test(a));
+    if (!usesSessionBypass) continue;
+    if (POOLER_REFUSAL.test(src)) continue;
+    out.add(path);
+  }
+  return out;
 }
 
 // readdirSync(withFileTypes) returns the entry TYPE from the same directory read, so there is no
@@ -158,10 +173,59 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
+function loadBaseline() {
+  if (!existsSync(BASELINE_PATH)) return null;
+  return JSON.parse(readFileSync(BASELINE_PATH, "utf8"));
+}
+
+// SHRINK-ONLY BASELINE RATCHET, same shape as verify-account-number-hidden-by-default.mjs:
+// pre-existing debt (44 files at the time this baseline was written 2026-09-28, the day this
+// exact defect class caused a real bug in scripts/ops/2026-09-28-lead-r147-book-18-current-loads.ts)
+// is known and printed, never silent, and can only shrink. A brand-new violation not in the
+// baseline is a hard FAIL — this is what makes the guard block the NEXT script that repeats this
+// exact mistake, which is the entire point.
 const files = readAll();
-const problems = analyse(files);
-if (problems.length) {
-  console.error(`${LABEL} FAILED:\n  - ${problems.join("\n  - ")}`);
+const live = violatingFiles(files);
+
+if (process.argv.includes("--write-baseline")) {
+  writeFileSync(
+    BASELINE_PATH,
+    JSON.stringify(
+      {
+        _comment: "ACCT-F155.4 -- shrink-only baseline of pre-existing session-scoped RLS bypass usages found when this guard was wired into money-pr-local-gate.mjs. Real, known debt, mostly one-shot historical ops scripts already run. Fix a file and remove its entry; a new violation outside this list fails the build.",
+        established: new Date().toISOString().slice(0, 10),
+        measured_at: new Date().toISOString(),
+        files: Object.fromEntries([...live].sort().map((f) => [f, true])),
+      },
+      null,
+      2,
+    ) + "\n",
+  );
+  console.log(`${LABEL}: wrote baseline with ${live.size} known-debt file(s)`);
+  process.exit(0);
+}
+
+const baseline = loadBaseline();
+if (!baseline) {
+  if (live.size > 0) {
+    console.error(`${LABEL}: FAIL — no baseline file and ${live.size} file(s) violate. Seed the baseline (--write-baseline) or fix them.`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} OK — ${Object.keys(files).length} script(s); no unguarded session-scoped RLS bypass`);
+  process.exit(0);
+}
+
+const baselineNames = new Set(Object.keys(baseline.files || {}));
+const newRot = [...live].filter((f) => !baselineNames.has(f));
+const nowClean = [...baselineNames].filter((f) => !live.has(f));
+
+if (newRot.length > 0) {
+  console.error(`${LABEL}: FAIL — new session-scoped RLS bypass, not in baseline:\n  - ${newRot.join("\n  - ")}`);
+  console.error(`Either refuse the -pooler endpoint, use transaction-local GUCs inside an explicit BEGIN (SET LOCAL), or go through withLuciaBypass(). Never add a new file to the baseline.`);
   process.exit(1);
 }
-console.log(`${LABEL} OK — ${Object.keys(files).length} script(s); no unguarded session-scoped RLS bypass`);
+if (nowClean.length > 0) {
+  console.error(`${LABEL}: FAIL — these baselined file(s) are now clean; remove them from the baseline (shrink-only ratchet):\n  - ${nowClean.join("\n  - ")}`);
+  process.exit(1);
+}
+console.log(`${LABEL} OK — ${live.size} known-debt file(s) unchanged (baseline ${baseline.established}), 0 new violations, ${Object.keys(files).length} script(s) scanned.`);

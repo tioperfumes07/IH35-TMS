@@ -30,6 +30,12 @@ const LABEL = "money-pr-local-gate";
 
 /** Ordered fail-fast suite — same classes that red'd Cursor #4009–#4011 / #4198 vs Claude. */
 const STEPS = [
+  // DB-F01/ACCT-F155.3 — a hand-rolled script that sets app.bypass_rls SESSION-scoped (is_local=false,
+  // or a bare SET, not SET LOCAL inside an explicit BEGIN) silently loses RLS scope between statements
+  // on Neon's pooled connection string. Same read went 3 -> 49 phantom failures between two runs with
+  // identical inputs (ROUND 155.2, 2026-09-28) before this was wired in. Shrink-only baseline for the
+  // 44 pre-existing offenders; a brand-new one is a hard FAIL.
+  ["verify-no-session-scoped-rls-bypass", "scripts/verify-no-session-scoped-rls-bypass.mjs"],
   ["verify-no-posting-to-inactive-account", "scripts/verify-no-posting-to-inactive-account.mjs"],
   ["verify-expense-item-lines", "scripts/verify-expense-item-lines.mjs"],
   ["verify-account-number-hidden-by-default", "scripts/verify-account-number-hidden-by-default.mjs"],
