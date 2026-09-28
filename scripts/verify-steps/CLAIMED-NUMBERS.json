@@ -9229,5 +9229,15 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-28",
     "purpose": "verify-projected-cash-date-equals-delivery"
+  },
+  "11707": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-28",
+    "purpose": "verify-banking-controls-boxed-and-tokenized"
+  },
+  "11711": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-28",
+    "purpose": "verify-banking-filters-and-reconcile-complete"
   }
 }
