@@ -1,0 +1,147 @@
+#!/usr/bin/env tsx
+/**
+ * R-147 (Lead, AUTH-077) — book the 18 current USMCA loads 13622–13639 through the REAL book-load
+ * engine (bookLoad(), the same path the Book Load screen and CC-1's ROUND 189 script use).
+ *
+ * SOURCE: the owner's own AlwaysTrack boards, read 2026-09-28 (screenshots in the session) — Open
+ * Loads (13624–13639 Dispatched), Delivered/Completed (13613–13623 Completed) and Unsettled Loads.
+ * Rates from feed-input/workbook-customer-charges.json (the owner's CUSTOMER CHARGES export) and,
+ * for 13630/13635/13639, from the signed rate confirmations in ~/Downloads.
+ *
+ * OWNER RULING 2026-09-28: these loads are COMPLETED AND FACTORED but NOT SETTLED because the tour
+ * is still open. So NO settlement number is invented for any of them — they book and stay unsettled
+ * on their driver's open pre-settlement, exactly like ROUND 189.
+ *
+ * 13634 and 13637 carry linehaul 0: neither is in the CUSTOMER CHARGES export (both start 09-28,
+ * past the export window) and neither rate confirmation exposes a parseable amount. They are booked
+ * so they RENDER on the board, with the rate left at 0 for the owner to state. Never guessed.
+ *
+ * Every id is resolved LIVE BY NAME/NUMBER inside the transaction — no hand-copied UUIDs.
+ * Usage: OWNER_AUTH_ID=AUTH-077 npx tsx scripts/ops/2026-09-28-lead-r147-book-18-current-loads.ts
+ */
+import path from "node:path";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { randomUUID } from "node:crypto";
+import pg from "pg";
+import { bookLoad, type BookLoadInput } from "../../apps/backend/src/dispatch/book-load.service.js";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const AUTH = process.env.OWNER_AUTH_ID;
+if (!AUTH) { console.error("OWNER_AUTH_ID required"); process.exit(1); }
+execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), AUTH], { stdio: "inherit" });
+
+const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
+const OWNER = "e4117991-d2c0-406d-8cda-74e98d95bccd";
+
+type Row = {
+  ln: string; wo: string; customer: string; driver: string; truck: string; trailer: string;
+  start: string; end: string; oc: string; os: string; dc: string; ds: string;
+  cents: number; tt: "refrigerated_van" | "dry_van" | "flatbed";
+};
+
+const PLAN: Row[] = [
+  { ln: "13622", wo: "16471804", customer: "TTS LLC", driver: "CARLOS MAURICIO PENA CARVALLO", truck: "T164", trailer: "10380", start: "2026-09-23", end: "2026-09-24", oc: "BALTIMORE", os: "MD", dc: "CONCORD", ds: "NC", cents: 220000, tt: "refrigerated_van" },
+  { ln: "13623", wo: "568871", customer: "Value Logistics Inc DBA A1 Value", driver: "EDUARDO AZAEL FLORES ORTIZ", truck: "T174", trailer: "568871", start: "2026-09-23", end: "2026-09-25", oc: "LAREDO", os: "TX", dc: "VILLA PARK", ds: "IL", cents: 320000, tt: "dry_van" },
+  { ln: "13624", wo: "2648812", customer: "Westgate Global Logistics", driver: "Jorge Luis Infante Corona", truck: "T177", trailer: "FB-56709", start: "2026-09-24", end: "2026-09-28", oc: "WILKES BARRE", os: "PA", dc: "ROMA", ds: "TX", cents: 520000, tt: "flatbed" },
+  { ln: "13625", wo: "LGMX142", customer: "LOGIMAX TRANSPORT INC", driver: "HUGO GAYTAN SARABIA", truck: "T148", trailer: "10222", start: "2026-09-24", end: "2026-09-28", oc: "LAREDO", os: "TX", dc: "BREINIGSVILLE", ds: "PA", cents: 625000, tt: "refrigerated_van" },
+  { ln: "13626", wo: "005804613", customer: "FLS Transportation Services Limited", driver: "Angel Alfonso Sosa Perez", truck: "T156", trailer: "10224", start: "2026-09-24", end: "2026-09-25", oc: "Lebanon", os: "IN", dc: "MEBANE", ds: "NC", cents: 340000, tt: "refrigerated_van" },
+  { ln: "13627", wo: "21868", customer: "EGRO TRANSPORT LLC", driver: "LUIS ARMANDO SOSA PEREZ", truck: "T170", trailer: "21868", start: "2026-09-23", end: "2026-09-25", oc: "LAREDO", os: "TX", dc: "COAL CITY", ds: "IL", cents: 320000, tt: "dry_van" },
+  { ln: "13628", wo: "4690712-1", customer: "Armstrong Transport GR", driver: "JOSE ANTONIO VICENTE MARTINEZ", truck: "T171", trailer: "10218", start: "2026-09-25", end: "2026-09-28", oc: "SECAUCUS", os: "NJ", dc: "HOUSTON", ds: "TX", cents: 487500, tt: "refrigerated_van" },
+  { ln: "13629", wo: "SHP7437063", customer: "GLT LOGISTICS", driver: "Angel Alfonso Sosa Perez", truck: "T156", trailer: "10224", start: "2026-09-25", end: "2026-09-28", oc: "CLINTON", os: "NC", dc: "Laredo", ds: "TX", cents: 320000, tt: "refrigerated_van" },
+  { ln: "13630", wo: "1013949", customer: "Refrigerx Transportation LLC", driver: "CARLOS MAURICIO PENA CARVALLO", truck: "T164", trailer: "10380", start: "2026-09-28", end: "2026-09-30", oc: "TAR HEEL", os: "NC", dc: "Laredo", ds: "TX", cents: 320000, tt: "refrigerated_van" },
+  { ln: "13631", wo: "1332528", customer: "Central Freight Management, LLC", driver: "EDUARDO AZAEL FLORES ORTIZ", truck: "T174", trailer: "568871", start: "2026-09-25", end: "2026-09-28", oc: "CALUMET CITY", os: "IL", dc: "LAREDO", ds: "TX", cents: 320000, tt: "dry_van" },
+  { ln: "13632", wo: "3-94954-0", customer: "RITE WAY LOGISTICS, INC", driver: "Fernando Mecor Hernandez", truck: "T168", trailer: "FB-56704", start: "2026-09-25", end: "2026-09-28", oc: "ELKHART", os: "IN", dc: "INGLESIDE", ds: "TX", cents: 400000, tt: "flatbed" },
+  { ln: "13633", wo: "1776502", customer: "ACE DORAN", driver: "Genaro Guerrero Chavez", truck: "T152", trailer: "FB-56707", start: "2026-09-25", end: "2026-09-28", oc: "LAREDO", os: "TX", dc: "COMSTOCK PARK", ds: "MI", cents: 430000, tt: "flatbed" },
+  { ln: "13634", wo: "3-95379-0", customer: "RITE WAY LOGISTICS, INC", driver: "Genaro Guerrero Chavez", truck: "T152", trailer: "FB-56707", start: "2026-09-28", end: "2026-09-30", oc: "ELKHART", os: "IN", dc: "INGLESIDE", ds: "TX", cents: 0, tt: "flatbed" },
+  { ln: "13635", wo: "2035346", customer: "C and A TRANSPORTATION & LOGISTICS INC", driver: "HUGO GAYTAN SARABIA", truck: "T148", trailer: "10222", start: "2026-09-28", end: "2026-10-01", oc: "BRIDGETON", os: "NJ", dc: "San Antonio", ds: "TX", cents: 460000, tt: "refrigerated_van" },
+  { ln: "13636", wo: "2648846", customer: "Westgate Global Logistics", driver: "Leonel Antonio Morales", truck: "T175", trailer: "FB-56709", start: "2026-09-25", end: "2026-09-28", oc: "WILKES BARRE", os: "PA", dc: "ROMA", ds: "TX", cents: 520000, tt: "flatbed" },
+  { ln: "13637", wo: "2648813", customer: "Westgate Global Logistics", driver: "Neftali Coronado Urbano", truck: "T176", trailer: "FB-56713", start: "2026-09-28", end: "2026-10-01", oc: "WILKES BARRE", os: "PA", dc: "ROMA", ds: "TX", cents: 0, tt: "flatbed" },
+  { ln: "13638", wo: "56713", customer: "Semares Forwarding Services", driver: "Neftali Coronado Urbano", truck: "T176", trailer: "FB-56713", start: "2026-09-25", end: "2026-09-28", oc: "Laredo", os: "TX", dc: "EDISON", ds: "NJ", cents: 490000, tt: "flatbed" },
+  { ln: "13639", wo: "1013880-2", customer: "Refrigerx Transportation LLC", driver: "Ruben Pedro Perez Garcia", truck: "T173", trailer: "10380", start: "2026-09-25", end: "2026-09-28", oc: "Laredo", os: "TX", dc: "QUAKERTOWN", ds: "PA", cents: 570000, tt: "refrigerated_van" },
+];
+
+async function one<T>(c: pg.PoolClient, sql: string, v: unknown[], what: string): Promise<string> {
+  const r = await c.query<{ id: string }>(sql, v);
+  if (r.rowCount !== 1) throw new Error(`${what}: expected 1 match, got ${r.rowCount} — refusing to guess`);
+  return r.rows[0]!.id;
+}
+
+async function resolveTrip(c: pg.PoolClient, driverId: string) {
+  const open = await c.query<{ id: string; tour_id: string | null }>(
+    `SELECT id::text, tour_id::text FROM driver_finance.driver_settlements
+      WHERE driver_id=$1::uuid AND trip_closed_at IS NULL AND voided_at IS NULL
+      ORDER BY created_at DESC LIMIT 1`, [driverId]);
+  const e = open.rows[0];
+  if (!e) return { trip_type: "NB" as const, tour_id: randomUUID() };
+  if (e.tour_id) return { trip_type: "TR" as const, tour_id: e.tour_id };
+  const t = randomUUID();
+  await c.query(`UPDATE driver_finance.driver_settlements SET tour_id=$1::uuid WHERE id=$2::uuid`, [t, e.id]);
+  return { trip_type: "TR" as const, tour_id: t };
+}
+
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+const out: Array<Record<string, unknown>> = [];
+try {
+  for (const r of PLAN) {
+    const c = await pool.connect();
+    let ids: { customer: string; driver: string; unit: string; trailer: string };
+    let trip: { trip_type: "NB" | "TR"; tour_id: string };
+    try {
+      await c.query(`SELECT set_config('app.bypass_rls','lucia',false)`);
+      await c.query(`SELECT set_config('app.operating_company_id',$1::text,false)`, [USMCA]);
+      const exists = await c.query(`SELECT id FROM mdata.loads WHERE operating_company_id=$1::uuid AND load_number=$2`, [USMCA, r.ln]);
+      if (exists.rowCount) { console.log(`${r.ln}: SKIP exists`); out.push({ ln: r.ln, status: "skip_exists" }); continue; }
+      ids = {
+        customer: await one(c, `SELECT id::text FROM mdata.customers WHERE operating_company_id=$1::uuid AND lower(btrim(name))=lower(btrim($2)) AND COALESCE(is_active,true)`, [USMCA, r.customer], `customer '${r.customer}'`),
+        driver: await one(c, `SELECT id::text FROM mdata.drivers WHERE operating_company_id=$1::uuid AND lower(btrim(first_name||' '||last_name))=lower(btrim($2))`, [USMCA, r.driver], `driver '${r.driver}'`),
+        unit: await one(c, `SELECT id::text FROM mdata.units WHERE operating_company_id=$1::uuid AND upper(btrim(unit_number))=upper(btrim($2))`, [USMCA, r.truck], `unit '${r.truck}'`),
+        trailer: await one(c, `SELECT id::text FROM mdata.units WHERE operating_company_id=$1::uuid AND upper(btrim(unit_number))=upper(btrim($2))`, [USMCA, r.trailer], `trailer '${r.trailer}'`),
+      };
+      trip = await resolveTrip(c, ids.driver);
+    } catch (e) {
+      console.log(`${r.ln}: RESOLVE FAILED — ${(e as Error).message}`);
+      out.push({ ln: r.ln, status: "resolve_failed", error: (e as Error).message });
+      continue;
+    } finally { c.release(); }
+
+    const input: BookLoadInput = {
+      requestingUserUuid: OWNER, requestingUserRole: "Owner", operating_company_id: USMCA,
+      customer_id: ids.customer, status: "dispatched", trip_type: trip.trip_type, tour_id: trip.tour_id,
+      load_number: r.ln, requested_load_number: r.ln, is_sample_data: false,
+      charges: r.cents > 0 ? [{ code: "linehaul", amount_cents: r.cents }] : [],
+      stops: [
+        { stop_type: "pickup", sequence_number: 1, city: r.oc, state: r.os, scheduled_arrival_at: `${r.start}T00:00:00.000Z`, time_window_type: "appointment" },
+        { stop_type: "delivery", sequence_number: 2, city: r.dc, state: r.ds, scheduled_arrival_at: `${r.end}T00:00:00.000Z`, time_window_type: "appointment" },
+      ],
+      save_mode: "book_dispatch",
+      assigned_primary_driver_id: ids.driver, assigned_unit_id: ids.unit, assigned_trailer_unit_id: ids.trailer,
+      trailer_type: r.tt, customer_po_number: r.wo,
+      override_reason: `R-147 (AUTH-077): load ${r.ln} is live on the owner's AlwaysTrack board and missing from USMCA — booked through the real book-load engine from that board row. Completed/factored but unsettled (open tour) per the owner's 2026-09-28 ruling; no settlement number assigned.`,
+      override_rules: [
+        { rule_code: "WF-HOS-VIOLATION", reason: `R-147 ${r.ln}` },
+        { rule_code: "WF-MED-CARD-MISSING", reason: `R-147 ${r.ln}` },
+      ],
+      override_token: `r147-book-current-${r.ln}`,
+    };
+
+    let res: Awaited<ReturnType<typeof bookLoad>>;
+    const notes: string[] = [];
+    try {
+      res = await bookLoad(input);
+    } catch (err) {
+      const m = (err as Error).message ?? "";
+      if (m.includes("unit is already active on load")) { notes.push("unit omitted"); res = await bookLoad({ ...input, assigned_unit_id: undefined }); }
+      else if (m.includes("uq_driver_settlements_one_open_per_driver")) { notes.push("trip link omitted"); res = await bookLoad({ ...input, trip_type: undefined, tour_id: undefined }); }
+      else { console.log(`${r.ln}: THREW — ${m}`); out.push({ ln: r.ln, status: "threw", error: m }); continue; }
+    }
+    if (res.kind === "error") {
+      console.log(`${r.ln}: BLOCKED — ${JSON.stringify(res.payload)}`);
+      out.push({ ln: r.ln, status: "blocked", payload: res.payload }); continue;
+    }
+    console.log(`${r.ln}: BOOKED ${res.row.id} ${notes.join(",")} bill=${JSON.stringify(res.row.driver_bill_mint)}`);
+    out.push({ ln: r.ln, status: "booked", id: String(res.row.id), rate_cents: r.cents, notes });
+  }
+  const booked = out.filter((o) => o.status === "booked").length;
+  console.log(JSON.stringify({ booked, of: PLAN.length, detail: out }, null, 1));
+} finally { await pool.end(); }
