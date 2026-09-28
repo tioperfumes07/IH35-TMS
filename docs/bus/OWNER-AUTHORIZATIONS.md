@@ -3752,7 +3752,7 @@ proof_query: new settlement id b3912fde-8b62-4be0-916e-b05d57e7a3c6, display_id 
 — CC-3
 
 
-## AUTH-120 — ROUND 191 item 1: resync driver_bills.settled_in_settlement_id (6 loads, CC-2 finding, CC-3 agreement)
+## AUTH-121 — ROUND 191 item 1: resync driver_bills.settled_in_settlement_id (6 loads, CC-2 finding, CC-3 agreement)
 
 requested_by: CC-2 (PR #23045, merged 2026-09-28T18:21:20Z — coordination doc + self-gated script only, no write)
 agreed_by: CC-3, 2026-09-28, after independent live re-verification (not a rubber stamp):
@@ -3792,7 +3792,7 @@ scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 6 named lo
 
 action:
   DATABASE_URL=<prod> npx tsx apps/backend/scripts/ops-r191-resync-driver-bill-settlement-pointer.ts --apply
-  (script's own AUTH_ID constant must be updated from the placeholder to AUTH-120 before --apply
+  (script's own AUTH_ID constant must be updated from the placeholder to AUTH-121 before --apply
   will pass verify-owner-authorization.mjs)
 expires_at: 2026-09-29T00:00:00.000Z
 status: OPEN — not yet executed
