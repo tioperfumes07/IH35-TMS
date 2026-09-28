@@ -662,8 +662,8 @@ async function storeMatch(
     match_state: MatchState;
     actor_user_uuid: string;
   }
-) {
-  await client.query(
+): Promise<string> {
+  const res = await client.query<{ id: string }>(
     `
       INSERT INTO banking.reconciliation_matches (
         operating_company_id,
@@ -682,6 +682,7 @@ async function storeMatch(
         match_state = EXCLUDED.match_state,
         matched_at = now(),
         matched_by_user_uuid = EXCLUDED.matched_by_user_uuid
+      RETURNING id::text
     `,
     [
       input.operating_company_id,
@@ -693,6 +694,7 @@ async function storeMatch(
       input.actor_user_uuid,
     ]
   );
+  return res.rows[0]!.id;
 }
 
 function computeCashBasisRevenueFromActualCashHit(input: { bankAmountCents: number; ledgerAmountCents: number; asOfDate: string }) {
@@ -1105,7 +1107,7 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
       txnAmountCents: txnAmountAbs,
     });
 
-    await storeMatch(client, {
+    const reconciliationMatchId = await storeMatch(client, {
       operating_company_id: input.operating_company_id,
       bank_transaction_id: input.bank_transaction_id,
       ledger_entry_kind: input.ledger_entry_kind,
@@ -1114,6 +1116,26 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
       match_state: "user_matched",
       actor_user_uuid: input.actor_user_uuid,
     });
+
+    // ROUND 185 — the ONLY place a banking.reconciliation_matches row gets a real, attributable
+    // "this went through the accept handler" record. audit.row_changes' own trigger on this table
+    // reads changed_by_user_id from a session var withLuciaBypass never sets, so it is NULL on
+    // every row regardless of path (verified live) — useless for telling a real accept apart from
+    // a raw INSERT. This event, with the actor passed explicitly (never a session var), is what
+    // verify-no-match-persisted-outside-accept-handler.mjs checks for instead.
+    await appendCrudAudit(
+      client,
+      input.actor_user_uuid,
+      "bank_match.accepted",
+      {
+        reconciliation_match_id: reconciliationMatchId,
+        bank_transaction_id: input.bank_transaction_id,
+        ledger_entry_kind: input.ledger_entry_kind,
+        ledger_entry_id: input.ledger_entry_id,
+      },
+      "info",
+      "BANK-RECON-ACCEPT-HANDLER"
+    );
 
     const journalEntryId = await postDifferenceJournalEntry(client, {
       operating_company_id: input.operating_company_id,

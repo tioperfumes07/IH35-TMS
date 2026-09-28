@@ -427,6 +427,16 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-cash-flow-reads-delivery-date",
     ["apps/backend/src/cash-flow/cash-flow.service.ts", "apps/backend/src/accounting/from-load.ts"],
   ],
+  // ROUND 185 — a banking.reconciliation_matches row with no real "accept handler" audit event
+  // (audit.audit_events, event_class='bank_match.accepted') fails. audit.row_changes' own trigger
+  // reads a session var withLuciaBypass never sets, so it can't tell a real accept from a raw
+  // INSERT (100% of 680 existing rows showed changed_by_user_id NULL regardless of path) -- this
+  // is the real signal, and it's what makes the Lead's 207-rows-outside-the-handler incident
+  // impossible to repeat.
+  [
+    "verify-no-match-persisted-outside-accept-handler",
+    ["apps/backend/src/accounting/bank-recon/match.service.ts"],
+  ],
   // ROUND 166 JOB 1(e) (P0) — the permanent alarm: fails when no USMCA unit has a fresh telematics
   // position during operating hours. USMCA's Samsara feed was off for weeks with zero stamps
   // accumulating and nobody noticed; this is the gate that catches the next silent death.
