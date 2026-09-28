@@ -390,6 +390,14 @@ const GUARD_303 = [
 const DATA_WRITE_PATHS = ["db/migrations/", "scripts/ops/"];
 const ONE_SHOT_WRITER_RE = /^scripts\/run-[^/]+-once\.m?[jt]s$/;
 const LIVE_DOMAIN_GUARDS = [
+  // ROUND 155.12 (Lead, 2026-09-28) — canonicalActiveLoadNotFinishedByMoneyCte treated an OPEN,
+  // unsettled driver bill (raised AT DISPATCH) as "finished money", silently dropping every
+  // freshly-dispatched load off every board. Live check: no load whose only money artifact is an
+  // open/unsettled driver bill or an active line on a still-open settlement is excluded.
+  [
+    "verify-open-driver-bill-keeps-load-active",
+    ["apps/backend/src/dispatch/canonical-active-load-set.ts"],
+  ],
   // Claude-Lead 2026-09-26 — two LIVE guards that ran nowhere (verify-guard-wired orphans, neither in CI nor here).
   // Both LIVE PASS at wiring: 10 loads / 5 multi-load tours; 758 Samsara profiles, 0 structural problems.
   [

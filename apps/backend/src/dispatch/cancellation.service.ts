@@ -466,12 +466,25 @@ export async function cancelLoadInClientTx(
         // was throwing "column load_id of relation bills does not exist" on every WO-auto-bill
         // create before this migration; it is fixed as a side effect, not the point of this round,
         // but worth stating plainly rather than discovering it silently.
+        // ROUND 155.20 fix — Postgres categorically refuses `SELECT DISTINCT ... FOR UPDATE` (not
+        // just this column combination; the clause is disallowed outright with DISTINCT/GROUP BY/
+        // window functions/UNION etc.). The DISTINCT here existed only to collapse duplicate
+        // b.id rows produced by the LEFT JOIN to bill_lines when a bill has more than one matching
+        // line for this load — an EXISTS-scoped header query returns each bill exactly once without
+        // ever needing DISTINCT, so FOR UPDATE OF b is valid again. Same real bills matched, same
+        // lock, no behavior change beyond making this cancellation path executable at all (it threw
+        // "FOR UPDATE is not allowed with DISTINCT clause" on every single call before this fix).
         const openVendorBillsRes = await client.query<{ id: string }>(
-          `SELECT DISTINCT b.id::text
+          `SELECT b.id::text
              FROM accounting.bills b
-             LEFT JOIN accounting.bill_lines bl ON bl.bill_id = b.id AND bl.operating_company_id = b.operating_company_id
             WHERE b.operating_company_id = $2::uuid AND b.status <> 'void'
-              AND (b.load_id = $1::uuid OR bl.load_id = $1::uuid)
+              AND (
+                b.load_id = $1::uuid
+                OR EXISTS (
+                  SELECT 1 FROM accounting.bill_lines bl
+                   WHERE bl.bill_id = b.id AND bl.operating_company_id = b.operating_company_id AND bl.load_id = $1::uuid
+                )
+              )
             FOR UPDATE OF b`,
           [input.load_id, input.operating_company_id]
         );
