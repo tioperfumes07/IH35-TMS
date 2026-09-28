@@ -58,6 +58,11 @@ const createBodySchema = z.object({
   reserve_pct: z.coerce.number().min(0).max(100),
   factor_fee_pct: z.coerce.number().min(0).max(100),
   notes: z.string().trim().max(5000).optional(),
+  // ROUND 172 MATCH LAW — when the caller knows the factor's PO string (Faro purchase PO), refuse
+  // create unless every invoice's source load carries that exact string on customer_wo_number OR
+  // customer_po_number. Optional so the interactive UI still submits without it; Faro feed scripts
+  // ALWAYS pass it. Never map on amount+customer.
+  expected_customer_po: z.string().trim().min(1).max(120).optional(),
 });
 
 /** FACT-PLEDGE-NET-CM — same net as ar-aging (payments + applied non-void credit memos), live not as-of. */
@@ -463,6 +468,50 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
         if (Number(row.pledge_cents ?? 0) <= 0) return { code: 409 as const, error: "invoice_zero_open" };
       }
 
+      // ROUND 172 MATCH LAW — refuse when the caller's factor PO does not EXACTLY match the load's
+      // customer_wo_number or customer_po_number. Amount+customer alone never authorizes a feed.
+      if (body.data.expected_customer_po) {
+        const poWant = body.data.expected_customer_po;
+        const poRes = await client.query(
+          `
+            SELECT
+              i.id::text AS invoice_id,
+              l.load_number,
+              l.customer_wo_number,
+              l.customer_po_number
+            FROM accounting.invoices i
+            LEFT JOIN mdata.loads l
+              ON l.id = i.source_load_id
+             AND l.operating_company_id = i.operating_company_id
+            WHERE i.operating_company_id = $1::uuid
+              AND i.id = ANY($2::uuid[])
+          `,
+          [query.data.operating_company_id, body.data.invoice_ids]
+        );
+        for (const row of poRes.rows as Array<{
+          invoice_id: string;
+          load_number: string | null;
+          customer_wo_number: string | null;
+          customer_po_number: string | null;
+        }>) {
+          const wo = row.customer_wo_number ?? "";
+          const po = row.customer_po_number ?? "";
+          if (wo !== poWant && po !== poWant) {
+            return {
+              code: 409 as const,
+              error: "factoring_po_mismatch",
+              detail: {
+                expected_customer_po: poWant,
+                load_number: row.load_number,
+                customer_wo_number: row.customer_wo_number,
+                customer_po_number: row.customer_po_number,
+                invoice_id: row.invoice_id,
+              },
+            };
+          }
+        }
+      }
+
       // FACT-PLEDGE-NET-CM: Faro face / reserve / fee base = open AR, not invoice header total.
       const invoiceTotalCents = invoiceRes.rows.reduce(
         (sum: number, row: Record<string, unknown>) => sum + Number(row.pledge_cents ?? 0),
@@ -584,7 +633,11 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
       return { code: 201 as const, data: detail };
     });
 
-    if ("error" in result) return reply.code(result.code).send({ error: result.error });
+    if ("error" in result) {
+      const payload: Record<string, unknown> = { error: result.error };
+      if ("detail" in result && result.detail != null) payload.detail = result.detail;
+      return reply.code(result.code).send(payload);
+    }
     return reply.code(result.code).send(result.data);
   });
 
