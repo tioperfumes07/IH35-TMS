@@ -627,6 +627,16 @@ const LIVE_DOMAIN_GUARDS = [
       "apps/backend/src/dispatch/",
     ],
   ],
+  // ROUND 155.2c: dispatch.non_owned_trailers had two identical rows for trailer 538306 live —
+  // migration 202614440000 added the missing unique index, this is the independent live proof
+  // that invariant holds, same pattern as verify-no-driver-merge-without-hard-identifier above.
+  [
+    "verify-no-duplicate-non-owned-trailer",
+    [
+      "apps/backend/src/dispatch/trailer-interchange.routes.ts",
+      "apps/backend/src/dispatch/trailer-interchange.service.ts",
+    ],
+  ],
   // ROUND E23 (DEVIN-B, Q06): gate live reads must connect as ih35_ci_readonly, never
   // neondb_owner. Static source scan — no DB needed.
   [
