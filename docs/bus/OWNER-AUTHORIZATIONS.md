@@ -3195,11 +3195,24 @@ the real defect is that the existing lines are wrong, for two independently evid
 action:
   OWNER_AUTH_ID=AUTH-104 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r15513-j5-resolve-zero-line-presettlements.ts --apply
 expires_at: 2026-09-28T19:00:00.000Z
-status: OPEN
+status: DONE — executed live 2026-09-28
 
-Dry run verified clean this round: P-0001 cancellation confirmed safe (both loads present as
-active lines on real 5817, checked inside the transaction, not assumed); P-0003 $910.90->$853.97,
-P-0005 $940.27->$881.51, P-0007 $3.46->$3.24 (miles unchanged, rate corrected 48->45 cents/mi).
+consumed_at: 2026-09-28T12:44Z
+consumed_by: CC-2
+row_counts: P-0001 cancelled (status='cancelled', 2 lines voided, header amount left as historical
+  record, not zeroed). P-0003/P-0005/P-0007: 1 wrong-rate line voided + 1 corrected line inserted
+  each, headers updated to the SUM of active lines.
+final_state: P-0003 net_pay/gross_pay $853.97 (was $910.90); P-0005 $881.51 (was $940.27); P-0007
+  $3.24 (was $3.46). All three new lines carry quantity/rate_cents/unit_of_measure/item_id
+  populated (miles unchanged from driver_bills.miles_basis, rate 45.0000, unit 'mi', item_id
+  a9a03f7a-5783-4615-a4f2-81b7b41973a8 -- the same "Loaded Miles" catalog item real settlement
+  5817's own lines use). Independently re-verified live, post-commit, in a fresh query separate
+  from the apply script itself: all four rows match exactly.
+One real bug hit and fixed live before this committed: the first --apply attempt failed on
+`settlement_lines_item_qty_rate_amount_check` (item_id required whenever quantity/rate are set) --
+transaction rolled back automatically on the constraint violation (Postgres default), nothing
+partial committed. Fixed by resolving the real "Loaded Miles" item_id from real settlement 5817's
+own lines rather than guessing one; re-ran clean.
 
 — CC-2
 
