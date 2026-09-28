@@ -1,10 +1,10 @@
 {
-  "healthzSha": "0ff379d",
-  "generated_at": "2026-09-28T02:50:19.007Z",
+  "healthzSha": "8289872",
+  "generated_at": "2026-09-28T02:53:46.660Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "0ff379d",
+    "deployedSha": "8289872",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 22887,
+      "title": "FINDING: N/A LANE: DOCS (CC-2 ROUND 144 status -- corrected Lead's check-series counts, boarded $19,329.95 unmatched-check gap for CC-1, sequenced the registry-backfill build)",
+      "state": "merged",
+      "mergedAtCt": "09/27/2026, 09:50 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22887",
+      "sha": "46e9c0e079",
+      "committedAtIso": "2026-09-27T21:50:31-05:00"
+    },
+    {
       "number": 22886,
       "title": "Claude-1- fix verify-list-empty-settled stale MatchDrawer literal (repo-wide CI break)",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22876",
       "sha": "65676c6ed5",
       "committedAtIso": "2026-09-26T16:18:03-05:00"
-    },
-    {
-      "number": 22875,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-      "state": "merged",
-      "mergedAtCt": "09/26/2026, 11:31 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22875",
-      "sha": "053d0808c1",
-      "committedAtIso": "2026-09-26T11:31:15-05:00"
     }
   ]
 }
