@@ -109,7 +109,7 @@ async function main() {
     console.log(`\n  -- maintenance.pm_auto_wo_log: ${pmIds.rows.length} row(s), 100% sample-unit confirmed inside transaction --`);
     const pmDeleted = await bulkDeleteBatched(
       client,
-      `DELETE FROM maintenance.pm_auto_wo_log WHERE id = ANY($1::uuid[])`,
+      `DELETE FROM maintenance.pm_auto_wo_log WHERE id = ANY($1::uuid[]) AND operating_company_id IS NOT NULL`,
       pmIds.rows.map((r) => r.id),
     );
 
@@ -122,7 +122,7 @@ async function main() {
     console.log(`\n  -- samsara.hos_snapshots: ${hosIds.rows.length} sample-driver-scoped row(s) confirmed inside transaction --`);
     const hosDeleted = await bulkDeleteBatched(
       client,
-      `DELETE FROM samsara.hos_snapshots WHERE id = ANY($1::uuid[])`,
+      `DELETE FROM samsara.hos_snapshots WHERE id = ANY($1::uuid[]) AND operating_company_id IS NOT NULL`,
       hosIds.rows.map((r) => r.id),
     );
 

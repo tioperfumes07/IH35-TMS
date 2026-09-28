@@ -37,6 +37,7 @@ const MATCHED_ID_COLUMNS = [
   "matched_expense_id",
   "matched_invoice_id",
   "matched_advance_id",
+  "matched_factoring_advance_id",
   "matched_payment_id",
   "matched_transfer_id",
   "matched_journal_entry_id",
