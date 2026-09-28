@@ -79,6 +79,32 @@ export type DisburseSplitResult =
   | { ok: true; advanceId: string; billPaymentIds: string[]; expenseIds: string[] }
   | { ok: false; code: number; error: string; message?: string };
 
+// B10-class fix (Devin sweep, 2026-09-28, applied here after the guard verify-no-nested-transactions
+// -in-withcurrentuser.mjs caught this file too): this function used to manage its own explicit
+// client.query("BEGIN"/"COMMIT"/"ROLLBACK") inside a withCurrentUser(...) callback -- redundant on
+// the SAME already-open transaction (withCurrentUser BEGINs/COMMITs/ROLLBACKs on its own), and
+// distinct from the real concern its own comment cited (avoiding a SECOND connection/transaction,
+// which postSourceTransactionInClientTx never opens -- it explicitly expects to run inside the
+// caller's existing transaction). A mid-loop failure (e.g. the missing-QBO-117-account case) can
+// happen AFTER an earlier split leg already inserted a real bill_payment row in this same
+// transaction, so simply removing the nested BEGIN/COMMIT and returning a plain falsy result would
+// let withCurrentUser COMMIT that partial write -- breaking the "all-or-nothing" contract this
+// function's own doc comment promises. This typed error preserves atomicity: a business-rule
+// failure THROWS, withCurrentUser's own catch rolls back the whole transaction, and the outer
+// wrapper below translates it back to the same { ok: false, code, error, message } shape callers
+// already expect.
+class DisburseSplitFailure extends Error {
+  code: number;
+  errorCode: string;
+  userMessage?: string;
+  constructor(code: number, errorCode: string, userMessage?: string) {
+    super(`disburse_split_failure:${errorCode}`);
+    this.code = code;
+    this.errorCode = errorCode;
+    this.userMessage = userMessage;
+  }
+}
+
 type DisburseSplitInput = {
   advance_id: string;
   splits: AdvanceSplit[];
@@ -96,10 +122,9 @@ export async function disburseCashAdvanceSplit(
 ): Promise<DisburseSplitResult> {
   if (!lumperLifecycleEnabled()) return { ok: false, code: 403, error: "lumper_lifecycle_disabled" };
 
-  return withCurrentUser(actorUserUuid, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
-    await client.query("BEGIN");
-    try {
+  try {
+    return await withCurrentUser(actorUserUuid, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
       // 1. Lock the advance + read its total (driver_advances.amount is numeric dollars).
       const adv = await client.query(
         `SELECT amount::text AS amount FROM driver_finance.driver_advances
@@ -107,16 +132,14 @@ export async function disburseCashAdvanceSplit(
         [companyId, input.advance_id],
       );
       if (adv.rows.length === 0) {
-        await client.query("ROLLBACK");
-        return { ok: false, code: 404, error: "advance_not_found" };
+        throw new DisburseSplitFailure(404, "advance_not_found");
       }
       const advanceTotalCents = Math.round(Number((adv.rows[0] as { amount: string }).amount) * 100);
 
       // 2. Fail-loud: the legs MUST sum to the advance.
       const v = validateAdvanceSplit(input.splits, advanceTotalCents);
       if (!v.ok) {
-        await client.query("ROLLBACK");
-        return { ok: false, code: 422, error: v.error, message: v.message };
+        throw new DisburseSplitFailure(422, v.error, v.message);
       }
 
       const billPaymentIds: string[] = [];
@@ -149,9 +172,12 @@ export async function disburseCashAdvanceSplit(
           const billPaymentId = String((bp.rows[0] as { id: string }).id);
           billPaymentIds.push(billPaymentId);
 
-          // C6 (GO-23) — same-transaction poster (this function manages its own explicit BEGIN/COMMIT,
-          // same reasoning as bills-bulk.routes.ts's #19625 fix): opening a second transaction here
-          // would self-deadlock on the bill row's own lock. Flag-gated by the EXISTING
+          // C6 (GO-23) — same-transaction poster: postSourceTransactionInClientTx runs on this same
+          // `client`/transaction (withCurrentUser's own, not a second connection) — opening a SECOND
+          // connection/transaction here would self-deadlock on the bill row's own lock, which is why
+          // this stays on one client throughout (B10 fix, 2026-09-28: this file used to also manage
+          // its own redundant nested BEGIN/COMMIT on this SAME connection, removed — see
+          // DisburseSplitFailure above for how atomicity is still preserved). Flag-gated by the EXISTING
           // BILL_PAYMENT_GL_POSTING_ENABLED check — no new flag, no new GL math. Best-effort: a post
           // failure must not abort the whole split disburse, but must not vanish silently (SWL-1).
           try {
@@ -183,8 +209,7 @@ export async function disburseCashAdvanceSplit(
             [companyId],
           );
           if (acct.rows.length === 0) {
-            await client.query("ROLLBACK");
-            return { ok: false, code: 409, error: "lumper_expense_account_missing", message: "QBO-117 (Warehouse-Lumper Fee) not found for this entity" };
+            throw new DisburseSplitFailure(409, "lumper_expense_account_missing", "QBO-117 (Warehouse-Lumper Fee) not found for this entity");
           }
           const lumperAccountId = String((acct.rows[0] as { id: string }).id);
 
@@ -247,11 +272,12 @@ export async function disburseCashAdvanceSplit(
         ],
       );
 
-      await client.query("COMMIT");
       return { ok: true, advanceId: input.advance_id, billPaymentIds, expenseIds };
-    } catch (e) {
-      await client.query("ROLLBACK").catch(() => {});
-      throw e;
+    });
+  } catch (e) {
+    if (e instanceof DisburseSplitFailure) {
+      return { ok: false, code: e.code, error: e.errorCode, message: e.userMessage };
     }
-  });
+    throw e;
+  }
 }

@@ -48,6 +48,13 @@ export async function registerQboBulkLinkRoutes(app: FastifyInstance) {
     await assertCompanyMembership(user.uuid, parsed.data.operating_company_id);
 
     const runBatch = async () => {
+      // B10 (Devin sweep, 2026-09-28): withCurrentUser already manages the transaction for this
+      // whole callback (one request, up to 500 mappings, one commit) -- the nested
+      // BEGIN/COMMIT/ROLLBACK below was redundant on the same connection and committed the outer
+      // transaction early (see qbo-master-write.routes.ts's fix for the full explanation). A
+      // per-mapping failure when ignoreErrors=false still throws and propagates to
+      // withCurrentUser's own rollback; per-mapping failures collected in `errors` when
+      // ignoreErrors=true were never query-level failures needing a rollback in the first place.
       await withCurrentUser(user.uuid, async (client) => {
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [parsed.data.operating_company_id]);
 
@@ -55,22 +62,7 @@ export async function registerQboBulkLinkRoutes(app: FastifyInstance) {
           await appendCrudAudit(client, user.uuid, "qbo.entity_linked", payload, "info", "P6-T11196");
         };
 
-        const maybeBegin = async () => {
-          await client.query("BEGIN");
-        };
-
-        const finalizeOk = async () => {
-          await client.query("COMMIT");
-        };
-
-        const finalizeBad = async () => {
-          await client.query("ROLLBACK");
-        };
-
-        await maybeBegin();
-
-        try {
-          for (const map of parsed.data.mappings) {
+        for (const map of parsed.data.mappings) {
             const vendorId = map.qbo_vendor_id ?? null;
             const classId = map.qbo_class_id ?? null;
             if (!vendorId && !classId) {
@@ -177,12 +169,6 @@ export async function registerQboBulkLinkRoutes(app: FastifyInstance) {
               errors.push({ entity_id: map.entity_id, error_message: message });
             }
           }
-
-          await finalizeOk();
-        } catch (error) {
-          await finalizeBad();
-          throw error;
-        }
       });
     };
 

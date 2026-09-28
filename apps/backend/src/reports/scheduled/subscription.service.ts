@@ -125,7 +125,13 @@ export async function createSubscription(data: CreateSubscriptionInput, userId: 
   });
 
   return withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [data.operatingCompanyId]);
+    // B7 (Devin sweep, 2026-09-28): was a bare set_config with no assertCompanyMembership --
+    // MDATA-F09-class gap (the caller's own operatingCompanyId chose the RLS scope, so RLS
+    // enforced whatever the request asked for instead of authorizing it). The route is
+    // Owner-only (requireOwner in routes.ts) so this was not reachable by a non-Owner caller
+    // today, but updateSubscription right below already carries the real check -- this closes
+    // the inconsistency the same way, once, via the same helper.
+    await setScopedCompanyContext(client, userId, data.operatingCompanyId);
     const res = await client.query<{ uuid: string }>(
       `
         INSERT INTO reports.scheduled_subscriptions (

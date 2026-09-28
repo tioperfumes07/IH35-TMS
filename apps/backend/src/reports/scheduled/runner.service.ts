@@ -13,7 +13,7 @@ import { cashArDailyQuery } from "../queries/cash-ar-daily.js";
 import { driverSettlementsWeeklyQuery } from "../queries/driver-settlements-weekly.js";
 import { iftaQuarterlyQuery } from "../queries/ifta-quarterly.js";
 import { buildScheduledReportFile } from "../../scheduled-reports/report-file-builder.js";
-import { companyBusinessDate } from "../../lib/company-business-date.js";
+import { companyBusinessDate, addBusinessDateDays } from "../../lib/company-business-date.js";
 import type { ScheduledReportId } from "../scheduled-report-runner.js";
 import { Q8_REPORT_LABELS, type CadenceInput } from "./cadence.js";
 import {
@@ -23,6 +23,24 @@ import {
   type ScheduledSubscription,
 } from "./subscription.service.js";
 
+// B7 (Devin sweep, 2026-09-28) -- investigated before changing anything, per the owner's own
+// "report what you find before you fix" order. Verdict: NOT exploitable today.
+//   - This whole file has exactly one call site: jobs/scheduled-reports-emailer.ts's cron tick
+//     (node-cron, */15 * * * *, registered once at server startup). There is no HTTP route that
+//     reaches runDue()/deliverSubscription() or any generate*() function in this file -- no
+//     request-level actor exists to spoof.
+//   - Every operatingCompanyId used below comes from `sub.operating_company_id` on a real
+//     `reports.scheduled_subscriptions` row (subscription.service.ts's listDueSubscriptions,
+//     intentionally withLuciaBypass -- a cron scanning ALL companies' due subscriptions is the
+//     correct shape, not a bug). Those rows are writable ONLY through the Owner-gated
+//     POST /api/v1/reports/scheduled/subscriptions route, and createSubscription now calls
+//     setScopedCompanyContext (fixed alongside this finding, same PR) -- so the one real
+//     write-side gap Devin's sweep actually found is closed there, not here.
+//   - SYSTEM_ACTOR_ID is a pseudo-user with no identity.users row and no company-membership
+//     rows, so assertCompanyMembership(SYSTEM_ACTOR_ID, ...) would always throw here -- calling
+//     it would not harden this path, it would break every scheduled report. This is deliberately
+//     the "dedicated service role" branch, not the "same membership assertion" branch: it trusts
+//     the subscriptions table because that table's own write path is what is actually gated.
 const SYSTEM_ACTOR_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-0000-0000-000000000001";
 
 const SLUG_TO_LEGACY: Partial<Record<string, ScheduledReportId>> = {
@@ -101,10 +119,17 @@ async function generateMonthlyPnl(
   operatingCompanyId: string,
   format: "pdf" | "xlsx" | "html"
 ): Promise<GeneratedBundle> {
-  const end = new Date();
-  const start = new Date(end.getFullYear(), end.getMonth() - 1, 1);
-  const startIso = start.toISOString().slice(0, 10);
-  const endIso = new Date(end.getFullYear(), end.getMonth(), 0).toISOString().slice(0, 10);
+  // B6 (Devin sweep, 6th instance of the same bug class): was server-local getFullYear()/getMonth()
+  // then .toISOString() (UTC) — shifts the reported month by a day at month boundaries when the
+  // server TZ differs from the company TZ. companyBusinessDate() + addBusinessDateDays() compute
+  // "today" and the previous month's boundaries entirely in company-TZ calendar terms, matching
+  // generateWeeklyArAging60 above.
+  const todayIso = companyBusinessDate();
+  const [todayYear, todayMonth] = todayIso.split("-").map(Number);
+  const firstOfThisMonthIso = `${todayYear}-${String(todayMonth).padStart(2, "0")}-01`;
+  const endIso = addBusinessDateDays(firstOfThisMonthIso, -1);
+  const [prevYear, prevMonth] = endIso.split("-").map(Number);
+  const startIso = `${prevYear}-${String(prevMonth).padStart(2, "0")}-01`;
   const report = await getProfitLossReport({
     userId: SYSTEM_ACTOR_ID,
     operating_company_id: operatingCompanyId,

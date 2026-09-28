@@ -101,6 +101,12 @@ const STEPS = [
   // LOAD-TO-CASH CHAIN (owner law, 2026-09-12) — "it should never automatch, it suggests and we
   // accept it or change the transactions." verify-load-to-cash-chain runs in LIVE_DOMAIN_GUARDS below.
   ["verify-no-automatch", "scripts/verify-no-automatch.mjs"],
+  // B10 (Devin sweep, 2026-09-28) — no withCurrentUser(...) callback manages its own nested
+  // BEGIN/COMMIT/ROLLBACK; withCurrentUser already owns the transaction.
+  ["verify-no-nested-transactions-in-withcurrentuser", "scripts/verify-no-nested-transactions-in-withcurrentuser.mjs"],
+  // B9 (Devin sweep, 2026-09-28) — named regression test: both accounting.bills paid_cents UPDATE
+  // sites stay entity-scoped and rowCount-checked.
+  ["verify-money-updates-are-entity-scoped-and-checked", "scripts/verify-money-updates-are-entity-scoped-and-checked.mjs"],
   // ALL-SEATS LAW (owner, 2026-09-13) — every load-number column carries a settlement/tour column
   // beside it; only source_document_ref (never display_id) is ever the human-visible number.
   ["verify-settlement-ref-beside-load", "scripts/verify-settlement-ref-beside-load.mjs"],
