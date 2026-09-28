@@ -925,6 +925,24 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
         if (typedSource === null) {
           nextSource = null;
         } else if (isAlwaysTrackSettlementNumber(typedSource) || typedSource.length > 0) {
+          // ROUND 210 (owner order): "never collide with 5769-5819" -- those are REAL, closed
+          // AlwaysTrack settlements. The unique index for this column
+          // (202614110000_driver_settlements_source_document_ref_unique.sql) is a HELD migration,
+          // not yet applied to prod, so the database itself does not reject a duplicate today.
+          // This app-level check closes that exact gap: same clash-then-409 pattern the display_id
+          // edit above already uses, scoped to source_document_ref instead.
+          if (typedSource !== current.source_document_ref) {
+            const sourceClash = await client.query(
+              `SELECT id::text FROM driver_finance.driver_settlements
+                WHERE operating_company_id = $1::uuid
+                  AND source_document_ref = $2
+                  AND id <> $3::uuid
+                  AND voided_at IS NULL
+                LIMIT 1`,
+              [body.data.operating_company_id, typedSource, params.data.id],
+            );
+            if (sourceClash.rows[0]) return { kind: "source_conflict" as const };
+          }
           nextSource = typedSource;
         }
       }
@@ -993,6 +1011,12 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
       });
     }
     if (result.kind === "conflict") return reply.code(409).send({ error: "display_id_taken", message: "That pre-settlement number is already in use for this company." });
+    if (result.kind === "source_conflict") {
+      return reply.code(409).send({
+        error: "source_document_ref_taken",
+        message: "That settlement number is already assigned to another settlement — check it against the closed 5769-5819 range before retyping.",
+      });
+    }
     return result;
   });
 

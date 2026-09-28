@@ -84,7 +84,7 @@ import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { dataTableErrorState } from "../../lib/tableError";
 import { useToast } from "../../components/Toast";
-import { listOpenPreSettlements, type OpenPreSettlement } from "../../api/driverFinance";
+import { listOpenPreSettlements, patchSettlementNumber, type OpenPreSettlement } from "../../api/driverFinance";
 import { STATUS_LABEL, formatMoneyCents, toRouteSummary } from "../../components/dispatch/constants";
 import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
 import { InlineDriverPicker } from "../../components/dispatch/InlineDriverPicker";
@@ -596,6 +596,15 @@ export function DispatchBoard({
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [pendingTransition, setPendingTransition] = useState<string>(LOAD_TRANSITION_OPTIONS[0].value);
   const [rowOverrides, setRowOverrides] = useState<Record<string, RowOverride>>({});
+  // ROUND 210 (owner order): editable internal pre-settlement number, inline on the Dispatch
+  // board -- keyed by settlement_id (one editor open at a time, same convention as every other
+  // single-editor-at-a-time cell on this board). Saved via patchSettlementNumber, which routes to
+  // display_id (P-series) or source_document_ref (the real AlwaysTrack number) by shape; the
+  // backend's own Owner-role gate + audit trail + source_document_ref clash check (added this
+  // round) are what actually enforce "never collide with 5769-5819" -- this is UI only.
+  const [editingSettlementId, setEditingSettlementId] = useState<string | null>(null);
+  const [settlementNumberDraft, setSettlementNumberDraft] = useState("");
+  const [settlementNumberBusy, setSettlementNumberBusy] = useState(false);
   const [quickAssignLoad, setQuickAssignLoad] = useState<BoardLoad | null>(null);
   const [sectionFilters, setSectionFilters] = useState<Record<string, string>>({});
   // LB-DESIGN-1: the List board is ONE grouped table; per-section sorts collapsed into the single tableSort.
@@ -1228,6 +1237,25 @@ export function DispatchBoard({
   // assigned driver currently has an open pre-settlement and this load's own status is still open
   // (an already-delivered/closed/invoiced/cancelled load's real settlement may differ from the
   // driver's CURRENT open one, so the number is withheld there rather than shown misleadingly).
+  const saveSettlementNumber = async (settlementId: string) => {
+    const typed = settlementNumberDraft.trim();
+    if (!typed || !operatingCompanyId) return;
+    setSettlementNumberBusy(true);
+    try {
+      await patchSettlementNumber(settlementId, operatingCompanyId, typed);
+      pushToast("Settlement number saved", "success");
+      setEditingSettlementId(null);
+      await queryClient.invalidateQueries({ queryKey: ["pre-settlements-open", operatingCompanyId] });
+    } catch (err) {
+      // Design contract rule 1: show the server's own refusal (e.g. source_document_ref_taken,
+      // display_id_taken, settlement_number_is_server_generated, owner_role_required) verbatim,
+      // never fail silently -- the edit stays open so the dispatcher/owner can correct and retry.
+      pushToast(userFacingApiError(err, "Could not save the settlement number"), "error");
+    } finally {
+      setSettlementNumberBusy(false);
+    }
+  };
+
   const renderPreSettlementNumber = (load: DispatchLoadRow) => {
     const effectiveDriverId = rowOverrides[load.id]?.driverId ?? load.assigned_primary_driver_id;
     const openPreSettlement = effectiveDriverId ? openPreSettlementsMap.get(effectiveDriverId) : undefined;
@@ -1237,11 +1265,57 @@ export function DispatchBoard({
           load.status
         )
     );
-    if (!showNumber || !openPreSettlement || !openPreSettlement.settlement_number) return null;
+    if (!showNumber || !openPreSettlement) return null;
+    const settlementId = openPreSettlement.settlement_id;
+    if (editingSettlementId === settlementId) {
+      return (
+        <span className="inline-flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          <input
+            autoFocus
+            className="h-6 w-20 rounded-sm border border-[#E5E7EB] px-1.5 text-center font-mono text-xs"
+            value={settlementNumberDraft}
+            onChange={(e) => setSettlementNumberDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void saveSettlementNumber(settlementId);
+              if (e.key === "Escape") setEditingSettlementId(null);
+            }}
+            placeholder="P-0004 or 5820"
+            data-testid={`presettlement-number-input-${settlementId}`}
+          />
+          <button
+            type="button"
+            disabled={settlementNumberBusy || !settlementNumberDraft.trim()}
+            className="h-6 rounded-sm bg-[#14314F] px-1.5 text-xs font-semibold text-white disabled:opacity-60"
+            onClick={() => void saveSettlementNumber(settlementId)}
+            data-testid={`presettlement-number-save-${settlementId}`}
+          >
+            Save
+          </button>
+          <button
+            type="button"
+            className="h-6 rounded-sm border border-[#E5E7EB] px-1.5 text-xs"
+            disabled={settlementNumberBusy}
+            onClick={() => setEditingSettlementId(null)}
+          >
+            ✕
+          </button>
+        </span>
+      );
+    }
     return (
-      <span className="font-mono text-xs text-slate-700">
-        <EntityLink kind="settlement" id={openPreSettlement.settlement_id} label={entityLabel(openPreSettlement.settlement_number, openPreSettlement.settlement_id, "Settlement")} />
-      </span>
+      <button
+        type="button"
+        className="font-mono text-xs text-slate-700 underline-offset-2 hover:underline"
+        onClick={(e) => {
+          e.stopPropagation();
+          setSettlementNumberDraft(openPreSettlement.settlement_number ?? "");
+          setEditingSettlementId(settlementId);
+        }}
+        title="Click to edit — Owner only"
+        data-testid={`presettlement-number-${settlementId}`}
+      >
+        {openPreSettlement.settlement_number ?? "— click to set —"}
+      </button>
     );
   };
 
