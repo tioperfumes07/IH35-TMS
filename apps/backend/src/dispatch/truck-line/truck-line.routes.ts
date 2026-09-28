@@ -1,35 +1,24 @@
 /**
  * TRUCK LINE — GET /api/v1/dispatch/truck-line (Lead assignment 2026-09-11, owner ruling).
  *
- * V10 (ROUND 18.6, owner-approved final spec): the row scope changed from "one row per in-service
- * unit" to "one row per ACTIVE LOAD, UNION one row per AVAILABLE DRIVER" — a deliberate narrowing
- * from an exhaustive fleet roster to "work in progress + workers ready for work" (the owner's own
- * framing: "a truck asking for a load"). A unit with no load and no qualifying available driver
- * is simply not drawn — this is the new board's intended scope, not an accidental omission.
+ * ROUND 155.6: top-level groups by unit (TOUR / IN TRANSIT / AVAILABLE), columns expose
+ * PU / DEL / Leg / Tour # (P-series display_id), CURRENT predicate lives in
+ * ../current-truck-line-load.ts as the ONE named helper (ruling 155.3a — CC-3 imports it).
  *
- * LOADED rows: one per CURRENT active load (status IN dispatched/at_pickup/in_transit/at_delivery
- * AND not a stamp-less dispatched shell whose delivery is already >48h past — see
- * CURRENT_TRUCK_LINE_LOAD_SQL), unit-anchored, station derived by station.ts's pure function —
- * never a stored "station" column.
+ * LOADED legs: every CURRENT active load (CURRENT_TRUCK_LINE_LOAD_SQL) — stamp-less dispatched
+ * shells with delivery already >48h past stay hidden (#22922 / AUTH-061). Multiple legs on one
+ * unit stack under ONE top-level group (tour) — never two top-level rows for the same unit_id.
  *
- * AVAILABLE rows (kind:"available"): one per driver who qualifies — operating_company_id=USMCA,
- * status='Active', is_sample_data IS NOT TRUE, NOT currently assigned to any CURRENT load (same
- * CURRENT_TRUCK_LINE_LOAD_SQL), AND with a samsara.hos_snapshots row polled within the last 2 hours. Unit/city
- * come from that driver's own MOST RECENT load (by created_at, any status) — may be null, in which
- * case the row honestly shows no unit rather than inventing one. samsara.hos_snapshots'
- * driving_hours_remaining/cycle_hours_remaining columns are misleadingly named — verified live
- * (schema + values, e.g. 660.00 for an 11-hour driver) that they actually store MINUTES; the API
- * exposes the raw minutes so the frontend formats "11h 00m" itself, never guessing a conversion
- * server-side and client-side that could drift apart.
+ * AVAILABLE rows: driver with fresh HOS, not on a CURRENT load, with a real unit.
  *
- * READ-ONLY. This file contains no UPDATE/INSERT to mdata.loads — every write the Truck Line UI
- * triggers goes through the EXISTING transition/stop-stamp/intransit-issue routes, called
- * separately by the frontend. Asserted statically by scripts/verify-dispatch-truck-line.mjs.
+ * READ-ONLY. No UPDATE/INSERT to mdata.loads here.
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { currentAuthUser, withCompanyScope } from "../../accounting/shared.js";
 import { openWorkOrderPredicateSql } from "../../maintenance/in-shop-condition.js";
+import { CURRENT_TRUCK_LINE_LOAD_SQL } from "../current-truck-line-load.js";
+import { groupTruckLineByUnit } from "./group-by-unit.js";
 import { deriveTruckLineStation, STATION_KEYS, STATION_LABELS, type StampSource } from "./station.js";
 
 const querySchema = z.object({ operating_company_id: z.string().uuid() });
@@ -43,6 +32,9 @@ type Row = {
   trip_type: string | null;
   rate_total_cents: number | null;
   customer_name: string | null;
+  tour_id: string | null;
+  tour_display_id: string | null;
+  created_at: string | null;
   driver1_id: string | null;
   driver1_name: string | null;
   driver2_id: string | null;
@@ -79,8 +71,6 @@ type Row = {
   pos_captured_at: string | null;
 };
 
-// V10 (ROUND 18.6) — one row per AVAILABLE driver (see file header). Unit/city are the driver's
-// OWN most recent load's unit, entirely independent of the in-service unit roster above.
 type AvailableRow = {
   driver_id: string;
   driver_first_name: string | null;
@@ -96,34 +86,21 @@ type AvailableRow = {
   pos_captured_at: string | null;
 };
 
-// V7 (ROUND 18.5) — the owner's own LIVE POSITION RULE names 60 minutes as the staleness cutoff
-// ("ping older than 60 min -> red 'signal stale'"); was 10 before this view had a rule of its own.
 const LOC_STALE_MIN = 60;
-// V10 (ROUND 18.6) — the owner's own "available" cutoff: an HOS snapshot older than 2 hours no
-// longer counts as evidence the driver is genuinely ready to work right now.
 const HOS_STALE_MIN = 120;
 
-// CURRENT load for Truck Line / busy-driver: open_dispatch in the four active statuses, BUT
-// hide AUTH-061-class shells that are still `dispatched` with zero stop stamps and a delivery
-// appointment already older than 48h. Those are not live work — inventing them as LOADED rows
-// (or marking their drivers busy) lies to the dispatcher. Real dispatched loads with any stamp,
-// or a delivery still within the next/last 48h window, stay visible.
-const CURRENT_TRUCK_LINE_LOAD_SQL = `
-  x.live_state = 'open_dispatch'
-  AND x.status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery')
-  AND (
-    x.status <> 'dispatched'
-    OR EXISTS (
-      SELECT 1 FROM mdata.load_stops s
-      WHERE s.load_id = x.id AND s.soft_deleted_at IS NULL
-        AND (s.actual_arrival_at IS NOT NULL OR s.actual_departure_at IS NOT NULL)
-    )
-    OR EXISTS (
-      SELECT 1 FROM mdata.load_stops s
-      WHERE s.load_id = x.id AND s.soft_deleted_at IS NULL
-        AND s.stop_type = 'delivery'::mdata.stop_type_enum
-        AND COALESCE(s.appointment_start_at, s.scheduled_arrival_at) >= now() - interval '48 hours'
-    )
+const UNIT_IN_SERVICE_SQL = `
+  u.deactivated_at IS NULL
+  AND u.currently_leased_to_company_id = $1::uuid
+  AND u.is_sample_data IS NOT TRUE
+  AND u.sold_date IS NULL
+  AND u.disposed_date IS NULL
+  AND u.is_oos IS NOT TRUE
+  AND u.status = 'InService'::mdata.unit_status
+  AND NOT EXISTS (
+    SELECT 1 FROM maintenance.work_orders wo
+    WHERE wo.unit_id = u.id AND wo.operating_company_id = $1::uuid
+      AND ${openWorkOrderPredicateSql("wo")}
   )
 `;
 
@@ -141,12 +118,18 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
       );
       const reasonsTableExists = Boolean((reasonsTableRes.rows[0] as { ok?: boolean } | undefined)?.ok);
 
+      // One row per CURRENT load (not LIMIT 1 per unit) so tour legs can stack under one truck.
       const res = await client.query(
         `
         SELECT
           u.id::text AS unit_id, u.unit_number,
           l.id::text AS load_id, l.load_number, l.status::text AS raw_status, l.trip_type::text AS trip_type,
-          l.rate_total_cents,
+          l.rate_total_cents, l.created_at::text AS created_at,
+          l.tour_id::text AS tour_id,
+          CASE
+            WHEN sett.display_id ~ '^P-[0-9]+$' THEN sett.display_id
+            ELSE NULL
+          END AS tour_display_id,
           COALESCE(cust.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)) AS customer_name,
           d1.id::text AS driver1_id, NULLIF(CONCAT_WS(' ', d1.first_name, d1.last_name), '') AS driver1_name,
           d2.id::text AS driver2_id, NULLIF(CONCAT_WS(' ', d2.first_name, d2.last_name), '') AS driver2_name,
@@ -165,25 +148,13 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
           p.lat::float8 AS pos_lat, p.lng::float8 AS pos_lng,
           p.speed_mph::float8 AS pos_speed_mph, p.engine_state AS pos_engine_state,
           COALESCE(p.city, loc.city) AS pos_city, COALESCE(p.state, loc.state) AS pos_state,
-          -- ROUND 23.1 D3 (owner, 2026-09-13: "i also need it with the state") — formatted_location
-          -- is the richest position string (37/41 USMCA rows carry it vs 33/34 for city/state
-          -- alone); exposed alongside city/state so the frontend's one shared location helper can
-          -- prefer it and fall back to city+state only when it is null.
           COALESCE(p.formatted_location, loc.formatted_location) AS pos_formatted_location,
           p.captured_at::text AS pos_captured_at
-        FROM mdata.units u
-        LEFT JOIN LATERAL (
-          -- ROUND 36.1: reads views.live_loads (structural guarantee) instead of mdata.loads with
-          -- an inline status exclusion list — a load stuck at 'dispatched' but already settled/
-          -- driver-billed can no longer render as "the unit's current load," structurally.
-          -- CURRENT_TRUCK_LINE_LOAD_SQL additionally drops stamp-less dispatched shells whose
-          -- delivery is already >48h past (AUTH-061 13609/16/17/18/20/21 class) so Truck Line
-          -- never invents "current" work that was never operated.
-          SELECT * FROM views.live_loads x
-          WHERE x.assigned_unit_id = u.id AND x.operating_company_id = $1::uuid
-            AND ${CURRENT_TRUCK_LINE_LOAD_SQL}
-          ORDER BY x.created_at DESC LIMIT 1
-        ) l ON true
+        FROM views.live_loads l
+        JOIN mdata.units u ON u.id = l.assigned_unit_id
+        LEFT JOIN driver_finance.driver_settlements sett
+          ON sett.id = l.presettlement_link_id
+         AND sett.operating_company_id = $1::uuid
         LEFT JOIN mdata.customers cust ON cust.id = l.customer_id AND cust.operating_company_id = l.operating_company_id
         LEFT JOIN mdata.drivers d1 ON d1.id = l.assigned_primary_driver_id
         LEFT JOIN mdata.drivers d2 ON d2.id = l.assigned_secondary_driver_id
@@ -191,12 +162,12 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
           SELECT * FROM mdata.load_stops s
           WHERE s.load_id = l.id AND s.stop_type = 'pickup'::mdata.stop_type_enum AND s.soft_deleted_at IS NULL
           ORDER BY s.sequence_number ASC LIMIT 1
-        ) pu ON l.id IS NOT NULL
+        ) pu ON true
         LEFT JOIN LATERAL (
           SELECT * FROM mdata.load_stops s
           WHERE s.load_id = l.id AND s.stop_type = 'delivery'::mdata.stop_type_enum AND s.soft_deleted_at IS NULL
           ORDER BY s.sequence_number DESC LIMIT 1
-        ) de ON l.id IS NOT NULL
+        ) de ON true
         LEFT JOIN LATERAL (
           SELECT count(*)::int AS cnt FROM dispatch.pod_documents p2
           WHERE p2.stop_id = de.id AND p2.archived_at IS NULL
@@ -205,12 +176,12 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
           SELECT display_id FROM accounting.invoices iv
           WHERE iv.source_load_id = l.id AND iv.voided_at IS NULL AND iv.operating_company_id = $1::uuid
           ORDER BY iv.created_at DESC LIMIT 1
-        ) inv ON l.id IS NOT NULL
+        ) inv ON true
         LEFT JOIN LATERAL (
           SELECT id, issue_category, reported_at FROM dispatch.intransit_issues ii
           WHERE ii.load_id = l.id AND ii.operating_company_id = $1::uuid AND ii.status IN ('open', 'acknowledged')
           ORDER BY ii.reported_at DESC LIMIT 1
-        ) issue ON l.id IS NOT NULL
+        ) issue ON true
         ${reasonsTableExists
           ? `LEFT JOIN catalogs.load_exception_reasons reason ON reason.code = issue.issue_category AND reason.operating_company_id = $1::uuid AND reason.is_active = true`
           : ""}
@@ -222,35 +193,18 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
             AND g.unit_id = u.id AND (g.city IS NOT NULL OR g.state IS NOT NULL)
           ORDER BY g.captured_at DESC LIMIT 1
         ) loc ON (p.city IS NULL AND p.state IS NULL)
-        WHERE u.deactivated_at IS NULL
-          -- Rule 49: USMCA in-service is the LEASE, never owner_company_id — same predicate as
-          -- GET /api/v1/dispatch/units-without-load, so the two surfaces never disagree on scope.
-          AND u.currently_leased_to_company_id = $1::uuid
-          AND u.is_sample_data IS NOT TRUE
-          AND u.sold_date IS NULL
-          AND u.disposed_date IS NULL
-          AND u.is_oos IS NOT TRUE
-          AND u.status = 'InService'::mdata.unit_status
-          AND NOT EXISTS (
-            SELECT 1 FROM maintenance.work_orders wo
-            WHERE wo.unit_id = u.id AND wo.operating_company_id = $1::uuid
-              AND ${openWorkOrderPredicateSql("wo")}
-          )
-        ORDER BY u.unit_number ASC
+        WHERE l.operating_company_id = $1::uuid
+          AND l.assigned_unit_id IS NOT NULL
+          AND ${CURRENT_TRUCK_LINE_LOAD_SQL.replace(/\bx\./g, "l.")}
+          AND ${UNIT_IN_SERVICE_SQL}
+        ORDER BY u.unit_number ASC, l.created_at ASC
         `,
         [operating_company_id]
       );
 
-      // V10 (ROUND 18.6) — AVAILABLE drivers: an entirely separate query, driver-anchored, never
-      // cross-referenced against the in-service unit roster above (a driver may have no unit).
       const availableRes = await client.query(
         `
         WITH busy_drivers AS (
-          -- ROUND 36.1: reads views.live_loads's open_dispatch bucket — a driver whose only
-          -- "in-progress" load is stuck at 'dispatched' but already settled/driver-billed is not
-          -- busy, structurally (was a per-caller money predicate in ROUND 35.1).
-          -- Same CURRENT_TRUCK_LINE_LOAD_SQL as the unit lateral: stamp-less dispatched shells
-          -- past delivery+48h do not make a driver "busy".
           SELECT DISTINCT assigned_primary_driver_id AS driver_id FROM views.live_loads x
           WHERE x.operating_company_id = $1::uuid
             AND ${CURRENT_TRUCK_LINE_LOAD_SQL}
@@ -312,18 +266,11 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
     });
 
     const now = Date.now();
-    // V10 (ROUND 18.6) — a unit with no active load is no longer drawn on its own (the row scope
-    // narrowed to "active loads UNION available drivers" — see file header). Filter here rather
-    // than in SQL so the query above stays reusable/identical to the pre-V10 shape for the parts
-    // that did not change.
-    const loadedRows = payload.rows.filter((r) => r.load_id != null);
-    const rows = loadedRows.map((r) => {
+
+    const buildLoadedRow = (r: Row) => {
       const station = r.load_id
         ? deriveTruckLineStation({
             rawStatus: r.raw_status ?? "unassigned",
-            // mdata.loads has no dispatched_at column (verified live schema) — no honest source for
-            // this specific stamp exists yet; the station still derives correctly from raw status,
-            // it just renders no hover-timestamp for the Dispatched node (never a guessed one).
             dispatchedAt: null,
             pickupArrivalAt: r.pickup_arrival_at,
             pickupArrivalSource: r.pickup_arrival_source,
@@ -342,11 +289,6 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
           })
         : null;
 
-      // V7 (ROUND 18.5): "use appointment_start_at when present, else scheduled_arrival_at, and
-      // say which in the cell's title attribute" — appointment_start_at is NULL on every measured
-      // USMCA stop today (a real, documented data gap), so this currently always falls back to
-      // scheduled_arrival_at, but never silently prefers the wrong one once appointment_start_at
-      // is populated.
       let nextAppointment:
         | { type: "pickup" | "delivery"; at: string | null; at_source: "appointment_start_at" | "scheduled_arrival_at" | null; late: boolean }
         | null = null;
@@ -370,11 +312,6 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
         }
       }
 
-      // ROUND 23.1 D4 (owner, 2026-09-13: "next appointment should show pick up and delivery") —
-      // BOTH of the load's own appointments, independent of which leg is still outstanding
-      // (nextAppointment above stays exactly as-is for one release so nothing else breaks). Each
-      // leg is null only when it has no derivable timestamp at all (never a blank placeholder for
-      // a leg that simply has not happened yet).
       type AppointmentLeg = { at: string; at_source: "appointment_start_at" | "scheduled_arrival_at" | null; late: boolean } | null;
       let appointments: { pickup: AppointmentLeg; delivery: AppointmentLeg } | null = null;
       if (r.load_id) {
@@ -405,6 +342,7 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
         kind: "loaded" as const,
         unit_id: r.unit_id,
         unit_number: r.unit_number,
+        tour_display_id: r.tour_display_id,
         load: r.load_id
           ? {
               load_id: r.load_id,
@@ -427,9 +365,6 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
               stamps: station.stamps,
               has_open_exception: station.hasOpenException,
               exception_reason_label: station.exceptionReasonLabel,
-              // V8 (ROUND 18.5 addendum): the "Other" status station's clear action resolves this
-              // EXACT open dispatch.intransit_issues row (POST .../intransit-issues/:id/resolve) —
-              // the frontend cannot resolve what it cannot name.
               open_exception_id: r.issue_id,
             }
           : null,
@@ -437,8 +372,6 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
           ? {
               lat: r.pos_lat,
               lng: r.pos_lng,
-              // V7 LIVE POSITION RULE inputs — speed/engine decide "moving" vs "parked", never
-              // fabricated; NULL when Samsara hasn't reported either on this ping.
               speed_mph: r.pos_speed_mph,
               engine_state: r.pos_engine_state,
               city: r.pos_city,
@@ -452,49 +385,72 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
         next_appointment: nextAppointment,
         appointments,
       };
-    });
+    };
 
-    // V10 (ROUND 18.6) — one row per available driver. driving/cycle minutes are exposed RAW
-    // (never pre-formatted here) so the frontend's own "11h 00m" rendering can never silently
-    // drift from a server-side copy of the same conversion.
-    // ROUND 23.1 D1 (owner, twice: "remove the drivers it is only the trucks") — THIS IS A UNIT
-    // BOARD. A driver with no unit is not a row on this board in any state; filtered in the row
-    // builder (here, not the renderer) so the top-bar counts and the rendered row count can never
-    // disagree — both read the same `availableRows` array this filter produces.
-    const availableRows = payload.availableRows
+    const loadedLegs = payload.rows
+      .filter((r) => r.load_id != null)
+      .map((r) => {
+        const row = buildLoadedRow(r);
+        return {
+          unit_id: r.unit_id,
+          unit_number: r.unit_number,
+          load_id: r.load_id,
+          trip_type: r.trip_type,
+          tour_id: r.tour_id,
+          tour_display_id: r.tour_display_id,
+          created_at: r.created_at,
+          row,
+        };
+      });
+
+    const availableBuilt = payload.availableRows
       .filter((r) => r.unit_id != null && r.unit_number != null)
       .map((r) => {
-      const polledMs = new Date(r.hos_polled_at).getTime();
-      const hosPolledMinutesAgo = Number.isNaN(polledMs) ? null : Math.max(0, Math.floor((now - polledMs) / 60000));
-      return {
-        kind: "available" as const,
-        unit_id: r.unit_id,
-        unit_number: r.unit_number,
-        load: null,
-        drivers: [{ id: r.driver_id, name: [r.driver_first_name, r.driver_last_name].filter(Boolean).join(" ") || null }],
-        station: null,
-        position: null,
-        next_appointment: null,
-        appointments: null,
-        available: {
-          driver_id: r.driver_id,
-          driving_minutes_remaining: r.driving_minutes_remaining,
-          cycle_minutes_remaining: r.cycle_minutes_remaining,
-          hos_polled_minutes_ago: hosPolledMinutesAgo,
-          last_closed_load_number: r.last_closed_load_number,
-          parked_city: r.pos_city,
-          parked_state: r.pos_state,
-        },
-      };
-    });
+        const polledMs = new Date(r.hos_polled_at).getTime();
+        const hosPolledMinutesAgo = Number.isNaN(polledMs) ? null : Math.max(0, Math.floor((now - polledMs) / 60000));
+        const row = {
+          kind: "available" as const,
+          unit_id: r.unit_id,
+          unit_number: r.unit_number,
+          tour_display_id: null as string | null,
+          load: null,
+          drivers: [{ id: r.driver_id, name: [r.driver_first_name, r.driver_last_name].filter(Boolean).join(" ") || null }],
+          station: null,
+          position: null,
+          next_appointment: null,
+          appointments: null,
+          available: {
+            driver_id: r.driver_id,
+            driving_minutes_remaining: r.driving_minutes_remaining,
+            cycle_minutes_remaining: r.cycle_minutes_remaining,
+            hos_polled_minutes_ago: hosPolledMinutesAgo,
+            last_closed_load_number: r.last_closed_load_number,
+            parked_city: r.pos_city,
+            parked_state: r.pos_state,
+          },
+        };
+        return { unit_id: r.unit_id as string, unit_number: r.unit_number as string, row };
+      });
 
-    const allRows = [...rows, ...availableRows];
+    type LoadedBuilt = ReturnType<typeof buildLoadedRow>;
+    type AvailableBuilt = (typeof availableBuilt)[number]["row"];
+    const groups = groupTruckLineByUnit<LoadedBuilt | AvailableBuilt>(loadedLegs, availableBuilt as Array<{
+      unit_id: string;
+      unit_number: string;
+      row: AvailableBuilt;
+    }>);
+    const flatRows = groups.flatMap((g) => g.legs);
+    const loadedCount = groups.filter((g) => g.section !== "available").reduce((n, g) => n + g.legs.length, 0);
+    const availableCount = groups.filter((g) => g.section === "available").length;
 
     return reply.code(200).send({
-      rows: allRows,
-      total_count: allRows.length,
-      loaded_count: rows.length,
-      available_count: availableRows.length,
+      groups,
+      rows: flatRows,
+      total_count: groups.length,
+      loaded_count: loadedCount,
+      available_count: availableCount,
+      tour_count: groups.filter((g) => g.section === "tour").length,
+      in_transit_count: groups.filter((g) => g.section === "in_transit").length,
       stations: STATION_KEYS.map((key, i) => ({ key, index: i, label: STATION_LABELS[key] })),
       catalog_ready: payload.reasonsTableExists,
     });
