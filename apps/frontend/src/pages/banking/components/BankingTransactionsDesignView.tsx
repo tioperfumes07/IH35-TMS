@@ -168,19 +168,10 @@ const MATCH_CANDIDATE_ENTITY_KIND: Record<BankMatchCandidateKind, EntityKind> = 
   expense: "expense",
 };
 
-// BANK-MATCH-QBO-c (owner 2026-09-06 verbatim: "IN SHOW, THAT LIST MUST BE MULTIPLE SELECTOR TO
-// SELECT VARIOUS TYPES OF RECORDS"). Show used to be a single <select> (one kind or "All records");
-// the owner wants a checklist, all six kinds on by default. The route already accepts an ARRAY
-// (CandidateFilters.kinds — BANK-MATCH-QBO), so this is a frontend-only state + control change.
-const ALL_MATCH_KINDS: BankMatchCandidateKind[] = ["bill", "bill_payment", "expense", "payment", "transfer", "je"];
-const MATCH_KIND_FILTER_LABELS: Record<BankMatchCandidateKind, string> = {
-  bill: "Bills (open)",
-  bill_payment: "Bill payments",
-  expense: "Expenses",
-  payment: "Customer payments",
-  transfer: "Transfers",
-  je: "Journal entries",
-};
+// ROUND 157-C / 156 MASTER SPEC: BUILD NO TYPE FILTER. Settlement-born only is the entire
+// candidate universe (match.service fetchLedgerCandidates). The retired Show multi-select is gone.
+const SETTLEMENT_BORN_MATCH_NOTE =
+  "Settlement-born documents only — driver/company settlement bills and bill payments. No type filter.";
 
 // BANK-MATCH-QBO-c: "Gap" (dollars off · days off, both unsigned) told you HOW FAR a candidate was
 // but not which direction — the owner's own "I don't know what the gap is" measured live. Split
@@ -614,15 +605,6 @@ export function BankingTransactionsDesignView({
   const [selectedTransactionTypes, setSelectedTransactionTypes] = useState<string[]>(
     initialTransactionType && initialTransactionType !== "all" ? [initialTransactionType] : []
   );
-  const toggleTransactionType = (id: string) => {
-    if (id === "all") {
-      setSelectedTransactionTypes([]);
-      return;
-    }
-    setSelectedTransactionTypes((prev) =>
-      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
-    );
-  };
   // Deep-link / KPI filter must apply after mount — BankingHome sets initialTransactionType via
   // ?type=uncategorized (and similar). Without this sync, the first paint sticks on "all".
   useEffect(() => {
@@ -632,17 +614,14 @@ export function BankingTransactionsDesignView({
   }, [initialTransactionType]);
   const [categorizeBy, setCategorizeBy] = useState<CategorizeBy>("category");
   const [showDateFilterMenu, setShowDateFilterMenu] = useState(false);
-  const [showTypeFilterMenu, setShowTypeFilterMenu] = useState(false);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [collapsedAllGroupings, setCollapsedAllGroupings] = useState(false);
   const [matchWindowStep, setMatchWindowStep] = useState<1 | 2 | undefined>(undefined);
   const [matchSearchQ, setMatchSearchQ] = useState("");
   const [matchDraftQ, setMatchDraftQ] = useState("");
-  // BANK-MATCH-QBO (owner 2026-09-06): the QuickBooks "Find match" filters — Show (record type), Payee,
-  // date From/To, amount From/To. Empty = no filter. Applied server-side by match-candidates.
-  // BANK-MATCH-QBO-c: Show is now a multi-select (all six kinds on by default, matching "no filter").
-  const [matchKinds, setMatchKinds] = useState<Set<BankMatchCandidateKind>>(() => new Set(ALL_MATCH_KINDS));
+  // ROUND 157-C: BUILD NO TYPE FILTER — settlement-born only is fixed in the engine.
+  // Filters that remain: Payee, date From/To, amount From/To, text search.
   const [matchPayee, setMatchPayee] = useState("");
   const [matchDateFrom, setMatchDateFrom] = useState("");
   const [matchDateTo, setMatchDateTo] = useState("");
@@ -843,14 +822,13 @@ export function BankingTransactionsDesignView({
   const matchCandidatesQuery = useQuery({
     queryKey: [
       "banking", "tx-match-candidates", companyId, expandedTxId ?? "", matchWindowStep ?? "cascade", matchSearchQ,
-      [...matchKinds].sort().join(","), matchPayee, matchDateFrom, matchDateTo, matchAmountMin, matchAmountMax,
+      matchPayee, matchDateFrom, matchDateTo, matchAmountMin, matchAmountMax,
     ],
     queryFn: () =>
       getMatchCandidates(String(expandedTxId), companyId, {
-        windowStep: matchDateFrom || matchDateTo || matchPayee || matchSearchQ || matchAmountMin || matchAmountMax || matchKinds.size < ALL_MATCH_KINDS.length ? undefined : matchWindowStep,
+        windowStep: matchDateFrom || matchDateTo || matchPayee || matchSearchQ || matchAmountMin || matchAmountMax ? undefined : matchWindowStep,
         q: matchSearchQ || undefined,
-        // All six checked == no filter (same as the route's own "omit kinds" semantics).
-        kinds: matchKinds.size >= ALL_MATCH_KINDS.length ? undefined : [...matchKinds],
+        // ROUND 157-C: never send kinds — engine is settlement-born only (BUILD NO TYPE FILTER).
         payee: matchPayee || undefined,
         dateFrom: matchDateFrom || undefined,
         dateTo: matchDateTo || undefined,
@@ -864,7 +842,6 @@ export function BankingTransactionsDesignView({
     setMatchWindowStep(undefined);
     setMatchSearchQ("");
     setMatchDraftQ("");
-    setMatchKinds(new Set(ALL_MATCH_KINDS));
     setMatchPayee("");
     setMatchDateFrom("");
     setMatchDateTo("");
@@ -2966,14 +2943,17 @@ export function BankingTransactionsDesignView({
           <p className="ldt-muted" data-testid="banking-match-window-header">
             {matchCandidatesQuery.data?.window?.auto_widened
               ? "No candidates within 3 days — widened to 7 days."
-              : matchDateFrom || matchDateTo || matchPayee || matchSearchQ || matchAmountMin || matchAmountMax || matchKinds.size < ALL_MATCH_KINDS.length
+              : matchDateFrom || matchDateTo || matchPayee || matchSearchQ || matchAmountMin || matchAmountMax
                 ? "Custom search"
                 : matchCandidatesQuery.data?.window?.step === 2
                   ? `Within 7 days (${matchCandidatesQuery.data.window.from} – ${matchCandidatesQuery.data.window.to})`
                   : matchCandidatesQuery.data?.window
                     ? `Within 3 days (${matchCandidatesQuery.data.window.from} – ${matchCandidatesQuery.data.window.to})`
                     : "Within 3 days (default)"}
-            {" "}Ranked by payee, exact amount, then date.
+            {" "}Settlement-born only · ranked by exact amount, then payee, then date.
+          </p>
+          <p className="mt-1 text-[11px] text-[#4B5563]" data-testid="banking-match-settlement-born-note">
+            {SETTLEMENT_BORN_MATCH_NOTE}
           </p>
           {matchCandidatesQuery.data?.window?.auto_widened ? (
             <p className="mt-1 text-xs text-[#1F2A44]" data-testid="banking-match-widened-banner">
@@ -2990,24 +2970,8 @@ export function BankingTransactionsDesignView({
               Search 7 days
             </button>
           ) : null}
-          {/* BANK-MATCH-QBO: the QuickBooks "Find match" filter row — Show · Payee · Date from/to · Amount from/to.
-              BANK-MATCH-QBO-c (owner 2026-09-06 verbatim): Show is now a multi-select checklist
-              (all six kinds on by default), never a single-select dropdown. */}
+          {/* ROUND 157-C: BUILD NO TYPE FILTER. Payee · Date · Amount only. */}
           <div className="mt-2 flex flex-wrap items-end gap-2" data-testid="banking-match-filters">
-            <div className="ldt-fld" data-testid="banking-match-filter-kind">
-              {/* FILTER-MULTI-01 — was an always-visible checkbox list (never a collapsed dropdown,
-                  no "(N)" count label). Same MultiSelectDropdown every other money list now uses;
-                  Set<->array conversion only, matchKinds/setMatchKinds unchanged, all downstream
-                  consumers of the Set are untouched. */}
-              <MultiSelectDropdown
-                label="Show"
-                options={ALL_MATCH_KINDS.map((kind) => ({ value: kind, label: MATCH_KIND_FILTER_LABELS[kind] }))}
-                selected={ALL_MATCH_KINDS.filter((k) => matchKinds.has(k))}
-                onChange={(next) => setMatchKinds(new Set(next as BankMatchCandidateKind[]))}
-                allLabel="All kinds"
-                data-testid="banking-match-filter-kind-dropdown"
-              />
-            </div>
             <label className="ldt-fld">
               <span className="ldt-muted block">Payee (vendor / customer)</span>
               <input data-testid="banking-match-filter-payee" value={matchPayee} onChange={(e) => setMatchPayee(e.target.value)} placeholder="e.g. Holiday Inn" className="h-7 min-w-[150px] rounded-sm border border-gray-300 px-2 text-xs" />
@@ -3028,8 +2992,8 @@ export function BankingTransactionsDesignView({
               <span className="ldt-muted block">Amount to</span>
               <input type="number" inputMode="decimal" min={0} step="0.01" data-testid="banking-match-filter-amount-max" value={matchAmountMax} onChange={(e) => setMatchAmountMax(e.target.value)} className="h-7 w-24 rounded-sm border border-gray-300 px-1 text-xs" />
             </label>
-            {matchKinds.size < ALL_MATCH_KINDS.length || matchPayee || matchDateFrom || matchDateTo || matchAmountMin || matchAmountMax ? (
-              <button type="button" className="ldt-link" data-testid="banking-match-filter-clear" onClick={() => { setMatchKinds(new Set(ALL_MATCH_KINDS)); setMatchPayee(""); setMatchDateFrom(""); setMatchDateTo(""); setMatchAmountMin(""); setMatchAmountMax(""); }}>
+            {matchPayee || matchDateFrom || matchDateTo || matchAmountMin || matchAmountMax ? (
+              <button type="button" className="ldt-link" data-testid="banking-match-filter-clear" onClick={() => { setMatchPayee(""); setMatchDateFrom(""); setMatchDateTo(""); setMatchAmountMin(""); setMatchAmountMax(""); }}>
                 clear filters
               </button>
             ) : null}
@@ -3565,68 +3529,20 @@ export function BankingTransactionsDesignView({
           >
             {suggestingMatches ? "Suggesting..." : "Suggest matches"}
           </button>
-          {/* B.2 — transaction TYPE filter: multi-select checkboxes/chips (was a single-select
-          <select>). Selected ids render as removable chips on the trigger button; "All transaction
-          types" clears the selection. See matchesTransactionTypeFilter (module scope, above) and
-          SERVER_FILTERABLE_TRANSACTION_TYPES (api/banking.ts) for the server/client split. */}
-          <div className="relative">
-            <button
-              type="button"
-              className="flex h-7 min-w-[9rem] items-center justify-between gap-1 rounded-sm border border-gray-300 bg-white px-2 text-xs text-gray-700"
-              onClick={() => setShowTypeFilterMenu((open) => !open)}
-              data-testid="banking-transaction-type-filter-button"
-            >
-              {selectedTransactionTypes.length === 0 ? (
-                <span>All transaction types</span>
-              ) : (
-                <span className="flex flex-wrap items-center gap-1">
-                  {selectedTransactionTypes.map((id) => {
-                    const label = TRANSACTION_TYPE_FILTER_OPTIONS.find((t) => t.id === id)?.label ?? id;
-                    return (
-                      <span
-                        key={id}
-                        className="inline-flex items-center gap-1 rounded-sm bg-[#1f2a44] px-1.5 py-0.5 text-[11px] text-white"
-                      >
-                        {label}
-                        <span
-                          role="button"
-                          tabIndex={-1}
-                          aria-label={`Remove ${label}`}
-                          className="cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleTransactionType(id);
-                          }}
-                        >
-                          ×
-                        </span>
-                      </span>
-                    );
-                  })}
-                </span>
-              )}
-            </button>
-            {showTypeFilterMenu ? (
-              <div className="absolute left-0 z-20 mt-1 w-64 rounded-sm border border-gray-200 bg-white p-2 shadow-sm">
-                {TRANSACTION_TYPE_FILTER_OPTIONS.map((option) => {
-                  const checked =
-                    option.id === "all" ? selectedTransactionTypes.length === 0 : selectedTransactionTypes.includes(option.id);
-                  return (
-                    <label
-                      key={option.id}
-                      className="flex cursor-pointer items-center gap-2 rounded-sm px-1.5 py-1 text-xs text-gray-700 hover:bg-gray-50"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => toggleTransactionType(option.id)}
-                      />
-                      {option.label}
-                    </label>
-                  );
-                })}
-              </div>
-            ) : null}
+          {/* B.2 — transaction TYPE filter on the register (not the Match panel). MultiSelectDropdown
+              satisfies FILTER-MULTI-01. Match panel itself has BUILD NO TYPE FILTER (settlement-born only). */}
+          <div data-testid="banking-transaction-type-filter">
+            <MultiSelectDropdown
+              label="Transaction type"
+              options={TRANSACTION_TYPE_FILTER_OPTIONS.filter((t) => t.id !== "all").map((t) => ({
+                value: t.id,
+                label: t.label,
+              }))}
+              selected={selectedTransactionTypes}
+              onChange={(next) => setSelectedTransactionTypes(next)}
+              allLabel="All transaction types"
+              data-testid="banking-transaction-type-filter-dropdown"
+            />
           </div>
           <div className="ml-auto flex h-7 items-center gap-2">
             <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Categorize by</span>

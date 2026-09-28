@@ -14,6 +14,9 @@
 // three were in the P1 "refused_no_shortest_miles" set from AUTH-090 — the cancellation cascade
 // had nothing to void there). Only dispatch.trailer_interchanges on 13627 (the 21868 broker
 // trailer) needs un-voiding; 13625/13638 never had one.
+//
+// AUTH-095 (docs/bus/OWNER-AUTHORIZATIONS.md). Requires OWNER_AUTH_ID=AUTH-095 in the environment;
+// scripts/verify-owner-authorization.mjs is run separately before this script, per ROUND 133.
 import { register } from "tsx/esm/api";
 register();
 const { withCurrentUser } = await import("../../apps/backend/src/auth/db.ts");

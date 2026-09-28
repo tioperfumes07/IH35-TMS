@@ -32,11 +32,13 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import pg from "pg";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "verify-settlement-line-carries-miles-and-rate";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BASELINE_PATH = path.join(ROOT, "scripts/verify-settlement-line-carries-miles-and-rate.baseline.json");
+export const REQUIRES_LIVE_DB =
+  "live-money ratchet on closed settlement earnings/deadhead_pay miles+rate; fails closed via requireLiveDbOrExit";
 
 function loadBaseline() {
   if (!fs.existsSync(BASELINE_PATH)) return null;
@@ -78,12 +80,7 @@ if (process.argv.includes("--selftest")) {
 }
 
 async function main() {
-  if (!process.env.DATABASE_URL) {
-    console.log(`${LABEL}: SKIP — no DATABASE_URL (live-money invariant by design, cannot fake offline).`);
-    process.exit(0);
-  }
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
-  const client = await pool.connect();
+  const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
     await client.query("BEGIN");
     await client.query(`SET LOCAL app.bypass_rls = 'lucia'`);
