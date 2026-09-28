@@ -52,7 +52,7 @@
  * verified) — the 2026-09-12 01:21:49Z presettlement_link_id unlink some other surface hit does not
  * reach this board.
  */
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -139,17 +139,7 @@ function pct(index: number) {
   return (index / (V7_COUNT - 1)) * 100;
 }
 
-function money(cents: number | null) {
-  if (cents == null) return "—";
-  return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
-}
 
-function fmtStamp(at: string | null | undefined) {
-  if (!at) return null;
-  const d = new Date(at);
-  if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleString("en-US", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Chicago" });
-}
 
 function fmtDuration(ms: number): string {
   const abs = Math.abs(ms);
@@ -182,26 +172,7 @@ function formatStaleAge(staleMinutes: number | null): string | null {
   return `${fmtDuration(staleMinutes * 60_000)} ago`;
 }
 
-// ROUND 23.1 D4 (owner: "next appointment should show pick up and delivery") — the SAME past-due/
-// in-N chip logic the old single-leg cell used, now callable once per leg so both the pickup line
-// and the delivery line carry their own chip.
-function apptChip(at: string, late: boolean): { text: string; color: string } | null {
-  const ms = new Date(at).getTime() - Date.now();
-  if (Number.isNaN(ms)) return null;
-  return late || ms < 0 ? { text: `past due ${fmtDuration(ms)}`, color: RED } : { text: `in ${fmtDuration(ms)}`, color: GREEN };
-}
 
-// V10 (ROUND 18.6) — samsara.hos_snapshots' driving_hours_remaining/cycle_hours_remaining columns
-// are misleadingly named: verified live (schema + real values, e.g. 660.00 for an 11-hour driver,
-// 2560.00 for 42h40m) that they store MINUTES. The backend exposes the raw minutes as-is; this is
-// the ONE place that converts to "11h 00m", so server and client formatting can never drift apart.
-function fmtHoursMinutes(totalMinutes: number | null): string | null {
-  if (totalMinutes == null || Number.isNaN(totalMinutes)) return null;
-  const whole = Math.max(0, Math.round(totalMinutes));
-  const hours = Math.floor(whole / 60);
-  const minutes = whole % 60;
-  return `${hours}h ${String(minutes).padStart(2, "0")}m`;
-}
 
 /** Backend reachedIndex (0-8, station.ts's own model) -> the furthest V7 visual index reached
  * (-1..6). See the file header for why "Loaded"(2)/"In transit"(3) share one signal and why
@@ -341,27 +312,6 @@ function WarehouseDockSvg({ roof }: { roof: string }) {
   );
 }
 
-/** YARD DOCK (34x26) — THE AVAILABLE TRUCK's own dock icon (V10, ROUND 18.6). No verbatim
- * reference file for this one exists on this machine (checked: only a same-day .md relay of the
- * Lead's written instructions, no HTML render) — built directly from the spec's own description
- * (green, 34x26, at left:0% of the track), sharing WarehouseDockSvg's structure/proportions so the
- * two dock icons read as one family, with a green roof honestly marking "yard", not a shipper. */
-function YardDockSvg() {
-  return (
-    <svg width="34" height="26" viewBox="0 0 34 26" aria-hidden="true">
-      <ellipse cx="17" cy="24.2" rx="13.6" ry="1.5" fill="#0F172A" opacity=".12" />
-      <path d="M2.3 10 17 2.6 31.7 10v1.7H2.3z" fill="#16A34A" />
-      <rect x="3.9" y="11.6" width="26.2" height="12.2" rx="1" fill="#F0FBF4" stroke="#86D2A3" strokeWidth=".8" />
-      <rect x="6.4" y="14.4" width="6" height="9.4" rx=".6" fill="#DCF3E4" stroke="#8FCDA8" strokeWidth=".6" />
-      <path d="M6.4 16.6h6M6.4 18.8h6M6.4 21h6" stroke="#A9DDBB" strokeWidth=".6" />
-      <rect x="14" y="14.4" width="6" height="9.4" rx=".6" fill="#DCF3E4" stroke="#8FCDA8" strokeWidth=".6" />
-      <path d="M14 16.6h6M14 18.8h6M14 21h6" stroke="#A9DDBB" strokeWidth=".6" />
-      <rect x="21.6" y="14.4" width="6" height="9.4" rx=".6" fill="#DCF3E4" stroke="#8FCDA8" strokeWidth=".6" />
-      <path d="M21.6 16.6h6M21.6 18.8h6M21.6 21h6" stroke="#A9DDBB" strokeWidth=".6" />
-      <rect x="3.9" y="23" width="26.2" height="1.3" fill="#6FAE84" />
-    </svg>
-  );
-}
 
 // ROUND 23.1 D5 (owner, twice: "there is no ascending and descending order on the columns...i am
 // clicking and it is not moving") — the identical sortable-header CONTRACT ParityTable already
@@ -400,14 +350,6 @@ function naturalCompare(a: string, b: string): number {
   return 0;
 }
 
-/** A timestamp, or +Infinity when absent — sorts nulls last ascending / first descending for free
- * once the caller negates the comparator for "desc" (the same trick every column below relies on,
- * so null-handling never has to be special-cased per direction). */
-function tsOrInfinity(at: string | null | undefined): number {
-  if (!at) return Infinity;
-  const t = new Date(at).getTime();
-  return Number.isNaN(t) ? Infinity : t;
-}
 
 /** Live before Stale before No ping, then by staleness age within the Stale group — one click
  * puts the trucks you have lost at the top. THE AVAILABLE TRUCK carries no live-signal concept at
@@ -701,59 +643,6 @@ function TruckLineTrack({
   );
 }
 
-/** THE AVAILABLE TRUCK (V10, ROUND 18.6) — the owner's favourite: a truck with no load NEVER
- * prints "no load on this truck" (that literal string must never render on this board — asserted
- * statically by the guard). Same 62px track, a different honest story: a parked truck, muted and
- * still, with the route ahead drawn as a GHOST (dashed rail, hollow nodes) because nothing has
- * been booked yet, a speech bubble naming the driver's real remaining drive time, and a real
- * "Assign a load →" action wired to the SAME BookLoadModal flow the rest of Dispatch uses (never a
- * dead button). */
-function AvailableTruckTrack({ row, onAssign }: { row: TruckLineRow; onAssign: (driverId: string, unitId: string | null) => void }) {
-  const a = row.available;
-  if (!a) return null;
-  const driveLabel = fmtHoursMinutes(a.driving_minutes_remaining);
-  return (
-    <div className="relative h-[80px]" data-testid={`truck-line-available-track-${a.driver_id}`}>
-      <div className="absolute" style={{ left: "0%", top: 2 }}>
-        <YardDockSvg />
-      </div>
-
-      <div className="truck-line-ghost-rail absolute left-0 right-0 top-[41px] h-[3px]" />
-      {V7_STATIONS.map((st, i) => (
-        <div key={i} className="absolute" style={{ left: `${pct(i)}%`, top: 0 }}>
-          <div className="truck-line-ghost-node absolute rounded-full" style={{ top: 34, width: 17, height: 17, transform: "translateX(-50%)" }} />
-          <span className="truck-line-v4-cap absolute whitespace-nowrap" style={{ top: 54, left: "50%", transform: "translateX(-50%)", color: "#AEB8C2" }}>
-            <span className="truck-line-v4-cap-full">{st.name === "status" ? "Status" : st.name}</span>
-            <span className="truck-line-v4-cap-narrow">{st.name === "status" ? "Status" : NARROW_STATION_CAPTIONS[st.name] ?? st.name}</span>
-          </span>
-        </div>
-      ))}
-
-      <div className="truck-line-vehicle" style={{ left: "7%", top: 15 }} data-testid={`truck-line-vehicle-available-${a.driver_id}`} data-rolling="false">
-        <TractorTrailerSvg hasIssue={false} rolling={false} parked />
-        {driveLabel ? (
-          <div className="truck-line-speech-bubble absolute whitespace-nowrap rounded-[13px] border-[1.5px] border-[#16A34A] bg-white px-2 py-1 font-semibold text-[#166534]" style={{ bottom: 38, left: 0 }}>
-            Load me — {driveLabel} drive left
-          </div>
-        ) : null}
-      </div>
-
-      <button
-        type="button"
-        className="absolute rounded-[13px] bg-[#16A34A] px-3 font-semibold text-white"
-        style={{ right: 4, top: 18, height: 26 }}
-        onClick={() => onAssign(a.driver_id, row.unit_id)}
-        data-testid={`truck-line-assign-${a.driver_id}`}
-      >
-        Assign a load →
-      </button>
-
-      <span className="truck-line-v4-sub absolute whitespace-nowrap text-[#6B7280]" style={{ top: 64, left: 0 }}>
-        parked at {formatLocationLabel({ city: a.parked_city, state: a.parked_state })} · waiting on dispatch
-      </span>
-    </div>
-  );
-}
 
 export function TruckLineBoard({
   operatingCompanyId,
@@ -1200,8 +1089,8 @@ export function TruckLineBoard({
                     }
 
                     return (
+                      <Fragment key={rowKey}>
                       <div
-                        key={rowKey}
                         className="truck-line-v4-row"
                         style={{ borderLeft: `3px solid ${rowSpineColor(r.load?.trip_type)}` }}
                         data-testid={`truck-line-row-${g.unit_id}${legIndex > 0 ? `-leg-${legIndex}` : ""}`}
@@ -1275,6 +1164,38 @@ export function TruckLineBoard({
                           )}
                         </div>
                       </div>
+                      {/* ROUND 167 — the 7-station rail (and with it the ONLY way to stamp a
+                          station or record an exception from this board) was orphaned by #22943's
+                          rewrite: TruckLineTrack, openStamp, openOther, confirmException and
+                          clearException were all left declared and uncalled, which is what broke
+                          `tsc -b` (13x TS6133) and red-lit every frontend build after 11:43 UTC.
+                          Re-wired here as a full-width sub-row beneath the leg it belongs to, so
+                          the 7-column header above is untouched. Deleting the handlers would have
+                          turned a build break into a silent loss of dispatcher stamping. */}
+                      {r.load && r.station ? (
+                        <div
+                          className="border-b border-[#E5E7EB] px-2.5 pb-2 pt-1"
+                          data-testid={`truck-line-track-${g.unit_id}-${r.load.load_id}`}
+                        >
+                          <TruckLineTrack
+                            row={r}
+                            reasons={reasons}
+                            otherPrompt={otherPrompt}
+                            otherReasonId={otherReasonId}
+                            otherNote={otherNote}
+                            otherBusy={otherBusy}
+                            otherError={otherError}
+                            onAdvance={openStamp}
+                            onOpenOther={openOther}
+                            onCloseOther={closeOther}
+                            onPickReason={setOtherReasonId}
+                            onNoteChange={setOtherNote}
+                            onConfirmException={confirmException}
+                            onClearException={clearException}
+                          />
+                        </div>
+                      ) : null}
+                      </Fragment>
                     );
                   })
                 )}
