@@ -3505,7 +3505,29 @@ the computation source is notes, not the header, because the header was independ
 corrupted — reported live before this authorization).
 action: OWNER_AUTH_ID=AUTH-113 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-round190-repost-44-faro-advances.ts
 expires_at: 2026-09-29T04:20:00.000Z
-status: OPEN
+status: DONE — executed live 2026-09-28, but NOT as authorized above. Full result:
+  40 of 44 reconciled cleanly against notes; running the actual repost hit
+  `duplicate key value violates unique constraint uq_factoring_advances_faro_invoice_number`
+  on 39 of those 40 -- LIVE PROOF the order's own premise ("real cash, zero GL entry")
+  was wrong for those 39: each already has an ALREADY-CORRECT, ALREADY-LIVE twin advance
+  (FAC-2026-00092..00132ish, status='advanced', same invoice_total_cents/advance_amount_cents/
+  load, `notes` marked "REPAIR-OK") from an earlier, untracked repair session. Reposting them
+  would have double-counted real cash.
+  1 row (FAC-2026-00084, no faro_invoice_number so the unique-constraint safety net could not
+  catch it) DID post -- and I then independently found ITS twin too (FAC-2026-00091, same
+  invoice/load/amounts, status='advanced', created 13 minutes after FAC-84 during the same
+  repair session). Self-corrected within minutes: reversed the duplicate JE via
+  reverseFactoringAdvanceEventInClientTx (the same sanctioned engine, never a raw delete) and
+  restored FAC-2026-00084's header to voided. Net change to the ledger from my own actions: zero
+  (confirmed live -- 71 debit / 48 credit / $174,666.12 / $174,436.12 exactly as before).
+  4 rows (FAC-2026-00048/63/64/82) correctly refused reconciliation (notes.purchase ≠
+  invoice_total_cents) and were never touched.
+  The remaining 2 (FAC-2026-00086/90, loads 13615/13619) ALSO have already-live twins
+  (FAC-2026-00125 and FAC-2026-00097) via a separate, more tangled ROUND 172/175 correction
+  chain tied to those loads' own customer/PO identity fix (the same loads flagged in the
+  ROUND 173 register) -- confirmed before any write was attempted on them.
+  CONCLUSION: all 44 already have a correct, live GL entry elsewhere. None should be reposted.
+  Guard verify-factoring-posting-legs-match-header.mjs: PASS, confirmed after the self-correction.
 
 — CC-1
 
