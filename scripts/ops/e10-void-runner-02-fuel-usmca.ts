@@ -53,9 +53,11 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
 import pg from "pg";
 import { reverseJournalEntryNoFlip } from "../../apps/backend/src/accounting/journal-entries.service.js";
 
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER_USER_ID = process.env.E10_ACTOR_USER_ID ?? "";
 const VOID_REASON =
@@ -73,6 +75,14 @@ async function main() {
     throw new Error("ABORT: DATABASE_URL host does not match ROUND271_ALLOW_HOST.");
   if (/ep-broad-block-akykk7bw/.test(url))
     throw new Error("ABORT: refusing the production compute host, by name, unconditionally.");
+  // Defense-in-depth alongside the proving-ground host allowlist above: --execute (the only mode
+  // that actually calls the reversal engine) requires the same verify-owner-authorization.mjs gate
+  // every other scripts/ops/ writer uses (verify-no-unauthorized-production-write.mjs, required: 0).
+  if (executeFlag) {
+    const auth = process.env.OWNER_AUTH_ID;
+    if (!auth) throw new Error("ABORT: --execute requires OWNER_AUTH_ID.");
+    execFileSync(process.execPath, [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), auth], { stdio: "inherit" });
+  }
 
   const pool = new pg.Pool({ connectionString: url, max: 1, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();
