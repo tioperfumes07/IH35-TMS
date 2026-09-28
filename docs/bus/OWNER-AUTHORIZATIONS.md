@@ -2236,3 +2236,15 @@ exactly 245 draft/unposted rows, every reimbursable driver has a 2175 leaf, no r
 and the trial balance and posting row count are unchanged.
 
 — Claude-Lead
+
+## AUTH-080
+issued_at: 2026-09-28T05:35:00.000Z
+scope: void every live USMCA accounting.expenses header (5769–5816, source_fuel_transaction_id IS NULL, memo NOT LIKE 'R145 SETTL%') that is superseded by an AUTH-076 R145 set-based twin on the same source_settlement_ref + expense_line (amount_cents, item_id); via existing voidDocument(type='expense') only; void-not-delete; no new rows — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA). Measured before void: 62 headers / $4,042.56.
+action: OWNER_AUTH_ID=AUTH-080 npx tsx scripts/feed/r145-void-pre-r145-superseded-dups.mts --apply
+expires_at: 2026-09-28T11:35:00.000Z
+status: OPEN
+
+ROUND 154.4. AUTH-076 set-based seed used natural key (settlement, AT date, amount, item). Prior R-164/gapfill rows kept wrong dates, so the seed inserted AT-dated twins and verify-alwaystrack-parity expenses went ~2x (16565 vs 8487). Void the pre-R145 superseded headers; keep R145 AT-dated rows. Same class as AUTH-078 one-row void, set-identified.
+
+— Cursor
+
