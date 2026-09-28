@@ -30,11 +30,11 @@ const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD
 const fmt = (c: number) => money.format(c / 100);
 const DASH = "\u2014";
 
-const TOUR_COLUMNS = (state: "open" | "closed", companyId: string): ParityColumn<TourListRow>[] => [
+const TOUR_COLUMNS = (state: "open" | "closed", companyId: string, rows: readonly TourListRow[]): ParityColumn<TourListRow>[] => [
   { key: "tour", label: "Settlement/Tour", alwaysVisible: true, testId: "setl-tour-col-id", sortable: true, className: "whitespace-nowrap", minWidth: 90, sortValue: r => tourLabel(r), render: r => <Link className="ldt-link font-semibold" style={{ display: "inline" }} to={`/driver-finance/settlements?settlement_id=${encodeURIComponent(r.settlement_id)}`}>{tourLabel(r)}</Link> },
   // COLUMN-ORDERING LAW (owner 2026-09-11): Load renders immediately next to Settlement, same as
   // every other surface this rule is applied to — before Driver/Unit, not after.
-  ...tourLoadColumns("setl-tour-col"),
+  ...tourLoadColumns("setl-tour-col", rows),
   { key: "driver", label: "Driver", testId: "setl-tour-col-driver", sortable: true, minWidth: 120, maxWidth: 200, cellClass: "whitespace-nowrap", sortValue: r => r.driver_name ?? "", render: r => <span className="block max-w-[200px] truncate" title={r.driver_name ?? ""}>{r.driver_name ?? DASH}</span> },
   { key: "unit", label: "Unit", testId: "setl-tour-col-unit", sortable: true, minWidth: 56, maxWidth: 64, className: "whitespace-nowrap", sortValue: r => r.unit_number ?? "", render: r => r.unit_number ?? DASH },
   // NEW-10 (owner 2026-09-07): "date started" + "delivery date" of the ORIGINAL load that created the
@@ -174,7 +174,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
         <ListErrorState status={0} message={activeQ.error instanceof Error ? activeQ.error.message : String(activeQ.error)} onRetry={() => void activeQ.refetch()} />
       ) : (
         <ParityTable
-          columns={TOUR_COLUMNS(state, companyId)}
+          columns={TOUR_COLUMNS(state, companyId, rows)}
           rows={rows}
           rowKey={r => r.settlement_id}
           loading={activeQ.isLoading}

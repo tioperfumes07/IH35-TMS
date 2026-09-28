@@ -68,23 +68,55 @@ export function TourLegsCell({ legs, legsLabel }: { legs: TourLegPill[] | null |
   );
 }
 
+/** One leg's chip + load number, or a dash when this row has no leg at that position. */
+function LegColumnCell({ leg }: { leg: TourLegPill | undefined }) {
+  if (!leg) return <span className="ldt-muted">{DASH}</span>;
+  return (
+    <EntityLink
+      kind="load"
+      id={leg.load_id}
+      label={`${leg.trip_type ?? "?"} ${leg.load_number}`}
+      className={legPillClass(leg.trip_type)}
+      title={`${leg.trip_type ?? "?"} ${leg.load_number}`}
+    />
+  );
+}
+
 /** REG-010/011, corrected (owner 2026-09-11, "SETTLEMENT LOAD LINKAGE: FIX THE RENDER, NOT THE
  *  SCHEMA"): REG-010/011 originally made this "Load Number" cell show ONLY the first leg by design
  *  ("expand the settlement to see every load") -- that is the exact "only 1 load per settlement"
  *  render bug the owner is now overturning. A settlement/tour can and should cover multiple loads
- *  (locked architecture); this cell renders every leg the tour actually has (the same TourLegsCell
- *  pill strip already built for this purpose, count pill + up to LEGS_VISIBLE loads + "+N more"),
- *  never a single bookend/first-load stand-in. Trip type and count stay their own columns. */
-export function tourLoadColumns(prefix: string): ParityColumn<TourListRow>[] {
+ *  (locked architecture).
+ *
+ *  ROUND 155.15 FIX B / 157-D item 2 (owner, verbatim): "IN PRE SETTLEMENT EACH LOAD NUMBER SHOULD
+ *  HAVE ITS OWN COLUMN. NOT VARIOUS IN ONE. ITS CONFUSING AND NOT CLEAN." The single load_numbers
+ *  cell (TourLegsCell's pill strip crammed into one <span>) is replaced with ONE COLUMN PER LEG --
+ *  "Leg 1".."Leg N", N generated from the WIDEST row in the current result set (never hard-coded),
+ *  so a 1-leg and a 4-leg tour both render cleanly and every leg gets its own sortable column. Each
+ *  cell is that leg's trip-type chip + load number (LegColumnCell); a tour with fewer legs than the
+ *  widest row shows a dash in the columns it doesn't reach. The old legs[0]-only "Trip type" column
+ *  is DELETED -- trip type now lives inside each leg's own cell, so a 4-leg tour no longer hides
+ *  three of its four trip types behind a column that only ever showed the first. tourLoadColumns is
+ *  SHARED (SettlementsToursRegister's TOUR_COLUMNS + SettlementsCompanyDriverTab's
+ *  CompanyDriverPicker both call it), so this fix lands once and both registers inherit it. */
+export function tourLoadColumns(prefix: string, rows: readonly Pick<TourListRow, "legs">[]): ParityColumn<TourListRow>[] {
+  const maxLegs = rows.reduce((max, r) => Math.max(max, (r.legs ?? []).length), 0);
+  const legColumns: ParityColumn<TourListRow>[] = Array.from({ length: maxLegs }, (_, i) => ({
+    key: `leg_${i + 1}`,
+    label: `Leg ${i + 1}`,
+    headerTitle: i === 0 ? "Every load in this tour, one column per leg" : undefined,
+    testId: `${prefix}-leg-${i + 1}`,
+    sortable: true,
+    alwaysVisible: i === 0,
+    minWidth: 110,
+    maxWidth: 160,
+    cellClass: "whitespace-nowrap",
+    sortValue: (r: TourListRow) => r.legs?.[i]?.load_number ?? "",
+    exportValue: (r: TourListRow) => r.legs?.[i]?.load_number ?? "",
+    render: (r: TourListRow) => <LegColumnCell leg={r.legs?.[i]} />,
+  }));
   return [
-    { key: "load_numbers", label: "Load Number", headerTitle: "Every load in this tour", testId: `${prefix}-load-number`, sortable: true, alwaysVisible: true,
-      minWidth: 160, maxWidth: 420, cellClass: "whitespace-nowrap",
-      sortValue: r => r.legs?.[0]?.load_number ?? "",
-      exportValue: r => (r.legs ?? []).map(l => l.load_number).join(" / "),
-      render: r => <TourLegsCell legs={r.legs} /> },
-    { key: "trip_types", label: "Trip type", headerTitle: "Trip type of the first load", testId: `${prefix}-trip-type`, sortable: true,
-      sortValue: r => r.legs?.[0]?.trip_type ?? "",
-      render: r => r.legs?.[0]?.trip_type ?? DASH },
+    ...legColumns,
     { key: "load_count", label: "Load count", testId: `${prefix}-load-count`, sortable: true,
       sortValue: r => r.leg_count, render: r => r.leg_count },
   ];

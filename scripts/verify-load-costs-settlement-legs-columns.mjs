@@ -53,27 +53,30 @@ function analyze(src) {
   }
 
   // Owner REG-010/011: retain links without mixing number, trip type and count in a cell.
-  // CORRECTED 2026-09-11 ("SETTLEMENT LOAD LINKAGE: FIX THE RENDER, NOT THE SCHEMA", see
-  // TourLegsCell.tsx's own header comment on tourLoadColumns): the Load Number column's original
-  // "first load only, expand to see the rest" design was an owner-overturned bug — a settlement/
-  // tour can and should cover multiple loads, so the column now renders EVERY leg via the shared
-  // TourLegsCell pill strip (count pill + up to LEGS_VISIBLE loads + "+N more"), never a single
-  // bookend/first-load stand-in. This guard's checks below were pinned to the retired first-load
-  // shape and are updated to match the current, corrected design.
+  // CORRECTED 2026-09-11 ("SETTLEMENT LOAD LINKAGE: FIX THE RENDER, NOT THE SCHEMA") then
+  // CORRECTED AGAIN, ROUND 155.15 FIX B / 157-D item 2 (owner, verbatim, 2026-09-28: "IN PRE
+  // SETTLEMENT EACH LOAD NUMBER SHOULD HAVE ITS OWN COLUMN. NOT VARIOUS IN ONE. ITS CONFUSING AND
+  // NOT CLEAN."): the single "Load Number" cell (TourLegsCell's whole-array pill strip crammed
+  // into one column) is itself a defect class the owner overturned a second time — not "every leg
+  // visible" but "every leg its OWN column." tourLoadColumns() now generates ONE COLUMN PER LEG
+  // ("Leg 1".."Leg N", N = the widest row in the current result set, never hard-coded); the old
+  // legs[0]-only "Trip type" column is deleted (trip type now lives inside each leg's own cell).
+  // This guard's checks below were pinned to the retired single-cell shape and are updated to
+  // match the current, corrected design. verify-no-multi-value-cell.mjs is the dedicated guard for
+  // this exact class of regression going forward; the checks here stay as a second, independent
+  // pin on the same file.
   const summary = cell.slice(cell.indexOf("export function tourLoadColumns"));
   if (!/export function tourLoadColumns/.test(cell)) errors.push("shared tourLoadColumns is missing");
-  for (const label of ["Load Number", "Trip type", "Load count"]) {
-    if (!summary.includes(`label: "${label}"`)) errors.push(`summary missing separate ${label} column`);
+  if (!summary.includes('label: "Load count"')) errors.push('summary missing separate "Load count" column');
+  if (!/key:\s*`leg_\$\{i \+ 1\}`/.test(summary)) errors.push('summary must generate one column per leg with a per-leg key (leg_${i+1})');
+  if (!/label:\s*`Leg \$\{i \+ 1\}`/.test(summary)) errors.push('summary must label each generated column "Leg N"');
+  if (!/reduce\(\(max, r\) => Math\.max\(max, \(r\.legs \?\? \[\]\)\.length\), 0\)/.test(summary)) {
+    errors.push("summary must compute the leg-column count from the widest row's own legs.length, never a hard-coded number");
   }
-  if (!/headerTitle: "Every load in this tour"/.test(summary)) errors.push("summary must explain that every load in the tour is shown");
-  if (!/render: r => <TourLegsCell legs=\{r\.legs\} \/>/.test(summary)) errors.push("summary Load Number column must delegate to the shared TourLegsCell pill strip (every leg, not just the first)");
-  // The RENDER must never flatten every load into one string cell (that was the old bug); a
-  // machine-readable CSV exportValue joining load numbers with " / " is a different surface (no
-  // JSX, never shown as a table cell) and is explicitly allowed.
-  const renderOnly = (summary.match(/render:\s*r\s*=>\s*<TourLegsCell[^}]*\}/) || [""])[0];
-  if (/\.map\(|\.join\(/.test(renderOnly)) errors.push("summary render must not concatenate multiple load numbers/types in one cell");
-  if (!/render: r => r\.legs\?\.\[0\]\?\.trip_type \?\? DASH/.test(summary)) errors.push("trip type column must show the first load's type");
-  if (!/sortValue: r => r\.leg_count, render: r => r\.leg_count/.test(summary)) errors.push("load count must sort and render its own value");
+  if (summary.includes('label: "Load Number"')) errors.push('summary must not restore the single "Load Number" cell (one column per leg, not one cell for the whole array)');
+  if (summary.includes('label: "Trip type"')) errors.push('summary must not restore the legs[0]-only "Trip type" column (trip type lives inside each leg\'s own cell now)');
+  // The RENDER must never flatten multiple legs into one string/array cell (that was the old bug).
+  if (/render:\s*r\s*=>\s*<TourLegsCell legs=\{r\.legs\}/.test(summary)) errors.push("summary render must not delegate the whole legs array to TourLegsCell in one cell — render one leg per column instead");
 
   // 3. ParityTable maxWidth ceiling + headerTitle tooltip
   if (!/maxWidth\?\:\s*number/.test(parity)) errors.push("ParityColumn must declare an optional maxWidth (auto-fit ceiling)");
@@ -156,9 +159,10 @@ if (process.argv.includes("--selftest")) {
     ["parity drops headerTitle render", withField("parity", (s) => s.replace(/title=\{column\.headerTitle\}/g, "data-x={column.headerTitle}"))],
     ["board drops TOUR_LOAD_COLUMNS", withField("board", (s) => s.replace(/TOUR_LOAD_COLUMNS/g, "GONE_COLUMNS"))],
     ["board restores shared tourLoadColumns", withField("board", (s) => `import { tourLoadColumns } from "../../components/dispatch/TourLegsCell";\n${s}\n...tourLoadColumns("x"),`)],
-    ["summary restores multiple numbers", withField("cell", (s) => s.replace("render: r => <TourLegsCell legs={r.legs} />", "render: r => <TourLegsCell legs={r.legs.map(l => l)} />"))],
-    ["summary loses TourLegsCell delegation", withField("cell", (s) => s.replace("render: r => <TourLegsCell legs={r.legs} />", "render: r => r.legs?.[0]?.load_number ?? DASH"))],
+    ["summary restores the whole-array Load Number cell", withField("cell", (s) => s.replace(/key:\s*`leg_\$\{i \+ 1\}`,[\s\S]*?\}\)\);/, 'x;\n  return [{ key: "load_numbers", label: "Load Number", render: r => <TourLegsCell legs={r.legs} /> }];'))],
+    ["summary restores the legs[0]-only Trip type column", withField("cell", (s) => s.replace(/return \[\n\s*\.\.\.legColumns,/, 'return [\n    { key: "trip_types", label: "Trip type" },\n    ...legColumns,'))],
     ["summary loses load count column", withField("cell", (s) => s.replace(/label: "Load count"/g, 'label: "Combined"'))],
+    ["summary hard-codes the leg-column count", withField("cell", (s) => s.replace(/rows\.reduce\(\(max, r\) => Math\.max\(max, \(r\.legs \?\? \[\]\)\.length\), 0\)/, "4"))],
     ["rows money wraps", withField("rows", (s) => s.replace(/const MONEY = "whitespace-nowrap text-right tabular-nums";/g, 'const MONEY = "text-right tabular-nums";'))],
     ["rows dates uncapped", withField("rows", (s) => s.replace(/maxWidth: 112/g, "maxWidth: 999"))],
     ["rows company not-opened dropped", withField("rows", (s) => s.replace(/not opened/g, "none"))],

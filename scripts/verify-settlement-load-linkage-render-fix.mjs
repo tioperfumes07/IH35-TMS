@@ -54,14 +54,20 @@ const TOUR_LOAD_ROWS = path.join(repoRoot, "apps/frontend/src/components/dispatc
 const PRE_SETTLEMENT_ROUTE = path.join(repoRoot, "apps/backend/src/driver-finance/pre-settlement.routes.ts");
 const DRIVER_FINANCE_API = path.join(repoRoot, "apps/frontend/src/api/driverFinance.ts");
 
-/** Pure: does tourLoadColumns() still throw away every leg but the first? */
+/** Pure: does tourLoadColumns() still throw away every leg but the first, or cram every leg into
+ *  one cell instead of giving each its own column (ROUND 155.15 FIX B / 157-D item 2 -- the owner
+ *  overturned the single-cell "every leg visible" design a second time: "EACH LOAD NUMBER SHOULD
+ *  HAVE ITS OWN COLUMN. NOT VARIOUS IN ONE.")? */
 export function auditTourLegsCellSource(src) {
   const failures = [];
   if (/r\.legs\?\.\[0\]\s*\?\s*<EntityLink/.test(src)) {
     failures.push("tourLoadColumns' Load Number column still renders only legs[0] via a direct EntityLink -- every other leg is dropped");
   }
-  if (!/render:\s*r\s*=>\s*<TourLegsCell legs={r\.legs}/.test(src)) {
-    failures.push("tourLoadColumns' Load Number column does not render <TourLegsCell legs={r.legs} /> -- the all-legs cell is missing or was reverted");
+  if (/render:\s*r\s*=>\s*<TourLegsCell legs={r\.legs}/.test(src)) {
+    failures.push("tourLoadColumns still delegates the WHOLE legs array to one <TourLegsCell legs={r.legs} /> cell -- every leg must get its own generated column instead (see verify-no-multi-value-cell.mjs)");
+  }
+  if (!/key:\s*`leg_\$\{i \+ 1\}`/.test(src)) {
+    failures.push("tourLoadColumns does not generate a per-leg column (key: `leg_${i+1}`) -- the all-legs-in-their-own-columns render is missing or was reverted");
   }
   return failures;
 }
@@ -146,10 +152,12 @@ export function auditPreSettlementRouteSource(src) {
 function selftest() {
   const assert = { ok: (c, m) => { if (!c) throw new Error(m); } };
 
-  const badLegs = `render: r => r.legs?.[0] ? <EntityLink kind="load" id={r.legs[0].load_id} label={r.legs[0].load_number} /> : DASH },`;
-  assert.ok(auditTourLegsCellSource(badLegs).length >= 1, "legs[0]-only render must be caught");
-  const goodLegs = `render: r => <TourLegsCell legs={r.legs} /> },`;
-  assert.ok(auditTourLegsCellSource(goodLegs).length === 0, "TourLegsCell render must pass: " + JSON.stringify(auditTourLegsCellSource(goodLegs)));
+  const badLegsFirstOnly = `render: r => r.legs?.[0] ? <EntityLink kind="load" id={r.legs[0].load_id} label={r.legs[0].load_number} /> : DASH },`;
+  assert.ok(auditTourLegsCellSource(badLegsFirstOnly).length >= 1, "legs[0]-only render must be caught");
+  const badLegsOneCell = `render: r => <TourLegsCell legs={r.legs} /> },`;
+  assert.ok(auditTourLegsCellSource(badLegsOneCell).length >= 1, "whole-array-in-one-cell render must be caught (superseded by one column per leg)");
+  const goodLegs = `key: \`leg_\${i + 1}\`, render: (r) => <LegColumnCell leg={r.legs?.[i]} />,`;
+  assert.ok(auditTourLegsCellSource(goodLegs).length === 0, "per-leg-column render must pass: " + JSON.stringify(auditTourLegsCellSource(goodLegs)));
 
   const badTable = `const link = row.load_links?.[0];\nreturn link ? <EntityLink kind="load" id={link.id} label={link.label} /> : "—";`;
   assert.ok(auditSettlementsTableSource(badTable).length >= 1, "load_links[0]-only render must be caught");
