@@ -9224,5 +9224,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-28",
     "purpose": "verify-qbo-flags-blocked"
+  },
+  "11703": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-28",
+    "purpose": "verify-projected-cash-date-equals-delivery"
   }
 }
