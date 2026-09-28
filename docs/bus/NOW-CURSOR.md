@@ -9,12 +9,15 @@ Credentials: `~/Desktop/09-28-2026-IH35-MASTER-KEYS-ENVS-SINGLE-SOURCE-OF-TRUTH.
 ## ROUND 213 arm 31 — DONE (AUTH-124 CONSUMED)
 Voided live Smithfield $25 `f9c5b0e4…` via voidCheck; reversing JE `1e0980d4…`.
 Three $1 already void (AUTH-117/120/122) re-measured. All 4 status=void / posting=reversed.
-#23094 merged, in batch.
+#23094/#23095 merged, in batch.
 
-## NEXT (Cursor lane)
-- #23088 named Resolve quick-picks — land (merged, in batch)
-- Faro named Resolve = owner Chrome CoA pick only
-- Do not steal Devin-B / CC-3 / CC-1 lanes
+## THIS PR — #23088 named Resolve quick-picks
+MatchDrawer NAMED_RESOLVE_QUICK_PICKS (Reserve/Fees/Wire/Chargeback/Discount) by account_name +
+coaAccountReferenceOption. Still posts via acceptMatchWithResolveDifference.
+
+## OWNER CHROME NEXT
+Faro Resolve wires still `for_review`: 08/13 `99ee0ead` −$1,800 · 08/14 `4cded6ac` −$5,441 ·
+09/21 `d6765d8d` −$4,010. Pick named CoA after this lands in a captain batch.
 
 ## DO NOT
 - Steal Devin-B purge-era gate unwire / arm 21
