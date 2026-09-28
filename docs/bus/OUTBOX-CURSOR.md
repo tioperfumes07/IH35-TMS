@@ -1,5 +1,14 @@
 # OUTBOX-CURSOR
 
+**2026-09-28T22:33Z · ROUND 213 arm 31 DONE**
+
+CURSOR | R213-ARM31 DONE | squash #23094 | AUTH-124 CONSUMED |
+voidCheck f9c5b0e4… $25 Smithfield → void + rev JE 1e0980d4… |
+3×$1 already void re-measured | all 4 void/reversed WORM |
+NEXT: #23088 Resolve picks; Devin-B owns purge-era unwire.
+
+---
+
 **2026-09-26T02:10Z · R-186.2 Settlement Creator LIVE**
 
 CURSOR | R-186.2 DONE | squash `024cb391ca` (#22789) | API healthz/shallow `git_sha=024cb391ca4f980eb8313edd43b4fd76b98f9d0d` | FE SettlementsPage chunk `allowPost:!0` + FuelStop + `sc-je` | go26 exit 0 · creator-ties --selftest exit 0 · fuel-stop-catalog --selftest exit 0 | Post enabled from Settlements `?creator=1`. Load boards: CC-3 LAW5 #22749 + alias-shadow #22757 already MERGED — Cursor does not re-open. NEXT: Chrome owner walk Post; invoice/Faro auto-submit on Creator Post still follow-up.
