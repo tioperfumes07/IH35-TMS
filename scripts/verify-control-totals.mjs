@@ -18,10 +18,12 @@ const BYPASS = `WITH b AS MATERIALIZED (SELECT set_config('app.bypass_rls','luci
 const CHECKS = [
   {
     name: 'Driver settlements 5804-5815 net pay',
-    // AlwaysTrack signed TOTAL DUE for 5804–5815 incl. paperwork 5812 at −$50 escrow
-    // (Driver_Settlement_5812.txt). Owner 2026-09-25: AT is source of truth — do not
-    // zero the escrow for a "collectable" substitute. Formula sum = 20,191.07.
-    expect: 20191.07,
+    // AlwaysTrack signed TOTAL DUE for 5804–5815. Pre–AUTH-056 sum was 20,191.07 with
+    // paperwork 5812 at −$50 escrow (Driver_Settlement_5812.txt @ $0.00/mi). AUTH-056
+    // (CONSUMED) re-priced 5812 at $0.45/mi → live net_pay 1,652.47. Identity:
+    // 20191.07 − (−50) + 1652.47 = 21893.54. Ruling:
+    // docs/bus/RULING-2026-09-28-control-totals-5812-auth056.md
+    expect: 21893.54,
     // Transaction data the purge deletes. Inside a verified purge window, with no USMCA settlements
     // at all, this control is EMPTY BY PURGE (provisional per Round 86, re-priced once after day 1).
     emptyByPurgeWhenNoRows: 'driver_finance.driver_settlements',
