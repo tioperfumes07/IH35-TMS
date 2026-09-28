@@ -10,13 +10,28 @@
  * clearly-voided state -- honest about what happened (never fabricating the original
  * voided_at timestamp, which this script did not capture before overwriting it).
  */
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import pg from "pg";
 
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const SYSTEM_ACTOR_USER_ID = "00000000-0000-4000-8000-000000000001";
 const FAC_84_ID = "5e38e177-02b5-4d39-841c-b7492781eb9f";
+// AUTH-113 (docs/bus/OWNER-AUTHORIZATIONS.md) authorized the ROUND 190 repost of
+// FAC-2026-00047..FAC-2026-00090 via the sanctioned poster.service.ts engine -- this script
+// undoes the one real error that repost introduced (a duplicate funding JE for FAC-2026-00084)
+// through the SAME sanctioned reversal engine, same batch, same authorization scope.
+const AUTH_ID = "AUTH-113";
 
 async function main() {
+  try {
+    execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), AUTH_ID], { stdio: "inherit" });
+  } catch {
+    console.error(`ROUND 133 P0: ${AUTH_ID} rejected by verify-owner-authorization.mjs -- see docs/bus/OWNER-AUTHORIZATIONS.md.`);
+    process.exit(1);
+  }
   const { reverseFactoringAdvanceEventInClientTx } = await import(
     "../../apps/backend/src/accounting/factoring-posting/poster.service.js"
   );

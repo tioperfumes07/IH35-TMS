@@ -836,7 +836,7 @@ async function resolveExpenseItem(
 // exists for the same load and amount. That card-fuel path is a separate ingestion
 // (fuel-expense-document.service.ts), not this seeder — this is a read-before-write guard against
 // it, not a second writer. Returns null (a genuine, expected skip, not an error) when it applies.
-async function seedExpense(
+export async function seedExpense(
   client: QueryableClient,
   operatingCompanyId: string,
   actorUserId: string,
@@ -865,7 +865,7 @@ async function seedExpense(
 
   const item = await resolveExpenseItem(client, operatingCompanyId, line);
 
-  const vendorId = await resolveByName(client, "mdata.vendors", "name", operatingCompanyId, line.vendor).catch(() => null);
+  const vendorId = await resolveByName(client, "mdata.vendors", "vendor_name", operatingCompanyId, line.vendor).catch(() => null);
 
   // R-168: this row always has a load_id (it is one of a specific load's expenseLines), so its
   // expense_number must come from the load-scoped series (generateExpenseNumber), the same one
@@ -876,27 +876,57 @@ async function seedExpense(
   // used to duplicate it below is gone — two writers incrementing the same sequence would double-count.
   const attribution = await generateExpenseNumber(client as never, loadId, operatingCompanyId);
   const expenseNumber = attribution.number;
+  // ROUND 178/182 (2026-09-28) — TWO real defects fixed in this one INSERT, found while adding
+  // real settlement-cost-line data through this path for the first time this session:
+  //
+  // (1) BIND-COUNT BUG (pre-existing, this INSERT has never successfully executed): the values
+  // array carried a stray extra element (a commented "unused placeholder" null) beyond the 8
+  // distinct $N the SQL actually references, so node-postgres always threw `bind message
+  // supplies 9 parameters, but prepared statement "" requires 8` on any real call — confirmed
+  // live via an isolated parameterized SELECT reproducing the exact same array shape. Every
+  // positional value after the stray null was shifted one slot off from its intended $N (load_id
+  // would have received line.description, etc.) had the bind count itself not failed first. The
+  // array below has exactly one element per referenced $N, in the SQL's own left-to-right order.
+  //
+  // (2) this INSERT never carried vendor_document_number, even though accounting.expenses HAS
+  // that column (populated by expenses.routes.ts's own manual create path) and line.invoice (the
+  // source document's real invoice/reference number) was already sitting right here, unused.
+  // Silently dropping it is the same "column exists on the row but this writer's own INSERT
+  // drops it" class as SETL-45 / the book-load.service.ts miles_deadhead gap fixed the same
+  // round. Never a minted value — line.invoice is only ever what the truth source itself
+  // carries, blank stays blank.
+  // (3) trailer_id dropped from this INSERT entirely — confirmed live that
+  // accounting.expenses.trailer_id's own FK constraint (expenses_trailer_id_fkey) targets
+  // mdata.equipment, while mdata.loads.load_trailer_equipment_id is a value from a DIFFERENT,
+  // incompatible id space (catalogs.load_trailer_equipment) — passing the load's trailer id here
+  // throws a guaranteed FK violation for every load carrying a real trailer assignment. unit_id
+  // (mdata.loads.assigned_unit_id -> mdata.units, verified compatible) is unaffected and kept.
   const expense = await client.query<{ id: string }>(
     `INSERT INTO accounting.expenses (
        operating_company_id, expense_number, vendor_uuid, driver_uuid, transaction_date,
        total_amount_cents, memo, load_id, status, posting_status, created_by_user_id, updated_by_user_id, is_sample_data,
-       trailer_id, unit_id
+       unit_id, vendor_document_number
      )
      SELECT $1::uuid, $2, $3::uuid, d.id, $4::date, $5, $6, $7::uuid, 'draft', 'unposted', $8::uuid, $8::uuid, false,
-            l.assigned_trailer_id, l.assigned_unit_id
+            l.assigned_unit_id, $9
        FROM mdata.loads l JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
       WHERE l.id = $7::uuid
      RETURNING id::text`,
-    [operatingCompanyId, expenseNumber, vendorId, /*unused placeholder*/ null, line.date, line.amountCents, line.description, loadId, actorUserId]
+    [operatingCompanyId, expenseNumber, vendorId, line.date, line.amountCents, line.description, loadId, actorUserId, line.invoice?.trim() || null]
   );
   const expenseId = expense.rows[0].id;
 
+  // (4) expense_lines_item_qty_rate_amount_check requires item_id/quantity/rate_cents/
+  // unit_of_measure to be ALL NULL or ALL set together (quantity*rate_cents = amount_cents) —
+  // this INSERT set item_id alone, violating the check on every real call. One line, one flat
+  // price: quantity=1 @ rate_cents=amount_cents satisfies the identity exactly. "each" is the
+  // same unit_of_measure convention check-create.service.ts already uses for a flat-price line.
   await client.query(
     `INSERT INTO accounting.expense_lines (
        operating_company_id, expense_id, line_sequence, amount, amount_cents, description, load_id, load_required,
-       expense_account_uuid, item_id
+       expense_account_uuid, item_id, quantity, rate_cents, unit_of_measure
      )
-     VALUES ($1::uuid, $2::uuid, 1, $3, $4, $5, $6::uuid, true, $7::uuid, $8::uuid)`,
+     VALUES ($1::uuid, $2::uuid, 1, $3, $4, $5, $6::uuid, true, $7::uuid, $8::uuid, 1, $4::bigint, 'each')`,
     [operatingCompanyId, expenseId, line.amountCents / 100, line.amountCents, line.description, loadId, item.expenseAccountId, item.itemId]
   );
 
@@ -974,7 +1004,7 @@ async function seedFuel(
   );
   if (existing.rows[0]) return { fuelTransactionId: existing.rows[0].id, postedAt: line.date, amountCents: line.amountCents };
 
-  const vendorId = await resolveByName(client, "mdata.vendors", "name", operatingCompanyId, line.vendor).catch(() => null);
+  const vendorId = await resolveByName(client, "mdata.vendors", "vendor_name", operatingCompanyId, line.vendor).catch(() => null);
   const { city: locationCity, state: locationState } = sanitizeFuelLocation(line.location);
 
   // ROUND 143.3 — linkage written at creation, not backfilled. Every fuel transaction carries
@@ -1086,7 +1116,7 @@ export async function seedSettlementDocument(
 
     // ROUND 143.3 — resolve the load's driver, unit, and trailer for fuel/expense linkage.
     const linkage = await client.query<{ driver_id: string | null; unit_id: string | null; trailer_id: string | null }>(
-      `SELECT assigned_primary_driver_id::text AS driver_id, assigned_unit_id::text AS unit_id, assigned_trailer_id::text AS trailer_id
+      `SELECT assigned_primary_driver_id::text AS driver_id, assigned_unit_id::text AS unit_id, load_trailer_equipment_id::text AS trailer_id
          FROM mdata.loads WHERE id = $1::uuid`,
       [loadId]
     );
