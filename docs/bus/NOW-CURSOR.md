@@ -3,7 +3,7 @@
 ## HARD LINE
 STOP FACTORING. CLOSED. AUTH-113. Settlements 5769–5819 OWNER-CLOSED. matched_* stand-down.
 Credentials: `~/Desktop/09-28-2026-IH35-MASTER-KEYS-ENVS-SINGLE-SOURCE-OF-TRUTH.md` ONLY.
-**ROUND 209:** Auto-Deploy OFF on BE+FE. Never say "live"/"shipped" for own PR — say **merged, in batch**. Captain batches every 5–10. Law: `docs/bus/00-ROUND-209-AUTO-DEPLOY-OFF-BULK-BATCH.md`.
+**ROUND 209:** Auto-Deploy OFF on BE+FE. Never say "live"/"shipped" for own PR — say **merged, in batch**. Captain = Claude Lead · batch every **8** PRs (immediate for migration/RLS/P0). Law: `docs/bus/00-ROUND-209-AUTO-DEPLOY-OFF-BULK-BATCH.md`.
 
 ## ITEM 1 — G-16 CHECK CREATOR — DONE
 REGISTRY_COUNT_BEFORE=2 · REGISTRY_COUNT_AFTER=3
