@@ -40,6 +40,23 @@ const createVendorBillPaymentBodySchema = z.object({
     .min(1),
 });
 
+export type VendorBillPaymentBatchInput = {
+  paid_at: string;
+  amount_cents: number;
+  payment_method: "check" | "ach" | "wire" | "cash" | "credit_card";
+  bank_account_id?: string;
+  reference_number?: string;
+  check_number?: string;
+  memo?: string;
+  applications: Array<{ bill_id: string; amount_cents: number }>;
+};
+
+export type VendorBillPaymentBatchResult =
+  | { code: 201; data: { payment_batch_id: string; bill_payment_ids: string[] } }
+  | { code: 400 | 404 | 409 | 500; error: string };
+
+type QueryClient = { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[]; rowCount?: number }> };
+
 function storageStatusForPaid(total: number, paid: number): string {
   if (paid <= 0) return "unpaid";
   if (paid >= total) return "paid";
@@ -89,6 +106,188 @@ function requirePaymentWriteRole(reply: FastifyReply, role: string) {
     return false;
   }
   return true;
+}
+
+/**
+ * R-172 step 5 -- the core "apply a payment across N bills, atomically, as one batch" logic, extracted
+ * verbatim from this file's own POST /:id/bill-payments handler so the check engine's "Add" (open
+ * bills -> Bill Payment (Check)) drawer reuses the SAME real engine instead of a second/third
+ * implementation. checks.routes.ts's new POST /api/v1/checks/pay-bills calls this exact function,
+ * inside its OWN withCompanyScope(...) transaction (so a check-number-registry reservation can share
+ * the same atomic unit as the applications it protects) -- no new GL math, no new poster, the identical
+ * postSourceTransactionInClientTx('bill_payment') call this route has always made.
+ *
+ * NOTE (disclosed, not fixed here -- out of this step's lane): a second, separately-implemented
+ * multi-bill batch writer also exists at POST /api/v1/ap/bill-payments
+ * (apps/backend/src/ap/payment-application.routes.ts), reachable from the Bills page's
+ * BillPaymentModal.tsx. This function does not consolidate that pre-existing duplication; it reuses
+ * THIS route's own engine (the one this file already owns) rather than adding a third copy.
+ */
+export async function applyVendorBillPaymentBatch(
+  client: QueryClient,
+  operatingCompanyId: string,
+  vendorId: string,
+  actorUserId: string,
+  body: VendorBillPaymentBatchInput
+): Promise<VendorBillPaymentBatchResult> {
+  const sumApplied = body.applications.reduce((sum, row) => sum + Number(row.amount_cents ?? 0), 0);
+  if (sumApplied > body.amount_cents) return { code: 400, error: "payment_apply_exceeds_total" };
+
+  const dup = new Set<string>();
+  for (const row of body.applications) {
+    if (dup.has(row.bill_id)) return { code: 400, error: "duplicate_bill_in_applications" };
+    dup.add(row.bill_id);
+  }
+
+  if (body.payment_method === "check") {
+    const checkNumber = body.check_number?.trim() || body.reference_number?.trim();
+    if (!checkNumber) return { code: 400, error: "check_number_required" };
+  }
+
+  const glPostingEnabled = await isBillPaymentGlPostingEnabled(operatingCompanyId, actorUserId);
+
+  if (body.bank_account_id) {
+    const acctProbe = await client.query(
+      `SELECT id FROM banking.bank_accounts WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+      [body.bank_account_id, operatingCompanyId]
+    );
+    if (!acctProbe.rows[0]) return { code: 400, error: "bank_account_not_found_for_payment" };
+    if (!(await assertBankAccountUsable(client as never, body.bank_account_id, operatingCompanyId))) {
+      return { code: 400, error: "bank_account_not_found_for_payment" };
+    }
+  }
+
+  const batchId = randomUUID();
+  const paymentIds: string[] = [];
+  const checkNumberForInsert = body.payment_method === "check" ? body.check_number?.trim() || body.reference_number?.trim() || null : null;
+
+  for (const applyRow of body.applications) {
+    const billRes = await client.query(
+      `
+        SELECT *
+        FROM accounting.bills
+        WHERE id = $1
+          AND operating_company_id = $2::uuid
+        LIMIT 1
+        FOR UPDATE
+      `,
+      [applyRow.bill_id, operatingCompanyId]
+    );
+    const billRaw = billRes.rows[0] as Record<string, unknown> | undefined;
+    if (!billRaw) return { code: 404, error: "bill_not_found" };
+
+    const vendorKey = String(billRaw.vendor_id ?? billRaw.vendor_uuid ?? "");
+    if (!vendorKey || vendorKey !== vendorId) return { code: 409, error: "bill_vendor_mismatch" };
+
+    if (billRaw.revoked_at) return { code: 409, error: "bill_voided" };
+
+    const amount = billAmountCents(billRaw as { amount_cents: unknown; total_amount: unknown });
+    const paid = billPaidCents(billRaw as { paid_cents: unknown; paid_amount: unknown; status: unknown; amount_cents: unknown; total_amount: unknown });
+    const appliedCreditsCents = await getAppliedVendorCreditsCents(client as never, applyRow.bill_id, operatingCompanyId);
+    const appliedPaymentApplicationsCents = await getAppliedBillPaymentApplicationsCents(client as never, applyRow.bill_id, operatingCompanyId);
+    const remaining = amount - paid - appliedCreditsCents - appliedPaymentApplicationsCents;
+    if (remaining <= 0) return { code: 409, error: "bill_already_paid" };
+    if (applyRow.amount_cents > remaining) return { code: 400, error: "payment_exceeds_remaining_balance" };
+
+    const paymentRes = await client.query(
+      `
+        INSERT INTO accounting.bill_payments (
+          operating_company_id,
+          bill_id,
+          vendor_id,
+          payment_date,
+          amount_cents,
+          amount,
+          payment_method,
+          from_bank_account_id,
+          check_number,
+          reference_number,
+          memo,
+          status,
+          created_by_user_id,
+          created_at,
+          updated_at,
+          payment_batch_id,
+          payment_source_kind,
+          source_bank_transaction_id,
+          is_sample_data
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'posted',$12,now(),now(),$13,'manual',$14,
+          COALESCE((SELECT b.is_sample_data FROM accounting.bills b WHERE b.id = $2::uuid AND b.operating_company_id = $1::uuid), false))
+        RETURNING id
+      `,
+      [
+        operatingCompanyId,
+        applyRow.bill_id,
+        vendorId,
+        body.paid_at,
+        applyRow.amount_cents,
+        applyRow.amount_cents / 100,
+        body.payment_method,
+        body.bank_account_id ?? null,
+        checkNumberForInsert,
+        body.reference_number ?? null,
+        body.memo ?? null,
+        actorUserId,
+        batchId,
+        null,
+      ]
+    );
+    const paymentId = paymentRes.rows[0]?.id as string | undefined;
+    if (!paymentId) return { code: 500, error: "bill_payment_insert_failed" };
+    paymentIds.push(paymentId);
+
+    const newPaidCents = paid + applyRow.amount_cents;
+    const storageStatus = storageStatusForPaid(amount, newPaidCents);
+    await client.query(
+      `
+        UPDATE accounting.bills
+        SET paid_cents = $2,
+            paid_amount = $3,
+            status = $4,
+            updated_at = now()
+        WHERE id = $1
+      `,
+      [applyRow.bill_id, newPaidCents, newPaidCents / 100, storageStatus]
+    );
+
+    const isQboBill = String(billRaw.source_system ?? "").toLowerCase() === "qbo";
+    if (glPostingEnabled && !isQboBill) {
+      await postSourceTransactionInClientTx(
+        client as never,
+        {
+          operating_company_id: operatingCompanyId,
+          source_transaction_type: "bill_payment",
+          source_transaction_id: paymentId,
+        },
+        { userId: actorUserId }
+      );
+    }
+
+    await enqueueAccountingOutbox(client as never, operatingCompanyId, "qbo.vendor_bill_payment.created", "vendor_bill_payment", paymentId, {
+      bill_payment_id: paymentId,
+      bill_id: applyRow.bill_id,
+      vendor_id: vendorId,
+      amount_cents: applyRow.amount_cents,
+      payment_date: body.paid_at,
+      payment_batch_id: batchId,
+    });
+  }
+
+  if (body.bank_account_id) {
+    await updateBankBalance(client, operatingCompanyId, body.bank_account_id, -Math.abs(body.amount_cents));
+  }
+
+  await appendCrudAudit(client as never, actorUserId, "accounting.vendor_bill_payment_batch.created.p6_t11204", {
+    resource_type: "accounting.bill_payments",
+    resource_id: batchId,
+    operating_company_id: operatingCompanyId,
+    vendor_id: vendorId,
+    payment_ids: paymentIds,
+    applications: body.applications.length,
+  });
+
+  return { code: 201, data: { payment_batch_id: batchId, bill_payment_ids: paymentIds } };
 }
 
 export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
@@ -198,200 +397,10 @@ export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
     const body = createVendorBillPaymentBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
 
-    const sumApplied = body.data.applications.reduce((sum, row) => sum + Number(row.amount_cents ?? 0), 0);
-    if (sumApplied > body.data.amount_cents) {
-      return reply.code(400).send({ error: "payment_apply_exceeds_total" });
-    }
-
-    const dup = new Set<string>();
-    for (const row of body.data.applications) {
-      if (dup.has(row.bill_id)) return reply.code(400).send({ error: "duplicate_bill_in_applications" });
-      dup.add(row.bill_id);
-    }
-
-    if (body.data.payment_method === "check") {
-      const checkNumber = body.data.check_number?.trim() || body.data.reference_number?.trim();
-      if (!checkNumber) return reply.code(400).send({ error: "check_number_required" });
-    }
-
-    // VEND-F-VENDOR-BILL-PAYMENT-NEVER-POSTS-GL — this route never called the poster at all: a
-    // vendor bill payment recorded here moved bank cash (updateBankBalance below) and marked the
-    // bill paid with ZERO journal entry, unlike bills.service.ts's payBill() (the PayBillModal
-    // path), which has posted DR ap_control / CR bank atomically since P1-BILLPAY-GL. Same flag,
-    // same poster, same "flag-OFF must still pay" contract — reused verbatim, no new GL math.
-    const glPostingEnabled = await isBillPaymentGlPostingEnabled(query.data.operating_company_id, user.uuid);
-
     try {
-      const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-        if (body.data.bank_account_id) {
-          const acctProbe = await client.query(
-            `SELECT id FROM banking.bank_accounts WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
-            [body.data.bank_account_id, query.data.operating_company_id]
-          );
-          if (!acctProbe.rows[0]) return { code: 400 as const, error: "bank_account_not_found_for_payment" as const };
-          // BANK-ACCOUNT-HIDE: an account hidden for THIS entity can never fund a NEW vendor bill
-          // payment (flag OFF by default — see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
-          if (!(await assertBankAccountUsable(client, body.data.bank_account_id, query.data.operating_company_id))) {
-            return { code: 400 as const, error: "bank_account_not_found_for_payment" as const };
-          }
-        }
-
-        const batchId = randomUUID();
-        const paymentIds: string[] = [];
-        const checkNumberForInsert =
-          body.data.payment_method === "check"
-            ? body.data.check_number?.trim() || body.data.reference_number?.trim() || null
-            : null;
-
-        for (const applyRow of body.data.applications) {
-          const billRes = await client.query(
-            `
-              SELECT *
-              FROM accounting.bills
-              WHERE id = $1
-                AND operating_company_id = $2::uuid
-              LIMIT 1
-              FOR UPDATE
-            `,
-            [applyRow.bill_id, query.data.operating_company_id]
-          );
-          const billRaw = billRes.rows[0] as Record<string, unknown> | undefined;
-          if (!billRaw) return { code: 404 as const, error: "bill_not_found" as const };
-
-          const vendorKey = String(billRaw.vendor_id ?? billRaw.vendor_uuid ?? "");
-          if (!vendorKey || vendorKey !== params.data.id) return { code: 409 as const, error: "bill_vendor_mismatch" as const };
-
-          if (billRaw.revoked_at) return { code: 409 as const, error: "bill_voided" as const };
-
-          const amount = billAmountCents(billRaw as { amount_cents: unknown; total_amount: unknown });
-          const paid = billPaidCents(
-            billRaw as { paid_cents: unknown; paid_amount: unknown; status: unknown; amount_cents: unknown; total_amount: unknown }
-          );
-          // ACCT-F5623 — net out non-voided vendor credits, same as BILL_OPEN_BALANCE_SQL already does
-          // on the read side. Without this, a bill already partly/fully settled by a vendor credit
-          // could still be paid in cash up to its full face amount minus prior payments only.
-          // ACCT-F5691 — same reasoning for accounting.payment_applications (target_kind='bill').
-          const appliedCreditsCents = await getAppliedVendorCreditsCents(client, applyRow.bill_id, query.data.operating_company_id);
-          const appliedPaymentApplicationsCents = await getAppliedBillPaymentApplicationsCents(client, applyRow.bill_id, query.data.operating_company_id);
-          const remaining = amount - paid - appliedCreditsCents - appliedPaymentApplicationsCents;
-          if (remaining <= 0) return { code: 409 as const, error: "bill_already_paid" as const };
-          if (applyRow.amount_cents > remaining) return { code: 400 as const, error: "payment_exceeds_remaining_balance" as const };
-
-          const paymentRes = await client.query(
-            `
-              INSERT INTO accounting.bill_payments (
-                operating_company_id,
-                bill_id,
-                vendor_id,
-                payment_date,
-                amount_cents,
-                amount,
-                payment_method,
-                from_bank_account_id,
-                check_number,
-                reference_number,
-                memo,
-                status,
-                created_by_user_id,
-                created_at,
-                updated_at,
-                payment_batch_id,
-                payment_source_kind,
-                source_bank_transaction_id,
-                is_sample_data
-              )
-              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'posted',$12,now(),now(),$13,'manual',$14,
-                -- ACCT-F265 — inherit the parent bill's sample flag. See bills.service.ts for the full
-                -- reasoning: four writers, and a per-caller parameter fails silently the moment one
-                -- forgets. A payment is never more or less sample than the bill it pays.
-                COALESCE((SELECT b.is_sample_data FROM accounting.bills b WHERE b.id = $2::uuid AND b.operating_company_id = $1::uuid), false))
-              RETURNING id
-            `,
-            [
-              query.data.operating_company_id,
-              applyRow.bill_id,
-              params.data.id,
-              body.data.paid_at,
-              applyRow.amount_cents,
-              applyRow.amount_cents / 100,
-              body.data.payment_method,
-              body.data.bank_account_id ?? null,
-              checkNumberForInsert,
-              body.data.reference_number ?? null,
-              body.data.memo ?? null,
-              user.uuid,
-              batchId,
-              null,
-            ]
-          );
-          const paymentId = paymentRes.rows[0]?.id as string | undefined;
-          if (!paymentId) return { code: 500 as const, error: "bill_payment_insert_failed" as const };
-          paymentIds.push(paymentId);
-
-          const newPaidCents = paid + applyRow.amount_cents;
-          const storageStatus = storageStatusForPaid(amount, newPaidCents);
-          await client.query(
-            `
-              UPDATE accounting.bills
-              SET paid_cents = $2,
-                  paid_amount = $3,
-                  status = $4,
-                  updated_at = now()
-              WHERE id = $1
-            `,
-            [applyRow.bill_id, newPaidCents, newPaidCents / 100, storageStatus]
-          );
-
-          // VEND-F-VENDOR-BILL-PAYMENT-NEVER-POSTS-GL — same gate + same poster as
-          // bills.service.ts's payBill(): parallel books never post a TMS Bill→GL leg for a
-          // QBO-origin bill (would throw BILL_AP_NOT_POSTED / invent a second JE); posting inside
-          // THIS transaction means a posting failure rolls back the payment + bill update together,
-          // so bank and GL can never diverge. Flag-OFF still pays — no regression to bill-paying.
-          const isQboBill = String(billRaw.source_system ?? "").toLowerCase() === "qbo";
-          if (glPostingEnabled && !isQboBill) {
-            await postSourceTransactionInClientTx(
-              client,
-              {
-                operating_company_id: query.data.operating_company_id,
-                source_transaction_type: "bill_payment",
-                source_transaction_id: paymentId,
-              },
-              { userId: user.uuid }
-            );
-          }
-
-          await enqueueAccountingOutbox(client, query.data.operating_company_id, "qbo.vendor_bill_payment.created", "vendor_bill_payment", paymentId, {
-            bill_payment_id: paymentId,
-            bill_id: applyRow.bill_id,
-            vendor_id: params.data.id,
-            amount_cents: applyRow.amount_cents,
-            payment_date: body.data.paid_at,
-            payment_batch_id: batchId,
-          });
-        }
-
-        if (body.data.bank_account_id) {
-          await updateBankBalance(client, query.data.operating_company_id, body.data.bank_account_id, -Math.abs(body.data.amount_cents));
-        }
-
-        await appendCrudAudit(client, user.uuid, "accounting.vendor_bill_payment_batch.created.p6_t11204", {
-          resource_type: "accounting.bill_payments",
-          resource_id: batchId,
-          operating_company_id: query.data.operating_company_id,
-          vendor_id: params.data.id,
-          payment_ids: paymentIds,
-          applications: body.data.applications.length,
-        });
-
-        return {
-          code: 201 as const,
-          data: {
-            payment_batch_id: batchId,
-            bill_payment_ids: paymentIds,
-          },
-        };
-      });
-
+      const result = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+        applyVendorBillPaymentBatch(client, query.data.operating_company_id, params.data.id, user.uuid, body.data)
+      );
       if ("error" in result) return reply.code(result.code).send({ error: result.error });
       return reply.code(result.code).send(result.data);
     } catch (error) {

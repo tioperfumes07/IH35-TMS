@@ -323,6 +323,9 @@ const FactoringDetailPage = React.lazy(() => import("../pages/accounting/Factori
 const FactorReconciliationPage = React.lazy(() => import("../pages/accounting/FactorReconciliationPage").then((m) => ({ default: m.FactorReconciliationPage })));
 import { ReconciliationWorkspacePage as AccountingReconciliationWorkspacePage } from "../pages/accounting/ReconciliationWorkspacePage";
 const VendorBillCreatePage = React.lazy(() => import("../pages/accounting/VendorBillCreatePage").then((m) => ({ default: m.VendorBillCreatePage })));
+const CheckListPage = React.lazy(() => import("../pages/accounting/checks/CheckListPage").then((m) => ({ default: m.CheckListPage })));
+const CheckCreatePage = React.lazy(() => import("../pages/accounting/checks/CheckCreatePage").then((m) => ({ default: m.CheckCreatePage })));
+const CheckDetailPage = React.lazy(() => import("../pages/accounting/checks/CheckDetailPage").then((m) => ({ default: m.CheckDetailPage })));
 const CreateMultipleBillsPage = React.lazy(() => import("../pages/accounting/CreateMultipleBillsPage").then((m) => ({ default: m.CreateMultipleBillsPage })));
 const RecurringBillList = React.lazy(() => import("../pages/accounting/bills/RecurringBillList").then((m) => ({ default: m.RecurringBillList })));
 const RecurringBillCreate = React.lazy(() => import("../pages/accounting/bills/RecurringBillCreate").then((m) => ({ default: m.RecurringBillCreate })));
@@ -4423,6 +4426,30 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <VendorBillCreatePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/checks"
+          element={
+            <ProtectedRoute>
+              <CheckListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/checks/new"
+          element={
+            <ProtectedRoute>
+              <CheckCreatePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/checks/:id"
+          element={
+            <ProtectedRoute>
+              <CheckDetailPage />
             </ProtectedRoute>
           }
         />

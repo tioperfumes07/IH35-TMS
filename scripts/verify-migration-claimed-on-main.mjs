@@ -73,6 +73,25 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
     "claude/land-cc3-drv-status-lock-fix",
     new Set(["db/migrations/202613980000_drivers_status_lock_prevents_auto_reactivation.sql"]),
   ],
+  // ROUND 172 (Lead order, "no subagents, no polling" time pressure -- check-engine full QBO Write
+  // Check parity, deadline 09-26 02:00 UTC): atomic claim+file for 202614400000
+  // (accounting.expenses.tags) and 202614390000 (accounting.expense_lines fleet linkage columns)
+  // rather than a separate claim-PR merge cycle per migration under this deadline. Same shape as
+  // every other entry in this map -- a real, narrow, per-migration exception, not a standing bypass;
+  // each file still gets its own live-verified justification in CLAIMED-MIGRATION-NUMBERS.json.
+  // RENAMED repeatedly (2026-09-25/26) as concurrent seats claimed the same 12-digit slots faster
+  // than this branch could land: 202614350000/202614360000 collided with already-merged siblings
+  // (driver_samsara_accounts_map, factoring_posting_key_revision); the replacement 202614380000 was
+  // then claimed by a different, unrelated PR (#22798) moments before this push. Both files were
+  // already live-applied to prod; their ledger rows were renamed in the same pass each time -- see
+  // the migration files' own headers for the full history.
+  [
+    "claude/r154-check-engine-cc2-build",
+    new Set([
+      "db/migrations/202614400000_expenses_tags.sql",
+      "db/migrations/202614390000_expense_lines_fleet_linkage.sql",
+    ]),
+  ],
 ]);
 
 function isOwnerAuthorizedOneOff(branch, files) {

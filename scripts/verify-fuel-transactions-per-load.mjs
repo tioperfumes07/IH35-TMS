@@ -163,31 +163,38 @@ async function live() {
     const liveRes = await client.query(
       `SELECT ft.id::text AS id, ft.source_row_hash, ft.total_cost, ft.fuel_type,
               ft.transaction_reference, ft.transaction_at::date::text AS txn_date,
-              ft.voided_at, l.load_number
+              ft.voided_at, ft.archived_at, ft.notes, ft.void_reason, l.load_number
          FROM fuel.fuel_transactions ft
          LEFT JOIN mdata.loads l ON l.id = ft.load_id
-        WHERE ft.operating_company_id = $1::uuid AND ft.archived_at IS NULL`,
+        WHERE ft.operating_company_id = $1::uuid`,
       [USMCA_COMPANY_ID]
     );
-    if (liveRes.rows.length === 0) {
+    const undocumentedActiveRows = liveRes.rows.filter((r) => r.archived_at == null);
+    if (undocumentedActiveRows.length === 0) {
       exitIfEmptyByPurge(LABEL, "fuel.fuel_transactions (USMCA, live)");
       console.error(`${LABEL}: LIVE FAIL — 0 live fuel.fuel_transactions rows for USMCA; completeness discriminator says this is an instrument problem, not a real zero — re-run before trusting this`);
       process.exit(1);
     }
-    const liveHashes = new Set(liveRes.rows.map((r) => r.source_row_hash));
+    const liveHashes = new Set(undocumentedActiveRows.map((r) => r.source_row_hash));
+    const hasReason = (r) => (r.notes && !/^\s*$/.test(r.notes)) || (r.void_reason && !/^\s*$/.test(r.void_reason));
     // ROUND 30.6 finding: fixing the archived_at filter above (for the count/total ratchet)
     // correctly surfaced that 2 of the original 171 rows are now archived — NOT a silent drop:
     // both carry a real void note citing an owner ruling (settlement 5796 stands exactly as
     // printed; the row came from a stale duplicate PDF, see docs/bus/OUTBOX-CC-3.md). This
     // assertion's own purpose is catching SILENT drops, not forbidding a documented void — a row
-    // found archived WITH a real reason in its notes counts as accounted-for, same as live.
-    const archivedWithReasonRes = await client.query(
-      `SELECT source_row_hash FROM fuel.fuel_transactions
-        WHERE operating_company_id = $1::uuid AND archived_at IS NOT NULL
-          AND notes IS NOT NULL AND notes !~ '^\\s*$'`,
-      [USMCA_COMPANY_ID]
-    );
-    const documentedVoidHashes = new Set(archivedWithReasonRes.rows.map((r) => r.source_row_hash));
+    // found archived WITH a real reason counts as accounted-for, same as live.
+    // 2026-09-28 fix (this session): (a) a documented void was only ever recognized via the legacy
+    // `notes` column; the Direction-1 silent-void fix this session (verify-void-is-whole, AUTH-075/
+    // scripts/ops/2026-09-28-cc2-r148-void-stamp-242-silent-voids.ts) stamps the CANONICAL
+    // `void_reason` column via stampDocumentVoided() -- the single writer every other family in this
+    // codebase uses -- never `notes`. (b) the hash-based documentedVoidHashes lookup below suffers
+    // the EXACT same "instrument failure" ROUND 191 already fixed for the live-hash lookup (the
+    // AlwaysTrack re-feed's source_row_hash scheme doesn't match buildFuelRows' computed hash for
+    // these rows) -- so archived-but-documented rows now also join the NATURAL KEY search pool
+    // naturalKeyMatch already uses for live rows, not just the hash set. `notes` is kept as a
+    // fallback for any older rows that only ever used it.
+    const archivedDocumented = liveRes.rows.filter((r) => r.archived_at != null && hasReason(r));
+    const documentedVoidHashes = new Set(archivedDocumented.map((r) => r.source_row_hash));
     // ROUND 191 (Lead, 2026-09-25): the AUTH-001 wipe deleted every B1-ingested row, and the
     // AlwaysTrack re-feed (scripts/feed/feed-settlement-day.mts + the R-178 date reissue) writes
     // its OWN source_row_hash scheme ("alwaystrack:<co>:<load>:<date>:<vendor>:<invoice>",
@@ -198,7 +205,15 @@ async function live() {
     // rows, and one live row can never satisfy two expected rows). The old hash is still
     // accepted, so a B1-era row keeps counting.
     const usedLiveIds = new Set();
-    const liveActive = liveRes.rows.filter((r) => !r.voided_at);
+    // 2026-09-28: the search pool is un-voided ACTIVE rows plus archived-but-DOCUMENTED rows (see
+    // above) -- a receipt that was correctly superseded and stamped still satisfies its own expected
+    // row; only a truly silent/undocumented drop should ever show as missing.
+    // 2026-09-28: a row is in the search pool when it was never voided at all, OR when it was
+    // voided/archived WITH a real, non-empty reason (stampDocumentVoided() always sets voided_at
+    // AND archived_at together for this family in the SAME write -- a row can be "voided but
+    // undocumented" only if void_reason/notes are both empty, which never happens through that
+    // single writer). Excludes only a genuinely silent/undocumented drop.
+    const liveActive = liveRes.rows.filter((r) => !r.voided_at || hasReason(r));
     const naturalKeyMatch = (exp) => {
       const cents = Math.round(Number(exp.amount) * 100);
       const hit = liveActive.find(
@@ -225,8 +240,8 @@ async function live() {
     // 2. row count / dollar total — shrink-only four-arm ratchet against
     // scripts/verify-fuel-transactions-per-load.baseline.json (Lead ruling, ROUND 30.6). See the
     // file header for the full rationale; this is deliberately NOT the old exact-match-171 check.
-    const liveCount = liveRes.rows.length;
-    const liveCents = liveRes.rows.reduce((s, r) => s + Math.round(Number(r.total_cost) * 100), 0);
+    const liveCount = undocumentedActiveRows.length;
+    const liveCents = undocumentedActiveRows.reduce((s, r) => s + Math.round(Number(r.total_cost) * 100), 0);
     const baseline = loadBaseline();
     if (!baseline) {
       if (liveCount === ORIGINAL_COUNT && liveCents === ORIGINAL_TOTAL_CENTS) {
@@ -273,8 +288,8 @@ async function live() {
     // collision still hard-fails immediately; only the already-measured, already-named debt (335
     // postings / $10,970.23) is capped, pending CC-3's real fix (create a dedicated DEF account,
     // repost, drive this to zero).
-    const defIds = liveRes.rows.filter((r) => r.fuel_type === "def").map((r) => r.id);
-    const dieselIds = liveRes.rows.filter((r) => r.fuel_type === "diesel").map((r) => r.id);
+    const defIds = undocumentedActiveRows.filter((r) => r.fuel_type === "def").map((r) => r.id);
+    const dieselIds = undocumentedActiveRows.filter((r) => r.fuel_type === "diesel").map((r) => r.id);
     let sharedCount = 0;
     let sharedCents = 0;
     let sharedDetailRows = [];

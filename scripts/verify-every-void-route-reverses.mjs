@@ -56,6 +56,17 @@ const REVERSAL_WRAPPERS = [
   "voidInvoiceInClientTx",
   "reverseFactoringAdvanceEvent",
   "reverseJournalEntryNoFlip",
+  // void-document.service.ts's voidDocument() dispatcher (R-154 check engine round) -- "NOT a new
+  // reversal engine" per its own header, a thin per-type dispatch to the SAME engines already named
+  // above (reversePostedSourceTransactionInClientTx for 'expense', postVoidReversal for 'invoice'/
+  // 'prepaid_purchase'/'customer_payment', voidBillInClientTx/voidBillPaymentInClientTx for 'bill'/
+  // 'bill_payment', reverseFactoringAdvanceEvent for 'factoring_advance', voidJournalEntry for
+  // 'journal_entry'). Verified live in its own source before adding here, same standard as every
+  // other name in this list.
+  "voidDocument",
+  // check-void.service.ts's voidCheck() (R-154 §6, checks.routes.ts's POST /:id/void) -- calls
+  // voidDocument({type:'expense'}) internally, one call site, verified.
+  "voidCheck",
 ];
 
 /** All function names that satisfy the reversal requirement. */

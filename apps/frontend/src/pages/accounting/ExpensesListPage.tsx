@@ -92,6 +92,9 @@ export function ExpensesListPage() {
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
+  // R-172 step 1 -- "New transaction" now offers Check alongside Expense (QBO parity: the Expenses
+  // list is one of the required entry points to Write Check).
+  const [newTxnMenuOpen, setNewTxnMenuOpen] = useState(false);
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
   // BANK-SORT-ROLLOUT-ACCT: every visible column header sorts ASC/DESC; sort persists in the URL
@@ -515,9 +518,35 @@ export function ExpensesListPage() {
       title="Expenses"
       subtitle="Recorded expenses (read-only)"
       createControl={
-        <Button type="button" onClick={() => setCreateOpen(true)} disabled={!companyId}>
-          + Create
-        </Button>
+        <div className="relative">
+          <Button type="button" onClick={() => setNewTxnMenuOpen((v) => !v)} disabled={!companyId} data-testid="expenses-new-transaction">
+            + Create
+          </Button>
+          {newTxnMenuOpen ? (
+            <div className="absolute right-0 z-30 mt-1 min-w-[160px] rounded-sm border border-gray-200 bg-white py-1 shadow-lg" data-testid="expenses-new-transaction-menu">
+              <button
+                type="button"
+                className="block w-full px-4 py-2 text-left text-xs text-gray-800 hover:bg-gray-50"
+                onClick={() => {
+                  setNewTxnMenuOpen(false);
+                  setCreateOpen(true);
+                }}
+              >
+                Expense
+              </button>
+              <button
+                type="button"
+                className="block w-full px-4 py-2 text-left text-xs text-gray-800 hover:bg-gray-50"
+                onClick={() => {
+                  setNewTxnMenuOpen(false);
+                  navigate("/accounting/checks/new");
+                }}
+              >
+                Check
+              </button>
+            </div>
+          ) : null}
+        </div>
       }
     >
       {/* Create = QBO-like right ParityDrawer (owner chrome). /accounting/expenses is the canonical
