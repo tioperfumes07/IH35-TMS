@@ -9,12 +9,11 @@
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { withCompanyScope } from "../../apps/backend/src/accounting/shared.js";
+import { withLuciaBypass } from "../../apps/backend/src/auth/db.js";
 import {
   reinstateDocumentThenVoidReversal,
 } from "../../apps/backend/src/accounting/reinstate-document.service.js";
 import { voidCheck } from "../../apps/backend/src/accounting/checks/check-void.service.js";
-import { withLuciaBypass } from "../../apps/backend/src/auth/db.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 {
