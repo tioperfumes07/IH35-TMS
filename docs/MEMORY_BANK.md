@@ -662,6 +662,17 @@ prod post is a separate, intentional, owner-authorized action, not a repoint of 
 - **Runner:** `scripts/ops/2026-09-28-cursor-r186-bulk-accept-through-engine.ts` (`--faro-only` /
   `--settlement-only` / `--apply`). Confidence bar (non-settlement): exact amount + date≤5 +
   sim≥0.5 + unambiguous both ways + zero variance.
+- **ROUND 206 AUTH-112 (Cursor, live 2026-09-28 21:27Z):** counterparties runner
+  `2026-09-28-cursor-r186-counterparties-through-engine.ts --apply` accepted **5** Relay Fuel
+  Wallet 1:1 exact matches (expense/Dreamline 0 under the bar). Named Faro Resolve days stay
+  08/13·08/14·09/21. Credentials ONLY from
+  `~/Desktop/09-28-2026-IH35-MASTER-KEYS-ENVS-SINGLE-SOURCE-OF-TRUTH.md` §1 pooled string
+  (`current_user=ih35_app`, `rolbypassrls=false`). Owner reads need BOTH
+  `SET LOCAL ROLE neondb_owner` + `SET LOCAL app.bypass_rls='lucia'`.
+- **G-13/G-14 (ROUND 206):** G-14 closed — load 13604 on AlwaysTrack 5814 (PDF+app); Faro 87 =
+  FAC-2026-00125 $4,900. G-13 “$34,210 no load” was an owner-file blank: 10/11 POs already have
+  real loads; inv 7/68747→90007 is fabricated (AUTH-103)=NO_REAL_LOAD. Register:
+  `docs/registers/09-28-2026-R206-G13-G14-RESOLUTION.md`. No factoring writes.
 
 ## Active Architectural Decisions — Universal unvoid / reinstate (Cursor, 2026-09-28 R-191)
 
