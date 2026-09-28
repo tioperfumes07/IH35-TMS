@@ -3819,3 +3819,37 @@ expires_at: 2026-09-29T00:00:00.000Z
 status: OPEN
 
 — Cursor (ROUND 206 item 1)
+
+## AUTH-123
+
+date: 2026-09-28
+scope: ROUND 210 item 2 (CC-3 handoff, Lead-routed to CC-1) — backfill mdata.loads.miles_deadhead
+  for the 13 of 16 live USMCA loads that had it NULL (13624, 13625, 13626, 13627, 13628, 13630,
+  13631, 13632, 13633, 13634, 13636, 13638, 13639). USMCA (5c854333-6ea5-4faa-af31-67cb272fef80)
+  only. Writes ONLY through the sanctioned allocator, updateDispatchLoad() (miles_deadhead is a
+  LOAD_EDIT_LOCK_MONEY_FIELD_KEYS field) — never a direct UPDATE. Values come from the app's own
+  GO-23 chain-deadhead producer, computeChainDeadheadMiles() (same unit's most recent prior
+  delivery to this load's pickup, haversine distance) — the exact function loads.routes.ts's own
+  /api/v1/dispatch/deadhead-from-chain endpoint calls at booking time, not a new calculation.
+  While building this, found and fixed a real, narrow bug in that shared function itself: its
+  status filter only recognized delivered_pending_docs/completed_docs_received as "this load
+  delivered," missing delivered/invoiced/paid/closed — a unit's prior load that had progressed
+  further in its own lifecycle was wrongly treated as having no prior delivery, even though
+  invoicing/paying/closing a load requires it to have delivered. Widened to include all six
+  post-delivery statuses (excludes cancelled/abandoned/walkoff/no-show/voided deliberately — those
+  did not complete a normal delivery). This is a live production fix (loads.routes.ts's booking
+  wizard endpoint), not backfill-only scope, so it's named here explicitly rather than left implicit.
+  Any load for which the real chain producer returns "blank" (no locatable prior delivery for its
+  unit, confirmed genuine in each case — not a bug in this backfill's own calling code) stays NULL,
+  exactly as the producer is designed to do — never 0, never invented.
+  Not authorized: touching TRANSP/TRK, any load outside the 13 named above, any field other than
+  miles_deadhead, or forcing a value where the real chain producer returns blank.
+
+action:
+  Source fix: apps/backend/src/dispatch/deadhead/chain-deadhead.service.ts (status filter widened).
+  OWNER_AUTH_ID=AUTH-123 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc1-round210-deadhead-miles-backfill.ts --apply
+
+expires_at: 2026-09-29T12:00:00.000Z
+status: OPEN
+
+— CC-1 (ROUND 210 item 2)

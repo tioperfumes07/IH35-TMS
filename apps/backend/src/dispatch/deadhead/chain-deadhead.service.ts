@@ -100,9 +100,20 @@ export async function computeChainDeadheadMiles(
         ) s ON true
         WHERE l.assigned_unit_id = $1::uuid
           AND l.soft_deleted_at IS NULL
+          -- ROUND 210 fix: the original list (delivered_pending_docs, completed_docs_received) only
+          -- covered the two statuses right at delivery -- a unit's prior load that has since
+          -- progressed further (delivered, invoiced, paid, closed) was wrongly treated as having
+          -- "no prior delivery" even though it obviously delivered (you cannot invoice/pay/close a
+          -- load that never delivered). Now includes every status at-or-after delivered in the
+          -- lifecycle. Excludes cancelled/abandoned/walkoff/no-show/voided deliberately -- those did
+          -- NOT complete a normal delivery, so they must not seed a false deadhead chain.
           AND l.status IN (
+            'delivered'::mdata.load_status_enum,
             'delivered_pending_docs'::mdata.load_status_enum,
-            'completed_docs_received'::mdata.load_status_enum
+            'completed_docs_received'::mdata.load_status_enum,
+            'invoiced'::mdata.load_status_enum,
+            'paid'::mdata.load_status_enum,
+            'closed'::mdata.load_status_enum
           )
           AND COALESCE(s.actual_arrival_at, s.actual_departure_at, s.scheduled_arrival_at) IS NOT NULL
           AND ($2::timestamptz IS NULL OR COALESCE(s.actual_arrival_at, s.actual_departure_at, s.scheduled_arrival_at) < $2::timestamptz)
