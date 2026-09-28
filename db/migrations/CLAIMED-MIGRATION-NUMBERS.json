@@ -1142,5 +1142,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-28",
     "purpose": "ROUND 168 JOB 3 side finding: integrations.samsara_vehicles had 14 local units each mapped to 2-4 different samsara_vehicle_id rows (one real/live, the rest stale duplicates from an earlier import) -- nothing enforced one local truck maps to exactly one Samsara vehicle. Live-verified and cleaned (19 stale duplicate rows removed, kept the one matching a real, currently-live telematics.vehicle_latest_position row per unit; one accidental over-delete caught and restored in the same session). Adds UNIQUE (operating_company_id, local_unit_id) so it cannot recur."
+  },
+  "202614500000": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-28",
+    "purpose": "ROUND 178 (Lead order): adds driver_finance.settlement_document_type_exceptions (settlement_id, document_type, reason, created_by_user_id, created_at) -- additive, append-only table backing verify-settlement-document-types-complete.mjs's 'present OR explicitly marked not-applicable with a reason' rule for the six real settlement document types."
   }
 }
