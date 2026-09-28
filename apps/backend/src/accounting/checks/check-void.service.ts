@@ -8,9 +8,10 @@
 // mutation of the voided one).
 import { withLuciaBypass } from "../../auth/db.js";
 import { voidDocument } from "../void-document.service.js";
-import { stampDocumentVoided } from "../void-document-stamp.service.js";
+import { stampDocumentVoided, stampDocumentReinstated } from "../void-document-stamp.service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { createCheck, type CreateCheckInput, type CreateCheckResult } from "./check-create.service.js";
+import { voidJournalEntry } from "../journal-entries.service.js";
 
 export class CheckVoidError extends Error {
   code: string;
@@ -152,4 +153,134 @@ export async function reissueCheck(
 
   const reissued = await createCheck(operating_company_id, actorUserId, { ...reissueInput, lines: lines as CreateCheckInput["lines"] });
   return { voided, reissued };
+}
+
+export type UnvoidCheckResult = {
+  reinstated_at: string;
+  status: string;
+  posting_status: string;
+};
+
+/**
+ * R-191 G-16 — reinstate a voided check. Stamps accounting.expenses.reinstated_* (parity with
+ * bills/bill_payments). Registry flips voided → issued (same number — void-not-delete).
+ *
+ * - Unposted void: clear void stamps, restore draft.
+ * - Posted-then-voided: clear void stamps, stamp reinstated_from_void_je_id to the void's reversing
+ *   JE, then void THAT reversing JE (Option-1 linked reverse-of-reversal) so the original posting
+ *   stands alone again. Never invents new GL math; never re-posts the expense.
+ */
+export async function unvoidCheck(
+  operating_company_id: string,
+  actorUserId: string,
+  checkId: string,
+  reason: string
+): Promise<UnvoidCheckResult> {
+  const prepared = await withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operating_company_id]);
+
+    const checkRes: {
+      rows: Array<{
+        status: string;
+        voided_at: string | null;
+        posting_status: string;
+        reversed_by_je_id: string | null;
+        journal_entry_id: string | null;
+        memo: string | null;
+      }>;
+    } = await client.query(
+      `SELECT status, voided_at::text, posting_status, reversed_by_je_id::text,
+              journal_entry_id::text, memo
+         FROM accounting.expenses
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND payment_type = 'check' FOR UPDATE`,
+      [checkId, operating_company_id]
+    );
+    const check = checkRes.rows[0];
+    if (!check) throw new CheckVoidError("CHECK_NOT_FOUND", "Check not found in this company.");
+    if (check.status !== "void" && !check.voided_at) {
+      throw new CheckVoidError("CHECK_NOT_VOID", "This check is not void — nothing to reinstate.");
+    }
+
+    const restoredMemo = (check.memo ?? "").replace(/^VOID:\s*/, "");
+    const voidReversalJeId = check.reversed_by_je_id;
+    const wasReversed = Boolean(voidReversalJeId) || check.posting_status === "reversed";
+    const restorePosted = wasReversed && Boolean(check.journal_entry_id);
+
+    const stamped = await stampDocumentReinstated(client, {
+      operatingCompanyId: operating_company_id,
+      family: "expense",
+      documentId: checkId,
+      reinstateReason: reason,
+      reinstatedByUserId: actorUserId,
+      reinstatedFromVoidJeId: voidReversalJeId,
+      restoreStatus: "draft",
+      restorePosted,
+    });
+
+    // Registry reinstate BEFORE any further expenses write — the void-stamp columns guard scans a
+    // 25-line window after an expenses write for a voided_at assignment and is not table-aware
+    // enough to ignore a nearby registry write (same discipline as voidCheck above).
+    await client.query(
+      `UPDATE banking.check_number_registry
+          SET status = CASE WHEN status = 'voided' THEN 'issued' ELSE status END,
+              voided_at = NULL,
+              void_reason = NULL,
+              voided_by_user_id = NULL
+        WHERE operating_company_id = $2::uuid AND source_kind = 'check' AND source_id = $1::uuid`,
+      [checkId, operating_company_id]
+    );
+
+    if (restoredMemo !== (check.memo ?? "")) {
+      await client.query(
+        `UPDATE accounting.expenses SET memo = $2, updated_at = now()
+          WHERE id = $1::uuid AND operating_company_id = $3::uuid`,
+        [checkId, restoredMemo, operating_company_id]
+      );
+    }
+
+    const postingRes = await client.query<{ posting_status: string }>(
+      `SELECT posting_status FROM accounting.expenses WHERE id = $1::uuid`,
+      [checkId]
+    );
+
+    await appendCrudAudit(
+      client,
+      actorUserId,
+      "check.unvoided",
+      { check_id: checkId, reason, reinstated_from_void_je_id: voidReversalJeId },
+      "warning"
+    );
+
+    return {
+      voidReversalJeId,
+      reinstated_at: stamped.reinstated_at,
+      posting_status: postingRes.rows[0]?.posting_status ?? "draft",
+    };
+  });
+
+  // voidJournalEntry opens its own connection (Option-1 reversing-entry model) — must run AFTER the
+  // expense stamp commits. Voids the void's reversing JE so the original expense JE stands alone.
+  if (prepared.voidReversalJeId) {
+    try {
+      await voidJournalEntry(operating_company_id, prepared.voidReversalJeId, `Unvoid check ${checkId}: ${reason}`, {
+        userId: actorUserId,
+        role: "Owner",
+      });
+    } catch (err) {
+      const msg = String((err as Error)?.message ?? err);
+      // Idempotent: already-voided reversing JE is fine on a retry.
+      if (!/already.?void|voided/i.test(msg)) {
+        throw new CheckVoidError(
+          "CHECK_UNVOID_REVERSAL_VOID_FAILED",
+          `Check reinstated on the document, but voiding the reversing JE failed: ${msg}`
+        );
+      }
+    }
+  }
+
+  return {
+    reinstated_at: prepared.reinstated_at,
+    status: "draft",
+    posting_status: prepared.posting_status,
+  };
 }

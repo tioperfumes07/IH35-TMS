@@ -19,9 +19,11 @@ import { assertCompanyMembership } from "../../_helpers/company-membership-guard
 import { CHECK_PAYEE_KIND_VALUES, resolveCheckPayee } from "./check-payee.service.js";
 import { createCheck, CreateCheckConflictError, CheckPayeeError, CheckAccountError } from "./check-create.service.js";
 import { assignPrintBatch, confirmPrintBatch, CheckPrintBatchError } from "./check-print-batch.service.js";
-import { voidCheck, reissueCheck, CheckVoidError } from "./check-void.service.js";
+import { voidCheck, reissueCheck, unvoidCheck, CheckVoidError } from "./check-void.service.js";
+import { upsertCheckStockSettings, getCheckStockSettings, advanceCheckStockAfterUse, CheckStockError } from "./check-stock.service.js";
 import { resolveDriverVendorLink, DriverVendorMissingError } from "../driver-vendor-link.service.js";
 import { applyVendorBillPaymentBatch, type VendorBillPaymentBatchInput } from "../vendor-bill-payments.routes.js";
+import { withLuciaBypass } from "../../auth/db.js";
 
 function accountingRoles(role: string) {
   return ["Owner", "Administrator", "Accountant"].includes(role);
@@ -258,6 +260,65 @@ export async function registerCheckRoutes(app: FastifyInstance) {
     }
   );
 
+  // R-190 — owner types the first real check number (Print Checks / stock settings). Never seeded.
+  app.get(
+    "/api/v1/checks/stock-settings",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req: FastifyRequest, reply: FastifyReply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      const parsed = companyQuerySchema.extend({ bank_account_id: z.string().uuid() }).safeParse(req.query ?? {});
+      if (!parsed.success) return validationError(reply, parsed.error);
+      const q = parsed.data;
+      const settings = await withCompanyScope(user.uuid, q.operating_company_id, async (client) =>
+        getCheckStockSettings(client, q.operating_company_id, q.bank_account_id)
+      );
+      return reply.code(200).send({ settings });
+    }
+  );
+
+  const stockSettingsBodySchema = z.object({
+    operating_company_id: z.string().uuid(),
+    bank_account_id: z.string().uuid(),
+    next_check_number: z
+      .union([z.string().trim().regex(/^\d+$/), z.null()])
+      .refine((v) => v === null || BigInt(v) > 0n, "next_check_number must be a positive integer"),
+    check_type: z.enum(["voucher", "standard"]).optional(),
+  });
+
+  app.put(
+    "/api/v1/checks/stock-settings",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req: FastifyRequest, reply: FastifyReply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+      const parsed = stockSettingsBodySchema.safeParse(req.body ?? {});
+      if (!parsed.success) return validationError(reply, parsed.error);
+      const body = parsed.data;
+      try {
+        await assertCompanyMembership(user.uuid, body.operating_company_id);
+        const settings = await withLuciaBypass(async (client) => {
+          await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [body.operating_company_id]);
+          return upsertCheckStockSettings(client, {
+            operating_company_id: body.operating_company_id,
+            bank_account_id: body.bank_account_id,
+            next_check_number: body.next_check_number,
+            check_type: body.check_type,
+            actor_user_id: user.uuid,
+          });
+        });
+        return reply.code(200).send({ settings });
+      } catch (err) {
+        if (err instanceof CheckStockError) {
+          const status = err.code === "BANK_ACCOUNT_NOT_FOUND" ? 404 : 400;
+          return reply.code(status).send({ error: err.code, message: err.message });
+        }
+        throw err;
+      }
+    }
+  );
+
   // R-172 step 6 -- "warn on a duplicate check number for the same bank account" (spec §6). A LIVE
   // advisory as the operator types, distinct from the hard 409 the check_number_registry UNIQUE
   // constraint still throws at actual save -- this just lets the form show the warning before that
@@ -279,7 +340,6 @@ export async function registerCheckRoutes(app: FastifyInstance) {
         const res = await client.query(
           `SELECT 1 FROM banking.check_number_registry
             WHERE operating_company_id = $1::uuid AND bank_account_id = $2::uuid AND check_number = $3
-              AND status <> 'voided'
             LIMIT 1`,
           [q.operating_company_id, q.bank_account_id, q.check_number]
         );
@@ -419,6 +479,12 @@ export async function registerCheckRoutes(app: FastifyInstance) {
              WHERE operating_company_id = $2::uuid AND bank_account_id = $3::uuid AND check_number = $4 AND source_kind = 'bill_payment'`,
           [batchResult.data.payment_batch_id, body.operating_company_id, body.bank_account_id, body.check_number]
         );
+        await advanceCheckStockAfterUse(client, {
+          operating_company_id: body.operating_company_id,
+          bank_account_id: body.bank_account_id,
+          used_check_number: body.check_number,
+          actor_user_id: user.uuid,
+        });
         return batchResult;
       });
 
@@ -605,6 +671,39 @@ export async function registerCheckRoutes(app: FastifyInstance) {
       try {
         await assertCompanyMembership(user.uuid, body.operating_company_id);
         const result = await voidCheck(body.operating_company_id, user.uuid, params.data.id, body.reason);
+        return reply.code(200).send(result);
+      } catch (err) {
+        if (err instanceof CheckVoidError) {
+          const status = err.code === "CHECK_NOT_FOUND" ? 404 : 409;
+          return reply.code(status).send({ error: err.code, message: err.message });
+        }
+        throw err;
+      }
+    }
+  );
+
+  const unvoidCheckBodySchema = z.object({
+    operating_company_id: z.string().uuid(),
+    reason: z.string().trim().min(1).max(500),
+  });
+
+  app.post(
+    "/api/v1/checks/:id/unvoid",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+      const paramsSchema = z.object({ id: z.string().uuid() });
+      const params = paramsSchema.safeParse(req.params);
+      if (!params.success) return validationError(reply, params.error);
+      const parsed = unvoidCheckBodySchema.safeParse(req.body ?? {});
+      if (!parsed.success) return validationError(reply, parsed.error);
+      const body = parsed.data;
+
+      try {
+        await assertCompanyMembership(user.uuid, body.operating_company_id);
+        const result = await unvoidCheck(body.operating_company_id, user.uuid, params.data.id, body.reason);
         return reply.code(200).send(result);
       } catch (err) {
         if (err instanceof CheckVoidError) {

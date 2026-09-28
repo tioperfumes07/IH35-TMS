@@ -325,6 +325,7 @@ import { ReconciliationWorkspacePage as AccountingReconciliationWorkspacePage } 
 const VendorBillCreatePage = React.lazy(() => import("../pages/accounting/VendorBillCreatePage").then((m) => ({ default: m.VendorBillCreatePage })));
 const CheckListPage = React.lazy(() => import("../pages/accounting/checks/CheckListPage").then((m) => ({ default: m.CheckListPage })));
 const CheckCreatePage = React.lazy(() => import("../pages/accounting/checks/CheckCreatePage").then((m) => ({ default: m.CheckCreatePage })));
+const CheckPrintPage = React.lazy(() => import("../pages/accounting/checks/CheckPrintPage").then((m) => ({ default: m.CheckPrintPage })));
 const CheckDetailPage = React.lazy(() => import("../pages/accounting/checks/CheckDetailPage").then((m) => ({ default: m.CheckDetailPage })));
 const CreateMultipleBillsPage = React.lazy(() => import("../pages/accounting/CreateMultipleBillsPage").then((m) => ({ default: m.CreateMultipleBillsPage })));
 const RecurringBillList = React.lazy(() => import("../pages/accounting/bills/RecurringBillList").then((m) => ({ default: m.RecurringBillList })));
@@ -4442,6 +4443,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <CheckCreatePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/checks/print"
+          element={
+            <ProtectedRoute>
+              <CheckPrintPage />
             </ProtectedRoute>
           }
         />

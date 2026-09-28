@@ -315,3 +315,143 @@ export async function stampDocumentVoided(
     status_flip_applied: applyStatusFlip,
   };
 }
+
+export type StampDocumentReinstatedParams = {
+  operatingCompanyId: string;
+  family: VoidDocumentFamily;
+  documentId: string;
+  reinstateReason: string;
+  reinstatedByUserId: string;
+  /** The void's reversing JE id (if any) — stamped onto reinstated_from_void_je_id when the column exists. */
+  reinstatedFromVoidJeId?: string | null;
+  /** Status to restore after clearing void. Expense checks use 'draft'. */
+  restoreStatus?: string | null;
+  /** When true and journal_entry_id is still set, restore posting_status='posted'. */
+  restorePosted?: boolean;
+};
+
+export type StampDocumentReinstatedResult = {
+  family: VoidDocumentFamily;
+  document_id: string;
+  reinstated_at: string;
+  reinstate_reason: string;
+  reinstated_by_user_id: string;
+};
+
+/**
+ * R-191 — the ONE writer that CLEARS void-stamp columns and writes reinstated_*.
+ * Metadata only. No GL math. Pair with the caller's own reversing-JE void (Option-1) when the
+ * document was posted-then-voided. Lives in this file so verify-void-stamp-columns.mjs's
+ * single-writer ratchet still holds (voided_at = NULL is still a voided_at write).
+ */
+export async function stampDocumentReinstated(
+  client: QueryableClient,
+  params: StampDocumentReinstatedParams
+): Promise<StampDocumentReinstatedResult> {
+  const { operatingCompanyId, family, documentId, reinstateReason, reinstatedByUserId } = params;
+  const spec = FAMILY_TABLE[family];
+  if (!spec || !(VOID_DOCUMENT_FAMILIES as readonly string[]).includes(family)) {
+    throw new VoidDocumentStampError(
+      "unknown_family",
+      `stampDocumentReinstated: "${family}" is not a recognized document family.`
+    );
+  }
+  if (!reinstateReason?.trim()) {
+    throw new VoidDocumentStampError("void_reason_required", "stampDocumentReinstated: reinstate_reason is empty.");
+  }
+  if (!reinstatedByUserId?.trim()) {
+    throw new VoidDocumentStampError("voided_by_user_id_required", "stampDocumentReinstated: reinstated_by_user_id is empty.");
+  }
+  if (!documentId?.trim() || !operatingCompanyId?.trim()) {
+    throw new VoidDocumentStampError("document_id_required", "stampDocumentReinstated: documentId/operatingCompanyId required.");
+  }
+
+  const qualifiedTable = `${spec.schema}.${spec.table}`;
+  const existingRes = await client.query<{
+    id: string;
+    operating_company_id: string;
+    voided_at: string | null;
+  }>(
+    `SELECT id::text, operating_company_id::text, voided_at::text
+       FROM ${qualifiedTable}
+      WHERE id = $1::uuid
+      LIMIT 1
+      FOR UPDATE`,
+    [documentId]
+  );
+  const existing = existingRes.rows[0];
+  if (!existing) {
+    throw new VoidDocumentStampError("document_not_found", `stampDocumentReinstated: no ${family} document ${documentId} found.`);
+  }
+  if (existing.operating_company_id !== operatingCompanyId) {
+    throw new VoidDocumentStampError(
+      "document_company_mismatch",
+      `stampDocumentReinstated: document company mismatch for ${documentId}.`
+    );
+  }
+  if (!existing.voided_at) {
+    throw new VoidDocumentStampError(
+      "not_voided",
+      `stampDocumentReinstated: document ${documentId} (${family}) is not void — nothing to reinstate.`
+    );
+  }
+
+  const restoreStatus = params.restoreStatus ?? null;
+  const restorePosted = params.restorePosted === true;
+  const fromJe = params.reinstatedFromVoidJeId ?? null;
+
+  // expense / invoice / factoring_advance / payments / bills-shaped tables carry reinstated_*.
+  // Families without those columns still clear the void stamps (load / fuel / JE / reimbursement).
+  const hasReinstateCols = ["invoice", "expense", "factoring_advance", "journal_entry"].includes(family);
+
+  const setClauses = [
+    "voided_at = NULL",
+    "void_reason = NULL",
+    "voided_by_user_id = NULL",
+  ];
+  const queryParams: unknown[] = [documentId, operatingCompanyId, reinstateReason.trim(), reinstatedByUserId, fromJe];
+
+  if (restoreStatus) {
+    queryParams.push(restoreStatus);
+    setClauses.push(`status = $${queryParams.length}`);
+  }
+  if (hasReinstateCols) {
+    setClauses.push("reinstated_at = now()");
+    setClauses.push("reinstate_reason = $3");
+    setClauses.push("reinstated_by_user_id = $4::uuid");
+    setClauses.push("reinstated_from_void_je_id = $5::uuid");
+  }
+  if (family === "expense") {
+    setClauses.push("reversed_by_je_id = NULL");
+    if (restorePosted) {
+      setClauses.push("posting_status = 'posted'");
+    } else {
+      setClauses.push(`posting_status = CASE WHEN posting_status = 'reversed' THEN 'unposted' ELSE posting_status END`);
+    }
+    setClauses.push("updated_at = now()");
+    setClauses.push("updated_by_user_id = $4::uuid");
+  }
+
+  const updateRes = await client.query<{ reinstated_at: string | null }>(
+    `UPDATE ${qualifiedTable}
+        SET ${setClauses.join(", ")}
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
+      RETURNING ${hasReinstateCols ? "reinstated_at::text" : "now()::text AS reinstated_at"}`,
+    queryParams
+  );
+  const written = updateRes.rows[0];
+  if (!written) {
+    throw new VoidDocumentStampError(
+      "document_write_race_lost",
+      `stampDocumentReinstated: UPDATE on ${qualifiedTable} for ${documentId} matched no row.`
+    );
+  }
+
+  return {
+    family,
+    document_id: documentId,
+    reinstated_at: written.reinstated_at ?? new Date().toISOString(),
+    reinstate_reason: reinstateReason.trim(),
+    reinstated_by_user_id: reinstatedByUserId,
+  };
+}

@@ -1,19 +1,22 @@
-# NOW-CURSOR — 2026-09-28 ROUND 190
+# NOW-CURSOR — 2026-09-28 ROUND 191
 
-## CURRENT — ROUND 190.2 FIRST (owner order)
-**DONE this turn:** acceptMatchWithResolveDifference now stamps `categorized_by_user_id`,
-`categorized_at`, `updated_at` in the same UPDATE as the match clear. Backfilled 108 USMCA
-bank rows (Lead measured 76 at cut; more relay accepts landed after) to actor
-`e4117991-d2c0-406d-8cda-74e98d95bccd` from `bank_match.accepted` audit.
-`verify-control-totals` **PASS** (suggest-only check = 0).
+## CURRENT — G-16 CHECK CREATOR (owner order: documents before matching)
+**IN FLIGHT this turn:** Check Creator end-to-end.
+- Stock settings upsert + advance-after-use allocator
+- Print Checks page (`/accounting/checks/print`)
+- Void + unvoid (stamps expenses.reinstated_*)
+- AUTH-117 LIVE PROOF PASS: create #1001 → registry → stock 1002 → void → unvoid → void
 
-## ROUND 190 QUEUE (after 190.2)
-1. Bulk accept every counterparty through acceptMatchWithResolveDifference (AUTH-112 / runner)
-2. Resolve section fully wired (difference / write-off / partial / 1→many)
-3. Check Creator (registry 0 LIVE — owner confirmed CREATE)
-4. Universal unvoid/reinstate engine
+## ROUND 191 QUEUE
+1. **G-16 CHECK CREATOR** — THIS TURN (shipping)
+2. Universal unvoid/reinstate engine (parity write of reinstated_* — columns exist, writers missing)
+3. Resolve fully wired
+4. Bulk accept remaining counterparties (812 unmatched) — report before/after/Resolve
 5. G-13 $34,210 no-load · G-14 invoice 87 / load 13604
 6. Guard cleanup from d4985591bb
 
+## HARD LINE
+BEFORE touching factoring: read AUTH-113. Twins FAC-2026-00091..~00132 already live — do not repost/void/fix.
+
 ## COORD
-USMCA only · Never POST Book Load · No QBO write-back · merge freeze VOID · push normally
+USMCA only · Never POST Book Load · No QBO write-back · push normally

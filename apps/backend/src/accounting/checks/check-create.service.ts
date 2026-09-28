@@ -17,6 +17,7 @@ import { reassignDraftAttachments } from "../../documents/attachments.service.js
 import { expenseOpenTourLoadId, TOUR_OPEN_HOLD_REASON } from "../tour-open-gate.service.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { EXPENSE_GL_POSTING_FLAG_KEY } from "../expenses.routes.js";
+import { advanceCheckStockAfterUse } from "./check-stock.service.js";
 
 export type CreateCheckLineInput = {
   line_kind: "category" | "item";
@@ -239,6 +240,14 @@ export async function createCheck(
            WHERE operating_company_id = $2::uuid AND bank_account_id = $3::uuid AND check_number = $4 AND source_kind = 'check'`,
         [expenseId, operating_company_id, input.bank_account_id, checkNumber]
       );
+      // R-190 — advance stock so the next Write Check shows used+1 (QBO parity). Creates the stock
+      // row from the operator-typed number when none existed yet — never invents a starting number.
+      await advanceCheckStockAfterUse(client, {
+        operating_company_id,
+        bank_account_id: input.bank_account_id,
+        used_check_number: checkNumber,
+        actor_user_id: actorUserId,
+      });
     }
 
     let seq = 1;

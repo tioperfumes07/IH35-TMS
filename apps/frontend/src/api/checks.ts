@@ -216,3 +216,84 @@ export function voidCheckApi(operatingCompanyId: string, id: string, reason: str
     body: { operating_company_id: operatingCompanyId, reason },
   });
 }
+
+export type UnvoidCheckResult = {
+  reinstated_at: string;
+  status: string;
+  posting_status: string;
+};
+
+export function unvoidCheckApi(operatingCompanyId: string, id: string, reason: string) {
+  return apiRequest<UnvoidCheckResult>(`/api/v1/checks/${id}/unvoid`, {
+    method: "POST",
+    body: { operating_company_id: operatingCompanyId, reason },
+  });
+}
+
+export type CheckStockSettings = {
+  bank_account_id: string;
+  operating_company_id: string;
+  next_check_number: string | null;
+  check_type: "voucher" | "standard";
+  offset_x_mm: string;
+  offset_y_mm: string;
+  print_company_address: boolean;
+};
+
+export function getCheckStockSettings(operatingCompanyId: string, bankAccountId: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId, bank_account_id: bankAccountId });
+  return apiRequest<{ settings: CheckStockSettings | null }>(`/api/v1/checks/stock-settings?${q.toString()}`);
+}
+
+export function putCheckStockSettings(input: {
+  operating_company_id: string;
+  bank_account_id: string;
+  next_check_number: string | null;
+  check_type?: "voucher" | "standard";
+}) {
+  return apiRequest<{ settings: CheckStockSettings }>(`/api/v1/checks/stock-settings`, {
+    method: "PUT",
+    body: input,
+  });
+}
+
+export type PrintQueueRow = {
+  id: string;
+  print_on_check_name: string;
+  transaction_date: string;
+  total_amount_cents: number;
+  memo: string | null;
+};
+
+export function listCheckPrintQueue(operatingCompanyId: string, bankAccountId: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId, bank_account_id: bankAccountId });
+  return apiRequest<{ rows: PrintQueueRow[] }>(`/api/v1/checks/print-queue?${q.toString()}`);
+}
+
+export type PrintBatchResult = {
+  print_batch_id: string;
+  assignments: Array<{ check_id: string; check_number: string }>;
+};
+
+export function assignCheckPrintBatch(input: {
+  operating_company_id: string;
+  bank_account_id: string;
+  check_type: "voucher" | "standard";
+  ids: string[];
+}) {
+  return apiRequest<PrintBatchResult>(`/api/v1/checks/print-batch`, { method: "POST", body: input });
+}
+
+export function confirmCheckPrintBatch(
+  operatingCompanyId: string,
+  printBatchId: string,
+  input: { all_ok: true } | { reprint_from_number: string }
+) {
+  return apiRequest<{ status: "confirmed" | "reprinting"; spoiled_check_ids: string[] }>(
+    `/api/v1/checks/print-batch/${printBatchId}/confirm`,
+    {
+      method: "POST",
+      body: { operating_company_id: operatingCompanyId, ...input },
+    }
+  );
+}
