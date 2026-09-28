@@ -2842,3 +2842,32 @@ truck as being on two loads at once. Unblocking requires ROUND 155.20 JOB 2 (sta
 ROUND 157-A item 1 (advance the stale loads through the real state machine) to land first.
 
 — CC-1
+
+## AUTH-096
+issued_at: 2026-09-28T10:40:00.000Z
+scope: driver_finance.driver_settlements + driver_finance.settlement_lines +
+accounting.journal_entries/journal_entry_postings + accounting.invoices INSERT ONLY, via
+postSettlementCreatorInClientTx (existing engine, no new GL math) — posts 3 real USMCA driver
+settlements from signed AlwaysTrack PDFs, replacing 3 existing empty pre-settlement shells via the
+engine's own Edit-override path (edit_void_repost=true: voids the empty shell, creates a new row
+with the SAME display_id — never a raw DELETE, never a new display_id series):
+  P-0001 (Genaro Guerrero Chavez) -> real settlement, driver net $1,617.66 (feed/PDF "5817")
+  P-0004 (Ruben Pedro Perez Garcia) -> real settlement, driver net $1,015.43 (feed/PDF "5818",
+    includes one line the JSON feed omitted but the signed PDF has: $50.00 additional pay
+    "Layover-Estancia" load 13609, $15.25 reimbursement "LOVES/TPE Scale Expense" load 13609 —
+    cross-verified against 09-25-26-DRIVER CARRIER EXPENSES.xlsx, exact match)
+  P-0002 (Neftali Coronado Urbano) -> real settlement, driver net $1,955.75 (feed/PDF "5819");
+    source_document_ref set to "5819" AFTER posting via the one sanctioned setter
+    (setSettlementSourceDocumentRef) — the voided/cancelled fake display_id "5819"
+    (c50e6c82-efff-4432-a1f5-b1e7edc42dd0) is NEVER touched, NEVER reused, per R-186.1.
+Loads used (all pre-existing in mdata.loads, none created): 13610/13619 (5817), 13609/13614
+(5818), 13612/13617 (5819). USMCA only (5c854333-6ea5-4faa-af31-67cb272fef80). is_sample_data
+never true. Dry-run verified clean this round (post PR #22958's engine-balance fix, merged
+d754fef0e9): all three previewSettlementCreator calls returned can_post=true, balanced=true,
+driver_net_matches_pdf=true, driver_net_cents exactly matching the signed-PDF totals above
+(161766 / 101543 / 195575 cents).
+action: OWNER_AUTH_ID=AUTH-096 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r157b-seed-settlements-5817-5818-5819.ts --apply
+expires_at: 2026-09-28T16:40:00.000Z
+status: OPEN
+
+— CC-2
