@@ -103,7 +103,9 @@ const MIGRATED = [
   { file: "apps/frontend/src/pages/banking/TransfersListPage.tsx", empties: ["No transfers found for this filter."] },
   { file: "apps/frontend/src/pages/banking/components/BankingPlaidConnectionsPanel.tsx", empties: ["No bank accounts connected yet.", "No transactions found."] },
   { file: "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx", empties: ["No escrow ledger rows found for this filter."] },
-  { file: "apps/frontend/src/pages/banking/components/MatchDrawer.tsx", empties: ["No matchable records found in the ±7-day window for this transaction."] },
+  // BANK-F207 (ROUND 207, #22829) split the single empty literal into two conditional variants
+  // (custom From/To range vs. the default window) -- both still gated by the same listState.isEmpty.
+  { file: "apps/frontend/src/pages/banking/components/MatchDrawer.tsx", empties: ["No matchable records in this window. Set From / To to search a custom range.", "No matchable records found for this transaction."] },
   { file: "apps/frontend/src/pages/dispatch/FactoringQueuePage.tsx", empties: ["No delivered loads in factoring queue.", "No loads match the current filter."] },
   { file: "apps/frontend/src/pages/dispatch/PodReviewPage.tsx", empties: ["No POD documents match the current filters."] },
   // DispatchBoard's "All units currently have active loads." empty migrated (orphan-triage batch 05)
