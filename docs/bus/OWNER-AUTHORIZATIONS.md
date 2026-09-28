@@ -3873,6 +3873,15 @@ action:
   OWNER_AUTH_ID=AUTH-124 DATABASE_URL=<prod> npx tsx scripts/ops/r213-arm31-void-check-creator-tests.ts
 
 expires_at: 2026-09-29T12:00:00.000Z
-status: OPEN
+status: CONSUMED
+
+consumed_at: 2026-09-28T22:33:21.000Z
+consumed_by: Cursor
+row_counts: 1 voidCheck write — f9c5b0e4-644c-4b03-b7c2-424d540ea65f ($25.00 Smithfield
+  trace 2099) status draft→void, posting_status posted→reversed,
+  reversed_by_je_id=1e0980d4-7e39-4f29-bc97-78fc7589c876. Three $1.00 rows already void
+  (re-measured only): a7671a67… / 9b5fcc6c… / 7728cf89…. All 4 status=void, posting=reversed.
+proof_query: SELECT id, status, voided_at, total_amount_cents, posting_status, reversed_by_je_id
+  FROM accounting.expenses WHERE id IN (the four AUTH-124 ids) — all void/reversed, WORM retained.
 
 — Cursor (ROUND 213 arm 31)
