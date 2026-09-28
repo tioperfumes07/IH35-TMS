@@ -121,6 +121,8 @@ scripts/ops/**            (one-shot ops scripts, named for the round)
 apps/frontend/**          (declare the screen in the PR body)
 apps/backend/src/index.ts  (route registration only — declare which register*Routes call in the PR body)
 .github/workflows/**      (CI is infrastructure every seat depends on — declare the job in the PR body)
+feed-input/**             (parsed source-document truth data every seat reads against, not one seat's own)
+scripts/feed/**           (the parsers that produce feed-input/** — same shared-reference-data rationale)
 
 ## FORBIDDEN TO EVERY SEAT
 Any write to: payroll.* · settlement.* · accounting.qbo_* · bank.* · maint.*
