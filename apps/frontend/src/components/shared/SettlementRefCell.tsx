@@ -11,7 +11,8 @@ import { loadSettlementRef } from "../../lib/settlementRefLoader";
  *   - renders through settlementNumber.ts's settlementLabel()/settlementNumber() — the only
  *     human-visible number is driver_finance.driver_settlements.source_document_ref, NEVER
  *     display_id (the retired internal S-YYYY-NNNN counter).
- *   - an OPEN tour renders "Open" (not blank, not a number).
+ *   - an OPEN tour / pre-settlement renders "PENDING" (not blank, not a number, not the retired
+ *     "Open" status word — ROUND 167, owner 2026-09-28: "THERE IS NO SETTLEMENT 001, 003, 005, 007").
  *   - NO link at all renders "Not on a tour" — plainly, never an empty cell.
  *   - a real settlement number deep-links to it (EntityLink kind="settlement").
  *
@@ -51,8 +52,8 @@ export function SettlementRefCell({ loadId, operatingCompanyId, settlement }: Pr
   }
 
   const label = settlementLabel(resolved);
-  if (label === "Open") {
-    return <span className="font-medium text-slate-700">Open</span>;
+  if (label === "PENDING") {
+    return <span className="font-medium text-slate-700">PENDING</span>;
   }
   // A closed settlement whose AlwaysTrack document number hasn't been stamped yet — a real,
   // distinct case from "no settlement at all" (never collapse the two into the same bare dash).

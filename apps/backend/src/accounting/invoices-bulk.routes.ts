@@ -11,6 +11,7 @@ import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.se
 import { recomputeInvoiceTotals } from "./shared.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { BATCH_VOID_ACTION, voidInvoiceInBulk } from "./bulk-void.service.js";
+import { syncLoadStatusToBillingInClientTx } from "../dispatch/load-billing-lifecycle.service.js";
 
 const invoiceStatusSchema = z.enum(["draft", "sent", "paid", "void", "factored"]);
 
@@ -153,6 +154,15 @@ async function handleInvoiceBulk(ctx: BulkPerEntityContext<InvoiceBulkPayload>):
           actor_user_id: actorUserId,
           invoice_id: id,
         });
+        // AUTH-105 root cause fix (2026-09-28) — same reasoning as invoice-send.service.ts's own
+        // fix: this branch can land an invoice directly on an issued status through a separate
+        // writer from the single-invoice /send path, and never re-fired the LOAD-CLOSE-LIFECYCLE
+        // walk either. Same in-tx sync, no new decision logic.
+        await syncLoadStatusToBillingInClientTx(client as never, {
+          operatingCompanyId,
+          loadId: String(oldRow.source_load_id),
+          actorUserId,
+        });
       }
     }
     await enqueueTmsInvoicePushRequested(pushClient, {
@@ -195,6 +205,12 @@ async function handleInvoiceBulk(ctx: BulkPerEntityContext<InvoiceBulkPayload>):
         source_load_id: String(oldRow.source_load_id),
         actor_user_id: actorUserId,
         invoice_id: id,
+      });
+      // AUTH-105 root cause fix (2026-09-28) — see invoice-send.service.ts's own identical fix.
+      await syncLoadStatusToBillingInClientTx(client as never, {
+        operatingCompanyId,
+        loadId: String(oldRow.source_load_id),
+        actorUserId,
       });
     }
     if (updateRes.rows.length === 0) {
@@ -259,6 +275,12 @@ async function handleInvoiceBulk(ctx: BulkPerEntityContext<InvoiceBulkPayload>):
           source_load_id: String(oldRow.source_load_id),
           actor_user_id: actorUserId,
           invoice_id: id,
+        });
+        // AUTH-105 root cause fix (2026-09-28) — see invoice-send.service.ts's own identical fix.
+        await syncLoadStatusToBillingInClientTx(client as never, {
+          operatingCompanyId,
+          loadId: String(oldRow.source_load_id),
+          actorUserId,
         });
       }
     }

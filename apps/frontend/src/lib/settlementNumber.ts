@@ -1,9 +1,17 @@
 // ACCT-F20260911 (owner rulings 2026-09-11): the ONLY settlement / tour number a person ever sees is the
 // AlwaysTrack document number (driver_finance.driver_settlements.source_document_ref: 5769 … 5800, then
 // 5801 …). driver_settlements.display_id (S-YYYY-NNNN) is an internal counter and is NEVER rendered as a
-// number. An open pre-settlement has no number until the tour closes — it renders as "Open"; a closed
-// row that has not been stamped yet renders as a dash. Every surface goes through this one helper so the
-// rule cannot drift per screen.
+// number. A closed row that has not been stamped yet renders as a dash. Every surface goes through this
+// one helper so the rule cannot drift per screen.
+//
+// ROUND 167 (owner, verbatim, 2026-09-28): "FOR THE CURRENT LOADS WRITE PENDING SETTLEMENT NUMBER
+// WHILE WE FINISH... THERE IS NO SETTLEMENT 001, 003, 005, 007." A load in flight has no settlement
+// number -- it has a PENDING one; the number only exists once AlwaysTrack settles the tour. A row
+// with is_presettlement=true renders "PENDING", never its internal P-series display_id (P-0001 etc
+// -- a pre-settlement row id, not a settlement number) and never the retired "Open" label ("Open"
+// described a STATUS, not a number, and is no longer a valid settlementLabel() output). This is a
+// RENDER rule only: source_document_ref is the sole AlwaysTrack match key and stays NULL on a
+// pre-settlement -- never write the literal string "PENDING" into the database.
 // FIX A (ROUND 155.15 / 157-D item 1): the row type used to declare EVERY field optional as one
 // flat object shape, so a row carrying NEITHER source_document_ref NOR settlement_number AT ALL --
 // not merely both-absent-at-runtime, the KEY ITSELF never declared on the type -- still type-
@@ -28,6 +36,7 @@
 type CommonFields = {
   status?: string | null;
   is_open?: boolean | null;
+  is_presettlement?: boolean | null;
 };
 
 type HasSettlementNumberKey<T> = "source_document_ref" extends keyof T
@@ -61,9 +70,15 @@ export function isOpenSettlement<T extends CommonFields & { source_document_ref?
   return s === "open" || s === "ready_to_close" || s === "draft";
 }
 
-/** Label for links and headings: "5774", or "Open" for an unclosed tour, or "—" when closed but unnumbered. */
+/** Label for links and headings: "PENDING" for anything still in flight -- a pre-settlement
+ *  (is_presettlement=true) or an open/unclosed tour (isOpenSettlement -- is_open=true or
+ *  status in open/ready_to_close/draft) -- never a P-series display_id, never the retired "Open"
+ *  label (a status word, not a number). "5774" once AlwaysTrack has settled it, or "—" when
+ *  closed but unnumbered. */
 export function settlementLabel<T extends CommonFields & { source_document_ref?: string | null; settlement_number?: string | null }>(
   row: (HasSettlementNumberKey<T> extends true ? T : never) | null | undefined
 ): string {
-  return settlementNumber(row) ?? (isOpenSettlement(row) ? "Open" : "—");
+  const r = row as CommonFields | null | undefined;
+  if (r?.is_presettlement === true || isOpenSettlement(row)) return "PENDING";
+  return settlementNumber(row) ?? "—";
 }

@@ -3340,7 +3340,26 @@ scope: mdata.loads status UPDATE ONLY, via the existing sanctioned engine ONLY
 action:
   OWNER_AUTH_ID=AUTH-105 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc3-auth105-sync-4-stale-status-loads.ts --apply
 expires_at: 2026-09-28T20:00:00.000Z
-status: OPEN
+status: DONE — executed live 2026-09-28
+
+consumed_at: 2026-09-28T14:30Z
+consumed_by: CC-3
+row_counts: 4 mdata.loads.status updates, all completed_docs_received -> invoiced (13503, 13504,
+  13509, 13539). First --apply attempt hit a transient ECONNRESET before COMMIT (verified live: 0
+  rows changed, re-checked directly against mdata.loads before retrying); second attempt committed
+  clean.
+proof_query: node scripts/verify-settled-load-carries-settled-status.mjs -> LIVE PASS, 107
+  settled-load row(s) checked, 0 baselined (0 new) -- was LIVE FAIL, 4 new stale-status loads,
+  before this AUTH ran.
+root_cause_fixed: apps/backend/src/accounting/invoice-send.service.ts (sendDraftInvoice) and
+  apps/backend/src/accounting/invoices-bulk.routes.ts (set_status / mark_sent / mark_factored) now
+  call syncLoadStatusToBillingInClientTx immediately after fireRevrecLatchOnInvoiceIssued, in the
+  same transaction -- settlements.routes.ts's finalize handler already called the batch sync, but
+  a load settled BEFORE its invoice was sent (condition (b) still false at finalize time) had
+  nothing left to re-fire the walk once the invoice was later sent; these two write paths were the
+  missing re-trigger. New guard: scripts/verify-settlement-close-advances-load-status.mjs (static,
+  asserts the wiring stays in place at all 3 call sites -- wired into money-pr-local-gate.mjs's
+  STEPS array, unconditional), registered in docs/law/LAW.json.
 
 — CC-3
 

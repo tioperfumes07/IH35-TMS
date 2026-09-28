@@ -5,8 +5,9 @@
 // scripts/ops/2026-09-28-cc2-r15518-purge-voided-usmca.ts ever leaving a zero-posting JE husk
 // behind -- the purge script deletes a JE header only when a runtime FK sweep confirms nothing else
 // references it, precisely so this guard keeps passing after a real purge run.
-import pg from "pg";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
+const LABEL = "verify-no-journal-entry-has-zero-postings";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 function findZeroPostingRows(rows) {
@@ -36,8 +37,7 @@ async function main() {
     selftest();
     return;
   }
-  const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
-  await client.connect();
+  const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   const r = await client.query(`
     SELECT je.id::text, je.operating_company_id::text
     FROM accounting.journal_entries je
@@ -45,7 +45,8 @@ async function main() {
       SELECT 1 FROM accounting.journal_entry_postings jep WHERE jep.journal_entry_uuid = je.id
     )
   `);
-  await client.end();
+  client.release();
+  await pool.end();
 
   if (r.rows.length > 0) {
     console.log(`verify-no-journal-entry-has-zero-postings FAIL — ${r.rows.length} journal_entries row(s) have zero postings:`);

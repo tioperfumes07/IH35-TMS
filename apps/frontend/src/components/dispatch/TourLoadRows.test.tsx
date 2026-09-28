@@ -1,6 +1,7 @@
 // DISPATCH-ONE-ROW-PER-LOAD + DISPATCH-NO-HISTORY (owner 2026-09-11): the Load-Costs Pre-Settlement /
 // Settlement registers render ONE ROW PER LOAD off the /tours read model, per-load money on each row,
-// tour-level money summed once per tour, and the settlement number is the AlwaysTrack doc or "Open".
+// tour-level money summed once per tour, and the settlement number is the AlwaysTrack doc or
+// "PENDING" for an open/unclosed tour (ROUND 167, 2026-09-28 — "Open" retired, a status is not a number).
 import { describe, expect, it } from "vitest";
 import type { TourListRow } from "../../api/tourReadout";
 import { flattenTourRows, TOUR_LOAD_COLUMNS, tourLoadFooter } from "./TourLoadRows";
@@ -50,12 +51,12 @@ describe("TourLoadRows — one row per load", () => {
     expect(rows[0].load_number).toBe("—");
   });
 
-  it("Settlement/Tour column sorts on the AlwaysTrack number or 'Open' — never the S-YYYY-NNNN counter", () => {
+  it("Settlement/Tour column sorts on the AlwaysTrack number or 'PENDING' — never 'Open' or the S-YYYY-NNNN counter (ROUND 167: 'Open' is retired, a status is not a number)", () => {
     const cols = TOUR_LOAD_COLUMNS("open");
     const open = flattenTourRows([tour("s1", [leg("l1", "13588", "NB", 1, 0, 0)])])[0];
     expect(cols[0].key).toBe("tour");
     expect(cols[1].key).toBe("load_number");
-    expect(String(cols[0].sortValue?.(open))).toBe("Open");
+    expect(String(cols[0].sortValue?.(open))).toBe("PENDING");
     expect(String(cols[0].sortValue?.(open))).not.toContain("S-2026");
   });
 });

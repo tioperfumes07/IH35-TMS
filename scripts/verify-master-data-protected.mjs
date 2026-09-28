@@ -24,8 +24,19 @@ const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const FLOORS = {
   // Raised 2026-09-26 (Claude-Lead): 1133 -> 1146 = 13 Plaid feed rows created 2026-09-24 11:00Z (source='plaid').
   // "exact" was a single-session claim (that session made no INSERT/DELETE); the live bank feed legitimately adds
-  // rows, so the table is a FLOOR like every other feed table. Deletes stay forbidden by the static scan (1).
-  "banking.bank_transactions": { floor: 1146 },
+  // rows, so the table is a FLOOR like every other feed table. Deletes stay forbidden by the static scan (1) --
+  // EXCEPT the one deliberate, owner-authorized exception below.
+  // LOWERED 2026-09-28 (CC-3, live-verified before editing, not assumed): 1146 -> 911. AUTH-101
+  // (docs/bus/OWNER-AUTHORIZATIONS.md, status DONE, owner order "STOP WASTING TIME AND GET THIS
+  // DONE NOW") authorized and executed a physical DELETE of already-voided (voided_at IS NOT NULL)
+  // banking.bank_transactions rows as part of scripts/ops/2026-09-28-cc2-r15518-purge-voided-usmca.ts
+  // -- real result, independently re-verified after commit: 274 candidates, 274 deleted, 0 blocked.
+  // This IS the intended, reviewed, one-time floor drop the "no --write-baseline flag on purpose"
+  // rule exists for (a deliberate, reviewed edit) -- not a silent/automatic lowering, and not a bug
+  // this guard should keep flagging. The static-scan DELETE-forbid comment above stays true for
+  // every OTHER, non-AUTH-101 write path; this single authorized purge is the one exception on
+  // record.
+  "banking.bank_transactions": { floor: 911 },
   "geo.geofences": { floor: 611 },
   "mdata.locations": { floor: 621 },
   "mdata.customers": { floor: 1239 },

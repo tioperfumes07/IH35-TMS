@@ -57,6 +57,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { transitionDispatchLoad } from "../../api/dispatch";
+import { formatMoneyCents } from "../../components/dispatch/constants";
+import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
 import {
   getTruckLine,
   listLoadExceptionReasons,
@@ -696,6 +698,15 @@ export function TruckLineBoard({
   const catalogReady = query.data?.catalog_ready ?? false;
   const reasons = reasonsQuery.data?.reasons ?? [];
 
+  // LAW-5 (per-build-block linkage): every money figure this board shows must come from the SAME
+  // rollup every other cost-linked surface reads (load-cost-rollup.sql.ts, via
+  // useLoadCostRollups), never re-derive its own figures.
+  const truckLineLoadIds = useMemo(
+    () => allGroups.flatMap((g) => g.legs.map((r) => r.load?.load_id).filter((id): id is string => !!id)),
+    [allGroups],
+  );
+  const costRollups = useLoadCostRollups(operatingCompanyId, truckLineLoadIds);
+
   const searchedGroups = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return allGroups;
@@ -1113,6 +1124,12 @@ export function TruckLineBoard({
                             <>
                               <div className="truck-line-v4-unit font-semibold text-[#1F2937]">{r.load.load_number}</div>
                               <div className="truck-line-v4-sub text-[#6B7280]">{r.load.customer_name ?? "—"}</div>
+                              <div className="truck-line-v4-sub text-[#6B7280]">
+                                Net {(() => {
+                                  const rollup = costRollups.get(r.load.load_id);
+                                  return rollup ? formatMoneyCents(rollup.net_cents) : "—";
+                                })()}
+                              </div>
                             </>
                           ) : (
                             <span className="truck-line-v4-sub text-[#6B7280]">—</span>

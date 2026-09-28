@@ -11,6 +11,9 @@
 // This guard is the permanent health check: it calls the SAME geocode path a real stop would use,
 // against a known-good, stable US address, so "provider_unavailable" (or any other failure) raises
 // loudly here instead of silently producing hundreds of uncoordinated stops again.
+export const ALLOW_OFFLINE_SKIP =
+  "live network health check (real geocode API call, no DATABASE_URL involved) -- honors SKIP_LIVE_NETWORK_CHECKS=true for environments with no provider credentials configured, same declared pattern verify-no-silent-db-skip.mjs requires.";
+
 import { register } from "tsx/esm/api";
 register();
 

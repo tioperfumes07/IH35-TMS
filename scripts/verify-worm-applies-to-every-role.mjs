@@ -5,8 +5,9 @@
 // function body from prod (pg_get_functiondef) and fails if it finds a current_user / pg_has_role /
 // SESSION_USER check gating the refusal -- the only conditional logic allowed in the function is the
 // app.purge_auth_id + voided_at check, which applies identically regardless of role.
-import pg from "pg";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
+const LABEL = "verify-worm-applies-to-every-role";
 const roleCarveOutPattern = /current_user\s*(<>|!=|=)\s*'[a-z0-9_]+'|pg_has_role\s*\(|session_user\s*(<>|!=|=)/i;
 
 function checkFunctionDef(def) {
@@ -47,15 +48,15 @@ async function main() {
     selftest();
     return;
   }
-  const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
-  await client.connect();
+  const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   const r = await client.query(`
     SELECT pg_get_functiondef(p.oid) AS def
     FROM pg_proc p
     JOIN pg_namespace n ON n.oid = p.pronamespace
     WHERE n.nspname = 'accounting' AND p.proname = 'refuse_financial_row_delete'
   `);
-  await client.end();
+  client.release();
+  await pool.end();
 
   if (r.rows.length === 0) {
     console.log("verify-worm-applies-to-every-role FAIL — accounting.refuse_financial_row_delete() does not exist");

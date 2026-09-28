@@ -26,11 +26,13 @@
 // NO live funding-event JE at all (confirmed via accounting.factoring_lifecycle_posting_keys: only
 // one "funding" claim per advance, pointing at the reversed JE, no "funding#revN" successor) -- is
 // named in the report, not fixed here. DO NOT REPOST -- report only, per the owner's own order.
-import pg from "pg";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 export const ALLOW_OFFLINE_SKIP = "live-data invariant by design, no static-only path";
 
 const LABEL = "verify-factoring-posting-legs-match-header";
+export const REQUIRES_LIVE_DB =
+  "live-data money guard (factoring posting legs vs header); fails closed via requireLiveDbOrExit with no DATABASE_URL (ROUND 29.9-B)";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 // header_field -> [account role, whether the leg is a debit or credit]. invoice_total_cents (the
@@ -64,15 +66,9 @@ if (process.argv.includes("--selftest")) {
 }
 
 async function main() {
-  if (!process.env.DATABASE_URL) {
-    console.log(`${LABEL}: SKIP — no DATABASE_URL (live-data invariant by design).`);
-    process.exit(0);
-  }
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
-  const client = await pool.connect();
+  const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
     await client.query("BEGIN");
-    await client.query("SET LOCAL ROLE neondb_owner");
     await client.query("SET LOCAL app.bypass_rls = 'lucia'");
 
     const roles = await client.query(

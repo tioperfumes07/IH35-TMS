@@ -1,5 +1,6 @@
 {
   "_comment": "Settlements with no loads assigned (no live settlement_lines, net_pay 0.00) when the guard landed, measured live on USMCA, read-only. Shrink-only: the PR that assigns a settlement's loads removes its id here; never add one without a Lead ruling named in the PR. 2026-09-28 (CC-1, AUTH-074 PR): removed 9bdfa86e, e1bfb565(5817), 32838c2f(5818), 9957827a(5819), 5820, 5821, 5822, 5823, 5824, 5825 -- verify-no-empty-zero-settlement's own live re-run confirmed each now has its loads (fixed by other seats overnight, unrelated to this PR -- these are different rows than the P-0001/0002/0004/0008/0009/0010/0011 pre-settlements this PR works with, which use their own system-minted ids, not the '5817/5818/5819' labels formerly on these now-resolved rows). Added S-5816 (empty shell, Lead ROUND 144 ruling item 6, not fixed here) and P-0002/P-0004/P-0008/P-0009/P-0010/P-0011 (the 6 ROUND-189 pre-settlements AUTH-074 emptied on purpose to restore views.live_loads -- each still carries its load via mdata.loads.presettlement_link_id, the guard's own documented open+loaded exception). [measured_at backfilled 2026-09-24 to pass verify-no-stale-literals-in-guards]",
+  "_round_176_predicate_fix": "2026-09-28 (Lead ruling, docs/bus/00-LEAD-ROUND-176-SETTLEMENT-GUARD-RULING.md): the guard's own predicate was wrong, not these rows -- it now skips an OPEN settlement while any of its linked loads has not reached delivered-or-later status, which is exactly what P-0002/P-0004/P-0008/P-0009/P-0010/P-0011 always were (each still in flight). Removed all 6 from this list: the guard's live re-run now excludes them on its own via the corrected predicate, not via a baseline entry -- keeping them here would be a redundant, silently-stale exception nobody would ever notice going wrong. S-5816 stays (closed, genuinely empty, out of scope for this PR).",
   "established": "2026-09-22",
   "settlements": [
     {
@@ -8,43 +9,7 @@
       "status": "closed",
       "period_start": "2026-09-10",
       "note": "empty shell -- closed, 0 lines, gross 0.00, one load (13595) linked, no PDF in this pack (Lead ROUND 144 ruling item 6, 2026-09-28). Not fixed here; out of scope for this PR."
-    },
-    {
-      "id": "8fefac42-b60b-443e-9ceb-1e7b9350d696",
-      "label": "P-0002",
-      "status": "open",
-      "period_start": "2026-09-18"
-    },
-    {
-      "id": "2ef96b64-c4bf-4f4e-8bd6-50cf0d8e8224",
-      "label": "P-0004",
-      "status": "open",
-      "period_start": "2026-09-17"
-    },
-    {
-      "id": "14a9fa91-3ea7-4fa7-88d1-eb692c02a6a1",
-      "label": "P-0008",
-      "status": "open",
-      "period_start": "2026-09-21"
-    },
-    {
-      "id": "9e338215-e6f9-4625-9fdc-0b4e51d06086",
-      "label": "P-0009",
-      "status": "open",
-      "period_start": "2026-09-21"
-    },
-    {
-      "id": "14f06775-5830-40fa-b19e-93908b9a4c88",
-      "label": "P-0010",
-      "status": "open",
-      "period_start": "2026-09-22"
-    },
-    {
-      "id": "349c0884-0a8b-4ee2-891d-1f9e75d20162",
-      "label": "P-0011",
-      "status": "open",
-      "period_start": "2026-09-22"
     }
   ],
-  "measured_at": "2026-09-28T03:28:22.874Z"
+  "measured_at": "2026-09-28T00:00:00Z"
 }

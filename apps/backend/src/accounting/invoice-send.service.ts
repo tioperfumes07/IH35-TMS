@@ -19,6 +19,7 @@ import {
 import { recomputeInvoiceTotals } from "./shared.js";
 import { finalActiveDeliveryDepartureAt, fireRevrecLatchOnInvoiceIssued } from "./revrec-delivery-posting/poster.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { syncLoadStatusToBillingInClientTx } from "../dispatch/load-billing-lifecycle.service.js";
 
 /**
  * ACCT-F61 — an invoice must not bill a delivery the system cannot evidence.
@@ -367,6 +368,24 @@ export async function sendDraftInvoice(
       source_load_id: String(current.source_load_id),
       actor_user_id: input.userId,
       invoice_id: input.invoiceId,
+    });
+
+    // AUTH-105 root cause (2026-09-28): sendDraftInvoice never called the LOAD-CLOSE-LIFECYCLE
+    // sync at all -- settlements.routes.ts's finalize handler calls syncSettlementLoadsToBilling
+    // the MOMENT a settlement locks (condition (a)), but that only advances a load whose invoice
+    // is ALREADY sent (condition (b)) at that exact instant. A load settled BEFORE its invoice is
+    // sent (the ordinary case: driver pay finalizes on its own cadence, revenue billing on its
+    // own) has (b) become true only HERE, later, and nothing re-fired the walk -- the load stayed
+    // stuck at completed_docs_received forever with a closed settlement and a sent invoice, live-
+    // confirmed on 13503/13504/13509/13539 (AUTH-105 one-shot). This is the SAME forward-walk
+    // every other trigger (invoice-paid, factoring-funded, settlement-finalize) already uses, in
+    // the SAME transaction as the send (matching syncLoadStatusToBillingInClientTx's own
+    // documented in-tx caller pattern, e.g. the Faro CSV import) -- never a new decision, never a
+    // new status, no-op when the load isn't eligible yet.
+    await syncLoadStatusToBillingInClientTx(client as never, {
+      operatingCompanyId: input.operatingCompanyId,
+      loadId: String(current.source_load_id),
+      actorUserId: input.userId,
     });
   }
 

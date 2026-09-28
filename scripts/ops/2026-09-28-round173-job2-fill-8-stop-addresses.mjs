@@ -12,14 +12,27 @@
 // against them; their real addresses independently match what this script derives from the same
 // source documents. Only 13625's pickup (GPEX Yard Laredo) was still NULL and is written here.
 // This script is idempotent (`WHERE address_line1 IS NULL`) and safe to re-run.
-//
-// No verify-owner-authorization.mjs / AUTH-NNN gate: this writes mdata.load_stops address text
-// only (street address, postal code) sourced from a signed rate confirmation PDF -- not an
-// accounting/driver_finance amount, GL posting, or money movement of any kind. The ROUND 133 P0
-// AUTH ledger governs financial writes; a dispatch address correction is not one.
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import pg from "pg";
 
 const LABEL = "round173-job2-fill-8-stop-addresses";
+
+// ROUND 133 (owner law, P0) retrofit: this script writes mdata.load_stops under AUTH-106 (see
+// docs/bus/OWNER-AUTHORIZATIONS.md, retroactive citation of this ROUND's own owner P0 order) --
+// verify-no-unauthorized-production-write.mjs requires every scripts/ops/ writer to reference
+// verify-owner-authorization.mjs before an --apply run. Added after the fact (retrofit only, no
+// behavior change) so static compliance matches what actually happened.
+if (process.argv.includes("--apply")) {
+  const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+  const authId = process.env.OWNER_AUTH_ID;
+  if (!authId) {
+    console.error(`${LABEL}: OWNER_AUTH_ID required (ROUND 133 P0)`);
+    process.exit(1);
+  }
+  execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), authId], { stdio: "inherit" });
+}
 
 // [stop_id, address_line1, postal_code, source] -- one row per of the 8 named stops, for the
 // permanent record even though 7 are already filled; the WHERE clause makes re-running a no-op

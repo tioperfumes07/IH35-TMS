@@ -15,8 +15,10 @@
 // had nothing to void there). Only dispatch.trailer_interchanges on 13627 (the 21868 broker
 // trailer) needs un-voiding; 13625/13638 never had one.
 //
-// AUTH-095 (docs/bus/OWNER-AUTHORIZATIONS.md). Requires OWNER_AUTH_ID=AUTH-095 in the environment;
-// scripts/verify-owner-authorization.mjs is run separately before this script, per ROUND 133.
+// AUTH-095 (docs/bus/OWNER-AUTHORIZATIONS.md).
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { register } from "tsx/esm/api";
 register();
 const { withCurrentUser } = await import("../../apps/backend/src/auth/db.ts");

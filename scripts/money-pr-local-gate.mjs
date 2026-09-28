@@ -30,6 +30,11 @@ const LABEL = "money-pr-local-gate";
 
 /** Ordered fail-fast suite — same classes that red'd Cursor #4009–#4011 / #4198 vs Claude. */
 const STEPS = [
+  // AUTH-105 condition (Lead ruling, docs/bus/00-LEAD-AUTH-105-STALE-LOAD-STATUS-SYNC.md,
+  // 2026-09-28) — closing a settlement with a sent invoice must leave the load's status advanced,
+  // asserted AT CLOSE/SEND TIME by source-wiring, not swept up later by a one-shot. Pure static
+  // text check, no DB.
+  ["verify-settlement-close-advances-load-status", "scripts/verify-settlement-close-advances-load-status.mjs"],
   // DB-F01/ACCT-F155.3 — a hand-rolled script that sets app.bypass_rls SESSION-scoped (is_local=false,
   // or a bare SET, not SET LOCAL inside an explicit BEGIN) silently loses RLS scope between statements
   // on Neon's pooled connection string. Same read went 3 -> 49 phantom failures between two runs with

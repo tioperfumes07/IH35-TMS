@@ -29,12 +29,25 @@
 //
 // This script documents and reproduces the exact statements already run live via direct SQL
 // (2026-09-28) -- idempotent by address_line1 IS NULL / sequence-number check.
-//
-// No verify-owner-authorization.mjs / AUTH-NNN gate: this inserts/renumbers mdata.load_stops rows
-// (a dispatch stop and its address) -- not an accounting/driver_finance amount, GL posting, or
-// money movement. The ROUND 133 P0 AUTH ledger governs financial writes; a missing-stop correction
-// is not one.
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import pg from "pg";
+
+// ROUND 133 (owner law, P0) retrofit: this script writes mdata.load_stops --
+// verify-no-unauthorized-production-write.mjs requires every scripts/ops/ writer to reference
+// verify-owner-authorization.mjs before an --apply run. Added after the fact (retrofit only, no
+// behavior change) -- this seat did not author the underlying ROUND 177 JOB 2 work and does not
+// grant an AUTH for it; whoever runs --apply supplies a real, already-open AUTH-<NNN> id.
+if (process.argv.includes("--apply")) {
+  const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+  const authId = process.env.OWNER_AUTH_ID;
+  if (!authId) {
+    console.error("OWNER_AUTH_ID required (ROUND 133 P0)");
+    process.exit(1);
+  }
+  execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), authId], { stdio: "inherit" });
+}
 
 const LOAD_ID = "2f828bf1-de54-476f-92bc-5607bb0a10aa"; // 13628
 const OLD_DELIVERY_STOP_ID = "2727c89e-5cc9-4bc1-8589-0feda5b3e33e";

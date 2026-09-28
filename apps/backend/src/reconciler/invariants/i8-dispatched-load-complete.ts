@@ -25,17 +25,23 @@ type Row = {
 
 /**
  * The live set is the canonical active-load predicate, imported, never restated. The trailer is
- * the most recent assignment-history row that set one (dispatch/quick-assign.service.ts
- * resolveCurrentTrailerId): mdata.loads.load_trailer_equipment_id is the equipment TYPE, not a
- * trailer. The customer reference is what Faro matches on (factoring/faro-csv-import.ts):
- * customer_wo_number, then customer_po_number.
+ * satisfied by either of the two real, live assignment mechanisms this codebase has: the most
+ * recent assignment-history row that set one (dispatch/quick-assign.service.ts
+ * resolveCurrentTrailerId), for an owned trailer, OR a non-voided dispatch.trailer_interchanges
+ * row, for a non-owned/broker trailer (found live 2026-09-28: loads 13627/13631 each carry a
+ * live, non-voided interchange for a broker trailer but no load_assignment_history row, since
+ * the interchange flow assigns the trailer without going through quick-assign — a load with an
+ * active interchange record genuinely has a trailer, this was the invariant missing a second,
+ * equally-real source rather than either load actually lacking one). mdata.loads.
+ * load_trailer_equipment_id is the equipment TYPE, not a trailer. The customer reference is what
+ * Faro matches on (factoring/faro-csv-import.ts): customer_wo_number, then customer_po_number.
  */
 export const I8_SQL = `
   SELECT l.id::text AS load_id,
          l.load_number,
          l.created_at::text AS created_at,
          (l.assigned_unit_id IS NOT NULL) AS has_unit,
-         (tr.new_trailer_id IS NOT NULL) AS has_trailer,
+         (tr.new_trailer_id IS NOT NULL OR ti.id IS NOT NULL) AS has_trailer,
          (l.assigned_primary_driver_id IS NOT NULL) AS has_driver,
          (nullif(btrim(coalesce(l.customer_wo_number, '')), '') IS NOT NULL
            OR nullif(btrim(coalesce(l.customer_po_number, '')), '') IS NOT NULL) AS has_customer_reference
@@ -49,6 +55,14 @@ export const I8_SQL = `
        ORDER BY lah.assigned_at DESC, lah.created_at DESC, lah.id DESC
        LIMIT 1
     ) tr ON true
+    LEFT JOIN LATERAL (
+      SELECT ti.id
+        FROM dispatch.trailer_interchanges ti
+       WHERE ti.load_id = l.id
+         AND ti.operating_company_id = l.operating_company_id
+         AND ti.voided_at IS NULL
+       LIMIT 1
+    ) ti ON true
    WHERE l.operating_company_id = $1::uuid
      AND l.soft_deleted_at IS NULL
      AND l.is_sample_data IS NOT TRUE

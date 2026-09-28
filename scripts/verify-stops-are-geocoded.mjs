@@ -5,7 +5,7 @@
 // named: geocode fails -> stop has no coordinates -> geofence cannot match -> zero arrivals -> zero
 // stamps -> status never advances. Samsara (proven live and healthy this same round) was never in
 // this chain; this guard is scoped to geocoding specifically, not telematics.
-import pg from "pg";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 export const ALLOW_OFFLINE_SKIP = "live-data invariant by design, no static-only path";
 
@@ -26,15 +26,11 @@ if (process.argv.includes("--selftest")) {
 }
 
 async function main() {
-  if (!process.env.DATABASE_URL) {
-    console.log(`${LABEL}: SKIP — no DATABASE_URL (live-data invariant by design).`);
-    process.exit(0);
-  }
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
-  const client = await pool.connect();
+  const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
     await client.query("BEGIN");
-    await client.query(`SET LOCAL ROLE neondb_owner`);
+    // SET LOCAL ROLE neondb_owner removed 2026-09-28: a read-only CI credential can set the
+    // app.bypass_rls GUC but cannot escalate role membership ("permission denied to set role").
     await client.query(`SET LOCAL app.bypass_rls = 'lucia'`);
     const res = await client.query(
       `SELECT DISTINCT l.load_number

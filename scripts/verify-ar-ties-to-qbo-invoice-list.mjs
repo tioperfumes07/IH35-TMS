@@ -24,7 +24,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import pg from "pg";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 export const ALLOW_OFFLINE_SKIP = "live A/R-to-QBO tie-out; static parse still runs and is reported";
 
@@ -178,16 +178,14 @@ async function main() {
   const rawRows = lines.slice(5).map(parseCsvLine); // header is line 5 (0-indexed 4)
   const { withLoad, unmatchedBlank, excludedWrongEntity } = categorizeCsvRows(rawRows);
 
-  if (!process.env.DATABASE_URL) {
-    console.log(`${LABEL}: SKIP live DB check — no DATABASE_URL. Static parse OK: ${withLoad.length} with-load rows, ${unmatchedBlank.length} unmatched, ${excludedWrongEntity.length} excluded.`);
-    process.exit(0);
-  }
-
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
-  const client = await pool.connect();
+  const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
     await client.query("BEGIN");
-    await client.query(`SET LOCAL ROLE neondb_owner`);
+    // SET LOCAL ROLE neondb_owner removed 2026-09-28: the ONLY outlier among 329 other guards in
+    // this repo, all of which bypass RLS via app.bypass_rls (the GUC every calling role can set,
+    // read-only credentials included) instead of role escalation -- SET ROLE requires actual
+    // PostgreSQL role membership a read-only CI credential doesn't have ("permission denied to
+    // set role"), while app.bypass_rls alone already does the job this line was for.
     await client.query(`SET LOCAL app.bypass_rls = 'lucia'`);
     const res = await client.query(
       `SELECT l.load_number, i.total_cents::text, c.customer_name

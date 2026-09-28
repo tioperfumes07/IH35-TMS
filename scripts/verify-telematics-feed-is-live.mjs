@@ -20,7 +20,7 @@
 // real dispatch window elsewhere in this codebase) rather than 24/7 -- a quiet feed at 3 AM Central
 // is not evidence of an outage, and a guard that pages on that noise gets ignored, which is worse
 // than not having it.
-import pg from "pg";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 export const ALLOW_OFFLINE_SKIP = "live-telematics invariant by design, no static-only path";
 
@@ -61,21 +61,19 @@ if (process.argv.includes("--selftest")) {
 }
 
 async function main() {
-  if (!process.env.DATABASE_URL) {
-    console.log(`${LABEL}: SKIP — no DATABASE_URL (live-telematics invariant by design).`);
-    process.exit(0);
-  }
   const now = new Date();
   if (!isWithinOperatingHours(now)) {
     console.log(`${LABEL}: SKIP — outside operating hours (06:00-22:00 America/Chicago); a quiet feed overnight is not an outage.`);
     process.exit(0);
   }
 
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
-  const client = await pool.connect();
+  const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
     await client.query("BEGIN");
-    await client.query(`SET LOCAL ROLE neondb_owner`);
+    // SET LOCAL ROLE neondb_owner removed 2026-09-28: a read-only CI credential can set the
+    // app.bypass_rls GUC (every calling role can) but cannot escalate role membership
+    // ("permission denied to set role") -- app.bypass_rls alone already does the job this line
+    // was for, matching the other 329+ guards in this repo that never used role escalation.
     await client.query(`SET LOCAL app.bypass_rls = 'lucia'`);
 
     const enabledRes = await client.query(

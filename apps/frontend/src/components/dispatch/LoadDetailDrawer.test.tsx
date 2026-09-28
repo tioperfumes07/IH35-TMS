@@ -616,13 +616,13 @@ describe("LoadDetailDrawer N1 expense-from-load", () => {
 });
 
 describe("REG-032 — settlement number rides beside the load number in the header", () => {
-  it("shows the tour's own S-YYYY-NNNN settlement number next to Load, from the tour readout", async () => {
+  it("shows the tour's own AlwaysTrack settlement number next to Load, from the tour readout — never the retired S-YYYY-NNNN display_id counter", async () => {
     mockGetTourReadoutForLoad.mockResolvedValueOnce({
       tour: {
-        settlement_id: "set-1", display_id: "S-2026-0007", status: "open", approval_status: null,
+        settlement_id: "set-1", display_id: "S-2026-0007", source_document_ref: "5807", status: "closed", approval_status: null,
         settlement_model: null, tour_id: "tour-1", driver_id: "drv-1", driver_name: "Driver One",
-        unit_number: "T169", trip_started_at: null, trip_closed_at: null, period_start: null,
-        period_end: null, is_open: true, locked_at: null, paid_at: null,
+        unit_number: "T169", trip_started_at: null, trip_closed_at: "2026-09-20T00:00:00Z", period_start: null,
+        period_end: null, is_open: false, locked_at: null, paid_at: null,
       },
       legs: [], costs: [], ready: [], can_close: false, close_blockers: [], soft_warnings: [],
     });
@@ -635,9 +635,11 @@ describe("REG-032 — settlement number rides beside the load number in the head
 
     renderDrawer(<LoadDetailDrawer loadId="load-1" isOpen canEdit operatingCompanyId="co-1" onClose={vi.fn()} />);
 
-    // The number appears once, beside the load number, sourced from the tour readout display_id (never S-<load#>).
+    // The number appears once, beside the load number, sourced from source_document_ref (the real
+    // AlwaysTrack document) — never the retired S-YYYY-NNNN display_id counter and never S-<load#>.
     const settlementNo = await screen.findByTestId("ldt0-header-settlement-no");
-    expect(settlementNo).toHaveTextContent("S-2026-0007");
+    expect(settlementNo).toHaveTextContent("5807");
+    expect(settlementNo).not.toHaveTextContent("S-2026-0007");
     // It is NOT the load number: a load-number-shaped value (13571) would be the retired scheme this fixes.
     expect(settlementNo).not.toHaveTextContent("13571");
   });

@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 // ALL-SEATS LAW (owner, 2026-09-13) — SettlementRefCell's 4 states: no tour link at all ("Not on a
-// tour"), an open tour ("Open"), a closed-but-unnumbered settlement (a titled dash, never bare),
-// and a real numbered settlement (deep-links via EntityLink, showing source_document_ref, NEVER
-// display_id).
+// tour"), an open tour ("PENDING" — ROUND 167, 2026-09-28: "Open" retired, a status is not a
+// number), a closed-but-unnumbered settlement (a titled dash, never bare), and a real numbered
+// settlement (deep-links via EntityLink, showing source_document_ref, NEVER display_id).
 import * as matchers from "@testing-library/jest-dom/matchers";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
@@ -28,7 +28,7 @@ describe("SettlementRefCell", () => {
     expect(screen.getByText("Not on a tour")).toBeInTheDocument();
   });
 
-  it('renders "Open" for an open tour, never a blank or a number', () => {
+  it('renders "PENDING" for an open tour, never a blank, a number, or the retired "Open" label', () => {
     render(
       wrap(
         <SettlementRefCell
@@ -38,7 +38,8 @@ describe("SettlementRefCell", () => {
         />
       )
     );
-    expect(screen.getByText("Open")).toBeInTheDocument();
+    expect(screen.getByText("PENDING")).toBeInTheDocument();
+    expect(screen.queryByText("Open")).not.toBeInTheDocument();
   });
 
   it("renders the AlwaysTrack source_document_ref as a deep link, never the internal display_id", () => {

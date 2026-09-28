@@ -1,4 +1,4 @@
-import { settlementNumber, isOpenSettlement } from "../../lib/settlementNumber";
+import { settlementNumber } from "../../lib/settlementNumber";
 import { HistoricalSettlementAttributions, type HistoricalSettlementAttributionRow } from "../../components/driver-finance/HistoricalSettlementAttributions";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
@@ -191,8 +191,10 @@ export function SettlementDetailPage() {
   const settlement = (detailQuery.data ?? {}) as Record<string, unknown>;
   const paymentState = String(settlement.payment_state ?? "unpaid");
   const approvalStatus = String(settlement.approval_status ?? "needs_review");
+  // ROUND 167 (owner, 2026-09-28): "Open" is retired as a settlement-number label -- a
+  // pre-settlement in flight (is_presettlement=true) reads "PENDING", never a status word.
   const settlementDisplayId =
-    settlementNumber(settlement) ?? (isOpenSettlement(settlement) ? "Open" : null);
+    settlementNumber(settlement) ?? (settlement.is_presettlement === true ? "PENDING" : null);
   // R-102-B item 3 (owner, ROUND 112) — moved up from its original spot below so the gates that
   // follow can reference it; isFinalSettlement/showFinalizeBlock/canApproveSettlement/canOpenDispute
   // all previously checked ONLY isFinalSettlement (locked/final), never cancelled — a cancelled
