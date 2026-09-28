@@ -1,0 +1,5 @@
+{
+  "_comment": "RULE 53 shrink-only baseline: pre-existing scripts/ops seed/backfill files that still use a per-row await create/insert loop without a set-based batch marker. New files MUST NOT be added here — fix them to set-based / one-txn-per-batch instead. Measured at law land 2026-09-28.",
+  "measured_at": "2026-09-28T11:15:00.000Z",
+  "files": []
+}

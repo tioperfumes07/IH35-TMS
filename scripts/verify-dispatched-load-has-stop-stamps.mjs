@@ -33,11 +33,13 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import pg from "pg";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "verify-dispatched-load-has-stop-stamps";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BASELINE_PATH = path.join(ROOT, "scripts/verify-dispatched-load-has-stop-stamps.baseline.json");
+export const REQUIRES_LIVE_DB =
+  "live-ops ratchet: dispatched loads past 24h with zero stop stamps; fails closed via requireLiveDbOrExit";
 
 const ACTIVE_STATUSES = [
   "booked", "planned", "assigned", "unassigned", "assigned_not_dispatched", "dispatched",
@@ -94,12 +96,7 @@ if (process.argv.includes("--selftest")) {
 }
 
 async function main() {
-  if (!process.env.DATABASE_URL) {
-    console.log(`${LABEL}: SKIP — no DATABASE_URL (live-money/live-ops invariant by design).`);
-    process.exit(0);
-  }
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
-  const client = await pool.connect();
+  const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
     await client.query("BEGIN");
     await client.query(`SET LOCAL app.bypass_rls = 'lucia'`);

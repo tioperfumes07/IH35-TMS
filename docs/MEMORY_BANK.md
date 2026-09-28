@@ -112,6 +112,22 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 
 ## Active Architectural Decisions
 
+
+### Active Architectural Decisions — SEED IN BULK, NEVER ROW BY ROW (Cursor, 2026-09-28)
+- **Owner verbatim:** "all data must be seeded instantly and fast, not one by one."
+- **LAW:** Rule 53 (`.cursor/rules/53-seed-in-bulk-never-row-by-row.mdc`, alwaysApply) +
+  `docs/specs/SEED-IN-BULK-NEVER-ROW-BY-ROW-LAW-2026-09-28.md` + guard
+  `scripts/verify-seed-in-bulk-never-row-by-row.mjs` + `LAW-2026-09-28-SEED-IN-BULK-NEVER-ROW-BY-ROW`.
+- **Shape:** parse whole set → validate all → one transaction per batch (500–2000) → report
+  rows · batches · seconds · rows/second. Forbidden: per-row HTTP / `for … await api.create`.
+- **Accounting exception only:** money still posts through the sanctioned engine; batch the
+  calls, never invent JEs. Reconciles with Rule 52: Faro = one txn **per purchase day**, not
+  per invoice — still full composition, still app writers.
+- **Cursor now:** match candidate pass over bank lines is set-based; Faro 09-22..09-25 = one
+  day batch each (09-22/09-23 empty in Faro daily purchase report; 09-24 · $19,219.72 / 5 inv;
+  09-25 · $26,950.00 / 6 inv).
+
+
 ### Active Architectural Decisions — Fed settlement auto-mint (Cursor, 2026-09-24 Round 152.1)
 
 - **Invoice vs driver-bill variance is NOT drift.** Day feed skips invoice when AlwaysTrack
