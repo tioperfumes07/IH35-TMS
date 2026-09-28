@@ -1147,5 +1147,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-28",
     "purpose": "ROUND 178 (Lead order): adds driver_finance.settlement_document_type_exceptions (settlement_id, document_type, reason, created_by_user_id, created_at) -- additive, append-only table backing verify-settlement-document-types-complete.mjs's 'present OR explicitly marked not-applicable with a reason' rule for the six real settlement document types."
+  },
+  "202614530000": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-28",
+    "purpose": "ROUND 195 (owner order): catalogs.blocked_feature_flags (named, auditable blocklist) + BEFORE INSERT/UPDATE triggers on lib.feature_flag_overrides and lib.feature_flags that RAISE EXCEPTION on any write that would resolve a blocked flag_key to enabled -- permanently blocks the 17 QBO write-back/pull/mirror flags (QBO_JE_PUSH_ENABLED, QBO_ENTITY_PUSH_ENABLED, VOID_QBO_MIRROR_ENABLED are the named hard core). Unblocking requires DELETING the catalogs.blocked_feature_flags row, never a code path or UI toggle."
   }
 }
