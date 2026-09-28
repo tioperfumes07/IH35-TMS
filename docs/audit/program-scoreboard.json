@@ -1,10 +1,10 @@
 {
-  "healthzSha": "b0519b0",
-  "generated_at": "2026-09-28T03:47:35.996Z",
+  "healthzSha": "ef1cbae",
+  "generated_at": "2026-09-28T03:53:59.125Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "b0519b0",
+    "deployedSha": "ef1cbae",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,33 @@
   },
   "recentActivity": [
     {
+      "number": 22894,
+      "title": "Claude-1- fix reconcile-feed-day text=uuid crash; assertion 14 is not a scoping bug",
+      "state": "merged",
+      "mergedAtCt": "09/27/2026, 10:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22894",
+      "sha": "d4ab7531b9",
+      "committedAtIso": "2026-09-27T22:52:35-05:00"
+    },
+    {
+      "number": 22893,
+      "title": "FINDING: N/A LANE: DOCS (fix AUTH-074/AUTH-075 numbering collision with CC-1 -- caught live before the stamping script ran)",
+      "state": "merged",
+      "mergedAtCt": "09/27/2026, 10:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22893",
+      "sha": "67f8dc827c",
+      "committedAtIso": "2026-09-27T22:52:24-05:00"
+    },
+    {
+      "number": 22892,
+      "title": "FINDING: N/A LANE: DOCS (AUTH-074 -- authorize header-stamp-only void fix for 242 pre-existing silent voids, ruled 148-02/149)",
+      "state": "merged",
+      "mergedAtCt": "09/27/2026, 10:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22892",
+      "sha": "ef1cbae2e9",
+      "committedAtIso": "2026-09-27T22:47:45-05:00"
+    },
+    {
       "number": 22891,
       "title": "FINDING: ACCT-F2026092704 LANE: DOCS (AUTH-074 executed live -- views.live_loads restored for 6 ROUND-189 loads; plus a repo-wide purge-window-expiry blocker discovered while shipping it)",
       "state": "merged",
@@ -2184,33 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22885",
       "sha": "0ff379d919",
       "committedAtIso": "2026-09-27T21:43:51-05:00"
-    },
-    {
-      "number": 22883,
-      "title": "FINDING: ACCT-F2026092701 LANE: FINANCIAL (verify-ldt-4-factoring-money omitted cash_rsv_cents from the factoring reconciliation identity)",
-      "state": "merged",
-      "mergedAtCt": "09/27/2026, 09:37 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22883",
-      "sha": "40f58065b5",
-      "committedAtIso": "2026-09-27T21:37:16-05:00"
-    },
-    {
-      "number": 22882,
-      "title": "Cursor- BANK-F211 ROUND 180 Creator complete wires (admin fee 7200, empty rate, accessorials)",
-      "state": "merged",
-      "mergedAtCt": "09/27/2026, 05:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22882",
-      "sha": "e74c04efd0",
-      "committedAtIso": "2026-09-27T17:23:11-05:00"
-    },
-    {
-      "number": 22880,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-      "state": "merged",
-      "mergedAtCt": "09/27/2026, 04:27 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22880",
-      "sha": "3ed4e85150",
-      "committedAtIso": "2026-09-27T21:27:30Z"
     }
   ]
 }
