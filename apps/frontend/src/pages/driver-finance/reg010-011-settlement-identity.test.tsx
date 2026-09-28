@@ -29,16 +29,30 @@ describe("REG-010/011 canonical settlement identity and one datum per column", (
     expect(settlement!.closest("td")).not.toHaveTextContent("13508");
     expect(settlement!.closest("td")).not.toHaveTextContent("2026-09-01");
   });
-  it("renders EVERY load in the tour in the Load Number cell, not just the first (owner 2026-09-11: 'FIX THE RENDER, NOT THE SCHEMA' — a settlement/tour can cover multiple loads)", () => {
+  it("renders EVERY load in the tour, one column per leg, not just the first (owner 2026-09-11: 'FIX THE RENDER, NOT THE SCHEMA' — a settlement/tour can cover multiple loads; owner 2026-09-28 ROUND 155.15 FIX B: 'EACH LOAD NUMBER SHOULD HAVE ITS OWN COLUMN. NOT VARIOUS IN ONE.')", () => {
     const row = { settlement_id: "s1", leg_count: 2, legs: [{load_id:"l1", load_number:"13508", trip_type:"NB"},{load_id:"l2",load_number:"13509",trip_type:"SB"}] } as TourListRow;
-    render(<MemoryRouter><ParityTable rows={[row]} rowKey={r=>r.settlement_id} columns={tourLoadColumns("proof")} /></MemoryRouter>);
-    const loadCell = screen.getByTestId("tour-legs-cell");
-    // Both loads render in the same cell now — neither is dropped.
-    expect(within(loadCell).getByText(/13508/)).toBeInTheDocument();
-    expect(within(loadCell).getByText(/13509/)).toBeInTheDocument();
-    // Load count stays its own, separately-sortable column alongside the full load list.
-    expect(screen.getByText("2").closest("td")).not.toBe(loadCell.closest("td"));
+    render(<MemoryRouter><ParityTable rows={[row]} rowKey={r=>r.settlement_id} columns={tourLoadColumns("proof", [row])} /></MemoryRouter>);
+    // Two legs -> two generated columns, each with its own header and its own cell.
+    expect(screen.getByRole("columnheader", {name:/^Leg 1\b/i})).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", {name:/^Leg 2\b/i})).toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", {name:/^Leg 3\b/i})).not.toBeInTheDocument();
+    const leg1Cell = screen.getByRole("columnheader", {name:/^Leg 1\b/i}).closest("table")!;
+    expect(within(leg1Cell).getByText(/13508/)).toBeInTheDocument();
+    expect(within(leg1Cell).getByText(/13509/)).toBeInTheDocument();
+    // Load count stays its own, separately-sortable column.
     expect(screen.getByRole("columnheader", {name:/Load count/i})).toBeInTheDocument();
-    expect(screen.getByRole("columnheader", {name:/Load Number/i})).toBeInTheDocument();
+    // The old legs[0]-only Trip type column is gone.
+    expect(screen.queryByRole("columnheader", {name:/^Trip type$/i})).not.toBeInTheDocument();
+  });
+  it("generates only as many leg columns as the widest row needs (never hard-coded)", () => {
+    const oneLeg = { settlement_id: "s1", leg_count: 1, legs: [{load_id:"l1", load_number:"13508", trip_type:"NB"}] } as TourListRow;
+    const threeLegs = { settlement_id: "s2", leg_count: 3, legs: [
+      {load_id:"l2", load_number:"13509", trip_type:"NB"},
+      {load_id:"l3", load_number:"13510", trip_type:"TR"},
+      {load_id:"l4", load_number:"13511", trip_type:"SB"},
+    ] } as TourListRow;
+    render(<MemoryRouter><ParityTable rows={[oneLeg, threeLegs]} rowKey={r=>r.settlement_id} columns={tourLoadColumns("proof2", [oneLeg, threeLegs])} /></MemoryRouter>);
+    expect(screen.getByRole("columnheader", {name:/^Leg 3\b/i})).toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", {name:/^Leg 4\b/i})).not.toBeInTheDocument();
   });
 });

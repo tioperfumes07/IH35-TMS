@@ -248,13 +248,18 @@ function scanBaselineForCommentContradiction(rel) {
     if (diff > 3_600_000) {
       // Check if the comment EXPLAINS the discrepancy (e.g. "prior baseline measured X,
       // regenerated at Y"). If the comment contains "prior" or "before" or "regenerated",
-      // it's explaining the history, not claiming the current measurement time.
-      if (/prior|before|regenerat|previous|wiped|old|pre-wipe|post-wipe/i.test(cmt)) {
+      // it's explaining the history, not claiming the current measurement time. "flip[ped]"
+      // added 2026-09-28 (157-D lane-cross fix): a false positive on
+      // verify-dispatched-load-has-stop-stamps.baseline.json, whose _comment names WHEN a
+      // config toggle flipped (a genuine, distinct, earlier real-world event) alongside a
+      // LATER measured_at -- not a claim about the measurement time, same shape as the
+      // already-recognized "prior"/"before" explanatory keywords.
+      if (/prior|before|regenerat|previous|wiped|old|pre-wipe|post-wipe|flip/i.test(cmt)) {
         // The comment is explaining history — check if it claims the CURRENT measurement
         // is at the old time. Look for "measured" near the old timestamp without
         // "prior"/"before" context.
         const around = cmt.slice(Math.max(0, m.index - 50), m.index + ts.length + 50);
-        if (/prior|before|regenerat|previous|wiped|old|pre-wipe|post-wipe/i.test(around)) {
+        if (/prior|before|regenerat|previous|wiped|old|pre-wipe|post-wipe|flip/i.test(around)) {
           continue; // explained
         }
       }

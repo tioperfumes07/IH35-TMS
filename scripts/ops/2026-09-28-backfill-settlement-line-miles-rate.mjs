@@ -29,6 +29,20 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
 const TRUTH_PATH = path.join(ROOT, "feed-input/settlement-truth-from-pdfs.json");
 const APPLY = process.argv.includes("--apply");
 
+// ROUND 133 (owner law, P0) retrofit: this script writes driver_finance.settlement_lines under
+// AUTH-091 (see docs/bus/OWNER-AUTHORIZATIONS.md) -- verify-no-unauthorized-production-write.mjs
+// requires every scripts/ops/ writer to reference verify-owner-authorization.mjs before an --apply
+// run. Added after the fact (this script already executed under a valid AUTH-091 at the time) so
+// static compliance matches what actually happened and any future re-run stays gated the same way.
+if (APPLY) {
+  const authId = process.env.OWNER_AUTH_ID;
+  if (!authId) {
+    console.error(`${LABEL}: OWNER_AUTH_ID required (ROUND 133 P0)`);
+    process.exit(1);
+  }
+  execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), authId], { stdio: "inherit" });
+}
+
 // settlement_lines_item_qty_rate_amount_check requires item_id whenever quantity/rate_cents/
 // unit_of_measure are set. catalogs.items already carries the real per-driver-type mileage items
 // (verified live 2026-09-28, zero settlement_lines rows have ever set item_id before this backfill
