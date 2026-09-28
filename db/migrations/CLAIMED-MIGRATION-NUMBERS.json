@@ -1096,6 +1096,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-09-26",
       "purpose": "Lead, live blocker: uniq_settlement_lines_source_driver_bill_id_line_type (source_driver_bill_id, line_type) WHERE source_driver_bill_id IS NOT NULL ignores voided_at, so a voided settlement line blocks its own reissue (void-never-delete cannot be honored; blocked R-206 settlement 5792). Recreate it WHERE source_driver_bill_id IS NOT NULL AND voided_at IS NULL."
+    },
+    "202614550000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-28",
+      "purpose": "ROUND 206 (Lead order): views.live_loads excludes a load from open_dispatch the moment ANY active settlement_lines row exists for it, regardless of whether the parent settlement is open or closed -- 14 of 16 live USMCA dispatched loads carry premature earnings/deadhead_pay settlement_lines rows on still-OPEN, unlocked pre-settlements, so they vanish from the Dispatch board entirely (ACTIVE LOADS tile shows 2 instead of the correct 14+2=16). Adds a driver_finance.driver_settlements join requiring status=closed before the settlement_lines exclusion applies. No load status changed, no settlement_lines row touched. Renumbered from 202614540000 after discovering that slot was already claimed by a concurrent Devin sweep commit (B3) moments earlier. Also discovered while renumbering: db/migrations/CLAIMED-MIGRATION-NUMBERS.json's claimed object has closed prematurely since at least 202613590001, leaving 11+ later entries as invisible root-level siblings instead of real claimed children -- reported, not fixed in this commit, out of scope for a P0 dispatcher-visibility fix."
     }
   },
   "202613590001": {
