@@ -1,10 +1,10 @@
 {
-  "healthzSha": "0b30a84",
-  "generated_at": "2026-09-28T03:29:10.470Z",
+  "healthzSha": "b0519b0",
+  "generated_at": "2026-09-28T03:47:35.996Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "0b30a84",
+    "deployedSha": "b0519b0",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 22891,
+      "title": "FINDING: ACCT-F2026092704 LANE: DOCS (AUTH-074 executed live -- views.live_loads restored for 6 ROUND-189 loads; plus a repo-wide purge-window-expiry blocker discovered while shipping it)",
+      "state": "merged",
+      "mergedAtCt": "09/27/2026, 10:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22891",
+      "sha": "b0519b0036",
+      "committedAtIso": "2026-09-27T22:43:11-05:00"
+    },
+    {
       "number": 22890,
       "title": "FINDING: N/A LANE: DOCS (AUTH-074 issued -- views.live_loads both-clause fix, per owner ROUND 146 ruling; AUTH-073 marked CONSUMED with its rollback outcome)",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22880",
       "sha": "3ed4e85150",
       "committedAtIso": "2026-09-27T21:27:30Z"
-    },
-    {
-      "number": 22879,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-      "state": "merged",
-      "mergedAtCt": "09/27/2026, 12:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22879",
-      "sha": "5158a70bc0",
-      "committedAtIso": "2026-09-27T17:04:40Z"
     }
   ]
 }
