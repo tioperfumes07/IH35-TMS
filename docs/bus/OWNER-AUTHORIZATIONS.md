@@ -2488,6 +2488,49 @@ refusals, 0 headroom violations.
 
 ---
 
+## AUTH-090
+issued_at: 2026-09-28T09:15:00.000Z
+scope: mdata.loads UPDATE ONLY (miles_shortest + mileage_source, guarded by `WHERE miles_shortest
+IS NULL`, exactly 2 rows: load 13631 = 1343.0mi, load 13634 = 1368.0mi, both read directly off
+their own signed rate con PDF's stated "Miles:"/"Miles" field) + driver_finance.driver_bills
+INSERT via the real engine (ensureDriverBillArtifactsForLoad -> createDriverBillArtifacts, no new
+GL/pricing math written). operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA) only,
+scoped to loads 13622-13639 (the same 18 from AUTH-086).
+action: OWNER_AUTH_ID=AUTH-090 npx tsx scripts/ops/2026-09-28-mint-driver-bills-18-loads.ts
+expires_at: 2026-09-28T16:15:00.000Z
+status: DONE — executed live 2026-09-28T09:20:41Z
+
+Owner order: "Sources to try, in order: Samsara trip distance... the rate con... PC*Miler/Trimble
+via getLaneMileage/getRouteMileage. If none yields a real number, record the exception and mint
+the other bills." All three sources checked live before writing anything:
+(1) Samsara — integrations.samsara_vehicle_positions has zero historical rows for the transit
+dates (Sept 23-28); only current-moment pings exist. NOT VIABLE for any of the 18.
+(2) Rate con PDF "Miles:" field — checked all 18 loads' own dedicated rate-con PDF (14 of 18 have
+one; 13623/13627 have none at all, confirmed in the 155.2c DONE LINE). Only 13631 (1343.0mi,
+loads_5656192.pdf) and 13634 (1368mi, loads_5661902.pdf) state a mileage figure.
+(3) PC*Miler/Trimble via /api/v1/dispatch/route-mileage (resolvePointMileage/OsrmProvider) —
+READ, NOT CALLED: the route's own code comment (loads.routes.ts ~592-604) documents this returns
+shortest_miles: null EVERY TIME today, by design — the configured OSRM profile is fastest-route
+weighting, and the repo provisions no distinct shortest-BY-DISTANCE profile
+(verify-miles-shortest-never-autofilled-from-catalog.mjs locks this). Calling it would have
+returned null on all 16 remaining loads, not a real number — running it would have been theater,
+not a real check, so it was read instead of invoked.
+
+RESULT: 2 of 18 driver bills minted with real, sourced miles (13631=$644.64, 13634=$656.64,
+gross_amount_cents 64464/65664, both priced off the driver's own active rate card — no rate
+invented). The other 16 have NO real mileage source available anywhere today. Per the owner's own
+"record the exception" instruction, the script calls the real engine for all 18 — it does not
+skip the 16 — and the engine's own pre-existing P1 refusal gate
+(driver_finance.driver_bill.refused_no_shortest_miles, owner 2026-09-14) does exactly what it is
+built to do: refuse and append one real audit.audit_events row per load, live-verified
+(audit.audit_events, 16 rows, timestamps 08:57:37Z-09:04:54Z, one per load 13622-13639 excluding
+13631/13634). That audit row IS the exception record demanded — nothing new was built or invented
+to satisfy this; the engine's existing refusal path already produces it.
+
+— CC-1
+
+---
+
 ## AUTH-089
 issued_at: 2026-09-28T10:10:00.000Z
 scope: driver_finance.settlement_lines UPDATE ONLY (void exactly the one duplicate escrow line
