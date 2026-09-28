@@ -3500,7 +3500,11 @@ No new GL math beyond the accept handler's existing zero-variance path. No Quick
 writes (report-only).
 action: OWNER_AUTH_ID=AUTH-112 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cursor-r186-counterparties-through-engine.ts --apply
 expires_at: 2026-09-29T04:10:00.000Z
-status: OPEN
+status: DONE -- executed live 2026-09-28. APPLY: relay_fuel_accepted=5, expense=0, dreamline_fuel=0
+  through acceptMatchWithResolveDifference only. E2E bank e3595937 ↔ relay 888c66b1 match
+  0f42147e audit bank_match.accepted @ 2026-09-28T21:27:55Z. Guard
+  verify-no-match-persisted-outside-accept-handler PASS. Active USMCA matches=135.
+  Named Faro Resolve days 08/13·08/14·09/21 remain Resolve (not auto-accepted).
 
 — Cursor
 
