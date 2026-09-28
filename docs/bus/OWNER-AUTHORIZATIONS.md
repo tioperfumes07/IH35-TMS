@@ -3036,3 +3036,72 @@ settlement. Not forced through without a verified closed-settlement correction p
 as known, real, open defects — never silently accepted.
 
 — CC-1
+
+---
+
+## AUTH-101
+_(NUMBERING NOTE: originally scoped as AUTH-091, per an earlier round of this same work — AUTH-091
+was found already claimed by an unrelated, already-DONE authorization (settlement_lines miles/rate
+backfill) by the time this was ready to file. Renumbered to the next free slot, AUTH-101, before
+any --apply ran. scope/action unchanged from the AUTH-091 name used in earlier commit messages and
+PR bodies this round -- those refer to this same authorization.)_
+
+issued_at: 2026-09-28T12:10:00.000Z
+scope: TWO parts, both required together, USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only:
+
+  (1) Physical DELETE (not void) of already-voided (voided_at IS NOT NULL) rows across 26 tables:
+  accounting.expenses, accounting.bills, accounting.bill_lines, accounting.invoices,
+  accounting.factoring_advances, banking.bank_transactions, accounting.journal_entries,
+  dispatch.non_owned_trailers, dispatch.trailer_interchanges, driver_finance.driver_bills,
+  driver_finance.driver_liabilities, driver_finance.driver_settlement_deductions,
+  driver_finance.driver_settlements, driver_finance.settlement_lines,
+  factoring.customer_factor_assignment, fuel.fuel_transactions, integrations.relay_company_cards,
+  legal.contract_instances, maintenance.work_orders, safety.complaints, safety.dot_inspections,
+  safety.hos_violations, safety.incidents, safety.internal_fines, mdata.customer_quality_events,
+  plus their owned child/detail rows (expense_lines, bill_lines-as-child, factoring_reserve_
+  movements, factoring_default_interest_accruals, factoring_lifecycle_posting_keys,
+  bank_transaction_splits, journal_entry_postings, transaction_source_links) and a safe-husk sweep
+  of zero-posting, zero-reference journal_entries headers left behind. Every count re-measured
+  fresh inside the apply transaction itself, never from an earlier snapshot. Delete criterion is
+  voided_at alone -- no entity-origin filter gates what gets deleted; the TRANSPORTATION-origin
+  question is reported separately, never used to exclude a row. Nothing is force-cascaded past a
+  live reference anywhere in the schema -- a document/JE with a live blocker is left in place and
+  reported by name, never forced through. Owner's own one-row rollback proof plus 7 further
+  --apply-test-run rollback-tested proofs (real DELETE statements, real trigger, always rolled
+  back) found and fixed 5 real bugs this round: a non-parameterizable SET LOCAL, a cross-JE
+  reversal-posting closure gap, a wrong before/after trial-balance invariant, an incomplete WORM
+  gated-table list (three separate rounds), and a Postgres `<> ANY` vs `<> ALL` exclusion bug in
+  the JE-husk self-reference check. The 8th rollback-tested run completed clean: 652 documents,
+  468 postings, 234 JE headers correctly removed as true husks, trial balance still balanced
+  (debit=credit both before and after, total legitimately shrinks by the amount of real postings
+  removed), zero orphaned postings, zero zero-posting husks remaining.
+
+  (2) Wholesale DELETE of maintenance.pm_auto_wo_log (100% sample-unit rows, re-verified fresh
+  inside the transaction before deleting) and a DELETE of samsara.hos_snapshots scoped to
+  sample-driver rows only (re-verified fresh inside the transaction). Both are confirmed true leaf
+  tables (zero inbound FK references, live-checked via pg_constraint) -- no child-table sweep
+  needed. The two writer defects that created these rows are already fixed at the source (PR
+  #22967, merged) -- this is cleanup of rows already written, not stopping an ongoing leak.
+
+  Explicitly OUT OF SCOPE, by the owner's own deliberate call after seeing the FK-fanout numbers
+  (mdata.drivers referenced by 137 distinct tables, mdata.units by 90, mdata.customers/vendors by
+  35 each, mdata.equipment by 27): the 58 sample master rows themselves
+  (mdata.customers/drivers/equipment/units/vendors) and their broader cascade. This is a
+  deliberate scope decision recorded here, not an oversight -- tracked as separate future work.
+
+  WORM hardening (accounting.refuse_financial_row_delete now applies to every role, no exemption,
+  gated only by this session's app.purge_auth_id) and the 14-table audit-trigger gap are already
+  merged and applied to prod ahead of this AUTH, per the owner's own stated condition.
+action:
+  OWNER_AUTH_ID=AUTH-101 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r15518-purge-voided-usmca.ts --apply
+  OWNER_AUTH_ID=AUTH-101 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r15518-purge-sample-leaf-tables.ts --apply
+expires_at: 2026-09-28T18:10:00.000Z
+status: OPEN
+
+Owner order (2026-09-28, verbatim, relayed): "STOP WASTING TIME AND GET THIS DONE NOW" -- after
+personally reviewing the complete final picture (every table, every real count, every script) and
+issuing explicit, in-the-moment authorization to execute, not a standing pre-approval. Full history
+of this authorization's build-out (every bug found, every fix, every rollback-tested proof) is in
+this session's PRs #22961, #22965, #22967, #22971, #22973, #22977, all merged.
+
+— CC-2
