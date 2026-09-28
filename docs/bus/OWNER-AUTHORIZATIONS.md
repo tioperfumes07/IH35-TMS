@@ -3486,3 +3486,27 @@ status: OPEN
 — Cursor
 
 ---
+
+## AUTH-113
+issued_at: 2026-09-28T16:20:00.000Z
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only — repost the 44 reversed Faro advances
+FAC-2026-00047..FAC-2026-00090 named in ACCT-F2026092826 (PR #23023) via the sanctioned engine
+ONLY (postFactoringAdvanceEventInClientTx, apps/backend/src/accounting/factoring-posting/
+poster.service.ts) — never a raw INSERT into accounting.journal_entries/journal_entry_postings.
+Source of truth is each row's own `notes` FARO_FEES JSON (Faro's original reported breakdown,
+untouched by the later repair), reconciled to the cent against invoice_total_cents before any
+write; any row that does not reconcile, or carries a nonzero sch_fee (no GL role defined for it
+yet), is SKIPPED and reported, never forced. Header status flipped 'voided'->'advanced' and
+voided_at/void_reason/voided_by_user_id cleared as part of the same correction (metadata, not new
+GL math) — reserve_amount_cents/factor_fee_cents/wire_fee_cents/cash_rsv_cents/
+advance_amount_cents corrected to the reconciled values. Owner's own verbatim order: "DIRECT
+INSERT AUTHORIZED — compute from the header, write in one pass." (superseded here only in that
+the computation source is notes, not the header, because the header was independently verified
+corrupted — reported live before this authorization).
+action: OWNER_AUTH_ID=AUTH-113 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-round190-repost-44-faro-advances.ts
+expires_at: 2026-09-29T04:20:00.000Z
+status: OPEN
+
+— CC-1
+
+---
