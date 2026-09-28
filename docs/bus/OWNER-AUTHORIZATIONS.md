@@ -3674,7 +3674,10 @@ scope: Round 191 item 2 — Universal unvoid / reinstate engine LIVE proof — U
   (AUTH-113 hard line).
 action: OWNER_AUTH_ID=AUTH-118 DATABASE_URL=<prod> npx tsx scripts/ops/r191-universal-unvoid-live-proof.ts
 expires_at: 2026-09-29T06:00:00.000Z
-status: OPEN
+status: DONE -- executed live 2026-09-28. reinstateDocument(expense) on check #1001
+  (9b5fcc6c): void→reinstated (status=posted, posting_status=posted, reinstate_reason=
+  AUTH-118, reinstated_from_void_je_id=267a4a86) → voidCheck re-void left voided
+  (seat-fixtures law). LIVE PROOF PASS.
 
 — Cursor (R-191 universal unvoid)
 
