@@ -59,9 +59,10 @@ function makeMockClient(state: State) {
       const rows = <R>(r: R[]) => ({ rows: r as unknown as T[] });
 
       // P0-B numbering-law fix: allocateSettlementDisplayId now calls
-      // allocateNextSettlementSourceDocumentRef, never the retired next_settlement_display_id.
+      // R-186.1: allocateSettlementDisplayId mints our own opco-scoped P-series (P-NNNN),
+      // never AlwaysTrack's continuing sequence and never the retired next_settlement_display_id.
       if (sql.includes("pg_advisory_xact_lock")) return rows([]);
-      if (sql.includes("GREATEST($2::int, COALESCE(MAX")) return rows([{ next: "5826" }]);
+      if (sql.includes("substring(display_id from '^P-(")) return rows([{ next: "P-5826" }]);
 
       if (sql.includes("to_regclass('driver_finance.settlement_lines')")) return rows([{ ok: true }]);
 

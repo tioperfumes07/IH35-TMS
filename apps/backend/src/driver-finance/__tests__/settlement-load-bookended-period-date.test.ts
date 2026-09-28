@@ -50,15 +50,16 @@ function fakeClient(pickupAt: Date | string | null) {
     if (/INSERT INTO outbox\.events/.test(sql)) {
       return { rows: [] };
     }
-    // allocateSettlementDisplayId (settlement-display-id.ts) now calls
-    // allocateNextSettlementSourceDocumentRef (P0-B numbering-law fix) instead of the retired
-    // next_settlement_display_id counter -- teach the double the two queries it issues. This test
-    // is about periodDate survival, not settlement numbering, so any valid bare-number id works.
+    // allocateSettlementDisplayId (settlement-display-id.ts) mints OUR OWN opco-scoped P-series
+    // off display_id (R-186.1, owner 2026-09-25), never the retired next_settlement_display_id
+    // counter and never AlwaysTrack's continuing sequence -- teach the double the two queries it
+    // issues. This test is about periodDate survival, not settlement numbering, so any valid
+    // P-NNNN id works.
     if (/SELECT pg_advisory_xact_lock/.test(sql)) {
       return { rows: [] };
     }
-    if (/GREATEST\(\$2::int, COALESCE\(MAX/.test(sql)) {
-      return { rows: [{ next: "5826" }] };
+    if (/substring\(display_id from '\^P-/.test(sql)) {
+      return { rows: [{ next: "P-5826" }] };
     }
     throw new Error(`fakeClient: unhandled query: ${sql}`);
   });
