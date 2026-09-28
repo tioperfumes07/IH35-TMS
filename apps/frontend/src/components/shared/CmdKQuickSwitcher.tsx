@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SearchResultItem, type SearchResult } from "./SearchResultItem";
+import { SectionErrorBoundary } from "../SectionErrorBoundary";
 
 const RECENT_KEY = "ih35.cmdk.recent";
 const MAX_RECENT = 10;
@@ -143,6 +144,7 @@ export function CmdKQuickSwitcher() {
           <p className="mt-1 text-xs text-gray-500">Cmd+K / Ctrl+K anywhere · ↑↓ navigate · Enter open</p>
         </div>
         <div className="max-h-80 overflow-y-auto py-2">
+          <SectionErrorBoundary name="CmdK results">
           {loading ? <p className="px-4 py-2 text-xs text-gray-500">Searching…</p> : null}
           {!loading && query.trim().length < 2 && recent.length > 0 ? (
             <div className="px-4 pb-2">
@@ -172,6 +174,7 @@ export function CmdKQuickSwitcher() {
               onSelect={selectResult}
             />
           ))}
+          </SectionErrorBoundary>
         </div>
       </div>
     </div>

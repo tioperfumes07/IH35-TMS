@@ -12,9 +12,11 @@ type Props = {
   displayLabel: string;
   onAssigned: (next: { unitId: string; label: string }) => void;
   onRollback: () => void;
+  /** ROUND 203 F3 — after server confirms, invalidate + clear override. */
+  onConfirmed?: () => void | Promise<void>;
 };
 
-export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLabel, onAssigned, onRollback }: Props) {
+export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLabel, onAssigned, onRollback, onConfirmed }: Props) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -85,9 +87,12 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
           const prior = { unitId, label: displayLabel };
           const result = await optimisticPatch({
             applyOptimistic: () => onAssigned({ unitId: next, label }),
+            // ROUND 203 F7 — never write unitId: "" on rollback; "" !== undefined so
+            // effectiveLoads permanently overrides assigned_unit_id to "". onRollback() alone
+            // clears the optimistic key; prior null must stay null/absent.
             rollback: () => {
+              void prior;
               onRollback();
-              onAssigned({ unitId: prior.unitId ?? "", label: prior.label });
             },
             request: async () => {
               try {
@@ -104,6 +109,7 @@ export function InlineUnitPicker({ loadId, operatingCompanyId, unitId, displayLa
           if (result.ok) {
             setError(null);
             setOpen(false);
+            await onConfirmed?.();
           }
         }}
       />

@@ -305,6 +305,37 @@ async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promi
       };
     }
 
+    // ROUND 203 B12 — delivered_pending_docs (and siblings) must not flip to paid without a
+    // real received payment on a linked invoice. Payment existence, not status alone.
+    const paymentRes = await client.query(
+      `
+        SELECT count(*)::text AS n
+          FROM accounting.invoices i
+          JOIN accounting.payment_applications pa
+            ON pa.invoice_id = i.id
+           AND pa.operating_company_id = i.operating_company_id
+           AND pa.unapplied_at IS NULL
+          JOIN accounting.payments p
+            ON p.id = pa.payment_id
+           AND p.operating_company_id = i.operating_company_id
+           AND p.voided_at IS NULL
+         WHERE i.operating_company_id = $1::uuid
+           AND i.source_load_id = $2::uuid
+           AND i.voided_at IS NULL
+           AND COALESCE(i.is_sample_data, false) IS NOT TRUE
+      `,
+      [operatingCompanyId, id]
+    );
+    const paymentCount = Number((paymentRes.rows[0] as { n?: string } | undefined)?.n ?? 0);
+    if (paymentCount < 1) {
+      return {
+        ok: false,
+        code: "E_NO_RECEIVED_PAYMENT",
+        message:
+          "Cannot mark load paid — no received (non-voided) payment is applied to an invoice for this load. Record payment first, or confirm with the owner.",
+      };
+    }
+
     const updateRes = await client.query(
       `
         UPDATE mdata.loads

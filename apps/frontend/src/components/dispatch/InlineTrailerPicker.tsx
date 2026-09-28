@@ -11,9 +11,10 @@ type Props = {
   displayLabel: string;
   onAssigned: (next: { trailerId: string; label: string }) => void;
   onRollback: () => void;
+  onConfirmed?: () => void | Promise<void>;
 };
 
-export function InlineTrailerPicker({ loadId, operatingCompanyId, trailerId, displayLabel, onAssigned, onRollback }: Props) {
+export function InlineTrailerPicker({ loadId, operatingCompanyId, trailerId, displayLabel, onAssigned, onRollback, onConfirmed }: Props) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -83,8 +84,9 @@ export function InlineTrailerPicker({ loadId, operatingCompanyId, trailerId, dis
           const result = await optimisticPatch({
             applyOptimistic: () => onAssigned({ trailerId: next, label }),
             rollback: () => {
+              // ROUND 203 F7 — never write trailerId: "" on rollback.
+              void prior;
               onRollback();
-              onAssigned({ trailerId: prior.trailerId ?? "", label: prior.label });
             },
             request: () =>
               patchAssignTrailer(loadId, {
@@ -96,6 +98,7 @@ export function InlineTrailerPicker({ loadId, operatingCompanyId, trailerId, dis
           if (result.ok) {
             setError(null);
             setOpen(false);
+            await onConfirmed?.();
           }
         }}
       />

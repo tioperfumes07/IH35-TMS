@@ -11,9 +11,10 @@ type Props = {
   displayLabel: string;
   onAssigned: (next: { driverId: string; label: string }) => void;
   onRollback: () => void;
+  onConfirmed?: () => void | Promise<void>;
 };
 
-export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displayLabel, onAssigned, onRollback }: Props) {
+export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displayLabel, onAssigned, onRollback, onConfirmed }: Props) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,9 +83,10 @@ export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displ
           const prior = { driverId, label: displayLabel };
           const result = await optimisticPatch({
             applyOptimistic: () => onAssigned({ driverId: next, label }),
+            // ROUND 203 F7 — never write driverId: "" on rollback (same trap as InlineUnitPicker).
             rollback: () => {
+              void prior;
               onRollback();
-              onAssigned({ driverId: prior.driverId ?? "", label: prior.label });
             },
             request: () =>
               patchAssignDriver(loadId, {
@@ -96,6 +98,7 @@ export function InlineDriverPicker({ loadId, operatingCompanyId, driverId, displ
           if (result.ok) {
             setError(null);
             setOpen(false);
+            await onConfirmed?.();
           }
         }}
       />

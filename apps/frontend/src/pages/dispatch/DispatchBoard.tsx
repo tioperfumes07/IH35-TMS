@@ -633,6 +633,15 @@ export function DispatchBoard({
     try {
       await statusMutation.mutateAsync({ id: load.id, body: { new_status: next } });
       pushToast(`Load ${load.load_number || load.id} → ${STATUS_LABEL[next]}`, "success");
+      // ROUND 203 F3 — clear optimistic override on success so effectiveLoads tracks server state.
+      setRowOverrides((current) => {
+        const nextOverrides = { ...current };
+        if (nextOverrides[load.id]) {
+          delete nextOverrides[load.id]!.status;
+          if (Object.keys(nextOverrides[load.id]!).length === 0) delete nextOverrides[load.id];
+        }
+        return nextOverrides;
+      });
       onBulkComplete?.();
     } catch (error) {
       setRowOverrides((current) => {
@@ -665,7 +674,8 @@ export function DispatchBoard({
     enabled: Boolean(companyId) && !isHistoryBoard,
     staleTime: 30_000,
   });
-  const unassignedUnits = unitsWithoutLoadQuery.isError ? [] : (unitsWithoutLoadQuery.data?.units ?? []);
+  const unassignedUnits = unitsWithoutLoadQuery.data?.units ?? [];
+  // ROUND 203 F17 — never collapse a failed query into an empty roster (Law §8).
 
   const inShopUnitsQuery = useQuery({
     queryKey: ["dispatch-board", "in-shop-units", companyId],
@@ -677,7 +687,8 @@ export function DispatchBoard({
     staleTime: 60_000,
     refetchInterval: 60_000,
   });
-  const inShopUnits = inShopUnitsQuery.isError ? [] : (inShopUnitsQuery.data ?? []);
+  const inShopUnits = inShopUnitsQuery.data ?? [];
+  // ROUND 203 F17 — isError handled via ListErrorBanner/ListErrorState, not silent [].
   // DispatchInShopUnit's real key is unit_id (api/dispatch.ts) — .id never existed on this type;
   // this line only typechecked before because a prior tsc pass didn't reach it.
   const inShopUnitIds = useMemo(() => new Set(inShopUnits.map((unit) => unit.unit_id)), [inShopUnits]);
@@ -1024,10 +1035,30 @@ export function DispatchBoard({
         onRollback={() =>
           setRowOverrides((prev) => {
             const next = { ...prev };
-            delete next[load.id]?.unitId;
+            if (next[load.id]) {
+              delete next[load.id]!.unitId;
+              delete next[load.id]!.unitLabel;
+              if (Object.keys(next[load.id]!).length === 0) delete next[load.id];
+            }
             return next;
           })
         }
+        onConfirmed={async () => {
+          // ROUND 203 F2+F3 — invalidate real keys, then drop override so server wins.
+          await queryClient.invalidateQueries({ queryKey: ["loads"] });
+          await queryClient.invalidateQueries({ queryKey: ["dispatch", "units-without-load"] });
+          await queryClient.invalidateQueries({ queryKey: ["dispatch-board"] });
+          setRowOverrides((prev) => {
+            const next = { ...prev };
+            if (next[load.id]) {
+              delete next[load.id]!.unitId;
+              delete next[load.id]!.unitLabel;
+              if (Object.keys(next[load.id]!).length === 0) delete next[load.id];
+            }
+            return next;
+          });
+          onBulkComplete?.();
+        }}
       />
     ) : (
       <EntityLinkOrTombstone kind="unit" id={load.assigned_unit_id} name={load.assigned_unit_number} noun="Unit" />
@@ -1061,10 +1092,29 @@ export function DispatchBoard({
             onRollback={() =>
               setRowOverrides((prev) => {
                 const next = { ...prev };
-                delete next[load.id]?.driverId;
+                if (next[load.id]) {
+                  delete next[load.id]!.driverId;
+                  delete next[load.id]!.driverLabel;
+                  if (Object.keys(next[load.id]!).length === 0) delete next[load.id];
+                }
                 return next;
               })
             }
+            onConfirmed={async () => {
+              await queryClient.invalidateQueries({ queryKey: ["loads"] });
+              await queryClient.invalidateQueries({ queryKey: ["dispatch", "units-without-load"] });
+              await queryClient.invalidateQueries({ queryKey: ["dispatch-board"] });
+              setRowOverrides((prev) => {
+                const next = { ...prev };
+                if (next[load.id]) {
+                  delete next[load.id]!.driverId;
+                  delete next[load.id]!.driverLabel;
+                  if (Object.keys(next[load.id]!).length === 0) delete next[load.id];
+                }
+                return next;
+              });
+              onBulkComplete?.();
+            }}
           />
         ) : (
           <EntityLinkOrTombstone kind="driver" id={load.assigned_primary_driver_id} name={driverDisplay} noun="Driver" />
@@ -1089,10 +1139,29 @@ export function DispatchBoard({
         onRollback={() =>
           setRowOverrides((prev) => {
             const next = { ...prev };
-            delete next[load.id]?.trailerId;
+            if (next[load.id]) {
+              delete next[load.id]!.trailerId;
+              delete next[load.id]!.trailerLabel;
+              if (Object.keys(next[load.id]!).length === 0) delete next[load.id];
+            }
             return next;
           })
         }
+        onConfirmed={async () => {
+          await queryClient.invalidateQueries({ queryKey: ["loads"] });
+          await queryClient.invalidateQueries({ queryKey: ["dispatch", "units-without-load"] });
+          await queryClient.invalidateQueries({ queryKey: ["dispatch-board"] });
+          setRowOverrides((prev) => {
+            const next = { ...prev };
+            if (next[load.id]) {
+              delete next[load.id]!.trailerId;
+              delete next[load.id]!.trailerLabel;
+              if (Object.keys(next[load.id]!).length === 0) delete next[load.id];
+            }
+            return next;
+          });
+          onBulkComplete?.();
+        }}
       />
     ) : (
       <EntityLinkOrTombstone
@@ -2068,7 +2137,10 @@ export function DispatchBoard({
               if (mint?.outcome === "refused_no_shortest_miles") {
                 pushToast(mint.reason ?? "No driver bill was created — shortest miles are required.", "error");
               }
-              await queryClient.invalidateQueries({ queryKey: ["dispatch", "loads"] });
+              // ROUND 203 F2 — real query keys (["dispatch","loads"] matched nothing).
+              await queryClient.invalidateQueries({ queryKey: ["loads"] });
+              await queryClient.invalidateQueries({ queryKey: ["dispatch", "units-without-load"] });
+              await queryClient.invalidateQueries({ queryKey: ["dispatch-board"] });
               onBulkComplete?.();
             } catch (error) {
               // CU-09 / FAIL-U1: prefer message/blocker; never toast a bare E_* machine code.
