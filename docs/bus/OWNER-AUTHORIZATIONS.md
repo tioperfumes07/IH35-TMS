@@ -3180,3 +3180,52 @@ remaining ~320-stop bulk backfill (needs the real GOOGLE_PLACES_API_KEY, which l
 Render's env, or a way to invoke the already-existing authenticated per-load endpoint).
 
 — CC-1
+
+---
+
+## AUTH-103
+_(NUMBERING NOTE: originally drafted as AUTH-102, before checking main fresh at push time --
+AUTH-102 was already claimed by CC-1's same-day samsara/geocoding retroactive entry (above).
+Renumbered to the next free slot, AUTH-103, before any --apply ran. scope/action unchanged.)_
+
+issued_at: 2026-09-28T12:30:00.000Z
+scope: HEADER-ONLY backfill, USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. No posting touched,
+no money moved, no journal_entry_postings row inserted/updated/deleted -- structurally enforced by
+the script itself (refuses to commit if journal_entry_postings count/trial-balance shifts at all).
+
+accounting.expenses.reversed_by_je_id backfilled from NULL to the real reversing JE id, and
+posting_status set to 'reversed', on 141 rows ($7,075.62) where voided_at IS NOT NULL,
+reversed_by_je_id IS NULL, and the row's own journal_entry_id points to a JE whose header
+(accounting.journal_entries.reversed_by_je_id) already shows a real reversal -- verified per-row,
+inside the apply transaction itself, that the original JE's postings and the reversal JE's
+postings net to exactly 0 cents (not assumed from an earlier snapshot; re-checked live this round
+after the ROUND 155.18 purge physically deleted 117 of the original 258-row population, shrinking
+this defect's true remaining population to 141).
+
+Root cause: the CURRENT, live void path (expenses.routes.ts's /void endpoint, ACCT-F5635 fix)
+already writes reversed_by_je_id atomically with the reversal -- these 141 rows are historical
+residue from before that fix, not an ongoing leak. No writer fix needed this round; the guard
+below is the permanent lock against future drift.
+
+Two "singleton" cases named in the original directive were investigated individually and found to
+be correct as-is, NOT touched by this AUTH:
+  - accounting.expenses id f9c5b0e4-644c-4b03-b7c2-424d540ea65f ($25.00): a real check (Smithfield
+    Foods Inc) posted live this session. status='draft' correctly means "not yet printed";
+    posting_status='posted' correctly reflects its real GL entry. By design.
+  - accounting.expenses id c3ec6e51-8033-4d7c-9671-a1556f4ebc8a ($15.69): void_reason
+    self-documents "R-175: prior JE ... already reversed; the idempotent engine returns it --
+    reissued as a new document on the card." journal_entry_id is correctly NULL (this document
+    never had its own JE); reversed_by_je_id correctly stays NULL.
+
+Guard, same PR, permanent: scripts/verify-void-header-matches-postings.mjs (verify-step 11663,
+claimed in #22989, merged before this AUTH). Confirmed live: currently FAILS at 141 before this
+AUTH's --apply runs; will PASS at 0 after.
+
+action:
+  DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r1558-void-header-posting-status-backfill.ts
+    (dry-run: verified live, 141 rows / $7,075.62, all net-zero-clean, rolled back)
+  DATABASE_URL=<prod> OWNER_AUTH_ID=AUTH-103 npx tsx scripts/ops/2026-09-28-cc2-r1558-void-header-posting-status-backfill.ts --apply
+expires_at: 2026-09-28T18:30:00.000Z
+status: OPEN
+
+— CC-2
