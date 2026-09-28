@@ -1,10 +1,10 @@
 {
-  "healthzSha": "d4ab753",
-  "generated_at": "2026-09-28T04:01:37.742Z",
+  "healthzSha": "7f27ac4",
+  "generated_at": "2026-09-28T04:08:42.427Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "d4ab753",
+    "deployedSha": "7f27ac4",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 22896,
+      "title": "FINDING: ACCT-F2026092706 LANE: DOCS (A/P adoption blocked on a real GL-flag conflict, not a code gap -- reporting before executing)",
+      "state": "merged",
+      "mergedAtCt": "09/27/2026, 11:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22896",
+      "sha": "7f27ac47be",
+      "committedAtIso": "2026-09-27T23:05:01-05:00"
+    },
+    {
       "number": 22895,
       "title": "FINDING: N/A LANE: DOCS (NOW-CC-1 update -- ROUND 150 ack, pivoting fully to A/P adoption)",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22887",
       "sha": "46e9c0e079",
       "committedAtIso": "2026-09-27T21:50:31-05:00"
-    },
-    {
-      "number": 22886,
-      "title": "Claude-1- fix verify-list-empty-settled stale MatchDrawer literal (repo-wide CI break)",
-      "state": "merged",
-      "mergedAtCt": "09/27/2026, 09:48 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22886",
-      "sha": "82898726fc",
-      "committedAtIso": "2026-09-27T21:48:55-05:00"
     }
   ]
 }
