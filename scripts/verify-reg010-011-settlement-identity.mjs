@@ -4,6 +4,15 @@
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../', import.meta.url));
+
+// ROUND 155.1.b — static lock that typed display_id override is 409, not 404.
+{
+  const g = spawnSync(process.execPath, [root + 'scripts/verify-settlement-display-id-override-is-409.mjs'], {
+    cwd: root, stdio: 'inherit',
+  });
+  if (g.status !== 0) process.exit(g.status ?? 1);
+}
+
 const suites = [
   ['apps/backend/vitest.config.ts',
     'apps/backend/src/dispatch/__tests__/presettlement-link.service.test.ts',
