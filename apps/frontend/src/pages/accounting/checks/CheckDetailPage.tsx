@@ -14,6 +14,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { formatDateUS } from "../../../lib/formatDate";
 import { getCheck, voidCheckApi, type CheckDetailLine } from "../../../api/checks";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { MoreActionsMenu } from "../../../components/shared/MoreActionsMenu";
 
 function formatMoneyCents(cents: number): string {
   return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -27,7 +28,6 @@ export function CheckDetailPage() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [voidOpen, setVoidOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
 
   const query = useQuery({
     queryKey: ["checks", "detail", companyId, id],
@@ -77,62 +77,36 @@ export function CheckDetailPage() {
       title="Checks"
       subtitle={`Check ${check.check_number ?? "(to print)"}`}
       actions={
-        <div className="relative">
-          <button
-            type="button"
-            className="rounded border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-            onClick={() => setMoreOpen((v) => !v)}
-            data-testid="check-more-menu-trigger"
-          >
-            More
-          </button>
-          {moreOpen ? (
-            <div className="absolute right-0 z-30 mt-1 min-w-[180px] rounded-sm border border-gray-200 bg-white py-1 shadow-lg" data-testid="check-more-menu">
-              <button
-                type="button"
-                className="block w-full px-4 py-2 text-left text-xs text-gray-800 hover:bg-gray-50"
-                onClick={() => {
-                  setMoreOpen(false);
-                  navigate(`/accounting/checks/new?copy_from=${check.id}`);
-                }}
-              >
-                Copy
-              </button>
-              <button
-                type="button"
-                className="block w-full px-4 py-2 text-left text-xs text-gray-800 hover:bg-gray-50 disabled:cursor-not-allowed disabled:text-gray-300"
-                disabled={!check.journal_entry_id}
-                onClick={() => {
-                  setMoreOpen(false);
-                  if (check.journal_entry_id) navigate(`/accounting/journal-entries/${check.journal_entry_id}`);
-                }}
-              >
-                Transaction journal
-              </button>
-              <button
-                type="button"
-                className="block w-full px-4 py-2 text-left text-xs text-gray-800 hover:bg-gray-50"
-                onClick={() => {
-                  setMoreOpen(false);
-                  navigate(`/accounting/audit-trail?source_type=expense&source_id=${check.id}`);
-                }}
-              >
-                Audit history
-              </button>
-              <button
-                type="button"
-                className="block w-full px-4 py-2 text-left text-xs text-gray-800 hover:bg-gray-50 disabled:cursor-not-allowed disabled:text-gray-300"
-                disabled={isVoided}
-                onClick={() => {
-                  setMoreOpen(false);
-                  setVoidOpen(true);
-                }}
-              >
-                {isVoided ? "Voided" : "Void"}
-              </button>
-            </div>
-          ) : null}
-        </div>
+        <MoreActionsMenu
+          data-testid="check-more-menu"
+          trigger={({ toggle, triggerTestId }) => (
+            <button
+              type="button"
+              className="rounded border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+              onClick={toggle}
+              data-testid={triggerTestId}
+            >
+              More
+            </button>
+          )}
+          items={[
+            { key: "copy", label: "Copy", onSelect: () => navigate(`/accounting/checks/new?copy_from=${check.id}`) },
+            {
+              key: "journal",
+              label: "Transaction journal",
+              disabled: !check.journal_entry_id,
+              onSelect: () => {
+                if (check.journal_entry_id) navigate(`/accounting/journal-entries/${check.journal_entry_id}`);
+              },
+            },
+            {
+              key: "audit",
+              label: "Audit history",
+              onSelect: () => navigate(`/accounting/audit-trail?source_type=expense&source_id=${check.id}`),
+            },
+            { key: "void", label: isVoided ? "Voided" : "Void", disabled: isVoided, onSelect: () => setVoidOpen(true) },
+          ]}
+        />
       }
     >
       <div className="flex flex-col gap-4 p-4">

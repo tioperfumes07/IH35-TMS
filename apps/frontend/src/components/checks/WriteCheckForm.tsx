@@ -16,7 +16,7 @@
 // the place to mint a new mapping — that is a chart-of-accounts governance action, done elsewhere.
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ParityDrawer } from "../parity/ParityDrawer";
+import { Modal } from "../Modal";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
@@ -28,6 +28,8 @@ import { Button } from "../Button";
 import { listExpenseCategoryMappings, listVendorBills, type ExpenseCategoryMapRow, type VendorBill } from "../../api/accounting";
 import { formatDateUS } from "../../lib/formatDate";
 import { getCashGlMapping, getBankingTiles, type CashGlBankAccount } from "../../api/banking";
+import { listVendors, listCustomers } from "../../api/mdata";
+import { useAccountingItemsQuery } from "../../hooks/useAccountingItemsQuery";
 import { UploadZone } from "../UploadZone";
 import {
   createCheck,
@@ -132,13 +134,18 @@ function renderBillableCell(line: DraftLine, onUpdate: (patch: Partial<DraftLine
   );
 }
 
-function renderCustomerCell(line: DraftLine, operatingCompanyId: string, onUpdate: (patch: Partial<DraftLine>) => void) {
+function renderCustomerCell(
+  line: DraftLine,
+  operatingCompanyId: string,
+  customerOptions: Array<{ value: string; label: string }>,
+  onUpdate: (patch: Partial<DraftLine>) => void
+) {
   return line.billable ? (
     <ReferenceSelect
       id={`check-line-customer-${line.key}`}
       value={line.customerId}
       onChange={(next) => onUpdate({ customerId: next })}
-      options={[]}
+      options={customerOptions}
       createKind="customer"
       operatingCompanyId={operatingCompanyId}
       placeholder="Select customer…"
@@ -190,6 +197,7 @@ function renderLinkageCell(kind: LinkageKind, line: DraftLine, operatingCompanyI
 /** Billable + Customer + the 5 fleet-linkage columns, identical across the category and item grids. */
 function sharedLineColumns(
   operatingCompanyId: string,
+  customerOptions: Array<{ value: string; label: string }>,
   onUpdate: (key: string, patch: Partial<DraftLine>) => void
 ): Array<ParityColumn<DraftLine>> {
   return [
@@ -205,7 +213,7 @@ function sharedLineColumns(
       key: "customerId",
       label: "Customer",
       sortable: false,
-      render: (line) => renderCustomerCell(line, operatingCompanyId, (patch) => onUpdate(line.key, patch)),
+      render: (line) => renderCustomerCell(line, operatingCompanyId, customerOptions, (patch) => onUpdate(line.key, patch)),
     },
     ...LINKAGE_KINDS.map(
       (kind): ParityColumn<DraftLine> => ({
@@ -270,6 +278,51 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
     enabled: open && Boolean(operatingCompanyId),
   });
   const categoryRows: ExpenseCategoryMapRow[] = categoryMapQuery.data?.rows ?? [];
+
+  // R-172 CHECK-PAYEE-UNREACHABLE fix -- these ReferenceSelects previously rendered options={[]}
+  // hardcoded, so a real vendor/customer/item could never be found by typing (only "+ Add new ___"
+  // ever showed). The engine underneath (payee resolve, Add-to-Check bill panel, item lines) was
+  // already correct; the picker feeding it a payee id was simply never wired to fetch anything.
+  const payeeVendorsQuery = useQuery({
+    queryKey: ["vendors", "picker", operatingCompanyId],
+    queryFn: () => listVendors({ operating_company_id: operatingCompanyId, limit: 1000 }),
+    enabled: open && Boolean(operatingCompanyId) && payeeKind === "vendor",
+  });
+  const payeeCustomersQuery = useQuery({
+    queryKey: ["customers", "picker", operatingCompanyId],
+    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: 1000 }),
+    enabled: open && Boolean(operatingCompanyId) && payeeKind === "customer",
+  });
+  const payeeOptions = useMemo(
+    () =>
+      payeeKind === "vendor"
+        ? (payeeVendorsQuery.data?.vendors ?? []).map((v) => ({ value: v.id, label: v.name ?? v.id }))
+        : (payeeCustomersQuery.data?.customers ?? []).map((c) => ({ value: c.id, label: c.name ?? c.id })),
+    [payeeKind, payeeVendorsQuery.data, payeeCustomersQuery.data]
+  );
+
+  // Billable-line "Customer" picker (renderCustomerCell) shares the same customer roster -- fetch it
+  // whenever the drawer is open, not gated to payeeKind==="customer" (a Vendor-payee check can still
+  // have billable lines against a customer).
+  const lineCustomersQuery = useQuery({
+    queryKey: ["customers", "picker", operatingCompanyId],
+    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: 1000 }),
+    enabled: open && Boolean(operatingCompanyId) && payeeKind !== "customer",
+  });
+  const customerOptions = useMemo(
+    () =>
+      (payeeKind === "customer" ? payeeCustomersQuery.data?.customers : lineCustomersQuery.data?.customers)?.map((c) => ({
+        value: c.id,
+        label: c.name ?? c.id,
+      })) ?? [],
+    [payeeKind, payeeCustomersQuery.data, lineCustomersQuery.data]
+  );
+
+  const itemsQuery = useAccountingItemsQuery({ operatingCompanyId, kind: "service", enabled: open });
+  const itemOptions = useMemo(
+    () => (itemsQuery.data ?? []).map((i) => ({ value: i.id, label: i.name })),
+    [itemsQuery.data]
+  );
 
   // R-172 step 8 -- More menu's "Copy": clone the source check's payee/bank/memo/tags/lines once, the
   // moment both the source check and the category map (needed to re-derive categoryMapId) are loaded.
@@ -524,7 +577,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
       className: "w-28",
       render: (line) => <MoneyInput valueCents={line.amountCents} onChangeCents={(cents) => updateLine(line.key, { amountCents: cents })} />,
     },
-    ...sharedLineColumns(operatingCompanyId, updateLine),
+    ...sharedLineColumns(operatingCompanyId, customerOptions, updateLine),
     {
       key: "remove",
       label: "",
@@ -557,7 +610,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
           id={`check-line-item-${line.key}`}
           value={line.itemId}
           onChange={(next) => updateLine(line.key, { itemId: next })}
-          options={[]}
+          options={itemOptions}
           createKind="item"
           operatingCompanyId={operatingCompanyId}
           placeholder="Select item…"
@@ -621,7 +674,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
         return cents != null ? formatMoneyCents(cents) : <span className="text-gray-300">—</span>;
       },
     },
-    ...sharedLineColumns(operatingCompanyId, updateLine),
+    ...sharedLineColumns(operatingCompanyId, customerOptions, updateLine),
     {
       key: "remove",
       label: "",
@@ -778,42 +831,8 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
   }
 
   return (
-    <ParityDrawer
-      open={open}
-      title="Check"
-      subtitle={bankAccounts.find((a) => a.id === bankAccountId)?.account_name}
-      onClose={onClose}
-      size="wide"
-      footer={
-        <div className="flex items-center justify-end gap-2">
-          <Button variant="tertiary" onClick={onClose} disabled={saving}>
-            Cancel
-          </Button>
-          <Button variant="tertiary" onClick={resetForm} disabled={saving}>
-            Clear
-          </Button>
-          {/* R-172 step 6 -- Print check: forces print_later (this check gets a number when it's
-              actually printed, step 9's queue), then saves and closes like Save and close. Not
-              offered for a Bill Payment (Check) -- print_later has no meaning there (step 5). Actual
-              PDF rendering/confirm-printed is step 9's own scope, not invented here. */}
-          {!isBillPayment ? (
-            <Button variant="tertiary" onClick={() => void handleSave("close", true)} disabled={!canSave}>
-              Print check
-            </Button>
-          ) : null}
-          <Button variant="tertiary" onClick={() => void handleSave("keep_open")} disabled={!canSave}>
-            {saving ? "Saving…" : "Save"}
-          </Button>
-          <Button variant="tertiary" onClick={() => void handleSave("new")} disabled={!canSave}>
-            Save and new
-          </Button>
-          <Button variant="primary" onClick={() => void handleSave("close")} disabled={!canSave}>
-            Save and close
-          </Button>
-        </div>
-      }
-    >
-      <div className="flex flex-col gap-4 p-4">
+    <Modal open={open} onClose={onClose} title="Check" modalKind="check-write" sizePreset="xl">
+      <div className="flex flex-col gap-4">
         {saveError ? <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">{saveError}</div> : null}
 
         <div className="grid grid-cols-3 gap-3">
@@ -850,7 +869,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                   id="check-payee"
                   value={payeeId}
                   onChange={setPayeeId}
-                  options={[]}
+                  options={payeeOptions}
                   createKind={payeeKind}
                   operatingCompanyId={operatingCompanyId}
                   placeholder={payeeKind === "vendor" ? "Select vendor…" : "Select customer…"}
@@ -1075,7 +1094,6 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
             columns={categoryColumns}
             rows={categoryLines}
             rowKey={(line) => line.key}
-            minWidthPx={1300}
             pageSize={categoryLines.length || 1}
             hidePager
             enableColumnResize={false}
@@ -1108,7 +1126,6 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
               columns={itemColumns}
               rows={itemLines}
               rowKey={(line) => line.key}
-              minWidthPx={1500}
               pageSize={itemLines.length || 1}
               hidePager
               enableColumnResize={false}
@@ -1123,7 +1140,34 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
         )}
           </>
         )}
+
+        <div className="flex items-center justify-end gap-2 border-t border-gray-200 pt-3">
+          <Button variant="tertiary" onClick={onClose} disabled={saving}>
+            Cancel
+          </Button>
+          <Button variant="tertiary" onClick={resetForm} disabled={saving}>
+            Clear
+          </Button>
+          {/* R-172 step 6 -- Print check: forces print_later (this check gets a number when it's
+              actually printed, step 9's queue), then saves and closes like Save and close. Not
+              offered for a Bill Payment (Check) -- print_later has no meaning there (step 5). Actual
+              PDF rendering/confirm-printed is step 9's own scope, not invented here. */}
+          {!isBillPayment ? (
+            <Button variant="tertiary" onClick={() => void handleSave("close", true)} disabled={!canSave}>
+              Print check
+            </Button>
+          ) : null}
+          <Button variant="tertiary" onClick={() => void handleSave("keep_open")} disabled={!canSave}>
+            {saving ? "Saving…" : "Save"}
+          </Button>
+          <Button variant="tertiary" onClick={() => void handleSave("new")} disabled={!canSave}>
+            Save and new
+          </Button>
+          <Button variant="primary" onClick={() => void handleSave("close")} disabled={!canSave}>
+            Save and close
+          </Button>
+        </div>
       </div>
-    </ParityDrawer>
+    </Modal>
   );
 }
