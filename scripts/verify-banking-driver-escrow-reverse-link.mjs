@@ -55,12 +55,17 @@ export function assertBankingDriverEscrowReverse(sources) {
   if (!/setSearchParams/.test(tabContent)) {
     problems.push(`${TAB_CONTENT}: must keep the URL in sync (setSearchParams) when the driver filter changes`);
   }
-  if (
-    !/dataTestId="banking-escrow-filter-driver"/.test(tabContent) ||
-    !/kind=["']driver["']/.test(tabContent) ||
-    !/allowCreate=\{false\}/.test(tabContent)
-  ) {
-    problems.push(`${TAB_CONTENT}: must render EntityPicker kind=driver filter (allowCreate=false)`);
+  // ROUND 197.1 (2026-09-28, owner-raised) — the driver filter is now a QuickBooks-parity
+  // MULTI-select (MultiSelectDropdown + live mdata.drivers), replacing the old single-select
+  // EntityPicker this check originally pinned. Accept EITHER shape: the retired EntityPicker
+  // single-select (kind="driver" + allowCreate={false} + its own dataTestId prop), or the new
+  // multi-select's own real testid hook -- both are genuine, live-scoped driver filters; only a
+  // total absence of any driver-filter marker is a real regression.
+  const hasLegacyEntityPicker =
+    /kind=["']driver["']/.test(tabContent) && /allowCreate=\{false\}/.test(tabContent);
+  const hasMultiSelectDriverFilter = /data-testid="banking-escrow-driver-filter"/.test(tabContent);
+  if (!hasLegacyEntityPicker && !hasMultiSelectDriverFilter) {
+    problems.push(`${TAB_CONTENT}: must render a driver filter (legacy EntityPicker kind=driver, or the multi-select's banking-escrow-driver-filter testid)`);
   }
   const leaf = JSON.parse(matrixSource).leaves?.find((candidate) => candidate.id === "driver_escrow");
   if (!leaf?.required?.includes("reverse_link")) {
@@ -105,7 +110,17 @@ function selftest() {
     { ...good, [TAB_CONTENT]: good[TAB_CONTENT].replace(/useSearchParams/g, "useState") },
     { ...good, [TAB_CONTENT]: good[TAB_CONTENT].replace('searchParams.get("driver_id")', '""') },
     { ...good, [TAB_CONTENT]: good[TAB_CONTENT].replace(/setSearchParams/g, "") },
-    { ...good, [TAB_CONTENT]: good[TAB_CONTENT].replace('dataTestId="banking-escrow-filter-driver"', 'dataTestId="x"') },
+    // ROUND 197.1 widened the driver-filter check to accept either the legacy EntityPicker shape
+    // or the new multi-select's own testid -- so the real regression fixture must remove BOTH
+    // markers (kind="driver"+allowCreate AND banking-escrow-driver-filter), not just rename the
+    // old testid, which is no longer sufficient to prove a driver filter is genuinely missing.
+    {
+      ...good,
+      [TAB_CONTENT]: good[TAB_CONTENT]
+        .replace('kind="driver"', "")
+        .replace("allowCreate={false}", "")
+        .replace('dataTestId="banking-escrow-filter-driver"', ""),
+    },
   ];
   const missingRequired = JSON.parse(good[MATRIX]);
   const escrowLeaf = missingRequired.leaves.find((candidate) => candidate.id === "driver_escrow");

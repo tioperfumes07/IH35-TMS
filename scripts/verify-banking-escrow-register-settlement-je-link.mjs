@@ -78,11 +78,25 @@ export function checkEscrowRegisterLinkage(src, frontendSrc) {
     if (!/visibleDocumentLabel\(String\(row\.settlement_display_id[^)]*\)[^,]*,\s*sid,\s*"Settlement"\)/.test(frontendSrc)) {
       problems.push(`${FRONTEND_TARGET}: Settlement column no longer threads row.settlement_display_id into visibleDocumentLabel — tombstone entityLabel or reverted`);
     }
-    if (!/settlement_display_id: String\(row\.settlement_display_id/.test(frontendSrc)) {
-      problems.push(`${FRONTEND_TARGET}: registerToEscrowRow no longer copies settlement_display_id from the register payload — BANK-F6050 live tombstone class`);
+    // ROUND 197.1 (2026-09-28) — DriverEscrowTabContent.tsx's dual-query architecture
+    // (registerToEscrowRow/timelineToRegisterRow copying fields into a shared row shape) was
+    // replaced with a single filtered /escrow-visualizer/ledger endpoint whose EscrowLedgerRow
+    // type is rendered directly, with no intermediate copy step. The underlying requirement this
+    // check guards -- settlement_display_id and journal_entry_id must actually reach the render,
+    // not be silently dropped -- still holds and is still asserted; the accepted pattern widened
+    // (OR) to cover BOTH the old copy-into-a-mapped-row shape and the new direct
+    // `row.<field>`-in-render shape, so a real future regression (the field vanishing from BOTH
+    // shapes) is still caught, but this specific, intentional architecture change is not
+    // misread as one.
+    const settlementCopied = /settlement_display_id: String\(row\.settlement_display_id/.test(frontendSrc);
+    const settlementDirect = /row\.settlement_display_id/.test(frontendSrc);
+    if (!settlementCopied && !settlementDirect) {
+      problems.push(`${FRONTEND_TARGET}: settlement_display_id no longer reaches the render (neither the mapped-row copy pattern nor a direct row.settlement_display_id usage found) — BANK-F6050 live tombstone class`);
     }
-    if (!/journal_entry_id: String\(row\.journal_entry_id/.test(frontendSrc)) {
-      problems.push(`${FRONTEND_TARGET}: registerToEscrowRow no longer copies journal_entry_id from the register payload`);
+    const jeCopied = /journal_entry_id: String\(row\.journal_entry_id/.test(frontendSrc);
+    const jeDirect = /row\.journal_entry_id/.test(frontendSrc);
+    if (!jeCopied && !jeDirect) {
+      problems.push(`${FRONTEND_TARGET}: journal_entry_id no longer reaches the render (neither the mapped-row copy pattern nor a direct row.journal_entry_id usage found)`);
     }
   }
 
@@ -129,7 +143,21 @@ function selftest() {
     { src: good.replace("ds.display_id AS settlement_display_id,\n", ""), frontend: goodFrontend },
     { src: good.replace(/LEFT JOIN driver_finance\.driver_settlements ds[\s\S]*?'driver_settlement'\n/, ""), frontend: goodFrontend },
     { src: good, frontend: goodFrontend.replace("row.settlement_display_id ?? \"\") || null", "null") },
-    { src: good, frontend: goodFrontend.replace("settlement_display_id: String(row.settlement_display_id ?? \"\"),", "") },
+    // ROUND 197.1 widened this check to accept EITHER the mapped-row copy pattern OR a direct
+    // `row.<field>` usage in render (two valid architectures) -- so the true regression fixture
+    // for "settlement_display_id lost" must remove it from BOTH forms, not just the copy line
+    // (removing only the copy line, while the direct-usage label line still exists, is no longer
+    // a real regression under the widened check).
+    {
+      src: good,
+      frontend: goodFrontend
+        .replace("settlement_display_id: String(row.settlement_display_id ?? \"\"),", "")
+        .replace("String(row.settlement_display_id ?? \"\") || null", "null"),
+    },
+    {
+      src: good,
+      frontend: goodFrontend.replace("journal_entry_id: String(row.journal_entry_id ?? \"\"),", ""),
+    },
   ];
   for (const [i, mutated] of mutations.entries()) {
     if (checkEscrowRegisterLinkage(mutated.src, mutated.frontend).length === 0) {

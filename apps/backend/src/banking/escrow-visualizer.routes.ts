@@ -162,7 +162,7 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
               je.entry_date::text AS journal_entry_date,
               je.memo AS journal_entry_memo
             FROM accounting.escrow_accounts ea
-            JOIN accounting.escrow_postings ep
+            JOIN accounting.escrow_ledger ep
               ON ep.escrow_account_id = ea.id
              AND ep.operating_company_id = ea.operating_company_id
             LEFT JOIN accounting.journal_entries je
@@ -244,12 +244,28 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
             SELECT
               ep.id,
               ea.holder_id AS driver_id,
+              -- ROUND 197.1 follow-up (2026-09-28) — d LEFT JOIN, not INNER: live-caught a real
+              -- cross-entity mismatch (escrow_accounts.holder_id ALFONSO HIDALGO CHAVEZ resolves
+              -- to a driver row scoped to a DIFFERENT operating_company_id than the escrow account
+              -- itself, so it never satisfied the entity-scoped INNER JOIN). The prior INNER JOIN
+              -- silently dropped 6 real postings from the row list while the separate total-count
+              -- query (no driver join) still counted them -- a 230-vs-224 mismatch a human would
+              -- read as "the list is just short," not as a hidden defect. NULL is now surfaced
+              -- honestly instead of hidden; this does not fix the underlying cross-entity data
+              -- question (out of scope here, flagged separately), it stops silently hiding it.
               CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
               ep.posting_type AS entry_type,
               (ep.amount_cents::numeric / 100) AS amount,
               ep.note AS memo,
               ep.posted_at AS created_at,
               CASE WHEN ep.source_type = 'driver_settlement' THEN ep.source_id::text ELSE NULL END AS settlement_id,
+              -- BANK-F5751/F6050 class (same law escrow-visualizer's own /:driver_id timeline and
+              -- banking.routes.ts's register "escrow" branch already follow) — the Settlement
+              -- column must show a real human document number, never a bare UUID behind a generic
+              -- "Settlement" fallback label. P0-B (Lead, 2026-09-22/23): source_document_ref is the
+              -- canonical AlwaysTrack settlement number; the old synthetic display_id counter is
+              -- retired as the user-facing label.
+              ds.source_document_ref AS settlement_display_id,
               ep.linked_journal_entry_id::text AS journal_entry_id,
               je.entry_date::text AS journal_entry_date,
               je.memo AS journal_entry_memo,
@@ -258,7 +274,11 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
             JOIN accounting.escrow_postings ep
               ON ep.escrow_account_id = ea.id
              AND ep.operating_company_id = ea.operating_company_id
-            JOIN mdata.drivers d
+            LEFT JOIN driver_finance.driver_settlements ds
+              ON ds.id = ep.source_id
+             AND ep.source_type = 'driver_settlement'
+             AND ds.operating_company_id = ep.operating_company_id
+            LEFT JOIN mdata.drivers d
               ON d.id = ea.holder_id
              AND d.operating_company_id = ea.operating_company_id
             LEFT JOIN accounting.journal_entries je
