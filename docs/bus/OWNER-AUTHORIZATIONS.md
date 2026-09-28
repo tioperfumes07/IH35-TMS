@@ -2358,3 +2358,29 @@ for the same load — a pre-existing data-quality defect, reported, not guessed 
 22+68+8+6 = 104, full accounting for every row.
 
 — CC-1
+
+---
+
+## AUTH-085
+issued_at: 2026-09-28T07:45:00.000Z
+scope: mdata.customers (INSERT only, exactly 5 real broker rows for USMCA, is_sample_data=false: TTS LLC, Westgate Global Logistics, LOGIMAX TRANSPORT INC, RITE WAY LOGISTICS, INC, C and A TRANSPORTATION & LOGISTICS INC) + mdata.drivers (status/first_name/last_name/deactivated_at/merged_into_driver_id UPDATE only, 4 newly-discovered leftover duplicate pairs) + mdata.driver_samsara_accounts (driver_id repoint only) + every FK table listed in scripts/ops/2026-09-28-cc1-round148-merge-driver-v5.ts's FK_TABLES (driver_id repoint only, for these 4 losers) + audit.audit_events (INSERT, merge trail), operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA) only.
+action: OWNER_AUTH_ID=AUTH-085 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc1-round155-create-5-customers.ts && OWNER_AUTH_ID=AUTH-085 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc1-round155-merge-driver-cleanup.ts
+expires_at: 2026-09-28T14:00:00.000Z
+status: OPEN
+
+ROUND 155.2 prerequisite fixes before booking the 18 real rate-con loads (13622-13639).
+(1) 5 customers live-verified missing from mdata.customers for USMCA (155.2.b) — the other 9
+customer names in the 18-load plan already exist and match exactly.
+(2) 4 driver-merge pairs NOT in the order's named list (which named CARLOS MAURICIO PENA
+CARVALLO / LUIS ARMANDO SOSA PEREZ / ANGEL ALFONSO SOSA PEREZ / LEONEL ANTONIO MORALES — all 4
+already fully resolved by AUTH-081, live-verified exactly 1 match each, no action needed here):
+HUGO GAYTAN SARABIA has 2 leftover 0-load duplicate profiles of the already-merged survivor
+3445cf68 (one shares its CDL with the already-merged loser, one shares the survivor's own
+Samsara id) — also corrects the survivor's name, which was missing the real "Sarabia" surname
+(confirmed in a 2026-09-08 document, predating any of tonight's merges). GENARO GUERRERO CHAVEZ
+has 1 leftover 0-load duplicate of survivor 6edcb351 sharing its CDL. EDUARDO AZAEL FLORES ORTIZ
+has exactly 2 USMCA profiles, both currently Inactive with 0 loads (he has never been booked
+before) — survivor chosen by hard identifier (Samsara id present vs absent), not by name.
+DRY_RUN=1 passed clean on the merge script: 4 pairs, TB unaffected, samsara total unchanged 95.
+
+— CC-1
