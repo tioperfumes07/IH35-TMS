@@ -9214,5 +9214,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-28",
     "purpose": "verify-factoring-posting-legs-match-header"
+  },
+  "11695": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-28",
+    "purpose": "verify-settlement-line-posting-account-complete"
   }
 }
