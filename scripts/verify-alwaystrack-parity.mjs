@@ -12,15 +12,20 @@
 //      mdata.loads for USMCA. Otherwise SKIPPED — NOT FED YET, printed as scope, never as
 //      a variance. Assertions A and B apply to in-scope documents ONLY — an absent load on
 //      an out-of-scope document is the expected state, not a violation.
+//   2b. OWNER-CLOSED RANGE 5769–5819 (owner 2026-09-28): EXCLUDED from in-scope entirely.
+//      SKIPPED — OWNER-CLOSED. Shared Transportation/USMCA settlements, reconciled by the
+//      owner. Never a variance. Never a LIVE FAIL. Fix the guard, never the data.
+//      Cite: claude/00-CLOSED-USMCA-SETTLEMENTS-5769-TO-5819-TIE-EXACTLY-NEVER-ASK-AGAIN.md
+//      Standing law: a permanent close goes in the GUARD, not just a doc.
 //   3. Six dimensions in cents, zero tolerance, in-scope only.
 //   4. Print every run, always, even when everything skips:
-//        "parity scope: N of X documents in scope, M skipped NOT FED YET"
+//        "parity scope: N of X documents in scope, K skipped OWNER-CLOSED, M skipped NOT FED YET"
 //      X is the DYNAMIC document count from the ground-truth file — never hardcoded. Today
 //      it reads 35 (34 company + 1 driver-only, 5782). When CC-3's regenerated truth file
 //      lands, it reads 48 with no edit.
 //   5. No baseline mechanism — no baseline file, no UPDATE_ALWAYSTRACK_PARITY_BASELINE.
-//      Scope is a POPULATION check. When all documents are in scope there is no exemption
-//      left — nothing to switch off, no human re-pin, ever.
+//      Scope is a POPULATION check. OWNER-CLOSED 5769–5819 is a permanent-close exclusion
+//      (settled shared Transportation/USMCA), not a baseline pin.
 //
 // THE BYPASS TRAP (verbatim): a CTE calling set_config('app.bypass_rls','lucia',true) must be
 // declared AS MATERIALIZED and referenced in a WHERE clause, e.g. (SELECT v FROM b)='lucia'.
@@ -67,10 +72,13 @@ const TRANSPORTATION_DOCS = ["5753", "5760", "5761", "5762", "5763", "5764", "57
 // $22,510.00 of the owner's own completed resolution (5 live invoices, INV-2026-00001..00005, that
 // ARE the owner's shared-settlement resolution, not a duplicate-billing defect) before the owner
 // retracted it. Full mechanism: claude/00-CLOSED-USMCA-SETTLEMENTS-5769-TO-5819-TIE-EXACTLY-NEVER-ASK-AGAIN.md.
-// A document number in this closed range is printed (never hidden) but never counted as a FAIL —
-// fix the guard, never the data, per the owner's own standing law.
+// Owner order: EXCLUDE 5769–5819 from in-scope. Print SKIPPED — OWNER-CLOSED with plain language
+// that these are shared Transportation/USMCA and reconciled by the owner. Cite the closed doc in
+// the comment AND in any failure/skip text. Fix the guard. Never the data. Do NOT void money.
 const CLOSED_5769_5819_MIN = 5769;
 const CLOSED_5769_5819_MAX = 5819;
+const CLOSED_5769_5819_DOC =
+  "claude/00-CLOSED-USMCA-SETTLEMENTS-5769-TO-5819-TIE-EXACTLY-NEVER-ASK-AGAIN.md";
 function isClosed5769to5819(docNumber) {
   const n = Number(docNumber);
   return Number.isFinite(n) && n >= CLOSED_5769_5819_MIN && n <= CLOSED_5769_5819_MAX;
@@ -313,10 +321,17 @@ async function live() {
 
     // D input — moved after in-scope scoping (see below) — must use inScopeLoadNumbers.
 
-    // ── Partition documents: IN SCOPE vs SKIPPED (NOT FED YET) ───────────────────────────
+    // ── Partition documents: IN SCOPE vs SKIPPED (OWNER-CLOSED | NOT FED YET) ───────────
+    // Closed range 5769–5819 — EXCLUDED from in-scope. Shared Transportation/USMCA,
+    // owner-reconciled. Fix the guard, never the data. Cite CLOSED_5769_5819_DOC.
     const inScopeDocs = [];
     const skippedDocs = [];
+    const skippedOwnerClosedDocs = [];
     for (const target of documents) {
+      if (isClosed5769to5819(target.doc)) {
+        skippedOwnerClosedDocs.push(target.doc);
+        continue;
+      }
       const loads = target.loads ?? [];
       const allLive = loads.length > 0 && loads.every((n) => liveLoadNumbers.has(n));
       if (allLive) {
@@ -348,34 +363,30 @@ async function live() {
       };
       actuals.push(actual);
       const mismatches = compareDocument(target, actual);
-      const closed = isClosed5769to5819(target.doc);
       if (mismatches.length === 0) cleanDocs += 1;
-      if (mismatches.length === 0) {
-        lines.push(`${target.doc}: PASS`);
-      } else if (closed) {
-        lines.push(
-          `${target.doc}: CLOSED (owner-reconciled, 5769-5819, see claude/00-CLOSED-USMCA-SETTLEMENTS-5769-TO-5819-TIE-EXACTLY-NEVER-ASK-AGAIN.md) -- ${mismatches.join("; ")}`
-        );
-      } else {
-        lines.push(`${target.doc}: FAIL -- ${mismatches.join("; ")}`);
-      }
-      // A closed-range document's mismatches are printed for transparency but never counted as a
-      // real defect — the owner's own standing law: fix the guard, never the data, never re-raise
-      // a settled decision. docResults still carries the raw mismatches so a FUTURE change to the
-      // range boundaries (never the data) is auditable, but hasMismatches below only counts
-      // documents outside the closed range.
-      docResults.push({ doc: target.doc, mismatches, target, actual, closed });
+      lines.push(`${target.doc}: ${mismatches.length === 0 ? "PASS" : "FAIL"}${mismatches.length ? " -- " + mismatches.join("; ") : ""}`);
+      docResults.push({ doc: target.doc, mismatches, target, actual });
     }
     for (const line of lines) console.log(line);
 
-    // ── Print SKIPPED documents (NOT FED YET) ───────────────────────────────────────────
+    // ── Print SKIPPED documents (OWNER-CLOSED | NOT FED YET) ────────────────────────────
+    for (const doc of skippedOwnerClosedDocs) {
+      console.log(
+        `${doc}: SKIPPED — OWNER-CLOSED (shared Transportation/USMCA settlements, ` +
+          `reconciled by the owner; see ${CLOSED_5769_5819_DOC})`
+      );
+    }
     for (const s of skippedDocs) {
       console.log(`${s.doc}: SKIPPED — NOT FED YET (missing loads: ${s.missing.join(",")})`);
     }
 
     // ── Scope line — printed EVERY run, always ─────────────────────────────────────────
     console.log("");
-    console.log(`parity scope: ${inScopeDocs.length} of ${documentCount} documents in scope, ${skippedDocs.length} skipped NOT FED YET`);
+    console.log(
+      `parity scope: ${inScopeDocs.length} of ${documentCount} documents in scope, ` +
+        `${skippedOwnerClosedDocs.length} skipped OWNER-CLOSED (5769–5819; ${CLOSED_5769_5819_DOC}), ` +
+        `${skippedDocs.length} skipped NOT FED YET`
+    );
 
     // ── TOTAL line (live sums for in-scope only) ────────────────────────────────────────
     const sumActual = (field) => actuals.reduce((s, a) => s + (a[field] ?? 0), 0);
@@ -507,21 +518,31 @@ async function live() {
     await client.query("COMMIT");
 
     const allStructuralPass = structuralFailures.every((a) => a.pass);
-    // Owner standing law (2026-09-28): a mismatch inside the closed 5769-5819 range is never a
-    // build failure — see claude/00-CLOSED-USMCA-SETTLEMENTS-5769-TO-5819-TIE-EXACTLY-NEVER-ASK-AGAIN.md.
-    const realMismatches = docResults.filter((r) => r.mismatches.length > 0 && !r.closed);
-    const closedRangeMismatches = docResults.filter((r) => r.mismatches.length > 0 && r.closed);
-    const hasMismatches = realMismatches.length > 0;
+    // Owner standing law (2026-09-28): 5769–5819 are EXCLUDED from in-scope. If any leaked
+    // into docResults, the GUARD is wrong — never the data. Shared Transportation/USMCA,
+    // reconciled by the owner. See CLOSED_5769_5819_DOC.
+    const leakedClosed = docResults.filter((r) => isClosed5769to5819(r.doc));
+    const hasMismatches = docResults.some((r) => r.mismatches.length > 0);
 
-    if (closedRangeMismatches.length > 0) {
+    if (skippedOwnerClosedDocs.length > 0) {
       console.log(
-        `\n${LABEL}: ${closedRangeMismatches.length} document(s) inside the CLOSED 5769-5819 range show a variance -- owner-reconciled, not a defect, not counted against this guard's result. See claude/00-CLOSED-USMCA-SETTLEMENTS-5769-TO-5819-TIE-EXACTLY-NEVER-ASK-AGAIN.md before re-raising: ${closedRangeMismatches.map((r) => r.doc).join(", ")}.`
+        `\n${LABEL}: ${skippedOwnerClosedDocs.length} document(s) SKIPPED — OWNER-CLOSED ` +
+          `(shared Transportation/USMCA settlements, reconciled by the owner; see ${CLOSED_5769_5819_DOC}). ` +
+          `Do NOT void money. Fix the guard if this range re-raises.`
       );
     }
 
-    if (!allStructuralPass || hasMismatches) {
+    if (!allStructuralPass || hasMismatches || leakedClosed.length > 0) {
+      if (leakedClosed.length > 0) {
+        console.error(
+          `${LABEL}: GUARD BUG — ${leakedClosed.length} closed owner-reconciled settlement(s) ` +
+            `leaked into in-scope parity: ${leakedClosed.map((r) => r.doc).join(", ")}. ` +
+            `These settlements are shared Transportation/USMCA and reconciled by the owner. ` +
+            `Do NOT void money. Fix the guard. See ${CLOSED_5769_5819_DOC}`
+        );
+      }
       if (hasMismatches) {
-        const mismatched = realMismatches.map((r) => r.doc);
+        const mismatched = docResults.filter((r) => r.mismatches.length > 0).map((r) => r.doc);
         console.error(`${LABEL}: LIVE FAIL — ${mismatched.length} in-scope document(s) mismatched: ${mismatched.join(", ")}`);
       }
       if (!allStructuralPass) {
@@ -530,7 +551,9 @@ async function live() {
       process.exit(1);
     }
     console.log(
-      `\n${LABEL}: LIVE PASS — ${inScopeDocs.length} in scope, ${skippedDocs.length} skipped NOT FED YET, 0 real mismatches${closedRangeMismatches.length ? ` (${closedRangeMismatches.length} owner-closed 5769-5819 variance(s), not counted)` : ""}, 5/5 structural assertions hold.`
+      `\n${LABEL}: LIVE PASS — ${inScopeDocs.length} in scope, ` +
+        `${skippedOwnerClosedDocs.length} skipped OWNER-CLOSED (5769–5819), ` +
+        `${skippedDocs.length} skipped NOT FED YET, 0 mismatches, 5/5 structural assertions hold.`
     );
   } finally {
     await client.end();
@@ -580,7 +603,26 @@ if (process.argv.includes("--selftest")) {
   // FEED-SCOPE MUTATION — a document with a missing load must be SKIPPED, not mismatched.
   // (This is a structural test of the scoping logic, not the comparison logic above.)
 
-  console.log(`${LABEL} --selftest PASS (${documentCount} docs / 193,100.00 / 171 fuel rows / 110,072.33 / 178 expense rows all reproduced; 1/1 mutation caught)`);
+  // OWNER-CLOSED RANGE (5769–5819) — EXCLUDE from in-scope. Permanent close in the GUARD.
+  // Cite: claude/00-CLOSED-USMCA-SETTLEMENTS-5769-TO-5819-TIE-EXACTLY-NEVER-ASK-AGAIN.md
+  // These settlements are shared Transportation/USMCA and reconciled by the owner.
+  assert.equal(isClosed5769to5819("5768"), false, "5768 is Transportation structural E, not OWNER-CLOSED range");
+  assert.equal(isClosed5769to5819("5769"), true, "5769 must be OWNER-CLOSED");
+  assert.equal(isClosed5769to5819("5770"), true, "5770 must be OWNER-CLOSED (ROUND 201 leak)");
+  assert.equal(isClosed5769to5819("5819"), true, "5819 must be OWNER-CLOSED");
+  assert.equal(isClosed5769to5819("5820"), false, "5820 is past OWNER-CLOSED range");
+  assert.ok(
+    CLOSED_5769_5819_DOC.includes("00-CLOSED-USMCA-SETTLEMENTS-5769-TO-5819"),
+    "skip/fail text must cite the closed-doc filename"
+  );
+  assert.ok(
+    fs.existsSync(path.join(ROOT, CLOSED_5769_5819_DOC)),
+    `closed doc must exist on disk: ${CLOSED_5769_5819_DOC}`
+  );
+
+  console.log(
+    `${LABEL} --selftest PASS (${documentCount} docs / 193,100.00 / 171 fuel rows / 110,072.33 / 178 expense rows; 1/1 mutation caught; OWNER-CLOSED 5769–5819 EXCLUDED — see ${CLOSED_5769_5819_DOC})`
+  );
   process.exit(0);
 }
 
