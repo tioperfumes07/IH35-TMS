@@ -1,103 +1,117 @@
-# ROUND 205.5 — direct answer + full RLS-guard audit — CC-1 — 2026-09-28
-Archived: `docs/bus/archive/NOW-CC-1-2026-09-28-r201-superseded.md`. Did NOT touch
-`scripts/verify-workflow-requests-entity-scoped.mjs` (confirmed via `git diff origin/main` before and
-after this investigation — byte-identical; Devin-B's file under ROUND 205.4).
+# ROUND 206 — item_id finished, B-LEDGER-1 fixed+documented, exact GRANT/REVOKE for approval — CC-1 — 2026-09-28
+Archived: `docs/bus/archive/NOW-CC-1-2026-09-28-r205.5-superseded.md`.
 
-## Part 1 — the direct question: "exactly what command and what DATABASE_URL produced that PASS line?"
+## 1. The 205.3 migration box — stands, nothing further from me.
 
-**Command:** `node scripts/verify-workflow-requests-entity-scoped.mjs`
-**DATABASE_URL** (the POOLED endpoint, `neondb_owner` credentials — the one I've used all session):
-`postgresql://neondb_owner:npg_hf85RMXGzFbK@ep-broad-block-akykk7bw-pooler.c-3.us-west-2.aws.neon.tech/neondb?channel_binding=require&sslmode=require`
+## 2. item_id — 4 more resolved live, 124 honestly remain (was 128 at investigation start; the Lead's
+"123 of 214" is an earlier snapshot — live denominator is now 358, the feed keeps growing).
 
-Re-ran it just now, identical output: `PASS — schema shape correct, ... two real Administrators in
-two different companies each see only their own company's workflow_request (rolled back, no data
-persisted).` It is reproducible. Here is why, verified live, not assumed:
+Real evidence found for 4 rows this pass, applied live and committed:
+- **"Driver Pay-Desenlonada"** ($25.00) + **"Driver Pay-Enlonada"** ($25.00), both USMCA — these are
+  unambiguous, unlike the bundled description below. Mapped to the existing combined catalog item
+  **"Driver Pay-Tarp-Enlonada/Desenlonada"** (USMCA `8dea02de-...`), the same combined-item convention
+  already used for both tarp directions.
+- **"Driver Pay-Layover-Estancia 21y22 DE SEPTIEMBRE"** ($50.00), USMCA — the date suffix is just
+  descriptive detail; mapped to **"Driver Pay-Layover-Estancia"** (USMCA `b2f21729-...`).
+- **"AlwaysTrack settl 5818: Admin fee"** ($10.00), USMCA, `deduction` — this is the same row I
+  already recommended in ROUND 201 ("Driver-Deductions-Miscellaneous", not a catalog gap). I had only
+  recommended it then; now actually mapped to that item (USMCA `48208aa4-...`).
 
-- `pg_roles`: `neondb_owner.rolbypassrls = true` — the Lead's stated fact, confirmed.
-- But on **this exact pooled connection**, `SELECT current_user, session_user` returns
-  `current_user = 'ih35_app'`, `session_user = 'neondb_owner'`. The pooler silently executes queries
-  as `ih35_app`, not as the authenticating role. `ih35_app.rolbypassrls = false` (also confirmed).
-  So the guard's read genuinely ran RLS-enforced.
-- I could not find the mechanism that causes this: `pg_roles.rolconfig` for both roles is null,
-  `pg_db_role_setting` for this database is empty, `pg_event_trigger` is empty. It is a real,
-  live-reproducible property of Neon's pooler endpoint for this project/role combination that I
-  cannot fully explain past the empirical fact. Flagging that gap honestly rather than inventing a
-  mechanism.
-- Cross-checked against a second, independent script with zero shared code with the guard
-  (raw `pg.Pool`, no `requireLiveDbOrExit`, no app helpers) — same result: reads as `ih35_app`,
-  sees only its own company's row.
+All 4: `quantity=1, rate_cents=round(amount*100), unit_of_measure='each'` (the ROUND 198 pattern for
+flat-dollar lines), constraint verified (`round(quantity*rate_cents) = round(amount*100)`) before
+commit. No migration needed — data-only, same as ROUND 198's resolutions.
 
-**So the PASS line is real for the exact command/URL I used.** But — see Part 2 — that specific
-protection does NOT generalize, and the Lead's separate, larger claim is confirmed true for the
-guards' actual documented execution path.
+**124 honestly remain, unchanged reasoning from ROUND 198, re-verified live just now:**
+- **68 (34 `earnings` + 34 `deadhead_pay`) — still accessorial-only expected state.** Re-checked the
+  invariant live: 0 of these 68 have `quantity` set. Not a new gap; the check constraint's
+  all-four-or-none design means these were never meant to carry an item.
+- **56 `extra_pay`, still genuinely ambiguous — not resolved, and I looked for new evidence before
+  reporting that.** Each is `"AlwaysTrack tarp/other/extra-stop load NNNNN settl NNNN"` — a real,
+  distinct load/settlement per row (not one literal bundled description as ROUND 198's count implied;
+  56 distinct descriptions, one ambiguous CONCEPT). Confirmed there is no raw itemized AlwaysTrack
+  payload table anywhere in this schema to disambiguate which of the 3 real items (Tarp-Enlonada/
+  Desenlonada, Extra Pick Up, Extra Delivery/Drop) applies to any given row — searched
+  `information_schema.tables` for anything raw/settlement/alwaystrack-shaped, found none. Naming a
+  specific item for any of these 56 without that evidence would be inventing a business fact, which
+  is exactly what the owner's 2026-09-10 ruling forbids. Standing by if a raw payload source exists
+  outside this database that I don't have access to.
 
-## Part 2 — the separate, larger task: audit of every RLS-asserting guard
+## 3. B-LEDGER-1 — investigated, root-caused, fixed. Applied and tracked live.
 
-**Answering the assigned question directly: the "downgrade to ih35_app" protection is an accident of
-which connection string I personally used, not a property of the guard framework.** I tested the
-actual documented credential path and it does NOT protect:
+**What happened, precisely:** `fuel.fuel_transactions.gross_cost/discount_amount/fee_amount` were
+applied directly to prod on 2026-09-28 at 05:17:33Z and 05:27:05Z, under migration numbers
+`202614420000` and `202614430000` — **with no .sql file ever committed to this repo for either run**
+(different checksums between the two runs, so not a retry of identical content). Those same two
+12-digit numbers were **legitimately re-claimed the same day** by two unrelated, real, committed
+migrations: `202614420000_mdata_drivers_merged_into_driver_id.sql` (applied 06:03:54Z) and
+`202614430000_worm_check_engine_banking_tables.sql` (applied 07:51:48Z) — confirmed both of those
+applied correctly with their own tracker rows; **nothing was skipped or overwritten**, this is a pure
+numbering collision, not a lost migration.
 
-- `~/.config/ih35/neon-prod-readonly.url` — the file `money-pr-local-gate.mjs`'s
-  `resolveGuardDatabaseUrl()` loads for `ih35_ci_readonly` (per GATE-F005, 2026-09-23) — uses the
-  **direct** endpoint (`ep-broad-block-akykk7bw.c-3...`, no `-pooler`). Tested it directly just now:
-  `current_user = session_user = 'ih35_ci_readonly'`, **no downgrade**, `rolbypassrls = true`. A
-  guard run this way — the intended, documented way — is genuinely RLS-bypassed.
-- This exact gap was **already disclosed once**, 5 days ago, and never fixed:
-  `docs/bus/2026-09-23-LEAD-RULING-CC2-LANE-CROSS-GATE-F005-READONLY-ROLE.md` lines 31-36 — CC-2
-  found `ih35_ci_readonly` could execute a real UPDATE inside a rolled-back transaction (should have
-  been permission-denied for a "readonly" role) and flagged it "for the owner to route (a role-grant
-  change)." It sat unrouted until now.
-- GitHub Actions' own `ci.yml`/`security-checks.yml` don't touch Neon for these guards at all —
-  `DATABASE_URL=postgres://verify:verify@localhost:54329/ih35_verify`, a fresh per-run Docker
-  Postgres. `verify` is that container's `POSTGRES_USER`, which the official postgres image always
-  creates as a superuser — and a real Postgres superuser bypasses RLS unconditionally, regardless of
-  the `rolbypassrls` flag. So **every RLS-asserting guard that runs inside actual GitHub Actions CI
-  is also vacuous**, by a third, independent mechanism, with no accidental protection possible (every
-  run hits this, not just some connection strings).
+**Data integrity checked, not assumed — no evidence of double-application:** of 2,081 `fuel_transactions`
+rows, 1,631 carry a non-null `gross_cost`, and every one of them satisfies `gross_cost = total_cost`
+exactly (avg diff `0.00000000000000000000`, zero rows at 2x `total_cost`). No audit trigger exists on
+this table (a separate, already-tracked gap) and Neon's query-log telemetry is not enabled for this
+region, so the original SQL text could not be recovered — but the live data itself is sane.
 
-**Guards that specifically assert cross-tenant/RLS security behavior with a real scoped session**
-(grepped for `set_config('app.current_user_id'|'app.operating_company_id')` combined with
-leak/cross-tenant/"should not see" assertion language — the pattern my own B3 guard uses), **11
-found**:
-1. `scripts/verify-alerts-routes-membership.mjs`
-2. `scripts/verify-company-membership-assert.mjs`
-3. `scripts/verify-driver-termination-reasons-rls-single-policy.mjs`
-4. `scripts/verify-escrow-forfeit-membership-before-guc.mjs`
-5. `scripts/verify-escrow-forfeit-sign-delta.mjs`
-6. `scripts/verify-money-dispatch-opco-resolver.mjs`
-7. `scripts/verify-money-side-effect-after-commit.mjs`
-8. `scripts/verify-no-interpolated-guc.mjs`
-9. `scripts/verify-no-session-scoped-guc-on-pooled-connection.mjs`
-10. `scripts/verify-relay-wallet-entity-parity.mjs`
-11. `scripts/verify-workflow-requests-entity-scoped.mjs` (mine, B3 — Devin-B owns the current fix)
+**Fixed, not just reported:**
+1. `db/migrations/202614550000_fuel_transactions_genesis_anchor_gross_cost_discount_fee_documented.sql`
+   — idempotent (`ADD COLUMN IF NOT EXISTS`, backfill `WHERE gross_cost IS NULL`), gives the repo the
+   durable record it never had. Applied live and tracked in both `_system._schema_migrations` and
+   `ih35_migrations.applied_migrations` (a genuine no-op against current state, confirmed).
+2. `scripts/verify-fuel-transactions-genesis-anchor-documented.mjs` (verify-step 11727) — asserts the
+   3 columns exist and the baseline relationship holds; live `PASS`.
 
-Every one of these is exposed **whenever it happens to run through GitHub Actions CI (guaranteed,
-per the superuser mechanism above) or through the documented `ih35_ci_readonly` direct-endpoint
-credential (guaranteed, confirmed above) or through `neondb_owner` on the direct endpoint (untested
-but `neondb_owner.rolbypassrls=true` with no pooler to downgrade it — expect the same result)**.
-None of them pin or assert their own connection's `rolbypassrls` status before trusting a negative
-result — that absence of a self-check is the actual root defect, not any one role's grant.
+## 4. RLS/CI bypass — exact GRANT/REVOKE for approval. NOT executed. Bigger than my ROUND 205.5 scope.
 
-## Plan — not yet executed, no role grants touched, per the explicit instruction
+Measured live before drafting anything: `ih35_ci_readonly` is not just `BYPASSRLS` — it is also a
+**member of `neon_superuser`** (not only `ih35_app`), and separately carries its own `CREATEDB` and
+`CREATEROLE` attributes. It has **zero direct grants of its own** on any existing table
+(`information_schema.role_table_grants` = 0 rows for it) — every bit of its current read access is
+**entirely inherited** from those two memberships (`ih35_app` alone holds direct `SELECT` on 752 of
+794 base tables). **A bare REVOKE of those memberships would drop it to zero read access on
+everything and break every live guard immediately** — so the safe order is grant-first, then revoke,
+then strip the attributes, then verify nothing broke:
 
-1. **Narrowest real fix, needs owner sign-off:** `REVOKE bypassrls` from `ih35_ci_readonly`. It is a
-   dedicated, single-purpose guard/gate role; it has no legitimate reason to bypass RLS, and this
-   already contradicts its own name (it also isn't actually write-blocked — the 2026-09-23 disclosure
-   above, same root cause class). This alone fixes the documented gate path for all 11 guards when
-   run via `money-pr-local-gate.mjs`.
-2. **Structural fix, closes the class instead of one role:** add a self-check to
-   `scripts/lib/require-live-db.mjs` (or a new helper the 11 guards above opt into) that queries
-   `SELECT rolbypassrls FROM pg_roles WHERE rolname = current_user` immediately after connecting, and
-   for any guard that declares itself an RLS-security assertion, **FAILS CLOSED** ("cannot prove
-   anything — this connection bypasses RLS") instead of proceeding to a PASS/FAIL it cannot actually
-   back up. This protects against the next accidental bypass-capable credential someone loads,
-   instead of relying on which of several documented connection-string files happens to be in scope.
-3. **GitHub Actions surface:** the container's fresh Postgres needs a genuinely non-superuser,
-   non-bypassrls role created and used for these 11 guards specifically when they run inside `ci.yml`
-   — `verify` itself can keep superuser for migrations/setup, but the guard's own `DATABASE_URL` for
-   this narrow set should point at a second, deliberately unprivileged role in the same container.
-4. Will not touch any of this — role grants or CI YAML — until the Lead/owner picks a direction.
+```sql
+-- Step 1: give ih35_ci_readonly its own direct, real, read-only grants BEFORE removing the
+-- memberships it currently (and only) reads through. One GRANT per schema ih35_app already reads
+-- everything in (71 schemas, enumerated live via role_table_grants, not guessed):
+GRANT USAGE ON SCHEMA _system, accounting, admin, alerts, analytics, audit, bank, banking,
+  brokerupdate, catalogs, chat, compliance, customer, dispatch, docs, documents, driver_finance,
+  driver_pwa, driveralert, drivers, email, events, expense_attribution, factor, factoring, finance,
+  fixed_assets_archived, forecast, fuel, geo, geofence, governance, hos, identity, ifta,
+  ih35_migrations, insurance, integrations, integrity, legal, lib, maint, maintenance, master_data,
+  mdata, notifications, onboarding, ops, org, outbox, owner, payroll, payroll_integration, public,
+  pwa, qbo, qbo_archive, qbo_sync, reconciler, reference, reporting, reports, safety, safetydoc,
+  samsara, search, settlement, settlements, shipper_portal, tasks, telematics, usmca_ops,
+  utilization, views
+  TO ih35_ci_readonly;
+-- then, per schema in that same list:
+GRANT SELECT ON ALL TABLES IN SCHEMA <schema> TO ih35_ci_readonly;
+-- (the ALTER DEFAULT PRIVILEGES entries for ih35_ci_readonly already exist for every one of these
+-- schemas, confirmed live in pg_default_acl -- this step only needs to catch EXISTING tables up to
+-- what future tables already get automatically.)
+
+-- Step 2: remove the two inherited-privilege escalations.
+REVOKE neon_superuser FROM ih35_ci_readonly;
+REVOKE ih35_app FROM ih35_ci_readonly;
+
+-- Step 3: strip the role's own excess attributes -- a dedicated read-only guard/gate role has no
+-- legitimate need for any of these.
+ALTER ROLE ih35_ci_readonly NOBYPASSRLS NOCREATEDB NOCREATEROLE;
+```
+
+**Verification plan before calling this done (still no data touched, read-only checks):** re-run the
+11-guard list from ROUND 205.5 as `ih35_ci_readonly` and confirm each still connects/reads correctly
+(Step 1 didn't break anything); confirm `pg_roles.rolbypassrls/rolcreatedb/rolcreaterole` are all now
+`false`; re-confirm a real cross-tenant read now correctly returns 0 rows (the guard's second
+assertion — the "should not see" branch) instead of passing vacuously.
+
+**Waiting on your go-ahead for these exact statements before running any of them**, per the
+instruction. Also note: this is bigger than what I scoped in ROUND 205.5 (bypassrls alone) — the
+`neon_superuser` membership and `CREATEDB`/`CREATEROLE` attributes are the same class of excess
+privilege and belong in the same fix, not a follow-up.
 
 ## Status
-Part 1 answered in full, with the caveat stated plainly. Part 2's count and mechanism are backed by
-live tests run today, not assumed. Standing by for direction on the plan before touching any grants.
+Items 1-3 done. Item 4 is a precise, ready-to-run proposal awaiting approval — nothing executed.
