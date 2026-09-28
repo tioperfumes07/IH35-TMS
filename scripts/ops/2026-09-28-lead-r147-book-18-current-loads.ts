@@ -88,14 +88,24 @@ async function preflightResolveAll(pool: pg.Pool): Promise<string[]> {
   const problems: string[] = [];
   const c = await pool.connect();
   try {
-    await c.query(`SELECT set_config('app.bypass_rls','lucia',false)`);
-    await c.query(`SELECT set_config('app.operating_company_id',$1::text,false)`, [USMCA]);
+    // Wrapped in one explicit transaction with SET LOCAL, not bare session-level set_config —
+    // live-verified 2026-09-28: on Neon's pooled connection string, a bare (non-LOCAL) set_config
+    // followed by separate un-transacted queries on the "same" client is NOT reliably guaranteed
+    // to land on the same physical backend, silently losing the RLS bypass / entity scope between
+    // statements (a second run of this exact preflight, unchanged, went from 8 failures to 49,
+    // including customers created minutes earlier — pure connection-pooling flakiness, not a real
+    // data problem). One transaction makes every statement in it land on the same backend.
+    await c.query("BEGIN");
+    await c.query(`SET LOCAL app.bypass_rls = 'lucia'`);
+    await c.query(`SET LOCAL app.operating_company_id = '${USMCA}'`);
     for (const r of PLAN) {
       const exists = await c.query(`SELECT id FROM mdata.loads WHERE operating_company_id=$1::uuid AND load_number=$2`, [USMCA, r.ln]);
       if (exists.rowCount) continue; // will be skipped in the main loop too — not a blocker
       const checks: Array<[string, string, unknown[]]> = [
         [`customer '${r.customer}'`, `SELECT id FROM mdata.customers WHERE operating_company_id=$1::uuid AND lower(btrim(customer_name))=lower(btrim($2)) AND deactivated_at IS NULL`, [USMCA, r.customer]],
-        [`driver '${r.driver}'`, `SELECT id FROM mdata.drivers WHERE operating_company_id=$1::uuid AND lower(btrim(first_name||' '||last_name))=lower(btrim($2))`, [USMCA, r.driver]],
+        // merged_into_driver_id IS NULL: a merged-away duplicate profile is never renamed (only
+        // the survivor is), so without this exclusion it still name-matches forever after a merge.
+        [`driver '${r.driver}'`, `SELECT id FROM mdata.drivers WHERE operating_company_id=$1::uuid AND lower(btrim(first_name||' '||last_name))=lower(btrim($2)) AND merged_into_driver_id IS NULL`, [USMCA, r.driver]],
         [`unit '${r.truck}'`, `SELECT id FROM mdata.units WHERE currently_leased_to_company_id=$1::uuid AND upper(btrim(unit_number))=upper(btrim($2))`, [USMCA, r.truck]],
         [`trailer '${r.trailer}'`, `SELECT id FROM mdata.equipment WHERE COALESCE(currently_leased_to_company_id, owner_company_id)=$1::uuid AND upper(btrim(equipment_number))=upper(btrim($2))`, [USMCA, r.trailer]],
       ];
@@ -104,6 +114,7 @@ async function preflightResolveAll(pool: pg.Pool): Promise<string[]> {
         if (res.rowCount !== 1) problems.push(`${r.ln}: ${what} — expected 1 match, got ${res.rowCount}`);
       }
     }
+    await c.query("ROLLBACK"); // read-only pass, nothing to keep
   } finally {
     c.release();
   }
@@ -129,17 +140,25 @@ try {
     let ids: { customer: string; driver: string; unit: string; trailer: string };
     let trip: { trip_type: "NB" | "TR"; tour_id: string };
     try {
-      await c.query(`SELECT set_config('app.bypass_rls','lucia',false)`);
-      await c.query(`SELECT set_config('app.operating_company_id',$1::text,false)`, [USMCA]);
+      // Wrapped in one explicit transaction with SET LOCAL — live-verified 2026-09-28: a bare
+      // (non-LOCAL) set_config followed by separate un-transacted queries on Neon's pooled
+      // connection string is not reliably guaranteed to land on the same physical backend,
+      // silently losing the RLS bypass / entity scope mid-resolution (see preflightResolveAll's
+      // comment for the exact repro: the same read went from 8 failures to 49 between two runs).
+      await c.query("BEGIN");
+      await c.query(`SET LOCAL app.bypass_rls = 'lucia'`);
+      await c.query(`SET LOCAL app.operating_company_id = '${USMCA}'`);
       const exists = await c.query(`SELECT id FROM mdata.loads WHERE operating_company_id=$1::uuid AND load_number=$2`, [USMCA, r.ln]);
-      if (exists.rowCount) { console.log(`${r.ln}: SKIP exists`); out.push({ ln: r.ln, status: "skip_exists" }); continue; }
+      if (exists.rowCount) { await c.query("COMMIT"); console.log(`${r.ln}: SKIP exists`); out.push({ ln: r.ln, status: "skip_exists" }); continue; }
       ids = {
         // 155.2.b fix: mdata.customers has no `name`/`is_active` columns live — the real columns
         // are `customer_name` and `deactivated_at` (verified via information_schema.columns,
         // 2026-09-28). The original query would 42703 on every row before ever reaching a
         // missing-customer failure.
         customer: await one(c, `SELECT id::text FROM mdata.customers WHERE operating_company_id=$1::uuid AND lower(btrim(customer_name))=lower(btrim($2)) AND deactivated_at IS NULL`, [USMCA, r.customer], `customer '${r.customer}'`),
-        driver: await one(c, `SELECT id::text FROM mdata.drivers WHERE operating_company_id=$1::uuid AND lower(btrim(first_name||' '||last_name))=lower(btrim($2))`, [USMCA, r.driver], `driver '${r.driver}'`),
+        // merged_into_driver_id IS NULL: a merged-away duplicate profile is never renamed (only
+        // the survivor is), so without this exclusion it still name-matches forever after a merge.
+        driver: await one(c, `SELECT id::text FROM mdata.drivers WHERE operating_company_id=$1::uuid AND lower(btrim(first_name||' '||last_name))=lower(btrim($2)) AND merged_into_driver_id IS NULL`, [USMCA, r.driver], `driver '${r.driver}'`),
         // 155.2.a fix: mdata.units has no `operating_company_id` column — units carry
         // `owner_company_id` (who owns the tractor) and `currently_leased_to_company_id` (who is
         // currently operating it). The dispatch-relevant scope is the latter, matching
@@ -153,7 +172,9 @@ try {
         trailer: await one(c, `SELECT id::text FROM mdata.equipment WHERE COALESCE(currently_leased_to_company_id, owner_company_id)=$1::uuid AND upper(btrim(equipment_number))=upper(btrim($2))`, [USMCA, r.trailer], `trailer '${r.trailer}'`),
       };
       trip = await resolveTrip(c, ids.driver);
+      await c.query("COMMIT");
     } catch (e) {
+      await c.query("ROLLBACK").catch(() => {});
       console.log(`${r.ln}: RESOLVE FAILED — ${(e as Error).message}`);
       out.push({ ln: r.ln, status: "resolve_failed", error: (e as Error).message });
       continue;
