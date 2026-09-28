@@ -2989,3 +2989,50 @@ Guard scripts/verify-ar-ties-to-qbo-invoice-list.mjs: live PASS. Fails on any NE
 are named-exception baselines (6 and 73) that block only if they grow, never silently.
 
 — CC-1
+
+---
+
+## AUTH-100
+issued_at: 2026-09-28T11:55:00.000Z
+scope: accounting.invoices UPDATE ONLY (1 row, id bba8411e-909e-4f1d-af21-1729a25a1ae7, display_id
+"90007": source_load_id -> NULL, internal_notes appended — never deleted, never its amount/status
+touched) + mdata.loads status UPDATE ONLY via the real cancelLoad/cancelLoadInClientTx path (1 row,
+load_number 90007: status -> 'cancelled'). operating_company_id
+5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA) only.
+action: OWNER_AUTH_ID=AUTH-100 npx tsx scripts/ops/2026-09-28-round166-job3-detach-90007-invoice-void-load.mjs
+expires_at: 2026-09-28T17:55:00.000Z
+status: DONE — executed live 2026-09-28
+
+ROUND 166 JOB 3 (owner ruling): load 90007 does not exist — a fabricated load number invented to
+carry a real Faro-purchased invoice (ITS Logistics LLC, PO 68747, $350.00) with no real load in the
+Faro reconciliation. Its $0.00 driver bill was already voided by the Lead before this AUTH. The
+$350 invoice is real (Faro bought it) — detached from the fake load (source_load_id -> NULL, kept
+as a non-freight invoice, its amount/status/customer untouched) rather than deleted, then the
+fabricated load itself voided through the real cancellation path.
+
+Sweep for other fabricated load numbers (every USMCA load outside the sanctioned 13xxx series):
+live-confirmed 90007 was the ONLY one; after this AUTH, zero remain. Guard
+scripts/verify-no-fabricated-load-numbers.mjs: live PASS (123 active loads checked, 0 outside the
+series).
+
+ROUND 166 JOB 1 (P0, Samsara): root-caused and proven live — USMCA's feed is now confirmed
+actively writing real position data (telematics.vehicle_latest_position: real row for unit T171,
+Houston TX, captured_at 2026-09-28T11:40:10Z, inside the last 15 minutes). Historical backfill for
+the 16 current loads' PAST stops remains impossible — the feed was off for their entire transit
+window and there is no historical position data to derive a stamp from; going forward, new
+position data will accumulate normally. Permanent alarm guard
+scripts/verify-telematics-feed-is-live.mjs shipped: live PASS (11 units with a fresh position),
+fails if is_enabled goes false again or no unit has a position inside 20 minutes during operating
+hours (06:00-22:00 America/Chicago).
+
+ROUND 166 JOB 2: guard scripts/verify-driver-bill-has-miles-and-rate.mjs shipped, covering all
+three named failure shapes (zero miles, null miles, zero rate) with one check — live-confirmed it
+correctly still flags 13544 and 13595 (both real, unfixed). 13544: no real source document found
+anywhere in Downloads for this load's mileage — not reminted. 13595: its settlement's own signed
+PDF (Driver_Settlement_5816.pdf) states 351.7 loaded miles and the driver's real active rate is
+$0.45/mi (351.7 x 45c = $158.27, real inputs, not invented) — but its settlement is already
+CLOSED, and correctOpenDriverBillMileage explicitly refuses to correct a line on a non-open
+settlement. Not forced through without a verified closed-settlement correction path. Both baselined
+as known, real, open defects — never silently accepted.
+
+— CC-1
