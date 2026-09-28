@@ -1,49 +1,35 @@
-# NOW-CC-1 — 2026-09-28 ROUND 210
+# NOW-CC-1 — 2026-09-28 — deadhead-miles backfill: source fixed, writes blocked by WORM
 
-Archived (bus cap): `docs/bus/archive/NOW-CC-1-2026-09-28-r208.3-plus-cc3-deadhead-superseded.md`.
+Archived (bus cap): `docs/bus/archive/NOW-CC-1-2026-09-28-r210-superseded.md`.
 
-## DONE THIS WINDOW
-- **Item 1 (guard narrowing): merged, in batch** — `verify-driver-bill-settlement-link.mjs` was
-  actively LIVE FAILING with 12 false positives before the fix (confirmed live, not assumed).
-  Narrowed to require the linked settlement `status='closed'`. Zero new exclusions. Rule written
-  down in the guard's own header with all 10 live row ids (2 real NULL-on-closed, already named/
-  expiring ROUND 23.3 debt; 8 set-while-open, expected, including 2 from my own ROUND 207 fix).
-- **Item 3 (bypassrls self-check helper): merged, in batch** — `scripts/lib/require-non-bypass-rls.mjs`,
-  real mutation-proof `--selftest`. **Major finding while building it, corrects my own ROUND 205.5/206
-  claim**: the pooled connection's "reliable downgrade to ih35_app" is FALSE as a blanket statement —
-  measured live, 1 of 8 rapid clean connections landed on a raw, undowngraded `neondb_owner` backend.
-  Root cause: the real production app's own pool explicitly does `SET ROLE ih35_app`, and that state
-  persists on shared PgBouncer-style backends with no reset between different logical clients. Impact
-  is narrow: ordinary money guards that SET `app.bypass_rls='lucia'` are unaffected (separate app-level
-  mechanism); only guards that CLEAR it to test real enforcement are at risk (my B3 guard, Devin-B's
-  workflow_requests guard). Re-audited the "11 guards" from ROUND 205.5 by hand: only those 2 do
-  genuine live enforcement testing; the other 9 are static source-scanners, helper doesn't apply.
-- **Item 4 (gate repoint): merged, in batch** — `resolveGuardDatabaseUrl()` now reads the owner's
-  master keys file's own dedicated section instead of the silently-mutable dotfile. Rotated
-  `ih35_ci_readonly`'s password as part of this and recorded it there with the required stamp.
-- **Item 2 (Neon ticket): submitted, no ticket number exists to give you.** Wrote and submitted the
-  full technical request (project/branch, exact ask, all 5 pieces of evidence, the 836-grant safety
-  argument) through Neon's AI Assistant — confirmed via Neon's own official docs
-  (neon.com/docs/introduction/support) that on our Launch plan, formal support tickets with a ticket
-  number exist **only for billing issues**; Discord and AI chat are explicitly documented as "not an
-  official Neon Support channel," with no ticket system for a technical request like this one short
-  of upgrading to Scale. Did get one real, useful answer: the documented self-service path to delete
-  the orphaned `ih35_ci_readonly_v2` role (Postgres database > Roles > Delete role). Not fabricating a
-  ticket number. If this needs to actually get fixed, the real options are: upgrade to Scale plan, or
-  accept the interim self-check helper (item 3) as the standing mitigation.
-- **Item 5 (standing rule): saved.** Caught myself mid-turn about to `rm scripts/ops/*.mjs` again in
-  spirit — corrected to named-file deletes with git status before/after, per the exact order. Also
-  saved as a durable memory for future sessions.
+## Deadhead-miles backfill (CC-3 handoff, ROUND 210 item 2) — root cause fixed, write blocked
 
-## ROUND 213 (owner, verify-purge-era-closures-still-hold no longer a gate) — acknowledged
-Not my guard to touch. My line item ("Faro invoice 87 — unchanged, still the P0") reflects ROUND
-207's already-closed status: the row was never missing, root-caused to the voided/reinstated
-`voided_at` blind spot, re-diffed correctly at 0 real gaps. Nothing new to do here unless told
-otherwise — flagging this reading rather than silently redoing already-closed work.
+Root-caused before writing anything: the live production deadhead producer
+(`computeChainDeadheadMiles`, the same function the booking wizard calls) only recognized 2 of 6
+valid post-delivery statuses when searching a unit's prior load history — a unit's prior load that
+had progressed to invoiced/paid/closed was wrongly treated as "no prior delivery." Fixed at the
+source (PR #23092, merged, `b6ef76b9a5`). Dry run: 3/13 resolved before the fix, 9/13 after — the
+remaining 4 have a genuinely unlocatable prior delivery (spot-checked: the historical stop itself
+has null city/state/lat/lng) and correctly stay NULL.
+
+**Opened AUTH-123 and ran the actual write. Result: 0 of 9 resolvable loads could be written.**
+`miles_deadhead` is a `LOAD_EDIT_LOCK_MONEY_FIELD_KEYS` field, and every one of the 9 is currently
+bookended by an OPEN driver settlement (P-0001 through P-0018, per load) — `updateDispatchLoad`
+correctly refused all 9 with `LoadEditLockedError: open_settlement`. This is the system's real WORM
+protection working as designed, not a bug: money fields cannot be edited behind a still-open
+settlement without a formal reversal, and an `Owner`-role override does not bypass money locks (only
+non-money fields get that override path). I did not route around it.
+
+**This is not fixable right now without either:** (a) waiting for each load's settlement to close
+naturally through the normal workflow, then re-running this exact backfill (script updated to
+report per-load lock reasons instead of aborting the whole batch on the first one), or (b) an
+explicit owner decision that filling a previously-NULL field is a different risk than correcting an
+existing one and deserves a narrow, named carve-out from the money-lock. Not deciding that myself —
+flagging it. AUTH-123 stays on the record as written (append-only); this is the honest outcome.
 
 ## OPEN
-- CC-3's deadhead-miles backfill (13 of 16 live loads missing `miles_deadhead`) — I own the backfill
-  per ROUND 210 item 2's routing. Next up.
+- Deadhead-miles backfill: blocked as above, re-run after settlements close or on an explicit
+  decision re: the money-lock carve-out.
 - AUTH-121 OPEN — resync 6 driver_bills.settled_in_settlement_id
 - The 253 expenses: DROPPED per owner's final ruling. Not opened.
 

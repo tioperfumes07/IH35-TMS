@@ -105,7 +105,8 @@ async function main() {
         continue;
       }
 
-      results.push({ load_number: row.load_number, deadhead_miles: chain.deadhead_miles, reason: "chain" });
+      const resultEntry = { load_number: row.load_number, deadhead_miles: chain.deadhead_miles as number | null, reason: "chain" };
+      results.push(resultEntry);
 
       if (!APPLY) continue;
 
@@ -123,6 +124,15 @@ async function main() {
         await client.query("COMMIT");
       } catch (err) {
         await client.query("ROLLBACK");
+        // A load bookended by an open settlement correctly refuses a money-field edit (WORM) --
+        // that is the system protecting itself, not a bug in this script. Report it and move on
+        // to the rest of the batch rather than aborting loads that have nothing to do with it.
+        const isLockError = err instanceof Error && err.constructor.name === "LoadEditLockedError";
+        if (isLockError) {
+          resultEntry.deadhead_miles = null;
+          resultEntry.reason = `locked: ${(err as any).lock?.reason ?? "unknown"} (${(err as any).lock?.reference_display_id ?? "?"})`;
+          continue;
+        }
         throw err;
       }
     }
