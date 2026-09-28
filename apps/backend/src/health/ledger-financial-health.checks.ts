@@ -100,7 +100,18 @@ export async function assertArTieout(): Promise<void> {
   });
 }
 
-/** ledger.ap_tieout — GL ap_control vs open bill subledger (real rows only). */
+/**
+ * ledger.ap_tieout — GL ap_control (2000) vs the open bill subledger that actually lands in it.
+ *
+ * ROUND 155.7 (Lead retraction 2026-09-28): driver-settlement-adopted bills (Round 148 A/P
+ * adoption) credit 2170 Driver Net-Pay Clearing by design, never 2000 -- their liability was
+ * already correctly posted through the settlement pay-run JE before the bill document existed.
+ * Comparing GL 2000 against EVERY non-draft bill (including these) compares a control account to
+ * a subledger that does not all land in it; it happened to net to zero only because every one of
+ * those bills is currently fully paid. Excluded here via driver_finance.driver_settlement_gl_bills
+ * (a stable, purpose-built link, not the now-cleared posting_hold_reason) so a FUTURE open
+ * driver-settlement bill can't reproduce this same false variance.
+ */
 export async function assertApTieout(): Promise<void> {
   await withHealthOpco(async (client) => {
     const apAccountId = await resolveRoleAccountOptional(client as never, HEALTH_LEDGER_OPCO, "ap_control");
@@ -119,12 +130,16 @@ export async function assertApTieout(): Promise<void> {
     );
     const subRes = await client.query<{ cents: string | null }>(
       `
-        SELECT COALESCE(SUM(ROUND((total_amount - COALESCE(paid_amount, 0)) * 100)), 0)::text AS cents
-          FROM accounting.bills
-         WHERE operating_company_id = $1::uuid
-           AND revoked_at IS NULL
-           AND status <> 'draft'
-           AND COALESCE(is_sample_data, false) = false
+        SELECT COALESCE(SUM(ROUND((b.total_amount - COALESCE(b.paid_amount, 0)) * 100)), 0)::text AS cents
+          FROM accounting.bills b
+         WHERE b.operating_company_id = $1::uuid
+           AND b.revoked_at IS NULL
+           AND b.status <> 'draft'
+           AND COALESCE(b.is_sample_data, false) = false
+           AND NOT EXISTS (
+             SELECT 1 FROM driver_finance.driver_settlement_gl_bills g
+              WHERE g.operating_company_id = b.operating_company_id AND g.accounting_bill_id = b.id
+           )
       `,
       [HEALTH_LEDGER_OPCO]
     );
