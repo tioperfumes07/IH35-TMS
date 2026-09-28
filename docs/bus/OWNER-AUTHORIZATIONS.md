@@ -3717,6 +3717,19 @@ scope: mint exactly ONE pre-settlement for driver Genaro Guerrero Chavez
 action:
   OWNER_AUTH_ID=AUTH-119 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc3-mint-genaro-settlement-13633-13634.ts --apply
 expires_at: 2026-09-28T22:00:00.000Z
-status: OPEN
+status: DONE — executed live 2026-09-28
+
+consumed_at: 2026-09-28T18:05Z
+consumed_by: CC-3
+row_counts: 1 new driver_finance.driver_settlements row (P-0018, open, driver Genaro Guerrero
+  Chavez); 13633.trip_type NULL->'NB'; 13633.tour_id/presettlement_link_id set to the new tour/
+  settlement; 13634.tour_id/presettlement_link_id repointed off the stale P-0001
+  (b69dfafb-7287-42f6-b46b-19257c9e7095) onto the same new tour/settlement.
+proof_query: new settlement id b3912fde-8b62-4be0-916e-b05d57e7a3c6, display_id P-0018. Both
+  loads' after-state: 13633 {trip_type: NB, tour_id: bc6b065f-333c-4e03-880e-6a1b49507302,
+  presettlement_link_id: b3912fde-8b62-4be0-916e-b05d57e7a3c6}; 13634 {trip_type: TR, tour_id:
+  bc6b065f-333c-4e03-880e-6a1b49507302 (same), presettlement_link_id: b3912fde-8b62-4be0-916e-
+  b05d57e7a3c6 (same)}. P-0001 untouched (still cancelled, no live children remain except its 2
+  driver_bills for 13610/13619 -- reported separately on the board, out of this AUTH's scope).
 
 — CC-3
