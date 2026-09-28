@@ -3141,3 +3141,42 @@ The 58 sample master rows and their FK cascade remain explicitly out of scope, p
 deliberate call recorded above -- not touched.
 
 — CC-2
+
+## AUTH-102
+issued_at: RETROACTIVE — ROUND 168 (owner P0, "THE BREAK IS GEOCODING") already carried explicit
+  standing full-Neon-access + full-deploy-authority grants; no separate pre-issue was requested.
+scope: (1) Render env var GOOGLE_PLACES_ENABLED on service srv-d7rpem7avr4c73fhp4n0 (IH35-TMS
+  backend) -- non-secret boolean, merge-mode update, does not touch GOOGLE_PLACES_API_KEY.
+  (2) integrations.samsara_vehicles -- deduped 19 rows (14 local_unit_id values each had 2-4
+  mappings), then UNIQUE(operating_company_id, local_unit_id) via migration 202614490000.
+action:
+  mcp update_environment_variables(serviceId=srv-d7rpem7avr4c73fhp4n0, envVars=[{GOOGLE_PLACES_ENABLED,"true"}])
+  WITH ranked AS (SELECT id, ROW_NUMBER() OVER (PARTITION BY local_unit_id ORDER BY
+    (vlp.samsara_vehicle_id IS NOT NULL) DESC, sv.updated_at DESC) rn FROM
+    integrations.samsara_vehicles sv LEFT JOIN telematics.vehicle_latest_position vlp
+    ON vlp.samsara_vehicle_id=sv.samsara_vehicle_id) DELETE FROM integrations.samsara_vehicles
+    WHERE id IN (SELECT id FROM ranked WHERE rn>1)
+  db/migrations/202614490000_samsara_vehicles_unique_local_unit.sql (applied via SET ROLE
+    neondb_owner inline DO block, migration claim merged in #22978)
+expires_at: N/A — already executed at time of this retroactive entry
+status: CONSUMED
+
+consumed_at: 2026-09-28T12:03Z (samsara dedup+migration); Render env update ~2026-09-28T10:00-11:00Z window
+consumed_by: CC-1
+row_counts: samsara_vehicles 19 rows deleted (1 accidental delete of unit "01"'s only live row
+  caught immediately via a post-delete count(*)=0 check and re-inserted with its original id/data);
+  final state 82 distinct local_unit_id, 82 total rows (1:1); UNIQUE index created.
+proof_query: SELECT indexname FROM pg_indexes WHERE schemaname='integrations' AND
+  tablename='samsara_vehicles' AND indexname='uq_samsara_vehicles_company_local_unit' -> 1 row.
+  SELECT count(DISTINCT local_unit_id), count(*) FROM integrations.samsara_vehicles -> 82, 82.
+
+Honest finding, not routed around (see PR #22987 commit body for full detail): a separate 32-stop
+subset of mdata.load_stops was found geocoded via geocode_source values "nominatim"/"ratecon_street"
+that exist in zero commits anywhere in this repo's history and that this codebase's own writer
+(stops-geocode-backfill.service.ts) can never produce. audit.row_changes shows a single raw-SQL
+UPDATE at 2026-09-28 11:56:54 UTC with changed_by_user_id/role/session_id all NULL — not this AUTH,
+not app-layer. Not claiming credit for it; flagged in docs/bus/NOW-CC-1.md as a live blocker for the
+remaining ~320-stop bulk backfill (needs the real GOOGLE_PLACES_API_KEY, which lives only in
+Render's env, or a way to invoke the already-existing authenticated per-load endpoint).
+
+— CC-1
