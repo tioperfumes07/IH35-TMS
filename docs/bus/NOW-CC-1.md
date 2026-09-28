@@ -1,19 +1,33 @@
-# ROUND 155.2a: 15/18 ready, guard shipped, 1 schema gap needs your ruling — CC-1 — 2026-09-28 08:25Z
-Archived: `docs/bus/archive/NOW-CC-1-2026-09-28-11.md`.
+# RULING 155.2c executed — 15/18 ready, 3 blocked on real owner ID — CC-1 — 2026-09-28 08:40Z
+Archived: `docs/bus/archive/NOW-CC-1-2026-09-28-12.md`.
 
-DONE, LIVE: 13634 set to 460000 (owner-declared, memo says so explicitly, PDF never cited as
-source). The RLS-scope-loss guard (verify-no-session-scoped-rls-bypass.mjs) is now WIRED INTO
-the gate with a shrink-only baseline (44 pre-existing files, real debt across scripts/, not
-fixed today) — demonstrated RED-then-GREEN live per your instruction. PR #22935, merged.
+DONE LINE:
+155.2b branch deleted / claim 202614440000 released: N/A — never shipped, caught before any PR.
+PR #22939 merged c2abbc6e. Migration 202614440000 (non_owned_trailers unique index) live.
 
-SCHEMA GAP — you said stop and tell you, so: mdata.equipment.owner_company_id is NOT NULL with
-NO ownership-type flag anywhere on the table (63 columns checked). Live-verified: all 330
-existing equipment rows use only the 3 internal entities (USMCA/TRK/TRANSP) as owner_company_id
-— there is no precedent anywhere for a broker/third-party-owned row. I can't create 568871 or
-21868 without either (a) falsely claiming USMCA owns them, which is exactly the shoehorn you
-said not to do, or (b) you ruling on the real mechanism (new boolean column? a placeholder
-external-owner company row? a notes convention?). Not forced either way.
+SELECT trailer_number, counterparty_type, counterparty_id, voided_at FROM dispatch.non_owned_trailers:
+  538306 | customer | ed3543fc-... | NULL   (survivor)
+  538306 | customer | ed3543fc-... | 2026-09-28T08:30:46Z  (duplicate, voided)
+538306 duplicate resolved: ee930141 voided, reason: exact duplicate, no interchange refs, no
+money moved.
 
-15 of 18 loads (all but 13623/13627/13631) are fully resolvable right now and ready to book the
-instant this is ruled on. equipment_type would be "DryVan" (free text, matches "53' Van" in
-notes) once owner_company_id is settled.
+trailer_interchanges: 0 rows — none created yet, blocked (see below).
+
+guard verify-no-duplicate-non-owned-trailer.mjs: selftest 3/3 PASS; live PASS (1 active row, 0
+duplicates). RED reproduction: re-running the OLD duplicate insert live now fails outright with
+"duplicate key value violates unique constraint" — the index itself refuses it, stronger than a
+guard catching it after the fact.
+
+rate-con owner confirmed for 568871: NONE FOUND. Searched every PDF in Downloads for the literal
+strings "568871", "21868", and load number "13627" — zero matches for any of the three. The one
+rate con that touches 568871 (13631's, WO 1332528, Central Freight Management) names the trailer
+only as "Van (DAT)" — no owner. No dedicated rate con exists for 13623 or 13627 at all.
+rate-con owner confirmed for 21868: NONE FOUND (same search, same result).
+Not defaulted to either load's customer, per your explicit instruction.
+
+Also found+fixed: HUGO GAYTAN SARABIA's name correction (from AUTH-085) was silently reverted by
+another concurrent process between 07:54–08:30Z (driver row's own updated_at). Reapplied.
+
+13634=460000, 13637=520000 both confirmed live-ready. 15 of 18 loads are fully resolvable right
+now. 13623/13627/13631 need you to name the real owning counterparty for 568871 and 21868 (or
+tell me where else to look) before I can create the non_owned_trailers rows and book them.
