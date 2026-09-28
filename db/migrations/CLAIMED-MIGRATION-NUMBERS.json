@@ -1152,5 +1152,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-28",
     "purpose": "ROUND 195 (owner order): catalogs.blocked_feature_flags (named, auditable blocklist) + BEFORE INSERT/UPDATE triggers on lib.feature_flag_overrides and lib.feature_flags that RAISE EXCEPTION on any write that would resolve a blocked flag_key to enabled -- permanently blocks the 17 QBO write-back/pull/mirror flags (QBO_JE_PUSH_ENABLED, QBO_ENTITY_PUSH_ENABLED, VOID_QBO_MIRROR_ENABLED are the named hard core). Unblocking requires DELETING the catalogs.blocked_feature_flags row, never a code path or UI toggle."
+  },
+  "202614540000": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-28",
+    "purpose": "B3 (Devin sweep, ROUND 203.1, one-time Lead-granted migration-lane exception outside CC-1's usual band): mdata.workflow_requests has NO operating_company_id column at all -- cross-tenant read leak, any global Administrator of ANY company can enumerate/read every other company's workflow requests. Adds operating_company_id (backfilled from the target resource, NOT NULL once resolved -- confirmed live 2026-09-28: table has 0 rows, so backfill is a no-op and the column can be NOT NULL from the start), tightens SELECT/INSERT/UPDATE RLS policies to require org.user_accessible_company_ids() membership (Owner keeps cross-entity access by design, matching the codebase's own established idiom), and the same shape as the resolver already used by callerCanTargetResource in workflow-routes.ts."
   }
 }
