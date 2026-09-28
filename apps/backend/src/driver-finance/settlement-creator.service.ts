@@ -86,6 +86,31 @@ async function accountByRole(
   return res.rows[0] ?? null;
 }
 
+// settlement_lines_item_qty_rate_amount_check (live, verified via pg_constraint) requires
+// item_id NOT NULL whenever quantity/rate_cents/unit_of_measure are set -- discovered live
+// (23514 check-constraint violation) when the earnings/deadhead_pay quantity fix above first ran
+// without it. Matches settlement 5812's own live rows exactly: item_name "Driver Pay-CDL-Loaded
+// Miles" / "Driver Pay-CDL-Empty Miles", company-scoped catalogs.items rows already seeded from
+// the live QBO company file (notes: "source=LIVE QBO COMPANY FILE") -- never created here.
+async function itemByName(
+  client: DbClient,
+  opco: string,
+  itemName: string,
+): Promise<{ id: string } | null> {
+  const res = await client.query<{ id: string }>(
+    `
+      SELECT id::text
+      FROM catalogs.items
+      WHERE operating_company_id = $1::uuid
+        AND item_name = $2
+        AND deactivated_at IS NULL
+      LIMIT 1
+    `,
+    [opco, itemName],
+  );
+  return res.rows[0] ?? null;
+}
+
 function cardRailNumber(card: "dreamline" | "relay"): string {
   return card === "dreamline" ? "2510" : "1295";
 }
@@ -1328,7 +1353,16 @@ export async function postSettlementCreatorInClientTx(
     // "Load 13588 — Loaded Miles 1,855.1 @ $0.45"), not just the dollar total. Only set when the
     // PDF actually gave miles+rate; an accessorial-only or flat line_haul_amount_cents load has no
     // per-mile quantity to report and stays NULL, same as before.
-    const hasLoadedMileage = load.line_haul_rate_cents != null && load.loaded_miles != null;
+    const hasLoadedMileage =
+      load.line_haul_rate_cents != null && load.loaded_miles != null && accessorialCents === 0;
+    const loadedItem = hasLoadedMileage
+      ? await itemByName(client, draft.operating_company_id, "Driver Pay-CDL-Loaded Miles")
+      : null;
+    // settlement_lines_item_qty_rate_amount_check requires round(quantity*rate_cents) ===
+    // round(amount*100) whenever quantity is set -- an accessorial folded into earningsCents
+    // would break that identity, so quantity/rate/item_id/unit_of_measure only populate on a
+    // pure mileage line (accessorialCents === 0); an accessorial-bearing load keeps the old
+    // dollar-only line rather than fail the check constraint or misreport its quantity.
     const loadedDesc = hasLoadedMileage
       ? `Load ${load.load_number} — Loaded Miles ${Number(load.loaded_miles).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} @ $${(Number(load.line_haul_rate_cents) / 100).toFixed(2)}`
       : `Load ${load.load_number} line haul`;
@@ -1336,9 +1370,9 @@ export async function postSettlementCreatorInClientTx(
       `
         INSERT INTO driver_finance.settlement_lines (
           settlement_id, operating_company_id, line_type, description, amount, load_id,
-          quantity, rate_cents, unit_of_measure, is_active, is_sample_data
+          quantity, rate_cents, unit_of_measure, item_id, is_active, is_sample_data
         )
-        SELECT $1::uuid, $2::uuid, 'earnings', $3, $4, $5::uuid, $6, $7, $8, true, false
+        SELECT $1::uuid, $2::uuid, 'earnings', $3, $4, $5::uuid, $6, $7, $8, $9::uuid, true, false
         WHERE NOT EXISTS (
           SELECT 1 FROM driver_finance.settlement_lines sl
            WHERE sl.settlement_id = $1::uuid
@@ -1356,6 +1390,7 @@ export async function postSettlementCreatorInClientTx(
         hasLoadedMileage ? Number(load.loaded_miles) : null,
         hasLoadedMileage ? Number(load.line_haul_rate_cents) : null,
         hasLoadedMileage ? "mi" : null,
+        hasLoadedMileage ? (loadedItem?.id ?? null) : null,
       ],
     );
 
@@ -1366,15 +1401,20 @@ export async function postSettlementCreatorInClientTx(
     // absent (matches the "empty contributes $0" comment on the JE side), never invented.
     const hasEmptyMileage = load.empty_rate_cents != null && load.empty_miles != null;
     if (hasEmptyMileage) {
+      const emptyItem = await itemByName(client, draft.operating_company_id, "Driver Pay-CDL-Empty Miles");
+      // Same all-four-or-none rule as the loaded-miles line above: without a resolved item_id the
+      // check constraint requires quantity/rate_cents/unit_of_measure to ALSO be NULL, not a
+      // partial set.
+      const hasEmptyItem = Boolean(emptyItem);
       const emptyCents = Math.round(Number(load.empty_rate_cents) * Number(load.empty_miles));
       const emptyDesc = `Load ${load.load_number} — Empty Miles ${Number(load.empty_miles).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} @ $${(Number(load.empty_rate_cents) / 100).toFixed(2)}`;
       await client.query(
         `
           INSERT INTO driver_finance.settlement_lines (
             settlement_id, operating_company_id, line_type, description, amount, load_id,
-            quantity, rate_cents, unit_of_measure, is_active, is_sample_data
+            quantity, rate_cents, unit_of_measure, item_id, is_active, is_sample_data
           )
-          SELECT $1::uuid, $2::uuid, 'deadhead_pay', $3, $4, $5::uuid, $6, $7, 'mi', true, false
+          SELECT $1::uuid, $2::uuid, 'deadhead_pay', $3, $4, $5::uuid, $6, $7, $8, $9::uuid, true, false
           WHERE NOT EXISTS (
             SELECT 1 FROM driver_finance.settlement_lines sl
              WHERE sl.settlement_id = $1::uuid
@@ -1389,8 +1429,10 @@ export async function postSettlementCreatorInClientTx(
           emptyDesc,
           dollarsFromCents(Math.max(0, emptyCents)),
           loadId,
-          Number(load.empty_miles),
-          Number(load.empty_rate_cents),
+          hasEmptyItem ? Number(load.empty_miles) : null,
+          hasEmptyItem ? Number(load.empty_rate_cents) : null,
+          hasEmptyItem ? "mi" : null,
+          hasEmptyItem ? emptyItem!.id : null,
         ],
       );
     }

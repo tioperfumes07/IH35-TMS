@@ -2,12 +2,21 @@
 /**
  * scripts/ops/2026-09-28-cc2-r157b-seed-settlements-5817-5818-5819.ts — ROUND 155.13/157-B item 2.
  *
- * Seeds real driver settlements 5817, 5818, 5819 through the Settlement Creator engine
- * (previewSettlementCreator / postSettlementCreatorInClientTx — existing engines only, no new GL
- * math), replacing the empty pre-settlement shells P-0001 (Genaro Guerrero Chavez → 5817),
- * P-0004 (Ruben Pedro Perez Garcia → 5818), P-0002 (Neftali Coronado Urbano → 5819) via the
- * engine's own sanctioned Edit-override path (settlement_no = the existing P-series id,
- * edit_void_repost = true — voids the empty shell, creates a new row with the SAME display_id).
+ * Seeds real driver settlements 5817 (Genaro Guerrero Chavez), 5818 (Ruben Pedro Perez Garcia),
+ * 5819 (Neftali Coronado Urbano) through the Settlement Creator engine (previewSettlementCreator /
+ * postSettlementCreatorInClientTx — existing engines only, no new GL math), posted as bare
+ * AlwaysTrack digits (settlement_no="5817" etc), NOT via the P-series Edit-override path onto the
+ * existing empty shells P-0001/P-0004/P-0002. That path was tried first and hit a real, pre-
+ * existing engine bug live (23505 duplicate key on driver_settlements_operating_company_id_
+ * display_id_key — the table's only unique index has no partial WHERE voided_at IS NULL clause,
+ * so voiding the old shell never frees its display_id for reuse; the whole transaction rolled
+ * back, nothing committed). Posting as bare digits sidesteps this entirely — confirmed live via
+ * pg_indexes that source_document_ref carries NO uniqueness constraint at all, and the bare-digit
+ * path's own existing-row check (`source_document_ref = $ref AND voided_at IS NULL`) correctly
+ * ignores the voided '5819' fake. The old P-0001/P-0004/P-0002 shells are left untouched by this
+ * script — known duplicate empty shells for the same driver/period, routed to ROUND 155.13/157-B
+ * item 5's separate cleanup (they're still attached to loads on the "never touched" list, so
+ * voiding them needs its own careful pass, not folded into this posting).
  *
  * Source of truth: feed-input/settlement-truth-from-pdfs.json (signed AlwaysTrack PDF transcript),
  * keys "5817"/"5818"/"5819", cross-checked against the actual signed PDFs in ~/Downloads and
@@ -23,8 +32,8 @@
  *
  * R-186.1 (5819 only): the display_id "5819" already exists as a cancelled/voided fake from the
  * retired allocator (id c50e6c82-efff-4432-a1f5-b1e7edc42dd0) — LEFT ALONE, never touched, never
- * reused. The real settlement posts under P-0002's own display_id; source_document_ref is set to
- * "5819" afterward via the one sanctioned setter (setSettlementSourceDocumentRef).
+ * reused. Posting settlement_no="5819" mints a fresh, auto-generated display_id and sets
+ * source_document_ref="5819" natively (bare-digit path); it never touches the voided fake.
  *
  * `is_sample_data` is never set true — this is real USMCA money.
  *
@@ -40,7 +49,6 @@ import {
   previewSettlementCreator,
   postSettlementCreatorInClientTx,
 } from "../../apps/backend/src/driver-finance/settlement-creator.service.js";
-import { setSettlementSourceDocumentRef } from "../../apps/backend/src/driver-finance/settlement-source-document-ref.service.js";
 import type { SettlementCreatorDraft, SettlementCreatorLoadBlock } from "../../apps/backend/src/driver-finance/settlement-creator.types.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -87,26 +95,39 @@ function deliveryDateOf(loads: Record<string, FeedLoad>, loadNumber: string): st
   return deliver?.date ?? null;
 }
 
+// ROUND 157-B correction: the P-series Edit-override path (settlement_no="P-000N",
+// edit_void_repost=true) hit a REAL, pre-existing engine bug live: driver_settlements has a FULL
+// (non-partial) unique index on (operating_company_id, display_id) -- voidPriorCreatorSettlementForEdit
+// sets voided_at/status='cancelled' on the old row but never changes its display_id, so the
+// following INSERT with the SAME display_id always violates the constraint. Confirmed live
+// (23505 duplicate key on driver_settlements_operating_company_id_display_id_key, P-0001) before
+// any commit -- the whole transaction rolled back, P-0001 untouched. Fixing that constraint is a
+// separate schema change, out of scope here. Instead: post all three as BARE AlwaysTrack digits
+// ("5817"/"5818"/"5819", not P-series) -- source_document_ref has NO uniqueness constraint at
+// all (confirmed live via pg_indexes: only one unique index exists on this table, on display_id),
+// and the bare-digit path's own existing-row check is `source_document_ref = $ref AND voided_at
+// IS NULL`, which correctly does NOT match the already-voided '5819' fake -- so this path mints a
+// fresh display_id and sets source_document_ref natively, no constraint conflict, no separate
+// setSettlementSourceDocumentRef call needed. The old P-0001/P-0004/P-0002 shells are left
+// untouched (still open, still empty) -- known duplicates for the same driver/period, routed to
+// ROUND 155.13/157-B item 5's separate cleanup (voiding a shell that's still attached to a
+// don't-touch load needs its own careful pass, not folded into this posting).
 const TARGETS: Array<{
   key: "5817" | "5818" | "5819";
-  presettlementId: string;
   driverId: string;
   driverLabel: string;
   targetTotalDueCents: number;
   extraAdditionalPay?: Array<{ load_number: string; description: string; amount_cents: number }>;
   extraReimbursements?: Array<{ load_number: string; description: string; amount_cents: number }>;
-  setSourceDocumentRefAfterPost?: string;
 }> = [
   {
     key: "5817",
-    presettlementId: "P-0001",
     driverId: "6edcb351-e81b-4bf2-adf7-5eca9eff9137", // Genaro Guerrero Chavez
     driverLabel: "Genaro Guerrero Chavez",
     targetTotalDueCents: centsOf(1617.66),
   },
   {
     key: "5818",
-    presettlementId: "P-0004",
     driverId: "1ec7654c-1ae9-4f3d-9af6-af9fd4b6bcc9", // Ruben Pedro Perez Garcia
     driverLabel: "Ruben Pedro Perez Garcia",
     targetTotalDueCents: centsOf(1015.43),
@@ -127,11 +148,9 @@ const TARGETS: Array<{
   },
   {
     key: "5819",
-    presettlementId: "P-0002",
     driverId: "a32a35c8-7cd5-4368-83f0-35e185092433", // Neftali Coronado Urbano
     driverLabel: "Neftali Coronado Urbano",
     targetTotalDueCents: centsOf(1955.75),
-    setSourceDocumentRefAfterPost: "5819",
   },
 ];
 
@@ -186,8 +205,7 @@ function buildDraft(feed: Record<string, FeedSettlement>, t: (typeof TARGETS)[nu
 
   return {
     operating_company_id: USMCA,
-    settlement_no: t.presettlementId,
-    edit_void_repost: true,
+    settlement_no: t.key, // bare AlwaysTrack digits — see TARGETS comment for why, not P-series
     driver_id: t.driverId,
     period_start: s.period_start,
     period_end: s.period_end,
@@ -215,10 +233,14 @@ async function main() {
     process.exit(1);
   }
 
+  const onlyArg = process.argv.find((a) => a.startsWith("--only="));
+  const only = onlyArg ? new Set(onlyArg.slice("--only=".length).split(",")) : null;
+
   const feed = loadFeed();
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 3 });
 
   for (const t of TARGETS) {
+    if (only && !only.has(t.key)) continue;
     const draft = buildDraft(feed, t);
     const client = await pool.connect();
     try {
@@ -227,7 +249,7 @@ async function main() {
       await client.query(`SET LOCAL app.operating_company_id = '${USMCA}'`);
 
       const preview = await previewSettlementCreator(client as never, draft);
-      console.log(`\n=== ${t.key} (${t.driverLabel}, shell ${t.presettlementId}) ===`);
+      console.log(`\n=== ${t.key} (${t.driverLabel}) ===`);
       console.log(`  driver_net_cents:      ${preview.driver_net_cents}  (target ${t.targetTotalDueCents})`);
       console.log(`  driver_net_matches_pdf: ${preview.driver_net_matches_pdf}`);
       console.log(`  balanced:              ${preview.balanced} (debit ${preview.debit_total_cents} / credit ${preview.credit_total_cents})`);
@@ -241,23 +263,15 @@ async function main() {
       }
 
       if (!apply) {
-        console.log(`  DRY RUN — would post ${t.key} onto ${t.presettlementId} (void+repost).`);
+        console.log(`  DRY RUN — would post ${t.key} as a new AlwaysTrack-numbered settlement.`);
         await client.query("ROLLBACK");
         continue;
       }
 
       const result = await postSettlementCreatorInClientTx(client as never, OWNER_USER_ID, draft);
-      console.log(`  POSTED: settlement_id=${result.settlement_id} display_id=${result.display_id}`);
-
-      if (t.setSourceDocumentRefAfterPost) {
-        const updated = await setSettlementSourceDocumentRef(client as never, {
-          operatingCompanyId: USMCA,
-          settlementId: result.settlement_id,
-          sourceDocumentRef: t.setSourceDocumentRefAfterPost,
-          actorUserId: OWNER_USER_ID,
-        });
-        console.log(`  source_document_ref set: ${JSON.stringify(updated)}`);
-      }
+      console.log(
+        `  POSTED: settlement_id=${result.settlement_id} display_id=${result.display_id} source_document_ref=${result.source_document_ref}`,
+      );
 
       await client.query("COMMIT");
       console.log(`  COMMITTED.`);
