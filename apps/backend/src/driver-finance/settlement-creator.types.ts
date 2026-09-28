@@ -111,6 +111,14 @@ export type SettlementCreatorDraft = {
   loads: SettlementCreatorLoadBlock[];
   customer_charges_cents?: number | null;
   fuel_purchases: SettlementCreatorFuelLine[];
+  /**
+   * ROUND 190/191 (2026-09-28) — explicit acknowledgment that this settlement's signed PDF
+   * genuinely carries no card-fuel purchases. Required (with fuel_purchases empty) whenever
+   * period_end extends past the entity's current latest fuel.fuel_transactions row — see the
+   * preview blocker in settlement-creator.service.ts. Never defaults to true; an omitted flag on
+   * a period-extending settlement with no fuel lines blocks the post.
+   */
+  confirmed_zero_fuel_purchases?: boolean;
   expenses: SettlementCreatorExpenseLine[];
   deductions: SettlementCreatorMoneyLine[];
   reimbursements: SettlementCreatorMoneyLine[];

@@ -339,6 +339,29 @@ export async function previewSettlementCreator(
   }
   if (!draft.loads?.length) blockers.push("At least one load block is required.");
 
+  // ROUND 190/191 (2026-09-28) — the 09-25/09-24 fuel-feed gap root cause: this engine DOES seed
+  // fuel.fuel_transactions from draft.fuel_purchases (below), but nothing ever verified the
+  // caller actually populated it from the signed PDF. 5817/5818/5819 all posted with a period_end
+  // (09-25/09-19) past the company's fuel-transaction frontier at the time (09-24) and zero
+  // fuel_purchases declared — undetectable by the type system alone (an empty array is valid
+  // syntax for "no fuel this period" AND for "caller forgot to check the PDF"). This gate refuses
+  // to post a settlement whose period_end extends past the entity's current latest known fuel
+  // transaction while fuel_purchases is empty, unless the caller explicitly confirms there is
+  // genuinely no fuel on this settlement's PDF (confirmed_zero_fuel_purchases). A settlement whose
+  // period stays within already-covered dates is unaffected (nothing new to seed).
+  if (!draft.fuel_purchases?.length && !draft.confirmed_zero_fuel_purchases) {
+    const frontier = await client.query<{ max_at: string | null }>(
+      `SELECT MAX(transaction_at)::text AS max_at FROM fuel.fuel_transactions WHERE operating_company_id = $1::uuid`,
+      [draft.operating_company_id],
+    );
+    const maxAt = frontier.rows[0]?.max_at ? frontier.rows[0].max_at.slice(0, 10) : null;
+    if (!maxAt || draft.period_end > maxAt) {
+      blockers.push(
+        `This settlement's period_end (${draft.period_end}) extends past the last known fuel transaction (${maxAt ?? "none"}) with zero fuel_purchases declared. Check the signed PDF for card fuel lines and add them, or set confirmed_zero_fuel_purchases if this settlement genuinely has none.`,
+      );
+    }
+  }
+
   const je_lines: SettlementCreatorJeLine[] = [];
   const push = (line: SettlementCreatorJeLine) => je_lines.push(line);
 
