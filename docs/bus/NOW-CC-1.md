@@ -1,28 +1,19 @@
-# ROUND 155.2: 14/18 loads ready, 4 blocked on real data gaps — CC-1 — 2026-09-28 08:10Z
-Archived: `docs/bus/archive/NOW-CC-1-2026-09-28-10.md`.
+# ROUND 155.2a: 15/18 ready, guard shipped, 1 schema gap needs your ruling — CC-1 — 2026-09-28 08:25Z
+Archived: `docs/bus/archive/NOW-CC-1-2026-09-28-11.md`.
 
-DONE, LIVE: 5 customers created (AUTH-085). 4 more leftover driver duplicates merged beyond the
-order's named list — HUGO GAYTAN SARABIA x2 (also corrected his name, missing "Sarabia"),
-GENARO GUERRERO CHAVEZ x1, EDUARDO AZAEL FLORES ORTIZ x1 (0-load both sides, survivor by Samsara
-id). The order's own named 4 (CARLOS MAURICIO/LUIS ARMANDO/ANGEL ALFONSO/LEONEL) were ALREADY
-fully resolved by AUTH-081 — no action needed, order was stale on this point.
+DONE, LIVE: 13634 set to 460000 (owner-declared, memo says so explicitly, PDF never cited as
+source). The RLS-scope-loss guard (verify-no-session-scoped-rls-bypass.mjs) is now WIRED INTO
+the gate with a shrink-only baseline (44 pre-existing files, real debt across scripts/, not
+fixed today) — demonstrated RED-then-GREEN live per your instruction. PR #22935, merged.
 
-FIXED 4 real bugs in the booking script (never rewrote PLAN or the bookLoad loop): mdata.customers
-resolver used nonexistent name/is_active columns (real: customer_name/deactivated_at); mdata.units
-has no operating_company_id (155.2.a, confirmed — fixed to currently_leased_to_company_id);
-trailers are NOT in mdata.units at all (0 rows of that type exist) — real table is mdata.equipment;
-and a serious pooled-connection bug where bare set_config + un-transacted queries silently lost
-RLS scope between statements (one read went 3->49 phantom failures between runs) — fixed by
-wrapping resolution in explicit transactions. Added the required preflight (refuses whole run,
-reports every unresolved ref at once). 3 consecutive runs now give an IDENTICAL, stable result.
+SCHEMA GAP — you said stop and tell you, so: mdata.equipment.owner_company_id is NOT NULL with
+NO ownership-type flag anywhere on the table (63 columns checked). Live-verified: all 330
+existing equipment rows use only the 3 internal entities (USMCA/TRK/TRANSP) as owner_company_id
+— there is no precedent anywhere for a broker/third-party-owned row. I can't create 568871 or
+21868 without either (a) falsely claiming USMCA owns them, which is exactly the shoehorn you
+said not to do, or (b) you ruling on the real mechanism (new boolean column? a placeholder
+external-owner company row? a notes convention?). Not forced either way.
 
-RATE VERIFICATION (155.2.d) against signed PDFs in Downloads: 13637 CONFIRMED $5,200.00 exactly.
-13634 does NOT confirm $4,600 — signed rate con states "Total Load Value: UNDECLARED" twice. Per
-the order's own rule (PDF wins, never book at 0), 13634 is excluded, not booked at either number.
-
-BLOCKED, NEED LEAD INPUT (14 of 18 are otherwise ready to book the instant these clear):
-1. 13634 rate — PDF shows UNDECLARED, not $4,600. Need the owner's real source for this number.
-2. 13623 & 13631 trailer "568871" — doesn't exist in mdata.equipment, not in any rate-con PDF,
-   IS identical to 13623's own work-order number (likely a transcription mix-up).
-3. 13627 trailer "21868" — same situation, no real trailer found anywhere.
-No historical truck-to-trailer pairing exists for T174/T170 to infer from. Never guessed.
+15 of 18 loads (all but 13623/13627/13631) are fully resolvable right now and ready to book the
+instant this is ruled on. equipment_type would be "DryVan" (free text, matches "53' Van" in
+notes) once owner_company_id is settled.
