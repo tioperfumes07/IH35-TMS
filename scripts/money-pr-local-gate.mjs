@@ -397,6 +397,22 @@ const GUARD_303 = [
 const DATA_WRITE_PATHS = ["db/migrations/", "scripts/ops/"];
 const ONE_SHOT_WRITER_RE = /^scripts\/run-[^/]+-once\.m?[jt]s$/;
 const LIVE_DOMAIN_GUARDS = [
+  // ROUND 166 JOB 2 — a non-void driver bill with $0 gross, OR null/zero miles, OR null/zero rate,
+  // fails. Three different failure shapes caught by one comprehensive check.
+  [
+    "verify-driver-bill-has-miles-and-rate",
+    ["apps/backend/src/dispatch/book-load.service.ts", "apps/backend/src/driver-finance/void-open-driver-bill.service.ts"],
+  ],
+  // ROUND 166 JOB 3 — a load whose number falls outside the sanctioned 13xxx series (and isn't
+  // cancelled) fails. Catches the next "invent a load to hold an orphan invoice" shortcut.
+  ["verify-no-fabricated-load-numbers", ["apps/backend/src/dispatch/", "apps/backend/src/accounting/from-load.ts"]],
+  // ROUND 166 JOB 1(e) (P0) — the permanent alarm: fails when no USMCA unit has a fresh telematics
+  // position during operating hours. USMCA's Samsara feed was off for weeks with zero stamps
+  // accumulating and nobody noticed; this is the gate that catches the next silent death.
+  [
+    "verify-telematics-feed-is-live",
+    ["apps/backend/src/integrations/samsara/", "apps/backend/src/telematics/", "apps/backend/src/cron/samsara-positions-cron.ts"],
+  ],
   // ROUND 163 JOB 1 (P0) — our issued-invoice total must tie to the QBO control file for its date
   // range, or the gate reports the exact delta (actionable/mismatched/unmatched broken out).
   [

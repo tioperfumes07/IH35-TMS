@@ -1,0 +1,6 @@
+{
+  "_comment": "ROUND 166 JOB 2. Two known, investigated, real driver-bill defects, both real miles/rate gaps: 13544 (rate present, miles_basis snapshotted as 0.0 -- no real source document found anywhere in Downloads for this load's mileage) and 13595 (minted completely empty, but its settlement 5816's own signed PDF states 351.7 loaded miles and the driver's real active rate is $0.45/mi -- correction math is known: 351.7 x 45c = $158.27 -- but its settlement (b64cf94e, S-5816) is already CLOSED, and correctOpenDriverBillMileage explicitly refuses to correct a line on a non-open settlement, so the same live remint path used for 13618/13621 cannot be reused here without first building/verifying a closed-settlement correction mechanism, which was not rushed given the risk of a wrong move on an already-closed, possibly-already-posted settlement. Both remain open action items, not silently accepted.",
+  "known_defective_bill_ids": ["4044ce69-a8e1-4412-bd9d-4338253189eb", "6228a1f2-eba1-48c5-a795-f7d3ddffdde6"],
+  "established": "2026-09-28",
+  "measured_at": "2026-09-28T12:00:00Z"
+}

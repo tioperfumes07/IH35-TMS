@@ -1,64 +1,49 @@
-# ROUND 163 JOB 1 DONE (AR reconciled to QBO to the cent) — CC-1 — 2026-09-28 11:50Z
-Archived: `docs/bus/archive/NOW-CC-1-2026-09-28-20.md`.
+# ROUND 166 JOB 1/2/3 DONE (Samsara proven live, fabricated load removed, driver-bill guard shipped) — CC-1 — 2026-09-28 12:05Z
+Archived: `docs/bus/archive/NOW-CC-1-2026-09-28-21.md`.
 
-## ROUND 163: Lead's claimed fixes — VERIFIED, not redone
-Re-checked with the full read pattern (SET LOCAL ROLE neondb_owner; SET LOCAL app.bypass_rls;
-verified neondb_owner/true — my first attempt silently ran as ih35_app, caught before trusting it):
-- Unit constraint replaced: uq_loads_one_active_unit confirmed DROPPED, trg_refuse_overlapping_unit_assignment confirmed present.
-- All 16 real loads (13624-13639): dispatched=16, with_unit=16, with_wo=16, missing_unit=0 — confirmed live, matches the Lead's numbers exactly.
-- 7 stale loads: 13609/13617 -> invoiced, 13616/13618/13620/13621/13622 -> delivered — confirmed live.
-- Samsara: is_enabled=true, confirmed still on (I found this earlier this session; it's held).
-No redo needed on any of this.
+## ROUND 166 JOB 1 (P0, Samsara) — DONE
+Live proof, exactly as demanded: telematics.vehicle_latest_position carries a real row for unit
+033dcdff-98c7-4b2e-8db3-2c94519dbc89 (T171), captured_at 2026-09-28T11:40:10Z, city=Houston,
+state=TX — inside the last 15 minutes. 11 USMCA units total have a position fresher than 20
+minutes as of this check. The feed was OFF for USMCA's entire history (is_enabled=false from
+2026-08-21 creation until 2026-09-28T10:00:08Z) — confirmed by repeated cron_skipped_samsara_disabled
+audit events up to that exact second — and is now genuinely healthy and writing.
+Historical backfill for the 16 current loads' PAST stops (c/d in the order) is NOT possible: the
+feed has no position history covering their actual transit dates (Sept 23-28), because it was off
+the whole time. Going forward, new stops should stamp normally as real position data accumulates.
+Permanent alarm shipped: scripts/verify-telematics-feed-is-live.mjs — fails if is_enabled goes
+false again, or no USMCA unit has a position inside 20 minutes during operating hours. Selftest
+4/4, live PASS.
 
-## ROUND 163 JOB 1 (P0) — DONE, AUTH-099, AR reconciles to QBO exactly
-Control file feed-input/qbo-invoice-list-2026-08-07-to-2026-09-27.csv (committed verbatim from the
-owner's Desktop export). Full row-by-row reconciliation, both embedded tables parsed (main table +
-a second block of 11 invoices hidden in CSV columns 19-26), every amount cross-checked against our
-own DB — not a coarse total-minus-total subtraction. Math ties EXACTLY to QBO's own printed total:
+## ROUND 166 JOB 2 — guard shipped, 2 real defects correctly still flagged
+scripts/verify-driver-bill-has-miles-and-rate.mjs covers all three named failure shapes (zero
+gross, null/zero miles, null/zero rate) in one check. Live-confirmed it correctly still flags:
+- 13544: has a rate (45c/mi) but miles_basis snapshotted as 0.0. No real source document found
+  anywhere in Downloads for this load's mileage — NOT reminted (never invented).
+- 13595: minted completely empty. Its settlement's own signed PDF (Driver_Settlement_5816.pdf)
+  states 351.7 loaded miles; driver's real active rate is $0.45/mi — real correction math is known
+  (351.7 x 45c = $158.27) but its settlement is already CLOSED and
+  correctOpenDriverBillMileage explicitly refuses to correct a line on a non-open settlement.
+  NOT forced through without a verified closed-settlement correction mechanism — flagged as the
+  next real step, not silently left broken.
+Both baselined as known, real, open debt (2/2), guard live PASS against that baseline.
+90007's own $0 bill was already voided by the Lead before this round — confirmed, not redone.
 
-  $143,920.00  already issued, matched by load number
-+ $ 22,510.00  created live this round (5 loads, listed below)
-+ $ 20,400.00  mismatched — customer/rate disagreement, reported not guessed (6 loads)
-+ $278,061.72  unmatched — LOAD blank/text in QBO, reported not guessed (73 rows)
-+ $  1,500.00  excluded — different billing entity (BBA Logistics/13530)
-= $454,991.72  QBO's own printed control total, exact to the cent
+## ROUND 166 JOB 3 — DONE
+Detached the real $350 invoice (ITS Logistics LLC, PO 68747) from fabricated load 90007 —
+source_load_id set NULL, kept as a non-freight invoice, amount/status/customer untouched, never
+deleted. Voided the fabricated load itself through the real cancellation path. Swept every USMCA
+load outside the sanctioned 13xxx series: 90007 was the only one; zero remain after this fix.
+Guard scripts/verify-no-fabricated-load-numbers.mjs: live PASS (123 active loads, 0 outside the
+series).
+NOT done this turn: cross-checking JPM RECONCILIATION.csv's other blank-LOAD Faro rows (ITS
+Logistics $350 already handled via 90007; Supply Chain Management $4,000, Hawkeye $600 x2,
+Refrigerx, Fuze, ES Logistics, others named in the order) against our invoices for a SIMILAR
+fabricated-load pattern — the load-number sweep confirms no OTHER fabricated load exists today,
+but I have not individually verified each of those specific Faro rows landed cleanly (e.g.,
+correctly unlinked, not mis-attached to a real-but-wrong load). Flagging as the next real check,
+not claiming it done.
 
-CREATED (real, populated LOAD, customer+amount agree with QBO, not yet issued — minted through the
-sanctioned engine, buildInvoiceFromLoad -> sendDraftInvoice mode="historical_backfill", never
-hand-written; amount/date both derived from the load's own real data, never caller-supplied):
-  13503 Semares Forwarding Services    $4,900.00
-  13504 Semares Forwarding Services    $4,900.00
-  13509 ES Logistics International LLC $4,400.00
-  13533 Refrigerx Transportation LLC   $3,450.00
-  13539 Refrigerx Transportation LLC   $4,860.00
-All 5 live-verified: minted, sent, exact QBO amount.
-
-MISMATCHED, reported, NOT touched (6 loads, all from the Aug 7-10 batch — a real, confirmed
-customer/rate-attribution defect in our own data, pattern looks like a rotation across adjacent
-rows, not one clean swap; needs each load's own real rate-con document, none located for loads
-this old, before correcting customer_id or rate_total_cents):
-  13505 QBO: Value Logistics LLC $3,900.00      | ours: Value Logistics Inc DBA A1 Value $3,900.00
-  13506 QBO: Twin Cities Logistics $1,200.00    | ours: DH Express Inc $3,900.00
-  13507 QBO: Value Logistics LLC $3,900.00      | ours: Twin Cities Logistics $1,200.00
-  13508 QBO: Value Logistics LLC $3,800.00      | ours: NCC Logistics México $2,500.00
-  13510 QBO: Refrigerx Transportation LLC $3,800.00 | ours: Impact Bulk Logistics $3,000.00
-  13511 QBO: Refrigerx Transportation LLC $3,800.00 | ours: Rehmann Transportation Corp. $3,600.00
-
-UNMATCHED, reported, NOT created (73 rows — LOAD column blank or a text placeholder like "NOT
-PURCHASED" in QBO's own export; per the order's own instruction, never assumed from the Num suffix
-— confirmed real trap: row "105- 13627" carries LOAD=13572, a DIFFERENT real load). Full list is in
-the guard's own live output (scripts/verify-ar-ties-to-qbo-invoice-list.mjs) and the baseline file.
-
-EXCLUDED: BBA Logistics LLC / load 13530 — "TRANSPORTATION" in QBO's own Location full name field,
-a different billing entity, not USMCA's.
-
-Guard scripts/verify-ar-ties-to-qbo-invoice-list.mjs: live PASS. Blocks immediately on any NEW
-actionable gap (real load, agreeing customer+amount, not yet issued); the mismatched/unmatched
-buckets are named-exception baselines (6/73) that only block if they grow.
-
-## ROUND 163 JOB 2/3/4 — NOT STARTED THIS TURN
-JOB 2 (Samsara backfill for the 16 current loads + prove a stamp lands): not started.
-JOB 3 (mileage from Samsara position history): depends on JOB 2.
-JOB 4 (fix the 6 copied-stop-data loads + the 1 tour_id-check-gap file, both already baselined by
-me in ROUND 155.23): not started this turn.
-Picking up JOB 2 next.
+## Round 163 JOB 2/3/4 — still not started (see prior archives)
+Given ROUND 166 superseded/extended much of this, next session should re-verify whether these are
+now covered by 166's work or still standalone.
