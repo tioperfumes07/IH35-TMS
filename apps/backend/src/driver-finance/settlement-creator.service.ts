@@ -59,7 +59,6 @@ async function accountByNumber(
       FROM catalogs.accounts
       WHERE operating_company_id = $1::uuid
         AND account_number = $2
-        AND COALESCE(is_active, true) IS TRUE
         AND deactivated_at IS NULL
       LIMIT 1
     `,
