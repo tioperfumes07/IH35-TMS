@@ -3436,7 +3436,7 @@ banking.bank_transactions.matched_factoring_advance_id (IF NOT EXISTS). No QBO w
 void. No delete. No new GL math beyond the accept handler's existing zero-variance path.
 action: OWNER_AUTH_ID=AUTH-110 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cursor-r186-bulk-accept-through-engine.ts --faro-only --apply
 expires_at: 2026-09-29T03:10:00.000Z
-status: OPEN
+status: DONE -- executed live 2026-09-28. Faro --faro-only --apply through accept handlers: 15 wires cleared, 45 live factoring_advance matches (all bank_match.accepted). Mid-run Lead LEAD REVERSAL wrongly voided 39 audited rows; unvoided same session. Guard verify-no-match-persisted-outside-accept-handler PASS. Resolve 10 (named 08/13 -$1800, 08/14 -$5441, 09/21 + every reserve movement; plus 7 non-exact).
 
 — Cursor
 
