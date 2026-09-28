@@ -2485,3 +2485,31 @@ a hard pre-commit check. DRY RUN 2026-09-28 09:4xZ: 90/90 bills planned across 4
 refusals, 0 headroom violations.
 
 — CC-2
+
+---
+
+## AUTH-089
+issued_at: 2026-09-28T10:10:00.000Z
+scope: driver_finance.settlement_lines UPDATE ONLY (void exactly the one duplicate escrow line
+id 2c6f0490-a299-465b-8951-8dbde16e878b, settlement 5812, load 13588) + INSERT ONLY (exactly 2 new
+deduction lines on settlement 5812 load 13600, amounts $75.00 and $100.00, from the signed
+AlwaysTrack report) + driver_finance.driver_settlements UPDATE ONLY (deductions_total/net_pay on
+settlement 5812, recomputed as SUM of that settlement's own active lines, refuses unless the sum
+equals $225.00/$1,502.47 exactly). No GL/journal_entry touched. operating_company_id
+5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA) only.
+action: OWNER_AUTH_ID=AUTH-089 npx tsx scripts/ops/2026-09-28-cc2-r15511b-fix-5812-deductions.ts --apply
+expires_at: 2026-09-28T16:10:00.000Z
+status: OPEN
+
+ROUND 155.11-B item 1 (Claude-Lead, settlement delta). Lead's figures: 5812 Luis Armando Sosa Perez
+09-21, gross ties, DEDUCTIONS 225.00 not 75.00 -> net 1,502.47, "ONE DEDUCTION LINE IS MISSING.
+Add the LINE. Never plug the total." Live-verified (CC-2) before writing this: the live discrepancy
+is actually a duplicate escrow line for load 13588 (the bill-linked original was never voided when
+its AUTH-056 replacement was added, unlike load 13600's clean swap) PLUS two deduction lines named
+in the signed report's truth file (feed-input/settlement-truth-from-pdfs.json, settlement 5812)
+that were never created at all: "Admin fee - PAGO DE TELEFONO" $75.00 and "CASH ADVANCE WIRE
+TRANSFER" $100.00, both load 13600. Every dollar traced to a real line, no total plugged -- the
+script computes deductions_total/net_pay as a SUM of the resulting active lines and refuses if it
+does not land on the Lead's own target.
+
+— CC-2
