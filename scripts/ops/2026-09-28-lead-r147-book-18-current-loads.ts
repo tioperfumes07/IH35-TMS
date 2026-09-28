@@ -80,7 +80,48 @@ async function resolveTrip(c: pg.PoolClient, driverId: string) {
   return { trip_type: "TR" as const, tour_id: t };
 }
 
+// ROUND 155.2 "How to run it": pre-flight must report EVERY unresolved reference at once and
+// refuse the WHOLE run — never book 11 of 18 and leave 7 half-dead. This checks every row's
+// customer/driver/unit/trailer with the SAME corrected queries the main loop uses, on one
+// connection, before any bookLoad() call is made.
+async function preflightResolveAll(pool: pg.Pool): Promise<string[]> {
+  const problems: string[] = [];
+  const c = await pool.connect();
+  try {
+    await c.query(`SELECT set_config('app.bypass_rls','lucia',false)`);
+    await c.query(`SELECT set_config('app.operating_company_id',$1::text,false)`, [USMCA]);
+    for (const r of PLAN) {
+      const exists = await c.query(`SELECT id FROM mdata.loads WHERE operating_company_id=$1::uuid AND load_number=$2`, [USMCA, r.ln]);
+      if (exists.rowCount) continue; // will be skipped in the main loop too — not a blocker
+      const checks: Array<[string, string, unknown[]]> = [
+        [`customer '${r.customer}'`, `SELECT id FROM mdata.customers WHERE operating_company_id=$1::uuid AND lower(btrim(customer_name))=lower(btrim($2)) AND deactivated_at IS NULL`, [USMCA, r.customer]],
+        [`driver '${r.driver}'`, `SELECT id FROM mdata.drivers WHERE operating_company_id=$1::uuid AND lower(btrim(first_name||' '||last_name))=lower(btrim($2))`, [USMCA, r.driver]],
+        [`unit '${r.truck}'`, `SELECT id FROM mdata.units WHERE currently_leased_to_company_id=$1::uuid AND upper(btrim(unit_number))=upper(btrim($2))`, [USMCA, r.truck]],
+        [`trailer '${r.trailer}'`, `SELECT id FROM mdata.equipment WHERE COALESCE(currently_leased_to_company_id, owner_company_id)=$1::uuid AND upper(btrim(equipment_number))=upper(btrim($2))`, [USMCA, r.trailer]],
+      ];
+      for (const [what, sql, params] of checks) {
+        const res = await c.query(sql, params);
+        if (res.rowCount !== 1) problems.push(`${r.ln}: ${what} — expected 1 match, got ${res.rowCount}`);
+      }
+    }
+  } finally {
+    c.release();
+  }
+  return problems;
+}
+
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+
+const preflightProblems = await preflightResolveAll(pool);
+if (preflightProblems.length > 0) {
+  console.log("PRE-FLIGHT REFUSED THE WHOLE RUN — unresolved references:");
+  for (const p of preflightProblems) console.log(`  ${p}`);
+  console.log(`${preflightProblems.length} unresolved reference(s) across the 18-row plan. Nothing booked.`);
+  await pool.end();
+  process.exit(1);
+}
+console.log("PRE-FLIGHT PASS — every customer/driver/unit/trailer reference resolves to exactly 1 row.");
+
 const out: Array<Record<string, unknown>> = [];
 try {
   for (const r of PLAN) {
@@ -93,10 +134,23 @@ try {
       const exists = await c.query(`SELECT id FROM mdata.loads WHERE operating_company_id=$1::uuid AND load_number=$2`, [USMCA, r.ln]);
       if (exists.rowCount) { console.log(`${r.ln}: SKIP exists`); out.push({ ln: r.ln, status: "skip_exists" }); continue; }
       ids = {
-        customer: await one(c, `SELECT id::text FROM mdata.customers WHERE operating_company_id=$1::uuid AND lower(btrim(name))=lower(btrim($2)) AND COALESCE(is_active,true)`, [USMCA, r.customer], `customer '${r.customer}'`),
+        // 155.2.b fix: mdata.customers has no `name`/`is_active` columns live — the real columns
+        // are `customer_name` and `deactivated_at` (verified via information_schema.columns,
+        // 2026-09-28). The original query would 42703 on every row before ever reaching a
+        // missing-customer failure.
+        customer: await one(c, `SELECT id::text FROM mdata.customers WHERE operating_company_id=$1::uuid AND lower(btrim(customer_name))=lower(btrim($2)) AND deactivated_at IS NULL`, [USMCA, r.customer], `customer '${r.customer}'`),
         driver: await one(c, `SELECT id::text FROM mdata.drivers WHERE operating_company_id=$1::uuid AND lower(btrim(first_name||' '||last_name))=lower(btrim($2))`, [USMCA, r.driver], `driver '${r.driver}'`),
-        unit: await one(c, `SELECT id::text FROM mdata.units WHERE operating_company_id=$1::uuid AND upper(btrim(unit_number))=upper(btrim($2))`, [USMCA, r.truck], `unit '${r.truck}'`),
-        trailer: await one(c, `SELECT id::text FROM mdata.units WHERE operating_company_id=$1::uuid AND upper(btrim(unit_number))=upper(btrim($2))`, [USMCA, r.trailer], `trailer '${r.trailer}'`),
+        // 155.2.a fix: mdata.units has no `operating_company_id` column — units carry
+        // `owner_company_id` (who owns the tractor) and `currently_leased_to_company_id` (who is
+        // currently operating it). The dispatch-relevant scope is the latter, matching
+        // book-load.service.ts's own resolution pattern for the trailer id below.
+        unit: await one(c, `SELECT id::text FROM mdata.units WHERE currently_leased_to_company_id=$1::uuid AND upper(btrim(unit_number))=upper(btrim($2))`, [USMCA, r.truck], `unit '${r.truck}'`),
+        // Trailers are NOT in mdata.units at all — every row in that table is vehicle_type
+        // 'Tractor' or NULL (live-verified 2026-09-28: 0 rows of type 'Trailer'). The real
+        // physical trailer table is mdata.equipment, keyed by equipment_number, exactly as
+        // book-load.service.ts's own trailer resolution query expects
+        // (`id = $1 AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2`).
+        trailer: await one(c, `SELECT id::text FROM mdata.equipment WHERE COALESCE(currently_leased_to_company_id, owner_company_id)=$1::uuid AND upper(btrim(equipment_number))=upper(btrim($2))`, [USMCA, r.trailer], `trailer '${r.trailer}'`),
       };
       trip = await resolveTrip(c, ids.driver);
     } catch (e) {

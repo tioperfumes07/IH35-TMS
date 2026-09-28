@@ -2384,3 +2384,45 @@ before) — survivor chosen by hard identifier (Samsara id present vs absent), n
 DRY_RUN=1 passed clean on the merge script: 4 pairs, TB unaffected, samsara total unchanged 95.
 
 — CC-1
+
+---
+
+## AUTH-086
+issued_at: 2026-09-28T08:00:00.000Z
+scope: mdata.loads (INSERT only, via createLoadWithFullSideEffects/bookLoad — the one real create path, never a raw INSERT) + mdata.load_stops + dispatch.load_charge_lines + dispatch.load_assignment_history + driver_finance.driver_bills (mint, via the same booking engine) for exactly the 18 load numbers 13622-13639, USMCA 5c854333-6ea5-4faa-af31-67cb272fef80 only. No settlement number is assigned to any of them (owner ruling: completed/factored but unsettled, open tour). Zero test/sample/demo rows.
+action: OWNER_AUTH_ID=AUTH-086 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-lead-r147-book-18-current-loads.ts
+expires_at: 2026-09-28T14:00:00.000Z
+status: OPEN
+
+ROUND 155.2. The booking script itself (already on main, not rewritten) had 3 real bugs beyond
+the order's own diagnosis, all live-verified before fixing: (1) mdata.customers resolver
+referenced nonexistent columns `name`/`is_active` (real: `customer_name`/`deactivated_at`) —
+every customer lookup would 42703 before ever reaching a missing-customer failure. (2)
+mdata.units has no operating_company_id (155.2.a, confirmed) — fixed to
+currently_leased_to_company_id, matching book-load.service.ts's own resolution pattern. (3)
+trailers are NOT in mdata.units at all (0 rows of vehicle_type 'Trailer' exist in that table,
+live-verified) — the real trailer table is mdata.equipment, keyed by equipment_number, exactly
+matching book-load.service.ts's own internal trailer-resolution query
+(`id = $1 AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2`). A new
+preflight function (resolves every row's customer/driver/unit/trailer on one connection before
+any bookLoad() call) was added per the order's "refuse the whole run" requirement — the PLAN
+array and the bookLoad()-calling loop are unchanged.
+Prerequisites already live: AUTH-085 created the 5 missing customers and merged 4
+newly-discovered leftover driver duplicates (HUGO GAYTAN SARABIA x2, GENARO GUERRERO CHAVEZ x1,
+EDUARDO AZAEL FLORES ORTIZ x1) not covered by the order's named list (which named 4 pairs
+already fully resolved by AUTH-081, live-verified exactly 1 match each).
+155.2.d rate verification against the signed PDFs in Downloads: 13637 (Westgate, WO 2648813)
+confirmed exactly $5,200.00 ("Total Cost USD 5,200.00") — matches the order. 13634 (Rite Way,
+WO 3-95379-0) does NOT confirm $4,600 — its signed rate con states "Total Load Value:
+UNDECLARED" twice. Per the order's own rule ("if the PDF disagrees, the PDF wins and you tell
+me" / "never book a load at 0"), 13634 is EXCLUDED from this run pending the Lead's decision —
+not booked at 0, not booked at an unconfirmed $4,600.
+Additionally found live and reported (not resolved by this AUTH, may cause the preflight to
+still refuse part of the run): loads 13623 and 13631 (driver Eduardo, trailer "568871") and
+13627 (driver Luis Armando, trailer "21868") reference trailer numbers that do not exist
+anywhere in mdata.equipment, and do not appear in any rate confirmation PDF in Downloads —
+"568871" is identical to load 13623's own work-order number, suggesting a transcription mix-up
+in the source AlwaysTrack board, not a real trailer. Never invented a trailer row to make these
+resolve.
+
+— CC-1
