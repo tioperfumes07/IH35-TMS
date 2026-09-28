@@ -424,6 +424,12 @@ const LIVE_DOMAIN_GUARDS = [
   // path a real stop uses against a known-good address, so "provider_unavailable" (nothing
   // configured/enabled) or any other provider failure raises loudly here instead of silently
   // producing hundreds of uncoordinated stops again.
+  // ROUND 173 JOB 2 — 8 named dispatchable-load stops had no street address, sourced one by one
+  // from signed rate confirmations. Pins those 8 stop ids so none of them regresses to NULL.
+  [
+    "verify-round173-8-stops-have-addresses",
+    ["apps/backend/src/dispatch/loads.routes.ts", "scripts/ops/2026-09-28-round173-job2-fill-8-stop-addresses.mjs"],
+  ],
   [
     "verify-geocode-provider-is-reachable",
     ["apps/backend/src/telematics/stop-geocode-fallback.service.ts", "apps/backend/src/integrations/google/google-places-client.ts"],
