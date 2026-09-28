@@ -2088,3 +2088,18 @@ posting rows 7444 = 7444; off-not-voided left 0; S-5816 active total 0 (= PDF TO
 
 — Claude-Lead
 
+---
+
+## AUTH-073
+issued_at: 2026-09-28T02:42:00.000Z
+scope: driver_finance.settlement_lines (void stamp + is_active=false only) on the active lines that AUTH-062's appendSettlementLineFromDriverBillIfMissing wrote for USMCA loads 13609, 13616, 13617, 13618, 13620, 13621 while those loads remain status=dispatched; scripts/verify-no-empty-zero-settlement.baseline.json rows for pre-settlements P-0008, P-0009, P-0010, P-0011 only — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: OWNER_AUTH_ID=AUTH-073 — CC-1 ops script (void-not-delete): deactivate+void-stamp exactly those settlement_lines that exclude the 6 named loads from views.live_loads; baseline the four open pre-settlements as known-open+loaded per verify-no-empty-zero-settlement's documented exception; refuse if any target load is no longer dispatched or if line count/amount shape does not match the live FLAG re-measure (2 active lines per load as of 2026-09-27 22:24Z). No JE invent, no new earnings, no Book Load, no other settlements.
+expires_at: 2026-09-29T02:42:00.000Z
+status: OPEN
+
+R-LEAD-20260928 (Cursor Lead, GO-20 census). CC-1 FLAG: views.live_loads hides a load the instant it has an active
+settlement_lines row; AUTH-062 filled lines on still-dispatched ROUND 189 loads → 6 loads missing from the Dispatch
+board for ~39h+. Fix restores board visibility; does not invent money. AUTH-071/072 CONSUMED; this is the next OPEN AUTH.
+
+— Cursor Lead
+
