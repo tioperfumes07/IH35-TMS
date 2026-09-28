@@ -89,7 +89,9 @@ type AvailableRow = {
 const LOC_STALE_MIN = 60;
 const HOS_STALE_MIN = 120;
 
-const UNIT_IN_SERVICE_SQL = `
+// Exported (ROUND 177 JOB 1) so verify-load-boards-agree.mjs can reuse this SAME fragment rather
+// than re-deriving its own "is this unit in service" copy that could drift from the real one.
+export const UNIT_IN_SERVICE_SQL = `
   u.deactivated_at IS NULL
   AND u.currently_leased_to_company_id = $1::uuid
   AND u.is_sample_data IS NOT TRUE
