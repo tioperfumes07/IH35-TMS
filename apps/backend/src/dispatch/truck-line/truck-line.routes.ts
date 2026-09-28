@@ -7,12 +7,14 @@
  * framing: "a truck asking for a load"). A unit with no load and no qualifying available driver
  * is simply not drawn — this is the new board's intended scope, not an accidental omission.
  *
- * LOADED rows: one per active load (status IN dispatched/at_pickup/in_transit/at_delivery), unit-
- * anchored, station derived by station.ts's pure function — never a stored "station" column.
+ * LOADED rows: one per CURRENT active load (status IN dispatched/at_pickup/in_transit/at_delivery
+ * AND not a stamp-less dispatched shell whose delivery is already >48h past — see
+ * CURRENT_TRUCK_LINE_LOAD_SQL), unit-anchored, station derived by station.ts's pure function —
+ * never a stored "station" column.
  *
  * AVAILABLE rows (kind:"available"): one per driver who qualifies — operating_company_id=USMCA,
- * status='Active', is_sample_data IS NOT TRUE, NOT currently assigned to any load in the same four
- * active statuses, AND with a samsara.hos_snapshots row polled within the last 2 hours. Unit/city
+ * status='Active', is_sample_data IS NOT TRUE, NOT currently assigned to any CURRENT load (same
+ * CURRENT_TRUCK_LINE_LOAD_SQL), AND with a samsara.hos_snapshots row polled within the last 2 hours. Unit/city
  * come from that driver's own MOST RECENT load (by created_at, any status) — may be null, in which
  * case the row honestly shows no unit rather than inventing one. samsara.hos_snapshots'
  * driving_hours_remaining/cycle_hours_remaining columns are misleadingly named — verified live
@@ -101,6 +103,30 @@ const LOC_STALE_MIN = 60;
 // longer counts as evidence the driver is genuinely ready to work right now.
 const HOS_STALE_MIN = 120;
 
+// CURRENT load for Truck Line / busy-driver: open_dispatch in the four active statuses, BUT
+// hide AUTH-061-class shells that are still `dispatched` with zero stop stamps and a delivery
+// appointment already older than 48h. Those are not live work — inventing them as LOADED rows
+// (or marking their drivers busy) lies to the dispatcher. Real dispatched loads with any stamp,
+// or a delivery still within the next/last 48h window, stay visible.
+const CURRENT_TRUCK_LINE_LOAD_SQL = `
+  x.live_state = 'open_dispatch'
+  AND x.status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery')
+  AND (
+    x.status <> 'dispatched'
+    OR EXISTS (
+      SELECT 1 FROM mdata.load_stops s
+      WHERE s.load_id = x.id AND s.soft_deleted_at IS NULL
+        AND (s.actual_arrival_at IS NOT NULL OR s.actual_departure_at IS NOT NULL)
+    )
+    OR EXISTS (
+      SELECT 1 FROM mdata.load_stops s
+      WHERE s.load_id = x.id AND s.soft_deleted_at IS NULL
+        AND s.stop_type = 'delivery'::mdata.stop_type_enum
+        AND COALESCE(s.appointment_start_at, s.scheduled_arrival_at) >= now() - interval '48 hours'
+    )
+  )
+`;
+
 export async function registerTruckLineRoutes(app: FastifyInstance) {
   app.get("/api/v1/dispatch/truck-line", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
@@ -150,8 +176,12 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
           -- ROUND 36.1: reads views.live_loads (structural guarantee) instead of mdata.loads with
           -- an inline status exclusion list — a load stuck at 'dispatched' but already settled/
           -- driver-billed can no longer render as "the unit's current load," structurally.
+          -- CURRENT_TRUCK_LINE_LOAD_SQL additionally drops stamp-less dispatched shells whose
+          -- delivery is already >48h past (AUTH-061 13609/16/17/18/20/21 class) so Truck Line
+          -- never invents "current" work that was never operated.
           SELECT * FROM views.live_loads x
           WHERE x.assigned_unit_id = u.id AND x.operating_company_id = $1::uuid
+            AND ${CURRENT_TRUCK_LINE_LOAD_SQL}
           ORDER BY x.created_at DESC LIMIT 1
         ) l ON true
         LEFT JOIN mdata.customers cust ON cust.id = l.customer_id AND cust.operating_company_id = l.operating_company_id
@@ -219,17 +249,17 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
           -- ROUND 36.1: reads views.live_loads's open_dispatch bucket — a driver whose only
           -- "in-progress" load is stuck at 'dispatched' but already settled/driver-billed is not
           -- busy, structurally (was a per-caller money predicate in ROUND 35.1).
-          SELECT DISTINCT assigned_primary_driver_id AS driver_id FROM views.live_loads
-          WHERE operating_company_id = $1::uuid
-            AND live_state = 'open_dispatch'
-            AND status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery')
-            AND assigned_primary_driver_id IS NOT NULL
+          -- Same CURRENT_TRUCK_LINE_LOAD_SQL as the unit lateral: stamp-less dispatched shells
+          -- past delivery+48h do not make a driver "busy".
+          SELECT DISTINCT assigned_primary_driver_id AS driver_id FROM views.live_loads x
+          WHERE x.operating_company_id = $1::uuid
+            AND ${CURRENT_TRUCK_LINE_LOAD_SQL}
+            AND x.assigned_primary_driver_id IS NOT NULL
           UNION
-          SELECT DISTINCT assigned_secondary_driver_id FROM views.live_loads
-          WHERE operating_company_id = $1::uuid
-            AND live_state = 'open_dispatch'
-            AND status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery')
-            AND assigned_secondary_driver_id IS NOT NULL
+          SELECT DISTINCT assigned_secondary_driver_id FROM views.live_loads x
+          WHERE x.operating_company_id = $1::uuid
+            AND ${CURRENT_TRUCK_LINE_LOAD_SQL}
+            AND x.assigned_secondary_driver_id IS NOT NULL
         ),
         latest_hos AS (
           SELECT DISTINCT ON (driver_uuid) driver_uuid, driving_hours_remaining, cycle_hours_remaining, polled_at
