@@ -1,10 +1,10 @@
 {
-  "healthzSha": "ef1cbae",
-  "generated_at": "2026-09-28T03:53:59.125Z",
+  "healthzSha": "d4ab753",
+  "generated_at": "2026-09-28T04:01:37.742Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "ef1cbae",
+    "deployedSha": "d4ab753",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 22895,
+      "title": "FINDING: N/A LANE: DOCS (NOW-CC-1 update -- ROUND 150 ack, pivoting fully to A/P adoption)",
+      "state": "merged",
+      "mergedAtCt": "09/27/2026, 10:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22895",
+      "sha": "8e0a1368f8",
+      "committedAtIso": "2026-09-27T22:57:51-05:00"
+    },
+    {
       "number": 22894,
       "title": "Claude-1- fix reconcile-feed-day text=uuid crash; assertion 14 is not a scoping bug",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22886",
       "sha": "82898726fc",
       "committedAtIso": "2026-09-27T21:48:55-05:00"
-    },
-    {
-      "number": 22885,
-      "title": "Cursor- Lead census: AUTH-073 OPEN unblock CC-1 live_loads FLAG",
-      "state": "merged",
-      "mergedAtCt": "09/27/2026, 09:43 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22885",
-      "sha": "0ff379d919",
-      "committedAtIso": "2026-09-27T21:43:51-05:00"
     }
   ]
 }
