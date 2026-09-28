@@ -3096,12 +3096,48 @@ action:
   OWNER_AUTH_ID=AUTH-101 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r15518-purge-voided-usmca.ts --apply
   OWNER_AUTH_ID=AUTH-101 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r15518-purge-sample-leaf-tables.ts --apply
 expires_at: 2026-09-28T18:10:00.000Z
-status: OPEN
+status: DONE — executed live 2026-09-28
 
 Owner order (2026-09-28, verbatim, relayed): "STOP WASTING TIME AND GET THIS DONE NOW" -- after
 personally reviewing the complete final picture (every table, every real count, every script) and
 issuing explicit, in-the-moment authorization to execute, not a standing pre-approval. Full history
 of this authorization's build-out (every bug found, every fix, every rollback-tested proof) is in
 this session's PRs #22961, #22965, #22967, #22971, #22973, #22977, all merged.
+
+Real result (both scripts run with --apply, real COMMIT, independently re-verified after commit,
+not from the run's own self-report):
+
+(1) purge-voided-usmca.ts: 652 documents + 468 postings + 234 JE husk headers deleted (1,354 rows
+total) in 42.15s. Per-table (candidates -> deleted / blocked): accounting.expenses 1061->117/944,
+accounting.bills 3->0/3, accounting.bill_lines 3->3/0, accounting.invoices 24->0/24,
+accounting.factoring_advances 45->0/45, banking.bank_transactions 274->274/0,
+dispatch.non_owned_trailers 1->1/0, dispatch.trailer_interchanges 1->1/0,
+driver_finance.driver_bills 13->11/2, driver_finance.driver_liabilities 2->0/2,
+driver_finance.driver_settlement_deductions 2->2/0, driver_finance.driver_settlements 2->0/2,
+driver_finance.settlement_lines 164->164/0, factoring.customer_factor_assignment 5->5/0,
+fuel.fuel_transactions 341->65/276, integrations.relay_company_cards 1->1/0,
+legal.contract_instances 1->0/1, maintenance.work_orders 2->1/1, safety.complaints 1->1/0,
+safety.dot_inspections 2->2/0, safety.hos_violations 1->1/0, safety.incidents 1->0/1,
+safety.internal_fines 1->1/0, mdata.customer_quality_events 2->2/0. Total removed from both sides
+of the ledger equally: $73,469.84 (7,346,984 cents). Independently re-verified post-commit:
+accounting.expenses voided count 1061->944 (matches); trial balance debit=credit=293,546,524 cents,
+postings=7,553; orphaned postings=0; zero-posting JE husks=0.
+
+(2) purge-sample-leaf-tables.ts: 34,323 maintenance.pm_auto_wo_log rows + 5,226
+samsara.hos_snapshots rows deleted (39,549 total) in 7.63s. Independently re-verified post-commit:
+pm_auto_wo_log total=0; hos_snapshots sample-driver rows remaining=0.
+
+Post-execution guard re-run: verify-worm-applies-to-every-role.mjs PASS,
+verify-no-journal-entry-has-zero-postings.mjs PASS. verify-no-job-writes-against-sample-data.mjs:
+samsara.hos_snapshots check OK (0); maintenance.pm_auto_wo_log check FAILS -- 1 active
+maintenance.pm_schedules row still points at a sample unit (T-TESTMTDP79YF), a pre-existing
+condition inside the explicitly-out-of-scope 58-row master-data set, not a regression from this
+round. Traced live: the fixed listActiveSchedules() query (pm-auto-engine.service.ts:287, `AND
+u.is_sample_data IS NOT TRUE`, merged in #22967) correctly excludes this row at runtime, so the
+hourly cron will not act on it -- but the guard's data-existence check (by design) still flags the
+schedule row itself as present, since master-row cleanup was deferred.
+
+The 58 sample master rows and their FK cascade remain explicitly out of scope, per the owner's own
+deliberate call recorded above -- not touched.
 
 — CC-2
