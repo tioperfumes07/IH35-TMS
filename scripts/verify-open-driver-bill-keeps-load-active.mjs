@@ -25,11 +25,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { register } from "tsx/esm/api";
-import pg from "pg";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const LABEL = "verify-open-driver-bill-keeps-load-active";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MODULE_PATH = path.join(ROOT, "apps/backend/src/dispatch/canonical-active-load-set.ts");
+export const REQUIRES_LIVE_DB =
+  "live-money invariant: open/unsettled driver bills must keep loads in the canonical active set; fails closed via requireLiveDbOrExit";
 
 function selftestStaticShape() {
   const src = fs.readFileSync(MODULE_PATH, "utf8");
@@ -70,17 +72,10 @@ async function main() {
     process.exit(1);
   }
 
-  if (!process.env.DATABASE_URL) {
-    console.log(`${LABEL}: SKIP — no DATABASE_URL (static shape check above still ran and passed; ` +
-      "the live-data half is a live-money invariant by design and cannot be faked offline).");
-    process.exit(0);
-  }
-
   register();
   const { listCanonicalActiveLoadIds } = await import(MODULE_PATH);
 
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
-  const client = await pool.connect();
+  const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
     await client.query("BEGIN");
     await client.query(`SET LOCAL app.bypass_rls = 'lucia'`);

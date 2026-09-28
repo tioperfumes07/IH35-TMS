@@ -16,6 +16,9 @@
 // that some of the 24 currently-dispatched loads sit in (those have no real settlement document to
 // backfill from at all; ROUND 155.12's DONE LINE reports that gap honestly rather than inventing a
 // source for them).
+//
+// AUTH-091 (docs/bus/OWNER-AUTHORIZATIONS.md). Requires OWNER_AUTH_ID=AUTH-091 in the environment;
+// scripts/verify-owner-authorization.mjs is run separately before this script, per ROUND 133.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
