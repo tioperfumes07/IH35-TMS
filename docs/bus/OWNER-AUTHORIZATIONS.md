@@ -3679,3 +3679,41 @@ status: OPEN
 — Cursor (R-191 universal unvoid)
 
 ---
+
+---
+
+## AUTH-119
+Full ruling text: ROUND 194.1 (Lead, in chat, live-measured before ruling; owner directive
+"Lead prices it the moment it exists")
+
+issued_at: 2026-09-28 (Lead ruling, in chat)
+scope: mint exactly ONE pre-settlement for driver Genaro Guerrero Chavez
+  (6edcb351-e81b-4bf2-adf7-5eca9eff9137), through the sanctioned allocator ONLY
+  (linkLoadToPresettlementAfterAssignmentInClientTx -> suggestPresettlementLink ->
+  confirmPresettlementLink, apps/backend/src/dispatch/presettlement-link.service.ts -- the SAME
+  path book-load.service.ts uses for every other load, never a direct INSERT on a settlement
+  number). USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY these 2 loads: 13633
+  (73c723b3-e9e3-4f2e-a834-5d06162e16ad, Laredo TX -> Comstock Park MI) and 13634
+  (5b981086-a833-4dd9-b419-0bdec063e8b4, Elkhart IN -> Ingleside TX), both dispatched to Genaro
+  with NO settlement row at all -- zero pay, the last gap on 16 of 16 live loads. Three writes,
+  all live-verified safe before this AUTH: (1) 13633.trip_type NULL -> 'NB' (real geography, Lead's
+  own live stop read: departs Laredo northbound, matches the tour's own "NB opens" law -- not
+  inferred here); (2) the allocator call itself, which opens a brand-new tour + settlement (NB with
+  no tour_id always creates new, confirmed via a real --dry-run: action="create_new", new
+  settlement display_id P-0018); (3) repoint 13634's presettlement_link_id AND tour_id off
+  b69dfafb-7287-42f6-b46b-19257c9e7095 (P-0001, a cancelled settlement already identified as debris
+  from the 5817 duplicate-load fix -- its 2 settlement_lines are both voided, live-confirmed) onto
+  the new settlement/tour -- a live load must never point at a cancelled settlement. Not
+  authorized: touching P-0001 itself (stays cancelled, untouched), touching its 2 OTHER live
+  driver_bills references (loads 13610/13619, belonging to Genaro's own separate real closed
+  settlement P-0015/5817 -- reported on the board, a different fix), or any settlement number
+  written directly (the new settlement gets its P-series display_id from the allocator itself,
+  same as every other pre-settlement; source_document_ref stays NULL until AlwaysTrack/the owner
+  sets the real number, per the P-series-stays ruling).
+
+action:
+  OWNER_AUTH_ID=AUTH-119 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc3-mint-genaro-settlement-13633-13634.ts --apply
+expires_at: 2026-09-28T22:00:00.000Z
+status: OPEN
+
+— CC-3
