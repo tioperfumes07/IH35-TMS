@@ -58,6 +58,24 @@ const CUTOVER_DATE = "2026-08-07";
 // touch (Part A, Rule 3).
 const TRANSPORTATION_DOCS = ["5753", "5760", "5761", "5762", "5763", "5764", "5765", "5766", "5767", "5768"];
 
+// ROUND 201 RETRACTION / STANDING LAW (owner, 2026-09-28) — "A PERMANENT CLOSE GOES IN THE GUARD,
+// NOT JUST A DOC." Settlements 5769-5819 are CLOSED and tie exactly on the owner's own
+// reconciliation: some are Transportation's own loads, some are loads on a settlement SHARED
+// between Transportation and USMCA. Owner, verbatim: "ALREADY ASKED AND ANSWERED, ALREADY
+// RECONCILED... I TOLD YOU TO CLOSE THESE TO NOT ASK AGAIN, THEY WERE RESOLVED ALREADY." A seat
+// escalated a LINE_HAUL/EXPENSES variance inside this range as a critical finding and nearly voided
+// $22,510.00 of the owner's own completed resolution (5 live invoices, INV-2026-00001..00005, that
+// ARE the owner's shared-settlement resolution, not a duplicate-billing defect) before the owner
+// retracted it. Full mechanism: claude/00-CLOSED-USMCA-SETTLEMENTS-5769-TO-5819-TIE-EXACTLY-NEVER-ASK-AGAIN.md.
+// A document number in this closed range is printed (never hidden) but never counted as a FAIL —
+// fix the guard, never the data, per the owner's own standing law.
+const CLOSED_5769_5819_MIN = 5769;
+const CLOSED_5769_5819_MAX = 5819;
+function isClosed5769to5819(docNumber) {
+  const n = Number(docNumber);
+  return Number.isFinite(n) && n >= CLOSED_5769_5819_MIN && n <= CLOSED_5769_5819_MAX;
+}
+
 // R-160 (Lead, 2026-09-25, owner ruling): "in our settlement it should only show our load, for
 // usmca, and all expenses are attributed to usmca. so our settlements will probably show a loss."
 // These 13 loads were Faro-purchased on the Transportation portal but their invoice+load records
@@ -330,9 +348,23 @@ async function live() {
       };
       actuals.push(actual);
       const mismatches = compareDocument(target, actual);
+      const closed = isClosed5769to5819(target.doc);
       if (mismatches.length === 0) cleanDocs += 1;
-      lines.push(`${target.doc}: ${mismatches.length === 0 ? "PASS" : "FAIL"}${mismatches.length ? " -- " + mismatches.join("; ") : ""}`);
-      docResults.push({ doc: target.doc, mismatches, target, actual });
+      if (mismatches.length === 0) {
+        lines.push(`${target.doc}: PASS`);
+      } else if (closed) {
+        lines.push(
+          `${target.doc}: CLOSED (owner-reconciled, 5769-5819, see claude/00-CLOSED-USMCA-SETTLEMENTS-5769-TO-5819-TIE-EXACTLY-NEVER-ASK-AGAIN.md) -- ${mismatches.join("; ")}`
+        );
+      } else {
+        lines.push(`${target.doc}: FAIL -- ${mismatches.join("; ")}`);
+      }
+      // A closed-range document's mismatches are printed for transparency but never counted as a
+      // real defect — the owner's own standing law: fix the guard, never the data, never re-raise
+      // a settled decision. docResults still carries the raw mismatches so a FUTURE change to the
+      // range boundaries (never the data) is auditable, but hasMismatches below only counts
+      // documents outside the closed range.
+      docResults.push({ doc: target.doc, mismatches, target, actual, closed });
     }
     for (const line of lines) console.log(line);
 
@@ -475,11 +507,21 @@ async function live() {
     await client.query("COMMIT");
 
     const allStructuralPass = structuralFailures.every((a) => a.pass);
-    const hasMismatches = docResults.some((r) => r.mismatches.length > 0);
+    // Owner standing law (2026-09-28): a mismatch inside the closed 5769-5819 range is never a
+    // build failure — see claude/00-CLOSED-USMCA-SETTLEMENTS-5769-TO-5819-TIE-EXACTLY-NEVER-ASK-AGAIN.md.
+    const realMismatches = docResults.filter((r) => r.mismatches.length > 0 && !r.closed);
+    const closedRangeMismatches = docResults.filter((r) => r.mismatches.length > 0 && r.closed);
+    const hasMismatches = realMismatches.length > 0;
+
+    if (closedRangeMismatches.length > 0) {
+      console.log(
+        `\n${LABEL}: ${closedRangeMismatches.length} document(s) inside the CLOSED 5769-5819 range show a variance -- owner-reconciled, not a defect, not counted against this guard's result. See claude/00-CLOSED-USMCA-SETTLEMENTS-5769-TO-5819-TIE-EXACTLY-NEVER-ASK-AGAIN.md before re-raising: ${closedRangeMismatches.map((r) => r.doc).join(", ")}.`
+      );
+    }
 
     if (!allStructuralPass || hasMismatches) {
       if (hasMismatches) {
-        const mismatched = docResults.filter((r) => r.mismatches.length > 0).map((r) => r.doc);
+        const mismatched = realMismatches.map((r) => r.doc);
         console.error(`${LABEL}: LIVE FAIL — ${mismatched.length} in-scope document(s) mismatched: ${mismatched.join(", ")}`);
       }
       if (!allStructuralPass) {
@@ -487,7 +529,9 @@ async function live() {
       }
       process.exit(1);
     }
-    console.log(`\n${LABEL}: LIVE PASS — ${inScopeDocs.length} in scope, ${skippedDocs.length} skipped NOT FED YET, 0 mismatches, 5/5 structural assertions hold.`);
+    console.log(
+      `\n${LABEL}: LIVE PASS — ${inScopeDocs.length} in scope, ${skippedDocs.length} skipped NOT FED YET, 0 real mismatches${closedRangeMismatches.length ? ` (${closedRangeMismatches.length} owner-closed 5769-5819 variance(s), not counted)` : ""}, 5/5 structural assertions hold.`
+    );
   } finally {
     await client.end();
   }
@@ -500,10 +544,13 @@ if (process.argv.includes("--selftest")) {
   // DYNAMIC count — never hardcoded. Today it reads 34 (company-side USMCA docs 5769-5803,
   // 5782 absent from company side). When CC-3's regenerated truth file lands, it reads higher.
   assert.ok(documentCount > 0, "ground truth must have at least one USMCA document");
+  // 193100 (was hardcoded 238810, stale since before the R-160 Transportation-load exclusion was
+  // added to computeGroundTruthTargets, line 107) -- confirmed live 2026-09-28 against this same
+  // pure function's real output, matching the live guard's own printed TOTAL line exactly.
   assert.equal(
     Math.round(documents.reduce((s, d) => s + d.line_haul_cents, 0) / 100),
-    238810,
-    "line-haul total must reproduce the Lead's own stated target exactly"
+    193100,
+    "line-haul total must reproduce the R-160-filtered ground truth exactly"
   );
   assert.equal(documents.reduce((s, d) => s + d.fuel_count, 0), 171, "171 USMCA fuel receipts expected");
   assert.equal(
@@ -533,7 +580,7 @@ if (process.argv.includes("--selftest")) {
   // FEED-SCOPE MUTATION — a document with a missing load must be SKIPPED, not mismatched.
   // (This is a structural test of the scoping logic, not the comparison logic above.)
 
-  console.log(`${LABEL} --selftest PASS (${documentCount} docs / 238,810.00 / 171 fuel rows / 110,072.33 / 178 expense rows all reproduced; 1/1 mutation caught)`);
+  console.log(`${LABEL} --selftest PASS (${documentCount} docs / 193,100.00 / 171 fuel rows / 110,072.33 / 178 expense rows all reproduced; 1/1 mutation caught)`);
   process.exit(0);
 }
 
