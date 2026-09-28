@@ -1,0 +1,1994 @@
+[
+ {
+  "doc": "5769",
+  "date": "2026-08-07",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 67.84,
+  "raw": "2026-08-07   LOVES                    1010NMAIN      2870483              Fuel-DEF-Diesel Exhaust Fluid                                     "
+ },
+ {
+  "doc": "5770",
+  "date": "2026-08-05",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 30.71,
+  "raw": "2026-08-05   LOVES                   900SEAGLE            99301244             Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5770",
+  "date": "2026-08-06",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 37.1,
+  "raw": "2026-08-06   LOVES                   10465LONESOME        99442334             Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5770",
+  "date": "2026-08-09",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 37.24,
+  "raw": "2026-08-09   LOVES                   10465LONESOME        99444239             Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5771",
+  "date": "2026-08-05",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 40.02,
+  "raw": "2026-08-05   LOVES                   9530SOUTHTON           99083185           Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5771",
+  "date": "2026-08-06",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 41.68,
+  "raw": "2026-08-06   LOVES                   10465LONESOME          99442342           Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5771",
+  "date": "2026-08-09",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 34.21,
+  "raw": "2026-08-09   LOVES                   10465LONESOME          99444242           Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5771",
+  "date": "2026-08-10",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 36.43,
+  "raw": "2026-08-10   LOVES                   21548FM471S            99518851           Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5772",
+  "date": "2026-08-03",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 66.05,
+  "raw": "2026-08-03   LOVES          101 PINNACLE ROAD   1910313            Fuel-DEF-Diesel Exhaust Fluid                                   Y        "
+ },
+ {
+  "doc": "5772",
+  "date": "2026-08-10",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 67.22,
+  "raw": "2026-08-10   LOVES          102FORM DRIVE       99975493           Fuel-DEF-Diesel Exhaust Fluid                                   Y        "
+ },
+ {
+  "doc": "5772",
+  "date": "2026-08-11",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 41.14,
+  "raw": "2026-08-11   LOVES          2409SO NEW ROAD     99014843           Fuel-DEF-Diesel Exhaust Fluid                                   Y        "
+ },
+ {
+  "doc": "5772",
+  "date": "2026-08-13",
+  "vendor": "CAT SCALE",
+  "desc": "Drv",
+  "amt": 15.25,
+  "raw": "2026-08-13   CAT SCALE      619CROSSROADS                          Driver Reimbursement-TPE-Scale Expense            Drv           Y        "
+ },
+ {
+  "doc": "5773",
+  "date": "2026-08-04",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 24.12,
+  "raw": "2026-08-04   LOVES                  21548FM471S          99513946             Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5773",
+  "date": "2026-08-05",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 51.17,
+  "raw": "2026-08-05   LOVES                  13023US35            1235975              Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5773",
+  "date": "2026-08-07",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 44.96,
+  "raw": "2026-08-07   LOVES                  433OLD GATE LANE     99564446             Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5773",
+  "date": "2026-08-08",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 38.93,
+  "raw": "2026-08-08   LOVES                  `601SOUTH RING RD    99061371             Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5773",
+  "date": "2026-08-10",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 37.76,
+  "raw": "2026-08-10   LOVES                  1021DALE EVANS       99886347             Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5774",
+  "date": "2026-08-07",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 5.32,
+  "raw": "2026-08-07   LOVES                   101 PINNACLE ROAD   9982105              Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5774",
+  "date": "2026-08-09",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 32.07,
+  "raw": "2026-08-09   LOVES                   2050HWY#70E         99462767             Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5774",
+  "date": "2026-08-07",
+  "vendor": "FUEL AMERICA",
+  "desc": "Drv",
+  "amt": 45.47,
+  "raw": "2026-08-07   FUEL AMERICA            13602MINES ROAD     01049493             Fuel-Reefer Diesel                                  Drv       "
+ },
+ {
+  "doc": "5774",
+  "date": "2026-08-12",
+  "vendor": "LOVES",
+  "desc": "Driver Reimbursement-Fuel-Def",
+  "amt": 18.7,
+  "raw": "2026-08-12   LOVES                   2971HWY48SOUTH      99121316             Driver Reimbursement-Fuel-Def                                 "
+ },
+ {
+  "doc": "5774",
+  "date": "2026-08-12",
+  "vendor": "THORNTON",
+  "desc": "Drv",
+  "amt": 70.0,
+  "raw": "2026-08-12   THORNTON                120LUYBEN HILLS     01011813             Fuel-Reefer Diesel                                  Drv       "
+ },
+ {
+  "doc": "5774",
+  "date": "2026-08-12",
+  "vendor": "LOVES",
+  "desc": "Road Service-Truck Tire Expense",
+  "amt": 1084.8,
+  "raw": "2026-08-12   LOVES                   1001 Hwy 76 White                        Road Service-Truck Tire Expense                               "
+ },
+ {
+  "doc": "5775",
+  "date": "2026-08-05",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 34.39,
+  "raw": "2026-08-05   LOVES   101PINNACLE ROAD   1911564            Fuel-DEF-Diesel Exhaust Fluid                           Y             34.39"
+ },
+ {
+  "doc": "5775",
+  "date": "2026-08-06",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 14.72,
+  "raw": "2026-08-06   LOVES   21548FM 471S       99515499           Fuel-DEF-Diesel Exhaust Fluid                           Y             14.72"
+ },
+ {
+  "doc": "5775",
+  "date": "2026-08-06",
+  "vendor": "LOVES",
+  "desc": "Scale Expense:OTR-Scale Expense",
+  "amt": 15.25,
+  "raw": "2026-08-06   LOVES   1501CORSICANA      1360475            Scale Expense:OTR-Scale Expense                         Y             15.25"
+ },
+ {
+  "doc": "5775",
+  "date": "2026-08-08",
+  "vendor": "LOVES",
+  "desc": "Driver Reimbursement-Fuel-Def",
+  "amt": 38.55,
+  "raw": "2026-08-08   LOVES   9191STATE ROUTE    99648329           Driver Reimbursement-Fuel-Def                           Y             38.55"
+ },
+ {
+  "doc": "5775",
+  "date": "2026-08-11",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 24.4,
+  "raw": "2026-08-11   LOVES   1500HWY 72W        2402527            Fuel-DEF-Diesel Exhaust Fluid                           Y             24.40"
+ },
+ {
+  "doc": "5775",
+  "date": "2026-08-12",
+  "vendor": "PILOT",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 24.88,
+  "raw": "2026-08-12   PILOT   4440NORTH MC       6092647            Fuel-DEF-Diesel Exhaust Fluid                           Y             24.88"
+ },
+ {
+  "doc": "5775",
+  "date": "2026-08-10",
+  "vendor": "LOVES",
+  "desc": "Drv",
+  "amt": 15.25,
+  "raw": "2026-08-10   LOVES   100ECOMMERCE CT    2066083            Driver Reimbursement-TPE-Scale Expense      Drv         Y             15.25"
+ },
+ {
+  "doc": "5775",
+  "date": "2026-08-13",
+  "vendor": "LOVES",
+  "desc": "Scale Expense:OTR-Scale Expense",
+  "amt": 15.25,
+  "raw": "2026-08-13   LOVES   7005LA PORTE SWY   1597129            Scale Expense:OTR-Scale Expense                         Y             15.25"
+ },
+ {
+  "doc": "5776",
+  "date": "2026-08-05",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 58.71,
+  "raw": "2026-08-05   LOVES    21548FM471S      2876136            Fuel-DEF-Diesel Exhaust Fluid                          Y             58.71"
+ },
+ {
+  "doc": "5776",
+  "date": "2026-08-05",
+  "vendor": "LOVES",
+  "desc": "Drv",
+  "amt": 5.25,
+  "raw": "2026-08-05   LOVES    21548FM471S      2876169            Driver Reimbursement-TPE-Scale Expense     Drv         Y              5.25"
+ },
+ {
+  "doc": "5776",
+  "date": "2026-08-05",
+  "vendor": "LOVES",
+  "desc": "Drv",
+  "amt": 15.25,
+  "raw": "2026-08-05   LOVES    21548FM471S      2876154            Driver Reimbursement-TPE-Scale Expense     Drv         Y             15.25"
+ },
+ {
+  "doc": "5776",
+  "date": "2026-08-09",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 57.56,
+  "raw": "2026-08-09   LOVES    1703EASTFWY      99822323           Fuel-DEF-Diesel Exhaust Fluid                          Y             57.56"
+ },
+ {
+  "doc": "5776",
+  "date": "2026-08-12",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 50.82,
+  "raw": "2026-08-12   LOVES    400NSTATE HWY    99106176           Fuel-DEF-Diesel Exhaust Fluid                          Y             50.82"
+ },
+ {
+  "doc": "5776",
+  "date": "2026-08-13",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 20.17,
+  "raw": "2026-08-13   LOVES    1021DALE EVANS   99887970           Fuel-DEF-Diesel Exhaust Fluid                          Y             20.17"
+ },
+ {
+  "doc": "5776",
+  "date": "2026-08-11",
+  "vendor": "LOVES",
+  "desc": "Drv",
+  "amt": 5.25,
+  "raw": "2026-08-11   LOVES    NORTHBROOK       1295098            Driver Reimbursement-TPE-Scale Expense     Drv         Y              5.25"
+ },
+ {
+  "doc": "5776",
+  "date": "2026-08-11",
+  "vendor": "LOVES",
+  "desc": "Drv",
+  "amt": 15.25,
+  "raw": "2026-08-11   LOVES    NORTHBROOK       1295089            Driver Reimbursement-TPE-Scale Expense     Drv         Y             15.25"
+ },
+ {
+  "doc": "5776",
+  "date": "2026-08-14",
+  "vendor": "VALERO",
+  "desc": "Drv",
+  "amt": 15.25,
+  "raw": "2026-08-14   VALERO   619CROSSROADS    39016214           Driver Reimbursement-TPE-Scale Expense     Drv         Y             15.25"
+ },
+ {
+  "doc": "5776",
+  "date": "2026-08-14",
+  "vendor": "VALERO",
+  "desc": "Drv",
+  "amt": 5.25,
+  "raw": "2026-08-14   VALERO   619CROSSROADS    40016373           Driver Reimbursement-TPE-Scale Expense     Drv         Y              5.25"
+ },
+ {
+  "doc": "5777",
+  "date": "2026-08-13",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 47.45,
+  "raw": "2026-08-13   LOVES                   10465 LONESOME         99448116           Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5777",
+  "date": "2026-08-15",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 32.9,
+  "raw": "2026-08-15   LOVES                   10465 LONESOME         99450055           Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5778",
+  "date": "2026-08-13",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 20.2,
+  "raw": "2026-08-13   LOVES                   3301 GREYHOUND      99694065           Fuel-DEF-Diesel Exhaust Fluid                                   "
+ },
+ {
+  "doc": "5778",
+  "date": "2026-08-14",
+  "vendor": "TYSON",
+  "desc": "Warehouse-Lumper Fee Expense",
+  "amt": 18.0,
+  "raw": "2026-08-14   TYSON                                                          Warehouse-Lumper Fee Expense                                    "
+ },
+ {
+  "doc": "5778",
+  "date": "2026-08-16",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 32.98,
+  "raw": "2026-08-16   LOVES                   I-35/SR22EXIT 368   99366495           Fuel-DEF-Diesel Exhaust Fluid                                   "
+ },
+ {
+  "doc": "5778",
+  "date": "2026-08-08",
+  "vendor": "LOVES",
+  "desc": "Drv",
+  "amt": 15.25,
+  "raw": "2026-08-08   LOVES                   21548FM471S         1842133            Driver Reimbursement-TPE-Scale Expense             Drv          "
+ },
+ {
+  "doc": "5778",
+  "date": "2026-08-08",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 17.21,
+  "raw": "2026-08-08   LOVES                   995121548FM471S     99517553           Fuel-DEF-Diesel Exhaust Fluid                                   "
+ },
+ {
+  "doc": "5778",
+  "date": "2026-08-10",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 30.17,
+  "raw": "2026-08-10   LOVES                   400L&N TURNPIKE     99418954           Fuel-DEF-Diesel Exhaust Fluid                                   "
+ },
+ {
+  "doc": "5779",
+  "date": "2026-08-17",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 27.37,
+  "raw": "2026-08-17   LOVES                    203NHAUGHTON       99264345             Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5779",
+  "date": "2026-08-17",
+  "vendor": "PILOTMBRIDGE,OH",
+  "desc": "Scale Expense:OTR-Scale Expense",
+  "amt": 15.25,
+  "raw": "2026-08-17   PILOTMBRIDGE,OH          61700SOUTHGATE     2027277              Scale Expense:OTR-Scale Expense                               "
+ },
+ {
+  "doc": "5779",
+  "date": "2026-08-19",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 21.27,
+  "raw": "2026-08-19   LOVES                    215EAST I-30NSVC   99291854             Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5779",
+  "date": "2026-08-14",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 47.91,
+  "raw": "2026-08-14   LOVES                    21548FM47SNATALI   2880342              Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5779",
+  "date": "2026-08-16",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 30.96,
+  "raw": "2026-08-16   LOVES   203NHAUGHTON     1132371           Fuel-DEF-Diesel Exhaust Fluid                         Y             30.96"
+ },
+ {
+  "doc": "5780",
+  "date": "2026-08-18",
+  "vendor": "LOVES",
+  "desc": "Reefer Trailer-Washout Expense",
+  "amt": 48.71,
+  "raw": "2026-08-18   LOVES                    13602MINES ROAD   00040979           Reefer Trailer-Washout Expense                                   "
+ },
+ {
+  "doc": "5780",
+  "date": "2026-08-19",
+  "vendor": "TEN STAR TRUCKWASH 3922 11TH",
+  "desc": "Reefer Trailer-Washout Expense",
+  "amt": 52.0,
+  "raw": "2026-08-19   TEN STAR TRUCKWASH 3922 11TH               397322164          Reefer Trailer-Washout Expense                                   "
+ },
+ {
+  "doc": "5780",
+  "date": "2026-08-21",
+  "vendor": "SR FORWARDING,INC",
+  "desc": "Warehouse-Lumper Fee Expense",
+  "amt": 120.0,
+  "raw": "2026-08-21   SR FORWARDING,INC                                             Warehouse-Lumper Fee Expense                                     "
+ },
+ {
+  "doc": "5781",
+  "date": "2026-08-16",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 19.58,
+  "raw": "2026-08-16   LOVES                     21548FM471SNATALI   99522983           Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5781",
+  "date": "2026-08-16",
+  "vendor": "LOVES",
+  "desc": "Fuel-Reefer Diesel",
+  "amt": 188.92,
+  "raw": "2026-08-16   LOVES                     21548FM471SNATALI   99522983           Fuel-Reefer Diesel                                            "
+ },
+ {
+  "doc": "5781",
+  "date": "2026-08-17",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 29.34,
+  "raw": "2026-08-17   LOVES                     1917HWY18WEST       99630372           Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5781",
+  "date": "2026-08-17",
+  "vendor": "LOVES",
+  "desc": "Fuel-Reefer Diesel",
+  "amt": 83.84,
+  "raw": "2026-08-17   LOVES                     1917HWY18WEST       99630372           Fuel-Reefer Diesel                                            "
+ },
+ {
+  "doc": "5781",
+  "date": "2026-08-15",
+  "vendor": "BLUEBEACON",
+  "desc": "Reefer Trailer-Washout Expense",
+  "amt": 43.5,
+  "raw": "2026-08-15   BLUEBEACON                12408MINES ROAD     114184107          Reefer Trailer-Washout Expense                                "
+ },
+ {
+  "doc": "5781",
+  "date": "2026-08-16",
+  "vendor": "LOVES",
+  "desc": "Driver Reimbursement-TPE-Scale Expense",
+  "amt": 15.25,
+  "raw": "2026-08-16   LOVES         21548MF471S        2880940            Driver Reimbursement-TPE-Scale Expense                  Y             15.25"
+ },
+ {
+  "doc": "5781",
+  "date": "2026-08-20",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 24.59,
+  "raw": "2026-08-20   LOVES         66595WADSWORTH     99133290           Fuel-DEF-Diesel Exhaust Fluid                           Y             24.59"
+ },
+ {
+  "doc": "5781",
+  "date": "2026-08-20",
+  "vendor": "LOVES",
+  "desc": "Fuel-Reefer Diesel",
+  "amt": 246.04,
+  "raw": "2026-08-20   LOVES         66595WADSWORTH     99133290           Fuel-Reefer Diesel                                      Y            246.04"
+ },
+ {
+  "doc": "5781",
+  "date": "2026-08-19",
+  "vendor": "LOVES",
+  "desc": "Scale Expense:OTR-Scale Expense",
+  "amt": 15.25,
+  "raw": "2026-08-19   LOVES         1169RIESTER ROAD   1338855            Scale Expense:OTR-Scale Expense                         Y             15.25"
+ },
+ {
+  "doc": "5781",
+  "date": "2026-08-19",
+  "vendor": "LOVES",
+  "desc": "Scale Expense:OTR-Scale Expense",
+  "amt": 5.25,
+  "raw": "2026-08-19   LOVES         1169RIESTER ROAD   1338855            Scale Expense:OTR-Scale Expense                         Y              5.25"
+ },
+ {
+  "doc": "5781",
+  "date": "2026-08-21",
+  "vendor": "PALOS GARZA",
+  "desc": "Warehouse-Lumper Fee Expense",
+  "amt": 124.8,
+  "raw": "2026-08-21   PALOS GARZA   12110RIVER BANK                       Warehouse-Lumper Fee Expense                            Y            124.80"
+ },
+ {
+  "doc": "5783",
+  "date": "2026-08-13",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 41.35,
+  "raw": "2026-08-13   LOVES                   10465LONESMOE          99448116           Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5783",
+  "date": "2026-08-19",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 40.1,
+  "raw": "2026-08-19   LOVES                   21548FM471S            99525008           Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5783",
+  "date": "2026-08-22",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 40.25,
+  "raw": "2026-08-22   LOVES                   10465LONESOME          99456225           Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5784",
+  "date": "2026-08-14",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 30.0,
+  "raw": "2026-08-14   LOVES          101 PINNACLE ROAD         99984843           Fuel-DEF-Diesel Exhaust Fluid                                    Y "
+ },
+ {
+  "doc": "5784",
+  "date": "2026-08-15",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 18.35,
+  "raw": "2026-08-15   LOVES          21548FM471S               99522909           Fuel-DEF-Diesel Exhaust Fluid                                    Y "
+ },
+ {
+  "doc": "5784",
+  "date": "2026-08-16",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 21.5,
+  "raw": "2026-08-16   LOVES          11700I-30LITTLE           99566003           Fuel-DEF-Diesel Exhaust Fluid                                    Y "
+ },
+ {
+  "doc": "5784",
+  "date": "2026-08-14",
+  "vendor": "FUEL AMERICA",
+  "desc": "Drv",
+  "amt": 55.21,
+  "raw": "2026-08-14   FUEL AMERICA   13602MINES ROAD           01040479           WASHOUT TRUCK-171                                  Drv           Y "
+ },
+ {
+  "doc": "5784",
+  "date": "2026-08-15",
+  "vendor": "LOVES",
+  "desc": "SCALE",
+  "amt": 15.25,
+  "raw": "2026-08-15   LOVES          101 PINNACLE ROAD          2044386           SCALE                                                            Y "
+ },
+ {
+  "doc": "5784",
+  "date": "2026-08-17",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 26.66,
+  "raw": "2026-08-17   LOVES          313PORTER RD              99558645           Fuel-DEF-Diesel Exhaust Fluid                                    Y "
+ },
+ {
+  "doc": "5784",
+  "date": "2026-08-18",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 35.68,
+  "raw": "2026-08-18   LOVES          22OLD FORGE               99193164           Fuel-DEF-Diesel Exhaust Fluid                                    Y "
+ },
+ {
+  "doc": "5784",
+  "date": "2026-08-21",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 28.26,
+  "raw": "2026-08-21   LOVES          STEELE STATION            99356279           Fuel-DEF-Diesel Exhaust Fluid                                    Y "
+ },
+ {
+  "doc": "5784",
+  "date": "2026-08-23",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 32.77,
+  "raw": "2026-08-23   LOVES          P.OBOX 1201               99090868           Fuel-DEF-Diesel Exhaust Fluid                                    Y "
+ },
+ {
+  "doc": "5784",
+  "date": "2026-08-20",
+  "vendor": "BLUE BEACON",
+  "desc": "Drv",
+  "amt": 49.5,
+  "raw": "2026-08-20   BLUE BEACON    1240HARRISBURG            042328496          Reefer Trailer-Washout Expense                     Drv           Y "
+ },
+ {
+  "doc": "5784",
+  "date": "2026-08-20",
+  "vendor": "BLUE BEACON",
+  "desc": "Drv",
+  "amt": 44.63,
+  "raw": "2026-08-20   BLUE BEACON    1240HARRISBURG            042172057          Reefer Trailer-Washout Expense                     Drv           Y "
+ },
+ {
+  "doc": "5784",
+  "date": "2026-08-20",
+  "vendor": "LOVES",
+  "desc": "Scale Expense:OTR-Scale Expense",
+  "amt": 15.25,
+  "raw": "2026-08-20   LOVES          22OLD FORGE                1344032           Scale Expense:OTR-Scale Expense                                  Y "
+ },
+ {
+  "doc": "5785",
+  "date": "2026-08-17",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 20.6,
+  "raw": "2026-08-17   LOVES    21548FM471S       1845295            Fuel-DEF-Diesel Exhaust Fluid                         Y             20.60"
+ },
+ {
+  "doc": "5785",
+  "date": "2026-08-21",
+  "vendor": "Warehouse-Lumper Fee Expense COBRO POR",
+  "desc": "Drv",
+  "amt": 10.0,
+  "raw": "2026-08-21                                                 Warehouse-Lumper Fee Expense COBRO POR    Drv         Y             10.00"
+ },
+ {
+  "doc": "5785",
+  "date": "2026-08-21",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 29.67,
+  "raw": "2026-08-21   LOVES    I-75& SOUTHWELL   99389982           Fuel-DEF-Diesel Exhaust Fluid                         Y             29.67"
+ },
+ {
+  "doc": "5785",
+  "date": "2026-08-18",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 26.51,
+  "raw": "2026-08-18   LOVES    2510HWY 231       2466361            Fuel-DEF-Diesel Exhaust Fluid                         Y             26.51"
+ },
+ {
+  "doc": "5785",
+  "date": "2026-08-26",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 29.43,
+  "raw": "2026-08-26   LOVES    21548FM471S       1848853            Fuel-DEF-Diesel Exhaust Fluid                         Y             29.43"
+ },
+ {
+  "doc": "5785",
+  "date": "2026-08-25",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 29.39,
+  "raw": "2026-08-25   LOVES    6138LAKE NORRIS   99554605           Fuel-DEF-Diesel Exhaust Fluid                         Y             29.39"
+ },
+ {
+  "doc": "5786",
+  "date": "2026-08-21",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 32.69,
+  "raw": "2026-08-21   LOVES                  16101HWY84           99222422           Fuel-DEF-Diesel Exhaust Fluid                                   "
+ },
+ {
+  "doc": "5786",
+  "date": "2026-08-20",
+  "vendor": "LOVES",
+  "desc": "Scale Expense:OTR-Scale Expense",
+  "amt": 15.25,
+  "raw": "2026-08-20   LOVES                  900SEAGLESTWEIM      1107881            Scale Expense:OTR-Scale Expense                                 "
+ },
+ {
+  "doc": "5786",
+  "date": "2026-08-25",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 28.2,
+  "raw": "2026-08-25   LOVES                  7561MESOPOTAMIA      99906385           Fuel-DEF-Diesel Exhaust Fluid                                   "
+ },
+ {
+  "doc": "5786",
+  "date": "2026-08-25",
+  "vendor": "LOVES",
+  "desc": "Scale Expense:OTR-Scale Expense",
+  "amt": 15.25,
+  "raw": "2026-08-25   LOVES                  7561MESOPOTAMIA      1230441            Scale Expense:OTR-Scale Expense                                 "
+ },
+ {
+  "doc": "5787",
+  "date": "2026-08-22",
+  "vendor": "FLYING",
+  "desc": "Drv",
+  "amt": 22.0,
+  "raw": "2026-08-22   FLYING                   16751 EAST 32ND   5320194             Bridge & Toll Expenses:OTR-Parking Expense          Drv         "
+ },
+ {
+  "doc": "5787",
+  "date": "2026-08-25",
+  "vendor": "FLYING",
+  "desc": "Scale Expense:OTR-Scale Expense",
+  "amt": 15.25,
+  "raw": "2026-08-25   FLYING                   2495WILLAMS AVE   1106179             Scale Expense:OTR-Scale Expense                                 "
+ },
+ {
+  "doc": "5787",
+  "date": "2026-08-26",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 24.51,
+  "raw": "2026-08-26   LOVES                    239BYKIN DRIVE    1515248             Fuel-DEF-Diesel Exhaust Fluid                                   "
+ },
+ {
+  "doc": "5787",
+  "date": "2026-08-18",
+  "vendor": "DTOPS",
+  "desc": "Driver Reimbursement-TPE-Toll Expense",
+  "amt": 13.45,
+  "raw": "2026-08-18   DTOPS                                                          Driver Reimbursement-TPE-Toll Expense                           "
+ },
+ {
+  "doc": "5787",
+  "date": "2026-08-20",
+  "vendor": "PILOT",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 24.92,
+  "raw": "2026-08-20   PILOT                    1101UNIROYAL      6610677             Fuel-DEF-Diesel Exhaust Fluid                                   "
+ },
+ {
+  "doc": "5787",
+  "date": "2026-08-20",
+  "vendor": "PILOT",
+  "desc": "Scale Expense:OTR-Scale Expense",
+  "amt": 15.25,
+  "raw": "2026-08-20   PILOT                    1101UNIROYAL      6232741             Scale Expense:OTR-Scale Expense                                 "
+ },
+ {
+  "doc": "5787",
+  "date": "2026-08-21",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 24.82,
+  "raw": "2026-08-21   LOVES                    1001EL MORO RD    2244651             Fuel-DEF-Diesel Exhaust Fluid                                   "
+ },
+ {
+  "doc": "5788",
+  "date": "2026-08-21",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 31.66,
+  "raw": "2026-08-21   LOVES            LOVES 471                                  Fuel-DEF-Diesel Exhaust Fluid                               Y      "
+ },
+ {
+  "doc": "5788",
+  "date": "2026-08-22",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 21.12,
+  "raw": "2026-08-22   LOVES            265 Opportunity Way,                       Fuel-DEF-Diesel Exhaust Fluid                               Y      "
+ },
+ {
+  "doc": "5788",
+  "date": "2026-08-18",
+  "vendor": "DTOPS",
+  "desc": "OTR-Mexico Tolls & Intl Bridge Expense",
+  "amt": 20.8,
+  "raw": "2026-08-18   DTOPS                                                       OTR-Mexico Tolls & Intl Bridge Expense                      Y      "
+ },
+ {
+  "doc": "5788",
+  "date": "2026-08-20",
+  "vendor": "FUEL AMERICA",
+  "desc": "Reefer Trailer-Washout Expense",
+  "amt": 51.96,
+  "raw": "2026-08-20   FUEL AMERICA     13602MINES ROAD         01041382           Reefer Trailer-Washout Expense                              Y      "
+ },
+ {
+  "doc": "5788",
+  "date": "2026-08-26",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 56.58,
+  "raw": "2026-08-26   LOVES            200 S Kings Hwy, Fort                      Fuel-DEF-Diesel Exhaust Fluid                               Y      "
+ },
+ {
+  "doc": "5788",
+  "date": "2026-08-29",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 47.36,
+  "raw": "2026-08-29   LOVES            101PINNACLE ROAD                           Fuel-DEF-Diesel Exhaust Fluid                               Y      "
+ },
+ {
+  "doc": "5788",
+  "date": "2026-08-28",
+  "vendor": "FRONTIER TRUCK",
+  "desc": "Reefer Trailer-Washout Expense",
+  "amt": 42.23,
+  "raw": "2026-08-28   FRONTIER TRUCK   107PLUMBERS                                Reefer Trailer-Washout Expense                              Y      "
+ },
+ {
+  "doc": "5789",
+  "date": "2026-08-26",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 43.43,
+  "raw": "2026-08-26   LOVES                   21548FM471S            99530124           Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5789",
+  "date": "2026-09-27",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 42.38,
+  "raw": "2026-09-27   LOVES                   10465LONESOME          99460605           Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5789",
+  "date": "2026-08-31",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 70.61,
+  "raw": "2026-08-31   LOVES                   1610COTTON GIN         99794138           Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5790",
+  "date": "2026-08-22",
+  "vendor": "DTOPS",
+  "desc": "PAGO DE CRUCE T174",
+  "amt": 20.8,
+  "raw": "2026-08-22   DTOPS                                                              PAGO DE CRUCE T174                                          "
+ },
+ {
+  "doc": "5790",
+  "date": "2026-08-23",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 44.26,
+  "raw": "2026-08-23   LOVES                  101 PINNACLE ROAD      99988783             Fuel-DEF-Diesel Exhaust Fluid                               "
+ },
+ {
+  "doc": "5790",
+  "date": "2026-08-26",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 40.91,
+  "raw": "2026-08-26   LOVES                  21548FM471S            99530096             Fuel-DEF-Diesel Exhaust Fluid                               "
+ },
+ {
+  "doc": "5790",
+  "date": "2026-08-26",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 10.81,
+  "raw": "2026-08-26   LOVES                  2024A WEST             99600926             Fuel-DEF-Diesel Exhaust Fluid                               "
+ },
+ {
+  "doc": "5790",
+  "date": "2026-08-29",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 8.7,
+  "raw": "2026-08-29   LOVES                  1127TYSON ROAD         99037285             Fuel-DEF-Diesel Exhaust Fluid                               "
+ },
+ {
+  "doc": "5790",
+  "date": "2026-08-31",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 63.94,
+  "raw": "2026-08-31   LOVES                  612PODERSON            99110970             Fuel-DEF-Diesel Exhaust Fluid                               "
+ },
+ {
+  "doc": "5791",
+  "date": "2026-08-26",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 23.23,
+  "raw": "2026-08-26   LOVES                 21548FM471S        99530416           Fuel-DEF-Diesel Exhaust Fluid                                      "
+ },
+ {
+  "doc": "5791",
+  "date": "2026-08-28",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 35.04,
+  "raw": "2026-08-28   LOVES                 10465LONESOME      99461047           Fuel-DEF-Diesel Exhaust Fluid                                      "
+ },
+ {
+  "doc": "5791",
+  "date": "2026-08-31",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 53.21,
+  "raw": "2026-08-31   LOVES                 182CLAIRBONE       99496951           Fuel-DEF-Diesel Exhaust Fluid                                      "
+ },
+ {
+  "doc": "5792",
+  "date": "2026-08-26",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 29.43,
+  "raw": "2026-08-26   LOVES                   21548FM471S          1848853             Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5792",
+  "date": "2026-08-27",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 35.94,
+  "raw": "2026-08-27   LOVES   182CLAIBORNE    99493735           Fuel-DEF-Diesel Exhaust Fluid                         Y             35.94"
+ },
+ {
+  "doc": "5792",
+  "date": "2026-08-28",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 17.86,
+  "raw": "2026-08-28   LOVES   I-81EXIT24      99440842           Fuel-DEF-Diesel Exhaust Fluid                         Y             17.86"
+ },
+ {
+  "doc": "5792",
+  "date": "2026-09-01",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 55.76,
+  "raw": "2026-09-01   LOVES   2500SIH-45      99378673           Fuel-DEF-Diesel Exhaust Fluid                         Y             55.76"
+ },
+ {
+  "doc": "5793",
+  "date": "2026-08-31",
+  "vendor": "CAT SCALE",
+  "desc": "Drv",
+  "amt": 15.25,
+  "raw": "2026-08-31   CAT SCALE               HWY27ANDHWY78        6243006              Driver Reimbursement-TPE-Scale Expense              Drv      "
+ },
+ {
+  "doc": "5793",
+  "date": "2026-09-01",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 53.53,
+  "raw": "2026-09-01   LOVES                   66595WODSWORTH       99143243             Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5793",
+  "date": "2026-09-02",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 19.24,
+  "raw": "2026-09-02   LOVES                   21548FM471SNATALI    99535609             Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5793",
+  "date": "2026-08-25",
+  "vendor": "LOVES",
+  "desc": "Drv",
+  "amt": 15.25,
+  "raw": "2026-08-25   LOVES                   101PINNACLE ROAD     2047749              Driver Reimbursement-TPE-Scale Expense              Drv      "
+ },
+ {
+  "doc": "5793",
+  "date": "2026-08-24",
+  "vendor": "PENSION BELEN",
+  "desc": "Drv",
+  "amt": 11.76,
+  "raw": "2026-08-24   PENSION BELEN                                                     Parking Expense                                     Drv      "
+ },
+ {
+  "doc": "5793",
+  "date": "2026-08-26",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 50.23,
+  "raw": "2026-08-26   LOVES                   21548FM471SNATALI    99530122             Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5793",
+  "date": "2026-08-27",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 27.93,
+  "raw": "2026-08-27   LOVES                   LOVES 453            99349841             Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5794",
+  "date": "2026-08-29",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 30.3,
+  "raw": "2026-08-29   LOVES                    21548FM471SNATALI   2885954            Fuel-DEF-Diesel Exhaust Fluid                                  "
+ },
+ {
+  "doc": "5794",
+  "date": "2026-08-29",
+  "vendor": "LOVES",
+  "desc": "1ASC 19PREMIUM",
+  "amt": 22.14,
+  "raw": "2026-08-29   LOVES                    2024A WEST ST       4110126            1ASC 19PREMIUM                                                 "
+ },
+ {
+  "doc": "5794",
+  "date": "2026-08-29",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 17.99,
+  "raw": "2026-08-29   LOVES                    2024A WEST          99602755           Fuel-DEF-Diesel Exhaust Fluid                                  "
+ },
+ {
+  "doc": "5794",
+  "date": "2026-08-30",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 17.29,
+  "raw": "2026-08-30   LOVES                    1624BEAR            99912182           Fuel-DEF-Diesel Exhaust Fluid                                  "
+ },
+ {
+  "doc": "5794",
+  "date": "2026-08-29",
+  "vendor": "LOVES",
+  "desc": "Drv",
+  "amt": 30.3,
+  "raw": "2026-08-29   LOVES                    21548FM471SNATALI   2885954            Driver Reimbursement-Fuel-Def                        Drv       "
+ },
+ {
+  "doc": "5794",
+  "date": "2026-08-29",
+  "vendor": "LOVES",
+  "desc": "Drv",
+  "amt": 22.14,
+  "raw": "2026-08-29   LOVES   2024A WEST ST       4110126            1ASC ''19 PREMIUM                          Drv         Y             22.14"
+ },
+ {
+  "doc": "5794",
+  "date": "2026-08-31",
+  "vendor": "LOVES",
+  "desc": "Reefer Trailer-Washout Expense",
+  "amt": 49.32,
+  "raw": "2026-08-31   LOVES   2241FAIR ROAD       11012948           Reefer Trailer-Washout Expense                         Y             49.32"
+ },
+ {
+  "doc": "5794",
+  "date": "2026-08-31",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 38.35,
+  "raw": "2026-08-31   LOVES   99294159            99294159           Fuel-DEF-Diesel Exhaust Fluid                          Y             38.35"
+ },
+ {
+  "doc": "5794",
+  "date": "2026-08-31",
+  "vendor": "LOVES",
+  "desc": "Driver Reimbursement-TPE-Scale Expense",
+  "amt": 15.25,
+  "raw": "2026-08-31   LOVES   LOVES323            1618908            Driver Reimbursement-TPE-Scale Expense                 Y             15.25"
+ },
+ {
+  "doc": "5794",
+  "date": "2026-09-01",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 20.5,
+  "raw": "2026-09-01   LOVES   1010N.MAIN          99114360           Fuel-DEF-Diesel Exhaust Fluid                          Y             20.50"
+ },
+ {
+  "doc": "5794",
+  "date": "2026-09-02",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 23.98,
+  "raw": "2026-09-02   LOVES   3158WIH-10SEGUIN,   99407649           Fuel-DEF-Diesel Exhaust Fluid                          Y             23.98"
+ },
+ {
+  "doc": "5794",
+  "date": "2026-08-31",
+  "vendor": "LOVES",
+  "desc": "Drv",
+  "amt": 49.32,
+  "raw": "2026-08-31   LOVES   2241FAIR ROAD       11012948           Reefer Trailer-Washout Expense             Drv         Y             49.32"
+ },
+ {
+  "doc": "5795",
+  "date": "2026-09-01",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 72.03,
+  "raw": "2026-09-01   LOVES                   1621BASSCROSS    99645028             Fuel-DEF-Diesel Exhaust Fluid                                    "
+ },
+ {
+  "doc": "5795",
+  "date": "2026-09-01",
+  "vendor": "LOVES",
+  "desc": "Fuel-Reefer Diesel",
+  "amt": 10.37,
+  "raw": "2026-09-01   LOVES                   1621BASSCROSS    99645028             Fuel-Reefer Diesel                                               "
+ },
+ {
+  "doc": "5795",
+  "date": "2026-08-31",
+  "vendor": "LOVES",
+  "desc": "Road Service-Truck Repair",
+  "amt": 617.17,
+  "raw": "2026-08-31   LOVES                   900SEAGLE ST     8130337              Road Service-Truck Repair                                        "
+ },
+ {
+  "doc": "5797",
+  "date": "2026-09-03",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 37.88,
+  "raw": "2026-09-03   LOVES                 116PRIESTER ROAD      1343482              Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5797",
+  "date": "2026-09-06",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 3.09,
+  "raw": "2026-09-06   LOVES                 1118LOWE GROUT        99506013             Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5797",
+  "date": "2026-09-01",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 45.93,
+  "raw": "2026-09-01   LOVES                 21548FM471SNATALI     2887867              Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5797",
+  "date": "2026-09-02",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 12.95,
+  "raw": "2026-09-02   LOVES                 66595WADSWORTH        1044016              Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5797",
+  "date": "2026-09-02",
+  "vendor": "LOVES",
+  "desc": "Drv",
+  "amt": 37.63,
+  "raw": "2026-09-02   LOVES                 2024A WEST ST         1546106              2AS20WINDSHIELD                                       Drv     "
+ },
+ {
+  "doc": "5798",
+  "date": "2026-09-02",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 25.58,
+  "raw": "2026-09-02   LOVES                  21548FM471SNATALI    2888318              Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5798",
+  "date": "2026-09-03",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 25.78,
+  "raw": "2026-09-03   LOVES                  3910SDIVISION        99463584             Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5799",
+  "date": "2026-08-31",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 70.61,
+  "raw": "2026-08-31   LOVES                   1610COTTON GIN     99794138           Fuel-DEF-Diesel Exhaust Fluid                                    "
+ },
+ {
+  "doc": "5799",
+  "date": "2026-09-03",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 34.72,
+  "raw": "2026-09-03   LOVES                   66595WADSWORTH     99144063           Fuel-DEF-Diesel Exhaust Fluid                                    "
+ },
+ {
+  "doc": "5799",
+  "date": "2026-09-03",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 21.73,
+  "raw": "2026-09-03   LOVES                   10465LONESOME      99466323           Fuel-DEF-Diesel Exhaust Fluid                                    "
+ },
+ {
+  "doc": "5799",
+  "date": "2026-09-06",
+  "vendor": "LOVES",
+  "desc": "Drv",
+  "amt": 531.26,
+  "raw": "2026-09-06   LOVES                   10465LONESOME      8031921            Road Service-Truck Tire Expense                       Drv        "
+ },
+ {
+  "doc": "5800",
+  "date": "2026-08-29",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 19.76,
+  "raw": "2026-08-29   LOVES   612PEDERSIN ROAD   2255359            Fuel-DEF-Diesel Exhaust Fluid                             Y             19.76"
+ },
+ {
+  "doc": "5800",
+  "date": "2026-08-30",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 18.63,
+  "raw": "2026-08-30   LOVES   16101HWY84         1087729            Fuel-DEF-Diesel Exhaust Fluid                             Y             18.63"
+ },
+ {
+  "doc": "5800",
+  "date": "2026-08-29",
+  "vendor": "LOVES",
+  "desc": "Drv",
+  "amt": 30.3,
+  "raw": "2026-08-29   LOVES   21548FM471S        2885953            Driver Reimbursement-Fuel-Def                 Drv         Y             30.30"
+ },
+ {
+  "doc": "5800",
+  "date": "2026-09-02",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 50.16,
+  "raw": "2026-09-02   LOVES   1760SOUTHFORD      99750084           Fuel-DEF-Diesel Exhaust Fluid                             Y             50.16"
+ },
+ {
+  "doc": "5800",
+  "date": "2026-09-03",
+  "vendor": "LOVES",
+  "desc": "Road Service-Trailer Tire Expense",
+  "amt": 453.6,
+  "raw": "2026-09-03   LOVES   2971HWY48SOUTH     8150294            Road Service-Trailer Tire Expense                         Y            453.60"
+ },
+ {
+  "doc": "5801",
+  "date": "2026-09-02",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 19.56,
+  "raw": "2026-09-02   LOVES                  3158WEST IH-10      99407022           Fuel-DEF-Diesel Exhaust Fluid                                    "
+ },
+ {
+  "doc": "5801",
+  "date": "2026-09-02",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 14.69,
+  "raw": "2026-09-02   LOVES                  66595WADSWORTH,     99143994           Fuel-DEF-Diesel Exhaust Fluid                                    "
+ },
+ {
+  "doc": "5801",
+  "date": "2026-09-01",
+  "vendor": "LOVES",
+  "desc": "Drv",
+  "amt": 15.25,
+  "raw": "2026-09-01   LOVES                  101 PINNACLE ROAD   2050188            Driver Reimbursement-TPE-Scale Expense               Drv         "
+ },
+ {
+  "doc": "5801",
+  "date": "2026-09-01",
+  "vendor": "LOVES",
+  "desc": "Drv",
+  "amt": 5.25,
+  "raw": "2026-09-01   LOVES                  101 PINNACLE ROAD   1926967            Driver Reimbursement-TPE-Scale Expense               Drv         "
+ },
+ {
+  "doc": "5801",
+  "date": "2026-09-09",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 9.97,
+  "raw": "2026-09-09   LOVES   66595WADSWORTH    99150047           Fuel-DEF-Diesel Exhaust Fluid                          Y              9.97"
+ },
+ {
+  "doc": "5801",
+  "date": "2026-09-09",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 40.0,
+  "raw": "2026-09-09   LOVES   2129WASHINGTON    99877734           Fuel-DEF-Diesel Exhaust Fluid                          Y             40.00"
+ },
+ {
+  "doc": "5801",
+  "date": "2026-09-08",
+  "vendor": "LOVES",
+  "desc": "Drv",
+  "amt": 15.25,
+  "raw": "2026-09-08   LOVES   770MORES FERRY    1129293            Driver Reimbursement-TPE-Scale Expense     Drv         Y             15.25"
+ },
+ {
+  "doc": "5802",
+  "date": "2026-09-05",
+  "vendor": "ROAD RANGER",
+  "desc": "Drv",
+  "amt": 10.0,
+  "raw": "2026-09-05   ROAD RANGER             20002FM-1472       38031247           Gasolina para Camioneta Honda                        Drv         "
+ },
+ {
+  "doc": "5802",
+  "date": "2026-09-08",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 38.3,
+  "raw": "2026-09-08   LOVES                   3499LEEJACKSON     99034356           Fuel-DEF-Diesel Exhaust Fluid                                    "
+ },
+ {
+  "doc": "5802",
+  "date": "2026-09-10",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 19.18,
+  "raw": "2026-09-10   LOVES                   10465LONESME       99471354           Fuel-DEF-Diesel Exhaust Fluid                                    "
+ },
+ {
+  "doc": "5802",
+  "date": "2026-09-10",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 30.11,
+  "raw": "2026-09-10   LOVES                   113WILL GARRETT    99186757           Fuel-DEF-Diesel Exhaust Fluid                                    "
+ },
+ {
+  "doc": "5802",
+  "date": "2026-09-08",
+  "vendor": "LOVES",
+  "desc": "Drv",
+  "amt": 24.99,
+  "raw": "2026-09-08   LOVES   3499LEEJACKSON   2181543           1ASC H1155LL HEADLIG                 Drv         Y             24.99"
+ },
+ {
+  "doc": "5803",
+  "date": "2026-09-02",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 20.41,
+  "raw": "2026-09-02   LOVES                 3158WEST IH-10        99407029            Fuel-DEF-Diesel Exhaust Fluid                                  "
+ },
+ {
+  "doc": "5803",
+  "date": "2026-09-02",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 16.95,
+  "raw": "2026-09-02   LOVES                 66595WADSWORTH        99144054            Fuel-DEF-Diesel Exhaust Fluid                                  "
+ },
+ {
+  "doc": "5804",
+  "date": "2026-09-08",
+  "vendor": "LOVES`",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 47.74,
+  "raw": "2026-09-08   LOVES`                21548FM471S          99540434             Fuel-DEF-Diesel Exhaust Fluid                                  "
+ },
+ {
+  "doc": "5804",
+  "date": "2026-09-05",
+  "vendor": "LOVES",
+  "desc": "Drv",
+  "amt": 15.25,
+  "raw": "2026-09-05   LOVES                 101 PINNACLE ROAD    1929303              Driver Reimbursement-TPE-Scale Expense              Drv        "
+ },
+ {
+  "doc": "5804",
+  "date": "2026-09-11",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 35.89,
+  "raw": "2026-09-11   LOVES   1911HWY 34WEST    99478021           Fuel-DEF-Diesel Exhaust Fluid                             Y             35.89"
+ },
+ {
+  "doc": "5804",
+  "date": "2026-09-12",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 24.67,
+  "raw": "2026-09-12   LOVES   9240COUTY FARMS   99681509           Fuel-DEF-Diesel Exhaust Fluid                             Y             24.67"
+ },
+ {
+  "doc": "5804",
+  "date": "2026-09-10",
+  "vendor": "LOVES",
+  "desc": "Road Service-Trailer Tire Expense",
+  "amt": 64.6,
+  "raw": "2026-09-10   LOVES   1917HWY 18 WEST   2163923            Road Service-Trailer Tire Expense                         Y             64.60"
+ },
+ {
+  "doc": "5805",
+  "date": "2026-09-09",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 28.84,
+  "raw": "2026-09-09   LOVES                   21548FM471SNATALI     99540777           Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5805",
+  "date": "2026-09-08",
+  "vendor": "LOVES",
+  "desc": "Drv",
+  "amt": 10.0,
+  "raw": "2026-09-08   LOVES                   20002 FM-1472         16049982           GASOLINA/HONDA                                       Drv      "
+ },
+ {
+  "doc": "5805",
+  "date": "2026-09-09",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 17.41,
+  "raw": "2026-09-09   LOVES                   I35/SR23 EXIT363      99378218           Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5805",
+  "date": "2026-09-10",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 29.65,
+  "raw": "2026-09-10   LOVES                   10465LONESOME         99471980           Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5805",
+  "date": "2026-09-12",
+  "vendor": "LOVES",
+  "desc": "Driver Reimbursement-Fuel-Def",
+  "amt": 87.69,
+  "raw": "2026-09-12   LOVES                   10465LONESOME         99473683           Driver Reimbursement-Fuel-Def                                 "
+ },
+ {
+  "doc": "5806",
+  "date": "2026-09-08",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 26.95,
+  "raw": "2026-09-08   LOVES                   21548FM471S          99540441             Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5806",
+  "date": "2026-09-09",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 17.03,
+  "raw": "2026-09-09   LOVES                   66595WADSWORTH       99149988             Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5806",
+  "date": "2026-09-10",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 30.44,
+  "raw": "2026-09-10   LOVES                   10465LONESME         99471824             Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5806",
+  "date": "2026-09-11",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 52.31,
+  "raw": "2026-09-11   LOVES                   18434SHOWALTER       2680400              Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5806",
+  "date": "2026-09-12",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 14.52,
+  "raw": "2026-09-12   LOVES   10465LONESOME     1498362           Fuel-DEF-Diesel Exhaust Fluid                         Y             14.52"
+ },
+ {
+  "doc": "5806",
+  "date": "2026-09-13",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 18.36,
+  "raw": "2026-09-13   LOVES   335HWY594         1602944           Fuel-DEF-Diesel Exhaust Fluid                         Y             18.36"
+ },
+ {
+  "doc": "5807",
+  "date": "2026-09-04",
+  "vendor": "FUEL AMERICA",
+  "desc": "Reefer Trailer-Washout Expense",
+  "amt": 48.71,
+  "raw": "2026-09-04   FUEL AMERICA        13602MINES ROAD        01043451              Reefer Trailer-Washout Expense                              Y "
+ },
+ {
+  "doc": "5807",
+  "date": "2026-09-04",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 1.88,
+  "raw": "2026-09-04   LOVES               21548FM471S             2889213              Fuel-DEF-Diesel Exhaust Fluid                               Y "
+ },
+ {
+  "doc": "5807",
+  "date": "2026-09-05",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 21.0,
+  "raw": "2026-09-05   LOVES               2510 Highway 231,      99355909              Fuel-DEF-Diesel Exhaust Fluid                               Y "
+ },
+ {
+  "doc": "5807",
+  "date": "2026-09-06",
+  "vendor": "LOVES",
+  "desc": "Warehouse-Lumper Fee Expense",
+  "amt": 560.0,
+  "raw": "2026-09-06   LOVES               1801W ROMMEYA          713028966             Warehouse-Lumper Fee Expense                                Y "
+ },
+ {
+  "doc": "5807",
+  "date": "2026-09-10",
+  "vendor": "TRUCK WASH HEBRON",
+  "desc": "Reefer Trailer-Washout Expense",
+  "amt": 47.25,
+  "raw": "2026-09-10   TRUCK WASH HEBRON   3570E.181ST           HB000170474            Reefer Trailer-Washout Expense                              Y "
+ },
+ {
+  "doc": "5807",
+  "date": "2026-09-06",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 34.06,
+  "raw": "2026-09-06   LOVES               200S. KINGS HWY FT     99585760              Fuel-DEF-Diesel Exhaust Fluid                               Y "
+ },
+ {
+  "doc": "5807",
+  "date": "2026-09-09",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 60.0,
+  "raw": "2026-09-09   LOVES               1900THE HILL AVE       99598463              Fuel-DEF-Diesel Exhaust Fluid                               Y "
+ },
+ {
+  "doc": "5808",
+  "date": "2026-09-12",
+  "vendor": "ROAD RANGER",
+  "desc": "Drv",
+  "amt": 10.0,
+  "raw": "2026-09-12   ROAD RANGER              20002FM-1472        00034608           GAS/HONDA                                            Drv       "
+ },
+ {
+  "doc": "5808",
+  "date": "2026-09-18",
+  "vendor": "FUEL AMERICA",
+  "desc": "TRUCK WASHOUT T176",
+  "amt": 55.21,
+  "raw": "2026-09-18   FUEL AMERICA             13602MINES RD       00044388           TRUCK WASHOUT T176                                             "
+ },
+ {
+  "doc": "5808",
+  "date": "2026-09-13",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 58.57,
+  "raw": "2026-09-13   LOVES                    21548FM471SNATALI   99543794           Fuel-DEF-Diesel Exhaust Fluid                                  "
+ },
+ {
+  "doc": "5808",
+  "date": "2026-09-14",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 23.75,
+  "raw": "2026-09-14   LOVES                    22183HWY216MCCA     99509456           Fuel-DEF-Diesel Exhaust Fluid                                  "
+ },
+ {
+  "doc": "5808",
+  "date": "2026-09-14",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 14.57,
+  "raw": "2026-09-14   LOVES                    10465LONESOME       99475285           Fuel-DEF-Diesel Exhaust Fluid                                  "
+ },
+ {
+  "doc": "5808",
+  "date": "2026-09-16",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 43.44,
+  "raw": "2026-09-16   LOVES   10465 LONESOME    99476767           Fuel-DEF-Diesel Exhaust Fluid                         Y             43.44"
+ },
+ {
+  "doc": "5808",
+  "date": "2026-09-17",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 34.26,
+  "raw": "2026-09-17   LOVES   612PEDERSON RD    99119426           Fuel-DEF-Diesel Exhaust Fluid                         Y             34.26"
+ },
+ {
+  "doc": "5809",
+  "date": "2026-09-09",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 51.11,
+  "raw": "2026-09-09   LOVES           66595 WADSWORTH       99149981           Fuel-DEF-Diesel Exhaust Fluid                                   Y     "
+ },
+ {
+  "doc": "5809",
+  "date": "2026-09-12",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 37.3,
+  "raw": "2026-09-12   LOVES           2008STATE HWY         99162813           Fuel-DEF-Diesel Exhaust Fluid                                   Y     "
+ },
+ {
+  "doc": "5809",
+  "date": "2026-09-14",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 20.33,
+  "raw": "2026-09-14   LOVES           433OLD GATE LANE      99596564           Fuel-DEF-Diesel Exhaust Fluid                                   Y     "
+ },
+ {
+  "doc": "5809",
+  "date": "2026-09-15",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 20.37,
+  "raw": "2026-09-15   LOVES           10465LONESOME         99476002           Fuel-DEF-Diesel Exhaust Fluid                                   Y     "
+ },
+ {
+  "doc": "5809",
+  "date": "2026-09-12",
+  "vendor": "PRIME INT",
+  "desc": "Warehouse-Lumper Fee Expense",
+  "amt": 225.0,
+  "raw": "2026-09-12   PRIME INT       171940                 171940            Warehouse-Lumper Fee Expense                                    Y     "
+ },
+ {
+  "doc": "5809",
+  "date": "2026-09-18",
+  "vendor": "GDC GROUP",
+  "desc": "Drv",
+  "amt": 120.0,
+  "raw": "2026-09-18   GDC GROUP                              928526            Warehouse-Lumper Fee Expense                      Drv           Y     "
+ },
+ {
+  "doc": "5809",
+  "date": "2026-09-17",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 36.9,
+  "raw": "2026-09-17   LOVES           I-35/SR22,EXIT 268    99882087           Fuel-DEF-Diesel Exhaust Fluid                                   Y     "
+ },
+ {
+  "doc": "5810",
+  "date": "2026-09-11",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 14.73,
+  "raw": "2026-09-11   LOVES                   101 PINNACLE ROAD   99997570             Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5810",
+  "date": "2026-09-11",
+  "vendor": "LOVES",
+  "desc": "Scale Expense:OTR-Scale Expense",
+  "amt": 15.25,
+  "raw": "2026-09-11   LOVES                   101 PINNACLE ROAD   1932609              Scale Expense:OTR-Scale Expense                               "
+ },
+ {
+  "doc": "5810",
+  "date": "2026-09-12",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 22.83,
+  "raw": "2026-09-12   LOVES                   21548FM471S         99542864             Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5810",
+  "date": "2026-09-13",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 40.01,
+  "raw": "2026-09-13   LOVES            22183HWY216McCAL    99508633           Fuel-DEF-Diesel Exhaust Fluid                           Y             4"
+ },
+ {
+  "doc": "5810",
+  "date": "2026-09-13",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 55.0,
+  "raw": "2026-09-13   LOVES            22183HWY216McCAL    99508632           Fuel-DEF-Diesel Exhaust Fluid                           Y             5"
+ },
+ {
+  "doc": "5810",
+  "date": "2026-09-14",
+  "vendor": "TERRENCE SMITH",
+  "desc": "Warehouse-Lumper Fee Expense",
+  "amt": 250.0,
+  "raw": "2026-09-14   TERRENCE SMITH                                          Warehouse-Lumper Fee Expense                            Y            25"
+ },
+ {
+  "doc": "5810",
+  "date": "2026-09-15",
+  "vendor": "FLYING",
+  "desc": "Scale Expense:OTR-Scale Expense",
+  "amt": 15.25,
+  "raw": "2026-09-15   FLYING           221 BELLE HILL RD   5041918            Scale Expense:OTR-Scale Expense                         Y             1"
+ },
+ {
+  "doc": "5810",
+  "date": "2026-09-15",
+  "vendor": "FLYING",
+  "desc": "Scale Expense:OTR-Scale Expense",
+  "amt": 5.25,
+  "raw": "2026-09-15   FLYING           221 BELLE HILL RD   2072298            Scale Expense:OTR-Scale Expense                         Y              "
+ },
+ {
+  "doc": "5810",
+  "date": "2026-09-16",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 55.02,
+  "raw": "2026-09-16   LOVES            10465LONESOME       99476764           Fuel-DEF-Diesel Exhaust Fluid                           Y             5"
+ },
+ {
+  "doc": "5810",
+  "date": "2026-09-16",
+  "vendor": "LOVES",
+  "desc": "Fuel-Reefer Diesel",
+  "amt": 95.54,
+  "raw": "2026-09-16   LOVES            10465LONESOME       99476768           Fuel-Reefer Diesel                                      Y             9"
+ },
+ {
+  "doc": "5810",
+  "date": "2026-09-17",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 42.73,
+  "raw": "2026-09-17   LOVES            1610COTTON GIN      99807944           Fuel-DEF-Diesel Exhaust Fluid                           Y             4"
+ },
+ {
+  "doc": "5811",
+  "date": "2026-09-13",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 81.75,
+  "raw": "2026-09-13   LOVES                   21548FB471S           99543793           Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5811",
+  "date": "2026-09-14",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 39.24,
+  "raw": "2026-09-14   LOVES                   10465LONESOME         99475290           Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5811",
+  "date": "2026-09-17",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 48.98,
+  "raw": "2026-09-17   LOVES                   10465LONESOME         99477095           Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5811",
+  "date": "2026-09-18",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 23.19,
+  "raw": "2026-09-18   LOVES   66595WADSWORTH    99157841           Fuel-DEF-Diesel Exhaust Fluid                         Y             23.19"
+ },
+ {
+  "doc": "5811",
+  "date": "2026-09-19",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 22.51,
+  "raw": "2026-09-19   LOVES   21548FM471S       99549122           Fuel-DEF-Diesel Exhaust Fluid                         Y             22.51"
+ },
+ {
+  "doc": "5812",
+  "date": "2026-09-08",
+  "vendor": "FUEL AMERICA TRAVEL 13602 MINES ROAD",
+  "desc": "TRACTOR-Washout Expense",
+  "amt": 55.21,
+  "raw": "2026-09-08   FUEL AMERICA TRAVEL 13602 MINES ROAD      01043900             TRACTOR-Washout Expense                                         "
+ },
+ {
+  "doc": "5812",
+  "date": "2026-09-09",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 50.51,
+  "raw": "2026-09-09   LOVES                 66595WADSWORTH      99149999             Fuel-DEF-Diesel Exhaust Fluid                                   "
+ },
+ {
+  "doc": "5812",
+  "date": "2026-09-11",
+  "vendor": "PILOT",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 49.53,
+  "raw": "2026-09-11   PILOT               979ROUTE 173        99368358           Fuel-DEF-Diesel Exhaust Fluid                         Y             "
+ },
+ {
+  "doc": "5812",
+  "date": "2026-09-15",
+  "vendor": "LOVES #304 TRAVEL",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 42.68,
+  "raw": "2026-09-15   LOVES #304 TRAVEL   LOVES #304 TRAVEL                      Fuel-DEF-Diesel Exhaust Fluid                         Y             "
+ },
+ {
+  "doc": "5812",
+  "date": "2026-09-16",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 15.69,
+  "raw": "2026-09-16   LOVES               9600HWY 80WEST      99471198           Fuel-DEF-Diesel Exhaust Fluid                         Y             "
+ },
+ {
+  "doc": "5813",
+  "date": "2026-09-15",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 34.18,
+  "raw": "2026-09-15   LOVES                   21548FM471S          2893712             Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5813",
+  "date": "2026-09-16",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 19.82,
+  "raw": "2026-09-16   LOVES                   20HWY607             2373575             Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5813",
+  "date": "2026-09-17",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 19.46,
+  "raw": "2026-09-17   LOVES                   10465LONESOME        1499386             Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5813",
+  "date": "2026-09-18",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 25.09,
+  "raw": "2026-09-18   LOVES                   1015MOUND OLIVE      3557619             Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5813",
+  "date": "2026-09-19",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 21.94,
+  "raw": "2026-09-19   LOVES                   22ELIZABETH LEE      2313445             Fuel-DEF-Diesel Exhaust Fluid                                 "
+ },
+ {
+  "doc": "5813",
+  "date": "2026-09-20",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 19.48,
+  "raw": "2026-09-20   LOVES   66595WADSWORTH   1047573           Fuel-DEF-Diesel Exhaust Fluid                         Y             19.48"
+ },
+ {
+  "doc": "5814",
+  "date": "2026-09-15",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 45.9,
+  "raw": "2026-09-15   LOVES                   3158WEST IH-10         99416535           Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5814",
+  "date": "2026-09-17",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 43.75,
+  "raw": "2026-09-17   LOVES                   10465LONESOME          99477699           Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5814",
+  "date": "2026-09-19",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 37.97,
+  "raw": "2026-09-19   LOVES                   10465LONESOME          99479001           Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5814",
+  "date": "2026-09-21",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 34.58,
+  "raw": "2026-09-21   LOVES                   21548FM471S            99549704           Fuel-DEF-Diesel Exhaust Fluid                                "
+ },
+ {
+  "doc": "5815",
+  "date": "2026-09-15",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 36.49,
+  "raw": "2026-09-15   LOVES                  21548FM471S              99546338           Fuel-DEF-Diesel Exhaust Fluid                               "
+ },
+ {
+  "doc": "5815",
+  "date": "2026-09-16",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 19.61,
+  "raw": "2026-09-16   LOVES                  66595WADSWORTH           99155958           Fuel-DEF-Diesel Exhaust Fluid                               "
+ },
+ {
+  "doc": "5815",
+  "date": "2026-09-18",
+  "vendor": "Warehouse-Lumper Fee Expense",
+  "desc": "Warehouse-Lumper Fee Expense",
+  "amt": 308.0,
+  "raw": "2026-09-18                                                                      Warehouse-Lumper Fee Expense                                "
+ },
+ {
+  "doc": "5815",
+  "date": "2026-09-18",
+  "vendor": "Smithfield Foods Inc",
+  "desc": "Warehouse-Lumper Fee Expense",
+  "amt": 269.1,
+  "raw": "2026-09-18   Smithfield Foods Inc   Smithfield Foods Plant                      Warehouse-Lumper Fee Expense                                "
+ },
+ {
+  "doc": "5815",
+  "date": "2026-09-19",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 35.74,
+  "raw": "2026-09-19   LOVES                  340LONGS POND RD         99531370           Fuel-DEF-Diesel Exhaust Fluid                               "
+ },
+ {
+  "doc": "5815",
+  "date": "2026-09-20",
+  "vendor": "LOVES",
+  "desc": "Fuel-DEF-Diesel Exhaust Fluid",
+  "amt": 21.15,
+  "raw": "2026-09-20   LOVES   66595 WADSWORTH   99159061           Fuel-DEF-Diesel Exhaust Fluid                         Y             21.15"
+ }
+]

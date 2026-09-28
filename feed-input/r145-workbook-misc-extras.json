@@ -1,0 +1,26 @@
+[
+  {
+    "doc": "5812",
+    "date": "2026-09-23",
+    "vendor": "",
+    "desc": "GAS",
+    "amt": 240.0,
+    "item_id": "682f9763-5eb4-42c3-995a-2d893c500c90",
+    "invoice": "",
+    "source": "wb-misc",
+    "load": "13600",
+    "is_reimbursable": false
+  },
+  {
+    "doc": "5812",
+    "date": "2026-09-23",
+    "vendor": "",
+    "desc": "COMIDAS",
+    "amt": 140.0,
+    "item_id": "c4adde9e-6901-436b-b917-736f1943fb5d",
+    "invoice": "",
+    "source": "wb-misc",
+    "load": "13600",
+    "is_reimbursable": false
+  }
+]

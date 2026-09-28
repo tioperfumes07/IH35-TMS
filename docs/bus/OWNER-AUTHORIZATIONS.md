@@ -2158,3 +2158,17 @@ completed 2026-09-28 under Lead ruling 148-02."
 — Claude-2 (AUTH-074->AUTH-075 collision fix)
 
 — Claude-2
+
+---
+
+## AUTH-076
+issued_at: 2026-09-28T03:40:00.000Z
+scope: accounting.expense_lines.item_id (UPDATE only, NULL→canonical UUID); accounting.expenses + accounting.expense_lines + expense_attribution.expense_load_links INSERT for USMCA document expenses 5769–5816 from feed-input/r145-document-expenses-255.json (255 / $12,764.27) and feed-input/r145-workbook-misc-extras.json (5812 GAS/COMIDAS owner-ruled) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA). Does not touch fuel.fuel_transactions, banking.*, Transportation, or QBO write-back. Does not CREATE catalogs.items. Does not post Quick Pay. Does not invent loads.
+action: OWNER_AUTH_ID=AUTH-076 npx tsx scripts/feed/r145-seed-document-expenses.mts --apply
+expires_at: 2026-09-29T03:40:00.000Z
+status: OPEN
+
+ROUND 149 (owner). Re-point all 326 NULL-item expense lines by canonical item UUID; seed missing company-settlement document expenses to PDF control 255 / $12,764.27; source_settlement_ref always set; idempotent on (source_settlement_ref, date, vendor, amount_cents, item_id). FUEL_FEED 391 and bank-origin 51 must remain unchanged. Proof: 255/255 · $12,764.27 · zero NULL item_id · 48-doc tie-out.
+LIVE CHECK 2026-09-28: loads 13627 and 13638 do NOT exist in mdata.loads (any opco) — rate-con add from ROUND 149 order is NOT executed (order defect; report, do not invent). Nearest live: 13620 rate_total $4,300.00 · 13621 rate_total $4,900.00. AUTH-074 (CC-1 live_loads) and AUTH-075 (Claude-2 silent-void header stamp) are separate OPEN entries — this is AUTH-076 for the R149/R150 document-expense seed.
+
+— Cursor
