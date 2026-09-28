@@ -11391,3 +11391,44 @@ reads as active, in-progress cleanup rather than a dead end. Flagging because it
 blocking every seat's push through the standard hook path, not just mine.
 
 — CC-2
+
+## verify-static-fallback — ADDENDUM: real per-guard root cause, not transient (CC-2, 2026-09-28)
+
+Follow-up to the finding above (merged, PR #23086 / sha `5e894116cb`). The 6-guard set held stable
+across 3 separate push retries spanning ~30 min and 2 resyncs — this is standing rot, not a race.
+Ran each of the 6 standalone under the same dead-port sentinel `verify-static.mjs` uses
+(`DATABASE_URL="postgres://x@127.0.0.1:59999/x" PGPORT=59999 DOTENV_CONFIG_PATH=/dev/null`) to get
+the real message past the push hook's truncated tail. None are mine (banking/money-in-out); routing
+by domain for whoever owns each:
+
+1. **`verify-caller-scoped-guc-membership`** — `apps/backend/src/accounting/invoices.routes.ts:1320`
+   (`POST /unvoid`) and `apps/backend/src/accounting/payments.routes.ts:852` (`POST /unvoid`) set
+   `app.operating_company_id` from caller input before any `assertCompanyMembership`/
+   `resolveOperatingCompanyId` call — the exact RLS-bypass shape this guard exists to catch.
+   RLS/security — likely CC-1's.
+2. **`verify-driver-samsara-map-one-to-many`** — tries to connect to a real DB and gets
+   `ECONNREFUSED`; never declares `REQUIRES_LIVE_DB` or `ALLOW_OFFLINE_SKIP` (verify-static.mjs's own
+   two sanctioned exclusion mechanisms). This one is a legitimate, mechanical, one-line
+   classification fix (add `export const REQUIRES_LIVE_DB = "<reason>";` if it genuinely needs live
+   data) — not a domain fix, but still fleet/Samsara-owned, not banking.
+3. **`verify-money-create-tags-sample-data`** — `apps/backend/src/accounting/checks/
+   check-create.service.ts` inserts into `accounting.expenses` without naming `is_sample_data`.
+   Overlaps with ROUND 213's arm-31 (4 Check-Creator test rows, $28.00, just routed to Cursor) —
+   same file, same root defect class, possibly the same fix closes both.
+4. **`verify-settlement-document-number-allocator-wired`** — `apps/backend/src/driver-finance/
+   settlements-load-bookended.service.ts` has ZERO calls to the canonical allocator
+   (`closeLoadBookendedSettlementForDriver` / `stampTripClosedForBookendedSettlement` /
+   `setSettlementSourceDocumentRef`) and two `trip_closed_at` UPDATEs with no overwrite-guard read
+   and no allocate+write in the same transaction. driver-finance domain.
+5. **`verify-settlement-sample-tag-wired`** — same file, the settlement INSERT doesn't carry
+   `is_sample_data` at all (no free-text fallback exists on this table). driver-finance domain.
+6. **`verify-one-canonical-active-load-set`** — `apps/backend/src/driver-finance/tour-readout.
+   routes.ts` regressed from the baseline's 2 violations to 3, live. driver-finance domain.
+
+Net: 5 of 6 are real, live, substantive regressions (not DB-connectivity noise); only #2 is a pure
+harness-classification gap. All 6 sit in accounting/driver-finance/fleet lanes, none in banking.
+Not fixing any of these myself — out of lane, and #1/#3/#4/#5/#6 need real domain fixes, not a
+guard-harness tweak. B5 (`cc2/r206-b5-invite-session-hash`) remains blocked at push time by this
+set alone — `money-pr-local-gate.mjs` passes clean on that branch.
+
+— CC-2
