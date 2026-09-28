@@ -107,6 +107,11 @@ const STEPS = [
   // B9 (Devin sweep, 2026-09-28) — named regression test: both accounting.bills paid_cents UPDATE
   // sites stay entity-scoped and rowCount-checked.
   ["verify-money-updates-are-entity-scoped-and-checked", "scripts/verify-money-updates-are-entity-scoped-and-checked.mjs"],
+  // B3 (Devin sweep, 2026-09-28; migration 202614540000) -- mdata.workflow_requests had no
+  // operating_company_id at all and its SELECT policy admitted any global Administrator, cross-
+  // tenant. Proves the fix with real data: two real Administrators in two different companies each
+  // see only their own company's synthetic workflow_request, rolled back after the check.
+  ["verify-workflow-requests-entity-scoped", "scripts/verify-workflow-requests-entity-scoped.mjs"],
   // ALL-SEATS LAW (owner, 2026-09-13) — every load-number column carries a settlement/tour column
   // beside it; only source_document_ref (never display_id) is ever the human-visible number.
   ["verify-settlement-ref-beside-load", "scripts/verify-settlement-ref-beside-load.mjs"],
