@@ -1,11 +1,8 @@
 # NOW-CURSOR — 2026-09-28 ROUND 203
 
-## IN FLIGHT — ROUND 203 dispatch sweep (Devin ten)
-Branch `cursor/r203-dispatch-sweep-c89b`. Check Creator already merged (#23037).
-Dispatch surface only: F1 noopener, F2/F3 query keys + override clear, F7 rollback,
-F12 catch, F17 error banner, F18 pointer cleanup, F19 MapView apiRequest, F20
-SectionErrorBoundary, B12 mark_paid payment-existence. Guard:
-`scripts/verify-dispatch-query-keys-and-boundaries.mjs`.
+## DONE — ROUND 203 dispatch sweep (Devin ten) #23061 `3f20414f31`
+Check Creator already merged (#23037). F1–F3/F7/F12/F17–F20 + B12 landed.
+Guard: `scripts/verify-dispatch-query-keys-and-boundaries.mjs`.
 
 ## DONE — ROUND 202 bank-feed orphan false red
 - Guard used incomplete matched_* list → false red; true orphans = 0. #23059.
