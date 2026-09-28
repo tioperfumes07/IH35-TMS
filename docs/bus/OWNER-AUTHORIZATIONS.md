@@ -2450,3 +2450,38 @@ Refuses unless exactly 6 such drivers, no duplicate account number, zero left wi
 the trial balance sum and posting row count unchanged.
 
 — Claude-Lead
+
+---
+
+## AUTH-088
+issued_at: 2026-09-28T09:40:00.000Z
+scope: accounting.journal_entry_postings UPDATE ONLY (source_transaction_type/source_transaction_id
+columns on exactly the 90 existing posting rows this script's own pre-flight plan names -- one row
+per bill, chosen deterministically, never amount-based) + accounting.bills UPDATE ONLY
+(posting_hold_reason -> NULL, paid_cents synced from each bill's own existing accounting.bill_payments
+sum) for the same 90 rows. No INSERT, no DELETE, no new journal_entry, no amount_cents change on any
+row, no new money. operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA) only.
+action: OWNER_AUTH_ID=AUTH-088 npx tsx scripts/ops/2026-09-28-cc2-r1557-backfill-bill-posting-source-links.ts --apply
+expires_at: 2026-09-28T15:40:00.000Z
+status: OPEN
+
+ROUND 155.7 (Claude-Lead retraction 2026-09-28 09:55Z, "RETRACTION -- I WAS WRONG. THE A/P AND THE
+GL ARE THERE AND CORRECT."). The Lead's original P0 ("GL ap_control $0.00 vs open-bill subledger
+$48,864.07") was itself measured wrong and retracted: all 90 held bills' liability is ALREADY live
+in the GL (2170 Driver Net-Pay Clearing $139,885.41 + 7200/1245/2100-00-* legs), independently
+confirmed by CC-2 live before the retraction arrived (same JEs, same accounts, line-by-line). The
+real defect is a missing back-reference only: journal_entry_postings.source_transaction_type/id on
+these JEs' own lines still say 'driver_settlement'/<settlement_id>, never 'bill'/<bill_id>, so
+ledger.posted_without_posting's NOT EXISTS check reports all 90 as posted-without-posting though the
+posting genuinely exists. Fix is linkage-only: retag one existing posting row per bill (chosen
+deterministically by line_sequence, verified live that every JE has more lines than bills sharing
+it so >=1 line stays 'driver_settlement'-tagged for settlement-void completeness -- void.service.ts's
+readOriginalGlPostings pulls every posting on a located JE header, not just source-tagged ones, so
+this is safe), then clear posting_hold_reason and sync paid_cents from each bill's own already-live
+bill_payments (68 of 90 show status='paid' with paid_cents=0 despite a full-amount bill_payments row
+already existing -- Round 148's set-based script inserted bill_payments via raw SQL without the
+paired paid_cents update). Trial balance and posting count asserted byte-identical before/after as
+a hard pre-commit check. DRY RUN 2026-09-28 09:4xZ: 90/90 bills planned across 41/41 JEs, 0
+refusals, 0 headroom violations.
+
+— CC-2
