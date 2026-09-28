@@ -1,0 +1,6 @@
+{
+  "_comment": "ROUND 155.20 JOB 2 / 157-A item 2. These 17 loads are stale-and-unstamped for one diagnosed, evidenced reason: integrations.samsara_config.is_enabled for USMCA was FALSE for their entire dispatched lifetime and only flipped true at 2026-09-28T10:00:08Z (see the guard file's own header for the audit-event proof) -- the geofence/Samsara arrival chain is correctly wired and running, it simply never had a chance to fire for these specific loads before now. The dispatcher-facing manual stamp route works too (fired once, ever, system-wide) but is essentially unused. Future loads dispatched after the Samsara toggle flip are expected to stamp normally; this baseline is not meant to grow.",
+  "load_numbers": ["13616", "13618", "13620", "13621", "13622", "13624", "13625", "13626", "13627", "13628", "13629", "13631", "13632", "13633", "13636", "13638", "13639"],
+  "established": "2026-09-28",
+  "measured_at": "2026-09-28T11:05:00Z"
+}

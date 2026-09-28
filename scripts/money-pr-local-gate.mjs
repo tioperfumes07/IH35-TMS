@@ -394,6 +394,13 @@ const GUARD_303 = [
 const DATA_WRITE_PATHS = ["db/migrations/", "scripts/ops/"];
 const ONE_SHOT_WRITER_RE = /^scripts\/run-[^/]+-once\.m?[jt]s$/;
 const LIVE_DOMAIN_GUARDS = [
+  // ROUND 155.20 JOB 2 / 157-A item 2 — a load frozen at an active status whose last scheduled
+  // stop is 24h+ past with zero actual_arrival_at anywhere in its stops. Root cause diagnosed live:
+  // USMCA's Samsara integration was disabled this entire time (see the guard's own header).
+  [
+    "verify-dispatched-load-has-stop-stamps",
+    ["apps/backend/src/dispatch/stop-stamp.service.ts", "apps/backend/src/telematics/geofence-detector.service.ts", "apps/backend/src/cron/samsara-positions-cron.ts"],
+  ],
   // ROUND 155.12 (Lead, 2026-09-28) — canonicalActiveLoadNotFinishedByMoneyCte treated an OPEN,
   // unsettled driver bill (raised AT DISPATCH) as "finished money", silently dropping every
   // freshly-dispatched load off every board. Live check: no load whose only money artifact is an
