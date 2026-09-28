@@ -273,16 +273,18 @@ async function listActiveSchedules(client: DbClient, operatingCompanyId: string)
   const res = await client.query<PmAutoEngineScheduleRow>(
     `
       SELECT
-        id::text,
-        unit_id::text,
-        label,
-        interval_kind::text AS interval_kind,
-        interval_value,
-        last_service_odometer,
-        next_due_odometer
-      FROM maintenance.pm_schedules
-      WHERE operating_company_id = $1::uuid
-        AND is_active = true
+        ps.id::text,
+        ps.unit_id::text,
+        ps.label,
+        ps.interval_kind::text AS interval_kind,
+        ps.interval_value,
+        ps.last_service_odometer,
+        ps.next_due_odometer
+      FROM maintenance.pm_schedules ps
+      JOIN mdata.units u ON u.id = ps.unit_id
+      WHERE ps.operating_company_id = $1::uuid
+        AND ps.is_active = true
+        AND u.is_sample_data IS NOT TRUE
     `,
     [operatingCompanyId]
   );
