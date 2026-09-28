@@ -9249,5 +9249,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-28",
     "purpose": "verify-money-updates-are-entity-scoped-and-checked"
+  },
+  "11723": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-28",
+    "purpose": "verify-workflow-requests-entity-scoped"
   }
 }

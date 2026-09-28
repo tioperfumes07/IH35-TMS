@@ -75,6 +75,7 @@ type WorkflowRequestRow = {
   requested_by: string;
   target_resource_type: z.infer<typeof resourceTypeSchema>;
   target_resource_id: string;
+  operating_company_id: string;
   payload: Record<string, unknown>;
   decided_by: string | null;
   decided_at: string | null;
@@ -107,6 +108,7 @@ function mapWorkflowRequest(row: WorkflowRequestRow) {
     requested_by: row.requested_by,
     target_resource_type: row.target_resource_type,
     target_resource_id: row.target_resource_id,
+    operating_company_id: row.operating_company_id,
     payload: row.payload,
     decided_by: row.decided_by,
     decided_at: row.decided_at,
@@ -136,12 +138,16 @@ async function appendWorkflowAudit(
 // operating_company_id directly; mdata.units/mdata.equipment have no such column, so scope by the
 // owner/leased pair (same rule as everywhere else). Require real org.user_company_access membership,
 // not bare existence.
+// B3 (Devin sweep, 2026-09-28): now returns the resolved operating_company_id alongside the
+// boolean, so the create route can stamp mdata.workflow_requests.operating_company_id (added by
+// migration 202614540000) without a second lookup -- the company id this function already proves
+// real membership against IS the row's own company, by construction.
 async function callerCanTargetResource(
-  client: { query: (query: string, values?: unknown[]) => Promise<{ rows: Array<{ id: string }> }> },
+  client: { query: (query: string, values?: unknown[]) => Promise<{ rows: Array<{ id: string; operating_company_id: string }> }> },
   targetResourceType: z.infer<typeof resourceTypeSchema>,
   targetResourceId: string,
   callerUserId: string
-) {
+): Promise<{ ok: true; operatingCompanyId: string } | { ok: false }> {
   const fromClause =
     targetResourceType === "driver"
       ? `FROM mdata.drivers r JOIN org.user_company_access uca ON r.operating_company_id = uca.company_id`
@@ -150,7 +156,7 @@ async function callerCanTargetResource(
              ON COALESCE(r.currently_leased_to_company_id, r.owner_company_id) = uca.company_id`;
   const res = await client.query(
     `
-      SELECT r.id
+      SELECT r.id, uca.company_id::text AS operating_company_id
         ${fromClause}
          AND uca.user_id = $2::uuid
          AND uca.deactivated_at IS NULL
@@ -161,7 +167,8 @@ async function callerCanTargetResource(
     `,
     [targetResourceId, callerUserId]
   );
-  return res.rows.length > 0;
+  const row = res.rows[0];
+  return row ? { ok: true, operatingCompanyId: row.operating_company_id } : { ok: false };
 }
 
 function parsePayloadForAction(
@@ -226,20 +233,20 @@ export async function registerMdataWorkflowRoutes(app: FastifyInstance) {
     }
 
     const created = await withCurrentUser(authUser.uuid, async (client) => {
-      const exists = await callerCanTargetResource(client, targetResourceType, targetResourceId, authUser.uuid);
-      if (!exists) return { error: "target_resource_not_found" as const };
+      const target = await callerCanTargetResource(client, targetResourceType, targetResourceId, authUser.uuid);
+      if (!target.ok) return { error: "target_resource_not_found" as const };
 
       const inserted = await client.query<WorkflowRequestRow>(
         `
           INSERT INTO mdata.workflow_requests (
-            action_code, requested_by, target_resource_type, target_resource_id, payload
+            action_code, requested_by, target_resource_type, target_resource_id, operating_company_id, payload
           )
-          VALUES ($1, $2, $3, $4, $5::jsonb)
+          VALUES ($1, $2, $3, $4, $5::uuid, $6::jsonb)
           RETURNING
-            id, action_code, status, requested_by, target_resource_type, target_resource_id, payload,
-            decided_by, decided_at, decision_reason, created_at, updated_at
+            id, action_code, status, requested_by, target_resource_type, target_resource_id,
+            operating_company_id, payload, decided_by, decided_at, decision_reason, created_at, updated_at
         `,
-        [actionCode, authUser.uuid, targetResourceType, targetResourceId, JSON.stringify(parsedPayload.payload)]
+        [actionCode, authUser.uuid, targetResourceType, targetResourceId, target.operatingCompanyId, JSON.stringify(parsedPayload.payload)]
       );
       const row = inserted.rows[0];
 
@@ -270,7 +277,12 @@ export async function registerMdataWorkflowRoutes(app: FastifyInstance) {
     const { status, action_code: actionCode, target_resource_type: targetResourceType, limit, offset } = parsedQuery.data;
 
     const rows = await withCurrentUser(authUser.uuid, async (client) => {
-      const filters: string[] = [];
+      // B3 (Devin sweep, 2026-09-28): explicit route-layer scope, on top of (never instead of) the
+      // RLS policy migration 202614540000 added -- an Administrator only sees their own accessible
+      // companies' requests, or their own requested_by rows, never every company's.
+      const filters: string[] = [
+        "(requested_by = identity.current_user_id() OR operating_company_id IN (SELECT org.user_accessible_company_ids()))",
+      ];
       const values: unknown[] = [];
 
       if (status) {
@@ -292,7 +304,7 @@ export async function registerMdataWorkflowRoutes(app: FastifyInstance) {
       const res = await client.query<WorkflowRequestRow>(
         `
           SELECT
-            id, action_code, status, requested_by, target_resource_type, target_resource_id, payload,
+            id, action_code, status, requested_by, target_resource_type, target_resource_id, operating_company_id, payload,
             decided_by, decided_at, decision_reason, created_at, updated_at
           FROM mdata.workflow_requests
           ${whereClause}
@@ -315,13 +327,15 @@ export async function registerMdataWorkflowRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
+      // B3 (Devin sweep, 2026-09-28): explicit route-layer scope, same as the list route above.
       const res = await client.query<WorkflowRequestRow>(
         `
           SELECT
-            id, action_code, status, requested_by, target_resource_type, target_resource_id, payload,
+            id, action_code, status, requested_by, target_resource_type, target_resource_id, operating_company_id, payload,
             decided_by, decided_at, decision_reason, created_at, updated_at
           FROM mdata.workflow_requests
           WHERE id = $1
+            AND (requested_by = identity.current_user_id() OR operating_company_id IN (SELECT org.user_accessible_company_ids()))
           LIMIT 1
         `,
         [parsedParams.data.id]
@@ -347,7 +361,7 @@ export async function registerMdataWorkflowRoutes(app: FastifyInstance) {
       const reqRes = await client.query<WorkflowRequestRow>(
         `
           SELECT
-            id, action_code, status, requested_by, target_resource_type, target_resource_id, payload,
+            id, action_code, status, requested_by, target_resource_type, target_resource_id, operating_company_id, payload,
             decided_by, decided_at, decision_reason, created_at, updated_at
           FROM mdata.workflow_requests
           WHERE id = $1
@@ -369,7 +383,7 @@ export async function registerMdataWorkflowRoutes(app: FastifyInstance) {
         workflow.target_resource_id,
         authUser.uuid
       );
-      if (!approverCanTarget) return { error: "mdata_workflow_request_not_found" as const };
+      if (!approverCanTarget.ok) return { error: "mdata_workflow_request_not_found" as const };
 
       let targetUpdated = 0;
       if (workflow.action_code === "WF-064-MDATA-001") {
@@ -429,12 +443,18 @@ export async function registerMdataWorkflowRoutes(app: FastifyInstance) {
             decision_reason = $3
           WHERE id = $1
           RETURNING
-            id, action_code, status, requested_by, target_resource_type, target_resource_id, payload,
+            id, action_code, status, requested_by, target_resource_type, target_resource_id, operating_company_id, payload,
             decided_by, decided_at, decision_reason, created_at, updated_at
         `,
         [workflow.id, authUser.uuid, parsedBody.data.reason ?? null]
       );
+      // B11 (Devin sweep, 2026-09-28): was an unguarded rows[0] -- safe today only because
+      // `workflow` above was already fetched FOR UPDATE and confirmed Pending, so this UPDATE
+      // (same id) cannot legitimately affect 0 rows right now. A future policy change (e.g. a
+      // stricter RLS predicate between the two queries) would otherwise turn a silent 0-row write
+      // into a 500 AFTER the mdata.drivers/units/equipment side-effect above already committed.
       const updated = updatedRes.rows[0];
+      if (!updated) return { error: "mdata_workflow_request_not_found" as const };
 
       await appendWorkflowAudit(client, "workflow.approved", authUser.uuid, {
         workflow_id: updated.id,
@@ -472,7 +492,7 @@ export async function registerMdataWorkflowRoutes(app: FastifyInstance) {
       const reqRes = await client.query<WorkflowRequestRow>(
         `
           SELECT
-            id, action_code, status, requested_by, target_resource_type, target_resource_id, payload,
+            id, action_code, status, requested_by, target_resource_type, target_resource_id, operating_company_id, payload,
             decided_by, decided_at, decision_reason, created_at, updated_at
           FROM mdata.workflow_requests
           WHERE id = $1
@@ -495,12 +515,14 @@ export async function registerMdataWorkflowRoutes(app: FastifyInstance) {
             decision_reason = $3
           WHERE id = $1
           RETURNING
-            id, action_code, status, requested_by, target_resource_type, target_resource_id, payload,
+            id, action_code, status, requested_by, target_resource_type, target_resource_id, operating_company_id, payload,
             decided_by, decided_at, decision_reason, created_at, updated_at
         `,
         [workflow.id, authUser.uuid, parsedBody.data.reason ?? null]
       );
+      // B11 (Devin sweep, 2026-09-28) -- see the approve handler above for the full explanation.
       const updated = updatedRes.rows[0];
+      if (!updated) return { error: "mdata_workflow_request_not_found" as const };
 
       await appendWorkflowAudit(client, "workflow.rejected", authUser.uuid, {
         workflow_id: updated.id,
