@@ -1,103 +1,73 @@
-# ROUND 195 + 195.1 — QBO write-back blocked permanently; receivable lag zeroed for factored loads — CC-1 — 2026-09-28 18:04Z
-Archived: `docs/bus/archive/NOW-CC-1-2026-09-28-r195.md`. PRs #23038, #23039, #23041, #23043 — all merged. DB migration already applied live; feature flag re-enabled live. Deployed and re-measured, not just merged.
+# ROUND 196 — item 0 pushed+PR opened (conflict flagged, not resolved); items 1-3 already complete from ROUND 191 — CC-1 — 2026-09-28 18:25Z
+Archived: `docs/bus/archive/NOW-CC-1-2026-09-28-r196.md`. Item 0: PR #23046 open, unmerged (owner merges). Items 1-3: no new PR — already live from ROUND 191 (#23033/#23034/#23036), re-verified this round.
 
-## ROUND 195 — QBO write-back flags blocked permanently. DONE.
-Measured live before writing anything: 92 active `lib.feature_flags`, 19 QBO-named. 17 of those carry
-a `lib.feature_flag_overrides` row with `enabled=false` for all three entities, all set 2026-08-16 by
-the owner — pinned off at wiring time, never touched since. The other 2
-(`QBO_RECONCILE_UI_ENABLED`, `TMS_QBO_RECON_UI_ENABLED`) are read-only reconciliation-surface UI
-flags, currently `true` for all three entities, and correctly stay OUT of the blocked list.
+## Item 0 — pushed, PR opened, stopped. One conflict + one concern flagged, not resolved.
+Found the Lead's commit in the separate clone `/Users/jorgemunoz/IH35-TMS-claude`
+(`b019ad4425`, branch `lead-r195-cashflow-delivery-date-is-income-date`) — a real, local commit, not
+on GitHub. Pushing directly from that clone hit `husky pre-push: branch:precheck-push FAIL
+category=dirty` — that clone's working tree carries a large pile of pre-existing, unrelated
+untracked Lead-workspace files (docs/bus/00-*.md notes, ops scripts, etc.), none of which are mine
+to touch or clean up. Fetched the one commit into my own clean worktree instead and pushed from
+there — no rewrite, no `--no-verify`, no disturbance to the Lead's checkout.
 
-Built (migration 202614530000, applied live on prod, `RESET ROLE` first — the known pooled-connection
-role-downgrade landmine hit on the first attempt, `permission denied for schema catalogs`, fixed):
-- `catalogs.blocked_feature_flags` — named, auditable blocklist. `ih35_app` gets SELECT only, no
-  write grant at all — "never a code path" enforced twice (grant boundary + trigger).
-- `lib.refuse_blocked_flag_enable()` — BEFORE INSERT/UPDATE trigger on `lib.feature_flag_overrides`
-  (the real enforcement surface: all 17 keys are already `POSTING_FLAG_KEYS`/`PER_ENTITY_ONLY_FLAG_KEYS`
-  in `feature-flags/service.ts`, so `default_enabled`/`rollout_pct` are never consulted for them —
-  documented plainly rather than implying a risk the code doesn't have) and BEFORE UPDATE on
-  `lib.feature_flags` (belt-and-suspenders, per the owner's explicit ask). No `current_user`
-  exemption — covers every seat, script, and the owner's own direct SQL.
-- Seeded all 17 keys. 3 named hard-core (`QBO_JE_PUSH_ENABLED`, `QBO_ENTITY_PUSH_ENABLED`,
-  `VOID_QBO_MIRROR_ENABLED`) cite law doc §2 "QuickBooks write-back: NEVER"; 14 are QBO-mirror-to-TMS
-  pull/projection flags the order also covers, without distinguishing direction — built as ordered.
-- Guard `verify-qbo-flags-blocked.mjs` (verify-step 11699), wired into `money-pr-local-gate.mjs`.
+**PR #23046 opened, NOT merged** (per the order: "the owner merges"). It is unmodified —
+commit `b019ad4425` pushed byte-for-byte.
 
-**Live proof — the failed enable attempt (exact text):**
+**Two things flagged in the PR body, neither resolved (per "do not rewrite it, stop"):**
+1. **It's `CONFLICTING`** (`gh pr view --json mergeable` → `CONFLICTING`, `mergeStateStatus: DIRTY`).
+   Expected: ROUND 195.1 (already merged separately as PR #23043, commit `b05801bf4a`, currently live
+   on `main`) touches the exact same lines in `receivable-lag.ts`/`receivable-lag.test.ts` from the
+   same much-older common ancestor.
+2. **A real correctness difference, not just a duplicate.** This commit's `receivableLagDays()`
+   returns `0` for **every** input, including non-factored customers, and zeroes
+   `DEFAULT_NET_TERMS_DAYS` (30 → 0). The owner's ruling ("Faro buys the invoice at delivery, no
+   lag") is about factored loads — Faro is the factor. A non-factored customer's payment timing has
+   nothing to do with Faro and should keep running on its own real net terms. My already-merged
+   ROUND 195.1 scopes the zero-lag to factored loads only and leaves `DEFAULT_NET_TERMS_DAYS` at 30.
+   Flagged in the PR description for the owner to see before merging; not fixed here, not argued
+   further — the order said stop, so I stopped.
+
+## Items 1-3 — settlement_lines posting_account_id / item_id / guard. Already done, from ROUND 191.
+This is the same ask as ROUND 191 items 2-4, which I completed and merged (#23033 backfill,
+#23034 guard-and-reconciliation write-up, #23036 status report) before this order arrived. Re-verified
+live just now rather than redone — nothing has regressed:
+
 ```
-QBO_FLAG_PERMANENTLY_BLOCKED: QBO_JE_PUSH_ENABLED cannot be enabled. Push journal entries into
-QuickBooks. QBO write-back is the hard core the owner named.. Ref: ROUND 195 (2026-09-28); law doc
-section 2 QuickBooks write-back: NEVER. Blocked 2026-09-28 17:52:37.504724+00 by
-e4117991-d2c0-406d-8cda-74e98d95bccd. Unblocking requires DELETING catalogs.blocked_feature_flags
-WHERE flag_key = 'QBO_JE_PUSH_ENABLED' -- an explicit, logged act, never a code path or UI toggle.
+line_type            total  with_posting_account_id  with_item_id
+deadhead_pay          73    73                        39
+deduction              7     5                         0
+earnings              129   129                       100
+escrow_contribution    72    72                         0
+extra_pay              59    59                         0
+reimbursement          13     0                         0
 ```
-Also live-verified: `UPDATE ... enabled=true` on an existing override raises the same way; `UPDATE
-lib.feature_flags SET default_enabled=true` raises the same way; `QBO_RECONCILE_UI_ENABLED` (not
-blocked) can still be written — the block doesn't over-reach. Caught and fixed one cosmetic bug in
-my own first pass: `RAISE EXCEPTION` doesn't support `%L` like `format()` does — fixed to bare `%`
-with literal quotes before merging.
+330 of 345 addressable rows have `posting_account_id` (same 15 sourceless reimbursement/deduction
+rows as before — no upstream `driver_reimbursements`/`driver_settlement_deductions` record exists
+for any of them; confirmed again, not re-guessed). `item_id` remains correctly NULL wherever
+quantity/rate/unit are also NULL (the live check constraint requires it) — still expected state, not
+a gap, per ROUND 191's own finding.
 
-**Guard PASS (live, after fix):**
+**Accrual tie — exact match, re-measured live:**
 ```
-verify-qbo-flags-blocked: PASS — all 17 QBO flags blocked, resolve FALSE for every entity, and an
-attempted enable raises.
+CLOSED   51 settlements   gross 80,608.41   deductions 5,243.21   net 75,629.80
+OPEN     13 pre-settlements  gross 13,867.93   (was 12/$13,867.93 in the order — one more
+                                                 opened since, gross unchanged)
 ```
+Matches the order's own cited CLOSED figures to the cent. `driver_settlements.gross_pay/
+deductions_total/net_pay` are the header fields the backfill never touches (it only writes
+`posting_account_id`), so this reconciliation was never at risk from that write.
 
-## ROUND 195.1 — receivable lag to zero for factored loads. DONE.
-Owner law (verbatim): "THE DELIVERY DATE OF THE LOAD IS THE PROJECTED INCOME DATE. Faro buys the
-invoice at delivery. There is no lag." Supersedes the 2026-06-17 lock in `receivable-lag.ts` ("the
-lag is NEVER zero") — retired, not re-raised.
-
-- `FACTORING_ADVANCE_DAYS`: 1 → 0. Header comment rewritten.
-- `DEFAULT_NET_TERMS_DAYS` (non-factored customers) — **unchanged**, confirmed by inspection: the
-  non-factored branch of `receivableLagDays()` never touches the factoring constant.
-- `projectedCashDateSql` — no logic change needed; its CASE expression already multiplies
-  `FACTORING_ADVANCE_DAYS` by the day interval only on the factored branch, so lag=0 resolves to the
-  raw delivery date automatically. Confirmed by inspection, then proven live (below).
-- Test suite updated: "never returns zero" → "non-factored never zero, factored always zero." All 8
-  tests pass.
-- Guard `verify-projected-cash-date-equals-delivery.mjs` (verify-step 11703), wired into the money
-  gate. Scoped to **factored** customers only — a non-factored proforma's real net terms are
-  unaffected by this ruling; the guard reports (never fails on) any non-factored open proforma it
-  finds, so it stays correct if that ever changes. Live-checked: all 14 open USMCA proformas are
-  factored today, so the owner's literal "every open USMCA proforma" holds in practice.
-- `CASH_FOLLOWS_ETA_ENABLED` re-enabled for USMCA live (a DB action, not repo-tracked) after the code
-  merged, then re-measured — per "merged is not done; deployed and re-measured is done."
-
-**Live proof — real `getDailyPrediction()` calls, before merge (both flag states) and after
-re-enabling the real flag (deployed code, real resolver):**
+**Guard re-run live, fresh:**
 ```
-Before merge, both states compared directly:
-  date=2026-09-28 cashFollowsEta=false: 10 income line(s), $46825.00
-  date=2026-09-28 cashFollowsEta=true:  10 income line(s), $46825.00
-  date=2026-09-29 cashFollowsEta=false: 0 income line(s), $0.00
-  date=2026-09-29 cashFollowsEta=true:  0 income line(s), $0.00
-
-After merge + flag re-enabled, real resolver:
-  CASH_FOLLOWS_ETA_ENABLED resolves: true
-  date=2026-09-28 (real flag state): 10 income line(s), $46825.00
-  date=2026-09-29 (real flag state): 0 income line(s), $0.00
+verify-settlement-line-posting-account-complete: 15 known, non-failing gap(s) — [named, unchanged]
+verify-settlement-line-posting-account-complete: PASS — every CLOSED settlement's active line has
+posting_account_id, except 15 named, sourceless gap(s) above (not guessed, per owner 2026-09-10 ruling).
 ```
-Flag ON now produces the identical bucket as flag OFF — zero shift, to the cent, both before and
-after the real re-enable. (This session's live count, 10 loads / $46,825.00, differs from the
-order's cited 9 loads / $40,575.00 — expected on a live system measured at a different moment; the
-zero-shift property is what was reproduced and what matters.)
-
-**Guard PASS (live, after re-enable):**
-```
-verify-projected-cash-date-equals-delivery: PASS — 14 factored open USMCA proforma(s) have
-projected_cash_date = delivery date, zero variance.
-```
-
-**Self-caught testing mistake, corrected before reporting:** my first post-merge re-measurement
-accidentally checked out a stale local `main` git ref (not `origin/main`) into the worktree, which
-briefly ran the OLD pre-fix code (`FACTORING_ADVANCE_DAYS = 1`) and produced a false "still shifting"
-result. Caught by checking `git log` on the ref actually used, fixed by checking out `origin/main`
-explicitly, and re-run — the real result is the zero-shift proof above. Not a code regression; a
-scratch-script git-ref mistake on my part, caught before it was reported as a finding.
+Already wired into `money-pr-local-gate.mjs` (verify-step 11695) since ROUND 191. No new PR needed.
 
 ## What's next
-ROUND 195 and 195.1 are both closed. No remaining task from either order. Standing by.
+Item 0: waiting on the owner to resolve the conflict and decide between the two versions (or merge
+mine, already live) before merging #23046. Items 1-3: closed, nothing outstanding. Standing by.
 
-Tier used: mid (live-data investigation, two small surgical DB/code changes, two new guards — no
-new GL/business math authored, both changes reuse or correct existing constants/logic).
+Tier used: mid (git forensics across a separate clone, live re-verification, no new code authored
+for items 1-3).
