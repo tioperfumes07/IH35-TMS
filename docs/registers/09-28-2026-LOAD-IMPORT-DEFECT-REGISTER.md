@@ -110,6 +110,36 @@ rate confirmations, 2 newly created by the live correction caught mid-register).
 are the most urgent: real money (a funded $5,210 Faro advance) now points at a load record that
 no longer carries its identifying reference.
 
+## (d) Addendum, 2026-09-28 — incomplete stop sets (seeded by the Lead: 13628)
+
+Not an address gap (see JOB 2) — a whole leg of the signed route is missing from
+`mdata.load_stops` entirely. **Load 13628** (Armstrong Transport GR, ref 4690712-1,
+`loads_5654578.pdf`) is a real 3-stop route per its own rate confirmation:
+
+1. 9/25/2026 PICKUP — White Toque (Frozen Warehouse), 11 Enterprise Ave N, Secaucus NJ 07094 — 516
+   cases, 9,220 lbs
+2. 9/25/2026 PICKUP — White Toque (Dry Warehouse), **1 County Rd, Secaucus NJ 07094** — 1,042
+   cases, 9,995 lbs
+3. 9/28/2026 DROPOFF — Houston, 8622 Fairbanks North Houston Rd, Houston TX 77064 — 1,042 + 516 =
+   1,558 combined cases, matching both pickups' totals exactly.
+
+Neon carries only 2 stops for this load (sequence 1 pickup = stop 1 above; sequence 2 delivery =
+stop 3 above). **Stop 2 — the entire "1 County Rd / White Toque Dry Warehouse" pickup leg — was
+never created.** The delivery stop's own case/weight totals (confirmed against the document)
+already reflect both pickups combined, so this isn't a case of the wrong total being booked; it's
+a missing intermediate stop row, which means any per-stop mileage/geofence/arrival logic for this
+load is running against an incomplete route.
+
+Not repaired here (JOB 1 stays register-only, and inserting a stop mid-sequence has downstream
+effects — stop_arrivals, mileage-from-stamps, geofence creation — this register doesn't own).
+Flagged for whoever builds the actual fix: insert a pickup stop (sequence 2, city Secaucus NJ
+07094, address_line1 "1 County Rd") and renumber the existing delivery to sequence 3.
+
+**Cross-checked seed set (13613, 13615, 13616, 13619) — no new findings beyond (b) above.**
+13613 (Refrigerx, WO 1013583-2, `loads_5636303.pdf`) matches its own signed document exactly on
+customer, amount and lane; already correctly funded by Faro invoice 92. 13615/13616/13619 are
+unchanged from the (b) findings above — cited, not re-derived.
+
 ## Reproduce
 
 ```
