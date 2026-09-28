@@ -3141,3 +3141,60 @@ The 58 sample master rows and their FK cascade remain explicitly out of scope, p
 deliberate call recorded above -- not touched.
 
 — CC-2
+
+---
+
+## AUTH-102
+
+issued_at: 2026-09-28T13:00:00.000Z
+scope: driver_finance.driver_settlements UPDATE + driver_finance.settlement_lines UPDATE/INSERT
+(via a script, no direct manual SQL outside it), USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only.
+ROUND 155.13 item 5 (also 155.13 J5): resolves four open pre-settlements the Lead originally
+reported as "zero lines" -- live-verified they now HAVE lines (a concurrent backfill process
+materialized them from driver_finance.driver_bills between the original report and this AUTH), so
+the real defect is that the existing lines are wrong, for two independently evidenced reasons:
+
+  (1) P-0001 (Genaro Guerrero Chavez, id b69dfafb-7287-42f6-b46b-19257c9e7095, $1,694.50) covers
+  loads 13610 and 13619 -- the SAME two loads already real-posted this session as settlement 5817
+  (driver_finance.driver_settlements P-0015, source_document_ref='5817'), built from the signed
+  Driver_Settlement_5817.pdf at $0.45/mi. P-0001's own lines use a different, driver_bills-sourced
+  figure at a flat $0.48/mi with different GPS-tracked mileage. Verified live inside the script's
+  own transaction that both of P-0001's loads appear as active lines on the real 5817 before
+  cancelling -- refuses otherwise. ACTION: void P-0001's 2 active lines and cancel the P-0001
+  header (status='cancelled', void_reason citing the duplicate), preventing double-payment to
+  Genaro for loads already paid via the real, signed-document-verified settlement.
+
+  (2) P-0003 (Carlos Mauricio Pena Carvallo, load 13613, $910.90), P-0005 (Jorge Luis Infante
+  Corona, load 13615, $940.27), P-0007 (Rafael Rogelio Rivero Reynoso, load 13563, $3.46) do not
+  overlap any already-posted settlement, but their lines were also sourced from driver_bills rows
+  carrying the same anomalous rate_per_mile_cents=48 -- all five affected driver_bills rows
+  (13610, 13613, 13615, 13619, 13563) share the identical created_at timestamp
+  2026-09-25T01:15:48.605Z to the millisecond, evidencing one batch write with a wrong flat rate,
+  not five independent real rates. The company's real per-mile rate is $0.45, confirmed from three
+  independent sources: Genaro's own signed 5817 PDF, Ruben's own signed 5818 PDF, this same driver
+  Rafael's OTHER driver_bills row for load 13544 (rate_per_mile_cents=45, outside the anomalous
+  batch), and Jorge Luis Infante Corona's own multiple historical PAID settlements (e.g. load
+  13504, settlement 5771, rate_per_mile_cents=45). Carlos's own specific historical rate could not
+  be independently recovered from stored data (older paid rows only retain a final gross amount,
+  not mileage/rate) -- the $0.45 company-standard rate is applied to him as the best-evidenced
+  figure, disclosed as a judgment call, not a certainty. ACTION: per settlement, void the single
+  wrong-rate line (is_active=false, void_reason citing the anomaly), insert one corrected line at
+  $0.45/mi with quantity=miles/rate_cents=45/unit_of_measure='mi' populated, recompute
+  gross_pay=net_pay as the SUM of the resulting active lines -- refuses if the sum does not equal
+  the single corrected line (never plugs a total). Script asserts the source driver_bills rate is
+  exactly the anomalous 48 before touching anything -- refuses to "correct" a rate it did not
+  itself confirm was wrong.
+
+  No deletion anywhere (void-not-delete). No JE/posting touched -- none of these four ever posted.
+  `is_sample_data` never set true.
+
+action:
+  OWNER_AUTH_ID=AUTH-102 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r15513-j5-resolve-zero-line-presettlements.ts --apply
+expires_at: 2026-09-28T19:00:00.000Z
+status: OPEN
+
+Dry run verified clean this round: P-0001 cancellation confirmed safe (both loads present as
+active lines on real 5817, checked inside the transaction, not assumed); P-0003 $910.90->$853.97,
+P-0005 $940.27->$881.51, P-0007 $3.46->$3.24 (miles unchanged, rate corrected 48->45 cents/mi).
+
+— CC-2
