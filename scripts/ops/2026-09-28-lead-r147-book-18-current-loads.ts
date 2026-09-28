@@ -25,6 +25,7 @@ import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { bookLoad, type BookLoadInput } from "../../apps/backend/src/dispatch/book-load.service.js";
+import { createNonOwnedTrailer, attachInterchangeTrailerToLoad } from "../../apps/backend/src/dispatch/trailer-interchange.service.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const AUTH = process.env.OWNER_AUTH_ID;
@@ -38,19 +39,42 @@ type Row = {
   ln: string; wo: string; customer: string; driver: string; truck: string; trailer: string;
   start: string; end: string; oc: string; os: string; dc: string; ds: string;
   cents: number; tt: "refrigerated_van" | "dry_van" | "flatbed";
+  // RULING 155.2c: a broker/shipper-supplied trailer is NEVER mdata.units or mdata.equipment —
+  // it goes through dispatch.non_owned_trailers + dispatch.trailer_interchanges (built 2026-09-02,
+  // GO-21 A1), never mdata.units/equipment (that would falsely assert fleet ownership). When set,
+  // `trailer` above is ignored for resolution and this field's `counterpartyCustomer` (the real
+  // mdata.customers row that owns the physical trailer) is used instead. `counterpartyCustomer:
+  // null` means the real owner is NOT YET CONFIRMED — no rate confirmation PDF in Downloads names
+  // an owner for this trailer, and per the Lead's own instruction ("if a rate con does not name
+  // the trailer's owner, stop and tell me — do not default it to the load's customer") this row
+  // is left deliberately unresolved rather than guessed. The preflight reports it and refuses the
+  // whole run until a real value is supplied here.
+  nonOwnedTrailer?: { trailerType: string; counterpartyCustomer: string | null };
 };
 
 const PLAN: Row[] = [
   { ln: "13622", wo: "16471804", customer: "TTS LLC", driver: "CARLOS MAURICIO PENA CARVALLO", truck: "T164", trailer: "10380", start: "2026-09-23", end: "2026-09-24", oc: "BALTIMORE", os: "MD", dc: "CONCORD", ds: "NC", cents: 220000, tt: "refrigerated_van" },
-  { ln: "13623", wo: "568871", customer: "Value Logistics Inc DBA A1 Value", driver: "EDUARDO AZAEL FLORES ORTIZ", truck: "T174", trailer: "568871", start: "2026-09-23", end: "2026-09-25", oc: "LAREDO", os: "TX", dc: "VILLA PARK", ds: "IL", cents: 320000, tt: "dry_van" },
+  // RULING 155.2c: 568871 is a broker-supplied trailer (dispatch.non_owned_trailers), not our
+  // equipment. counterpartyCustomer is null — live-verified 2026-09-28: no PDF in Downloads
+  // contains the literal string "568871"; the one rate con found that touches this same trailer
+  // (13631's, WO 1332528) describes it only as "Van (DAT)", naming no owner. STOP AND REPORT.
+  { ln: "13623", wo: "568871", customer: "Value Logistics Inc DBA A1 Value", driver: "EDUARDO AZAEL FLORES ORTIZ", truck: "T174", trailer: "568871", start: "2026-09-23", end: "2026-09-25", oc: "LAREDO", os: "TX", dc: "VILLA PARK", ds: "IL", cents: 320000, tt: "dry_van", nonOwnedTrailer: { trailerType: "DryVan", counterpartyCustomer: null } },
   { ln: "13624", wo: "2648812", customer: "Westgate Global Logistics", driver: "Jorge Luis Infante Corona", truck: "T177", trailer: "FB-56709", start: "2026-09-24", end: "2026-09-28", oc: "WILKES BARRE", os: "PA", dc: "ROMA", ds: "TX", cents: 520000, tt: "flatbed" },
   { ln: "13625", wo: "LGMX142", customer: "LOGIMAX TRANSPORT INC", driver: "HUGO GAYTAN SARABIA", truck: "T148", trailer: "10222", start: "2026-09-24", end: "2026-09-28", oc: "LAREDO", os: "TX", dc: "BREINIGSVILLE", ds: "PA", cents: 625000, tt: "refrigerated_van" },
   { ln: "13626", wo: "005804613", customer: "FLS Transportation Services Limited", driver: "Angel Alfonso Sosa Perez", truck: "T156", trailer: "10224", start: "2026-09-24", end: "2026-09-25", oc: "Lebanon", os: "IN", dc: "MEBANE", ds: "NC", cents: 340000, tt: "refrigerated_van" },
-  { ln: "13627", wo: "21868", customer: "EGRO TRANSPORT LLC", driver: "LUIS ARMANDO SOSA PEREZ", truck: "T170", trailer: "21868", start: "2026-09-23", end: "2026-09-25", oc: "LAREDO", os: "TX", dc: "COAL CITY", ds: "IL", cents: 320000, tt: "dry_van" },
+  // RULING 155.2c: 21868 is a broker-supplied trailer. counterpartyCustomer is null —
+  // live-verified 2026-09-28: no PDF in Downloads contains "21868" or load number "13627", and no
+  // dedicated rate confirmation for EGRO TRANSPORT LLC was found (only driver-settlement PDFs
+  // mention EGRO as a customer line item, never a load-specific rate con naming trailer
+  // ownership). STOP AND REPORT rather than default to the load's own broker.
+  { ln: "13627", wo: "21868", customer: "EGRO TRANSPORT LLC", driver: "LUIS ARMANDO SOSA PEREZ", truck: "T170", trailer: "21868", start: "2026-09-23", end: "2026-09-25", oc: "LAREDO", os: "TX", dc: "COAL CITY", ds: "IL", cents: 320000, tt: "dry_van", nonOwnedTrailer: { trailerType: "DryVan", counterpartyCustomer: null } },
   { ln: "13628", wo: "4690712-1", customer: "Armstrong Transport GR", driver: "JOSE ANTONIO VICENTE MARTINEZ", truck: "T171", trailer: "10218", start: "2026-09-25", end: "2026-09-28", oc: "SECAUCUS", os: "NJ", dc: "HOUSTON", ds: "TX", cents: 487500, tt: "refrigerated_van" },
   { ln: "13629", wo: "SHP7437063", customer: "GLT LOGISTICS", driver: "Angel Alfonso Sosa Perez", truck: "T156", trailer: "10224", start: "2026-09-25", end: "2026-09-28", oc: "CLINTON", os: "NC", dc: "Laredo", ds: "TX", cents: 320000, tt: "refrigerated_van" },
   { ln: "13630", wo: "1013949", customer: "Refrigerx Transportation LLC", driver: "CARLOS MAURICIO PENA CARVALLO", truck: "T164", trailer: "10380", start: "2026-09-28", end: "2026-09-30", oc: "TAR HEEL", os: "NC", dc: "Laredo", ds: "TX", cents: 320000, tt: "refrigerated_van" },
-  { ln: "13631", wo: "1332528", customer: "Central Freight Management, LLC", driver: "EDUARDO AZAEL FLORES ORTIZ", truck: "T174", trailer: "568871", start: "2026-09-25", end: "2026-09-28", oc: "CALUMET CITY", os: "IL", dc: "LAREDO", ds: "TX", cents: 320000, tt: "dry_van" },
+  // RULING 155.2c: same physical trailer as 13623 (568871) — its own rate con (WO 1332528,
+  // Central Freight Management) describes the trailer only as "Van (DAT)", naming no owner.
+  // counterpartyCustomer is null for the same reason as 13623.
+  { ln: "13631", wo: "1332528", customer: "Central Freight Management, LLC", driver: "EDUARDO AZAEL FLORES ORTIZ", truck: "T174", trailer: "568871", start: "2026-09-25", end: "2026-09-28", oc: "CALUMET CITY", os: "IL", dc: "LAREDO", ds: "TX", cents: 320000, tt: "dry_van", nonOwnedTrailer: { trailerType: "DryVan", counterpartyCustomer: null } },
   { ln: "13632", wo: "3-94954-0", customer: "RITE WAY LOGISTICS, INC", driver: "Fernando Mecor Hernandez", truck: "T168", trailer: "FB-56704", start: "2026-09-25", end: "2026-09-28", oc: "ELKHART", os: "IN", dc: "INGLESIDE", ds: "TX", cents: 400000, tt: "flatbed" },
   { ln: "13633", wo: "1776502", customer: "ACE DORAN", driver: "Genaro Guerrero Chavez", truck: "T152", trailer: "FB-56707", start: "2026-09-25", end: "2026-09-28", oc: "LAREDO", os: "TX", dc: "COMSTOCK PARK", ds: "MI", cents: 430000, tt: "flatbed" },
   // RULING 155.2a: 460000 is OWNER-DECLARED, not rate-con-derived — the signed rate con
@@ -111,8 +135,23 @@ async function preflightResolveAll(pool: pg.Pool): Promise<string[]> {
         // the survivor is), so without this exclusion it still name-matches forever after a merge.
         [`driver '${r.driver}'`, `SELECT id FROM mdata.drivers WHERE operating_company_id=$1::uuid AND lower(btrim(first_name||' '||last_name))=lower(btrim($2)) AND merged_into_driver_id IS NULL`, [USMCA, r.driver]],
         [`unit '${r.truck}'`, `SELECT id FROM mdata.units WHERE currently_leased_to_company_id=$1::uuid AND upper(btrim(unit_number))=upper(btrim($2))`, [USMCA, r.truck]],
-        [`trailer '${r.trailer}'`, `SELECT id FROM mdata.equipment WHERE COALESCE(currently_leased_to_company_id, owner_company_id)=$1::uuid AND upper(btrim(equipment_number))=upper(btrim($2))`, [USMCA, r.trailer]],
       ];
+      if (r.nonOwnedTrailer) {
+        // RULING 155.2c: a broker-supplied trailer is dispatch.non_owned_trailers, never
+        // mdata.equipment. If the real owner has not been confirmed yet, report it precisely —
+        // do not silently resolve to the load's own customer.
+        if (r.nonOwnedTrailer.counterpartyCustomer === null) {
+          problems.push(`${r.ln}: non-owned trailer '${r.trailer}' — owner NOT YET CONFIRMED (no rate con in Downloads names one; STOP AND REPORT, not defaulted to the load's customer)`);
+        } else {
+          checks.push([
+            `non-owned trailer '${r.trailer}' counterparty '${r.nonOwnedTrailer.counterpartyCustomer}'`,
+            `SELECT id FROM mdata.customers WHERE operating_company_id=$1::uuid AND lower(btrim(customer_name))=lower(btrim($2)) AND deactivated_at IS NULL`,
+            [USMCA, r.nonOwnedTrailer.counterpartyCustomer],
+          ]);
+        }
+      } else {
+        checks.push([`trailer '${r.trailer}'`, `SELECT id FROM mdata.equipment WHERE COALESCE(currently_leased_to_company_id, owner_company_id)=$1::uuid AND upper(btrim(equipment_number))=upper(btrim($2))`, [USMCA, r.trailer]]);
+      }
       for (const [what, sql, params] of checks) {
         const res = await c.query(sql, params);
         if (res.rowCount !== 1) problems.push(`${r.ln}: ${what} — expected 1 match, got ${res.rowCount}`);
@@ -141,7 +180,7 @@ const out: Array<Record<string, unknown>> = [];
 try {
   for (const r of PLAN) {
     const c = await pool.connect();
-    let ids: { customer: string; driver: string; unit: string; trailer: string };
+    let ids: { customer: string; driver: string; unit: string; trailer: string | null; nonOwnedTrailerId: string | null };
     let trip: { trip_type: "NB" | "TR"; tour_id: string };
     try {
       // Wrapped in one explicit transaction with SET LOCAL — live-verified 2026-09-28: a bare
@@ -168,13 +207,46 @@ try {
         // currently operating it). The dispatch-relevant scope is the latter, matching
         // book-load.service.ts's own resolution pattern for the trailer id below.
         unit: await one(c, `SELECT id::text FROM mdata.units WHERE currently_leased_to_company_id=$1::uuid AND upper(btrim(unit_number))=upper(btrim($2))`, [USMCA, r.truck], `unit '${r.truck}'`),
-        // Trailers are NOT in mdata.units at all — every row in that table is vehicle_type
-        // 'Tractor' or NULL (live-verified 2026-09-28: 0 rows of type 'Trailer'). The real
-        // physical trailer table is mdata.equipment, keyed by equipment_number, exactly as
+        // RULING 155.2c: a broker-supplied trailer (r.nonOwnedTrailer set) is NEVER
+        // mdata.units/mdata.equipment — it lives in dispatch.non_owned_trailers, resolved below.
+        // Our own trailer, when not an interchange, resolves through mdata.equipment exactly as
         // book-load.service.ts's own trailer resolution query expects
         // (`id = $1 AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2`).
-        trailer: await one(c, `SELECT id::text FROM mdata.equipment WHERE COALESCE(currently_leased_to_company_id, owner_company_id)=$1::uuid AND upper(btrim(equipment_number))=upper(btrim($2))`, [USMCA, r.trailer], `trailer '${r.trailer}'`),
+        trailer: r.nonOwnedTrailer ? null : await one(c, `SELECT id::text FROM mdata.equipment WHERE COALESCE(currently_leased_to_company_id, owner_company_id)=$1::uuid AND upper(btrim(equipment_number))=upper(btrim($2))`, [USMCA, r.trailer], `trailer '${r.trailer}'`),
+        nonOwnedTrailerId: null,
       };
+      if (r.nonOwnedTrailer) {
+        if (r.nonOwnedTrailer.counterpartyCustomer === null) {
+          throw new Error(`non-owned trailer '${r.trailer}' owner not yet confirmed — refusing (preflight should have already caught this)`);
+        }
+        const counterpartyId = await one(
+          c,
+          `SELECT id::text FROM mdata.customers WHERE operating_company_id=$1::uuid AND lower(btrim(customer_name))=lower(btrim($2)) AND deactivated_at IS NULL`,
+          [USMCA, r.nonOwnedTrailer.counterpartyCustomer],
+          `non-owned trailer counterparty '${r.nonOwnedTrailer.counterpartyCustomer}'`,
+        );
+        // Reuse an existing active non_owned_trailers row for this exact (counterparty, trailer
+        // number) if one already exists (idempotent — matches the new UNIQUE index from
+        // migration 202614440000), otherwise create it through the real service function.
+        const existingTrailer = await c.query<{ id: string }>(
+          `SELECT id::text FROM dispatch.non_owned_trailers WHERE operating_company_id=$1::uuid AND counterparty_id=$2::uuid AND trailer_number=$3 AND voided_at IS NULL`,
+          [USMCA, counterpartyId, r.trailer],
+        );
+        if (existingTrailer.rows[0]) {
+          ids.nonOwnedTrailerId = existingTrailer.rows[0].id;
+        } else {
+          const created = await createNonOwnedTrailer(c, {
+            operating_company_id: USMCA,
+            trailer_number: r.trailer,
+            trailer_type: r.nonOwnedTrailer.trailerType,
+            counterparty_type: "customer",
+            counterparty_id: counterpartyId,
+            notes: `ROUND 155.2c: broker-supplied trailer, created from load ${r.ln}'s booking.`,
+            created_by_user_id: OWNER,
+          });
+          ids.nonOwnedTrailerId = created.id;
+        }
+      }
       trip = await resolveTrip(c, ids.driver);
       await c.query("COMMIT");
     } catch (e) {
@@ -194,7 +266,10 @@ try {
         { stop_type: "delivery", sequence_number: 2, city: r.dc, state: r.ds, scheduled_arrival_at: `${r.end}T00:00:00.000Z`, time_window_type: "appointment" },
       ],
       save_mode: "book_dispatch",
-      assigned_primary_driver_id: ids.driver, assigned_unit_id: ids.unit, assigned_trailer_unit_id: ids.trailer,
+      // RULING 155.2c: our trailer XOR an interchange trailer, never both — for a
+      // non-owned-trailer row, assigned_trailer_unit_id stays undefined and the
+      // dispatch.trailer_interchanges row is created separately below, after the load exists.
+      assigned_primary_driver_id: ids.driver, assigned_unit_id: ids.unit, assigned_trailer_unit_id: ids.trailer ?? undefined,
       trailer_type: r.tt, customer_po_number: r.wo,
       override_reason: `R-147 (AUTH-077): load ${r.ln} is live on the owner's AlwaysTrack board and missing from USMCA — booked through the real book-load engine from that board row. Completed/factored but unsettled (open tour) per the owner's 2026-09-28 ruling; no settlement number assigned.${
         r.ln === "13634"
@@ -223,7 +298,35 @@ try {
       out.push({ ln: r.ln, status: "blocked", payload: res.payload }); continue;
     }
     console.log(`${r.ln}: BOOKED ${res.row.id} ${notes.join(",")} bill=${JSON.stringify(res.row.driver_bill_mint)}`);
-    out.push({ ln: r.ln, status: "booked", id: String(res.row.id), rate_cents: r.cents, notes });
+
+    let interchangeId: string | null = null;
+    if (r.nonOwnedTrailer && ids.nonOwnedTrailerId) {
+      // RULING 155.2c: created AFTER the load insert — the FK requires that order, exactly as
+      // BookLoadModalV4's own createTrailerInterchange() call is sequenced.
+      const ic = await pool.connect();
+      try {
+        await ic.query("BEGIN");
+        await ic.query(`SET LOCAL app.bypass_rls = 'lucia'`);
+        await ic.query(`SET LOCAL app.operating_company_id = '${USMCA}'`);
+        const attached = await attachInterchangeTrailerToLoad(ic, {
+          operating_company_id: USMCA,
+          load_id: String(res.row.id),
+          non_owned_trailer_id: ids.nonOwnedTrailerId,
+          created_by_user_id: OWNER,
+        });
+        await ic.query("COMMIT");
+        interchangeId = attached.id;
+        console.log(`${r.ln}: INTERCHANGE ATTACHED ${attached.id} (status=${attached.status}) trailer=${ids.nonOwnedTrailerId}`);
+      } catch (err) {
+        await ic.query("ROLLBACK").catch(() => {});
+        console.log(`${r.ln}: INTERCHANGE ATTACH FAILED — ${(err as Error).message}`);
+        out.push({ ln: r.ln, status: "booked_interchange_failed", id: String(res.row.id), error: (err as Error).message });
+        continue;
+      } finally {
+        ic.release();
+      }
+    }
+    out.push({ ln: r.ln, status: "booked", id: String(res.row.id), rate_cents: r.cents, notes, interchangeId });
   }
   const booked = out.filter((o) => o.status === "booked").length;
   console.log(JSON.stringify({ booked, of: PLAN.length, detail: out }, null, 1));
