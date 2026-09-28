@@ -3394,3 +3394,30 @@ category_kind='transfer', categorization_gl_account_id=5585dc64-dd7c-4314-b279-c
 six IDs).
 
 — CC-2
+
+---
+
+## AUTH-109
+issued_at: 2026-09-28T13:45:00.000Z
+scope: fuel.fuel_transactions UPDATE ONLY (location_city, location_state), USMCA
+(5c854333-6ea5-4faa-af31-67cb272fef80) only, exactly the settlement-import rows whose stored
+location_city is corrupted (a street address with the number jammed against the street name, or a
+product/category name leaked in from an empty source field -- ROUND 182 item 5). No other column
+touched, no document created, no money moved. Sanitizer (sanitizeFuelLocation) applied
+retroactively to each row's OWN currently-stored text -- the only source available at this scale
+without re-reading hundreds of settlement PDFs. Recovers location_state where a clean trailing
+", XX" code exists; sets location_city to NULL everywhere the stored text starts with a digit or
+matches a known product term -- an honest NULL rather than a fabricated city. Also fixes the
+writer (apps/backend/src/feed/seed-settlement-document.service.ts's seedFuel()) so future seeds
+apply the same sanitizer instead of copying the raw truth-JSON location string, and adds
+location_state to the INSERT (previously never written at all -- NULL on all 450 rows before this).
+action: DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r182-fuel-location-backfill.ts --apply
+expires_at: 2026-09-28T19:45:00.000Z
+status: DONE -- executed live 2026-09-28. Dry-run: 122 non-null location_city rows evaluated, 114
+would be city-nulled, 35 would gain a real location_state, 2 already clean. Applied: 120 rows
+updated (114 city-nulled, 35 state-recovered -- some rows both). Guard
+scripts/verify-fuel-location-is-a-city.mjs (verify-step 11679) confirmed PASS live afterward, both
+the static writer check and the live population check (zero remaining digit-led or product-term
+location_city values in USMCA).
+
+— CC-2

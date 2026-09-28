@@ -913,6 +913,40 @@ async function seedExpense(
   return expenseId;
 }
 
+// ROUND 182 item 5 — the truth JSON's fuelLines[].location is raw AlwaysTrack scrape text, not a
+// clean city: it is EITHER a street address with the number jammed against the street name
+// ("101 PINNACLE ROAD", "21548FM471S NATALIA,TX") OR, when the source spreadsheet's Location cell
+// was empty, the Item/product name leaking in instead ("Fuel-DEF-Diesel Exhaust Fluid", "DEF").
+// Measured live (bypass_rls) across the 450 already-seeded rows: 307 of 358 non-null values START
+// WITH A DIGIT (a street number with no reliable street/city word boundary — "471SNATALIA" has
+// zero delimiter between the road suffix and the city), and 35 are bare product-category text.
+// Only rows with a clean trailing ", XX" two-letter state code are reliably splittable; even those
+// still typically have the city jammed against a street suffix with no space, so only the STATE
+// half is trustworthy to recover automatically — inventing a city split beyond what a regex can
+// prove would be exactly the "manufacture a document field" mistake this round is fixing, just at
+// city-name granularity instead of document granularity. A wrong city is worse than an honest
+// NULL: verify-fuel-location-is-a-city.mjs's job is to make sure garbage never lands here again,
+// not to make every row non-null.
+const KNOWN_LOCATION_PRODUCT_TERMS = ["fuel", "def", "diesel", "reefer", "lumper", "scale", "tire", "washout"];
+
+function sanitizeFuelLocation(raw: string | null | undefined): { city: string | null; state: string | null } {
+  const text = (raw ?? "").trim();
+  if (!text) return { city: null, state: null };
+  const lower = text.toLowerCase();
+  if (KNOWN_LOCATION_PRODUCT_TERMS.some((term) => lower.includes(term))) return { city: null, state: null };
+  if (/^\d/.test(text)) {
+    // Street-number-led text. Still try to recover the STATE half if a clean ", XX" trails it —
+    // the state code itself is never ambiguous the way a jammed street/city boundary is.
+    const stateMatch = text.match(/,\s*([A-Za-z]{2})\s*,?\s*$/);
+    return { city: null, state: stateMatch ? stateMatch[1].toUpperCase() : null };
+  }
+  // Text that doesn't start with a digit and isn't a known product term is treated as a real,
+  // already-clean city string (e.g. a plain "Laredo, TX" style value) — split state if present.
+  const stateMatch = text.match(/^(.*?),\s*([A-Za-z]{2})\s*,?\s*$/);
+  if (stateMatch) return { city: stateMatch[1].trim() || null, state: stateMatch[2].toUpperCase() };
+  return { city: text, state: null };
+}
+
 // STEP 5 — fuel.fuel_transactions. fuel_type is ALWAYS 'diesel' here — the truth JSON's
 // fuel_purchases[] is diesel-only by construction (DEF/reefer print under expenses[] on these
 // documents; do not reclassify them into fuel even though the DB CHECK would technically allow
@@ -941,6 +975,7 @@ async function seedFuel(
   if (existing.rows[0]) return { fuelTransactionId: existing.rows[0].id, postedAt: line.date, amountCents: line.amountCents };
 
   const vendorId = await resolveByName(client, "mdata.vendors", "name", operatingCompanyId, line.vendor).catch(() => null);
+  const { city: locationCity, state: locationState } = sanitizeFuelLocation(line.location);
 
   // ROUND 143.3 — linkage written at creation, not backfilled. Every fuel transaction carries
   // the load's driver, unit, and trailer, so a fuel purchase can be costed to a truck and a
@@ -948,12 +983,13 @@ async function seedFuel(
   const inserted = await client.query<{ id: string }>(
     `INSERT INTO fuel.fuel_transactions (
        operating_company_id, transaction_at, purchased_at, load_id, vendor_id, fuel_type,
-       gallons, total_cost, location_city, transaction_reference, source, source_row_hash,
-       created_by_user_id, updated_by_user_id, driver_id, unit_id, trailer_id
+       gallons, total_cost, location_city, location_state, transaction_reference, source,
+       source_row_hash, created_by_user_id, updated_by_user_id, driver_id, unit_id, trailer_id
      )
-     VALUES ($1::uuid, $2::date, $2::date, $3::uuid, $4::uuid, 'diesel', $5, $6, $7, $8, 'import', $9, $10::uuid, $10::uuid, $11::uuid, $12::uuid, $13::uuid)
+     VALUES ($1::uuid, $2::date, $2::date, $3::uuid, $4::uuid, 'diesel', $5, $6, $7, $8, $9, 'import',
+             $10, $11::uuid, $11::uuid, $12::uuid, $13::uuid, $14::uuid)
      RETURNING id::text`,
-    [operatingCompanyId, line.date, loadId, vendorId, line.gallons, line.amountCents / 100, line.location, line.invoice, rowHash, actorUserId, driverId, unitId, trailerId]
+    [operatingCompanyId, line.date, loadId, vendorId, line.gallons, line.amountCents / 100, locationCity, locationState, line.invoice, rowHash, actorUserId, driverId, unitId, trailerId]
   );
   return { fuelTransactionId: inserted.rows[0].id, postedAt: line.date, amountCents: line.amountCents };
 }
