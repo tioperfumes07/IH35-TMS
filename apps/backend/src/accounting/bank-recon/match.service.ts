@@ -41,6 +41,7 @@ export type LedgerEntryKind =
   | "expense"
   | "factoring_advance"
   | "fuel_transaction"
+  | "relay_fuel"
   | "settlement";
 export type MatchState = "auto_matched" | "user_matched" | "rejected";
 
@@ -48,6 +49,7 @@ export type MatchState = "auto_matched" | "user_matched" | "rejected";
 // 202607011600_bank_recon_expense_match_part2a.sql widened it to permit 'expense' (BLOCK-01
 // Part 2a: expense-link accept). Lead extended production CHECK 2026-09-28 for factoring_advance /
 // fuel_transaction / invoice / driver_bill / settlement / load (ROUND 186 bulk-accept).
+// ROUND 186 counterparties: relay_fuel + matched_fuel_transaction_id clear-column (202614520000).
 // 'bill' remains NON-persistable: recording a bill payment with no GL JE is an orphan write —
 // that's Part 2b (BLOCK-02 CHAIN-04), still gated.
 export const PERSISTABLE_MATCH_KINDS: ReadonlySet<LedgerEntryKind> = new Set<LedgerEntryKind>([
@@ -57,9 +59,8 @@ export const PERSISTABLE_MATCH_KINDS: ReadonlySet<LedgerEntryKind> = new Set<Led
   "je",
   "expense",
   "factoring_advance",
-  // fuel_transaction is persistable in the CHECK, but has no matched_* clear-column yet —
-  // accept stores the match + audit and leaves review_state uncleared until that column lands.
   "fuel_transaction",
+  "relay_fuel",
   // ROUND 186 addendum — driver settlement net_pay ↔ BoA debit. Wider date window (10d) lives in
   // the bulk runner, not findCandidates (settlement-born candidate universe stays bill_payment/bill).
   "settlement",
@@ -78,6 +79,8 @@ const MATCHED_COLUMN_BY_KIND: Partial<Record<LedgerEntryKind, string>> = {
   expense: "matched_expense_id",
   factoring_advance: "matched_factoring_advance_id",
   settlement: "matched_settlement_id",
+  fuel_transaction: "matched_fuel_transaction_id",
+  relay_fuel: "matched_relay_fuel_transaction_id",
 };
 
 // ROUND 141.4 — A kind that findCandidates can RETURN but that cannot be accepted
@@ -683,6 +686,18 @@ async function loadLedgerAmountCents(client: DbClient, operatingCompanyId: strin
     );
     return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
   }
+  if (kind === "relay_fuel") {
+    // Source of truth: integrations.relay_fuel_transactions (ROUND 186). Discount already in
+    // total_amount_paid_cents — never re-derive from bank description.
+    const res = await client.query<{ amount_cents: number }>(
+      `SELECT ABS(COALESCE(total_amount_paid_cents, 0))::int AS amount_cents
+         FROM integrations.relay_fuel_transactions
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+        LIMIT 1`,
+      [entryId, operatingCompanyId]
+    );
+    return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
+  }
   if (kind === "settlement") {
     // Driver settlement net_pay is stored in dollars (numeric). Bank amount is cents.
     const res = await client.query<{ amount_cents: number }>(
@@ -1209,8 +1224,8 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
     // Clear the bank line: mark it 'matched' + stamp the denormalized matched_<kind>_id so the
     // worklist and the Accounting Bills/Expenses lists show status without re-deriving from
     // banking.reconciliation_matches. Column name comes from a fixed whitelist (never user input).
-    // Kinds without a matched_* column (fuel_transaction today) still get the match + audit above;
-    // they do NOT flip review_state here — verify-matched-state-requires-matched-id forbids a
+    // Kinds without a matched_* column still get the match + audit above; they do NOT flip
+    // review_state here — verify-matched-state-requires-matched-id forbids a
     // review_state='matched' write with no matched_*_id in the same statement.
     const matchedColumn = MATCHED_COLUMN_BY_KIND[input.ledger_entry_kind];
     if (matchedColumn) {

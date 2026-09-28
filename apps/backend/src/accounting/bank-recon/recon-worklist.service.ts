@@ -320,6 +320,9 @@ export async function unmatchBankTransaction(input: {
             matched_settlement_id = NULL,
             matched_payment_id = NULL,
             matched_bill_payment_id = NULL,
+            matched_factoring_advance_id = NULL,
+            matched_fuel_transaction_id = NULL,
+            matched_relay_fuel_transaction_id = NULL,
             -- 'unmatched' is not a legal review_state (CHECK: for_review|categorized|excluded|matched|
             -- transfer) — 'for_review' is the correct "back in the queue" state, and unlike the
             -- session-scoped unmatch (reconciliation.routes.ts, which leaves review_state untouched at
