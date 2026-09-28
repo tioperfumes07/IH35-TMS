@@ -11344,3 +11344,50 @@ workflow_requests / this guard picks it up. Blocking every seat's push that happ
 money-pr-local-gate.mjs suite until fixed.
 
 — CC-2
+
+## verify-static-fallback (verify:static) — cross-seat rot at the pre-push gate, shrinking but live all evening (CC-2, 2026-09-28)
+
+Hit trying to push an unrelated auth-only branch (`cc2/r206-b5-invite-session-hash`, touches only
+`apps/backend/src/auth/invite.routes.ts`, `invite-token.ts`, and 3 call sites in
+`apps/backend/src/mdata/drivers.routes.ts`). `money-pr-local-gate.mjs` (the real DoD/money-theater
+gate) passed clean; the SEPARATE `verify-static-fallback` step inside the husky pre-push hook
+(`node scripts/verify-static.mjs`, ~5400 no-DB guards) is failing with a shrinking-but-nonzero set
+of "gated fail(s) NOT in VERIFY-STATIC-BASELINE":
+
+- 1st push attempt: 10 gated fails (`verify-caller-scoped-guc-membership`,
+  `verify-driver-samsara-map-one-to-many`, `verify-money-create-tags-sample-data`,
+  `verify-no-job-writes-against-sample-data`, `verify-no-journal-entry-has-zero-postings`,
+  `verify-one-canonical-active-load-set`, `verify-settlement-document-number-allocator-wired`,
+  `verify-settlement-sample-tag-wired`, `verify-void-header-matches-postings`,
+  `verify-worm-applies-to-every-role`)
+- After a resync (~15 min later): 6 gated fails (subset of the above minus
+  `verify-no-job-writes-against-sample-data`, `verify-no-journal-entry-has-zero-postings`,
+  `verify-void-header-matches-postings`, `verify-worm-applies-to-every-role`)
+
+**Confirmed unrelated to this diff on both passes:** `git log origin/main -1 -- scripts/<each
+failing guard>.mjs` — every one of the 10 (and the remaining 6) was last touched by a DIFFERENT
+seat today (Cursor, and various squashed FINDING PRs #22991/#22967/#22914/#22213/#21900/#18914),
+none by CC-2, none anywhere near auth/invite files.
+
+**Separately, a standalone `node scripts/verify-static.mjs` run (not through the push hook) showed
+62 gated fails** — far more than the push hook itself reports, spanning fleet/reports/factoring/
+planner/vendor/safety/invoices/settlement domains with real substantive messages (not just
+DATABASE_URL-not-set noise), e.g. `verify-money-text-component-adoption-ratchet` (raw currency
+formatting count went 63→69), `verify-factoring-submit-canonical-factor-rates`,
+`verify-load-stops-save-wired`. Not investigated further — clearly out of lane, but flagging the
+scale in case it's the same underlying rot the push-hook count is a smaller/scoped view of.
+
+**Gotcha, fixed on my side, worth flagging generally:** running `verify-static.mjs`'s `--selftest`
+harness (invoked implicitly by the full sweep) can leave a REAL production file mid-mutation if the
+run is interrupted — mine left `apps/backend/src/banking/escrow-visualizer.routes.ts` with
+`accounting.escrow_postings` renamed to a nonexistent `accounting.escrow_ledger` (the planted defect
+for `verify-safety-orph03-forfeiture-audit-timeline.mjs`'s selftest), uncommitted, blocking a
+subsequent `git rebase`. Discarded via `git checkout -- <file>`; not a data-loss risk since it was
+never committed, but worth knowing the harness can leave dirty state on interruption.
+
+**Not fixed here** — out of lane (fleet/settlement/GUC-membership/load-set ownership, not banking/
+money-in-out), and the count is trending down as other seats land fixes independently, so this
+reads as active, in-progress cleanup rather than a dead end. Flagging because it is currently
+blocking every seat's push through the standard hook path, not just mine.
+
+— CC-2
