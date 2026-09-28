@@ -2216,3 +2216,31 @@ new pattern. 13546-3 is the live, correct, current document; 13546-2 is voided a
 duplicate. Void-not-delete; the voided row stays as its own audit trail.
 
 — Claude-2
+
+---
+
+## AUTH-079
+issued_at: 2026-09-28T05:45:00.000Z
+scope: mdata.drivers (status/first_name/last_name/deactivated_at/merged_into_driver_id UPDATE only, 7 named pairs) + mdata.driver_samsara_accounts (driver_id repoint only, never delete) + accounting.escrow_accounts (status='closed' on loser's account only) + driver_finance.escrow_balances (UPDATE/INSERT, balance transfer only) + every FK table listed in scripts/ops/2026-09-28-cc1-round148-merge-driver-v5.ts's FK_TABLES (driver_id repoint only, for exactly these 7 losers) + audit.audit_events (INSERT, merge trail) for operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA) only. Escrow JEs (if any) posted only through the existing createJournalEntryOnClient + recordEscrowPostingOnly engine — no direct INSERT into journal_entry_postings.
+action: OWNER_AUTH_ID=AUTH-079 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc1-round148-merge-driver-v5.ts
+expires_at: 2026-09-28T12:00:00.000Z
+status: OPEN
+
+ROUND 148 (Updated) driver map — 7 named duplicate-driver pairs (LEONEL ANTONIO MORALES,
+ANGEL ALFONSO SOSA PEREZ, LUIS ARMANDO SOSA PEREZ, ALFONSO HIDALGO CHAVEZ, GENARO GUERRERO
+CHAVEZ, HUGO GAYTAN, CARLOS MAURICIO PENA CARVALLO) merged survivor<-loser per live-verified
+load counts (owner's "DRIVER FROM LOADS" rule), with the ALFONSO exception per Lead ruling
+2026-09-28 07:10Z (posted-money criterion: survivor 40823a77 holds Samsara 60309682 +
+settlements 5775/5787 with posted JEs; loser dcd683f5 has zero posted-money rows). Loser goes
+status=Inactive with a merged_into_driver_id pointer (never Terminated, never deleted) — the
+column did not exist and was added by migration 202614420000, itself claimed via a separate
+claim-only PR (#22904) per db/migrations/CLAIMED-MIGRATION-NUMBERS.json's own two-PR
+discipline. DRY_RUN=1 passed clean twice (2026-09-28 05:4x UTC): all 7 pairs, escrow
+reconciliation PASS (39 accounts), 0 unbalanced JEs, Samsara total unchanged at 95.
+This supersedes scripts/ops/2026-09-25-devin-b-merge-driver-v4.ts, whose hardcoded PAIRS array
+was found live-verified to have survivor/loser REVERSED on 3 of its 4 pairs (ANGEL, LEONEL,
+CARLOS MAURICIO) — running v4 would have merged the load-carrying driver into the near-empty
+shell. v5 adds a load-count guard that refuses any survivor<loser pair without an explicit,
+documented overrideReason (the ALFONSO exception is the only one carrying one).
+
+— CC-1
