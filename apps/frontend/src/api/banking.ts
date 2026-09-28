@@ -1608,6 +1608,54 @@ export function getEscrowDriverTimeline(operatingCompanyId: string, driverId: st
   );
 }
 
+/** ROUND 197.1 — the real posting_type enum (escrow_postings CHECK constraint), live-verified. */
+export const ESCROW_POSTING_TYPES = ["deposit", "release", "adjustment", "forfeiture"] as const;
+export type EscrowPostingType = (typeof ESCROW_POSTING_TYPES)[number];
+
+export type EscrowLedgerRow = {
+  id: string;
+  driver_id: string;
+  driver_name: string | null;
+  entry_type: EscrowPostingType | string | null;
+  amount: number;
+  memo: string | null;
+  created_at: string;
+  settlement_id?: string | null;
+  journal_entry_id?: string | null;
+  journal_entry_date?: string | null;
+  journal_entry_memo?: string | null;
+  /** linked_journal_entry_id IS NOT NULL — the one real "posted to GL" binary this table carries;
+   *  the closest honest analog to a QBO C/R cleared flag (escrow_postings has no status column). */
+  cleared: boolean;
+};
+
+export type EscrowLedgerFilters = {
+  from?: string;
+  to?: string;
+  driverIds?: string[];
+  types?: EscrowPostingType[];
+  amountMinCents?: number;
+  amountMaxCents?: number;
+  cleared?: "cleared" | "uncleared";
+  /** accounting.escrow_accounts.status — a per-driver-account state, distinct from `cleared`. */
+  accountStatus?: "active" | "closed";
+};
+
+export function getEscrowLedger(operatingCompanyId: string, filters: EscrowLedgerFilters = {}) {
+  const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (filters.from) params.set("from", filters.from);
+  if (filters.to) params.set("to", filters.to);
+  if (filters.driverIds?.length) params.set("driver_ids", filters.driverIds.join(","));
+  if (filters.types?.length) params.set("types", filters.types.join(","));
+  if (filters.amountMinCents != null) params.set("amount_min_cents", String(filters.amountMinCents));
+  if (filters.amountMaxCents != null) params.set("amount_max_cents", String(filters.amountMaxCents));
+  if (filters.cleared) params.set("cleared", filters.cleared);
+  if (filters.accountStatus) params.set("account_status", filters.accountStatus);
+  return apiRequest<{ rows: EscrowLedgerRow[]; total_amount_cents: number; total_count: number }>(
+    `/api/v1/banking/escrow-visualizer/ledger?${params.toString()}`
+  );
+}
+
 export function uploadBankStatementCsv(file: File, bankAccountId: string) {
   const form = new FormData();
   form.append("csv_file", file);

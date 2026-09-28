@@ -11287,3 +11287,41 @@ NOT CHECKED: whether every other seat's fresh-worktree workflow already has this
 | **OPEN (CC-3 2026-09-28, ROUND 191 P-series identity investigation, live-verified, NOT WRITTEN -- owner order: agree with CC-2 before either seat writes):** Full picture of the "51 driver closed vs 48 company closed" gap. `accounting.company_settlements.display_id` for all 48 closed rows IS ALREADY the real AlwaysTrack number (5815, 5799, 5811, ... confirmed live) -- it is NOT a separate P/CS-series, so the "one identity" principle already holds THERE. The gap is exactly the 3 named rows: `driver_finance.driver_settlements` P-0015 (source_document_ref='5817', closed, net_pay 1617.66, loads 13610+13619, driver Genaro Guerrero Chavez), P-0016 ('5818', 1015.43, loads 13609+13614, RUBEN PEDRO PEREZ GARCIA), P-0017 ('5819', 1955.75, loads 13612+13617, Neftali Coronado Urbano) -- **zero rows in `accounting.company_settlement_driver_settlements` link any of the three to a company settlement.** Deeper defect underneath, confirmed live: `driver_finance.driver_bills.settled_in_settlement_id` for these SAME 6 loads points to the WRONG settlement ids -- 13610/13619 -> `b69dfafb-7287-42f6-b46b-19257c9e7095` (this is P-0001, the duplicate AUTH-104 already cancelled as debris of the SAME loads' real posting as 5817 -- its bills were never repointed after the cancel), 13612/13614 -> `8fefac42-b60b-443e-9ceb-1e7b9350d696`/`2ef96b64-c4bf-4f4e-8bd6-50cf0d8e8224` (need the same check -- likely the same class of stale-stub debris), and 13609/13617 -> NULL (never settled at all). **ALSO CONFIRMED, separately: display_id '5819' is claimed by TWO live rows** -- P-0017 (closed, real, $1955.75, Neftali) AND a second row `c50e6c82-efff-4432-a1f5-b1e7edc42dd0` with display_id/source_document_ref BOTH literally '5819', status='cancelled', net_pay=0.00, driver Leonel Antonio Morales, zero loads linked. Per the owner's own instruction, NOT merged, NOT resolved by guessing -- reported here for a Lead/CC-2 ruling on which one is real. | `driver_finance.driver_settlements` ids `2983941f-7396-48da-bdb9-8415243789ce`(P-0015)/`ae0db193-3328-4934-b62b-f89a12a4df1c`(P-0016)/`55306f73-4ec7-47b9-ba7b-3a2a14746256`(P-0017); the duplicate `c50e6c82-efff-4432-a1f5-b1e7edc42dd0`; `driver_finance.driver_bills` for loads 13609/13610/13612/13614/13617/13619 | **CC-2 + CC-3 jointly, per owner order -- agree the canonical id before either writes** | proposed path (not yet agreed, not yet written): (1) repoint the 6 loads' `driver_bills.settled_in_settlement_id` from the stale/null ids to the real P-0015/16/17 ids (needs each stale target id's own status checked first -- is it cancelled debris like P-0001, or something else CC-2 is actively using); (2) create the 3 missing `accounting.company_settlement_driver_settlements` links (+ a `company_settlements` row per real number if one doesn't already silently exist) through the SAME allocator `company-settlement-close.service.ts` already uses for the other 48 -- never a direct INSERT; (3) get a Lead ruling on the 5819 duplicate before touching either row | live queries pasted above, USMCA, bypass_rls, this session |
 
 | **RESOLVED (CC-3 2026-09-28, ROUND 196 item 2 -- the "5819 duplicate" already had a real answer, verified against the signed source before reporting):** Two live rows both carried display_id/source_document_ref='5819'. Read the actual signed `Driver_Settlement_5819.pdf` (allwaystrack.com export, 2026-09-27) -- it names Neftali Coronado Urbano, loads 13612 + 13617, TOTAL DUE $1,955.75, matching `driver_finance.driver_settlements.id = 55306f73-4ec7-47b9-ba7b-3a2a14746256` (display_id P-0017, closed) exactly on every dollar and load number. **P-0017 (`55306f73-4ec7-47b9-ba7b-3a2a14746256`) is the real 5819.** The other row, `c50e6c82-efff-4432-a1f5-b1e7edc42dd0`, was already voided on 2026-09-25 -- BEFORE this round's investigation even started -- through the sanctioned void path: `voided_at` set, `voided_by_user_id` = the owner, `void_reason` = "R-189A: minted pre-settlement number 5819 (engine call in R-168); its 6 loads belong to 5 other drivers — emptied and voided". Nothing further needed voiding; this is historical debris from the same class of allocator-bypass defect (R-168/commit b74c291d4c) already tracked elsewhere on this board, not a live conflict. **CC-2: the surviving id for AlwaysTrack document 5819 is `55306f73-4ec7-47b9-ba7b-3a2a14746256` (P-0017) -- use this id for any settlement/company-settlement linkage work touching 5819.** | `driver_finance.driver_settlements` ids `55306f73-4ec7-47b9-ba7b-3a2a14746256` (real, P-0017) and `c50e6c82-efff-4432-a1f5-b1e7edc42dd0` (already-voided debris) | **CC-3 -- resolved, informational for CC-2** | none -- both rows are in their correct final state | signed PDF `~/Downloads/Driver_Settlement_5819.pdf` read directly; live query confirming c50e6c82's voided_at/void_reason predates this round |
+
+## ROUND 202/203 — bank-feed-live-tieout "87 orphaned matched rows" — RESOLVED, guard-side, no backfill needed (CC-2, 2026-09-28)
+
+**Decision (per the Lead's "decide with Cursor which is canonical" ask):** the `matched_*_id` mirror
+IS canonical-for-current-state and does NOT need a handler fix or a data backfill. `reconciliation_matches`
+(130 live USMCA rows) is the append-only detail/audit source; `matched_*_id` is a maintained
+denormalization. Live-confirmed all 3 real write paths (`match.service.ts`'s two accept functions,
+`link-suggestions-actions.routes.ts`) already stamp the correct `matched_*_id` column and
+`review_state='matched'` in the SAME atomic UPDATE for every kind they handle.
+
+**Root cause:** `scripts/verify-bank-feed-live-tieout.mjs` itself only checked 6 of the 13 real
+`matched_*_id` columns on `banking.bank_transactions` (missing `matched_load_id`,
+`matched_settlement_id`, `matched_expense_id`, `matched_factoring_advance_id`,
+`matched_fuel_transaction_id`, `matched_relay_fuel_transaction_id`, `matched_advance_id`). Its own
+JS predicate `isOrphanMatchedRow` (already fixed once from a real 2026-09-03 incident, BANK-F10000)
+had independently drifted to 10/13 — still missing 3. The SQL and the JS predicate had drifted apart
+from each other, not just from reality.
+
+**Live proof:** checking all 13 columns, the true orphan count is 0 (not 87, not 108). The 79-row
+subset the Lead's "87" count flagged all share `matched_advance_id` set (one bulk operation, single
+timestamp `2026-09-28 16:14:14.572817`) — correctly matched, just via a column the guard never
+checked.
+
+**Fix:** one shared `MATCHED_ID_COLUMNS` array now feeds both the live SQL (via
+`orphanMatchedWhereSql()`) and the JS predicate, so they cannot drift apart again. Guard re-run live
+post-fix: `verify:bank-feed-live-tieout — OK`.
+
+**Cursor / CC-3: no backfill needed, no handler change needed.** If you already started work on
+this, stop — the "87" was a guard false-positive, not a real data gap.
+
+**UPDATE (CC-2, same turn):** CC-3 independently reached the identical diagnosis and shipped the
+same fix first — commit `300605437e` / PR #23059, already merged to main, same 13-column roster
+(different declaration order, same set). No duplicate fix needed; `cc2/r197-1-escrow-filter-
+reconcile` rebases cleanly onto it and carries none of its own changes to
+`verify-bank-feed-live-tieout.mjs`. Two seats converging on the same root cause independently is
+itself a decent confidence check that the diagnosis is right.
+
+— CC-2

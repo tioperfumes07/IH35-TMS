@@ -27,6 +27,8 @@ import { filterBankingTilesForCompany } from "../../lib/banking-company-filter";
 import { SelectCombobox } from "../../components/Combobox";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
+import { getCoaAccounts } from "../../api/banking";
 import { PrintOrientationDialog } from "./components/PrintOrientationDialog";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -140,6 +142,35 @@ export function ReconciliationWorkspacePage() {
   const [eventFilter, setEventFilter] = useState<"all" | "load" | "bill" | "settlement">("all");
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
+
+  // ROUND 197.1 (owner-raised) — Service charge / Interest earned, each with its own date + GL
+  // account, matching the real QuickBooks Online reconcile flow (bank fee expense / interest
+  // income, entered as part of the reconcile, adjusting the book side of the difference before
+  // Finish is evaluated). Session-LOCAL only: ReconciliationSession carries no
+  // service_charge_cents/interest_earned_cents columns today, and CC-2 cannot author a migration
+  // to add them (verify-migration-lane-band.mjs hard-bars cc-2/*-prefixed branches from
+  // db/migrations/*.sql) — persisting these across a reload/reopen is real follow-up work for
+  // whichever seat owns migrations, flagged explicitly rather than silently limited. The
+  // difference calculation and the Finish gate below both already read from this local state, so
+  // the core requirement (an operator can enter these, and Finish stays disabled until the
+  // resulting difference is exactly 0.00) is real today, not deferred.
+  const [serviceChargeInput, setServiceChargeInput] = useState<number | null>(null);
+  const [serviceChargeDate, setServiceChargeDate] = useState("");
+  const [serviceChargeAccountId, setServiceChargeAccountId] = useState<string | null>(null);
+  const [interestEarnedInput, setInterestEarnedInput] = useState<number | null>(null);
+  const [interestEarnedDate, setInterestEarnedDate] = useState("");
+  const [interestEarnedAccountId, setInterestEarnedAccountId] = useState<string | null>(null);
+
+  const coaQuery = useQuery({
+    queryKey: ["banking", "recon-coa", companyId],
+    queryFn: () => getCoaAccounts(companyId),
+    enabled: Boolean(companyId),
+    staleTime: 120_000,
+  });
+  const coaOptions = useMemo(
+    () => (coaQuery.data?.accounts ?? []).map((a) => ({ value: a.id, label: a.account_name })),
+    [coaQuery.data?.accounts],
+  );
   const [completing, setCompleting] = useState(false);
   const [forceReason, setForceReason] = useState("");
   const [localTransactions, setLocalTransactions] = useState<PlaidBankTransaction[]>([]);
@@ -238,16 +269,33 @@ export function ReconciliationWorkspacePage() {
     return byType;
   }, [allCandidates, eventFilter]);
 
+  const serviceChargeCents = serviceChargeInput != null ? Math.round(Number(serviceChargeInput) * 100) : 0;
+  const interestEarnedCents = interestEarnedInput != null ? Math.round(Number(interestEarnedInput) * 100) : 0;
+
   const summary = useMemo(() => {
     const statementBalance = Number(workspaceQuery.data?.summary.statement_balance_cents ?? 0);
-    return computeSummary(localTransactions, statementBalance);
-  }, [workspaceQuery.data?.summary.statement_balance_cents, localTransactions]);
+    const base = computeSummary(localTransactions, statementBalance);
+    // Service charges reduce the bank's cash (an expense not yet in the matched-transaction set
+    // during an active session); interest earned increases it — standard reconcile adjustment,
+    // applied to the book side so the variance reflects both once entered.
+    const adjustedBookBalanceCents = base.bookBalanceCents - serviceChargeCents + interestEarnedCents;
+    return {
+      ...base,
+      adjustedBookBalanceCents,
+      varianceCents: statementBalance - adjustedBookBalanceCents,
+    };
+  }, [workspaceQuery.data?.summary.statement_balance_cents, localTransactions, serviceChargeCents, interestEarnedCents]);
 
   const canComplete = auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Accountant";
   const isOwner = auth.user?.role === "Owner";
   // Reconciliation is ordinary-complete only at exactly $0.00. Any non-zero difference needs an
   // Owner's explicit, reasoned override; never silently certify an under-$10 variance.
   const needsForceComplete = summary.varianceCents !== 0;
+  // A service charge / interest earned amount with no date or account is an incomplete entry —
+  // it already moved the Difference, but there's nowhere real to post it. Block Finish until
+  // both are filled, same as any other money line this app blocks on an incomplete wizard step.
+  const serviceChargeIncomplete = serviceChargeCents !== 0 && (!serviceChargeDate || !serviceChargeAccountId);
+  const interestEarnedIncomplete = interestEarnedCents !== 0 && (!interestEarnedDate || !interestEarnedAccountId);
 
   // 0441-mod8: wire Auto-Match → existing bank-recon auto_matched_candidates worklist
   // (BankReconciliationPage accept/reject). No new scoring/GL — session period + account only.
@@ -713,11 +761,70 @@ export function ReconciliationWorkspacePage() {
               <p className="text-xs font-semibold text-gray-900">Variance summary</p>
               <div className="mt-2 space-y-1 text-xs">
                 <div className="flex justify-between"><span>Statement</span><span>{money(Number(workspaceQuery.data.summary.statement_balance_cents))}</span></div>
-                <div className="flex justify-between"><span>Matched credits</span><span>{money(summary.matchedCreditsCents)}</span></div>
-                <div className="flex justify-between"><span>Matched debits</span><span>{money(summary.matchedDebitsCents)}</span></div>
-                <div className="flex justify-between"><span>Book balance</span><span>{money(summary.bookBalanceCents)}</span></div>
+                <div className="flex justify-between"><span>Matched deposits (cleared)</span><span>{money(summary.matchedCreditsCents)}</span></div>
+                <div className="flex justify-between"><span>Matched payments (cleared)</span><span>{money(summary.matchedDebitsCents)}</span></div>
+                <div className="flex justify-between"><span>Book balance (cleared only)</span><span>{money(summary.bookBalanceCents)}</span></div>
+                {serviceChargeCents !== 0 ? (
+                  <div className="flex justify-between"><span>Less: service charge</span><span>-{money(serviceChargeCents)}</span></div>
+                ) : null}
+                {interestEarnedCents !== 0 ? (
+                  <div className="flex justify-between"><span>Plus: interest earned</span><span>+{money(interestEarnedCents)}</span></div>
+                ) : null}
                 <div className={`flex justify-between font-semibold ${varianceClass(summary.varianceCents)}`}>
-                  <span>Variance</span><span>{money(summary.varianceCents)}</span>
+                  <span>Difference</span><span>{money(summary.varianceCents)}</span>
+                </div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-1 gap-2 border-t border-gray-100 pt-2 sm:grid-cols-2">
+                <div>
+                  <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Service charge</label>
+                  <MoneyInput
+                    valueDollars={serviceChargeInput}
+                    onChangeDollars={setServiceChargeInput}
+                    ariaLabel="Service charge (USD)"
+                    placeholder="Service charge (USD)"
+                    className="mt-0.5"
+                  />
+                  <DatePicker
+                    value={serviceChargeDate}
+                    onChange={setServiceChargeDate}
+                    className="mt-1 h-7 w-full"
+                  />
+                  <div className="mt-1" data-testid="recon-service-charge-account">
+                    <ReferenceSelect
+                      value={serviceChargeAccountId}
+                      onChange={setServiceChargeAccountId}
+                      options={coaOptions}
+                      createKind="category"
+                      operatingCompanyId={companyId}
+                      placeholder="Bank fee account"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Interest earned</label>
+                  <MoneyInput
+                    valueDollars={interestEarnedInput}
+                    onChangeDollars={setInterestEarnedInput}
+                    ariaLabel="Interest earned (USD)"
+                    placeholder="Interest earned (USD)"
+                    className="mt-0.5"
+                  />
+                  <DatePicker
+                    value={interestEarnedDate}
+                    onChange={setInterestEarnedDate}
+                    className="mt-1 h-7 w-full"
+                  />
+                  <div className="mt-1" data-testid="recon-interest-earned-account">
+                    <ReferenceSelect
+                      value={interestEarnedAccountId}
+                      onChange={setInterestEarnedAccountId}
+                      options={coaOptions}
+                      createKind="category"
+                      operatingCompanyId={companyId}
+                      placeholder="Interest income account"
+                    />
+                  </div>
                 </div>
               </div>
               {needsForceComplete ? (
@@ -730,7 +837,13 @@ export function ReconciliationWorkspacePage() {
                 />
               ) : null}
               <ActionButton
-                disabled={!canComplete || completing || (needsForceComplete && (!isOwner || !forceReason.trim()))}
+                disabled={
+                  !canComplete ||
+                  completing ||
+                  serviceChargeIncomplete ||
+                  interestEarnedIncomplete ||
+                  (needsForceComplete && (!isOwner || !forceReason.trim()))
+                }
                 onClick={() => {
                   if (!sessionId || !companyId) return;
                   setCompleting(true);
