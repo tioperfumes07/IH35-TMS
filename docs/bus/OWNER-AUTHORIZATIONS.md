@@ -3691,7 +3691,10 @@ scope: Round 197 item 1 — G-16 Check Creator MERGE PROOF. #23037 was closed un
   mid-sequence). Leaves proof check VOIDED same session (seat-fixtures law). USMCA only.
 action: OWNER_AUTH_ID=AUTH-120 DATABASE_URL=<prod> npx tsx scripts/ops/r197-g16-allocator-registry-proof.ts
 expires_at: 2026-09-29T08:00:00.000Z
-status: OPEN
+status: DONE -- executed live 2026-09-28 on merge sha 0da6b26dec. createCheck #1002
+  through canonical allocator wrote banking.check_number_registry id=3c78afc0
+  (status=issued, source_id=a7671a67 expense); stock advanced 1002→1003; voidCheck left
+  voided (seat-fixtures). registry_count=2 (1001+1002). LIVE PROOF PASS.
 
 — Cursor (R-197 G-16 merge proof)
 
