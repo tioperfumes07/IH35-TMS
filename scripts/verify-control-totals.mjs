@@ -20,15 +20,14 @@ const CHECKS = [
     name: 'Driver settlements 5804-5815 net pay',
     // AlwaysTrack signed TOTAL DUE for 5804–5815. Pre–AUTH-056 sum was 20,191.07 with
     // paperwork 5812 at −$50 escrow (Driver_Settlement_5812.txt @ $0.00/mi). AUTH-056
-    // (CONSUMED) re-priced 5812 at $0.45/mi → live net_pay 1,652.47. Identity:
-    // 20191.07 − (−50) + 1652.47 = 21893.54. Ruling:
-    // docs/bus/RULING-2026-09-28-control-totals-5812-auth056.md
-    // SUPERSEDES this session's earlier "exclude 5812, HOLD" resolution
-    // (docs/bus/09-27-2026-LEAD-RULING-CONTROL-TOTAL-5804-5815-STALE-BASELINE.md /
-    // 09-28-2026-LEAD-RULING-FARO-PURGE-WINDOW-REARM-AND-5812-HOLD.md) -- the Lead/CC-1
-    // resolved the 3-way dispute via AUTH-056 while this branch was in flight; taking
-    // origin/main's resolution as authoritative on rebase.
-    expect: 21893.54,
+    // re-priced 5812 at $0.45/mi → net 1,652.47 (SUM 21893.54). AUTH-089 (ROUND 155.11-B)
+    // completed 5812 deductions to $225 (escrow + phone + CA wire) → net 1,502.47.
+    // Identity: 21893.54 − 150.00 = 21743.54. Live Neon + ALLWAYS DRIVER SETTLEMENTS REPORT
+    // + feed-input/settlement-truth-from-pdfs.json all print 1502.47 for 5812.
+    // Ruling: docs/bus/RULING-2026-09-28-control-totals-5812-auth089.md
+    // SUPERSEDES RULING-2026-09-28-control-totals-5812-auth056.md SUM only (AUTH-056 rate
+    // re-price still in force; AUTH-089 is the deduction-side completion of the same doc).
+    expect: 21743.54,
     // Transaction data the purge deletes. Inside a verified purge window, with no USMCA settlements
     // at all, this control is EMPTY BY PURGE (provisional per Round 86, re-priced once after day 1).
     emptyByPurgeWhenNoRows: 'driver_finance.driver_settlements',

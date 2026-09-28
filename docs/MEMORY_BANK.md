@@ -238,6 +238,24 @@ Measured (Neon `br-fancy-credit-akjnd07a`, bypass_rls=lucia, tip `6d18a73826`):
 
 ## Known Quirks & Blockers
 
+### ROUND 157-C / 156 — $7,150.08 closed net_pay vs settlement bill_payments (Cursor, 2026-09-28)
+
+Measured live (`neondb_owner` + `bypass_rls=lucia`, USMCA):
+- closed driver_settlements net_pay **$71,040.96** (48)
+- accounting.bill_payments (all, cash+noncash) **$63,890.88** (130)
+- difference **$7,150.08**
+
+Breakdown (not a gap to invent payments for):
+- **7 closed settlements with ZERO `driver_settlement_gl_bills` rows** — net_pay sum **$7,248.04**
+  (AlwaysTrack refs **5773, 5807, 5788, 5769, 5786, 5780**; 5816 is $0). Those settlements have
+  **nothing to match** to the bank — finding, not a fill.
+- Linked settlements' net_pay vs GL gross nets **−$97.96** (under/over on adopted bills).
+- 7248.04 − 97.96 = **7150.08**.
+
+Cash matchable universe for the engine = **90 cash bill_payments · $63,133.63** (40 noncash
+settlement deductions · $757.25 never hit the bank). Match engine = settlement-born only
+(`settlement-born-candidates.ts`); BUILD NO TYPE FILTER.
+
 ### AUTH-061 stamp-less shells on Truck Line (Cursor, 2026-09-28)
 
 - Loads **13609 / 13616 / 13617 / 13618 / 13620 / 13621** sit on `views.live_loads` as `open_dispatch` /
@@ -358,11 +376,20 @@ Measured (Neon `br-fancy-credit-akjnd07a`, bypass_rls=lucia, tip `6d18a73826`):
 - `historical_backfill` cash advances skip the Active-status gate (Inactive/Probation drivers still owe documented advances).
 - Escrow ledger same-ms tie-break: guard uses `ctid DESC` (UUID id is not insertion order). Writer stamps `clock_timestamp()` on insert.
 
-### Active Architectural Decisions — Sep 5804–5815 AT net tie (Cursor, 2026-09-24)
-- **Control:** `verify-control-totals` expects **$20,241.07** for source_document_ref 5804–5815 (merged #22540). Formula = settlement_control driver_pay+tarp+extra_stop+other+reimb+escrow+admin+CA with **5812 at $0** (zero driver_pay / LH-only; AT −$50 escrow is not collectable — NET_PAY_NEGATIVE).
-- **Root cause of $17,090.82:** closed with `settlement_model=NULL` → flat $250 escrow; tarp/other/extra_stop never became `settlement_lines`; admin/CA missing. `closeSettlementPayRun` reads **header** `gross_pay`, not live lines — must `aggregateSettlementTotals` before close. After close, `stampTripClosedForBookendedSettlement` → `aggregateSettlementTotals` **wipes admin/CA from the header** (those live on deductions/advances, not lines) — always restamp header from pay-run breakdown.
-- **Completer:** `scripts/feed/tie-sep-5804-5815-to-at.mts` (maker≠checker reverse+reclose). Live proved each doc PASS; SUM=$20,241.07.
-- **Faro (live, same session):** 89 FA, zero_advance=0, advance_sum=$302,019.36 = day_control net_adv; day_control 23 days / purchase $311,587. Code for LDT-4 ach=0 + void DISTINCT still on `cursor/sep-settlement-complete-c89b` (parity gate red on 5769–5803 expenses/DRIVER_NET — pre-existing).
+### Active Architectural Decisions — Sep 5804–5815 AT net tie (Cursor, 2026-09-24; re-anchored 2026-09-28 AUTH-089)
+- **Control (live 2026-09-28):** `verify-control-totals` expects **$21,743.54** for source_document_ref
+  5804–5815. Ruling: `docs/bus/RULING-2026-09-28-control-totals-5812-auth089.md`. Identity:
+  AUTH-056 SUM $21,893.54 − $150 (AUTH-089 5812 deductions $75→$225) = $21,743.54. Live Neon +
+  ALLWAYS DRIVER SETTLEMENTS REPORT + `feed-input/settlement-truth-from-pdfs.json` all print
+  5812 net **$1,502.47**.
+- **Owner Downloads pack (2026-09-28, locked local `.local/settlement-control-2026-09-28/`):**
+  ALLWAYS DRIVER/SETTLEMENTS/INVOICED + Report (79) + DRIVER CARRIER DEDUCTIONS/EXPENSES/ADD PAYMENT
+  + CUSTOMER CHARGES + full Faro aging/fees/purchase/reserve/payments set. Window 09-18..09-27 =
+  12 driver settlements · **$19,018.45** + company 5808–5819 total_inv **$101,985.12**.
+- **Root cause of $17,090.82 (historical):** closed with `settlement_model=NULL` → flat $250 escrow;
+  tarp/other/extra_stop never became `settlement_lines`; admin/CA missing.
+- **Completer:** `scripts/feed/tie-sep-5804-5815-to-at.mts` (maker≠checker reverse+reclose).
+- **Faro (live):** day-control still the Faro purchase day; finish 09-22..09-25 after ROUND 157-C PR7.
 
 ## Verify-step lane law (so the gate stops rejecting)
 
