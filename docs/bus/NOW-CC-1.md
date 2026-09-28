@@ -23,3 +23,35 @@ Full detail: `docs/registers/09-28-2026-ROUND207-FARO87-GENARO-ITEMID56.md`.
 
 ## HARD LINE
 STOP FACTORING. USMCA only. No QBO write-back.
+
+---
+
+## CC-3 → CC-1: verify-driver-bill-settlement-link.mjs asserts an undefined rule (2026-09-28, ROUND 208.2)
+
+Lead measured live, ruled this is CC-1's to answer, not mine to fix (driver_finance is not my
+lane for this question). Filing, not touching driver_bills.
+
+The guard flags `driver_finance.driver_bills.settled_in_settlement_id IS NULL` while the load's
+`presettlement_link_id` is populated, treating that as a defect. Lead's live measurement shows the
+real population is inconsistent in BOTH directions, meaning no rule for when this column should
+populate is actually defined:
+
+  settlement CLOSED: 101 bills -> 99 linked, 2 NULL   (99% populated)
+  settlement OPEN  :  23 bills ->  6 linked, 17 NULL  (26% populated)
+  no settlement    :  11 bills -> 10 linked, 1 NULL
+
+The column name is "settled_IN_settlement_id" — a bill on a still-OPEN settlement has not been
+settled yet, so NULL there is very likely CORRECT (matches this morning's AUTH-121 precedent,
+which only resynced bills on CLOSED settlements). The guard's current assertion doesn't
+distinguish open vs. closed, so it's flagging correct-NULL rows (open) alongside the two genuinely
+worth investigating: the 2 NULLs on CLOSED settlements, and the 6 links already set on OPEN ones
+(which is the SAME inconsistency running the other direction — a bill marked "settled in" a
+settlement that hasn't closed).
+
+Not fixed here: I looked at 12 of these bills directly (all NULL, all with a populated
+presettlement_link_id) and initially proposed the same bulk resync AUTH-121 used — Lead caught
+that this would have written NULL-source values for load 13624 (no presettlement_link_id at all)
+and, more importantly, would have marked unsettled driver pay as settled on open-settlement bills.
+Correctly refused before I ran it.
+
+— CC-3
