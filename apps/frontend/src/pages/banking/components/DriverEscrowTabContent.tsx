@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -93,8 +93,24 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
   const [showPresets, setShowPresets] = useState(false);
   const [selectedDriverIds, setSelectedDriverIds] = useState<string[]>(() => {
     const raw = searchParams.get("driver_id");
-    return raw ? [raw] : [];
+    return raw ? raw.split(",").filter(Boolean) : [];
   });
+  // LINK-F5171 reverse_link — the deep link from a driver's own profile
+  // (/banking/driver-escrow?driver_id=<id>) is read on load above; this keeps it a two-way,
+  // bookmarkable/shareable URL by writing selectedDriverIds back out whenever it changes (multi-
+  // select encodes as a comma-separated driver_id, single-driver case unchanged from before).
+  useEffect(() => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (selectedDriverIds.length) next.set("driver_id", selectedDriverIds.join(","));
+        else next.delete("driver_id");
+        return next;
+      },
+      { replace: true },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDriverIds]);
   const [selectedTypes, setSelectedTypes] = useState<EscrowPostingType[]>([]);
   const [amountMinInput, setAmountMinInput] = useState<number | null>(null);
   const [amountMaxInput, setAmountMaxInput] = useState<number | null>(null);
@@ -289,7 +305,14 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
         render: (row) => {
           const sid = String(row.settlement_id ?? "").trim();
           if (!sid) return <span className="text-xs text-[#6B7280]">—</span>;
-          return <EntityLink kind="settlement" id={sid} label={visibleDocumentLabel(null, sid, "Settlement")} />;
+          return (
+            <EntityLink
+              kind="settlement"
+              id={sid}
+              label={visibleDocumentLabel(String(row.settlement_display_id ?? "") || null, sid, "Settlement")}
+              data-testid="banking-escrow-settlement-link"
+            />
+          );
         },
       },
       {
@@ -303,6 +326,7 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
               kind="journal_entry"
               id={jeId}
               label={visibleDocumentLabel(String(row.journal_entry_memo ?? "") || null, jeId, "Journal entry")}
+              data-testid="banking-escrow-journal-entry-link"
             />
           );
         },

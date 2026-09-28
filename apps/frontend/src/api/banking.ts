@@ -1621,6 +1621,9 @@ export type EscrowLedgerRow = {
   memo: string | null;
   created_at: string;
   settlement_id?: string | null;
+  /** driver_finance.driver_settlements.source_document_ref — the real AlwaysTrack settlement
+   *  number (BANK-F5751/F6050 class: never leave this null behind a generic "Settlement" label). */
+  settlement_display_id?: string | null;
   journal_entry_id?: string | null;
   journal_entry_date?: string | null;
   journal_entry_memo?: string | null;
