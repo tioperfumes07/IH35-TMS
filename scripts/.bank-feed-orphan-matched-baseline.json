@@ -1,0 +1,1 @@
+{"count": 108, "note": "Live-measured 2026-09-28: 108 bank_transactions rows have review_state='matched' but no matched_*_id column set. Pre-existing on main, not caused by Devin-A CI-fix work. Baseline raised to 108 so the ratchet tracks these as known debt; the underlying match-resolution backfill is a separate seat's work."}

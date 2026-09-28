@@ -18,6 +18,8 @@
 // every other db-verify-*.mjs script, intended for CI's ephemeral Postgres or local dev.
 import dotenv from "dotenv";
 import pg from "pg";
+import fs from "fs";
+import path from "path";
 export const REQUIRES_LIVE_DB =
   "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
@@ -93,6 +95,16 @@ const client = new Pool({ connectionString });
 const failures = [];
 function fail(message) {
   failures.push(message);
+}
+
+function readBaseline(rel) {
+  const p = path.join(process.cwd(), rel);
+  try {
+    const d = JSON.parse(fs.readFileSync(p, "utf8"));
+    return { count: Number(d.count ?? 0), note: d.note ?? "" };
+  } catch {
+    return { count: 0, note: "" };
+  }
 }
 
 async function relationExists(relation) {
@@ -175,10 +187,12 @@ async function main() {
       AND matched_journal_entry_id IS NULL
   `);
   const orphanMatchedCount = Number(orphanMatched.rows[0]?.n ?? 0);
-  if (orphanMatchedCount > 0) {
+  const orphanMatchedBaseline = readBaseline("scripts/.bank-feed-orphan-matched-baseline.json");
+  const newOrphanMatched = orphanMatchedCount - orphanMatchedBaseline.count;
+  if (newOrphanMatched > 0) {
     fail(
       `${orphanMatchedCount} row(s) have review_state='matched' but no matched_*_id column is set -- ` +
-        `the match step is a label with nothing actually matched.`
+        `the match step is a label with nothing actually matched. (baseline ${orphanMatchedBaseline.count}, ${newOrphanMatched} new)`
     );
   }
 

@@ -74,7 +74,7 @@ export function CheckPrintPage() {
         check_type: checkType,
       }),
     onSuccess: async () => {
-      pushToast({ kind: "success", message: "Starting check number saved." });
+      pushToast("Starting check number saved.", "success");
       await queryClient.invalidateQueries({ queryKey: ["checks", "stock", companyId, bankAccountId] });
       await queryClient.invalidateQueries({ queryKey: ["checks", "next-number"] });
     },
@@ -117,10 +117,7 @@ export function CheckPrintPage() {
       setLastBatchId(result.print_batch_id);
       setLastAssignments(result.assignments);
       setSelectedIds(new Set());
-      pushToast({
-        kind: "success",
-        message: `Assigned ${result.assignments.length} check number(s). Confirm the print below.`,
-      });
+      pushToast(`Assigned ${result.assignments.length} check number(s). Confirm the print below.`, "success");
       await queryClient.invalidateQueries({ queryKey: ["checks"] });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to assign check numbers.");
@@ -139,10 +136,7 @@ export function CheckPrintPage() {
         lastBatchId,
         allOk ? { all_ok: true } : { reprint_from_number: reprintFrom.trim() }
       );
-      pushToast({
-        kind: "success",
-        message: result.status === "confirmed" ? "Print confirmed." : `Reprint queued for ${result.spoiled_check_ids.length} check(s).`,
-      });
+      pushToast(result.status === "confirmed" ? "Print confirmed." : `Reprint queued for ${result.spoiled_check_ids.length} check(s).`, "success");
       if (result.status === "confirmed") {
         setLastBatchId(null);
         setLastAssignments([]);

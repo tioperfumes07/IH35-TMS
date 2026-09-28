@@ -115,13 +115,10 @@ export function CheckDetailPage() {
                   setUnvoidBusy(true);
                   try {
                     await unvoidCheckApi(companyId, check.id, "Owner reinstate via Check detail");
-                    pushToast({ kind: "success", message: "Check reinstated." });
+                    pushToast("Check reinstated.", "success");
                     await queryClient.invalidateQueries({ queryKey: ["checks"] });
                   } catch (err) {
-                    pushToast({
-                      kind: "error",
-                      message: err instanceof Error ? err.message : "Could not reinstate this check.",
-                    });
+                    pushToast(err instanceof Error ? err.message : "Could not reinstate this check.", "error");
                   } finally {
                     setUnvoidBusy(false);
                   }
