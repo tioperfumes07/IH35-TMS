@@ -1162,5 +1162,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-28",
     "purpose": "B3 (Devin sweep, ROUND 203.1, one-time Lead-granted migration-lane exception outside CC-1's usual band): mdata.workflow_requests has NO operating_company_id column at all -- cross-tenant read leak, any global Administrator of ANY company can enumerate/read every other company's workflow requests. Adds operating_company_id (backfilled from the target resource, NOT NULL once resolved -- confirmed live 2026-09-28: table has 0 rows, so backfill is a no-op and the column can be NOT NULL from the start), tightens SELECT/INSERT/UPDATE RLS policies to require org.user_accessible_company_ids() membership (Owner keeps cross-entity access by design, matching the codebase's own established idiom), and the same shape as the resolver already used by callerCanTargetResource in workflow-routes.ts."
+  },
+  "202614550000": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-28",
+    "purpose": "B-LEDGER-1 (ROUND 206): retroactive record for the fuel.fuel_transactions genesis-anchor gross_cost/discount_amount/fee_amount columns, which live-verified were already applied to prod directly (twice, under migration numbers 202614420000 and 202614430000 that were never committed as .sql and were later legitimately re-claimed by two unrelated real migrations -- mdata_drivers_merged_into_driver_id.sql and worm_check_engine_banking_tables.sql). This migration is idempotent (ADD COLUMN IF NOT EXISTS, UPDATE ... WHERE col IS NULL) and changes nothing live -- it exists so the repo finally has a durable, reviewable record matching what prod already carries. Data verified sane before writing this: gross_cost = total_cost exactly for all 1,631 backfilled rows, no doubling."
   }
 }

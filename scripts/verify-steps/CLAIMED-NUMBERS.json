@@ -9254,5 +9254,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-28",
     "purpose": "verify-workflow-requests-entity-scoped"
+  },
+  "11727": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-28",
+    "purpose": "verify-fuel-transactions-genesis-anchor-documented (B-LEDGER-1, ROUND 206)"
   }
 }
