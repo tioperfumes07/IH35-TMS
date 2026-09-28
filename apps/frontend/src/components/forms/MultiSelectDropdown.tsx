@@ -15,6 +15,10 @@ type Props = {
   onChange: (next: string[]) => void;
   allLabel?: string;
   className?: string;
+  /** Overrides the trigger button's own classes (default box below) — a caller with its own
+   *  locked control tokens (e.g. banking's BankingControlBox) passes its full recipe here instead
+   *  of fighting the default className with overrides. */
+  triggerClassName?: string;
   "data-testid"?: string;
   /** FILTER-MULTI-01: large reference lists (Vendor/Customer/Unit/Trailer/Driver/Load/Account/Class)
    *  need a type-to-narrow box inside the open panel — a plain checkbox list of hundreds/thousands
@@ -30,6 +34,7 @@ export function MultiSelectDropdown({
   onChange,
   allLabel = "All",
   className,
+  triggerClassName,
   searchable = false,
   searchPlaceholder = "Type to narrow…",
   ...rest
@@ -79,7 +84,10 @@ export function MultiSelectDropdown({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="mt-1 flex items-center gap-1 rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900 hover:bg-gray-50"
+        className={
+          triggerClassName ??
+          "mt-1 flex items-center gap-1 rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900 hover:bg-gray-50"
+        }
         aria-haspopup="listbox"
         aria-expanded={open}
       >
