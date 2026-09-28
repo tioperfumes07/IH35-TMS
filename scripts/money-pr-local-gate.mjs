@@ -911,6 +911,22 @@ const LIVE_DOMAIN_GUARDS = [
       "accounting.factoring_advances",
     ],
   ],
+  // ROUND 191 item 4 (Lead order) — 330 of 336(+) active USMCA settlement_lines had NULL
+  // posting_account_id; nothing on a settlement reached the GL. The canonical backfill
+  // (backfillExistingSettlementLineAccounts) already existed but was never wired into
+  // settlement-creator.service.ts's bare-AlwaysTrack-digit path, so every line it inserts lands
+  // with no account. Every CLOSED settlement's active line must have posting_account_id, except a
+  // named, structural exemption (reimbursement/deduction lines with no upstream source record at
+  // all — never guessed, per the owner's 2026-09-10 ruling against blind generic-account
+  // assignment).
+  [
+    "verify-settlement-line-posting-account-complete",
+    [
+      "apps/backend/src/driver-finance/settlement-lines-materialize.service.ts",
+      "apps/backend/src/driver-finance/settlement-creator.service.ts",
+      "apps/backend/src/driver-finance/escrow-resolver.service.ts",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {
