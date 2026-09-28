@@ -1,0 +1,8 @@
+{
+  "_comment": "ROUND 155.23/157-A item 6. This guard's own selftest/scan found settlement-load-reassignment.service.ts (a manual admin tool that moves a load between settlements) writes mdata.loads.presettlement_link_id with NO tour_id check anywhere in the file -- the same class of defect this round fixed in settlement-creator.service.ts's own write path and in tour-readout.routes.ts's read path, but discovered as a side effect of writing this guard, not yet fixed. Note the guard's own static heuristic (tour_id referenced ANYWHERE nearby a write) could not reliably distinguish settlement-creator.service.ts's write (which DOES mention tour_id nearby but never actually gates the write on it) from a genuinely safe write -- that file is NOT flagged here despite having the same real defect this round's live guard (verify-presettlement-shows-only-this-load-and-its-open-tour.mjs) already covers on the READ side. Do not assume 'not in this baseline' means 'safe' for every driver-finance write path; this is a best-effort static sweep, not a proof.",
+  "files": {
+    "apps/backend/src/driver-finance/settlement-load-reassignment.service.ts": { "count": 1 }
+  },
+  "established": "2026-09-28",
+  "measured_at": "2026-09-28T11:20:00Z"
+}

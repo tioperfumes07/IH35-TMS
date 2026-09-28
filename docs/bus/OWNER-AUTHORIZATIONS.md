@@ -2903,3 +2903,45 @@ no-approved-line safety checks apply unchanged). RESULT, live-verified: 13618 ol
 open, $940.27 (1958.9mi x $0.48, rounded).
 
 — CC-1
+
+---
+
+## AUTH-098
+issued_at: 2026-09-28T11:15:00.000Z
+scope: mdata.load_stops UPDATE ONLY (1 row: 13614's delivery stop, city/state/postal_code, WHERE
+still matching the known-wrong copied values so it can never double-apply) + mdata.loads UPDATE
+ONLY (13614: miles_practical/loaded_miles set to the document's real figure, miles_shortest set to
+NULL — never another copy of practical — mileage_source set to 'Manual', WHERE
+mileage_source='History' guarded). operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80
+(USMCA) only.
+action: OWNER_AUTH_ID=AUTH-098 (direct guarded SQL, see PR — values read from
+Driver_Settlement_5818.pdf in ~/Downloads)
+expires_at: 2026-09-28T17:15:00.000Z
+status: DONE — executed live 2026-09-28T11:12Z
+
+ROUND 155.23/157-A item 6: "13614's lane reads LAREDO, TX -> LAREDO, TX on a 1,137.4-mile load...
+Read its source document and fix the stop records. Do not guess the city from the mileage." Read
+the real signed settlement document (Driver_Settlement_5818.pdf — the same document CC-2's
+concurrent AUTH-096 is posting from): real pickup Laredo, TX; real delivery CONLEY, GA 30288; real
+loaded miles 1,111.6 @ $0.45/mi. Live-confirmed before writing: the delivery stop was a literal
+copy of the pickup stop (identical city/state/postal_code AND identical actual_arrival_at
+timestamp — a data-entry/import artifact, not a real same-city load). Fixed both. miles_shortest
+set to NULL rather than left as a copy of miles_practical, per 155.12 FIX 2's own "never copy
+practical into shortest" rule — the document states only loaded miles, no independently-sourced
+shortest figure exists, so NULL is the honest answer.
+
+Guard scripts/verify-stop-lane-is-consistent-with-miles.mjs shipped in the same PR: a load whose
+first and last stop share a city while its own recorded miles exceed 100 fails. Live run
+immediately after fixing 13614 found the SAME copy-artifact defect on 6 MORE historical loads
+(13610, 13612, 13613, 13615, 13619, 13541) — baselined as known, documented debt (not fixed yet,
+not hidden); each needs its own real source document before correction, same as 13614 got.
+
+Guard scripts/verify-tour-groups-by-tour-id-only.mjs also shipped: a static sweep of
+driver-finance/** for a write to presettlement_link_id with no tour_id check nearby. Found
+settlement-load-reassignment.service.ts (a manual admin reassignment tool) has this exact gap —
+baselined as known debt, not yet fixed. The guard's own limits are documented in its baseline file:
+it could not reliably flag settlement-creator.service.ts's own confirmed defect (tour_id is
+mentioned nearby but never actually gates the write) — the live behavioral guard
+(verify-presettlement-shows-only-this-load-and-its-open-tour.mjs) is what actually covers that one.
+
+— CC-1

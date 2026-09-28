@@ -40,6 +40,9 @@ const STEPS = [
   // driver_id/unit_id) and must never mix a closed load into an open settlement's legs/totals.
   // Static source-shape check; the live proof (13609/13614/13639) lives in the round's own PR.
   ["verify-presettlement-shows-only-this-load-and-its-open-tour", "scripts/verify-presettlement-shows-only-this-load-and-its-open-tour.mjs"],
+  // ROUND 155.23/157-A item 6 — static sweep: no driver-finance write path may link a load into a
+  // settlement/tour (presettlement_link_id) without a tour_id check nearby.
+  ["verify-tour-groups-by-tour-id-only", "scripts/verify-tour-groups-by-tour-id-only.mjs"],
   ["verify-no-posting-to-inactive-account", "scripts/verify-no-posting-to-inactive-account.mjs"],
   ["verify-expense-item-lines", "scripts/verify-expense-item-lines.mjs"],
   ["verify-account-number-hidden-by-default", "scripts/verify-account-number-hidden-by-default.mjs"],
@@ -394,6 +397,13 @@ const GUARD_303 = [
 const DATA_WRITE_PATHS = ["db/migrations/", "scripts/ops/"];
 const ONE_SHOT_WRITER_RE = /^scripts\/run-[^/]+-once\.m?[jt]s$/;
 const LIVE_DOMAIN_GUARDS = [
+  // ROUND 155.23/157-A item 6 — a load whose first and last scheduled stop share the same city
+  // while its own recorded miles exceed 100 is physically impossible and always means copied/
+  // corrupted stop data (found live: 13614 and 6 other historical loads).
+  [
+    "verify-stop-lane-is-consistent-with-miles",
+    ["apps/backend/src/dispatch/update-load.service.ts", "apps/backend/src/dispatch/book-load.service.ts"],
+  ],
   // ROUND 155.20 JOB 2 / 157-A item 2 — a load frozen at an active status whose last scheduled
   // stop is 24h+ past with zero actual_arrival_at anywhere in its stops. Root cause diagnosed live:
   // USMCA's Samsara integration was disabled this entire time (see the guard's own header).
