@@ -587,7 +587,7 @@ async function measureLive(client, normalizedDate) {
         AND NOT EXISTS (
           SELECT 1 FROM accounting.journal_entry_postings jep
            WHERE jep.source_transaction_type = 'invoice'
-             AND jep.source_transaction_id = i.id
+             AND jep.source_transaction_id = i.id::text
         )`,
     [USMCA_COMPANY_ID, normalizedDate],
   );
