@@ -9184,5 +9184,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-28",
     "purpose": "verify-round173-8-stops-have-addresses"
+  },
+  "11671": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-28",
+    "purpose": "verify-load-boards-agree"
   }
 }
