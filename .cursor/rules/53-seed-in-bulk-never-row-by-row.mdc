@@ -1,0 +1,66 @@
+---
+description: SEED IN BULK, NEVER ROW BY ROW — every seed/backfill/parse/correction is set-based, one transaction per batch. Owner law 2026-09-28. Money still posts through the sanctioned engine.
+alwaysApply: true
+---
+
+# RULE 53 — SEED IN BULK, NEVER ROW BY ROW (owner 2026-09-28)
+
+Owner, verbatim: **"all data must be seeded instantly and fast, not one by one."**
+
+This is LAW for every seat, every backfill. It does not weaken Rule 52 (Faro purchase-day
+composition / app writers only) or void-not-delete. When this rule and correct accounting
+conflict, **accounting wins** — that is the only speed exception, and it is not a licence to be
+slow anywhere else.
+
+## THE RULE
+
+Every seed, backfill, parse and correction is **SET-BASED** and runs in **ONE transaction per batch**.
+
+Forbidden:
+
+- Per-row HTTP call
+- `for (const row of rows) await api.create(row)`
+- A loop issuing one `INSERT` / `UPDATE` / engine call per record when a set-based write exists
+
+That pattern is why a 300-row backfill takes an hour and why half of them land.
+
+## HOW
+
+1. **Parse the whole document into memory first**, validate the **WHOLE set**, then write.
+2. **Set-based SQL:** `INSERT ... SELECT` · `UPDATE ... FROM (VALUES ...) AS v(...)` · `COPY`
+   above a few thousand rows.
+3. **One transaction per batch.** All-or-nothing. A partial seed is worse than no seed — nobody
+   can tell which half is real.
+4. **Batch 500–2000 rows.** Report **rows/second**.
+5. **Validate BEFORE writing**, not per row during. If any row fails, the batch does not run and
+   you report **EVERY** failing row at once — not the first one.
+
+## THE ONE THING SPEED NEVER BUYS
+
+Money still posts through the **sanctioned engine**. Do **NOT** hand-write journal entries or
+postings to go faster. If the engine only exposes a per-document call, **batch the CALLS** — one
+transaction, reused connection, stop re-reading the same catalog per row — but the posting logic
+stays the engine's.
+
+## WHERE THIS APPLIES RIGHT NOW (owner-named)
+
+- **CC-2** — settlement lines `quantity` / `rate_cents` / `unit_of_measure`: remaining rows in ONE
+  `UPDATE ... FROM (VALUES ...)`, not N updates. Same for settlements 5817 / 5818 / 5819.
+- **CC-1** — unit / trailer / driver / customer / W.O. from the AlwaysTrack table — ONE statement.
+  Mileage backfill across loads — ONE statement. Driver-bill re-mint — one batched transaction
+  through the engine.
+- **CC-3** — nothing to seed today; same law on any data migration shipped.
+- **CURSOR** — match candidate pass over bank lines is **set-based**, not a loop over
+  transactions. Faro **09-22..09-25** posts **one transaction per DAY**, not per invoice
+  (Rule 52 composition still required; the day is the batch).
+
+## PROOF
+
+Every seed report states: **rows written · batches · seconds · rows/second · and that it ran in a
+single transaction per batch.** A seed report without a rate is not a report.
+
+## Guard
+
+`scripts/verify-seed-in-bulk-never-row-by-row.mjs` — registered in `docs/law/LAW.json`. Fails if
+this rule file is missing, stripped of its hard lines, or if new `scripts/ops/` seed/backfill
+paths introduce an obvious per-row `await` create/insert loop without a set-based batch marker.
