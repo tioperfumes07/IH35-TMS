@@ -718,11 +718,19 @@ async function resolveDriverBasePayCents(
 
 /**
  * MILES-ON-BOOK — which pay input is absent, in the operator's words. Never a column name: a
- * dispatcher can act on "shortest miles", not on `miles_shortest IS NULL`.
+ * dispatcher can act on "miles", not on `miles_shortest IS NULL`.
+ *
+ * ROUND 155.12 (Lead, 2026-09-28, correcting the P1/2026-09-14 gate): "The owner's AlwaysTrack
+ * settlements PAID on the miles printed in the document. miles_shortest is not the pay basis and
+ * never was." Document miles (practical, loaded off the settlement) IS the real pay basis —
+ * miles_shortest is an optional variance check only, never the gate. Only missing when BOTH
+ * miles_shortest AND miles_practical are absent; resolveDriverBasePayCents' own owner-locked
+ * (2026-09-04, verify-driver-pay-practical-fallback-locked.mjs) practical-miles fallback is what
+ * actually prices it once this gate lets the mint proceed.
  */
 export function missingPayInputs(load: Record<string, unknown>): string[] {
   const missing: string[] = [];
-  if (!(Number(load.miles_shortest ?? 0) > 0)) missing.push("shortest miles");
+  if (!(Number(load.miles_shortest ?? 0) > 0) && !(Number(load.miles_practical ?? 0) > 0)) missing.push("miles (shortest or practical)");
   return missing;
 }
 
@@ -794,17 +802,27 @@ export async function createDriverBillArtifacts(
     return { outcome: "already_exists" };
   }
 
-  // P1 (owner 2026-09-14) — "a driver_finance.driver_bills row may not be minted from a load whose
-  // miles_shortest is NULL." Checked BEFORE resolveDriverBasePayCents runs, so its own owner-locked
-  // practical-miles fallback (2026-09-04) never gets a chance to price this load — a load with no
-  // captured shortest miles gets NO bill at all, not a $0 tracking row and not a practical-derived
-  // figure. Historical loads already carrying a driver_bills row from before this gate landed are
-  // untouched (existing && already-open/$0 falls through to the existing-bill branches below,
-  // unchanged) — this refuses only a NEW mint attempt going forward. Never applies when an existing
-  // bill is already priced (gross > 0) — that is settled history, not a fresh mint.
+  // P1 (owner 2026-09-14) — "a driver_finance.driver_bills row may not be minted from a load with
+  // no miles captured at all." Checked BEFORE resolveDriverBasePayCents runs.
+  //
+  // ROUND 155.12 CORRECTION (Lead, 2026-09-28, superseding the 2026-09-14 gate's basis, not its
+  // existence): the 09-14 gate required miles_shortest specifically, on the premise that shortest
+  // miles were the pay basis. The owner's own AlwaysTrack settlement documents disprove that —
+  // drivers are PAID on document miles (practical/loaded), never miles_shortest; miles_shortest is
+  // an optional variance check, not the basis and never was. Requiring it as a hard gate meant a
+  // real, already-paid load could never mint a bill purely because a measure that was never the
+  // pay basis happened to be uncaptured. The gate now refuses only when NEITHER miles_shortest NOR
+  // miles_practical is captured — resolveDriverBasePayCents' own owner-locked (2026-09-04,
+  // verify-driver-pay-practical-fallback-locked.mjs) practical-miles fallback is exactly the
+  // correct pricing path once either is present; this gate no longer stands in front of it for the
+  // practical-only case. Historical loads already carrying a driver_bills row from before this gate
+  // landed are untouched (existing && already-open/$0 falls through to the existing-bill branches
+  // below, unchanged) — this refuses only a NEW mint attempt going forward. Never applies when an
+  // existing bill is already priced (gross > 0) — that is settled history, not a fresh mint.
   const isFreshMintAttempt = !existing || (Number(existing.gross_amount_cents ?? 0) === 0 && String(existing.status) === "open");
-  if (isFreshMintAttempt && !(Number(load.miles_shortest ?? 0) > 0)) {
-    const reason = "Shortest miles have not been captured for this load — driver pay is computed from shortest miles, never practical or an estimate. Enter shortest miles before a driver bill can be created.";
+  const hasAnyRealMiles = Number(load.miles_shortest ?? 0) > 0 || Number(load.miles_practical ?? 0) > 0;
+  if (isFreshMintAttempt && !hasAnyRealMiles) {
+    const reason = "No miles have been captured for this load (neither shortest nor practical) — driver pay is computed from document miles, never invented. Enter miles before a driver bill can be created.";
     const priorRefusal = await client.query<{ exists: boolean }>(
       `SELECT EXISTS (
          SELECT 1
@@ -1303,9 +1321,10 @@ export async function assertClosedLoadHasPricedDriverBill(
     driver_last_name: string | null;
     has_active_rate: boolean;
     miles_shortest: string | number | null;
+    miles_practical: string | number | null;
   }>(
     `SELECT db.status AS bill_status, db.gross_amount_cents,
-            l.assigned_primary_driver_id AS driver_id, l.team_id, l.miles_shortest,
+            l.assigned_primary_driver_id AS driver_id, l.team_id, l.miles_shortest, l.miles_practical,
             d.first_name AS driver_first_name, d.last_name AS driver_last_name,
             rr.exists AS has_active_rate
        FROM mdata.loads l
@@ -1334,7 +1353,9 @@ export async function assertClosedLoadHasPricedDriverBill(
 
   const missing: string[] = [];
   if (!row.has_active_rate) missing.push("a pay rate on file");
-  if (!(Number(row.miles_shortest ?? 0) > 0)) missing.push("captured shortest miles");
+  // ROUND 155.12: document miles (practical/loaded) is the real pay basis, miles_shortest an
+  // optional variance check only — same correction as missingPayInputs/createDriverBillArtifacts.
+  if (!(Number(row.miles_shortest ?? 0) > 0) && !(Number(row.miles_practical ?? 0) > 0)) missing.push("captured miles (shortest or practical)");
   if (missing.length === 0) return { ok: true }; // has both — the $0 is some other, unrelated reason
 
   const driverName =

@@ -2659,3 +2659,76 @@ rolled-back transaction, confirming every row is a genuine, unvoided, matching-s
 just a count).
 
 — Claude
+
+---
+
+## AUTH-091
+issued_at: 2026-09-28T09:35:00.000Z
+scope: driver_finance.settlement_lines UPDATE ONLY (quantity/rate_cents/unit_of_measure/item_id on
+110 real, active earnings/deadhead_pay lines belonging to CLOSED settlements with a
+source_document_ref matching feed-input/settlement-truth-from-pdfs.json — the pre-existing,
+already-committed 61-settlement truth file), guarded WHERE quantity IS NULL AND rate_cents IS
+NULL AND item_id IS NULL so it can never touch an already-backfilled line. No amount changed on
+any line; every write independently verified quantity x rate_cents = the line's own pre-existing
+amount before writing (exact match required by settlement_lines_item_qty_rate_amount_check, not
+approximated). operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA) only.
+action: OWNER_AUTH_ID=AUTH-091 npx tsx scripts/ops/2026-09-28-backfill-settlement-line-miles-rate.mjs --apply
+expires_at: 2026-09-28T16:35:00.000Z
+status: DONE — executed live 2026-09-28
+
+ROUND 155.12 FIX 2(b) (Lead): "The seeder threw the miles away... quantity/rate_cents/
+unit_of_measure are NULL on all 312 active lines even though the AlwaysTrack settlement documents
+print miles and rate per mile on every line." Re-parsed the ALREADY-PARSED truth file (no new PDF
+parsing needed), matched each settlement by its own display_id/source_document_ref (confirmed live
+both equal the settlement number, e.g. "5769"), matched each load by load_number within that
+settlement's own operating_company_id. RESULT: 110 updated, 30 correctly skipped (the DB line's
+amount does not decompose into document-miles x document-rate at all — the original seeder folded
+extra-stop/tarp/lumper pay into the same "earnings" bucket as mileage pay; forcing quantity/rate
+onto these would VIOLATE the DB's own check constraint, not satisfy it), 31 correctly skipped
+(deadhead_pay lines genuinely at $0.00 with no empty_miles/empty_rate anywhere in the source
+document — zero deadhead miles on that leg is the real answer), 13 settlement numbers in the JSON
+have no matching closed/source-documented settlement row yet. item_id populated from
+catalogs.items' existing real B1/CDL mileage items (Driver Pay-Mexico-B1/CDL Driver-Loaded/Empty
+Miles) per each settlement's own driver's has_b1_visa flag — required by
+settlement_lines_item_qty_rate_amount_check, which had never been populated by any prior writer.
+Guard: scripts/verify-settlement-line-carries-miles-and-rate.mjs, shrink-only ratchet, baseline
+ceiling 61 (the two genuinely un-backfillable categories above), live PASS.
+
+— CC-1
+
+---
+
+## AUTH-093
+issued_at: 2026-09-28T10:05:00.000Z
+scope: mdata.loads status UPDATE via the real cancelLoad/cancelLoadInClientTx path ONLY (4 loads:
+13623, 13625, 13627, 13638 — status -> 'cancelled', reason_code 'OTHER'), cascading to
+driver_finance.driver_bills (void, via the existing cascade already in cancelLoadInClientTx) and
+dispatch.trailer_interchanges (void, via voidTrailerInterchange, the 2 rows on 13623/13627 that
+cascade doesn't reach). Void-not-delete throughout, no raw UPDATE outside the real service paths.
+operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA) only.
+action: OWNER_AUTH_ID=AUTH-093 npx tsx scripts/ops/2026-09-28-void-4-unsourced-loads.mjs, then
+scripts/ops/2026-09-28-void-2-orphaned-interchanges.mjs
+expires_at: 2026-09-28T17:05:00.000Z
+status: DONE — executed live 2026-09-28
+
+ROUND 155.20 JOB 1 (owner direct, "I DO NOT HAVE 20 BOOKED LOADS IN ALWAYSTRACK... Any load you
+cannot tie to a source document gets VOIDED"). Re-verified all 18 loads booked under AUTH-086/090
+against every PDF in Downloads (254 files, full-text scan for each load's own WO number, not just
+a filename-pattern match) AND every filename: 14 of 18 have their own WO number AND customer name
+both present together in their own dedicated rate-con PDF (genuine proof). 4 do not: 13623 (WO
+568871), 13625 (WO LGMX142), 13627 (WO 21868) have ZERO matches anywhere in any file; 13638's only
+WO-string hit ("56713") is a false positive — a substring of an unrelated older load's trailer
+number (FB-56713) inside settlement PDFs, not a rate con for this load. Voided all 4, per the
+owner's own rule, not left sitting in dispatch.
+
+REAL BUG FOUND AND FIXED while executing this: cancelLoadInClientTx's vendor-bill-void query used
+`SELECT DISTINCT b.id ... FOR UPDATE OF b` — Postgres categorically refuses FOR UPDATE combined
+with DISTINCT in any form, so this threw "FOR UPDATE is not allowed with DISTINCT clause" on
+EVERY call, meaning load cancellation was completely broken for any load reaching this branch
+before today, not just these 4. Fixed by replacing the LEFT JOIN + DISTINCT with an EXISTS-scoped
+header query (apps/backend/src/dispatch/cancellation.service.ts) — same bills matched, same lock,
+no DISTINCT needed. Dispatch test suite: 212 passed, 4 pre-existing failures confirmed unrelated
+(load-id-reservation.guard.test.ts, fails identically on stock main before this change, no file
+overlap with anything touched here).
+
+— CC-1

@@ -1,0 +1,6 @@
+{
+  "_comment": "ROUND 155.12 FIX 2(b)/(d), AUTH-091. 61 active earnings/deadhead_pay lines on CLOSED, real (source_document_ref-backed) settlements still carry NULL quantity/rate_cents after the backfill applied 110 of 171 real lines. Investigated live, not unexamined debt: 30 lines whose DB amount does not decompose into document-miles x document-rate at all (the original seeder folded extra-stop/tarp/lumper pay into the same earnings bucket as mileage pay -- forcing quantity/rate onto these would violate settlement_lines_item_qty_rate_amount_check, not satisfy it); 31 deadhead_pay lines genuinely at $0.00 with no empty_miles/empty_rate anywhere in the source document (zero deadhead miles on that leg is the correct real answer, not missing data). Neither category can be closed without inventing a number. Shrink this ceiling only when a real fix (e.g. a corrected seeder that separates mileage pay from extras onto its own line) actually reduces the live count -- never by editing this file alone.",
+  "max_known_deficient_lines": 61,
+  "established": "2026-09-28",
+  "measured_at": "2026-09-28T09:35:00Z"
+}

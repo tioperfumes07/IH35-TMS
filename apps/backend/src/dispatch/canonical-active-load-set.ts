@@ -170,21 +170,42 @@ export function canonicalActiveLoadInvoiceExclusionCte(loadIdColumn = "l.id"): s
 /**
  * THE real "not finished" half of the invariant (ROUND 32.2-CORRECTED) — money is the source of
  * truth, not status. A load is finished (and therefore NOT active, regardless of status) the
- * moment ANY of these exist: an active settlement line, a non-void driver bill, or an issued
- * (non-draft/proforma/void) invoice. Confirmed live: 24 of 33 status-active USMCA loads are
- * already settled/driver-billed while status never advanced past dispatched/delivered — status
- * alone (or status + invoice-only) overcounts by exactly that 24. `loadIdColumn` names the
- * column carrying the load's id in the caller's own FROM clause (aliased to match).
+ * moment ANY of these exist: a settlement line on a CLOSED settlement, a driver bill already
+ * SETTLED, or an issued (non-draft/proforma/void) invoice. Confirmed live: 24 of 33 status-active
+ * USMCA loads are already settled/driver-billed while status never advanced past
+ * dispatched/delivered — status alone (or status + invoice-only) overcounts by exactly that 24.
+ * `loadIdColumn` names the column carrying the load's id in the caller's own FROM clause
+ * (aliased to match).
+ *
+ * ROUND 155.12 (Lead, 2026-09-28) — CORRECTED AGAIN, same failure mode as ROUND 32.2 itself: a
+ * driver bill is raised AT DISPATCH time (createDriverBillArtifacts runs inside
+ * createLoadWithFullSideEffects, the one shared booking path), long before the load is actually
+ * settled. The original `db.status <> 'void'` test treated the mere EXISTENCE of an OPEN,
+ * unsettled driver bill as proof of "finished" — but an open bill with
+ * `settled_in_settlement_id IS NULL` is exactly what every freshly-dispatched load looks like.
+ * That silently dropped every just-booked load off every board the moment it was dispatched,
+ * which is the opposite of what "active" means. Live-confirmed: 8 status-'dispatched' loads,
+ * money-moved-zero-otherwise, each carrying one open driver bill and nothing else — the predicate
+ * was declaring them finished purely because booking itself raises a bill. Same correction
+ * applies to the settlement_lines half: an `is_active` line is not "finished" money on its own
+ * either — it only means something once the driver_settlements row it belongs to is CLOSED
+ * (paid out). An active line sitting on a still-open settlement is, again, exactly what a
+ * currently-being-prepared (not yet finished) settlement looks like. Both halves now require the
+ * settlement to have actually CLOSED, or the bill to have actually been SETTLED — "money moved
+ * and is done," not "money exists."
  */
 export function canonicalActiveLoadNotFinishedByMoneyCte(loadIdColumn = "l.id"): string {
   return `
     NOT EXISTS (
       SELECT 1 FROM driver_finance.settlement_lines sl
+      JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id AND ds.status = 'closed'
        WHERE sl.load_id = ${loadIdColumn} AND sl.is_active IS TRUE
     )
     AND NOT EXISTS (
       SELECT 1 FROM driver_finance.driver_bills db
-       WHERE db.load_id = ${loadIdColumn} AND db.status <> 'void'
+       WHERE db.load_id = ${loadIdColumn}
+         AND db.status <> 'void'
+         AND db.settled_in_settlement_id IS NOT NULL
     )
     AND ${canonicalActiveLoadInvoiceExclusionCte(loadIdColumn)}
   `;

@@ -1,0 +1,1613 @@
+{
+  "updated": [
+    {
+      "settlementNumber": "5769",
+      "loadNumber": "13498",
+      "lineId": "19302521-3cae-47c1-8f07-b56f43b0d4dc",
+      "lineType": "earnings",
+      "quantity": 1263.9,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5769",
+      "loadNumber": "13508",
+      "lineId": "381adef2-583e-4f37-a625-36b4e64f6861",
+      "lineType": "earnings",
+      "quantity": 1284,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5769",
+      "loadNumber": "13508",
+      "lineId": "b5926c46-7261-495d-9409-fdf08923068b",
+      "lineType": "deadhead_pay",
+      "quantity": 19.9,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5770",
+      "loadNumber": "13503",
+      "lineId": "2eff0791-224f-4fa9-a865-489e50f5eff6",
+      "lineType": "earnings",
+      "quantity": 1894.3,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5771",
+      "loadNumber": "13504",
+      "lineId": "43119fdf-985f-4a52-9631-c0c0db7e01da",
+      "lineType": "earnings",
+      "quantity": 1890.2,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5771",
+      "loadNumber": "13510",
+      "lineId": "8a1a3d4d-f3a4-41fc-bfa1-e85670e78aeb",
+      "lineType": "earnings",
+      "quantity": 1574.8,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5771",
+      "loadNumber": "13510",
+      "lineId": "4b28fa48-26ce-4532-ab2c-8db8a220ff62",
+      "lineType": "deadhead_pay",
+      "quantity": 353.2,
+      "rateCents": 50,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5772",
+      "loadNumber": "13502",
+      "lineId": "7067b82a-8229-45a3-be6c-75a3e7ed9ac0",
+      "lineType": "earnings",
+      "quantity": 1079.7,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5772",
+      "loadNumber": "13507",
+      "lineId": "1ac1d511-91c9-48a0-bdbe-943e57237bd5",
+      "lineType": "earnings",
+      "quantity": 414.2,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5772",
+      "loadNumber": "13507",
+      "lineId": "002f9a7b-a1a4-469a-8c1e-55e65f8d59d1",
+      "lineType": "deadhead_pay",
+      "quantity": 93.7,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5772",
+      "loadNumber": "13512",
+      "lineId": "034f019d-536b-4eaf-af29-cf8eed119380",
+      "lineType": "earnings",
+      "quantity": 716.8,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5772",
+      "loadNumber": "13512",
+      "lineId": "79eee49f-cdeb-400a-a447-eb41f733f291",
+      "lineType": "deadhead_pay",
+      "quantity": 222,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5772",
+      "loadNumber": "13513",
+      "lineId": "77ce32f2-0695-45ad-a60b-7924c1385ce9",
+      "lineType": "earnings",
+      "quantity": 436.1,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5772",
+      "loadNumber": "13513",
+      "lineId": "9096f4e8-6c7e-4c62-9fbf-0fbd7ff7c868",
+      "lineType": "deadhead_pay",
+      "quantity": 108.2,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5773",
+      "loadNumber": "13511",
+      "lineId": "4bccc1bd-888e-4ff6-960d-26f943a5a7f8",
+      "lineType": "earnings",
+      "quantity": 1540.5,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5773",
+      "loadNumber": "13511",
+      "lineId": "f5e6fd9f-747b-439d-9955-8d41ddb21bf9",
+      "lineType": "deadhead_pay",
+      "quantity": 587.6,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5774",
+      "loadNumber": "13517",
+      "lineId": "96e2b7bd-cc04-46f8-8ac8-43520d71117d",
+      "lineType": "earnings",
+      "quantity": 1097.6,
+      "rateCents": 43,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5774",
+      "loadNumber": "13518",
+      "lineId": "0fde1fae-1c6f-4b91-bd29-0f0e49bce9cc",
+      "lineType": "earnings",
+      "quantity": 1214.8,
+      "rateCents": 43,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5774",
+      "loadNumber": "13518",
+      "lineId": "483e9ed3-dc97-4740-a210-df0392d87670",
+      "lineType": "deadhead_pay",
+      "quantity": 134,
+      "rateCents": 43,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5775",
+      "loadNumber": "13506",
+      "lineId": "ec45bf0d-0b3d-4938-b7e9-4a16e9a1822e",
+      "lineType": "earnings",
+      "quantity": 1292.4,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5775",
+      "loadNumber": "13514",
+      "lineId": "9ac768c3-93ed-4601-95a5-91869311cfa9",
+      "lineType": "earnings",
+      "quantity": 1119.2,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5775",
+      "loadNumber": "13514",
+      "lineId": "acbe6217-ac11-484a-a607-7d55f0d81dd2",
+      "lineType": "deadhead_pay",
+      "quantity": 109.3,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5775",
+      "loadNumber": "13516",
+      "lineId": "8a76af50-de43-4eb3-896d-10dfbd2e1ed5",
+      "lineType": "earnings",
+      "quantity": 351.6,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5775",
+      "loadNumber": "13516",
+      "lineId": "c520959a-d857-455e-a781-66c06d25700a",
+      "lineType": "deadhead_pay",
+      "quantity": 25.6,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5776",
+      "loadNumber": "13505",
+      "lineId": "d949b743-3312-4c7c-b236-098929663a7b",
+      "lineType": "earnings",
+      "quantity": 1292.4,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5776",
+      "loadNumber": "13515",
+      "lineId": "6ecaa3cf-e9d1-4354-8c2e-17e1ae995890",
+      "lineType": "earnings",
+      "quantity": 426.8,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5776",
+      "loadNumber": "13515",
+      "lineId": "64c9ec10-a4d9-4845-b89d-341136a5f7fe",
+      "lineType": "deadhead_pay",
+      "quantity": 36.6,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5776",
+      "loadNumber": "13520",
+      "lineId": "19129bbc-3d9e-45a2-829e-0cd1afac46f3",
+      "lineType": "earnings",
+      "quantity": 897.6,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5776",
+      "loadNumber": "13520",
+      "lineId": "e71e3254-5cdb-4251-b970-6c499ab337b6",
+      "lineType": "deadhead_pay",
+      "quantity": 21.9,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5777",
+      "loadNumber": "13519",
+      "lineId": "861ca8df-4a35-45e2-a173-8683a77b7cc2",
+      "lineType": "earnings",
+      "quantity": 1890.2,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5777",
+      "loadNumber": "13521",
+      "lineId": "891f85b5-939a-4af9-bcb3-820c666ec02e",
+      "lineType": "earnings",
+      "quantity": 1557.7,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5777",
+      "loadNumber": "13521",
+      "lineId": "d1f22c28-8beb-4d11-87fd-8a5a41ad09ae",
+      "lineType": "deadhead_pay",
+      "quantity": 368.1,
+      "rateCents": 50,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5778",
+      "loadNumber": "13524",
+      "lineId": "1b5ed438-fda7-4d2c-a68a-3b8d466dc0d1",
+      "lineType": "earnings",
+      "quantity": 1185.4,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5778",
+      "loadNumber": "13524",
+      "lineId": "602870e9-3045-4bca-9c5b-19d92319d879",
+      "lineType": "deadhead_pay",
+      "quantity": 711.5,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5778",
+      "loadNumber": "13525",
+      "lineId": "efab17d1-e91c-428a-b627-be8d91aa2fdc",
+      "lineType": "earnings",
+      "quantity": 1303.1,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5779",
+      "loadNumber": "13526",
+      "lineId": "65c0702f-440b-4d09-9df7-68048c55fc78",
+      "lineType": "earnings",
+      "quantity": 1122.1,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5779",
+      "loadNumber": "13526",
+      "lineId": "ec205e4c-105f-4702-92cb-c7e8506f70a2",
+      "lineType": "deadhead_pay",
+      "quantity": 487.9,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5779",
+      "loadNumber": "13527",
+      "lineId": "bd51cf26-17a0-4d6c-b021-e2dbf6e725a5",
+      "lineType": "earnings",
+      "quantity": 1547,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5781",
+      "loadNumber": "13523",
+      "lineId": "d31abf4a-ae79-4ce4-b9f6-ac3d9d7efc55",
+      "lineType": "earnings",
+      "quantity": 1395.3,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5781",
+      "loadNumber": "13534",
+      "lineId": "a999d503-751f-4d60-99c6-4dc51dd09fca",
+      "lineType": "earnings",
+      "quantity": 1391.7,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5781",
+      "loadNumber": "13534",
+      "lineId": "bc2a7115-d563-4589-8476-3335d0a632bd",
+      "lineType": "deadhead_pay",
+      "quantity": 58.1,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5782",
+      "loadNumber": "13529",
+      "lineId": "4d343da7-c433-466f-9f1f-919771527fac",
+      "lineType": "earnings",
+      "quantity": 1618.9,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5782",
+      "loadNumber": "13540",
+      "lineId": "408c4b60-d8ed-462a-94bb-2378794e1a50",
+      "lineType": "earnings",
+      "quantity": 1511.7,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5782",
+      "loadNumber": "13540",
+      "lineId": "669ad71f-c7c2-4c5d-806b-0ccac3ae1306",
+      "lineType": "deadhead_pay",
+      "quantity": 178.5,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5783",
+      "loadNumber": "13535",
+      "lineId": "f6d24ae5-0857-46d3-a4d0-3a6d8f2d7c8e",
+      "lineType": "earnings",
+      "quantity": 1890.2,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5783",
+      "loadNumber": "13537",
+      "lineId": "15fc3c89-ba17-4011-8904-ee87f82c91a0",
+      "lineType": "earnings",
+      "quantity": 1586.6,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5783",
+      "loadNumber": "13537",
+      "lineId": "69db1a7b-aff0-4317-ab7b-3db562ee362d",
+      "lineType": "deadhead_pay",
+      "quantity": 335.7,
+      "rateCents": 50,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5784",
+      "loadNumber": "13522",
+      "lineId": "bb3c7a5a-c3ec-4bfc-8e23-3085af8d553e",
+      "lineType": "earnings",
+      "quantity": 1319,
+      "rateCents": 43,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5784",
+      "loadNumber": "13528",
+      "lineId": "57652226-7386-49f6-bb84-723db8bd79c8",
+      "lineType": "earnings",
+      "quantity": 542.1,
+      "rateCents": 43,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5784",
+      "loadNumber": "13528",
+      "lineId": "2b773fed-1d12-46e7-8640-68df7621ea93",
+      "lineType": "deadhead_pay",
+      "quantity": 121.6,
+      "rateCents": 43,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5784",
+      "loadNumber": "13536",
+      "lineId": "c4e48bda-eeac-4ea2-aed5-38d45b905a76",
+      "lineType": "earnings",
+      "quantity": 1607.9,
+      "rateCents": 43,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5784",
+      "loadNumber": "13536",
+      "lineId": "b0fb55a1-3bf9-4de5-a6f4-a5a08fdfc2e1",
+      "lineType": "deadhead_pay",
+      "quantity": 276.7,
+      "rateCents": 43,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5785",
+      "loadNumber": "13531",
+      "lineId": "fb28dd78-1733-498f-b4b2-4f0847cb695a",
+      "lineType": "earnings",
+      "quantity": 1481.8,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5785",
+      "loadNumber": "13538",
+      "lineId": "32e1d733-eac9-4d0c-8c7c-af1a47a29136",
+      "lineType": "earnings",
+      "quantity": 561.1,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5785",
+      "loadNumber": "13538",
+      "lineId": "9071b639-c859-4c6c-b0a1-c4b914f70e01",
+      "lineType": "deadhead_pay",
+      "quantity": 126.9,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5785",
+      "loadNumber": "13543",
+      "lineId": "224fc1e8-1d8d-448b-8967-50dfe72abe82",
+      "lineType": "earnings",
+      "quantity": 776.3,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5785",
+      "loadNumber": "13543",
+      "lineId": "63cf0b1b-834f-4d22-8dde-7e4b94bb84a0",
+      "lineType": "deadhead_pay",
+      "quantity": 439.8,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5786",
+      "loadNumber": "13548",
+      "lineId": "83156adc-dd9a-42e8-8bed-59db044b5ad0",
+      "lineType": "earnings",
+      "quantity": 1043.4,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5786",
+      "loadNumber": "13548",
+      "lineId": "533320b6-ba5c-4790-a51d-0774e36577ce",
+      "lineType": "deadhead_pay",
+      "quantity": 154,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5787",
+      "loadNumber": "13549",
+      "lineId": "85863a67-a2e1-4e6b-a6c8-4f9faff51f58",
+      "lineType": "earnings",
+      "quantity": 745.5,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5787",
+      "loadNumber": "13549",
+      "lineId": "63fa8950-3f33-4764-a67e-fdf775330673",
+      "lineType": "deadhead_pay",
+      "quantity": 520.2,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5787",
+      "loadNumber": "13555",
+      "lineId": "5feb61ff-c641-4e76-b54f-7a185cea19b0",
+      "lineType": "earnings",
+      "quantity": 958.1,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5788",
+      "loadNumber": "13539",
+      "lineId": "ba8588eb-5f26-4f11-96b6-498939afbdaa",
+      "lineType": "earnings",
+      "quantity": 1490.4,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5788",
+      "loadNumber": "13546",
+      "lineId": "ae8089df-0a14-4237-822b-47ed48043c75",
+      "lineType": "earnings",
+      "quantity": 750.5,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5788",
+      "loadNumber": "13546",
+      "lineId": "5d3f28d1-9bd4-4698-8df2-0a7d4cb8cbdc",
+      "lineType": "deadhead_pay",
+      "quantity": 71.4,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5788",
+      "loadNumber": "13552",
+      "lineId": "4934f799-05ac-4d22-8a0f-9a6b6bb6e10d",
+      "lineType": "earnings",
+      "quantity": 1349.2,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5788",
+      "loadNumber": "13552",
+      "lineId": "89a23a57-85fc-41c7-80df-25df3dde2098",
+      "lineType": "deadhead_pay",
+      "quantity": 173.8,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5789",
+      "loadNumber": "13550",
+      "lineId": "fcd31b28-f9ba-40e0-8e73-93ef7356bde5",
+      "lineType": "earnings",
+      "quantity": 1890.2,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5789",
+      "loadNumber": "13557",
+      "lineId": "627b9aa6-308b-4e83-b7d1-0d9a135615d0",
+      "lineType": "earnings",
+      "quantity": 1415.9,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5789",
+      "loadNumber": "13557",
+      "lineId": "2c288087-3fb3-47e4-b0a1-0b82bf098fc3",
+      "lineType": "deadhead_pay",
+      "quantity": 545.6,
+      "rateCents": 50,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5790",
+      "loadNumber": "13542",
+      "lineId": "f123c024-67fb-41d6-bc81-d309119c11d9",
+      "lineType": "earnings",
+      "quantity": 1502.1,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5790",
+      "loadNumber": "13554",
+      "lineId": "c7aeecc0-0202-4b1c-a10e-10beba69af39",
+      "lineType": "earnings",
+      "quantity": 1046.8,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5790",
+      "loadNumber": "13554",
+      "lineId": "5b2f4a13-3ae7-4323-961c-a166bcbcb242",
+      "lineType": "deadhead_pay",
+      "quantity": 476.6,
+      "rateCents": 50,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5791",
+      "loadNumber": "13545",
+      "lineId": "913deaab-34be-4dc4-a57c-8aec96bf1066",
+      "lineType": "earnings",
+      "quantity": 1820.1,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5791",
+      "loadNumber": "13560",
+      "lineId": "b769d56a-76a7-4e14-b68d-e02d3e574a18",
+      "lineType": "earnings",
+      "quantity": 1524.4,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5791",
+      "loadNumber": "13560",
+      "lineId": "100e696c-b765-455b-9e23-442928d282a0",
+      "lineType": "deadhead_pay",
+      "quantity": 411.1,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5792",
+      "loadNumber": "13547",
+      "lineId": "912c8d53-2bbc-4b5d-a95c-ffe8447e8874",
+      "lineType": "earnings",
+      "quantity": 1820.1,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5792",
+      "loadNumber": "13559",
+      "lineId": "33eead5f-777c-4e19-8f56-da6c5b0f7eb4",
+      "lineType": "earnings",
+      "quantity": 1508.1,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5792",
+      "loadNumber": "13559",
+      "lineId": "f6f4f571-daec-4195-8f08-010886c5a584",
+      "lineType": "deadhead_pay",
+      "quantity": 68.8,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5792",
+      "loadNumber": "13562",
+      "lineId": "8f66b9c7-31c9-405c-b0a6-709d38f5beff",
+      "lineType": "earnings",
+      "quantity": 420.4,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5792",
+      "loadNumber": "13562",
+      "lineId": "3f4b70b5-2e1f-45b1-ada5-48273e000af0",
+      "lineType": "deadhead_pay",
+      "quantity": 44.9,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5793",
+      "loadNumber": "13565",
+      "lineId": "99bfee30-fcde-4933-8531-d64bab77e71e",
+      "lineType": "earnings",
+      "quantity": 1485.2,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5793",
+      "loadNumber": "13566",
+      "lineId": "711289dd-42c3-4ad9-93b0-72f6f933e330",
+      "lineType": "earnings",
+      "quantity": 1086,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5793",
+      "loadNumber": "13566",
+      "lineId": "f4218793-2ab5-4aef-84f6-b950b514e0ca",
+      "lineType": "deadhead_pay",
+      "quantity": 402.1,
+      "rateCents": 50,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5794",
+      "loadNumber": "13558",
+      "lineId": "cb751b87-47b6-4457-b024-c4d091df0372",
+      "lineType": "earnings",
+      "quantity": 1312.6,
+      "rateCents": 43,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5795",
+      "loadNumber": "13561",
+      "lineId": "874dde82-6302-47a8-b024-3f04016e6d5a",
+      "lineType": "earnings",
+      "quantity": 1111.6,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5795",
+      "loadNumber": "13567",
+      "lineId": "0bc95dc6-8a39-457e-acff-47c6139661dc",
+      "lineType": "earnings",
+      "quantity": 1164.9,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5795",
+      "loadNumber": "13567",
+      "lineId": "97ff036a-4e57-4517-a657-c90504c8e262",
+      "lineType": "deadhead_pay",
+      "quantity": 59.1,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5797",
+      "loadNumber": "13569",
+      "lineId": "51eb54b0-38c3-4b08-802f-e71d1cabe97d",
+      "lineType": "earnings",
+      "quantity": 1397.8,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5798",
+      "loadNumber": "13572",
+      "lineId": "63cc8966-5355-43ab-b936-4575cdcc7e20",
+      "lineType": "earnings",
+      "quantity": 1079.7,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5799",
+      "loadNumber": "13571",
+      "lineId": "f426c011-4a89-4e1c-a6de-1198ad40e40f",
+      "lineType": "earnings",
+      "quantity": 1890.2,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5800",
+      "loadNumber": "13551",
+      "lineId": "48dfc285-25a9-4814-ae2e-cc8bbefb5005",
+      "lineType": "earnings",
+      "quantity": 1397.8,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5800",
+      "loadNumber": "13573",
+      "lineId": "e5846c3e-e58f-4c7d-b464-bb822ebed78f",
+      "lineType": "earnings",
+      "quantity": 1066.1,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5801",
+      "loadNumber": "13570",
+      "lineId": "2ba7947c-1c35-46e2-b046-54277b2eb537",
+      "lineType": "earnings",
+      "quantity": 1693,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5802",
+      "loadNumber": "13579",
+      "lineId": "b30191c8-6e1a-41bd-a70c-7eb6cd7cd9c9",
+      "lineType": "earnings",
+      "quantity": 1890.2,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5803",
+      "loadNumber": "13564",
+      "lineId": "3a678b7c-8f5a-4436-b3a5-2e71239ec3ff",
+      "lineType": "earnings",
+      "quantity": 1397.8,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5804",
+      "loadNumber": "13576",
+      "lineId": "d49d8507-0240-4721-a731-dbbc8faf4c58",
+      "lineType": "earnings",
+      "quantity": 2332.7,
+      "rateCents": 43,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5805",
+      "loadNumber": "13582",
+      "lineId": "6c813c81-b65a-4bda-af6e-66947161e773",
+      "lineType": "earnings",
+      "quantity": 1890.2,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5806",
+      "loadNumber": "13581",
+      "lineId": "8292ad83-28d4-4317-a3cc-d461c1de44a3",
+      "lineType": "earnings",
+      "quantity": 1890.2,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5807",
+      "loadNumber": "13578",
+      "lineId": "f95ceee4-f627-4909-a2ca-4423cbf6ce48",
+      "lineType": "earnings",
+      "quantity": 1085.1,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5808",
+      "loadNumber": "13597",
+      "lineId": "af2c7f35-10f4-47b5-b17c-90f369e0ffd9",
+      "lineType": "earnings",
+      "quantity": 1890.2,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5809",
+      "loadNumber": "13583",
+      "lineId": "a1d6fb78-fff4-4285-9756-e4ecf6d50c96",
+      "lineType": "earnings",
+      "quantity": 2132.9,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5810",
+      "loadNumber": "13590",
+      "lineId": "0f291124-631b-42e7-bfec-95c01d6476fa",
+      "lineType": "earnings",
+      "quantity": 1850.8,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5811",
+      "loadNumber": "13596",
+      "lineId": "2bebe08d-69a2-4f63-969e-4ab29f34abd9",
+      "lineType": "earnings",
+      "quantity": 1890.2,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5812",
+      "loadNumber": "13588",
+      "lineId": "94f585ea-e531-4203-ac57-cf328645417a",
+      "lineType": "earnings",
+      "quantity": 1855.1,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5812",
+      "loadNumber": "13600",
+      "lineId": "2e4dcd5e-c7da-4ce4-84ff-a912b4e632d9",
+      "lineType": "earnings",
+      "quantity": 1486.5,
+      "rateCents": 45,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5812",
+      "loadNumber": "13600",
+      "lineId": "3ad9a0eb-a362-487a-be72-06fa2cdac011",
+      "lineType": "deadhead_pay",
+      "quantity": 497.2,
+      "rateCents": 45,
+      "itemId": "2a1414eb-b95d-4762-a9af-712f40f654ab"
+    },
+    {
+      "settlementNumber": "5813",
+      "loadNumber": "13602",
+      "lineId": "cff47b75-dd81-4db4-bc52-65a581d6b2f8",
+      "lineType": "earnings",
+      "quantity": 1890.2,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5814",
+      "loadNumber": "13604",
+      "lineId": "8c3043d0-6d5f-4d8c-a947-2b4a8e8be1ad",
+      "lineType": "earnings",
+      "quantity": 1890.2,
+      "rateCents": 50,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    },
+    {
+      "settlementNumber": "5815",
+      "loadNumber": "13605",
+      "lineId": "e993b4ab-1a19-4551-9e26-f334a57ef8da",
+      "lineType": "earnings",
+      "quantity": 1449.6,
+      "rateCents": 43,
+      "itemId": "a9a03f7a-5783-4615-a4f2-81b7b41973a8"
+    }
+  ],
+  "mismatched": [
+    {
+      "settlementNumber": "5770",
+      "loadNumber": "13509",
+      "lineId": "e06a5dda-8b59-4dfc-a1aa-6737688cc1d1",
+      "lineType": "earnings",
+      "quantity": 1813.3,
+      "rateCents": 50,
+      "computedDollars": 906.65,
+      "dbAmount": "912.02",
+      "jsonExpectedAmount": 906.65
+    },
+    {
+      "settlementNumber": "5770",
+      "loadNumber": "13509",
+      "lineId": "7cad1223-9508-4bc7-9e5c-55e83aa49732",
+      "lineType": "deadhead_pay",
+      "quantity": 107.4,
+      "rateCents": 50,
+      "computedDollars": 53.7,
+      "dbAmount": "48.33",
+      "jsonExpectedAmount": 53.7
+    },
+    {
+      "settlementNumber": "5773",
+      "loadNumber": "13511",
+      "lineId": "f856dcf2-382e-4a4e-8eca-9b5e3caf3a45",
+      "lineType": "earnings",
+      "quantity": 1540.5,
+      "rateCents": 45,
+      "computedDollars": 693.23,
+      "dbAmount": "939.87",
+      "jsonExpectedAmount": 693.23
+    },
+    {
+      "settlementNumber": "5773",
+      "loadNumber": "13511",
+      "lineId": "2d0d7d74-5676-4d54-a671-25e4243332f1",
+      "lineType": "deadhead_pay",
+      "quantity": 587.6,
+      "rateCents": 45,
+      "computedDollars": 264.42,
+      "dbAmount": "0.00",
+      "jsonExpectedAmount": 264.42
+    },
+    {
+      "settlementNumber": "5786",
+      "loadNumber": "13548",
+      "lineId": "76a6f94d-ebf2-4cf7-ae4e-1d3b826c76f3",
+      "lineType": "earnings",
+      "quantity": 1043.4,
+      "rateCents": 45,
+      "computedDollars": 469.53,
+      "dbAmount": "500.22",
+      "jsonExpectedAmount": 469.53
+    },
+    {
+      "settlementNumber": "5786",
+      "loadNumber": "13548",
+      "lineId": "d0839e83-b9e1-469a-8732-225d810221fd",
+      "lineType": "deadhead_pay",
+      "quantity": 154,
+      "rateCents": 45,
+      "computedDollars": 69.3,
+      "dbAmount": "0.00",
+      "jsonExpectedAmount": 69.3
+    },
+    {
+      "settlementNumber": "5794",
+      "loadNumber": "13568",
+      "lineId": "1d46d60a-3197-4dde-98c4-4463f07653ff",
+      "lineType": "earnings",
+      "quantity": 1464.7,
+      "rateCents": 43,
+      "computedDollars": 629.82,
+      "dbAmount": "625.42",
+      "jsonExpectedAmount": 629.82
+    },
+    {
+      "settlementNumber": "5794",
+      "loadNumber": "13568",
+      "lineId": "4f8a526c-ac08-4d0a-9532-73eff9028d07",
+      "lineType": "deadhead_pay",
+      "quantity": 220,
+      "rateCents": 43,
+      "computedDollars": 94.6,
+      "dbAmount": "99.00",
+      "jsonExpectedAmount": 94.6
+    },
+    {
+      "settlementNumber": "5796",
+      "loadNumber": "13541",
+      "lineId": "ef2ebd17-134f-4028-a33e-05b7c16eb376",
+      "lineType": "earnings",
+      "quantity": 441.7,
+      "rateCents": 43,
+      "computedDollars": 189.93,
+      "dbAmount": "181.10",
+      "jsonExpectedAmount": 189.93
+    },
+    {
+      "settlementNumber": "5796",
+      "loadNumber": "13541",
+      "lineId": "67a1199a-a4d4-4fd3-896e-fe9017847ee9",
+      "lineType": "deadhead_pay",
+      "quantity": 441.4,
+      "rateCents": 43,
+      "computedDollars": 189.8,
+      "dbAmount": "198.63",
+      "jsonExpectedAmount": 189.8
+    },
+    {
+      "settlementNumber": "5797",
+      "loadNumber": "13577",
+      "lineId": "1c8ce61e-d510-4267-b9c1-811a32391645",
+      "lineType": "earnings",
+      "quantity": 1313.2,
+      "rateCents": 50,
+      "computedDollars": 656.6,
+      "dbAmount": "717.95",
+      "jsonExpectedAmount": 656.6
+    },
+    {
+      "settlementNumber": "5798",
+      "loadNumber": "13575",
+      "lineId": "98d6a1b3-9595-496e-bc95-0940f9a84f52",
+      "lineType": "earnings",
+      "quantity": 1004.7,
+      "rateCents": 45,
+      "computedDollars": 452.12,
+      "dbAmount": "501.98",
+      "jsonExpectedAmount": 452.12
+    },
+    {
+      "settlementNumber": "5799",
+      "loadNumber": "13574",
+      "lineId": "565a9cf2-d7a6-46f8-821a-a50c4be3757a",
+      "lineType": "earnings",
+      "quantity": 1807.7,
+      "rateCents": 50,
+      "computedDollars": 903.85,
+      "dbAmount": "957.55",
+      "jsonExpectedAmount": 903.85
+    },
+    {
+      "settlementNumber": "5800",
+      "loadNumber": "13584",
+      "lineId": "bb9fad02-3c1a-442f-a579-016eadbf4f65",
+      "lineType": "earnings",
+      "quantity": 421,
+      "rateCents": 50,
+      "computedDollars": 210.5,
+      "dbAmount": "230.15",
+      "jsonExpectedAmount": 210.5
+    },
+    {
+      "settlementNumber": "5801",
+      "loadNumber": "13580",
+      "lineId": "39cfe0cc-fec9-430f-ab43-346125af5e92",
+      "lineType": "earnings",
+      "quantity": 1566.6,
+      "rateCents": 45,
+      "computedDollars": 704.97,
+      "dbAmount": "746.42",
+      "jsonExpectedAmount": 704.97
+    },
+    {
+      "settlementNumber": "5802",
+      "loadNumber": "13589",
+      "lineId": "b986fbe6-025f-47de-b1f9-b11259ecf1d1",
+      "lineType": "earnings",
+      "quantity": 1588.7,
+      "rateCents": 50,
+      "computedDollars": 794.35,
+      "dbAmount": "1009.75",
+      "jsonExpectedAmount": 794.35
+    },
+    {
+      "settlementNumber": "5803",
+      "loadNumber": "13586",
+      "lineId": "f6cec794-c3d3-472b-b8ec-34eff136458c",
+      "lineType": "earnings",
+      "quantity": 1296.7,
+      "rateCents": 50,
+      "computedDollars": 648.35,
+      "dbAmount": "760.15",
+      "jsonExpectedAmount": 648.35
+    },
+    {
+      "settlementNumber": "5804",
+      "loadNumber": "13594",
+      "lineId": "4ba2d94f-40e1-47e5-b337-2e97edf8d67f",
+      "lineType": "earnings",
+      "quantity": 1472.3,
+      "rateCents": 43,
+      "computedDollars": 633.09,
+      "dbAmount": "642.77",
+      "jsonExpectedAmount": 633.09
+    },
+    {
+      "settlementNumber": "5805",
+      "loadNumber": "13592",
+      "lineId": "40844eab-8c27-4b72-9134-f0db5865e003",
+      "lineType": "earnings",
+      "quantity": 1807.7,
+      "rateCents": 50,
+      "computedDollars": 903.85,
+      "dbAmount": "957.55",
+      "jsonExpectedAmount": 903.85
+    },
+    {
+      "settlementNumber": "5806",
+      "loadNumber": "13591",
+      "lineId": "1370211c-fe1d-40e9-8e5a-59ce45c6ee3d",
+      "lineType": "earnings",
+      "quantity": 1495,
+      "rateCents": 50,
+      "computedDollars": 747.5,
+      "dbAmount": "973.05",
+      "jsonExpectedAmount": 747.5
+    },
+    {
+      "settlementNumber": "5807",
+      "loadNumber": "13585",
+      "lineId": "e54b2118-635e-432b-8b12-ac583d3769e3",
+      "lineType": "earnings",
+      "quantity": 1202.9,
+      "rateCents": 45,
+      "computedDollars": 541.31,
+      "dbAmount": "874.31",
+      "jsonExpectedAmount": 541.31
+    },
+    {
+      "settlementNumber": "5807",
+      "loadNumber": "13587",
+      "lineId": "4008aa58-62c6-423d-ad32-83614c713cb5",
+      "lineType": "earnings",
+      "quantity": 1312.4,
+      "rateCents": 45,
+      "computedDollars": 590.58,
+      "dbAmount": "654.44",
+      "jsonExpectedAmount": 590.58
+    },
+    {
+      "settlementNumber": "5808",
+      "loadNumber": "13601",
+      "lineId": "4e777802-9daa-405f-bca8-c26d27ecfff3",
+      "lineType": "earnings",
+      "quantity": 1569.2,
+      "rateCents": 50,
+      "computedDollars": 784.6,
+      "dbAmount": "956.15",
+      "jsonExpectedAmount": 784.6
+    },
+    {
+      "settlementNumber": "5809",
+      "loadNumber": "13598",
+      "lineId": "c8a8d695-a890-47a3-9d18-de14c9b089e3",
+      "lineType": "earnings",
+      "quantity": 1773.2,
+      "rateCents": 45,
+      "computedDollars": 797.94,
+      "dbAmount": "815.27",
+      "jsonExpectedAmount": 797.94
+    },
+    {
+      "settlementNumber": "5809",
+      "loadNumber": "13606",
+      "lineId": "64e5e39d-8f5e-4c06-a7c7-ac4c8ff584b0",
+      "lineType": "earnings",
+      "quantity": 420.4,
+      "rateCents": 45,
+      "computedDollars": 189.18,
+      "dbAmount": "190.89",
+      "jsonExpectedAmount": 189.18
+    },
+    {
+      "settlementNumber": "5810",
+      "loadNumber": "13599",
+      "lineId": "0929d78a-c451-418b-a52b-555965e592e7",
+      "lineType": "earnings",
+      "quantity": 1617.3,
+      "rateCents": 45,
+      "computedDollars": 727.79,
+      "dbAmount": "877.91",
+      "jsonExpectedAmount": 727.79
+    },
+    {
+      "settlementNumber": "5811",
+      "loadNumber": "13603",
+      "lineId": "049b39c1-8e79-4ad9-8c05-3ae7d701ae6d",
+      "lineType": "earnings",
+      "quantity": 1449.4,
+      "rateCents": 50,
+      "computedDollars": 724.7,
+      "dbAmount": "954.25",
+      "jsonExpectedAmount": 724.7
+    },
+    {
+      "settlementNumber": "5813",
+      "loadNumber": "13607",
+      "lineId": "306587ec-fe93-4e58-aa46-0313365feceb",
+      "lineType": "earnings",
+      "quantity": 1783.3,
+      "rateCents": 50,
+      "computedDollars": 891.65,
+      "dbAmount": "950.95",
+      "jsonExpectedAmount": 891.65
+    },
+    {
+      "settlementNumber": "5814",
+      "loadNumber": "13608",
+      "lineId": "97ae6d54-9a6b-4e57-83c4-2dda77028657",
+      "lineType": "earnings",
+      "quantity": 1807.7,
+      "rateCents": 50,
+      "computedDollars": 903.85,
+      "dbAmount": "957.55",
+      "jsonExpectedAmount": 903.85
+    },
+    {
+      "settlementNumber": "5815",
+      "loadNumber": "13611",
+      "lineId": "c31e14cc-280a-487a-b8f1-f2e13d36e4b4",
+      "lineType": "earnings",
+      "quantity": 1472.3,
+      "rateCents": 43,
+      "computedDollars": 633.09,
+      "dbAmount": "642.77",
+      "jsonExpectedAmount": 633.09
+    }
+  ],
+  "no_source_data": [
+    {
+      "settlementNumber": "5769",
+      "loadNumber": "13498",
+      "lineId": "37b7c3d6-e75b-4ea6-81f0-0048978c0eb0",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5770",
+      "loadNumber": "13503",
+      "lineId": "67309056-93da-4a79-83b0-ba31af664d84",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5771",
+      "loadNumber": "13504",
+      "lineId": "c6d30494-3ec6-42a2-99ca-5791afd534c9",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5772",
+      "loadNumber": "13502",
+      "lineId": "fb351474-002a-4437-b38a-12ffb17b6c60",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5774",
+      "loadNumber": "13517",
+      "lineId": "c784be9d-c2ba-47db-a4c7-6aa085f458c5",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5775",
+      "loadNumber": "13506",
+      "lineId": "138ad19e-bfcd-4171-84bf-f4fd2a82094f",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5776",
+      "loadNumber": "13505",
+      "lineId": "0e4eebf6-67fa-40ff-8cb1-6e773f93485b",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5777",
+      "loadNumber": "13519",
+      "lineId": "ad511436-30f5-4552-a139-8328db4ec2e2",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5778",
+      "loadNumber": "13525",
+      "lineId": "4e703a99-e41a-4cec-b0c0-8e8a8db63d61",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5779",
+      "loadNumber": "13527",
+      "lineId": "46c1e420-ebff-462b-ab36-6c526d9b1ead",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5780",
+      "loadNumber": "13532",
+      "lineId": "54dd8497-c6be-47ed-9d5b-69c5bf3d14ed",
+      "lineType": "earnings",
+      "dbAmount": "150.00"
+    },
+    {
+      "settlementNumber": "5780",
+      "loadNumber": "13532",
+      "lineId": "6459cc7c-7d04-4281-834e-e56caf412fb2",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5780",
+      "loadNumber": "13532",
+      "lineId": "94b634d9-ea1c-4b93-a0d8-cb1f13c874e4",
+      "lineType": "earnings",
+      "dbAmount": "150.00"
+    },
+    {
+      "settlementNumber": "5780",
+      "loadNumber": "13532",
+      "lineId": "4f3f9b01-71c6-48aa-be22-77867525b00e",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5781",
+      "loadNumber": "13523",
+      "lineId": "2af1e8f8-3a69-4d53-bd13-7407ce9dc44f",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5782",
+      "loadNumber": "13529",
+      "lineId": "07e9b77c-f39d-4d18-a8b4-64573b2885f8",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5783",
+      "loadNumber": "13535",
+      "lineId": "87a02082-e86f-4228-9829-fb3dead73d08",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5784",
+      "loadNumber": "13522",
+      "lineId": "a5202bd6-fcd2-44a7-b9d4-0b3c468493b3",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5785",
+      "loadNumber": "13531",
+      "lineId": "cb441956-613b-4300-be52-495b7a45784f",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5787",
+      "loadNumber": "13555",
+      "lineId": "bac4881c-0297-44f9-b95b-2dc33d59c511",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5788",
+      "loadNumber": "13539",
+      "lineId": "7b25f690-3003-453c-b2fc-b4fdf76129b0",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5789",
+      "loadNumber": "13550",
+      "lineId": "5f4faebf-ab49-4a3d-ab83-6eb00680203f",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5790",
+      "loadNumber": "13542",
+      "lineId": "62f88938-739f-41eb-895e-1725bbb771dd",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5791",
+      "loadNumber": "13545",
+      "lineId": "04da75cd-2eaa-49e9-83a2-0468d41d4898",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5792",
+      "loadNumber": "13547",
+      "lineId": "5dd321d4-d9ef-4727-9a29-4a41a37620c6",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5793",
+      "loadNumber": "13565",
+      "lineId": "930afd84-e197-4c4e-9ac5-e8d9bf1e4f23",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5794",
+      "loadNumber": "13558",
+      "lineId": "5240abbf-0b5a-47ac-a00a-0b4a8bb82bd7",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5795",
+      "loadNumber": "13561",
+      "lineId": "a8e11561-d8d6-490f-ada2-af1aadc4a045",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5800",
+      "loadNumber": "13551",
+      "lineId": "f05e7444-d9cd-4e29-99b3-be16f0f6f756",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5803",
+      "loadNumber": "13564",
+      "lineId": "e4db0f3a-4203-4e30-9854-1f83071fa8e3",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    },
+    {
+      "settlementNumber": "5812",
+      "loadNumber": "13588",
+      "lineId": "2a8047ca-801c-423a-adb9-53ad2fa372db",
+      "lineType": "deadhead_pay",
+      "dbAmount": "0.00"
+    }
+  ],
+  "settlement_not_found": [
+    {
+      "settlementNumber": "5753",
+      "found": false,
+      "status": null
+    },
+    {
+      "settlementNumber": "5760",
+      "found": false,
+      "status": null
+    },
+    {
+      "settlementNumber": "5761",
+      "found": false,
+      "status": null
+    },
+    {
+      "settlementNumber": "5762",
+      "found": false,
+      "status": null
+    },
+    {
+      "settlementNumber": "5763",
+      "found": false,
+      "status": null
+    },
+    {
+      "settlementNumber": "5764",
+      "found": false,
+      "status": null
+    },
+    {
+      "settlementNumber": "5765",
+      "found": false,
+      "status": null
+    },
+    {
+      "settlementNumber": "5766",
+      "found": false,
+      "status": null
+    },
+    {
+      "settlementNumber": "5767",
+      "found": false,
+      "status": null
+    },
+    {
+      "settlementNumber": "5768",
+      "found": false,
+      "status": null
+    },
+    {
+      "settlementNumber": "5817",
+      "found": false,
+      "status": null
+    },
+    {
+      "settlementNumber": "5818",
+      "found": false,
+      "status": null
+    },
+    {
+      "settlementNumber": "5819",
+      "found": false,
+      "status": null
+    }
+  ],
+  "load_not_found": []
+}
