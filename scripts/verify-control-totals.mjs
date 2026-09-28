@@ -78,7 +78,16 @@ const CHECKS = [
             AND (t.matched_invoice_id IS NOT NULL
               OR t.matched_bill_id IS NOT NULL
               OR t.matched_payment_id IS NOT NULL
-              OR t.matched_settlement_id IS NOT NULL)`,
+              OR t.matched_settlement_id IS NOT NULL
+              OR t.matched_expense_id IS NOT NULL
+              OR t.matched_bill_payment_id IS NOT NULL
+              OR t.matched_transfer_id IS NOT NULL
+              OR t.matched_journal_entry_id IS NOT NULL
+              OR t.matched_load_id IS NOT NULL
+              OR t.matched_advance_id IS NOT NULL
+              OR t.matched_factoring_advance_id IS NOT NULL
+              OR t.matched_fuel_transaction_id IS NOT NULL
+              OR t.matched_relay_fuel_transaction_id IS NOT NULL)`,
   },
 ];
 
