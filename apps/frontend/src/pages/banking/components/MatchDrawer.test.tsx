@@ -1,8 +1,6 @@
 // @vitest-environment jsdom
-// BANKREC-CONFIRM-01 — Confirm-match enabled ONLY for exact matches (amount_gap_cents === 0) on a
-// persistable non-bill kind. bill and any variance (gap !== 0) stay disabled with a visible held note.
-// gap=0 accept = pure link-and-clear (no journal entry); this test asserts the client call fires with
-// the correct kind + id and never fires for bill/variance rows.
+// BANKREC-CONFIRM-01 + ROUND 206 Resolve — exact Confirm always; variance Confirm when write-off
+// account selected; bill stays held.
 import * as matchers from "@testing-library/jest-dom/matchers";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
@@ -18,12 +16,15 @@ import { MatchDrawer } from "./MatchDrawer";
 expect.extend(matchers);
 
 vi.mock("../../../api/banking", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../../api/banking")>();
+  const actual = await importOriginal<typeof bankingApi>();
   return {
     ...actual,
     getMatchCandidates: vi.fn(),
     acceptBankReconMatch: vi.fn(),
-    getCoaAccounts: vi.fn().mockResolvedValue({ accounts: [] }),
+    acceptBankReconMultiMatch: vi.fn(),
+    getCoaAccounts: vi.fn().mockResolvedValue({
+      accounts: [{ id: "wo-acct-1", account_name: "Write-off", account_type: "Expense" }],
+    }),
     categorizeBankTransaction: vi.fn(),
   };
 });
@@ -101,7 +102,7 @@ describe("MatchDrawer — Confirm-match exact-only (BANKREC-CONFIRM-01)", () => 
     });
   });
 
-  it("keeps Confirm disabled for a gap!==0 candidate and shows the variance-held note", async () => {
+  it("keeps Confirm disabled for a gap!==0 candidate until write-off account is selected", async () => {
     const varianceCandidate = candidate({
       ledger_entry_kind: "payment",
       ledger_entry_id: "pay-variance-1",
@@ -110,6 +111,7 @@ describe("MatchDrawer — Confirm-match exact-only (BANKREC-CONFIRM-01)", () => 
     vi.mocked(bankingApi.getMatchCandidates).mockResolvedValue({
       candidates: [varianceCandidate],
       match_candidates_count: 1,
+      bank_amount_cents: 10500,
     });
 
     render(wrap(<MatchDrawer open bankTransactionId={bankTxnId} operatingCompanyId={companyId} onClose={vi.fn()} />));
@@ -117,12 +119,8 @@ describe("MatchDrawer — Confirm-match exact-only (BANKREC-CONFIRM-01)", () => 
     const row = await screen.findByTestId("match-candidate-row");
     const confirmBtn = within(row).getByTestId("match-candidate-confirm");
     expect(confirmBtn).toBeDisabled();
-    // BANK-F9998 F8 (2026-09-03) updated this note's text once
-    // verify-bank-recon-variance-je-always-balanced.mjs proved the balanced-JE math structurally —
-    // Confirm itself stays disabled (a separate, owner-reserved Tier-1 go-ahead), only the wording
-    // changed from "pending" proof to "proven balanced, awaiting owner go-ahead".
     expect(within(row).getByTestId("match-candidate-variance-held")).toHaveTextContent(
-      "Variance posting proven balanced (Tier-1) — awaiting owner go-ahead to enable Confirm"
+      "Select a write-off / difference account to resolve this variance"
     );
 
     await userEvent.click(confirmBtn);

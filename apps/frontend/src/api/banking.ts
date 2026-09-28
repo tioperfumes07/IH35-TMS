@@ -558,6 +558,8 @@ export function getMatchCandidates(bankTxnId: string, companyId: string, opts?: 
     days_after?: number | null;
     search_query?: string | null;
     bank_transaction_id?: string;
+    /** Abs bank amount — multi-doc Resolve sums selected ledger amounts against this. */
+    bank_amount_cents?: number;
   }>(`/api/v1/banking/transactions/${bankTxnId}/match-candidates?${params.toString()}`);
 }
 
@@ -1546,10 +1548,26 @@ export function acceptBankReconMatch(
     // (CHAIN-04 / Part 2b records the bill payment, not a plain accept).
     ledger_entry_kind: "payment" | "bill_payment" | "transfer" | "je" | "expense";
     ledger_entry_id: string;
+    /** ROUND 206 Resolve — required when amount gap ≠ 0 (write-off / difference account). */
     variance_account_id?: string;
   }
 ) {
   return apiRequest<{ ok: boolean; result: Record<string, unknown> }>(`/api/v1/bank-recon/accept-match`, {
+    method: "POST",
+    body: input,
+  });
+}
+
+/** ROUND 206 — one bank line → many documents (exact sum only; variance → use accept with write-off). */
+export function acceptBankReconMultiMatch(input: {
+  operating_company_id: string;
+  bank_transaction_id: string;
+  entries: Array<{
+    ledger_entry_kind: "payment" | "bill_payment" | "transfer" | "je" | "expense";
+    ledger_entry_id: string;
+  }>;
+}) {
+  return apiRequest<{ ok: boolean; result: Record<string, unknown> }>(`/api/v1/bank-recon/accept-multi-match`, {
     method: "POST",
     body: input,
   });

@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   acceptBankReconMatch,
+  acceptBankReconMultiMatch,
   categorizeBankTransaction,
   getCoaAccounts,
   getMatchCandidates,
@@ -20,19 +21,11 @@ import { useListState } from "../../../components/list-state";
 import { formatUsdCents } from "../../../lib/money";
 import { userFacingApiError } from "../../../lib/api-error-message";
 
-// BANKREC-CONFIRM-01 (Tier 2): Confirm is enabled ONLY for an exact-amount match (amount_gap_cents
-// === 0) on a persistable non-bill kind. gap=0 = pure link-and-clear (review_state='matched' +
-// matched_<kind>_id) — NO journal entry is posted. "bill" always stays held (CHAIN-04 / Part 2b
-// records the bill payment). Any variance (gap !== 0) stays held.
-//
-// BANK-F9998 F8 (2026-09-03) — the balanced-JE proof this note asks for now exists:
-// scripts/verify-bank-recon-variance-je-always-balanced.mjs proves, structurally, that
-// match.service.ts's postDifferenceJournalEntry can never post an unbalanced variance JE (its two
-// posting legs always share one magnitude on opposite sides, for any variance amount). That is
-// the PROOF, not an authorization to post — whether/when a variance match becomes live-confirmable
-// here is still a separate, owner-reserved Tier-1 decision (this codebase's own HOLD-FOR-JORGE
-// convention for money-posting UI), so canConfirm below is deliberately unchanged.
-const VARIANCE_HELD_NOTE = "Variance posting proven balanced (Tier-1) — awaiting owner go-ahead to enable Confirm";
+// ROUND 206 Resolve (owner asked 4×): exact Confirm stays link-and-clear; variance Confirm is enabled
+// when a write-off / difference account is selected (posts via acceptMatchWithResolveDifference);
+// multi-select exact sum → acceptExactMultiDocumentMatch (one bank line → many documents).
+// "bill" still held (CHAIN-04 Part 2b).
+const VARIANCE_NEEDS_WRITEOFF = "Select a write-off / difference account to resolve this variance";
 
 type Props = {
   open: boolean;
@@ -96,6 +89,7 @@ function windowHeaderLabel(step: 1 | 2 | "custom" | undefined, from: string, to:
 
 export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, operatingCompanyId, onClose, onAccepted }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   /** undefined = default cascade; 2 = user clicked Search 7 days */
   const [windowStep, setWindowStep] = useState<1 | 2 | undefined>(undefined);
@@ -105,6 +99,8 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
   const [draftQ, setDraftQ] = useState("");
   const [categorizeVendorId, setCategorizeVendorId] = useState("");
   const [categorizeGlAccountId, setCategorizeGlAccountId] = useState("");
+  /** ROUND 206 Resolve — write-off / difference CoA for non-zero variance accept. */
+  const [writeOffAccountId, setWriteOffAccountId] = useState("");
   const { pushToast } = useToast();
 
   useEffect(() => {
@@ -115,6 +111,8 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
     setSearchQ("");
     setDraftQ("");
     setSelectedId(null);
+    setSelectedIds(new Set());
+    setWriteOffAccountId("");
   }, [open, bankTransactionId]);
 
   const hasCustomFilters = Boolean(dateFrom || dateTo || searchQ.trim());
@@ -158,6 +156,7 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
         bank_transaction_id: String(bankTransactionId),
         ledger_entry_kind: candidate.ledger_entry_kind as "payment" | "bill_payment" | "transfer" | "je" | "expense",
         ledger_entry_id: candidate.ledger_entry_id,
+        variance_account_id: candidate.amount_gap_cents !== 0 ? writeOffAccountId || undefined : undefined,
       }),
     onMutate: (candidate) => setConfirmingId(candidate.ledger_entry_id),
     onSuccess: async () => {
@@ -169,6 +168,27 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
       pushToast(userFacingApiError(error, "Confirm match failed"), "error");
     },
     onSettled: () => setConfirmingId(null),
+  });
+
+  const multiConfirmMutation = useMutation({
+    mutationFn: (entries: BankMatchCandidate[]) =>
+      acceptBankReconMultiMatch({
+        operating_company_id: operatingCompanyId,
+        bank_transaction_id: String(bankTransactionId),
+        entries: entries.map((c) => ({
+          ledger_entry_kind: c.ledger_entry_kind as "payment" | "bill_payment" | "transfer" | "je" | "expense",
+          ledger_entry_id: c.ledger_entry_id,
+        })),
+      }),
+    onSuccess: async () => {
+      pushToast("Multi-document match confirmed — bank line cleared.", "success");
+      setSelectedIds(new Set());
+      await candidatesQuery.refetch();
+      onAccepted?.();
+    },
+    onError: (error) => {
+      pushToast(userFacingApiError(error, "Multi-document match failed"), "error");
+    },
   });
 
   const categorizeMutation = useMutation({
@@ -192,9 +212,17 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
 
   const listState = useListState(candidatesQuery, (candidatesQuery.data?.candidates ?? []).length === 0);
 
+  const candidates: BankMatchCandidate[] = candidatesQuery.data?.candidates ?? [];
+  const bankAmountCents = Number(candidatesQuery.data?.bank_amount_cents ?? 0);
+  const multiSelected = useMemo(
+    () => candidates.filter((c) => selectedIds.has(c.ledger_entry_id) && c.ledger_entry_kind !== "bill"),
+    [candidates, selectedIds]
+  );
+  const multiSumCents = multiSelected.reduce((s, c) => s + Number(c.amount_cents ?? 0), 0);
+  const multiExact = multiSelected.length >= 2 && bankAmountCents > 0 && multiSumCents === bankAmountCents;
+
   if (!bankTransactionId) return null;
 
-  const candidates: BankMatchCandidate[] = candidatesQuery.data?.candidates ?? [];
   const win = candidatesQuery.data?.window;
   const topAutoMatchId = candidates.find((c) => c.auto_match)?.ledger_entry_id ?? null;
   const canCategorize = Boolean(categorizeGlAccountId) && !categorizeMutation.isPending;
@@ -205,6 +233,16 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
     hasCustomFilters ||
     (win?.step === 2 && candidates.length === 0) ||
     (windowStep === 2 && candidates.length === 0);
+
+  const toggleMulti = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+    setSelectedId(id);
+  };
 
   return (
     <ParityDrawer open={open} title="Match transaction" onClose={onClose}>
@@ -225,10 +263,58 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
             : windowHeaderLabel(win?.step, win?.from ?? "", win?.to ?? "")}
         </p>
         <p className="mb-3 text-[11px] text-slate-500">
-          Exact-amount matches can be confirmed to link and clear — no journal entry is posted. Bill
-          payments and any amount variance stay held. Candidates are live production ledger rows —
-          never fixtures.
+          Exact-amount matches link and clear with no journal entry. A variance (partial) match requires a
+          write-off / difference account below — that posts the balanced variance JE. Select 2+ exact
+          documents whose amounts sum to the bank line for one-bank-line → many-documents. Bill
+          candidates stay held (CHAIN-04). Live production ledger rows only — never fixtures.
         </p>
+
+        <div className="mb-3 space-y-1" data-testid="match-drawer-writeoff-account">
+          <label className="block text-xs text-slate-600">
+            Write-off / difference account (required for variance)
+            <div className="mt-0.5">
+              <ReferenceSelect
+                value={writeOffAccountId || null}
+                onChange={(aid) => setWriteOffAccountId(aid ?? "")}
+                options={(coaQuery.data?.accounts ?? []).map((account) => ({
+                  value: account.id,
+                  label: account.account_name,
+                  type: account.account_type ? String(account.account_type) : undefined,
+                }))}
+                createKind="category"
+                operatingCompanyId={operatingCompanyId}
+                placeholder="Select write-off / difference account"
+                onOptionCreated={() => void coaQuery.refetch()}
+              />
+            </div>
+          </label>
+        </div>
+
+        {multiSelected.length >= 2 ? (
+          <div
+            className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5"
+            data-testid="match-drawer-multi-bar"
+          >
+            <p className="text-xs text-slate-700">
+              {multiSelected.length} selected · sum {formatMoneyCents(multiSumCents)}
+              {bankAmountCents > 0 ? ` / bank ${formatMoneyCents(bankAmountCents)}` : ""}
+              {multiExact ? " · exact" : " · not exact yet"}
+            </p>
+            <button
+              type="button"
+              data-testid="match-multi-confirm"
+              className={
+                multiExact
+                  ? "rounded-sm border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-white hover:bg-slate-800 disabled:opacity-60"
+                  : "rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs text-slate-400"
+              }
+              disabled={!multiExact || multiConfirmMutation.isPending}
+              onClick={() => multiExact && multiConfirmMutation.mutate(multiSelected)}
+            >
+              {multiConfirmMutation.isPending ? "Confirming…" : "Confirm multi-document match"}
+            </button>
+          </div>
+        ) : null}
 
         {showWidenBanner ? (
           <p
@@ -307,9 +393,11 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
           {candidates.map((c) => {
             const isTopAuto = c.ledger_entry_id === topAutoMatchId;
             const isSelected = c.ledger_entry_id === selectedId;
+            const isMultiChecked = selectedIds.has(c.ledger_entry_id);
             const isBill = c.ledger_entry_kind === "bill";
             const isExactMatch = c.amount_gap_cents === 0;
-            const canConfirm = !isBill && isExactMatch;
+            const canConfirmVariance = !isBill && !isExactMatch && Boolean(writeOffAccountId);
+            const canConfirm = !isBill && (isExactMatch || canConfirmVariance);
             const isConfirming = confirmMutation.isPending && confirmingId === c.ledger_entry_id;
             return (
               // FAIL-BM1 — the row's PRIMARY click must SELECT the candidate, not drill through. Before
@@ -327,6 +415,16 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-2">
+                    <input
+                      type="checkbox"
+                      data-testid="match-candidate-multi-select"
+                      className="accent-slate-700"
+                      checked={isMultiChecked}
+                      disabled={isBill}
+                      title={isBill ? "Bills stay held (CHAIN-04)" : "Include in multi-document match"}
+                      onChange={() => toggleMulti(c.ledger_entry_id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
                     <input
                       type="radio"
                       name="match-candidate"
@@ -376,9 +474,9 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
                 <div className="mt-2 flex items-center justify-end gap-2">
                   {isBill ? (
                     <span className="text-xs text-slate-400">Posting available after CHAIN-04</span>
-                  ) : !isExactMatch ? (
+                  ) : !isExactMatch && !writeOffAccountId ? (
                     <span className="text-xs text-slate-400" data-testid="match-candidate-variance-held">
-                      {VARIANCE_HELD_NOTE}
+                      {VARIANCE_NEEDS_WRITEOFF}
                     </span>
                   ) : null}
                   <button
@@ -393,13 +491,15 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
                     title={
                       isBill
                         ? "Recording the bill payment is CHAIN-04 (Part 2b)"
-                        : !isExactMatch
-                        ? VARIANCE_HELD_NOTE
-                        : "Confirm this match — links and clears the transaction, no journal entry posted"
+                        : !isExactMatch && !writeOffAccountId
+                        ? VARIANCE_NEEDS_WRITEOFF
+                        : isExactMatch
+                        ? "Confirm this match — links and clears the transaction, no journal entry posted"
+                        : "Confirm with write-off / difference account — posts balanced variance JE"
                     }
                     onClick={canConfirm ? () => confirmMutation.mutate(c) : undefined}
                   >
-                    {isConfirming ? "Confirming…" : "Confirm match"}
+                    {isConfirming ? "Confirming…" : isExactMatch ? "Confirm match" : "Resolve difference"}
                   </button>
                 </div>
               </div>

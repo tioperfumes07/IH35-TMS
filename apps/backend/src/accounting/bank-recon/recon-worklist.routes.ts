@@ -4,7 +4,7 @@ import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "../shared.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { ReconciledSessionLockedError } from "../../banking/closed-session-immutability.js";
-import { type LedgerEntryKind } from "./match.service.js";
+import { type LedgerEntryKind, acceptExactMultiDocumentMatch } from "./match.service.js";
 import { acceptReconMatch, closeReconPeriod, getReconWorklist, rejectReconMatch, unmatchBankTransaction } from "./recon-worklist.service.js";
 
 const worklistQuerySchema = companyQuerySchema.extend({
@@ -39,6 +39,20 @@ const manualBodySchema = z.object({
   ledger_entry_kind: z.enum(["payment", "bill_payment", "transfer", "je", "expense"]),
   ledger_entry_id: z.string().uuid(),
   variance_account_id: z.string().uuid().optional(),
+});
+
+const multiAcceptBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  bank_transaction_id: z.string().uuid(),
+  entries: z
+    .array(
+      z.object({
+        ledger_entry_kind: z.enum(["payment", "bill_payment", "transfer", "je", "expense"]),
+        ledger_entry_id: z.string().uuid(),
+      })
+    )
+    .min(2)
+    .max(50),
 });
 
 const closeBodySchema = z.object({
@@ -186,6 +200,42 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
       // (period_not_100pct_reconciled).
       if (message === "bank_transaction_already_matched") {
         return reply.code(409).send({ error: message });
+      }
+      throw error;
+    }
+  });
+
+  app.post("/api/v1/bank-recon/accept-multi-match", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const body = multiAcceptBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+    await assertCompanyMembership(user.uuid, body.data.operating_company_id);
+    try {
+      const result = await acceptExactMultiDocumentMatch({
+        operating_company_id: body.data.operating_company_id,
+        bank_transaction_id: body.data.bank_transaction_id,
+        actor_user_uuid: user.uuid,
+        entries: body.data.entries.map((e) => ({
+          ledger_entry_kind: asLedgerKind(e.ledger_entry_kind),
+          ledger_entry_id: e.ledger_entry_id,
+        })),
+      });
+      return { ok: true, result };
+    } catch (error) {
+      const message = String((error as Error).message ?? "");
+      if (error instanceof ReconciledSessionLockedError) {
+        return reply.code(409).send({ error: error.code, message: error.message });
+      }
+      if (message === "bank_transaction_already_matched") {
+        return reply.code(409).send({ error: message });
+      }
+      if (message.startsWith("multi_match_nonzero_variance:")) {
+        return reply.code(400).send({ error: "multi_match_nonzero_variance", message });
+      }
+      if (message.startsWith("match_kind_not_acceptable:")) {
+        return reply.code(400).send({ error: message });
       }
       throw error;
     }
