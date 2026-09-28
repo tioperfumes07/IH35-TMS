@@ -481,32 +481,131 @@ export async function previewSettlementCreator(
   }
 
   // --- Extra reimbursements on driver net ---
+  // ROUND 157-B fix: draft.reimbursements (distinct from draft.expenses is_reimbursable, which
+  // already pushes a balanced Dr 6100 / Cr 2175 pair above) previously added straight to
+  // reimbCents/driverNetCents with NO offsetting JE leg at all -- the same missing-debit class of
+  // bug fixed for escrow above. A settlement whose only driver-net items are mileage pay + a bare
+  // "reimbursements" line (settlement 5818's $15.25 LOVES/TPE scale-expense reimbursement, not
+  // modeled as an is_reimbursable expense) would permanently fail the debit_total_cents ===
+  // credit_total_cents check. Same account pair as the is_reimbursable path: Dr reimbursement
+  // expense (6100/other_operating_expense) / Cr 2175 Driver Reimbursements Payable.
   let reimbCents = 0;
+  const reimbItemAcct =
+    (await accountByNumber(client, draft.operating_company_id, "6100")) ??
+    (await accountByRole(client, draft.operating_company_id, "other_operating_expense"));
+  const reimbAcct2175 = await accountByNumber(client, draft.operating_company_id, "2175");
   for (const r of draft.reimbursements ?? []) {
     if (r.amount_cents <= 0) continue;
     reimbCents += r.amount_cents;
+    if (!reimbAcct2175) {
+      blockers.push("Account 2175 Driver Reimbursements Payable missing — cannot post reimbursements.");
+      continue;
+    }
+    push({
+      load_number: r.load_number ?? null,
+      account_number: reimbItemAcct?.account_number ?? null,
+      account_name: reimbItemAcct?.account_name ?? "Driver reimbursement expense",
+      debit_cents: r.amount_cents,
+      credit_cents: 0,
+      memo: r.description || "Driver reimbursement",
+      section: "reimbursement",
+    });
+    push({
+      load_number: r.load_number ?? null,
+      account_number: reimbAcct2175.account_number ?? "2175",
+      account_name: reimbAcct2175.account_name ?? "Driver Reimbursements Payable",
+      debit_cents: 0,
+      credit_cents: r.amount_cents,
+      memo: r.description || "Driver reimbursement",
+      section: "reimbursement",
+    });
   }
   for (const exp of draft.expenses ?? []) {
     if (exp.is_reimbursable && exp.amount_cents > 0) reimbCents += exp.amount_cents;
   }
 
   // Additional pay (detention / layover / bonus) — adds to driver net.
+  // ROUND 157-B fix: previously summed into additionalPayCents with NO JE leg at all -- same
+  // missing-leg class as escrow/reimbursements above. Mirrors the mileage-pay pair exactly (this
+  // IS driver pay, just not mileage-based): Dr driver_pay_expense / Cr driver_payroll_clearing,
+  // increasing what's payable to the driver (confirmed live need: settlement 5819's $50.00
+  // Enlonada/Desenlonada additional pay, no other driver-net items besides mileage).
   let additionalPayCents = 0;
+  const addPayExpenseAcct =
+    (await accountByRole(client, draft.operating_company_id, "driver_pay_expense")) ??
+    (await accountByNumber(client, draft.operating_company_id, "6890"));
+  const addPayClearingAcct =
+    (await accountByRole(client, draft.operating_company_id, "driver_payroll_clearing")) ??
+    (await accountByNumber(client, draft.operating_company_id, "2100"));
   for (const p of draft.additional_pay ?? []) {
     if (p.amount_cents <= 0) continue;
     additionalPayCents += p.amount_cents;
+    push({
+      load_number: p.load_number ?? null,
+      account_number: addPayExpenseAcct?.account_number ?? null,
+      account_name: addPayExpenseAcct?.account_name ?? "Driver pay expense",
+      debit_cents: p.amount_cents,
+      credit_cents: 0,
+      memo: p.description || "Additional pay",
+      section: "mileage",
+    });
+    push({
+      load_number: p.load_number ?? null,
+      account_number: addPayClearingAcct?.account_number ?? null,
+      account_name: addPayClearingAcct?.account_name ?? "Driver payable",
+      debit_cents: 0,
+      credit_cents: p.amount_cents,
+      memo: p.description || "Additional pay",
+      section: "mileage",
+    });
   }
 
   // --- Deductions / escrow / advances / admin fee (driver net) ---
+  // ROUND 157-B fix: both generic ("other") deductions and the admin fee previously had either no
+  // JE leg (deductions) or a credit-only leg (admin fee) -- same missing/half-leg bug. Both route
+  // to the SAME account at settlement-close time (createSettlementDeduction sourceType='other' ->
+  // other_recovery role -> 7200, confirmed via deductions.service.ts), so both get the same pair
+  // here: Dr driver_payroll_clearing (withheld from payable) / Cr 7200 income.
+  const income7200 =
+    (await accountByNumber(client, draft.operating_company_id, "7200")) ??
+    (await accountByRole(client, draft.operating_company_id, "other_recovery"));
+  const deductClearingAcct =
+    (await accountByRole(client, draft.operating_company_id, "driver_payroll_clearing")) ??
+    (await accountByNumber(client, draft.operating_company_id, "2100"));
   let deductionCents = 0;
   for (const d of draft.deductions ?? []) {
-    if (d.amount_cents > 0) deductionCents += d.amount_cents;
+    if (d.amount_cents <= 0) continue;
+    deductionCents += d.amount_cents;
+    push({
+      load_number: d.load_number ?? null,
+      account_number: deductClearingAcct?.account_number ?? null,
+      account_name: deductClearingAcct?.account_name ?? "Driver payable",
+      debit_cents: d.amount_cents,
+      credit_cents: 0,
+      memo: `${d.description || "Deduction"} (withheld from payable)`,
+      section: "deduction",
+    });
+    push({
+      load_number: d.load_number ?? null,
+      account_number: income7200?.account_number ?? "7200",
+      account_name: income7200?.account_name ?? "Driver Admin Fee & Chargeback Income",
+      debit_cents: 0,
+      credit_cents: d.amount_cents,
+      memo: d.description || "Deduction",
+      section: "deduction",
+    });
   }
   const adminFeeCents = Math.max(0, Math.round(Number(draft.admin_fee_cents || 0)));
   if (adminFeeCents > 0) {
-    const income7200 =
-      (await accountByNumber(client, draft.operating_company_id, "7200")) ??
-      (await accountByRole(client, draft.operating_company_id, "other_recovery"));
+    push({
+      load_number: null,
+      account_number: deductClearingAcct?.account_number ?? null,
+      account_name: deductClearingAcct?.account_name ?? "Driver payable",
+      debit_cents: adminFeeCents,
+      credit_cents: 0,
+      memo: "Admin fee (withheld from payable)",
+      section: "admin_fee",
+    });
     push({
       load_number: null,
       account_number: income7200?.account_number ?? "7200",
@@ -524,6 +623,27 @@ export async function previewSettlementCreator(
     const liab =
       (await accountByRole(client, draft.operating_company_id, "escrow_liability_default")) ??
       (await accountByNumber(client, draft.operating_company_id, "2400"));
+    // ROUND 157-B fix: the comment this replaced ("Balancing Dr comes from settlement net —
+    // shown as reduction below") was wrong -- driverNetCents below is a control-total figure,
+    // never its own JE leg, so an escrow credit with no debit left every settlement with escrow
+    // but no fuel/company-expense activity permanently unbalanced (debit_total_cents !=
+    // credit_total_cents at the full je_lines level -- confirmed live for settlement 5817, whose
+    // preview had companyLegDebits=0 so the balanced-shortcut never applied). The mileage-pay
+    // push above already credited driver_payroll_clearing (2100) for the FULL pay; withholding
+    // escrow from that same payable is Dr 2100 / Cr escrow liability -- moving the liability from
+    // "payable to driver" into "held in escrow", not creating money from nothing.
+    const payClearing =
+      (await accountByRole(client, draft.operating_company_id, "driver_payroll_clearing")) ??
+      (await accountByNumber(client, draft.operating_company_id, "2100"));
+    push({
+      load_number: e.load_number ?? null,
+      account_number: payClearing?.account_number ?? null,
+      account_name: payClearing?.account_name ?? "Driver payable",
+      debit_cents: e.amount_cents,
+      credit_cents: 0,
+      memo: `${e.description || "Escrow hold"} (withheld from payable)`,
+      section: "escrow",
+    });
     push({
       load_number: e.load_number ?? null,
       account_number: liab?.account_number ?? null,
@@ -533,7 +653,6 @@ export async function previewSettlementCreator(
       memo: e.description || "Escrow hold",
       section: "escrow",
     });
-    // Balancing Dr comes from settlement net (deduction from payable) — shown as reduction below.
   }
   let advanceCents = 0;
   for (const a of draft.advances ?? []) {
@@ -1204,12 +1323,22 @@ export async function postSettlementCreatorInClientTx(
         (load.line_haul_rate_cents != null && load.loaded_miles != null
           ? Math.round(Number(load.line_haul_rate_cents) * Number(load.loaded_miles))
           : 0)) + accessorialCents;
+    // Loaded-miles quantity/rate: ROUND 157-B — every settlement_lines row for a mileage-driven
+    // line carries quantity/rate_cents/unit_of_measure='mi' (matches the live 5812 precedent:
+    // "Load 13588 — Loaded Miles 1,855.1 @ $0.45"), not just the dollar total. Only set when the
+    // PDF actually gave miles+rate; an accessorial-only or flat line_haul_amount_cents load has no
+    // per-mile quantity to report and stays NULL, same as before.
+    const hasLoadedMileage = load.line_haul_rate_cents != null && load.loaded_miles != null;
+    const loadedDesc = hasLoadedMileage
+      ? `Load ${load.load_number} — Loaded Miles ${Number(load.loaded_miles).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} @ $${(Number(load.line_haul_rate_cents) / 100).toFixed(2)}`
+      : `Load ${load.load_number} line haul`;
     await client.query(
       `
         INSERT INTO driver_finance.settlement_lines (
-          settlement_id, operating_company_id, line_type, description, amount, load_id, is_active, is_sample_data
+          settlement_id, operating_company_id, line_type, description, amount, load_id,
+          quantity, rate_cents, unit_of_measure, is_active, is_sample_data
         )
-        SELECT $1::uuid, $2::uuid, 'earnings', $3, $4, $5::uuid, true, false
+        SELECT $1::uuid, $2::uuid, 'earnings', $3, $4, $5::uuid, $6, $7, $8, true, false
         WHERE NOT EXISTS (
           SELECT 1 FROM driver_finance.settlement_lines sl
            WHERE sl.settlement_id = $1::uuid
@@ -1221,11 +1350,50 @@ export async function postSettlementCreatorInClientTx(
       [
         settlementId,
         draft.operating_company_id,
-        `Load ${load.load_number} line haul`,
+        loadedDesc,
         dollarsFromCents(Math.max(0, earningsCents)),
         loadId,
+        hasLoadedMileage ? Number(load.loaded_miles) : null,
+        hasLoadedMileage ? Number(load.line_haul_rate_cents) : null,
+        hasLoadedMileage ? "mi" : null,
       ],
     );
+
+    // Empty (deadhead) miles → its own settlement_lines row, same mileage-quantity convention.
+    // Previously MISSING entirely from this engine — empty-mile pay only ever reached the JE
+    // preview (mileage pay section above), never a settlement_lines row a driver's settlement
+    // screen can display or a quantity a mileage audit can check. Zero amount when rate/miles
+    // absent (matches the "empty contributes $0" comment on the JE side), never invented.
+    const hasEmptyMileage = load.empty_rate_cents != null && load.empty_miles != null;
+    if (hasEmptyMileage) {
+      const emptyCents = Math.round(Number(load.empty_rate_cents) * Number(load.empty_miles));
+      const emptyDesc = `Load ${load.load_number} — Empty Miles ${Number(load.empty_miles).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} @ $${(Number(load.empty_rate_cents) / 100).toFixed(2)}`;
+      await client.query(
+        `
+          INSERT INTO driver_finance.settlement_lines (
+            settlement_id, operating_company_id, line_type, description, amount, load_id,
+            quantity, rate_cents, unit_of_measure, is_active, is_sample_data
+          )
+          SELECT $1::uuid, $2::uuid, 'deadhead_pay', $3, $4, $5::uuid, $6, $7, 'mi', true, false
+          WHERE NOT EXISTS (
+            SELECT 1 FROM driver_finance.settlement_lines sl
+             WHERE sl.settlement_id = $1::uuid
+               AND sl.load_id = $5::uuid
+               AND sl.line_type = 'deadhead_pay'
+               AND sl.voided_at IS NULL
+          )
+        `,
+        [
+          settlementId,
+          draft.operating_company_id,
+          emptyDesc,
+          dollarsFromCents(Math.max(0, emptyCents)),
+          loadId,
+          Number(load.empty_miles),
+          Number(load.empty_rate_cents),
+        ],
+      );
+    }
 
     let built;
     try {
