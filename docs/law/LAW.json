@@ -1,5 +1,12 @@
 [
   {
+    "id": "LAW-2026-09-28-TRUCK-LINE-SURFACE-TOKENS-LOCKED",
+    "title": "TruckLineBoard.tsx's surface/border/text roles must reference the shared locked-baseline-tokens module (GLOBAL-TYPE-SIZE-BASELINE.md values); the retired/drifted #C7D2DC/#F4F7FA/#374151/#1F2937 hexes must never reappear",
+    "source_file": "docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md",
+    "guard": "scripts/verify-truck-line-surface-tokens-locked.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "LAW-2026-09-28-SETTLEMENT-CLOSE-ADVANCES-LOAD-STATUS",
     "title": "Closing a settlement with a sent invoice must leave the load status advanced (invoiced/paid/closed), asserted at close/send time by source-wiring, not swept up later by a one-shot; the sync call must stay wired in invoice-send.service.ts, invoices-bulk.routes.ts, and settlements.routes.ts",
     "source_file": "docs/bus/00-LEAD-AUTH-105-STALE-LOAD-STATUS-SYNC.md",

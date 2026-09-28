@@ -35,6 +35,11 @@ const STEPS = [
   // asserted AT CLOSE/SEND TIME by source-wiring, not swept up later by a one-shot. Pure static
   // text check, no DB.
   ["verify-settlement-close-advances-load-status", "scripts/verify-settlement-close-advances-load-status.mjs"],
+  // ROUND 203/205 (owner, 2026-09-28) — "white background, wrong contrast... tokens for surface/
+  // border/text." TruckLineBoard.tsx had drifted off the LOCKED GLOBAL-TYPE-SIZE-BASELINE.md
+  // surface/border/text palette; this asserts the retired values never reappear and the file
+  // stays wired to the shared locked-baseline-tokens module. Pure static text check, no DB.
+  ["verify-truck-line-surface-tokens-locked", "scripts/verify-truck-line-surface-tokens-locked.mjs"],
   // DB-F01/ACCT-F155.3 — a hand-rolled script that sets app.bypass_rls SESSION-scoped (is_local=false,
   // or a bare SET, not SET LOCAL inside an explicit BEGIN) silently loses RLS scope between statements
   // on Neon's pooled connection string. Same read went 3 -> 49 phantom failures between two runs with
