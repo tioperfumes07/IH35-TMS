@@ -1,10 +1,10 @@
 {
-  "healthzSha": "88ecb78",
-  "generated_at": "2026-09-28T03:03:43.563Z",
+  "healthzSha": "0b30a84",
+  "generated_at": "2026-09-28T03:23:09.130Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "88ecb78",
+    "deployedSha": "0b30a84",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 22889,
+      "title": "Claude-1- CORRECTION: ROUND 144's 5819 driver is wrong per the actual signed PDF",
+      "state": "merged",
+      "mergedAtCt": "09/27/2026, 10:06 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22889",
+      "sha": "0b30a84848",
+      "committedAtIso": "2026-09-27T22:06:37-05:00"
+    },
+    {
       "number": 22888,
       "title": "FINDING: ACCT-F2026092702 LANE: DOCS (views.live_loads has a second exclusion clause AUTH-073's settlement_lines void cannot fix)",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22878",
       "sha": "524a5dcafa",
       "committedAtIso": "2026-09-27T12:13:15Z"
-    },
-    {
-      "number": 22877,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-      "state": "merged",
-      "mergedAtCt": "09/27/2026, 12:27 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/22877",
-      "sha": "4318a538d1",
-      "committedAtIso": "2026-09-27T05:27:15Z"
     }
   ]
 }
