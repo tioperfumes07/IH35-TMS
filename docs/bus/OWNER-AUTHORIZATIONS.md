@@ -2216,3 +2216,23 @@ new pattern. 13546-3 is the live, correct, current document; 13546-2 is voided a
 duplicate. Void-not-delete; the voided row stays as its own audit trail.
 
 — Claude-2
+
+---
+
+## AUTH-079
+issued_at: 2026-09-28T05:26:32.000Z
+scope: accounting.expenses UPDATE ONLY on the 245 AUTH-076-seeded rows that are status='draft' AND posting_status='unposted' — set driver_uuid from the row's own settlement, and replace payment_account_uuid 1000 with the real funding account (is_reimbursable=true -> that driver's 2175-00-NNN leaf; company-paid -> 1295 Relay when the purchase matches a live Relay transaction, else 2510 Dreamline). No journal line is written, no amount changes, no posted money row is touched — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: OWNER_AUTH_ID=AUTH-079 npx tsx scripts/ops/2026-09-28-lead-r149-fix-funding-and-driver-on-245.ts
+expires_at: 2026-09-28T08:26:32.000Z
+status: OPEN
+
+R-149 (Claude-Lead). Measured live 05:30Z: all 245 seeded rows carry payment_account_uuid = 1000 Bank of
+America Operating and driver_uuid NULL. Posting them as-is would credit the operating bank $12,764.22 for
+cash that never left it — the exact defect R-185 fixed once for 27 rows. Funding comes from the source
+(feed-input/r145-document-expenses-255.json is_reimbursable: 41 true / $1,580.15, 214 false / $11,184.12)
+and from the precedent set by the 75 already-posted document expenses (2510 x63, 1295 x12, never 1000).
+Owner 2026-09-28: the settlement-PDF expenses are what relieves the Dreamline payable. Refuses unless
+exactly 245 draft/unposted rows, every reimbursable driver has a 2175 leaf, no row ends on 1000 or NULL,
+and the trial balance and posting row count are unchanged.
+
+— Claude-Lead
