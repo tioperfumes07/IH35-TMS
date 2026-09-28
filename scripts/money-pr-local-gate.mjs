@@ -997,8 +997,21 @@ function touchesMoneyPath() {
 // contends for writer locks with the production feed. Every one of these guards is a read-only
 // check (SELECT / BEGIN READ ONLY / set_config bypass_rls) — none of them ever needs write
 // authority — so the gate defaults their DATABASE_URL to the `ih35_ci_readonly` role instead.
-// Read once, memoized, never logged (it's a live credential).
-const READONLY_DB_URL_FILE = path.join(os.homedir(), ".config/ih35/neon-prod-readonly.url");
+//
+// ROUND 210 repoint (CC-1): this used to read a lone-purpose file at
+// ~/.config/ih35/neon-prod-readonly.url with no write-attribution anywhere in this repo, and that
+// file was silently overwritten by an unidentified seat on 2026-09-28 with neondb_owner credentials
+// — a read-only gate credential quietly became a real-bypass one with nothing to notice it. Now
+// reads the single, owner-designated master credentials file instead, extracting the connection
+// string from its own dedicated "READONLY GATE CREDENTIAL (ih35_ci_readonly)" section (a fenced
+// code block, not the whole file) so a stray edit elsewhere in that doc can't be misread as this
+// credential. Read once, memoized, never logged (it's a live credential).
+const MASTER_KEYS_FILE = path.join(
+  os.homedir(),
+  "Desktop/09-28-2026-IH35-MASTER-KEYS-ENVS-SINGLE-SOURCE-OF-TRUTH.md"
+);
+const READONLY_SECTION_RE =
+  /## READONLY GATE CREDENTIAL[^\n]*\n(?:(?!\n## )[^\n]*\n)*?\s*(postgresql:\/\/\S+)/;
 let cachedReadonlyDbUrl;
 function resolveGuardDatabaseUrl() {
   if (cachedReadonlyDbUrl !== undefined) return cachedReadonlyDbUrl;
@@ -1009,8 +1022,9 @@ function resolveGuardDatabaseUrl() {
     return cachedReadonlyDbUrl;
   }
   try {
-    const val = fs.readFileSync(READONLY_DB_URL_FILE, "utf8").trim();
-    cachedReadonlyDbUrl = val || undefined;
+    const doc = fs.readFileSync(MASTER_KEYS_FILE, "utf8");
+    const match = doc.match(READONLY_SECTION_RE);
+    cachedReadonlyDbUrl = match ? match[1].trim() : undefined;
   } catch {
     cachedReadonlyDbUrl = undefined;
   }
