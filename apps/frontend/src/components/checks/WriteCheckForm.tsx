@@ -17,6 +17,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ParityDrawer } from "../parity/ParityDrawer";
+import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../EntityPicker";
@@ -117,93 +118,105 @@ function newLineKey(): string {
 
 // Shared between the category and item grids -- both carry the same Billable/Customer pair and the
 // same 5 fleet-linkage pickers (spec step 3/4), so the columns stay pixel-identical across both grids
-// instead of two hand-copied implementations drifting apart.
-function BillableCustomerCells({
-  line,
-  operatingCompanyId,
-  onUpdate,
-}: {
-  line: DraftLine;
-  operatingCompanyId: string;
-  onUpdate: (patch: Partial<DraftLine>) => void;
-}) {
+// instead of two hand-copied implementations drifting apart. These render CELL CONTENT ONLY (no
+// <td> wrapper) -- go26-consolidation-ratchet routes every grid through ParityTable, which owns the
+// <td> itself (column.render(row) => ReactNode content, same contract as every other ParityTable caller).
+function renderBillableCell(line: DraftLine, onUpdate: (patch: Partial<DraftLine>) => void) {
   return (
-    <>
-      <td className="px-2 py-1 text-center">
-        <input
-          type="checkbox"
-          checked={line.billable}
-          onChange={(e) => onUpdate({ billable: e.target.checked, customerId: e.target.checked ? line.customerId : null })}
-          aria-label="Billable"
-        />
-      </td>
-      <td className="px-2 py-1">
-        {line.billable ? (
-          <ReferenceSelect
-            id={`check-line-customer-${line.key}`}
-            value={line.customerId}
-            onChange={(next) => onUpdate({ customerId: next })}
-            options={[]}
-            createKind="customer"
-            operatingCompanyId={operatingCompanyId}
-            placeholder="Select customer…"
-            size="sm"
-          />
-        ) : (
-          <span className="text-gray-300">—</span>
-        )}
-      </td>
-    </>
+    <input
+      type="checkbox"
+      checked={line.billable}
+      onChange={(e) => onUpdate({ billable: e.target.checked, customerId: e.target.checked ? line.customerId : null })}
+      aria-label="Billable"
+    />
   );
 }
 
-function LinkageCells({
-  line,
-  operatingCompanyId,
-  onUpdate,
-}: {
-  line: DraftLine;
-  operatingCompanyId: string;
-  onUpdate: (patch: Partial<DraftLine>) => void;
-}) {
-  return (
-    <>
-      <td className="px-2 py-1">
-        <EntityPicker kind="load" operatingCompanyId={operatingCompanyId} value={line.loadId} onChange={(next) => onUpdate({ loadId: next })} placeholder="(header)" allowCreate={false} size="sm" />
-      </td>
-      <td className="px-2 py-1">
-        <EntityPicker kind="driver" operatingCompanyId={operatingCompanyId} value={line.driverId} onChange={(next) => onUpdate({ driverId: next })} placeholder="(header)" allowCreate={false} size="sm" />
-      </td>
-      <td className="px-2 py-1">
-        <EntityPicker kind="unit" operatingCompanyId={operatingCompanyId} value={line.unitId} onChange={(next) => onUpdate({ unitId: next })} placeholder="(header)" allowCreate={false} size="sm" />
-      </td>
-      <td className="px-2 py-1">
-        <EntityPicker kind="trailer" operatingCompanyId={operatingCompanyId} value={line.trailerId} onChange={(next) => onUpdate({ trailerId: next })} placeholder="(header)" allowCreate={false} size="sm" />
-      </td>
-      <td className="px-2 py-1">
-        <EntityPicker
-          kind="work_order"
-          operatingCompanyId={operatingCompanyId}
-          value={line.workOrderId}
-          onChange={(next) => onUpdate({ workOrderId: next })}
-          placeholder="(header)"
-          allowCreate={false}
-          size="sm"
-        />
-      </td>
-    </>
+function renderCustomerCell(line: DraftLine, operatingCompanyId: string, onUpdate: (patch: Partial<DraftLine>) => void) {
+  return line.billable ? (
+    <ReferenceSelect
+      id={`check-line-customer-${line.key}`}
+      value={line.customerId}
+      onChange={(next) => onUpdate({ customerId: next })}
+      options={[]}
+      createKind="customer"
+      operatingCompanyId={operatingCompanyId}
+      placeholder="Select customer…"
+      size="sm"
+    />
+  ) : (
+    <span className="text-gray-300">—</span>
   );
 }
 
-const LINKAGE_HEADER_CELLS = (
-  <>
-    <th className="px-2 py-1">Load</th>
-    <th className="px-2 py-1">Driver</th>
-    <th className="px-2 py-1">Truck</th>
-    <th className="px-2 py-1">Trailer</th>
-    <th className="px-2 py-1">Work order</th>
-  </>
-);
+type LinkageKind = "load" | "driver" | "unit" | "trailer" | "work_order";
+const LINKAGE_PATCH_KEY: Record<LinkageKind, keyof DraftLine> = {
+  load: "loadId",
+  driver: "driverId",
+  unit: "unitId",
+  trailer: "trailerId",
+  work_order: "workOrderId",
+};
+const LINKAGE_VALUE: Record<LinkageKind, (line: DraftLine) => string | null> = {
+  load: (l) => l.loadId,
+  driver: (l) => l.driverId,
+  unit: (l) => l.unitId,
+  trailer: (l) => l.trailerId,
+  work_order: (l) => l.workOrderId,
+};
+const LINKAGE_LABEL: Record<LinkageKind, string> = {
+  load: "Load",
+  driver: "Driver",
+  unit: "Truck",
+  trailer: "Trailer",
+  work_order: "Work order",
+};
+const LINKAGE_KINDS: LinkageKind[] = ["load", "driver", "unit", "trailer", "work_order"];
+
+function renderLinkageCell(kind: LinkageKind, line: DraftLine, operatingCompanyId: string, onUpdate: (patch: Partial<DraftLine>) => void) {
+  return (
+    <EntityPicker
+      kind={kind}
+      operatingCompanyId={operatingCompanyId}
+      value={LINKAGE_VALUE[kind](line)}
+      onChange={(next) => onUpdate({ [LINKAGE_PATCH_KEY[kind]]: next } as Partial<DraftLine>)}
+      placeholder="(header)"
+      allowCreate={false}
+      size="sm"
+    />
+  );
+}
+
+/** Billable + Customer + the 5 fleet-linkage columns, identical across the category and item grids. */
+function sharedLineColumns(
+  operatingCompanyId: string,
+  onUpdate: (key: string, patch: Partial<DraftLine>) => void
+): Array<ParityColumn<DraftLine>> {
+  return [
+    {
+      key: "billable",
+      label: "Billable",
+      sortable: false,
+      className: "w-14 text-center",
+      cellClass: "text-center",
+      render: (line) => renderBillableCell(line, (patch) => onUpdate(line.key, patch)),
+    },
+    {
+      key: "customerId",
+      label: "Customer",
+      sortable: false,
+      render: (line) => renderCustomerCell(line, operatingCompanyId, (patch) => onUpdate(line.key, patch)),
+    },
+    ...LINKAGE_KINDS.map(
+      (kind): ParityColumn<DraftLine> => ({
+        key: kind,
+        label: LINKAGE_LABEL[kind],
+        sortable: false,
+        render: (line) => renderLinkageCell(kind, line, operatingCompanyId, (patch) => onUpdate(line.key, patch)),
+      })
+    ),
+  ];
+}
 
 export type WriteCheckFormProps = {
   open: boolean;
@@ -390,6 +403,49 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
   function setBillToPayAmount(billId: string, cents: number) {
     setBillToPayAmounts((prev) => ({ ...prev, [billId]: cents }));
   }
+  const billsToPayColumns: Array<ParityColumn<VendorBill>> = [
+    {
+      key: "id",
+      label: "Bill",
+      sortable: false,
+      render: (b) => <EntityLink kind="bill" id={b.id} label={b.display_id ?? b.bill_number ?? undefined} />,
+    },
+    { key: "bill_date", label: "Date", sortable: false, render: (b) => formatDateUS(b.bill_date) },
+    {
+      key: "balance_cents",
+      label: "Remaining",
+      sortable: false,
+      className: "w-28",
+      render: (b) => formatMoneyCents(b.balance_cents ?? b.amount_cents - b.paid_cents),
+    },
+    {
+      key: "pay_amount",
+      label: "Pay amount",
+      sortable: false,
+      className: "w-28",
+      render: (b) => {
+        const remaining = b.balance_cents ?? b.amount_cents - b.paid_cents;
+        return (
+          <MoneyInput
+            valueCents={billToPayAmounts[b.id] ?? 0}
+            onChangeCents={(cents) => setBillToPayAmount(b.id, Math.min(cents ?? 0, remaining))}
+          />
+        );
+      },
+    },
+    {
+      key: "remove",
+      label: "",
+      sortable: false,
+      className: "w-8 text-center",
+      cellClass: "text-center",
+      render: (b) => (
+        <button type="button" className="text-gray-400 hover:text-red-600" onClick={() => removeBillToPay(b.id)} aria-label="Remove bill">
+          ×
+        </button>
+      ),
+    },
+  ];
   // A payee switch clears any bills queued for the PREVIOUS payee -- they belong to a different vendor.
   useEffect(() => {
     setBillToPayAmounts({});
@@ -418,6 +474,167 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
   function removeItemLine(key: string) {
     setLines((prev) => prev.filter((l) => l.key !== key));
   }
+
+  const categoryColumns: Array<ParityColumn<DraftLine>> = [
+    {
+      key: "seq",
+      label: "#",
+      sortable: false,
+      className: "w-10",
+      cellClass: "text-gray-500",
+      render: (line) => categoryLines.indexOf(line) + 1,
+    },
+    {
+      key: "categoryMapId",
+      label: "Category",
+      sortable: false,
+      // Account numbers stay hidden by default (verify-account-number-hidden-by-default.mjs) --
+      // name/kind-code is enough to pick the right category.
+      render: (line) => (
+        <select
+          className="h-8 w-full rounded border border-gray-300 px-1"
+          value={line.categoryMapId ?? ""}
+          onChange={(e) => updateLine(line.key, { categoryMapId: e.target.value || null })}
+        >
+          <option value="">Select category…</option>
+          {categoryRows.map((row) => (
+            <option key={row.id} value={row.id}>
+              {row.account_name ?? `${row.category_kind}/${row.category_code}`}
+            </option>
+          ))}
+        </select>
+      ),
+    },
+    {
+      key: "description",
+      label: "Description",
+      sortable: false,
+      render: (line) => (
+        <input
+          className="h-8 w-full rounded border border-gray-300 px-1"
+          value={line.description}
+          onChange={(e) => updateLine(line.key, { description: e.target.value })}
+        />
+      ),
+    },
+    {
+      key: "amountCents",
+      label: "Amount",
+      sortable: false,
+      className: "w-28",
+      render: (line) => <MoneyInput valueCents={line.amountCents} onChangeCents={(cents) => updateLine(line.key, { amountCents: cents })} />,
+    },
+    ...sharedLineColumns(operatingCompanyId, updateLine),
+    {
+      key: "remove",
+      label: "",
+      sortable: false,
+      className: "w-8 text-center",
+      cellClass: "text-center",
+      render: (line) => (
+        <button type="button" className="text-gray-400 hover:text-red-600" onClick={() => removeLine(line.key)} aria-label="Remove line">
+          ×
+        </button>
+      ),
+    },
+  ];
+
+  const itemColumns: Array<ParityColumn<DraftLine>> = [
+    {
+      key: "seq",
+      label: "#",
+      sortable: false,
+      className: "w-10",
+      cellClass: "text-gray-500",
+      render: (line) => itemLines.indexOf(line) + 1,
+    },
+    {
+      key: "itemId",
+      label: "Product/Service",
+      sortable: false,
+      render: (line) => (
+        <ReferenceSelect
+          id={`check-line-item-${line.key}`}
+          value={line.itemId}
+          onChange={(next) => updateLine(line.key, { itemId: next })}
+          options={[]}
+          createKind="item"
+          operatingCompanyId={operatingCompanyId}
+          placeholder="Select item…"
+          size="sm"
+        />
+      ),
+    },
+    {
+      key: "description",
+      label: "Description",
+      sortable: false,
+      render: (line) => (
+        <input
+          className="h-8 w-full rounded border border-gray-300 px-1"
+          value={line.description}
+          onChange={(e) => updateLine(line.key, { description: e.target.value })}
+        />
+      ),
+    },
+    {
+      key: "quantity",
+      label: "Qty",
+      sortable: false,
+      className: "w-20",
+      render: (line) => (
+        <input
+          type="number"
+          min="0"
+          step="0.001"
+          className="h-8 w-full rounded border border-gray-300 px-1"
+          value={line.quantity ?? ""}
+          onChange={(e) => updateLine(line.key, { quantity: e.target.value ? Number(e.target.value) : null })}
+        />
+      ),
+    },
+    {
+      key: "rateDollars",
+      label: "Rate",
+      sortable: false,
+      className: "w-24",
+      render: (line) => (
+        <input
+          type="number"
+          min="0"
+          step="0.0001"
+          className="h-8 w-full rounded border border-gray-300 px-1"
+          value={line.rateDollars ?? ""}
+          onChange={(e) => updateLine(line.key, { rateDollars: e.target.value ? Number(e.target.value) : null })}
+        />
+      ),
+    },
+    {
+      key: "amount",
+      label: "Amount",
+      sortable: false,
+      className: "w-28",
+      cellClass: "text-gray-700",
+      // R-83: computed, never typed -- read-only, mirrors quantity x rate.
+      render: (line) => {
+        const cents = lineAmountCents(line);
+        return cents != null ? formatMoneyCents(cents) : <span className="text-gray-300">—</span>;
+      },
+    },
+    ...sharedLineColumns(operatingCompanyId, updateLine),
+    {
+      key: "remove",
+      label: "",
+      sortable: false,
+      className: "w-8 text-center",
+      cellClass: "text-center",
+      render: (line) => (
+        <button type="button" className="text-gray-400 hover:text-red-600" onClick={() => removeItemLine(line.key)} aria-label="Remove line">
+          ×
+        </button>
+      ),
+    },
+  ];
 
   // R-172 step 5 -- once a bill is added, this IS a Bill Payment (Check): a real check number is
   // required (the underlying engine has never supported print-later) and the category/item lines are
@@ -718,42 +935,18 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
               </div>
             ) : null}
             {billsToPay.length > 0 ? (
-              <table className="mb-2 w-full text-xs">
-                <thead className="text-left text-gray-500">
-                  <tr>
-                    <th className="py-1">Bill</th>
-                    <th className="py-1">Date</th>
-                    <th className="w-28 py-1">Remaining</th>
-                    <th className="w-28 py-1">Pay amount</th>
-                    <th className="w-8 py-1" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {billsToPay.map((b) => {
-                    const remaining = b.balance_cents ?? b.amount_cents - b.paid_cents;
-                    return (
-                      <tr key={b.id} className="border-t border-gray-100">
-                        <td className="py-1">
-                          <EntityLink kind="bill" id={b.id} label={b.display_id ?? b.bill_number ?? undefined} />
-                        </td>
-                        <td className="py-1">{formatDateUS(b.bill_date)}</td>
-                        <td className="py-1">{formatMoneyCents(remaining)}</td>
-                        <td className="py-1">
-                          <MoneyInput
-                            valueCents={billToPayAmounts[b.id] ?? 0}
-                            onChangeCents={(cents) => setBillToPayAmount(b.id, Math.min(cents ?? 0, remaining))}
-                          />
-                        </td>
-                        <td className="py-1 text-center">
-                          <button type="button" className="text-gray-400 hover:text-red-600" onClick={() => removeBillToPay(b.id)} aria-label="Remove bill">
-                            ×
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              <div className="mb-2 rounded border border-gray-200">
+                <ParityTable<VendorBill>
+                  columns={billsToPayColumns}
+                  rows={billsToPay}
+                  rowKey={(b) => b.id}
+                  emptyText="No bills queued."
+                  pageSize={billsToPay.length || 1}
+                  hidePager
+                  enableColumnResize={false}
+                  enableColumnReorder={false}
+                />
+              </div>
             ) : null}
             {openBillsQuery.isLoading ? (
               <div className="text-xs text-gray-400">Loading open bills…</div>
@@ -878,62 +1071,16 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
           <>
         {/* Category details grid (spec step 3) -- always present; a check needs at least one line. */}
         <div className="rounded border border-gray-200">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1300px] text-xs">
-              <thead className="bg-gray-50 text-left text-gray-500">
-                <tr>
-                  <th className="w-10 px-2 py-1">#</th>
-                  <th className="px-2 py-1">Category</th>
-                  <th className="px-2 py-1">Description</th>
-                  <th className="w-28 px-2 py-1">Amount</th>
-                  <th className="w-14 px-2 py-1">Billable</th>
-                  <th className="px-2 py-1">Customer</th>
-                  {LINKAGE_HEADER_CELLS}
-                  <th className="w-8 px-2 py-1" />
-                </tr>
-              </thead>
-              <tbody>
-                {categoryLines.map((line, idx) => (
-                  <tr key={line.key} className="border-t border-gray-100">
-                    <td className="px-2 py-1 text-gray-500">{idx + 1}</td>
-                    <td className="px-2 py-1">
-                      <select
-                        className="h-8 w-full rounded border border-gray-300 px-1"
-                        value={line.categoryMapId ?? ""}
-                        onChange={(e) => updateLine(line.key, { categoryMapId: e.target.value || null })}
-                      >
-                        {/* Account numbers stay hidden by default (verify-account-number-hidden-
-                            by-default.mjs) -- name/kind-code is enough to pick the right category. */}
-                        <option value="">Select category…</option>
-                        {categoryRows.map((row) => (
-                          <option key={row.id} value={row.id}>
-                            {row.account_name ?? `${row.category_kind}/${row.category_code}`}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="px-2 py-1">
-                      <input
-                        className="h-8 w-full rounded border border-gray-300 px-1"
-                        value={line.description}
-                        onChange={(e) => updateLine(line.key, { description: e.target.value })}
-                      />
-                    </td>
-                    <td className="px-2 py-1">
-                      <MoneyInput valueCents={line.amountCents} onChangeCents={(cents) => updateLine(line.key, { amountCents: cents })} />
-                    </td>
-                    <BillableCustomerCells line={line} operatingCompanyId={operatingCompanyId} onUpdate={(patch) => updateLine(line.key, patch)} />
-                    <LinkageCells line={line} operatingCompanyId={operatingCompanyId} onUpdate={(patch) => updateLine(line.key, patch)} />
-                    <td className="px-2 py-1 text-center">
-                      <button type="button" className="text-gray-400 hover:text-red-600" onClick={() => removeLine(line.key)} aria-label="Remove line">
-                        ×
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ParityTable<DraftLine>
+            columns={categoryColumns}
+            rows={categoryLines}
+            rowKey={(line) => line.key}
+            minWidthPx={1300}
+            pageSize={categoryLines.length || 1}
+            hidePager
+            enableColumnResize={false}
+            enableColumnReorder={false}
+          />
           <div className="flex items-center justify-between border-t border-gray-100 px-2 py-2">
             <div className="flex items-center gap-3">
               <button type="button" className="text-xs font-semibold text-blue-700 hover:underline" onClick={() => addLine("category")}>
@@ -957,84 +1104,16 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
           </button>
         ) : (
           <div className="rounded border border-gray-200">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1500px] text-xs">
-                <thead className="bg-gray-50 text-left text-gray-500">
-                  <tr>
-                    <th className="w-10 px-2 py-1">#</th>
-                    <th className="px-2 py-1">Product/Service</th>
-                    <th className="px-2 py-1">Description</th>
-                    <th className="w-20 px-2 py-1">Qty</th>
-                    <th className="w-24 px-2 py-1">Rate</th>
-                    <th className="w-28 px-2 py-1">Amount</th>
-                    <th className="w-14 px-2 py-1">Billable</th>
-                    <th className="px-2 py-1">Customer</th>
-                    {LINKAGE_HEADER_CELLS}
-                    <th className="w-8 px-2 py-1" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {itemLines.map((line, idx) => (
-                    <tr key={line.key} className="border-t border-gray-100">
-                      <td className="px-2 py-1 text-gray-500">{idx + 1}</td>
-                      <td className="px-2 py-1">
-                        <ReferenceSelect
-                          id={`check-line-item-${line.key}`}
-                          value={line.itemId}
-                          onChange={(next) => updateLine(line.key, { itemId: next })}
-                          options={[]}
-                          createKind="item"
-                          operatingCompanyId={operatingCompanyId}
-                          placeholder="Select item…"
-                          size="sm"
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        <input
-                          className="h-8 w-full rounded border border-gray-300 px-1"
-                          value={line.description}
-                          onChange={(e) => updateLine(line.key, { description: e.target.value })}
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.001"
-                          className="h-8 w-full rounded border border-gray-300 px-1"
-                          value={line.quantity ?? ""}
-                          onChange={(e) => updateLine(line.key, { quantity: e.target.value ? Number(e.target.value) : null })}
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.0001"
-                          className="h-8 w-full rounded border border-gray-300 px-1"
-                          value={line.rateDollars ?? ""}
-                          onChange={(e) => updateLine(line.key, { rateDollars: e.target.value ? Number(e.target.value) : null })}
-                        />
-                      </td>
-                      <td className="px-2 py-1 text-gray-700">
-                        {/* R-83: computed, never typed -- read-only, mirrors quantity x rate. */}
-                        {(() => {
-                          const cents = lineAmountCents(line);
-                          return cents != null ? formatMoneyCents(cents) : <span className="text-gray-300">—</span>;
-                        })()}
-                      </td>
-                      <BillableCustomerCells line={line} operatingCompanyId={operatingCompanyId} onUpdate={(patch) => updateLine(line.key, patch)} />
-                      <LinkageCells line={line} operatingCompanyId={operatingCompanyId} onUpdate={(patch) => updateLine(line.key, patch)} />
-                      <td className="px-2 py-1 text-center">
-                        <button type="button" className="text-gray-400 hover:text-red-600" onClick={() => removeItemLine(line.key)} aria-label="Remove line">
-                          ×
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ParityTable<DraftLine>
+              columns={itemColumns}
+              rows={itemLines}
+              rowKey={(line) => line.key}
+              minWidthPx={1500}
+              pageSize={itemLines.length || 1}
+              hidePager
+              enableColumnResize={false}
+              enableColumnReorder={false}
+            />
             <div className="border-t border-gray-100 px-2 py-2">
               <button type="button" className="text-xs font-semibold text-blue-700 hover:underline" onClick={() => addLine("item")}>
                 + Add lines
