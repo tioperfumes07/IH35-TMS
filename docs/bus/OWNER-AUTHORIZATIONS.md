@@ -3553,6 +3553,41 @@ updated (13629: null->114.0, 13635: null->104.0, 13637: null->113.0), re-verifie
 
 ---
 
+## AUTH-116
+issued_at: 2026-09-28T17:10:00.000Z
+scope: accounting.expenses / accounting.expense_lines / expense_attribution.expense_load_links
+INSERT ONLY, USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only, exactly the 18 invoice-number-
+unmatched real candidate rows from feed-input/09-25-26-DRIVER_CARRIER_EXPENSES.xlsx (ROUND 178
+JOB A's own dry-run, re-derived fresh this round). NOT a hand-derived formula -- every row went
+through the SAME sanctioned engine (seedExpense, apps/backend/src/feed/seed-settlement-
+document.service.ts) the AlwaysTrack settlement-import feed already uses for every other
+settlement-sourced expense, never a hand-rolled INSERT. Fixed 4 real, independent, pre-existing
+bugs in that shared function first (same PR) -- confirmed via a rollback-wrapped live call that
+seedExpense() had NEVER successfully created a row before this fix: a stray extra bind parameter
+(bind-count mismatch, threw on every real call), a wrong mdata.vendors column name ("name" instead
+of the real "vendor_name", silently swallowed by an unrelated .catch(() => null)), an incompatible
+trailer_id id-space (mdata.loads.load_trailer_equipment_id and accounting.expenses.trailer_id's
+own FK reference two different tables -- dropped from the INSERT), and a missing expense_lines
+quantity/rate_cents/unit_of_measure trio the item_id column requires together (violated a live
+CHECK constraint). "GAS"/"COMIDAS" (Item="Miscellaneous", no category-alias keyword match) were
+NOT inserted -- resolveExpenseItem refuses rather than guessing, by design.
+action: DATABASE_URL=<prod> npx tsx apps/backend/scripts/ops-r190-import-expenses-xlsx.ts --apply
+(run from apps/backend/)
+expires_at: 2026-09-28T23:10:00.000Z
+status: DONE -- executed live 2026-09-28. Dry-run (every tx rolled back) matched the apply run
+exactly, 18/18 seeded, 0 failed, 0 skipped. Live re-query after apply: 18 new accounting.expenses
+rows in the prior 10 minutes, $2,588.17 total, live USMCA total 532 -> 550. NOTE for the Lead: none
+of these 18 rows touch the 14 loads currently on the Load Costs active board (13624-13639) -- the
+xlsx export's real candidates are all on older, already-closed/settled loads (13587-13619 range).
+The 14 current loads genuinely have zero documented expense data anywhere available yet (their
+settlement/expense-report cycle has not run) -- an honest gap, not an import failure.
+GUARD: scripts/verify-seed-expense-actually-works.mjs -- static + rollback-wrapped live proof that
+seedExpense() still creates a real row; not yet claimed as a registered verify-step (follow-up).
+
+— CC-2
+
+---
+
 ## AUTH-115
 issued_at: 2026-09-28T15:15:00.000Z
 scope: driver_finance.driver_bills INSERT/UPDATE, USMCA (5c854333-6ea5-4faa-af31-67cb272fef80)
