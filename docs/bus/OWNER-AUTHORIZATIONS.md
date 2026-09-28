@@ -3463,3 +3463,26 @@ status: DONE -- executed live 2026-09-28. Settlement --settlement-only --apply t
 — Cursor
 
 ---
+
+## AUTH-112
+issued_at: 2026-09-28T16:10:00.000Z
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only — bank match accept via
+apps/backend/src/accounting/bank-recon/match.service.ts acceptMatchWithResolveDifference ONLY
+(never a raw INSERT into banking.reconciliation_matches). Clears high-confidence unmatched bank
+lines across EVERY counterparty (Bank of America USMCA FREIGHT, Dreamline Diesel Card, Relay Fuel
+Wallet) when ALL hold: amount exact / zero variance, ledger date inside MATCH_WINDOW_STEPS.step2
+(−7/+2), payee similarity >= 0.5, unambiguous both directions. Kinds: expense, fuel_transaction
+(Dreamline ↔ fuel.fuel_transactions), relay_fuel (Relay wallet ↔ integrations.relay_fuel_transactions
+— never parse bank description to build a document). Additive columns
+matched_fuel_transaction_id + matched_relay_fuel_transaction_id (IF NOT EXISTS) and CHECK widen
+for relay_fuel. Faro named Resolve stays 08/13, 08/14, 09/21 (surface every reserve movement on
+09/21 — never net). Bills stay Resolve (aggregate, not 1:1). No QBO write-back. No void. No delete.
+No new GL math beyond the accept handler's existing zero-variance path. No QuickBooks create-check
+writes (report-only).
+action: OWNER_AUTH_ID=AUTH-112 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cursor-r186-counterparties-through-engine.ts --apply
+expires_at: 2026-09-29T04:10:00.000Z
+status: OPEN
+
+— Cursor
+
+---
