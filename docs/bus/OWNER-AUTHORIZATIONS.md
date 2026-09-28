@@ -3226,6 +3226,17 @@ action:
     (dry-run: verified live, 141 rows / $7,075.62, all net-zero-clean, rolled back)
   DATABASE_URL=<prod> OWNER_AUTH_ID=AUTH-103 npx tsx scripts/ops/2026-09-28-cc2-r1558-void-header-posting-status-backfill.ts --apply
 expires_at: 2026-09-28T18:30:00.000Z
-status: OPEN
+status: DONE — executed live 2026-09-28
+
+consumed_at: 2026-09-28T12:35Z
+consumed_by: CC-2
+row_counts: 141 accounting.expenses headers updated (reversed_by_je_id + posting_status='reversed').
+  journal_entry_postings unchanged: 0 net cents across 7,553 postings (structural check — this
+  script writes zero rows to that table; count matches AUTH-101's post-purge figure exactly).
+proof_query: SELECT count(*) FROM accounting.expenses e JOIN accounting.journal_entries je ON
+  je.id = e.journal_entry_id WHERE e.voided_at IS NOT NULL AND e.reversed_by_je_id IS NULL AND
+  je.reversed_by_je_id IS NOT NULL AND e.operating_company_id =
+  '5c854333-6ea5-4faa-af31-67cb272fef80' -> 0 (was 141 before this AUTH ran).
+  node scripts/verify-void-header-matches-postings.mjs -> PASS (was FAIL at 141 before).
 
 — CC-2
