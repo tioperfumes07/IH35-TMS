@@ -927,6 +927,19 @@ const LIVE_DOMAIN_GUARDS = [
       "apps/backend/src/driver-finance/escrow-resolver.service.ts",
     ],
   ],
+  // ROUND 195 (owner order) — "the QuickBooks flags are blocked permanently. Not 'off' - blocked,
+  // so that no seat, script or UI can ever set them true." catalogs.blocked_feature_flags (the
+  // named, auditable list) + BEFORE INSERT/UPDATE triggers on lib.feature_flag_overrides and
+  // lib.feature_flags RAISE EXCEPTION on any write that would resolve a blocked flag_key to
+  // enabled. Catches the next PATCH/migration/ops-script that tries to flip a QBO write-back or
+  // pull flag on, whether or not the trigger itself is touched.
+  [
+    "verify-qbo-flags-blocked",
+    [
+      "apps/backend/src/lib/feature-flags/service.ts",
+      "apps/backend/src/lib/feature-flags/routes.ts",
+    ],
+  ],
 ];
 
 function touchesMoneyPath() {
