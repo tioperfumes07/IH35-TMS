@@ -2312,3 +2312,16 @@ status: OPEN
 ROUND 154.4 residual after AUTH-080. Same class (pre-R145 / non-R145 superseded by AUTH-076 R145 twin); identify-set holes were NULL ref and washout item rename.
 
 — Cursor
+
+---
+
+## AUTH-083
+issued_at: 2026-09-28T06:05:00.000Z
+scope: driver_finance.escrow_ledger INSERT exactly one row for driver 52037e93-484a-4659-ab60-cf2a78f4c647 (USMCA Angel Alfonso Sosa Perez survivor) — amount_cents=+7500, running_balance_cents=20000, description names AUTH-083 — so the ledger tip equals canonical accounting.escrow_accounts.balance_cents=20000 and driver_finance.escrow_balances.current_balance_cents=20000 (already equal). No UPDATE/DELETE; no journal_entry; no change to accounting.escrow_accounts or escrow_balances — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA). Measured: 1 mismatch (projection 20000 ≠ ledger tip 12500); GL already 20000.
+action: OWNER_AUTH_ID=AUTH-083 npx tsx scripts/feed/r145-sync-angel-escrow-ledger-tip.mts --apply
+expires_at: 2026-09-28T12:30:00.000Z
+status: OPEN
+
+ROUND 154.4 unblock. Pre-existing projection/ledger tip drift on this driver (ledger tip stuck at 12500 after Sep-24 settlement churn while GL/projection sit at 20000) fails alwaysRun verify-escrow-balance-reconciles-gl and blocks every money push. Canonical is accounting.escrow_accounts (owner 2026-09-05) — bring the ledger tip to the GL, do not move the GL.
+
+— Cursor
