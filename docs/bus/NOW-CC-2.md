@@ -1,42 +1,48 @@
-# NOW — CC-2 — ROUND 144 — 2026-09-27 5:35 PM CT (22:35Z)
+# NOW — CC-2 — ROUND 159 — 2026-09-28 (10:40Z)
 
-Prior content archived byte-identical: `docs/bus/archive/NOW-CC-2-2026-09-27.md`.
+Prior content archived byte-identical: `docs/bus/archive/NOW-CC-2-2026-09-28.md`.
 
-FAST MERGE ON (`docs/bus/FAST-MERGE-4MIN-LAW.md`). Drained `gh pr list --author @me --state open`
-before starting: 0 open. Fast-merged CC-1's ROUND 143 STEP 1 (#22883 -> `40f58065b5`) after confirming
-its diff is the single-file guard fix and its only red (`locked-guards-heavy` orphan-guard check) is
-pre-existing on main, unrelated to the diff.
+ROUND 144's queue (check-number backfill, Write Check UI, 311 settlement lines, 31 deadhead
+lines) is SUPERSEDED by everything below -- do not act on ROUND 144's text, it predates this
+session's work and is now stale in multiple places (most importantly: it says 5817/5818 do not
+exist and 5819 is held pending CC-1 -- that is no longer true, see below).
 
-**Verified live (Neon `tiny-field-89581227`, `bypass_rls=lucia`, USMCA), corrected Lead's two counts:**
-- 11 missing check numbers (not 13): `1012 1013 1018 1019 1022 1023 1034 1039 1040 1042 1043`.
-  1025/1026 are NOT missing -- both clear real checks ($1,150.00 / $360.39).
-- 18 unmatched (not 14), $19,329.95 total, matching NOTHING in any TMS money table (settlements,
-  driver_bills, expenses, bill_payments): `1004 1006 1008 1010 1011 1020 1021 1024 1025 1026 1031
-  1032 1033 1041 1044 1045 1046 1047`. Boarding for CC-1 (A/P lane) below, same pass per Lead order.
-- The 16 driver-settlement matches the Lead listed are exactly right, verified to the cent.
-- Check-payment schema already live on prod (migration applied): `accounting.expenses` has
-  `payment_type='check'`/`check_number`/`print_status`/`payee_kind`/`print_batch_id` etc., 0 rows used.
-  `banking.check_number_registry` / `check_stock_settings` / `check_print_batches` / `_batch_items`
-  all exist, all empty. Matches "cannot print today."
+**DONE, merged, live this session:**
+- Create Check (155.13 J1): ParityDrawer -> centered Modal, real vendor/customer/item pickers
+  wired, shared close-safe dropdown. PR #22949 + #22951. Live-tested: real check posted,
+  `accounting.expenses` id `f9c5b0e4-644c-4b03-b7c2-424d540ea65f`, balanced GL.
+- AUTH-088/089 (155.7 retraction): bill-posting source-link backfill + settlement 5812 deduction
+  fix. Merged, live-verified.
+- Settlement Creator engine fix: `catalogs.accounts.is_active` didn't exist, engine was 100%
+  non-functional for every settlement. PR #22953. Merged.
+- **5817/5818/5819 are POSTED, real, exact to the signed PDFs to the cent** -- not blocked, not
+  pending. `driver_finance.driver_settlements`: P-0015 (source_document_ref=5817, net $1,617.66),
+  P-0016 (5818, net $1,015.43, includes a Reimbursed-Expenses line the feed JSON had missed
+  entirely), P-0017 (5819, net $1,955.75, cancelled fake display_id `5819` left untouched per
+  R-186.1). PRs #22958/#22959/#22963. Old empty shells P-0001/P-0002/P-0004 intentionally left
+  alone -- that's 155.13 J5's cleanup, not this.
+- ROUND 155.18 JOB 2 guards (fuel-card-rail, driver-2175 partial, one-feed-path,
+  expense-entity-match) + an entity-scope fix in `expenses.routes.ts`. PR #22956. Merged.
 
-**BOARDED FOR CC-1 (A/P lane, not banking):** 18 cleared USMCA checks, $19,329.95, no bill/expense/
-settlement/bill_payment anywhere -> missing A/P, not a numbering gap. List + amounts above. Needed
-before STEP 4 adoption (bills=0 today).
+**IN FLIGHT:** ROUND 155.18 JOB 1, owner-authorized directly (Jorge, in his own words) to purge
+voided rows (25 tables, ~1,950 rows, USMCA) + two confirmed-100%-sample leaf tables
+(`maintenance.pm_auto_wo_log`, `samsara.hos_snapshots` scoped to sample drivers) + close a real
+WORM gap (current trigger exempts `neondb_owner`, unaudited -- demonstrated live, not just
+inferred) + backfill 14 tables missing audit triggers + fix the two background jobs that were
+writing against sample data (root-caused, one stopped by *coincidence* not by any fix -- see
+AUTH ledger). The 58 sample MASTER rows and their full cascade (drivers fan out to 137
+referencing tables, units to 90) are explicitly OUT of this round's scope -- deliberate, not an
+oversight; that cascade needs its own pass. PRs landing under AUTH-091 (or its succeeding number
+if renumbered on collision, per Rule 37/38 discipline this session followed all along).
 
-**NEXT (this session, in order per Lead ROUND 144):**
-1. `check_stock_settings` for bank `1000`/`e83028a5-dcda-4233-b660-5b9923b3d39c` with
-   `next_check_number=1048`; `check_number_registry` backfill 1003-1047, the 11 absent numbers
-   flagged `UNACCOUNTED`. Real backfill, no invented starting number.
-2. Concurrency-safe sequential issuance proof for the next real check (1048+).
-3. Write Check UI + print + void (void = VOID, never delete; will state burn-or-release on the
-   number in that PR).
-4. 311 settlement lines by canonical id (excluding 5817/5818/5819 -- owner says 5817/5818 do not
-   exist and are signed, 5819 was wrongly voided and is real; holding until CC-1 restores them).
-5. 31 deadhead $0.00 lines tabulation.
+**NOT YET STARTED (155.13 J3/J4/J5, still queued in order):**
+3. Faro control totals: tie 2150 to the advances, report both numbers (2150 carries fee+reserve,
+   is NOT the $311,587.00 invoice total). Day-range 09-22..09-25 handed to Cursor's lane (155.16).
+4. 258-row void-header-vs-posting defect: header-only backfill to `posting_status='reversed'`,
+   `scripts/verify-void-header-matches-postings.mjs`. GL already clean, POST NOTHING.
+5. $3,549.13 of net pay on P-0001/P-0003/P-0005/P-0007 (zero lines each) -- read the AlwaysTrack
+   export per driver before deciding which side is wrong. P-0001/0003/0005/0007 remain genuinely
+   open/unbuilt (distinct from the now-superseded P-0002/0004 which were 5819/5818 candidates,
+   now moot since those posted as fresh P-0015/0017/0016 instead).
 
-Quick Pay ruled: Faro discount already in 6400. Print only, post nothing.
-
-Create Check background (superseded by the above -- same feature, ROUND 154 branch never landed):
-local branch `claude/r154-check-engine-cc2-build` @ `9a008d5a22`, 23 commits, never pushed, rebases
-clean onto origin/main. Will fold into the sequence above rather than push as-is (schema in that
-branch predates the live migration state confirmed this turn).
+If you're picking this seat up cold: read this file, not ROUND 144's text above the "DONE" line.
