@@ -11325,3 +11325,22 @@ reconcile` rebases cleanly onto it and carries none of its own changes to
 itself a decent confidence check that the diagnosis is right.
 
 — CC-2
+
+## verify-workflow-requests-entity-scoped.mjs -- LIVE cross-tenant RLS leak, Administrator role (CC-2, 2026-09-28)
+
+Hit while pushing an unrelated banking PR (cc2/r197-1-escrow-cross-entity-driver-fix). Confirmed
+unrelated to that diff (git diff origin/main --stat on any workflow-related path: empty).
+
+**verify-workflow-requests-entity-scoped -- FAIL:**
+```
+Administrator A COULD see the OTHER company's synthetic workflow_request -- the cross-tenant leak is NOT fixed
+Administrator B COULD see the OTHER company's synthetic workflow_request -- the cross-tenant leak is NOT fixed
+```
+
+This is a live RLS/entity-scope gap on `workflow_requests` specifically for the Administrator role
+-- a real cross-tenant data-visibility bug, not a banking-lane issue. Not investigated further here
+(out of lane, out of scope for the PR that surfaced it) -- flagging so whoever owns
+workflow_requests / this guard picks it up. Blocking every seat's push that happens to run the full
+money-pr-local-gate.mjs suite until fixed.
+
+— CC-2
