@@ -787,8 +787,9 @@ export async function createDriverBillArtifacts(
     status: string;
     gross_amount_cents: string | number | null;
     voided_at: string | null;
+    settled_in_settlement_id: string | null;
   }>(
-    `SELECT id::text, status, gross_amount_cents, voided_at
+    `SELECT id::text, status, gross_amount_cents, voided_at, settled_in_settlement_id::text
        FROM driver_finance.driver_bills
       WHERE operating_company_id = $1::uuid
         AND load_id = $2::uuid
@@ -958,10 +959,28 @@ export async function createDriverBillArtifacts(
 
   if (existing && !input.team_id) {
     const existingGross = Number(existing.gross_amount_cents ?? 0);
-    if (existingGross > 0 || String(existing.status) !== "open") {
+    // ROUND 178/182 (2026-09-28) — CLOSE-PATH RECALCULATION. Before this, an existing bill only
+    // ever recalculated on re-entry while its gross was still 0 (the unpriced-tracking-bill ->
+    // first-real-price transition). A bill that had ALREADY minted a PRE-SETTLEMENT ESTIMATE
+    // (priced off whatever miles/rate-card were on the load at mint time) silently froze at that
+    // estimate forever — entering the real, document-sourced mileage at close via Edit Load re-ran
+    // this exact function (DRV-BILL-SKIP-PATHS re-entry, update-load.service.ts) but hit
+    // `existingGross > 0` and returned already_exists without ever touching the row. "Real mileage
+    // at close recalculates the driver bill" was the designed intent, not the actual behavior.
+    // The fix: recalculation stays allowed for ANY open bill that has not yet entered a settlement
+    // (settled_in_settlement_id IS NULL) — not just a $0 one. The instant a bill is attached to a
+    // settlement (or voided/closed), it is settled history and this function must never touch it
+    // again, exactly like the void guard above. This does not change WHEN re-entry happens (still
+    // only on booking/assignment/edit/delivery events that already call this function) — only
+    // whether an already-priced-but-still-open bill is eligible to be recalculated when it does.
+    const isRecalculable = String(existing.status) === "open" && existing.settled_in_settlement_id == null;
+    if (!isRecalculable) {
       return { outcome: "already_exists" };
     }
     if (unpriced || totalBillCents <= 0) {
+      return { outcome: "already_exists" };
+    }
+    if (totalBillCents === existingGross) {
       return { outcome: "already_exists" };
     }
     await client.query(
@@ -980,7 +999,7 @@ export async function createDriverBillArtifacts(
                deadhead_pay_cents = $12
          WHERE id = $1::uuid
            AND status = 'open'
-           AND COALESCE(gross_amount_cents, 0) = 0
+           AND settled_in_settlement_id IS NULL
       `,
       [
         existing.id,
@@ -1237,10 +1256,17 @@ export async function ensureDriverBillArtifactsForLoad(
   // actual driver_bills row from it. Live-proven 2026-08-31: a TEST load priced at $117.60 via a
   // $0.48/mi per-load override in the wizard still produced zero driver_bills / zero
   // settlement_lines end to end.
+  // ROUND 178/182 FINDING (2026-09-28): this SELECT never carried miles_deadhead, so
+  // resolveDriverBasePayCents' own deadhead leg (`load.miles_deadhead x rate_empty`) always
+  // evaluated to 0 through this entry point regardless of what mdata.loads.miles_deadhead actually
+  // held — the same class of "column exists on the row but this caller's SELECT drops it" bug as
+  // SETL-45 (driver_pay_rate_per_mile) above. createDriverBillArtifacts() itself never had this
+  // gap; only the loadRes projection here did.
   const loadRes = await client.query<Record<string, unknown>>(
     `SELECT id, operating_company_id, load_number, customer_id, status,
             assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
-            requires_tarps, miles_shortest, miles_practical, driver_pay_rate_per_mile
+            requires_tarps, miles_shortest, miles_practical, driver_pay_rate_per_mile,
+            miles_deadhead
        FROM mdata.loads
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
