@@ -53,7 +53,11 @@ const PLAN: Row[] = [
   { ln: "13631", wo: "1332528", customer: "Central Freight Management, LLC", driver: "EDUARDO AZAEL FLORES ORTIZ", truck: "T174", trailer: "568871", start: "2026-09-25", end: "2026-09-28", oc: "CALUMET CITY", os: "IL", dc: "LAREDO", ds: "TX", cents: 320000, tt: "dry_van" },
   { ln: "13632", wo: "3-94954-0", customer: "RITE WAY LOGISTICS, INC", driver: "Fernando Mecor Hernandez", truck: "T168", trailer: "FB-56704", start: "2026-09-25", end: "2026-09-28", oc: "ELKHART", os: "IN", dc: "INGLESIDE", ds: "TX", cents: 400000, tt: "flatbed" },
   { ln: "13633", wo: "1776502", customer: "ACE DORAN", driver: "Genaro Guerrero Chavez", truck: "T152", trailer: "FB-56707", start: "2026-09-25", end: "2026-09-28", oc: "LAREDO", os: "TX", dc: "COMSTOCK PARK", ds: "MI", cents: 430000, tt: "flatbed" },
-  { ln: "13634", wo: "3-95379-0", customer: "RITE WAY LOGISTICS, INC", driver: "Genaro Guerrero Chavez", truck: "T152", trailer: "FB-56707", start: "2026-09-28", end: "2026-09-30", oc: "ELKHART", os: "IN", dc: "INGLESIDE", ds: "TX", cents: 0, tt: "flatbed" },
+  // RULING 155.2a: 460000 is OWNER-DECLARED, not rate-con-derived — the signed rate con
+  // (loads_5661902.pdf) states "Total Load Value: UNDECLARED", but that field is the CARGO
+  // insurance/customs value on the steel tube, not the linehaul rate; the document never states
+  // a freight rate at all, so it does not disagree with 460000, it is simply silent on it.
+  { ln: "13634", wo: "3-95379-0", customer: "RITE WAY LOGISTICS, INC", driver: "Genaro Guerrero Chavez", truck: "T152", trailer: "FB-56707", start: "2026-09-28", end: "2026-09-30", oc: "ELKHART", os: "IN", dc: "INGLESIDE", ds: "TX", cents: 460000, tt: "flatbed" },
   { ln: "13635", wo: "2035346", customer: "C and A TRANSPORTATION & LOGISTICS INC", driver: "HUGO GAYTAN SARABIA", truck: "T148", trailer: "10222", start: "2026-09-28", end: "2026-10-01", oc: "BRIDGETON", os: "NJ", dc: "San Antonio", ds: "TX", cents: 460000, tt: "refrigerated_van" },
   { ln: "13636", wo: "2648846", customer: "Westgate Global Logistics", driver: "Leonel Antonio Morales", truck: "T175", trailer: "FB-56709", start: "2026-09-25", end: "2026-09-28", oc: "WILKES BARRE", os: "PA", dc: "ROMA", ds: "TX", cents: 520000, tt: "flatbed" },
   { ln: "13637", wo: "2648813", customer: "Westgate Global Logistics", driver: "Neftali Coronado Urbano", truck: "T176", trailer: "FB-56713", start: "2026-09-28", end: "2026-10-01", oc: "WILKES BARRE", os: "PA", dc: "ROMA", ds: "TX", cents: 0, tt: "flatbed" },
@@ -192,7 +196,11 @@ try {
       save_mode: "book_dispatch",
       assigned_primary_driver_id: ids.driver, assigned_unit_id: ids.unit, assigned_trailer_unit_id: ids.trailer,
       trailer_type: r.tt, customer_po_number: r.wo,
-      override_reason: `R-147 (AUTH-077): load ${r.ln} is live on the owner's AlwaysTrack board and missing from USMCA — booked through the real book-load engine from that board row. Completed/factored but unsettled (open tour) per the owner's 2026-09-28 ruling; no settlement number assigned.`,
+      override_reason: `R-147 (AUTH-077): load ${r.ln} is live on the owner's AlwaysTrack board and missing from USMCA — booked through the real book-load engine from that board row. Completed/factored but unsettled (open tour) per the owner's 2026-09-28 ruling; no settlement number assigned.${
+        r.ln === "13634"
+          ? " RULING 155.2a: rate 460000 cents is OWNER-DECLARED, NOT rate-con-derived — loads_5661902.pdf states no freight rate at all (its \"Total Load Value: UNDECLARED\" field is the cargo/customs value, not the linehaul); do not cite that PDF as the source for this number."
+          : ""
+      }`,
       override_rules: [
         { rule_code: "WF-HOS-VIOLATION", reason: `R-147 ${r.ln}` },
         { rule_code: "WF-MED-CARD-MISSING", reason: `R-147 ${r.ln}` },
