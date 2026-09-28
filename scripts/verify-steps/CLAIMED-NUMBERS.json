@@ -9199,5 +9199,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-28",
     "purpose": "verify-fuel-location-is-a-city"
+  },
+  "11683": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-28",
+    "purpose": "verify-no-match-persisted-outside-accept-handler"
   }
 }
