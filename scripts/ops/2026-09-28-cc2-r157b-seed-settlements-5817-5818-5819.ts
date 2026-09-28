@@ -30,7 +30,7 @@
  *
  * Usage:
  *   DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r157b-seed-settlements-5817-5818-5819.ts --dry-run
- *   OWNER_AUTH_ID=AUTH-095 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r157b-seed-settlements-5817-5818-5819.ts --apply
+ *   OWNER_AUTH_ID=AUTH-096 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r157b-seed-settlements-5817-5818-5819.ts --apply
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -44,7 +44,7 @@ import { setSettlementSourceDocumentRef } from "../../apps/backend/src/driver-fi
 import type { SettlementCreatorDraft, SettlementCreatorLoadBlock } from "../../apps/backend/src/driver-finance/settlement-creator.types.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const AUTH_ID = "AUTH-095";
+const AUTH_ID = "AUTH-096";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd"; // identity.users tioperfumes07@gmail.com, role Owner
 
