@@ -9239,5 +9239,15 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-28",
     "purpose": "verify-banking-filters-and-reconcile-complete"
+  },
+  "11715": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-28",
+    "purpose": "verify-no-nested-transactions-in-withcurrentuser"
+  },
+  "11719": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-28",
+    "purpose": "verify-money-updates-are-entity-scoped-and-checked"
   }
 }
