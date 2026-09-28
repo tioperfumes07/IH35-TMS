@@ -265,7 +265,12 @@ export function dedupeCompanyExpenses(expenses: readonly TruthExpenseLine[]): Ar
   const exactSeen = new Set<string>();
   const afterExactDedupe: TruthExpenseLine[] = [];
   for (const e of expenses) {
-    const exactKey = `${e.load ?? ""} ${e.date} ${e.vendor} ${e.description} ${dollarsToCents(e.amount)}`;
+    // ROUND 155 (verify-no-nul-bytes-in-source): these composite dedup keys used literal NUL bytes
+    // as their separator, which made the whole file invisible to `grep -r`. A plain space is NOT a
+    // safe replacement -- a vendor or description containing a space would let two different
+    // expense lines collapse into one key and silently drop a real expense. JSON.stringify over the
+    // parts is unambiguous (every part is quoted and escaped), printable, and greppable.
+    const exactKey = JSON.stringify([e.load ?? "", e.date, e.vendor, e.description, dollarsToCents(e.amount)]);
     if (exactSeen.has(exactKey)) continue;
     exactSeen.add(exactKey);
     afterExactDedupe.push(e);
@@ -273,7 +278,7 @@ export function dedupeCompanyExpenses(expenses: readonly TruthExpenseLine[]): Ar
 
   const groups = new Map<string, TruthExpenseLine[]>();
   for (const e of afterExactDedupe) {
-    const groupKey = `${e.load ?? ""} ${dollarsToCents(e.amount)}`;
+    const groupKey = JSON.stringify([e.load ?? "", dollarsToCents(e.amount)]);
     const bucket = groups.get(groupKey) ?? [];
     bucket.push(e);
     groups.set(groupKey, bucket);

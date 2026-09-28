@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { randomUUID } from "node:crypto";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
@@ -119,7 +120,27 @@ export async function registerPhotoComparisonRoutes(app: FastifyInstance) {
     const chunks: Buffer[] = [];
     for await (const chunk of file.file) chunks.push(Buffer.from(chunk));
     const buffer = Buffer.concat(chunks);
-    const r2ObjectKey = `trip-photos/${query.data.load_uuid ?? "no-load"}/${query.data.angle_label}/${file.filename ?? "photo.jpg"}`;
+    // ROUND 155 (verify-dedupe-keys-cannot-collide): angle_label and the client-supplied filename
+    // used to go RAW into the object key. Both are free text, and "/" is the key's own separator:
+    // a label or filename carrying "/" (or "..") silently re-nests the object, so two different
+    // uploads can land on the same key and one overwrites the other -- and a "../" segment escapes
+    // the trip-photos/ prefix entirely. Each free-text segment is now reduced to a safe slug, and
+    // a per-upload uuid makes the key unique even when two files slug identically.
+    const safeSegment = (value: unknown, fallback: string): string => {
+      const slug = String(value ?? "")
+        .normalize("NFKD")
+        .replace(/[^A-Za-z0-9._-]+/g, "-")
+        .replace(/^[.-]+|[.-]+$/g, "")
+        .slice(0, 120);
+      return slug.length > 0 ? slug : fallback;
+    };
+    const r2ObjectKey = [
+      "trip-photos",
+      safeSegment(query.data.load_uuid, "no-load"),
+      safeSegment(query.data.angle_label, "no-angle"),
+      randomUUID(),
+      safeSegment(file.filename, "photo.jpg"),
+    ].join("/");
 
     try {
       const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>

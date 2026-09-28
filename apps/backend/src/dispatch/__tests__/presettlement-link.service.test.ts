@@ -32,8 +32,12 @@ function makeClient(overrides: { openSettlement?: { id: string; display_id: stri
         driver_id: overrides.currentDriver ?? DRIVER_ID, unit_id: pending?.[3] ?? null,
       }] };
       if (/SELECT audit\.append_event/.test(sql)) return { rows: [] };
-      // INSTANT PRE-SETTLEMENT NUMBER (owner 2026-09-11): allocateNextSettlementSourceDocumentRef
-      // mints the next AllwaysTrack doc number (floor 5803 -> 5804) when a new tour opens.
+      // INSTANT PRE-SETTLEMENT NUMBER (owner 2026-09-11) as amended by R-186.1 (owner 2026-09-25):
+      // opening a new tour mints OUR OWN opco-scoped P-series number (P-NNNN), not AlwaysTrack's
+      // continuing document sequence. The legacy source_document_ref allocator branch is kept
+      // because setSettlementSourceDocumentRef still uses it when the owner types a real
+      // AlwaysTrack number into the Creator field.
+      if (sql.includes("substring(display_id from '^P-(")) return { rows: [{ next: "P-5804" }] };
       if (/AS next[\s\S]*FROM driver_finance\.driver_settlements/.test(sql) && sql.includes("source_document_ref")) return { rows: [{ next: "5804" }] };
       if (/SELECT id, display_id[\s\S]*FROM driver_finance\.driver_settlements/.test(sql)) {
         return { rows: overrides.openSettlement ? [{ ...overrides.openSettlement, is_continuation: overrides.closedContinuation || overrides.historicalContinuation || false, is_closed: overrides.closedContinuation ?? false, has_other_nb: overrides.hasOtherNb ?? false }] : [] };
@@ -59,9 +63,10 @@ function makeClient(overrides: { openSettlement?: { id: string; display_id: stri
       if (/COALESCE\(\s*\(SELECT ls\.scheduled_arrival_at/.test(sql)) return { rows: [{ trip_started_at: "2026-07-03T08:00:00.000Z", is_sample_data: false }] };
       if (/SELECT EXISTS \(SELECT 1 FROM lib\.trace_counters/.test(sql)) return { rows: [{ exists: true }] };
       // P0-B numbering-law fix: allocateSettlementDisplayId now calls
-      // allocateNextSettlementSourceDocumentRef, never the retired next_settlement_display_id.
+      // R-186.1: allocateSettlementDisplayId mints our own opco-scoped P-series (P-NNNN),
+      // never AlwaysTrack's continuing sequence and never the retired next_settlement_display_id.
       if (sql.includes("pg_advisory_xact_lock")) return { rows: [] };
-      if (sql.includes("GREATEST($2::int, COALESCE(MAX")) return { rows: [{ next: "5804" }] };
+      if (sql.includes("substring(display_id from '^P-(")) return { rows: [{ next: "P-5804" }] };
       if (/SELECT lib\.next_trace_no/.test(sql)) return { rows: [{ seq: "1" }] };
       if (/INSERT INTO driver_finance\.driver_settlements/.test(sql)) return { rows: [{ id: "new-settlement-id" }] };
       if (/SELECT id, status, trip_closed_at::text, tour_id::text FROM driver_finance\.driver_settlements\s+WHERE id = \$1::uuid/.test(sql)) return { rows: overrides.targetClosed ? [] : [{ id: OPEN_SETTLEMENT_ID, tour_id: TOUR_ID, status: overrides.closedContinuation ? "closed" : "open", trip_closed_at: overrides.closedContinuation ? "2026-09-10" : null }] };
@@ -141,14 +146,23 @@ describe("presettlement link — GO-22", () => {
     expect(result.status).toBe("confirmed");
     expect(result.settlement_id).toBe("new-settlement-id");
     const created = calls.find(c => /INSERT INTO driver_finance\.driver_settlements/.test(c.sql));
-    expect(created?.values[2]).toBe("5804");
+    expect(created?.values[2]).toBe("P-5804");
     expect(calls.some(c => c.sql.includes("lib.next_trace_no"))).toBe(false);
     expect(calls.some((c) => /INSERT INTO driver_finance\.driver_settlements/.test(c.sql))).toBe(true);
     expect(calls.some((c) => /UPDATE mdata\.loads SET presettlement_link_id/.test(c.sql))).toBe(true);
-    // INSTANT PRE-SETTLEMENT NUMBER (owner 2026-09-11): opening a new tour mints the next
-    // AllwaysTrack doc number (allocator) and writes it to source_document_ref right away.
-    expect(calls.some((c) => c.sql.includes("AS next") && c.sql.includes("source_document_ref"))).toBe(true);
-    expect(calls.some((c) => /SET source_document_ref = \$3/.test(c.sql))).toBe(true);
+    // R-186.1 (owner ruling 2026-09-25 06:35 PM CT) SUPERSEDES the 2026-09-11 "instant
+    // pre-settlement number" rule this test used to assert. Opening a tour now mints OUR OWN
+    // opco-scoped P-series on display_id and must NOT invent an AlwaysTrack document number:
+    // the old path wrote FAKE AlwaysTrack numbers (5817/5818/5819) into source_document_ref,
+    // sitting next to the real signed-document numbers and indistinguishable from them. A real
+    // AlwaysTrack number enters exactly one way — the owner types it into the editable Creator /
+    // Pre-Settlement header — so source_document_ref stays NULL until he does.
+    // Owner authorization to rewrite this assertion to the newer ruling: 2026-09-28.
+    // Locked in static code by scripts/verify-r186-1-presettlement-p-series.mjs.
+    // All three halves asserted, so a regression back to fake AT numbers fails HERE.
+    expect(calls.some((c) => c.sql.includes("substring(display_id from '^P-("))).toBe(true);
+    expect(calls.some((c) => c.sql.includes("AS next") && c.sql.includes("source_document_ref"))).toBe(false);
+    expect(calls.some((c) => /SET source_document_ref = \$3/.test(c.sql))).toBe(false);
   });
 
   it("GAP-PRESETTLEMENT-PERIOD-NULL: create_new derives period_start/period_end from the load's own trip-start date, never leaves them NULL", async () => {
@@ -387,25 +401,35 @@ describe("presettlement link — GO-22", () => {
 
 describe("REG-010/011 settlement identity", () => {
   it("uses the settlement sequence without consuming a load number", async () => {
-    // P0-B numbering-law fix: allocateSettlementDisplayId now calls
-    // allocateNextSettlementSourceDocumentRef (continues the real AlwaysTrack sequence, floor
-    // 5803), never the retired next_settlement_display_id synthetic S-YYYY-NNNN counter. periodDate
-    // is accepted for call-site compatibility but no longer used -- the sequence is opco-scoped,
-    // not date-scoped, so it is not part of either query's bound values.
+    // R-186.1 numbering law (owner 2026-09-25): allocateSettlementDisplayId mints OUR OWN
+    // opco-scoped P-series (P-NNNN) -- never AlwaysTrack's continuing sequence (that number is
+    // typed by the owner into source_document_ref via the editable Creator field) and never the
+    // retired next_settlement_display_id synthetic S-YYYY-NNNN counter. periodDate is accepted for
+    // call-site compatibility but no longer used -- the series is opco-scoped, not date-scoped, so
+    // it is not part of either query's bound values.
     const { client, calls } = makeClient();
-    await expect(allocateNextSettlementDisplayId(client as never, OPCO, "2026-07-03")).resolves.toBe("5804");
+    await expect(allocateNextSettlementDisplayId(client as never, OPCO, "2026-07-03")).resolves.toBe("P-5804");
     expect(calls).toHaveLength(2);
     expect(calls[0].sql).toContain("pg_advisory_xact_lock");
-    expect(calls[1].sql).toContain("GREATEST($2::int, COALESCE(MAX");
-    expect(calls[1].values).toEqual([OPCO, 5803]);
+    expect(calls[1].sql).toContain("substring(display_id from '^P-(");
+    expect(calls[1].values).toEqual([OPCO]);
   });
   it.each([undefined, null, "", "S-13734", "S-2026-42", "13734.5", "-5"])("rejects invalid allocator output %s instead of inventing an ID", async (next) => {
     const client = { query: vi.fn().mockResolvedValue({ rows: [{ next }] }) };
     await expect(allocateNextSettlementDisplayId(client, OPCO, "2026-07-03")).rejects.toThrow("Settlement number allocation failed");
   });
-  it("accepts a bare AlwaysTrack-sequence number -- no S- prefix required or rejected", async () => {
+  it("REFUSES a bare AlwaysTrack-sequence number on display_id -- that number belongs in source_document_ref", async () => {
+    // R-186.1 (owner ruling 2026-09-25) REVERSED what this test used to assert. display_id is
+    // OURS (P-NNNN). A bare AlwaysTrack document number is the owner's typed value and lands in
+    // source_document_ref through setSettlementSourceDocumentRef -- never here. If the allocator
+    // ever hands back a bare number again it must THROW rather than silently stamp AlwaysTrack's
+    // sequence onto our own series, because a fake number that looks exactly like a real signed
+    // one is the defect R-186.1 exists to prevent.
+    // Owner authorization to rewrite this test to the newer ruling: 2026-09-28.
     const client = { query: vi.fn().mockResolvedValue({ rows: [{ next: "13734" }] }) };
-    await expect(allocateNextSettlementDisplayId(client, OPCO, "2026-07-03")).resolves.toBe("13734");
+    await expect(allocateNextSettlementDisplayId(client, OPCO, "2026-07-03")).rejects.toThrow(
+      "Settlement number allocation failed"
+    );
   });
 });
 
