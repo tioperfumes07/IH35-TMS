@@ -16,6 +16,7 @@ import {
 import { ciRunGuardSet, runStatic, STATIC_RESULT_CATEGORIES } from "./verify-static.mjs";
 import { ensureFreshGateStepMap } from "./generate-gate-step-map.mjs";
 import { ensureVerifyStaticOnce } from "./static-sweep-proof.mjs";
+import { loadHeadBaseline } from "./verify-static-ratchet.mjs";
 
 const MODULE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -760,7 +761,21 @@ export function attemptStaleBaseRecovery(root) {
     stepMap,
     ciSet: ciRunGuardSet(root),
   });
-  const gatedFails = results.filter((r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST && r.gated);
+  // GR-1: a gated FAIL that is already in VERIFY-STATIC-BASELINE.failingNames is pre-existing
+  // main rot, not new rot introduced by this branch's delta. The freshness check exists to catch
+  // NEW failures introduced by main's advance, not to re-fail every known-baselined guard on
+  // every push that happens to touch a migration file. Filter out baselined names so the
+  // freshness gate only blocks on NEW (extra) failures, matching verify-static's own ratchet.
+  let baselineNames = null;
+  try {
+    const baseline = loadHeadBaseline();
+    if (baseline.status === "seeded") baselineNames = new Set(baseline.failingNames);
+  } catch { /* unseeded or missing — treat as no baseline, fail on everything */ }
+  const gatedFails = results.filter((r) => {
+    if (r.kind !== STATIC_RESULT_CATEGORIES.FAIL_TEST || !r.gated) return false;
+    if (baselineNames && baselineNames.has(r.name)) return false;
+    return true;
+  });
   if (gatedFails.length) {
     return {
       ok: false,

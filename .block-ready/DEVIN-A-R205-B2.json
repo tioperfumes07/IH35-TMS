@@ -1,0 +1,30 @@
+{
+  "block_id": "DEVIN-A-R205-B2",
+  "branch": "devin-a/r204-b2-session-middleware",
+  "status": "BUILD",
+  "classification": "NON-FINANCIAL",
+  "phase": "Security",
+  "task": "B2: session-middleware IH35_TEST_AUTH_BYPASS NODE_ENV gate + boot assertion + freshness check GR-1 baseline filter fix",
+  "agent": "Devin-A",
+  "is_read_only": false,
+  "workspace_path": "/Users/jorgemunoz/IH35-TMS-devin",
+  "allowed_files": [
+    "apps/backend/src/auth/session-middleware.ts",
+    "scripts/verify-b2-session-bypass-node-env-gate.mjs",
+    "scripts/branch-precheck-push.mjs",
+    "docs/bus/09-28-2026-Devin-A-ROUND-204-LANE-CROSS.md",
+    ".block-ready/DEVIN-A-R205-B2.json"
+  ],
+  "preview_provided": false,
+  "extra_gates": [],
+  "runtime_path": "src",
+  "db_required": false,
+  "guard_required": true,
+  "acceptance": [
+    {
+      "kind": "guard",
+      "script": "scripts/verify-b2-session-bypass-node-env-gate.mjs",
+      "wired_into": "scripts/.gate-step-map.json (diff-scoped to session-middleware.ts)"
+    }
+  ]
+}

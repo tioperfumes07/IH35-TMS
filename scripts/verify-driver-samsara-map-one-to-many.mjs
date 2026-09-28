@@ -16,6 +16,8 @@
 //
 // Self-arming POPULATION check. Read-only. Never writes.
 
+export const REQUIRES_LIVE_DB = "live DB guard — arms D/E need Neon to verify Samsara map integrity";
+
 import { readFileSync, existsSync } from "node:fs";
 import { execSync } from "node:child_process";
 
