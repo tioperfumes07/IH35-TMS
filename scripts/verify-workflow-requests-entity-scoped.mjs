@@ -109,16 +109,20 @@ async function main() {
         const [idA, idB] = insertedIds;
 
         // #3 -- read AS Administrator A (real session, no bypass): must see A's row, must NOT see B's.
+        // DATABASE_URL is typically neondb_owner (rolbypassrls=true). BYPASSRLS ignores FORCE RLS, so
+        // the cross-tenant proof MUST run as ih35_app (NOBYPASSRLS) — same role the app pool uses.
         for (const [label, userId, ownId, otherId] of [
           ["A", userA, idA, idB],
           ["B", userB, idB, idA],
         ]) {
           await client.query(`SELECT set_config('app.bypass_rls', '', true)`);
           await client.query(`SELECT set_config('app.current_user_id', $1::text, true)`, [userId]);
+          await client.query(`SET LOCAL ROLE ih35_app`);
           const visible = await client.query(
             `SELECT id::text FROM mdata.workflow_requests WHERE id = ANY($1::uuid[])`,
             [[idA, idB]]
           );
+          await client.query(`RESET ROLE`);
           const visibleIds = new Set(visible.rows.map((r) => r.id));
           if (!visibleIds.has(ownId)) {
             failures.push(`Administrator ${label} could NOT see their own company's synthetic workflow_request -- RLS is over-restrictive`);

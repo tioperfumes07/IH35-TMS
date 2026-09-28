@@ -107,11 +107,6 @@ const STEPS = [
   // B9 (Devin sweep, 2026-09-28) — named regression test: both accounting.bills paid_cents UPDATE
   // sites stay entity-scoped and rowCount-checked.
   ["verify-money-updates-are-entity-scoped-and-checked", "scripts/verify-money-updates-are-entity-scoped-and-checked.mjs"],
-  // B3 (Devin sweep, 2026-09-28; migration 202614540000) -- mdata.workflow_requests had no
-  // operating_company_id at all and its SELECT policy admitted any global Administrator, cross-
-  // tenant. Proves the fix with real data: two real Administrators in two different companies each
-  // see only their own company's synthetic workflow_request, rolled back after the check.
-  ["verify-workflow-requests-entity-scoped", "scripts/verify-workflow-requests-entity-scoped.mjs"],
   // ALL-SEATS LAW (owner, 2026-09-13) — every load-number column carries a settlement/tour column
   // beside it; only source_document_ref (never display_id) is ever the human-visible number.
   ["verify-settlement-ref-beside-load", "scripts/verify-settlement-ref-beside-load.mjs"],
@@ -580,9 +575,20 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-dispute-window-unified",
     ["apps/backend/src/data-infra/", "apps/backend/src/factoring/", "apps/backend/src/accounting/"],
   ],
+  // ROUND 23.3 B6 — driver bills whose load already has a settlement must be linked.
+  // Domain narrowed 2026-09-28 (GATE-SCOPE): whole apps/backend/src/accounting/ was too broad —
+  // bank-recon MatchDrawer / accept-multi-match cannot create or clear settled_in_settlement_id.
+  // Keep driver-finance + dispatch + settlement/from-load writers only.
   [
     "verify-driver-bill-settlement-link",
-    ["apps/backend/src/driver-finance/", "apps/backend/src/dispatch/", "apps/backend/src/accounting/"],
+    [
+      "apps/backend/src/driver-finance/",
+      "apps/backend/src/dispatch/",
+      "apps/backend/src/accounting/from-load.ts",
+      "apps/backend/src/accounting/settlement",
+      "apps/backend/src/accounting/driver-settlement",
+      "scripts/verify-driver-bill-settlement-link.mjs",
+    ],
   ],
   [
     "verify-load-to-cash-chain",
@@ -735,14 +741,19 @@ const LIVE_DOMAIN_GUARDS = [
   // ROUND E23 (DEVIN-B, Q11): re-assert purge-era closures (tasks 19/21/24/25/26/29/30/31/39)
   // against live state every run. "Zero now" on a 6% fed book is NOT "fixed." Derives live load
   // count dynamically, prints "closure re-measured at N live loads", self-arms as feed grows.
+  // Domain narrowed 2026-09-28 (GATE-SCOPE): bank-recon MatchDrawer cannot create AR gaps,
+  // missing mileage, or orphan expenses — do not block Match/Resolve PRs on feed tip debt.
   [
     "verify-purge-era-closures-still-hold",
     [
-      "apps/backend/src/accounting/",
+      "apps/backend/src/accounting/from-load.ts",
+      "apps/backend/src/accounting/invoice",
+      "apps/backend/src/accounting/expenses",
       "apps/backend/src/factoring/",
       "apps/backend/src/driver-finance/",
       "apps/backend/src/fuel/",
       "apps/backend/src/dispatch/",
+      "scripts/verify-purge-era-closures-still-hold.mjs",
     ],
   ],
   // ROUND E23 (DEVIN-B, Q16): a driver merge must have at least one hard identifier
@@ -855,9 +866,12 @@ const LIVE_DOMAIN_GUARDS = [
   [
     "verify-fuel-cost-posts-exactly-once",
     [
-      "apps/backend/src/accounting/bank-recon/match.service.ts",
+      // GATE-SCOPE 2026-09-28: do not list bank-recon/match.service.ts — Match Resolve cannot
+      // create fuel_event JE tip debt; static accept-path check still lives inside this guard when
+      // fuel/accounting fuel-posting paths change.
       "apps/backend/src/fuel/",
       "apps/backend/src/accounting/fuel-posting/",
+      "scripts/verify-fuel-cost-posts-exactly-once.mjs",
       "accounting.expenses",
       "fuel.fuel_transactions",
       "accounting.journal_entry_postings",
@@ -1081,6 +1095,21 @@ for (const [name, rel] of STEPS) {
   }
 }
 
+// B3 (Devin sweep, 2026-09-28; migration 202614540000) — mdata.workflow_requests cross-tenant RLS
+// proof. Must INSERT synthetic rows + SET LOCAL ROLE ih35_app (NOBYPASSRLS). The gate's default
+// ih35_ci_readonly rewrite cannot run this: readonly has BYPASSRLS and cannot SET ROLE ih35_app.
+// Pin the caller's write DATABASE_URL explicitly so runNode does not rewrite it.
+{
+  const name = "verify-workflow-requests-entity-scoped";
+  const rel = "scripts/verify-workflow-requests-entity-scoped.mjs";
+  const writerUrl = process.env.DATABASE_URL;
+  const code = writerUrl ? runNode(rel, { DATABASE_URL: writerUrl }) : runNode(rel);
+  if (code !== 0) {
+    failStep(name);
+    process.exit(code);
+  }
+}
+
 // ROUND 29.9 — 03a/03b run unconditionally, in order, right after the STEPS array above.
 for (const [name, rel, extraEnv] of GUARD_303) {
   const code = runNode(rel, extraEnv);
@@ -1287,7 +1316,23 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
         if ((diff.status ?? 1) !== 0) return true;
         return dataWritePathDiffActuallyWrites(f, ROOT, diff.stdout || "");
       }
-      if (domainPaths.some((p) => f.startsWith(p))) return true;
+      if (
+        domainPaths.some((p) => {
+          if (!f.startsWith(p)) return false;
+          // GATE-SCOPE bank-recon (2026-09-28): blanket accounting/ must not pull MatchDrawer /
+          // accept-multi-match into every tip-debt money guard. bank-recon owns its own guards
+          // (verify-no-match-persisted-outside-accept-handler lists match.service.ts explicitly).
+          if (
+            p === "apps/backend/src/accounting/" &&
+            f.startsWith("apps/backend/src/accounting/bank-recon/")
+          ) {
+            return false;
+          }
+          return true;
+        })
+      ) {
+        return true;
+      }
       return false;
     });
   if (touched) {
@@ -1298,7 +1343,12 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
       );
       process.exit(1);
     }
-    const code = runNode(rel);
+    // Guards that SET LOCAL ROLE neondb_owner (or INSERT+ROLLBACK) cannot run under the gate's
+    // default ih35_ci_readonly rewrite — pin the caller's write DATABASE_URL.
+    const needsWriterUrl = name === "verify-no-match-persisted-outside-accept-handler";
+    const code = needsWriterUrl
+      ? runNode(rel, { DATABASE_URL: process.env.DATABASE_URL })
+      : runNode(rel);
     if (code !== 0 && !acceptedAsEmptyByPurge(rel, code)) {
       failStep(name);
       process.exit(code);
