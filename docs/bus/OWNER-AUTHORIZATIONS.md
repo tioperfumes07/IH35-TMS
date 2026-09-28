@@ -2513,3 +2513,55 @@ script computes deductions_total/net_pay as a SUM of the resulting active lines 
 does not land on the Lead's own target.
 
 — CC-2
+
+---
+
+## AUTH-090
+_(NUMBERING NOTE: originally filed as AUTH-089, which collided with CC-2's own AUTH-089
+(ROUND 155.11-B settlement 5812 deduction fix, landed on main first). Renamed to AUTH-090, the
+next free number, before this authorization was ever executed. scope/action/expires_at
+unchanged.)_
+
+issued_at: 2026-09-28T09:50:00.000Z
+scope: accounting.expenses UPDATE ONLY (voided_at/void_reason/voided_by_user_id, via the existing
+stampDocumentVoided() single writer only — no direct UPDATE, no INSERT, no DELETE), exactly the
+rows a deterministic (load_id, total_amount_cents) clustering identifies as a duplicate document
+representing the same real purchase already counted by another live row in the same cluster — 75
+clusters, 87 rows, $3,094.66, live-measured and dry-run-verified this round. Within each cluster:
+the "R145 SETTL"-memo row is kept when one exists (the current canonical AlwaysTrack-fed row, same
+precedent AUTH-076/078/080/082 already established and executed for this exact reconciliation
+class); every other row in the cluster is voided. No journal_entry touched, no GL posting changed,
+no amount_cents changed on any surviving row — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80
+(USMCA) only.
+action: OWNER_AUTH_ID=AUTH-090 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc3-void-duplicate-expense-documents.ts
+expires_at: 2026-09-28T15:50:00.000Z
+status: OPEN
+
+verify-alwaystrack-parity live-measured this round (USMCA): 30 of 34 in-scope documents
+mismatched, every mismatch on the EXPENSES dimension only (fuel/line_haul/driver_payment/
+driver_net all reconcile exactly to target). Live investigation (not assumed) traced this to the
+same real company-expense DOCUMENT existing as multiple live, non-voided accounting.expenses rows
+— fed independently across time by the R145 settlement bulk feed (ran 2026-09-28 05:15:05Z), an
+older per-fuel-transaction feed (source_fuel_transaction_id set, "amount as charged, not derived",
+R-168), and assorted older manual "R-164"/"R-185 reissue" rows. AUTH-080 (Cursor, CONSUMED
+05:47Z) already voided 62 rows of this same class via a narrower natural-key match (source_settlement_ref
++ expense_line item_id); this round's clustering independently re-derives the SAME
+duplicate-purchase signature (load + exact dollar amount) and finds 87 further rows AUTH-080's
+narrower match did not catch, because these pairs use different item_id/ref schemes across their
+two creation paths — the identical "identify-set holes" class AUTH-082 patched a 2-row sample of
+for settlement 5812 only; this generalizes that fix across every live USMCA document.
+
+Owner order (2026-09-28, verbatim, in chat): "THE PARITY BLOCKER — STOP WAITING ON CURSOR. Lane
+rule is SUSPENDED by owner order... verify-alwaystrack-parity is 30/34. FIX IT YOURSELF, add
+LANE-CROSS to the commit, ship your queued work." ROUND 133 P0 itself (this AUTH file's own
+claim-before-write law) was not suspended and still governs — this entry lands on main via a
+minimal, docs-only commit (no money path touched, so verify-alwaystrack-parity does not gate this
+specific push) BEFORE the void script's --apply run, exactly as every other AUTH this session has
+required.
+
+DRY_RUN=1 verified clean this round: clusters=75, planned_void_count=87,
+planned_void_cents=309466, actually_voided=87 (stampDocumentVoided ran for real inside the
+rolled-back transaction, confirming every row is a genuine, unvoided, matching target — not just a
+count).
+
+— Claude

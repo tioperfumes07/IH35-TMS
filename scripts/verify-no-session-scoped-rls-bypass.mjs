@@ -34,6 +34,16 @@
 import { readdirSync, readFileSync, existsSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
+// verify-no-silent-db-skip.mjs flagged this file for referencing DATABASE_URL with no live-DB
+// fail-closed path -- a false positive: this guard is a pure filesystem/source-text scanner (see
+// the header above) and never opens a database connection at all. Its only "DATABASE_URL"
+// occurrences are inside string-literal EXAMPLE code (the `bad`/`fixedByRefusal` fixtures below,
+// used to selftest the pattern-matcher itself), not a live check this guard performs.
+export const ALLOW_OFFLINE_SKIP =
+  "pure static source-text scan for the session-scoped-bypass-without-pooler-refusal anti-pattern " +
+  "across scripts/*.mjs — never connects to a database; its DATABASE_URL references are inside " +
+  "string-literal example fixtures used by its own selftest.";
+
 const LABEL = "verify:no-session-scoped-rls-bypass";
 const ROOT = "scripts";
 const BASELINE_PATH = join(ROOT, "verify-no-session-scoped-rls-bypass.baseline.json");
