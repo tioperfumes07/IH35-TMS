@@ -7,6 +7,8 @@
 // references it, precisely so this guard keeps passing after a real purge run.
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
+export const REQUIRES_LIVE_DB =
+  "live-data invariant: asserts every real accounting.journal_entries row has at least one accounting.journal_entry_postings row; no static-only path exists.";
 const LABEL = "verify-no-journal-entry-has-zero-postings";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 

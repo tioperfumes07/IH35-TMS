@@ -6,6 +6,8 @@
 // (AUTH-102) — this guard is the permanent lock against the header drifting out of sync again.
 import pg from "pg";
 
+export const REQUIRES_LIVE_DB =
+  "live-data invariant: joins real accounting.expenses to accounting.journal_entries to assert a voided expense's reversed_by_je_id header never drifts from the JE's real reversal state; no static-only path exists.";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 function findDrifted(rows) {
