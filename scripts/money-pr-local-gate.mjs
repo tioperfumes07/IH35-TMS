@@ -413,6 +413,21 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-telematics-feed-is-live",
     ["apps/backend/src/integrations/samsara/", "apps/backend/src/telematics/", "apps/backend/src/cron/samsara-positions-cron.ts"],
   ],
+  // ROUND 168 (P0, retraction) — Samsara was never the break; mdata.load_stops had no coordinates,
+  // so the (healthy) geofence engine had nothing to compare a position against. Fails when any
+  // dispatchable load has a stop with no lat/lng or a live geocode_failure_reason.
+  [
+    "verify-stops-are-geocoded",
+    ["apps/backend/src/telematics/stop-geocode-fallback.service.ts", "apps/backend/src/telematics/stops-geocode-backfill.service.ts", "apps/backend/src/dispatch/loads.routes.ts"],
+  ],
+  // ROUND 168 JOB 2 — the permanent health check for the actual root cause: calls the same geocode
+  // path a real stop uses against a known-good address, so "provider_unavailable" (nothing
+  // configured/enabled) or any other provider failure raises loudly here instead of silently
+  // producing hundreds of uncoordinated stops again.
+  [
+    "verify-geocode-provider-is-reachable",
+    ["apps/backend/src/telematics/stop-geocode-fallback.service.ts", "apps/backend/src/integrations/google/google-places-client.ts"],
+  ],
   // ROUND 163 JOB 1 (P0) — our issued-invoice total must tie to the QBO control file for its date
   // range, or the gate reports the exact delta (actionable/mismatched/unmatched broken out).
   [

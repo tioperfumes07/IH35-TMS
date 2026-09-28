@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * scripts/ops/2026-09-28-cc2-r15513-j5-resolve-zero-line-presettlements.ts — AUTH-102
+ * scripts/ops/2026-09-28-cc2-r15513-j5-resolve-zero-line-presettlements.ts — AUTH-104
  *
  * ROUND 155.13 item 5 (also 155.13 J5): P-0001 ($1,694.50), P-0003 ($910.90), P-0005 ($940.27),
  * P-0007 ($3.46) — four USMCA open pre-settlements. Live-verified before this script was written
@@ -53,7 +53,7 @@
  *
  * Usage:
  *   DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r15513-j5-resolve-zero-line-presettlements.ts --dry-run
- *   OWNER_AUTH_ID=AUTH-102 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r15513-j5-resolve-zero-line-presettlements.ts --apply
+ *   OWNER_AUTH_ID=AUTH-104 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r15513-j5-resolve-zero-line-presettlements.ts --apply
  */
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -63,7 +63,7 @@ import pg from "pg";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd"; // identity.users tioperfumes07@gmail.com, Owner
-const AUTH_ID = "AUTH-102";
+const AUTH_ID = "AUTH-104";
 const CORRECT_RATE_CENTS = 45;
 
 const P0001 = "b69dfafb-7287-42f6-b46b-19257c9e7095";
@@ -155,7 +155,7 @@ async function main() {
           [
             line.id,
             OWNER_USER_ID,
-            `AUTH-102: duplicate of real, signed-PDF-verified settlement 5817 (driver_finance.driver_settlements P-0015) for the same load -- this line's $0.48/mi driver_bills-sourced figure ($${line.amount}) does not match the signed document's $0.45/mi figure. P-0001 is cancelled, not built out.`,
+            `AUTH-104: duplicate of real, signed-PDF-verified settlement 5817 (driver_finance.driver_settlements P-0015) for the same load -- this line's $0.48/mi driver_bills-sourced figure ($${line.amount}) does not match the signed document's $0.45/mi figure. P-0001 is cancelled, not built out.`,
           ],
         );
       }
@@ -167,7 +167,7 @@ async function main() {
         [
           P0001,
           OWNER_USER_ID,
-          "AUTH-102 (ROUND 155.13 J5): both loads on this shell (13610, 13619) are already real, signed-PDF-verified settlement 5817 (P-0015), built from Driver_Settlement_5817.pdf at $0.45/mi. This shell's lines were auto-materialized from driver_finance.driver_bills at an anomalous flat $0.48/mi rate (batch created 2026-09-25T01:15:48.605Z) with different GPS-tracked mileage than the signed document. Cancelled as a duplicate to prevent double-paying Genaro Guerrero Chavez for the same two loads.",
+          "AUTH-104 (ROUND 155.13 J5): both loads on this shell (13610, 13619) are already real, signed-PDF-verified settlement 5817 (P-0015), built from Driver_Settlement_5817.pdf at $0.45/mi. This shell's lines were auto-materialized from driver_finance.driver_bills at an anomalous flat $0.48/mi rate (batch created 2026-09-25T01:15:48.605Z) with different GPS-tracked mileage than the signed document. Cancelled as a duplicate to prevent double-paying Genaro Guerrero Chavez for the same two loads.",
         ],
       );
     }
@@ -226,7 +226,7 @@ async function main() {
           [
             oldLine.id,
             OWNER_USER_ID,
-            `AUTH-102: sourced from driver_finance.driver_bills at an anomalous flat $0.48/mi rate (batch created 2026-09-25T01:15:48.605Z, shared identically by 5 unrelated loads) -- not this driver's real, established $0.45/mi rate. Corrected line inserted.`,
+            `AUTH-104: sourced from driver_finance.driver_bills at an anomalous flat $0.48/mi rate (batch created 2026-09-25T01:15:48.605Z, shared identically by 5 unrelated loads) -- not this driver's real, established $0.45/mi rate. Corrected line inserted.`,
           ],
         );
         const ins = await client.query<{ id: string }>(
@@ -239,7 +239,7 @@ async function main() {
            RETURNING id`,
           [
             t.id,
-            `Load ${b.load_number} — Loaded Miles (rate corrected $0.48→$0.45/mi, AUTH-102)`,
+            `Load ${b.load_number} — Loaded Miles (rate corrected $0.48→$0.45/mi, AUTH-104)`,
             correctedAmount,
             oldLine.load_id,
             USMCA,
@@ -275,7 +275,7 @@ async function main() {
       console.log("COMMITTED.");
     } else {
       await client.query("ROLLBACK");
-      console.log("\nDRY RUN ONLY — no rows changed. Re-run with --apply once AUTH-102 is OPEN.");
+      console.log("\nDRY RUN ONLY — no rows changed. Re-run with --apply once AUTH-104 is OPEN.");
     }
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});

@@ -3144,7 +3144,11 @@ deliberate call recorded above -- not touched.
 
 ---
 
-## AUTH-102
+## AUTH-104
+_(NUMBERING NOTE: originally drafted as AUTH-102, before checking main fresh at merge time --
+AUTH-102 was already claimed by CC-1's same-day samsara/geocoding retroactive entry, and AUTH-103
+by CC-2's own parallel ROUND 155.13 J4 work (both below). Renumbered to the next free slot,
+AUTH-104, before any --apply ran. scope/action unchanged.)_
 
 issued_at: 2026-09-28T13:00:00.000Z
 scope: driver_finance.driver_settlements UPDATE + driver_finance.settlement_lines UPDATE/INSERT
@@ -3189,12 +3193,113 @@ the real defect is that the existing lines are wrong, for two independently evid
   `is_sample_data` never set true.
 
 action:
-  OWNER_AUTH_ID=AUTH-102 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r15513-j5-resolve-zero-line-presettlements.ts --apply
+  OWNER_AUTH_ID=AUTH-104 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r15513-j5-resolve-zero-line-presettlements.ts --apply
 expires_at: 2026-09-28T19:00:00.000Z
 status: OPEN
 
 Dry run verified clean this round: P-0001 cancellation confirmed safe (both loads present as
 active lines on real 5817, checked inside the transaction, not assumed); P-0003 $910.90->$853.97,
 P-0005 $940.27->$881.51, P-0007 $3.46->$3.24 (miles unchanged, rate corrected 48->45 cents/mi).
+
+— CC-2
+
+---
+
+## AUTH-102
+issued_at: RETROACTIVE — ROUND 168 (owner P0, "THE BREAK IS GEOCODING") already carried explicit
+  standing full-Neon-access + full-deploy-authority grants; no separate pre-issue was requested.
+scope: (1) Render env var GOOGLE_PLACES_ENABLED on service srv-d7rpem7avr4c73fhp4n0 (IH35-TMS
+  backend) -- non-secret boolean, merge-mode update, does not touch GOOGLE_PLACES_API_KEY.
+  (2) integrations.samsara_vehicles -- deduped 19 rows (14 local_unit_id values each had 2-4
+  mappings), then UNIQUE(operating_company_id, local_unit_id) via migration 202614490000.
+action:
+  mcp update_environment_variables(serviceId=srv-d7rpem7avr4c73fhp4n0, envVars=[{GOOGLE_PLACES_ENABLED,"true"}])
+  WITH ranked AS (SELECT id, ROW_NUMBER() OVER (PARTITION BY local_unit_id ORDER BY
+    (vlp.samsara_vehicle_id IS NOT NULL) DESC, sv.updated_at DESC) rn FROM
+    integrations.samsara_vehicles sv LEFT JOIN telematics.vehicle_latest_position vlp
+    ON vlp.samsara_vehicle_id=sv.samsara_vehicle_id) DELETE FROM integrations.samsara_vehicles
+    WHERE id IN (SELECT id FROM ranked WHERE rn>1)
+  db/migrations/202614490000_samsara_vehicles_unique_local_unit.sql (applied via SET ROLE
+    neondb_owner inline DO block, migration claim merged in #22978)
+expires_at: N/A — already executed at time of this retroactive entry
+status: CONSUMED
+
+consumed_at: 2026-09-28T12:03Z (samsara dedup+migration); Render env update ~2026-09-28T10:00-11:00Z window
+consumed_by: CC-1
+row_counts: samsara_vehicles 19 rows deleted (1 accidental delete of unit "01"'s only live row
+  caught immediately via a post-delete count(*)=0 check and re-inserted with its original id/data);
+  final state 82 distinct local_unit_id, 82 total rows (1:1); UNIQUE index created.
+proof_query: SELECT indexname FROM pg_indexes WHERE schemaname='integrations' AND
+  tablename='samsara_vehicles' AND indexname='uq_samsara_vehicles_company_local_unit' -> 1 row.
+  SELECT count(DISTINCT local_unit_id), count(*) FROM integrations.samsara_vehicles -> 82, 82.
+
+Honest finding, not routed around (see PR #22987 commit body for full detail): a separate 32-stop
+subset of mdata.load_stops was found geocoded via geocode_source values "nominatim"/"ratecon_street"
+that exist in zero commits anywhere in this repo's history and that this codebase's own writer
+(stops-geocode-backfill.service.ts) can never produce. audit.row_changes shows a single raw-SQL
+UPDATE at 2026-09-28 11:56:54 UTC with changed_by_user_id/role/session_id all NULL — not this AUTH,
+not app-layer. Not claiming credit for it; flagged in docs/bus/NOW-CC-1.md as a live blocker for the
+remaining ~320-stop bulk backfill (needs the real GOOGLE_PLACES_API_KEY, which lives only in
+Render's env, or a way to invoke the already-existing authenticated per-load endpoint).
+
+— CC-1
+
+---
+
+## AUTH-103
+_(NUMBERING NOTE: originally drafted as AUTH-102, before checking main fresh at push time --
+AUTH-102 was already claimed by CC-1's same-day samsara/geocoding retroactive entry (above).
+Renumbered to the next free slot, AUTH-103, before any --apply ran. scope/action unchanged.)_
+
+issued_at: 2026-09-28T12:30:00.000Z
+scope: HEADER-ONLY backfill, USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. No posting touched,
+no money moved, no journal_entry_postings row inserted/updated/deleted -- structurally enforced by
+the script itself (refuses to commit if journal_entry_postings count/trial-balance shifts at all).
+
+accounting.expenses.reversed_by_je_id backfilled from NULL to the real reversing JE id, and
+posting_status set to 'reversed', on 141 rows ($7,075.62) where voided_at IS NOT NULL,
+reversed_by_je_id IS NULL, and the row's own journal_entry_id points to a JE whose header
+(accounting.journal_entries.reversed_by_je_id) already shows a real reversal -- verified per-row,
+inside the apply transaction itself, that the original JE's postings and the reversal JE's
+postings net to exactly 0 cents (not assumed from an earlier snapshot; re-checked live this round
+after the ROUND 155.18 purge physically deleted 117 of the original 258-row population, shrinking
+this defect's true remaining population to 141).
+
+Root cause: the CURRENT, live void path (expenses.routes.ts's /void endpoint, ACCT-F5635 fix)
+already writes reversed_by_je_id atomically with the reversal -- these 141 rows are historical
+residue from before that fix, not an ongoing leak. No writer fix needed this round; the guard
+below is the permanent lock against future drift.
+
+Two "singleton" cases named in the original directive were investigated individually and found to
+be correct as-is, NOT touched by this AUTH:
+  - accounting.expenses id f9c5b0e4-644c-4b03-b7c2-424d540ea65f ($25.00): a real check (Smithfield
+    Foods Inc) posted live this session. status='draft' correctly means "not yet printed";
+    posting_status='posted' correctly reflects its real GL entry. By design.
+  - accounting.expenses id c3ec6e51-8033-4d7c-9671-a1556f4ebc8a ($15.69): void_reason
+    self-documents "R-175: prior JE ... already reversed; the idempotent engine returns it --
+    reissued as a new document on the card." journal_entry_id is correctly NULL (this document
+    never had its own JE); reversed_by_je_id correctly stays NULL.
+
+Guard, same PR, permanent: scripts/verify-void-header-matches-postings.mjs (verify-step 11663,
+claimed in #22989, merged before this AUTH). Confirmed live: currently FAILS at 141 before this
+AUTH's --apply runs; will PASS at 0 after.
+
+action:
+  DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r1558-void-header-posting-status-backfill.ts
+    (dry-run: verified live, 141 rows / $7,075.62, all net-zero-clean, rolled back)
+  DATABASE_URL=<prod> OWNER_AUTH_ID=AUTH-103 npx tsx scripts/ops/2026-09-28-cc2-r1558-void-header-posting-status-backfill.ts --apply
+expires_at: 2026-09-28T18:30:00.000Z
+status: DONE — executed live 2026-09-28
+
+consumed_at: 2026-09-28T12:35Z
+consumed_by: CC-2
+row_counts: 141 accounting.expenses headers updated (reversed_by_je_id + posting_status='reversed').
+  journal_entry_postings unchanged: 0 net cents across 7,553 postings (structural check — this
+  script writes zero rows to that table; count matches AUTH-101's post-purge figure exactly).
+proof_query: SELECT count(*) FROM accounting.expenses e JOIN accounting.journal_entries je ON
+  je.id = e.journal_entry_id WHERE e.voided_at IS NOT NULL AND e.reversed_by_je_id IS NULL AND
+  je.reversed_by_je_id IS NOT NULL AND e.operating_company_id =
+  '5c854333-6ea5-4faa-af31-67cb272fef80' -> 0 (was 141 before this AUTH ran).
+  node scripts/verify-void-header-matches-postings.mjs -> PASS (was FAIL at 141 before).
 
 — CC-2

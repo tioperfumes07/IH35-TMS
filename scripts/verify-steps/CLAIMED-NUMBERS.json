@@ -9169,5 +9169,10 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-09-28",
     "purpose": "verify-no-job-writes-against-sample-data"
+  },
+  "11663": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-28",
+    "purpose": "verify-void-header-matches-postings"
   }
 }

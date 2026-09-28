@@ -1,15 +1,20 @@
 #!/usr/bin/env node
-// ROUND 166 JOB 1(e) (owner P0, 2026-09-28, verbatim: "YES FIX SAMSARA, IT SHOULD BE RENDERING
-// REAL DATA ALWAYS"): USMCA's Samsara feed (integrations.samsara_config.is_enabled) was FALSE for
-// the entire dispatched lifetime of every load in the system and nobody noticed until this round
-// -- zero position rows, zero stop stamps, for weeks, silently. "A feed that can die silently will
-// die silently again." This guard is the permanent alarm: it fails when no USMCA unit has a
-// position newer than N minutes during operating hours, so the NEXT silent death is caught within
-// one CI run instead of weeks later.
+// ROUND 166 JOB 1(e), SCOPE CORRECTED BY ROUND 168 (owner P0, 2026-09-28): USMCA's Samsara feed
+// (integrations.samsara_config.is_enabled) was FALSE from creation (2026-08-21) until this same
+// session flipped it TRUE at 2026-09-28T10:00:08Z. That gap was real and worth this alarm. IT WAS
+// NOT, however, the reason stop stamps read zero on the 16 currently-dispatched loads -- ROUND 168
+// retracted that specific causal claim with live evidence (telematics.vehicle_latest_position: 84
+// rows, newest ~4 minutes old, all 14 dispatched units reporting real city/state; geo.geofence_
+// events and geo.geofence_vehicle_state both actively writing today) and identified the REAL chain:
+// mdata.load_stops has no lat/lng (geocode_failure_reason='provider_unavailable' on every failing
+// row), so the geofence engine -- which IS running and DOES receive live positions -- has no
+// coordinates to compare a position against. See verify-stops-are-geocoded.mjs and
+// verify-geocode-provider-is-reachable.mjs for that actual root cause and its own guards.
 //
-// Live-verified before writing this: telematics.vehicle_latest_position carries a real row for
-// unit 033dcdff-98c7-4b2e-8db3-2c94519dbc89 (T171) at 2026-09-28T11:40:10Z, city=Houston,
-// state=TX -- captured_at inside the last 15 minutes, exactly the proof this gate demands.
+// This guard stays, scoped honestly to what it actually proves: the Samsara position feed itself
+// (not stop-stamping, not geofencing) is alive. It fails when no USMCA unit has a position newer
+// than N minutes during operating hours, so if the feed itself dies again (as it did for 5 weeks,
+// silently, before this round), that specific failure is caught within one CI run.
 //
 // "Operating hours" is deliberately generous (06:00-22:00 America/Chicago, matching the fleet's
 // real dispatch window elsewhere in this codebase) rather than 24/7 -- a quiet feed at 3 AM Central
