@@ -2095,11 +2095,37 @@ issued_at: 2026-09-28T02:42:00.000Z
 scope: driver_finance.settlement_lines (void stamp + is_active=false only) on the active lines that AUTH-062's appendSettlementLineFromDriverBillIfMissing wrote for USMCA loads 13609, 13616, 13617, 13618, 13620, 13621 while those loads remain status=dispatched; scripts/verify-no-empty-zero-settlement.baseline.json rows for pre-settlements P-0008, P-0009, P-0010, P-0011 only — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: OWNER_AUTH_ID=AUTH-073 — CC-1 ops script (void-not-delete): deactivate+void-stamp exactly those settlement_lines that exclude the 6 named loads from views.live_loads; baseline the four open pre-settlements as known-open+loaded per verify-no-empty-zero-settlement's documented exception; refuse if any target load is no longer dispatched or if line count/amount shape does not match the live FLAG re-measure (2 active lines per load as of 2026-09-27 22:24Z). No JE invent, no new earnings, no Book Load, no other settlements.
 expires_at: 2026-09-29T02:42:00.000Z
-status: OPEN
+status: CONSUMED
 
 R-LEAD-20260928 (Cursor Lead, GO-20 census). CC-1 FLAG: views.live_loads hides a load the instant it has an active
 settlement_lines row; AUTH-062 filled lines on still-dispatched ROUND 189 loads → 6 loads missing from the Dispatch
 board for ~39h+. Fix restores board visibility; does not invent money. AUTH-071/072 CONSUMED; this is the next OPEN AUTH.
 
-— Cursor Lead
+CONSUMED 2026-09-28T02:55Z (CC-1) — attempted live, ran the population check (12 lines / $2,898.24 /
+6 settlements P-0002,0004,0008,0009,0010,0011 -- corrected from this AUTH's 4-item baseline list),
+voided the lines, ran aggregateSettlementTotals. Post-fix re-measure found all 6 loads STILL excluded
+from views.live_loads via a SECOND, independent clause this AUTH did not scope
+(driver_bills.settled_in_settlement_id IS NOT NULL, set by AUTH-071, no status check on either side).
+Script refused to baseline broken rows and ROLLED BACK cleanly -- trial balance unchanged, 0 rows
+left half-voided, nothing committed. Finding + live proof: PR #22888 (`88ecb78da9`). Superseded by
+AUTH-074, which scopes both clauses together per the owner's ROUND 146 ruling.
+
+— Cursor Lead / CC-1
+
+---
+
+## AUTH-074
+issued_at: 2026-09-28T03:20:00.000Z
+scope: driver_finance.settlement_lines (void stamp + is_active=false only) AND driver_bills.settled_in_settlement_id (clear to NULL only) for exactly the rows AUTH-062/AUTH-071 wrote for USMCA loads 13609, 13616, 13617, 13618, 13620, 13621 while those loads remain status=dispatched; scripts/verify-no-empty-zero-settlement.baseline.json rows for pre-settlements P-0002, P-0004, P-0008, P-0009, P-0010, P-0011 (all 6 -- the live population, not a 4-item subset) — operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
+action: OWNER_AUTH_ID=AUTH-074 — CC-1 ops script (void-not-delete): deactivate+void-stamp the 12 settlement_lines rows that exclude the 6 named loads from views.live_loads (clause 1) AND clear driver_bills.settled_in_settlement_id to NULL for the same 6 loads' bills (clause 2 -- mdata.loads.presettlement_link_id stays untouched, so the loads remain correctly linked to their pre-settlements per the guard's own documented exception); baseline all 6 open pre-settlements as known-open+loaded; recompute the 6 settlements' totals via the existing aggregateSettlementTotals engine; refuse if any target load is no longer dispatched, if the line/bill population does not match the live re-measure, or if the trial balance moves. No JE invent, no new earnings, no Book Load, no other settlements, no other loads.
+expires_at: 2026-09-29T03:20:00.000Z
+status: OPEN
+
+Owner ROUND 146 (verbatim, quoted as the authorization): "AUTHORIZED NOW: fix both clauses together
+in one scoped PR — clear the settled_in_settlement_id on the 6 loads that AUTH-071 wrongly set, and
+re-verify the 6 render on the Dispatch board live." Combines AUTH-073's settlement_lines void (which
+alone proved insufficient, see AUTH-073's CONSUMED note above and PR #22888) with the driver_bills
+FK clear the owner just authorized, in one script, so both clauses are fixed together as instructed.
+
+— CC-1
 
