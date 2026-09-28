@@ -437,6 +437,16 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-no-match-persisted-outside-accept-handler",
     ["apps/backend/src/accounting/bank-recon/match.service.ts"],
   ],
+  // P0 (owner, real-money finding) — 44 factoring advances (FAC-2026-00047..00090) had their real
+  // advance amount posted into the wire-fee GL leg instead of the ~$10 real wire fee; $174,666.12
+  // gross across 71 lines, netting to ~$230 via 48 later reversals (which is why the trial balance
+  // still squared and it was never caught). poster.service.ts itself is verified correct and never
+  // regressed; the bad value came from an uncommitted one-time script. Every live (non-reversed,
+  // non-voided) factoring advance's posted legs must equal its own header fields.
+  [
+    "verify-factoring-posting-legs-match-header",
+    ["apps/backend/src/accounting/factoring-posting/poster.service.ts", "apps/backend/src/factoring/faro-csv-import.ts"],
+  ],
   // ROUND 166 JOB 1(e) (P0) — the permanent alarm: fails when no USMCA unit has a fresh telematics
   // position during operating hours. USMCA's Samsara feed was off for weeks with zero stamps
   // accumulating and nobody noticed; this is the gate that catches the next silent death.
