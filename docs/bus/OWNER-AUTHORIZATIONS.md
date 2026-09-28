@@ -3458,7 +3458,7 @@ zero-variance path. ROUND 186 addendum; gated on CC-1 ROUND 185 window/accept-ha
 already on main (#23016).
 action: OWNER_AUTH_ID=AUTH-111 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cursor-r186-bulk-accept-through-engine.ts --settlement-only --apply
 expires_at: 2026-09-29T03:40:00.000Z
-status: OPEN
+status: DONE -- executed live 2026-09-28. Settlement --settlement-only --apply through acceptMatchWithResolveDifference: 21 BoA FREIGHT debits cleared (matched_settlement_id + review_state=matched), 21 live reconciliation_matches kind=settlement. Resolve 1 (doc 5799 lag 13d >10). Guard verify-no-match-persisted-outside-accept-handler PASS. End-to-end sample: bank 6acfc989 (2026-09-18 $2,001.25) ↔ settlement 5808 net_pay exact.
 
 — Cursor
 
