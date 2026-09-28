@@ -23,6 +23,11 @@ const CHECKS = [
     // (CONSUMED) re-priced 5812 at $0.45/mi → live net_pay 1,652.47. Identity:
     // 20191.07 − (−50) + 1652.47 = 21893.54. Ruling:
     // docs/bus/RULING-2026-09-28-control-totals-5812-auth056.md
+    // SUPERSEDES this session's earlier "exclude 5812, HOLD" resolution
+    // (docs/bus/09-27-2026-LEAD-RULING-CONTROL-TOTAL-5804-5815-STALE-BASELINE.md /
+    // 09-28-2026-LEAD-RULING-FARO-PURGE-WINDOW-REARM-AND-5812-HOLD.md) -- the Lead/CC-1
+    // resolved the 3-way dispute via AUTH-056 while this branch was in flight; taking
+    // origin/main's resolution as authoritative on rebase.
     expect: 21893.54,
     // Transaction data the purge deletes. Inside a verified purge window, with no USMCA settlements
     // at all, this control is EMPTY BY PURGE (provisional per Round 86, re-priced once after day 1).

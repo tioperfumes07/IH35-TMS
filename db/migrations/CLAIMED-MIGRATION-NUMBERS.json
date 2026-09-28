@@ -38,6 +38,16 @@
       "claimed_at": "2026-09-25",
       "purpose": "R-153 step 6 (routed by CC-2, cc2-*-prefixed branches barred from db/migrations/ by verify-migration-lane-band.mjs): widen banking.reconciliation_matches.ledger_entry_kind_check to admit 'driver_bill' -- CC-2's match-engine needs to match a bank line directly against an OPEN, unpaid driver_finance.driver_bills row (settlement hasn't closed yet; an already-posted bill_payment is already matchable via the existing 'bill_payment' kind). Same idempotent DROP+re-ADD shape as 202613350001_linkage_integrity_law_reconciliation_matches_widen.sql, which already widened this exact constraint for load/bill/settlement. Additive only, no data change."
     },
+    "202614400000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-25",
+      "purpose": "ROUND 172 step 2 (Lead order, check-engine full QBO Write Check parity): add accounting.expenses.tags text[] DEFAULT '{}' -- QBO's Tags field on a check/expense header has no existing column anywhere in accounting.* (live-verified, information_schema, no tag-shaped column on any transaction table). Additive only, nullable-safe default, no data change, no backfill. RENAMED TWICE (2026-09-25): originally 202614350000 (collided with the already-merged 202614350000_driver_samsara_accounts_map.sql, ROUND 181.1) -> 202614380000 -> this slot, after PR #22798 claimed 202614380000 for a different, unrelated migration (mdata.driver_samsara_accounts.operating_company_id) moments before this push. Live ledger rows updated to the new filename/checksum each time."
+    },
+    "202614390000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-25",
+      "purpose": "ROUND 172 step 3 (Lead order, check-engine full QBO Write Check parity): add accounting.expense_lines.driver_id/unit_id/trailer_id/linked_work_order_uuid -- the category grid's per-line linkage columns (spec step 3). Live-verified gap (information_schema + pg_constraint): expense_lines has load_id but none of the other three fleet dimensions, which exist only on the accounting.expenses header. Same additive-column shape already used to close this exact kind of gap on accounting.bills in 202613360001_go18_bill_driver_trailer_load_required.sql; mirrors the header's own FK targets/ON DELETE behavior exactly. Additive only, all nullable, no backfill. RENAMED from 202614360000 (2026-09-25): that slot collided with an already-merged sibling, 202614360000_factoring_posting_key_revision.sql -- discovered rebasing onto origin/claude/r186-creator-je-preview-paritytable. Live ledger rows updated to the new filename/checksum in the same pass."
+    },
     "202614240000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-22",

@@ -44,6 +44,32 @@ const EXPECTED_WRITABLE_CHILDREN = [
   { schema: "driver_finance", table: "driver_settlement_deductions", fkColumn: "applied_to_settlement_id", livenessColumn: "voided_at" },
 ];
 
+// SCOPED EXCLUSION (Lead ruling, docs/bus/09-28-2026-LEAD-RULING-BILL-LINE-2822f791-CC1-ADOPTION-DEBRIS.md):
+// bill_lines row 2822f791-ff2e-43c5-9dfb-d8d0ba4f1e65 under voided bill d03de0c0-a54c-467a-8c04-
+// 49f199a925a8 (BILL-2026-00004) is debris from CC-1's ROUND 154 A/P-adoption run, killed
+// mid-flight while switching to the set-based approach -- the bill's own void_reason says so
+// verbatim ("header+1 line only, zero payments, zero gl linkage, no money moved, safe to void and
+// recreate cleanly"). Owned by CC-1, live adoption in flight -- not a CC-2/check-engine defect and
+// not touched here (writing into accounting.bills/bill_lines while CC-1's transaction is mid-flight
+// risks colliding with or double-voiding real money rows). A NAMED, EXPIRING exclusion, not a
+// baseline regeneration: if this row is still unresolved after the expiry below, the guard goes red
+// again and someone has to look at it fresh, not assume it is still just adoption debris.
+const KNOWN_ORPHAN_EXCLUSIONS = {
+  "accounting.bill_lines": [
+    {
+      id: "2822f791-ff2e-43c5-9dfb-d8d0ba4f1e65",
+      owner: "CC-1",
+      reason: "ROUND 154 A/P-adoption run killed mid-flight; bill d03de0c0-a54c-467a-8c04-49f199a925a8 (BILL-2026-00004) voided, its one line never cascaded",
+      expires_at: "2026-10-05T00:00:00.000Z",
+    },
+  ],
+};
+
+function activeExclusionIds(childTable, now = new Date()) {
+  const rows = KNOWN_ORPHAN_EXCLUSIONS[childTable] ?? [];
+  return rows.filter((r) => now.getTime() < new Date(r.expires_at).getTime()).map((r) => r.id);
+}
+
 const LIVE_CHECKS = [
   {
     label: "invoice -> invoice_lines",
@@ -110,6 +136,7 @@ async function liveCheck(client) {
   const violations = [];
 
   for (const check of LIVE_CHECKS) {
+    const excludeIds = activeExclusionIds(check.childTable);
     const res = await client.query(
       `SELECT count(*)::text AS n
          FROM ${check.childTable} c
@@ -117,12 +144,16 @@ async function liveCheck(client) {
         WHERE c.operating_company_id = $1::uuid
           AND p.operating_company_id = $1::uuid
           AND p.${check.parentVoidPredicate}
-          AND c.${check.livenessColumn} IS NULL`,
-      [USMCA]
+          AND c.${check.livenessColumn} IS NULL
+          AND NOT (c.id = ANY($2::uuid[]))`,
+      [USMCA, excludeIds]
     );
     const n = Number(res.rows[0].n);
     if (n > 0) {
       violations.push(`${check.label}: ${n} live child row(s) under a voided parent (${check.parentTable}.${check.parentVoidPredicate}, ${check.childTable}.${check.livenessColumn} IS NULL)`);
+    }
+    if (excludeIds.length > 0) {
+      console.log(`${LABEL}: ${check.childTable} has ${excludeIds.length} active named exclusion(s) (see KNOWN_ORPHAN_EXCLUSIONS) -- not counted above, not a pass on those rows.`);
     }
   }
 

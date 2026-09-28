@@ -251,12 +251,30 @@ async function live() {
     );
     const expenseByLoad = new Map(expenseRes.rows.map((r) => [r.load_number, { cents: Number(r.cents), n: Number(r.n) }]));
 
+    // ROUND 154.1 fix (Lead ruling, 2026-09-28): a diesel fuel_transactions row can be SUPERSEDED --
+    // its own JE reversed and archived_at stamped (verify-void-is-whole's Direction-1 fix), while the
+    // real cost lives on as a NEW, live, posted accounting.expenses row via source_fuel_transaction_id
+    // (created during the fuel-posting migration, R-153.10/R-164). Reading fuel.fuel_transactions
+    // alone with archived_at IS NULL silently drops that cost the moment the original row is
+    // correctly archived -- it was only ever "counted" here because nobody had stamped it yet, not
+    // because the query was reading the right source. Falls back to the live expense's own amount
+    // for an archived row; still excludes an archived row with NO live expense (a real gap, reported
+    // elsewhere, never silently patched here).
     const fuelRes = await client.query(
-      `SELECT l.load_number, sum(round(ft.total_cost * 100)) AS cents, count(ft.id) AS n
+      `SELECT l.load_number,
+              sum(round(CASE WHEN ft.archived_at IS NULL THEN ft.total_cost ELSE le.total_amount_cents / 100.0 END * 100)) AS cents,
+              count(*) AS n
          FROM mdata.loads l
          JOIN fuel.fuel_transactions ft ON ft.load_id = l.id AND ft.operating_company_id = l.operating_company_id
-        WHERE l.operating_company_id = $1::uuid AND l.load_number = ANY($2::text[]) AND ft.archived_at IS NULL
+         LEFT JOIN LATERAL (
+           SELECT e.total_amount_cents
+             FROM accounting.expenses e
+            WHERE e.source_fuel_transaction_id = ft.id AND e.voided_at IS NULL
+            LIMIT 1
+         ) le ON true
+        WHERE l.operating_company_id = $1::uuid AND l.load_number = ANY($2::text[])
           AND ft.fuel_type = 'diesel'
+          AND (ft.archived_at IS NULL OR le.total_amount_cents IS NOT NULL)
         GROUP BY l.load_number`,
       [USMCA_COMPANY_ID, allLoadNumbers]
     );

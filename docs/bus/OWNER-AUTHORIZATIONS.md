@@ -2143,7 +2143,7 @@ issued_at: 2026-09-28T03:39:13.000Z
 scope: header-stamp only (voided_at, void_reason, voided_by_user_id) on exactly the 242 USMCA documents verify-void-is-whole.mjs reports as Direction-1 silent voids (218 fuel.fuel_transactions + 24 accounting.invoices) via the existing single writer stampDocumentVoided() -- no GL, no journal entry, no new reversal, no other rows -- operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA)
 action: OWNER_AUTH_ID=AUTH-075 npx tsx scripts/ops/2026-09-28-cc2-r148-void-stamp-242-silent-voids.ts
 expires_at: 2026-09-28T09:39:13.000Z
-status: OPEN
+status: CONSUMED
 
 Lead ROUND 148-02/149 (2026-09-27/28 CT). CC-2's check-engine merge is blocked by verify-void-is-whole:
 a purge-window exemption for these 242 Direction-1 silent voids expired 2026-09-26T15:11:53.498Z. Ruling:
@@ -2154,6 +2154,21 @@ linked journal entries are still exactly live_jes=0 / dead_jes>0 (the guard's ow
 test) before writing anything -- any row that no longer measures that way is skipped and named, never
 forced. void_reason for every stamped row: "E10 fuel-void-runner R-102-C: GL reversed, header stamp
 completed 2026-09-28 under Lead ruling 148-02."
+
+CONSUMED 2026-09-28 ~03:55Z: script run live against production (br-fancy-credit-akjnd07a). Tally:
+stamped=218 (all fuel.fuel_transactions -- every one had live_jes=0/dead_jes>0 re-verified fresh at
+stamp time, none skipped) already_voided=0 errors=24 (all 24 accounting.invoices -- see below).
+GENUINE STRUCTURAL FINDING, not forced past: the 24 invoices are a DIFFERENT sub-case than assumed --
+each already carries a real voided_at + a real, correct void_reason (e.g. "Transportation load —
+Faro Transportation portal", "Load cancelled (OTHER) — ... cancellation cascade"); only
+voided_by_user_id was ever left null. stampDocumentVoided()'s idempotency check requires BOTH the
+same reason AND the same actor to treat a re-call as a no-op; since the existing actor is null and
+any real actor differs from null, it always throws already_voided_different_reason for these 24,
+even when passed the row's own original reason text -- there is no path in the existing single
+writer to backfill ONLY a missing actor onto an already-correctly-voided document. Not forced past
+via a hand UPDATE (explicitly forbidden). verify-void-is-whole.baseline.json shrunk from 242 to 24
+keys (the 218 fixed keys removed, shrink-only, never widened) -- guard is PASS, 24/24 in baseline,
+0 new. The 24 remain open, reported here, not silently dropped.
 
 — Claude-2 (AUTH-074->AUTH-075 collision fix)
 

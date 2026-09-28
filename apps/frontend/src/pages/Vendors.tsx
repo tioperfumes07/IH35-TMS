@@ -110,6 +110,8 @@ export function VendorsPage() {
   const navigate = useNavigate();
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  // R-172 step 1 -- vendor profile "New transaction" now offers Check alongside Bill.
+  const [vendorNewTxnMenuOpen, setVendorNewTxnMenuOpen] = useState(false);
   // USMCA/TRK are TMS-native — QBO vendor sync chrome is TRANSP-only (customers twin #8698 / LV #1420).
   const qboAvailable = selectedCompany?.code === "TRANSP";
   // CUR-2: Edit opens the vendor's core fields in the right-side ParityDrawer (QBO-style), not the full page.
@@ -798,9 +800,35 @@ export function VendorsPage() {
                       >
                         Edit
                       </Button>
-                      <Button type="button" onClick={() => navigate(`/accounting/bills?vendor_id=${selectedVendor.id}`)}>
-                        New transaction
-                      </Button>
+                      <div className="relative">
+                        <Button type="button" onClick={() => setVendorNewTxnMenuOpen((v) => !v)} data-testid="vendor-header-new-transaction">
+                          New transaction
+                        </Button>
+                        {vendorNewTxnMenuOpen ? (
+                          <div className="absolute right-0 z-30 mt-1 min-w-[160px] rounded-sm border border-gray-200 bg-white py-1 shadow-lg" data-testid="vendor-new-transaction-menu">
+                            <button
+                              type="button"
+                              className="block w-full px-4 py-2 text-left text-xs text-gray-800 hover:bg-gray-50"
+                              onClick={() => {
+                                setVendorNewTxnMenuOpen(false);
+                                navigate(`/accounting/bills?vendor_id=${selectedVendor.id}`);
+                              }}
+                            >
+                              Bill
+                            </button>
+                            <button
+                              type="button"
+                              className="block w-full px-4 py-2 text-left text-xs text-gray-800 hover:bg-gray-50"
+                              onClick={() => {
+                                setVendorNewTxnMenuOpen(false);
+                                navigate(`/accounting/checks/new?vendor_id=${selectedVendor.id}`);
+                              }}
+                            >
+                              Check
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 gap-2 text-xs md:grid-cols-2">
