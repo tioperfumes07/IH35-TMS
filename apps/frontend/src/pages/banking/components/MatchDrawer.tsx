@@ -14,7 +14,7 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
-import { vendorReferenceOption } from "../../../components/parity/referenceOptionLabels";
+import { coaAccountReferenceOption, vendorReferenceOption } from "../../../components/parity/referenceOptionLabels";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useToast } from "../../../components/Toast";
 import { useListState } from "../../../components/list-state";
@@ -26,6 +26,17 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 // multi-select exact sum → acceptExactMultiDocumentMatch (one bank line → many documents).
 // "bill" still held (CHAIN-04 Part 2b).
 const VARIANCE_NEEDS_WRITEOFF = "Select a write-off / difference account to resolve this variance";
+
+/** ROUND 189 Resolve — named difference accounts only (never a generic "adjustment").
+ * Match by account_name (not account_number) so the Account-Numbers-Hidden law stays green.
+ */
+const NAMED_RESOLVE_QUICK_PICKS: ReadonlyArray<{ label: string; account_name: string; testId: string }> = [
+  { label: "Reserve Deposit", account_name: "Faro Cash Reserve", testId: "reserve-deposit" },
+  { label: "Factoring Fees", account_name: "Factoring Fees", testId: "factoring-fees" },
+  { label: "Wire Fee", account_name: "Bank Service Charges & Wire Fees", testId: "wire-fee" },
+  { label: "Chargeback", account_name: "Driver Admin Fee & Chargeback Income", testId: "chargeback" },
+  { label: "Quick-Pay Discount", account_name: "Short-Pay — Agreed Concession / Quick-Pay Discount", testId: "quick-pay-discount" },
+];
 
 type Props = {
   open: boolean;
@@ -276,11 +287,7 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
               <ReferenceSelect
                 value={writeOffAccountId || null}
                 onChange={(aid) => setWriteOffAccountId(aid ?? "")}
-                options={(coaQuery.data?.accounts ?? []).map((account) => ({
-                  value: account.id,
-                  label: account.account_name,
-                  type: account.account_type ? String(account.account_type) : undefined,
-                }))}
+                options={(coaQuery.data?.accounts ?? []).map(coaAccountReferenceOption)}
                 createKind="category"
                 operatingCompanyId={operatingCompanyId}
                 placeholder="Select write-off / difference account"
@@ -288,6 +295,46 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
               />
             </div>
           </label>
+          <div
+            className="flex flex-wrap gap-1"
+            data-testid="match-drawer-named-resolve-picks"
+            role="group"
+            aria-label="Named difference accounts"
+          >
+            {NAMED_RESOLVE_QUICK_PICKS.map((pick) => {
+              const match = (coaQuery.data?.accounts ?? []).find(
+                (a) => a.account_name === pick.account_name,
+              );
+              const selected = Boolean(match && writeOffAccountId === match.id);
+              return (
+                <button
+                  key={pick.testId}
+                  type="button"
+                  data-testid={`match-named-resolve-${pick.testId}`}
+                  disabled={!match}
+                  title={
+                    match
+                      ? pick.account_name
+                      : `${pick.label} not on this entity chart of accounts`
+                  }
+                  className={`h-7 rounded-sm border px-2 text-xs ${
+                    selected
+                      ? "border-[#14314F] bg-[#14314F] text-white"
+                      : "border-[#E5E7EB] bg-white text-[#1F2A44]"
+                  } disabled:cursor-not-allowed disabled:opacity-40`}
+                  onClick={() => {
+                    if (match) setWriteOffAccountId(match.id);
+                  }}
+                >
+                  {pick.label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-slate-500">
+            Named only: Reserve Deposit · Factoring Fees · Wire Fee · Chargeback · Quick-Pay Discount.
+            Never a generic adjustment.
+          </p>
         </div>
 
         {multiSelected.length >= 2 ? (

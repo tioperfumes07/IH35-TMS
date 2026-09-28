@@ -31,6 +31,9 @@ if (!drawer.includes("variance_account_id")) {
 if (!drawer.includes("match-drawer-writeoff-account")) {
   fail("MatchDrawer must expose write-off / difference account picker (data-testid).");
 }
+if (!drawer.includes("match-drawer-named-resolve-picks") || !drawer.includes("NAMED_RESOLVE_QUICK_PICKS")) {
+  fail("MatchDrawer must expose named Resolve quick-picks (Reserve/Fees/Wire/Chargeback) — never generic adjustment only.");
+}
 if (!drawer.includes("acceptBankReconMultiMatch") || !drawer.includes("match-multi-confirm")) {
   fail("MatchDrawer must wire multi-document confirm (one bank line → many documents).");
 }

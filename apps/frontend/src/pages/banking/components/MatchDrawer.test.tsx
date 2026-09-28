@@ -23,7 +23,20 @@ vi.mock("../../../api/banking", async (importOriginal) => {
     acceptBankReconMatch: vi.fn(),
     acceptBankReconMultiMatch: vi.fn(),
     getCoaAccounts: vi.fn().mockResolvedValue({
-      accounts: [{ id: "wo-acct-1", account_name: "Write-off", account_type: "Expense" }],
+      accounts: [
+        {
+          id: "wo-acct-1",
+          account_number: "6400",
+          account_name: "Factoring Fees",
+          account_type: "Expense",
+        },
+        {
+          id: "wo-acct-1235",
+          account_number: "1235",
+          account_name: "Faro Cash Reserve",
+          account_type: "Asset",
+        },
+      ],
     }),
     categorizeBankTransaction: vi.fn(),
   };
@@ -125,6 +138,39 @@ describe("MatchDrawer — Confirm-match exact-only (BANKREC-CONFIRM-01)", () => 
 
     await userEvent.click(confirmBtn);
     expect(bankingApi.acceptBankReconMatch).not.toHaveBeenCalled();
+  });
+
+  it("named Resolve quick-pick (Reserve Deposit) sets write-off and unlocks variance Confirm", async () => {
+    const varianceCandidate = candidate({
+      ledger_entry_kind: "payment",
+      ledger_entry_id: "pay-variance-named-1",
+      amount_gap_cents: 180000,
+    });
+    vi.mocked(bankingApi.getMatchCandidates).mockResolvedValue({
+      candidates: [varianceCandidate],
+      match_candidates_count: 1,
+      bank_amount_cents: 367050,
+    });
+    vi.mocked(bankingApi.acceptBankReconMatch).mockResolvedValue({ ok: true } as never);
+
+    render(wrap(<MatchDrawer open bankTransactionId={bankTxnId} operatingCompanyId={companyId} onClose={vi.fn()} />));
+
+    const named = await screen.findByTestId("match-named-resolve-reserve-deposit");
+    await waitFor(() => expect(named).toBeEnabled());
+    await userEvent.click(named);
+
+    const row = await screen.findByTestId("match-candidate-row");
+    const confirmBtn = within(row).getByTestId("match-candidate-confirm");
+    expect(confirmBtn).toBeEnabled();
+    await userEvent.click(confirmBtn);
+    await waitFor(() => {
+      expect(bankingApi.acceptBankReconMatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variance_account_id: "wo-acct-1235",
+          ledger_entry_id: "pay-variance-named-1",
+        }),
+      );
+    });
   });
 
   it("keeps Confirm disabled for a bill candidate with the CHAIN-04 note, even at gap=0", async () => {
