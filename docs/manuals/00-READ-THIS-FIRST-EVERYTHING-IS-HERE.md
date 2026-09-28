@@ -91,8 +91,19 @@ From the 117 AlwaysTrack settlement documents:
   - AN ALREADY-COLLECTED DRIVER DEDUCTION IS NEVER REVERSED.
   - SIX REVERSAL ENGINES EXIST. A seventh must never be written.
   - BANK MATCHING IS SUGGEST-ONLY, PERMANENTLY. A GET must never write.
-  - NO DIRECT INSERT INTO AN ACCOUNTING TABLE, EVER. Origin creates the document, the document is
-    matched to the bank register, and the register creates nothing. MATCH IS NOT ADD.
+  - INSTANT SET-BASED SEEDING INTO AN ACCOUNTING TABLE IS AUTHORIZED — owner, 2026-09-28, verbatim:
+    "THERE IS A PREVIOUS LAW THAT I DID NOT AUTHORIZE THAT BLOCKED INSTANT SEEDING. NO. REMOVE."
+    The former line here — "NO DIRECT INSERT INTO AN ACCOUNTING TABLE, EVER" — was never
+    owner-authorized and is STRUCK. No seat may cite it again, in any form.
+    Documents are seeded IN BULK, in ONE transaction, by INSERT…SELECT. Never one row at a time,
+    never a per-document engine loop (measured 2026-09-28: a per-bill loop ran 1 bill / 2 minutes —
+    4 hours for 120 bills; the same work set-based is one statement).
+    What still holds, unchanged: every seeded row carries its real linkage (operating_company_id,
+    load, driver, settlement, item, account), is idempotent on its natural key, and is REAL — never
+    test, sample or demo. Balanced books and the void-never-delete law are untouched.
+  - MATCH IS NOT ADD. The bank register creates nothing. Only documents BORN FROM a company or
+    driver settlement are ever matched to a bank transaction — settlement expenses, bill payments,
+    vendor bill payments, driver bill payments, fuel, gas. Nothing else is matched (owner, 2026-09-28).
 
 ## WHAT IS STILL OPEN — NAMED, NOT HIDDEN
   - 19 money lines, 1,571.91, have no item and were NOT guessed (06-OUTPUT/feed_input_gaps.json).
