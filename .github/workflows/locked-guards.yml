@@ -136,6 +136,26 @@ jobs:
       - name: verify:owner-bulk-cancel-select-prevoid
         run: node scripts/verify-owner-bulk-cancel-select-prevoid.mjs
 
+      - name: verify:fuel-credits-the-card-rail --selftest
+        run: node scripts/verify-fuel-credits-the-card-rail.mjs --selftest
+      - name: verify:fuel-credits-the-card-rail
+        run: node scripts/verify-fuel-credits-the-card-rail.mjs
+
+      - name: verify:driver-paid-expense-credits-2175 --selftest
+        run: node scripts/verify-driver-paid-expense-credits-2175.mjs --selftest
+      - name: verify:driver-paid-expense-credits-2175
+        run: node scripts/verify-driver-paid-expense-credits-2175.mjs
+
+      - name: verify:one-feed-path-per-purchase --selftest
+        run: node scripts/verify-one-feed-path-per-purchase.mjs --selftest
+      - name: verify:one-feed-path-per-purchase
+        run: node scripts/verify-one-feed-path-per-purchase.mjs
+
+      - name: verify:expense-entity-matches-its-load --selftest
+        run: node scripts/verify-expense-entity-matches-its-load.mjs --selftest
+      - name: verify:expense-entity-matches-its-load
+        run: node scripts/verify-expense-entity-matches-its-load.mjs
+
       - name: verify:guard-wired --selftest
         run: node scripts/verify-guard-wired.mjs --selftest
 

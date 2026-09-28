@@ -788,6 +788,24 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           if (!vendorRes.rows[0]) return { vendorNotInCompany: true as const };
         }
 
+        // ROUND 155.18 JOB 2 (owner order, 2026-09-28) — an expense's load_id must belong to the
+        // SAME entity as the expense itself. This mirrors the vendor_uuid check immediately above
+        // (same shape: entity-scoped SELECT, reject if the row is not visible under this company).
+        // Before this check, the only load lookup on this path (the unit-mismatch resolver a few
+        // lines below) scoped its own query by operating_company_id too, but treated "load not
+        // found under this company" as "load has no assigned unit" (a silent null) rather than as
+        // a cross-entity load_id — so a TRANSPORTATION-owned load_id passed straight through into
+        // this USMCA expense's INSERT with no rejection at all. Live-verified this round: 0 of 528
+        // live USMCA expenses currently carry a cross-entity load_id (the historical instances of
+        // this defect were already voided/purged), but nothing in this route stopped a new one.
+        if (body.load_id) {
+          const loadEntityRes = await client.query(
+            `SELECT id FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+            [body.load_id, body.operating_company_id]
+          );
+          if (!loadEntityRes.rows[0]) return { loadNotInCompany: true as const };
+        }
+
         // Resolve the form's QBO category account → a catalogs.accounts (GL) id, ENTITY-SCOPED
         // (operating_company_id) per TRK/TRANSP/USMCA independence. Reject if the QBO account isn't yet
         // bridged into this entity's ledger chart — surfaced as an honest CoA-gap, never silently
@@ -1325,6 +1343,8 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         });
       if ("vendorNotInCompany" in payload)
         return reply.code(400).send({ error: "expense_vendor_not_in_company" });
+      if ("loadNotInCompany" in payload)
+        return reply.code(400).send({ error: "expense_load_not_in_company" });
       if ("duplicateSubmission" in payload)
         return reply.code(409).send({
           error: "duplicate_expense_submission",
