@@ -36,9 +36,11 @@ if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL required");
 const DATABASE_URL = process.env.DATABASE_URL.replace("-pooler.", ".");
 
 async function main() {
-  const { voidDocument } = await import("../../apps/backend/src/accounting/void-document.js");
+  const { voidDocument } = await import("../../apps/backend/src/accounting/void-document.service.js");
+  const { stampDocumentVoided } = await import("../../apps/backend/src/accounting/void-document-stamp.service.js");
   const pool = new pg.Pool({ connectionString: DATABASE_URL, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();
+  const businessDate = new Date().toISOString().slice(0, 10);
   try {
     await client.query("BEGIN");
     await client.query("RESET ROLE");
@@ -94,12 +96,22 @@ async function main() {
 
     let voided = 0;
     for (const r of dups.rows) {
+      const reason = `AUTH-080 pre-R145 superseded by AUTH-076 AT-dated seed (doc ${r.ref})`;
       await voidDocument(client as never, {
         type: "expense",
         id: r.id,
         operatingCompanyId: USMCA,
-        actorUserId: SYSTEM_ACTOR,
-        reason: `AUTH-080 pre-R145 superseded by AUTH-076 AT-dated seed (doc ${r.ref})`,
+        reason,
+        actor: { userId: SYSTEM_ACTOR, role: "Owner" },
+        currentBusinessDate: businessDate,
+      });
+      // voidDocument(expense) reverses GL only — stamp is the one voided_at writer.
+      await stampDocumentVoided(client as never, {
+        operatingCompanyId: USMCA,
+        family: "expense",
+        documentId: r.id,
+        voidReason: reason,
+        voidedByUserId: SYSTEM_ACTOR,
       });
       voided += 1;
       if (voided % 10 === 0) console.log(`voided ${voided}/${dups.rows.length}`);
