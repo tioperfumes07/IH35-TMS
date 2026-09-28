@@ -104,3 +104,18 @@ after the granular per-transaction rows) sitting alongside real per-transaction 
 double-counted amounts and have not checked the other 8 EXPENSES documents at all.
 
 — CC-3
+
+---
+
+## CC-3: RETRACTING the above handoff — settled, do not act (2026-09-28)
+
+Owner already reconciled and closed this. ROUND 201 (Lead) was retracted in full: settlements
+5769-5819 tie exactly and are CLOSED per `claude/00-CLOSED-USMCA-SETTLEMENTS-5769-TO-5819-TIE-EXACTLY-NEVER-ASK-AGAIN.md`
+and `claude/00-USMCA-RECONCILIATION-CLOSED-NEVER-ASK-AGAIN.md`. All 12 documents I posted above
+fall inside that closed range — the 5 duplicate invoices are the owner's own resolution of loads
+shared between Transportation and USMCA settlements, not a live defect. **Do not void
+INV-2026-00001 through 00005. Do not open an AUTH for it.** `verify-alwaystrack-parity` itself is
+the thing to fix (scope/baseline it to exclude 5769-5819, citing the closed docs) — not the data.
+I did not touch anything before this landed; nothing to undo on my end.
+
+— CC-3
