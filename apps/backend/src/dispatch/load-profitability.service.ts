@@ -108,11 +108,14 @@ export async function computeLoadProfitability(
   const missSources: string[] = [];
 
   // 1. Load base + revenue
+  // ROUND 150: by-id detail still reads mdata.loads (settled loads must resolve in the drawer).
+  // List/board surfaces use views.live_loads — this is a single-record money snapshot, not a board.
   const loadRes = await client.query<Record<string, unknown>>(
     `SELECT
        l.id::text,
        l.load_number,
        l.status,
+       l.customer_id::text AS customer_id,
        COALESCE(l.rate_total_cents, 0)::bigint AS revenue_cents,
        COALESCE(l.miles_practical, l.miles_shortest, 0)::bigint AS miles,
        -- DISP-PHANTOM-CLASS: this read l.delivered_at, which DOES NOT EXIST on mdata.loads
@@ -157,11 +160,12 @@ export async function computeLoadProfitability(
   const tripEnd = String(base.trip_end ?? "");
 
   // LAW 5 / R-151.3 — the canonical rollup, the ONLY source for revenue/costs/driver_pay/margin.
+  // ROUND 150: no second FROM mdata.loads — bind id/opco as a values row so the live_loads
+  // ratchet does not grow (baseline was 2; a third FROM was new rot).
   const rollupRes = await client.query<{ lc_revenue_cents: string; lc_costs_cents: string; lc_driver_pay_cents: string; lc_margin_cents: string }>(
     `SELECT ${LOAD_COST_ROLLUP_SELECT}
-       FROM mdata.loads l
-       ${loadCostRollupLateral("l.id", "l.operating_company_id")}
-      WHERE l.id = $1 AND l.operating_company_id = $2::uuid`,
+       FROM (SELECT $1::uuid AS id, $2::uuid AS operating_company_id) l
+       ${loadCostRollupLateral("l.id", "l.operating_company_id")}`,
     [loadId, operatingCompanyId]
   );
   const rollup = rollupRes.rows[0];
@@ -169,16 +173,18 @@ export async function computeLoadProfitability(
   const canonicalDriverPayCents = num(rollup?.lc_driver_pay_cents);
   const canonicalMarginCents = num(rollup?.lc_margin_cents ?? revenue);
 
-  // 2. Customer name
-  const custRes = await client.query<{ customer_name: string | null }>(
-    `SELECT c.customer_name
-     FROM mdata.loads l
-     LEFT JOIN mdata.customers c ON c.id = l.customer_id
-                              AND c.operating_company_id = l.operating_company_id
-     WHERE l.id = $1 AND l.operating_company_id = $2::uuid LIMIT 1`,
-    [loadId, operatingCompanyId]
-  );
-  const customerName = custRes.rows[0]?.customer_name ?? null;
+  // 2. Customer name — from the base row's customer_id (no second loads FROM).
+  let customerName: string | null = null;
+  if (base.customer_id) {
+    const custRes = await client.query<{ customer_name: string | null }>(
+      `SELECT c.customer_name
+         FROM mdata.customers c
+        WHERE c.id = $1::uuid AND c.operating_company_id = $2::uuid
+        LIMIT 1`,
+      [String(base.customer_id), operatingCompanyId]
+    );
+    customerName = custRes.rows[0]?.customer_name ?? null;
+  }
 
   // 3. Driver pay (driver_finance.driver_bills by load_id)
   const payRes = await client.query<{ driver_pay_cents: string }>(
