@@ -25,6 +25,7 @@ import pg from "pg";
 
 const AUTH_ID = "AUTH-101";
 const BATCH_SIZE = 1000;
+const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 function chunk<T>(arr: T[], size: number): T[][] {
   const out: T[][] = [];
@@ -53,11 +54,11 @@ async function measure(client: pg.Client) {
   };
 }
 
-async function bulkDeleteBatched(client: pg.Client, sql: string, ids: string[]): Promise<number> {
+async function bulkDeleteBatched(client: pg.Client, sql: string, ids: string[], extraParams: unknown[] = []): Promise<number> {
   let total = 0;
   for (const batch of chunk(ids, BATCH_SIZE)) {
     const t0 = Date.now();
-    const res = await client.query(sql, [batch]);
+    const res = await client.query(sql, [batch, ...extraParams]);
     const elapsedSec = (Date.now() - t0) / 1000;
     const n = res.rowCount ?? 0;
     total += n;
@@ -107,10 +108,14 @@ async function main() {
     }
     const pmIds = await client.query<{ id: string }>(`SELECT id::text FROM maintenance.pm_auto_wo_log`);
     console.log(`\n  -- maintenance.pm_auto_wo_log: ${pmIds.rows.length} row(s), 100% sample-unit confirmed inside transaction --`);
+    // ROUND 133 (verify-no-unscoped-company-delete) — belt-and-suspenders alongside the
+    // is_sample_data re-verification above: pm_auto_wo_log carries its own operating_company_id
+    // column, so scope the DELETE by it directly, never trusting the id list alone.
     const pmDeleted = await bulkDeleteBatched(
       client,
-      `DELETE FROM maintenance.pm_auto_wo_log WHERE id = ANY($1::uuid[]) AND operating_company_id IS NOT NULL`,
+      `DELETE FROM maintenance.pm_auto_wo_log WHERE id = ANY($1::uuid[]) AND operating_company_id = $2::uuid`,
       pmIds.rows.map((r) => r.id),
+      [USMCA],
     );
 
     // Re-verify sample-driver scope INSIDE the transaction, fresh, before deleting.
@@ -120,10 +125,14 @@ async function main() {
       WHERE d.is_sample_data IS TRUE
     `);
     console.log(`\n  -- samsara.hos_snapshots: ${hosIds.rows.length} sample-driver-scoped row(s) confirmed inside transaction --`);
+    // ROUND 133 (verify-no-unscoped-company-delete) — belt-and-suspenders alongside the
+    // sample-driver re-verification above: hos_snapshots carries its own operating_company_id
+    // column, so scope the DELETE by it directly, never trusting the id list alone.
     const hosDeleted = await bulkDeleteBatched(
       client,
-      `DELETE FROM samsara.hos_snapshots WHERE id = ANY($1::uuid[]) AND operating_company_id IS NOT NULL`,
+      `DELETE FROM samsara.hos_snapshots WHERE id = ANY($1::uuid[]) AND operating_company_id = $2::uuid`,
       hosIds.rows.map((r) => r.id),
+      [USMCA],
     );
 
     // Post-delete sanity: pm_auto_wo_log should now be empty; hos_snapshots should have zero

@@ -30,16 +30,32 @@
  *   DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r181-categorize-relay-topups.ts            # dry-run
  *   DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r181-categorize-relay-topups.ts --apply
  */
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import pg from "pg";
 
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd";
 const RELAY_FUEL_WALLET_ACCOUNT_ID = "5585dc64-dd7c-4314-b279-c9dd29c705fc"; // catalogs.accounts 1295
+// AUTH-108 (docs/bus/OWNER-AUTHORIZATIONS.md) authorized this script's one-time run, already
+// executed and closed 2026-09-28. Added retroactively (ROUND 133 P0) so a bare --apply re-run
+// correctly refuses now that AUTH-108 is closed, rather than silently re-running unauthorized.
+const AUTH_ID = "AUTH-108";
 
 const APPLY = process.argv.includes("--apply");
 
 async function main() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL required");
+  if (APPLY) {
+    try {
+      execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), AUTH_ID], { stdio: "inherit" });
+    } catch {
+      console.error(`ROUND 133 P0: ${AUTH_ID} rejected by verify-owner-authorization.mjs -- see docs/bus/OWNER-AUTHORIZATIONS.md.`);
+      process.exit(1);
+    }
+  }
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 3 });
   const client = await pool.connect();
   try {

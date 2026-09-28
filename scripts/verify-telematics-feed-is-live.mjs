@@ -22,6 +22,8 @@
 // than not having it.
 import pg from "pg";
 
+export const ALLOW_OFFLINE_SKIP = "live-telematics invariant by design, no static-only path";
+
 const LABEL = "verify-telematics-feed-is-live";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const STALE_MINUTES = 20;

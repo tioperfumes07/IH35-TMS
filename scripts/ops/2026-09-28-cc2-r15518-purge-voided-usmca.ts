@@ -109,8 +109,12 @@
  *   DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r15518-purge-voided-usmca.ts --dry-run
  *   OWNER_AUTH_ID=AUTH-101 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc2-r15518-purge-voided-usmca.ts --apply
  */
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import pg from "pg";
 
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const AUTH_ID = "AUTH-101";
 const TRANSP_LOAD_NUMBERS = ["5753", "5760", "5761", "5762", "5763", "5764", "5765", "5766", "5767", "5768"];
@@ -338,21 +342,29 @@ async function expandJeClosure(client: pg.Client, seedJeIds: string[]): Promise<
 
 async function deletePostingsForJeSet(client: pg.Client, jeIds: string[]): Promise<number> {
   if (jeIds.length === 0) return 0;
+  // ROUND 133 (verify-no-unscoped-company-delete) — jeIds arrives pre-filtered to USMCA by every
+  // caller above (the script's own documented SCOPE is USMCA-only throughout), but this function
+  // is generic and reusable, so belt-and-suspenders: both DELETEs additionally require the
+  // journal entry itself to resolve to USMCA via accounting.journal_entries, never trusting the
+  // caller's id list alone. neither accounting.transaction_source_links nor
+  // accounting.journal_entry_postings carries its own operating_company_id column.
   await client.query(
     `DELETE FROM accounting.transaction_source_links
-      WHERE operating_company_id IS NOT NULL
-        AND journal_entry_posting_id IN (
-        SELECT id FROM accounting.journal_entry_postings
-         WHERE journal_entry_uuid = ANY($1::uuid[])
-           AND operating_company_id IS NOT NULL
+      WHERE journal_entry_posting_id IN (
+        SELECT jep.id FROM accounting.journal_entry_postings jep
+          JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+         WHERE jep.journal_entry_uuid = ANY($1::uuid[])
+           AND je.operating_company_id = $2::uuid
       )`,
-    [jeIds],
+    [jeIds, USMCA],
   );
   const del = await client.query(
     `DELETE FROM accounting.journal_entry_postings
       WHERE journal_entry_uuid = ANY($1::uuid[])
-        AND operating_company_id IS NOT NULL`,
-    [jeIds],
+        AND journal_entry_uuid IN (
+          SELECT id FROM accounting.journal_entries WHERE operating_company_id = $2::uuid
+        )`,
+    [jeIds, USMCA],
   );
   return del.rowCount ?? 0;
 }
@@ -460,6 +472,20 @@ async function main() {
     console.error(`REFUSED: --apply requires OWNER_AUTH_ID=${AUTH_ID} and an OPEN ${AUTH_ID} entry in ` +
       `docs/bus/OWNER-AUTHORIZATIONS.md. Neither is present. Run --dry-run or --apply-test-run instead.`);
     process.exit(1);
+  }
+  // ROUND 133 P0 — the env-var string match above only proves the CALLER typed the right id; it
+  // never confirms AUTH_ID is actually an OPEN, unexpired entry on origin/main. verify-owner-
+  // authorization.mjs is the real check (reads docs/bus/OWNER-AUTHORIZATIONS.md AT origin/main,
+  // confirms not expired, not withdrawn). AUTH-101 itself is long closed (single-use, already
+  // executed 2026-09-28) — this makes a bare re-run of --apply refuse correctly going forward,
+  // exactly as it should for a one-time purge.
+  if (apply && !testRun) {
+    try {
+      execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), AUTH_ID], { stdio: "inherit" });
+    } catch {
+      console.error(`ROUND 133 P0: ${AUTH_ID} rejected by verify-owner-authorization.mjs -- see docs/bus/OWNER-AUTHORIZATIONS.md.`);
+      process.exit(1);
+    }
   }
 
   const client = new pg.Client({ connectionString: process.env.DATABASE_URL });

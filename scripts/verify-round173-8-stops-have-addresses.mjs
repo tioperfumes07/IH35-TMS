@@ -4,6 +4,8 @@
 // or city, so a future re-dispatch/renumbering of these loads can't silently defeat the guard.
 import pg from "pg";
 
+export const ALLOW_OFFLINE_SKIP = "live-data invariant by design, no static-only path";
+
 const LABEL = "verify-round173-8-stops-have-addresses";
 const STOP_IDS = [
   "6de58e1c-2b89-4be3-b955-a82020c8fb16", // 13625 pickup

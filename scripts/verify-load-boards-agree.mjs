@@ -21,6 +21,8 @@
 // A subset violation (Truck Line showing a load canonical says is finished/inactive) is exactly
 // the kind of real bug this guard exists to catch -- a documented narrower filter is not.
 import { register } from "tsx/esm/api";
+
+export const ALLOW_OFFLINE_SKIP = "live-data invariant by design, no static-only path";
 register();
 
 const LABEL = "verify-load-boards-agree";

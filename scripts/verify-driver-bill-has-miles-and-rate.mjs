@@ -14,6 +14,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 
+export const ALLOW_OFFLINE_SKIP = "live-money invariant by design, no static-only path";
+
 const LABEL = "verify-driver-bill-has-miles-and-rate";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BASELINE_PATH = path.join(ROOT, "scripts/verify-driver-bill-has-miles-and-rate.baseline.json");

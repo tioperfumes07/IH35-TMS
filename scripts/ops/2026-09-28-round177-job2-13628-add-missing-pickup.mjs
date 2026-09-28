@@ -29,6 +29,11 @@
 //
 // This script documents and reproduces the exact statements already run live via direct SQL
 // (2026-09-28) -- idempotent by address_line1 IS NULL / sequence-number check.
+//
+// No verify-owner-authorization.mjs / AUTH-NNN gate: this inserts/renumbers mdata.load_stops rows
+// (a dispatch stop and its address) -- not an accounting/driver_finance amount, GL posting, or
+// money movement. The ROUND 133 P0 AUTH ledger governs financial writes; a missing-stop correction
+// is not one.
 import pg from "pg";
 
 const LOAD_ID = "2f828bf1-de54-476f-92bc-5607bb0a10aa"; // 13628

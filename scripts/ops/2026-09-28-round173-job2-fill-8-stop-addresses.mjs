@@ -12,6 +12,11 @@
 // against them; their real addresses independently match what this script derives from the same
 // source documents. Only 13625's pickup (GPEX Yard Laredo) was still NULL and is written here.
 // This script is idempotent (`WHERE address_line1 IS NULL`) and safe to re-run.
+//
+// No verify-owner-authorization.mjs / AUTH-NNN gate: this writes mdata.load_stops address text
+// only (street address, postal code) sourced from a signed rate confirmation PDF -- not an
+// accounting/driver_finance amount, GL posting, or money movement of any kind. The ROUND 133 P0
+// AUTH ledger governs financial writes; a dispatch address correction is not one.
 import pg from "pg";
 
 const LABEL = "round173-job2-fill-8-stop-addresses";
