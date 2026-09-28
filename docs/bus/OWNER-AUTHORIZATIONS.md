@@ -2329,3 +2329,32 @@ ROUND 154.4 unblock. Pre-existing projection/ledger tip drift on this driver (le
 CONSUMED — AUTH-083 — 2026-09-28T06:10Z Cursor. tip 12500→20000; verify-escrow-balance-reconciles-gl PASS (17 GL, 15 ledger).
 
 — Cursor
+
+---
+
+## AUTH-084
+issued_at: 2026-09-28T06:20:00.000Z
+scope: accounting.bills / accounting.bill_lines / accounting.bill_payments (INSERT only, every bill carries posting_hold_reason, no createBill/payBill call, zero new accounting.journal_entry_postings rows) + driver_finance.driver_settlement_gl_runs (INSERT for target settlements missing a row, UPDATE none) + driver_finance.driver_settlement_gl_bills (INSERT only) + driver_finance.driver_bills (status UPDATE to 'paid' only, for the exact rows adopted) for exactly the driver_bills belonging to the 47 payrun-closed settlements (driver_finance.payrun_gl_runs, status='posted', journal_entry_id IS NOT NULL), operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80 (USMCA). Excludes any driver_bill whose driver has no vendor link and any driver_bill that is one of a live-verified pair of duplicate driver_bills rows for the same (driver, load) — both reported, neither forced.
+action: OWNER_AUTH_ID=AUTH-084 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc1-round148-ap-adoption-setbased.ts
+expires_at: 2026-09-28T12:00:00.000Z
+status: OPEN
+
+ROUND 148/154 A/P adoption, SET-BASED per Lead's "KILL THE LOOP" ruling (2026-09-28) and the
+owner's strike of "no direct insert into an accounting table" (#22902, merged 027dd1780a).
+Supersedes AUTH-077's per-bill-loop approach (settlement-bill-payment-adopt.service.ts +
+2026-09-28-cc1-round154-ap-adoption-held.ts), which ran at ~1 bill / 2-3 min (4+ hours for 120)
+and was killed. This is ONE transaction, INSERT...SELECT only, no createBill/payBill call, zero
+new journal lines — the real money already posted under each settlement's payrun JE; this only
+creates the historical document trail with posting held.
+Idempotency: driver_finance.driver_settlement_gl_bills.driver_bill_id + accounting_bill_id IS
+NOT NULL (the order's own SQL sketch assumed accounting.bills.source_driver_bill_id, which does
+not exist live — verified via information_schema.columns 2026-09-28).
+DRY_RUN=1 passed clean twice (2026-09-28 06:1x UTC): 68 bills staged and inserted correctly,
+TB unchanged before/after (dr=cr=299,597,349, 7,661 rows), 0 unlinked driver_bills after insert.
+104 total driver_bills exist for the 47 settlements; 22 already adopted (prior per-bill run,
+kept), 68 adopted by this run, 8 excluded (ANGEL ALFONSO SOSA PEREZ, no vendor link — reported,
+not forced), 6 excluded (3 (driver, load) pairs each carrying TWO separate driver_bills rows
+for the same load — a pre-existing data-quality defect, reported, not guessed which is correct).
+22+68+8+6 = 104, full accounting for every row.
+
+— CC-1
