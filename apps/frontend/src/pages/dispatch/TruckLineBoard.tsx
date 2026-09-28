@@ -114,7 +114,12 @@ const EXCEPTION_RED = "#991B1B";
 // Below 860px, Load + Live signal hide (same fold pattern as V10).
 const GRID_TEMPLATE_COLUMNS =
   "minmax(120px,9vw) minmax(140px,11vw) minmax(120px,10vw) minmax(120px,10vw) minmax(64px,5vw) minmax(80px,7vw) 1fr";
-const GRID_TEMPLATE_COLUMNS_NARROW = "minmax(100px,22vw) minmax(100px,22vw) minmax(100px,22vw) minmax(56px,12vw) minmax(72px,14vw)";
+// ROUND 200 (owner, "separate Truck / Tour-Presettlement / Load into three columns") — the prior
+// narrow template dropped the Load column entirely (display:none below), which could make Truck
+// and Tour # look merged with nothing identifying the load between them. Load now stays visible at
+// every width; only Live signal folds away below FOLD_BREAKPOINT_PX (6 tracks, not 5).
+const GRID_TEMPLATE_COLUMNS_NARROW =
+  "minmax(84px,13vw) minmax(104px,16vw) minmax(76px,13vw) minmax(76px,13vw) minmax(46px,8vw) minmax(60px,10vw)";
 const FOLD_BREAKPOINT_PX = 860;
 // TRUCK-LINE-04 (found live at 1024px, one of the 5 required breakpoints, during this seat's own
 // V10 verification pass): V10's ROUND 18.6 widening of columns 1-2 (Truck/Load) shrank the Line
@@ -139,6 +144,30 @@ function rowSpineColor(tripType: string | null | undefined): string {
 
 function pct(index: number) {
   return (index / (V7_COUNT - 1)) * 100;
+}
+
+// ROUND 200 (owner: "timeline out of proportion — 13635 (6 days) renders like 13626 (1 day)") —
+// THE LINE's 7 station nodes are honest discrete progress markers (station.ts's own reached/next
+// model), never repositioned onto a fabricated calendar axis for stations with no real stamp. What
+// WAS missing: every row's track rendered at the same 100% width regardless of how long the trip
+// actually spans, so a week-long NB/SB leg and a same-day local leg looked identical. This scales
+// the track's own WIDTH (not the node positions inside it) to the load's real scheduled
+// pickup->delivery window — the same appointments.pickup.at/delivery.at this board already reads
+// for the appointment columns, never a second date source. TIMELINE_SCALE_MAX_DAYS=7 matches the
+// existing 7-day "long leg" convention (RoundTripsTimeline.tsx's own longFlag threshold) so a
+// week-or-longer trip fills the row and everything shorter is visibly, proportionally narrower.
+const TIMELINE_SCALE_MAX_DAYS = 7;
+const TIMELINE_MIN_WIDTH_PCT = 24; // never so narrow the 7 nodes + truck graphic can't fit legibly
+function timelineWidthPercent(row: TruckLineRow): number {
+  const puAt = row.appointments?.pickup?.at;
+  const delAt = row.appointments?.delivery?.at;
+  if (!puAt || !delAt) return 100; // no real schedule window known — full width, never fabricated
+  const start = Date.parse(puAt);
+  const end = Date.parse(delAt);
+  if (Number.isNaN(start) || Number.isNaN(end) || end <= start) return 100;
+  const days = (end - start) / 86_400_000;
+  const clamped = Math.min(Math.max(days, 0), TIMELINE_SCALE_MAX_DAYS);
+  return TIMELINE_MIN_WIDTH_PCT + (clamped / TIMELINE_SCALE_MAX_DAYS) * (100 - TIMELINE_MIN_WIDTH_PCT);
 }
 
 
@@ -488,9 +517,16 @@ function TruckLineTrack({
   // progress that already happened honestly.
   const reachedPct = pct(Math.max(v7Reached, 0));
   const exceptionPct = pct(STATUS_STATION_INDEX);
+  const trackWidthPct = timelineWidthPercent(row);
 
   return (
     <div className="relative h-[62px]" data-testid={`truck-line-track-${row.unit_id}`}>
+    <div
+      className="relative h-full"
+      style={{ width: `${trackWidthPct}%` }}
+      data-testid={`truck-line-track-scale-${row.unit_id}`}
+      data-timeline-width-pct={trackWidthPct.toFixed(1)}
+    >
       <WarehouseDockSvg roof="#1f2a44" />
       <div className="absolute" style={{ left: `${pct(1)}%`, top: 2, transform: "translateX(-50%)" }}>
         <WarehouseDockSvg roof="#1f2a44" />
@@ -641,6 +677,7 @@ function TruckLineTrack({
       >
         <TractorTrailerSvg hasIssue={has_open_exception} rolling={live.rolling} />
       </div>
+    </div>
     </div>
   );
 }
@@ -813,10 +850,10 @@ export function TruckLineBoard({
     setOtherNote("");
   };
 
-  const confirmException = async () => {
-    if (!otherPrompt?.row.load || !otherReasonId) return;
-    const selected = reasons.find((r) => r.id === otherReasonId);
-    if (selected?.code === "other" && otherNote.trim().length === 0) {
+  const confirmExceptionWith = async (reasonId: string, note: string) => {
+    if (!otherPrompt?.row.load) return;
+    const selected = reasons.find((r) => r.id === reasonId);
+    if (selected?.code === "other" && note.trim().length === 0) {
       setOtherError('A note is required for "Other (note required)".');
       return;
     }
@@ -826,9 +863,9 @@ export function TruckLineBoard({
       await recordTruckLineException({
         operating_company_id: operatingCompanyId,
         load_id: otherPrompt.row.load.load_id,
-        reason_id: otherReasonId,
+        reason_id: reasonId,
         issue_category: selected?.code ?? "other",
-        issue_description: otherNote.trim() || (selected?.name ?? "Exception"),
+        issue_description: note.trim() || (selected?.name ?? "Exception"),
         severity: "warning",
       });
       await qc.invalidateQueries({ queryKey: ["truck-line", operatingCompanyId] });
@@ -837,9 +874,25 @@ export function TruckLineBoard({
       // Honest failure — leave the popover open so the dispatcher can retry, with the server's
       // own reason shown (guard item d's same rule applies here).
       setOtherError(userFacingApiError(err, "Could not record this exception"));
+      setOtherReasonId(reasonId);
     } finally {
       setOtherBusy(false);
     }
+  };
+  const confirmException = () => confirmExceptionWith(otherReasonId ?? "", otherNote);
+
+  // ROUND 200 (owner: "the status dropdown that will not close") — picking a reason used to only
+  // ever set otherReasonId, which revealed a note field + a separate Save button every dispatcher
+  // then had to click again, so the popover looked stuck open after the reason click that should
+  // have been the whole action. "Other (note required)" still needs a note, so it still stops here
+  // and waits for Save; every other reason now confirms and closes on the SAME click.
+  const selectReason = (reasonId: string) => {
+    const selected = reasons.find((r) => r.id === reasonId);
+    if (selected?.code === "other") {
+      setOtherReasonId(reasonId);
+      return;
+    }
+    void confirmExceptionWith(reasonId, "");
   };
 
   const clearException = async () => {
@@ -945,7 +998,8 @@ export function TruckLineBoard({
           .truck-line-v4-header, .truck-line-v4-row {
             grid-template-columns: ${GRID_TEMPLATE_COLUMNS_NARROW};
           }
-          .truck-line-v4-load-cell, .truck-line-v4-load-header,
+          /* ROUND 200 — Load stays visible: Truck / Load / Tour # must read as three separate
+             columns at every width. Only Live signal folds away here. */
           .truck-line-v4-signal-cell, .truck-line-v4-signal-header { display: none; }
           .truck-line-v4-cap-full { display: none; }
           .truck-line-v4-cap-narrow { display: inline; }
@@ -1103,7 +1157,18 @@ export function TruckLineBoard({
                       <Fragment key={rowKey}>
                       <div
                         className="truck-line-v4-row"
-                        style={{ borderLeft: `3px solid ${rowSpineColor(r.load?.trip_type)}` }}
+                        style={{
+                          borderLeft: `3px solid ${rowSpineColor(r.load?.trip_type)}`,
+                          // ROUND 200 (owner: "restore the moved design") — ROUND 167 re-wired THE
+                          // LINE as its own div below this row instead of its old inline column
+                          // (see ROUND 167 comment further down), and this row's OWN border-bottom
+                          // plus the track's border-bottom drew two separate seams, making the line
+                          // read as a detached, secondary strip. Suppressing this row's own bottom
+                          // border when a track follows it merges the two back into one unified
+                          // card, matching the pre-#22943 single-row look, without touching the
+                          // owner-ordered 7-column header (ROUND 155.6) the old layout predates.
+                          borderBottom: r.load && r.station ? "none" : undefined,
+                        }}
                         data-testid={`truck-line-row-${g.unit_id}${legIndex > 0 ? `-leg-${legIndex}` : ""}`}
                         data-unit-id={g.unit_id}
                       >
@@ -1205,7 +1270,7 @@ export function TruckLineBoard({
                             onAdvance={openStamp}
                             onOpenOther={openOther}
                             onCloseOther={closeOther}
-                            onPickReason={setOtherReasonId}
+                            onPickReason={selectReason}
                             onNoteChange={setOtherNote}
                             onConfirmException={confirmException}
                             onClearException={clearException}
