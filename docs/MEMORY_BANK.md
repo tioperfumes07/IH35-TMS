@@ -638,9 +638,14 @@ prod post is a separate, intentional, owner-authorized action, not a repoint of 
 - **Faro formula:** net = invoice − reserve − factor_fee − wire_fee − cash_rsv. Auto-accept only when
   batch net == same-day ORIG:FARO wire exactly (zero variance). Named Resolve: 08/13, 08/14, 09/21
   (surface every reserve movement on 09/21 — never net).
+- **Settlement pay ↔ BoA (ROUND 186 addendum):** closed `driver_settlements.net_pay` (dollars→cents)
+  ↔ Bank of America USMCA FREIGHT debits, amount EXACT, unambiguous both ways. Date window is
+  `abs(period_end → bank.transaction_date) ≤ 10` for auto-accept (wider than fuel/expense 5d —
+  settlement payment lag is real); amount-exact beyond 10d → Resolve only. Kind=`settlement` →
+  `matched_settlement_id`. Runner flag `--settlement-only`, AUTH-111.
 - **Runner:** `scripts/ops/2026-09-28-cursor-r186-bulk-accept-through-engine.ts` (`--faro-only` /
-  `--apply`, AUTH-110). Confidence bar: exact amount + date≤5 + sim≥0.5 + unambiguous both ways +
-  zero variance.
+  `--settlement-only` / `--apply`). Confidence bar (non-settlement): exact amount + date≤5 +
+  sim≥0.5 + unambiguous both ways + zero variance.
 
 ## Active Architectural Decisions — Banking (CC-2, 2026-09-08)
 

@@ -40,7 +40,8 @@ export type LedgerEntryKind =
   | "bill"
   | "expense"
   | "factoring_advance"
-  | "fuel_transaction";
+  | "fuel_transaction"
+  | "settlement";
 export type MatchState = "auto_matched" | "user_matched" | "rejected";
 
 // banking.reconciliation_matches.ledger_entry_kind has a CHECK constraint. Migration
@@ -59,6 +60,9 @@ export const PERSISTABLE_MATCH_KINDS: ReadonlySet<LedgerEntryKind> = new Set<Led
   // fuel_transaction is persistable in the CHECK, but has no matched_* clear-column yet —
   // accept stores the match + audit and leaves review_state uncleared until that column lands.
   "fuel_transaction",
+  // ROUND 186 addendum — driver settlement net_pay ↔ BoA debit. Wider date window (10d) lives in
+  // the bulk runner, not findCandidates (settlement-born candidate universe stays bill_payment/bill).
+  "settlement",
 ]);
 
 // Denormalized convenience FK on banking.bank_transactions (migration 0182 + Part 2a's
@@ -73,6 +77,7 @@ const MATCHED_COLUMN_BY_KIND: Partial<Record<LedgerEntryKind, string>> = {
   je: "matched_journal_entry_id",
   expense: "matched_expense_id",
   factoring_advance: "matched_factoring_advance_id",
+  settlement: "matched_settlement_id",
 };
 
 // ROUND 141.4 — A kind that findCandidates can RETURN but that cannot be accepted
@@ -672,6 +677,17 @@ async function loadLedgerAmountCents(client: DbClient, operatingCompanyId: strin
     const res = await client.query<{ amount_cents: number }>(
       `SELECT ROUND(COALESCE(total_cost, 0) * 100)::int AS amount_cents
          FROM fuel.fuel_transactions
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+        LIMIT 1`,
+      [entryId, operatingCompanyId]
+    );
+    return Math.abs(Number(res.rows[0]?.amount_cents ?? 0));
+  }
+  if (kind === "settlement") {
+    // Driver settlement net_pay is stored in dollars (numeric). Bank amount is cents.
+    const res = await client.query<{ amount_cents: number }>(
+      `SELECT ROUND(COALESCE(net_pay, 0) * 100)::int AS amount_cents
+         FROM driver_finance.driver_settlements
         WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
         LIMIT 1`,
       [entryId, operatingCompanyId]

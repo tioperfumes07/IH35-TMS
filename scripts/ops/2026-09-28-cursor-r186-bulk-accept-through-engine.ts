@@ -5,8 +5,8 @@
  *
  * Confidence bar (ALL must hold) — else Resolve:
  *   1. Amount exact within tolerance (and ZERO variance — no auto variance JE)
- *   2. Date gap <= 5 days
- *   3. Payee/text similarity >= 0.5
+ *   2. Date gap <= 5 days (fuel/expense/findCandidates); settlement uses <= 10 days
+ *   3. Payee/text similarity >= 0.5 (findCandidates path)
  *   4. Unambiguous both directions
  *   5. Zero variance
  *
@@ -17,9 +17,15 @@
  * Debit path: findCandidates → auto_match && exact_amount && unambiguous both ways →
  * acceptMatchWithResolveDifference.
  *
+ * Settlement path (ROUND 186 addendum): closed driver_settlements.net_pay ↔ Bank of America
+ * USMCA FREIGHT debits, amount EXACT. Date window uses period_end → bank transaction_date.
+ *   <= 10 days + unambiguous both ways → acceptMatchWithResolveDifference(kind=settlement)
+ *   > 10 days amount-exact → Resolve (settlement payment lag is real; do not auto-accept)
+ *
  * Usage:
  *   DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cursor-r186-bulk-accept-through-engine.ts
- *   OWNER_AUTH_ID=AUTH-110 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cursor-r186-bulk-accept-through-engine.ts --apply
+ *   OWNER_AUTH_ID=AUTH-110 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cursor-r186-bulk-accept-through-engine.ts --faro-only --apply
+ *   OWNER_AUTH_ID=AUTH-111 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cursor-r186-bulk-accept-through-engine.ts --settlement-only --apply
  */
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -40,9 +46,15 @@ const OWNER_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd";
 const ZERO_VARIANCE_ACCOUNT_ID = "00000000-0000-4000-8000-000000000000";
 const APPLY = process.argv.includes("--apply");
 const FARO_ONLY = process.argv.includes("--faro-only") || process.env.FARO_ONLY === "1";
+const SETTLEMENT_ONLY =
+  process.argv.includes("--settlement-only") || process.env.SETTLEMENT_ONLY === "1";
 const OUT_DIR = path.join(ROOT, "artifacts", "r186-bulk-accept");
 
 const NAMED_FARO_RESOLVE = new Set(["2026-08-13", "2026-08-14", "2026-09-21"]);
+/** Active Bank of America · USMCA FREIGHT (mask 3224). */
+const BOA_USMCA_FREIGHT_ACCOUNT_ID = "e83028a5-dcda-4233-b660-5b9923b3d39c";
+/** Settlement pay lag is real — wider than fuel/expense 5d bar. */
+const SETTLEMENT_AUTO_ACCEPT_MAX_LAG_DAYS = 10;
 
 type ResolveRow = {
   reason: string;
@@ -53,13 +65,15 @@ type ResolveRow = {
 };
 
 type AcceptRow = {
-  path: "faro_batch" | "findCandidates_1to1";
+  path: "faro_batch" | "findCandidates_1to1" | "settlement_1to1";
   bank_transaction_id: string;
   transaction_date: string;
   amount_cents: number;
   ledger_entry_kind: LedgerEntryKind;
   ledger_entry_ids: string[];
   submission_batch_ref?: string;
+  source_document_ref?: string;
+  date_lag_days?: number;
 };
 
 function requireAuth() {
@@ -169,9 +183,166 @@ function clearsBar(c: MatchCandidate): boolean {
   return Boolean(c.auto_match && c.exact_amount && c.amount_gap_cents === 0);
 }
 
+type SettlementPair = {
+  settlement_id: string;
+  source_document_ref: string | null;
+  period_end: string;
+  net_cents: number;
+  bank_id: string;
+  transaction_date: string;
+  abs_lag: number;
+  lag_days: number;
+};
+
+/**
+ * Closed settlement net_pay (cents) ↔ unmatched BoA USMCA FREIGHT debits, amount EXACT.
+ * Auto-accept only when abs(period_end → bank date) <= 10 AND unambiguous both ways.
+ * Amount-exact beyond 10 days → Resolve (owner: settlement pay lag is real).
+ */
+async function loadSettlementBoaPairs(client: pg.PoolClient): Promise<{
+  autoAccept: SettlementPair[];
+  resolveBeyond10: SettlementPair[];
+  resolveAmbiguous: ResolveRow[];
+}> {
+  const settlements = await client.query<{
+    id: string;
+    source_document_ref: string | null;
+    period_end: string;
+    net_cents: string;
+  }>(
+    `SELECT s.id::text,
+            s.source_document_ref,
+            s.period_end::text,
+            ROUND(COALESCE(s.net_pay, 0) * 100)::bigint::text AS net_cents
+       FROM driver_finance.driver_settlements s
+      WHERE s.operating_company_id = $1::uuid
+        AND s.voided_at IS NULL
+        AND s.status = 'closed'
+        AND COALESCE(s.is_sample_data, false) IS NOT TRUE
+        AND COALESCE(s.net_pay, 0) > 0
+        AND NOT EXISTS (
+              SELECT 1
+                FROM banking.bank_transactions bt
+               WHERE bt.matched_settlement_id = s.id
+                 AND bt.voided_at IS NULL
+            )
+      ORDER BY s.period_end, s.source_document_ref`,
+    [USMCA]
+  );
+
+  const debits = await client.query<{
+    id: string;
+    transaction_date: string;
+    amt: string;
+  }>(
+    `SELECT bt.id::text,
+            bt.transaction_date::text,
+            ABS(bt.amount_cents)::bigint::text AS amt
+       FROM banking.bank_transactions bt
+      WHERE bt.operating_company_id = $1::uuid
+        AND bt.voided_at IS NULL
+        AND bt.is_credit = false
+        AND bt.bank_account_id = $2::uuid
+        AND COALESCE(bt.review_state, '') <> 'matched'
+      ORDER BY bt.transaction_date, bt.id`,
+    [USMCA, BOA_USMCA_FREIGHT_ACCOUNT_ID]
+  );
+
+  const pairs: SettlementPair[] = [];
+  for (const s of settlements.rows) {
+    const net = Number(s.net_cents);
+    for (const d of debits.rows) {
+      if (Number(d.amt) !== net) continue;
+      const periodEnd = s.period_end.slice(0, 10);
+      const txnDate = d.transaction_date.slice(0, 10);
+      const lagDays =
+        (Date.parse(txnDate + "T00:00:00Z") - Date.parse(periodEnd + "T00:00:00Z")) /
+        86_400_000;
+      pairs.push({
+        settlement_id: s.id,
+        source_document_ref: s.source_document_ref,
+        period_end: periodEnd,
+        net_cents: net,
+        bank_id: d.id,
+        transaction_date: txnDate,
+        abs_lag: Math.abs(lagDays),
+        lag_days: lagDays,
+      });
+    }
+  }
+
+  const within10 = pairs.filter((p) => p.abs_lag <= SETTLEMENT_AUTO_ACCEPT_MAX_LAG_DAYS);
+  const beyond10 = pairs.filter((p) => p.abs_lag > SETTLEMENT_AUTO_ACCEPT_MAX_LAG_DAYS);
+
+  const bySettlement = new Map<string, SettlementPair[]>();
+  const byBank = new Map<string, SettlementPair[]>();
+  for (const p of within10) {
+    const sl = bySettlement.get(p.settlement_id) ?? [];
+    sl.push(p);
+    bySettlement.set(p.settlement_id, sl);
+    const bl = byBank.get(p.bank_id) ?? [];
+    bl.push(p);
+    byBank.set(p.bank_id, bl);
+  }
+
+  const autoAccept: SettlementPair[] = [];
+  const resolveAmbiguous: ResolveRow[] = [];
+  const seenSettle = new Set<string>();
+  const seenBank = new Set<string>();
+
+  for (const p of within10) {
+    if (seenSettle.has(p.settlement_id) || seenBank.has(p.bank_id)) continue;
+    const sRivals = bySettlement.get(p.settlement_id) ?? [];
+    const bRivals = byBank.get(p.bank_id) ?? [];
+    if (sRivals.length !== 1 || bRivals.length !== 1) {
+      resolveAmbiguous.push({
+        reason: "settlement_ambiguous_within_10d",
+        bank_transaction_id: p.bank_id,
+        transaction_date: p.transaction_date,
+        amount_cents: p.net_cents,
+        detail: {
+          settlement_id: p.settlement_id,
+          source_document_ref: p.source_document_ref,
+          period_end: p.period_end,
+          abs_lag: p.abs_lag,
+          settlement_rival_count: sRivals.length,
+          bank_rival_count: bRivals.length,
+          settlement_rival_banks: sRivals.map((r) => r.bank_id),
+          bank_rival_settlements: bRivals.map((r) => r.settlement_id),
+        },
+      });
+      seenSettle.add(p.settlement_id);
+      seenBank.add(p.bank_id);
+      continue;
+    }
+    autoAccept.push(p);
+    seenSettle.add(p.settlement_id);
+    seenBank.add(p.bank_id);
+  }
+
+  // Beyond 10d: one Resolve row per settlement that has any amount-exact hit and no ≤10d auto path.
+  const resolveBeyond10: SettlementPair[] = [];
+  const autoSettleIds = new Set(autoAccept.map((p) => p.settlement_id));
+  const seenBeyond = new Set<string>();
+  for (const p of beyond10) {
+    if (autoSettleIds.has(p.settlement_id) || seenBeyond.has(p.settlement_id)) continue;
+    // Prefer the nearest bank hit for the Resolve detail.
+    const rivals = beyond10
+      .filter((x) => x.settlement_id === p.settlement_id)
+      .sort((a, b) => a.abs_lag - b.abs_lag);
+    resolveBeyond10.push(rivals[0]!);
+    seenBeyond.add(p.settlement_id);
+  }
+
+  return { autoAccept, resolveBeyond10, resolveAmbiguous };
+}
+
 async function main() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL required");
   if (APPLY) requireAuth();
+  if (FARO_ONLY && SETTLEMENT_ONLY) {
+    throw new Error("Pass only one of --faro-only / --settlement-only");
+  }
 
   fs.mkdirSync(OUT_DIR, { recursive: true });
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 4, ssl: { rejectUnauthorized: false } });
@@ -183,10 +354,104 @@ async function main() {
   let faroResolve = 0;
   let debitAccepted = 0;
   let debitResolve = 0;
+  let settlementAccepted = 0;
+  let settlementResolve = 0;
 
   try {
     await client.query(`SELECT set_config('app.bypass_rls','lucia',true)`);
     await client.query(`SELECT set_config('app.operating_company_id',$1::text,true)`, [USMCA]);
+
+    // ─── SETTLEMENT ↔ BoA (ROUND 186 addendum) ───────────────────────────────
+    if (!FARO_ONLY) {
+      const { autoAccept, resolveBeyond10, resolveAmbiguous } = await loadSettlementBoaPairs(client);
+      console.log(
+        `Settlement↔BoA: auto-accept ≤${SETTLEMENT_AUTO_ACCEPT_MAX_LAG_DAYS}d=${autoAccept.length}, ` +
+          `resolve >${SETTLEMENT_AUTO_ACCEPT_MAX_LAG_DAYS}d=${resolveBeyond10.length}, ` +
+          `ambiguous=${resolveAmbiguous.length}`
+      );
+
+      for (const row of resolveAmbiguous) {
+        resolve.push(row);
+        settlementResolve += 1;
+        console.log(`RESOLVE settlement ambiguous bank ${row.bank_transaction_id}`);
+      }
+      for (const p of resolveBeyond10) {
+        resolve.push({
+          reason: "settlement_amount_exact_beyond_10d",
+          bank_transaction_id: p.bank_id,
+          transaction_date: p.transaction_date,
+          amount_cents: p.net_cents,
+          detail: {
+            settlement_id: p.settlement_id,
+            source_document_ref: p.source_document_ref,
+            period_end: p.period_end,
+            abs_lag: p.abs_lag,
+            lag_days: p.lag_days,
+            note: "Settlement payment lag is real — rank for Resolve, do not auto-accept beyond 10 days.",
+          },
+        });
+        settlementResolve += 1;
+        console.log(
+          `RESOLVE settlement ${p.source_document_ref ?? p.settlement_id} lag=${p.abs_lag}d > ${SETTLEMENT_AUTO_ACCEPT_MAX_LAG_DAYS}`
+        );
+      }
+
+      for (const p of autoAccept) {
+        const row: AcceptRow = {
+          path: "settlement_1to1",
+          bank_transaction_id: p.bank_id,
+          transaction_date: p.transaction_date,
+          amount_cents: p.net_cents,
+          ledger_entry_kind: "settlement",
+          ledger_entry_ids: [p.settlement_id],
+          source_document_ref: p.source_document_ref ?? undefined,
+          date_lag_days: p.abs_lag,
+        };
+        if (!APPLY) {
+          accepted.push(row);
+          settlementAccepted += 1;
+          console.log(
+            `DRY settlement ACCEPT ${p.source_document_ref ?? p.settlement_id} → bank ${p.bank_id} (lag ${p.abs_lag}d)`
+          );
+          continue;
+        }
+        await acceptMatchWithResolveDifference({
+          operating_company_id: USMCA,
+          bank_transaction_id: p.bank_id,
+          actor_user_uuid: OWNER_USER_ID,
+          ledger_entry_kind: "settlement",
+          ledger_entry_id: p.settlement_id,
+          difference_account_id: ZERO_VARIANCE_ACCOUNT_ID,
+        });
+        accepted.push(row);
+        settlementAccepted += 1;
+        console.log(
+          `APPLIED settlement ACCEPT ${p.source_document_ref ?? p.settlement_id} → bank ${p.bank_id} (lag ${p.abs_lag}d)`
+        );
+      }
+    } else {
+      console.log("Skipping settlement↔BoA path (--faro-only).");
+    }
+
+    if (SETTLEMENT_ONLY) {
+      const summary = {
+        mode: APPLY ? "APPLY" : "DRY_RUN",
+        settlement_only: true,
+        settlement_accepted: settlementAccepted,
+        settlement_resolve: settlementResolve,
+        accepted_total: accepted.length,
+        resolve_total: resolve.length,
+        settlement_auto_accept_max_lag_days: SETTLEMENT_AUTO_ACCEPT_MAX_LAG_DAYS,
+        boa_account_id: BOA_USMCA_FREIGHT_ACCOUNT_ID,
+      };
+      fs.writeFileSync(path.join(OUT_DIR, "summary.json"), JSON.stringify(summary, null, 2));
+      fs.writeFileSync(path.join(OUT_DIR, "accepted.json"), JSON.stringify(accepted, null, 2));
+      fs.writeFileSync(path.join(OUT_DIR, "resolve.json"), JSON.stringify(resolve, null, 2));
+      console.log("\n=== ROUND 186 SETTLEMENT SUMMARY ===");
+      console.log(JSON.stringify(summary, null, 2));
+      console.log(`Wrote ${OUT_DIR}/summary.json (+ accepted.json, resolve.json)`);
+      return;
+    }
 
     // ─── FARO BATCHES ────────────────────────────────────────────────────────
     const { batches, wires, advancesByBatch } = await loadFaroBatches(client);
@@ -459,13 +724,18 @@ async function main() {
     const summary = {
       mode: APPLY ? "APPLY" : "DRY_RUN",
       faro_only: FARO_ONLY,
+      settlement_only: SETTLEMENT_ONLY,
       faro_exact_accepted: faroExact,
       faro_resolve: faroResolve,
       debit_accepted: debitAccepted,
       debit_resolve: debitResolve,
+      settlement_accepted: settlementAccepted,
+      settlement_resolve: settlementResolve,
       accepted_total: accepted.length,
       resolve_total: resolve.length,
       named_faro_resolve: ["2026-08-13", "2026-08-14", "2026-09-21"],
+      settlement_auto_accept_max_lag_days: SETTLEMENT_AUTO_ACCEPT_MAX_LAG_DAYS,
+      boa_account_id: BOA_USMCA_FREIGHT_ACCOUNT_ID,
     };
 
     fs.writeFileSync(path.join(OUT_DIR, "summary.json"), JSON.stringify(summary, null, 2));
