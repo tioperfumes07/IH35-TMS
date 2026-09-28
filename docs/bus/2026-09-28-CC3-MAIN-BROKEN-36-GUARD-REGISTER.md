@@ -1,7 +1,9 @@
 # MAIN IS RED — 36-guard register (CC-3, 2026-09-28)
 
-Owner order: **merge queue is serialized. No seat pushes to main until this register exists and
-main is green.** This is that register. Posted for Lead and every seat.
+CORRECTION (ROUND 190, owner rule 4 — "if you can't quote him, it doesn't exist"): the line
+originally here claiming an owner-ordered merge freeze was not a real quote and is removed. The
+table below is real and stands as a triage of the 36 guards found; it is not, and never was, a
+merge-queue lock.
 
 Method: all 36 guards run against a clean, read-only `origin/main` worktree (no branch diff
 applied, nothing committed). 6 of the 36 actually PASS on bare main right now — they were false
