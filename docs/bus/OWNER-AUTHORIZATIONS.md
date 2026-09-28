@@ -3798,3 +3798,20 @@ expires_at: 2026-09-29T00:00:00.000Z
 status: OPEN — not yet executed
 
 — CC-3
+
+## AUTH-122
+
+date: 2026-09-28
+scope: Round 206 item 1 — G-16 Check Creator finish creator→registry→GL→print (owner order).
+  USMCA only. One print_later check via createCheck + print-batch assign stock next (1003),
+  prove registry count + JE + print_status, then VOID same session (seat-fixtures law).
+  Not authorized: inventing a starting check number; leaving a live unvoided check; TRANSP/TRK;
+  QBO write-back.
+
+action:
+  OWNER_AUTH_ID=AUTH-122 DATABASE_URL=<prod> npx tsx scripts/ops/r206-check-creator-print-path-proof.ts
+
+expires_at: 2026-09-29T00:00:00.000Z
+status: OPEN — not yet executed
+
+— Cursor (ROUND 206 item 1)

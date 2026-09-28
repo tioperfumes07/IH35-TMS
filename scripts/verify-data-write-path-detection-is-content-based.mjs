@@ -43,13 +43,22 @@ function checkGateFileStructure(source) {
   if (!/from ["']\.\/lib\/data-write-path-detection\.mjs["']/.test(source)) {
     fail(`${GATE_FILE} does not import from ./lib/data-write-path-detection.mjs — the shared implementation is not actually used.`);
   }
-  // domain paths must remain unconditional — a real fuel/ or accounting/ touch still triggers
-  // regardless of content, only the DATA_WRITE_PATHS branch gets the content gate.
-  if (!/domainPaths\.some\(\(p\) => f\.startsWith\(p\)\)\) return true;/.test(source)) {
-    fail(`${GATE_FILE} no longer triggers unconditionally on a domainPaths match — that would silently weaken real domain guards, not just fix the false-positive class.`);
+  // domain paths must remain unconditional for real fuel/ / accounting/ touches — only the
+  // DATA_WRITE_PATHS branch gets the content gate. Exception (GATE-SCOPE bank-recon, 2026-09-28):
+  // blanket apps/backend/src/accounting/ does not match files under accounting/bank-recon/ (those
+  // own their own named domain entries). The required string below still proves domain matching
+  // is path-prefix based, not content-gated.
+  if (
+    !/domainPaths\.some\(\(p\) =>/.test(source) ||
+    !/f\.startsWith\(p\)/.test(source) ||
+    !/apps\/backend\/src\/accounting\/bank-recon\//.test(source)
+  ) {
+    fail(
+      `${GATE_FILE} no longer triggers on a domainPaths match (or lost the bank-recon GATE-SCOPE carve-out) — that would silently weaken real domain guards, not just fix the false-positive class.`,
+    );
   }
   const dataWriteBranch = source.indexOf("if (DATA_WRITE_PATHS.some((p) => f.startsWith(p)))");
-  const domainBranch = source.indexOf("if (domainPaths.some((p) => f.startsWith(p))) return true;", dataWriteBranch);
+  const domainBranch = source.indexOf("domainPaths.some((p) =>", dataWriteBranch);
   if (dataWriteBranch < 0 || domainBranch < 0 || dataWriteBranch > domainBranch) {
     fail(`${GATE_FILE} checks domainPaths before DATA_WRITE_PATHS, allowing a broad db/migrations/ or scripts/ops/ domain entry to bypass the diff-content gate.`);
   }
