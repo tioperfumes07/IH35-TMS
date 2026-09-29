@@ -64,7 +64,7 @@ export function audit(src) {
   need(/kind="customer" id=\{row\.customer_id\}/.test(src.dispatchMargin), `${FILES.dispatchMargin}: dispatch margin must render a real EntityLink kind="customer"`);
   need(/listCustomers/.test(src.cargoClaim) && /kind="customer"/.test(src.cargoClaim), `${FILES.cargoClaim}: cargo claim must have a real customer picker and render EntityLink kind="customer"`);
   need(/<EntityPicker\s+kind="customer"/.test(src.complaints) && /<EntityLink\s+kind="customer"/.test(src.complaints), `${FILES.complaints}: complaints must have a real customer picker and render EntityLink kind="customer"`);
-  need(/kind="customer"/.test(src.banking) && /customerId:\s*""/.test(src.banking), `${FILES.banking}: banking transactions must have a real customerId field and render EntityLink kind="customer"`);
+  need(/kind="customer"/.test(src.banking) && /customerId:\s*(tx\.categorization_customer_id\s*\?\?\s*)?""/.test(src.banking), `${FILES.banking}: banking transactions must have a real customerId field and render EntityLink kind="customer"`);
   need(/type === "driver" \|\| type === "customer" \|\| type === "vendor"/.test(src.contractsList), `${FILES.contractsList}: contracts list must resolve a real customer signer via signerKind`);
   need(/kind=["']customer["']/.test(src.contractsCreate) && /allowCreate/.test(src.contractsCreate), `${FILES.contractsCreate}: contract create must have a real customer EntityPicker`);
   need(/kind="customer" id=\{r\.customer_id\}/.test(src.arApAging), `${FILES.arApAging}: AR/AP aging must render a real EntityLink kind="customer"`);
@@ -100,7 +100,7 @@ if (process.argv.includes("--selftest")) {
     ["margin-link", "dispatchMargin", /kind="customer" id=\{row\.customer_id\}/, 'kind="unit" id={row.unit_id}'],
     ["cargo-claim-picker", "cargoClaim", /listCustomers/g, "listSomethingElse"],
     ["complaints-picker", "complaints", /<EntityPicker\s+kind="customer"/g, '<EntityPicker kind="unit"'],
-    ["banking-field", "banking", /customerId:\s*""/, 'customerId_unused: ""'],
+    ["banking-field", "banking", /customerId:\s*tx\.categorization_customer_id\s*\?\?\s*""/, 'customerId_unused: tx.categorization_customer_id ?? ""'],
     ["contracts-list-signer", "contractsList", /type === "driver" \|\| type === "customer" \|\| type === "vendor"/, 'type === "driver" || type === "vendor"'],
     ["contracts-create-picker", "contractsCreate", /kind=["']customer["']/g, 'kind="unit"'],
     ["ar-ap-aging-link", "arApAging", /kind="customer" id=\{r\.customer_id\}/g, 'kind="unit" id={r.unit_id}'],

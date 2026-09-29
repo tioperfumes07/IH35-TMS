@@ -708,6 +708,13 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           bt.merchant_name,
           bt.plaid_category,
           bt.pending,
+          -- ROUND 224: the real state the categorize (/transactions/:id/categorize -> status) and
+          -- exclude (/link-suggestions/exclude -> review_state) routes actually write. Neither was
+          -- ever selected here, so the FE's tab bucketing fell back to a matched_kind-only heuristic
+          -- that a real categorize/exclude call never touches -- confirmed live: a transaction with
+          -- status='categorized' or review_state='excluded' still rendered as "For review" forever.
+          bt.status,
+          bt.review_state,
           bt.is_credit,
           bt.matched_load_id,
           matched_load.load_number AS matched_load_number,

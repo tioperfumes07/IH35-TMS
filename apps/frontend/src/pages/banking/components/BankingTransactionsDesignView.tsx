@@ -380,15 +380,29 @@ function hasPersistedMatch(tx: PlaidBankTransaction) {
   );
 }
 
+// ROUND 224 — this used to be matched_kind-only, which has no relationship to either real write
+// path: POST /transactions/:id/categorize writes `status`, POST /link-suggestions/exclude writes
+// `review_state` — neither route ever touches matched_kind. Confirmed live: a transaction that
+// genuinely went through categorize (status='categorized') or exclude (review_state='excluded')
+// rendered as "For review" forever under the old heuristic, because the tab bucketing never looked
+// at the columns those actions actually wrote. `review_state === 'excluded'` and
+// `status === 'categorized'` are now checked FIRST, directly; the matched_kind-based checks stay as
+// a fallback only for older rows this account's history may still carry from before those two
+// columns existed on this endpoint's SELECT.
 function looksExcludedTx(tx: PlaidBankTransaction) {
   return (
+    tx.review_state === "excluded" ||
     String(tx.matched_kind ?? "").toLowerCase() === "excluded" ||
     String(tx.notes ?? "").toLowerCase().includes("excluded from banking transactions view")
   );
 }
 
 function looksCategorizedTx(tx: PlaidBankTransaction) {
-  return hasPersistedMatch(tx) || (tx.matched_kind != null && String(tx.matched_kind).toLowerCase() !== "excluded");
+  return (
+    tx.status === "categorized" ||
+    hasPersistedMatch(tx) ||
+    (tx.matched_kind != null && String(tx.matched_kind).toLowerCase() !== "excluded")
+  );
 }
 
 /** BANK-UNDO-01 — a row is Undo-eligible exactly when it's on the Categorized or Excluded bucket
