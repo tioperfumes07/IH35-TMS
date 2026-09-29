@@ -1347,9 +1347,15 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
           // GATE-SCOPE bank-recon (2026-09-28): blanket accounting/ must not pull MatchDrawer /
           // accept-multi-match into every tip-debt money guard. bank-recon owns its own guards
           // (verify-no-match-persisted-outside-accept-handler lists match.service.ts explicitly).
+          // GATE-SCOPE checks mount (2026-09-29, ROUND 224): accounting/index.ts (autoload ignore)
+          // and checks/checks.routes.ts (HTTP registrar only) do not create/post documents —
+          // check-create.service.ts / check-void.service.ts remain under accounting/ and still
+          // trip the ledger-population guards when those writers change.
           if (
             p === "apps/backend/src/accounting/" &&
-            f.startsWith("apps/backend/src/accounting/bank-recon/")
+            (f.startsWith("apps/backend/src/accounting/bank-recon/") ||
+              f === "apps/backend/src/accounting/index.ts" ||
+              f === "apps/backend/src/accounting/checks/checks.routes.ts")
           ) {
             return false;
           }
@@ -1406,12 +1412,34 @@ if (process.env.DATABASE_URL) {
 // owned path to key on, so it runs only when a live DB is present.
 const E7_BATCH2_LIST = "scripts/lib/e7-batch2-live-guards.json";
 const e7Batch2List = JSON.parse(fs.readFileSync(path.join(ROOT, E7_BATCH2_LIST), "utf8"));
+const { map: gateStepMap } = ensureFreshGateStepMap();
+
+// GATE-SCOPE index.ts (2026-09-29, ROUND 224): ~199 guards list apps/backend/src/index.ts as an
+// owned path because they assert a mount line there. An index.ts-only intersection must still run
+// the STATIC half of live_flag_guards (mount still present), but must NOT pull the live fleet
+// census (--live) — that census is tip-debt shared across seats and is not caused by mounting an
+// unrelated registrar (e.g. registerCheckRoutes). Real telematics/geocode/writer path changes still
+// get --live via a non-index ownedPath hit.
+function ownedIntersectionIsIndexOnly(entry, changedFiles) {
+  if (!changedFiles || !entry?.ownedPaths?.length) return false;
+  const hits = entry.ownedPaths.filter((owned) =>
+    changedFiles.some(
+      (changed) => changed === owned || changed.startsWith(owned) || owned.startsWith(changed),
+    ),
+  );
+  return hits.length > 0 && hits.every((h) => h === "apps/backend/src/index.ts");
+}
+
 // live_flag_guards are static by default; their database half runs only with --live.
 const e7Batch2 = [
   ...e7Batch2List.guards.map((file) => [file, []]),
-  ...(e7Batch2List.live_flag_guards ?? []).map((file) => [file, ["--live"]]),
+  ...(e7Batch2List.live_flag_guards ?? []).map((file) => {
+    const entry = gateStepMap.entries?.[file];
+    const indexOnly =
+      changedForLiveDomains !== null && ownedIntersectionIsIndexOnly(entry, changedForLiveDomains);
+    return [file, indexOnly ? [] : ["--live"]];
+  }),
 ];
-const { map: gateStepMap } = ensureFreshGateStepMap();
 const e7Batch2Skipped = [];
 for (const [file, args] of e7Batch2) {
   const entry = gateStepMap.entries?.[file];
@@ -1421,6 +1449,11 @@ for (const [file, args] of e7Batch2) {
   if (!inScope) {
     e7Batch2Skipped.push(file);
     continue;
+  }
+  if (args.length === 0 && (e7Batch2List.live_flag_guards ?? []).includes(file)) {
+    console.log(
+      `[${LABEL}] GATE-SCOPE — ${file} static only (index.ts mount intersection; --live census not pulled)`,
+    );
   }
   const code = runNode(`scripts/${file}`, {}, args);
   if (code !== 0 && !acceptedAsEmptyByPurge(`scripts/${file}`, code)) {

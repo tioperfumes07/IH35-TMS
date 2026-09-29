@@ -12,7 +12,6 @@
 // while unprinted), void+reissue, and the print-batch/print-PDF routes are later PRs (4-7) per the
 // spec's own PR mapping -- not silently rolled in here.
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../shared.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
@@ -750,6 +749,7 @@ export async function registerCheckRoutes(app: FastifyInstance) {
   );
 }
 
-export default fp(async (app) => {
-  await registerCheckRoutes(app);
-}, { name: "accounting.registerCheckRoutes" });
+// ROUND 224 — cash-flow pattern: named export only. Explicit mount lives in
+// apps/backend/src/index.ts (await registerCheckRoutes(app)). Do not restore a
+// fastify-plugin default export here: the duplicate-routes static scanner would
+// treat it as an autoload twin of the manual mount (boot-crash / gate-red class).

@@ -1,31 +1,31 @@
-# NOW-CURSOR — 2026-09-29 ROUND 222 DONE
+# NOW-CURSOR — 2026-09-29 ROUND 224
 
 ## HARD LINE
-ROUND 219 freeze held except AUTH-125 chain. Factoring STOPPED.
+ROUND 219 freeze held except AUTH-126 Check Creator chain. Factoring STOPPED.
 LIVE-DB guards: re-run WITH master-keys DATABASE_URL before blaming code (ROUND 29.9-B).
 
-## ROUND 222 — CHECK CREATOR — DONE
+## ROUND 224 — CHECK CREATOR NEVER WIRED — IN FLIGHT
 
-### ROOT CAUSE (measured)
-1001–1003 were **voided seat-test documents**, not orphan allocations.
-`createCheck`/`assignPrintBatch` are one-transaction. Lead live=0 was post-void.
-Smithfield `f9c5b0e4` $25 voided AUTH-124; still `payment_type='check'`; never numbered.
-Said plainly: those four rows were seat tests.
+### Defect
+`registerCheckRoutes` had ZERO named callers outside its folder. Autoload fp was not
+acceptable as the greppable mount. FE CheckDetail/Print already in manifest.
 
-### FULL CHAIN PROOF (AUTH-125 CONSUMED) — live 2026-09-29T02:34Z
-```
-BEFORE  registry=3  live_check_expenses=0
-MID     registry=4  live_check_expenses=1  check#1004  print_complete  JE da008b36… posted
-AFTER   registry=4  live_check_expenses=0  (voided; number retained)  rev JE 703e4008…
-```
-expense `00e50ba8…` · print_batch `527454c9…` · stock next=1005
-Guard `verify-check-registry-has-expense-document` PASS (orphans = 0).
+### Fix (this PR)
+- `index.ts`: import + `await registerCheckRoutes(app)`
+- `accounting/index.ts`: ignore `checks.routes` (no double-mount)
+- Guard `verify-check-routes-mounted.mjs` PASS
 
-### PRs
-#23108 squash `799976268d` — root cause + AUTH-125 OPEN + guard (merged, in batch)
-This follow-up — AUTH-125 CONSUMED stamp
+### BEFORE (live 2026-09-29T16:18Z)
+registry=4 (1001–1004 voided) · check_expenses=5 all void · live=0
+
+### 3+4 accounting
+1001/1002/1003 (+1004 AUTH-125) = voided seat tests. Four junk ($1x3 + $25 Smithfield) =
+seat tests, all void. Said plainly.
+
+### Next after merge
+AUTH-126 OPEN → run r224 full-chain → CONSUMED with MID/AFTER paste.
 
 ## DO NOT
-- Re-mint seat checks into USMCA without void same session
-- Blame REQUIRES_LIVE_DB fails with no DATABASE_URL
+- Leave a live unvoided check in USMCA
+- Double-register checks.routes via autoload + index (boot crash)
 - Steal CC-2 opening-balance / escrow

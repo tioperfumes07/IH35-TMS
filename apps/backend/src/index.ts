@@ -410,6 +410,7 @@ import { registerDriverReimbursementDetailRoutes } from "./accounting/driver-rei
 import { registerCashFlowRoutes } from "./accounting/cash-flow.routes.js";
 import { registerCashForecastRoutes } from "./accounting/cash-forecast.routes.js";
 import { registerFinanceHubRoutes } from "./accounting/finance-hub.routes.js";
+import { registerCheckRoutes } from "./accounting/checks/checks.routes.js";
 import { registerApPaymentApplicationRoutes } from "./ap/payment-application.routes.js";
 import { registerDataInfrastructureRoutes } from "./data-infra/data-infra.routes.js";
 import { registerOcrRoutes } from "./ocr/ocr.routes.js";
@@ -1286,6 +1287,11 @@ async function main() {
   await registerCashFlowRoutes(app);
   await registerCashForecastRoutes(app);
   await registerFinanceHubRoutes(app);
+  // ROUND 224 — Check Creator was defined + fp-exported but never greppable from index.ts; Lead
+  // measured ZERO callers outside checks/. Ignore from autoload (see accounting/index.ts) and mount
+  // here so UI /api/v1/checks hits registerCheckRoutes. Do NOT also leave it on autoload — duplicate
+  // POST /api/v1/checks boots crash (DUPLICATE-ROUTE-BOOT-CRASH).
+  await registerCheckRoutes(app);
   await registerApPaymentApplicationRoutes(app);
   await registerCompanyRoutes(app);
   await registerLegalTemplateRoutes(app);
