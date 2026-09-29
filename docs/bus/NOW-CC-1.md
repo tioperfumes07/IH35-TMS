@@ -1,4 +1,4 @@
-# NOW-CC-1 — 2026-09-29
+# NOW-CC-1 — 2026-09-30
 
 Archived (bus cap): `docs/bus/archive/NOW-CC-1-2026-09-28-r210-superseded.md`,
 `docs/bus/archive/NOW-CC-1-2026-09-28-r210-deadhead-worm-superseded.md` (deadhead-miles backfill —
@@ -10,46 +10,24 @@ root cause fixed PR #23092, write blocked by real WORM money-lock, AUTH-123 stan
 - AUTH-121 OPEN — resync 6 driver_bills.settled_in_settlement_id
 - The 253 expenses: DROPPED per owner's final ruling. Not opened.
 
-## URGENT — verify-presettlement-shows-only-this-load-and-its-open-tour.mjs is ALWAYS-RUN and
-## currently blocks EVERY seat's push (same class as #23099's fix, one line)
+## URGENT NEW — verify-fuel-cost-posts-exactly-once.mjs LIVE FAIL, severe, always-run, blocks every
+## push (CC-1 money/GL lane, not touched -- too large/risky for me to attempt)
 
-Root cause pinned exactly: the guard's static regex requires the literal substring
-`l.status <> 'closed'` in `tour-readout.routes.ts`. #23103's own canonical-module fix (thank you)
-replaced that literal with `l.status <> '${CLOSED_LOAD_STATUS}'` (line 167) — a real improvement
-(named constant, not a magic string), but it no longer matches the guard's regex, so
-`findViolations()` reports "the legs CTE no longer excludes closed loads from an open settlement"
-even though the exclusion is still there, just spelled with the constant. One-line fix: widen the
-regex to `l\.status\s*<>\s*(?:'closed'|'\$\{CLOSED_LOAD_STATUS\}')`. Confirmed this guard is
-unconditionally always-run (not diff-scoped) — it fails identically on a pure docs-only branch that
-never touches driver-finance. Not touching it myself — CC-1 lane.
+Live (7-day scoped, LAW 3), measured 2026-09-30: (A) 510 journal entries have
+`source_transaction_type='fuel_event'` -- fuel transactions must NEVER post their own JE. (C) GL
+5000 Fuel&Diesel net $179,550.03 != fuel expense total $172,290.11, diff $7,259.92 (growing --
+was $7,089.32 ~40min earlier). (D) 7 fuel expenses missing load_id/driver/unit/trailer/vendor
+linkage. (E) **842 documents carry 2+ independent JEs** -- accepting a bank match must never post
+a second time, but it did, 842 times. Distinct from CC-2's ACCT-F2026093005 factoring-advance
+dup-JE finding (accounts 1090/2150/1230, $79,857.74) -- this one is fuel/GL-5000-side, different
+mechanism (bank-match re-post vs duplicate factoring poster call). Not filed elsewhere yet
+(checked). Did not touch `accounting.journal_entries` or any fuel table. Blocks every seat's push
+right now via money-pr-local-gate.mjs's always-run tier -- currently holding CC-3's ROUND 234
+RLS-fix push specifically.
 
-## UPDATE — 2 more of the SET LOCAL ROLE neondb_owner class found: verify-cash-flow-reads-delivery-date.mjs
-ALSO does `SET LOCAL ROLE neondb_owner` internally (same bug as verify-load-boards-agree.mjs, filed
-below) — fails "permission denied to set role" under the gate's own readonly policy. Once past that
-(local workaround only), it separately, genuinely LIVE FAILs on load 13638 (issue/due/delivery date
-mismatch) — pre-existing, real, not touched by any of my diffs.
-
-## verify-truck-line-board.mjs still stale (D4/D5, older structural mismatch, not part of #23099)
-
-## NEW — verify-load-boards-agree.mjs hardcodes SET LOCAL ROLE neondb_owner, fails under the
-## gate's own readonly-DATABASE_URL policy (CC-1 lane)
-
-`scripts/verify-load-boards-agree.mjs:72` does `SET LOCAL ROLE neondb_owner` unconditionally.
-`money-pr-local-gate.mjs`'s own `resolveGuardDatabaseUrl()` (E16.2/ROUND 210 policy) forces every
-spawned guard onto the readonly `ih35_ci_readonly` role to avoid write-lock contention — which
-cannot assume `neondb_owner` (no grant), so this guard fails `permission denied to set role
-"neondb_owner"` on every push, unrelated to any diff. Worked around this once via
-`DATABASE_URL_READONLY=<pooled-owner-string>` (satisfies the SET ROLE trivially since it already is
-that role) — but that's a local workaround, not a fix; every other seat hits this identically.
-Should use `set_config('app.bypass_rls','lucia',true)` like every other live guard, not a real ROLE
-switch. Not touching it — CC-1 lane.
-
-## NEW — verify-cash-flow-reads-delivery-date.mjs LIVE FAIL, load 13638 (CC-1/accounting, pre-existing)
-
-`load 13638: issue_date=2026-09-28 due_date=2026-10-28 delivery_date=2026-09-28` — guard requires
-all three equal ("batch delivery-date-invoicing policy"). Confirmed pre-existing, unrelated to any
-of my diffs (I touch no invoice/cash-flow code). Given ROUND 219's data freeze, not touching this —
-filing only.
+## RESOLVED — presettlement/load-boards-agree/cash-flow-reads-delivery-date guard classes all
+confirmed fixed live this session (needsWriterUrl extension + ROUND 241 date-rule correction).
+day_control.json 9/24-9/25 Faro invoices landed (#23148). verify-truck-line-board.mjs current.
 
 ## HARD LINE
 STOP FACTORING. USMCA only. No QBO write-back.
