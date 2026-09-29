@@ -185,6 +185,16 @@ async function main() {
         JOIN driver_finance.driver_bills db ON db.load_id = e.load_id AND db.status <> 'void'
         LEFT JOIN driver_finance.settlement_lines sl ON sl.source_driver_bill_id = db.id AND sl.is_active = true
         LEFT JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+        -- ROUND 270 fix (Claude-1): tour-open-gate.service.ts's isLoadTourOpen (the function this
+        -- guard's OWN static half asserts every posting call site uses) has checked a SECOND path
+        -- since R-169 fix 3 (owner 2026-09-25) -- driver_bills.settled_in_settlement_id, stamped
+        -- directly on the bill at settlement time, which a zero-pay/no-pay-line settlement (e.g. a
+        -- CANCELLED one) never earns a settlement_lines row for at all. This guard's live-check SQL
+        -- was never updated to match, so it flagged 3 genuinely-closed-tour postings (settled via a
+        -- CANCELLED settlement reached ONLY through settled_in_settlement_id) as violations -- a
+        -- false positive from a stale guard, not a real defect. Mirrors isLoadTourOpen's own
+        -- UNION-of-both-paths definition exactly; never a second, competing definition of "closed."
+        LEFT JOIN driver_finance.driver_settlements ds_direct ON ds_direct.id = db.settled_in_settlement_id
         WHERE e.posting_status = 'posted'
           AND e.created_at > $1::timestamptz
           -- EXP-CLOSED-TOUR-VOCAB (owner 2026-09-07): 'closed'/'final' are terminal, GL-posted
@@ -192,6 +202,7 @@ async function main() {
           -- violation. Mirrors tour-open-gate.service.ts CLOSED_TOUR_STATUSES.
           -- EXP-CLOSED-TOUR-VOCAB-2 (CC-3, 2026-09-22): 'locked' is the same terminal tier.
           AND (ds.status IS NULL OR ds.status NOT IN ('approved', 'paid', 'cancelled', 'closed', 'final', 'locked'))
+          AND (ds_direct.status IS NULL OR ds_direct.status NOT IN ('approved', 'paid', 'cancelled', 'closed', 'final', 'locked'))
       `,
       [GATE_MERGE_CUTOFF]
     );
