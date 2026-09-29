@@ -78,7 +78,16 @@ export function isOpenSettlement<T extends CommonFields & { source_document_ref?
 export function settlementLabel<T extends CommonFields & { source_document_ref?: string | null; settlement_number?: string | null }>(
   row: (HasSettlementNumberKey<T> extends true ? T : never) | null | undefined
 ): string {
+  // ROUND 224 (owner, 2026-09-29): ROUND 167's PENDING rename (f2718da7) checked open/presettlement
+  // status BEFORE checking for a real number, so it hid an already-typed real AlwaysTrack number the
+  // instant a tour is still open -- a real regression on the settlement-identity money surface
+  // (verify-reg010-011-settlement-identity.mjs / TourPreSettlementTab.test.tsx, ACCT-F20260911b: "the
+  // number rendered ... minted the instant the tour opens"). A real number always wins, exactly like
+  // the pre-ROUND-167 code (`settlementNumber(row) ?? (isOpenSettlement(row) ? "Open" : "—")`);
+  // PENDING is only for the genuinely-numberless case ROUND 167 was actually about.
+  const n = settlementNumber(row);
+  if (n) return n;
   const r = row as CommonFields | null | undefined;
   if (r?.is_presettlement === true || isOpenSettlement(row)) return "PENDING";
-  return settlementNumber(row) ?? "—";
+  return "—";
 }
