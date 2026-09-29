@@ -4063,3 +4063,23 @@ proof_query: SELECT count(*), count(claimed_duplicate_expense_id) FROM
   accounting.expenses_review_queue WHERE operating_company_id='5c854333…' — 77 / 77.
 
 — Claude-1 (ROUND 236/248 expenses_review_queue population)
+
+## AUTH-130
+
+date: 2026-09-29
+scope: ROUND 248 Step 3 (Lead, P0) — resolve 6 (load, date, amount) duplicate groups among USMCA
+  draft accounting.expenses (operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80): void the
+  redundant DRAFT side of each pair via executeVoidCancel("expense", {action:"cancel"}) (canonical
+  void path, no raw UPDATE). 5 pairs are draft-vs-draft (void the earlier generic "R145 SETTL"
+  bulk-import placeholder, keep the later/more-specific entry): 215bc558… (13587), 11dc04f3…
+  (13590), 3f292519… (13600), f366ff9b… (13605), aeae6fa5… (13611). 1 pair is draft-vs-
+  already-posted: cff3e687… (13606, draft, doc 928526) duplicates f25d98dd… (already posted,
+  R-164, live since 2026-09-25) -- void the draft, the posted row is never touched. Every voided
+  row is a DRAFT that never posted -- no GL entry exists to reverse. USMCA only. Not authorized:
+  voiding or touching any already-posted expense; any write outside these 6 draft ids.
+
+action:
+  OWNER_AUTH_ID=AUTH-130 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-29-cc1-round248-step3-draft-duplicates.ts
+
+expires_at: 2026-09-30T08:00:00.000Z
+status: OPEN
