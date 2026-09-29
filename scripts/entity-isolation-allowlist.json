@@ -692,6 +692,12 @@
       "phase": "P1"
     },
     {
+      "schema": "driver_finance",
+      "table": "signed_acknowledgments",
+      "reason": "needs opco-scoped RLS policy (currently: 1 policy, none scope 'operating_company_id' against current_setting('app.operating_company_id'|'app.current_operating_company_id') OR org.user_accessible_company_ids()/org.user_company_access membership) — ROUND 259: keep in backlog; fresh CI DB still fails this (Neon live --update falsely reported compliant)",
+      "phase": "P4"
+    },
+    {
       "schema": "driveralert",
       "table": "alarm_event",
       "reason": "needs FK from 'operating_company_id' to org.companies(id)",
@@ -833,6 +839,18 @@
       "schema": "maint",
       "table": "position_set",
       "reason": "needs FK from 'operating_company_id' to org.companies(id)",
+      "phase": "P4"
+    },
+    {
+      "schema": "maintenance",
+      "table": "defects",
+      "reason": "needs opco-scoped RLS policy (currently: 1 policy, none scope 'operating_company_id' against current_setting('app.operating_company_id'|'app.current_operating_company_id') OR org.user_accessible_company_ids()/org.user_company_access membership) — ROUND 259: keep in backlog; fresh CI DB still fails this",
+      "phase": "P4"
+    },
+    {
+      "schema": "maintenance",
+      "table": "dvir_submissions",
+      "reason": "needs opco-scoped RLS policy (currently: 1 policy, none scope 'operating_company_id' against current_setting('app.operating_company_id'|'app.current_operating_company_id') OR org.user_accessible_company_ids()/org.user_company_access membership) — ROUND 259: keep in backlog; fresh CI DB still fails this",
       "phase": "P4"
     },
     {
