@@ -52,7 +52,13 @@ function auditSearchExcludesDrivers(src) {
 
 function auditRowBorderVisible(src) {
   const failures = [];
-  const m = /\.truck-line-v4-row\s*\{[^}]*border-bottom:\s*1px solid (#[0-9A-Fa-f]{6})/.exec(src);
+  // ROUND 215.2 fix: LAW-2026-09-28-TRUCK-LINE-SURFACE-TOKENS-LOCKED (PR #23080) deliberately
+  // retired the literal #C7D2DC this guard originally required, unifying the row border to the
+  // shared ${LOCKED_BORDER} token instead -- enforced going forward by its own dedicated guard,
+  // scripts/verify-truck-line-surface-tokens-locked.mjs. A guard hardcoding a literal the codebase
+  // has correctly tokenized is stale, not a real defect. Accept either the token expression or a
+  // literal hex; only a literal #E5E7EB (the pale color this guard has always forbidden) fails.
+  const m = /\.truck-line-v4-row\s*\{[^}]*border-bottom:\s*1px solid (\$\{LOCKED_BORDER\}|#[0-9A-Fa-f]{6})/.exec(src);
   if (!m) {
     failures.push(`${BOARD_FILE}: .truck-line-v4-row's border-bottom rule not found at all — fixture/guard out of sync with real source`);
   } else if (m[1].toUpperCase() === "#E5E7EB") {
@@ -73,7 +79,7 @@ function run() {
     for (const f of failures) console.error("  ✗ " + f);
     process.exit(1);
   }
-  console.log("verify-truck-line-units-only OK — TruckLineBoard.tsx renders no driver names into any row label, the search haystack is units/loads/customers/lanes only, and the row separator is the visible #C7D2DC.");
+  console.log("verify-truck-line-units-only OK — TruckLineBoard.tsx renders no driver names into any row label, the search haystack is units/loads/customers/lanes only, and the row separator is not a hardcoded pale #E5E7EB.");
 }
 
 if (process.argv.includes("--selftest")) {
@@ -93,17 +99,21 @@ if (process.argv.includes("--selftest")) {
   assert.notEqual(mutated1, realSrc, "mutation 1 did not change the source");
   assert.ok(auditAll(mutated1).length > 0, "MUTATION 1 (driver name reintroduced on available row) escaped detection");
 
-  // MUTATION 2 — fold driver names back into the search haystack.
-  const haystackNeedle = "r.load?.pickup.city,\n        r.load?.delivery.city,\n      ]";
+  // MUTATION 2 — fold driver names back into the search haystack. ROUND 215.2: the real array
+  // has since grown a trip_type/tour_display_id tail past pickup/delivery city -- this fixture
+  // was pinned to the array's OLD closing shape and drifted.
+  const haystackNeedle = "r.load?.delivery.city,\n            r.load?.trip_type,\n            r.tour_display_id,\n          ]";
   assert.ok(realSrc.includes(haystackNeedle), "selftest fixture out of sync with the real haystack array");
-  const mutated2 = realSrc.replace(haystackNeedle, "r.load?.pickup.city,\n        r.load?.delivery.city,\n        ...r.drivers.map((d) => d.name),\n      ]");
+  const mutated2 = realSrc.replace(haystackNeedle, "r.load?.delivery.city,\n            r.load?.trip_type,\n            r.tour_display_id,\n            ...r.drivers.map((d) => d.name),\n          ]");
   assert.notEqual(mutated2, realSrc, "mutation 2 did not change the source");
   assert.ok(auditAll(mutated2).length > 0, "MUTATION 2 (driver names refolded into search haystack) escaped detection");
 
-  // MUTATION 3 — regress the row separator to the pale #E5E7EB. Targeted at the
+  // MUTATION 3 — regress the row separator to a hardcoded pale #E5E7EB. Targeted at the
   // `.truck-line-v4-row { ... }` block specifically (its `.truck-line-v4-header` sibling rule
-  // legitimately shares the same #C7D2DC value, so a bare string replace would hit the wrong rule).
-  const rowBorderNeedle = "border-bottom: 1px solid #C7D2DC;\n          min-height: 88px;";
+  // legitimately shares the same ${LOCKED_BORDER} token, so a bare string replace would hit the
+  // wrong rule). ROUND 215.2: real source now uses the LOCKED_BORDER token (LAW-2026-09-28-
+  // TRUCK-LINE-SURFACE-TOKENS-LOCKED), not the literal #C7D2DC this fixture originally pinned.
+  const rowBorderNeedle = "border-bottom: 1px solid ${LOCKED_BORDER};\n          min-height: 88px;";
   assert.ok(realSrc.includes(rowBorderNeedle), "selftest fixture out of sync with the real row border rule");
   const mutated3 = realSrc.replace(rowBorderNeedle, "border-bottom: 1px solid #E5E7EB;\n          min-height: 88px;");
   assert.notEqual(mutated3, realSrc, "mutation 3 did not change the source");
