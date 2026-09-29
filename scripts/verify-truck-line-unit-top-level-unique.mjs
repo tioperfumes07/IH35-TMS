@@ -41,8 +41,9 @@ function main() {
   if (!/export function currentTruckLineLoadSql/.test(helperSrc) || !/export const CURRENT_TRUCK_LINE_LOAD_SQL/.test(helperSrc)) {
     problems.push("current-truck-line-load.ts must export currentTruckLineLoadSql + CURRENT_TRUCK_LINE_LOAD_SQL");
   }
-  if (!/interval '48 hours'/.test(helperSrc)) {
-    problems.push("CURRENT helper must keep the 48-hour delivery window (#22922)");
+  // ROUND 255 — AUTH-061 48h hide retired; CURRENT aliases canonicalActiveLoadWhereClause.
+  if (!/canonicalActiveLoadWhereClause/.test(helperSrc)) {
+    problems.push("CURRENT helper must alias canonicalActiveLoadWhereClause (ROUND 255)");
   }
   if (!/truck-line-section-\$\{section\}/.test(boardSrc) || !/SECTION_ORDER/.test(boardSrc) || !/"tour"/.test(boardSrc) || !/"in_transit"/.test(boardSrc) || !/"available"/.test(boardSrc)) {
     problems.push("TruckLineBoard must render three sections via SECTION_ORDER (tour / in_transit / available)");
@@ -56,8 +57,8 @@ function main() {
   if (/Next appointment/.test(boardCode)) {
     problems.push('TruckLineBoard must not render "Next appointment" column (ROUND 155.6)');
   }
-  if (!/label="Tour #"/.test(boardSrc) || !/label="PU"/.test(boardSrc) || !/label="DEL"/.test(boardSrc) || !/label="Leg"/.test(boardSrc)) {
-    problems.push("TruckLineBoard columns must include PU, DEL, Leg, Tour #");
+  if (!/label="TOUR \/ PRE-SETTLEMENT"/.test(boardSrc) || !/label="PU DATE"/.test(boardSrc) || !/label="DELIVERY DATE"/.test(boardSrc) || !/label="UNIT"/.test(boardSrc) || !/label="LOAD"/.test(boardSrc)) {
+    problems.push("TruckLineBoard columns must be UNIT · TOUR / PRE-SETTLEMENT · LOAD · PU DATE · DELIVERY DATE (ROUND 255)");
   }
   if (/truck-line-load-costs|useLoadCostRollups/.test(boardCode)) {
     problems.push("TruckLineBoard must not show expenses/income (ROUND 155.6)");

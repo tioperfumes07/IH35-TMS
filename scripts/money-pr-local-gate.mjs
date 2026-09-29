@@ -439,10 +439,8 @@ const LIVE_DOMAIN_GUARDS = [
   // ROUND 166 JOB 3 — a load whose number falls outside the sanctioned 13xxx series (and isn't
   // cancelled) fails. Catches the next "invent a load to hold an orphan invoice" shortcut.
   ["verify-no-fabricated-load-numbers", ["apps/backend/src/dispatch/", "apps/backend/src/accounting/from-load.ts"]],
-  // ROUND 177 JOB 1 — Truck Line, List/Kanban, and Load Costs must agree exactly on the active
-  // load set; Truck Line's own deliberately-narrower "current work" view must stay a SUBSET of
-  // canonical, never independently equal. Catches the next board-specific status/money predicate
-  // that quietly drifts from canonical-active-load-set.ts.
+  // ROUND 177 JOB 1 / ROUND 255 — Truck Line, List/Kanban, and Load Costs must agree exactly
+  // on the canonical active-load set (CURRENT helper now aliases canonical).
   [
     "verify-load-boards-agree",
     [
@@ -451,6 +449,16 @@ const LIVE_DOMAIN_GUARDS = [
       "apps/backend/src/dispatch/truck-line/truck-line.routes.ts",
       "apps/backend/src/accounting/load-costs-board.routes.ts",
       "apps/backend/src/dispatch/live-loads-view.ts",
+    ],
+  ],
+  // ROUND 255 — Truck Line board row count equals canonical active set; column order + return trip.
+  [
+    "verify-truck-line-board-shows-canonical-active-set",
+    [
+      "apps/backend/src/dispatch/canonical-active-load-set.ts",
+      "apps/backend/src/dispatch/current-truck-line-load.ts",
+      "apps/backend/src/dispatch/truck-line/truck-line.routes.ts",
+      "apps/frontend/src/pages/dispatch/TruckLineBoard.tsx",
     ],
   ],
   // ROUND 177 JOB 3 — the current 16-load batch's invoices must keep issue_date=due_date=

@@ -48,6 +48,8 @@ export type TruckLineDriver = { id: string; name: string | null };
 export type TruckLineLoad = {
   load_id: string;
   load_number: string | null;
+  /** Live mdata.loads.status — ROUND 255 per-load status dropdown. */
+  status?: string | null;
   trip_type: string | null;
   rate_total_cents: number | null;
   customer_name: string | null;

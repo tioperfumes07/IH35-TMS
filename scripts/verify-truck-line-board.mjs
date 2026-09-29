@@ -9,7 +9,7 @@
  *      on this board uses), and keeps the last known location beside the age.
  * D3 — every position label carries "City, ST" (or the richer formatted_location) — one shared
  *      helper, every call site.
- * D4 — Next appointment renders BOTH the pickup and delivery lines when both exist.
+ * D4 — ROUND 255: PU DATE / DELIVERY DATE columns from appointments.*.
  * D5 — every column header is a real sortable control (aria-sort, three-state click cycle).
  *
  * --selftest plants each regression and requires the guard to fail.
@@ -39,12 +39,12 @@ function analyze(src) {
   if (!/fmtDuration\(staleMinutes \* 60_000\)/.test(board)) {
     errors.push("D2a: formatStaleAge must hand off to the SAME fmtDuration every other duration on this board uses, not a second duration formatter");
   }
-  const staleBranch = (board.match(/live\.signalLabel === "Stale" \? \(([\s\S]*?)\) : \(/) ?? [])[1] ?? "";
-  if (!/formatLocationLabel\(r\.position\)/.test(staleBranch)) {
-    errors.push("D2b: the Stale branch must still render the last known location (formatLocationLabel(r.position)) beside the age");
+  // ROUND 255 — Live/Stale/No-ping moved under CURRENT LOCATION after the transit line.
+  if (!/truck-line-current-location-/.test(board)) {
+    errors.push("D2b: CURRENT LOCATION must render after the transit line (truck-line-current-location-)");
   }
-  if (!/formatStaleAge\(r\.position\?\.stale_minutes/.test(staleBranch)) {
-    errors.push("D2b: the Stale branch must render the age via formatStaleAge, not raw stale_minutes");
+  if (!/formatLocationLabel\(row\.position\)/.test(board) || !/formatStaleAge\(row\.position\.stale_minutes/.test(board)) {
+    errors.push("D2b: CURRENT LOCATION must still use formatLocationLabel + formatStaleAge for stale pings");
   }
 
   // D3 — state present on every position label, one shared helper.
@@ -74,23 +74,19 @@ function analyze(src) {
   if (!/next_appointment: nextAppointment,/.test(routes)) {
     errors.push("D4: next_appointment must stay exactly as-is for one release (kept beside the new appointments field)");
   }
-  if (!/data-testid=\{`truck-line-appt-pickup-\$\{r\.unit_id\}`\}/.test(board) || !/data-testid=\{`truck-line-appt-delivery-\$\{r\.unit_id\}`\}/.test(board)) {
-    errors.push("D4: TruckLineBoard.tsx must render BOTH a pickup line and a delivery line, each independently gated on its own r.appointments.pickup / .delivery");
+  // ROUND 255 — PU DATE / DELIVERY DATE columns (fmtApptDate on appointments.*).
+  if (!/label="PU DATE"/.test(board) || !/label="DELIVERY DATE"/.test(board)) {
+    errors.push("D4: TruckLineBoard must render PU DATE and DELIVERY DATE column headers");
   }
-  if (!/Pickup ·/.test(board) || !/Delivery ·/.test(board)) {
-    errors.push('D4: the appointment cell must label each line "Pickup ·" / "Delivery ·"');
-  }
-  // Each leg's line must be independently conditional (r.appointments.pickup ? ... : null / r.appointments.delivery ? ... : null)
-  // — never a single combined condition that would force both lines to appear together or neither.
-  if (!/\{r\.appointments\.pickup \? \(/.test(board) || !/\{r\.appointments\.delivery \? \(/.test(board)) {
-    errors.push("D4: pickup and delivery lines must each be gated on their OWN appointments field — never a single combined condition (a load with one remaining leg must render only that line)");
+  if (!/fmtApptDate\(r\.appointments\?\.pickup\?\.at\)/.test(board) || !/fmtApptDate\(r\.appointments\?\.delivery\?\.at\)/.test(board)) {
+    errors.push("D4: PU/DEL cells must read appointments.pickup.at / appointments.delivery.at via fmtApptDate");
   }
 
   // D5 — sortable headers.
   if (!/aria-sort=\{ariaSort\}/.test(board)) {
     errors.push("D5: every column header must carry aria-sort");
   }
-  const sortKeys = ["truck", "load", "line", "appt", "signal"];
+  const sortKeys = ["truck", "tour", "load", "pu", "del"];
   for (const key of sortKeys) {
     if (!new RegExp(`sortKey="${key}"`).test(board)) errors.push(`D5: header for sortKey="${key}" missing — every one of the five columns must be sortable`);
   }
@@ -114,7 +110,7 @@ function analyze(src) {
   if (/refetch\(\)|invalidateQueries/.test(cycleSortBody)) {
     errors.push("D5: changing the sort must never re-fetch — cycleSort must only update local state");
   }
-  if (!/const rows = useMemo/.test(board) || !/withIndex\.sort\(/.test(board)) {
+  if (!/withIndex\.sort\(/.test(board) || !/compareTruckLineRows/.test(board)) {
     errors.push("D5: sorting must happen client-side over rows already in hand (a stable sort with an original-index tiebreak), never a second query");
   }
 
@@ -145,18 +141,18 @@ if (process.argv.includes("--selftest")) {
     ["D1 retired string reintroduced", withField(base, "board", (s) => s.replace("available truck", "no unit assigned"))],
     ["D2a formatStaleAge threshold removed", withField(base, "board", (s) => s.replace("staleMinutes <= 60", "false"))],
     ["D2a formatStaleAge stops using fmtDuration", withField(base, "board", (s) => s.replace("fmtDuration(staleMinutes * 60_000)", "String(staleMinutes)"))],
-    ["D2b Stale branch drops the location", withField(base, "board", (s) => s.replace('<b style={{ color: RED }}>Stale</b> · {formatLocationLabel(r.position)} ·{" "}', '<b style={{ color: RED }}>Stale</b> ·{" "}'))],
-    ["D2b Stale branch stops using formatStaleAge", withField(base, "board", (s) => s.replace("formatStaleAge(r.position?.stale_minutes ?? null) ?? \"—\"", "r.position?.stale_minutes ?? \"—\""))],
+    ["D2b CURRENT LOCATION removed", withField(base, "board", (s) => s.replace(/truck-line-current-location-/g, "truck-line-loc-REMOVED-"))],
+    ["D2b CURRENT LOCATION drops formatStaleAge", withField(base, "board", (s) => s.replace("formatStaleAge(row.position.stale_minutes)", "String(row.position.stale_minutes)"))],
     ["D3 helper removed", withField(base, "board", (s) => s.replace("function formatLocationLabel", "function goneFormatLocationLabel"))],
     ["D3 formatted_location preference removed", withField(base, "board", (s) => s.replace("if (loc.formatted_location) return loc.formatted_location;", ""))],
     ["D3 backend stops selecting formatted_location", withField(base, "routes", (s) => s.replace("COALESCE(p.formatted_location, loc.formatted_location) AS pos_formatted_location,", ""))],
     ["D4 appointments type removed", withField(base, "routes", (s) => s.replace("appointments: { pickup: AppointmentLeg; delivery: AppointmentLeg } | null = null;", "appointments: unknown = null;"))],
     ["D4 appointments field dropped from the return", withField(base, "routes", (s) => s.replace("        appointments,\n", ""))],
     ["D4 next_appointment removed", withField(base, "routes", (s) => s.replace("next_appointment: nextAppointment,", ""))],
-    ["D4 delivery line testid removed", withField(base, "board", (s) => s.replace('data-testid={`truck-line-appt-delivery-${r.unit_id}`}', ""))],
-    ["D4 pickup/delivery collapsed into one combined condition", withField(base, "board", (s) => s.replace("{r.appointments.delivery ? (", "{false ? ("))],
+    ["D4 PU DATE header removed", withField(base, "board", (s) => s.replace('label="PU DATE"', 'label="PU"'))],
+    ["D4 fmtApptDate pickup removed", withField(base, "board", (s) => s.replace(/fmtApptDate\(r\.appointments\?\.pickup\?\.at\)/g, '"—"'))],
     ["D5 aria-sort removed", withField(base, "board", (s) => s.replace("aria-sort={ariaSort}", ""))],
-    ["D5 a sortKey column dropped", withField(base, "board", (s) => s.replace('sortKey="signal"', 'sortKey="gone"'))],
+    ["D5 a sortKey column dropped", withField(base, "board", (s) => s.replace('sortKey="del"', 'sortKey="gone"'))],
     ["D5 three-state cycle broken (no default restore)", withField(base, "board", (s) => s.replace('if (prev.dir === "asc") return { key, dir: "desc" };\n      return null;', 'if (prev.dir === "asc") return { key, dir: "desc" };\n      return { key, dir: "asc" };'))],
     ["D5 sort triggers a refetch", withField(base, "board", (s) => s.replace("const cycleSort = (key: TruckLineSortKey) => {", "const cycleSort = (key: TruckLineSortKey) => {\n    void query.refetch();"))],
   ];
