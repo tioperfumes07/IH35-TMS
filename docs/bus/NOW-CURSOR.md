@@ -12,21 +12,21 @@ Obey `claude/00-SEAT-CONTRACT.md`. ROUND 265 self-service. Factoring STOPPED for
 
 Deploy R273: `dep-dau46k7avr4c73fk1a7g` (sha `85dd08c643`). Later tip live: healthz advances with main.
 
-## NOW — ROUND 274 THE VOID ENGINE
+## NOW — ROUND 274 THE VOID ENGINE (IN FLIGHT on `cursor/r274-void-engine-c89b`)
 
 Order: `claude/09-29-2026-Cursor-ROUND-274-THE-VOID-ENGINE.md`
 Register: 5, 49, 50, 53 · **ALL ENTITIES** · no partial delivery.
 
-1. `executeVoidCancel` case per voidable entity
-2. Atomic void (flag + status + reversing JE)
-3. DB CHECK `(voided_at IS NULL OR status = void-status)`
-4. Repair drift (coordinate — do not duplicate AUTH-132 factoring 2 rows)
-5. Symmetric reinstatement
-6. Plaid merge match re-point (item 53)
-7. Guard shrink-only REQUIRES_LIVE_DB
-8. Linkage both ways
+### Landed this session
+1. **EXECUTORS** — wired all R274 entity keys (was 9+load unsupported; now +factoring_advance, bank_transaction, reconciliation_match, driver_bill, driver_liability, check_number_registry, bill_line, settlement_line, safety_incident, legal_contract_instance, relay_fuel_transaction(+_line)). `load` stays supported:false.
+2. **Plaid item 53** — `repointReconciliationMatchesOnPlaidMerge` in `bank-tx-dedup.ts` (retire + supersede paths). Migration `202614600000_r274_plaid_merge_repoint_recon_matches.sql` repairs live orphan match `2d1f3f73…` → survivor `52c51c10…`.
+3. **Guard** — `scripts/verify-r274-void-engine-complete.mjs` (selftest PASS; REQUIRES_LIVE_DB; shrink-only baselines status_drift=0, plaid_orphans=0).
 
-Board UI click-proof (#24–29 / register #3–#10) waits until void engine is live.
+### Still open
+- Per-table DB CHECK for remaining status/voided_at pairs (factoring already has AUTH-132)
+- Symmetric reinstatement path for new entities
+- Claim+wire verify-step (mod-4 EVEN) · merge · deploy proof
+- Ensure migrate runner records `202614601800` on Neon (data already clean; migration idempotent)
 
 ## DO NOT
 - Duplicate CC-1 AUTH-132 factoring status repair
