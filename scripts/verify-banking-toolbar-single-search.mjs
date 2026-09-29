@@ -47,7 +47,22 @@ function main() {
   }
 
   if (selftest) {
-    const mut1 = src.replace("suppressToolbarSearch\n", "");
+    // Target the SPECIFIC occurrence inside the main register's own <ParityTable
+    // storageKey="banking-transactions"> call, the same region audit() scopes to — a bare,
+    // non-global src.replace() would hit whichever occurrence comes first in the WHOLE file,
+    // which silently stopped being this one once a second suppressToolbarSearch (on a different
+    // ParityTable, e.g. the match-candidates register) was added earlier in the file.
+    const start = src.indexOf('storageKey="banking-transactions"');
+    const callEnd = src.indexOf("/>", start);
+    const before = src.slice(0, start);
+    const call = src.slice(start, callEnd === -1 ? undefined : callEnd);
+    const after = callEnd === -1 ? "" : src.slice(callEnd);
+    const mutatedCall = call.replace("suppressToolbarSearch\n", "");
+    if (mutatedCall === call) {
+      console.error("SELFTEST FAIL: suppressToolbarSearch not found in the audited call region — re-anchor");
+      process.exit(1);
+    }
+    const mut1 = before + mutatedCall + after;
     if (audit(mut1).length === 0) {
       console.error("SELFTEST FAIL: removing suppressToolbarSearch did not trip the guard");
       process.exit(1);
