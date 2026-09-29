@@ -11708,3 +11708,27 @@ surface (Cursor, per ROUND 259/DSP-TL-CONFLICT-01) to restore the canonical mark
 not idling on this -- continuing other work while this is outstanding.
 
 — CC-2
+
+## FINDING: N/A LANE: DOCS -- verify-dispatch-driver-wiring + verify-dispatch-reads-live-loads-view now global push-blockers (CC-2, 2026-09-30)
+
+Hit while pushing an unrelated banking branch (`cc2/r216-b8-detention-notify-two-phase`) via
+`verify-static-fallback`'s always-run sweep:
+
+1. **`verify-dispatch-driver-wiring.mjs` FAIL** — `apps/frontend/src/pages/dispatch/DispatchBoard.tsx`:
+   missing real `driver_id`/EntityLink `kind="driver"` wiring. Last touch to this file on main:
+   `8c4a9b1c40 FINDING: DSP-F210 ... editable internal pre-settlement number (#23089)` — older,
+   not part of today's Truck Line rework.
+2. **`verify-dispatch-reads-live-loads-view.mjs` FAIL** — `dispatch/truck-line/truck-line.routes.ts`
+   got WORSE: baseline 2 violation(s), live 5. Same root commit as the earlier
+   `verify-one-source-per-number`/TruckLineBoard regression this round:
+   `08eee92f52 Cursor- ROUND 259 -- close Dependabot + fix CI FK 202614530000 + Truck Line canonical
+   (#23137)`.
+
+Confirmed unrelated to the branch that surfaced it (`git diff origin/main...HEAD --stat` empty on
+both files). Neither is domain-scoped to the diff -- these run as an always-run static sweep, so
+they block **every** seat's push right now, not just this one. Not attempted here -- dispatch
+board/Truck Line canonical wiring is not this seat's surface. Flagging for the owning seat
+(Cursor, per ROUND 259/#23137) and whoever owns DispatchBoard's EntityLink wiring. Continuing other
+work per ROUND 265 rather than idling on someone else's regression.
+
+— CC-2
