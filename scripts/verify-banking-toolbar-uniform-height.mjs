@@ -54,8 +54,11 @@ export function collectProblems(root = ROOT) {
   if (/\bh-8\b|\bh-9\b/.test(toolbar)) {
     problems.push(`${FILE}: toolbar has a control off the uniform h-7 (28px) height — found h-8/h-9`);
   }
-  if (!/type="checkbox"/.test(toolbar)) {
-    problems.push(`${FILE}: transaction type filter must be multi-select (checkboxes), none found in the toolbar`);
+  // A multi-select can be either inline checkboxes or a shared <MultiSelectDropdown> component
+  // (its own checkboxes render inside that component's file, never literally in this one) — the
+  // toolbar's real transaction-type filter now uses the latter (B.2 FILTER-MULTI-01).
+  if (!/type="checkbox"/.test(toolbar) && !/<MultiSelectDropdown\b/.test(toolbar)) {
+    problems.push(`${FILE}: transaction type filter must be multi-select (checkboxes or <MultiSelectDropdown>), neither found in the toolbar`);
   }
   // Regression sentinel for the exact old control this replaced.
   if (/<SelectCombobox\s*\n?\s*value=\{selectedTransactionType\}/.test(toolbar)) {
