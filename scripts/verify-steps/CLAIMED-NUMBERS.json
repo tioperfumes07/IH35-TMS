@@ -9259,5 +9259,15 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-28",
     "purpose": "verify-fuel-transactions-genesis-anchor-documented (B-LEDGER-1, ROUND 206)"
+  },
+  "11731": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-29",
+    "purpose": "verify-cancel-releases-presettlement-link (ROUND 219 ADDENDUM) -- retroactive claim, file merged in PR #23106 before this check's requirement was discovered"
+  },
+  "11733": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-29",
+    "purpose": "verify-expense-dedupe-never-keys-on-load-and-amount (ROUND 236)"
   }
 }
