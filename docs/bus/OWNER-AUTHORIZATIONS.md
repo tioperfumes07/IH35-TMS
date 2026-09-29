@@ -3983,4 +3983,19 @@ action:
   OWNER_AUTH_ID=AUTH-127 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-29-cc1-auth089-reinstate-13549-19.ts
 
 expires_at: 2026-09-30T06:00:00.000Z
-status: OPEN
+status: CONSUMED
+
+consumed_at: 2026-09-29T18:22:21.701Z
+consumed_by: Claude-1
+row_counts: 1 expense reinstated. id 3ce7e2a5-b93c-406c-b8a7-341f6ecc0951, load 13549, settlement
+  5787, vendor_document_number 6232741, $15.25. status void→draft (was never posted before AUTH-089
+  voided it, so reinstated_from_void_je_id=null — no JE to reverse). voided_at→null, reinstated_at=
+  2026-09-29T18:22:21.701Z.
+proof_query: SELECT sum(e.total_amount_cents), count(*) FROM accounting.expenses e JOIN mdata.loads l
+  ON l.id=e.load_id WHERE l.operating_company_id='5c854333…' AND l.load_number='13549' AND
+  e.voided_at IS NULL AND (e.source_fuel_transaction_id IS NULL OR EXISTS (SELECT 1 FROM
+  fuel.fuel_transactions ft WHERE ft.id=e.source_fuel_transaction_id AND ft.fuel_type<>'diesel')) —
+  14020 cents / 7 rows = $140.20, matching AlwaysTrack settlement 5787's non-diesel expense total
+  exactly (ROUND 236 proof item 3).
+
+— Claude-1 (ROUND 236 AUTH-089 dedupe-key correction)
