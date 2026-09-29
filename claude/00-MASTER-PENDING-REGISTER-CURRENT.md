@@ -128,3 +128,67 @@ Owner: *"I NEED THE FACTORING ENGINE FULLY BUILT FIRST, COMPLETELY DONE NOW. REN
 | — | "130/130 bill_payments unposted" | GL-exempt; cash posted via the settlement JE |
 | — | "Build the void engine to QuickBooks' standard" | NetSuite model is correct and already implemented |
 | — | "5 loads (13503/13504/13509/13533/13539) should be purged" | **UNVERIFIED.** CC-1 has not checked them against the Faro files. Nobody deletes a load nobody has verified. |
+
+---
+
+# OWNER ORDERS — 09-29-2026, LATE. THESE OVERRIDE EARLIER SEQUENCING.
+
+## STATUS WORDS — one meaning each, no synonyms
+**FOUND** measured and proven, nobody on it · **RULED** fix decided, not built · **ORDERED** in a seat's round,
+not started · **IN PROGRESS** a seat is on it now · **BLOCKED** names what it waits on · **DONE** seat says
+finished, no proof yet · **DONE-VERIFIED** finished with live proof pasted · **PARKED** real work, set aside ·
+**RETRACTED** the claim was wrong, do not act on it. "IN FLIGHT" is retired.
+
+## ORDER 1 — THE $39,108 GETS FIXED NOW (item 48) · CC-2
+15 Faro advances were bank-matched but their cash never moved out of **Undeposited Funds** into the bank,
+because `match.service.ts` sweeps matched customer payments and bill payments and **never had a sweep for
+factoring advances**. The sweep is built; the backfill has not run.
+
+**Raised once, then execute:** 7 of the 15 are also inside the duplicate-funding groups. Their advance-table
+figures are clean (the $39,108 comes from `factoring_advances`' own columns, not from postings), but their
+postings are duplicated. So:
+- **Sweep the 8 clean rows immediately.** Do not wait.
+- **The other 7 are swept the moment their surviving copy is determined** — same round, same session, no
+  separate hand-off. Do not sweep a row whose postings are still duplicated.
+
+Proof: before/after Undeposited Funds and bank balance per account. Undeposited Funds must fall by exactly the
+amount swept, the bank must rise by the same, nothing else moves.
+
+## ORDER 2 — DUPLICATE FUNDINGS: VOID, **THEN DELETE** (item 42) · CC-2
+Owner: *"THE DUPLICATE FUNDINGS GETS VOIDED AND DELETED."*
+
+1. Determine the surviving copy per group from the owner's **09-25-26 Faro files** — the copy matching BOTH the
+   canonical shape in `00-CANONICAL-FACTORING-POSTING-LOCKED.md` AND Faro's figures for that invoice. Escalate
+   to the owner ONLY what those files cannot settle; say how many fell each way.
+2. **Void** every non-surviving copy — reversing entry dated the void date, original untouched (Seat Contract §4).
+3. **Then delete** them: archive first into `archive.*` with the full payload, children before parents, the
+   reversal deleted together with the copy it reverses so the GL is never left one-sided.
+4. Proof: Trial Balance, Balance Sheet totals, Undeposited Funds, Factoring Reserves, Factoring Advance and the
+   fee accounts, before and after. The overstatement must fall by **$79,857.74** and nothing else may move.
+
+## ORDER 3 — THE PURGE: ONE DEFINITION, NO MORE CONFUSION
+There is **one** purge and it has **one** rule:
+
+> **A transaction is deleted only after it has been voided, and only after the audit proves nothing live still
+> reads it. Archive first, every time. Children before parents. A reversal is deleted with the entry it
+> reverses, never alone. Balance proof before and after, and nothing may move.**
+
+Who deletes what:
+- **CC-2** deletes the duplicate funding copies it voids (Order 2). Nobody else touches those.
+- **Devin-B** deletes everything else — the voided transactions app-wide and the test/sample/demo data — and
+  only after Phases 1 and 2 are merged and deployed.
+- **Approved and standing:** the 9 duplicate bank rows. The 10th (f5bbddce…) goes only after its live match
+  2d1f3f73… is re-pointed to the surviving row.
+- **Nobody deletes a record nobody has verified.** The 5 loads 13503/13504/13509/13533/13539 remain untouched.
+
+## ORDER 4 — SCOPE: ALL ENTITIES
+Owner: the void/delete work is **all entities**, not USMCA alone. Every count in this register measured under
+USMCA only must be re-measured across every entity before the delete, and the re-measured figure reported.
+TRANSPORTATION and TRUCKING stay frozen for **feature** work — this scope change applies to the void and delete
+audit only, and no operational or accounting change may be made inside them without the owner saying so.
+
+## ANSWER — HAS DEVIN-B FINISHED THE VOID AUDIT? NO.
+Phase 1 measured all 18 void-carrying tables read-only and found two real defects (fuel MTD overstated
+$77,009.78; 430 bank rows hidden by voided matches). **The consumer audit — which modules, windows, reports and
+tiles read those tables — is still running.** Phases 2, 3, 4 and 5 are NOT started. Nothing is fixed and nothing
+is deleted.
