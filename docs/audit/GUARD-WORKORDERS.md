@@ -11597,3 +11597,58 @@ backfill lands AND the threshold is revisited together. This is a policy call, n
 should silently work around.
 
 — CC-2
+
+## FINDING: ACCT-F2026093005 -- 24 factoring advances have FULLY DUPLICATED funding journal entries (real money, both sides) (CC-2, 2026-09-30)
+
+**LANE: FINANCIAL. Not a threshold question -- a live GL-integrity defect found while investigating
+the owner's approved NO_CLEARING_PILEUP threshold recalibration.**
+
+While computing the "in-transit factoring advance" exclusion the owner approved (2026-09-29 relay:
+"exclude in-transit factoring advances from the NO_CLEARING_PILEUP calculation"), the live 1090
+balance would not reconcile to the previously-reported $276,248.28 legitimate-lag / $39,108.00
+real-defect split. Root cause, live-verified (USMCA, `bypass_rls=lucia`):
+
+**24 distinct `accounting.factoring_advances` rows have 2 or 3 separate, non-voided journal entries
+posted under the identical `source_transaction_type='factoring_advance'` + `source_transaction_id`.**
+These are not a display artifact -- every account leg is duplicated, confirmed on two full JE
+dumps:
+
+```
+je 83b0cde3... : Dr 1090 $5,325.00 / Dr 1230 $82.50 / Cr 2150 $5,500.00 / Dr 6400 $92.50
+je 331e3fea... : Dr 1090 $5,325.00 / Dr 1230 $82.50 / Cr 2150 $5,500.00 / Dr 6300 $10.00 / Dr 6400 $82.50
+```
+Same advance (FAC-2026-00133), same entry_date, same amounts to the cent (the fee is split
+slightly differently between 6300/6400 in each copy -- looks like a "fix and re-run" that never
+voided the original before reposting). `created_at` timestamps show the copies landing 09-24, 09-25,
+09-26 -- three separate posting runs re-touched several of the same advances days apart.
+
+**Dollar impact, live-measured, summed across all 24 duplicated advances:**
+- Total booked (all copies together): **$151,985.48**
+- Total EXCESS -- phantom, duplicate money that should not be on the books: **$79,857.74**
+- Real (single-copy) amount that should remain: $72,127.74
+
+Because both sides of every duplicate JE are equal and opposite, `verify-trial-balance-and-balance-sheet`'s
+JE_BALANCE (A), TRIAL_BALANCE (B) and ACCOUNTING_EQUATION (C) checks all stay green -- duplication is
+invisible to a debits=credits check. It inflates, live, right now: 1090 Undeposited Funds (asset),
+1230 Factoring Reserves (asset), 2150 Factoring Advance (liability), and 6300/6400 (fees/bank charge
+expenses) -- both the balance sheet and the P&L are currently overstated by this amount.
+
+**Overlap with the pending $39,108 backfill (15-row list posted to the owner this round):** 7 of
+these 15 advances are ALSO among the 24 duplicated. The $39,108 net-wire figure already given to the
+owner is unaffected -- it was computed from `factoring_advances`' own stored columns, not by summing
+postings, so it stays correct for the sweep backfill. But sweeping those 7 will NOT remove their
+duplicate JE copies -- that needs a separate void/reversal action, under its own AUTH, after the
+owner has seen this.
+
+**Not attempted here:** voiding the duplicate JEs, or building the NO_CLEARING_PILEUP threshold
+exclusion. The exclusion work was reverted on `cc2/r245-p0-check-number-reset` rather than shipped,
+because any unmatched/in-transit exclusion computed before this is fixed silently absorbs $79,857.74
+of duplicate phantom money into "normal lag" -- masking a real defect instead of excluding one.
+Recommend: (1) owner/Lead decide the void/reversal scope for the 24 duplicated advances (which copy
+is the "real" one per advance -- earliest `created_at`, by inspection, in both examples checked); (2)
+find and fix the poster-side gap that let the same advance repost without voiding its prior JE first
+(likely `apps/backend/src/accounting/factoring-posting/poster.service.ts` -- not yet inspected for
+root cause, flagging for whoever owns that file); (3) only then is the NO_CLEARING_PILEUP threshold
+recalibration measurable against real numbers.
+
+— CC-2
