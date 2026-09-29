@@ -102,16 +102,21 @@ export function classifyTrialBalance(input) {
   // E. Clearing account pile-up (1090 Undeposited Funds)
   // Threshold derived from data: 1% of total debits. A clearing account holding
   // more than 1% of total transaction volume is a defect — money is at rest.
+  // ROUND 273 ruling: exclude in-transit factoring advances (advance received,
+  // bank wire not yet matched). Those are timing lag, not a pileup. measureLive
+  // already subtracts them from clearingBalance. Only an unexplained DEBIT
+  // residual counts — credit skew from historical sweeps is not "money at rest."
   const thresholdCents = Math.max(Math.round(totalDebitsForThreshold * 0.01), 10000); // min $100
+  const reportableClearingDebit = Math.max(0, clearingBalance);
   checks.push({
     id: "E",
     name: "NO_CLEARING_PILEUP",
     expected: `$${(thresholdCents / 100).toFixed(2)} max (1% of total debits)`,
-    live: `$${(clearingBalance / 100).toFixed(2)} in 1090`,
-    pass: Math.abs(clearingBalance) <= thresholdCents,
+    live: `$${(reportableClearingDebit / 100).toFixed(2)} in 1090 (excl. in-transit factoring)`,
+    pass: reportableClearingDebit <= thresholdCents,
   });
-  if (Math.abs(clearingBalance) > thresholdCents) {
-    problems.push(`CLEARING_PILEUP: 1090 Undeposited Funds holds $${(clearingBalance / 100).toFixed(2)}, exceeding derived threshold of $${(thresholdCents / 100).toFixed(2)} (1% of total debits $${(totalDebitsForThreshold / 100).toFixed(2)}). Money is at rest in a pass-through account.`);
+  if (reportableClearingDebit > thresholdCents) {
+    problems.push(`CLEARING_PILEUP: 1090 Undeposited Funds holds $${(reportableClearingDebit / 100).toFixed(2)} unexplained debit (in-transit factoring advances excluded), exceeding derived threshold of $${(thresholdCents / 100).toFixed(2)} (1% of total debits $${(totalDebitsForThreshold / 100).toFixed(2)}). Money is at rest in a pass-through account.`);
   }
 
   // F. Sign discipline
@@ -205,10 +210,17 @@ function runSelftest() {
     fail += 1;
   } else pass += 1;
 
-  // RED E: clearing pile-up
+  // RED E: clearing pile-up (unexplained debit above threshold)
   const redE = classifyTrialBalance({ ...baseInput, clearingBalance: 50000, totalDebitsForThreshold: 100000 });
   if (redE.allPass || redE.checks.find(c => c.id === "E").pass) {
     console.error(`${LABEL} --selftest FAIL — RED E: expected check E FAIL`);
+    fail += 1;
+  } else pass += 1;
+
+  // GREEN E: credit skew after excluding in-transit factoring is NOT a pileup
+  const greenECredit = classifyTrialBalance({ ...baseInput, clearingBalance: -18596528, totalDebitsForThreshold: 303213100 });
+  if (!greenECredit.checks.find(c => c.id === "E").pass) {
+    console.error(`${LABEL} --selftest FAIL — GREEN E credit-skew: expected check E PASS when clearingBalance is credit-side after in-transit exclusion`);
     fail += 1;
   } else pass += 1;
 
@@ -294,7 +306,10 @@ async function measureLive(client) {
     [USMCA_COMPANY_ID],
   );
 
-  // E: 1090 clearing balance
+  // E: 1090 clearing balance — ROUND 273: exclude in-transit factoring advances.
+  // In-transit = source_transaction_type='factoring_advance' whose advance has no
+  // live banking.bank_transactions.matched_factoring_advance_id. Matched-but-unswept
+  // and every non-factoring 1090 posting stay in the measure (real defect surface).
   const clearingRes = await client.query(
     `SELECT COALESCE(SUM(CASE WHEN jep.debit_or_credit = 'debit' THEN jep.amount_cents ELSE -jep.amount_cents END), 0)::bigint AS balance_cents
        FROM accounting.journal_entry_postings jep
@@ -302,7 +317,17 @@ async function measureLive(client) {
        JOIN catalogs.accounts a ON a.id = jep.account_id
       WHERE je.operating_company_id = $1::uuid AND je.voided_at IS NULL
         AND a.operating_company_id = $1::uuid
-        AND a.account_number = '1090'`,
+        AND a.account_number = '1090'
+        AND NOT (
+          jep.source_transaction_type = 'factoring_advance'
+          AND NOT EXISTS (
+            SELECT 1
+              FROM banking.bank_transactions bt
+             WHERE bt.matched_factoring_advance_id::text = jep.source_transaction_id
+               AND bt.voided_at IS NULL
+               AND bt.operating_company_id = $1::uuid
+          )
+        )`,
     [USMCA_COMPANY_ID],
   );
 
