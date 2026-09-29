@@ -178,11 +178,17 @@ export async function measureClosures(client) {
   const invSumRes = await client.query(
     // 21 — R-201 (Lead, 2026-09-25): A/R (1100) is what is still OPEN on the invoices, not their face. Face minus
     // collected receipts ($15,507.60 live) is exactly the gap this arm reported; the identity is 1100 = amount_open.
+    // ROUND 211.1 (Lead, 2026-09-28): proforma invoices are excluded. Under the owner's cash-flow law,
+    // EVERY dispatched load creates a proforma invoice — it is projected cash flow, not a real
+    // receivable, and it correctly never posts to GL 1100. Including proforma in this sum made the
+    // arm mathematically guaranteed red forever (14 proforma invoices = $61,375.00 of the prior
+    // $114,335.00 "gap"). The real identity is:
+    //   GL 1100 = SUM(amount_open_cents) WHERE status NOT IN ('void','draft','proforma')
     `SELECT COALESCE(SUM(amount_open_cents), 0)::bigint AS total FROM accounting.invoices
       WHERE operating_company_id = $1::uuid
         AND is_sample_data IS NOT TRUE
         AND voided_at IS NULL
-        AND status NOT IN ('void', 'draft')`,
+        AND status NOT IN ('void', 'draft', 'proforma')`,
     [USMCA_COMPANY_ID],
   );
   const arSumRes = await client.query(
