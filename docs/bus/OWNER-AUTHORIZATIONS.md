@@ -4126,3 +4126,30 @@ expires_at: 2026-10-01T08:00:00.000Z
 status: OPEN
 
 — Claude-1 (ROUND 260 Part H held-expense posting batch)
+
+## AUTH-132
+
+date: 2026-09-30
+
+scope: ROUND 270 (Lead, P0) — correct accounting.factoring_advances.status for the 2 USMCA rows
+  (operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80) that were voided (voided_at stamped,
+  void_reason "ROUND-175 reversal — load identity unproven, Lead ruling 172-Updated", both
+  2026-09-28) but never had their status column flipped from 'advanced' to 'voided': 1f09c82c-81f2-
+  4908-b1a4-577461be4ade (faro_invoice_number 1013272-2, invoice 13619) and 9667e71c-9f29-44ff-af31-
+  f28ffb43282b (faro_invoice_number 87, invoice 13615). This is a pure status-label correction —
+  amount, voided_at, void_reason, and every other column are untouched; the void itself already
+  happened and is not being redone. Sets status_before_void='advanced' (the value being corrected
+  away from) before setting status='voided', matching the reinstate-pattern's own convention of
+  recording the prior value. Root cause: no factoring_advance case exists in
+  governance/void-cancel-executors.ts's executeVoidCancel, so whatever voided these 2 rows used a
+  raw UPDATE that set voided_at/void_reason without status — this AUTH corrects the resulting drift,
+  it does not authorize voiding anything new. Not authorized: touching any row where voided_at IS
+  NULL; touching amount, invoice, or vendor columns; TRANSP or TRK.
+
+action:
+  OWNER_AUTH_ID=AUTH-132 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-round270-factoring-advance-status-fix.ts
+
+expires_at: 2026-10-01T08:00:00.000Z
+status: OPEN
+
+— Claude-1 (ROUND 270 factoring_advances status/voided_at drift fix)
