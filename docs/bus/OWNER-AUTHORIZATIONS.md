@@ -4018,4 +4018,20 @@ action:
   OWNER_AUTH_ID=AUTH-128 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-29-cc1-auth089-reinstate-remaining-9.ts
 
 expires_at: 2026-09-30T08:00:00.000Z
-status: OPEN
+status: CONSUMED
+
+consumed_at: 2026-09-29T19:03:29.203Z
+consumed_by: Claude-1
+row_counts: 9 of 9 expenses reinstated (all status void->draft, none had been posted before AUTH-089
+  voided them, so reinstated_from_void_je_id=null for all 9): 64f2b99c… (13514/1597129/$15.25,
+  19:03:09.918Z), edb89fc2… (13514/1360475/$15.25, 19:03:12.333Z), 9f6990c0…
+  (13515/1295089/$15.25, 19:03:14.719Z), df3dc885… (13515/1295098/$5.25, 19:03:17.138Z),
+  5ee11e39… (13515/40016373/$5.25, 19:03:19.578Z), 24b9378b… (13515/39016214/$15.25,
+  19:03:21.962Z), c0c1aace… (13528/2044386/$15.25, 19:03:24.397Z), 831733cd…
+  (13548/1230441/$15.25, 19:03:26.777Z), 964abc3d… (13565/2047749/$15.25, 19:03:29.203Z).
+proof_query: all 10 of AUTH-089's document-numbered voided rows now reinstated (this batch of 9 +
+  AUTH-127's single row) -- SELECT count(*) FROM accounting.expenses WHERE operating_company_id=
+  '5c854333…' AND void_reason LIKE 'AUTH-089%' AND vendor_document_number IS NOT NULL AND
+  voided_at IS NOT NULL returns 0.
+
+— Claude-1 (ROUND 236/248 AUTH-089 remaining 9 reinstatement)
