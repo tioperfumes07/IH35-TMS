@@ -11652,3 +11652,33 @@ root cause, flagging for whoever owns that file); (3) only then is the NO_CLEARI
 recalibration measurable against real numbers.
 
 — CC-2
+
+## UPDATE — ACCT-F2026093005 independently re-verified, scope corrected: 25 groups / 53 JEs / 28 excess, full comparison table produced (CC-2, 2026-09-30)
+
+Independent verification (relayed) confirms the finding and corrects scope: fingerprinting live
+`factoring_advance`-tagged, non-voided postings in USMCA by exact (account : side : amount) per
+copy gives **25 duplicate groups, 53 total JE rows, 28 excess copies**, posted 2026-09-23 through
+2026-09-28 (wider than this finding's original 24-group / 09-24–26 read, which under-scoped the
+population and missed one group, `5e38e177-02b5-4d39-841c-b7492781eb9f`).
+
+**Critical correction to this finding's original framing:** every one of the 25 groups DIFFERS
+between copies once fingerprinted account-by-account — none are byte-identical duplicates. "Void
+the extra copy" is undefined without a human choosing which copy survives per group. **No voids are
+authorized or should run against these 25 rows.**
+
+Full side-by-side comparison table (account, side, amount, per copy, differences bolded, each
+copy's posting timestamp) for all 25 groups: `claude/09-30-2026-CC-2-FACTORING-DUP-JE-COMPARISON-TABLE.md`.
+Summary: 18 of 25 groups differ only in how the $10 wire/factoring fee splits between 6300/6400 —
+core money lines (1090/1230/2150) are identical in those. **7 of 25 need closer attention because a
+CORE money line differs**, most notably Group 8 (`5e38e177...`, `advance_amount_cents=$0.00` on
+record, no invoice number): one copy posts $582.00 to 1090 Undeposited Funds (correct, cash-clearing
+asset), the other posts the same $582.00 to 6300 Bank Service Charges (an expense account) — one of
+these two copies is structurally wrong independent of the duplication question.
+
+The $39,108.00 sweep-backfill list (15 rows, posted earlier this round) is unaffected — confirmed
+again, it's sourced from `factoring_advances`' own stored columns, not from journal_entry_postings.
+
+Sequence per the relayed instruction: comparison table (done) → owner picks surviving copy per
+group → voids run → $39,108 sweep runs → NO_CLEARING_PILEUP threshold recalibration.
+
+— CC-2
