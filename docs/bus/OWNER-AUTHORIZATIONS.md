@@ -4123,7 +4123,27 @@ action:
   OWNER_AUTH_ID=AUTH-131 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-round260-retry-held-expense-postings.ts
 
 expires_at: 2026-10-01T08:00:00.000Z
-status: OPEN
+status: CONSUMED
+
+consumed_at: 2026-09-29T21:37:18.470145+00:00
+consumed_by: Claude-1
+row_counts: posting_batch_id 6c6c8f6c-0502-42f8-aec1-7516123de1d8. 257 candidates: 246 posted (one
+  balanced JE each, via postSourceTransaction, no new GL math), 9 still held (posting_hold_reason
+  set to 'tour_open' -- their load's tour genuinely still open, ACC-50 working as designed at the
+  time this ran), 2 still held (posting_hold_reason 'post_failed:orphan_no_payment_account_or_vendor'
+  -- 83b4dd98-608d-4e80-aec4-3cbbe9561cb6 and ca383aa9-1e87-4c44-8b0f-8d5d5a665781, no resolvable
+  payment account or vendor, correctly routed to human review rather than force-posted). Live
+  re-verify: accounting.expenses status='draft' count went 257 -> 11 ($14,315.36 -> $1,839.13),
+  matching 9+2 exactly.
+proof_query: SELECT status, posting_hold_reason, count(*), sum(total_amount_cents)::numeric/100.0
+  FROM accounting.expenses WHERE operating_company_id='5c854333…' AND voided_at IS NULL AND
+  status='draft' GROUP BY status, posting_hold_reason -- returns exactly 2 rows: ('draft',
+  'tour_open', 9, 1488.45) and ('draft', '', 2, 350.68).
+NOTE (2026-09-29, post-consumption): claude/00-SEAT-CONTRACT.md §3's corollary ("no guard may block
+  a post because a tour is open") now supersedes the ACC-50 gate this batch respected. The 9
+  tour_open-held rows above are no longer correctly gated under the new ruling and are expected to
+  post in a follow-up round once the gate itself is removed from the code (separate PR, in
+  progress) -- not re-run under this AUTH, which is now fully consumed and closed.
 
 — Claude-1 (ROUND 260 Part H held-expense posting batch)
 
