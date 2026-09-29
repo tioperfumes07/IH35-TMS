@@ -110,3 +110,12 @@ Return-trip double rows with unit# kept · columns UNIT · TOUR · LOAD · PU DA
 
 - #23139 restored bank-match candidates → `verify-bank-match-candidate-sources — OK` on CI run `36632583192`.
 - Next fail: `catalogs.blocked_feature_flags` ENTITY-ISOLATION — genuinely global QBO permanent blocklist (sibling of `lib.feature_flags`). Added to `scripts/entity-isolation-allowlist.json` under `global`.
+
+## LIVE SHIP (P0 checksum restore)
+
+- Restored `202614530000` to applied bytes `05b2e366fd` — sha256 `f2098eb0627eefaa9c04740944fe4f134aa62b75ed4f8b75a3766a7855459358` (= ledger). Did **not** edit ledger / `--force` / delete migration.
+- Follow-up `202614580000_blocked_feature_flags_seed_user_fk_safe.sql` (subquery seed repair).
+- PR **#23149** squash `4e84c519a9`.
+- Render deploy **`dep-dau3h9u0tbcc73fr127g`** status **live**.
+- `GET https://ih35-tms.onrender.com/api/v1/healthz/shallow` → `git_sha=4e84c519a9d965fbd72dc5b39caa50715109d00a`, `migrations.ledger` ok.
+- Guard re-run: `verify-truck-line-board-shows-canonical-active-set` LIVE PASS board===canonical=12.

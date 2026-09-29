@@ -49,8 +49,8 @@ STATUS KEYS: OPEN · IN PROGRESS · BLOCKED · DONE-VERIFIED (Lead measured it l
 # CURSOR — DISPATCH / LOAD BOARDS / FRONTEND
 | # | Issue | Round | Status |
 |---|---|---|---|
-| 1 | **Load-board linkage defect.** Board shows 11. Database says 14 dispatched. Owner counts 16 running. Three answers to one question. Find the board's query, name why it returns 11, and identify the owner's 2 extra loads. **A truck physically running and not in the app is the most serious finding on this board.** | 250 | **OPEN — P0** |
-| 2 | ONE canonical active-load definition shared by truck line, dispatch and tour views. If each has its own status list, that is the root cause; fix it once, centrally. | 250 | OPEN |
+| 1 | **Load-board linkage defect.** 14−2 money-finished−1 AUTH-061=11; extras T124+T163; canonical=12. | 250/259 | **DONE-VERIFIED** |
+| 2 | ONE canonical active-load definition shared by truck line, dispatch and tour views. Truck line aliases `canonicalActiveLoadWhereClause`. Guard LIVE PASS board===canonical=12. | 250/255/259 | **DONE-VERIFIED** |
 | 3 | A unit MAY appear twice — when row 2's PU date equals row 1's DELIVERY date, that is the RETURN TRIP. Do not de-duplicate, do not collapse. Chain row 2 visually to row 1. | 250 | OPEN |
 | 4 | Unit after **176** renders with no unit shown. Same grouping logic swallowing a row. | 250 | OPEN |
 | 5 | Column order, exactly: **UNIT · PRE-SETTLEMENT/TOUR · LOAD · PU DATE · DELIVERY DATE · [TRANSIT LINE]**. The transit line BEGINS under the LOAD column. | 250 | OPEN |
