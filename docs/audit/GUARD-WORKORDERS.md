@@ -11520,3 +11520,37 @@ branch cc2/r245-p0-check-number-reset, sha 58e5356b11) because it's domain-scope
 apps/backend/src/accounting/ and my diff touches apps/backend/src/accounting/checks/.
 
 — CC-2
+
+## verify-trial-balance-and-balance-sheet -- NO_CLEARING_PILEUP blocking ROUND 245 P0 push (CC-2, 2026-09-29)
+
+Hit pushing the unrelated P0 check-number-reset branch (cc2/r245-p0-check-number-reset, sha
+58e5356b11). `money-pr-local-gate.mjs` LIVE FAIL on check E:
+```
+NO_CLEARING_PILEUP: $30196.55 max (1% of total debits) -- live $173426.64 in account 1090 (Undeposited Funds)
+```
+All other 6 checks (JE_BALANCE, TRIAL_BALANCE, ACCOUNTING_EQUATION, NO_UNMAPPED_POSTINGS,
+SIGN_DISCIPLINE, UNBILLED_REVENUE_RESIDUAL) PASS -- this is the sole failure.
+
+**Confirmed pre-existing/unrelated:** guard file itself last touched 2026-09-23 (#22512), well
+before this session; P0's diff (check-stock.service.ts, checks.routes.ts) has zero relationship to
+Undeposited Funds or deposit-matching.
+
+**Composition (live, debit side of 1090, USMCA), not fully root-caused -- flagging scale, not
+diagnosing):**
+```
+factoring_advance   131 postings   $427,887.92
+journal_entry        162 postings   $102,048.88
+fuel_event            48 postings    $16,485.10
+customer_payment       7 postings    $15,507.60
+```
+factoring_advance dominates by both count and dollars. Money at rest in a pass-through account this
+large suggests a real, systemic deposit-matching/clearing gap (factoring proceeds landing in 1090
+and never being swept to the real bank account or A/R), not a one-off. Not my lane (factoring/
+deposit-matching, not check-number reconciliation) -- flagging scale for whoever owns 1090's
+clearing cadence, not attempting a fix here.
+
+This is a second, independent domain-scoped `accounting/` live check (alongside the now-fixed
+verify-no-document-without-a-ledger) currently blocking any push that touches
+apps/backend/src/accounting/**, regardless of what the diff actually does.
+
+— CC-2
