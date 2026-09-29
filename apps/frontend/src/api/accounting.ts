@@ -327,7 +327,7 @@ export type VendorBill = {
   /** Present when bills.service resolves a cash-advance reverse link for BillDetail. */
   linked_cash_advance_id?: string | null;
   linked_cash_advance_display_id?: string | null;
-  /** ACC-50 (LAW §2) — why this bill hasn't posted yet, e.g. "tour_open". Null when never held. */
+  /** ACC-50 REMOVED (claude/00-SEAT-CONTRACT.md §3, 2026-09-29) — why this bill hasn't posted yet, e.g. an unresolved account mapping. Null when never held; never "tour_open" going forward. */
   posting_hold_reason?: string | null;
   /** CV-TRANSACTION-COLUMNS (inv #46) — load/settlement/unit linkage for vendor bill transactions tab. */
   linked_load_id?: string | null;
@@ -814,7 +814,7 @@ export type ExpenseListRow = {
   total_amount_cents: number | string;
   status: ExpenseListStatus;
   posting_status: ExpensePostingStatus;
-  /** ACC-50 (LAW §2) — why posting is held while posting_status='unposted', e.g. "tour_open". */
+  /** ACC-50 REMOVED (claude/00-SEAT-CONTRACT.md §3, 2026-09-29) — why posting is held while posting_status='unposted', e.g. an unresolved account mapping; never "tour_open" going forward. */
   posting_hold_reason?: string | null;
   memo: string | null;
   /** REG-PARSE-DATA (ROUND 11, additive, 2026-09-06) — structured fields backfilled from the
@@ -1020,7 +1020,7 @@ export type ExpenseDetail = {
   total_amount_cents: number | string;
   status: ExpenseListStatus;
   posting_status: ExpensePostingStatus;
-  /** ACC-50 (LAW §2) — why posting is held while posting_status='unposted', e.g. "tour_open". */
+  /** ACC-50 REMOVED (claude/00-SEAT-CONTRACT.md §3, 2026-09-29) — why posting is held while posting_status='unposted', e.g. an unresolved account mapping; never "tour_open" going forward. */
   posting_hold_reason?: string | null;
   memo: string | null;
   /** VIS-01 — expense void date/reason, shown by VoidedBanner. */

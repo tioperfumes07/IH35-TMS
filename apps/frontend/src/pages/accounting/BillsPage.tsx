@@ -621,14 +621,15 @@ export function BillsPage() {
       },
       {
         // ACC-51 (owner 01:33Z, "same truth as Load costs") — the Costs cards already show a real
-        // "held — tour open" pill (ACC-50b); Bills list showed no GL posting signal at all.
-        // accounting.bills has no posting_status column (posted state lives in
-        // accounting.posting_batches) — journal_entry_id presence is the same "is this posted"
-        // proxy the Bill detail page already uses.
+        // held pill; Bills list showed no GL posting signal at all. accounting.bills has no
+        // posting_status column (posted state lives in accounting.posting_batches) —
+        // journal_entry_id presence is the same "is this posted" proxy the Bill detail page
+        // already uses. ACC-50 REMOVED (claude/00-SEAT-CONTRACT.md §3, owner ruling 2026-09-29) —
+        // sort any held reason first, not just the now-retired "tour_open" one.
         key: "posting_hold_reason",
         label: "GL Posting",
         sortable: true,
-        sortValue: (bill) => (bill.posting_hold_reason === "tour_open" ? -1 : bill.journal_entry_id ? 1 : 0),
+        sortValue: (bill) => (bill.posting_hold_reason ? -1 : bill.journal_entry_id ? 1 : 0),
         render: (bill) => <PostingPill posted={Boolean(bill.journal_entry_id)} holdReason={bill.posting_hold_reason} />,
       },
       {

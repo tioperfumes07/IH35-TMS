@@ -364,8 +364,10 @@ export function ExpensesListPage() {
       label: "GL",
       sortable: true,
       // ACC-51 (owner 01:33Z, "same truth as Load costs") — the Costs cards already show a real
-      // "held — tour open" pill (ACC-50b); this list showed only the bare posting_status string.
-      sortValue: (r) => (r.posting_hold_reason === "tour_open" ? -1 : r.posting_status === "posted" ? 1 : 0),
+      // held pill; this list showed only the bare posting_status string. ACC-50 REMOVED (claude/
+      // 00-SEAT-CONTRACT.md §3, owner ruling 2026-09-29) — sort any held reason first, not just
+      // the now-retired "tour_open" one.
+      sortValue: (r) => (r.posting_hold_reason ? -1 : r.posting_status === "posted" ? 1 : 0),
       render: (r) => <PostingPill posted={r.posting_status === "posted"} holdReason={r.posting_hold_reason} />,
     },
     {
