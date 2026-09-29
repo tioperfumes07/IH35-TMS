@@ -16,6 +16,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCompanyScope } from "./shared.js";
 import { isLoadTourOpen } from "./tour-open-gate.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { randomUUID } from "node:crypto";
 
 // Same flag every other expense-GL-posting call site gates on (expenses.routes.ts's own
 // EXPENSE_GL_POSTING_FLAG_KEY = "EXPENSE_GL_POSTING_ENABLED") — a local literal, not an import from
@@ -165,4 +166,110 @@ export async function postHeldDocumentsForClosedTour(
   }
 
   return result;
+}
+
+export type HeldExpenseRetryOutcome = "posted" | "still_held_tour_open" | "still_held_orphan" | "still_held_posting_error" | "flag_off";
+
+export type HeldExpenseRetryResult = {
+  posting_batch_id: string;
+  outcomes: Array<{ expense_id: string; outcome: HeldExpenseRetryOutcome; journal_entry_id: string | null; hold_reason: string | null }>;
+};
+
+/**
+ * ROUND 260 Part H root cause fix. postHeldDocumentsForClosedTour above only ever retries an
+ * expense whose posting_hold_reason is the LITERAL string 'tour_open' -- the one failure mode its
+ * own create-time caller (expenses.routes.ts) records. But that same create-time code's OTHER
+ * branch -- postSourceTransaction throwing a PostingEngineError when the tour was NOT open and the
+ * flag WAS on -- catches the error and leaves the row unposted with posting_hold_reason left NULL
+ * (expenses.routes.ts:1423-1426, "leave unposted -- surfaced via posting_status"). A blank hold
+ * reason is indistinguishable from "never attempted," so no retry path -- this one included --
+ * ever picks that row back up again. MEASURED live 2026-09-30 on USMCA: 257 status='draft' expenses,
+ * ALL with posting_hold_reason = '' (never 'tour_open'); 245 of them have a load whose tour is
+ * ALREADY closed, and 237 of those already carry both a resolvable category account and a payment
+ * account -- fully postable right now, held only because nothing ever retries a blank-hold-reason
+ * row. This function is that missing, general retry: it scans every non-voided draft/unposted
+ * expense for the company (not scoped to one settlement's loadIds, not filtered by hold_reason),
+ * re-checks isLoadTourOpen per expense (the ACC-50 gate stays authoritative and unchanged), and
+ * posts through the SAME postSourceTransaction engine every other call site uses. On a genuine
+ * posting failure this time the hold reason is RECORDED (not left blank), so a human or a future
+ * automated pass can tell "blocked, here is why" apart from "never tried."
+ */
+export async function retryHeldExpensePostings(
+  operatingCompanyId: string,
+  actor: { userId: string }
+): Promise<HeldExpenseRetryResult> {
+  const postingBatchId = randomUUID();
+  const outcomes: HeldExpenseRetryResult["outcomes"] = [];
+
+  const expensePostingEnabled = await withCompanyScope(actor.userId, operatingCompanyId, (client: DbClient) =>
+    isEnabled(client as never, EXPENSE_GL_POSTING_FLAG_KEY, { operating_company_id: operatingCompanyId, user_uuid: actor.userId })
+  );
+
+  const candidates = await withCompanyScope(actor.userId, operatingCompanyId, (client: DbClient) =>
+    client.query<{ id: string; load_id: string | null; payment_account_uuid: string | null; vendor_uuid: string | null }>(
+      `
+        SELECT e.id::text, e.load_id::text, e.payment_account_uuid::text, e.vendor_uuid::text
+        FROM accounting.expenses e
+        WHERE e.operating_company_id = $1::uuid
+          AND e.status = 'draft'
+          AND e.posting_status = 'unposted'
+          AND e.voided_at IS NULL
+          AND EXISTS (SELECT 1 FROM accounting.expense_lines el WHERE el.expense_id = e.id AND el.expense_account_uuid IS NOT NULL)
+        ORDER BY e.id
+      `,
+      [operatingCompanyId]
+    )
+  );
+
+  if (!expensePostingEnabled) {
+    return { posting_batch_id: postingBatchId, outcomes: candidates.rows.map((r) => ({ expense_id: r.id, outcome: "flag_off" as const, journal_entry_id: null, hold_reason: null })) };
+  }
+
+  for (const expense of candidates.rows) {
+    if (expense.load_id) {
+      const open = await withCompanyScope(actor.userId, operatingCompanyId, (client: DbClient) => isLoadTourOpen(client as never, operatingCompanyId, expense.load_id as string));
+      if (open) {
+        await withCompanyScope(actor.userId, operatingCompanyId, (client: DbClient) =>
+          client.query(`UPDATE accounting.expenses SET posting_hold_reason=$2, updated_at=now() WHERE id=$1::uuid AND operating_company_id=$3::uuid`, [expense.id, "tour_open", operatingCompanyId])
+        );
+        outcomes.push({ expense_id: expense.id, outcome: "still_held_tour_open", journal_entry_id: null, hold_reason: "tour_open" });
+        continue;
+      }
+    }
+    if (!expense.payment_account_uuid && !expense.vendor_uuid) {
+      outcomes.push({ expense_id: expense.id, outcome: "still_held_orphan", journal_entry_id: null, hold_reason: "orphan_no_payment_account_or_vendor" });
+      continue;
+    }
+    try {
+      const posting = await postSourceTransaction(
+        { operating_company_id: operatingCompanyId, source_transaction_type: "expense", source_transaction_id: expense.id },
+        actor
+      );
+      await withCompanyScope(actor.userId, operatingCompanyId, async (client: DbClient) => {
+        await client.query(
+          `UPDATE accounting.expenses
+              SET status='posted', posting_status='posted', posted_at=now(), journal_entry_id=$2::uuid, posting_hold_reason=NULL, updated_at=now()
+            WHERE id=$1::uuid AND operating_company_id=$3::uuid`,
+          [expense.id, posting.journal_entry_id, operatingCompanyId]
+        );
+        await appendCrudAudit(
+          client,
+          actor.userId,
+          "expense.posted",
+          { expense_id: expense.id, journal_entry_id: posting.journal_entry_id, source: "held_expense_retry_batch", posting_batch_id: postingBatchId },
+          "info"
+        );
+      });
+      outcomes.push({ expense_id: expense.id, outcome: "posted", journal_entry_id: posting.journal_entry_id, hold_reason: null });
+    } catch (err) {
+      if (!(err instanceof PostingEngineError)) throw err;
+      const holdReason = `post_failed:${err.code}`;
+      await withCompanyScope(actor.userId, operatingCompanyId, (client: DbClient) =>
+        client.query(`UPDATE accounting.expenses SET posting_hold_reason=$2, updated_at=now() WHERE id=$1::uuid AND operating_company_id=$3::uuid`, [expense.id, holdReason, operatingCompanyId])
+      );
+      outcomes.push({ expense_id: expense.id, outcome: "still_held_posting_error", journal_entry_id: null, hold_reason: holdReason });
+    }
+  }
+
+  return { posting_batch_id: postingBatchId, outcomes };
 }
