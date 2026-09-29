@@ -10,6 +10,14 @@ declare module "fastify" {
 }
 
 export async function registerSessionMiddleware(app: FastifyInstance) {
+  // Boot assertion: refuse to start if the test auth bypass is enabled in production.
+  if (process.env.IH35_TEST_AUTH_BYPASS === "1" && process.env.NODE_ENV === "production") {
+    throw new Error(
+      "FATAL: IH35_TEST_AUTH_BYPASS=1 is set in a production runtime (NODE_ENV=production). " +
+      "This would allow unauthenticated request spoofing. Refusing to start."
+    );
+  }
+
   app.decorateRequest("user", null);
   app.decorateRequest("session", null);
 
@@ -20,7 +28,8 @@ export async function registerSessionMiddleware(app: FastifyInstance) {
     }
 
     // CI/Vitest integration only — never enable IH35_TEST_AUTH_BYPASS in production runtimes.
-    if (process.env.IH35_TEST_AUTH_BYPASS === "1") {
+    // Hard gate: if NODE_ENV is "production", the bypass is dead regardless of the env var.
+    if (process.env.IH35_TEST_AUTH_BYPASS === "1" && process.env.NODE_ENV !== "production") {
       const raw = req.headers["x-test-auth"];
       if (typeof raw === "string" && raw.trim().length > 0) {
         try {

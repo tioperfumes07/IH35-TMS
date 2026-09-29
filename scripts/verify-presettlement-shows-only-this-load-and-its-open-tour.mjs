@@ -43,12 +43,10 @@ export function findViolations(src) {
   if (!/l\.tour_id\s*=\s*\$6::uuid/.test(src)) {
     violations.push("the legs CTE no longer filters by l.tour_id = the subject's own tour_id");
   }
-  // ROUND 218.2 (#23103): bare 'closed' became CLOSED_LOAD_STATUS from
-  // canonical-active-load-set (identical SQL at runtime). Accept either shape.
-  if (
-    !/l\.status\s*<>\s*'closed'/.test(src) &&
-    !/l\.status\s*<>\s*'\$\{CLOSED_LOAD_STATUS\}'/.test(src)
-  ) {
+  // CC-1 #23103 routed the closed-load exclusion through the canonical module's
+  // CLOSED_LOAD_STATUS constant instead of the bare literal 'closed'. Both forms
+  // are valid — the exclusion is present either way.
+  if (!/l\.status\s*<>\s*('closed'|'\$\{CLOSED_LOAD_STATUS\}')/.test(src)) {
     violations.push("the legs CTE no longer excludes closed loads from an open settlement");
   }
 
@@ -83,10 +81,7 @@ function selftest() {
   const dirtyNoTourFilter = clean.replace(/l\.tour_id\s*=\s*\$6::uuid/, "true");
   t("removing the tour_id legs filter is caught", findViolations(dirtyNoTourFilter).length >= 1);
 
-  const dirtyNoClosedExclusion = clean.replace(
-    /AND \(\$7::boolean IS FALSE OR l\.status <> '(?:closed|\$\{CLOSED_LOAD_STATUS\})'\)/,
-    "AND (true)"
-  );
+  const dirtyNoClosedExclusion = clean.replace(/l\.status\s*<>\s*('closed'|'\$\{CLOSED_LOAD_STATUS\}')/, "true");
   t("removing the closed-load exclusion is caught", findViolations(dirtyNoClosedExclusion).length >= 1);
 
   if (failures.length) {
