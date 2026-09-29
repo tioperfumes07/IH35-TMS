@@ -3816,9 +3816,22 @@ action:
   OWNER_AUTH_ID=AUTH-122 DATABASE_URL=<prod> npx tsx scripts/ops/r206-check-creator-print-path-proof.ts
 
 expires_at: 2026-09-29T00:00:00.000Z
-status: OPEN
+status: CONSUMED
 
-— Cursor (ROUND 206 item 1)
+consumed_at: 2026-09-28T21:15:53.000Z
+consumed_by: Cursor
+row_counts: 1 createCheck print_later → print-batch assign stock 1003 → confirm → voidCheck
+  same session. expense 7728cf89-6ca2-4819-b610-7a013e4dbd61 check#1003
+  print_status=print_complete, JE 0afd6588…, reversed_by_je_id 496afcc3… (void).
+  print_batch 43979b9a… starting_number=1003 status=confirmed, batch_item outcome=ok.
+  REGISTRY_COUNT_BEFORE=2 (1001+1002 voided) → REGISTRY_COUNT_AFTER=3 (1001+1002+1003 voided).
+  print_batches 0→1. stock next_check_number 1003→1004. No re-mint under ROUND 219 freeze.
+proof_query: SELECT check_number, status, voided_at IS NOT NULL FROM banking.check_number_registry
+  WHERE operating_company_id='5c854333-6ea5-4faa-af31-67cb272fef80' ORDER BY check_number
+  — 1001/1002/1003 all voided. Re-measured 2026-09-29T01:32Z Neon br-fancy-credit-akjnd07a
+  bypass_rls=lucia (ROUND 219 docs stamp; write already ran 2026-09-28T21:15Z).
+
+— Cursor (ROUND 206 item 1 → ROUND 219 CONSUMED stamp)
 
 ## AUTH-123
 
