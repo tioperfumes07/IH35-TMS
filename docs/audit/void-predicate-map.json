@@ -505,6 +505,17 @@
         "voided_at"
       ]
     },
+    "banking.check_number_registry": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ],
+      "_surfaces": [
+        "apps/frontend/src/components/checks/WriteCheckForm.tsx"
+      ],
+      "_notes": "ROUND 273 / R-154 check engine. WriteCheckForm issues + voids through banking.check_number_registry; void marker is voided_at (status='voided' is the paired state flag, not the canonical soft-delete column)."
+    },
     "banking.transaction_categories": {
       "canonical_column": "is_active",
       "predicate": "is_active = true",
@@ -561,7 +572,11 @@
       "predicate": "voided_at IS NULL",
       "all_columns": [
         "voided_at"
-      ]
+      ],
+      "_surfaces": [
+        "apps/frontend/src/pages/settlements/SettlementCreatorDrawer.tsx"
+      ],
+      "_notes": "ROUND 273. SettlementCreatorDrawer void-prior-repost path stamps driver_finance.driver_settlements.voided_at; canonical predicate is voided_at IS NULL."
     },
     "driver_finance.escrow_settings": {
       "canonical_column": "is_active",
