@@ -369,7 +369,7 @@ export function DispatchPage({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 max-w-full space-y-3 overflow-x-hidden" data-testid="dispatch-page-responsive">
       <PageHeader
         title="Dispatch"
         actions={

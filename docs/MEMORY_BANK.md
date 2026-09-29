@@ -737,6 +737,20 @@ prod post is a separate, intentional, owner-authorized action, not a repoint of 
   `accounting.payments` row applied to a load invoice (`E_NO_RECEIVED_PAYMENT`).
 - **SectionErrorBoundary** wraps Dispatch board / kanban / LoadDetailDrawer / CmdK results.
 
+## Active Architectural Decisions — Truck Line ROUND 255 (Cursor, 2026-09-29)
+
+- **ONE active-load definition:** `current-truck-line-load.ts` aliases `canonicalActiveLoadWhereClause`.
+  AUTH-061 48h stamp-less hide is RETIRED. Truck Line / List / Load Costs must agree exactly
+  (`verify-load-boards-agree.mjs` + `verify-truck-line-board-shows-canonical-active-set.mjs`).
+- **11 vs 14 root cause (live 2026-09-29):** 13633/13634 finished-by-money (settled driver bill) while
+  status=dispatched; 13627 was AUTH-061-hidden. Owner's 2 extras beyond 14 dispatched = **T124 + T163**
+  (InService, live ping today, zero dispatched load) — most serious finding on this board.
+- **Return trip:** second leg PU date = prior DEL date → two rows, unit number kept on both
+  (`data-return-trip`). Do not de-duplicate.
+- **Columns:** UNIT · TOUR / PRE-SETTLEMENT · LOAD · PU DATE · DELIVERY DATE · [transit under LOAD].
+  Green animated/draggable truck; CURRENT LOCATION after the line; in-place status dropdown;
+  universal combo filter.
+
 ## Active Architectural Decisions — Banking (CC-2, 2026-09-08)
 
 - **Bank reconciliation — cleared_date:** `accounting.payments`/`accounting.bill_payments` carry

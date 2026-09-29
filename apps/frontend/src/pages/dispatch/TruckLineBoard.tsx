@@ -7,9 +7,9 @@
  * etc." This is the current, locked shape of the board — it supersedes the earlier V4 4-column /
  * 9-station layout entirely.
  *
- * ROUND 155.6 COLUMNS (owner ordered): Truck | Load | PU | DEL | Leg (NB/TR/SB) | Tour # |
- * Live signal. "Next appointment" removed. No expenses/income on this board. Three sections:
- * TOUR / IN TRANSIT / AVAILABLE. Unit appears once at top level; tour legs stack under it.
+ * ROUND 255 COLUMNS (owner ordered): UNIT · PRE-SETTLEMENT / TOUR · LOAD · PU DATE ·
+ * DELIVERY DATE · [TRANSIT LINE]. Transit begins under LOAD. Return trips render TWO rows.
+ * Status dropdown in-place. Universal combo filter. Canonical active-load set only.
  *
  * THE LINE is 7 stations: Dispatched · At pickup · Loaded · In transit · [status] · At delivery ·
  * Delivered. station.ts (backend) still owns the ONLY pure derivation of progress — it was NOT
@@ -17,48 +17,14 @@
  * at_pickup/in_transit/other/at_delivery/delivered/docs_received/invoiced) because OTHER surfaces
  * (guard (b)/(h), its own unit tests) depend on that shape. V7_STATIONS below is a DOCUMENTED,
  * honest FRONTEND-ONLY regrouping of that same 9-index signal into the 7 labels the owner asked
- * for — never a second source of truth: "Loaded" and "In transit" share the identical backend
- * signal (pickup departure), because there is no distinct real stamp for "just loaded, still
- * parked" vs. "now rolling" in the schema today; "Assigned" (never reached before this board shows
- * a row) and "Docs received"/"Invoiced" (post-delivery paperwork, out of this in-route view's
- * scope per the owner's own "current loads only" data law) are simply not drawn.
- *
- * THE MIDDLE STATION IS A STATUS STATION, NOT A LABEL (V8, RULING 1): it shows "On time" (green,
- * solid border — a real state, not a missing stamp) when the load has no open
- * dispatch.intransit_issues row, or the exception's own reason name (red) when one is open.
- * Clicking it opens a reason list ANCHORED ABOVE the node, fetched live from GET /api/v1/
- * catalogs/load-exception-reasons (never hardcoded — a reason the owner adds in Lists › Catalogs
- * appears with no deploy), with a final green "✓ No exception — on time" row that RESOLVES the
- * open issue (void-not-delete: the resolved row is retained, never deleted).
- *
- * PROPORTIONAL TYPE (V8, RULING 2): four CSS custom classes (.truck-line-v4-unit/-sub/-cap/-appt)
- * carry clamp()-based font sizes so captions never collide and never grow out of proportion at any
- * window width — this is IN ADDITION TO the 1fr auto-fit Line column, not a replacement for it.
- *
- * LIVE POSITION RULE (own section below, `deriveLiveStation`): the moving truck's on-screen
- * station is derived from telematics.vehicle_latest_position (speed_mph, engine_state, city) —
- * NEVER fabricated. With a fresh (<=60min) ping: speed>0 + engine on -> "In transit", rolling;
- * speed 0 + city matches the pickup -> "At pickup", parked; city matches the delivery -> "At
- * delivery", parked; otherwise -> "In transit", parked. With a stale or missing ping, the truck
- * sits on the last STAMPED node (the honest fallback) and the Live signal column says so in red.
- * THREE DATA GAPS presently make the rail mostly dashed even while the truck glides ahead of it on
- * live telemetry — that mismatch is the current honest state, not a bug: 0 of 14 USMCA stops are
- * geocoded, 0 arrival/departure stamps exist on any of them, and geofence "approaching/idle" rows
- * are being detected (geo.geofence_vehicle_state) but never linked to a stamp. Closing those is
- * this seat's next PR after this view ships.
- *
- * DATA RULE (owner, repeated 2026-09-11): any view reachable from Dispatch shows CURRENT loads and
- * pre-settlement data only. This view's read model never reads presettlement_link_id at all (grep-
- * verified) — the 2026-09-12 01:21:49Z presettlement_link_id unlink some other surface hit does not
- * reach this board.
+ * for — never a second source of truth.
  */
 import { Fragment, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { transitionDispatchLoad } from "../../api/dispatch";
-import { formatMoneyCents } from "../../components/dispatch/constants";
-import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
+import type { DispatchStatus } from "../../api/dispatch";
 import { LOCKED_BORDER, LOCKED_TEXT_SECONDARY } from "../../design/locked-baseline-tokens";
 import {
   getTruckLine,
@@ -104,35 +70,65 @@ const NARROW_STATION_CAPTIONS: Record<string, string> = {
 
 const GREEN = "#16A34A";
 const RED = "#DC2626";
-const NAVY = "#14314F";
-const NAVY_DARK = "#0E2439";
+const GREEN_DARK = "#15803D";
 const RED_DARK = "#B91C1C";
 const ON_TIME_GREEN = "#166534";
 const ON_TIME_FILL = "#ECFDF3";
 const EXCEPTION_RED = "#991B1B";
 
-// ROUND 155.6 — Truck | Load | PU | DEL | Leg | Tour # | Live signal (1fr). Never a ParityTable.
-// Below 860px, Load + Live signal hide (same fold pattern as V10).
+// ROUND 255 — UNIT · PRE-SETTLEMENT / TOUR · LOAD · PU DATE · DELIVERY DATE · [TRANSIT LINE].
+// Transit line is a full-width sub-row that BEGINS under the LOAD column (padding-left matches
+// the first three tracks). Leg / Live-signal columns retired from the header (signal + CURRENT
+// LOCATION render after the transit line).
 const GRID_TEMPLATE_COLUMNS =
-  "minmax(120px,9vw) minmax(140px,11vw) minmax(120px,10vw) minmax(120px,10vw) minmax(64px,5vw) minmax(80px,7vw) 1fr";
-// ROUND 200 (owner, "separate Truck / Tour-Presettlement / Load into three columns") — the prior
-// narrow template dropped the Load column entirely (display:none below), which could make Truck
-// and Tour # look merged with nothing identifying the load between them. Load now stays visible at
-// every width; only Live signal folds away below FOLD_BREAKPOINT_PX (6 tracks, not 5).
+  "minmax(88px,8vw) minmax(100px,9vw) minmax(120px,11vw) minmax(100px,9vw) minmax(100px,9vw)";
 const GRID_TEMPLATE_COLUMNS_NARROW =
-  "minmax(84px,13vw) minmax(104px,16vw) minmax(76px,13vw) minmax(76px,13vw) minmax(46px,8vw) minmax(60px,10vw)";
+  "minmax(72px,14vw) minmax(84px,16vw) minmax(88px,18vw) minmax(72px,14vw) minmax(72px,14vw)";
 const FOLD_BREAKPOINT_PX = 860;
-// TRUCK-LINE-04 (found live at 1024px, one of the 5 required breakpoints, during this seat's own
-// V10 verification pass): V10's ROUND 18.6 widening of columns 1-2 (Truck/Load) shrank the Line
-// column's own share of the grid, so the FULL 7-station captions (still at the .cap clamp() floor
-// of 9px) started colliding again well above the whole-grid FOLD_BREAKPOINT_PX -- measured live via
-// getBoundingClientRect on every `.truck-line-v4-cap`, first real overlap at 1080px, clean at 1090+.
-// A SEPARATE, wider breakpoint swaps to the SAME narrow captions (Disp./Pickup/Transit/etc.) that
-// already exist for the 860px whole-grid fold, WITHOUT collapsing the Load/Live-signal columns --
-// this is a caption-only response, not a column-count change, so it stays inside the owner's
-// "auto-adjust to screen size" ruling rather than hiding columns earlier than necessary.
 const CAPTION_FOLD_BREAKPOINT_PX = 1180;
 const AVAILABLE_ROW_TINT = "color-mix(in srgb, #16A34A 4%, #fff)";
+
+/** ROUND 255 — in-place status dropdown options (load status, not exception station). */
+const LOAD_STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: "dispatched", label: "Dispatched" },
+  { value: "at_pickup", label: "At pickup" },
+  { value: "in_transit", label: "In transit" },
+  { value: "at_delivery", label: "At delivery" },
+  { value: "delivered", label: "Delivered" },
+];
+
+/** Drag targets along the transit line (owner: in transit → on time → at delivery → delivered). */
+const DRAG_STATUS_BY_V7: Record<number, string> = {
+  3: "in_transit",
+  4: "in_transit", // "On time" station — keep in_transit, exception cleared separately
+  5: "at_delivery",
+  6: "delivered",
+};
+
+function fmtApptDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  const yyyy = d.getUTCFullYear();
+  return `${mm}/${dd}/${yyyy}`;
+}
+
+function apptDayKey(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+}
+
+/** ROUND 255 Item 2 — return trip when this leg's PU date equals the prior leg's DEL date. */
+function isReturnTripLeg(prev: TruckLineRow | null | undefined, curr: TruckLineRow): boolean {
+  if (!prev?.appointments?.delivery?.at || !curr.appointments?.pickup?.at) return false;
+  const a = apptDayKey(prev.appointments.delivery.at);
+  const b = apptDayKey(curr.appointments.pickup.at);
+  return a != null && b != null && a === b;
+}
 
 // ROUND-20.4 -- 3px left spine per row, colored by the unit's current trip leg, so a unit's row is
 // identifiable at a glance without reading its text. No load (including the available-truck rows,
@@ -268,8 +264,9 @@ function deriveLiveStation(row: TruckLineRow, v7ReachedIndex: number): LiveStati
  * V10's `parked` variant (THE AVAILABLE TRUCK) mutes the cab to #2F5069/#22394C and desaturates the
  * whole graphic (grayscale(.15)) — never rolling, never puffing, regardless of the `rolling` prop. */
 function TractorTrailerSvg({ hasIssue, rolling, parked }: { hasIssue: boolean; rolling: boolean; parked?: boolean }) {
-  const cab = parked ? "#2F5069" : hasIssue ? RED : NAVY;
-  const cabDark = parked ? "#22394C" : hasIssue ? RED_DARK : NAVY_DARK;
+  // ROUND 255 Item 4 — the truck is GREEN (owner: restore), not navy, when rolling / on the line.
+  const cab = parked ? "#2F5069" : hasIssue ? RED : GREEN;
+  const cabDark = parked ? "#22394C" : hasIssue ? RED_DARK : GREEN_DARK;
   const gid = parked ? "cgParked" : hasIssue ? "cgIssue" : "cgOk";
   const isRolling = rolling && !parked;
   return (
@@ -352,7 +349,7 @@ function WarehouseDockSvg({ roof }: { roof: string }) {
 // ruling, guard item (j)). Sort is a VIEW PREFERENCE only — never persisted, never re-fetched, the
 // row COUNT never changes. Three-state per column: ascending -> descending -> back to the board's
 // own default order (the array the backend/search already produced).
-type TruckLineSortKey = "truck" | "load" | "pu" | "del" | "leg" | "tour" | "signal";
+type TruckLineSortKey = "truck" | "load" | "pu" | "del" | "tour";
 type TruckLineSortDir = "asc" | "desc";
 type TruckLineSortState = { key: TruckLineSortKey; dir: TruckLineSortDir } | null;
 
@@ -383,20 +380,7 @@ function naturalCompare(a: string, b: string): number {
 }
 
 
-/** Live before Stale before No ping, then by staleness age within the Stale group — one click
- * puts the trucks you have lost at the top. THE AVAILABLE TRUCK carries no live-signal concept at
- * all and always sorts last, in either direction (it is not part of "how stale is my fleet"). */
-function signalSortRank(row: TruckLineRow): number {
-  if (row.kind === "available" || !row.load || !row.station) return 4_000_000;
-  const live = deriveLiveStation(row, mapReachedIndexToV7(row.station.reached_index));
-  if (live.signalLabel === "Live") return 0;
-  if (live.signalLabel === "Stale") return 1_000_000 + (row.position?.stale_minutes ?? 0);
-  return 2_000_000; // No ping
-}
-
 function compareTruckLineRows(a: TruckLineRow, b: TruckLineRow, key: TruckLineSortKey): number {
-  const loc = (c: { city: string | null; state: string | null } | null | undefined) =>
-    `${c?.city ?? ""}, ${c?.state ?? ""}`;
   switch (key) {
     case "truck":
       return naturalCompare(a.unit_number ?? "", b.unit_number ?? "");
@@ -407,15 +391,11 @@ function compareTruckLineRows(a: TruckLineRow, b: TruckLineRow, key: TruckLineSo
       return la - lb;
     }
     case "pu":
-      return loc(a.load?.pickup).localeCompare(loc(b.load?.pickup));
+      return (a.appointments?.pickup?.at ?? "").localeCompare(b.appointments?.pickup?.at ?? "");
     case "del":
-      return loc(a.load?.delivery).localeCompare(loc(b.load?.delivery));
-    case "leg":
-      return (a.load?.trip_type ?? "").localeCompare(b.load?.trip_type ?? "");
+      return (a.appointments?.delivery?.at ?? "").localeCompare(b.appointments?.delivery?.at ?? "");
     case "tour":
       return (a.tour_display_id ?? "").localeCompare(b.tour_display_id ?? "");
-    case "signal":
-      return signalSortRank(a) - signalSortRank(b);
     default:
       return 0;
   }
@@ -476,6 +456,7 @@ function TruckLineTrack({
   onNoteChange,
   onConfirmException,
   onClearException,
+  onDragStatus,
 }: {
   row: TruckLineRow;
   reasons: { id: string; code: string; name: string }[];
@@ -491,6 +472,8 @@ function TruckLineTrack({
   onNoteChange: (note: string) => void;
   onConfirmException: () => void;
   onClearException: () => void;
+  /** ROUND 255 — drag truck along the line to change status (in transit → at delivery → delivered). */
+  onDragStatus: (row: TruckLineRow, newStatus: string) => void;
 }) {
   if (!row.load || !row.station) {
     // V10 (ROUND 18.6): this board no longer draws a bare unit row at all when there is neither an
@@ -521,10 +504,10 @@ function TruckLineTrack({
   const trackWidthPct = timelineWidthPercent(row);
 
   return (
-    <div className="relative h-[62px]" data-testid={`truck-line-track-${row.unit_id}`}>
+    <div className="relative h-[52px]" data-testid={`truck-line-track-${row.unit_id}`}>
     <div
-      className="relative h-full"
-      style={{ width: `${trackWidthPct}%` }}
+      className="relative mx-auto h-full"
+      style={{ width: `${trackWidthPct}%`, maxWidth: "100%" }}
       data-testid={`truck-line-track-scale-${row.unit_id}`}
       data-timeline-width-pct={trackWidthPct.toFixed(1)}
     >
@@ -672,12 +655,57 @@ function TruckLineTrack({
 
       <div
         className="truck-line-vehicle"
-        style={{ left: `${pct(live.v7Index)}%`, top: 15 }}
+        style={{ left: `${pct(live.v7Index)}%`, top: 12, cursor: "grab", touchAction: "none" }}
         data-testid={`truck-line-vehicle-${row.unit_id}`}
         data-rolling={live.rolling ? "true" : "false"}
+        title="Drag to change status: in transit → on time → at delivery → delivered"
+        onPointerDown={(e) => {
+          e.preventDefault();
+          const el = e.currentTarget.parentElement;
+          if (!el || !row.load) return;
+          const startX = e.clientX;
+          const rect = el.getBoundingClientRect();
+          const onMove = (ev: PointerEvent) => {
+            const rel = Math.min(1, Math.max(0, (ev.clientX - rect.left) / Math.max(rect.width, 1)));
+            const idx = Math.round(rel * (V7_COUNT - 1));
+            e.currentTarget.style.left = `${pct(idx)}%`;
+            (e.currentTarget as HTMLElement).dataset.dragIndex = String(idx);
+          };
+          const onUp = (ev: PointerEvent) => {
+            window.removeEventListener("pointermove", onMove);
+            window.removeEventListener("pointerup", onUp);
+            const idx = Number((e.currentTarget as HTMLElement).dataset.dragIndex ?? live.v7Index);
+            const nextStatus = DRAG_STATUS_BY_V7[idx];
+            if (nextStatus && nextStatus !== row.load?.status) {
+              onDragStatus(row, nextStatus);
+            } else {
+              e.currentTarget.style.left = `${pct(live.v7Index)}%`;
+            }
+            void ev;
+            void startX;
+          };
+          window.addEventListener("pointermove", onMove);
+          window.addEventListener("pointerup", onUp);
+        }}
       >
         <TractorTrailerSvg hasIssue={has_open_exception} rolling={live.rolling} />
       </div>
+    </div>
+    <div
+      className="truck-line-v4-cap mt-0.5 text-center text-[#6B7280]"
+      data-testid={`truck-line-current-location-${row.unit_id}`}
+    >
+      CURRENT LOCATION ·{" "}
+      {live.signalLabel === "Live" || live.signalLabel === "Stale" ? (
+        <span style={{ color: live.signalLabel === "Stale" ? RED : GREEN }}>
+          {live.signalLabel} · {formatLocationLabel(row.position)}
+          {live.signalLabel === "Stale" && row.position?.stale_minutes != null
+            ? ` · ${formatStaleAge(row.position.stale_minutes) ?? "—"}`
+            : ""}
+        </span>
+      ) : (
+        <span style={{ color: RED }}>— last position unavailable</span>
+      )}
     </div>
     </div>
   );
@@ -721,12 +749,32 @@ export function TruckLineBoard({
       return null;
     });
   };
+  const [statusMenuLoadId, setStatusMenuLoadId] = useState<string | null>(null);
+  const [statusBusy, setStatusBusy] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
   const [stampPrompt, setStampPrompt] = useState<StampPromptState>(null);
   const [otherPrompt, setOtherPrompt] = useState<OtherPromptState>(null);
   const [otherReasonId, setOtherReasonId] = useState<string | null>(null);
   const [otherNote, setOtherNote] = useState("");
   const [stampBusy, setStampBusy] = useState(false);
   const [otherBusy, setOtherBusy] = useState(false);
+
+  const applyLoadStatus = async (row: TruckLineRow, newStatus: string) => {
+    if (!row.load?.load_id) return;
+    setStatusBusy(true);
+    setStatusError(null);
+    try {
+      await transitionDispatchLoad(row.load.load_id, operatingCompanyId, {
+        new_status: newStatus as DispatchStatus,
+      });
+      setStatusMenuLoadId(null);
+      await qc.invalidateQueries({ queryKey: ["truck-line", operatingCompanyId] });
+    } catch (err) {
+      setStatusError(userFacingApiError(err, "Could not change status"));
+    } finally {
+      setStatusBusy(false);
+    }
+  };
   // Design contract rule 1 / guard (d): a refused transition must show the SERVER's own reason,
   // never fail silently — these surface whatever userFacingApiError derives from the rejection.
   const [stampError, setStampError] = useState<string | null>(null);
@@ -736,14 +784,8 @@ export function TruckLineBoard({
   const catalogReady = query.data?.catalog_ready ?? false;
   const reasons = reasonsQuery.data?.reasons ?? [];
 
-  // LAW-5 (per-build-block linkage): every money figure this board shows must come from the SAME
-  // rollup every other cost-linked surface reads (load-cost-rollup.sql.ts, via
-  // useLoadCostRollups), never re-derive its own figures.
-  const truckLineLoadIds = useMemo(
-    () => allGroups.flatMap((g) => g.legs.map((r) => r.load?.load_id).filter((id): id is string => !!id)),
-    [allGroups],
-  );
-  const costRollups = useLoadCostRollups(operatingCompanyId, truckLineLoadIds);
+  // LAW-5 rollup removed from this board's columns (ROUND 255 column order has no Net cell).
+  // Keep the rollup hook out so units-only / column guards stay green.
 
   const searchedGroups = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -756,11 +798,17 @@ export function TruckLineBoard({
             g.tour_display_id,
             r.unit_number,
             r.load?.load_number,
+            r.load?.status,
             r.load?.customer_name,
             r.load?.pickup.city,
             r.load?.delivery.city,
             r.load?.trip_type,
             r.tour_display_id,
+            ...r.drivers.map((d) => d.name),
+            fmtApptDate(r.appointments?.pickup?.at),
+            fmtApptDate(r.appointments?.delivery?.at),
+            r.appointments?.pickup?.at,
+            r.appointments?.delivery?.at,
           ]
             .filter(Boolean)
             .join(" ")
@@ -940,9 +988,9 @@ export function TruckLineBoard({
           color: ${LOCKED_TEXT_SECONDARY};
         }
         .truck-line-v4-row {
-          padding: 6px 10px 6px 13px;
+          padding: 3px 10px 3px 13px;
           border-bottom: 1px solid ${LOCKED_BORDER};
-          min-height: 88px;
+          min-height: 56px;
         }
         /* ROUND-20.4 -- row rules the owner can actually see: an every-other-row tint and a hover
            state so one unit's row is visibly distinct from its neighbors, plus a 3px left spine per
@@ -1009,7 +1057,8 @@ export function TruckLineBoard({
           position: absolute;
           transform: translateX(-50%);
           transition: left 1s cubic-bezier(0.4, 0, 0.2, 1);
-          pointer-events: none;
+          pointer-events: auto;
+          z-index: 5;
         }
         .truck-line-vehicle-svg .wheel, .truck-line-vehicle-svg .puff { transform-box: fill-box; transform-origin: center; }
         .truck-line-rolling .wheel { animation: truck-line-spin 0.55s linear infinite; }
@@ -1064,27 +1113,29 @@ export function TruckLineBoard({
         </span>
       </div>
 
-      <div className="mb-2">
+      <div className="mb-2 flex min-w-0 flex-wrap items-center gap-2">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Truck, load #, customer, stop city…"
-          className="h-7 w-64 rounded border border-[#E5E7EB] px-2 text-xs"
-          data-testid="truck-line-search"
+          placeholder="Unit, driver, customer, status, tour #, date…"
+          className="h-7 min-w-0 flex-1 rounded-sm border border-[#E5E7EB] px-2 text-xs"
+          style={{ maxWidth: 420 }}
+          data-testid="truck-line-universal-filter"
         />
-        <span className="ml-2 text-xs text-[#6B7280]">{rowCount} rows</span>
+        <span className="text-xs text-[#6B7280]" data-testid="truck-line-row-count">{rowCount} rows</span>
+        {statusError ? (
+          <span className="text-xs text-[#DC2626]" data-testid="truck-line-status-error">{statusError}</span>
+        ) : null}
       </div>
 
-      <div className="rounded border border-[#E5E7EB] bg-white" data-testid="truck-line-board-v4">
-        <div className="truck-line-v4-header">
-          <TruckLineSortHeader label="Truck" sortKey="truck" active={sort?.key === "truck" ? sort.dir : null} onClick={cycleSort} />
-          <TruckLineSortHeader label="Load" sortKey="load" active={sort?.key === "load" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-load-header" />
-          <TruckLineSortHeader label="PU" sortKey="pu" active={sort?.key === "pu" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-pu-header" />
-          <TruckLineSortHeader label="DEL" sortKey="del" active={sort?.key === "del" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-del-header" />
-          <TruckLineSortHeader label="Leg" sortKey="leg" active={sort?.key === "leg" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-leg-header" />
-          <TruckLineSortHeader label="Tour #" sortKey="tour" active={sort?.key === "tour" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-tour-header" />
-          <TruckLineSortHeader label="Live signal" sortKey="signal" active={sort?.key === "signal" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-signal-header" />
+      <div className="min-w-0 overflow-x-auto rounded-sm border border-[#E5E7EB] bg-white" data-testid="truck-line-board-v4">
+        <div className="truck-line-v4-header" data-testid="truck-line-column-order">
+          <TruckLineSortHeader label="UNIT" sortKey="truck" active={sort?.key === "truck" ? sort.dir : null} onClick={cycleSort} />
+          <TruckLineSortHeader label="TOUR / PRE-SETTLEMENT" sortKey="tour" active={sort?.key === "tour" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-tour-header" />
+          <TruckLineSortHeader label="LOAD" sortKey="load" active={sort?.key === "load" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-load-header" />
+          <TruckLineSortHeader label="PU DATE" sortKey="pu" active={sort?.key === "pu" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-pu-header" />
+          <TruckLineSortHeader label="DELIVERY DATE" sortKey="del" active={sort?.key === "del" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-del-header" />
         </div>
 
         {showLoading ? (
@@ -1100,7 +1151,7 @@ export function TruckLineBoard({
             return (
               <div key={section} data-testid={`truck-line-section-${section}`}>
                 <div
-                  className="truck-line-v4-unit border-b border-[#E5E7EB] bg-[#F7F8FA] px-2.5 py-1 font-semibold uppercase text-[#4B5563]"
+                  className="truck-line-v4-unit border-b border-[#E5E7EB] bg-[#F7F8FA] px-2.5 py-0.5 font-semibold uppercase text-[#4B5563]"
                   style={{ fontSize: 11, letterSpacing: "0.02em" }}
                   data-testid={`truck-line-section-header-${section}`}
                 >
@@ -1108,11 +1159,12 @@ export function TruckLineBoard({
                 </div>
                 {sectionGroups.map((g) =>
                   g.legs.map((r, legIndex) => {
-                    const live = r.load && r.station ? deriveLiveStation(r, mapReachedIndexToV7(r.station.reached_index)) : null;
+                    const prevLeg = legIndex > 0 ? g.legs[legIndex - 1] : null;
+                    const returnTrip = isReturnTripLeg(prevLeg, r);
                     const tourNum = g.tour_display_id ?? r.tour_display_id ?? null;
                     const tourSafe = tourNum && /^P-\d+$/i.test(tourNum) ? tourNum : tourNum && !/^[0-9a-f-]{36}$/i.test(tourNum) ? tourNum : null;
                     const rowKey = `${g.section}-${g.unit_id}-${r.load?.load_id ?? r.available?.driver_id ?? legIndex}`;
-                    const showTruck = legIndex === 0;
+                    const statusOpen = r.load?.load_id != null && statusMenuLoadId === r.load.load_id;
 
                     if (r.kind === "available" && r.available) {
                       const a = r.available;
@@ -1126,9 +1178,10 @@ export function TruckLineBoard({
                           data-unit-id={g.unit_id}
                         >
                           <div>
-                            <div className="truck-line-v4-unit font-semibold text-[#0F1219]">{showTruck ? r.unit_number : ""}</div>
-                            {showTruck ? <div className="truck-line-v4-sub text-[#6B7280]">available truck</div> : null}
+                            <div className="truck-line-v4-unit font-semibold text-[#0F1219]">{r.unit_number}</div>
+                            <div className="truck-line-v4-sub text-[#6B7280]">available truck</div>
                           </div>
+                          <div className="truck-line-v4-tour-cell"><span className="truck-line-v4-sub text-[#6B7280]">—</span></div>
                           <div className="truck-line-v4-load-cell">
                             <button
                               type="button"
@@ -1141,15 +1194,10 @@ export function TruckLineBoard({
                             <div className="truck-line-v4-cap text-[#6B7280]">
                               {a.last_closed_load_number ? `Last load ${a.last_closed_load_number}` : "no load yet"}
                             </div>
+                            <div className="truck-line-v4-cap text-[#6B7280]">{hosAgeLabel}</div>
                           </div>
                           <div className="truck-line-v4-pu-cell"><span className="truck-line-v4-sub text-[#6B7280]">—</span></div>
                           <div className="truck-line-v4-del-cell"><span className="truck-line-v4-sub text-[#6B7280]">—</span></div>
-                          <div className="truck-line-v4-leg-cell"><span className="truck-line-v4-sub text-[#6B7280]">—</span></div>
-                          <div className="truck-line-v4-tour-cell"><span className="truck-line-v4-sub text-[#6B7280]">—</span></div>
-                          <div className="truck-line-v4-signal-cell">
-                            <span className="truck-line-v4-sub"><b style={{ color: GREEN }}>available now</b></span>
-                            <div className="truck-line-v4-cap text-[#6B7280]">{hosAgeLabel}</div>
-                          </div>
                         </div>
                       );
                     }
@@ -1159,110 +1207,99 @@ export function TruckLineBoard({
                       <div
                         className="truck-line-v4-row"
                         style={{
-                          borderLeft: `3px solid ${rowSpineColor(r.load?.trip_type)}`,
-                          // ROUND 200 (owner: "restore the moved design") — ROUND 167 re-wired THE
-                          // LINE as its own div below this row instead of its old inline column
-                          // (see ROUND 167 comment further down), and this row's OWN border-bottom
-                          // plus the track's border-bottom drew two separate seams, making the line
-                          // read as a detached, secondary strip. Suppressing this row's own bottom
-                          // border when a track follows it merges the two back into one unified
-                          // card, matching the pre-#22943 single-row look, without touching the
-                          // owner-ordered 7-column header (ROUND 155.6) the old layout predates.
+                          borderLeft: `3px solid ${returnTrip ? GREEN : rowSpineColor(r.load?.trip_type)}`,
                           borderBottom: r.load && r.station ? "none" : undefined,
                         }}
                         data-testid={`truck-line-row-${g.unit_id}${legIndex > 0 ? `-leg-${legIndex}` : ""}`}
                         data-unit-id={g.unit_id}
+                        data-return-trip={returnTrip ? "true" : "false"}
                       >
                         <div>
-                          {showTruck ? (
-                            <div className="truck-line-v4-unit font-semibold text-[#0F1219]">{g.unit_number}</div>
-                          ) : (
-                            <div className="truck-line-v4-sub text-[#6B7280]" aria-hidden>↳</div>
-                          )}
+                          <div className="truck-line-v4-unit font-semibold text-[#0F1219]">
+                            {returnTrip ? <span className="mr-1 text-[#16A34A]" aria-hidden>↳</span> : null}
+                            {g.unit_number}
+                          </div>
+                          {returnTrip ? (
+                            <div className="truck-line-v4-cap text-[#16A34A]" data-testid={`truck-line-return-trip-${g.unit_id}`}>
+                              return trip
+                            </div>
+                          ) : null}
+                        </div>
+                        <div className="truck-line-v4-tour-cell" data-testid={`truck-line-tour-${g.unit_id}`}>
+                          <span className="truck-line-v4-sub font-semibold text-[#0F1219]">{tourSafe ?? "—"}</span>
                         </div>
                         <div
-                          className="truck-line-v4-load-cell cursor-pointer"
+                          className="truck-line-v4-load-cell relative"
                           data-testid={`truck-line-card-${g.unit_id}-${r.load?.load_id ?? legIndex}`}
-                          onDoubleClick={() => r.load && onLoadClick(r.load.load_id)}
-                          title={r.load ? `double-click opens load ${r.load.load_number ?? ""}` : undefined}
                         >
                           {r.load ? (
                             <>
-                              <div className="truck-line-v4-unit font-semibold text-[#0F1219]">{r.load.load_number}</div>
+                              <button
+                                type="button"
+                                className="truck-line-v4-unit font-semibold text-[#0F1219] underline-offset-2 hover:underline"
+                                data-testid={`truck-line-load-${r.load.load_id}`}
+                                onDoubleClick={() => onLoadClick(r.load!.load_id)}
+                                title={`double-click opens load ${r.load.load_number ?? ""}`}
+                              >
+                                {r.load.load_number}
+                              </button>
                               <div className="truck-line-v4-sub text-[#6B7280]">{r.load.customer_name ?? "—"}</div>
-                              <div className="truck-line-v4-sub text-[#6B7280]">
-                                Net {(() => {
-                                  const rollup = costRollups.get(r.load.load_id);
-                                  return rollup ? formatMoneyCents(rollup.net_cents) : "—";
-                                })()}
-                              </div>
+                              <button
+                                type="button"
+                                className="truck-line-v4-cap mt-0.5 rounded-sm border border-[#E5E7EB] px-1.5 py-0.5 font-semibold uppercase text-[#4B5563]"
+                                style={{ fontSize: 11 }}
+                                data-testid={`truck-line-status-trigger-${r.load.load_id}`}
+                                onClick={() => setStatusMenuLoadId(statusOpen ? null : r.load!.load_id)}
+                              >
+                                {(r.load.status ?? "—").replace(/_/g, " ")}
+                              </button>
+                              {statusOpen ? (
+                                <div
+                                  className="absolute left-0 top-full z-40 mt-0.5 min-w-[140px] rounded-sm border border-[#E5E7EB] bg-white shadow-md"
+                                  data-testid={`truck-line-status-dropdown-${r.load.load_id}`}
+                                >
+                                  {LOAD_STATUS_OPTIONS.map((opt) => (
+                                    <button
+                                      key={opt.value}
+                                      type="button"
+                                      disabled={statusBusy}
+                                      className="block w-full px-2 py-1 text-left text-xs hover:bg-[#F7F8FA] disabled:opacity-60"
+                                      data-testid={`truck-line-status-option-${opt.value}`}
+                                      onClick={() => void applyLoadStatus(r, opt.value)}
+                                    >
+                                      {opt.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              ) : null}
                             </>
                           ) : (
                             <span className="truck-line-v4-sub text-[#6B7280]">—</span>
                           )}
                         </div>
                         <div className="truck-line-v4-pu-cell">
-                          <div className="truck-line-v4-sub text-[#0F1219]">
+                          <div className="truck-line-v4-sub text-[#0F1219]">{fmtApptDate(r.appointments?.pickup?.at)}</div>
+                          <div className="truck-line-v4-cap text-[#6B7280]">
                             {formatLocationLabel({ city: r.load?.pickup.city ?? null, state: r.load?.pickup.state ?? null })}
                           </div>
                         </div>
                         <div className="truck-line-v4-del-cell">
-                          <div className="truck-line-v4-sub text-[#0F1219]">
+                          <div className="truck-line-v4-sub text-[#0F1219]">{fmtApptDate(r.appointments?.delivery?.at)}</div>
+                          <div className="truck-line-v4-cap text-[#6B7280]">
                             {formatLocationLabel({ city: r.load?.delivery.city ?? null, state: r.load?.delivery.state ?? null })}
                           </div>
                         </div>
-                        <div className="truck-line-v4-leg-cell">
-                          {r.load?.trip_type ? (
-                            <span
-                              className="truck-line-v4-cap inline-block rounded-sm px-1.5 py-0.5 font-semibold text-white"
-                              style={{ background: r.load.trip_type === "NB" ? "#1f2a44" : r.load.trip_type === "SB" ? "#475569" : "#b45309" }}
-                            >
-                              {r.load.trip_type}
-                            </span>
-                          ) : (
-                            <span className="truck-line-v4-sub text-[#6B7280]">—</span>
-                          )}
-                        </div>
-                        <div className="truck-line-v4-tour-cell" data-testid={`truck-line-tour-${g.unit_id}`}>
-                          <span className="truck-line-v4-sub font-semibold text-[#0F1219]">{tourSafe ?? "—"}</span>
-                        </div>
-                        <div className="truck-line-v4-signal-cell">
-                          {live ? (
-                            live.signalLabel === "Live" ? (
-                              <span className="truck-line-v4-sub">
-                                <b>Live</b> · {formatLocationLabel(r.position)}
-                              </span>
-                            ) : live.signalLabel === "Stale" ? (
-                              <span className="truck-line-v4-sub">
-                                <b style={{ color: RED }}>Stale</b> · {formatLocationLabel(r.position)} ·{" "}
-                                <span style={{ color: RED }}>{formatStaleAge(r.position?.stale_minutes ?? null) ?? "—"}</span>
-                              </span>
-                            ) : (
-                              <span className="truck-line-v4-sub">
-                                <b>No ping</b> <span style={{ color: RED }}>— last position unavailable</span>
-                              </span>
-                            )
-                          ) : (
-                            <span className="truck-line-v4-sub text-[#6B7280]">—</span>
-                          )}
-                        </div>
                       </div>
-                      {/* ROUND 167 — the 7-station rail (and with it the ONLY way to stamp a
-                          station or record an exception from this board) was orphaned by #22943's
-                          rewrite: TruckLineTrack, openStamp, openOther, confirmException and
-                          clearException were all left declared and uncalled, which is what broke
-                          `tsc -b` (13x TS6133) and red-lit every frontend build after 11:43 UTC.
-                          Re-wired here as a full-width sub-row beneath the leg it belongs to, so
-                          the 7-column header above is untouched. Deleting the handlers would have
-                          turned a build break into a silent loss of dispatcher stamping. */}
                       {r.load && r.station ? (
                         <div
-                          className="border-b border-[#E5E7EB] px-2.5 pb-2 pt-1"
+                          className="border-b border-[#E5E7EB] pb-1 pt-0.5"
+                          style={{ paddingLeft: "max(12rem, 17vw)", paddingRight: 10 }}
                           data-testid={`truck-line-track-${g.unit_id}-${r.load.load_id}`}
                         >
                           <TruckLineTrack
                             row={r}
                             reasons={reasons}
+
                             otherPrompt={otherPrompt}
                             otherReasonId={otherReasonId}
                             otherNote={otherNote}
@@ -1275,6 +1312,7 @@ export function TruckLineBoard({
                             onNoteChange={setOtherNote}
                             onConfirmException={confirmException}
                             onClearException={clearException}
+                            onDragStatus={(row, newStatus) => void applyLoadStatus(row, newStatus)}
                           />
                         </div>
                       ) : null}

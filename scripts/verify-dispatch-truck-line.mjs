@@ -126,13 +126,11 @@ export function verify(files) {
   if (!/is_active = true/.test(archTabsService)) problems.push("(i) the reason_id lookup must filter is_active = true");
   if (/UPDATE\s+mdata\.loads\b/i.test(archTabsService)) problems.push("(i) arch-tabs.service.ts (intransit-issues) must never write mdata.loads — Other never changes loads.status");
 
-  // (j) ROUND 155.6 grid — Truck | Load | PU | DEL | Leg | Tour # | Live signal (1fr).
-  // Still never a ParityTable / storageKey.
+  // (j) ROUND 255 grid — UNIT · TOUR · LOAD · PU DATE · DELIVERY DATE (transit under LOAD).
+  // Still never a ParityTable / storageKey. No mandatory 1fr live-signal column.
   const gridColumnsConst = boardTsx.match(/const GRID_TEMPLATE_COLUMNS\s*=\s*(["'`])([\s\S]*?)\1/);
-  if (!gridColumnsConst || !/\b1fr\b/.test(gridColumnsConst[2])) {
-    problems.push(
-      "(j) TruckLineBoard.tsx must define GRID_TEMPLATE_COLUMNS with a 1fr column (Live signal residual)"
-    );
+  if (!gridColumnsConst) {
+    problems.push("(j) TruckLineBoard.tsx must define GRID_TEMPLATE_COLUMNS");
   }
   if (!gridColumnsConst || !/grid-template-columns:\s*\$\{GRID_TEMPLATE_COLUMNS\}/.test(boardTsx)) {
     problems.push("(j) TruckLineBoard.tsx defines GRID_TEMPLATE_COLUMNS but never wires it into an actual grid-template-columns rule");
@@ -171,8 +169,8 @@ export function verify(files) {
   if (/no load on this truck/.test(codeOnly)) {
     problems.push('(l) TruckLineBoard.tsx must never render the retired "no load on this truck" string — THE AVAILABLE TRUCK replaces every such row');
   }
-  if (!/text-align:\s*center/.test(boardTsx) || !/truck-line-v4-signal-header|truck-line-v4-signal-cell/.test(boardTsx)) {
-    problems.push("(l) TruckLineBoard.tsx must center-align Live signal (and ROUND 155.6 PU/DEL/Leg/Tour) columns");
+  if (!/text-align:\s*center/.test(boardTsx) || !/truck-line-v4-pu-header|truck-line-v4-tour-header/.test(boardTsx)) {
+    problems.push("(l) TruckLineBoard.tsx must center-align PU/DEL/Tour columns");
   }
   if (!/Assign a load/.test(codeOnly) || !/onAssignDriver/.test(codeOnly)) {
     problems.push('(l) TruckLineBoard.tsx must render a real "Assign a load" action wired to an onAssignDriver callback — a dead button fails this box');
@@ -204,11 +202,11 @@ export function verify(files) {
   if (helperSrc && !/export const CURRENT_TRUCK_LINE_LOAD_SQL/.test(helperSrc)) {
     problems.push("(m) current-truck-line-load.ts must export CURRENT_TRUCK_LINE_LOAD_SQL");
   }
-  if (helperSrc && !/interval '48 hours'/.test(helperSrc)) {
-    problems.push("(m) CURRENT helper must keep the 48-hour delivery window for stamp-less dispatched shells");
+  if (helperSrc && !/canonicalActiveLoadWhereClause/.test(helperSrc)) {
+    problems.push("(m) CURRENT helper must alias canonicalActiveLoadWhereClause (ROUND 255 — one active-load definition)");
   }
-  if (helperSrc && !/actual_arrival_at IS NOT NULL OR s\.actual_departure_at IS NOT NULL/.test(helperSrc)) {
-    problems.push("(m) CURRENT helper must treat any stop stamp as evidence the dispatched load is real work");
+  if (helperSrc && /interval '48 hours'/.test(helperSrc)) {
+    problems.push("(m) AUTH-061 48h hide must be retired from CURRENT helper (ROUND 255)");
   }
   const currentSqlUses = (truckLineRoutes.match(/\$\{CURRENT_TRUCK_LINE_LOAD_SQL\}/g) ?? []).length;
   if (currentSqlUses < 2) {
@@ -269,7 +267,7 @@ function runSelftest() {
     ["(i) reason validation removed", { ...good, archTabsService: good.archTabsService.replace("reason_not_found", "REMOVED") }],
     ["(h) mapReachedIndexToV7 removed", { ...good, boardTsx: good.boardTsx.replace("function mapReachedIndexToV7", "function REMOVEDmapReachedIndexToV7") }],
     ["(h) an 8th V7 station planted", { ...good, boardTsx: good.boardTsx.replace('{ name: "Delivered", backendIndex: 6 },', '{ name: "Delivered", backendIndex: 6 },\n  { name: "Extra", backendIndex: 7 },') }],
-    ["(j) 1fr column removed from the grid", { ...good, boardTsx: good.boardTsx.replace(/\b1fr\b/g, "minmax(200px,20vw)") }],
+    ["(j) GRID_TEMPLATE_COLUMNS removed", { ...good, boardTsx: good.boardTsx.replace("const GRID_TEMPLATE_COLUMNS", "const REMOVED_GRID_TEMPLATE_COLUMNS") }],
     ["(j) narrow-grid fold removed", { ...good, boardTsx: good.boardTsx.replace("const GRID_TEMPLATE_COLUMNS_NARROW", "const REMOVED_GRID_TEMPLATE_COLUMNS_NARROW").replace(/@media \(max-width: \$\{FOLD_BREAKPOINT_PX\}px\)/, "@media (max-width: 999999px) /* REMOVED */") }],
     ["(j) ParityTable reintroduced", { ...good, boardTsx: good.boardTsx + '\nimport { ParityTable } from "../../components/parity/ParityTable";\n' }],
     ["(j) storageKey column state reintroduced", { ...good, boardTsx: good.boardTsx + '\nconst x = { storageKey: "dispatch-truck-line-v1" };\n' }],
@@ -282,9 +280,14 @@ function runSelftest() {
     ["(l) available-row branch removed", { ...good, boardTsx: good.boardTsx.replaceAll('r.kind === "available"', "false") }],
     ["(m) CURRENT import removed", { ...good, truckLineRoutes: good.truckLineRoutes.replace(/from ["'].*current-truck-line-load\.js["']/, 'from "./MISSING.js"') }],
     ["(m) busy_drivers stopped using CURRENT predicate", { ...good, truckLineRoutes: good.truckLineRoutes.replace(/\$\{CURRENT_TRUCK_LINE_LOAD_SQL\}/g, "TRUE /* REMOVED */") }],
+    ["(m) canonical alias removed from CURRENT helper", { ...good, /* helper mutated via board path unused — plant in truckLineRoutes comment only */ truckLineRoutes: good.truckLineRoutes, boardTsx: good.boardTsx }],
     ["(n) groupTruckLineByUnit removed", { ...good, truckLineRoutes: good.truckLineRoutes.replaceAll("groupTruckLineByUnit", "REMOVED") }],
     ["(n) empty state removed", { ...good, boardTsx: good.boardTsx.replaceAll("truck-line-empty", "REMOVED") }],
   ];
+  // Load helper separately for (m) canonical plant — mutate via monkey by rewriting loadFiles isn't available;
+  // instead plant by appending a fake helper check through truckLineRoutes that removes CURRENT uses already covered.
+  // Drop the no-op canonical plant (always passes) — covered by live/static R255 guard.
+  cases.splice(cases.findIndex((c) => c[0].includes("canonical alias removed")), 1);
   let failed = 0;
   for (const [name, mutated] of cases) {
     const problems = verify(mutated);

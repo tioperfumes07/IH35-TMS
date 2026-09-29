@@ -1,15 +1,13 @@
 /**
  * TRUCK LINE — GET /api/v1/dispatch/truck-line (Lead assignment 2026-09-11, owner ruling).
  *
- * ROUND 155.6: top-level groups by unit (TOUR / IN TRANSIT / AVAILABLE), columns expose
- * PU / DEL / Leg / Tour # (P-series display_id), CURRENT predicate lives in
- * ../current-truck-line-load.ts as the ONE named helper (ruling 155.3a — CC-3 imports it).
+ * ROUND 255: LOADED legs = the ONE canonical active-load set
+ * (`canonicalActiveLoadWhereClause` via CURRENT_TRUCK_LINE_LOAD_SQL alias). AUTH-061 48h hide
+ * is retired — board row count must equal the canonical active-load count. Multiple legs on
+ * one unit (including a RETURN TRIP whose PU date equals the prior DEL date) stack as TWO
+ * rows under that unit; do not de-duplicate.
  *
- * LOADED legs: every CURRENT active load (CURRENT_TRUCK_LINE_LOAD_SQL) — stamp-less dispatched
- * shells with delivery already >48h past stay hidden (#22922 / AUTH-061). Multiple legs on one
- * unit stack under ONE top-level group (tour) — never two top-level rows for the same unit_id.
- *
- * AVAILABLE rows: driver with fresh HOS, not on a CURRENT load, with a real unit.
+ * AVAILABLE rows: driver with fresh HOS, not on a canonical-active load, with a real unit.
  *
  * READ-ONLY. No UPDATE/INSERT to mdata.loads here.
  */
@@ -152,7 +150,7 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
           COALESCE(p.city, loc.city) AS pos_city, COALESCE(p.state, loc.state) AS pos_state,
           COALESCE(p.formatted_location, loc.formatted_location) AS pos_formatted_location,
           p.captured_at::text AS pos_captured_at
-        FROM views.live_loads l
+        FROM mdata.loads l
         JOIN mdata.units u ON u.id = l.assigned_unit_id
         LEFT JOIN driver_finance.driver_settlements sett
           ON sett.id = l.presettlement_link_id
@@ -196,6 +194,7 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
           ORDER BY g.captured_at DESC LIMIT 1
         ) loc ON (p.city IS NULL AND p.state IS NULL)
         WHERE l.operating_company_id = $1::uuid
+          AND l.soft_deleted_at IS NULL
           AND l.assigned_unit_id IS NOT NULL
           AND ${CURRENT_TRUCK_LINE_LOAD_SQL.replace(/\bx\./g, "l.")}
           AND ${UNIT_IN_SERVICE_SQL}
@@ -207,13 +206,15 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
       const availableRes = await client.query(
         `
         WITH busy_drivers AS (
-          SELECT DISTINCT assigned_primary_driver_id AS driver_id FROM views.live_loads x
+          SELECT DISTINCT assigned_primary_driver_id AS driver_id FROM mdata.loads x
           WHERE x.operating_company_id = $1::uuid
+            AND x.soft_deleted_at IS NULL
             AND ${CURRENT_TRUCK_LINE_LOAD_SQL}
             AND x.assigned_primary_driver_id IS NOT NULL
           UNION
-          SELECT DISTINCT assigned_secondary_driver_id FROM views.live_loads x
+          SELECT DISTINCT assigned_secondary_driver_id FROM mdata.loads x
           WHERE x.operating_company_id = $1::uuid
+            AND x.soft_deleted_at IS NULL
             AND ${CURRENT_TRUCK_LINE_LOAD_SQL}
             AND x.assigned_secondary_driver_id IS NOT NULL
         ),
@@ -349,6 +350,7 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
           ? {
               load_id: r.load_id,
               load_number: r.load_number,
+              status: r.raw_status,
               trip_type: r.trip_type,
               rate_total_cents: r.rate_total_cents,
               customer_name: r.customer_name,

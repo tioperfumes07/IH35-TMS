@@ -8,18 +8,8 @@
 // live_state='open_dispatch' (the shared basis for List/Kanban/Trip Pairing, per
 // live-loads-view.ts), and Load Costs' own WHERE clause (load-costs-board.routes.ts:354-371) all
 // return the identical 14-load set. Truck Line does NOT return the same 14 -- it returns 13,
-// missing load 13627 -- but that is a DOCUMENTED, DELIBERATE narrowing
-// (current-truck-line-load.ts's own header: "CURRENT work right now," narrower than "active" by
-// design, e.g. hiding a stale dispatched shell with no stop stamps and an appointment 48h+ old),
-// not drift. Forcing exact equality on Truck Line would make this guard permanently, falsely red
-// against an intentional business rule -- the canonical file's OWN convention
-// (assertCanonicalSubset) is that a narrower named view must be a SUBSET of canonical, never
-// independently equal to it. This guard enforces exactly that asymmetry:
-//   - canonical == the List/Kanban/Trip-Pairing basis (views.live_loads) == Load Costs, EXACTLY.
-//   - Truck Line's set is checked as a SUBSET of canonical (every truck-line load must be in the
-//     canonical set); it is allowed to be narrower, but never to contain a load canonical excludes.
-// A subset violation (Truck Line showing a load canonical says is finished/inactive) is exactly
-// the kind of real bug this guard exists to catch -- a documented narrower filter is not.
+// ROUND 255: Truck Line CURRENT helper now ALIASES the canonical active set. This guard
+// enforces exact equality across canonical / List-Kanban basis / Load Costs / Truck Line.
 import { register } from "tsx/esm/api";
 
 export const ALLOW_OFFLINE_SKIP = "live-data invariant by design, no static-only path";
@@ -43,7 +33,10 @@ async function selftest() {
   const canonicalSql = canonicalActiveLoadWhereClause("l");
   if (!canonicalSql.includes("l.status IN")) failures.push("canonicalActiveLoadWhereClause did not produce a status IN clause");
   const truckLineSql = currentTruckLineLoadSql("x");
-  if (!truckLineSql.includes("open_dispatch")) failures.push("currentTruckLineLoadSql did not reference open_dispatch");
+  if (!truckLineSql.includes("status IN") && !truckLineSql.includes("canonical")) {
+    // Alias of canonicalActiveLoadWhereClause — must produce a status IN clause.
+  }
+  if (!/status IN/.test(truckLineSql)) failures.push("currentTruckLineLoadSql (canonical alias) did not produce a status IN clause");
   if (!UNIT_IN_SERVICE_SQL.includes("InService")) failures.push("UNIT_IN_SERVICE_SQL import looks wrong (no InService check)");
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
@@ -107,16 +100,16 @@ async function main() {
       [USMCA]
     );
 
-    // Truck Line — deliberately narrower (current-truck-line-load.ts). Checked as a SUBSET below,
-    // never for exact equality.
+    // Truck Line — ROUND 255: same canonical predicate on mdata.loads (+ assigned in-service unit).
     const truckLine = await client.query(
-      `SELECT x.load_number FROM views.live_loads x
-        JOIN mdata.units u ON u.id = x.assigned_unit_id
-        WHERE x.operating_company_id = $1::uuid
-          AND x.assigned_unit_id IS NOT NULL
-          AND ${currentTruckLineLoadSql("x")}
+      `SELECT l.load_number FROM mdata.loads l
+        JOIN mdata.units u ON u.id = l.assigned_unit_id
+        WHERE l.operating_company_id = $1::uuid
+          AND l.soft_deleted_at IS NULL
+          AND l.assigned_unit_id IS NOT NULL
+          AND ${currentTruckLineLoadSql("l")}
           AND ${UNIT_IN_SERVICE_SQL}
-        ORDER BY x.load_number`,
+        ORDER BY l.load_number`,
       [USMCA]
     );
 
@@ -136,9 +129,10 @@ async function main() {
     const costsVsCanonical = [...diff(loadCostsSet, canonicalSet), ...diff(canonicalSet, loadCostsSet)];
     if (costsVsCanonical.length) failures.push(`Load Costs disagrees with canonical: ${costsVsCanonical.join(", ")}`);
 
-    const truckLineOutsideCanonical = truckLineList.filter((n) => !canonicalSet.has(n));
-    if (truckLineOutsideCanonical.length) {
-      failures.push(`Truck Line shows load(s) canonical says are NOT active (real bug, not a narrower-view exception): ${truckLineOutsideCanonical.join(", ")}`);
+    const truckLineSet = new Set(truckLineList);
+    const truckVsCanonical = [...diff(truckLineSet, canonicalSet), ...diff(canonicalSet, truckLineSet)];
+    if (truckVsCanonical.length) {
+      failures.push(`Truck Line disagrees with canonical (ROUND 255 equality): ${truckVsCanonical.join(", ")}`);
     }
 
     if (failures.length) {
@@ -147,8 +141,7 @@ async function main() {
       return;
     }
     console.log(
-      `${LABEL}: PASS — canonical=List/Kanban=Load Costs (${canonicalSet.size} loads); ` +
-        `Truck Line (${truckLineList.length} loads) is a valid subset.`
+      `${LABEL}: PASS — canonical=List/Kanban=Load Costs=Truck Line (${canonicalSet.size} loads).`
     );
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});
