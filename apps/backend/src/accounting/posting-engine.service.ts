@@ -1,7 +1,7 @@
 import { withCurrentUser } from "../auth/db.js";
 import { boundJeMemo, sourceDocumentLabel } from "./je-memo.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
-import { resolveRoleAccountOptional, resolveReimbursementExpenseAccount } from "./coa-roles/resolver.service.js";
+import { resolveRoleAccountOptional, resolveReimbursementExpenseAccount, resolveRoleAccount } from "./coa-roles/resolver.service.js";
 import { STANDING_LATCH_JE_PREDICATE } from "./revrec-delivery-posting/poster.service.js";
 import { resolveAccountForCategory } from "./expense-category-map/resolver.service.js";
 import { resolveBillLineDebitAccount, BillLineAccountError } from "./bill-account-resolver.js";
@@ -56,6 +56,18 @@ export const POSTING_SOURCE_TYPES = [
   // account -- fired once, at the moment bank-recon MATCHES the payment to its real bank_transaction
   // (match.service.ts), reusing this same idempotent/period-gated poster. sourceId = accounting.payments.id.
   "customer_payment_deposit",
+  // ROUND 261 (same GO-CLOSE-188 DEFECT A class, factoring side): the factoring-advance poster's
+  // FUNDING JE (Dr cash_clearing / Dr reserve / Dr fees / Cr factoring_advance_liability) correctly
+  // books the wire as received, but cash_clearing (Undeposited Funds, role "cash_clearing") is a
+  // HOLDING account too — match.service.ts's acceptMatchWithResolveDifference had branches to sweep
+  // this exact holding-account balance for "payment" and "bill_payment" but NONE for
+  // "factoring_advance", so a matched factoring advance set its bank-recon status correctly and
+  // never moved its GL out of cash_clearing. Live-confirmed: factoring_advance is the single
+  // largest contributor to account 1090's live pileup ($427,887.92 net across 131 postings).
+  // sourceId = accounting.factoring_advances.id; the covering bank transaction is resolved via the
+  // REVERSE pointer banking.bank_transactions.matched_factoring_advance_id (already written by the
+  // existing match path — no new column, no migration needed).
+  "factoring_advance_deposit",
 ] as const;
 
 export type PostingSourceType = (typeof POSTING_SOURCE_TYPES)[number];
@@ -1673,6 +1685,102 @@ async function buildCustomerPaymentDepositSweepLines(client: DbClient, operating
   };
 }
 
+// ROUND 261 (GO-CLOSE-188 DEFECT A, factoring side) — see POSTING_SOURCE_TYPES comment. Mirrors
+// buildCustomerPaymentDepositSweepLines's shape exactly (same holding->bank sweep), sourced from
+// accounting.factoring_advances instead of accounting.payments, and resolving the covering bank
+// transaction via the REVERSE pointer (banking.bank_transactions.matched_factoring_advance_id) since
+// factoring_advances itself carries no source_bank_transaction_id column.
+async function buildFactoringAdvanceDepositSweepLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
+  const advanceRes = await client.query<{
+    id: string;
+    advanced_at: string | null;
+    display_id: string | null;
+    invoice_total_cents: number;
+    reserve_amount_cents: number | null;
+    factor_fee_cents: number | null;
+    wire_fee_cents: number | null;
+    cash_rsv_cents: number | null;
+    voided_at: string | null;
+    source_system: string | null;
+  }>(
+    `
+      SELECT id::text, advanced_at::text, display_id, invoice_total_cents::bigint,
+             reserve_amount_cents::bigint, factor_fee_cents::bigint, wire_fee_cents::bigint,
+             cash_rsv_cents::bigint, voided_at::text, source_system::text
+      FROM accounting.factoring_advances
+      WHERE operating_company_id = $1::uuid
+        AND id::text = $2
+      LIMIT 1
+      FOR UPDATE
+    `,
+    [operatingCompanyId, sourceId]
+  );
+  const advance = advanceRes.rows[0];
+  if (!advance) throw new PostingEngineError("SOURCE_NOT_FOUND", "Factoring advance not found");
+  if (advance.voided_at) throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided factoring advance is not deposit-sweep eligible");
+  if ((advance.source_system ?? "").toLowerCase() === "qbo") {
+    throw new PostingEngineError(
+      "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED",
+      "Refusing factoring advance deposit-sweep for a QBO-origin advance — parallel books; QBO already holds this receipt's GL."
+    );
+  }
+
+  const bankRes = await client.query<{ bank_ledger_account_id: string | null }>(
+    `
+      SELECT ba.ledger_account_id::text AS bank_ledger_account_id
+      FROM banking.bank_transactions bt
+      JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id
+      WHERE bt.matched_factoring_advance_id = $1::uuid
+        AND bt.operating_company_id = $2::uuid
+      LIMIT 1
+    `,
+    [advance.id, operatingCompanyId]
+  );
+  const bankLedgerAccountId = bankRes.rows[0]?.bank_ledger_account_id ?? null;
+  if (!bankLedgerAccountId) {
+    throw new PostingEngineError(
+      "PAYMENT_NOT_POSTING_ELIGIBLE",
+      "Factoring advance has no matched bank transaction yet — deposit-sweep requires a confirmed bank-recon match"
+    );
+  }
+
+  const holdingAccount = await resolveRoleAccount(client, operatingCompanyId, "cash_clearing");
+  if (!holdingAccount) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "cash_clearing account mapping is missing");
+
+  if (holdingAccount === bankLedgerAccountId) {
+    throw new PostingEngineError("DEPOSIT_ALREADY_AT_BANK", "Factoring advance already posted directly to the matched bank account — no deposit-sweep needed");
+  }
+
+  const label = advance.display_id ? `Factoring advance ${advance.display_id}` : "Factoring advance";
+  const amount = Math.abs(
+    Number(advance.invoice_total_cents ?? 0) -
+      Number(advance.reserve_amount_cents ?? 0) -
+      Number(advance.factor_fee_cents ?? 0) -
+      Number(advance.wire_fee_cents ?? 0) -
+      Number(advance.cash_rsv_cents ?? 0)
+  );
+  return {
+    postingDate: advance.advanced_at ?? new Date().toISOString().slice(0, 10),
+    memo: `${label} deposit`,
+    lines: [
+      {
+        account_id: bankLedgerAccountId,
+        debit_or_credit: "debit",
+        amount_cents: amount,
+        description: `${label} wire deposited to bank`,
+        source_transaction_line_id: null,
+      },
+      {
+        account_id: holdingAccount,
+        debit_or_credit: "credit",
+        amount_cents: amount,
+        description: `${label} cleared from cash_clearing`,
+        source_transaction_line_id: null,
+      },
+    ],
+  };
+}
+
 async function buildBillPaymentLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
   const paymentRes = await client.query<{
     id: string;
@@ -2400,6 +2508,7 @@ async function buildPostingDraft(
   if (sourceType === "expense") return buildExpenseLines(client, operatingCompanyId, sourceId);
   if (sourceType === "customer_payment") return buildCustomerPaymentLines(client, operatingCompanyId, sourceId);
   if (sourceType === "customer_payment_deposit") return buildCustomerPaymentDepositSweepLines(client, operatingCompanyId, sourceId);
+  if (sourceType === "factoring_advance_deposit") return buildFactoringAdvanceDepositSweepLines(client, operatingCompanyId, sourceId);
   if (sourceType === "bill_payment") return buildBillPaymentLines(client, operatingCompanyId, sourceId);
   if (sourceType === "cash_advance") return buildCashAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
   if (sourceType === "driver_advance") return buildDriverAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);

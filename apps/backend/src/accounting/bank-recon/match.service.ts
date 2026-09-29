@@ -1424,6 +1424,37 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
           txn.transaction_date.slice(0, 10),
         ]
       );
+    } else if (input.ledger_entry_kind === "factoring_advance") {
+      // ROUND 261 (GO-CLOSE-188 DEFECT A, factoring side) — same deposit-sweep the "payment" branch
+      // above runs for customer payments, extended to factoring advances: cash_clearing (Undeposited
+      // Funds) is a HOLDING account here too, and nothing ever swept a matched advance's balance out
+      // of it into the real bank register. matched_factoring_advance_id (set by the generic match
+      // UPDATE above, MATCHED_ID_COLUMN_MAP) is the reverse pointer the sweep resolves the covering
+      // bank transaction from — no new column, no migration. Best-effort, same skip contract as the
+      // customer_payment_deposit sweep: a genuinely ineligible advance (voided, QBO-origin, already
+      // posted straight to this bank, or no cash_clearing mapping) is a normal, expected skip; any
+      // OTHER error still surfaces, since it would mean real money moved with no GL trail.
+      try {
+        await postSourceTransactionInClientTx(
+          client,
+          {
+            operating_company_id: input.operating_company_id,
+            source_transaction_type: "factoring_advance_deposit",
+            source_transaction_id: input.ledger_entry_id,
+          },
+          { userId: input.actor_user_uuid }
+        );
+      } catch (sweepError) {
+        const skippable: string[] = [
+          "DEPOSIT_ALREADY_AT_BANK",
+          "PAYMENT_NOT_POSTING_ELIGIBLE",
+          "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED",
+          "ACCOUNT_MAPPING_MISSING",
+        ];
+        if (!(sweepError instanceof PostingEngineError) || !skippable.includes(sweepError.code)) {
+          throw sweepError;
+        }
+      }
     }
 
     const cashBasisRevenueCents = computeCashBasisRevenueFromActualCashHit({
