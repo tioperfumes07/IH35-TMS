@@ -64,3 +64,20 @@ money-pr-local-gate: FAIL — verify-open-tour-posts-nothing.mjs rejected this b
 Command: `LANE_CROSS=2026-09-30-ROUND-268-CODEX-REPORT-LANE-CROSS.md node /tmp/r264-run-gate.cjs node scripts/money-pr-local-gate.mjs`. The wrapper supplies the existing ih35_ci_readonly credential without printing it. No skip/bypass was used. This guard enforces an open-tour posting hold, which conflicts with Round 264 Part B's immediate-recording rule. Publishing is not claimed: two local commits on codex/r264-concept-comparison, no PR/merge/deploy. Resolving that posting-rule conflict requires a scoped guard/engine decision, not silently suppressing the failure for this report.
 
 Final workbook checks: exactly two tabs, 794 formulas with nonempty calculated caches, zero formula errors, NET PAY markers 47 green/1 red. Corrected signed-margin absolute variance is $222,200.16; the required magnitude variance remains $96,516.32.
+
+CODEX | 2026-09-29 5:06 PM CT | Subsequent owner ruling / 00-SEAT-CONTRACT §3 resolves the blocker. Rewrote `scripts/verify-open-tour-posts-nothing.mjs` in place (existing gate and step 10433 retained) to check the Expense.load_id reporting join, not prevent posting while a tour is open. Removed the contradictory posting-delay assertions, time cutoff and unreachable-DB/CI skips. Missing DB, empty visible scope or broken linkage now fails closed. USMCA-only, read-only; no production writes.
+
+Live guard at 22:06:38.961Z: 542 posted nonvoid Expenses; 539 valid same-company load joins; 3 without direct/attribution/fuel load references reported separately, not asserted to be load costs; 0 linkage violations. Selftest PASS 7/7, including missing direct FK, dangling FK, foreign-entity load, and conflicting attribution mutants rejected. Deliberate split allocations remain valid.
+
+The formerly flagged expenses were independently queried using the owner role and bypass inside BEGIN READ ONLY, then ROLLBACK:
+
+| Expense id | Expense number | Load | Posted | Attribution rows |
+|---|---|---|---|---:|
+| 1e24c761-d8bd-40f0-8d31-ff0d37dc6980 | 13610-1 | 13610 | yes | 1 |
+| 2aa0e584-478e-4d3c-bc7c-65c151d0c3be | 13619 | 13619 | yes | 1 |
+| 2bbc404d-91fe-4151-be83-6f29c7cda3b2 | 13610 | 13610 | yes | 1 |
+
+All three target loads belong to USMCA and have soft_deleted_at NULL. SQL: select expense ID/number/load/posting_status, LEFT JOIN mdata.loads on loads.id=expenses.load_id, and count expense_attribution.expense_load_links by expense_id; WHERE expenses.operating_company_id=USMCA AND expenses.id IN the three IDs above. The guard's full SQL is exported as LINKAGE_SQL for reproducibility. This change does not claim to remove application posting holds; it replaces the contradictory verifier as expressly ordered.
+# CODEX | 2026-09-29 5:38 PM CT | Publication rebase proof
+
+PR #23153 landed during publication. Its four-file no-tour-posting-delay regression check and nine-row historical-hold ceiling are retained alongside the requested load-linkage assertion. The hold read is now USMCA-scoped and read-only. Combined selftest: 9/9. Production read at 2026-09-29 5:37 PM CT: 542 posted expenses; 539 load-linked; 3 without load references (not asserted load costs); 0 linkage violations; 9 historical tour-open holds. No rows changed. Main's generated scoreboard refresh superseded the redundant local refresh; no generated scoreboard changes remain in this PR.
