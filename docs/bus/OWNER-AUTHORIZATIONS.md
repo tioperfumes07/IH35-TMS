@@ -4211,6 +4211,22 @@ action:
   OWNER_AUTH_ID=AUTH-133 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-round270-post-acc50-released-expenses.ts
 
 expires_at: 2026-10-01T08:00:00.000Z
-status: OPEN
+status: CONSUMED
+
+consumed_at: 2026-09-29T22:52:00.000Z
+consumed_by: Claude-1
+row_counts: posting_batch_id fba58975-1d1f-48a7-a5f7-69b9d08518b2. 11 candidates: 9 posted (real
+  JEs via postSourceTransaction, no new GL math) -- 047b0f6e, 04ec3581, 43fc648c, 58168f62,
+  667478e2, 7c22d99d, 8c170d77, 8f4c66f1, 90a95164 -- exactly the 9 rows AUTH-131 correctly left
+  held under the retired ACC-50 gate; 2 still held (orphan_no_payment_account_or_vendor, unchanged
+  from AUTH-131 -- 83b4dd98, ca383aa9). Live re-verify: accounting.expenses status='draft' count
+  went 11 -> 2 exactly ($1,839.13 -> $350.68).
+proof_query: SELECT status, posting_hold_reason, count(*), sum(total_amount_cents)::numeric/100.0
+  FROM accounting.expenses WHERE operating_company_id='5c854333…' AND voided_at IS NULL AND
+  status='draft' GROUP BY status, posting_hold_reason -- returns exactly 1 row: ('draft', '', 2,
+  350.68).
+This closes ROUND 260 Part H / ROUND 270's expense-posting thread completely: of the original 257
+drafts ($14,315.36), 255 are now posted, 2 remain genuinely held pending a human-resolved payment
+account or vendor (never auto-postable, correctly excluded by design).
 
 — Claude-1 (ROUND 270 / ACC-50 removal follow-up: post the 9 released expenses)
