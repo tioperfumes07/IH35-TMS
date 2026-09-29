@@ -11432,3 +11432,32 @@ guard-harness tweak. B5 (`cc2/r206-b5-invite-session-hash`) remains blocked at p
 set alone — `money-pr-local-gate.mjs` passes clean on that branch.
 
 — CC-2
+
+## verify-load-to-cash-chain -- global push blocker, matches ROUND 219's named exceptions exactly (CC-2, 2026-09-29)
+
+Hit pushing an unrelated auth-only branch (cc2/r206-b5-invite-session-hash). `money-pr-local-gate.mjs`
+LIVE FAIL:
+```
+LINK 1 -- 1 of 123 USMCA driver-having load(s) older than 24h have no driver_finance.driver_bills row: 13622
+LINK 2 -- 2 of 123 USMCA driver-having load(s) older than 24h have no presettlement_link_id and are not in the owner-pending baseline: 13622, 13624
+```
+
+**Confirmed pre-existing, unrelated to any diff, and already named:** these are exactly ROUND 219's
+three named data-freeze exceptions ("13624 dispatched invoice YES bill YES PRESETTLEMENT MISSING",
+"13622 invoiced invoice YES BILL MISSING PRESETTLEMENT MISSING"), whose repair ROUND 219 explicitly
+authorized as "the three status-chain repairs below, by CC-1, one PR" and nobody else. Under the same
+data freeze (mdata.loads / driver_settlements / settlement_lines / driver_bills / accounting.invoices
+frozen except CC-1's tagging, CC-3's lat/lng, and CC-1's three status-chain repairs), I cannot and
+will not touch these rows.
+
+**Impact: this is a global, always-run live check inside money-pr-local-gate.mjs, not diff-scoped.**
+It will reject every seat's push, regardless of what the branch touches, until CC-1's repair PR lands
+-- confirmed by reproducing it on B5, B8, and the ROUND 218 opening-balance/escrow-guard branch alike
+(three unrelated branches, identical failure, identical two load ids).
+
+Not filing this as a new problem -- ROUND 219 already scoped and authorized the fix. Flagging because
+it is currently the actual, sole live blocker on every push (the earlier
+verify-presettlement-shows-only-this-load-and-its-open-tour.mjs false positive is confirmed FIXED on
+main as of #23103 -- read directly, not re-litigated here).
+
+— CC-2
