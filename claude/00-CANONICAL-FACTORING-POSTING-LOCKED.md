@@ -153,3 +153,69 @@ For each of the 25 groups, the correct copy is the one that (a) matches the cano
 Where those two tests agree, that copy survives and the rest are voided — no owner decision needed. Escalate to
 the owner **only** the groups the exports cannot settle, and for those show the copies side by side, account by
 account, with the delta. Say how many of the 25 fell into each bucket.
+
+---
+
+# AMENDMENT 2 — THE THREE FARO ACCOUNTS: DEFINE, WIRE, RENDER (owner 09-29)
+
+Owner: *"IN BANKING WE ACTUALLY HAVE THE FARO CASH RESERVE ACCOUNT, WHICH RENDERS NOTHING. THE FARO ESCROW
+RESERVE, WHICH RENDERS NOTHING AND THE FARO FACTORING USMCA, WHICH ALSO RENDERS NOTHING."*
+*"YOU NEED TO DEFINE AND ASSIGN THEM... IN THE FARO FACTORING ACCOUNT I ASSUME I WILL SEE THE PURCHASES, OR
+INVOICES PURCHASED... MAKE SURE THOSE ARE FULLY AND COMPLETELY WIRED AS WELL TO THE FACTORING MODULE."*
+
+## A. 1235 IS NOT DELETED — AMENDMENT 1 SECTION C IS RESOLVED
+
+Faro keeps **two** reserve buckets (`ACCOUNT SUMMARY.csv`: Escrow Reserve $4,530.19, Cash Reserve $4,135.41)
+and the owner confirms Banking carries accounts for both plus the factoring account itself. **`Faro Cash
+Reserve` is legitimate.** The defect was never that it exists — it is that **none of the three was ever
+defined or wired**, so all three render nothing.
+
+Do not delete any of them. Define them.
+
+## B. DEFINE EACH ONE — `system_purpose`, and what it must equal
+
+| Banking account | system_purpose | Must always equal |
+|---|---|---|
+| Faro Escrow Reserve | `factoring_reserve_escrow` | Faro's **Escrow Reserve** balance on `ACCOUNT SUMMARY.csv` |
+| Faro Cash Reserve | `factoring_reserve_cash` | Faro's **Cash Reserve** balance on the same report |
+| Faro Factoring USMCA | `factoring_advance_liability` | What we owe Faro — the advance liability |
+
+Reconcile the existing `Factoring Reserves` (1230) against these two buckets. If 1230 has been carrying both,
+split it correctly and say which entries moved where, with Faro's figures pasted. The tie-out is already
+written out in `docs/reconciliation/2026-09-22-faro-reserve-1230-correction-preview.md` — use it, do not
+re-derive it.
+
+## C. WIRE THEM SO THEY RENDER — this is the deliverable the owner will judge
+
+**Faro Factoring USMCA** opens and shows, live: every **invoice purchased** by Faro — invoice number, load,
+customer, purchase date, face amount, advance, reserve held, fees, net wire, current status, and whether it has
+been settled by the customer. Running liability balance at the top. A row opens the invoice, the load and the
+journal entry.
+
+**Faro Escrow Reserve** and **Faro Cash Reserve** each open and show every movement in and out with its source
+document, and a running balance that ties to Faro's report for that date.
+
+All three wire to the **existing** factoring module and the **existing** banking views — find them, use them,
+do not build a parallel surface. Name the files you wired in the report.
+
+## D. LINKAGE — a block with no linkage declaration is not done
+
+Every row on all three screens links both ways to: the advance, the invoice, the load, the customer, the bank
+transaction, the reserve movement, and the journal entry. Declare each link.
+
+## E. THE 41 AND THE 15 ARE DIFFERENT DEFECTS — DO NOT MERGE THEM
+
+- **41 funding entries never debited Undeposited Funds.** The money never entered the clearing account. Fixed
+  by re-posting to canonical shape 1.
+- **15 advances landed in Undeposited Funds and were never swept to the bank — $39,108 still sitting there.**
+  Fixed by the deposit-sweep backfill, after the duplicates are resolved.
+
+Opposite problems, different populations. Report them separately, always. Never let one number be presented as
+the other.
+
+## F. THE BUILD DOES NOT STOP UNTIL ALL OF IT IS LIVE
+
+Engine, reversal path, constraint, guard, reclassification, the three screens rendering real data, the module
+wiring, the linkage, the QBO mapping. Push, merge, trigger the deploy, paste the deploy id, and paste a live
+screenshot of Faro Factoring USMCA showing real purchased invoices. Owner's law: if he cannot open it in Chrome
+and click it, it is not done.
