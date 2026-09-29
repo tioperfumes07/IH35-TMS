@@ -3965,3 +3965,22 @@ proof_query: SELECT check_number, status, source_id FROM banking.check_number_re
   Mount already on main #23117 squash 2661b67017 (registerCheckRoutes in index.ts).
 
 — Cursor (ROUND 224 Check Creator mount + AUTH-126 chain)
+
+## AUTH-127
+
+date: 2026-09-29
+scope: ROUND 236 (Lead, P0) — reinstate accounting.expenses id 3ce7e2a5-b93c-406c-b8a7-341f6ecc0951
+  (USMCA, operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80), load 13549 / settlement 5787,
+  vendor_document_number 6232741, $15.25, 2026-08-20. AUTH-089's duplicate-expense-document cleanup
+  voided this row keyed on (load, amount) alone; no live row on load 13549 carries document 6232741
+  — the row AUTH-089 believed superseded it (document 1106179, $15.25, 2026-08-25) is a different
+  real vendor invoice on a different date. Via the canonical reinstateDocumentThenVoidReversal
+  (R-191 universal reinstate engine) only — no raw UPDATE, no new row. USMCA only. Not authorized:
+  reinstating any other AUTH-089/092/08x row (see the 77-row undocumented set, filed separately, not
+  auto-reinstated); TRANSP/TRK; QBO write-back; any write outside this one expense id.
+
+action:
+  OWNER_AUTH_ID=AUTH-127 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-29-cc1-auth089-reinstate-13549-19.ts
+
+expires_at: 2026-09-30T06:00:00.000Z
+status: OPEN
