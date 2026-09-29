@@ -51,6 +51,11 @@
       "reason": "global feature-flag definitions (the flag registry itself); per-entity overrides live separately in lib.feature_flag_overrides, which IS operating_company_id-scoped and is NOT in this exemption"
     },
     {
+      "schema": "catalogs",
+      "table": "blocked_feature_flags",
+      "reason": "ROUND 195 / 202614530000 — permanent GLOBAL blocklist of QBO write-back / mirror flag_keys. One row set for every entity: a blocked flag can never resolve enabled for any opco. Unblocking = DELETE the catalog row (never a per-entity override). Sibling of lib.feature_flags (already global); entity scope lives on lib.feature_flag_overrides, not here."
+    },
+    {
       "schema": "org",
       "table": "companies",
       "reason": "the entity registry itself — the FK target every operating_company_id/tenant_id/company_id column points to; cannot meaningfully self-scope"

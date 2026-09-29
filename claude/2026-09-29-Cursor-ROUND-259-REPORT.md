@@ -105,3 +105,8 @@ Return-trip double rows with unit# kept · columns UNIT · TOUR · LOAD · PU DA
 - PR **#23137** squash-merged → `08eee92f525b02d2998be435a642effed0d9186a`
 - CI run `36631055479` build-typecheck-heavy: **APPLY 202614530000_qbo_flags_permanent_block.sql** then later migrations → **Migrations applied successfully** (1213). FK blocker CLEARED.
 - Same run then failed later on unrelated `verify-bank-match-candidate-sources` (157-C dropped `FROM accounting.expenses` + explicit `if (!isCredit)`). Follow-up PR restores expenses + `if (!isCredit)` branch.
+
+## FOLLOW-UP (CI onion after FK + bank-match)
+
+- #23139 restored bank-match candidates → `verify-bank-match-candidate-sources — OK` on CI run `36632583192`.
+- Next fail: `catalogs.blocked_feature_flags` ENTITY-ISOLATION — genuinely global QBO permanent blocklist (sibling of `lib.feature_flags`). Added to `scripts/entity-isolation-allowlist.json` under `global`.
