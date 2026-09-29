@@ -11554,3 +11554,46 @@ verify-no-document-without-a-ledger) currently blocking any push that touches
 apps/backend/src/accounting/**, regardless of what the diff actually does.
 
 — CC-2
+
+## UPDATE — NO_CLEARING_PILEUP fully root-caused: real defect fixed, guard will likely still stay RED (CC-2, 2026-09-30)
+
+Follow-up to the earlier NO_CLEARING_PILEUP finding. Root-caused precisely (ROUND 261's own explicit
+ask, not a guess):
+
+**The real defect (fixed, sha 490623dc36, branch cc2/r245-p0-check-number-reset):**
+`match.service.ts`'s `acceptMatchWithResolveDifference` has post-match GL-sweep branches for
+`payment` (customer payments, the GO-CLOSE-188 DEFECT A deposit-sweep) and `bill_payment`, but had
+**none for `factoring_advance`** -- a factoring advance correctly sets its bank-recon match status
+but the code path that should sweep its `cash_clearing` (Undeposited Funds, account 1090) balance
+into the real bank register simply never existed. Fixed: added `factoring_advance_deposit` to
+`POSTING_SOURCE_TYPES` + `buildFactoringAdvanceDepositSweepLines` (mirrors the customer-payment
+sweep exactly), and a `factoring_advance` branch in match.service.ts that calls it. No new column,
+no migration -- resolves the covering bank transaction via the REVERSE pointer
+`banking.bank_transactions.matched_factoring_advance_id` (already exists, ROUND 186).
+
+**Live-measured split of the $427,887.92 factoring_advance gross debit total in 1090:**
+- **15 advances, $39,108.00** -- already matched (`matched_factoring_advance_id IS NOT NULL`), never
+  swept. This IS the defect above, now fixed going forward. A one-time backfill would close this --
+  **not run here**, because `scripts/verify-owner-authorization.mjs` requires a real `AUTH-<NNN>`
+  committed to `docs/bus/OWNER-AUTHORIZATIONS.md` on main before any such write, and none exists yet
+  for this specific action. Script content is ready the moment one is authorized.
+- **78 advances, $276,248.28** -- never matched to any bank transaction at all. This is normal,
+  legitimate timing lag (an advance is received before its bank line shows up and gets matched --
+  matching precedes sweeping by design, per ROUND 261 Part B: "matching sets a status, creates no
+  JE"). **Not a defect.**
+
+**The conclusion that matters:** even a full, authorized backfill of the 15 matched-unswept rows
+only closes $39,108 of the $173,426.64 net pileup. The 78 legitimately-unmatched advances
+($276,248.28) alone already exceed `NO_CLEARING_PILEUP`'s $30,282.19 (1% of total debits) threshold
+by nearly 10x. That volume reads as this company's normal factoring scale/velocity, not a bug --
+**this guard will very likely stay RED regardless of any code fix**, because its fixed 1% threshold
+was not calibrated for a book this size's real in-transit factoring volume.
+
+**Recommendation, not decided unilaterally:** the owner/Lead should either (a) raise or reweight the
+threshold to account for normal in-transit factoring advance volume specifically, or (b) exclude
+genuinely-unmatched-yet-recent factoring advances from the pileup calculation the same way "recent
+and normal" is handled elsewhere, or (c) accept the guard stays red on this account until the AUTH +
+backfill lands AND the threshold is revisited together. This is a policy call, not something I
+should silently work around.
+
+— CC-2
