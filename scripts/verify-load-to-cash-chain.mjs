@@ -22,6 +22,9 @@
 //
 // Fails closed with no DATABASE_URL (requireLiveDbOrExit, ROUND 29.9-B). money-pr-local-gate.mjs runs
 // it only when this guard's own domain paths change or a live DB is present (Lead ruling R56-B).
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 import { exitIfEmptyByPurge } from "./lib/purge-window.mjs";
 
@@ -30,6 +33,17 @@ import { exitIfEmptyByPurge } from "./lib/purge-window.mjs";
 const LABEL = "verify-load-to-cash-chain";
 export const REQUIRES_LIVE_DB =
   "live-data money guard; fails closed via requireLiveDbOrExit with no DATABASE_URL (ROUND 29.9-B) and runs in money-pr-local-gate.mjs only when its own domain paths change or a live DB is present (Lead ruling R56-B, 2026-09-22)";
+
+// ROUND 240 — R224 load exceptions are SHRINK-ONLY. Source of truth:
+// scripts/lib/r224-gate-exception-sets.baseline.json (ratchet: verify-gate-exception-sets-never-grow).
+const _r224GateEx = JSON.parse(
+  fs.readFileSync(
+    path.join(path.dirname(fileURLToPath(import.meta.url)), "lib/r224-gate-exception-sets.baseline.json"),
+    "utf8",
+  ),
+);
+export const R224_LINK1_PENDING = Object.freeze([...( _r224GateEx.r224_load_to_cash_link1 ?? [] )]);
+export const R224_LINK2_PENDING = Object.freeze([...( _r224GateEx.r224_load_to_cash_link2 ?? [] )]);
 
 // USMCA only (00-IH35-LAW.mdc). The first draft of this guard counted EVERY company under
 // bypass_rls, so frozen Transportation loads (L-2026… under 91e0bf0a) landed in LINK 1/2 as
@@ -76,12 +90,9 @@ const OWNER_PENDING_UNLINKED = new Set([
   // cancellation + factoring unwind is the closing guard's ITEM1 work (CC-1 R-187). Remove this entry
   // in the PR that lands ITEM1 for 90007. Never re-link it to a pre-settlement.
   "90007",
-  // 2026-09-29 Neon br-fancy-credit-akjnd07a (bypass_rls=lucia), ROUND 219 named freeze exceptions
-  // documented on main as #23114 (sole live blocker on every accounting push; repair = CC-1 one PR):
-  // 13622 invoiced, has_driver, miles_shortest NULL, has_bill=false, presettlement_link_id NULL.
-  // 13624 dispatched, has_driver, has_bill=true, miles_shortest=1929.2, presettlement_link_id NULL.
-  // LINK 2 only for both here; 13622 also joins LINK1_PENDING below. Remove when CC-1 links them.
-  "13622", "13624",
+  // R224 additions — SHRINK-ONLY via scripts/lib/r224-gate-exception-sets.baseline.json
+  // (ROUND 240 ratchet). Do not append loads here; edit the baseline under a Lead ruling.
+  ...R224_LINK2_PENDING,
 ]);
 const DELIVERED_STATUSES = ["delivered_pending_docs", "completed_docs_received", "closed", "invoiced"];
 
@@ -107,11 +118,9 @@ const LINK1_PENDING_REAL_MILEAGE_SOURCE = new Set([
   // creating loads in this state faster than a one-time baseline can track -- this is the same
   // recurring class, not a new defect.
   "13613", "13618", "13616", "13617", "13614",
-  // 2026-09-29 measured (Neon br-fancy-credit-akjnd07a): 13622 invoiced, miles_shortest IS NULL,
-  // mileage_source NULL, has_driver, has_bill=false — same refused_no_shortest_miles class.
-  // ROUND 219 freeze / #23114: CC-1 owns the real repair; named here so every accounting push
-  // is not red on a known freeze exception. Remove when real miles land + bill mints.
-  "13622",
+  // R224 additions — SHRINK-ONLY via scripts/lib/r224-gate-exception-sets.baseline.json
+  // (ROUND 240 ratchet). Do not append loads here; edit the baseline under a Lead ruling.
+  ...R224_LINK1_PENDING,
 ]);
 
 export function expenseNumberMismatch(loadNumber, expenseNumber) {

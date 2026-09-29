@@ -28,6 +28,20 @@ import { dataWritePathDiffActuallyWrites, dataWritePathFileActuallyWrites } from
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "money-pr-local-gate";
 
+// ROUND 240 — R224 GATE-SCOPE accounting mount-only skip allowlist is SHRINK-ONLY.
+// Source: scripts/lib/r224-gate-exception-sets.baseline.json
+// (ratchet: verify-gate-exception-sets-never-grow). bank-recon/ prefix is pre-R224 and separate.
+const R224_ACCOUNTING_LIVE_DOMAIN_SKIP = new Set(
+  (
+    JSON.parse(
+      fs.readFileSync(
+        path.join(ROOT, "scripts/lib/r224-gate-exception-sets.baseline.json"),
+        "utf8",
+      ),
+    ).r224_accounting_live_domain_skip ?? []
+  ).map(String),
+);
+
 /** Ordered fail-fast suite — same classes that red'd Cursor #4009–#4011 / #4198 vs Claude. */
 const STEPS = [
   // AUTH-105 condition (Lead ruling, docs/bus/00-LEAD-AUTH-105-STALE-LOAD-STATUS-SYNC.md,
@@ -388,6 +402,9 @@ const GUARD_303 = [
   // parity guard's own in-process regenerate-refuse logic (a hand-edit, a different script, a bad
   // merge). No DATABASE_URL needed — pure git+JSON diff.
   ["verify-baseline-never-grows (03e)", "scripts/verify-baseline-never-grows.mjs", {}],
+  // 03e-R224 — ROUND 240 shrink-only ratchet on the two R224 gate loosenings (13622/13624
+  // load-to-cash exceptions + accounting mount-only LIVE_DOMAIN skip allowlist). Static.
+  ["verify-gate-exception-sets-never-grow (03e-R224)", "scripts/verify-gate-exception-sets-never-grow.mjs", {}],
   // 03f — the USMCA/Faro reconciliation, CLOSED (owner order 2026-09-22, "SAVED SO NOBODY ASKS
   // AGAIN"). Nine figures are LAW; this asserts the JSON + the human-readable doc both still
   // match them exactly, and the purchases-receipts=AR identity holds. Static — no DATABASE_URL.
@@ -1347,15 +1364,13 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
           // GATE-SCOPE bank-recon (2026-09-28): blanket accounting/ must not pull MatchDrawer /
           // accept-multi-match into every tip-debt money guard. bank-recon owns its own guards
           // (verify-no-match-persisted-outside-accept-handler lists match.service.ts explicitly).
-          // GATE-SCOPE checks mount (2026-09-29, ROUND 224): accounting/index.ts (autoload ignore)
-          // and checks/checks.routes.ts (HTTP registrar only) do not create/post documents —
-          // check-create.service.ts / check-void.service.ts remain under accounting/ and still
-          // trip the ledger-population guards when those writers change.
+          // GATE-SCOPE checks mount (2026-09-29, ROUND 224 / ROUND 240 ratchet): exact-file
+          // allowlist from r224-gate-exception-sets.baseline.json — NOT whole accounting/.
+          // check-create.service.ts / check-void.service.ts still trip ledger-population guards.
           if (
             p === "apps/backend/src/accounting/" &&
             (f.startsWith("apps/backend/src/accounting/bank-recon/") ||
-              f === "apps/backend/src/accounting/index.ts" ||
-              f === "apps/backend/src/accounting/checks/checks.routes.ts")
+              R224_ACCOUNTING_LIVE_DOMAIN_SKIP.has(f))
           ) {
             return false;
           }
