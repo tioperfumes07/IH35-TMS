@@ -201,3 +201,30 @@ You have the same production access, the same repo and the same documents everyo
 Push, merge, trigger the deploy, paste the deploy id, and write your results to `claude/09-29-2026-Devin-B-ROUND-271-RESULTS.md` in the repo.
 
 **The only acceptable reply: what I did · the proof it's real · what's next.**
+
+---
+
+# AMENDMENT 271.1 — A SECOND CONTAMINATION PATTERN, FOUND LIVE BY CC-1
+
+CC-1 root-caused the factoring MTD defect while this round was being written. The cause is not only "reports forget to exclude voids." It is worse:
+
+**Two `accounting.factoring_advances` rows (invoices 13619 and 13615) carry `voided_at` stamped 2026-09-28 with reason "ROUND-175 reversal" — but their `status` column was never flipped from `advanced` to `voided`.** The reason: **`executeVoidCancel` has no `factoring_advance` case**, so whatever voided them used a raw UPDATE that set the timestamp and nothing else.
+
+Those same two rows explain both the MTD overstatement and the "invoices flagged advanced with no advance behind them" discrepancy. One root cause, two symptoms.
+
+**So Phase 1 gets a second question, asked of all 18 tables:**
+
+> **Does `executeVoidCancel` have a case for this entity — and do `voided_at` and `status` agree on every row?**
+
+Report, per table:
+- rows where `voided_at IS NOT NULL` but `status` is not a void status
+- rows where `status` is a void status but `voided_at IS NULL`
+- whether the void engine has a registered case for that entity, or whether voids there are being done by raw UPDATE
+
+**An entity with no case in `executeVoidCancel` is a hole in the void engine, not a data defect.** Register a case for every entity that can be voided. A void that a human can perform through any path must go through the engine, and the engine must set the flag, the status and the reversing journal entry together, in one transaction, or set none of them.
+
+CC-1 owns the fix for the factoring case and the two rows (AUTH-132, plus a DB-level `CHECK (voided_at IS NULL OR status = 'voided')`). **You own finding every other entity with the same hole.** Coordinate; do not duplicate his work on factoring.
+
+## ONE MORE CORRECTION FOR THE RECORD
+
+An earlier Lead statement that `factor.faro_invoice_lines` being empty proves "the Faro import never ran" is **withdrawn**. CC-1 verified live that the import code is wired and reachable and has run successfully before — a 34-row backfill on 2026-09-13 is recorded in the table's own header comment. The table is empty because the **AUTH-001 purge on 2026-09-23** wiped it, and it was never re-derived. The fix is re-running the working import once the purge window closes, not new code. Do not build an import.
