@@ -13,51 +13,8 @@ If we delete the voided rows first, every rollup that is silently counting voids
 
 ---
 
-## PART A — QUICKBOOKS TERMINOLOGY (we all use these words, nothing else)
-
-| Our word | QuickBooks word | What it is |
-|---|---|---|
-| Expense | Expense | Money out, paid at the moment it is recorded |
-| Bill | Bill | Vendor owes-us-later; creates A/P |
-| Bill Payment | Bill Payment | Pays a Bill; clears A/P |
-| Invoice | Invoice | Customer owes us; creates A/R |
-| Receive Payment | Receive Payment | Customer pays; clears A/R |
-| Journal Entry | Journal Entry | Direct debit/credit pair |
-| Matched / Cleared | Matched | Bank line tied to a ledger document — **STATUS ONLY** |
-| Reconciled | Reconciled | Statement closed — **STATUS ONLY** |
-| Void | Void | Document killed, number and record retained |
-| Delete | Delete | Document removed from the app |
-
-## PART B — THE POSTING RULE (owner-confirmed law, do not relitigate)
-
-A document posts its journal entry **WHEN IT IS RECORDED**, dated the transaction date.
-**Matched/Cleared and Reconciled create NO journal entry — they are statuses only.**
-Owner: *"if you write a check on Dec 31 but is deposited on January 03, the accountant reports it as a December payment."*
-
-## PART C — THE VOID ENGINE STANDARD (researched, closed, already correct in our app)
-
-NetSuite model, which we already implement and which is superior to QuickBooks' zero-in-place:
-- The original document is **left untouched at its full original amount**, flagged Voided.
-- A **separate reversing journal entry** is written, **dated the void date**, linked both ways (`Void Of` / `Voided On`).
-- **No GL-impacting change is ever made to the original after the fact** — not the amount, not the posting period.
-
-Do not change this. What this round fixes is **who reads voided rows and forgets to exclude them.**
-
-## PART D — ANTI-DRIFT CONTRACT (all 13 apply)
-
-1. Do the thing, live. Not a plan, not a doc about the thing.
-2. Never report done without pasted proof — the live row, the live screen, the live query.
-3. Never guess. Read the source: signed PDF, live table, bank statement.
-4. Empty is a question, not an answer. Check the entity, the filter, the RLS bypass, the join, the spelling.
-5. No patching. Fix the root cause in the same session.
-6. USMCA only — `5c854333-6ea5-4faa-af31-67cb272fef80`. TRANSPORTATION and TRUCKING are frozen.
-7. Every USMCA record is REAL unless `is_sample_data = true`. **Never write test/sample/demo rows into USMCA — not even to prove something works.**
-8. Canonical tables: write `driver_finance.*` / `mdata.qbo_*` / `banking.*` / `maintenance.*` / `mdata.vendors` / `catalogs.load_cancellation_reasons`. Never `payroll.*`, `settlement.*`, `accounting.qbo_*`, `bank.*`, `maint.*`, `mdata.qbo_vendors`, `catalogs.cancellation_reasons`.
-9. Production is Neon `tiny-field-89581227`, branch `br-fancy-credit-akjnd07a`. Reads need **both** lines: `SET LOCAL ROLE neondb_owner;` then `SET LOCAL app.bypass_rls = 'lucia';`
-10. RLS guard work runs on the **pooled** endpoint only, where `current_user` resolves to `ih35_app`. The direct endpoint lies to you.
-11. No blocking guard may derive its verdict from wall-clock time.
-12. **NOTHING STAYS ON YOUR MACHINE.** If it is complete, you push, merge and deploy. No local-only work at the end of your round.
-13. **AUTO-DEPLOY IS OFF.** After merge you trigger the deploy yourself and paste the deploy id.
+## OBEY `claude/00-SEAT-CONTRACT.md`
+That file carries the owner's law, the QuickBooks terminology, the posting rule, the void-engine standard, the mileage rule, the statistical accounts, production access, the canonical tables, the guard rules and the reply format. Read it once. It is not repeated here.
 
 ---
 

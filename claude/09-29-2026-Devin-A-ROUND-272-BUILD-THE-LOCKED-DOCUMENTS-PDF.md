@@ -27,44 +27,8 @@ A PDF renderer exists. It predates the approved designs by six weeks and contain
 
 ---
 
-## PART A — QUICKBOOKS TERMINOLOGY (we all use these words, nothing else)
-
-| Our word | QuickBooks word | What it is |
-|---|---|---|
-| Expense | Expense | Money out, paid at the moment it is recorded |
-| Bill | Bill | Vendor owes-us-later; creates A/P |
-| Bill Payment | Bill Payment | Pays a Bill; clears A/P |
-| Invoice | Invoice | Customer owes us; creates A/R |
-| Receive Payment | Receive Payment | Customer pays; clears A/R |
-| Journal Entry | Journal Entry | Direct debit/credit pair |
-| Matched / Cleared | Matched | Bank line tied to a ledger document — **STATUS ONLY** |
-| Reconciled | Reconciled | Statement closed — **STATUS ONLY** |
-| Void | Void | Document killed, number and record retained |
-| Delete | Delete | Document removed from the app |
-
-## PART B — THE POSTING RULE (owner-confirmed law)
-
-A document posts its journal entry **WHEN IT IS RECORDED**, dated the transaction date. **Matched/Cleared and Reconciled create NO journal entry.**
-
-## PART C — THE VOID ENGINE STANDARD
-
-NetSuite model, already correct in our app: original untouched at full amount and flagged Voided; a **separate reversing journal entry dated the void date**, linked both ways; no GL-impacting change to the original afterward.
-
-## PART D — ANTI-DRIFT CONTRACT (all 13 apply)
-
-1. Do the thing, live. Not a plan, not a doc about the thing.
-2. Never report done without pasted proof — the live row, the live screen, the live query, **and for this round the actual rendered PDF**.
-3. Never guess. Read the source.
-4. Empty is a question, not an answer.
-5. No patching. Fix the root cause in the same session.
-6. USMCA only — `5c854333-6ea5-4faa-af31-67cb272fef80`. TRANSPORTATION and TRUCKING are frozen.
-7. Every USMCA record is REAL unless `is_sample_data = true`. **Never write a test/sample/demo record into USMCA — including to render a proof PDF. Render from a REAL settlement.**
-8. Canonical tables: `driver_finance.*`, `mdata.qbo_*`, `banking.*`, `maintenance.*`, `mdata.vendors`, `catalogs.load_cancellation_reasons`. Never `payroll.*`, `settlement.*`, `accounting.qbo_*`, `bank.*`, `maint.*`, `mdata.qbo_vendors`, `catalogs.cancellation_reasons`.
-9. Production is Neon `tiny-field-89581227`, branch `br-fancy-credit-akjnd07a`. Reads need **both**: `SET LOCAL ROLE neondb_owner;` then `SET LOCAL app.bypass_rls = 'lucia';`
-10. RLS guard work runs on the pooled endpoint only.
-11. No blocking guard may derive its verdict from wall-clock time.
-12. **NOTHING STAYS ON YOUR MACHINE.** Complete means pushed, merged, deployed.
-13. **AUTO-DEPLOY IS OFF.** Trigger the deploy yourself and paste the deploy id.
+## OBEY `claude/00-SEAT-CONTRACT.md`
+That file carries the owner's law, the QuickBooks terminology, the posting rule, the void-engine standard, the mileage rule, the statistical accounts, production access, the canonical tables, the guard rules and the reply format. Read it once. It is not repeated here.
 
 ## SPECIAL RULE FOR THIS SEAT — NO FABRICATED NUMBERS
 
