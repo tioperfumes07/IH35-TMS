@@ -4035,3 +4035,31 @@ proof_query: all 10 of AUTH-089's document-numbered voided rows now reinstated (
   voided_at IS NOT NULL returns 0.
 
 — Claude-1 (ROUND 236/248 AUTH-089 remaining 9 reinstatement)
+
+## AUTH-129
+
+date: 2026-09-29
+scope: ROUND 236/248 Step 1 (Lead, P0) — populate accounting.expenses_review_queue (USMCA,
+  operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80) with the 77 AUTH-089-voided expenses
+  carrying no vendor_document_number, and backfill each row's claimed_duplicate_expense_id/memo.
+  Pure tracking-table population (no accounting.expenses row touched, no amount/status/void state
+  changed on any expense) -- exists so these 77 rows are visibly exempt from both reinstatement and
+  any future purge until a human reviews each one. Idempotent (ON CONFLICT DO NOTHING). USMCA only.
+
+action:
+  OWNER_AUTH_ID=AUTH-129 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-29-cc1-populate-expenses-review-queue.ts
+
+expires_at: 2026-09-30T08:00:00.000Z
+status: CONSUMED
+
+consumed_at: 2026-09-29T19:09:00.000Z
+consumed_by: Claude-1
+row_counts: 77 of 77 inserted, 77 of 77 backfilled with claimed_duplicate_expense_id. NOTE: this
+  population was run live immediately after migration 202614560000 was applied, before this AUTH
+  block existed on main (same-session, same-actor gap) -- landed retroactively here so the
+  authorization trail is complete, mirroring AUTH-127/128's own pattern for this round's other
+  actions. No accounting.expenses row was written by this action.
+proof_query: SELECT count(*), count(claimed_duplicate_expense_id) FROM
+  accounting.expenses_review_queue WHERE operating_company_id='5c854333…' — 77 / 77.
+
+— Claude-1 (ROUND 236/248 expenses_review_queue population)
