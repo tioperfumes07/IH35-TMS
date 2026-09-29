@@ -546,70 +546,142 @@ async function fetchLedgerCandidates(
   const hasFilters = Boolean(searchNeedle || payeeNeedle || options.amountMinCents != null || options.amountMaxCents != null);
   const rowLimit = hasFilters ? 2000 : 500;
   const likeParam = searchNeedle ? `%${searchNeedle}%` : null;
+  const wants = (kind: LedgerEntryKind) => !options.kinds?.length || options.kinds.includes(kind);
 
-  // Settlement pay is money OUT. Deposits get an empty settlement-born set (owner hand-matches).
+  // Direction branches required by verify-bank-match-candidate-sources (Part 1 Match drawer).
+  // ROUND 157-C narrowed bill/bill_payment to settlement-born; ROUND 259 restored expenses +
+  // the explicit isCredit / !isCredit shape after that refactor red'd main CI.
+
+  // --- MONEY IN (deposit) — customer payments ------------------------------------
   if (isCredit) {
-    return [];
+    if (wants("payment")) {
+      const payments = await client.query<RawRow>(
+        `
+          SELECT p.id::text, p.amount_cents::int, p.payment_date::text AS event_date, p.display_id::text AS memo,
+                 p.customer_id::text AS counterparty_id, c.customer_name::text AS counterparty_name,
+                 COALESCE(NULLIF(p.reference, ''), p.display_id)::text AS reference,
+                 NULL::text AS description, NULL::int AS open_balance_cents
+            FROM accounting.payments p
+            LEFT JOIN mdata.customers c ON c.id = p.customer_id
+           WHERE p.operating_company_id = $1::uuid
+             AND p.payment_date BETWEEN $2::date AND $3::date
+             AND p.voided_at IS NULL
+             AND ($4::text IS NULL OR lower(COALESCE(p.display_id, '') || ' ' || COALESCE(p.reference, '') || ' ' || COALESCE(c.customer_name, '')) LIKE $4)
+             AND NOT EXISTS (
+               SELECT 1 FROM banking.reconciliation_matches m
+                WHERE m.ledger_entry_kind = 'payment'
+                  AND m.ledger_entry_id = p.id
+                  AND m.match_state IN ('auto_matched', 'user_matched')
+             )
+           LIMIT $5
+        `,
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit]
+      );
+      for (const row of payments.rows) results.push(toCandidate("payment", row, "customer"));
+    }
   }
 
-  // --- CASH settlement-born bill_payments (primary match targets) ----------------
-  const billPayments = await client.query<RawRow>(
-    `
-      SELECT bp.id::text, bp.amount_cents::int, bp.payment_date::text AS event_date,
-             COALESCE(bp.reference_number, bp.memo)::text AS memo,
-             bp.vendor_id::text AS counterparty_id, v.vendor_name::text AS counterparty_name,
-             COALESCE(NULLIF(bp.check_number, ''), bp.reference_number)::text AS reference,
-             bp.memo::text AS description, NULL::int AS open_balance_cents
-        FROM accounting.bill_payments bp
-        LEFT JOIN mdata.vendors v ON v.id::text = bp.vendor_id
-       WHERE bp.operating_company_id = $1::uuid
-         AND bp.payment_date BETWEEN $2::date AND $3::date
-         AND bp.revoked_at IS NULL
-         AND bp.voided_at IS NULL
-         AND ${SQL_BILL_PAYMENT_IS_CASH_SETTLEMENT_BORN}
-         AND ($4::text IS NULL OR lower(COALESCE(bp.reference_number, '') || ' ' || COALESCE(bp.memo, '') || ' ' || COALESCE(bp.check_number, '') || ' ' || COALESCE(v.vendor_name, '')) LIKE $4)
-         AND NOT EXISTS (
-           SELECT 1 FROM banking.reconciliation_matches m
-            WHERE m.ledger_entry_kind = 'bill_payment'
-              AND m.ledger_entry_id = bp.id
-              AND m.match_state IN ('auto_matched', 'user_matched')
-         )
-         AND bp.source_bank_transaction_id IS NULL
-       LIMIT $5
-    `,
-    [operatingCompanyId, fromDate, toDate, likeParam, rowLimit]
-  );
-  for (const row of billPayments.rows) results.push(toCandidate("bill_payment", row, "vendor"));
+  // --- MONEY OUT (withdrawal) — settlement-born bill_payments / bills + expenses --
+  if (!isCredit) {
+    // --- CASH settlement-born bill_payments (primary match targets) ----------------
+    if (wants("bill_payment")) {
+      const billPayments = await client.query<RawRow>(
+        `
+          SELECT bp.id::text, bp.amount_cents::int, bp.payment_date::text AS event_date,
+                 COALESCE(bp.reference_number, bp.memo)::text AS memo,
+                 bp.vendor_id::text AS counterparty_id, v.vendor_name::text AS counterparty_name,
+                 COALESCE(NULLIF(bp.check_number, ''), bp.reference_number)::text AS reference,
+                 bp.memo::text AS description, NULL::int AS open_balance_cents
+            FROM accounting.bill_payments bp
+            LEFT JOIN mdata.vendors v ON v.id::text = bp.vendor_id
+           WHERE bp.operating_company_id = $1::uuid
+             AND bp.payment_date BETWEEN $2::date AND $3::date
+             AND bp.revoked_at IS NULL
+             AND bp.voided_at IS NULL
+             AND ${SQL_BILL_PAYMENT_IS_CASH_SETTLEMENT_BORN}
+             AND ($4::text IS NULL OR lower(COALESCE(bp.reference_number, '') || ' ' || COALESCE(bp.memo, '') || ' ' || COALESCE(bp.check_number, '') || ' ' || COALESCE(v.vendor_name, '')) LIKE $4)
+             AND NOT EXISTS (
+               SELECT 1 FROM banking.reconciliation_matches m
+                WHERE m.ledger_entry_kind = 'bill_payment'
+                  AND m.ledger_entry_id = bp.id
+                  AND m.match_state IN ('auto_matched', 'user_matched')
+             )
+             AND bp.source_bank_transaction_id IS NULL
+           LIMIT $5
+        `,
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit]
+      );
+      for (const row of billPayments.rows) results.push(toCandidate("bill_payment", row, "vendor"));
+    }
 
-  // --- Settlement-born OPEN bills (ROUND 155.25 — stay candidates until balance zero) ---
-  // Do NOT drop a bill after one match. Only open_balance > 0 removes it.
-  // amount = remaining open balance. Classifier offers record_partial_payment when bill > bank.
-  const bills = await client.query<RawRow>(
-    `
-      SELECT
-        b.id::text,
-        (COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0))::int AS amount_cents,
-        b.bill_date::text AS event_date,
-        COALESCE(b.mdata_vendor_id::text, b.vendor_uuid, b.vendor_id)::text AS counterparty_id,
-        v.vendor_name::text AS counterparty_name,
-        COALESCE(NULLIF(b.bill_number, ''), b.display_id)::text AS reference,
-        b.memo::text AS description,
-        (COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0))::int AS open_balance_cents,
-        COALESCE(NULLIF(b.bill_number, ''), b.display_id, b.memo)::text AS memo
-      FROM accounting.bills b
-      LEFT JOIN mdata.vendors v ON v.id::text = COALESCE(b.mdata_vendor_id::text, b.vendor_uuid, b.vendor_id)
-      WHERE b.operating_company_id = $1::uuid
-        AND b.bill_date BETWEEN $2::date AND $4::date
-        AND b.revoked_at IS NULL
-        AND b.status = ANY($3::text[])
-        AND (COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0)) > 0
-        AND ${SQL_BILL_IS_SETTLEMENT_BORN}
-        AND ($5::text IS NULL OR lower(COALESCE(b.bill_number, '') || ' ' || COALESCE(b.display_id, '') || ' ' || COALESCE(b.memo, '') || ' ' || COALESCE(v.vendor_name, '')) LIKE $5)
-      LIMIT $6
-    `,
-    [operatingCompanyId, fromDate, OPEN_BILL_STATUSES as unknown as string[], toDate, likeParam, rowLimit]
-  );
-  for (const row of bills.rows) results.push(toCandidate("bill", row, "vendor"));
+    // --- Settlement-born OPEN bills (ROUND 155.25 — stay candidates until balance zero) ---
+    // Do NOT drop a bill after one match. Only open_balance > 0 removes it.
+    // amount = remaining open balance. Classifier offers record_partial_payment when bill > bank.
+    if (wants("bill")) {
+      const bills = await client.query<RawRow>(
+        `
+          SELECT
+            b.id::text,
+            (COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0))::int AS amount_cents,
+            b.bill_date::text AS event_date,
+            COALESCE(b.mdata_vendor_id::text, b.vendor_uuid, b.vendor_id)::text AS counterparty_id,
+            v.vendor_name::text AS counterparty_name,
+            COALESCE(NULLIF(b.bill_number, ''), b.display_id)::text AS reference,
+            b.memo::text AS description,
+            (COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0))::int AS open_balance_cents,
+            COALESCE(NULLIF(b.bill_number, ''), b.display_id, b.memo)::text AS memo
+          FROM accounting.bills b
+          LEFT JOIN mdata.vendors v ON v.id::text = COALESCE(b.mdata_vendor_id::text, b.vendor_uuid, b.vendor_id)
+          WHERE b.operating_company_id = $1::uuid
+            AND b.bill_date BETWEEN $2::date AND $4::date
+            AND b.revoked_at IS NULL
+            AND b.status = ANY($3::text[])
+            AND (COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0)) > 0
+            AND ${SQL_BILL_IS_SETTLEMENT_BORN}
+            AND ($5::text IS NULL OR lower(COALESCE(b.bill_number, '') || ' ' || COALESCE(b.display_id, '') || ' ' || COALESCE(b.memo, '') || ' ' || COALESCE(v.vendor_name, '')) LIKE $5)
+          LIMIT $6
+        `,
+        [operatingCompanyId, fromDate, OPEN_BILL_STATUSES as unknown as string[], toDate, likeParam, rowLimit]
+      );
+      for (const row of bills.rows) results.push(toCandidate("bill", row, "vendor"));
+    }
+
+    // --- Posted expenses (Part 1 Match drawer — money-out; restored ROUND 259) ---
+    // Accept path requires status=posted (no new JE on match). Exclude already-matched / voided.
+    if (wants("expense")) {
+      const expenses = await client.query<RawRow>(
+        `
+          SELECT
+            e.id::text,
+            e.total_amount_cents::int AS amount_cents,
+            e.transaction_date::text AS event_date,
+            COALESCE(e.expense_number, e.memo)::text AS memo,
+            e.vendor_uuid::text AS counterparty_id,
+            v.vendor_name::text AS counterparty_name,
+            COALESCE(NULLIF(e.vendor_document_number, ''), e.expense_number)::text AS reference,
+            e.memo::text AS description,
+            NULL::int AS open_balance_cents
+          FROM accounting.expenses e
+          LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid
+          WHERE e.operating_company_id = $1::uuid
+            AND e.transaction_date BETWEEN $2::date AND $3::date
+            AND e.is_active = true
+            AND e.voided_at IS NULL
+            AND e.status = 'posted'
+            AND ($4::text IS NULL OR lower(COALESCE(e.expense_number, '') || ' ' || COALESCE(e.memo, '') || ' ' || COALESCE(e.vendor_document_number, '') || ' ' || COALESCE(v.vendor_name, '')) LIKE $4)
+            AND NOT EXISTS (
+              SELECT 1 FROM banking.reconciliation_matches m
+              WHERE m.ledger_entry_kind = 'expense'
+                AND m.ledger_entry_id = e.id
+                AND m.match_state IN ('auto_matched', 'user_matched')
+            )
+          LIMIT $5
+        `,
+        [operatingCompanyId, fromDate, toDate, likeParam, rowLimit]
+      );
+      for (const row of expenses.rows) results.push(toCandidate("expense", row, "vendor"));
+    }
+  }
 
   const haystack = (r: RawLedgerCandidate) =>
     `${r.memo ?? ""} ${r.reference ?? ""} ${r.description ?? ""} ${r.counterparty_name ?? ""}`.toLowerCase();
