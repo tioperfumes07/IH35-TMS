@@ -1,0 +1,21 @@
+{
+  "established": "2026-09-29T17:30:00.000Z",
+  "ruling": "ROUND 240 — file what R224 loosened (Downloads/09-29-2026-Cursor-ROUND-240-ROUND-224-ACCEPTED-NOW-FILE-WHAT-YOU-LOOSENED.md)",
+  "r224_load_to_cash_link1": ["13622"],
+  "r224_load_to_cash_link2": ["13622", "13624"],
+  "r224_accounting_live_domain_skip": [
+    "apps/backend/src/accounting/index.ts",
+    "apps/backend/src/accounting/checks/checks.routes.ts"
+  ],
+  "ceiling": {
+    "link1_count": 1,
+    "link2_count": 2,
+    "accounting_skip_count": 2
+  },
+  "notes": {
+    "link1_13622": "Neon 2026-09-29 bypass_rls=lucia: invoiced, miles_shortest NULL, has_driver, has_bill=false — refused_no_shortest_miles class. CC-1 owns repair (#23114).",
+    "link2_13622_13624": "Same measure: both lack presettlement_link_id. 13624 has bill+miles. ROUND 219 freeze. CC-1 owns repair.",
+    "accounting_skip": "Exact-file allowlist only — NOT whole accounting/. check-create.service.ts / check-void.service.ts still trip LIVE_DOMAIN_GUARDS including verify-no-document-without-a-ledger. bank-recon/ prefix is pre-R224 GATE-SCOPE and is NOT in this R224 ceiling.",
+    "e7_index_only": "Separate GATE-SCOPE in money-pr-local-gate: ownedIntersectionIsIndexOnly drops --live for e7 live_flag_guards when the ONLY intersecting ownedPath is apps/backend/src/index.ts. Static half still runs. Not a file-pattern skip of the unposted-document census."
+  }
+}

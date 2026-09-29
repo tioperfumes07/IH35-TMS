@@ -112,6 +112,17 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 
 ## Active Architectural Decisions
 
+### Active Architectural Decisions — R224 gate loosenings fenced (Cursor, ROUND 240, 2026-09-29)
+- Owner accepted Check Creator mount (#23117) + AUTH-126 chain (#23118). Ordered: file what was
+  loosened, shrink-only ratchet both sets.
+- Filing: `claude/09-29-2026-CURSOR-GATE-LOOSENINGS-R224.md`
+- Baseline: `scripts/lib/r224-gate-exception-sets.baseline.json` — link1=[13622] ceiling 1;
+  link2=[13622,13624] ceiling 2; accounting LIVE_DOMAIN skip exact files
+  `accounting/index.ts` + `checks/checks.routes.ts` ceiling 2. **Not whole accounting/**.
+- Guard: `scripts/verify-gate-exception-sets-never-grow.mjs` (money-pr-local-gate 03e-R224).
+  Growth needs `GATE_EXCEPTION_GROWTH_RULING` + Lead ruling by number.
+- `verify-no-document-without-a-ledger` tip RED remains CC-1 ROUND 236 — route-around ≠ fix.
+
 ### Active Architectural Decisions — SEED IN BULK, NEVER ROW BY ROW (Cursor, 2026-09-28)
 - **Owner verbatim:** "all data must be seeded instantly and fast, not one by one."
 - **LAW:** Rule 53 (`.cursor/rules/53-seed-in-bulk-never-row-by-row.mdc`, alwaysApply) +
