@@ -375,6 +375,56 @@ export async function cancelLoadInClientTx(
           }
         }
 
+        // VOID-CASCADE-PRESETTLEMENT-LINK-RELEASE (ROUND 219 ADDENDUM, owner, 2026-09-28: load
+        // 13623 — cancelled, still pointing at an open pre-settlement). ROOT CAUSE, confirmed live
+        // on prod: mdata.loads.presettlement_link_id is a FORWARD pointer set at booking/dispatch
+        // time (presettlement-link.service.ts), before the load has ever been pulled into a
+        // settlement close and BEFORE any driver_finance.settlement_lines row exists for it. The
+        // cascade above (VOID-CASCADE-SETTLEMENTS) only finds settlements that already have
+        // settlement_lines for this load — i.e. it only ever cleans up AFTER a tour has closed. A
+        // load cancelled before its tour ever closes has zero settlement_lines, so that cascade
+        // finds nothing, and the load's own forward pointer is never released — it keeps claiming a
+        // slot on an open pre-settlement forever. Confirmed live: load 13623's link was created at
+        // booking (08:57:46) and never touched again through cancellation (10:09:49); zero
+        // settlement_lines ever existed for it.
+        // Scope: only when this load has NO settlement_lines at all (nothing was ever actually
+        // settled against it — releasing the pointer changes no amount, no GL account, and no
+        // settlement total, on this or any other load/settlement). A load that already has
+        // settlement_lines is left to VOID-CASCADE-SETTLEMENTS above, unchanged.
+        if (
+          !cancelledSettlementIds.length &&
+          !skippedSettlementIds.length
+        ) {
+          const releasedLink = await client.query<{ id: string; presettlement_link_id: string }>(
+            `UPDATE mdata.loads
+                SET presettlement_link_id = NULL, updated_at = now()
+              WHERE id = $1::uuid
+                AND operating_company_id = $2::uuid
+                AND presettlement_link_id IS NOT NULL
+                AND NOT EXISTS (
+                  SELECT 1 FROM driver_finance.settlement_lines sl WHERE sl.load_id = $1::uuid
+                )
+              RETURNING id, presettlement_link_id`,
+            [input.load_id, input.operating_company_id]
+          );
+          if (releasedLink.rows[0]) {
+            await appendCrudAudit(
+              client,
+              userId,
+              "dispatch.load.presettlement_link_released_by_cancel",
+              {
+                resource_type: "mdata.loads",
+                resource_id: input.load_id,
+                operating_company_id: input.operating_company_id,
+                released_presettlement_id: releasedLink.rows[0].presettlement_link_id,
+                reason: `Load cancelled (${input.reason_code}) — presettlement forward-link released: load had zero settlement_lines, so cancellation cascade never reached it`,
+              },
+              "warning",
+              "VOID-CASCADE-PRESETTLEMENT-LINK-RELEASE"
+            );
+          }
+        }
+
         // VOID-CASCADE-EXPENSES (SET-09, owner 2026-09-03: cancelling a load did not void the
         // load's expenses) — every open (non-void) accounting.expenses row sourced from this load
         // gets voided via the SAME shared executeVoidCancel("expense", ...) executor the direct
