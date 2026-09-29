@@ -1,32 +1,32 @@
-# NOW-CURSOR — 2026-09-29 ROUND 224 DONE
+# NOW-CURSOR — 2026-09-29 ROUND 259 DONE + LIVE
 
 ## HARD LINE
-ROUND 219 freeze held except AUTH-126 Check Creator chain. Factoring STOPPED.
-LIVE-DB guards: re-run WITH master-keys DATABASE_URL before blaming code (ROUND 29.9-B).
+Obey `claude/00-SEAT-CONTRACT.md`. ROUND 265 self-service. Factoring STOPPED.
+LIVE-DB guards need master-keys DATABASE_URL before blaming code.
 
-## ROUND 224 — CHECK CREATOR MOUNTED + AUTH-126 CONSUMED — DONE
+## ROUND 259 — DONE + LIVE
 
-### Defect
-`registerCheckRoutes` had ZERO named callers outside its folder. Autoload fp was not
-acceptable as the greppable mount. FE CheckDetail/Print already in manifest.
+| Item | Proof |
+|------|-------|
+| Dependabot #22980–#22986 CLOSED (not merged) | gh CLOSED 2026-09-29T20:58Z |
+| Render preview srv-dat5* | all 404 |
+| CI checksum / FK | restored `202614530000` = ledger `f2098eb0…`; follow-up `202614580000` |
+| Truck Line = canonical | board===canonical **12**; guard LIVE PASS |
+| Deploy | `dep-dau3h9u0tbcc73fr127g` **live**; healthz `git_sha=4e84c519a9d965fbd72dc5b39caa50715109d00a` |
 
-### Fix (merged #23117 squash `2661b67017`)
-- `index.ts`: import + `await registerCheckRoutes(app)`
-- `accounting/index.ts`: ignore `checks.routes` (no double-mount)
-- Named-export only (no `export default fp`) — cash-flow pattern
-- Guard `verify-check-routes-mounted.mjs` PASS
+### 11 vs 14 vs 16
+14 dispatched − 13633/13634 (money-finished) − 13627 (AUTH-061 hide) = **11** on screen.
+Extras **T124 + T163** (InService, live ping, no dispatched load). Canonical = **12**.
 
-### AUTH-126 chain (2026-09-29T17:00Z)
-BEFORE reg=4 live=0 next=1005
-→ createCheck 4194581a… need_to_print JE 06628a5e… posted
-→ print_batch 3b8a40aa… check#1005 print_complete
-→ void rev JE 2f774a6c…
-AFTER reg=5 live=0 next=1006
+### Merged
+#23137 · #23139 · #23141 · #23143 · #23146 · #23149 (`4e84c519a9`)
 
-### 3+4 accounting
-1001–1005 all voided seat/AUTH proofs. Live check expenses = 0.
+Report: `claude/2026-09-29-Cursor-ROUND-259-REPORT.md`
+
+## REPORTED NOT FIXED THIS LANE
+Cash-flow private settlement/invoice status filters (not the load active-set) — named in R259 report.
 
 ## DO NOT
-- Leave a live unvoided check in USMCA
-- Double-register checks.routes via autoload + index (boot crash)
-- Steal CC-2 opening-balance / escrow
+- Edit an applied migration in place (checksum drift) — follow-up only
+- Drop entity-isolation backlog from Neon `--update` without fresh-CI proof
+- Steal CC-1/CC-2 money lanes
