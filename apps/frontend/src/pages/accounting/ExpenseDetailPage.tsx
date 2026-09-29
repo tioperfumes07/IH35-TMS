@@ -152,8 +152,10 @@ export function ExpenseDetailPage() {
         actions={
           <div className="flex items-center gap-2">
             <StatusBadge variant={statusVariant(expense.status)}>{expense.status}</StatusBadge>
-            {expense.posting_hold_reason === "tour_open" ? (
-              <StatusBadge variant="crit">held — tour open</StatusBadge>
+            {/* ACC-50 REMOVED (claude/00-SEAT-CONTRACT.md §3, owner ruling 2026-09-29) — a hold
+                reason here now means a genuine remaining cause, never "tour open". */}
+            {expense.posting_hold_reason ? (
+              <StatusBadge variant="crit">held — {expense.posting_hold_reason.replace(/^post_failed:/, "post failed: ").replace(/_/g, " ")}</StatusBadge>
             ) : null}
             <Button
               variant="secondary"
@@ -280,11 +282,10 @@ export function ExpenseDetailPage() {
           <span className="text-xs font-semibold text-gray-600">GL posting</span>
           <span className="flex items-center gap-2 text-xs capitalize text-gray-900">
             {expense.posting_status}
-            {/* ACC-50 (LAW §2) — "open tour posts nothing": this expense carries a load whose
-                tour/settlement is still open, so it was held instead of posting, even if GL
-                posting is enabled for this entity. Clears itself once the tour closes. */}
-            {expense.posting_hold_reason === "tour_open" ? (
-              <StatusBadge variant="crit">held — tour open</StatusBadge>
+            {/* ACC-50 REMOVED (claude/00-SEAT-CONTRACT.md §3, owner ruling 2026-09-29) — a hold
+                reason here now means a genuine remaining cause, never "tour open". */}
+            {expense.posting_hold_reason ? (
+              <StatusBadge variant="crit">held — {expense.posting_hold_reason.replace(/^post_failed:/, "post failed: ").replace(/_/g, " ")}</StatusBadge>
             ) : null}
           </span>
         </DataPanelRow>

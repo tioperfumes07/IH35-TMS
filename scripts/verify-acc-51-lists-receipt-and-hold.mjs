@@ -44,9 +44,12 @@ function checkListPage(src, label) {
 }
 
 function checkPostingPill(src) {
+  // ACC-50 REMOVED (claude/00-SEAT-CONTRACT.md §3, owner ruling 2026-09-29) — PostingPill no longer
+  // special-cases "tour_open" (nothing writes that value any more); it renders whatever hold reason
+  // is actually present. Assert the generic "held" branch survives, not the retired specific one.
   const failures = [];
-  if (!/tour_open/.test(src)) failures.push("PostingPill.tsx has no tour_open branch");
-  if (!/held — tour open|held — tour open/.test(src)) failures.push('PostingPill.tsx has no "held — tour open" text');
+  if (!/holdReason\s*\?/.test(src)) failures.push('PostingPill.tsx has no generic "held" branch keyed on holdReason');
+  if (!/held — /.test(src)) failures.push('PostingPill.tsx has no "held — " text');
   return failures;
 }
 
