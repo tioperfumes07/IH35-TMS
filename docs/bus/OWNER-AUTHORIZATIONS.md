@@ -4187,3 +4187,30 @@ proof_query: SELECT mtd_advances_count, mtd_advanced_total FROM views.factoring_
   accounting.factoring_advances WHERE voided_at IS NOT NULL AND status <> 'voided' returns 0.
 
 — Claude-1 (ROUND 270 factoring_advances status/voided_at drift fix)
+
+## AUTH-133
+
+date: 2026-09-30
+
+scope: ROUND 270 / claude/00-SEAT-CONTRACT.md §3 follow-up (Lead, P0) — re-run the general held-
+  expense retry sweep (retryHeldExpensePostings, apps/backend/src/accounting/tour-close-posting.service.ts)
+  against USMCA (operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80) now that PR #23153
+  removed the ACC-50 open-tour check from that function. AUTH-131 (CONSUMED, ROUND 260 Part H)
+  authorized and ran the FIRST pass of this same sweep while the tour-open gate still existed,
+  correctly leaving 9 expenses held with posting_hold_reason='tour_open' ($1,488.45) because their
+  load's tour was genuinely open under the law in force at the time. That law is now retired
+  (owner ruling 2026-09-29: "no guard may block a post because a tour is open"), so this AUTH
+  authorizes posting those same 9 rows now, through the identical postSourceTransaction engine, no
+  new GL math, each re-checked for a resolvable payment account/vendor exactly as AUTH-131's run
+  was. The 2 rows still held for a genuinely missing payment account/vendor
+  (orphan_no_payment_account_or_vendor, $350.68) remain correctly excluded — not authorized here,
+  still need human review. Not authorized: voiding, reclassifying, or altering any expense's
+  amount/accounts/date; touching any already-posted or already-voided row; touching TRANSP or TRK.
+
+action:
+  OWNER_AUTH_ID=AUTH-133 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-round270-post-acc50-released-expenses.ts
+
+expires_at: 2026-10-01T08:00:00.000Z
+status: OPEN
+
+— Claude-1 (ROUND 270 / ACC-50 removal follow-up: post the 9 released expenses)
