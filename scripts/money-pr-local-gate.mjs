@@ -748,19 +748,25 @@ const LIVE_DOMAIN_GUARDS = [
   // count dynamically, prints "closure re-measured at N live loads", self-arms as feed grows.
   // Domain narrowed 2026-09-28 (GATE-SCOPE): bank-recon MatchDrawer cannot create AR gaps,
   // missing mileage, or orphan expenses — do not block Match/Resolve PRs on feed tip debt.
-  [
-    "verify-purge-era-closures-still-hold",
-    [
-      "apps/backend/src/accounting/from-load.ts",
-      "apps/backend/src/accounting/invoice",
-      "apps/backend/src/accounting/expenses",
-      "apps/backend/src/factoring/",
-      "apps/backend/src/driver-finance/",
-      "apps/backend/src/fuel/",
-      "apps/backend/src/dispatch/",
-      "scripts/verify-purge-era-closures-still-hold.mjs",
-    ],
-  ],
+  // ROUND 213 (owner ruling 2026-09-28): verify-purge-era-closures-still-hold is REPORT-ONLY.
+  // It still runs (see GUARD_REPORT_ONLY below), still prints every arm and every number, but
+  // no longer blocks unrelated work. The guard was written against the purge-era EMPTY book;
+  // that book is gone. It now asserts a closed-books steady state against a system mid-build
+  // and fires on normal operating data (proforma A/R, loads dispatched hours ago, $28 in test
+  // expenses). Every other money guard stays a hard blocking gate. No baselines grow.
+  // [
+  //   "verify-purge-era-closures-still-hold",
+  //   [
+  //     "apps/backend/src/accounting/from-load.ts",
+  //     "apps/backend/src/accounting/invoice",
+  //     "apps/backend/src/accounting/expenses",
+  //     "apps/backend/src/factoring/",
+  //     "apps/backend/src/driver-finance/",
+  //     "apps/backend/src/fuel/",
+  //     "apps/backend/src/dispatch/",
+  //     "scripts/verify-purge-era-closures-still-hold.mjs",
+  //   ],
+  // ],
   // ROUND E23 (DEVIN-B, Q16): a driver merge must have at least one hard identifier
   // match (CDL, passport, INE, CURP, Samsara ID, QBO vendor ID, employee ID). Name
   // similarity alone is NOT sufficient. Baseline 0 (shrink-only).
@@ -1377,6 +1383,21 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     console.log(`[${LABEL}] SKIP ${msg}`);
     skippedLiveChecks.push(msg);
   }
+}
+
+// ROUND 213 (owner ruling 2026-09-28): verify-purge-era-closures-still-hold is REPORT-ONLY.
+// It still runs, still prints every arm and every number, every run — nothing is silenced.
+// But it no longer blocks pushes. The guard was written against the purge-era EMPTY book; that
+// book is gone. It now asserts a closed-books steady state against a system mid-build and fires
+// on normal operating data (proforma A/R, loads dispatched hours ago, $28 in test expenses).
+// Every other money guard stays a hard blocking gate. No baselines grow. No exclusion lists.
+if (process.env.DATABASE_URL) {
+  const reportCode = runNode("scripts/verify-purge-era-closures-still-hold.mjs");
+  if (reportCode !== 0) {
+    console.log(`[${LABEL}] REPORT-ONLY — verify-purge-era-closures-still-hold exited ${reportCode} (ROUND 213: no longer blocking)`);
+  }
+} else {
+  console.log(`[${LABEL}] SKIP verify-purge-era-closures-still-hold.mjs (REPORT-ONLY, no DATABASE_URL)`);
 }
 
 // E7 batch 2 (Lead ROUND 84): the guards in scripts/lib/e7-batch2-live-guards.json fail closed. Each
