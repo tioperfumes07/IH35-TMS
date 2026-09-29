@@ -3999,3 +3999,23 @@ proof_query: SELECT sum(e.total_amount_cents), count(*) FROM accounting.expenses
   exactly (ROUND 236 proof item 3).
 
 — Claude-1 (ROUND 236 AUTH-089 dedupe-key correction)
+
+## AUTH-128
+
+date: 2026-09-29
+scope: ROUND 236/248 (Lead, P0) — reinstate the remaining 9 accounting.expenses rows (USMCA,
+  operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80) that AUTH-089 voided citing a
+  (load, amount) duplicate match, where no live row on the same load carries the same
+  vendor_document_number: 64f2b99c… (13514/1597129/$15.25), edb89fc2… (13514/1360475/$15.25),
+  9f6990c0… (13515/1295089/$15.25), df3dc885… (13515/1295098/$5.25), 5ee11e39…
+  (13515/40016373/$5.25), 24b9378b… (13515/39016214/$15.25), c0c1aace… (13528/2044386/$15.25),
+  831733cd… (13548/1230441/$15.25), 964abc3d… (13565/2047749/$15.25). Via
+  reinstateDocumentThenVoidReversal (R-191) only -- no raw UPDATE, no new row. USMCA only. Not
+  authorized: touching the 77 undocumented AUTH-089 rows (moved to a review queue instead, not
+  reinstated); TRANSP/TRK; QBO write-back; any write outside these 9 expense ids.
+
+action:
+  OWNER_AUTH_ID=AUTH-128 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-29-cc1-auth089-reinstate-remaining-9.ts
+
+expires_at: 2026-09-30T08:00:00.000Z
+status: OPEN
