@@ -70,6 +70,12 @@ export type PlaidBankTransaction = {
   plaid_category: string[];
   pending: boolean;
   is_credit: boolean;
+  /** ROUND 224 — the real state written by POST /transactions/:id/categorize. */
+  status?: string | null;
+  /** ROUND 224 — the real state written by POST /link-suggestions/exclude (and 'matched' by the
+   * accept-suggestion flow). Independent of `status` — a transaction can be categorized without
+   * ever being reviewed for a match, and vice versa. */
+  review_state?: string | null;
   matched_load_id: string | null;
   /** BANK-F5662: load_number joined alongside matched_load_id (per-account register labels). */
   matched_load_number?: string | null;
