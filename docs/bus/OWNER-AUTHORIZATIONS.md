@@ -3885,3 +3885,23 @@ proof_query: SELECT id, status, voided_at, total_amount_cents, posting_status, r
   FROM accounting.expenses WHERE id IN (the four AUTH-124 ids) — all void/reversed, WORM retained.
 
 — Cursor (ROUND 213 arm 31)
+
+## AUTH-125
+
+date: 2026-09-29
+scope: ROUND 222 — Check Creator full-chain live proof under ROUND 219 freeze exception
+  for accounting.expenses (authorized ONLY as part of this chain). USMCA only.
+  One print_later createCheck → assignPrintBatch (stock next 1004) → confirmPrintBatch →
+  measure registry + live check expense + JE + print_status → voidCheck same session
+  (seat-fixtures law; void never delete). Proves creator→registry→expense(payment_type=
+  check)→GL→print. Not authorized: inventing a starting check number; leaving a live
+  unvoided check; DELETE; TRANSP/TRK; QBO write-back; touching freeze tables outside
+  this chain (loads / settlements / settlement_lines / driver_bills / invoices).
+
+action:
+  OWNER_AUTH_ID=AUTH-125 DATABASE_URL=<prod> npx tsx scripts/ops/r222-check-creator-full-chain-proof.ts
+
+expires_at: 2026-09-30T06:00:00.000Z
+status: OPEN
+
+— Cursor (ROUND 222 Check Creator)
