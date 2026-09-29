@@ -1,26 +1,26 @@
 {
  "date": "2026-09-29",
- "generated_at_iso": "2026-09-29T13:04:19.609Z",
+ "generated_at_iso": "2026-09-29T15:55:01.542Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
   "NEEDS-VERIFY": 69,
-  "DONE": 550,
+  "DONE": 551,
   "AUDIT-NOTE": 578
  },
  "universe": {
-  "total_blocks_after_dedup": 1245,
+  "total_blocks_after_dedup": 1246,
   "by_source_after_dedup": {
-   ".block-ready": 1051,
+   ".block-ready": 1052,
    "program": 83,
    "enterprise-29": 29,
    "accounting": 25,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 1423,
+   ".block-ready (*.json files)": 1424,
    ".block-ready retired (dup/stale/superseded, excluded)": 367,
-   ".block-ready active (counted)": 1056
+   ".block-ready active (counted)": 1057
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files with EXPLICIT retirement markers (_DUP/_STALE/_SUPERSEDED underscore suffixes, status superseded/duplicate/dup/stale, or superseded_by/duplicate_of). Hyphen descriptive …-stale/…-duplicate live defect IDs are NOT retired by filename alone. So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations."
  },
@@ -3420,6 +3420,17 @@
    "name": "Create NavyPageSubNav as the software-wide navy banner standard. Swap SettlementsPage onto it. Lock approved tokens in C",
    "registered_on": null,
    "pr": null
+  },
+  {
+   "id": "DEVIN-A-R205-B2",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #23096 merged 2026-09-29",
+   "name": "B2: session-middleware IH35_TEST_AUTH_BYPASS NODE_ENV gate + boot assertion + freshness check GR-1 baseline filter fix",
+   "registered_on": null,
+   "pr": 23096
   },
   {
    "id": "DISP-FACTORING-PACKET",
@@ -13727,6 +13738,18 @@
  ],
  "merged_prs": [
   {
+   "number": 23112,
+   "title": "Claude-3-FINDING: N/A LANE: DOCS -- ROUND 219/223 guard findings (presettlement false-positive, SET ROLE bugs)",
+   "mergedAt": "2026-09-29T15:43:15Z",
+   "branch": "cc-3/now-cc1-r219-findings"
+  },
+  {
+   "number": 23111,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-29T13:05:22Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 23110,
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-09-29T05:52:45Z",
@@ -13797,6 +13820,12 @@
    "title": "Claude-3-FINDING: N/A LANE: DOCS -- verify-truck-line-units-only.mjs stale-hex regex defect (CC-1 filing)",
    "mergedAt": "2026-09-28T23:03:41Z",
    "branch": "cc-3/file-trucklineboard-guard-defect"
+  },
+  {
+   "number": 23096,
+   "title": "FINDING: LST-F202609282050 LANE: NON-FINANCIAL — B2 session NODE_ENV gate + freshness check baseline filter",
+   "mergedAt": "2026-09-29T15:53:09Z",
+   "branch": "devin-a/r204-b2-session-middleware"
   },
   {
    "number": 23095,
@@ -17307,24 +17336,6 @@
    "title": "FINDING: GUARD-F2026092410 — bank-match-suggest-is-read-only (ROUND 140.6)",
    "mergedAt": "2026-09-24T01:46:27Z",
    "branch": "devin-b/bank-match-readonly"
-  },
-  {
-   "number": 22485,
-   "title": "Q35 REPORT — module walk (API + DB, USMCA)",
-   "mergedAt": "2026-09-24T01:27:46Z",
-   "branch": "devin-a/q35-module-walk"
-  },
-  {
-   "number": 22484,
-   "title": "Claude-3: Q16 verify-no-driver-merge-without-hard-identifier.mjs",
-   "mergedAt": "2026-09-24T01:26:02Z",
-   "branch": "claude/q16-driver-merge-hard-identifier-guard"
-  },
-  {
-   "number": 22483,
-   "title": "CC-2-gate: ih35_ci_readonly default + concurrency-flake fix (GATE-F004/F005/F005-B)",
-   "mergedAt": "2026-09-24T01:32:57Z",
-   "branch": "cc2-gate-scope-03-refix"
   }
  ],
  "merged_pr_total": 3000,
