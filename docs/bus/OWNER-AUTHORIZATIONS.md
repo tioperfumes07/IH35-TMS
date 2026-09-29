@@ -3947,6 +3947,21 @@ action:
   OWNER_AUTH_ID=AUTH-126 DATABASE_URL=<prod> npx tsx scripts/ops/r224-check-creator-full-chain-proof.ts
 
 expires_at: 2026-09-30T23:59:59.000Z
-status: OPEN
+status: CONSUMED
 
-— Cursor (ROUND 224 Check Creator mount + chain)
+consumed_at: 2026-09-29T17:00:14.000Z
+consumed_by: Cursor
+row_counts: 1 createCheck print_later → assignPrintBatch stock 1005 → confirm → voidCheck
+  same session. expense 4194581a-f13c-4383-bb34-387073309b63 check#1005
+  payment_type=check, print_status=print_complete, posting_status=posted→reversed,
+  JE 06628a5e-c929-4068-944d-5b60076f54de, reversing JE 2f774a6c-0959-41ec-8dbb-f86fbbd83ce1.
+  print_batch 3b8a40aa-0f8d-413c-a87e-63f1240b5e3a confirmed.
+  REGISTRY_COUNT_BEFORE=4 → MID=5 → AFTER=5 (1005 voided, number retained).
+  CHECK_EXPENSE_LIVE_BEFORE=0 → MID=1 → AFTER=0.
+  check_expense_all 5→6. stock next 1005→1006.
+proof_query: SELECT check_number, status, source_id FROM banking.check_number_registry
+  WHERE operating_company_id='5c854333…' ORDER BY check_number — 1001–1005 all present,
+  1005 voided linked to 4194581a…. Live check expenses = 0 after void (seat-fixtures law).
+  Mount already on main #23117 squash 2661b67017 (registerCheckRoutes in index.ts).
+
+— Cursor (ROUND 224 Check Creator mount + AUTH-126 chain)

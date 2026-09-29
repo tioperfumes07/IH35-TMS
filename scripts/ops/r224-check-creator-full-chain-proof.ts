@@ -83,8 +83,8 @@ async function measure(): Promise<Counts> {
 }
 
 async function main() {
-  if (process.env.OWNER_AUTH_ID !== "AUTH-125") {
-    console.error("Refusing: set OWNER_AUTH_ID=AUTH-125");
+  if (process.env.OWNER_AUTH_ID !== "AUTH-126") {
+    console.error("Refusing: set OWNER_AUTH_ID=AUTH-126");
     process.exit(1);
   }
   if (!process.env.DATABASE_URL) {
@@ -108,14 +108,14 @@ async function main() {
     payee_id: VENDOR,
     check_date: today,
     print_later: true,
-    memo: `AUTH-125 R222 full-chain proof — VOID same session`,
+    memo: `AUTH-126 R224 full-chain proof — VOID same session`,
     lines: [
       {
         line_kind: "category",
         category_kind: "maintenance",
         category_code: "maintenance",
         amount_cents: 100,
-        description: "AUTH-125 R222 chain $1.00",
+        description: "AUTH-126 R224 chain $1.00",
       },
     ],
   });
@@ -183,7 +183,7 @@ async function main() {
     USMCA,
     ACTOR,
     created.id,
-    "AUTH-125 R222 full-chain proof — void same session"
+    "AUTH-126 R224 full-chain proof — void same session"
   );
   console.log("VOIDED", voided);
 

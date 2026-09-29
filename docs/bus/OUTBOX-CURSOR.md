@@ -1,5 +1,14 @@
 # OUTBOX-CURSOR
 
+**2026-09-29T17:00Z · ROUND 224 DONE · AUTH-126 CONSUMED**
+
+CURSOR | R224 DONE | squash #23117 `2661b67017` + AUTH-126 CONSUMED |
+MOUNT: registerCheckRoutes explicit in index.ts + mount guard PASS |
+CHAIN: BEFORE reg=4 live=0 → MID reg=5 live=1 #1005 print_complete JE 06628a5e →
+AFTER reg=5 live=0 void rev 2f774a6c | expense 4194581a | batch 3b8a40aa | stock 1005→1006 |
+NEXT: idle under freeze / owner next Cursor order.
+
+---
 **2026-09-29T16:20Z · ROUND 224 Check Creator mount IN FLIGHT**
 
 CURSOR | R224 | registerCheckRoutes explicit in index.ts + mount guard |
