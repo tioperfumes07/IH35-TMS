@@ -1,6 +1,6 @@
 {
  "date": "2026-09-29",
- "generated_at_iso": "2026-09-29T15:55:01.542Z",
+ "generated_at_iso": "2026-09-29T22:23:44.952Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -838,10 +838,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #23101 title-match only, unverified",
+   "evidence": "PR #23145 title-match only, unverified",
    "name": "CC-2 cross-check signal for Codex/Cursor: ran verify-codex-vertical-nonmoney-zero-remainder.mjs directly, confirming rem",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-claim-reports-0223",
@@ -849,10 +849,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #23101 title-match only, unverified",
+   "evidence": "PR #23145 title-match only, unverified",
    "name": "CC-2 claims POST-U14 leftover sequence order 5 (REPORTS, /reports) after driver-hub's unique-FINDING hunting came up emp",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-codex-progress-check-fleet-sweep-0223",
@@ -860,10 +860,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #23101 title-match only, unverified",
+   "evidence": "PR #23145 title-match only, unverified",
    "name": "CC-2 confirms Codex is actively progressing (DRV-F6246-53 series, commit-message status not OUTBOX-CODEX.md) and reports",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-customers-reverse-proof-0223",
@@ -871,10 +871,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #23101 title-match only, unverified",
+   "evidence": "PR #23145 title-match only, unverified",
    "name": "CC-2 helping Codex's MODULE=customers reverse SQL/GET hops (per U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md). Live SQL ",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-dot-inspection-test-fixture-void-0223",
@@ -882,10 +882,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #23101 title-match only, unverified",
+   "evidence": "PR #23145 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg: found and voided a stray test-fixture row (safety.dot_inspections) live in the DOT audit ",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-driver-hub-chrome-law-note-0223",
@@ -893,10 +893,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #23101 title-match only, unverified",
+   "evidence": "PR #23145 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired sweep session close-out status: 3 PRs merged this leg (label-leak fix, sample-data-fixture-",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-driver-hub-chrome-law-pass2-0223",
@@ -904,10 +904,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #23101 title-match only, unverified",
+   "evidence": "PR #23145 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: second chrome-law live pass. Leave Requests Range filter honest-empty state + Reset/Ca",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-driver-hub-create-void-verified-0223",
@@ -915,10 +915,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #23101 title-match only, unverified",
+   "evidence": "PR #23145 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: live CREATE-TEST-THEN-VOID verification of the Assign Temp Cover control on production",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-driver-hub-postdeploy-confirm-0223",
@@ -926,10 +926,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #23101 title-match only, unverified",
+   "evidence": "PR #23145 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: post-deploy live re-check confirms LV-DRIVER-HUB-REPORTING-STALE-NO-LOAD-FK's fix (#14",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-driver-hub-responsive-checked-0223",
@@ -937,10 +937,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #23101 title-match only, unverified",
+   "evidence": "PR #23145 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: responsive-overflow check clean (Driver Scheduler + Reporting, ~500px viewport, 0 hori",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-driver-hub-row3-done-0223",
@@ -948,10 +948,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #23101 title-match only, unverified",
+   "evidence": "PR #23145 title-match only, unverified",
    "name": "CC-2 marks POST-U14 leftover row 3 (DRIVER HUB) DONE with full close-out summary, correcting stale claim-only text so th",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-driver-hub-sweep-status-0223",
@@ -959,10 +959,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #23101 title-match only, unverified",
+   "evidence": "PR #23145 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired sweep progress status. Documents that Overview/Driver Scheduler/Leave Requests tabs plus th",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-drivers-fleet-reverse-proof-0223",
@@ -970,10 +970,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #23101 title-match only, unverified",
+   "evidence": "PR #23145 title-match only, unverified",
    "name": "CC-2 helping Codex's MODULE=drivers and MODULE=fleet reverse SQL/GET hops. Live SQL proof of forward+reverse FK chains f",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-mdata-reverse-sweep-0223b",
@@ -981,10 +981,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #23101 title-match only, unverified",
+   "evidence": "PR #23145 title-match only, unverified",
    "name": "CC-2 mdata reverse SQL/GET sweep continuation on customers/drivers/fleet (help Codex CERTIFY, per INBOX-CC-2). This pass",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-mdata-sweep-clean-0223c",
@@ -992,10 +992,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #23101 title-match only, unverified",
+   "evidence": "PR #23145 title-match only, unverified",
    "name": "CC-2 mdata reverse SQL/GET sweep continuation on customers/drivers/fleet (help Codex CERTIFY). This pass swept clean acr",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-reports-full-category-sweep-0223",
@@ -1003,10 +1003,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #23101 title-match only, unverified",
+   "evidence": "PR #23145 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg session close-out: all 9 report categories walked, 8 reports run live, all genuinely wired",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-reports-progress-status-0223",
@@ -1014,10 +1014,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #23101 title-match only, unverified",
+   "evidence": "PR #23145 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg progress status: IFTA Quarterly Preparer entry confirmed real and correctly wired; Generat",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-reports-row-done-0223",
@@ -1025,10 +1025,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #23101 title-match only, unverified",
+   "evidence": "PR #23145 title-match only, unverified",
    "name": "CC-2 marks POST-U14 leftover row 5 (REPORTS) DONE, matching CC-3's table-exhausted close-out. Returning full attention t",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-reports-sweep2-clean-0223",
@@ -1036,10 +1036,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #23101 title-match only, unverified",
+   "evidence": "PR #23145 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg: Fleet utilization and Internal inspection-point rollup reports spot-checked live, both cl",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-sql-proof-rls-discriminator-0223",
@@ -1047,10 +1047,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #23101 title-match only, unverified",
+   "evidence": "PR #23145 title-match only, unverified",
    "name": "CC-2 delivers a hop-10 (RLS + completeness discriminator) SQL proof for Codex's MODULE=drivers and MODULE=fleet CERTIFIE",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc2-ack-go-0105-r1-guard-money-h4-after-live",
@@ -3072,7 +3072,7 @@
    "evidence": "all 1 file(s) on main",
    "name": "CC-2 /driver-hub Fully-Wired 1-12 Live Chrome leftover (POST-URGENT-14 sequence order 3), triggered by an empty unique-F",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-driver-list-sample-data-exclusion-0223",
@@ -3083,7 +3083,7 @@
    "evidence": "all 3 file(s) on main",
    "name": "CC-2 /driver-hub Fully-Wired leg, CREATE-flow probe on Assign Temp Cover found other seats' test/QA fixture units and dr",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-help-codex-certify-cdf-0223",
@@ -3094,7 +3094,7 @@
    "evidence": "all 2 file(s) on main",
    "name": "CC-2 mdata reverse SQL/GET hunt on customers/drivers/fleet (help Codex CERTIFY, per INBOX-CC-2). Found + root-caused + f",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "cc-2-reports-required-filter-indicator-0223",
@@ -3105,7 +3105,7 @@
    "evidence": "all 3 file(s) on main",
    "name": "CC-2 /reports Fully-Wired leg. Live probe on driver-pay-history found Run report silently disabled with zero visual expl",
    "registered_on": null,
-   "pr": 23101
+   "pr": 23145
   },
   {
    "id": "CC1-FINANCE-SETTLEMENTS-TOOLBAR-CONNECTIVITY-HONESTY-2026-08-16",
@@ -13738,6 +13738,234 @@
  ],
  "merged_prs": [
   {
+   "number": 23150,
+   "title": "Claude- AUTH-131 CONSUMED: 246 of 257 held expenses posted",
+   "mergedAt": "2026-09-29T22:19:34Z",
+   "branch": "claude/round260-auth131-consumed"
+  },
+  {
+   "number": 23149,
+   "title": "Cursor- P0 — restore 202614530000 applied bytes + FK-safe follow-up migration",
+   "mergedAt": "2026-09-29T22:16:00Z",
+   "branch": "cursor/r259-migration-checksum-restore-c89b"
+  },
+  {
+   "number": 23148,
+   "title": "Claude- ROUND 270 Item 1: add 6 Faro invoices to day_control.json",
+   "mergedAt": "2026-09-29T22:13:42Z",
+   "branch": "claude/round270-day-control-6-faro-invoices"
+  },
+  {
+   "number": 23147,
+   "title": "Claude- ACCT-F2026093003: fix verify-open-tour-posts-nothing false positive",
+   "mergedAt": "2026-09-29T22:09:04Z",
+   "branch": "claude/round270-fix-open-tour-guard-cancelled-settlement"
+  },
+  {
+   "number": 23146,
+   "title": "Cursor- ROUND 259 — restore 3 entity-isolation backlog rows (CI fresh DB)",
+   "mergedAt": "2026-09-29T21:58:48Z",
+   "branch": "cursor/r259-restore-entity-backlog-c89b"
+  },
+  {
+   "number": 23145,
+   "title": "CC-2-FINDING: NO_CLEARING_PILEUP fully root-caused, real defect fixed",
+   "mergedAt": "2026-09-29T21:49:32Z",
+   "branch": "cc2/r261-clearing-pileup-full-root-cause"
+  },
+  {
+   "number": 23144,
+   "title": "Claude- ACCT-F2026093002: factoring_advances status left stale after void",
+   "mergedAt": "2026-09-29T21:48:17Z",
+   "branch": "claude/round270-factoring-advance-status-void-mismatch-v2"
+  },
+  {
+   "number": 23143,
+   "title": "Cursor- ROUND 259 — drop stale entity-isolation backlog rows",
+   "mergedAt": "2026-09-29T21:44:36Z",
+   "branch": "cursor/r259-entity-isolation-stale-backlog-c89b"
+  },
+  {
+   "number": 23142,
+   "title": "Claude- chore: claim-reserve 11741",
+   "mergedAt": "2026-09-29T21:38:13Z",
+   "branch": "chore/claim-reserve-11741"
+  },
+  {
+   "number": 23141,
+   "title": "Cursor- ROUND 259 — allowlist catalogs.blocked_feature_flags (global)",
+   "mergedAt": "2026-09-29T21:30:05Z",
+   "branch": "cursor/r259-blocked-flags-entity-allowlist-c89b"
+  },
+  {
+   "number": 23140,
+   "title": "Claude- ACCT-F2026093001: held expenses with no retry path never post",
+   "mergedAt": "2026-09-29T21:25:24Z",
+   "branch": "claude/round260-parth-retry-held-expense-postings"
+  },
+  {
+   "number": 23139,
+   "title": "Cursor- ROUND 259 follow-up — restore bank-match expense + isCredit branches",
+   "mergedAt": "2026-09-29T21:20:13Z",
+   "branch": "cursor/r259-bank-match-candidate-sources-c89b"
+  },
+  {
+   "number": 23138,
+   "title": "CC-2-FINDING: NO_CLEARING_PILEUP blocking ROUND 245 P0",
+   "mergedAt": "2026-09-29T21:27:16Z",
+   "branch": "cc2/r245-clearing-pileup-blocker-finding"
+  },
+  {
+   "number": 23137,
+   "title": "Cursor- ROUND 259 — close Dependabot + fix CI FK 202614530000 + Truck Line canonical",
+   "mergedAt": "2026-09-29T21:06:36Z",
+   "branch": "cursor/r259-dependabot-close-migration-fk-c89b"
+  },
+  {
+   "number": 23136,
+   "title": "Claude- ROUND 251 Item 7: kill the wall-clock gate",
+   "mergedAt": "2026-09-29T21:02:42Z",
+   "branch": "claude/round251-item7-kill-wall-clock-gate"
+  },
+  {
+   "number": 23135,
+   "title": "Claude- chore: claim-reserve 11737",
+   "mergedAt": "2026-09-29T20:53:41Z",
+   "branch": "chore/claim-reserve-11737"
+  },
+  {
+   "number": 23134,
+   "title": "CC-2-FINDING: ACCT-F26433 B5 invite token hash + two-phase session claim",
+   "mergedAt": "2026-09-29T20:48:55Z",
+   "branch": "cc2/r206-b5-invite-session-hash"
+  },
+  {
+   "number": 23133,
+   "title": "Claude-1- ROUND 251 Item 1: bill_payment coverage fallback — releases CC-2 and CC-3",
+   "mergedAt": "2026-09-29T20:41:32Z",
+   "branch": "claude/round251-item1-bill-payment-coverage-fallback"
+  },
+  {
+   "number": 23132,
+   "title": "CC-2-FINDING: ROUND 245 P2 -- 130 bill_payments are GL-exempt, NOT a posting failure",
+   "mergedAt": "2026-09-29T19:31:27Z",
+   "branch": "cc2/r245-p2-double-booking-finding"
+  },
+  {
+   "number": 23131,
+   "title": "Claude-1- ROUND 248: AUTH-130 CONSUMED — 6/6 draft duplicates resolved",
+   "mergedAt": "2026-09-29T19:30:02Z",
+   "branch": "claude/round248-auth130-consumed"
+  },
+  {
+   "number": 23130,
+   "title": "Claude-1- ROUND 248: AUTH-130 — authorize Step 3 draft-duplicate resolution",
+   "mergedAt": "2026-09-29T19:26:33Z",
+   "branch": "claude/round248-step3-draft-duplicates"
+  },
+  {
+   "number": 23129,
+   "title": "Claude-1- ROUND 236/248 Step 1: expenses_review_queue (77-row exempt set) + load-boards-agree pooler fix",
+   "mergedAt": "2026-09-29T19:20:58Z",
+   "branch": "claude/round248-expenses-review-queue-migration"
+  },
+  {
+   "number": 23128,
+   "title": "CC-2-FINDING: ROUND 224 banking tab counts real state + 3 stale guard fixes",
+   "mergedAt": "2026-09-29T19:31:16Z",
+   "branch": "cc2/r224-banking-tabs-real-state"
+  },
+  {
+   "number": 23127,
+   "title": "Claude-1- ROUND 236/248: AUTH-128 CONSUMED — 9/9 remaining expenses reinstated",
+   "mergedAt": "2026-09-29T19:06:01Z",
+   "branch": "claude/round248-auth128-consumed"
+  },
+  {
+   "number": 23126,
+   "title": "Claude-1- ROUND 236/248: AUTH-128 — authorize reinstatement of remaining 9 wrongly-voided expenses",
+   "mergedAt": "2026-09-29T19:02:54Z",
+   "branch": "claude/round248-auth128-reinstate-remaining-9"
+  },
+  {
+   "number": 23125,
+   "title": "Claude-1- ROUND 236 item 4: 77-row AUTH-089 triage register",
+   "mergedAt": "2026-09-29T18:49:19Z",
+   "branch": "claude/round236-77row-triage-register"
+  },
+  {
+   "number": 23124,
+   "title": "Claude-1- ROUND 236: permanent guard against the (load, amount) duplicate-expense void key",
+   "mergedAt": "2026-09-29T18:48:45Z",
+   "branch": "claude/round236-expense-dedupe-key-guard"
+  },
+  {
+   "number": 23123,
+   "title": "Cursor- ROUND 240 file R224 gate loosenings + shrink-only ratchet",
+   "mergedAt": "2026-09-29T18:43:04Z",
+   "branch": "cursor/r240-gate-loosenings-file-c89b"
+  },
+  {
+   "number": 23122,
+   "title": "Claude-1- CLAIM-RESERVE 11731 (retroactive) + 11733",
+   "mergedAt": "2026-09-29T18:43:52Z",
+   "branch": "chore/claim-reserve-11733"
+  },
+  {
+   "number": 23121,
+   "title": "Claude-1- ROUND 241: fix cash-flow due-date guard — real terms, not a batch override",
+   "mergedAt": "2026-09-29T18:36:01Z",
+   "branch": "claude/round241-cash-flow-guard-real-terms-rule"
+  },
+  {
+   "number": 23120,
+   "title": "Claude-1- ROUND 236: AUTH-127 CONSUMED — live proof, expense reinstated",
+   "mergedAt": "2026-09-29T18:34:42Z",
+   "branch": "claude/round236-auth127-consumed"
+  },
+  {
+   "number": 23119,
+   "title": "Claude-1- ROUND 236: AUTH-127 — authorize reinstatement of AUTH-089's wrongly-voided expense",
+   "mergedAt": "2026-09-29T18:21:59Z",
+   "branch": "claude/round236-auth127-reinstate-13549-19"
+  },
+  {
+   "number": 23118,
+   "title": "Cursor- AUTH-126 CONSUMED — ROUND 224 Check Creator full-chain live proof",
+   "mergedAt": "2026-09-29T17:21:02Z",
+   "branch": "cursor/r224-auth126-consumed-c89b"
+  },
+  {
+   "number": 23117,
+   "title": "Cursor- ACCT-F224 ROUND 224 Check Creator registerCheckRoutes mounted in index.ts",
+   "mergedAt": "2026-09-29T16:58:33Z",
+   "branch": "cursor/r224-check-routes-mounted-c89b"
+  },
+  {
+   "number": 23116,
+   "title": "Claude-1- ROUND 226.1: AlwaysTrack full parity comparison tool (app vs AlwaysTrack)",
+   "mergedAt": "2026-09-29T16:18:56Z",
+   "branch": "claude/round226-1-alwaystrack-parity-comparison"
+  },
+  {
+   "number": 23115,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-29T15:56:11Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 23114,
+   "title": "CC-2-FINDING: verify-load-to-cash-chain global blocker (ROUND 219 loads)",
+   "mergedAt": "2026-09-29T15:59:55Z",
+   "branch": "cc2/r225-load-to-cash-chain-blocker-finding"
+  },
+  {
+   "number": 23113,
+   "title": "Claude-1- ROUND 224: settlementLabel precedence — real AlwaysTrack number must beat PENDING",
+   "mergedAt": "2026-09-29T16:01:02Z",
+   "branch": "claude/round224-settlement-label-precedence-fix"
+  },
+  {
    "number": 23112,
    "title": "Claude-3-FINDING: N/A LANE: DOCS -- ROUND 219/223 guard findings (presettlement false-positive, SET ROLE bugs)",
    "mergedAt": "2026-09-29T15:43:15Z",
@@ -13768,10 +13996,22 @@
    "branch": "cursor/r222-check-creator-full-wire-c89b"
   },
   {
+   "number": 23107,
+   "title": "Devin- FINDING: ROUND-221.1 — guard-literal defect sweep + shared helper",
+   "mergedAt": "2026-09-29T16:07:11Z",
+   "branch": "devin-a/guard-literal-defect-sweep"
+  },
+  {
    "number": 23106,
    "title": "Claude-1- ROUND 219 ADDENDUM: cancellation releases dangling presettlement link (load 13623)",
    "mergedAt": "2026-09-29T02:09:31Z",
    "branch": "claude/round219-addendum-status-chain-loads"
+  },
+  {
+   "number": 23105,
+   "title": "Cursor- AUTH-122 CONSUMED stamp (rebase onto tip after R222)",
+   "mergedAt": "2026-09-29T15:56:26Z",
+   "branch": "cursor/r219-auth122-consumed-c89b"
   },
   {
    "number": 23104,
@@ -17096,246 +17336,6 @@
    "title": "FINDING: N/A LANE: DOCS (ROUND 152 -- the scorecard, build order all seats)",
    "mergedAt": "2026-09-24T04:27:41Z",
    "branch": "claude-lead/round152"
-  },
-  {
-   "number": 22526,
-   "title": "FINDING: N/A LANE: DOCS (ROUND 151.5 -- root cause from the register)",
-   "mergedAt": "2026-09-24T04:22:08Z",
-   "branch": "claude-lead/round151-5"
-  },
-  {
-   "number": 22525,
-   "title": "FINDING: N/A LANE: DOCS (ROUND 151.3/151.4 -- CC-3 LAW 5, CC-1 order)",
-   "mergedAt": "2026-09-24T04:11:53Z",
-   "branch": "claude-lead/round151-cc"
-  },
-  {
-   "number": 22524,
-   "title": "FINDING: N/A LANE: DOCS (ROUND 151 Updated -- entity per owner ruling)",
-   "mergedAt": "2026-09-24T04:10:49Z",
-   "branch": "claude-lead/round151-updated"
-  },
-  {
-   "number": 22523,
-   "title": "FINDING: N/A LANE: DOCS (ROUND 151.1/151.2 -- Devin-A hold; Devin-B guard scoping)",
-   "mergedAt": "2026-09-24T04:04:14Z",
-   "branch": "claude-lead/round151-devin"
-  },
-  {
-   "number": 22522,
-   "title": "FINDING: N/A LANE: DOCS (ROUND 151 -- Cursor: feed drops loads inside documents, 24 unfed; ghost advance a76ed504)",
-   "mergedAt": "2026-09-24T04:03:25Z",
-   "branch": "claude-lead/round151-cursor-feed"
-  },
-  {
-   "number": 22521,
-   "title": "CC-2-board note: alwaystrack-parity gap growing (2 to 5 documents)",
-   "mergedAt": "2026-09-24T03:39:32Z",
-   "branch": "cc2-board-note-alwaystrack-parity-growing"
-  },
-  {
-   "number": 22520,
-   "title": "FINDING: GUARD-F2026092424 — load outcome presence + seat distance from main",
-   "mergedAt": "2026-09-24T03:37:34Z",
-   "branch": "devin-b/load-outcome-and-seat-distance"
-  },
-  {
-   "number": 22519,
-   "title": "CC-2-Q22: Settlement/Presettlement column, cc2_driverfinance_settlements_fuel bucket (4/4)",
-   "mergedAt": "2026-09-24T03:35:03Z",
-   "branch": "cc2-q22-settlement-column-sweep-2"
-  },
-  {
-   "number": 22518,
-   "title": "Claude-1-docs: alert -- verify-fuel-cost-posts-exactly-once was blocking every branch",
-   "mergedAt": "2026-09-24T03:23:16Z",
-   "branch": "cc-1/now-cc1-status-update-5"
-  },
-  {
-   "number": 22516,
-   "title": "DEVIN-A: status update — feed linkage merged, 09/08 blocker open",
-   "mergedAt": "2026-09-24T03:19:53Z",
-   "branch": "devin-a/bus-update-148"
-  },
-  {
-   "number": 22515,
-   "title": "Claude-1-docs: NOW-CC-1 -- built and proved the shared Gap 1/Gap 2 fix",
-   "mergedAt": "2026-09-24T03:16:18Z",
-   "branch": "cc-1/now-cc1-status-update-4"
-  },
-  {
-   "number": 22514,
-   "title": "Claude-3: URGENT revert PR #22509 -- parity rescope was wrong, Lead ruling CASE A",
-   "mergedAt": "2026-09-24T03:14:22Z",
-   "branch": "claude/revert-parity-rescope-case-a"
-  },
-  {
-   "number": 22513,
-   "title": "bus: LAW 4 + ROUND 146 orders (docs only)",
-   "mergedAt": "2026-09-24T03:12:57Z",
-   "branch": "devin-a/bus-commit-146"
-  },
-  {
-   "number": 22512,
-   "title": "FINDING: GUARD-F2026092423 — trial balance and balance sheet (ROUND 143.2, Item 2)",
-   "mergedAt": "2026-09-24T03:18:35Z",
-   "branch": "devin-b/trial-balance-balance-sheet"
-  },
-  {
-   "number": 22511,
-   "title": "CC-2-board note: fuel-transactions-per-load live drift blocks task 48",
-   "mergedAt": "2026-09-24T03:15:17Z",
-   "branch": "cc2-board-note-fuel-txn-per-load-drift"
-  },
-  {
-   "number": 22510,
-   "title": "DEVIN-A: Feed writer linkage at creation (Round 143.3/145.2)",
-   "mergedAt": "2026-09-24T03:07:33Z",
-   "branch": "devin-a/feed-linkage-seed-only"
-  },
-  {
-   "number": 22509,
-   "title": "Claude-3: ROUND 142.2 — parity scope requires a live settlement, not just live loads (CASE B fix)",
-   "mergedAt": "2026-09-24T02:57:10Z",
-   "branch": "claude/round-142-2-parity-feed-scope-settlement-required"
-  },
-  {
-   "number": 22508,
-   "title": "Claude-1-docs: NOW-CC-1 ROUND 145.1 item C root cause",
-   "mergedAt": "2026-09-24T02:55:23Z",
-   "branch": "cc-1/now-cc1-status-update-3"
-  },
-  {
-   "number": 22507,
-   "title": "Claude-1-docs: NOW-CC-1 ROUND 145.1 items A+B done",
-   "mergedAt": "2026-09-24T02:52:14Z",
-   "branch": "cc-1/now-cc1-status-update-2"
-  },
-  {
-   "number": 22506,
-   "title": "FINDING: GUARD-F2026092422 — fuel costs post exactly once (ROUND 145.3)",
-   "mergedAt": "2026-09-24T02:58:07Z",
-   "branch": "devin-b/fuel-posts-once"
-  },
-  {
-   "number": 22505,
-   "title": "Claude-1-docs: NOW-CC-1 status ROUND 143.1/144.1 -- GAP 0 ruled+linked, GAP 1 root cause",
-   "mergedAt": "2026-09-24T02:49:50Z",
-   "branch": "cc-1/now-cc1-status-update"
-  },
-  {
-   "number": 22504,
-   "title": "DEVIN-A: Cursor mapping error found for ,210 Refrigerx invoice",
-   "mergedAt": "2026-09-24T02:47:30Z",
-   "branch": "devin-a/cursor-mapping-error"
-  },
-  {
-   "number": 22503,
-   "title": "FINDING: GUARD-F2026092421 — 142.3 amended: assertions 13, 14, 15 (doc-posting, clearing residue, expense net)",
-   "mergedAt": "2026-09-24T02:50:22Z",
-   "branch": "devin-b/day-close-gate-amended"
-  },
-  {
-   "number": 22502,
-   "title": "FINDING: GUARD-F2026092420 — no document without a ledger (ROUND 143.2, Item 1)",
-   "mergedAt": "2026-09-24T02:43:55Z",
-   "branch": "devin-b/no-doc-without-ledger"
-  },
-  {
-   "number": 22501,
-   "title": "DEVIN-A: feed blocker 09/08 status update",
-   "mergedAt": "2026-09-24T02:39:37Z",
-   "branch": "devin-a/feed-status-update"
-  },
-  {
-   "number": 22500,
-   "title": "DEVIN-A: feed blocker report — day 09/08 + guard fixes",
-   "mergedAt": "2026-09-24T02:33:33Z",
-   "branch": "devin-a/feed-blocker-0908"
-  },
-  {
-   "number": 22499,
-   "title": "FINDING: GUARD-F2026092419 — reconcile-feed-day (ROUND 142.3, day-close gate)",
-   "mergedAt": "2026-09-24T02:29:24Z",
-   "branch": "devin-b/day-close-gate"
-  },
-  {
-   "number": 22498,
-   "title": "CC-2: board finding + NOW-CC-2.md refresh",
-   "mergedAt": "2026-09-24T02:44:02Z",
-   "branch": "cc2-board-note-alwaystrack-recurring"
-  },
-  {
-   "number": 22497,
-   "title": "CC-2-filter: FILTER-MULTI-01 sweep (5/12) + VOID-BUTTON-01 first surface",
-   "mergedAt": "2026-09-24T02:16:51Z",
-   "branch": "cc2-filter-multi-01"
-  },
-  {
-   "number": 22496,
-   "title": "FINDING: Devin-A feeder #2 day list (09/06-09/21)",
-   "mergedAt": "2026-09-24T02:11:11Z",
-   "branch": "devin-a/feeder-2"
-  },
-  {
-   "number": 22495,
-   "title": "FINDING: GUARD-F2026092418 — no audit event without its JE (ROUND 142.1, Item 2)",
-   "mergedAt": "2026-09-24T02:19:09Z",
-   "branch": "devin-b/audit-je-guard"
-  },
-  {
-   "number": 22494,
-   "title": "FINDING: GUARD-F2026092417 — verify-feed-is-whole (ROUND 142.1, Item 1)",
-   "mergedAt": "2026-09-24T02:11:19Z",
-   "branch": "devin-b/feed-whole-guard"
-  },
-  {
-   "number": 22493,
-   "title": "CC-2: archive 8 oversized bus files, unblocks every seat's push",
-   "mergedAt": "2026-09-24T02:06:06Z",
-   "branch": "cc2-archive-bus-files"
-  },
-  {
-   "number": 22492,
-   "title": "Codex- Match window live UI inventory",
-   "mergedAt": "2026-09-24T01:57:50Z",
-   "branch": "codex/round140-match-window-inventory"
-  },
-  {
-   "number": 22491,
-   "title": "FINDING: GUARD-F2026092414 — every match kind is acceptable or declared (ROUND 141.4)",
-   "mergedAt": "2026-09-24T01:59:10Z",
-   "branch": "devin-b/match-kind-acceptable"
-  },
-  {
-   "number": 22490,
-   "title": "Claude-3: ROUND 140.3 — match-candidate volume measured (corrected)",
-   "mergedAt": "2026-09-24T01:52:24Z",
-   "branch": "claude/round-140-3-bank-match-candidate-volume"
-  },
-  {
-   "number": 22489,
-   "title": "FINDING: GUARD-F2026092410-FIX — fix bank-match live query (postings table)",
-   "mergedAt": "2026-09-24T01:52:32Z",
-   "branch": "devin-b/bank-match-fix"
-  },
-  {
-   "number": 22488,
-   "title": "FINDING: partial payment + variance path measured (read-only audit)",
-   "mergedAt": "2026-09-24T01:53:04Z",
-   "branch": "devin-a/partial-payment-audit"
-  },
-  {
-   "number": 22487,
-   "title": "Codex- Q14 protect Loves geofence population",
-   "mergedAt": "2026-09-24T01:43:53Z",
-   "branch": "codex/q14-loves-geofences"
-  },
-  {
-   "number": 22486,
-   "title": "FINDING: GUARD-F2026092410 — bank-match-suggest-is-read-only (ROUND 140.6)",
-   "mergedAt": "2026-09-24T01:46:27Z",
-   "branch": "devin-b/bank-match-readonly"
   }
  ],
  "merged_pr_total": 3000,
