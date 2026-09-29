@@ -4082,4 +4082,18 @@ action:
   OWNER_AUTH_ID=AUTH-130 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-29-cc1-round248-step3-draft-duplicates.ts
 
 expires_at: 2026-09-30T08:00:00.000Z
-status: OPEN
+status: CONSUMED
+
+consumed_at: 2026-09-29T19:26:59.648Z
+consumed_by: Claude-1
+row_counts: 6 of 6 drafts voided via executeVoidCancel("expense", {action:"cancel"}), all -> {kind:
+  "ok"}: 215bc558… (13587), 11dc04f3… (13590), 3f292519… (13600), f366ff9b… (13605),
+  aeae6fa5… (13611), cff3e687… (13606). The already-posted row f25d98dd… (13606) re-verified
+  live: status='posted', voided_at=NULL -- untouched.
+proof_query: SELECT count(*) FROM accounting.expenses e WHERE operating_company_id='5c854333…'
+  AND status='draft' AND voided_at IS NULL AND EXISTS (SELECT 1 FROM accounting.expenses e2 WHERE
+  e2.load_id=e.load_id AND e2.transaction_date=e.transaction_date AND
+  e2.total_amount_cents=e.total_amount_cents AND e2.voided_at IS NULL AND e2.id<>e.id) returns 0
+  (was 6 groups before this run).
+
+— Claude-1 (ROUND 248 Step 3 draft-duplicate resolution)
