@@ -109,9 +109,13 @@ async function main() {
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();
   try {
+    // ROUND 241 (CC-3 finding, folded in here since this is the same file): `SET LOCAL ROLE
+    // neondb_owner` fails "permission denied to set role" against Neon's pooled endpoint even
+    // when already connected AS neondb_owner (pooler role-switching, same class as BANK-F30150 in
+    // verify-alwaystrack-parity.mjs). The correct, working pattern used by every other live guard
+    // in this repo is set_config('app.bypass_rls','lucia',true) inside one explicit transaction.
     await client.query("BEGIN");
-    await client.query("SET LOCAL ROLE neondb_owner");
-    await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+    await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
 
     const invRes = await client.query(
       `SELECT l.load_number, i.status::text, i.issue_date::text, i.due_date::text,
