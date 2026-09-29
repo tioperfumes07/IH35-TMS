@@ -130,6 +130,19 @@ function isReturnTripLeg(prev: TruckLineRow | null | undefined, curr: TruckLineR
   return a != null && b != null && a === b;
 }
 
+/** ROUND 262 — a real schedule conflict: this unit's next leg is scheduled to pick up BEFORE the
+ *  prior leg's own delivery appointment, i.e. the same truck is double-booked in overlapping
+ *  windows. Distinct from isReturnTripLeg (same-day PU/DEL is normal); this fires only when the
+ *  order actually inverts. Never fires across two different units' legs — callers pass adjacent
+ *  legs from the same group only. */
+function hasScheduleConflict(prev: TruckLineRow | null | undefined, curr: TruckLineRow): boolean {
+  if (!prev?.appointments?.delivery?.at || !curr.appointments?.pickup?.at) return false;
+  const prevDel = new Date(prev.appointments.delivery.at).getTime();
+  const currPu = new Date(curr.appointments.pickup.at).getTime();
+  if (Number.isNaN(prevDel) || Number.isNaN(currPu)) return false;
+  return currPu < prevDel;
+}
+
 // ROUND-20.4 -- 3px left spine per row, colored by the unit's current trip leg, so a unit's row is
 // identifiable at a glance without reading its text. No load (including the available-truck rows,
 // which never carry r.load) gets the neutral border color, never a semantic one.
@@ -1161,6 +1174,7 @@ export function TruckLineBoard({
                   g.legs.map((r, legIndex) => {
                     const prevLeg = legIndex > 0 ? g.legs[legIndex - 1] : null;
                     const returnTrip = isReturnTripLeg(prevLeg, r);
+                    const conflict = hasScheduleConflict(prevLeg, r);
                     const tourNum = g.tour_display_id ?? r.tour_display_id ?? null;
                     const tourSafe = tourNum && /^P-\d+$/i.test(tourNum) ? tourNum : tourNum && !/^[0-9a-f-]{36}$/i.test(tourNum) ? tourNum : null;
                     const rowKey = `${g.section}-${g.unit_id}-${r.load?.load_id ?? r.available?.driver_id ?? legIndex}`;
@@ -1207,19 +1221,24 @@ export function TruckLineBoard({
                       <div
                         className="truck-line-v4-row"
                         style={{
-                          borderLeft: `3px solid ${returnTrip ? GREEN : rowSpineColor(r.load?.trip_type)}`,
+                          borderLeft: `3px solid ${conflict ? RED : returnTrip ? GREEN : rowSpineColor(r.load?.trip_type)}`,
                           borderBottom: r.load && r.station ? "none" : undefined,
                         }}
                         data-testid={`truck-line-row-${g.unit_id}${legIndex > 0 ? `-leg-${legIndex}` : ""}`}
                         data-unit-id={g.unit_id}
                         data-return-trip={returnTrip ? "true" : "false"}
+                        data-schedule-conflict={conflict ? "true" : "false"}
                       >
                         <div>
                           <div className="truck-line-v4-unit font-semibold text-[#0F1219]">
                             {returnTrip ? <span className="mr-1 text-[#16A34A]" aria-hidden>↳</span> : null}
                             {g.unit_number}
                           </div>
-                          {returnTrip ? (
+                          {conflict ? (
+                            <div className="truck-line-v4-cap font-semibold text-[#DC2626]" data-testid={`truck-line-schedule-conflict-${g.unit_id}`}>
+                              CONFLICT
+                            </div>
+                          ) : returnTrip ? (
                             <div className="truck-line-v4-cap text-[#16A34A]" data-testid={`truck-line-return-trip-${g.unit_id}`}>
                               return trip
                             </div>
