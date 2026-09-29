@@ -11461,3 +11461,62 @@ verify-presettlement-shows-only-this-load-and-its-open-tour.mjs false positive i
 main as of #23103 -- read directly, not re-litigated here).
 
 — CC-2
+
+## ROUND 245 P2 -- the 130 "unposted" bill_payments are NOT a posting failure, they are correct, deliberate GL-exempt history. Force-posting would DOUBLE-BOOK real money. (CC-2, 2026-09-29)
+
+Lead's ROUND 245 P2 measured "130 of 130 accounting.bill_payments have no ledger entry" and asked
+for root cause: "posting path not wired, failing silently, or gated? Name it, do not guess. Then
+post them oldest first, each with its own JE." Named it -- and the conclusion is the opposite of
+"go post them":
+
+**All 130 rows were created by ONE documented, owner-authorized, one-time backfill:
+`scripts/ops/2026-09-28-cc1-round148-ap-adoption-setbased.ts` (ROUND 148/154, CC-1), all within a
+90-minute window on 2026-09-28 (04:47-06:15 UTC, 98 of 130 in a single burst at 06:15). Zero organic
+usage since -- this is not a live, ongoing posting gap.**
+
+The script's own header is explicit about why it never posts: *"Adopts every active
+driver_finance.driver_bills row belonging to one of the 47 payrun-closed settlements... with GL
+posting explicitly HELD... POSTS NO NEW JOURNAL LINES -- the real money already posted under the
+payrun JE; this only creates the historical document trail... Never... touches
+accounting.journal_entry_postings."*
+
+**Live-verified this is TRUE, not just claimed, for a real sampled row:**
+- `accounting.bill_payments` id `8ef03b9f-...` (cash_cents 56998, bill_id -> `accounting.bills` id
+  `01abceef-...`), linked via `driver_finance.driver_settlement_gl_bills` row `791a4896-...` to
+  `driver_bill_id d00746f5-...` / `load_number 13518` / `settlement_id 065f5fbd-...`
+  (gross_cents 57998, deduction_cents 1000, cash_cents 56998 -- the numbers foot).
+- That settlement has a real, `status='posted'` `driver_finance.payrun_gl_runs` row (`f1718025-...`)
+  whose `journal_entry_id` (`bf65354e-...`) is a REAL, live JE: memo *"Settlement 5774 -- pay-run
+  close (net 110742c)"*, dated 2026-08-14. The driver's net pay -- which structurally already nets
+  out this exact $569.98 cash portion against gross minus deductions -- was posted to the GL
+  THROUGH THAT SETTLEMENT CLOSE, five weeks before the adoption backfill ever ran.
+
+**Posting a NEW, separate journal entry for this bill_payment now would put the same $569.98 into
+the GL a second time** -- literally the double-booking trap P1's own spec warns about ("if a check
+to a vendor with open bills is recorded as a fresh expense, the cost lands twice"). This applies to
+all 130 by construction (same script, same mechanism, same settlement-close-already-posted logic)
+-- not verified individually row-by-row here, but the mechanism is uniform and documented, and the
+one sampled row checks out exactly.
+
+**One loose end, not yet resolved, flagged rather than guessed at:** the linkage table
+(`driver_finance.driver_settlement_gl_bills`) has its OWN `bill_journal_entry_id` /
+`cash_journal_entry_id` columns, both NULL on the sampled row -- these look like they were meant to
+be populated (a forward pointer TO the covering JE, i.e. `bf65354e-...` itself, for traceability),
+not left null forever. That's a real, small gap -- traceability, not money -- separate from whether
+a NEW JE should be posted. Also open: `accounting.bills.posting_hold_reason` (which the adoption
+script's docblock says it sets) is NULL on all 130 linked bills today, not the script's claimed
+behavior -- either the script's comment is stale relative to what shipped, or a later process
+cleared it without completing whatever the hold was gating. Neither loose end changes the core
+finding: **do not post a new JE against these 130 rows.**
+
+**Recommendation, not built:** `verify-no-document-without-a-ledger.mjs`'s blanket "every
+accounting.bill_payments row must have a ledger entry" rule needs a legitimate exemption for
+settlement-adopted rows (e.g. keyed off `driver_finance.driver_settlement_gl_bills.
+cash_bill_payment_id`/`deduction_bill_payment_id` matching the row's id, or a dedicated marker
+column) -- not a blanket baseline-grow, a real, checkable "this bill_payment's cash effect is
+already covered by settlement JE X" predicate. This guard is not banking's lane; I have not touched
+it. It is currently ALSO blocking my own, fully unrelated ROUND 245 P0 push (check-number reset,
+branch cc2/r245-p0-check-number-reset, sha 58e5356b11) because it's domain-scoped to
+apps/backend/src/accounting/ and my diff touches apps/backend/src/accounting/checks/.
+
+— CC-2
