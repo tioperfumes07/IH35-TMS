@@ -1,0 +1,1218 @@
+{
+  "measured_at": "2026-09-29T20:58:05.754Z",
+  "report_measured_at": "2026-09-29T21:04:42.060Z",
+  "company_green": 0,
+  "company_red": 48,
+  "classes_overlapping": {
+    "Concept and quantity match": {
+      "count": 0,
+      "amount_cents": 0
+    },
+    "Transportation-shared": {
+      "count": 3,
+      "amount_cents": 1215000
+    },
+    "AUTH-089 class": {
+      "count": 0,
+      "amount_cents": 0
+    },
+    "Wrong-load-split": {
+      "count": 20,
+      "amount_cents": 118844
+    },
+    "Genuine differences": {
+      "count": 48,
+      "amount_cents": 2253708
+    }
+  },
+  "transaction_differences_count": 16,
+  "transaction_absolute_variance_cents": 2253708,
+  "transaction_clean_before_margin_or_split": 32,
+  "margin_absolute_magnitude_variance_cents": 9651632,
+  "margin_absolute_signed_variance_cents": 22220016,
+  "by_concept": {
+    "line haul": {
+      "count": 4,
+      "absolute_cents": 1350000
+    },
+    "driver pay": {
+      "count": 2,
+      "absolute_cents": 202747
+    },
+    "expenses": {
+      "count": 12,
+      "absolute_cents": 238662
+    },
+    "fuel": {
+      "count": 2,
+      "absolute_cents": 462299
+    }
+  },
+  "driver_net_green": 47,
+  "driver_net_red": 1,
+  "driver_net_absolute_variance_cents": 145247,
+  "driver_net_signed_absolute_variance_cents": 155247,
+  "driver_tab_unchanged": false,
+  "driver_tab_saved_green": 47,
+  "driver_tab_saved_red": 1,
+  "summary": [
+    {
+      "number": "5769",
+      "classes": [
+        "Wrong-load-split",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 6784,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 368442,
+      "margin_app_cents": 245236,
+      "margin_magnitude_variance_cents": -123206,
+      "signed_margin_variance_cents": -123206,
+      "notes": [
+        "App report margin 2,452.36; AT margin 3,684.42; signed variance -1,232.06",
+        "At least $67.84 allocated to the wrong load; settlement expense total agrees."
+      ]
+    },
+    {
+      "number": "5770",
+      "classes": [
+        "Wrong-load-split",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 6781,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 382625,
+      "margin_app_cents": -218199,
+      "margin_magnitude_variance_cents": -164426,
+      "signed_margin_variance_cents": -600824,
+      "notes": [
+        "App report margin -2,181.99; AT margin 3,826.25; signed variance -6,008.24",
+        "At least $67.81 allocated to the wrong load; settlement expense total agrees."
+      ]
+    },
+    {
+      "number": "5771",
+      "classes": [
+        "Wrong-load-split",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 4168,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 254340,
+      "margin_app_cents": -242060,
+      "margin_magnitude_variance_cents": -12280,
+      "signed_margin_variance_cents": -496400,
+      "notes": [
+        "App report margin -2,420.60; AT margin 2,543.40; signed variance -4,964.00",
+        "At least $41.68 allocated to the wrong load; settlement expense total agrees."
+      ]
+    },
+    {
+      "number": "5772",
+      "classes": [
+        "Wrong-load-split",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 6605,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 141886,
+      "margin_app_cents": -491791,
+      "margin_magnitude_variance_cents": 349905,
+      "signed_margin_variance_cents": -633677,
+      "notes": [
+        "App report margin -4,917.91; AT margin 1,418.86; signed variance -6,336.77",
+        "At least $66.05 allocated to the wrong load; settlement expense total agrees."
+      ]
+    },
+    {
+      "number": "5773",
+      "classes": [
+        "Transportation-shared",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 720000,
+      "margin_at_cents": 468369,
+      "margin_app_cents": -411822,
+      "margin_magnitude_variance_cents": -56547,
+      "signed_margin_variance_cents": -880191,
+      "notes": [
+        "App report margin -4,118.22; AT margin 4,683.69; signed variance -8,801.91",
+        "AT-only load revenue excluded from the comparison; all settlement costs retained under owner ruling. No frozen-entity query performed."
+      ]
+    },
+    {
+      "number": "5774",
+      "classes": [
+        "Wrong-load-split",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 1870,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 291491,
+      "margin_app_cents": -228468,
+      "margin_magnitude_variance_cents": -63023,
+      "signed_margin_variance_cents": -519959,
+      "notes": [
+        "App report margin -2,284.68; AT margin 2,914.91; signed variance -5,199.59",
+        "At least $18.70 allocated to the wrong load; settlement expense total agrees."
+      ]
+    },
+    {
+      "number": "5775",
+      "classes": [
+        "Wrong-load-split",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 4911,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 234526,
+      "margin_app_cents": -195465,
+      "margin_magnitude_variance_cents": -39061,
+      "signed_margin_variance_cents": -429991,
+      "notes": [
+        "App report margin -1,954.65; AT margin 2,345.26; signed variance -4,299.91",
+        "At least $49.11 allocated to the wrong load; settlement expense total agrees."
+      ]
+    },
+    {
+      "number": "5776",
+      "classes": [
+        "Wrong-load-split",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 5871,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 111511,
+      "margin_app_cents": -684965,
+      "margin_magnitude_variance_cents": 573454,
+      "signed_margin_variance_cents": -796476,
+      "notes": [
+        "App report margin -6,849.65; AT margin 1,115.11; signed variance -7,964.76",
+        "At least $58.71 allocated to the wrong load; settlement expense total agrees."
+      ]
+    },
+    {
+      "number": "5777",
+      "classes": [
+        "Wrong-load-split",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 3290,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 281350,
+      "margin_app_cents": -382765,
+      "margin_magnitude_variance_cents": 101415,
+      "signed_margin_variance_cents": -664115,
+      "notes": [
+        "App report margin -3,827.65; AT margin 2,813.50; signed variance -6,641.15",
+        "At least $32.90 allocated to the wrong load; settlement expense total agrees."
+      ]
+    },
+    {
+      "number": "5778",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 40000,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": -98116,
+      "margin_app_cents": -861165,
+      "margin_magnitude_variance_cents": 763049,
+      "signed_margin_variance_cents": -763049,
+      "notes": [
+        "App report margin -8,611.65; AT margin -981.16; signed variance -7,630.49"
+      ]
+    },
+    {
+      "number": "5779",
+      "classes": [
+        "Wrong-load-split",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 6362,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 161001,
+      "margin_app_cents": -446058,
+      "margin_magnitude_variance_cents": 285057,
+      "signed_margin_variance_cents": -607059,
+      "notes": [
+        "App report margin -4,460.58; AT margin 1,610.01; signed variance -6,070.59",
+        "At least $63.62 allocated to the wrong load; settlement expense total agrees."
+      ]
+    },
+    {
+      "number": "5780",
+      "classes": [
+        "Transportation-shared",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 30000,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 150000,
+      "margin_at_cents": 109803,
+      "margin_app_cents": -36447,
+      "margin_magnitude_variance_cents": -73356,
+      "signed_margin_variance_cents": -146250,
+      "notes": [
+        "App report margin -364.47; AT margin 1,098.03; signed variance -1,462.50",
+        "AT-only load revenue excluded from the comparison; all settlement costs retained under owner ruling. No frozen-entity query performed."
+      ]
+    },
+    {
+      "number": "5781",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 31955,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 208286,
+      "margin_app_cents": -54167,
+      "margin_magnitude_variance_cents": -154119,
+      "signed_margin_variance_cents": -262453,
+      "notes": [
+        "App report margin -541.67; AT margin 2,082.86; signed variance -2,624.53"
+      ]
+    },
+    {
+      "number": "5782",
+      "classes": [
+        "Wrong-load-split",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 5577,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 184393,
+      "margin_app_cents": -401899,
+      "margin_magnitude_variance_cents": 217506,
+      "signed_margin_variance_cents": -586292,
+      "notes": [
+        "App report margin -4,018.99; AT margin 1,843.93; signed variance -5,862.92",
+        "At least $55.77 allocated to the wrong load; settlement expense total agrees."
+      ]
+    },
+    {
+      "number": "5783",
+      "classes": [
+        "Wrong-load-split",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 4025,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 228486,
+      "margin_app_cents": -120403,
+      "margin_magnitude_variance_cents": -108083,
+      "signed_margin_variance_cents": -348889,
+      "notes": [
+        "App report margin -1,204.03; AT margin 2,284.86; signed variance -3,488.89",
+        "At least $40.25 allocated to the wrong load; settlement expense total agrees."
+      ]
+    },
+    {
+      "number": "5784",
+      "classes": [
+        "Wrong-load-split",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 13088,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 293877,
+      "margin_app_cents": -551791,
+      "margin_magnitude_variance_cents": 257914,
+      "signed_margin_variance_cents": -845668,
+      "notes": [
+        "App report margin -5,517.91; AT margin 2,938.77; signed variance -8,456.68",
+        "At least $130.88 allocated to the wrong load; settlement expense total agrees."
+      ]
+    },
+    {
+      "number": "5785",
+      "classes": [
+        "Wrong-load-split",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 7942,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 119609,
+      "margin_app_cents": -451799,
+      "margin_magnitude_variance_cents": 332190,
+      "signed_margin_variance_cents": -571408,
+      "notes": [
+        "App report margin -4,517.99; AT margin 1,196.09; signed variance -5,714.08",
+        "At least $79.42 allocated to the wrong load; settlement expense total agrees."
+      ]
+    },
+    {
+      "number": "5786",
+      "classes": [
+        "Transportation-shared",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 345000,
+      "margin_at_cents": 214957,
+      "margin_app_cents": -246423,
+      "margin_magnitude_variance_cents": 31466,
+      "signed_margin_variance_cents": -461380,
+      "notes": [
+        "App report margin -2,464.23; AT margin 2,149.57; signed variance -4,613.80",
+        "AT-only load revenue excluded from the comparison; all settlement costs retained under owner ruling. No frozen-entity query performed."
+      ]
+    },
+    {
+      "number": "5787",
+      "classes": [
+        "Wrong-load-split",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 4974,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 94353,
+      "margin_app_cents": -236723,
+      "margin_magnitude_variance_cents": 142370,
+      "signed_margin_variance_cents": -331076,
+      "notes": [
+        "App report margin -2,367.23; AT margin 943.53; signed variance -3,310.76",
+        "At least $49.74 allocated to the wrong load; settlement expense total agrees.",
+        "AUTH-089 resolved at fresh read: two $15.25 expense documents present; non-diesel total $140.20. Allocation remains wrong."
+      ]
+    },
+    {
+      "number": "5788",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 214024,
+      "margin_app_cents": -513824,
+      "margin_magnitude_variance_cents": 299800,
+      "signed_margin_variance_cents": -727848,
+      "notes": [
+        "App report margin -5,138.24; AT margin 2,140.24; signed variance -7,278.48"
+      ]
+    },
+    {
+      "number": "5789",
+      "classes": [
+        "Wrong-load-split",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 7061,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 262794,
+      "margin_app_cents": -214286,
+      "margin_magnitude_variance_cents": -48508,
+      "signed_margin_variance_cents": -477080,
+      "notes": [
+        "App report margin -2,142.86; AT margin 2,627.94; signed variance -4,770.80",
+        "At least $70.61 allocated to the wrong load; settlement expense total agrees."
+      ]
+    },
+    {
+      "number": "5790",
+      "classes": [
+        "Wrong-load-split",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 350000,
+      "moved_cents": 7264,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": -150885,
+      "margin_app_cents": -198415,
+      "margin_magnitude_variance_cents": 47530,
+      "signed_margin_variance_cents": -47530,
+      "notes": [
+        "App report margin -1,984.15; AT margin -1,508.85; signed variance -475.30",
+        "At least $72.64 allocated to the wrong load; settlement expense total agrees."
+      ]
+    },
+    {
+      "number": "5791",
+      "classes": [
+        "Wrong-load-split",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 5321,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 334822,
+      "margin_app_cents": -28205,
+      "margin_magnitude_variance_cents": -306617,
+      "signed_margin_variance_cents": -363027,
+      "notes": [
+        "App report margin -282.05; AT margin 3,348.22; signed variance -3,630.27",
+        "At least $53.21 allocated to the wrong load; settlement expense total agrees."
+      ]
+    },
+    {
+      "number": "5792",
+      "classes": [
+        "Wrong-load-split",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 5576,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 364226,
+      "margin_app_cents": 13756,
+      "margin_magnitude_variance_cents": -350470,
+      "signed_margin_variance_cents": -350470,
+      "notes": [
+        "App report margin 137.56; AT margin 3,642.26; signed variance -3,504.70",
+        "At least $55.76 allocated to the wrong load; settlement expense total agrees."
+      ]
+    },
+    {
+      "number": "5793",
+      "classes": [
+        "Wrong-load-split",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 7277,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": -57207,
+      "margin_app_cents": -470749,
+      "margin_magnitude_variance_cents": 413542,
+      "signed_margin_variance_cents": -413542,
+      "notes": [
+        "App report margin -4,707.49; AT margin -572.07; signed variance -4,135.42",
+        "At least $72.77 allocated to the wrong load; settlement expense total agrees."
+      ]
+    },
+    {
+      "number": "5794",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 7962,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 205387,
+      "margin_app_cents": -418452,
+      "margin_magnitude_variance_cents": 213065,
+      "signed_margin_variance_cents": -623839,
+      "notes": [
+        "App report margin -4,184.52; AT margin 2,053.87; signed variance -6,238.39"
+      ]
+    },
+    {
+      "number": "5795",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 7203,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 103180,
+      "margin_app_cents": -339512,
+      "margin_magnitude_variance_cents": 236332,
+      "signed_margin_variance_cents": -442692,
+      "notes": [
+        "App report margin -3,395.12; AT margin 1,031.80; signed variance -4,426.92"
+      ]
+    },
+    {
+      "number": "5796",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 85208,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 212027,
+      "margin_app_cents": 46116,
+      "margin_magnitude_variance_cents": -165911,
+      "signed_margin_variance_cents": -165911,
+      "notes": [
+        "App report margin 461.16; AT margin 2,120.27; signed variance -1,659.11"
+      ]
+    },
+    {
+      "number": "5797",
+      "classes": [
+        "Wrong-load-split",
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 4097,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 143659,
+      "margin_app_cents": -191497,
+      "margin_magnitude_variance_cents": 47838,
+      "signed_margin_variance_cents": -335156,
+      "notes": [
+        "App report margin -1,914.97; AT margin 1,436.59; signed variance -3,351.56",
+        "At least $40.97 allocated to the wrong load; settlement expense total agrees."
+      ]
+    },
+    {
+      "number": "5798",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 233681,
+      "margin_app_cents": 37883,
+      "margin_magnitude_variance_cents": -195798,
+      "signed_margin_variance_cents": -195798,
+      "notes": [
+        "App report margin 378.83; AT margin 2,336.81; signed variance -1,957.98"
+      ]
+    },
+    {
+      "number": "5799",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 231518,
+      "margin_app_cents": -226093,
+      "margin_magnitude_variance_cents": -5425,
+      "signed_margin_variance_cents": -457611,
+      "notes": [
+        "App report margin -2,260.93; AT margin 2,315.18; signed variance -4,576.11"
+      ]
+    },
+    {
+      "number": "5800",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 60209,
+      "margin_app_cents": -285142,
+      "margin_magnitude_variance_cents": 224933,
+      "signed_margin_variance_cents": -345351,
+      "notes": [
+        "App report margin -2,851.42; AT margin 602.09; signed variance -3,453.51"
+      ]
+    },
+    {
+      "number": "5801",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 408595,
+      "margin_app_cents": 72817,
+      "margin_magnitude_variance_cents": -335778,
+      "signed_margin_variance_cents": -335778,
+      "notes": [
+        "App report margin 728.17; AT margin 4,085.95; signed variance -3,357.78"
+      ]
+    },
+    {
+      "number": "5802",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 317986,
+      "margin_app_cents": -22224,
+      "margin_magnitude_variance_cents": -295762,
+      "signed_margin_variance_cents": -340210,
+      "notes": [
+        "App report margin -222.24; AT margin 3,179.86; signed variance -3,402.10"
+      ]
+    },
+    {
+      "number": "5803",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 300000,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": -60889,
+      "margin_app_cents": 8227,
+      "margin_magnitude_variance_cents": -52662,
+      "signed_margin_variance_cents": 69116,
+      "notes": [
+        "App report margin 82.27; AT margin -608.89; signed variance +691.16"
+      ]
+    },
+    {
+      "number": "5804",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 4774,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 5087,
+      "margin_app_cents": -507457,
+      "margin_magnitude_variance_cents": 502370,
+      "signed_margin_variance_cents": -512544,
+      "notes": [
+        "App report margin -5,074.57; AT margin 50.87; signed variance -5,125.44"
+      ]
+    },
+    {
+      "number": "5805",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 268022,
+      "margin_app_cents": -149432,
+      "margin_magnitude_variance_cents": -118590,
+      "signed_margin_variance_cents": -417454,
+      "notes": [
+        "App report margin -1,494.32; AT margin 2,680.22; signed variance -4,174.54"
+      ]
+    },
+    {
+      "number": "5806",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 7442,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 204384,
+      "margin_app_cents": -242159,
+      "margin_magnitude_variance_cents": 37775,
+      "signed_margin_variance_cents": -446543,
+      "notes": [
+        "App report margin -2,421.59; AT margin 2,043.84; signed variance -4,465.43"
+      ]
+    },
+    {
+      "number": "5807",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 1130461,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 231247,
+      "margin_app_cents": -581456,
+      "margin_magnitude_variance_cents": 350209,
+      "signed_margin_variance_cents": -812703,
+      "notes": [
+        "App report margin -5,814.56; AT margin 2,312.47; signed variance -8,127.03"
+      ]
+    },
+    {
+      "number": "5808",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 9689,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 142634,
+      "margin_app_cents": -343275,
+      "margin_magnitude_variance_cents": 200641,
+      "signed_margin_variance_cents": -485909,
+      "notes": [
+        "App report margin -3,432.75; AT margin 1,426.34; signed variance -4,859.09"
+      ]
+    },
+    {
+      "number": "5809",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 12911,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 319398,
+      "margin_app_cents": -297968,
+      "margin_magnitude_variance_cents": -21430,
+      "signed_margin_variance_cents": -617366,
+      "notes": [
+        "App report margin -2,979.68; AT margin 3,193.98; signed variance -6,173.66"
+      ]
+    },
+    {
+      "number": "5810",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 13257,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 213028,
+      "margin_app_cents": -320095,
+      "margin_magnitude_variance_cents": 107067,
+      "signed_margin_variance_cents": -533123,
+      "notes": [
+        "App report margin -3,200.95; AT margin 2,130.28; signed variance -5,331.23"
+      ]
+    },
+    {
+      "number": "5811",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 12099,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 178063,
+      "margin_app_cents": -355638,
+      "margin_magnitude_variance_cents": 177575,
+      "signed_margin_variance_cents": -533701,
+      "notes": [
+        "App report margin -3,556.38; AT margin 1,780.63; signed variance -5,337.01"
+      ]
+    },
+    {
+      "number": "5812",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 210747,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 445719,
+      "margin_app_cents": -328947,
+      "margin_magnitude_variance_cents": -116772,
+      "signed_margin_variance_cents": -774666,
+      "notes": [
+        "App report margin -3,289.47; AT margin 4,457.19; signed variance -7,746.66"
+      ]
+    },
+    {
+      "number": "5813",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 343527,
+      "margin_app_cents": -65042,
+      "margin_magnitude_variance_cents": -278485,
+      "signed_margin_variance_cents": -408569,
+      "notes": [
+        "App report margin -650.42; AT margin 3,435.27; signed variance -4,085.69"
+      ]
+    },
+    {
+      "number": "5814",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 330799,
+      "margin_app_cents": -24017,
+      "margin_magnitude_variance_cents": -306782,
+      "signed_margin_variance_cents": -354816,
+      "notes": [
+        "App report margin -240.17; AT margin 3,307.99; signed variance -3,548.16"
+      ]
+    },
+    {
+      "number": "5815",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 108881,
+      "margin_app_cents": -304419,
+      "margin_magnitude_variance_cents": 195538,
+      "signed_margin_variance_cents": -413300,
+      "notes": [
+        "App report margin -3,044.19; AT margin 1,088.81; signed variance -4,133.00"
+      ]
+    },
+    {
+      "number": "5816",
+      "classes": [
+        "Genuine differences"
+      ],
+      "transaction_variance_cents": 0,
+      "moved_cents": 0,
+      "excluded_linehaul_cents": 0,
+      "margin_at_cents": 150000,
+      "margin_app_cents": 0,
+      "margin_magnitude_variance_cents": -150000,
+      "signed_margin_variance_cents": -150000,
+      "notes": [
+        "App report margin 0.00; AT margin 1,500.00; signed variance -1,500.00",
+        "App report omits load because it reads settlement_lines only; this comparison uses the real driver settlement header load FK."
+      ]
+    }
+  ],
+  "driver_audit": [
+    {
+      "number": "5769",
+      "at_cents": 109552,
+      "app_cents": 109552,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5770",
+      "at_cents": 199750,
+      "app_cents": 199750,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5771",
+      "at_cents": 194910,
+      "app_cents": 194910,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5772",
+      "at_cents": 99708,
+      "app_cents": 99708,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5773",
+      "at_cents": 183752,
+      "app_cents": 183752,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5774",
+      "at_cents": 110742,
+      "app_cents": 110742,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5775",
+      "at_cents": 118640,
+      "app_cents": 118640,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5776",
+      "at_cents": 128039,
+      "app_cents": 128039,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5777",
+      "at_cents": 194800,
+      "app_cents": 194800,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5778",
+      "at_cents": 124526,
+      "app_cents": 124526,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5779",
+      "at_cents": 138766,
+      "app_cents": 138766,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5780",
+      "at_cents": 30000,
+      "app_cents": 30000,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5781",
+      "at_cents": 122031,
+      "app_cents": 122031,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5782",
+      "at_cents": 145686,
+      "app_cents": 145686,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5783",
+      "at_cents": 207125,
+      "app_cents": 207125,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5784",
+      "at_cents": 175228,
+      "app_cents": 175228,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5785",
+      "at_cents": 124668,
+      "app_cents": 124668,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5786",
+      "at_cents": 103905,
+      "app_cents": 103905,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5787",
+      "at_cents": 88573,
+      "app_cents": 88573,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5788",
+      "at_cents": 127390,
+      "app_cents": 127390,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5789",
+      "at_cents": 201585,
+      "app_cents": 201585,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5790",
+      "at_cents": 145275,
+      "app_cents": 145275,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5791",
+      "at_cents": 163003,
+      "app_cents": 163003,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5792",
+      "at_cents": 138605,
+      "app_cents": 138605,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5793",
+      "at_cents": 156891,
+      "app_cents": 156891,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5794",
+      "at_cents": 133060,
+      "app_cents": 133060,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5795",
+      "at_cents": 78904,
+      "app_cents": 78904,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5796",
+      "at_cents": 37973,
+      "app_cents": 37973,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5797",
+      "at_cents": 154448,
+      "app_cents": 154448,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5798",
+      "at_cents": 92785,
+      "app_cents": 92785,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5799",
+      "at_cents": 252391,
+      "app_cents": 252391,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5800",
+      "at_cents": 140740,
+      "app_cents": 140740,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5801",
+      "at_cents": 133402,
+      "app_cents": 133402,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5802",
+      "at_cents": 210484,
+      "app_cents": 210484,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5803",
+      "at_cents": 162405,
+      "app_cents": 162405,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5804",
+      "at_cents": 160108,
+      "app_cents": 160108,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5805",
+      "at_cents": 200265,
+      "app_cents": 200265,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5806",
+      "at_cents": 200815,
+      "app_cents": 200815,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5807",
+      "at_cents": 170205,
+      "app_cents": 170205,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5808",
+      "at_cents": 200125,
+      "app_cents": 200125,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5809",
+      "at_cents": 207597,
+      "app_cents": 207597,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5810",
+      "at_cents": 170077,
+      "app_cents": 170077,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5811",
+      "at_cents": 196435,
+      "app_cents": 196435,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5812",
+      "at_cents": -5000,
+      "app_cents": 150247,
+      "normalized_diff_cents": 145247,
+      "signed_diff_cents": 155247
+    },
+    {
+      "number": "5813",
+      "at_cents": 198605,
+      "app_cents": 198605,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5814",
+      "at_cents": 199265,
+      "app_cents": 199265,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5815",
+      "at_cents": 120610,
+      "app_cents": 120610,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    },
+    {
+      "number": "5816",
+      "at_cents": 0,
+      "app_cents": 0,
+      "normalized_diff_cents": 0,
+      "signed_diff_cents": 0
+    }
+  ],
+  "app_unknown_na_rows": 0,
+  "out_of_scope_rows": 0,
+  "output": "/Users/jorgemunoz/Downloads/09-30-2026-ALWAYSTRACK-vs-APP-SETTLEMENT-COMPARISON-R264.xlsx",
+  "driver_marker_basis": "NET PAY magnitude only, authorized ROUND 268; gross/deduction observations preserved"
+}
