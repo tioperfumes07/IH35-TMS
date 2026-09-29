@@ -4170,6 +4170,20 @@ action:
   OWNER_AUTH_ID=AUTH-132 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-round270-factoring-advance-status-fix.ts
 
 expires_at: 2026-10-01T08:00:00.000Z
-status: OPEN
+status: CONSUMED
+
+consumed_at: 2026-09-29T22:41:00.000Z
+consumed_by: Claude-1
+row_counts: both rows corrected: 1f09c82c-81f2-4908-b1a4-577461be4ade (faro_invoice_number
+  1013272-2) status 'advanced' -> 'voided'; 9667e71c-9f29-44ff-af31-f28ffb43282b (faro_invoice_number
+  87) status 'advanced' -> 'voided'. status_before_void='advanced' recorded on both. Constraint
+  factoring_advances_status_matches_voided_at then VALIDATEd (was NOT VALID since migration
+  202614570000) -- convalidated=true confirmed live. Guard re-run: 0 mismatches (ratchet lowered
+  2 -> 0 in the same commit). views.factoring_summary re-read live: mtd_advances_count 93,
+  mtd_advanced_total $315,356.28 -- now matches the 93 non-void accounting.factoring_advances rows
+  exactly (was overstated by these 2 rows before this fix).
+proof_query: SELECT mtd_advances_count, mtd_advanced_total FROM views.factoring_summary WHERE
+  operating_company_id='5c854333…' returns (93, 315356.28). SELECT count(*) FROM
+  accounting.factoring_advances WHERE voided_at IS NOT NULL AND status <> 'voided' returns 0.
 
 — Claude-1 (ROUND 270 factoring_advances status/voided_at drift fix)

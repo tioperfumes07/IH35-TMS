@@ -22,9 +22,9 @@ register();
 
 const LABEL = "verify-factoring-advance-status-matches-voided-at";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
-// Shrink-only ratchet. Measured live 2026-09-30: 2 known-bad rows, pending AUTH-132's correction.
-// Lower this to 0 once AUTH-132 lands and this guard re-confirms zero.
-const KNOWN_STATUS_VOID_MISMATCHES = 2;
+// Shrink-only ratchet. AUTH-132 corrected both known-bad rows 2026-09-29 (status_before_void
+// recorded, status flipped to 'voided'); constraint VALIDATEd (202614590000). 0 confirmed live.
+const KNOWN_STATUS_VOID_MISMATCHES = 0;
 
 async function selftest() {
   const failures = [];
