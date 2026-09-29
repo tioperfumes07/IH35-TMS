@@ -1,6 +1,6 @@
 {
  "date": "2026-09-29",
- "generated_at_iso": "2026-09-29T05:52:14.978Z",
+ "generated_at_iso": "2026-09-29T13:04:19.609Z",
  "counts": {
   "PENDING": 17,
   "PENDING (GATED)": 31,
@@ -13727,6 +13727,12 @@
  ],
  "merged_prs": [
   {
+   "number": 23110,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-09-29T05:52:45Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 23109,
    "title": "Cursor- AUTH-125 CONSUMED — R222 Check Creator full-chain live proof",
    "mergedAt": "2026-09-29T02:42:23Z",
@@ -17319,12 +17325,6 @@
    "title": "CC-2-gate: ih35_ci_readonly default + concurrency-flake fix (GATE-F004/F005/F005-B)",
    "mergedAt": "2026-09-24T01:32:57Z",
    "branch": "cc2-gate-scope-03-refix"
-  },
-  {
-   "number": 22482,
-   "title": "claim: Q10 DONE DEVIN-A (PR #22480), Q35 DEVIN-A",
-   "mergedAt": "2026-09-24T01:22:34Z",
-   "branch": "devin-a/q11-purge-era-closures"
   }
  ],
  "merged_pr_total": 3000,
