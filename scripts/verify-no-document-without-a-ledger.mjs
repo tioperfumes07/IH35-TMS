@@ -53,6 +53,27 @@ export function livePostingSql(sourceTypes, idExpr) {
 const BILL_CLOSED_SETTLEMENT = (extra) => `EXISTS (SELECT 1 FROM driver_finance.settlement_lines sl
       JOIN driver_finance.driver_settlements s ON s.id = sl.settlement_id AND s.voided_at IS NULL
      WHERE sl.source_driver_bill_id = d.id AND sl.voided_at IS NULL AND s.status = 'closed' AND ${extra})`;
+
+// ROUND 251 Item 1 (adoption fallback for accounting.bill_payments, mirroring BILL_CLOSED_SETTLEMENT
+// above for the SAME reason): the AP-adoption backfills (scripts/ops/*ap-adoption*.ts) recreated
+// accounting.bills + bill_payments to represent driver-pay cash that ALREADY posted once, through
+// the covering driver_settlement's own payrun-close JE -- posting a bill_payment JE on top would
+// book the same cash twice. Verified LIVE (not assumed from the adoption scripts' own source, which
+// disagreed with what actually ran): only 93 of these adopted bills embed a real JE uuid in their
+// memo ("ADOPTED from payrun_gl_run <uuid>"); the other 130 (the "set-based" cohort) carry the
+// literal text "set-based" with NO uuid at all. Matching by (load_id, driver_id) against the closed
+// settlement that actually covers this bill's load+driver works for BOTH cohorts uniformly, without
+// parsing free text -- and is the semantically correct check regardless of memo format: "this bill's
+// cash was already posted by the settlement that closed for this load and driver."
+const BILL_PAYMENT_ADOPTED_SETTLEMENT = `EXISTS (
+  SELECT 1 FROM accounting.bills b
+    JOIN driver_finance.settlement_lines sl ON sl.load_id = b.load_id AND sl.voided_at IS NULL
+    JOIN driver_finance.driver_settlements s
+      ON s.id = sl.settlement_id AND s.voided_at IS NULL AND s.driver_id = b.driver_id
+   WHERE b.id = d.bill_id AND b.driver_id IS NOT NULL AND b.load_id IS NOT NULL
+     AND s.status = 'closed'
+     AND ${livePostingSql(["driver_settlement"], "s.id")}
+)`;
 const SETTLEMENT_LINES_TOTAL = (sid) =>
   `COALESCE((SELECT SUM(x.amount) FROM driver_finance.settlement_lines x WHERE x.settlement_id = ${sid} AND x.voided_at IS NULL), 0)`;
 // Settlement states that are not yet postable (the JE posts at close — settlement-pay-run closeSettlementPayRun).
@@ -73,7 +94,12 @@ const SETTLEMENT_NOT_YET_POSTABLE = ["draft", "open", "approved"];
 const DOCUMENT_CLASSES = [
   { table: "accounting.expenses", voidCol: "voided_at", sourceType: "expense", expectedToPost: true },
   { table: "accounting.bills", voidCol: "voided_at", sourceType: "bill", expectedToPost: true },
-  { table: "accounting.bill_payments", voidCol: "voided_at", sourceType: "bill_payment", expectedToPost: true },
+  {
+    table: "accounting.bill_payments", voidCol: "voided_at",
+    sourceType: "bill_payment (direct) or driver_settlement (adopted, via the bill's own load+driver)",
+    expectedToPost: true,
+    coveredSql: `(${livePostingSql(["bill_payment"], "d.id")} OR ${BILL_PAYMENT_ADOPTED_SETTLEMENT})`,
+  },
   {
     table: "accounting.payments", voidCol: "voided_at", sourceType: "customer_payment", expectedToPost: true,
     coveredSql: livePostingSql(["customer_payment", "payment"], "d.id"),
@@ -278,6 +304,10 @@ function runSelftest() {
     ["payments resolve 'customer_payment'", /'customer_payment'/.test(byTable["accounting.payments"]?.coveredSql ?? "")],
     ["fuel resolves through its expense", /source_fuel_transaction_id/.test(byTable["fuel.fuel_transactions"]?.coveredSql ?? "") && /'expense'/.test(byTable["fuel.fuel_transactions"]?.coveredSql ?? "")],
     ["driver bills resolve through the closed settlement JE", /'driver_settlement'/.test(byTable["driver_finance.driver_bills"]?.coveredSql ?? "") && /status = 'closed'/.test(byTable["driver_finance.driver_bills"]?.coveredSql ?? "")],
+    ["bill_payments resolve through direct posting OR the adopted (load+driver) closed settlement JE, ROUND 251 item 1",
+      /'bill_payment'/.test(byTable["accounting.bill_payments"]?.coveredSql ?? "") &&
+      /s\.driver_id = b\.driver_id/.test(byTable["accounting.bill_payments"]?.coveredSql ?? "") &&
+      /status = 'closed'/.test(byTable["accounting.bill_payments"]?.coveredSql ?? "")],
     ["closed settlements are never pending", !SETTLEMENT_NOT_YET_POSTABLE.includes("closed")],
   ];
   for (const [name, ok] of registryChecks) {
