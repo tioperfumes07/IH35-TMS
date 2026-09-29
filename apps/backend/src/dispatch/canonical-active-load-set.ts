@@ -88,6 +88,20 @@ export type CanonicalActiveLoadStatus = (typeof CANONICAL_ACTIVE_LOAD_STATUSES)[
 export const CANONICAL_TERMINAL_LOAD_STATUSES = ["draft", "invoiced", "paid", "closed", "cancelled"] as const;
 
 /**
+ * ROUND 218.2 — a call site that specifically needs "is this load fully closed" (narrower than
+ * "is this load terminal" -- an invoiced-but-not-yet-closed load is still terminal per the list
+ * above, but a settlement readout legitimately still shows it) must not fall back to a bare
+ * string literal, which is exactly the "eleventh independent status definition" shape this
+ * module's own guard (verify-one-canonical-active-load-set.mjs) exists to catch. Named here so
+ * that one specific, narrower need is still sourced from the canonical vocabulary instead of an
+ * ungoverned literal, without silently widening to the full 5-status terminal set (verified live,
+ * 2026-09-28: 19 real USMCA loads sit at status='invoiced' with an active settlement line today --
+ * swapping to the full terminal/active-inverse set would have hidden them from open-settlement
+ * readouts that currently, correctly, show them).
+ */
+export const CLOSED_LOAD_STATUS: (typeof CANONICAL_TERMINAL_LOAD_STATUSES)[number] = "closed";
+
+/**
  * "Delivered by status" — Cursor's I2 finding (docs/bus/OUTBOX-CURSOR.md, "I2 does not key on
  * status: a status list near mdata.loads is an eleventh load-status definition. If 'delivered'
  * by status is wanted, it belongs in dispatch/canonical-active-load-set.ts and I2 imports it.").

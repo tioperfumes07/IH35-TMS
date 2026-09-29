@@ -8,6 +8,7 @@ import { stampTripClosedForBookendedSettlement } from "./settlements-load-booken
 import { closeCompanySettlementAlongsideDriverSettlement } from "../accounting/company-settlement-close.service.js";
 import { postLoadBookendedSettlementGlAfterClose } from "./settlement-payrun-close.service.js";
 import { loadCostRollupLateral } from "../accounting/load-cost-rollup.sql.js";
+import { CLOSED_LOAD_STATUS } from "../dispatch/canonical-active-load-set.js";
 
 /**
  * LDT-5 / LDT-6 · ONE tour readout (owner order 2026-09-05 23:00Z, register § LDT-5: "One read model shared with
@@ -163,7 +164,7 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
           -- ROUND 155.23 JOB 2 — a CLOSED load must never appear in an OPEN settlement's legs or
           -- totals, full stop, regardless of what presettlement_link_id (or anything else) says.
           -- A closed settlement's own real historical legs (including closed loads) are untouched.
-          AND ($7::boolean IS FALSE OR l.status <> 'closed')
+          AND ($7::boolean IS FALSE OR l.status <> '${CLOSED_LOAD_STATUS}')
      )
      SELECT l.id::text AS load_id, l.load_number, l.trip_type::text, l.status::text, l.rate_total_cents,
             l.miles_practical, l.miles_shortest, l.miles_deadhead,
