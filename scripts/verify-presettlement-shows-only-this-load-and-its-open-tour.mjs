@@ -26,10 +26,19 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { literalOrConstFragment } from "./lib/literal-or-const.mjs";
 
 const LABEL = "verify-presettlement-shows-only-this-load-and-its-open-tour";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILE = path.join(ROOT, "apps/backend/src/driver-finance/tour-readout.routes.ts");
+
+// ROUND 221.1: the source now uses ${CLOSED_LOAD_STATUS} (exported from
+// canonical-active-load-set.ts) instead of the raw literal 'closed'. The guard
+// accepts either form via the literal-or-const helper — the assertion is
+// unchanged, not weakened.
+const CLOSED_EXCLUSION_RE = new RegExp(
+  "l\\.status\\s*<>\\s*'" + literalOrConstFragment("closed", "CLOSED_LOAD_STATUS") + "'"
+);
 
 export function findViolations(src) {
   const violations = [];
@@ -43,10 +52,7 @@ export function findViolations(src) {
   if (!/l\.tour_id\s*=\s*\$6::uuid/.test(src)) {
     violations.push("the legs CTE no longer filters by l.tour_id = the subject's own tour_id");
   }
-  // CC-1 #23103 routed the closed-load exclusion through the canonical module's
-  // CLOSED_LOAD_STATUS constant instead of the bare literal 'closed'. Both forms
-  // are valid — the exclusion is present either way.
-  if (!/l\.status\s*<>\s*('closed'|'\$\{CLOSED_LOAD_STATUS\}')/.test(src)) {
+  if (!CLOSED_EXCLUSION_RE.test(src)) {
     violations.push("the legs CTE no longer excludes closed loads from an open settlement");
   }
 
@@ -81,7 +87,7 @@ function selftest() {
   const dirtyNoTourFilter = clean.replace(/l\.tour_id\s*=\s*\$6::uuid/, "true");
   t("removing the tour_id legs filter is caught", findViolations(dirtyNoTourFilter).length >= 1);
 
-  const dirtyNoClosedExclusion = clean.replace(/l\.status\s*<>\s*('closed'|'\$\{CLOSED_LOAD_STATUS\}')/, "true");
+  const dirtyNoClosedExclusion = clean.replace(CLOSED_EXCLUSION_RE, "true");
   t("removing the closed-load exclusion is caught", findViolations(dirtyNoClosedExclusion).length >= 1);
 
   if (failures.length) {
