@@ -79,6 +79,10 @@ export type CreateCheckInput = {
     postal_code?: string | null;
     country?: string | null;
   } | null;
+  // ROUND 215.2 (verify-money-create-tags-sample-data, ACCT-F208): omitted/default-false-on-omit,
+  // same convention as expenses.routes.ts's own body.is_sample_data === true -- a caller that
+  // omits it gets real money, never a silent guess either way.
+  is_sample_data?: boolean;
   lines: CreateCheckLineInput[];
 };
 
@@ -186,13 +190,15 @@ export async function createCheck(
          vendor_uuid, driver_uuid, payee_customer_uuid, payee_kind, payment_type, check_number,
          print_status, print_on_check_name, remit_to_address, tags,
          unit_id, trailer_id, load_id, linked_work_order_uuid, insurance_claim_id, legal_matter_id,
-         class_id, recover_from_driver, status, posting_status, created_by_user_id, updated_by_user_id
+         class_id, recover_from_driver, status, posting_status, created_by_user_id, updated_by_user_id,
+         is_sample_data
        ) VALUES (
          $1::uuid, $2::date, $3::uuid, $4, $5,
          $6::uuid, $7::uuid, $8::uuid, $9, 'check', $10,
          $11, $12, $13::jsonb, $14::text[],
          $15::uuid, $16::uuid, $17::uuid, $18::uuid, $19::uuid, $20::uuid,
-         $21::uuid, $22, 'draft', 'unposted', $23::uuid, $23::uuid
+         $21::uuid, $22, 'draft', 'unposted', $23::uuid, $23::uuid,
+         $24
        ) RETURNING id::text`,
       [
         operating_company_id,
@@ -221,6 +227,7 @@ export async function createCheck(
         input.class_id ?? null,
         input.recover_from_driver ?? false,
         actorUserId,
+        input.is_sample_data === true,
       ]
     );
     const expenseId = expenseRes.rows[0].id;

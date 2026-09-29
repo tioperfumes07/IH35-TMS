@@ -787,6 +787,16 @@ export async function postSettlementCreatorInClientTx(
     throw new SettlementCreatorError("preview_blocked", preview.blockers.join(" · ") || "Post blocked");
   }
 
+  // ROUND 215.2 (verify-settlement-sample-tag-wired): a settlement's is_sample_data must be
+  // DERIVED, never a hardcoded literal -- LV-SAMPLE-TAG-DISPATCH-HOLE shipped exactly that way
+  // (column named, guard green, every auto-opened settlement still hardcoded "not sample data").
+  // Derived off the driver, per the guard's own prescribed pattern ("driver for the weekly close").
+  const driverSampleRes = await client.query<{ is_sample_data: boolean | null }>(
+    `SELECT is_sample_data FROM mdata.drivers WHERE id = $1::uuid`,
+    [draft.driver_id],
+  );
+  const isSampleData = driverSampleRes.rows[0]?.is_sample_data ?? false;
+
   const typedNo = (draft.settlement_no ?? "").trim();
   let settlementId: string;
   let displayId: string;
@@ -827,7 +837,7 @@ export async function postSettlementCreatorInClientTx(
             operating_company_id, driver_id, status, display_id, period_start, period_end,
             trip_started_at, settlement_model, created_by_user_id, is_sample_data
           )
-          VALUES ($1::uuid, $2::uuid, 'open', $3, $4::date, $5::date, $4::date, 'load_bookended', $6::uuid, false)
+          VALUES ($1::uuid, $2::uuid, 'open', $3, $4::date, $5::date, $4::date, 'load_bookended', $6::uuid, $7)
           RETURNING id
         `,
       [
@@ -837,6 +847,7 @@ export async function postSettlementCreatorInClientTx(
         draft.period_start,
         draft.period_end,
         actorUserId,
+        isSampleData,
       ],
     );
     settlementId = ins.rows[0]!.id;
@@ -898,7 +909,7 @@ export async function postSettlementCreatorInClientTx(
       period_end: draft.period_end,
       source_document_ref: atRef,
       actor_user_id: actorUserId,
-      is_sample_data: false,
+      is_sample_data: isSampleData,
       status: "closed",
     });
     settlementId = bare.settlement_id;

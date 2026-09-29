@@ -9,19 +9,31 @@
  * setSettlementSourceDocumentRef, settlement-source-document-ref.service.ts), using a DIFFERENT
  * advisory-lock key that did not mutually exclude against it — a real double-allocation race
  * between an open-time and a close-time settlement, found live (see OUTBOX-CC-3.md,
- * "duplicate-allocator" correction). This guard now asserts the CLOSE path reuses the SAME
- * canonical functions, not a second implementation.
+ * "duplicate-allocator" correction).
+ *
+ * CORRECTED AGAIN, ROUND 215.2 (2026-09-28): the "CLOSE path must call the allocator" assertion
+ * below was itself superseded by a LATER, explicit owner ruling — R-186.1 (2026-09-25): "NEVER
+ * auto-mint AlwaysTrack sequence into source_document_ref [at close]. display_id is our P-series
+ * (open) / editable field. An AlwaysTrack number is written only when the owner types it on the
+ * Creator or Pre-Settlement header." The owner named the exact defect this auto-mint caused —
+ * "minted fake 5817/5818/5819" — and settlements-load-bookended.service.ts's own code was
+ * correctly updated to retire both allocator calls at its two trip_closed_at UPDATE sites,
+ * leaving only documenting comments behind. Confirmed still true today: `docs/MEMORY_BANK.md`
+ * — "R-186.1 (no AT mint on Book Load open) unchanged — Creator Post is the authorized mint."
+ *
+ * This guard's job is narrower than its original title suggests, and INVERTED from its original
+ * close-path assertion: (1) the canonical allocator+writer in settlement-source-document-ref.
+ * service.ts must still exist, still advisory-lock, still audit — Creator Post and Edit Post
+ * still call it there, just not from this file; (2) settlements-load-bookended.service.ts's own
+ * trip-close paths must NEVER call the allocator (the R-186.1 ban must not silently regress back
+ * in); (3) no OTHER file in apps/backend computes MAX(source_document_ref) outside the one
+ * canonical service — the real, still-live risk this guard exists to catch (a second,
+ * independently-locked allocation path racing the real one).
  *
  * Also fixes this guard's OWN prior blind spot: the "no rogue MAX(source_document_ref) reads"
  * scanner used a regex requiring the literal text `MAX(source_document_ref` — the pre-existing
  * service's own code reads `MAX((source_document_ref)::int)` (an extra wrapping paren), which
  * silently escaped detection. The scanner below tolerates that shape.
- *
- * This guard is source-shape only (no DB) — it asserts both trip-close call sites in
- * settlements-load-bookended.service.ts import and call allocateNextSettlementSourceDocumentRef +
- * setSettlementSourceDocumentRef immediately after their own trip_closed_at UPDATE, guarded by a
- * read that never overwrites an existing number, and that no OTHER file in apps/backend computes
- * MAX(source_document_ref) outside the one canonical service.
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
@@ -46,35 +58,19 @@ function analyze(canonicalSrc, callerSrc) {
     failures.push(`${CANONICAL_FILE}: setSettlementSourceDocumentRef no longer audits the write`);
   }
 
-  if (!/import \{\s*\n?\s*allocateNextSettlementSourceDocumentRef,\s*\n?\s*setSettlementSourceDocumentRef,?\s*\n?\s*\} from "\.\/settlement-source-document-ref\.service\.js";/.test(callerSrc)) {
-    failures.push(`${CALLER_FILE}: missing the canonical allocator+writer import`);
+  // R-186.1 (owner, 2026-09-25): the trip-close path in this file must NEVER auto-mint a
+  // source_document_ref. It minted fake AlwaysTrack numbers (5817/5818/5819) when it did. Assert
+  // the ban holds -- no actual call to either allocator function anywhere in this file (comments
+  // documenting the retirement are fine and expected; only a real `await ...(` call is a failure).
+  const rogueAllocateCall = /await\s+allocateNextSettlementSourceDocumentRef\(/.test(callerSrc);
+  const rogueSetCall = /await\s+setSettlementSourceDocumentRef\(/.test(callerSrc);
+  if (rogueAllocateCall || rogueSetCall) {
+    failures.push(
+      `${CALLER_FILE}: calls the canonical allocator/writer from the trip-close path — R-186.1 (owner, 2026-09-25) permanently bans auto-minting source_document_ref at close; only Creator Post / Pre-Settlement header edits (the owner typing a real AlwaysTrack number) may call it`
+    );
   }
-  const callCount = (callerSrc.match(/await allocateNextSettlementSourceDocumentRef\(/g) || []).length;
-  if (callCount < 2) {
-    failures.push(`${CALLER_FILE}: expected 2 allocator call sites (closeLoadBookendedSettlementForDriver + stampTripClosedForBookendedSettlement), found ${callCount}`);
-  }
-  const writeCallCount = (callerSrc.match(/await setSettlementSourceDocumentRef\(/g) || []).length;
-  if (writeCallCount < 2) {
-    failures.push(`${CALLER_FILE}: expected 2 setSettlementSourceDocumentRef call sites, found ${writeCallCount}`);
-  }
-
-  // Each call site must sit AFTER its own trip_closed_at UPDATE, guarded by a read that never
-  // overwrites an existing number, within the same transaction window.
-  const closeUpdateMatches = [...callerSrc.matchAll(/UPDATE driver_finance\.driver_settlements\s*\n\s*SET trip_closed_at = /g)];
-  if (closeUpdateMatches.length < 2) {
-    failures.push(`${CALLER_FILE}: expected 2 trip_closed_at UPDATE call sites, found ${closeUpdateMatches.length}`);
-  } else {
-    for (const m of closeUpdateMatches) {
-      const afterUpdateWindow = callerSrc.slice(m.index, m.index + 1600);
-      if (!/SELECT source_document_ref FROM driver_finance\.driver_settlements/.test(afterUpdateWindow)) {
-        failures.push(`${CALLER_FILE}: trip_closed_at UPDATE at offset ${m.index} has no overwrite-guard read before allocating`);
-      }
-      if (!/await allocateNextSettlementSourceDocumentRef\(/.test(afterUpdateWindow) || !/await setSettlementSourceDocumentRef\(/.test(afterUpdateWindow)) {
-        failures.push(
-          `${CALLER_FILE}: trip_closed_at UPDATE at offset ${m.index} has no allocate+write call within the same transaction window`
-        );
-      }
-    }
+  if (!/R-186\.1/.test(callerSrc)) {
+    failures.push(`${CALLER_FILE}: the R-186.1 documenting comment is gone — a future edit could reintroduce the auto-mint with no record of why it's forbidden`);
   }
 
   return failures;
@@ -135,27 +131,34 @@ function selftest() {
 
   const mutations = [
     {
-      name: "import removed",
-      apply: (a, c) =>
-        [a, c.replace(/import \{\s*\n?\s*allocateNextSettlementSourceDocumentRef,\s*\n?\s*setSettlementSourceDocumentRef,?\s*\n?\s*\} from "\.\/settlement-source-document-ref\.service\.js";\n/, "")],
-    },
-    {
-      name: "one call site's allocate+write deleted",
-      apply: (a, c) => [
-        a,
-        c.replace(
-          /  if \(!\(await client\.query<\{ source_document_ref: string \| null \}>\(\n\s*`SELECT source_document_ref FROM driver_finance\.driver_settlements WHERE id = \$1`,\n\s*\[settlementId\]\n\s*\)\)\.rows\[0\]\?\.source_document_ref\) \{[\s\S]*?\n  \}\n/,
-          "\n"
-        ),
-      ],
-    },
-    {
       name: "canonical allocator's advisory lock removed",
       apply: (a, c) => [a.replace(/await client\.query\(`SELECT pg_advisory_xact_lock[^;]+;\n/, ""), c],
     },
     {
       name: "canonical writer's audit call removed",
       apply: (a, c) => [a.replace(/await appendCrudAudit\(/, "// appendCrudAudit("), c],
+    },
+    {
+      name: "R-186.1 ban regressed -- a real allocator call reintroduced into the close path",
+      apply: (a, c) => [
+        a,
+        c.replace(
+          "// R-186.1 — never auto-mint AlwaysTrack sequence on close (see closeLoadBookendedSettlementForDriver).",
+          '// R-186.1 — never auto-mint AlwaysTrack sequence on close (see closeLoadBookendedSettlementForDriver).\n  const rogueDocRef = await allocateNextSettlementSourceDocumentRef(client, { operatingCompanyId: opts.operatingCompanyId });\n  await setSettlementSourceDocumentRef(client, { settlementId: opts.settlementId, sourceDocumentRef: rogueDocRef, actorUserId: opts.actorUserId });'
+        ),
+      ],
+    },
+    {
+      name: "R-186.1 documenting comment deleted entirely",
+      apply: (a, c) => [
+        a,
+        c
+          .replace("// R-186.1 — never auto-mint AlwaysTrack sequence on close (see closeLoadBookendedSettlementForDriver).\n", "")
+          .replace(
+            "// R-186.1 (owner 2026-09-25): NEVER auto-mint AlwaysTrack sequence into source_document_ref.\n  // display_id is our P-series (open) / editable field. An AlwaysTrack number is written only when\n  // the owner types it on the Creator or Pre-Settlement header (setSettlementSourceDocumentRef).\n  // Retiring the allocateNextSettlementSourceDocumentRef call that minted fake 5817/5818/5819.\n\n",
+            ""
+          ),
+      ],
     },
     {
       name: "a rogue duplicate MAX(source_document_ref) reader planted elsewhere",
@@ -206,5 +209,5 @@ if (process.argv.includes("--selftest")) {
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: OK -- both trip-close call sites reuse the ONE canonical allocator+writer, guarded against overwrite, no rogue MAX(source_document_ref) reads elsewhere`);
+  console.log(`${LABEL}: OK -- canonical allocator+writer intact and audited; the trip-close path never auto-mints (R-186.1 holds); no rogue MAX(source_document_ref) reads elsewhere`);
 }

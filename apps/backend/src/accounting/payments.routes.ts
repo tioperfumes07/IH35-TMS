@@ -847,13 +847,13 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
 
     try {
       const result = await reinstateDocumentThenVoidReversal(
-        (fn) =>
-          withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-            await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
-              query.data.operating_company_id,
-            ]);
-            return fn(client as never);
-          }),
+        // ROUND 215.2 (verify-caller-scoped-guc-membership): withCompanyScope already asserts
+        // membership and sets app.operating_company_id internally before running this callback
+        // (accounting/shared.ts) -- the redundant manual set_config here re-set the SAME
+        // already-verified value, but the guard's static scanner can't see that, and a future
+        // edit could have changed one of the two copies without the other. Removed; nothing else
+        // needs it.
+        (fn) => withCompanyScope(user.uuid, query.data.operating_company_id, (client) => fn(client as never)),
         {
           operatingCompanyId: query.data.operating_company_id,
           type: "customer_payment",
