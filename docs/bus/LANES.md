@@ -19,6 +19,7 @@ apps/backend/src/dispatch/**
 apps/backend/src/feed/**
 apps/backend/src/mdata/drivers**
 apps/backend/src/mdata/loads.routes.ts
+apps/backend/src/cron/retry-held-expense-postings.cron.ts
 **/*.db.test.ts
 TABLES: accounting.company_settlements · driver_finance.driver_bills · mdata.drivers · identity.*
         mdata.loads
@@ -114,6 +115,15 @@ TABLES: none. The Lead owns no module code and no tables. Anything else the Lead
 # two seats is exactly the mechanism §0b exists to prevent ("No job is split across seats").
 # Assigned to CC-1 so the work is not blocked. **Owner may move it; until he says otherwise it is
 # CC-1's**, on the same basis §0b used when it moved telematics to CC-3 in 2026-09-05.
+#
+# **`apps/backend/src/cron/retry-held-expense-postings.cron.ts` added to CC-1 (ROUND 260 Part H,
+# 2026-09-30).** `apps/backend/src/cron/**` as a directory has no seat -- verify-lane-ownership.mjs
+# reports it "owned by UNASSIGNED". This one file is the cron half of a single accounting.expenses
+# posting-retry defect whose service-layer half (tour-close-posting.service.ts) already lives in
+# CC-1's `apps/backend/src/accounting/**` grant above; splitting the fix and its own cron trigger
+# across two seats recreates exactly the "one job, two seats" problem §0b exists to prevent, same
+# reasoning as the dispatch grant immediately above. Scoped to this one filename, not the whole
+# cron directory. Owner may move it; until then it is CC-1's.
 
 ## SHARED — any seat, but say so in the PR body
 docs/**

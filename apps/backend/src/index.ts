@@ -426,6 +426,7 @@ import { initializeQboSyncQueueRunner } from "./cron/qbo-sync-queue-runner.js";
 import { initializeQboInboundSyncCron, stopQboInboundSyncCron } from "./cron/qbo-inbound-sync.cron.js";
 import { initializeQboCdcPollCron } from "./cron/qbo-cdc-poll.cron.js";
 import { initializeDepreciationAutopostCron } from "./cron/depreciation-autopost.cron.js";
+import { initializeRetryHeldExpensePostingsCron } from "./cron/retry-held-expense-postings.cron.js";
 import { initializeBankDriftAlertsCron } from "./cron/bank-drift-alerts.cron.js";
 import { initializeCashFlowProjectionSnapshotCron } from "./cron/cash-flow-projection-snapshot.cron.js";
 import { initializeCashFlowRollingLedgerNotifyCron } from "./cron/cash-flow-rolling-ledger-notify.cron.js";
@@ -1358,6 +1359,16 @@ async function main() {
       app.log.info("[STARTUP] depreciation-autopost cron initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] depreciation-autopost cron failed");
+    }
+
+    try {
+      // ROUND 260 Part H — retries any expense stuck status='draft'/posting_status='unposted' with
+      // no (or a stale) hold reason: a create-time posting failure that the original code path never
+      // recorded a reason for, and so nothing else was ever able to pick back up again.
+      initializeRetryHeldExpensePostingsCron(app);
+      app.log.info("[STARTUP] retry-held-expense-postings cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] retry-held-expense-postings cron failed");
     }
 
     try {

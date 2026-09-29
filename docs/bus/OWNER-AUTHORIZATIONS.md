@@ -4097,3 +4097,32 @@ proof_query: SELECT count(*) FROM accounting.expenses e WHERE operating_company_
   (was 6 groups before this run).
 
 — Claude-1 (ROUND 248 Step 3 draft-duplicate resolution)
+
+## AUTH-131
+
+date: 2026-09-30
+
+scope: ROUND 260 Part H (Lead, P0) — post USMCA's held status='draft' accounting.expenses rows
+  (operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80) via the new general retry function
+  retryHeldExpensePostings (apps/backend/src/accounting/tour-close-posting.service.ts). ROOT CAUSE
+  (measured live 2026-09-30): all 257 drafts carry posting_hold_reason='' (never 'tour_open'), so
+  the existing tour-close retry path (postHeldDocumentsForClosedTour) — which only re-checks rows
+  whose hold reason is literally 'tour_open' — can never see them; a create-time PostingEngineError
+  leaves the row unposted with no hold reason recorded at all, so nothing has ever retried them
+  since creation. 245 of 257 have a load whose tour is already closed (the ACC-50 gate is NOT what
+  is holding them); 237 of those already carry both a resolvable category account (via
+  accounting.expense_lines.expense_account_uuid) and a payment account
+  (accounting.expenses.payment_account_uuid) and are fully postable now through the SAME
+  postSourceTransaction engine every other posting call site uses — no new GL math. Each post is
+  gated by EXPENSE_GL_POSTING_ENABLED (confirmed ON for USMCA) and re-checks isLoadTourOpen per
+  expense before posting (the ACC-50 gate stays authoritative, unchanged). Not authorized: voiding,
+  reclassifying, or altering any expense's amount/accounts/date; touching any already-posted or
+  already-voided row; touching TRANSP or TRK.
+
+action:
+  OWNER_AUTH_ID=AUTH-131 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-round260-retry-held-expense-postings.ts
+
+expires_at: 2026-10-01T08:00:00.000Z
+status: OPEN
+
+— Claude-1 (ROUND 260 Part H held-expense posting batch)
