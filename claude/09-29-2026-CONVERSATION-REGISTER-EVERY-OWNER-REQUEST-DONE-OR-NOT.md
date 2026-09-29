@@ -42,3 +42,15 @@
 | All-green self-check in Codex's round | WITHDRAWN in writing | Codex refused it |
 | "15 invoices never sent to Faro" | WITHDRAWN — they are Transportation entity loads | Owner |
 | "The Faro import never ran" | WITHDRAWN — it ran (34-row backfill 09-13); AUTH-001 purge wiped the table | CC-1 |
+
+## OPEN ITEM — FARO RESERVES / HOLDBACK (owner 09-29, "we will work later")
+
+Owner: *"sometimes the purchase might be for 30,000 and they apply 30,000 in payments but only send 10 in wire, that is because they hold funds for the CCG payment, but that we will work later, all these deductions are in the reserves account I believe."*
+
+**What this means for the factoring model:** the wire we receive is NOT the advance amount. Purchase amount, payments applied, deductions/holdbacks, and net wire are four different numbers, and the gap lives in the **reserve account**. Any reconciliation that expects wire = advance is wrong by construction.
+
+Measured today on USMCA: invoice face $325,346.72 · advanced $315,356.28 · **reserve held $4,736.59** · factor fees $4,888.44.
+
+CC-2 independently hit the same shape: 12 of 15 matched bank lines are combined Faro wires covering several invoices (invoice 84 nets $3,589 against a $27,441 wire). Those bank lines cannot reconcile one-to-one to an invoice and must never be flagged as a data error.
+
+**NOT SCHEDULED — owner deferred it himself.** Do not build against it yet. Do not let any guard assume wire = advance in the meantime.
