@@ -94,3 +94,62 @@ This is where A/R is relieved and the liability clears.
 | Uses Faro Cash Reserve (1235) | 6 | Reclassify to Factoring Reserves (1230); deactivate 1235 |
 | Wire Fees on entries with no wire fee | — | Remove the line where no fee was charged |
 | Duplicate funding entries, copies differ | 25 groups / 28 excess | Owner picks the surviving copy per group, then void the rest |
+
+---
+
+# AMENDMENT 1 — OWNER ORDERS, 09-29-2026
+
+## A. THE BUILD DOES NOT STOP UNTIL IT IS FINISHED
+Owner: *"MAKE SURE THE CODER FULLY AND COMPLETELY BUILDS THE ENGINE CORRECTLY, ALL MECHANICAL ETC. NOT HALF OR PARTIALLY, IT DOES NOT STOP UNTIL IT IS FULLY AND TOTALLY BUILT, DONE, WIRED, LINKED, ETC."*
+
+No phase-1-of-3. No "foundation laid." No handing the rest to the next seat or the next round. The seat that
+starts this round finishes it: the posting engine, the reversal path, the constraint, the guard, the
+reclassification of every non-conforming entry, the UI that reads it, the reports that aggregate it, the QBO
+export mapping, and the linkage declarations. **Then** it reports.
+
+**Linkage is part of "built."** Every factoring entry links both ways to: the advance, the invoice, the load,
+the customer, the bank transaction, the reserve movement, and its journal entry. A block with no linkage
+declaration is not done (Seat Contract Section 8).
+
+## B. WIRE TO THE EXISTING BANKING VIEWS — DO NOT BUILD NEW ONES
+Owner: *"YOU ALREADY CREATED THE BANKING VIEWS FOR THE FARO RESERVES AND ESCROW ACCOUNTS."*
+
+The Faro reserve and escrow banking views already exist. The engine wires into them. Do not create a parallel
+view, a second reserve surface, or a new screen. Find them, read them, use them, and name them in the report.
+
+## C. THE UNNECESSARY ACCOUNT IS DELETED, NOT JUST DEACTIVATED
+Owner: *"THE UNNECESSARY ACCOUNT SHOULD BE DELETED."*
+
+**BUT FIRST, ONE VERIFICATION — RAISED ONCE, THEN EXECUTE.**
+
+`docs/reconciliation/2026-09-22-faro-reserve-1230-correction-preview.md` quotes Faro's own `ACCOUNT SUMMARY.csv`
+as carrying **two** reserve buckets, not one:
+
+- **Escrow Reserve — $4,530.19**
+- **Cash Reserve — $4,135.41**
+- Total **$8,665.60**
+
+Our chart has **Factoring Reserves (1230)** and **Faro Cash Reserve (1235)**. Two buckets at Faro, two accounts
+here. It is possible 1235 is not drift at all — it may be the Cash Reserve bucket, with 1230 as escrow.
+
+**So before deleting anything, prove which it is, from Faro's exports, not from the code:**
+1. Does Faro hold escrow reserve and cash reserve as genuinely separate balances that must be reported
+   separately? The `ACCOUNT SUMMARY.csv` and `RESERVE REPORT.csv` answer this.
+2. If YES — 1235 is legitimate, it stays, and both accounts get a `system_purpose` and enter the canonical
+   shapes properly. The defect was never having defined which is which.
+3. If NO — one bucket, one account. Reclassify the 6 entries to 1230, then **delete 1235** per the owner's
+   order. Archive it first; a deleted account with history is only safe once nothing points at it.
+
+Report which case it is with the Faro figures pasted. Do not delete on an assumption.
+
+## D. THE 25 DUPLICATE GROUPS — DETERMINE THE SURVIVOR FROM THE SOURCE, DON'T HAND THE OWNER 25 DECISIONS
+The owner should not be asked to hand-pick 25 copies. The surviving copy is **determinable**, and Seat Contract
+Section 9 says read the source:
+
+For each of the 25 groups, the correct copy is the one that (a) matches the canonical funding shape above, and
+(b) ties to Faro's own figures for that invoice in `RESERVE REPORT.csv` / `ACCOUNT SUMMARY.csv` /
+`PAYMENTS TO USMCA FROM FARO.csv`.
+
+Where those two tests agree, that copy survives and the rest are voided — no owner decision needed. Escalate to
+the owner **only** the groups the exports cannot settle, and for those show the copies side by side, account by
+account, with the delta. Say how many of the 25 fell into each bucket.
