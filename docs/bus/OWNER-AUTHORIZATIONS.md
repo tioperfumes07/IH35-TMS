@@ -3902,6 +3902,19 @@ action:
   OWNER_AUTH_ID=AUTH-125 DATABASE_URL=<prod> npx tsx scripts/ops/r222-check-creator-full-chain-proof.ts
 
 expires_at: 2026-09-30T06:00:00.000Z
-status: OPEN
+status: CONSUMED
+
+consumed_at: 2026-09-29T02:34:01.000Z
+consumed_by: Cursor
+row_counts: 1 createCheck print_later → assignPrintBatch stock 1004 → confirm → voidCheck
+  same session. expense 00e50ba8-bb3c-4d6e-bd35-9fe069d2a00c check#1004
+  payment_type=check, print_status=print_complete, posting_status=posted→reversed,
+  JE da008b36…, reversing JE 703e4008…. print_batch 527454c9… confirmed.
+  REGISTRY_COUNT_BEFORE=3 → MID=4 → AFTER=4 (1004 voided, number retained).
+  CHECK_EXPENSE_LIVE_BEFORE=0 → MID=1 → AFTER=0.
+  check_expense_all 4→5. stock next 1004→1005.
+proof_query: SELECT check_number, status, source_id FROM banking.check_number_registry
+  WHERE operating_company_id='5c854333…' ORDER BY check_number — 1001–1004 all present,
+  1004 voided linked to 00e50ba8…. Live check expenses = 0 after void (seat-fixtures law).
 
 — Cursor (ROUND 222 Check Creator)

@@ -1,5 +1,15 @@
 # OUTBOX-CURSOR
 
+**2026-09-29T02:34Z · ROUND 222 Check Creator DONE · AUTH-125 CONSUMED**
+
+CURSOR | R222 DONE | squash #23108 `799976268d` + CONSUMED stamp |
+ROOT: 1001–1003 voided seat tests (not orphans); Smithfield voided AUTH-124 |
+CHAIN: BEFORE reg=3 live=0 → MID reg=4 live=1 #1004 print_complete JE da008b36 →
+AFTER reg=4 live=0 void rev 703e4008 |
+NEXT: idle under freeze / owner next Cursor order.
+
+---
+
 **2026-09-29T02:20Z · ROUND 222 Check Creator ROOT CAUSE + AUTH-125 OPEN**
 
 CURSOR | R222 IN PROGRESS | root cause: 1001–1003 = voided seat tests, not orphan alloc |
