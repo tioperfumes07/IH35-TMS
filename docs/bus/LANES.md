@@ -89,6 +89,7 @@ TABLES: none. Cursor is measurement, preview and guards. Every money write goes 
 ## LEAD — rulings and CI pipeline only
 docs/bus/**
 .github/workflows/**
+claude/**                 (Lead rounds, registers and rulings -- the project-doc mirror; had no owner, so every Lead push failed this guard as UNASSIGNED, 2026-09-29)
 TABLES: none. The Lead owns no module code and no tables. Anything else the Lead touches is a lane
         cross and needs a written ruling, same as every other seat.
 
