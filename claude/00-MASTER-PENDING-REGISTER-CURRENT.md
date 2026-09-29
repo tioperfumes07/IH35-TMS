@@ -2,6 +2,18 @@
 # Claude Lead · 09-29-2026 22:5x CT · THE ONE LIST. Supersedes every earlier register.
 # Rule: nothing is removed from this file. Items close with proof or are marked RETRACTED with the reason.
 
+## OWNER PRIORITY — 09-29-2026, SUPERSEDES ALL SEQUENCING
+
+**THE FACTORING ENGINE IS BUILT FIRST, COMPLETELY, BEFORE ANYTHING ELSE.**
+Owner: *"I NEED THE FACTORING ENGINE FULLY BUILT FIRST, COMPLETELY DONE NOW. RENDERING DATA WHERE IT SHOULD RENDER, ETC."*
+
+- **CC-2 works on nothing else.** Items 13, 14, 15, 16 are parked until factoring is live.
+- Scope = `00-CANONICAL-FACTORING-POSTING-LOCKED.md` in full, including Amendments 1 and 2: items **42, 43, 45, 46, 48, 50, 51**.
+- **Cursor's only job is unblocking CC-2** (items 61, 62). Board UI waits.
+- Done means: engine on one code path · reversal path · constraint · guard · every non-conforming entry reclassified · all three Faro accounts rendering real data · wired to the existing factoring module and banking views · linkage declared both ways · QBO mapping · merged · deployed · deploy id pasted · live Chrome screenshot of Faro Factoring USMCA showing real purchased invoices.
+- **No partial delivery. No "phase 1 complete." It does not stop until a person can open it in Chrome and click it.**
+
+
 ## A. YOUR BOOKS ARE WRONG TODAY — these cost money right now
 
 | # | Seat | Item | Money | Status |
