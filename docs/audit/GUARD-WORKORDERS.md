@@ -11682,3 +11682,29 @@ Sequence per the relayed instruction: comparison table (done) → owner picks su
 group → voids run → $39,108 sweep runs → NO_CLEARING_PILEUP threshold recalibration.
 
 — CC-2
+
+## FINDING: N/A LANE: DOCS -- verify-one-source-per-number now globally blocks every push (TruckLineBoard.tsx regressed after DSP-TL-CONFLICT-01) (CC-2, 2026-09-30)
+
+While pushing an unrelated banking/checks branch (`cc2/r245-p0-check-number-reset`),
+`verify-one-source-per-number` failed with:
+```
+load board -- Truck Line (R-173) (apps/frontend/src/pages/dispatch/TruckLineBoard.tsx): no longer
+matches required canonical-source marker /useLoadCostRollups/ -- did this surface regress to
+re-deriving its own numbers?
+load board -- Truck Line (R-173) (apps/frontend/src/pages/dispatch/TruckLineBoard.tsx): no longer
+matches required canonical-source marker /costRollups\.get\(r\.load\.load_id\)/ -- did this surface
+regress to re-deriving its own numbers?
+```
+Confirmed unrelated to that branch's diff (`git diff origin/main...HEAD --stat -- .../TruckLineBoard.tsx`
+empty). Last touch to the file on `main` is `85e03a0380 FINDING: DSP-TL-CONFLICT-01 (#23164)`, on
+top of `08eee92f52 Cursor- ROUND 259 ... Truck Line canonical`. This guard is an always-run static
+check (not domain-scoped to the diff), so it now blocks **every** seat's push, regardless of what
+their branch touches, until `TruckLineBoard.tsx` is restored to reading load costs through
+`useLoadCostRollups`/`costRollups.get(r.load.load_id)` instead of re-deriving them locally.
+
+Not attempted here -- not this seat's surface (dispatch board / Truck Line canonical-source wiring),
+and DSP-TL-CONFLICT-01 was someone else's very recent, in-flight fix. Flagging for whoever owns that
+surface (Cursor, per ROUND 259/DSP-TL-CONFLICT-01) to restore the canonical marker. Per ROUND 265:
+not idling on this -- continuing other work while this is outstanding.
+
+— CC-2
