@@ -54,3 +54,5 @@ Measured today on USMCA: invoice face $325,346.72 · advanced $315,356.28 · **r
 CC-2 independently hit the same shape: 12 of 15 matched bank lines are combined Faro wires covering several invoices (invoice 84 nets $3,589 against a $27,441 wire). Those bank lines cannot reconcile one-to-one to an invoice and must never be flagged as a data error.
 
 **NOT SCHEDULED — owner deferred it himself.** Do not build against it yet. Do not let any guard assume wire = advance in the meantime.
+
+**Owner's answer on where the holdback lands (09-29, deferred by him):** it is already in the blueprint / architecture / CPA answers. Create a **LOAN TO TRANSPORTATION** account and use the **loan creator** to open a loan to Transportation, so the amounts Faro deducts match against the loan account rather than floating. **NOT SCHEDULED — owner deferred. Do not build it yet. Do not invent a different treatment in the meantime.**
