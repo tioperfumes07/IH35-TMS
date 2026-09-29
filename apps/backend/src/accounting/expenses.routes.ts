@@ -9,7 +9,6 @@ import { generateExpenseNumber } from "../expense-attribution/expense-number.js"
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { resolveExpenseCategoryId } from "./expense-category-catalog.js";
 import { postSourceTransaction, reversePostedSourceTransactionInClientTx, PostingEngineError } from "./posting-engine.service.js";
-import { expenseOpenTourLoadId, TOUR_OPEN_HOLD_REASON } from "./tour-open-gate.service.js";
 import { todayIso } from "./void.service.js";
 import { canVoid, isVoidEnforcementEnabled } from "./void.service.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
@@ -1376,27 +1375,14 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       let journal_entry_id: string | null = null;
       let posting_hold_reason: string | null = null;
       if (expenseId && created.category_account_id && created.has_payment_account) {
-        // ACC-50 (LAW §2, ROUND 5) — "open tour posts nothing." Checked BEFORE the posting flag:
-        // an expense on a still-open tour must never post even when EXPENSE_GL_POSTING_ENABLED is
-        // on. Held here means posting_status stays 'unposted' with a named reason instead of the
-        // engine ever being called — same shape as the flag-off path, just with an honest cause.
-        const openTourLoadId = await withCompanyScope(user.uuid, body.operating_company_id, (client) =>
-          expenseOpenTourLoadId(client, body.operating_company_id, expenseId)
+        // ACC-50 REMOVED (claude/00-SEAT-CONTRACT.md §3 corollary, owner ruling 2026-09-29): "an
+        // expense on an open load posts on its transaction date. No guard may block a post because
+        // a tour is open. Cost attribution to a load is a reporting join, never a posting delay."
+        // Posting now depends only on the flag; whether the load's tour is open/closed is no longer
+        // consulted here at all.
+        const flagOn = await withCompanyScope(user.uuid, body.operating_company_id, (client) =>
+          isEnabled(client, EXPENSE_GL_POSTING_FLAG_KEY, { operating_company_id: body.operating_company_id, user_uuid: String(user.uuid) })
         );
-        if (openTourLoadId) posting_hold_reason = TOUR_OPEN_HOLD_REASON;
-        if (openTourLoadId) {
-          await withCompanyScope(user.uuid, body.operating_company_id, (client) =>
-            client.query(
-              `UPDATE accounting.expenses SET posting_hold_reason=$2, updated_at=now() WHERE id=$1::uuid AND operating_company_id=$3::uuid`,
-              [expenseId, TOUR_OPEN_HOLD_REASON, body.operating_company_id]
-            )
-          );
-        }
-        const flagOn =
-          !openTourLoadId &&
-          (await withCompanyScope(user.uuid, body.operating_company_id, (client) =>
-            isEnabled(client, EXPENSE_GL_POSTING_FLAG_KEY, { operating_company_id: body.operating_company_id, user_uuid: String(user.uuid) })
-          ));
         if (flagOn) {
           try {
             const posting = await postSourceTransaction(
@@ -1620,15 +1606,8 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       if (!exp) return { kind: "not_found" as const };
       if (exp.status === "void") return { kind: "not_eligible" as const };
       if (exp.posting_status !== "unposted") return { kind: "already_posted" as const };
-      // ACC-50 (LAW §2) — a manual "Post to GL" click can never override the open-tour hold either.
-      const openTourLoadId = await expenseOpenTourLoadId(client, oci, expenseId);
-      if (openTourLoadId) {
-        await client.query(
-          `UPDATE accounting.expenses SET posting_hold_reason=$2, updated_at=now() WHERE id=$1::uuid AND operating_company_id=$3::uuid`,
-          [expenseId, TOUR_OPEN_HOLD_REASON, oci]
-        );
-        return { kind: "tour_open" as const, load_id: openTourLoadId };
-      }
+      // ACC-50 REMOVED (claude/00-SEAT-CONTRACT.md §3 corollary, owner ruling 2026-09-29) — a manual
+      // "Post to GL" click no longer checks the load's tour status at all.
       // orphan guard (decision 3): no payment account AND no vendor → reject (no orphan payable). Clean 409 here;
       // buildExpenseLines keeps the same guard as the engine-level backstop.
       if (!exp.payment_account_uuid && !exp.vendor_uuid) return { kind: "orphan" as const };
@@ -1648,8 +1627,6 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     if (pre.kind === "not_eligible") return reply.code(409).send({ error: "expense_not_posting_eligible" });
     if (pre.kind === "already_posted") return reply.code(409).send({ error: "expense_already_posted" });
     if (pre.kind === "orphan") return reply.code(409).send({ error: "expense_orphan_no_payment_account_or_vendor" });
-    if (pre.kind === "tour_open")
-      return reply.code(409).send({ error: "expense_tour_open", posting_hold_reason: TOUR_OPEN_HOLD_REASON, load_id: pre.load_id });
 
     // Step B: post the balanced JE (own tx, idempotent — re-post returns the existing batch).
     let journalEntryId: string;

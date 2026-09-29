@@ -1,10 +1,10 @@
 {
-  "healthzSha": "f40e8b1",
-  "generated_at": "2026-09-28T19:39:17.390Z",
+  "healthzSha": "4e84c51",
+  "generated_at": "2026-09-29T22:25:53.346Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "f40e8b1",
+    "deployedSha": "4e84c51",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 23057,
-      "title": "Claude-3-ROUND 200: Truck Line dropdown/design/columns/timeline fixes",
+      "number": 23151,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "09/28/2026, 02:38 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23057",
-      "sha": "581b4ad0e4",
-      "committedAtIso": "2026-09-28T14:38:43-05:00"
+      "mergedAtCt": "09/29/2026, 05:24 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23151",
+      "sha": "e9e7aa3b50",
+      "committedAtIso": "2026-09-29T17:24:17-05:00"
     },
     {
-      "number": 23056,
-      "title": "FINDING: AT-EXCLUDE-5769-5819 — owner ordered EXCLUDE of closed shared Transportation/USMCA settlements 5769–5819 from verify-alwaystrack-parity in-scope; #23054 only de-failed mismatches while still counting them in-scope and printing variances that can re-raise",
+      "number": 23150,
+      "title": "FINDING: N/A — AUTH-131 CONSUMED: live proof, 246 of 257 held expenses posted",
       "state": "merged",
-      "mergedAtCt": "09/28/2026, 02:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23056",
-      "sha": "f40e8b10e7",
-      "committedAtIso": "2026-09-28T14:28:30-05:00"
+      "mergedAtCt": "09/29/2026, 05:19 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23150",
+      "sha": "f6a9418242",
+      "committedAtIso": "2026-09-29T17:19:33-05:00"
     },
     {
-      "number": 23055,
-      "title": "ROUND 201 status report: guard fix confirmed merged, 4 catalog-gap concepts answered",
+      "number": 23149,
+      "title": "Cursor- P0 — restore 202614530000 applied bytes + FK-safe follow-up migration",
       "state": "merged",
-      "mergedAtCt": "09/28/2026, 02:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23055",
-      "sha": "8e18724218",
-      "committedAtIso": "2026-09-28T14:22:33-05:00"
+      "mergedAtCt": "09/29/2026, 05:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23149",
+      "sha": "4e84c519a9",
+      "committedAtIso": "2026-09-29T17:15:59-05:00"
     },
     {
-      "number": 23054,
-      "title": "ROUND 201 retraction / standing law: scope verify-alwaystrack-parity to the CLOSED 5769-5819 range",
+      "number": 23148,
+      "title": "FINDING: N/A — ROUND 270 Item 1: add 6 Faro invoices to day_control.json",
       "state": "merged",
-      "mergedAtCt": "09/28/2026, 02:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23054",
-      "sha": "9296e7c387",
-      "committedAtIso": "2026-09-28T14:21:31-05:00"
+      "mergedAtCt": "09/29/2026, 05:13 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23148",
+      "sha": "b0387b6888",
+      "committedAtIso": "2026-09-29T17:13:42-05:00"
     },
     {
-      "number": 0,
-      "title": "CC-3: retract prior handoff -- owner already closed 5769-5819, do not void",
+      "number": 23147,
+      "title": "FINDING: ACCT-F2026093003 — verify-open-tour-posts-nothing false-positives on cancelled-settlement closes",
       "state": "merged",
-      "mergedAtCt": "09/28/2026, 02:15 PM CT",
-      "url": "",
-      "sha": "036608fcf8",
-      "committedAtIso": "2026-09-28T14:15:13-05:00"
-    },
-    {
-      "number": 23053,
-      "title": "FINDING: BANK-F26428",
-      "state": "merged",
-      "mergedAtCt": "09/28/2026, 02:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23053",
-      "sha": "91233f9ec9",
-      "committedAtIso": "2026-09-28T14:14:14-05:00"
+      "mergedAtCt": "09/29/2026, 05:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23147",
+      "sha": "3f23a65cf9",
+      "committedAtIso": "2026-09-29T17:09:03-05:00"
     },
     {
       "number": 0,
-      "title": "CC-3: hand off verify-alwaystrack-parity's 12-document mismatch to CC-1 with exact file/line facts, no verdict, per Lead ROUND 200 order",
+      "title": "00-SEAT-CONTRACT: one standing-rules file; rounds now point at it instead of repeating it",
       "state": "merged",
-      "mergedAtCt": "09/28/2026, 02:11 PM CT",
+      "mergedAtCt": "09/29/2026, 05:03 PM CT",
       "url": "",
-      "sha": "5cb059f4da",
-      "committedAtIso": "2026-09-28T14:11:14-05:00"
-    },
-    {
-      "number": 23052,
-      "title": "ROUND 198 status report",
-      "state": "merged",
-      "mergedAtCt": "09/28/2026, 02:00 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23052",
-      "sha": "d803819a4f",
-      "committedAtIso": "2026-09-28T14:00:56-05:00"
+      "sha": "9fac32621b",
+      "committedAtIso": "2026-09-29T17:03:27-05:00"
     },
     {
       "number": 0,
-      "title": "FIX: coordination doc reply pointed at AUTH-120 (Cursor's, collided) -- corrected to AUTH-121, the real id CC-2 must put in the script",
+      "title": "REGISTER: every owner request marked DONE or NOT DONE, plus all nine Lead retractions on the record",
       "state": "merged",
-      "mergedAtCt": "09/28/2026, 02:00 PM CT",
+      "mergedAtCt": "09/29/2026, 05:00 PM CT",
       "url": "",
-      "sha": "7371c50e24",
-      "committedAtIso": "2026-09-28T14:00:27-05:00"
+      "sha": "6f0a258743",
+      "committedAtIso": "2026-09-29T17:00:07-05:00"
     },
     {
       "number": 0,
-      "title": "FIX: renumber my new authorization from AUTH-120 (collided with Cursor's already-DONE AUTH-120, G-16 Check Creator proof) to AUTH-121",
+      "title": "ROUND 271.1: second void-contamination pattern (voided_at set, status not flipped, executeVoidCancel has no case); Lead retracts the 'Faro import never ran' claim",
       "state": "merged",
-      "mergedAtCt": "09/28/2026, 02:00 PM CT",
+      "mergedAtCt": "09/29/2026, 05:00 PM CT",
       "url": "",
-      "sha": "c7d72d7e4c",
-      "committedAtIso": "2026-09-28T14:00:15-05:00"
+      "sha": "f9890af415",
+      "committedAtIso": "2026-09-29T17:00:07-05:00"
+    },
+    {
+      "number": 0,
+      "title": "LEAD ROUND 271/272: Devin-B void-contamination audit before purge; Devin-A builds the locked PDFs; v10 designs locked into the repo",
+      "state": "merged",
+      "mergedAtCt": "09/29/2026, 05:00 PM CT",
+      "url": "",
+      "sha": "d6f42fdc41",
+      "committedAtIso": "2026-09-29T17:00:07-05:00"
+    },
+    {
+      "number": 23146,
+      "title": "Cursor- ROUND 259 — restore 3 entity-isolation backlog rows (CI fresh DB)",
+      "state": "merged",
+      "mergedAtCt": "09/29/2026, 04:58 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23146",
+      "sha": "97c5594125",
+      "committedAtIso": "2026-09-29T16:58:48-05:00"
     }
   ]
 }

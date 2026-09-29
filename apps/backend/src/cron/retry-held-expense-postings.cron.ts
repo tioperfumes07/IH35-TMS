@@ -29,14 +29,13 @@ export async function runRetryHeldExpensePostingsCronTick(deps?: {
   const retryImpl = deps?.retryHeldExpensePostingsImpl ?? retryHeldExpensePostings;
 
   const companyIds = await withLuciaBypassImpl(async (client) => listActiveOperatingCompanyIds(client));
-  const summary = { company_count: companyIds.length, posted: 0, still_held_tour_open: 0, still_held_orphan: 0, still_held_posting_error: 0, flag_off: 0 };
+  const summary = { company_count: companyIds.length, posted: 0, still_held_orphan: 0, still_held_posting_error: 0, flag_off: 0 };
 
   for (const operatingCompanyId of companyIds) {
     assertTenantContext(operatingCompanyId, CRON_NAME);
     const result = await retryImpl(operatingCompanyId, { userId: SYSTEM_ACTOR_ID });
     for (const o of result.outcomes) {
       if (o.outcome === "posted") summary.posted += 1;
-      else if (o.outcome === "still_held_tour_open") summary.still_held_tour_open += 1;
       else if (o.outcome === "still_held_orphan") summary.still_held_orphan += 1;
       else if (o.outcome === "still_held_posting_error") summary.still_held_posting_error += 1;
       else summary.flag_off += 1;
