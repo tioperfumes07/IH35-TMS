@@ -9279,5 +9279,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-30",
     "purpose": "verify-factoring-advance-status-matches-voided-at (ROUND 270)"
+  },
+  "11745": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-batch-bank-match-unambiguous-only (ROUND 260/270 Part I)"
   }
 }
