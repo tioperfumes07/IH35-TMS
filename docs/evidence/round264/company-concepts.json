@@ -6137,7 +6137,7 @@
           "expenses": 13381,
           "extra pay": 6525,
           "repairs": 0,
-          "margin": 98116,
+          "margin": -98116,
           "quick pay": 0
         },
         "revenue": {
@@ -6146,7 +6146,7 @@
           "Additional Driver Pay": 5000,
           "Fuel": 355734,
           "Company Expenses": 13381,
-          "Net Revenue": 98116
+          "Net Revenue": -98116
         },
         "reimbursed_expenses": 1525,
         "parse_errors": [],
@@ -6159,7 +6159,7 @@
           "expenses": 13381,
           "extra pay": 6525,
           "repairs": 0,
-          "margin": 98116,
+          "margin": -98116,
           "quick pay": 0
         }
       },
@@ -13815,7 +13815,7 @@
           "expenses": 18942,
           "extra pay": 0,
           "repairs": 0,
-          "margin": 150885,
+          "margin": -150885,
           "quick pay": 0
         },
         "revenue": {
@@ -13823,7 +13823,7 @@
           "Driver Salary": 151275,
           "Fuel": 380668,
           "Company Expenses": 18942,
-          "Net Revenue": 150885
+          "Net Revenue": -150885
         },
         "reimbursed_expenses": 0,
         "parse_errors": [],
@@ -13836,7 +13836,7 @@
           "expenses": 18942,
           "extra pay": 0,
           "repairs": 0,
-          "margin": 150885,
+          "margin": -150885,
           "quick pay": 0
         }
       },
@@ -15661,7 +15661,7 @@
           "expenses": 19319,
           "extra pay": 9226,
           "repairs": 0,
-          "margin": 57207,
+          "margin": -57207,
           "quick pay": 0
         },
         "revenue": {
@@ -15670,7 +15670,7 @@
           "Additional Driver Pay": 5000,
           "Fuel": 394223,
           "Company Expenses": 19319,
-          "Net Revenue": 57207
+          "Net Revenue": -57207
         },
         "reimbursed_expenses": 4226,
         "parse_errors": [],
@@ -15683,7 +15683,7 @@
           "expenses": 19319,
           "extra pay": 9226,
           "repairs": 0,
-          "margin": 57207,
+          "margin": -57207,
           "quick pay": 0
         }
       },
@@ -21767,7 +21767,7 @@
           "expenses": 3736,
           "extra pay": 22500,
           "repairs": 0,
-          "margin": 60889,
+          "margin": -60889,
           "quick pay": 10800
         },
         "revenue": {
@@ -21777,7 +21777,7 @@
           "Additional Driver Pay": 22500,
           "Fuel": 237948,
           "Company Expenses": 3736,
-          "Net Revenue": 60889
+          "Net Revenue": -60889
         },
         "reimbursed_expenses": 0,
         "parse_errors": [],
@@ -21790,7 +21790,7 @@
           "expenses": 3736,
           "extra pay": 22500,
           "repairs": 0,
-          "margin": 60889,
+          "margin": -60889,
           "quick pay": 10800
         }
       },

@@ -29,7 +29,7 @@
   "transaction_absolute_variance_cents": 2253708,
   "transaction_clean_before_margin_or_split": 32,
   "margin_absolute_magnitude_variance_cents": 9651632,
-  "margin_absolute_signed_variance_cents": 22815978,
+  "margin_absolute_signed_variance_cents": 22220016,
   "by_concept": {
     "line haul": {
       "count": 4,
@@ -52,9 +52,9 @@
   "driver_net_red": 1,
   "driver_net_absolute_variance_cents": 145247,
   "driver_net_signed_absolute_variance_cents": 155247,
-  "driver_tab_unchanged": true,
-  "driver_tab_saved_green": 15,
-  "driver_tab_saved_red": 33,
+  "driver_tab_unchanged": false,
+  "driver_tab_saved_green": 47,
+  "driver_tab_saved_red": 1,
   "summary": [
     {
       "number": "5769",
@@ -226,12 +226,12 @@
       "transaction_variance_cents": 40000,
       "moved_cents": 0,
       "excluded_linehaul_cents": 0,
-      "margin_at_cents": 98116,
+      "margin_at_cents": -98116,
       "margin_app_cents": -861165,
       "margin_magnitude_variance_cents": 763049,
-      "signed_margin_variance_cents": -959281,
+      "signed_margin_variance_cents": -763049,
       "notes": [
-        "App report margin -8,611.65; AT margin 981.16; signed variance -9,592.81"
+        "App report margin -8,611.65; AT margin -981.16; signed variance -7,630.49"
       ]
     },
     {
@@ -438,12 +438,12 @@
       "transaction_variance_cents": 350000,
       "moved_cents": 7264,
       "excluded_linehaul_cents": 0,
-      "margin_at_cents": 150885,
+      "margin_at_cents": -150885,
       "margin_app_cents": -198415,
       "margin_magnitude_variance_cents": 47530,
-      "signed_margin_variance_cents": -349300,
+      "signed_margin_variance_cents": -47530,
       "notes": [
-        "App report margin -1,984.15; AT margin 1,508.85; signed variance -3,493.00",
+        "App report margin -1,984.15; AT margin -1,508.85; signed variance -475.30",
         "At least $72.64 allocated to the wrong load; settlement expense total agrees."
       ]
     },
@@ -492,12 +492,12 @@
       "transaction_variance_cents": 0,
       "moved_cents": 7277,
       "excluded_linehaul_cents": 0,
-      "margin_at_cents": 57207,
+      "margin_at_cents": -57207,
       "margin_app_cents": -470749,
       "margin_magnitude_variance_cents": 413542,
-      "signed_margin_variance_cents": -527956,
+      "signed_margin_variance_cents": -413542,
       "notes": [
-        "App report margin -4,707.49; AT margin 572.07; signed variance -5,279.56",
+        "App report margin -4,707.49; AT margin -572.07; signed variance -4,135.42",
         "At least $72.77 allocated to the wrong load; settlement expense total agrees."
       ]
     },
@@ -655,12 +655,12 @@
       "transaction_variance_cents": 300000,
       "moved_cents": 0,
       "excluded_linehaul_cents": 0,
-      "margin_at_cents": 60889,
+      "margin_at_cents": -60889,
       "margin_app_cents": 8227,
       "margin_magnitude_variance_cents": -52662,
-      "signed_margin_variance_cents": -52662,
+      "signed_margin_variance_cents": 69116,
       "notes": [
-        "App report margin 82.27; AT margin 608.89; signed variance -526.62"
+        "App report margin 82.27; AT margin -608.89; signed variance +691.16"
       ]
     },
     {
@@ -1213,5 +1213,6 @@
   ],
   "app_unknown_na_rows": 0,
   "out_of_scope_rows": 0,
-  "output": "/Users/jorgemunoz/Downloads/09-30-2026-ALWAYSTRACK-vs-APP-SETTLEMENT-COMPARISON-R264.xlsx"
+  "output": "/Users/jorgemunoz/Downloads/09-30-2026-ALWAYSTRACK-vs-APP-SETTLEMENT-COMPARISON-R264.xlsx",
+  "driver_marker_basis": "NET PAY magnitude only, authorized ROUND 268; gross/deduction observations preserved"
 }

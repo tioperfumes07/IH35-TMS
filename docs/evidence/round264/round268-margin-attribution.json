@@ -1,0 +1,887 @@
+{
+  "measurement_at": "2026-09-29T21:04:42.060Z",
+  "rows": [
+    {
+      "number": "5769",
+      "AT_printed_margin_cents": 368442,
+      "AT_extra_pay_cents": 0,
+      "AT_formula_cents": 368442,
+      "app_report_margin_cents": 245236,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 11400,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": -6784,
+        "expense_report_minus_AT_expenses": -127822,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -123206
+    },
+    {
+      "number": "5770",
+      "AT_printed_margin_cents": 382625,
+      "AT_extra_pay_cents": 10000,
+      "AT_formula_cents": 382625,
+      "app_report_margin_cents": -218199,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 13950,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": -292604,
+        "expense_report_minus_AT_expenses": -322170,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -600824
+    },
+    {
+      "number": "5771",
+      "AT_printed_margin_cents": 254340,
+      "AT_extra_pay_cents": 5000,
+      "AT_formula_cents": 254340,
+      "app_report_margin_cents": -242060,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 7350,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": -186584,
+        "expense_report_minus_AT_expenses": -317166,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -496400
+    },
+    {
+      "number": "5772",
+      "AT_printed_margin_cents": 141886,
+      "AT_extra_pay_cents": 10000,
+      "AT_formula_cents": 141886,
+      "app_report_margin_cents": -491791,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 15525,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -1525,
+        "fuel_report_minus_AT_fuel": -249737,
+        "expense_report_minus_AT_expenses": -397940,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -633677
+    },
+    {
+      "number": "5773",
+      "AT_printed_margin_cents": 468369,
+      "AT_extra_pay_cents": 0,
+      "AT_formula_cents": 468369,
+      "app_report_margin_cents": -411822,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": -720000,
+        "quick_pay_not_subtracted_by_report": 21600,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": 198794,
+        "expense_report_minus_AT_expenses": -380585,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -880191
+    },
+    {
+      "number": "5774",
+      "AT_printed_margin_cents": 291491,
+      "AT_extra_pay_cents": 0,
+      "AT_formula_cents": 291491,
+      "app_report_margin_cents": -228468,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 5700,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -11547,
+        "fuel_report_minus_AT_fuel": -262134,
+        "expense_report_minus_AT_expenses": -251978,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -519959
+    },
+    {
+      "number": "5775",
+      "AT_printed_margin_cents": 234526,
+      "AT_extra_pay_cents": 10000,
+      "AT_formula_cents": 234526,
+      "app_report_margin_cents": -195465,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 16050,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -1525,
+        "fuel_report_minus_AT_fuel": -123776,
+        "expense_report_minus_AT_expenses": -320740,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -429991
+    },
+    {
+      "number": "5776",
+      "AT_printed_margin_cents": 111511,
+      "AT_extra_pay_cents": 10000,
+      "AT_formula_cents": 111511,
+      "app_report_margin_cents": -684965,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 13275,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -6150,
+        "fuel_report_minus_AT_fuel": -381152,
+        "expense_report_minus_AT_expenses": -422449,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -796476
+    },
+    {
+      "number": "5777",
+      "AT_printed_margin_cents": 281350,
+      "AT_extra_pay_cents": 5000,
+      "AT_formula_cents": 281350,
+      "app_report_margin_cents": -382765,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 17850,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": -345000,
+        "expense_report_minus_AT_expenses": -336965,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -664115
+    },
+    {
+      "number": "5778",
+      "AT_printed_margin_cents": -98116,
+      "AT_extra_pay_cents": 5000,
+      "AT_formula_cents": -98116,
+      "app_report_margin_cents": -861165,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": -40000,
+        "quick_pay_not_subtracted_by_report": 0,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -1525,
+        "fuel_report_minus_AT_fuel": -365790,
+        "expense_report_minus_AT_expenses": -355734,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -763049
+    },
+    {
+      "number": "5779",
+      "AT_printed_margin_cents": 161001,
+      "AT_extra_pay_cents": 2700,
+      "AT_formula_cents": 161001,
+      "app_report_margin_cents": -446058,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 0,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": -277102,
+        "expense_report_minus_AT_expenses": -329957,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -607059
+    },
+    {
+      "number": "5780",
+      "AT_printed_margin_cents": 109803,
+      "AT_extra_pay_cents": 0,
+      "AT_formula_cents": 109803,
+      "app_report_margin_cents": -36447,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": -150000,
+        "quick_pay_not_subtracted_by_report": 3750,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": 84376,
+        "expense_report_minus_AT_expenses": -84376,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -146250
+    },
+    {
+      "number": "5781",
+      "AT_printed_margin_cents": 208286,
+      "AT_extra_pay_cents": 0,
+      "AT_formula_cents": 208286,
+      "app_report_margin_cents": -54167,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 15450,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": -7351,
+        "expense_report_minus_AT_expenses": -270552,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -262453
+    },
+    {
+      "number": "5782",
+      "AT_printed_margin_cents": 184393,
+      "AT_extra_pay_cents": 2500,
+      "AT_formula_cents": 184393,
+      "app_report_margin_cents": -401899,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 11700,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -1800,
+        "fuel_report_minus_AT_fuel": -266025,
+        "expense_report_minus_AT_expenses": -330167,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -586292
+    },
+    {
+      "number": "5783",
+      "AT_printed_margin_cents": 228486,
+      "AT_extra_pay_cents": 17500,
+      "AT_formula_cents": 228486,
+      "app_report_margin_cents": -120403,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 17250,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": -12170,
+        "expense_report_minus_AT_expenses": -353969,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -348889
+    },
+    {
+      "number": "5784",
+      "AT_printed_margin_cents": 293877,
+      "AT_extra_pay_cents": 2500,
+      "AT_formula_cents": 293877,
+      "app_report_margin_cents": -551791,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 5250,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -14934,
+        "fuel_report_minus_AT_fuel": -281211,
+        "expense_report_minus_AT_expenses": -554773,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -845668
+    },
+    {
+      "number": "5785",
+      "AT_printed_margin_cents": 119609,
+      "AT_extra_pay_cents": 10000,
+      "AT_formula_cents": 119609,
+      "app_report_margin_cents": -451799,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 6450,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -1000,
+        "fuel_report_minus_AT_fuel": -119844,
+        "expense_report_minus_AT_expenses": -457014,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -571408
+    },
+    {
+      "number": "5786",
+      "AT_printed_margin_cents": 214957,
+      "AT_extra_pay_cents": 0,
+      "AT_formula_cents": 214957,
+      "app_report_margin_cents": -246423,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": -345000,
+        "quick_pay_not_subtracted_by_report": 5175,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": 120269,
+        "expense_report_minus_AT_expenses": -241824,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -461380
+    },
+    {
+      "number": "5787",
+      "AT_printed_margin_cents": 94353,
+      "AT_extra_pay_cents": 7500,
+      "AT_formula_cents": 94353,
+      "app_report_margin_cents": -236723,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 3000,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -2200,
+        "fuel_report_minus_AT_fuel": -132821,
+        "expense_report_minus_AT_expenses": -199055,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -331076
+    },
+    {
+      "number": "5788",
+      "AT_printed_margin_cents": 214024,
+      "AT_extra_pay_cents": 0,
+      "AT_formula_cents": 214024,
+      "app_report_margin_cents": -513824,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 15090,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": -275812,
+        "expense_report_minus_AT_expenses": -467126,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -727848
+    },
+    {
+      "number": "5789",
+      "AT_printed_margin_cents": 262794,
+      "AT_extra_pay_cents": 10000,
+      "AT_formula_cents": 262794,
+      "app_report_margin_cents": -214286,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 19050,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": -116201,
+        "expense_report_minus_AT_expenses": -379929,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -477080
+    },
+    {
+      "number": "5790",
+      "AT_printed_margin_cents": -150885,
+      "AT_extra_pay_cents": 0,
+      "AT_formula_cents": -150885,
+      "app_report_margin_cents": -198415,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 350000,
+        "quick_pay_not_subtracted_by_report": 0,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": -16862,
+        "expense_report_minus_AT_expenses": -380668,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -47530
+    },
+    {
+      "number": "5791",
+      "AT_printed_margin_cents": 334822,
+      "AT_extra_pay_cents": 0,
+      "AT_formula_cents": 334822,
+      "app_report_margin_cents": -28205,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 21000,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": 0,
+        "expense_report_minus_AT_expenses": -384027,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -363027
+    },
+    {
+      "number": "5792",
+      "AT_printed_margin_cents": 364226,
+      "AT_extra_pay_cents": 0,
+      "AT_formula_cents": 364226,
+      "app_report_margin_cents": 13756,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 28800,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": 0,
+        "expense_report_minus_AT_expenses": -379270,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -350470
+    },
+    {
+      "number": "5793",
+      "AT_printed_margin_cents": -57207,
+      "AT_extra_pay_cents": 5000,
+      "AT_formula_cents": -57207,
+      "app_report_margin_cents": -470749,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 0,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -4226,
+        "fuel_report_minus_AT_fuel": -15093,
+        "expense_report_minus_AT_expenses": -394223,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -413542
+    },
+    {
+      "number": "5794",
+      "AT_printed_margin_cents": 205387,
+      "AT_extra_pay_cents": 0,
+      "AT_formula_cents": 205387,
+      "app_report_margin_cents": -418452,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 11250,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -10176,
+        "fuel_report_minus_AT_fuel": -246160,
+        "expense_report_minus_AT_expenses": -378753,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -623839
+    },
+    {
+      "number": "5795",
+      "AT_printed_margin_cents": 103180,
+      "AT_extra_pay_cents": 0,
+      "AT_formula_cents": 103180,
+      "app_report_margin_cents": -339512,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 8325,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": -175379,
+        "expense_report_minus_AT_expenses": -275638,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -442692
+    },
+    {
+      "number": "5796",
+      "AT_printed_margin_cents": 212027,
+      "AT_extra_pay_cents": 0,
+      "AT_formula_cents": 212027,
+      "app_report_margin_cents": 46116,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 0,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": -80703,
+        "expense_report_minus_AT_expenses": -85208,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -165911
+    },
+    {
+      "number": "5797",
+      "AT_printed_margin_cents": 143659,
+      "AT_extra_pay_cents": 10000,
+      "AT_formula_cents": 143659,
+      "app_report_margin_cents": -191497,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 9750,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -3763,
+        "fuel_report_minus_AT_fuel": -9985,
+        "expense_report_minus_AT_expenses": -331158,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -335156
+    },
+    {
+      "number": "5798",
+      "AT_printed_margin_cents": 233681,
+      "AT_extra_pay_cents": 0,
+      "AT_formula_cents": 233681,
+      "app_report_margin_cents": 37883,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 3300,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": 0,
+        "expense_report_minus_AT_expenses": -199098,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -195798
+    },
+    {
+      "number": "5799",
+      "AT_printed_margin_cents": 231518,
+      "AT_extra_pay_cents": 10000,
+      "AT_formula_cents": 231518,
+      "app_report_margin_cents": -226093,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 13950,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -53126,
+        "fuel_report_minus_AT_fuel": 0,
+        "expense_report_minus_AT_expenses": -418435,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -457611
+    },
+    {
+      "number": "5800",
+      "AT_printed_margin_cents": 60209,
+      "AT_extra_pay_cents": 20000,
+      "AT_formula_cents": 60209,
+      "app_report_margin_cents": -285142,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 7950,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -3030,
+        "fuel_report_minus_AT_fuel": -11885,
+        "expense_report_minus_AT_expenses": -338386,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -345351
+    },
+    {
+      "number": "5801",
+      "AT_printed_margin_cents": 408595,
+      "AT_extra_pay_cents": 5000,
+      "AT_formula_cents": 408595,
+      "app_report_margin_cents": 72817,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 9900,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -3575,
+        "fuel_report_minus_AT_fuel": -8422,
+        "expense_report_minus_AT_expenses": -333681,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -335778
+    },
+    {
+      "number": "5802",
+      "AT_printed_margin_cents": 317986,
+      "AT_extra_pay_cents": 12500,
+      "AT_formula_cents": 317986,
+      "app_report_margin_cents": -22224,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 13530,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -3499,
+        "fuel_report_minus_AT_fuel": 0,
+        "expense_report_minus_AT_expenses": -350241,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -340210
+    },
+    {
+      "number": "5803",
+      "AT_printed_margin_cents": -60889,
+      "AT_extra_pay_cents": 22500,
+      "AT_formula_cents": -60889,
+      "app_report_margin_cents": 8227,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 300000,
+        "quick_pay_not_subtracted_by_report": 10800,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": -3736,
+        "expense_report_minus_AT_expenses": -237948,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": 69116
+    },
+    {
+      "number": "5804",
+      "AT_printed_margin_cents": 5087,
+      "AT_extra_pay_cents": 0,
+      "AT_formula_cents": 5087,
+      "app_report_margin_cents": -507457,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 5550,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -1525,
+        "fuel_report_minus_AT_fuel": -10830,
+        "expense_report_minus_AT_expenses": -505739,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -512544
+    },
+    {
+      "number": "5805",
+      "AT_printed_margin_cents": 268022,
+      "AT_extra_pay_cents": 10000,
+      "AT_formula_cents": 268022,
+      "app_report_margin_cents": -149432,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 13950,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -1000,
+        "fuel_report_minus_AT_fuel": 0,
+        "expense_report_minus_AT_expenses": -430404,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -417454
+    },
+    {
+      "number": "5806",
+      "AT_printed_margin_cents": 204384,
+      "AT_extra_pay_cents": 10000,
+      "AT_formula_cents": 204384,
+      "app_report_margin_cents": -242159,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 7350,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": -15961,
+        "expense_report_minus_AT_expenses": -437932,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -446543
+    },
+    {
+      "number": "5807",
+      "AT_printed_margin_cents": 231247,
+      "AT_extra_pay_cents": 5000,
+      "AT_formula_cents": 231247,
+      "app_report_margin_cents": -581456,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 660000,
+        "quick_pay_not_subtracted_by_report": 19275,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -18500,
+        "fuel_report_minus_AT_fuel": -462534,
+        "expense_report_minus_AT_expenses": -1010944,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -812703
+    },
+    {
+      "number": "5808",
+      "AT_printed_margin_cents": 142634,
+      "AT_extra_pay_cents": 10000,
+      "AT_formula_cents": 142634,
+      "app_report_margin_cents": -343275,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 12750,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -1000,
+        "fuel_report_minus_AT_fuel": -17459,
+        "expense_report_minus_AT_expenses": -480200,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -485909
+    },
+    {
+      "number": "5809",
+      "AT_printed_margin_cents": 319398,
+      "AT_extra_pay_cents": 7500,
+      "AT_formula_cents": 319398,
+      "app_report_margin_cents": -297968,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 22275,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": -12000,
+        "fuel_report_minus_AT_fuel": -16601,
+        "expense_report_minus_AT_expenses": -611040,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -617366
+    },
+    {
+      "number": "5810",
+      "AT_printed_margin_cents": 213028,
+      "AT_extra_pay_cents": 5000,
+      "AT_formula_cents": 213028,
+      "app_report_margin_cents": -320095,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 21450,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": -23032,
+        "expense_report_minus_AT_expenses": -531541,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -533123
+    },
+    {
+      "number": "5811",
+      "AT_printed_margin_cents": 178063,
+      "AT_extra_pay_cents": 12500,
+      "AT_formula_cents": 178063,
+      "app_report_margin_cents": -355638,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 13950,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": -21567,
+        "expense_report_minus_AT_expenses": -526084,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -533701
+    },
+    {
+      "number": "5812",
+      "AT_printed_margin_cents": 445719,
+      "AT_extra_pay_cents": 0,
+      "AT_formula_cents": 445719,
+      "app_report_margin_cents": -328947,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 23250,
+        "base_driver_cost_difference": -172747,
+        "other_driver_cost_minus_AT_extra_pay": -17500,
+        "fuel_report_minus_AT_fuel": 0,
+        "expense_report_minus_AT_expenses": -607669,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -774666
+    },
+    {
+      "number": "5813",
+      "AT_printed_margin_cents": 343527,
+      "AT_extra_pay_cents": 10000,
+      "AT_formula_cents": 343527,
+      "app_report_margin_cents": -65042,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 23001,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": 0,
+        "expense_report_minus_AT_expenses": -431570,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -408569
+    },
+    {
+      "number": "5814",
+      "AT_printed_margin_cents": 330799,
+      "AT_extra_pay_cents": 10000,
+      "AT_formula_cents": 330799,
+      "app_report_margin_cents": -24017,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 13950,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": 0,
+        "expense_report_minus_AT_expenses": -368766,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -354816
+    },
+    {
+      "number": "5815",
+      "AT_printed_margin_cents": 108881,
+      "AT_extra_pay_cents": 0,
+      "AT_formula_cents": 108881,
+      "app_report_margin_cents": -304419,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": 0,
+        "quick_pay_not_subtracted_by_report": 11100,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": 0,
+        "expense_report_minus_AT_expenses": -424400,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -413300
+    },
+    {
+      "number": "5816",
+      "AT_printed_margin_cents": 150000,
+      "AT_extra_pay_cents": 0,
+      "AT_formula_cents": 150000,
+      "app_report_margin_cents": 0,
+      "extra_pay_alone_explains": false,
+      "terms_cents": {
+        "revenue_difference": -150000,
+        "quick_pay_not_subtracted_by_report": 0,
+        "base_driver_cost_difference": 0,
+        "other_driver_cost_minus_AT_extra_pay": 0,
+        "fuel_report_minus_AT_fuel": 0,
+        "expense_report_minus_AT_expenses": 0,
+        "PDF_printed_margin_formula_residual": 0
+      },
+      "signed_difference_cents": -150000
+    }
+  ],
+  "extra_pay_alone_explains_count": 0,
+  "AT_formula_ties_count": 48,
+  "nonzero_counts": {
+    "quick_pay_not_subtracted_by_report": 42,
+    "fuel_report_minus_AT_fuel": 37,
+    "expense_report_minus_AT_expenses": 47,
+    "other_driver_cost_minus_AT_extra_pay": 22,
+    "revenue_difference": 8,
+    "base_driver_cost_difference": 1
+  },
+  "absolute_term_cents": {
+    "quick_pay_not_subtracted_by_report": 551271,
+    "fuel_report_minus_AT_fuel": 5241746,
+    "expense_report_minus_AT_expenses": 17755314,
+    "other_driver_cost_minus_AT_extra_pay": 175126,
+    "revenue_difference": 2715000,
+    "base_driver_cost_difference": 172747
+  }
+}
