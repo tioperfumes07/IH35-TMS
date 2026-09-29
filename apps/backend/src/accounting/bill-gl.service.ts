@@ -12,7 +12,6 @@
 import { postSourceTransaction, PostingEngineError } from "./posting-engine.service.js";
 import { withCurrentUser } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
-import { billOpenTourLoadId, TOUR_OPEN_HOLD_REASON } from "./tour-open-gate.service.js";
 
 export const BILL_GL_POSTING_FLAG_KEY = "BILL_GL_POSTING_ENABLED";
 
@@ -20,7 +19,6 @@ type PostingResult = Awaited<ReturnType<typeof postSourceTransaction>>;
 
 export type BillGlPostOutcome =
   | { posted: false; reason: "posting_disabled" }
-  | { posted: false; reason: "tour_open"; load_id: string }
   | { posted: false; reason: "post_failed"; code: string; message: string }
   | { posted: true; result: PostingResult };
 
@@ -52,25 +50,10 @@ export async function postBillGlIfEnabled(
   billId: string,
   actor: { userId: string }
 ): Promise<BillGlPostOutcome> {
-  // ACC-50 (LAW §2, ROUND 5) — "open tour posts nothing," checked BEFORE the posting flag so a
-  // bill on a still-open tour never posts even when BILL_GL_POSTING_ENABLED is on. A bill spans
-  // its lines' load_ids (accounting.bills itself has no load_id column); ANY line naming a
-  // still-open-tour load holds the WHOLE bill — postSourceTransaction posts one document as one
-  // balanced JE, never a partial post of just the closed-tour lines.
-  const openTourLoadId = await withCurrentUser(actor.userId, (client) => {
-    return billOpenTourLoadId(client, operatingCompanyId, billId);
-  });
-  if (openTourLoadId) {
-    await withCurrentUser(actor.userId, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-      await client.query(
-        `UPDATE accounting.bills SET posting_hold_reason=$2, updated_at=now() WHERE id=$1::uuid AND operating_company_id=$3::uuid`,
-        [billId, TOUR_OPEN_HOLD_REASON, operatingCompanyId]
-      );
-    });
-    return { posted: false, reason: "tour_open", load_id: openTourLoadId };
-  }
-
+  // ACC-50 REMOVED (claude/00-SEAT-CONTRACT.md §3 corollary, owner ruling 2026-09-29): "an expense
+  // [or bill] on an open load posts on its transaction date. No guard may block a post because a
+  // tour is open. Cost attribution to a load is a reporting join, never a posting delay." A bill's
+  // load-tour status is no longer consulted before posting.
   const enabled = await isBillGlPostingEnabled(operatingCompanyId, actor.userId);
   if (!enabled) return { posted: false, reason: "posting_disabled" };
 

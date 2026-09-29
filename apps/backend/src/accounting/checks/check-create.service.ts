@@ -14,7 +14,6 @@ import {
 import { ensureOpenPeriod, postSourceTransactionInClientTx, PostingEngineError } from "../posting-engine.service.js";
 import { resolveExpenseCategoryId } from "../expense-category-catalog.js";
 import { reassignDraftAttachments } from "../../documents/attachments.service.js";
-import { expenseOpenTourLoadId, TOUR_OPEN_HOLD_REASON } from "../tour-open-gate.service.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { EXPENSE_GL_POSTING_FLAG_KEY } from "../expenses.routes.js";
 import { advanceCheckStockAfterUse } from "./check-stock.service.js";
@@ -305,17 +304,12 @@ export async function createCheck(
 
     // R-172 step 7 -- post via the ONLY existing poster (postSourceTransactionInClientTx), atomically
     // inside this same transaction: either the check + its JE both exist, or neither does. Same
-    // tour-open + feature-flag gates as a regular expense's own create-time post (expenses.routes.ts)
-    // -- a check IS an accounting.expenses row (R-154 §2), so it gets no posting shortcut.
+    // feature-flag gate as a regular expense's own create-time post (expenses.routes.ts) -- a check
+    // IS an accounting.expenses row (R-154 §2), so it gets no posting shortcut. ACC-50 REMOVED
+    // (claude/00-SEAT-CONTRACT.md §3 corollary, owner ruling 2026-09-29) -- no tour-open check here.
     let postingStatus: "posted" | "unposted" = "unposted";
     let journalEntryId: string | null = null;
-    const openTourLoadId = await expenseOpenTourLoadId(client, operating_company_id, expenseId);
-    if (openTourLoadId) {
-      await client.query(
-        `UPDATE accounting.expenses SET posting_hold_reason = $2, updated_at = now() WHERE id = $1::uuid`,
-        [expenseId, TOUR_OPEN_HOLD_REASON]
-      );
-    } else if (await isEnabled(client, EXPENSE_GL_POSTING_FLAG_KEY, { operating_company_id, user_uuid: actorUserId })) {
+    if (await isEnabled(client, EXPENSE_GL_POSTING_FLAG_KEY, { operating_company_id, user_uuid: actorUserId })) {
       try {
         const posting = await postSourceTransactionInClientTx(
           client,

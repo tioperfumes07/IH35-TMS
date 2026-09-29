@@ -168,7 +168,7 @@ export async function postHeldDocumentsForClosedTour(
   return result;
 }
 
-export type HeldExpenseRetryOutcome = "posted" | "still_held_tour_open" | "still_held_orphan" | "still_held_posting_error" | "flag_off";
+export type HeldExpenseRetryOutcome = "posted" | "still_held_orphan" | "still_held_posting_error" | "flag_off";
 
 export type HeldExpenseRetryResult = {
   posting_batch_id: string;
@@ -188,9 +188,10 @@ export type HeldExpenseRetryResult = {
  * ALREADY closed, and 237 of those already carry both a resolvable category account and a payment
  * account -- fully postable right now, held only because nothing ever retries a blank-hold-reason
  * row. This function is that missing, general retry: it scans every non-voided draft/unposted
- * expense for the company (not scoped to one settlement's loadIds, not filtered by hold_reason),
- * re-checks isLoadTourOpen per expense (the ACC-50 gate stays authoritative and unchanged), and
- * posts through the SAME postSourceTransaction engine every other call site uses. On a genuine
+ * expense for the company (not scoped to one settlement's loadIds, not filtered by hold_reason).
+ * ACC-50 REMOVED (claude/00-SEAT-CONTRACT.md §3 corollary, owner ruling 2026-09-29): no tour-open
+ * check runs here any more either -- every candidate with a resolvable account posts through the
+ * SAME postSourceTransaction engine every other call site uses. On a genuine
  * posting failure this time the hold reason is RECORDED (not left blank), so a human or a future
  * automated pass can tell "blocked, here is why" apart from "never tried."
  */
@@ -226,16 +227,6 @@ export async function retryHeldExpensePostings(
   }
 
   for (const expense of candidates.rows) {
-    if (expense.load_id) {
-      const open = await withCompanyScope(actor.userId, operatingCompanyId, (client: DbClient) => isLoadTourOpen(client as never, operatingCompanyId, expense.load_id as string));
-      if (open) {
-        await withCompanyScope(actor.userId, operatingCompanyId, (client: DbClient) =>
-          client.query(`UPDATE accounting.expenses SET posting_hold_reason=$2, updated_at=now() WHERE id=$1::uuid AND operating_company_id=$3::uuid`, [expense.id, "tour_open", operatingCompanyId])
-        );
-        outcomes.push({ expense_id: expense.id, outcome: "still_held_tour_open", journal_entry_id: null, hold_reason: "tour_open" });
-        continue;
-      }
-    }
     if (!expense.payment_account_uuid && !expense.vendor_uuid) {
       outcomes.push({ expense_id: expense.id, outcome: "still_held_orphan", journal_entry_id: null, hold_reason: "orphan_no_payment_account_or_vendor" });
       continue;

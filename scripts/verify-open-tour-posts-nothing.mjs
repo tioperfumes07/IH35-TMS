@@ -1,118 +1,73 @@
 #!/usr/bin/env node
 /**
- * verify-open-tour-posts-nothing — ACC-50 (LAW §2, ROUND 5, owner order). "Open tour posts
- * nothing": a cost on a load whose tour (driver_finance.driver_settlements, reached via
- * driver_bills -> settlement_lines) is still open must never post to the GL. CC-3 measured 137
- * of 137 posted USMCA expenses violated this before the gate existed.
+ * verify-open-tour-posts-nothing — ACC-50 REMOVED (claude/00-SEAT-CONTRACT.md §3 corollary, owner
+ * ruling 2026-09-29): "an expense on an open load posts on its transaction date. No guard may
+ * block a post because a tour is open. Cost attribution to a load is a reporting join, never a
+ * posting delay. What is worth guarding is that the posted expense is linked to its load."
  *
- * STATIC HALF: tour-open-gate.service.ts exports the gate functions; every real posting call site
- * (expenses create-with-auto-post, expenses /:id/post, bill-gl.service.ts's postBillGlIfEnabled,
- * the TRANSP-only bills/:id/post-gl route) checks the gate BEFORE attempting to post.
+ * This guard used to assert the OPPOSITE: that every posting call site gated on the load's tour
+ * status before posting. Section 9 of the seat contract is explicit: "A guard that contradicts
+ * Section 3 or 4 is wrong and gets rewritten, never bypassed." Rewritten (not deleted, not
+ * bypassed) to the new invariant: the removed gate never comes back as a regression.
  *
- * --selftest: proves the check asserts the defect — runs against the REAL files (expect clean)
- * and again against a MUTANT with the gate call deleted from bill-gl.service.ts (expect FAIL).
+ * STATIC HALF: none of expenses.routes.ts, checks/check-create.service.ts, bill-gl.service.ts, or
+ * bill-gl-draft.routes.ts call expenseOpenTourLoadId(...)/billOpenTourLoadId(...) to gate a post.
+ * tour-open-gate.service.ts itself, and its remaining legitimate consumer
+ * (tour-close-posting.service.ts's postHeldDocumentsForClosedTour, a historical drain for rows
+ * that were held under the OLD law and still carry posting_hold_reason='tour_open'), are untouched
+ * -- isLoadTourOpen is not deleted, only stopped from ever blocking a NEW post.
  *
- * LIVE HALF (DEGRADE-SAFE, opt-in OPEN_TOUR_POSTS_NOTHING_LIVE=1): 0 accounting.expenses/bills rows
- * with posting_status='posted' (or, for bills, an actual posted posting_batches row) whose load's
- * tour is open, among rows created after this gate's own migration landed (202613800000) — the
- * gate cannot be blamed for anything posted before it existed.
+ * --selftest: proves the check asserts the regression — runs against the REAL files (expect clean)
+ * and again against a MUTANT with the gate call re-added to bill-gl.service.ts (expect FAIL).
+ *
+ * LIVE HALF (DEGRADE-SAFE, opt-in OPEN_TOUR_POSTS_NOTHING_LIVE=1): shrink-only ratchet on how many
+ * accounting.expenses rows still carry the now-meaningless posting_hold_reason='tour_open' from
+ * before this law changed -- tracks the historical backlog draining toward 0, never a block.
  */
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
-export const REQUIRES_LIVE_DB =
-  "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B) and runs in money-pr-local-gate.mjs when its owned paths change (Lead ROUND 84, E7 batch 2)";
+export const REQUIRES_LIVE_DB = false;
+export const ALLOW_OFFLINE_SKIP =
+  "the static half (no posting call site gates on load-tour status) is the real, always-run enforcement now; the live half is an opt-in, shrink-only backlog tracker for historical posting_hold_reason='tour_open' rows, not a blocking check -- ACC-50 removed, claude/00-SEAT-CONTRACT.md §3";
 
 const require = createRequire(import.meta.url);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-open-tour-posts-nothing";
-const GATE_SERVICE = path.join(ROOT, "apps", "backend", "src", "accounting", "tour-open-gate.service.ts");
 const EXPENSES_ROUTES = path.join(ROOT, "apps", "backend", "src", "accounting", "expenses.routes.ts");
+const CHECK_CREATE_SERVICE = path.join(ROOT, "apps", "backend", "src", "accounting", "checks", "check-create.service.ts");
 const BILL_GL_SERVICE = path.join(ROOT, "apps", "backend", "src", "accounting", "bill-gl.service.ts");
 const BILL_GL_DRAFT_ROUTES = path.join(ROOT, "apps", "backend", "src", "accounting", "bill-gl-draft.routes.ts");
-const TOUR_CLOSE_SERVICE = path.join(ROOT, "apps", "backend", "src", "accounting", "tour-close-posting.service.ts");
-const SETTLEMENTS_MVP_ROUTES = path.join(ROOT, "apps", "backend", "src", "driver-finance", "settlements-mvp.routes.ts");
-// Migration timestamp — the earliest possible moment posting_hold_reason (and this gate) existed.
-// A row created before this cannot be blamed on a gate that did not exist yet.
-const GATE_MERGE_CUTOFF = "2026-09-06T01:00:00Z";
+const GATE_FILES = [EXPENSES_ROUTES, CHECK_CREATE_SERVICE, BILL_GL_SERVICE, BILL_GL_DRAFT_ROUTES];
 
-function checkGateService(src) {
-  const failures = [];
-  if (!/export async function isLoadTourOpen/.test(src)) failures.push("isLoadTourOpen not exported");
-  if (!/export async function expenseOpenTourLoadId/.test(src)) failures.push("expenseOpenTourLoadId not exported");
-  if (!/export async function billOpenTourLoadId/.test(src)) failures.push("billOpenTourLoadId not exported");
-  if (!/export async function loadIdsForSettlement/.test(src)) failures.push("loadIdsForSettlement not exported");
-  return failures;
-}
+// Shrink-only ratchet, non-voided rows only (a voided row is terminal and irrelevant here -- 93
+// separate voided expenses also carry this stale value and are excluded on purpose). Measured live
+// 2026-09-30, immediately after removing the gate from code: 9 non-voided accounting.expenses rows
+// still carry posting_hold_reason='tour_open' from the OLD law (AUTH-131 held them correctly under
+// ACC-50 before this ruling). Never grows -- lower it as they drain via retryHeldExpensePostings,
+// which no longer respects this value as a block.
+const KNOWN_STALE_TOUR_OPEN_HOLDS = 9;
 
-function checkExpensesRoutes(src) {
+function checkNoGateCall(file, src) {
   const failures = [];
-  const importCount = (src.match(/expenseOpenTourLoadId/g) ?? []).length;
-  if (importCount < 3) failures.push(`expenseOpenTourLoadId referenced fewer than 3 times (import + 2 call sites) — found ${importCount}`);
-  if (!/posting_hold_reason/.test(src)) failures.push("expenses.routes.ts never writes posting_hold_reason");
-  return failures;
-}
-
-function checkBillGlService(src) {
-  const failures = [];
-  if (!/billOpenTourLoadId/.test(src)) failures.push("bill-gl.service.ts does not call billOpenTourLoadId");
-  if (!/reason:\s*"tour_open"/.test(src)) failures.push('bill-gl.service.ts has no "tour_open" outcome reason');
-  // The gate check must run BEFORE isBillGlPostingEnabled, never after — the whole point is that
-  // an open tour holds even when the posting flag is ON.
-  const gateIdx = src.indexOf("billOpenTourLoadId(");
-  const flagIdx = src.indexOf("isBillGlPostingEnabled(operatingCompanyId, actor.userId)");
-  if (gateIdx === -1 || flagIdx === -1 || gateIdx > flagIdx) {
-    failures.push("open-tour gate does not run before the BILL_GL_POSTING_ENABLED check in postBillGlIfEnabled");
+  if (/expenseOpenTourLoadId\(|billOpenTourLoadId\(/.test(src)) {
+    failures.push(`${path.relative(ROOT, file)} still calls the removed open-tour gate to decide whether to post`);
   }
   return failures;
-}
-
-function checkBillGlDraftRoutes(src) {
-  const failures = [];
-  if (!/billOpenTourLoadId/.test(src)) failures.push("bill-gl-draft.routes.ts's manual /post-gl route does not call billOpenTourLoadId");
-  return failures;
-}
-
-function checkTourCloseService(src) {
-  const failures = [];
-  if (!/export async function postHeldDocumentsForClosedTour/.test(src)) failures.push("postHeldDocumentsForClosedTour not exported");
-  if (!/postSourceTransaction/.test(src)) failures.push("tour-close-posting.service.ts does not reuse postSourceTransaction (no new posting code allowed)");
-  if (!/postBillGlIfEnabled/.test(src)) failures.push("tour-close-posting.service.ts does not reuse postBillGlIfEnabled (no new posting code allowed)");
-  return failures;
-}
-
-function checkSettlementsMvpRoutes(src) {
-  const failures = [];
-  if (!/postHeldDocumentsForClosedTour/.test(src)) failures.push("settlements-mvp.routes.ts's approve handler never calls postHeldDocumentsForClosedTour");
-  return failures;
-}
-
-function readAll() {
-  return {
-    gate: fs.readFileSync(GATE_SERVICE, "utf8"),
-    expensesRoutes: fs.readFileSync(EXPENSES_ROUTES, "utf8"),
-    billGl: fs.readFileSync(BILL_GL_SERVICE, "utf8"),
-    billGlDraft: fs.readFileSync(BILL_GL_DRAFT_ROUTES, "utf8"),
-    tourClose: fs.readFileSync(TOUR_CLOSE_SERVICE, "utf8"),
-    settlementsMvp: fs.readFileSync(SETTLEMENTS_MVP_ROUTES, "utf8"),
-  };
 }
 
 function checkStatic() {
-  for (const f of [GATE_SERVICE, EXPENSES_ROUTES, BILL_GL_SERVICE, BILL_GL_DRAFT_ROUTES, TOUR_CLOSE_SERVICE, SETTLEMENTS_MVP_ROUTES]) {
-    if (!fs.existsSync(f)) return [`missing: ${path.relative(ROOT, f)}`];
+  const failures = [];
+  for (const f of GATE_FILES) {
+    if (!fs.existsSync(f)) {
+      failures.push(`missing: ${path.relative(ROOT, f)}`);
+      continue;
+    }
+    failures.push(...checkNoGateCall(f, fs.readFileSync(f, "utf8")));
   }
-  const src = readAll();
-  return [
-    ...checkGateService(src.gate),
-    ...checkExpensesRoutes(src.expensesRoutes),
-    ...checkBillGlService(src.billGl),
-    ...checkBillGlDraftRoutes(src.billGlDraft),
-    ...checkTourCloseService(src.tourClose),
-    ...checkSettlementsMvpRoutes(src.settlementsMvp),
-  ];
+  return failures;
 }
 
 function selftest() {
@@ -121,23 +76,17 @@ function selftest() {
     for (const f of realFailures) console.error(`${LABEL} --selftest FAIL — real files flagged: ${f}`);
     return 1;
   }
-  console.log(`${LABEL} --selftest: real files clear (gate exported + wired into every real posting call site)`);
+  console.log(`${LABEL} --selftest: real files clear (no posting call site gates on load-tour status)`);
 
-  // Mutant: delete the gate call from bill-gl.service.ts (simulating "post-while-open" — the
-  // exact defect this guard exists to catch).
-  const realSrc = fs.readFileSync(BILL_GL_SERVICE, "utf8");
-  const gateBlockRe = /\s*const openTourLoadId = await withCurrentUser\(actor\.userId, \(client\) => \{[\s\S]*?\n {2}\}\);\n\s*if \(openTourLoadId\) \{[\s\S]*?\n {2}\}\n/;
-  if (!gateBlockRe.test(realSrc)) {
-    console.error(`${LABEL} --selftest FAIL — could not locate the bill-gl.service.ts gate block to mutate; guard is stale against its real shape.`);
-    return 1;
-  }
-  const mutantSrc = realSrc.replace(gateBlockRe, "\n");
-  const mutantFailures = checkBillGlService(mutantSrc);
+  // Mutant: re-add a gate call to bill-gl.service.ts (simulating a regression back to the OLD,
+  // now-wrong law).
+  const mutantSrc = "const openTourLoadId = await billOpenTourLoadId(client, opco, billId);\n";
+  const mutantFailures = checkNoGateCall(BILL_GL_SERVICE, mutantSrc);
   if (!mutantFailures.length) {
-    console.error(`${LABEL} --selftest FAIL — deleting the open-tour gate from bill-gl.service.ts did NOT trip this guard (theater — a post-while-open defect would ship silently).`);
+    console.error(`${LABEL} --selftest FAIL — re-adding the open-tour gate did NOT trip this guard (theater — a regression to the old law would ship silently).`);
     return 1;
   }
-  console.log(`${LABEL} --selftest: mutant with the bill gate deleted correctly FAILS (${mutantFailures.join("; ")})`);
+  console.log(`${LABEL} --selftest: mutant with the gate re-added correctly FAILS (${mutantFailures.join("; ")})`);
   console.log(`${LABEL} --selftest PASS — 2/2`);
   return 0;
 }
@@ -151,16 +100,12 @@ async function main() {
     for (const f of staticFailures) console.error(`  - ${f}`);
     return 1;
   }
-  console.log(`${LABEL} static half OK — open-tour gate wired into expense create+post, bill auto-post, bill manual post-gl, and the tour-close batch-post reuses the same posting engine`);
+  console.log(`${LABEL} static half OK — no posting call site gates on load-tour status (ACC-50 removed, claude/00-SEAT-CONTRACT.md §3)`);
 
   const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
-  if (!connectionString) {
-    console.error("verify-open-tour-posts-nothing: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");
-    process.exit(1);
-  }
   const liveRequested = process.env.OPEN_TOUR_POSTS_NOTHING_LIVE === "1";
-  if (!liveRequested && (process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true")) {
-    console.log(`${LABEL} SKIP (live half) — CI's database is a fixture playground; run with OPEN_TOUR_POSTS_NOTHING_LIVE=1 against prod.`);
+  if (!connectionString || (!liveRequested && (process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true"))) {
+    console.log(`${LABEL}: SKIP (live half) — static half is the real guard now; live half is an opt-in backlog tracker only.`);
     return 0;
   }
 
@@ -178,42 +123,19 @@ async function main() {
   try {
     await client.query("BEGIN");
     await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
-    const violationsRes = await client.query(
-      `
-        SELECT e.id::text AS id, e.load_id::text AS load_id
-        FROM accounting.expenses e
-        JOIN driver_finance.driver_bills db ON db.load_id = e.load_id AND db.status <> 'void'
-        LEFT JOIN driver_finance.settlement_lines sl ON sl.source_driver_bill_id = db.id AND sl.is_active = true
-        LEFT JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
-        -- ROUND 270 fix (Claude-1): tour-open-gate.service.ts's isLoadTourOpen (the function this
-        -- guard's OWN static half asserts every posting call site uses) has checked a SECOND path
-        -- since R-169 fix 3 (owner 2026-09-25) -- driver_bills.settled_in_settlement_id, stamped
-        -- directly on the bill at settlement time, which a zero-pay/no-pay-line settlement (e.g. a
-        -- CANCELLED one) never earns a settlement_lines row for at all. This guard's live-check SQL
-        -- was never updated to match, so it flagged 3 genuinely-closed-tour postings (settled via a
-        -- CANCELLED settlement reached ONLY through settled_in_settlement_id) as violations -- a
-        -- false positive from a stale guard, not a real defect. Mirrors isLoadTourOpen's own
-        -- UNION-of-both-paths definition exactly; never a second, competing definition of "closed."
-        LEFT JOIN driver_finance.driver_settlements ds_direct ON ds_direct.id = db.settled_in_settlement_id
-        WHERE e.posting_status = 'posted'
-          AND e.created_at > $1::timestamptz
-          -- EXP-CLOSED-TOUR-VOCAB (owner 2026-09-07): 'closed'/'final' are terminal, GL-posted
-          -- statuses — a tour in either is closed, so posting its expense is correct, not a
-          -- violation. Mirrors tour-open-gate.service.ts CLOSED_TOUR_STATUSES.
-          -- EXP-CLOSED-TOUR-VOCAB-2 (CC-3, 2026-09-22): 'locked' is the same terminal tier.
-          AND (ds.status IS NULL OR ds.status NOT IN ('approved', 'paid', 'cancelled', 'closed', 'final', 'locked'))
-          AND (ds_direct.status IS NULL OR ds_direct.status NOT IN ('approved', 'paid', 'cancelled', 'closed', 'final', 'locked'))
-      `,
-      [GATE_MERGE_CUTOFF]
+    const res = await client.query(
+      `SELECT count(*)::int AS n FROM accounting.expenses WHERE posting_hold_reason = 'tour_open' AND voided_at IS NULL`
     );
     await client.query("COMMIT");
-
-    if (violationsRes.rows.length > 0) {
-      console.error(`${LABEL} FAIL — ${violationsRes.rows.length} expense(s) posted with an open tour, created after this gate landed:`);
-      for (const row of violationsRes.rows.slice(0, 10)) console.error(`  - expense ${row.id} (load ${row.load_id})`);
+    const n = res.rows[0].n;
+    if (n > KNOWN_STALE_TOUR_OPEN_HOLDS) {
+      console.error(`${LABEL} FAIL — ${n} row(s) carry posting_hold_reason='tour_open', GREW past the ratchet baseline of ${KNOWN_STALE_TOUR_OPEN_HOLDS}. Nothing should write this value any more.`);
       return 1;
     }
-    console.log(`${LABEL} PASS — 0 expenses posted with an open tour created after ${GATE_MERGE_CUTOFF}`);
+    if (n < KNOWN_STALE_TOUR_OPEN_HOLDS) {
+      console.log(`${LABEL}: NOTE — ratchet improved (${n} < baseline ${KNOWN_STALE_TOUR_OPEN_HOLDS}). Lower KNOWN_STALE_TOUR_OPEN_HOLDS in this file to match.`);
+    }
+    console.log(`${LABEL} PASS — ${n} historical row(s) still carry posting_hold_reason='tour_open' (ratchet baseline ${KNOWN_STALE_TOUR_OPEN_HOLDS}, draining, never grows).`);
     return 0;
   } finally {
     await client.end().catch(() => {});
