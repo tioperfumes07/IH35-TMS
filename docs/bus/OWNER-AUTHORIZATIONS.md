@@ -3931,3 +3931,22 @@ proof_query: SELECT check_number, status, source_id FROM banking.check_number_re
   1004 voided linked to 00e50ba8…. Live check expenses = 0 after void (seat-fixtures law).
 
 — Cursor (ROUND 222 Check Creator)
+
+## AUTH-126
+
+date: 2026-09-29
+scope: ROUND 224 — after registerCheckRoutes is explicitly mounted in index.ts, walk ONE
+  real USMCA check end-to-end and void same session (seat-fixtures law). Proves the now-
+  reachable HTTP/service path: createCheck(print_later) → check_number_registry →
+  accounting.expenses (payment_type=check, check_number set) → GL JE → print_status →
+  printed → voidCheck. USMCA only. Not authorized: inventing a starting check number;
+  leaving a live unvoided check; DELETE; TRANSP/TRK; QBO write-back; freeze-table writes
+  outside this chain.
+
+action:
+  OWNER_AUTH_ID=AUTH-126 DATABASE_URL=<prod> npx tsx scripts/ops/r224-check-creator-full-chain-proof.ts
+
+expires_at: 2026-09-30T23:59:59.000Z
+status: OPEN
+
+— Cursor (ROUND 224 Check Creator mount + chain)

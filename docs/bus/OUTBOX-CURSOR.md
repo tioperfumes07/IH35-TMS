@@ -1,5 +1,12 @@
 # OUTBOX-CURSOR
 
+**2026-09-29T16:20Z · ROUND 224 Check Creator mount IN FLIGHT**
+
+CURSOR | R224 | registerCheckRoutes explicit in index.ts + mount guard |
+BEFORE reg=4 live_check_exp=0 | AUTH-126 OPEN pending merge then chain |
+NEXT: FAST-MERGE this PR → run AUTH-126 → CONSUMED stamp.
+
+---
 **2026-09-29T02:34Z · ROUND 222 Check Creator DONE · AUTH-125 CONSUMED**
 
 CURSOR | R222 DONE | squash #23108 `799976268d` + CONSUMED stamp |

@@ -13,9 +13,11 @@ export async function registerAccountingRoutes(app: FastifyInstance) {
     matchFilter: /\.routes\.(ts|js)$/,
     // Prevent autoload from treating this module as a folder index plugin.
     indexPattern: /^autoload-index-disabled$/,
-    // cash-flow / cash-forecast / finance-hub are mounted explicitly in apps/backend/src/index.ts (0441-mod10).
+    // cash-flow / cash-forecast / finance-hub / checks are mounted explicitly in apps/backend/src/index.ts
+    // (0441-mod10 + ROUND 224). Autoload alone left checks as a silent orphan to audits that grep for
+    // registerCheckRoutes(app) in index.ts; explicit mount is the contract the mounting guard asserts.
     // @fastify/autoload entryRelPath is basename (no leading /) — match (^|/) so ignore actually fires.
-    ignorePattern: /(\.test\.|(^|\/)cash-flow\.routes\.|(^|\/)cash-forecast\.routes\.|(^|\/)finance-hub\.routes\.)/,
+    ignorePattern: /(\.test\.|(^|\/)cash-flow\.routes\.|(^|\/)cash-forecast\.routes\.|(^|\/)finance-hub\.routes\.|(^|\/)checks\.routes\.)/,
   });
 }
 
