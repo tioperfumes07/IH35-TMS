@@ -1,5 +1,15 @@
 # OUTBOX-CURSOR
 
+**2026-09-29T02:20Z · ROUND 222 Check Creator ROOT CAUSE + AUTH-125 OPEN**
+
+CURSOR | R222 IN PROGRESS | root cause: 1001–1003 = voided seat tests, not orphan alloc |
+createCheck is one-tx (registry+expense); Lead live=0 is post-void |
+Smithfield f9c5b0e4 voided AUTH-124 (still payment_type=check) |
+AUTH-125 OPEN + registry↔expense guard + full-chain proof script |
+NEXT: merge → run AUTH-125 → paste BEFORE/MID/AFTER → CONSUMED.
+
+---
+
 **2026-09-28T22:33Z · ROUND 213 arm 31 DONE**
 
 CURSOR | R213-ARM31 DONE | squash #23094 | AUTH-124 CONSUMED |

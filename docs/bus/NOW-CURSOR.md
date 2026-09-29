@@ -1,26 +1,41 @@
-# NOW-CURSOR — 2026-09-28 ROUND 213
+# NOW-CURSOR — 2026-09-29 ROUND 222
 
-## HARD LINE
-STOP FACTORING. AUTH-113. Settlements 5769–5819 OWNER-CLOSED.
-Credentials: `~/Desktop/09-28-2026-IH35-MASTER-KEYS-ENVS-SINGLE-SOURCE-OF-TRUTH.md` ONLY.
-**ROUND 209:** Auto-Deploy OFF. Say **merged, in batch**. Captain=Claude Lead · every **8** PRs.
-**ROUND 213:** purge-era REPORT-ONLY — Devin-B unwires gate + arm 21. Cursor does **not** steal.
+## HARD LINE — DATA FREEZE (ROUND 219) + LIVE-DB GUARD LAW
+Freeze tables unchanged except ROUND 222 chain exception for `accounting.expenses`
+(create/void Check Creator only). Factoring STOPPED.
 
-## ROUND 213 arm 31 — DONE (AUTH-124 CONSUMED)
-Voided live Smithfield $25 `f9c5b0e4…` via voidCheck; reversing JE `1e0980d4…`.
-Three $1 already void (AUTH-117/120/122) re-measured. All 4 status=void / posting=reversed.
-#23094/#23095 merged, in batch.
+**LIVE-DB guards:** `REQUIRES_LIVE_DB` fails closed with no `DATABASE_URL` (ROUND 29.9-B).
+Before calling a guard "broken" or another seat's blocker, re-run WITH the verified
+pooled URL from Desktop master-keys. Env miss ≠ their code.
 
-## THIS PR — #23088 named Resolve quick-picks
-MatchDrawer NAMED_RESOLVE_QUICK_PICKS (Reserve/Fees/Wire/Chargeback/Discount) by account_name +
-coaAccountReferenceOption. Still posts via acceptMatchWithResolveDifference.
+## ROUND 222 — CHECK CREATOR (owner named out loud)
 
-## OWNER CHROME NEXT
-Faro Resolve wires still `for_review`: 08/13 `99ee0ead` −$1,800 · 08/14 `4cded6ac` −$5,441 ·
-09/21 `d6765d8d` −$4,010. Pick named CoA after this lands in a captain batch.
+### ROOT CAUSE (before code) — `docs/registers/09-29-2026-R222-CHECK-CREATOR-ROOT-CAUSE.md`
+Lead saw registry=3 + live check expenses=0 and read it as "allocation without document."
+**Mechanism:** `createCheck` / `assignPrintBatch` write registry+expense in **one transaction**
+(rollback on failure). The three numbers **are** documents — voided seat-test fixtures:
+
+| # | Expense | AUTH | What |
+|---|---|---|---|
+| 1001 | `9b5fcc6c…` | 117 | $1 AMPARTS test → voided |
+| 1002 | `a7671a67…` | 120 | $1 allocator proof → voided |
+| 1003 | `7728cf89…` | 122 | $1 print-path → voided (print_complete) |
+
+Smithfield `f9c5b0e4…` $25: **voided AUTH-124** via voidCheck; still `payment_type='check'`;
+never had a check_number / registry row. All four were **seat tests** — said plainly.
+
+### THIS PR
+- AUTH-125 OPEN (full chain proof, void same session)
+- Guard `verify-check-registry-has-expense-document` — orphans FAIL
+- Ops `scripts/ops/r222-check-creator-full-chain-proof.ts`
+- Root-cause register
+
+### AFTER MERGE
+`OWNER_AUTH_ID=AUTH-125 DATABASE_URL=<prod> npx tsx scripts/ops/r222-check-creator-full-chain-proof.ts`
+Paste REGISTRY / LIVE check BEFORE · MID · AFTER. Stamp AUTH-125 CONSUMED.
 
 ## DO NOT
-- Steal Devin-B purge-era gate unwire / arm 21
-- Steal CC-3 pre-settlement editor → ROUND 212 mileage
-- Steal CC-1 Faro invoice 87
-- Leave seat fixtures in USMCA
+- Steal CC-2 opening-balance / escrow held work
+- Touch freeze tables outside this chain
+- Leave an unvoided seat check in USMCA
+- Blame live-DB guards without DATABASE_URL
