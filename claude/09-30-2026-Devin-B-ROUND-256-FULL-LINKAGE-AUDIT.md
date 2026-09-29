@@ -48,8 +48,8 @@ FOR EACH CHAIN REPORT: total rows · rows with a complete chain · rows with a B
 ## ITEM 2 — THE SPECIFIC BREAKS ALREADY KNOWN. CONFIRM OR REFUTE EACH, MEASURED.
 - 349 of 382 load stops have no coordinates.
 - `telematics.odometer_readings` is empty, so no load has driven miles.
-- 15 invoices delivered and invoiced but in NO Faro file: 13498, 13513, 13517, 13525, 13527, 13540,
-  13541, 13555, 13572, 13578, 13582, 13595, 13609, 13616, 13621.
+- ~~15 invoices delivered and invoiced but in NO Faro file~~ **RETRACTED 09-29-2026: those loads are IH 35 TRANSPORTATION, not USMCA. Disregard.**
+
 - 5 loads factored under IH 35 TRANSPORTATION yet carrying USMCA invoices: 13503, 13504, 13509,
   13533, 13539.
 - Load 13525 carries a $0.00 invoice marked sent.

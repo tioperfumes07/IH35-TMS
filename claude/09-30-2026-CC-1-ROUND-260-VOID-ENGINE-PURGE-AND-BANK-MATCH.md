@@ -154,11 +154,10 @@ stops, expenses, settlement links, `docs.files`. Nothing orphaned.
 PROVE NOTHING MOVED: trial balance · P&L by account · balance sheet · A/R and A/P aging · bank
 balances — BEFORE and AFTER, identical. One cent of movement = ROLL BACK.
 
-## PART K — ITEM 6: THE 15 INVOICES NEVER SENT TO FARO
-13498, 13513, 13517, 13525, 13527, 13540, 13541, 13555, 13572, 13578, 13582, 13595, 13609, 13616,
-13621. Devin-B measured **24** sent-but-not-in-Faro, more than my 15 — reconcile the two counts and
-report the true list. Find why submission never fired and WIRE IT PERMANENTLY. Load 13525 also has a
-$0.00 invoice marked sent — find out what it is.
+## PART K — RETRACTED, DO NOT EXECUTE
+
+**RETRACTED 09-29-2026 BY THE OWNER.** The "invoices never sent to Faro" claim is wrong and is withdrawn. Those loads belong to IH 35 TRANSPORTATION, not USMCA. There is nothing to send and nothing to investigate. Separately, `factor.faro_invoice_lines` being empty does NOT mean the import never ran: CC-1 verified the writer is wired and ran a 34-row backfill on 2026-09-13; the AUTH-001 purge on 2026-09-23 wiped the table. **Do not act on this item.**
+
 
 ## PART L — ITEM 7: KILL THE WALL-CLOCK GATE
 Replace the 7-day rolling window with a fixed ratcheted population count. Your own analysis is now

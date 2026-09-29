@@ -19,7 +19,7 @@ STATUS KEYS: OPEN · IN PROGRESS · BLOCKED · DONE-VERIFIED (Lead measured it l
 | 7 | Prove nothing moved — trial balance, P&L, balance sheet, A/R and A/P aging, bank balances, BEFORE and AFTER, identical. | 248 | OPEN |
 | 8 | **Replace the 7-day rolling window** with a fixed ratcheted population count. NEW STANDING LAW: no blocking guard may derive its verdict from wall-clock time. Plus scanner guard `verify-no-money-gate-depends-on-wall-clock-time.mjs`. | 249 | OPEN |
 | 9 | Load **13525** — invoice `total_cents = 0`, status `sent`, issued 2026-08-10, load status `invoiced`. Zero-rate move or a rate that failed to copy? Find out live. Do not delete it; it is not voided. | 249 | OPEN |
-| 10 | **The 20 unfactored invoices, $69,685.** MEASURED: all 20 are USMCA loads, ZERO belong to another entity, ZERO are cancelled, ZERO are unlinked. The owner's hypothesis is disproved — these are genuinely delivered, invoiced USMCA loads never sent to Faro. Oldest 2026-08-05. Find why the submission never fired and wire it permanently. | NEW | OPEN |
+| 10 | **The 20 unfactored invoices, $69,685.** MEASURED: all 20 are USMCA loads, ZERO belong to another entity, ZERO are cancelled, ZERO are unlinked. The owner's hypothesis is disproved — these are genuinely delivered, invoiced USMCA loads never sent to Faro. Oldest 2026-08-05. Find why the submission never fired and wire it permanently. | RETRACTED | CLOSED — owner 09-29: these are IH 35 TRANSPORTATION loads, not USMCA. Nothing to send. |
 | 11 | Settlement 5787 non-diesel expense total must read **140.20** live after #2. | 236 | OPEN |
 
 ---
