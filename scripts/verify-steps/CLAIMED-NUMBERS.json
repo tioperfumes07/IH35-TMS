@@ -9324,5 +9324,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-30",
     "purpose": "verify-resolve-fully-wired"
+  },
+  "11773": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-g2-extra-pay-requires-item"
   }
 }
