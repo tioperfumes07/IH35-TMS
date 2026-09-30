@@ -228,10 +228,15 @@ async function ensureFreshDbProductionIdentity(client, file) {
   );
   const have = new Set(cols.rows.map((r) => r.column_name));
   if (!have.has("id") || !have.has("role")) return; // not yet in its final shape — retry next file
+  // 'Administrator', not 'Owner': identity carries a role-escalation trigger — "only a primary
+  // owner can assign the Owner role" — which refused the insert outright (CI 2026-09-30T10:55:16Z).
+  // That control is correct and stays untouched. This row exists ONLY so an FK has something to
+  // point at in a throwaway database; nothing reads its role, and 'Administrator' is the same role
+  // the sanctioned identity.users service account in 202614200000 uses.
   await client.query(
     `
       INSERT INTO identity.users (id, role)
-      VALUES ($1::uuid, 'Owner')
+      VALUES ($1::uuid, 'Administrator')
       ON CONFLICT (id) DO NOTHING
     `,
     [FRESH_DB_PROD_IDENTITY_UUID]
