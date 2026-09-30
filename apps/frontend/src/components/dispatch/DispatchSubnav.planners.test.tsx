@@ -65,6 +65,15 @@ describe("DispatchSubnav planner reachability + click-nav (Task 1)", () => {
     expect(dispatchBreadcrumbLabel("/dispatch/awaiting-bol-invoice", "")).toBe("Awaiting BOL");
   });
 
+  it("maps needs-delivery-authorization route to its Documents child href + breadcrumb", () => {
+    expect(dispatchSubNavActiveHref("/dispatch/needs-delivery-authorization", "")).toBe(
+      "/dispatch/needs-delivery-authorization",
+    );
+    expect(dispatchBreadcrumbLabel("/dispatch/needs-delivery-authorization", "")).toBe(
+      "Needs delivery auth",
+    );
+  });
+
   it("exposes Awaiting BOL under Documents submenu", () => {
     renderNav();
     // Documents has no leaf href — the whole control is the menuitem that toggles the submenu.
@@ -72,5 +81,13 @@ describe("DispatchSubnav planner reachability + click-nav (Task 1)", () => {
     fireEvent.click(documentsBtn);
     const link = screen.getByRole("menuitem", { name: /Awaiting BOL/i });
     expect(link).toHaveAttribute("href", "/dispatch/awaiting-bol-invoice");
+  });
+
+  it("exposes Needs delivery auth under Documents submenu", () => {
+    renderNav();
+    const documentsBtn = screen.getByRole("menuitem", { name: /^Documents/i });
+    fireEvent.click(documentsBtn);
+    const link = screen.getByRole("menuitem", { name: /Needs delivery auth/i });
+    expect(link).toHaveAttribute("href", "/dispatch/needs-delivery-authorization");
   });
 });

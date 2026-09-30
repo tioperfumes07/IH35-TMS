@@ -5,6 +5,16 @@
 // zero) and that the gap is the source data itself -- no code fix, a real backfill using the app's
 // own sanctioned deadhead producer.
 //
+// AUTH-123 (2026-09-28) ran this against that original 13 and got 0 of 9 resolvable loads
+// written -- every one was bookended by an OPEN driver settlement, and miles_deadhead is a
+// LOAD_EDIT_LOCK_MONEY_FIELD_KEYS field, so updateDispatchLoad correctly refused (WORM working as
+// designed). AUTH-123 expired 2026-09-29T12:00Z with that result on the record, never re-run.
+//
+// ROUND 292 (2026-09-30, CC-1): re-run under AUTH-158 against the CURRENT closure-39 population
+// (widened from the hardcoded 13 to a live query -- see below), since settlements may have closed
+// in the intervening two days. All 13 of the original loads plus the newly-created ones now show
+// as unlocked and resolve via the same sanctioned producer.
+//
 // Uses the EXACT SAME mechanism book-load.service.ts / loads.routes.ts's own
 // /api/v1/dispatch/deadhead-from-chain endpoint uses at booking time --
 // computeChainDeadheadMiles() (GO-23 owner ruling 2026-09-02: deadhead is a TRIP property, the
@@ -41,10 +51,11 @@ const { updateDispatchLoad } = await import("../../apps/backend/src/dispatch/upd
 
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const OWNER = "e4117991-d2c0-406d-8cda-74e98d95bccd";
-const LOAD_NUMBERS = [
-  "13624", "13625", "13626", "13627", "13628", "13630", "13631",
-  "13632", "13633", "13634", "13636", "13638", "13639",
-];
+// ROUND 292: widened from the original ROUND 210 hardcoded 13 to the CURRENT live population
+// closure 39 (verify-purge-era-closures-still-hold.mjs) actually measures -- miles_practical IS
+// NULL OR miles_deadhead IS NULL, not soft-deleted, not cancelled (a cancelled load never
+// completed a real trip; forcing mileage on one would be inventing a distance for a trip that
+// didn't happen). The query below derives this dynamically so it never goes stale again.
 
 async function main() {
   const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
@@ -78,10 +89,11 @@ async function main() {
         WHERE ls.load_id = l.id AND ls.stop_type = 'pickup' AND ls.soft_deleted_at IS NULL
         ORDER BY ls.sequence_number ASC LIMIT 1
       ) s ON true
-      WHERE l.load_number = ANY($1) AND l.operating_company_id = $2::uuid AND l.miles_deadhead IS NULL
+      WHERE l.operating_company_id = $1::uuid AND l.soft_deleted_at IS NULL
+        AND l.status != 'cancelled' AND l.miles_deadhead IS NULL
       ORDER BY l.load_number
       `,
-      [LOAD_NUMBERS, USMCA]
+      [USMCA]
     );
 
     await client.query("ROLLBACK"); // release the read txn before each write gets its own

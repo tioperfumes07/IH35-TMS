@@ -77,6 +77,90 @@ export async function findVoidReversalJournalEntryId(
   return res.rows[0]?.reversal_je_id ?? null;
 }
 
+/**
+ * ROUND 292 -- the enforced counterpart to AUTH-140's own classification test
+ * (docs/audit/GUARD-WORKORDERS.md, FACTORING-41-LIVE-DOUBLE-COUNT): refuses to reinstate a
+ * factoring_advance if a sibling record already carries status='advanced' with its own live,
+ * unreversed GL posting for the SAME Faro purchase. Reinstating on top of a live twin would
+ * recreate the exact double-count AUTH-140 was built to remove. Read-only; no GL math.
+ *
+ * MATCH KEY, per CC-2's live review of this exact check (ROUND 292): amount-only matching
+ * (invoice_total_cents, advance_amount_cents) is a real false-positive risk -- two genuinely
+ * different purchases can share a common round rate. Prefer identity: when BOTH the target and a
+ * candidate carry a non-null faro_invoice_number, that match alone is authoritative (it is
+ * uniquely constrained per company by uq_factoring_advances_faro_invoice_number). Only fall back
+ * to amount+purchase-date matching when either side lacks faro_invoice_number -- confirmed live
+ * necessary: FAC-2026-00048 (reinstated under AUTH-140, faro_invoice_number since nulled by an
+ * earlier repair pass) and its real twin FAC-2026-00094 (faro_invoice_number='52') would not
+ * match on faro_invoice_number alone, but do match on amount+date, and ARE the same Faro purchase
+ * (same "Wire / Faro 9/4/26 inv 52" memo, same load 13570 in both notes' FARO_FEES JSON) -- both
+ * currently live simultaneously on production, a real pre-existing double-count this check did
+ * not create and is out of scope to fix here, but is exactly the class of defect this gate exists
+ * to stop from recurring. Flagged separately to the Lead/CC-2 for remediation.
+ */
+export class FactoringTwinExistsError extends Error {
+  constructor(
+    public readonly twinId: string,
+    public readonly twinDisplayId: string | null,
+    public readonly matchedOn: "faro_invoice_number" | "amount_and_purchase_date"
+  ) {
+    super(
+      `reinstateDocument(factoring_advance): refused — a live twin already exists (${twinDisplayId ?? twinId}), ` +
+        `matched on ${matchedOn}, with its own live, unreversed GL posting. Reinstating this record would ` +
+        `double-count that cash. If this twin is not actually the same purchase, resolve that first ` +
+        `(see docs/audit/GUARD-WORKORDERS.md FACTORING-41-LIVE-DOUBLE-COUNT).`
+    );
+    this.name = "FactoringTwinExistsError";
+  }
+}
+
+async function assertNoLiveFactoringTwin(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  factoringAdvanceId: string
+): Promise<void> {
+  const res = await client.query<{ id: string; display_id: string | null; matched_on: "faro_invoice_number" | "amount_and_purchase_date" }>(
+    `SELECT twin.id::text, twin.display_id,
+            CASE WHEN target.faro_invoice_number IS NOT NULL AND twin.faro_invoice_number IS NOT NULL
+                 THEN 'faro_invoice_number' ELSE 'amount_and_purchase_date' END AS matched_on
+       FROM accounting.factoring_advances target
+       JOIN accounting.factoring_advances twin
+         ON twin.operating_company_id = target.operating_company_id
+        AND twin.id != target.id
+        AND twin.status = 'advanced'
+        AND (
+          -- Strong signal: same Faro invoice number, uniquely constrained per company.
+          (target.faro_invoice_number IS NOT NULL AND twin.faro_invoice_number IS NOT NULL
+           AND twin.faro_invoice_number = target.faro_invoice_number)
+          OR
+          -- Fallback when either side lacks the strong identifier: amount + purchase date.
+          (
+            (target.faro_invoice_number IS NULL OR twin.faro_invoice_number IS NULL)
+            AND twin.invoice_total_cents = target.invoice_total_cents
+            AND twin.advance_amount_cents = target.advance_amount_cents
+            AND twin.faro_purchase_date IS NOT NULL
+            AND twin.faro_purchase_date = target.faro_purchase_date
+          )
+        )
+      WHERE target.id = $1::uuid AND target.operating_company_id = $2::uuid
+        AND EXISTS (
+          SELECT 1 FROM accounting.journal_entry_postings jep
+          JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+         WHERE jep.operating_company_id = twin.operating_company_id
+           AND jep.source_transaction_type = 'factoring_advance'
+           AND jep.source_transaction_id = twin.id::text
+           AND je.status = 'posted' AND je.voided_at IS NULL
+           AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL
+        )
+      LIMIT 1`,
+    [factoringAdvanceId, operatingCompanyId]
+  );
+  const twin = res.rows[0];
+  if (twin) {
+    throw new FactoringTwinExistsError(twin.id, twin.display_id, twin.matched_on);
+  }
+}
+
 const DEFAULT_RESTORE_STATUS: Partial<Record<ReinstateDocumentType, string>> = {
   bill: "unpaid",
   bill_payment: "posted",
@@ -144,6 +228,17 @@ export async function reinstateDocument(
       // twin -- callers reach this branch only for those, each carrying its own fresh AUTH id per
       // record, cited in the caller's own reason string. Twins with a live posting are REVERSED
       // (postVoidReversal), never reinstated -- that path does not call this function at all.
+      //
+      // ROUND 292 (CC-1) -- that classification lived only in the CALLER's own script (AUTH-140),
+      // as a convention: nothing HERE stopped a future caller from reinstating a record nobody
+      // individually classified, which would silently recreate the exact double-count AUTH-140 was
+      // built to remove. The twin test is now enforced INSIDE this function, unconditionally, using
+      // the same test AUTH-140's own classification used (docs/audit/GUARD-WORKORDERS.md,
+      // FACTORING-41-LIVE-DOUBLE-COUNT): a same-(invoice_total_cents, advance_amount_cents) sibling
+      // record with status='advanced' and its own live, unreversed GL posting is a twin -- refuse
+      // rather than reinstate into a double-count. This is a read-only safety check; it changes no
+      // GL math and does not touch reinstateSimple's own behavior for the true no-twin case.
+      await assertNoLiveFactoringTwin(client, input.operatingCompanyId, input.id);
       return reinstateSimple(client, input, "factoring_advance", "factoring_advance");
     case "settlement":
       return reinstateSimple(client, input, "driver_settlement", "settlement");

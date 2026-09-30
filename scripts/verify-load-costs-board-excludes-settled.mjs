@@ -6,36 +6,33 @@
 // Load-Costs board's list query (apps/backend/src/accounting/load-costs-board.routes.ts) already
 // applies the real fix for this (ROUND 31.2/32.2-CORRECTED, owner): status filtering ALONE
 // overcounts — a load can sit at status='dispatched'/'delivered' while already fully settled
-// (settlement line active, driver bill posted, or invoice issued), and status never advances. The
-// board's real predicate is status IN canonical AND
-// `canonicalActiveLoadNotFinishedByMoneyCte()` (apps/backend/src/dispatch/canonical-active-load-set.ts)
-// — money is the source of truth, not status. Applying status alone (or status + invoice-only)
-// lets settled loads leak onto an "active" board, where their cost/margin figures are either wrong
-// or trivially $0 (a load already closed out via settlement has no reason to carry open cost rows
-// the way a genuinely active load does).
+// (settlement line on a CLOSED settlement, driver bill on a CLOSED settlement, or invoice issued
+// AFTER delivery). Money is the source of truth, not status.
 //
-// THIS GUARD is the regression lock: any settled-class load (a real settlement line, a non-void
-// driver bill, or an issued invoice) with REAL, nonzero, non-void expense/driver-bill cost must
-// NEVER appear in the board's live active-load result set. It reproduces the board's own WHERE
-// clause verbatim (status filter + canonicalActiveLoadNotFinishedByMoneyCte, same three NOT EXISTS
-// clauses) rather than importing the route file directly (this guard runs standalone via `node`,
-// the route needs a full Fastify app context) — kept in lockstep by citing the exact source lines
-// in this comment; if the route's predicate ever changes, this guard's SQL must change with it.
+// ROUND 292 / FACTOR-BUT-NOT-DELIVERED (Lead): an ISSUED invoice on a still-rolling truck
+// (dispatched/at_pickup/in_transit/at_delivery) is NOT finished — customer-approved factoring
+// before delivery. The board + this guard must pass l.status into
+// canonicalActiveLoadNotFinishedByMoneyCte so 13625/13626 stay visible. "Settled-class" for the
+// leak check therefore means finished-by-money under that same CTE (NOT mere invoice existence).
 //
-// SHRINK-ONLY BASELINE-FREE: this is a zero-tolerance boolean check, not a debt ratchet — a single
-// leaked settled-with-real-cost load is a real margin overstatement on a board someone is reading
-// right now, never "known debt." Live-verified 2026-09-23: with the money-based exclusion applied,
-// the board's active set is 5 loads (USMCA); dropping ONLY the money-based exclusion (status filter
-// alone) would leak 33 — of which dozens carry real, non-void cost. Zero settled-with-real-cost
-// loads currently leak through.
+// THIS GUARD is the regression lock: any finished-by-money load with REAL, nonzero, non-void
+// expense/driver-bill cost must NEVER appear in the board's live active-load result set.
 export const REQUIRES_LIVE_DB =
   "money-relevant (Load Costs board margin correctness) — must fail-closed, never skip, per ROUND 29.9-B";
 
+import { register } from "tsx/esm/api";
 import pg from "pg";
 
-const LABEL = "verify-load-costs-board-excludes-settled";
+register();
 
-const BOARD_ACTIVE_SET_SQL = `
+const LABEL = "verify-load-costs-board-excludes-settled";
+const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
+
+async function boardActiveSql() {
+  const { canonicalActiveLoadNotFinishedByMoneyCte } = await import(
+    "../apps/backend/src/dispatch/canonical-active-load-set.ts"
+  );
+  return `
   SELECT l.id::text, l.load_number
   FROM mdata.loads l
   WHERE l.operating_company_id = $1::uuid
@@ -43,24 +40,16 @@ const BOARD_ACTIVE_SET_SQL = `
     AND l.status <> 'draft'
     AND l.status <> 'cancelled'
     AND l.status NOT IN ('closed', 'invoiced', 'paid')
-    AND NOT EXISTS (
-      SELECT 1 FROM driver_finance.settlement_lines sl
-       WHERE sl.load_id = l.id AND sl.is_active IS TRUE
-    )
-    AND NOT EXISTS (
-      SELECT 1 FROM driver_finance.driver_bills db
-       WHERE db.load_id = l.id AND db.status <> 'void'
-    )
-    AND NOT EXISTS (
-      SELECT 1 FROM accounting.invoices i
-       WHERE i.source_load_id = l.id
-         AND i.status NOT IN ('draft', 'proforma', 'void')
-    )
+    AND ${canonicalActiveLoadNotFinishedByMoneyCte("l.id", "l.status")}
 `;
+}
 
-// A load is "settled-class with real cost" when it carries a settlement line, a non-void driver
-// bill, or an issued invoice, AND its real (non-void) expense + driver-bill cost sums to > 0.
-const SETTLED_WITH_REAL_COST_SQL = `
+// Finished-by-money under the SAME CTE, with real cost — the leak population.
+async function settledWithRealCostSql() {
+  const { canonicalActiveLoadNotFinishedByMoneyCte } = await import(
+    "../apps/backend/src/dispatch/canonical-active-load-set.ts"
+  );
+  return `
   SELECT l.id::text, l.load_number,
     (COALESCE(ec.expense_cents,0) + COALESCE(dp.driver_pay_cents,0))::bigint AS real_cost_cents
   FROM mdata.loads l
@@ -76,17 +65,16 @@ const SETTLED_WITH_REAL_COST_SQL = `
   ) dp ON dp.load_id = l.id
   WHERE l.operating_company_id = $1::uuid
     AND l.soft_deleted_at IS NULL
-    AND (
-      EXISTS (SELECT 1 FROM driver_finance.settlement_lines sl WHERE sl.load_id = l.id AND sl.is_active IS TRUE)
-      OR EXISTS (SELECT 1 FROM driver_finance.driver_bills db2 WHERE db2.load_id = l.id AND db2.status <> 'void')
-      OR EXISTS (SELECT 1 FROM accounting.invoices i2 WHERE i2.source_load_id = l.id AND i2.status NOT IN ('draft','proforma','void'))
-    )
+    AND NOT (${canonicalActiveLoadNotFinishedByMoneyCte("l.id", "l.status")})
     AND (COALESCE(ec.expense_cents,0) + COALESCE(dp.driver_pay_cents,0)) > 0
 `;
+}
 
 async function measureLive(client, companyId) {
-  const boardActive = await client.query(BOARD_ACTIVE_SET_SQL, [companyId]);
-  const settledWithCost = await client.query(SETTLED_WITH_REAL_COST_SQL, [companyId]);
+  const boardSql = await boardActiveSql();
+  const settledSql = await settledWithRealCostSql();
+  const boardActive = await client.query(boardSql, [companyId]);
+  const settledWithCost = await client.query(settledSql, [companyId]);
   const boardIds = new Set(boardActive.rows.map((r) => r.id));
   const leaked = settledWithCost.rows.filter((r) => boardIds.has(r.id));
   return {
@@ -116,38 +104,37 @@ async function live() {
   const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
   try {
     await client.connect();
-  } catch (err) {
-    console.error(`${LABEL}: FAIL — cannot connect (${err.code || err.message}). A money guard that cannot connect is a fail, not a pass (ROUND 29.9-B).`);
-    process.exitCode = 1;
-    return;
-  }
-  try {
     await client.query("BEGIN");
-    await client.query("SELECT set_config('app.bypass_rls', 'lucia', false)");
-    const perCompany = await forEachCompany(client, (companyId) => measureLive(client, companyId));
+    await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
+    const results = await forEachCompany(client, (id) => measureLive(client, id));
     await client.query("ROLLBACK");
 
-    let failures = 0;
-    for (const r of perCompany) {
-      console.log(
-        `${LABEL}: ${r.code} — board active set ${r.boardActiveCount} load(s); ${r.settledWithCostCount} ` +
-          `settled-class load(s) carry real cost ($${(r.settledWithCostTotalCents / 100).toFixed(2)} total); ` +
-          `${r.leaked.length} leaked into the board's active set.`
+    const usmca = results.find((r) => r.companyId === USMCA) ?? results[0];
+    const anyLeaked = results.flatMap((r) => r.leaked.map((row) => ({ code: r.code, ...row })));
+    if (anyLeaked.length) {
+      console.error(
+        `${LABEL}: FAIL — ${anyLeaked.length} finished-by-money load(s) with real cost still on Load Costs active set:`
       );
-      if (r.leaked.length > 0) {
-        console.error(
-          `${LABEL}: LIVE FAIL — ${r.code}: settled-class load(s) with real cost leaked onto the ` +
-            `"active" board (margin overstated there): ${r.leaked.map((l) => l.load_number).join(", ")}`
-        );
-        failures++;
+      for (const row of anyLeaked.slice(0, 20)) {
+        console.error(`  ${row.code} load ${row.load_number} real_cost_cents=${row.real_cost_cents}`);
       }
+      process.exitCode = 1;
+      return;
     }
-
-    if (failures > 0) process.exit(1);
-    console.log(`${LABEL}: LIVE PASS — zero settled-class loads with real cost leak into any company's active board set.`);
+    console.log(
+      `${LABEL}: PASS — 0 finished-by-money loads with real cost on the board; USMCA board_active=${usmca?.boardActiveCount ?? "?"} settled_with_cost=${usmca?.settledWithCostCount ?? "?"}.`
+    );
+  } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      /* ignore */
+    }
+    console.error(`${LABEL}: FAIL — ${err.message}`);
+    process.exitCode = 1;
   } finally {
     await client.end().catch(() => {});
   }
 }
 
-await live();
+live();

@@ -201,13 +201,39 @@ export function canonicalActiveLoadStatusClause(alias = "l"): string {
  * `canonicalActiveLoadNotFinishedByMoneyCte` for the real predicate. `loadIdColumn` names the
  * column carrying the load's id in the caller's own FROM clause (aliased to match).
  */
-export function canonicalActiveLoadInvoiceExclusionCte(loadIdColumn = "l.id"): string {
+/**
+ * FACTOR-BUT-NOT-DELIVERED (Lead, 09-30-2026). Owner, verbatim: "unless we have approval from the
+ * customer, we already have this engine, factor but not delivered."
+ *
+ * The invoice-exclusion assumed ISSUED INVOICE => FINISHED. That holds for a delivered load. It is
+ * false for the case this company actually runs and already built an engine for: a delivery
+ * confirmation sent to the factor before the truck has legally delivered, on customer approval —
+ * dispatch.manual_delivery_authorizations, shipped 2026-09-07 from the owner's own words: "sometimes
+ * we might send a delivery confirmation to the factoring, even though we have not officially
+ * delivered... i need to be able to manually do this."
+ *
+ * When that happens the invoice is real, the factor's cash is real, and THE TRUCK IS STILL ROLLING.
+ * Hiding it from dispatch is the defect. MEASURED LIVE 2026-09-30: loads 13625 (T148) and 13626
+ * (T156) are status 'dispatched' per AlwaysTrack, carry SENT invoices, and Faro has advanced
+ * $6,062.50 and $3,298.00 against them. The board showed 14 instead of 16 for exactly this reason.
+ *
+ * So the exclusion now fires only once the load has actually left live dispatch. A load still in a
+ * pre-delivery status stays on the board whether or not it has been invoiced or factored. Nothing
+ * about the DELIVERED-and-invoiced case changes: those still drop off, which is the behaviour the
+ * owner asked for when he said "why are there all these units dispatched, when there are only 5."
+ */
+const PRE_DELIVERY_STATUSES = ["dispatched", "at_pickup", "in_transit", "at_delivery"] as const;
+
+export function canonicalActiveLoadInvoiceExclusionCte(loadIdColumn = "l.id", statusColumn?: string): string {
+  const stillRolling = statusColumn
+    ? `${statusColumn} IN (${PRE_DELIVERY_STATUSES.map((s) => `'${s}'::mdata.load_status_enum`).join(", ")}) OR `
+    : "";
   return `
-    NOT EXISTS (
+    (${stillRolling}NOT EXISTS (
       SELECT 1 FROM accounting.invoices i
        WHERE i.source_load_id = ${loadIdColumn}
          AND i.status NOT IN ('draft', 'proforma', 'void')
-    )
+    ))
   `;
 }
 
@@ -256,7 +282,7 @@ export function canonicalActiveLoadInvoiceExclusionCte(loadIdColumn = "l.id"): s
  * exactly as the settlement_lines half four lines above already does. "Settled" means the
  * settlement closed and the money left, never that a draft references the bill.
  */
-export function canonicalActiveLoadNotFinishedByMoneyCte(loadIdColumn = "l.id"): string {
+export function canonicalActiveLoadNotFinishedByMoneyCte(loadIdColumn = "l.id", statusColumn?: string): string {
   return `
     NOT EXISTS (
       SELECT 1 FROM driver_finance.settlement_lines sl
@@ -270,7 +296,7 @@ export function canonicalActiveLoadNotFinishedByMoneyCte(loadIdColumn = "l.id"):
        WHERE db.load_id = ${loadIdColumn}
          AND db.status <> 'void'
     )
-    AND ${canonicalActiveLoadInvoiceExclusionCte(loadIdColumn)}
+    AND ${canonicalActiveLoadInvoiceExclusionCte(loadIdColumn, statusColumn)}
   `;
 }
 
@@ -278,7 +304,7 @@ export function canonicalActiveLoadNotFinishedByMoneyCte(loadIdColumn = "l.id"):
  *  Every consumer's outer WHERE must include BOTH; applying status alone, or status + the
  *  invoice-only signal, overcounts (confirmed live, ROUND 32.2-CORRECTED). */
 export function canonicalActiveLoadWhereClause(alias = "l"): string {
-  return `${canonicalActiveLoadStatusClause(alias)} AND ${canonicalActiveLoadNotFinishedByMoneyCte(`${alias}.id`)}`;
+  return `${canonicalActiveLoadStatusClause(alias)} AND ${canonicalActiveLoadNotFinishedByMoneyCte(`${alias}.id`, `${alias}.status`)}`;
 }
 
 /**

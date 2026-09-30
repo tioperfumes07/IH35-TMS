@@ -89,6 +89,11 @@ const PodReviewPage = React.lazy(() => import("../pages/dispatch/PodReviewPage")
 const AwaitingBolInvoicePage = React.lazy(() =>
   import("../pages/dispatch/AwaitingBolInvoicePage").then((m) => ({ default: m.AwaitingBolInvoicePage })),
 );
+const NeedsDeliveryAuthorizationPage = React.lazy(() =>
+  import("../pages/dispatch/NeedsDeliveryAuthorizationPage").then((m) => ({
+    default: m.NeedsDeliveryAuthorizationPage,
+  })),
+);
 const DispatchSettingsPage = React.lazy(() => import("../pages/dispatch/DispatchSettingsPage").then((m) => ({ default: m.DispatchSettingsPage })));
 const BorderCrossingWizardPage = React.lazy(() => import("../pages/dispatch/BorderCrossingWizardPage").then((m) => ({ default: m.BorderCrossingWizardPage })));
 const BorderCrossingHistoryPage = React.lazy(() => import("../pages/dispatch/BorderCrossingHistoryPage").then((m) => ({ default: m.BorderCrossingHistoryPage })));
@@ -1375,6 +1380,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <AwaitingBolInvoicePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/needs-delivery-authorization"
+          element={
+            <ProtectedRoute>
+              <NeedsDeliveryAuthorizationPage />
             </ProtectedRoute>
           }
         />

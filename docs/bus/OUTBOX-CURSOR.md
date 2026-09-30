@@ -1,5 +1,23 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T09:45Z · ROUND 292 overflow MERGED `#23334` `394697bbf8`**
+CURSOR | Needs delivery authorization FE LIVE on main · GET queue + Documents badge + guard · money-pr-local-gate PASS | GUARD verify-needs-delivery-authorization-wired | LIVE PROOF squash `394697bbf8` | NEXT: FE deploy · Owner Chrome Documents › Needs delivery auth · 13615 BOL→Faro.
+
+**2026-09-30T09:35Z · ROUND 292 overflow — Needs delivery authorization FE wired**
+CURSOR | Named queue GET `/needs-delivery-authorization` + FE `/dispatch/needs-delivery-authorization` + Documents badge · POST still Owner-only · no seat fixtures | GUARD verify-needs-delivery-authorization-wired OK · vitest 9/9 | LIVE PROOF API tip `8c3ac5e02e` · boards@16 | NEXT: FAST-MERGE · FE deploy · Owner Chrome Authorize when rolling+invoiced · 13615 BOL→Faro.
+
+**2026-09-30T09:22Z · API LIVE `8c3ac5e02e` · boards@16 on Load Costs**
+CURSOR | Render API `dep-daud7ru0tbcc73evu250` LIVE · healthz git_sha=`8c3ac5e02e` · Load Costs FACTOR-BUT-NOT-DELIVERED on prod | GUARD boards-agree 16/16 | LIVE PROOF healthz shallow | NEXT: Owner Chrome 13615 BOL→Faro · Cursor overflow.
+
+**2026-09-30T09:20Z · ROUND 292 Load Costs FACTOR-BUT-NOT-DELIVERED · boards@16**
+CURSOR | Load Costs passed `l.status` into money CTE (matches Lead invoice exclusion) · 13625/13626 on board · boards-agree PASS accounting=16 + dispatch-work=16 | GUARD verify-load-boards-agree · verify-load-costs-board-excludes-settled | LIVE PROOF both sets 16 | NEXT: Owner Chrome 13615 BOL→Faro · FAST-MERGE this PR.
+
+**2026-09-30T09:05Z · ROUND 292 ACK · 285.4.9 CLOSED · boards@16 · Chrome=13615**
+CURSOR | ACK Round 292: AT Dispatched 16 is law · boards PASS dispatch-work 16 · 285.4.9 #31/#58/#59/#32/#33 re-proved on tip · awaiting-BOL queue=**13615** only · FE `93c84ac` | GUARD load-boards-agree · company-settlement-pdf · ldt-5 · auto-invoice-on-bol | LIVE PROOF dispatched 13624–13639 · queue SQL count=1 | NEXT: Owner Chrome 13615 BOL→invoice→Faro · METHOD when detention exists · no baseline raises.
+
+**2026-09-30T08:22Z · board-agree CLOSED `#23312` `da0e34f2c2`**
+CURSOR | migrate `202614661200` live_loads bills require closed settlement · Neon applied · (AT later corrected 13625/13626 → boards now 16) | NEXT: Round 292 Chrome.
+
 **2026-09-30T08:00Z · 285.4.10 FE TIP LIVE `a79b2e9` · plain-English status**
 CURSOR | FE redeploy `dep-dauc1pvlot8c73ai36o0` LIVE · `version.json=a79b2e9` · awaiting-BOL queue + status spaces · Neon queue=3 | NEXT: Jorge Chrome Documents › Awaiting BOL (13626/13625/13615) · BOL→invoice→Faro · METHOD when detention approve exists.
 

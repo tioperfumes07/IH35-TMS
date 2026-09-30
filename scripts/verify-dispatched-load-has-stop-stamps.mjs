@@ -30,6 +30,15 @@
 // backlog (created the same day Samsara was finally enabled, so it cannot retroactively stamp
 // them) is tolerated up to the baseline ceiling; any NEW load ageing past 24h with zero stamps
 // fails outright.
+//
+// DISPATCH-STAMPS (owner, 2026-09-30): "FIX THE GUARD TOO: it must assert only on stops whose
+// event must already have occurred, never on a delivery scheduled in the future. As written it
+// turns every newly dispatched load into a red for every seat." The "overdue" EXISTS clause now
+// only matches stop_type='pickup' — pickup is the one event a load in any board-active status
+// must already have completed; a delivery leg is legitimately still in the future for a load
+// genuinely in transit, and must never itself be grounds to flag red. (The anti-join still
+// requires ZERO actual_arrival_at anywhere on the load, so a load whose pickup IS stamped never
+// fires here regardless of how the delivery leg's own schedule looks.)
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -108,6 +117,7 @@ async function main() {
          AND EXISTS (
                SELECT 1 FROM mdata.load_stops ls
                 WHERE ls.load_id = l.id AND ls.soft_deleted_at IS NULL
+                  AND ls.stop_type = 'pickup'
                   AND COALESCE(ls.scheduled_arrival_at, ls.appointment_start_at) < now() - interval '24 hours'
              )
          AND NOT EXISTS (
