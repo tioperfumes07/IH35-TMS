@@ -62,6 +62,14 @@ const REVERSE_IDS: Array<{ id: string; display_id: string; date: string }> = [
   { id: "27862cbc-9ed8-4ea3-a883-ab9df789b32e", display_id: "FAC-2026-00087", date: "2026-09-21" },
   { id: "449b660c-9c75-4d29-903f-25d4f9e08abf", display_id: "FAC-2026-00088", date: "2026-09-21" },
   { id: "94f29401-8c4f-4321-b1ad-20bccf99a87e", display_id: "FAC-2026-00089", date: "2026-09-21" },
+  // RE-CLASSIFIED just before execution (2026-09-30, ~05:00 UTC): FAC-2026-00090's twin,
+  // FAC-2026-00097, was VOIDED with 0 live lines at classification time (correctly REINSTATE then)
+  // -- but CC-1's AUTH-144 (consumed minutes later, same session) reposted FAC-2026-00097 for real
+  // reasons unrelated to this round (load 13619's true Faro identity), flipping it to
+  // status='advanced' with 4 live lines. Reinstating FAC-2026-00090 now would create a NEW live
+  // double-count against that freshly-live twin -- re-verified live immediately before this
+  // execution, moved from REINSTATE to REVERSE to match every other twin-having record's rule.
+  { id: "75e07f0c-5e10-4b92-a0c0-7e0b2de80099", display_id: "FAC-2026-00090", date: "2026-09-08" },
 ];
 
 const REINSTATE_IDS: Array<{ id: string; display_id: string }> = [
@@ -69,7 +77,6 @@ const REINSTATE_IDS: Array<{ id: string; display_id: string }> = [
   { id: "7b2da4bc-fcf0-4649-a3a6-ebbac086666c", display_id: "FAC-2026-00063" },
   { id: "5c44b184-aecc-4132-8247-7543f14e618a", display_id: "FAC-2026-00064" },
   { id: "e9f9df8a-a91c-46b4-a5bf-0dced674b933", display_id: "FAC-2026-00082" },
-  { id: "75e07f0c-5e10-4b92-a0c0-7e0b2de80099", display_id: "FAC-2026-00090" },
 ];
 
 async function sums(client: pg.Client) {
