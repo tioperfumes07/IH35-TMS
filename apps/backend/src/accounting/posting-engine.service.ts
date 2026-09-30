@@ -1449,19 +1449,30 @@ async function buildExpenseLines(client: DbClient, operatingCompanyId: string, s
 
   const totalDebit = debitLines.reduce((sum, line) => sum + line.amount_cents, 0);
 
-  // CREDIT side — CASH-BASIS PRIMARY: bank/cash when a payment account is set; else AP-with-vendor (accrual exception).
+  // CREDIT side — canonical guard #9 (ROUND 290.2, owner law): a Bill IS Accounts Payable; an
+  // expense document is not. An expense may credit ONLY a real payment instrument (1000 Bank,
+  // 2510 Dreamline, 1295 Relay Fuel Wallet, or any other catalogs.accounts row an operator sets as
+  // payment_account_uuid) — never account 2000 A/P. The former "else if (exp.vendor_uuid)" branch
+  // here credited AP as a deliberate "accrual exception" for a vendor-owed expense with no payment
+  // account yet set; measured live 2026-09-30 (ROUND 290 engine audit) that this produced 3 real
+  // expense documents crediting 2000 ($566.35 total) — an expense document representing money owed
+  // and not yet paid to a vendor is exactly what a BILL is for (accounting.bills + createBill() +
+  // postBillGlIfEnabled(), which legitimately credits 2000). An expense with a vendor but no
+  // payment account must now fail loud and be entered as a Bill instead, never silently credit AP.
   let creditAccount: string | null;
   let creditRole: string;
   if (exp.payment_account_uuid) {
     creditAccount = exp.payment_account_uuid; // a catalogs.accounts id (the bank/cash account)
     creditRole = "expense_cash_payment";
-  } else if (exp.vendor_uuid) {
-    creditAccount = await resolveApAccountForCompany(client, operatingCompanyId);
-    creditRole = "expense_ap";
-    if (!creditAccount) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AP account (ap_control) is unresolved for the accrual expense path");
   } else {
-    // ORPHAN GUARD: no payment account AND no vendor → fail loud (no orphan payable).
-    throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Expense has neither a payment account nor a vendor — cannot post (no orphan payable)");
+    // ORPHAN GUARD (canonical guard #9): no payment account → fail loud. A vendor alone does not
+    // make an expense postable — money owed and unpaid to a vendor is a Bill, not an Expense.
+    throw new PostingEngineError(
+      "ACCOUNT_MAPPING_MISSING",
+      exp.vendor_uuid
+        ? "Expense has a vendor but no payment account — an unpaid vendor obligation is a Bill (accounting.bills), not an Expense. Enter it as a Bill instead of posting this Expense."
+        : "Expense has neither a payment account nor a vendor — cannot post (no orphan payable)."
+    );
   }
 
   // LV-JE-MEMO-RECORD-NOT-VISIBLE — expense_number is NULL by design for driverless/unattributed

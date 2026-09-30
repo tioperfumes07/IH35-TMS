@@ -4955,3 +4955,25 @@ proof_query: live on prod, 2026-09-30 -- SELECT count(*) FROM accounting.expense
   status <> 'void' returned 0 (was 15 before either script ran). Spot-checked
   4102568a-1693-453b-b490-ecb2a8861e57 (the $1,287.35/load-13617 row): expense_number='13617-2'.
   The 3 load-less rows got EXP-2026-00541/00542/00543.
+
+## AUTH-150
+issued_at: 2026-09-30T05:50:00.000Z
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- void 3 accounting.expenses rows
+(48ec5887-441e-4e1e-ba0d-1947c404adce, c93de0eb-f147-4f45-a0db-a0689259cae8,
+d4fa22e9-f02d-4ddd-aed8-9b3c711e7c54) that credit account 2000 Accounts Payable ($566.35 total,
+ROUND 290 engine audit RED 1 / canonical guard #9 -- "a Bill IS Accounts Payable; an expense
+document is not"), then create a real accounting.bills row for each vendor/amount/date via the
+sanctioned createBill() (bills.service.ts, which posts its own GL internally via
+postBillGlIfEnabled) -- never a raw INSERT into accounting.journal_entries/journal_entry_postings.
+Root cause (fixed in the same PR): posting-engine.service.ts's buildExpenseLines had a deliberate
+"accrual exception" crediting AP when an expense had a vendor_uuid but no payment_account_uuid;
+removed -- that shape now refuses to post (ACCOUNT_MAPPING_MISSING), directing the caller to enter
+a Bill instead. Void via the SAME atomic reversal+flip pattern expenses.routes.ts's own /void route
+uses (reversePostedSourceTransactionInClientTx + header UPDATE + cascadeVoidChildren + audit).
+Renumbered from AUTH-149 to AUTH-150 before any write: AUTH-149 was claimed concurrently by another
+seat's expense-number backfill (#23254, merged first) -- caught before this AUTH landed on main, no
+write attempted under the collided number.
+action: OWNER_AUTH_ID=AUTH-150 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth150-void-3-ap-expenses-create-bills.ts
+  (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
+expires_at: 2026-10-01T05:50:00.000Z
+status: OPEN
