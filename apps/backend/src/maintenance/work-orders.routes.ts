@@ -941,11 +941,23 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       return reply.code(403).send({ error: "forbidden" });
     }
 
-    if (["repair", "tire", "accident"].includes(body.wo_type) && !body.driver_id) {
-      return reply.code(400).send({ error: "driver_required_for_selected_type" });
-    }
-    if (["repair", "tire", "accident"].includes(body.wo_type) && !body.load_id) {
-      return reply.code(400).send({ error: "load_required_for_selected_type" });
+    // ROUND 302 A-34 (Lead ruling, docs/bus/2026-09-30-LEAD-RULING-WO-TYPE-TIRE-IS-SPLIT-BY-SOURCE-TYPE.md):
+    // "tire" is not one TIER -- it splits by source_type exactly like every other wo_type does.
+    // source_type RS (roadside) is TIER1 (a truck that is working: a road-call tire blowout) and
+    // keeps requiring driver+load. source_type IS (in-house, a routine yard tire swap) is TIER2
+    // (something done to an asset, not a trip) and must NEVER be forced to carry a driver or load --
+    // demanding one here is the defect verify-transaction-linkage-law.mjs was warning about: a
+    // writer compelled to supply a load for a yard tire swap invents one, and an invented load link
+    // lands in a settlement looking correct. "repair"/"accident" are unchanged -- this ruling
+    // addressed "tire" specifically, not those two.
+    const tireIsTier1Roadside = body.wo_type === "tire" ? body.source_type === "RS" : true;
+    if (["repair", "accident"].includes(body.wo_type) || (body.wo_type === "tire" && tireIsTier1Roadside)) {
+      if (!body.driver_id) {
+        return reply.code(400).send({ error: "driver_required_for_selected_type" });
+      }
+      if (!body.load_id) {
+        return reply.code(400).send({ error: "load_required_for_selected_type" });
+      }
     }
     try {
       assertRoadsideFields(body);

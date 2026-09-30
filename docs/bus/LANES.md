@@ -155,6 +155,18 @@ TABLES: none. The Lead owns no module code and no tables. Anything else the Lead
 # (the pm_intervals catalog + pm_schedules migrations it reads/writes, both squarely CC-1's
 # migrations lane) and from the guard verifying all three together. Same one-job-one-seat reasoning
 # as the four grants above. Scoped to this one filename. Owner may move it; until then it is CC-1's.
+#
+# **`apps/backend/src/maintenance/work-orders.routes.ts` -- ONE narrow edit added to CC-1 (ROUND
+# 302, A-34, 2026-09-30).** `apps/backend/src/maintenance/**` has no seat -- UNASSIGNED per
+# verify-lane-ownership.mjs. CC-1's own guard (scripts/verify-transaction-linkage-law.mjs, ROUND
+# 300 A-30) found and flagged the exact defect (wo_type "tire" forced to carry driver+load
+# unconditionally); the Lead's ruling that resolves it
+# (docs/bus/2026-09-30-LEAD-RULING-WO-TYPE-TIRE-IS-SPLIT-BY-SOURCE-TYPE.md) is inseparable from
+# that same guard, which also changed in this PR to enforce the ruling permanently. Splitting the
+# one-line route fix from the guard that found it and now enforces it would recreate the exact
+# "one job, two seats" problem §0b exists to prevent. Scoped to this one narrow edit (the
+# driver_id/load_id validation block only) in this one filename -- not a blanket grant of the file.
+# Owner may move it; until then this one edit is CC-1's.
 
 ## SHARED — any seat, but say so in the PR body
 docs/**

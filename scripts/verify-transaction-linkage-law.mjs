@@ -288,40 +288,43 @@ export function classifyExpenseLineCategoryCode(code, tier1Codes) {
 // C) STATIC CHECKS
 // ---------------------------------------------------------------------------------------------
 
-// A pre-existing instance of "code demanding load on a TIER2 path", found while building this
-// guard. NOT this PR's to silently fix (behavior change to a live route with no test coverage
-// verified here) -- posted to the Lead per law §10. The guard reports it every run; it does not
-// hide it, and it will not let a SECOND instance land silently anywhere else.
-const KNOWN_TIER2_LOAD_DEMAND_PENDING_RULING = [
-  {
-    file: WORK_ORDERS_ROUTES_PATH,
-    pattern: /\["repair", "tire", "accident"\]\.includes\(body\.wo_type\) && !body\.load_id\)/,
-    note: `wo_type "tire" is forced to require load_id alongside "repair"/"accident". Live data shows` +
-      ` wo_type=repair spans both TIER1 (source_type RS/roadside) and TIER2 (source_type IS/in_house)` +
-      ` causes -- "tire" likely has the same split (a road-call blowout vs a yard tire change).` +
-      ` Forcing load_id on every "tire" WO risks exactly the law's own warning: pushing writers to` +
-      ` staple on a fake trip for a routine yard tire swap. Posted to the Lead for a ruling, not` +
-      ` changed here.`,
-  },
-];
+// RESOLVED (ROUND 302 A-34, Lead ruling: docs/bus/2026-09-30-LEAD-RULING-WO-TYPE-TIRE-IS-SPLIT-BY-SOURCE-TYPE.md):
+// wo_type "tire" used to be forced to require driver_id+load_id unconditionally, alongside
+// "repair"/"accident" -- a TIER2 in-house yard tire swap (source_type IS) demanding a load is
+// exactly the anti-pattern this law exists to stop. The Lead ruled tire splits by source_type like
+// everything else: RS (roadside) stays TIER1 (driver+load required), IS (in-house) is TIER2 (never
+// forced). work-orders.routes.ts now gates the requirement on source_type === "RS" for tire. This
+// check is a PERMANENT REGRESSION GUARD, not a one-time fix record: it fails if the unconditional
+// forced-load pattern for "tire" ever comes back, and fails if the source_type gate disappears.
+function checkTier2LoadDemand() {
+  const findings = [];
+  const src = readFileSync(join(ROOT, WORK_ORDERS_ROUTES_PATH), "utf8");
+
+  const regressedToUnconditional = /\["repair", "tire", "accident"\]\.includes\(body\.wo_type\)/.test(src);
+  if (regressedToUnconditional) {
+    findings.push({
+      level: "FAIL",
+      message: `${WORK_ORDERS_ROUTES_PATH}: REGRESSION -- "tire" is back in the unconditional forced-driver/load array alongside "repair"/"accident". ROUND 302 A-34 ruled this must split by source_type (RS=TIER1 required, IS=TIER2 never forced). Forcing a load on a TIER2 yard tire swap invents a trip that never happened.`,
+    });
+  }
+
+  const hasSourceTypeGate = /body\.wo_type === "tire" && tireIsTier1Roadside/.test(src) || /body\.wo_type === "tire"[\s\S]{0,80}source_type === "RS"/.test(src);
+  if (!hasSourceTypeGate) {
+    findings.push({
+      level: "FAIL",
+      message: `${WORK_ORDERS_ROUTES_PATH}: the tire/source_type=="RS" gate is missing -- ROUND 302 A-34's ruling is no longer enforced in code.`,
+    });
+  }
+
+  if (findings.length === 0) {
+    findings.push({ level: "OK", message: `${WORK_ORDERS_ROUTES_PATH}: tire is correctly gated by source_type (RS required, IS never forced) per ROUND 302 A-34.` });
+  }
+  return findings;
+}
 
 function checkTableRegistryDrift(liveTables) {
   const missing = liveTables.filter((t) => !(t in TABLE_REGISTRY));
   return missing;
-}
-
-function checkTier2LoadDemand() {
-  const findings = [];
-  for (const known of KNOWN_TIER2_LOAD_DEMAND_PENDING_RULING) {
-    const src = readFileSync(join(ROOT, known.file), "utf8");
-    if (!known.pattern.test(src)) {
-      // The known instance is gone -- good, but note it so a stale entry gets cleaned up by a human.
-      findings.push({ level: "INFO", message: `${known.file}: previously-known TIER2 load-demand pattern no longer matches -- remove this entry from KNOWN_TIER2_LOAD_DEMAND_PENDING_RULING if resolved` });
-    } else {
-      findings.push({ level: "WARN", message: `${known.file}: ${known.note}` });
-    }
-  }
-  return findings;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -348,8 +351,21 @@ function runSelftest() {
   if (!drift.includes("accounting.some_brand_new_money_table")) failures.push("checkTableRegistryDrift did not catch a fabricated unregistered table");
   if (drift.includes("accounting.expense_lines")) failures.push("checkTableRegistryDrift false-flagged a registered table");
 
+  // checkTier2LoadDemand reads the real file from disk; against the current (fixed) source it must
+  // report OK, never FAIL. Regression detection itself is proven directly against synthetic source
+  // snippets here, without touching the real file.
   const tier2Findings = checkTier2LoadDemand();
-  if (!tier2Findings.some((f) => f.level === "WARN")) failures.push("checkTier2LoadDemand did not surface the known work-orders.routes.ts tire/load-demand pattern");
+  if (tier2Findings.some((f) => f.level === "FAIL")) failures.push(`checkTier2LoadDemand unexpectedly FAILed against the current (should be fixed) work-orders.routes.ts: ${tier2Findings.map((f) => f.message).join(" | ")}`);
+  if (!tier2Findings.some((f) => f.level === "OK")) failures.push("checkTier2LoadDemand did not report OK against the current, already-fixed work-orders.routes.ts");
+
+  const regressedSnippet = `if (["repair", "tire", "accident"].includes(body.wo_type) && !body.load_id) {`;
+  if (!/\["repair", "tire", "accident"\]\.includes\(body\.wo_type\)/.test(regressedSnippet)) {
+    failures.push("selftest fixture invalid: regressedSnippet should match the regression-detection regex (proves checkTier2LoadDemand would FAIL if this pattern ever came back)");
+  }
+  const fixedGateSnippet = `if (["repair", "accident"].includes(body.wo_type) || (body.wo_type === "tire" && tireIsTier1Roadside)) {`;
+  if (!/body\.wo_type === "tire" && tireIsTier1Roadside/.test(fixedGateSnippet)) {
+    failures.push("selftest fixture invalid: fixedGateSnippet should match hasSourceTypeGate's detection regex (proves the guard recognizes the correct fix, not just the absence of the bug)");
+  }
 
   if (failures.length > 0) {
     console.error(`${LABEL} --selftest: FAIL`);
@@ -374,10 +390,16 @@ async function main() {
   // --- STATIC HALF ---
   for (const finding of checkTier2LoadDemand()) {
     infoLines.push(`[${finding.level}] ${finding.message}`);
+    if (finding.level === "FAIL") failures.push(finding.message);
   }
 
   if (args.includes("--static-only")) {
     for (const line of infoLines) console.log(line);
+    if (failures.length > 0) {
+      console.error(`${LABEL} --static-only: FAIL`);
+      for (const f of failures) console.error(`  - ${f}`);
+      process.exit(1);
+    }
     console.log(`${LABEL} --static-only: OK (registry drift + live value checks require DATABASE_URL; run without --static-only for the full check)`);
     process.exit(0);
   }
