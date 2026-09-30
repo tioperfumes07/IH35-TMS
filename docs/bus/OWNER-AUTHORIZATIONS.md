@@ -4314,7 +4314,28 @@ action:
   DATABASE_URL=<prod> npx tsx apps/backend/scripts/ops-r191-resync-driver-bill-settlement-pointer.ts --apply
   (script's own AUTH_ID constant updated from the AUTH-121 placeholder to AUTH-135 in this same PR)
 expires_at: 2026-10-01T00:00:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T01:47:00.000Z
+consumed_by: CC-1
+row_counts: 6 of 6 driver_bills rows updated (13609, 13610, 13612, 13614, 13617, 13619)
+proof_query: re-run live immediately after commit, USMCA, bypass_rls=lucia -- joined
+  mdata.loads.presettlement_link_id to driver_finance.driver_bills.settled_in_settlement_id for
+  all 6 loads: every row now matches exactly (13609/13614 -> ae0db193..., 13610/13619 ->
+  2983941f..., 13612/13617 -> 55306f73...). Script's own BEFORE/AFTER console output (this run)
+  also confirms: all 6 bill_updated=true, AFTER values match each load's presettlement_link_id
+  byte for byte. mdata.loads.presettlement_link_id itself untouched by this script (before ==
+  after on the canonical side).
+note: this run also surfaced (and worked around) two unrelated defects in
+  verify-owner-authorization.mjs's own AUTH-121-copied text -- both now fixed for future AUTHs:
+  (1) a heading with trailing text after "## AUTH-<N>" breaks the guard's block-extraction regex
+  (fixed in the AUTH-135 heading, PR #23185); (2) a status value of "OPEN -- not yet executed"
+  fails the guard's strict `status !== "OPEN"` check -- AUTH-121 itself carried this same defect
+  from day one, a second, independent reason (beyond the clock) it sat unexecuted (fixed for
+  AUTH-135, PR #23188). Also: running the ops script's own documented invocation ("run from
+  apps/backend/") breaks the guard's internal `git log -- docs/bus/OWNER-AUTHORIZATIONS.md` lookup,
+  since that path is repo-root-relative and git resolves it against the process cwd -- ran from
+  the repo root instead to work around it; the script's own header comment should be corrected in
+  a follow-up (not done here, out of scope for this AUTH).
 
 — CC-1
 
