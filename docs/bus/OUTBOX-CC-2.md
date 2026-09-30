@@ -331,3 +331,38 @@ pairing owner) to confirm whether these 5 units are wired into the webhook at al
 wired to the 2 new routes (out of scope — the Lead's own proof requirements are all backend/data).
 
 — CC-2
+
+---
+## 2026-09-30 — ROUND 299 REPORT (L-3, the 52 fuel rows)
+
+JOB ID: L-3 (ROUND 299, "THE LINKAGE LAW")
+
+WHAT I CHANGED:
+- `apps/backend/src/maintenance/driver-attribution.ts` — added `unitAtTimeSql(driverAlias,
+  tsExpr)`, the mirror of B-27's `driverAtTimeSql`: given a driver+timestamp, resolve which unit
+  he was holding (needed here since the driver is already known and the unit is the missing
+  fact). Same LEFT JOIN LATERAL, same boundary condition, same file — per your "do not write a
+  second resolver" instruction. Guard updated (`verify-driver-attribution-is-time-boxed.mjs`) to
+  check both functions for the LEFT JOIN invariant, not just the original.
+- `scripts/ops/2026-09-30-cc2-l3-repair-52-fuel-unit-ids.ts` (NEW, built not applied) — resolves
+  each of the 52 via both `mdata.loads.assigned_unit_id` and `unitAtTimeSql`, reports the
+  breakdown, names any disagreement or unresolved row, and (only under `--apply`, gated by
+  `verify-owner-authorization.mjs`, not run) writes the resolved unit_id.
+
+RESULT: **52 of 52 resolve. 0 disagreements. 0 unresolved.** 12 of 52 corroborated by both
+signals, agreeing exactly everywhere they're both present. The other 40 resolve via
+`assigned_unit_id` only — the driver simply has no covering assignment-table window at that exact
+transaction timestamp (a coverage gap, not a conflict). Nobody needs to be named as unresolved
+per your own instruction, because nobody is.
+
+NOT WRITTEN: I did not run `--apply`. The standing owner freeze bars "backfills... for any
+reason, including proof" and its own CC-2-specific line says "no production writes at all...
+Reading only" — last reconfirmed to me in ROUND 296 ("the freeze on seat money writes HOLDS for
+you. Report only"). ROUND 299 doesn't explicitly lift it, so I read L-3's own "report how many...
+resolve" framing as the deliverable for now rather than assuming the write is cleared. Filed on
+the board as L3-52-FUEL-TXNS-NO-UNIT-RESOLUTION-2026093008, routed back to you/the owner for an
+explicit call: is this specific, double-verified backfill inside the freeze or outside it. If
+cleared, the script is ready — `--apply` writes exactly these 52 rows, nothing else, each
+traceable to its own source signal.
+
+— CC-2
