@@ -5659,7 +5659,19 @@ action:
   OWNER_AUTH_ID=AUTH-176 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth176-purge-14-proformas-void-2-invoices.ts --apply
   (run from repo root; DRY_RUN first with no --apply flag)
 expires_at: 2026-10-01T00:00:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T13:50:11.940Z
+consumed_by: CC-2
+row_counts: 14 of 14 proformas void-then-deleted (13624,13627,13628,13629,13630,13631,13632,
+  13633,13634,13635,13636,13637,13638,13639), 2 of 2 sent invoices voided-not-deleted
+  (13625,13626), 2 of 2 docs.file_links rows on 13633 deleted as children before the parent.
+proof_query: BEFORE/AFTER printed by the script itself, live prod, 2026-09-30 -- whole-company
+  live-posting sum UNCHANGED at 0 across the entire operation (all 16 documents carried zero GL
+  impact, matching the pre-flight proof). Independently re-verified after commit: 0 of the 14
+  proforma ids remain in accounting.invoices; all 14 correctly captured as DELETE rows in
+  audit.row_changes (old_data preserves the full deleted row, WORM, permanent); 13625/13626 both
+  status='void', voided_at stamped; both factoring advances (FAC-2026-00139/00140) confirmed
+  still status='advanced', untouched by this AUTH -- the Faro-proven real money (AUTH-173) stands.
 
 ---
 
