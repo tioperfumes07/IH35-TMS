@@ -27,7 +27,7 @@ function selftest() {
 if (process.argv.includes("--selftest")) {
   selftest();
 } else if (!process.env.DATABASE_URL) {
-  console.log(`${LABEL} (live check): SKIP — no DATABASE_URL (selftest is sufficient offline).`);
+  throw new Error(`${LABEL}: DATABASE_URL required; --selftest is not live proof`);
 } else {
   const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   await client.connect();
@@ -42,7 +42,12 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
 
-    // Live behavioural check, fully rolled back — no data written.
+    // A rollback does not authorize fixtures in production. Behavioural writes
+    // require an isolated loopback database, never an operational entity.
+    const target = new URL(process.env.DATABASE_URL);
+    if (!['localhost', '127.0.0.1', '[::1]'].includes(target.hostname)) {
+      throw new Error(`${LABEL}: fixture execution requires an isolated loopback database; production writes refused`);
+    }
     await client.query("BEGIN");
     try {
       const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";

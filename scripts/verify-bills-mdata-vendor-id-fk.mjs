@@ -29,7 +29,7 @@ function selftest() {
 if (process.argv.includes("--selftest")) {
   selftest();
 } else if (!process.env.DATABASE_URL) {
-  console.log(`${LABEL} (live check): SKIP — no DATABASE_URL (selftest is sufficient offline).`);
+  throw new Error(`${LABEL}: DATABASE_URL required; --selftest is not live proof`);
 } else {
   const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   await client.connect();
