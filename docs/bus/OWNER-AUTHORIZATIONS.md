@@ -5703,3 +5703,30 @@ once the scope doc's two open questions are resolved and the Lead has reviewed t
 Lead's own order ("Execution after I see the scope").
 expires_at: 2026-10-01T11:15:00.000Z
 status: OPEN
+
+## AUTH-167
+issued_at: 2026-09-30T11:10:00.000Z
+note: my reserved block (CC-1 154-159) is fully consumed as of this entry; using the next global
+free number instead of stopping to ask, per the practical reality of concurrent numbering this
+session -- flagging so the Lead can extend the block if this pattern continues.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- A-02 (ROUND 293 NEXT-15-JOBS): close
+the G5 gap (driver_finance.driver_settlements closed=51 vs accounting.company_settlements
+closed=48). Root cause: 3 driver settlements (P-0015, P-0016, P-0017 -- all created 2026-09-28,
+covering loads 13609-13619, the DEFECT-ITEM-4/LOVES-reclass remediation population) are closed
+but were never linked into a company_settlements header at all -- the normal
+closeCompanySettlementAlongsideDriverSettlement call (which fires from the tour-close flow) never
+ran for these 3 because they were created via an ops-script remediation path. Confirmed live: for
+every OTHER driver-settlement<->company-settlement pair that IS linked via
+accounting.company_settlement_driver_settlements, the two statuses always agree (0 mismatches) --
+these 3 orphans are the entire gap. Per owner ruling R-200 (2026-09-25, cited in
+company-settlement-close.service.ts's own header): never link an orphan into an existing header by
+shared period dates (the merge the owner rejected) -- each driver settlement gets its OWN
+dedicated company_settlements header, by number. Fix: call the real, sanctioned
+closeCompanySettlementAlongsideDriverSettlement for each of the 3 (same call the normal tour-close
+path makes) -- creates each one's own header + junction link + closes it. NO NEW MONEY DATA (per
+that function's own "CANONICAL-CHECK" comment) -- a header row and a junction link only, no dollar
+amount, no GL posting, trial balance untouched.
+action: OWNER_AUTH_ID=AUTH-167 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth167-g5-close-3-orphan-company-settlements.ts
+  (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
+expires_at: 2026-10-01T11:10:00.000Z
+status: OPEN
