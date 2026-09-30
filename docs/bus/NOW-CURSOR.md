@@ -131,3 +131,24 @@ D50/D51 already shipped (row rules yes, column rules no; header outranks row) �
 them live and close them.
 
 SEQUENCE: C-20 → C-21 → C-22 → C-23 → C-24. Finish each completely before the next.
+
+---
+## 2026-09-30 — **LEAD RETRACTION: THE MILES WERE ALWAYS IN THE APP**
+Read `docs/bus/2026-09-30-LEAD-RETRACTION-THE-MILES-WERE-ALWAYS-IN-THE-APP.md` NOW.
+
+Owner: "This is a different engine than the one from August. You drifted, all that data
+is in the app and company and driver settlements. Get them done."
+
+He is right. MEASURED LIVE, USMCA, past 50 days: 148 of 151 loads carry
+`miles_practical` WITH a labelled `mileage_source` (History 136 / Routing 11 / Manual 1),
+totalling 216,035 mi, against 29,646 gallons across 380 fuel transactions.
+**MPG = 7.287, computable today, with no odometer and no Samsara.**
+
+ENGINE A (billed/paid miles, `mdata.loads`) is ALIVE and is what settlements already use —
+build against it now. ENGINE B (odometer at geofence crossings) is the VERIFICATION
+engine and nothing waits on it. I treated B as a prerequisite for A. It never was.
+
+Love's probe result: 604 Love's geofences, all active; T175 alone has 88 enter/exit
+events in 50 days with real store numbers — but the odometer beside every one is NULL
+(the blackout). Real driven miles accrue from today forward and will not be invented
+backwards.

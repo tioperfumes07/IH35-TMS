@@ -1136,6 +1136,9 @@ export function TruckLineBoard({
            the 70px rail and the short text cells on one baseline, so the row is exactly as tall as
            the rail and never taller. */
         .truck-line-v4-transit-header { text-align: center; }
+        /* The rail cell carries pr-7 so the Delivered caption is not clipped; the header mirrors it
+           so TRANSIT and CURRENT LOCATION land on the same x as the body beneath them. */
+        .truck-line-v4-transit-header > span:first-child { padding-right: 1.75rem; }
         /* CUSTOMER-UNDER-THE-THREE — the ROW (not the header) is a 2-row grid. Row 1 holds the five
            value cells; row 2 holds the customer name spanning UNIT+TOUR+LOAD. TRANSIT spans BOTH
            rows, so the 70px rail still sets the row height exactly as before and the two stacked
@@ -1353,8 +1356,20 @@ export function TruckLineBoard({
           <TruckLineSortHeader label="DELIVERY DATE" sortKey="del" active={sort?.key === "del" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-del-header" />
           {/* TRANSIT is not sortable — it renders station progress, not a value to order by. It
               still needs a real header cell so the sixth track is labelled and the grid's header
-              and body have the same number of children. */}
-          <div className="truck-line-v4-transit-header">TRANSIT · CURRENT LOCATION</div>
+              and body have the same number of children.
+
+              OWNER-LIVE 2026-09-30 ("change the location header to the correct column, it was next
+              to transit"): this was ONE centred cell reading "TRANSIT · CURRENT LOCATION" spanning
+              the whole sixth track. But the BODY of that track is two things —
+              [ rail, flex-1 ][ CURRENT LOCATION, fixed 168px, right ] — so the words CURRENT
+              LOCATION sat centred over the RAIL while the locations themselves rendered 168px to
+              the right, under nothing. The header now mirrors the body exactly: TRANSIT over the
+              rail, CURRENT LOCATION over the column that actually holds it. The w-[168px]
+              shrink-0 matches the body cell verbatim so the two can never drift apart. */}
+          <div className="truck-line-v4-transit-header flex items-center">
+            <span className="min-w-0 flex-1 text-center">TRANSIT</span>
+            <span className="w-[168px] shrink-0 text-left">CURRENT LOCATION</span>
+          </div>
         </div>
 
         {showLoading ? (

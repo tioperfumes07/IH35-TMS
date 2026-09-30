@@ -190,6 +190,50 @@ jobs:
           DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
         run: node scripts/verify-issued-invoice-on-rolling-load-needs-authorization.mjs
 
+      # ── ORPHANED MONEY GUARDS, WIRED (Lead, 2026-09-30) ──────────────────────────
+      # Six guards that existed, were correct, and enforced NOTHING -- neither package.json nor CI.
+      # An unwired guard is a fake green: the file is there, the team believes the property is
+      # protected, and nothing checks it. verify:guard-wired has been red over exactly this.
+      #
+      # They run HERE and not on the local pre-commit path because every one needs a real
+      # DATABASE_URL. In CI's empty database they would pass by finding nothing -- the precise fake
+      # green this sweep exists to remove -- and locally they would block every seat's commit for a
+      # reason no seat can fix. A guard that requires a live database belongs in the job that HAS one.
+      - name: verify:check-engine
+        env:
+          DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+        run: node scripts/verify-check-engine.mjs
+
+      - name: verify:check-register-gapless
+        env:
+          DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+        run: node scripts/verify-check-register-gapless.mjs
+
+      - name: verify:check-registry-has-expense-document
+        env:
+          DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+        run: node scripts/verify-check-registry-has-expense-document.mjs
+
+      - name: verify:dispatched-load-has-stop-stamps
+        env:
+          DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+        run: node scripts/verify-dispatched-load-has-stop-stamps.mjs
+
+      - name: verify:driver-escrow-counter-leg-is-clearing
+        env:
+          DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+        run: node scripts/verify-driver-escrow-counter-leg-is-clearing.mjs
+
+      - name: verify:ar-ties-to-qbo-invoice-list
+        env:
+          DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+        run: node scripts/verify-ar-ties-to-qbo-invoice-list.mjs
+
+      - name: verify:every-bill-posting-carries-its-source-link
+        env:
+          DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+        run: node scripts/verify-every-bill-posting-carries-its-source-link.mjs
+
       - name: Smoke PRODUCTION
         id: smoke
         continue-on-error: true
