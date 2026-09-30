@@ -259,9 +259,18 @@ function deriveLiveStation(row: TruckLineRow, v7ReachedIndex: number): LiveStati
   if (pos.stale) {
     return { v7Index: parkedFallback, rolling: false, signalLabel: "Stale" };
   }
-  const engineOn = typeof pos.engine_state === "string" && /on|running/i.test(pos.engine_state);
+  // TRUCKLINE-ANIM (Lead, 09-30-2026) — engine_state is a VETO, never a REQUIREMENT.
+  // Measured live on prod telematics.vehicle_locations: of the fresh pings, 231 carry
+  // engine_state='unknown' with 171 of those MOVING (up to 76.1 mph), against only 166
+  // reporting 'on'. Requiring a positive 'on' therefore rendered more than half the moving
+  // fleet as parked. Every 'idle'/'off' ping measured had speed_mph = 0.0, so those two
+  // values are safe to trust as a denial. Speed is the ground truth for motion; engine_state
+  // only overrides it when it explicitly contradicts motion.
+  // The column itself is fixed at ingest under 283.6 (CC-3) — this gate must stay correct
+  // regardless of what ingest stores, so it does not assume any particular vocabulary.
+  const engineDenies = typeof pos.engine_state === "string" && /^(idle|off)$/i.test(pos.engine_state.trim());
   const speed = pos.speed_mph ?? 0;
-  if (speed > 0 && engineOn) {
+  if (speed > 0 && !engineDenies) {
     return { v7Index: 3, rolling: true, signalLabel: "Live" };
   }
   const pickupCity = row.load?.pickup.city;
