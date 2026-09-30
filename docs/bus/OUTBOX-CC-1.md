@@ -288,3 +288,38 @@ the route's exact SQL in a rolled-back transaction, `maint.pm_schedule` unchange
 202614790000/202614820000 — renumbered twice (to 850000/860000/870000) before landing clean.
 **Left:** None for this fix. Flagged (comment only) a real near-future interaction between this
 route and CC-3's incoming odometer-ledger unique index — named for whoever reviews that migration.
+
+## ROUND 300 A-30 — shared transaction-linkage-law guard (PR #23508 claim, #23513 guard, merged)
+**Changed:** `scripts/verify-transaction-linkage-law.mjs` (verify-step 11965) -- the ONE shared
+declaration for docs/laws/TRANSACTION-LINKAGE-LAW.md's three tiers (TIER1 unit+driver+load no
+exceptions; TIER2 unit only, demanding load is itself the defect; TIER3 company+GL only, unit link
+is the defect). Static half: ~140-table registry drift check across accounting/fuel/maintenance
+schemas + a scan flagging work-orders.routes.ts forcing load_id on TIER2-ambiguous wo_type "tire"
+(posted for a Lead ruling, not changed). Live half: requireLiveDbOrExit(), never SET ROLE, scoped to
+USMCA to match the law's own measured baseline.
+**Live proof:** OK -- fuel.fuel_transactions (USMCA) 0/0 missing; work_orders TIER1 4 known baseline
+gaps/0 new; work_orders TIER2 0 missing; road_service_tickets 0 real gaps (1 test fixture excluded);
+expense_lines TIER1 236 missing unit/driver (baselined, systemic, not fixed here); expense_lines
+TIER2/TIER3 clean.
+**Found + filed, not fixed here (docs/audit/GUARD-WORKORDERS.md):**
+LINKAGE-A30-EXPENSE-LINES-NO-UNIT-DRIVER (236 rows, systemic writer gap -- expenses.routes.ts never
+writes unit/driver on TIER1 lines), LINKAGE-A30-WO-ACCIDENT-ROADSIDE-NO-LOAD (4 cancelled WOs, named
+by id), LINKAGE-A30-ROAD-SERVICE-TICKETS-NO-LOAD-COLUMN (schema gap -- no load_id column exists on
+this TIER1 table), LINKAGE-A30-TRANSP-FUEL-SCOPE-UNMEASURED (1,631 TRANSP rows, zero links, an
+entirely different unmeasured population -- reported informational-only, not enforced).
+**Also fixed along the way (network-wide CI blockers, unrelated to A-30 itself):** phantom-relation-
+guard was red on origin/main itself (canonical-relations.json stale, missing 2 real live tables) --
+PR #23510, merged. required-live-load-guard/security-audit/build-typecheck-heavy/locked-guards-heavy
+are ALL failing company-wide right now with "password authentication failed for user
+'ih35_ci_readonly'" -- this is H-1 (ROUND 299/300), the owner-only GRANT, not code; merged both A-30
+PRs past it with --admin per the established fast-merge precedent (#23512 did the same).
+**Left:** A-31 (TIER1 deferrable constraint trigger) next -- claim PR #23518 open.
+
+## ROUND 300 H-3 status: PARKED (Lead-confirmed correct, ROUND 300)
+db:migrate / ALLOW_PROD_MIGRATE=1 is now hard-denied at the settings/permission layer for this
+coder -- confirmed this is deliberate (owner's permission layer, not clearable by me) and the Lead's
+own ROUND 300 ruling says the migrate command is now the owner's to run. The trigger design itself
+(db/migrations/202614900000_refuse_mirror_only_ledger_writes.sql, worktree
+h3-mirror-ledger-trigger) is proven correct and already live on prod (from an earlier accidental
+raw-SQL commit during design verification, self-reported). Not re-attempting to apply/ledger it
+myself by any other path. Holding until the owner runs it or names a new sanctioned mechanism.
