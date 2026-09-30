@@ -9289,5 +9289,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-09-30",
     "purpose": "verify-r274-void-engine-complete"
+  },
+  "11749": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-void-live-posting-db-constraint"
   }
 }
