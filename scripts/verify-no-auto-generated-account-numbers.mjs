@@ -140,8 +140,8 @@ function runSelftest() {
 }
 
 async function measureLive(client) {
-  await client.query("BEGIN");
-  await client.query("SELECT set_config('app.bypass_rls','lucia',false)");
+  await client.query("BEGIN READ ONLY");
+  await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
 
   // Count accounts with auto-generated numbers (pattern: PARENTNUM-NNN)
   const autoRes = await client.query(
@@ -182,6 +182,12 @@ async function runFull() {
   }
 
   // Live check
+  if (process.argv.includes("--static")) {
+    for (const problem of staticProblems) console.error(problem);
+    console.log(`${LABEL}: STATIC ONLY; live count required in CI`);
+    process.exitCode = staticProblems.length ? 1 : 0;
+    return;
+  }
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   let live;
   try {

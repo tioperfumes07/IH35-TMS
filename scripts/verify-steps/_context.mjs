@@ -1,18 +1,22 @@
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { localDatabaseGuardArgs } from "../lib/local-db-guard-routing.mjs";
 
 export function createVerifyPrecommitContext(rootDir) {
   const VITEST_REPORT_PATH = path.join(rootDir, ".tmp-vitest-backend.json");
   const VERIFY_DB_URL = "postgres://verify:verify@localhost:54329/ih35_verify";
 
-  const spawn = (cmd, args, options = {}) =>
-    spawnSync(cmd, args, {
+  const spawn = (cmd, args, options = {}) => {
+    const localArgs = cmd === "node" ? localDatabaseGuardArgs(args) : args;
+    if (localArgs === null) return { status: 0 }; // X-16: CI owns the actual verdict.
+    return spawnSync(cmd, localArgs, {
       stdio: "inherit",
       cwd: rootDir,
       env: process.env,
       ...options,
     });
+  };
 
   const describeCommand = (cmd, args) => `${cmd} ${(args ?? []).join(" ")}`.trim();
 

@@ -34,6 +34,62 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
+  # X-16 runner contract: independent of frontend build and precommit fail-fast.
+  # X-01 source guards are now wired by main's verify-steps; do not duplicate them.
+  required-static-guards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Prove batch failure propagation
+        run: node --test scripts/lib/run-required-guards.test.mjs
+
+  # X-16: live-population assertions must never be proved on empty CI Postgres.
+  # Audited read-only check; fixture writers do NOT belong in this job.
+  required-live-load-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Live load creation outcomes (read-only USMCA)
+        env:
+          DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+          DATABASE_DIRECT_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+          PGOPTIONS: '-c default_transaction_read_only=on -c statement_timeout=30000'
+        run: |
+          node scripts/lib/run-required-guards.mjs \
+            scripts/verify-one-load-create-path.mjs \
+            scripts/verify-load-costs-wizard-amounts.mjs \
+            scripts/verify-g2-extra-pay-requires-item.mjs \
+            scripts/verify-telematics-feed-is-live.mjs \
+            scripts/verify-workflow-requests-entity-scoped.mjs \
+            scripts/verify-no-auto-generated-account-numbers.mjs \
+            scripts/verify-driver-samsara-map-one-to-many.mjs \
+            scripts/verify-load-status-has-audit-event.mjs \
+            scripts/verify-void-stamp-columns.mjs \
+            scripts/verify-invoice-factor-profile-linkage.mjs \
+            scripts/verify-no-double-reversed-fuel-postings.mjs \
+            scripts/verify-voided-loads-hold-no-real-number.mjs \
+            scripts/verify-void-stamps-the-spec-liveness-column.mjs \
+            scripts/verify-reversed-jes-carry-header-linkage.mjs \
+            scripts/verify-cancelled-load-leaves-no-live-money.mjs \
+            scripts/verify-void-cascades-to-every-child.mjs \
+            scripts/verify-control-totals.mjs \
+            scripts/verify-alwaystrack-parity.mjs \
+            scripts/verify-settlement-net-equals-document.mjs \
+            scripts/verify-diesel-expense-fuel-dedupe.mjs \
+            scripts/verify-fuel-relay-txn-vendor-unmatched.mjs
+
   verify-branch-fresh:
     # Base-DEPENDENT gate: it asserts the PR base is 0 commits behind origin/main.
     # That question is only meaningful for a PR that merges INTO main. On a stacked
@@ -1473,7 +1529,7 @@ jobs:
   # Code PRs: heavy must be success or this fails.
   build-typecheck:
     name: build-typecheck
-    needs: [detect-scope, build-typecheck-heavy]
+    needs: [detect-scope, build-typecheck-heavy, required-static-guards, required-live-load-guard]
     if: always() && needs.detect-scope.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -1482,6 +1538,16 @@ jobs:
         run: |
           DOC="${{ needs.detect-scope.outputs.doc_only }}"
           HEAVY="${{ needs.build-typecheck-heavy.result }}"
+          LIVE="${{ needs.required-live-load-guard.result }}"
+          if [ "$LIVE" != "success" ]; then
+            echo "Required live load guard did not succeed: $LIVE"
+            exit 1
+          fi
+          STATIC="${{ needs.required-static-guards.result }}"
+          if [ "$STATIC" != "success" ]; then
+            echo "Required static guards did not succeed: $STATIC"
+            exit 1
+          fi
           echo "doc_only=$DOC heavy=$HEAVY"
           if [ "$DOC" = "true" ]; then
             echo "DOC-ONLY — heavy matrix suspended (owner 2026-08-31). Required check green."
@@ -1493,4 +1559,3 @@ jobs:
           fi
           echo "Heavy matrix did not succeed: $HEAVY"
           exit 1
-

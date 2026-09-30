@@ -68,7 +68,7 @@ async function main() {
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();
   try {
-    await client.query("BEGIN");
+    await client.query("BEGIN READ ONLY");
     await client.query("RESET ROLE");
     await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
 

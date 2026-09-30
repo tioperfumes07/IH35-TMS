@@ -39,6 +39,11 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
+if (process.argv.includes("--static")) {
+  console.log(`${LABEL}: NO STATIC ASSERTION — live audit check required in CI, not measured locally`);
+  process.exit(0);
+}
+
 function loadBaseline() {
   try {
     const data = JSON.parse(fs.readFileSync(BASELINE_FILE, "utf8"));
@@ -53,7 +58,7 @@ async function main() {
   const failures = [];
   let liveLoadNumbers = [];
   try {
-    await client.query("BEGIN");
+    await client.query("BEGIN READ ONLY");
     await client.query("SET LOCAL app.bypass_rls = 'lucia'");
     const res = await client.query(
       `
@@ -61,6 +66,7 @@ async function main() {
         SELECT DISTINCT ON (source_reference_id) source_reference_id, event_type, occurred_at
           FROM events.event_log
          WHERE source_table = 'mdata.loads'
+           AND source_reference_id IN (SELECT id FROM mdata.loads WHERE operating_company_id=$1::uuid)
            AND event_type IN ('load.created', 'load.status_changed', 'load.cancelled', 'load.cancellation_approved')
          ORDER BY source_reference_id, occurred_at DESC
       )

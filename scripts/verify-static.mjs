@@ -39,6 +39,7 @@ import {
 } from "./push-gate-capability-policy.mjs";
 import { extraFailsNotInBaseline, loadHeadBaseline } from "./verify-static-ratchet.mjs";
 import { ensureFreshGateStepMap } from "./generate-gate-step-map.mjs";
+import { CI_DATABASE_GUARDS } from "./lib/local-db-guard-routing.mjs";
 
 const SELF_PATH = fileURLToPath(import.meta.url);
 const SELF_NAME = path.basename(SELF_PATH);
@@ -211,6 +212,17 @@ const REQUIRES_LIVE_DB_RE = /export\s+const\s+REQUIRES_LIVE_DB\s*=\s*["'`]([^"'`
 
 /** Classify a single guard file. Pure w.r.t. the filesystem read of the guard's own source. */
 export function classify(file, options = {}) {
+  const rel = path.relative(ROOT, path.resolve(file));
+  if (Object.hasOwn(CI_DATABASE_GUARDS, rel)) {
+    const mode = CI_DATABASE_GUARDS[rel];
+    const result = mode ? runGuard(file, [mode]) : null;
+    return {
+      file, name: path.basename(file),
+      kind: result && result.status !== 0 ? STATIC_RESULT_CATEGORIES.FAIL_TEST : STATIC_RESULT_CATEGORIES.SKIP_CAPABILITY,
+      detail: result && result.status !== 0 ? firstSignalLine(result.out)
+        : `database → ci / required-live-load-guard; ${mode ? `${mode} assertion executed` : 'no static assertion'}; NOT live proof`,
+    };
+  }
   const src = (() => { try { return fs.readFileSync(file, "utf8"); } catch { return ""; } })();
   const requiresLiveDb = src.match(REQUIRES_LIVE_DB_RE);
   if (requiresLiveDb) {

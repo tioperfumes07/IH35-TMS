@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["invoices","factoring"],"cols":["connectivity"],"leafRe":"factor_profile_id","task":"invoice-factor-profile-linkage"} */
 // ROUND 124 T4 — guard for accounting.invoices.factor_profile_id (FK -> factoring.factor(id)).
 //
 // ROOT CAUSE (fixed this round): apps/backend/src/factoring/auto-submit-on-delivery.service.ts and
@@ -36,14 +37,17 @@ const KNOWN_PRE_FIX_UNRESOLVED = new Set([
 async function main() {
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
-    await client.query(`SET app.bypass_rls = 'lucia'`);
+    await client.query("BEGIN READ ONLY");
+    await client.query(`SET LOCAL app.bypass_rls = 'lucia'`);
     const res = await client.query(`
       SELECT id::text, operating_company_id::text, factoring_status
       FROM accounting.invoices
       WHERE factoring_status IN ('submitted', 'advanced')
+        AND operating_company_id = '5c854333-6ea5-4faa-af31-67cb272fef80'
         AND factor_profile_id IS NULL
     `);
 
+    await client.query("ROLLBACK");
     const unexpected = res.rows.filter((r) => !KNOWN_PRE_FIX_UNRESOLVED.has(r.id));
 
     if (unexpected.length > 0) {

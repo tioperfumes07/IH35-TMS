@@ -5,8 +5,8 @@
  * Static: both surfaces + shared SQL pivot. Live (when DATABASE_URL): open_dispatch count matches
  * charge-line pivot for USMCA; every open load with rate_total > 0 has a linehaul charge.
  */
-export const ALLOW_OFFLINE_SKIP =
-  "static contract on FE/BE source; live open_dispatch↔linehaul check arms when DATABASE_URL is set";
+export const REQUIRES_LIVE_DB =
+  "default mode checks live USMCA open_dispatch wizard charges in required CI; --static preserves local source assertions";
 
 import fs from "node:fs";
 import path from "node:path";
@@ -75,15 +75,13 @@ function staticCheck() {
 
 async function liveCheck() {
   if (!process.env.DATABASE_URL) {
-    console.log(`${LABEL}: SKIP live — no DATABASE_URL`);
-    return;
+    throw new Error(`${LABEL}: DATABASE_URL required for live mode; use --static for source assertions`);
   }
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();
   try {
-    await client.query("BEGIN");
-    await client.query("SET LOCAL ROLE neondb_owner").catch(() => {});
-    await client.query("SET LOCAL app.bypass_rls = 'lucia'").catch(() => {});
+    await client.query("BEGIN READ ONLY");
+    await client.query("SET LOCAL app.bypass_rls = 'lucia'");
     const loads = await client.query(
       `SELECT l.load_number, l.id, l.rate_total_cents
          FROM mdata.loads l
@@ -150,5 +148,5 @@ if (staticErrors.length) {
   console.error(`${LABEL}: FAIL — ${staticErrors.join("; ")}`);
   process.exit(1);
 }
-await liveCheck();
+if (!process.argv.includes('--static')) await liveCheck();
 console.log(`${LABEL}: PASS — wizard amounts wired on board + dispatch panel + shared pivot`);

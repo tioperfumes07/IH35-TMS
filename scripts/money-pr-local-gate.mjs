@@ -24,6 +24,8 @@ import { ensureFreshGateStepMap } from "./generate-gate-step-map.mjs";
 import { guardIsInScope } from "./verify-static.mjs";
 import { EMPTY_BY_PURGE_EXIT, PURGE_WINDOW_GUARDS, purgeWindow } from "./lib/purge-window.mjs";
 import { dataWritePathDiffActuallyWrites, dataWritePathFileActuallyWrites } from "./lib/data-write-path-detection.mjs";
+import { localDatabaseGuardArgs, requiresLocalDatabase } from "./lib/local-db-guard-routing.mjs";
+import { reportedSkip, formatLocalOutcomes } from "./lib/run-required-guards.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "money-pr-local-gate";
@@ -1082,7 +1084,16 @@ function resolveGuardDatabaseUrl() {
   return cachedReadonlyDbUrl ?? process.env.DATABASE_URL;
 }
 
+const localOutcomes = { passed: 0, failed: 0, skipped: 0 };
+const skippedLiveChecks = [];
+process.once('exit', code => console.log(formatLocalOutcomes(LABEL, localOutcomes, skippedLiveChecks.length, code)));
+
 function runNode(rel, extraEnv = {}, args = []) {
+  const localArgs = localDatabaseGuardArgs([rel, ...args]);
+  const routed = localArgs === null || localArgs.length !== args.length + 1;
+  if (routed) localOutcomes.skipped++; // Database phase is deferred, even if its static phase passes.
+  if (localArgs === null) return 0; // X-16: required CI execution, no local/live verdict.
+  args = localArgs.slice(1);
   const script = path.join(ROOT, rel);
   console.log(`[${LABEL}] RUN ${rel}${args.length ? ` ${args.join(" ")}` : ""}`);
   const env = { ...process.env, ...extraEnv };
@@ -1098,6 +1109,11 @@ function runNode(rel, extraEnv = {}, args = []) {
   });
   const out = `${res.stdout ?? ""}${res.stderr ?? ""}`.trim();
   if (out) console.log(out);
+  if (res.error || res.signal || res.status !== 0) localOutcomes.failed++;
+  else if (reportedSkip(out)) {
+    if (!routed) localOutcomes.skipped++;
+  }
+  else localOutcomes.passed++;
   return res.status ?? 1;
 }
 
@@ -1191,7 +1207,6 @@ for (const [name, rel, extraEnv] of GUARD_303) {
 // green, exactly what Rule 30 already forbids in words. Every skip anywhere in this file — 03c
 // below, and any future conditional live check — pushes here so the final line can never silently
 // omit it.
-const skippedLiveChecks = [];
 
 // Purge window (Lead ruling 2026-09-23, docs/bus/09-23-2026-LEAD-RULING-CURSOR-PURGE-WINDOW-GUARD-STATE.md):
 // a live guard may exit EMPTY_BY_PURGE_EXIT only if it is one of PURGE_WINDOW_GUARDS and the window in
@@ -1220,7 +1235,7 @@ function acceptedAsEmptyByPurge(rel, code) {
 
 // 03c — control totals against LIVE production.
 if (touchesMoneyPath()) {
-  if (!process.env.DATABASE_URL) {
+  if (!process.env.DATABASE_URL && requiresLocalDatabase("scripts/verify-control-totals.mjs")) {
     console.error(
       `\n${LABEL}: FAIL — scripts/verify-control-totals.mjs (03c) — this diff touches a money path ` +
         `but DATABASE_URL is not set. A touched live-domain guard with no DB is a FAIL, never a skip (ROUND 29.9-B).\n`,
@@ -1241,7 +1256,7 @@ if (touchesMoneyPath()) {
 // ROUND 23.3 SUPPLEMENT (owner/Lead, 2026-09-13) — the master AlwaysTrack parity guard, proves the
 // WHOLE ingest chain against prod.
 if (touchesMoneyPath()) {
-  if (!process.env.DATABASE_URL) {
+  if (!process.env.DATABASE_URL && requiresLocalDatabase("scripts/verify-alwaystrack-parity.mjs")) {
     console.error(
       `\n${LABEL}: FAIL — scripts/verify-alwaystrack-parity.mjs — this diff touches a money path but ` +
         `DATABASE_URL is not set. A touched live-domain guard with no DB is a FAIL, never a skip (ROUND 29.9-B).\n`,
@@ -1263,7 +1278,7 @@ if (touchesMoneyPath()) {
 // own TOTAL DUE (the same runtime check closeSettlementPayRun now runs at close time). Mirrors
 // verify-control-totals/verify-alwaystrack-parity's own touchesMoneyPath()-gated live pattern.
 if (touchesMoneyPath()) {
-  if (!process.env.DATABASE_URL) {
+  if (!process.env.DATABASE_URL && requiresLocalDatabase("scripts/verify-settlement-net-equals-document.mjs")) {
     console.error(
       `\n${LABEL}: FAIL — scripts/verify-settlement-net-equals-document.mjs — this diff touches a ` +
         `money path but DATABASE_URL is not set. A touched live-domain guard with no DB is a FAIL, never a skip (ROUND 29.9-B).\n`,
@@ -1296,7 +1311,7 @@ function touchesFuelOrExpensePath() {
   return files.some((f) => FUEL_EXPENSE_RE.test(f));
 }
 if (touchesFuelOrExpensePath()) {
-  if (!process.env.DATABASE_URL) {
+  if (!process.env.DATABASE_URL && requiresLocalDatabase("scripts/verify-diesel-expense-fuel-dedupe.mjs")) {
     console.error(
       `\n${LABEL}: FAIL — scripts/verify-diesel-expense-fuel-dedupe.mjs — this diff touches its ` +
         `fuel/accounting/migration domain but DATABASE_URL is not set. A touched live-domain guard ` +
@@ -1319,7 +1334,7 @@ if (touchesFuelOrExpensePath()) {
 // fuel.fuel_transactions rows still carrying the raw Relay bridge token (transaction_reference LIKE
 // 'txn_%') instead of a real, vendor-matched reference.
 if (touchesMoneyPath()) {
-  if (!process.env.DATABASE_URL) {
+  if (!process.env.DATABASE_URL && requiresLocalDatabase("scripts/verify-fuel-relay-txn-vendor-unmatched.mjs")) {
     console.error(
       `\n${LABEL}: FAIL — scripts/verify-fuel-relay-txn-vendor-unmatched.mjs — this diff touches a ` +
         `money path but DATABASE_URL is not set. A touched live-domain guard with no DB is a FAIL, ` +
@@ -1408,7 +1423,7 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
       return false;
     });
   if (touched) {
-    if (!process.env.DATABASE_URL) {
+    if (!process.env.DATABASE_URL && requiresLocalDatabase(rel)) {
       console.error(
         `\n${LABEL}: FAIL — ${rel} — this diff touches its domain but DATABASE_URL is not set. ` +
           `A touched live-domain guard with no DB is a FAIL, never a skip (ROUND 29.9-B).\n`,
@@ -1507,7 +1522,7 @@ if (e7Batch2Skipped.length > 0) {
     `${e7Batch2Skipped.length} E7 batch-2 live guard(s) — none of their owned paths in this diff ` +
     `(alwaysRun ones need a DATABASE_URL): ${e7Batch2Skipped.join(", ")}`;
   console.log(`[${LABEL}] SKIP ${msg}`);
-  skippedLiveChecks.push(msg);
+  skippedLiveChecks.push(...e7Batch2Skipped.map(file => `${file} — no owned paths in diff`));
 }
 
 if (purgeSkips.length > 0) {
@@ -1516,7 +1531,7 @@ if (purgeSkips.length > 0) {
     `${purgeSkips.length} GUARDS SKIPPED — EMPTY BY PURGE, verified ${w.verifiedAt}, expires ${w.expiresAt}: ` +
     purgeSkips.join(", ");
   console.log(`[${LABEL}] ${msg}`);
-  skippedLiveChecks.push(msg);
+  skippedLiveChecks.push(...purgeSkips);
 }
 
 function changedFileCountVsMain() {

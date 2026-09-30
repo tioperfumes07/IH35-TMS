@@ -61,6 +61,8 @@ money is right, the line is silent. Plus the engine fix that stops the populatio
 A seat that finds an August or September population **files it here and keeps building.** It does
 not investigate it, does not re-measure it, does not route it, and does not ask the owner about it.
 
+CODEX | 2026-09-30 7:06 AM CT | X-16 source-only scope notice: the pending live-guard routing includes guards with unbounded transaction queries, including G2 extra-pay, invoice-factor linkage, control totals and settlement-document totals. Those queries could re-measure these closed periods. None was executed against production by this X-16 work. No new transaction counts or findings are asserted; the rulings above stand. Production execution of those unbounded queries is not authorized by CI routing. Continuing runner counting and synthetic tests without re-opening these populations.
+
 If the answer is in this file, **the answer is the line in this file** — not a new investigation.
 
 ## CLOSE-ENGINE DEFECT FOUND WHILE RULING THIS (CC-1, not fixed, filed)

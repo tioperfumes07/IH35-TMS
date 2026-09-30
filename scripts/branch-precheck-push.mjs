@@ -229,10 +229,15 @@ export function freshnessVerdict({ behind, mainFiles, branchFiles, unionPatterns
   };
 }
 
-function runStep(command, label, root, env = process.env) {
+export function runStep(command, label, root, env = process.env) {
   console.log(`[branch:precheck-push] RUN ${label}: ${command}`);
   const res = spawnSync(command, { cwd: root, shell: true, encoding: "utf8", env });
   const merged = `${res.stdout ?? ""}\n${res.stderr ?? ""}`.trim();
+  // X-16: successful child output used to hide the gate's deferred-check counts.
+  // Always surface its measured outcomes, even when the child exits zero.
+  for (const line of merged.split("\n")) {
+    if (line.includes("LOCAL PHASE OUTCOMES") || line.startsWith("Required guards:")) console.log(line);
+  }
   if (res.status === 0) return { ok: true, category: GATE_RESULT_CATEGORIES.PASS };
   return {
     ok: false,
