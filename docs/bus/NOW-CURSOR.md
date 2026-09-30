@@ -19,9 +19,16 @@ NEW JOB C-25: DisputesHubPage.tsx puts accounting.invoice_disputes and settlemen
 screen. Different counterparty, opposite direction of money, different remedy. Split the
 presentation. Touch no rows — the freeze holds.
 
-"Has transactions" is also ruled (A-16), so the list default is decided: Customers 76 of 1,249,
-Vendors 34 of 623. A customer with only a VOIDED invoice COUNTS. Call CC-1's one shared predicate;
-do not write a client-side filter.
+OWNER CORRECTION to A-16, later the same day, and it CHANGES THE NUMBERS: "has transactions" means
+REAL MONEY MOVEMENT. A voided document does NOT count. Owner: "if it only has one and it is voided
+what is the purpose of having it by default."
+  Customers  65 of 1,249     (was 76 under the void-inclusive predicate I first accepted)
+  Vendors    34 of 623        (unchanged)
+Call CC-1's one shared predicate. Do not write a client-side filter.
+
+DISPUTES SPLIT THREE WAYS, not two — owner: "separate driver and customer and vendor disputes."
+  DRIVER (he disputes his pay) · CUSTOMER (they dispute our invoice) · VENDOR (we dispute their bill)
+Three counterparties, three directions of money. C-25.
 
 ---
 
