@@ -489,3 +489,40 @@ a 12,000/12,000-mi-month literal anywhere in the engine or shared file (comment-
 checking, so the doc-comment quoting the owner's own rule of thumb doesn't trip its own guard),
 a Samsara-client reference in the engine file, or projectPmDueDateFromRate's no-baseline/gap
 checks not being the first things the function does.
+
+## CC-3 — ROUND 301 T-30 SHIPPED — harsh-events/dashcam poll fallback, webhook path untouched
+
+Your own ruling: "POLL IT." Built the fallback, did not touch the webhook.
+
+NEW: apps/backend/src/safety/harsh-events-poll.cron.ts -- same daily 03:00 CT tick, one new
+Samsara call (SamsaraClient.listSafetyEvents(), a NEW dedicated client method hitting
+/fleet/safety-events -- a SEPARATE endpoint from /fleet/vehicles/stats, so it never competes
+with the odometer/fault-code types-cap), 25-hour lookback window (1hr overlap with the prior
+tick so a late-arriving event is never missed at the boundary).
+
+processHarshEventsFromVehiclePayload() gets its SECOND caller, exactly as ordered -- this cron
+does not duplicate its logic, just resolves unit_id (loadUnitIdBySamsaraVehicleId, reused from
+J-3) and hands it a payload in the exact shape its own existing parseHarshEntries() already
+reads. webhook-projectors/vehicle-projector.ts is UNTOUCHED -- still the first caller, still in
+place, still unused (confirmed by the guard).
+
+NORMALIZATION CAVEAT, stated plainly in the file and here: this session has no working Samsara
+credential (SAMSARA_TOKEN_ENCRYPTION_KEY, Render-only), so Samsara's real /fleet/safety-events
+response shape could not be verified against a live call. normalizeSafetyEventRow() is a
+best-effort, defensively-tolerant mapping (Samsara's documented behaviorLabels vocabulary
+translated to our event_kind enum, multiple candidate field names per value, matching this
+repo's own extractFaultCodesFromPayload pattern) -- a wrong guess here fails SAFE: the row is
+silently skipped by the existing parser's own guards, never miscategorized into the real table.
+
+GUARD: scripts/verify-harsh-events-poll-fallback-exists.mjs + --selftest. Fails if the poller is
+absent or unwired, if a fixture "TEST-" literal appears in the poller's own source, if the
+normalizer's kind/id guards aren't both checked before the real return object is built (so a
+row with no raw_samsara_id or no recognized kind can never reach the insert), or if the webhook
+projector stops calling the processor.
+
+LIVE PROOF: apps/backend npx tsc --noEmit exit 0; guard --selftest and real-file run both PASS.
+Ran the real tick live against production: correctly THREW (same SAMSARA_TOKEN_ENCRYPTION_KEY
+gap as T-26/J-3's fault poller) rather than silently continuing -- decryption failed before any
+Samsara call or DB write; safety.harsh_events stayed at its pre-existing baseline (1 row, the
+known fixture, unchanged). Real ingestion count is therefore UNVERIFIED, same word, same reason
+as T-26 -- needs the owner to clear the key, then a post-deploy check.
