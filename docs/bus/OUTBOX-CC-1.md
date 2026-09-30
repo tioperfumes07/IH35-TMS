@@ -323,3 +323,53 @@ own ROUND 300 ruling says the migrate command is now the owner's to run. The tri
 h3-mirror-ledger-trigger) is proven correct and already live on prod (from an earlier accidental
 raw-SQL commit during design verification, self-reported). Not re-attempting to apply/ledger it
 myself by any other path. Holding until the owner runs it or names a new sanctioned mechanism.
+
+## ROUND 300 A-31 — TIER1 deferrable constraint trigger (PR #23518 claim, #23527 migration, merged)
+**Changed:** db/migrations/202614980000_tier1_linkage_unit_driver_constraint.sql -- one shared
+function, three CONSTRAINT TRIGGERs (fuel.fuel_transactions, accounting.expense_lines,
+maintenance.work_orders), AFTER INSERT, DEFERRABLE INITIALLY DEFERRED, going-forward only. Enforces
+unit_id+driver_id on fuel_transactions/expense_lines (G18's existing trigger already enforces
+load_id there); enforces unit_id+driver_id+load_id on work_orders. TIER2/TIER3 untouched.
+**Live proof:** design proven 8/8 in a rolled-back transaction (full breakdown in the PR/commit).
+
+## ROUND 300 A-32 — bind 3 unbound USMCA cash GL accounts (PR #23528 claim, #23531 migration)
+**Changed:** db/migrations/202615000000_bind_usmca_cash_gl_accounts.sql -- Faro Cash Reserve binds
+to its existing GL account; Faro Escrow Reserve and Petty Cash get 2 new GL accounts (1236, 1005,
+no existing match found), per the owner's standing USMCA-create-missing-accounts authorization.
+**Caught, not shipped:** a first draft had a one-character-off GL account id -- the live trigger
+`banking.assert_cash_gl_account_postable()` correctly refused it before merge, not after.
+**Live proof:** idempotent across 3 runs; posting-path proof (synthetic rolled-back
+bank_transactions row per account) shows all 3 now resolve a postable ledger account through the
+exact join bank-feed-gl-posting.service.ts uses.
+
+## Also fixed along the way: ACCT-F180 telematics.odometer_readings UPDATE grant (PR #23526/#23530)
+verify-schema-usage-grants.mjs (required CI, company-wide blocker) was red on origin/main itself --
+no migration grants UPDATE on telematics.odometer_readings to ih35_app, needed for the
+INSERT...ON CONFLICT DO UPDATE in odometer-manual.routes.ts. Same failure class as the pre-existing
+202612360000_idempotency_keys_update_grant.sql. Rebuild-path gap, not a live-500 (ih35_app already
+holds the grant on prod via a non-migration path).
+
+## ROUND 300 A-33 — MEASURED, reporting before code per the order
+Live, br-fancy-credit-akjnd07a, USMCA, 2026-09-30, bypass_rls=lucia:
+- **Vendors:** 622 of 622 (100%) carry `vendor_type`.
+- **Customers:** 21 of 1,238 (1.7%) carry `customer_type`. `customer_type_id` is 0 of 1,238 --
+  entirely unused, likely dead/vestigial.
+- **Expense lines reaching their account by TYPE vs BY HAND:** of 557 live USMCA
+  `accounting.expense_lines` rows, 68 (12%) have a category AND an `expense_account_uuid` that
+  exactly matches `accounting.expense_category_account_map`'s entry for that category (type-driven,
+  or at least consistent with it) -- 0 of those 68 deviate from the map (no hand-override-after-
+  categorization found). The other 489 (88%) have **no `expense_category_uuid` at all** -- these
+  were categorized purely by hand, with no type in the loop whatsoever. The category->account map
+  itself is well-populated (34 active entries covering fuel/maintenance/lumper/toll/office/permit/
+  insurance/revenue/driver_pay/escrow/factoring_fee/cash_advance kinds) -- the gap is entirely on
+  the WRITE side: most expense-creation flows never set `expense_category_uuid` at all, so the map
+  never gets consulted.
+**The decision point before I build the wiring A-33 asks for:** customer typing at 1.7% is far too
+sparse to wire "customer type + charge -> revenue account" against today -- that wiring would
+resolve for 21 customers and HOLD (correctly, per the order's own "never suspense, never guessed"
+rule) for the other 1,217. Before I build that half, I want a ruling: is customer-type backfill (a
+separate, sizable data-entry/classification effort) in scope for A-33, or does A-33's customer-type
+half wait until that backfill lands elsewhere? Vendor-type wiring (622/622 typed) and unit-capital-
+spend wiring have no equivalent blocker and I'm proceeding on those.
+**Not fixed here:** the 489-of-557 hand-categorized expense lines are not backfilled/rewired in this
+report -- that is the build A-33 asks for next, scoped to what's actually typed.
