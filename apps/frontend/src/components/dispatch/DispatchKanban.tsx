@@ -325,6 +325,38 @@ export function resolveKanbanColumnKey(load: DispatchLoadRow): string {
 // competing Kanban card). A unit whose only loads are all cancelled still shows its (cancelled)
 // card rather than vanishing. Loads with no assigned_unit_id never compete against each other.
 const KANBAN_TERMINAL_CANCELLED_STATUSES = new Set(["cancelled", "abandoned", "driver_walkoff", "driver_no_show"]);
+
+// KANBAN-HIDES-A-REAL-LEG (Lead, 09-30-2026, owner live: "there are 16 dispatched ... now I still
+// only see 11").
+//
+// REG-048 above fixed a REAL defect and its intent is kept intact: a unit whose OLD
+// delivered_pending_docs load still sits open must not render a second competing card next to its
+// CURRENT one. But the rule it used to do that was "one card per unit, newest wins," and that is
+// broader than the defect. It also collapses two loads that are BOTH live dispatch work — which is
+// exactly what a round trip is on this fleet: a northbound leg and its southbound return, both
+// dispatched, both on the same truck, both needing a dispatcher.
+//
+// MEASURED LIVE on prod 2026-09-30: 14 loads in status 'dispatched' across 12 units. Two units run
+// two legs each — T152 (13633, 13634) and T176 (13637, 13638). The backend returned both legs; this
+// function threw one away per unit, so 13637 never reached the screen. A dispatched load that is
+// nowhere on the dispatch board is the same class of defect as the settled-pointer bug fixed in the
+// backend predicate today: work that exists and cannot be seen.
+//
+// THE CORRECTED RULE — separate the two cases REG-048 conflated:
+//   * BACKLOG loads (delivered and past — money/paperwork tail) yield to live work on the same unit.
+//     That is REG-048's actual defect and it stays fixed.
+//   * Two or more LIVE loads on one unit are both real legs. Render both. The board is a dispatch
+//     board; a leg the dispatcher must act on is never collapsed to make the grid tidier.
+// A unit with only backlog loads still shows its newest one rather than vanishing, and a unit with
+// only cancelled loads still shows its cancelled card, both exactly as before.
+const KANBAN_BACKLOG_STATUSES = new Set([
+  "delivered",
+  "delivered_pending_docs",
+  "completed_docs_received",
+  "invoiced",
+  "paid",
+  "closed",
+]);
 function dedupeLoadsByUnit(loads: DispatchLoadRow[]): DispatchLoadRow[] {
   const byUnit = new Map<string, DispatchLoadRow[]>();
   const unassigned: DispatchLoadRow[] = [];
@@ -337,18 +369,23 @@ function dedupeLoadsByUnit(loads: DispatchLoadRow[]): DispatchLoadRow[] {
     list.push(load);
     byUnit.set(load.assigned_unit_id, list);
   }
+  const newestFirst = (a: DispatchLoadRow, b: DispatchLoadRow) =>
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   const current: DispatchLoadRow[] = [...unassigned];
   for (const list of byUnit.values()) {
     if (list.length === 1) {
       current.push(list[0]!);
       continue;
     }
-    const active = list.filter((load) => !KANBAN_TERMINAL_CANCELLED_STATUSES.has(String(load.status)));
-    const pool = active.length > 0 ? active : list;
-    const winner = pool.reduce((latest, load) =>
-      new Date(load.created_at).getTime() > new Date(latest.created_at).getTime() ? load : latest
-    );
-    current.push(winner);
+    const notCancelled = list.filter((load) => !KANBAN_TERMINAL_CANCELLED_STATUSES.has(String(load.status)));
+    const pool = notCancelled.length > 0 ? notCancelled : list;
+    // Every leg still in live dispatch work renders. Only the delivered-and-past tail yields.
+    const live = pool.filter((load) => !KANBAN_BACKLOG_STATUSES.has(String(load.status)));
+    if (live.length > 0) {
+      current.push(...[...live].sort(newestFirst));
+      continue;
+    }
+    current.push([...pool].sort(newestFirst)[0]!);
   }
   return current;
 }
