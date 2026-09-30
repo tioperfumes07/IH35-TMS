@@ -104,14 +104,56 @@ export function assertOrph03(root = ROOT) {
     if (!/join\s+accounting\.escrow_postings\s+ep/i.test(src)) {
       problems.push(`${rel}: detail-timeline query must JOIN accounting.escrow_postings (ACCT-F5703 canonical source)`);
     }
+    // ACCT-GUARD-F7301 (Lead, 2026-09-30): the check above is satisfied by ANY ONE of this file's
+    // THREE `JOIN accounting.escrow_postings ep` queries, so flipping a single one back to the
+    // retired source passed this guard unnoticed — which is exactly what happened: line 165 shipped
+    // as `JOIN accounting.escrow_ledger ep` and only the phantom-relation guard caught it, after the
+    // register had already 500'd. accounting.escrow_ledger does not exist at all: escrow_ledger
+    // lives in driver_finance (verified live 2026-09-30 on br-fancy-credit-akjnd07a). Assert the
+    // absence, so reverting ANY of the three joins is caught here, at its own guard.
+    if (/accounting\.escrow_ledger/i.test(src)) {
+      problems.push(`${rel}: accounting.escrow_ledger is a phantom relation (escrow_ledger lives in driver_finance) and was retired here by ACCT-F5703 — every timeline query must read accounting.escrow_postings`);
+    }
     if (!/left\s+join\s+accounting\.journal_entries[\s\S]{0,120}linked_journal_entry_id/i.test(src)) {
       problems.push(`${rel}: detail-timeline query must LEFT JOIN accounting.journal_entries via linked_journal_entry_id — losing this drops the GL lineage that is the whole point of the repoint`);
     }
-    if (!/"ea\.operating_company_id\s*=\s*\$1::uuid"/i.test(src)) {
-      problems.push(`${rel}: detail-timeline query must stay scoped by operating_company_id`);
+    // ACCT-GUARD-F7301 (cont.): same multiplicity trap as above — this file runs THREE
+    // escrow_postings queries and the existence check above is satisfied by any one of them.
+    // Require EVERY escrow_postings query to carry its own JE-lineage join, and reject the
+    // degenerate `je.id = ep.id` shape the selftest plants (it joins a posting id to a journal
+    // entry id: always empty, silently dropping GL lineage from the audit trail).
+    {
+      // Checked PER SQL LITERAL, not per file. A pure COALESCE(SUM())/COUNT() totals query over
+      // escrow_postings projects no JE column and correctly carries no JE join — only a query that
+      // actually RENDERS journal-entry lineage (je.entry_date / je.memo / journal_entry_id) must
+      // join accounting.journal_entries on ep.linked_journal_entry_id.
+      let jeRenderingQueries = 0;
+      let jeJoined = 0;
+      for (const m of src.matchAll(/`([^`]*join\s+accounting\.escrow_postings\s+ep[^`]*)`/gis)) {
+        const q = m[1];
+        if (!/\bje\.\w+|journal_entry_id\b/i.test(q)) continue;
+        jeRenderingQueries += 1;
+        if (/left\s+join\s+accounting\.journal_entries[\s\S]{0,160}je\.id\s*=\s*ep\.linked_journal_entry_id/i.test(q)) {
+          jeJoined += 1;
+        }
+      }
+      if (jeRenderingQueries === 0) {
+        problems.push(`${rel}: no escrow_postings query renders journal-entry lineage — the GL trail ACCT-F5703 exists for is gone`);
+      }
+      if (jeJoined !== jeRenderingQueries) {
+        problems.push(`${rel}: ${jeRenderingQueries} escrow_postings quer(ies) render journal-entry lineage but only ${jeJoined} LEFT JOIN accounting.journal_entries ON je.id = ep.linked_journal_entry_id`);
+      }
     }
-    if (!/"ea\.holder_id\s*=\s*\$2"/i.test(src)) {
-      problems.push(`${rel}: detail-timeline query must stay scoped to the requested driver (holder_id)`);
+    // ACCT-GUARD-F7301 (cont.): this file builds TWO filter arrays that scope by
+    // ea.operating_company_id, so an existence check on that string alone is satisfied by the
+    // OTHER endpoint's array — the detail timeline could drop its own scope unnoticed. Anchor on
+    // the ADJACENT company+holder pair that is unique to the detail-timeline array, and reject any
+    // always-true filter literal outright: "1 = 1" in an RLS-scoped money read is never legitimate.
+    if (!/"ea\.operating_company_id\s*=\s*\$1::uuid",\s*"ea\.holder_id\s*=\s*\$2"/i.test(src)) {
+      problems.push(`${rel}: detail-timeline query must stay scoped by BOTH operating_company_id and the requested driver (holder_id), as an adjacent pair`);
+    }
+    if (/"\s*1\s*=\s*1\s*"/.test(src)) {
+      problems.push(`${rel}: an always-true "1 = 1" filter is present — an escrow money read must never be unscoped`);
     }
   }
 
@@ -203,8 +245,12 @@ function selftest() {
       fs.writeFileSync(abs, original.replace(c.find, c.replace), "utf8");
       const caught = assertOrph03();
       if (caught.length === 0) {
-        console.error(`SELFTEST FAIL: "${c.name}" not caught`);
-        process.exit(1);
+        // ACCT-GUARD-F7302 (Lead, 2026-09-30): NEVER process.exit() inside this try. process.exit()
+        // skips the finally below, so a failing selftest used to leave the PLANTED DEFECT written
+        // into the real source file. That is how `JOIN accounting.escrow_ledger ep` — a phantom
+        // relation this guard itself plants — ended up committed on main and 500'd production.
+        // Throw instead: finally restores the file, and the catch below reports and exits.
+        throw new Error(`SELFTEST FAIL: "${c.name}" not caught`);
       }
       console.log(`  caught: ${c.name}`);
     } finally {
@@ -215,9 +261,19 @@ function selftest() {
   console.log(`SELFTEST PASS: all ${cases.length} planted defects caught, restore green.`);
 }
 
+/** Wrap selftest so a thrown failure still reports and exits non-zero AFTER finally restored. */
+function runSelftest() {
+  try {
+    selftest();
+  } catch (err) {
+    console.error(err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  }
+}
+
 const problems = assertOrph03();
 if (process.argv.includes("--selftest")) {
-  selftest();
+  runSelftest();
   process.exit(0);
 }
 

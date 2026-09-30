@@ -72,6 +72,12 @@ WITH voided_docs AS (
   SELECT 'customer_payment'::text, id, voided_at, operating_company_id
     FROM accounting.payments
    WHERE operating_company_id = $1::uuid AND voided_at IS NOT NULL AND COALESCE(is_sample_data, false) IS NOT TRUE
+  UNION ALL
+  -- Factoring advances (BANK-F-FACTORING-VOID-NO-REVERSAL, 2026-09-30) -- this table has no
+  -- is_sample_data column (verified via information_schema), unlike the others above.
+  SELECT 'factoring_advance'::text, id, voided_at, operating_company_id
+    FROM accounting.factoring_advances
+   WHERE operating_company_id = $1::uuid AND voided_at IS NOT NULL
 ),
 live_postings AS (
   -- LIVE = original unreverted line. A proper void reverse keeps the original
@@ -86,7 +92,7 @@ live_postings AS (
    WHERE operating_company_id = $1::uuid
      AND reversal_of_line_id IS NULL
      AND reversed_by_line_id IS NULL
-     AND source_transaction_type IN ('invoice','bill','expense','bill_payment','customer_payment')
+     AND source_transaction_type IN ('invoice','bill','expense','bill_payment','customer_payment','factoring_advance')
    GROUP BY source_transaction_type, source_transaction_id, operating_company_id
 )
 SELECT vd.doc_type, vd.id, COALESCE(lp.total_cents, 0) AS live_posting_cents
