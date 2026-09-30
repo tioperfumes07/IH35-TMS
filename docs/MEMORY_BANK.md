@@ -1226,10 +1226,12 @@ Full coder instructions: `claude/2026-09-13-ABSORPTION-INGEST-AND-DISPUTE-WINDOW
 - **AlwaysTrack Dispatched list is board truth**, not the app status alone and not `views.live_loads` alone. Live measure: 16 dispatched loads (13624–13639). Lead corrected 13625/13626 `completed_docs_received`→`dispatched` on prod.
 - **Dispatch-work predicate** (`canonicalDispatchWorkWhereClause` — status only, no money test) = the 16. Truck Line / List / Kanban / Trip Pairing / Round Trips must stay on it. `verify-load-boards-agree` PASS @ 16 dispatch-work.
 - **`views.live_loads` bills half** requires closed settlement (`202614661200` / `#23312`) — fixed defect (1). View still at 15 because invoice exclusion hides dispatched+invoiced 13625/13626; do **not** rewire Truck Line onto the view or it regresses off AlwaysTrack's 16.
-- **Accounting canonical** (money finished) stays separate — Load Costs @ 14. Dual predicate permanent (file header on `canonical-active-load-set.ts`).
+- **Accounting canonical** (money finished) stays separate — Load Costs / FACTOR-BUT-NOT-DELIVERED: pass `l.status` into money CTE so pre-delivery + invoice stays on board (`#23332`). Dual predicate permanent.
+- **Needs delivery authorization queue (overflow):** issued invoice on rolling load (`dispatched|at_pickup|in_transit|at_delivery`) with no active `dispatch.manual_delivery_authorizations` row → `GET /api/v1/dispatch/needs-delivery-authorization` + FE `/dispatch/needs-delivery-authorization` (Documents › Needs delivery auth). Owner POST authorizes (reason ≥20, customer+factoring both true); never seat fixtures. Guard `verify-needs-delivery-authorization-wired.mjs` (wired into step 10869).
 
 ## Next Immediate Milestones — ROUND 292 Cursor (2026-09-30)
 
 1. 285.4.9 remainder CODE CLOSED (#31/#58/#59/#32/#33 on tip) — Chrome METHOD waits real detention approve.
 2. Owner Chrome 13615 BOL→invoice→Faro.
-3. No baseline raises to clear tip ENV reds.
+3. Ship Needs delivery authorization FE queue (this PR) → FE deploy → Owner clicks Authorize when a rolling load needs early factoring auth.
+4. No baseline raises to clear tip ENV reds.

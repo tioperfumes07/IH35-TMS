@@ -1928,3 +1928,44 @@ export function listAwaitingBolInvoice(operatingCompanyId: string) {
     rows: AwaitingBolInvoiceRow[];
   }>(`/api/v1/dispatch/awaiting-bol-invoice?${params}`);
 }
+
+/** ROUND 292 — FACTOR-BUT-NOT-DELIVERED queue (issued invoice on rolling load, no auth). */
+export type NeedsDeliveryAuthorizationRow = {
+  load_id: string;
+  load_number: string | null;
+  status: string;
+  customer_name: string | null;
+  invoice_display_id: string | null;
+  invoice_status: string;
+  factoring_status: string | null;
+};
+
+export function listNeedsDeliveryAuthorization(operatingCompanyId: string) {
+  const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{
+    operating_company_id: string;
+    waiting_for: "delivery_authorization";
+    count: number;
+    rows: NeedsDeliveryAuthorizationRow[];
+  }>(`/api/v1/dispatch/needs-delivery-authorization?${params}`);
+}
+
+export function createManualDeliveryAuthorization(
+  loadId: string,
+  body: {
+    operating_company_id: string;
+    reason: string;
+    customer_authorized: true;
+    factoring_authorized: true;
+    pod_docs_attachment_id?: string;
+  },
+) {
+  return apiRequest<{
+    authorization_id: string;
+    authorized_at: string;
+    pod_document_id: string | null;
+  }>(`/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/manual-delivery-authorization`, {
+    method: "POST",
+    body,
+  });
+}

@@ -248,4 +248,72 @@ export async function registerManualDeliveryAuthorizationRoutes(app: FastifyInst
       };
     }
   );
+
+  /**
+   * ROUND 292 — named queue for FACTOR-BUT-NOT-DELIVERED debt: issued invoices on loads still in
+   * pre-delivery status with NO active manual delivery authorization. Same predicate as
+   * scripts/verify-issued-invoice-on-rolling-load-needs-authorization.mjs. Read-only list; authorize
+   * via POST /loads/:loadId/manual-delivery-authorization (Owner click — never a seat fixture).
+   */
+  app.get(
+    "/api/v1/dispatch/needs-delivery-authorization",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+
+      const q = z
+        .object({ operating_company_id: z.string().uuid() })
+        .safeParse(req.query ?? {});
+      if (!q.success) return validationError(reply, q.error);
+
+      const rows = await withCompanyScope(user.uuid, q.data.operating_company_id, async (client: ScopedClient) => {
+        const res = await client.query<{
+          load_id: string;
+          load_number: string | null;
+          status: string;
+          customer_name: string | null;
+          invoice_display_id: string | null;
+          invoice_status: string;
+          factoring_status: string | null;
+        }>(
+          `
+            SELECT
+              l.id::text AS load_id,
+              l.load_number,
+              l.status::text AS status,
+              c.customer_name,
+              i.display_id AS invoice_display_id,
+              i.status::text AS invoice_status,
+              i.factoring_status::text AS factoring_status
+            FROM accounting.invoices i
+            JOIN mdata.loads l ON l.id = i.source_load_id
+            LEFT JOIN mdata.customers c
+              ON c.id = l.customer_id AND c.operating_company_id = l.operating_company_id
+            WHERE i.operating_company_id = $1::uuid
+              AND i.voided_at IS NULL
+              AND i.status NOT IN ('draft', 'proforma', 'void')
+              AND l.soft_deleted_at IS NULL
+              AND COALESCE(l.is_sample_data, false) IS NOT TRUE
+              AND l.status::text = ANY($2::text[])
+              AND NOT EXISTS (
+                SELECT 1 FROM dispatch.manual_delivery_authorizations m
+                 WHERE m.load_id = l.id AND m.revoked_at IS NULL
+              )
+            ORDER BY l.load_number
+            LIMIT 200
+          `,
+          [q.data.operating_company_id, ["dispatched", "at_pickup", "in_transit", "at_delivery"]]
+        );
+        return res.rows;
+      });
+
+      return {
+        operating_company_id: q.data.operating_company_id,
+        waiting_for: "delivery_authorization",
+        count: rows.length,
+        rows,
+      };
+    }
+  );
 }

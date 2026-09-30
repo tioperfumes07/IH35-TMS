@@ -1,10 +1,10 @@
 {
-  "healthzSha": "808bfa2",
-  "generated_at": "2026-09-30T05:14:39.581Z",
+  "healthzSha": "8c3ac5e",
+  "generated_at": "2026-09-30T09:35:28.866Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "808bfa2",
+    "deployedSha": "8c3ac5e",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 23237,
-      "title": "FINDING: N/A LANE: DOCS -- AUTH-145 CONSUMED, 32/34 fuel-expense-bridge backfill rows created live",
+      "number": 23333,
+      "title": "FINDING: N/A — OUTBOX/NOW: API LIVE 8c3ac5e02e · boards@16 on prod · Chrome path = 13615",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 12:12 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23237",
-      "sha": "7bdf48212e",
-      "committedAtIso": "2026-09-30T00:12:20-05:00"
+      "mergedAtCt": "09/30/2026, 04:25 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23333",
+      "sha": "fc8b83ffed",
+      "committedAtIso": "2026-09-30T04:25:49-05:00"
     },
     {
-      "number": 23235,
-      "title": "FINDING: N/A LANE: FINANCIAL -- AUTH-145 OPEN: create load 13593 + invoice 074-13593 + driver bill + 3 fuel rows (THE-CLOSE 9.1 / 287.3.1)",
+      "number": 23332,
+      "title": "Cursor- ROUND 292 ACCT-F29216 Load Costs FACTOR-BUT-NOT-DELIVERED · boards@16",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 12:11 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23235",
-      "sha": "87f75cfe29",
-      "committedAtIso": "2026-09-30T00:11:39-05:00"
+      "mergedAtCt": "09/30/2026, 04:17 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23332",
+      "sha": "8c3ac5e02e",
+      "committedAtIso": "2026-09-30T04:17:48-05:00"
     },
     {
-      "number": 23236,
-      "title": "FIX: ROUND-290.1 backfill script passed null as requesting_user_uuid, which createExpenseFromFuelTransaction's fallback tried to insert as a literal UUID (\"system:fuel-expense-document\") -- only surfaced on the real (non-DRY_RUN) write path since DRY_RUN never reaches the INSERT. Pass the standing system actor UUID instead.",
+      "number": 23331,
+      "title": "FINDING: AUTH-165 CONSUMED -- $17,057.44 double-count reversed for real, verified closed",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 12:10 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23236",
-      "sha": "ae10a35fb8",
-      "committedAtIso": "2026-09-30T00:10:13-05:00"
+      "mergedAtCt": "09/30/2026, 04:14 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23331",
+      "sha": "2646634186",
+      "committedAtIso": "2026-09-30T04:14:02-05:00"
     },
     {
-      "number": 23234,
-      "title": "FINDING: ROUND-290.1 — the fuel-to-expense bridge becomes an invariant before any seed",
+      "number": 23330,
+      "title": "Claude-Lead — Truck Line: strip the noise out of UNIT/TOUR/LOAD so the TRANSIT line gets the width",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 12:07 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23234",
-      "sha": "6509389711",
-      "committedAtIso": "2026-09-30T00:07:17-05:00"
+      "mergedAtCt": "09/30/2026, 04:12 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23330",
+      "sha": "a4ba611c96",
+      "committedAtIso": "2026-09-30T04:12:40-05:00"
     },
     {
-      "number": 23230,
-      "title": "Cursor-285.4.1–4.3 board_scope mandatory + seven boards agree @ 12",
+      "number": 23329,
+      "title": "FINDING: AUTH-165 -- reverse a real, live $17,057.44 double-count, my own AUTH-140 error",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 12:02 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23230",
-      "sha": "af673b91d0",
-      "committedAtIso": "2026-09-30T00:02:51-05:00"
+      "mergedAtCt": "09/30/2026, 04:11 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23329",
+      "sha": "d79a348d88",
+      "committedAtIso": "2026-09-30T04:11:18-05:00"
     },
     {
-      "number": 23233,
-      "title": "FINDING: N/A LANE: FINANCIAL -- AUTH-144 CONSUMED: 2/2 factoring advances reposted live (loads 13619/13615)",
+      "number": 23328,
+      "title": "Claude-3- OPS-RLS-BYPASS — trial-balance-purge guard fix + verify-static REQUIRES_LIVE_DB fixes",
       "state": "merged",
-      "mergedAtCt": "09/29/2026, 11:58 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23233",
-      "sha": "95b1639f5d",
-      "committedAtIso": "2026-09-29T23:58:41-05:00"
+      "mergedAtCt": "09/30/2026, 04:09 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23328",
+      "sha": "2b3608b1ce",
+      "committedAtIso": "2026-09-30T04:09:15-05:00"
     },
     {
-      "number": 23231,
-      "title": "FINDING: N/A LANE: FINANCIAL -- AUTH-144: repost 2 factoring advances (loads 13619/13615) with zero live GL, sourced from Faro's own workbooks",
+      "number": 23327,
+      "title": "FINDING: N/A LANE: FINANCIAL -- AUTH-158 CONSUMED: deadhead backfill 0/15, all locked (open_settlement or issued_invoice), flagged to Lead",
       "state": "merged",
-      "mergedAtCt": "09/29/2026, 11:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23231",
-      "sha": "80ac0077a4",
-      "committedAtIso": "2026-09-29T23:56:41-05:00"
+      "mergedAtCt": "09/30/2026, 04:05 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23327",
+      "sha": "be0d06be0e",
+      "committedAtIso": "2026-09-30T04:05:48-05:00"
     },
     {
-      "number": 23229,
-      "title": "FINDING: ROUND-290 — engine audit from the live GL: 9 of 9 posting shapes are correct, the fuel-to-expense bridge is not 1:1",
+      "number": 23326,
+      "title": "FINDING: N/A LANE: FINANCIAL -- ROUND 292: fix closures 30/31 guard bugs, regen canonical-relations.json, AUTH-158 deadhead backfill",
       "state": "merged",
-      "mergedAtCt": "09/29/2026, 11:49 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23229",
-      "sha": "808bfa2313",
-      "committedAtIso": "2026-09-29T23:49:42-05:00"
+      "mergedAtCt": "09/30/2026, 04:03 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23326",
+      "sha": "cb74c2e4c9",
+      "committedAtIso": "2026-09-30T04:03:33-05:00"
     },
     {
-      "number": 23228,
-      "title": "FINDING: THE CLOSE IS LOCKED — every apparent gap has an answer and a named source, and only 6 items remain open",
+      "number": 23323,
+      "title": "Claude-Lead — FACTOR BUT NOT DELIVERED: the engine already existed and nothing used it",
       "state": "merged",
-      "mergedAtCt": "09/29/2026, 11:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23228",
-      "sha": "37a2a0c6e2",
-      "committedAtIso": "2026-09-29T23:32:05-05:00"
+      "mergedAtCt": "09/30/2026, 04:03 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23323",
+      "sha": "552ae2beb5",
+      "committedAtIso": "2026-09-30T04:03:09-05:00"
     },
     {
-      "number": 23227,
-      "title": "FINDING: N/A LANE: FINANCIAL -- AUTH-142 CONSUMED: 0/12 posted, correctly refused, real diagnosis corrected",
+      "number": 23321,
+      "title": "Claude-3- ACCT-F2026093013 — driver escrow counter-leg fix (2170, not 1090) + AUTH-153 + diesel baseline raise",
       "state": "merged",
-      "mergedAtCt": "09/29/2026, 11:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23227",
-      "sha": "0fb333bae2",
-      "committedAtIso": "2026-09-29T23:29:38-05:00"
+      "mergedAtCt": "09/30/2026, 04:02 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23321",
+      "sha": "c0c0a630a5",
+      "committedAtIso": "2026-09-30T04:02:16-05:00"
     }
   ]
 }
