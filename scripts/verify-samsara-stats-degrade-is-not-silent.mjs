@@ -34,8 +34,36 @@ const SERVICE = "apps/backend/src/integrations/samsara/samsara-positions.service
 export function assertDegradeIsNotSilent({ client, service }) {
   const problems = [];
 
-  if (!/export const SAMSARA_STATS_TYPES_FULL\b/.test(client) || !/export const SAMSARA_STATS_TYPES_DEGRADED\b/.test(client)) {
-    problems.push(`${CLIENT}: the two stats types sets are no longer named constants, so no caller can tell which one it got.`);
+  if (!/export const SAMSARA_STATS_TYPES_PRIMARY\b/.test(client) || !/export const SAMSARA_STATS_TYPES_DEGRADED\b/.test(client)) {
+    problems.push(`${CLIENT}: the stats types sets are no longer named constants, so no caller can tell which one it got.`);
+  }
+
+  // SAMSARA CAPS THIS ENDPOINT AT FOUR TYPES. Proven live 2026-09-30: five types ->
+  // HTTP 400 "Vehicle stats are currently restricted to 4 types.". Asking for five is what
+  // collapsed the fetch to gps,engineStates and cost 35 days of odometer.
+  const primary = client.match(/export const SAMSARA_STATS_TYPES_PRIMARY = "([^"]+)"/);
+  if (primary) {
+    const count = primary[1].split(",").filter(Boolean).length;
+    if (count > 4) {
+      problems.push(
+        `${CLIENT}: SAMSARA_STATS_TYPES_PRIMARY asks for ${count} types. Samsara refuses more than 4 outright ` +
+          `("Vehicle stats are currently restricted to 4 types.") and the whole request fails -- which is exactly ` +
+          `how odometer went missing for 35 days.`
+      );
+    }
+    if (!primary[1].includes("obdOdometerMeters")) {
+      problems.push(
+        `${CLIENT}: obdOdometerMeters is not in the PRIMARY types set. Odometer must never be the type that gets ` +
+          `traded away -- driven miles, MPG, PM countdowns and engine-hour services all depend on it.`
+      );
+    }
+  }
+  const fuel = client.match(/export const SAMSARA_STATS_TYPES_FUEL = "([^"]+)"/);
+  if (fuel && fuel[1].split(",").filter(Boolean).length > 4) {
+    problems.push(`${CLIENT}: SAMSARA_STATS_TYPES_FUEL asks for more than 4 types; Samsara refuses the whole request.`);
+  }
+  if (!fuel) {
+    problems.push(`${CLIENT}: the separate fuel types set is gone. Fuel does not fit in the same four as odometer -- it needs its own call.`);
   }
   if (!/obdOdometerMeters/.test(client)) {
     problems.push(`${CLIENT}: obdOdometerMeters is no longer requested at all. That IS the odometer -- without it driven miles and MPG are impossible.`);
@@ -46,7 +74,7 @@ export function assertDegradeIsNotSilent({ client, service }) {
   if (!/async listVehicleStatsWithMeta\(/.test(client)) {
     problems.push(`${CLIENT}: listVehicleStatsWithMeta is gone -- callers are back to a bare array with no way to know the pull was degraded.`);
   }
-  if (!/degraded: typesUsed === SAMSARA_STATS_TYPES_DEGRADED/.test(client)) {
+  if (!/=== SAMSARA_STATS_TYPES_DEGRADED/.test(client)) {
     problems.push(`${CLIENT}: the degraded flag is no longer derived from the types set actually served.`);
   }
 
@@ -98,14 +126,28 @@ if (process.argv.includes("--selftest")) {
   // 5. The meta method is removed.
   expect("meta-method-removed", { ...live, client: live.client.replace("async listVehicleStatsWithMeta(", "async removedMeta(") }, "listVehicleStatsWithMeta is gone");
   // 6. The named constants disappear.
-  expect("constants-removed", { ...live, client: live.client.replace("export const SAMSARA_STATS_TYPES_FULL", "const SAMSARA_STATS_TYPES_FULL") }, "no longer named constants");
+  expect("constants-removed", { ...live, client: live.client.replace("export const SAMSARA_STATS_TYPES_PRIMARY", "const SAMSARA_STATS_TYPES_PRIMARY") }, "no longer named constants");
+  // 7. THE ORIGINAL DEFECT, verbatim: five types in one request.
+  expect(
+    "five-types-again",
+    { ...live, client: live.client.replace(/export const SAMSARA_STATS_TYPES_PRIMARY = "[^"]+"/, 'export const SAMSARA_STATS_TYPES_PRIMARY = "gps,engineStates,obdOdometerMeters,fuelPercents,obdEngineSeconds"') },
+    "restricted to 4 types"
+  );
+  // 8. Odometer traded out of the primary set.
+  expect(
+    "odometer-traded-away",
+    { ...live, client: live.client.replace(/export const SAMSARA_STATS_TYPES_PRIMARY = "[^"]+"/, 'export const SAMSARA_STATS_TYPES_PRIMARY = "gps,engineStates,fuelPercents,obdEngineSeconds"') },
+    "not in the PRIMARY types set"
+  );
+  // 9. The fuel set is deleted, so fuel silently disappears.
+  expect("fuel-set-removed", { ...live, client: live.client.replace("export const SAMSARA_STATS_TYPES_FUEL", "const REMOVED_FUEL") }, "separate fuel types set is gone");
 
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED (${failures.length})`);
     for (const f of failures) console.error(`  - ${f}`);
     process.exitCode = 1;
   } else {
-    console.log(`${LABEL} selftest 6/6 OK`);
+    console.log(`${LABEL} selftest 9/9 OK`);
   }
 } else {
   const problems = assertDegradeIsNotSilent({ client: read(CLIENT), service: read(SERVICE) });

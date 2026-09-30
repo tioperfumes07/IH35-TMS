@@ -380,13 +380,37 @@ export function parseVehicleStatRow(row: Record<string, unknown>): SamsaraVehicl
 }
 
 /**
- * The full stats types set, and the degraded set the fetch falls back to. Exported so callers can
- * name which one they got instead of guessing why a column went blank.
+ * SAMSARA CAPS /fleet/vehicles/stats AT FOUR TYPES. Proven against the live API with the real
+ * token, 2026-09-30:
+ *   types=gps,engineStates,obdOdometerMeters,fuelPercents,obdEngineSeconds   (5)
+ *     -> HTTP 400 {"message":"Vehicle stats are currently restricted to 4 types."}
+ *   types=gps,engineStates,obdOdometerMeters,obdEngineSeconds                (4)
+ *     -> HTTP 200, 95 vehicles, 93 with obdOdometerMeters, 87 with obdEngineSeconds
+ *   types=gps,engineStates,obdOdometerMeters,fuelPercents                    (4)
+ *     -> HTTP 200, 95 vehicles, 93 with obdOdometerMeters, 90 with fuelPercent
+ *
+ * THAT ONE EXTRA TYPE IS THE WHOLE 35-DAY DEFECT. The request asked for five, Samsara refused the
+ * lot, and the old fallback collapsed all the way to gps,engineStates -- throwing ODOMETER away to
+ * keep a position we already had. Odometer has been NULL since 2026-09-10 as a direct result, which
+ * is why driven miles, company-settlement MPG, PM countdowns and engine-hour services all went
+ * blind. Nothing ever said a word.
+ *
+ * So we ask for four and we ask TWICE, merging by vehicle id: the PRIMARY set carries position,
+ * engine state, odometer and engine hours; the FUEL set carries fuel level. Odometer is in the
+ * primary set and never traded away again.
  */
-export const SAMSARA_STATS_TYPES_FULL = "gps,engineStates,obdOdometerMeters,fuelPercents,obdEngineSeconds";
+export const SAMSARA_STATS_TYPES_PRIMARY = "gps,engineStates,obdOdometerMeters,obdEngineSeconds";
+export const SAMSARA_STATS_TYPES_FUEL = "gps,fuelPercents";
+/** Last-resort set if even four types are refused. Carries NO odometer -- a named, recorded failure. */
 export const SAMSARA_STATS_TYPES_DEGRADED = "gps,engineStates";
+/** @deprecated kept so existing imports keep compiling; the primary set is what is requested. */
+export const SAMSARA_STATS_TYPES_FULL = SAMSARA_STATS_TYPES_PRIMARY;
 
-async function fetchSamsaraStatsPage(token: string, after: string | null): Promise<{
+async function fetchSamsaraStatsPage(
+  token: string,
+  after: string | null,
+  requestedTypes: string = SAMSARA_STATS_TYPES_PRIMARY
+): Promise<{
   data: SamsaraVehicleStat[];
   hasNextPage: boolean;
   cursor: string | null;
@@ -420,10 +444,10 @@ async function fetchSamsaraStatsPage(token: string, after: string | null): Promi
   //
   // So the fetch now REPORTS which set it got. The caller records it. A degraded feed is a named,
   // visible condition -- never a column that quietly turns to null.
-  const typesSets = [SAMSARA_STATS_TYPES_FULL, SAMSARA_STATS_TYPES_DEGRADED];
+  const typesSets = [requestedTypes, SAMSARA_STATS_TYPES_DEGRADED];
   let res: Response | null = null;
   let lastError: SamsaraApiError | null = null;
-  let typesUsed = SAMSARA_STATS_TYPES_FULL;
+  let typesUsed = requestedTypes;
   // Samsara's own words for WHY the full set was refused. Without this, a degrade is a mystery we
   // can only guess at from the outside -- and guessing is what turned 35 days of missing odometer
   // into an open question instead of an answer. Captured here, recorded by the caller.
@@ -442,7 +466,7 @@ async function fetchSamsaraStatsPage(token: string, after: string | null): Promi
     const body = await readJsonResponse(res);
     const retryable = res.status === 429 || res.status >= 500;
     lastError = new SamsaraApiError(`samsara_http_${res.status}`, res.status, body, retryable);
-    if (types === SAMSARA_STATS_TYPES_FULL) {
+    if (types === requestedTypes) {
       // Keep Samsara's verbatim refusal of the FULL set. `message` names the offending type or the
       // missing scope; that one string is the whole diagnosis.
       const detail = (() => {
@@ -721,25 +745,57 @@ export class SamsaraClient {
     data: SamsaraVehicleStat[];
     typesUsed: string;
     degraded: boolean;
-    /** Samsara's verbatim refusal of the full types set, when we had to fall back. */
+    /** Samsara's verbatim refusal, when a set was refused. */
     fullSetError: string | null;
   }> {
     const token = this._token();
-    if (!token) return { data: [], typesUsed: SAMSARA_STATS_TYPES_FULL, degraded: false, fullSetError: null };
-    const out: SamsaraVehicleStat[] = [];
-    let after: string | null = null;
-    let typesUsed = SAMSARA_STATS_TYPES_FULL;
-    let fullSetError: string | null = null;
-    for (let page = 0; page < 50; page += 1) {
-      const page_ = await fetchSamsaraStatsPage(token, after);
-      // Any page that fell back marks the whole pull degraded -- odometer is missing from it either way.
-      if (page_.typesUsed === SAMSARA_STATS_TYPES_DEGRADED) typesUsed = SAMSARA_STATS_TYPES_DEGRADED;
-      if (page_.fullSetError && !fullSetError) fullSetError = page_.fullSetError;
-      out.push(...page_.data);
-      if (!page_.hasNextPage || !page_.cursor) break;
-      after = page_.cursor;
+    if (!token) return { data: [], typesUsed: SAMSARA_STATS_TYPES_PRIMARY, degraded: false, fullSetError: null };
+
+    const pull = async (types: string) => {
+      const out: SamsaraVehicleStat[] = [];
+      let after: string | null = null;
+      let used = types;
+      let err: string | null = null;
+      for (let page = 0; page < 50; page += 1) {
+        const p = await fetchSamsaraStatsPage(token, after, types);
+        if (p.typesUsed === SAMSARA_STATS_TYPES_DEGRADED) used = SAMSARA_STATS_TYPES_DEGRADED;
+        if (p.fullSetError && !err) err = p.fullSetError;
+        out.push(...p.data);
+        if (!p.hasNextPage || !p.cursor) break;
+        after = p.cursor;
+      }
+      return { data: out, used, err };
+    };
+
+    // PRIMARY carries odometer and engine hours. It is never traded away -- see the constants above
+    // for why (Samsara caps this endpoint at 4 types, and asking for 5 cost 35 days of odometer).
+    const primary = await pull(SAMSARA_STATS_TYPES_PRIMARY);
+    const degraded = primary.used === SAMSARA_STATS_TYPES_DEGRADED;
+
+    // FUEL is a SECOND call because it does not fit in the same four. Best-effort: fuel level is
+    // useful, but it must never be able to take odometer down with it, so a failure here is logged
+    // and the primary data still stands.
+    let fuelError: string | null = null;
+    const byId = new Map(primary.data.map((row) => [row.id, row]));
+    try {
+      const fuel = await pull(SAMSARA_STATS_TYPES_FUEL);
+      for (const row of fuel.data) {
+        if (row.fuel_level_pct === null) continue;
+        const base = byId.get(row.id);
+        if (base) base.fuel_level_pct = row.fuel_level_pct;
+        else byId.set(row.id, row);
+      }
+      fuelError = fuel.err;
+    } catch (error) {
+      fuelError = `fuel_pull_failed:${String((error as Error)?.message ?? error)}`;
     }
-    return { data: out, typesUsed, degraded: typesUsed === SAMSARA_STATS_TYPES_DEGRADED, fullSetError };
+
+    return {
+      data: Array.from(byId.values()),
+      typesUsed: degraded ? SAMSARA_STATS_TYPES_DEGRADED : SAMSARA_STATS_TYPES_PRIMARY,
+      degraded,
+      fullSetError: primary.err ?? fuelError,
+    };
   }
 
   async listVehicles(): Promise<SamsaraVehicle[]> {
