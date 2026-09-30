@@ -1,0 +1,23 @@
+{
+  "_comment": "ROUND 300 A-30. Shrink-only ceilings for pre-existing linkage gaps measured live on br-fancy-credit-akjnd07a, 2026-09-30, BEFORE this guard existed. This guard fails on any NEW gap beyond what is named here; it does not fail the gate for data that predates it. Each entry must shrink as the named remediation work lands -- never grow, never get a higher ceiling to make a new regression pass.",
+  "fuel.fuel_transactions": {
+    "max_allowed": 0,
+    "note": "0 as of 2026-09-30 -- L3-52 (PR #23503) resolved the last 52 unit_id gaps same day. No baseline needed; kept at 0 so a future regression fails immediately."
+  },
+  "maintenance.work_orders": {
+    "tier1_known_gap_ids": [
+      "5950272e-0793-4bc0-a092-224b6bcaf0a8",
+      "a236b27a-fe1b-46eb-aada-005908139666",
+      "df93878c-6fb3-463a-9cfe-e481d88e14f6",
+      "ad7c6b47-68fb-4d4d-a533-161110630348"
+    ],
+    "note": "4 TIER1 work orders (2 accident/AC: WO-T149-AC-08-25-2026-0004-PEND0, WO-T150-AC-08-29-2026-0001-PEND0; 2 roadside/RS: WO-T120-RS-08-08-2026-0001--0085, WO-T120-RS-08-08-2026-0002--0085) measured live 2026-09-30 with unit_id and driver_id populated but load_id NULL. Named individually, not by count, so this ceiling can only shrink as each is resolved -- filed as docs/audit/GUARD-WORKORDERS.md finding LINKAGE-A30-WO-ACCIDENT-ROADSIDE-NO-LOAD."
+  },
+  "accounting.expense_lines": {
+    "tier1_missing_unit_or_driver_max": 236,
+    "note": "236 live USMCA TIER1 expense_lines rows (line_category IS NOT NULL -- diesel 201, def 30, lumper 3, scale 2 -- i.e. G18's own migration-0093 trigger already treats them as load-bearing) measured 2026-09-30, USMCA-scoped, with unit_id AND driver_id both NULL on every single row. load_id itself is fine (G18's existing trigger already requires load_id or a documented exemption reason). This is a SYSTEMIC gap: expenses.routes.ts never wrote unit_id/driver_id on these lines. Too large for a per-row baseline; ceiling is count-based and must shrink as a backfill (same methodology as L3-52: resolve unit from the linked load's assignment) lands. Filed as docs/audit/GUARD-WORKORDERS.md finding LINKAGE-A30-EXPENSE-LINES-NO-UNIT-DRIVER. (An earlier draft of this ceiling read 68 -- an undercounted artifact of INNER JOINing catalogs.expense_categories, which silently drops rows with a NULL expense_category_uuid; the guard now derives TIER1 status directly off line_category with no join, giving the true 236.)"
+  },
+  "_not_baselined_but_named": {
+    "note": "Two items are deliberately NOT in this baseline because enforcing or silently passing them would misrepresent reality: (1) fuel.fuel_transactions carries 1,631 TRANSP rows (operating_company_id 91e0bf0a-133f-4ce8-a734-2586cfa66d96) with zero unit/driver/load links -- outside this law's USMCA-measured scope, reported informational-only by the guard, filed as LINKAGE-A30-TRANSP-FUEL-SCOPE-UNMEASURED. (2) maintenance.road_service_tickets has one row, ticket_number CC3-TEST-RS-01, missing driver_id -- a leftover test fixture excluded from the live check by ticket_number pattern, not a real production gap, per the standing never-a-test-row-in-USMCA law."
+  }
+}
