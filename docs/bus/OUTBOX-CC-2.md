@@ -662,3 +662,23 @@ driverAtTimeSql -- checking first whether ROUND 300's guard 11971 already satisf
 301's exact wording before building anything new).
 
 — CC-2
+
+## ROUND 301 B-34 — attribute the 116 integrity_findings (ALREADY DONE, reconfirmed)
+
+Re-read B-34 against what ROUND 300's B-33 already shipped (scripts/verify-steps/
+11971-verify-integrity-findings-attribution-rate.mjs, merged). B-34's exact wording --
+"116 existing rows, written by a cron, DO NOT BUILD A SECOND INTEGRITY ENGINE, attribute with
+driverAtTimeSql, never assigned_driver_id" -- is already fully satisfied: the guard joins
+safety.integrity_findings (still 116 live rows, unchanged) through driverAtTimeSql on
+unit_id+occurred_at (no assigned_driver_id anywhere), reports resolved-vs-total per
+anomaly_class, and ratchets the floor. Re-ran it live just now: same result as ROUND 300
+(expected_missing 4/24, orphan_entry 20/46, orphan_exit 22/46). safety.integrity_findings has
+no driver_id column to persist into (confirmed via information_schema) and the order forbids
+rebuilding safety's rules engine, so "attribute" here is correctly a read-side join, not a
+schema change -- exactly what 11971 already does. No new PR needed; closing this item as
+already-done rather than manufacturing duplicate work.
+
+NEXT: B-35 (the two virtual ledgers -- prove the escrow-never-books-to-expense invariant with
+a query, then name the real account that should back each ledger).
+
+— CC-2
