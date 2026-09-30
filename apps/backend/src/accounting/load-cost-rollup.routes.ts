@@ -46,6 +46,12 @@ export type LoadCostRollup = {
   /** ROUND 173's own name for margin_cents (same value) — the "net" column in the 5-board spec. */
   net_cents: number;
   margin_pct: number | null;
+  /** ROUND 285.4.4 — Book Load wizard charge lines (dispatch.load_charge_lines). */
+  wizard_linehaul_cents: number;
+  wizard_fuel_surcharge_cents: number;
+  wizard_accessorial_cents: number;
+  wizard_detention_cents: number;
+  wizard_layover_cents: number;
 };
 
 const num = (v: unknown) => (v == null ? 0 : Number(v));
@@ -60,6 +66,11 @@ export async function buildLoadCostRollup(client: Db, companyId: string, loadId:
     lc_driver_pay_cents: string;
     lc_margin_cents: string;
     lc_net_cents: string;
+    lc_wizard_linehaul_cents: string;
+    lc_wizard_fuel_surcharge_cents: string;
+    lc_wizard_accessorial_cents: string;
+    lc_wizard_detention_cents: string;
+    lc_wizard_layover_cents: string;
   }>(
     `SELECT ${LOAD_COST_ROLLUP_SELECT}
        FROM mdata.loads l
@@ -82,6 +93,11 @@ export async function buildLoadCostRollup(client: Db, companyId: string, loadId:
     margin_cents: margin,
     net_cents: num(row.lc_net_cents),
     margin_pct: revenue > 0 ? Math.round((margin / revenue) * 1000) / 10 : null,
+    wizard_linehaul_cents: num(row.lc_wizard_linehaul_cents),
+    wizard_fuel_surcharge_cents: num(row.lc_wizard_fuel_surcharge_cents),
+    wizard_accessorial_cents: num(row.lc_wizard_accessorial_cents),
+    wizard_detention_cents: num(row.lc_wizard_detention_cents),
+    wizard_layover_cents: num(row.lc_wizard_layover_cents),
   };
 }
 
@@ -96,6 +112,11 @@ export async function buildLoadCostRollupBatch(client: Db, companyId: string, lo
     lc_driver_pay_cents: string;
     lc_margin_cents: string;
     lc_net_cents: string;
+    lc_wizard_linehaul_cents: string;
+    lc_wizard_fuel_surcharge_cents: string;
+    lc_wizard_accessorial_cents: string;
+    lc_wizard_detention_cents: string;
+    lc_wizard_layover_cents: string;
   }>(
     `SELECT l.id::text AS load_id, ${LOAD_COST_ROLLUP_SELECT}
        FROM mdata.loads l
@@ -117,6 +138,11 @@ export async function buildLoadCostRollupBatch(client: Db, companyId: string, lo
       margin_cents: margin,
       net_cents: num(row.lc_net_cents),
       margin_pct: revenue > 0 ? Math.round((margin / revenue) * 1000) / 10 : null,
+      wizard_linehaul_cents: num(row.lc_wizard_linehaul_cents),
+      wizard_fuel_surcharge_cents: num(row.lc_wizard_fuel_surcharge_cents),
+      wizard_accessorial_cents: num(row.lc_wizard_accessorial_cents),
+      wizard_detention_cents: num(row.lc_wizard_detention_cents),
+      wizard_layover_cents: num(row.lc_wizard_layover_cents),
     };
   });
 }

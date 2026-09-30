@@ -4,6 +4,7 @@ import { z } from "zod";
 import { countUncategorizedTransactions } from "../banking/pending-categorization.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { canonicalActiveLoadNotFinishedByMoneyCte } from "../dispatch/canonical-active-load-set.js";
+import { wizardChargesLeftJoin } from "./load-wizard-charges.sql.js";
 
 /** TAB-COMPLETION-STANDARD A — twelve hubs, both-way or explicit N/A. Silence is a defect. */
 export const LOAD_COSTS_HUB_LINKAGE = {
@@ -35,6 +36,8 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
     const parsed = companyQuerySchema.extend({
       load_costs_sort: z.enum([
         "load", "unit", "driver_name", "pu_date", "del_date", "status", "revenue",
+        // ROUND 285.4.4 — wizard amounts from dispatch.load_charge_lines (Book Load).
+        "line_haul", "fuel_surcharge", "accessorials", "detention_charge", "layover",
         "late_fee", "lumper", "fuel", "repairs_maintenance", "other",
         "short_miles", "rate_loaded", "loaded_pay", "empty_miles", "rate_empty", "deadhead_pay", "gross", "margin", "margin_pct",
         "settlement",
@@ -60,6 +63,11 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
         del_date: "delivery.actual_arrival_at",
         status: "CASE WHEN delivery.actual_arrival_at IS NULL THEN 0 WHEN delivery.scheduled_arrival_at IS NULL THEN 1 WHEN delivery.actual_arrival_at <= delivery.scheduled_arrival_at THEN 2 ELSE 3 END",
         revenue: "l.rate_total_cents",
+        line_haul: "COALESCE(wiz.linehaul_cents,0)",
+        fuel_surcharge: "COALESCE(wiz.fuel_surcharge_cents,0)",
+        accessorials: "COALESCE(wiz.accessorial_cents,0)",
+        detention_charge: "COALESCE(wiz.detention_charge_cents,0)",
+        layover: "COALESCE(wiz.layover_charge_cents,0)",
         late_fee: "COALESCE(cb.late_fee_cents,0)",
         lumper: "COALESCE(cb.lumper_cents,0)",
         fuel: "COALESCE(cb.fuel_cents,0)",
@@ -301,6 +309,12 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
                 u.unit_number, tr.equipment_number AS trailer_number, pickup.city AS pickup_city, delivery.city AS delivery_city,
                 pickup.scheduled_arrival_at::text AS pickup_date, delivery.scheduled_arrival_at::text AS scheduled_delivery_at,
                 delivery.actual_arrival_at::text AS actual_delivery_at, l.created_at::text, l.rate_total_cents::text AS revenue_cents,
+                -- ROUND 285.4.4 — Book Load wizard amounts (dispatch.load_charge_lines), not re-derived.
+                COALESCE(wiz.linehaul_cents, 0)::text AS line_haul_cents,
+                COALESCE(wiz.fuel_surcharge_cents, 0)::text AS fuel_surcharge_cents,
+                COALESCE(wiz.accessorial_cents, 0)::text AS accessorial_cents,
+                COALESCE(wiz.detention_charge_cents, 0)::text AS detention_charge_cents,
+                COALESCE(wiz.layover_charge_cents, 0)::text AS layover_cents,
                 COALESCE(ec.expense_cents, 0)::text AS expense_cents,
                 COALESCE(bc.bill_cents, 0)::text AS bill_cents,
                 COALESCE(rm.repairs_maintenance_cents, 0)::text AS repairs_maintenance_cents,
@@ -332,6 +346,7 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
            LEFT JOIN category_costs cb ON cb.load_id=l.id LEFT JOIN driver_pay_detail dpd ON dpd.load_id=l.id LEFT JOIN driver_pay_amounts dpa ON dpa.load_id=l.id
            LEFT JOIN settlement_info si ON si.load_id=l.id
            LEFT JOIN invoice_info ii ON ii.load_id=l.id
+           ${wizardChargesLeftJoin("l.id", "l.operating_company_id", "wiz")}
            LEFT JOIN mdata.customers c ON c.id=l.customer_id AND c.operating_company_id=l.operating_company_id
            -- W-FIX-3b (loads.routes.ts, same rule): mdata.units has owner_company_id /
            -- currently_leased_to_company_id, never operating_company_id. mdata.loads has NO

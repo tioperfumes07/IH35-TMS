@@ -947,6 +947,12 @@ export type LoadCostRollup = {
   /** ROUND 173's own name for margin_cents (same value) — the "net" column in the 5-board spec. */
   net_cents: number;
   margin_pct: number | null;
+  /** ROUND 285.4.4 — Book Load wizard charge lines. */
+  wizard_linehaul_cents?: number;
+  wizard_fuel_surcharge_cents?: number;
+  wizard_accessorial_cents?: number;
+  wizard_detention_cents?: number;
+  wizard_layover_cents?: number;
 };
 export function getLoadCostRollup(operatingCompanyId: string, loadId: string) {
   return apiRequest<LoadCostRollup>(

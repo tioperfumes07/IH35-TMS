@@ -18,6 +18,7 @@ const IDS = [
   "load-costs-show-voided",
   "kpi-loads-in-motion", "kpi-revenue-booked", "kpi-costs-recorded", "kpi-driver-pay", "kpi-approx-margin", "kpi-bank-unmatched",
   "col-load", "col-unit", "col-driver-name", "col-pu-date", "col-del-date", "col-status", "col-revenue",
+  "col-line-haul", "col-fuel-surcharge", "col-accessorials", "col-detention-charge", "col-layover",
   "col-late-fee", "col-lumper", "col-fuel", "col-repairs-maintenance", "col-other",
   "col-short-miles", "col-rate-loaded", "col-loaded-pay", "col-empty-miles", "col-rate-empty", "col-deadhead-pay", "col-gross",
   "load-costs-expand", "panel-costs-on-load",
@@ -26,14 +27,15 @@ const IDS = [
 
 const COLUMN_ORDER = [
   "load", "unit", "driver-name", "pu-date", "del-date", "status", "revenue",
+  "line-haul", "fuel-surcharge", "accessorials", "detention-charge", "layover",
   "late-fee", "lumper", "fuel", "repairs-maintenance", "other",
   "short-miles", "rate-loaded", "loaded-pay", "empty-miles", "rate-empty", "deadhead-pay", "gross",
 ];
 
-// Every one of the 19 frontend column keys must be a server sort key too (spec §3 / DoD-2): "every
-// one of the 19 is server-side sortable... A column the owner cannot sort is not delivered."
+// Every frontend column key must be a server sort key too (spec §3 / DoD-2), including ROUND 285.4.4 wizard amounts.
 const SORT_KEYS = [
   "load", "unit", "driver_name", "pu_date", "del_date", "status", "revenue",
+  "line_haul", "fuel_surcharge", "accessorials", "detention_charge", "layover",
   "late_fee", "lumper", "fuel", "repairs_maintenance", "other",
   "short_miles", "rate_loaded", "loaded_pay", "empty_miles", "rate_empty", "deadhead_pay", "gross",
 ];
@@ -42,7 +44,7 @@ function violations(board, backend) {
   const errors = [];
   for (const id of IDS) if (!board.includes(`"${id}"`)) errors.push(`missing ${id}`);
   const offsets = COLUMN_ORDER.map((id) => board.indexOf(`testId: "col-${id}"`));
-  if (offsets.some((offset) => offset < 0) || offsets.some((offset, index) => index > 0 && offset <= offsets[index - 1])) errors.push("nineteen columns are not declared in locked left-to-right order");
+  if (offsets.some((offset) => offset < 0) || offsets.some((offset, index) => index > 0 && offset <= offsets[index - 1])) errors.push("locked columns are not declared in left-to-right order");
   // Spec §3/DoD-2: SERVER-side sort, controlled (sortKey/sortDirection/onSortChange all wired) with
   // sortMode="external" -- ParityTable must never re-order rows itself on this board.
   if (!board.includes("<ParityTable") || !board.includes("enableColumnReorder") || !board.includes("enableColumnResize") || !board.includes('sortMode="external"') || !board.includes("onSortChange") || !board.includes("sortKey={sortKey}") || !board.includes("sortDirection={sortDirection}")) errors.push("board is not a reorderable, resizable, server-sorted (external) ParityTable");

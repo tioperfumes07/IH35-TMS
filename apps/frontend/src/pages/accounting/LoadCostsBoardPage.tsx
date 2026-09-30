@@ -39,6 +39,9 @@ type BoardRow = {
   unit_number: string | null; trailer_number: string | null; pickup_city: string | null; delivery_city: string | null;
   pickup_date: string | null; scheduled_delivery_at: string | null; actual_delivery_at: string | null; created_at: string;
   revenue_cents: string; expense_cents: string; bill_cents: string; repairs_maintenance_cents: string; driver_pay_cents: string;
+  /** ROUND 285.4.4 — Book Load wizard amounts from dispatch.load_charge_lines. */
+  line_haul_cents: string; fuel_surcharge_cents: string; accessorial_cents: string;
+  detention_charge_cents: string; layover_cents: string;
   expense_count: number; bill_count: number;
   fuel_cents: string; lumper_cents: string; late_fee_cents: string; other_cost_cents: string;
   /** null = no short-route figure exists for this bill's own basis (never invented -- honest blank, not zero). */
@@ -122,6 +125,7 @@ export const LOAD_COSTS_ELEMENT_MANIFEST = [
   "load-costs-show-voided",
   "kpi-loads-in-motion", "kpi-revenue-booked", "kpi-costs-recorded", "kpi-driver-pay", "kpi-approx-margin", "kpi-bank-unmatched",
   "col-load", "col-unit", "col-driver-name", "col-pu-date", "col-del-date", "col-status", "col-revenue",
+  "col-line-haul", "col-fuel-surcharge", "col-accessorials", "col-detention-charge", "col-layover",
   "col-late-fee", "col-lumper", "col-fuel", "col-repairs-maintenance", "col-other",
   "col-short-miles", "col-rate-loaded", "col-loaded-pay", "col-empty-miles", "col-rate-empty", "col-deadhead-pay", "col-gross",
   "load-costs-expand", "panel-costs-on-load",
@@ -750,6 +754,13 @@ export function LoadCostsBoardPage() {
       },
     },
     { key: "revenue", label: "Revenue", testId: "col-revenue", sortable: true, className: NUM, sortValue: r => Number(r.revenue_cents), render: r => fmt(Number(r.revenue_cents)) },
+    // ROUND 285.4.4 — wizard amounts traced to dispatch.load_charge_lines (Book Load). Dash = never
+    // recorded on the load (honesty rule); never invent from rate_total.
+    { key: "line_haul", label: "Line haul", testId: "col-line-haul", sortable: true, className: NUM, sortValue: r => Number(r.line_haul_cents), render: r => fmtDash(Number(r.line_haul_cents)) },
+    { key: "fuel_surcharge", label: "Fuel surcharge", testId: "col-fuel-surcharge", sortable: true, className: NUM, sortValue: r => Number(r.fuel_surcharge_cents), render: r => fmtDash(Number(r.fuel_surcharge_cents)) },
+    { key: "accessorials", label: "Accessorials", testId: "col-accessorials", sortable: true, className: NUM, sortValue: r => Number(r.accessorial_cents), render: r => fmtDash(Number(r.accessorial_cents)) },
+    { key: "detention_charge", label: "Detention", testId: "col-detention-charge", sortable: true, className: NUM, sortValue: r => Number(r.detention_charge_cents), render: r => fmtDash(Number(r.detention_charge_cents)) },
+    { key: "layover", label: "Layover", testId: "col-layover", sortable: true, className: NUM, sortValue: r => Number(r.layover_cents), render: r => fmtDash(Number(r.layover_cents)) },
     { key: "late_fee", label: "Late Fee", testId: "col-late-fee", sortable: true, className: NUM, sortValue: r => Number(r.late_fee_cents), render: r => fmtDash(Number(r.late_fee_cents)) },
     { key: "lumper", label: "Lumper", testId: "col-lumper", sortable: true, className: NUM, sortValue: r => Number(r.lumper_cents), render: r => fmtDash(Number(r.lumper_cents)) },
     { key: "fuel", label: "Fuel", testId: "col-fuel", sortable: true, className: NUM, sortValue: r => Number(r.fuel_cents), render: r => fmtDash(Number(r.fuel_cents)) },
@@ -839,7 +850,7 @@ export function LoadCostsBoardPage() {
   // odd/even. "The trip" columns carry NO body tint in the reference (plain zebra) -- band label only.
   const COLUMN_GROUPS = [
     { label: "The trip", keys: ["load", "unit", "driver_name", "pu_date", "del_date", "status"] },
-    { label: "Revenue", keys: ["revenue"], bg: "#EEF4FA", bgEven: "#E4EDF6" },
+    { label: "Revenue", keys: ["revenue", "line_haul", "fuel_surcharge", "accessorials", "detention_charge", "layover"], bg: "#EEF4FA", bgEven: "#E4EDF6" },
     { label: "Trip expense", keys: ["late_fee", "lumper", "fuel", "repairs_maintenance", "other"], bg: "#FDF6F3", bgEven: "#F8EDE8" },
     { label: "Driver pay", keys: ["short_miles", "rate_loaded", "loaded_pay", "empty_miles", "rate_empty", "deadhead_pay"], bg: "#F4F1FA", bgEven: "#EDE7F5" },
     { label: "", keys: ["gross"], bg: "#EDF1F5", bgEven: "#E6EBF1" },

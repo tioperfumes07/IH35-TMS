@@ -26,7 +26,8 @@
  *
  * loadCostRollupLateral() returns a `LEFT JOIN LATERAL (…) lcr ON true` whose columns are
  * load_number, driver_id, driver_name, unit_number, settlement_number, revenue_cents, fuel_cents,
- * expenses_cents, costs_cents, driver_pay_cents, margin_cents, net_cents. The caller passes the
+ * expenses_cents, costs_cents, driver_pay_cents, margin_cents, net_cents, plus ROUND 285.4.4
+ * wizard_* cents from dispatch.load_charge_lines. The caller passes the
  * OUTER SQL expressions for the load id and the operating company (both internal column references,
  * never user input — no injection surface). RLS scopes the base-table reads to the session company
  * exactly as the board route relies on.
@@ -45,6 +46,8 @@
  * longer collide with a caller's `l` — every existing call site keeps passing "l.id"/
  * "l.operating_company_id" unchanged and is now correctly correlated.
  */
+import { wizardChargesLeftJoin } from "./load-wizard-charges.sql.js";
+
 export function loadCostRollupLateral(loadIdExpr: string, companyExpr: string): string {
   return `LEFT JOIN LATERAL (
       SELECT
@@ -83,7 +86,12 @@ export function loadCostRollupLateral(loadIdExpr: string, companyExpr: string): 
         (COALESCE(ec.expense_cents, 0) + COALESCE(bc.bill_cents, 0))::bigint AS costs_cents,
         COALESCE(dp.driver_pay_cents, 0)::bigint AS driver_pay_cents,
         (cl.rate_total_cents - COALESCE(ec.expense_cents, 0) - COALESCE(bc.bill_cents, 0) - COALESCE(dp.driver_pay_cents, 0))::bigint AS margin_cents,
-        (cl.rate_total_cents - COALESCE(ec.expense_cents, 0) - COALESCE(bc.bill_cents, 0) - COALESCE(dp.driver_pay_cents, 0))::bigint AS net_cents
+        (cl.rate_total_cents - COALESCE(ec.expense_cents, 0) - COALESCE(bc.bill_cents, 0) - COALESCE(dp.driver_pay_cents, 0))::bigint AS net_cents,
+        COALESCE(wiz.linehaul_cents, 0)::bigint AS wizard_linehaul_cents,
+        COALESCE(wiz.fuel_surcharge_cents, 0)::bigint AS wizard_fuel_surcharge_cents,
+        COALESCE(wiz.accessorial_cents, 0)::bigint AS wizard_accessorial_cents,
+        COALESCE(wiz.detention_charge_cents, 0)::bigint AS wizard_detention_cents,
+        COALESCE(wiz.layover_charge_cents, 0)::bigint AS wizard_layover_cents
       FROM mdata.loads cl
       LEFT JOIN mdata.units u
         ON u.id = cl.assigned_unit_id
@@ -114,6 +122,7 @@ export function loadCostRollupLateral(loadIdExpr: string, companyExpr: string): 
          WHERE db.load_id IS NOT NULL AND db.status <> 'void'
          GROUP BY db.load_id
       ) dp ON dp.load_id = cl.id
+      ${wizardChargesLeftJoin("cl.id", "cl.operating_company_id", "wiz")}
       WHERE cl.id = ${loadIdExpr}
         AND cl.operating_company_id = ${companyExpr}
       LIMIT 1
@@ -134,4 +143,9 @@ export const LOAD_COST_ROLLUP_SELECT = `
               lcr.costs_cents AS lc_costs_cents,
               lcr.driver_pay_cents AS lc_driver_pay_cents,
               lcr.margin_cents AS lc_margin_cents,
-              lcr.net_cents AS lc_net_cents`;
+              lcr.net_cents AS lc_net_cents,
+              lcr.wizard_linehaul_cents AS lc_wizard_linehaul_cents,
+              lcr.wizard_fuel_surcharge_cents AS lc_wizard_fuel_surcharge_cents,
+              lcr.wizard_accessorial_cents AS lc_wizard_accessorial_cents,
+              lcr.wizard_detention_cents AS lc_wizard_detention_cents,
+              lcr.wizard_layover_cents AS lc_wizard_layover_cents`;
