@@ -6,6 +6,10 @@ export type InvoiceLineRender = {
   rate: string;
   amountCents: number;
   isSubtotal?: boolean;
+  /** ROUND 285.4.9 / #59 — under detention/layover only; blank when approval missing. */
+  approvedBy?: string | null;
+  approvalMethod?: string | null;
+  lineType?: string | null;
 };
 
 export type InvoiceAdjustmentRow = {
@@ -54,7 +58,16 @@ export function renderInvoiceBody(model: InvoiceHtmlModel): string {
   const linesHtml = model.lines
     .map((line) => {
       const cls = line.isSubtotal ? ` class="subtotal"` : "";
-      return `<tr${cls}><td>${escapeHtml(line.description)}</td><td class="num">${escapeHtml(line.basis)}</td><td class="num">${escapeHtml(line.rate)}</td><td class="num">${escapeHtml(formatMoney(line.amountCents))}</td></tr>`;
+      const lt = String(line.lineType ?? "").toLowerCase();
+      const needsApproval = lt === "detention" || lt === "layover" || /\bdetention\b|\blayover\b/i.test(line.description);
+      let approvalHtml = "";
+      if (needsApproval && !line.isSubtotal) {
+        const by = (line.approvedBy ?? "").trim();
+        const method = (line.approvalMethod ?? "").trim();
+        // Owner: blank fields when missing — never invent an approver. Flag is the empty values.
+        approvalHtml = `<div style="font-size:9px;color:#4B5563;margin:2px 0 0;letter-spacing:0.02em;">APPROVED BY: ${escapeHtml(by || "—")} · METHOD: ${escapeHtml(method || "—")}</div>`;
+      }
+      return `<tr${cls}><td>${escapeHtml(line.description)}${approvalHtml}</td><td class="num">${escapeHtml(line.basis)}</td><td class="num">${escapeHtml(line.rate)}</td><td class="num">${escapeHtml(formatMoney(line.amountCents))}</td></tr>`;
     })
     .join("");
 
