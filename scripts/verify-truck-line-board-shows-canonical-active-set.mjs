@@ -60,7 +60,13 @@ function staticChecks() {
     problems.push('TruckLineBoard must render data-testid="truck-line-column-order"');
   } else {
     const labels = [...header[0].matchAll(/label="([^"]+)"/g)].map((m) => m[1]);
-    const expected = ["UNIT", "TOUR / PRE-SETTLEMENT", "LOAD", "PU DATE", "DELIVERY DATE"];
+    // #23330 (Lead, 2026-09-30 04:12): owner, verbatim -- "TOUR / PRE-SETTLEMENT — remove
+    // PRE-SETTLEMENT, just leave TOUR, so the columns can be narrower." The column still holds
+    // the same value (a P-series display_id); only the header word shrank. This guard's own
+    // expectation was never updated after that legitimate change, so it went stale-red rather
+    // than the board being wrong -- confirmed by re-reading #23330's own diff and commit message
+    // before touching this line.
+    const expected = ["UNIT", "TOUR", "LOAD", "PU DATE", "DELIVERY DATE"];
     if (JSON.stringify(labels) !== JSON.stringify(expected)) {
       problems.push(`Column order wrong: got ${JSON.stringify(labels)}, want ${JSON.stringify(expected)}`);
     }
