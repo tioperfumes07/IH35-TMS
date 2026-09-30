@@ -4533,4 +4533,16 @@ action:
   OWNER_AUTH_ID=AUTH-139 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth139-repost-6-zero-footprint.ts
 
 expires_at: 2026-10-01T08:00:00.000Z
-status: OPEN
+status: CONSUMED
+
+consumed_at: 2026-09-30T01:50:00.000Z
+consumed_by: CC-2
+row_counts: 6 of 6 posted via postFactoringAdvanceEventInClientTx, 0 skipped.
+proof_query: 1090/1230/2150/6300/6400 before and after, USMCA, bypass_rls=lucia -- BEFORE:
+  1090=$306,304.02. AFTER (committed): 1090=$315,561.76 (+$9,257.74 exactly -- the same amount
+  removed by AUTH-137's void, now correctly restored via the repost rather than the wrong
+  duplicate copy). 2150 rose $9,575.00 (the 6 advances' face value, now correctly liable again).
+This closes the discovery made mid-AUTH-137: all 10 determined-survivor groups now have exactly
+one live, correct funding JE each.
+
+— CC-2
