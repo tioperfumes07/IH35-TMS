@@ -5652,7 +5652,20 @@ action:
   OWNER_AUTH_ID=AUTH-173 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth173-reverse-13625-13626-advance-and-invoice-voids.ts --apply
   (run from repo root; DRY_RUN first with no --apply flag)
 expires_at: 2026-10-01T00:00:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T12:18:56.586Z
+consumed_by: CC-2
+row_counts: 4 of 4 reinstated.
+    FAC-2026-00139 -> fresh re-post JE 3b84b409-06bd-44fb-abc3-b305b0c11939, header reinstated
+    FAC-2026-00140 -> fresh re-post JE 893eea09-0595-4bb9-af19-b6a09d68e71a, header reinstated
+    13625 -> invoice reinstated, status='sent'
+    13626 -> invoice reinstated, status='sent'
+proof_query: BEFORE/AFTER printed by the script itself, live prod, 2026-09-30 -- AFTER trial
+  balance (1090=15920734, 1230=514440, 2150=-34343905, 6400=514764) matches AUTH-170's own
+  pre-void BEFORE figures exactly, to the cent. Independently re-verified after commit: both
+  advances status='advanced'/voided_at=NULL, both invoices status='sent'/voided_at=NULL, both
+  delivery stops' actual_arrival_at/actual_departure_at still NULL (AUTH-172 confirmed unchanged,
+  as required -- delivery evidence and factoring reality are separate facts).
 
 ---
 
