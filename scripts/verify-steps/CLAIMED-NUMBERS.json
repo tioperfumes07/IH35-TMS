@@ -7443,6 +7443,11 @@
     "claimed_at": "2026-09-30",
     "purpose": "verify-pm-schedule-never-guesses-a-baseline (ROUND 297.2 A-27/A-28/A-29)"
   },
+  "11963": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-invoice-amount-paid-matches-applications (ROUND 300 B-31: locks the clean payment_applications->invoice.amount_paid_cents link found while tracing the A/R overstatement)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
