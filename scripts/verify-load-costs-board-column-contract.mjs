@@ -15,6 +15,7 @@ const BOARD = "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx";
 
 const COLUMN_ORDER = [
   "load", "unit", "driver-name", "pu-date", "del-date", "status", "revenue",
+  "line-haul", "fuel-surcharge", "accessorials", "detention-charge", "layover",
   "late-fee", "lumper", "fuel", "repairs-maintenance", "other",
   "short-miles", "rate-loaded", "loaded-pay", "empty-miles", "rate-empty", "deadhead-pay", "gross",
 ];
@@ -63,7 +64,11 @@ if (process.argv.includes("--selftest")) {
     board.replace('testId: "col-gross"', 'testId: "col-removed-gross"'),
     swapped,
     `${board}\n{ key: "category", testId: "col-category", label: "Category" }`,
-    board.replace('{ key: "margin", label: "Margin", testId: "col-margin", sortable: true, className: "text-center [font-variant-numeric:tabular-nums]", defaultHidden: true,', '{ key: "margin", label: "Margin", testId: "col-margin", sortable: true, className: "text-center [font-variant-numeric:tabular-nums]",'),
+    board.replace(
+      '{ key: "margin", label: "Margin", testId: "col-margin", sortable: true, className: NUM, defaultHidden: true,',
+      '{ key: "margin", label: "Margin", testId: "col-margin", sortable: true, className: NUM,',
+    ),
+    board.replace('testId: "col-line-haul"', 'testId: "col-line-haul-GONE"'),
   ];
   for (const mutated of mutations) {
     try { check(mutated); }
@@ -74,5 +79,5 @@ if (process.argv.includes("--selftest")) {
   console.log(`PASS verify-load-costs-board-column-contract --selftest (${caught}/${mutations.length})`);
 } else {
   check(board);
-  console.log(`PASS verify-load-costs-board-column-contract (19/19 columns, in order, route_crew/costs/category absent)`);
+  console.log(`PASS verify-load-costs-board-column-contract (${COLUMN_ORDER.length}/${COLUMN_ORDER.length} columns, in order, route_crew/costs/category absent)`);
 }
