@@ -186,6 +186,53 @@ function isChecksumOverrideMatch(overridesByFile, file, ledgerChecksum, diskChec
 //
 // Granting here, at the point of creation, is the only self-contained place for it: a migration
 // cannot reliably grant a table the migrator itself needs before migrations run.
+// ── FRESH-DB PRODUCTION-IDENTITY BOOTSTRAP (Lead, 2026-09-30) ────────────────
+// Same class, and the same reasoning, as ensureLedgerGrants above: something a migration CANNOT
+// do for itself, done by the migrator at the only point where it is possible.
+//
+// ROOT CAUSE: 202614530000_qbo_flags_permanent_block.sql seeds catalogs.blocked_feature_flags with
+// blocked_by_user_id = 'e4117991-d2c0-406d-8cda-74e98d95bccd', an FK to identity.users(id). That
+// user is real in PRODUCTION (verified live 2026-09-30) but exists in no migration, so every
+// database built from source — CI's ephemeral Postgres, a DR restore, a fresh Neon branch — dies
+// there with "insert or update on table blocked_feature_flags violates foreign key constraint
+// blocked_feature_flags_blocked_by_user_id_fkey". main CI has been red on this since 2026-09-17.
+//
+// Why it cannot be fixed in a migration, either by editing or by adding one:
+//   - Editing 202614530000 changes the bytes of an APPLIED migration. That was tried (08eee92f52 /
+//     #23137) and red'd deploy AND main with a ledger-checksum mismatch; the owner P0'd a
+//     byte-for-byte restore (#23149). The immutability law is enforced by checksum, not by honor.
+//   - A NEW migration sorts AFTER 202614530000 by construction, so it runs after the failure.
+//     202614580000 (the FK-safe follow-up) correctly repairs production drift, but on a fresh
+//     database it is never reached. There is no number that sorts before an already-applied file.
+// The runner is the only remaining place, exactly as the ledger-grant comment above argues.
+//
+// Scope, deliberately narrow:
+//   - NON-PROD ONLY. Production already has this user; asserting it there is both pointless and a
+//     write this script has no business making.
+//   - The row cannot authenticate: no email, no google_user_id, no password_hash — same shape as
+//     the sanctioned identity.users service account in 202614200000.
+//   - Idempotent (ON CONFLICT DO NOTHING) and no-ops until identity.users exists.
+const FRESH_DB_PROD_IDENTITY_UUID = "e4117991-d2c0-406d-8cda-74e98d95bccd";
+let freshDbIdentityBootstrapped = false;
+async function ensureFreshDbProductionIdentity(client) {
+  if (TARGET_IS_PROD || freshDbIdentityBootstrapped) return;
+  const present = await client.query(`SELECT to_regclass('identity.users') IS NOT NULL AS ok`);
+  if (!present.rows[0]?.ok) return; // identity.users not created yet — try again next migration
+  await client.query(
+    `
+      INSERT INTO identity.users (id, email, google_user_id, role, created_at, password_hash, first_name, last_name)
+      VALUES ($1::uuid, NULL, NULL, 'Owner', now(), NULL, 'Owner', 'Ruling Actor')
+      ON CONFLICT (id) DO NOTHING
+    `,
+    [FRESH_DB_PROD_IDENTITY_UUID]
+  );
+  freshDbIdentityBootstrapped = true;
+  console.log(
+    `[db:migrate] fresh-DB identity bootstrap: ensured identity.users ${FRESH_DB_PROD_IDENTITY_UUID} (non-prod target only)`
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 async function ensureLedgerGrants(client) {
   // Role-guarded because on a genuinely fresh database this runs BEFORE 0006 creates ih35_app.
   // That first pass no-ops; the call after the apply loop then lands it in the same run.
@@ -595,6 +642,7 @@ try {
       );
     }
 
+    await ensureFreshDbProductionIdentity(client);
     console.log(`APPLY ${file}`);
     await applyMigration(client, file, sql, checksum);
     if (!ledgerFilesByChecksum.has(checksum)) ledgerFilesByChecksum.set(checksum, []);
