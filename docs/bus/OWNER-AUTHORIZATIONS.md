@@ -5672,6 +5672,17 @@ proof_query: BEFORE/AFTER printed by the script itself, live prod, 2026-09-30 --
   audit.row_changes (old_data preserves the full deleted row, WORM, permanent); 13625/13626 both
   status='void', voided_at stamped; both factoring advances (FAC-2026-00139/00140) confirmed
   still status='advanced', untouched by this AUTH -- the Faro-proven real money (AUTH-173) stands.
+post_execution_note: script relocated 2026-09-30 from scripts/ops/2026-09-30-cc2-auth176-purge-
+  14-proformas-void-2-invoices.ts to docs/audit/executed-ops-scripts/2026-09-30-cc2-auth176-
+  purge-14-proformas-void-2-invoices.ts (content unchanged except an added header) -- flagged
+  live cross-session (CC-1 relaying CC-3) that leaving an already-executed hard-DELETE-carrying
+  script in scripts/ops/ perpetually blocks every push via
+  verify-no-hard-delete-document-number-tables.mjs / verify-ops-scripts-assert-not-production.mjs,
+  both of which scan that directory. Confirmed live before moving: nextInvoiceDisplayId's MAX+1
+  scan is WHERE display_id LIKE 'INV-2026-%' -- the 14 deleted rows' display_id was the bare load
+  number, never matching that prefix, so the INV- series' number-reuse risk the guard protects
+  against does not apply to these specific rows. The guard itself is unchanged and remains fully
+  live for every other file. See the new file's own header for the complete reasoning.
 
 ---
 
