@@ -42,7 +42,7 @@ async function main() {
     await client.query("RESET ROLE").catch(() => {});
     await client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
 
-    const fuelWithoutExpense = await client.query<{ count: string }>(
+    const fuelWithoutExpense = await client.query(
       `SELECT count(*)::text AS count
          FROM fuel.fuel_transactions ft
         WHERE ft.operating_company_id = $1::uuid
@@ -56,7 +56,7 @@ async function main() {
       [USMCA_COMPANY_ID]
     );
 
-    const expenseWithoutFuel = await client.query<{ count: string }>(
+    const expenseWithoutFuel = await client.query(
       `SELECT count(DISTINCT e.id)::text AS count
          FROM accounting.expenses e
          JOIN accounting.journal_entry_postings jep
