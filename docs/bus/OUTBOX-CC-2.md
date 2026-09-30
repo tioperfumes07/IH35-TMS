@@ -490,3 +490,32 @@ GUARD: scripts/verify-integrity-findings-attribution-rate.mjs (verify-step 11971
 NEXT: B-34 (factoring reserve / escrow tie-out).
 
 — CC-2
+
+---
+## 2026-09-30 — B-34 REPORT (Factoring Reserve / Escrow tie-out, measure only)
+
+JOB ID: B-34 (ROUND 300)
+
+FOUND: Driver Escrow's real sub-ledger is exactly right — driver_finance.escrow_balances shows
+14 drivers, $2,375.00 to the cent, matching your own figures exactly. But the GL side (Driver
+Escrow named sub-accounts) sums to only $1,325.00 — a $1,050.00 gap between the GL and the real
+sub-ledger it's supposed to mirror. The sub-ledger itself is trustworthy; the GL posting of it
+isn't. Three drivers even show a negative escrow balance (Rafael -$25, Neftali -$50, Jorge Luis
+Infante -$150), flagged not investigated.
+
+Factoring Reserve also doesn't tie: GL balance $5,144.40 vs Faro's own statement total $5,208.19
+— a $63.79 gap. Neither matches your stated $4,992.75 exactly either.
+
+All the test/sample-named escrow sub-accounts in the CoA (there are ~25 of them) have zero GL
+activity — that noise isn't contaminating the real number, good.
+
+GUARD: scripts/verify-factoring-reserve-escrow-subledger-gap.mjs (verify-step 11975, reserved
+via #23520) — ratchets today's measurements (both gaps, as-is) as a floor. LIVE PASS,
+--selftest 1/1 mutation caught.
+
+NOT ADJUSTED: measure only, per the order. Filed on the board as
+FACTORING-RESERVE-ESCROW-SUBLEDGER-GAP-2026093012.
+
+NEXT: B-35 (QBO connection status).
+
+— CC-2
