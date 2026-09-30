@@ -33,3 +33,23 @@ T-03 · catalog_ready / On-time click investigation — cannot reproduce live, m
   accounts with zero org.user_company_access rows querying a NON-default company --
   Owner is immune to that path) and a browser network-tab capture of the real response
   body, not just the on-screen symptom.
+
+T-04 · Truck Line bottom-section feed — DONE, merged (PR #23437, 1154f4ff9b):
+- ROOT CAUSE: the feed's only query INNER JOINs mdata.units on assigned_unit_id plus
+  AND assigned_unit_id IS NOT NULL, so a booked/planned/assigned load with no unit yet
+  structurally has nowhere to appear. DISPATCH_WORK_LOAD_STATUSES already includes
+  booked/planned/assigned/unassigned/assigned_not_dispatched -- status was never the
+  exclusion, the unit JOIN was.
+- FIX: new `pending_rows` in the response -- PENDING_LOAD_STATUSES (the dispatch-work set
+  minus the four actively-rolling statuses, derived not duplicated) LEFT JOIN units,
+  excluding anything that already qualifies for the top-level `rows` (NOT EXISTS mirroring
+  UNIT_IN_SERVICE_SQL) so the two lists can never disagree or duplicate a row. Promotion
+  needs no separate write path -- crossing into an active status simply stops matching
+  pending and starts matching top on the next 30s poll.
+- PROOF: 4/4 new unit tests, backend+frontend tsc clean. Live non-duplication case
+  confirmed on real data (company 91e0bf0a-133f-4ce8-a734-2586cfa66d96's one live
+  assigned_not_dispatched load, unit T139 in-service, correctly excluded from pending,
+  stays in top only). USMCA itself has 0 loads in any pre-dispatch status right now, so a
+  positive "row appears in pending" example needs a real booked load to exist first --
+  not available today without writing new load data (owner freeze).
+- REMAINING: bottom-section UI render is a separate build, per the job assignment.
