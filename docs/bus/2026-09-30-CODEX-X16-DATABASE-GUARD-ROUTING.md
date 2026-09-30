@@ -1,4 +1,4 @@
-# CODEX | 2026-09-30 6:38 AM CT | X-16 — priority over remaining X jobs
+# CODEX | 2026-09-30 6:35 AM CT | X-16 — priority over remaining X jobs
 
 Owner ruling: database-required guards belong in required CI, not local hooks.
 No empty-database baseline is a live measurement. AUTH-147 remains a recorded

@@ -70,7 +70,10 @@ export function findUnscopedLiveDomainGuardRuns(source) {
   if (!/if\s*\(\s*touched\s*\)\s*\{/.test(loopBody)) {
     problems.push("the loop does not gate a touched guard's run behind `if (touched)` alone");
   }
-  if (!/if\s*\(\s*!\s*process\s*\.\s*env\s*\.\s*DATABASE_URL\s*\)/.test(loopBody)) {
+  // X-16: reviewed database phases now run in REQUIRED CI. Unknown guards must
+  // still fail closed here. This accepts only the shared routing predicate, not
+  // arbitrary exceptions or an unconditional skip; its CI binding is tested below.
+  if (!/if\s*\(\s*!\s*process\s*\.\s*env\s*\.\s*DATABASE_URL\s*(?:&&\s*requiresLocalDatabase\(rel\)\s*)?\)/.test(loopBody)) {
     problems.push("a touched guard with no DATABASE_URL is not explicitly failed closed inside the loop");
   }
   if (!/runNode\s*\(\s*rel\s*\)/.test(loopBody)) {
@@ -114,6 +117,11 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
   const goodProblems = findUnscopedLiveDomainGuardRuns(good);
   if (goodProblems.length !== 0) failures.push(`findUnscopedLiveDomainGuardRuns wrongly flagged the good fixture: ${goodProblems.join("; ")}`);
 
+  const ciRouted = good.replace('!process.env.DATABASE_URL)', '!process.env.DATABASE_URL && requiresLocalDatabase(rel))');
+  if (findUnscopedLiveDomainGuardRuns(ciRouted).length) failures.push('required CI routing rejected');
+  const bypass = good.replace('!process.env.DATABASE_URL)', '!process.env.DATABASE_URL && false)');
+  if (!findUnscopedLiveDomainGuardRuns(bypass).length) failures.push('unconditional credential bypass accepted');
+
   const noArray = `const x = 1;`;
   const noArrayProblems = findUnscopedLiveDomainGuardRuns(noArray);
   if (noArrayProblems.length === 0) failures.push("findUnscopedLiveDomainGuardRuns did not flag a file with no LIVE_DOMAIN_GUARDS array at all");
@@ -142,7 +150,7 @@ function main() {
   if (problems.length) {
     fail(`${path.relative(ROOT, GATE_PATH)}: ${problems.join("; ")}`);
   }
-  console.log(`${LABEL}: PASS — every LIVE_DOMAIN_GUARDS entry runs only when its own domain is touched; a touched guard with no DATABASE_URL fails closed, never skips.`);
+  console.log(`${LABEL}: PASS — domain checks are diff-scoped; unknown database guards fail closed locally, reviewed database phases require CI (X-16).`);
 }
 
 main();
