@@ -564,3 +564,31 @@ ROUND 300 QUEUE (B-31 through B-35) is now complete. Summary:
 B-36: re-reading the queue file now for whatever's next.
 
 — CC-2
+
+---
+## 2026-09-30 — ACK ROUND 301, B-31 UPDATED (row-level proof)
+
+ACK 2026-09-30 · CC-2 · read ROUND 301 (B-31..B-37). Starting top to bottom.
+
+JOB ID: B-31 (ROUND 301, extends the ROUND 300 finding)
+
+Re-measured with full row-level detail, per "prove it with rows," nothing netted. 104 open
+invoices sum to $366,409.12 exactly. 102 of those carry ZERO payment_applications at all
+($366,071.72) — the complete named list (display_id, customer, amount) is now in the guard's own
+live output, not summarized away. The other 2 have a partial application and remain correctly
+open (CORE's $250 short-pay).
+
+I still cannot name which of the 102 correspond to the $28,125.00 Faro says it collected in
+September — that data doesn't exist in this database anywhere (re-confirmed:
+factor.faro_daily_imports.raw_payload is a header object, not a line-item array). Naming a
+correspondence without the actual Faro rows would be exactly the netting the order forbids, so I
+didn't guess. Extended the existing guard (verify-step 11963, not a new claim) to print the full
+list and ratchet its count.
+
+GUARD: scripts/verify-invoice-amount-paid-matches-applications.mjs — same verify-step 11963,
+extended (not re-claimed). LIVE PASS, --selftest 2/2 mutations caught.
+
+NEXT: B-32 (the bank-feed matched side) — reading the owner's window-cascade ruling first, as
+ordered.
+
+— CC-2

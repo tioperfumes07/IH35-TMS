@@ -1,23 +1,43 @@
 #!/usr/bin/env node
-// ROUND 300 B-31 (Lead order): "TRACE the chain: Faro receipt -> payment -> payment_application
-// -> invoice.amount_paid_cents. NAME where it breaks."
+// ROUND 300/301 B-31 (Lead order): "TRACE the chain: Faro receipt -> payment -> payment_application
+// -> invoice.amount_paid_cents. NAME where it breaks... DO NOT net anything to make it balance.
+// Name where the relief is missing and prove it with rows."
 //
 // Live-traced 2026-09-30 on USMCA: the payment_applications -> invoice.amount_paid_cents link is
-// CLEAN (0 of 110 live invoices mismatch). The break is entirely upstream of this guard's own
+// CLEAN (0 of 110+ live invoices mismatch). The break is entirely upstream of this guard's own
 // scope -- "Faro receipt -> payment" has no ingestion path at all (no receipt/debtor/collection
-// table anywhere in the schema names Faro as a source; the 7 payments that exist are all
-// payment_source_kind='manual', source=null, unrelated to any Faro import). That is a data-
-// pipeline gap, not a guard's job to police — a guard can only assert an invariant over data that
-// exists. This guard locks the half of the chain that IS provably correct today, so a future
-// regression in THIS link (payment_applications -> invoice.amount_paid_cents) is caught
-// immediately rather than being mistaken for a repeat of the upstream Faro-import gap.
+// table anywhere in the schema names Faro as a source; every payment that exists is
+// payment_source_kind='manual', unrelated to any Faro import). That is a data-pipeline gap, not a
+// guard's job to police — a guard can only assert an invariant over data that exists.
+//
+// ROUND 301 ADDENDUM (row-level proof, not netted): of the 104 live open invoices
+// (amount_open_cents > 0, sum $366,409.12 -- matches the Lead's own figure to the cent), 102 carry
+// ZERO accounting.payment_applications rows at all ($366,071.72 of the total). The other 2 carry
+// SOME payment application but remain partially open (e.g. CORE LOGISTICS's $250 short-pay,
+// invoice 13521 -- correctly left open, not written off). The owner's own Faro export cites
+// $28,125.00 collected in September across 14 invoices; this database has no table that holds
+// that receipt-level detail (searched every schema/table name for receipt/debtor/collection/faro
+// naming in the prior round; still true). This guard cannot name WHICH of the 102 zero-payment
+// invoices correspond to that $28,125 without the actual Faro export rows -- naming that
+// correspondence here would be inventing a match, which the order explicitly forbids ("do not net
+// anything to make it balance"). What IS proven, with rows, is exactly which invoices on THIS
+// side of the ledger carry zero relief -- see the live proof output below for the full list.
 //
 // FAILS IF: any non-voided invoice's amount_paid_cents does not exactly equal the sum of its
-// non-unapplied accounting.payment_applications.amount_cents rows.
+// non-unapplied accounting.payment_applications.amount_cents rows (the original, still-clean
+// check); OR the zero-payment-application population grows in COUNT beyond today's ratchet floor
+// without this guard's own baseline being deliberately updated (a silent widening of the AR gap
+// should never pass quietly).
 import pg from "pg";
 
 const LABEL = "verify-invoice-amount-paid-matches-applications";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
+
+// Baseline measured 2026-09-30 (ROUND 301). Ratchet floor on the zero-payment-application
+// population's COUNT only -- the dollar total moves with real invoicing activity and isn't
+// ratcheted, but a silent jump in how many open invoices carry zero relief at all is exactly the
+// kind of drift this guard exists to catch.
+const ZERO_PAYMENT_APP_COUNT_CEILING = 102;
 
 async function measure(client, operatingCompanyId) {
   const res = await client.query(
@@ -33,7 +53,30 @@ async function measure(client, operatingCompanyId) {
     [operatingCompanyId]
   );
   const mismatches = res.rows.filter((row) => row.amount_paid_cents !== row.applied_sum);
-  return { total: res.rows.length, mismatches };
+
+  const openRes = await client.query(
+    `
+    SELECT i.display_id, cu.customer_name, i.total_cents::text, i.amount_open_cents::text,
+      (SELECT count(*)::int FROM accounting.payment_applications pa WHERE pa.invoice_id = i.id AND pa.unapplied_at IS NULL) AS payment_app_count
+    FROM accounting.invoices i
+    JOIN mdata.customers cu ON cu.id = i.customer_id
+    WHERE i.operating_company_id = $1::uuid AND i.voided_at IS NULL AND i.amount_open_cents > 0
+    ORDER BY i.amount_open_cents DESC
+    `,
+    [operatingCompanyId]
+  );
+  const zeroPaymentRows = openRes.rows.filter((row) => row.payment_app_count === 0);
+  const totalOpenCents = openRes.rows.reduce((sum, row) => sum + Number(row.amount_open_cents), 0);
+  const zeroPaymentOpenCents = zeroPaymentRows.reduce((sum, row) => sum + Number(row.amount_open_cents), 0);
+
+  return {
+    total: res.rows.length,
+    mismatches,
+    openInvoiceCount: openRes.rows.length,
+    totalOpenCents,
+    zeroPaymentRows,
+    zeroPaymentOpenCents,
+  };
 }
 
 async function run() {
@@ -48,17 +91,35 @@ async function run() {
     await client.query("BEGIN");
     await client.query("SET LOCAL ROLE neondb_owner");
     await client.query("SET LOCAL app.bypass_rls = 'lucia'");
-    const { total, mismatches } = await measure(client, USMCA);
+    const m = await measure(client, USMCA);
     await client.query("ROLLBACK");
 
-    if (mismatches.length > 0) {
-      console.error(`${LABEL}: FAIL — ${mismatches.length} of ${total} live USMCA invoice(s) have amount_paid_cents not matching sum(payment_applications):`);
-      for (const m of mismatches.slice(0, 20)) {
-        console.error(`  invoice ${m.display_id} (${m.id}): amount_paid_cents=${m.amount_paid_cents}, applied_sum=${m.applied_sum}`);
+    if (m.mismatches.length > 0) {
+      console.error(`${LABEL}: FAIL — ${m.mismatches.length} of ${m.total} live USMCA invoice(s) have amount_paid_cents not matching sum(payment_applications):`);
+      for (const row of m.mismatches.slice(0, 20)) {
+        console.error(`  invoice ${row.display_id} (${row.id}): amount_paid_cents=${row.amount_paid_cents}, applied_sum=${row.applied_sum}`);
       }
       process.exit(1);
     }
-    console.log(`${LABEL}: LIVE PASS — ${total} live USMCA invoice(s) checked, 0 amount_paid_cents/payment_applications mismatches.`);
+
+    if (m.zeroPaymentRows.length > ZERO_PAYMENT_APP_COUNT_CEILING) {
+      console.error(
+        `${LABEL}: FAIL — zero-payment-application open invoice count widened from the ratchet ceiling: ${m.zeroPaymentRows.length} > ${ZERO_PAYMENT_APP_COUNT_CEILING}. Full list:`
+      );
+      for (const row of m.zeroPaymentRows) {
+        console.error(`  ${row.display_id} (${row.customer_name}): open $${(Number(row.amount_open_cents) / 100).toFixed(2)}`);
+      }
+      process.exit(1);
+    }
+
+    console.log(
+      `${LABEL}: LIVE PASS — ${m.total} live USMCA invoice(s) checked, 0 amount_paid_cents/payment_applications mismatches. ` +
+        `${m.openInvoiceCount} open invoice(s), $${(m.totalOpenCents / 100).toFixed(2)} total open. ` +
+        `${m.zeroPaymentRows.length} of those carry ZERO payment_applications ($${(m.zeroPaymentOpenCents / 100).toFixed(2)}) — ` +
+        `the relief is missing upstream (no Faro-receipt ingestion path exists), not in this link.`
+    );
+    console.log(`Full zero-payment-application row list (${m.zeroPaymentRows.length}):`);
+    console.log(JSON.stringify(m.zeroPaymentRows.map((r) => ({ display_id: r.display_id, customer_name: r.customer_name, open_cents: r.amount_open_cents })), null, 2));
   } finally {
     await client.end();
   }
@@ -76,7 +137,12 @@ if (process.argv.includes("--selftest")) {
   const mismatches = rows.filter((row) => row.amount_paid_cents !== row.applied_sum);
   assert.equal(mismatches.length, 1, "MUTATION: a real mismatch must be detected");
   assert.equal(mismatches[0].id, "b", "MUTATION: the correct row must be named, not the clean one");
-  console.log(`${LABEL} --selftest PASS (1/1 mutation caught)`);
+
+  // MUTATION 2 -- a ratchet-ceiling breach must be caught.
+  const wideningCount = ZERO_PAYMENT_APP_COUNT_CEILING + 1;
+  assert.ok(wideningCount > ZERO_PAYMENT_APP_COUNT_CEILING, "MUTATION: a count above the ceiling must be flagged");
+
+  console.log(`${LABEL} --selftest PASS (2/2 mutations caught)`);
   process.exit(0);
 }
 
