@@ -682,3 +682,33 @@ NEXT: B-35 (the two virtual ledgers -- prove the escrow-never-books-to-expense i
 a query, then name the real account that should back each ledger).
 
 — CC-2
+
+## ROUND 301 B-35 — escrow/factoring-reserve never books to expense (DONE)
+
+Proved, with two independent queries each, that neither virtual ledger ever posts to an
+Expense-type account in USMCA: (1) every source_transaction_type='escrow_account' posting hits
+Asset (16, $500.00) or Liability (16, $500.00) only, zero Expense; (2) broader net -- ANY
+posting anywhere with "escrow" in its memo/description, joined to an Expense-type account --
+zero rows, catching a mis-tagged posting that check (1) alone would miss. Same two-check
+pattern for factoring reserve: all 344 live postings are Asset-type, zero Expense.
+
+Named the real backing account for each, as ordered: Driver Escrow Pool ->
+"Driver Escrow - Held in Trust" (catalogs.accounts 2100, Liability, id
+0dc63b15-3407-4414-8efe-38d082a9f29f), parent of 44 correctly-Liability-typed per-driver
+2100-00-NNN sub-accounts. Factoring Reserve -> "Factoring Reserves" (1230, Asset, id
+165cc317-5c8b-4296-8aab-f5101f4a6815). Both already correctly typed -- the gap named in
+FACTORING-RESERVE-ESCROW-SUBLEDGER-GAP-2026093012 (GL total vs sub-ledger/Faro total) is a
+posting-completeness/timing gap, not a wrong-account-type problem. (Checked a possible
+account_number collision on 2100/1230 first -- each exists twice in catalogs.accounts, but the
+second instance of each belongs to a different operating_company_id, ordinary multi-tenant CoA
+shape, not a real duplicate.)
+
+Shipped scripts/verify-steps/11991-verify-escrow-factoring-reserve-never-books-expense.mjs
+(claim-reserved first, PR #23572) as a HARD invariant (not a ratchet) -- FAILS if any future
+posting, tagged or mis-tagged, ever reaches an Expense account for either ledger, or if either
+named backing account is ever retyped away from Liability/Asset.
+
+NEXT: B-36 (QBO not connected, last sync never -- report what connecting would push/overwrite
+today, without connecting).
+
+— CC-2
