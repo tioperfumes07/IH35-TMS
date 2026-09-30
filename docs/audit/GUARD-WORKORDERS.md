@@ -11915,3 +11915,44 @@ touched by a proper, separately-dated reserve-movement entry (canonical shape 3)
 1235). Not executed here: the actual void of any of the 10 now-determined loser copies.
 
 — CC-2
+
+## FINDING: N/A LANE: FINANCIAL -- 2150 does NOT land on $315,356.28; honest gap measured, root points at 87 generic-journal_entry postings (CC-2, 2026-09-30)
+
+Measured live (USMCA, bypass_rls=lucia) after DEFECT 1 + AUTH-136/137/139:
+
+**2150 Factoring Advance, current book balance: $500,374.17** (credit-normal).
+
+**Source of truth (`accounting.factoring_advances`, status='advanced', not voided): 93 rows,
+invoice-face total $325,346.72.** This is the currently-outstanding population per the advance
+records themselves.
+
+**Gap: $500,374.17 − $325,346.72 = $175,027.45, unexplained by anything fixed today.**
+
+2150 postings broken down by `source_transaction_type`:
+```
+factoring_advance             219 postings   net $795,540.72  (funding, credit side)
+factoring_default_interest    194 postings   net     $355.45  (accrued interest, credit side)
+journal_entry                  87 postings   net -$295,522.00  (generic/manual entries, debit side)
+```
+795,540.72 + 355.45 − 295,522.00 = 500,374.17 -- ties to the current balance exactly. **The 87
+`journal_entry`-sourced postings are the entire story of why 2150 doesn't tie to the source
+table.** These are not posted through `factoring_customer_payment` (canonical shape 4, the
+sanctioned customer-pays-Faro clear) -- they carry the generic `journal_entry` source type, the
+same untracked/ad-hoc signature already found twice today (the reversal pattern behind DEFECT 1
+and 6 of AUTH-137/139's rows).
+
+**Cannot honestly prove 2150 lands on $315,356.28** -- two separate problems, neither closed by
+today's fixes:
+1. The target itself needs clarifying: canonical shape 1 credits 2150 by **invoice face**
+   ($325,346.72 per the 93 outstanding rows), not net-advanced ($315,356.28, which is face minus
+   reserve/fee -- a different number). Which one 2150 should equal needs the owner's own prior
+   $315,356.28 figure reconciled against which measure it was computed from.
+2. Even against $325,346.72, the $175,027.45 gap traces entirely to 87 generic `journal_entry`
+   postings that need their own audit -- are they legitimate customer-payment clears mistagged
+   with the wrong source_transaction_type, or another instance of the same ad-hoc-reversal actor
+   pattern found in DEFECT 1's population? Not determined here.
+
+**Not attempted:** auditing the 87 journal_entry postings individually, or forcing 2150 to either
+target number. A forced tie is worse than an honest gap.
+
+— CC-2
