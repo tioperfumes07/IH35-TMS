@@ -4366,3 +4366,39 @@ entries are the same population as "the 41 entries that skip Undeposited Funds" 
 statement that they are the same defect.
 
 — CC-2
+
+## AUTH-137
+
+date: 2026-09-30
+
+scope: Owner Order 2 (claude/00-MASTER-PENDING-REGISTER-CURRENT.md, item 42; Amendment 1D) — void
+  the 13 non-surviving duplicate JE copies across the 10 factoring-advance groups whose survivor
+  has been determined against Faro's own exports (docs/audit/GUARD-WORKORDERS.md, two findings
+  2026-09-30). VOID ONLY — no delete (Order 2 step 2; delete is step 3, separate, archive-first,
+  not part of this AUTH). Each void goes through reverseJournalEntryNoFlip (the same sanctioned
+  engine AUTH-113 used, apps/backend/src/accounting/journal-entries.service.ts) — a mirroring
+  reversal JE dated per the function's own logic, original JE untouched except reversed_by_je_id.
+  Survivor copies are NEVER touched. The 13 loser JE ids, by invoice:
+  - invoice 1: 03c73353-7557-4db7-bc33-94a7bc9a75ee (survivor: ca5c1bd0-4460-4c28-9d38-297d00f2117f)
+  - invoice 3: 60fcca1a-95f8-48be-b8dd-5c1d6dd3a338, e102528b-959e-4242-8d48-a177dc2344f7 (survivor: f018426d-be1a-42e8-a2d6-647b5559590e)
+  - invoice 4: 1894f3e0-6778-486f-b234-ddff585e33a1, 313f3fc1-3b5e-4559-907f-f43cef25455a (survivor: 7fdef252-d7e9-493e-9545-5be9c0016e45)
+  - invoice 7: 73146611-3a24-4755-852f-0c32bbb3ea68 (survivor: 3c87cf68-30cf-4b7e-9ec6-0a92b87c0875)
+  - invoice 8: 96f1f238-5344-4e67-90f9-c96e6bf13f5a (survivor: f10e48d8-effc-4d0b-9970-ed8f86b9dfe8)
+  - invoice 11: 70a293d6-ca2e-4641-8bf7-94ace1f592c8 (survivor: 23e74ab0-18dd-46f4-bd7f-ce24f79b4e67)
+  - invoice 16: e5fcd443-3413-4671-af44-be4de07f9981, 6705aca7-d0c5-45ea-ae0f-bc97805b4c36 (survivor: 7f6fae15-711a-4dff-86d9-c74f630c59af)
+  - invoice 19: d8483aff-43d3-4fb4-86c1-d3012b39e70b (survivor: b5934a69-e1ef-4377-b863-bf64892f44fb)
+  - invoice 41: a606edad-5940-47e1-ae13-93282c0eaf74 (survivor: 4a0264a3-0f8b-4370-bbf9-29c04e86d817)
+  - invoice 42: abf7ca21-2c93-47e1-a696-e375042fc5e8 (survivor: 92d6c8d3-aa10-419d-8091-23372655ad66)
+  Tested dry-run against invoice 1's loser (03c73353): reverseJournalEntryNoFlip produced a clean
+  mirroring reversal, reversed_line_count 4, reversed_by_je_id linkage written, original untouched
+  otherwise. Total dollar impact (excess duplicate money removed from the ledger): $79,857.74
+  minus whatever subset of the original ACCT-F2026093005 $79,857.74 these 13 already represent —
+  exact post-void trial balance delta is proof, not pre-computed here (see proof_query on
+  consumption). Not authorized: deleting any JE; touching any of the 15 not-yet-determined
+  duplicate groups; touching any survivor copy; touching TRANSP or TRK.
+
+action:
+  OWNER_AUTH_ID=AUTH-137 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth137-void-13-duplicate-copies.ts
+
+expires_at: 2026-10-01T08:00:00.000Z
+status: OPEN
