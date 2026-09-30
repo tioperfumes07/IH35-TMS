@@ -1,5 +1,8 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T09:45Z · ROUND 292 overflow MERGED `#23334` `394697bbf8`**
+CURSOR | Needs delivery authorization FE LIVE on main · GET queue + Documents badge + guard · money-pr-local-gate PASS | GUARD verify-needs-delivery-authorization-wired | LIVE PROOF squash `394697bbf8` | NEXT: FE deploy · Owner Chrome Documents › Needs delivery auth · 13615 BOL→Faro.
+
 **2026-09-30T09:35Z · ROUND 292 overflow — Needs delivery authorization FE wired**
 CURSOR | Named queue GET `/needs-delivery-authorization` + FE `/dispatch/needs-delivery-authorization` + Documents badge · POST still Owner-only · no seat fixtures | GUARD verify-needs-delivery-authorization-wired OK · vitest 9/9 | LIVE PROOF API tip `8c3ac5e02e` · boards@16 | NEXT: FAST-MERGE · FE deploy · Owner Chrome Authorize when rolling+invoiced · 13615 BOL→Faro.
 
