@@ -5458,4 +5458,14 @@ uncapped, never fails) instead of bundling both under one shrink-only-7 ratchet.
 action: OWNER_AUTH_ID=AUTH-157 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth157-backfill-fuel-expense-linkage.ts
   (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
 expires_at: 2026-10-01T08:35:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T08:50:00.000Z
+consumed_by: CC-1
+row_counts: 35 of 35 candidates updated (driver_uuid + unit_id on all 35; trailer_id where a source
+  existed). 8 rows fully resolved (all 5 fields present). 27 rows resolved to trailer_id-only gap
+  (same accepted shape as the original 7 baseline) -- 34 total trailer-only gaps now, informational.
+proof_query: live on prod, 2026-09-30 -- scripts/verify-fuel-cost-posts-exactly-once.mjs: all 5
+  checks PASS. Check D: 0 non-trailer gap(s); 34 trailer_id-only gap(s), informational (never
+  fails). Rehearsed identically on a throwaway Neon branch fork first (fork deleted after proof).
+
+— CC-1
