@@ -1,5 +1,11 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T03:05Z · ROUND 280 UNBLOCK #23205 + CURSOR ORPHAN WIRE**
+CURSOR | UNBLOCK `#23205` `bcda09bd5a` + orphan wire (this PR) | guard-wired orphan **38→19** via 10931 (19 Cursor/dispatch/settlement PASS guards) | settlementLabel Open false-positive fixed |
+LEFT (other seats / red): check-engine cluster · bank-match · stop-stamps rot 13630/34/35/37 · geocode-provider env · money seed/match · universal-reinstate |
+NEXT: Fast-merge this PR · Phase 3 waits CC-1 280.5 + CC-2 280.7–280.10 · 280.19/280.20 Codex · Chrome cancelled · stop-stamps ratchet not grown.
+
+
 **2026-09-30T02:40Z · ROUND 280.17 + 280.18 FAST-MERGED**
 CURSOR | 280.17+280.18 DONE | squash `c1c4b0cafb` (#23198) | LIVE PROOF: board===canonical 12; verify-load-boards-agree PASS 12; verify-one-source-per-number OK 0/81; LAW-5 Truck Line hook restored (Net not painted) | 280.0.a/b/c held | NEXT: Chrome control-response only after FE tip (280.0.c — not linkage); Phase 3 purge waits CC-1 280.5 + CC-2 280.7–280.10.
 

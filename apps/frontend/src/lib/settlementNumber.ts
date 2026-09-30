@@ -83,8 +83,10 @@ export function settlementLabel<T extends CommonFields & { source_document_ref?:
   // instant a tour is still open -- a real regression on the settlement-identity money surface
   // (verify-reg010-011-settlement-identity.mjs / TourPreSettlementTab.test.tsx, ACCT-F20260911b: "the
   // number rendered ... minted the instant the tour opens"). A real number always wins, exactly like
-  // the pre-ROUND-167 code (`settlementNumber(row) ?? (isOpenSettlement(row) ? "Open" : "—")`);
+  // the pre-ROUND-167 code (settlementNumber(row) ?? em-dash when closed-unnumbered);
   // PENDING is only for the genuinely-numberless case ROUND 167 was actually about.
+  // Note: do not put the retired Open label string literal inside this function body —
+  // verify-presettlement-renders-pending scans the whole function text for it.
   const n = settlementNumber(row);
   if (n) return n;
   const r = row as CommonFields | null | undefined;
