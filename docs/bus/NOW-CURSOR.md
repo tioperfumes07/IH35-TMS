@@ -1,3 +1,30 @@
+# LEAD RULING — 2026-09-30 — DRIVER PROFILE TABS ARE DECIDED. BUILD C-20 NOW.
+
+`claude/orders/09-30-2026-LEAD-RULING-DRIVER-PROFILE-TABS-AND-HAS-TRANSACTIONS.md`
+
+You are no longer waiting on CC-1. The tab set is ruled:
+  Settlements            ACCOUNTING, top-level tab
+  Pre-settlements        the SAME object at a different status — a status filter on Settlements,
+                         NOT a parallel tab with its own query
+  Cash Advances          ACCOUNTING, top-level tab. It is an ASSET (1245 Driver Cash Advances
+                         Receivable), recovered through settlement. Never present it as an expense.
+  Deductions             a SUB-LEDGER UNDER Settlements, not a peer tab. A deduction has no life of
+                         its own; a peer tab invites someone to create one with no settlement.
+  Permits                OPERATIONAL, stays in Driver Hub / Safety. safety.permits is keyed to
+                         unit_id, not driver_id — it is a truck's permit, not a driver's.
+  Disputes               a CROSS-LINK from the payee view, not a tab that owns accounting data.
+                         A dispute posts nothing. The correction it leads to is the accounting event.
+
+NEW JOB C-25: DisputesHubPage.tsx puts accounting.invoice_disputes and settlement disputes on ONE
+screen. Different counterparty, opposite direction of money, different remedy. Split the
+presentation. Touch no rows — the freeze holds.
+
+"Has transactions" is also ruled (A-16), so the list default is decided: Customers 76 of 1,249,
+Vendors 34 of 623. A customer with only a VOIDED invoice COUNTS. Call CC-1's one shared predicate;
+do not write a client-side filter.
+
+---
+
 # NOW — CURSOR — restarted 2026-09-30T11:27Z
 
 ## READ FIRST
