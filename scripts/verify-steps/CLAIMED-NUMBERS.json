@@ -7483,6 +7483,11 @@
     "claimed_at": "2026-09-30",
     "purpose": "verify-escrow-factoring-reserve-never-books-expense (ROUND 301 B-35: proves escrow/factoring-reserve postings never hit an Expense-type account, names the real backing account for each virtual ledger)"
   },
+  "11995": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-qbo-usmca-connect-push-overwrite-report (ROUND 301 B-36: quantifies exactly what connecting USMCA to QBO would push and overwrite today, without connecting)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
