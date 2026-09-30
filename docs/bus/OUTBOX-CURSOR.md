@@ -1,5 +1,8 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T09:35Z · ROUND 292 overflow — Needs delivery authorization FE wired**
+CURSOR | Named queue GET `/needs-delivery-authorization` + FE `/dispatch/needs-delivery-authorization` + Documents badge · POST still Owner-only · no seat fixtures | GUARD verify-needs-delivery-authorization-wired OK · vitest 9/9 | LIVE PROOF API tip `8c3ac5e02e` · boards@16 | NEXT: FAST-MERGE · FE deploy · Owner Chrome Authorize when rolling+invoiced · 13615 BOL→Faro.
+
 **2026-09-30T09:22Z · API LIVE `8c3ac5e02e` · boards@16 on Load Costs**
 CURSOR | Render API `dep-daud7ru0tbcc73evu250` LIVE · healthz git_sha=`8c3ac5e02e` · Load Costs FACTOR-BUT-NOT-DELIVERED on prod | GUARD boards-agree 16/16 | LIVE PROOF healthz shallow | NEXT: Owner Chrome 13615 BOL→Faro · Cursor overflow.
 
