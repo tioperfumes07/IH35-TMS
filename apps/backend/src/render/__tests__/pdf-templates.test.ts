@@ -122,8 +122,10 @@ describe("invoice.template", () => {
     expect(html).toContain("C.H. Robinson Worldwide Inc");
     expect(html).toContain("Triumph Business Capital");
     expect(html).toContain("$2,439.00");
-    expect(html).toContain("Expected adjustments flagged at booking");
-    expect(html).toContain("Tax · intrastate freight exempt");
+    expect(html).toContain('data-doc-skin="v10"');
+    expect(html).toContain("INVOICE");
+    expect(html).toContain("Balance due");
+    expect(html).toContain("Intrastate freight exempt");
     expect(html.includes("<script>")).toBe(false);
   });
 });
@@ -213,13 +215,14 @@ describe("settlement.template", () => {
     const html = renderSettlementBody(model);
     expect(html).toContain("S-2026-W20-RSMITH");
     expect(html).toContain("L-13518");
-    expect(html).toContain("$480.50");
-    expect(html).toContain("Deductions &amp; recoveries");
-    expect(html).toContain("YTD totals · for 1099-NEC");
-    expect(html).toContain("Driver acknowledgment");
+    expect(html).toContain("480.50");
+    expect(html).toContain("DRIVER SETTLEMENT");
+    expect(html).toContain('data-doc-skin="v10"');
+    expect(html).toContain("Total due");
+    expect(html).toContain("DEDUCTIONS");
     expect(html.includes("<script>")).toBe(false);
 
-    const wrapped = wrapPdfDocument({ title: "S-test · Settlement", body: html });
+    const wrapped = wrapPdfDocument({ title: "S-test · Settlement", body: html, skin: "v10" });
     // wrapPdfDocument legitimately emits ONE static, first-party print-trigger <script> (the
     // ?print=1 auto-print IIFE) -- a bare "no <script> at all" assertion is stale against that
     // real, guarded feature (verify-bill-payment-print-letter-html). The real security property
@@ -231,5 +234,6 @@ describe("settlement.template", () => {
     expect(scriptBlocks[0]).not.toContain("S-test");
     expect(scriptBlocks[0]).not.toContain(model.sigDriverName);
     expect(scriptBlocks[0]).not.toContain("S-2026-W20-RSMITH");
+    expect(wrapped).toContain("IBM Plex");
   });
 });

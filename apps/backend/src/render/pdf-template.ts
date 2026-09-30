@@ -1,6 +1,7 @@
 import { PDF_BASE_STYLES } from "./pdf-styles.inline.js";
+import { PDF_V10_STYLES } from "./pdf-styles-v10.inline.js";
 
-export { PDF_BASE_STYLES };
+export { PDF_BASE_STYLES, PDF_V10_STYLES };
 
 export function escapeHtml(unsafe: string): string {
   return unsafe
@@ -15,6 +16,12 @@ export function escapeHtml(unsafe: string): string {
 export function formatMoney(cents: number): string {
   const safe = Number.isFinite(cents) ? cents / 100 : 0;
   return safe.toLocaleString("en-US", { style: "currency", currency: "USD" });
+}
+
+/** Locked v10 sheets print plain tabular amounts (no $); Balance Due line may still use formatMoney. */
+export function formatMoneyPlain(cents: number): string {
+  const safe = Number.isFinite(cents) ? cents / 100 : 0;
+  return safe.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 export function formatDate(value: Date | string | number | null | undefined, timeZone = "America/Chicago"): string {
@@ -49,15 +56,21 @@ export function docIdFromLoadNumber(prefix: string, loadNumber: string | null | 
   return `${prefix}-${match[1]}`;
 }
 
-export function wrapPdfDocument(opts: { title: string; body: string }): string {
+export function wrapPdfDocument(opts: {
+  title: string;
+  body: string;
+  /** ROUND 285.4.9 / #31 — locked v10 for driver/company settlement + invoice. House for bills/dispatch. */
+  skin?: "house" | "v10";
+}): string {
   // ?print=1 on the document URL opens the browser print dialog after load so operators
   // get the letter HTML (invoice/settlement/dispatch-sheet), never the SPA chrome.
+  const styles = opts.skin === "v10" ? PDF_V10_STYLES : PDF_BASE_STYLES;
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <title>${escapeHtml(opts.title)}</title>
-<style>${PDF_BASE_STYLES}</style>
+<style>${styles}</style>
 </head>
 <body>
 <div class="scene">${opts.body}</div>

@@ -49,10 +49,16 @@ export function collectFailures(src = source) {
   if (!/import type \{ CompanySettlementReport \} from "\.\.\/accounting\/company-settlement-report\.service\.js"/.test(src.template)) {
     failures.push(`${templatePath}: no longer consumes the canonical CompanySettlementReport (would risk inventing money math)`);
   }
-  for (const cls of ["doc-page", "doc-head", "sec-head", "data-table", "total-line"]) {
-    if (!src.template.includes(`class="${cls}`)) {
-      failures.push(`${templatePath}: house-template class "${cls}" missing — not on the shared PDF shell`);
+  for (const cls of ["sheet", "dochead", "headbar", "loadblock", "lbhead"]) {
+    if (!src.template.includes(cls)) {
+      failures.push(`${templatePath}: locked v10 class "${cls}" missing — not on the #31 v10 PDF shell`);
     }
+  }
+  if (!/data-doc-skin="v10"/.test(src.template)) {
+    failures.push(`${templatePath}: data-doc-skin="v10" missing (ROUND 285.4.9 / #31)`);
+  }
+  if (!/COMPANY SETTLEMENT/.test(src.template)) {
+    failures.push(`${templatePath}: carrier title COMPANY SETTLEMENT missing`);
   }
   for (const [label, re] of [
     ["customer charges", /s\.customer_charges\.rows/],
@@ -84,6 +90,20 @@ export function collectFailures(src = source) {
     if (!re.test(reportSrc)) failures.push(`${reportPath}: missing "${label}" for ROUND 285.4.9 #58`);
   }
 
+
+  // ROUND 285.4.9 / #31 — the three locked v10 documents share the same skin markers.
+  const driverTpl = readFileSync("apps/backend/src/render/settlement.template.ts", "utf8");
+  const invoiceTpl = readFileSync("apps/backend/src/render/invoice.template.ts", "utf8");
+  const pdfTpl = readFileSync("apps/backend/src/render/pdf-template.ts", "utf8");
+  if (!/PDF_V10_STYLES/.test(pdfTpl)) failures.push("pdf-template.ts: PDF_V10_STYLES not wired");
+  if (!/skin\?:\s*"house"\s*\|\s*"v10"/.test(pdfTpl)) failures.push("pdf-template.ts: wrapPdfDocument skin option missing");
+  for (const [label, srcDoc] of [["driver settlement", driverTpl], ["invoice", invoiceTpl]]) {
+    if (!/data-doc-skin="v10"/.test(srcDoc)) failures.push(`${label} template: data-doc-skin="v10" missing`);
+  }
+  if (!/DRIVER SETTLEMENT/.test(driverTpl)) failures.push("settlement.template.ts: DRIVER SETTLEMENT carrier title missing");
+  if (!/invtitle/.test(invoiceTpl) || !/Balance due/.test(invoiceTpl)) failures.push("invoice.template.ts: QuickBooks invtitle / Balance due missing");
+  if (!/class="appr"/.test(invoiceTpl)) failures.push("invoice.template.ts: APPROVED BY/METHOD (.appr) missing for detention/layover");
+
   // --- 2. Route: canonical HTML letter route feeding the report into the house shell ---
   if (!/"\/api\/v1\/accounting\/company-settlements\/:id\.html"/.test(src.route)) {
     failures.push(`${routePath}: GET /api/v1/accounting/company-settlements/:id.html route path missing`);
@@ -96,6 +116,9 @@ export function collectFailures(src = source) {
   }
   if (!/wrapPdfDocument\(\{/.test(src.route)) {
     failures.push(`${routePath}: does not wrap the body in the house shell (wrapPdfDocument)`);
+  }
+  if (!/skin:\s*["']v10["']/.test(src.route)) {
+    failures.push(`${routePath}: wrapPdfDocument must use skin: "v10" (ROUND 285.4.9 / #31)`);
   }
   if (!/export async function registerCompanySettlementHtmlRoutes/.test(src.route)) {
     failures.push(`${routePath}: no longer exports registerCompanySettlementHtmlRoutes`);
@@ -141,11 +164,13 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["template export", "template", /export function renderCompanySettlementBody/, "function renderCompanySettlementBody"],
     ["report type import", "template", /import type \{ CompanySettlementReport \} from "\.\.\/accounting\/company-settlement-report\.service\.js";\n/, ""],
-    ["house shell class", "template", /class="total-line"/, 'class="spa-panel"'],
+    ["v10 skin marker", "template", /data-doc-skin="v10"/, 'data-doc-skin="legacy"'],
+    ["v10 loadblock", "template", /loadblock/g, "legacyblock"],
     ["pl section", "template", /s\.pl_rollup\.lines/g, "s.PL_DISABLED.lines"],
     ["route path", "route", /"\/api\/v1\/accounting\/company-settlements\/:id\.html"/, '"/api/v1/accounting/company-settlements/:id.json"'],
     ["build report", "route", /buildCompanySettlementReport\(/g, "buildDISABLEDReport("],
     ["wrap shell", "route", /wrapPdfDocument\(\{/g, "rawHtml({"],
+    ["v10 skin on route", "route", /skin:\s*"v10"/g, 'skin: "house"'],
     ["route default fp export", "route", /export default fp\(async \(app\) => \{/, "const _unmounted = (async (app) => {"],
     ["index double-mount", "index", /await registerDriverFinanceSettlementHtmlRoutes\(app\);\n/, "await registerDriverFinanceSettlementHtmlRoutes(app);\n  await registerCompanySettlementHtmlRoutes(app);\n"],
     ["api helper", "api", /export function companySettlementHtmlUrl/, "function companySettlementHtmlUrl"],
@@ -173,5 +198,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  "verify-company-settlement-pdf-house-template: OK — company settlement renders inside the shared house shell (wrapPdfDocument + doc-page/sec-head/data-table/total-line), fed by buildCompanySettlementReport, mounted in index.ts, opened via companySettlementHtmlUrl (canonical letter, never SPA print)"
+  "verify-company-settlement-pdf-house-template: OK — company settlement on locked v10 shell (sheet/dochead/loadblock + wrapPdfDocument skin:v10), fed by buildCompanySettlementReport, mounted in index.ts, opened via companySettlementHtmlUrl; driver+invoice also carry data-doc-skin=v10"
 );

@@ -1,4 +1,4 @@
-import { escapeHtml, formatDate, formatMoney } from "./pdf-template.js";
+import { escapeHtml, formatDate, formatMoneyPlain } from "./pdf-template.js";
 
 export type SettlementLoadRow = {
   loadNum: string;
@@ -28,6 +28,10 @@ export type SettlementHtmlModel = {
   brandSub: string;
   brandAddrHtml: string;
   settlementDocNum: string;
+  /** Settlement date shown in docno (MM-DD-YYYY preferred). */
+  settlementDateDisplay?: string;
+  periodFromDisplay?: string;
+  periodToDisplay?: string;
   periodLines: string[];
   statusLine: string;
   driverBlock: { label: string; value: string; sub?: string }[];
@@ -48,165 +52,156 @@ export type SettlementHtmlModel = {
   escrowFooter: string;
 };
 
-function kvGrid(items: { label: string; value: string; sub?: string }[]) {
-  return items
-    .map((item) => {
-      const sub = item.sub ? `<div class="sub">${escapeHtml(item.sub)}</div>` : "";
-      return `<div class="lv"><div class="lbl">${escapeHtml(item.label)}</div><div class="val">${escapeHtml(item.value)}</div>${sub}</div>`;
-    })
-    .join("");
+function moneyPlainSigned(cents: number): string {
+  const abs = formatMoneyPlain(Math.abs(cents));
+  return cents < 0 ? `−${abs}` : abs;
 }
 
-function formatMoneySigned(cents: number): string {
-  const abs = formatMoney(Math.abs(cents));
-  if (cents < 0) return `−${abs}`;
-  return abs;
+function driverName(model: SettlementHtmlModel): string {
+  const hit = model.driverBlock.find((b) => b.label.toLowerCase() === "driver");
+  return hit?.value ?? model.sigDriverName;
 }
 
+/**
+ * ROUND 285.4.9 / #31 — locked v10 driver settlement (portrait · one loadblock per load).
+ * Source of truth: claude/00-LOCKED-DOCUMENT-DESIGNS-v10-DO-NOT-ALTER.html · Driver settlement · D2.
+ * Pays on SHORT miles. Numbers come from the live settlement model — never invented.
+ */
 export function renderSettlementBody(model: SettlementHtmlModel): string {
-  const issuedHtml = model.periodLines.map((line) => escapeHtml(line)).join("<br/>");
+  const driver = driverName(model);
+  const periodFrom = model.periodFromDisplay ?? model.periodLines[0] ?? "—";
+  const periodTo = model.periodToDisplay ?? "—";
+  const settleDate = model.settlementDateDisplay ?? "—";
 
-  const loadRowsHtml = model.loadRows
+  const loadBlocks = model.loadRows
+    .map((row) => {
+      const payLine = `
+          <tr>
+            <td><span class="typ">Loaded</span></td>
+            <td class="num dim">—</td>
+            <td>${escapeHtml(row.lane)}<span class="loc">pay basis · short miles</span></td>
+            <td class="num dim">—</td>
+            <td class="dim">—</td>
+            <td class="r num">${escapeHtml(row.shortMi === "—" ? "—" : `${row.shortMi} mi`)}</td>
+            <td class="r num">${escapeHtml(row.ratePerMi)}</td>
+            <td class="r num">${escapeHtml(formatMoneyPlain(row.linehaulCents))}</td>
+          </tr>`;
+      const bonus =
+        row.bonusesDisplay && row.bonusesDisplay !== "—"
+          ? `<tr><td class="num dim">—</td><td>Addition</td><td>${escapeHtml(row.bonusesDisplay)}</td><td class="r num dim">—</td><td class="r num dim">—</td><td class="r num dim">—</td></tr>`
+          : `<tr><td colspan="5" class="dim">No additions on this load.</td><td class="r num">0.00</td></tr>`;
+      return `
+    <div class="loadblock">
+      <div class="lbhead"><b>LOAD ${escapeHtml(row.loadNum)}</b><span class="eq">${escapeHtml(row.lane)}</span></div>
+      <table>
+        <thead><tr><th style="width:62px">Leg</th><th style="width:58px">PU date</th><th>Pickup location</th><th style="width:58px">Del. date</th><th>Delivery location</th><th class="r" style="width:86px">Quantity</th><th class="r" style="width:50px">Rate</th><th class="r" style="width:80px">Amount</th></tr></thead>
+        <tbody>
+          ${payLine}
+          <tr class="subtot"><td colspan="5">Total load pay</td><td class="r num">${escapeHtml(row.shortMi === "—" ? "—" : `${row.shortMi} mi`)}</td><td class="r num">${escapeHtml(row.ratePerMi)}</td><td class="r num">${escapeHtml(formatMoneyPlain(row.lineTotalCents))}</td></tr>
+        </tbody>
+      </table>
+      <table style="margin-top:10px">
+        <thead><tr><th style="width:54px">Date</th><th style="width:96px">Category</th><th>Description</th><th class="r" style="width:76px">Quantity</th><th class="r" style="width:60px">Price</th><th class="r" style="width:82px">Total</th></tr></thead>
+        <tbody>
+          ${bonus}
+          <tr class="subtot"><td colspan="5">Total additions</td><td class="r num">0.00</td></tr>
+        </tbody>
+      </table>
+    </div>`;
+    })
+    .join("\n");
+
+  const deductionRows =
+    model.deductions.length === 0
+      ? `<tr><td colspan="5" class="dim">No deductions on this settlement.</td><td class="r num">0.00</td></tr>`
+      : model.deductions
+          .map(
+            (d) => `
+          <tr>
+            <td class="num dim">—</td>
+            <td>${escapeHtml(d.item)}</td>
+            <td>${escapeHtml(d.reference)}</td>
+            <td class="r num">1</td>
+            <td class="r num">${escapeHtml(formatMoneyPlain(Math.abs(d.amountCents)))}</td>
+            <td class="r num neg">${escapeHtml(moneyPlainSigned(-Math.abs(d.amountCents)))}</td>
+          </tr>`
+          )
+          .join("");
+
+  const summaryRows = model.loadRows
     .map(
       (row) => `
-      <tr>
-        <td class="mono">${escapeHtml(row.loadNum)}</td>
-        <td>${escapeHtml(row.lane)}</td>
-        <td class="num">${escapeHtml(row.shortMi)}</td>
-        <td class="num">${escapeHtml(row.ratePerMi)}</td>
-        <td class="num">${escapeHtml(formatMoney(row.linehaulCents))}</td>
-        <td class="num">${escapeHtml(row.bonusesDisplay)}</td>
-        <td class="num">${escapeHtml(formatMoney(row.lineTotalCents))}</td>
-      </tr>`
+        <tr>
+          <td class="num">${escapeHtml(row.loadNum)}</td>
+          <td class="r num">${escapeHtml(formatMoneyPlain(row.linehaulCents))}</td>
+          <td class="r num">0.00</td>
+          <td class="r num">—</td>
+          <td class="r num">${escapeHtml(formatMoneyPlain(row.lineTotalCents))}</td>
+        </tr>`
     )
     .join("");
-
-  const deductionsHtml = model.deductions
-    .map(
-      (row) => `
-      <tr><td>${escapeHtml(row.item)}</td><td>${escapeHtml(row.reference)}</td><td class="num">${escapeHtml(formatMoneySigned(row.amountCents))}</td></tr>`
-    )
-    .join("");
-
-  const netSubHtml = model.netSubLines.map((line) => `<div class="sub">${escapeHtml(line)}</div>`).join("");
 
   return `
-<div class="doc-page">
-  <div class="doc-head">
-    <div>
-      <div class="brand-name">${escapeHtml(model.brandName)}</div>
-      <div class="brand-sub">${escapeHtml(model.brandSub)}</div>
-      <div class="brand-addr">${model.brandAddrHtml}</div>
+<div class="sheet portrait" data-doc-skin="v10" data-doc-kind="driver-settlement">
+  <div class="dochead">
+    <div class="brand">
+      <div>
+        <div class="carrier">DRIVER SETTLEMENT</div>
+        <div class="sub">${escapeHtml(model.brandName)}${model.brandSub ? ` · ${escapeHtml(model.brandSub)}` : ""}</div>
+        <div class="sub">${model.brandAddrHtml}</div>
+      </div>
     </div>
-    <div class="doc-meta">
-      <div class="doc-type">Driver settlement statement</div>
-      <div class="doc-num">${escapeHtml(model.settlementDocNum)}</div>
-      <div class="doc-issued">${issuedHtml}</div>
-      <div class="doc-status">${escapeHtml(model.statusLine)}</div>
+    <div class="docno">
+      <div class="lab">Settlement date</div>
+      <div class="val">${escapeHtml(settleDate)}</div>
     </div>
+  </div>
+  <div class="headbar">
+    <div class="f"><span class="k">Settlement no.</span><span class="v">${escapeHtml(model.settlementDocNum)}</span></div>
+    <div class="f"><span class="k">Driver</span><span class="v t">${escapeHtml(driver)}</span></div>
+    <div class="f"><span class="k">Period from</span><span class="v">${escapeHtml(periodFrom)}</span></div>
+    <div class="f"><span class="k">Period to</span><span class="v">${escapeHtml(periodTo)}</span></div>
   </div>
 
-  <div class="sec-head">
-    <span class="title">Driver</span>
-  </div>
-  <div class="lv-grid">
-    ${kvGrid(model.driverBlock)}
+  ${loadBlocks}
+
+  <div class="loadblock">
+    <div class="lbhead"><b>DEDUCTIONS</b><span class="eq">${escapeHtml(model.deductionsRight)}</span></div>
+    <table>
+      <thead><tr><th style="width:54px">Date</th><th style="width:96px">Category</th><th>Description</th><th class="r" style="width:76px">Quantity</th><th class="r" style="width:60px">Price</th><th class="r" style="width:82px">Total</th></tr></thead>
+      <tbody>
+        ${deductionRows}
+        <tr class="subtot"><td colspan="5">Total deductions</td><td class="r num neg">${escapeHtml(moneyPlainSigned(-Math.abs(model.deductionsTotalCents)))}</td></tr>
+      </tbody>
+    </table>
   </div>
 
-  <div class="sec-head">
-    <span class="title">Loads completed this period</span>
-    <span class="right">${escapeHtml(model.loadsSummaryRight)}</span>
-  </div>
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th style="width: 11%;">Load #</th>
-        <th>Lane</th>
-        <th class="num">Short mi</th>
-        <th class="num">Rate</th>
-        <th class="num">Linehaul</th>
-        <th class="num">Bonuses</th>
-        <th class="num" style="width: 12%;">Line total</th>
-      </tr>
-    </thead>
+  <table style="margin-top:15px">
+    <thead><tr><th>Load · invoice</th><th class="r">Load pay</th><th class="r">Additions</th><th class="r">Deductions</th><th class="r">Net due</th></tr></thead>
     <tbody>
-      ${loadRowsHtml}
+      ${summaryRows}
     </tbody>
     <tfoot>
-      <tr>
-        <td colspan="2">${escapeHtml(model.loadsFoot.label)}</td>
-        <td class="num">${escapeHtml(model.loadsFoot.shortMi)}</td>
-        <td class="num">${escapeHtml(model.loadsFoot.rate)}</td>
-        <td class="num">${escapeHtml(formatMoney(model.loadsFoot.linehaulCents))}</td>
-        <td class="num">${escapeHtml(model.loadsFoot.bonusesDisplay)}</td>
-        <td class="num">${escapeHtml(formatMoney(model.loadsFoot.lineTotalCents))}</td>
+      <tr class="marginrow">
+        <td>Total · ${model.loadRows.length} load${model.loadRows.length === 1 ? "" : "s"}</td>
+        <td class="r num">${escapeHtml(formatMoneyPlain(model.loadsFoot.linehaulCents))}</td>
+        <td class="r num">0.00</td>
+        <td class="r num neg">${escapeHtml(moneyPlainSigned(-Math.abs(model.deductionsTotalCents)))}</td>
+        <td class="r num">${escapeHtml(formatMoneyPlain(model.netCents))}</td>
       </tr>
     </tfoot>
   </table>
 
-  <div class="sec-head">
-    <span class="title">Deductions &amp; recoveries</span>
-    <span class="right">${escapeHtml(model.deductionsRight)}</span>
-  </div>
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th>Item</th>
-        <th>Reference</th>
-        <th class="num" style="width: 14%;">Amount</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${deductionsHtml}
-    </tbody>
-    <tfoot>
-      <tr><td colspan="2">Total deductions</td><td class="num">${escapeHtml(formatMoneySigned(-Math.abs(model.deductionsTotalCents)))}</td></tr>
-    </tfoot>
-  </table>
-
-  <div class="total-line">
-    <div>
-      <div class="lbl">${escapeHtml(model.netTitle)}</div>
-      ${netSubHtml}
+  <div class="strip">
+    <div class="set">
+      <span><span class="k">YTD gross</span><span class="num">${escapeHtml(formatMoneyPlain(model.ytd.grossCents))}</span></span>
+      <span><span class="k">YTD net</span><span class="num">${escapeHtml(formatMoneyPlain(model.ytd.netCents))}</span></span>
+      <span><span class="k">YTD miles</span><span class="num">${escapeHtml(model.ytd.milesDisplay)}</span></span>
+      <span><span class="k">Status</span><span class="num">${escapeHtml(model.statusLine)}</span></span>
     </div>
-    <div class="amt">${escapeHtml(formatMoney(model.netCents))}</div>
+    <span><span class="m">Total due</span><span class="mv num">${escapeHtml(formatMoneyPlain(model.netCents))}</span></span>
   </div>
-
-  <div class="sec-head">
-    <span class="title">YTD totals · for 1099-NEC</span>
-  </div>
-  <div class="lv-grid">
-    <div class="lv"><div class="lbl">YTD gross</div><div class="val amt">${escapeHtml(formatMoney(model.ytd.grossCents))}</div></div>
-    <div class="lv"><div class="lbl">YTD deductions</div><div class="val amt">${escapeHtml(formatMoney(model.ytd.deductionsCents))}</div></div>
-    <div class="lv"><div class="lbl">YTD net</div><div class="val amt">${escapeHtml(formatMoney(model.ytd.netCents))}</div></div>
-    <div class="lv"><div class="lbl">YTD miles</div><div class="val amt">${escapeHtml(model.ytd.milesDisplay)}</div></div>
-  </div>
-
-  <div class="signoff">
-    <div class="sig-block">
-      <div class="sig-label-top">Driver acknowledgment</div>
-      <div class="sig-line"></div>
-      <div class="sig-name">${escapeHtml(model.sigDriverName)} · sign &amp; date</div>
-      <div class="sig-note">Disputes must be raised within 7 days of pay date</div>
-    </div>
-    <div class="sig-block">
-      <div class="sig-label-top">Payroll · Owner</div>
-      <div class="sig-line"></div>
-      <div class="sig-name">${escapeHtml(model.dispatcherSigLine)}</div>
-      <div class="sig-note">${escapeHtml(model.dispatcherIssuedNote)}</div>
-    </div>
-  </div>
-
-  <div class="doc-footer">
-    <div>
-      <div class="fl-label">Disputes &amp; corrections</div>
-      <p>${escapeHtml(model.disputesFooter)}</p>
-    </div>
-    <div>
-      <div class="fl-label">Escrow balance</div>
-      <p>${escapeHtml(model.escrowFooter)}</p>
-    </div>
-  </div>
+  <p class="note">Settlement ${escapeHtml(model.settlementDocNum)} · ${escapeHtml(model.disputesFooter)} · ${escapeHtml(model.escrowFooter)}</p>
 </div>`;
 }
 

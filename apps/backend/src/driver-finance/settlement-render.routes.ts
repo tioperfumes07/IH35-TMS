@@ -217,7 +217,9 @@ export async function registerDriverFinanceSettlementHtmlRoutes(app: FastifyInst
         [company.phone ? String(company.phone) : null, company.email ? String(company.email) : null].filter(Boolean).join(" · "),
       ];
 
-      const settlementDocNum = String(settlement.display_id ?? params.data.settlementId);
+      const settlementDocNum = String(
+        settlement.source_document_ref ?? settlement.display_id ?? params.data.settlementId
+      );
       const driverName = String(settlement.driver_full_name ?? "Driver");
       const cdlState = settlement.cdl_state ? String(settlement.cdl_state) : "—";
       const cdlExp = settlement.cdl_expiration_date ? formatDate(settlement.cdl_expiration_date) : "—";
@@ -227,6 +229,9 @@ export async function registerDriverFinanceSettlementHtmlRoutes(app: FastifyInst
         brandSub,
         brandAddrHtml: joinBrandAddrLines(brandAddrLines),
         settlementDocNum,
+        settlementDateDisplay: settlement.paid_at ? formatDate(settlement.paid_at) : formatDate(settlement.period_end),
+        periodFromDisplay: formatDate(String(settlement.period_start)),
+        periodToDisplay: formatDate(String(settlement.period_end)),
         periodLines: formatSettlementPeriodLines(String(settlement.period_start), String(settlement.period_end), settlement.paid_at ?? null, "ACH"),
         statusLine: `Settlement · ${String(settlement.status ?? "draft")}`,
         driverBlock: [
@@ -288,6 +293,6 @@ export async function registerDriverFinanceSettlementHtmlRoutes(app: FastifyInst
 
     reply.header("Content-Type", "text/html; charset=utf-8");
     reply.header("Cache-Control", "private, no-store");
-    return reply.send(wrapPdfDocument({ title: payload.title, body: payload.body }));
+    return reply.send(wrapPdfDocument({ title: payload.title, body: payload.body, skin: "v10" }));
   });
 }

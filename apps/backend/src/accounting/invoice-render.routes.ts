@@ -60,6 +60,7 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
         wrapPdfDocument({
           title: "Invoice",
           body: "<p>This print URL needs a real invoice UUID. Create a TEST invoice, then Print from the invoice (or pass operating_company_id).</p>",
+          skin: "v10",
         })
       );
     }
@@ -424,7 +425,7 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
 
     reply.header("Content-Type", "text/html; charset=utf-8");
     reply.header("Cache-Control", "private, no-store");
-    return reply.send(wrapPdfDocument({ title: payload.title, body: payload.body }));
+    return reply.send(wrapPdfDocument({ title: payload.title, body: payload.body, skin: "v10" }));
   });
 }
 
