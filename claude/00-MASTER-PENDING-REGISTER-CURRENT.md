@@ -30,15 +30,15 @@ Owner: *"I NEED THE FACTORING ENGINE FULLY BUILT FIRST, COMPLETELY DONE NOW. REN
 
 | # | Seat | Item | Status |
 |---|---|---|---|
-| 5 | CC-1 | Rebuild the void **detector** — NetSuite reversing mechanics stay as they are | OPEN |
-| 49 | CC-1 | **`executeVoidCancel` has no case per entity.** Voids stamp `voided_at` by raw UPDATE without flipping status or writing the reversal. Root cause of #3 and #4. | IN FLIGHT |
+| 5 | CC-1 | Rebuild the void **detector** — NetSuite reversing mechanics stay as they are | OPEN — engine cases CLOSED under R274; detector still CC-1 |
+| 49 | Cursor | **`executeVoidCancel` has no case per entity.** Voids stamp `voided_at` by raw UPDATE without flipping status or writing the reversal. Root cause of #3 and #4. | **DONE-VERIFIED (R274)** — all live-voided entity keys wired; CHECKs + liability drift repair in `202614601800`; reinstate symmetric; guard claim 11610 |
 | 50 | CC-2 | Unique constraint on (advance, posting type) + guard: no funding may post twice | ORDERED |
 | 51 | CC-2 | Guard: every factoring JE must match one of the 4 canonical shapes | ORDERED |
 | 3 | CC-1 | Advanced MTD counts voided advances (106 vs 93) — same root cause as #49 | IN FLIGHT |
 | 4 | CC-1 | 95 invoices flagged advanced vs 93 advance records — same 2 rows as #3 | IN FLIGHT |
 | 11 | CC-1 | Kill the 7-day wall-clock gate (Seat Contract §9: no guard decides on wall-clock) | OPEN |
 | 52 | CC-1 | ACC-50 removal — open-tour posting gate removed, guard rewritten to the opposite invariant (PR #23153) | IN FLIGHT |
-| 53 | Devin-B | Plaid pending→posted merge does not carry matches across. Fix the merge path, not just the one row. | ORDERED |
+| 53 | Cursor | Plaid pending→posted merge does not carry matches across. Fix the merge path, not just the one row. | **DONE-VERIFIED (R274)** — `repointReconciliationMatchesOnPlaidMerge` on retire+supersede; live match `2d1f3f73…` on survivor `52c51c10…`; migration re-point idempotent |
 
 ## C. DEVIN-B ROUND 271 — audit before purge (owner-sequenced)
 

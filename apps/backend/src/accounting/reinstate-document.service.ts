@@ -19,7 +19,12 @@ import {
 import type { VoidDocumentType } from "./void-document.service.js";
 import { updateBankBalance, type BillMutationClient } from "./bills.service.js";
 
-export type ReinstateDocumentType = VoidDocumentType;
+export type ReinstateDocumentType =
+  | VoidDocumentType
+  | "driver_bill"
+  | "bank_transaction"
+  | "check_number_registry"
+  | "work_order";
 
 export type ReinstateDocumentResult = {
   reinstatedAt: string;
@@ -80,8 +85,14 @@ const DEFAULT_RESTORE_STATUS: Partial<Record<ReinstateDocumentType, string>> = {
   prepaid_purchase: "active",
   credit_memo: "issued",
   factoring_advance: "funded",
+  // ROUND 274 — restore defaults for newly wired reinstate families.
+  liability: "active",
+  settlement: "open",
+  driver_bill: "open",
+  check_number_registry: "issued",
+  work_order: "open",
   // journal_entry: status never flipped on void — leave untouched (restoreStatus ignored)
-  // customer_payment: no status column
+  // customer_payment / bank_transaction: no void-status column
 };
 
 /**
@@ -130,12 +141,22 @@ export async function reinstateDocument(
         "reinstateDocument(factoring_advance): refused — read AUTH-113 before reinstating any factoring advance. Twins FAC-2026-00091..~00132 are already live and correct."
       );
     case "settlement":
+      return reinstateSimple(client, input, "driver_settlement", "settlement");
     case "deduction":
-    case "liability":
       throw new ReinstateDocumentError(
         "not_yet_wired",
-        `reinstateDocument: '${input.type}' reinstate is not yet wired — driver-finance / liability lane.`
+        "reinstateDocument: 'deduction' reinstate is not yet wired — driver-finance lane (void path voids the parent settlement/liability)."
       );
+    case "liability":
+      return reinstateSimple(client, input, "driver_liability", "liability");
+    case "driver_bill":
+      return reinstateSimple(client, input, "driver_bill", "driver_bill");
+    case "bank_transaction":
+      return reinstateSimple(client, input, "bank_transaction", "bank_transaction");
+    case "check_number_registry":
+      return reinstateSimple(client, input, "check_number_registry", "check_number_registry");
+    case "work_order":
+      return reinstateSimple(client, input, "work_order", "work_order");
     default: {
       const _exhaustive: never = input.type;
       throw new Error(`reinstateDocument: unhandled type ${_exhaustive as string}`);

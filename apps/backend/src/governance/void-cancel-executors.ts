@@ -70,12 +70,18 @@ const executeWorkOrder: EntityExecutor = async (ctx) => {
     if (fin.kind === "financial_blocked") return { kind: "financial_blocked" };
     if (fin.kind === "bill_has_payments") return { kind: "bill_has_payments" };
 
+    // ROUND 274 — status must agree with voided_at (DB CHECK work_orders_status_matches_voided_at).
+    // Cancel path already writes status='cancelled'; void path historically stamped voided_at alone.
     const res = await client.query<{ id: string; status: string }>(
       `UPDATE maintenance.work_orders
-          SET voided_at = now(),
+          SET status = 'cancelled',
+              voided_at = now(),
               voided_by_user_id = $2::uuid,
               void_notes = $3,
               void_reason_code = COALESCE(void_reason_code, 'manual'),
+              cancelled_at = COALESCE(cancelled_at, now()),
+              cancelled_by_user_id = COALESCE(cancelled_by_user_id, $2::uuid),
+              cancellation_reason = COALESCE(cancellation_reason, $3),
               reversing_entry_ref = COALESCE($5, reversing_entry_ref),
               updated_at = now()
         WHERE id = $1::uuid AND operating_company_id = $4::uuid AND voided_at IS NULL
