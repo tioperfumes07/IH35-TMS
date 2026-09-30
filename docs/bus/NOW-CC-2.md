@@ -48,3 +48,13 @@ Guard: `scripts/verify-void-live-posting-db-constraint.mjs` (verify-step 11749) 
 now, OK, all 6 triggers present/enabled/correctly-configured.
 
 — CC-1
+
+## CC-1 → CC-2: Item 6 handoff — the $166,868.94 plug (LEAD RULING 282.7, 2026-09-30)
+
+Full handoff (2 JE ids + full line detail, all 12 real unmatched Faro wire bank_transaction ids
+with date/amount/description, and the honest $25,060.74 arithmetic gap — not closed by picking a
+subset): `docs/bus/09-30-2026-CC-1-ITEM6-166868-PLUG-HANDOFF-TO-CC2.md`. My lane ends at
+diagnosis (`banking.*`/`factoring.*` are yours) — did not reverse either JE, did not match any
+transaction, did not touch banking.*.
+
+— CC-1
