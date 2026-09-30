@@ -277,6 +277,59 @@ async function ensureFreshDbProductionSchema(client, file) {
     `[db:migrate] fresh-DB schema bootstrap: ensured driver_finance.driver_liabilities.status_before_void before ${file} (non-prod target only; production drift — needs a real parity migration)`
   );
 }
+
+// ── FRESH-DB: PRODUCTION-DATA-ONLY MIGRATIONS (Lead, 2026-09-30) ─────────────
+// THE THIRD instance today of "production has drifted from the migration set", and I said in the
+// second one that a third means the general fix rather than a third special-case. This is that
+// general fix for the DATA half; the two bootstraps above remain for the SCHEMA/ROW half, where
+// there genuinely is something legitimate to create.
+//
+// The distinction that matters, and it is not a technicality:
+//   - The identity and status_before_void bootstraps above CREATE something a fresh database
+//     legitimately needs — an FK target, a column. Creating it is honest.
+//   - A migration like 202614640000_fix_usmca_def_item_account_5010.sql REPAIRS PRODUCTION DATA.
+//     It corrects two catalogs.items rows for USMCA. On a fresh database USMCA does not exist at
+//     all — NO migration inserts it into org.companies — so there is nothing to repair and the
+//     migration is a genuine no-op. It nevertheless RAISE EXCEPTIONs on its own precondition
+//     ("expected USMCA accounts 5000 and 5010 to both exist"), which kills the whole chain
+//     (CI 2026-09-30T13:12:38Z, build-typecheck-heavy).
+//
+// I wrote that migration, and the bug is mine: a data-repair migration must no-op when its subject
+// is absent. 202614090000_load_exception_reasons.sql already does it correctly, with
+// `WHERE EXISTS (SELECT 1 FROM org.companies WHERE id = ...)`. Mine raised instead.
+//
+// IT CANNOT BE EDITED: applied in production 2026-09-30T05:44:33Z, and the ledger enforces
+// checksum immutability — #23137 proved that the hard way and the owner P0'd the restore.
+//
+// SO: on a NON-PROD target only, a migration named here is recorded as applied WITHOUT executing,
+// because on a database with no production data it has nothing to do. The alternative — seeding a
+// fake USMCA company and a fake chart of accounts into a throwaway database so a repair script has
+// something to repair — would be inventing production data to satisfy an assertion, which is worse
+// than the problem.
+//
+// RULES FOR THIS LIST, so it does not become a dumping ground:
+//   - NON-PROD ONLY. On production these run normally and are never skipped.
+//   - A migration qualifies ONLY if it is pure DATA REPAIR scoped to rows that no migration creates.
+//     A migration that creates or alters SCHEMA never belongs here — skipping one of those would
+//     make a fresh database structurally different from production, which is the opposite of the
+//     goal.
+//   - Every entry carries a written reason naming what it repairs and why a fresh database has
+//     nothing to repair.
+//   - The skip is LOGGED on every run. A silent skip is how a real migration goes missing.
+const FRESH_DB_PRODUCTION_DATA_ONLY = new Map([
+  [
+    "202614640000_fix_usmca_def_item_account_5010.sql",
+    "Repairs two catalogs.items rows for USMCA (5c854333-…), flipping DEF line items from account " +
+      "5000 to 5010. No migration inserts USMCA into org.companies, so a fresh database has neither " +
+      "the company, the accounts, nor the items — nothing to repair. The migration RAISEs on its own " +
+      "precondition instead of no-opping, which kills the chain on every fresh build.",
+  ],
+]);
+
+function freshDbProductionDataOnlySkip(file) {
+  if (TARGET_IS_PROD) return null;
+  return FRESH_DB_PRODUCTION_DATA_ONLY.get(file) ?? null;
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -377,6 +430,36 @@ async function applyMigration(client, file, sql, checksum) {
         VALUES ($1, $2, $3);
       `,
       [file, checksum, Date.now() - start]
+    );
+    await client.query(
+      `
+        INSERT INTO ${MIRROR_LEDGER_TABLE} (name)
+        VALUES ($1)
+        ON CONFLICT (name) DO NOTHING;
+      `,
+      [file]
+    );
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  }
+}
+
+/**
+ * Ledger a migration WITHOUT executing its SQL. Used only by FRESH_DB_PRODUCTION_DATA_ONLY on a
+ * non-prod target -- see that map for the rules. Writes the SAME rows applyMigration() writes, so
+ * the ledger and its mirror stay identical in shape and a later checksum check behaves normally.
+ */
+async function recordMigrationApplied(client, file, checksum) {
+  await client.query("BEGIN");
+  try {
+    await client.query(
+      `
+        INSERT INTO ${CANONICAL_LEDGER_TABLE} (filename, checksum, duration_ms)
+        VALUES ($1, $2, 0);
+      `,
+      [file, checksum]
     );
     await client.query(
       `
@@ -691,6 +774,18 @@ try {
 
     await ensureFreshDbProductionIdentity(client, file);
     await ensureFreshDbProductionSchema(client, file);
+    const dataOnlyReason = freshDbProductionDataOnlySkip(file);
+    if (dataOnlyReason) {
+      console.log(
+        `[db:migrate] fresh-DB production-data-only: recording ${file} as applied WITHOUT executing ` +
+          `(non-prod target only) — ${dataOnlyReason}`
+      );
+      await recordMigrationApplied(client, file, checksum);
+      if (!ledgerFilesByChecksum.has(checksum)) ledgerFilesByChecksum.set(checksum, []);
+      ledgerFilesByChecksum.get(checksum).push(file);
+      ledgerByFile.set(file, { filename: file, checksum });
+      continue;
+    }
     console.log(`APPLY ${file}`);
     await applyMigration(client, file, sql, checksum);
     if (!ledgerFilesByChecksum.has(checksum)) ledgerFilesByChecksum.set(checksum, []);

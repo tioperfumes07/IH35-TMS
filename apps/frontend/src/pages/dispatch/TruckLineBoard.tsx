@@ -632,7 +632,9 @@ function TruckLineTrack({
         if (i === STATUS_STATION_INDEX) {
           const exceptionOpen = has_open_exception;
           return (
-            <div key={i} className="absolute" style={{ left: `${left}%`, top: 0 }}>
+            // Same z-order rule as the progress nodes below: the station layer outranks the
+            // truck graphic so the On time / Exception dot is never painted over.
+            <div key={i} className="absolute" style={{ left: `${left}%`, top: 0, zIndex: 6 }}>
               <button
                 type="button"
                 data-testid={`truck-line-status-node-${row.unit_id}`}
@@ -727,7 +729,13 @@ function TruckLineTrack({
         const isNext = i === v7Next && i !== 3;
         const nodeColor = has_open_exception && isDone ? RED : GREEN;
         return (
-          <div key={i} className="absolute" style={{ left: `${left}%`, top: 0 }}>
+          // OWNER-LIVE 2026-09-30 ("the green circle is not on ... the truck appears in
+          // dispatched"): the node was NOT off. `.truck-line-vehicle` carries z-index 5 and the
+          // 74x34 truck graphic, centred on its station, painted straight over the 17px node —
+          // measured on T170, where a 15h44m-stale ping correctly parks the truck at Dispatched
+          // and it then blanketed the Dispatched dot. The station layer now outranks the truck,
+          // so the progress node is visible at every station the truck can sit on.
+          <div key={i} className="absolute" style={{ left: `${left}%`, top: 0, zIndex: 6 }}>
             <button
               type="button"
               disabled={!isNext}
@@ -755,7 +763,7 @@ function TruckLineTrack({
 
       <div
         className="truck-line-vehicle"
-        style={{ left: `${pct(live.v7Index)}%`, top: 12, cursor: "grab", touchAction: "none" }}
+        style={{ left: `${pct(live.v7Index)}%`, top: 4, cursor: "grab", touchAction: "none" }}
         data-testid={`truck-line-vehicle-${row.unit_id}`}
         data-rolling={live.rolling ? "true" : "false"}
         title="Drag to change status: in transit → on time → at delivery → delivered"
@@ -788,7 +796,13 @@ function TruckLineTrack({
           window.addEventListener("pointerup", onUp);
         }}
       >
-        <TractorTrailerSvg hasIssue={has_open_exception} rolling={live.rolling} />
+        {/* A Stale / No ping truck is the LAST KNOWN position, never a live one. It renders
+            muted so the owner can tell the two apart at a glance without reading the caption. */}
+        <TractorTrailerSvg
+          hasIssue={has_open_exception}
+          rolling={live.rolling}
+          parked={live.signalLabel !== "Live"}
+        />
       </div>
     </div>
     <div

@@ -169,6 +169,27 @@ jobs:
           DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
         run: node scripts/verify-load-settlement-linkage.mjs
 
+      - name: verify:issued-invoice-on-rolling-load-needs-authorization
+        id: rolling_load_invoice_authorization
+        # FACTOR-BUT-NOT-DELIVERED, detection half. Owner, verbatim: "unless we have approval from
+        # the customer, we already have this engine, factor but not delivered." The engine is
+        # dispatch.manual_delivery_authorizations. This guard was written 2026-09-30 and left an
+        # ORPHAN -- present, correct, enforcing nothing.
+        #
+        # It runs HERE and not on the local pre-commit path because it needs a real DATABASE_URL.
+        # A guard that requires a live database belongs in the job that HAS one: in CI's empty
+        # database it would pass by finding nothing, which is a fake green of exactly the kind
+        # this sweep exists to remove, and locally it would block every seat's commit.
+        #
+        # Baseline 2, shrink-only: loads 13625 and 13626, both invoiced and factored before
+        # delivery ($6,062.50 and $3,298.00 advanced) with that table holding 0 rows across all
+        # companies. Clear them by recording the real authorization or correcting the invoices --
+        # never by raising the number. The WRITE block that stops the next one is
+        # verify-invoice-send-blocks-rolling-load.mjs, which is static and runs on every push.
+        env:
+          DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+        run: node scripts/verify-issued-invoice-on-rolling-load-needs-authorization.mjs
+
       - name: Smoke PRODUCTION
         id: smoke
         continue-on-error: true

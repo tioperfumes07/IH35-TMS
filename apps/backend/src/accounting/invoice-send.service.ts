@@ -14,6 +14,8 @@ import {
   InvoiceLoadSourceRequiredError,
   InvoiceHasNoRevenueLinesError,
   InvoiceLineIncomeAccountRequiredError,
+  assertIssuedInvoiceAuthorizedIfRolling,
+  InvoiceOnRollingLoadNeedsAuthorizationError,
   type InvoiceLineGuardRow,
 } from "./invoice-linkage-guards.js";
 import { recomputeInvoiceTotals } from "./shared.js";
@@ -178,6 +180,53 @@ export async function sendDraftInvoice(
     [input.invoiceId]
   );
   const sendLines = sendLinesRes.rows as InvoiceLineGuardRow[];
+
+  // FACTOR-BUT-NOT-DELIVERED WRITE BLOCK -- see invoice-linkage-guards.ts for the measurement and
+  // the owner's ruling. Read the load's CURRENT status and any ACTIVE (non-revoked) manual delivery
+  // authorization together, so an invoice can never be issued on freight that is still rolling
+  // unless the customer's approval is on record. This runs BEFORE the line guards because it is a
+  // question about the load, not about the lines, and it must refuse even a perfectly-formed invoice.
+  const rollingLoadId = current.source_load_id ? String(current.source_load_id) : null;
+  if (rollingLoadId) {
+    const rollingRes = await client.query(
+      `
+        SELECT
+          l.status::text AS load_status,
+          EXISTS (
+            SELECT 1
+            FROM dispatch.manual_delivery_authorizations mda
+            WHERE mda.load_id = l.id
+              AND mda.operating_company_id = l.operating_company_id
+              AND mda.revoked_at IS NULL
+          ) AS has_active_authorization
+        FROM mdata.loads l
+        WHERE l.id = $1::uuid AND l.operating_company_id = $2::uuid
+        LIMIT 1
+      `,
+      [rollingLoadId, input.operatingCompanyId]
+    );
+    const rolling = rollingRes.rows[0] ?? null;
+    if (rolling) {
+      try {
+        assertIssuedInvoiceAuthorizedIfRolling(
+          input.invoiceId,
+          rolling.load_status ? String(rolling.load_status) : null,
+          rolling.has_active_authorization === true
+        );
+      } catch (rollingErr) {
+        if (rollingErr instanceof InvoiceOnRollingLoadNeedsAuthorizationError) {
+          return {
+            ok: false,
+            code: 409,
+            error: "invoice_on_rolling_load_needs_authorization",
+            message: rollingErr.message,
+          };
+        }
+        throw rollingErr;
+      }
+    }
+  }
+
   try {
     // ACCT-F124 — FIRST, because the two guards below iterate the lines and therefore pass vacuously
     // on an empty set. INV-2026-00004 sent with zero lines and left a receivable the poster correctly

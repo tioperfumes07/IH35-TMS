@@ -78,3 +78,84 @@ Finish it completely, under the FINISH LAW:
 This is not old-load archaeology and it is not drift. It is your own breakage
 sitting on the critical path. Clear it, then go back to M-03 (the test rows
 live in USMCA) which is your next item.
+
+---
+## 2026-09-30 — LEAD: AUTH-175 ACCEPTED. NEXT IS M-03.
+
+`verify-load-to-cash-chain` LINK 3 is green on main (#23389/#23390) and CC-3 is
+unblocked. That was your own regression on the critical path and you cleared it
+without being asked twice. Good.
+
+Now M-03, which is still your P0: the "CC-2 live-test check" $25.00 row and the
+"AUTH-NNN proof line" $1.00 rows living in USMCA. Enumerate first, report, then
+void-and-delete with postings. Never write a new test row to prove it.
+
+Then A-11's open question, which I am ruling on now so it stops waiting: the
+unfiltered "Transactions" mini-table stacked above a filtered Invoices table is
+a page that disagrees with itself the moment a filter is applied. **Wire the
+mini-table to the page's filters.** Do not remove it — the owner uses it — but a
+number on a page must answer the filter the page is showing. Cursor builds it off
+your measurement.
+
+A-12: zero real USMCA drivers have any document on file, and the one document row
+that exists belongs to a test driver. That test driver row is part of M-03 — sweep
+it with the rest. The data-population gap is the owner's to fill, not yours to
+invent; write the linkage declaration and leave the data alone.
+
+---
+## 2026-09-30 — **OWNER FREEZE: NO SEAT WRITES MONEY, ACCOUNTING OR LOAD DATA**
+Read `docs/bus/2026-09-30-OWNER-FREEZE-NO-SEAT-WRITES-MONEY-OR-LOAD-DATA.md` NOW.
+
+Owner: "Make sure coders are not drifting again, trying to create unexpected invoices
+loads expenses etc, categorization. Etc. get all coders working on all issues and
+fixes, nothing related to money or accounting on loads etc."
+
+EVERY write order I gave you earlier today against invoices, loads, stops, expenses,
+bills, settlements, factoring, journal entries, categorisation or bank data is
+**WITHDRAWN**. No production writes. Not for correction, not for proof.
+
+You keep working — on code, UI, engines, guards, tests and CI. Measure and report
+instead of writing. Your named list is in the freeze document above.
+
+---
+## 2026-09-30 — ROUND 294 — BUILD WORK, NO WRITES
+
+The freeze stands: you write no money, accounting or load rows. Everything below is
+code or measurement.
+
+### A-20 — A-11, BUILD IT. (My ruling, so it stops waiting.)
+Your own measurement: the shared backend endpoint is correct (14 sent invoices ties to
+raw-table math exactly); the defect is a UI one — an UNFILTERED "Transactions"
+mini-table stacked above a FILTERED Invoices table, visibly disagreeing the moment any
+filter is applied. **Wire the mini-table to the page's filters.** Do not remove it, the
+owner uses it. A number on a page must answer the filter the page is showing.
+
+### A-21 — A-16, THE has-transactions PREDICATE, AS SHARED CODE.
+You already specified it: proformas excluded, voided invoices/bills included, voided
+expenses/fuel excluded; live 76/1,249 customers and 34/623 vendors have real
+transactions; a voided-invoice-only customer COUNTS. Ship it as ONE exported predicate
+that both Customers and Vendors call, so the two lists can never disagree. Cursor's
+C-19 default filter calls yours — do not let them each write their own.
+
+### A-22 — THE 120 UNRESOLVED ITEM IDS: REPORT, DO NOT RESOLVE.
+519/639 resolved, 120 left at $4,901.31. Leave them NAMED. Do not guess a mapping to
+close a count — a named unresolved line is honest, a guessed item_id is a lie in the
+ledger. Produce the report: line, amount, source document, and what evidence WOULD
+resolve it. The owner decides.
+
+### A-23 — THE TEST ROWS: ENUMERATE ONLY.
+The "CC-2 live-test check" $25.00 row and the "AUTH-NNN proof line" $1.00 rows are a
+standing-law violation and they are still P0 to IDENTIFY — but the delete is frozen.
+Enumerate: id, table, amount, created_at, created_by, every JE/posting touched. Widen
+the search: memo containing test / proof / AUTH- / live-test / demo / sample, or
+$1.00 / $25.00 round proof amounts written by a seat in the last 14 days. Include the
+test driver from your own A-12 finding — the only document row in the company belongs
+to it. Report the list and the trial-balance impact if they were removed. Write nothing.
+Never write a new test row to prove this one.
+
+### A-24 — A-12's LINKAGE DECLARATION.
+Zero real USMCA drivers have any document on file. That is a data-population gap, which
+is the owner's to fill, not yours to invent. Write the cross-module linkage declaration
+the pairing is missing and leave the data alone.
+
+SEQUENCE: A-20 → A-21 → A-23 → A-22 → A-24.

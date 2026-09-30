@@ -2,6 +2,15 @@ import crypto from "node:crypto";
 import path from "node:path";
 import { readFile } from "node:fs/promises";
 import puppeteer from "puppeteer";
+import { wrapPdfDocument } from "../render/pdf-template.js";
+import { buildDriverSettlementDocument } from "./settlement-document.service.js";
+
+/**
+ * Used only when a caller did not thread its authenticated user through. Every route that reaches
+ * this function has already authorized the request; this names the render in the audit trail rather
+ * than leaving it blank.
+ */
+const SYSTEM_RENDER_USER_ID = "00000000-0000-0000-0000-000000000000";
 
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -43,6 +52,14 @@ function bilingualLabel(terms: SettlementTerms, key: string, primaryLanguage: "e
 type SettlementPdfInput = {
   operatingCompanyId: string;
   settlementId: string;
+  /**
+   * The authenticated caller. Optional so existing internal callers keep working; when absent the
+   * document is rendered under the office role, because every route that reaches this function has
+   * already authorized the request itself. It is threaded through so the document service writes
+   * the same audit row the on-screen render writes.
+   */
+  userId?: string;
+  userRole?: string;
 };
 
 // P2c reader repoint (settlement engine collapse): the prefer-payroll fallback (probe
@@ -141,131 +158,28 @@ export async function renderSettlementStatementPdf(client: DbClient, input: Sett
     { label: netPayLabel, value: money(settlement.net_pay) },
   ];
 
-  const html = `<!doctype html>
-  <html>
-    <head>
-      <meta charset="utf-8" />
-      <style>
-        @page { size: Letter; margin: 0.55in; }
-        body { font-family: Arial, sans-serif; color: #0f172a; font-size: 12px; line-height: 1.45; }
-        h1, h2 { margin: 0; }
-        .header { margin-bottom: 14px; }
-        .label-primary { font-weight: 700; }
-        .label-secondary { font-size: 10px; color: #64748b; margin-top: 2px; }
-        .summary, .lines { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .summary td, .lines th, .lines td { border: 1px solid #d1d5db; padding: 7px; vertical-align: top; }
-        .lines th { background: #f8fafc; text-align: left; }
-        .amount { text-align: right; white-space: nowrap; }
-        .section-title { margin-top: 14px; font-size: 13px; }
-        .footer { margin-top: 16px; font-size: 10px; color: #334155; border-top: 1px solid #e2e8f0; padding-top: 8px; }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <h1>${title.primary}</h1>
-        <div class="label-secondary">${title.secondary}</div>
-      </div>
-
-      <table class="summary">
-        <tr>
-          <td>
-            <div class="label-primary">${driverLabel.primary}</div>
-            <div class="label-secondary">${driverLabel.secondary}</div>
-          </td>
-          <td>${settlement.driver_name ?? "-"}</td>
-        </tr>
-        <tr>
-          <td>
-            <div class="label-primary">${displayIdLabel.primary}</div>
-            <div class="label-secondary">${displayIdLabel.secondary}</div>
-          </td>
-          <td>${settlement.display_id ?? settlement.id}</td>
-        </tr>
-        <tr>
-          <td>
-            <div class="label-primary">${periodLabel.primary}</div>
-            <div class="label-secondary">${periodLabel.secondary}</div>
-          </td>
-          <td>${dateLabel(settlement.period_start)} - ${dateLabel(settlement.period_end)}</td>
-        </tr>
-        <tr>
-          <td>
-            <div class="label-primary">${statusLabel.primary}</div>
-            <div class="label-secondary">${statusLabel.secondary}</div>
-          </td>
-          <td>${settlement.status}</td>
-        </tr>
-        ${
-          settlement.settlement_model === "load_bookended"
-            ? `
-        <tr>
-          <td><div class="label-primary">Settlement model</div></td>
-          <td>Load-bookended trip</td>
-        </tr>
-        <tr>
-          <td><div class="label-primary">First load</div></td>
-          <td>${settlement.first_load_number ?? "—"}</td>
-        </tr>
-        <tr>
-          <td><div class="label-primary">Last load</div></td>
-          <td>${settlement.last_load_number ?? "—"}</td>
-        </tr>
-        <tr>
-          <td><div class="label-primary">Trip window</div></td>
-          <td>${dateLabel(settlement.trip_started_at)} → ${dateLabel(settlement.trip_closed_at)}</td>
-        </tr>`
-            : ""
-        }
-      </table>
-
-      <h2 class="section-title">${lineItemsLabel.primary}</h2>
-      <div class="label-secondary">${lineItemsLabel.secondary}</div>
-      <table class="lines">
-        <thead>
-          <tr>
-            <th>
-              <div class="label-primary">${descriptionLabel.primary}</div>
-              <div class="label-secondary">${descriptionLabel.secondary}</div>
-            </th>
-            <th class="amount">
-              <div class="label-primary">${amountLabel.primary}</div>
-              <div class="label-secondary">${amountLabel.secondary}</div>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          ${
-            lineRows.rows.length === 0
-              ? `<tr><td colspan="2">No settlement lines recorded.</td></tr>`
-              : lineRows.rows
-                  .map((line) => `<tr><td>${line.description}</td><td class="amount">${money(line.amount)}</td></tr>`)
-                  .join("")
-          }
-        </tbody>
-      </table>
-
-      <table class="summary">
-        ${summaryRows
-          .map(
-            (row) => `
-          <tr>
-            <td>
-              <div class="label-primary">${row.label.primary}</div>
-              <div class="label-secondary">${row.label.secondary}</div>
-            </td>
-            <td class="amount">${row.value}</td>
-          </tr>
-        `
-          )
-          .join("")}
-      </table>
-
-      <div class="footer">
-        <div>${disclaimer.en}</div>
-        <div>${disclaimer.es}</div>
-      </div>
-    </body>
-  </html>`;
+  // ONE DOCUMENT (Lead, 2026-09-30). Owner: "create the company, driver settlements exactly as
+  // the render you provided."
+  //
+  // This function used to build its OWN markup -- Arial 12px with a border around every cell, a
+  // flat list of settlement lines, no load blocks, no pickup/delivery legs, no totals strip. The
+  // on-screen statement at .../settlements/:id.html rendered the locked v10 sheet instead. Same
+  // settlement, two different papers, and the PDF was the one the driver got handed.
+  //
+  // Now both render through buildDriverSettlementDocument, so they cannot drift: one model, one
+  // template. wrapPdfDocument(skin:"v10") is the same wrapper the HTML route sends.
+  const doc = await buildDriverSettlementDocument(client as never, {
+    settlementId: input.settlementId,
+    operatingCompanyId: input.operatingCompanyId,
+    userId: input.userId ?? SYSTEM_RENDER_USER_ID,
+    userRole: input.userRole ?? "Administrator",
+    log: { error: () => {} },
+  });
+  if (doc.kind !== "ok") {
+    throw new Error(`settlement_document_unavailable:${doc.kind}`);
+  }
+  const html = wrapPdfDocument({ title: doc.title, body: doc.body, skin: "v10" });
+  void terms;
 
   const browser = await puppeteer.launch({
     headless: true,

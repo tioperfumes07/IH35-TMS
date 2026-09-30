@@ -81,7 +81,7 @@ export function DriverListSidebar({ selectedDriverId, onSelectDriver }: Props) {
                     data-testid={`driver-master-row-${driver.id}`}
                     onClick={() => onSelectDriver(driver.id)}
                   >
-                    <EntityLinkOrTombstone kind="driver" id={driver.id} name={name} />
+                    <EntityLinkOrTombstone kind="driver" id={driver.id} name={name} noun="Driver" />
                   </button>
                 </li>
               );
