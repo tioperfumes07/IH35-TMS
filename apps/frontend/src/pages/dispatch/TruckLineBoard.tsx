@@ -1363,7 +1363,13 @@ export function TruckLineBoard({
                   className="truck-line-v4-section-band"
                   data-testid={`truck-line-section-header-${section}`}
                 >
-                  {SECTION_LABEL[section]} · {sectionGroups.length}
+                  {/* SECTION-BAND-COUNT (Lead, 09-30-2026, owner: "you have your 11, and there
+                      are 15 active loads"). The band counted GROUPS — units/tours — while the band
+                      RENDERS one row per LEG. Eleven units carrying fifteen legs printed "· 11"
+                      above fifteen rows, so the header contradicted the thing it sat on top of and
+                      the owner had to count rows by hand to find out which number was real. A band
+                      counts WHAT IT SHOWS. Measured live 2026-09-30: TOUR said 11 over 15 rows. */}
+                  {SECTION_LABEL[section]} · {sectionGroups.reduce((n, g) => n + g.legs.length, 0)}
                 </div>
                 {sectionGroups.map((g, groupIndex) =>
                   g.legs.map((r, legIndex) => {
