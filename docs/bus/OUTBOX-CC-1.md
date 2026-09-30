@@ -406,3 +406,32 @@ highest-leverage single fix once a rule is authorized to be written. The USMCA F
 gap needs someone to actually read the uncategorized descriptions and author/extend rules against
 them -- a data-entry-shaped task, not a wiring one, and NOT attempted here since the order asked for
 diagnosis first.
+
+## ROUND 300 A-35 — DIAGNOSED: what a first reconciliation needs, and what's missing
+Confirmed live: `banking.reconciliation_sessions` has 0 rows for USMCA -- 0 of 8 accounts have ever
+been reconciled, matching the order's own count exactly.
+**THE ONE UNIVERSAL BLOCKER, same for every account:** `POST` start-reconciliation
+(`apps/backend/src/banking/reconciliation.routes.ts`) requires `statement_balance_cents` as a
+required body field -- a human must type in the account's real ending balance from its actual bank/
+card statement. Nothing in the code can supply this; it is not a code gap, it is that nobody has
+ever done this for any of the 8 accounts. That single missing input is why the count is 0, full
+stop.
+**Per-account state, live 2026-09-30:**
+  5 of 8 accounts (Amex-Scentsx, Faro Cash Reserve, Faro Escrow Reserve, Faro Factoring - USMCA,
+  Petty Cash) have ZERO bank_transactions and $0 current_balance_cents -- there is nothing to
+  reconcile yet; a "first reconciliation" is moot until real activity exists.
+  USMCA FREIGHT: 474 txns (Dec 2025-Sep 2026), Plaid-sourced with a live-synced balance
+  ($11,684.14) -- the most reconciliation-READY account of the 8 (real history, a live balance feed
+  to check a human-entered statement balance against). Best candidate to reconcile first.
+  Dreamline Diesel Card: 397 txns (Aug-Sep 2026, csv_import) but `current_balance_cents = $0` --
+  flagged as a likely data-quality gap in its own right (a credit card with 397 real transactions
+  and a literal zero balance looks wrong, not just "unreconciled"); csv_import accounts have no live
+  balance feed at all, so reconciliation here depends entirely on a human re-typing the statement
+  balance every period.
+  Relay Fuel Wallet: 76 txns, `current_balance_cents = -$123.45` -- the exact digit sequence
+  (12345) reads like a placeholder/test value rather than a real synced balance; flagged, not
+  corrected here (no source-of-truth check performed against Relay's own dashboard in this pass).
+**Not built here, per the order's own "establish what is missing" framing (a report, not a build
+task):** no reconciliation session was started, no balance was entered on the owner's behalf, and
+the two balance-quality flags (Dreamline $0, Relay's placeholder-looking figure) were not
+investigated further or corrected.
