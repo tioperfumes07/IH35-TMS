@@ -40,6 +40,7 @@ if (!DRY_RUN) {
 }
 
 const USMCA_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+const SYSTEM_ACTOR_USER_ID = "00000000-0000-4000-8000-000000000001";
 
 async function main() {
   const { createExpenseFromFuelTransaction } = await import(
@@ -86,7 +87,7 @@ async function main() {
       const r = await createExpenseFromFuelTransaction(client, {
         operating_company_id: USMCA_ID,
         fuel_transaction_id: row.id,
-        requesting_user_uuid: null,
+        requesting_user_uuid: SYSTEM_ACTOR_USER_ID,
         dry_run: DRY_RUN,
       });
 
