@@ -1,14 +1,17 @@
-# NOW-CURSOR — 2026-09-30 ROUND 285 PART E
+# NOW-CURSOR — 2026-09-30 ROUND 291.5 ACK + 285.4.9 CLOSE
 
 ## HARD LINE
-Obey `claude/00-ROUND-285-FULL-WORK-SEQUENCE-EVERY-SEAT.md` PART E. AUTH: never self-assign outside seat blocks (Lead #23272). Owner FAST-MERGE order overrides migrate-window hold when given.
+Obey ROUND 285 PART E + Round 291.5 ACK (`claude/09-30-2026-CURSOR-ROUND-291-ACK-AND-THE-12UTC-WINDOW.md`).
+AUTH: never self-assign outside seat blocks. Tip ENV reds (CC-1/CC-2/Codex) — do not wait.
 
-## DONE (285.4.9)
-- AUTH collision law `#23272`
-- **#58** `#23275` · **#32** `#23276` · **#33** `#23279` · **#31** v10 PDFs `#23283` `c57f610b4b`
-- Migration claim **202614651200** `#23286` `6cb5f4b515`
-- **#59 METHOD** `#23287` squash `39eff3b07f` · Neon `approval_method` live + ledger `2026-09-30T07:14:03Z`
+## RATCHET CORRECTION (Round 291.5 — Lead)
+Baseline `scripts/ui-design-system-baseline.json` **raw_font_sizes=1253 never moved**. Main was +5 above it; Lead retired those to `.text-section-header` (already in `index.css`). Cursor was wrong to say Lead "lowered the ratchet." Nothing forgiven — count returned to baseline.
+
+## DONE
+- 285.4.9 **#58/#32/#33/#31/#59** all on main
+- **#59 METHOD** `#23287` `39eff3b07f` · Neon `approval_method` live `2026-09-30T07:14:03Z`
+- Owner FAST-MERGE superseded the 12:05Z timer (merged ~07:12Z). Round 291's 12UTC hold acknowledged; owner order won.
 
 ## NEXT
-Deploy Chrome Print proof of METHOD on a detention/layover invoice line (APPROVED BY · METHOD).
-285.4.10 remainder / PART E closeout if any open on board.
+1. **Chrome Print proof** — APPROVED BY · METHOD on a detention/layover invoice line (screenshots + live row). Neon: **0** USMCA `detention_requests` in approved/invoiced yet — METHOD print needs a real approve with `approval_method` stamped, or prove blank on a line without approval.
+2. **285.4.10 #60** — BOL → invoice → Faro queue Chrome chain (Round 291 after #59).

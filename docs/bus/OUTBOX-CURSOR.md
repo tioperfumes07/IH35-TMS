@@ -1,5 +1,8 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T07:32Z · ROUND 291.5 ACK · ratchet correction · #59 already live**
+CURSOR | ACK Round 291.5: window stood; tip ENV reds not ours (do not wait). CORRECTION: baseline stayed **1253** — Lead retired +5 Kanban raw sizes to `.text-section-header`; Cursor mis-said "lowered ratchet." #59 already FAST-MERGED `39eff3b07f` + Neon applied (owner order beat 12:05Z timer). | GUARD ratchet PASS · Neon column live | NEXT: Chrome Print METHOD proof (0 USMCA invoiced detention_requests yet) · 285.4.10 BOL→invoice→Faro Chrome.
+
 **2026-09-30T07:14Z · 285.4.9 #59 METHOD FAST-MERGED `39eff3b07f` · Neon applied**
 CURSOR | #59 METHOD `#23287` `39eff3b07f` · migrate `202614651200` ADD COLUMN approval_method · approve requires method · invoice SELECT · FE METHOD picker | GUARD lifecycle 8/8 · company-settlement-pdf OK · ratchet PASS | LIVE PROOF Neon br-fancy-credit-akjnd07a: `dispatch.detention_requests.approval_method` text NULL + ledger row checksum `fb8ea0a133…` applied_at `2026-09-30T07:14:03.087Z` | NEXT: Chrome Print proof of METHOD on detention invoice.
 
