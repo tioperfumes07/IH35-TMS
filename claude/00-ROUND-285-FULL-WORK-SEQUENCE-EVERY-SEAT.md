@@ -311,3 +311,104 @@ The mis-filed loads imported into USMCA on 09-23/24 with a null PO: re-point the
 exclude them. My "61 loads" signature was WRONG — it returns 123 including 5 that are closed and PAID. No
 query I have found separates the mis-filed Transportation loads from real USMCA loads. **Nobody touches them
 until the owner rules.** TRANSPORTATION and TRUCKING stay frozen — do not read, write or report on them.
+
+---
+
+# PART H — AMENDMENT 1 · 09-30-2026 · measured after the ROUND 285 merge. This OVERRIDES PART A and PART C above.
+
+## H.1 — 280.4.OWNER IS CLOSED BY THE OWNER. TRANSPORTATION IS FULLY DELETED.
+Owner ruling, verbatim: *"you do not touch transportation. they are fully deleted."*
+**Nobody re-opens this. Nobody calls a USMCA load "mis-filed Transportation" again. Lead included.**
+Live: `org.companies` shows IH 35 Transportation LLC with 5 loads, IH 35 Trucking LLC with 0, USMCA with 149.
+`is_sample_data` count in USMCA: **0** — every USMCA record is real, as the law already said.
+
+**The 123 null-PO loads are USMCA's OWN loads, not anyone else's.** Measured:
+
+| status | loads | of which null PO |
+|---|---|---|
+| closed | 86 | 86 |
+| invoiced | 23 | 16 |
+| **dispatched (live)** | **14** | **0** |
+| cancelled | 13 | 12 |
+| completed_docs_received | 13 | 9 |
+
+**The live dispatch path is already correct — all 14 dispatched loads carry a PO.** The null PO is purely
+historical, on loads the 09-23/24 import created. So this is a BACKFILL, not a bug hunt:
+
+**285.3.11 — CC-3 — backfill `customer_po_number` on the historical loads that have a source document.**
+The PO is the Faro join key. Work from the rate confirmation or the customer's own document, never a guess.
+Where no document exists, leave it NULL and report the count — an honest gap beats an invented PO.
+**285.3.6 (W/O or PO required at creation) is what keeps it from happening again. Do that one first.**
+
+## H.2 — 285.2.1 IS WITHDRAWN AND REPLACED. **CC-2: DO NOT REVERSE THE 41.**
+I ordered CC-2 to reverse 41 factoring advances. **That order was unsafe and I am killing it before it runs.**
+This is the second time this session I have aimed a reversal at real money, and CC-2 caught the first one.
+
+Measured, live, on the 41:
+- **40 of them carry void reason "repair zero-advance ach=NetAdv bug", voided 2026-09-24**, with
+  **$163,962.00 of debits still live**. `invoice_total_cents` $164,097.00, `advance_amount_cents` $159,003.12
+  — which is the **same population AUTH-136 addressed** ("$159,585.12 of real advanced cash").
+- **1 of them is a genuine duplicate** — void reason names it: duplicate of FAC-2026-00091, same real Faro
+  invoice 46, load 13563. **$600.00 of debits still live.**
+- On all 40: `faro_invoice_number` is **NULL**, **no invoice references them** (`invoices.factoring_advance_id`),
+  **no bank transaction is matched to them** (`bank_transactions.matched_factoring_advance_id`),
+  `status_before_void` is NULL, `reinstated_at` is NULL.
+
+**So the 40 are orphaned in every direction except the GL, where their money is real and live.** Reversing
+them removes $163,962.00 of real advanced cash from the books with nothing replacing it.
+
+**RETRACTION inside this amendment:** I first tested for replacements by matching `faro_invoice_number` and
+reported "no replacement exists for any of the 40". **That test proved nothing — the column is NULL on all
+40.** Withdrawn. The invoice-link and bank-match tests above are the ones that stand.
+
+**285.2.1-R — CC-2 — CLASSIFY the 41 before touching one of them. Per record, one of three:**
+1. **REVERSE** — the record is a duplicate or was never funded. The 1 duplicate of FAC-2026-00091 is
+   already proven to be this. Reverse it, never delete it.
+2. **REINSTATE** — real cash was advanced and the posting is correct; the `voided_at` flag is the lie.
+   Clear the flag through `reinstateDocument` (Cursor's R274 built it, and the columns `reinstated_at`,
+   `reinstate_reason`, `reinstated_by_user_id`, `reinstated_from_void_je_id`, `status_before_void` exist for
+   exactly this). **Do not hand-write the UPDATE.**
+3. **CANNOT TELL** — say so, list them, and stop. Unclassified is an answer. Guessing is not.
+**The classifier is the real Faro wire.** You hold the 12 for-review Faro wire-ins at $191,929.68 from
+285.2.3. Cross those and the bank ledger against the 40's amounts. Cash in the bank is what proves an
+advance was funded — not the flag, not the JE, not a document.
+**PROOF: the 41 listed with the verdict per record and the evidence per verdict. No bulk action.**
+
+## H.3 — AUTH-136 / DEFECT 1 IS CLOSED. Both targets hit exactly.
+| account | live balance | target | verdict |
+|---|---|---|---|
+| **1090 Undeposited Funds** | **$315,561.76** | ~$315,561.76 | **HIT** |
+| **6300 Bank Service Charges & Wire Fees** | **$230.00** | ~$230 | **HIT** |
+CC-2's AUTH-136 repost applied and landed on its predicted numbers. Nobody re-runs it.
+**But AUTH-136's own no-double-post guard means it SKIPPED any advance whose original posting was never
+reversed.** That is why the 41 in H.2 still sit dirty — the repost was correct to skip them. Do not read the
+green AUTH-136 result as covering those 41; it does not, and treating it that way is a fake green.
+
+## H.4 — THE LIVE BALANCE SHEET, USMCA, measured now. Use these, not older numbers.
+| acct | name | balance | note |
+|---|---|---|---|
+| 1000 | Bank of America — Operating | $168,643.65 | |
+| **1090** | **Undeposited Funds** | **$315,561.76** | **the biggest single number. Must sweep to 1000.** |
+| 1100 | Accounts Receivable | $336,809.12 | ties per the closed reconciliation |
+| 2000 | Accounts Payable | **credit $3,542.98** | CC-1 285.1.3 — was reported as $2,117.49, re-measure |
+| 2150 | Factoring Advance | credit $500,374.17 | target after H.2 classification |
+| 6300 | Bank Svc Charges & Wire Fees | $230.00 | HIT |
+**Every journal entry balances: 3,788 JEs, 0 unbalanced, 0 zero-line, total Dr = total Cr = $3,240,860.36.**
+That is canonical guard #1 measured live — it is green from a clean baseline, not a red one.
+
+**$315,561.76 sitting in Undeposited Funds is the headline defect in these books.** It is one fact with three
+owners: CC-1 285.1.6 (the 920 uncategorized bank rows), CC-2 285.2.3 (the 12 Faro wires and the plug) and
+CC-2 285.2.4 (the 7 remaining unswept advances). Undeposited Funds reaching 0 is the proof all three worked.
+
+## H.5 — THE DEPLOY PIPELINE WAS THE DEFECT, not a missed step.
+**`IH35-TMS` (backend) and `ih35-tms-web` (frontend) both have `autoDeploy: "no"`.** Merging to main deploys
+NOTHING on either. Only `IH35-TMS-Driver` auto-deploys. That is why nothing reached production for hours
+while PRs kept merging. Every "merged" claim in this repo since that setting changed was not a live claim.
+Deploys triggered by hand for merge `218cc70131`: backend `dep-dau8ir893c1s73d6ebd0`,
+frontend `dep-dau8is6gekts73ddq8a0`.
+Also on the record: `dep-dau629jncjis73atgomg` finished **`pre_deploy_failed`** at 01:11 — a pre-deploy
+migration failure that nobody reported. **A failed pre-deploy is a red, not a skip.**
+**OWNER DECISION NEEDED (one line): turn `autoDeploy` back ON for both services?** My recommendation is yes
+for the frontend immediately, and yes for the backend too — its pre-deploy runs `db:migrate` and
+`db:verify:critical-runtime`, so a bad migration fails the deploy instead of reaching your users, which is
+the behaviour you want. Until you say so I will keep triggering both by hand after every merge.
