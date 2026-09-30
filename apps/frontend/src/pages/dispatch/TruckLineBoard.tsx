@@ -19,7 +19,7 @@
  * honest FRONTEND-ONLY regrouping of that same 9-index signal into the 7 labels the owner asked
  * for — never a second source of truth.
  */
-import { Fragment, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -78,19 +78,29 @@ const ON_TIME_GREEN = "#166534";
 const ON_TIME_FILL = "#ECFDF3";
 const EXCEPTION_RED = "#991B1B";
 
-// ROUND 255 — UNIT · PRE-SETTLEMENT / TOUR · LOAD · PU DATE · DELIVERY DATE · [TRANSIT LINE].
-// Transit line is a full-width sub-row that BEGINS under the LOAD column (padding-left matches
-// the first three tracks). Leg / Live-signal columns retired from the header (signal + CURRENT
-// LOCATION render after the transit line).
+// TRUCK-LINE-TRANSIT-IS-A-COLUMN (Lead, 09-30-2026). Owner, measured live on app.ih35dispatch.com:
+// "the location isnt supposed to be under, it is supposed to be next to delivered · pu date and
+// delivery date are supposed to be before dispatched · the time lines is not uniform in an all ·
+// the height is still too tall · the unit and tour columns are too wide."
+//
+// ROOT CAUSE — one defect, five symptoms. The transit line was NOT a column. It was a second,
+// full-width sub-row rendered after the grid row, indented with paddingLeft:max(12rem,17vw) so it
+// LOOKED like it started under LOAD. Consequences, all forced by that one choice:
+//   * every unit cost TWO stacked lines (~132px measured) — "the height is still too tall";
+//   * PU DATE / DELIVERY DATE sat in the grid row to the RIGHT of the whole transit line, so the
+//     "Dispatched" station printed to their LEFT — "pu date and delivery date before dispatched";
+//   * CURRENT LOCATION had nowhere to go but a THIRD line beneath the rail — "not under";
+//   * the sub-row was free-floating, so its width was scaled per row by trip length and centered,
+//     making no two rails start or end at the same x — "the time lines is not uniform in an all";
+//   * the five real columns had to absorb the whole viewport width on their own, which is why UNIT
+//     and TOUR were handed 8vw/9vw — "the unit and tour columns are too wide".
+// FIX: TRANSIT is the sixth grid track. It takes 1fr, so every rail begins and ends on the same two
+// x positions in every row, PU/DEL precede it, CURRENT LOCATION sits beside Delivered inside the
+// same cell, the row is one line, and UNIT/TOUR shrink to what their values actually need.
 const GRID_TEMPLATE_COLUMNS =
-  // TRUCK-LINE-FILL (Lead, 09-30-2026, owner: "the page still does not autoadjust"). MEASURED LIVE:
-  // all five tracks were capped (8+9+11+9+9 = 46vw MAX) with no flexible track, so the grid could
-  // never exceed ~46% of the viewport. On the owner's 1850px screen the board stopped at ~1010px and
-  // ~840px rendered as empty white. It was not failing to adjust — it was told not to. LOAD now
-  // takes 1fr and absorbs the remainder; the other four keep their min/max discipline.
-  "minmax(88px,8vw) minmax(100px,9vw) minmax(120px,1fr) minmax(100px,9vw) minmax(100px,9vw)";
+  "minmax(62px,5vw) minmax(80px,6vw) minmax(150px,13vw) minmax(92px,7vw) minmax(92px,7vw) minmax(360px,1fr)";
 const GRID_TEMPLATE_COLUMNS_NARROW =
-  "minmax(72px,14vw) minmax(84px,16vw) minmax(88px,18vw) minmax(72px,14vw) minmax(72px,14vw)";
+  "minmax(56px,10vw) minmax(68px,11vw) minmax(96px,17vw) minmax(64px,10vw) minmax(64px,10vw) minmax(200px,1fr)";
 const FOLD_BREAKPOINT_PX = 860;
 const CAPTION_FOLD_BREAKPOINT_PX = 1180;
 const AVAILABLE_ROW_TINT = "color-mix(in srgb, #16A34A 4%, #fff)";
@@ -163,29 +173,49 @@ function pct(index: number) {
   return (index / (V7_COUNT - 1)) * 100;
 }
 
-// ROUND 200 (owner: "timeline out of proportion — 13635 (6 days) renders like 13626 (1 day)") —
-// THE LINE's 7 station nodes are honest discrete progress markers (station.ts's own reached/next
-// model), never repositioned onto a fabricated calendar axis for stations with no real stamp. What
-// WAS missing: every row's track rendered at the same 100% width regardless of how long the trip
-// actually spans, so a week-long NB/SB leg and a same-day local leg looked identical. This scales
-// the track's own WIDTH (not the node positions inside it) to the load's real scheduled
-// pickup->delivery window — the same appointments.pickup.at/delivery.at this board already reads
-// for the appointment columns, never a second date source. TIMELINE_SCALE_MAX_DAYS=7 matches the
-// existing 7-day "long leg" convention (RoundTripsTimeline.tsx's own longFlag threshold) so a
-// week-or-longer trip fills the row and everything shorter is visibly, proportionally narrower.
-const TIMELINE_SCALE_MAX_DAYS = 7;
-const TIMELINE_MIN_WIDTH_PCT = 24; // never so narrow the 7 nodes + truck graphic can't fit legibly
-function timelineWidthPercent(row: TruckLineRow): number {
-  const puAt = row.appointments?.pickup?.at;
-  const delAt = row.appointments?.delivery?.at;
-  if (!puAt || !delAt) return 100; // no real schedule window known — full width, never fabricated
-  const start = Date.parse(puAt);
-  const end = Date.parse(delAt);
-  if (Number.isNaN(start) || Number.isNaN(end) || end <= start) return 100;
-  const days = (end - start) / 86_400_000;
-  const clamped = Math.min(Math.max(days, 0), TIMELINE_SCALE_MAX_DAYS);
-  return TIMELINE_MIN_WIDTH_PCT + (clamped / TIMELINE_SCALE_MAX_DAYS) * (100 - TIMELINE_MIN_WIDTH_PCT);
+// TRUCK-LINE-STATUS-FILTER (Lead, 09-30-2026, owner: "the status, i had requested a filter drop
+// down combo box, it is stuck").
+// ROOT CAUSE: it was stuck because it was never a control. The top bar rendered six plain <span>
+// elements — "All trucks (14) Rolling (8) Stopped (3) …" — with no onClick, no state and nothing
+// downstream reading them. They were a read-out that LOOKED like a filter bar.
+// FIX: one real <select>, and ONE classifier that both the counts and the filter read, so an
+// option can never show a count the filtered board disagrees with. There is no second place to
+// change when a bucket's definition moves.
+export type TruckLineStatusFilter =
+  | "all"
+  | "rolling"
+  | "stopped"
+  | "signal_stale"
+  | "appointment_past"
+  | "available";
+
+/** The single definition of which bucket a leg belongs to. Counts and filtering both read this. */
+function legBuckets(group: TruckLineGroup, r: TruckLineRow): TruckLineStatusFilter[] {
+  const out: TruckLineStatusFilter[] = ["all"];
+  if (group.section === "available") {
+    out.push("available");
+    return out;
+  }
+  if (r.load && r.station) {
+    const live = deriveLiveStation(r, mapReachedIndexToV7(r.station.reached_index));
+    if (live.signalLabel === "Stale") out.push("signal_stale");
+    else if (live.rolling) out.push("rolling");
+    else out.push("stopped");
+  }
+  if (r.next_appointment?.late) out.push("appointment_past");
+  return out;
 }
+
+// THE LINE's 7 station nodes are honest discrete progress markers (station.ts's own reached/next
+// model), never repositioned onto a fabricated calendar axis for stations with no real stamp.
+//
+// TRUCK-LINE-UNIFORM-RAIL (Lead, 09-30-2026) — OWNER REVERSAL, recorded so nobody re-adds it.
+// ROUND 200 scaled each row's rail WIDTH to that leg's pickup->delivery span (24%..100%) and
+// centered it. Owner, measured live 09-30: "the time lines is not uniform in an all." Every rail
+// now spans the full TRANSIT column, so all 7 stations sit on the same x in every row and a column
+// of rows reads as one chart. The trip's real length is not lost — it is in the PU DATE and
+// DELIVERY DATE columns, which now render immediately to the rail's LEFT. timelineWidthPercent()
+// and its two constants are deleted rather than left unused; there is no scaled path to resurrect.
 
 
 
@@ -530,23 +560,22 @@ function TruckLineTrack({
   // progress that already happened honestly.
   const reachedPct = pct(Math.max(v7Reached, 0));
   const exceptionPct = pct(STATUS_STATION_INDEX);
-  const trackWidthPct = timelineWidthPercent(row);
-
   // TRUCK-LINE-CAPTION-CLIP (Lead, 09-30-2026, owner: "the load timeline is wrong, you removed the
-  // live location"). The live location was never removed — it was being painted ON TOP OF.
-  // MEASURED: station captions render at top:54 inside a box that was h-[52px], so every caption
-  // began 2px BELOW its own container and ran ~14px further, straight through the CURRENT LOCATION
-  // line that follows with mt-0.5. The live DOM showed them merged as
-  // "Loaded CURRENT LOCATION · Live · In transit, Springville, AL On time". 54 > 52 was the whole
-  // defect. 70px clears the caption baseline; the row's padding is trimmed below so the total row
-  // height does NOT grow (owner: "the height of each unit is still too tall").
+  // live location"). Station captions render at top:54, so the rail box is 70px tall — a shorter
+  // box printed every caption below its own bounds, straight through whatever followed.
+  //
+  // TRANSIT CELL LAYOUT: [ rail — flex-1, always full width ][ CURRENT LOCATION — fixed, right ].
+  // The rail's last station is "Delivered" at left:100%, so the location block that follows sits
+  // literally next to it (owner: "it is supposed to be next to delivered"), on the same line, never
+  // on a line of its own underneath. pr-7 on the rail keeps the Delivered caption, which is centered
+  // on the 100% node and so overhangs by half its width, clear of the location text.
   return (
-    <div className="relative h-[70px]" data-testid={`truck-line-track-${row.unit_id}`}>
+    <div className="flex h-[70px] min-w-0 items-center gap-1" data-testid={`truck-line-track-${row.unit_id}`}>
     <div
-      className="relative mx-auto h-full"
-      style={{ width: `${trackWidthPct}%`, maxWidth: "100%" }}
+      className="relative h-full min-w-0 flex-1"
+      style={{ marginRight: 28 }}
       data-testid={`truck-line-track-scale-${row.unit_id}`}
-      data-timeline-width-pct={trackWidthPct.toFixed(1)}
+      data-timeline-width-pct="100.0"
     >
       <WarehouseDockSvg roof="#1f2a44" />
       <div className="absolute" style={{ left: `${pct(1)}%`, top: 2, transform: "translateX(-50%)" }}>
@@ -729,19 +758,19 @@ function TruckLineTrack({
       </div>
     </div>
     <div
-      className="truck-line-v4-cap mt-0.5 text-center text-[#6B7280]"
+      className="truck-line-v4-cap w-[168px] shrink-0 leading-tight text-[#6B7280]"
       data-testid={`truck-line-current-location-${row.unit_id}`}
     >
-      CURRENT LOCATION ·{" "}
+      <div className="font-semibold uppercase" style={{ letterSpacing: "0.03em" }}>CURRENT LOCATION</div>
       {live.signalLabel === "Live" || live.signalLabel === "Stale" ? (
-        <span style={{ color: live.signalLabel === "Stale" ? RED : GREEN }}>
+        <div style={{ color: live.signalLabel === "Stale" ? RED : GREEN }}>
           {live.signalLabel} · {formatLocationLabel(row.position)}
           {live.signalLabel === "Stale" && row.position?.stale_minutes != null
             ? ` · ${formatStaleAge(row.position.stale_minutes) ?? "—"}`
             : ""}
-        </span>
+        </div>
       ) : (
-        <span style={{ color: RED }}>— last position unavailable</span>
+        <div style={{ color: RED }}>— last position unavailable</div>
       )}
     </div>
     </div>
@@ -775,6 +804,7 @@ export function TruckLineBoard({
   });
 
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<TruckLineStatusFilter>("all");
   // ROUND 23.1 D5 — a view preference only, never persisted (no storageKey — this board has none
   // by design and that stays true) and never re-fetched (sorting is client-side over rows already
   // in hand).
@@ -866,6 +896,20 @@ export function TruckLineBoard({
       .filter((g): g is TruckLineGroup => g != null);
   }, [allGroups, search, costRollups]);
 
+  // TRUCK-LINE-STATUS-FILTER — applied AFTER the text search and BEFORE the sort, so the two
+  // narrow together and the sort always orders what is actually on screen. A group whose legs are
+  // all filtered out drops out entirely rather than rendering an empty unit header.
+  const statusFilteredGroups = useMemo(() => {
+    if (statusFilter === "all") return searchedGroups;
+    return searchedGroups
+      .map((g) => {
+        const legs = g.legs.filter((r) => legBuckets(g, r).includes(statusFilter));
+        if (legs.length === 0) return null;
+        return { ...g, legs };
+      })
+      .filter((g): g is TruckLineGroup => g != null);
+  }, [searchedGroups, statusFilter]);
+
   // Sort within each section; never merge sections or duplicate unit_ids across top-level groups.
   const groups = useMemo(() => {
     const sortGroupLegs = (g: TruckLineGroup): TruckLineGroup => {
@@ -878,7 +922,7 @@ export function TruckLineBoard({
       return { ...g, legs: withIndex.map((x) => x.r) };
     };
     const bySection = SECTION_ORDER.map((section) => {
-      const sectionGroups = searchedGroups.filter((g) => g.section === section).map(sortGroupLegs);
+      const sectionGroups = statusFilteredGroups.filter((g) => g.section === section).map(sortGroupLegs);
       if (!sort || sort.key !== "truck") return sectionGroups;
       return [...sectionGroups].sort((a, b) => {
         const cmp = naturalCompare(a.unit_number, b.unit_number);
@@ -886,33 +930,31 @@ export function TruckLineBoard({
       });
     });
     return bySection.flat();
-  }, [searchedGroups, sort]);
+  }, [statusFilteredGroups, sort]);
 
   const rowCount = groups.reduce((n, g) => n + g.legs.length, 0);
 
-  // Top-bar counts from full unfiltered groups (not search-narrowed).
+  // Top-bar counts from full unfiltered groups (not search-narrowed). Each count is the number of
+  // LEGS the corresponding filter option would leave on the board, derived from legBuckets() — the
+  // same function the filter itself calls — so "Rolling (8)" is a promise the board keeps when the
+  // option is chosen. "All trucks" counts UNITS (groups), which is what the label says.
   const topBarStats = useMemo(() => {
-    let rolling = 0;
-    let stopped = 0;
-    let signalStale = 0;
-    let appointmentPast = 0;
-    let available = 0;
+    const n: Record<TruckLineStatusFilter, number> = {
+      all: allGroups.length,
+      rolling: 0,
+      stopped: 0,
+      signal_stale: 0,
+      appointment_past: 0,
+      available: 0,
+    };
     for (const g of allGroups) {
-      if (g.section === "available") {
-        available++;
-        continue;
-      }
       for (const r of g.legs) {
-        if (r.load && r.station) {
-          const live = deriveLiveStation(r, mapReachedIndexToV7(r.station.reached_index));
-          if (live.signalLabel === "Stale") signalStale++;
-          else if (live.rolling) rolling++;
-          else stopped++;
+        for (const b of legBuckets(g, r)) {
+          if (b !== "all") n[b] += 1;
         }
-        if (r.next_appointment?.late) appointmentPast++;
       }
     }
-    return { allTrucks: allGroups.length, rolling, stopped, signalStale, appointmentPast, available };
+    return n;
   }, [allGroups]);
 
   // ROUND 155.6 — empty board renders empty state, never a stuck "Loading…".
@@ -1043,6 +1085,20 @@ export function TruckLineBoard({
           border-bottom: 1px solid ${LOCKED_BORDER};
           min-height: 40px;
         }
+        /* TRUCK-LINE-TRANSIT-IS-A-COLUMN — the sixth track. align-items:center on the grid keeps
+           the 70px rail and the short text cells on one baseline, so the row is exactly as tall as
+           the rail and never taller. */
+        .truck-line-v4-transit-header { text-align: center; }
+        .truck-line-v4-transit-cell { align-self: center; }
+        /* The LOAD column is now 13vw instead of 1fr (TRANSIT took the remainder), so a long
+           customer name must truncate inside its own cell rather than widen the grid. The full name
+           stays available on hover via title=. */
+        .truck-line-v4-load-cell { min-width: 0; }
+        .truck-line-v4-customer {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
         /* ROUND-20.4 -- row rules the owner can actually see: an every-other-row tint and a hover
            state so one unit's row is visibly distinct from its neighbors, plus a 3px left spine per
            row (inline style, colored by trip-type -- see rowSpineColor()) so a unit's row is
@@ -1160,28 +1216,33 @@ export function TruckLineBoard({
         </div>
       ) : null}
 
-      <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#1F2A44]" data-testid="truck-line-top-bar">
-        <span>
-          All trucks (<b>{topBarStats.allTrucks}</b>)
-        </span>
-        <span>
-          Rolling (<b>{topBarStats.rolling}</b>)
-        </span>
-        <span>
-          Stopped (<b>{topBarStats.stopped}</b>)
-        </span>
-        <span>
-          Signal stale (<b style={{ color: RED }}>{topBarStats.signalStale}</b>)
-        </span>
-        <span>
-          Appointment past (<b style={{ color: RED }}>{topBarStats.appointmentPast}</b>)
-        </span>
-        <span>
-          Available (<b style={{ color: GREEN }}>{topBarStats.available}</b>)
-        </span>
-      </div>
-
       <div className="mb-2 flex min-w-0 flex-wrap items-center gap-2">
+        <label className="flex items-center gap-1.5 text-xs text-[#1F2A44]" data-testid="truck-line-top-bar">
+          <span className="font-semibold uppercase tracking-[0.3px] text-[#4B5563]" style={{ fontSize: 11 }}>Status</span>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as TruckLineStatusFilter)}
+            className="h-7 rounded-sm border border-[#CBD5E1] bg-white px-2 text-xs text-[#1F2A44]"
+            data-testid="truck-line-status-filter"
+          >
+            <option value="all">All trucks ({topBarStats.all})</option>
+            <option value="rolling">Rolling ({topBarStats.rolling})</option>
+            <option value="stopped">Stopped ({topBarStats.stopped})</option>
+            <option value="signal_stale">Signal stale ({topBarStats.signal_stale})</option>
+            <option value="appointment_past">Appointment past ({topBarStats.appointment_past})</option>
+            <option value="available">Available ({topBarStats.available})</option>
+          </select>
+        </label>
+        {statusFilter !== "all" ? (
+          <button
+            type="button"
+            className="h-7 rounded-sm border border-[#CBD5E1] px-2 text-xs text-[#4B5563]"
+            data-testid="truck-line-status-filter-clear"
+            onClick={() => setStatusFilter("all")}
+          >
+            Clear
+          </button>
+        ) : null}
         <input
           type="text"
           value={search}
@@ -1204,6 +1265,10 @@ export function TruckLineBoard({
           <TruckLineSortHeader label="LOAD" sortKey="load" active={sort?.key === "load" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-load-header" />
           <TruckLineSortHeader label="PU DATE" sortKey="pu" active={sort?.key === "pu" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-pu-header" />
           <TruckLineSortHeader label="DELIVERY DATE" sortKey="del" active={sort?.key === "del" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-del-header" />
+          {/* TRANSIT is not sortable — it renders station progress, not a value to order by. It
+              still needs a real header cell so the sixth track is labelled and the grid's header
+              and body have the same number of children. */}
+          <div className="truck-line-v4-transit-header">TRANSIT · CURRENT LOCATION</div>
         </div>
 
         {showLoading ? (
@@ -1286,19 +1351,21 @@ export function TruckLineBoard({
                           </div>
                           <div className="truck-line-v4-pu-cell"><span className="truck-line-v4-sub text-[#6B7280]">—</span></div>
                           <div className="truck-line-v4-del-cell"><span className="truck-line-v4-sub text-[#6B7280]">—</span></div>
+                          <div className="truck-line-v4-transit-cell min-w-0" data-testid={`truck-line-track-available-${a.driver_id}`}>
+                            <span className="truck-line-v4-sub text-[#6B7280]">no trip in progress</span>
+                          </div>
                         </div>
                       );
                     }
 
                     return (
-                      <Fragment key={rowKey}>
                       <div
+                        key={rowKey}
                         className="truck-line-v4-row"
                           data-unit-stripe={unitStripe}
                           data-unit-first={unitFirst ? "true" : "false"}
                         style={{
                           borderLeft: `3px solid ${conflict ? RED : returnTrip ? GREEN : rowSpineColor(r.load?.trip_type)}`,
-                          borderBottom: r.load && r.station ? "none" : undefined,
                         }}
                         data-testid={`truck-line-row-${g.unit_id}${legIndex > 0 ? `-leg-${legIndex}` : ""}`}
                         data-unit-id={g.unit_id}
@@ -1344,7 +1411,12 @@ export function TruckLineBoard({
                               >
                                 {r.load.load_number}
                               </button>
-                              <div className="truck-line-v4-sub text-[#6B7280]">{r.load.customer_name ?? "—"}</div>
+                              <div
+                                className="truck-line-v4-sub truck-line-v4-customer text-[#6B7280]"
+                                title={r.load.customer_name ?? undefined}
+                              >
+                                {r.load.customer_name ?? "—"}
+                              </div>
                               <button
                                 type="button"
                                 className="truck-line-v4-cap mt-0.5 rounded-sm border border-[#E5E7EB] px-1.5 py-0.5 font-semibold uppercase text-[#4B5563]"
@@ -1390,13 +1462,13 @@ export function TruckLineBoard({
                             {formatLocationLabel({ city: r.load?.delivery.city ?? null, state: r.load?.delivery.state ?? null })}
                           </div>
                         </div>
-                      </div>
-                      {r.load && r.station ? (
                         <div
-                          className="border-b border-[#E5E7EB] pb-1 pt-0.5"
-                          style={{ paddingLeft: "max(12rem, 17vw)", paddingRight: 10 }}
-                          data-testid={`truck-line-track-${g.unit_id}-${r.load.load_id}`}
+                          className="truck-line-v4-transit-cell min-w-0"
+                          data-testid={
+                            r.load && r.station ? `truck-line-track-${g.unit_id}-${r.load.load_id}` : `truck-line-track-empty-${g.unit_id}`
+                          }
                         >
+                          {r.load && r.station ? (
                           <TruckLineTrack
                             row={r}
                             reasons={reasons}
@@ -1415,9 +1487,11 @@ export function TruckLineBoard({
                             onClearException={clearException}
                             onDragStatus={(row, newStatus) => void applyLoadStatus(row, newStatus)}
                           />
+                          ) : (
+                            <span className="truck-line-v4-sub text-[#6B7280]">—</span>
+                          )}
                         </div>
-                      ) : null}
-                      </Fragment>
+                      </div>
                     );
                   })
                 )}
