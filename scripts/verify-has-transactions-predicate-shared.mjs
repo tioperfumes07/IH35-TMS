@@ -38,9 +38,9 @@ const CHECKS = [
     pattern: /export function vendorHasTransactionsSql\(/,
   },
   {
-    name: "customer predicate excludes proforma invoices",
+    name: "customer predicate excludes proforma AND voided invoices (r294d owner overrule)",
     file: SHARED,
-    pattern: /i\.status != 'proforma'/,
+    pattern: /i\.status NOT IN \('proforma', 'void'\)/,
   },
   {
     name: "vendor predicate excludes voided bills but casts vendor_uuid correctly",

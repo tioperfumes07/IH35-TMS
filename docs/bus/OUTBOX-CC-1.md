@@ -194,6 +194,22 @@ churn. Corrected predicate SQL committed to
 **Left:** Same as before — Lead's ruling on Disputes tab placement; Cursor builds the UI off this
 spec. A-16 itself is closed on CC-1's side.
 
+## A-21 — has-transactions predicate shipped as shared code, then corrected
+**Changed:** Shipped `apps/backend/src/accounting/has-transactions-predicate.ts` exporting
+`customerHasTransactionsSql`/`vendorHasTransactionsSql`, wired into `mdata/customers.routes.ts` and
+`mdata/vendors.routes.ts` under `has_transactions`, guarded by
+`verify-has-transactions-predicate-shared.mjs` (PR #23439). Then corrected per your r294d ruling
+(owner overrule on the voided-invoice edge case): a voided invoice no longer counts (PR #23451).
+**Live proof:**
+```
+BEFORE correction: customers with_transactions = 76/1,249
+AFTER correction:  customers with_transactions = 65/1,249  (exact match to your stated count)
+vendors with_transactions = 34/623, unchanged both times
+```
+`verify-has-transactions-predicate-shared.mjs --selftest`: 12/12 PASS. Live run: PASS.
+**Left:** A-25 (three-way dispute split, prove no shared query) and A-26 (bills.vendor_uuid text/uuid
+cast, own migration) are new jobs from r294d, not started. Proceeding to A-23 per the sequence.
+
 ## A-23 — test/proof/sample rows: enumerated, not written
 **Changed:** Nothing to data (enumeration only, as instructed).
 **Live proof:** `docs/bus/2026-09-30-CC1-A23-TEST-ROWS-ENUMERATION.md` — 6 accounting.expenses proof

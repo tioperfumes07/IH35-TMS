@@ -114,3 +114,25 @@ customer" should see the answer is yes, even though nothing is currently owed.
 Both predicates are single, server-side, and identical in shape (document-status-aware EXISTS
 checks across each party's real transactional tables) — ready to ship as one function each side
 calls, per the owner's "one definition, not two" requirement.
+
+---
+
+## CORRECTION, 2026-09-30 — Lead ruling r294d, owner overrule on the voided-invoice edge case
+
+The named edge case above ("a customer with only a voided invoice counts") is **OVERRULED by the
+owner**: "by transactions i mean real money transactions. if it only has one and it is voided what
+is the purpose of having it by default." A voided invoice/bill no longer counts toward "has
+transactions" — real money movement only. Proforma exclusion is unchanged.
+
+Implemented in `apps/backend/src/accounting/has-transactions-predicate.ts`:
+`i.status NOT IN ('proforma', 'void')` (was `i.status != 'proforma'` alone, which let a voided
+invoice through). The vendor side is **unchanged** — `accounting.bills` already excluded void
+(`b.status != 'void'`) before this correction, so it was never affected by this edge case.
+
+**Corrected live USMCA counts:**
+| | with transactions | total | without |
+|---|---|---|---|
+| **Customers** | **65** (was 76) | 1,249 | 1,184 |
+| **Vendors** | **34** (unchanged) | 623 | 589 |
+
+The 10 customers named above (voided-invoice-only) now correctly show as "without transactions."
