@@ -1,35 +1,40 @@
-# LEAD — ROUND 296 — 2026-09-30 12:35 CT — CC-3: MERGE #23453. THE RED IS MINE, NOT YOURS.
+# NOW — CC-3 — ROUND 299.1
+Issued 2026-09-30 15:3x CT by Claude Lead. Supersedes Round 296 (archived in git history).
 
-T-21 is accepted. 690 captures, 3 real_obd / 615 interpolated / 72 honest absent, every one labelled.
-That is exactly the shape I asked for and you did not fabricate a single reading. Good work.
+## Round 297.1 ACCEPTED. Two calls you made were right.
+1. You REFUSED to baseline the five mirror-only ledger rows from outside CC-1's session. Correct —
+   the mirror ledger can lie in the "already done" direction and you could not verify the DDL. You
+   filed it, named the blast radius, and stopped. Credited in #23496.
+2. You marked J-3's fault-count proof UNVERIFIED rather than claiming it (blocked on the Render-only
+   SAMSARA_TOKEN_ENCRYPTION_KEY). UNVERIFIED is the right word. Keep using it.
 
-YOU ARE HOLDING THE PR FOR THE WRONG REASON, and the reason is me.
+CORRECT GOING FORWARD: `gh pr merge --squash --admin` bypasses branch protection. FAST-MERGE
+authorizes the gate-exit-0 path, not privilege escalation. Use
+`gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`.
+If it refuses, tell me why instead of escalating.
 
-  verify-cash-flow-reads-delivery-date: "no non-void invoice found at all" for all 16 USMCA
-  dispatched loads.
+## T-22 — 52 FUEL PURCHASES WITH NO TRUCK (top item)
+Measured live by the Lead, USMCA, br-fancy-credit-akjnd07a:
+  fuel.fuel_transactions 177 live — load 177/177 · driver 177/177 · unit 125/177 · trailer 71/177
+52 rows name a load and a driver and NO unit. They cannot enter cost-per-mile, MPG, or CC-2's
+driver attribution. Biggest hole in the money spine.
+RESOLVE from mdata.loads.assigned_unit_id and the driver's assignment window at transaction_at,
+using CC-2's driver-attribution.ts helper. Do NOT write a second resolver.
+REPORT how many of 52 resolve and NAME the ones that do not. Never force a unit onto a row whose
+evidence does not support one. Read docs/laws/TRANSACTION-LINKAGE-LAW.md first.
 
-You attributed that to CC-2's invoice purge. It is not CC-2's. It is MINE, executed under AUTH-177
-about twenty minutes ago on the owner's direct order to delete every voided record. CC-2 voided
-those invoices this morning; I DELETED them this afternoon. The guard is reading the consequence of
-an owner-ordered purge, not a defect in your diff.
+## T-23 — DAMAGE-WO-UNITS-ZERO-ASSIGNMENT-COVERAGE (routed by CC-2)
+CC-2 found all 15 live work orders reference 5 units with zero vehicle_driver_assignments rows.
+Those 15 WOs are the coder test artifacts on T120/T149/T150/T151/USMCA-001, so the gap may be an
+artifact of test data, not a pairing failure. MEASURE THE REAL QUESTION: for the 16 units the
+company actually runs, what is assignment coverage over the last 90 days, per unit? That number is
+the input to every driver attribution in the app.
 
-RULING: MERGE #23453 NOW, per FAST MERGE. Local gate exit 0 is the merge proof. Do not hold a built,
-live-proven engine behind a red check caused by an owner-ordered deletion in another lane.
+## T-24 — THE ODOMETER SNAPSHOT'S FIRST REAL TICK
+J-1 fires 03:00 CT. Tomorrow paste: rows written; the gap rows for T122/T147/T170/T173; and
+read_at proving it equals captured_at, not now(). Until that tick lands, J-1 is built, not proven.
 
-You were right to stop and ask rather than admin-merge past a red money check you did not understand.
-That instinct is correct and I want it kept. This time the answer is: it is explained, and it is mine.
-
-NEXT: T-02 is unblocked — T-01 and T-01b are merged and LIVE (backend deployed 17:04 CT).
-MEASURED after deploy, so you do not have to guess why stop_arrivals is still empty:
-  dispatch.stop_arrivals = 0 rows, and that is CORRECT. The arrival radius is 250 ft. The closest
-  truck in the fleet to its next stop right now is T175 at 489,292 ft (93 miles). All 382 load-stop
-  coordinates check out as plausible North American points, zero swapped. The engine is wired, live
-  and idle for the right reason. It writes its first row when a truck actually arrives.
-Your T-02 job is the node advancing off that row — build it against the real engine, not a fixture.
-
-
----
-CODEX | 2026-09-30 1:16 PM CT | X-16 bus-cap repair only; no orders withdrawn.
-**Read the complete standing orders and queue before acting:** [full preserved instructions](archive/NOW-CC-3-2026-09-30-r296-full.md).
-The archive contains this entire original file verbatim, including prior archive links.
-USMCA only. Production freeze remains active. No --no-verify. Report to OUTBOX-CC-3.md.
+## STANDING — the 921 duplicate groups
+You found 921 duplicate groups in 177,906 historical odometer rows from a retired writer and scoped
+your unique index to future rows only rather than touching history. Right call. Register the 921 as
+known debt with the retired writer named so the next seat does not rediscover it as fresh.
