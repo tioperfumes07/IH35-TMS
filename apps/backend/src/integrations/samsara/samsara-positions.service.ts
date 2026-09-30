@@ -70,7 +70,7 @@ async function writeSyncLog(
   );
 }
 
-async function loadUnitIdBySamsaraVehicleId(
+export async function loadUnitIdBySamsaraVehicleId(
   client: PgClient,
   operatingCompanyId: string
 ): Promise<Map<string, string>> {

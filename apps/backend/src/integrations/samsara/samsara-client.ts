@@ -405,6 +405,9 @@ export const SAMSARA_STATS_TYPES_FUEL = "gps,fuelPercents";
 export const SAMSARA_STATS_TYPES_DEGRADED = "gps,engineStates";
 /** @deprecated kept so existing imports keep compiling; the primary set is what is requested. */
 export const SAMSARA_STATS_TYPES_FULL = SAMSARA_STATS_TYPES_PRIMARY;
+/** ROUND 297.1 J-3 — fault codes, requested on their OWN call (see listVehicleFaultCodes) so they
+ *  never compete with the primary set's 4-type cap and never risk trading away odometer again. */
+export const SAMSARA_STATS_TYPES_FAULT = "gps,faultCodes";
 
 async function fetchSamsaraStatsPage(
   token: string,
@@ -796,6 +799,51 @@ export class SamsaraClient {
       degraded,
       fullSetError: primary.err ?? fuelError,
     };
+  }
+
+  /**
+   * ROUND 297.1 J-3 — one Samsara call for the fleet's fault codes, SEPARATE from
+   * listVehicleStatsWithMeta's own 4-type cap (faultCodes does not fit alongside
+   * gps/engineStates/obdOdometerMeters/obdEngineSeconds without risking the same "one extra type
+   * trades away odometer" failure this file's own header already documents). Returns the RAW row
+   * per vehicle (not a parsed SamsaraVehicleStat) -- fault-code-processor.service.ts's own
+   * extractFaultCodesFromPayload() already tolerates several real-world shapes
+   * (faultCodes/fault_codes/dtc_codes/diagnostics/faults), so the raw row is handed to it directly
+   * rather than this client guessing a single rigid shape.
+   */
+  async listVehicleFaultCodes(): Promise<{ id: string; raw: Record<string, unknown> }[]> {
+    const token = this._token();
+    if (!token) return [];
+    const out: { id: string; raw: Record<string, unknown> }[] = [];
+    let after: string | null = null;
+    for (let page = 0; page < 50; page += 1) {
+      const url = new URL(`${SAMSARA_API_BASE}/fleet/vehicles/stats`);
+      url.searchParams.set("types", SAMSARA_STATS_TYPES_FAULT);
+      if (after) url.searchParams.set("after", after);
+      let res: Response;
+      try {
+        res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }));
+      } catch (error) {
+        throw new SamsaraApiError(`samsara_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
+      }
+      if (!res.ok) {
+        const body = await readJsonResponse(res);
+        throw new SamsaraApiError(`samsara_http_${res.status}`, res.status, body, res.status === 429 || res.status >= 500);
+      }
+      const json = await readJsonResponse(res);
+      const rows = Array.isArray(json.data)
+        ? json.data.filter((row): row is Record<string, unknown> => Boolean(row && typeof row === "object"))
+        : [];
+      for (const row of rows) {
+        const id = typeof row.id === "string" && row.id.trim().length > 0 ? row.id.trim() : null;
+        if (!id) continue;
+        out.push({ id, raw: row });
+      }
+      const { hasNextPage, cursor } = parsePagination(json);
+      if (!hasNextPage || !cursor) break;
+      after = cursor;
+    }
+    return out;
   }
 
   async listVehicles(): Promise<SamsaraVehicle[]> {
