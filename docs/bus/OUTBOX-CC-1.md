@@ -638,3 +638,29 @@ addressed to the right person; (2) the remaining five clean short-GL drivers (Jo
 Martinez, Luis Armando Sosa Perez, Hugo Gaytan, Genaro Guerrero Chavez, Ruben Pedro Perez Garcia)
 need the same `driver_finance.escrow_ledger` trace Pedro's got -- not done here for all five given
 the size of this report, but the method above is proven and repeatable.
+
+## ROUND 302 A-37 — A/P GL EXCEEDS UNPAID BILLS BY $2,976.63, ROOT CAUSE FOUND EXACTLY
+GL account 2000 "Accounts Payable (A/P)" live balance: $3,542.98. True open A/P from
+accounting.bills (voided_at IS NULL, status NOT IN ('paid','void')): exactly $566.35 (3 unpaid
+bills, all fully unpaid, $0 partial payments anywhere -- every "paid" bill's paid_cents matches its
+gross amount_cents exactly, no partial-payment noise). Gap = $2,976.63, matching the order's own
+figure to the cent.
+**Root cause, proven exactly, not inferred:** grouping every posting on account 2000 by
+`source_transaction_type` --
+  bill      3 postings,   net $566.35   -- matches the 3 real unpaid bills exactly
+  expense   200 postings, net $0.00     -- correctly self-offsetting (original + reversal pairs)
+  journal_entry  60 postings, net $2,976.63  -- THE ENTIRE GAP, ISOLATED TO ONE SOURCE TYPE
+All 60 `journal_entry`-sourced postings are dated 2026-08-29 through 2026-09-21 and are void-
+reversal JEs from a prior remediation ("DEFECT 3: source accounting.expenses row is voided
+(posting_status reversed/unposted)"). Every one of their own memos states the intended design
+explicitly: **"this replacement JE (Dr 2000 AP / Cr 9000)"** -- debit AP (reducing the liability,
+correct for reversing a voided expense's AP effect), credit 9000 "Ask My Accountant" (a QBO-style
+suspense account). Pulled one JE's actual live postings to check the memo against reality: it posted
+**debit 9000 / credit 2000 -- the OPPOSITE of its own stated design.** A credit to AP INCREASES the
+liability; the reversal was supposed to decrease it. This is a systemic sign-flip in whatever script
+executed the DEFECT 3 remediation, not a one-off -- confirmed by the aggregate: 60 postings net to
+positive $2,976.63 instead of $0.00, the same clean self-offsetting pattern the "expense" source
+type shows.
+**NOT adjusted, per the order.** No JE reversed, no sides swapped, no balance corrected. This report
+names the exact mechanism and the exact date range (2026-08-29 to 2026-09-21) and source (DEFECT 3
+remediation JEs) for whoever owns fixing it next.
