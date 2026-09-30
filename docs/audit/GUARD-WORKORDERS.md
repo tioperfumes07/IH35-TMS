@@ -11827,3 +11827,33 @@ everything already found this session. Recommend a follow-up AUTH scoped to exac
 fa_ids (listed in this branch's commit), reclass only, no new GL math, verified twin-free.
 
 — CC-2
+
+## UPDATE -- the 41 skip-1090 entries: standard reversal engine cannot see them, verified live (CC-2, 2026-09-30)
+
+Follow-up to the previous finding. Tested the identified fix (reverse via
+`reverseFactoringAdvanceEventInClientTx`, repost via `postFactoringAdvanceEventInClientTx` with
+`ach_cents:0` so `cash` auto-derives correctly into 1090) against one sample fa_id, inside a
+rolled-back transaction (no write):
+
+**`reverseFactoringAdvanceEventInClientTx` returned `{reversed:false, reason:"no_posting_found"}`**
+even though the bad JE is live and visible by a direct SQL join on
+`source_transaction_type='factoring_advance'` + `source_transaction_id`. Its own internal lookup
+(`findAllLifecyclePostingKeyJes`, a separate tracking mechanism from the raw postings table) does
+not know about these 41 JEs -- consistent with the recap's "one-time, never-committed script": that
+script wrote directly to `journal_entries`/`journal_entry_postings` without also registering the
+posting-key row the standard reversal/repair engine depends on to find its own work.
+
+**This confirms the caution in the prior finding was correct** -- the obvious call does not work
+out of the box. Not attempted further here: forcing a fix around a lookup gap under time pressure
+is exactly how the duplicate-JE and void-contamination messes already found this session happened
+in the first place. Needs one of:
+1. Find/backfill whatever registers a posting-key row, so the standard engine can see and reverse
+   these 41 correctly (preferred -- reuses the sanctioned path, no new logic).
+2. Or a purpose-built reclass path reviewed before use, since these are single miscoded lines
+   (not missing, not duplicated) and a raw void+repost outside the standard engine would repeat
+   the "hole in the engine" pattern Section 4 already warns against.
+
+Still not executed. Still twin-checked clean (0 of 41, prior finding). Still needs a scoped AUTH
+once the reversal mechanism is actually verified end-to-end, not just planned.
+
+— CC-2
