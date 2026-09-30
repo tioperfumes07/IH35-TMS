@@ -4901,7 +4901,22 @@ customer_id.
 action: OWNER_AUTH_ID=AUTH-148 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth147-invoice-010-supply-chain.ts
   (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
 expires_at: 2026-10-01T05:38:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T05:41:00.000Z
+consumed_by: CC-1
+row_counts: 1 invoice created and sent. accounting.invoices id e8c11abd-a18c-46a9-845d-223467ec4e53,
+  display_id "010", customer_id 4fa300b3-45b6-4eef-a484-1c3fe065ad72, total_cents 400000, status
+  'sent', delivery_evidence_source 'owner_source_document', source_load_id NULL (genuinely
+  load-less, as designed).
+proof_query: live on prod, 2026-09-30 -- rehearsed first end-to-end on a throwaway Neon branch fork
+  (same result, fork then deleted) before the real run. Migration 202614630000 (widening the
+  delivery_evidence_source CHECK) applied and ledgered in both _system._schema_migrations and
+  ih35_migrations.applied_migrations before this write.
+note: migration 202614630000_invoices_delivery_evidence_source_owner_document.sql landed in PR
+  #23253 (a v2 of #23252, which hit the same stale-base merge-conflict pattern documented elsewhere
+  this session). Invoice-010 script itself is
+  scripts/ops/2026-09-30-cc1-auth147-invoice-010-supply-chain.ts (filename kept from its AUTH-147
+  draft; content and AUTH id are AUTH-148's).
 
 ## AUTH-149
 issued_at: 2026-09-30T05:30:00.000Z
