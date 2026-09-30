@@ -88,7 +88,8 @@ jobs:
             scripts/verify-alwaystrack-parity.mjs \
             scripts/verify-settlement-net-equals-document.mjs \
             scripts/verify-diesel-expense-fuel-dedupe.mjs \
-            scripts/verify-fuel-relay-txn-vendor-unmatched.mjs
+            scripts/verify-fuel-relay-txn-vendor-unmatched.mjs \
+            scripts/verify-no-test-markers-in-live-tables.mjs
 
   verify-branch-fresh:
     # Base-DEPENDENT gate: it asserts the PR base is 0 commits behind origin/main.
