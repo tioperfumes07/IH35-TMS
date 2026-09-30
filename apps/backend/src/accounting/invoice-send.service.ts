@@ -79,7 +79,25 @@ export type SendDraftInvoiceResult = SendDraftInvoiceOk | SendDraftInvoiceErr;
 // silent pass -- "a backfill that cannot name its evidence source still fails closed."
 export type InvoiceSendMode = "live_feed" | "historical_backfill";
 
-type DeliveryEvidenceSource = "stop_actual_departure" | "closed_settlement" | "faro_invoice_line";
+type DeliveryEvidenceSource =
+  | "stop_actual_departure"
+  | "closed_settlement"
+  | "faro_invoice_line"
+  | "owner_source_document";
+
+/**
+ * ROUND 290 (Lead order, 2026-09-30) — a NARROW, explicit, human-named exception for a genuinely
+ * load-less invoice that bills real freight the company already carried and already handed the
+ * customer a signed PDF for (e.g. a self-carried invoice with no TMS dispatch record at all). This
+ * is NOT a bypass: it requires BOTH mode==='historical_backfill' (never the default live_feed path)
+ * AND a non-empty, named `documentRef` — there is no default and no empty-string acceptance, so a
+ * live send can never pick this up by omission. It only fires for the `no_source_load` evidence
+ * shape (a load-less invoice) — a load WITH a departure/settlement/Faro-line gap still falls through
+ * to backfillDeliveryEvidence()/the fail-closed block exactly as before, unchanged. "NOBODY WEAKENS
+ * THE GATE AND NOBODY CODES AROUND IT" — this adds one real, auditable evidence class; it does not
+ * touch or relax any existing check.
+ */
+export type ManualDeliveryEvidence = { source: "owner_source_document"; documentRef: string };
 
 /**
  * mode='historical_backfill' ONLY: does a closed/locked driver settlement carry this load, or
@@ -117,7 +135,13 @@ async function backfillDeliveryEvidence(
 
 export async function sendDraftInvoice(
   client: SendClient,
-  input: { invoiceId: string; operatingCompanyId: string; userId: string; mode?: InvoiceSendMode }
+  input: {
+    invoiceId: string;
+    operatingCompanyId: string;
+    userId: string;
+    mode?: InvoiceSendMode;
+    manualEvidence?: ManualDeliveryEvidence;
+  }
 ): Promise<SendDraftInvoiceResult> {
   const mode: InvoiceSendMode = input.mode === "historical_backfill" ? "historical_backfill" : "live_feed";
   const currentRes = await client.query(
@@ -205,6 +229,39 @@ export async function sendDraftInvoice(
       ? null
       : ("no_departure_on_final_delivery_stop" as const)
     : ("no_source_load" as const);
+
+  // ROUND 290 manual evidence — mode='historical_backfill' ONLY, ONLY for the no_source_load
+  // shape (a genuinely load-less invoice), and ONLY when the caller explicitly names a real
+  // document. Checked before the load-based backfill below because a load-less invoice has
+  // nothing for that function to query against (it requires a loadId). Never inferred, never
+  // defaulted -- input.manualEvidence must be supplied by the caller for this exact invoice.
+  if (
+    evidenceReason === "no_source_load" &&
+    mode === "historical_backfill" &&
+    input.manualEvidence?.source === "owner_source_document" &&
+    input.manualEvidence.documentRef?.trim()
+  ) {
+    await client.query(
+      `UPDATE accounting.invoices SET delivery_evidence_source = $2, delivery_evidence_recorded_at = now() WHERE id = $1 AND operating_company_id = $3::uuid`,
+      [input.invoiceId, "owner_source_document", input.operatingCompanyId]
+    );
+    await appendCrudAudit(
+      client as never,
+      input.userId,
+      "accounting.invoice.delivery_evidence_backfilled",
+      {
+        invoice_id: input.invoiceId,
+        load_id: null,
+        delivery_evidence_source: "owner_source_document",
+        document_ref: input.manualEvidence.documentRef.trim(),
+        operating_company_id: input.operatingCompanyId,
+        mode,
+      },
+      "info",
+      "ACCT-F61-BACKFILL-EVIDENCE-MANUAL"
+    );
+    evidenceReason = null;
+  }
 
   // Lead ruling item 2 P0: mode='historical_backfill' ONLY, and only when the load itself is
   // known (a no-load invoice has nothing to check a settlement/Faro line against — that shape

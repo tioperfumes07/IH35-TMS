@@ -4854,3 +4854,25 @@ action:
   (run from repo root; DRY_RUN first with no --apply flag)
 expires_at: 2026-10-01T00:00:00.000Z
 status: OPEN
+
+## AUTH-147
+issued_at: 2026-09-30T05:20:00.000Z
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- record invoice 010 (SUPPLY CHAIN
+MANAGEMENT, customer_id 296fd87b-fc93-48e0-9503-d27772c14cf7, $4,000.00, genuinely load-less) via
+the real invoice-creation shape (accounting.invoices/invoice_lines INSERT matching invoices.routes.ts,
+resolveInvoiceLineRevenueAccountId, recomputeInvoiceTotals) then the real sendDraftInvoice with
+mode:'historical_backfill' and the new, narrowly-scoped manualEvidence:{source:'owner_source_document',
+documentRef:'Invoice 010 SUPPLY CHAIN MANAGEMENT.pdf'} parameter added in this same PR
+(apps/backend/src/accounting/invoice-send.service.ts) -- gated to require BOTH historical_backfill
+mode AND an explicit named document, never inferred, never defaulted, and only usable for the
+no_source_load evidence shape; the existing load-based evidence checks are untouched. Lead ruling,
+ROUND 290: "The invoice already exists [as real paper the customer holds] ... We are backfilling an
+ISSUED document, not issuing new paper ... Use historical_backfill with the PDF as the named
+evidence source." Never a raw INSERT into journal_entries/journal_entry_postings -- GL posting goes
+through postInvoiceGlIfEnabled inside the real sendDraftInvoice path, unchanged.
+Not authorized: invoice 009 (already correctly linked to load 13513, verified live, nothing to do);
+any other invoice; any change to the delivery-evidence gate's existing three evidence sources.
+action: OWNER_AUTH_ID=AUTH-147 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth147-invoice-010-supply-chain.ts
+  (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
+expires_at: 2026-10-01T05:20:00.000Z
+status: OPEN
