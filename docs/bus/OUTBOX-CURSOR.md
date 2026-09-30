@@ -83,3 +83,9 @@ House table format on main (ParityTable sticky/zebra/no vertical borders + Table
 
 **2026-09-30T22:50Z · ROUND 301 ACK + C-50 IN FLIGHT · branch `cursor/c50-active-company-bound-pin-c89b`**
 Parked `docs/bus/ROUND-301-CURSOR-STANDING-QUEUE.md` + rewrote NOW-CURSOR to Round 301. FAST-MERGE: open Cursor PRs cleared (#23525 already on main). C-50 root fix: `active_company_only` no longer pins via `current_setting(... )::uuid` (silent empty / 500); pin uses bound `companyScopeIdx`. Added `/api/v1/mdata/customers|vendors/counts` + `/api/v1/customers|vendors/counts` aliases. FE tab badges call `getCustomerRosterCounts` / `getVendorRosterCounts`. Neon proof (bypass lucia, USMCA): with_txn customers **65**, vendors **34**. Guards: verify-master-data-list-active-company-scope + ops/verify-c50. · LEFT: Lead Chrome 65/34 after deploy. NEXT after merge: C-51 Banking Home + Driver Escrow.
+
+**2026-09-30T23:04Z · C-50 MERGED · PR #23546 · `f5a3226f14`**
+Bound-param pin + counts on main. LEFT: Lead Chrome 65/34 after backend deploy. NEXT: C-51 Banking Home + Driver Escrow (no Transactions yet).
+
+**2026-09-30T23:20Z · C-51 BANKING HOME + DRIVER ESCROW · branch `cursor/c51-banking-home-escrow-c89b`**
+C-51 · what changed: BANKING_MODULE_TABS first tab label **Home** (id stays `accounts`); `BankingHomeAttentionStrip` surfaces buried live facts (931/947 uncat, 0/8 reconciled, 3/8 Cash GL unbound, QBO not connected, Escrow liability pool) with CTAs; Driver Escrow liability honesty banner + Home↔Escrow↔Settlements links. Ops: `scripts/ops/verify-c51-banking-home-escrow.mjs`. Neon: uncat 931/947, unbound 3/8, ever_reconciled 0, escrow $2,375. · LEFT: Lead Chrome Home attention strip; Transactions still deferred per queue. NEXT: C-52 alerts side-dock.

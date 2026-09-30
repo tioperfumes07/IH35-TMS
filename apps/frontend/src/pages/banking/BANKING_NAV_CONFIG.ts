@@ -1,6 +1,8 @@
-/** Canonical Banking module tab registry — single source for HOME quick-jump count. */
+/** Canonical Banking module tab registry — single source for HOME quick-jump count.
+ * C-51: first tab label is Home (every module home page states Home). id stays `accounts`
+ * so /banking routes and guards that key on id remain stable. */
 export const BANKING_MODULE_TABS = [
-  { id: "accounts", label: "Accounts" },
+  { id: "accounts", label: "Home" },
   { id: "transactions", label: "Transactions" },
   { id: "link_suggestions", label: "Link Suggestions" },
   { id: "reconciliation", label: "Reconciliation" },
