@@ -75,6 +75,21 @@ function audit(f) {
   ]) if (!re.test(f[PRE])) p.push(`Pre-Settlement tab: ${label} missing`);
   if (!/closeTour\(/.test(f[API]) || !/confirm: true/.test(f[API])) p.push("api/tourReadout.ts closeTour missing or not confirming");
   if (!/<TourPreSettlementTab loadId=\{load\.id\}/.test(f[DRAWER]) || !/<TourSettlementTab loadId=\{load\.id\}/.test(f[DRAWER])) p.push("drawer does not mount both tour tabs");
+
+  // ROUND 285.4.9 / #32 — draft / unposted expenses must flag on settlement surfaces.
+  if (!/document_status/.test(f[ROUTE]) || !/e\.status::text AS document_status/.test(f[ROUTE])) {
+    p.push("route: expense costs must expose document_status (expenses.status) for the draft/unposted flag");
+  }
+  if (!/document_status/.test(f[API])) p.push("api: TourCost must carry document_status");
+  if (!/settlement-unposted-draft-expense-flag/.test(f[SET])) {
+    p.push("Settlement tab: missing settlement-unposted-draft-expense-flag banner (#32)");
+  }
+  if (!/presettlement-unposted-draft-expense-flag/.test(f[PRE])) {
+    p.push("Pre-Settlement tab: missing presettlement-unposted-draft-expense-flag banner (#32)");
+  }
+  if (!/key: "posting"/.test(f[SET])) {
+    p.push("Settlement tab: fuel/expenses table must render a Posting column (#32)");
+  }
   return p;
 }
 
