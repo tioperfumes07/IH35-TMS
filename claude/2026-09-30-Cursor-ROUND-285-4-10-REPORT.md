@@ -1,38 +1,41 @@
 # Cursor · ROUND 285.4.10 — #60 invoice auto on BOL → Faro queue
 
-## VERDICT: WIRED (code + guard + unit tests). Live Chrome click still required after deploy.
+## VERDICT: BE + FE WIRED ON MAIN. Chrome click waits on FE deploy carrying `1f96a24c34`.
 
 ## WHAT I DID
 
-1. **`autoInvoiceOnBol` service** — BOL gate using the same `docs.files` + `catalogs.file_categories.code='bol'` predicate as the factoring queue. Missing BOL → durable audit `accounting.invoice.awaiting_bol` (never silent). Present BOL → ensure official draft (create via `buildInvoiceFromLoad` if none; convert proforma if needed) → `sendDraftInvoice` → link BOL file onto the invoice.
-2. **Delivery latch** — `convertAndSendInvoiceOnDelivery` now calls `autoInvoiceOnBol` instead of convert-only (which skipped loads with no proforma and ignored BOL).
-3. **Late BOL upload/link retry** — `docs/files` upload-complete + load link fire `maybeFireAutoInvoiceAfterBolSaved` → invoice then `autoSubmitDeliveredLoadToFactor` (Faro purchase queue).
-4. **Named queue** — `GET /api/v1/dispatch/awaiting-bol-invoice?operating_company_id=` returns delivered loads waiting on BOL (`waiting_for: "BOL"`).
-5. **Guard** — `scripts/verify-auto-invoice-on-bol-wired.mjs` + gate-step-map ownedPaths. Unit tests 3/3 PASS.
+1. **`autoInvoiceOnBol` service** (BE, `#23249` `ee3a6290fe`) — BOL gate; missing BOL → audit `accounting.invoice.awaiting_bol`; present → draft/send + Faro submit.
+2. **Delivery latch + late BOL upload retry** — wired.
+3. **Named queue API** — `GET /api/v1/dispatch/awaiting-bol-invoice`.
+4. **FE queue (this turn, `#23297` `1f96a24c34`)** — `listAwaitingBolInvoice` · `AwaitingBolInvoicePage` · route `/dispatch/awaiting-bol-invoice` · Documents › Awaiting BOL (red badge) · sidebar flyout · arch design tab · guard FE asserts.
 
-## BOUNDARY (proforma)
+## LIVE (Neon USMCA, bypass measured)
 
-Proforma stays a non-posting cash-flow projection. This path never posts a proforma; it converts or creates an official draft before send. Factoring auto-submit still refuses non-`sent` invoices.
+Awaiting BOL (no `docs` BOL category file): **3 loads** — **13626**, **13625**, **13615** (all `completed_docs_received`, `has_invoice=true`).
+
+Detention METHOD Chrome: **0** USMCA `detention_requests`, **0** `detention_events` — no seat fixtures; Print METHOD waits for a real approve with `approval_method`.
 
 ## GUARD / TESTS
 
 ```
-node scripts/verify-auto-invoice-on-bol-wired.mjs → OK
-npx vitest run src/accounting/__tests__/auto-invoice-on-bol.test.ts → 3 passed
+node scripts/verify-auto-invoice-on-bol-wired.mjs → OK (BE + FE needles)
+npx vitest run AwaitingBolInvoicePage + DispatchSubnav → 7 passed
 ```
 
-## FILES
+## FILES (FE)
 
-- `apps/backend/src/accounting/auto-invoice-on-bol.service.ts`
-- `apps/backend/src/accounting/__tests__/auto-invoice-on-bol.test.ts`
-- `apps/backend/src/dispatch/delivery-evidence-latch.ts`
-- `apps/backend/src/dispatch/awaiting-bol-invoice.routes.ts`
-- `apps/backend/src/docs/maybe-fire-auto-invoice-after-bol.ts`
-- `apps/backend/src/docs/files.routes.ts`
-- `apps/backend/src/index.ts`
+- `apps/frontend/src/api/dispatch.ts`
+- `apps/frontend/src/pages/dispatch/AwaitingBolInvoicePage.tsx`
+- `apps/frontend/src/pages/dispatch/__tests__/AwaitingBolInvoicePage.test.tsx`
+- `apps/frontend/src/components/dispatch/DispatchSubnav.tsx` (+ planners test)
+- `apps/frontend/src/routes/manifest.tsx`
+- `apps/frontend/src/components/layout/sidebar-config.ts`
 - `scripts/verify-auto-invoice-on-bol-wired.mjs`
-- `scripts/.gate-step-map.json`
+- `docs/specs/IH35_ARCHITECTURAL_DESIGN.md`
 
 ## NEXT
 
-285.4.9 Documents WIP (v10 PDFs — downtime ledger / APPROVED BY+METHOD / draft-expense flag / idle events). Deploy + live proof of awaiting-bol queue + one BOL→invoice→Faro path.
+1. FE deploy carrying `1f96a24c34` (Rule 42: on-demand for Chrome, not per-merge spam).
+2. Chrome: Documents › Awaiting BOL → table shows 13626/13625/13615.
+3. One BOL upload on a waiting load → invoice send → Faro queue proof (screenshots + live row).
+4. METHOD Print when a real detention approve stamps `approval_method`.
