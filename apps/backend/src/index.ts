@@ -343,6 +343,9 @@ import { registerMaintenanceServiceTimelineRoutes } from "./maintenance/service-
 import { registerUnitMaintenanceHistoryRoutes } from "./maintenance/unit-maintenance-history.routes.js";
 import { registerMaintenanceKpiRoutes } from "./maintenance/kpi.routes.js";
 import { initializePmAutoEngineCron } from "./maintenance/pm-auto-engine.cron.js";
+import { initializeOdometerSnapshotCron } from "./telematics/odometer-snapshot.cron.js";
+import { registerOdometerManualRoutes } from "./telematics/odometer-manual.routes.js";
+import { initializeSamsaraFaultPollCron } from "./integrations/samsara/fault-poll.cron.js";
 import { registerMaintPartsRoutes } from "./maint/parts.routes.js";
 import { registerMaintPmRoutes } from "./maint/pm.routes.js";
 import { registerMaintWoApRoutes } from "./maint/wo-ap.routes.js";
@@ -1233,6 +1236,7 @@ async function main() {
   await registerMaintenanceDefectsRoutes(app);
   await registerPreFlightDvirRoutes(app);
   await registerMaintenancePmAutoEngineRoutes(app);
+  await registerOdometerManualRoutes(app);
   await registerMaintenanceServiceTimelineRoutes(app);
   await registerUnitMaintenanceHistoryRoutes(app);
   await registerMaintenanceKpiRoutes(app);
@@ -1806,6 +1810,12 @@ async function main() {
 
       initializePmAutoEngineCron(app);
       app.log.info("[STARTUP] pm-auto-engine-cron initialized");
+
+      initializeOdometerSnapshotCron(app);
+      app.log.info("[STARTUP] odometer-snapshot-cron initialized");
+
+      initializeSamsaraFaultPollCron(app);
+      app.log.info("[STARTUP] samsara-fault-poll-cron initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] safety-reminders-cron failed");
     }
