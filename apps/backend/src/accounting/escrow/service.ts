@@ -336,7 +336,19 @@ export async function postEscrowTransactionOnClient(
       throw new Error("escrow_release_exceeds_balance");
     }
 
-    const cashAccountId = await resolveRoleAccount(client, input.operating_company_id, "cash_clearing");
+    // ROUND 290.3 (owner order, 2026-09-30): driver escrow held in trust is a liability to a NAMED
+    // driver -- never cash, never expense. A driver-holder deposit/release moves nothing through
+    // Undeposited Funds/cash; it is a paper transfer against the driver's own net-pay clearing
+    // balance (2170), which is where the settlement that funded the escrow already parked the
+    // driver's pay. Vendor/factor/other holders (repair-reserve withholds, factoring reserves) can
+    // still involve real cash movement, so only the driver path is redirected here.
+    const isDriverHolder = escrowAccount.holder_type === "driver";
+    const cashAccountId = await resolveRoleAccount(
+      client,
+      input.operating_company_id,
+      isDriverHolder ? "driver_payroll_clearing" : "cash_clearing"
+    );
+    const counterLegLabel = isDriverHolder ? "driver net-pay clearing" : "cash";
     const memoPrefix = input.posting_type === "deposit" ? "Escrow deposit" : input.posting_type === "release" ? "Escrow release" : "Escrow adjustment";
     const postingDate = companyBusinessDate();
     const journalEntry = await createJournalEntryOnClient(
@@ -361,7 +373,7 @@ export async function postEscrowTransactionOnClient(
                   account_id: cashAccountId,
                   debit_or_credit: "credit",
                   amount_cents: input.amount_cents,
-                  description: "Escrow cash release",
+                  description: `Escrow ${counterLegLabel} release`,
                 },
               ]
             : [
@@ -369,7 +381,7 @@ export async function postEscrowTransactionOnClient(
                   account_id: cashAccountId,
                   debit_or_credit: "debit",
                   amount_cents: input.amount_cents,
-                  description: "Escrow cash deposit",
+                  description: `Escrow ${counterLegLabel} deposit`,
                 },
                 {
                   account_id: escrowAccount.coa_account_id,
