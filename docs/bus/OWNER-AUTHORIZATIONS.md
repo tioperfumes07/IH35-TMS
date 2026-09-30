@@ -4826,7 +4826,26 @@ order (August first, stop and report, then September).
 action: MONTH=2026-08 OWNER_AUTH_ID=AUTH-154 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-round290-12-def-reclass-5000-to-5010.ts
   (DRY_RUN=1 first for the rehearsal, then DRY_RUN=0 to commit)
 expires_at: 2026-10-01T05:55:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T06:20:00.000Z
+consumed_by: CC-1
+row_counts: 94 of 94 reclassed, 0 failed. Rehearsed first on Neon branch br-bitter-grass-akuanwgd
+  (deleted after proof), then run for real against prod.
+proof_query: live on prod, 2026-09-30 -- account 5010 August: 94 docs / $3,744.13 (was $0.00).
+  Account 5000 August: 136 docs / $88,224.03 (dollar total matches the Lead's own expected
+  $88,224.03 exactly; document count came out 136 not the expected 140 -- the $4 discrepancy in
+  count with an EXACT dollar match is not yet explained and is flagged honestly, not forced).
+  August journal entries: 458 distinct JEs, debit=credit=$614,349.76 across 1,051 lines (internally
+  balanced -- Dr=Cr holds exactly). This is $4,000.00 / 2 lines higher than the Lead's original
+  $610,349.76/1,049 baseline; the exact $4,000.00 gap matches invoice 010's amount and August issue
+  date (08/13/2026) from a concurrent sibling fix (AUTH-147/148, invoice 010 historical_backfill)
+  landing in the same window -- not from this reclass, which only touches accounts 5000/5010 and
+  provably kept every JE it touched balanced. Both verify-no-fuel-purchase-booked-twice.mjs and
+  verify-steps/11751-verify-fuel-expense-bridge-is-whole.mjs's fuel-side check were re-verified
+  clean immediately before this run (see AUTH-155's own consumption for the duplicate-DEF fix that
+  preceded this).
+note: September (114 docs / $3,698.49) is explicitly NOT run under this AUTH, per the Lead's staged
+  order -- stop and report after August, which is what this entry does.
 
 ## AUTH-140
 
