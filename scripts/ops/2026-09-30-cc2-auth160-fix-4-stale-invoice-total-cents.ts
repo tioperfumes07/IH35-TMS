@@ -1,6 +1,6 @@
 #!/usr/bin/env -S npx tsx
 /**
- * AUTH-151 -- correct invoice_total_cents on 4 factoring_advances rows (FAC-2026-00048/63/64/82)
+ * AUTH-160 -- correct invoice_total_cents on 4 factoring_advances rows (FAC-2026-00048/63/64/82)
  * to match their own notes.FARO_FEES.purchase value.
  *
  * Discovered running verify-ldt-4-factoring-money.mjs immediately after ROUND 285.2.1-R reinstated
@@ -28,7 +28,7 @@ import pg from "pg";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const APPLY = process.argv.includes("--apply");
-const AUTH_ID = "AUTH-151";
+const AUTH_ID = "AUTH-160";
 
 const CORRECTIONS: Array<{ id: string; display_id: string; correct_invoice_total_cents: number }> = [
   { id: "43bf2fc5-4984-4b56-8d13-7eeaf244d080", display_id: "FAC-2026-00048", correct_invoice_total_cents: 611500 },
