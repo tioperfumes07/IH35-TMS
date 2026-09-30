@@ -1,32 +1,18 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useCompanyContext } from "../../contexts/CompanyContext";
-import { CreateWorkOrderModal } from "./components/CreateWorkOrderModal";
+import { Navigate, useSearchParams } from "react-router-dom";
 
-/** Deep-link target for fleet ActionBars: accepts canonical unit_id and trailer equipment_id. */
+/**
+ * D24 — Create Work Order is a modal on Maintenance Home, never a blank full-page shell.
+ * Legacy deep links (/maintenance/work-orders/new?unit_id=…) redirect into ?create_wo=1 so the
+ * wizard opens as the same CreateWorkOrderModal already mounted on MaintenanceHome.
+ * Route retained (never delete).
+ */
 export function WorkOrderNewPage() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const { selectedCompanyId } = useCompanyContext();
   const unitId = searchParams.get("unit_id")?.trim() ?? "";
   const equipmentId = searchParams.get("equipment_id")?.trim() ?? "";
-  const [open, setOpen] = useState(true);
-
-  useEffect(() => {
-    if (!open) navigate("/maintenance", { replace: true });
-  }, [open, navigate]);
-
-  if (!selectedCompanyId) {
-    return <div className="p-4 text-xs text-gray-500">Select a company to create a work order.</div>;
-  }
-
-  return (
-    <CreateWorkOrderModal
-      open={open}
-      operatingCompanyId={selectedCompanyId}
-      initialValues={unitId || equipmentId ? { unit_id: unitId, equipment_id: equipmentId } : undefined}
-      onClose={() => setOpen(false)}
-      onCreated={() => setOpen(false)}
-    />
-  );
+  const next = new URLSearchParams();
+  next.set("create_wo", "1");
+  if (unitId) next.set("unit_id", unitId);
+  if (equipmentId) next.set("equipment_id", equipmentId);
+  return <Navigate to={`/maintenance?${next.toString()}`} replace />;
 }
