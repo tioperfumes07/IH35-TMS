@@ -5256,4 +5256,19 @@ action:
   OWNER_AUTH_ID=AUTH-161 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth161-round291-void4-invoices.ts --apply
   (run from repo root; DRY_RUN first with no --apply flag)
 expires_at: 2026-10-01T00:00:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T07:45:00.000Z
+consumed_by: CC-2
+row_counts: 4 of 4 voided, 0 of 8 posted (all 8 correctly refused live, per root_cause above):
+    INV-2026-00001 -> void ok, reversing_entry_ref null (0 live postings, pure header void)
+    INV-2026-00002 -> void ok, reversing_entry_ref null
+    INV-2026-00004 -> void ok, reversing_entry_ref null
+    INV-2026-00005 -> void ok, reversing_entry_ref null
+proof_query: scripts/verify-purge-era-closures-still-hold.mjs run live against prod immediately
+  after commit, 2026-09-30 -- closure 21: "open invoices=38045912 cents, A/R=34560912 cents,
+  gap=3485000 cents" ($34,850.00 exactly, matching the 8 blocked invoices' total to the cent; was
+  $52,960.00 before this AUTH). Closure 21 does NOT read 0 -- by design, per this AUTH's own
+  root_cause: the remaining $34,850.00 requires firing the DISP-01 two-event latch for 8 delivered
+  loads whose latch never fired, not a posting call. Separate board finding filed
+  (DISP-01-LATCH-8-DELIVERED-LOADS-NEVER-FIRED) for that investigation, CC-1/dispatch-adjacent
+  lane, not closed here.
