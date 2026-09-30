@@ -7,6 +7,7 @@
 export default {
   name: "verify-one-load-create-path",
   async run(ctx) {
-    await ctx.run("node", ["scripts/verify-one-load-create-path.mjs"]);
+    // X-16: the live phase has its own required CI job, never empty-DB proof.
+    await ctx.run("node", ["scripts/verify-one-load-create-path.mjs", "--static"]);
   },
 };

@@ -274,13 +274,13 @@ const MEASURE_OWNER_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd";
 
 export async function measureLoadOutcomes(client) {
   const closedDays = loadClosedPurchaseDays();
-  await client.query("BEGIN");
-  await client.query("SELECT set_config('app.bypass_rls','lucia',false)");
+  await client.query("BEGIN READ ONLY");
+  await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
   // FORCE ROW LEVEL SECURITY on dispatch.load_charge_lines: bypass_rls GUC alone is inert
   // (policy is operating_company_id IN user_accessible_company_ids() only). Owner identity
   // makes that set non-empty so the outcome half can see real charge lines.
-  await client.query("SELECT set_config('app.current_user_id',$1::text,false)", [MEASURE_OWNER_USER_ID]);
-  await client.query("SELECT set_config('app.operating_company_id',$1::text,false)", [USMCA_COMPANY_ID]);
+  await client.query("SELECT set_config('app.current_user_id',$1::text,true)", [MEASURE_OWNER_USER_ID]);
+  await client.query("SELECT set_config('app.operating_company_id',$1::text,true)", [USMCA_COMPANY_ID]);
 
   // No closed purchase day yet → 0 loads in scope (self-arming). Never scan the whole board.
   if (closedDays.length === 0) {
@@ -467,6 +467,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const staticResult = check();
   const staticExit = report(staticResult);
   if (staticExit !== 0) process.exit(staticExit);
+
+  if (process.argv.includes("--static")) {
+    console.log(`${LABEL}: STATIC ONLY — live outcomes are enforced by ci / required-live-load-guard; no live verdict here.`);
+    process.exit(0);
+  }
 
   // Live outcome check (requires DATABASE_URL)
   const { requireLiveDbOrExit } = await import("./lib/require-live-db.mjs");

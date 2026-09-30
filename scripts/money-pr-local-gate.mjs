@@ -24,6 +24,7 @@ import { ensureFreshGateStepMap } from "./generate-gate-step-map.mjs";
 import { guardIsInScope } from "./verify-static.mjs";
 import { EMPTY_BY_PURGE_EXIT, PURGE_WINDOW_GUARDS, purgeWindow } from "./lib/purge-window.mjs";
 import { dataWritePathDiffActuallyWrites, dataWritePathFileActuallyWrites } from "./lib/data-write-path-detection.mjs";
+import { localDatabaseGuardArgs } from "./lib/local-db-guard-routing.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "money-pr-local-gate";
@@ -1083,6 +1084,9 @@ function resolveGuardDatabaseUrl() {
 }
 
 function runNode(rel, extraEnv = {}, args = []) {
+  const localArgs = localDatabaseGuardArgs([rel, ...args]);
+  if (localArgs === null) return 0; // X-16: required CI execution, no local/live verdict.
+  args = localArgs.slice(1);
   const script = path.join(ROOT, rel);
   console.log(`[${LABEL}] RUN ${rel}${args.length ? ` ${args.join(" ")}` : ""}`);
   const env = { ...process.env, ...extraEnv };

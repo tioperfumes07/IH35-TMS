@@ -246,6 +246,10 @@ async function main() {
   }
 
   // ---- Part 2: live column-completeness check (DB required, fail-closed) ----
+  if (process.argv.includes("--static")) {
+    console.log(`${LABEL}: STATIC ONLY — single-writer assertions passed; live schema required in CI`);
+    return;
+  }
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
     const missing = [];

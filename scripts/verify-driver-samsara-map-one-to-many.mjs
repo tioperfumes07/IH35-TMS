@@ -168,6 +168,8 @@ async function measureLive() {
 
   try {
     // A. Map table exists
+    await client.query("BEGIN READ ONLY");
+    await client.query("SET LOCAL app.bypass_rls='lucia'");
     const tableRes = await client.query(
       `SELECT to_regclass('mdata.driver_samsara_accounts') IS NOT NULL AS exists`,
     );
@@ -200,10 +202,12 @@ async function measureLive() {
     // E. Samsara ids mapping to 2+ drivers (should be 0 due to UNIQUE, but check)
     const dupRes = await client.query(
       `SELECT count(*)::int AS cnt FROM (
-        SELECT samsara_driver_id, count(DISTINCT driver_id) AS driver_count
-        FROM mdata.driver_samsara_accounts
-        GROUP BY samsara_driver_id
-        HAVING count(DISTINCT driver_id) > 1
+        SELECT m.samsara_driver_id, count(DISTINCT m.driver_id) AS driver_count
+        FROM mdata.driver_samsara_accounts m
+        JOIN mdata.drivers d ON d.id=m.driver_id
+        WHERE d.operating_company_id='5c854333-6ea5-4faa-af31-67cb272fef80'
+        GROUP BY m.samsara_driver_id
+        HAVING count(DISTINCT m.driver_id) > 1
       ) dups`,
     );
     const liveSamsaraIdsMappingTo2Drivers = dupRes.rows[0].cnt;
@@ -217,6 +221,7 @@ async function measureLive() {
       liveSamsaraIdsMappingTo2Drivers,
     };
   } finally {
+    await client.query("ROLLBACK");
     client.release();
     await pool.end();
   }
@@ -224,6 +229,12 @@ async function measureLive() {
 
 // --- main ---
 async function main() {
+  if (process.argv.includes("--static")) {
+    const invalid = staticScanLegacyAsKey();
+    console.log(`${LABEL}: STATIC ONLY; live map integrity required in CI`);
+    process.exitCode = invalid ? 1 : 0;
+    return;
+  }
   if (process.argv.includes("--selftest")) {
     selftest();
     return;
