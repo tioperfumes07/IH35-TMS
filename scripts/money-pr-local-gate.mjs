@@ -1179,6 +1179,13 @@ for (const [name, rel] of STEPS) {
   }
 }
 
+// R297.5 X-19: local in-memory contract; production inventory is REQUIRED in CI.
+{
+  const name = "verify-no-test-markers-in-live-tables selftest";
+  const code = runNode("scripts/verify-no-test-markers-in-live-tables.mjs", {}, ["--selftest"]);
+  if (code !== 0) { failStep(name); process.exit(code); }
+}
+
 // B3 (Devin sweep, 2026-09-28; migration 202614540000) — mdata.workflow_requests cross-tenant RLS
 // proof. Must INSERT synthetic rows + SET LOCAL ROLE ih35_app (NOBYPASSRLS). The gate's default
 // ih35_ci_readonly rewrite cannot run this: readonly has BYPASSRLS and cannot SET ROLE ih35_app.
