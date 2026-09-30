@@ -9360,10 +9360,10 @@
     "claimed_at": "2026-09-30",
     "purpose": "verify-arrival-detection-runs-on-poll-path (renumbered from a colliding 11829 -- another seat's own claim landed on the same number)"
   },
-  "11833": {
+  "11845": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-30",
-    "purpose": "verify-dispatched-load-gps-not-stale"
+    "purpose": "verify-dispatched-load-gps-not-stale (renumbered from a colliding 11833 -- another seat's own claim landed on the same number)"
   },
   "11837": {
     "claimed_by": "claude",
