@@ -928,8 +928,15 @@ export function CustomersPage() {
   // (GET /accounting/customers/:id/activity — invoices, payments, credit memos, advances with a
   // running A/R balance) — no new backend. AB Global proof: 3 sent invoices → ≥3 invoice rows.
   const customerTxnActivityQuery = useQuery({
-    queryKey: ["customers", "txn-activity", companyId, selectedCustomer?.id ?? ""],
-    queryFn: () => getCustomerActivity({ operating_company_id: companyId, customer_id: selectedCustomer!.id }),
+    queryKey: ["customers", "txn-activity", companyId, selectedCustomer?.id ?? "", statusFilter, dateFrom, dateTo],
+    queryFn: () =>
+      getCustomerActivity({
+        operating_company_id: companyId,
+        customer_id: selectedCustomer!.id,
+        status: statusFilter || undefined,
+        from_date: dateFrom || undefined,
+        to_date: dateTo || undefined,
+      }),
     enabled: Boolean(companyId && selectedCustomer?.id && activeTab === "transaction_list"),
     retry: false,
   });
