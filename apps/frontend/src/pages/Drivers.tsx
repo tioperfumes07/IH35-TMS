@@ -611,7 +611,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
   };
 
   return (
-    <div className="space-y-3">
+    <div className={MASTER_DETAIL.pageShellClass} data-c05-min-scroll="drivers">
       <PageHeader
         title="Drivers"
         subtitle={`${newDriversInLast3Days} new in last 3 days`}
@@ -862,7 +862,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             </DataPanel>
           ) : null}
           {subnavTab === "profiles" ? (
-            <div className="space-y-3" data-testid="drivers-profiles-shell">
+            <div className={MASTER_DETAIL.pageShellClass} data-testid="drivers-profiles-shell" data-c05-min-scroll="drivers-profiles">
               <div className="flex flex-wrap items-center gap-2">
                 <SegmentedControl
                   value={profilesViewMode}

@@ -61,7 +61,7 @@ export function DriverListSidebar({ selectedDriverId, onSelectDriver }: Props) {
         aria-label="Search drivers"
         className="mb-2 mt-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
       />
-      <div className="max-h-[760px] overflow-y-auto">
+      <div className={MASTER_DETAIL.listScrollClass} data-c05-list-scroll="true">
         {listState.isLoading ? (
           <p className="px-2 py-3 text-xs text-gray-500">Loading…</p>
         ) : listState.isEmpty ? (

@@ -125,7 +125,7 @@ export function CustomerListSidebar({
         <option value="balance_asc">Sort by balance (low-high)</option>
       </SelectCombobox>
       {/* QBO columnar list: resizable, per-user-persisted column widths (shared ResizableTable/ResizableTh). */}
-      <div className="max-h-[760px] overflow-y-auto">
+      <div className={MASTER_DETAIL.listScrollClass} data-c05-list-scroll="true">
         <ResizableTable
           tableId="customers-master-list"
           columns={[
