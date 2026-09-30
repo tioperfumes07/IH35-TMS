@@ -1,5 +1,8 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T06:40Z · 285.4.9 #31 MERGED `c57f610b4b`**
+CURSOR | #31 locked v10 PDFs `#23283` `c57f610b4b` · APPROVED BY already prints; METHOD needs `dispatch.detention_requests.approval_method` migrate | GUARD company-settlement-pdf v10 OK | NEXT: #59 METHOD after **12:00 UTC** Cursor migrate window · deploy Chrome Print proof.
+
 **2026-09-30T06:36Z · 285.4.9 #31 v10 DOCS ON BRANCH**
 CURSOR | #31 locked v10 driver+company+invoice PDFs (`PDF_V10_STYLES`, `data-doc-skin=v10`, invoice QB Balance due + `.appr`) | GUARD verify-company-settlement-pdf-house-template OK + selftest 14/14 · vitest pdf-templates 3/3 | NEXT: fast-merge · #59 METHOD migrate after 12:00 UTC · deploy Chrome.
 
