@@ -1219,9 +1219,9 @@ export function CustomersPage() {
             <ToolbarSegmentControl
               value={viewMode}
               onChange={setViewMode}
-              dataAttributes={{ "data-view-mode-toggle": "customers" }}
+              dataAttributes={{ "data-view-mode-toggle": "customers", "data-c55-view-toggle": "1" }}
               options={[
-                { value: "list", label: "List view", testId: "customers-view-list" },
+                { value: "list", label: "Regular", testId: "customers-view-list" },
                 { value: "master-detail", label: "Master-detail", testId: "customers-view-master-detail" },
               ]}
             />
