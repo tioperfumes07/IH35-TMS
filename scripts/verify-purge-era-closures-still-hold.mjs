@@ -135,10 +135,19 @@ export async function measureClosures(client) {
   }
 
   // 30 — every live load has driver + unit coverage
+  // ROUND 292 (CC-1): a CANCELLED load is a load-level terminal/void-equivalent state (loads have
+  // no voided_at; "cancelled" is that state) -- this codebase's own established rule is that a
+  // cancelled load correctly carries no invoice, no expense, no fuel, no driver bill (ROUND 290
+  // engine audit, section 8: "All cancelled loads carry no invoice, no expense, no fuel, no driver
+  // bill. Correct."). Requiring driver+unit coverage on a load that was cancelled before dispatch
+  // is the same class of error, and was flagging a single row (E2E-2E-95603e75, is_sample_data=
+  // false, created 2026-09-30 by what looks like an E2E test run against prod -- a separate,
+  // real finding filed to the board, not fixed here by inventing driver/unit on a cancelled load).
   const noCoverageRes = await client.query(
     `SELECT COUNT(*)::int AS n FROM mdata.loads
       WHERE operating_company_id = $1::uuid
         AND soft_deleted_at IS NULL
+        AND status != 'cancelled'
         AND (assigned_primary_driver_id IS NULL OR assigned_unit_id IS NULL)`,
     [USMCA_COMPANY_ID],
   );
@@ -147,11 +156,20 @@ export async function measureClosures(client) {
   }
 
   // 31 — no no-driver/no-unit/no-load expense cases
+  // ROUND 292 (CC-1): this query never excluded voided_at IS NOT NULL -- the exact "counting
+  // ghosts" anti-pattern this codebase has self-corrected in the fuel and factoring guards. Live
+  // measured 2026-09-30: all 6 flagged rows are ALREADY voided (status='void', voided_at set) --
+  // five are $1.00 create-test-then-void AUTH proof artifacts (AUTH-117/120/122/125/126, per
+  // docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md's own sanctioned pattern), the sixth is
+  // the Smithfield Foods expense AUTH-150 voided and replaced with a real Bill (ROUND 290.2). A
+  // voided document with no linkage is not a live defect; it is dead history and void-not-delete
+  // keeps it exactly as it is.
   const noLoadExpRes = await client.query(
     `SELECT COUNT(*)::int AS n FROM accounting.expenses
       WHERE operating_company_id = $1::uuid
         AND is_sample_data IS NOT TRUE
         AND deleted_at IS NULL
+        AND voided_at IS NULL
         AND load_id IS NULL
         AND driver_uuid IS NULL
         AND unit_id IS NULL`,
