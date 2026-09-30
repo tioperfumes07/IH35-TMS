@@ -62,6 +62,36 @@
  * this file exists to prevent.
  */
 
+/**
+ * TWO CANONICAL QUESTIONS, NOT ONE — TRUCKLINE-16 (Lead, 2026-09-30).
+ *
+ * This file answers TWO deliberately different questions, and they must never be merged into one
+ * "the" active-load definition again — that was the original TRUCKLINE-16 bug: one definition
+ * (the accounting one below) tried to answer both, so board-active dispatch loads whose driver
+ * bill happened to be marked SETTLED while the truck was still physically rolling silently
+ * vanished from the Truck Line, Load board tiles, List, Kanban and Trip Pairing.
+ *
+ *   ACTIVE (accounting) — `canonicalActiveLoadWhereClause` / `canonicalActiveLoadStatusClause` /
+ *   `canonicalActiveLoadNotFinishedByMoneyCte` below. "Is this load still open on the books" —
+ *   status IN the full canonical set AND NOT finished-by-money (no closed settlement line, no
+ *   settled driver bill, no issued invoice). Correct for Load Costs, cash flow, break-even and
+ *   money-side KPIs. Money decides whether the books consider a load done. DO NOT WIDEN THIS ONE
+ *   to also answer the dispatch question below — that is exactly the bug this section fixes.
+ *
+ *   DISPATCH WORK (operations) — `canonicalDispatchWorkWhereClause` /
+ *   `canonicalDispatchWorkStatusClause` below. "Is a unit carrying this load right now" — status
+ *   IN the narrower dispatch subset (booked through at_delivery, explicitly NOT
+ *   completed_docs_received — paperwork-done means the truck is no longer carrying it, even
+ *   though the load may still be accounting-active) AND scoped to one real entity. NO money test
+ *   anywhere in this predicate — a truck is loaded or it isn't; a driver bill's settlement status
+ *   has no bearing on that fact. Correct for Truck Line, Load board tiles, List, Kanban and Trip
+ *   Pairing.
+ *
+ * Both are legitimate, permanent, and must stay separate. `scripts/verify-one-canonical-active-
+ * load-set.mjs` fails the build if a dispatch-classified consumer imports the accounting
+ * predicate, or an accounting-classified consumer imports the dispatch-work predicate.
+ */
+
 export const CANONICAL_ACTIVE_LOAD_STATUSES = [
   "booked",
   "planned",
@@ -251,6 +281,51 @@ export function canonicalActiveLoadWhereClause(alias = "l"): string {
   return `${canonicalActiveLoadStatusClause(alias)} AND ${canonicalActiveLoadNotFinishedByMoneyCte(`${alias}.id`)}`;
 }
 
+/**
+ * DISPATCH WORK — "is a unit carrying this load right now." See the file-header section above for
+ * why this is a SEPARATE, permanent predicate from the accounting one above, never a widening of
+ * it. Explicitly excludes `completed_docs_received` (and everything at-or-past delivery) — once
+ * paperwork is done the truck is no longer carrying the load, even though the load can still be
+ * accounting-active for weeks after. A strict subset of CANONICAL_ACTIVE_LOAD_STATUSES, asserted
+ * below so drift fails at import time, not silently in a live count.
+ */
+export const DISPATCH_WORK_LOAD_STATUSES = [
+  "booked",
+  "planned",
+  "assigned",
+  "unassigned",
+  "assigned_not_dispatched",
+  "dispatched",
+  "at_pickup",
+  "in_transit",
+  "at_delivery",
+] as const;
+
+export type DispatchWorkLoadStatus = (typeof DISPATCH_WORK_LOAD_STATUSES)[number];
+
+assertCanonicalSubset("canonical-active-load-set.ts DISPATCH_WORK_LOAD_STATUSES", DISPATCH_WORK_LOAD_STATUSES);
+
+/** `l.status IN (...)` fragment for the dispatch-work set, aliasable to match the caller's query. */
+export function canonicalDispatchWorkStatusClause(alias = "l"): string {
+  return `${alias}.status IN (${statusInClause(DISPATCH_WORK_LOAD_STATUSES)})`;
+}
+
+/**
+ * The complete dispatch-work predicate — status IN the dispatch subset AND scoped to one real
+ * entity, aliasable. NO money test: whether a settlement or driver bill happened to get marked
+ * closed/settled has no bearing on whether a truck is physically carrying a load. The entity gate
+ * is REQUIRED (not optional/defaulted) — TRUCKLINE-16 measured live that an unscoped read can
+ * surface frozen-entity orphans (13497, 13530 — Transportation, not USMCA) alongside real USMCA
+ * dispatch work; baking the gate into this function's own signature makes that structurally
+ * impossible to forget at a call site, unlike the accounting predicate above which trusts each
+ * caller to add its own `operating_company_id = $1` separately.
+ * `operatingCompanyIdParam` is the caller's own SQL parameter placeholder (e.g. "$1"), never a
+ * literal value — this function never accepts or interpolates a raw UUID.
+ */
+export function canonicalDispatchWorkWhereClause(alias: string, operatingCompanyIdParam: string): string {
+  return `${canonicalDispatchWorkStatusClause(alias)} AND ${alias}.operating_company_id = ${operatingCompanyIdParam}`;
+}
+
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };
@@ -281,6 +356,37 @@ export async function listCanonicalActiveLoadIds(client: Queryable, operatingCom
       WHERE l.operating_company_id = $1::uuid
         AND l.soft_deleted_at IS NULL
         AND ${canonicalActiveLoadWhereClause("l")}
+    `,
+    [operatingCompanyId]
+  );
+  return res.rows.map((r) => r.id);
+}
+
+/** Live count of the dispatch-work set for one company — "how many units are carrying freight
+ *  right now." The single source Truck Line, Load board tiles, List, Kanban and Trip Pairing must
+ *  all call, so they return the SAME number from the SAME predicate (TRUCKLINE-16). */
+export async function countCanonicalDispatchWorkLoads(client: Queryable, operatingCompanyId: string): Promise<number> {
+  const res = await client.query<{ count: number }>(
+    `
+      SELECT count(*)::int AS count
+      FROM mdata.loads l
+      WHERE l.soft_deleted_at IS NULL
+        AND ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
+    `,
+    [operatingCompanyId]
+  );
+  return Number(res.rows[0]?.count ?? 0);
+}
+
+/** The full id list of the dispatch-work set — for consumers that need to join against it rather
+ *  than just count it (boards, pickers, kanban). */
+export async function listCanonicalDispatchWorkLoadIds(client: Queryable, operatingCompanyId: string): Promise<string[]> {
+  const res = await client.query<{ id: string }>(
+    `
+      SELECT l.id::text AS id
+      FROM mdata.loads l
+      WHERE l.soft_deleted_at IS NULL
+        AND ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
     `,
     [operatingCompanyId]
   );

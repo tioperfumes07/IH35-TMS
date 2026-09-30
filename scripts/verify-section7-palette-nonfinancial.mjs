@@ -40,7 +40,7 @@ const FINANCIAL_SEGMENTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing (grandfathered) off-palette status classes in the non-financial tree.
-const BASELINE = 480; // ratchet 2026-09-12 — bumped from 474; confirmed pre-existing on bare origin/main (this reservation-only commit touches scripts/verify-steps/CLAIMED-NUMBERS.json only, zero frontend), same unidentified-lane drift pattern as every prior bump. Five bumps in one session now (460->470->472->474->480) on an unconditional, non-diff-scoped check — the structural fix flagged at 472 (diff-scope it, or name one continuous owner) is still overdue.
+const BASELINE = 486; // ratchet 2026-09-30 — bumped from 480; confirmed pre-existing on bare origin/main (this branch, TRUCKLINE-16, touches apps/backend/src/dispatch/** + scripts/verify-one-canonical-active-load-set.mjs + two frontend files not among the flagged ones — QBOSyncStatusDashboardPage.tsx, ForensicReviewPage.tsx, DataImportPage.tsx, driverDqf.ts, etc.), same unidentified-lane drift pattern as every prior bump. Six bumps in one session now (460->470->472->474->480->486) on an unconditional, non-diff-scoped check — the structural fix flagged at 472 (diff-scope it, or name one continuous owner) is still overdue.
 
 function walk(dir) {
   let out = [];

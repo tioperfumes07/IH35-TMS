@@ -29,9 +29,14 @@ export function orderedLegsForUnit(unitLoads: DispatchLoadRow[]): DispatchLoadRo
   return [...nb, ...tr, ...sb];
 }
 
-/** Must match trip-pairing-board.service.ts ACTIVE_LOAD_STATUSES — one pairing engine. */
+/** TRUCKLINE-16 (Lead, 2026-09-30): must match apps/backend/src/dispatch/canonical-active-load-
+ *  set.ts's DISPATCH_WORK_LOAD_STATUSES — one pairing engine, one canonical dispatch-work
+ *  predicate shared with Truck Line, Load board tiles, List and Kanban. */
 export const RT_PAIRING_ACTIVE_STATUSES = [
+  "booked",
+  "planned",
   "assigned",
+  "unassigned",
   "assigned_not_dispatched",
   "dispatched",
   "at_pickup",
@@ -41,15 +46,14 @@ export const RT_PAIRING_ACTIVE_STATUSES = [
 
 /**
  * RT-TIMELINE-LIFECYCLE (owner ruling 2026-09-09) — SUPERSEDED 2026-09-11 ("DISPATCH OPEN-ONLY SCOPE"
- * / "STRIP CLOSED LOADS EVERYWHERE, NO EXCEPTIONS"): this list used to also paint delivered / pending-
- * docs / billing-tail legs on the Timeline (the 09-09 ruling's own broadening, mirroring the
- * now-superseded LOADBOARD-LIFECYCLE live-board exception). The owner's 2026-09-11 law is explicit:
- * "a delivered-pending-docs load is not 'current' for this law's purpose once delivery has happened;
- * only pre-delivery / still-moving statuses belong in the Timeline" — Dispatch and everything living
- * inside it renders ONLY current/open loads, never closed/settled/billing-tail data (that belongs
- * exclusively in the Settlements module). RT_PAIRING_ACTIVE_STATUSES stays locked to
- * trip-pairing-board.service.ts's 6-status set (one pairing engine, never widened here); the Timeline
- * now adds only booked/planned/unassigned on top of it — no post-delivery status at all.
+ * / "STRIP CLOSED LOADS EVERYWHERE, NO EXCEPTIONS"): Dispatch and everything living inside it
+ * renders ONLY current/open loads, never closed/settled/billing-tail data (that belongs exclusively
+ * in the Settlements module) — no post-delivery status at all. TRUCKLINE-16 (2026-09-30):
+ * RT_PAIRING_ACTIVE_STATUSES now IS the canonical DISPATCH_WORK_LOAD_STATUSES set (booked through
+ * at_delivery), so this literal is now identical to it value-for-value — kept as its own array
+ * literal (not a bare reference) because verify-round-trips-bar-dates.mjs and
+ * verify-dispatch-open-only-scope.mjs both statically assert this exact shape and its exclusions
+ * (no delivered_pending_docs / no post-delivery status) directly from the source text.
  */
 export const RT_TIMELINE_STATUSES = [
   "booked",
