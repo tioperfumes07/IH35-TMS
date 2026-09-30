@@ -1,5 +1,13 @@
 [
   {
+    "filename": "202614720000_downtime_schema_grants.sql",
+    "ledger_checksum": "2883506f594c99b4b8598e79572f1f5727459648d5408c1cd39b28ba5bdee666",
+    "disk_checksum": "ae02d9058d5c819faeea2dff9b0ad787c393cfbee4df318a94c74d3e546406a8",
+    "reason": "Two seats independently authored a missing migration for the same claimed number (202614720000, 'downtime schema + table grants') around the same time, 2026-09-30: this seat's own simpler GRANT-only version was applied and ledgered first, then #23441's more defensive DO-block version (schema-existence guard, sequence grants) landed on disk under the same filename. Both are idempotent and grant the identical live state (verified: has_schema_privilege/has_table_privilege all true either way); the disk version is kept as canonical going forward since it is strictly more defensive. Checksum drift recorded rather than re-ledgering or renaming an already-applied migration.",
+    "added_at": "2026-09-30",
+    "added_in_pr": "claude/t21-geofence-odometer-captures"
+  },
+  {
     "filename": "0050_two_section_v5_and_safety_restructure.sql",
     "ledger_checksum": "1d5f77d669ceb800c60f3b4cbf51060e174568fb22126be9ab3f3cadeb05c5de",
     "disk_checksum": "8919f0ed54012cbbb865852a7074e0c69c9dad399357e5f14fefcffb682ec2ef",
