@@ -656,12 +656,19 @@ export function VendorsPage() {
 
   return (
     <div className={MASTER_DETAIL.pageShellClass} data-c05-min-scroll="vendors" data-c06-page="vendors">
-      {viewModeSaveError && (
-        <div role="alert" data-view-mode-save-error="vendors" className="flex items-center justify-between gap-3 rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
-          <span>{viewModeSaveError}</span>
-          <button type="button" className="font-semibold underline" onClick={retryViewModeSave}>Retry save</button>
+      {viewModeSaveError ? (
+        <div
+          role="alert"
+          data-view-mode-save-error="vendors"
+          data-c52-alert-dock="page"
+          className="fixed bottom-20 right-3 z-[231] flex w-72 max-w-[min(18rem,calc(100vw-1.5rem))] items-start justify-between gap-2 rounded-sm border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-800 shadow-sm"
+        >
+          <span className="min-w-0 flex-1 leading-snug">{viewModeSaveError}</span>
+          <button type="button" className="shrink-0 font-bold underline" onClick={retryViewModeSave}>
+            Retry
+          </button>
         </div>
-      )}
+      ) : null}
       <PageHeader
         title="Vendors"
         subtitle="Vendor list and transactions"
