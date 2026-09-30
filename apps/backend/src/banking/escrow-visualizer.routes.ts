@@ -162,7 +162,7 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
               je.entry_date::text AS journal_entry_date,
               je.memo AS journal_entry_memo
             FROM accounting.escrow_accounts ea
-            JOIN accounting.escrow_ledger ep
+            JOIN accounting.escrow_postings ep
               ON ep.escrow_account_id = ea.id
              AND ep.operating_company_id = ea.operating_company_id
             LEFT JOIN accounting.journal_entries je
