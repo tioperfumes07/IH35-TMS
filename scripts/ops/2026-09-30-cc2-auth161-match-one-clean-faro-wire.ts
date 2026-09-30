@@ -3,15 +3,25 @@
  * AUTH-161 -- ROUND 282.7 item 1: match the ONE genuinely clean, unambiguous Faro wire-in bank
  * transaction to its factoring advance, through the sanctioned banking match engine.
  *
- * bank_transaction 3feba937-1aa5-463b-9ce7-054d404c1024 (2026-09-25, $4,161.00, for_review)
+ * bank_transaction 3feba937-1aa5-463b-9ce7-054d404c1024 (2026-09-25, $4,161.00)
  *   <-> factoring_advance a925526e-b2cf-4513-98bf-40ed1cbb3f6d (FAC-2026-00138, faro_invoice 101,
  *       Bennett International Logistics, expected net $4,161.00 exactly -- zero variance)
  *
- * Two sanctioned calls, same order AUTH-134 used for the 8-clean-rows sweep:
- *   1. acceptMatchWithResolveDifference -- writes reconciliation_matches + audit, stamps
- *      review_state='matched' + matched_factoring_advance_id (zero variance -> no difference JE).
- *   2. postSourceTransactionInClientTx({source_transaction_type:'factoring_advance_deposit'}) --
- *      sweeps 1090 -> 1000 for this one advance.
+ * STEP 1 (acceptMatchWithResolveDifference) ALREADY HAPPENED FOR REAL during this AUTH's own
+ * rehearsal: that function ignores any client/transaction argument (it wraps its own work in
+ * withLuciaBypass internally -- confirmed by reading match.service.ts:1203-1205), so the
+ * intended "dry run" of it committed for real the instant it was called. review_state='matched'
+ * + matched_factoring_advance_id are live and correct (zero variance, confirmed). A second,
+ * separately-found defect in storeMatch()'s ON CONFLICT clause (match.service.ts:826-831, does
+ * not clear voided_at/void_reason on a re-accepted natural-key match) left this specific
+ * reconciliation_matches row showing a stale void from an unrelated 2026-09-28 Lead reversal;
+ * corrected directly (voided_at/void_reason/voided_by_user_id set NULL) since the row is now the
+ * genuine active match. Both findings reported on the board -- not re-attempted here.
+ *
+ * This script now performs ONLY the remaining step:
+ *   postSourceTransactionInClientTx({source_transaction_type:'factoring_advance_deposit'}) --
+ *   sweeps 1090 -> 1000 for this one advance. Confirmed (posting-engine.service.ts:2769-2775) to
+ *   genuinely use the passed-in client's transaction, unlike step 1 above -- a real dry run here.
  *
  * Run: DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth161-match-one-clean-faro-wire.ts [--apply]
  * (run from repo root)
@@ -43,9 +53,6 @@ async function main() {
   }
 
   process.env.DATABASE_URL = url;
-  const { acceptMatchWithResolveDifference } = await import(
-    path.join(ROOT, "apps/backend/src/accounting/bank-recon/match.service.ts")
-  );
   const { postSourceTransactionInClientTx } = await import(
     path.join(ROOT, "apps/backend/src/accounting/posting-engine.service.ts")
   );
@@ -71,25 +78,19 @@ async function main() {
     console.log("BEFORE:", before.rows);
 
     const btCheck = await client.query(
-      `SELECT review_state, matched_factoring_advance_id FROM banking.bank_transactions WHERE id = $1 AND operating_company_id = $2`,
+      `SELECT review_state, matched_factoring_advance_id::text FROM banking.bank_transactions WHERE id = $1 AND operating_company_id = $2`,
       [BANK_TXN_ID, USMCA]
     );
-    if (btCheck.rows[0]?.review_state !== "for_review" || btCheck.rows[0]?.matched_factoring_advance_id) {
-      throw new Error(`bank transaction not in expected for_review/unmatched state: ${JSON.stringify(btCheck.rows[0])}`);
+    if (btCheck.rows[0]?.review_state !== "matched" || btCheck.rows[0]?.matched_factoring_advance_id !== ADVANCE_ID) {
+      throw new Error(`bank transaction not in expected already-matched-to-this-advance state: ${JSON.stringify(btCheck.rows[0])}`);
     }
-
-    console.log("Calling acceptMatchWithResolveDifference...");
-    const matchResult = await (acceptMatchWithResolveDifference as any)({
-      operating_company_id: USMCA,
-      bank_transaction_id: BANK_TXN_ID,
-      ledger_entry_kind: "factoring_advance",
-      ledger_entry_id: ADVANCE_ID,
-      difference_account_id: null,
-      actor_user_uuid: ACTOR_USER_ID,
-    }, client);
-    console.log("Match result:", matchResult);
-    if (matchResult.variance_cents !== 0) {
-      throw new Error(`UNEXPECTED NONZERO VARIANCE ${matchResult.variance_cents} -- refusing, this was supposed to be exact`);
+    const rmCheck = await client.query(
+      `SELECT match_state, voided_at FROM banking.reconciliation_matches
+        WHERE bank_transaction_id = $1 AND ledger_entry_kind = 'factoring_advance' AND ledger_entry_id = $2`,
+      [BANK_TXN_ID, ADVANCE_ID]
+    );
+    if (rmCheck.rows[0]?.match_state !== "user_matched" || rmCheck.rows[0]?.voided_at !== null) {
+      throw new Error(`reconciliation_matches row not in expected clean user_matched state: ${JSON.stringify(rmCheck.rows[0])}`);
     }
 
     console.log("Calling postSourceTransactionInClientTx (factoring_advance_deposit sweep)...");

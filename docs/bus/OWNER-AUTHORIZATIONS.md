@@ -5226,8 +5226,26 @@ scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY: bank_transact
   explicitly held per the order's own sequencing until all 12 are resolved), any
   factoring_reserve_movements write (out of scope, needs its own ruling), the
   fetchLedgerCandidates() factoring-advance-candidate gap (separate defect, named on the board).
+addendum_during_rehearsal: `acceptMatchWithResolveDifference` (match.service.ts:1203-1205) ignores
+  any client/transaction argument -- it wraps its own work in `withLuciaBypass` internally -- so
+  the intended dry-run rehearsal of this AUTH's own script committed the match FOR REAL the
+  instant it was called (a real, undocumented footgun in that function for any caller attempting a
+  rollback-wrapped rehearsal; separate finding filed on the board, not fixed here). Result: zero
+  variance, exactly as diagnosed -- no harm, but not a rehearsal. A second, independently-found
+  defect in `storeMatch()`'s `ON CONFLICT` clause (match.service.ts:826-831) does not clear
+  `voided_at`/`void_reason` when re-accepting a natural-key match that was previously voided; this
+  bank_transaction/advance pair carried a stale 2026-09-28 Lead-reversal void from an earlier,
+  improperly-persisted attempt, so the freshly (correctly, through-the-engine) accepted row showed
+  `match_state='user_matched'` AND `voided_at` set simultaneously. Corrected directly (voided_at/
+  void_reason/voided_by_user_id set NULL on reconciliation_matches id
+  `80c480c2-11bc-4b9d-8d91-6da84e6c4178`) since the row is now the genuine active match this AUTH
+  authorizes -- also filed on the board, not fixed at the code level here. The script was updated
+  in place to remove the now-already-executed match step and keep only the remaining sweep
+  (`postSourceTransactionInClientTx`, confirmed to genuinely honor the passed client/transaction --
+  a real dry run, rolled back and re-verified clean before commit).
 action:
   OWNER_AUTH_ID=AUTH-161 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth161-match-one-clean-faro-wire.ts --apply
-  (run from repo root; DRY_RUN first with no --apply flag)
+  (run from repo root; DRY_RUN first with no --apply flag; script now performs ONLY the deposit
+  sweep -- the match itself already happened for real during rehearsal, see addendum above)
 expires_at: 2026-10-01T00:00:00.000Z
 status: OPEN
