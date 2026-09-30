@@ -120,11 +120,24 @@ export function DrillKpiCard({
     ? `font-semibold ${VALUE_TONE[valueTone]}`
     : `mt-1 text-page-title font-semibold text-gray-900 ${VALUE_TONE[valueTone]}`;
 
+  const displayValue = unavailable
+    ? KPI_NO_VALUE
+    : formatKpiValue(value);
+  const emptyWithoutReason = !unavailable && displayValue === KPI_NO_VALUE;
+  // C-22 — never a silent em-dash: empty tiles say why (hint, or default "No data").
+  const emptyExplain = unavailable ?? (emptyWithoutReason ? (typeof hint === "string" ? hint : "No data") : null);
+
   const body = (
     <>
       <div className={labelClass}>{label}</div>
-      <div className={valueClass}>{formatKpiValue(value)}</div>
-      {hint ? <div className="mt-0.5 text-[11px] leading-snug text-gray-500">{hint}</div> : null}
+      <div className={valueClass}>{displayValue}</div>
+      {emptyExplain ? (
+        <div className="mt-0.5 text-[11px] leading-snug text-gray-500" data-kpi-empty-reason="true">
+          {emptyExplain}
+        </div>
+      ) : hint ? (
+        <div className="mt-0.5 text-[11px] leading-snug text-gray-500">{hint}</div>
+      ) : null}
     </>
   );
   const style = resolvedAccent
