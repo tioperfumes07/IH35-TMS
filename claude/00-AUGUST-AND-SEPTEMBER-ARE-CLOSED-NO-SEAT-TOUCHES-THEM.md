@@ -70,3 +70,13 @@ month, but that quarter's return cannot be FILED until the quarter has ENDED —
 September and December can never lock on time, in any year. A logic error, not a data gap: the gate
 should test whether a return that is **due and fileable** is unfiled. Filed as
 `CLOSE-ENGINE-QUARTER-END-IS-STRUCTURALLY-UNLOCKABLE`. Do not change it unilaterally.
+
+## $2,837.33 IN 9000 "ASK MY ACCOUNTANT" — ROOT-CAUSED, NOT FIXED, FILED (CC-1, 2026-09-30)
+
+Not 176 uncategorized transactions. Confirmed on 100% of the population, not a sample: 56 of the
+176 postings share one systemic shape — a "DEFECT 3" remediation JE reversed a journal entry that
+was ITSELF already a correct void-reversal of a real voided expense (e.g. `2c78c7c2` = "Reversal of
+[voided Expense EXP-2026-00047 posting]"), incorrectly un-doing that reversal and restoring the
+voided expense's original posting to live status. The other 120 postings to 9000 (112
+expense-sourced + 4 already-reclassified) net to $0.00 and are fine. Mechanical fix would be
+reversing those same 56 JEs a third time — NOT executed, filed here per this document's own rule.
