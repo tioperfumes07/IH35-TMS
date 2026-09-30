@@ -1185,8 +1185,8 @@ export function KanbanDispatchColumn({
       just border-b), matching the same 2px radius as everything else. */}
   if (column.collapsedByDefault && !expanded) {
     return (
-      <section className="min-w-[270px] rounded-sm border border-gray-300 bg-white p-2" data-testid={`kanban-column-${column.key}`}>
-        <header className="grid grid-cols-[auto_1fr_auto] items-center gap-2 border border-gray-300 bg-gray-50 px-2 pb-2 pt-1">
+      <section className="kanban-col-collapsed flex-none w-[148px] rounded-sm border border-gray-300 bg-white p-2" data-testid={`kanban-column-${column.key}`}>
+        <header className="grid grid-cols-[auto_1fr_auto] items-center gap-2 border-b-2 border-gray-400 bg-gray-100 px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-700">
           <button
             type="button"
             onClick={() => setExpanded(true)}
@@ -1206,7 +1206,14 @@ export function KanbanDispatchColumn({
   }
 
   const detailed = density === "detailed";
-  const minWidth = density === "compact" ? "min-w-[200px]" : density === "standard" ? "min-w-[230px]" : "min-w-[290px]";
+  // KANBAN-PROPORTION (Lead, 09-30-2026, owner: "kanban still out of proportion"). Columns carried a
+  // min-width and NOTHING else, inside a `flex gap-3 overflow-x-auto` board -- so each column sized
+  // itself to its own content and none of them shared the board evenly. A COLLAPSED column was also
+  // min-w-[270px], i.e. WIDER than an open standard column at 230px, which is backwards. Expanded
+  // columns now take an equal share (flex-1 basis-0) and still honour their per-density minimum, so
+  // the board fills at any width and falls back to horizontal scroll only when the minimums no
+  // longer fit. Collapsed columns are flex-none at a fixed 148px -- always narrower than open ones.
+  const minWidth = (density === "compact" ? "min-w-[200px]" : density === "standard" ? "min-w-[230px]" : "min-w-[290px]") + " flex-1 basis-0";
   return (
     <section
       ref={sectionRef}
@@ -1214,7 +1221,7 @@ export function KanbanDispatchColumn({
       style={width ? { width: `${width}px`, flex: "0 0 auto" } : undefined}
       data-testid={`kanban-column-${column.key}`}
     >
-      <header className="mb-2 border border-gray-300 bg-gray-50 px-2 pb-2 pt-1">
+      <header className="mb-2 border-b-2 border-gray-400 bg-gray-100 px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-700">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
           {column.collapsedByDefault ? (
             <button
@@ -1397,8 +1404,8 @@ function KanbanSwimLaneColumn({
 
   if (column.collapsedByDefault && !expanded) {
     return (
-      <section className="min-w-[270px] rounded-sm border border-gray-300 bg-white p-2" data-testid={`kanban-column-${column.key}`}>
-        <header className="grid grid-cols-[auto_1fr_auto] items-center gap-2 border border-gray-300 bg-gray-50 px-2 pb-2 pt-1">
+      <section className="kanban-col-collapsed flex-none w-[148px] rounded-sm border border-gray-300 bg-white p-2" data-testid={`kanban-column-${column.key}`}>
+        <header className="grid grid-cols-[auto_1fr_auto] items-center gap-2 border-b-2 border-gray-400 bg-gray-100 px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-700">
           <button
             type="button"
             onClick={() => setExpanded(true)}
@@ -1418,7 +1425,14 @@ function KanbanSwimLaneColumn({
   }
 
   const detailed = density === "detailed";
-  const minWidth = density === "compact" ? "min-w-[200px]" : density === "standard" ? "min-w-[230px]" : "min-w-[290px]";
+  // KANBAN-PROPORTION (Lead, 09-30-2026, owner: "kanban still out of proportion"). Columns carried a
+  // min-width and NOTHING else, inside a `flex gap-3 overflow-x-auto` board -- so each column sized
+  // itself to its own content and none of them shared the board evenly. A COLLAPSED column was also
+  // min-w-[270px], i.e. WIDER than an open standard column at 230px, which is backwards. Expanded
+  // columns now take an equal share (flex-1 basis-0) and still honour their per-density minimum, so
+  // the board fills at any width and falls back to horizontal scroll only when the minimums no
+  // longer fit. Collapsed columns are flex-none at a fixed 148px -- always narrower than open ones.
+  const minWidth = (density === "compact" ? "min-w-[200px]" : density === "standard" ? "min-w-[230px]" : "min-w-[290px]") + " flex-1 basis-0";
   const rowMinH = SWIM_LANE_ROW_MIN_HEIGHT[density];
   const rowGap = detailed ? "8px" : "4px";
   // ROUND 20.3 SWIM-LANE BLOAT (owner-live 2026-09-12): SWIM-LANE ROW ALIGNMENT (2026-09-11) renders
@@ -1445,7 +1459,7 @@ function KanbanSwimLaneColumn({
       style={width ? { width: `${width}px`, flex: "0 0 auto" } : undefined}
       data-testid={`kanban-column-${column.key}`}
     >
-      <header className="mb-2 border border-gray-300 bg-gray-50 px-2 pb-2 pt-1">
+      <header className="mb-2 border-b-2 border-gray-400 bg-gray-100 px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-700">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
           {column.collapsedByDefault ? (
             <button

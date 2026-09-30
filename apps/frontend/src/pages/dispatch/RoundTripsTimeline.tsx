@@ -254,9 +254,47 @@ export function RoundTripsTimeline({ loads, rangeFrom, rangeTo, onLoadClick }: P
   );
 }
 
-export const RT_TIMELINE_WINDOW_START = "2026-08-25";
+/**
+ * RT-TIMELINE-WINDOW (Lead, 09-30-2026, owner: "too many days, it is round trips, so it should be
+ * rendering approx 7 days max").
+ *
+ * ROOT CAUSE: the window start was the HARDCODED LITERAL "2026-08-25" while the end was
+ * companyToday(). That is not a window, it is a ratchet — on 2026-09-30 it rendered 37 day columns,
+ * and it grew by exactly one more column every day, forever, with no upper bound. Every bar was
+ * squeezed into 1/37th of the row and a round trip became unreadable. A literal date in a range is
+ * always a bug with a delayed fuse: it was correct for about a week after someone typed it.
+ *
+ * THE FIX IS THE SHAPE, NOT THE NUMBER: the window is now RELATIVE TO TODAY and fixed in LENGTH, so
+ * it can never ratchet again regardless of how long the app runs. A round trip is out-and-back in
+ * about a week — the board's own "long leg" flag has used 7 days as that threshold all along — so
+ * a look-back (a trip that left yesterday is still mid-flight and must stay visible) plus the days
+ * ahead covers the live set. Bars outside the window already clamp gracefully via
+ * Math.max(start, rangeStart) / Math.min(end, rangeEnd); nothing is fabricated.
+ *
+ * OWNER CORRECTION, same session: "caps at 7-10 days because usually a tour nb and sb, but can have
+ * more days, remember triangulation, up to 15-20 days. if i want to see more days, i change in
+ * calendar." So the DEFAULT covers a normal NB+SB tour — 10 days — and is NOT a hard ceiling: the
+ * calendar already drives rangeFrom/rangeTo as props, so a 15-20 day triangulation is seen by
+ * widening the calendar, not by re-coding this. My first pass at 8 columns was too tight and would
+ * have clipped an ordinary tour; corrected before it could mislead.
+ *
+ * THIS WINDOW IS THE ROUND TRIPS CALENDAR ONLY. Kanban, Truck Line and List are NOT date-windowed
+ * and must never be — they show the current load and its SB load, selected by load, not by day.
+ * Nothing in this file is imported by them.
+ */
+export const RT_TIMELINE_DAYS_BACK = 2;
+export const RT_TIMELINE_DAYS_FORWARD = 7;
+
+function shiftIsoDay(iso: string, deltaDays: number): string {
+  const d = new Date(`${iso}T00:00:00`);
+  d.setDate(d.getDate() + deltaDays);
+  return d.toISOString().slice(0, 10);
+}
 
 export function defaultTimelineRange(): { from: string; to: string } {
-  const to = companyToday();
-  return { from: RT_TIMELINE_WINDOW_START, to };
+  const today = companyToday();
+  return {
+    from: shiftIsoDay(today, -RT_TIMELINE_DAYS_BACK),
+    to: shiftIsoDay(today, RT_TIMELINE_DAYS_FORWARD),
+  };
 }

@@ -62,8 +62,26 @@ export function collectFailures(src = source) {
     ["P&L rollup", /s\.pl_rollup\.lines/],
     ["net revenue total", /pl_rollup\.net_revenue_cents/],
     ["miles & mpg", /miles_and_mpg\.total_miles/],
+    // ROUND 285.4.9 / #58 — downtime ledger + fuel consumed + three margins print automatically.
+    ["downtime ledger", /downtime_ledger|renderDowntimeLedger/],
+    ["fuel consumed", /fuel_consumed|renderFuelConsumed/],
+    ["three margins", /margins\.cash_margin_cents|renderThreeMargins/],
   ]) {
     if (!re.test(src.template)) failures.push(`${templatePath}: report section "${label}" not rendered`);
+  }
+
+  const reportPath = "apps/backend/src/accounting/company-settlement-report.service.ts";
+  const reportSrc = readFileSync(reportPath, "utf8");
+  for (const [label, re] of [
+    ["downtime.events read", /FROM downtime\.events/],
+    ["downtime.event_costs read", /FROM downtime\.event_costs/],
+    ["downtime.lost_opportunity read", /FROM downtime\.lost_opportunity/],
+    ["fuel.load_fuel_cost read", /FROM fuel\.load_fuel_cost/],
+    ["cash_margin_cents", /cash_margin_cents/],
+    ["true_cost_margin_cents", /true_cost_margin_cents/],
+    ["economic_margin_cents", /economic_margin_cents/],
+  ]) {
+    if (!re.test(reportSrc)) failures.push(`${reportPath}: missing "${label}" for ROUND 285.4.9 #58`);
   }
 
   // --- 2. Route: canonical HTML letter route feeding the report into the house shell ---

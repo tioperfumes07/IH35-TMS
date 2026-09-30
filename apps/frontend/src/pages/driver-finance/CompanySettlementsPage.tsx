@@ -335,6 +335,34 @@ function CompanySettlementWaterfall({
               <span className="ldt-m">{DASH}</span>
             </div>
           ) : null}
+
+          {/* ROUND 285.4.9 / #58 — three margins + downtime/fuel-consumed rollups (print PDF has full ledger). */}
+          {report.sections.margins ? (
+            <>
+              <div className="ldt-row">
+                <span>Cash margin · fuel purchased</span>
+                <span className="ldt-m">{isVoided ? DASH : money(report.sections.margins.cash_margin_cents)}</span>
+              </div>
+              <div className="ldt-row">
+                <span>
+                  True-cost margin · fuel consumed
+                  {report.sections.fuel_consumed && report.sections.fuel_consumed.total_gallons > 0
+                    ? ` (${report.sections.fuel_consumed.total_gallons.toLocaleString()} gal)`
+                    : ""}
+                </span>
+                <span className="ldt-m">{isVoided ? DASH : money(report.sections.margins.true_cost_margin_cents)}</span>
+              </div>
+              <div className="ldt-row">
+                <span>
+                  Economic margin · after downtime
+                  {report.sections.downtime_ledger && report.sections.downtime_ledger.events.length > 0
+                    ? ` (${report.sections.downtime_ledger.events.length} event${report.sections.downtime_ledger.events.length === 1 ? "" : "s"})`
+                    : ""}
+                </span>
+                <span className="ldt-m">{isVoided ? DASH : money(report.sections.margins.economic_margin_cents)}</span>
+              </div>
+            </>
+          ) : null}
         </div>
       )}
 
