@@ -628,3 +628,37 @@ AUTH-178's already-fixed 52/177 fuel-unit-id rows; fresh dry run required, no re
 logic without one).
 
 — CC-2
+
+## ROUND 301 B-33 — Dreamline + Relay uncategorized populations (DONE)
+
+Confirmed the Lead's own totals exactly on live USMCA data: Dreamline (banking.bank_accounts
+"Dreamline Diesel Card") 397/397 bank_transactions uncategorized, $140,226.34; Relay ("Relay
+Fuel Wallet") 76/76 uncategorized, $32,726.45. Neither is fuel.fuel_transactions (AUTH-178's
+table, already clean 177/177) — they are two separate banking.bank_accounts whose own
+bank_transactions rows carry no category/GL/unit.
+
+Named plainly why the two populations differ, per the order:
+
+- Dreamline: 0 of 397 link to ANY fuel-detail source table (no Dreamline-branded rows exist in
+  integrations.relay_fuel_transactions or fuel.fuel_transactions, whose only vendors are
+  LOVES/PILOT). Pure ingestion gap -- there is no card-swipe/fuel-detail import for Dreamline
+  in this schema at all, so there is nothing for a unit-resolution query to join against.
+  AUTH-178's logic has no table to run against here.
+
+- Relay: DOES have its own fuel-detail feed (integrations.relay_fuel_transactions). Of the 76,
+  69 ($31,438.15) link to it; of those, 68 ($30,753.80) already carry a resolvable
+  matched_unit_id on the linked row -- the unit is already known, just never copied to
+  bank_transactions.categorization_unit_id. That's a WIRING gap, not a data gap. Only 8 rows
+  total ($1,972.65 -- 7 unlinked + 1 linked-but-unit-null) genuinely have no unit resolvable by
+  any path. Relay's TRUE no-unit-resolves population is 8/$1,972.65, not the cited $20,942.94 --
+  named the discrepancy plainly rather than forcing a match; did not re-run AUTH-178 logic
+  against either population, per the order.
+
+Shipped scripts/verify-steps/11987-verify-fuel-card-unit-resolution-populations.mjs
+(claim-reserved first, PR #23563), ratcheting all six figures above as ceilings.
+
+NEXT: B-34 (attribute the 116 existing safety.integrity_findings to drivers via
+driverAtTimeSql -- checking first whether ROUND 300's guard 11971 already satisfies ROUND
+301's exact wording before building anything new).
+
+— CC-2
