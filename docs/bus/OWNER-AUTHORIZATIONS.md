@@ -5617,6 +5617,45 @@ executed: 2026-09-30, PR #23339 merged (squash 72f1b7a2ae), then --apply run for
 
 ---
 
+## AUTH-173
+
+title: reverse AUTH-170/AUTH-171 -- FAC-2026-00139/00140 and invoices 13625/13626 are REAL,
+  not fabricated (Lead correction, owner-supplied Faro CSVs)
+requested_by: Lead order, verbatim correction: "STOP. REVERSE THE TWO ADVANCE VOIDS. MY ORDER WAS
+  WRONG. The owner supplied Faro's own 09-25 files. They prove FAC-2026-00139 and FAC-2026-00140
+  are REAL... Faro purchased them, Faro wired them, and our advances match to the cent. I told you
+  they were app-fabricated because factor.faro_invoice_lines is empty. That table is empty because
+  THE IMPORTER NEVER LOADED THESE FILES — absence of a record is not evidence of absence."
+root_cause: same as AUTH-170/171's original root_cause text, now CORRECTED: the actual defect is
+  that `factor.faro_invoice_lines` was never populated by an import (0 rows), which made two real
+  Faro-corroborated advances LOOK fabricated when checked against that empty table. Owner-supplied
+  evidence (faro_daily_purchase_report.csv, FARO-PAYMENTS_TO_YOU_REPORT.csv, FARO_AGING_REPORT.csv,
+  FARO_ALL_FEES.csv, all dated 09-25-2026) confirms invoice 103 (LOGIMAX TRANSPORT INC, purchase
+  $6,250.00, net advance $6,062.50) and invoice 104 (FLS Transport Inc., purchase $3,400.00, net
+  advance $3,298.00) match FAC-2026-00139/00140 to the cent, including the wire ("USMCA Tank
+  09/25/2026") and the Faro fee discount ($93.75/$51.00). What STAYS TRUE and is NOT reversed: the
+  delivery stamps on both loads' stops were still fabricated (arrival==departure to the
+  millisecond, source NULL, no pickup stamp) -- Faro purchasing the invoice does not make a truck
+  have delivered; AUTH-172 (stamp removal) stands unchanged, per Lead's own explicit instruction.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 2 factoring_advances +
+  2 invoices named above, in
+  `scripts/ops/2026-09-30-cc2-auth173-reverse-13625-13626-advance-and-invoice-voids.ts`. Advances
+  restored via a FRESH RE-POST (`postFactoringAdvanceEventInClientTx`, the same poster used for a
+  brand-new advance -- R-02 Step 2 pattern, matching AUTH-144/A-10's already-proven approach) plus
+  a direct `stampDocumentReinstated` header flip -- NEVER a reversal-of-reversal (Lead's explicit
+  instruction: "Use the fresh re-post path per R-02, not a reversal-of-reversal"). Invoices
+  reinstated via `reinstateDocumentThenVoidReversal` (header-only, correct and complete since
+  neither ever had a GL posting to restore). Not authorized: touching the delivery stamps (AUTH-172
+  stands); touching the 14 pre-invoices (separate, unchanged, still void-then-delete); importing
+  the Faro CSV files (separate task); any other factoring_advance or invoice.
+action:
+  OWNER_AUTH_ID=AUTH-173 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth173-reverse-13625-13626-advance-and-invoice-voids.ts --apply
+  (run from repo root; DRY_RUN first with no --apply flag)
+expires_at: 2026-10-01T00:00:00.000Z
+status: OPEN
+
+---
+
 ## AUTH-172
 
 title: remove fabricated delivery stamps on loads 13625/13626 -- step 3 of Lead's 6-step
