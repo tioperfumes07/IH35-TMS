@@ -1,16 +1,7 @@
-// ROUND 23.3 Part C (owner/Lead, 2026-09-13) — the unified dispute window hub.
-//
-// The full disputes.disputes / 12-subject-type schema (dispute_events WORM, dispute_evidence,
-// dispute_window_policies, catalogs.dispute_reasons) is migration-blocked: CC-2 is hard-barred from
-// authoring migrations (verify-migration-lane-band.mjs), and that schema needs a real migration.
-// This hub does NOT wait on that migration to ship real value — it surfaces the two ALREADY-BUILT,
-// ALREADY-LIVE dispute tracks side by side, using routes that already exist:
-//   - A/R invoice disputes (accounting/invoice-disputes.routes.ts, wired 2026-09-13 — this hub is
-//     its first real UI surface) — must show invoices 13581 and 13586 on first load (both open,
-//     status='open', the default filter).
-//   - Settlement disputes (the pre-existing /accounting/dispute-queue page's own data source).
-// When the disputes.disputes schema lands, this hub is the natural place to fold both into one
-// unified table; until then, two honestly-labelled sections beat a fabricated unification.
+// ROUND 23.3 Part C (owner/Lead, 2026-09-13) — dispute window hub.
+// C-25 (owner 2026-09-30): split presentation THREE ways (Driver / Customer / Vendor).
+// Do NOT unify into one mixed table — different counterparty, money direction, and remedy.
+// Vendor register does not exist yet (CC-1 A-25); panel is honest-empty, no invented table.
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -33,6 +24,7 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { statusPill } from "../../components/shared/statusPill";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { SegmentedControl } from "../../components/SegmentedControl";
 
 function money(cents: number | null | undefined) {
   if (cents == null || !Number.isFinite(Number(cents))) return "—";
@@ -387,29 +379,119 @@ function SettlementDisputesSection({ companyId }: { companyId: string }) {
   );
 }
 
+/**
+ * C-25 (owner 2026-09-30): three counterparties, three money directions — never one mixed table.
+ *   DRIVER   — settlement pay dispute (we owe the driver)     → driver_finance.* via /api/v1/disputes
+ *   CUSTOMER — invoice dispute (they owe us)                  → accounting.invoice_disputes
+ *   VENDOR   — bill dispute (we owe the vendor)               → no TMS table yet (CC-1 A-25); honest empty
+ * Freeze: presentation split only — touch no dispute rows.
+ */
+type DisputeParty = "driver" | "customer" | "vendor";
+
+const DISPUTE_PARTY_OPTIONS: Array<{ value: DisputeParty; label: string }> = [
+  { value: "driver", label: "Driver" },
+  { value: "customer", label: "Customer" },
+  { value: "vendor", label: "Vendor" },
+];
+
+function readDisputePartyFromUrl(): DisputeParty {
+  if (typeof window === "undefined") return "customer";
+  const raw = new URLSearchParams(window.location.search).get("party");
+  if (raw === "driver" || raw === "customer" || raw === "vendor") return raw;
+  return "customer";
+}
+
+function VendorDisputesSection() {
+  // C-25 + A-25: do not invent a vendor dispute table. CC-1 must name it or say none exists.
+  return (
+    <div
+      className="rounded-sm border border-[#E5E7EB] bg-white p-4 text-xs text-[#1F2A44]"
+      data-testid="vendor-disputes-unavailable"
+      data-c25-party="vendor"
+    >
+      <p className="font-semibold uppercase tracking-wide text-[#4B5563]">Vendor disputes — not in TMS yet</p>
+      <p className="mt-2 text-[#6B7280]">
+        We owe the vendor on this side of money. There is no vendor/bill dispute register in the app today —
+        CC-1 A-25 names the table (or confirms none). This panel stays empty on purpose; it does not reuse
+        invoice or settlement dispute queries.
+      </p>
+    </div>
+  );
+}
+
 export function DisputesHubPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [party, setParty] = useState<DisputeParty>(() => readDisputePartyFromUrl());
+
+  const setPartyAndUrl = (next: DisputeParty) => {
+    setParty(next);
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("party", next);
+    window.history.replaceState({}, "", `${url.pathname}${url.search}`);
+  };
 
   if (!companyId) {
     return (
-      <AccountingSubNavWrapper title="Disputes" subtitle="Unified dispute window — invoice + settlement">
+      <AccountingSubNavWrapper
+        title="Disputes"
+        subtitle="Driver · Customer · Vendor — separate objects, separate money directions"
+      >
         <p className="text-xs text-red-600">Select operating company.</p>
       </AccountingSubNavWrapper>
     );
   }
 
   return (
-    <AccountingSubNavWrapper title="Disputes" subtitle="Unified dispute window — invoice + settlement">
-      <div className="flex flex-col gap-6">
-        <section className="flex flex-col gap-2">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Invoice disputes</h2>
-          <InvoiceDisputesSection companyId={companyId} />
-        </section>
-        <section className="flex flex-col gap-2">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Settlement disputes</h2>
-          <SettlementDisputesSection companyId={companyId} />
-        </section>
+    <AccountingSubNavWrapper
+      title="Disputes"
+      subtitle="Driver · Customer · Vendor — separate objects, separate money directions"
+    >
+      <div className="flex flex-col gap-4" data-testid="disputes-hub-c25" data-c25-party={party}>
+        <div className="flex flex-wrap items-center gap-3">
+          <SegmentedControl
+            value={party}
+            onChange={setPartyAndUrl}
+            options={DISPUTE_PARTY_OPTIONS}
+            testId="disputes-party-segment"
+            dataAttributes={{ "aria-label": "Dispute counterparty" }}
+          />
+          <p className="text-xs text-[#6B7280]">
+            {party === "driver"
+              ? "Driver pay disputes — we owe the driver (settlement)."
+              : party === "customer"
+                ? "Customer invoice disputes — they owe us (A/R)."
+                : "Vendor bill disputes — we owe the vendor (A/P)."}
+          </p>
+        </div>
+
+        {party === "driver" ? (
+          <section className="flex flex-col gap-2" data-c25-section="driver">
+            <h2 className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">
+              Driver — settlement pay disputes
+            </h2>
+            <SettlementDisputesSection companyId={companyId} />
+          </section>
+        ) : null}
+
+        {party === "customer" ? (
+          <section className="flex flex-col gap-2" data-c25-section="customer">
+            <h2 className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">
+              Customer — invoice disputes
+            </h2>
+            <InvoiceDisputesSection companyId={companyId} />
+          </section>
+        ) : null}
+
+        {party === "vendor" ? (
+          <section className="flex flex-col gap-2" data-c25-section="vendor">
+            <h2 className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">
+              Vendor — bill disputes
+            </h2>
+            <VendorDisputesSection />
+          </section>
+        ) : null}
       </div>
     </AccountingSubNavWrapper>
   );
