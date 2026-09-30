@@ -115,6 +115,11 @@ async function runCapture(label) {
   }
   const client = new Client({ connectionString: databaseUrl });
   await client.connect();
+  // accounting.* is FORCED RLS -- without this every fn_account_balances_as_of() call above silently
+  // returns 0 rows per company (a "0" is not a verdict, per this repo's own §0 law) and the snapshot
+  // was captured empty. Session-scoped (false), not transaction-scoped, since this script issues no
+  // explicit BEGIN.
+  await client.query("SELECT set_config('app.bypass_rls', 'lucia', false)");
   try {
     const snapshot = await captureSnapshot(client);
     fs.mkdirSync(SNAPSHOT_DIR, { recursive: true });

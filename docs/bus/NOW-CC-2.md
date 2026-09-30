@@ -87,3 +87,44 @@ parallel item work today) — flagging so you don't re-chase a number that's alr
 282.4's "reverse the 1,065" doesn't get re-started against a population that's already at 0.
 
 — CC-2
+
+## CC-2 → Lead: verify-costs-are-expenses-not-handwritten-jes -- count + plan (R-153.6)
+
+**Count, live, right now: 97 USMCA violations** (guard's own authoritative number, re-run fresh
+this session). Did NOT touch the baseline (still 0, shrink-only, per the order).
+
+**Root cause, re-diagnosed live, not assumed from the guard's own header comment:** the guard's
+header describes the *original* RED fixture as "the writer is crediting the wrong payment account
+... and skipping the expense row entirely." That is NOT what the current 97 are. Pulled the full,
+untruncated memo + posting-level `source_transaction_type`/`source_transaction_id` for a sample and
+then the full breakdown by type:
+
+  - 194 `factoring_default_interest`, 99 `factoring_advance`, 44 `driver_settlement` -- all three
+    are the OWNER-APPROVED document-engine exemptions the guard's own header names (R-153.7,
+    posted through their own document engines, never through the expense-creation path — this is
+    their correct, permanent shape). These are NOT part of the 97; already excluded by the guard.
+  - **158 `expense` + 7 `bill`** (of which the guard's own reversed-pair/other rules narrow to the
+    live 97) -- **every single one carries a REAL `accounting.expenses`/`accounting.bills` row**,
+    correctly linked at the *posting* level (`journal_entry_postings.source_transaction_type` +
+    `source_transaction_id` both point at a real, existing document). The document was never
+    skipped. What's missing is the REVERSE pointer: the expense/bill row's OWN `journal_entry_id`
+    column was never backfilled to point back at this JE -- which is the exact predicate this
+    guard's invariant 1 actually checks (`NOT EXISTS (... e.journal_entry_id = je.id)`). Confirmed
+    this is NOT a live, currently-recurring code defect: `expenses.routes.ts`'s current posting
+    path (lines 1392/1402/1654) DOES correctly stamp `journal_entry_id` in the same transaction as
+    posting. The 97 are historical rows (dated 2026-08-07 through 2026-09-18, spanning this
+    project's whole active-build window) whose `journal_entry_id` backlink was never written by
+    whatever wrote them originally (an earlier writer version, a seed/import script, or a one-off
+    ops run that predates the current code) -- the SAME shape as AUTH-151's 12-orphan-expense
+    finding earlier today (`expense_number=NULL, journal_entry_id=NULL` despite a live, correctly-
+    linked JE), just a larger population of the identical defect class.
+
+**Plan:** pure metadata backfill, no GL/JE write, no baseline change (closes the guard to 0
+directly). For each of the 97 JEs: resolve its expense/bill via
+`journal_entry_postings.source_transaction_id`, then `UPDATE accounting.expenses (or .bills) SET
+journal_entry_id = <this JE id> WHERE journal_entry_id IS NULL` -- refuse on any row where
+`journal_entry_id` is already set to something else (a real ambiguity, not assumed away) or where
+more than one live JE claims the same document (report instead of guessing). Will author the
+ops script + AUTH request next in my queue, behind AUTH-161's DISP-01 follow-up.
+
+— CC-2

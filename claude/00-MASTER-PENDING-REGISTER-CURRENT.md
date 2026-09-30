@@ -55,12 +55,12 @@ Owner: *"I NEED THE FACTORING ENGINE FULLY BUILT FIRST, COMPLETELY DONE NOW. REN
 
 | # | Seat | Item | Status |
 |---|---|---|---|
-| 31 | Devin-A | Build the 3 locked v10 documents — driver settlement, company settlement, invoice | IN PROGRESS (R272) |
-| 58 | Devin-A | Company settlement must auto-print the downtime ledger + real fuel cost per load + the 3 margins | IN PROGRESS |
-| 59 | Devin-A | Invoice: APPROVED BY + METHOD under each detention/layover line | IN PROGRESS |
-| 60 | Cursor | Invoice auto-generates on delivered/closed when BOL exists → auto to the Faro queue | **IN PROGRESS** (R285.4.10) — BOL gate + awaiting queue + upload retry wired; see `claude/2026-09-30-Cursor-ROUND-285-4-10-REPORT.md` |
-| 32 | Devin-A | Draft-expense unposted flag on settlements | OPEN |
-| 33 | Devin-A | 26 flagged idle events needing human review | OPEN |
+| 31 | Cursor | Build the 3 locked v10 documents — driver settlement, company settlement, invoice | **DONE (code)** `#23283` `c57f610b4b` — locked v10 PDFs; Chrome Print proof still open |
+| 58 | Cursor | Company settlement must auto-print the downtime ledger + real fuel cost per load + the 3 margins | **DONE (code)** `#23275` — downtime/fuel/3-margins; Chrome Print proof still open |
+| 59 | Cursor | Invoice: APPROVED BY + METHOD under each detention/layover line | **DONE (code+Neon)** `#23287` `39eff3b07f` · `approval_method` live — Chrome Print blocked on 0 USMCA detention_requests |
+| 60 | Cursor | Invoice auto-generates on delivered/closed when BOL exists → auto to the Faro queue | **DONE (code+FE live)** `#23297`/`1f96a24c34` + FE `c4cea25` — Chrome click Documents › Awaiting BOL (13626/13625/13615) + one BOL→invoice→Faro path still required; see `claude/2026-09-30-Cursor-ROUND-285-4-10-REPORT.md` |
+| 32 | Cursor | Draft-expense unposted flag on settlements | **DONE (code)** `#23276` — draft-expense unposted flag |
+| 33 | Cursor | 26 flagged idle events needing human review | **DONE (code)** `#23279` `da88a8338d` — idle review |
 
 ## E. UNBLOCKING (Cursor is the unblocker seat — ROUND 273)
 

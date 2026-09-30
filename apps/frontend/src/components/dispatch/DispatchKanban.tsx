@@ -1365,7 +1365,7 @@ export function KanbanDispatchColumn({
               </span>
             ) : column.manualStamp ? (
               <span
-                className="rounded-sm bg-amber-100 px-1 py-0.5 text-xs font-semibold uppercase text-amber-800"
+                className="rounded-sm border border-slate-200 bg-slate-100 px-1 py-0.5 text-xs font-semibold uppercase text-slate-700"
                 data-testid={`kanban-column-stamp-badge-${column.key}`}
                 title={`Fills automatically from geofence/driver PWA. Dropping a card here records a MANUAL ${column.manualStamp.event === "arrive" ? "arrival" : "departure"} stamp on the ${column.manualStamp.stop} stop — it is stored and shown as Manual, and it never overwrites an existing stamp.`}
               >
@@ -1604,7 +1604,7 @@ function KanbanSwimLaneColumn({
               </span>
             ) : column.manualStamp ? (
               <span
-                className="rounded-sm bg-amber-100 px-1 py-0.5 text-xs font-semibold uppercase text-amber-800"
+                className="rounded-sm border border-slate-200 bg-slate-100 px-1 py-0.5 text-xs font-semibold uppercase text-slate-700"
                 data-testid={`kanban-column-stamp-badge-${column.key}`}
                 title={`Fills automatically from geofence/driver PWA. Dropping a card here records a MANUAL ${column.manualStamp.event === "arrive" ? "arrival" : "departure"} stamp on the ${column.manualStamp.stop} stop — it is stored and shown as Manual, and it never overwrites an existing stamp.`}
               >
