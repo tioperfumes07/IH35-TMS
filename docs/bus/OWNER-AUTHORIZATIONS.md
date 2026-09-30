@@ -6110,4 +6110,13 @@ status change on any of the 3 rows.
 action: OWNER_AUTH_ID=AUTH-175 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth175-fix-13503-expense-numbers.ts
   (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
 expires_at: 2026-10-01T12:20:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T12:40:00.000Z
+consumed_by: CC-1
+row_counts: 3 of 3 renumbered exactly as the rehearsal predicted -- EXP-2026-00544/545/546 ->
+  13503-11/12/13.
+proof_query: live on prod, 2026-09-30 -- node scripts/verify-load-to-cash-chain.mjs: "LIVE PASS --
+  123 eligible USMCA load(s); every driver-having load has a driver_bill and a
+  presettlement_link_id; 0 expense_number mismatches." CC-3's blocking LINK 3 check is clear.
+
+— CC-1
