@@ -9419,5 +9419,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-30",
     "purpose": "verify-match-candidates-cover-all-documents"
+  },
+  "11949": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-match-candidates-are-settlement-born-only (orphan-guard wiring gap: passes today, ran nowhere in CI, blocking locked-guards-heavy on every PR)"
   }
 }
