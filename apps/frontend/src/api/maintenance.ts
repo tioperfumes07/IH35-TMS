@@ -1106,6 +1106,8 @@ export type MaintPmDueRow = {
   miles_remaining: number | null;
   days_remaining: number | null;
   current_odometer_mi: number | null;
+  /** C-21 — telematics.vehicle_latest_position.captured_at (may be set when odometer is null). */
+  odometer_reading_at?: string | null;
   next_due_miles: number | null;
   next_due_date: string | null;
 };

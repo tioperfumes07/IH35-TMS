@@ -22,7 +22,9 @@ GUARD: verify-c01-c17-master-detail-shell + verify-md-width-0. No Aug/Sep money.
 
 ACK 2026-09-30 · CURSOR · read NOW-CURSOR · starting C-20
 
-**2026-09-30T16:12Z · C-20 DRIVER PROFILE MODULE · branch `cursor/c20-driver-profile-module-c89b`**
+**2026-09-30T16:12Z · C-20 DRIVER PROFILE MODULE · PR #23444 MERGED · `cursor/c20-driver-profile-module-c89b`**
 
 C-20 · what changed: `DriverProfilePage` is now a Customers/Vendors-style tabbed shell — `NavyPageSubNav` first, then horizontal DQF `KpiStrip` (Overview only; never above tabs — C-11/D11). Tabs: Overview / Settlements / Cash Advances / Deductions / Loads / Maintenance / Safety / Documents / Legal / Communications / Reports / Activity (`driverProfileTabs.ts`, `?tab=` URL). A-13 accounting tabs on the payee profile; Permits stay operational; Disputes cross-link from Settlements. A-14 Reports shells (Statement/Activity/Transactions/Deductions) via `SegmentedControl`. C-12: `driverDisplayName` forces Proper Case (never ALL CAPS); `formatPhoneAsTyped` / `formatPhoneDisplay` = `(956) 000-0000`; IdentityHeader + DriverDetail use them. Surfaces use `MASTER_DETAIL.surfaceClass`. Ops guard: `scripts/ops/verify-c20-driver-profile-module.mjs`. · LIVE PROOF: `npx tsc -b` (apps/frontend) exit 0; `node scripts/ops/verify-c20-driver-profile-module.mjs --selftest` PASS; vitest DriverProfilePage ×2 files 6/6 + assign-truck 1/1. · LEFT: Chrome click tabs + measure KPI band below nav on `/drivers?subtab=profiles`; C-21 Maintenance next.
 
+**2026-09-30T16:45Z · C-21 ODOMETER HONESTY · branch `cursor/c21-maintenance-odometer-honest-c89b`**
+C-21 · what changed: PM countdown + fleet odometer never invent miles when Samsara odometer is null. Backend `odometer_reading_at` on `/api/v1/maint/pm/due` + fleet-table rows. FE `odometerHonesty.ts` + `MaintenancePmCountdownCards` / `FleetTable` say "No odometer reading since <date>". Ops: `scripts/ops/verify-c21-odometer-honesty.mjs`. · LIVE PROOF: ops --selftest PASS; vitest odometerHonesty 3/3; tsc -b exit 0. · LEFT: D24 WO modal restore + rest of C-21 shell; C-22 next.
