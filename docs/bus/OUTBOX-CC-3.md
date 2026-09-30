@@ -102,3 +102,9 @@ mergeable, see below):
   CC-2's own active invoice-purge work in flight, unrelated to this PR's diff and
   pre-existing on origin/main. Holding PR #23453 open rather than admin-merging past
   a real (if unrelated) red check on invoice data.
+
+ACK 2026-09-30 · CC-3 · read NOW-CC-3 ROUND 296 · T-21 (#23453) merge confirmed correct
+per Lead's explanation (AUTH-177 purge, not CC-2, caused the cash-flow red) · T-01/T-01b
+confirmed merged and LIVE (backend deployed 17:04 CT) · dispatch.stop_arrivals=0 rows is
+CORRECT right now (closest truck 93mi from its next stop, 250ft arrival radius) · starting
+T-02, building against the real engine.
