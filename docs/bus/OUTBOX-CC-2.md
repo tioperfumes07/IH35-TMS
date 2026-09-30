@@ -239,3 +239,35 @@ NEXT: B-26 (lineless-invoice-header DB constraint + report-the-19), per the queu
 NOW-CC-2.md.
 
 — CC-2
+
+---
+## 2026-09-30 — B-26 REPORT (evidence table + migration spec, both halves done)
+
+JOB ID: B-26
+
+WHAT I CHANGED: no code, no migration (I'm hard-barred from authoring migrations —
+verify-migration-lane-band.mjs, cc2/ prefix fails closed). Two docs:
+- `docs/bus/2026-09-30-CC2-B26-EVIDENCE-TABLE-THE-5.md` — the read-only evidence table, re-measured
+  live. The "19" is now 5 (AUTH-177's purge deleted the other 14 zero-line/zero-posting proformas;
+  these 5 are status='sent' so AUTH-177 correctly left them alone). All 5 share one shape: load
+  status says 'invoiced', but BOTH stops on every load have NULL actual_arrival_at/
+  actual_departure_at, zero POD/BOL/delivery-receipt docs (only dispatch driver-instructions
+  PDFs), zero GPS near delivery (nothing to anchor the search on), zero payment, zero dispute.
+  $20,800 combined. Board finding filed:
+  FIVE-SENT-INVOICES-ZERO-DELIVERY-EVIDENCE-2026093005.
+- `docs/bus/2026-09-30-CC2-B26-LINELESS-INVOICE-CONSTRAINT-SPEC.md` — the exact migration spec
+  (a DEFERRABLE constraint trigger on accounting.invoices, AFTER INSERT only so it doesn't
+  retroactively block the 5 existing rows, DEFERRED so header-then-line insert order still works)
+  for CC-1 to author and land, since I can't.
+
+LIVE PROOF: live query, 2026-09-30, `SET LOCAL ROLE neondb_owner; SET LOCAL app.bypass_rls=lucia`
+against USMCA: 5 rows matched `voided_at IS NULL AND total_cents<>0 AND NOT EXISTS (invoice_lines)`
+(was 19 before AUTH-177). Full per-invoice detail in the evidence-table doc above.
+
+WHAT IS LEFT: CC-1 to author the actual migration from the spec doc. Owner to decide what happens
+to the 5 invoices themselves (void, hold-pending-POD, or otherwise) — not decided or acted on here.
+
+NEXT: back to B-03 proper (the earlier "5" backfill is explicitly stopped — see B-03 STOP-WORK),
+or whatever the Lead's next queue item is. Checking the bus before starting anything else.
+
+— CC-2
