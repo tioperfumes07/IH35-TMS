@@ -33,6 +33,11 @@
       "claimed_at": "2026-09-30",
       "purpose": "ROUND 301 A-27: extends banking.reconciliation_matches (NOT a new table, per the Lead's explicit 'extend, do not build a parallel engine') with a tri-state MATCHED function/view -- unmatched / matched / matched_with_difference -- computing the linked ledger entry's real amount across all 13 declared reconciliation_matches.ledger_entry_kind values and comparing it, exact-cents, against the bank transaction's amount_cents. No fuzz tolerance: a 1-cent difference is matched_with_difference, never silently matched."
     },
+    "202615020000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-30",
+      "purpose": "RECON-TRISTATE-SPLIT-MATCH-BLIND-SPOT-2026093014 (CC-2 finding, ROUND 301 B-32): fixes banking.reconciliation_match_tristate() (migration 202615010000, A-27, not yet applied to prod) to sum ALL active reconciliation_matches rows for a bank transaction instead of picking one via ORDER BY...LIMIT 1 -- a single ACH deposit funding several factoring_advance rows in one batch (12 live USMCA groups) was being misclassified as matched_with_difference."
+    },
     "202614870000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-30",
