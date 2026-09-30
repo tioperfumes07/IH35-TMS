@@ -315,3 +315,73 @@ list, so no future report re-derives its own test-unit exclusion and risks CC-2'
 
 MEASURED ONLY, nothing changed: no assignment rows written, no backfill attempted. T-23 asked
 for the number, not a fix.
+
+## CC-3 — ROUND 300 T-24 — status: BUILT, NOT YET PROVEN (correctly blocked on clock time)
+
+J-1 is coded, merged, and manually invoked live against production in Round 297.1 (16/16 units,
+12 measured + 4 honest gap rows, read_at = captured_at proven not now()). That is NOT the same
+proof this item asks for -- the actual cron.schedule("0 3 * * *", ...) tick has not fired yet.
+Current time at this report: 2026-09-30 16:1x CT. The next real 03:00 CT tick is tomorrow
+morning. Will paste rows written + the T122/T147/T170/T173 gap rows + read_at once that tick
+actually lands, not before. Reporting this honestly rather than re-presenting the Round 297.1
+manual-invocation proof as if it were the scheduled tick.
+
+## CC-3 — ROUND 300 T-25 SHIPPED — the four trucks with no odometer, cause named per unit
+
+MEASURED LIVE (br-fancy-credit-akjnd07a, telematics.vehicle_locations, all-time per-unit history):
+
+  unit   samsara_vehicle_id mapping     last odometer    last ANY position   cause
+  T122   MISMATCHED (see below)         2026-07-01       2026-09-26 (4d stale) truck went dark independently, ~2 months before the fleet-wide incident
+  T147   correct, single id             2026-08-26       2026-09-09 (21d stale) fleet-wide incident, never recovered
+  T170   correct, single id             2026-08-26       2026-09-29 (1d stale)  fleet-wide incident, never recovered
+  T173   correct, single id             2026-08-26       2026-09-30 (fresh)     fleet-wide incident, never recovered
+
+THREE OF FOUR (T147/T170/T173) stopped reporting odometer on the EXACT SAME DATE -- 2026-08-26 --
+which is the already-documented fleet-wide "stats types degraded fallback" incident named in
+samsara-positions.service.ts's own header comment (the WITH-META fix that restored odometer for
+most of the fleet afterward). GPS/position kept flowing normally for all three afterward -- this
+is NOT a mapping problem (samsara_vehicle_id in mdata.units and the integrations.samsara_vehicles
+mirror agree for all three) and NOT a full feed outage (position never stopped). It is specifically
+these 3 units' OBD/odometer stat that never came back online on Samsara's side after the platform
+incident that took the whole fleet's odometer down, while 12 of 16 units DID recover. Points at a
+per-vehicle Samsara-side re-pairing/resync need, not anything in our own polling code (one batched
+call treats every vehicle identically; these 3 are the exception, not the rule).
+
+T122 is a DIFFERENT, older, two-part problem:
+  (a) its last odometer (2026-07-01) predates the August 26 fleet incident by ~2 months -- a
+      separate, earlier failure, not the same event as the other three.
+  (b) mdata.units.samsara_vehicle_id carries a STALE/WRONG id (212014918407330 -- last reported
+      2024-08-21, 2 years ago, 3 rows total, 0 with odometer) while the ACTUALLY active id
+      (212014918197571, name "T122 (R)" in Samsara, 3,329 rows through 2026-09-26) lives only in
+      the integrations.samsara_vehicles mirror. loadUnitIdBySamsaraVehicleId() prefers the mirror
+      first, so this mismatch is currently HARMLESS at runtime -- but it is a real landmine for any
+      future code that reads mdata.units.samsara_vehicle_id directly instead of through the
+      mirror-aware resolver, and worth CC-1/whoever owns mdata.units correcting.
+  T122 has also stopped sending ANY position (not just odometer) for 4 days as of this report --
+  consistent with "(R)" meaning a reserve/idle unit, not an active data-feed bug.
+
+REMAINING: no code changed here (measurement/diagnosis only, per the item's own ask -- "find out
+why... name the cause"). No new guard for this one: the root cause for 3 of 4 lives on Samsara's
+own platform side (a per-vehicle OBD re-pairing), not something this repo's code can detect or
+fix structurally beyond what integration_sync_log already would catch if it degraded further. The
+T122 mdata.units.samsara_vehicle_id staleness is a one-row data-correction candidate for whoever
+owns mdata.units -- named here, not touched, since it is currently harmless and outside a
+measurement task's scope to unilaterally correct.
+
+## CC-3 — ROUND 300 T-27 SHIPPED — 921 duplicate groups registered as known debt
+
+Registered ODOMETER-DUP-01 in docs/audit/GUARD-WORKORDERS.md: 921 duplicate
+(operating_company_id, unit_id, day, source='samsara') groups across 176,960 of
+telematics.odometer_readings' 177,906 historical rows. Retired writer confirmed to have NO
+trace in the current repo (not in git log, not any registered cron/route) -- predates Round
+297.1, which is the first CURRENT writer of this table. Worked around, not fixed: J-1's new
+unique index is a PARTIAL index (migration 202614950000) scoped to rows from Round 297.1's
+apply date forward; the historical duplication is untouched and its disposition is a separate
+decision for whoever ends up owning this table's data quality.
+
+## CC-3 — ROUND 300 T-26 — reaffirmed, still honestly UNVERIFIED
+
+No change since Round 297.1's own report: J-3's fault-count proof remains UNVERIFIED, blocked
+on SAMSARA_TOKEN_ENCRYPTION_KEY (Render-only secret, no tool this session can read it). Keeping
+the word as-is per this item's own instruction -- not softening it. Will paste the live count
+the moment the owner clears the key and a real tick completes.
