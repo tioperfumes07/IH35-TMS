@@ -17,6 +17,10 @@
 // rows. This can only shrink (if a future decision resolves the held-out row) and must never grow.
 import pg from "pg";
 
+export const REQUIRES_LIVE_DB =
+  "live money guard -- queries driver_finance.settlement_lines against Postgres; fails closed " +
+  "with no DATABASE_URL, so it must never run in verify-static's dead-port sweep.";
+
 const LABEL = "verify-g2-extra-pay-requires-item";
 const USMCA_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const KNOWN_LEGACY_NULL_ITEM_COUNT = 17; // 16 split via AUTH-168 + 1 held out (b0c47f5c)

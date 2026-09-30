@@ -74,8 +74,15 @@ a real transaction already).
 EXISTS (SELECT 1 FROM accounting.bills b WHERE b.vendor_uuid = v.id::text AND b.status != 'void')
 OR EXISTS (SELECT 1 FROM accounting.expenses e WHERE e.vendor_uuid = v.id AND e.voided_at IS NULL)
 OR EXISTS (SELECT 1 FROM fuel.fuel_transactions f WHERE f.vendor_id = v.id AND f.voided_at IS NULL)
-OR EXISTS (SELECT 1 FROM accounting.vendor_credits vc WHERE vc.vendor_uuid::text = v.id::text)
+OR EXISTS (SELECT 1 FROM accounting.vendor_credits vc WHERE vc.vendor_id::text = v.id::text)
 ```
+**CORRECTION, 2026-09-30 restart re-verification:** the original predicate posted here referenced
+`vc.vendor_uuid`, a column that does not exist on `accounting.vendor_credits` (the real column is
+`vendor_id`) — this would have thrown at runtime, never actually returning a false result. Caught
+by re-running the live query fresh rather than trusting the prior text; corrected above. Live count
+unchanged after the fix (34/623, see PROOF below) — this table contributes 0 rows to the "with
+transactions" set for USMCA either way, so the bug never silently changed the answer, only would
+have crashed the query.
 **Ruling, for symmetry with the customer side and with this codebase's own established discipline
 (void-not-delete = real history, never invented): a voided bill counts, a voided expense/fuel
 transaction does not — because unlike invoices/bills (which are true documents whose voided state

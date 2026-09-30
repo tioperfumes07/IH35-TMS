@@ -5,6 +5,8 @@
  * revenue without source_load_id; refuse null income on revenue-bearing lines.
  */
 
+import { assertCanonicalSubset } from "../dispatch/canonical-active-load-set.js";
+
 /** Freight / accessorial line types that represent load revenue (ASC 606 performance). */
 export const LOAD_REVENUE_LINE_TYPES = new Set([
   "linehaul",
@@ -172,6 +174,7 @@ export class InvoiceLineIncomeAccountRequiredError extends Error {
  * recorded through that engine.
  */
 export const PRE_DELIVERY_LOAD_STATUSES = ["dispatched", "at_pickup", "in_transit", "at_delivery"] as const;
+assertCanonicalSubset("PRE_DELIVERY_LOAD_STATUSES", PRE_DELIVERY_LOAD_STATUSES);
 
 export class InvoiceOnRollingLoadNeedsAuthorizationError extends Error {
   readonly loadStatus: string;
