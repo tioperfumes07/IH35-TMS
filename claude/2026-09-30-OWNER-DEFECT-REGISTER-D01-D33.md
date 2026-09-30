@@ -213,3 +213,35 @@ Ten remain, and they are NOT wired by me on purpose:
   - `verify-match-candidates-are-settlement-born-only` genuinely FAILS —
     "fetchLedgerCandidates must NOT select from AR payments". A real defect. Routed to CC-2 (B-08).
   - `verify-geocode-provider-is-reachable` genuinely FAILS. Routed to CC-3 (T-08).
+
+---
+
+## O. QUICKBOOKS PARITY — the owner's screenshots, 2026-09-30
+
+The owner's benchmark is 25+ years of QuickBooks. These are not taste; they are the specific
+things our app dropped that QuickBooks does, measured against his own screenshots.
+
+| # | Defect | Seat | Status |
+|---|---|---|---|
+| D47 | **The QuickBooks CALENDAR / DATE FORMAT was dropped from the entire app.** QBO shows `9/14/26` in a transaction list and `07/31/2026` in a banking list. One date policy, app-wide. | Cursor | OPEN |
+| D48 | **The QuickBooks NUMBER FORMAT and styling were dropped from the entire app** — amount alignment, thousands separators, the `$5,500.00` shape, right-aligned money columns. | Cursor | OPEN |
+| D49 | Banking → Action column: use the QuickBooks text size for the text and the dates. Ours is smaller and reads as a different product. | Cursor | OPEN |
+| D50 | **Row distinction YES — column lines NO.** QuickBooks separates rows and never draws vertical lines between columns. That is the exact combination the owner wants and the exact opposite of what we ship (no row separation at all). | Cursor | OPEN |
+| D51 | **Column-header text must be a step LARGER than the row text. For every list in the app.** | Cursor | OPEN |
+| D52 | The multi-select / filter control must be LARGER — follow the QuickBooks control sizes (`All dates ⌄`, `All transactions (40) ⌄`). Ours is a 131×33 bare input with `border: 0px`. | Cursor | OPEN |
+| D53 | Add the QuickBooks PRINTER and EXPORT icons to list toolbars, in the QuickBooks position (right of the pager, beside the settings gear). | Cursor | OPEN |
+| D54 | Banking actions must be the QuickBooks set the owner is used to: **Add · Match · Record transfer**, rendered as QuickBooks renders them. | Cursor | OPEN |
+
+D47..D54 are ONE systemic typography-and-control pass, not eight jobs. They land with C-18's token
+work, because every one of them is a token: a date format, a number format, a row rule, a header
+scale, a control size, an icon set.
+
+## P. NEW LEAD RULINGS — 2026-09-30
+
+| # | Ruling | Seat |
+|---|---|---|
+| R-01 | **Production near-miss (CC-1).** A rehearsal script reused a stale connection string and called `voidDocument` against PRODUCTION on a real factoring advance. Nothing persisted only because the header stamp lives one level up in the bypassed route — luck, not a control. RULE: a rehearsal or ops script FETCHES its connection string fresh every run and ASSERTS the target is not production before its FIRST write, failing closed. "I verified afterwards" is not a control. Ship `assertNotProduction()` plus a guard that fails any ops/rehearsal script that writes without it. | CC-1 |
+| R-02 | **REINSTATE IS HEADER-ONLY (CC-2's finding).** A reinstate that restores the header but not the GL is the exact mirror of the void bug CC-2 just fixed — one shows voided while the money is live, the other shows live while the money is reversed. Step 1: reinstate must REFUSE, every family, when the original void reversed GL and the reinstate cannot re-post. Step 2: re-post family by family, each with its own void → TB delta → reinstate → TB returns to its exact starting value. Never change shared reinstate logic without a per-family proof. | CC-2 |
+| R-03 | **The void engine's factoring hole (CC-2's find).** `executeVoidCancel("factoring_advance")` never reversed the GL — header-only, on a false comment claiming reversal was impossible. A document showing "voided" while its money stays live in the GL is the most dangerous shape this system can have. Fixed and merged (PR #23353). The guard meant to catch it was not scanning that family; that is now in scope. | CC-2 |
+| R-04 | **The 204 database-required guard candidates (Codex).** Route by BEHAVIOUR, not by whether the file mentions a database. Three buckets and nothing else: (a) STATIC — reads source only; stays local. (b) ISOLATED — needs a database but writes only synthetic rows; runs against CI's own loopback database, never production. (c) LIVE-DATA — asserts something about real production rows; runs in CI against the read-only production credential, and its baseline is set by the seat that owns that data, never by Codex and never from an empty database. | Codex |
+| R-05 | **G5 CLOSED.** Driver closed 51, company closed 51. Root cause named and fixed under AUTH-167 (three settlements closed without the company-settlement side effect firing; each given its own dedicated header per the standing never-merge-periods ruling). Off the close gate. | CC-1 |

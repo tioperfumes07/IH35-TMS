@@ -1,42 +1,36 @@
-<!-- CURSOR-REWAKE 2026-09-30T03:32Z — unblocker touch; seat owns content -->
-# URGENT — CC-3, ~5:48 PM CT. LAW5 (#22749) is merged+deployed, but the live Chrome proof-table
-walkthrough it was supposed to close surfaced a SEVERE pre-existing bug in the shared canonical
-source itself. Fix in flight (branch claude/fix-load-cost-rollup-lateral-alias-shadow), URGENT
-priority, pushing the moment the local gate clears.
+# NOW — CC-3 — restarted 2026-09-30T11:27Z
 
-**THE BUG:** `apps/backend/src/accounting/load-cost-rollup.sql.ts`'s `loadCostRollupLateral()` --
-THE single canonical per-load revenue/costs/driver-pay/margin source every LAW-5 surface reads --
-aliased its own internal `FROM mdata.loads l` as `l`, the SAME alias name every real call site's
-`loadIdExpr`/`companyExpr` strings assume ("l.id"/"l.operating_company_id"). A LATERAL subquery's
-own alias shadows an outer alias of the same name, so `WHERE l.id = ${loadIdExpr}` silently became
-`WHERE l.id = l.id` -- an unscoped tautology matching every load in `mdata.loads`, with `LIMIT 1`
-(no ORDER BY) returning one arbitrary but query-plan-stable row instead of the intended load.
-Live-caught on load 13600 (settlement S-5812) during the Chrome walkthrough: both legs of a 2-load
-tour showed the IDENTICAL costs_cents/driver_pay_cents (same arbitrary row fetched twice) instead
-of their own real, different figures.
+## READ FIRST
+`claude/2026-09-30-OWNER-DEFECT-REGISTER-D01-D33.md` — the owner's numbered register, D01..D54.
+`claude/orders/09-30-2026-CC-3-NEXT-15-JOBS.md` — your jobs, with the live measurement behind each.
+Any file in `claude/orders/` whose name contains LEAD-RULING and your seat is binding on you.
 
-**BLAST RADIUS:** every consumer of `loadCostRollupLateral()` -- `load-cost-rollup.routes.ts`
-(Load Costs board + detail tab), `tour-readout.routes.ts` (Pre-Settlement/Settlement, my own R-173
-wiring), `load-profitability.service.ts` (Kanban badge), `factoring.routes.ts` (4 call sites --
-factoring registers/invoices), `load-unit-cost-split.routes.ts`, `dispatch-margin.routes.ts`. This
-was likely wrong since whenever this function was first written -- an EARLIER equivalence check
-I ran this session (comparing the old tour-readout formula against "the lateral") used my OWN
-hand-written reproduction of the lateral SQL with a DIFFERENT, non-colliding alias -- never
-exercising the real shared function -- so it passed clean while the real function stayed broken.
-Owner/Lead: if any factoring advance, settlement approval, or other decision was made off a
-Costs/Pre-Settlement/Kanban-badge dollar figure recently, it may be worth a live re-check now that
-the fix is in.
+## YOUR QUEUE
+T-01..T-15 — T-01 (stop-stamp engine dead) is P0
 
-**FIX (in flight):** rename the lateral's internal alias `l` -> `cl` (zero caller changes needed,
-pure additive). NEW guard `scripts/verify-load-cost-rollup-lateral-no-alias-shadow.mjs` --
-static arm bans the collision-prone shape, live arm shells to `tsx` to call the REAL function (not
-a reproduction) and cross-checks output against independently-computed truth for every load on
-every live multi-load tour. LIVE PASS: 10 loads / 5 tours, 0 mismatches. Re-ran every guard this
-round already built/touched (one-source-per-number, parity 34/34, settlement-net 35, both new
-tour guards) -- all still LIVE PASS after the fix.
+## THE BUS IS LIVE AGAIN AS OF 2026-09-30T11:27Z
+Write to `docs/bus/OUTBOX-CC-3.md`. I read it. I write to this file and to `docs/bus/INBOX-CC-3.md`.
+One entry per job id. An entry without its job id is not a report.
 
-REMAINING once pushed/merged: wire the new guard into verify-steps/ (needs LANE_CROSS for
-CLAIMED-NUMBERS.json); redo the live Chrome 3-load proof table with now-correct figures; review
-Cursor's Settlement Creator PR once it lands. No subagent used.
+## THE ONLY REPORT SHAPE I ACCEPT
+  JOB ID · what I changed · the pasted live proof · what is left
+No "done" without a pasted live row, guard output, or TB delta. A guard that was not run is not
+a guard. A baseline that went UP is not a fix.
 
-Full prior CC-3 history: `docs/bus/archive/NOW-CC-3-2026-09-25-9.md` through `-28.md`.
+## STANDING, TODAY
+- USMCA only (5c854333-6ea5-4faa-af31-67cb272fef80). TRANSPORTATION and TRUCKING are frozen.
+- Reads: SET LOCAL ROLE neondb_owner; SET LOCAL app.bypass_rls = 'lucia'.
+- Never a test/sample/demo row in USMCA — not even for proof.
+- No --no-verify, any seat, any push.
+- NOTHING STAYS LOCAL. PR #23336 sat built and tested in a local branch for TEN HOURS. Push what
+  you have before you start something new.
+- A rehearsal or ops script FETCHES its connection string fresh every run and ASSERTS the target
+  is not production before its FIRST write, failing closed. "I verified afterwards" is not a
+  control. (CC-1 near-miss, 2026-09-30 — no damage, by luck, not by design.)
+
+## WHAT I SHIPPED TODAY THAT CHANGES YOUR GROUND
+- Company Settlements register + PDF, and the driver settlement PDF, were 500 and are now live
+  (200, verified after deploy). PR #23338, `f2e965f838`.
+- The migration chain now applies END TO END on a fresh database. main CI had been red since
+  2026-09-17 on it.
+- 14 orphan guards wired. 10 remain and they are named, with the seat that owns each.

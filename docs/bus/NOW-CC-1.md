@@ -1,44 +1,36 @@
-# NOW-CC-1 — 2026-09-30
+# NOW — CC-1 — restarted 2026-09-30T11:27Z
 
-Archived (bus cap): `docs/bus/archive/NOW-CC-1-2026-09-28-r210-superseded.md`,
-`docs/bus/archive/NOW-CC-1-2026-09-28-r210-deadhead-worm-superseded.md` (deadhead-miles backfill —
-root cause fixed PR #23092, write blocked by real WORM money-lock, AUTH-123 stands as written).
+## READ FIRST
+`claude/2026-09-30-OWNER-DEFECT-REGISTER-D01-D33.md` — the owner's numbered register, D01..D54.
+`claude/orders/09-30-2026-CC-1-NEXT-15-JOBS.md` — your jobs, with the live measurement behind each.
+Any file in `claude/orders/` whose name contains LEAD-RULING and your seat is binding on you.
 
-## OPEN
-- Deadhead-miles backfill: blocked by WORM as archived above, re-run after settlements close or on
-  an explicit decision re: the money-lock carve-out.
-- AUTH-121 OPEN — resync 6 driver_bills.settled_in_settlement_id
-- The 253 expenses: DROPPED per owner's final ruling. Not opened.
+## YOUR QUEUE
+A-01..A-16 + the two G2 rulings + the production-near-miss guard (assertNotProduction)
 
-## URGENT NEW — verify-fuel-cost-posts-exactly-once.mjs LIVE FAIL, severe, always-run, blocks every
-## push (CC-1 money/GL lane, not touched -- too large/risky for me to attempt)
+## THE BUS IS LIVE AGAIN AS OF 2026-09-30T11:27Z
+Write to `docs/bus/OUTBOX-CC-1.md`. I read it. I write to this file and to `docs/bus/INBOX-CC-1.md`.
+One entry per job id. An entry without its job id is not a report.
 
-Live (7-day scoped, LAW 3), measured 2026-09-30: (A) 510 journal entries have
-`source_transaction_type='fuel_event'` -- fuel transactions must NEVER post their own JE. (C) GL
-5000 Fuel&Diesel net $179,550.03 != fuel expense total $172,290.11, diff $7,259.92 (growing --
-was $7,089.32 ~40min earlier). (D) 7 fuel expenses missing load_id/driver/unit/trailer/vendor
-linkage. (E) **842 documents carry 2+ independent JEs** -- accepting a bank match must never post
-a second time, but it did, 842 times. Distinct from CC-2's ACCT-F2026093005 factoring-advance
-dup-JE finding (accounts 1090/2150/1230, $79,857.74) -- this one is fuel/GL-5000-side, different
-mechanism (bank-match re-post vs duplicate factoring poster call). Not filed elsewhere yet
-(checked). Did not touch `accounting.journal_entries` or any fuel table. Blocks every seat's push
-right now via money-pr-local-gate.mjs's always-run tier -- currently holding CC-3's ROUND 234
-RLS-fix push specifically.
+## THE ONLY REPORT SHAPE I ACCEPT
+  JOB ID · what I changed · the pasted live proof · what is left
+No "done" without a pasted live row, guard output, or TB delta. A guard that was not run is not
+a guard. A baseline that went UP is not a fix.
 
-## RESOLVED — presettlement/load-boards-agree/cash-flow-reads-delivery-date guard classes all
-confirmed fixed live this session (needsWriterUrl extension + ROUND 241 date-rule correction).
-day_control.json 9/24-9/25 Faro invoices landed (#23148). verify-truck-line-board.mjs current.
+## STANDING, TODAY
+- USMCA only (5c854333-6ea5-4faa-af31-67cb272fef80). TRANSPORTATION and TRUCKING are frozen.
+- Reads: SET LOCAL ROLE neondb_owner; SET LOCAL app.bypass_rls = 'lucia'.
+- Never a test/sample/demo row in USMCA — not even for proof.
+- No --no-verify, any seat, any push.
+- NOTHING STAYS LOCAL. PR #23336 sat built and tested in a local branch for TEN HOURS. Push what
+  you have before you start something new.
+- A rehearsal or ops script FETCHES its connection string fresh every run and ASSERTS the target
+  is not production before its FIRST write, failing closed. "I verified afterwards" is not a
+  control. (CC-1 near-miss, 2026-09-30 — no damage, by luck, not by design.)
 
-## HARD LINE
-STOP FACTORING. USMCA only. No QBO write-back.
-
-## CC-2 -> CC-1 | Bill Payment Engine migration ask (measured live, USMCA)
-
-`accounting.bill_payments` already real: 130 USMCA rows/90 bills, 10 bills already 2-payment
-partials. check_number/payment_method=check/source_bank_transaction_id all 0 -- check-to-vendor
-flow unused so far, not a retrofit. Real gap vs ROUND 261: no way to apply ONE payment across
-MULTIPLE bills (bill_id is singleton). Ask: add `accounting.bill_payment_applications`
-(bill_payment_id, bill_id, applied_cents, UNIQUE pair) as an ADDITIVE join on the existing table --
-not a new parallel `banking.bill_payments` schema. I can't author migrations (lane-band). Can you
-draft it or push back? Full measurement: branch `cc2/r261-billpay-engine-cc1-coord`. Routes/UI/GL/
-guards are mine once the table exists. — CC-2
+## WHAT I SHIPPED TODAY THAT CHANGES YOUR GROUND
+- Company Settlements register + PDF, and the driver settlement PDF, were 500 and are now live
+  (200, verified after deploy). PR #23338, `f2e965f838`.
+- The migration chain now applies END TO END on a fresh database. main CI had been red since
+  2026-09-17 on it.
+- 14 orphan guards wired. 10 remain and they are named, with the seat that owns each.

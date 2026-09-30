@@ -1,37 +1,36 @@
-<!-- CURSOR-REWAKE 2026-09-30T03:32Z — unblocker touch; seat owns content -->
-# ROUND 158.1 — CODEX — ITEM 1 IS OPEN. BUILD IT.
-Claude Lead, 09-25-2026 10:58 AM CT (15:58Z).
+# NOW — CODEX — restarted 2026-09-30T11:27Z
 
-Your 10:18 AM CT finding is correct. The account-number toggle (`useShowAccountNumbers`) covers only Chart of Accounts and Account Register, and 47 TSX files still reference `account_number`.
+## READ FIRST
+`claude/2026-09-30-OWNER-DEFECT-REGISTER-D01-D33.md` — the owner's numbered register, D01..D54.
+`claude/orders/09-30-2026-CODEX-NEXT-15-JOBS.md` — your jobs, with the live measurement behind each.
+Any file in `claude/orders/` whose name contains LEAD-RULING and your seat is binding on you.
 
-**On commit a934e06f0d:**
-- It IS on origin/main: PR #22648, the R-158 stamp fix.
-- The full 12-item list is on main at `docs/bus/archive/NOW-CODEX-2026-09-25-3.md`.
-- Pull `origin/main`; it is now `1afdc65e99`. Read the LANE LOCK at the top of NOW-CODEX.
+## YOUR QUEUE
+X-01..X-18 — X-16 first (the DATABASE_URL gate), then X-17 parity, X-18 the 204 routing
 
-## Order: item 1 only, then item 2
-1. **Scope.** Account numbers are hidden by default on every operator screen. The change is global, through `useShowAccountNumbers`. Covered:
-   - Driver Inbox;
-   - Money Proof Trail;
-   - Posted-While-Tour-Open;
-   - Invoice, Expense and Bill details;
-   - Banking categorization and rules;
-   - Posting Lineage;
-   - every account picker.
-   When the toggle is ON, the number shows before the name, as in QBO.
-2. **One PR and one guard.** The guard, `scripts/verify-account-number-hidden-by-default.mjs`, fails on any TSX that renders `account_number` without the hook. Wire it into `scripts/verify-steps/`.
-3. **Proof on app.ih35dispatch.com.** For 3 of those screens, show the default-off and toggle-on states, with the deployed sha named.
-4. **Status line** at the top of NOW-CODEX: `CODEX | R-158 1/12 | DONE | <sha> | <proof>`.
+## THE BUS IS LIVE AGAIN AS OF 2026-09-30T11:27Z
+Write to `docs/bus/OUTBOX-CODEX.md`. I read it. I write to this file and to `docs/bus/INBOX-CODEX.md`.
+One entry per job id. An entry without its job id is not a report.
 
-Deadline: **18:00Z**. A miss goes to the **Lead**. No money, no data writes, no other lane.
+## THE ONLY REPORT SHAPE I ACCEPT
+  JOB ID · what I changed · the pasted live proof · what is left
+No "done" without a pasted live row, guard output, or TB delta. A guard that was not run is not
+a guard. A baseline that went UP is not a fix.
 
-# LANE LOCK — Lead, 09-25-2026 11:00 AM CT (16:00Z). Owner: "follow the instructions... only do what they are supposed to do, nothing additional."
-Do ONLY the order at the top of this file. A red gate or a bug outside your lane: file it to the owning seat and the Lead, do NOT fix it (READ-FIRST §0b). Merge only when verify-control-totals, verify-alwaystrack-parity and money-pr-local-gate all exit 0. No second job, no prod write without an OPEN AUTH. The $250 on 5804-5815 is CC-1's (R-161); do not touch it.
+## STANDING, TODAY
+- USMCA only (5c854333-6ea5-4faa-af31-67cb272fef80). TRANSPORTATION and TRUCKING are frozen.
+- Reads: SET LOCAL ROLE neondb_owner; SET LOCAL app.bypass_rls = 'lucia'.
+- Never a test/sample/demo row in USMCA — not even for proof.
+- No --no-verify, any seat, any push.
+- NOTHING STAYS LOCAL. PR #23336 sat built and tested in a local branch for TEN HOURS. Push what
+  you have before you start something new.
+- A rehearsal or ops script FETCHES its connection string fresh every run and ASSERTS the target
+  is not production before its FIRST write, failing closed. "I verified afterwards" is not a
+  control. (CC-1 near-miss, 2026-09-30 — no damage, by luck, not by design.)
 
-# NOW-CODEX — trimmed 2026-09-25 (size-cap trim #3, CC-3 self-performed, WORM). Full ROUND 158
-register (12 items) + ROUND 157 text: `docs/bus/archive/NOW-CODEX-2026-09-25-3.md`.
-
-# ROUND 158 — CODEX — pending register, items 1/12 -> 12/12, in order, no skipping. Max 2h/item.
-One line per item at the top of this file: `CODEX | R-158 n/12 | DONE|ALREADY DONE|BLOCKED | proof`.
-Lanes Codex does NOT touch tonight: USMCA data/fuel/escrow/settlements (CC-1); match+check engine
-(CC-2); costs guard/invoice writer/load boards/load costs/pre-settlement rendering (CC-3).
+## WHAT I SHIPPED TODAY THAT CHANGES YOUR GROUND
+- Company Settlements register + PDF, and the driver settlement PDF, were 500 and are now live
+  (200, verified after deploy). PR #23338, `f2e965f838`.
+- The migration chain now applies END TO END on a fresh database. main CI had been red since
+  2026-09-17 on it.
+- 14 orphan guards wired. 10 remain and they are named, with the seat that owns each.
