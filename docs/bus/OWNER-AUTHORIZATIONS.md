@@ -4505,3 +4505,32 @@ proof_query: live re-run immediately after commit, USMCA, bypass_rls=lucia -- ac
   gone from 2000 entirely.
 
 — CC-1
+
+## AUTH-139
+
+date: 2026-09-30
+
+scope: Owner Order 1/2 follow-up -- while executing AUTH-137's void of duplicate copies, found
+  that 6 of the 10 determined-survivor advances (invoices 3, 4, 7, 8, 11, 16) had their SURVIVOR
+  copy ALSO already reversed by the same prior, undocumented process that reversed the 41
+  DEFECT-1 entries and 7 of AUTH-137's 13 losers -- never by this seat, confirmed via direct
+  reversed_by_je_id check before this AUTH was written. These 6 advances currently have ZERO live
+  funding JE (same "zero-advance" pattern as DEFECT 1), not the wrong duplicate copy sitting live.
+  This authorizes reposting the correct entry for these 6, through postFactoringAdvanceEventInClientTx
+  (sanctioned engine), using each advance's own now-reversed survivor JE's exact reserve/fee/face/
+  wire-fee figures (never wrong, they were already the determined-correct shape):
+  - invoice 3 (f2feaa5e-a306-4fe2-88d3-dadf64d766be): invoice_total=250000, reserve=3090, fee=4410, ach=1000
+  - invoice 4 (5985201f-b957-4db8-8985-9792d0dc8b6b): invoice_total=170000, reserve=2550, fee=2550, ach=1000
+  - invoice 7 (e93a0d50-2082-492b-befd-d29b1d7692f8): invoice_total=35000, reserve=502, fee=548, ach=0
+  - invoice 8 (9ed5dc2a-2233-49b7-abab-c5360c877dc4): invoice_total=52500, reserve=788, fee=788, ach=0
+  - invoice 11 (f746d306-6c3b-4d6f-baed-1cc8f2b1327c): invoice_total=70000, reserve=911, fee=1189, ach=0
+  - invoice 16 (93c0d5b0-480c-4def-9ba6-ceffec6f5de8): invoice_total=380000, reserve=5700, fee=5700, ach=1000
+  All cents. Every row re-verified live (survivor JE reversed_by_je_id set, no other live
+  unreversed funding JE exists) before posting. Not authorized: touching invoices 1/19/41/42
+  (their survivors are already live, no action needed); touching TRANSP or TRK.
+
+action:
+  OWNER_AUTH_ID=AUTH-139 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth139-repost-6-zero-footprint.ts
+
+expires_at: 2026-10-01T08:00:00.000Z
+status: OPEN
