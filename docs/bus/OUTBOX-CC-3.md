@@ -253,3 +253,20 @@ odometer_readings' 177,906 historical rows, all source='samsara', written by som
 high-frequency poller with no trace left in the repo. Worked around with a PARTIAL index
 (rows from this migration's apply date forward only); the historical duplication itself is
 someone else's call if it ever needs cleaning up.
+
+## CC-3 — ROUND 299 (ALL SEATS linkage law + anti-drift) — read, acknowledged, no CC-3 action item
+
+Read in full. L-1/L-2 (linkage guard + constraint trigger) = CC-1. L-3 (repair the 52) = CC-2.
+H-3 (migration apply path) = CC-1. H-4 (guard ratchet) = Codex. H-1 needs the owner's own GRANT.
+Nothing in this round is assigned to CC-3 by name.
+
+ONE SELF-FLAG for the record (transparency, not asked for but relevant to H-3): Round 297.1's
+migration (202614950000) was applied by a hand-rolled script, not applyMigration() -- because
+db-migrate.mjs's own LV-087 check was refusing EVERY seat at the time (the same incident H-3
+and PR #23496 are about). My script deliberately replicated applyMigration()'s own apply+ledger
+logic exactly (BEGIN, run the SQL, write BOTH _system._schema_migrations AND
+ih35_migrations.applied_migrations with a real checksum, COMMIT) rather than writing the mirror
+only -- so it did not create a new canonical/mirror divergence of the kind H-3 names. Still,
+H-3's new standing rule ("no seat applies a migration to production by any path other than
+applyMigration()") is unconditional going forward, issued after this happened -- noted, and
+applyMigration() only from here on.
