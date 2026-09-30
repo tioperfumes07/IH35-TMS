@@ -592,3 +592,39 @@ NEXT: B-32 (the bank-feed matched side) — reading the owner's window-cascade r
 ordered.
 
 — CC-2
+
+## ROUND 301 B-32 — bank-feed MATCHED-side criteria (DONE)
+
+Read the owner's window-cascade ruling verbatim from its enforcement point in code
+(match.service.ts's own comment above MATCH_WINDOW_STEPS — the standalone file named in the
+order, 09-23-2026-OWNER-DECISION-BANK-MATCH-WINDOW-DATE-CASCADE.md, does not exist under that
+literal name anywhere in the repo; confirmed via find + git log --all --grep). Did not re-decide
+it. Did not touch match.service.ts or apps/frontend — CC-1's reconciliation engine and Cursor's
+UI stayed untouched, per the stated lane boundary.
+
+Found, mid-task, that CC-1 had already merged A-27's real tri-state MATCHED extension
+(banking.reconciliation_match_tristate(), migration 202615010000, commit 5803c71385) — not yet
+deployed to prod. My job, "own the bank-feed side of MATCHED," became auditing the CRITERIA that
+make an existing banking.reconciliation_matches row a true "same event" claim: account/entity,
+stable transaction key, and (since CC-1's tri-state only handles single-row amount comparison)
+the split-match sum invariant for the many-to-one funding-batch case that already exists live.
+
+Built + shipped scripts/verify-steps/11983-verify-bank-match-criteria-integrity.mjs (claim-reserved
+on its own branch first, per Rule 25/37). Live USMCA result: 0 cross-entity matches (ratchet floor
+0, forever); 12 active split-match groups (one bank deposit funding 2-7 factoring_advance rows),
+every one sums EXACTLY to its bank transaction's amount — real funding batches, not errors; 7
+active matches (CSV-imported Loves fuel rows) carry no external stable key (no plaid_transaction_id,
+no dedup_hash) — a real bank-feed-side gap, reported and ratcheted, not fixed here (fixing CSV
+ingestion to populate a stable key is a separate, larger task, not silently patched in a guard).
+
+Filed RECON-TRISTATE-SPLIT-MATCH-BLIND-SPOT-2026093014 to GUARD-WORKORDERS for CC-1: their new
+tristate function picks only the single most-recent match row per bank transaction, so once it
+deploys it will misclassify all 12 of today's correct split-matches as matched_with_difference —
+a false-variance flag on a provably-correct funding batch. Did not patch their function myself
+(their file, their lane) — named the exact fix needed and cited the live proof.
+
+NEXT: B-33 (diesel card / fuel wallet — Relay's 76 uncategorized rows, a population distinct from
+AUTH-178's already-fixed 52/177 fuel-unit-id rows; fresh dry run required, no reuse of AUTH-178
+logic without one).
+
+— CC-2
