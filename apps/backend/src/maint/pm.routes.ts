@@ -29,6 +29,8 @@ type PmScheduleRow = {
   samsara_unit_id: string | null;
   samsara_raw_payload: unknown;
   live_odometer_mi: number | null;
+  /** C-21 — when the live telematics position was captured (may exist even if odometer_mi is NULL). */
+  odometer_reading_at: string | null;
 };
 
 function authUser(req: FastifyRequest, reply: FastifyReply) {
@@ -76,7 +78,8 @@ async function listSchedules(client: Queryable, operatingCompanyId: string, asse
         NULL::text AS next_due_date,
         u.samsara_vehicle_id,
         sv.raw_payload AS samsara_raw_payload,
-        vlp.odometer_mi::float8 AS live_odometer_mi
+        vlp.odometer_mi::float8 AS live_odometer_mi,
+        vlp.captured_at::text AS odometer_reading_at
       FROM maintenance.pm_schedules s
       JOIN mdata.units u
         ON u.id = s.unit_id
@@ -87,6 +90,8 @@ async function listSchedules(client: Queryable, operatingCompanyId: string, asse
        AND sv.samsara_vehicle_id = u.samsara_vehicle_id
       -- Live odometer from the Samsara stats-poll ingest (#1289): the webhook raw_payload is empty
       -- because we POLL, not webhook, so the current odometer must come from telematics.vehicle_latest_position.
+      -- C-21: also return captured_at so the UI can say "no odometer reading since <date>" when
+      -- odometer_mi is NULL (obdOdometerMeters feed dead since 2026-09-10) instead of a confident zero.
       LEFT JOIN telematics.vehicle_latest_position vlp
         ON vlp.operating_company_id = s.operating_company_id
        AND vlp.unit_id = s.unit_id
@@ -126,6 +131,7 @@ function mapDueRow(row: PmScheduleRow) {
     interval_days: row.interval_days,
     last_done_miles: row.last_done_miles,
     last_done_date: row.last_done_date,
+    odometer_reading_at: row.odometer_reading_at,
     ...evaluation,
   };
 }

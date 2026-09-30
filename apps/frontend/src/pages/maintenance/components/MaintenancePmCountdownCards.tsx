@@ -1,4 +1,5 @@
 import type { MaintPmDueRow } from "../../../api/maintenance";
+import { formatMilesRemainingHonest } from "../../../lib/odometerHonesty";
 
 type Props = {
   rows: MaintPmDueRow[];
@@ -21,14 +22,28 @@ const CARD_TYPES: PmCardType[] = [
 
 function formatCountdown(row: MaintPmDueRow | undefined) {
   if (!row) return "No active schedule";
+  // C-21 — never invent miles left when the live odometer feed is null (Samsara obdOdometerMeters
+  // dead since 2026-09-10). Prefer an honest "no odometer reading since <date>" over "0 mi left".
+  const milesHonesty = formatMilesRemainingHonest({
+    milesRemaining: row.miles_remaining,
+    currentOdometerMi: row.current_odometer_mi,
+    odometerReadingAt: row.odometer_reading_at,
+  });
+  if (row.current_odometer_mi == null && milesHonesty) {
+    // Still allow a date-based countdown when the schedule has interval_days.
+    if (row.days_remaining != null) {
+      const isOverdue = row.days_remaining < 0;
+      if (isOverdue) return `Overdue now · ${milesHonesty}`;
+      return `${Math.max(0, row.days_remaining)} day${Math.max(0, row.days_remaining) === 1 ? "" : "s"} left · ${milesHonesty}`;
+    }
+    return milesHonesty;
+  }
   const isOverdue = (row.days_remaining ?? 0) < 0 || (row.miles_remaining ?? 0) < 0;
   if (isOverdue) return "Overdue now";
   if (row.days_remaining != null) {
     return `${Math.max(0, row.days_remaining)} day${Math.max(0, row.days_remaining) === 1 ? "" : "s"} left`;
   }
-  if (row.miles_remaining != null) {
-    return `${Math.max(0, row.miles_remaining).toLocaleString()} mi left`;
-  }
+  if (milesHonesty) return milesHonesty;
   return "Countdown unavailable";
 }
 

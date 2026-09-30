@@ -191,6 +191,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         rows: Array<{
           id: string;
           odometer_mi: number | null;
+          odometer_reading_at?: string | null;
           next_due_odometer: number | null;
           open_wo_count: number;
           work_order_id: string | null;
@@ -207,6 +208,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
   const maintByUnit = useMemo(() => {
     const m: Record<string, {
       odometer_mi: number | null;
+      odometer_reading_at: string | null;
       next_due_odometer: number | null;
       open_wo_count: number;
       work_order_id: string | null;
@@ -218,6 +220,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
     for (const r of maintStatusQuery.isError ? [] : maintStatusQuery.data?.rows ?? [])
       m[r.id] = {
         odometer_mi: r.odometer_mi,
+        odometer_reading_at: r.odometer_reading_at ?? null,
         next_due_odometer: r.next_due_odometer,
         open_wo_count: r.open_wo_count,
         work_order_id: r.work_order_id,

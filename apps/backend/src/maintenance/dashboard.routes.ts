@@ -489,6 +489,11 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
         ? `(SELECT vlp.odometer_mi FROM telematics.vehicle_latest_position vlp
              WHERE vlp.unit_id = u.id AND vlp.operating_company_id = $1::uuid)`
         : `NULL::double precision`;
+      // C-21 — position capture time even when odometer_mi is NULL (honest "since <date>" UI).
+      const odoAtExpr = hasVlp
+        ? `(SELECT vlp.captured_at::text FROM telematics.vehicle_latest_position vlp
+             WHERE vlp.unit_id = u.id AND vlp.operating_company_id = $1::uuid)`
+        : `NULL::text`;
       const pmExpr = hasPm
         ? `(SELECT MIN(ps.next_due_odometer) FROM maintenance.pm_schedules ps
              WHERE ps.unit_id = u.id AND ps.is_active AND ps.next_due_odometer IS NOT NULL)`
@@ -545,6 +550,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
             u.qbo_vendor_id,
             u.samsara_vehicle_id,
             ${odoExpr} AS odometer_mi,
+            ${odoAtExpr} AS odometer_reading_at,
             ${pmExpr} AS next_due_odometer,
             COALESCE(in_shop.open_wo_count, 0)::int AS open_wo_count,
             in_shop.work_order_id,
