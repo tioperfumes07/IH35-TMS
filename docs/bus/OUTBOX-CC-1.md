@@ -580,3 +580,61 @@ per row, with no supporting index, is expensive at this row count. The rules-onl
 fast (~0.4s/row, live-measured) and is what actually ran. The fuzzy-match backlog pass is a separate,
 future task that needs either a trigram index on `mdata.vendors.vendor_name` or a batched query
 shape before it's safe to run company-wide -- flagged, not built here.
+
+## ROUND 302 A-35 — THE $1,050 ESCROW GL GAP, NAMED IN FULL. NOTHING ADJUSTED.
+CC-2's B-34 sub-ledger total ($2,375.00 across driver_finance.escrow_balances.current_balance_cents)
+confirmed exact by re-summing it independently: 237500 cents. The per-driver GL total across every
+`2100-00-*` "— Driver Escrow" liability account (accounting.journal_entry_postings, signed
+credit-positive) sums to $1,325.00 -- a $1,050.00 shortfall, matching the order's own figure to the
+cent. Matched every one of the 18 live escrow_balances rows to its GL account by driver name
+(no FK exists between driver_finance.escrow_balances and catalogs.accounts -- name-matched, and that
+absence of a real link is itself part of the finding). The $1,050.00 decomposes into exactly these
+named pieces, summing back to the cent:
+**Six real, unambiguous rows where the GL account exists, is correctly the only escrow account for
+that driver, and simply falls short of the sub-ledger (a missing or short posting, not a data-
+quality artifact):**
+  PEDRO ABRAHAM LOPEZ COLLADO   (2100-00-008): sub-ledger $200.00, GL $100.00 -- short $100.00
+  JOSE ANTONIO VICENTE MARTINEZ (2100-00-026): sub-ledger $375.00, GL $250.00 -- short $125.00
+  LUIS ARMANDO SOSA PEREZ       (2100-00-001): sub-ledger $250.00, GL $150.00 -- short $100.00
+  HUGO GAYTAN                   (2100-00-022): sub-ledger $250.00, GL $150.00 -- short $100.00
+  GENARO GUERRERO CHAVEZ        (2100-00-023): sub-ledger $400.00, GL $275.00 -- short $125.00
+  RUBEN PEDRO PEREZ GARCIA      (2100-00-030): sub-ledger $50.00,  GL $0.00   -- short $50.00
+  Subtotal: $600.00 short.
+**One offsetting row, GL OVER the sub-ledger (partially masking the total gap):**
+  ANGEL ALFONSO SOSA            (2100-00-024): sub-ledger $125.00, GL $175.00 -- GL over by $50.00
+**Three rows where the root cause is a DUPLICATE OR SPLIT DRIVER RECORD, not a missing posting --
+named individually, not netted away:**
+  ALFONSO HIDALGO CHAVEZ -- TWO live driver_id rows (dcd683f5-b8a1-46a8-aa6b-093732e70b92, sub-ledger
+    $0.00; 40823a77-d8d4-481c-88cb-1387556aa98e, sub-ledger $250.00) both name-match the SAME single
+    GL account 2100-00-006 ($75.00). Combined sub-ledger $250.00 vs one GL account $75.00 -- short
+    $175.00. The GL account cannot represent two driver records at once; this needs a driver-record
+    dedupe decision, not a GL fix.
+  LEONEL ANTONIO MORALES -- one driver_id (5dd518ff-db91-429f-b651-a71b5f0db672, sub-ledger $400.00)
+    name-matches TWO different GL accounts: 2100-00-003 "Leonel Antonio Morales NOGUEZ -- Driver
+    Escrow" ($0.00) and 2100-00-040 "Leonel Antonio Morales -- Driver Escrow" ($275.00). The
+    "Noguez" surname variant is a second account for what all live activity indicates is the same
+    person. Combined GL $275.00 vs sub-ledger $400.00 -- short $125.00.
+  ANGEL ALFONSO SOSA PEREZ (driver_id 52037e93-484a-4659-ab60-cf2a78f4c647, sub-ledger $200.00) --
+    NO escrow GL account exists for this driver_id at all (confirmed: no catalogs.accounts row name-
+    matches). Likely the same real person as "ANGEL ALFONSO SOSA" above (a second, separate driver
+    record) but named as its own line since that identity question is not decided here. Short
+    $200.00 in full (100% of this driver's sub-ledger balance has no GL representation whatsoever).
+  Subtotal: $500.00 short.
+**Reconciliation: $600.00 - $50.00 + $175.00 + $125.00 + $200.00 = $1,050.00 exactly.**
+**NOT adjusted, per the order:** no journal entry posted, no GL balance changed, no driver record
+merged or renamed. This is a locate-and-name report only.
+**One of the six clean gaps traced to its actual document, as an example of the method:** PEDRO
+ABRAHAM LOPEZ COLLADO's `driver_finance.escrow_ledger` shows the $100.00 gap is Settlement 5772
+(`settlement_id` 2672c3a7-3569-41b8-ab31-1429a7439907): a $100.00 escrow hold was posted, then
+REVERSED same-day under "ACCT-F20260924 tie pure-Aug 5769-5796 to AlwaysTrack total_due /
+settlement_control", then a second $100.00 hold was posted immediately after (2026-09-25T00:11:22Z)
+to replace it. The sub-ledger correctly reflects this final $100.00 hold; the GL evidently only ever
+posted a journal entry for the FIRST (reversed) hold, never for the corrective second one -- the
+ACCT-F20260924 remediation pass touched the sub-ledger but not the GL side of this specific driver.
+**What actually needs a decision before the rest can be closed:** (1) the driver-record duplicates
+(Alfonso Hidalgo Chavez, Leonel Antonio Morales/Morales Noguez, Angel Alfonso Sosa/Sosa Perez) need
+an owner or CC-2 ruling on which driver_id is canonical before any escrow correction can even be
+addressed to the right person; (2) the remaining five clean short-GL drivers (Jose Antonio Vicente
+Martinez, Luis Armando Sosa Perez, Hugo Gaytan, Genaro Guerrero Chavez, Ruben Pedro Perez Garcia)
+need the same `driver_finance.escrow_ledger` trace Pedro's got -- not done here for all five given
+the size of this report, but the method above is proven and repeatable.
