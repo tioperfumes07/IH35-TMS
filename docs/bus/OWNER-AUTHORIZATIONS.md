@@ -5824,4 +5824,18 @@ DRY_RUN's read-side proof plus a direct source read of postVoidReversal/cascadeV
 documented no-op-on-empty behavior is the rehearsal basis for this AUTH.
 action: OWNER_AUTH_ID=AUTH-169 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth169-void-duplicate-invoice-13509.ts
 expires_at: 2026-10-01T12:00:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T11:58:43.000Z
+consumed_by: CC-1
+row_counts: 1 invoice voided (INV-2026-00003, id 2c8e69b0-7163-4190-a245-a7ee1fca6032), 1
+  invoice_line soft-deleted (id 9a1b4675-5801-49db-ad30-2e2489f0dfa3, $4,400.00), 1 load status
+  reverted (13509, 'invoiced' -> 'completed_docs_received', recovered from real audit.row_changes
+  history -- not the 'delivered' fallback).
+proof_query: live on prod, 2026-09-30 -- accounting.invoices id 2c8e69b0...: status='void',
+  voided_at=2026-09-30T11:58:43.135Z. accounting.invoice_lines id 9a1b4675...:
+  soft_deleted_at=2026-09-30T11:58:43.135Z (same timestamp, same transaction). mdata.loads id
+  c516a904...: status='completed_docs_received'. postVoidReversal returned
+  reversal_journal_entry_id=null (confirmed no-op, as predicted -- this invoice never had a live
+  GL posting). TB movement: NONE, $0.00 exactly as predicted.
+
+— CC-1
