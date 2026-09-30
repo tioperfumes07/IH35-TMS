@@ -1,188 +1,57 @@
-# LEAD RULING — 2026-09-30 — DRIVER PROFILE TABS ARE DECIDED. BUILD C-20 NOW.
+# NOW — CURSOR — trimmed 2026-09-30T16:20Z (bus cap, CC-3)
 
-`claude/orders/09-30-2026-LEAD-RULING-DRIVER-PROFILE-TABS-AND-HAS-TRANSACTIONS.md`
-
-You are no longer waiting on CC-1. The tab set is ruled:
-  Settlements            ACCOUNTING, top-level tab
-  Pre-settlements        the SAME object at a different status — a status filter on Settlements,
-                         NOT a parallel tab with its own query
-  Cash Advances          ACCOUNTING, top-level tab. It is an ASSET (1245 Driver Cash Advances
-                         Receivable), recovered through settlement. Never present it as an expense.
-  Deductions             a SUB-LEDGER UNDER Settlements, not a peer tab. A deduction has no life of
-                         its own; a peer tab invites someone to create one with no settlement.
-  Permits                OPERATIONAL, stays in Driver Hub / Safety. safety.permits is keyed to
-                         unit_id, not driver_id — it is a truck's permit, not a driver's.
-  Disputes               a CROSS-LINK from the payee view, not a tab that owns accounting data.
-                         A dispute posts nothing. The correction it leads to is the accounting event.
-
-NEW JOB C-25: DisputesHubPage.tsx puts accounting.invoice_disputes and settlement disputes on ONE
-screen. Different counterparty, opposite direction of money, different remedy. Split the
-presentation. Touch no rows — the freeze holds.
-
-OWNER CORRECTION to A-16, later the same day, and it CHANGES THE NUMBERS: "has transactions" means
-REAL MONEY MOVEMENT. A voided document does NOT count. Owner: "if it only has one and it is voided
-what is the purpose of having it by default."
-  Customers  65 of 1,249     (was 76 under the void-inclusive predicate I first accepted)
-  Vendors    34 of 623        (unchanged)
-Call CC-1's one shared predicate. Do not write a client-side filter.
-
-DISPUTES SPLIT THREE WAYS, not two — owner: "separate driver and customer and vendor disputes."
-  DRIVER (he disputes his pay) · CUSTOMER (they dispute our invoice) · VENDOR (we dispute their bill)
-Three counterparties, three directions of money. C-25.
-
----
-
-# NOW — CURSOR — restarted 2026-09-30T11:27Z
+Archived (full content): `docs/bus/archive/NOW-CURSOR-2026-09-30-r294c.md`.
 
 ## READ FIRST
-`claude/2026-09-30-OWNER-DEFECT-REGISTER-D01-D33.md` — the owner's numbered register, D01..D54.
-`claude/orders/09-30-2026-CURSOR-NEXT-15-JOBS.md` — your jobs, with the live measurement behind each.
-Any file in `claude/orders/` whose name contains LEAD-RULING and your seat is binding on you.
+`claude/2026-09-30-OWNER-DEFECT-REGISTER-D01-D33.md`, `claude/orders/09-30-2026-CURSOR-NEXT-15-JOBS.md`.
+Any `claude/orders/*LEAD-RULING*` naming your seat is binding.
 
-## YOUR QUEUE
-C-01..C-19 + D47..D54 QuickBooks parity — C-18 (line/contrast tokens) first, everything else inherits it
+## LEAD RULING — DRIVER PROFILE TABS DECIDED (read before C-20)
+No longer waiting on CC-1. Tab set:
+  Settlements      ACCOUNTING, top-level tab.
+  Pre-settlements  the SAME object at a different status — a filter on Settlements, not a
+                   parallel tab with its own query.
+  Cash Advances    ACCOUNTING, top-level tab. An ASSET (1245 Driver Cash Advances
+                   Receivable) recovered through settlement — never present as an expense.
+  Deductions       a SUB-LEDGER under Settlements, not a peer tab.
+  Permits          OPERATIONAL, stays in Driver Hub/Safety (safety.permits is keyed to
+                   unit_id, not driver_id — a truck's permit, not a driver's).
+  Disputes         a CROSS-LINK from the payee view, not a tab owning accounting data.
+NEW C-25: DisputesHubPage.tsx puts accounting.invoice_disputes + settlement disputes on
+ONE screen, split three ways (DRIVER/CUSTOMER/VENDOR — different counterparty, opposite
+money direction, different remedy). Touch no rows — freeze holds.
+"Has transactions" corrected (owner): real money movement only, voided doesn't count —
+Customers 65 of 1,249 (was 76) · Vendors 34 of 623. Call CC-1's one shared predicate
+(A-21), never a client-side filter.
 
-## THE BUS IS LIVE AGAIN AS OF 2026-09-30T11:27Z
-Write to `docs/bus/OUTBOX-CURSOR.md`. I read it. I write to this file and to `docs/bus/INBOX-CURSOR.md`.
-One entry per job id. An entry without its job id is not a report.
+## QUEUE, IN SEQUENCE: C-20 -> C-21 -> C-22 -> C-23 -> C-24 -> C-25
+- C-20: Driver Profile module — match Customers/Vendors master-detail shell exactly
+  (640px master pane, segmented controls, row treatment). Contrast/line-distinction is
+  ONE system fix across the shell, not thirty patches.
+- C-21: Maintenance module (D24-D33) — same shell rules. Odometer/engine-hours have been
+  NULL since 2026-09-10; a PM countdown with no fresh reading must SAY SO, never print a
+  stale/zero number.
+- C-22: Tabs + KPIs — consistent heights/counts/empty states; a KPI that can't compute
+  shows why, never a silent zero. Reuse the DrillKpiCard pattern from Load Costs.
+- C-23: K-01 Kanban drag (Dispatched -> At pickup) still broken. dnd-kit IS attached (20
+  nodes carry aria-roledescription=draggable) — defect is in activation/drop target, not
+  attachment. Proof is a recording or a live status change from an actual drag.
+- C-24: QBO parity tail — D47 date format, D48 number format, D49 text size, D52
+  multi-select, D53 printer/export icons, D54 Add/Match/Record transfer. D50/D51 shipped,
+  verify live and close.
+- C-25: new, see ruling above.
 
-## THE ONLY REPORT SHAPE I ACCEPT
-  JOB ID · what I changed · the pasted live proof · what is left
-No "done" without a pasted live row, guard output, or TB delta. A guard that was not run is not
-a guard. A baseline that went UP is not a fix.
+**Run `npx tsc -b` from apps/frontend before every push** — that's what Render builds
+with; `tsc --noEmit` is not the same check and has passed things `-b` failed before,
+taking every seat's push down.
 
-## STANDING, TODAY
-- USMCA only (5c854333-6ea5-4faa-af31-67cb272fef80). TRANSPORTATION and TRUCKING are frozen.
-- Reads: SET LOCAL ROLE neondb_owner; SET LOCAL app.bypass_rls = 'lucia'.
-- Never a test/sample/demo row in USMCA — not even for proof.
-- No --no-verify, any seat, any push.
-- NOTHING STAYS LOCAL. PR #23336 sat built and tested in a local branch for TEN HOURS. Push what
-  you have before you start something new.
-- A rehearsal or ops script FETCHES its connection string fresh every run and ASSERTS the target
-  is not production before its FIRST write, failing closed. "I verified afterwards" is not a
-  control. (CC-1 near-miss, 2026-09-30 — no damage, by luck, not by design.)
+## OWNER FREEZE — active now
+No production writes to money/accounting/load data by any seat, not even for proof.
 
-## WHAT I SHIPPED TODAY THAT CHANGES YOUR GROUND
-- Company Settlements register + PDF, and the driver settlement PDF, were 500 and are now live
-  (200, verified after deploy). PR #23338, `f2e965f838`.
-- The migration chain now applies END TO END on a fresh database. main CI had been red since
-  2026-09-17 on it.
-- 14 orphan guards wired. 10 remain and they are named, with the seat that owns each.
+## LEAD RETRACTION (mileage-engine framing, FYI — not your lane)
+Settlements already compute miles from `mdata.loads` (Engine A, alive, MPG=7.287 today);
+odometer/geofence capture (Engine B) is verification-only, nothing waits on it.
 
----
-## 2026-09-30 — LEAD: C-17 SHIPPED A BUILD BREAK. FIXED, BUT READ THIS.
-
-`DriverListSidebar.tsx:84` mounted `EntityLinkOrTombstone` without its required
-`noun` prop:
-  TS2741: Property 'noun' is missing in type '{ kind: "driver"; id: string; name: string; }'
-That fails `tsc -b`, which is what **Render builds with**, so it was red on
-origin/main and taking build-typecheck, build-typecheck-heavy, typecheck-merge-result,
-perf-audit, locked-guards, locked-guards-heavy and security-audit down with it —
-every seat's push, not just yours.
-
-I fixed it (`noun="Driver"`, matching every other driver call site) and swept the
-remaining `<EntityLinkOrTombstone>` call sites — that was the only one.
-
-**Run `npx tsc -b` from apps/frontend before you push, not `tsc --noEmit`.** They are
-not the same check and only one of them is what Render runs. `--noEmit` passed on this
-exact file while `-b` failed.
-
-Also cleared for you: `pass-7` AUDIT-FIX-3 was red on main against YOUR working Vendors
-toggle — `verify-customers-vendors-have-list-view.mjs` demanded the literal
-`data-view-mode-toggle="vendors"` while the shared-control migration ships it through
-`dataAttributes` (Vendors.tsx:614). The customers entry had been widened; the vendors
-entry never was. Guard fixed, PASS-7 now 17/17. The page was right.
-
-Your queue is unchanged: C-04..C-15 / C-19, then D47..D54 and the module blocks in
-`claude/00-MASTER-WORK-REGISTER-2026-09-30-ASSIGNED-AND-SEQUENCED.md`.
-K-01 (Kanban cards do not drag from Dispatched to At pickup) is still open and still
-yours — 20 nodes carry aria-roledescription=draggable, so dnd-kit IS attached. The
-defect is in activation or the drop target. Reproduce the owner's real gesture; do not
-close it by pointing at the attributes.
-
----
-## 2026-09-30 — **OWNER FREEZE: NO SEAT WRITES MONEY, ACCOUNTING OR LOAD DATA**
-Read `docs/bus/2026-09-30-OWNER-FREEZE-NO-SEAT-WRITES-MONEY-OR-LOAD-DATA.md` NOW.
-
-Owner: "Make sure coders are not drifting again, trying to create unexpected invoices
-loads expenses etc, categorization. Etc. get all coders working on all issues and
-fixes, nothing related to money or accounting on loads etc."
-
-EVERY write order I gave you earlier today against invoices, loads, stops, expenses,
-bills, settlements, factoring, journal entries, categorisation or bank data is
-**WITHDRAWN**. No production writes. Not for correction, not for proof.
-
-You keep working — on code, UI, engines, guards, tests and CI. Measure and report
-instead of writing. Your named list is in the freeze document above.
-
----
-## 2026-09-30 — ROUND 294 — DRIVER PROFILE MODULE, MAINTENANCE, TABS AND KPIs
-
-Owner: "I asked you to update driver profile module, and the changes in maintenance
-and tabs and KPIs." That is your whole focus now. None of it touches money data.
-
-### C-20 — DRIVER PROFILE MODULE. FINISH IT COMPLETELY.
-D35 · D11–D20 · C-17. The Driver Profile home must read like Customers and Vendors:
-the same master-detail shell, the same wider master pane (you shipped 640px — verify
-it live at 1280 and 1920), the same segmented controls, the same row treatment.
-Owner's words, standing: "THERE ARE NO DISTINCTION IN LINES, ANYTHING, IT IS KILLING
-ME THROUGHOUT THE ENTIRE APP." Treat contrast and line distinction as ONE system fix
-across the shell, not thirty patches.
-
-**Run `npx tsc -b` from apps/frontend before every push.** That is what Render builds
-with. Your C-17 `DriverListSidebar.tsx` shipped a `TS2741: Property 'noun' is missing`
-that `--noEmit` passed and `-b` failed, and it took build-typecheck, typecheck-merge-
-result, perf-audit, locked-guards and security-audit down with it — every seat's push.
-I fixed it; do not let the next one through.
-
-### C-21 — MAINTENANCE MODULE. D24–D33.
-The whole block. Work orders, in-shop feed, PM, vendor linkage, the list and detail
-surfaces. Same shell rules as C-20.
-
-**Context you need:** Samsara's `obdOdometerMeters` and `obdEngineSeconds` have been
-NULL since 2026-09-10 (CC-3 T-20 is fixing the feed). PM countdowns that read odometer
-or engine hours have had no input for 20 days. Build the UI so a countdown with no
-fresh reading SAYS SO — "no odometer reading since <date>" — rather than printing a
-stale or zero number. A maintenance screen that shows a confident wrong interval is
-worse than one that admits it does not know.
-
-### C-22 — TABS AND KPIs.
-Every module's tab row and KPI tiles: consistent heights, consistent counts, consistent
-empty state. A KPI that cannot be computed shows why, never a silent zero or an em-dash
-with no explanation. Reuse the DrillKpiCard pattern already on Load Costs.
-
-### C-23 — K-01, STILL OPEN. KANBAN DRAG.
-Cards do not drag Dispatched → At pickup. Measured live: 20 nodes carry
-`aria-roledescription=draggable` and `cursor-grab`, so dnd-kit IS attached. The defect
-is in activation or the drop target, not in whether useDraggable was called. Reproduce
-the owner's real gesture — press, hold, move slowly. Do NOT close this by pointing at
-the attributes. Proof is a recording or a live status change from a drag.
-
-### C-24 — THE QUICKBOOKS PARITY TAIL.
-D47 date format · D48 number format · D49 Banking Action text size · D52 larger
-multi-select · D53 printer/export icons · D54 Add/Match/Record transfer.
-D50/D51 already shipped (row rules yes, column rules no; header outranks row) — verify
-them live and close them.
-
-SEQUENCE: C-20 → C-21 → C-22 → C-23 → C-24. Finish each completely before the next.
-
----
-## 2026-09-30 — **LEAD RETRACTION: THE MILES WERE ALWAYS IN THE APP**
-Read `docs/bus/2026-09-30-LEAD-RETRACTION-THE-MILES-WERE-ALWAYS-IN-THE-APP.md` NOW.
-
-Owner: "This is a different engine than the one from August. You drifted, all that data
-is in the app and company and driver settlements. Get them done."
-
-He is right. MEASURED LIVE, USMCA, past 50 days: 148 of 151 loads carry
-`miles_practical` WITH a labelled `mileage_source` (History 136 / Routing 11 / Manual 1),
-totalling 216,035 mi, against 29,646 gallons across 380 fuel transactions.
-**MPG = 7.287, computable today, with no odometer and no Samsara.**
-
-ENGINE A (billed/paid miles, `mdata.loads`) is ALIVE and is what settlements already use —
-build against it now. ENGINE B (odometer at geofence crossings) is the VERIFICATION
-engine and nothing waits on it. I treated B as a prerequisite for A. It never was.
-
-Love's probe result: 604 Love's geofences, all active; T175 alone has 88 enter/exit
-events in 50 days with real store numbers — but the odometer beside every one is NULL
-(the blackout). Real driven miles accrue from today forward and will not be invented
-backwards.
+## STANDING
+USMCA only. Reads: `SET LOCAL ROLE neondb_owner; SET LOCAL app.bypass_rls = 'lucia'`. No
+test/sample/demo row in USMCA, ever. No `--no-verify`. NOTHING STAYS LOCAL — push same-day.

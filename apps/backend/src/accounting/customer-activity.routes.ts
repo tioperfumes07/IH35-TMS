@@ -11,7 +11,11 @@ import { getCustomerActivity } from "./customer-activity.service.js";
 // assertCompanyMembership, and the service sets app.operating_company_id under withCurrentUser.
 
 const idParamsSchema = z.object({ customerId: z.string().uuid() });
-const activityQuerySchema = companyQuerySchema;
+const activityQuerySchema = companyQuerySchema.extend({
+  status: z.string().trim().optional(),
+  from_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  to_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
 
 function canAccessActivity(role: string) {
   return role === "Owner" || role === "Administrator" || role === "Manager" || role === "Accountant";
@@ -37,6 +41,9 @@ export async function registerCustomerActivityRoutes(app: FastifyInstance) {
         userId: user.uuid,
         operating_company_id: query.data.operating_company_id,
         customer_id: params.data.customerId,
+        status: query.data.status,
+        from_date: query.data.from_date,
+        to_date: query.data.to_date,
       });
       if (!result) return reply.code(404).send({ error: "customer_not_found" });
       return reply.code(200).send(result);
