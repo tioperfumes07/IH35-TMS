@@ -89,3 +89,9 @@ Bound-param pin + counts on main. LEFT: Lead Chrome 65/34 after backend deploy. 
 
 **2026-09-30T23:20Z · C-51 BANKING HOME + DRIVER ESCROW · branch `cursor/c51-banking-home-escrow-c89b`**
 C-51 · what changed: BANKING_MODULE_TABS first tab label **Home** (id stays `accounts`); `BankingHomeAttentionStrip` surfaces buried live facts (931/947 uncat, 0/8 reconciled, 3/8 Cash GL unbound, QBO not connected, Escrow liability pool) with CTAs; Driver Escrow liability honesty banner + Home↔Escrow↔Settlements links. Ops: `scripts/ops/verify-c51-banking-home-escrow.mjs`. Neon: uncat 931/947, unbound 3/8, ever_reconciled 0, escrow $2,375. · LEFT: Lead Chrome Home attention strip; Transactions still deferred per queue. NEXT: C-52 alerts side-dock.
+
+**2026-09-30T23:14Z · C-51 MERGED · PR #23549 · `fe8fde44b7`**
+Home attention strip + Escrow liability on main. NEXT: C-52 alerts side-dock.
+
+**2026-09-30T23:25Z · C-52 ALERTS SIDE-DOCK · branch `cursor/c52-alerts-side-dock-c89b`**
+C-52 · Toast house side-dock (bottom-right, smaller, rounded-sm, dismiss, no layout shift); Customers/Vendors view-mode save errors fixed side-dock. Ops: verify-c52-alerts-side-dock. NEXT after merge: C-53 recon shell.

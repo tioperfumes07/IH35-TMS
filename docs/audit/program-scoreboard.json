@@ -1,10 +1,10 @@
 {
-  "healthzSha": "2ff1b25",
-  "generated_at": "2026-09-30T17:08:14.644Z",
+  "healthzSha": "e8b138e",
+  "generated_at": "2026-09-30T23:17:34.727Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "2ff1b25",
+    "deployedSha": "e8b138e",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 23450,
-      "title": "fix(deploy): P0 second block — 202614720000 applied from bytes that exist in no branch",
+      "number": 23553,
+      "title": "FINDING: N/A LANE: DOCS -- ROUND 301 T-35: close DAMAGE-WO-UNITS-ZERO-ASSIGNMENT-COVERAGE-2026093006 VOID",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 12:00 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23450",
-      "sha": "2ff1b25882",
-      "committedAtIso": "2026-09-30T12:00:24-05:00"
+      "mergedAtCt": "09/30/2026, 06:16 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23553",
+      "sha": "77b1e2ff0e",
+      "committedAtIso": "2026-09-30T18:16:55-05:00"
     },
     {
-      "number": 23448,
-      "title": "FINDING: N/A LANE: DOCS (file MIGR-COLLISION-01 -- 4 migration number collisions + 6 missing .sql files on prod ledger)",
+      "number": 23551,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL (CLAIM-RESERVE: verify-step 11983 for ROUND 301 B-32)",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 11:57 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23448",
-      "sha": "0ef434e8c4",
-      "committedAtIso": "2026-09-30T11:57:28-05:00"
+      "mergedAtCt": "09/30/2026, 06:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23551",
+      "sha": "b7d119ccde",
+      "committedAtIso": "2026-09-30T18:15:01-05:00"
     },
     {
-      "number": 23439,
-      "title": "Claude-1-A21-shared-has-transactions-predicate",
+      "number": 23550,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL -- ROUND 301 T-34: Arriving Soon feed gains geofence state (backend)",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 11:57 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23439",
-      "sha": "d166832f7e",
-      "committedAtIso": "2026-09-30T11:57:20-05:00"
+      "mergedAtCt": "09/30/2026, 06:14 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23550",
+      "sha": "aca76faf2f",
+      "committedAtIso": "2026-09-30T18:14:41-05:00"
     },
     {
-      "number": 23447,
-      "title": "fix(deploy): P0 — two APPLIED migrations were edited; every production deploy is blocked",
+      "number": 23549,
+      "title": "FINDING: BANK-F05",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 11:54 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23447",
-      "sha": "1eeeb83dc0",
-      "committedAtIso": "2026-09-30T11:54:59-05:00"
+      "mergedAtCt": "09/30/2026, 06:14 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23549",
+      "sha": "fe8fde44b7",
+      "committedAtIso": "2026-09-30T18:14:09-05:00"
     },
     {
-      "number": 23431,
-      "title": "fix: T-01/T-01b arrival engine, S-01 settlement legs, M-01 company MPG, and the three main-red blockers",
+      "number": 23548,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL -- ROUND 301 T-33: fault codes into the maintenance alert chain",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 11:49 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23431",
-      "sha": "80bab30d0b",
-      "committedAtIso": "2026-09-30T11:49:11-05:00"
+      "mergedAtCt": "09/30/2026, 06:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23548",
+      "sha": "e8b138e4ea",
+      "committedAtIso": "2026-09-30T18:09:30-05:00"
     },
     {
-      "number": 23432,
-      "title": "FINDING: N/A LANE: FINANCIAL -- exempt G2 adjusting JE from handwritten-cost-JE guard via its real settlement_line_item_splits backing",
+      "number": 23547,
+      "title": "FINDING: GATE-HANG-TWO-LIVE-GUARDS-BLOCK-EVERY-SEAT-2026093010 LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 11:45 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23432",
-      "sha": "b7de332973",
-      "committedAtIso": "2026-09-30T11:45:09-05:00"
+      "mergedAtCt": "09/30/2026, 06:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23547",
+      "sha": "ad6a9c2ef3",
+      "committedAtIso": "2026-09-30T18:09:03-05:00"
     },
     {
-      "number": 23445,
-      "title": "FINDING: N/A LANE: DOCS -- board finding: 4 migration-filename-collision pairs are pre-existing, already applied, dangerous to rename",
+      "number": 23546,
+      "title": "FINDING: C-50 Customers/Vendors With-txn/All = 0 while Neon 65/34",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 11:43 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23445",
-      "sha": "2e7fb37010",
-      "committedAtIso": "2026-09-30T11:43:42-05:00"
+      "mergedAtCt": "09/30/2026, 06:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23546",
+      "sha": "f5a3226f14",
+      "committedAtIso": "2026-09-30T18:04:13-05:00"
     },
     {
-      "number": 23441,
-      "title": "Claude-1-fix: CANONICAL-CHECK gaps + live downtime schema grant gap",
+      "number": 23545,
+      "title": "FINDING: PWA-LIVE-T122-STALE-SAMSARA-ID-JOIN-MISS LANE: NON-FINANCIAL -- ROUND 301 T-31/T-32 dry-run reports",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 11:39 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23441",
-      "sha": "52eff7a2ef",
-      "committedAtIso": "2026-09-30T11:39:45-05:00"
+      "mergedAtCt": "09/30/2026, 06:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23545",
+      "sha": "4f97b0882d",
+      "committedAtIso": "2026-09-30T18:02:48-05:00"
     },
     {
-      "number": 23434,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL -- exempt orphan guard verify-match-candidates-are-settlement-born-only, no code change",
+      "number": 23544,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL -- ROUND 301 T-30: harsh-events/dashcam poll fallback",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 11:35 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23434",
-      "sha": "f0e66711e4",
-      "committedAtIso": "2026-09-30T11:35:14-05:00"
+      "mergedAtCt": "09/30/2026, 05:58 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23544",
+      "sha": "cc6824ecdf",
+      "committedAtIso": "2026-09-30T17:58:15-05:00"
     },
     {
-      "number": 23443,
-      "title": "FINDING: N/A LANE: DOCS (claim-reserve migration 202614740000 -- T-21 geofence odometer captures)",
+      "number": 23543,
+      "title": "FINDING: N/A LANE: DOCS (OUTBOX: URGENT -- 5 merged CC-1 migrations not yet applied to prod)",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 11:29 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23443",
-      "sha": "4fd93f75c5",
-      "committedAtIso": "2026-09-30T11:29:06-05:00"
+      "mergedAtCt": "09/30/2026, 05:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23543",
+      "sha": "ecc21f5104",
+      "committedAtIso": "2026-09-30T17:57:10-05:00"
     }
   ]
 }
