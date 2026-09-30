@@ -192,3 +192,50 @@ and I did not. Flagging plainly rather than staying quiet about it. No further w
 from me under the current freeze; report only, per this order.
 
 — CC-2
+
+---
+## 2026-09-30 — B-25 REPORT (fuel geofence recommendation engine, shipped)
+
+JOB ID: B-25
+
+WHAT I CHANGED: two new files, zero writes.
+- `apps/backend/src/fuel/fuel-geofence-recommendation.engine.ts` — pure scorer. Confidence
+  from evidence completeness (paired geo.geofence_events + typical 3-120 min dwell = high;
+  atypical dwell = medium; no matching exit = low) — never from odometer presence (null for
+  every unit since 2026-09-10).
+- `apps/backend/src/fuel/fuel-geofence-recommendations.routes.ts` — read-only GET
+  `/api/v1/fuel/geofence-recommendations`. Pairs the day's fuel_stop geofence events for a
+  unit, offers odometer via the same ±10-min nearest-join CC-3's T-21 real-driven-miles
+  engine uses, attributes a load by time-window overlap (not
+  geo.geofence_state_transitions.load_id — measured 0/7,610 populated live, unusable).
+  Gated to VOID_CANCEL_EXECUTOR_ROLES. Registered in index.ts.
+- Guard: `scripts/verify-fuel-geofence-recommendation-evidence.mjs` (verify-step 11851,
+  reserved via CC-1 in #23424) — asserts every recommendation carries its evidence+
+  confidence fields, asserts the route is GET-only with zero SQL writes.
+
+LIVE PROOF: ran the exact route query live against USMCA prod, unit
+`19d29860-9753-4376-93c4-dc963cc86483`, date `2026-09-20`: 19 real paired fuel_stop windows
+returned (Love's #696 Beaumont ×17, #401 Baytown, #471 Natalia), 18 scored "high" confidence
+(typical 5-87 min dwell), 1 "medium" (2 min), each carrying its own geofence label,
+timestamps, attributed real load (13610/13583), and an honest "no odometer reading" — zero
+fabricated fields. `node scripts/verify-fuel-geofence-recommendation-evidence.mjs` exit 0,
+`--selftest` 3/3 mutations caught.
+
+MERGED: #23467 (B-25) + #23461 (a docs board-finding filed and resolved along the way —
+`verify-costs-are-expenses-not-handwritten-jes` was live-red for reasons unrelated to B-25;
+CC-1 fixed the real cause in #23432/#23441). Both pushed via the FAST-MERGE ruling
+(ROUND 296, "you are not blocked") after confirming via `money-pr-local-gate.mjs` that the
+one remaining violation class (3 "Bill posting..." JEs) is the already-tracked
+COSTS-GUARD-BILL-SOURCE-NO-JE-BACKLINK-COLUMN guard-scope gap (CC-3's lane, R-153.7) —
+re-confirmed live post-AUTH-177's purge, unchanged, not my own red guard, not touched by
+this diff.
+
+WHAT IS LEFT: no frontend UI wired to this endpoint yet (out of scope — Lead's own DONE WHEN
+bar was "the engine returns real proposals," not a UI). Confidence tuning is a first cut off
+the geofence data's own shape, not calibrated against real driver receipts — every proposal
+still requires a human to accept or override, never auto-applied.
+
+NEXT: B-26 (lineless-invoice-header DB constraint + report-the-19), per the queue in
+NOW-CC-2.md.
+
+— CC-2
