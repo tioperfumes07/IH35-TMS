@@ -25,7 +25,9 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { transitionDispatchLoad } from "../../api/dispatch";
 import type { DispatchStatus } from "../../api/dispatch";
+import { formatMoneyCents } from "../../components/dispatch/constants";
 import { LOCKED_BORDER, LOCKED_TEXT_SECONDARY } from "../../design/locked-baseline-tokens";
+import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
 import {
   getTruckLine,
   listLoadExceptionReasons,
@@ -797,8 +799,14 @@ export function TruckLineBoard({
   const catalogReady = query.data?.catalog_ready ?? false;
   const reasons = reasonsQuery.data?.reasons ?? [];
 
-  // LAW-5 rollup removed from this board's columns (ROUND 255 column order has no Net cell).
-  // Keep the rollup hook out so units-only / column guards stay green.
+  // LAW-5 (R-173): this board still wires useLoadCostRollups so every money figure it
+  // touches comes from load-cost-rollup.sql.ts. ROUND 255 / 155.6: Net is NOT a column and
+  // is not painted in the row — it only feeds the universal filter + load title tooltip.
+  const truckLineLoadIds = useMemo(
+    () => allGroups.flatMap((g) => g.legs.map((r) => r.load?.load_id).filter((id): id is string => !!id)),
+    [allGroups],
+  );
+  const costRollups = useLoadCostRollups(operatingCompanyId, truckLineLoadIds);
 
   const searchedGroups = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -806,6 +814,7 @@ export function TruckLineBoard({
     return allGroups
       .map((g) => {
         const legs = g.legs.filter((r) => {
+          const rollup = r.load?.load_id ? costRollups.get(r.load.load_id) : undefined;
           const haystack = [
             g.unit_number,
             g.tour_display_id,
@@ -822,6 +831,7 @@ export function TruckLineBoard({
             fmtApptDate(r.appointments?.delivery?.at),
             r.appointments?.pickup?.at,
             r.appointments?.delivery?.at,
+            rollup ? formatMoneyCents(rollup.net_cents) : null,
           ]
             .filter(Boolean)
             .join(" ")
@@ -832,7 +842,7 @@ export function TruckLineBoard({
         return { ...g, legs };
       })
       .filter((g): g is TruckLineGroup => g != null);
-  }, [allGroups, search]);
+  }, [allGroups, search, costRollups]);
 
   // Sort within each section; never merge sections or duplicate unit_ids across top-level groups.
   const groups = useMemo(() => {
@@ -1258,7 +1268,13 @@ export function TruckLineBoard({
                                 className="truck-line-v4-unit font-semibold text-[#0F1219] underline-offset-2 hover:underline"
                                 data-testid={`truck-line-load-${r.load.load_id}`}
                                 onDoubleClick={() => onLoadClick(r.load!.load_id)}
-                                title={`double-click opens load ${r.load.load_number ?? ""}`}
+                                title={
+                                  (() => {
+                                    const rollup = costRollups.get(r.load.load_id);
+                                    const net = rollup ? formatMoneyCents(rollup.net_cents) : "—";
+                                    return `double-click opens load ${r.load.load_number ?? ""}; net ${net} (Load Costs)`;
+                                  })()
+                                }
                               >
                                 {r.load.load_number}
                               </button>

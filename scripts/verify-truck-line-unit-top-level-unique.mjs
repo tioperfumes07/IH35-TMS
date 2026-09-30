@@ -60,8 +60,17 @@ function main() {
   if (!/label="TOUR \/ PRE-SETTLEMENT"/.test(boardSrc) || !/label="PU DATE"/.test(boardSrc) || !/label="DELIVERY DATE"/.test(boardSrc) || !/label="UNIT"/.test(boardSrc) || !/label="LOAD"/.test(boardSrc)) {
     problems.push("TruckLineBoard columns must be UNIT · TOUR / PRE-SETTLEMENT · LOAD · PU DATE · DELIVERY DATE (ROUND 255)");
   }
-  if (/truck-line-load-costs|useLoadCostRollups/.test(boardCode)) {
-    problems.push("TruckLineBoard must not show expenses/income (ROUND 155.6)");
+  // ROUND 255 + LAW-5: useLoadCostRollups MUST stay wired (verify-one-source-per-number).
+  // What 155.6 forbids is painting expenses/income/Net as a board column or row cell —
+  // not the canonical rollup hook itself.
+  if (/truck-line-load-costs|truck-line-net-|data-testid=\{`truck-line-net-/.test(boardCode)) {
+    problems.push("TruckLineBoard must not paint expenses/income/Net as a visible cell (ROUND 155.6 / 255)");
+  }
+  if (/\bNet\s*\{/.test(boardCode) || />\s*Net\s*</.test(boardCode) || />\s*Net\s*\{/.test(boardCode)) {
+    problems.push("TruckLineBoard must not render a visible Net label in the row (ROUND 155.6 / 255)");
+  }
+  if (!/useLoadCostRollups/.test(boardCode) || !/costRollups\.get\(r\.load\.load_id\)/.test(boardCode)) {
+    problems.push("TruckLineBoard must keep useLoadCostRollups + costRollups.get(r.load.load_id) (LAW-5 / R-173)");
   }
 
   // Pure duplicate-detection contract the grouper must keep (red fixture).
