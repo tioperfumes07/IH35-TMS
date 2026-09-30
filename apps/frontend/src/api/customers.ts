@@ -114,8 +114,14 @@ export type CustomerActivityRow = {
 export function getCustomerActivity(params: {
   operating_company_id: string;
   customer_id: string;
+  status?: string;
+  from_date?: string;
+  to_date?: string;
 }): Promise<{ rows: CustomerActivityRow[]; total: number }> {
   const qs = new URLSearchParams({ operating_company_id: params.operating_company_id });
+  if (params.status) qs.set("status", params.status);
+  if (params.from_date) qs.set("from_date", params.from_date);
+  if (params.to_date) qs.set("to_date", params.to_date);
   return apiRequest<{ rows: CustomerActivityRow[]; total: number }>(
     `/api/v1/accounting/customers/${encodeURIComponent(params.customer_id)}/activity?${qs.toString()}`
   );

@@ -47,6 +47,11 @@ export async function getCustomerActivity(input: {
   userId: string;
   operating_company_id: string;
   customer_id: string;
+  /** Exact match against each event's own normalized status (post-fold, same as customer-invoices.routes.ts's status filter). */
+  status?: string;
+  /** Inclusive date-range bounds against each event's own date, same semantics as customer-invoices.routes.ts issue_date range. */
+  from_date?: string;
+  to_date?: string;
 }): Promise<{ rows: CustomerActivityRow[]; total: number } | null> {
   return withCurrentUser(input.userId, async (client: DbClient) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
@@ -235,7 +240,11 @@ export async function getCustomerActivity(input: {
       });
     }
 
-    // Fold a running balance chronologically (USMCA opens at $0), then emit newest-first.
+    // Fold a running balance chronologically (USMCA opens at $0) over the FULL unfiltered feed —
+    // the balance must reflect every prior event even when the page's own status/date filters
+    // narrow what is displayed, or balance_after_cents would silently misstate the real running
+    // total. Only after folding do we apply the display filters, same predicates as
+    // customer-invoices.routes.ts (exact status match, inclusive date-range on the event's own date).
     events.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
     let running = 0;
     const folded: CustomerActivityRow[] = events.map((e) => {
@@ -244,6 +253,13 @@ export async function getCustomerActivity(input: {
     });
     folded.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 
-    return { rows: folded, total: folded.length };
+    const filtered = folded.filter((r) => {
+      if (input.status && r.status !== input.status) return false;
+      if (input.from_date && r.date < input.from_date) return false;
+      if (input.to_date && r.date > input.to_date) return false;
+      return true;
+    });
+
+    return { rows: filtered, total: filtered.length };
   });
 }
