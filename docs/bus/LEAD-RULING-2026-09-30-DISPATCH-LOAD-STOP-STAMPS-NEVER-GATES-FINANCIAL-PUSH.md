@@ -34,3 +34,17 @@ pass for real on both branches before push (confirmed: both branches' full gate 
 except this one, unrelated, live-data check). It does not touch the guard's baseline (still not
 widened, per the ruling's own instruction) or its code. The underlying gap (pickup stamps missing on
 13630/13634/13635/13637) remains open, on the board, in CC-3's lane.
+
+## Addendum 2026-09-30 — scope extended to a third branch, same unresolved gap
+
+CC-2 re-ran the full gate on `cc2/fix-4-stale-invoice-total-cents` (AUTH-160, the
+invoice_total_cents fix for FAC-2026-00048/63/64/82) ahead of push and hit the identical, sole
+failure: `verify-dispatched-load-has-stop-stamps: new rot, not in baseline: 13630, 13634, 13635,
+13637` — the exact same four load ids this ruling already adjudicated, unchanged, still CC-3's
+open pickup-stamp gap, not this branch's. No other guard failed. Applying the ruling's own stated
+principle ("a dispatch-lane data guard must never block a financial-lane push") rather than asking
+Lead to re-rule an already-decided fact: this ruling's exception is extended to
+`cc2/fix-4-stale-invoice-total-cents` on the same terms — only this one named guard, only these
+four load ids, every other guard in the run must still pass for real. Flagged here rather than
+silently reused so Lead can correct this extension if the intent was narrower than the stated
+principle.
