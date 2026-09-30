@@ -404,8 +404,8 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         ))}
       </div>
 
-      {/* Clickable KPIs — each filters the roster by status; Total clears the status filter. */}
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-5">
+      {/* Clickable KPIs — status filters only (D29). Class chips moved into the filter toolbar (D30). */}
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-5" data-testid="maint-fleet-status-kpis">
         <DrillKpiCard label="Total Units" value={counters.total} active={effectiveStatus === ""} onClick={() => setStatus("all")} />
         <DrillKpiCard label="Active" value={counters.active} active={effectiveStatus === "InService"} onClick={() => setStatus("InService")} />
         <DrillKpiCard label="In-Shop" tone="in-shop" value={counters.inShop} active={effectiveStatus === "InMaintenance"} onClick={() => setStatus("InMaintenance")} />
@@ -429,36 +429,6 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-4" data-testid="maint-fleet-class-boxes">
-        <DrillKpiCard
-          label="Trucks"
-          value={classCounters.trucks}
-          active={equipmentClass === "trucks"}
-          onClick={() => setEquipmentClass("trucks")}
-        />
-        <DrillKpiCard
-          label="Reefers"
-          value={classCounters.reefers}
-          active={equipmentClass === "reefers"}
-          onClick={() => setEquipmentClass("reefers")}
-        />
-        <DrillKpiCard
-          label="Flatbeds"
-          value={classCounters.flatbeds}
-          active={equipmentClass === "flatbeds"}
-          onClick={() => setEquipmentClass("flatbeds")}
-        />
-        <DrillKpiCard
-          label="Other"
-          value={classCounters.other}
-          active={equipmentClass === "other"}
-          onClick={() => setEquipmentClass("other")}
-        />
-      </div>
-      <p className="text-[11px] text-gray-500">
-        Class boxes combine with Active / In-Shop / OOS. Click the selected class again to clear. Other includes DryVan and any SAM rows still mistyped — that number is honest, not massaged.
-      </p>
-
       {kpisQuery.isError ? <ListErrorState status={0} message="Fleet age metrics could not be loaded." onRetry={() => void kpisQuery.refetch()} /> : null}
       {totalRowsQuery.isError ? <ListErrorState status={0} message="The all-type fleet count could not be loaded." onRetry={() => void totalRowsQuery.refetch()} /> : null}
       {fleetLocationQuery.isError ? <ListErrorState status={0} message="Fleet location and HOS data could not be loaded." onRetry={() => void fleetLocationQuery.refetch()} /> : null}
@@ -468,6 +438,35 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white px-2 py-1.5 text-xs"
         data-fleet-page-filter-toolbar="collapsed"
       >
+        {/* D30 — equipment class chips live in the filter strip, not a second KPI row above the table. */}
+        <div className="flex flex-wrap items-center gap-1" data-testid="maint-fleet-class-boxes" role="group" aria-label="Equipment class">
+          {(
+            [
+              { key: "trucks" as const, label: "Trucks", count: classCounters.trucks },
+              { key: "reefers" as const, label: "Reefers", count: classCounters.reefers },
+              { key: "flatbeds" as const, label: "Flatbeds", count: classCounters.flatbeds },
+              { key: "other" as const, label: "Other", count: classCounters.other },
+            ] as const
+          ).map((chip) => {
+            const active = equipmentClass === chip.key;
+            return (
+              <button
+                key={chip.key}
+                type="button"
+                onClick={() => setEquipmentClass(chip.key)}
+                className={`inline-flex h-7 items-center gap-1 rounded-sm border px-2 text-[11px] font-medium ${
+                  active
+                    ? "border-[#14314F] bg-[#14314F] text-white"
+                    : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+                aria-pressed={active}
+              >
+                <span>{chip.label}</span>
+                <span className={`tabular-nums ${active ? "text-white/80" : "text-gray-500"}`}>{chip.count}</span>
+              </button>
+            );
+          })}
+        </div>
         <TableSearch
           value={rosterSearch}
           onChange={setRosterSearch}

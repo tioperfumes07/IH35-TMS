@@ -2,7 +2,6 @@ import type { WorkOrder } from "../../../api/maintenance";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../../lib/entity-label";
 import { Button } from "../../../components/Button";
-import { SelectCombobox } from "../../../components/Combobox";
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import { EntityPicker } from "../../../components/EntityPicker";
 import { useToast } from "../../../components/Toast";
@@ -122,6 +121,25 @@ export function WorkOrdersTable({
     },
   });
 
+  /** D31 — source type is a multi-selector (comma-joined). API still takes one code; multi filters client-side. */
+  const selectedSourceTypes = useMemo(
+    () =>
+      staged.draft.sourceTypeFilter
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+    [staged.draft.sourceTypeFilter],
+  );
+
+  const toggleSourceType = (code: string) => {
+    const set = new Set(selectedSourceTypes);
+    if (set.has(code)) set.delete(code);
+    else set.add(code);
+    staged.setDraft({ ...staged.draft, sourceTypeFilter: [...set].sort().join(",") });
+  };
+
+  const SOURCE_TYPES = ["IS", "ES", "AC", "ET", "RT", "IT", "RS"] as const;
+
   // MAINT-ACTIVE-WOS-PARITYTABLE (GO-05 wave 1): column resize/reorder/persistence now come from
   // ParityTable itself (storageKey="maint-active-wos") — the old useTablePref/useColumnReorder pair
   // is redundant with that and dropped.
@@ -209,12 +227,20 @@ export function WorkOrdersTable({
   );
 
   const sortedRows = useMemo(() => {
-    if (!effectiveSortKey) return rows;
-    return [...rows].sort((a, b) => {
+    const appliedSources = sourceTypeFilter
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const base =
+      appliedSources.length <= 1
+        ? rows
+        : rows.filter((row) => appliedSources.includes(String(row.source_type ?? "")));
+    if (!effectiveSortKey) return base;
+    return [...base].sort((a, b) => {
       const cmp = compareWoRows(a, b, effectiveSortKey);
       return effectiveSortDir === "asc" ? cmp : -cmp;
     });
-  }, [rows, effectiveSortKey, effectiveSortDir]);
+  }, [rows, effectiveSortKey, effectiveSortDir, sourceTypeFilter]);
 
   return (
     <div className="space-y-2" data-testid="maint-active-work-orders-table">
@@ -228,25 +254,32 @@ export function WorkOrdersTable({
           testIdPrefix="work-orders"
         >
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            <label className="space-y-1 text-xs text-gray-600">
-              <span>Source type</span>
-              <SelectCombobox
-                className="min-h-12 w-full rounded-sm border border-gray-300 px-2 text-xs sm:h-9 sm:min-h-0"
-                value={staged.draft.sourceTypeFilter}
-                onChange={(e) => staged.setDraft({ ...staged.draft, sourceTypeFilter: e.target.value })}
-              >
-                <option value="">All</option>
-                <option value="IS">IS</option>
-                <option value="ES">ES</option>
-                <option value="AC">AC</option>
-                <option value="ET">ET</option>
-                <option value="RT">RT</option>
-                <option value="IT">IT</option>
-                <option value="RS">RS</option>
-              </SelectCombobox>
-            </label>
+            <fieldset className="space-y-1 text-xs text-gray-600" data-testid="work-orders-source-type-multi">
+              <legend className="mb-1 font-medium text-gray-700">Source type (multi)</legend>
+              <div className="flex flex-wrap gap-1">
+                {SOURCE_TYPES.map((code) => {
+                  const on = selectedSourceTypes.includes(code);
+                  return (
+                    <label
+                      key={code}
+                      className={`inline-flex h-7 cursor-pointer items-center gap-1 rounded-sm border px-2 text-[11px] ${
+                        on ? "border-[#14314F] bg-[#14314F] text-white" : "border-gray-300 bg-white text-gray-700"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        checked={on}
+                        onChange={() => toggleSourceType(code)}
+                      />
+                      {code}
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
             <div className="space-y-1 text-xs text-gray-600">
-              <span>External vendor id</span>
+              <span>External vendor</span>
               <EntityPicker
                 kind="vendor"
                 operatingCompanyId={operatingCompanyId}

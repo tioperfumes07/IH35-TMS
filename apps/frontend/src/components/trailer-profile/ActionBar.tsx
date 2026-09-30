@@ -35,7 +35,11 @@ export function ActionBar({
       <button type="button" className={linkClass} onClick={onChangeStatus}>
         Change Status
       </button>
-      <Link className={linkClass} to={`/maintenance/work-orders/new?equipment_id=${equipmentId}`}>
+      <Link
+        className={linkClass}
+        to={`/maintenance?create_wo=1&equipment_id=${encodeURIComponent(equipmentId)}`}
+        data-testid="tp-create-work-order"
+      >
         + Create WO
       </Link>
       <a className={linkClass} href={pdfUrl} download data-testid="tp-export-pdf">
