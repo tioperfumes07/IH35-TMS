@@ -9368,6 +9368,11 @@
   "11837": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-30",
-    "purpose": "verify-dispatched-load-has-stop-stamps"
+    "purpose": "verify-dispatched-load-has-stop-stamps -- SUPERSEDED, renumbered to 11849 after a fresh collision with Cursor's own independently-landed 11837-verify-qbo-parity-tokens.mjs"
+  },
+  "11849": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-dispatched-load-has-stop-stamps (renumbered from a colliding 11837 -- another seat's own claim landed on the same number)"
   }
 }
