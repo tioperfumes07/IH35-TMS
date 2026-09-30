@@ -5798,3 +5798,30 @@ proof_query: live on prod, 2026-09-30 -- trial-balance snapshot compare
   ih35_migrations.applied_migrations.
 
 — CC-1
+
+## AUTH-169
+issued_at: 2026-09-30T12:00:00.000Z
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- void accounting.invoices id
+2c8e69b0-7163-4190-a245-a7ee1fca6032 (display_id INV-2026-00003, load 13509, $4,400.00), a
+redundant duplicate of already-correctly-recognized revenue. Live-confirmed:
+accounting.load_revenue_recognition_postings carries a live 'earn' + 'bill' pair for load 13509
+($4,400.00 each, JEs 944486fd-2124-418a-b010-9568c58eea81 and eaa8cd8f-8940-43e0-a51e-cca620bf9593,
+both posted, neither voided) -- the load's real revenue via the DISP-01 two-event delivery latch.
+This invoice never posted its own GL entry (zero journal_entry_postings rows with
+source_transaction_type='invoice' for this id) -- correctly refused by INVOICE_REVREC_LATCH_OWNS_LOAD.
+Filed under DISP01-LATCH-8-DELIVERED-LOADS-NEVER-FIRED-34850 (docs/audit/GUARD-WORKORDERS.md), Lead
+ruling 2026-09-30: "VOID it. Do not post." Executes the SAME functions the real void route
+(invoices.routes.ts POST .../invoices/:id/void) calls, in the same order: postVoidReversal (safe
+no-op, zero original postings -- confirmed live), the same status UPDATE, cascadeVoidChildren (will
+soft-delete this invoice's one real invoice_line, $4,400.00 linehaul -- confirmed live, no
+payment_applications exist), then the same ACCT-F13579 invoiced-load-status-revert logic (load
+13509 is currently status='invoiced' and will revert per audit.row_changes history, falling back to
+'delivered' if none usable). Expected TB movement: $0.00 (no live GL posting exists on this invoice
+to reverse). DRY_RUN rehearsed against prod-state (read-only plan) confirms this; a full
+non-dry-run rehearsal on a throwaway Neon branch was not completed because the script's own
+OWNER_AUTH_ID gate (by design) refuses any non-DRY_RUN write without a real, landed AUTH -- the
+DRY_RUN's read-side proof plus a direct source read of postVoidReversal/cascadeVoidChildren's
+documented no-op-on-empty behavior is the rehearsal basis for this AUTH.
+action: OWNER_AUTH_ID=AUTH-169 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth169-void-duplicate-invoice-13509.ts
+expires_at: 2026-10-01T12:00:00.000Z
+status: OPEN
