@@ -1,0 +1,10 @@
+{
+  "_comment": "Shrink-only ceiling for loads whose most recent lifecycle event (events.event_log) is load.cancelled/load.cancellation_approved but whose live mdata.loads.status is not 'cancelled', with no load.status_changed event ever recording the actual transition -- ROUND 280.14 (owner order 2026-09-30): a real write with no script, no audit row, no actor. Discovered live: 13625, 13627, 13638 (13626 has the same underlying defect -- a status change with zero events.event_log rows -- but never carried a cancelled event, so it isn't caught by this precise, zero-false-positive check; filed separately). This ratchet only guards against NEW occurrences from here forward.",
+  "baseline_established": "2026-09-30",
+  "load_numbers": [
+    "13625",
+    "13627",
+    "13638"
+  ],
+  "measured_at": "2026-09-30T02:42:32.801Z"
+}

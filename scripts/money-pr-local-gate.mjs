@@ -161,6 +161,11 @@ const STEPS = [
   // ROUND 181.1 (DEVIN-B) — Samsara map one-to-many. Owner order: one driver can have
   // multiple Samsara accounts. Map table is canonical; legacy column is read-only.
   ["verify-driver-samsara-map-one-to-many", "scripts/verify-driver-samsara-map-one-to-many.mjs"],
+  // ROUND 280.14 (owner order, 2026-09-30) — "every status change must carry an audit event. A
+  // status with no audit row is a defect." Discovered live: loads leaving 'cancelled' with zero
+  // events.event_log rows recording the transition -- a real write with no script, no audit row,
+  // no actor. Shrink-only ratchet on this precise, zero-false-positive signal.
+  ["verify-load-status-has-audit-event", "scripts/verify-load-status-has-audit-event.mjs"],
   // ROUND E15.7-R (DEVIN-B, task 47) — daily Relay deposit sync cron must exist and be wired.
   // POPULATION CHECK: cron absent → SKIPPED exit 0 (arms itself when CC-2 lands task 48);
   // cron present → assert daily + wired at boot, RED if broken. No .guard-exempt.json entry.
