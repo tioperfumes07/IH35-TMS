@@ -23,6 +23,11 @@
       "claimed_at": "2026-09-30",
       "purpose": "ROUND 300 A-32: bind the 3 of 8 USMCA bank_accounts with ledger_account_id NULL (Faro Cash Reserve, Faro Escrow Reserve, Petty Cash) to a Cash/OtherCurrentAsset GL account each -- creates 2 missing catalogs.accounts rows (Faro Escrow Reserve, Petty Cash; Faro Cash Reserve's GL account already exists, just unbound) per the owner's standing USMCA-create-missing-accounts authorization."
     },
+    "202614900000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-30",
+      "purpose": "H-3 (Lead-authored, lane-cross ruling docs/bus/2026-09-30-LEAD-RULING-H3-MIGRATION-FILE-LANE-CROSS.md): ih35_migrations.refuse_mirror_only_insert() BEFORE INSERT trigger, already live in production since 2026-09-30 via an out-of-band apply during CC-1's design verification. This claim + the file itself simply gives the repository a record of what is already running and lets applyMigration() write the two currently-missing ledger rows."
+    },
     "202614870000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-30",
