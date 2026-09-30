@@ -6207,7 +6207,7 @@ action: hard-DELETE every row where voided_at IS NOT NULL, or revoked_at IS NOT 
   back whole on any foreign-key refusal.
   Script of record: scripts/ops/2026-09-30-lead-owner-purge-voided-and-sample-usmca.ts
 expires_at: 2026-10-01T16:16:30Z
-status: OPEN
+status: CONSUMED 2026-09-30T17:40Z — see the execution block at the end of this entry
 
 OWNER ORDER, verbatim, 2026-09-30:
 > "I WANT THE VOIDED TRANSACTIONS BULD DELETED IMMEDIATELY. INVOICES, TRANSACTIONS, WORK ORDERS,
@@ -6246,3 +6246,62 @@ recorded here rather than done quietly.
 mdata.loads is absent from every list above because it has ZERO qualifying rows: the 09-24
 bulk-import block is not flagged voided or sample, and the owner's own tie-out ruled those loads
 belong to IH 35 TRANSPORTATION — which this same order says not to touch. The two instructions agree.
+
+### AUTH-177 — EXECUTED 2026-09-30, live result, per table
+
+DELETED (all USMCA only; TRUCKING and TRANSPORTATION never referenced by any statement):
+
+  accounting.expenses                    1091 -> 0    549 real expenses untouched
+  banking.reconciliation_matches          632 -> 0
+  accounting.factoring_advances            45 -> 0    + their reserve movements / accrual / key rows
+  accounting.invoices                      31 -> 0    110 live invoices remain
+  banking.bank_transactions                10 -> 0    + their splits
+  mdata.customers (sample)                 11 -> 0
+  banking.check_number_registry             5 -> 0    + their print-batch items
+  driver_finance.settlement_lines           5 -> 0
+  accounting.bills                          3 -> 0    + their lines
+  driver_finance.driver_settlements         3 -> 0    + presettlement link suggestions
+  driver_finance.driver_bills               2 -> 0
+  maintenance.work_orders                   1 -> 0    + their lines
+  downtime.events (sample)                  1 -> 0
+  mdata.vendors (sample)                    1 -> 0
+  fuel.fuel_transactions                  276 -> 146  130 deleted, 146 REFUSED, see below
+  accounting.expenses_review_queue          77 -> 0
+
+  TOTAL ORDERED 2149 · DELETED 1971 · REFUSED 178
+
+REFUSED, AND WHY. Not one of these was forced. Every refusal is a LIVE record pointing at the row,
+or a control that exists for a reason:
+
+  fuel.fuel_transactions            146   a LIVE expense carries source_fuel_transaction_id into each
+                                          one. Deleting them leaves 146 real expenses pointing at
+                                          nothing. That is damage, not cleanup.
+  mdata.units (sample)               17   every one is a seat fixture by name -- TEST-TRUCK-1..4,
+                                          CODEX-TEST-0033, DEVIN-A-210001, TEST-CC3-FLEET-001 -- and
+                                          NONE carries a load. Blocked by 25 maintenance.pm_schedules
+                                          rows, which are in turn blocked by maintenance.pm_alerts,
+                                          which is APPEND-ONLY by its own guard. Breaking an
+                                          append-only table to delete a fake truck is not a trade I
+                                          will make without the owner saying so.
+  mdata.drivers (sample)              6   blocked by 34 hos.duty_status_events, 13 retention scores,
+                                          8 mdata.vendors rows, 5 pay rates, 5 invites, 4 advance
+                                          accounts. Every one is itself a test artifact; none is
+                                          voided or sample-flagged, so each would have to be named.
+  mdata.equipment (sample)            5   referenced by legal.matters.
+  driver_finance.driver_liabilities   2   referenced by driver_advances and deduction_schedule.
+  safety.incidents                    1   referenced by damage_continuity_chains.
+  legal.contract_instances            1   referenced by contract_audit_log.
+
+ALSO FOUND WHILE EXECUTING, and NOT touched: one accounting.bills row is attached to a TEST unit and
+is NOT voided, so the WORM document arm correctly refuses it. A live bill on a fake truck is its own
+finding and belongs to the owner, not to a purge.
+
+mdata.loads was never in scope: ZERO rows qualify. The 09-24 bulk-import block is not flagged voided
+or sample, and the owner's own tie-out ruled those loads belong to IH 35 TRANSPORTATION — which this
+same order says not to touch.
+
+A defect in my own 202614730000 surfaced mid-run and was fixed before continuing: invoice_lines was
+classified as a DOCUMENT (requiring its own voided_at, which a line never carries) instead of a
+CHILD. Rather than drop it to the loose detail arm — where an auth id alone would have permitted
+deleting lines out from under a LIVE invoice — 202614760000 added a STRICTER third arm that looks the
+parent document up. Found by running the purge against production, not by reading the code.
