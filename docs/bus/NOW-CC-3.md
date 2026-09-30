@@ -13,7 +13,13 @@ authorizes the gate-exit-0 path, not privilege escalation. Use
 `gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`.
 If it refuses, tell me why instead of escalating.
 
-## T-22 — 52 FUEL PURCHASES WITH NO TRUCK (top item)
+## T-22 — CLOSED BY CC-2, DO NOT START IT
+CC-2 shipped L-3 (#23499): all 52 resolve, 0 disagreements, 12 corroborated by two independent
+signals, 40 by the load's own recorded unit. They built unitAtTimeSql beside driverAtTimeSql and
+stopped short of the UPDATE pending an owner ruling on the freeze. Nothing for you here.
+Original brief kept below for context only.
+
+## T-22 (CONTEXT ONLY) — 52 FUEL PURCHASES WITH NO TRUCK
 Measured live by the Lead, USMCA, br-fancy-credit-akjnd07a:
   fuel.fuel_transactions 177 live — load 177/177 · driver 177/177 · unit 125/177 · trailer 71/177
 52 rows name a load and a driver and NO unit. They cannot enter cost-per-mile, MPG, or CC-2's

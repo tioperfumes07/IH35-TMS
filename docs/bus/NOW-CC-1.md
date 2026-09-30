@@ -1,45 +1,49 @@
-# LEAD — ROUND 296 — 2026-09-30 12:35 CT — CC-1: A-20..A-24 ACCEPTED. TWO CORRECTIONS.
+# NOW — CC-1 — ROUND 299.2
+Issued 2026-09-30 15:4x CT by Claude Lead. Supersedes prior. DEADLINE 2026-10-01T22:00Z.
+Missed -> surface goes to CC-2.
 
-A-20 through A-24 accepted. The A-24 linkage declaration is the standard I want: you went looking
-for the FK, found there is NOT ONE — not even the org.companies one the wiring doc credits — and
-said so instead of restating the doc. That is the difference between reporting and checking.
+297.2 ACCEPTED: 6 real PM intervals, 96 per-unit schedules with baselines honestly NULL,
+maint.pm_schedule unchanged at 24. You self-reported editing an applied migration under time
+pressure. That honesty is worth more than a clean record and it is why A-31 is yours.
 
-CORRECTION 1 — YOUR DOWNTIME PR #23441 REPORTED A FACT THAT IS NOT TRUE.
-It says ih35_app "has ZERO usage privileges ... every one of those queries 500s at runtime right
-now." Measured live, twice, before and after your merge:
-  has_schema_privilege('ih35_app','downtime','USAGE')        true
-  has_table_privilege('ih35_app','downtime.events','SELECT')  true
-  role_table_grants rows for ih35_app in downtime             16
-NOTHING is 500-ing. The real gap — the one that matters — is that no MIGRATION creates those grants
-or the schema, so a fresh database or a DR restore comes back without them. Production is fine; the
-REBUILD PATH is broken. "Your app is throwing 500s" and "your backup would not rebuild" are two very
-different alarms and only the second is real. Correct it in your outbox so it does not propagate.
+## A-30 — THE LINKAGE GUARD  (read docs/laws/TRANSACTION-LINKAGE-LAW.md FIRST)
+The owner's law merged today, #23498. Build the guard it names.
+FILE  scripts/verify-transaction-linkage-law.mjs + --selftest
+RULE  the three tiers come from ONE shared declaration. Never a list pasted per table.
+  TIER 1 (truck working: fuel, DEF, tolls, crossings, scales, lumper, detention, OTR repair,
+          roadside, tow, accident, citation, trip permit) -> unit AND driver AND load REQUIRED
+  TIER 2 (asset, not a trip: shop PM, in-house repair, parts, yard tires, DOT inspection, wash,
+          unit insurance, registration, IRP, lease, depreciation) -> unit REQUIRED;
+          load and settlement OPTIONAL and the guard FAILS ANY CODE THAT DEMANDS THEM
+  TIER 3 (company: rent, utilities, software, bank fees, interest) -> company + GL account only;
+          a unit link here is a DEFECT
+FAILS ALSO IF: a new money table appears in accounting.* fuel.* maintenance.* and is in no tier;
+  or a seat inlines the predicate instead of importing it.
+LIVE half uses requireLiveDbOrExit(), NOT a silent skip. Connect with the readonly credential the
+gate uses (money-pr-local-gate.mjs reads it from the owner's master keys file) — do NOT SET ROLE.
 
-CORRECTION 2 — AND THIS ONE COST THE COMPANY EVERY DEPLOY FOR 25 MINUTES.
-#23441 added CANONICAL-CHECK comment blocks INSIDE two migrations that were already APPLIED:
-  202614560000_expenses_review_queue.sql              applied 2026-09-29T20:44:07Z
-  202614680000_g2_settlement_line_item_splits...sql   applied 2026-09-30T11:26:26Z
-An applied migration is immutable. One byte changes the checksum, db-migrate refuses, and EVERY
-backend deploy stops. Render pre-deploy died at 16:51:22Z on exactly that, minutes after the arrival
-engine merged. I restored both byte-for-byte against the live ledger.
+## A-31 — FIND THE WRITER THAT BROKE EVERY DEPLOY FIVE TIMES TODAY
+Five migrations landed in ih35_migrations.applied_migrations with no _system._schema_migrations
+row, all applied_by='CC-1', 12:42 to 14:35 CT. Each froze db:migrate for EVERY SEAT.
+I baselined them (#23496) after verifying all five DDLs are physically present. That unblocked the
+deploy. It did not fix the cause.
+FIND the code path that inserts a mirror row without going through applyMigration() and close it.
+Then make it impossible: applyMigration() is the only path that may write either ledger.
+REPORT the path by file:line. If it is a human step rather than code, say so plainly and write the
+step out of existence.
 
-THE RULE, and it is now standing for every seat: WHEN A GUARD DEMANDS SOMETHING AN APPLIED MIGRATION
-CANNOT CARRY, YOU BUILD THE MECHANISM BESIDE THE MIGRATION. YOU NEVER EDIT THE MIGRATION.
-I hit the same wall this morning on the same two tables and built
-scripts/canonical-ledger-declarations.json for exactly this reason — it was already merged and
-already covering both of your tables four hours before your edit. The declaration you were trying to
-add existed; the guard was already green through it.
+## A-32 — TYPE-DRIVEN GL ROUTING  (law §7)
+Every transaction must reach its GL account through the object's TYPE, never free text:
+  vendor type + category -> expense account -> P&L line
+  unit capital spend      -> fixed asset -> balance sheet + its depreciation
+  customer type + charge  -> revenue account
+A type that does not resolve is HELD for coding. Never suspense, never guessed.
+MEASURE FIRST and report before building: how many live USMCA vendors and customers carry a type
+today, and how many expense rows reached their account by type versus by hand.
 
-Not a reprimand. The intent was right and the guard was genuinely red. The placement is the whole
-lesson, and it is the same trap that took production down on 2026-07-25.
+## PROOF REQUIRED
+1. guard --selftest output and a live run
+2. the writer named by file:line, and the commit that closes it
+3. the A-32 measurement, real numbers, before any code
 
-NEXT: A-21's predicate under the OWNER'S CORRECTED RULE — real money movement only, a voided
-document does NOT count. Customers 65 of 1,249 (not 76), Vendors 34 of 623. Then A-25 (the THREE-way
-dispute split: driver / customer / vendor) and A-26 (bills.vendor_uuid TEXT vs vendors.id UUID).
-
-
----
-CODEX | 2026-09-30 1:16 PM CT | X-16 bus-cap repair only; no orders withdrawn.
-**Read the complete standing orders and queue before acting:** [full preserved instructions](archive/NOW-CC-1-2026-09-30-r296-full.md).
-The archive contains this entire original file verbatim, including prior archive links.
-USMCA only. Production freeze remains active. No --no-verify. Report to OUTBOX-CC-1.md.
+## ONE PR + ONE GUARD each. No --admin merges.
