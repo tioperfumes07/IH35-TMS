@@ -33,3 +33,25 @@ T-03 · catalog_ready / On-time click investigation — cannot reproduce live, m
   accounts with zero org.user_company_access rows querying a NON-default company --
   Owner is immune to that path) and a browser network-tab capture of the real response
   body, not just the on-screen symptom.
+
+T-21 · geofence mileage engine — measured live 2026-09-30, structural finding confirmed
+(reporting before building further, per NOW-CC-3 instruction):
+- `materializeRealDrivenMilesSegments` is STILL producing nothing: `telematics.load_
+  odometer_segments` is 40 rows, newest created_at 2026-09-29 21:40:25Z (yesterday) --
+  with odometer NOW flowing live (300 rows with odometer_mi in the last 2h, newest ping
+  2026-09-30 16:20:15Z, confirming T-20's fix is holding). This is the real defect the
+  Lead asked me to measure, not assume: odometer is no longer the blocker.
+- ROOT CAUSE: 0 of 83 USMCA dispatch-work `mdata.load_stops` rows have `location_id`
+  populated (dispatcher-entered pickup/delivery addresses are always free-text, never
+  selected from the `mdata.locations` catalog). The materializer's pickup/delivery join
+  goes through `load_stops.location_id -> mdata.locations`, so it can structurally never
+  match regardless of odometer quality -- only a yard-exit leg (the separate
+  `is_ih35_yard` flag path) could theoretically produce a segment today.
+- The spine IS alive and current: `geo.geofence_events` 689 rows (newest 16:15:18Z),
+  `geo.geofence_state_transitions` 7,615 rows (newest 16:17:09Z) -- this is the real
+  foundation T-21's new odometer-capture engine should build on, not the stuck
+  load_odometer_segments materializer.
+- Per the Lead's own retraction: this is Engine B (verification-only); settlements
+  already compute miles from Engine A (`mdata.loads`, MPG=7.287 today). Nothing is
+  blocked on this -- proceeding to build the geofence-enter/exit odometer capture
+  (SOURCE always labelled, idempotent, guard + freshness alarm) as time allows.
