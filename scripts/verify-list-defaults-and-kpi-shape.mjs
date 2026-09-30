@@ -118,13 +118,19 @@ ok("C-33 Drivers peer tabs reshaped (no Permits/Deductions/Disputes)");
 // --- C-34: profiles list / master renders rows ---
 const sidebar = read("apps/frontend/src/pages/drivers/DriverListSidebar.tsx");
 if (!sidebar.includes("drivers-profiles-master-table")) {
-  fail("DriverListSidebar must render a tbody table (C-34)");
+  fail("DriverListSidebar must expose drivers-profiles-master-table (C-34)");
+}
+if (!sidebar.includes("data-c34-master-rows") && !sidebar.includes("driver-master-row-")) {
+  fail("DriverListSidebar must render master rows (C-34)");
 }
 if (!sidebar.includes("onSelectDriver(first.id)")) {
   fail("DriverListSidebar must auto-select first driver after load");
 }
+if (/<table[\s>]/i.test(sidebar)) {
+  fail("DriverListSidebar must not add a raw <table> (GO-26); use ul or shared ResizableTable infra");
+}
 const listPage = read("apps/frontend/src/pages/drivers/DriversListPage.tsx");
 if (!listPage.includes("embedded")) fail("DriversListPage must support embedded mode (no duplicate KPI stack)");
-ok("C-34 profiles master renders tbody rows + auto-select");
+ok("C-34 profiles master renders rows + auto-select");
 
 console.log("verify-list-defaults-and-kpi-shape --selftest OK");

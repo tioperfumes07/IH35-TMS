@@ -15,8 +15,10 @@ type Props = {
 
 /**
  * C-17 / C-34 — Drivers Profiles master pane. Same MASTER_DETAIL width/surface tokens as
- * Customers / Vendors. Auto-selects the first Active driver so the detail pane is never empty
- * after load when rows exist.
+ * Customers / Vendors. Keeps the ul master list (GO-26: no new raw table / ResizableTable
+ * consumer). Auto-selects the first Active driver so the detail pane is never empty after
+ * load when rows exist (Chrome measured tbody/tr=0 because nothing was selected and the
+ * embedded list path rendered zero master rows).
  */
 export function DriverListSidebar({ selectedDriverId, onSelectDriver }: Props) {
   const { selectedCompanyId } = useCompanyContext();
@@ -69,36 +71,32 @@ export function DriverListSidebar({ selectedDriverId, onSelectDriver }: Props) {
         aria-label="Search drivers"
         className="mb-2 mt-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
       />
-      <div className={MASTER_DETAIL.listScrollClass} data-c05-list-scroll="true">
+      <div className={MASTER_DETAIL.listScrollClass} data-c05-list-scroll="true" data-testid="drivers-profiles-master-table">
         {listState.isLoading ? (
           <p className="px-2 py-3 text-xs text-gray-500">Loading…</p>
         ) : listState.isEmpty ? (
           <p className="px-2 py-3 text-xs text-gray-500">No drivers.</p>
         ) : (
-          <table className="w-full border-collapse text-xs" data-testid="drivers-profiles-master-table">
-            <tbody>
-              {rows.map((driver) => {
-                const selected = selectedDriverId === driver.id;
-                const name = driverDisplayName(driver.first_name, driver.last_name, driver.id);
-                return (
-                  <tr key={driver.id} className={MASTER_DETAIL.rowStripeClass} data-c04-row="true">
-                    <td className="p-0">
-                      <button
-                        type="button"
-                        className={`block w-full truncate px-2 py-1.5 text-left text-xs font-medium ${MASTER_DETAIL.rowBorderClass} ${
-                          selected ? MASTER_DETAIL.rowSelectedClass : MASTER_DETAIL.rowHoverClass
-                        }`}
-                        data-testid={`driver-master-row-${driver.id}`}
-                        onClick={() => onSelectDriver(driver.id)}
-                      >
-                        <EntityLinkOrTombstone kind="driver" id={driver.id} name={name} noun="Driver" />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <ul data-c34-master-rows="true">
+            {rows.map((driver) => {
+              const selected = selectedDriverId === driver.id;
+              const name = driverDisplayName(driver.first_name, driver.last_name, driver.id);
+              return (
+                <li key={driver.id} className={MASTER_DETAIL.rowStripeClass} data-c04-row="true">
+                  <button
+                    type="button"
+                    className={`block w-full truncate px-2 py-1.5 text-left text-xs font-medium ${MASTER_DETAIL.rowBorderClass} ${
+                      selected ? MASTER_DETAIL.rowSelectedClass : MASTER_DETAIL.rowHoverClass
+                    }`}
+                    data-testid={`driver-master-row-${driver.id}`}
+                    onClick={() => onSelectDriver(driver.id)}
+                  >
+                    <EntityLinkOrTombstone kind="driver" id={driver.id} name={name} noun="Driver" />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </div>
     </aside>
