@@ -30,7 +30,7 @@ describe("GAP-19 detention approval gate", () => {
     expect(service).toContain("bridgeDetentionToBilling");
     expect(service).toContain("buildInvoiceFromLoad");
     // bridge must run before invoice build in the approve flow.
-    expect(service.indexOf("bridgeDetentionToBilling(userId")).toBeLessThan(
+    expect(service.indexOf("bridgeDetentionToBillingInClientTx")).toBeLessThan(
       service.indexOf("buildInvoiceFromLoad(client")
     );
   });
@@ -51,6 +51,12 @@ describe("GAP-19 detention approval gate", () => {
     expect(routes).toContain("reason: z.string().trim().min(3)");
     expect(service).toContain("request_approved");
     expect(service).toContain("request_rejected");
+  });
+
+  it("ROUND 285.4.9 #59 requires approval_method on approve and stamps the column", () => {
+    expect(routes).toContain("approval_method:");
+    expect(service).toContain("approval_method = $5");
+    expect(service).toContain("approval_method_required");
   });
 });
 

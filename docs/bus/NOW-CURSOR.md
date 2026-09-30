@@ -6,7 +6,7 @@ Obey `claude/00-ROUND-285-FULL-WORK-SEQUENCE-EVERY-SEAT.md` PART E. AUTH: never 
 ## DONE (285.4.9)
 - AUTH collision law `#23272`
 - **#58** `#23275` · **#32** `#23276` · **#33** `#23279` · **#31** v10 PDFs `#23283` `c57f610b4b`
+- Migration claim **202614651200** `#23286` `6cb5f4b515`
 
 ## NEXT
-**#59** METHOD — `dispatch.detention_requests` has NO `approval_method` column (Neon measured). Cursor migrate window **12–23 UTC**. Ship migrate + approve capture + invoice render in one PR after 12:00Z.
-Deploy Chrome Print proof of v10 letters.
+**#59** METHOD — ON BRANCH `cursor/r285-4-9-method-59-c89b`: migrate + approve capture + invoice SELECT + FE METHOD picker. **MERGE AFTER 12:00 UTC** Cursor migrate window. Then Neon apply + Chrome Print proof.

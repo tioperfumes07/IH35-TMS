@@ -1500,6 +1500,62 @@ export function notifyDetentionCustomer(eventId: string, body: { operating_compa
   );
 }
 
+/** ROUND 285.4.9 / #59 — METHOD values printed under APPROVED BY on the invoice. */
+export const DETENTION_APPROVAL_METHODS = [
+  "by telephone call",
+  "by email",
+  "by text message",
+  "in person",
+  "by customer portal",
+] as const;
+
+export type DetentionApprovalMethod = (typeof DETENTION_APPROVAL_METHODS)[number] | string;
+
+export type DetentionApprovalRequest = {
+  id: string;
+  status: "pending_review" | "approved" | "rejected" | "invoiced";
+  load_id: string;
+  load_number?: string | null;
+  customer_name?: string | null;
+  amount_cents: number;
+  billable_minutes: number;
+  approval_method?: string | null;
+  stop_city?: string | null;
+  stop_state?: string | null;
+  stop_type?: string | null;
+};
+
+export function listDetentionApprovalRequests(
+  operatingCompanyId: string,
+  status?: DetentionApprovalRequest["status"]
+) {
+  const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (status) params.set("status", status);
+  return apiRequest<{ count: number; requests: DetentionApprovalRequest[] }>(
+    `/api/v1/dispatch/detention/requests?${params}`
+  );
+}
+
+export function approveDetentionRequest(
+  requestId: string,
+  body: { operating_company_id: string; approval_method: DetentionApprovalMethod }
+) {
+  return apiRequest<Record<string, unknown>>(
+    `/api/v1/dispatch/detention/requests/${encodeURIComponent(requestId)}/approve`,
+    { method: "PATCH", body }
+  );
+}
+
+export function rejectDetentionRequest(
+  requestId: string,
+  body: { operating_company_id: string; reason: string }
+) {
+  return apiRequest<Record<string, unknown>>(
+    `/api/v1/dispatch/detention/requests/${encodeURIComponent(requestId)}/reject`,
+    { method: "PATCH", body }
+  );
+}
+
 export type OcrIntakeExtractedFields = {
   // Nullable (not just optional) to match the honest EntityLinkOrTombstone rendering this field
   // feeds (OcrQueuePage.tsx) — OCR extraction can legitimately produce a present-but-empty field.

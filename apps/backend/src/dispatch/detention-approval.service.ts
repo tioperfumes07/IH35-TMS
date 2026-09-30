@@ -313,7 +313,8 @@ async function notifyCustomerOfApprovedDetention(
 export async function approveDetentionRequest(
   userId: string,
   operatingCompanyId: string,
-  requestId: string
+  requestId: string,
+  approvalMethod: string
 ) {
   // DSP-MONEY-F7132A — the whole approval sequence (status check, bridge, invoice, evidence, final
   // status flip) now runs in ONE transaction, with the request row locked (FOR UPDATE) from the
@@ -375,6 +376,10 @@ export async function approveDetentionRequest(
 
     // Defense in depth: the FOR UPDATE lock above already makes a lost race impossible, but this
     // CAS keeps the invariant explicit and self-enforcing even if the lock scope above ever changes.
+    const method = String(approvalMethod ?? "").trim();
+    if (!method) return { ok: false as const, error: "approval_method_required" as const };
+
+    // ROUND 285.4.9 / #59 — stamp approval_method so invoice PDF prints METHOD under APPROVED BY.
     const updated = await client.query(
       `
         UPDATE dispatch.detention_requests
@@ -383,11 +388,12 @@ export async function approveDetentionRequest(
             reviewed_at = now(),
             invoice_id = $3,
             invoice_line_id = $4,
+            approval_method = $5,
             updated_at = now()
-        WHERE id = $1 AND operating_company_id = $5::uuid AND status = 'pending_review'
+        WHERE id = $1 AND operating_company_id = $6::uuid AND status = 'pending_review'
         RETURNING *
       `,
-      [requestId, userId, invoiceId, lineId, operatingCompanyId]
+      [requestId, userId, invoiceId, lineId, method, operatingCompanyId]
     );
     if (!updated.rows[0]) return { ok: false as const, error: "not_pending" as const };
 
@@ -404,6 +410,7 @@ export async function approveDetentionRequest(
         invoice_line_id: lineId,
         evidence_id: evidenceId,
         amount_cents: Number(request.amount_cents ?? 0),
+        approval_method: method,
         billing_note:
           "detention merged into linehaul total via bridgeDetentionToBillingInClientTx; discrete detention line is a follow-up",
       },

@@ -23,7 +23,7 @@
  * node scripts/verify-company-settlement-pdf-house-template.mjs
  * node scripts/verify-company-settlement-pdf-house-template.mjs --selftest
  */
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 
 const templatePath = "apps/backend/src/render/company-settlement.template.ts";
 const routePath = "apps/backend/src/accounting/company-settlement-render.routes.ts";
@@ -103,6 +103,23 @@ export function collectFailures(src = source) {
   if (!/DRIVER SETTLEMENT/.test(driverTpl)) failures.push("settlement.template.ts: DRIVER SETTLEMENT carrier title missing");
   if (!/invtitle/.test(invoiceTpl) || !/Balance due/.test(invoiceTpl)) failures.push("invoice.template.ts: QuickBooks invtitle / Balance due missing");
   if (!/class="appr"/.test(invoiceTpl)) failures.push("invoice.template.ts: APPROVED BY/METHOD (.appr) missing for detention/layover");
+  const invoiceRender = readFileSync("apps/backend/src/accounting/invoice-render.routes.ts", "utf8");
+  if (!/dr\.approval_method/.test(invoiceRender)) {
+    failures.push("invoice-render.routes.ts: must SELECT dr.approval_method for ROUND 285.4.9 #59 METHOD print");
+  }
+  const approveRoutes = readFileSync("apps/backend/src/dispatch/detention-approval.routes.ts", "utf8");
+  if (!/approval_method:\s*z/.test(approveRoutes)) {
+    failures.push("detention-approval.routes.ts: approve body must require approval_method (ROUND 285.4.9 #59)");
+  }
+  const methodMigration = readdirSync("db/migrations").find((f) => f.includes("detention_requests_approval_method"));
+  if (!methodMigration) {
+    failures.push("db/migrations: missing *detention_requests_approval_method*.sql (ROUND 285.4.9 #59)");
+  } else {
+    const mig = readFileSync(`db/migrations/${methodMigration}`, "utf8");
+    if (!/ADD COLUMN IF NOT EXISTS approval_method/.test(mig)) {
+      failures.push(`${methodMigration}: must ADD COLUMN IF NOT EXISTS approval_method`);
+    }
+  }
 
   // --- 2. Route: canonical HTML letter route feeding the report into the house shell ---
   if (!/"\/api\/v1\/accounting\/company-settlements\/:id\.html"/.test(src.route)) {
