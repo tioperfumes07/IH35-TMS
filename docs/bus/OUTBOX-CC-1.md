@@ -175,3 +175,5 @@ verify-g2-extra-pay-requires-item: PASS
 **Changed:** Nothing (analysis/spec only, as instructed).
 **Live proof:** `docs/bus/2026-09-30-CC1-A13-A14-A16-DRIVER-PROFILE-AND-HAS-TRANSACTIONS-ANALYSIS.md` (PR #23349) — Settlements/Pre-settlements/Cash Advances/Deductions classified accounting, Permits operational, Disputes flagged for ruling (also found `DisputesHubPage` conflates two different objects). A-16 predicate: proformas excluded, voided invoices/bills included, voided expenses/fuel excluded; live counts 76/1,249 customers and 34/623 vendors have real transactions; "voided-invoice-only" customer ruled to COUNT.
 **Left:** Lead's ruling on Disputes tab placement; Cursor to build the A-14/A-16 UI off this spec.
+
+ACK 2026-09-30 · CC-1 · read NOW-CC-1 · starting A-16
