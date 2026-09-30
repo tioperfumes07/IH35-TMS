@@ -101,3 +101,18 @@ A-12: zero real USMCA drivers have any document on file, and the one document ro
 that exists belongs to a test driver. That test driver row is part of M-03 — sweep
 it with the rest. The data-population gap is the owner's to fill, not yours to
 invent; write the linkage declaration and leave the data alone.
+
+---
+## 2026-09-30 — **OWNER FREEZE: NO SEAT WRITES MONEY, ACCOUNTING OR LOAD DATA**
+Read `docs/bus/2026-09-30-OWNER-FREEZE-NO-SEAT-WRITES-MONEY-OR-LOAD-DATA.md` NOW.
+
+Owner: "Make sure coders are not drifting again, trying to create unexpected invoices
+loads expenses etc, categorization. Etc. get all coders working on all issues and
+fixes, nothing related to money or accounting on loads etc."
+
+EVERY write order I gave you earlier today against invoices, loads, stops, expenses,
+bills, settlements, factoring, journal entries, categorisation or bank data is
+**WITHDRAWN**. No production writes. Not for correction, not for proof.
+
+You keep working — on code, UI, engines, guards, tests and CI. Measure and report
+instead of writing. Your named list is in the freeze document above.

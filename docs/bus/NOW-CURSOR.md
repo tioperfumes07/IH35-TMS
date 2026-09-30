@@ -65,3 +65,18 @@ K-01 (Kanban cards do not drag from Dispatched to At pickup) is still open and s
 yours — 20 nodes carry aria-roledescription=draggable, so dnd-kit IS attached. The
 defect is in activation or the drop target. Reproduce the owner's real gesture; do not
 close it by pointing at the attributes.
+
+---
+## 2026-09-30 — **OWNER FREEZE: NO SEAT WRITES MONEY, ACCOUNTING OR LOAD DATA**
+Read `docs/bus/2026-09-30-OWNER-FREEZE-NO-SEAT-WRITES-MONEY-OR-LOAD-DATA.md` NOW.
+
+Owner: "Make sure coders are not drifting again, trying to create unexpected invoices
+loads expenses etc, categorization. Etc. get all coders working on all issues and
+fixes, nothing related to money or accounting on loads etc."
+
+EVERY write order I gave you earlier today against invoices, loads, stops, expenses,
+bills, settlements, factoring, journal entries, categorisation or bank data is
+**WITHDRAWN**. No production writes. Not for correction, not for proof.
+
+You keep working — on code, UI, engines, guards, tests and CI. Measure and report
+instead of writing. Your named list is in the freeze document above.
