@@ -1,4 +1,4 @@
-# CODEX | 2026-09-30 6:27 AM CT | X-16 — priority over remaining X jobs
+# CODEX | 2026-09-30 6:38 AM CT | X-16 — priority over remaining X jobs
 
 Owner ruling: database-required guards belong in required CI, not local hooks.
 No empty-database baseline is a live measurement. AUTH-147 remains a recorded
@@ -6,7 +6,7 @@ EXPIRED authorization finding, not a dependency of this code work.
 
 ## Implementation so far — NOT a claim of complete class coverage
 
-`scripts/lib/local-db-guard-routing.mjs` explicitly routes 13 reviewed guards.
+`scripts/lib/local-db-guard-routing.mjs` explicitly routes 18 reviewed guards.
 Local source checks remain where available; database-only checks print DEFERRED,
 never a live PASS. Both the money gate and verify-step command context use it.
 The full guards execute directly in CI, outside that local routing context.
@@ -43,7 +43,12 @@ Six nonduplicated X-01 guards remain in the new static job.
 
 ## Local evidence and remaining scope
 
-- Runner/required-CI routing tests: 6/6, exit 0.
+- Runner/required-CI routing tests: 7/7, exit 0.
+- The five top-level domain database checks now route to required CI too.
+  Their baselines and financial assertions are unchanged. Two filesystem/source
+  guards incorrectly placed in the live-domain list now run locally without a
+  credential prerequisite; neither assertion is skipped. Bus scan: 394 files,
+  zero hard failures. Settlement comparator and fuel-reference selftests: 5/5 each.
 - Load-create selftest: exit 0; live query still exits 1 without credentials.
 - Workflow target-safety tests: 6/6; isolated RLS behavior: 3/3, exit 0.
 - No production rows written or queried in this implementation pass.

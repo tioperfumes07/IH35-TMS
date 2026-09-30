@@ -89,3 +89,16 @@ test('every locally routed guard has a real required live-job invocation, never 
   }
   assert.deepEqual(localDatabaseGuardArgs(['scripts/unreviewed.mjs']), ['scripts/unreviewed.mjs']);
 });
+
+test('static domain guards run without credentials; unknown live domains still fail closed', async () => {
+  const { requiresLocalDatabase, STATIC_DOMAIN_GUARDS } = await import('./local-db-guard-routing.mjs');
+  for (const file of STATIC_DOMAIN_GUARDS) {
+    assert.equal(requiresLocalDatabase(file), false);
+    assert.deepEqual(localDatabaseGuardArgs([file]), [file], 'must still execute the actual static assertion');
+  }
+  for (const file of Object.keys(CI_DATABASE_GUARDS)) assert.equal(requiresLocalDatabase(file), false);
+  assert.equal(requiresLocalDatabase('scripts/verify-unreviewed-live.mjs'), true);
+  const gate = fs.readFileSync('scripts/money-pr-local-gate.mjs', 'utf8');
+  assert.match(gate, /!process\.env\.DATABASE_URL && requiresLocalDatabase\(rel\)/);
+  assert.match(gate, /const code = needsWriterUrl[\s\S]*?runNode\(rel\)/);
+});

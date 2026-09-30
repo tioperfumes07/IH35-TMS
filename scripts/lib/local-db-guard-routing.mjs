@@ -14,7 +14,23 @@ export const CI_DATABASE_GUARDS = Object.freeze({
   'scripts/verify-reversed-jes-carry-header-linkage.mjs': null,
   'scripts/verify-cancelled-load-leaves-no-live-money.mjs': null,
   'scripts/verify-void-cascades-to-every-child.mjs': null,
+  'scripts/verify-control-totals.mjs': null,
+  'scripts/verify-alwaystrack-parity.mjs': null,
+  'scripts/verify-settlement-net-equals-document.mjs': '--selftest',
+  'scripts/verify-diesel-expense-fuel-dedupe.mjs': null,
+  'scripts/verify-fuel-relay-txn-vendor-unmatched.mjs': '--selftest',
 });
+
+// These two entries were mistakenly grouped with live-domain checks. They still
+// execute locally and their exit status still blocks; neither opens a database.
+export const STATIC_DOMAIN_GUARDS = Object.freeze([
+  'scripts/verify-bus-files-are-readable.mjs',
+  'scripts/verify-gate-live-reads-use-ci-readonly.mjs',
+]);
+
+export function requiresLocalDatabase(file) {
+  return !Object.hasOwn(CI_DATABASE_GUARDS, file) && !STATIC_DOMAIN_GUARDS.includes(file);
+}
 
 export function localDatabaseGuardArgs(args) {
   const mode = CI_DATABASE_GUARDS[args?.[0]];

@@ -24,7 +24,7 @@ import { ensureFreshGateStepMap } from "./generate-gate-step-map.mjs";
 import { guardIsInScope } from "./verify-static.mjs";
 import { EMPTY_BY_PURGE_EXIT, PURGE_WINDOW_GUARDS, purgeWindow } from "./lib/purge-window.mjs";
 import { dataWritePathDiffActuallyWrites, dataWritePathFileActuallyWrites } from "./lib/data-write-path-detection.mjs";
-import { localDatabaseGuardArgs } from "./lib/local-db-guard-routing.mjs";
+import { localDatabaseGuardArgs, requiresLocalDatabase } from "./lib/local-db-guard-routing.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "money-pr-local-gate";
@@ -1224,7 +1224,7 @@ function acceptedAsEmptyByPurge(rel, code) {
 
 // 03c — control totals against LIVE production.
 if (touchesMoneyPath()) {
-  if (!process.env.DATABASE_URL) {
+  if (!process.env.DATABASE_URL && requiresLocalDatabase("scripts/verify-control-totals.mjs")) {
     console.error(
       `\n${LABEL}: FAIL — scripts/verify-control-totals.mjs (03c) — this diff touches a money path ` +
         `but DATABASE_URL is not set. A touched live-domain guard with no DB is a FAIL, never a skip (ROUND 29.9-B).\n`,
@@ -1245,7 +1245,7 @@ if (touchesMoneyPath()) {
 // ROUND 23.3 SUPPLEMENT (owner/Lead, 2026-09-13) — the master AlwaysTrack parity guard, proves the
 // WHOLE ingest chain against prod.
 if (touchesMoneyPath()) {
-  if (!process.env.DATABASE_URL) {
+  if (!process.env.DATABASE_URL && requiresLocalDatabase("scripts/verify-alwaystrack-parity.mjs")) {
     console.error(
       `\n${LABEL}: FAIL — scripts/verify-alwaystrack-parity.mjs — this diff touches a money path but ` +
         `DATABASE_URL is not set. A touched live-domain guard with no DB is a FAIL, never a skip (ROUND 29.9-B).\n`,
@@ -1267,7 +1267,7 @@ if (touchesMoneyPath()) {
 // own TOTAL DUE (the same runtime check closeSettlementPayRun now runs at close time). Mirrors
 // verify-control-totals/verify-alwaystrack-parity's own touchesMoneyPath()-gated live pattern.
 if (touchesMoneyPath()) {
-  if (!process.env.DATABASE_URL) {
+  if (!process.env.DATABASE_URL && requiresLocalDatabase("scripts/verify-settlement-net-equals-document.mjs")) {
     console.error(
       `\n${LABEL}: FAIL — scripts/verify-settlement-net-equals-document.mjs — this diff touches a ` +
         `money path but DATABASE_URL is not set. A touched live-domain guard with no DB is a FAIL, never a skip (ROUND 29.9-B).\n`,
@@ -1300,7 +1300,7 @@ function touchesFuelOrExpensePath() {
   return files.some((f) => FUEL_EXPENSE_RE.test(f));
 }
 if (touchesFuelOrExpensePath()) {
-  if (!process.env.DATABASE_URL) {
+  if (!process.env.DATABASE_URL && requiresLocalDatabase("scripts/verify-diesel-expense-fuel-dedupe.mjs")) {
     console.error(
       `\n${LABEL}: FAIL — scripts/verify-diesel-expense-fuel-dedupe.mjs — this diff touches its ` +
         `fuel/accounting/migration domain but DATABASE_URL is not set. A touched live-domain guard ` +
@@ -1323,7 +1323,7 @@ if (touchesFuelOrExpensePath()) {
 // fuel.fuel_transactions rows still carrying the raw Relay bridge token (transaction_reference LIKE
 // 'txn_%') instead of a real, vendor-matched reference.
 if (touchesMoneyPath()) {
-  if (!process.env.DATABASE_URL) {
+  if (!process.env.DATABASE_URL && requiresLocalDatabase("scripts/verify-fuel-relay-txn-vendor-unmatched.mjs")) {
     console.error(
       `\n${LABEL}: FAIL — scripts/verify-fuel-relay-txn-vendor-unmatched.mjs — this diff touches a ` +
         `money path but DATABASE_URL is not set. A touched live-domain guard with no DB is a FAIL, ` +
@@ -1412,7 +1412,7 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
       return false;
     });
   if (touched) {
-    if (!process.env.DATABASE_URL) {
+    if (!process.env.DATABASE_URL && requiresLocalDatabase(rel)) {
       console.error(
         `\n${LABEL}: FAIL — ${rel} — this diff touches its domain but DATABASE_URL is not set. ` +
           `A touched live-domain guard with no DB is a FAIL, never a skip (ROUND 29.9-B).\n`,

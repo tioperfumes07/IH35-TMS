@@ -89,7 +89,12 @@ jobs:
             scripts/verify-void-stamps-the-spec-liveness-column.mjs \
             scripts/verify-reversed-jes-carry-header-linkage.mjs \
             scripts/verify-cancelled-load-leaves-no-live-money.mjs \
-            scripts/verify-void-cascades-to-every-child.mjs
+            scripts/verify-void-cascades-to-every-child.mjs \
+            scripts/verify-control-totals.mjs \
+            scripts/verify-alwaystrack-parity.mjs \
+            scripts/verify-settlement-net-equals-document.mjs \
+            scripts/verify-diesel-expense-fuel-dedupe.mjs \
+            scripts/verify-fuel-relay-txn-vendor-unmatched.mjs
 
   verify-branch-fresh:
     # Base-DEPENDENT gate: it asserts the PR base is 0 commits behind origin/main.
