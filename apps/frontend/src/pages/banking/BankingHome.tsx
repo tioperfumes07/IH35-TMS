@@ -10,6 +10,7 @@ import {
   getPlaidBankAccounts,
   getQboSyncQueueStats,
   getReconciliationSessions,
+  getEscrowDriverBalances,
   startReconciliationSession,
   createPettyCashAccount,
   reorderBankAccounts,
@@ -28,6 +29,7 @@ import { SyncStatusStrip } from "./components/SyncStatusStrip";
 import { DriftAlertsPanel } from "./components/DriftAlertsPanel";
 import { getQboConnectionStatus } from "../../api/forensic";
 import { ManualJEModal } from "../accounting/ManualJEModal";
+import { BankingHomeAttentionStrip } from "./components/BankingHomeAttentionStrip";
 import { BankingPlaidConnectionsPanel } from "./components/BankingPlaidConnectionsPanel";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
@@ -177,6 +179,12 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   const uncategorizedQuery = useQuery({
     queryKey: ["banking", "uncategorized", companyId],
     queryFn: () => getBankingUncategorized(companyId, { limit: 8 }),
+    enabled: Boolean(companyId),
+  });
+  // C-51 — Driver Escrow liability pool headcount for Home attention strip.
+  const escrowBalancesQuery = useQuery({
+    queryKey: ["banking", "escrow-balances", companyId, "home-attention"],
+    queryFn: () => getEscrowDriverBalances(companyId),
     enabled: Boolean(companyId),
   });
   const factoringVirtualQuery = useQuery({
@@ -475,6 +483,31 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           + Connect bank/credit card/other buttons, see that file) — this duplicate pair is deleted. */}
       {activeTab === "accounts" ? (
         <>
+          {/* C-51 — buried live facts first: uncategorized / never-reconciled / Cash GL / QBO / Escrow. */}
+          <BankingHomeAttentionStrip
+            facts={{
+              uncategorizedCount,
+              transactionCount: syncTransactionCount,
+              reconciledAccountsCount,
+              totalBankAccounts: totalBankAccountsForRecon,
+              unboundCashGlCount: (allAccountsQuery.data?.accounts ?? []).filter((a) => !a.ledger_account_id).length,
+              qboConnected: qboConnectionQuery.data?.connected ?? false,
+              escrowBalanceCents: Math.round(Number(kpiQuery.data?.driver_escrow ?? 0) * 100),
+              escrowDriverCount: (escrowBalancesQuery.data?.drivers ?? []).filter(
+                (d) => Number(d.escrow_balance ?? 0) !== 0
+              ).length,
+            }}
+            onCategorize={() => {
+              setTransactionsInitialFilter("uncategorized");
+              navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`);
+            }}
+            onReconcile={openStartReconciliation}
+            onCashGl={() => navigate("/banking/cash-gl-setup")}
+            onDriverEscrow={() => {
+              setActiveTab("driver_escrow");
+              navigate(BANKING_TAB_PATH.driver_escrow);
+            }}
+          />
           {/* QBO-parity banking home: horizontal account-tiles row + QBO sync strip (May-1 spec).
               Additive — the KPI grid, vertical Bank-accounts list, and register below are unchanged. */}
           <SyncStatusStrip

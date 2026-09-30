@@ -336,7 +336,31 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
   );
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-c51-driver-escrow="1">
+      <div
+        className="rounded-sm border border-[#E5E7EB] px-3 py-2 text-xs"
+        style={{ borderLeft: "4px solid #B54708", background: "#fffaeb" }}
+        data-testid="banking-escrow-liability-honesty-banner"
+      >
+        <p className="font-semibold text-[#0F1219]">
+          Driver Escrow is a liability — the company owes{" "}
+          {Number(driverEscrowBalance ?? 0).toLocaleString("en-US", { style: "currency", currency: "USD" })} back
+          across {(driverBalancesQuery.data?.drivers ?? []).filter((d) => Number(d.escrow_balance ?? 0) !== 0).length}{" "}
+          driver(s) with a balance.
+        </p>
+        <p className="mt-1 text-[#6B7280]">
+          Never book escrow to an expense account. Liability overstates cost when treated as spend. Drill a driver
+          row for the posting register; settlement and journal links stay two-way.
+        </p>
+        <div className="mt-2 flex flex-wrap gap-3">
+          <Link to="/driver-finance/settlements" className="font-medium text-[#1F2A44] underline">
+            Settlements
+          </Link>
+          <Link to="/banking" className="font-medium text-[#1F2A44] underline">
+            Banking Home
+          </Link>
+        </div>
+      </div>
       {ledgerQuery.isSuccess && listState.isEmpty && Number(driverEscrowBalance ?? 0) === 0 && !isFiltered ? (
         <div
           className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
