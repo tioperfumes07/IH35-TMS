@@ -526,3 +526,91 @@ gap as T-26/J-3's fault poller) rather than silently continuing -- decryption fa
 Samsara call or DB write; safety.harsh_events stayed at its pre-existing baseline (1 row, the
 known fixture, unchanged). Real ingestion count is therefore UNVERIFIED, same word, same reason
 as T-26 -- needs the owner to clear the key, then a post-deploy check.
+
+## CC-3 — ROUND 301 T-31 — T122's stale samsara_vehicle_id, DRY-RUN REPORT (no write, needs owner AUTH)
+
+MEASURED LIVE (br-fancy-credit-akjnd07a):
+  mdata.units.samsara_vehicle_id (T122, id c9f6737d-3f0b-4a20-aa7e-5cebc8e48787) = '212014918407330'
+    -- last reported 2024-08-21 (2+ YEARS ago), 3 rows total, 0 with odometer, ever
+  integrations.samsara_vehicles (T122's mirror row)                            = '212014918197571'
+    -- name "T122 (R)" in Samsara, 3,329 rows, last reported 2026-09-26 -- the ACTIVE id
+
+PROPOSED FIX (not applied):
+  UPDATE mdata.units
+  SET samsara_vehicle_id = '212014918197571'
+  WHERE id = 'c9f6737d-3f0b-4a20-aa7e-5cebc8e48787'; -- T122, USMCA
+
+IMPACT, confirmed by grepping every repo-wide reader of mdata.units.samsara_vehicle_id
+(not just the two I already knew about from T-25):
+  - loadUnitIdBySamsaraVehicleId() (samsara-positions.service.ts): prefers the mirror first, so
+    the polling/snapshot/fault-poll/harsh-events paths are UNAFFECTED either way -- confirmed,
+    this part really is harmless today, as reported in T-25.
+  - apps/backend/src/driver/pwa-live.routes.ts:121 -- REAL BUG, not harmless: joins
+    `sv.samsara_vehicle_id = u.samsara_vehicle_id` directly. For T122 this join currently NEVER
+    matches (407330 != 197571), so whatever live Samsara data this route serves to T122's driver
+    in the PWA mobile app comes back empty/null today. This is a genuine functional gap the fix
+    closes, found while building this report, not previously known.
+  - apps/backend/src/maint/pm.routes.ts -- same join shape, same effect: the PM-due endpoint's
+    samsara_raw_payload fallback for T122 is always null (cosmetic today, since T122 also has no
+    live odometer regardless -- T-25).
+  - apps/backend/src/jobs/samsara-position-poll-worker.ts -- reads u.samsara_vehicle_id as a
+    pass-through LABEL only (joins to telematics.vehicle_latest_position by unit_id, not by this
+    column), so it mirrors T122's REAL position correctly but tags the mirrored row with the
+    WRONG samsara_vehicle_id in integrations.samsara_vehicle_positions -- a cosmetic mislabel,
+    not a functional break.
+  - apps/backend/src/maintenance/vehicles.routes.ts, dashboard.routes.ts -- display/reference
+    only (no join), cosmetically wrong id shown/stored, no functional break.
+
+Net: the fix is genuinely more than a landmine-for-later -- it fixes a REAL, currently-live gap
+in T122's driver-facing PWA view (pwa-live.routes.ts), not just a future risk.
+
+NOT APPLIED. Per this item's own instruction: DRY-RUN REPORT FIRST, then an owner AUTH, then
+apply -- never on my own authority. Awaiting AUTH before running the UPDATE above.
+
+## CC-3 — ROUND 301 T-32 — ODOMETER-DUP-01 dedupe plan + dry-run counts (NO DELETES, needs owner AUTH)
+
+DEDUPE RULE proposed: within each (operating_company_id, unit_id, day, source) duplicate group,
+keep the row with the LATEST read_at for that day (freshest same-day reading); on an exact
+read_at tie, keep the lowest id for determinism. Every other row in the group is a dedupe
+candidate.
+
+DRY-RUN COUNTS, live, read-only (window function only, nothing written):
+  rows_kept:      975
+  rows_to_dedupe: 176,960
+  rows_total:     177,935   (grew slightly since T-27's 177,906 measurement -- J-1's own daily
+                             ticks since then, expected)
+  by source:      samsara=176,960 to dedupe, manual=0 to dedupe (J-2's own day-grain IDEMP
+                   already holds -- confirmed clean, matches its own partial unique index design)
+
+SAMPLE (one real group, first 6 of 44 rows): unit 033dcdff (T171), day 2026-06-21, all
+odometer_miles=401810.0, read_at every ~5 minutes from 23:34:04 through 23:59:59Z -- exactly the
+shape of a retired high-frequency poller writing the same reading on a tight interval, not a
+reading that legitimately varied within the day.
+
+PROPOSED DELETE (not executed):
+  WITH ranked AS (
+    SELECT id, row_number() OVER (
+      PARTITION BY operating_company_id, unit_id, (read_at AT TIME ZONE 'UTC')::date, source
+      ORDER BY read_at DESC, id ASC
+    ) AS rn
+    FROM telematics.odometer_readings
+  )
+  DELETE FROM telematics.odometer_readings
+  WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
+  -- expected result: 176,960 rows removed, 975 rows remain from the historical duplicate groups
+  -- (plus every row outside a duplicate group, untouched).
+
+THE UNIQUE INDEX THAT MAKES A REPEAT IMPOSSIBLE: Round 297.1 already shipped
+odometer_readings_oci_unit_date_source_key (migration 202614950000) -- but scoped
+WHERE read_at >= '2026-09-30T00:00:00Z' specifically BECAUSE the unscoped form could not be
+created against this same historical duplication. Once the DELETE above runs, that WHERE clause
+is no longer load-bearing -- every remaining row (975 historical + everything written since)
+would satisfy the constraint unscoped. Follow-up migration (own claimed number, own PR, after
+the delete is AUTH'd and applied):
+  DROP INDEX telematics.odometer_readings_oci_unit_date_source_key;
+  CREATE UNIQUE INDEX odometer_readings_oci_unit_date_source_key
+    ON telematics.odometer_readings (operating_company_id, unit_id, telematics.odometer_reading_day(read_at), source);
+  -- no WHERE clause -- a repeat becomes structurally impossible for EVERY row, not just future ones.
+
+NO DELETES RUN. Awaiting owner AUTH before executing either the dedupe DELETE or the
+index-widening migration.
