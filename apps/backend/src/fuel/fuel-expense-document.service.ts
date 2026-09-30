@@ -179,6 +179,7 @@ type FuelRow = {
   load_id: string | null;
   driver_id: string | null;
   unit_id: string | null;
+  trailer_id: string | null;
   fuel_type: string | null;
   gallons: string | null;
   price_per_gallon: string | null;
@@ -205,7 +206,7 @@ export async function createExpenseFromFuelTransaction(
   // ---- 1. READ THE SOURCE, SCOPED. Never trust an id without its company. ----------------
   const fuelRes = await client.query<FuelRow>(
     `SELECT id::text, operating_company_id::text, vendor_id::text, load_id::text,
-            driver_id::text, unit_id::text, fuel_type, gallons::text, price_per_gallon::text,
+            driver_id::text, unit_id::text, trailer_id::text, fuel_type, gallons::text, price_per_gallon::text,
             total_cost::text, transaction_at::text, purchased_at::text, transaction_reference,
             location_city, location_state, archived_at::text,
             gross_cost::text, discount_amount::text, fee_amount::text
@@ -441,10 +442,10 @@ export async function createExpenseFromFuelTransaction(
       INSERT INTO accounting.expenses (
         operating_company_id, vendor_uuid, status, transaction_date, total_amount_cents,
         memo, expense_number, source_fuel_transaction_id, load_id, is_sample_data,
-        journal_entry_id, posted_at, payment_account_uuid
+        journal_entry_id, posted_at, payment_account_uuid, driver_uuid, unit_id, trailer_id
       )
       VALUES ($1::uuid, $2::uuid, $9, $3::date, $4::bigint, $5, $6, $7::uuid, $8::uuid, false,
-              $10::uuid, $11, $12::uuid)
+              $10::uuid, $11, $12::uuid, $13::uuid, $14::uuid, $15::uuid)
       RETURNING id::text
     `,
     [
@@ -468,6 +469,14 @@ export async function createExpenseFromFuelTransaction(
       // R-153.6/153.7: the card-rail account (Dreamline 2510 / Relay 1295 for USMCA), resolved
       // above through the SAME function the live poster uses -- never 1090, never a guess.
       paymentAccountId,
+      // ROUND 291 fix: the fuel transaction already carries this attribution (set at ingestion,
+      // same source verify-fuel-cost-posts-exactly-once.mjs's FULL_LOAD_LINKAGE check reads) --
+      // it was being fetched into `fuel` above and used only in the audit-log payload below,
+      // never written onto the document it actually attributes. That silently produced 35 new
+      // linkage-incomplete expenses (ratchet baseline 7) from every backfill call this session.
+      fuel.driver_id,
+      fuel.unit_id,
+      fuel.trailer_id,
     ],
   );
   const expenseId = inserted.rows[0]!.id;

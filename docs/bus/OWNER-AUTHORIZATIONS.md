@@ -5435,3 +5435,37 @@ proof_query: scripts/verify-purge-era-closures-still-hold.mjs run live against p
   loads whose latch never fired, not a posting call. Separate board finding filed
   (DISP-01-LATCH-8-DELIVERED-LOADS-NEVER-FIRED) for that investigation, CC-1/dispatch-adjacent
   lane, not closed here.
+
+## AUTH-157
+issued_at: 2026-09-30T08:35:00.000Z
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- metadata-only backfill of
+driver_uuid/unit_id/trailer_id on accounting.expenses rows created via
+createExpenseFromFuelTransaction. Root cause (fixed in the same PR): that function already read
+fuel.fuel_transactions.driver_id/unit_id into a local variable and used them ONLY in an audit-log
+payload -- never wrote them onto the accounting.expenses row it inserted, and never selected
+trailer_id from the fuel row at all. Two earlier backfill passes this session (AUTH-145 ROUND
+290.1's fuel-expense-bridge backfill; AUTH-146 load 13593's fuel rows) both called the buggy
+version and pushed scripts/verify-fuel-cost-posts-exactly-once.mjs check D's "any field null"
+count from a genuine baseline of 7 to 42 -- hard-blocking every seat's push via
+money-pr-local-gate.mjs's always-run tier. No GL, journal_entry_id, amount, or status touched --
+pure metadata, no posting engine involved. driver_uuid/unit_id sourced from fuel.fuel_transactions
+directly (or, when the fuel row itself lacks unit_id, from the expense's own load's real
+assigned_unit_id -- same standing as reading it off the fuel row, never invented). trailer_id has
+no legitimate source for most of these rows (card-import data with no telematics tag) and is left
+NULL, same shape as the original accepted baseline -- see the same PR's correction to check D
+itself, which now separates a NON-trailer gap (ratchet 0) from a trailer-ONLY gap (informational,
+uncapped, never fails) instead of bundling both under one shrink-only-7 ratchet.
+action: OWNER_AUTH_ID=AUTH-157 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth157-backfill-fuel-expense-linkage.ts
+  (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
+expires_at: 2026-10-01T08:35:00.000Z
+status: CONSUMED
+consumed_at: 2026-09-30T08:50:00.000Z
+consumed_by: CC-1
+row_counts: 35 of 35 candidates updated (driver_uuid + unit_id on all 35; trailer_id where a source
+  existed). 8 rows fully resolved (all 5 fields present). 27 rows resolved to trailer_id-only gap
+  (same accepted shape as the original 7 baseline) -- 34 total trailer-only gaps now, informational.
+proof_query: live on prod, 2026-09-30 -- scripts/verify-fuel-cost-posts-exactly-once.mjs: all 5
+  checks PASS. Check D: 0 non-trailer gap(s); 34 trailer_id-only gap(s), informational (never
+  fails). Rehearsed identically on a throwaway Neon branch fork first (fork deleted after proof).
+
+— CC-1
