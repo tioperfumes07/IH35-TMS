@@ -5647,7 +5647,16 @@ action:
   OWNER_AUTH_ID=AUTH-171 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth171-void-13625-13626-invoices.ts --apply
   (run from repo root; DRY_RUN first with no --apply flag)
 expires_at: 2026-10-01T00:00:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T12:07:03.833Z
+consumed_by: CC-2
+row_counts: 2 of 2 voided (13625, 13626), both reversing_entry_ref:null (zero live postings on
+  either, confirmed correct -- neither invoice was ever posted to GL, same population AUTH-161
+  already found blocked).
+proof_query: BEFORE/AFTER printed by the script itself, live prod, 2026-09-30 -- AR (1100)
+  unchanged at 34560912 cents (consistent with zero prior postings, not a bug). Independently
+  re-verified after commit: both invoices status='void', voided_at stamped. CC-1 notified per
+  Lead's instruction ("tell CC-1 the moment step 2 is proved").
 
 ---
 
