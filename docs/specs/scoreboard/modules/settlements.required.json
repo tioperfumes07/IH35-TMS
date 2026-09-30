@@ -369,6 +369,21 @@
       ]
     },
     {
+      "id": "settlements.drawer.creator",
+      "tab": "Drawers",
+      "sub": "Drawer: Settlement Creator",
+      "route_hint": "surface://pages/settlements/SettlementCreatorDrawer.tsx",
+      "surface_kind": "drawer",
+      "surface_path": "pages/settlements/SettlementCreatorDrawer.tsx",
+      "required": [
+        "connectivity",
+        "driver",
+        "load",
+        "settlement",
+        "picker_law"
+      ]
+    },
+    {
       "id": "settlements.panel.pay_run_close",
       "tab": "Panels",
       "sub": "Panel: Pay Run Close",

@@ -6,7 +6,8 @@ Laws: **280.0.a** no Transportation posts · **280.0.b** no JEs / create the doc
 
 ## DONE
 - ROUND 273 #61+#62 · ROUND 274 void engine · **280.17 + 280.18** squash `#23198` `c1c4b0cafb`
+- Chrome control-response **cancelled by owner** (2026-09-30: "no more chrome verification")
 
-## NEXT
-1. Chrome **control-response only** on Truck Line after FE tip (280.0.c — not linkage proof).
+## NEXT (unblocker seat — resume prior sequence)
+1. Wire orphan Truck Line canonical guard + surface-bar leaves for WriteCheck / Settlement Creator (main push blockers).
 2. Do **not** start Phase 3 purge (waits CC-1 **280.5** + CC-2 **280.7–280.10**).
