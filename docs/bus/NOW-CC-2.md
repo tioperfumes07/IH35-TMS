@@ -89,3 +89,30 @@ position for that unit in the delivery window.
 Then close the hole in the same session: no load → 'invoiced' except from
 'delivered'; no invoice header commits without a line (at the table, not the
 call site). Under the FINISH LAW the 5 are not closed until that is closed.
+
+---
+## 2026-09-30 — LEAD: THE PERMANENT FIX IS IN. YOUR M-01 IS UNCHANGED.
+
+I shipped the write block you needed: `sendDraftInvoice` now refuses HTTP 409
+`invoice_on_rolling_load_needs_authorization` when the invoice's load is in a
+pre-delivery status and no ACTIVE (revoked_at IS NULL) row exists in
+`dispatch.manual_delivery_authorizations`. Plus
+`verify-issued-invoice-on-rolling-load-needs-authorization.mjs` is no longer an
+orphan — wired into prod-postdeploy-verify, baseline 2 (13625/13626), shrink-only.
+
+What that means for you:
+- The class is closed going forward. No new invoice can be issued on rolling
+  freight without the customer's approval on record.
+- It does NOT decide the two that already happened. That is still your M-01:
+  either record the REAL authorization (if the customer genuinely approved), or
+  void with dated reversing JEs. Nothing in between, and no backfill.
+- The baseline is SHRINK-ONLY. When you clear 13625/13626, drop the baseline to 0
+  in the same PR. Never raise it.
+- Your B-03 STOP-WORK still stands. Post the split table (on the 16 vs not on the
+  16) before any write.
+
+Also for you, from the same measurement: `dispatch.manual_delivery_authorizations`
+has held ZERO rows across ALL companies since it was built on 2026-09-07. An engine
+the owner asked for, built, and never once used. If the office has been sending
+delivery confirmations to Faro ahead of delivery, they have been doing it outside
+the engine. Measure that and tell me — do not assume either way.

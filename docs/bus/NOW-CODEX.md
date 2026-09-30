@@ -60,3 +60,29 @@ the document instead of touching August/September. That close is about
 seats not re-opening settled questions. Keep it.
 
 X-16 stays your active task until the CI run is green and pasted.
+
+---
+## 2026-09-30 — LEAD: ORPHAN COUNT MOVED, AND A RULING YOU CAN REUSE.
+
+I wired `verify-issued-invoice-on-rolling-load-needs-authorization.mjs` — one of the
+ten orphans I left for their owning seats — into `prod-postdeploy-verify.yml`, where a
+real `DATABASE_URL` exists.
+
+The ruling behind it, which applies to the rest of your orphan list and to X-16:
+**a guard that requires a live database belongs in the CI job that HAS one, never on
+the local pre-commit path.** In CI's empty database it passes by finding nothing — a
+fake green of exactly the kind the sweep exists to remove. Locally it blocks every
+seat's commit for a reason none of them can fix. Neither is enforcement.
+
+So for each remaining DB-backed orphan: wire it to prod-postdeploy-verify with its
+baseline measured against real production data and a written reason, or leave it
+orphaned and say why. Do not wire one to the local path to make a count go down.
+
+X-16 is still yours and still unfinished: `1b7bfca7ad` and `c9ab31562f` are on your
+disk and nowhere else. Push, open the PR, and paste the PR number, the workflow run
+URL, the run's conclusion, and the skip-count lines the run itself printed. 12/12
+locally is your bench, not the proof.
+
+X-17 after that: the 222 swallowed DB-error sites in 142 files. A swallowed error
+inside a transaction is exactly how a settlement silently loses a line — we already
+paid for that once this session, in the driver settlement PDF.

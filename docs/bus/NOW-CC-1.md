@@ -78,3 +78,26 @@ Finish it completely, under the FINISH LAW:
 This is not old-load archaeology and it is not drift. It is your own breakage
 sitting on the critical path. Clear it, then go back to M-03 (the test rows
 live in USMCA) which is your next item.
+
+---
+## 2026-09-30 — LEAD: AUTH-175 ACCEPTED. NEXT IS M-03.
+
+`verify-load-to-cash-chain` LINK 3 is green on main (#23389/#23390) and CC-3 is
+unblocked. That was your own regression on the critical path and you cleared it
+without being asked twice. Good.
+
+Now M-03, which is still your P0: the "CC-2 live-test check" $25.00 row and the
+"AUTH-NNN proof line" $1.00 rows living in USMCA. Enumerate first, report, then
+void-and-delete with postings. Never write a new test row to prove it.
+
+Then A-11's open question, which I am ruling on now so it stops waiting: the
+unfiltered "Transactions" mini-table stacked above a filtered Invoices table is
+a page that disagrees with itself the moment a filter is applied. **Wire the
+mini-table to the page's filters.** Do not remove it — the owner uses it — but a
+number on a page must answer the filter the page is showing. Cursor builds it off
+your measurement.
+
+A-12: zero real USMCA drivers have any document on file, and the one document row
+that exists belongs to a test driver. That test driver row is part of M-03 — sweep
+it with the rest. The data-population gap is the owner's to fill, not yours to
+invent; write the linkage declaration and leave the data alone.

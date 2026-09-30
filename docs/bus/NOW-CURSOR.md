@@ -34,3 +34,34 @@ a guard. A baseline that went UP is not a fix.
 - The migration chain now applies END TO END on a fresh database. main CI had been red since
   2026-09-17 on it.
 - 14 orphan guards wired. 10 remain and they are named, with the seat that owns each.
+
+---
+## 2026-09-30 — LEAD: C-17 SHIPPED A BUILD BREAK. FIXED, BUT READ THIS.
+
+`DriverListSidebar.tsx:84` mounted `EntityLinkOrTombstone` without its required
+`noun` prop:
+  TS2741: Property 'noun' is missing in type '{ kind: "driver"; id: string; name: string; }'
+That fails `tsc -b`, which is what **Render builds with**, so it was red on
+origin/main and taking build-typecheck, build-typecheck-heavy, typecheck-merge-result,
+perf-audit, locked-guards, locked-guards-heavy and security-audit down with it —
+every seat's push, not just yours.
+
+I fixed it (`noun="Driver"`, matching every other driver call site) and swept the
+remaining `<EntityLinkOrTombstone>` call sites — that was the only one.
+
+**Run `npx tsc -b` from apps/frontend before you push, not `tsc --noEmit`.** They are
+not the same check and only one of them is what Render runs. `--noEmit` passed on this
+exact file while `-b` failed.
+
+Also cleared for you: `pass-7` AUDIT-FIX-3 was red on main against YOUR working Vendors
+toggle — `verify-customers-vendors-have-list-view.mjs` demanded the literal
+`data-view-mode-toggle="vendors"` while the shared-control migration ships it through
+`dataAttributes` (Vendors.tsx:614). The customers entry had been widened; the vendors
+entry never was. Guard fixed, PASS-7 now 17/17. The page was right.
+
+Your queue is unchanged: C-04..C-15 / C-19, then D47..D54 and the module blocks in
+`claude/00-MASTER-WORK-REGISTER-2026-09-30-ASSIGNED-AND-SEQUENCED.md`.
+K-01 (Kanban cards do not drag from Dispatched to At pickup) is still open and still
+yours — 20 nodes carry aria-roledescription=draggable, so dnd-kit IS attached. The
+defect is in activation or the drop target. Reproduce the owner's real gesture; do not
+close it by pointing at the attributes.

@@ -72,3 +72,32 @@ Your remaining T-01 scope, all of it, before you report done:
    dead stamp engine. Your guard must make that transition impossible.
 
 T-03/T-04/T-06/T-07 findings: good, keep them on the branch, they ship with it.
+
+---
+## 2026-09-30 — LEAD: T-01 IS NOW THE ONLY THING IN FRONT OF THE BOARD.
+
+Your blocker is cleared — CC-1 landed AUTH-175 (#23390) and `verify-load-to-cash-chain`
+LINK 3 is green on main. Stop retrying and push.
+
+Two things I fixed today that touch your lane, so you do not re-diagnose them:
+
+1. **The Truck Line green node was never off.** `.truck-line-vehicle` (z-index 5) was
+   painting over the 17px station dot. Fixed by z-order, not by data. `deriveLiveStation`
+   still correctly parks a stale ping at the last STAMPED node — do not change that.
+   Measured: T170's last ping is 2026-09-29 21:06:28Z, 15h44m stale. The board is honest.
+
+2. **That last stamped node is Dispatched for all 16 loads because of T-01.** So the
+   z-order fix makes the board readable; only your engine makes it TRUE.
+
+Finish T-01 completely, per the FINISH LAW — an engine that has never produced a row is
+not built, and `dispatch.stop_arrivals` has 0 rows ever:
+  1. The poll path calls arrival detection on every position it persists. Idempotent per
+     (load, stop, arrival window). Keep the webhook path too.
+  2. BACKFILL. Replay the 129 positions and 7,596 geofence transitions so the 16 loads
+     land on their true station today. Paste the stop_arrivals rows created and the live
+     status of all 16 after.
+  3. Guard + verify-step, selftest that FAILS when the poll path stops calling detection.
+  4. Alarm: a load in 'dispatched' with fresh GPS older than N hours is a silent failure.
+  5. Your guard must also make 'invoiced' unreachable from anything but 'delivered' —
+     five loads (13616/13618/13620/13621/13622) reached 'invoiced' without ever being
+     'delivered', which is the same dead engine.
