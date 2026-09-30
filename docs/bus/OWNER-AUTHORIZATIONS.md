@@ -5031,3 +5031,41 @@ row_counts: 3 of 3 -- each expense voided (reversal JE) and a real Bill created 
 proof_query: scripts/verify-steps/11753-verify-expense-never-credits-ap.mjs run live against prod
   2026-09-30 -- "live expense-sourced JE lines crediting account 2000: 0" / "PASS -- no expense
   document credits Accounts Payable." (was 3 before this AUTH ran.)
+
+
+---
+
+## LEAD RULING — AUTH NUMBER COLLISION + BLOCK RESERVATION (2026-09-30)
+
+issued_at: 2026-09-30T05:50:00.000Z
+scope: AUTH number assignment law for all seats — documentation only; no production write
+status: LAW
+
+Owner, verbatim (chat 2026-09-30):
+> AUTH NUMBER COLLISION — LEAD'S FAULT, RESOLVED. Three collisions in minutes, one of them mine.
+> AUTHORITATIVE ASSIGNMENT, effective immediately. Do not self-assign an AUTH number again.
+
+### AUTHORITATIVE ASSIGNMENT (wins over any concurrent local draft)
+
+| AUTH | Seat | Scope |
+|------|------|-------|
+| **AUTH-147** | **CODEX** | USMCA sample-data purge, 25 rows. MERGED ON MAIN as `7c0ed1d3a9` (`claude/00-AUTH-147-SAMPLE-DATA-PURGE-USMCA-25-ROWS.md`). **This one wins because it is already on main.** Codex is unblocked — execute it. |
+| AUTH-151 | CC-2 | orphan-expense void (per CC-1's flag) |
+| AUTH-152 | CC-3 | DISPATCH-STAMPS backfill — renumber local 147 → 152 before push |
+| AUTH-153 | CC-3 | ROUND 290.3 escrow fix |
+| AUTH-154+ | CC-1 | take sequentially from 154 |
+
+**Collision note on this file's earlier `## AUTH-147` heading:** that entry was CC-1's invoice-010 draft, `status: EXPIRED` / SUPERSEDED BEFORE ANY WRITE by AUTH-148. Zero rows touched under that heading. The number AUTH-147 is awarded to Codex's sample-data purge above; invoice-010 lives only under AUTH-148.
+
+### BLOCK RESERVATION (self-assign ONLY inside your block)
+
+| Seat | Block |
+|------|-------|
+| CC-1 | **154–159** |
+| CC-2 | **160–165** |
+| CC-3 | **166–171** |
+| Codex | **172–177** |
+
+Inside your block you self-assign freely. Outside it, never. If you need more, ask Lead — Lead extends the block.
+
+**Cursor / Lead:** do not self-assign an AUTH number. Cursor code / docs PRs that are not a production write need no AUTH.
