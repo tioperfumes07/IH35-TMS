@@ -1,0 +1,5 @@
+{
+  "count": 2,
+  "reason": "Loads 13625 and 13626, measured live 2026-09-30. Both invoiced and factored by Faro ($6,062.50 and $3,298.00 advanced) before delivery, with dispatch.manual_delivery_authorizations holding 0 rows across all companies. Owner ruling: these should never have been sent without customer approval. SHRINK-ONLY — clear them by recording the real authorization or correcting the invoices; never raise this number.",
+  "established": "2026-09-30"
+}
