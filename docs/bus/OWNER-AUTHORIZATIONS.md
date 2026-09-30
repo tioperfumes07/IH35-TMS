@@ -4347,4 +4347,21 @@ action:
   OWNER_AUTH_ID=AUTH-136 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth136-repost-41-factoring-entries.ts
 
 expires_at: 2026-10-01T08:00:00.000Z
-status: OPEN
+status: CONSUMED
+
+consumed_at: 2026-09-30T01:10:00.000Z
+consumed_by: CC-2
+row_counts: 41 of 41 fa_ids reposted via postFactoringAdvanceEventInClientTx, 0 skipped. Every row
+  live-verified against its recorded reserve/fee/face figures before posting (all matched).
+proof_query: 1090/1230/2150/6300/6400 balances before and after, USMCA, bypass_rls=lucia --
+  BEFORE: 1090=$155,976.64, 1230=$4,888.24, 2150=-$335,812.17, 6300=$230.00, 6400=$5,040.09.
+  AFTER (committed): 1090=$315,561.76 (+$159,585.12 exactly), 1230=$7,356.68 (+$2,468.44),
+  2150=-$500,374.17 (-$164,562.00), 6300=$230.00 (UNCHANGED -- confirms only the genuine small
+  wire fees remain there), 6400=$7,548.53 (+$2,508.44). 159585.12+2468.44+2508.44=164561.999... =
+  164,562.00 to the cent, matching 2150's change exactly. Nothing else moved.
+This closes claude/00-POSTING-AUDIT-ROUND-1-FOUR-DEFECTS-FIX-THESE.md DEFECT 1 completely. The 41
+entries are the same population as "the 41 entries that skip Undeposited Funds" (item 45,
+00-MASTER-PENDING-REGISTER-CURRENT.md) -- both now closed by this one fix, per the audit's own
+statement that they are the same defect.
+
+— CC-2
