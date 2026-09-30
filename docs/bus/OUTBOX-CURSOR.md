@@ -43,3 +43,6 @@ C-25 · what changed: `/accounting/disputes` SegmentedControl Driver|Customer|Ve
 
 **2026-09-30T18:20Z · C-04 ROW TREATMENT · branch `cursor/c04-row-treatment-c89b`**
 C-04 · what changed: ParityTable hover/stripe/selected → QBO_SURFACE (#EEF2F7 / #FAFBFC / #EAECF1); dropped weak `hover:bg-gray-50`; Customers/Vendors/Drivers master sidebars add `rowStripeClass` + `data-c04-row`; Customers DetailRow divider `#D8DEE6` (was gray-100). Ops: `scripts/ops/verify-c04-row-treatment.mjs`. · LIVE PROOF: ops --selftest PASS; tsc -b; ratchet PASS. · LEFT: Chrome getComputedStyle rows 1..4 on /customers; C-19 has-transactions default next.
+
+**2026-09-30T18:35Z · C-19 HAS-TRANSACTIONS DEFAULT · branch `cursor/c19-has-transactions-default-c89b`**
+C-19 · what changed: Customers + Vendors roster default `?txn=with` → `listAll*` with `has_transactions:true` (A-21 shared predicate; voided never counts). Explicit SegmentedControl "With transactions" / "All customers|vendors" (`?txn=all`). Parent create picker stays unfiltered. Ops: `scripts/ops/verify-c19-has-transactions-default.mjs`. · LIVE PROOF: ops --selftest PASS; tsc -b. · LEFT: Chrome default count vs All (USMCA 65/1249 cust, 34/623 vend); C-05 next.

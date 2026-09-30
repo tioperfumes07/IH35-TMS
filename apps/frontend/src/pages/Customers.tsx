@@ -552,6 +552,18 @@ export function CustomersPage() {
   };
   const listStatus: "active" | "inactive" | "all" =
     listTab === "inactive" ? "inactive" : listTab === "active" ? "active" : "all";
+  // C-19 / A-21 (owner 2026-09-30): default roster = parties with REAL money movement only.
+  // Voided does not count. Full roster stays behind the explicit "All customers" control.
+  const txnScope = ((): "with" | "all" => {
+    const raw = (searchParams.get("txn") ?? "with").toLowerCase();
+    return raw === "all" ? "all" : "with";
+  })();
+  const setTxnScope = (next: "with" | "all") => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "with") params.delete("txn");
+    else params.set("txn", "all");
+    setSearchParams(params, { replace: true });
+  };
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -664,14 +676,27 @@ export function CustomersPage() {
   });
 
   const customersQuery = useQuery({
-    queryKey: ["customers", "page", companyId],
+    queryKey: ["customers", "page", companyId, txnScope],
     // CUST-1: load the FULL customer roster (the client-side table below paginates/searches over it).
     // Without an explicit limit the endpoint returns only the default 50, hiding the rest of the roster.
     // PAGER-SERVERTOTAL-01: keep server `total` (COUNT) — never derive pager totalCount from .length.
-    queryFn: () => listAllCustomers({ operating_company_id: companyId, active_company_only: true }),
+    // C-19: default has_transactions=true via A-21 shared predicate (never a client-side filter).
+    queryFn: () =>
+      listAllCustomers({
+        operating_company_id: companyId,
+        active_company_only: true,
+        ...(txnScope === "with" ? { has_transactions: true } : {}),
+      }),
     enabled: Boolean(companyId),
   });
   const customersRoster = customersQuery.data?.customers ?? [];
+  // Create-form parents must see every active customer, not only those with transactions.
+  const parentCustomersQuery = useQuery({
+    queryKey: ["customers", "parents", companyId],
+    queryFn: () => listAllCustomers({ operating_company_id: companyId, active_company_only: true }),
+    enabled: Boolean(companyId) && createOpen,
+  });
+  const parentCustomersRoster = parentCustomersQuery.data?.customers ?? customersRoster;
   // ACCT-F5790 — `active_company_only: true` above scopes to the ACTIVE company's records, and
   // mdata.customers' own customers_select RLS additionally hides any deactivated_at-set row for a
   // non-bypass reader. Both are correct for the base roster (pickers/parentCustomerOptions below must
@@ -682,8 +707,13 @@ export function CustomersPage() {
   // semantics or any other consumer of customersRoster (parentCustomerOptions stays sourced from the
   // active-only roster below, unchanged).
   const inactiveCustomersQuery = useQuery({
-    queryKey: ["customers", "inactive", companyId],
-    queryFn: () => listAllCustomers({ operating_company_id: companyId, status: "inactive" }),
+    queryKey: ["customers", "inactive", companyId, txnScope],
+    queryFn: () =>
+      listAllCustomers({
+        operating_company_id: companyId,
+        status: "inactive",
+        ...(txnScope === "with" ? { has_transactions: true } : {}),
+      }),
     enabled: Boolean(companyId),
   });
   const inactiveCustomersRoster = inactiveCustomersQuery.data?.customers ?? [];
@@ -696,10 +726,10 @@ export function CustomersPage() {
   // D1-4: eligible parents for the create form = active, TOP-LEVEL customers (never a sub-customer).
   const parentCustomerOptions = useMemo(
     () =>
-      customersRoster
+      parentCustomersRoster
         .filter((c) => !c.parent_customer_id && customerIsSelectable(c))
         .map((c) => ({ id: c.id, name: c.name, customer_code: c.customer_code })),
-    [customersRoster]
+    [parentCustomersRoster]
   );
   const allInvoicesQuery = useQuery({
     queryKey: ["accounting", "invoices", "all", "open", companyId],
@@ -1171,6 +1201,17 @@ export function CustomersPage() {
                 { value: "active", label: "Active", testId: "customers-roster-status-active" },
                 { value: "inactive", label: "Inactive", testId: "customers-roster-status-inactive" },
                 { value: "all", label: "All", testId: "customers-roster-status-all" },
+              ]}
+            />
+            {/* C-19 — A-21 server predicate; default With transactions (real money only). */}
+            <SegmentedControl
+              value={txnScope}
+              onChange={setTxnScope}
+              testId="customers-txn-scope"
+              dataAttributes={{ "data-c19-txn-scope": "customers" }}
+              options={[
+                { value: "with", label: "With transactions", testId: "customers-txn-with" },
+                { value: "all", label: "All customers", testId: "customers-txn-all" },
               ]}
             />
             {/* V8 — roster Type + Credit-status filters (filter the left customer list, not transactions). */}
