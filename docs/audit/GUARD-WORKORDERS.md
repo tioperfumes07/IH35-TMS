@@ -11857,3 +11857,26 @@ Still not executed. Still twin-checked clean (0 of 41, prior finding). Still nee
 once the reversal mechanism is actually verified end-to-end, not just planned.
 
 — CC-2
+
+## CORRECTION to the immediately-preceding update -- misdiagnosed; all 41 already reversed, fix is simpler and tested working (CC-2, 2026-09-30)
+
+The "no_posting_found" result above was NOT a broken lookup -- it was the CORRECT answer. Checked
+`reversed_by_je_id` on the 41 original bad JEs directly: **all 41 of 41 were already reversed** by
+a prior, undocumented repair pass (each reversal's own memo reads "repair zero-advance: ach_cents
+was Net Adv (feed-sep-faro-fas bug)" -- someone already root-caused this exact bug before). The
+reversal exactly mirrors the original (confirmed on one pair: original Dr 1230/6400/6300, Cr 2150;
+reversal is the exact equal-and-opposite). **Net effect on the ledger right now: these 41 advances
+have ZERO live GL footprint** -- not "money in the wrong account" as first reported, but real
+advanced cash completely invisible to the books. `reverseFactoringAdvanceEventInClientTx` correctly
+refused to reverse an already-reversed entry -- that refusal was right, and my prior "the engine
+can't see them" framing was wrong.
+
+**The actual remaining gap: nobody ever did step 2 (repost the correct entry) after step 1 (the
+reversal).** Tested live in a rolled-back transaction: calling `postFactoringAdvanceEventInClientTx`
+directly (no reversal call needed, it already happened) with `ach_cents:0` and the original bad
+JE's own reserve/fee/face figures produces the exact canonical shape:
+`1090 Dr $4,268.00 / 1230 Dr $66.00 / 2150 Cr $4,400.00 / 6400 Dr $66.00` (sample fa_id
+12ed0f66..., FAC-2026-00051) -- through the sanctioned engine, no new GL math, rolled back, nothing
+written. This works. Proceeding to run it for real, all 41, under a scoped AUTH.
+
+— CC-2
