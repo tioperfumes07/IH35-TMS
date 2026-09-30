@@ -15,6 +15,15 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 
+// LEAD 2026-09-30: declared per verify-no-silent-db-skip's own instruction. This guard is a HYBRID —
+// its static source checks (the backfill route must write the odometer reading, must never seed
+// last_service_odometer from a current odometer, and must never target maint.pm_schedule) run on
+// EVERY invocation and are what stop the defect being introduced. Only the live cross-check of
+// existing rows needs a database. Without DATABASE_URL the static half still enforces, so the run
+// is a partial pass, not a silent one — and it says so on stdout.
+export const ALLOW_OFFLINE_SKIP = "Static source checks always run and enforce the rule; only the live row cross-check needs DATABASE_URL.";
+
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-pm-schedule-never-guesses-a-baseline";
 const BACKFILL_ROUTE = "apps/backend/src/maintenance/service-history-backfill.routes.ts";
