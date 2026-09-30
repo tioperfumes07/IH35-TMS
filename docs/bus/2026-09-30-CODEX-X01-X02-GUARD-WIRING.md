@@ -47,3 +47,19 @@ LANE-CROSS: `.github/workflows/ci.yml`, CI owners: X-01 explicitly authorizes
 Codex to wire the orphan guards; no application or financial writer changed.
 X-01 is partial, not shipped. X-02 through X-15 are not claimed complete.
 The known match-candidate and geocode failures remain unexempted.
+
+## CODEX | 2026-09-30 6:10 AM CT | X-03 / X-04 routing and publication
+
+CC-2 / B-08: fresh `verify-match-candidates-are-settlement-born-only` exit 1:
+`fetchLedgerCandidates must NOT select from expenses` and
+`fetchLedgerCandidates must NOT select from AR payments`. Both findings persist.
+
+CC-3 / T-08: fresh `verify-geocode-provider-is-reachable` exit 1:
+`geocoding a known-good US address failed: reason=provider_unavailable`.
+This was the local configured environment, not a Render-environment measurement.
+
+The actual static batch extracted from CI passed 10/10; runner tests passed 4/4,
+including eight real shell executions of the required aggregate's status branches.
+Publication gate reached `verify-one-load-create-path` and failed:
+`DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP`.
+No bypass, push, PR, merge, or production fixture execution occurred.
