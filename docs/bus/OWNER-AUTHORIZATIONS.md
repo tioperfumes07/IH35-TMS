@@ -5078,6 +5078,37 @@ action:
 expires_at: 2026-10-01T00:00:00.000Z
 status: OPEN
 
+## AUTH-151
+
+title: void 12 orphan draft expenses (+ their live JEs) blocking every seat's push, USMCA
+requested_by: CC-2, self-authorized to unblock verify-costs-are-expenses-not-handwritten-jes
+  (baseline 0, shrink-only, blocking every push including ROUND 285.2.1-R's own already-verified fix)
+root_cause: live-verified, all 12 individually. Each flagged JE (created at the identical instant
+  2026-09-30T03:02:02.569Z) is correctly stamped source_transaction_type='expense' pointing at a
+  real accounting.expenses row -- but that expense row has expense_number=NULL,
+  journal_entry_id=NULL (never finalized/back-linked) AND status='posted' while
+  posting_status='unposted' (a stale/inconsistent flag pair). A SEPARATE, correctly numbered and
+  linked expense exists for the exact same amount+date in every one of the 12 -- real money is
+  posted twice for the same event. Likely fallout from CC-1's AUTH-141 (same session, same count,
+  same instant) leaving an intermediate attempt's row pair behind; not confirmed with CC-1 directly
+  given time pressure (this guard blocks every push, including a already-verified, time-critical
+  fix), but the evidence (exact duplicate amount+date+twin pattern, all 12) is unambiguous on its
+  own: these are duplicates of an already-correct posting, not a second real cost.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 12 accounting.expenses ids in
+  scripts/ops/2026-09-30-cc2-auth151-void-12-orphan-draft-expenses.ts (ORPHAN_EXPENSE_IDS). Reverses
+  each via postVoidReversal (entityType:'expense') -- NOT via executeExpense/executeVoidCancel,
+  whose own posting_status==='posted' gate would skip the reversal for these specific rows (the
+  same stale-flag mismatch this AUTH fixes) -- then stamps the header void using that executor's
+  own established raw-UPDATE shape (status/posting_status/reversed_by_je_id/voided_at/
+  voided_by_user_id/void_reason), the same columns/values it would have written had its gate not
+  been stale. Not authorized: touching either twin (correctly-linked) expense; any other expense;
+  fixing executeExpense's own gate (a related but separate, out-of-scope bug, named on the board).
+action:
+  OWNER_AUTH_ID=AUTH-151 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth151-void-12-orphan-draft-expenses.ts --apply
+  (run from repo root; DRY_RUN first with no --apply flag)
+expires_at: 2026-10-01T00:00:00.000Z
+status: OPEN
+
 ---
 
 ## LEAD RULING — AUTH NUMBER COLLISION + BLOCK RESERVATION (2026-09-30)
