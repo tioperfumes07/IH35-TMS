@@ -469,3 +469,24 @@ FUEL-CARD-GL-BALANCES-UNTRACEABLE-TO-SUBLEDGER-2026093010.
 NEXT: B-33 (attribute the existing integrity engine findings through driverAtTimeSql).
 
 — CC-2
+
+---
+## 2026-09-30 — B-33 REPORT (integrity findings attribution)
+
+JOB ID: B-33 (ROUND 300)
+
+Attributed all 116 live safety.integrity_findings rows through driverAtTimeSql — no second
+resolver, no new table, safety.*'s own engine untouched.
+
+RESULT: 46 of 116 resolve (39.7%) — orphan_entry 20/46, orphan_exit 22/46, expected_missing 4/24.
+The other 70 have no covering assignment window at that unit+time — the same honest coverage
+gap already named in DAMAGE-WO-UNITS-ZERO-ASSIGNMENT-COVERAGE-2026093006 (some units genuinely
+lack telemetry), not a bug in the attribution logic.
+
+GUARD: scripts/verify-integrity-findings-attribution-rate.mjs (verify-step 11971, reserved via
+#23517) — ratchets today's resolved counts per anomaly_class as a floor. LIVE PASS, --selftest
+1/1 mutation caught.
+
+NEXT: B-34 (factoring reserve / escrow tie-out).
+
+— CC-2
