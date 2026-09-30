@@ -271,3 +271,20 @@ schema's grants, so a fresh database or a DR restore would come back without the
 gap, not a live-500 gap. I conflated "no migration recreates this" with "this is currently broken."
 Correcting the record so it doesn't propagate, per the Lead's instruction.
 # CODEX | 2026-09-30 2:16 PM CT | LANE-CROSS coordination — user R297.5 X-19 assigns no-test-marker guard. Separate guard PR will add its in-memory selftest to money-pr-local-gate.mjs and required readonly run to ci.yml/local-db-guard-routing.mjs. Minimum wiring only; no posters, money, migrations or baselines touched. Authority: docs/bus/2026-09-30-CODEX-R297-5-AUTHORITY.md.
+
+## ROUND 297.2 — real PM catalog, real schedules, owner backfill path (A-27/A-28/A-29)
+**Changed:** `catalogs.pm_intervals` gets 6 real active intervals (PM-A/PM-B/DOT/TIRE/BRK/COOL),
+test row deactivated not deleted. `maintenance.pm_schedules` gets 96 rows (16 real USMCA units x 6
+intervals), every `last_service_odometer`/`next_due_odometer` left NULL — never seeded from the
+current odometer. New `POST /api/v1/maintenance/service-history` route for the owner to type real
+past service into; one transaction writes the work order (`status=complete`,
+`source_type=backfill`), the odometer reading, and (only when `pm_code` matches) that schedule's
+due tracking. AP linkage reuses the existing work-order-close poster, no new bill engine.
+**Live proof:** `docs/bus/2026-09-30-CC1-ROUND297.2-PM-CATALOG-SCHEDULES-BACKFILL.md` — all 4
+required proof items pasted (catalog rows, schedule count/NULL-baseline, one backfill run through
+the route's exact SQL in a rolled-back transaction, `maint.pm_schedule` unchanged at 24). Guard
+`verify-pm-schedule-never-guesses-a-baseline.mjs` (verify-step 11961), selftest 4/4 + live PASS.
+**Note:** hit a live migration-number collision with another seat's concurrent ROUND 297.1 claim on
+202614790000/202614820000 — renumbered twice (to 850000/860000/870000) before landing clean.
+**Left:** None for this fix. Flagged (comment only) a real near-future interaction between this
+route and CC-3's incoming odometer-ledger unique index — named for whoever reviews that migration.
