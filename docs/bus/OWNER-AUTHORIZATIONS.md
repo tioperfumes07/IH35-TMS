@@ -5744,3 +5744,41 @@ proof_query: live on prod, 2026-09-30 -- SELECT count(*) FROM driver_finance.dri
   3 display_ids minted there too, fork deleted after proof).
 
 — CC-1
+
+## AUTH-168
+issued_at: 2026-09-30T11:25:00.000Z
+note: CC-1's reserved AUTH block (154-159) was fully consumed by concurrent work by the time this
+was written; the block system (CC-1 154-159 / CC-2 160-165 / CC-3 166-171 / Codex 172-177) is
+similarly overrun on other seats' ranges too (166/167 already taken). Took the next actually-free
+number (168) rather than stall on asking, per the Lead's own standing offer to extend on request --
+flagging that the block reservation itself may need the Lead's attention/re-extension.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- G2 (ROUND 292/293), execute the Lead's
+RULING 2 + its item-mapping correction. Split 16 of the 17 driver_finance.settlement_lines rows
+(item_id IS NULL, line_type='extra_pay') into their real constituent items via ONE adjusting
+journal entry in the current open period (2026-09), never a void+recreate of the closed, verified
+(51/51 against AlwaysTrack) settlements 5769-5819 those rows sit in. $1,723.88 across 16 rows / 31
+split lines (one JE debit line per settlement_line+item pair, aggregating same-item-same-row
+repeats -- e.g. 4 identical $25 tarp charges on one row become one $100 line -- full per-event
+detail preserved in each split's own description). The 17th row (b0c47f5c-ea45-40ef-af07-
+13aa4128fa64, $22.14, settl 5794/load 13558, "LOVES 1ASC ''19 PREMIUM") is explicitly HELD OUT per
+the Lead's order -- neither fuel.fuel_transactions (load 13558's only 2 fuel purchases are $522.71
+and $872.01, nothing near $22.14) nor banking.bank_transactions (no row at $22.14 at all) names
+what it actually bought; not included in this AUTH, item_id stays NULL, reported back separately.
+The $1,806.02 figure in the prior scope doc (docs/bus/2026-09-30-CC1-G2-SETTLEMENT-LINE-SPLIT-
+SCOPE.md) was a $60.00 ARITHMETIC ERROR in that doc's own prose -- its own 17-row table, and a
+live re-query, both sum to $1,746.02 exactly; $1,746.02 minus the held-out $22.14 = $1,723.88.
+Item mapping (corrected twice by the Lead, second correction authoritative, verified against the
+live catalog): Driver Pay-Tarp/Extra-Delivery/Layover/Bonus -> account 5100; Road Service-Truck
+Tire Expense -> 5500; OTR-Parking Expense -> 5300; Driver Reimbursement-Company Vehicle Fuel ->
+5000; Driver Reimbursement Warehouse-Lumper Fee (DRIVER-REIMB-..., NOT the SALES-OF-SER-... revenue
+item, NOT the FREIGHT-DELI-... item) -> 5310; Road Service-Truck Repair Expense (for the two
+truck-stop parts lines, same family as the already-live Truck Tire Expense line on 5799/13574) ->
+5400. Migration 202614680000 (same PR): driver_finance.settlement_line_item_splits (permanent,
+append-only mapping table, references the adjusting JE) + a NOT VALID check constraint
+(settlement_lines_extra_pay_requires_item) so no future extra_pay line can ever again write with a
+NULL item_id -- the actual engine fix that removes G2 from the close gate permanently. Guard
+verify-g2-extra-pay-requires-item (claimed verify-step 11773).
+action: OWNER_AUTH_ID=AUTH-168 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth168-g2-settlement-line-item-split.ts
+  (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
+expires_at: 2026-10-01T11:25:00.000Z
+status: OPEN
