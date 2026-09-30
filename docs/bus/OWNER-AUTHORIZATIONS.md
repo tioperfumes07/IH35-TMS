@@ -4587,6 +4587,19 @@ action:
   OWNER_AUTH_ID=AUTH-141 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-item4-loves-ap-to-bank-reclass.ts
   (run from the repo root, not apps/backend/ -- see AUTH-135's CONSUMED note on why; DRY_RUN=1 first)
 expires_at: 2026-10-01T00:00:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T03:03:00.000Z
+consumed_by: CC-1
+row_counts: 12 of 12 expenses voided + recreated + posted, committed. DRY_RUN=1 rehearsal first
+  (same 12, clean, rolled back) before the real run.
+proof_query: live re-run immediately after commit, USMCA, bypass_rls=lucia -- vendor LOVES live
+  credit-side accounts across ALL its non-voided expenses: 1000=214 rows/$11,655.82 (was 202/
+  $10,104.68 -- +12 rows, +$2,117.49 dead-on the sum this AUTH named), 1295=62/$32,308.77
+  (unchanged), 2510=222/$135,307.38 (unchanged). **Account 2000 is now ZERO rows from this
+  population** (was 12/$2,117.49). Each of the 12 old expense ids is voided
+  (voided_at set, status='void'); each new expense id is posted with payment_account_uuid=1000 and
+  the identical category/amount/date/vendor/load as its original.
+
+— CC-1
 
 — CC-1
