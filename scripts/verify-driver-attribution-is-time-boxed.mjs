@@ -80,18 +80,22 @@ function auditNoInlinedPredicate(files) {
 }
 
 /** Check 3 — driverAtTimeSql's own fragment is a LEFT JOIN, never an INNER join (which would
- * silently drop unattributed events instead of resolving them to a NULL driver_id row). */
+ * silently drop unattributed events instead of resolving them to a NULL driver_id row). Checks
+ * both driverAtTimeSql (B-27) and its L-3 mirror unitAtTimeSql (resolve unit from driver+time) —
+ * the same invariant applies in either direction. */
 function auditAttributionIsLeftJoin() {
   const failures = [];
   const src = readRel(ATTRIBUTION_FILE_REL);
-  const fnMatch = src.match(/export function driverAtTimeSql[\s\S]*?\n}/);
-  if (!fnMatch) {
-    failures.push(`${ATTRIBUTION_FILE_REL}: could not locate the driverAtTimeSql function body`);
-    return failures;
-  }
-  const body = fnMatch[0];
-  if (!/LEFT JOIN LATERAL/.test(body)) {
-    failures.push(`${ATTRIBUTION_FILE_REL}: driverAtTimeSql does not contain "LEFT JOIN LATERAL" — an INNER join here would drop every unattributed event instead of counting it`);
+  for (const fnName of ["driverAtTimeSql", "unitAtTimeSql"]) {
+    const fnMatch = src.match(new RegExp(`export function ${fnName}[\\s\\S]*?\\n}`));
+    if (!fnMatch) {
+      failures.push(`${ATTRIBUTION_FILE_REL}: could not locate the ${fnName} function body`);
+      continue;
+    }
+    const body = fnMatch[0];
+    if (!/LEFT JOIN LATERAL/.test(body)) {
+      failures.push(`${ATTRIBUTION_FILE_REL}: ${fnName} does not contain "LEFT JOIN LATERAL" — an INNER join here would drop every unattributed event instead of counting it`);
+    }
   }
   return failures;
 }

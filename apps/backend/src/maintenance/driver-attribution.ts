@@ -58,6 +58,31 @@ export function driverAtTimeSql(unitAlias: string, tsExpr: string, resultAlias =
 
 export const DRIVER_ATTRIBUTION_RESULT_ALIAS_DEFAULT = "driver_at_time";
 
+/**
+ * L-3 (Lead order, ROUND 299): the mirror of driverAtTimeSql — given a DRIVER + a timestamp,
+ * resolve which UNIT he was holding. Needed to repair fuel.fuel_transactions rows that carry a
+ * driver_id and a load_id but no unit_id: the driver is already known, so the missing fact is
+ * "which truck was he in," not "who was driving." Kept in this same file (not a bespoke query in
+ * the repair script) so there is still exactly one definition of the time-boxed assignment
+ * predicate, in either direction — the Lead's own instruction was "do not write a second
+ * resolver."
+ *
+ * Same boundary condition and tiebreak as driverAtTimeSql, same LEFT JOIN (an unattributable
+ * driver+time still returns a row, with unit_id NULL, never dropped).
+ */
+export function unitAtTimeSql(driverAlias: string, tsExpr: string, resultAlias = "unit_at_time"): string {
+  return `LEFT JOIN LATERAL (
+    SELECT a.unit_id
+    FROM telematics.vehicle_driver_assignments a
+    WHERE a.operating_company_id = $1::uuid
+      AND a.driver_id = ${driverAlias}
+      AND a.started_at <= ${tsExpr}
+      AND (a.ended_at IS NULL OR a.ended_at > ${tsExpr})
+    ORDER BY a.started_at DESC, a.created_at DESC
+    LIMIT 1
+  ) ${resultAlias} ON true`;
+}
+
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
