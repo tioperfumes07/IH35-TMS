@@ -5486,6 +5486,25 @@ population (15 loads: the original 13 plus 13593 and 13622, newly created/surfac
 for which the real producer returns "blank" stays NULL -- not authorized to force a value.
 action: OWNER_AUTH_ID=AUTH-158 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc1-round210-deadhead-miles-backfill.ts --apply
 expires_at: 2026-10-01T09:00:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T09:10:00.000Z
+consumed_by: CC-1
+row_counts: 0 of 15 written. Same outcome class as AUTH-123 (2026-09-28), now broader: all 15 real
+  chain-deadhead values were correctly computed (dry run, unchanged from pre-apply), but
+  updateDispatchLoad refused every single write -- 13 for open_settlement (P-0001..P-0018, one per
+  load) and 2 (13593, 13622) for issued_invoice, a second money-lock reason AUTH-123 never
+  encountered. This is WORM protecting itself correctly, not a bug; not routed around.
+proof_query: live on prod, 2026-09-30 -- APPLIED output pasted above shows all 15 rows still NULL
+  with their exact lock reason and reference (settlement number or invoice number) per row.
+remaining: closure 39 (17 live loads missing mileage: these 15 miles_deadhead-only, plus 13622's
+  miles_practical also NULL with no AlwaysTrack record found, plus the cancelled E2E test load
+  correctly excluded from this closure the same as closure 30) is NOT closeable by this backfill
+  mechanism while every candidate load is bookended by an open settlement or an issued invoice.
+  Same two options as AUTH-123 left on the record: (a) wait for the settlements/invoices to close
+  and re-run this identical script, or (b) an explicit owner decision that filling a previously-NULL
+  field is a different risk than editing an existing one and deserves a narrow carve-out from the
+  money-lock. Not deciding that here -- flagged to the Lead.
+
+— CC-1
 
 — CC-1
