@@ -40,6 +40,44 @@ export class ReinstateDocumentError extends Error {
   }
 }
 
+/**
+ * BANK-F-REINSTATE-GL-NOT-RESTORED (2026-09-30, Lead ruling) — the exact mirror of
+ * BANK-F-FACTORING-VOID-NO-REVERSAL (fixed same session): a void that reverses GL but shows
+ * "live" is dangerous; a reinstate that shows "active" while the GL stays reversed is EQUALLY
+ * dangerous, and was the actual live behavior of this function when called directly (confirmed
+ * live on FAC-2026-00140: reinstateDocument alone left the account balances at the VOIDED state).
+ * The documented contract (this file's own header comment, and reinstatedFromVoidJeId's own
+ * doc-comment) already required the caller to separately call voidJournalEntry on the returned id
+ * AFTER commit to actually restore the GL -- reinstateDocumentThenVoidReversal does this correctly
+ * for the six families with a wired /unvoid route, but the bare reinstateDocument() function
+ * enforced nothing: any OTHER caller (a future ops script, an unwired family like
+ * factoring_advance today) could call it directly and get a silent header-active/GL-still-reversed
+ * mismatch. Ship-first fix (Lead ruling, step 1 of 3): reinstateDocument now REFUSES whenever the
+ * void actually reversed GL postings (voidReversalJeId is non-null) UNLESS the caller explicitly
+ * sets expectGlRestoreFollowUp:true, promising to complete the restore in the same call chain.
+ * reinstateDocumentThenVoidReversal sets it (and does complete the restore); no other caller in
+ * this repo does, so every other path fails closed today. Step 2 (family-by-family re-posting with
+ * its own round-trip proof, factoring first) is separate, later work -- NOT this fix.
+ */
+export class ReinstateGlNotRestoredError extends Error {
+  constructor(
+    public readonly documentType: string,
+    public readonly documentId: string,
+    public readonly voidReversalJeId: string
+  ) {
+    super(
+      `reinstateDocument(${documentType} ${documentId}): refused — the original void reversed GL ` +
+        `postings (reversing JE ${voidReversalJeId}), and this call path cannot guarantee that ` +
+        `reversal is undone in the same operation. Reinstating the header alone would leave the ` +
+        `document showing "active" while its money stays reversed in the GL — the mirror image of ` +
+        `a voided-header-with-live-postings mismatch, and equally unacceptable. Use ` +
+        `reinstateDocumentThenVoidReversal (which restores the GL immediately after) instead of ` +
+        `calling reinstateDocument directly.`
+    );
+    this.name = "ReinstateGlNotRestoredError";
+  }
+}
+
 type ReinstateClient = BillMutationClient & QueryableClient;
 
 /**
@@ -197,6 +235,12 @@ export async function reinstateDocument(
     actor: { userId: string; role?: string };
     /** Override the default restore status for the family. */
     restoreStatus?: string | null;
+    /**
+     * Set ONLY by reinstateDocumentThenVoidReversal, which guarantees the GL restore (voiding the
+     * reversing JE) happens in the same call chain right after this returns. Any other caller must
+     * leave this unset — see ReinstateGlNotRestoredError.
+     */
+    expectGlRestoreFollowUp?: boolean;
   }
 ): Promise<ReinstateDocumentResult> {
   if (!input.reason?.trim()) {
@@ -278,8 +322,12 @@ async function stampAndAudit(
     voidReversalJeId: string | null;
     auditAction: string;
     auditExtra?: Record<string, unknown>;
+    expectGlRestoreFollowUp?: boolean;
   }
 ): Promise<ReinstateDocumentResult> {
+  if (input.voidReversalJeId && input.expectGlRestoreFollowUp !== true) {
+    throw new ReinstateGlNotRestoredError(input.type, input.id, input.voidReversalJeId);
+  }
   const stamped = await stampDocumentReinstated(client, {
     operatingCompanyId: input.operatingCompanyId,
     family: input.family,
@@ -320,6 +368,7 @@ async function reinstateBill(
     reason: string;
     actor: { userId: string };
     restoreStatus?: string | null;
+    expectGlRestoreFollowUp?: boolean;
   }
 ): Promise<ReinstateDocumentResult> {
   const billRes = await client.query<{
@@ -361,6 +410,7 @@ async function reinstateBill(
     restoreStatus,
     voidReversalJeId,
     auditAction: "accounting.bill.reinstated",
+    expectGlRestoreFollowUp: input.expectGlRestoreFollowUp,
   });
 }
 
@@ -372,6 +422,7 @@ async function reinstateBillPayment(
     reason: string;
     actor: { userId: string };
     restoreStatus?: string | null;
+    expectGlRestoreFollowUp?: boolean;
   }
 ): Promise<ReinstateDocumentResult> {
   const payRes = await client.query<{
@@ -446,6 +497,7 @@ async function reinstateBillPayment(
     voidReversalJeId,
     auditAction: "accounting.bill_payment.reinstated",
     auditExtra: { bill_id: payment.bill_id },
+    expectGlRestoreFollowUp: input.expectGlRestoreFollowUp,
   });
 
   // Re-apply the payment onto the bill (void had subtracted it).
@@ -475,6 +527,7 @@ async function reinstateExpense(
     reason: string;
     actor: { userId: string };
     restoreStatus?: string | null;
+    expectGlRestoreFollowUp?: boolean;
   }
 ): Promise<ReinstateDocumentResult> {
   const expRes = await client.query<{
@@ -521,6 +574,7 @@ async function reinstateExpense(
     restorePosted,
     voidReversalJeId,
     auditAction: "accounting.expense.reinstated",
+    expectGlRestoreFollowUp: input.expectGlRestoreFollowUp,
   });
 }
 
@@ -533,6 +587,7 @@ async function reinstateSimple(
     actor: { userId: string };
     restoreStatus?: string | null;
     type: ReinstateDocumentType;
+    expectGlRestoreFollowUp?: boolean;
   },
   family: ReinstateDocumentFamily,
   sourceTransactionType: string
@@ -554,6 +609,7 @@ async function reinstateSimple(
       restoreStatus,
       voidReversalJeId,
       auditAction: `accounting.${input.type}.reinstated`,
+      expectGlRestoreFollowUp: input.expectGlRestoreFollowUp,
     });
   } catch (err) {
     if (err instanceof VoidDocumentStampError) {
@@ -571,6 +627,7 @@ async function reinstateCustomerPayment(
     reason: string;
     actor: { userId: string };
     restoreStatus?: string | null;
+    expectGlRestoreFollowUp?: boolean;
   }
 ): Promise<ReinstateDocumentResult> {
   // Re-open applications that were archived on void (unapplied_at set). Only those voided in the
@@ -602,6 +659,7 @@ async function reinstateCreditMemo(
     reason: string;
     actor: { userId: string };
     restoreStatus?: string | null;
+    expectGlRestoreFollowUp?: boolean;
   }
 ): Promise<ReinstateDocumentResult> {
   // Credit memo void zeroes amount_applied and voids applications. Reinstate restores status to
@@ -625,6 +683,7 @@ async function reinstatePrepaid(
     reason: string;
     actor: { userId: string };
     restoreStatus?: string | null;
+    expectGlRestoreFollowUp?: boolean;
   }
 ): Promise<ReinstateDocumentResult> {
   const assetRes = await client.query<{
@@ -660,6 +719,7 @@ async function reinstatePrepaid(
     restorePosted,
     voidReversalJeId,
     auditAction: "accounting.prepaid_purchase.reinstated",
+    expectGlRestoreFollowUp: input.expectGlRestoreFollowUp,
   });
 }
 
@@ -670,6 +730,7 @@ async function reinstateJournalEntry(
     id: string;
     reason: string;
     actor: { userId: string };
+    expectGlRestoreFollowUp?: boolean;
   }
 ): Promise<ReinstateDocumentResult> {
   // JE void is Option-1 (a NEW reversing JE, original status left alone). Reinstate = void the
@@ -708,11 +769,15 @@ async function reinstateJournalEntry(
       restoreStatus: null, // JE status never flipped on void
       voidReversalJeId,
       auditAction: "accounting.journal_entry.reinstated",
+      expectGlRestoreFollowUp: input.expectGlRestoreFollowUp,
     });
   }
 
   // Stamp-less JE void (Option-1 only): record reinstate columns + clear reversed_by_je_id after
   // the caller voids the reversing JE. Write reinstated_* now; caller voids reversing JE after commit.
+  if (voidReversalJeId && input.expectGlRestoreFollowUp !== true) {
+    throw new ReinstateGlNotRestoredError("journal_entry", input.id, voidReversalJeId);
+  }
   await client.query(
     `UPDATE accounting.journal_entries
         SET reinstated_at = now(),
@@ -758,7 +823,11 @@ export async function reinstateDocumentThenVoidReversal(
     restoreStatus?: string | null;
   }
 ): Promise<ReinstateDocumentResult> {
-  const prepared = await runInTx((client) => reinstateDocument(client, input));
+  // This function is the one place in the codebase that guarantees the GL restore (voiding the
+  // reversing JE, below) happens immediately after the header stamp -- so it is the only caller
+  // allowed to set expectGlRestoreFollowUp:true. Any other caller of reinstateDocument leaves it
+  // unset and fails closed via ReinstateGlNotRestoredError when the void reversed real postings.
+  const prepared = await runInTx((client) => reinstateDocument(client, { ...input, expectGlRestoreFollowUp: true }));
 
   if (prepared.reinstatedFromVoidJeId) {
     const { voidJournalEntry } = await import("./journal-entries.service.js");

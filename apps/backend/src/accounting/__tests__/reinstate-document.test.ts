@@ -97,13 +97,41 @@ describe("reinstateDocument — R-191 universal unvoid", () => {
         ],
       },
     ]);
-    const result = await reinstateDocument(client, { ...base, type: "expense", id: "exp-1" });
+    const result = await reinstateDocument(client, {
+      ...base,
+      type: "expense",
+      id: "exp-1",
+      expectGlRestoreFollowUp: true,
+    });
     expect(stampDocumentReinstated).toHaveBeenCalledWith(
       client,
       expect.objectContaining({ family: "expense", documentId: "exp-1", reinstatedFromVoidJeId: "je-rev-1" })
     );
     expect(result.reinstatedFromVoidJeId).toBe("je-rev-1");
     expect(result.restoreStatus).toBe("posted");
+  });
+
+  it("BANK-F-REINSTATE-GL-NOT-RESTORED — refuses a reversed document when the caller does not promise to restore the GL", async () => {
+    const client = makeClient([
+      {
+        needle: "FROM accounting.expenses",
+        rows: [
+          {
+            id: "exp-1",
+            status: "void",
+            voided_at: "2026-09-28T00:00:00Z",
+            posting_status: "reversed",
+            reversed_by_je_id: "je-rev-1",
+            journal_entry_id: "je-orig-1",
+          },
+        ],
+      },
+    ]);
+    await expect(reinstateDocument(client, { ...base, type: "expense", id: "exp-1" })).rejects.toMatchObject({
+      name: "ReinstateGlNotRestoredError",
+      voidReversalJeId: "je-rev-1",
+    });
+    expect(stampDocumentReinstated).not.toHaveBeenCalled();
   });
 
   it("bill → stamps reinstate via stampDocumentReinstated(family=bill)", async () => {
