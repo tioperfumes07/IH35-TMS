@@ -5729,4 +5729,18 @@ amount, no GL posting, trial balance untouched.
 action: OWNER_AUTH_ID=AUTH-167 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth167-g5-close-3-orphan-company-settlements.ts
   (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
 expires_at: 2026-10-01T11:10:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T11:14:00.000Z
+consumed_by: CC-1
+row_counts: 3 of 3 driver settlements (P-0015, P-0016, P-0017) each got their own new
+  accounting.company_settlements header (display_id 5817, 5818, 5819 respectively -- real
+  AlwaysTrack-style numbers, per R-200's numbering rule), each linked via
+  company_settlement_driver_settlements, each closed (already_closed=false on all 3, confirming
+  these were genuinely new headers, not reused existing ones).
+proof_query: live on prod, 2026-09-30 -- SELECT count(*) FROM driver_finance.driver_settlements
+  WHERE operating_company_id='5c854333-...' AND status='closed' = 51. SELECT count(*) FROM
+  accounting.company_settlements WHERE operating_company_id='5c854333-...' AND status='closed' =
+  51. G5 gap closed: 51 vs 51. Rehearsed identically on a throwaway Neon branch fork first (same
+  3 display_ids minted there too, fork deleted after proof).
+
+— CC-1
