@@ -4230,3 +4230,34 @@ drafts ($14,315.36), 255 are now posted, 2 remain genuinely held pending a human
 account or vendor (never auto-postable, correctly excluded by design).
 
 — Claude-1 (ROUND 270 / ACC-50 removal follow-up: post the 9 released expenses)
+
+## AUTH-134
+
+date: 2026-09-30
+
+scope: Owner Orders 09-29-2026 late, ORDER 1 (`claude/00-MASTER-PENDING-REGISTER-CURRENT.md`,
+  item 48) — "THE $39,108 GETS FIXED NOW ... Sweep the 8 clean rows immediately. Do not wait." 15
+  Faro advances were bank-matched (`banking.bank_transactions.matched_factoring_advance_id`) but
+  never swept out of Undeposited Funds (1090) into the real bank account, because
+  `match.service.ts` had no sweep branch for `factoring_advance` (customer_payment and
+  bill_payment already had one). Fixed on branch `cc2/r245-p0-check-number-reset`:
+  `factoring_advance_deposit` added to `POSTING_SOURCE_TYPES`, `buildFactoringAdvanceDepositSweepLines`
+  mirrors the existing customer-payment sweep exactly, dispatched from a new `factoring_advance`
+  branch in `match.service.ts`. 7 of the 15 are also inside the 25 duplicate-funding-JE groups
+  (ACCT-F2026093005) — NOT authorized here per the owner's own sequencing ("the other 7 are swept
+  the moment their surviving copy is determined ... do not sweep a row whose postings are still
+  duplicated"). This authorizes ONLY the 8 fa_ids whose funding postings are NOT duplicated:
+  invoices 15, 18, 25, 28, 49, 54, 62, 84 — fa_ids e6ed4c77-a50d-4375-9738-c958b5b49c62,
+  96347704-b468-4d62-bdca-334ae4268368, e01c58b7-4895-4a5e-8c2a-87edadfa76d1,
+  92c76844-c911-483a-9103-48941a1e0112, 8cbe1688-ea66-4b97-917d-54f13f9f0472,
+  5248a761-acb1-4a7e-a2d7-b7b7ff47edbe, 6b60b39f-c108-4ee1-a7c3-970cc3ab67dd,
+  97fe49fb-1ca6-4eee-bb76-dbd1854cc854 — net-wire total $17,450.00 (computed from
+  `factoring_advances`' own columns: invoice_total − reserve − factor_fee − wire_fee − cash_rsv,
+  never from postings). Not authorized: the other 7 fa_ids (invoices 1, 3, 4, 16, 19, 41, 42);
+  voiding or deleting any duplicate JE; touching TRANSP or TRK.
+
+action:
+  OWNER_AUTH_ID=AUTH-134 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth134-factoring-sweep-8-clean.ts
+
+expires_at: 2026-10-01T08:00:00.000Z
+status: OPEN
