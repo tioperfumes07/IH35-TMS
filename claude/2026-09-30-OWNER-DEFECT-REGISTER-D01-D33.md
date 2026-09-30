@@ -174,3 +174,42 @@ the accounting definition are the same definition, not two guesses.
    raised baselines, the selftests that pass while protecting nothing.
 
 Rule for every seat: nothing is reported done without its number and its pasted live proof.
+
+---
+
+## M. FULL SWEEP OF THE OWNER'S MESSAGES THIS SESSION — nothing left unregistered
+
+I re-read every message the owner sent this session and checked each sentence against the register.
+These six were spoken but not yet carried their own number. They do now.
+
+| # | Defect | Seat | Status |
+|---|---|---|---|
+| D41 | **Company settlement PDF** — was 500 on every open (`42703 column "unit_id" does not exist`). | Lead | **DONE** — PR #23338 |
+| D42 | **Driver settlement PDF** — was 500 on every open (`25P02 current transaction is aborted`, a bare catch left the transaction poisoned). | Lead | **DONE** — PR #23338 |
+| D43 | **Invoice PDF** — asked whether it is ready. Measured live: HTTP 200, renders, one route and one template. | Lead | **VERIFIED READY** |
+| D44 | **The pre-invoice must be EXACTLY the invoice.** It already renders through the SAME route and SAME template — but pre-invoice 13627 shows `Balance due $3,200.00` above a line table containing only `Tax · $0.00`. The gap is the missing `invoice_lines`, not the template. | CC-2 | OPEN — blocked on B-03 |
+| D45 | **Lines between SECTIONS inside a box** — distinct from row separators (D36). Inside every panel the owner sees no section boundaries at all: "in all boxes such as these the lines between sections or something, it just looks too simple, it bothers me." | Cursor | OPEN |
+| D46 | **Deploy cadence.** The owner: "if no one is going to deploy every 5–10 PRs, then I guess I will turn on autodeploy." Deploys must not depend on someone remembering. Either a named owner deploys on a stated cadence, or autoDeploy goes on with the pre-deploy gates carrying the safety. | Lead + Owner | OPEN — DECISION |
+
+Cross-check performed, message by message: PDFs (D41-D44) · Company Settlements failure (D41) ·
+Cash Flow contrast/rows/engine/columns (D02-D05) · Banking three boxes (D06-D08) · app auto-adjust
+and minimum-scroll (D09-D10) · Driver Profile KPIs, name case, phone, columns, clip upload, Safety
+linkage, Samsara mapping, roster, tab logic, QuickBooks model (D11-D20) · Customers activity lists
+and the Faro same-date defect (D21-D22) · multi-select filters (D23) · Maintenance wizard, combo
+boxes, Tab key, section headers, tab logic, fleet boxes, relocation, filters, stacked KPIs
+(D24-D33) · master-detail proportion, Driver Profile shell, line contrast, default view, segmented
+controls, overflow (D34-D39) · transactions-only default (D40) · section dividers (D45) · deploy
+cadence (D46) · PO/WO legacy loads (D01).
+
+## N. ORPHAN-GUARD SWEEP — done, with the honest remainder
+
+14 guards that PASSED but ran NOWHERE are now wired through claimed verify-steps (10872..10885).
+An unwired guard is a fake green; wiring a passing guard costs nothing.
+
+Ten remain, and they are NOT wired by me on purpose:
+  - Eight need a live DATABASE_URL and a baseline. A baseline I set against CI's EMPTY database
+    would be a fake green of exactly the kind this sweep exists to remove. They belong to the seats
+    that own their data: CC-1, CC-2, CC-3 (orders X-02, A-07..A-09, B-09, B-10, T-09).
+  - `verify-match-candidates-are-settlement-born-only` genuinely FAILS —
+    "fetchLedgerCandidates must NOT select from AR payments". A real defect. Routed to CC-2 (B-08).
+  - `verify-geocode-provider-is-reachable` genuinely FAILS. Routed to CC-3 (T-08).
