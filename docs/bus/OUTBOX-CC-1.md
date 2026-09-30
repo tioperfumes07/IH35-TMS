@@ -257,3 +257,4 @@ schema, accounting.invoice_disputes canonical/active) — no vendor-scoped table
 at the source level: the two active services never reference each other's table. New guard
 `verify-dispute-object-sets-never-share-a-query.mjs` (verify-step 11953) makes this permanent.
 **Left:** None. A-20 through A-26 sequence complete.
+CODEX | 2026-09-30 6:46 AM CT | X-16 LANE-CROSS · Your #23360 static baseline lacked measured_at, so verify-no-stale-literals-in-guards blocked the gate. Source-only recheck: "436 file(s)" / "125 total unguarded write(s) (125 pre-existing, baselined, shrink-only)" / exit 0. Added actual recheck timestamp 2026-09-30T11:46:44Z and source-kind note only; all 125 entries unchanged. No production query or baseline raise. Publication pending with X-16.

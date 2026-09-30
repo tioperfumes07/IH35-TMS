@@ -6,7 +6,7 @@ EXPIRED authorization finding, not a dependency of this code work.
 
 ## Implementation so far — NOT a claim of complete class coverage
 
-`scripts/lib/local-db-guard-routing.mjs` explicitly routes 18 reviewed guards.
+`scripts/lib/local-db-guard-routing.mjs` explicitly routes 19 reviewed guards.
 Local source checks remain where available; database-only checks print DEFERRED,
 never a live PASS. Both the money gate and verify-step command context use it.
 The full guards execute directly in CI, outside that local routing context.
@@ -39,7 +39,28 @@ batch; existing main steps retained:
 
 The reported 10872..10885 block was not found as that set on this main revision;
 the reconciliation uses actual file contents, not assumed reservation numbers.
-Six nonduplicated X-01 guards remain in the new static job.
+After the next rebase onto `0e066ef877`, all ten have main verify-step wiring.
+Removed the five remaining duplicate batch invocations. Retained main steps
+11801, 10876, 10878, 11805, 10882 and wizard 11802. Removed duplicate wrappers
+10872/10874/11803/11804, retaining 11765/11757/11761/11769 respectively. The guard
+sources and reservation registry are untouched; deleted wrappers are recoverable
+in git. Wizard amounts has both static and live behavior: source assertions stay
+local and its full read-only USMCA assertion is required in the live CI job.
+
+## Owner ruling — skips and behavior routing (2026-09-30)
+
+A SKIP IS NOT A PASS. Local phase outcomes must print passed, failed, and skipped
+counts, counting each E7 guard rather than hiding 91 guards in one summary entry.
+Required CI treats a reported skip as failure even when the process exits zero.
+Missing credentials, skipped jobs, cancelled jobs, signals, and spawn failures
+cannot satisfy the required aggregate. X-16 requires a real CI execution record;
+local selftests are not a substitute.
+
+R-04: STATIC stays local; ISOLATED uses CI loopback synthetic data only; LIVE-DATA
+uses the read-only production credential and the owning seat's baseline. No
+baseline from an empty database. The eight owner-baselined guards remain untouched.
+Lead's swallowed-error baseline timestamp `2026-09-30T10:45:00.000Z` is retained;
+the independent source recheck is metadata only, with all 222/142 ceilings intact.
 
 ## Local evidence and remaining scope
 

@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
-import { runRequiredGuards } from './run-required-guards.mjs';
+import os from 'node:os';
+import path from 'node:path';
+import { runRequiredGuards, reportedSkip } from './run-required-guards.mjs';
 import { CI_DATABASE_GUARDS, localDatabaseGuardArgs } from './local-db-guard-routing.mjs';
 
 test('every failed position fails the batch without skipping later checks', () => {
@@ -33,6 +35,33 @@ test('actual CLI exits nonzero on an unstartable guard', () => {
   const result = spawnSync(process.execPath, ['scripts/lib/run-required-guards.mjs', 'scripts/no-such-required-guard.mjs'], { encoding: 'utf8' });
   assert.equal(result.status, 1);
   assert.match(result.stdout, /executed=1 passed=0 failed=1/);
+});
+
+test('exit-zero skips fail required CI and are never counted as passes', () => {
+  for (const text of ['SKIP live — no DATABASE_URL', 'guard: SKIPPED — NOT FED YET', '  EMPTY BY PURGE', 'guard: DEFERRED', 'parity scope: 0 of 34 documents in scope, 34 skipped NOT FED YET']) {
+    assert.equal(reportedSkip(text), true, text);
+    const result = runRequiredGuards(['a', 'b'], (_node, [file]) => ({ status: 0, stdout: file === 'a' ? text : 'PASS b' }));
+    assert.equal(result.length, 1);
+    assert.deepEqual(result.summary, { attempted: 2, executed: 2, passed: 1, failed: 0, skipped: 1 });
+  }
+  assert.equal(reportedSkip('passed=2 failed=0 skipped=0'), false);
+  assert.equal(reportedSkip('PASS — rejects a skip mutation'), false);
+});
+
+test('actual CLI rejects an exit-zero skip even with a database credential present', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ih35-required-skip-'));
+  try {
+    const file = path.join(dir, 'skipped.mjs');
+    fs.writeFileSync(file, 'console.log("fixture: SKIP live — absent population"); process.exit(0);');
+    const result = spawnSync(process.execPath, ['scripts/lib/run-required-guards.mjs', file], {
+      encoding: 'utf8', env: { ...process.env, DATABASE_URL: 'synthetic-not-used-by-this-fixture' },
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stdout, /executed=1 passed=0 failed=0 skipped=1/);
+    assert.match(result.stderr, /REQUIRED CI SKIP IS A FAILURE/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test('required CI aggregate rejects failed, skipped, or cancelled static job, including docs-only PRs', () => {

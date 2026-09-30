@@ -75,15 +75,13 @@ function staticCheck() {
 
 async function liveCheck() {
   if (!process.env.DATABASE_URL) {
-    console.log(`${LABEL}: SKIP live — no DATABASE_URL`);
-    return;
+    throw new Error(`${LABEL}: DATABASE_URL required for live mode; use --static for source assertions`);
   }
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();
   try {
-    await client.query("BEGIN");
-    await client.query("SET LOCAL ROLE neondb_owner").catch(() => {});
-    await client.query("SET LOCAL app.bypass_rls = 'lucia'").catch(() => {});
+    await client.query("BEGIN READ ONLY");
+    await client.query("SET LOCAL app.bypass_rls = 'lucia'");
     const loads = await client.query(
       `SELECT l.load_number, l.id, l.rate_total_cents
          FROM mdata.loads l
@@ -150,5 +148,5 @@ if (staticErrors.length) {
   console.error(`${LABEL}: FAIL — ${staticErrors.join("; ")}`);
   process.exit(1);
 }
-await liveCheck();
+if (!process.argv.includes('--static')) await liveCheck();
 console.log(`${LABEL}: PASS — wizard amounts wired on board + dispatch panel + shared pivot`);

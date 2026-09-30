@@ -1,5 +1,4 @@
 {
-  "measured_at": "2026-09-30T11:36:40Z",
   "measurement_kind": "static source scan; 222 sites rechecked at b72fae59f2; no database measurement; numeric ceilings unchanged",
   "total": 222,
   "files": 142,

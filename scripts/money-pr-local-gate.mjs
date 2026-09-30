@@ -25,6 +25,7 @@ import { guardIsInScope } from "./verify-static.mjs";
 import { EMPTY_BY_PURGE_EXIT, PURGE_WINDOW_GUARDS, purgeWindow } from "./lib/purge-window.mjs";
 import { dataWritePathDiffActuallyWrites, dataWritePathFileActuallyWrites } from "./lib/data-write-path-detection.mjs";
 import { localDatabaseGuardArgs, requiresLocalDatabase } from "./lib/local-db-guard-routing.mjs";
+import { reportedSkip } from "./lib/run-required-guards.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "money-pr-local-gate";
@@ -1083,8 +1084,14 @@ function resolveGuardDatabaseUrl() {
   return cachedReadonlyDbUrl ?? process.env.DATABASE_URL;
 }
 
+const localOutcomes = { passed: 0, failed: 0, skipped: 0 };
+const skippedLiveChecks = [];
+process.once('exit', () => console.log(`${LABEL}: LOCAL PHASE OUTCOMES passed=${localOutcomes.passed} failed=${localOutcomes.failed} skipped=${localOutcomes.skipped + skippedLiveChecks.length}; local skips are NOT live passes; required CI must execute them`));
+
 function runNode(rel, extraEnv = {}, args = []) {
   const localArgs = localDatabaseGuardArgs([rel, ...args]);
+  const routed = localArgs === null || localArgs.length !== args.length + 1;
+  if (routed) localOutcomes.skipped++; // Database phase is deferred, even if its static phase passes.
   if (localArgs === null) return 0; // X-16: required CI execution, no local/live verdict.
   args = localArgs.slice(1);
   const script = path.join(ROOT, rel);
@@ -1102,6 +1109,9 @@ function runNode(rel, extraEnv = {}, args = []) {
   });
   const out = `${res.stdout ?? ""}${res.stderr ?? ""}`.trim();
   if (out) console.log(out);
+  if (res.error || res.signal || res.status !== 0) localOutcomes.failed++;
+  else if (!routed && reportedSkip(out)) localOutcomes.skipped++;
+  else localOutcomes.passed++;
   return res.status ?? 1;
 }
 
@@ -1195,7 +1205,6 @@ for (const [name, rel, extraEnv] of GUARD_303) {
 // green, exactly what Rule 30 already forbids in words. Every skip anywhere in this file — 03c
 // below, and any future conditional live check — pushes here so the final line can never silently
 // omit it.
-const skippedLiveChecks = [];
 
 // Purge window (Lead ruling 2026-09-23, docs/bus/09-23-2026-LEAD-RULING-CURSOR-PURGE-WINDOW-GUARD-STATE.md):
 // a live guard may exit EMPTY_BY_PURGE_EXIT only if it is one of PURGE_WINDOW_GUARDS and the window in
@@ -1511,7 +1520,7 @@ if (e7Batch2Skipped.length > 0) {
     `${e7Batch2Skipped.length} E7 batch-2 live guard(s) — none of their owned paths in this diff ` +
     `(alwaysRun ones need a DATABASE_URL): ${e7Batch2Skipped.join(", ")}`;
   console.log(`[${LABEL}] SKIP ${msg}`);
-  skippedLiveChecks.push(msg);
+  skippedLiveChecks.push(...e7Batch2Skipped.map(file => `${file} — no owned paths in diff`));
 }
 
 if (purgeSkips.length > 0) {
@@ -1520,7 +1529,7 @@ if (purgeSkips.length > 0) {
     `${purgeSkips.length} GUARDS SKIPPED — EMPTY BY PURGE, verified ${w.verifiedAt}, expires ${w.expiresAt}: ` +
     purgeSkips.join(", ");
   console.log(`[${LABEL}] ${msg}`);
-  skippedLiveChecks.push(msg);
+  skippedLiveChecks.push(...purgeSkips);
 }
 
 function changedFileCountVsMain() {

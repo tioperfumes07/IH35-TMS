@@ -1,6 +1,7 @@
 // X-16: only explicitly CI-wired, reviewed guards can move their DB phase.
 // Do not infer safety from REQUIRES_LIVE_DB: some such guards INSERT fixtures.
 export const CI_DATABASE_GUARDS = Object.freeze({
+  'scripts/verify-load-costs-wizard-amounts.mjs': '--static',
   'scripts/verify-one-load-create-path.mjs': '--static',
   'scripts/verify-workflow-requests-entity-scoped.mjs': '--selftest',
   'scripts/verify-no-auto-generated-account-numbers.mjs': '--static',

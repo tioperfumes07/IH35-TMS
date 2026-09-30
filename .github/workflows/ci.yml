@@ -34,8 +34,8 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  # X-01: independent of frontend build and precommit fail-fast. No production
-  # credentials; load-costs-wizard-amounts runs its static contract here only.
+  # X-16 runner contract: independent of frontend build and precommit fail-fast.
+  # X-01 source guards are now wired by main's verify-steps; do not duplicate them.
   required-static-guards:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -48,15 +48,6 @@ jobs:
       - run: npm ci
       - name: Prove batch failure propagation
         run: node --test scripts/lib/run-required-guards.test.mjs
-      - name: Required static guard batch
-        run: |
-          node scripts/lib/run-required-guards.mjs \
-            scripts/verify-dedupe-keys-cannot-collide.mjs \
-            scripts/verify-load-costs-wizard-amounts.mjs \
-            scripts/verify-match-window-date-cascade-is-3-7-custom.mjs \
-            scripts/verify-one-match-engine-owns-this-surface.mjs \
-            scripts/verify-seed-in-bulk-never-row-by-row.mjs \
-            scripts/verify-universal-reinstate-engine.mjs
 
   # X-16: live-population assertions must never be proved on empty CI Postgres.
   # Audited read-only check; fixture writers do NOT belong in this job.
@@ -78,6 +69,7 @@ jobs:
         run: |
           node scripts/lib/run-required-guards.mjs \
             scripts/verify-one-load-create-path.mjs \
+            scripts/verify-load-costs-wizard-amounts.mjs \
             scripts/verify-workflow-requests-entity-scoped.mjs \
             scripts/verify-no-auto-generated-account-numbers.mjs \
             scripts/verify-driver-samsara-map-one-to-many.mjs \
