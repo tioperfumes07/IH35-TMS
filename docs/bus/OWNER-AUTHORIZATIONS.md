@@ -4492,6 +4492,16 @@ action:
   (run from the repo root, not apps/backend/ -- see AUTH-135's CONSUMED note on why; script's own
   AUTH_ID constant is already AUTH-138)
 expires_at: 2026-10-01T00:00:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T02:09:00.000Z
+consumed_by: CC-1
+row_counts: 60 of 60 JEs reversed via reverseJournalEntryNoFlip, committed.
+proof_query: live re-run immediately after commit, USMCA, bypass_rls=lucia -- account 9000 now
+  shows ZERO live credits (the entire 60-row population relieved), 64 live debit-side rows
+  totaling $3,631.73 remaining (= the 60 new reversals' own debit-to-9000 lines $2,976.63 + the 4
+  pre-existing, unrelated 0f2c79b8-family dust debits $655.10 -- exactly matching the dry run's
+  own prediction, zero surprises). Account 2000 Accounts Payable: 75 live credit rows $5,094.12,
+  25 live debit rows $2,076.56 remaining -- the phantom $2,976.63 orphaned-plug population is
+  gone from 2000 entirely.
 
 — CC-1
