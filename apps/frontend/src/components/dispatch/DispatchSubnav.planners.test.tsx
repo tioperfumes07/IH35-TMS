@@ -57,4 +57,20 @@ describe("DispatchSubnav planner reachability + click-nav (Task 1)", () => {
     const link = screen.getByRole("menuitem", { name: "Load costs" });
     expect(link).toHaveAttribute("href", "/accounting/load-costs");
   });
+
+  it("maps awaiting-bol-invoice route to its Documents child href + breadcrumb", () => {
+    expect(dispatchSubNavActiveHref("/dispatch/awaiting-bol-invoice", "")).toBe(
+      "/dispatch/awaiting-bol-invoice",
+    );
+    expect(dispatchBreadcrumbLabel("/dispatch/awaiting-bol-invoice", "")).toBe("Awaiting BOL");
+  });
+
+  it("exposes Awaiting BOL under Documents submenu", () => {
+    renderNav();
+    // Documents has no leaf href — the whole control is the menuitem that toggles the submenu.
+    const documentsBtn = screen.getByRole("menuitem", { name: /^Documents/i });
+    fireEvent.click(documentsBtn);
+    const link = screen.getByRole("menuitem", { name: /Awaiting BOL/i });
+    expect(link).toHaveAttribute("href", "/dispatch/awaiting-bol-invoice");
+  });
 });

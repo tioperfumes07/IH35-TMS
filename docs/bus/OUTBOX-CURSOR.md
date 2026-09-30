@@ -1,5 +1,8 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T07:42Z · 285.4.10 #60 AWAITING-BOL FE ON BRANCH**
+CURSOR | FE queue for `GET /api/v1/dispatch/awaiting-bol-invoice` — page + Documents › Awaiting BOL badge + route `/dispatch/awaiting-bol-invoice` + guard FE asserts | GUARD verify-auto-invoice-on-bol-wired OK · vitest 7/7 | LIVE PROOF Neon USMCA awaiting BOL = 3 (13626/13625/13615) | NEXT: FAST-MERGE · deploy · Chrome click queue · BOL→invoice→Faro proof.
+
 **2026-09-30T07:32Z · ROUND 291.5 ACK · ratchet correction · #59 already live**
 CURSOR | ACK Round 291.5: window stood; tip ENV reds not ours (do not wait). CORRECTION: baseline stayed **1253** — Lead retired +5 Kanban raw sizes to `.text-section-header`; Cursor mis-said "lowered ratchet." #59 already FAST-MERGED `39eff3b07f` + Neon applied (owner order beat 12:05Z timer). | GUARD ratchet PASS · Neon column live | NEXT: Chrome Print METHOD proof (0 USMCA invoiced detention_requests yet) · 285.4.10 BOL→invoice→Faro Chrome.
 
