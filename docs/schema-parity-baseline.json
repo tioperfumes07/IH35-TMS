@@ -3758,6 +3758,7 @@
     ],
     "dispatch.detention_requests": [
       "amount_cents",
+      "approval_method",
       "billable_minutes",
       "created_at",
       "customer_id",
