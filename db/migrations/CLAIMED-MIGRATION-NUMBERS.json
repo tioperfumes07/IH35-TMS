@@ -18,6 +18,11 @@
       "claimed_at": "2026-09-30",
       "purpose": "ROUND 300 A-31: the TIER1 deferrable constraint trigger (same shape as B-26's lineless-invoice trigger) enforcing unit_id+driver_id on fuel.fuel_transactions and accounting.expense_lines (TIER1 line_category rows), plus unit_id+driver_id+load_id on maintenance.work_orders (TIER1 source_type rows: AC/RS/RT/ET). Going-forward only (AFTER INSERT, not UPDATE), does not touch G18's existing load-only trigger (migration 0093)."
     },
+    "202615000000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-30",
+      "purpose": "ROUND 300 A-32: bind the 3 of 8 USMCA bank_accounts with ledger_account_id NULL (Faro Cash Reserve, Faro Escrow Reserve, Petty Cash) to a Cash/OtherCurrentAsset GL account each -- creates 2 missing catalogs.accounts rows (Faro Escrow Reserve, Petty Cash; Faro Cash Reserve's GL account already exists, just unbound) per the owner's standing USMCA-create-missing-accounts authorization."
+    },
     "202614870000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-30",
