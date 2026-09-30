@@ -213,22 +213,32 @@ function isChecksumOverrideMatch(overridesByFile, file, ledgerChecksum, diskChec
 //     the sanctioned identity.users service account in 202614200000.
 //   - Idempotent (ON CONFLICT DO NOTHING) and no-ops until identity.users exists.
 const FRESH_DB_PROD_IDENTITY_UUID = "e4117991-d2c0-406d-8cda-74e98d95bccd";
+// The migration that needs the row. Bootstrapping EARLIER is wrong and was measured wrong: on a
+// fresh database identity.users exists as a relation long before it has the columns this INSERT
+// writes, so an earlier attempt died with 'column "id" of relation "users" does not exist'
+// (CI 2026-09-30T10:50:29Z). Gate on the file that actually needs it — by then the table has
+// evolved into its final shape — and verify the columns anyway rather than trusting the order.
+const FRESH_DB_IDENTITY_NEEDED_BY = "202614530000_qbo_flags_permanent_block.sql";
 let freshDbIdentityBootstrapped = false;
-async function ensureFreshDbProductionIdentity(client) {
+async function ensureFreshDbProductionIdentity(client, file) {
   if (TARGET_IS_PROD || freshDbIdentityBootstrapped) return;
-  const present = await client.query(`SELECT to_regclass('identity.users') IS NOT NULL AS ok`);
-  if (!present.rows[0]?.ok) return; // identity.users not created yet — try again next migration
+  if (file < FRESH_DB_IDENTITY_NEEDED_BY) return;
+  const cols = await client.query(
+    `SELECT column_name FROM information_schema.columns WHERE table_schema = 'identity' AND table_name = 'users'`
+  );
+  const have = new Set(cols.rows.map((r) => r.column_name));
+  if (!have.has("id") || !have.has("role")) return; // not yet in its final shape — retry next file
   await client.query(
     `
-      INSERT INTO identity.users (id, email, google_user_id, role, created_at, password_hash, first_name, last_name)
-      VALUES ($1::uuid, NULL, NULL, 'Owner', now(), NULL, 'Owner', 'Ruling Actor')
+      INSERT INTO identity.users (id, role)
+      VALUES ($1::uuid, 'Owner')
       ON CONFLICT (id) DO NOTHING
     `,
     [FRESH_DB_PROD_IDENTITY_UUID]
   );
   freshDbIdentityBootstrapped = true;
   console.log(
-    `[db:migrate] fresh-DB identity bootstrap: ensured identity.users ${FRESH_DB_PROD_IDENTITY_UUID} (non-prod target only)`
+    `[db:migrate] fresh-DB identity bootstrap: ensured identity.users ${FRESH_DB_PROD_IDENTITY_UUID} before ${file} (non-prod target only)`
   );
 }
 // ─────────────────────────────────────────────────────────────────────────────
@@ -642,7 +652,7 @@ try {
       );
     }
 
-    await ensureFreshDbProductionIdentity(client);
+    await ensureFreshDbProductionIdentity(client, file);
     console.log(`APPLY ${file}`);
     await applyMigration(client, file, sql, checksum);
     if (!ledgerFilesByChecksum.has(checksum)) ledgerFilesByChecksum.set(checksum, []);
