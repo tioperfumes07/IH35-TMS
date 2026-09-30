@@ -11732,3 +11732,59 @@ board/Truck Line canonical wiring is not this seat's surface. Flagging for the o
 work per ROUND 265 rather than idling on someone else's regression.
 
 — CC-2
+
+## FINDING: N/A LANE: FINANCIAL -- Order 2 survivor determination, the 7 duplicate groups blocking the $39,108 sweep (CC-2, 2026-09-30)
+
+Amendment 1D says the survivor is determinable from the source, not an owner hand-pick. Determined
+for the 7 groups blocking Order 1's remaining sweep (invoices 1, 3, 4, 16, 19, 41, 42), against
+`~/Downloads/PAYMENTS TO USMCA FROM FARO.csv`, `09-25-26 RESERVE REPORT.csv`, and
+`FARO ACCOUNT SUMMARY.csv` ("Wire Fee","260.00" -- a real aggregate wire-fee total, confirming
+per-invoice wire fees are real, not zero).
+
+**All 7: 1090/1230(or 1235)/2150 amounts are IDENTICAL across every copy** and match Faro's own
+wire amount exactly (invoice 1 = $3,482.00, invoice 3 = $2,415.00, invoice 16 = $3,676.00, invoice
+19 = $3,385.00, invoice 41 = $3,385.00, invoice 42 = $3,676.00, invoice 4 = $1,639.00 per our own
+`factoring_advances` columns, no PAYMENTS row found for invoice 4 specifically). So test (b) (ties
+to Faro's figures) never discriminates on its own -- test (a), the canonical shape, decides.
+
+**4 simple groups (invoices 1, 19, 41, 42), 2 copies each:** copies differ ONLY in fee-account
+split -- the earlier copy folds the wire fee into 6400 Factoring Fees; the later copy carries it
+correctly as its own 6300 Bank Service Charges & Wire Fees line. Canonical rule 2: "Wire Fees posts
+only when a wire fee exists" -- FARO ACCOUNT SUMMARY's $260.00 aggregate confirms wire fees are
+real across this book. **Survivor: the later copy (with the 6300 line). Void the earlier copy.**
+
+**3 complex groups (invoices 3, 4, 16), 3 copies each:** copy 1 = no 6300 (wrong, same as above);
+copy 2 = has 6300 AND posts the reserve to 1230 Factoring Reserves; copy 3 = has 6300 but posts the
+reserve to 1235 Faro Cash Reserve instead. `09-25-26 RESERVE REPORT.csv` shows a **"Transfer Escrow
+to Cash"** line for every one of these 3 invoices, dated AFTER the funding date (e.g. invoice 4
+funded 08/12, escrow-to-cash transfer dated 09/15) -- proving the reserve for these invoices sat in
+**Escrow** at funding time and moved to **Cash** later, as its own separate reserve-movement event
+(canonical shape 3). Copy 3 collapsed that later escrow-to-cash transfer into the funding entry
+itself by posting straight to 1235 at funding -- wrong account, wrong timing. **Survivor: copy 2
+(has 6300, posts reserve to 1230 at funding). Void copies 1 and 3.**
+
+| Invoice | fa_id | Copies | Survivor | Void |
+|---|---|---|---|---|
+| 1 | 4c4a8f23-1975-4235-8d22-14175a69db7a | 2 | copy 2 (later, has 6300) | copy 1 |
+| 3 | f2feaa5e-a306-4fe2-88d3-dadf64d766be | 3 | copy 2 (has 6300, 1230) | copies 1, 3 |
+| 4 | 5985201f-b957-4db8-8985-9792d0dc8b6b | 3 | copy 2 (has 6300, 1230) | copies 1, 3 |
+| 16 | 93c0d5b0-480c-4def-9ba6-ceffec6f5de8 | 3 | copy 2 (has 6300, 1230) | copies 1, 3 |
+| 19 | 31f8630a-95a9-4b24-bf78-4d0910e55d14 | 2 | copy 2 (later, has 6300) | copy 1 |
+| 41 | 5207bfad-87f1-4441-9489-10f4674f4e34 | 2 | copy 2 (later, has 6300) | copy 1 |
+| 42 | da9d0965-df7e-4000-a89c-005fe4e2e00b | 2 | copy 2 (later, has 6300) | copy 1 |
+
+7 of 7 settled by the exports -- none escalated to the owner. Net-wire total for these 7
+(unaffected by which copy survives, since 1090 is identical either way): $21,658.00
+($3,482+$2,415+$1,639+$3,676+$3,385+$3,385+$3,676), matching $39,108.00 − $17,450.00 (AUTH-134,
+CONSUMED) exactly.
+
+**The other 18 duplicate groups (not blocking Order 1's sweep) are not resolved here** -- same
+6300/6400 fee-split pattern was observed on inspection but each invoice's own Faro wire-fee status
+was not individually re-verified against the exports for those 18. Do not assume this determination
+extends to them without doing so.
+
+**Not attempted here:** the actual void + delete (Order 2 steps 2-3). This finding only names the
+survivor; execution is a separate, code-level step (reversal JE dated the void date, then archive +
+delete per Order 3's one purge definition).
+
+— CC-2
