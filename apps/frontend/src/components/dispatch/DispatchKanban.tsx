@@ -1186,7 +1186,7 @@ export function KanbanDispatchColumn({
   if (column.collapsedByDefault && !expanded) {
     return (
       <section className="kanban-col-collapsed flex-none w-[148px] rounded-sm border border-gray-300 bg-white p-2" data-testid={`kanban-column-${column.key}`}>
-        <header className="grid grid-cols-[auto_1fr_auto] items-center gap-2 border-b-2 border-gray-400 bg-gray-100 px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-700">
+        <header className="grid grid-cols-[auto_1fr_auto] items-center gap-2 border-b-2 border-gray-400 bg-gray-100 px-2 pb-1.5 pt-1 text-section-header font-semibold uppercase tracking-[0.4px] text-gray-700">
           <button
             type="button"
             onClick={() => setExpanded(true)}
@@ -1221,7 +1221,7 @@ export function KanbanDispatchColumn({
       style={width ? { width: `${width}px`, flex: "0 0 auto" } : undefined}
       data-testid={`kanban-column-${column.key}`}
     >
-      <header className="mb-2 border-b-2 border-gray-400 bg-gray-100 px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-700">
+      <header className="mb-2 border-b-2 border-gray-400 bg-gray-100 px-2 pb-1.5 pt-1 text-section-header font-semibold uppercase tracking-[0.4px] text-gray-700">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
           {column.collapsedByDefault ? (
             <button
@@ -1405,7 +1405,7 @@ function KanbanSwimLaneColumn({
   if (column.collapsedByDefault && !expanded) {
     return (
       <section className="kanban-col-collapsed flex-none w-[148px] rounded-sm border border-gray-300 bg-white p-2" data-testid={`kanban-column-${column.key}`}>
-        <header className="grid grid-cols-[auto_1fr_auto] items-center gap-2 border-b-2 border-gray-400 bg-gray-100 px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-700">
+        <header className="grid grid-cols-[auto_1fr_auto] items-center gap-2 border-b-2 border-gray-400 bg-gray-100 px-2 pb-1.5 pt-1 text-section-header font-semibold uppercase tracking-[0.4px] text-gray-700">
           <button
             type="button"
             onClick={() => setExpanded(true)}
@@ -1459,7 +1459,7 @@ function KanbanSwimLaneColumn({
       style={width ? { width: `${width}px`, flex: "0 0 auto" } : undefined}
       data-testid={`kanban-column-${column.key}`}
     >
-      <header className="mb-2 border-b-2 border-gray-400 bg-gray-100 px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-700">
+      <header className="mb-2 border-b-2 border-gray-400 bg-gray-100 px-2 pb-1.5 pt-1 text-section-header font-semibold uppercase tracking-[0.4px] text-gray-700">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
           {column.collapsedByDefault ? (
             <button
