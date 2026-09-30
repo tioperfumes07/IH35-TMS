@@ -90,6 +90,7 @@ import { registerVoidCancelReasonRoutes } from "./catalogs/void-cancel-reasons.r
 import { registerDispatchFlagColorRoutes } from "./catalogs/dispatch-flag-colors.routes.js";
 import { registerDispatchCatalogRoutes } from "./catalogs/dispatch/index.js";
 import { registerFactoringQueueRoutes } from "./dispatch/factoring-queue.routes.js";
+import { registerAwaitingBolInvoiceRoutes } from "./dispatch/awaiting-bol-invoice.routes.js";
 import { registerSafetyCatalogRoutes } from "./catalogs/safety/index.js";
 import { registerDocsFoundationRoutes } from "./docs/docs.routes.js";
 import { registerDocsFilesRoutes } from "./docs/files.routes.js";
@@ -912,6 +913,7 @@ async function main() {
   await registerDispatchCatalogRoutes(app);
   // Factoring-packet ops surface (DISP-FACTORING-PACKET): the queue routes were built but never mounted.
   await registerFactoringQueueRoutes(app);
+  await registerAwaitingBolInvoiceRoutes(app);
   await registerGenericCatalogRoutes(app);
   await registerStubCatalogPurgeRoutes(app);
   await registerAccountingCatalogRoutes(app);

@@ -183,6 +183,36 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
       const linesRaw = (invoice.lines as Array<Record<string, unknown>> | undefined) ?? [];
       const filteredLines = linesRaw.filter((line) => String(line.line_type ?? "") !== "tax");
 
+      // ROUND 285.4.9 / #59 — APPROVED BY under detention/layover from detention_requests.reviewed_by.
+      // METHOD prints blank until approval_method is captured on the approve path (column not yet on tip).
+      const lineIds = filteredLines.map((l) => String(l.id ?? "")).filter(Boolean);
+      const approvalByLineId = new Map<string, { approvedBy: string | null; method: string | null }>();
+      if (lineIds.length > 0) {
+        const appr = await client.query(
+          `
+            SELECT
+              dr.invoice_line_id::text AS invoice_line_id,
+              COALESCE(
+                NULLIF(TRIM(CONCAT_WS(' ', u.first_name, u.last_name)), ''),
+                u.email
+              ) AS approved_by
+            FROM dispatch.detention_requests dr
+            LEFT JOIN identity.users u ON u.id = dr.reviewed_by_user_id
+            WHERE dr.operating_company_id = $1::uuid
+              AND dr.invoice_id = $2::uuid
+              AND dr.invoice_line_id = ANY($3::uuid[])
+              AND dr.status IN ('approved', 'invoiced')
+          `,
+          [operatingCompanyId, invoice.id, lineIds]
+        );
+        for (const row of appr.rows as Array<{ invoice_line_id: string; approved_by: string | null }>) {
+          approvalByLineId.set(String(row.invoice_line_id), {
+            approvedBy: row.approved_by,
+            method: null,
+          });
+        }
+      }
+
       const renderedLines: InvoiceLineRender[] = filteredLines.map((line) => {
         const qty = Number(line.quantity ?? 1);
         const unitCents = Number(line.unit_amount_cents ?? 0);
@@ -195,11 +225,15 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
             : lineType === "linehaul"
               ? `${formatMoney(unitCents)} / mi`
               : `${formatMoney(unitCents)}`;
+        const appr = approvalByLineId.get(String(line.id ?? ""));
         return {
           description: String(line.description ?? "Line item"),
           basis,
           rate,
           amountCents: totalCents,
+          lineType,
+          approvedBy: appr?.approvedBy ?? null,
+          approvalMethod: appr?.method ?? null,
         };
       });
 

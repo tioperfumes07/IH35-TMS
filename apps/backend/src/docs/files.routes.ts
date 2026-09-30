@@ -524,6 +524,22 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
     });
 
     if (!completed) return reply.code(404).send({ error: "docs_file_not_found" });
+
+    // ROUND 285.4.10 / #60 — late BOL upload: if this completed file is a BOL on a delivered load,
+    // mint/send the invoice and push to the Faro queue. Never blocks the upload response.
+    if (!completed.already_completed) {
+      void withCurrentUser(user.uuid, async (client) => {
+        const { maybeFireAutoInvoiceAfterBolSaved } = await import("./maybe-fire-auto-invoice-after-bol.js");
+        await maybeFireAutoInvoiceAfterBolSaved({
+          client: client as never,
+          fileId: parsedParams.data.file_id,
+          actorUserId: user.uuid,
+        });
+      }).catch((err) => {
+        console.warn({ err, file_id: parsedParams.data.file_id }, "bol_upload_auto_invoice_hook_failed");
+      });
+    }
+
     return {
       ok: true,
       file_id: parsedParams.data.file_id,
@@ -861,6 +877,21 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
         return row;
       });
       if (!linked) return reply.code(404).send({ error: "docs_file_not_found" });
+
+      // ROUND 285.4.10 / #60 — linking an already-uploaded BOL to a delivered load retries invoice→Faro.
+      if (body.entity_type === "load") {
+        void withCurrentUser(user.uuid, async (client) => {
+          const { maybeFireAutoInvoiceAfterBolSaved } = await import("./maybe-fire-auto-invoice-after-bol.js");
+          await maybeFireAutoInvoiceAfterBolSaved({
+            client: client as never,
+            fileId: parsedParams.data.file_id,
+            actorUserId: user.uuid,
+          });
+        }).catch((err) => {
+          console.warn({ err, file_id: parsedParams.data.file_id }, "bol_link_auto_invoice_hook_failed");
+        });
+      }
+
       return reply.code(201).send({ link: linked });
     } catch (error) {
       if ((error as Error).message === "entity_not_found") return reply.code(400).send({ error: "entity_not_found" });
