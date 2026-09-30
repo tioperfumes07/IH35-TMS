@@ -1,10 +1,10 @@
 {
-  "healthzSha": "8c3ac5e",
-  "generated_at": "2026-09-30T09:35:28.866Z",
+  "healthzSha": "2ff1b25",
+  "generated_at": "2026-09-30T17:08:14.644Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "8c3ac5e",
+    "deployedSha": "2ff1b25",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 23333,
-      "title": "FINDING: N/A — OUTBOX/NOW: API LIVE 8c3ac5e02e · boards@16 on prod · Chrome path = 13615",
+      "number": 23450,
+      "title": "fix(deploy): P0 second block — 202614720000 applied from bytes that exist in no branch",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 04:25 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23333",
-      "sha": "fc8b83ffed",
-      "committedAtIso": "2026-09-30T04:25:49-05:00"
+      "mergedAtCt": "09/30/2026, 12:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23450",
+      "sha": "2ff1b25882",
+      "committedAtIso": "2026-09-30T12:00:24-05:00"
     },
     {
-      "number": 23332,
-      "title": "Cursor- ROUND 292 ACCT-F29216 Load Costs FACTOR-BUT-NOT-DELIVERED · boards@16",
+      "number": 23448,
+      "title": "FINDING: N/A LANE: DOCS (file MIGR-COLLISION-01 -- 4 migration number collisions + 6 missing .sql files on prod ledger)",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 04:17 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23332",
-      "sha": "8c3ac5e02e",
-      "committedAtIso": "2026-09-30T04:17:48-05:00"
+      "mergedAtCt": "09/30/2026, 11:57 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23448",
+      "sha": "0ef434e8c4",
+      "committedAtIso": "2026-09-30T11:57:28-05:00"
     },
     {
-      "number": 23331,
-      "title": "FINDING: AUTH-165 CONSUMED -- $17,057.44 double-count reversed for real, verified closed",
+      "number": 23439,
+      "title": "Claude-1-A21-shared-has-transactions-predicate",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 04:14 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23331",
-      "sha": "2646634186",
-      "committedAtIso": "2026-09-30T04:14:02-05:00"
+      "mergedAtCt": "09/30/2026, 11:57 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23439",
+      "sha": "d166832f7e",
+      "committedAtIso": "2026-09-30T11:57:20-05:00"
     },
     {
-      "number": 23330,
-      "title": "Claude-Lead — Truck Line: strip the noise out of UNIT/TOUR/LOAD so the TRANSIT line gets the width",
+      "number": 23447,
+      "title": "fix(deploy): P0 — two APPLIED migrations were edited; every production deploy is blocked",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 04:12 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23330",
-      "sha": "a4ba611c96",
-      "committedAtIso": "2026-09-30T04:12:40-05:00"
+      "mergedAtCt": "09/30/2026, 11:54 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23447",
+      "sha": "1eeeb83dc0",
+      "committedAtIso": "2026-09-30T11:54:59-05:00"
     },
     {
-      "number": 23329,
-      "title": "FINDING: AUTH-165 -- reverse a real, live $17,057.44 double-count, my own AUTH-140 error",
+      "number": 23431,
+      "title": "fix: T-01/T-01b arrival engine, S-01 settlement legs, M-01 company MPG, and the three main-red blockers",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 04:11 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23329",
-      "sha": "d79a348d88",
-      "committedAtIso": "2026-09-30T04:11:18-05:00"
+      "mergedAtCt": "09/30/2026, 11:49 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23431",
+      "sha": "80bab30d0b",
+      "committedAtIso": "2026-09-30T11:49:11-05:00"
     },
     {
-      "number": 23328,
-      "title": "Claude-3- OPS-RLS-BYPASS — trial-balance-purge guard fix + verify-static REQUIRES_LIVE_DB fixes",
+      "number": 23432,
+      "title": "FINDING: N/A LANE: FINANCIAL -- exempt G2 adjusting JE from handwritten-cost-JE guard via its real settlement_line_item_splits backing",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 04:09 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23328",
-      "sha": "2b3608b1ce",
-      "committedAtIso": "2026-09-30T04:09:15-05:00"
+      "mergedAtCt": "09/30/2026, 11:45 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23432",
+      "sha": "b7de332973",
+      "committedAtIso": "2026-09-30T11:45:09-05:00"
     },
     {
-      "number": 23327,
-      "title": "FINDING: N/A LANE: FINANCIAL -- AUTH-158 CONSUMED: deadhead backfill 0/15, all locked (open_settlement or issued_invoice), flagged to Lead",
+      "number": 23445,
+      "title": "FINDING: N/A LANE: DOCS -- board finding: 4 migration-filename-collision pairs are pre-existing, already applied, dangerous to rename",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 04:05 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23327",
-      "sha": "be0d06be0e",
-      "committedAtIso": "2026-09-30T04:05:48-05:00"
+      "mergedAtCt": "09/30/2026, 11:43 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23445",
+      "sha": "2e7fb37010",
+      "committedAtIso": "2026-09-30T11:43:42-05:00"
     },
     {
-      "number": 23326,
-      "title": "FINDING: N/A LANE: FINANCIAL -- ROUND 292: fix closures 30/31 guard bugs, regen canonical-relations.json, AUTH-158 deadhead backfill",
+      "number": 23441,
+      "title": "Claude-1-fix: CANONICAL-CHECK gaps + live downtime schema grant gap",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 04:03 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23326",
-      "sha": "cb74c2e4c9",
-      "committedAtIso": "2026-09-30T04:03:33-05:00"
+      "mergedAtCt": "09/30/2026, 11:39 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23441",
+      "sha": "52eff7a2ef",
+      "committedAtIso": "2026-09-30T11:39:45-05:00"
     },
     {
-      "number": 23323,
-      "title": "Claude-Lead — FACTOR BUT NOT DELIVERED: the engine already existed and nothing used it",
+      "number": 23434,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL -- exempt orphan guard verify-match-candidates-are-settlement-born-only, no code change",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 04:03 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23323",
-      "sha": "552ae2beb5",
-      "committedAtIso": "2026-09-30T04:03:09-05:00"
+      "mergedAtCt": "09/30/2026, 11:35 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23434",
+      "sha": "f0e66711e4",
+      "committedAtIso": "2026-09-30T11:35:14-05:00"
     },
     {
-      "number": 23321,
-      "title": "Claude-3- ACCT-F2026093013 — driver escrow counter-leg fix (2170, not 1090) + AUTH-153 + diesel baseline raise",
+      "number": 23443,
+      "title": "FINDING: N/A LANE: DOCS (claim-reserve migration 202614740000 -- T-21 geofence odometer captures)",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 04:02 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23321",
-      "sha": "c0c0a630a5",
-      "committedAtIso": "2026-09-30T04:02:16-05:00"
+      "mergedAtCt": "09/30/2026, 11:29 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23443",
+      "sha": "4fd93f75c5",
+      "committedAtIso": "2026-09-30T11:29:06-05:00"
     }
   ]
 }
