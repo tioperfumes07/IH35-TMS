@@ -519,3 +519,48 @@ FACTORING-RESERVE-ESCROW-SUBLEDGER-GAP-2026093012.
 NEXT: B-35 (QBO connection status).
 
 — CC-2
+
+---
+## 2026-09-30 — B-35 REPORT, ROUND 300 QUEUE COMPLETE
+
+JOB ID: B-35 (ROUND 300)
+
+FOUND: "Not connected" is accurate and by design, not a defect. USMCA has zero QBO connections
+and zero sync runs, ever. TRANSP and TRK both have live, actively-used connections today (tokens
+refreshed and used within the hour, neither revoked) — QBO sync itself is healthy, only USMCA
+was never wired to it, matching the parallel-books architecture (USMCA's own ledger has been
+system-of-record since 2026-01-01, no entity writes back to QBO).
+
+WHAT BREAKS: nothing the architecture didn't already expect. One partial exception: USMCA's
+chart-of-accounts mirror already holds 365 rows (a one-time clone, never kept live) —
+customers/vendors were never cloned at all (0 rows each).
+
+WHAT RECONNECTING REQUIRES: a fresh Intuit OAuth flow naming which QBO company file (realm_id)
+USMCA should point at — TRANSP and TRK use two different realm_ids today, so this needs its own
+decision, not made here.
+
+WHAT NEEDS RE-SYNCING: this would be a first sync (0 historical runs) — customers/vendors need
+an initial pull, the 365-row CoA clone needs reconciling against live QBO.
+
+GUARD: scripts/verify-qbo-connection-status-honest.mjs (verify-step 11979, reserved via #23524)
+— locks TRANSP/TRK's own live connections staying healthy, without treating USMCA's by-design
+gap as a regression. LIVE PASS, --selftest 1/1 mutation caught.
+
+DID NOT CONNECT ANYTHING — measure and report only, per the order.
+
+ROUND 300 QUEUE (B-31 through B-35) is now complete. Summary:
+- B-31: A/R overstatement traced — breaks at Faro-receipt-never-becomes-payment, not at the
+  accounting layer (clean 0/110).
+- B-32: diesel card balances measured — both real GL balances, neither traceable to a sub-ledger
+  (Dreamline has none at all; Relay's own posted_to_gl flag doesn't verify).
+- B-33: integrity findings attributed — 46/116 resolve through driverAtTimeSql, rest are an
+  honest telemetry-coverage gap.
+- B-34: Factoring Reserve / Escrow tied out — the escrow sub-ledger is exactly right ($2,375/14
+  drivers, matching your figures to the cent) but the GL doesn't mirror it ($1,050 gap);
+  Factoring Reserve GL vs Faro's own total also off by $63.79.
+  B-35: QBO status explained — USMCA was simply never connected, by design, not broken.
+
+5 PRs merged, 5 guards live, nothing written to money or load data anywhere in the queue. Per
+B-36: re-reading the queue file now for whatever's next.
+
+— CC-2
