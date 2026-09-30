@@ -133,7 +133,7 @@ export const spacing = {
   sidebarItemHeight: 56,
   sidebarItemPaddingY: 8,
   pageContentPadding: 24,
-  kpiCardHeight: 30,
+  kpiCardHeight: 56,
   kpiCardPaddingX: 12,
   kpiCardGap: 6,
   subAreaTileHeight: 60,

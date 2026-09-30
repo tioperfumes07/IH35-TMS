@@ -10,7 +10,7 @@
  *   1. Manifest lazy-mounts pages/Drivers.tsx (canonical), not a second chrome.
  *   2. pages/drivers/DriversPage.tsx stays present with @archived marker (Rule 07).
  *   3. /drivers/auto-deductions Navigate → /drivers/deductions (duplicate panel).
- *   4. Team Splits + Disputes render inside Drivers.tsx unified subnav.
+ *   4. Team Splits render inside Drivers.tsx unified subnav (C-33: Disputes is C-25 hub, not a peer).
  *   5. Singular /lists/driver/{5 reference catalogs} Navigate → /lists/drivers/*.
  *   6. Plural /lists/drivers/* catalogs remain mounted Live.
  *   7. deprecated-subcatalog-pages.tsx stays @archived and unmounted.
@@ -96,14 +96,15 @@ function runChecks() {
   if (!driversCanonical.includes("data-testid=\"drivers-unified-subnav\"")) {
     failures.push("Drivers.tsx must render unified subnav (data-testid=drivers-unified-subnav)");
   }
-  if (!driversCanonical.includes("drivers-team-splits-tab") || !driversCanonical.includes("drivers-disputes-tab")) {
-    failures.push("Drivers.tsx must expose Team Splits + Disputes tabs in the unified chrome");
+  if (!driversCanonical.includes("drivers-team-splits-tab")) {
+    failures.push("Drivers.tsx must expose Team Splits in the unified chrome (C-33)");
   }
-  if (!driversCanonical.includes("TeamSplitConfigPanel") || !driversCanonical.includes("SettlementDisputeList")) {
-    failures.push("Drivers.tsx must render TeamSplitConfigPanel and SettlementDisputeList");
+  if (!driversCanonical.includes("TeamSplitConfigPanel")) {
+    failures.push("Drivers.tsx must render TeamSplitConfigPanel");
   }
-  if (!driversCanonical.includes("openCount")) {
-    failures.push("Drivers.tsx Disputes tab must use openCount badge");
+  // C-33 / Round 298.1 — Disputes is the three-way hub (C-25), not a Drivers peer tab.
+  if (driversCanonical.includes("drivers-disputes-tab") && /id:\s*"disputes"/.test(read("apps/frontend/src/components/drivers/DRIVERS_TABS_CONFIG.ts") ?? "")) {
+    failures.push("Drivers peer subnav must not keep Disputes (use /accounting/disputes C-25 hub)");
   }
 
   // 2. Archived wrapper present

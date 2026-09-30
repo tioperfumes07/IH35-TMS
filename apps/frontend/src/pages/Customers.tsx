@@ -537,33 +537,28 @@ export function CustomersPage() {
   // tabs (:186) whose existing deep-links must keep working (CURSOR-RULING-PARAM-LIST-TAB, 2026-08-08).
   // One param carries the whole segment set; status and quality are derived from it so they can never
   // disagree with the URL or with each other.
-  const listTab = ((): "all" | "active" | "inactive" | "preferred" | "watch" | "factored" => {
-    const raw = (searchParams.get("listTab") ?? "active").toLowerCase();
-    return raw === "all" || raw === "inactive" || raw === "preferred" || raw === "watch" || raw === "factored"
-      ? raw
-      : "active";
+  // C-31 / C-19 (owner Round 298.1): default TAB is With transactions (A-21 server predicate).
+  // "All" / Active / quality segments stay one click away — nobody is hidden from search.
+  type CustomerListTabId = "with_transactions" | "all" | "active" | "inactive" | "preferred" | "watch" | "factored";
+  const listTab = ((): CustomerListTabId => {
+    const raw = (searchParams.get("listTab") ?? "with_transactions").toLowerCase();
+    if (raw === "with_transactions" || raw === "with-txn" || raw === "txn") return "with_transactions";
+    return raw === "all" || raw === "inactive" || raw === "preferred" || raw === "watch" || raw === "factored" || raw === "active"
+      ? (raw as CustomerListTabId)
+      : "with_transactions";
   })();
   const setListTab = (next: string) => {
     const params = new URLSearchParams(searchParams);
-    // "active" is the default view, so keep the URL clean rather than pinning the default.
-    if (next === "active") params.delete("listTab");
+    // With transactions is the default — keep the URL clean rather than pinning it.
+    if (next === "with_transactions") params.delete("listTab");
     else params.set("listTab", next);
+    params.delete("txn"); // C-31 — tab owns the predicate; retire the buried ?txn= control.
     setSearchParams(params, { replace: true });
   };
   const listStatus: "active" | "inactive" | "all" =
     listTab === "inactive" ? "inactive" : listTab === "active" ? "active" : "all";
-  // C-19 / A-21 (owner 2026-09-30): default roster = parties with REAL money movement only.
-  // Voided does not count. Full roster stays behind the explicit "All customers" control.
-  const txnScope = ((): "with" | "all" => {
-    const raw = (searchParams.get("txn") ?? "with").toLowerCase();
-    return raw === "all" ? "all" : "with";
-  })();
-  const setTxnScope = (next: "with" | "all") => {
-    const params = new URLSearchParams(searchParams);
-    if (next === "with") params.delete("txn");
-    else params.set("txn", "all");
-    setSearchParams(params, { replace: true });
-  };
+  // A-21 server predicate only when the With-transactions tab is selected (default).
+  const useHasTransactions = listTab === "with_transactions";
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -675,53 +670,53 @@ export function CustomersPage() {
     },
   });
 
-  const customersQuery = useQuery({
-    queryKey: ["customers", "page", companyId, txnScope],
-    // CUST-1: load the FULL customer roster (the client-side table below paginates/searches over it).
-    // Without an explicit limit the endpoint returns only the default 50, hiding the rest of the roster.
-    // PAGER-SERVERTOTAL-01: keep server `total` (COUNT) — never derive pager totalCount from .length.
-    // C-19: default has_transactions=true via A-21 shared predicate (never a client-side filter).
+  // C-31 — always fetch the A-21 with-transactions set (default tab + its count). Never invent a
+  // client-side "has money" filter; the predicate lives in has-transactions-predicate.ts only.
+  const withTxnCustomersQuery = useQuery({
+    queryKey: ["customers", "page", companyId, "with_transactions"],
     queryFn: () =>
       listAllCustomers({
         operating_company_id: companyId,
         active_company_only: true,
-        ...(txnScope === "with" ? { has_transactions: true } : {}),
+        has_transactions: true,
       }),
     enabled: Boolean(companyId),
   });
-  const customersRoster = customersQuery.data?.customers ?? [];
+  // Full active roster for All / Active / quality tabs (and for tab counts beside With transactions).
+  const customersQuery = useQuery({
+    queryKey: ["customers", "page", companyId, "all"],
+    queryFn: () =>
+      listAllCustomers({
+        operating_company_id: companyId,
+        active_company_only: true,
+      }),
+    enabled: Boolean(companyId),
+  });
+  const customersRoster = useHasTransactions
+    ? (withTxnCustomersQuery.data?.customers ?? [])
+    : (customersQuery.data?.customers ?? []);
   // Create-form parents must see every active customer, not only those with transactions.
   const parentCustomersQuery = useQuery({
     queryKey: ["customers", "parents", companyId],
     queryFn: () => listAllCustomers({ operating_company_id: companyId, active_company_only: true }),
     enabled: Boolean(companyId) && createOpen,
   });
-  const parentCustomersRoster = parentCustomersQuery.data?.customers ?? customersRoster;
-  // ACCT-F5790 — `active_company_only: true` above scopes to the ACTIVE company's records, and
-  // mdata.customers' own customers_select RLS additionally hides any deactivated_at-set row for a
-  // non-bypass reader. Both are correct for the base roster (pickers/parentCustomerOptions below must
-  // stay active-only), but it means customersRoster NEVER contains an inactive customer, so the
-  // Inactive tab always counted/showed zero regardless of real data (ACCT-F5789 fixed the backend
-  // status=inactive branch itself; this is the frontend half — the master-list page never called it).
-  // A SEPARATE, explicit status=inactive fetch, additive-only: does not touch active_company_only's
-  // semantics or any other consumer of customersRoster (parentCustomerOptions stays sourced from the
-  // active-only roster below, unchanged).
+  const parentCustomersRoster = parentCustomersQuery.data?.customers ?? customersQuery.data?.customers ?? [];
+  // ACCT-F5790 — inactive rows need an explicit status=inactive fetch (RLS hides them otherwise).
   const inactiveCustomersQuery = useQuery({
-    queryKey: ["customers", "inactive", companyId, txnScope],
+    queryKey: ["customers", "inactive", companyId],
     queryFn: () =>
       listAllCustomers({
         operating_company_id: companyId,
         status: "inactive",
-        ...(txnScope === "with" ? { has_transactions: true } : {}),
       }),
     enabled: Boolean(companyId),
   });
   const inactiveCustomersRoster = inactiveCustomersQuery.data?.customers ?? [];
-  // Full roster (active + inactive) for the list/table view and tab counts ONLY — every other
-  // consumer of customersRoster (parentCustomerOptions) stays active-only on purpose.
+  // With-transactions tab: only the A-21 set. Other tabs: full active (+ inactive when needed).
   const fullCustomersRoster = useMemo(
-    () => [...customersRoster, ...inactiveCustomersRoster],
-    [customersRoster, inactiveCustomersRoster]
+    () => (useHasTransactions ? customersRoster : [...customersRoster, ...inactiveCustomersRoster]),
+    [useHasTransactions, customersRoster, inactiveCustomersRoster]
   );
   // D1-4: eligible parents for the create form = active, TOP-LEVEL customers (never a sub-customer).
   const parentCustomerOptions = useMemo(
@@ -747,9 +742,16 @@ export function CustomersPage() {
   // inactive fetch, not just the active-only base roster (avoids a "No customers found" flash on the
   // Inactive tab while that second query is still in flight).
   const customersStatus = {
-    isPending: customersQuery.isPending || inactiveCustomersQuery.isPending,
-    isError: customersQuery.isError || inactiveCustomersQuery.isError,
-    isFetching: customersQuery.isFetching || inactiveCustomersQuery.isFetching,
+    isPending:
+      withTxnCustomersQuery.isPending ||
+      (!useHasTransactions && (customersQuery.isPending || inactiveCustomersQuery.isPending)),
+    isError:
+      withTxnCustomersQuery.isError ||
+      (!useHasTransactions && (customersQuery.isError || inactiveCustomersQuery.isError)),
+    isFetching:
+      withTxnCustomersQuery.isFetching ||
+      customersQuery.isFetching ||
+      inactiveCustomersQuery.isFetching,
   };
 
   // §7 RESTORE — the deleted quality segments. b3690eb68 removed these tabs AND their filter arms; the arms
@@ -760,13 +762,14 @@ export function CustomersPage() {
     listTab === "preferred" || listTab === "watch" || listTab === "factored" ? listTab : "all";
 
   // Soft-delete (Active/Inactive) list filter — canonical deactivated_at semantics,
-  // mirroring the Driver Deactivate pattern. Defaults to Active.
-  // ACCT-F5790 — sourced from fullCustomersRoster (active + inactive), not customersRoster
-  // (active-only), so the Inactive/All tabs actually have inactive rows to show.
+  // mirroring the Driver Deactivate pattern. With-transactions tab shows the A-21 set as-is
+  // (already active-company scoped); Active/Inactive only apply on the non-txn tabs.
   const visibleCustomers = useMemo(() => {
     let all = fullCustomersRoster;
-    if (listStatus === "inactive") all = all.filter((customer) => customer.deactivated_at != null);
-    else if (listStatus !== "all") all = all.filter((customer) => customer.deactivated_at == null);
+    if (!useHasTransactions) {
+      if (listStatus === "inactive") all = all.filter((customer) => customer.deactivated_at != null);
+      else if (listStatus !== "all") all = all.filter((customer) => customer.deactivated_at == null);
+    }
     // V8 roster filters — applied here so BOTH the sidebar (visibleCustomers) and the
     // customersSorted consumers (list view, selection) stay in sync.
     if (rosterType) all = all.filter((customer) => customer.customer_type === rosterType);
@@ -776,48 +779,32 @@ export function CustomersPage() {
     else if (qualitySegment === "watch") all = all.filter((c) => c.quality_overall_flag === "caution");
     else if (qualitySegment === "factored") all = all.filter((c) => Boolean(c.factoring_company_vendor_id));
     return all;
-  }, [fullCustomersRoster, listStatus, rosterType, rosterCreditStatus, qualitySegment]);
+  }, [fullCustomersRoster, listStatus, rosterType, rosterCreditStatus, qualitySegment, useHasTransactions]);
 
-  // §7 RESTORE (FE-LIST-SEGMENT-TABS-DELETED-B3690EB68), mirroring the Vendors half. b3690eb68 deleted the
-  // customer list segment tabs during the side-rail realignment; §7 is ADDITIVE-ONLY and Drivers still ships
-  // the identical pattern (Drivers.tsx:659-665). Counts are computed off the FULL roster BEFORE the status
-  // filter, so each tab shows its own total rather than the filtered remainder.
-  // ACCT-F5790 — sourced from fullCustomersRoster (active + inactive); was customersRoster
-  // (active-only), which made the Inactive tab always count 0 regardless of real data.
+  // Tab counts: With transactions = A-21 server total; other tabs from the full roster query.
   const customerTabCounts = useMemo(
     () => ({
+      with_transactions: withTxnCustomersQuery.data?.total ?? withTxnCustomersQuery.data?.customers?.length ?? 0,
       all: fullCustomersRoster.length,
-      active: fullCustomersRoster.filter((customer) => customer.deactivated_at == null).length,
-      inactive: fullCustomersRoster.filter((customer) => customer.deactivated_at != null).length,
+      active: customersQuery.data?.total ?? customersQuery.data?.customers?.length ?? 0,
+      inactive: inactiveCustomersQuery.data?.total ?? inactiveCustomersQuery.data?.customers?.length ?? 0,
       preferred: fullCustomersRoster.filter((c) => c.quality_overall_flag === "preferred").length,
       watch: fullCustomersRoster.filter((c) => c.quality_overall_flag === "caution").length,
       factored: fullCustomersRoster.filter((c) => Boolean(c.factoring_company_vendor_id)).length,
     }),
-    [fullCustomersRoster]
+    [withTxnCustomersQuery.data, customersQuery.data, inactiveCustomersQuery.data, fullCustomersRoster]
   );
 
-  // ACCT-F5792 — PAGER-SERVERTOTAL-01 still holds (never derive from .length): each tab's pager
-  // total is that tab's own authoritative server COUNT, just picked per listStatus instead of always
-  // reading the active-only query's total. Before this fix, the Inactive tab (13 real rows, confirmed
-  // live) showed "1-12 of 12" underneath because the pager always read customersQuery's active-only
-  // total (12) regardless of which roster was actually being displayed.
-  // CUSTOMERS-QUALITY-SEGMENT-PAGER-TOTAL-STUCK-ON-ALL: `listStatus` only distinguishes
-  // active/inactive/all — it collapses to "all" for the Preferred/Watch/Factored tabs too (see
-  // `listStatus` above), so those 3 tabs' pager fell into the "all" branch (customersQuery.total +
-  // inactiveCustomersQuery.total = 31) even though `visibleCustomers` is filtered down to that
-  // segment's real count by `qualitySegment` (a separate piece of state). Live-confirmed:
-  // "Preferred (1)" showed exactly 1 row with a pager reading "1-31 of 31". No server-side COUNT
-  // exists per quality segment, so fall back to the same clientside `customerTabCounts` value the
-  // tab's own label already uses — never a fresh divergent count, mirroring Vendors.tsx's identical
-  // `categoryFilter` fallback for its `by-category` tab.
   const customersServerTotal =
-    qualitySegment !== "all"
-      ? customerTabCounts[qualitySegment]
-      : listStatus === "inactive"
-        ? inactiveCustomersQuery.data?.total ?? 0
-        : listStatus === "all"
-          ? (customersQuery.data?.total ?? 0) + (inactiveCustomersQuery.data?.total ?? 0)
-          : customersQuery.data?.total ?? 0;
+    listTab === "with_transactions"
+      ? withTxnCustomersQuery.data?.total ?? 0
+      : qualitySegment !== "all"
+        ? customerTabCounts[qualitySegment]
+        : listStatus === "inactive"
+          ? inactiveCustomersQuery.data?.total ?? 0
+          : listStatus === "all"
+            ? (customersQuery.data?.total ?? 0) + (inactiveCustomersQuery.data?.total ?? 0)
+            : customersQuery.data?.total ?? 0;
 
   const customersSorted = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -1192,10 +1179,10 @@ export function CustomersPage() {
                 { value: "master-detail", label: "Master-detail", testId: "customers-view-master-detail" },
               ]}
             />
-            {/* C-01 — same SegmentedControl family as the view toggle (height/padding/min-width/tint). */}
+            {/* C-01 — Active/Inactive soft-delete filter (not the default list tab). */}
             <SegmentedControl
-              value={listStatus}
-              onChange={(value) => setListTab(value)}
+              value={listTab === "with_transactions" ? "active" : listStatus}
+              onChange={(value) => setListTab(value === "active" ? "active" : value)}
               dataAttributes={{ "data-list-status-filter": "customers", "data-customers-roster-filter-toolbar": "inline" }}
               options={[
                 { value: "active", label: "Active", testId: "customers-roster-status-active" },
@@ -1203,18 +1190,7 @@ export function CustomersPage() {
                 { value: "all", label: "All", testId: "customers-roster-status-all" },
               ]}
             />
-            {/* C-19 — A-21 server predicate; default With transactions (real money only). */}
-            <SegmentedControl
-              value={txnScope}
-              onChange={setTxnScope}
-              testId="customers-txn-scope"
-              dataAttributes={{ "data-c19-txn-scope": "customers" }}
-              options={[
-                { value: "with", label: "With transactions", testId: "customers-txn-with" },
-                { value: "all", label: "All customers", testId: "customers-txn-all" },
-              ]}
-            />
-            {/* V8 — roster Type + Credit-status filters (filter the left customer list, not transactions). */}
+            {/* C-31 — With transactions is the DEFAULT NAVY TAB below (A-21), not a buried header control. */}
             <SelectCombobox
               value={rosterType}
               onChange={(event) => setRosterType(event.target.value as typeof rosterType)}
@@ -1246,13 +1222,13 @@ export function CustomersPage() {
         }
       />
       {companyId && qboAvailable ? <CustomersSyncPanel operatingCompanyId={companyId} /> : null}
-      {/* §7 RESTORE — segment tabs, additive. Wired to the EXISTING `listStatus` state, which already filters
-          the roster in `visibleCustomers`, so no filtering logic is added and no URL behaviour changes: this
-          page's `?tab=` param stays owned by the customer DETAIL tabs, untouched. */}
+      {/* C-31 — default tab = With transactions (A-21). All / quality / Active stay one click away. */}
+      <div data-c31-list-default="customers">
       <NavyPageSubNav
         activeId={listTab}
         onTabChange={(id) => setListTab(id)}
         items={[
+          { label: `With transactions (${customerTabCounts.with_transactions})`, to: "#with_transactions" },
           { label: `All (${customerTabCounts.all})`, to: "#all" },
           { label: `Preferred (${customerTabCounts.preferred})`, to: "#preferred" },
           { label: `Watch (${customerTabCounts.watch})`, to: "#watch" },
@@ -1260,8 +1236,9 @@ export function CustomersPage() {
           { label: `Inactive (${customerTabCounts.inactive})`, to: "#inactive" },
           { label: `Factored (${customerTabCounts.factored})`, to: "#factored" },
         ]}
-        itemIds={["all", "preferred", "watch", "active", "inactive", "factored"]}
+        itemIds={["with_transactions", "all", "preferred", "watch", "active", "inactive", "factored"]}
       />
+      </div>
       {allInvoicesQuery.isError ? (
         <ListErrorState
           title="Couldn't load customer open balances"

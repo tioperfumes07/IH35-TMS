@@ -33,19 +33,17 @@ function assert(files) {
   if (!/listVendors\(/.test(page) && !/listAllVendors\(/.test(page)) {
     problems.push(`${PAGE}: must call listVendors( or listAllVendors(`);
   }
-  // VEND-S05 is "the roster defaults to Active", NOT "the default lives in useState". The §7 list-segment
-  // work made `listStatus` URL-addressable (`?listTab=`), so the default moved from a useState initialiser
-  // to the fallback on the param read — same guarantee, different expression, and this guard failed on the
-  // SHAPE while the behaviour it protects was intact. Third accepted form added rather than the assertion
-  // relaxed: it still requires the literal "active" as the default, so flipping the default to inactive/all
-  // (or dropping the fallback entirely) still fails. Do NOT widen this to just /"active"/ — that would
-  // match any mention anywhere in the file and protect nothing.
-  const defaultsToActive =
+  // VEND-S05 (superseded by C-31 / Round 298.1): default list is With transactions (A-21),
+  // not Active. Active remains one click away via listTab=active / the Active Navy tab.
+  const defaultsToWithTxnOrActive =
     /useState<"active" \| "inactive" \| "all">\("active"\)/.test(page) ||
     /listStatus.*useState.*"active"/.test(page) ||
-    /get\(\s*["']listTab["']\s*\)\s*\?\?\s*["']active["']/.test(page);
-  if (!defaultsToActive) {
-    problems.push(`${PAGE}: default listStatus must be "active" (VEND-S05)`);
+    /get\(\s*["']listTab["']\s*\)\s*\?\?\s*["']active["']/.test(page) ||
+    /get\(\s*["']listTab["']\s*\)\s*\?\?\s*["']with_transactions["']/.test(page) ||
+    /\(raw \?\? ["']with_transactions["']\)/.test(page) ||
+    /normalized = \(raw \?\? ["']with_transactions["']\)/.test(page);
+  if (!defaultsToWithTxnOrActive) {
+    problems.push(`${PAGE}: default listStatus must be "with_transactions" (C-31) or legacy "active" (VEND-S05)`);
   }
   if (!/deactivated_at == null/.test(page) && !/deactivated_at IS NULL/.test(page)) {
     // client-side Active filter

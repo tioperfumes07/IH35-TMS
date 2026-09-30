@@ -452,23 +452,25 @@ Defects auto-spawn `maintenance.work_orders` with `origin='dvir'`. Maintenance t
 ### Top action button
 **+ Create Driver**
 
-### Sub-nav tabs (9 query-synced subtabs on `/drivers?subtab=` — locked design, Block A24-2)
+### Sub-nav tabs (9 query-synced subtabs on `/drivers?subtab=` — locked design, Block A24-2 + C-33 Round 298.1)
 
 Canonical config: `apps/frontend/src/components/drivers/DRIVERS_TABS_CONFIG.ts` (`DRIVERS_CANONICAL_SUBNAV_COUNT = 9`).
 
 | Subtab id | Label | What it shows | Phase |
 |-----------|-------|---------------|-------|
-| `drivers` | Drivers | Driver list + 5 status filters (`?status=`) | Phase 1 ✅ |
+| `drivers` | Drivers | Driver list + status filters (`?status=`) | Phase 1 ✅ |
 | `profiles` | Profiles | Driver profile index (`DriversListPage`) | Phase 1 ✅ |
-| `settlements` | Settlements ▾ | Settlements-ready panel | Phase 3 ✅ T11.7 |
+| `settlements` | Settlements ▾ | Settlements panel + deductions sub-ledger | Phase 3 ✅ T11.7 |
 | `pre_settlements` | Pre-settlements | Pre-settlement queue panel | Phase 3 ✅ |
 | `cash_advances` | Cash advances | Debt-alert panel (advances + liabilities) | Phase 3 ✅ T11.11 |
-| `permits` | Permits | Permit/document expirations | Phase 1 ✅ |
+| `cash_advance_requests` | Cash advance requests | Link into Driver Finance request queue (was a full-width single-item band) | Phase 3 ✅ |
 | `pay_rate_templates` | Pay rate templates | Pointer to Lists pay templates | Phase 3 (T11.14) |
-| `deductions` | Deductions | Auto-deduction policies panel (distinct from Cash advances debt alert) | Phase 3 ✅ |
 | `leave` | Leave | On-leave / available summary | Phase 1 ✅ |
+| `team_splits` | Team Splits | Team split config panel | Phase 3 ✅ |
 
-**Active-path law (2026-07-21):** ONE Live mount — `pages/Drivers.tsx` (manifest lazy-imports it directly). `pages/drivers/DriversPage.tsx` is `@archived` re-export (Rule 07). CLOSURE additive surfaces **Team Splits** (`/drivers/team-splits`) and **Disputes** (`/drivers/disputes`) render inside the same chrome (outside the locked 9). `/drivers/auto-deductions` Navigate-redirects to `/drivers/deductions` (duplicate panel retired). **CI:** `verify:drivers-active-path`.
+**C-33 reshape (Round 296 / 298.1 — not peer tabs):** `permits` removed (unit-keyed at `safety.permits`, not driver). `deductions` folds under Settlements (a deduction has no life without a settlement). `disputes` is the three-way hub (Driver / Customer / Vendor — C-25 at `/accounting/disputes`), not a Drivers peer tab. Legacy paths `/drivers/permits`, `/drivers/deductions`, `/drivers/disputes`, `/drivers/auto-deductions` stay registered (Rule 07) and remap via `driversSubtabFromPath`.
+
+**Active-path law (2026-07-21 + C-33):** ONE Live mount — `pages/Drivers.tsx` (manifest lazy-imports it directly). `pages/drivers/DriversPage.tsx` is `@archived` re-export (Rule 07). **Team Splits** stays in the locked 9. `/drivers/auto-deductions` Navigate-redirects to `/drivers/deductions` → Settlements. **CI:** `verify:drivers-active-path` · `verify-list-defaults-and-kpi-shape.mjs`.
 
 **Module nav surfaces (2):** `/drivers` hub + `/driver-finance/cash-advance-requests` (linked from module subnav and sidebar flyout).
 

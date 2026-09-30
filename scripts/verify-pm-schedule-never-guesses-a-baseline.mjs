@@ -28,6 +28,11 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-pm-schedule-never-guesses-a-baseline";
 const BACKFILL_ROUTE = "apps/backend/src/maintenance/service-history-backfill.routes.ts";
 
+// Static arm always runs; live honesty check needs Neon. Declared so verify-no-silent-db-skip (03d)
+// does not treat the intentional offline skip as a silent green.
+export const ALLOW_OFFLINE_SKIP =
+  "static source checks always run; live pm_schedules honesty check requires DATABASE_URL";
+
 /** Static source checks — pure, take the route file's text as input. */
 export function findStaticProblems(routeSrc) {
   const problems = [];

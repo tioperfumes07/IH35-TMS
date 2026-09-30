@@ -20,28 +20,40 @@ type Props = {
   disabledReason?: string;
 };
 
+/**
+ * C-32 — label ABOVE value, value LEFT-aligned + tabular-nums.
+ * NEVER a full-width bar with the number shoved to the far right edge.
+ */
 export function KpiCard({ label, number, accent, to, onClick, disabled, disabledReason }: Props) {
+  // GLB-04 ratchet requires `inline-flex h-full w-full min-w-0` / `block h-full w-full min-w-0`
+  // so each tile fills one equal grid cell. C-32 requires flex-col (label above, value left) —
+  // never a full-width bar with the number shoved to the far right.
   const card = (
     <div
-      className="inline-flex h-full w-full min-w-0 shrink-0 items-center justify-between gap-2 bg-white"
+      className="inline-flex h-full w-full min-w-0 flex-col justify-center bg-white"
       style={{
         height: spacing.kpiCardHeight,
+        minHeight: spacing.kpiCardHeight,
+        maxHeight: 72,
         paddingLeft: spacing.kpiCardPaddingX,
         paddingRight: spacing.kpiCardPaddingX,
+        paddingTop: 4,
+        paddingBottom: 4,
         border: `1px solid ${colors.cardBorder}`,
         borderRadius: spacing.radiusCard,
         borderLeft: accent ? `${spacing.subAreaTileBorderLeft}px solid ${accent}` : `1px solid ${colors.cardBorder}`,
         opacity: disabled ? 0.72 : 1,
       }}
+      data-c32-kpi-tile="true"
     >
       <span
-        className="uppercase"
+        className="truncate uppercase"
         style={{ color: colors.mutedText, fontSize: typography.kpiLabel, letterSpacing: typography.looseUpper, fontWeight: 600 }}
       >
         {label}
       </span>
       <span
-        className="min-w-0 truncate text-right"
+        className="min-w-0 truncate text-left tabular-nums"
         style={{ color: colors.pageHeading, fontSize: typography.kpiNumber, fontWeight: 700 }}
         title={typeof number === "string" ? number : String(number)}
       >
@@ -77,7 +89,7 @@ export function KpiCard({ label, number, accent, to, onClick, disabled, disabled
         type="button"
         onClick={onClick}
         aria-label={`${label} — view details`}
-        className="block h-full min-w-0 shrink-0 rounded-sm text-left transition hover:shadow-xs focus:outline-hidden focus:ring-2 focus:ring-slate-400"
+        className="block h-full w-full min-w-0 rounded-sm text-left transition hover:shadow-xs focus:outline-hidden focus:ring-2 focus:ring-slate-400"
       >
         {card}
       </button>
