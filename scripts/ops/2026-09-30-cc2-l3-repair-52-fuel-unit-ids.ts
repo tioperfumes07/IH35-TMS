@@ -19,11 +19,12 @@
  * STANDING OWNER FREEZE (docs/bus/2026-09-30-OWNER-FREEZE-NO-SEAT-WRITES-MONEY-OR-LOAD-DATA.md):
  * "No seat creates, edits, voids, deletes, recategorises, renumbers, BACKFILLS or reclassifies
  * ANY of the following in production, for any reason, including proof... Any ops script with
- * --apply against production: FROZEN." CC-2's own instruction under that freeze: "no production
- * writes at all... Reading only." L-3 itself asks to "Report how many of 52 resolve" -- this
- * script's --apply path exists (built, per CC-3's T-01 parallel instruction: "Build it, prove it
- * ... do not run it against production") but is NOT run here. Only the dry-run (report) ran.
- * Do not run --apply until the freeze is explicitly lifted or an AUTH record authorizes it.
+ * --apply against production: FROZEN." This script's dry-run (report-only) ran first and was
+ * reported to the owner directly, with the exact 52/52 resolve, 12-both-agree/40-load-only/
+ * 0-disagree/0-unresolved breakdown. The owner, verbatim, in chat: "write the 52 fuel unit ids i
+ * authorize it, so do it." AUTH-178 (docs/bus/OWNER-AUTHORIZATIONS.md) records that authorization
+ * as a permanent, reviewable artifact before --apply is allowed to run, per the same
+ * claim-before-write discipline as every other AUTH script this session.
  *
  * Run: DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-l3-repair-52-fuel-unit-ids.ts [--apply]
  * (dry run by default; --apply gated by verify-owner-authorization.mjs like every other AUTH script)
@@ -38,7 +39,7 @@ import { assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const APPLY = process.argv.includes("--apply");
-const AUTH_ID = "AUTH-L3-52-FUEL-UNITS"; // not yet issued -- --apply will refuse until it is
+const AUTH_ID = "AUTH-178"; // owner order, 2026-09-30, "write the 52 fuel unit ids i authorize it, so do it"
 
 type Row = {
   fuel_txn_id: string;
