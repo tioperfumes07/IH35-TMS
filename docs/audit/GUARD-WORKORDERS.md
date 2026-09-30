@@ -11915,3 +11915,122 @@ touched by a proper, separately-dated reserve-movement entry (canonical shape 3)
 1235). Not executed here: the actual void of any of the 10 now-determined loser copies.
 
 — CC-2
+
+## FINDING: N/A LANE: FINANCIAL -- 2150 does NOT land on $315,356.28; honest gap measured, root points at 87 generic-journal_entry postings (CC-2, 2026-09-30)
+
+Measured live (USMCA, bypass_rls=lucia) after DEFECT 1 + AUTH-136/137/139:
+
+**2150 Factoring Advance, current book balance: $500,374.17** (credit-normal).
+
+**Source of truth (`accounting.factoring_advances`, status='advanced', not voided): 93 rows,
+invoice-face total $325,346.72.** This is the currently-outstanding population per the advance
+records themselves.
+
+**Gap: $500,374.17 − $325,346.72 = $175,027.45, unexplained by anything fixed today.**
+
+2150 postings broken down by `source_transaction_type`:
+```
+factoring_advance             219 postings   net $795,540.72  (funding, credit side)
+factoring_default_interest    194 postings   net     $355.45  (accrued interest, credit side)
+journal_entry                  87 postings   net -$295,522.00  (generic/manual entries, debit side)
+```
+795,540.72 + 355.45 − 295,522.00 = 500,374.17 -- ties to the current balance exactly. **The 87
+`journal_entry`-sourced postings are the entire story of why 2150 doesn't tie to the source
+table.** These are not posted through `factoring_customer_payment` (canonical shape 4, the
+sanctioned customer-pays-Faro clear) -- they carry the generic `journal_entry` source type, the
+same untracked/ad-hoc signature already found twice today (the reversal pattern behind DEFECT 1
+and 6 of AUTH-137/139's rows).
+
+**Cannot honestly prove 2150 lands on $315,356.28** -- two separate problems, neither closed by
+today's fixes:
+1. The target itself needs clarifying: canonical shape 1 credits 2150 by **invoice face**
+   ($325,346.72 per the 93 outstanding rows), not net-advanced ($315,356.28, which is face minus
+   reserve/fee -- a different number). Which one 2150 should equal needs the owner's own prior
+   $315,356.28 figure reconciled against which measure it was computed from.
+2. Even against $325,346.72, the $175,027.45 gap traces entirely to 87 generic `journal_entry`
+   postings that need their own audit -- are they legitimate customer-payment clears mistagged
+   with the wrong source_transaction_type, or another instance of the same ad-hoc-reversal actor
+   pattern found in DEFECT 1's population? Not determined here.
+
+**Not attempted:** auditing the 87 journal_entry postings individually, or forcing 2150 to either
+target number. A forced tie is worse than an honest gap.
+
+— CC-2
+
+## CORRECTION + TRUE ROOT CAUSE: 2150's $185,017.89 gap is the 41 DEFECT-1 advances' own status field, not the 87 journal_entry postings (CC-2, 2026-09-30)
+
+The immediately-preceding finding's "87 journal_entry postings" framing was itself incomplete --
+those postings are legitimate reversal-halves of prior reclass work (mine and others': R-159, R-187
+G4, AUTH-137) and net to zero against their own reposts. They do not explain the gap.
+
+**The real root cause, found by cross-checking against `factoring_advances.status` directly:**
+
+```
+status='advanced' (live, correct)  93 advances   net 2150 credit  $325,346.72  <- matches Lead's own tie-out exactly
+status='voided'                    41 advances   net 2150 credit  $164,562.00  <- SHOULD BE ZERO
+```
+
+**These exact 41 advances are DEFECT 1's own 41 -- the ones fixed this round via AUTH-136.**
+Cross-checked directly: all 41 AUTH-136 fa_ids currently carry `factoring_advances.status='voided'`.
+40 of 41 share `void_reason='repair zero-advance ach=NetAdv bug'`, `voided_at` 2026-09-24 22:49-22:59
+UTC -- a prior, undocumented repair process's way of "fixing" the ach=NetAdv posting bug was to
+**void the entire advance record**, not just correct the miscoded JE. The 1 remaining
+(`27e4edc0`... no -- correcting: one of the 41 carries a different, ROUND-190-style reason: "self-
+correction: duplicate of FAC-2026-00091 ... this row must never look like a live, independently-
+funded advance again" -- that ONE may be a genuine duplicate, not a posting-bug victim; the other
+40 are not).
+
+**This means DEFECT 1's repost (AUTH-136, already CONSUMED) is now internally inconsistent: the GL
+says these 41 advances are real and funded ($164,562.00 correctly sitting in 1090/2150), but the
+advance records themselves say they never happened (status='voided').** Lead's own reconciliation
+source (`00-RECONCILIATION-TIED-OUT-NEVER-REDERIVE-THIS.md`) treats status='advanced' as the sole
+real population and never flagged these 41 as voided -- this status/GL conflict was not previously
+known.
+
+**Not resolved here, deliberately -- this needs a decision, not a unilateral fix:**
+1. If the 41 advances are real (Faro really funded them, only the JE was miscoded) -- as DEFECT 1's
+   own framing and the owner's order to fix them implies -- their `status` should flip back to
+   'advanced' to match the now-correct GL, EXCEPT the 1 confirmed genuine duplicate
+   (duplicate-of-FAC-2026-00091), which should stay voided AND have its just-reposted GL reversed
+   again.
+2. If any of the other 40 are ALSO genuine duplicates/errors (not yet individually confirmed), the
+   GL repost done for them under AUTH-136 needs reversing instead, and $325,346.72 is not the right
+   target either.
+
+**Recommend:** confirm against Faro's own exports (as done for every other duplicate this round)
+whether each of these 41 has a real, distinct Faro-side funding -- not just the one already-known
+duplicate. Until then, 2150's $185,017.89 gap should NOT be closed by any single-direction fix.
+
+— CC-2
+
+## URGENT — this is what verify-void-is-whole is catching, confirmed, NOT a transaction-atomicity bug (CC-2, 2026-09-30)
+
+Relayed report: "verify-void-is-whole is catching your duplicate-funding voids in a half-done
+state... wrap the whole void batch in a single transaction." **Ran the guard live just now to
+check precisely.** It is NOT an atomicity problem -- every AUTH-136/137/139 script ran its whole
+batch inside one `BEGIN...COMMIT`, no partial-batch state is possible from how they're written.
+
+The guard's own live output confirms the finding two sections above, exactly:
+```
+factoring advances    144 docs · 144 with a ledger · 10 all-dead · 51 voided headers
+✗ factoring advances · 2-stranded-posting · FAC-2026-00047 · 3deb5c6b-... · live 1 / dead 1 — header voided but live journal entries remain
+✗ factoring advances · 2-stranded-posting · FAC-2026-00048 · 43bf2fc5-... · live 1 / dead 1 — header voided but live journal entries remain
+[... 41 total, exactly the AUTH-136 fa_id list ...]
+```
+**This is not a bug in how I voided anything -- it's that AUTH-136 (DEFECT 1's repost, already
+CONSUMED, owner-ordered) correctly gave these 41 advances a live funding JE again, while their
+`factoring_advances.status` has carried 'voided' since 2026-09-24 (a DIFFERENT, earlier process's
+"repair" for the same underlying ach=NetAdv bug -- it voided the ADVANCE RECORD instead of just
+fixing the JE).** The guard is doing exactly its job: catching that a voided document now has a
+live posting. Wrapping anything in a bigger transaction does not resolve this -- the two facts
+(status='voided', JE now correctly live) are both already true and both already committed;
+fixing it requires deciding which one is wrong, not re-running anything atomically.
+
+**The decision needed, restated precisely:** flip these 41 advances' status back to 'advanced' (to
+match the now-correct GL, since DEFECT 1's whole premise is that these are real funded advances
+with a posting-only bug) -- except the 1 of 41 that is a confirmed genuine duplicate
+(duplicate-of-FAC-2026-00091), which should have its GL reversed again instead and stay voided.
+Not done unilaterally. This is the same recommendation as two sections above; restating because it
+is now confirmed to be exactly what is blocking CC-3's guard.
+
+— CC-2
