@@ -19,8 +19,29 @@ const kpisQuerySchema = z.object({
 
 const requestParamsSchema = z.object({ id: z.string().uuid() });
 
+/** ROUND 285.4.9 / #59 — METHOD under APPROVED BY on the invoice (owner: "by telephone call"). */
+const APPROVAL_METHODS = [
+  "by telephone call",
+  "by email",
+  "by text message",
+  "in person",
+  "by customer portal",
+] as const;
+
 const approveBodySchema = z.object({
   operating_company_id: z.string().uuid(),
+  approval_method: z
+    .string()
+    .trim()
+    .min(2)
+    .max(120)
+    .refine(
+      (v) =>
+        (APPROVAL_METHODS as readonly string[]).includes(v) ||
+        /^by [a-z0-9][a-z0-9 .,'/-]{1,100}$/i.test(v) ||
+        /^in person$/i.test(v),
+      { message: "approval_method_invalid" }
+    ),
 });
 
 const rejectBodySchema = z.object({
@@ -65,10 +86,16 @@ export async function registerDispatchDetentionApprovalRoutes(app: FastifyInstan
     if (!params.success || !body.success) {
       return reply.code(400).send({ error: "validation_error" });
     }
-    const result = await approveDetentionRequest(user.uuid, body.data.operating_company_id, params.data.id);
+    const result = await approveDetentionRequest(
+      user.uuid,
+      body.data.operating_company_id,
+      params.data.id,
+      body.data.approval_method
+    );
     if (!result.ok) {
       if (result.error === "not_found") return reply.code(404).send({ error: result.error });
       if (result.error === "zero_accrual") return reply.code(422).send({ error: result.error });
+      if (result.error === "approval_method_required") return reply.code(400).send({ error: result.error });
       return reply.code(409).send({ error: result.error });
     }
     return result;

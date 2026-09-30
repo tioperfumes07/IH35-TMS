@@ -184,8 +184,7 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
       const linesRaw = (invoice.lines as Array<Record<string, unknown>> | undefined) ?? [];
       const filteredLines = linesRaw.filter((line) => String(line.line_type ?? "") !== "tax");
 
-      // ROUND 285.4.9 / #59 — APPROVED BY under detention/layover from detention_requests.reviewed_by.
-      // METHOD prints blank until approval_method is captured on the approve path (column not yet on tip).
+      // ROUND 285.4.9 / #59 — APPROVED BY + METHOD under detention/layover from detention_requests.
       const lineIds = filteredLines.map((l) => String(l.id ?? "")).filter(Boolean);
       const approvalByLineId = new Map<string, { approvedBy: string | null; method: string | null }>();
       if (lineIds.length > 0) {
@@ -196,7 +195,8 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
               COALESCE(
                 NULLIF(TRIM(CONCAT_WS(' ', u.first_name, u.last_name)), ''),
                 u.email
-              ) AS approved_by
+              ) AS approved_by,
+              NULLIF(TRIM(dr.approval_method), '') AS approval_method
             FROM dispatch.detention_requests dr
             LEFT JOIN identity.users u ON u.id = dr.reviewed_by_user_id
             WHERE dr.operating_company_id = $1::uuid
@@ -206,10 +206,14 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
           `,
           [operatingCompanyId, invoice.id, lineIds]
         );
-        for (const row of appr.rows as Array<{ invoice_line_id: string; approved_by: string | null }>) {
+        for (const row of appr.rows as Array<{
+          invoice_line_id: string;
+          approved_by: string | null;
+          approval_method: string | null;
+        }>) {
           approvalByLineId.set(String(row.invoice_line_id), {
             approvedBy: row.approved_by,
-            method: null,
+            method: row.approval_method,
           });
         }
       }

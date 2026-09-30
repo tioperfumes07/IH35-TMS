@@ -1,5 +1,8 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T06:48Z · 285.4.9 #59 METHOD ON BRANCH (merge after 12:00 UTC)**
+CURSOR | #59 METHOD: claim `#23286` `6cb5f4b515` · migrate `202614651200` + approve `approval_method` required + invoice SELECT + FE METHOD picker on Detention board | GUARD detention-approval-lifecycle selftest 8/8 · company-settlement-pdf OK · vitest 12/12 | NEXT: **merge after 12:00 UTC** · Neon apply · Chrome Print proof.
+
 **2026-09-30T06:40Z · 285.4.9 #31 MERGED `c57f610b4b`**
 CURSOR | #31 locked v10 PDFs `#23283` `c57f610b4b` · APPROVED BY already prints; METHOD needs `dispatch.detention_requests.approval_method` migrate | GUARD company-settlement-pdf v10 OK | NEXT: #59 METHOD after **12:00 UTC** Cursor migrate window · deploy Chrome Print proof.
 

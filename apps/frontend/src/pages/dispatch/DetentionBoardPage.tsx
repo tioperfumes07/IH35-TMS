@@ -3,11 +3,16 @@ import { Link } from "react-router-dom";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { useEffect, useMemo, useState } from "react";
 import {
+  approveDetentionRequest,
   bridgeDetentionBilling,
   closeDetentionEvent,
+  DETENTION_APPROVAL_METHODS,
   getDetentionBoard,
+  listDetentionApprovalRequests,
   notifyDetentionCustomer,
+  rejectDetentionRequest,
   syncDetentionFromArrivals,
+  type DetentionApprovalRequest,
   type DetentionBoardEvent,
 } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -45,6 +50,123 @@ function operationalStateLabel(state: DetentionBoardEvent["operational_state"]):
 function billingStateLabel(state: DetentionBoardEvent["billing_state"]): string {
   if (state === "billed") return "Billed";
   return state === "unbilled_receivable" ? "Unbilled receivable" : "Estimated, not yet owed";
+}
+
+/** ROUND 285.4.9 / #59 — pending detention approvals require METHOD before invoice print. */
+function DetentionApprovalQueue({
+  companyId,
+}: {
+  companyId: string;
+}) {
+  const { pushToast } = useToast();
+  const queryClient = useQueryClient();
+  const [methodById, setMethodById] = useState<Record<string, string>>({});
+
+  const pendingQ = useQuery({
+    queryKey: ["dispatch", "detention-approval", companyId, "pending_review"],
+    queryFn: () => listDetentionApprovalRequests(companyId, "pending_review"),
+    enabled: Boolean(companyId),
+    refetchInterval: 60_000,
+  });
+
+  const approveM = useMutation({
+    mutationFn: (input: { id: string; method: string }) =>
+      approveDetentionRequest(input.id, {
+        operating_company_id: companyId,
+        approval_method: input.method,
+      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["dispatch", "detention-approval", companyId] });
+      void queryClient.invalidateQueries({ queryKey: ["dispatch", "detention-board", companyId] });
+      pushToast("Detention approved and invoiced", "success");
+    },
+    onError: (err) => pushToast(userFacingApiError(err, "Could not approve detention"), "error"),
+  });
+
+  const rejectM = useMutation({
+    mutationFn: (input: { id: string }) =>
+      rejectDetentionRequest(input.id, {
+        operating_company_id: companyId,
+        reason: "Rejected from detention board",
+      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["dispatch", "detention-approval", companyId] });
+      pushToast("Detention request rejected", "success");
+    },
+    onError: (err) => pushToast(userFacingApiError(err, "Could not reject detention"), "error"),
+  });
+
+  const rows = pendingQ.data?.requests ?? [];
+  if (pendingQ.isLoading) {
+    return (
+      <div data-testid="detention-approval-queue" className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">
+        Loading approval queue…
+      </div>
+    );
+  }
+  if (pendingQ.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load detention approvals"
+        {...formatQueryErrorDetail(pendingQ.error)}
+        onRetry={() => void pendingQ.refetch()}
+      />
+    );
+  }
+  if (rows.length === 0) return null;
+
+  return (
+    <div data-testid="detention-approval-queue" className="rounded-sm border border-slate-200 bg-white">
+      <div className="border-b border-slate-200 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">
+        Pending approval · METHOD required for invoice
+      </div>
+      <ul className="divide-y divide-slate-100">
+        {rows.map((row: DetentionApprovalRequest) => {
+          const method = methodById[row.id] ?? DETENTION_APPROVAL_METHODS[0];
+          const stopLabel = [row.stop_city, row.stop_state].filter(Boolean).join(", ") || "—";
+          return (
+            <li key={row.id} className="flex flex-wrap items-center gap-2 px-3 py-2 text-xs text-[#0F1219]">
+              <span className="min-w-[4.5rem] font-semibold">{row.load_number ?? "—"}</span>
+              <span className="min-w-[8rem] text-slate-600">{row.customer_name ?? "—"}</span>
+              <span className="min-w-[6rem] text-center">{stopLabel}</span>
+              <span className="min-w-[4rem] text-center">{formatMoney(Number(row.amount_cents ?? 0))}</span>
+              <label className="flex items-center gap-1">
+                <span className="text-[11px] font-bold uppercase text-[#4B5563]">Method</span>
+                <select
+                  className="h-7 rounded-sm border border-slate-200 px-2 text-xs"
+                  value={method}
+                  aria-label={`Approval method for ${row.load_number ?? row.id}`}
+                  onChange={(e) => setMethodById((prev) => ({ ...prev, [row.id]: e.target.value }))}
+                >
+                  {DETENTION_APPROVAL_METHODS.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                className="h-7 rounded-sm border border-slate-300 px-2 text-xs text-slate-700"
+                disabled={approveM.isPending || rejectM.isPending || !method.trim()}
+                onClick={() => approveM.mutate({ id: row.id, method })}
+              >
+                Approve
+              </button>
+              <button
+                type="button"
+                className="h-7 rounded-sm border border-slate-300 px-2 text-xs text-slate-700"
+                disabled={approveM.isPending || rejectM.isPending}
+                onClick={() => rejectM.mutate({ id: row.id })}
+              >
+                Reject
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
 }
 
 // Per-row action buttons — kept as its own component (not a plain column render) so the
@@ -284,6 +406,8 @@ export function DetentionBoardPage() {
       />
 
       <DispatchAlertServerControls value={range} onApply={setRange} />
+
+      <DetentionApprovalQueue companyId={companyId} />
 
       <p className="text-xs text-slate-600">
         Active rows are estimates, not customer balances · stopped rows remain visible as unbilled receivables · customer notify after{" "}

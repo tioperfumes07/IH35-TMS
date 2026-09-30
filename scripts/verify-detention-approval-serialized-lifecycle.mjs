@@ -65,10 +65,17 @@ export function check(sources) {
       );
     }
 
-    if (!/WHERE id = \$1 AND operating_company_id = \$5::uuid AND status = 'pending_review'/.test(fnBody)) {
+    if (!/WHERE id = \$1 AND operating_company_id = \$6::uuid AND status = 'pending_review'/.test(fnBody)) {
       failures.push(
         `${APPROVAL_FILE}: approveDetentionRequest's final status UPDATE is no longer CAS-guarded ` +
           `(AND status = 'pending_review') -- it may have regressed to an unconditional flip`
+      );
+    }
+
+    if (!/approval_method = \$5/.test(fnBody)) {
+      failures.push(
+        `${APPROVAL_FILE}: approveDetentionRequest no longer stamps approval_method on the CAS UPDATE ` +
+          `(ROUND 285.4.9 #59 — METHOD under APPROVED BY on the invoice)`
       );
     }
 
@@ -112,7 +119,7 @@ export { check as run };
 
 if (process.argv.includes("--selftest")) {
   const goodApproval = `
-    export async function approveDetentionRequest(userId, operatingCompanyId, requestId) {
+    export async function approveDetentionRequest(userId, operatingCompanyId, requestId, approvalMethod) {
       const result = await withCompany(userId, operatingCompanyId, async (client) => {
         const res = await client.query(
           \`SELECT dr.* FROM dispatch.detention_requests dr WHERE dr.id = $1 FOR UPDATE OF dr\`,
@@ -123,7 +130,7 @@ if (process.argv.includes("--selftest")) {
         if (request.status !== "pending_review") return { ok: false, error: "not_pending" };
         const bridge = await bridgeDetentionToBillingInClientTx(client, userId, operatingCompanyId, request.detention_event_id);
         const updated = await client.query(
-          \`UPDATE dispatch.detention_requests SET status = 'invoiced' WHERE id = $1 AND operating_company_id = $5::uuid AND status = 'pending_review' RETURNING *\`,
+          \`UPDATE dispatch.detention_requests SET status = 'invoiced', approval_method = $5 WHERE id = $1 AND operating_company_id = $6::uuid AND status = 'pending_review' RETURNING *\`,
           [requestId]
         );
         return { ok: true, request: updated.rows[0] };
@@ -133,9 +140,10 @@ if (process.argv.includes("--selftest")) {
   `;
   const regressedNoLock = goodApproval.replace("FOR UPDATE OF dr", "");
   const regressedNoCas = goodApproval.replace(
-    "WHERE id = $1 AND operating_company_id = $5::uuid AND status = 'pending_review'",
-    "WHERE id = $1 AND operating_company_id = $5::uuid"
+    "WHERE id = $1 AND operating_company_id = $6::uuid AND status = 'pending_review'",
+    "WHERE id = $1 AND operating_company_id = $6::uuid"
   );
+  const regressedNoMethod = goodApproval.replace("approval_method = $5, ", "").replace("approval_method = $5 ", "");
   const regressedSeparateBridge = goodApproval.replace(
     "bridgeDetentionToBillingInClientTx(client, userId, operatingCompanyId, request.detention_event_id)",
     "bridgeDetentionToBilling(userId, operatingCompanyId, request.detention_event_id)"
@@ -159,6 +167,7 @@ if (process.argv.includes("--selftest")) {
     ["fully-fixed shape produces zero failures", check({ approval: goodApproval, detention: goodDetention }).length === 0],
     ["missing FOR UPDATE lock is caught", check({ approval: regressedNoLock, detention: goodDetention }).some((f) => f.includes("no longer locks the request row"))],
     ["missing final CAS guard is caught", check({ approval: regressedNoCas, detention: goodDetention }).some((f) => f.includes("no longer CAS-guarded"))],
+    ["missing approval_method stamp is caught", check({ approval: regressedNoMethod, detention: goodDetention }).some((f) => f.includes("no longer stamps approval_method"))],
     ["regressing to the separate standalone-transaction bridge call is caught", check({ approval: regressedSeparateBridge, detention: goodDetention }).some((f) => f.includes("no longer calls bridgeDetentionToBillingInClientTx"))],
     ["bridgeDetentionToBillingInClientTx losing its client param is caught", check({ approval: goodApproval, detention: regressedDetentionNoClientParam }).some((f) => f.includes("no longer takes an explicit client"))],
     ["bridgeDetentionToBilling wrapper reimplementing instead of delegating is caught", check({ approval: goodApproval, detention: regressedWrapperReimplements }).some((f) => f.includes("no longer delegates to"))],
