@@ -271,3 +271,63 @@ NEXT: back to B-03 proper (the earlier "5" backfill is explicitly stopped — se
 or whatever the Lead's next queue item is. Checking the bus before starting anything else.
 
 — CC-2
+
+---
+## 2026-09-30 — ROUND 297.3 REPORT (B-27/B-28/B-29/B-30, the Integrity Engine)
+
+JOB ID: ROUND 297.3 (B-27, B-28, B-29, B-30)
+
+WHAT I CHANGED:
+- `apps/backend/src/maintenance/driver-attribution.ts` (NEW) — `driverAtTimeSql(unitAlias,
+  tsExpr, resultAlias?)`, the ONE shared LEFT JOIN LATERAL against
+  `telematics.vehicle_driver_assignments`, replacing what was 8 independently-inlined copies of
+  the same predicate across the codebase (driver-day-summary.routes.ts, arrival-detection
+  .service.ts, vehicle-driver-pairing.routes.ts, safety/driver-scoring/scoring.service.ts,
+  fraud-detector/rules.service.ts ×2, samsara/vehicle-driver-pairing/pairing.service.ts,
+  samsara/active-driver-set/recompute.service.ts — none of them touched/refactored here, this is
+  the new shared definition for future/this feature's own consumers, not a repo-wide migration).
+  LEFT JOIN (never INNER) so an unattributed event resolves to a NULL driver_id row, never
+  dropped. Also exports `computeDriverMilesInPeriod` — per-driver confirmed miles in a period,
+  shared by B-28 and B-29, NULL (never partially estimated) the moment any one assignment window
+  lacks a boundary `telematics.odometer_readings` row within ±24h.
+- `apps/backend/src/maintenance/fuel-driver-scorecard.service.ts` (NEW, B-28) — per-driver
+  gallons/MPG/cost, gal/100mi, fills-with-no-load, 4 anomaly flags (MPG >1.5 SD below fleet mean;
+  tank overflow, reusing `fraud-detector/rules.service.ts`'s own `evaluateTankOverflow`/
+  `DEFAULT_TANK_CAPACITY_GAL` rather than re-deriving it; two fills <90min apart >50mi apart,
+  reusing `haversineMiles`; gallons bought exceeding what the fleet's own worst real MPG could
+  have consumed for the driver's actual miles). Every flag states its own evidence, never an
+  accusation.
+- `apps/backend/src/maintenance/driver-damage-scorecard.service.ts` (NEW, B-29) — per-driver
+  damage-WO/accident-WO/tire-event/safety-accident/accident-report counts + cost + down-days, each
+  ALSO expressed per 100,000 miles driven (via the same computeDriverMilesInPeriod), attributed by
+  unit+event-timestamp, never by a stored driver_id column on the event row.
+- `apps/backend/src/maintenance/integrity.routes.ts` (extended, B-30) — 2 new GET routes,
+  `/driver-scorecard` (combined fuel+damage per driver) and `/fuel-anomalies` (flattened flag
+  worklist), both period-scoped (defaults to trailing 30 days), no new routes file, no index.ts
+  change (single register call already covers the whole file).
+- Guard: `scripts/verify-driver-attribution-is-time-boxed.mjs` (verify-step 11959, reservation
+  requested) — fails if any integrity file references `assigned_driver_id`, if a new site inlines
+  the assignments-table predicate instead of importing `driverAtTimeSql`, if the shared helper
+  stops being a LEFT JOIN, or (fixture-based, no live DB needed) if MPG is ever returned non-null
+  for a window with an odometer gap. 4/4 mutations caught under `--selftest`.
+
+LIVE PROOF (all 4 items the Lead asked for, run live against USMCA prod, rolled back):
+1. Attribution join, one real unit (`8a842d23-8261-4c5a-bf72-bb38fa93b9f5`, 109 assignments),
+   3 real dates: resolved `bd56ad0d-...` and `ba5ce08e-...` at the first two, correctly NULL at
+   the third (no covering assignment that recently).
+2. Unattributed bucket, last 90 days, fuel fills: **126 of 177 unattributed** — the real number,
+   however ugly, not smoothed over.
+3. Live driver fuel scorecard (30-day window): 22 drivers returned, each with gallons/MPG/
+   gal-per-100mi/flags.
+4. A real row with `mpg_null_reason: "odometer_gap"`: driver with 1 fill, 135.3 gal, $796.79 spent,
+   `mpg: null` — a genuine odometer coverage gap on a real fill, not a fabricated example.
+
+WHAT IS LEFT / FOUND ALONG THE WAY: B-29's damage scorecard currently returns 0 attributed
+drivers — not a bug (proven correct by proof #1 above, which resolves real drivers elsewhere).
+All 15 live work_orders (12 repair, 2 accident, 1 pm) reference 5 units with ZERO rows in
+telematics.vehicle_driver_assignments, even though the fleet-wide table holds 617 rows for other
+units. Filed as DAMAGE-WO-UNITS-ZERO-ASSIGNMENT-COVERAGE-2026093006, routed to CC-3 (Samsara
+pairing owner) to confirm whether these 5 units are wired into the webhook at all. No frontend UI
+wired to the 2 new routes (out of scope — the Lead's own proof requirements are all backend/data).
+
+— CC-2
