@@ -1,0 +1,569 @@
+{
+  "captured_at": "2026-09-30T11:09:21.666Z",
+  "companies": {
+    "b49a737b-6cf0-43bb-8758-a6c8ff8a2c4e": [
+      {
+        "account_id": "6ea133b4-74a2-4a41-83e6-195d4833d14a",
+        "account_code": "1000",
+        "account_name": "BUSINESS CHECKING ...3500 3500",
+        "closing_balance_cents": -105000
+      },
+      {
+        "account_id": "5462aa0b-462d-48c9-ab54-46e32c2697c2",
+        "account_code": "1410",
+        "account_name": "Prepaid Expenses",
+        "closing_balance_cents": 30000
+      },
+      {
+        "account_id": "3af15c76-0ef2-4433-a9a5-7eca44c2ce59",
+        "account_code": "2000",
+        "account_name": "Accounts Payable",
+        "closing_balance_cents": -30001
+      },
+      {
+        "account_id": "5a635f63-ece2-4492-a790-e0c61b872be4",
+        "account_code": "6100",
+        "account_name": "Fuel Expense",
+        "closing_balance_cents": 1
+      },
+      {
+        "account_id": "c6cac1be-7400-454b-84d1-3569422d61cb",
+        "account_code": "QBO-1150040031",
+        "account_name": "Accumulated Depreciation TRUCK 170",
+        "closing_balance_cents": -150000
+      },
+      {
+        "account_id": "9c0b80ce-65e4-4be3-85a8-bfbf5472e713",
+        "account_code": "QBO-1150040035",
+        "account_name": "Truck Depreciation",
+        "closing_balance_cents": 150000
+      },
+      {
+        "account_id": "27ed41d7-d8be-447c-8524-08d4983adec4",
+        "account_code": "QBO-1206",
+        "account_name": "Equipment Bank/Finance Loans",
+        "closing_balance_cents": 100000
+      },
+      {
+        "account_id": "062eb885-809f-474e-b38b-2b07d9cd3fd7",
+        "account_code": "QBO-1222",
+        "account_name": "IE-Interest Paid.",
+        "closing_balance_cents": 5000
+      },
+      {
+        "account_id": "47f5807d-aa5e-437b-bc96-e0a0ac815e3c",
+        "account_code": "TRK-2000",
+        "account_name": "Accounts Payable",
+        "closing_balance_cents": -2500
+      },
+      {
+        "account_id": "5f9a88a5-e58f-4fe7-aea4-983dd2604b76",
+        "account_code": "TRK-QBO-1150040031",
+        "account_name": "Repair & Maintenance Expenses",
+        "closing_balance_cents": 2500
+      }
+    ],
+    "91e0bf0a-133f-4ce8-a734-2586cfa66d96": [
+      {
+        "account_id": "828d47bb-ad0b-4b3a-b07b-dafccca8df92",
+        "account_code": "1250",
+        "account_name": "Driver Fuel-Overage Receivable",
+        "closing_balance_cents": 14374
+      },
+      {
+        "account_id": "58c6e304-ab3e-4714-9c35-623ec51ae7cf",
+        "account_code": "6100",
+        "account_name": "Fuel Expense",
+        "closing_balance_cents": 58132286
+      },
+      {
+        "account_id": "87050f56-2d99-496a-bfa5-5846973c9b18",
+        "account_code": "8002",
+        "account_name": "Inter-company - USMCA Freight",
+        "closing_balance_cents": 100
+      },
+      {
+        "account_id": "a55b1071-59eb-4125-92c7-dd60d57d016c",
+        "account_code": "QBO-1150040016",
+        "account_name": "Loan-Scentsx",
+        "closing_balance_cents": -10363576
+      },
+      {
+        "account_id": "27c4a09a-0d34-4908-9da1-44b6174b5bce",
+        "account_code": "QBO-1150040031",
+        "account_name": "Repair & Maintenance Expenses",
+        "closing_balance_cents": 337854
+      },
+      {
+        "account_id": "14449020-5d36-45ba-8919-e6e05b9278c4",
+        "account_code": "QBO-1150040080",
+        "account_name": "Faro Factoring Reserves",
+        "closing_balance_cents": -17072960
+      },
+      {
+        "account_id": "39191731-941a-4e83-a03e-fb409c6a730c",
+        "account_code": "QBO-1150040083",
+        "account_name": "Comdata-Prepay Express Code Account",
+        "closing_balance_cents": 71600
+      },
+      {
+        "account_id": "7ed22741-9f86-4916-871a-ac6da3cfb625",
+        "account_code": "QBO-1150040109",
+        "account_name": "Owner Loan-Acct-4019",
+        "closing_balance_cents": -4807876
+      },
+      {
+        "account_id": "941ca478-8e53-48f8-bf2c-a0633d2f317b",
+        "account_code": "QBO-1150040124",
+        "account_name": "BOA-CHECKING-1135",
+        "closing_balance_cents": 10000
+      },
+      {
+        "account_id": "c9140428-6971-482f-96c1-7f7f6e0bf3f0",
+        "account_code": "QBO-1150040125",
+        "account_name": "BOA-SAVINGS-1148",
+        "closing_balance_cents": -7649708
+      },
+      {
+        "account_id": "2506f7aa-bec7-44d7-8b09-2198c0c02450",
+        "account_code": "QBO-1150040130",
+        "account_name": "Transportation/Trucking Loan Account",
+        "closing_balance_cents": -75488
+      },
+      {
+        "account_id": "e319ca2d-e334-4cfb-b942-d4e41181d497",
+        "account_code": "QBO-1150040131",
+        "account_name": "Sent Payments to trucking",
+        "closing_balance_cents": 5020
+      },
+      {
+        "account_id": "06e2fdbe-0855-4ff1-99c6-9c453ad75f8a",
+        "account_code": "QBO-1150040132",
+        "account_name": "Unauthorized Expenses Ignacio Muñoz",
+        "closing_balance_cents": 35045138
+      },
+      {
+        "account_id": "3ec0fe1e-d2f7-42fc-8445-cc6e658d38fc",
+        "account_code": "QBO-1150040133",
+        "account_name": "Unauthorized Expenses Anarely Alcazar",
+        "closing_balance_cents": 7325348
+      },
+      {
+        "account_id": "75139185-7591-4707-89a9-0b989609fea1",
+        "account_code": "QBO-1150040141",
+        "account_name": "WF - General Operating 6103",
+        "closing_balance_cents": -619127
+      },
+      {
+        "account_id": "cb4a14ad-75a9-42d5-b14e-92f21c0f4b4c",
+        "account_code": "QBO-119",
+        "account_name": "LOVES SOLUTIONS,LLC",
+        "closing_balance_cents": -579344
+      },
+      {
+        "account_id": "9b3e7124-2705-470b-a819-5a5faced8c30",
+        "account_code": "QBO-120",
+        "account_name": "BC-Bank Charges & Credit Card Fees",
+        "closing_balance_cents": 10660
+      },
+      {
+        "account_id": "bce818e1-7d09-42f9-9b6e-46992f88edcf",
+        "account_code": "QBO-125",
+        "account_name": "Factoring Reserves Love's Solutions",
+        "closing_balance_cents": 1299499
+      },
+      {
+        "account_id": "3ea0e474-e844-446d-a0f8-f9ef1df15ead",
+        "account_code": "QBO-130",
+        "account_name": "Billable Expense Income",
+        "closing_balance_cents": -500
+      },
+      {
+        "account_id": "4caf71d7-a402-4db4-b58b-e4baf0cb4feb",
+        "account_code": "QBO-155",
+        "account_name": "Fuel-Def",
+        "closing_balance_cents": 760974
+      },
+      {
+        "account_id": "3d580499-9efb-4fed-9327-d2eb70ed9264",
+        "account_code": "QBO-168",
+        "account_name": "Undeposited Funds",
+        "closing_balance_cents": 500
+      },
+      {
+        "account_id": "9facb3ed-ec25-48a5-84be-e89768ec3204",
+        "account_code": "QBO-2",
+        "account_name": "Retained Earnings",
+        "closing_balance_cents": 796222615
+      },
+      {
+        "account_id": "1dfbf5cb-8e39-4bb4-9b60-42ad658ecbc1",
+        "account_code": "QBO-23",
+        "account_name": "Uncategorized Asset",
+        "closing_balance_cents": 6732
+      },
+      {
+        "account_id": "b5638fdd-ae95-481d-91c4-8bfbf609ecb9",
+        "account_code": "QBO-246",
+        "account_name": "IBC-AHORROS-6089",
+        "closing_balance_cents": -43869143
+      },
+      {
+        "account_id": "223f654f-9310-4913-bff4-07ea948ffd31",
+        "account_code": "QBO-247",
+        "account_name": "RTS FINANCIAL-VIRTUAL ACCT",
+        "closing_balance_cents": -852835732
+      },
+      {
+        "account_id": "d76c02ab-a204-48e6-8192-999bceb24f98",
+        "account_code": "QBO-248",
+        "account_name": "RTS-Factoring Reserves",
+        "closing_balance_cents": -44925901
+      },
+      {
+        "account_id": "4cec8ed2-4dbc-4765-8a59-ace3ce45a7d7",
+        "account_code": "QBO-25",
+        "account_name": "Uncategorized Expense",
+        "closing_balance_cents": 500
+      },
+      {
+        "account_id": "ec7bdd5b-7fc1-4fbe-99a9-8b4c7eb7a7d1",
+        "account_code": "QBO-29",
+        "account_name": "IBC-5231",
+        "closing_balance_cents": 34761328
+      },
+      {
+        "account_id": "432f7a4f-8898-4fad-88ab-51c9bc60e0df",
+        "account_code": "QBO-303",
+        "account_name": "PNC-2786",
+        "closing_balance_cents": -4286
+      },
+      {
+        "account_id": "b7a05250-45b1-43b8-9139-ca47ab81d027",
+        "account_code": "QBO-312",
+        "account_name": "PNC-2954",
+        "closing_balance_cents": 162926465
+      },
+      {
+        "account_id": "563b929d-da14-4eec-a5a2-a7233c3be768",
+        "account_code": "QBO-313",
+        "account_name": "PNC-2962",
+        "closing_balance_cents": -48102
+      },
+      {
+        "account_id": "687cb37d-40c3-43f2-be56-7e755bd97562",
+        "account_code": "QBO-331",
+        "account_name": "VANTAGE-6107",
+        "closing_balance_cents": -81531
+      },
+      {
+        "account_id": "42994a07-1d0b-4514-ac4d-8007270aa3aa",
+        "account_code": "QBO-332",
+        "account_name": "VANTAGE-6224",
+        "closing_balance_cents": 1586975
+      },
+      {
+        "account_id": "8d7eabd2-ff49-4d5c-80cf-4c25029e29fe",
+        "account_code": "QBO-338",
+        "account_name": "Amex Card-",
+        "closing_balance_cents": -500000
+      },
+      {
+        "account_id": "09ae838e-4be7-4392-a09d-dd53b7febe85",
+        "account_code": "QBO-37",
+        "account_name": "Petty Cash",
+        "closing_balance_cents": 100000
+      },
+      {
+        "account_id": "7d795152-0883-41ef-80ee-91de1f97f9bb",
+        "account_code": "QBO-38",
+        "account_name": "OTR-Bridge & Toll Expenses",
+        "closing_balance_cents": 121540
+      },
+      {
+        "account_id": "3bfa6640-cfab-4dae-b03d-8989f49ad910",
+        "account_code": "QBO-45",
+        "account_name": "Accounts Receivable (A/R)",
+        "closing_balance_cents": -96198352
+      },
+      {
+        "account_id": "49ecd817-4f60-408d-8cc1-3f3ad3a5b533",
+        "account_code": "QBO-47",
+        "account_name": "Accounts Payable (A/P)",
+        "closing_balance_cents": -33797227
+      },
+      {
+        "account_id": "bb61ad4a-db7e-4ed9-b0a6-4066348f3bf3",
+        "account_code": "QBO-57",
+        "account_name": "Owner Loan-Acct-9745",
+        "closing_balance_cents": 19292598
+      },
+      {
+        "account_id": "f31be290-0455-447c-b03e-9a480bada532",
+        "account_code": "QBO-65",
+        "account_name": "eCapital",
+        "closing_balance_cents": 49720
+      },
+      {
+        "account_id": "7f5356e2-fd7e-4ed4-9a57-622c2f8f3af7",
+        "account_code": "QBO-72",
+        "account_name": "Loans to Others/IH 35 Trucking",
+        "closing_balance_cents": -13524227
+      },
+      {
+        "account_id": "8b4a5b5b-b49a-477e-9088-87faf458f8b4",
+        "account_code": "QBO-73",
+        "account_name": "Independence Bank-Credit Line",
+        "closing_balance_cents": 657609
+      },
+      {
+        "account_id": "5e9b9afd-5fee-46f7-aa77-37f4eb3bdfad",
+        "account_code": "QBO-92",
+        "account_name": "Fuel-Reefer-Diesel Expense",
+        "closing_balance_cents": 8213645
+      }
+    ],
+    "5c854333-6ea5-4faa-af31-67cb272fef80": [
+      {
+        "account_id": "c7af1219-f6a6-4169-a2d8-8f556fb0c2f3",
+        "account_code": "1000",
+        "account_name": "Bank of America - Operating (USMCA)",
+        "closing_balance_cents": 17435579
+      },
+      {
+        "account_id": "09d53946-8e22-4126-867a-d94acfea9ff3",
+        "account_code": "1090",
+        "account_name": "Undeposited Funds",
+        "closing_balance_cents": 16162234
+      },
+      {
+        "account_id": "11f4641f-6d83-4958-9f8b-0de94c107a70",
+        "account_code": "1100",
+        "account_name": "Accounts Receivable (A/R)",
+        "closing_balance_cents": 34560912
+      },
+      {
+        "account_id": "e75c82e2-fe4e-4b56-8c94-2b2bff6df008",
+        "account_code": "1150",
+        "account_name": "Unbilled Revenue",
+        "closing_balance_cents": 9436900
+      },
+      {
+        "account_id": "165cc317-5c8b-4296-8aab-f5101f4a6815",
+        "account_code": "1230",
+        "account_name": "Factoring Reserves",
+        "closing_balance_cents": 517530
+      },
+      {
+        "account_id": "5585dc64-dd7c-4314-b279-c9dd29c705fc",
+        "account_code": "1295",
+        "account_name": "Relay Fuel Wallet",
+        "closing_balance_cents": -3232402
+      },
+      {
+        "account_id": "34d5f1f7-385f-450c-b324-927fff09d31f",
+        "account_code": "2000",
+        "account_name": "Accounts Payable (A/P)",
+        "closing_balance_cents": -354298
+      },
+      {
+        "account_id": "7761b1cd-4844-4cd3-8469-4fd143152da7",
+        "account_code": "2100-00-001",
+        "account_name": "LUIS ARMANDO SOSA PEREZ — Driver Escrow",
+        "closing_balance_cents": -15000
+      },
+      {
+        "account_id": "f1aec825-f6cf-4c8f-b1f0-3572141e3516",
+        "account_code": "2100-00-002",
+        "account_name": "Neftali Coronado Urbano — Driver Escrow",
+        "closing_balance_cents": 5000
+      },
+      {
+        "account_id": "a1516250-8c94-4dd4-9faf-1f4088cd90a7",
+        "account_code": "2100-00-004",
+        "account_name": "Rafael Rogelio Rivero Reynoso — Driver Escrow",
+        "closing_balance_cents": 2500
+      },
+      {
+        "account_id": "20ccea95-d8b0-45dc-8bce-73c43cc58601",
+        "account_code": "2100-00-006",
+        "account_name": "ALFONSO HIDALGO CHAVEZ — Driver Escrow",
+        "closing_balance_cents": -7500
+      },
+      {
+        "account_id": "8cd7ca04-4bcd-4d79-8850-405b381e9df9",
+        "account_code": "2100-00-008",
+        "account_name": "PEDRO ABRAHAM LOPEZ COLLADO — Driver Escrow",
+        "closing_balance_cents": -10000
+      },
+      {
+        "account_id": "4bcc9669-3c34-4b47-a251-d246d174df9e",
+        "account_code": "2100-00-022",
+        "account_name": "HUGO GAYTAN — Driver Escrow",
+        "closing_balance_cents": -15000
+      },
+      {
+        "account_id": "209f1464-f27b-4b63-8dce-be21633a64a9",
+        "account_code": "2100-00-023",
+        "account_name": "GENARO GUERRERO CHAVEZ — Driver Escrow",
+        "closing_balance_cents": -27500
+      },
+      {
+        "account_id": "6974ef4b-1f48-40a0-b736-d3ceb4137859",
+        "account_code": "2100-00-024",
+        "account_name": "ANGEL ALFONSO SOSA — Driver Escrow",
+        "closing_balance_cents": -17500
+      },
+      {
+        "account_id": "4239cf0c-b387-4ea2-a23e-8a0a86459331",
+        "account_code": "2100-00-026",
+        "account_name": "JOSE ANTONIO VICENTE MARTINEZ — Driver Escrow",
+        "closing_balance_cents": -25000
+      },
+      {
+        "account_id": "451b3b5e-d49f-438d-b148-69d726e192a4",
+        "account_code": "2100-00-027",
+        "account_name": "Jorge Luis Infante Corona — Driver Escrow",
+        "closing_balance_cents": 15000
+      },
+      {
+        "account_id": "7680014f-3980-47a3-8959-90606b32adf8",
+        "account_code": "2100-00-040",
+        "account_name": "Leonel Antonio Morales — Driver Escrow",
+        "closing_balance_cents": -27500
+      },
+      {
+        "account_id": "38dae155-9845-4c0d-b25e-c58428c1ed8c",
+        "account_code": "2100-00-041",
+        "account_name": "Carlos Mauricio Pena Carvallo — Driver Escrow",
+        "closing_balance_cents": -10000
+      },
+      {
+        "account_id": "1b2568e6-7212-46d5-82ed-833161adf4bd",
+        "account_code": "2150",
+        "account_name": "Factoring Advance",
+        "closing_balance_cents": -34596600
+      },
+      {
+        "account_id": "b8c4f9d4-e9db-4642-a8bc-d3ca27ea1d80",
+        "account_code": "2170",
+        "account_name": "Driver Net-Pay Clearing",
+        "closing_balance_cents": -7121596
+      },
+      {
+        "account_id": "9ec2a8a5-a3db-4a79-9145-bba3739e14d2",
+        "account_code": "2175-00-006",
+        "account_name": "JOSE ANTONIO VICENTE MARTINEZ — Driver Reimbursements",
+        "closing_balance_cents": -4932
+      },
+      {
+        "account_id": "be1f70f8-fec4-463b-893d-dfc0acfe264d",
+        "account_code": "2510",
+        "account_name": "Dreamline Diesel Card Payable",
+        "closing_balance_cents": -14119723
+      },
+      {
+        "account_id": "d9ad7748-8811-4bbc-af32-ec3fed76ef09",
+        "account_code": "4000",
+        "account_name": "Freight / Line-haul Income",
+        "closing_balance_cents": -45148572
+      },
+      {
+        "account_id": "cc3798c2-5fb2-49c9-a81e-fb8be7b2349b",
+        "account_code": "4200",
+        "account_name": "Accessorial / Detention Income",
+        "closing_balance_cents": -400000
+      },
+      {
+        "account_id": "353fbd5b-d39c-4709-ac19-60cae52018f7",
+        "account_code": "5000",
+        "account_name": "Fuel & Diesel",
+        "closing_balance_cents": 17208798
+      },
+      {
+        "account_id": "6d6e2311-caeb-4b44-b93d-34c102e95409",
+        "account_code": "5010",
+        "account_name": "DEF (Diesel Exhaust Fluid)",
+        "closing_balance_cents": 722876
+      },
+      {
+        "account_id": "7fda32cf-2d44-4e03-a619-9069bba42724",
+        "account_code": "5100",
+        "account_name": "Driver Pay / Settlements",
+        "closing_balance_cents": 14000
+      },
+      {
+        "account_id": "4a0a5b88-3f56-4dc7-853c-37071089315a",
+        "account_code": "5300",
+        "account_name": "Tolls & Scales",
+        "closing_balance_cents": 53206
+      },
+      {
+        "account_id": "b029d12d-f0b2-4f69-9e84-5df91a954c77",
+        "account_code": "5310",
+        "account_name": "Lumper Expense",
+        "closing_balance_cents": 264425
+      },
+      {
+        "account_id": "273c22af-02df-4642-9744-886f772dd478",
+        "account_code": "5320",
+        "account_name": "Trailer Washout",
+        "closing_balance_cents": 74208
+      },
+      {
+        "account_id": "8fe4f37c-39ae-48df-a0f9-f43489f3df5d",
+        "account_code": "5400",
+        "account_name": "Truck Repairs & Maintenance",
+        "closing_balance_cents": 68079
+      },
+      {
+        "account_id": "3e868fdb-7430-476f-8fcd-3d76b7356814",
+        "account_code": "5500",
+        "account_name": "Tires",
+        "closing_balance_cents": 213426
+      },
+      {
+        "account_id": "ada3ea02-3417-4f4e-b70e-37c7c6e11f11",
+        "account_code": "6160",
+        "account_name": "Parts & Supplies Expense",
+        "closing_balance_cents": 4428
+      },
+      {
+        "account_id": "de553cc4-160c-4dec-8256-dfb28e9d4989",
+        "account_code": "6300",
+        "account_name": "Bank Service Charges & Wire Fees",
+        "closing_balance_cents": 23000
+      },
+      {
+        "account_id": "5612e135-8d7d-4083-b309-5b0e59089084",
+        "account_code": "6400",
+        "account_name": "Factoring Fees",
+        "closing_balance_cents": 519174
+      },
+      {
+        "account_id": "4c1a7a0f-b52d-49f1-881b-2b0c55e26e10",
+        "account_code": "6830",
+        "account_name": "Factoring Default Interest",
+        "closing_balance_cents": 39928
+      },
+      {
+        "account_id": "fd3a69a2-7c71-41e4-89d8-d5f1f9e15c4b",
+        "account_code": "6890",
+        "account_name": "Cost of Labor–Mexico Drivers",
+        "closing_balance_cents": 7589482
+      },
+      {
+        "account_id": "06a9e010-e8db-44a3-9c8e-2b636dbb2e7d",
+        "account_code": "7200",
+        "account_name": "Driver Admin Fee & Chargeback Income",
+        "closing_balance_cents": -95225
+      },
+      {
+        "account_id": "c6f629ab-0c65-4aa1-a798-9c77e62a06d2",
+        "account_code": "9000",
+        "account_name": "Ask My Accountant",
+        "closing_balance_cents": 297663
+      }
+    ]
+  }
+}
