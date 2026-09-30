@@ -5508,3 +5508,49 @@ remaining: closure 39 (17 live loads missing mileage: these 15 miles_deadhead-on
 — CC-1
 
 — CC-1
+
+---
+
+## AUTH-165
+
+title: reverse a real, live $17,057.44 double-count -- my own AUTH-140 classification error, USMCA
+requested_by: CC-2, self-authorized, own error, own domain. Live-caught and reported by CC-1
+  (cross-session message, 2026-09-30, after their new `assertNoLiveFactoringTwin()` check
+  -- PR #23320, closes the reinstate-engine hole -- flagged that any FUTURE reinstate of these 4
+  would now be blocked, but the already-live double-count from my own EARLIER reinstate needed
+  separate judgment/reversal). Independently re-verified every fact below before writing this AUTH.
+root_cause: my own AUTH-140 (ROUND 285.2.1-R, earlier this session) classified 41 factoring
+  advances as REVERSE or REINSTATE by checking whether a live twin existed, matched on
+  `(invoice_total_cents, advance_amount_cents)`. FAC-2026-00048/63/64/82 were classified REINSTATE
+  ("no live twin found") and reinstated at 2026-09-30T05:28:26-29Z. **The twin-detection was wrong
+  because the target's own `invoice_total_cents` was itself corrupted at that exact moment** --
+  590000/412000/400000/370000 instead of the correct 611500/415000/412000/320000 -- THE EXACT
+  DEFECT MY OWN AUTH-160 (later the same session) fixed. Because target.invoice_total_cents !=
+  twin.invoice_total_cents at classification time, the twin search never matched, so AUTH-140
+  incorrectly treated a genuine duplicate as an orphan needing reinstatement. AUTH-140 should have
+  run AFTER AUTH-160, not before.
+  Live-verified, all 4 pairs, immediately before writing this AUTH: FAC-2026-00094/110/111/129
+  (`faro_invoice_number` 52/69/70/91, real Faro-assigned numbers) are `status='advanced'`,
+  `voided_at IS NULL`, each with its OWN live, unreversed 4-line GL posting (1090/1230/2150/6400)
+  -- byte-identical `advance_amount_cents`/`reserve_amount_cents`/`factor_fee_cents`/
+  `invoice_total_cents`/`advanced_at`/`notes.FARO_FEES` to their paired target
+  (FAC-2026-00048/63/64/82, `faro_invoice_number IS NULL`) -- genuinely the same real-world Faro
+  invoice, not a coincidental match. Each target ALSO has its own live, unreversed 4-line GL
+  posting (the one my AUTH-140 reinstate created) for the identical amounts. Sum of the duplicated
+  `advance_amount_cents`: 593154+402550+399640+310400 = 1,705,744 cents = **$17,057.44 exactly**,
+  matching CC-1's independently-measured figure to the cent.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 4 factoring_advances ids in
+  `scripts/ops/2026-09-30-cc2-auth165-reverse-4-mistaken-reinstates.ts` (`TARGETS` constant).
+  Reverses ONLY the one live JE my own AUTH-140 reinstate created on each target (via
+  `postVoidReversal(entityType:'factoring_advance')`, which correctly finds only the currently-live
+  posting -- the OLDER, already-reversed JE from before AUTH-140 on the same target is skipped,
+  already dead). Target header (status/voided_at) left untouched -- mirrors the exact shape already
+  sitting on the same 4 records from their own pre-AUTH-140 history (a document whose GL nets to
+  zero via reversal, not a voided document). Not authorized: touching either twin
+  (FAC-2026-00094/110/111/129, the correct sole live record for each pair); any other factoring
+  advance; any GL math beyond the standard reversal (no new JE shape invented).
+action:
+  OWNER_AUTH_ID=AUTH-165 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth165-reverse-4-mistaken-reinstates.ts --apply
+  (run from repo root; DRY_RUN first with no --apply flag)
+expires_at: 2026-10-01T00:00:00.000Z
+status: OPEN
