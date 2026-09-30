@@ -4314,7 +4314,7 @@ action:
   DATABASE_URL=<prod> npx tsx apps/backend/scripts/ops-r191-resync-driver-bill-settlement-pointer.ts --apply
   (script's own AUTH_ID constant updated from the AUTH-121 placeholder to AUTH-135 in this same PR)
 expires_at: 2026-10-01T00:00:00.000Z
-status: OPEN — not yet executed
+status: OPEN
 
 — CC-1
 
