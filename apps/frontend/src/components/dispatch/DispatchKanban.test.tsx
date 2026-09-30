@@ -8,7 +8,7 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import type { UnitsWithoutLoad } from "../../api/dispatch";
 import type { DispatchLoadRow } from "../../api/loads";
-import { DispatchKanban, resolveKanbanColumnKey } from "./DispatchKanban";
+import { DispatchKanban, optimisticGeofenceAfterManualStamp, resolveKanbanColumnKey } from "./DispatchKanban";
 
 expect.extend(jestDomMatchers);
 
@@ -351,7 +351,9 @@ describe("DispatchKanban — REG-048 one card per unit", () => {
     expect(screen.queryByTestId("kanban-standard-card-13400")).not.toBeInTheDocument();
   });
 
-  it("a unit with two DIFFERENT non-cancelled loads still resolves to exactly one card (latest wins) even when both are 'active'-looking", () => {
+  it("a unit with two DIFFERENT non-cancelled live loads keeps every live leg (newest-first) — backlog-only collapse is for delivered/past tails", () => {
+    // dedupeLoadsByUnit: live statuses all render; only KANBAN_BACKLOG_STATUSES yield to the newest.
+    // Both "assigned" loads are live, so BOTH cards must appear (pre-existing test expected collapse — stale).
     const loads = [
       mockLoad({ id: "load-a", load_number: "13401", status: "assigned", assigned_unit_id: "u-165", created_at: "2026-01-01T00:00:00.000Z" }),
       mockLoad({ id: "load-b", load_number: "13601", status: "assigned", assigned_unit_id: "u-165", created_at: "2026-03-01T00:00:00.000Z" }),
@@ -362,7 +364,7 @@ describe("DispatchKanban — REG-048 one card per unit", () => {
       </MemoryRouter>
     );
     expect(screen.getByTestId("kanban-standard-card-13601")).toBeInTheDocument();
-    expect(screen.queryByTestId("kanban-standard-card-13401")).not.toBeInTheDocument();
+    expect(screen.getByTestId("kanban-standard-card-13401")).toBeInTheDocument();
   });
 
   it("a unit whose only load is cancelled still counts toward the Cancelled lane rather than vanishing (lane is collapsedByDefault, so the card itself is not rendered until expanded — same as every other cancelled load)", () => {
@@ -521,4 +523,25 @@ describe("DispatchKanban — Drafts get their own lane, never merged into Assign
   // At delivery pattern) is asserted by scripts/verify-draft-load-saves-and-is-visible.mjs's own
   // source-grep, not duplicated here — this file's tsconfig has no Node type declarations to read
   // its own source at runtime, and the guard already runs in a real Node context.
+});
+
+describe("C-23 — Dispatched → At pickup Manual stamp moves the card", () => {
+  it("optimisticGeofenceAfterManualStamp(pickup arrive) makes resolveKanbanColumnKey return at_pickup", () => {
+    const base = mockLoad({ status: "dispatched" });
+    expect(resolveKanbanColumnKey(base)).toBe("dispatched");
+    const patch = optimisticGeofenceAfterManualStamp({ stop: "pickup", event: "arrive" });
+    expect(resolveKanbanColumnKey({ ...base, ...patch })).toBe("at_pickup");
+  });
+
+  it("optimisticGeofenceAfterManualStamp(pickup depart) places the card in loaded", () => {
+    const base = mockLoad({ status: "dispatched" });
+    const patch = optimisticGeofenceAfterManualStamp({ stop: "pickup", event: "depart" });
+    expect(resolveKanbanColumnKey({ ...base, ...patch })).toBe("loaded");
+  });
+
+  it("optimisticGeofenceAfterManualStamp(delivery arrive) places the card in at_delivery", () => {
+    const base = mockLoad({ status: "in_transit" });
+    const patch = optimisticGeofenceAfterManualStamp({ stop: "delivery", event: "arrive" });
+    expect(resolveKanbanColumnKey({ ...base, ...patch })).toBe("at_delivery");
+  });
 });

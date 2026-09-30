@@ -293,6 +293,9 @@ export function resolveKanbanColumnKey(load: DispatchLoadRow): string {
   }
 
   // Geofence overrides (held feed — only fire when the feed actually populates these states).
+  // C-23 / KANBAN-DRAG-UNBLOCK: a MANUAL stamp from dropping on At pickup / Loaded / At delivery
+  // sets these fields optimistically (see optimisticGeofenceAfterManualStamp) so the card MOVES
+  // into the target lane instead of staying put while only a toast fires.
   if (status === "dispatched" && (pickupGeo === "at" || pickupGeo === "dwelling" || geofence === "at" || geofence === "dwelling")) {
     return "at_pickup";
   }
@@ -309,6 +312,26 @@ export function resolveKanbanColumnKey(load: DispatchLoadRow): string {
   // Fallback is Assigned (booked_unassigned + assigned merged, owner 2026-09-07) — never the
   // truck-only Awaiting lane.
   return group?.key ?? "assigned";
+}
+
+/**
+ * C-23 — after a successful Manual stamp from a Kanban drop, patch the board row so
+ * `resolveKanbanColumnKey` places the card in the lane the operator just dropped on.
+ * Without this, the stamp writes but the card stays in Dispatched (owner-reported "drag does nothing").
+ */
+export function optimisticGeofenceAfterManualStamp(
+  stamp: { stop: "pickup" | "delivery"; event: "arrive" | "depart" },
+): Partial<KanbanLoad> {
+  if (stamp.stop === "pickup" && stamp.event === "arrive") {
+    return { pickup_geofence_state: "at", geofence_state: "at" };
+  }
+  if (stamp.stop === "pickup" && stamp.event === "depart") {
+    return { pickup_geofence_state: "departed", geofence_state: "departed", status: "in_transit" };
+  }
+  if (stamp.stop === "delivery" && stamp.event === "arrive") {
+    return { delivery_geofence_state: "at", status: "in_transit" };
+  }
+  return {};
 }
 
 // REG-048 (owner live 2026-09-10, T164/T156 duplicated across Dispatched/Delivered): a unit with
@@ -1395,7 +1418,12 @@ export function KanbanDispatchColumn({
         </div>
         <KanbanColumnSortControls columnKey={column.key} sort={columnSort} onToggleSort={onToggleColumnSort} />
       </header>
-      <div ref={setNodeRef} className={`max-h-[68vh] ${detailed ? "space-y-2" : "space-y-1"} overflow-y-auto rounded-sm p-1`} style={isOver ? { background: "#DCE7F3" } : KANBAN_LANE_BODY_STYLE}>
+      <div
+        ref={setNodeRef}
+        className={`max-h-[68vh] min-h-[120px] ${detailed ? "space-y-2" : "space-y-1"} overflow-y-auto rounded-sm p-1`}
+        style={isOver ? { background: "#DCE7F3" } : KANBAN_LANE_BODY_STYLE}
+        data-c23-drop-target="true"
+      >
         {loads.length === 0 ? (
           <div className="rounded-sm border border-dashed border-gray-300 p-3 text-xs text-gray-500">
             {column.key === "drafts"
@@ -1636,9 +1664,10 @@ function KanbanSwimLaneColumn({
       </header>
       <div
         ref={setNodeRef}
-        className="max-h-[68vh] overflow-y-auto rounded-sm p-1"
+        className="max-h-[68vh] min-h-[120px] overflow-y-auto rounded-sm p-1"
         style={{ display: "flex", flexDirection: "column", gap: rowGap, ...(isOver ? { background: "#DCE7F3" } : KANBAN_LANE_BODY_STYLE) }}
         data-testid={`kanban-swim-lane-body-${column.key}`}
+        data-c23-drop-target="true"
       >
         {visibleUnits.length === 0 ? (
           <div className="rounded-sm border border-dashed border-gray-300 p-3 text-xs text-gray-500">
@@ -1726,6 +1755,10 @@ export function DispatchKanban({
   listError,
 }: Props) {
   const [optimisticLoads, setOptimisticLoads] = useState<DispatchLoadRow[]>(loads);
+  // C-23 — Manual stamp drops must keep the card in the stamped lane across loads refetch.
+  // invalidateQueries reloads rows that may not yet carry geofence fields; without this overlay
+  // the card snaps back to Dispatched and the drag looks dead.
+  const [stampOverrides, setStampOverrides] = useState<Record<string, Partial<KanbanLoad>>>({});
   // DISPATCH-UI-REFINE-2 ITEM 1 — default to STANDARD (2-line) density. Compact (1-line) + Detailed
   // (~5-line) remain available via the toggle (additive). Standard balances fleet density vs readability.
   const [density, setDensity] = useState<KanbanDensity>(KANBAN_DEFAULT_DENSITY);
@@ -1801,7 +1834,37 @@ export function DispatchKanban({
     setOptimisticLoads(loads);
   }, [loads]);
 
-  const grouped = useMemo(() => groupLoadsByColumn(optimisticLoads), [optimisticLoads]);
+  useEffect(() => {
+    setStampOverrides((prev) => {
+      if (Object.keys(prev).length === 0) return prev;
+      const next = { ...prev };
+      let changed = false;
+      for (const id of Object.keys(next)) {
+        const serverLoad = loads.find((row) => row.id === id);
+        if (!serverLoad) {
+          delete next[id];
+          changed = true;
+          continue;
+        }
+        const withOverride = { ...serverLoad, ...next[id] } as DispatchLoadRow;
+        if (resolveKanbanColumnKey(serverLoad) === resolveKanbanColumnKey(withOverride)) {
+          delete next[id];
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [loads]);
+
+  const boardLoads = useMemo(
+    () =>
+      optimisticLoads.map((row) =>
+        stampOverrides[row.id] ? ({ ...row, ...stampOverrides[row.id] } as DispatchLoadRow) : row,
+      ),
+    [optimisticLoads, stampOverrides],
+  );
+
+  const grouped = useMemo(() => groupLoadsByColumn(boardLoads), [boardLoads]);
   // KANBAN-DUP-UNIT-2 (owner correction 2026-09-11, verbatim: "the Awaiting-Assignment lane renders
   // a SEPARATE source ... Reconcile the two"). dedupeLoadsByUnit() only ever collapsed duplicates
   // WITHIN the `loads` array (PR #21729's own scope). It never reconciled against `awaitingTrucks` --
@@ -1830,13 +1893,13 @@ export function DispatchKanban({
   // (loads + awaiting trucks), then sort by the board-wide sort. Each column renders ALL rows;
   // a unit's card appears in its lane, every other lane has an empty placeholder at that row's height.
   const allUnits = useMemo(
-    () => sortAllUnits(computeAllUnits(optimisticLoads, awaitingTruckCards), boardSort),
-    [optimisticLoads, awaitingTruckCards, boardSort],
+    () => sortAllUnits(computeAllUnits(boardLoads, awaitingTruckCards), boardSort),
+    [boardLoads, awaitingTruckCards, boardSort],
   );
   // Fleet out-of-service strip (Part D). No fleet-OOS feed reaches this board yet, so we
   // surface breakdown loads best-effort and flag that the full OOS feed is held — same gate
   // as HOS/geofence. Once Jorge wires the OOS source this strip lists every down unit.
-  const outOfServiceLoads = useMemo(() => optimisticLoads.filter(isBreakdown), [optimisticLoads]);
+  const outOfServiceLoads = useMemo(() => boardLoads.filter(isBreakdown), [boardLoads]);
   const sortedOutOfServiceLoads = useMemo(
     () => sortKanbanColumnLoads(outOfServiceLoads, columnSorts.oos_strip ?? { key: "unit", direction: "asc" }),
     [outOfServiceLoads, columnSorts.oos_strip],
@@ -1997,6 +2060,16 @@ export function DispatchKanban({
         }
         if (event === "arrive") await stampTruckLineArrival(loadId, target.stop_id, operatingCompanyId);
         else await stampTruckLineDeparture(loadId, target.stop_id, operatingCompanyId);
+        // C-23 — stamp alone left the card in Dispatched; overlay geofence fields so the board
+        // column key moves with the operator's drop (Manual provenance already recorded server-side).
+        // stampOverrides survive loads refetch until the server row already resolves to the same lane.
+        const optimisticPatch = optimisticGeofenceAfterManualStamp({ stop: stopRole, event });
+        if (Object.keys(optimisticPatch).length > 0) {
+          setStampOverrides((prev) => ({ ...prev, [loadId]: optimisticPatch }));
+          setOptimisticLoads((current) =>
+            current.map((item) => (item.id === loadId ? { ...item, ...optimisticPatch } : item)),
+          );
+        }
         pushToast(`Load ${load.load_number} moved to ${targetGroup.title} — stamped manually (recorded as Manual).`, "success");
         // Same key the assign mutation already invalidates — one refresh contract on this board.
         await queryClient.invalidateQueries({ queryKey: ["loads"] });
