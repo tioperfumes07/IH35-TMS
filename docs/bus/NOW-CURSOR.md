@@ -1,13 +1,13 @@
-# NOW-CURSOR — 2026-09-30 285.4.10 #60 FE LIVE
+# NOW-CURSOR — 2026-09-30 285.4.10 READY FOR CHROME
 
 ## HARD LINE
-Obey ROUND 285 PART E + Round 291.5 ACK. AUTH: never self-assign. Tip ENV reds — do not wait.
+PART E Cursor code closed. AUTH blocks stand. Tip palette baseline restored by Lead (#23302).
 
 ## DONE
-- 285.4.9 **#58/#32/#33/#31/#59** on main · METHOD Neon live
-- **285.4.10 #60 FE** `#23297` `1f96a24c34` · FE deploy `dep-daubt92d0e5s73f4peag` LIVE `version.json=c4cea25` · bundle has `awaiting-bol-invoice`
+- 285.4.9 #31/#58/#59/#32/#33 on main + register truth
+- 285.4.10 #60 BE+FE on main · FE LIVE `a79b2e9` · Neon awaiting BOL = **13626 / 13625 / 13615**
 
-## NEXT (Chrome — owner click)
-1. Documents › **Awaiting BOL** → loads **13626 / 13625 / 13615**
-2. Upload BOL on one load → invoice send → Faro queue (screenshots + live row)
-3. METHOD Print when a real detention approve stamps `approval_method` (0 USMCA detention_requests today)
+## NEXT (owner Chrome only — no seat fixtures)
+1. https://app.ih35dispatch.com/dispatch/awaiting-bol-invoice (Documents › Awaiting BOL)
+2. Upload BOL on one waiting load → prove invoice send + Faro
+3. METHOD Print when a real detention approve stamps `approval_method`
