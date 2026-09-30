@@ -36,6 +36,16 @@
 //    (never a hard 0), matching every other live-data guard's own discipline in this repo, and the
 //    7-day wall-clock scope (claude/00-SEAT-CONTRACT.md §9: "no blocking guard may derive its
 //    verdict from wall-clock time") is removed -- the WHOLE population is measured every run.
+//
+// D, CORRECTED AGAIN, ROUND 291 (CC-1): the ratchet still bundled trailer_id together with
+// load_id/driver_uuid/unit_id/vendor_uuid in one "any field null" count. That conflation hid a
+// real code defect (createExpenseFromFuelTransaction never wrote driver_uuid/unit_id onto the
+// expense row it created) behind the "trailer is often genuinely unknown" tolerance -- two
+// backfill passes pushed the bundled count from 7 to 42 before it was caught. Split: a NON-trailer
+// gap is now the only thing the ratchet measures (baseline 0, since AUTH-157 closed the code
+// defect and backfilled every known instance); a trailer-ONLY gap is reported as
+// `trailerOnlyGapCount`, uncapped, and never fails -- it is the exact shape this correction always
+// intended to tolerate.
 // E. Counted DISTINCT journal_entry_uuid per source_transaction_id with NO exclusion for a
 //    reversed/superseded pair -- the correct void-then-reinstate audit trail (this session's own
 //    AUTH-089/127/128/131/133 work) legitimately leaves TWO posting_batches/JE rows per document
@@ -75,11 +85,23 @@ const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const ACCEPT_PATH_FILE = path.join(ROOT, "apps/backend/src/accounting/bank-recon/match.service.ts");
 
-// Shrink-only ratchet for check D. Measured live 2026-09-30 (whole population, no wall-clock
-// scope): 7 fuel expenses missing linkage, all 7 missing ONLY trailer_id (load_id, driver_uuid,
-// unit_id, vendor_uuid all present) -- a genuine fuel-card data-availability gap, not a code
-// defect. Never grows; lower it only as real linkage backfills land.
-const KNOWN_NULL_LINKAGE_COUNT = 7;
+// ROUND 291 (CC-1) — check D was counting "ANY of 5 fields null" as one undifferentiated bucket
+// against a shrink-only ratchet, but this guard's own ROUND 277 correction already established
+// that trailer_id-only gaps are a genuine, uncapped, non-code-defect shape ("a fuel-card stop
+// frequently has no specific trailer to attribute"). That conflation is exactly what let a real
+// code defect hide: createExpenseFromFuelTransaction never wrote driver_uuid/unit_id onto the
+// expense row it created (it read them from fuel.fuel_transactions into a local variable and only
+// used them in an audit-log payload) -- two backfill passes this session pushed the "any field
+// null" count from 7 to 42 before AUTH-157 fixed the code and backfilled the 35 real gaps it left
+// (of which 8 fully resolved via fuel_transactions itself; 27 resolved driver_uuid+unit_id but
+// have no trailer source anywhere -- real card-import data, backfilled unit_id from the load's own
+// assigned_unit_id where the fuel row lacked it, never invented).
+//
+// CORRECTED SHAPE: a NON-trailer gap (load_id/driver_uuid/unit_id/vendor_uuid missing) is the real
+// regression indicator -- ratchet at 0, since AUTH-157 closed every known cause. A trailer-ONLY
+// gap (everything else present) is reported but never fails; it is the same accepted shape as the
+// original 7 baseline, now 34 (7 original + 27 AUTH-157 backfilled-to-trailer-only).
+const KNOWN_NULL_LINKAGE_COUNT = 0;
 
 /**
  * Classify the fuel-cost-posts-once state. Pure function — exported for selftest.
@@ -132,12 +154,12 @@ export function classifyFuelPostsOnce(input) {
   checks.push({
     id: "D",
     name: "FULL_LOAD_LINKAGE",
-    expected: `<= ${KNOWN_NULL_LINKAGE_COUNT} expense(s) with null linkage (ratchet, never grows)`,
-    live: `${expensesWithNullLinkage} expense(s) with null linkage${expensesWithNullLinkageDetails ? ` (${expensesWithNullLinkageDetails})` : ""}`,
+    expected: `<= ${KNOWN_NULL_LINKAGE_COUNT} expense(s) missing load_id/driver_uuid/unit_id/vendor_uuid (ratchet, never grows; trailer_id-only gaps are reported separately and never fail)`,
+    live: `${expensesWithNullLinkage} non-trailer gap(s)${expensesWithNullLinkageDetails ? ` (${expensesWithNullLinkageDetails})` : ""}${input.trailerOnlyGapCount != null ? `; ${input.trailerOnlyGapCount} trailer_id-only gap(s), informational` : ""}`,
     pass: expensesWithNullLinkage <= KNOWN_NULL_LINKAGE_COUNT,
   });
   if (expensesWithNullLinkage > KNOWN_NULL_LINKAGE_COUNT) {
-    problems.push(`FUEL_EXPENSE_MISSING_LINKAGE: ${expensesWithNullLinkage} fuel expense(s) missing load_id, driver_uuid, unit_id, trailer_id, or vendor_uuid — GREW past the ratchet baseline of ${KNOWN_NULL_LINKAGE_COUNT}.`);
+    problems.push(`FUEL_EXPENSE_MISSING_LINKAGE: ${expensesWithNullLinkage} fuel expense(s) missing load_id, driver_uuid, unit_id, or vendor_uuid (trailer_id excluded — see check D's own history) — GREW past the ratchet baseline of ${KNOWN_NULL_LINKAGE_COUNT}.`);
   }
 
   // E. No documents with 2+ LIVE JEs (a reversed+live void/reinstate pair is NOT a violation)
@@ -241,6 +263,7 @@ function runSelftest() {
     fuelExpenseTotalCents: 50000,
     expensesWithNullLinkage: 0,
     expensesWithNullLinkageDetails: "",
+    trailerOnlyGapCount: 34,
     docsDoublePosted: 0,
   };
 
@@ -268,17 +291,18 @@ function runSelftest() {
     fail += 1;
   } else pass += 1;
 
-  // RED D: null linkage GROWS past the ratchet baseline
-  const redD = classifyFuelPostsOnce({ ...baseInput, expensesWithNullLinkage: KNOWN_NULL_LINKAGE_COUNT + 1, expensesWithNullLinkageDetails: "trailer_id null" });
+  // RED D: a NON-trailer gap (e.g. driver_uuid null) GROWS past the ratchet baseline of 0
+  const redD = classifyFuelPostsOnce({ ...baseInput, expensesWithNullLinkage: KNOWN_NULL_LINKAGE_COUNT + 1, expensesWithNullLinkageDetails: "driver_uuid null: 1" });
   if (redD.allPass || redD.checks.find((c) => c.id === "D").pass) {
-    console.error(`${LABEL} --selftest FAIL — RED D: expected check D FAIL when growing past the ratchet`);
+    console.error(`${LABEL} --selftest FAIL — RED D: expected check D FAIL when a non-trailer gap grows past the ratchet`);
     fail += 1;
   } else pass += 1;
 
-  // GREEN D: null linkage AT the ratchet baseline must still pass
-  const greenD = classifyFuelPostsOnce({ ...baseInput, expensesWithNullLinkage: KNOWN_NULL_LINKAGE_COUNT, expensesWithNullLinkageDetails: "trailer_id null" });
+  // GREEN D: at the ratchet baseline (0 non-trailer gaps) must still pass EVEN WITH a large
+  // trailer-only gap count -- trailer-only is informational and must never fail this check.
+  const greenD = classifyFuelPostsOnce({ ...baseInput, expensesWithNullLinkage: KNOWN_NULL_LINKAGE_COUNT, expensesWithNullLinkageDetails: "", trailerOnlyGapCount: 9999 });
   if (!greenD.checks.find((c) => c.id === "D").pass) {
-    console.error(`${LABEL} --selftest FAIL — GREEN D: expected check D PASS at the ratchet baseline`);
+    console.error(`${LABEL} --selftest FAIL — GREEN D: expected check D PASS at the ratchet baseline regardless of trailer-only count`);
     fail += 1;
   } else pass += 1;
 
@@ -359,12 +383,24 @@ async function measureLive(client) {
     [USMCA_COMPANY_ID],
   );
 
-  // D: expenses with null linkage (whole population, no wall-clock scope)
+  // D: expenses with a NON-trailer linkage gap (the real regression indicator; ratchet at 0).
+  // trailer_id is excluded here on purpose -- see this guard's own ROUND 277/291 history above.
   const nullLinkRes = await client.query(
     `SELECT count(*)::int AS cnt FROM accounting.expenses
       WHERE operating_company_id = $1::uuid AND voided_at IS NULL
         AND source_fuel_transaction_id IS NOT NULL
-        AND (load_id IS NULL OR driver_uuid IS NULL OR unit_id IS NULL OR trailer_id IS NULL OR vendor_uuid IS NULL)`,
+        AND (load_id IS NULL OR driver_uuid IS NULL OR unit_id IS NULL OR vendor_uuid IS NULL)`,
+    [USMCA_COMPANY_ID],
+  );
+
+  // D (informational, uncapped): expenses missing ONLY trailer_id -- everything else present.
+  // This is the accepted, genuine fuel-card data-availability gap; never fails the guard.
+  const trailerOnlyRes = await client.query(
+    `SELECT count(*)::int AS cnt FROM accounting.expenses
+      WHERE operating_company_id = $1::uuid AND voided_at IS NULL
+        AND source_fuel_transaction_id IS NOT NULL
+        AND trailer_id IS NULL
+        AND load_id IS NOT NULL AND driver_uuid IS NOT NULL AND unit_id IS NOT NULL AND vendor_uuid IS NOT NULL`,
     [USMCA_COMPANY_ID],
   );
 
@@ -402,11 +438,12 @@ async function measureLive(client) {
   await client.query("ROLLBACK");
 
   const d = nullLinkDetailRes.rows[0];
+  // trailer_null is deliberately excluded here -- it is reported via trailerOnlyGapCount instead
+  // (see check D's own history above for why it is never bundled with the real-defect fields).
   const linkageDetails = [];
   if (d.load_null > 0) linkageDetails.push(`load_id null: ${d.load_null}`);
   if (d.driver_null > 0) linkageDetails.push(`driver_uuid null: ${d.driver_null}`);
   if (d.unit_null > 0) linkageDetails.push(`unit_id null: ${d.unit_null}`);
-  if (d.trailer_null > 0) linkageDetails.push(`trailer_id null: ${d.trailer_null}`);
   if (d.vendor_null > 0) linkageDetails.push(`vendor_uuid null: ${d.vendor_null}`);
 
   return {
@@ -416,6 +453,7 @@ async function measureLive(client) {
     fuel5000NetCents: Number(fuel5000Res.rows[0].net_cents),
     fuelExpenseTotalCents: Number(fuelTotalRes.rows[0].total_cents),
     expensesWithNullLinkage: nullLinkRes.rows[0].cnt,
+    trailerOnlyGapCount: trailerOnlyRes.rows[0].cnt,
     expensesWithNullLinkageDetails: linkageDetails.join(", "),
     docsDoublePosted: doublePostedRes.rows[0].cnt,
   };
