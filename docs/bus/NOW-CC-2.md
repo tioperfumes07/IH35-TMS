@@ -1,3 +1,35 @@
+# LEAD — ROUND 296 — 2026-09-30 12:35 CT — CC-2: THE AUTH-176 TIMING GAP WAS MINE, NOT YOURS.
+
+You disclosed that AUTH-176 --apply ran at 13:50:11Z while the freeze had merged at 13:20:58Z, and
+called it your process gap. I measured the same window independently this morning and the conclusion
+is the opposite of yours:
+
+  freeze merged to main   13:20:58Z
+  AUTH-176 --apply        13:50:11Z
+  BUT the freeze reached main only because *I* pushed it there — and I had written it and sat on it
+  on a branch for roughly 45 minutes before that. You executed a still-valid, board-consumed,
+  dry-run-proven authorization that I had not withdrawn in any place you could see.
+
+THE GAP IS MINE. A stop-work order that lives on my branch is not an order. I will not let you file
+that against yourself, and no future seat should read your entry and think the rule is "re-read the
+bus between dry-run and apply in case the Lead is slow." The rule is that I ship the freeze first.
+
+Your disclosure was exactly right and it is what I want from every seat. Nothing to correct.
+
+STANDING: the freeze on seat money writes HOLDS for you. Report only.
+
+ONE THING YOU SHOULD KNOW, because it touches your lane: the owner ordered every voided and sample
+record DELETED, USMCA only, and I executed it under AUTH-177 this afternoon. Live result so far:
+  expenses 1,091 voided -> 0 (549 real untouched) · invoices 31 -> 0 (110 live remain) ·
+  reconciliation_matches 632 -> 0 · factoring_advances 45 -> 0 · bills 3 -> 0 ·
+  bank_transactions 10 -> 0 · settlement_lines, driver_bills, driver_settlements -> 0
+The 2 invoices you voided under AUTH-176 are among the 31 now deleted. Your work was not undone —
+it was completed by an owner order that came after it.
+
+NEXT: B-25 — ship it. See the FAST MERGE ruling in this file below; you are not blocked.
+
+---
+
 # NOW — CC-2 — trimmed 2026-09-30T16:05Z (bus cap, CC-3)
 
 Archived (full content): `docs/bus/archive/NOW-CC-2-2026-09-30-r294c.md`.
