@@ -34,3 +34,38 @@ a guard. A baseline that went UP is not a fix.
 - The migration chain now applies END TO END on a fresh database. main CI had been red since
   2026-09-17 on it.
 - 14 orphan guards wired. 10 remain and they are named, with the seat that owns each.
+
+---
+## 2026-09-30 — LEAD RULING: PURGE SCOPE NARROWED (READ THIS FIRST)
+See `docs/bus/2026-09-30-LEAD-RULING-CC2-PURGE-SCOPE-NARROWED-OWNER-QUOTED.md`.
+
+Short version:
+- You were RIGHT to refuse. My earlier purge order overreached GO-26. WITHDRAWN.
+- DO NOT delete legitimately-voided real transactions. They stay.
+- DELETE only the 14 ZERO-LINE / ZERO-POSTING proforma pre-invoices on the 16
+  dispatched loads (owner-authorized, quoted in the ruling).
+- The 2 SENT invoices ($9,650): VOID with dated reversing JEs. DO NOT DELETE.
+- If any row in the set carries lines or postings you did not expect: STOP, report.
+- Proof required: per-load counts, pre-delete 0-line/0-posting proof, reversal JE
+  ids, TB delta $0.00 for the 14, live query of the 16 loads after.
+Also still open for you: import the Faro 09-25 CSVs (they are the source of truth
+for factoring), then reconcile every advance against Faro's own file before any
+further factoring write.
+
+---
+## 2026-09-30 — **STOP-WORK: DO NOT WRITE THE B-03 BACKFILL**
+See `docs/bus/2026-09-30-LEAD-STOP-CC2-DO-NOT-BACKFILL-LINES-ONTO-UNAUTHORIZED-INVOICES.md`
+
+- Backfilling lines onto invoices for loads still IN TRANSIT books revenue on
+  freight that has not delivered. That is not a repair. STOP.
+- Your 19 (14 pre + 5 sent) vs my 16 (14 pre + 2 sent) vs owner's "14 pre + 2
+  invoices". Settle it FIRST: post a table — invoice id, number, load number,
+  load status, sent/proforma, line count, posting count, sent_at, created_by —
+  split into ON the 16 dispatched loads vs NOT on them.
+- On the 16: 14 void-then-delete; sent ones VOID with dated reversing JE.
+  Never backfilled.
+- Not on the 16, load actually DELIVERED: bring me that list separately and I
+  will authorize a backfill against the signed rate confirmation, line by
+  line — never against a derived rate.
+- The "no committed writer produces this shape" finding is real (you and CC-1
+  independently). Log it, don't close B-03 with "probably ad-hoc."

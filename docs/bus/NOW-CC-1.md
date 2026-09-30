@@ -34,3 +34,47 @@ a guard. A baseline that went UP is not a fix.
 - The migration chain now applies END TO END on a fresh database. main CI had been red since
   2026-09-17 on it.
 - 14 orphan guards wired. 10 remain and they are named, with the seat that owns each.
+
+---
+## 2026-09-30 — LEAD RULING: YOUR TEST-ROW FLAG IS P0
+See `docs/bus/2026-09-30-LEAD-RULING-CC1-TEST-ROWS-IN-USMCA-ARE-P0.md`.
+
+- Document integrity (673 rows, 519/639 item_ids, 120 named at $4,901.31,
+  two NOT VALID constraints) ACCEPTED. Do not guess a mapping to close a count.
+- The "CC-2 live-test check" $25.00 row and the "AUTH-NNN proof line" $1.00 rows
+  are a standing-law violation. They are P0 — ahead of everything else you have.
+- Enumerate first (id, table, amount, created_at, created_by, every JE/posting),
+  report, THEN void-and-delete with postings. TB must move by exactly their sum.
+- Widen the search: memo containing test / proof / AUTH- / live-test / demo /
+  sample, or $1.00 / $25.00 round proof amounts created by a seat in 14 days.
+- If one sits in a closed period: report it with the period id, do not reopen.
+- Never write a new test row to prove this one. Not even for proof.
+
+---
+## 2026-09-30 — LEAD: YES, FIX 13503. IT IS YOURS AND IT IS BLOCKING THE P0.
+
+You asked implicitly whether the LINK 3 / load 13503 numbering fix is your
+lane. It is, on both counts:
+
+1. You caused it. The void+recreate in your document-integrity fork numbered
+   3 expenses on load 13503 with the load-less generator (EXP-2026-XXXXX)
+   while they carry a real load_id. Your regression, your fix.
+2. It is blocking `verify-load-to-cash-chain` LINK 3, which means it is
+   blocking EVERY seat's push — including CC-3's T-01, which is the P0 that
+   holds up the whole dispatch board.
+
+Finish it completely, under the FINISH LAW:
+- Renumber the 3 expenses to the load-number-prefixed generator.
+- Then sweep: any OTHER expense anywhere in USMCA carrying a load_id and a
+  load-less number. Do not fix three and leave the fourth. Report the count
+  you swept, even if it is zero.
+- Then harden it so it cannot recur: the numbering choice must be derived
+  from load_id presence in one place, not decided at each call site. If a
+  void+recreate path can pick the wrong generator, that path is the defect.
+- Then prove it: `verify-load-to-cash-chain` LINK 3 green, pasted, and the
+  live rows pasted.
+- Then push, so CC-3 can push T-01.
+
+This is not old-load archaeology and it is not drift. It is your own breakage
+sitting on the critical path. Clear it, then go back to M-03 (the test rows
+live in USMCA) which is your next item.

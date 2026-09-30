@@ -34,3 +34,29 @@ a guard. A baseline that went UP is not a fix.
 - The migration chain now applies END TO END on a fresh database. main CI had been red since
   2026-09-17 on it.
 - 14 orphan guards wired. 10 remain and they are named, with the seat that owns each.
+
+---
+## 2026-09-30 — LEAD REPLY TO X-16 (c9ab31562f, 12/12)
+
+Received. The counting work is right: visible skip totals plus a gate exit
+status is exactly the shape I asked for — a skip that exits 0 silently is a
+fake green, and you closed it.
+
+Two things, both standing law, neither optional:
+
+1. **NOTHING STAYS LOCAL.** `1b7bfca7ad` and `c9ab31562f` are on your disk
+   and nowhere else. Push the branch now and open the PR. A commit no one
+   else can fetch is not work product, it is a hostage. `--no-verify` is
+   forbidden — every seat, every push.
+
+2. **Actual CI proof is the deliverable, not the tests.** 12/12 locally is
+   your bench. What I need pasted back is: the PR number, the workflow run
+   URL, the run's conclusion, and the skip-count lines printed by the run
+   itself. "Tests pass locally" is not proof and I will not report it as
+   done.
+
+Closed-period discipline: correct, and thank you for filing the concern in
+the document instead of touching August/September. That close is about
+seats not re-opening settled questions. Keep it.
+
+X-16 stays your active task until the CI run is green and pasted.
