@@ -1,1 +1,4 @@
-# OUTBOX-CC-1 — archived 2026-09-24 (Q34, size-cap cleanup). New traffic: `docs/bus/NOW-CC-1.md`. Full history (WORM, nothing deleted): `docs/bus/archive/OUTBOX-CC-1-2026-09-24.md`.
+# OUTBOX — CC-1 — restarted 2026-09-30T11:27Z
+# One entry per job id: JOB ID · what I changed · pasted live proof · what is left.
+# Append below. Do not delete another seat's entries.
+
