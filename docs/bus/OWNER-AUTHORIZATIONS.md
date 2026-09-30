@@ -5617,6 +5617,40 @@ executed: 2026-09-30, PR #23339 merged (squash 72f1b7a2ae), then --apply run for
 
 ---
 
+## AUTH-171
+
+title: void the 2 fabricated invoices (13625/13626, $9,650.00 combined) -- step 2 of Lead's
+  6-step owner-verified correction order
+requested_by: Lead order, verbatim: "VOID THE INVOICES — 13625 ($6,250.00) and 13626 ($3,400.00)
+  — through the invoice void engine, with their GL reversed. Paste the TB delta and confirm AR
+  moves by exactly $9,650.00."
+root_cause: same as AUTH-170 -- fabricated delivery evidence -> an invoice that should never have
+  been sent -> an advance Faro never made (both advances already voided under AUTH-170).
+  DISCREPANCY FROM THE ORDER'S OWN EXPECTATION, found live before writing this AUTH: these 2
+  invoices carry ZERO GL postings, ever -- confirmed via direct query
+  (source_transaction_type='invoice' + source_transaction_id, zero rows for either id). This is
+  NOT new information -- it is the SAME fact AUTH-161 (this session, earlier today) already
+  established for this exact population: load 13509 + 13616/13618/13620/13621/13622/13625/13626
+  are the "8 blocked, never posted" invoices, permanently refused by ACCT-F59
+  (posting-engine.service.ts:946-973) because their loads reached delivery evidence and the
+  DISP-01 two-event revenue-recognition latch never fired for them (separate, still-open board
+  finding DISP01-LATCH-8-DELIVERED-LOADS-NEVER-FIRED-34850). Voiding these 2 invoices is still
+  correct and safe -- it marks the fabricated documents dead, matching the order's core intent --
+  but "AR moves by exactly $9,650.00" cannot literally happen: there is no AR posting to reverse,
+  because none was ever created. The void engine correctly returns reversing_entry_ref:null for
+  both (a true, zero-live-postings void, not a bug), same shape as AUTH-161's own void-4.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 2 invoice ids in
+  `scripts/ops/2026-09-30-cc2-auth171-void-13625-13626-invoices.ts`, voided via
+  `executeVoidCancel("invoice", ...)`. Not authorized: touching either load's stops (step 3,
+  separate); any other invoice; any hand-written JE.
+action:
+  OWNER_AUTH_ID=AUTH-171 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth171-void-13625-13626-invoices.ts --apply
+  (run from repo root; DRY_RUN first with no --apply flag)
+expires_at: 2026-10-01T00:00:00.000Z
+status: OPEN
+
+---
+
 ## AUTH-170
 
 note: renumbered from AUTH-169 -- that number collided with CC-1's own AUTH-169 (void of
