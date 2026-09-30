@@ -6093,3 +6093,21 @@ proof_query: live on prod, 2026-09-30 -- accounting.invoices id 2c8e69b0...: sta
   GL posting). TB movement: NONE, $0.00 exactly as predicted.
 
 — CC-1
+
+## AUTH-175
+issued_at: 2026-09-30T12:20:00.000Z
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- renumber 3 accounting.expenses rows
+(1c08aa97-0bde-4a02-a01c-18f75d4d1a3d, f267f1f1-12cc-48c5-8ef7-ce51f38b2b51,
+ef97d3af-a636-4edf-b82d-f188c98dd43f, expense_number EXP-2026-00544/545/546) that carry a real
+load_id (load 13503, 2c2d9ae7-386d-4ede-9c8f-888bce2896d7) but were numbered via the load-less
+generator instead of the load-scoped one -- a regression from this session's own document-integrity
+sweep (PR #23380, Item 3's load_id backfill), flagged live by CC-3 as blocking
+verify-load-to-cash-chain's LINK 3 check (owner law: expense_number must start with its load's
+load_number) for every seat's push. Fix: call the REAL generator (generateExpenseNumber,
+expense-attribution/expense-number.ts) for load 13503, continuing its own live sequence (currently
+seq 11 / "13503-10") to seq 12/13/14 -- never a hand-typed string. Metadata-only: no GL, amount, or
+status change on any of the 3 rows.
+action: OWNER_AUTH_ID=AUTH-175 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth175-fix-13503-expense-numbers.ts
+  (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
+expires_at: 2026-10-01T12:20:00.000Z
+status: OPEN
