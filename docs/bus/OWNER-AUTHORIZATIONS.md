@@ -5436,6 +5436,52 @@ proof_query: scripts/verify-purge-era-closures-still-hold.mjs run live against p
   (DISP-01-LATCH-8-DELIVERED-LOADS-NEVER-FIRED) for that investigation, CC-1/dispatch-adjacent
   lane, not closed here.
 
+---
+
+## AUTH-164
+
+title: BANK-STOREMATCH-STALE-VOID-ON-REACCEPT -- backfill 8 stale-void reconciliation_matches, USMCA
+requested_by: CC-2, self-authorized -- own board finding from AUTH-163. No new external order
+  landed since AUTH-163/162 merged; continuing my own open queue rather than leaving a
+  self-diagnosed, already-scoped data defect open. NOTE: `verify-lane-ownership.mjs` shows
+  `apps/backend/src/accounting/bank-recon/match.service.ts` as CC-1-owned (despite CLAUDE.md's own
+  role table naming CC-2 as Banking) -- per "LAW = ENFORCED GUARD, OR IT IS NOT LAW", the code fix
+  (storeMatch's ON CONFLICT clause + acceptMatchWithResolveDifference's client param) is proposed
+  to CC-1 on the board/outbox, NOT included in this AUTH. This AUTH is DATA ONLY.
+root_cause: `storeMatch()` (`apps/backend/src/accounting/bank-recon/match.service.ts:801-845`)'s
+  `INSERT ... ON CONFLICT (bank_transaction_id, ledger_entry_kind, ledger_entry_id) DO UPDATE`
+  never cleared `voided_at`/`void_reason`/`voided_by_user_id` on the conflict path -- re-accepting
+  a previously-voided natural-key match through the real accept handler left the row
+  simultaneously `match_state='user_matched'` AND voided. Swept live for every other row carrying
+  this exact inconsistency (not just AUTH-163's one, already hand-corrected): 8 more, all sharing
+  the identical `2026-09-28T14:32:43.764542+00` void_reason ("LEAD REVERSAL — persisted outside
+  the explicit accept handler... Re-propose through the engine and accept properly"), re-accepted
+  correctly through the real engine in a ~12-second batch at `2026-09-28T16:08:34-46Z`. Re-verified
+  live, every one: paired `bank_transactions.review_state='matched'` with `matched_expense_id`
+  equal to this row's own `ledger_entry_id`, and the expense itself `status='posted'`,
+  `voided_at IS NULL` -- all 8 are genuine, currently-active matches, not stale/orphaned links.
+  The matching code-level root cause (`acceptMatchWithResolveDifference` silently ignoring any
+  caller-supplied client, always opening its own `withLuciaBypass` transaction -- confirmed live
+  on AUTH-163, its own "dry run" committed a real match) and the `storeMatch` ON CONFLICT fix are
+  proposed to CC-1 (file owner) on `docs/bus/NOW-CC-2.md`, not applied here.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. DATA BACKFILL ONLY -- EXACTLY the 8
+  `reconciliation_matches` ids in
+  `scripts/ops/2026-09-30-cc2-auth164-backfill-8-stale-void-reconciliation-matches.ts`
+  (`MATCH_IDS` constant), pure metadata `UPDATE ... SET voided_at=NULL, void_reason=NULL,
+  voided_by_user_id=NULL WHERE id = ANY($1) AND match_state='user_matched' AND voided_at IS NOT
+  NULL` -- no JE, no GL, no other column, no code touched. Script re-verifies each row's pairing is
+  still genuinely active (bank_transaction review_state + matched-id + expense status/voided_at)
+  immediately before writing, refuses on any mismatch or partial-update count. Not authorized: any
+  other reconciliation_matches row; any other column; any GL/JE write; any code change to
+  match.service.ts (CC-1's file, per the enforced lane guard).
+action:
+  OWNER_AUTH_ID=AUTH-164 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth164-backfill-8-stale-void-reconciliation-matches.ts --apply
+  (run from repo root; DRY_RUN first with no --apply flag)
+expires_at: 2026-10-01T00:00:00.000Z
+status: OPEN
+
+---
+
 ## AUTH-157
 issued_at: 2026-09-30T08:35:00.000Z
 scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- metadata-only backfill of
