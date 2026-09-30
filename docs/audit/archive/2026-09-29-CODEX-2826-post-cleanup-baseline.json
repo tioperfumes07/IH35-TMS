@@ -1,0 +1,1685 @@
+{
+  "sourceSha": "151c646a254a1a3767192021124ff884394e97e2",
+  "measuredAt": "2026-09-30T03:31:38.954Z",
+  "scope": "Offline classify run in eight isolated same-commit worktrees, not proof of production defects",
+  "complete": true,
+  "total": 5417,
+  "counts": {
+    "PASS": 4812,
+    "FAIL-test": 401,
+    "EXCLUDED-live-db": 182,
+    "SKIP-capability": 22
+  },
+  "lawRegisteredFailures": [
+    {
+      "name": "verify-class-scoreboard-fresh.mjs",
+      "detail": "Fix: node scripts/gen-class-scoreboard.mjs && commit the regenerated data file."
+    },
+    {
+      "name": "verify-surface-bar-modal-inventory.mjs",
+      "detail": "- components/checks/WriteCheckForm.tsx: Modal host has no required.json leaf.surface_path / FILE_OWNED_BY_LEAF / ALLOWED_NESTED — add a leaf or map it"
+    },
+    {
+      "name": "verify-honest-built-launch-law-present.mjs",
+      "detail": "- docs/bus/INBOX-CC-2.md (does not cite HONEST-BUILT-LAUNCH-LAW-2026-08-14)"
+    },
+    {
+      "name": "verify-no-guard-file-deletion.mjs",
+      "detail": "verify-no-guard-file-deletion FAILED:"
+    },
+    {
+      "name": "verify-regclass-fallback-intent.mjs",
+      "detail": "Fix: throw, fail closed, or degrade WITH a signal. Copy fuel.loves_prices_daily."
+    },
+    {
+      "name": "verify-surface-bar-paritydrawer-inventory.mjs",
+      "detail": "- pages/settlements/SettlementCreatorDrawer.tsx: ParityDrawer host has no required.json leaf.surface_path / FILE_OWNED_BY_LEAF / ALLOWED_NESTED — add a leaf or map it"
+    },
+    {
+      "name": "verify-standing-directive-present.mjs",
+      "detail": "- AGENTS.md: missing reference to SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md; --selftest failed"
+    },
+    {
+      "name": "verify-banking-matched-bill-drill.mjs",
+      "detail": "- apps/backend/src/integrations/plaid/link.routes.ts: both transaction readers must project and company-scope matched settlements (labels 0/2, joins 2/2; never use phantom driver_finance.settlements —; --selftest failed"
+    },
+    {
+      "name": "verify-display-id-lookups-entity-scoped.mjs",
+      "detail": "✗ 1 NEW unscoped display_id lookup(s) — this is the shape that nearly voided a real PAID invoice:; --selftest failed"
+    },
+    {
+      "name": "verify-disp-wire-07-departure-evidence.mjs",
+      "detail": "- apps/backend/src/telematics/geofence-detector.service.ts: writes actual_departure_at = $4::timestamptz, — a client-supplied value can arrive null, leaving a delivered load with NO delivery evidence."
+    },
+    {
+      "name": "verify-load-column-all-modules.mjs",
+      "detail": "- apps/frontend/src/pages/dispatch/TripProfitability.tsx: Trip-profitability load drill; --selftest failed"
+    },
+    {
+      "name": "verify-no-uuid-label-rendering.mjs",
+      "detail": "✗ 2 NEW truncated-uuid label(s) — the ratchet may only shrink:; --selftest failed"
+    },
+    {
+      "name": "verify-fleet-unit-profile-edit-detail.mjs",
+      "detail": "- apps/frontend/src/pages/fleet/VehicleProfilePage.tsx: unit.profile.maintenance distinct mounted connectivity missing; --selftest failed"
+    },
+    {
+      "name": "verify-join-entity-scoped.mjs",
+      "detail": "✗ 94 NEW entity-unscoped JOIN(s) — the shape that puts another entity's driver/unit on a legal or money record:; --selftest failed"
+    },
+    {
+      "name": "verify-surface-bar-combobox-inventory.mjs",
+      "detail": "- pages/samsara-driver-mapping/SamsaraDriverMappingPage.tsx: Combobox host has no required.json leaf.surface_path / FILE_OWNED_BY_LEAF / ALLOWED_NESTED — add a leaf or map it"
+    },
+    {
+      "name": "verify-wave-c-ap-bill-fe-all-modules.mjs",
+      "detail": "- verify-ap-bill-column-wave.mjs: composed FE guard failed"
+    }
+  ],
+  "allFailures": [
+    {
+      "name": "verify-accounting-catalog-creator.mjs",
+      "detail": "verify:accounting-catalog-creator — FAILED"
+    },
+    {
+      "name": "verify-accounting-money-lists-suppress-toolbar-search.mjs",
+      "detail": "verify-accounting-money-lists-suppress-toolbar-search FAIL — apps/frontend/src/pages/accounting/InvoicesListPage.tsx: must keep server-side search placeholder INV-2026-00001 or customer; --selftest failed"
+    },
+    {
+      "name": "verify-acct-posting-business-date.mjs",
+      "detail": "- apps/backend/src/accounting/from-load.ts:520: new Date().toISOString().slice(0, 10)"
+    },
+    {
+      "name": "verify-banking-palette-section7.mjs",
+      "detail": "apps/frontend/src/pages/banking/components/BankingControlBox.tsx: #16A34A; --selftest failed"
+    },
+    {
+      "name": "verify-bankrec-confirm-exact-only.mjs",
+      "detail": "verify:bankrec-confirm-exact-only — FAILED"
+    },
+    {
+      "name": "verify-bills-page-uses-paritytable.mjs",
+      "detail": "- apps/frontend/src/pages/accounting/BillsPage.tsx: must keep the cents-based USD money() formatter"
+    },
+    {
+      "name": "verify-board-append-only.mjs",
+      "detail": "uncited: | **FINDING+FIXED GUARD THIS PR (Codex 2026-08-30):** `GUARD-F7536-DQF-VISIBLE-ERROR-GUARD-EXPECTS-RETIRED-ITEM-NAME` —"
+    },
+    {
+      "name": "verify-book-load-single-submit.mjs",
+      "detail": "- apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx: the submit button must also disable while submitting (visible affordance)"
+    },
+    {
+      "name": "verify-class-scoreboard-fresh.mjs",
+      "detail": "Fix: node scripts/gen-class-scoreboard.mjs && commit the regenerated data file."
+    },
+    {
+      "name": "verify-coa-canonical.mjs",
+      "detail": "verify:coa-canonical FAILED"
+    },
+    {
+      "name": "verify-combobox-id-label-binding.mjs",
+      "detail": "Error: ENOENT: no such file or directory, open '/private/tmp/ih35-codex-cleanup-measure-0/apps/frontend/src/components/shared/Combobox.tsx'; --selftest failed"
+    },
+    {
+      "name": "verify-compliance-notification-rule-visible-errors.mjs",
+      "detail": "--selftest failed: file:///private/tmp/ih35-codex-cleanup-measure-0/scripts/verify-compliance-notification-rule-visible-errors.mjs:44"
+    },
+    {
+      "name": "verify-cu09-optional-message.mjs",
+      "detail": "verify-cu09-optional-message FAILED (4):; --selftest failed"
+    },
+    {
+      "name": "verify-cust-s03-coming-state-copy.mjs",
+      "detail": "- apps/frontend/src/pages/Customers.tsx: activity feed must render its real reader"
+    },
+    {
+      "name": "verify-customers-open-balance-excludes-void.mjs",
+      "detail": "ACCT-F6917 FAILED; --selftest failed"
+    },
+    {
+      "name": "verify-definition-of-done-is-auto-loaded.mjs",
+      "detail": "verify-definition-of-done-is-auto-loaded FAILED:; --selftest failed"
+    },
+    {
+      "name": "verify-disp-wire-09-bol-generate.mjs",
+      "detail": "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx: Load Detail drawer Documents tab must mount <LoadBolPanel /> — EntityLink /dispatch/loads/:id is the canonical load path; BOL cannot live on; --selftest failed"
+    },
+    {
+      "name": "verify-driver-pay-tab-generic-error-has-retry.mjs",
+      "detail": "verify-driver-pay-tab-generic-error-has-retry FAIL; --selftest failed"
+    },
+    {
+      "name": "verify-driver-retention-failure-exclusion.mjs",
+      "detail": "verify-driver-retention-failure-exclusion FAILED:"
+    },
+    {
+      "name": "verify-edit-vehicle-record-lifecycle.mjs",
+      "detail": "verify-edit-vehicle-record-lifecycle FAIL — modal cancel no-change and success use reset close"
+    },
+    {
+      "name": "verify-factoring-advance-reserve-fee-independent.mjs",
+      "detail": "--selftest failed: verify-factoring-advance-reserve-fee-independent --selftest: mutation had no effect -- advance_rate_pct reintroduced as a caller input in createBodySchema"
+    },
+    {
+      "name": "verify-factoring-batch-wizard-qbo-chrome.mjs",
+      "detail": "- factoring.modal.deactivate_factor_confirm: real Modal: pattern miss in apps/frontend/src/components/factoring/DeactivateFactorConfirmModal.tsx; --selftest failed"
+    },
+    {
+      "name": "verify-factoring-customer-retention-human-labels.mjs",
+      "detail": "--selftest failed: verify-factoring-customer-retention-human-labels SELFTEST FAILED: planted defect not caught"
+    },
+    {
+      "name": "verify-factoring-forward-only-chrome.mjs",
+      "detail": "FAIL: FactoringHome.tsx contains historical/backfill/retroactive wording"
+    },
+    {
+      "name": "verify-factoring-vendor-merge-banner-deeplink.mjs",
+      "detail": "- apps/frontend/src/components/factoring/DuplicateVendorsBanner.tsx: missing the honest \"not yet synced to QBO\" fallback for pairs with no qbo_vendor_id on either side; --selftest failed"
+    },
+    {
+      "name": "verify-faro-no-accrued-reserve-release.mjs",
+      "detail": "verify-faro-no-accrued-reserve-release: UNVERIFIED — DATABASE_URL not set, cannot check live"
+    },
+    {
+      "name": "verify-fuel-history-exact-range.mjs",
+      "detail": "FAIL: query key must own every reverse filter and page"
+    },
+    {
+      "name": "verify-geofence-recon-surface-bar.mjs",
+      "detail": "if (!cond) throw new Error(msg);; --selftest failed"
+    },
+    {
+      "name": "verify-held-registry-ledger-parity.mjs",
+      "detail": "[verify-held-registry-ledger-parity] FAILED — 1 issue(s):; --selftest failed"
+    },
+    {
+      "name": "verify-insurance-policy-complete-unit-picker.mjs",
+      "detail": "apps/frontend/src/components/insurance/PolicyCreateModal.tsx: canonical selected ids must remain in the creator"
+    },
+    {
+      "name": "verify-invoices-list-filter-apply-single-write.mjs",
+      "detail": "[verify-invoices-list-filter-apply-single-write] FAILED — 3 check(s) regressed:"
+    },
+    {
+      "name": "verify-load-costs-board-column-contract.mjs",
+      "detail": "--selftest failed: throw new Error(\"a column-contract mutation escaped detection\");"
+    },
+    {
+      "name": "verify-load-costs-drawer-wide.mjs",
+      "detail": "--selftest failed: SELFTEST FAIL: removing the tab branch did not trip"
+    },
+    {
+      "name": "verify-maintenance-paid-same-day-gl-and-no-double-bill.mjs",
+      "detail": "--selftest failed: posting_status stamp removed: mutation anchor missing"
+    },
+    {
+      "name": "verify-migration-schema-grants.mjs",
+      "detail": "See: docs/runbooks/migration-naming.md — 'Every CREATE SCHEMA must include GRANT USAGE'."
+    },
+    {
+      "name": "verify-nonmoney-frontend-business-date.mjs",
+      "detail": "FAIL: plannerLayout retains raw UTC business-date default; --selftest failed"
+    },
+    {
+      "name": "verify-one-load-one-open-invoice.mjs",
+      "detail": "verify-one-load-one-open-invoice UNVERIFIED: DATABASE_URL not set"
+    },
+    {
+      "name": "verify-parity-table-footer-follows-columns.mjs",
+      "detail": "spawn: spawnSync /opt/homebrew/Cellar/node/26.3.0/bin/node ETIMEDOUT"
+    },
+    {
+      "name": "verify-paybill-detail-human-labels.mjs",
+      "detail": "--selftest failed: verify-paybill-detail-human-labels SELFTEST FAILED: planted defect not caught"
+    },
+    {
+      "name": "verify-pending-approvals-gl-linkage.mjs",
+      "detail": "verify:pending-approvals-gl-linkage — FAILED"
+    },
+    {
+      "name": "verify-posting-prepaid-factoring-register-human-labels.mjs",
+      "detail": "verify-posting-prepaid-factoring-register-human-labels FAILED:; --selftest failed"
+    },
+    {
+      "name": "verify-pre-settlement-panel-driver-entitylink.mjs",
+      "detail": "[verify-pre-settlement-panel-driver-entitylink] FAIL: return load drill must bind canonical id and number; --selftest failed"
+    },
+    {
+      "name": "verify-primary-module-navigation-connectivity.mjs",
+      "detail": "--selftest failed: if (!source[key].includes(before)) throw new Error(`self-test fixture missing: ${key} ${before}`);"
+    },
+    {
+      "name": "verify-program-system-cashflow-filter-panels.mjs",
+      "detail": "filter-panel guard failed:; --selftest failed"
+    },
+    {
+      "name": "verify-reversed-jes-carry-header-linkage.mjs",
+      "detail": "verify-reversed-jes-carry-header-linkage: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B o"
+    },
+    {
+      "name": "verify-safety-creator-pickers.mjs",
+      "detail": "--selftest failed: verify-safety-creator-pickers SELFTEST FAILED:"
+    },
+    {
+      "name": "verify-settlements-open-driver-bills.mjs",
+      "detail": "[verify-settlements-open-driver-bills] FAIL: Settlements list load drill must use the human load label; --selftest failed"
+    },
+    {
+      "name": "verify-sortable-columns-and-void-visibility.mjs",
+      "detail": "✗ A1: 28 NEW ParityTable/DataTable column(s) with a label but no `sortable` — above baseline 1162."
+    },
+    {
+      "name": "verify-sql-write-targets.mjs",
+      "detail": "verify-sql-write-targets FAILED:"
+    },
+    {
+      "name": "verify-subledger-tieout.mjs",
+      "detail": "verify-subledger-tieout FAIL CLOSED: wiring of === INV-3  SUBLEDGER TIE-OUT + ar_difference + ap_difference is present in verify-gl-invariants.sql but this check cannot PASS without a Neon INV run. Us"
+    },
+    {
+      "name": "verify-truck-planner-complete-unit-roster.mjs",
+      "detail": "--selftest failed: verify-truck-planner-complete-unit-roster SELFTEST FAILED: mutation survived: retired unit admitted"
+    },
+    {
+      "name": "verify-usmca-inbox9-23-fe.mjs",
+      "detail": "✗ apps/frontend/src/pages/fuel/FuelPlannerHome.tsx: honest empty fuel history"
+    },
+    {
+      "name": "verify-vehicle-driver-history-exact-range.mjs",
+      "detail": "--selftest failed: for (const mutate of mutations) if (findings((file) => mutate(file, base[file])).length === 0) throw new Error(\"planted regression escaped guard\");"
+    },
+    {
+      "name": "verify-vendor-parts-history-linkage.mjs",
+      "detail": "- capped vendor reverse must disclose exact range; --selftest failed"
+    },
+    {
+      "name": "verify-void-cascades-to-every-child.mjs",
+      "detail": "verify-void-cascades-to-every-child: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B owner "
+    },
+    {
+      "name": "verify-voided-loads-hold-no-real-number.mjs",
+      "detail": "verify-voided-loads-hold-no-real-number: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B ow"
+    },
+    {
+      "name": "verify-bank-econ-04-honesty-keep.mjs",
+      "detail": "--selftest failed: Error: ENOENT: no such file or directory, open '/var/folders/gh/r48zdj1d58jb61cjbjkcf05m0000gn/T/verify-bank-econ-04-honesty-keep-aptUQF/apps/frontend/src/pages/banking/BankReconciliationPage.tsx'"
+    },
+    {
+      "name": "verify-bill-detail-linked-identity-human-labels.mjs",
+      "detail": "--selftest failed: mutations.forEach((mutation, index) => { if (verify(...mutation).length === 0) throw new Error(`selftest mutation ${index + 1} escaped`); });"
+    },
+    {
+      "name": "verify-bill-payment-panel-labels.mjs",
+      "detail": "FAIL: BillPaymentDetailPage missing an honest fallback for journal entry"
+    },
+    {
+      "name": "verify-cancelled-load-leaves-no-live-money.mjs",
+      "detail": "verify-cancelled-load-leaves-no-live-money: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B"
+    },
+    {
+      "name": "verify-cash-advance-disbursement-method-parity.mjs",
+      "detail": "- apps/backend/src/cash-advances/cash-advance-create.ts (CreateDriverCashAdvanceCoreInput TS union) disbursement_method set != apps/backend/src/cash-advances/cash-advances.routes.ts (createAdvanceBody"
+    },
+    {
+      "name": "verify-cc1-money-orphan-guard-registry-batch.mjs",
+      "detail": "- unaccounted guards remain: verify-ar-ties-to-qbo-invoice-list.mjs, verify-b2-session-bypass-node-env-gate.mjs, verify-check-engine.mjs, verify-check-register-gapless.mjs, verify-check-registry-has-e"
+    },
+    {
+      "name": "verify-connectivity-nonmoney-create-remainder.mjs",
+      "detail": "- apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx: missing real driver_id/EntityLink kind=\"driver\" wiring; --selftest failed"
+    },
+    {
+      "name": "verify-deep-audit-a-customer-sub-tabs.mjs",
+      "detail": "deep-audit-a-customer-sub-tabs — FAILED"
+    },
+    {
+      "name": "verify-disp-s08-border-crossing-surface.mjs",
+      "detail": "verify-disp-s08-border-crossing-surface FAILED:; --selftest failed"
+    },
+    {
+      "name": "verify-driver-escrow-tab-content-uses-paritytable.mjs",
+      "detail": "- apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx: missing column label: \"Category\""
+    },
+    {
+      "name": "verify-driver-safety-residual-datepicker-wrappers.mjs",
+      "detail": "- expected 8 controls, found 10"
+    },
+    {
+      "name": "verify-drivers-qbo-chrome-leaves.mjs",
+      "detail": "- profiles.drawer.equipment_qualification: DriverDetail real Modal drawer + DatePicker: pattern miss in apps/frontend/src/pages/DriverDetail.tsx; --selftest failed"
+    },
+    {
+      "name": "verify-drivers-teams-tab-reachable.mjs",
+      "detail": "[verify-drivers-teams-tab-reachable] FAILED"
+    },
+    {
+      "name": "verify-entity-picker-load-kind-sweep.mjs",
+      "detail": "- apps/frontend/src/pages/Dispatch.tsx: listLoads/listDispatchLoads outside allowlist — migrate to EntityPicker kind=load or add honest table-only allow; --selftest failed"
+    },
+    {
+      "name": "verify-expense-category-map-page-uses-paritytable.mjs",
+      "detail": "- apps/frontend/src/pages/accounting/ExpenseCategoryMapPage.tsx: must keep the admin-activity audit drill-through link"
+    },
+    {
+      "name": "verify-factoring-package-metadata-failures-caught.mjs",
+      "detail": "- apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx: the Mark-uploaded button's persistPackageMeta call must carry a .catch() after .then(), landing before the button's own JSX label; --selftest failed"
+    },
+    {
+      "name": "verify-faro-no-purchased-account-past-repurchase-deadline.mjs",
+      "detail": "verify-faro-no-purchased-account-past-repurchase-deadline: UNVERIFIED — DATABASE_URL not set, cannot check live"
+    },
+    {
+      "name": "verify-fleet-qbo-chrome-leaves.mjs",
+      "detail": "- trailer.edit: EditTrailerModal is a real Modal that mounts: pattern miss in apps/frontend/src/components/fleet/EditTrailerModal.tsx; --selftest failed"
+    },
+    {
+      "name": "verify-fleet-unit-roster-modals.mjs",
+      "detail": "--selftest failed: verify-fleet-unit-roster-modals SELFTEST FAIL — kind-filter-apply: mutation escaped"
+    },
+    {
+      "name": "verify-gate-live-reads-use-ci-readonly.mjs",
+      "detail": "Allowlist by annotation only: // NEONDB-OWNER-OK: <reason>"
+    },
+    {
+      "name": "verify-hold-merge-gate.mjs",
+      "detail": "live GitHub ruleset lookup failed with exit 1: gh: API rate limit exceeded for user ID 275097450. If you reach out to GitHub Support for help, please include the request ID F07F:9ED0F:24B1C97:79629EE:6ABC809C and timestamp 2026-09-30 03:23:08 UTC. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) (HTTP 403)"
+    },
+    {
+      "name": "verify-hos-violation-create-lifecycle.mjs",
+      "detail": "verify-hos-violation-create-lifecycle FAIL — draft reset includes form baseline suggestion and search, submit snapshots company generation draft and catalog identity"
+    },
+    {
+      "name": "verify-insurance-dashboard-excludes-fixture-data.mjs",
+      "detail": "--selftest failed: verify-insurance-dashboard-excludes-fixture-data SELFTEST FAIL — mutation escaped: {\"key\":\"coverageGap\",\"from\":\"\\n    AND ${excludeDemoPhantomSql(\\\"u.unit_number\\\")}\",\"to\":\"\"}"
+    },
+    {
+      "name": "verify-invoice-line-no-uuid-description.mjs",
+      "detail": "[verify-invoice-line-no-uuid-description] from-load.ts linehaul description safety incomplete: load_number source, loadNumber variable, throws when load_number missing; --selftest failed"
+    },
+    {
+      "name": "verify-list-rows-use-datatable.mjs",
+      "detail": "- PreSettlementsPanel missing governed Settlement / Bill Number column"
+    },
+    {
+      "name": "verify-load-quality-events-reverse-link.mjs",
+      "detail": "- customer detail renders a legitimate zero-dollar impact; --selftest failed"
+    },
+    {
+      "name": "verify-mdata-deactivate-rls-bypass-wrap.mjs",
+      "detail": "--selftest failed: FAIL(selftest): offender mutation did not change customers.routes.ts — pattern out of sync"
+    },
+    {
+      "name": "verify-no-dead-schema.mjs",
+      "detail": "verify-no-dead-schema FAILED — schema created with no reader (§10a linkage law):"
+    },
+    {
+      "name": "verify-no-qbo-archive-runtime-reads.mjs",
+      "detail": "verify-no-qbo-archive-runtime-reads FAILED:"
+    },
+    {
+      "name": "verify-owner-quality-compact-present.mjs",
+      "detail": "- AGENTS.md: missing reference to ALL QUESTIONS HAVE BEEN ASKED; --selftest failed"
+    },
+    {
+      "name": "verify-phantom-relations.mjs",
+      "detail": "✘ phantom-relation guard FAILED — 1 reference(s) to non-existent relation(s):"
+    },
+    {
+      "name": "verify-posting-flag-has-roles.mjs",
+      "detail": "verify-posting-flag-has-roles FAIL CLOSED: wiring of === INV-10 ENTITY ROLE PARITY + --- 10b: + --- 10c: + --- 10d: is present in verify-gl-invariants.sql but this check cannot PASS without a Neon INV"
+    },
+    {
+      "name": "verify-primary-record-selector-reverse-links.mjs",
+      "detail": "apps/frontend/src/pages/maintenance/components/RecentActivityRow.tsx: missing canonical recent work order selector"
+    },
+    {
+      "name": "verify-push-gate-classification.mjs",
+      "detail": "result.error = new ErrnoException(result.error, 'spawnSync ' + options.file);"
+    },
+    {
+      "name": "verify-reports-cash-flow-overview-iso-axis.mjs",
+      "detail": "verify-reports-cash-flow-overview-iso-axis FAIL: CashFlowOverviewPage must import formatDateUS; projection XAxis dataKey=\"date\" must use formatDateUS tickFormatter; --selftest failed"
+    },
+    {
+      "name": "verify-revrec-and-payrun-close-tag-source.mjs",
+      "detail": "verify-revrec-and-payrun-close-tag-source: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B "
+    },
+    {
+      "name": "verify-section7-palette-maintenance.mjs",
+      "detail": "apps/frontend/src/components/settlements/SettlementReferenceCell.tsx: #2563eb"
+    },
+    {
+      "name": "verify-settlement-detail-sections.mjs",
+      "detail": "[verify-settlement-detail-sections] FAIL — 1 issue(s)"
+    },
+    {
+      "name": "verify-settlements-qbo-chrome-surfaces.mjs",
+      "detail": "- SettlementsPage OpenDriverBillsPanel EntityLink drill (driver/load, never bill): pattern miss in apps/frontend/src/pages/driver-finance/SettlementsPage.tsx; --selftest failed"
+    },
+    {
+      "name": "verify-surface-bar-modal-inventory.mjs",
+      "detail": "- components/checks/WriteCheckForm.tsx: Modal host has no required.json leaf.surface_path / FILE_OWNED_BY_LEAF / ALLOWED_NESTED — add a leaf or map it"
+    },
+    {
+      "name": "verify-unit-picker-excludes-archived-deactivated.mjs",
+      "detail": "--selftest failed: SELFTEST FAIL: dropping the deactivated_at filter did not trip the guard"
+    },
+    {
+      "name": "verify-vendors-list-master-detail.mjs",
+      "detail": "- apps/frontend/src/pages/Vendors.tsx: md.header.edit must navigate to the real selected vendor's own record; --selftest failed"
+    },
+    {
+      "name": "verify-wave-b-reverse-link-all-modules.mjs",
+      "detail": "- verify-linkage-required-edges.mjs failed:"
+    },
+    {
+      "name": "verify-wave-c-expense-fe-all-modules.mjs",
+      "detail": "- verify-expense-column-wave.mjs: composed FE guard failed"
+    },
+    {
+      "name": "verify-ar-ties-to-qbo-invoice-list.mjs",
+      "detail": "verify-ar-ties-to-qbo-invoice-list: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B owner r"
+    },
+    {
+      "name": "verify-assigned-safety-datepicker-label-completion.mjs",
+      "detail": "FAIL: apps/frontend/src/pages/drivers/components/DriverDqfPanel.tsx: DatePicker trigger has no id; --selftest failed"
+    },
+    {
+      "name": "verify-audit-geofence-human-labels.mjs",
+      "detail": "verify-audit-geofence-human-labels FAILED:; --selftest failed"
+    },
+    {
+      "name": "verify-bankfeed-je-match.mjs",
+      "detail": "--selftest failed: throw new Error(`FAIL case was not detected for legacy bulk-categorize: ${legacyFails.join(\"; \")}`);"
+    },
+    {
+      "name": "verify-banking-match-qbo-engine.mjs",
+      "detail": "- service: fetchLedgerCandidates must NOT select AR payments; --selftest failed"
+    },
+    {
+      "name": "verify-bill-detail-panel-visible-label.mjs",
+      "detail": "--selftest failed: verify-bill-detail-panel-visible-label selftest FAILED {"
+    },
+    {
+      "name": "verify-bill-header-only-refused.mjs",
+      "detail": "--selftest failed: verify-bill-header-only-refused SELFTEST FAIL — generator.service.ts mutation escaped"
+    },
+    {
+      "name": "verify-catalog-default-entity-resolver.mjs",
+      "detail": "verify-catalog-default-entity-resolver FAILED:; --selftest failed"
+    },
+    {
+      "name": "verify-connectivity-user-vendor-remainder.mjs",
+      "detail": "- vendor Edit must open the canonical profile route; --selftest failed"
+    },
+    {
+      "name": "verify-control-totals.mjs",
+      "detail": "CONTROL TOTALS: DATABASE_URL not set. Refusing to pass a money gate that never ran."
+    },
+    {
+      "name": "verify-customers-vendors-default-is-prior-design.mjs",
+      "detail": "The DEFAULT /customers and /vendors view must remain the prior \"master-detail\" design (CLOSURE-31)."
+    },
+    {
+      "name": "verify-disp-wire-04-invoice-evidence-durable.mjs",
+      "detail": "- the evidence gate is nested inside `if (current.source_load_id)` — an invoice with NO load skips the check entirely, which is the weakest-evidence case, not an exemption (LV-012); --selftest failed"
+    },
+    {
+      "name": "verify-dispatch-mapview-honest.mjs",
+      "detail": "- apps/frontend/src/pages/dispatch/MapView.tsx: must not render raw lat/lng coordinate cards (fake map pins)"
+    },
+    {
+      "name": "verify-dispatch-round-trips-read-recovery.mjs",
+      "detail": "✗ verify-dispatch-round-trips-read-recovery: pairing failure must render before honest empty"
+    },
+    {
+      "name": "verify-document-identity-deep-links.mjs",
+      "detail": "document identity deep-link guard failed:; --selftest failed"
+    },
+    {
+      "name": "verify-entity-expense-category-map-complete.mjs",
+      "detail": "verify:entity-expense-category-map-complete FAILED:"
+    },
+    {
+      "name": "verify-escrow-forfeit-liability-select.mjs",
+      "detail": "- apps/frontend/src/pages/safety/components/EscrowForfeitModal.tsx: Combobox must not remain on liability picker"
+    },
+    {
+      "name": "verify-escrow-ledger-sign-follows-type.mjs",
+      "detail": "verify-escrow-ledger-sign-follows-type: FAIL — DATABASE_URL not set. A live money guard that cannot connect is a FAIL, never a pass."
+    },
+    {
+      "name": "verify-expense-detail-human-labels.mjs",
+      "detail": "ExpenseDetailPage must fall back to entityLabel(journal_entry_memo, …) when date missing; --selftest failed"
+    },
+    {
+      "name": "verify-factoring-chargeback-invoice-customer-reverse.mjs",
+      "detail": "- lateral producer resolves human identities; --selftest failed"
+    },
+    {
+      "name": "verify-factoring-package-popup-block-honesty.mjs",
+      "detail": "--selftest failed: verify-factoring-package-popup-block-honesty SELFTEST FAIL — revert pattern did not match source, re-anchor"
+    },
+    {
+      "name": "verify-factoring-void-enumerates-all-postings.mjs",
+      "detail": "verify-factoring-void-enumerates-all-postings FAILED:; --selftest failed"
+    },
+    {
+      "name": "verify-faro-partial-payment-leaves-account-open.mjs",
+      "detail": "verify-faro-partial-payment-leaves-account-open: UNVERIFIED — DATABASE_URL not set, cannot check live"
+    },
+    {
+      "name": "verify-fleet-table-failure-exclusion.mjs",
+      "detail": "--selftest failed: "
+    },
+    {
+      "name": "verify-from-load-invoice-no-zero-rate.mjs",
+      "detail": "- apps/backend/src/dispatch/book-load.service.ts: must catch load_has_no_rate and audit proforma_skipped_zero_rate; --selftest failed"
+    },
+    {
+      "name": "verify-honest-built-launch-law-present.mjs",
+      "detail": "- docs/bus/INBOX-CC-2.md (does not cite HONEST-BUILT-LAUNCH-LAW-2026-08-14)"
+    },
+    {
+      "name": "verify-journal-entry-detail-page-uses-paritytable.mjs",
+      "detail": "- apps/frontend/src/pages/accounting/journal-entries/JournalEntryDetailPage.tsx: display-only GL surface — must not add mutations"
+    },
+    {
+      "name": "verify-linkage-required-edges.mjs",
+      "detail": "verify-linkage-required-edges FAILED — §10a linkage law:"
+    },
+    {
+      "name": "verify-lists-dispatch-dedicated-catalog-connectivity-exact.mjs",
+      "detail": "- BookLoadModalV4 catalog failure honesty missing disabled={customersQuery.isLoading || customersQuery.isError}"
+    },
+    {
+      "name": "verify-load-driver-pay-bill-entitylink.mjs",
+      "detail": "- apps/frontend/src/components/dispatch/LoadDetailDriverPayTab.tsx: must keep the comment explaining driver_finance.driver_bills != accounting.bills (why kind=\"bill\" is forbidden here); --selftest failed"
+    },
+    {
+      "name": "verify-load-settlement-summary-resolves-line-linked.mjs",
+      "detail": "verify-load-settlement-summary-resolves-line-linked: must match first_load_id; --selftest failed"
+    },
+    {
+      "name": "verify-load-stops-save-wired.mjs",
+      "detail": "FAIL: LoadDetailDrawer: missing /<MultiStopEditor\\b/"
+    },
+    {
+      "name": "verify-match-candidates-are-settlement-born-only.mjs",
+      "detail": "- fetchLedgerCandidates must NOT select from AR payments"
+    },
+    {
+      "name": "verify-money-text-component-adoption-ratchet.mjs",
+      "detail": "verify-money-text-component-adoption-ratchet FAIL — raw hand-rolled currency formatting went UP: 63 -> 69 (+6). New money display code must use MoneyText (components/MoneyText.tsx) or formatUsdCents/f"
+    },
+    {
+      "name": "verify-no-duplicate-financial-ledger.mjs",
+      "detail": "• accounting.expenses_review_queue: NEW financial table has no '-- CANONICAL-CHECK:' block. Every new table in a financial schema (or one whose name collides with a canonical money-concept) must decla"
+    },
+    {
+      "name": "verify-no-guard-file-deletion.mjs",
+      "detail": "verify-no-guard-file-deletion FAILED:"
+    },
+    {
+      "name": "verify-no-native-browser-dialogs-ratchet.mjs",
+      "detail": "verify-no-native-browser-dialogs-ratchet FAILED — 9 native window.confirm/alert/prompt call site(s), baseline is 0. A native dialog freezes the page's event loop and makes the Chrome extension stop re"
+    },
+    {
+      "name": "verify-ops-sortable-headers.mjs",
+      "detail": "- apps/frontend/src/pages/driver-finance/components/SettlementsTable.tsx: column \"period\" must be sortable: true"
+    },
+    {
+      "name": "verify-owner-authorization.mjs",
+      "detail": "verify-owner-authorization: FAIL — first argument must be an AUTH-<NNN> id (got null)."
+    },
+    {
+      "name": "verify-period-comparison-page-uses-paritytable.mjs",
+      "detail": "- apps/frontend/src/pages/accounting/PeriodComparisonPage.tsx: must keep the money() USD cents formatter"
+    },
+    {
+      "name": "verify-quickcreate-workorder-title-cased.mjs",
+      "detail": "verify-quickcreate-workorder-title-cased FAILED:; --selftest failed"
+    },
+    {
+      "name": "verify-regclass-fallback-intent.mjs",
+      "detail": "Fix: throw, fail closed, or degrade WITH a signal. Copy fuel.loves_prices_daily."
+    },
+    {
+      "name": "verify-reports-fuel-reconciliation-display-dates.mjs",
+      "detail": "verify-reports-fuel-reconciliation-display-dates FAIL: apps/frontend/src/pages/reports/FuelReconciliationPage.tsx: unmatched WO wo_date must render via formatDateUS(row.wo_date); --selftest failed"
+    },
+    {
+      "name": "verify-revrec-bill-posting-tagged-invoice-source.mjs",
+      "detail": "--selftest failed: FAIL(selftest): offender B mutation did not change the file — pattern out of sync"
+    },
+    {
+      "name": "verify-settlement-close-posts-gl.mjs",
+      "detail": "verify-settlement-close-posts-gl: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B owner rul"
+    },
+    {
+      "name": "verify-settlements-grid-honest-labels.mjs",
+      "detail": "[verify-settlements-grid-honest-labels] FAIL: table settlement drill must bind row.id to display_id; table period must format both dates; --selftest failed"
+    },
+    {
+      "name": "verify-surface-bar-paritydrawer-inventory.mjs",
+      "detail": "- pages/settlements/SettlementCreatorDrawer.tsx: ParityDrawer host has no required.json leaf.surface_path / FILE_OWNED_BY_LEAF / ALLOWED_NESTED — add a leaf or map it"
+    },
+    {
+      "name": "verify-trial-balance-unchanged-across-purge.mjs",
+      "detail": "usage: --capture <label> | --compare <before-label> <after-label> | --selftest"
+    },
+    {
+      "name": "verify-void-source-linked-reads-full-je.mjs",
+      "detail": "verify-void-source-linked-reads-full-je: FAIL — IN-subquery must discover JE ids from source_transaction_type/id ($3/$2); --selftest failed"
+    },
+    {
+      "name": "verify-active-dispatch-load-complete-range.mjs",
+      "detail": "--selftest failed: verify-truck-planner-complete-unit-roster SELFTEST FAILED: mutation survived: retired unit admitted"
+    },
+    {
+      "name": "verify-ap-bill-column-wave.mjs",
+      "detail": "[verify-ap-bill-column-wave] FAILED — 2 check(s) regressed:"
+    },
+    {
+      "name": "verify-audit-actor-and-noop-guard.mjs",
+      "detail": "✗ audit.tg_audit_row: the no-op skip does not compare the WHOLE remaining document (to_jsonb(OLD) - keys IS NOT DISTINCT FROM to_jsonb(NEW) - keys). Any narrower test suppresses REAL changes and silen"
+    },
+    {
+      "name": "verify-bank-recon-accept-closed-session-conflict.mjs",
+      "detail": "- accept-match and manual-match must map the typed closed-session error to HTTP 409; --selftest failed"
+    },
+    {
+      "name": "verify-banking-home-transfers-reconcile-human-labels.mjs",
+      "detail": "verify-banking-home-transfers-reconcile-human-labels FAILED:; --selftest failed"
+    },
+    {
+      "name": "verify-cash-advance-load-trailer-entity-picker.mjs",
+      "detail": "- apps/frontend/src/pages/cash-advances/components/CreateAdvanceModal.tsx: Combobox import must be removed"
+    },
+    {
+      "name": "verify-cash-flow-report-route-fix-no-fake-zero.mjs",
+      "detail": "- the bankRes query block was not found (route shape changed?); --selftest failed"
+    },
+    {
+      "name": "verify-coa-role-values-registered-in-check-constraint.mjs",
+      "detail": "if (errors.length) throw new Error(errors.join(\"; \"));; --selftest failed"
+    },
+    {
+      "name": "verify-compliance-property-tax-add-line-chrome-law.mjs",
+      "detail": "- asset-line button must read '+ Create Line' (chrome law item 8); --selftest failed"
+    },
+    {
+      "name": "verify-cu09-create-surfaces.mjs",
+      "detail": "verify-cu09-create-surfaces FAILED:; --selftest failed"
+    },
+    {
+      "name": "verify-customer-activity-feed-wired.mjs",
+      "detail": "- activity feed cannot recover from an out-of-range page after history changes; --selftest failed"
+    },
+    {
+      "name": "verify-d1-load-stop-source-attribution.mjs",
+      "detail": "verify-d1-load-stop-source-attribution FAIL: PWA arrival source; PWA departure source; --selftest failed"
+    },
+    {
+      "name": "verify-dispatch-board-live-history.mjs",
+      "detail": "FAIL verify-dispatch-board-live-history: board_scope=live must exclude the closed cohort when no explicit status filter; --selftest failed"
+    },
+    {
+      "name": "verify-dispatch-in-shop-feed-wired.mjs",
+      "detail": "FAIL verify-dispatch-in-shop-feed-wired: failed in-shop feed must suppress stale rows and section counts; --selftest failed"
+    },
+    {
+      "name": "verify-dispatch-no-navy-table-header.mjs",
+      "detail": "FAIL apps/frontend/src/pages/dispatch/DispatchBoard.tsx: navy table/section header fill still present (/bg-\\[#14314F\\]/i)"
+    },
+    {
+      "name": "verify-driver-profile-settlement-reverse-link.mjs",
+      "detail": "- apps/backend/src/mdata/driver-aggregate.service.ts: weeks CTE must SELECT id::text AS settlement_id — without it no per-row link is possible; --selftest failed"
+    },
+    {
+      "name": "verify-e10-never-posted-document-is-not-skipped.mjs",
+      "detail": "- draft/proforma documents are not visibly named-and-not-voided anywhere in the file.; --selftest failed"
+    },
+    {
+      "name": "verify-edit-trailer-record-lifecycle.mjs",
+      "detail": "verify-edit-trailer-record-lifecycle FAIL — modal cancel no-change and success use reset close"
+    },
+    {
+      "name": "verify-feed-day.mjs",
+      "detail": "verify-feed-day FAIL — --day is required (e.g. --day 8/10/26), or use --all."
+    },
+    {
+      "name": "verify-finance-landing-hub.mjs",
+      "detail": "- legacy /finance/hub must keep the Hub tab active"
+    },
+    {
+      "name": "verify-fine-amend-guards.mjs",
+      "detail": "--selftest failed: verify-fine-amend-guards SELFTEST FAILED:"
+    },
+    {
+      "name": "verify-fleet-bulk-update-all-or-nothing.mjs",
+      "detail": "--selftest failed: [verify-fleet-bulk-update-all-or-nothing] SELFTEST FAIL: factory 409 mutation survived"
+    },
+    {
+      "name": "verify-fleet-counters-match-rows.mjs",
+      "detail": "--selftest failed: if (mutated === source || audit(mutated).length === 0) throw new Error(`planted defect ${index + 1} escaped`);"
+    },
+    {
+      "name": "verify-from-load-rate-resync.mjs",
+      "detail": "- apps/backend/src/dispatch/book-load.service.ts: must catch load_has_no_rate and audit proforma_skipped_zero_rate"
+    },
+    {
+      "name": "verify-invoice-factor-profile-linkage.mjs",
+      "detail": "verify-invoice-factor-profile-linkage: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B owne"
+    },
+    {
+      "name": "verify-lane-mileage-merge-and-rescore.mjs",
+      "detail": "- merged n_practical is not a sum across the group's variant rows; --selftest failed"
+    },
+    {
+      "name": "verify-live-load-number-not-self-referential.mjs",
+      "detail": "verify-live-load-number-not-self-referential: UNVERIFIED — DATABASE_URL not set, cannot check live"
+    },
+    {
+      "name": "verify-load-creators-mint-or-audit-driver-pay.mjs",
+      "detail": "- apps/backend/src/onboarding/seed-sample-data.ts: listed in KNOWN_GAPS but no longer creates loads with a driver — delete the entry.; --selftest failed"
+    },
+    {
+      "name": "verify-load-linkage-renders-both-directions.mjs",
+      "detail": "verify-load-linkage-renders-both-directions: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-"
+    },
+    {
+      "name": "verify-lst-orph02-held-registry-truth.mjs",
+      "detail": "- companion scripts/verify-held-registry-ledger-parity.mjs exited 1"
+    },
+    {
+      "name": "verify-master-data-create-targets.mjs",
+      "detail": "✗ D1-1 REGRESSION: apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx no longer calls createCustomer(...). The customer create must target the real mdata.customers endpoint.; --selftest failed"
+    },
+    {
+      "name": "verify-no-leak-test-pollution.mjs",
+      "detail": "✗ scripts/verify-cash-flow-row-adjustments-seq-grant.mjs: INSERTs into a live business schema without assertNotProdTarget() — add the prod refusal (this is the LST-SEED-01 vector: 259 rows written int; --selftest failed"
+    },
+    {
+      "name": "verify-no-orphan-bookend-settlement-reuse.mjs",
+      "detail": "✗ apps/backend/src/driver-finance/settlements-load-bookended.service.ts: reuse does not require first_load_id IS NOT NULL. A settlement with no anchor load has no trip to continue, so reusing it silen"
+    },
+    {
+      "name": "verify-no-sample-data-holds-a-real-number.mjs",
+      "detail": "FAIL: DATABASE_URL not set -- refusing to pass a money-adjacent guard that never ran against a live DB."
+    },
+    {
+      "name": "verify-obligation-reconcile-settlement-net-pay-column.mjs",
+      "detail": "verify-obligation-reconcile-settlement-net-pay-column FAILED:; --selftest failed"
+    },
+    {
+      "name": "verify-one-source-per-number.mjs",
+      "detail": "verify-one-source-per-number: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B owner ruling)"
+    },
+    {
+      "name": "verify-operational-compliance-module-doors.mjs",
+      "detail": "operational/compliance module-door guard failed:"
+    },
+    {
+      "name": "verify-payrun-close-reimbursements-and-active-lines.mjs",
+      "detail": "verify-payrun-close-reimbursements-and-active-lines FAILED:; --selftest failed"
+    },
+    {
+      "name": "verify-reports-geofence-reconciliation-display-dates.mjs",
+      "detail": "verify-reports-geofence-reconciliation-display-dates FAIL: apps/frontend/src/pages/reports/GeofenceReconciliationReport.tsx: emptyText must interpolate formatDateUS(appliedDate), not raw appliedDate; --selftest failed"
+    },
+    {
+      "name": "verify-reserve-docs-liabilities-human-labels.mjs",
+      "detail": "--selftest failed: verify-reserve-docs-liabilities-human-labels SELFTEST FAILED: planted defect not caught"
+    },
+    {
+      "name": "verify-round-trips-bar-dates.mjs",
+      "detail": "- roundTripsLegs: RT_TIMELINE_STATUSES no longer includes delivered_pending_docs — delivered units drop off the timeline; --selftest failed"
+    },
+    {
+      "name": "verify-scheduled-report-catalog-shared.mjs",
+      "detail": "- apps/frontend/src/pages/reports/ScheduleReportModal.tsx no longer synthesizes a fallback option for an unknown reportId (belt-and-suspenders removed)"
+    },
+    {
+      "name": "verify-seed-document-is-whole.mjs",
+      "detail": "verify-seed-document-is-whole FAIL — DATABASE_URL not set. This guard's only job is checking live wholeness; a skip here would be a false PASS, not a real one."
+    },
+    {
+      "name": "verify-selftests-can-fail.mjs",
+      "detail": "verify-selftests-can-fail FAILED:; --selftest failed"
+    },
+    {
+      "name": "verify-shared-picker-created-option-dedupe.mjs",
+      "detail": "- EntityPicker must use the shared canonical-id merge; --selftest failed"
+    },
+    {
+      "name": "verify-standing-directive-present.mjs",
+      "detail": "- AGENTS.md: missing reference to SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md; --selftest failed"
+    },
+    {
+      "name": "verify-void-stamp-columns.mjs",
+      "detail": "verify-void-stamp-columns: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B owner ruling)."
+    },
+    {
+      "name": "verify-a4-audit-emit-accounting.mjs",
+      "detail": "[verify-a4] FAILED; --selftest failed"
+    },
+    {
+      "name": "verify-accounting-qbo-chrome-modals-batch2.mjs",
+      "detail": "- chrome.toolbar_filter: BillsPage CollapsedListFilters Apply/Reset/Cancel triad: pattern miss in apps/frontend/src/pages/accounting/BillsPage.tsx; --selftest failed"
+    },
+    {
+      "name": "verify-audit-emit-coverage.mjs",
+      "detail": "✗ apps/backend/src/accounting/bills.routes.ts"
+    },
+    {
+      "name": "verify-banking-active-categorize-path.mjs",
+      "detail": "- apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx — must sync selectedTransactionType when initialTransactionType changes (deep-link ?type=)"
+    },
+    {
+      "name": "verify-banking-bulk-categorize-posts-je.mjs",
+      "detail": "--selftest failed: throw new Error(`FAIL case was not detected for legacy bulk-categorize: ${legacyFails.join(\"; \")}`);"
+    },
+    {
+      "name": "verify-banking-matched-bill-drill.mjs",
+      "detail": "- apps/backend/src/integrations/plaid/link.routes.ts: both transaction readers must project and company-scope matched settlements (labels 0/2, joins 2/2; never use phantom driver_finance.settlements —; --selftest failed"
+    },
+    {
+      "name": "verify-bill-detail-url-sort.mjs",
+      "detail": "verify-bill-detail-url-sort — FAILED"
+    },
+    {
+      "name": "verify-break-even-route-wired.mjs",
+      "detail": "- apps/backend/src/index.ts: registerBreakEvenRoutes(app) is never called — GET /api/v1/finance/break-even will 404 (GO-0021-BREAK-EVEN-ROUTE-NEVER-REGISTERED); --selftest failed"
+    },
+    {
+      "name": "verify-cache-tier-coverage.mjs",
+      "detail": "- apps/backend/src/integrations/samsara/routes-integration.service.ts: direct SamsaraClient usage must route through cache tier accessor"
+    },
+    {
+      "name": "verify-cargo-claims-parity-and-picker-search.mjs",
+      "detail": "--selftest failed: verify-cargo-claims-parity-and-picker-search SELFTEST FAILED:"
+    },
+    {
+      "name": "verify-cash-advances-f9930-no-silent-catch.mjs",
+      "detail": "- apps/backend/src/cash-advances/cash-advances.routes.ts: expected untouched financial reverse-guard catch (CASH-ADV-F9930) not found — guard out of sync; --selftest failed"
+    },
+    {
+      "name": "verify-dispatch-filter-entity-pickers.mjs",
+      "detail": "--selftest failed: throw new Error(`customer-filter mutation ${index + 1} escaped`);"
+    },
+    {
+      "name": "verify-dispatch-overview-dashboard-error.mjs",
+      "detail": "--selftest failed: verify-dispatch-overview-dashboard-error: SELFTEST FAIL — surviving mutations: honest KPI value"
+    },
+    {
+      "name": "verify-display-id-lookups-entity-scoped.mjs",
+      "detail": "✗ 1 NEW unscoped display_id lookup(s) — this is the shape that nearly voided a real PAID invoice:; --selftest failed"
+    },
+    {
+      "name": "verify-driver-activation-lifecycle-truth.mjs",
+      "detail": "FAIL verify-driver-activation-lifecycle-truth: deactivate write is company-active and returned; --selftest failed"
+    },
+    {
+      "name": "verify-driver-bill-has-miles-and-rate.mjs",
+      "detail": "verify-driver-bill-has-miles-and-rate: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B owne"
+    },
+    {
+      "name": "verify-driver-column-remaining-modules.mjs",
+      "detail": "- apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx: missing real driver_id/EntityLink kind=\"driver\" wiring; --selftest failed"
+    },
+    {
+      "name": "verify-driver-profile-compact-layout.mjs",
+      "detail": "- driver profile must use a bounded responsive layout; --selftest failed"
+    },
+    {
+      "name": "verify-driver-roster-status-filter-combobox.mjs",
+      "detail": "]) if (!source.includes(token)) throw new Error(`missing Driver roster status contract: ${token}`);"
+    },
+    {
+      "name": "verify-edit-unit-action-company-lifecycle.mjs",
+      "detail": "verify-edit-unit-action-company-lifecycle FAIL: caller copies patch; --selftest failed"
+    },
+    {
+      "name": "verify-factoring-pledge-nets-credit-memos.mjs",
+      "detail": "FAIL: factoring routes must join credit_memo_applications; --selftest failed"
+    },
+    {
+      "name": "verify-factoring-surface.mjs",
+      "detail": "- TAB COUNT: top-level nav items must be explicit literals, not a top-level \"...\" spread (can silently exceed 6 at runtime); --selftest failed"
+    },
+    {
+      "name": "verify-faro-default-interest-accrues-from-day-35.mjs",
+      "detail": "verify-faro-default-interest-accrues-from-day-35: UNVERIFIED — DATABASE_URL not set, cannot check live"
+    },
+    {
+      "name": "verify-faro-repurchase-price-ties-to-statement.mjs",
+      "detail": "verify-faro-repurchase-price-ties-to-statement UNVERIFIED: EXPECTED_REPURCHASE_TOTAL_CENTS is not yet transcribed from a real, current Faro statement -- there is nothing to tie out against. This is ho"
+    },
+    {
+      "name": "verify-form-425c-exhibits.mjs",
+      "detail": "verify:form-425c-exhibits — FAILED"
+    },
+    {
+      "name": "verify-form425c-exhibits-no-stolen-prefix.mjs",
+      "detail": "- apps/frontend/src/pages/form425c/tabs/ProfilesTab.tsx: missing Exhibit required label"
+    },
+    {
+      "name": "verify-fuel-gl-no-double-post.mjs",
+      "detail": "verify:fuel-gl-no-double-post FAILED:"
+    },
+    {
+      "name": "verify-geocode-provider-is-reachable.mjs",
+      "detail": "verify-geocode-provider-is-reachable: FAIL — geocoding a known-good US address failed: reason=provider_unavailable"
+    },
+    {
+      "name": "verify-law-of-the-land-autoload-pointer.mjs",
+      "detail": "- Consolidated index pointer missing in AGENTS.md"
+    },
+    {
+      "name": "verify-list-segment-tabs-present.mjs",
+      "detail": "- apps/frontend/src/pages/Vendors.tsx: no <SecondaryNavTabs> at all — the §7 segment tab set is gone (b3690eb68 class)."
+    },
+    {
+      "name": "verify-load-column-all-module-remainder.mjs",
+      "detail": "- dispatch creator must trigger canonical reload after success; --selftest failed"
+    },
+    {
+      "name": "verify-load-drawer-money-query-error-disclosure.mjs",
+      "detail": "verify-load-drawer-money-query-error-disclosure FAIL; --selftest failed"
+    },
+    {
+      "name": "verify-load-factoring-advance-banking-reverse-section.mjs",
+      "detail": "- apps/frontend/src/pages/banking/BankingHome.tsx: must render Load EntityPicker allowCreate={false} dataTestId=banking-factoring-filter-load"
+    },
+    {
+      "name": "verify-load-write-paths-run-driver-qualification.mjs",
+      "detail": "- apps/backend/src/driver-finance/settlement-creator.service.ts: writes/updates a driver onto a load (INSERT/UPDATE mdata.loads + assigned_primary_driver_id) but never calls assertDriverQualifiedForLo; --selftest failed"
+    },
+    {
+      "name": "verify-m2-integrity-position-history.mjs",
+      "detail": "Missing DATABASE_URL or DATABASE_DIRECT_URL"
+    },
+    {
+      "name": "verify-matrix-metrics-tally.mjs",
+      "detail": "- OUTBOX-DEVIN.md must keep historical LIVE PASS lines (have 0, need >=3000); --selftest failed"
+    },
+    {
+      "name": "verify-no-stranded-intermediate.mjs",
+      "detail": "verify-no-stranded-intermediate FAIL CLOSED: wiring of === INV-6  STRANDED INTERMEDIATE ACCOUNTS + unbilled_revenue is present in verify-gl-invariants.sql but this check cannot PASS without a Neon INV"
+    },
+    {
+      "name": "verify-non-empty-certification.mjs",
+      "detail": "verify-non-empty-certification FAIL CLOSED: wiring of === INV-7  TEST / SAMPLE DATA INSIDE THE TRIAL BALANCE + j.is_sample_data is present in verify-gl-invariants.sql but this check cannot PASS withou"
+    },
+    {
+      "name": "verify-presettlement-renders-pending.mjs",
+      "detail": "- settlementLabel() still returns the retired \"Open\" label -- \"Open\" describes a status, not a settlement number."
+    },
+    {
+      "name": "verify-reconciliation-unmatch-clears-all-six-kinds.mjs",
+      "detail": "[verify-reconciliation-unmatch-clears-all-six-kinds] FAILED:"
+    },
+    {
+      "name": "verify-rls-uuid-cast-nullif.mjs",
+      "detail": "- 202614380000_driver_samsara_accounts_operating_company.sql:94: bare current_setting()::uuid without NULLIF wrap"
+    },
+    {
+      "name": "verify-road-service-ticket-create-result.mjs",
+      "detail": "--selftest failed: verify-road-service-ticket-create-result selftest mutation escaped: { config: { rateLimit: { max: 60, timeWindow: \"1 minute\" } } },"
+    },
+    {
+      "name": "verify-safety-complete-driver-roster-vertical.mjs",
+      "detail": "--selftest failed: verify-truck-planner-complete-unit-roster SELFTEST FAILED: mutation survived: retired unit admitted"
+    },
+    {
+      "name": "verify-safety-driver-profile-connectivity.mjs",
+      "detail": "--selftest failed: if (!failures(mutant).includes(expected)) throw new Error(`mutation escaped: ${expected}`);"
+    },
+    {
+      "name": "verify-safety-orph03-forfeiture-audit-timeline.mjs",
+      "detail": "--selftest failed: throw new Error(`SELFTEST FAIL: \"${c.name}\" not caught`);"
+    },
+    {
+      "name": "verify-test-typecheck-ratchet.mjs",
+      "detail": "spawn: spawnSync /opt/homebrew/Cellar/node/26.3.0/bin/node ETIMEDOUT"
+    },
+    {
+      "name": "verify-users-add-user-submits.mjs",
+      "detail": "spawn: spawnSync /opt/homebrew/Cellar/node/26.3.0/bin/node ETIMEDOUT"
+    },
+    {
+      "name": "verify-vend-s03-s04-dedup-and-types.mjs",
+      "detail": "--selftest failed: verify-vend-s03-s04-dedup-and-types SELFTEST FAIL — 2-arg PATCH resolve not caught []"
+    },
+    {
+      "name": "verify-vendors-qbo-chrome-leaves.mjs",
+      "detail": "- detail.w9_1099: VendorDetail W-9/1099 tab real field grid + Documents drill-through: pattern miss in apps/frontend/src/pages/VendorDetail.tsx; --selftest failed"
+    },
+    {
+      "name": "verify-void-stamps-the-spec-liveness-column.mjs",
+      "detail": "verify-void-stamps-the-spec-liveness-column: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-"
+    },
+    {
+      "name": "verify-wo-console-list-uses-paritytable.mjs",
+      "detail": "- apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx: missing column label: \"Est / Act\""
+    },
+    {
+      "name": "verify-accounting-audit-trail-tenant-scope.mjs",
+      "detail": "--selftest failed: verify:accounting-audit-trail-tenant-scope --selftest FAIL — plant escaped: list route company wrapper"
+    },
+    {
+      "name": "verify-accounting-qbo-chrome-toolbar-range-gear-and-expenses-create.mjs",
+      "detail": "- chrome.toolbar_range: BillsPage has two real DatePicker range controls (dateFrom/dateTo): pattern miss in apps/frontend/src/pages/accounting/BillsPage.tsx; --selftest failed"
+    },
+    {
+      "name": "verify-acct-list-uuid-human-labels.mjs",
+      "detail": "--selftest failed: verify-acct-list-uuid-human-labels SELFTEST FAILED: planted defect not caught"
+    },
+    {
+      "name": "verify-acct-surf-03-bill-payment.mjs",
+      "detail": "- VERIFY-1: BillPaymentsListPage must URL-sync create open/close"
+    },
+    {
+      "name": "verify-banking-nav-clickthrough.mjs",
+      "detail": "- apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx — expected the row click to drill through to the driver (/drivers/:id)"
+    },
+    {
+      "name": "verify-banking-reconcile-expense-candidate.mjs",
+      "detail": "FAIL verify-banking-reconcile-expense-candidate: expense reconcile-candidate wiring missing: candidate-select; --selftest failed"
+    },
+    {
+      "name": "verify-banking-reverse-link-list-surfaces.mjs",
+      "detail": "- reconciliation transactions resolve every matched label; --selftest failed"
+    },
+    {
+      "name": "verify-bills-open-status-spelling-complete.mjs",
+      "detail": "[verify-bills-open-status-spelling-complete] FAILED — 1 leaf(ves) regressed off the full open-bill status spelling:"
+    },
+    {
+      "name": "verify-bills-void-filter-uses-revoked-at.mjs",
+      "detail": "✗ apps/backend/src/accounting/posted-while-tour-open-report.service.ts: filters b.voided_at without also testing revoked_at. voidBill() writes revoked_at and never voided_at, so this predicate matches"
+    },
+    {
+      "name": "verify-cash-advance-mark-disbursed-bank-txn-picker.mjs",
+      "detail": "- imports the shared Combobox component; --selftest failed"
+    },
+    {
+      "name": "verify-cash-flow-overview-avg-flow-sign.mjs",
+      "detail": "--selftest failed: verify-cash-flow-overview-avg-flow-sign SELFTEST FAILED:"
+    },
+    {
+      "name": "verify-catalog-factory-coverage.mjs",
+      "detail": "verify:catalog-factory-coverage FAIL: catalog tables without factory registration: blocked_feature_flags, cash_flow_adjustment_reasons, driver_tags, lane_mileage, point_mileage"
+    },
+    {
+      "name": "verify-clickable-kpis.mjs",
+      "detail": "--selftest failed: verify:clickable-kpis selftest detected 2/4 planted defects"
+    },
+    {
+      "name": "verify-company-membership-assert.mjs",
+      "detail": "verify-company-membership-assert FAILED:"
+    },
+    {
+      "name": "verify-company-violation-creator-draft-lifecycle.mjs",
+      "detail": "verify-company-violation-creator-draft-lifecycle FAIL — create snapshots company and payload"
+    },
+    {
+      "name": "verify-counterparty-side-search.mjs",
+      "detail": "[verify-counterparty-side-search] FAIL — 2 issue(s)"
+    },
+    {
+      "name": "verify-customer-relationship-health-fails-honestly.mjs",
+      "detail": "FAIL: detail badge labels a failed read unavailable; detail badge styles a failed read unavailable"
+    },
+    {
+      "name": "verify-customers-list-master-detail.mjs",
+      "detail": "- apps/frontend/src/pages/customers/CustomerListSidebar.tsx: roster sidebar must release its desktop width below xl; --selftest failed"
+    },
+    {
+      "name": "verify-customers-reverse-link-detail.mjs",
+      "detail": "- invoice list destination sends customer_id to producer; --selftest failed"
+    },
+    {
+      "name": "verify-detention-board-complete-range.mjs",
+      "detail": "FAIL: board page must consume getDetentionBoard with the canonical server range/sort contract; --selftest failed"
+    },
+    {
+      "name": "verify-disp-s27-s31-planners-pack.mjs",
+      "detail": "verify-disp-s27-s31-planners-pack FAILED:; --selftest failed"
+    },
+    {
+      "name": "verify-disp-wire-07-departure-evidence.mjs",
+      "detail": "- apps/backend/src/telematics/geofence-detector.service.ts: writes actual_departure_at = $4::timestamptz, — a client-supplied value can arrive null, leaving a delivered load with NO delivery evidence."
+    },
+    {
+      "name": "verify-dispatch-board-sections-and-columns.mjs",
+      "detail": "FAIL verify-dispatch-board-sections-and-columns: DispatchBoard section headers still hard-code navy #14314F — use colors.tableHeaderBg; --selftest failed"
+    },
+    {
+      "name": "verify-docs-module-reverse-link-wired.mjs",
+      "detail": "FAIL verify-docs-module-reverse-link-wired: apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx: load Documents tab reverse-link mount not found.; --selftest failed"
+    },
+    {
+      "name": "verify-dot-inspection-action-company-lifecycle.mjs",
+      "detail": "- create uses mutable company/form; --selftest failed"
+    },
+    {
+      "name": "verify-driver-escrow-balances-available-count-matches-nonzero.mjs",
+      "detail": "- apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx \"Driver balances available\" stat no longer renders the filtered driversWithEscrowBalance count; --selftest failed"
+    },
+    {
+      "name": "verify-driver-pay-preview-not-customer-total.mjs",
+      "detail": "- apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx: unavailable preview copy must disclose both submit-time active-rate-card fallback and the honest skipped-no-rate outcome.; --selftest failed"
+    },
+    {
+      "name": "verify-driver-pwa-vitest.mjs",
+      "detail": "spawn: spawnSync /opt/homebrew/Cellar/node/26.3.0/bin/node ETIMEDOUT"
+    },
+    {
+      "name": "verify-driver-settlements-section-uses-paritytable.mjs",
+      "detail": "- apps/frontend/src/components/driver-profile/SettlementsSection.tsx: missing column label: \"Week ending\""
+    },
+    {
+      "name": "verify-drivers-active-path.mjs",
+      "detail": "- Drivers.tsx must expose Team Splits + Disputes tabs in the unified chrome"
+    },
+    {
+      "name": "verify-drug-alcohol-action-company-lifecycle.mjs",
+      "detail": "- test create uses mutable company/form; --selftest failed"
+    },
+    {
+      "name": "verify-entity-label-rejects-uuid-shaped-name.mjs",
+      "detail": "✗ apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx: must call entityLabel for display name; --selftest failed"
+    },
+    {
+      "name": "verify-event-log-spine.mjs",
+      "detail": "Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@supabase/supabase-js' imported from /private/tmp/ih35-codex-cleanup-measure-5/scripts/verify-event-log-spine.mjs"
+    },
+    {
+      "name": "verify-factoring-event-one-live-claim.mjs",
+      "detail": "verify-factoring-event-one-live-claim: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B owne"
+    },
+    {
+      "name": "verify-factoring-invoice-detail-url-sort.mjs",
+      "detail": "verify-factoring-invoice-detail-url-sort — FAILED"
+    },
+    {
+      "name": "verify-factoring-nav-reachable.mjs",
+      "detail": "spawn: spawnSync /opt/homebrew/Cellar/node/26.3.0/bin/node ETIMEDOUT"
+    },
+    {
+      "name": "verify-factoring-poster-secured-borrowing.mjs",
+      "detail": "verify:factoring-poster-secured-borrowing — FAILED"
+    },
+    {
+      "name": "verify-factoring-settlement-number-real-join.mjs",
+      "detail": "- apps/backend/src/accounting/load-cost-rollup.sql.ts: could not find the settlement_number subquery."
+    },
+    {
+      "name": "verify-fail-dd2-pending-deduction-surfaces.mjs",
+      "detail": "- apps/frontend/src/pages/drivers/PendingSettlementDeductionsPanel.tsx: panel must request status=pending (FAIL-DD2)"
+    },
+    {
+      "name": "verify-fleettable-unit-cell-maintenance-mode.mjs",
+      "detail": "verify-fleettable-unit-cell-maintenance-mode FAILED —; --selftest failed"
+    },
+    {
+      "name": "verify-lists-catalog-search-debounced.mjs",
+      "detail": "verify-lists-catalog-search-debounced FAIL — apps/frontend/src/pages/lists/LocationsListPage.tsx: raw per-keystroke search forbidden; --selftest failed"
+    },
+    {
+      "name": "verify-load-column-all-modules.mjs",
+      "detail": "- apps/frontend/src/pages/dispatch/TripProfitability.tsx: Trip-profitability load drill; --selftest failed"
+    },
+    {
+      "name": "verify-load-state-machine-parity.mjs",
+      "detail": "Canon is apps/backend/src/dispatch/load-state-machine.ts. Change it first, then mirror into packages/shared-types/src/dispatch/load-state-machine.ts.; --selftest failed"
+    },
+    {
+      "name": "verify-master-data-protected.mjs",
+      "detail": "verify-master-data-protected: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B owner ruling)"
+    },
+    {
+      "name": "verify-mdata-loads-driver-dqf-gate.mjs",
+      "detail": "[verify-mdata-loads-driver-dqf-gate] FAILED:"
+    },
+    {
+      "name": "verify-moneyinput-single-frame-vertical.mjs",
+      "detail": "--selftest failed: verify-moneyinput-single-frame-vertical FAIL: planted defect survived: input's own frame silently dropped"
+    },
+    {
+      "name": "verify-no-execsync-on-request-path.mjs",
+      "detail": "verify-no-execsync-on-request-path FAILED — apps/backend/src/program/module-matrix.service.ts: synchronous fs.readFileSync(...) call present — blocks the whole event loop. Use node:fs/promises instead; --selftest failed"
+    },
+    {
+      "name": "verify-no-uuid-label-rendering.mjs",
+      "detail": "✗ 2 NEW truncated-uuid label(s) — the ratchet may only shrink:; --selftest failed"
+    },
+    {
+      "name": "verify-paritytable-group-bands.mjs",
+      "detail": "- apps/frontend/src/components/parity/ParityTable.tsx: ungrouped fallback `pageRows.map((row) => renderDataRow(row))` must be preserved"
+    },
+    {
+      "name": "verify-plaid-escrow-billpay-human-labels.mjs",
+      "detail": "--selftest failed: verify-plaid-escrow-billpay-human-labels SELFTEST FAILED: planted defect not caught"
+    },
+    {
+      "name": "verify-reports-audit-customer-vendor-subject-links.mjs",
+      "detail": "vendor subject must project its canonical human label"
+    },
+    {
+      "name": "verify-reports-scheduled-custom-raw-chrome-delete.mjs",
+      "detail": "verify-reports-scheduled-custom-raw-chrome-delete FAIL: ScheduledReportsPage must import formatDateTimeUS; --selftest failed"
+    },
+    {
+      "name": "verify-requireauth-returns-reply.mjs",
+      "detail": "apps/backend/src/telematics/stops-geocode-backfill.routes.ts:10 \"if (!requireAuth(req, reply)) return;\""
+    },
+    {
+      "name": "verify-samsara-units-vin-collision-isolated.mjs",
+      "detail": "--selftest failed: verify-samsara-units-vin-collision-isolated --selftest FAILED: mutation was not caught"
+    },
+    {
+      "name": "verify-subscription-manager-delivery-banner.mjs",
+      "detail": "--selftest failed: if (mutated === source) throw new Error(`mutation \"${name}\" did not change the source — test is inert`);"
+    },
+    {
+      "name": "verify-vendor-money-human-labels.mjs",
+      "detail": "--selftest failed: verify-vendor-money-human-labels SELFTEST FAILED: planted defect not caught"
+    },
+    {
+      "name": "verify-accounting-qbo-chrome-toolbar-search-and-panels.mjs",
+      "detail": "- chrome.toolbar_search: search input is wired into the CollapsedListFilters toolbar: pattern miss in apps/frontend/src/pages/accounting/BillsPage.tsx; --selftest failed"
+    },
+    {
+      "name": "verify-acct-period-close-01-ensureopenperiod-wired.mjs",
+      "detail": "- apps/backend/src/accounting/bank-recon/match.service.ts: does not import ensureOpenPeriod from posting-engine.service.js; --selftest failed"
+    },
+    {
+      "name": "verify-adjacent-entity-filter-silent-apply.mjs",
+      "detail": "apps/frontend/src/pages/accounting/ExpensesListPage.tsx: adjacent EntityPicker still silent-applies (4)"
+    },
+    {
+      "name": "verify-audit-events-column-names.mjs",
+      "detail": "verify:audit-events-column-names FAILED:"
+    },
+    {
+      "name": "verify-bank-recon-already-matched-conflict-status.mjs",
+      "detail": "--selftest failed: verify-bank-recon-already-matched-conflict-status --selftest FAILED: mutation was not caught"
+    },
+    {
+      "name": "verify-bill-display-id-stamped.mjs",
+      "detail": "✗ apps/backend/src/accounting/bills.service.ts never calls nextBillDisplayId, so a created bill keeps display_id NULL and can only be cited by raw UUID (ACCT-F186). Bills were the ONLY money document ; --selftest failed"
+    },
+    {
+      "name": "verify-blocker-errors-carry-message.mjs",
+      "detail": "verify-blocker-errors-carry-message: FAIL; --selftest failed"
+    },
+    {
+      "name": "verify-cancellations-report-staged-filters.mjs",
+      "detail": "- must use CollapsedListFilters + useStagedListFilters"
+    },
+    {
+      "name": "verify-company-violations-error-messages.mjs",
+      "detail": "verify-company-violations-error-messages: FAILED; --selftest failed"
+    },
+    {
+      "name": "verify-cross-package-imports-resolve.mjs",
+      "detail": "✗ apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx imports \"type\" — not exported from @ih35/shared-types; --selftest failed"
+    },
+    {
+      "name": "verify-datepicker-label-clickthrough-reopen.mjs",
+      "detail": "--selftest failed: FAIL(selftest): pre-fix-offender mutation did not change the source — regex out of sync with the real block"
+    },
+    {
+      "name": "verify-disp-s33-s36-surface.mjs",
+      "detail": "verify-disp-s33-s36-surface FAILED:; --selftest failed"
+    },
+    {
+      "name": "verify-dispatch-board-unassigned-units-error-state.mjs",
+      "detail": "verify-dispatch-board-unassigned-units-error-state FAIL — 1 problem(s):; --selftest failed"
+    },
+    {
+      "name": "verify-dispatch-driver-wiring.mjs",
+      "detail": "- apps/frontend/src/pages/dispatch/DispatchBoard.tsx: missing real driver_id/EntityLink kind=\"driver\" wiring; --selftest failed"
+    },
+    {
+      "name": "verify-dispatch-load-detail-deactivated-customer-left-join.mjs",
+      "detail": "- apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx: both notes/package and dispatch-flag writes must submit immutable load company (found 1/2); --selftest failed"
+    },
+    {
+      "name": "verify-dispatch-top-bar-single-primary-action.mjs",
+      "detail": "- apps/frontend/src/pages/Dispatch.tsx: \"Trip Pairing\" must not duplicate DispatchSubnav's own nav item inside the board-view toolbar; --selftest failed"
+    },
+    {
+      "name": "verify-driver-finance-reverse-leaves.mjs",
+      "detail": "- bank escrow driver reverse/scope missing; --selftest failed"
+    },
+    {
+      "name": "verify-entity-audit-history-exact-pager.mjs",
+      "detail": "FAIL: consumer 3 missing"
+    },
+    {
+      "name": "verify-expense-column-wave.mjs",
+      "detail": "[verify-expense-column-wave] FAILED — 2 check(s) regressed:"
+    },
+    {
+      "name": "verify-financial-statements-page-uses-paritytable.mjs",
+      "detail": "- apps/frontend/src/pages/finance/FinancialStatementsPage.tsx: must keep the money() USD currency formatter"
+    },
+    {
+      "name": "verify-fleet-roster-trailer-kind-wiring.mjs",
+      "detail": "--selftest failed: verify-fleet-roster-trailer-kind-wiring SELFTEST FAIL — kind-filter: mutation escaped"
+    },
+    {
+      "name": "verify-gl-delta-matches-matrix.mjs",
+      "detail": "verify-gl-delta-matches-matrix FAIL CLOSED: wiring of === INV-4  DOCUMENTS WITH NO GL DELTA is present in verify-gl-invariants.sql but this check cannot PASS without a Neon INV run. Use --selftest for"
+    },
+    {
+      "name": "verify-ifta-tax-rates-current.mjs",
+      "detail": "verify:ifta-tax-rates-current FAIL: missing or sparse tax rates for Q3-2026; --selftest failed"
+    },
+    {
+      "name": "verify-insurance-policy-wizard-complete-fleet-picker.mjs",
+      "detail": "FAIL: wizard must read the unified truck+trailer fleet; type chips must filter server-side; type changes must own the query key"
+    },
+    {
+      "name": "verify-je-source-links-bill-uses-bill-number.mjs",
+      "detail": "- apps/backend/src/accounting/journal-entries.service.ts: linked_object_display_id COALESCE expression not found — re-check this guard; --selftest failed"
+    },
+    {
+      "name": "verify-lane-ownership.mjs",
+      "detail": "LANE GUARD FAIL: could not resolve the seat. Set SEAT=CC-1|CC-2|CC-3|LEAD|CURSOR|CODEX|DEVIN-A, or name the branch cc-1/<topic> (seat), claude/<topic> (Lead), cursor/<topic> (Cursor), codex/<topic> (C"
+    },
+    {
+      "name": "verify-list-empty-settled.mjs",
+      "detail": "--selftest failed: [verify-list-empty-settled] FAIL: selftest did not reject the planted Work Orders false-empty race"
+    },
+    {
+      "name": "verify-load-costs-tab-registers.mjs",
+      "detail": "costTab !== \"costs\" ? <TransactionRegister; --selftest failed"
+    },
+    {
+      "name": "verify-lst-picker01-road-service-vendor-inline-create.mjs",
+      "detail": "- apps/frontend/src/pages/maintenance/RoadServiceTicketModal.tsx: must import EntityPicker; --selftest failed"
+    },
+    {
+      "name": "verify-modal-close-retracts-url.mjs",
+      "detail": "--selftest failed: remove same-mount transition opener: planted defect escaped (no problems)"
+    },
+    {
+      "name": "verify-money-fields-use-moneyinput.mjs",
+      "detail": "--selftest failed: verify:money-fields-use-moneyinput SELFTEST FAIL — mutation 0 anchor not found in /private/tmp/ih35-codex-cleanup-measure-6/apps/frontend/src/pages/finance/LoanWizardPage.tsx: moneyField(\"Purchase pri"
+    },
+    {
+      "name": "verify-no-dead-buttons.mjs",
+      "detail": "verify:no-dead-buttons FAIL: 2 dead button handler(s)"
+    },
+    {
+      "name": "verify-no-uncast-operating-company-id.mjs",
+      "detail": "- apps/backend/src/mdata/units-unified-list.service.ts:173: AND estimate.operating_company_id = $${truckCompanyParamIndex}"
+    },
+    {
+      "name": "verify-owner-override-driver-qualification.mjs",
+      "detail": "verify:owner-override-driver-qualification FAILED:"
+    },
+    {
+      "name": "verify-payroll-aggregate-matches-qbo.mjs",
+      "detail": "[verify:payroll-aggregate-matches-qbo] FAIL: qbo-pull must NOT query the phantom accounting.qbo_payroll_links (never existed in any migration) — see verify-phantom-relations.mjs's HOLD note; the real "
+    },
+    {
+      "name": "verify-period-and-date-guard.mjs",
+      "detail": "verify-period-and-date-guard FAIL CLOSED: wiring of === INV-8  PERIOD CLOSE + === INV-9  FUTURE-DATED ENTRIES is present in verify-gl-invariants.sql but this check cannot PASS without a Neon INV run. "
+    },
+    {
+      "name": "verify-planner-design-system.mjs",
+      "detail": "[verify-planner-design-system] FAILED; --selftest failed"
+    },
+    {
+      "name": "verify-reference-before-introduction.mjs",
+      "detail": "db:verify:reference-order — More than 10 blocking findings; triage required."
+    },
+    {
+      "name": "verify-reimbursements-section-uses-paritytable.mjs",
+      "detail": "- apps/frontend/src/pages/driver-finance/components/ReimbursementsSection.tsx: must keep the \"C. Reimbursements\" heading"
+    },
+    {
+      "name": "verify-reports-booking-gap-staged-period-filter.mjs",
+      "detail": "verify-reports-booking-gap-staged-period-filter FAIL: BookingGapReport must use CollapsedListFilters + useStagedListFilters; --selftest failed"
+    },
+    {
+      "name": "verify-reports-dot-audit-pack-connectivity.mjs",
+      "detail": "--selftest failed: "
+    },
+    {
+      "name": "verify-safety-reverse-link-list-surfaces.mjs",
+      "detail": "- Internal fines driver/liability drills: no EntityLink; --selftest failed"
+    },
+    {
+      "name": "verify-scenario-tracker-live-binding.mjs",
+      "detail": "- apps/backend/src/home/scenario-registry.ts: \"scenario.parts_receive\" does not prove its complete chain (missing `ffo.enabled = true`).; --selftest failed"
+    },
+    {
+      "name": "verify-stops-are-geocoded.mjs",
+      "detail": "verify-stops-are-geocoded: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B owner ruling)."
+    },
+    {
+      "name": "verify-trip-profitability-single-load-no-double-count.mjs",
+      "detail": "- apps/backend/src/dispatch/load-profitability.service.ts: factoring_fee_cents must be gated behind \"sb_load_id != nb_load_id\" (CASE WHEN) -- or single-load trips double-count it again; --selftest failed"
+    },
+    {
+      "name": "verify-user-detail-linked-read-failure-exclusion.mjs",
+      "detail": "- customersQuery.isError ? [] : customersQuery.data ?? []; --selftest failed"
+    },
+    {
+      "name": "verify-vendor-credits-ui-linkage.mjs",
+      "detail": "apps/frontend/src/pages/accounting/VendorCreditsPage.tsx: create drawer must show QBO Ref no. top-right; --selftest failed"
+    },
+    {
+      "name": "verify-bank-econ-02-poster-path-wired.mjs",
+      "detail": "--selftest failed: throw new Error(`FAIL case was not detected for legacy bulk-categorize: ${legacyFails.join(\"; \")}`);"
+    },
+    {
+      "name": "verify-bank-match-no-double-match-all-six-kinds.mjs",
+      "detail": "- ledger_entry_kind 'bill' has no NOT EXISTS already-matched guard in fetchLedgerCandidates — a document of this kind can be matched to two bank transactions"
+    },
+    {
+      "name": "verify-banking-driver-escrow-uses-accounting-escrow-source.mjs",
+      "detail": "--selftest failed: visualizer per-driver timeline join to accounting.escrow_postings removed: planted defect escaped"
+    },
+    {
+      "name": "verify-bills-page-human-labels.mjs",
+      "detail": "verify-bills-page-human-labels FAILED:; --selftest failed"
+    },
+    {
+      "name": "verify-cash-flow-overview-no-fake-zero.mjs",
+      "detail": "verify-cash-flow-overview-no-fake-zero FAILED:"
+    },
+    {
+      "name": "verify-cursor-pr-title-prefix.mjs",
+      "detail": "- .gitignore must un-ignore !.cursor/rules/34-cursor-pr-title-prefix.mdc; --selftest failed"
+    },
+    {
+      "name": "verify-customer-financial-history-complete-range.mjs",
+      "detail": "ACCT-F6917 FAILED; --selftest failed"
+    },
+    {
+      "name": "verify-customer-notes-tab-wired.mjs",
+      "detail": "- Edit notes does not reach the canonical customer editor"
+    },
+    {
+      "name": "verify-da-program-routes-uuid-scoped.mjs",
+      "detail": "--selftest failed: SELFTEST SETUP FAILED: no ::uuid cast found to strip in listEnrollments()."
+    },
+    {
+      "name": "verify-deadhead-pay-line-renders-on-settlement.mjs",
+      "detail": "--selftest failed: verify-deadhead-pay-line-renders-on-settlement SELFTEST FAIL — escaped: deadhead filter removed (plant target not found -- source drifted), section not rendered (plant target not found -- source drift"
+    },
+    {
+      "name": "verify-dispatch-kanban-row-alignment.mjs",
+      "detail": "verify-dispatch-kanban-row-alignment: FAIL — 1 check(s) failed"
+    },
+    {
+      "name": "verify-dispatch-load-status-filter-no-stale-tokens-systemwide.mjs",
+      "detail": "--selftest failed: FAIL(selftest): planted offender (stale 'delivered' token added to a real listDispatchLoads call) was NOT caught"
+    },
+    {
+      "name": "verify-dispatch-units-live-location.mjs",
+      "detail": "FAIL verify-dispatch-units-live-location: units-without-load must select reverse-geo city/state from the position view"
+    },
+    {
+      "name": "verify-driver-pay-rate-override-reason-wired.mjs",
+      "detail": "- apps/frontend/src/pages/dispatch/components/BookLoadEquipmentSection.tsx: BookLoadEquipmentSection registers a real input for driver_pay_rate_override_reason — MISSING; --selftest failed"
+    },
+    {
+      "name": "verify-driver-reassign-runs-qualification.mjs",
+      "detail": "- apps/backend/src/driver-finance/settlement-creator.service.ts: UPDATEs mdata.loads SET assigned_primary_driver_id without calling assertDriverQualifiedForLoad. A load that passed the gate at dispatc; --selftest failed"
+    },
+    {
+      "name": "verify-drivers-home-complete-roster.mjs",
+      "detail": "--selftest failed: verify-truck-planner-complete-unit-roster SELFTEST FAILED: mutation survived: retired unit admitted"
+    },
+    {
+      "name": "verify-earnings-section-uses-paritytable.mjs",
+      "detail": "- apps/frontend/src/pages/driver-finance/components/EarningsSection.tsx: must expose Source column for settlement earnings lines (SRC-02)"
+    },
+    {
+      "name": "verify-export-business-date.mjs",
+      "detail": "--selftest failed: if (findings(mutation).length === 0) throw new Error(`mutation ${index + 1} escaped`);"
+    },
+    {
+      "name": "verify-factoring-submit-canonical-factor-rates.mjs",
+      "detail": "[verify-factoring-submit-canonical-factor-rates] FAIL: apps/frontend/src/pages/accounting/SubmitFactoringModal.tsx must default advance rate from activeFactor.advance_rate"
+    },
+    {
+      "name": "verify-finance-tabs-overflow-scrollable.mjs",
+      "detail": "- apps/frontend/src/pages/finance/FinanceModuleTabs.tsx: Finance tab nav no longer has overflow-x-auto -- tabs beyond the visible width (e.g. Amortization, once enough flag-gated tabs are on) become c; --selftest failed"
+    },
+    {
+      "name": "verify-fleet-unit-profile-edit-detail.mjs",
+      "detail": "- apps/frontend/src/pages/fleet/VehicleProfilePage.tsx: unit.profile.maintenance distinct mounted connectivity missing; --selftest failed"
+    },
+    {
+      "name": "verify-form-field-roundtrip.mjs",
+      "detail": "✗ apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx:2348  react-hook-form field \"catalog_load_type_id\" is rendered but never appears in the BookLoadModalV4.tsx submit payload — the opera"
+    },
+    {
+      "name": "verify-join-entity-scoped.mjs",
+      "detail": "✗ 94 NEW entity-unscoped JOIN(s) — the shape that puts another entity's driver/unit on a legal or money record:; --selftest failed"
+    },
+    {
+      "name": "verify-layout-law.mjs",
+      "detail": "- verify-no-nested-box must PASS (layout law §2); --selftest failed"
+    },
+    {
+      "name": "verify-ledger-finding-type-dual-artifact.mjs",
+      "detail": "--selftest failed: ✗ real repo files currently satisfy this guard (no args = real files)"
+    },
+    {
+      "name": "verify-lst-picker01-equipment-type-inline-create.mjs",
+      "detail": "- apps/backend/src/catalogs/equipment-types.routes.ts: line-item parent lookup must bind id and company; --selftest failed"
+    },
+    {
+      "name": "verify-master-detail-reverse-leaves.mjs",
+      "detail": "- vendor header routes missing; --selftest failed"
+    },
+    {
+      "name": "verify-matrix-built-tag-present.mjs",
+      "detail": "Fix: add /** @matrix-built {\"modules\":[…],\"cols\":[…],\"leafRe\":\"…\",\"task\":\"…\"} */ or modules=… / csv form"
+    },
+    {
+      "name": "verify-migration-filenames.mjs",
+      "detail": "verify:migration-filenames FAILED"
+    },
+    {
+      "name": "verify-module-manifest-integrity.mjs",
+      "detail": "--selftest failed: - good manifest failed: z.json: complete:true while pass_count(0) < total_count(2); z.json: complete:true while scored N(0) < M(2)"
+    },
+    {
+      "name": "verify-no-double-reversed-fuel-postings.mjs",
+      "detail": "verify-no-double-reversed-fuel-postings: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B ow"
+    },
+    {
+      "name": "verify-no-fabricated-load-numbers.mjs",
+      "detail": "verify-no-fabricated-load-numbers: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B owner ru"
+    },
+    {
+      "name": "verify-no-selftest-mutates-tracked-source.mjs",
+      "detail": "✗ scripts/verify-acc20-void-unmatch-resets-review-state.mjs:77 — writeFileSync(voidServicePath, ...) targets tracked source under apps/ or packages/. Copy the target to a temp path first (mkdtempSync/"
+    },
+    {
+      "name": "verify-planner-row-columns.mjs",
+      "detail": "[verify-planner-row-columns] FAILED; --selftest failed"
+    },
+    {
+      "name": "verify-posting-column-contract.mjs",
+      "detail": "verify-posting-column-contract FAILED:"
+    },
+    {
+      "name": "verify-predispatch-panel-mounted.mjs",
+      "detail": "--selftest failed: FAIL verify-predispatch-panel-mounted: selftest mutation survived: failure reports passing"
+    },
+    {
+      "name": "verify-qbo-filter-collapse.mjs",
+      "detail": "- apps/frontend/src/pages/accounting/ManualJEListPage.tsx: missing data-manual-je-filter-toolbar collapsed marker"
+    },
+    {
+      "name": "verify-reports-cancellations-by-date-iso-chrome.mjs",
+      "detail": "verify-reports-cancellations-by-date-iso-chrome FAIL: CancellationsReportPage must import formatDateUS; --selftest failed"
+    },
+    {
+      "name": "verify-reports-scheduled-status-datetime-chrome.mjs",
+      "detail": "verify-reports-scheduled-status-datetime-chrome FAIL: SubscriptionManager must import formatDateTimeUS; --selftest failed"
+    },
+    {
+      "name": "verify-required-surface-inventory-complete.mjs",
+      "detail": "accounting.modal.decide_fault ← pages/accounting/DisputesHubPage.tsx; --selftest failed"
+    },
+    {
+      "name": "verify-runner-filters-entity-pickers.mjs",
+      "detail": "- apps/frontend/src/pages/reports/runners/RunnerFilters.tsx: Combobox import must be removed"
+    },
+    {
+      "name": "verify-sort-law.mjs",
+      "detail": "- apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx: column \"settlement_reference\" missing sortable: true"
+    },
+    {
+      "name": "verify-sql-read-targets.mjs",
+      "detail": "verify-sql-read-targets FAILED:"
+    },
+    {
+      "name": "verify-surface-bar-combobox-inventory.mjs",
+      "detail": "- pages/samsara-driver-mapping/SamsaraDriverMappingPage.tsx: Combobox host has no required.json leaf.surface_path / FILE_OWNED_BY_LEAF / ALLOWED_NESTED — add a leaf or map it"
+    },
+    {
+      "name": "verify-table-header-and-date-column.mjs",
+      "detail": "- date-column missing count rose 182 -> 189"
+    },
+    {
+      "name": "verify-trip-profitability-tombstone-drills.mjs",
+      "detail": "sb_load_number nullable API contract is missing"
+    },
+    {
+      "name": "verify-ui-control-law.mjs",
+      "detail": "offender count rose 0 -> 1. The baseline may only SHRINK."
+    },
+    {
+      "name": "verify-vehicle-documents-uses-paritytable.mjs",
+      "detail": "- apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx: must keep vp-docs-upload-button upload control"
+    },
+    {
+      "name": "verify-vendor-category-picker-law.mjs",
+      "detail": "verify-vendor-category-picker-law FAILED: By Category is not using ReferenceSelect | missing canonical vendor_type creator | missing first-row + Add new label; --selftest failed"
+    },
+    {
+      "name": "verify-void-reversal-links-non-batch-postings.mjs",
+      "detail": "[verify-void-reversal-links-non-batch-postings] FAILED"
+    },
+    {
+      "name": "verify-wave-c-ap-bill-fe-all-modules.mjs",
+      "detail": "- verify-ap-bill-column-wave.mjs: composed FE guard failed"
+    }
+  ]
+}
