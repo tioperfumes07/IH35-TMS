@@ -25,6 +25,9 @@ vi.mock("./RecordTransferModal", () => ({
 }));
 vi.mock("./RecordCCPaymentModal", () => ({ RecordCCPaymentModal: () => null }));
 vi.mock("./components/DriverEscrowTabContent", () => ({ DriverEscrowTabContent: () => null }));
+vi.mock("./components/ReconciliationTabContent", () => ({
+  ReconciliationTabContent: () => <div data-testid="recon-shell-stub" />,
+}));
 vi.mock("./components/BankingReportsTabContent", () => ({ BankingReportsTabContent: () => null }));
 vi.mock("./components/BankingPlaidConnectionsPanel", () => ({
   BankingPlaidConnectionsPanel: () => <div data-testid="plaid-connections" />,

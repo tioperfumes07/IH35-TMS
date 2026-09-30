@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getAllAccounts,
@@ -11,12 +10,10 @@ import {
   getQboSyncQueueStats,
   getReconciliationSessions,
   getEscrowDriverBalances,
-  startReconciliationSession,
   createPettyCashAccount,
   reorderBankAccounts,
 } from "../../api/banking";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { MoneyInput } from "../../components/forms/MoneyInput";
 import { EntityEmptyState } from "../../components/shared/EntityEmptyState";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -37,15 +34,15 @@ import { TransferModal } from "./TransferModal";
 import { RecordTransferModal } from "./RecordTransferModal";
 import { RecordCCPaymentModal } from "./RecordCCPaymentModal";
 import { filterBankingTilesForCompany } from "../../lib/banking-company-filter";
-import { SelectCombobox } from "../../components/Combobox";
 import { DriverEscrowTabContent } from "./components/DriverEscrowTabContent";
+import { ReconciliationTabContent } from "./components/ReconciliationTabContent";
 import { BankingReportsTabContent } from "./components/BankingReportsTabContent";
 import { BankingTransactionsDesignView } from "./components/BankingTransactionsDesignView";
 import { StatementUpload } from "../../components/banking/StatementUpload";
 import { BANKING_TAB_PATH, bankingTabFromPath } from "../../router/route-manifest";
 import { BANKING_MODULE_TABS, type BankingModuleTabId } from "./BANKING_NAV_CONFIG";
 import { formatUsd } from "../../lib/money";
-import { userFacingApiError } from "../../lib/api-error-message";
+import { entityLabel } from "../../lib/entity-label";
 import { BankingNewMenu } from "./components/BankingNewMenu";
 import { LinkSuggestionsPanel } from "./components/LinkSuggestionsPanel";
 import { MoneyKpiTile, MoneySparkline } from "../../components/money/MoneyKpiTile";
@@ -111,12 +108,6 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   // no change to the existing Bank-to-Bank/Intercompany flow.
   const [recordDepositOpen, setRecordDepositOpen] = useState(false);
   const [ccPaymentModalOpen, setCcPaymentModalOpen] = useState(false);
-  const [startReconOpen, setStartReconOpen] = useState(false);
-  const [reconAccountId, setReconAccountId] = useState("");
-  const [reconPeriodStart, setReconPeriodStart] = useState("");
-  const [reconPeriodEnd, setReconPeriodEnd] = useState("");
-  const [reconStatementBalance, setReconStatementBalance] = useState("");
-  const [startingRecon, setStartingRecon] = useState(false);
   const [showDisconnectedBankAccounts, setShowDisconnectedBankAccounts] = useState(false);
   const [activeTab, setActiveTab] = useState<BankingTabId>(initialTab ?? bankingTabFromPath(location.pathname) as BankingTabId);
   const [inspectTileId, setInspectTileId] = useState<string | null>(null);
@@ -360,9 +351,10 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     const dip = (allAccountsQuery.data?.accounts ?? []).find((a) => Boolean((a as Record<string, unknown>).is_dip));
     return dip ? String((dip as Record<string, unknown>).id ?? "") || null : null;
   }, [allAccountsQuery.data?.accounts]);
+  // C-53 — start opener lives on the Reconciliation shell (SAVE+CLOSE). Home / attention strip deep-link here.
   const openStartReconciliation = () => {
-    setReconAccountId(String(plaidAccountsQuery.data?.accounts?.[0]?.id ?? ""));
-    setStartReconOpen(true);
+    setActiveTab("reconciliation");
+    navigate(`${BANKING_TAB_PATH.reconciliation}?start=1`);
   };
 
   // Doc-18 defects #10/#11 — QBO always surfaces "Bank Register" + "Chart of Accounts" as persistent
@@ -934,81 +926,25 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       {activeTab === "link_suggestions" ? <LinkSuggestionsPanel companyId={companyId} /> : null}
 
       {activeTab === "reconciliation" ? (
-        <div className="space-y-3">
-          <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Reconciliation</p>
-              <div className="flex flex-wrap items-center gap-3">
-                <Link to="/banking/reconcile" className="text-xs font-medium text-slate-700 hover:underline">
-                  Open Reconcile Queue
-                </Link>
-                <Link to="/banking/reconciliation-workspace" className="text-xs font-medium text-slate-700 hover:underline">
-                  Open Workspace
-                </Link>
-              </div>
-            </div>
-            {reconciliationSessionsQuery.isSuccess &&
-            (reconciliationSessionsQuery.data?.open_sessions ?? []).length === 0 &&
-            (reconciliationSessionsQuery.data?.completed_sessions ?? []).length === 0 ? (
-              <div
-                className="mb-3 border-l-4 border-slate-400 bg-slate-100 px-3 py-2 text-xs text-slate-700"
-                data-testid="banking-recon-never-completed-banner"
-              >
-                <p className="font-semibold">No reconciliation sessions exist for this company yet.</p>
-                <p className="mt-1">
-                  Statement reconcile is not proven live until a session is started and completed. Uncategorized /
-                  for-review bank transactions still need Match/Categorize on the Transactions tab (
-                  {uncategorizedCount.toLocaleString()} currently flagged). Do not treat this screen as “reconciled.”
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <ActionButton onClick={openStartReconciliation}>+ Start first reconciliation</ActionButton>
-                  <ActionButton
-                    onClick={() => {
-                      setTransactionsInitialFilter("uncategorized");
-                      navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`);
-                    }}
-                  >
-                    Open for-review queue
-                  </ActionButton>
-                </div>
-              </div>
-            ) : null}
-            <p className="text-xs text-gray-700">Open sessions: {(reconciliationSessionsQuery.data?.open_sessions ?? []).length}</p>
-            <div className="mt-2 space-y-1">
-              {(reconciliationSessionsQuery.data?.open_sessions ?? []).map((session) => (
-                <button
-                  key={session.id}
-                  type="button"
-                  className="w-full rounded-sm border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
-                  onClick={() => navigate(`/banking/reconciliation-workspace?session_id=${session.id}&bank_account_hint=${session.bank_account_id}`)}
-                >
-                  Open: {session.period_start} to {session.period_end} ({Number(session.variance_cents ?? 0) / 100})
-                </button>
-              ))}
-              {(reconciliationSessionsQuery.data?.open_sessions ?? []).length === 0 ? (
-                <p className="text-xs text-gray-500">No open reconciliation sessions.</p>
-              ) : null}
-            </div>
-            <div className="mt-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Recent completed</p>
-              <div className="mt-1 space-y-1">
-                {(reconciliationSessionsQuery.data?.completed_sessions ?? []).map((session) => (
-                  <button
-                    key={session.id}
-                    type="button"
-                    className="w-full rounded-sm border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
-                    onClick={() => navigate(`/banking/reconciliation-workspace?session_id=${session.id}&bank_account_hint=${session.bank_account_id}`)}
-                  >
-                    {session.period_start} to {session.period_end} - variance {Number(session.variance_cents ?? 0) / 100}
-                  </button>
-                ))}
-                {(reconciliationSessionsQuery.data?.completed_sessions ?? []).length === 0 ? (
-                  <p className="text-xs text-gray-500">No completed sessions yet.</p>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </div>
+        <ReconciliationTabContent
+          companyId={companyId}
+          uncategorizedCount={uncategorizedCount}
+          preferStartOpen={searchParams.get("start") === "1"}
+          accounts={(plaidAccountsQuery.data?.accounts ?? []).map((account) => {
+            const tile = tiles.find((t) => String(t.id) === String(account.id));
+            const allRow = (allAccountsQuery.data?.accounts ?? []).find((a) => String(a.id) === String(account.id));
+            return {
+              id: account.id,
+              label:
+                tile?.display_name ||
+                [account.institution_name, account.account_name, account.account_mask ? `••••${account.account_mask}` : ""]
+                  .filter(Boolean)
+                  .join(" · ") ||
+                entityLabel(account.account_name, account.id, "Account"),
+              ledgerAccountId: allRow?.ledger_account_id ? String(allRow.ledger_account_id) : null,
+            };
+          })}
+        />
       ) : null}
 
       {/* ROUND-20.8 B3 — the "Factoring (Faro)" tab is DELETED (was a whole duplicate module entry
@@ -1246,69 +1182,6 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           void queryClient.invalidateQueries({ queryKey: ["banking"] });
         }}
       />
-      {startReconOpen ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-lg rounded-sm bg-white p-4 shadow-lg">
-            <h3 className="text-xs font-semibold text-gray-900">Start reconciliation</h3>
-            <div className="mt-3 grid grid-cols-1 gap-3">
-              <SelectCombobox
-                value={reconAccountId}
-                onChange={(event) => setReconAccountId(event.target.value)}
-                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-              >
-                <option value="">Select bank account</option>
-                {(plaidAccountsQuery.data?.accounts ?? []).map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.institution_name || "Bank"} - {account.account_name || "Account"} {account.account_mask ? `••••${account.account_mask}` : ""}
-                  </option>
-                ))}
-              </SelectCombobox>
-              <DatePicker
-                value={reconPeriodStart}
-                onChange={(next) => setReconPeriodStart(next)}
-                className=""
-              />
-              <DatePicker
-                value={reconPeriodEnd}
-                onChange={(next) => setReconPeriodEnd(next)}
-                className=""
-              />
-              {/* M-1: dollars-mode QBO money entry; bridged so Math.round(*100) seam is byte-for-byte. */}
-              <MoneyInput
-                valueDollars={reconStatementBalance ? Number(reconStatementBalance) : null}
-                onChangeDollars={(d) => setReconStatementBalance(d == null ? "" : String(d))}
-                ariaLabel="Statement balance (USD)"
-                placeholder="Statement balance (USD)"
-                className="text-xs"
-              />
-            </div>
-            <div className="mt-4 flex justify-end gap-2">
-              <ActionButton onClick={() => setStartReconOpen(false)}>Cancel</ActionButton>
-              <ActionButton
-                disabled={!reconAccountId || !reconPeriodStart || !reconPeriodEnd || !reconStatementBalance || startingRecon}
-                onClick={() => {
-                  setStartingRecon(true);
-                  void startReconciliationSession({
-                    bank_account_id: reconAccountId,
-                    period_start: reconPeriodStart,
-                    period_end: reconPeriodEnd,
-                    statement_balance_cents: Math.round(Number(reconStatementBalance) * 100),
-                  })
-                    .then((res) => {
-                      setStartReconOpen(false);
-                      void queryClient.invalidateQueries({ queryKey: ["banking", "reconciliation-sessions", companyId] });
-                      navigate(`/banking/reconciliation-workspace?session_id=${res.session_id}&bank_account_hint=${reconAccountId}`);
-                    })
-                    .catch((error) => pushToast(userFacingApiError(error, "Failed to start reconciliation"), "error"))
-                    .finally(() => setStartingRecon(false));
-                }}
-              >
-                {startingRecon ? "Starting..." : "Create Session"}
-              </ActionButton>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
