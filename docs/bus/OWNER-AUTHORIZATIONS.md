@@ -4422,4 +4422,25 @@ action:
   OWNER_AUTH_ID=AUTH-137 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth137-void-13-duplicate-copies.ts
 
 expires_at: 2026-10-01T08:00:00.000Z
-status: OPEN
+status: CONSUMED
+
+consumed_at: 2026-09-30T01:35:00.000Z
+consumed_by: CC-2
+row_counts: 6 of 13 voided via reverseJournalEntryNoFlip (invoices 3, 4, 7, 8, 11, 16 -- one loser
+  copy each). 7 of 13 were already reversed by a prior, undocumented process (invoices 1, 3(other
+  copy), 4(other copy), 16(other copy), 19, 41, 42) -- correctly detected live and skipped, not
+  double-reversed.
+proof_query: 1090/1230/1235/2150/6300/6400 before and after, USMCA, bypass_rls=lucia -- BEFORE:
+  1090=$315,561.76, 1230=$7,356.68, 1235=$135.41, 2150=-$500,374.17, 6300=$230.00, 6400=$7,548.53.
+  AFTER (committed): 1090=$306,304.02 (-$9,257.74 exactly -- matches the sum of the 6 voided
+  copies' own 1090 debit lines: 2415.00+1639.00+339.50+509.24+679.00+3676.00=9257.74), 1230
+  unchanged, **1235=$0.00 exactly** (down from $135.41 -- confirms all 6 live 1235-mixing entries
+  named in Amendment 2 are now fully resolved, whether by this AUTH or the prior undocumented
+  process), 2150=-$490,799.17 (+$9,575.00), 6300=$200.00 (-$30.00, the small legitimate wire-fee
+  lines on the voided copies), 6400=$7,396.68 (-$151.85). Every delta traces to a named voided
+  copy's own lines; nothing else moved.
+This closes the "6 entries using 1235" item from Amendment 2 completely, and Order 2 step 2 (void)
+for 10 of 25 duplicate-JE groups. 15 of 25 groups remain undetermined. Step 3 (delete, archive
+first) not started -- separate AUTH, per Order 3's one purge definition.
+
+— CC-2
