@@ -7,6 +7,16 @@ export type SettlementLoadRow = {
   ratePerMi: string;
   linehaulCents: number;
   bonusesDisplay: string;
+  /**
+   * The additions on THIS load, in cents. `bonusesDisplay` is a display string and cannot be
+   * summed -- the subtotal underneath it used to be the literal "0.00" regardless of what the
+   * line above said, so a load carrying a $50.00 addition printed "Total additions 0.00"
+   * directly beneath it (measured on settlement 5800, 2026-09-30). A pay document that
+   * contradicts itself in adjacent rows is the fastest way to make correct pay look wrong.
+   * Optional so existing callers keep compiling; when it is absent the subtotal says so rather
+   * than inventing a number.
+   */
+  bonusesCents?: number | null;
   lineTotalCents: number;
 };
 
@@ -86,6 +96,16 @@ export function renderSettlementBody(model: SettlementHtmlModel): string {
             <td class="r num">${escapeHtml(row.ratePerMi)}</td>
             <td class="r num">${escapeHtml(formatMoneyPlain(row.linehaulCents))}</td>
           </tr>`;
+      // The subtotal must agree with the line above it. When the caller supplies the figure we
+      // print it; when it does not, we print an em dash rather than a confident 0.00 that the
+      // visible addition row contradicts.
+      const hasAddition = Boolean(row.bonusesDisplay && row.bonusesDisplay !== "—");
+      const additionsSubtotal =
+        row.bonusesCents != null
+          ? formatMoneyPlain(row.bonusesCents)
+          : hasAddition
+            ? "—"
+            : "0.00";
       const bonus =
         row.bonusesDisplay && row.bonusesDisplay !== "—"
           ? `<tr><td class="num dim">—</td><td>Addition</td><td>${escapeHtml(row.bonusesDisplay)}</td><td class="r num dim">—</td><td class="r num dim">—</td><td class="r num dim">—</td></tr>`
@@ -104,16 +124,23 @@ export function renderSettlementBody(model: SettlementHtmlModel): string {
         <thead><tr><th style="width:54px">Date</th><th style="width:96px">Category</th><th>Description</th><th class="r" style="width:76px">Quantity</th><th class="r" style="width:60px">Price</th><th class="r" style="width:82px">Total</th></tr></thead>
         <tbody>
           ${bonus}
-          <tr class="subtot"><td colspan="5">Total additions</td><td class="r num">0.00</td></tr>
+          <tr class="subtot"><td colspan="5">Total additions</td><td class="r num">${escapeHtml(additionsSubtotal)}</td></tr>
         </tbody>
       </table>
     </div>`;
     })
     .join("\n");
 
+  // A settlement whose deduction TOTAL is non-zero while its deduction LINES are empty is not a
+  // settlement with no deductions -- it is a document whose detail did not load. Measured on
+  // settlement 5800, 2026-09-30: "No deductions on this settlement. 0.00" printed directly above
+  // "Total deductions -285.00". Say which it is. Never print "none" over a number.
+  const deductionsUnexplained = model.deductions.length === 0 && model.deductionsTotalCents !== 0;
   const deductionRows =
     model.deductions.length === 0
-      ? `<tr><td colspan="5" class="dim">No deductions on this settlement.</td><td class="r num">0.00</td></tr>`
+      ? deductionsUnexplained
+        ? `<tr><td colspan="5" class="dim">Deduction detail unavailable for this settlement — the total below is from the settlement header. Contact the office before relying on this line.</td><td class="r num neg">${escapeHtml(moneyPlainSigned(-Math.abs(model.deductionsTotalCents)))}</td></tr>`
+        : `<tr><td colspan="5" class="dim">No deductions on this settlement.</td><td class="r num">0.00</td></tr>`
       : model.deductions
           .map(
             (d) => `
