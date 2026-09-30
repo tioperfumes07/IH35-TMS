@@ -193,3 +193,14 @@ churn. Corrected predicate SQL committed to
 `docs/bus/2026-09-30-CC1-A13-A14-A16-DRIVER-PROFILE-AND-HAS-TRANSACTIONS-ANALYSIS.md`.
 **Left:** Same as before — Lead's ruling on Disputes tab placement; Cursor builds the UI off this
 spec. A-16 itself is closed on CC-1's side.
+
+## A-23 — test/proof/sample rows: enumerated, not written
+**Changed:** Nothing to data (enumeration only, as instructed).
+**Live proof:** `docs/bus/2026-09-30-CC1-A23-TEST-ROWS-ENUMERATION.md` — 6 accounting.expenses proof
+rows (5 mine, AUTH-117/120/122/125/126; 1 CC-2's "live-test check" $25.00), ALL already voided AND
+their JEs already reversed same-session — TB impact if removed is $0.00, already net zero. Plus 2
+TEST-named mdata.drivers rows (one with the company's only safety.driver_documents row, per A-12) —
+neither voided, no GL impact. Plus 1 downtime.events row with is_sample_data=true. 5 other apparent
+hits investigated and ruled out as real business rows (AUTH- mentioned for provenance only, or a
+real bank ACH fee).
+**Left:** Proceeding to A-22 per the sequence. Nothing written.
