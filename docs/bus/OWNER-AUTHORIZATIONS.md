@@ -4787,6 +4787,22 @@ action:
   OWNER_AUTH_ID=AUTH-146 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-287-3-1-create-load-13593-invoice-driver-bill-fuel.ts
   (run from the repo root; DRY_RUN=1 is the default -- pass DRY_RUN=0 to commit for real)
 expires_at: 2026-10-01T12:00:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T05:20:00.000Z
+consumed_by: CC-1
+row_counts: 1 load, 1 invoice, 1 driver bill, 3 fuel transactions, 3 linked expenses -- all created,
+  0 refused.
+proof_query: live on prod, 2026-09-30, verified via a fresh Neon read (not the same connection that
+  wrote it): mdata.loads c3a3d1b8-5d0d-450d-bc84-fc879379da25 (load_number=13593, rate_total_cents=
+  480000, status='invoiced' -- advanced past completed_docs_received by sendDraftInvoice's own state
+  transition, expected). accounting.invoices 81459ab2-6309-46e4-aca1-aabcd44eefc6 (display_id=13593,
+  status='sent', total_cents=480000, issue_date=2026-09-14, due_date=2026-09-15 -- matches the
+  owner's PDF exactly). driver_finance.driver_bills a283f17a-e022-4e13-87c0-9fbf03438b47
+  (gross_amount_cents=80179, status='open'). fuel.fuel_transactions
+  2c1055b7-d54d-4874-bfdb-726f9b220a1d / ad91e856-a9ee-419a-8071-25b16ea04adf /
+  987ccd4e-b07b-4b19-abcd-4159a6056ef1, all load_id=the new load, vendor_id=62dd25a7-460e-4fd0-b4f7-
+  d80ec59fd8a7 (canonical Pilot), total_cost 978.67/297.14/49.51. All 3 have a linked
+  accounting.expenses row via source_fuel_transaction_id (count=3, confirmed by direct query).
+  The throwaway rehearsal Neon branch (br-rapid-band-ak0qnb0c) was deleted after this proof.
 
 — CC-1
