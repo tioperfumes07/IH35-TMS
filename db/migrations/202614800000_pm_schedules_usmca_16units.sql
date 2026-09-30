@@ -3,7 +3,7 @@
 -- (unit, interval) for the real USMCA fleet -- live-verified 16 real, active, non-sample units
 -- (mdata.units WHERE (owner_company_id = USMCA OR currently_leased_to_company_id = USMCA) AND
 -- is_sample_data IS NOT TRUE AND deactivated_at IS NULL), x the 6 real intervals from
--- catalogs.pm_intervals (202614790000). 96 rows total.
+-- catalogs.pm_intervals (202614820000). 96 rows total.
 --
 -- HARD RULE (order's own wording): "do NOT seed last_service_odometer from the current odometer.
 -- That silently declares every truck freshly serviced today." Every row below is inserted with
