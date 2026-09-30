@@ -220,3 +220,13 @@ neither voided, no GL impact. Plus 1 downtime.events row with is_sample_data=tru
 hits investigated and ruled out as real business rows (AUTH- mentioned for provenance only, or a
 real bank ACH fee).
 **Left:** Proceeding to A-22 per the sequence. Nothing written.
+
+## A-24 — safety.driver_documents ↔ mdata.drivers linkage declaration
+**Changed:** Wrote the missing cross-module linkage declaration (data left alone, as instructed).
+**Live proof:** `docs/trackers/LINKAGE-DECLARATION-safety-driver_documents-mdata-drivers.md` — live-
+confirmed the FK is application-level only (zero real FOREIGN KEY constraints on the table, not even
+the org.companies one the wiring doc credits it with), named every read/write surface, and restated
+A-12's real finding (1 document row company-wide, belongs to a TEST driver, zero real USMCA drivers
+have any document on file) without touching it.
+**Left:** Recommend a real FK constraint (named, not added). Data-population gap is the owner's to
+fill. A-20 through A-24 sequence complete.
