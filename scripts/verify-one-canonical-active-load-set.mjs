@@ -74,14 +74,61 @@ export function findViolations(relPath, src) {
   // filter, in a statement that also references mdata.loads. Scoped to a sliding window (40
   // lines) around each match so an unrelated status filter later in a long file doesn't false-
   // positive on a `mdata.loads` reference elsewhere in that same file.
+  //
+  // FIX (2026-09-30, CC-3): the header comment above says "in the same statement as
+  // `mdata.loads`" but the original implementation approximated "same statement" with a blind
+  // ±40-line window, which produces two real false-positive classes, both confirmed live on
+  // apps/backend/src/dispatch/manual-delivery-authorization.routes.ts:
+  //   (1) an EARLIER, unrelated, already-closed SQL template happens to mention mdata.loads
+  //       within 40 lines of a LATER, separate query's status gate on a different table
+  //       (there: `mdata.load_stops` status, not `mdata.loads` status).
+  //   (2) the SAME query joins mdata.loads but the status gate is on a DIFFERENT table's
+  //       alias (there: `i.status` on an invoices join, not the `l` alias bound to mdata.loads).
+  // Both are fixed below by (a) scoping the proximity check to the nearest enclosing
+  // backtick-delimited template literal (the actual SQL statement) instead of a blind line
+  // window, falling back to the old window when no enclosing template is found, and (b) when
+  // the status token carries an alias prefix, resolving that alias via the statement's own
+  // FROM/JOIN clauses and skipping when it resolves to a table other than mdata.loads.
   const lines = src.split("\n");
-  const inlineGateRe = /status(?:::text)?\s*(?:NOT\s+IN\s*\(|<>\s*')/i;
+  const lineStartOffsets = [];
+  {
+    let offset = 0;
+    for (const line of lines) {
+      lineStartOffsets.push(offset);
+      offset += line.length + 1;
+    }
+  }
+  function enclosingTemplateLiteral(offset) {
+    const start = src.lastIndexOf("`", offset);
+    const end = src.indexOf("`", offset);
+    if (start === -1 || end === -1 || start > offset) return null;
+    return { start, end };
+  }
+  function resolveAlias(statement, alias) {
+    const re = new RegExp(`\\b(?:FROM|JOIN)\\s+([a-z_][a-z0-9_.]*)\\s+(?:AS\\s+)?${alias}\\b`, "i");
+    const found = statement.match(re);
+    return found ? found[1] : null;
+  }
+  const inlineGateRe = /(?:([a-z_][a-z0-9_]*)\.)?status(?:::text)?\s*(?:NOT\s+IN\s*\(|<>\s*')/i;
   for (let i = 0; i < lines.length; i++) {
-    if (!inlineGateRe.test(lines[i])) continue;
-    const windowStart = Math.max(0, i - 40);
-    const windowEnd = Math.min(lines.length, i + 5);
-    const window = lines.slice(windowStart, windowEnd).join("\n");
-    if (!/mdata\.loads\b/.test(window)) continue;
+    const gateMatch = lines[i].match(inlineGateRe);
+    if (!gateMatch) continue;
+    const alias = gateMatch[1] || null;
+    const lineOffset = lineStartOffsets[i];
+    const enclosing = enclosingTemplateLiteral(lineOffset);
+    let statement;
+    if (enclosing) {
+      statement = src.slice(enclosing.start, enclosing.end);
+    } else {
+      const windowStart = Math.max(0, i - 40);
+      const windowEnd = Math.min(lines.length, i + 5);
+      statement = lines.slice(windowStart, windowEnd).join("\n");
+    }
+    if (!/mdata\.loads\b/.test(statement)) continue;
+    if (alias) {
+      const resolvedTable = resolveAlias(statement, alias);
+      if (resolvedTable && !/mdata\.loads/i.test(resolvedTable)) continue;
+    }
     // Only count it if the literal(s) on this line are load-status-shaped (draft/cancelled/
     // closed/invoiced/paid or any canonical token) — avoids matching an unrelated status column
     // that happens to share the word "status" near a `mdata.loads` join.
@@ -242,6 +289,49 @@ function selftest() {
     const q = \`SELECT * FROM mdata.loads l WHERE \${canonicalDispatchWorkWhereClause("l", "$1::uuid")}\`;
   `;
   checks.push(["TRUCKLINE-16: dispatch-work-only file -> 0 violations (no money test required)", findViolations("dispatch/work-only.ts", dispatchWorkOnlySrc).length === 0]);
+
+  // 2026-09-30 (CC-3): confirmed live false-positive classes on
+  // manual-delivery-authorization.routes.ts -- a status gate on a DIFFERENT table, in a
+  // statement/nearby statement that also happens to mention mdata.loads, must not fire.
+  const unrelatedEarlierQuerySrc = `
+    const loadRes = await client.query(\`
+      SELECT id::text FROM mdata.loads WHERE id = $1::uuid
+    \`, [id]);
+    const stopRes = await client.query(\`
+      SELECT id::text FROM mdata.load_stops
+      WHERE load_id = $1::uuid
+        AND status::text <> 'cancelled'
+        AND soft_deleted_at IS NULL
+    \`, [id]);
+  `;
+  checks.push([
+    "false-positive: unaliased status gate on a DIFFERENT table in an EARLIER, separate query -> 0 violations",
+    findViolations("dispatch/unrelated-earlier-query.ts", unrelatedEarlierQuerySrc).length === 0,
+  ]);
+
+  const differentAliasSameQuerySrc = `
+    const res = await client.query(\`
+      SELECT i.id
+      FROM accounting.invoices i
+      JOIN mdata.loads l ON l.id = i.source_load_id
+      WHERE i.status NOT IN ('draft', 'proforma', 'void')
+    \`, [id]);
+  `;
+  checks.push([
+    "false-positive: aliased status gate on a DIFFERENT table joined in the SAME query as mdata.loads -> 0 violations",
+    findViolations("dispatch/different-alias-same-query.ts", differentAliasSameQuerySrc).length === 0,
+  ]);
+
+  const aliasedLoadsStatusSrc = `
+    const q = \`
+      SELECT l.id FROM mdata.loads l
+      WHERE l.status NOT IN ('draft', 'cancelled')
+    \`;
+  `;
+  checks.push([
+    "true-positive still caught: aliased status gate on mdata.loads itself -> RED, at least 1 violation",
+    findViolations("dispatch/aliased-loads-status.ts", aliasedLoadsStatusSrc).length >= 1,
+  ]);
 
   const mixedPredicatesSrc = `
     import { canonicalActiveLoadWhereClause, canonicalDispatchWorkWhereClause } from "./canonical-active-load-set.js";
