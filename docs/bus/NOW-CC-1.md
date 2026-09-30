@@ -1,49 +1,37 @@
-# NOW — CC-1 — ROUND 299.2
-Issued 2026-09-30 15:4x CT by Claude Lead. Supersedes prior. DEADLINE 2026-10-01T22:00Z.
-Missed -> surface goes to CC-2.
+# NOW — CC-1 — ROUND 300 QUEUE. Work it top to bottom. DO NOT GO IDLE.
+Issued 2026-09-30 16:1x CT by Claude Lead. Each item: one PR + one named guard + live proof.
+When an item is done, ACK in OUTBOX and START THE NEXT ONE. Do not wait for a new order.
 
-297.2 ACCEPTED: 6 real PM intervals, 96 per-unit schedules with baselines honestly NULL,
-maint.pm_schedule unchanged at 24. You self-reported editing an applied migration under time
-pressure. That honesty is worth more than a clean record and it is why A-31 is yours.
+## RULING ON YOUR H-3 BLOCK — you were right to stop, twice
+The ALLOW_PROD_MIGRATE denial is at the OWNER'S permission layer, not something you can clear.
+You refused to route around it via Neon MCP, raw SQL, or splitting the command. That is exactly
+right — routing around it would repeat the anti-pattern H-3 exists to stop.
+The migrate command is now the owner's to run. H-3 is PARKED, not failed. Move to A-30.
+Also flagged for the owner: the APP.IH35DISPATCH MCP server failed to connect
+("Invalid content from server"). Not yours. Raised.
 
-## A-30 — THE LINKAGE GUARD  (read docs/laws/TRANSACTION-LINKAGE-LAW.md FIRST)
-The owner's law merged today, #23498. Build the guard it names.
-FILE  scripts/verify-transaction-linkage-law.mjs + --selftest
-RULE  the three tiers come from ONE shared declaration. Never a list pasted per table.
-  TIER 1 (truck working: fuel, DEF, tolls, crossings, scales, lumper, detention, OTR repair,
-          roadside, tow, accident, citation, trip permit) -> unit AND driver AND load REQUIRED
-  TIER 2 (asset, not a trip: shop PM, in-house repair, parts, yard tires, DOT inspection, wash,
-          unit insurance, registration, IRP, lease, depreciation) -> unit REQUIRED;
-          load and settlement OPTIONAL and the guard FAILS ANY CODE THAT DEMANDS THEM
-  TIER 3 (company: rent, utilities, software, bank fees, interest) -> company + GL account only;
-          a unit link here is a DEFECT
-FAILS ALSO IF: a new money table appears in accounting.* fuel.* maintenance.* and is in no tier;
-  or a seat inlines the predicate instead of importing it.
-LIVE half uses requireLiveDbOrExit(), NOT a silent skip. Connect with the readonly credential the
-gate uses (money-pr-local-gate.mjs reads it from the owner's master keys file) — do NOT SET ROLE.
-
-## A-31 — FIND THE WRITER THAT BROKE EVERY DEPLOY FIVE TIMES TODAY
-Five migrations landed in ih35_migrations.applied_migrations with no _system._schema_migrations
-row, all applied_by='CC-1', 12:42 to 14:35 CT. Each froze db:migrate for EVERY SEAT.
-I baselined them (#23496) after verifying all five DDLs are physically present. That unblocked the
-deploy. It did not fix the cause.
-FIND the code path that inserts a mirror row without going through applyMigration() and close it.
-Then make it impossible: applyMigration() is the only path that may write either ledger.
-REPORT the path by file:line. If it is a human step rather than code, say so plainly and write the
-step out of existence.
-
-## A-32 — TYPE-DRIVEN GL ROUTING  (law §7)
-Every transaction must reach its GL account through the object's TYPE, never free text:
-  vendor type + category -> expense account -> P&L line
-  unit capital spend      -> fixed asset -> balance sheet + its depreciation
-  customer type + charge  -> revenue account
-A type that does not resolve is HELD for coding. Never suspense, never guessed.
-MEASURE FIRST and report before building: how many live USMCA vendors and customers carry a type
-today, and how many expense rows reached their account by type versus by hand.
-
-## PROOF REQUIRED
-1. guard --selftest output and a live run
-2. the writer named by file:line, and the commit that closes it
-3. the A-32 measurement, real numbers, before any code
-
-## ONE PR + ONE GUARD each. No --admin merges.
+## THE QUEUE
+1. **A-30 LINKAGE GUARD** — read docs/laws/TRANSACTION-LINKAGE-LAW.md first.
+   Three tiers from ONE shared declaration. Tier 1 (fuel, DEF, tolls, crossings, scales, lumper,
+   detention, OTR repair, roadside, tow, accident, citation) requires unit AND driver AND load.
+   Tier 2 (shop PM, in-house repair, parts, yard tires, DOT inspection, wash, unit insurance,
+   registration, lease, depreciation) requires unit only — and the guard FAILS ANY CODE DEMANDING
+   a load there. Tier 3 (rent, utilities, software, bank fees, interest) is company + GL only;
+   a unit link is a defect. Live half uses requireLiveDbOrExit() with the gate's readonly
+   credential — never SET ROLE.
+2. **A-31 TIER-1 CONSTRAINT TRIGGER** — deferrable, same shape as B-26's lineless-invoice trigger,
+   so a Tier 1 row with no unit cannot exist even when every guard is bypassed. Going-forward only.
+3. **A-32 CASH GL UNBOUND ON 3 OF 8 BANK ACCOUNTS** — measured live on /banking right now. Bank
+   Register and bank-feed posting need a Cash GL per account. Name the 3, bind them, prove posting
+   works on each. This blocks every bank-feed posting path.
+4. **A-33 TYPE-DRIVEN GL ROUTING** — MEASURE FIRST, report before code: how many live USMCA
+   vendors and customers carry a type, and how many expense rows reached their account by type
+   versus by hand. Then wire vendor type + category -> expense account -> P&L line; unit capital
+   spend -> fixed asset -> balance sheet + depreciation; customer type + charge -> revenue.
+   A type that does not resolve is HELD for coding. Never suspense. Never guessed.
+5. **A-34 THE 931 UNCATEGORIZED** — 931 of 947 bank transactions are uncategorized, 98%.
+   Dreamline Diesel Card alone carries 397, Relay Fuel Wallet 76. Diagnose WHY the categorizer is
+   not running or not matching. Measure and report before writing a single rule.
+6. **A-35 RECONCILIATION HAS NEVER RUN** — 0 of 8 accounts have ever been reconciled. Establish
+   what a first reconciliation needs per account and what is missing today.
+7. **A-36** — when 1-6 are shipped, re-read this file. A new queue will be here.
