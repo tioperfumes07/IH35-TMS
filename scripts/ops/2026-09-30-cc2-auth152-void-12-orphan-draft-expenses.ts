@@ -1,6 +1,6 @@
 #!/usr/bin/env -S npx tsx
 /**
- * AUTH-150 -- void 12 orphan draft expenses (+ their JEs) that verify-costs-are-expenses-not-
+ * AUTH-152 -- void 12 orphan draft expenses (+ their JEs) that verify-costs-are-expenses-not-
  * handwritten-jes flags live, blocking every seat's push. Each of the 12 is an unnumbered
  * (expense_number NULL), never-linked (journal_entry_id NULL) draft, created at the identical
  * instant 2026-09-30T03:02:02.569Z, for the exact same amount+date as a SEPARATE, correctly
@@ -21,7 +21,7 @@ import pg from "pg";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const APPLY = process.argv.includes("--apply");
-const AUTH_ID = "AUTH-150";
+const AUTH_ID = "AUTH-152";
 const ACTOR_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd";
 
 const ORPHAN_EXPENSE_IDS: string[] = [

@@ -4981,7 +4981,7 @@ note: the 12-row backfill already ran successfully under the original AUTH-148 i
   collision). The 3-row load-less backfill has NOT run yet -- pending this AUTH landing on main so
   its own verify-owner-authorization check passes; will be marked CONSUMED with live proof once run.
 
-## AUTH-150
+## AUTH-152
 
 title: void 12 orphan draft expenses (+ their live JEs) blocking every seat's push, USMCA
 requested_by: CC-2, self-authorized to unblock verify-costs-are-expenses-not-handwritten-jes
@@ -4998,7 +4998,7 @@ root_cause: live-verified, all 12 individually. Each flagged JE (created at the 
   fix), but the evidence (exact duplicate amount+date+twin pattern, all 12) is unambiguous on its
   own: these are duplicates of an already-correct posting, not a second real cost.
 scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 12 accounting.expenses ids in
-  scripts/ops/2026-09-30-cc2-auth150-void-12-orphan-draft-expenses.ts (ORPHAN_EXPENSE_IDS). Reverses
+  scripts/ops/2026-09-30-cc2-auth152-void-12-orphan-draft-expenses.ts (ORPHAN_EXPENSE_IDS). Reverses
   each via postVoidReversal (entityType:'expense') -- NOT via executeExpense/executeVoidCancel,
   whose own posting_status==='posted' gate would skip the reversal for these specific rows (the
   same stale-flag mismatch this AUTH fixes) -- then stamps the header void using that executor's
@@ -5007,7 +5007,7 @@ scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 12 account
   been stale. Not authorized: touching either twin (correctly-linked) expense; any other expense;
   fixing executeExpense's own gate (a related but separate, out-of-scope bug, named on the board).
 action:
-  OWNER_AUTH_ID=AUTH-150 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth150-void-12-orphan-draft-expenses.ts --apply
+  OWNER_AUTH_ID=AUTH-152 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth152-void-12-orphan-draft-expenses.ts --apply
   (run from repo root; DRY_RUN first with no --apply flag)
 expires_at: 2026-10-01T00:00:00.000Z
 status: OPEN
