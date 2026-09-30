@@ -580,3 +580,28 @@ per row, with no supporting index, is expensive at this row count. The rules-onl
 fast (~0.4s/row, live-measured) and is what actually ran. The fuzzy-match backlog pass is a separate,
 future task that needs either a trigram index on `mdata.vendors.vendor_name` or a batched query
 shape before it's safe to run company-wide -- flagged, not built here.
+
+## ROUND 302 A-36 — FACTORING RESERVE GL vs FARO, $63.79 GAP CONFIRMED, root cause partially traced
+GL account 1230 "Factoring Reserves" (Asset) live balance: $5,144.40, entirely from 344 journal_entry
+postings, EVERY ONE dated 2026-08-10 or later (0 postings before that date -- confirmed by direct
+count). Faro's own reported reserve total, per factor.faro_daily_imports (Faro's imported statement
+data, not our own derived figure): two rows --
+  2026-09-04 statement (scoped 2026-08-10 to 2026-09-21, "reconciles to Faro Account Summary/Control
+    exactly" per its own stored note): reserve_total_cents = $4,530.19
+  2026-08-09 statement ("Faro prior-period block, pre-2026-08-10... Round 29.7 owner ruling:
+    register the pre-08/10 population as its own row, cumulative ledger never blended into the
+    scoped Faro statement header"): reserve_total_cents = $678.00
+  Combined: $5,208.19. GL $5,144.40 vs combined Faro $5,208.19 -- gap = $63.79, matching the order's
+  own figure exactly.
+**What is solidly established:** the ENTIRE pre-2026-08-10 prior-period block ($678.00) has ZERO
+matching GL postings before that date -- the GL's $5,144.40 is built entirely from post-08/10
+activity, yet it does not equal the post-08/10 statement alone ($4,530.19) either (off by $614.21 in
+the other direction) -- meaning the GL activity is NOT a clean 1:1 mirror of either individual Faro
+statement; it reflects some blend of both periods' real economics, landing $63.79 short of their
+true combined total.
+**Not yet isolated to a specific posting or document, said honestly rather than guessed:** with 344
+live postings on this one GL account, finding the exact line(s) responsible for the residual $63.79
+(as distinct from the much larger, already-ruled-on $678.00 prior-period question) needs a
+posting-by-posting reconciliation against Faro's per-invoice detail (factor.faro_invoice_lines) that
+this report does not complete. UNVERIFIED beyond this point -- not guessed at further.
+**NOT adjusted, per the order.**
