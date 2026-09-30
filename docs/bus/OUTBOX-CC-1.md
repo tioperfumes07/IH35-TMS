@@ -373,3 +373,36 @@ half wait until that backfill lands elsewhere? Vendor-type wiring (622/622 typed
 spend wiring have no equivalent blocker and I'm proceeding on those.
 **Not fixed here:** the 489-of-557 hand-categorized expense lines are not backfilled/rewired in this
 report -- that is the build A-33 asks for next, scoped to what's actually typed.
+
+## ROUND 300 A-34 — DIAGNOSED (per the order: measure and report before writing a rule)
+931 of 947 (98%) live USMCA bank_transactions uncategorized, split by account, live 2026-09-30:
+`USMCA FREIGHT 474 total (45 categorized, 9.5%) | Dreamline Diesel Card 397 total (7 categorized,
+1.8%) | Relay Fuel Wallet 76 total (69 categorized, 91%)`.
+**THREE DIFFERENT ROOT CAUSES, not one:**
+1. **Dreamline Diesel Card (397 txns, csv_import source) -- THE BIG ONE, 390 of the 931 gap.**
+   `apps/backend/src/banking/transaction-ingestion.ts` (the generic CSV-import path) NEVER calls
+   `applyBankingRulesForTransaction`/`applyBankingRulesForCompany` -- confirmed by reading the file:
+   it explicitly documents itself as ingesting "a RAW, uncategorized bank_transactions row... the
+   real GL post happens later, once, when the row is categorized." This is a pure WIRING gap, not a
+   rule-coverage gap: the 56 active USMCA `accounting.banking_rules` are never even consulted for
+   anything imported this way. The 7 that ARE categorized were almost certainly hand-categorized
+   through the UI, not rule-matched.
+2. **USMCA FREIGHT (474 txns, 472 plaid-sourced) -- a rule-COVERAGE gap, not a wiring gap.**
+   `applyBankingRulesForTransaction` IS called on every Plaid-ingested row
+   (`apps/backend/src/integrations/plaid/plaid.service.ts:762`, unconditional on successful insert).
+   It still only matches 45 of 472 (9.5%) -- the 56 active rules' `description_contains`/
+   `description_regex` patterns simply don't cover most of this account's real transaction
+   descriptions. This needs a look at the actual uncategorized descriptions vs the rule set, not a
+   wiring fix.
+3. **Relay Fuel Wallet (76 txns, csv_import source) -- NOT a gap, working as designed.** 91%
+   categorized via its OWN dedicated classifier
+   (`apps/backend/src/integrations/relay-payments/relay-deposit-classifier.service.ts` +
+   `relay-fuel-ingest.service.ts`), entirely separate from the generic `banking_rules` engine. This
+   is the one account where the categorizer story is already good.
+**Not fixed here (measure-and-report only, per the order):** wiring the CSV-import path into
+`applyBankingRulesForTransaction` would close most of the Dreamline gap immediately (390 of 931,
+42% of the whole company-wide gap) with a small, additive code change -- flagging this as the
+highest-leverage single fix once a rule is authorized to be written. The USMCA FREIGHT rule-coverage
+gap needs someone to actually read the uncategorized descriptions and author/extend rules against
+them -- a data-entry-shaped task, not a wiring one, and NOT attempted here since the order asked for
+diagnosis first.
