@@ -9359,5 +9359,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-30",
     "purpose": "verify-arrival-detection-runs-on-poll-path"
+  },
+  "11833": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-dispatched-load-gps-not-stale"
   }
 }
