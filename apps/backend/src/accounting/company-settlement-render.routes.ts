@@ -46,6 +46,7 @@ export async function registerCompanySettlementHtmlRoutes(app: FastifyInstance) 
           wrapPdfDocument({
             title: "Company settlement",
             body: "<p>This print URL needs a real company-settlement UUID (or pass operating_company_id).</p>",
+            skin: "v10",
           })
         );
       }
@@ -100,7 +101,7 @@ export async function registerCompanySettlementHtmlRoutes(app: FastifyInstance) 
 
       reply.header("Content-Type", "text/html; charset=utf-8");
       reply.header("Cache-Control", "private, no-store");
-      return reply.send(wrapPdfDocument({ title: payload.title, body: payload.body }));
+      return reply.send(wrapPdfDocument({ title: payload.title, body: payload.body, skin: "v10" }));
     }
   );
 }

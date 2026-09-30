@@ -1,4 +1,4 @@
-import { escapeHtml, formatDate, formatMoney } from "./pdf-template.js";
+import { escapeHtml, formatDate, formatMoney, formatMoneyPlain } from "./pdf-template.js";
 
 export type InvoiceLineRender = {
   description: string;
@@ -10,6 +10,8 @@ export type InvoiceLineRender = {
   approvedBy?: string | null;
   approvalMethod?: string | null;
   lineType?: string | null;
+  lineDateDisplay?: string | null;
+  itemLabel?: string | null;
 };
 
 export type InvoiceAdjustmentRow = {
@@ -24,6 +26,9 @@ export type InvoiceHtmlModel = {
   brandSub: string;
   brandAddrHtml: string;
   invoiceDocNum: string;
+  invoiceDateDisplay?: string;
+  dueDateDisplay?: string;
+  termsLabel?: string;
   issuedLines: string[];
   statusLine: string;
   billToSectionTitle: string;
@@ -54,157 +59,130 @@ export type InvoiceHtmlModel = {
   latePayFooter: string;
 };
 
+/**
+ * ROUND 285.4.9 / #31 — locked v10 customer invoice (QuickBooks order).
+ * Source: claude/00-LOCKED-DOCUMENT-DESIGNS-v10-DO-NOT-ALTER.html · Customer invoice.
+ * Balance-due is the totstack footer (not a rejected top banner). Detention/layover print APPROVED BY · METHOD.
+ */
 export function renderInvoiceBody(model: InvoiceHtmlModel): string {
+  const accessorialCents = model.lines
+    .filter((l) => {
+      if (l.isSubtotal) return false;
+      const lt = String(l.lineType ?? "").toLowerCase();
+      return lt === "detention" || lt === "layover" || /\bdetention\b|\blayover\b/i.test(l.description);
+    })
+    .reduce((sum, l) => sum + Math.max(0, l.amountCents), 0);
+
   const linesHtml = model.lines
+    .filter((l) => !l.isSubtotal)
     .map((line) => {
-      const cls = line.isSubtotal ? ` class="subtotal"` : "";
       const lt = String(line.lineType ?? "").toLowerCase();
       const needsApproval = lt === "detention" || lt === "layover" || /\bdetention\b|\blayover\b/i.test(line.description);
       let approvalHtml = "";
-      if (needsApproval && !line.isSubtotal) {
+      if (needsApproval) {
         const by = (line.approvedBy ?? "").trim();
         const method = (line.approvalMethod ?? "").trim();
-        // Owner: blank fields when missing — never invent an approver. Flag is the empty values.
-        approvalHtml = `<div style="font-size:9px;color:#4B5563;margin:2px 0 0;letter-spacing:0.02em;">APPROVED BY: ${escapeHtml(by || "—")} · METHOD: ${escapeHtml(method || "—")}</div>`;
+        approvalHtml = `<span class="appr">Approved by ${escapeHtml(by || "—")} · ${escapeHtml(method || "—")}</span>`;
       }
-      return `<tr${cls}><td>${escapeHtml(line.description)}${approvalHtml}</td><td class="num">${escapeHtml(line.basis)}</td><td class="num">${escapeHtml(line.rate)}</td><td class="num">${escapeHtml(formatMoney(line.amountCents))}</td></tr>`;
+      const item = line.itemLabel ?? (needsApproval ? (lt.includes("layover") || /\blayover\b/i.test(line.description) ? "Layover" : "Detention") : "Line haul");
+      return `<tr>
+        <td class="num">${escapeHtml(line.lineDateDisplay ?? "—")}</td>
+        <td>${escapeHtml(item)}</td>
+        <td>${escapeHtml(line.description)}${approvalHtml}</td>
+        <td class="r num">${escapeHtml(line.basis)}</td>
+        <td class="r num">${escapeHtml(line.rate)}</td>
+        <td class="r num">${escapeHtml(formatMoneyPlain(line.amountCents))}</td>
+      </tr>`;
     })
     .join("");
 
-  const adjustmentsHtml = model.adjustments
-    .map(
-      (row) =>
-        `<tr><td>${escapeHtml(row.flag)}</td><td class="num">${escapeHtml(row.booking)}</td><td class="num">${escapeHtml(row.actual)}</td><td class="num">${escapeHtml(row.net)}</td></tr>`
-    )
-    .join("");
-
   return `
-<div class="doc-page">
-  <div class="doc-head">
-    <div>
-      <div class="brand-name">${escapeHtml(model.brandName)}</div>
-      <div class="brand-sub">${escapeHtml(model.brandSub)}</div>
-      <div class="brand-addr">${model.brandAddrHtml}</div>
+<div class="sheet portrait" data-doc-skin="v10" data-doc-kind="customer-invoice">
+  <div class="invhead">
+    <div class="brand" style="gap:14px">
+      <div>
+        <div class="carrier">${escapeHtml(model.brandName)}</div>
+        <div class="sub">${escapeHtml(model.brandSub)}</div>
+        <div class="sub">${model.brandAddrHtml}</div>
+      </div>
     </div>
-    <div class="doc-meta">
-      <div class="doc-type">Customer invoice</div>
-      <div class="doc-num">${escapeHtml(model.invoiceDocNum)}</div>
-      <div class="doc-issued">${model.issuedLines.map((line) => escapeHtml(line)).join("<br/>")}</div>
-      <div class="doc-status">${escapeHtml(model.statusLine)}</div>
+    <div>
+      <div class="invtitle">INVOICE</div>
+      <div class="invmeta">
+        <span class="k">Invoice no.</span><span class="v">${escapeHtml(model.invoiceDocNum)}</span>
+        <span class="k">Invoice date</span><span class="v">${escapeHtml(model.invoiceDateDisplay ?? model.issuedLines[0] ?? "—")}</span>
+        <span class="k">Terms</span><span class="v">${escapeHtml(model.termsLabel ?? "Net terms")}</span>
+        <span class="k">Due date</span><span class="v">${escapeHtml(model.dueDateDisplay ?? "—")}</span>
+      </div>
     </div>
   </div>
 
-  <div class="sec-head">
-    <span class="title">${escapeHtml(model.billToSectionTitle)}</span>
-  </div>
-  <div class="lv-grid cols-2">
-    <div class="lv">
-      <div class="lbl">Bill to (customer)</div>
+  <div class="party">
+    <div>
+      <h5>Bill to</h5>
       ${model.billToInnerHtml}
     </div>
-    <div class="lv">
-      <div class="lbl">${escapeHtml(model.remitLabel)}</div>
-      ${model.remitInnerHtml}
+    <div>
+      <h5>Load and references</h5>
+      <p><span class="dim">Load</span> <span class="num">${escapeHtml(model.loadDocNum)}</span> ·
+         <span class="dim">Customer ref</span> <span class="num">${escapeHtml(model.customerWo)}</span><br>
+         <span class="dim">PU number</span> <span class="num">${escapeHtml(model.pickupRef)}</span> ·
+         <span class="dim">POD</span> <span class="num">${escapeHtml(model.podRef)}</span><br>
+         <span class="dim">Commodity</span> ${escapeHtml(model.commodity)} ·
+         <span class="dim">Weight</span> ${escapeHtml(model.weight)} ·
+         <span class="dim">Pieces</span> ${escapeHtml(model.pieces)}<br>
+         <span class="dim">Equipment</span> ${escapeHtml(model.equipment)}</p>
     </div>
   </div>
 
-  <div class="sec-head">
-    <span class="title">Load reference</span>
-    <span class="right">All line items below earned under load ${escapeHtml(model.loadDocNum)}</span>
-  </div>
-  <div class="lv-grid">
-    <div class="lv"><div class="lbl">Load #</div><div class="val mono">${escapeHtml(model.loadDocNum)}</div></div>
-    <div class="lv"><div class="lbl">Customer WO #</div><div class="val mono">${escapeHtml(model.customerWo)}</div></div>
-    <div class="lv"><div class="lbl">Pickup #</div><div class="val mono">${escapeHtml(model.pickupRef)}</div></div>
-    <div class="lv"><div class="lbl">POD reference</div><div class="val mono">${escapeHtml(model.podRef)}</div></div>
-  </div>
-  <div class="lv-grid cols-2" style="margin-top: 6px;">
-    <div class="lv">
-      <div class="lbl">Pickup</div>
-      <div class="val">${escapeHtml(model.pickupPrimary)}</div>
-      <div class="sub">${escapeHtml(model.pickupSecondary)}</div>
-    </div>
-    <div class="lv">
-      <div class="lbl">Delivery</div>
-      <div class="val">${escapeHtml(model.deliveryPrimary)}</div>
-      <div class="sub">${escapeHtml(model.deliverySecondary)}</div>
-    </div>
-  </div>
-  <div class="lv-grid" style="margin-top: 6px;">
-    <div class="lv"><div class="lbl">Commodity</div><div class="val">${escapeHtml(model.commodity)}</div></div>
-    <div class="lv"><div class="lbl">Weight</div><div class="val">${escapeHtml(model.weight)}</div></div>
-    <div class="lv"><div class="lbl">Pieces</div><div class="val">${escapeHtml(model.pieces)}</div></div>
-    <div class="lv"><div class="lbl">Equipment</div><div class="val">${escapeHtml(model.equipment)}</div></div>
-  </div>
-
-  <div class="sec-head">
-    <span class="title">Line items</span>
-  </div>
-  <table class="data-table">
-    <thead>
+  <table class="tight" style="margin-top:14px">
+    <thead><tr><th style="width:74px">Date</th><th style="width:56px">Stop</th><th>Location</th><th style="width:140px">Notes</th></tr></thead>
+    <tbody>
       <tr>
-        <th style="width: 52%;">Description</th>
-        <th class="num">Basis</th>
-        <th class="num">Rate</th>
-        <th class="num" style="width: 16%;">Amount</th>
+        <td class="num dim">—</td><td>Pickup</td>
+        <td><b>${escapeHtml(model.pickupPrimary)}</b><span class="loc">${escapeHtml(model.pickupSecondary)}</span></td>
+        <td class="dim">—</td>
       </tr>
-    </thead>
+      <tr>
+        <td class="num dim">—</td><td>Delivery</td>
+        <td><b>${escapeHtml(model.deliveryPrimary)}</b><span class="loc">${escapeHtml(model.deliverySecondary)}</span></td>
+        <td class="dim">—</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <table class="tight" style="margin-top:12px">
+    <thead><tr><th style="width:74px">Date</th><th style="width:118px">Item</th><th>Description</th><th class="r" style="width:88px">Qty</th><th class="r" style="width:66px">Rate</th><th class="r" style="width:88px">Amount</th></tr></thead>
     <tbody>
       ${linesHtml}
-      <tr><td>Tax · intrastate freight exempt</td><td class="num"></td><td class="num"></td><td class="num">${escapeHtml(formatMoney(model.taxCents))}</td></tr>
-    </tbody>
-    <tfoot>
-      <tr><td colspan="3">Total customer invoice</td><td class="num">${escapeHtml(formatMoney(model.invoiceTotalCents))}</td></tr>
-    </tfoot>
-  </table>
-
-  <div class="sec-head">
-    <span class="title">Expected adjustments flagged at booking</span>
-    <span class="right">Visible to A/R for review before invoice approval</span>
-  </div>
-  <div style="font-size: 9.5px; color: #555; margin: 4px 0 6px; line-height: 1.5;">
-    ${escapeHtml(model.adjustmentsIntro)}
-  </div>
-  <table class="adj-table">
-    <thead>
-      <tr>
-        <th>Flag</th>
-        <th class="num">Booking estimate</th>
-        <th class="num">Actual</th>
-        <th class="num">Net change</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${adjustmentsHtml}
+      <tr><td class="num dim">—</td><td>Tax</td><td class="dim">Intrastate freight exempt</td><td class="r num dim">—</td><td class="r num dim">—</td><td class="r num">${escapeHtml(formatMoneyPlain(model.taxCents))}</td></tr>
     </tbody>
   </table>
 
-  <div class="total-line">
-    <div>
-      <div class="lbl">Total amount due</div>
-      <div class="sub">${escapeHtml(model.totalDuePrimary)}</div>
-      <div class="sub">${escapeHtml(model.totalDueSecondary)}</div>
-    </div>
-    <div class="amt">${escapeHtml(formatMoney(model.invoiceTotalCents))}</div>
+  <div class="totstack">
+    <table class="tight">
+      <tbody>
+        <tr><td>Subtotal</td><td class="r num">${escapeHtml(formatMoneyPlain(model.invoiceTotalCents - model.taxCents))}</td></tr>
+        <tr><td>Accessorials included above</td><td class="r num">${escapeHtml(formatMoneyPlain(accessorialCents))}</td></tr>
+        <tr><td>Payments and credits</td><td class="r num">0.00</td></tr>
+        <tr class="bal"><td>Balance due</td><td class="r">${escapeHtml(formatMoney(model.invoiceTotalCents))}</td></tr>
+      </tbody>
+    </table>
   </div>
 
-  <div class="sec-head">
-    <span class="title">Payment instructions · ACH preferred</span>
-  </div>
-  <div style="font-size: 9.5px; line-height: 1.55; margin: 4px 0;">
-    ${model.paymentInstructionsHtml}
-  </div>
-
-  <div class="doc-footer">
+  <div class="party" style="margin-top:14px">
     <div>
-      <div class="fl-label">Disputes &amp; corrections</div>
-      <p>${escapeHtml(model.disputesFooter)}</p>
+      <h5>${escapeHtml(model.billToSectionTitle)}</h5>
+      <p>${escapeHtml(model.totalDuePrimary)}<br>${escapeHtml(model.totalDueSecondary)}</p>
+      <p class="dim">${escapeHtml(model.statusLine)}</p>
     </div>
     <div>
-      <div class="fl-label">Late-pay terms</div>
-      <p>${escapeHtml(model.latePayFooter)}</p>
+      <h5>${escapeHtml(model.remitLabel)}</h5>
+      ${model.remitInnerHtml}
+      <div style="margin-top:8px;font-size:11.5px;line-height:1.5">${model.paymentInstructionsHtml}</div>
     </div>
   </div>
+  <p class="note">Invoice ${escapeHtml(model.invoiceDocNum)} · load ${escapeHtml(model.loadDocNum)} · ${escapeHtml(model.disputesFooter)} · ${escapeHtml(model.latePayFooter)}</p>
 </div>`;
 }
 

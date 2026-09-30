@@ -1,5 +1,8 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T06:36Z · 285.4.9 #31 v10 DOCS ON BRANCH**
+CURSOR | #31 locked v10 driver+company+invoice PDFs (`PDF_V10_STYLES`, `data-doc-skin=v10`, invoice QB Balance due + `.appr`) | GUARD verify-company-settlement-pdf-house-template OK + selftest 14/14 · vitest pdf-templates 3/3 | NEXT: fast-merge · #59 METHOD migrate after 12:00 UTC · deploy Chrome.
+
 **2026-09-30T06:28Z · 285.4.9 #58+#32+#33 MERGED · AUTH law MERGED**
 CURSOR | AUTH-147=CODEX blocks 154–177 `#23272` · #58 downtime/fuel/margins `#23275` · #32 draft-expense flag `#23276` · #33 idle review `#23279` (`da88a8338d`) | GUARD company-settlement-pdf + ldt-5 + maint-kpi OK | NEXT: #59 METHOD after 12:00 UTC migrate window · #31 v10 document parity · deploy Chrome.
 
