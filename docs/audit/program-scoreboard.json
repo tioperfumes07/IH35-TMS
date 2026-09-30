@@ -1,6 +1,6 @@
 {
   "healthzSha": "808bfa2",
-  "generated_at": "2026-09-30T05:09:15.917Z",
+  "generated_at": "2026-09-30T05:14:39.581Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
@@ -2123,6 +2123,33 @@
   },
   "recentActivity": [
     {
+      "number": 23237,
+      "title": "FINDING: N/A LANE: DOCS -- AUTH-145 CONSUMED, 32/34 fuel-expense-bridge backfill rows created live",
+      "state": "merged",
+      "mergedAtCt": "09/30/2026, 12:12 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23237",
+      "sha": "7bdf48212e",
+      "committedAtIso": "2026-09-30T00:12:20-05:00"
+    },
+    {
+      "number": 23235,
+      "title": "FINDING: N/A LANE: FINANCIAL -- AUTH-145 OPEN: create load 13593 + invoice 074-13593 + driver bill + 3 fuel rows (THE-CLOSE 9.1 / 287.3.1)",
+      "state": "merged",
+      "mergedAtCt": "09/30/2026, 12:11 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23235",
+      "sha": "87f75cfe29",
+      "committedAtIso": "2026-09-30T00:11:39-05:00"
+    },
+    {
+      "number": 23236,
+      "title": "FIX: ROUND-290.1 backfill script passed null as requesting_user_uuid, which createExpenseFromFuelTransaction's fallback tried to insert as a literal UUID (\"system:fuel-expense-document\") -- only surfaced on the real (non-DRY_RUN) write path since DRY_RUN never reaches the INSERT. Pass the standing system actor UUID instead.",
+      "state": "merged",
+      "mergedAtCt": "09/30/2026, 12:10 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23236",
+      "sha": "ae10a35fb8",
+      "committedAtIso": "2026-09-30T00:10:13-05:00"
+    },
+    {
       "number": 23234,
       "title": "FINDING: ROUND-290.1 — the fuel-to-expense bridge becomes an invariant before any seed",
       "state": "merged",
@@ -2184,33 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23227",
       "sha": "0fb333bae2",
       "committedAtIso": "2026-09-29T23:29:38-05:00"
-    },
-    {
-      "number": 23226,
-      "title": "FINDING: ROUND-288 — STOP: the 8 loads are TRANSPORTATION, 287.2.1 is cancelled before any seat acted on it",
-      "state": "merged",
-      "mergedAtCt": "09/29/2026, 11:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23226",
-      "sha": "5c0020a5e9",
-      "committedAtIso": "2026-09-29T23:28:23-05:00"
-    },
-    {
-      "number": 23225,
-      "title": "FINDING: ROUND-287 — the USMCA boundary is the settlement number, and 8 invoices worth 29,300.00 were voided wrongly as Transportation",
-      "state": "merged",
-      "mergedAtCt": "09/29/2026, 11:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23225",
-      "sha": "41b70a6f55",
-      "committedAtIso": "2026-09-29T23:22:57-05:00"
-    },
-    {
-      "number": 23224,
-      "title": "FINDING: ACCT-F2026093012",
-      "state": "merged",
-      "mergedAtCt": "09/29/2026, 11:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23224",
-      "sha": "8787b7d543",
-      "committedAtIso": "2026-09-29T23:21:09-05:00"
     }
   ]
 }
