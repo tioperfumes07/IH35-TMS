@@ -9349,5 +9349,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-30",
     "purpose": "verify-expense-line-item-and-account-required"
+  },
+  "11825": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-geocode-provider-is-reachable"
   }
 }
