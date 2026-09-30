@@ -9304,5 +9304,25 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-30",
     "purpose": "verify-expense-never-credits-ap"
+  },
+  "11757": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-live-loads-bills-require-closed-settlement"
+  },
+  "11761": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-new-financial-table-ships-worm"
+  },
+  "11765": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-check-stock-allocator"
+  },
+  "11769": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-resolve-fully-wired"
   }
 }
