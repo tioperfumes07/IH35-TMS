@@ -78,7 +78,10 @@ export type TourLeg = {
 };
 export type TourCost = {
   id: string; kind: "expense" | "bill"; number: string; load_id: string; load_number: string | null; date: string | null; vendor_name: string | null;
-  category: string | null; amount_cents: number; posting_status: string; has_account: boolean; has_vendor: boolean; receipt_count: number;
+  category: string | null; amount_cents: number; posting_status: string;
+  /** ROUND 285.4.9 / #32 — expenses.status (draft/posted/…) or bills.status; drives the draft-unposted flag. */
+  document_status: string;
+  has_account: boolean; has_vendor: boolean; receipt_count: number;
 };
 export type ReadyItem = { key: string; label: string; ok: boolean; detail: string; hard: boolean };
 
@@ -245,11 +248,12 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
 
   const costsRes = loadIds.length ? await client.query<{
     id: string; kind: "expense" | "bill"; number: string | null; load_id: string; load_number: string | null; date: string | null; vendor_name: string | null; category: string | null;
-    amount_cents: unknown; posting_status: string | null; has_account: boolean; has_vendor: boolean; receipt_count: unknown;
+    amount_cents: unknown; posting_status: string | null; document_status: string | null; has_account: boolean; has_vendor: boolean; receipt_count: unknown;
   }>(
     `SELECT e.id::text, 'expense'::text AS kind, e.expense_number AS number, l.id::text AS load_id, l.load_number, e.transaction_date::text AS date, v.vendor_name,
             (SELECT acc.account_name FROM accounting.expense_lines el JOIN catalogs.accounts acc ON acc.id = el.expense_account_uuid WHERE el.expense_id = e.id ORDER BY el.line_sequence LIMIT 1) AS category,
             e.total_amount_cents AS amount_cents, e.posting_status::text,
+            e.status::text AS document_status,
             EXISTS (SELECT 1 FROM accounting.expense_lines el WHERE el.expense_id = e.id AND el.expense_account_uuid IS NOT NULL) AS has_account,
             e.vendor_uuid IS NOT NULL AS has_vendor,
             (SELECT COUNT(*) FROM documents.attachments a WHERE a.operating_company_id = e.operating_company_id AND a.entity_type = 'expense' AND a.entity_id = e.id AND a.is_deleted = false) AS receipt_count
@@ -268,6 +272,7 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
      -- is extended with load_id below so a multi-load bill's second load is no longer dropped.
      SELECT b.id::text, 'bill', COALESCE(b.display_id, b.bill_number), bl_agg.load_id::text, l.load_number, b.bill_date::text, v.vendor_name,
             acc.account_name, bl_agg.line_cents, CASE WHEN b.status = 'paid' THEN 'paid' ELSE 'owed' END,
+            b.status::text,
             b.coa_account_id IS NOT NULL, b.vendor_uuid IS NOT NULL OR b.mdata_vendor_id IS NOT NULL,
             (SELECT COUNT(*) FROM documents.attachments a WHERE a.operating_company_id = b.operating_company_id AND a.entity_type = 'bill' AND a.entity_id = b.id AND a.is_deleted = false)
        FROM accounting.bills b
@@ -294,7 +299,7 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
     // ALL-SEATS LAW (owner, 2026-09-13): the Fuel & Expenses "Load Number" column must drill through
     // a real EntityLink, not print a bare number — l.id was already joined for load_number, just not
     // exposed until now.
-    costs.push({ id: r.id, kind: r.kind, number: r.number ?? "—", load_id: r.load_id, load_number: r.load_number, date: r.date, vendor_name: r.vendor_name, category: r.category, amount_cents: n(r.amount_cents), posting_status: r.posting_status ?? "unposted", has_account: Boolean(r.has_account), has_vendor: Boolean(r.has_vendor), receipt_count: n(r.receipt_count) });
+    costs.push({ id: r.id, kind: r.kind, number: r.number ?? "—", load_id: r.load_id, load_number: r.load_number, date: r.date, vendor_name: r.vendor_name, category: r.category, amount_cents: n(r.amount_cents), posting_status: r.posting_status ?? "unposted", document_status: r.document_status ?? "unknown", has_account: Boolean(r.has_account), has_vendor: Boolean(r.has_vendor), receipt_count: n(r.receipt_count) });
   }
 
   const linesRes = await client.query<{ id: string; line_type: string; description: string | null; amount: unknown; load_id: string | null; load_number: string | null; approval_status: string | null; posting_account_id: string | null; account_number: string | null; account_name: string | null; source_driver_bill_id: string | null }>(
