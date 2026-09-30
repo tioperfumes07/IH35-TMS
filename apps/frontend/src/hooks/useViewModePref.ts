@@ -4,6 +4,7 @@ import { getUserPreferences, patchUserPreferences } from "../api/safety";
 export type EntityViewMode = "list" | "master-detail";
 
 const STORAGE_PREFIX = "ih35:view-mode:";
+const CHOSEN_SUFFIX = ":chosen";
 
 function readLocal(key: string): EntityViewMode | null {
   try {
@@ -23,33 +24,55 @@ function writeLocal(key: string, mode: EntityViewMode) {
   }
 }
 
-// CLOSURE-31: The DEFAULT view for /customers and /vendors must be the prior
-// "master-detail" design Jorge was using before AUDIT-FIX-3 (#531). #531 added
-// the opt-in tabular "list" view but also flipped the default to it, which was
-// an unrequested wholesale change. The list view stays available as a toggle;
-// it must NOT be the default. See scripts/verify-customers-vendors-default-is-prior-design.mjs.
+function readChosen(key: string): boolean {
+  try {
+    return localStorage.getItem(`${key}${CHOSEN_SUFFIX}`) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function writeChosen(key: string) {
+  try {
+    localStorage.setItem(`${key}${CHOSEN_SUFFIX}`, "1");
+  } catch {
+    // private mode
+  }
+}
+
+// CLOSURE-31 + C-02 (2026-09-30): DEFAULT is master-detail. localStorage may only override
+// AFTER an explicit user click (chosen flag). Cleared storage / first visit → master-detail.
 const DEFAULT_VIEW_MODE: EntityViewMode = "master-detail";
 
 export function useViewModePref(
-  entity: "customers" | "vendors",
+  entity: "customers" | "vendors" | "drivers",
   defaultMode: EntityViewMode = DEFAULT_VIEW_MODE
 ) {
   const storageKey = `${STORAGE_PREFIX}${entity}`;
   const prefKey = `${entity}_view_mode`;
 
-  const [viewMode, setViewModeState] = useState<EntityViewMode>(() => readLocal(storageKey) ?? defaultMode);
+  // C-02: seed from code default only. Do NOT read localStorage for the initial value —
+  // stale "list" from a never-chosen session must not win over the house default.
+  const [viewMode, setViewModeState] = useState<EntityViewMode>(() => defaultMode);
   const [saveError, setSaveError] = useState<string | null>(null);
   const pendingModeRef = useRef<EntityViewMode | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    // Explicit local choice (user clicked) may restore immediately.
+    if (readChosen(storageKey)) {
+      const local = readLocal(storageKey);
+      if (local && !cancelled) setViewModeState(local);
+    }
     void (async () => {
       try {
         const prefs = await getUserPreferences();
         const fromServer = prefs.preferences?.[prefKey];
         if (!cancelled && (fromServer === "list" || fromServer === "master-detail")) {
+          // Server preference is an explicit prior save — treat as chosen.
           setViewModeState(fromServer);
           writeLocal(storageKey, fromServer);
+          writeChosen(storageKey);
         }
       } catch {
         // offline / unauthenticated
@@ -74,6 +97,7 @@ export function useViewModePref(
     setSaveError(null);
     setViewModeState(mode);
     writeLocal(storageKey, mode);
+    writeChosen(storageKey);
     void persistMode(mode);
   }, [persistMode, storageKey]);
 

@@ -45,6 +45,12 @@ import { SelectCombobox } from "../components/Combobox";
 import { CreateDriverModal } from "../components/drivers/CreateDriverModal";
 import { DriverPickerWithCreate } from "../components/drivers/DriverPickerWithCreate";
 import { DriversListPage } from "./drivers/DriversListPage";
+import { DriverListSidebar } from "./drivers/DriverListSidebar";
+import { DriverProfilePage } from "./drivers/DriverProfilePage";
+import { MasterDetailShell } from "../components/layout/MasterDetailShell";
+import { SegmentedControl } from "../components/SegmentedControl";
+import { MASTER_DETAIL } from "../design/master-detail";
+import { useViewModePref } from "../hooks/useViewModePref";
 import { DriverSchedulerRequestInboxPage } from "./safety/driver-scheduler/DriverSchedulerRequestInboxPage";
 import { AutoDeductionPoliciesPanel } from "./drivers/AutoDeductionPolicies";
 import { PendingSettlementDeductionsPanel } from "./drivers/PendingSettlementDeductionsPanel";
@@ -245,6 +251,9 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
     () => (initialSubnav ?? driversSubtabFromPath(location.pathname)) as DriversSubnavId | DriversExtendedSubtabId,
     [initialSubnav, location.pathname]
   );
+  // C-02 / C-17 — Drivers Profiles share the same master-detail default + pref hook as Customers/Vendors.
+  const { viewMode: profilesViewMode, setViewMode: setProfilesViewMode } = useViewModePref("drivers", "master-detail");
+  const [selectedDriverId, setSelectedDriverId] = useState("");
 
   useEffect(() => {
     const legacySubtab = searchParams.get("subtab");
@@ -852,7 +861,48 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               {permitExpirationRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No permit/document expirations in the next 60 days.</p> : null}
             </DataPanel>
           ) : null}
-          {subnavTab === "profiles" ? <DriversListPage /> : null}
+          {subnavTab === "profiles" ? (
+            <div className="space-y-3" data-testid="drivers-profiles-shell">
+              <div className="flex flex-wrap items-center gap-2">
+                <SegmentedControl
+                  value={profilesViewMode}
+                  onChange={setProfilesViewMode}
+                  dataAttributes={{ "data-view-mode-toggle": "drivers" }}
+                  options={[
+                    { value: "list", label: "List view", testId: "drivers-view-list" },
+                    { value: "master-detail", label: "Master-detail", testId: "drivers-view-master-detail" },
+                  ]}
+                />
+              </div>
+              {profilesViewMode === "list" ? (
+                <DriversListPage onOpenProfile={(id) => {
+                  setSelectedDriverId(id);
+                  setProfilesViewMode("master-detail");
+                }} />
+              ) : (
+                <MasterDetailShell
+                  testId="drivers-master-detail-shell"
+                  master={
+                    <DriverListSidebar
+                      selectedDriverId={selectedDriverId}
+                      onSelectDriver={setSelectedDriverId}
+                    />
+                  }
+                  detail={
+                    selectedDriverId ? (
+                      <div className={`${MASTER_DETAIL.surfaceClass} p-2`}>
+                        <DriverProfilePage driverId={selectedDriverId} />
+                      </div>
+                    ) : (
+                      <div className={`${MASTER_DETAIL.surfaceClass} p-4 text-xs text-gray-500`}>
+                        Select a driver to open the profile.
+                      </div>
+                    )
+                  }
+                />
+              )}
+            </div>
+          ) : null}
           {subnavTab === "leave" ? (
             <div className="space-y-3" data-testid="drivers-leave-workspace">
               {/* @matrix-built drivers:leave:{connectivity} */}

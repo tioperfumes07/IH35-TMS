@@ -15,6 +15,23 @@ describe("useViewModePref failure truth", () => {
   beforeEach(() => {
     getPreferencesMock.mockReset().mockResolvedValue({ preferences: {} });
     patchPreferencesMock.mockReset();
+    localStorage.clear();
+  });
+
+  it("C-02: seeds master-detail even when localStorage has list without chosen flag", () => {
+    localStorage.setItem("ih35:view-mode:customers", "list");
+    const { result } = renderHook(() => useViewModePref("customers", "master-detail"));
+    expect(result.current.viewMode).toBe("master-detail");
+  });
+
+  it("C-02: restores localStorage only after an explicit chosen click", async () => {
+    const { result } = renderHook(() => useViewModePref("customers", "master-detail"));
+    await act(async () => {
+      result.current.setViewMode("list");
+      await Promise.resolve();
+    });
+    expect(localStorage.getItem("ih35:view-mode:customers:chosen")).toBe("1");
+    expect(localStorage.getItem("ih35:view-mode:customers")).toBe("list");
   });
 
   it("keeps a failed server preference visible and retries the exact mode", async () => {
