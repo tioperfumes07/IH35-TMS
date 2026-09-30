@@ -19,6 +19,7 @@ import {
   getOcrIntakeQueue,
   getPodDocuments,
   listAtRiskOrLateDispatchLoads,
+  listAwaitingBolInvoice,
   listDispatchAssignmentHistory,
   listLateArrivalDispatchLoads,
   listLoadTemplates,
@@ -104,6 +105,11 @@ const DISPATCH_NAV_ITEMS: readonly NavItem[] = [
         badgeKey: "pod_review",
       },
       {
+        label: "Awaiting BOL",
+        href: "/dispatch/awaiting-bol-invoice",
+        badgeKey: "awaiting_bol",
+      },
+      {
         label: "OCR Queue",
         href: "/dispatch/ocr-queue",
         badgeKey: "ocr_queue",
@@ -156,6 +162,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   "/driver-finance/settlement-creator": "Settlement Creator",
   "/accounting/pre-settlements": "Pre-settlements",
   "/dispatch/pod-review": "POD Review",
+  "/dispatch/awaiting-bol-invoice": "Awaiting BOL",
   "/dispatch/ocr-queue": "OCR Queue",
   "/dispatch/equipment-transfers": "Equipment transfers",
 };
@@ -226,6 +233,8 @@ export function dispatchSubNavActiveHref(
     return "/accounting/pre-settlements";
   if (pathname.startsWith("/dispatch/pod-review"))
     return "/dispatch/pod-review";
+  if (pathname.startsWith("/dispatch/awaiting-bol-invoice"))
+    return "/dispatch/awaiting-bol-invoice";
   if (pathname.startsWith("/dispatch/ocr-queue")) return "/dispatch/ocr-queue";
   if (pathname.startsWith("/accounting/load-costs")) return "/accounting/load-costs";
   return pathname;
@@ -241,7 +250,7 @@ export function dispatchBreadcrumbLabel(
   );
 }
 
-const ALERT_BADGE_KEYS = new Set(["at_risk", "detention", "late", "border"]);
+const ALERT_BADGE_KEYS = new Set(["at_risk", "detention", "late", "border", "awaiting_bol"]);
 
 function CountBadge({
   count,
@@ -515,6 +524,7 @@ export function DispatchSubnav({ operatingCompanyId }: Props) {
     templatesQ,
     podQ,
     ocrQ,
+    awaitingBolQ,
   ] = useQueries({
     queries: [
       {
@@ -578,6 +588,12 @@ export function DispatchSubnav({ operatingCompanyId }: Props) {
         enabled,
         refetchInterval: 60_000,
       },
+      {
+        queryKey: ["dispatch-subnav", "awaiting-bol", operatingCompanyId],
+        queryFn: () => listAwaitingBolInvoice(operatingCompanyId),
+        enabled,
+        refetchInterval: 60_000,
+      },
     ],
   });
 
@@ -592,6 +608,7 @@ export function DispatchSubnav({ operatingCompanyId }: Props) {
     templatesQ,
     podQ,
     ocrQ,
+    awaitingBolQ,
   ].filter((query) => query.isError);
 
   const badges = useMemo<Record<string, number | null | undefined>>(
@@ -636,6 +653,10 @@ export function DispatchSubnav({ operatingCompanyId }: Props) {
         enabled && !ocrQ.isLoading && !ocrQ.isError
           ? (ocrQ.data?.items?.length ?? 0)
           : null,
+      awaiting_bol:
+        enabled && !awaitingBolQ.isLoading && !awaitingBolQ.isError
+          ? Number(awaitingBolQ.data?.count ?? awaitingBolQ.data?.rows?.length ?? 0)
+          : null,
     }),
     [
       enabled,
@@ -669,6 +690,9 @@ export function DispatchSubnav({ operatingCompanyId }: Props) {
       ocrQ.isLoading,
       ocrQ.isError,
       ocrQ.data,
+      awaitingBolQ.isLoading,
+      awaitingBolQ.isError,
+      awaitingBolQ.data,
     ],
   );
 
