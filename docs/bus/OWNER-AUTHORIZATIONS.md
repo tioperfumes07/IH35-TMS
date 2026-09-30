@@ -5781,4 +5781,20 @@ verify-g2-extra-pay-requires-item (claimed verify-step 11773).
 action: OWNER_AUTH_ID=AUTH-168 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth168-g2-settlement-line-item-split.ts
   (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
 expires_at: 2026-10-01T11:25:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T11:27:00.000Z
+consumed_by: CC-1
+row_counts: adjusting JE 4210bd06-01fe-4f67-84ea-f85bb171b91f posted, 32 lines (31 debits + 1
+  credit), $1,723.88. 31 driver_finance.settlement_line_item_splits rows inserted (one per
+  settlement_line+item pair across the 16 target rows). The 17th row
+  (b0c47f5c-ea45-40ef-af07-13aa4128fa64, $22.14) untouched, item_id still NULL, held out as
+  authorized.
+proof_query: live on prod, 2026-09-30 -- trial-balance snapshot compare
+  (2026-09-30-pre-g2-split-real vs 2026-09-30-post-g2-split-real): exactly 7 accounts moved,
+  matching the predicted table to the cent: 5000 +$30.00, 5100 +$1,050.00, 5300 +$22.00,
+  5310 +$28.00, 5400 +$62.62, 5500 +$531.26, 6890 -$1,723.88 (net $0.00). Guard
+  verify-g2-extra-pay-requires-item: PASS (constraint present, live null-item extra_pay count 17,
+  at baseline). Migration 202614680000 applied and ledgered in both _system._schema_migrations and
+  ih35_migrations.applied_migrations.
+
+— CC-1
