@@ -4,8 +4,39 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { runRequiredGuards, reportedSkip } from './run-required-guards.mjs';
+import { runRequiredGuards, reportedSkip, formatLocalOutcomes } from './run-required-guards.mjs';
 import { CI_DATABASE_GUARDS, localDatabaseGuardArgs } from './local-db-guard-routing.mjs';
+import { classify as classifyStatic, STATIC_RESULT_CATEGORIES } from '../verify-static.mjs';
+import { runStep } from '../branch-precheck-push.mjs';
+
+test('gate prerequisite failures remain visible even when no child guard has failed', () => {
+  const line = formatLocalOutcomes('gate', { passed: 12, failed: 0, skipped: 3 }, 61, 1);
+  assert.match(line, /passed=12 failed=0 skipped=64 gate_exit=1/);
+  assert.match(line, /NOT live passes/);
+});
+
+test('push precheck prints child skip counts even when the child exits zero', () => {
+  const output = [];
+  const originalLog = console.log;
+  console.log = (...args) => output.push(args.join(' '));
+  try {
+    const line = 'money-pr-local-gate: LOCAL PHASE OUTCOMES passed=12 failed=0 skipped=64';
+    const command = `${JSON.stringify(process.execPath)} -e ${JSON.stringify(`console.log(${JSON.stringify(line)})`)}`;
+    const result = runStep(command, 'outcome-fixture', process.cwd());
+    assert.equal(result.ok, true);
+    assert.ok(output.includes(line), 'an exit-zero child must not hide its 64 skips');
+  } finally {
+    console.log = originalLog;
+  }
+});
+
+test('static fallback uses the same required-CI registry and never counts deferral as PASS', () => {
+  for (const file of Object.keys(CI_DATABASE_GUARDS)) {
+    const result = classifyStatic(path.resolve(file));
+    assert.equal(result.kind, STATIC_RESULT_CATEGORIES.SKIP_CAPABILITY, `${file}: ${result.detail}`);
+    assert.match(result.detail, /required-live-load-guard/);
+  }
+});
 
 test('every failed position fails the batch without skipping later checks', () => {
   const files = Array.from({ length: 10 }, (_, i) => `guard-${i}`);
@@ -38,13 +69,14 @@ test('actual CLI exits nonzero on an unstartable guard', () => {
 });
 
 test('exit-zero skips fail required CI and are never counted as passes', () => {
-  for (const text of ['SKIP live — no DATABASE_URL', 'guard: SKIPPED — NOT FED YET', '  EMPTY BY PURGE', 'guard: DEFERRED', 'parity scope: 0 of 34 documents in scope, 34 skipped NOT FED YET']) {
+  for (const text of ['SKIP live — no DATABASE_URL', 'guard: SKIPPED — NOT FED YET', '  EMPTY BY PURGE', 'guard: DEFERRED', 'parity scope: 0 of 34 documents in scope, 34 skipped NOT FED YET', 'passed=2 failed=0 skipped=1', '{"passed":2,"skipped":1}']) {
     assert.equal(reportedSkip(text), true, text);
     const result = runRequiredGuards(['a', 'b'], (_node, [file]) => ({ status: 0, stdout: file === 'a' ? text : 'PASS b' }));
     assert.equal(result.length, 1);
     assert.deepEqual(result.summary, { attempted: 2, executed: 2, passed: 1, failed: 0, skipped: 1 });
   }
   assert.equal(reportedSkip('passed=2 failed=0 skipped=0'), false);
+  assert.equal(reportedSkip('guard: NO STATIC ASSERTION — required in CI'), true);
   assert.equal(reportedSkip('PASS — rejects a skip mutation'), false);
 });
 

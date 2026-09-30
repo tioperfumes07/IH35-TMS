@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["invoices","factoring"],"cols":["connectivity"],"leafRe":"factor_profile_id","task":"invoice-factor-profile-linkage"} */
 // ROUND 124 T4 — guard for accounting.invoices.factor_profile_id (FK -> factoring.factor(id)).
 //
 // ROOT CAUSE (fixed this round): apps/backend/src/factoring/auto-submit-on-delivery.service.ts and

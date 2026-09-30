@@ -60,7 +60,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci --ignore-scripts
+      - run: npm ci
       - name: Live load creation outcomes (read-only USMCA)
         env:
           DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
@@ -70,6 +70,8 @@ jobs:
           node scripts/lib/run-required-guards.mjs \
             scripts/verify-one-load-create-path.mjs \
             scripts/verify-load-costs-wizard-amounts.mjs \
+            scripts/verify-g2-extra-pay-requires-item.mjs \
+            scripts/verify-telematics-feed-is-live.mjs \
             scripts/verify-workflow-requests-entity-scoped.mjs \
             scripts/verify-no-auto-generated-account-numbers.mjs \
             scripts/verify-driver-samsara-map-one-to-many.mjs \

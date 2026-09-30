@@ -25,7 +25,7 @@ import { guardIsInScope } from "./verify-static.mjs";
 import { EMPTY_BY_PURGE_EXIT, PURGE_WINDOW_GUARDS, purgeWindow } from "./lib/purge-window.mjs";
 import { dataWritePathDiffActuallyWrites, dataWritePathFileActuallyWrites } from "./lib/data-write-path-detection.mjs";
 import { localDatabaseGuardArgs, requiresLocalDatabase } from "./lib/local-db-guard-routing.mjs";
-import { reportedSkip } from "./lib/run-required-guards.mjs";
+import { reportedSkip, formatLocalOutcomes } from "./lib/run-required-guards.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "money-pr-local-gate";
@@ -1086,7 +1086,7 @@ function resolveGuardDatabaseUrl() {
 
 const localOutcomes = { passed: 0, failed: 0, skipped: 0 };
 const skippedLiveChecks = [];
-process.once('exit', () => console.log(`${LABEL}: LOCAL PHASE OUTCOMES passed=${localOutcomes.passed} failed=${localOutcomes.failed} skipped=${localOutcomes.skipped + skippedLiveChecks.length}; local skips are NOT live passes; required CI must execute them`));
+process.once('exit', code => console.log(formatLocalOutcomes(LABEL, localOutcomes, skippedLiveChecks.length, code)));
 
 function runNode(rel, extraEnv = {}, args = []) {
   const localArgs = localDatabaseGuardArgs([rel, ...args]);
@@ -1110,7 +1110,9 @@ function runNode(rel, extraEnv = {}, args = []) {
   const out = `${res.stdout ?? ""}${res.stderr ?? ""}`.trim();
   if (out) console.log(out);
   if (res.error || res.signal || res.status !== 0) localOutcomes.failed++;
-  else if (!routed && reportedSkip(out)) localOutcomes.skipped++;
+  else if (reportedSkip(out)) {
+    if (!routed) localOutcomes.skipped++;
+  }
   else localOutcomes.passed++;
   return res.status ?? 1;
 }

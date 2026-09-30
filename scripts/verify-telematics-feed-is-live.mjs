@@ -69,7 +69,7 @@ async function main() {
 
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
-    await client.query("BEGIN");
+    await client.query("BEGIN READ ONLY");
     // SET LOCAL ROLE neondb_owner removed 2026-09-28: a read-only CI credential can set the
     // app.bypass_rls GUC (every calling role can) but cannot escalate role membership
     // ("permission denied to set role") -- app.bypass_rls alone already does the job this line

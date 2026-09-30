@@ -6,7 +6,7 @@ EXPIRED authorization finding, not a dependency of this code work.
 
 ## Implementation so far — NOT a claim of complete class coverage
 
-`scripts/lib/local-db-guard-routing.mjs` explicitly routes 19 reviewed guards.
+`scripts/lib/local-db-guard-routing.mjs` explicitly routes 21 reviewed guards.
 Local source checks remain where available; database-only checks print DEFERRED,
 never a live PASS. Both the money gate and verify-step command context use it.
 The full guards execute directly in CI, outside that local routing context.
@@ -64,7 +64,7 @@ the independent source recheck is metadata only, with all 222/142 ceilings intac
 
 ## Local evidence and remaining scope
 
-- Runner/required-CI routing tests: 7/7, exit 0.
+- Runner/required-CI routing tests: 10/10, exit 0; covers textual, key/value and JSON skip reports and all 21 static fallback routes.
 - The five top-level domain database checks now route to required CI too.
   Their baselines and financial assertions are unchanged. Two filesystem/source
   guards incorrectly placed in the live-domain list now run locally without a
@@ -80,4 +80,7 @@ the independent source recheck is metadata only, with all 222/142 ceilings intac
   and migration. X-16 is NOT DONE and the seats are NOT claimed unblocked yet.
 
 LANE-CROSS: X-16 explicitly authorizes `scripts/money-pr-local-gate.mjs`, shared
-verify-step context, and CI required-job wiring. No money application code changed.
+verify-step context, static fallback routing, and CI required-job wiring. CC-1's
+extra-pay guard retains its 17-row owner baseline unchanged; its full read uses
+BEGIN READ ONLY. The telematics guard retains its operating-hours condition;
+any such reported skip fails the required CI runner. No money application code changed.

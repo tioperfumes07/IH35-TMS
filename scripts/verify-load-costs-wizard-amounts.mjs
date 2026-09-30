@@ -5,8 +5,8 @@
  * Static: both surfaces + shared SQL pivot. Live (when DATABASE_URL): open_dispatch count matches
  * charge-line pivot for USMCA; every open load with rate_total > 0 has a linehaul charge.
  */
-export const ALLOW_OFFLINE_SKIP =
-  "static contract on FE/BE source; live open_dispatch↔linehaul check arms when DATABASE_URL is set";
+export const REQUIRES_LIVE_DB =
+  "default mode checks live USMCA open_dispatch wizard charges in required CI; --static preserves local source assertions";
 
 import fs from "node:fs";
 import path from "node:path";

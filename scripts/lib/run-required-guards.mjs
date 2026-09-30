@@ -1,13 +1,18 @@
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
+export function formatLocalOutcomes(label, outcomes, deferredCount, exitCode) {
+  return `${label}: LOCAL PHASE OUTCOMES passed=${outcomes.passed} failed=${outcomes.failed} skipped=${outcomes.skipped + deferredCount} gate_exit=${exitCode}; local skips are NOT live passes; required CI must execute them`;
+}
+
 // Existing guards report named skips in text. Required CI must not accept an
 // exit-zero skip as proof. Also recognize batch summaries with nonzero skips.
 export function reportedSkip(output) {
   const text = String(output).replace(/\x1b\[[0-9;]*m/g, '');
   return text.split('\n').some(line =>
-    /^\s*(?:\[[^\]]+\]\s*)?(?:[\w./-]+:\s*)?(?:SKIP(?:PED)?(?:[\s:—-]|$)|DEFERRED\b|EMPTY BY PURGE\b|STATIC ONLY\b)/i.test(line) ||
-    /\b[1-9]\d*\s+(?:(?:live\s+)?checks?(?:\(s\))?\s+)?skipped\b/i.test(line));
+    /^\s*(?:\[[^\]]+\]\s*)?(?:[\w./-]+:\s*)?(?:SKIP(?:PED)?(?:[\s:—-]|$)|DEFERRED\b|EMPTY BY PURGE\b|STATIC ONLY\b|NO STATIC ASSERTION\b)/i.test(line) ||
+    /\b[1-9]\d*\s+(?:(?:live\s+)?checks?(?:\(s\))?\s+)?skipped\b/i.test(line) ||
+    /\bskipped["']?\s*[:=]\s*[1-9]\d*\b/i.test(line));
 }
 
 // Run every check for a complete report; any failed, killed, or unstarted check
