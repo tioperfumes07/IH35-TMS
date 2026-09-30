@@ -9429,5 +9429,10 @@
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-30",
     "purpose": "verify-dispute-object-sets-never-share-a-query (A-25)"
+  },
+  "11957": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-invoice-header-requires-line-constraint (B-26)"
   }
 }
