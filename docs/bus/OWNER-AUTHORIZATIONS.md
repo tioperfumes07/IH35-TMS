@@ -4806,3 +4806,51 @@ proof_query: live on prod, 2026-09-30, verified via a fresh Neon read (not the s
   The throwaway rehearsal Neon branch (br-rapid-band-ak0qnb0c) was deleted after this proof.
 
 — CC-1
+## AUTH-140
+
+title: ROUND 285.2.1-R -- classify-then-execute the 41 factoring advances (REVERSE 37 / REINSTATE 4), USMCA
+requested_by: Lead order 285.2.1-R (2026-09-30, replacing the withdrawn blind-reversal order 285.2.1):
+  "CLASSIFY the 41 before touching one of them. Per record, one of three: REVERSE / REINSTATE (via
+  reinstateDocument, never a hand-written UPDATE) / CANNOT TELL... The classifier is the real Faro
+  wire... PROOF: the 41 listed with the verdict per record and the evidence per verdict. No bulk
+  action."
+root_cause: live-verified (USMCA, bypass_rls), individually for all 41 -- not sampled. 36 of 41
+  currently carry a LIVE TWIN: a separate accounting.factoring_advances row, status='advanced'
+  (never voided), same invoice_total_cents/advance_amount_cents, that ALSO carries a live,
+  unreversed GL posting right now (verified per-record via a bool_or over each candidate twin's own
+  live journal_entry_postings, not merely "a same-amount row exists"). This reproduces AUTH-113's
+  own 2026-09-28 finding ("all 44 already have a correct, live GL entry elsewhere... reposting them
+  would have double-counted real cash") -- which this session's own AUTH-136 (consumed earlier
+  today) violated by reposting onto 40 of these same rows without knowing AUTH-113 had already
+  found the twins, creating the exact live double-count AUTH-113 warned against. 1 of the 41
+  (FAC-2026-00084) is a separately-proven duplicate of FAC-2026-00091 per its own void_reason,
+  self-corrected once already by AUTH-113 (same conclusion: reverse). Full list of 37 REVERSE ids +
+  each one's live twin, and the 4 REINSTATE ids with their independent Faro-CSV corroboration, are
+  posted in full to docs/audit/GUARD-WORKORDERS.md (FACTORING-41-LIVE-DOUBLE-COUNT). This
+  supersedes ROUND-285-AMEND-1's blanket "reinstate all 40" conclusion, which tested the wrong
+  linkage (invoices.factoring_advance_id / bank_transactions.matched_factoring_advance_id -- neither
+  is ever how a factoring-advance-to-factoring-advance twin would be found) and never re-ran
+  AUTH-113's own, already-correct methodology against current state.
+  RE-CLASSIFIED once more immediately before execution (2026-09-30, ~05:00 UTC, live re-check):
+  FAC-2026-00090's twin FAC-2026-00097 was voided/dead at first classification (making 090 the sole
+  live representation, REINSTATE) -- but CC-1's AUTH-144 (consumed minutes later) reposted
+  FAC-2026-00097 for real, unrelated reasons (load 13619's true Faro identity), flipping it live
+  again. Re-verified live immediately before running this AUTH's own action and moved
+  FAC-2026-00090 from REINSTATE to REVERSE to match -- 37 REVERSE / 4 REINSTATE is the corrected,
+  final split (was 36/5 when first posted). Named here rather than silently updated, since the
+  count itself is part of this AUTH's own proof.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 41 ids named in
+  scripts/ops/2026-09-30-cc2-auth140-classify-execute-41-factoring-advances.ts (REVERSE_IDS +
+  REINSTATE_IDS constants). REVERSE (37): via postVoidReversal (entityType:'factoring_advance'),
+  one transaction per record -- fixed in this same PR to filter its reversal-linkage lookup to only
+  currently-live originals (a pre-existing bug in the shared primitive that this population
+  triggers; see LEAD-RULING-2026-09-30-CC2-ROUND285-2-1-R-REINSTATE-AND-REVERSE-CROSS-LANE.md).
+  REINSTATE (4): via reinstateDocument(type:'factoring_advance', restoreStatus:'advanced') -- the
+  dispatcher's prior hard-refusal and wrong default restore status ("funded", not a valid status)
+  are also fixed in this PR, same ruling. Not authorized: touching any twin record itself; touching
+  invoices, bank_transactions, or any other table; any factoring_reserve_movements write.
+action:
+  OWNER_AUTH_ID=AUTH-140 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth140-classify-execute-41-factoring-advances.ts --apply
+  (run from repo root; DRY_RUN first with no --apply flag)
+expires_at: 2026-10-01T00:00:00.000Z
+status: OPEN

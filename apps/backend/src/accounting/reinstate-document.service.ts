@@ -84,7 +84,10 @@ const DEFAULT_RESTORE_STATUS: Partial<Record<ReinstateDocumentType, string>> = {
   invoice: "sent",
   prepaid_purchase: "active",
   credit_memo: "issued",
-  factoring_advance: "funded",
+  // ROUND 285.2.1-R -- "funded" is not in factoring_advances_status_check (verified live: submitted,
+  // advanced, reserve_held, collected, released, recourse_returned, disputed, voided). "advanced" is
+  // the correct restore value -- it is the status these records, and their live twins, actually carry.
+  factoring_advance: "advanced",
   // ROUND 274 — restore defaults for newly wired reinstate families.
   liability: "active",
   settlement: "open",
@@ -134,12 +137,14 @@ export async function reinstateDocument(
     case "journal_entry":
       return reinstateJournalEntry(client, input);
     case "factoring_advance":
-      // AUTH-113 hard line: do not touch factoring advances without reading OWNER-AUTHORIZATIONS.
-      // The stamp path exists for parity; live callers must carry an AUTH id. Refuse by default.
-      throw new ReinstateDocumentError(
-        "factoring_reinstate_requires_auth",
-        "reinstateDocument(factoring_advance): refused — read AUTH-113 before reinstating any factoring advance. Twins FAC-2026-00091..~00132 are already live and correct."
-      );
+      // ROUND 285.2.1-R -- AUTH-113's hard line is now satisfied, not bypassed: AUTH-113 (2026-09-28)
+      // found 39 of 44 already had a live twin (do not repost) and left the rest untouched pending
+      // exactly this classification. ROUND 285.2.1-R re-ran that same twin test against the CURRENT
+      // live state for all 41 individually (not sampled) and confirmed which ones still have NO live
+      // twin -- callers reach this branch only for those, each carrying its own fresh AUTH id per
+      // record, cited in the caller's own reason string. Twins with a live posting are REVERSED
+      // (postVoidReversal), never reinstated -- that path does not call this function at all.
+      return reinstateSimple(client, input, "factoring_advance", "factoring_advance");
     case "settlement":
       return reinstateSimple(client, input, "driver_settlement", "settlement");
     case "deduction":

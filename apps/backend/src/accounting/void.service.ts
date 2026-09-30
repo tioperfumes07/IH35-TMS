@@ -826,10 +826,12 @@ export async function postVoidReversal(
       `
         SELECT DISTINCT p.journal_entry_uuid::text AS je_id
         FROM accounting.journal_entry_postings p
+        JOIN accounting.journal_entries je2 ON je2.id = p.journal_entry_uuid
         WHERE p.operating_company_id = $1::uuid
           AND p.source_transaction_type = $3
           AND p.source_transaction_id = $2
           AND p.journal_entry_uuid <> $4::uuid
+          AND je2.status = 'posted' AND je2.voided_at IS NULL AND je2.reversed_by_je_id IS NULL
         ORDER BY 1 ASC
       `,
       [params.operatingCompanyId, params.entityId, params.entityType, reversalJeId]
