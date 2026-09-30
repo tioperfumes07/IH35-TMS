@@ -1,5 +1,6 @@
 {
   "_comment": "ROUND 300 A-30. Shrink-only ceilings for pre-existing linkage gaps measured live on br-fancy-credit-akjnd07a, 2026-09-30, BEFORE this guard existed. This guard fails on any NEW gap beyond what is named here; it does not fail the gate for data that predates it. Each entry must shrink as the named remediation work lands -- never grow, never get a higher ceiling to make a new regression pass.",
+  "measured_at": "2026-09-30T22:00:00.000Z",
   "fuel.fuel_transactions": {
     "max_allowed": 0,
     "note": "0 as of 2026-09-30 -- L3-52 (PR #23503) resolved the last 52 unit_id gaps same day. No baseline needed; kept at 0 so a future regression fails immediately."
