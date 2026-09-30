@@ -7478,6 +7478,11 @@
     "claimed_at": "2026-09-30",
     "purpose": "verify-fuel-card-unit-resolution-populations (ROUND 301 B-33: Dreamline 397/397 + Relay 76/76 uncategorized -- names the real wiring-gap vs true no-unit-resolves populations, distinct from AUTH-178's already-fixed 52/177)"
   },
+  "11991": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-escrow-factoring-reserve-never-books-expense (ROUND 301 B-35: proves escrow/factoring-reserve postings never hit an Expense-type account, names the real backing account for each virtual ledger)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
