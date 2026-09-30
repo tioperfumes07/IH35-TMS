@@ -14,7 +14,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DispatchLoadRow, LoadStatus } from "../../api/loads";
 import { getLoadStopsRecord, patchAssignUnit } from "../../api/dispatch";
-import { LOCKED_BORDER, LOCKED_HEADER_TEXT, LOCKED_PAGE_BG, LOCKED_SURFACE } from "../../design/locked-baseline-tokens";
+import { LOCKED_BORDER, LOCKED_HEADER_TEXT, LOCKED_SURFACE } from "../../design/locked-baseline-tokens";
 import { stampTruckLineArrival, stampTruckLineDeparture } from "../../api/truckLine";
 import type { UnitsWithoutLoad } from "../../api/dispatch";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -140,26 +140,48 @@ type KanbanDensity = "compact" | "standard" | "detailed";
  * rendered as the same white and the board read as floating text. The borders made it worse by
  * being off-palette hand-picked Tailwind grays (gray-300, gray-400) rather than the locked border.
  *
- * FIX — three tones that actually step, taken from the locked palette, never hand-picked:
- *   header band  rgb(228,234,241)  darkest — the same band TruckLineBoard's header already uses,
- *                                   so the two dispatch boards finally agree
- *   lane body    LOCKED_PAGE_BG    middle  — the lane is a container, so it recedes
- *   card         LOCKED_SURFACE    white   — the card is the object, so it sits on top
- * Header text is LOCKED_HEADER_TEXT (#4B5563), the locked column/section-header color, and every
- * border is LOCKED_BORDER. Defined once here; the four header sites read these, so the ladder
- * cannot drift apart again the way gray-100/gray-300/gray-400 did.
+ * FIX: a real tonal ladder, defined once below. The first attempt at it got the ORDER wrong and
+ * the correction is documented immediately after this block — read that one, it is the truth.
+ * Header text is LOCKED_HEADER_TEXT (#4B5563) and every border is LOCKED_BORDER, so the four
+ * header sites cannot drift apart again the way gray-100/gray-300/gray-400 did.
  */
+// KANBAN-LADDER-INVERTED (Lead, 09-30-2026, second pass). Owner, live: "it still looks like crap,
+// the colors, the outlines, it feels too weird."
+//
+// MY OWN BUG, measured live on the deployed build before this fix:
+//   page      rgb(244,246,248)
+//   column    rgb(247,248,250)   <- LIGHTER than the page. A container must recede, not advance.
+//   lane body rgb(255,255,255)   <- WHITE
+//   card      #fff + border      <- WHITE CARD ON A WHITE LANE. The cards vanished.
+// I had the ladder upside down: I put the page tint on the COLUMN and the white surface on the
+// LANE, so the one element that must read as a liftable object (these cards are draggable) had
+// nothing behind it to lift off. That is the "feels weird" — there were no cards on screen, just
+// text floating on a white sheet inside a container lighter than the page behind it.
+//
+// THE RIGHT ORDER, outermost to innermost — each step DARKER until the card, which is the object:
+//   page      #F4F6F8   the desk
+//   column    #FFFFFF   a panel sitting ON the desk: white, real border, one soft shadow
+//   header    #E4EAF1   the panel's own title band (same band TruckLineBoard uses)
+//   lane body #EDF1F6   RECESSED well — the tray the cards sit in
+//   card      #FFFFFF   white + border + shadow, so it reads as pick-up-able against the well
+// Every value is from the locked palette except the well, which is one deliberate step between
+// the header band and white so the tray reads as inset rather than as a third competing surface.
 const KANBAN_HEADER_BAND = "rgb(228,234,241)";
+const KANBAN_LANE_WELL = "#EDF1F6";
 const KANBAN_HEADER_STYLE = {
   background: KANBAN_HEADER_BAND,
   color: LOCKED_HEADER_TEXT,
-  borderBottom: `2px solid ${LOCKED_BORDER}`,
+  borderBottom: `1px solid #C9D4E0`,
 } as const;
 const KANBAN_COLUMN_STYLE = {
-  background: LOCKED_PAGE_BG,
+  background: LOCKED_SURFACE,
   border: `1px solid ${LOCKED_BORDER}`,
+  boxShadow: "0 1px 2px rgba(15,23,42,0.06)",
 } as const;
-const KANBAN_LANE_BODY_STYLE = { background: LOCKED_SURFACE } as const;
+const KANBAN_LANE_BODY_STYLE = {
+  background: KANBAN_LANE_WELL,
+  boxShadow: "inset 0 1px 2px rgba(15,23,42,0.05)",
+} as const;
 
 const KANBAN_DENSITIES: readonly KanbanDensity[] = ["compact", "standard", "detailed"] as const;
 const KANBAN_DEFAULT_DENSITY: KanbanDensity = "standard";
