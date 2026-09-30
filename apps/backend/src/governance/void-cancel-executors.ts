@@ -801,6 +801,70 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
   return { kind: "ok", reversing_entry_ref: reversal.run_id };
 };
 
+// ROUND 270/AUTH-132 (Lead + owner) — closing the hole this session found live: two
+// accounting.factoring_advances rows (invoices 13619/13615) had voided_at/void_reason stamped by a
+// raw UPDATE outside this dispatch map, but status was never flipped from 'advanced' to 'voided' --
+// a void done with no case here is a hole in the engine, not a data defect (claude/00-SEAT-
+// CONTRACT.md §4: "Every voidable entity must have a case in executeVoidCancel. A void done by raw
+// UPDATE that sets voided_at without flipping status... is a hole in the engine"). Migration
+// 202614570000/202614590000 already added a DB-level CHECK (voided_at IS NULL OR status='voided')
+// so this can never silently drift again even if some future caller bypasses this executor too.
+// accounting.factoring_advances carries no journal_entry_id of its own (verified live -- the
+// advance funding is tracked via banking.reconciliation_matches / linked invoices, not a direct
+// JE on this table), so there is no GL reversal to call here, unlike executeExpense above. The
+// header write goes through stampDocumentVoided ONLY (same rule as executeFuelTransaction above) --
+// 'factoring_advance' is already a registered VOID_DOCUMENT_FAMILIES entry
+// (voidStatusValue:'voided'), and it is already in cascade-void-engine.service.ts's
+// CASCADE_ELIGIBLE_FAMILIES, so this call gets the correct status flip AND child cascade for free,
+// with zero risk of drifting from the DB-level CHECK constraint #23144 added.
+const executeFactoringAdvance: EntityExecutor = async (ctx) => {
+  const { client, operatingCompanyId, entityId, userId, reason } = ctx;
+
+  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('accounting.factoring_advances') IS NOT NULL AS ok`);
+  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+
+  const pre = await client.query<{ status: string }>(
+    `SELECT status::text AS status FROM accounting.factoring_advances
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+    [entityId, operatingCompanyId]
+  );
+  if (!pre.rows[0]) return { kind: "not_found" };
+  if (String(pre.rows[0].status) === "voided") return { kind: "already_done" };
+
+  const flagOn = await isVoidEnforcementEnabled(client, operatingCompanyId, userId);
+  if (!flagOn) return { kind: "void_not_enabled" };
+
+  const previousStatus = pre.rows[0].status;
+  const stamped = await stampDocumentVoided(client, {
+    operatingCompanyId,
+    family: "factoring_advance",
+    documentId: entityId,
+    voidReason: reason,
+    voidedByUserId: userId,
+  });
+  if (stamped.already_voided) return { kind: "already_done" };
+
+  // status_before_void is audit sugar stampDocumentVoided doesn't own (it only writes voided_at/
+  // void_reason/voided_by_user_id/status) -- a narrow, separate write of ONLY that one column,
+  // never touching voided_at/status themselves, so the single-writer rule for THOSE columns stays
+  // with stampDocumentVoided alone.
+  await client.query(
+    `UPDATE accounting.factoring_advances SET status_before_void = $3
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [entityId, operatingCompanyId, previousStatus]
+  );
+
+  await appendCrudAudit(
+    client,
+    userId,
+    "factoring_advance.voided",
+    { factoring_advance_id: entityId, operating_company_id: operatingCompanyId, reason, via: "governance.void_cancel_requests" },
+    "warning",
+    "VOID-CANCEL-GOV"
+  );
+  return { kind: "ok", reversing_entry_ref: null };
+};
+
 // Dispatch map keyed on entity_type. Phase 1 wired 'work_order'; VOID-EVERYWHERE PR-3 wires the
 // remaining Phase-2 financial surfaces flagged in the prior report: expense, journal_entry, payment,
 // bill_payment, driver_settlement. 'load' is deliberately LEFT unsupported here — dispatch load
@@ -826,6 +890,7 @@ const EXECUTORS: Record<string, EntityExecutor | { supported: false }> = {
   payment: executeCustomerPayment,
   bill_payment: executeBillPayment,
   driver_settlement: executeDriverSettlement,
+  factoring_advance: executeFactoringAdvance,
   // Deliberately unsupported — see comment above.
   load: { supported: false },
 };

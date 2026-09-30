@@ -20,6 +20,7 @@ apps/backend/src/feed/**
 apps/backend/src/mdata/drivers**
 apps/backend/src/mdata/loads.routes.ts
 apps/backend/src/cron/retry-held-expense-postings.cron.ts
+apps/backend/src/governance/void-cancel-executors.ts
 **/*.db.test.ts
 TABLES: accounting.company_settlements · driver_finance.driver_bills · mdata.drivers · identity.*
         mdata.loads
@@ -125,6 +126,13 @@ TABLES: none. The Lead owns no module code and no tables. Anything else the Lead
 # across two seats recreates exactly the "one job, two seats" problem §0b exists to prevent, same
 # reasoning as the dispatch grant immediately above. Scoped to this one filename, not the whole
 # cron directory. Owner may move it; until then it is CC-1's.
+#
+# **`apps/backend/src/governance/void-cancel-executors.ts` added to CC-1 (ROUND 270, 2026-09-30).**
+# `apps/backend/src/governance/**` has no seat -- UNASSIGNED per verify-lane-ownership.mjs. Adding
+# the factoring_advance case here is the direct engine-level fix for the exact
+# accounting.factoring_advances void hole CC-1 root-caused and already fixed the data for
+# (ACCT-F2026093002, PR #23144/#23156) -- same one-job-one-seat reasoning as the two grants
+# immediately above. Scoped to this one filename. Owner may move it; until then it is CC-1's.
 
 ## SHARED — any seat, but say so in the PR body
 docs/**
