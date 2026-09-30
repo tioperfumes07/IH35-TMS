@@ -5,7 +5,7 @@ import { ParityTable, type ParityColumn } from "../components/parity/ParityTable
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { listBills, listVendorBalances, listExpenses, type ExpenseListRow } from "../api/accounting";
-import { listAllVendors, listVendorPaymentMethods, getVendorRollups, type VendorPaymentMethod, type VendorRollup } from "../api/mdata";
+import { listAllVendors, listVendorPaymentMethods, getVendorRollups, getVendorRosterCounts, type VendorPaymentMethod, type VendorRollup } from "../api/mdata";
 import { vendorQualityKind, vendorQualityClass } from "../lib/quality-badge";
 import { formatUsdCents } from "../lib/money";
 import { Button } from "../components/Button";
@@ -233,6 +233,12 @@ export function VendorsPage() {
       }),
     enabled: Boolean(companyId),
   });
+  // C-50 — dedicated counts route for tab badges.
+  const vendorCountsQuery = useQuery({
+    queryKey: ["vendors", "counts", companyId],
+    queryFn: () => getVendorRosterCounts(companyId),
+    enabled: Boolean(companyId),
+  });
   const vendorsQuery = useQuery({
     queryKey: ["vendors", "page", companyId, "all"],
     queryFn: () =>
@@ -292,13 +298,18 @@ export function VendorsPage() {
   // Inactive tab while that second query is still in flight).
   const vendorsStatus = {
     isPending:
+      vendorCountsQuery.isPending ||
       withTxnVendorsQuery.isPending ||
       (!useHasTransactions && (vendorsQuery.isPending || inactiveVendorsQuery.isPending)),
     isError:
+      vendorCountsQuery.isError ||
       withTxnVendorsQuery.isError ||
       (!useHasTransactions && (vendorsQuery.isError || inactiveVendorsQuery.isError)),
     isFetching:
-      withTxnVendorsQuery.isFetching || vendorsQuery.isFetching || inactiveVendorsQuery.isFetching,
+      vendorCountsQuery.isFetching ||
+      withTxnVendorsQuery.isFetching ||
+      vendorsQuery.isFetching ||
+      inactiveVendorsQuery.isFetching,
   };
 
   const vendorTypes = useMemo<ReferenceOption[]>(() => {
@@ -356,10 +367,18 @@ export function VendorsPage() {
   // the Inactive tab always count 0 regardless of real data.
   const vendorTabCounts = useMemo(
     () => ({
-      with_transactions: withTxnVendorsQuery.data?.total ?? withTxnVendorsQuery.data?.vendors?.length ?? 0,
-      all: fullVendorsRoster.length,
-      active: vendorsQuery.data?.total ?? vendorsQuery.data?.vendors?.length ?? 0,
-      inactive: inactiveVendorsQuery.data?.total ?? inactiveVendorsQuery.data?.vendors?.length ?? 0,
+      with_transactions:
+        vendorCountsQuery.data?.with_transactions ??
+        withTxnVendorsQuery.data?.total ??
+        withTxnVendorsQuery.data?.vendors?.length ??
+        0,
+      all: vendorCountsQuery.data?.all ?? fullVendorsRoster.length,
+      active: vendorCountsQuery.data?.active ?? vendorsQuery.data?.total ?? vendorsQuery.data?.vendors?.length ?? 0,
+      inactive:
+        vendorCountsQuery.data?.inactive ??
+        inactiveVendorsQuery.data?.total ??
+        inactiveVendorsQuery.data?.vendors?.length ??
+        0,
       byCategory: categoryFilter
         ? fullVendorsRoster.filter((vendor) => {
             const selected = vendorTypes.find((type) => type.value === categoryFilter);
@@ -369,7 +388,15 @@ export function VendorsPage() {
           }).length
         : fullVendorsRoster.length,
     }),
-    [withTxnVendorsQuery.data, vendorsQuery.data, inactiveVendorsQuery.data, categoryFilter, vendorTypes, fullVendorsRoster]
+    [
+      vendorCountsQuery.data,
+      withTxnVendorsQuery.data,
+      vendorsQuery.data,
+      inactiveVendorsQuery.data,
+      categoryFilter,
+      vendorTypes,
+      fullVendorsRoster,
+    ]
   );
 
   // ACCT-F5793 — PAGER-SERVERTOTAL-01 still holds (never derive from .length) wherever a server COUNT
@@ -604,10 +631,18 @@ export function VendorsPage() {
   // AUTO-13: honest error state instead of a blank list when the vendors fetch 500s.
   // LST-F9104: also surface inactiveVendorsQuery errors — a failed inactive fetch silently showed
   // "No vendors found." on the Inactive tab instead of an error message (silent no-op).
-  if (vendorsQuery.isError) {
+  if (vendorCountsQuery.isError || withTxnVendorsQuery.isError || vendorsQuery.isError) {
+    const err = vendorCountsQuery.error ?? withTxnVendorsQuery.error ?? vendorsQuery.error;
     return (
       <div className="p-3">
-        <ListErrorState title="Couldn't load vendors" status={0} message={(vendorsQuery.error as Error)?.message} onRetry={() => void vendorsQuery.refetch()} />
+        <ListErrorState
+          title="Couldn't load vendors"
+          status={0}
+          message={(err as Error)?.message}
+          onRetry={() =>
+            void Promise.all([vendorCountsQuery.refetch(), withTxnVendorsQuery.refetch(), vendorsQuery.refetch()])
+          }
+        />
       </div>
     );
   }

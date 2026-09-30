@@ -417,13 +417,12 @@ export async function registerVendorRoutes(app: FastifyInstance) {
         filters.push(`(vendor_name ILIKE $${idx} OR vendor_code ILIKE $${idx} OR email ILIKE $${idx})`);
       }
       values.push(resolvedOperatingCompanyId);
-      filters.push(`operating_company_id = $${values.length}::uuid`);
-      // ITEM 3 = B: LIST-VIEW-ONLY active-company pin. When the Vendors list page opts in, additionally
-      // constrain rows to the ACTIVE session company (app.operating_company_id, set above). Layered ON TOP
-      // of the existing access check so the list can never regress to a cross-entity roster; shared pickers
-      // do not pass the flag and keep their per-call operating_company_id scope untouched.
+      const companyScopeIdx = values.length;
+      filters.push(`operating_company_id = $${companyScopeIdx}::uuid`);
+      // ITEM 3 = B + C-50 (2026-09-30): LIST-VIEW-ONLY active-company pin. Bound company id — never
+      // `current_setting(... )::uuid` alone (empty GUC → silent 0 / 500). Shared pickers never pass the flag.
       if (active_company_only) {
-        filters.push(`operating_company_id = current_setting('app.operating_company_id', true)::uuid`);
+        filters.push(`operating_company_id = $${companyScopeIdx}::uuid`);
       }
       // A-21 (2026-09-30, owner): the ONE "has transactions" predicate, shared with
       // mdata/customers.routes.ts via vendorHasTransactionsSql — see A-16.
@@ -466,6 +465,47 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     });
     return { vendors: result.rows, total: result.total };
   });
+
+  // C-50 — tab/KPI counts without exhausting the full roster (bound company pin + A-21 predicate).
+  const vendorCountsHandler = async (req: FastifyRequest, reply: FastifyReply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    const parsed = z
+      .object({ operating_company_id: z.string().uuid() })
+      .safeParse(req.query ?? {});
+    if (!parsed.success) return sendValidationError(reply, parsed.error);
+    const resolvedOperatingCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
+      resolveOperatingCompanyId(client, authUser.uuid, parsed.data.operating_company_id)
+    );
+    if (!resolvedOperatingCompanyId) {
+      return reply.code(400).send({ error: "operating_company_id_required" });
+    }
+    const counts = await withCurrentUser(authUser.uuid, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
+      const withTxnPred = vendorHasTransactionsSql("id");
+      const res = await client.query<{
+        all_active: number;
+        with_transactions: number;
+        inactive: number;
+      }>(
+        `SELECT
+           (SELECT count(*)::int FROM mdata.vendors WHERE is_sample_data IS NOT TRUE AND operating_company_id = $1::uuid AND deactivated_at IS NULL) AS all_active,
+           (SELECT count(*)::int FROM mdata.vendors WHERE is_sample_data IS NOT TRUE AND operating_company_id = $1::uuid AND deactivated_at IS NULL AND ${withTxnPred}) AS with_transactions,
+           (SELECT count(*)::int FROM mdata.list_vendors_same_company($1::uuid) WHERE is_sample_data IS NOT TRUE AND deactivated_at IS NOT NULL) AS inactive`,
+        [resolvedOperatingCompanyId]
+      );
+      return res.rows[0] ?? { all_active: 0, with_transactions: 0, inactive: 0 };
+    });
+    return {
+      operating_company_id: resolvedOperatingCompanyId,
+      with_transactions: counts.with_transactions,
+      active: counts.all_active,
+      all: counts.all_active + counts.inactive,
+      inactive: counts.inactive,
+    };
+  };
+  app.get("/api/v1/mdata/vendors/counts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, vendorCountsHandler);
+  app.get("/api/v1/vendors/counts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, vendorCountsHandler);
 
   // Driver-as-vendor ensure (Jorge-depth Accounting 2026-07-22): Active drivers must appear in the
   // vendor picker for bills/expenses. TRANSP already has ~52 name-matched vendor rows from QBO;
