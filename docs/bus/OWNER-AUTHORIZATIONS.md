@@ -5076,7 +5076,17 @@ action:
   OWNER_AUTH_ID=AUTH-160 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth160-fix-4-stale-invoice-total-cents.ts --apply
   (run from repo root; DRY_RUN first with no --apply flag)
 expires_at: 2026-10-01T00:00:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T06:35:00.000Z
+consumed_by: CC-2
+row_counts: 4 of 4 -- invoice_total_cents corrected exactly as specified:
+    FAC-2026-00048 590000 -> 611500
+    FAC-2026-00063 412000 -> 415000
+    FAC-2026-00064 400000 -> 412000
+    FAC-2026-00082 370000 -> 320000
+proof_query: scripts/verify-ldt-4-factoring-money.mjs run live against prod 2026-09-30 --
+  "live reconciliation PASS -- advance + reserve + fee = purchased; A/R not derecognized" on all 8
+  checked USMCA factoring invoices including all 4 corrected rows.
 
 ## AUTH-151
 
@@ -5107,7 +5117,27 @@ action:
   OWNER_AUTH_ID=AUTH-151 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth151-void-12-orphan-draft-expenses.ts --apply
   (run from repo root; DRY_RUN first with no --apply flag)
 expires_at: 2026-10-01T00:00:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T06:30:00.000Z
+consumed_by: CC-2
+row_counts: 12 of 12 -- each orphan expense reversed via postVoidReversal(entityType:'expense'),
+  header stamped void, 0 failed:
+    4102568a-1693-453b-b490-ecb2a8861e57 -> reversing JE 2b133ddd-3658-4976-afa3-68c4487706d2
+    8e88475e-404c-4c1b-9c0d-9bd42816e285 -> reversing JE 066f8b3f-e9cb-4edf-ab83-1701e03cc0df
+    f158a883-81b4-4b89-81b3-e048ec903d11 -> reversing JE 113234cb-1ebf-4ece-bf92-3c4fe1bba05f
+    615ba771-3c59-42c9-a083-fd22eb8bd592 -> reversing JE 13334971-f158-42df-9c49-411bf8c59850
+    5d4d872d-4757-4d5d-bc48-d226016ea972 -> reversing JE 5475d266-c9d1-464d-94d4-198ee32bad27
+    1dd54fc2-877e-4da2-8aff-e84319693377 -> reversing JE 5d566143-6037-4ad8-9976-674524170fe6
+    9a2632c7-25aa-4c22-9fde-d933eb6e1508 -> reversing JE 0208f8e1-b271-4a22-9225-def77f25660a
+    36274438-8cb2-4242-8300-a0b7ef3eb742 -> reversing JE 48090386-4dab-444d-9e28-3f5dcbcc2291
+    3492c10b-2101-4d9b-832b-73c032cf9dad -> reversing JE 79f0e03c-aedc-4328-a5eb-fd8b7a7fa270
+    a7f091ce-c75e-46fd-b4e7-5a351147227b -> reversing JE 8a8da19e-56c2-439e-a9ab-53c88e4a76a2
+    ced40054-ab32-4bc3-8aa6-766bf4ccd951 -> reversing JE 2da9fa76-9e11-44ab-879e-63c892fe4215
+    47fc543c-90aa-454d-a26d-6fc32576fa2d -> reversing JE 690d650a-3716-42ec-92d6-a00a2165b7e4
+proof_query: independently re-checked all 12 original expense/JE ids by hand against a fresh
+  scripts/verify-costs-are-expenses-not-handwritten-jes.mjs live run 2026-09-30 -- none of the 12
+  appear in its current violation list (the guard's remaining 97-count is a separate, much larger,
+  pre-existing population entirely out of this AUTH's scope, unaffected by and unrelated to this fix).
 
 ---
 
