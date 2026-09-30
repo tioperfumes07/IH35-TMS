@@ -1,13 +1,14 @@
-# NOW-CURSOR — 2026-09-30 285.4.10 READY FOR CHROME
+# NOW-CURSOR — 2026-09-30 ROUND 292 · boards@16 · Chrome = 13615
 
 ## HARD LINE
-PART E Cursor code closed. AUTH blocks stand. Tip palette baseline restored by Lead (#23302).
+AlwaysTrack Dispatched = 16 (law). All boards @ 16. No seat fixtures. No baseline raises.
 
 ## DONE
-- 285.4.9 #31/#58/#59/#32/#33 on main + register truth
-- 285.4.10 #60 BE+FE on main · FE LIVE `a79b2e9` · Neon awaiting BOL = **13626 / 13625 / 13615**
+- 285.4.9 #31/#58/#59/#32/#33 on tip
+- 285.4.10 #60 FE LIVE `93c84ac`
+- `#23312` live_loads bills-closed
+- **ROUND 292:** Load Costs money CTE now passes `l.status` (FACTOR-BUT-NOT-DELIVERED) — boards-agree PASS **16/16**
 
-## NEXT (owner Chrome only — no seat fixtures)
-1. https://app.ih35dispatch.com/dispatch/awaiting-bol-invoice (Documents › Awaiting BOL)
-2. Upload BOL on one waiting load → prove invoice send + Faro
-3. METHOD Print when a real detention approve stamps `approval_method`
+## NEXT
+1. Owner Chrome: Documents › Awaiting BOL → **13615** BOL → invoice → Faro
+2. METHOD Print when detention approve stamps `approval_method`

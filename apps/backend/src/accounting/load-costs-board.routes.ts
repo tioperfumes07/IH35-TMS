@@ -383,7 +383,9 @@ export async function registerLoadCostsBoardRoutes(app: FastifyInstance) {
             -- alone can miss, plus ANY load already finished by settlement, driver bill, or
             -- invoice. Measured live: 114 -> 33 (invoice-only) -> 9 (the corrected predicate).
             AND l.status NOT IN ('closed', 'invoiced', 'paid')
-            AND ${canonicalActiveLoadNotFinishedByMoneyCte("l.id")}
+            -- ROUND 292 / FACTOR-BUT-NOT-DELIVERED: pass l.status so pre-delivery + issued
+            -- invoice (13625/13626) stays on the board — matches canonicalActiveLoadWhereClause.
+            AND ${canonicalActiveLoadNotFinishedByMoneyCte("l.id", "l.status")}
           ORDER BY ${sortSql}`,
         [parsed.data.operating_company_id]
       );

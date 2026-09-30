@@ -104,12 +104,14 @@ async function main() {
     );
 
     // Load Costs — mirrors load-costs-board.routes.ts (accounting-active, money-aware).
+    // ROUND 292: pass l.status so FACTOR-BUT-NOT-DELIVERED (pre-delivery + issued invoice)
+    // matches canonicalActiveLoadWhereClause — else 13625/13626 drift off Load Costs.
     const loadCosts = await client.query(
       `SELECT l.load_number FROM mdata.loads l
         WHERE l.operating_company_id = $1::uuid AND l.soft_deleted_at IS NULL
           AND l.status <> 'draft' AND l.status <> 'cancelled'
           AND l.status NOT IN ('closed', 'invoiced', 'paid')
-          AND ${canonicalActiveLoadNotFinishedByMoneyCte("l.id")}
+          AND ${canonicalActiveLoadNotFinishedByMoneyCte("l.id", "l.status")}
         ORDER BY l.load_number`,
       [USMCA]
     );
