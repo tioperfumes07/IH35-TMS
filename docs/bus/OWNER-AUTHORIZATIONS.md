@@ -4632,6 +4632,31 @@ action:
   (run from the repo root, not apps/backend/ -- see AUTH-135's CONSUMED note on why; DRY_RUN=1
   first for the rollback-only rehearsal, then the same command without DRY_RUN to commit)
 expires_at: 2026-10-01T00:00:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T04:22:00.000Z
+consumed_by: CC-1
+row_counts: 0 of 12 posted. Correctly refused, not a failure -- the DRY_RUN=1 rehearsal caught a
+  real diagnostic gap in this AUTH's own root-cause section before anything committed.
+proof_query: DRY_RUN=1 live run against production, 2026-09-30 -- every one of the 12 refused, by
+  the poster's own pre-existing safety checks, in two distinct classes:
+  (a) 7 of 12 (13625, 13626, INV-2026-00001/00002/00003/00004/00005) -- INVOICE_REVREC_LATCH_OWNS_LOAD.
+  Their loads' revenue and A/R are ALREADY correctly recognized via the DISP-01 two-event delivery
+  latch (accounting.load_revenue_recognition_postings), a DIFFERENT posting path than
+  source_transaction_type='invoice'. This AUTH's own root-cause section only checked for the latter
+  and never queried the latch table -- a real measurement gap in the diagnosis, not a defect in
+  these 7 documents. They are NOT part of "the 12 invoices that never hit the GL"; their revenue
+  already hit the GL, correctly, via the latch. Posting them here would have double-recognized
+  revenue -- the poster's own guard correctly refused.
+  (b) 5 of 12 (13616, 13618, 13620, 13621, 13622) -- INVOICE_LINE_REVENUE_UNRESOLVED. Checked live:
+  these 5 have ZERO rows in accounting.invoice_lines -- not miscoded lines, no lines at all. A
+  genuinely incomplete document (header exists, total_cents is set, but nothing to post per line).
+  This is real and remains open -- see AUTH-143.
+  1100 net unchanged (2473401.2 dollars... 24,734,012 cents before and after); trial balance
+  unchanged (debit=credit=$3,240,860.36 both sides). No data touched. ROLLED BACK.
+note: this AUTH's own $52,960.00 figure is corrected by this consumption: $32,160.00 of it (the 7
+  latch-owned invoices) was already correctly recognized elsewhere and was never a real gap. The
+  real remaining gap is $20,800.00 across the 5 line-less invoices -- see AUTH-143.
+
+— CC-1
 
 — CC-1
