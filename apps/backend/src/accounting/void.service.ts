@@ -233,6 +233,63 @@ async function closedPeriodCutoff(client: QueryableClient, operatingCompanyId: s
   return res.rows[0]?.cutoff ?? null;
 }
 
+/**
+ * REINSTATE-VOIDJE-REVERSAL-SEVERS-SOURCE-LINKAGE (2026-09-30, Lead ruling) — resolve the TRUE
+ * source document a reversal should be tagged with, instead of blindly tagging it with whatever
+ * (entityType, entityId) the caller passed in.
+ *
+ * Every reversal line is tagged with (params.entityType, params.entityId) below, by design (see
+ * that comment) — correct for a direct void of a typed document (invoice/bill/expense/factoring_
+ * advance/etc). But `reverseJournalEntryNoFlip` (the reinstate-restore path, `voidJournalEntry`'s
+ * Option-1 implementation) always calls this with entityType:'journal_entry' and entityId:<the JE
+ * being reversed>, EVEN WHEN that JE is itself a reversal that already correctly carries the real
+ * source document's own type/id on its own posting lines (tagged by THIS same rule, one call
+ * earlier). Left unresolved, a reversal-of-a-reversal gets tagged 'journal_entry'/<the first
+ * reversal's own id> — severing the chain from the real document. Live-confirmed on FAC-2026-00140
+ * (a factoring_advance reinstate) and independently on a real pre-existing case (expense
+ * 9b5fcc6c-6d8c-4e14-83ab-49c79c9132e9, AUTH-117/118, 2026-09-28): any standard "find live postings
+ * for document X" query (verify-no-voided-doc-has-live-postings.mjs, readOriginalGlPostings below,
+ * several guards shipped the same day) returns a false negative for a reinstated-then-still-live
+ * document, even though the money is real and correct.
+ *
+ * FIX (Lead's explicit preference: carry the source document, don't make every predicate walk the
+ * chain): when entityType is 'journal_entry', look at the JE's OWN posting lines for a real,
+ * already-resolved source_transaction_type (one that is itself not 'journal_entry' and not null) —
+ * the same "ONE representative posting per JE" pattern this file's JE_SOURCE_TRANSACTION_TYPE_SQL
+ * (journal-entries.service.ts) already uses for the LIST PAGE's own source-link display. If found,
+ * every future reversal in the chain inherits the TRUE origin directly, no matter how many hops
+ * deep — a single JOIN answers "does document X have live postings," never a chain walk. A
+ * genuinely hand-keyed JE with no typed source (no posting carries a non-null, non-'journal_entry'
+ * source_transaction_type) falls back to 'journal_entry'/entityId exactly as before — unchanged,
+ * correct for that case.
+ */
+async function resolveTrueReversalSource(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  entityType: VoidableEntityType,
+  entityId: string
+): Promise<{ trueType: VoidableEntityType | string; trueId: string }> {
+  if (entityType !== "journal_entry") return { trueType: entityType, trueId: entityId };
+  const res = await client.query<{ source_transaction_type: string | null; source_transaction_id: string | null }>(
+    `
+      SELECT source_transaction_type, source_transaction_id
+        FROM accounting.journal_entry_postings
+       WHERE operating_company_id = $1::uuid
+         AND journal_entry_uuid = $2::uuid
+         AND source_transaction_type IS NOT NULL
+         AND source_transaction_type <> 'journal_entry'
+         AND source_transaction_id IS NOT NULL
+       LIMIT 1
+    `,
+    [operatingCompanyId, entityId]
+  );
+  const found = res.rows[0];
+  if (found?.source_transaction_type && found.source_transaction_id) {
+    return { trueType: found.source_transaction_type, trueId: found.source_transaction_id };
+  }
+  return { trueType: entityType, trueId: entityId };
+}
+
 /** Read the original posted GL lines for the entity being voided. */
 async function readOriginalGlPostings(
   client: QueryableClient,
@@ -624,6 +681,17 @@ export async function postVoidReversal(
     return { reversal_journal_entry_id: null, reversal_date: null, closed_period_reversal: false, reversed_line_count: 0 };
   }
 
+  // REINSTATE-VOIDJE-REVERSAL-SEVERS-SOURCE-LINKAGE fix — tag the NEW reversal lines with the true
+  // source document, not blindly with (entityType, entityId), so a reversal-of-a-reversal (the
+  // reinstate-restore path) stays traceable back to the real document at every hop. See
+  // resolveTrueReversalSource's own comment for the full incident this closes.
+  const { trueType, trueId } = await resolveTrueReversalSource(
+    client,
+    params.operatingCompanyId,
+    params.entityType,
+    params.entityId
+  );
+
   // ACCT-F211 — inherit the sample flag from the entry being reversed, before anything is written.
   const originalIsSample = await readOriginalIsSampleData(
     client,
@@ -716,8 +784,13 @@ export async function postVoidReversal(
         // stayed correct. Tagging the reversal with the SAME source_transaction_type/id as what it
         // reverses (not inventing a new "reversal" type) means a source-typed sum sees BOTH legs and
         // nets to zero, matching how the account-level total already behaves.
-        params.entityType,
-        params.entityId,
+        // REINSTATE-VOIDJE-REVERSAL-SEVERS-SOURCE-LINKAGE fix (2026-09-30) — trueType/trueId, NOT
+        // params.entityType/entityId: when this call is reversing a JE that is itself a reversal
+        // (the reinstate-restore path), resolveTrueReversalSource already resolved the real source
+        // document above, so this (and every future hop) stays tagged back to the true document,
+        // not to the intermediate 'journal_entry'/<reversal id>. See that function's own comment.
+        trueType,
+        trueId,
         // ROUND 86 (Lead, 2026-09-23) — LINE-LEVEL reversal FK, the fix for the "stranded posting"
         // this function's own comment below used to claim already existed. Mirrors
         // posting-engine.service.ts's reversal path exactly: the new line points back at the
