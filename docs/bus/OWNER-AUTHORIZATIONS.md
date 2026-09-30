@@ -5178,7 +5178,7 @@ Inside your block you self-assign freely. Outside it, never. If you need more, a
 
 ---
 
-## AUTH-161
+## AUTH-163
 
 title: ROUND 282.7 item 1 -- match ONE clean Faro wire-in bank transaction to its factoring advance, USMCA
 requested_by: Lead order 282.7 (relayed 2026-09-30, per CC-1's item-6 handoff
@@ -5244,7 +5244,7 @@ addendum_during_rehearsal: `acceptMatchWithResolveDifference` (match.service.ts:
   (`postSourceTransactionInClientTx`, confirmed to genuinely honor the passed client/transaction --
   a real dry run, rolled back and re-verified clean before commit).
 action:
-  OWNER_AUTH_ID=AUTH-161 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth161-match-one-clean-faro-wire.ts --apply
+  OWNER_AUTH_ID=AUTH-163 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth163-match-one-clean-faro-wire.ts --apply
   (run from repo root; DRY_RUN first with no --apply flag; script now performs ONLY the deposit
   sweep -- the match itself already happened for real during rehearsal, see addendum above)
 expires_at: 2026-10-01T00:00:00.000Z

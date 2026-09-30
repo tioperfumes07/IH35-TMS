@@ -1,6 +1,6 @@
 #!/usr/bin/env -S npx tsx
 /**
- * AUTH-161 -- ROUND 282.7 item 1: match the ONE genuinely clean, unambiguous Faro wire-in bank
+ * AUTH-163 -- ROUND 282.7 item 1: match the ONE genuinely clean, unambiguous Faro wire-in bank
  * transaction to its factoring advance, through the sanctioned banking match engine.
  *
  * bank_transaction 3feba937-1aa5-463b-9ce7-054d404c1024 (2026-09-25, $4,161.00)
@@ -23,7 +23,7 @@
  *   sweeps 1090 -> 1000 for this one advance. Confirmed (posting-engine.service.ts:2769-2775) to
  *   genuinely use the passed-in client's transaction, unlike step 1 above -- a real dry run here.
  *
- * Run: DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth161-match-one-clean-faro-wire.ts [--apply]
+ * Run: DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth163-match-one-clean-faro-wire.ts [--apply]
  * (run from repo root)
  */
 import { execFileSync } from "node:child_process";
@@ -34,7 +34,7 @@ import pg from "pg";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const APPLY = process.argv.includes("--apply");
-const AUTH_ID = "AUTH-161";
+const AUTH_ID = "AUTH-163";
 const ACTOR_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd";
 
 const BANK_TXN_ID = "3feba937-1aa5-463b-9ce7-054d404c1024";
