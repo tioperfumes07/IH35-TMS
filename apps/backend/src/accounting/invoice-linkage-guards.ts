@@ -148,3 +148,63 @@ export class InvoiceLineIncomeAccountRequiredError extends Error {
     this.qbo_item_id = qboItemId;
   }
 }
+
+/**
+ * FACTOR-BUT-NOT-DELIVERED WRITE BLOCK (Lead, 2026-09-30).
+ *
+ * The detection half of this rule already existed as
+ * scripts/verify-issued-invoice-on-rolling-load-needs-authorization.mjs, written the same day and
+ * never wired. Detection after the fact is not a fix: by the time a guard reports it, a real
+ * document has been sent to a real customer and, on IH35's recourse line, factored at Faro.
+ *
+ * Owner, verbatim: "unless we have approval from the customer, we already have this engine, factor
+ * but not delivered." The engine is dispatch.manual_delivery_authorizations, shipped 2026-09-07
+ * from his own words: "sometimes we might send a delivery confirmation to the factoring, even
+ * though we have not officially delivered... i need to be able to manually do this."
+ *
+ * MEASURED LIVE 2026-09-30: that table held 0 rows across ALL companies -- built once, never used --
+ * while loads 13625 and 13626 carried SENT invoices with Faro advances of $6,062.50 and $3,298.00
+ * against them. Two invoices issued before delivery with no recorded approval, and nothing in the
+ * write path that would have stopped either one.
+ *
+ * So the rule is enforced where the document is issued, not reported on afterwards: an invoice may
+ * be issued and factored on a load that has not delivered ONLY with the customer's approval
+ * recorded through that engine.
+ */
+export const PRE_DELIVERY_LOAD_STATUSES = ["dispatched", "at_pickup", "in_transit", "at_delivery"] as const;
+
+export class InvoiceOnRollingLoadNeedsAuthorizationError extends Error {
+  readonly loadStatus: string;
+  constructor(invoiceId: string, loadStatus: string) {
+    super(
+      `Invoice ${invoiceId} cannot be issued: its load is still '${loadStatus}' and has not delivered, ` +
+        `and no active manual delivery authorization is recorded for it. Record the customer's approval ` +
+        `through dispatch.manual_delivery_authorizations first, or wait for delivery.`
+    );
+    this.name = "InvoiceOnRollingLoadNeedsAuthorizationError";
+    this.loadStatus = loadStatus;
+  }
+}
+
+/**
+ * Pure decision, so it is testable without a database and so the rule reads in one place.
+ * `loadStatus` null/unknown means there is no load to be rolling -- not this guard's business.
+ */
+export function issuedInvoiceNeedsDeliveryAuthorization(
+  loadStatus: string | null | undefined,
+  hasActiveAuthorization: boolean
+): boolean {
+  if (!loadStatus) return false;
+  if (!(PRE_DELIVERY_LOAD_STATUSES as readonly string[]).includes(loadStatus)) return false;
+  return !hasActiveAuthorization;
+}
+
+export function assertIssuedInvoiceAuthorizedIfRolling(
+  invoiceId: string,
+  loadStatus: string | null | undefined,
+  hasActiveAuthorization: boolean
+): void {
+  if (issuedInvoiceNeedsDeliveryAuthorization(loadStatus, hasActiveAuthorization)) {
+    throw new InvoiceOnRollingLoadNeedsAuthorizationError(invoiceId, String(loadStatus));
+  }
+}
