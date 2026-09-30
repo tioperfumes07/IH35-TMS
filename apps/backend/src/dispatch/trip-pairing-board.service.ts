@@ -168,9 +168,8 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
          ORDER BY sequence_number DESC LIMIT 1) de ON true
       WHERE l.operating_company_id = $1::uuid
         AND l.live_state = 'open_dispatch'
-        AND l.assigned_unit_id IS NOT NULL AND l.trip_type IS NOT NULL
-        AND l.status::text = ANY($2::text[])`,
-    [operatingCompanyId, ACTIVE_LOAD_STATUSES]
+        AND l.assigned_unit_id IS NOT NULL`,
+    [operatingCompanyId]
   );
 
   // Group active loads by unit → the unit's current tour.

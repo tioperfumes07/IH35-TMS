@@ -622,44 +622,43 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         // findable regardless of the live OPEN-ONLY exclusion and regardless of any status already
         // selected in the UI.
         filters.push(`(l.status = 'draft' OR l.is_quicksave_draft = true)`);
-      } else if (status && status.length > 0) {
-        values.push(status);
-        filters.push(`l.status = ANY($${values.length}::mdata.load_status_enum[])`);
-      } else if (board_scope === "live") {
-        // ROUND 36.1 / E11-D2 — see the comment above DISPATCH_LIVE_EXCLUDED_STATUSES.
-        const existsSql = liveLoadsOpenDispatchExistsSql("l.id");
-        if (include_open_tour_legs) {
-          // ROUND-20.2 (RT-FULL-TOUR) — owner ruling 2026-09-12: "Round Trips is the ONE exception
-          // [to OPEN-ONLY], because the tour IS the unit of this view: an OPEN tour renders whole,
-          // including its already-delivered legs. A CLOSED tour never renders here at all." Scoped
-          // exactly: a terminal-status leg is let through ONLY when its presettlement_link_id points
-          // at a settlement that is still open (same "open" predicate as pre-settlement.routes.ts's
-          // own open-by-driver endpoint — trip_closed_at IS NULL and status not in the closed set).
-          // Correlated subquery, not a param list, so a closed/approved/paid settlement's legs never
-          // leak back in once the tour settles. Opt-in via include_open_tour_legs; every other
-          // board_scope=live caller (Kanban/List/Trip Pairing) does not pass it and is unaffected.
-          filters.push(`(
-            ${existsSql}
-            OR l.presettlement_link_id IN (
-              SELECT s.id FROM driver_finance.driver_settlements s
-              WHERE s.operating_company_id = l.operating_company_id
-                AND s.settlement_model = 'load_bookended'
-                AND s.trip_closed_at IS NULL
-                AND s.status NOT IN ('approved', 'paid', 'cancelled', 'closed', 'final')
-            )
-          )`);
-        } else {
-          filters.push(existsSql);
-        }
-      } else if (board_scope === "history") {
-        values.push(DISPATCH_LIVE_EXCLUDED_STATUSES);
-        filters.push(`l.status = ANY($${values.length}::mdata.load_status_enum[])`);
       } else {
-        // ROUND 283.1 — fail closed. No status filter and no board_scope used to return EVERY
-        // load (closed/cancelled/settled/billing-tail). Owner law 2026-09-11 OPEN-ONLY: Dispatch
-        // and everything inside it renders only current/open loads. A caller must OPT IN to
-        // history (or pass an explicit status list); forgetting scope must never dump the table.
-        filters.push(liveLoadsOpenDispatchExistsSql("l.id"));
+        // ROUND 285.4.2 — board_scope (or fail-closed default) is ALWAYS applied first; an explicit
+        // status[] from the UI narrows WITHIN that set (AND), never replaces the money gate.
+        // The old else-if let DispatchLoadCostsPanel's IN_MOTION list bypass open_dispatch (14 vs 12).
+        if (board_scope === "live") {
+          // ROUND 36.1 / E11-D2 — see the comment above DISPATCH_LIVE_EXCLUDED_STATUSES.
+          const existsSql = liveLoadsOpenDispatchExistsSql("l.id");
+          if (include_open_tour_legs) {
+            // ROUND-20.2 (RT-FULL-TOUR) — retired for 285.4.2 one-set law: no live caller passes
+            // this flag anymore; branch kept so stale URLs fail closed to open_dispatch only.
+            filters.push(`(
+              ${existsSql}
+              OR l.presettlement_link_id IN (
+                SELECT s.id FROM driver_finance.driver_settlements s
+                WHERE s.operating_company_id = l.operating_company_id
+                  AND s.settlement_model = 'load_bookended'
+                  AND s.trip_closed_at IS NULL
+                  AND s.status NOT IN ('approved', 'paid', 'cancelled', 'closed', 'final')
+              )
+            )`);
+          } else {
+            filters.push(existsSql);
+          }
+        } else if (board_scope === "history") {
+          values.push(DISPATCH_LIVE_EXCLUDED_STATUSES);
+          filters.push(`l.status = ANY($${values.length}::mdata.load_status_enum[])`);
+        } else {
+          // ROUND 283.1 — fail closed. No status filter and no board_scope used to return EVERY
+          // load (closed/cancelled/settled/billing-tail). Owner law 2026-09-11 OPEN-ONLY: Dispatch
+          // and everything inside it renders only current/open loads. A caller must OPT IN to
+          // history (or pass an explicit status list); forgetting scope must never dump the table.
+          filters.push(liveLoadsOpenDispatchExistsSql("l.id"));
+        }
+        if (status && status.length > 0) {
+          values.push(status);
+          filters.push(`l.status = ANY($${values.length}::mdata.load_status_enum[])`);
+        }
       }
       if (customer_id) {
         values.push(customer_id);

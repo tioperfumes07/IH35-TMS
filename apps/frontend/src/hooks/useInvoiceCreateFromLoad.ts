@@ -15,8 +15,8 @@ export function useInvoiceCreateFromLoad(operatingCompanyId: string, options: { 
       : options.statusFilter === "in_transit"
         ? ["in_transit", "dispatched", "at_pickup", "at_delivery"]
         : undefined;
-  // ROUND 283.2 — "all" is invoice-from-load history (delivered/billing-tail), not Dispatch open-only.
-  const board_scope = status ? undefined : ("history" as const);
+  // ROUND 283.3 — board_scope is mandatory (Lead 2026-09-30). in_transit → live; delivered/all → history.
+  const board_scope: "live" | "history" = options.statusFilter === "in_transit" ? "live" : "history";
 
   const loadsQuery = useQuery({
     queryKey: ["invoice-create", "loads", operatingCompanyId, options.search, options.statusFilter, page, pageSize],
