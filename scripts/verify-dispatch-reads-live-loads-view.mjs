@@ -93,11 +93,40 @@ export function findViolations(relPath, src) {
     const before = src.slice(Math.max(0, m.index - 200), m.index);
     // UPDATE mdata.loads ... FROM mdata.loads (self-join in an UPDATE) or a DELETE — not a read.
     if (/\bUPDATE\s+mdata\.loads\b/i.test(before) || /\bDELETE\s+FROM\s+mdata\.loads\b/i.test(src.slice(Math.max(0, m.index - 20), m.index + 20))) continue;
+    // TRUCKLINE-16 (Lead, 2026-09-30): canonicalDispatchWorkWhereClause/StatusClause provide the
+    // SAME structural guarantee views.live_loads does, by a different mechanism — a settled/
+    // closed/cancelled/invoiced/paid/draft load's status is never a member of
+    // DISPATCH_WORK_LOAD_STATUSES to begin with, so it cannot render regardless of convention,
+    // exactly the property this guard exists to enforce. A nearby use of either function (same
+    // query statement — a 60-line window around the FROM, generous enough for a dense multi-JOIN
+    // SELECT) is an equally valid proof, not a bypass. Also accepts the truck-line-specific alias
+    // (currentTruckLineLoadSql / CURRENT_TRUCK_LINE_LOAD_SQL), which wraps the same predicate.
+    // Excludes canonical-active-load-set.ts itself: that file's OWN accounting-predicate reads
+    // (countCanonicalActiveLoads/listCanonicalActiveLoadIds) are pre-existing, deliberate, known
+    // debt (baselined) and must not be silently cleared just because the new dispatch-work
+    // functions happen to sit nearby in the same file — this carve-out is for CONSUMERS of the
+    // dispatch-work predicate, not the module that defines it.
+    {
+      // Match only an actual CALL interpolated into a query template (${canonicalDispatchWork...(),
+      // never the bare function name (which would also match the function's own `export function
+      // canonicalDispatchWorkWhereClause(...)` declaration) — and only within the SAME backtick-
+      // delimited query template literal as the FROM clause, never a line-count window: a file can
+      // legitimately hold several separate queries (Truck Line's own "recent unit"/"last closed
+      // load" LATERAL subqueries are genuinely different, unrelated queries a few dozen lines from
+      // the real dispatch-work query in the same file) and only the ONE statement that actually
+      // embeds the predicate is exempt.
+      const templateStart = src.lastIndexOf("`", m.index);
+      let templateEnd = src.indexOf("`", m.index);
+      if (templateEnd === -1) templateEnd = src.length;
+      const statement = templateStart === -1 ? "" : src.slice(templateStart, templateEnd);
+      if (/\$\{\s*canonicalDispatchWorkWhereClause\s*\(|\$\{\s*canonicalDispatchWorkStatusClause\s*\(|currentTruckLineLoadSql\s*\(|CURRENT_TRUCK_LINE_LOAD_SQL\b/.test(statement)) continue;
+    }
     const lineNo = src.slice(0, m.index).split("\n").length;
     violations.push(
       `line ${lineNo}: selects FROM mdata.loads directly — a dispatch/dispatcher-board/load-costs-board ` +
-        `list/board surface must read FROM views.live_loads (ROUND 36.1) so a settled load can never ` +
-        `render, structurally, instead of by convention.`
+        `list/board surface must read FROM views.live_loads (ROUND 36.1), or gate on ` +
+        `canonicalDispatchWorkWhereClause/StatusClause (TRUCKLINE-16 — the equivalent status-only ` +
+        `structural guarantee), so a settled load can never render, structurally, instead of by convention.`
     );
   }
 
@@ -211,6 +240,37 @@ function selftest() {
   checks.push([
     "a genuine UPDATE ... FROM mdata.loads self-reference in a mutation, non-allow-listed file -> 0 violations (not a board read)",
     findViolations("dispatch/cancellation-detail.service.ts", mutationSrc).length === 0,
+  ]);
+
+  const dispatchWorkSrc = `
+    export async function listDispatchWork() {
+      const q = \`
+        SELECT l.id FROM mdata.loads l
+         WHERE l.soft_deleted_at IS NULL
+           AND \${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
+      \`;
+    }
+  `;
+  checks.push([
+    "TRUCKLINE-16: FROM mdata.loads gated by canonicalDispatchWorkWhereClause in the SAME statement -> 0 violations",
+    findViolations("dispatch/some-dispatch-work-board.service.ts", dispatchWorkSrc).length === 0,
+  ]);
+
+  const twoStatementsSrc = `
+    export async function mixedFile() {
+      const gated = \`
+        SELECT l.id FROM mdata.loads l
+         WHERE \${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
+      \`;
+      const ungated = \`
+        SELECT l2.id FROM mdata.loads l2
+         WHERE l2.status = 'dispatched'
+      \`;
+    }
+  `;
+  checks.push([
+    "TRUCKLINE-16: the exemption is per-STATEMENT, not per-file — a second, separate query in the same file with no predicate call still violates",
+    findViolations("dispatch/some-dispatch-work-board.service.ts", twoStatementsSrc).length === 1,
   ]);
 
   let bad = 0;

@@ -1,13 +1,17 @@
 #!/usr/bin/env node
 /**
- * ROUND 255 — Truck Line board shows the ONE canonical active-load set.
+ * ROUND 255, UPDATED TRUCKLINE-16 (Lead, 2026-09-30) — Truck Line board shows the ONE canonical
+ * DISPATCH-WORK set (not the accounting one — see canonical-active-load-set.ts's file-header
+ * section "TWO CANONICAL QUESTIONS, NOT ONE"). ROUND 255's original rule (alias the accounting
+ * predicate) is exactly the bug TRUCKLINE-16 fixed: a load whose driver bill got marked SETTLED
+ * while the truck was still rolling silently dropped off the board.
  *
  * REQUIRES_LIVE_DB. Fails closed without DATABASE_URL.
  *
  * Asserts:
- *  1. Board SQL (truck-line.routes CURRENT helper = canonicalActiveLoadWhereClause +
+ *  1. Board SQL (truck-line.routes CURRENT helper = canonicalDispatchWorkWhereClause +
  *     assigned unit + UNIT_IN_SERVICE) returns the SAME load_number set as
- *     canonicalActiveLoadWhereClause on mdata.loads for USMCA.
+ *     canonicalDispatchWorkStatusClause on mdata.loads for USMCA.
  *  2. Static: TruckLineBoard column order UNIT · TOUR · LOAD · PU · DEL.
  *  3. Static: return-trip second row keeps the unit number (data-return-trip).
  *  4. Static: universal filter + per-load status dropdown wired.
@@ -28,10 +32,10 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (rel) => readFileSync(join(ROOT, rel), "utf8");
 
 async function loadFragments() {
-  const { canonicalActiveLoadWhereClause } = await import("../apps/backend/src/dispatch/canonical-active-load-set.ts");
+  const { canonicalDispatchWorkStatusClause } = await import("../apps/backend/src/dispatch/canonical-active-load-set.ts");
   const { currentTruckLineLoadSql } = await import("../apps/backend/src/dispatch/current-truck-line-load.ts");
   const { UNIT_IN_SERVICE_SQL } = await import("../apps/backend/src/dispatch/truck-line/truck-line.routes.ts");
-  return { canonicalActiveLoadWhereClause, currentTruckLineLoadSql, UNIT_IN_SERVICE_SQL };
+  return { canonicalDispatchWorkStatusClause, currentTruckLineLoadSql, UNIT_IN_SERVICE_SQL };
 }
 
 function staticChecks() {
@@ -40,14 +44,14 @@ function staticChecks() {
   const board = read("apps/frontend/src/pages/dispatch/TruckLineBoard.tsx");
   const routes = read("apps/backend/src/dispatch/truck-line/truck-line.routes.ts");
 
-  if (!/canonicalActiveLoadWhereClause/.test(helper)) {
-    problems.push("current-truck-line-load.ts must alias canonicalActiveLoadWhereClause (ROUND 255 — one definition)");
+  if (!/canonicalDispatchWorkWhereClause/.test(helper)) {
+    problems.push("current-truck-line-load.ts must alias canonicalDispatchWorkWhereClause (TRUCKLINE-16 — dispatch-work, not accounting)");
   }
   if (/interval '48 hours'/.test(helper)) {
     problems.push("AUTH-061 48h hide must be retired from current-truck-line-load.ts (ROUND 255)");
   }
-  if (!/CURRENT_TRUCK_LINE_LOAD_SQL/.test(routes) || !/canonicalActiveLoadWhereClause|current-truck-line-load/.test(routes)) {
-    problems.push("truck-line.routes.ts must still consume CURRENT_TRUCK_LINE_LOAD_SQL (now = canonical)");
+  if (!/CURRENT_TRUCK_LINE_LOAD_SQL/.test(routes) || !/canonicalDispatchWorkWhereClause|current-truck-line-load/.test(routes)) {
+    problems.push("truck-line.routes.ts must still consume CURRENT_TRUCK_LINE_LOAD_SQL (now = dispatch-work canonical)");
   }
 
   // Column order: UNIT, TOUR, LOAD, PU, DEL — labels in that sequence in the header block.
@@ -92,7 +96,7 @@ async function liveChecks() {
     console.error(`${LABEL}: FAIL — DATABASE_URL not set (REQUIRES_LIVE_DB)`);
     process.exit(1);
   }
-  const { canonicalActiveLoadWhereClause, currentTruckLineLoadSql, UNIT_IN_SERVICE_SQL } = await loadFragments();
+  const { canonicalDispatchWorkStatusClause, currentTruckLineLoadSql, UNIT_IN_SERVICE_SQL } = await loadFragments();
   const { default: pg } = await import("pg");
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();
@@ -103,7 +107,7 @@ async function liveChecks() {
     const canonical = await client.query(
       `SELECT l.load_number FROM mdata.loads l
         WHERE l.operating_company_id = $1::uuid AND l.soft_deleted_at IS NULL
-          AND ${canonicalActiveLoadWhereClause("l")}
+          AND ${canonicalDispatchWorkStatusClause("l")}
         ORDER BY l.load_number`,
       [USMCA]
     );

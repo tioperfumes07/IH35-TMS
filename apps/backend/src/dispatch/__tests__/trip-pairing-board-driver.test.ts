@@ -30,10 +30,13 @@ function makeClient(opts: { eldDriver?: Rows; loads?: Rows; units?: Rows }) {
         return { rows: (opts.units ?? [{ unit_id: "unit-1", unit_number: "T176" }]) as R[] };
       }
       if (/telematics\.vehicle_driver_assignments/.test(sql)) return { rows: (opts.eldDriver ?? []) as R[] };
-      // ROUND 36.1: the loads query now reads FROM views.live_loads (the permanent fix for
-      // "At Risk shows 19" — see docs/manuals/02-RULING-LIVE-LOADS-VIEW-THE-PERMANENT-FIX.md),
-      // not mdata.loads directly.
-      if (/FROM views\.live_loads/.test(sql)) return { rows: (opts.loads ?? []) as R[] };
+      // TRUCKLINE-16 (Lead, 2026-09-30): the loads query now reads FROM mdata.loads directly,
+      // gated by the canonical DISPATCH WORK predicate (canonical-active-load-set.ts) — not
+      // views.live_loads, which bakes in a money-aware exclusion this dispatch-only question
+      // must never use. Match on the load_stops LATERAL join (unique to this query) rather than
+      // the FROM clause, since "FROM mdata.loads" alone would also match the mdata.units query
+      // above if this file's regexes were ever reordered.
+      if (/mdata\.load_stops/.test(sql)) return { rows: (opts.loads ?? []) as R[] };
       // positions / anything else
       return { rows: [] as R[] };
     },
@@ -97,7 +100,7 @@ describe("FAIL-TP1 trip pairing driver resolution", () => {
   it("selects assigned_primary_driver_id in the loads query at all", async () => {
     const { client, seen } = makeClient({ loads: [] });
     await getTripPairingBoard(client, "co-1", AS_OF);
-    const loadsSql = seen.find((s) => /FROM views\.live_loads/.test(s)) ?? "";
+    const loadsSql = seen.find((s) => /mdata\.load_stops/.test(s)) ?? "";
     // Assert the PROJECTION under the exact alias the row assembly reads, not merely that the identifier
     // appears somewhere: `LEFT JOIN mdata.drivers ld ON ld.id = l.assigned_primary_driver_id` also contains
     // the column name, so a bare `toContain("assigned_primary_driver_id")` still passes when the SELECT

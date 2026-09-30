@@ -45,12 +45,20 @@ type BorderCrossingEvent = {
 
 const PANEL_ROW_LIMIT = 6;
 
-// DSP-KPI-ON-LOAD (owner ruling 2026-09-09): "Active loads" = only trucks that actually HAVE a load
-// out. countOnLoadDispatchLoads() (backend `on_load`) counts these same five statuses; the drill URL
-// carries the identical set so the tile and its table agree. delivered_pending_docs is DELIBERATELY
-// excluded here — with AlwaysTrack docs always in, a delivered load belongs to the factoring/billing
-// pipeline, surfaced by its own "Delivered — pending docs" tile drilling to /dispatch/factoring-queue.
+// TRUCKLINE-16 (Lead, 2026-09-30): "Active loads" / "on_load" now reads the canonical DISPATCH WORK
+// predicate (apps/backend/src/dispatch/canonical-active-load-set.ts's DISPATCH_WORK_LOAD_STATUSES)
+// — the same set Truck Line, List, Kanban and Trip Pairing all use, so every surface agrees. The
+// drill URL carries the identical set so the tile and its table agree. completed_docs_received (and
+// everything at-or-past delivery) is DELIBERATELY excluded — paperwork-done means the truck is no
+// longer carrying the load; a delivered load belongs to the factoring/billing pipeline, surfaced by
+// its own "Delivered — pending docs" tile drilling to /dispatch/factoring-queue. Frontend cannot
+// import the backend module directly — keep this list textually identical to
+// DISPATCH_WORK_LOAD_STATUSES if that ever changes.
 const ACTIVE_LOAD_DRILL_STATUSES = [
+  "booked",
+  "planned",
+  "assigned",
+  "unassigned",
   "assigned_not_dispatched",
   "dispatched",
   "at_pickup",

@@ -202,8 +202,8 @@ export function verify(files) {
   if (helperSrc && !/export const CURRENT_TRUCK_LINE_LOAD_SQL/.test(helperSrc)) {
     problems.push("(m) current-truck-line-load.ts must export CURRENT_TRUCK_LINE_LOAD_SQL");
   }
-  if (helperSrc && !/canonicalActiveLoadWhereClause/.test(helperSrc)) {
-    problems.push("(m) CURRENT helper must alias canonicalActiveLoadWhereClause (ROUND 255 — one active-load definition)");
+  if (helperSrc && !/canonicalDispatchWorkWhereClause/.test(helperSrc)) {
+    problems.push("(m) CURRENT helper must alias canonicalDispatchWorkWhereClause (TRUCKLINE-16 — dispatch-work, not accounting)");
   }
   if (helperSrc && /interval '48 hours'/.test(helperSrc)) {
     problems.push("(m) AUTH-061 48h hide must be retired from CURRENT helper (ROUND 255)");

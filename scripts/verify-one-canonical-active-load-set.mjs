@@ -115,12 +115,29 @@ export function findViolations(relPath, src) {
   // status-only or status+invoice-only both overcounted (33, then still wrong vs the real 9).
   const usesStatusHalf = /\bcanonicalActiveLoadStatusClause\s*\(|\bCANONICAL_ACTIVE_LOAD_STATUSES\b/.test(src);
   const usesMoneyHalf = /\bcanonicalActiveLoadNotFinishedByMoneyCte\s*\(|\bcanonicalActiveLoadWhereClause\s*\(/.test(src);
+  // TRUCKLINE-16 (Lead, 2026-09-30): the second, permanent, money-free predicate — see rules (d)/(e) below.
+  const usesDispatchWork = /\bcanonicalDispatchWorkWhereClause\s*\(|\bcanonicalDispatchWorkStatusClause\s*\(|\bDISPATCH_WORK_LOAD_STATUSES\b/.test(src);
   if (usesStatusHalf && !usesMoneyHalf) {
     violations.push(
       `uses the canonical STATUS half (condition 1) without the MONEY half (condition 2, ` +
         `canonicalActiveLoadNotFinishedByMoneyCte) — status alone, or status + invoice-only, ` +
         `overcounts on this data (confirmed live: 33 -> the real 9). Use ` +
         `canonicalActiveLoadWhereClause(...) for the complete predicate.`
+    );
+  }
+
+  // (d)/(e) TRUCKLINE-16 (Lead, 2026-09-30): two deliberately different, permanent predicates now
+  // exist — ACCOUNTING ("is this load open on the books," money-aware) and DISPATCH WORK ("is a
+  // unit carrying this load right now," no money test). A file importing BOTH is exactly the
+  // "one definition answering two questions" bug TRUCKLINE-16 fixed, reintroduced from the other
+  // direction — fails closed rather than trusting a human to notice the mismatch.
+  if (usesMoneyHalf && usesDispatchWork) {
+    violations.push(
+      `imports BOTH the accounting predicate (canonicalActiveLoadWhereClause/` +
+        `canonicalActiveLoadNotFinishedByMoneyCte) and the dispatch-work predicate ` +
+        `(canonicalDispatchWorkWhereClause/canonicalDispatchWorkStatusClause) — these answer two ` +
+        `different questions (books vs. operations) and must never be mixed in one file. If this ` +
+        `file genuinely needs both answers for two genuinely different features, split it.`
     );
   }
 
@@ -219,6 +236,19 @@ function selftest() {
     const q = \`SELECT * FROM mdata.loads l WHERE \${canonicalActiveLoadWhereClause("l")}\`;
   `;
   checks.push(["file using the complete predicate (both halves) -> 0 violations", findViolations("dispatch/both-halves.ts", bothHalvesSrc).length === 0]);
+
+  const dispatchWorkOnlySrc = `
+    import { canonicalDispatchWorkWhereClause } from "./canonical-active-load-set.js";
+    const q = \`SELECT * FROM mdata.loads l WHERE \${canonicalDispatchWorkWhereClause("l", "$1::uuid")}\`;
+  `;
+  checks.push(["TRUCKLINE-16: dispatch-work-only file -> 0 violations (no money test required)", findViolations("dispatch/work-only.ts", dispatchWorkOnlySrc).length === 0]);
+
+  const mixedPredicatesSrc = `
+    import { canonicalActiveLoadWhereClause, canonicalDispatchWorkWhereClause } from "./canonical-active-load-set.js";
+    const accountingQ = \`SELECT * FROM mdata.loads l WHERE \${canonicalActiveLoadWhereClause("l")}\`;
+    const dispatchQ = \`SELECT * FROM mdata.loads l WHERE \${canonicalDispatchWorkWhereClause("l", "$1::uuid")}\`;
+  `;
+  checks.push(["TRUCKLINE-16: file importing BOTH predicates -> RED, at least 1 violation", findViolations("dispatch/mixed.ts", mixedPredicatesSrc).length >= 1]);
 
   let bad = 0;
   for (const [name, ok] of checks) { if (!ok) bad++; console.log(`${ok ? "ok  " : "FAIL"}  ${name}`); }
