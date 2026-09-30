@@ -1,5 +1,8 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T10:40Z · FE+API LIVE `eac3748` · Needs delivery auth on tip**
+CURSOR | Render FE `dep-dauebg3ncjis73faafgg` + API `dep-dauebgbncjis73faaga0` LIVE @ `eac37483fa` | GUARD bundle HIT needs-delivery-authorization · GET → 401 (mounted) | LIVE PROOF version.json=eac3748 · healthz git_sha=eac37483fa | NEXT: Owner Chrome 13615 BOL→Faro · Documents › Needs delivery auth
+
 **2026-09-30T09:45Z · ROUND 292 overflow MERGED `#23334` `394697bbf8`**
 CURSOR | Needs delivery authorization FE LIVE on main · GET queue + Documents badge + guard · money-pr-local-gate PASS | GUARD verify-needs-delivery-authorization-wired | LIVE PROOF squash `394697bbf8` | NEXT: FE deploy · Owner Chrome Documents › Needs delivery auth · 13615 BOL→Faro.
 

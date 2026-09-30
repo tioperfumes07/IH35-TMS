@@ -1,14 +1,17 @@
-# NOW-CURSOR — 2026-09-30 ROUND 292 · API LIVE · Chrome = 13615
+# NOW-CURSOR — 2026-09-30 ROUND 292 · FE+API LIVE eac3748
 
 ## HARD LINE
 AlwaysTrack Dispatched = 16. Boards @ 16. No seat fixtures. No baseline raises.
 
 ## DONE
-- `#23332` `8c3ac5e02e` Load Costs FACTOR-BUT-NOT-DELIVERED · **API LIVE** healthz=`8c3ac5e02e`
-- 285.4.9 remainder CODE CLOSED · 285.4.10 FE awaiting-BOL · boards-agree 16/16
-- Awaiting-BOL queue = **13615** only
+- `#23332` Load Costs FACTOR-BUT-NOT-DELIVERED
+- `#23334` `394697bbf8` Needs delivery authorization FE queue
+- **FE+API deploy LIVE** tip `eac37483fa` / version=`eac3748`
+  - FE dep `dep-dauebg3ncjis73faafgg` · API dep `dep-dauebgbncjis73faaga0`
+  - bundle HIT `needs-delivery-authorization` in `assets/index-C8LmCctm.js`
+  - GET queue returns HTTP 401 unauthorized (mounted; auth-gated — not 404)
 
-## NEXT
-1. Owner Chrome: https://app.ih35dispatch.com/dispatch/awaiting-bol-invoice → **13615** BOL → invoice → Faro (screenshots + live row)
-2. METHOD Print when detention approve stamps `approval_method`
-3. Tip phantom `accounting.escrow_ledger` = **CC-2** (Round 292) — not Cursor
+## NEXT (Owner Chrome only — no seat fixtures)
+1. https://app.ih35dispatch.com/dispatch/awaiting-bol-invoice → **13615** BOL → invoice → Faro (screenshots + live row)
+2. https://app.ih35dispatch.com/dispatch/needs-delivery-authorization — Authorize when rolling+invoiced
+3. METHOD Print when detention approve stamps `approval_method`
