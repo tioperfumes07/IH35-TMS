@@ -8,6 +8,21 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202614870000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-30",
+      "purpose": "ROUND 297.2 A-29: widen maintenance.work_orders.source_type CHECK to allow 'backfill' (the exact value the order specifies), alongside the 4 real existing values (IS/RS/IT/AC). Additive, no data touched. (renumbered twice: 202614810000 -> 202614830000 -> here, after a live concurrent-claim race on 820000 with another seat's ROUND 297.1 work -- see the board finding on this number sequence)"
+    },
+    "202614860000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-30",
+      "purpose": "ROUND 297.2 A-28: real per-unit maintenance.pm_schedules rows for the 16 real USMCA units x 6 real PM intervals (96 rows), last_service_odometer/next_due_odometer left NULL until the owner backfills a real service record -- never seeded from current odometer. (renumbered from 202614800000 in the same race as the two siblings above/below)"
+    },
+    "202614850000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-30",
+      "purpose": "ROUND 297.2 A-27: real catalogs.pm_intervals rows (PM-A/PM-B/DOT/TIRE/BRK/COOL) for USMCA, deactivate the CC3-TEST-PMINTERVAL-20260822 test row (deactivate only, never delete). (renumbered twice: 202614790000 -> 202614820000 -> here, after a live concurrent-claim race with another seat's ROUND 297.1 work that also landed on 820000)"
+    },
     "202614820000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-30",

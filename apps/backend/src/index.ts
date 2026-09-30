@@ -307,6 +307,7 @@ import { registerCashAdvancesRoutes } from "./cash-advances/cash-advances.routes
 import { registerDriverHubRequestRoutes } from "./cash-advances/driver-hub-requests.routes.js";
 import { registerMaintenanceWorkOrderRoutes } from "./maintenance/work-orders.routes.js";
 import { registerWorkOrdersV1Routes } from "./work-orders/work-orders.routes.js";
+import { registerServiceHistoryBackfillRoutes } from "./maintenance/service-history-backfill.routes.js";
 import { registerMaintenanceDashboardRoutes } from "./maintenance/dashboard.routes.js";
 import { registerMaintenanceSettingsRoutes } from "./maintenance/settings.routes.js";
 import { registerMaintenanceDashboardKpisRoutes } from "./maintenance/dashboard-kpis.routes.js";
@@ -1200,6 +1201,7 @@ async function main() {
   await registerOcrRoutes(app);
   await registerMaintenanceWorkOrderRoutes(app);
   await registerWorkOrdersV1Routes(app);
+  await registerServiceHistoryBackfillRoutes(app);
   await registerMaintenanceLaborRoutes(app);
   await registerWoTimeEntriesRoutes(app);
   await registerMaintenanceDriverReportsRoutes(app);
