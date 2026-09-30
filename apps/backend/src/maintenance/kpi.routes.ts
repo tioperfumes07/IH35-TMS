@@ -373,6 +373,83 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
 
     return { ...payload, hub_links: { pm_auto_engine: "/maintenance/pm-auto-engine", pm_schedule: "/maintenance/pm-schedule" } };
   });
+
+  // ROUND 285.4.9 / #33 — idle events with NULL idle_source need human review (confirm → 'manual').
+  app.get("/api/v1/maintenance/idle-events/needs-review", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const parsed = z
+      .object({ operating_company_id: z.string().uuid(), limit: z.coerce.number().int().min(1).max(200).default(100) })
+      .safeParse(req.query ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+    const { operating_company_id: companyId, limit } = parsed.data;
+    const payload = await withCompany(user.uuid, companyId, async (client) => {
+      if (!(await relationExists(client, "downtime.events"))) {
+        return { rows: [], total_count: 0, downtime_events_unavailable: true };
+      }
+      const res = await client.query(
+        `
+          SELECT e.id::text AS event_id,
+                 u.unit_number,
+                 e.unit_id::text,
+                 cat.label AS category,
+                 fp.label AS fault,
+                 e.started_at::text AS started_at,
+                 e.ended_at::text AS ended_at,
+                 e.engine_on_idle_hours::float8 AS engine_on_idle_hours,
+                 e.idle_source,
+                 NULLIF(TRIM(BOTH ', ' FROM COALESCE(e.location_city, '') || ', ' || COALESCE(e.location_state, '')), '') AS location
+            FROM downtime.events e
+            LEFT JOIN mdata.units u ON u.id = e.unit_id
+            LEFT JOIN catalogs.downtime_categories cat ON cat.id = e.category_id
+            LEFT JOIN catalogs.downtime_fault_parties fp ON fp.id = e.fault_party_id
+           WHERE e.operating_company_id = $1::uuid
+             AND e.is_sample_data IS NOT TRUE
+             AND e.idle_source IS NULL
+           ORDER BY e.started_at DESC NULLS LAST
+           LIMIT $2
+        `,
+        [companyId, limit]
+      );
+      const countRes = await client.query(
+        `SELECT COUNT(*)::int AS n FROM downtime.events
+          WHERE operating_company_id = $1::uuid AND is_sample_data IS NOT TRUE AND idle_source IS NULL`,
+        [companyId]
+      );
+      return { rows: res.rows, total_count: Number(countRes.rows[0]?.n ?? 0) };
+    });
+    return payload;
+  });
+
+  app.post("/api/v1/maintenance/idle-events/:id/confirm-manual", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const params = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
+    const body = z
+      .object({ operating_company_id: z.string().uuid() })
+      .safeParse(req.body ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    if (!body.success) return validationError(reply, body.error);
+    const companyId = body.data.operating_company_id;
+    const result = await withCompany(user.uuid, companyId, async (client) => {
+      const upd = await client.query(
+        `
+          UPDATE downtime.events
+             SET idle_source = 'manual',
+                 updated_at = now()
+           WHERE id = $1::uuid
+             AND operating_company_id = $2::uuid
+             AND is_sample_data IS NOT TRUE
+             AND idle_source IS NULL
+       RETURNING id::text AS event_id, idle_source
+        `,
+        [params.data.id, companyId]
+      );
+      return upd.rows[0] ?? null;
+    });
+    if (!result) return reply.code(404).send({ error: "idle_event_not_found_or_already_sourced" });
+    return { ok: true, ...result };
+  });
 }
 
 async function countActiveUnits(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> }, companyId: string) {

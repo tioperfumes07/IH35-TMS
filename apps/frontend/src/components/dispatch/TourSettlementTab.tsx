@@ -71,7 +71,12 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
   const invoicedCents = cs.revenue_cents;
   const chargeMiles = liveLegs.reduce((s, l) => s + (l.miles_practical ?? 0), 0);
   const totalMiles = tot.miles_practical || chargeMiles;
-  // per practical mile, dollars, 3 decimals (AlwaysTrack "p/m") — dash when there are no miles to divide by.
+  // ROUND 285.4.9 / #32 — draft or unposted expenses must flag on the settlement surface.
+  const unpostedDraftExpenses = r.costs.filter(
+    (c) =>
+      c.kind === "expense" &&
+      (c.posting_status === "unposted" || String(c.document_status ?? "").toLowerCase() === "draft")
+  );
   const pm = (c: number) => (totalMiles > 0 ? `${(c / 100 / totalMiles).toFixed(3)} p/m` : DASH);
   const pct = (c: number) => (invoicedCents > 0 ? `${((c / invoicedCents) * 100).toFixed(2)}%` : DASH);
   const legRate = (l: TourReadout["legs"][number]) => (l.miles_practical && l.miles_practical > 0 ? l.revenue_cents / 100 / l.miles_practical : null);
@@ -93,6 +98,16 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
       <span>Settlement <EntityLink kind="settlement" id={t.settlement_id} label={settlementLabel(t)} />{periodLabel(t) ? <> · <span className="ldt-k" data-testid="tour-settlement-dates">{periodLabel(t)}</span></> : null} · {t.driver_name ?? "driver"} · <b>{t.is_open ? "open" : t.status}</b>{t.is_open ? " — fills when the tour closes; the figures below are the shape it will take from today's readout." : ` — closed ${t.trip_closed_at ? t.trip_closed_at.slice(0, 16).replace("T", " ") : ""}; frozen.`}</span>
       <span className={`ldt-pill ${t.is_open ? "warn" : "ok"}`} data-testid="tour-settlement-state">{t.is_open ? "open · pre-settlement" : `${t.status}${t.paid_at ? " · paid" : ""}`}</span>
     </div>
+
+    {unpostedDraftExpenses.length > 0 ? (
+      <div className="ldt-note warn" data-testid="settlement-unposted-draft-expense-flag" role="status">
+        {unpostedDraftExpenses.length} draft / unposted expense{unpostedDraftExpenses.length === 1 ? "" : "s"} on this settlement
+        {" — "}
+        {unpostedDraftExpenses.slice(0, 4).map((c) => c.number).join(", ")}
+        {unpostedDraftExpenses.length > 4 ? ` · +${unpostedDraftExpenses.length - 4} more` : ""}
+        . Post or void before treating costs as final.
+      </div>
+    ) : null}
 
     <div className="ldt-grid2">
       <div className="ldt-card" data-testid="driver-settlement-card">
@@ -180,6 +195,26 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
           { key: "vendor", label: "Vendor", sortable: true, sortValue: c => c.vendor_name ?? "", render: c => c.vendor_name ?? DASH },
           { key: "load", label: "Load Number", sortable: true, sortValue: c => c.load_number ?? "", render: c => <EntityLink kind="load" id={c.load_id} label={c.load_number ?? "Load"} /> },
           { key: "category", label: "Category", sortable: true, sortValue: c => c.category ?? "", render: c => c.category ?? DASH },
+          {
+            key: "posting",
+            label: "Posting",
+            sortable: true,
+            sortValue: c => `${c.document_status ?? ""}:${c.posting_status}`,
+            render: c => {
+              const isDraftUnposted =
+                c.kind === "expense" &&
+                (c.posting_status === "unposted" || String(c.document_status ?? "").toLowerCase() === "draft");
+              const label =
+                c.kind === "expense"
+                  ? `${c.document_status ?? "—"} · ${c.posting_status}`
+                  : c.posting_status;
+              return (
+                <span className={`ldt-pill ${isDraftUnposted ? "warn" : "ok"}`} data-testid={isDraftUnposted ? "settlement-cost-unposted-flag" : undefined}>
+                  {label}
+                </span>
+              );
+            },
+          },
           { key: "amount", label: "Amount", sortable: true, sortValue: c => c.amount_cents, render: c => money(c.amount_cents, currencyCode) },
         ]} footerCells={{
           date: () => <span className="ldt-sub" data-testid="fuel-expenses-total-label">Fuel {money(fuelTotal, currencyCode)} · expenses {money(otherTotal, currencyCode)}</span>,

@@ -9,11 +9,19 @@ import { pickDate } from "../../../test-utils/pickDate";
 const getMaintenanceKpiSummary = vi.fn();
 const getMaintenanceKpiDrilldown = vi.fn();
 const getMaintenanceKpiPmCompliance = vi.fn();
+const listIdleEventsNeedsReview = vi.fn();
+const confirmIdleEventManual = vi.fn();
 
 vi.mock("../../../api/maintenance", () => ({
   getMaintenanceKpiSummary: (...args: unknown[]) => getMaintenanceKpiSummary(...args),
   getMaintenanceKpiDrilldown: (...args: unknown[]) => getMaintenanceKpiDrilldown(...args),
   getMaintenanceKpiPmCompliance: (...args: unknown[]) => getMaintenanceKpiPmCompliance(...args),
+  listIdleEventsNeedsReview: (...args: unknown[]) => listIdleEventsNeedsReview(...args),
+  confirmIdleEventManual: (...args: unknown[]) => confirmIdleEventManual(...args),
+}));
+
+vi.mock("../../../components/Toast", () => ({
+  useToast: () => ({ pushToast: vi.fn() }),
 }));
 
 vi.mock("../../../components/EntityPicker", () => ({
@@ -60,7 +68,11 @@ describe("MaintKpiDashboardPage (B35)", () => {
     getMaintenanceKpiSummary.mockReset();
     getMaintenanceKpiDrilldown.mockReset();
     getMaintenanceKpiPmCompliance.mockReset();
+    listIdleEventsNeedsReview.mockReset();
+    confirmIdleEventManual.mockReset();
     getMaintenanceKpiSummary.mockResolvedValue(summaryFixture);
+    listIdleEventsNeedsReview.mockResolvedValue({ rows: [], total_count: 0 });
+    confirmIdleEventManual.mockResolvedValue({ ok: true, event_id: "e1", idle_source: "manual" });
     getMaintenanceKpiDrilldown.mockResolvedValue({
       kind: "downtime",
       rows: [{ display_id: "WO-1", unit_number: "T-101", downtime_hours: 4 }],

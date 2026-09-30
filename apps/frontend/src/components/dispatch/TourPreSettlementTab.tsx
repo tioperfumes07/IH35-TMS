@@ -58,6 +58,11 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
   const thisLeg = r.legs.find((l) => l.is_this_load);
   const sb = r.legs.find((l) => l.trip_type === "SB");
   const okCount = r.ready.filter((x) => x.ok).length;
+  const unpostedDraftExpenses = r.costs.filter(
+    (c) =>
+      c.kind === "expense" &&
+      (c.posting_status === "unposted" || String(c.document_status ?? "").toLowerCase() === "draft")
+  );
 
   return <div className="ldt-body" data-testid="tour-presettlement-tab" data-surface="load-detail">
     <div className="ldt-rowbar">
@@ -66,6 +71,12 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
         · {r.legs.map((l) => `${l.trip_type ?? "leg"} ${l.load_number}${l.is_this_load ? " (this load)" : ""}`).join(" · ")}{sb ? "" : " · SB —"} · {t.driver_name ?? "driver"}{t.unit_number ? ` · ${t.unit_number}` : ""}</span>
       <span className={`ldt-pill ${t.is_open ? "warn" : "ok"}`} data-testid="tour-state-chip">{t.is_open ? "open · nothing posted" : `closed · ${t.status}`}</span>
     </div>
+
+    {unpostedDraftExpenses.length > 0 ? (
+      <div className="ldt-note warn" data-testid="presettlement-unposted-draft-expense-flag" role="status">
+        {unpostedDraftExpenses.length} draft / unposted expense{unpostedDraftExpenses.length === 1 ? "" : "s"} on this tour — post or void before close.
+      </div>
+    ) : null}
 
     {/* Per-leg readout — the same numbers the Costs footer and Settlement tab show */}
     <div className="ldt-card" data-testid="tour-legs">

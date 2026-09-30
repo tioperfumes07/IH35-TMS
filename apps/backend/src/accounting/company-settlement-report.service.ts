@@ -81,6 +81,75 @@ export type CompanySettlementPLLine = {
   amount_cents: number;
 };
 
+/** ROUND 285.4.9 / #58 — downtime ledger row from downtime.events (+ catalogs). Never invents hours. */
+export type CompanySettlementDowntimeEventRow = {
+  event_id: string;
+  unit_number: string | null;
+  category: string | null;
+  fault: string | null;
+  started_at: string | null;
+  ended_at: string | null;
+  duration_hours: number | null;
+  engine_on_idle_hours: number | null;
+  idle_source: string | null;
+  location: string | null;
+};
+
+/** ROUND 285.4.9 / #58 — downtime.event_costs (cash + management). amount_cents from the live row. */
+export type CompanySettlementDowntimeCostRow = {
+  event_id: string;
+  unit_number: string | null;
+  cost_type: string;
+  basis: string | null;
+  hours: number | null;
+  gallons: number | null;
+  unit_rate_cents: number | null;
+  amount_cents: number;
+  is_cash_cost: boolean;
+};
+
+/** ROUND 285.4.9 / #58 — downtime.lost_opportunity. Management only. */
+export type CompanySettlementLostOpportunityRow = {
+  event_id: string;
+  cancelled_load_number: string | null;
+  would_have_invoiced_cents: number;
+  miles: number | null;
+  pu_label: string | null;
+  del_label: string | null;
+};
+
+/** ROUND 285.4.9 / #58 — fuel.load_fuel_cost (consumed vs purchased). Missing fields stay null. */
+export type CompanySettlementFuelConsumedRow = {
+  load_id: string;
+  load_number: string | null;
+  driven_miles: number | null;
+  gallons_consumed: number | null;
+  mpg_used: number | null;
+  mpg_method: string | null;
+  avg_cost_per_gallon_cents: number | null;
+  fuel_cost_consumed_cents: number | null;
+  fuel_cost_purchased_cents: number | null;
+  confidence: string | null;
+  missing_reason: string | null;
+};
+
+/**
+ * ROUND 285.4.9 / #58 — three margins, never mixed (v10 locked design):
+ *   cash      = revenue − driver pay − fuel purchased − expenses  (ties books / AlwaysTrack)
+ *   true_cost = revenue − driver pay − fuel consumed − expenses   (management)
+ *   economic  = true_cost − downtime cash costs − lost opportunity (management; never posted)
+ */
+export type CompanySettlementMargins = {
+  cash_margin_cents: number;
+  true_cost_margin_cents: number;
+  economic_margin_cents: number;
+  fuel_purchased_cents: number;
+  fuel_consumed_cents: number;
+  downtime_cash_cost_cents: number;
+  downtime_mgmt_cost_cents: number;
+  lost_opportunity_cents: number;
+};
+
 export type CompanySettlementReport = {
   company_settlement_id: string;
   display_id: string;
@@ -96,6 +165,22 @@ export type CompanySettlementReport = {
     revenue: { invoiced_cents: number };
     pl_rollup: { lines: CompanySettlementPLLine[]; net_revenue_cents: number };
     miles_and_mpg: { total_miles: number; mpg: number | null };
+    /** ROUND 285.4.9 / #58 — auto-printed with every company settlement (owner: no toggle). */
+    downtime_ledger: {
+      events: CompanySettlementDowntimeEventRow[];
+      costs: CompanySettlementDowntimeCostRow[];
+      lost_opportunity: CompanySettlementLostOpportunityRow[];
+      total_duration_hours: number;
+      total_idle_hours: number;
+    };
+    fuel_consumed: {
+      rows: CompanySettlementFuelConsumedRow[];
+      total_consumed_cents: number;
+      total_purchased_cents: number;
+      total_gallons: number;
+      total_driven_miles: number;
+    };
+    margins: CompanySettlementMargins;
   };
 };
 
@@ -153,6 +238,16 @@ export async function buildCompanySettlementReport(
   );
   const driverSettlementIds = linkRes.rows.map((r) => r.driver_settlement_id);
 
+  const emptyMargins: CompanySettlementMargins = {
+    cash_margin_cents: 0,
+    true_cost_margin_cents: 0,
+    economic_margin_cents: 0,
+    fuel_purchased_cents: 0,
+    fuel_consumed_cents: 0,
+    downtime_cash_cost_cents: 0,
+    downtime_mgmt_cost_cents: 0,
+    lost_opportunity_cents: 0,
+  };
   const empty: CompanySettlementReport = {
     company_settlement_id: header.id,
     display_id: header.display_id,
@@ -168,6 +263,21 @@ export async function buildCompanySettlementReport(
       revenue: { invoiced_cents: 0 },
       pl_rollup: { lines: [], net_revenue_cents: 0 },
       miles_and_mpg: { total_miles: 0, mpg: null },
+      downtime_ledger: {
+        events: [],
+        costs: [],
+        lost_opportunity: [],
+        total_duration_hours: 0,
+        total_idle_hours: 0,
+      },
+      fuel_consumed: {
+        rows: [],
+        total_consumed_cents: 0,
+        total_purchased_cents: 0,
+        total_gallons: 0,
+        total_driven_miles: 0,
+      },
+      margins: emptyMargins,
     },
   };
   if (driverSettlementIds.length === 0) return empty;
@@ -384,6 +494,247 @@ export async function buildCompanySettlementReport(
   const totalMiles = Number(milesRes.rows[0]?.total_miles ?? 0);
   const mpg = fuelGallonsTotal > 0 ? Math.round((totalMiles / fuelGallonsTotal) * 1000) / 1000 : null;
 
+  // 8) DOWNTIME LEDGER — ROUND 285.4.9 / #58. Events for units that ran this settlement's loads,
+  // overlapping the company-settlement period (or linked via preceding/following load). Sample
+  // rows excluded. Hours / costs come from live tables only — never fabricated.
+  const unitIdsRes = await client.query<{ unit_id: string }>(
+    `
+      SELECT DISTINCT unit_id::text AS unit_id
+      FROM mdata.loads
+      WHERE id = ANY($1::uuid[])
+        AND unit_id IS NOT NULL
+    `,
+    [loadIds.length ? loadIds : ["00000000-0000-0000-0000-000000000000"]]
+  );
+  const unitIds = unitIdsRes.rows.map((r) => r.unit_id);
+
+  const downtimeEventsRes = await client.query<{
+    event_id: string;
+    unit_number: string | null;
+    category: string | null;
+    fault: string | null;
+    started_at: string | null;
+    ended_at: string | null;
+    duration_hours: string | null;
+    engine_on_idle_hours: string | null;
+    idle_source: string | null;
+    location: string | null;
+  }>(
+    `
+      SELECT e.id::text AS event_id,
+             u.unit_number,
+             cat.label AS category,
+             fp.label AS fault,
+             e.started_at::text AS started_at,
+             e.ended_at::text AS ended_at,
+             CASE
+               WHEN e.started_at IS NOT NULL AND e.ended_at IS NOT NULL
+                 THEN ROUND((EXTRACT(EPOCH FROM (e.ended_at - e.started_at)) / 3600.0)::numeric, 2)::text
+               ELSE NULL
+             END AS duration_hours,
+             e.engine_on_idle_hours::text AS engine_on_idle_hours,
+             e.idle_source,
+             NULLIF(TRIM(BOTH ', ' FROM COALESCE(e.location_city, '') || ', ' || COALESCE(e.location_state, '')), '') AS location
+      FROM downtime.events e
+      LEFT JOIN mdata.units u ON u.id = e.unit_id
+      LEFT JOIN catalogs.downtime_categories cat ON cat.id = e.category_id
+      LEFT JOIN catalogs.downtime_fault_parties fp ON fp.id = e.fault_party_id
+      WHERE e.operating_company_id = $1::uuid
+        AND e.is_sample_data IS NOT TRUE
+        AND (
+          (e.unit_id = ANY($2::uuid[])
+            AND e.started_at::date <= $4::date
+            AND COALESCE(e.ended_at::date, e.started_at::date) >= $3::date)
+          OR e.preceding_load_id = ANY($5::uuid[])
+          OR e.following_load_id = ANY($5::uuid[])
+        )
+      ORDER BY e.started_at NULLS LAST
+    `,
+    [
+      input.operatingCompanyId,
+      unitIds.length ? unitIds : ["00000000-0000-0000-0000-000000000000"],
+      header.period_start,
+      header.period_end,
+      loadIds.length ? loadIds : ["00000000-0000-0000-0000-000000000000"],
+    ]
+  );
+  const downtimeEventRows: CompanySettlementDowntimeEventRow[] = downtimeEventsRes.rows.map((r) => ({
+    event_id: r.event_id,
+    unit_number: r.unit_number,
+    category: r.category,
+    fault: r.fault,
+    started_at: r.started_at,
+    ended_at: r.ended_at,
+    duration_hours: r.duration_hours === null ? null : Number(r.duration_hours),
+    engine_on_idle_hours: r.engine_on_idle_hours === null ? null : Number(r.engine_on_idle_hours),
+    idle_source: r.idle_source,
+    location: r.location,
+  }));
+  const downtimeEventIds = downtimeEventRows.map((r) => r.event_id);
+
+  const downtimeCostsRes = await client.query<{
+    event_id: string;
+    unit_number: string | null;
+    cost_type: string;
+    basis: string | null;
+    hours: string | null;
+    gallons: string | null;
+    unit_rate_cents: string | null;
+    amount_cents_num: string;
+    is_cash_cost: boolean;
+  }>(
+    `
+      SELECT ec.event_id::text AS event_id,
+             u.unit_number,
+             ec.cost_type,
+             ec.basis,
+             e.engine_on_idle_hours::text AS hours,
+             CASE WHEN ec.cost_type = 'idle_fuel' THEN ec.quantity::text ELSE NULL END AS gallons,
+             ec.unit_rate_cents::text AS unit_rate_cents,
+             ROUND(ec.amount_cents)::bigint::text AS amount_cents_num,
+             COALESCE(ec.is_cash_cost, false) AS is_cash_cost
+      FROM downtime.event_costs ec
+      JOIN downtime.events e ON e.id = ec.event_id
+      LEFT JOIN mdata.units u ON u.id = e.unit_id
+      WHERE ec.operating_company_id = $1::uuid
+        AND ec.event_id = ANY($2::uuid[])
+      ORDER BY u.unit_number NULLS LAST, ec.cost_type
+    `,
+    [
+      input.operatingCompanyId,
+      downtimeEventIds.length ? downtimeEventIds : ["00000000-0000-0000-0000-000000000000"],
+    ]
+  );
+  const downtimeCostRows: CompanySettlementDowntimeCostRow[] = downtimeCostsRes.rows.map((r) => ({
+    event_id: r.event_id,
+    unit_number: r.unit_number,
+    cost_type: r.cost_type,
+    basis: r.basis,
+    hours: r.hours === null ? null : Number(r.hours),
+    gallons: r.gallons === null ? null : Number(r.gallons),
+    unit_rate_cents: r.unit_rate_cents === null ? null : Number(r.unit_rate_cents),
+    amount_cents: Number(r.amount_cents_num),
+    is_cash_cost: Boolean(r.is_cash_cost),
+  }));
+
+  const lostOppRes = await client.query<{
+    event_id: string;
+    cancelled_load_number: string | null;
+    would_have_invoiced_cents_num: string;
+    miles: string | null;
+    pu_label: string | null;
+    del_label: string | null;
+  }>(
+    `
+      SELECT lo.event_id::text AS event_id,
+             cl.load_number AS cancelled_load_number,
+             ROUND(lo.would_have_invoiced_cents)::bigint::text AS would_have_invoiced_cents_num,
+             lo.miles::text AS miles,
+             NULLIF(TRIM(BOTH ', ' FROM COALESCE(lo.pu_city, '') || ', ' || COALESCE(lo.pu_state, '')), '') AS pu_label,
+             NULLIF(TRIM(BOTH ', ' FROM COALESCE(lo.del_city, '') || ', ' || COALESCE(lo.del_state, '')), '') AS del_label
+      FROM downtime.lost_opportunity lo
+      LEFT JOIN mdata.loads cl ON cl.id = lo.cancelled_load_id
+      WHERE lo.operating_company_id = $1::uuid
+        AND lo.event_id = ANY($2::uuid[])
+      ORDER BY cl.load_number NULLS LAST
+    `,
+    [
+      input.operatingCompanyId,
+      downtimeEventIds.length ? downtimeEventIds : ["00000000-0000-0000-0000-000000000000"],
+    ]
+  );
+  const lostOppRows: CompanySettlementLostOpportunityRow[] = lostOppRes.rows.map((r) => ({
+    event_id: r.event_id,
+    cancelled_load_number: r.cancelled_load_number,
+    would_have_invoiced_cents: Number(r.would_have_invoiced_cents_num),
+    miles: r.miles === null ? null : Number(r.miles),
+    pu_label: r.pu_label,
+    del_label: r.del_label,
+  }));
+
+  const totalDurationHours = downtimeEventRows.reduce((s, r) => s + (r.duration_hours ?? 0), 0);
+  const totalIdleHours = downtimeEventRows.reduce((s, r) => s + (r.engine_on_idle_hours ?? 0), 0);
+  const downtimeCashCents = downtimeCostRows
+    .filter((r) => r.is_cash_cost)
+    .reduce((s, r) => s + r.amount_cents, 0);
+  const downtimeMgmtCents = downtimeCostRows
+    .filter((r) => !r.is_cash_cost)
+    .reduce((s, r) => s + r.amount_cents, 0);
+  const lostOppCents = lostOppRows.reduce((s, r) => s + r.would_have_invoiced_cents, 0);
+
+  // 9) FUEL CONSUMED — fuel.load_fuel_cost. Purchased cents may differ from fuel_transactions
+  // rollup; both surfaces print; neither invents gallons when driven miles / mpg are missing.
+  const fuelConsumedRes = await client.query<{
+    load_id: string;
+    load_number: string | null;
+    driven_miles: string | null;
+    gallons_consumed: string | null;
+    mpg_used: string | null;
+    mpg_method: string | null;
+    avg_cost_per_gallon_cents: string | null;
+    fuel_cost_consumed_cents: string | null;
+    fuel_cost_purchased_cents: string | null;
+    confidence: string | null;
+    missing_reason: string | null;
+  }>(
+    `
+      SELECT lfc.load_id::text AS load_id,
+             l.load_number,
+             lfc.driven_miles::text AS driven_miles,
+             lfc.gallons_consumed::text AS gallons_consumed,
+             lfc.mpg_used::text AS mpg_used,
+             lfc.mpg_method,
+             lfc.avg_cost_per_gallon_cents::text AS avg_cost_per_gallon_cents,
+             lfc.fuel_cost_consumed_cents::text AS fuel_cost_consumed_cents,
+             lfc.fuel_cost_purchased_cents::text AS fuel_cost_purchased_cents,
+             lfc.confidence,
+             lfc.missing_reason
+      FROM fuel.load_fuel_cost lfc
+      LEFT JOIN mdata.loads l ON l.id = lfc.load_id
+      WHERE lfc.operating_company_id = $1::uuid
+        AND lfc.load_id = ANY($2::uuid[])
+      ORDER BY l.load_number NULLS LAST
+    `,
+    [input.operatingCompanyId, loadIds.length ? loadIds : ["00000000-0000-0000-0000-000000000000"]]
+  );
+  const fuelConsumedRows: CompanySettlementFuelConsumedRow[] = fuelConsumedRes.rows.map((r) => ({
+    load_id: r.load_id,
+    load_number: r.load_number,
+    driven_miles: r.driven_miles === null ? null : Number(r.driven_miles),
+    gallons_consumed: r.gallons_consumed === null ? null : Number(r.gallons_consumed),
+    mpg_used: r.mpg_used === null ? null : Number(r.mpg_used),
+    mpg_method: r.mpg_method,
+    avg_cost_per_gallon_cents: r.avg_cost_per_gallon_cents === null ? null : Number(r.avg_cost_per_gallon_cents),
+    fuel_cost_consumed_cents: r.fuel_cost_consumed_cents === null ? null : Number(r.fuel_cost_consumed_cents),
+    fuel_cost_purchased_cents: r.fuel_cost_purchased_cents === null ? null : Number(r.fuel_cost_purchased_cents),
+    confidence: r.confidence,
+    missing_reason: r.missing_reason,
+  }));
+  const fuelConsumedTotal = fuelConsumedRows.reduce((s, r) => s + (r.fuel_cost_consumed_cents ?? 0), 0);
+  const fuelConsumedPurchasedTotal = fuelConsumedRows.reduce(
+    (s, r) => s + (r.fuel_cost_purchased_cents ?? 0),
+    0
+  );
+  const fuelConsumedGallons = fuelConsumedRows.reduce((s, r) => s + (r.gallons_consumed ?? 0), 0);
+  const fuelConsumedMiles = fuelConsumedRows.reduce((s, r) => s + (r.driven_miles ?? 0), 0);
+
+  // 10) THREE MARGINS — cash uses fuel_transactions purchased total (ties books); true-cost swaps
+  // in load_fuel_cost consumed; economic subtracts downtime cash + lost opportunity (mgmt only).
+  const cashMarginCents = netRevenueCents;
+  const trueCostMarginCents =
+    revenueCents - driverSalaryCents - otherDeductionsCents - fuelConsumedTotal - expensesTotal;
+  const economicMarginCents = trueCostMarginCents - downtimeCashCents - lostOppCents;
+  const margins: CompanySettlementMargins = {
+    cash_margin_cents: cashMarginCents,
+    true_cost_margin_cents: trueCostMarginCents,
+    economic_margin_cents: economicMarginCents,
+    fuel_purchased_cents: fuelTotal,
+    fuel_consumed_cents: fuelConsumedTotal,
+    downtime_cash_cost_cents: downtimeCashCents,
+    downtime_mgmt_cost_cents: downtimeMgmtCents,
+    lost_opportunity_cents: lostOppCents,
+  };
+
   return {
     company_settlement_id: header.id,
     display_id: header.display_id,
@@ -399,6 +750,21 @@ export async function buildCompanySettlementReport(
       revenue: { invoiced_cents: revenueCents },
       pl_rollup: { lines: plLines, net_revenue_cents: netRevenueCents },
       miles_and_mpg: { total_miles: totalMiles, mpg },
+      downtime_ledger: {
+        events: downtimeEventRows,
+        costs: downtimeCostRows,
+        lost_opportunity: lostOppRows,
+        total_duration_hours: totalDurationHours,
+        total_idle_hours: totalIdleHours,
+      },
+      fuel_consumed: {
+        rows: fuelConsumedRows,
+        total_consumed_cents: fuelConsumedTotal,
+        total_purchased_cents: fuelConsumedPurchasedTotal,
+        total_gallons: fuelConsumedGallons,
+        total_driven_miles: fuelConsumedMiles,
+      },
+      margins,
     },
   };
 }
