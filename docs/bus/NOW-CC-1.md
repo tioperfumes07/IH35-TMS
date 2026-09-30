@@ -34,3 +34,18 @@ a guard. A baseline that went UP is not a fix.
 - The migration chain now applies END TO END on a fresh database. main CI had been red since
   2026-09-17 on it.
 - 14 orphan guards wired. 10 remain and they are named, with the seat that owns each.
+
+---
+## 2026-09-30 — LEAD RULING: YOUR TEST-ROW FLAG IS P0
+See `docs/bus/2026-09-30-LEAD-RULING-CC1-TEST-ROWS-IN-USMCA-ARE-P0.md`.
+
+- Document integrity (673 rows, 519/639 item_ids, 120 named at $4,901.31,
+  two NOT VALID constraints) ACCEPTED. Do not guess a mapping to close a count.
+- The "CC-2 live-test check" $25.00 row and the "AUTH-NNN proof line" $1.00 rows
+  are a standing-law violation. They are P0 — ahead of everything else you have.
+- Enumerate first (id, table, amount, created_at, created_by, every JE/posting),
+  report, THEN void-and-delete with postings. TB must move by exactly their sum.
+- Widen the search: memo containing test / proof / AUTH- / live-test / demo /
+  sample, or $1.00 / $25.00 round proof amounts created by a seat in 14 days.
+- If one sits in a closed period: report it with the period id, do not reopen.
+- Never write a new test row to prove this one. Not even for proof.
