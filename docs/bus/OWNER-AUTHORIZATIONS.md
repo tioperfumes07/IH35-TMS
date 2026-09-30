@@ -5617,6 +5617,55 @@ executed: 2026-09-30, PR #23339 merged (squash 72f1b7a2ae), then --apply run for
 
 ---
 
+## AUTH-169
+
+title: void 2 fabricated factoring advances (FAC-2026-00139/00140) behind loads 13625/13626 --
+  step 1 of Lead's 6-step owner-verified correction order
+requested_by: Lead order, verbatim, owner-verified 2026-09-30: "I was wrong for seven rounds and I
+  am correcting it in writing... source_system='tms' means OUR APP wrote those advances. The Faro
+  invoice numbers and purchase dates were typed by us, not received from Faro. Nothing on the Faro
+  side corroborates either one." Measured by Lead live: factor.faro_invoice_lines = 0 rows, 0
+  invoices, entirely empty; both advances carry a faro_invoice_number (103/104) with zero
+  corresponding Faro-side rows. Delivery stamps on both loads' delivery stops are fabricated
+  (arrival==departure==2026-09-25T16:00:00.000Z, actual_arrival_source NULL, no pickup stamps,
+  load status still 'dispatched').
+root_cause: fabricated delivery evidence -> an invoice that should never have been sent -> an
+  advance Faro never made. Live-verified independently before writing this AUTH: FAC-2026-00139
+  (id 32e3b54b-a789-4b2a-af9f-ae9bff3624a8) status='advanced', advance_amount_cents=606250
+  ($6,062.50) -- matches Lead's figures exactly. FAC-2026-00140 (id
+  7ba4abe8-c195-4118-96d3-a10c35f0d8c4) status='advanced', advance_amount_cents=329800 ($3,298.00)
+  -- matches exactly.
+  COMPLICATION found live, not in the original order: FAC-2026-00140 is my own earlier B-06 test
+  artifact this same session (a round-trip void->reinstate proof against the then-broken
+  executeVoidCancel/reinstate engine, both since fixed, PR #23353/#23362). Its CURRENT live
+  posting is JE 9c8e6897-524d-449a-bff3-d13611767989, but that JE's own postings carry
+  source_transaction_type='journal_entry' (pointing at the reversal JE it un-reversed), NOT
+  'factoring_advance' pointing at FAC-2026-00140's own id -- exactly the
+  REINSTATE-VOIDJE-REVERSAL-SEVERS-SOURCE-LINKAGE defect (filed + partially fixed this session, PR
+  #23366; the historical row itself cannot be retagged, WORM). executeVoidCancel's tag-based
+  live-posting lookup would find ZERO live rows for FAC-2026-00140 and silently perform a
+  header-only void, missing this real $3,298.00/$51.00/$51.00/$3,400.00 -- live-verified via direct
+  query before writing this AUTH. FAC-2026-00139 was never touched by any prior test; its live JE
+  is correctly tagged.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 2 factoring_advances named
+  above, in `scripts/ops/2026-09-30-cc2-auth169-void-13625-13626-factoring-advances.ts`.
+  FAC-2026-00139: standard `executeVoidCancel("factoring_advance", {action:'void'})` path (clean,
+  no complication). FAC-2026-00140: JE 9c8e6897 reversed DIRECTLY by id via `postVoidReversal`
+  (entityType:'journal_entry', entityId:<9c8e6897>) -- reads journal_entry_postings WHERE
+  journal_entry_uuid=<id> directly, finds the real 4 lines regardless of their tag -- confirmed
+  zero live tagged postings remain (both the standard tag query and a direct check on 9c8e6897
+  itself) BEFORE the header void, which is called second and correctly finds nothing further live.
+  Not authorized: touching invoices 13625/13626 (step 2, separate); touching either load's stops
+  (step 3, separate); any other factoring_advance; any hand-written JE; any direct INSERT into a
+  posting table.
+action:
+  OWNER_AUTH_ID=AUTH-169 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth169-void-13625-13626-factoring-advances.ts --apply
+  (run from repo root; DRY_RUN first with no --apply flag)
+expires_at: 2026-10-01T00:00:00.000Z
+status: OPEN
+
+---
+
 ## AUTH-165
 
 title: reverse a real, live $17,057.44 double-count -- my own AUTH-140 classification error, USMCA
