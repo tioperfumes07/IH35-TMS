@@ -80,3 +80,54 @@ bills, settlements, factoring, journal entries, categorisation or bank data is
 
 You keep working — on code, UI, engines, guards, tests and CI. Measure and report
 instead of writing. Your named list is in the freeze document above.
+
+---
+## 2026-09-30 — ROUND 294 — DRIVER PROFILE MODULE, MAINTENANCE, TABS AND KPIs
+
+Owner: "I asked you to update driver profile module, and the changes in maintenance
+and tabs and KPIs." That is your whole focus now. None of it touches money data.
+
+### C-20 — DRIVER PROFILE MODULE. FINISH IT COMPLETELY.
+D35 · D11–D20 · C-17. The Driver Profile home must read like Customers and Vendors:
+the same master-detail shell, the same wider master pane (you shipped 640px — verify
+it live at 1280 and 1920), the same segmented controls, the same row treatment.
+Owner's words, standing: "THERE ARE NO DISTINCTION IN LINES, ANYTHING, IT IS KILLING
+ME THROUGHOUT THE ENTIRE APP." Treat contrast and line distinction as ONE system fix
+across the shell, not thirty patches.
+
+**Run `npx tsc -b` from apps/frontend before every push.** That is what Render builds
+with. Your C-17 `DriverListSidebar.tsx` shipped a `TS2741: Property 'noun' is missing`
+that `--noEmit` passed and `-b` failed, and it took build-typecheck, typecheck-merge-
+result, perf-audit, locked-guards and security-audit down with it — every seat's push.
+I fixed it; do not let the next one through.
+
+### C-21 — MAINTENANCE MODULE. D24–D33.
+The whole block. Work orders, in-shop feed, PM, vendor linkage, the list and detail
+surfaces. Same shell rules as C-20.
+
+**Context you need:** Samsara's `obdOdometerMeters` and `obdEngineSeconds` have been
+NULL since 2026-09-10 (CC-3 T-20 is fixing the feed). PM countdowns that read odometer
+or engine hours have had no input for 20 days. Build the UI so a countdown with no
+fresh reading SAYS SO — "no odometer reading since <date>" — rather than printing a
+stale or zero number. A maintenance screen that shows a confident wrong interval is
+worse than one that admits it does not know.
+
+### C-22 — TABS AND KPIs.
+Every module's tab row and KPI tiles: consistent heights, consistent counts, consistent
+empty state. A KPI that cannot be computed shows why, never a silent zero or an em-dash
+with no explanation. Reuse the DrillKpiCard pattern already on Load Costs.
+
+### C-23 — K-01, STILL OPEN. KANBAN DRAG.
+Cards do not drag Dispatched → At pickup. Measured live: 20 nodes carry
+`aria-roledescription=draggable` and `cursor-grab`, so dnd-kit IS attached. The defect
+is in activation or the drop target, not in whether useDraggable was called. Reproduce
+the owner's real gesture — press, hold, move slowly. Do NOT close this by pointing at
+the attributes. Proof is a recording or a live status change from a drag.
+
+### C-24 — THE QUICKBOOKS PARITY TAIL.
+D47 date format · D48 number format · D49 Banking Action text size · D52 larger
+multi-select · D53 printer/export icons · D54 Add/Match/Record transfer.
+D50/D51 already shipped (row rules yes, column rules no; header outranks row) — verify
+them live and close them.
+
+SEQUENCE: C-20 → C-21 → C-22 → C-23 → C-24. Finish each completely before the next.

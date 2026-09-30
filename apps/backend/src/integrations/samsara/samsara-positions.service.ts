@@ -324,8 +324,21 @@ export async function syncSamsaraVehicleStats(
   });
 
   let stats: SamsaraVehicleStat[];
+  let statsDegraded = false;
+  let statsTypesUsed = "";
   try {
-    stats = await api.listVehicleStats();
+    // WITH META (Lead, 2026-09-30): the stats fetch falls back to a types set that carries NO
+    // odometer when the full set 400s. That fallback is correct -- it keeps the dispatch board's
+    // live location working -- but it used to be invisible, and 35 days of odometer went missing
+    // without a single error anywhere. Measured on rows this path wrote:
+    //   2026-08-26   779 rows,  733 with odometer
+    //   2026-09-10 1,900 rows,    0 with odometer   ... and every day since
+    // Now the pull says which set it got, and a degraded pull is recorded as a failed-shape sync
+    // with the reason named, so "MPG is unavailable" has a cause instead of a blank column.
+    const pull = await api.listVehicleStatsWithMeta();
+    stats = pull.data;
+    statsDegraded = pull.degraded;
+    statsTypesUsed = pull.typesUsed;
   } catch (error) {
     const message =
       error instanceof SamsaraApiError
@@ -343,6 +356,22 @@ export async function syncSamsaraVehicleStats(
       errorMessage: message,
     });
     return { fetched: 0, positions_inserted: 0, drivers_paired: 0, skipped_no_unit: 0, errors };
+  }
+
+  if (statsDegraded) {
+    const reason =
+      `samsara_stats_degraded_types:${statsTypesUsed} — this account did not serve ` +
+      `obdOdometerMeters/fuelPercents/obdEngineSeconds, so odometer, fuel level and engine hours are ` +
+      `NULL for every row in this pull. Driven miles and MPG cannot be computed from it.`;
+    errors.push(reason);
+    await writeSyncLog(client, {
+      operatingCompanyId,
+      success: false,
+      fetched: stats.length,
+      inserted: 0,
+      skippedNoUnit: 0,
+      errorMessage: reason,
+    });
   }
 
   const unitByVehicleId = await loadUnitIdBySamsaraVehicleId(client, operatingCompanyId);

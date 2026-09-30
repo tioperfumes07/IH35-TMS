@@ -379,10 +379,19 @@ export function parseVehicleStatRow(row: Record<string, unknown>): SamsaraVehicl
   return { id, latitude, longitude, captured_at, speed_mph, heading_deg, formatted_location, city, state, engine_state, odometer_mi, fuel_level_pct, engine_hours, current_driver, raw: row };
 }
 
+/**
+ * The full stats types set, and the degraded set the fetch falls back to. Exported so callers can
+ * name which one they got instead of guessing why a column went blank.
+ */
+export const SAMSARA_STATS_TYPES_FULL = "gps,engineStates,obdOdometerMeters,fuelPercents,obdEngineSeconds";
+export const SAMSARA_STATS_TYPES_DEGRADED = "gps,engineStates";
+
 async function fetchSamsaraStatsPage(token: string, after: string | null): Promise<{
   data: SamsaraVehicleStat[];
   hasNextPage: boolean;
   cursor: string | null;
+  /** Which types set actually succeeded. DEGRADED carries NO odometer, fuel or engine-hours. */
+  typesUsed: string;
 }> {
   // VALID stats types only. driverAssignments is NOT a valid /fleet/vehicles/stats type — including it
   // 400s the whole request (the bug that left city/state blank). Driver login lives on the separate
@@ -393,13 +402,28 @@ async function fetchSamsaraStatsPage(token: string, after: string | null): Promi
   // FALLBACK: if the full types set 400s (some Samsara accounts don't support all types), retry with
   // the minimal set (gps,engineStates) — the two that carry city/state + engine state. This keeps
   // the dispatch board's live location working even when the account lacks obd/fuel stats.
-  const typesSets = [
-    "gps,engineStates,obdOdometerMeters,fuelPercents,obdEngineSeconds",
-    "gps,engineStates",
-  ];
+  //
+  // SILENT DEGRADE (Lead, 2026-09-30) — the fallback below is correct and stays, but it used to be
+  // INVISIBLE, and that cost 35 days of odometer. Measured live on telematics.vehicle_locations,
+  // rows written by this very path (raw_samsara_event_id LIKE 'cron:stats:%'):
+  //     2026-08-25   4,645 rows   4,510 with odometer
+  //     2026-08-26     779 rows     733 with odometer
+  //     [12-day gap -- the feed was down entirely]
+  //     2026-09-10   1,900 rows         0 with odometer
+  //     2026-09-11   4,121 rows         0 with odometer
+  //     2026-09-12   3,628 rows         0 with odometer   ... and every day since
+  // The feed came back on the DEGRADED set and never said so. obdOdometerMeters is the odometer,
+  // and without it driven miles cannot be computed, which is why company-settlement MPG has had no
+  // honest input since August. Nothing was broken loudly enough to notice.
+  //
+  // So the fetch now REPORTS which set it got. The caller records it. A degraded feed is a named,
+  // visible condition -- never a column that quietly turns to null.
+  const typesSets = [SAMSARA_STATS_TYPES_FULL, SAMSARA_STATS_TYPES_DEGRADED];
   let res: Response | null = null;
   let lastError: SamsaraApiError | null = null;
+  let typesUsed = SAMSARA_STATS_TYPES_FULL;
   for (const types of typesSets) {
+    typesUsed = types;
     const url = new URL(`${SAMSARA_API_BASE}/fleet/vehicles/stats`);
     url.searchParams.set("types", types);
     if (after) url.searchParams.set("after", after);
@@ -426,7 +450,7 @@ async function fetchSamsaraStatsPage(token: string, after: string | null): Promi
     .map((row) => parseVehicleStatRow(row))
     .filter((row): row is SamsaraVehicleStat => Boolean(row));
   const { hasNextPage, cursor } = parsePagination(json);
-  return { data, hasNextPage, cursor };
+  return { data, hasNextPage, cursor, typesUsed };
 }
 
 async function fetchSamsaraPage(
@@ -667,17 +691,29 @@ export class SamsaraClient {
    *  driverAssignments is NOT a valid stats type (it 400s the request); driver login comes from the separate
    *  /fleet/vehicles/driver-assignments feed. Defensive parse; never throws on shape. */
   async listVehicleStats(): Promise<SamsaraVehicleStat[]> {
+    return (await this.listVehicleStatsWithMeta()).data;
+  }
+
+  /**
+   * Same fetch, but it also says WHICH types set the account actually served. A caller that needs
+   * odometer (driven miles, MPG, PM countdowns) must check `degraded` rather than discover a null
+   * column weeks later -- see the measurement in fetchSamsaraStatsPage.
+   */
+  async listVehicleStatsWithMeta(): Promise<{ data: SamsaraVehicleStat[]; typesUsed: string; degraded: boolean }> {
     const token = this._token();
-    if (!token) return [];
+    if (!token) return { data: [], typesUsed: SAMSARA_STATS_TYPES_FULL, degraded: false };
     const out: SamsaraVehicleStat[] = [];
     let after: string | null = null;
+    let typesUsed = SAMSARA_STATS_TYPES_FULL;
     for (let page = 0; page < 50; page += 1) {
-      const { data, hasNextPage, cursor } = await fetchSamsaraStatsPage(token, after);
-      out.push(...data);
-      if (!hasNextPage || !cursor) break;
-      after = cursor;
+      const page_ = await fetchSamsaraStatsPage(token, after);
+      // Any page that fell back marks the whole pull degraded -- odometer is missing from it either way.
+      if (page_.typesUsed === SAMSARA_STATS_TYPES_DEGRADED) typesUsed = SAMSARA_STATS_TYPES_DEGRADED;
+      out.push(...page_.data);
+      if (!page_.hasNextPage || !page_.cursor) break;
+      after = page_.cursor;
     }
-    return out;
+    return { data: out, typesUsed, degraded: typesUsed === SAMSARA_STATS_TYPES_DEGRADED };
   }
 
   async listVehicles(): Promise<SamsaraVehicle[]> {
