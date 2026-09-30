@@ -5606,7 +5606,14 @@ action:
   OWNER_AUTH_ID=AUTH-166 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth166-backfill-201-expense-journal-entry-id-backlinks.ts --apply
   (run from repo root; DRY_RUN first with no --apply flag)
 expires_at: 2026-10-01T00:00:00.000Z
-status: OPEN
+status: CONSUMED
+executed: 2026-09-30, PR #23339 merged (squash 72f1b7a2ae), then --apply run for real against
+  ep-broad-block-akykk7bw-pooler.c-3.us-west-2.aws.neon.tech. "Preflight+write OK: 201 rows
+  updated, 0 already correct, 201 total targets." COMMITTED. Independently re-verified by
+  re-running scripts/verify-costs-are-expenses-not-handwritten-jes.mjs live post-commit:
+  handwritten_cost_je count fell from 204 to exactly 3, all 3 remaining are the bill-sourced ones
+  named in this AUTH's own scope note (COSTS-GUARD-BILL-SOURCE-NO-JE-BACKLINK-COLUMN, filed to
+  CC-3 on docs/audit/GUARD-WORKORDERS.md, structurally out of this backfill's reach).
 
 ---
 
