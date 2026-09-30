@@ -4893,5 +4893,10 @@ already claimed 147 for a different task (invoice 010) moments earlier. No data 
 before any write, before this branch was ever pushed.
 action: OWNER_AUTH_ID=AUTH-148 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth148-backfill-12-expense-numbers.ts
   (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
+  EXTENDED (same run, same scope note): after the 12-row backfill, the live guard still reported 3
+  more NULL expense_number rows -- unrelated to AUTH-141, memo "R145 SETTL 5770 ... Fuel-DEF-Diesel
+  Exhaust Fluid", created 2026-09-28, load_id NULL (genuinely load-less, so the correct generator is
+  nextExpenseDisplayId, not generateExpenseNumber). Also covered under this same AUTH:
+  OWNER_AUTH_ID=AUTH-148 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth148b-backfill-3-loadless-expense-numbers.ts
 expires_at: 2026-10-01T05:30:00.000Z
 status: OPEN
