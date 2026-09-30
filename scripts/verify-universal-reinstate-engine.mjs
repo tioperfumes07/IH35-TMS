@@ -59,7 +59,19 @@ mustInclude(REINSTATE, 'case "invoice"', "invoice case");
 mustInclude(REINSTATE, 'case "customer_payment"', "customer_payment case");
 mustInclude(REINSTATE, 'case "credit_memo"', "credit_memo case");
 mustInclude(REINSTATE, 'case "prepaid_purchase"', "prepaid_purchase case");
-mustInclude(REINSTATE, "factoring_reinstate_requires_auth", "AUTH-113 refuse factoring by default");
+// ROUND 292: the AUTH-113 hard-refuse-by-default was deliberately replaced (ROUND 285.2.1-R) by a
+// real, per-record reinstate -- but that removed the ONLY enforcement point, leaving the function
+// trusting caller discipline. The real invariant now enforced INSIDE reinstateDocument itself is
+// "no live twin" (same test AUTH-140's own classification used) -- assert the enforcement function
+// exists, is exported for testability, and is actually CALLED in the factoring_advance case (not
+// just defined and orphaned).
+mustInclude(REINSTATE, "async function assertNoLiveFactoringTwin", "factoring twin-check function defined");
+mustInclude(REINSTATE, "class FactoringTwinExistsError", "factoring twin-check refuses with a named error");
+mustMatch(
+  REINSTATE,
+  /case "factoring_advance":[\s\S]{0,2000}await assertNoLiveFactoringTwin\(/,
+  "factoring_advance case calls the twin-check before reinstating (not just defines it elsewhere)"
+);
 mustInclude(REINSTATE, "findVoidReversalJournalEntryId", "reversing-JE lookup (no memo parsing)");
 mustInclude(REINSTATE, "voidJournalEntry", "Option-1 void of reversing JE");
 
@@ -89,8 +101,14 @@ mustMatch(
 
 function selftest() {
   const reinstate = read(REINSTATE);
-  if (!reinstate.includes("factoring_reinstate_requires_auth")) {
-    throw new Error("AUTH-113 refuse missing");
+  if (!reinstate.includes("async function assertNoLiveFactoringTwin")) {
+    throw new Error("factoring twin-check function missing");
+  }
+  if (!reinstate.includes("class FactoringTwinExistsError")) {
+    throw new Error("factoring twin-check error class missing");
+  }
+  if (!/case "factoring_advance":[\s\S]{0,2000}await assertNoLiveFactoringTwin\(/.test(reinstate)) {
+    throw new Error("factoring_advance case does not call the twin-check");
   }
   if (!reinstate.includes("export async function reinstateDocument")) {
     throw new Error("reinstateDocument export missing");
