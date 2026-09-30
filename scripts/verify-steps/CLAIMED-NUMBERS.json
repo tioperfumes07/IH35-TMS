@@ -7453,6 +7453,11 @@
     "claimed_at": "2026-09-30",
     "purpose": "verify-fuel-card-gl-subledger-traceability (ROUND 300 B-32: ratchets the Dreamline/Relay GL-vs-subledger traceability gap found while measuring the diesel card balances)"
   },
+  "11971": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-integrity-findings-attribution-rate (ROUND 300 B-33: ratchets safety.integrity_findings attribution through driverAtTimeSql)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
