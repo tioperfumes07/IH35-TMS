@@ -1109,6 +1109,24 @@
       ]
     },
     {
+      "id": "accounting.modal.write_check",
+      "tab": "Modals",
+      "sub": "Modal: Write Check",
+      "route_hint": "surface://components/checks/WriteCheckForm.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/checks/WriteCheckForm.tsx",
+      "owned_surface_paths": [
+        "pages/accounting/checks/CheckCreatePage.tsx"
+      ],
+      "required": [
+        "connectivity",
+        "vendor",
+        "gl_je",
+        "qbo_chrome",
+        "picker_law"
+      ]
+    },
+    {
       "id": "payment_methods_catalog.create",
       "tab": "Payment methods catalog",
       "sub": "+ Add new payment method",

@@ -57,6 +57,8 @@ const FILE_OWNED_BY_LEAF = {
   "components/accounting/ManualJEModal.tsx": "accounting.modal.manual_je",
   "pages/banking/components/ManualJEModal.tsx": "je.create",
   "pages/dispatch/AssignDriverDropdown.tsx": "dispatch.parity.assign_driver_dropdown",
+  // ROUND 280 Cursor unblock — Settlement Creator (R-186.2 / #61) hosts ParityDrawer; leaf owns the path.
+  "pages/settlements/SettlementCreatorDrawer.tsx": "settlements.drawer.creator",
 };
 
 function normalizePath(p) {

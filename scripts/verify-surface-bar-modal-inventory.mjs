@@ -68,6 +68,8 @@ const FILE_OWNED_BY_LEAF = {
   "pages/reports/FuelReconciliationPage.tsx": "report.fuel_reconciliation",
   "pages/safety/SafetyEventsPage.tsx": "safety_events.list",
   "pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx": "driver_scheduler.list",
+  // ROUND 280 Cursor unblock — Write Check creator (R-154 / #61) hosts Modal; leaf owns the path.
+  "components/checks/WriteCheckForm.tsx": "accounting.modal.write_check",
 };
 
 function normalizePath(p) {
