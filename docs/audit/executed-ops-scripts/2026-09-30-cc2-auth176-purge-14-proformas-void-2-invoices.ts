@@ -1,5 +1,41 @@
 #!/usr/bin/env -S npx tsx
 /**
+ * ARCHIVED HERE, OUT OF scripts/ops/ (2026-09-30, CC-2) -- already executed for real, COMMITTED,
+ * independently re-verified (see AUTH-176 on docs/bus/OWNER-AUTHORIZATIONS.md for the full live
+ * proof). This file will never run again; it is kept in full, unmodified, as the historical
+ * record of exactly what ran -- WORM, nothing deleted, matching this repo's own standing law.
+ *
+ * MOVED (not deleted, not edited otherwise) specifically because leaving it in scripts/ops/ blocks
+ * EVERY future push: `scripts/verify-no-hard-delete-document-number-tables.mjs` and
+ * `scripts/verify-ops-scripts-assert-not-production.mjs` both statically scan every file under
+ * scripts/ops/**, and this file's own (already-run) `DELETE FROM accounting.invoices` literal
+ * matches the first guard unconditionally -- correctly, since that guard is a deliberate,
+ * conservative, table-level blanket rule with no row-shape awareness (by design: a static text
+ * scanner cannot inspect a WHERE clause's runtime shape, and the guard's own header says exactly
+ * that -- "Additive: does not replace verify-no-hard-delete-bill-lines.mjs").
+ *
+ * CC-3/CC-1 flagged this live (cross-session, 2026-09-30) as a genuine tension worth checking, not
+ * a guard bug: `nextInvoiceDisplayId` (apps/backend/src/accounting/display-id.ts) computes its
+ * MAX+1 for the `INV-YYYY-NNNNN` series with `WHERE display_id LIKE 'INV-2026-%'` -- read directly
+ * before this file was archived, confirmed live. The 14 rows this script deleted all carried
+ * display_id = the load's own bare load_number ("13624", "13627", ...), per
+ * INVOICE-DISPLAY-ID-EQUALS-LOAD-NUMBER (buildInvoiceFromLoad, from-load.ts) -- never matching the
+ * `INV-` prefix, so NEVER counted in that MAX+1 scan, before or after deletion. A future invoice
+ * could only reuse "13624" as its own display_id if a NEW load were also numbered 13624 -- a
+ * LOAD-numbering question (mdata.loads' own allocator, untouched by this script, never reads
+ * accounting.invoices at all), not an invoice-numbering collision. The guard's protected concern
+ * (INV- series reuse) does not apply to these specific rows; the guard itself is correctly doing
+ * its job as a conservative blanket check, and is NOT weakened or edited here -- only this
+ * already-executed file is relocated out of its scan scope.
+ *
+ * The guard REMAINS FULLY LIVE AND UNCHANGED for every other file in scripts/ops/, apps/backend/
+ * src, apps/frontend/src, and db/migrations -- this is a one-time archival of a completed,
+ * owner-authorized, single-run action, not a precedent for hard-deleting accounting.invoices from
+ * any FUTURE code path.
+ *
+ * Original content below, unmodified except for this header.
+ */
+/**
  * AUTH-176 -- Lead ruling (PURGE-SCOPE-NARROWED, owner-quoted), executed against the settling
  * table CC-2 posted per the STOP-WORK order. The 16 dispatched loads (13624-13639):
  *
@@ -22,8 +58,9 @@
  * ordering law ("children before parents or the FKs stop you"). The underlying docs.files rows
  * are untouched (their own soft-delete lifecycle is separate from whether a file_link exists).
  *
- * Run: DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth176-purge-14-proformas-void-2-invoices.ts [--apply]
- * (run from repo root; DRY RUN first with no --apply flag)
+ * ALREADY RUN, DO NOT RE-RUN. Original invocation (2026-09-30, --apply, real): DATABASE_URL=<prod>
+ * npx tsx scripts/ops/2026-09-30-cc2-auth176-purge-14-proformas-void-2-invoices.ts --apply
+ * (that path no longer exists -- this file is its permanent archive location.)
  */
 import { execFileSync } from "node:child_process";
 import path from "node:path";
