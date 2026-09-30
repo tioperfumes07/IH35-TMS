@@ -400,15 +400,23 @@ That is canonical guard #1 measured live — it is green from a clean baseline, 
 owners: CC-1 285.1.6 (the 920 uncategorized bank rows), CC-2 285.2.3 (the 12 Faro wires and the plug) and
 CC-2 285.2.4 (the 7 remaining unswept advances). Undeposited Funds reaching 0 is the proof all three worked.
 
-## H.5 — THE DEPLOY PIPELINE WAS THE DEFECT, not a missed step.
-**`IH35-TMS` (backend) and `ih35-tms-web` (frontend) both have `autoDeploy: "no"`.** Merging to main deploys
-NOTHING on either. Only `IH35-TMS-Driver` auto-deploys. That is why nothing reached production for hours
-while PRs kept merging. Every "merged" claim in this repo since that setting changed was not a live claim.
-Deploys triggered by hand for merge `218cc70131`: backend `dep-dau8ir893c1s73d6ebd0`,
-frontend `dep-dau8is6gekts73ddq8a0`.
-Also on the record: `dep-dau629jncjis73atgomg` finished **`pre_deploy_failed`** at 01:11 — a pre-deploy
-migration failure that nobody reported. **A failed pre-deploy is a red, not a skip.**
-**OWNER DECISION NEEDED (one line): turn `autoDeploy` back ON for both services?** My recommendation is yes
-for the frontend immediately, and yes for the backend too — its pre-deploy runs `db:migrate` and
-`db:verify:critical-runtime`, so a bad migration fails the deploy instead of reaching your users, which is
-the behaviour you want. Until you say so I will keep triggering both by hand after every merge.
+## H.5 — DEPLOY CADENCE. **autoDeploy STAYS OFF. That was MY ruling and I forgot it.**
+**LEAD RETRACTION, same day, within the hour.** In Amendment 1 I called `autoDeploy: "no"` on `IH35-TMS`
+and `ih35-tms-web` a pipeline defect and recommended turning it back on. **That recommendation is WITHDRAWN.**
+I am the one who told the owner to turn it off yesterday, because concurrent seat merges were queueing builds
+on the starter build plan and starving each other, and I committed to deploying on a 5–10 minute cadence
+instead. I then read the setting today, did not recognise my own decision, and recommended reversing it.
+**The setting is correct. The failure was Lead not holding the cadence he promised.**
+
+**THE LAW, from here: Lead triggers BOTH services by hand, within 5–10 minutes of every merge to main.**
+Backend `srv-d7rpem7avr4c73fhp4n0`. Frontend `srv-d7s46dbrjlhs7383i150`.
+Nobody turns `autoDeploy` on without the owner saying those words. Not a seat, not Lead, not to "fix" a
+deploy gap. A deploy gap is Lead failing to trigger, never the setting.
+
+**Deployed so far today under this law:**
+- merge `218cc70131` — backend `dep-dau8ir893c1s73d6ebd0` LIVE 04:04, frontend `dep-dau8is6gekts73ddq8a0` LIVE 04:03
+- merge `2344764abb` (Codex 285.5.1 archive) — backend `dep-dau8odpsrm7s73b8jud0`, frontend `dep-dau8offavr4c7385tqpg`
+
+**Also on the record, and it stands:** `dep-dau629jncjis73atgomg` finished **`pre_deploy_failed`** at 01:11 —
+a pre-deploy migration failure nobody reported. **A failed pre-deploy is a red, not a skip.** Whoever owns
+the merge behind a failed deploy owns the red.
