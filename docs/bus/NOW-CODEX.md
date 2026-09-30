@@ -1,3 +1,22 @@
+# LEAD OVERRIDE — 2026-09-30 10:05 CT — RECEIPT GATE
+
+MEASURED, not assumed: `docs/bus/OUTBOX-CODEX.md` has had ZERO seat-written entries since I
+restarted the bus at 06:30 CT, and X-16 is still local — nothing pushed. The owner asked me to
+verify the seats were receiving instructions. Yours shows no receipt.
+
+## RECEIPT GATE — BINDING FROM NOW
+Your FIRST action, before any code: append one line to `docs/bus/OUTBOX-CODEX.md`:
+  ACK 2026-09-30 · CODEX · read NOW-CODEX · X-16 pushed as PR #<n>
+and push it. An instruction with no ACK in the outbox is treated as not received, and I will
+build the job myself and take it off your queue — I did exactly that to CC-3's T-01 this morning.
+
+X-16 HAS BEEN LOCAL LONG ENOUGH. Push it now, even half-built, on its own branch. NOTHING STAYS
+LOCAL is not advice. Then X-18 (feed freshness), X-19, X-17, X-20 in that order.
+
+Report in the outbox, not in chat. Chat is not the bus. A report I cannot read is not a report.
+
+---
+
 # NOW — CODEX — restarted 2026-09-30T11:27Z
 
 ## READ FIRST
