@@ -9379,5 +9379,40 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-30",
     "purpose": "verify-fuel-geofence-recommendation-evidence (B-25: every geofence-based fuel recommendation must carry evidence+confidence fields)"
+  },
+  "11861": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-arrival-detection-runs-on-poll-path"
+  },
+  "11873": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-arrival-stop-coordinate-source"
+  },
+  "11885": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-settlement-legs-carry-lane-and-source"
+  },
+  "11897": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-test-env-forces-node-env-test"
+  },
+  "11909": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-company-mpg-uses-practical-miles"
+  },
+  "11921": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-relocated-canonical-declarations-are-bound"
+  },
+  "11933": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-truck-line-exhaust-fits-its-viewbox"
   }
 }

@@ -1,12 +1,30 @@
-# NOW — CURSOR — trimmed 2026-09-30T16:05Z (bus cap, CC-3)
+# NOW — CURSOR — trimmed 2026-09-30T16:20Z (bus cap, CC-3)
 
-Archived (full content): `docs/bus/archive/NOW-CURSOR-2026-09-30-r294b.md`.
+Archived (full content): `docs/bus/archive/NOW-CURSOR-2026-09-30-r294c.md`.
 
 ## READ FIRST
 `claude/2026-09-30-OWNER-DEFECT-REGISTER-D01-D33.md`, `claude/orders/09-30-2026-CURSOR-NEXT-15-JOBS.md`.
 Any `claude/orders/*LEAD-RULING*` naming your seat is binding.
 
-## QUEUE, IN SEQUENCE: C-20 -> C-21 -> C-22 -> C-23 -> C-24
+## LEAD RULING — DRIVER PROFILE TABS DECIDED (read before C-20)
+No longer waiting on CC-1. Tab set:
+  Settlements      ACCOUNTING, top-level tab.
+  Pre-settlements  the SAME object at a different status — a filter on Settlements, not a
+                   parallel tab with its own query.
+  Cash Advances    ACCOUNTING, top-level tab. An ASSET (1245 Driver Cash Advances
+                   Receivable) recovered through settlement — never present as an expense.
+  Deductions       a SUB-LEDGER under Settlements, not a peer tab.
+  Permits          OPERATIONAL, stays in Driver Hub/Safety (safety.permits is keyed to
+                   unit_id, not driver_id — a truck's permit, not a driver's).
+  Disputes         a CROSS-LINK from the payee view, not a tab owning accounting data.
+NEW C-25: DisputesHubPage.tsx puts accounting.invoice_disputes + settlement disputes on
+ONE screen, split three ways (DRIVER/CUSTOMER/VENDOR — different counterparty, opposite
+money direction, different remedy). Touch no rows — freeze holds.
+"Has transactions" corrected (owner): real money movement only, voided doesn't count —
+Customers 65 of 1,249 (was 76) · Vendors 34 of 623. Call CC-1's one shared predicate
+(A-21), never a client-side filter.
+
+## QUEUE, IN SEQUENCE: C-20 -> C-21 -> C-22 -> C-23 -> C-24 -> C-25
 - C-20: Driver Profile module — match Customers/Vendors master-detail shell exactly
   (640px master pane, segmented controls, row treatment). Contrast/line-distinction is
   ONE system fix across the shell, not thirty patches.
@@ -21,6 +39,7 @@ Any `claude/orders/*LEAD-RULING*` naming your seat is binding.
 - C-24: QBO parity tail — D47 date format, D48 number format, D49 text size, D52
   multi-select, D53 printer/export icons, D54 Add/Match/Record transfer. D50/D51 shipped,
   verify live and close.
+- C-25: new, see ruling above.
 
 **Run `npx tsc -b` from apps/frontend before every push** — that's what Render builds
 with; `tsc --noEmit` is not the same check and has passed things `-b` failed before,
