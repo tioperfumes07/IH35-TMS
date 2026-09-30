@@ -110,3 +110,67 @@ Truck Line bottom section for booked-but-undispatched loads ·
 Truck Line status filter must use the real `components/Combobox` ·
 17 orphan guards unwired (`verify:guard-wired`) ·
 MASS DELETE blocked · AUGUST and SEPTEMBER close blocked.
+
+---
+
+## J. OWNER ADDENDUM — same day, after the Chrome measurement pass
+
+Measured live on `/customers` with a customer selected:
+```
+master (list) pane      440px = 20.8%
+detail pane            1662px = 78.6%
+container              2114px  display:flex  gap:12px
+detail pane            background rgba(0,0,0,0) · border 0px · box-shadow none
+page background        rgb(244,246,248)
+row separator          1.25px oklch(0.967 0.003 264.542)   (~#F4F4F5 — white on white)
+row background         rgba(0,0,0,0) for every row after the first
+view toggle pills      h=22 · padding 0px 8px · widths 67 / 93
+status toggle pills    h=24 · padding 4px 8px · widths 52 / 61 / 31
+inactive pill          background rgba(0,0,0,0)
+page scroll            content 1808px vs viewport 1090px = 718px of overflow
+```
+
+| # | Defect | Seat | Status |
+|---|---|---|---|
+| D34 | The master-detail split is 1:4 — master 440px (20.8%) against detail 1662px (78.6%). The master must be WIDER; the detail side is out of proportion. Make the split a shared token. | Cursor | OPEN |
+| D35 | Driver Profiles home must work like the Customers / Vendors master profile — same shell, same default, same split. One shared component, not three copies. | Cursor | OPEN |
+| D36 | **No distinction in lines anywhere.** Detail pane `border: 0px`, `box-shadow: none`; row separator near-white on a near-white page. The owner's loudest complaint, now measured. One systemic token fix, then an app-wide sweep. | Cursor | OPEN — TOP IRRITANT |
+| D37 | Master-detail must be the DEFAULT in code, not a localStorage preference — a cleared browser must still land on master-detail. | Cursor | OPEN |
+| D38 | Segmented controls out of proportion: two different heights, two different paddings, five different pill widths, no group border, and a fully transparent inactive pill. | Cursor | OPEN |
+| D39 | `/customers` renders 1808px into a 1090px viewport — 718px of overflow before the list is visible. The minimum-scroll law (D10), measured. | Cursor | OPEN |
+
+Confirmed CORRECT and not a defect: master-detail IS currently the active view on /customers
+(`localStorage['ih35:view-mode:customers'] = "master-detail"`). D37 is about the default for a user
+who has never chosen, not about today's rendering.
+
+---
+
+## K. COACHING ORDERS ISSUED — 2026-09-30, 15 jobs per seat
+
+`~/Downloads/09-30-2026-Cursor-NEXT-15-JOBS.md`  (C-01..C-18, includes the addendum above)
+`~/Downloads/09-30-2026-CC-1-NEXT-15-JOBS.md`    (A-01..A-15 — accounting, close gate, QBO model)
+`~/Downloads/09-30-2026-CC-2-NEXT-15-JOBS.md`    (B-01..B-15 — factoring, AR, the $82,175)
+`~/Downloads/09-30-2026-CC-3-NEXT-15-JOBS.md`    (T-01..T-15 — stop-stamp engine, roster, PO/WO)
+`~/Downloads/09-30-2026-Codex-NEXT-15-JOBS.md`   (X-01..X-15 — the 17 orphan guards, guard audit)
+
+| D40 | **Customers list defaults to ONLY customers WITH transactions; Vendors list defaults to ONLY vendors WITH transactions.** The full list stays reachable behind an explicit filter — never lost, just not the default. | Cursor + CC-1 | OPEN |
+
+C-19 builds the filter. A-16 defines "has transactions" ONCE — which tables, which status
+predicates, and the ruling on a customer whose only invoice is voided — so the frontend filter and
+the accounting definition are the same definition, not two guesses.
+
+## L. SEQUENCE — the order these get done in
+
+1. **Unblock everyone.** PR #23338 (this branch): the two settlement PDFs, the Company Settlements
+   register, the phantom escrow relation, the 13-day CI red, the bank-recon guard. Then Codex's
+   X-01/X-02 wires the 11 orphan guards that already pass. Main goes green.
+2. **Stop the bleeding.** CC-3 T-01 restarts the stop-stamp engine — every dispatch surface is
+   lying until it runs. CC-2 B-01/B-02/B-03 — $17,057.44, $52,960, $82,175.
+3. **Close the books.** CC-1 A-01/A-02, then August, then September. MASS DELETE unblocks behind it.
+4. **The app the owner actually looks at.** Cursor C-18 first — the line/contrast token fix is
+   systemic and every other UI job inherits it. Then C-16/C-17 (proportion and the shared shell),
+   then C-05 (minimum-scroll), then the per-surface work.
+5. **Make it stay fixed.** Codex X-06..X-10 — the mutation harnesses, the exact-count guards, the
+   raised baselines, the selftests that pass while protecting nothing.
+
+Rule for every seat: nothing is reported done without its number and its pasted live proof.
