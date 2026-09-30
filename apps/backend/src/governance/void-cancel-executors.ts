@@ -865,10 +865,291 @@ const executeFactoringAdvance: EntityExecutor = async (ctx) => {
   return { kind: "ok", reversing_entry_ref: null };
 };
 
+const executeBankTransaction: EntityExecutor = async (ctx) => {
+  const { client, operatingCompanyId, entityId, userId, reason } = ctx;
+  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('banking.bank_transactions') IS NOT NULL AS ok`);
+  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  const pre = await client.query<{ voided_at: string | null }>(
+    `SELECT voided_at::text FROM banking.bank_transactions
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+    [entityId, operatingCompanyId]
+  );
+  if (!pre.rows[0]) return { kind: "not_found" };
+  if (pre.rows[0].voided_at) return { kind: "already_done" };
+  const flipped = await client.query(
+    `UPDATE banking.bank_transactions
+        SET voided_at = now(), voided_reason = $3, updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+      RETURNING id::text`,
+    [entityId, operatingCompanyId, reason]
+  );
+  if (!flipped.rows[0]) return { kind: "already_done" };
+  // Live matches on this row must not stay readable as active after the bank line is voided.
+  await client.query(
+    `UPDATE banking.reconciliation_matches
+        SET voided_at = COALESCE(voided_at, now()),
+            void_reason = COALESCE(void_reason, $3),
+            voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid),
+            updated_at = now()
+      WHERE bank_transaction_id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL`,
+    [entityId, operatingCompanyId, reason, userId]
+  );
+  await appendCrudAudit(client, userId, "banking.bank_transaction.voided", {
+    resource_id: entityId, operating_company_id: operatingCompanyId, reason, via: "governance.void_cancel_requests",
+  }, "warning", "VOID-CANCEL-GOV");
+  return { kind: "ok", reversing_entry_ref: null };
+};
+
+const executeReconciliationMatch: EntityExecutor = async (ctx) => {
+  const { client, operatingCompanyId, entityId, userId, reason } = ctx;
+  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('banking.reconciliation_matches') IS NOT NULL AS ok`);
+  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  const pre = await client.query<{ voided_at: string | null }>(
+    `SELECT voided_at::text FROM banking.reconciliation_matches
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+    [entityId, operatingCompanyId]
+  );
+  if (!pre.rows[0]) return { kind: "not_found" };
+  if (pre.rows[0].voided_at) return { kind: "already_done" };
+  const flipped = await client.query(
+    `UPDATE banking.reconciliation_matches
+        SET voided_at = now(), void_reason = $3, voided_by_user_id = $4::uuid, updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+      RETURNING id::text`,
+    [entityId, operatingCompanyId, reason, userId]
+  );
+  if (!flipped.rows[0]) return { kind: "already_done" };
+  await appendCrudAudit(client, userId, "banking.reconciliation_match.voided", {
+    resource_id: entityId, operating_company_id: operatingCompanyId, reason, via: "governance.void_cancel_requests",
+  }, "warning", "VOID-CANCEL-GOV");
+  return { kind: "ok", reversing_entry_ref: null };
+};
+
+const executeDriverBill: EntityExecutor = async (ctx) => {
+  const { client, operatingCompanyId, entityId, userId, reason } = ctx;
+  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('driver_finance.driver_bills') IS NOT NULL AS ok`);
+  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  const pre = await client.query<{ status: string; voided_at: string | null }>(
+    `SELECT status::text, voided_at::text FROM driver_finance.driver_bills
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+    [entityId, operatingCompanyId]
+  );
+  if (!pre.rows[0]) return { kind: "not_found" };
+  if (pre.rows[0].voided_at || String(pre.rows[0].status) === "void") return { kind: "already_done" };
+  const flipped = await client.query(
+    `UPDATE driver_finance.driver_bills
+        SET status = 'void', voided_at = now(), void_reason = $3, voided_by_user_id = $4::uuid, updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'void'
+      RETURNING id::text`,
+    [entityId, operatingCompanyId, reason, userId]
+  );
+  if (!flipped.rows[0]) return { kind: "already_done" };
+  await appendCrudAudit(client, userId, "driver_finance.driver_bill.voided", {
+    resource_id: entityId, operating_company_id: operatingCompanyId, reason, via: "governance.void_cancel_requests",
+  }, "warning", "VOID-CANCEL-GOV");
+  return { kind: "ok", reversing_entry_ref: null };
+};
+
+const executeDriverLiability: EntityExecutor = async (ctx) => {
+  const { client, operatingCompanyId, entityId, userId, reason } = ctx;
+  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('driver_finance.driver_liabilities') IS NOT NULL AS ok`);
+  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  const pre = await client.query<{ voided_at: string | null }>(
+    `SELECT voided_at::text FROM driver_finance.driver_liabilities
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+    [entityId, operatingCompanyId]
+  );
+  if (!pre.rows[0]) return { kind: "not_found" };
+  if (pre.rows[0].voided_at) return { kind: "already_done" };
+  const flipped = await client.query(
+    `UPDATE driver_finance.driver_liabilities
+        SET current_balance = 0, status = 'voided', voided_at = now(), void_reason = $3, voided_by_user_id = $4::uuid
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+      RETURNING id::text`,
+    [entityId, operatingCompanyId, reason, userId]
+  );
+  if (!flipped.rows[0]) return { kind: "already_done" };
+  await client.query(
+    `UPDATE driver_finance.deduction_schedule
+        SET hold_until_period = '9999-12-31'::date, hold_reason = $2, updated_at = now()
+      WHERE liability_id = $1::uuid`,
+    [entityId, `Parent liability voided: ${reason}`]
+  );
+  await appendCrudAudit(client, userId, "liability.voided", {
+    resource_id: entityId, operating_company_id: operatingCompanyId, reason, via: "governance.void_cancel_requests",
+  }, "warning", "VOID-CANCEL-GOV");
+  return { kind: "ok", reversing_entry_ref: null };
+};
+
+const executeCheckNumberRegistry: EntityExecutor = async (ctx) => {
+  const { client, operatingCompanyId, entityId, userId, reason } = ctx;
+  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('banking.check_number_registry') IS NOT NULL AS ok`);
+  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  const pre = await client.query<{ status: string; voided_at: string | null }>(
+    `SELECT status::text, voided_at::text FROM banking.check_number_registry
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+    [entityId, operatingCompanyId]
+  );
+  if (!pre.rows[0]) return { kind: "not_found" };
+  if (pre.rows[0].voided_at || String(pre.rows[0].status) === "voided") return { kind: "already_done" };
+  const flipped = await client.query(
+    `UPDATE banking.check_number_registry
+        SET status = 'voided', voided_at = now(), void_reason = $3, voided_by_user_id = $4::uuid
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+      RETURNING id::text`,
+    [entityId, operatingCompanyId, reason, userId]
+  );
+  if (!flipped.rows[0]) return { kind: "already_done" };
+  await appendCrudAudit(client, userId, "banking.check_number_registry.voided", {
+    resource_id: entityId, operating_company_id: operatingCompanyId, reason, via: "governance.void_cancel_requests",
+  }, "warning", "VOID-CANCEL-GOV");
+  return { kind: "ok", reversing_entry_ref: null };
+};
+
+const executeBillLine: EntityExecutor = async (ctx) => {
+  const { client, operatingCompanyId, entityId, userId, reason } = ctx;
+  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('accounting.bill_lines') IS NOT NULL AS ok`);
+  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  const pre = await client.query<{ voided_at: string | null }>(
+    `SELECT voided_at::text FROM accounting.bill_lines
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+    [entityId, operatingCompanyId]
+  );
+  if (!pre.rows[0]) return { kind: "not_found" };
+  if (pre.rows[0].voided_at) return { kind: "already_done" };
+  const flipped = await client.query(
+    `UPDATE accounting.bill_lines
+        SET voided_at = now(), voided_reason = COALESCE(voided_reason, $3)
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+      RETURNING id::text`,
+    [entityId, operatingCompanyId, reason]
+  );
+  if (!flipped.rows[0]) return { kind: "already_done" };
+  return { kind: "ok", reversing_entry_ref: null };
+};
+
+const executeSettlementLine: EntityExecutor = async (ctx) => {
+  const { client, operatingCompanyId, entityId, userId, reason } = ctx;
+  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('driver_finance.settlement_lines') IS NOT NULL AS ok`);
+  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  const pre = await client.query<{ voided_at: string | null; is_active: boolean | null }>(
+    `SELECT voided_at::text, is_active FROM driver_finance.settlement_lines
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+    [entityId, operatingCompanyId]
+  );
+  if (!pre.rows[0]) return { kind: "not_found" };
+  if (pre.rows[0].voided_at || pre.rows[0].is_active === false) return { kind: "already_done" };
+  const flipped = await client.query(
+    `UPDATE driver_finance.settlement_lines
+        SET is_active = false, voided_at = now(), void_reason = $3, voided_by_user_id = $4::uuid, updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+      RETURNING id::text`,
+    [entityId, operatingCompanyId, reason, userId]
+  );
+  if (!flipped.rows[0]) return { kind: "already_done" };
+  return { kind: "ok", reversing_entry_ref: null };
+};
+
+const executeSafetyIncident: EntityExecutor = async (ctx) => {
+  const { client, operatingCompanyId, entityId, userId, reason } = ctx;
+  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('safety.incidents') IS NOT NULL AS ok`);
+  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  const pre = await client.query<{ voided_at: string | null }>(
+    `SELECT voided_at::text FROM safety.incidents
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+    [entityId, operatingCompanyId]
+  );
+  if (!pre.rows[0]) return { kind: "not_found" };
+  if (pre.rows[0].voided_at) return { kind: "already_done" };
+  const flipped = await client.query(
+    `UPDATE safety.incidents
+        SET voided_at = now(), voided_reason = $3, voided_by_user_id = $4::uuid
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+      RETURNING id::text`,
+    [entityId, operatingCompanyId, reason, userId]
+  );
+  if (!flipped.rows[0]) return { kind: "already_done" };
+  return { kind: "ok", reversing_entry_ref: null };
+};
+
+const executeLegalContractInstance: EntityExecutor = async (ctx) => {
+  const { client, operatingCompanyId, entityId, userId, reason } = ctx;
+  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('legal.contract_instances') IS NOT NULL AS ok`);
+  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  const pre = await client.query<{ voided_at: string | null; status: string }>(
+    `SELECT voided_at::text, status::text FROM legal.contract_instances
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+    [entityId, operatingCompanyId]
+  );
+  if (!pre.rows[0]) return { kind: "not_found" };
+  if (pre.rows[0].voided_at) return { kind: "already_done" };
+  // status enum is legal.contract_instance_status — void via voided_at stamp only (no invented status).
+  const flipped = await client.query(
+    `UPDATE legal.contract_instances
+        SET voided_at = now(), void_reason = $3
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+      RETURNING id::text`,
+    [entityId, operatingCompanyId, reason]
+  );
+  if (!flipped.rows[0]) return { kind: "already_done" };
+  return { kind: "ok", reversing_entry_ref: null };
+};
+
+const executeRelayFuelTransaction: EntityExecutor = async (ctx) => {
+  const { client, operatingCompanyId, entityId, userId, reason } = ctx;
+  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('integrations.relay_fuel_transactions') IS NOT NULL AS ok`);
+  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  const pre = await client.query<{ voided_at: string | null }>(
+    `SELECT voided_at::text FROM integrations.relay_fuel_transactions
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+    [entityId, operatingCompanyId]
+  );
+  if (!pre.rows[0]) return { kind: "not_found" };
+  if (pre.rows[0].voided_at) return { kind: "already_done" };
+  const flipped = await client.query(
+    `UPDATE integrations.relay_fuel_transactions
+        SET voided_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+      RETURNING id::text`,
+    [entityId, operatingCompanyId]
+  );
+  if (!flipped.rows[0]) return { kind: "already_done" };
+  await client.query(
+    `UPDATE integrations.relay_fuel_transaction_lines
+        SET voided_at = COALESCE(voided_at, now())
+      WHERE relay_fuel_transaction_id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL`,
+    [entityId, operatingCompanyId]
+  );
+  return { kind: "ok", reversing_entry_ref: null };
+};
+
+const executeRelayFuelTransactionLine: EntityExecutor = async (ctx) => {
+  const { client, operatingCompanyId, entityId, reason } = ctx;
+  const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('integrations.relay_fuel_transaction_lines') IS NOT NULL AS ok`);
+  if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
+  const pre = await client.query<{ voided_at: string | null }>(
+    `SELECT voided_at::text FROM integrations.relay_fuel_transaction_lines
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+    [entityId, operatingCompanyId]
+  );
+  if (!pre.rows[0]) return { kind: "not_found" };
+  if (pre.rows[0].voided_at) return { kind: "already_done" };
+  const flipped = await client.query(
+    `UPDATE integrations.relay_fuel_transaction_lines
+        SET voided_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL
+      RETURNING id::text`,
+    [entityId, operatingCompanyId]
+  );
+  if (!flipped.rows[0]) return { kind: "already_done" };
+  return { kind: "ok", reversing_entry_ref: null };
+};
+
 // Dispatch map keyed on entity_type. Phase 1 wired 'work_order'; VOID-EVERYWHERE PR-3 wires the
 // remaining Phase-2 financial surfaces flagged in the prior report: expense, journal_entry, payment,
-// bill_payment, driver_settlement. 'load' is deliberately LEFT unsupported here — dispatch load
-// cancellation already has its OWN dedicated maker/checker workflow
+// bill_payment, driver_settlement. ROUND 274 wires every remaining live-voided entity from the
+// R274 order. 'load' is deliberately LEFT unsupported here — dispatch load cancellation already
+// has its OWN dedicated maker/checker workflow
 // (dispatch/cancellation.service.ts::cancelLoad / approveCancellation, with its own per-entity
 // catalogs.load_cancellation_reasons) per the explicit design decision in migration
 // 202606300030_void_cancel_reasons_catalog.sql ("load cancellations stay on the per-entity
@@ -890,7 +1171,19 @@ const EXECUTORS: Record<string, EntityExecutor | { supported: false }> = {
   payment: executeCustomerPayment,
   bill_payment: executeBillPayment,
   driver_settlement: executeDriverSettlement,
+  // ROUND 274 — remaining live-voided entities (register items 5/49/50/53).
   factoring_advance: executeFactoringAdvance,
+  bank_transaction: executeBankTransaction,
+  reconciliation_match: executeReconciliationMatch,
+  driver_bill: executeDriverBill,
+  driver_liability: executeDriverLiability,
+  check_number_registry: executeCheckNumberRegistry,
+  bill_line: executeBillLine,
+  settlement_line: executeSettlementLine,
+  safety_incident: executeSafetyIncident,
+  legal_contract_instance: executeLegalContractInstance,
+  relay_fuel_transaction: executeRelayFuelTransaction,
+  relay_fuel_transaction_line: executeRelayFuelTransactionLine,
   // Deliberately unsupported — see comment above.
   load: { supported: false },
 };

@@ -67,11 +67,11 @@ Owner: *"I NEED THE FACTORING ENGINE FULLY BUILT FIRST, COMPLETELY DONE NOW. REN
 | # | Seat | Item | Status |
 |---|---|---|---|
 | 22 | Cursor | Main CI red — migration 202614530000 edited after apply | **DONE-VERIFIED** — restored byte-for-byte, deploy `dep-dau3h9u0tbcc73fr127g` live |
-| 61 | Cursor | Register void-predicate leaf mappings for WriteCheckForm.tsx + SettlementCreatorDrawer.tsx — blocks CC-3's TruckLine | ORDERED |
-| 62 | Cursor | Clear NO_CLEARING_PILEUP + open-tour guards holding CC-2's 3 branches (9 commits) | ORDERED |
-| 63 | Cursor | **Do NOT merge cc-3/round157d-settlement-screens as-is** — 57 files / −3,579 lines, deletes unrelated guards. Stale rebase drift. | FLAGGED |
-| 23 | Cursor | Close 7 dependabot PRs + 7 preview services | OPEN |
-| 24–29 | Cursor | Board UI: 11-vs-14-vs-16 · canonical active-load set · return-trip rows · transit line · row height/filters · responsive width | OPEN — needs Chrome click-proof |
+| 61 | Cursor | Register void-predicate leaf mappings for WriteCheckForm.tsx + SettlementCreatorDrawer.tsx — blocks CC-3's TruckLine | **DONE-VERIFIED** — #23158 `85dd08c643`; `verify-void-predicate-map-current OK — 81 tables`; TruckLine on origin `claude/truckline-schedule-conflict-detector` `f0b099c892`; re-proved tip main 2026-09-29 |
+| 62 | Cursor | Clear NO_CLEARING_PILEUP + open-tour guards holding CC-2's 3 branches (9 commits) | **DONE-VERIFIED** — #23158 NO_CLEARING_PILEUP excl in-transit FA → live E PASS `$0.00`; open-tour #23153+#23155 on main; `verify-open-tour-posts-nothing PASS`; CC-2 named branches still seat-local (blockers cleared) |
+| 63 | Cursor | **Do NOT merge cc-3/round157d-settlement-screens as-is** — 57 files / −3,579 lines, deletes unrelated guards. Stale rebase drift. | FLAGGED — commit comment on `60f10b6915` |
+| 23 | Cursor | Close 7 dependabot PRs + 7 preview services | **DONE-VERIFIED** (R259) — Dependabot #22980–#22986 CLOSED; preview srv-dat5* all 404 |
+| 24–29 | Cursor | Board UI: 11-vs-14-vs-16 · canonical active-load set · return-trip rows · transit line · row height/filters · responsive width | OPEN — needs Chrome click-proof; waits until after R274 void engine per Lead |
 
 ## F. DISPATCH / TELEMATICS
 

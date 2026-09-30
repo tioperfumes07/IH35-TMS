@@ -33,6 +33,87 @@ export type SupersedePlaidPendingResult =
   | { superseded: false; reason: "pending_not_found" | "no_exact_posted_candidate" | "multiple_exact_posted_candidates" | "financially_linked" }
   | { superseded: true; pending_id: string; posted_id: string };
 
+/**
+ * ROUND 274 item 53 — when a Plaid pending row is retired into its posted survivor, any live
+ * banking.reconciliation_matches still pointing at the pending row must move to the survivor.
+ * Measured live (USMCA): match `2d1f3f73-52c7-4249-944a-3e9ceec1ee8c` stayed on superseded pending
+ * `f5bbddce-7690-4594-803e-a90fff840dff` while survivor `52c51c10-bd54-44bf-b734-f79a1811cefd` held
+ * none. UNIQUE (bank_transaction_id, ledger_entry_kind, ledger_entry_id) — skip re-point when the
+ * survivor already carries an identical live triple (void the pending's duplicate instead).
+ */
+export async function repointReconciliationMatchesOnPlaidMerge(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[]; rowCount?: number }> },
+  args: { pendingId: string; survivorId: string; operatingCompanyId: string }
+): Promise<{ repointed: number; voided_duplicates: number }> {
+  const voidedDup = await client.query(
+    `
+      UPDATE banking.reconciliation_matches AS pending_rm
+         SET voided_at = COALESCE(pending_rm.voided_at, now()),
+             void_reason = COALESCE(pending_rm.void_reason, 'plaid_pending_merge_duplicate_on_survivor'),
+             updated_at = now()
+        FROM banking.reconciliation_matches AS survivor_rm
+       WHERE pending_rm.bank_transaction_id = $1::uuid
+         AND pending_rm.operating_company_id = $3::uuid
+         AND pending_rm.voided_at IS NULL
+         AND survivor_rm.bank_transaction_id = $2::uuid
+         AND survivor_rm.operating_company_id = $3::uuid
+         AND survivor_rm.voided_at IS NULL
+         AND survivor_rm.ledger_entry_kind = pending_rm.ledger_entry_kind
+         AND survivor_rm.ledger_entry_id IS NOT DISTINCT FROM pending_rm.ledger_entry_id
+      RETURNING pending_rm.id
+    `,
+    [args.pendingId, args.survivorId, args.operatingCompanyId]
+  );
+
+  const repointed = await client.query(
+    `
+      UPDATE banking.reconciliation_matches
+         SET bank_transaction_id = $2::uuid,
+             updated_at = now()
+       WHERE bank_transaction_id = $1::uuid
+         AND operating_company_id = $3::uuid
+         AND voided_at IS NULL
+      RETURNING id
+    `,
+    [args.pendingId, args.survivorId, args.operatingCompanyId]
+  );
+
+  // Carry matched_* + categorized_by_user_id from the pending onto the survivor so control-totals
+  // does not see a system-written matched_* with no user (verify-control-totals).
+  await client.query(
+    `
+      UPDATE banking.bank_transactions AS survivor
+         SET matched_invoice_id = COALESCE(survivor.matched_invoice_id, pending.matched_invoice_id),
+             matched_bill_id = COALESCE(survivor.matched_bill_id, pending.matched_bill_id),
+             matched_payment_id = COALESCE(survivor.matched_payment_id, pending.matched_payment_id),
+             matched_settlement_id = COALESCE(survivor.matched_settlement_id, pending.matched_settlement_id),
+             matched_expense_id = COALESCE(survivor.matched_expense_id, pending.matched_expense_id),
+             matched_bill_payment_id = COALESCE(survivor.matched_bill_payment_id, pending.matched_bill_payment_id),
+             matched_transfer_id = COALESCE(survivor.matched_transfer_id, pending.matched_transfer_id),
+             matched_journal_entry_id = COALESCE(survivor.matched_journal_entry_id, pending.matched_journal_entry_id),
+             matched_load_id = COALESCE(survivor.matched_load_id, pending.matched_load_id),
+             matched_advance_id = COALESCE(survivor.matched_advance_id, pending.matched_advance_id),
+             matched_factoring_advance_id = COALESCE(survivor.matched_factoring_advance_id, pending.matched_factoring_advance_id),
+             matched_fuel_transaction_id = COALESCE(survivor.matched_fuel_transaction_id, pending.matched_fuel_transaction_id),
+             matched_relay_fuel_transaction_id = COALESCE(survivor.matched_relay_fuel_transaction_id, pending.matched_relay_fuel_transaction_id),
+             categorized_by_user_id = COALESCE(survivor.categorized_by_user_id, pending.categorized_by_user_id),
+             categorized_at = COALESCE(survivor.categorized_at, pending.categorized_at),
+             updated_at = now()
+        FROM banking.bank_transactions AS pending
+       WHERE pending.id = $1::uuid
+         AND survivor.id = $2::uuid
+         AND pending.operating_company_id = $3::uuid
+         AND survivor.operating_company_id = $3::uuid
+    `,
+    [args.pendingId, args.survivorId, args.operatingCompanyId]
+  );
+
+  return {
+    repointed: repointed.rowCount ?? (repointed.rows?.length ?? 0),
+    voided_duplicates: voidedDup.rowCount ?? (voidedDup.rows?.length ?? 0),
+  };
+}
+
 /** Operator remediation for historical rows ingested before pending_transaction_id was honored. */
 export async function supersedePlaidPendingByExactPostedCandidate(
   client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[]; rowCount?: number }> },
@@ -111,6 +192,12 @@ export async function supersedePlaidPendingByExactPostedCandidate(
     [pending.id, posted.id, args.operatingCompanyId]
   );
   if ((retired.rowCount ?? 0) !== 1) return { superseded: false, reason: "financially_linked" };
+  // ROUND 274 item 53 — carry live matches to the posted survivor (never leave them on voided pending).
+  await repointReconciliationMatchesOnPlaidMerge(client, {
+    pendingId: pending.id,
+    survivorId: posted.id,
+    operatingCompanyId: args.operatingCompanyId,
+  });
   return { superseded: true, pending_id: pending.id, posted_id: posted.id };
 }
 
@@ -182,6 +269,12 @@ export async function retirePlaidPendingPredecessor(
     [pending.id, args.postedPlaidTransactionId, args.postedRowId, args.operatingCompanyId, args.bankAccountId]
   );
   if ((retired.rowCount ?? 0) === 0) return { retired: false, reason: "financially_linked" };
+  // ROUND 274 item 53 — carry live matches to the posted survivor (never leave them on voided pending).
+  await repointReconciliationMatchesOnPlaidMerge(client, {
+    pendingId: pending.id,
+    survivorId: args.postedRowId,
+    operatingCompanyId: args.operatingCompanyId,
+  });
   return { retired: true, pending_id: pending.id };
 }
 

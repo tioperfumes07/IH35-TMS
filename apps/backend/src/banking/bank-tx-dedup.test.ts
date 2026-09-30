@@ -107,6 +107,13 @@ describe("bank-tx-dedup", () => {
           query.sql.includes("operating_company_id = $4::uuid")
       )
     ).toBe(true);
+    expect(
+      queries.some(
+        (query) =>
+          query.sql.includes("UPDATE banking.reconciliation_matches") &&
+          query.sql.includes("bank_transaction_id = $2::uuid")
+      )
+    ).toBe(true);
   });
 
   it("fails closed when the pending predecessor already has financial linkage", async () => {
@@ -152,6 +159,7 @@ describe("bank-tx-dedup", () => {
     expect(result).toEqual({ superseded: true, pending_id: "pending", posted_id: "posted" });
     expect(queries.some((q) => q.sql.includes("DELETE FROM banking.bank_transactions"))).toBe(false);
     expect(queries.some((q) => q.sql.includes("operator_confirmed_plaid_pending_replacement"))).toBe(true);
+    expect(queries.some((q) => q.sql.includes("UPDATE banking.reconciliation_matches"))).toBe(true);
   });
 
   it("operator supersede fails closed when candidate matching is ambiguous", async () => {

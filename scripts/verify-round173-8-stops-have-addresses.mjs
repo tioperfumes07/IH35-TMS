@@ -40,7 +40,8 @@ async function main() {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await client.query("SET LOCAL ROLE neondb_owner");
+    // Prefer bypass_rls alone — SET ROLE neondb_owner fails on app-role DATABASE_URL credentials
+    // (permission denied) and is unnecessary when lucia bypass is set.
     await client.query("SET LOCAL app.bypass_rls = 'lucia'");
     const res = await client.query(
       `SELECT id::text, address_line1 FROM mdata.load_stops WHERE id = ANY($1::uuid[])`,
