@@ -5676,8 +5676,11 @@ proof_query: BEFORE/AFTER printed by the script itself, live prod, 2026-09-30 --
   is fully closed, each real Faro invoice now counted exactly once via its twin
   (FAC-2026-00094/110/111/129, untouched, still the sole live record).
 
-## AUTH-158
+## AUTH-159
 issued_at: 2026-09-30T11:15:00.000Z
+note: renumbered from AUTH-158 -- that number collided with an earlier, unrelated, already-CONSUMED
+AUTH-158 (the ROUND 210 deadhead-miles backfill) that landed on main first. Caught before this
+entry was ever executed; no write happened under the collided number.
 scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- split 17 driver_finance.settlement_lines
 rows (item_id IS NULL, ROUND 292/293 G2) into their real constituent line items, per Lead RULING 2
 (ROUND 293): each row currently merges 2-5 real settlement-document line items of different

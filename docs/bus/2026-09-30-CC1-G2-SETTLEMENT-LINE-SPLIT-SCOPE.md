@@ -1,7 +1,7 @@
 # G2 — 17 settlement lines, item_id NULL — SPLIT SCOPE (not executed)
 
 CC-1, 2026-09-30, per Lead RULING 2 (ROUND 293). This is a SCOPE document only. Nothing in this PR
-executes a write. AUTH-158 (opened alongside this doc) stays `status: OPEN` pending Lead review of
+executes a write. AUTH-159 (opened alongside this doc) stays `status: OPEN` pending Lead review of
 this scope, per the Lead's own order: "Execution after I see the scope."
 
 ## Source, read directly — never another agent's summary
@@ -51,7 +51,7 @@ direct computation, zero rows failed to reconcile.
 **Reconciliation: 17 of 17 rows, sum of constituent lines = merged row total, to the cent. Zero
 discrepancies.**
 
-## Open item-mapping questions — must be resolved before AUTH-158 executes
+## Open item-mapping questions — must be resolved before AUTH-159 executes
 
 Real catalog items already exist and are already in live use elsewhere in this exact settlement
 population for: `Driver Pay-Tarp-Enlonada/Desenlonada` (8dea02de-e7ec-4e0f-b69f-abc33d459a06),
@@ -76,7 +76,7 @@ have an unambiguous existing-item match yet:
   freight-delivery-side item) was not resolved in this pass — needs the item catalog's own intended
   usage confirmed before picking one.
 
-These 4 lines total $92.76 of the $1,806.02 in scope (5.1%) — small in dollars, but AUTH-158 will
+These 4 lines total $92.76 of the $1,806.02 in scope (5.1%) — small in dollars, but AUTH-159 will
 refuse to execute against them until they resolve to a real item, per the "never invent a mapping"
 law. Recommend either a quick Lead/owner call on the two ambiguous cases, or a follow-up read of the
 raw settlement PDFs (not just the parsed text) for the two headlight/windshield lines, which may
@@ -101,19 +101,19 @@ and the close cannot be honest while 6890 overstates cost-of-labor by absorbing 
 parking, and tire-repair dollars that belong elsewhere. **"Must not move" = the TOTAL. Individual
 account balances moving is not a violation, it is the fix.**
 
-## Execution mechanism (for AUTH-158, once resolved and approved — NOT run in this PR)
+## Execution mechanism (for AUTH-159, once resolved and approved — NOT run in this PR)
 
 `retypeSettlementDeduction` (`apps/backend/src/driver-finance/retype-settlement-deduction.service.ts`)
 is the closest existing precedent (void old row → create replacement with corrected classification →
 `materializeSettlementLines()` re-derives a fresh line) but it explicitly REFUSES unless the parent
-settlement is still `'open'` — all 17 of ours are `'closed'`. **The execution script for AUTH-158
+settlement is still `'open'` — all 17 of ours are `'closed'`. **The execution script for AUTH-159
 must find and use the equivalent sanctioned mechanism for a CLOSED settlement's already-posted
 line** (the same "reversal + fresh line via the real writer" shape used everywhere else this session
 for a posted document — likely a settlement-specific reversal function alongside
 `materializeSettlementLines`, or the general `reversePostedSourceTransactionInClientTx` /
 `postSourceTransactionInClientTx` pair if settlement lines route through the same posting-engine
 path as other document types). **This was not conclusively identified in the time available for
-this scope pass and must be confirmed, by reading the real code, before AUTH-158 is executed** —
+this scope pass and must be confirmed, by reading the real code, before AUTH-159 is executed** —
 this is exactly the kind of "never an UPDATE to a posted row" requirement the Lead named, and it
 deserves a confirmed answer, not a guess, before any write happens.
 
@@ -128,7 +128,7 @@ table).
 
 ## Status
 
-**SCOPED, NOT EXECUTED.** Two things must happen before AUTH-158 runs for real: (1) the 4 open
+**SCOPED, NOT EXECUTED.** Two things must happen before AUTH-159 runs for real: (1) the 4 open
 item-mapping questions above resolve to real items, (2) the exact sanctioned engine for a
 closed-settlement line correction is confirmed by reading its code, not assumed. G2 stays on the
 close gate until then, per the Lead's own ruling.
