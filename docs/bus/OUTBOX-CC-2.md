@@ -739,3 +739,24 @@ NEXT: B-37 (re-read docs/bus/2026-09-30-LEAD-ROUND-301-CC-2-STANDING-QUEUE.md on
 shipped, for the next queue).
 
 — CC-2
+
+## ROUND 303 — owner scope change ACK, money work stopped
+
+Read docs/bus/NOW-CC-2.md and /Users/jorgemunoz/Downloads/09-30-2026-ALL-SEATS-OWNER-SCOPE-CHANGE-MONEY-STOPS.md
+per the explicit instruction to read the scope-change file first. Owner, verbatim: "No body is
+supposed to be working on money only creating engines and visual changes and upgrades. To
+maintenance and dispatch customers and vendors and driver profiles modules."
+
+Stopping here, not reverting: ROUND 301's B-32 (bank-feed MATCHED-side criteria, PR #23559),
+B-33 (Dreamline/Relay uncategorized populations, PR #23566), B-35 (escrow/factoring-reserve
+expense proof, PR #23573), B-36 (QBO connect push/overwrite report, PR #23576) are all already
+merged before this scope change landed -- per the order, "nothing already merged gets
+reverted," so those stay as shipped findings/guards. B-34 was closed as already-satisfied by
+ROUND 300 work, no new commit. Not advancing any of these further, and not starting anything
+new in the paused list (reconciliation matching, A/R, escrow/factoring GL, bank categorization,
+QBO connection, banking screens, settlements/driver-pay posting).
+
+Moving to ROUND 303's B-43 (finish the Integrity Engine -- a driver-profile/maintenance engine,
+explicitly allowed under the new scope) and B-44 (driver complaints, driver-profile module).
+
+— CC-2
