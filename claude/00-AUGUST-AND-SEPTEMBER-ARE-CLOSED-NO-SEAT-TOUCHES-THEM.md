@@ -71,6 +71,40 @@ September and December can never lock on time, in any year. A logic error, not a
 should test whether a return that is **due and fileable** is unfiled. Filed as
 `CLOSE-ENGINE-QUARTER-END-IS-STRUCTURALLY-UNLOCKABLE`. Do not change it unilaterally.
 
+## PLACEHOLDER DELIVERY TIMESTAMPS — WIDER THAN 13625/13626, FILED (CC-1, 2026-09-30)
+
+Answering part of "then find what WROTE them" (13625/13626 item above) and filing the rest per this
+document's own rule, not investigating further:
+
+The `actual_arrival_at = actual_departure_at` (to the millisecond) with `actual_arrival_source IS
+NULL` signature is not limited to 13625/13626 — it's on **27 `load_stops` rows total**: 18
+`stop_type='rest'` (lower severity, not delivery-evidence the revenue latch reads) and **9
+pickup/delivery** (the dangerous kind): loads 13494, 13500, 13541, 13546 (×2), 13609, 13617, 13625,
+13626. No committed script under `scripts/ops/`/`scripts/feed/` produces this exact shape (every
+one checked uses distinct, non-equal arrival/departure pairs).
+
+Two distinct, unattributed write paths, not one findable script:
+1. 13625/13626 both stamped within 26 seconds of each other, 2026-09-28 ~12:57-12:58Z,
+   `changed_by_role='Owner'` / the shared session account — likely an automated script that ran
+   `withCurrentUser(OWNER, ...)`, not a literal manual click. Which script: not identified.
+2. 13609's stamp (and the same shape on the separate 5-loads status/stop desync below) has **zero
+   audit attribution at all** — `changed_by_user_id`/`role` both NULL — a raw/system write that
+   bypasses the audit trail entirely.
+
+That second path is a governance gap independent of the fabricated data: something can write
+financially-consequential timestamp/status data with no record of what did it. Filed as
+`PLACEHOLDER-TIMESTAMPS-27-ROWS-TWO-UNATTRIBUTED-WRITE-PATHS`. Not fixed, not investigated further.
+
+## 5-LOADS STATUS/STOP DESYNC — CONFIRMED NO REAL SOURCE EXISTS, FILED (CC-1, 2026-09-30)
+
+13616/13618/13620/13621/13622: `mdata.loads.status='invoiced'` with zero stop-level delivery
+evidence on any of the 5. `audit.row_changes` on 13616 (representative): `dispatched → delivered →
+invoiced` all inside a 23-minute window, 2026-09-28, **zero user attribution** — same unattributed-
+writer shape as 13609 above. Checked
+`~/Downloads/IH35-MASTER-RECONCILIATION/02-ALWAYSTRACK/USMCA LOAD HISTORY.xlsx` for all 5 loads:
+**zero matches** — no real delivery evidence exists anywhere for these 5. Not invented, not
+backfilled, filed only.
+
 ## $2,837.33 IN 9000 "ASK MY ACCOUNTANT" — ROOT-CAUSED, NOT FIXED, FILED (CC-1, 2026-09-30)
 
 Not 176 uncategorized transactions. Confirmed on 100% of the population, not a sample: 56 of the
