@@ -614,3 +614,46 @@ the delete is AUTH'd and applied):
 
 NO DELETES RUN. Awaiting owner AUTH before executing either the dedupe DELETE or the
 index-widening migration.
+
+## CC-3 — ROUND 301 T-33 SHIPPED — fault codes routed into the maintenance alert chain, both directions
+
+Owner verbatim: "WE ALL NEED TO READ SAMSARA FOR ANY ENGINE FAILURES AND FAULTS AND CODES."
+
+NEW: apps/backend/src/maintenance/fault-code-alerts.routes.ts --
+  GET /api/v1/maintenance/fault-code-alerts?operating_company_id=&unit_id=|driver_id=&limit=
+  FORWARD (unit_id given): every fault a unit has ever thrown -- linkage law §6 "a UNIT -> every
+    ... repair, WO ... for its life."
+  REVERSE (driver_id given): every fault that occurred while this driver held whichever unit was
+    assigned to him at that exact timestamp -- driverAtTimeSql's own LATERAL result column
+    filtered by driver_id, not a second copy of the predicate.
+  Every row carries: unit_number, fault_code, severity, occurred_at, auto_wo linkage (display_id)
+    when a draft WO exists, and driver-at-time (id + name), resolved via driverAtTimeSql
+    (driver-attribution.ts) exactly as instructed -- imported, called, never re-inlined
+    (confirmed by the new guard).
+
+fault-code-processor.service.ts (the SAME shared processor J-3's poller and the untouched
+webhook path both call) now also emits ONE maintenance_alert notification per NEW fault-code
+history row via emitFaultCodeNotifications() (notification.service.ts, new -- mirrors the
+existing emitPredictiveAutoWoNotifications' shape), carrying unit label, fault code, severity
+and driver-at-time in the title/body, action_link to the new alerts route. This is a SEPARATE,
+BROADER alert than the existing auto-WO notification (which still only fires on the narrower
+high/critical + auto_create_wo threshold) -- full visibility on every code, not just the
+WO-worthy ones, per the owner's own words.
+
+LIVE PROOF: apps/backend npx tsc --noEmit exit 0. Guard --selftest and real-file run both PASS.
+Ran the real route handler live against production (real Owner user, real company membership
+check): 200, empty rows (maintenance.samsara_fault_code_history is genuinely empty right now --
+J-3 hasn't completed a live tick yet, T-26/T-30's own SAMSARA_TOKEN_ENCRYPTION_KEY gap). Proved
+the actual JOIN/linkage logic end-to-end with a throwaway row (inserted inside
+BEGIN...ROLLBACK, nothing persisted): a fault on T171 at 2026-09-30T00:00Z correctly resolved
+unit_number='T171' and driver_label='JOSE ANTONIO VICENTE MARTINEZ' -- the real driver actually
+assigned to that unit during that exact window (2026-09-29T19:27Z to 2026-09-30T12:55Z per
+telematics.vehicle_driver_assignments), confirmed against live data, not a fixture.
+
+GUARD: scripts/verify-fault-code-alerts-use-shared-driver-attribution.mjs + --selftest. Fails if
+either touched file stops importing/calling driverAtTimeSql, or if either contains its own copy
+of the assignment-window boundary predicate (the exact "independently inlined in 8 places"
+regression class driver-attribution.ts exists to prevent).
+
+REMAINING: real alert volume depends on J-3 actually completing a tick (SAMSARA_TOKEN_ENCRYPTION_KEY,
+same UNVERIFIED as T-26/T-30). T-34 next in the Round 301 queue.
