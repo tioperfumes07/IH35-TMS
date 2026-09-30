@@ -28,6 +28,11 @@
       "claimed_at": "2026-09-30",
       "purpose": "H-3 (Lead-authored, lane-cross ruling docs/bus/2026-09-30-LEAD-RULING-H3-MIGRATION-FILE-LANE-CROSS.md): ih35_migrations.refuse_mirror_only_insert() BEFORE INSERT trigger, already live in production since 2026-09-30 via an out-of-band apply during CC-1's design verification. This claim + the file itself simply gives the repository a record of what is already running and lets applyMigration() write the two currently-missing ledger rows."
     },
+    "202615010000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-30",
+      "purpose": "ROUND 301 A-27: extends banking.reconciliation_matches (NOT a new table, per the Lead's explicit 'extend, do not build a parallel engine') with a tri-state MATCHED function/view -- unmatched / matched / matched_with_difference -- computing the linked ledger entry's real amount across all 13 declared reconciliation_matches.ledger_entry_kind values and comparing it, exact-cents, against the bank transaction's amount_cents. No fuzz tolerance: a 1-cent difference is matched_with_difference, never silently matched."
+    },
     "202614870000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-30",
