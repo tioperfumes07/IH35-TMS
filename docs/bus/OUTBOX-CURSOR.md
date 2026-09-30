@@ -64,3 +64,6 @@ C-31 · what changed: Customers + Vendors default Navy tab = With transactions (
 
 **2026-09-30T20:15Z · ROUND 299 ACK · LINKAGE LAW (H-2 binds Cursor)**
 Read `docs/bus/ROUND-299-ALL-SEATS-LINKAGE-LAW-AND-ANTI-DRIFT.md`. Cursor lane from this packet: **H-2** — UI not closed on merge SHA; finish C-31..C-35 so Lead can measure Chrome (With-txn default, KPI row ≤90px, chrome≤260px, master rows>0, no -$0.00). NOT Cursor: L-1/L-2/H-3 = CC-1 · L-3 = CC-2 · H-1 = owner GRANT · H-4 = Codex. Continuing PR #23495 (go26 + guard-wired CI fix stacked).
+
+**2026-09-30T21:10Z · ROUND 300 ACK · standing queue parked**
+Read `docs/bus/ROUND-300-CURSOR-STANDING-QUEUE.md` + rewrote `docs/bus/NOW-CURSOR.md`. Queue top→bottom: (1) FINISH #23495 C-31..C-35 + Lead Chrome · (2) C-36 maint 16→9 · (3) C-37 house table · (4) C-38 controls · (5) C-39 filters/gear · (6) C-40 Regular+MD · (7) C-41 banking · (8) C-42 re-read. SAVE+CLOSE every opener. NOW working #1: exempt tip-main orphan `verify-odometer-ledger-has-one-writer.mjs` (#23493) so locked-guards clears; required-checks-gate already PASS; tip-main ENV reds (live-load H-1 auth, migrate pm_intervals FK, phantom geofence_odometer) not Cursor chrome — admin-merge when gate green.
