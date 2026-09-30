@@ -5199,7 +5199,27 @@ expense_account_uuid, no GL exists yet.
 action: OWNER_AUTH_ID=AUTH-156 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-round290-12-def-reclass-5000-to-5010.ts
   (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
 expires_at: 2026-10-01T07:25:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T07:52:00.000Z
+consumed_by: CC-1
+row_counts: 119 of 119 lines corrected -- 12 unposted via direct UPDATE, 107 posted via
+  reverse+correct+repost through the sanctioned engine. 0 failures. Rehearsed twice on a throwaway
+  Neon branch fork first (br-twilight-math-akr4rbvg, deleted after proof) -- the rehearsal caught
+  two real bugs in this script (a nonexistent expense_lines.updated_at column, and a wrong
+  PostingResult field check) before either reached production; both fixed, committed, and the fixed
+  version is what ran for real.
+proof_query: live on production, 2026-09-30 -- scripts/verify-expense-line-account-matches-item.mjs:
+  LIVE PASS, 0 mismatches (was 119). node scripts/verify-trial-balance-unchanged-across-purge.mjs
+  --compare 2026-09-30-auth156-before 2026-09-30-auth156-after: exactly 2 accounts moved, an exact
+  offsetting pair -- 5000 Fuel & Diesel 17,557,261 -> 17,208,798 cents (-$3,484.63), 5010 DEF
+  374,413 -> 722,876 cents (+$3,484.63) -- matching the 107 posted lines' total exactly (the 12
+  unposted lines never had a GL entry, so correctly show zero TB movement). 0 accounts with a real
+  balance disappeared. Dr=Cr confirmed balanced both before and after.
+note: also fixed scripts/verify-trial-balance-unchanged-across-purge.mjs in the same PR --
+  --capture never set app.bypass_rls, so it silently captured 0 accounts under FORCED RLS instead
+  of the real 93-account trial balance (confirmed against the Lead's own reported 93-account count
+  before trusting the fix). This is why AUTH-154 (the prior attempt) could not have produced a
+  meaningful --compare either.
 
 ---
 
