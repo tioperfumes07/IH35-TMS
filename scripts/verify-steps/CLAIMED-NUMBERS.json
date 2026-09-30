@@ -7468,6 +7468,11 @@
     "claimed_at": "2026-09-30",
     "purpose": "verify-qbo-connection-status-honest (ROUND 300 B-35: locks that USMCA's QBO-disconnected state is reported honestly and TRANSP/TRK connections stay live)"
   },
+  "11983": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-bank-match-criteria-integrity (ROUND 301 B-32: bank-feed MATCHED-side criteria -- split-match sum invariant, entity-scope, stable transaction key)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
