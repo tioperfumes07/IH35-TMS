@@ -4686,6 +4686,16 @@ Faro's FUNDS DUE sheet). Full detail and source citations in the ops script's ow
 action: OWNER_AUTH_ID=AUTH-144 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth144-repost-faro-13619-13615.ts
   (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
 expires_at: 2026-10-01T04:40:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T05:00:00.000Z
+consumed_by: CC-1
+row_counts: 2 of 2 posted. FAC-2026-00097 (load 13619, $5,210.00) and FAC-2026-00125 (load 13615,
+  $4,900.00) both flipped voided -> advanced with reconciled cents, both produced a new live
+  journal entry.
+proof_query: live on prod, 2026-09-30 -- accounting.factoring_advances: both rows status='advanced',
+  voided_at=NULL, advance_amount_cents 505370/475300, faro_invoice_number '1013272-2'/'87'.
+  accounting.journal_entries 6a43e0d6-2985-40df-941b-cbf7c153eb8c and
+  36300f39-1cc3-4218-b607-fee8ee5b6ce6: both status='posted', reversed_by_je_id=NULL,
+  reverses_je_id=NULL (live, unreversed).
 
 — CC-1
