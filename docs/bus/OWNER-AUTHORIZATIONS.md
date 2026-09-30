@@ -5617,6 +5617,40 @@ executed: 2026-09-30, PR #23339 merged (squash 72f1b7a2ae), then --apply run for
 
 ---
 
+## AUTH-174
+
+title: B-03/D44 -- backfill the missing linehaul line on 5 already-sent invoices
+  (13616/13618/13620/13621/13622, $20,800.00)
+requested_by: Lead order (B-03/D44): "19 invoices carry a real total and ZERO invoice_lines...
+  The 5 SENT ones are customer-facing invoices already issued showing a balance with no charge
+  detail behind it; those are the priority. Do not fabricate a line: derive it from the load's
+  own rate, or report that the load has no rate."
+root_cause: exhaustive search this session (every INSERT INTO accounting.invoices across
+  apps/backend/src, scripts/, and db/migrations/) found no committed code path that produces this
+  shape -- `buildInvoiceFromLoad` always writes header+line together (confirmed by reading its
+  full source), and no other function inserts with `invoice_type='from_load'`. Matches CC-1's own
+  independent, identical conclusion for the related load_stops fabricated-delivery-stamp shape
+  (docs/bus/2026-09-30-CC1-... cross-session relay: "no committed script under scripts/ops/ or
+  scripts/feed/ produces this shape"). The writer is very likely an uncommitted/ad-hoc script or a
+  direct database write, not a discoverable application code path -- reported as-is, not guessed
+  at further.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 5 invoices in
+  `scripts/ops/2026-09-30-cc2-auth174-backfill-5-sent-invoice-lines.ts` (TARGETS constant). Each
+  load's own `rate_total_cents` confirmed live to match its invoice's `total_cents` exactly (no
+  derivation ambiguity, no fabrication) immediately before writing. Inserts exactly the single
+  linehaul line `buildInvoiceFromLoad` itself would have created -- same line_type, same
+  `resolveInvoiceLineRevenueAccountId` resolution, same description shape
+  (`Linehaul · Load <number>`), same quantity/amount/display_order shape. Not authorized: the 14
+  pre-invoices (13624/27-39, separate void-then-delete remedy per a different Lead order); any
+  other invoice; touching invoice status/GL (unchanged, still status='sent', no posting).
+action:
+  OWNER_AUTH_ID=AUTH-174 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth174-backfill-5-sent-invoice-lines.ts --apply
+  (run from repo root; DRY_RUN first with no --apply flag)
+expires_at: 2026-10-01T00:00:00.000Z
+status: OPEN
+
+---
+
 ## AUTH-173
 
 title: reverse AUTH-170/AUTH-171 -- FAC-2026-00139/00140 and invoices 13625/13626 are REAL,
