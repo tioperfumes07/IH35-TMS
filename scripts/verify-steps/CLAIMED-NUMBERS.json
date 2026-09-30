@@ -9414,5 +9414,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-30",
     "purpose": "verify-truck-line-exhaust-fits-its-viewbox"
+  },
+  "11945": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-match-candidates-cover-all-documents"
   }
 }
