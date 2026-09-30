@@ -213,7 +213,15 @@ export function renderCompanySettlementBody(model: CompanySettlementHtmlModel): 
 
   <div class="strip">
     <div class="set">
-      <span><span class="k">Short miles</span><span class="num">${escapeHtml(model.report.sections.miles_and_mpg.total_miles.toLocaleString("en-US"))}</span></span>
+      <!-- ROUND 294 (Lead retraction, 2026-09-30): total_miles no longer sums miles_shortest --
+           the company-settlement MPG fix earlier today moved this to practical-with-fallback.
+           "Short miles" was left over from before that fix and now misnames its own basis --
+           exactly what "never print an MPG whose miles cannot name their source" forbids. The
+           summary object (company-settlement-report.service.ts, currently open in PR #23410,
+           frozen from edits) does not yet carry a per-summary basis label the way each row's own
+           mpg_method does (rendered below, unchanged) -- until it does, this says "Miles" rather
+           than assert a specific basis it can no longer prove. -->
+      <span><span class="k">Miles</span><span class="num">${escapeHtml(model.report.sections.miles_and_mpg.total_miles.toLocaleString("en-US"))}</span></span>
       <span><span class="k">Fuel gal</span><span class="num">${escapeHtml(s.fuel_purchases.total_gallons.toFixed(1))}</span></span>
       <span><span class="k">MPG</span><span class="num">${escapeHtml(model.report.sections.miles_and_mpg.mpg != null ? model.report.sections.miles_and_mpg.mpg.toFixed(3) : "—")}</span></span>
     </div>

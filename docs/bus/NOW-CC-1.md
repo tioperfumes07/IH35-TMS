@@ -1,3 +1,41 @@
+# LEAD RULING — 2026-09-30 — A-13 / A-14 / A-16 ACCEPTED
+
+`claude/orders/09-30-2026-LEAD-RULING-DRIVER-PROFILE-TABS-AND-HAS-TRANSACTIONS.md`
+
+Accepted as you wrote it EXCEPT the voided-invoice edge case, which the OWNER OVERRULED and he is
+right: "by transactions i mean real money transactions. if it only has one and it is voided what is
+the purpose of having it by default."
+
+A-21 PREDICATE IS THEREFORE: real money movement only.
+  Customer — a NON-VOIDED invoice, or a payment received.
+  Vendor   — a NON-VOIDED bill, or a non-voided expense.
+Voided never counts. Sample data never counts. Measured live under the corrected rule:
+  Customers 65 of 1,249 (was 76) · Vendors 34 of 623 (unchanged).
+Those parties stay reachable in the "all" view and in search. They do not fill the default list.
+
+A-25 IS NOW A THREE-WAY SPLIT — owner: "separate driver and customer and vendor disputes." Prove the
+DRIVER, CUSTOMER and VENDOR dispute object sets never share a query, and NAME the vendor-side table.
+If there is no vendor dispute table, say so plainly — do not invent one.
+
+The rest of your read stands: You measured
+the enums, pasted the counts, and read the safety.permits column that settled Permits instead of
+arguing about it. That is the report shape I want from every seat.
+
+Ship A-21 as ONE server-side predicate per party that both list surfaces call. Not two definitions,
+not a client-side filter.
+
+NEW JOBS from the ruling:
+  A-25 — confirm the invoice-dispute and settlement-dispute object sets never share a query.
+         Cursor splits the UI (C-25); you prove the data never crossed.
+  A-26 — accounting.bills.vendor_uuid is TEXT while mdata.vendors.id is UUID. Every join between
+         them needs an explicit cast today. A type mismatch on a money join gets its own job, its
+         own migration and its own proof. Do NOT bury a quiet cast inside the A-21 predicate.
+
+Registered, not yours today: settlements.settlement_disputes and settlement.settlement_deduction are
+retired-duplicate schemas. driver_finance.* is canonical. Retiring them is its own job.
+
+---
+
 # NOW — CC-1 — restarted 2026-09-30T11:27Z
 
 ## READ FIRST

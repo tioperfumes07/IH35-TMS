@@ -9374,5 +9374,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-30",
     "purpose": "verify-dispatched-load-has-stop-stamps (renumbered from a colliding 11837 -- another seat's own claim landed on the same number)"
+  },
+  "11851": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-fuel-geofence-recommendation-evidence (B-25: every geofence-based fuel recommendation must carry evidence+confidence fields)"
   }
 }
