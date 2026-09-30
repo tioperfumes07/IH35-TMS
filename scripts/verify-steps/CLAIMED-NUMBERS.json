@@ -9339,5 +9339,15 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-30",
     "purpose": "verify-ops-scripts-assert-not-production"
+  },
+  "11817": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-expense-line-item-and-account-required"
+  },
+  "11821": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-expense-line-item-and-account-required"
   }
 }
