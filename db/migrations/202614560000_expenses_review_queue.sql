@@ -15,11 +15,6 @@
 -- carries no money-moving semantics of its own.
 --
 -- Additive, idempotent, CREATE-only, void-not-delete, FORCED RLS. No existing data touched.
---
--- CANONICAL-CHECK: expense_review_queue. No existing canonical ledger covers this concept (a human
---    review queue for a specific voided-expense cleanup cohort). Not a second expense ledger: it
---    carries no amount-of-record, posts no GL, and never mutates accounting.expenses -- purely a
---    tracking/audit table referencing that table's real rows via source_expense_id.
 
 BEGIN;
 
