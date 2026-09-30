@@ -116,7 +116,11 @@ const EXCEPTION_RED = "#991B1B";
 // lines are far shorter than 70px, so they sit inside the height the rail already dictated. The row
 // is exactly as tall as it was.
 const GRID_TEMPLATE_COLUMNS =
-  "minmax(52px,3.4vw) minmax(68px,4.4vw) minmax(84px,6vw) minmax(88px,6.4vw) minmax(88px,6.4vw) minmax(420px,1fr)";
+  // Owner, 09-30: "what part of I want the transit line to be more visible". PRE-SETTLEMENT is gone
+  // from the TOUR header and DISPATCHED is gone from the LOAD cell, so neither column has to be
+  // wide enough for a word it no longer prints. UNIT holds "T148", TOUR holds "P-0013", LOAD holds
+  // "13635" — nothing longer. Every point freed goes to TRANSIT.
+  "minmax(46px,2.6vw) minmax(56px,3.2vw) minmax(62px,3.6vw) minmax(84px,5.6vw) minmax(84px,5.6vw) minmax(480px,1fr)";
 const GRID_TEMPLATE_COLUMNS_NARROW =
   "minmax(48px,8vw) minmax(60px,9vw) minmax(76px,11vw) minmax(62px,9.5vw) minmax(62px,9.5vw) minmax(200px,1fr)";
 const FOLD_BREAKPOINT_PX = 860;
@@ -779,7 +783,6 @@ function TruckLineTrack({
       className="truck-line-v4-cap w-[168px] shrink-0 leading-tight text-[#6B7280]"
       data-testid={`truck-line-current-location-${row.unit_id}`}
     >
-      <div className="font-semibold uppercase" style={{ letterSpacing: "0.03em" }}>CURRENT LOCATION</div>
       {live.signalLabel === "Live" || live.signalLabel === "Stale" ? (
         <div style={{ color: live.signalLabel === "Stale" ? RED : GREEN }}>
           {live.signalLabel} · {formatLocationLabel(row.position)}
@@ -1113,6 +1116,21 @@ export function TruckLineBoard({
            text lines sit inside it. Placement is explicit so a 7th child can never auto-flow into
            the wrong track. */
         .truck-line-v4-row { grid-template-rows: auto auto; row-gap: 0; }
+        /* SECTION-BAND — a full-width rule across the whole board, never a value in the UNIT
+           column. Distinct from every cell's type so it cannot be misread as data. */
+        .truck-line-v4-section-band {
+          display: block;
+          width: 100%;
+          background: #E4EAF1;
+          border-top: 1px solid #C9D4E0;
+          border-bottom: 1px solid #C9D4E0;
+          padding: 2px 10px;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: #4B5563;
+        }
         .truck-line-v4-unit-cell { grid-column: 1; grid-row: 1; }
         .truck-line-v4-tour-cell { grid-column: 2; grid-row: 1; }
         .truck-line-v4-load-cell { grid-column: 3; grid-row: 1; }
@@ -1294,7 +1312,7 @@ export function TruckLineBoard({
       <div className="min-w-0 overflow-x-auto rounded-sm border border-[#E5E7EB] bg-white" data-testid="truck-line-board-v4">
         <div className="truck-line-v4-header" data-testid="truck-line-column-order">
           <TruckLineSortHeader label="UNIT" sortKey="truck" active={sort?.key === "truck" ? sort.dir : null} onClick={cycleSort} />
-          <TruckLineSortHeader label="TOUR / PRE-SETTLEMENT" sortKey="tour" active={sort?.key === "tour" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-tour-header" />
+          <TruckLineSortHeader label="TOUR" sortKey="tour" active={sort?.key === "tour" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-tour-header" />
           <TruckLineSortHeader label="LOAD" sortKey="load" active={sort?.key === "load" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-load-header" />
           <TruckLineSortHeader label="PU DATE" sortKey="pu" active={sort?.key === "pu" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-pu-header" />
           <TruckLineSortHeader label="DELIVERY DATE" sortKey="del" active={sort?.key === "del" ? sort.dir : null} onClick={cycleSort} className="truck-line-v4-del-header" />
@@ -1316,12 +1334,15 @@ export function TruckLineBoard({
             if (sectionGroups.length === 0) return null;
             return (
               <div key={section} data-testid={`truck-line-section-${section}`}>
+                {/* SECTION-BAND (Lead, 09-30-2026, owner: "you have UNIT showing TOUR under and 11,
+                    that does not belong there"). The band used .truck-line-v4-unit, so it inherited
+                    the UNIT column's own type and read as a value sitting inside that column. It is
+                    a full-width band across the board, not a cell — it says so now. */}
                 <div
-                  className="truck-line-v4-unit border-b border-[#E5E7EB] bg-[#F7F8FA] px-2.5 py-0.5 font-semibold uppercase text-[#4B5563]"
-                  style={{ fontSize: 11, letterSpacing: "0.02em" }}
+                  className="truck-line-v4-section-band"
                   data-testid={`truck-line-section-header-${section}`}
                 >
-                  {SECTION_LABEL[section]} ({sectionGroups.length})
+                  {SECTION_LABEL[section]} · {sectionGroups.length}
                 </div>
                 {sectionGroups.map((g, groupIndex) =>
                   g.legs.map((r, legIndex) => {
@@ -1445,14 +1466,20 @@ export function TruckLineBoard({
                               >
                                 {r.load.load_number}
                               </button>
+                              {/* LOAD-SAYS-DISPATCHED (Lead, 09-30-2026, owner: "load should not say
+                                  dispatch, I know it is dispatched"). Every row in the dispatched
+                                  section is dispatched, so printing it on each row is noise that
+                                  cost the LOAD column width. The status PICKER stays — it is how a
+                                  dispatcher advances a load — but it is now a small caret on the
+                                  load number instead of a word repeated down the board. */}
                               <button
                                 type="button"
-                                className="truck-line-v4-cap mt-0.5 rounded-sm border border-[#E5E7EB] px-1.5 py-0.5 font-semibold uppercase text-[#4B5563]"
-                                style={{ fontSize: 11 }}
+                                className="truck-line-v4-cap ml-1 rounded-sm px-1 text-[#6B7280] hover:bg-[#EEF2F6]"
+                                title={`Status: ${(r.load.status ?? "—").replace(/_/g, " ")} — click to change`}
                                 data-testid={`truck-line-status-trigger-${r.load.load_id}`}
                                 onClick={() => setStatusMenuLoadId(statusOpen ? null : r.load!.load_id)}
                               >
-                                {(r.load.status ?? "—").replace(/_/g, " ")}
+                                ▾
                               </button>
                               {statusOpen ? (
                                 <div
