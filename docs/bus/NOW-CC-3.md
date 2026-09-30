@@ -206,3 +206,70 @@ Build the backfill and prove it on a BRANCH database — do not run it on produc
 T-21 above and T-01 share the same spine; build them so they use one capture path.
 
 SEQUENCE: T-20 → T-01 → T-21. The feed first: T-21 needs odometer to capture.
+
+---
+## 2026-09-30 — T-20 IS DONE. I FIXED IT. HERE IS THE PROOF AND WHAT IS NOW YOURS.
+
+**You do not need to diagnose the 400. It is solved, fixed, merged and deployed.**
+
+SAMSARA'S OWN ANSWER, taken live against api.samsara.com with the real token:
+
+    types=gps,engineStates,obdOdometerMeters,fuelPercents,obdEngineSeconds   (5)
+      -> HTTP 400 {"message":"Vehicle stats are currently restricted to 4 types."}
+    types=gps,engineStates,obdOdometerMeters,obdEngineSeconds                (4)
+      -> HTTP 200  95 vehicles  93 with obdOdometerMeters  87 with obdEngineSeconds
+    types=gps,engineStates,obdOdometerMeters,fuelPercents                    (4)
+      -> HTTP 200  95 vehicles  93 with obdOdometerMeters  90 with fuelPercent
+
+ONE TYPE TOO MANY. Samsara caps that endpoint at four; we asked for five; it refused the
+whole request; the fallback collapsed to `gps,engineStates` and threw ODOMETER away to
+keep a position the locations feed already had. It was never a retired type name and
+never the entity rename — the owner was right about that.
+
+FIXED: ask for four, ask TWICE, merge by vehicle id.
+  SAMSARA_STATS_TYPES_PRIMARY = "gps,engineStates,obdOdometerMeters,obdEngineSeconds"
+  SAMSARA_STATS_TYPES_FUEL    = "gps,fuelPercents"
+Odometer is in PRIMARY and is never traded away again. Guard
+`verify-samsara-stats-degrade-is-not-silent`, selftest 9/9, counts the types in the
+constant itself — nobody can ask for five again without failing the build.
+
+**ODOMETER IS LIVE. Measured after the deploy:**
+
+    rows on the stats path, last 30 min   76
+    with odometer                         49
+    distinct units                        12
+    newest ping                           2026-09-30 14:14:51Z
+
+Before the deploy it was 0 of every row since 2026-09-10.
+
+### WHAT IS NOW YOURS, AND THE MEASUREMENT THAT MAKES IT EASY
+
+`telematics.load_odometer_segments` is STILL 40 rows, newest segment ended
+2026-08-26 03:05:17Z — BUT its `created_at` max is 2026-09-29 21:40:25Z. **The
+materializer is alive and ran yesterday. It produced nothing because odometer was NULL.**
+It is not broken; it was starved. It is now fed.
+
+So T-21 is unblocked and starts from a working engine, not a dead one:
+  1. Confirm `materializeRealDrivenMilesSegments` now produces segments for the current
+     fleet. Paste the row count and the newest segment. If it still produces nothing
+     with odometer flowing, THAT is a real defect and it is yours — measure it, do not
+     assume the feed.
+  2. Build the geofence mileage capture the owner asked for: odometer at every enter and
+     exit — Love's and other fuel stops, DOT/scale, pickup, delivery, and every yard
+     crossing. `geo.geofence_events` (684) and `geo.geofence_state_transitions` (7,596)
+     are current and never died; that is your spine.
+  3. EVERY capture records its odometer SOURCE — real OBD read, interpolation, or
+     absent. Never a derived mileage that cannot say where it came from. `mpg_method`
+     on the company settlement already follows this pattern; match it.
+  4. Idempotent per (unit, geofence_event). Replaying must not double-count.
+  5. Guard + verify-step, with a freshness check so this engine cannot go dark silently
+     the way the last one did for 35 days.
+
+ALSO YOURS, still: **T-01.** `dispatch.stop_arrivals` is 0 rows, ever. Arrival detection
+has exactly one caller — the Samsara webhook projector, and
+`integrations.samsara_webhook_events` is 0 rows, ever. Wire it onto the POLLING path.
+Until that runs, every load on Truck Line sits on Dispatched and the green node cannot
+advance — I fixed the z-order so the node is VISIBLE, but only your engine makes it TRUE.
+
+DO NOT backfill historical odometer or load status against production. The owner freeze
+stands; he decides about the 35-day gap.
