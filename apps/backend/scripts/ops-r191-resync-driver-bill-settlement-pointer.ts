@@ -34,11 +34,10 @@ const TARGET_LOAD_NUMBERS = ["13609", "13610", "13612", "13614", "13617", "13619
 const APPLY = process.argv.includes("--apply");
 // ROUND 191 -- posted to docs/bus/09-28-2026-CC-2-TO-CC-3-SETTLEMENT-LINKAGE-MAP-AGREE-FIRST.md
 // for CC-3's agreement, per the owner's explicit "neither of you writes that alone" order.
-// NOT YET OPENED. Whoever runs --apply must first open a real AUTH-NNN entry in
-// docs/bus/OWNER-AUTHORIZATIONS.md once CC-3 has confirmed agreement, then update this constant
-// to that real id -- this deliberately-nonexistent placeholder makes --apply refuse until that
-// happens (verify-owner-authorization.mjs rejects any AUTH id that isn't a real, open entry).
-const AUTH_ID = "AUTH-PENDING-CC3-AGREEMENT-ROUND-191-ITEM-1";
+// Originally opened as AUTH-121; that entry expired unexecuted at 2026-09-29T00:00:00Z before
+// anyone ran --apply. Re-opened as AUTH-135 (same scope, re-verified live, zero drift) in
+// docs/bus/OWNER-AUTHORIZATIONS.md.
+const AUTH_ID = "AUTH-135";
 
 async function main() {
   const url = process.env.DATABASE_URL;
