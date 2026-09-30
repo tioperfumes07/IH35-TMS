@@ -49,8 +49,8 @@ function main() {
   const expected = {
     moduleNav: 13,
     masterData: 11,
-    dashboardTabs: 10,
-    operationLinks: 11,
+    dashboardTabs: 9,
+    operationLinks: 10,
     listsCatalogs: 21,
   };
 
@@ -66,8 +66,8 @@ function main() {
   if (!navConfig.includes("...MAINTENANCE_DASHBOARD_TAB_LINKS")) {
     failures.push("MAINTENANCE_OPERATION_LINKS must spread MAINTENANCE_DASHBOARD_TAB_LINKS after Dashboard");
   }
-  if (!navConfig.includes('{ label: "Dashboard", path: "/maintenance" }')) {
-    failures.push("MAINTENANCE_OPERATION_LINKS must include Dashboard entry");
+  if (!navConfig.includes('{ label: "Home", path: "/maintenance" }')) {
+    failures.push("MAINTENANCE_OPERATION_LINKS must include Home entry at /maintenance");
   }
   if (!navConfig.includes("/maintenance/drivers")) {
     failures.push("MAINTENANCE_MASTER_DATA_LINKS must include /maintenance/drivers");

@@ -2109,6 +2109,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/maintenance/integrity-report"
+          element={
+            <ProtectedRoute>
+              <MaintenanceTabRoute tabId="integrity_report" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/maintenance/settings"
           element={
             <ProtectedRoute>

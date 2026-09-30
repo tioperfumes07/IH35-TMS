@@ -31,14 +31,17 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
   { path: "/maintenance", label: "Maintenance Home", module: "maintenance" },
   { path: "/maintenance/active-wos", label: "Active WOs", module: "maintenance" },
   { path: "/maintenance/fleet-table", label: "Fleet Table", module: "maintenance" },
-  { path: "/maintenance/rm-status-board", label: "R&M Status Board", module: "maintenance" },
+  { path: "/maintenance/rm-status-board", label: "Maintenance Home", module: "maintenance" },
+  { path: "/maintenance/home", label: "Maintenance Home", module: "maintenance" },
   { path: "/maintenance/service-location", label: "Service / Location", module: "maintenance" },
   { path: "/maintenance/arriving-soon", label: "Arriving Soon", module: "maintenance" },
   { path: "/maintenance/in-transit-issues", label: "In-Transit Issues", module: "maintenance" },
   { path: "/maintenance/damage-reports", label: "Damage Reports", module: "maintenance" },
+  { path: "/maintenance/driver-reports", label: "Driver Reports", module: "maintenance" },
   { path: "/maintenance/severe-repairs", label: "Severe Repairs", module: "maintenance" },
   { path: "/maintenance/road-service", label: "Road Service", module: "maintenance" },
   { path: "/maintenance/parts-inventory", label: "Parts Inventory", module: "maintenance" },
+  { path: "/maintenance/integrity-report", label: "Integrity Report", module: "maintenance" },
   { path: "/maintenance/settings", label: "Maintenance Settings", module: "maintenance" },
   { path: "/maintenance/work-orders", label: "Work Orders List", module: "maintenance" },
   { path: "/factoring", label: "Factoring Home", module: "factoring" },
@@ -135,7 +138,9 @@ export function driversSubtabFromPath(pathname: string): string {
 export const MAINTENANCE_TAB_PATH: Record<string, string> = {
   active_wos: "/maintenance/active-wos",
   fleet_table: "/maintenance/fleet-table",
+  // C-36 — Home (was "R&M Status Board"); legacy path kept (Rule 07).
   rm_status_board: "/maintenance/rm-status-board",
+  home: "/maintenance/home",
   service_location: "/maintenance/service-location",
   arriving_soon: "/maintenance/arriving-soon",
   in_transit_issues: "/maintenance/in-transit-issues",
@@ -144,8 +149,8 @@ export const MAINTENANCE_TAB_PATH: Record<string, string> = {
   severe_repairs: "/maintenance/severe-repairs",
   road_service: "/maintenance/road-service",
   parts_inventory: "/maintenance/parts-inventory",
-  // LV-MAINT-SUBNAV-ORPHAN-PATHS — these three lived in SUBNAV but were missing here, so
-  // NavLink fell through to `?? "/maintenance"` (dashboard shell) instead of the dedicated leaf.
+  integrity_report: "/maintenance/integrity-report",
+  // LV-MAINT-SUBNAV-ORPHAN-PATHS — retired from SUBNAV (C-36) but paths stay reachable.
   brake_wear: "/maintenance/brake-wear",
   tire_wear: "/maintenance/tire-wear",
   pre_flight_dvir: "/maintenance/pre-flight-dvir",
@@ -155,12 +160,21 @@ export const MAINTENANCE_TAB_PATH: Record<string, string> = {
 
 export function maintenanceTabFromPath(pathname: string): string | null {
   const norm = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
-  // Bare hub — let MaintenanceHomePage initialTab decide (R&M board by default).
+  // Bare hub — let MaintenanceHomePage initialTab decide (Home / rm_status_board by default).
   if (norm === "/maintenance") return null;
-  if (norm === "/maintenance/in-transit" || norm === "/maintenance/triage") return "in_transit_issues";
-  if (norm.includes("in-transit")) return "in_transit_issues";
-  // Live operators + Devin still hit the short alias; map it to the canonical pre-flight leaf.
-  if (norm === "/maintenance/dvir") return "pre_flight_dvir";
+  // C-36 remaps — retired peer tabs fold into Home or Driver Reports Kind (paths kept, Rule 07).
+  if (norm === "/maintenance/home" || norm === "/maintenance/rm-status-board") return "rm_status_board";
+  if (norm === "/maintenance/arriving-soon" || norm === "/maintenance/predictive-alerts") return "rm_status_board";
+  if (norm === "/maintenance/brake-wear" || norm === "/maintenance/tire-wear") return "rm_status_board";
+  if (norm === "/maintenance/severe-repairs") return "active_wos"; // Severe is the red kanban column, not a tab
+  if (norm === "/maintenance/in-transit" || norm === "/maintenance/triage" || norm === "/maintenance/in-transit-issues") {
+    return "driver_reports";
+  }
+  if (norm.includes("in-transit")) return "driver_reports";
+  if (norm === "/maintenance/damage-reports") return "driver_reports";
+  // DVIR belongs to Safety; defects tagged DVIR surface under Driver Reports Kind=DVIR.
+  if (norm === "/maintenance/dvir" || norm === "/maintenance/pre-flight-dvir") return "driver_reports";
+  if (norm === "/maintenance/integrity-report") return "integrity_report";
   for (const [id, routePath] of Object.entries(MAINTENANCE_TAB_PATH)) {
     if (routePath === norm) return id;
   }

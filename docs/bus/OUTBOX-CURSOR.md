@@ -67,3 +67,9 @@ Read `docs/bus/ROUND-299-ALL-SEATS-LINKAGE-LAW-AND-ANTI-DRIFT.md`. Cursor lane f
 
 **2026-09-30T21:10Z · ROUND 300 ACK · standing queue parked**
 Read `docs/bus/ROUND-300-CURSOR-STANDING-QUEUE.md` + rewrote `docs/bus/NOW-CURSOR.md`. Queue top→bottom: (1) FINISH #23495 C-31..C-35 + Lead Chrome · (2) C-36 maint 16→9 · (3) C-37 house table · (4) C-38 controls · (5) C-39 filters/gear · (6) C-40 Regular+MD · (7) C-41 banking · (8) C-42 re-read. SAVE+CLOSE every opener. NOW working #1: exempt tip-main orphan `verify-odometer-ledger-has-one-writer.mjs` (#23493) so locked-guards clears; required-checks-gate already PASS; tip-main ENV reds (live-load H-1 auth, migrate pm_intervals FK, phantom geofence_odometer) not Cursor chrome — admin-merge when gate green.
+
+**2026-09-30T21:40Z · ROUND 300 #1 DONE · #23495 MERGED · `584f51c792`**
+C-31..C-35 on main. Tip-main orphans (odometer + assignment-coverage) exempted. LEFT: Lead Chrome-measure (With-txn ~65/34, KPI≤90px, chrome≤260px, tbody>0, no -$0.00). NEXT: C-36.
+
+**2026-09-30T21:55Z · ROUND 300 #2 C-36 MAINT 16→9 · branch `cursor/c36-maint-tabs-16-to-9-c89b`**
+C-36 · what changed: SUBNAV = Home · Fleet · Active WOs · Service/Location · Driver Reports · Road Service · Parts · Integrity Report · Settings. Deleted Brake/Tire Wear from subnav. Folded Arriving Soon + At Risk into Home. Driver Reports Kind (Driver|Damage|In-transit|DVIR). Severe remaps to Active WOs (kanban red column). DVIR path → Driver Reports Kind=DVIR. IntegrationsStrip once on Home. RMStatStrip dropped 4 kanban-duplicate tiles. IntegrityReportPage → scorecard + fuel-anomalies. · GUARD: `scripts/ops/verify-c36-maint-tabs-16-to-9.mjs --selftest` + verify-maintenance-tab-coverage + verify-maint-nav-count-reconcile. · LIVE PROOF: UNVERIFIED Chrome — 9 tabs, Kind chips, single integrations strip, no Open/In Progress/Awaiting/Severe KPI tiles above kanban. · LEFT: Lead Chrome; C-37 next.

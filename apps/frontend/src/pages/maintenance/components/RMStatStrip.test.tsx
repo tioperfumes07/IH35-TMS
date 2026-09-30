@@ -4,9 +4,7 @@ import { describe, expect, it } from "vitest";
 import { RMStatStrip } from "./RMStatStrip";
 import type { MaintenanceKpis } from "../../../api/maintenance";
 
-// Render-proof for the R&M Status Board 2nd stat strip (rm-status-board.html). Token-in-source can be green
-// while a tile is removed/unmounted; this mounts the strip and asserts all 8 tiles reach the DOM. If a tile
-// label is deleted/renamed, getByText throws → RED.
+// C-36 — strip keeps only the four tiles that are NOT kanban column counts.
 const KPIS = {
   open_wos: 7,
   in_shop: 0,
@@ -28,16 +26,8 @@ const KPIS = {
   parts_low_stock: 4,
 } as unknown as MaintenanceKpis;
 
-const LABELS = [
-  "Open WOs",
-  "In Progress",
-  "Awaiting Parts",
-  "PM Due Soon",
-  "Severe / OOS",
-  "Road Service",
-  "Parts Low-Stock",
-  "MTD Cost",
-];
+const LABELS = ["PM Due Soon", "Road Service", "Parts Low-Stock", "MTD Cost"];
+const REMOVED = ["Open WOs", "In Progress", "Awaiting Parts", "Severe / OOS"];
 
 const renderStrip = (kpis: MaintenanceKpis) =>
   render(
@@ -47,24 +37,25 @@ const renderStrip = (kpis: MaintenanceKpis) =>
   );
 
 describe("RMStatStrip", () => {
-  it("renders all 8 R&M stat tiles in the DOM", () => {
+  it("renders the 4 non-kanban R&M stat tiles (C-36)", () => {
     renderStrip(KPIS);
     for (const label of LABELS) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
+    for (const label of REMOVED) {
+      expect(screen.queryByText(label)).not.toBeInTheDocument();
+    }
   });
 
-  // C8 — every tile is a real drill target, not a dead click.
-  it("gives all 8 tiles a drill destination", () => {
+  it("gives all remaining tiles a drill destination", () => {
     const { container } = renderStrip(KPIS);
     expect(container.querySelectorAll("[data-kpi-drill]")).toHaveLength(LABELS.length);
-    expect(screen.getByLabelText("Open WOs — view records")).toHaveAttribute(
+    expect(screen.getByLabelText("Road Service — view records")).toHaveAttribute(
       "href",
-      "/maintenance/active-wos"
+      "/maintenance/road-service"
     );
   });
 
-  // C8 — a count the payload does not carry renders "—", never a fabricated 0.
   it("renders an absent count as an em-dash instead of zero", () => {
     const { container } = renderStrip({ open_wos: 7 } as unknown as MaintenanceKpis);
     expect(screen.getAllByText("—").length).toBeGreaterThan(0);

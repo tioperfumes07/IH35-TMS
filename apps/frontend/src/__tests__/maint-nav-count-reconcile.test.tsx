@@ -18,8 +18,8 @@ describe("maintenance nav count reconcile (B24)", () => {
     expect(MAINTENANCE_MASTER_DATA_NAV_COUNT).toBe(11);
   });
 
-  it("keeps dashboard operational tab count at 10", () => {
-    expect(MAINTENANCE_DASHBOARD_TAB_COUNT).toBe(10);
+  it("keeps dashboard operational tab count at 9 (C-36)", () => {
+    expect(MAINTENANCE_DASHBOARD_TAB_COUNT).toBe(9);
   });
 
   it("MAINTENANCE_LISTS_CATALOG_COUNT matches the real catalog map, not a hand-typed number", () => {
