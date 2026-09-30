@@ -214,3 +214,42 @@ J-2/J-3 code against the target schema now; will retry the live apply + live pro
 clears, or once CC-1 confirms the 5 rows are safe to baseline. Migration file is committed at
 db/migrations/202614950000_odometer_readings_gap_rows_and_date_grain_idemp.sql on
 claude/r297-odometer-ledger-samsara-fault-poller, not yet applied.
+
+## CC-3 — ROUND 297.1 SHIPPED (2026-09-30 ~19:55 CT) — PR #23493 merged
+
+J-1 (odometer-snapshot.cron.ts), J-2 (odometer-manual.routes.ts), J-3 (fault-poll.cron.ts) all
+built, wired into index.ts, guard shipped (verify-odometer-ledger-has-one-writer.mjs
+--selftest). Migration 202614950000 applied live (see MIGR-COLLISION-02 below for why the
+number changed twice).
+
+PROOF 1 (adjusted): 16/16 active USMCA units got a row today (verified via created_at), 12
+measured + 4 honest gap rows (T122/T147/T170/T173, confidence='suggested', odometer_miles
+NULL). The order's literal query (WHERE read_at::date = CURRENT_DATE) returns 13, not 16 --
+3 of the 4 gap units' last known position is itself several days stale, and read_at is
+honestly set to that unit's own captured_at, never now(), exactly per spec. Not a bug.
+PROOF 2: T173's gap row confirmed (odometer_miles NULL, confidence='suggested', read_at
+2026-09-30T11:46:51Z -- its own last real position, not a placeholder).
+PROOF 3: manual reading inserted through the REAL route handler (not a hand-rolled script) --
+201, source='manual', confidence='entered', recorded_by_user_id = the real Owner account.
+PROOF 4: UNVERIFIED this session -- J-3's decrypt step needs the real
+SAMSARA_TOKEN_ENCRYPTION_KEY, which exists only in Render's deployed environment; no tool this
+session has access to can read an existing Render secret value (update_environment_variables
+is write-only). What IS proven live: the never-swallow-a-tick policy fires correctly (threw
+instead of silently continuing when decryption failed), and maintenance.samsara_fault_code_
+history stayed at its 0-row baseline (no partial/silent write). Needs a post-deploy check.
+
+MIGR-COLLISION-02 (new, filed in docs/audit/GUARD-WORKORDERS.md): the claim-reserve tooling
+(CLAIMED-MIGRATION-NUMBERS.json + verify-migration-claimed-on-main.mjs) only checks the
+canonical ledger (_system._schema_migrations), not the mirror one
+(ih35_migrations.applied_migrations) CC-1 appears to write to directly and rapidly. Burned two
+claimed numbers live in under 20 minutes this way (202614790000 then 202614820000) before
+landing on 202614950000, well ahead of CC-1's observed pace at the time. Worth CC-1/Lead
+closing the gap in the claim tooling itself so the next seat doesn't repeat this.
+
+Also found and left unfixed (pre-existing, unrelated, named not chased): the unscoped version
+of the new date-grain unique index cannot be created at all -- 921 duplicate
+(operating_company_id, unit_id, day, source) groups already exist across 176,960 of
+odometer_readings' 177,906 historical rows, all source='samsara', written by some now-retired
+high-frequency poller with no trace left in the repo. Worked around with a PARTIAL index
+(rows from this migration's apply date forward only); the historical duplication itself is
+someone else's call if it ever needs cleaning up.
