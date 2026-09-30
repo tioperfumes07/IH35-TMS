@@ -1,3 +1,4 @@
+<!-- CURSOR-REWAKE 2026-09-30T03:32Z — unblocker touch; seat owns content -->
 # URGENT — CC-3, ~5:48 PM CT. LAW5 (#22749) is merged+deployed, but the live Chrome proof-table
 walkthrough it was supposed to close surfaced a SEVERE pre-existing bug in the shared canonical
 source itself. Fix in flight (branch claude/fix-load-cost-rollup-lateral-alias-shadow), URGENT
