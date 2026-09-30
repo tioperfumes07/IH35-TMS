@@ -5617,6 +5617,43 @@ executed: 2026-09-30, PR #23339 merged (squash 72f1b7a2ae), then --apply run for
 
 ---
 
+## AUTH-172
+
+title: remove fabricated delivery stamps on loads 13625/13626 -- step 3 of Lead's 6-step
+  owner-verified correction order
+requested_by: Lead order, verbatim: "REMOVE THE FABRICATED DELIVERY STAMPS on both loads'
+  delivery stops. They are not evidence and every engine that reads them inherits the lie. Record
+  the removal in the audit trail with this ruling referenced — do not silently null them." Step 4
+  of the same order: "The loads stay 'dispatched'. That is AlwaysTrack's truth and it is correct.
+  Do not advance them."
+root_cause: both loads' delivery stops carry actual_arrival_at = actual_departure_at =
+  2026-09-25T16:00:00.000Z (to the millisecond) with actual_arrival_source IS NULL, and no pickup
+  stamps at all -- confirmed live before writing this AUTH, matching Lead's own measurement
+  exactly. CC-1 independently corroborated (before the Aug/Sep investigation freeze landed,
+  relayed cross-session): this exact signature (equal arrival/departure, NULL source) appears on
+  27 load_stops rows total across 9 loads including these 2; no committed script under
+  scripts/ops/ or scripts/feed/ produces this shape; 13625/13626 specifically were stamped within
+  26 seconds of each other, 2026-09-28 ~12:57-12:58Z, attributed to changed_by_role='Owner' under
+  the shared session account -- consistent with an automated script run as the Owner actor, not a
+  literal UI click. The specific writer was not identified (step 5, reported separately, not
+  fixed here).
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 2 delivery stops in
+  `scripts/ops/2026-09-30-cc2-auth172-remove-fabricated-stamps-13625-13626.ts` (STOPS constant).
+  Writes an `appendCrudAudit` row FIRST (per the order's "record the removal, do not silently null
+  them"), naming exactly what is being removed and citing this ruling, THEN nulls
+  actual_arrival_at/actual_departure_at/actual_arrival_source/actual_departure_source on those 2
+  rows only. Confirms both loads remain status='dispatched' (this script does not touch load
+  status -- step 4 requires it stay that way, verified not advanced). Not authorized: touching
+  pickup stops (already null, nothing to remove); any other load; advancing load status; touching
+  invoices/factoring_advances (already done, AUTH-170/171).
+action:
+  OWNER_AUTH_ID=AUTH-172 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth172-remove-fabricated-stamps-13625-13626.ts --apply
+  (run from repo root; DRY_RUN first with no --apply flag)
+expires_at: 2026-10-01T00:00:00.000Z
+status: OPEN
+
+---
+
 ## AUTH-171
 
 title: void the 2 fabricated invoices (13625/13626, $9,650.00 combined) -- step 2 of Lead's
