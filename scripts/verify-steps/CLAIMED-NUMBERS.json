@@ -9434,5 +9434,10 @@
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-30",
     "purpose": "verify-invoice-header-requires-line-constraint (B-26)"
+  },
+  "11969": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-severe-estimate-open-set-is-shared"
   }
 }
