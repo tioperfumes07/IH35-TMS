@@ -270,3 +270,48 @@ only -- so it did not create a new canonical/mirror divergence of the kind H-3 n
 H-3's new standing rule ("no seat applies a migration to production by any path other than
 applyMigration()") is unconditional going forward, issued after this happened -- noted, and
 applyMigration() only from here on.
+
+## CC-3 — ROUND 300 T-23 SHIPPED — real assignment coverage, 16-unit fleet, 90-day window
+
+MEASURED LIVE (br-fancy-credit-akjnd07a, USMCA, telematics.vehicle_driver_assignments, excludes
+the 5 coder test artifacts T120/T149/T150/T151/USMCA-001 per CC-2's T-22 finding):
+
+  unit   covered/90  pct
+  T122        0/90    0.0%   <- ZERO assignment rows, ever
+  T124        0/90    0.0%   <- ZERO assignment rows, ever
+  T147       68/90   75.6%
+  T148       24/90   26.7%
+  T152       54/90   60.0%
+  T156       18/90   20.0%
+  T163       33/90   36.7%
+  T164       59/90   65.6%
+  T168       53/90   58.9%
+  T170       46/90   51.1%
+  T171       44/90   48.9%
+  T173       66/90   73.3%
+  T174       48/90   53.3%
+  T175       38/90   42.2%
+  T176       66/90   73.3%
+  T177       69/90   76.7%
+
+FLEET AGGREGATE: 686/1440 unit-days = 47.6% over the trailing 90 days.
+
+T122 and T124 have NEVER had a vehicle_driver_assignments row -- not a gap in an otherwise-covered
+history, a complete absence. T122 also has no live odometer (Round 297.1's own T-25 target) and no
+fault-poll-relevant driver pairing either; T124 by contrast DOES have a fresh position/odometer
+reading today (815317.3 mi), so its gap is specifically the driver-pairing feed, not the GPS feed
+-- two different failure shapes wearing the same "0 assignment rows" symptom.
+
+Every driver attribution in the app (settlement linkage, fault-WO assignment, the fuel-linkage law
+just closed in T-22/L-3) resolves through this table. A quarter of the fleet at less than 50%
+coverage, with 2 units at flat zero, is the real input number the next attribution job should be
+measured against -- not "52 of 52 fuel rows resolved," which only proves the driver+load were
+already known, never that the assignment table itself is populated going forward.
+
+GUARD: scripts/verify-assignment-coverage-excludes-test-units.mjs + --selftest. Exports
+measureAssignmentCoverage() (the live query, reusable) and the shared KNOWN_TEST_UNIT_NUMBERS
+list, so no future report re-derives its own test-unit exclusion and risks CC-2's original
+15-work-order mixup a second time.
+
+MEASURED ONLY, nothing changed: no assignment rows written, no backfill attempted. T-23 asked
+for the number, not a fix.
