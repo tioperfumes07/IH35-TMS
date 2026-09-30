@@ -25,8 +25,12 @@ const REQUIRED = [
     markers: ['data-view-mode-toggle=\"customers\"|\"data-view-mode-toggle\": \"customers\"', "CustomersListView", "useViewModePref"],
   },
   {
+    // Same two spellings the customers entry above already accepts. Vendors.tsx made the identical
+    // shared-control migration (the toggle now ships its data attribute through `dataAttributes`,
+    // Vendors.tsx:614) but this entry was never widened with it, so pass-7 AUDIT-FIX-3 went red on
+    // main against a feature that is present and working. The guard was stale, not the page.
     file: "apps/frontend/src/pages/Vendors.tsx",
-    markers: ["data-view-mode-toggle=\"vendors\"", "VendorsListView", "useViewModePref"],
+    markers: ['data-view-mode-toggle=\"vendors\"|"data-view-mode-toggle": "vendors"', "VendorsListView", "useViewModePref"],
   },
   {
     file: "apps/frontend/src/hooks/useViewModePref.ts",
