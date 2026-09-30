@@ -6317,7 +6317,7 @@ action: UPDATE fuel.fuel_transactions SET unit_id = <resolved unit> WHERE id = <
   unitAtTimeSql(driver_id, transaction_at) from apps/backend/src/maintenance/driver-attribution.ts.
   Script of record: scripts/ops/2026-09-30-cc2-l3-repair-52-fuel-unit-ids.ts.
 expires_at: 2026-10-01T20:35:00Z
-status: OPEN
+status: CONSUMED 2026-09-30T20:52Z — see the execution block at the end of this entry
 
 OWNER ORDER, verbatim, 2026-09-30 (in response to CC-2's dry-run report of the exact 52/52-resolve,
 0-disagree, 0-unresolved breakdown, posted to chat and to docs/bus/OUTBOX-CC-2.md /
@@ -6338,3 +6338,14 @@ THIS AUTHORIZATION DOES NOT COVER, and it is not a hedge: any column other than
 fuel.fuel_transactions.unit_id; any row outside the exact 52 measured above; any table other than
 fuel.fuel_transactions; any future fuel row that lands in the same zero-unit shape (that is L-2's
 job, a going-forward DB constraint, not this one-time repair).
+
+EXECUTION, 2026-09-30T20:52Z: `npx tsx scripts/ops/2026-09-30-cc2-l3-repair-52-fuel-unit-ids.ts
+--apply` — verify-owner-authorization confirmed AUTH-178 OPEN/unexpired on origin/main at commit
+7292ba243dc629fe34fe99795610747422bb2eb4 before running. Re-measured the same 52/12/0/40/0
+breakdown live immediately before the UPDATE (no drift between the dry run that grounded this
+authorization and the real run). COMMITTED — 52 rows updated, one UPDATE per row, exactly the
+resolved unit_id already measured, no other column touched. Independently re-verified after
+commit, in a separate rolled-back read transaction: `fuel.fuel_transactions` rows matching
+(USMCA, voided_at IS NULL, load_id NOT NULL, driver_id NOT NULL, unit_id IS NULL) = **0**
+(was 52). Total live USMCA fuel transactions carrying a unit_id = **177 of 177** — exactly
+ROUND 299's own stated target (125 already had one + these 52 = 177).
