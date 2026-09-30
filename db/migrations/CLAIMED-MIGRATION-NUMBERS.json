@@ -1167,5 +1167,11 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-28",
     "purpose": "B-LEDGER-1 (ROUND 206): retroactive record for the fuel.fuel_transactions genesis-anchor gross_cost/discount_amount/fee_amount columns, which live-verified were already applied to prod directly (twice, under migration numbers 202614420000 and 202614430000 that were never committed as .sql and were later legitimately re-claimed by two unrelated real migrations -- mdata_drivers_merged_into_driver_id.sql and worm_check_engine_banking_tables.sql). This migration is idempotent (ADD COLUMN IF NOT EXISTS, UPDATE ... WHERE col IS NULL) and changes nothing live -- it exists so the repo finally has a durable, reviewable record matching what prod already carries. Data verified sane before writing this: gross_cost = total_cost exactly for all 1,631 backfilled rows, no doubling."
+  },
+  "202614601800": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-30",
+    "purpose": "ROUND 274 voided_at/status CHECKs + driver_liabilities drift repair + check reinstate cols + plaid re-point"
   }
+
 }

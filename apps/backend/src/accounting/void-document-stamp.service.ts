@@ -335,6 +335,13 @@ export const REINSTATE_DOCUMENT_FAMILIES = [
   "customer_payment",
   "credit_memo",
   "prepaid_purchase",
+  // ROUND 274 — symmetric reinstate for entities wired into executeVoidCancel.
+  "driver_bill",
+  "driver_liability",
+  "driver_settlement",
+  "bank_transaction",
+  "check_number_registry",
+  "work_order",
 ] as const;
 
 export type ReinstateDocumentFamily = (typeof REINSTATE_DOCUMENT_FAMILIES)[number];
@@ -344,6 +351,13 @@ type ReinstateFamilySpec = FamilyTableSpec & {
   clearRevoked: boolean;
   /** Every reinstate family measured live carries reinstated_* (Neon 2026-09-28). */
   hasReinstateCols: boolean;
+  /**
+   * ROUND 274 — reason column name. Most tables use void_reason; banking.bank_transactions
+   * and maintenance.work_orders use voided_reason / void_notes respectively.
+   */
+  voidReasonColumn?: "void_reason" | "voided_reason" | "void_notes";
+  /** Default true. bank_transactions has no voided_by_user_id column. */
+  hasVoidedByUserId?: boolean;
 };
 
 const REINSTATE_FAMILY_TABLE: Record<ReinstateDocumentFamily, ReinstateFamilySpec> = {
@@ -394,6 +408,58 @@ const REINSTATE_FAMILY_TABLE: Record<ReinstateDocumentFamily, ReinstateFamilySpe
     livenessColumn: null,
     clearRevoked: false,
     hasReinstateCols: true,
+  },
+  driver_bill: {
+    schema: "driver_finance",
+    table: "driver_bills",
+    voidStatusValue: "void",
+    livenessColumn: null,
+    clearRevoked: false,
+    hasReinstateCols: true,
+  },
+  driver_liability: {
+    schema: "driver_finance",
+    table: "driver_liabilities",
+    voidStatusValue: "voided",
+    livenessColumn: null,
+    clearRevoked: false,
+    hasReinstateCols: true,
+  },
+  driver_settlement: {
+    schema: "driver_finance",
+    table: "driver_settlements",
+    voidStatusValue: "cancelled",
+    livenessColumn: null,
+    clearRevoked: false,
+    hasReinstateCols: true,
+  },
+  bank_transaction: {
+    schema: "banking",
+    table: "bank_transactions",
+    // status is categorization (pending_categorization / uncategorized) — never a void flag.
+    voidStatusValue: null,
+    livenessColumn: null,
+    clearRevoked: false,
+    hasReinstateCols: true,
+    voidReasonColumn: "voided_reason",
+    hasVoidedByUserId: false,
+  },
+  check_number_registry: {
+    schema: "banking",
+    table: "check_number_registry",
+    voidStatusValue: "voided",
+    livenessColumn: null,
+    clearRevoked: false,
+    hasReinstateCols: true,
+  },
+  work_order: {
+    schema: "maintenance",
+    table: "work_orders",
+    voidStatusValue: "cancelled",
+    livenessColumn: null,
+    clearRevoked: false,
+    hasReinstateCols: true,
+    voidReasonColumn: "void_notes",
   },
 };
 
@@ -484,11 +550,11 @@ export async function stampDocumentReinstated(
   const restorePosted = params.restorePosted === true;
   const fromJe = params.reinstatedFromVoidJeId ?? null;
 
-  const setClauses = [
-    "voided_at = NULL",
-    "void_reason = NULL",
-    "voided_by_user_id = NULL",
-  ];
+  const reasonCol = spec.voidReasonColumn ?? "void_reason";
+  const setClauses = ["voided_at = NULL", `${reasonCol} = NULL`];
+  if (spec.hasVoidedByUserId !== false) {
+    setClauses.push("voided_by_user_id = NULL");
+  }
   const queryParams: unknown[] = [documentId, operatingCompanyId, reinstateReason.trim(), reinstatedByUserId, fromJe];
 
   if (spec.clearRevoked) {
@@ -497,11 +563,11 @@ export async function stampDocumentReinstated(
     setClauses.push("revoked_by_user_id = NULL");
   }
   if (restoreStatus !== null && spec.voidStatusValue !== null) {
-    // Only flip status when the family has a status column (customer_payment does not).
+    // Only flip status when the family has a void-status column (customer_payment / bank_transaction do not).
     queryParams.push(restoreStatus);
     setClauses.push(`status = $${queryParams.length}`);
-  } else if (restoreStatus !== null && family === "customer_payment") {
-    // no-op — payments has no status column
+  } else if (restoreStatus !== null && (family === "customer_payment" || family === "bank_transaction")) {
+    // no-op — no void-status column (bank_transaction.status is categorization, left untouched).
   } else if (restoreStatus === null && spec.voidStatusValue !== null && family !== "journal_entry") {
     // Caller forgot restoreStatus on a status-bearing family — refuse rather than leave status='void'.
     throw new VoidDocumentStampError(

@@ -1,35 +1,24 @@
-# NOW-CURSOR — 2026-09-29 ROUND 274
+# NOW-CURSOR — 2026-09-30 ROUND 274 remainder (CHECKs + reinstate + claim)
 
 ## HARD LINE
-Obey `claude/00-SEAT-CONTRACT.md`. ROUND 265 self-service. Factoring STOPPED for Cursor — CC-2 owns factoring engine.
+Obey `claude/00-SEAT-CONTRACT.md`. Close-out phases: `claude/00-THE-ACCOUNTING-CLOSE-OUT-DO-THIS-IN-ORDER.md` — Cursor = Phase 2 void engine.
 
-## FIRST — ROUND 273 items 61 + 62 CLOSED
+## DONE — ROUND 273 #61+#62
+#23158 + #23170 register DONE-VERIFIED. Live tip advances with main.
 
-| # | Item | Proof |
-|---|------|-------|
-| 61 | void-predicate leaf map (WriteCheck / SettlementCreator) | #23158 `85dd08c643` · `verify-void-predicate-map-current OK — 81 tables` · TruckLine `claude/truckline-schedule-conflict-detector` `f0b099c892` on origin · re-PASS tip main |
-| 62 | NO_CLEARING_PILEUP + open-tour | #23158 E PASS `$0.00` excl in-transit FA · open-tour #23153+#23155 · `verify-open-tour-posts-nothing PASS` · CC-2 3 branches still seat-local (guards no longer block) |
+## ROUND 274 — THIS BRANCH closes the remainder
 
-Deploy R273: `dep-dau46k7avr4c73fk1a7g` (sha `85dd08c643`). Later tip live: healthz advances with main.
+Landed earlier (#23170): EXECUTORS for all R274 entities · Plaid re-point helper · `verify-r274-void-engine-complete.mjs`.
 
-## NOW — ROUND 274 THE VOID ENGINE (IN FLIGHT on `cursor/r274-void-engine-c89b`)
-
-Order: `claude/09-29-2026-Cursor-ROUND-274-THE-VOID-ENGINE.md`
-Register: 5, 49, 50, 53 · **ALL ENTITIES** · no partial delivery.
-
-### Landed this session
-1. **EXECUTORS** — wired all R274 entity keys (was 9+load unsupported; now +factoring_advance, bank_transaction, reconciliation_match, driver_bill, driver_liability, check_number_registry, bill_line, settlement_line, safety_incident, legal_contract_instance, relay_fuel_transaction(+_line)). `load` stays supported:false.
-2. **Plaid item 53** — `repointReconciliationMatchesOnPlaidMerge` in `bank-tx-dedup.ts` (retire + supersede paths). Migration `202614600000_r274_plaid_merge_repoint_recon_matches.sql` repairs live orphan match `2d1f3f73…` → survivor `52c51c10…`.
-3. **Guard** — `scripts/verify-r274-void-engine-complete.mjs` (selftest PASS; REQUIRES_LIVE_DB; shrink-only baselines status_drift=0, plaid_orphans=0).
-
-### Still open
-- Per-table DB CHECK for remaining status/voided_at pairs (factoring already has AUTH-132)
-- Symmetric reinstatement path for new entities
-- Claim+wire verify-step (mod-4 EVEN) · merge · deploy proof
-- Ensure migrate runner records `202614601800` on Neon (data already clean; migration idempotent)
+This remainder:
+1. **DB CHECKs** — `202614601800_r274_void_status_checks_and_liability_drift.sql` for expenses, driver_liabilities, driver_settlements, check_number_registry, work_orders. Factoring untouched (AUTH-132).
+2. **Drift repair** — 2 `driver_liabilities` status `reversed`→`voided` (status_before_void preserved). Measured: only those 2 disagreed.
+3. **Reinstatement** — `REINSTATE_DOCUMENT_FAMILIES` + `reinstateDocument` wired for driver_bill / driver_liability / driver_settlement / bank_transaction / check_number_registry / work_order. check_number_registry gets reinstated_* columns in the same migration.
+4. **Claim 11610** — #23178 on main; step `11610-verify-r274-void-engine-complete.mjs`.
+5. **WO void** — executeWorkOrder void now flips `status='cancelled'` so CHECK and engine agree.
 
 ## DO NOT
-- Duplicate CC-1 AUTH-132 factoring status repair
-- Merge `cc-3/round157d-settlement-screens` stale −guards shape
+- Duplicate factoring AUTH-132
+- Steal CC-2 factoring engine
 - Edit applied migrations in place
-- Steal CC-2 factoring engine lane (items 42–51)
+- Start Phase 3 purge / phantom money (close-out law — engines first)
