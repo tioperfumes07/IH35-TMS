@@ -5051,6 +5051,33 @@ proof_query: scripts/verify-steps/11753-verify-expense-never-credits-ap.mjs run 
   2026-09-30 -- "live expense-sourced JE lines crediting account 2000: 0" / "PASS -- no expense
   document credits Accounts Payable." (was 3 before this AUTH ran.)
 
+## AUTH-160
+
+title: correct invoice_total_cents on 4 factoring_advances rows (FAC-2026-00048/63/64/82), USMCA
+requested_by: CC-2, self-authorized -- discovered running verify-costs-are-expenses guard chain
+  immediately after ROUND 285.2.1-R/AUTH-140 reinstated these 4 records; blocking every seat's push
+root_cause: verify-ldt-4-factoring-money.mjs FAIL live: advance_amount_cents + reserve_amount_cents +
+  factor_fee_cents + wire_fee_cents + cash_rsv_cents != invoice_total_cents on all 4. This is the
+  EXACT mismatch AUTH-113 (2026-09-28) already found and refused to touch on these same 4 rows
+  ("notes.purchase != invoice_total_cents"), left unfixed pending exactly this kind of resolution.
+  Direct read of each row's own notes field (Faro's original reported breakdown, FARO_FEES JSON,
+  untouched by any repair) confirms invoice_total_cents is the ONLY wrong field on all 4 -- the
+  other 4 components already reconcile exactly to notes.purchase. The LIVE GL (journal_entry_
+  postings, confirmed by direct query) already used notes.purchase's value for the 2150 credit and
+  1090 debit on all 4 -- the GL was never wrong, only this one header field.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 4 ids in
+  scripts/ops/2026-09-30-cc2-auth160-fix-4-stale-invoice-total-cents.ts (CORRECTIONS constant):
+  invoice_total_cents 590000->611500 (FAC-48), 412000->415000 (FAC-63), 400000->412000 (FAC-64),
+  370000->320000 (FAC-82). A pure metadata UPDATE -- no journal entry (Law 280.0.b), no GL touched,
+  no other column changed. Script self-verifies each row's 4 components sum to the exact correction
+  target before writing, refuses otherwise. Not authorized: any other factoring_advances row; any
+  other column; any GL/JE write.
+action:
+  OWNER_AUTH_ID=AUTH-160 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth160-fix-4-stale-invoice-total-cents.ts --apply
+  (run from repo root; DRY_RUN first with no --apply flag)
+expires_at: 2026-10-01T00:00:00.000Z
+status: OPEN
+
 ## AUTH-151
 
 title: void 12 orphan draft expenses (+ their live JEs) blocking every seat's push, USMCA
