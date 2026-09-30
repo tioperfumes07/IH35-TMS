@@ -4876,3 +4876,22 @@ action: OWNER_AUTH_ID=AUTH-147 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-3
   (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
 expires_at: 2026-10-01T05:20:00.000Z
 status: OPEN
+
+## AUTH-148
+issued_at: 2026-09-30T05:30:00.000Z
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- backfill expense_number on 12 specific
+accounting.expenses ids (listed in the ops script below) via the sanctioned generateExpenseNumber
+function (apps/backend/src/expense-attribution/expense-number.ts) -- never a hand-built string.
+These 12 were left with expense_number=NULL by the already-merged AUTH-141 void+recreate repair
+(DEFECT ITEM 4, LOVES vendor AP-to-Bank reclass), which read the original expense_number but never
+included it in its own recreate INSERT's column list. Verified live: all 12 exist, sum to $1,551.14,
+span loads 13609/13610/13612/13614(x3)/13617(x2, one is $1,287.35)/13619 -- matches exactly. The
+existing live guard scripts/verify-expense-number-never-null.mjs already enforces this invariant
+going forward; no new guard needed.
+NOTE: originally drafted as AUTH-147, renumbered to AUTH-148 on discovering a concurrent seat had
+already claimed 147 for a different task (invoice 010) moments earlier. No data conflict -- caught
+before any write, before this branch was ever pushed.
+action: OWNER_AUTH_ID=AUTH-148 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth148-backfill-12-expense-numbers.ts
+  (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
+expires_at: 2026-10-01T05:30:00.000Z
+status: OPEN
