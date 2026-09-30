@@ -221,6 +221,14 @@ hits investigated and ruled out as real business rows (AUTH- mentioned for prove
 real bank ACH fee).
 **Left:** Proceeding to A-22 per the sequence. Nothing written.
 
+## A-22 — 120 unresolved item_ids: reported, not resolved
+**Changed:** Nothing to data (report only, as instructed).
+**Live proof:** `docs/bus/2026-09-30-CC1-A22-UNRESOLVED-ITEM-IDS-REPORT.md` — re-verified live, still
+exactly 120 rows / $4,901.31 (unchanged from PR #23380's original analysis). Full per-row
+enumeration supplied (id, amount, expense_number, transaction_date, description) — the source doc
+had only described the pattern groups, not printed the full list. No item_id guessed or assigned.
+**Left:** The owner decides. Proceeding to A-24 per the sequence.
+
 ## A-24 — safety.driver_documents ↔ mdata.drivers linkage declaration
 **Changed:** Wrote the missing cross-module linkage declaration (data left alone, as instructed).
 **Live proof:** `docs/trackers/LINKAGE-DECLARATION-safety-driver_documents-mdata-drivers.md` — live-
