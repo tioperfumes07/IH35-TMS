@@ -9434,5 +9434,10 @@
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-30",
     "purpose": "verify-invoice-header-requires-line-constraint (B-26)"
+  },
+  "11959": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-driver-attribution-is-time-boxed (ROUND 297.3: B-27 shared driverAtTimeSql helper, B-28/B-29 fuel+damage scorecards)"
   }
 }
