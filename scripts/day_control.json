@@ -414,17 +414,51 @@
     "92",
     "93"
    ]
+  },
+  {
+   "date": "9/24/26",
+   "invoices": 3,
+   "purchase": 9919.72,
+   "escrow": 148.8,
+   "cash_rsv": 0.0,
+   "discount": 148.8,
+   "wire": 0.0,
+   "sch_fee": 0.0,
+   "receipts": 0.0,
+   "net_adv": 9622.12,
+   "inv": [
+    "094",
+    "096",
+    "097"
+   ]
+  },
+  {
+   "date": "9/25/26",
+   "invoices": 3,
+   "purchase": 13950.0,
+   "escrow": 209.25,
+   "cash_rsv": 0.0,
+   "discount": 209.25,
+   "wire": 10.0,
+   "sch_fee": 0.0,
+   "receipts": 0.0,
+   "net_adv": 13521.5,
+   "inv": [
+    "101",
+    "103",
+    "104"
+   ]
   }
  ],
  "totals": {
-  "invoices": 89,
-  "purchase": 311587.0,
-  "escrow": 4530.19,
+  "invoices": 95,
+  "purchase": 335456.72,
+  "escrow": 4888.24,
   "cash_rsv": 135.41,
-  "discount": 4673.82,
-  "wire": 220.0,
+  "discount": 5031.87,
+  "wire": 230.0,
   "sch_fee": 8.22,
   "receipts": 12825.0,
-  "net_adv": 302019.36
+  "net_adv": 325162.98
  }
 }
