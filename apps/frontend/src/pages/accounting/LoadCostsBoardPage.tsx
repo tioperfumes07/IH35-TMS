@@ -116,9 +116,22 @@ const DELIVERED = ["delivered", "delivered_pending_docs", "completed_docs_receiv
 // it is current, never a sibling load's state. is_resettlement stays load-costs-board.routes.ts's
 // signal for the SEPARATE Resettlement tab (isResettlement() below, unchanged) — just no longer a
 // reason to hide an otherwise-active load from Costs.
-const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || r.is_invoiced;
-// An issued invoice moves the original load out of every active bucket, independent of tour close.
-const isResettlement = (r: BoardRow) => r.is_resettlement === true || r.status === "invoiced" || (r.is_invoiced && !CLOSED.includes(r.status));
+// ROUND 18.2 (owner-live 2026-09-30, "LOAD COSTS SHOULD SHOW ALL 16") — the SAME class of defect
+// ROUND 18.1 above overturned, arriving through is_invoiced instead of is_resettlement. Measured
+// live: /api/v1/accounting/load-costs-board returns all 16 open USMCA loads; the board rendered 14.
+// The two it dropped, 13625 and 13626, come back status='dispatched', is_invoiced=true — freight
+// physically in transit that carries an invoice nobody authorised. `|| r.is_invoiced` closed them
+// on the spot, so the loads most in need of attention were the only ones invisible.
+//
+// A load's PHYSICAL state decides whether it is in motion. Invoicing is an ACCOUNTING state and
+// cannot move a truck off the road. An invoice still closes a load that is no longer in a motion
+// status -- that intent is kept -- it just can no longer erase one that is.
+const isClosed = (r: BoardRow) => CLOSED.includes(r.status) || (r.is_invoiced && !MOTION.includes(r.status));
+// An issued invoice moves the original load out of every active bucket ONCE IT HAS STOPPED MOVING,
+// independent of tour close. status === "invoiced" is the real resettlement signal; a dispatched
+// load wearing an invoice is an anomaly to surface on Costs, not a resettlement to file away.
+const isResettlement = (r: BoardRow) =>
+  r.is_resettlement === true || r.status === "invoiced" || (r.is_invoiced && !CLOSED.includes(r.status) && !MOTION.includes(r.status));
 export const LOAD_COSTS_ELEMENT_MANIFEST = [
   "load-costs-shell", "load-costs-back", "load-costs-title", "load-costs-topbar",
   "load-costs-pill-in_motion", "load-costs-pill-delivered_open", "load-costs-pill-all_open", "load-costs-pill-this_week",
