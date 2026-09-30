@@ -186,6 +186,100 @@ function isChecksumOverrideMatch(overridesByFile, file, ledgerChecksum, diskChec
 //
 // Granting here, at the point of creation, is the only self-contained place for it: a migration
 // cannot reliably grant a table the migrator itself needs before migrations run.
+// ── FRESH-DB PRODUCTION-IDENTITY BOOTSTRAP (Lead, 2026-09-30) ────────────────
+// Same class, and the same reasoning, as ensureLedgerGrants above: something a migration CANNOT
+// do for itself, done by the migrator at the only point where it is possible.
+//
+// ROOT CAUSE: 202614530000_qbo_flags_permanent_block.sql seeds catalogs.blocked_feature_flags with
+// blocked_by_user_id = 'e4117991-d2c0-406d-8cda-74e98d95bccd', an FK to identity.users(id). That
+// user is real in PRODUCTION (verified live 2026-09-30) but exists in no migration, so every
+// database built from source — CI's ephemeral Postgres, a DR restore, a fresh Neon branch — dies
+// there with "insert or update on table blocked_feature_flags violates foreign key constraint
+// blocked_feature_flags_blocked_by_user_id_fkey". main CI has been red on this since 2026-09-17.
+//
+// Why it cannot be fixed in a migration, either by editing or by adding one:
+//   - Editing 202614530000 changes the bytes of an APPLIED migration. That was tried (08eee92f52 /
+//     #23137) and red'd deploy AND main with a ledger-checksum mismatch; the owner P0'd a
+//     byte-for-byte restore (#23149). The immutability law is enforced by checksum, not by honor.
+//   - A NEW migration sorts AFTER 202614530000 by construction, so it runs after the failure.
+//     202614580000 (the FK-safe follow-up) correctly repairs production drift, but on a fresh
+//     database it is never reached. There is no number that sorts before an already-applied file.
+// The runner is the only remaining place, exactly as the ledger-grant comment above argues.
+//
+// Scope, deliberately narrow:
+//   - NON-PROD ONLY. Production already has this user; asserting it there is both pointless and a
+//     write this script has no business making.
+//   - The row cannot authenticate: no email, no google_user_id, no password_hash — same shape as
+//     the sanctioned identity.users service account in 202614200000.
+//   - Idempotent (ON CONFLICT DO NOTHING) and no-ops until identity.users exists.
+const FRESH_DB_PROD_IDENTITY_UUID = "e4117991-d2c0-406d-8cda-74e98d95bccd";
+// The migration that needs the row. Bootstrapping EARLIER is wrong and was measured wrong: on a
+// fresh database identity.users exists as a relation long before it has the columns this INSERT
+// writes, so an earlier attempt died with 'column "id" of relation "users" does not exist'
+// (CI 2026-09-30T10:50:29Z). Gate on the file that actually needs it — by then the table has
+// evolved into its final shape — and verify the columns anyway rather than trusting the order.
+const FRESH_DB_IDENTITY_NEEDED_BY = "202614530000_qbo_flags_permanent_block.sql";
+let freshDbIdentityBootstrapped = false;
+async function ensureFreshDbProductionIdentity(client, file) {
+  if (TARGET_IS_PROD || freshDbIdentityBootstrapped) return;
+  if (file < FRESH_DB_IDENTITY_NEEDED_BY) return;
+  const cols = await client.query(
+    `SELECT column_name FROM information_schema.columns WHERE table_schema = 'identity' AND table_name = 'users'`
+  );
+  const have = new Set(cols.rows.map((r) => r.column_name));
+  if (!have.has("id") || !have.has("role")) return; // not yet in its final shape — retry next file
+  // 'Administrator', not 'Owner': identity carries a role-escalation trigger — "only a primary
+  // owner can assign the Owner role" — which refused the insert outright (CI 2026-09-30T10:55:16Z).
+  // That control is correct and stays untouched. This row exists ONLY so an FK has something to
+  // point at in a throwaway database; nothing reads its role, and 'Administrator' is the same role
+  // the sanctioned identity.users service account in 202614200000 uses.
+  await client.query(
+    `
+      INSERT INTO identity.users (id, role)
+      VALUES ($1::uuid, 'Administrator')
+      ON CONFLICT (id) DO NOTHING
+    `,
+    [FRESH_DB_PROD_IDENTITY_UUID]
+  );
+  freshDbIdentityBootstrapped = true;
+  console.log(
+    `[db:migrate] fresh-DB identity bootstrap: ensured identity.users ${FRESH_DB_PROD_IDENTITY_UUID} before ${file} (non-prod target only)`
+  );
+}
+
+// ── FRESH-DB PRODUCTION-SCHEMA BOOTSTRAP (Lead, 2026-09-30) ──────────────────
+// The SECOND instance of the same class the identity bootstrap above exists for, found the moment
+// that one unblocked the chain: production carries a `status_before_void` column on EIGHTEEN money
+// tables and NO migration in this repo creates a single one of them. They were added live, by hand,
+// and never expressed as a migration. 202614601800_r274_void_status_checks_and_liability_drift.sql
+// reads driver_finance.driver_liabilities.status_before_void, so on any database built from source
+// it dies with 'column "status_before_void" does not exist' (CI 2026-09-30T11:01:42Z) — and that
+// migration is itself ALREADY APPLIED in production (2026-09-30T01:00:42Z), so it cannot be edited.
+//
+// This is NOT the real fix and must not be mistaken for one. The real fix is a schema-parity
+// migration that expresses the full status_before_void family, owned by whoever created those
+// columns live. This keeps every fresh database — CI, a DR restore, a new Neon branch — buildable
+// until that lands. Non-prod only; IF NOT EXISTS; production is never touched by this path.
+const FRESH_DB_SCHEMA_NEEDED_BY = "202614601800_r274_void_status_checks_and_liability_drift.sql";
+let freshDbSchemaBootstrapped = false;
+async function ensureFreshDbProductionSchema(client, file) {
+  if (TARGET_IS_PROD || freshDbSchemaBootstrapped) return;
+  if (file < FRESH_DB_SCHEMA_NEEDED_BY) return;
+  const present = await client.query(
+    `SELECT to_regclass('driver_finance.driver_liabilities') IS NOT NULL AS ok`
+  );
+  if (!present.rows[0]?.ok) return;
+  await client.query(
+    `ALTER TABLE driver_finance.driver_liabilities ADD COLUMN IF NOT EXISTS status_before_void text`
+  );
+  freshDbSchemaBootstrapped = true;
+  console.log(
+    `[db:migrate] fresh-DB schema bootstrap: ensured driver_finance.driver_liabilities.status_before_void before ${file} (non-prod target only; production drift — needs a real parity migration)`
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+
 async function ensureLedgerGrants(client) {
   // Role-guarded because on a genuinely fresh database this runs BEFORE 0006 creates ih35_app.
   // That first pass no-ops; the call after the apply loop then lands it in the same run.
@@ -595,6 +689,8 @@ try {
       );
     }
 
+    await ensureFreshDbProductionIdentity(client, file);
+    await ensureFreshDbProductionSchema(client, file);
     console.log(`APPLY ${file}`);
     await applyMigration(client, file, sql, checksum);
     if (!ledgerFilesByChecksum.has(checksum)) ledgerFilesByChecksum.set(checksum, []);

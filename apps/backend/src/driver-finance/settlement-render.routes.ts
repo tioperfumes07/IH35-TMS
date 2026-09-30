@@ -164,8 +164,22 @@ export async function registerDriverFinanceSettlementHtmlRoutes(app: FastifyInst
         });
       }
 
+      // SETTLE-PDF-500 (Lead, 2026-09-30) — ROOT CAUSE of a live 500 on every driver settlement
+      // PDF. This optional read runs INSIDE the withCompanyScope transaction. It used to sit in a
+      // bare `catch { billRowsCache = null }`: when the query failed, the error was discarded but
+      // the TRANSACTION STAYED POISONED, so the next statement — appendCrudAudit, ~90 lines later —
+      // died with 25P02 "current transaction is aborted". Production returned an opaque 25P02 that
+      // named the audit write, not the query that actually failed, and the real cause was gone.
+      // Measured live 2026-09-30T10:37:55Z: GET /api/v1/driver-finance/settlements/:id.html -> 500,
+      // 25P02, stack at appendCrudAudit (settlement-render.routes.js:228).
+      //
+      // An optional read inside a transaction needs its OWN SAVEPOINT — rolling back to it clears
+      // the aborted state so the fallback path (lineDerivedLoads) can actually be taken, which is
+      // the whole point of it being optional. And the error is LOGGED, never discarded: a silent
+      // failure here is what hid this defect in the first place.
       let billRowsCache: Awaited<ReturnType<typeof listDriverBillsForSettlementPeriod>> | null = null;
       if (await hasDriverBillsTable(client)) {
+        await client.query("SAVEPOINT settlement_bills_read");
         try {
           billRowsCache = await listDriverBillsForSettlementPeriod(client, {
             operatingCompanyId: query.data.operating_company_id,
@@ -173,8 +187,20 @@ export async function registerDriverFinanceSettlementHtmlRoutes(app: FastifyInst
             periodStart: String(settlement.period_start),
             periodEnd: String(settlement.period_end),
           });
-        } catch {
+          await client.query("RELEASE SAVEPOINT settlement_bills_read");
+        } catch (err) {
+          await client.query("ROLLBACK TO SAVEPOINT settlement_bills_read");
+          await client.query("RELEASE SAVEPOINT settlement_bills_read");
           billRowsCache = null;
+          req.log.error(
+            {
+              err,
+              settlement_id: params.data.settlementId,
+              driver_id: String(settlement.driver_id),
+              operating_company_id: query.data.operating_company_id,
+            },
+            "settle_pdf_500_driver_bills_read_failed_falling_back_to_settlement_lines"
+          );
         }
       }
 
