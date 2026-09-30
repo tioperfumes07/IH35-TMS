@@ -689,3 +689,25 @@ current_state='approaching', distance_m=805.9, matching geo.geofence_vehicle_sta
 row exactly.
 
 REMAINING: T-35 next in the Round 301 queue.
+
+## CC-3 — ROUND 301 T-35 SHIPPED — DAMAGE-WO-UNITS-ZERO-ASSIGNMENT-COVERAGE-2026093006 closed VOID
+
+Live-verified all 5 units CC-2's finding named (6eb57e6d=T151, 1a3c98da=T149, bb1e77ab=USMCA-001,
+bf353dfc=T150, 395352db=T120) match T-23's own KNOWN_TEST_UNIT_NUMBERS list exactly, id for id.
+Coder test artifacts, not real fleet trucks -- is_sample_data=false on all 5 notwithstanding (the
+flag was simply never set; classification rests on the T-22/T-23 investigation itself, not that
+column). Closed VOID in docs/audit/GUARD-WORKORDERS.md, evidence appended in place, nothing
+deleted.
+
+THE REAL PAIRING HOLE, filed separately (ASSIGNMENT-COVERAGE-T122-T124-ZERO-PAIRING-2026093012):
+T122 and T124 -- the two REAL units with zero telematics.vehicle_driver_assignments rows, full
+table history, not just the 90-day window (confirmed: count=0 for both, all time). Two different
+failure shapes: T122 has also never had a live odometer and its position feed went dark 4 days
+before T-25's measurement (consistent with its Samsara device's "(R)" suffix); T124 has a FRESH
+position/odometer feed (reported today) but the driver-pairing side of its Samsara integration
+never has, while the GPS side works fine. Every damage/accident/fault/PM attribution touching
+either unit honestly resolves to an unattributed driver until this closes -- not an engine bug,
+a real per-unit pairing gap.
+
+MEASURED ONLY, nothing changed: no assignment rows written, no unit reclassified, no is_sample_data
+flag touched.
