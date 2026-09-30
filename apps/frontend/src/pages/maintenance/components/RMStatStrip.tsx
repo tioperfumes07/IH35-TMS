@@ -24,21 +24,13 @@ export function RMStatStrip({ kpis }: Props) {
   const k = kpis as Record<string, unknown>;
   const mtdCostRaw = count(k, "mtd_repair_cost") ?? count(k, "open_dollars");
   const mtdCost = mtdCostRaw === null ? null : `$${mtdCostRaw.toLocaleString()}`;
-  const severeOos = count(k, "severe_oos");
   const partsLowStock = count(k, "parts_low_stock");
 
+  // C-36 — drop Open / In Progress / Awaiting Parts / Severe tiles: those four duplicate the
+  // Home kanban column counts ~81px below this strip. Keep the four that are NOT column counts.
   return (
-    <div className="grid grid-cols-2 gap-1.5 md:grid-cols-4 lg:grid-cols-8" data-testid="rm-status-stat-strip">
-      <DrillKpiCard label="Open WOs" value={count(k, "open_wos")} to="/maintenance/active-wos" />
-      <DrillKpiCard label="In Progress" value={count(k, "in_progress")} to="/maintenance/active-wos" />
-      <DrillKpiCard label="Awaiting Parts" value={count(k, "waiting_parts")} to="/maintenance/active-wos" />
+    <div className="grid grid-cols-2 gap-1.5 md:grid-cols-4" data-testid="rm-status-stat-strip" data-c36-kpi="non-kanban">
       <DrillKpiCard label="PM Due Soon" value={count(k, "pm_due")} to="/maintenance/pm-schedule" />
-      <DrillKpiCard
-        label="Severe / OOS"
-        value={severeOos}
-        valueTone={severeOos ? "critical" : "default"}
-        to="/maintenance/severe-repairs"
-      />
       <DrillKpiCard label="Road Service" value={count(k, "road_service")} to="/maintenance/road-service" />
       <DrillKpiCard
         label="Parts Low-Stock"

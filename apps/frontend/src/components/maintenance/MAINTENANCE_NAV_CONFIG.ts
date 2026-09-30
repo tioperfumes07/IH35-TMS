@@ -32,23 +32,22 @@ export const MAINTENANCE_MASTER_DATA_LINKS: MaintenanceNavLink[] = [
   { label: "Fault Rules", path: "/maintenance/fault-rules" },
 ];
 
-/** Dashboard operational sub-tabs — guarded by verify:maintenance-tab-coverage (10). */
+/** Dashboard operational sub-tabs — C-36 owner canvas (9). */
 export const MAINTENANCE_DASHBOARD_TAB_LINKS: MaintenanceNavLink[] = [
-  { label: "Active WOs", path: "/maintenance/active-wos" },
+  { label: "Home", path: "/maintenance/rm-status-board" },
   { label: "Fleet Table", path: "/maintenance/fleet-table" },
-  { label: "R&M Status Board", path: "/maintenance/rm-status-board" },
+  { label: "Active WOs", path: "/maintenance/active-wos" },
   { label: "Service / Location", path: "/maintenance/service-location" },
-  { label: "Arriving Soon", path: "/maintenance/arriving-soon" },
-  { label: "In-Transit Issues", path: "/maintenance/in-transit-issues" },
-  { label: "Damage Reports", path: "/maintenance/damage-reports" },
-  { label: "Severe Repairs", path: "/maintenance/severe-repairs" },
+  { label: "Driver Reports", path: "/maintenance/driver-reports" },
+  { label: "Road Service", path: "/maintenance/road-service" },
   { label: "Parts Inventory", path: "/maintenance/parts-inventory" },
+  { label: "Integrity Report", path: "/maintenance/integrity-report" },
   { label: "Settings", path: "/maintenance/settings" },
 ];
 
-/** Operation links table (dashboard home + operational tabs = 11). */
+/** Operation links table (dashboard home + operational tabs = 10). */
 export const MAINTENANCE_OPERATION_LINKS: MaintenanceNavLink[] = [
-  { label: "Dashboard", path: "/maintenance" },
+  { label: "Home", path: "/maintenance" },
   ...MAINTENANCE_DASHBOARD_TAB_LINKS,
 ];
 

@@ -115,14 +115,15 @@ Every page renders inside a 3-zone shell:
 
 | Tab | What it shows | Notes |
 |-----|---------------|-------|
-| **Active WOs** | All open + in-progress WOs in table view | Default view |
+| **Home** | Kanban: Open / In Progress / Awaiting Parts / Severe / OOS / Completed. Arriving Soon + At Risk folded here (C-36). | Default view |
 | **Fleet Table** | Fleet-oriented maintenance table by unit | Phase 3 shell; bulk-select checkbox column (Block A5) with sticky BulkActionBar for Change Status (Active · Sold · Transferred · Damaged · OOS) and Change Type; POST `/api/v1/mdata/units/bulk-update` is RLS-scoped and emits one `unit.bulk_update` audit row per affected unit; Block B4 joins trucks (`mdata.units`) and trailers (`mdata.equipment`) in one list via GET `/api/v1/mdata/units?include=trailers` with `kind` discriminator, Type column, and trailer bulk-update at POST `/api/v1/mdata/equipment/bulk-update`; Block B5 adds type filter dropdown (All · Truck · Tractor · Reefer · DryVan · Flatbed · Stepdeck · Lowboy · Tanker · Custom) with URL sync `?type=` on GET `/api/v1/mdata/units?include=trailers&type=` combined AND with `status=` |
-| **R&M Status Board** | Kanban: Open / Awaiting Parts / In Progress / Awaiting Vendor / Completed | Drag-to-transition |
+| **Active WOs** | All open + in-progress WOs in table view | List |
 | **Service / Location** | Service location board and queue split by location | Phase 3 shell |
-| **Arriving Soon Needs Service** ← NEW T11.6.2 | Cards of units arriving at yard with open in-transit issues + ETA | Phase 3 ships UI; Phase 4 wires live Samsara ETA |
-| **In-Transit Issues** | Triage queue from `dispatch.intransit_issues` (driver-reported failures) | "Promote to WO" action per WF-049 |
-| **Damage Reports** | Pre-WO damage photo intake | Auto-spawn WO-AC if accident |
-| **Severe Repairs** | High-severity repair alerts and escalations | Phase 3 shell |
+| **Driver Reports** | Kind column: Driver · Damage · In-transit · DVIR (C-36). Damage register + in-transit triage + DVIR defects fold here. | Segmented Kind |
+| **Road Service** | Roadside / road-service tickets | |
+| **Parts Inventory** | Parts stock + reorder | |
+| **Integrity Report** | Driver scorecard + fuel anomalies (CC-2 integrity engine) | C-36 |
+| **Settings** | Maintenance module settings | |
 | **Parts Inventory** ← NEW T11.6.1 | Light stock tracking (anti-theft daily-purchase pattern) | "+ Record Purchase" button |
 | **Settings** | PM intervals per equipment class · Vendor preferences · Bay assignments | Owner+Admin only |
 
@@ -580,7 +581,7 @@ Active Customers · Open Loads · MTD Revenue · AR Total · Disputes Open
 
 **Route aliases (B21-D1):** Legacy `/dispatch/loads` → `/dispatch?view=loads`; `/dispatch/loads/{uuid}` → `/dispatch?load_id={uuid}`; `/dispatch/incidents` → `/dispatch/alerts`; `/dispatch/factoring-packets` → `/accounting/factoring`. DISPATCH sidebar flyout includes At-Risk Queue, In-Transit Issues, Assignment History (B21-D2), Planner Calendar (B21-D4), Detention Board (B21-D5), OCR Queue (B21-D7), Customer ETA Notify (B21-D9), POD Review + BOL (B21-D10), Awaiting BOL for invoice (ROUND 285.4.10 / #60), Needs delivery authorization (ROUND 292), Dispatch Settings (B21-D11), Border Crossing + Border History + Factoring Packets per triage. **CI:** `verify:dispatch-arch-tab-parity`, `verify:dispatch-planner-calendar`, `verify:dispatch-detention-board`, `verify:dispatch-ocr-queue`, `verify:dispatch-assignment-optimizer`, `verify:dispatch-customer-eta-notify`, `verify:dispatch-pod-bol-workflow`, `verify:dispatch-settings-tab`, `verify:dispatch-secondary-nav-depth`, `verify-auto-invoice-on-bol-wired`, `verify-needs-delivery-authorization-wired`.
 
-**Maintenance module nav counts (B24 + Block 22 orphan-nav close):** Canonical surfaces in `MAINTENANCE_NAV_CONFIG.ts` — **13 sidebar flyout links**, 10 dashboard operational tabs, **11 Master Data hover links** (includes `/maintenance/drivers`, `/maintenance/fault-drafts`, `/maintenance/fault-rules`), 10 Lists maintenance catalogs. HOME quick-jump uses `MAINTENANCE_HOME_QUICK_JUMP_COUNT` (13). **Fault Drafts** + **Fault Rules** are first-class flyout/Master Data destinations (never URL-only). Dead stub CTAs removed from parts-inventory dashboard band, fleet-table empty state, service-location empty state, and vendors CSV Import. **CI:** `verify:maint-nav-count-reconcile`, `verify:fault-drafts-nav`.
+**Maintenance module nav counts (B24 + C-36 Round 300):** Canonical surfaces in `MAINTENANCE_NAV_CONFIG.ts` — **13 sidebar flyout links**, **9 dashboard operational tabs** (Home · Fleet Table · Active WOs · Service/Location · Driver Reports · Road Service · Parts Inventory · Integrity Report · Settings), **11 Master Data hover links** (includes `/maintenance/drivers`, `/maintenance/fault-drafts`, `/maintenance/fault-rules`), 21 Lists maintenance catalogs. HOME quick-jump uses `MAINTENANCE_HOME_QUICK_JUMP_COUNT` (13). Retired peers (Brake/Tire Wear, Arriving Soon, At Risk, Damage, In-Transit, Severe, Pre-Flight DVIR) stay routable (Rule 07) via remaps into Home / Driver Reports Kind / Active WOs. **CI:** `verify:maint-nav-count-reconcile`, `verify:maintenance-tab-coverage`, `scripts/ops/verify-c36-maint-tabs-16-to-9.mjs`.
 
 ### KPI row — 6 cards
 Active Loads · In Transit · At Risk · Border Decisions Pending · Ready to Settle · MTD Revenue

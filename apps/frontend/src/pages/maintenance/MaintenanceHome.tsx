@@ -28,6 +28,7 @@ import { maintenancePartsStockQueryKey } from "../inventory/partsStockQueryKeys"
 import { ArrivingSoonPage } from "./ArrivingSoonPage";
 import { DriverReportsQueuePage } from "./DriverReportsQueuePage";
 import { FleetTablePage } from "./FleetTablePage";
+import { IntegrityReportPage } from "./IntegrityReportPage";
 import { MaintenanceSettingsPage } from "./MaintenanceSettingsPage";
 import { ServiceLocationPage } from "./ServiceLocationPage";
 import { CreateWorkOrderModal } from "./components/CreateWorkOrderModal";
@@ -61,6 +62,7 @@ import { formatTriageLocation, triageDescription } from "./triage-location";
 import { partNeedsReorder } from "./parts-low-stock";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
+import { SegmentedControl } from "../../components/SegmentedControl";
 import {
   MAINTENANCE_MASTER_DATA_LINKS,
   MAINTENANCE_OPERATION_LINKS,
@@ -69,28 +71,38 @@ import { MAINTENANCE_TAB_PATH, maintenanceTabFromPath } from "../../router/route
 
 export { MAINTENANCE_MASTER_DATA_LINKS, MAINTENANCE_OPERATION_LINKS } from "../../components/maintenance/MAINTENANCE_NAV_CONFIG";
 
-// Approved order (maintenance-FULL-with-chrome.html): R&M Status Board is the landing tab, then Fleet
-// Table, then Active WOs. Additive reorder only — every existing tab is preserved.
+// C-36 (Round 300) — owner canvas: 9 tabs. Retired peers stay routable (Rule 07) via remaps.
 const SUBNAV = [
-  { id: "rm_status_board", label: "R&M Status Board" },
+  { id: "rm_status_board", label: "Home" },
   { id: "fleet_table", label: "Fleet Table" },
   { id: "active_wos", label: "Active WOs" },
   { id: "service_location", label: "Service / Location" },
-  { id: "arriving_soon", label: "Arriving Soon" },
-  { id: "in_transit_issues", label: "In-Transit Issues" },
-  { id: "damage_reports", label: "Damage Reports" },
   { id: "driver_reports", label: "Driver Reports" },
-  { id: "severe_repairs", label: "Severe Repairs" },
   { id: "road_service", label: "Road Service" },
   { id: "parts_inventory", label: "Parts Inventory" },
-  { id: "brake_wear", label: "Brake Wear" },
-  { id: "predictive_alerts", label: "At Risk" },
-  { id: "tire_wear", label: "Tire Wear" },
-  { id: "pre_flight_dvir", label: "Pre-Flight DVIR" },
+  { id: "integrity_report", label: "Integrity Report" },
   { id: "settings", label: "Settings" },
 ] as const;
 
-export type MaintenanceTabId = (typeof SUBNAV)[number]["id"];
+export type MaintenanceTabId =
+  | (typeof SUBNAV)[number]["id"]
+  | "arriving_soon"
+  | "in_transit_issues"
+  | "damage_reports"
+  | "severe_repairs"
+  | "brake_wear"
+  | "tire_wear"
+  | "predictive_alerts"
+  | "pre_flight_dvir";
+
+type DriverReportKind = "driver" | "damage" | "in_transit" | "dvir";
+
+const DRIVER_REPORT_KIND_OPTIONS: { value: DriverReportKind; label: string }[] = [
+  { value: "driver", label: "Driver" },
+  { value: "damage", label: "Damage" },
+  { value: "in_transit", label: "In-transit" },
+  { value: "dvir", label: "DVIR" },
+];
 
 type Props = {
   initialTab?: MaintenanceTabId;
@@ -139,12 +151,45 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const isListTab =
     tab === "active_wos" ||
     tab === "fleet_table" ||
-    tab === "arriving_soon" ||
     tab === "service_location" ||
-    tab === "in_transit_issues" ||
     tab === "parts_inventory" ||
+    tab === "driver_reports" ||
+    tab === "integrity_report" ||
+    tab === "road_service";
+
+  // C-36 Driver Reports Kind — damage / in-transit / DVIR fold into this tab (not separate peers).
+  // Remapped paths still set Kind even though maintenanceTabFromPath returns driver_reports.
+  const pathNorm = location.pathname.length > 1 && location.pathname.endsWith("/")
+    ? location.pathname.slice(0, -1)
+    : location.pathname;
+  const kindParam = (searchParams.get("kind") ?? "").toLowerCase();
+  const driverReportKind: DriverReportKind =
+    kindParam === "damage" || kindParam === "in_transit" || kindParam === "dvir" || kindParam === "driver"
+      ? (kindParam as DriverReportKind)
+      : pathNorm === "/maintenance/damage-reports" || tab === "damage_reports"
+        ? "damage"
+        : pathNorm.includes("in-transit") || pathNorm === "/maintenance/triage" || tab === "in_transit_issues"
+          ? "in_transit"
+          : pathNorm === "/maintenance/dvir" || pathNorm === "/maintenance/pre-flight-dvir" || tab === "pre_flight_dvir"
+            ? "dvir"
+            : "driver";
+  const setDriverReportKind = (next: DriverReportKind) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "driver") params.delete("kind");
+    else params.set("kind", next);
+    setSearchParams(params, { replace: true });
+  };
+
+  const showDriverReportsSurface =
+    tab === "driver_reports" ||
     tab === "damage_reports" ||
-    tab === "driver_reports";
+    tab === "in_transit_issues" ||
+    tab === "pre_flight_dvir" ||
+    pathNorm === "/maintenance/damage-reports" ||
+    pathNorm.includes("in-transit") ||
+    pathNorm === "/maintenance/dvir" ||
+    pathNorm === "/maintenance/pre-flight-dvir";
+  const isHomeTab = tab === "rm_status_board";
 
   useEffect(() => {
     if (createWoDeepLink) {
@@ -185,7 +230,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const triageTableQuery = useQuery({
     queryKey: ["maintenance", "dashboard", "triage-table", companyId, triagePage],
     queryFn: () => getMaintenanceInTransitQueue(companyId, { limit: triagePageSize, offset: (triagePage - 1) * triagePageSize }),
-    enabled: Boolean(companyId) && tab === "in_transit_issues",
+    enabled: Boolean(companyId) && (tab === "in_transit_issues" || (showDriverReportsSurface && driverReportKind === "in_transit")),
   });
   const triageTotalPages = Math.max(1, Math.ceil((triageTableQuery.data?.total_count ?? 0) / triagePageSize));
   useEffect(() => setTriagePage(1), [companyId]);
@@ -358,13 +403,12 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         items={SUBNAV.map((item) => ({ label: item.label, to: MAINTENANCE_TAB_PATH[item.id] ?? "/maintenance" }))}
       />
 
-      {/* MAINT-F7528 — R&M owns its purpose-built RMStatStrip below. Rendering the global strip
-          here as well duplicated Open WOs and PM Due with different labels on the same surface. */}
-      {tab !== "rm_status_board" && tab !== "settings" ? (
+      {/* MAINT-F7528 — Home owns RMStatStrip (non-kanban tiles only, C-36). */}
+      {!isHomeTab && tab !== "settings" ? (
         <MaintKpiRows kpis={kpis} isError={kpisQuery.isError} compact={isListTab} />
       ) : null}
-      {/* D10/D32/D33: PM countdown / Alerts / DTC stay on R&M sidebar only — list tabs need the list visible. */}
-      {companyId && !isListTab && tab !== "rm_status_board" && tab !== "settings" ? (
+      {/* D10/D32/D33: PM countdown / Alerts / DTC stay on Home sidebar only — list tabs need the list visible. */}
+      {companyId && !isListTab && !isHomeTab && tab !== "settings" ? (
         pmDueQuery.isError ? (
           <ListErrorState
             title="Couldn't load PM countdown"
@@ -376,13 +420,12 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           <MaintenancePmCountdownCards rows={pmDueQuery.data?.rows ?? []} loading={pmDueQuery.isLoading} />
         )
       ) : null}
-      {!isListTab && tab !== "rm_status_board" && tab !== "settings" ? (
-        <IntegrationsStrip pendingQboCount={kpis.pending_qbo} />
-      ) : null}
-      {companyId && !isListTab && tab !== "rm_status_board" && tab !== "settings" ? (
+      {/* C-36 — IntegrationsStrip renders ONCE, on Home only (was duplicating on every non-list tab). */}
+      {isHomeTab ? <IntegrationsStrip pendingQboCount={kpis.pending_qbo} /> : null}
+      {companyId && !isListTab && !isHomeTab && tab !== "settings" ? (
         <MaintenanceAlertsCard operatingCompanyId={companyId} />
       ) : null}
-      {companyId && !isListTab && tab !== "rm_status_board" && tab !== "settings" ? (
+      {companyId && !isListTab && !isHomeTab && tab !== "settings" ? (
         <DtcAutoWorkOrdersCard operatingCompanyId={companyId} />
       ) : null}
 
@@ -513,6 +556,17 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
             )}
           </aside>
           </div>
+          {/* C-36 — fold Arriving Soon + At Risk into Home (no peer tabs). */}
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-2" data-testid="maintenance-home-folded-panels">
+            <div data-testid="maintenance-arriving-soon-tab" data-maintenance-tab="arriving_soon">
+              <h3 className="mb-1 text-xs font-bold uppercase tracking-wide text-[#4B5563]">Arriving Soon</h3>
+              <ArrivingSoonPage operatingCompanyId={companyId} />
+            </div>
+            <div data-testid="maintenance-predictive-alerts-tab" data-maintenance-tab="predictive_alerts">
+              <h3 className="mb-1 text-xs font-bold uppercase tracking-wide text-[#4B5563]">At Risk</h3>
+              <PredictiveAlertsPage />
+            </div>
+          </div>
         </div>
       ) : null}
 
@@ -529,59 +583,87 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       ) : null}
 
       {tab === "arriving_soon" ? (
-        <div data-testid="maintenance-arriving-soon-tab" data-maintenance-tab="arriving_soon">
+        <div data-testid="maintenance-arriving-soon-retired" data-maintenance-tab="arriving_soon">
           <ArrivingSoonPage operatingCompanyId={companyId} />
         </div>
       ) : null}
 
-      {tab === "in_transit_issues"
-        ? triageTableQuery.isError
-          ? (
-            <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-800">
-              <div className="font-semibold">Failed to load in-transit issues</div>
-              <button
-                type="button"
-                className="mt-2 rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-700"
-                onClick={() => {
-                  void triageTableQuery.refetch();
-                  pushToast("Retrying in-transit issue load", "info");
-                }}
-              >
-                Retry
-              </button>
-            </div>
-            )
-          : (
-            <InTransitIssuesTable
-              issues={triageTableQuery.data?.issues ?? []}
-              totalCount={triageTableQuery.data?.total_count ?? triageTableQuery.data?.issues?.length ?? 0}
-              loading={
-                triageTableQuery.isPending ||
-                (triageTableQuery.isFetching && (triageTableQuery.data?.issues?.length ?? 0) === 0)
-              }
-              onTriage={(issue) => setTriageIssue(issue)}
-              page={triagePage}
-              totalPages={triageTotalPages}
-              onPageChange={setTriagePage}
-              fetching={triageTableQuery.isFetching}
+      {showDriverReportsSurface ? (
+        <div className="space-y-2" data-testid="maintenance-driver-reports-hub" data-maintenance-tab="driver_reports">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">Kind</span>
+            <SegmentedControl
+              value={driverReportKind}
+              onChange={setDriverReportKind}
+              options={DRIVER_REPORT_KIND_OPTIONS}
+              testId="maintenance-driver-reports-kind"
             />
-            )
-        : null}
-
-      {/* Damage Reports = the FORMAL register (safety.incidents, read-only). The driver-PWA intake queue
-          moved to its own "Driver Reports" tab below — additive, nothing removed. */}
-      {tab === "damage_reports" ? (
-        <div data-testid="maintenance-damage-reports-tab" data-maintenance-tab="damage_reports">
-          <MaintenanceDamageRegisterTab operatingCompanyId={companyId} />
+          </div>
+          {driverReportKind === "driver" ? (
+            <DriverReportsQueuePage
+              highlightedReportId={driverReportId}
+              filterDriverId={driverReportsDriverId}
+              filterLoadId={driverReportsLoadId}
+            />
+          ) : null}
+          {driverReportKind === "damage" ? (
+            <div data-testid="maintenance-damage-reports-tab" data-maintenance-tab="damage_reports">
+              <MaintenanceDamageRegisterTab operatingCompanyId={companyId} />
+            </div>
+          ) : null}
+          {driverReportKind === "in_transit"
+            ? triageTableQuery.isError
+              ? (
+                <div className="rounded-sm border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+                  <div className="font-semibold">Failed to load in-transit issues</div>
+                  <button
+                    type="button"
+                    className="mt-2 rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-700"
+                    onClick={() => {
+                      void triageTableQuery.refetch();
+                      pushToast("Retrying in-transit issue load", "info");
+                    }}
+                  >
+                    Retry
+                  </button>
+                </div>
+                )
+              : (
+                <InTransitIssuesTable
+                  issues={triageTableQuery.data?.issues ?? []}
+                  totalCount={triageTableQuery.data?.total_count ?? triageTableQuery.data?.issues?.length ?? 0}
+                  loading={
+                    triageTableQuery.isPending ||
+                    (triageTableQuery.isFetching && (triageTableQuery.data?.issues?.length ?? 0) === 0)
+                  }
+                  onTriage={(issue) => setTriageIssue(issue)}
+                  page={triagePage}
+                  totalPages={triageTotalPages}
+                  onPageChange={setTriagePage}
+                  fetching={triageTableQuery.isFetching}
+                />
+                )
+            : null}
+          {driverReportKind === "dvir" ? (
+            <div data-testid="maintenance-pre-flight-dvir-tab" data-maintenance-tab="pre_flight_dvir">
+              <p className="mb-1 text-xs text-[#6B7280]">
+                Full DVIR queue lives under Safety. Defects tagged DVIR surface here for Maintenance triage.
+              </p>
+              <PreFlightDvirQueue />
+            </div>
+          ) : null}
         </div>
       ) : null}
 
-      {tab === "driver_reports" ? (
-        <DriverReportsQueuePage
-          highlightedReportId={driverReportId}
-          filterDriverId={driverReportsDriverId}
-          filterLoadId={driverReportsLoadId}
-        />
+      {/* Retired peer panels — keep mounted only when remaps did not catch (Rule 07). */}
+      {tab === "in_transit_issues" && !showDriverReportsSurface
+        ? null
+        : null}
+
+      {tab === "damage_reports" && !showDriverReportsSurface ? (
+        <div data-testid="maintenance-damage-reports-retired" data-maintenance-tab="damage_reports">
+          <MaintenanceDamageRegisterTab operatingCompanyId={companyId} />
+        </div>
       ) : null}
 
       {tab === "severe_repairs" ? <SevereRepairOosTab operatingCompanyId={companyId} /> : null}
@@ -604,17 +686,13 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         </div>
       ) : null}
 
-      {tab === "predictive_alerts" ? (
-        <div data-testid="maintenance-predictive-alerts-tab" data-maintenance-tab="predictive_alerts">
+      {tab === "predictive_alerts" && !isHomeTab ? (
+        <div data-testid="maintenance-predictive-alerts-retired" data-maintenance-tab="predictive_alerts">
           <PredictiveAlertsPage />
         </div>
       ) : null}
 
-      {tab === "pre_flight_dvir" ? (
-        <div data-testid="maintenance-pre-flight-dvir-tab" data-maintenance-tab="pre_flight_dvir">
-          <PreFlightDvirQueue />
-        </div>
-      ) : null}
+      {tab === "integrity_report" ? <IntegrityReportPage operatingCompanyId={companyId} /> : null}
 
       {tab === "parts_inventory" ? (
         <div className="space-y-2" data-testid="maintenance-parts-inventory-tab" data-maintenance-tab="parts_inventory">

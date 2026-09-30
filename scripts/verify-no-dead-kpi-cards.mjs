@@ -616,11 +616,12 @@ export function contractErrors(src, options = {}) {
   const maintenanceHome = src.files[`${SRC}/pages/maintenance/MaintenanceHome.tsx`];
   if (
     maintenanceHome &&
+    !maintenanceHome.includes("!isHomeTab && tab !== \"settings\" ? (") &&
     !maintenanceHome.includes('tab !== "rm_status_board" ? <MaintKpiRows')
   ) {
     errors.push(
-      "DUPLICATE-KPI: MaintenanceHome must suppress MaintKpiRows on rm_status_board; " +
-        "RMStatStrip already owns Open WOs and PM Due there",
+      "DUPLICATE-KPI: MaintenanceHome must suppress MaintKpiRows on Home (rm_status_board); " +
+        "RMStatStrip owns the non-kanban Home tiles (C-36)",
     );
   }
   const fleetTable = src.files[`${SRC}/pages/maintenance/FleetTablePage.tsx`];
