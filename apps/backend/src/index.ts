@@ -446,6 +446,7 @@ import { initializeSamsaraHosPullCron } from "./cron/samsara-hos-pull.cron.js";
 import { initializeSamsaraPositionsCron } from "./cron/samsara-positions-cron.js";
 import { initializeReeferHoursPollCron } from "./cron/reefer-hours-poll.cron.js";
 import { initializeRealDrivenMilesSegmentsCron } from "./cron/real-driven-miles-segments.cron.js";
+import { initializeGeofenceOdometerCapturesCron } from "./cron/geofence-odometer-captures.cron.js";
 import { initializeFuelGpsMatchCron } from "./cron/fuel-gps-match.cron.js";
 import { initializeDraftCrewStatusSelfHealCron } from "./cron/draft-crew-status-selfheal.cron.js";
 import { initializeGeofenceBreachDetectorCron } from "./cron/geofence-breach-detector.cron.js";
@@ -1537,6 +1538,13 @@ async function main() {
       app.log.info("[STARTUP] real-driven-miles-segments-cron initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] real-driven-miles-segments-cron failed");
+    }
+
+    try {
+      initializeGeofenceOdometerCapturesCron(app);
+      app.log.info("[STARTUP] geofence-odometer-captures-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] geofence-odometer-captures-cron failed");
     }
 
     try {

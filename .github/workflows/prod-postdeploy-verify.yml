@@ -229,6 +229,21 @@ jobs:
           DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
         run: node scripts/verify-ar-ties-to-qbo-invoice-list.mjs
 
+      - name: verify:geofence-odometer-capture-freshness
+        id: geofence_odometer_capture_freshness
+        # T-21 (owner order, 2026-09-30): "record each vehicle's mileage automatically in every
+        # Loves geofence, in DOTs, and for every pickup and delivery, every time we leave the
+        # yards... the source is ALWAYS labelled and NEVER inferred." STALE_HOURS=6 -- the capture
+        # cron runs every 10 minutes, so a 6h-old uncaptured geofence event means the engine
+        # itself has gone dark, matching exactly the silent-for-35-days failure this session
+        # measured on telematics.load_odometer_segments's own materializer.
+        #
+        # It runs HERE and not on the local pre-commit path because it needs a real DATABASE_URL.
+        # A guard that requires a live database belongs in the job that HAS one.
+        env:
+          DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+        run: node scripts/verify-geofence-odometer-capture-freshness.mjs
+
       - name: verify:every-bill-posting-carries-its-source-link
         env:
           DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
