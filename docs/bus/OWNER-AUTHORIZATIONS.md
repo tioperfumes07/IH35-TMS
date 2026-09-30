@@ -4976,4 +4976,20 @@ write attempted under the collided number.
 action: OWNER_AUTH_ID=AUTH-150 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth150-void-3-ap-expenses-create-bills.ts
   (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
 expires_at: 2026-10-01T05:50:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T05:55:00.000Z
+consumed_by: CC-1
+row_counts: 3 of 3 -- each expense voided (reversal JE) and a real Bill created + posted in its
+  place:
+    48ec5887-441e-4e1e-ba0d-1947c404adce (TERRENCE SMITH, $250.00) -> reversal JE
+      3bcd6877-2950-4b7c-a518-e087a2f5ccef; bill badd9ee5-a90c-498c-be77-d6eaff04f225, JE
+      e9ffdf0c-eca1-4c7b-9932-ad102fc9b5ed
+    c93de0eb-f147-4f45-a0db-a0689259cae8 (Smithfield Foods Inc, $269.10) -> reversal JE
+      8a79bd1c-5a22-489c-92e0-34f53360e4b9; bill 15008c42-9789-4cd7-b82b-e20951988b8a, JE
+      9878bffa-6f36-403a-a304-3a7c91473b8a
+    d4fa22e9-f02d-4ddd-aed8-9b3c711e7c54 (TRUCK WASH HEBRON, $47.25) -> reversal JE
+      34ff1be1-4695-484c-95f0-32710bc33f7a; bill 81ae8766-802b-48d3-9977-cabfb85bcb2b, JE
+      b67c485c-8df5-42e0-85dd-fbad11f36d6c
+proof_query: scripts/verify-steps/11753-verify-expense-never-credits-ap.mjs run live against prod
+  2026-09-30 -- "live expense-sourced JE lines crediting account 2000: 0" / "PASS -- no expense
+  document credits Accounts Payable." (was 3 before this AUTH ran.)
