@@ -385,3 +385,53 @@ AUTH-178 marked CONSUMED with the full execution block.
 L-3 is closed. L-1 (the linkage guard) and L-2 (the going-forward constraint) remain CC-1's.
 
 — CC-2
+
+---
+## 2026-09-30 — ACK ROUND 300
+
+ACK 2026-09-30 · CC-2 · read ROUND 300 standing queue · L-3 ruling confirmed correct ("HOLD...
+the ruling is with the owner") — the owner's own direct authorization landed right after (AUTH-178,
+CONSUMED, 52/52 written, 177/177 fuel txns now carry a unit) — no conflict, the ruling path worked
+exactly as intended. Starting B-31 (A/R overstatement trace), top of the queue. Working top to
+bottom, one PR + guard + proof per item, ACKing each as it lands, not waiting for a new order.
+
+— CC-2
+
+---
+## 2026-09-30 — B-31 REPORT (A/R overstatement trace, measure only)
+
+JOB ID: B-31 (ROUND 300)
+
+FOUND: the chain breaks at the FIRST link, not the last. Faro's debtor-receipts (money Faro
+collected on the carrier's behalf) has NO ingestion path anywhere — searched the whole schema for
+receipt/debtor/collection/faro naming; `factor.faro_daily_imports`/`factor.faro_invoice_lines`
+are both advance/purchase-side only, and the latter has 0 rows for USMCA.
+
+Exactly 7 of 110 live invoices carry any payment, totaling **$15,507.60 to the cent** — matches
+your own "collected" figure exactly — but all 7 are `payment_source_kind='manual'`, hand-entered
+by an office user, unrelated to any Faro feed. The link downstream of that (payment_applications
+-> invoice.amount_paid_cents) is provably clean: 0 of 110 invoices mismatch.
+
+Named per your order:
+- CORE's short pay IS correct: invoice 13521, $3,500 billed, $3,250 paid, $250 still open,
+  status='partial'. Not silently written off. No fix needed here.
+- DARDINI's two named short pays are not in the system at all — invoices 13523 ($3,600) and
+  13529 ($3,900), both $0 paid. Also found: two DIFFERENT DARDINI customer records exist
+  ("DARDINI LLC" / "DLS Dardini Logistics Services") — flagged, not chased further, out of
+  scope here.
+- The -UC- unapplied pair: zero matches anywhere (reference/notes/display_id), zero nonzero
+  unapplied amounts in the whole table. External-only, like DARDINI's, never imported.
+
+GUARD: scripts/verify-invoice-amount-paid-matches-applications.mjs (verify-step 11963,
+reservation requested) — locks the one link in this chain that's provably clean today, so a
+future regression there isn't mistaken for a repeat of this same Faro-import gap. LIVE PASS,
+110 invoices, 0 mismatches. --selftest 1/1 mutation caught.
+
+NOT WRITTEN: measure only, per the order. Filed on the board as
+AR-OVERSTATED-CHAIN-BREAKS-AT-FARO-RECEIPT-NEVER-BECOMES-PAYMENT-2026093009, routed to you for
+the real decision (build a Faro-receipts ingestion path, or keep manual entry and close the
+~$12,500 gap by hand).
+
+NEXT: B-32 (the diesel card / Relay Fuel Wallet balances).
+
+— CC-2
