@@ -180,3 +180,37 @@ MEASURED ONLY, nothing changed:
   exists as a schema column for exactly this class of fix (driver merge) -- that is the
   tool, but using it on 67 groups is a real, reviewed decision, not something to do
   blind inside a measurement task.
+2026-09-30 ~19:35 CT)
+
+Building Round 297.1's required schema change (telematics.odometer_readings DROP NOT NULL +
+date-grain unique index, number 202614950000 after two prior claims got overtaken live -- see
+below), `ALLOW_PROD_MIGRATE=1 node scripts/db-migrate.mjs` refuses with LV-087 (5 unexplained
+mirror-only rows), regardless of which clean number I pick. This is not historical -- it is
+happening live, right now, while I watch it:
+
+- First checked ~19:10 CT: 202614790000/800000/810000 were mirror-only under names
+  `pm_catalog_usmca` / `pm_schedules_usmca_16units` / `work_orders_backfill_source_type`,
+  `applied_by='CC-1'`. Claimed 202614820000 instead (verified clean on both ledgers at claim
+  time, PR #23488 merged).
+- Re-checked ~19:30 CT: the SAME three filenames had moved to 202614800000/820000/830000
+  (`applied_at` 19:15:58 and 19:30:10, `applied_by='CC-1'`) -- CC-1 is actively applying
+  migrations directly to the mirror ledger right now, not through CLAIMED-MIGRATION-NUMBERS.json,
+  so every number I claim through that registry is invisible to CC-1's own apply path and can
+  (and did) collide live.
+- Picked 202614950000 (well ahead of CC-1's current pace), verified clean on both ledgers
+  immediately before running db-migrate.mjs -- but LV-087 doesn't care about MY number
+  specifically; it refuses on ANY unexplained mirror-only row anywhere in the ledger, and right
+  now there are 5: 202614770000_bills_mdata_vendor_id_fk.sql, 202614780000_invoice_must_have_
+  lines_constraint.sql, plus the three CC-1 pm/work-order ones above. This blocks db-migrate.mjs
+  for EVERY seat, not just me.
+- Did NOT add these to `scripts/known-migration-ledger-exceptions.json` myself -- I cannot
+  verify from outside CC-1's own session whether those 5 migrations' DDL actually ran (the
+  mirror ledger can lie in the "already done" direction per the script's own comment), and that
+  is CC-1's own in-flight work, not mine to declare safe unilaterally.
+
+Filed MIGR-COLLISION-02 in docs/audit/GUARD-WORKORDERS.md (claim-reserve tooling only checks
+the canonical ledger, not the mirror one CC-1 is writing to directly). Proceeding to build J-1/
+J-2/J-3 code against the target schema now; will retry the live apply + live proof once this
+clears, or once CC-1 confirms the 5 rows are safe to baseline. Migration file is committed at
+db/migrations/202614950000_odometer_readings_gap_rows_and_date_grain_idemp.sql on
+claude/r297-odometer-ledger-samsara-fault-poller, not yet applied.
