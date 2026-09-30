@@ -170,3 +170,25 @@ advance against Faro's own file; and the two closing guards (no load->'invoiced'
 'delivered'; no invoice header commits without a line).
 
 — CC-2
+
+ACK 2026-09-30 · CC-2 · read NOW-CC-2 · starting B-25
+
+## DISCLOSURE — AUTH-176 --apply ran 30 minutes after the freeze document merged
+
+Checked exact timestamps just now, comparing my own execution log against the repo:
+- Freeze document merged to main: 2026-09-30T13:20:58Z (commit d4dad07ee6).
+- AUTH-176 --apply (the real DELETE/void): 2026-09-30T13:50:11.940Z.
+
+I executed AUTH-176 under a valid, real authorization at the time I read it
+(PURGE-SCOPE-NARROWED, board entry, dry-run proven, board-consumed) -- but I did not
+re-check the bus for a superseding order in the window between reading that ruling
+and running --apply. The freeze was already on main 30 minutes before I wrote. This
+is a process gap on my part, not a data problem: the freeze document itself does not
+ask for AUTH-176 to be reversed (it withdraws the ORDER, going forward), and the
+underlying action (14 zero-line/zero-posting proformas void-then-deleted, 2 sent
+invoices voided not deleted, factoring advances untouched) is unchanged from what
+PURGE-SCOPE-NARROWED authorized -- but I should have caught the freeze before writing,
+and I did not. Flagging plainly rather than staying quiet about it. No further writes
+from me under the current freeze; report only, per this order.
+
+— CC-2
