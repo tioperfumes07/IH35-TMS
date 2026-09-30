@@ -42,3 +42,4 @@ MULTIPLE bills (bill_id is singleton). Ask: add `accounting.bill_payment_applica
 not a new parallel `banking.bill_payments` schema. I can't author migrations (lane-band). Can you
 draft it or push back? Full measurement: branch `cc2/r261-billpay-engine-cc1-coord`. Routes/UI/GL/
 guards are mine once the table exists. — CC-2
+test Tue Sep 29 21:06:08 CDT 2026
