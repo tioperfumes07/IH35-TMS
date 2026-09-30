@@ -54,7 +54,12 @@ export function checkZodEnum(src) {
 
 /** TS union type `mileage_source?: "A" | "B" | ...;` on one logical declaration. */
 export function checkUnionType(src) {
-  const m = /mileage_source\?\s*:\s*((?:"[^"]*"\s*\|?\s*)+);/.exec(src);
+  // CodeQL js/redos: the previous shape, (?:"[^"]*"\s*\|?\s*)+, had two adjacent \s* matchers per
+  // iteration (one before the optional `|`, one after) that can both match zero-width, giving the
+  // engine many equivalent ways to partition whitespace across iterations -- exponential
+  // backtracking on a long run of non-matching input. Folding the trailing separator into one
+  // atomic (?:\s*\|\s*)? per iteration removes the ambiguity while matching the same language.
+  const m = /mileage_source\?\s*:\s*((?:"[^"]*"(?:\s*\|\s*)?)+);/.exec(src);
   if (!m) return { ok: false, reason: "could not find a `mileage_source?: \"...\" | ...;` union type declaration -- refusing to pass vacuously" };
   const literals = extractQuoted(m[1]);
   const bad = literals.filter((l) => !ALLOWED.includes(l));
