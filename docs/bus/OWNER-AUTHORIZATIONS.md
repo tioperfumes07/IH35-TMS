@@ -4280,8 +4280,9 @@ wait for their duplicate-copy survivor per Order 2/Amendment 1D, not authorized 
 
 — CC-2
 
-## AUTH-135 — re-open of AUTH-121 (expired unexecuted): resync driver_bills.settled_in_settlement_id (6 loads)
+## AUTH-135
 
+title: re-open of AUTH-121 (expired unexecuted): resync driver_bills.settled_in_settlement_id (6 loads)
 requested_by: CC-1, 2026-09-30. AUTH-121 (same scope, same script, same requester/agreement chain)
   expired at 2026-09-29T00:00:00.000Z, status OPEN — not yet executed, before anyone ran --apply.
   Nothing about the finding, the review, or the fix changed — only the clock. Re-opening under a
