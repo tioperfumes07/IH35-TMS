@@ -131,3 +131,52 @@ T-02 · Truck Line node advancing off the real engine — VERIFIED, no code chan
 - CONCLUSION: the board is honest end-to-end right now. It will advance its own rail
   the instant dispatch.stop_arrivals/load_stops gets a real row from the now-live
   arrival-detection engine -- no further CC-3 work required for T-02 itself.
+
+T-13 · geofence engine re-verify after T-01 — measured live, honest idle confirmed:
+- geo.geofence_events: 691 rows, newest 2026-09-30T18:24:59Z (growing, engine actively
+  evaluating). telematics.vehicle_locations: 341 fresh positions in the last hour alone.
+  dispatch.stop_arrivals: still 0 rows. Newest eld_geofence-sourced load_stops arrival:
+  still 2026-09-28T17:35:04Z (pre-restart) -- UNCHANGED, and that is CORRECT, not a
+  regression: matches T-02's own finding that no truck is within the 250ft arrival
+  radius yet. The engine is live, evaluating fresh positions continuously, and has
+  produced zero false positives. Nothing further needed for T-13 until a truck actually
+  arrives.
+
+T-06 · Driver roster reconciliation — three-way comparison + a bigger root cause found,
+MEASURED ONLY, nothing changed:
+- THREE DEFINITIONS OF "ACTIVE" COEXIST, measured live, USMCA:
+    mdata.drivers.status = 'Active'                                    19 drivers
+    integrations.active_driver_set_cache (GAP-25 canonical definition,
+      current vehicle_driver_assignment + live position, 15d threshold)  16 drivers <- THIS is the "~16" the owner sees
+    ANY Samsara signal (login or HOS snapshot, 30d)                      89 drivers
+  The 16-number is not a bug in isolation -- it is the documented, deliberate GAP-25
+  definition (assignment + live position), and it already excludes sample/deactivated/
+  terminated drivers correctly.
+- THE REAL DELTA (19 admin-Active minus the 16 canonical-active = 3 drivers):
+    Pedro Abraham Lopez Collado  -- ZERO vehicle_driver_assignments rows, ever. ZERO
+      samsara_driver_id. A pure admin record with no telematics link at all.
+    Eduardo Azael Flores Ortiz   -- has a DUPLICATE Inactive row; the Active row has no
+      samsara_driver_id and zero assignment rows.
+    Jorge Flores Valadez         -- HAS samsara_driver_id (59829032) but
+      last_samsara_login_at is NULL and zero vehicle_driver_assignments rows -- Samsara
+      knows this driver exists but the app's own assignment pipeline never linked him to
+      a truck.
+  None of these three is "wrong" to exclude from the canonical active count -- they
+  genuinely have no live-position evidence. The gap is in the ASSIGNMENT PIPELINE
+  (telematics.vehicle_driver_assignments), not the active-set query.
+- THE BIGGER FINDING, not asked for but found while building the delta table: **67
+  duplicate-name driver groups in USMCA alone**, several 3-4x: "Genaro Guerrero Chavez"
+  (3 rows: Active/Inactive/Active), "Angel Alfonso Sosa" (3: Inactive/Active/Inactive),
+  "Hugo Gaytan" (3: Inactive/Inactive/Active), "Juan Pablo Hernandez Estrada" (4x
+  Inactive), "Carlos Galaviz" (4x Inactive), plus ~60 more 2x pairs including "Driver
+  Dummy" (2x Inactive -- a fixture name with real duplicate rows). This is almost
+  certainly the REAL root cause behind "only ~16 show active": a real driver's identity
+  is split across multiple mdata.drivers rows (no stable de-dup key on import), so
+  status/samsara_driver_id/assignment history can each land on a DIFFERENT row for the
+  SAME person, making any single-table "active" count structurally unreliable regardless
+  of which definition is used.
+- NOT CHANGED, per the job's own instruction ("before changing anything"): no rows
+  merged, no status flipped, no assignment backfilled. merged_into_driver_id already
+  exists as a schema column for exactly this class of fix (driver merge) -- that is the
+  tool, but using it on 67 groups is a real, reviewed decision, not something to do
+  blind inside a measurement task.
