@@ -5617,8 +5617,16 @@ executed: 2026-09-30, PR #23339 merged (squash 72f1b7a2ae), then --apply run for
 
 ---
 
-## AUTH-169
+## AUTH-170
 
+note: renumbered from AUTH-169 -- that number collided with CC-1's own AUTH-169 (void of
+  INV-2026-00003, a different task, merged first at commit 26f6cc7ff1). Caught after this AUTH had
+  already been --applied for real under the collided number (verify-owner-authorization.mjs found
+  a heading named AUTH-169 with status OPEN on main and validated against it; the actual DATA
+  WRITTEN is independently confirmed correct and scoped exactly as below via live re-verification,
+  so the money is right -- only the board heading collided). Renumbered here for a clean,
+  unambiguous record; the executed ops script keeps its original filename (already ran, already
+  audited under that name) rather than being renamed after the fact.
 title: void 2 fabricated factoring advances (FAC-2026-00139/00140) behind loads 13625/13626 --
   step 1 of Lead's 6-step owner-verified correction order
 requested_by: Lead order, verbatim, owner-verified 2026-09-30: "I was wrong for seven rounds and I
@@ -5660,9 +5668,23 @@ scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 2 factorin
   posting table.
 action:
   OWNER_AUTH_ID=AUTH-169 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth169-void-13625-13626-factoring-advances.ts --apply
-  (run from repo root; DRY_RUN first with no --apply flag)
+  (run from repo root; DRY_RUN first with no --apply flag; note OWNER_AUTH_ID stays AUTH-169 in the
+  action line -- that is what the script and its own already-run audit trail actually used)
 expires_at: 2026-10-01T00:00:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T12:00:48.445Z
+consumed_by: CC-2
+row_counts: 2 of 2 voided.
+    FAC-2026-00139 -> void ok, reversing_entry_ref 20699f43-c820-4966-8e8a-1321d3a3cd84
+    FAC-2026-00140 -> manual reversal of mistagged live JE 9c8e6897 -> reversal_journal_entry_id
+      18138b8b-c4da-48fd-b823-0b00b8a2ab2f, then header void ok (reversing_entry_ref null, correct
+      -- the real reversal already happened via the manual call)
+proof_query: BEFORE/AFTER printed by the script itself, live prod, 2026-09-30 -- 1090 fell exactly
+  $9,360.50 (15920734 -> 14984684 cents), 2150 rose $9,650.00 (-34343905 -> -33378905 cents,
+  matching the gross invoice/purchase totals, not the net advance amounts -- verified line-by-line
+  against each reversal's own postings before commit). Independently re-verified after commit:
+  both records status='voided', voided_at stamped, 0 remaining live postings tagged
+  source_transaction_type='factoring_advance' for either id.
 
 ---
 
