@@ -329,7 +329,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   );
 
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 max-w-full space-y-3" data-c06-page="maintenance">
       <PageHeader
         title="Maintenance"
         subtitle="Work orders, fleet maintenance, parts inventory, and PM scheduling"

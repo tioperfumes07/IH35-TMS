@@ -452,7 +452,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   );
 
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 max-w-full space-y-3" data-c06-page="banking">
       <PageHeader
         title="Banking Home"
         subtitle="QBO mirrored accounts + categorization"

@@ -611,7 +611,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
   };
 
   return (
-    <div className={MASTER_DETAIL.pageShellClass} data-c05-min-scroll="drivers">
+    <div className={MASTER_DETAIL.pageShellClass} data-c05-min-scroll="drivers" data-c06-page="drivers">
       <PageHeader
         title="Drivers"
         subtitle={`${newDriversInLast3Days} new in last 3 days`}

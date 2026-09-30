@@ -65,7 +65,7 @@ export function CashFlowPage() {
   }
 
   return (
-    <div className="space-y-4" data-testid="cash-flow-page">
+    <div className="min-w-0 max-w-full space-y-4" data-testid="cash-flow-page" data-c06-page="cash-flow">
       <PageHeader
         backHref="/home"
         title="Cash Flow"

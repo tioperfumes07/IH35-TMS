@@ -48,3 +48,22 @@
     max-width: min(100vw, 100%);
   }
 }
+
+/* C-06 — viewport auto-adjust: never expand document width past the window.
+ * Wide tables / Kanban lanes must scroll inside a local overflow-x-auto region. */
+.ih35-responsive-shell[data-c06-viewport="true"] {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+.ih35-responsive-shell .ih35-main-shell,
+.ih35-responsive-shell .edge-ultrawide-shell,
+.ih35-responsive-shell [data-c06-page] {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+.ih35-responsive-shell [data-c06-page] {
+  overflow-x: auto;
+}

@@ -52,3 +52,9 @@ C-19 DONE on main. Guard re-anchors for txnScope/parentCustomersRoster included.
 
 **2026-09-30T19:05Z · C-05 MINIMUM-SCROLL · branch `cursor/c05-minimum-scroll-c89b`**
 C-05 · what changed: Shell locks to `h-dvh` + overflow-hidden (document no longer grows); UltraWide flex fill + internal scroll; MASTER_DETAIL `pageShellClass` / `listScrollClass` / fill-height shell; Customers/Vendors/Drivers use pageShell; sidebars drop `max-h-[760px]` for flex scroll; PageHeader `mb-2 shrink-0`. Ops: `scripts/ops/verify-c05-minimum-scroll.mjs`. · LIVE PROOF: ops --selftest PASS. · LEFT: Chrome `scrollHeight` vs `innerHeight` on /customers; C-06 next.
+
+**2026-09-30T19:10Z · C-05 MERGED · PR #23481 · `3916490fec`**
+C-05 DONE. NEXT: C-06 viewport auto-adjust.
+
+**2026-09-30T19:20Z · C-06 VIEWPORT AUTO-ADJUST · branch `cursor/c06-viewport-auto-adjust-c89b`**
+C-06 · what changed: Shell `data-c06-viewport` + CSS `max-width:100vw; overflow-x:hidden`; UltraWide `min-w-0 max-w-full`; six named pages marked `data-c06-page` (customers/vendors/drivers/banking/cash-flow/maintenance). Ops: `scripts/ops/verify-c06-viewport-auto-adjust.mjs`. · LIVE PROOF: ops --selftest PASS. · LEFT: Chrome scrollWidth-innerWidth=0 at 1280/1920; C-07 Cash Flow contrast next.
