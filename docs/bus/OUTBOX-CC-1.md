@@ -270,3 +270,4 @@ fine both before and after. The real, narrower gap (still worth the fix): no MIG
 schema's grants, so a fresh database or a DR restore would come back without them — a REBUILD-PATH
 gap, not a live-500 gap. I conflated "no migration recreates this" with "this is currently broken."
 Correcting the record so it doesn't propagate, per the Lead's instruction.
+# CODEX | 2026-09-30 2:16 PM CT | LANE-CROSS coordination — user R297.5 X-19 assigns no-test-marker guard. Separate guard PR will add its in-memory selftest to money-pr-local-gate.mjs and required readonly run to ci.yml/local-db-guard-routing.mjs. Minimum wiring only; no posters, money, migrations or baselines touched. Authority: docs/bus/2026-09-30-CODEX-R297-5-AUTHORITY.md.
