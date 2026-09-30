@@ -366,3 +366,22 @@ cleared, the script is ready — `--apply` writes exactly these 52 rows, nothing
 traceable to its own source signal.
 
 — CC-2
+
+---
+## 2026-09-30 — L-3 CLOSED (AUTH-178 executed)
+
+JOB ID: L-3 (ROUND 299) — closing the loop on the earlier report-only entry.
+
+The owner reviewed the dry-run report and ordered, verbatim: "write the 52 fuel unit ids i
+authorize it, so do it." Issued AUTH-178 (docs/bus/OWNER-AUTHORIZATIONS.md), merged to main,
+verified OPEN via verify-owner-authorization.mjs, then ran
+`scripts/ops/2026-09-30-cc2-l3-repair-52-fuel-unit-ids.ts --apply`.
+
+RESULT: 52 rows updated — same 12-both-agree / 40-load-only / 0-disagree / 0-unresolved breakdown
+as the dry run, no drift. Independently re-verified post-commit: 0 rows remain matching the
+original gap predicate. **177 of 177 live USMCA fuel transactions now carry a unit_id.**
+AUTH-178 marked CONSUMED with the full execution block.
+
+L-3 is closed. L-1 (the linkage guard) and L-2 (the going-forward constraint) remain CC-1's.
+
+— CC-2
