@@ -21,7 +21,18 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = "apps/backend/src/accounting/posting-engine.service.ts";
 
-function read(rel) { return fs.readFileSync(path.join(ROOT, rel), "utf8"); }
+import { maskComments } from "./lib/mask-comments.mjs";
+
+/**
+ * CLS-GUARD-READS-COMMENTS, yet another instance (Lead, 2026-09-30). Caught by mutation-testing my
+ * own fix rather than by trusting it: I deleted the `await postSourceTransactionInClientTx(` call
+ * from the delegated service and this guard STILL printed PASS — because the file carries a COMMENT
+ * at line ~118 that names the same function. The guard was reading prose and calling it proof.
+ *
+ * Comments are masked before any assertion runs. Masking is offset-preserving, so every index-based
+ * extractor above keeps working.
+ */
+function read(rel) { return maskComments(fs.readFileSync(path.join(ROOT, rel), "utf8")); }
 
 /** Body of `export async function payBill(...)` up to the next top-level export. */
 function payBillBody(src) {
@@ -32,6 +43,35 @@ function payBillBody(src) {
   return next < 0 ? rest : rest.slice(0, next);
 }
 
+/**
+ * FOLLOW-THE-DELEGATION (Lead, 2026-09-30). This guard was RED on origin/main, on BOTH assertions,
+ * against a route that does post the JE correctly.
+ *
+ * WHY: routeHandlerBody() reads only the lines between `app.post("<path>"` and the next route
+ * registration. `POST /api/v1/vendors/:id/bill-payments` is nine lines of auth and zod validation
+ * that then calls applyVendorBillPaymentBatch(), and THAT function resolves
+ * isBillPaymentGlPostingEnabled (line 147) and calls postSourceTransactionInClientTx (line 256), in
+ * the same client transaction as the bank decrement. The property the guard exists to protect is
+ * satisfied; the guard was looking one function too shallow.
+ *
+ * Left as it was, the only way to make it green would be to INLINE a service into a route handler —
+ * the guard would have forced worse code to protect a property the code already had. A guard that
+ * can only be satisfied by making the codebase worse is a defect in the guard.
+ *
+ * So the extractor now follows ONE level of delegation: if the handler body calls a function
+ * defined in the same file, that function's body is appended to the text searched. One level, same
+ * file, and only for calls that actually resolve to a definition here — it does not chase across
+ * modules, because at that point it would stop being a static check and start being a call graph.
+ */
+function sameFileFunctionBody(src, name) {
+  const re = new RegExp(`(?:export\\s+)?(?:async\\s+)?function\\s+${name}\\s*\\(`);
+  const start = src.search(re);
+  if (start < 0) return "";
+  const rest = src.slice(start);
+  const next = rest.slice(1).search(/\n(?:export\s+)?(?:async\s+)?function\s/);
+  return next < 0 ? rest : rest.slice(0, next + 1);
+}
+
 /** Body of `app.post("<routePath>", ...)` up to the next `app.<verb>(` registration in the file. */
 function routeHandlerBody(src, routePath) {
   const marker = `app.post("${routePath}"`;
@@ -39,7 +79,22 @@ function routeHandlerBody(src, routePath) {
   if (start < 0) return "";
   const rest = src.slice(start + marker.length);
   const next = rest.search(/\n\s*app\.(get|post|put|patch|delete)\(/);
-  return next < 0 ? rest : rest.slice(0, next);
+  const body = next < 0 ? rest : rest.slice(0, next);
+
+  // Follow ONE named delegate, same file only. See FOLLOW-THE-DELEGATION above.
+  //
+  // NARROWED AFTER A FAILED MUTATION TEST. My first version appended EVERY same-file function whose
+  // name appeared in the handler. That made the guard BLIND: I deleted the poster call from the
+  // delegated service and the guard still printed PASS, because some other function in the file
+  // carried the symbol. A guard that survives the removal of the thing it checks is worse than no
+  // guard, so this now follows exactly ONE delegate — the awaited call the handler actually makes —
+  // and nothing else.
+  // Every identifier the handler CALLS that also has a `function <name>(` definition in this same
+  // file, and nothing else. Not the first await (that is withCompanyScope, a helper from another
+  // module), not every same-file function (that is what made this blind — see above).
+  const called = [...new Set([...body.matchAll(/\b([A-Za-z_$][\w$]*)\s*\(/g)].map((m) => m[1]))];
+  const extra = called.map((name) => sameFileFunctionBody(src, name)).join("\n");
+  return body + extra;
 }
 
 const WRITERS = [
