@@ -10,8 +10,9 @@ type Props = {
 };
 
 /**
- * C-16 / C-17 — one master-detail shell for Customers, Vendors, Drivers.
+ * C-16 / C-17 / C-05 — one master-detail shell for Customers, Vendors, Drivers.
  * Split widths come from MASTER_DETAIL tokens (not per-page magic numbers).
+ * C-05: shell fills remaining viewport; panes scroll internally.
  */
 export function MasterDetailShell({ master, detail, className = "", testId }: Props) {
   return (
@@ -19,6 +20,7 @@ export function MasterDetailShell({ master, detail, className = "", testId }: Pr
       className={`${MASTER_DETAIL.shellClass} ${className}`.trim()}
       data-testid={testId ?? "master-detail-shell"}
       data-master-detail-shell="true"
+      data-c05-min-scroll="shell"
     >
       {master}
       <div className={MASTER_DETAIL.detailPaneClass} data-master-detail-detail="true">
