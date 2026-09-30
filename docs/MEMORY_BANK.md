@@ -1212,11 +1212,24 @@ Full coder instructions: `claude/2026-09-13-ABSORPTION-INGEST-AND-DISPUTE-WINDOW
 
 - **Named queue:** delivered loads without a `docs.files` BOL (`catalogs.file_categories.code='bol'`) wait on `GET /api/v1/dispatch/awaiting-bol-invoice`. FE: `/dispatch/awaiting-bol-invoice` under Documents › Awaiting BOL (red badge). Guard `verify-auto-invoice-on-bol-wired.mjs` asserts BE + FE.
 - **Fire path:** delivery latch + late BOL upload → `autoInvoiceOnBol` → `sendDraftInvoice` → `autoSubmitDeliveredLoadToFactor`. Proforma stays non-posting; convert/create official draft before send.
-- **Live measure (USMCA):** loads **13626 / 13625 / 13615** awaiting BOL (`completed_docs_received`, invoices already exist). Upload BOL on load Documents tab — do not invent fixtures.
+- **Live measure (USMCA, Round 292):** awaiting-BOL queue = **13615** only (`completed_docs_received`, has invoice). 13625/13626 corrected to `dispatched` per AlwaysTrack — no longer in the queue. Upload BOL on load Documents tab — do not invent fixtures.
 - **METHOD (#59):** `dispatch.detention_requests.approval_method` stamps on approve; invoice PDF `.appr` prints METHOD. Chrome Print blocked while USMCA has **0** detention_requests / detention_events.
 
 ## Next Immediate Milestones — ROUND 285.4.10 (Cursor, 2026-09-30)
 
-1. Owner Chrome: Documents › Awaiting BOL → 13626/13625/13615 (FE live `version.json=c4cea25`).
-2. One BOL upload → invoice send → Faro queue proof (screenshots + live row).
-3. METHOD Print when a real detention approve stamps `approval_method`.
+1. Owner Chrome: Documents › Awaiting BOL → **13615 only** (13625/13626 corrected to `dispatched` per AlwaysTrack Round 292). FE live `version.json=93c84ac`.
+2. One BOL upload on 13615 → invoice send → Faro queue proof (screenshots + live row). No seat fixtures.
+3. METHOD Print when a real detention approve stamps `approval_method` (USMCA detention_requests still 0).
+
+## Active Architectural Decisions — ROUND 292 AlwaysTrack 16 + live_loads (Cursor, 2026-09-30)
+
+- **AlwaysTrack Dispatched list is board truth**, not the app status alone and not `views.live_loads` alone. Live measure: 16 dispatched loads (13624–13639). Lead corrected 13625/13626 `completed_docs_received`→`dispatched` on prod.
+- **Dispatch-work predicate** (`canonicalDispatchWorkWhereClause` — status only, no money test) = the 16. Truck Line / List / Kanban / Trip Pairing / Round Trips must stay on it. `verify-load-boards-agree` PASS @ 16 dispatch-work.
+- **`views.live_loads` bills half** requires closed settlement (`202614661200` / `#23312`) — fixed defect (1). View still at 15 because invoice exclusion hides dispatched+invoiced 13625/13626; do **not** rewire Truck Line onto the view or it regresses off AlwaysTrack's 16.
+- **Accounting canonical** (money finished) stays separate — Load Costs @ 14. Dual predicate permanent (file header on `canonical-active-load-set.ts`).
+
+## Next Immediate Milestones — ROUND 292 Cursor (2026-09-30)
+
+1. 285.4.9 remainder CODE CLOSED (#31/#58/#59/#32/#33 on tip) — Chrome METHOD waits real detention approve.
+2. Owner Chrome 13615 BOL→invoice→Faro.
+3. No baseline raises to clear tip ENV reds.
