@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DriverProfilePage } from "./DriverProfilePage";
 import { ToastProvider } from "../../components/Toast";
 import * as clientApi from "../../api/client";
+import { formatPhoneAsTyped } from "../../lib/formatPhoneAsTyped";
+import { driverDisplayName } from "../../lib/driverDqf";
 
 vi.mock("../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
@@ -24,6 +26,9 @@ vi.mock("../../api/mdata", () => ({
     dot_medical_expires_at: "2026-12-01",
     settlement_auto_pay_enabled: false,
   }),
+  updateDriver: vi.fn(),
+  deactivateDriver: vi.fn(),
+  reactivateDriver: vi.fn(),
 }));
 
 vi.mock("../../api/client", async (importOriginal) => {
@@ -40,13 +45,54 @@ vi.mock("../../api/safety", () => ({
   getUserPreferences: vi.fn().mockResolvedValue({}),
 }));
 
+vi.mock("../../api/requiredDocuments", () => ({
+  listRequiredDocumentTypes: vi.fn().mockResolvedValue([]),
+}));
+
+// Heavy reverse / history panels — stub so the tab shell test stays focused (C-20).
+vi.mock("./components/DriverDqfPanel", () => ({
+  DriverDqfPanel: () => <div data-testid="driver-dqf-panel-stub">DQF checklist</div>,
+}));
+vi.mock("../../components/drivers/DriverLateArrivalCard", () => ({ DriverLateArrivalCard: () => null }));
+vi.mock("../../components/driver-profile/DriverTeamsReverseSection", () => ({ DriverTeamsReverseSection: () => null }));
+vi.mock("../../components/driver-profile/DriverTeamSplitConfigReverseSection", () => ({ DriverTeamSplitConfigReverseSection: () => null }));
+vi.mock("../../components/safety/MedicalCardsHistorySection", () => ({ MedicalCardsHistorySection: () => null }));
+vi.mock("../../components/driver-profile/ActionBar", () => ({
+  ActionBar: () => <div data-testid="dp-section-12-action-bar" />,
+}));
+vi.mock("../../components/driver-profile/CurrentAssignmentSection", () => ({
+  CurrentAssignmentSection: () => <div data-testid="dp-section-6-assignment" />,
+}));
+vi.mock("../../components/driver-profile/PerformanceScorecardSection", () => ({
+  PerformanceScorecardSection: () => <div data-testid="dp-section-7-performance" />,
+}));
+vi.mock("../../components/driver-profile/LicenseSection", () => ({
+  LicenseSection: () => <div data-testid="dp-section-2-license" />,
+}));
+vi.mock("../../components/driver-profile/MedicalCardSection", () => ({
+  MedicalCardSection: () => <div data-testid="dp-section-3-medical" />,
+}));
+vi.mock("../../components/driver-profile/DrugProgramSection", () => ({
+  DrugProgramSection: () => <div data-testid="dp-section-4-drug" />,
+}));
+vi.mock("../../components/driver-profile/HOSStatusSection", () => ({
+  HOSStatusSection: () => <div data-testid="dp-section-5-hos" />,
+}));
+vi.mock("../../components/driver-profile/SettlementsSection", () => ({
+  SettlementsSection: () => <div data-testid="settlements-stub" />,
+}));
+vi.mock("../../components/driver-profile/DriverPaymentMethodsCard", () => ({ DriverPaymentMethodsCard: () => null }));
+vi.mock("../../components/banking/LinkedBankTransactionsPanel", () => ({ LinkedBankTransactionsPanel: () => null }));
+vi.mock("../../components/driver-profile/DriverSettlementFinanceReverseSection", () => ({ DriverSettlementFinanceReverseSection: () => null }));
+vi.mock("../../components/driver-profile/DriverVendorMergesReverseSection", () => ({ DriverVendorMergesReverseSection: () => null }));
+
 describe("DriverProfilePage", () => {
   afterEach(cleanup);
 
   beforeEach(() => {
     vi.mocked(clientApi.apiRequest).mockResolvedValue({
       driver: {
-        id: "d1", first_name: "Alex", last_name: "Rivera", status: "Active",
+        id: "d1", first_name: "ALEX", last_name: "rivera", status: "Active",
         phone: "5555550100", email: "alex@example.com",
         cdl_number: "TX123", cdl_state: "TX",
         cdl_expires_at: "2027-01-01", dot_medical_expires_at: "2026-12-01",
@@ -65,7 +111,12 @@ describe("DriverProfilePage", () => {
     } as never);
   });
 
-  it("renders driver DQF profile header and checklist section", async () => {
+  it("C-12 Proper Case name + (area) phone mask helpers", () => {
+    expect(driverDisplayName("ALEX", "rivera")).toBe("Alex Rivera");
+    expect(formatPhoneAsTyped("5555550100")).toBe("(555) 555-0100");
+  });
+
+  it("renders tab strip before KPIs and Overview DQF sections (C-11/C-20)", async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
@@ -79,9 +130,31 @@ describe("DriverProfilePage", () => {
       </QueryClientProvider>
     );
 
-    const headings = await screen.findAllByRole("heading", { name: "Alex Rivera" });
-    expect(headings.length).toBeGreaterThan(0);
-    expect(screen.getByText("DQF checklist")).toBeInTheDocument();
+    expect(await screen.findByTestId("dp-tab-overview")).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Section navigation" })).toBeInTheDocument();
+    expect(screen.getByTestId("driver-profile-kpi-strip")).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: "Alex Rivera" }).length).toBeGreaterThan(0);
+    expect(screen.getByTestId("driver-dqf-panel-stub")).toBeInTheDocument();
     expect(screen.getByText("Compliance summary")).toBeInTheDocument();
+    expect(screen.getByTestId("driver-compliance-phone")).toHaveTextContent("(555) 555-0100");
+  });
+
+  it("opens Settlements from ?tab=settlements without Overview KPIs (C-20 A-13)", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <ToastProvider>
+          <MemoryRouter initialEntries={["/drivers/d1/profile?tab=settlements"]}>
+            <Routes>
+              <Route path="/drivers/:id/profile" element={<DriverProfilePage />} />
+            </Routes>
+          </MemoryRouter>
+        </ToastProvider>
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByTestId("dp-tab-settlements")).toBeInTheDocument();
+    expect(screen.queryByTestId("driver-profile-kpi-strip")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dp-tab-overview")).not.toBeInTheDocument();
   });
 });

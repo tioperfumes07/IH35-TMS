@@ -13,6 +13,66 @@ vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
 }));
 
+vi.mock("../../../api/requiredDocuments", () => ({
+  listRequiredDocumentTypes: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("../components/DriverDqfPanel", () => ({
+  DriverDqfPanel: () => <div data-testid="driver-dqf-panel-stub">DQF checklist</div>,
+}));
+
+vi.mock("../../../components/drivers/DriverLateArrivalCard", () => ({
+  DriverLateArrivalCard: () => null,
+}));
+
+vi.mock("../../../components/driver-profile/DriverTeamsReverseSection", () => ({
+  DriverTeamsReverseSection: () => null,
+}));
+
+vi.mock("../../../components/driver-profile/DriverTeamSplitConfigReverseSection", () => ({
+  DriverTeamSplitConfigReverseSection: () => null,
+}));
+
+vi.mock("../../../components/driver-profile/SettlementsSection", () => ({
+  SettlementsSection: () => <div data-testid="settlements-stub" />,
+}));
+
+vi.mock("../../../components/driver-profile/DriverPaymentMethodsCard", () => ({
+  DriverPaymentMethodsCard: () => null,
+}));
+
+vi.mock("../../../components/banking/LinkedBankTransactionsPanel", () => ({
+  LinkedBankTransactionsPanel: () => null,
+}));
+
+vi.mock("../../../components/driver-profile/DriverSettlementFinanceReverseSection", () => ({
+  DriverSettlementFinanceReverseSection: () => null,
+}));
+
+vi.mock("../../../components/driver-profile/DriverVendorMergesReverseSection", () => ({
+  DriverVendorMergesReverseSection: () => null,
+}));
+
+vi.mock("../../../components/driver-profile/TrainingRecordsSection", () => ({
+  TrainingRecordsSection: () => <div data-testid="training-stub" />,
+}));
+
+vi.mock("../../../components/safety/BackgroundChecksSection", () => ({
+  BackgroundChecksSection: () => null,
+}));
+
+vi.mock("../../../components/documents/DocumentsTab", () => ({
+  DocumentsTab: () => <div data-testid="documents-stub" />,
+}));
+
+vi.mock("../../../components/driver-profile/BorderCredentialsSection", () => ({
+  BorderCredentialsSection: () => <div data-testid="border-stub" />,
+}));
+
+vi.mock("../../../components/driver-profile/W8BenSection", () => ({
+  W8BenSection: () => null,
+}));
+
 const driverFixture = {
   id: "d-test-1",
   first_name: "Jane",
@@ -53,14 +113,15 @@ const profileFixture = {
   training_records: [],
   border_credentials: { fast_card: {}, sentri: {}, twic: {}, passport: {}, mexican_license: {}, visa_b1: {} },
   documents: [],
+  deductions: [],
 };
 
-function renderPage() {
+function renderPage(entry = "/drivers/d-test-1/profile") {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
       <ToastProvider>
-        <MemoryRouter initialEntries={["/drivers/d-test-1/profile"]}>
+        <MemoryRouter initialEntries={[entry]}>
           <Routes>
             <Route path="/drivers/:id/profile" element={<DriverProfilePage />} />
           </Routes>
@@ -79,29 +140,39 @@ describe("DriverProfilePage", () => {
     vi.spyOn(safetyApi, "listDriverQualificationItems").mockResolvedValue({ items: [] } as never);
   });
 
-  it("renders six profile sections", async () => {
+  it("renders Overview sections under the tab strip (C-20)", async () => {
     renderPage();
-    expect(await screen.findByTestId("dp-section-1-identity")).toBeTruthy();
+    expect(await screen.findByTestId("dp-tab-overview")).toBeTruthy();
+    expect(screen.getByRole("navigation", { name: "Section navigation" })).toBeTruthy();
+    expect(screen.getByTestId("driver-profile-kpi-strip")).toBeTruthy();
+    expect(screen.getByTestId("dp-section-1-identity")).toBeTruthy();
     expect(screen.getByTestId("dp-section-2-license")).toBeTruthy();
     expect(screen.getByTestId("dp-section-3-medical")).toBeTruthy();
     expect(screen.getByTestId("dp-section-4-drug")).toBeTruthy();
     expect(screen.getByTestId("dp-section-5-hos")).toBeTruthy();
     expect(screen.getByTestId("dp-section-6-assignment")).toBeTruthy();
-  });
-
-  it("renders part 2 profile sections", async () => {
-    renderPage();
-    expect(await screen.findByTestId("dp-section-7-performance")).toBeTruthy();
-    expect(screen.getByTestId("dp-section-8-settlements")).toBeTruthy();
-    expect(screen.getByTestId("dp-section-9-training")).toBeTruthy();
-    expect(screen.getByTestId("dp-section-10-border")).toBeTruthy();
-    expect(screen.getByTestId("dp-section-11-documents")).toBeTruthy();
+    expect(screen.getByTestId("dp-section-7-performance")).toBeTruthy();
     expect(screen.getByTestId("dp-section-12-action-bar")).toBeTruthy();
   });
 
-  // DRIVERPROFILE-1 (HOME-6): a driver with sparse/null data must still render every scaffolded
-  // section with no console error — no field may throw or silently drop on missing data.
-  it("renders all scaffolded sections for a driver with sparse/null data, without console errors", async () => {
+  it("renders Settlements / Safety / Documents on their tabs (C-20 A-13)", async () => {
+    renderPage("/drivers/d-test-1/profile?tab=settlements");
+    expect(await screen.findByTestId("dp-tab-settlements")).toBeTruthy();
+    expect(screen.getByTestId("dp-section-8-settlements")).toBeTruthy();
+
+    cleanup();
+    renderPage("/drivers/d-test-1/profile?tab=safety");
+    expect(await screen.findByTestId("dp-tab-safety")).toBeTruthy();
+    expect(screen.getByTestId("dp-section-9-training")).toBeTruthy();
+
+    cleanup();
+    renderPage("/drivers/d-test-1/profile?tab=documents");
+    expect(await screen.findByTestId("dp-tab-documents")).toBeTruthy();
+    expect(screen.getByTestId("dp-section-10-border")).toBeTruthy();
+    expect(screen.getByTestId("dp-section-11-documents")).toBeTruthy();
+  });
+
+  it("renders Overview scaffold for a sparse driver without console errors", async () => {
     const sparseDriver = { id: "d-sparse", first_name: null, last_name: null, status: "Active" };
     const sparseAggregate = {
       driver: sparseDriver,
@@ -115,13 +186,6 @@ describe("DriverProfilePage", () => {
       training_records: [],
       border_credentials: {},
       documents: [],
-      // ACCT-ESCROW-VIEW-DRIVER-PROFILE — the shared apiRequest mock below resolves EVERY call
-      // (including DriverDeductionsReverseSection's listSettlementDeductions, which reads
-      // response.deductions) with this one fixture object; without this key the query resolves to
-      // `undefined`, which is the pre-existing failure mode this test already had for 3 OTHER
-      // sibling sections (cash-advances, compliance, vendor-merges-reverse — none fixed here, out
-      // of scope) before this section existed. Adding the key here only prevents THIS new section
-      // from adding a 4th instance of that same pre-existing gap.
       deductions: [],
     };
     vi.spyOn(mdataApi, "getDriver").mockResolvedValue(sparseDriver as never);
@@ -131,7 +195,6 @@ describe("DriverProfilePage", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     try {
       renderPage();
-      // Every scaffolded section id 1..12 (+ layovers) renders on sparse data.
       expect(await screen.findByTestId("dp-section-1-identity")).toBeTruthy();
       for (const id of [
         "dp-section-2-license",
@@ -140,11 +203,7 @@ describe("DriverProfilePage", () => {
         "dp-section-5-hos",
         "dp-section-6-assignment",
         "dp-section-7-performance",
-        "dp-section-8-settlements",
         "dp-section-layovers",
-        "dp-section-9-training",
-        "dp-section-10-border",
-        "dp-section-11-documents",
         "dp-section-12-action-bar",
       ]) {
         expect(screen.getByTestId(id)).toBeTruthy();
