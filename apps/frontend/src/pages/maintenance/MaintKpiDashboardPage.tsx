@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  confirmIdleEventManual,
   getMaintenanceKpiDrilldown,
   getMaintenanceKpiPmCompliance,
   getMaintenanceKpiSummary,
+  listIdleEventsNeedsReview,
   type MaintKpiDrilldownKind,
   type MaintKpiSparkPoint,
 } from "../../api/maintenance";
@@ -15,6 +17,8 @@ import { EntityPicker } from "../../components/EntityPicker";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
+import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type KpiTileId = MaintKpiDrilldownKind | "pm_compliance";
 type DrillRow = Record<string, unknown>;
@@ -102,11 +106,28 @@ export function MaintKpiDashboardPage() {
   const pmPageSize = 25;
   const [drillPage, setDrillPage] = useState(1);
   const drillPageSize = 25;
+  const qc = useQueryClient();
+  const { pushToast } = useToast();
 
   const summaryQ = useQuery({
     queryKey: ["maintenance", "kpi-dashboard", "summary", companyId, periodStart, periodEnd, unitId],
     queryFn: () => getMaintenanceKpiSummary(companyId, periodStart, periodEnd, unitId || undefined),
     enabled: Boolean(companyId),
+  });
+
+  const idleReviewQ = useQuery({
+    queryKey: ["maintenance", "idle-events-needs-review", companyId],
+    queryFn: () => listIdleEventsNeedsReview(companyId, 100),
+    enabled: Boolean(companyId),
+  });
+
+  const confirmIdle = useMutation({
+    mutationFn: (eventId: string) => confirmIdleEventManual(eventId, companyId),
+    onSuccess: async () => {
+      pushToast("Idle source confirmed as manual", "success");
+      await qc.invalidateQueries({ queryKey: ["maintenance", "idle-events-needs-review"] });
+    },
+    onError: (e) => pushToast(userFacingApiError(e, "Could not confirm idle event."), "error"),
   });
 
   const drilldownQ = useQuery({
@@ -201,6 +222,70 @@ export function MaintKpiDashboardPage() {
           maintenance cost per unit report
         </Link>
       </p>
+
+      {/* ROUND 285.4.9 / #33 — idle events with no idle_source need human review. */}
+      <section className="rounded-sm border border-amber-200 bg-amber-50 p-3" data-testid="idle-events-needs-review">
+        <div className="mb-2 flex items-baseline justify-between gap-2">
+          <h2 className="text-[11px] font-bold uppercase tracking-wide text-gray-600">
+            Idle events needing review
+          </h2>
+          <span className="text-xs text-gray-600" data-testid="idle-events-needs-review-count">
+            {idleReviewQ.data?.total_count ?? "—"} open
+          </span>
+        </div>
+        <p className="mb-2 text-xs text-gray-600">
+          Engine-on idle hours with no Samsara/manual source. Confirm sets idle source to manual (CHECK allows only samsara or manual).
+        </p>
+        {idleReviewQ.isError ? (
+          <ListErrorState title="Could not load idle review queue" onRetry={() => void idleReviewQ.refetch()} />
+        ) : idleReviewQ.isPending ? (
+          <p className="text-xs text-gray-500">Loading…</p>
+        ) : (idleReviewQ.data?.rows.length ?? 0) === 0 ? (
+          <p className="text-xs text-gray-600" data-testid="idle-events-needs-review-empty">No idle events waiting for review.</p>
+        ) : (
+          <div className="overflow-x-auto bg-white">
+            <ParityTable
+              rows={idleReviewQ.data!.rows}
+              rowKey={(r) => r.event_id}
+              tableTestId="idle-events-needs-review-table"
+              emptyText="No idle events waiting for review."
+              columns={[
+                { key: "unit", label: "Unit", sortable: true, sortValue: (r) => r.unit_number ?? "", render: (r) => r.unit_number ?? "—" },
+                { key: "category", label: "Category", sortable: true, sortValue: (r) => r.category ?? "", render: (r) => r.category ?? "—" },
+                { key: "fault", label: "Fault", sortable: true, sortValue: (r) => r.fault ?? "", render: (r) => r.fault ?? "—" },
+                { key: "start", label: "Start", sortable: true, sortValue: (r) => r.started_at ?? "", render: (r) => r.started_at?.slice(0, 10) ?? "—" },
+                { key: "end", label: "End", sortable: true, sortValue: (r) => r.ended_at ?? "", render: (r) => r.ended_at?.slice(0, 10) ?? "—" },
+                {
+                  key: "idle_h",
+                  label: "Idle hours",
+                  sortable: true,
+                  sortValue: (r) => r.engine_on_idle_hours ?? -Infinity,
+                  render: (r) => (r.engine_on_idle_hours == null ? "—" : r.engine_on_idle_hours.toFixed(2)),
+                },
+                { key: "location", label: "Location", sortable: true, sortValue: (r) => r.location ?? "", render: (r) => r.location ?? "—" },
+                {
+                  key: "action",
+                  label: "Review",
+                  sortable: false,
+                  render: (r) => (
+                    <button
+                      type="button"
+                      className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs"
+                      style={{ height: 28 }}
+                      data-testid={`idle-confirm-manual-${r.event_id}`}
+                      disabled={confirmIdle.isPending}
+                      onClick={() => confirmIdle.mutate(r.event_id)}
+                    >
+                      Confirm manual
+                    </button>
+                  ),
+                },
+              ]}
+            />
+          </div>
+        )}
+      </section>
+
       <div className="flex flex-wrap items-end justify-end gap-3">
         <div data-maint-kpi-filter-toolbar="collapsed">
           <CollapsedListFilters

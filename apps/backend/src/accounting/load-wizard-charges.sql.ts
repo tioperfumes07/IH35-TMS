@@ -17,32 +17,44 @@ export function wizardChargesAggregateSelect(alias = "wiz"): string {
 
 /** LEFT JOIN of the per-load pivot. `loadIdExpr` / `companyExpr` are internal SQL refs only. */
 export function wizardChargesLeftJoin(loadIdExpr: string, companyExpr: string, alias = "wiz"): string {
-  return `LEFT JOIN (
-      SELECT cl.load_id,
-             COALESCE(SUM(cl.amount_cents) FILTER (
-               WHERE lower(cl.charge_code) IN ('linehaul', 'line_haul')
+  // ALIAS NOTE: the inner table is aliased `wcl`, never `cl` — load-cost-rollup.sql.ts calls this
+  // with the OUTER alias `cl` ("cl.id"), and an inner `cl` would shadow it so `cl.load_id = cl.id`
+  // would silently self-reference instead of correlating. Found while fixing LOADCOSTS-500.
+  // LOADCOSTS-500 (Lead, 09-30-2026). This was a PLAIN `LEFT JOIN ( ... )` whose subquery body
+  // filtered on `${companyExpr}` — which callers pass as `l.operating_company_id`, an OUTER alias.
+  // A non-lateral subquery may not reference the outer FROM clause, so Postgres rejected the whole
+  // statement at PARSE time with 42P01 "invalid reference to FROM-clause entry for table l ... you
+  // must mark this subquery with LATERAL". The Load Costs board therefore returned HTTP 500 in
+  // ~40ms and rendered 0 loads / $0.00 for every tile, live, from the moment #23239 merged.
+  // LATERAL is the correct form here: it also lets the per-load filter move INSIDE, so this becomes
+  // a one-row correlated lookup per load instead of aggregating every charge line in the company
+  // and then joining. Aggregates over zero matching rows return NULL and the callers' COALESCE
+  // turns them into 0, so `ON true` keeps the LEFT-JOIN semantics the callers already rely on.
+  return `LEFT JOIN LATERAL (
+      SELECT COALESCE(SUM(wcl.amount_cents) FILTER (
+               WHERE lower(wcl.charge_code) IN ('linehaul', 'line_haul')
              ), 0)::bigint AS linehaul_cents,
-             COALESCE(SUM(cl.amount_cents) FILTER (
-               WHERE lower(cl.charge_code) IN ('fuel_surcharge', 'fsc')
+             COALESCE(SUM(wcl.amount_cents) FILTER (
+               WHERE lower(wcl.charge_code) IN ('fuel_surcharge', 'fsc')
              ), 0)::bigint AS fuel_surcharge_cents,
-             COALESCE(SUM(cl.amount_cents) FILTER (
-               WHERE lower(cl.charge_code) LIKE '%detention%'
-                  OR lower(COALESCE(cl.description, '')) LIKE '%detention%'
+             COALESCE(SUM(wcl.amount_cents) FILTER (
+               WHERE lower(wcl.charge_code) LIKE '%detention%'
+                  OR lower(COALESCE(wcl.description, '')) LIKE '%detention%'
              ), 0)::bigint AS detention_charge_cents,
-             COALESCE(SUM(cl.amount_cents) FILTER (
-               WHERE lower(cl.charge_code) LIKE '%layover%'
-                  OR lower(COALESCE(cl.description, '')) LIKE '%layover%'
+             COALESCE(SUM(wcl.amount_cents) FILTER (
+               WHERE lower(wcl.charge_code) LIKE '%layover%'
+                  OR lower(COALESCE(wcl.description, '')) LIKE '%layover%'
              ), 0)::bigint AS layover_charge_cents,
-             COALESCE(SUM(cl.amount_cents) FILTER (
-               WHERE lower(cl.charge_code) NOT IN ('linehaul', 'line_haul', 'fuel_surcharge', 'fsc')
-                 AND lower(cl.charge_code) NOT LIKE '%detention%'
-                 AND lower(cl.charge_code) NOT LIKE '%layover%'
-                 AND lower(COALESCE(cl.description, '')) NOT LIKE '%detention%'
-                 AND lower(COALESCE(cl.description, '')) NOT LIKE '%layover%'
+             COALESCE(SUM(wcl.amount_cents) FILTER (
+               WHERE lower(wcl.charge_code) NOT IN ('linehaul', 'line_haul', 'fuel_surcharge', 'fsc')
+                 AND lower(wcl.charge_code) NOT LIKE '%detention%'
+                 AND lower(wcl.charge_code) NOT LIKE '%layover%'
+                 AND lower(COALESCE(wcl.description, '')) NOT LIKE '%detention%'
+                 AND lower(COALESCE(wcl.description, '')) NOT LIKE '%layover%'
              ), 0)::bigint AS accessorial_cents
-        FROM dispatch.load_charge_lines cl
-       WHERE cl.operating_company_id = ${companyExpr}
-         AND COALESCE(cl.is_active, true) IS TRUE
-       GROUP BY cl.load_id
-    ) ${alias} ON ${alias}.load_id = ${loadIdExpr}`;
+        FROM dispatch.load_charge_lines wcl
+       WHERE wcl.load_id = ${loadIdExpr}
+         AND wcl.operating_company_id = ${companyExpr}
+         AND COALESCE(wcl.is_active, true) IS TRUE
+    ) ${alias} ON true`;
 }

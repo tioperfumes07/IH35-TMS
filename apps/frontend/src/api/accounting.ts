@@ -3070,6 +3070,17 @@ export type CompanySettlementPLLine = {
   amount_cents: number;
 };
 
+export type CompanySettlementMargins = {
+  cash_margin_cents: number;
+  true_cost_margin_cents: number;
+  economic_margin_cents: number;
+  fuel_purchased_cents: number;
+  fuel_consumed_cents: number;
+  downtime_cash_cost_cents: number;
+  downtime_mgmt_cost_cents: number;
+  lost_opportunity_cents: number;
+};
+
 export type CompanySettlementReport = {
   company_settlement_id: string;
   display_id: string;
@@ -3085,6 +3096,22 @@ export type CompanySettlementReport = {
     revenue: { invoiced_cents: number };
     pl_rollup: { lines: CompanySettlementPLLine[]; net_revenue_cents: number };
     miles_and_mpg: { total_miles: number; mpg: number | null };
+    /** ROUND 285.4.9 / #58 — auto-printed; optional on older clients until deploy catches up. */
+    downtime_ledger?: {
+      events: Array<Record<string, unknown>>;
+      costs: Array<Record<string, unknown>>;
+      lost_opportunity: Array<Record<string, unknown>>;
+      total_duration_hours: number;
+      total_idle_hours: number;
+    };
+    fuel_consumed?: {
+      rows: Array<Record<string, unknown>>;
+      total_consumed_cents: number;
+      total_purchased_cents: number;
+      total_gallons: number;
+      total_driven_miles: number;
+    };
+    margins?: CompanySettlementMargins;
   };
 };
 

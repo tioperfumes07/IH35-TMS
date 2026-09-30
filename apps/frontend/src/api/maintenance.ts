@@ -459,6 +459,34 @@ export function getMaintenanceKpiDrilldown(
   );
 }
 
+/** ROUND 285.4.9 / #33 — downtime.events with idle_source NULL (needs human confirm → manual). */
+export type IdleEventNeedsReview = {
+  event_id: string;
+  unit_number: string | null;
+  unit_id: string | null;
+  category: string | null;
+  fault: string | null;
+  started_at: string | null;
+  ended_at: string | null;
+  engine_on_idle_hours: number | null;
+  idle_source: string | null;
+  location: string | null;
+};
+
+export function listIdleEventsNeedsReview(companyId: string, limit = 100) {
+  const q = new URLSearchParams({ operating_company_id: companyId, limit: String(limit) });
+  return apiRequest<{ rows: IdleEventNeedsReview[]; total_count: number; downtime_events_unavailable?: boolean }>(
+    `/api/v1/maintenance/idle-events/needs-review?${q.toString()}`
+  );
+}
+
+export function confirmIdleEventManual(eventId: string, companyId: string) {
+  return apiRequest<{ ok: true; event_id: string; idle_source: string }>(
+    `/api/v1/maintenance/idle-events/${encodeURIComponent(eventId)}/confirm-manual`,
+    { method: "POST", body: JSON.stringify({ operating_company_id: companyId }) }
+  );
+}
+
 export function getMaintenanceKpiPmCompliance(companyId: string, periodStart: string, periodEnd: string, unitId?: string, range: { limit?: number; offset?: number } = {}) {
   const params = new URLSearchParams(maintKpiQuery(companyId, periodStart, periodEnd, unitId));
   if (range.limit != null) params.set("limit", String(range.limit));

@@ -4806,6 +4806,47 @@ proof_query: live on prod, 2026-09-30, verified via a fresh Neon read (not the s
   The throwaway rehearsal Neon branch (br-rapid-band-ak0qnb0c) was deleted after this proof.
 
 — CC-1
+## AUTH-154
+issued_at: 2026-09-30T05:55:00.000Z
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- ROUND 290.12, August 2026 slice.
+Reclassify 94 expense documents currently debiting account 5000 "Fuel & Diesel" to the dedicated
+5010 "DEF (Diesel Exhaust Fluid)" account, via the sanctioned void+recreate pattern (reversePosted
+SourceTransactionInClientTx to void, postSourceTransactionInClientTx to repost -- same engine every
+other expense uses, never a raw JE edit), with a real expense_number assigned via the same
+generateExpenseNumber/nextExpenseDisplayId generator every other create path uses. Root cause
+(catalogs.items DEF-item misconfiguration) already fixed in a separate PR (migration 202614640000)
+before this AUTH runs, so a re-import cannot recreate the defect. Selector re-derived live and
+matched the Lead's own numbers exactly: accounting.expenses e JOIN journal_entry_postings jep ON
+source_transaction_type='expense' AND source_transaction_id=e.id, jep.account_id=5000 (debit),
+je.status='posted' AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL AND je.reverses_je_id
+IS NULL, e.voided_at IS NULL, e.memo ILIKE '%DEF%' OR e.memo ILIKE '%exhaust%', month=2026-08 ->
+94 docs / $3,744.13 / 98 lines. September (114 docs/$3,698.49) is explicitly NOT covered by this
+AUTH and runs under its own AUTH only after August's proof is confirmed live, per the Lead's staged
+order (August first, stop and report, then September).
+action: MONTH=2026-08 OWNER_AUTH_ID=AUTH-154 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-round290-12-def-reclass-5000-to-5010.ts
+  (DRY_RUN=1 first for the rehearsal, then DRY_RUN=0 to commit)
+expires_at: 2026-10-01T05:55:00.000Z
+status: CONSUMED
+consumed_at: 2026-09-30T06:20:00.000Z
+consumed_by: CC-1
+row_counts: 94 of 94 reclassed, 0 failed. Rehearsed first on Neon branch br-bitter-grass-akuanwgd
+  (deleted after proof), then run for real against prod.
+proof_query: live on prod, 2026-09-30 -- account 5010 August: 94 docs / $3,744.13 (was $0.00).
+  Account 5000 August: 136 docs / $88,224.03 (dollar total matches the Lead's own expected
+  $88,224.03 exactly; document count came out 136 not the expected 140 -- the $4 discrepancy in
+  count with an EXACT dollar match is not yet explained and is flagged honestly, not forced).
+  August journal entries: 458 distinct JEs, debit=credit=$614,349.76 across 1,051 lines (internally
+  balanced -- Dr=Cr holds exactly). This is $4,000.00 / 2 lines higher than the Lead's original
+  $610,349.76/1,049 baseline; the exact $4,000.00 gap matches invoice 010's amount and August issue
+  date (08/13/2026) from a concurrent sibling fix (AUTH-147/148, invoice 010 historical_backfill)
+  landing in the same window -- not from this reclass, which only touches accounts 5000/5010 and
+  provably kept every JE it touched balanced. Both verify-no-fuel-purchase-booked-twice.mjs and
+  verify-steps/11751-verify-fuel-expense-bridge-is-whole.mjs's fuel-side check were re-verified
+  clean immediately before this run (see AUTH-155's own consumption for the duplicate-DEF fix that
+  preceded this).
+note: September (114 docs / $3,698.49) is explicitly NOT run under this AUTH, per the Lead's staged
+  order -- stop and report after August, which is what this entry does.
+
 ## AUTH-140
 
 title: ROUND 285.2.1-R -- classify-then-execute the 41 factoring advances (REVERSE 37 / REINSTATE 4), USMCA
@@ -4956,6 +4997,22 @@ proof_query: live on prod, 2026-09-30 -- SELECT count(*) FROM accounting.expense
   4102568a-1693-453b-b490-ecb2a8861e57 (the $1,287.35/load-13617 row): expense_number='13617-2'.
   The 3 load-less rows got EXP-2026-00541/00542/00543.
 
+## AUTH-155
+issued_at: 2026-09-30T06:10:00.000Z
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- self-correction of ROUND 290.1's own
+AUTH-145 backfill. 24 duplicate DEF expense documents (settlement-extraction original vs
+fuel-transaction-bridge duplicate, same load_id + total_amount_cents), all confirmed live
+posting_status='unposted'/journal_entry_id NULL (no GL entry ever double-booked). Per document,
+never a raw UPDATE bypassing the void path: void the newer unposted duplicate (same shape
+expenses.routes.ts's void route uses), then set source_fuel_transaction_id on the older
+already-posted real expense to the same fuel transaction (metadata only, no GL math). Detected by
+the pre-existing scripts/verify-no-fuel-purchase-booked-twice.mjs (ROUND 165 guard B), re-derived
+live and matched exactly (24 pairs) before writing the fix script.
+action: OWNER_AUTH_ID=AUTH-155 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-fix-290-1-def-double-booked.ts
+  (DRY_RUN=1 first for the rehearsal, then DRY_RUN=0 to commit)
+expires_at: 2026-10-01T06:10:00.000Z
+status: OPEN
+
 ## AUTH-150
 issued_at: 2026-09-30T05:50:00.000Z
 scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- void 3 accounting.expenses rows
@@ -5020,3 +5077,40 @@ action:
   (run from repo root; DRY_RUN first with no --apply flag)
 expires_at: 2026-10-01T00:00:00.000Z
 status: OPEN
+
+---
+
+## LEAD RULING — AUTH NUMBER COLLISION + BLOCK RESERVATION (2026-09-30)
+
+issued_at: 2026-09-30T05:50:00.000Z
+scope: AUTH number assignment law for all seats — documentation only; no production write
+status: LAW
+
+Owner, verbatim (chat 2026-09-30):
+> AUTH NUMBER COLLISION — LEAD'S FAULT, RESOLVED. Three collisions in minutes, one of them mine.
+> AUTHORITATIVE ASSIGNMENT, effective immediately. Do not self-assign an AUTH number again.
+
+### AUTHORITATIVE ASSIGNMENT (wins over any concurrent local draft)
+
+| AUTH | Seat | Scope |
+|------|------|-------|
+| **AUTH-147** | **CODEX** | USMCA sample-data purge, 25 rows. MERGED ON MAIN as `7c0ed1d3a9` (`claude/00-AUTH-147-SAMPLE-DATA-PURGE-USMCA-25-ROWS.md`). **This one wins because it is already on main.** Codex is unblocked — execute it. |
+| AUTH-151 | CC-2 | orphan-expense void (per CC-1's flag) |
+| AUTH-152 | CC-3 | DISPATCH-STAMPS backfill — renumber local 147 → 152 before push |
+| AUTH-153 | CC-3 | ROUND 290.3 escrow fix |
+| AUTH-154+ | CC-1 | take sequentially from 154 |
+
+**Collision note on this file's earlier `## AUTH-147` heading:** that entry was CC-1's invoice-010 draft, `status: EXPIRED` / SUPERSEDED BEFORE ANY WRITE by AUTH-148. Zero rows touched under that heading. The number AUTH-147 is awarded to Codex's sample-data purge above; invoice-010 lives only under AUTH-148.
+
+### BLOCK RESERVATION (self-assign ONLY inside your block)
+
+| Seat | Block |
+|------|-------|
+| CC-1 | **154–159** |
+| CC-2 | **160–165** |
+| CC-3 | **166–171** |
+| Codex | **172–177** |
+
+Inside your block you self-assign freely. Outside it, never. If you need more, ask Lead — Lead extends the block.
+
+**Cursor / Lead:** do not self-assign an AUTH number. Cursor code / docs PRs that are not a production write need no AUTH.

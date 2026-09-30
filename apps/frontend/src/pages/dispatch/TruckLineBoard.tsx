@@ -1047,14 +1047,31 @@ export function TruckLineBoard({
            state so one unit's row is visibly distinct from its neighbors, plus a 3px left spine per
            row (inline style, colored by trip-type -- see rowSpineColor()) so a unit's row is
            identifiable at a glance without reading its text. */
-        .truck-line-v4-row:nth-child(even) { background: #FAFCFE; }
+        /* TRUCK-LINE-UNIT-SEPARATION (Lead, 09-30-2026, owner: "no distinction between units, the
+           lines for the rows"). nth-child(even) striped by ROW, but a unit running a round trip
+           renders TWO rows — so the stripe cut a single unit in half and visually merged it with
+           its neighbour. Striping is therefore keyed off the UNIT (data-unit-stripe, set once per
+           unit group in the renderer), and the boundary between units gets a real 2px rule while
+           legs of the SAME unit are separated only by a hairline. A unit is now one visual block
+           whether it has one leg or three. */
+        .truck-line-v4-row[data-unit-stripe="1"] { background: #F7FAFD; }
+        .truck-line-v4-row[data-unit-first="true"] { border-top: 2px solid #9FB3C8; }
+        .truck-line-v4-row[data-unit-first="false"] { border-top: 1px dotted #DBE3EC; }
         .truck-line-v4-row:hover { background: #F2F7FC; }
         /* ROUND 155.6 — PU / DEL / Leg / Tour # / Live signal centered like prior appt/signal. */
         .truck-line-v4-pu-header, .truck-line-v4-del-header, .truck-line-v4-leg-header,
         .truck-line-v4-tour-header, .truck-line-v4-signal-header,
         .truck-line-v4-pu-cell, .truck-line-v4-del-cell, .truck-line-v4-leg-cell,
         .truck-line-v4-tour-cell, .truck-line-v4-signal-cell { text-align: center; }
-        .truck-line-v4-unit { font-size: clamp(12px, 0.85vw, 14px); }
+        /* TRUCK-LINE-TYPE-SCALE (Lead, 09-30-2026, owner: "the text size for the unit, tour, load,
+           pu date delivery date, etc must be the same"). They were not: UNIT and LOAD used
+           .truck-line-v4-unit at clamp(12,0.85vw,14) while TOUR, PU DATE and DELIVERY DATE used
+           .truck-line-v4-sub at clamp(10,0.72vw,12) — three of the five header values a full step
+           smaller than the other two. Rather than hand-matching the numbers (which is how they
+           drifted apart in the first place), all five now read ONE custom property. Change the
+           token, every primary cell value moves together; there is no second place to forget. */
+        .truck-line-v4-header, .truck-line-v4-row { --tl-primary: clamp(12px, 0.85vw, 14px); }
+        .truck-line-v4-unit, .truck-line-v4-primary { font-size: var(--tl-primary); }
         .truck-line-v4-sub { font-size: clamp(10px, 0.72vw, 12px); }
         .truck-line-v4-cap { font-size: clamp(9px, 0.72vw, 11px); }
         .truck-line-v4-appt { font-size: clamp(11px, 0.8vw, 13px); }
@@ -1208,13 +1225,30 @@ export function TruckLineBoard({
                 >
                   {SECTION_LABEL[section]} ({sectionGroups.length})
                 </div>
-                {sectionGroups.map((g) =>
+                {sectionGroups.map((g, groupIndex) =>
                   g.legs.map((r, legIndex) => {
+                    // TRUCK-LINE-UNIT-SEPARATION: stripe by UNIT GROUP, not by row. A unit with a
+                    // round trip renders several legs; striping per row split one unit across two
+                    // tints and ran it into its neighbour. groupIndex is the unit's ordinal within
+                    // its section, so every leg of a unit shares one tint, and only the FIRST leg
+                    // carries the heavy 2px rule that marks where a new unit begins.
+                    const unitStripe = groupIndex % 2 === 1 ? "1" : "0";
+                    const unitFirst = legIndex === 0;
                     const prevLeg = legIndex > 0 ? g.legs[legIndex - 1] : null;
                     const returnTrip = isReturnTripLeg(prevLeg, r);
                     const conflict = hasScheduleConflict(prevLeg, r);
                     const tourNum = g.tour_display_id ?? r.tour_display_id ?? null;
-                    const tourSafe = tourNum && /^P-\d+$/i.test(tourNum) ? tourNum : tourNum && !/^[0-9a-f-]{36}$/i.test(tourNum) ? tourNum : null;
+                    // TRUCK-LINE-TOUR-GIBBERISH (Lead, 09-30-2026, owner: "the tour shows gibberish").
+                    // This was a DENY-list: it printed whatever it was handed unless the string
+                    // happened to match a 36-char UUID. Every other machine value passed straight to
+                    // the screen — a dashless 32-char uuid, an internal settlement ref, a truncated
+                    // id. A deny-list cannot be right here because we cannot enumerate every wrong
+                    // shape; we CAN enumerate the two right ones. This column is
+                    // "TOUR / PRE-SETTLEMENT" and the closed reconciliation fixes both forms:
+                    // the open pre-settlement is P-#### and the settlement is the AlwaysTrack
+                    // 4-digit document ("SETTLEMENT-NUMBER-IS-ALWAYSTRACK-DOC ... never S-YYYY-NNNN").
+                    // Anything else is a machine id leaking into a human column and renders as "—".
+                    const tourSafe = tourNum && (/^P-\d+$/i.test(tourNum) || /^\d{4}$/.test(tourNum)) ? tourNum : null;
                     const rowKey = `${g.section}-${g.unit_id}-${r.load?.load_id ?? r.available?.driver_id ?? legIndex}`;
                     const statusOpen = r.load?.load_id != null && statusMenuLoadId === r.load.load_id;
 
@@ -1225,6 +1259,8 @@ export function TruckLineBoard({
                         <div
                           key={rowKey}
                           className="truck-line-v4-row"
+                          data-unit-stripe={unitStripe}
+                          data-unit-first={unitFirst ? "true" : "false"}
                           style={{ background: AVAILABLE_ROW_TINT, borderLeft: `3px solid ${rowSpineColor(null)}` }}
                           data-testid={`truck-line-row-available-${a.driver_id}`}
                           data-unit-id={g.unit_id}
@@ -1258,6 +1294,8 @@ export function TruckLineBoard({
                       <Fragment key={rowKey}>
                       <div
                         className="truck-line-v4-row"
+                          data-unit-stripe={unitStripe}
+                          data-unit-first={unitFirst ? "true" : "false"}
                         style={{
                           borderLeft: `3px solid ${conflict ? RED : returnTrip ? GREEN : rowSpineColor(r.load?.trip_type)}`,
                           borderBottom: r.load && r.station ? "none" : undefined,
@@ -1283,7 +1321,7 @@ export function TruckLineBoard({
                           ) : null}
                         </div>
                         <div className="truck-line-v4-tour-cell" data-testid={`truck-line-tour-${g.unit_id}`}>
-                          <span className="truck-line-v4-sub font-semibold text-[#0F1219]">{tourSafe ?? "—"}</span>
+                          <span className="truck-line-v4-primary font-semibold text-[#0F1219]">{tourSafe ?? "—"}</span>
                         </div>
                         <div
                           className="truck-line-v4-load-cell relative"
@@ -1341,13 +1379,13 @@ export function TruckLineBoard({
                           )}
                         </div>
                         <div className="truck-line-v4-pu-cell">
-                          <div className="truck-line-v4-sub text-[#0F1219]">{fmtApptDate(r.appointments?.pickup?.at)}</div>
+                          <div className="truck-line-v4-primary text-[#0F1219]">{fmtApptDate(r.appointments?.pickup?.at)}</div>
                           <div className="truck-line-v4-cap text-[#6B7280]">
                             {formatLocationLabel({ city: r.load?.pickup.city ?? null, state: r.load?.pickup.state ?? null })}
                           </div>
                         </div>
                         <div className="truck-line-v4-del-cell">
-                          <div className="truck-line-v4-sub text-[#0F1219]">{fmtApptDate(r.appointments?.delivery?.at)}</div>
+                          <div className="truck-line-v4-primary text-[#0F1219]">{fmtApptDate(r.appointments?.delivery?.at)}</div>
                           <div className="truck-line-v4-cap text-[#6B7280]">
                             {formatLocationLabel({ city: r.load?.delivery.city ?? null, state: r.load?.delivery.state ?? null })}
                           </div>
