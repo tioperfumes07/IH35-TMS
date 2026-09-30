@@ -9444,5 +9444,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
+  },
+  "11965": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-transaction-linkage-law (ROUND 300 A-30): the shared TIER1/TIER2/TIER3 linkage declaration + table-registry drift check + tier2-load-demand static scan, per docs/laws/TRANSACTION-LINKAGE-LAW.md"
   }
 }
