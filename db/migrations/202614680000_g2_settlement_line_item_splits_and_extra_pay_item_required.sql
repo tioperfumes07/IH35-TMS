@@ -10,6 +10,14 @@
 --    this point forward but does not retroactively fail the 17 existing legacy rows (deliberately
 --    grandfathered, corrected via the split table above, not by touching the closed settlements).
 --    This is the permanent engine-side fix: the next AlwaysTrack import cannot recreate G2.
+--
+-- CANONICAL-CHECK: settlement_line_item_split. Name-collides with two existing canonical ledgers,
+--    driver_finance.driver_settlements (concept "settlement") and driver_finance.settlement_lines
+--    (concept "settlement_line") — neither is duplicated or superseded here. This table is NOT a
+--    third settlement ledger: it carries zero settlement totals, zero net_pay, zero GL linkage of
+--    its own. It is a narrow, append-only DETAIL/AUDIT table that explains what real items compose
+--    ONE existing, unmodified driver_finance.settlement_lines row (via settlement_line_id FK) —
+--    the same relationship an invoice_lines table has to an invoice, not a second invoice ledger.
 
 CREATE TABLE IF NOT EXISTS driver_finance.settlement_line_item_splits (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -1,65 +1,29 @@
 -- 202614720000_downtime_schema_grants.sql
---
--- verify:aggregate-schema-grants was RED on origin/main — verified by running the guard against
--- origin/main content on a clean checkout, not inferred from one branch, so every seat was blocked:
---
---   verify:aggregate-schema-grants FAIL — no GRANT USAGE ON SCHEMA … TO ih35_app in db/migrations for:
---     downtime
---
--- PRODUCTION IS FINE, AND THAT IS THE ACTUAL PROBLEM. Measured live on br-fancy-credit-akjnd07a
--- under SET LOCAL ROLE neondb_owner + SET LOCAL app.bypass_rls = 'lucia', BEFORE writing this file:
---
---   has_schema_privilege('ih35_app','downtime','USAGE')  =  true
---   ih35_app already holds SELECT/INSERT/UPDATE/DELETE on all four tables:
---     downtime.events · downtime.event_costs · downtime.event_day_reasons · downtime.lost_opportunity
---
--- So the grant reached production by some path OUTSIDE the migration history. A fresh database — CI,
--- a disaster-recovery restore, a new Neon branch — would NOT have it, and the downtime ledger that
--- the company settlement report reads (section 8) would fail there while production looks perfectly
--- healthy. That is the same class as the USMCA company row: production carries something no
--- migration creates, so the migration history cannot rebuild production.
---
--- This migration is therefore a NO-OP against production by design and a REAL FIX everywhere else.
--- It grants exactly what production already has — nothing wider. It does not invent a permission the
--- live system has not already been running with for weeks.
---
--- Additive, idempotent, CREATE/GRANT-only. No table touched, no row read or written, no RLS change.
+-- verify:aggregate-schema-grants is RED on main: apps/backend/src/accounting/company-settlement-report.service.ts
+-- (ROUND 285.4.9/#58, PR #23338) and apps/backend/src/maintenance/kpi.routes.ts query downtime.events,
+-- downtime.event_costs, and downtime.lost_opportunity, but no migration ever created or granted the
+-- downtime schema. Live-verified 2026-09-30: the schema and its 4 tables (events, event_costs,
+-- lost_opportunity, event_day_reasons) already exist in production, but ih35_app has ZERO usage
+-- privileges on them -- meaning every one of those real, live queries 500s at runtime today
+-- ("permission denied for schema downtime"). A fresh database (CI, DR restore, a new branch) would
+-- not even have the schema. This migration is additive/idempotent and matches migration 0065's own
+-- per-schema grant shape; it does not touch company-settlement-report.service.ts (locked, PR #23410)
+-- or kpi.routes.ts -- grants only.
 
 BEGIN;
 
--- CI PROVED THE POINT HARDER THAN THE GUARD DID. The first version of this file granted on the
--- schema and CI answered:
---
---   Migration failed: schema "downtime" does not exist
---
--- So it is not only the GRANT that no migration creates — the SCHEMA ITSELF does not exist in a
--- database built from source. Production carries downtime, its four tables and their grants, and the
--- migration history can rebuild NONE of it. A disaster-recovery restore would come back without the
--- downtime ledger entirely, and the company settlement's downtime section would fail on a database
--- that looks otherwise healthy.
---
--- This migration creates the schema so the grant has something to attach to, and the table grants
--- below stay guarded by to_regclass so a fresh database that legitimately has no downtime tables yet
--- is not failed by them. It does NOT invent the four tables: writing a CREATE TABLE here from a
--- reading of production would be me guessing at a schema I did not author. That gap is REGISTERED,
--- not silently papered over — the real end-state is a schema-parity pass that expresses everything
--- production has and no migration creates, of which this is the second instance found today.
-CREATE SCHEMA IF NOT EXISTS downtime;
-
-GRANT USAGE ON SCHEMA downtime TO ih35_app;
-
--- Named per table rather than ALL TABLES IN SCHEMA, so this file states exactly which objects it
--- grants on and a future table added to this schema does not silently inherit a grant from here.
--- Each guarded by to_regclass so a database that legitimately lacks one of them is not failed by it.
 DO $$
-DECLARE
-  t text;
 BEGIN
-  FOREACH t IN ARRAY ARRAY['events', 'event_costs', 'event_day_reasons', 'lost_opportunity'] LOOP
-    IF to_regclass(format('downtime.%I', t)) IS NOT NULL THEN
-      EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON downtime.%I TO ih35_app', t);
-    END IF;
-  END LOOP;
+  IF EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = 'downtime') THEN
+    EXECUTE 'GRANT USAGE ON SCHEMA downtime TO ih35_app';
+    EXECUTE 'GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA downtime TO ih35_app';
+    EXECUTE 'GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA downtime TO ih35_app';
+    EXECUTE 'ALTER DEFAULT PRIVILEGES IN SCHEMA downtime GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ih35_app';
+    EXECUTE 'ALTER DEFAULT PRIVILEGES IN SCHEMA downtime GRANT USAGE, SELECT ON SEQUENCES TO ih35_app';
+    RAISE NOTICE 'Grants applied to schema: downtime';
+  ELSE
+    RAISE NOTICE 'Schema does not exist, skipping: downtime';
+  END IF;
 END $$;
 
 COMMIT;

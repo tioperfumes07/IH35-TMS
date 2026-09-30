@@ -248,6 +248,12 @@ function run() {
 
 function selftest() {
   const checks = [];
+  // Built via real template-literal interpolation (never a literal backslash-dollar in source) so
+  // these fixtures' embedded `${...}` text can't be misread as a regex escape sequence by static
+  // analysis (CodeQL js/useless-regexp-character-escape false-fired on the escaped form, backslash
+  // immediately followed by dollar-brace, used to represent a nested SQL template literal inside
+  // these JS string fixtures).
+  const DOLLAR = "$";
 
   const cleanSrc = `
     import { assertCanonicalSubset } from "./canonical-active-load-set.js";
@@ -274,19 +280,19 @@ function selftest() {
 
   const statusOnlySrc = `
     import { canonicalActiveLoadStatusClause } from "./canonical-active-load-set.js";
-    const q = \`SELECT * FROM mdata.loads l WHERE \${canonicalActiveLoadStatusClause("l")}\`;
+    const q = \`SELECT * FROM mdata.loads l WHERE ${DOLLAR}{canonicalActiveLoadStatusClause("l")}\`;
   `;
   checks.push(["ROUND 32.2-CORRECTED: status-half-only file -> RED, at least 1 violation", findViolations("dispatch/status-only.ts", statusOnlySrc).length >= 1]);
 
   const bothHalvesSrc = `
     import { canonicalActiveLoadWhereClause } from "./canonical-active-load-set.js";
-    const q = \`SELECT * FROM mdata.loads l WHERE \${canonicalActiveLoadWhereClause("l")}\`;
+    const q = \`SELECT * FROM mdata.loads l WHERE ${DOLLAR}{canonicalActiveLoadWhereClause("l")}\`;
   `;
   checks.push(["file using the complete predicate (both halves) -> 0 violations", findViolations("dispatch/both-halves.ts", bothHalvesSrc).length === 0]);
 
   const dispatchWorkOnlySrc = `
     import { canonicalDispatchWorkWhereClause } from "./canonical-active-load-set.js";
-    const q = \`SELECT * FROM mdata.loads l WHERE \${canonicalDispatchWorkWhereClause("l", "$1::uuid")}\`;
+    const q = \`SELECT * FROM mdata.loads l WHERE ${DOLLAR}{canonicalDispatchWorkWhereClause("l", "$1::uuid")}\`;
   `;
   checks.push(["TRUCKLINE-16: dispatch-work-only file -> 0 violations (no money test required)", findViolations("dispatch/work-only.ts", dispatchWorkOnlySrc).length === 0]);
 
@@ -335,8 +341,8 @@ function selftest() {
 
   const mixedPredicatesSrc = `
     import { canonicalActiveLoadWhereClause, canonicalDispatchWorkWhereClause } from "./canonical-active-load-set.js";
-    const accountingQ = \`SELECT * FROM mdata.loads l WHERE \${canonicalActiveLoadWhereClause("l")}\`;
-    const dispatchQ = \`SELECT * FROM mdata.loads l WHERE \${canonicalDispatchWorkWhereClause("l", "$1::uuid")}\`;
+    const accountingQ = \`SELECT * FROM mdata.loads l WHERE ${DOLLAR}{canonicalActiveLoadWhereClause("l")}\`;
+    const dispatchQ = \`SELECT * FROM mdata.loads l WHERE ${DOLLAR}{canonicalDispatchWorkWhereClause("l", "$1::uuid")}\`;
   `;
   checks.push(["TRUCKLINE-16: file importing BOTH predicates -> RED, at least 1 violation", findViolations("dispatch/mixed.ts", mixedPredicatesSrc).length >= 1]);
 
