@@ -5519,4 +5519,33 @@ proof_query: scripts/ops/2026-09-30-cc3-auth152-backfill-13637-pickup-stamp.ts r
   "actual_arrival_at":"2026-09-28T17:35:04.000Z","actual_departure_at":"2026-09-28T18:35:14.000Z",
   "actual_arrival_source":"eld_geofence"}}.
 
+## AUTH-153
+
+title: ROUND 290.3 -- driver escrow counter-leg fix (2170 Driver Net-Pay Clearing, not 1090 Undeposited Funds), USMCA
+requested_by: Lead/owner, 2026-09-30 (ROUND 290 engine audit, RED 2: "the escrow engine is wrong
+  in both directions... Correct shape: Dr 2170 Driver Net-Pay Clearing / Cr 2100-00-NNN <DRIVER
+  NAME> - Driver Escrow. 290.3 -- CC-3 -- fix the engine." Lead reviewed and accepted the fix as
+  correct, 2026-09-30: "2170 instead of 1090 is the correct shape. Ship it as AUTH-153.")
+root_cause: apps/backend/src/accounting/escrow/service.ts's postEscrowTransactionOnClient()
+  resolved ONE counter-account role ("cash_clearing") for every escrow deposit/release regardless
+  of holder_type. For USMCA that role resolves to 1090 Undeposited Funds -- correct for a
+  factor/vendor holder where real cash is withheld, but wrong for a driver holder: the settlement
+  that funded the driver's escrow already parked the pay in 2170 Driver Net-Pay Clearing, so a
+  driver escrow release moves no cash at all. Live-measured: 16 escrow_account-sourced journal
+  entries (all driver-holder, all source_type='reconciliation') credited/debited 1090 instead of
+  2170.
+scope: this AUTH tracks a CODE FIX (apps/backend/src/accounting/escrow/service.ts), not a live
+  prod data write -- there is no scripts/ops/*.ts action to run under it. It is filed for audit
+  tracking per the Lead's own instruction ("ship it as AUTH-153"), same numbering discipline as a
+  data-write AUTH. The 16 pre-fix bad documents this fix does NOT correct are separate, higher-risk
+  follow-up work (correct by document, never by a blanket JE, per the owner's own ROUND 290.3
+  order) and will carry their own AUTH-ID when that follow-up is scoped.
+action: N/A -- this AUTH authorizes merging the code fix itself (PR touching
+  apps/backend/src/accounting/escrow/service.ts), not a scripts/ops/*.ts run. No prod data is
+  written by this AUTH.
+expires_at: 2026-10-01T12:00:00.000Z
+status: CONSUMED
+consumed_at: 2026-09-30T00:00:00.000Z
+consumed_by: CC-3
+
 — CC-3

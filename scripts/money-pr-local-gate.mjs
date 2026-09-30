@@ -706,6 +706,19 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-escrow-ledger-sign-follows-type.baseline.json",
     ],
   ],
+  // ROUND-290.3 (owner ruling, 2026-09-30): driver escrow is a liability to a NAMED driver, never
+  // cash. Shrink-only baseline on the 16 pre-fix documents (corrected by document, per the ruling,
+  // never by a blanket JE). Domain-conditional, same E7 pattern as the escrow-ledger-sign guard
+  // directly above.
+  [
+    "verify-driver-escrow-counter-leg-is-clearing",
+    [
+      "apps/backend/src/accounting/escrow/",
+      "apps/backend/src/driver-finance/escrow-forfeit.service.ts",
+      "apps/backend/src/driver-finance/escrow-separation.service.ts",
+      "scripts/verify-driver-escrow-counter-leg-is-clearing.baseline.json",
+    ],
+  ],
   // Round 84 M1: every directory that writes catalogs.accounts.
   [
     "verify-no-duplicate-active-account-names",
