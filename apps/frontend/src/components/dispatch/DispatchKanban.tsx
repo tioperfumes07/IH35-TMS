@@ -13,7 +13,9 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DispatchLoadRow, LoadStatus } from "../../api/loads";
-import { patchAssignUnit } from "../../api/dispatch";
+import { getLoadStopsRecord, patchAssignUnit } from "../../api/dispatch";
+import { LOCKED_BORDER, LOCKED_HEADER_TEXT, LOCKED_PAGE_BG, LOCKED_SURFACE } from "../../design/locked-baseline-tokens";
+import { stampTruckLineArrival, stampTruckLineDeparture } from "../../api/truckLine";
 import type { UnitsWithoutLoad } from "../../api/dispatch";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ConfirmModal } from "../shared/ConfirmModal";
@@ -128,6 +130,37 @@ type KanbanLoad = DispatchLoadRow & KanbanLoadExtras;
 
 // DISPATCH-UI-REFINE-2 ITEM 1 — three densities (additive). Standard is the default.
 type KanbanDensity = "compact" | "standard" | "detailed";
+/**
+ * KANBAN-HEADER-CONTRAST (Lead, 09-30-2026, owner: "in kanban the header boxes, the contrast in
+ * color the background colors, check what is missing why it looks like crap").
+ *
+ * WHAT WAS MISSING — measured live on app.ih35dispatch.com/dispatch?view=kanban: there was no
+ * tonal ladder at all. The lane was bg-white, the header band was bg-gray-100, and the page behind
+ * both is near-white, so three surfaces that mean three different things (page / lane / card) all
+ * rendered as the same white and the board read as floating text. The borders made it worse by
+ * being off-palette hand-picked Tailwind grays (gray-300, gray-400) rather than the locked border.
+ *
+ * FIX — three tones that actually step, taken from the locked palette, never hand-picked:
+ *   header band  rgb(228,234,241)  darkest — the same band TruckLineBoard's header already uses,
+ *                                   so the two dispatch boards finally agree
+ *   lane body    LOCKED_PAGE_BG    middle  — the lane is a container, so it recedes
+ *   card         LOCKED_SURFACE    white   — the card is the object, so it sits on top
+ * Header text is LOCKED_HEADER_TEXT (#4B5563), the locked column/section-header color, and every
+ * border is LOCKED_BORDER. Defined once here; the four header sites read these, so the ladder
+ * cannot drift apart again the way gray-100/gray-300/gray-400 did.
+ */
+const KANBAN_HEADER_BAND = "rgb(228,234,241)";
+const KANBAN_HEADER_STYLE = {
+  background: KANBAN_HEADER_BAND,
+  color: LOCKED_HEADER_TEXT,
+  borderBottom: `2px solid ${LOCKED_BORDER}`,
+} as const;
+const KANBAN_COLUMN_STYLE = {
+  background: LOCKED_PAGE_BG,
+  border: `1px solid ${LOCKED_BORDER}`,
+} as const;
+const KANBAN_LANE_BODY_STYLE = { background: LOCKED_SURFACE } as const;
+
 const KANBAN_DENSITIES: readonly KanbanDensity[] = ["compact", "standard", "detailed"] as const;
 const KANBAN_DEFAULT_DENSITY: KanbanDensity = "standard";
 
@@ -145,6 +178,26 @@ type KanbanColumnDef = {
    * reappeared in "In transit". To the dispatcher that reads as "the drop did nothing".
    */
   derivedOnly?: boolean;
+  /**
+   * KANBAN-DRAG-UNBLOCK (Lead, 09-30-2026, owner: "the boxes were supposed to be dragable so i
+   * could drag from dispatch to at pick up if i wanted or to loaded etc").
+   *
+   * ROOT CAUSE of the refusal these three lanes showed: at_pickup / loaded / at_delivery are
+   * geofence-DERIVED micro-states whose dropStatus maps to the SAME dispatch state as the parent
+   * lane, so a drop produced dispatched->dispatched or in_transit->in_transit and the backend
+   * rejected it as invalid_transition. The previous response was to refuse the drop in the UI with
+   * a telematics message. That is a patch: it hides a broken write path instead of using the right
+   * one, and it takes a control away from the dispatcher rather than making it work.
+   *
+   * THE RIGHT WRITE PATH ALREADY EXISTS. These three lanes are not load-status changes at all —
+   * they are STOP EVENTS, and the stop-event model already carries a first-class Manual source
+   * (StopsRecordStop.source: "Geofence + driver" | "Driver only" | "Manual"). Truck Line has been
+   * writing them that way all along through POST .../stops/{stop_id}/arrive and /depart. So a drop
+   * on one of these lanes now records the SAME stamp Truck Line records, on the SAME route, with
+   * the SAME manual provenance. Nothing is fabricated as telematics; a manual stamp is stored as
+   * manual and reads as Manual on the load's Stops record.
+   */
+  manualStamp?: { stop: "pickup" | "delivery"; event: "arrive" | "depart" };
   showDwell?: boolean;
 };
 
@@ -180,10 +233,10 @@ const KANBAN_STATUS_GROUPS: KanbanColumnDef[] = [
   // which the backend rejects as invalid_transition. Marking them derivedOnly (like "Loaded") refuses
   // the drop with a telematics explanation instead of a silent server rejection — the operator is
   // told these lanes are set by geofence/driver PWA, not by office drag.
-  { key: "at_pickup", title: "At pickup", statuses: ["at_pickup"], dropStatus: "at_pickup", showDwell: true, derivedOnly: true },
-  { key: "loaded", title: "Loaded", statuses: [], dropStatus: "in_transit", derivedOnly: true },
+  { key: "at_pickup", title: "At pickup", statuses: ["at_pickup"], dropStatus: "at_pickup", showDwell: true, manualStamp: { stop: "pickup", event: "arrive" } },
+  { key: "loaded", title: "Loaded", statuses: [], dropStatus: "in_transit", manualStamp: { stop: "pickup", event: "depart" } },
   { key: "in_transit", title: "In transit", statuses: ["in_transit"], dropStatus: "in_transit" },
-  { key: "at_delivery", title: "At delivery", statuses: ["at_delivery"], dropStatus: "at_delivery", showDwell: true, derivedOnly: true },
+  { key: "at_delivery", title: "At delivery", statuses: ["at_delivery"], dropStatus: "at_delivery", showDwell: true, manualStamp: { stop: "delivery", event: "arrive" } },
   // WIRE-07: drop must use delivered_pending_docs so mdata status stamps actual_departure_at.
   // Bare "delivered" skips loadStatusRequiresDeliveryDepartureStamp (backend stamp helper).
   { key: "delivered", title: "Delivered", statuses: ["delivered", "delivered_pending_docs"], dropStatus: "delivered_pending_docs" },
@@ -1185,8 +1238,8 @@ export function KanbanDispatchColumn({
       just border-b), matching the same 2px radius as everything else. */}
   if (column.collapsedByDefault && !expanded) {
     return (
-      <section className="kanban-col-collapsed flex-none w-[148px] rounded-sm border border-gray-300 bg-white p-2" data-testid={`kanban-column-${column.key}`}>
-        <header className="grid grid-cols-[auto_1fr_auto] items-center gap-2 border-b-2 border-gray-400 bg-gray-100 px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-700">
+      <section className="kanban-col-collapsed flex-none w-[148px] rounded-sm p-2" style={KANBAN_COLUMN_STYLE} data-testid={`kanban-column-${column.key}`}>
+        <header className="grid grid-cols-[auto_1fr_auto] items-center gap-2 px-2 pb-1.5 pt-1 text-section-header font-semibold uppercase tracking-[0.4px]" style={KANBAN_HEADER_STYLE}>
           <button
             type="button"
             onClick={() => setExpanded(true)}
@@ -1217,11 +1270,11 @@ export function KanbanDispatchColumn({
   return (
     <section
       ref={sectionRef}
-      className={`relative ${width ? "" : `${minWidth} flex-1`} rounded-sm border border-gray-300 bg-white p-2`}
-      style={width ? { width: `${width}px`, flex: "0 0 auto" } : undefined}
+      className={`relative ${width ? "" : `${minWidth} flex-1`} rounded-sm p-2`}
+      style={width ? { ...KANBAN_COLUMN_STYLE, width: `${width}px`, flex: "0 0 auto" } : KANBAN_COLUMN_STYLE}
       data-testid={`kanban-column-${column.key}`}
     >
-      <header className="mb-2 border-b-2 border-gray-400 bg-gray-100 px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-700">
+      <header className="mb-2 px-2 pb-1.5 pt-1 text-section-header font-semibold uppercase tracking-[0.4px]" style={KANBAN_HEADER_STYLE}>
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
           {column.collapsedByDefault ? (
             <button
@@ -1239,20 +1292,25 @@ export function KanbanDispatchColumn({
           )}
           <div className="flex items-center justify-center gap-1 text-center">
             {headerLink}
-            {/* DSP-16 (owner 2026-09-04): the "Loaded" lane is statuses:[] + derivedOnly — it is
-                populated ONLY by the pickup-departure telematics signal, never by a drag (a drop is
-                correctly refused, see FAIL-K1). Badge it "Auto" so the operator does not try. */}
+            {/* KANBAN-DRAG-UNBLOCK: the badge used to read "Auto" on at_pickup / Loaded /
+                at_delivery and claim they were not drag-droppable. They are now, so the badge says
+                what a drop there really does — it writes a manual stop stamp. Drafts keeps its own
+                badge and its own refusal. */}
             {column.derivedOnly ? (
               <span
                 className="rounded-sm bg-slate-100 px-1 py-0.5 text-xs font-semibold uppercase text-slate-500"
                 data-testid={`kanban-column-auto-badge-${column.key}`}
-                title={
-                  column.key === "drafts"
-                    ? "Only resumed and finished from its own card — not drag-droppable"
-                    : "Set automatically from pickup-departure telematics — not drag-droppable"
-                }
+                title="Only resumed and finished from its own card — not drag-droppable"
               >
-                {column.key === "drafts" ? "Draft" : "Auto"}
+                Draft
+              </span>
+            ) : column.manualStamp ? (
+              <span
+                className="rounded-sm bg-amber-100 px-1 py-0.5 text-xs font-semibold uppercase text-amber-800"
+                data-testid={`kanban-column-stamp-badge-${column.key}`}
+                title={`Fills automatically from geofence/driver PWA. Dropping a card here records a MANUAL ${column.manualStamp.event === "arrive" ? "arrival" : "departure"} stamp on the ${column.manualStamp.stop} stop — it is stored and shown as Manual, and it never overwrites an existing stamp.`}
+              >
+                Stamp
               </span>
             ) : null}
           </div>
@@ -1260,13 +1318,13 @@ export function KanbanDispatchColumn({
         </div>
         <KanbanColumnSortControls columnKey={column.key} sort={columnSort} onToggleSort={onToggleColumnSort} />
       </header>
-      <div ref={setNodeRef} className={`max-h-[68vh] ${detailed ? "space-y-2" : "space-y-1"} overflow-y-auto rounded-sm p-1 ${isOver ? "bg-slate-100" : "bg-transparent"}`}>
+      <div ref={setNodeRef} className={`max-h-[68vh] ${detailed ? "space-y-2" : "space-y-1"} overflow-y-auto rounded-sm p-1`} style={isOver ? { background: "#DCE7F3" } : KANBAN_LANE_BODY_STYLE}>
         {loads.length === 0 ? (
           <div className="rounded-sm border border-dashed border-gray-300 p-3 text-xs text-gray-500">
             {column.key === "drafts"
               ? "No open drafts."
-              : column.derivedOnly
-                ? "Set automatically from pickup-departure telematics — you can't drag a card here."
+              : column.manualStamp
+                ? `Fills from geofence / driver PWA — or drop a card here to stamp the ${column.manualStamp.stop} ${column.manualStamp.event === "arrive" ? "arrival" : "departure"} manually.`
                 : "(empty)"}
           </div>
         ) : null}
@@ -1404,8 +1462,8 @@ function KanbanSwimLaneColumn({
 
   if (column.collapsedByDefault && !expanded) {
     return (
-      <section className="kanban-col-collapsed flex-none w-[148px] rounded-sm border border-gray-300 bg-white p-2" data-testid={`kanban-column-${column.key}`}>
-        <header className="grid grid-cols-[auto_1fr_auto] items-center gap-2 border-b-2 border-gray-400 bg-gray-100 px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-700">
+      <section className="kanban-col-collapsed flex-none w-[148px] rounded-sm p-2" style={KANBAN_COLUMN_STYLE} data-testid={`kanban-column-${column.key}`}>
+        <header className="grid grid-cols-[auto_1fr_auto] items-center gap-2 px-2 pb-1.5 pt-1 text-section-header font-semibold uppercase tracking-[0.4px]" style={KANBAN_HEADER_STYLE}>
           <button
             type="button"
             onClick={() => setExpanded(true)}
@@ -1455,11 +1513,11 @@ function KanbanSwimLaneColumn({
   return (
     <section
       ref={sectionRef}
-      className={`relative ${width ? "" : `${minWidth} flex-1`} rounded-sm border border-gray-300 bg-white p-2`}
-      style={width ? { width: `${width}px`, flex: "0 0 auto" } : undefined}
+      className={`relative ${width ? "" : `${minWidth} flex-1`} rounded-sm p-2`}
+      style={width ? { ...KANBAN_COLUMN_STYLE, width: `${width}px`, flex: "0 0 auto" } : KANBAN_COLUMN_STYLE}
       data-testid={`kanban-column-${column.key}`}
     >
-      <header className="mb-2 border-b-2 border-gray-400 bg-gray-100 px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-700">
+      <header className="mb-2 px-2 pb-1.5 pt-1 text-section-header font-semibold uppercase tracking-[0.4px]" style={KANBAN_HEADER_STYLE}>
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
           {column.collapsedByDefault ? (
             <button
@@ -1481,13 +1539,17 @@ function KanbanSwimLaneColumn({
               <span
                 className="rounded-sm bg-slate-100 px-1 py-0.5 text-xs font-semibold uppercase text-slate-500"
                 data-testid={`kanban-column-auto-badge-${column.key}`}
-                title={
-                  column.key === "drafts"
-                    ? "Only resumed and finished from its own card — not drag-droppable"
-                    : "Set automatically from pickup-departure telematics — not drag-droppable"
-                }
+                title="Only resumed and finished from its own card — not drag-droppable"
               >
-                {column.key === "drafts" ? "Draft" : "Auto"}
+                Draft
+              </span>
+            ) : column.manualStamp ? (
+              <span
+                className="rounded-sm bg-amber-100 px-1 py-0.5 text-xs font-semibold uppercase text-amber-800"
+                data-testid={`kanban-column-stamp-badge-${column.key}`}
+                title={`Fills automatically from geofence/driver PWA. Dropping a card here records a MANUAL ${column.manualStamp.event === "arrive" ? "arrival" : "departure"} stamp on the ${column.manualStamp.stop} stop — it is stored and shown as Manual, and it never overwrites an existing stamp.`}
+              >
+                Stamp
               </span>
             ) : null}
           </div>
@@ -1497,16 +1559,16 @@ function KanbanSwimLaneColumn({
       </header>
       <div
         ref={setNodeRef}
-        className={`max-h-[68vh] overflow-y-auto rounded-sm p-1 ${isOver ? "bg-slate-100" : "bg-transparent"}`}
-        style={{ display: "flex", flexDirection: "column", gap: rowGap }}
+        className="max-h-[68vh] overflow-y-auto rounded-sm p-1"
+        style={{ display: "flex", flexDirection: "column", gap: rowGap, ...(isOver ? { background: "#DCE7F3" } : KANBAN_LANE_BODY_STYLE) }}
         data-testid={`kanban-swim-lane-body-${column.key}`}
       >
         {visibleUnits.length === 0 ? (
           <div className="rounded-sm border border-dashed border-gray-300 p-3 text-xs text-gray-500">
             {column.key === "drafts"
               ? "No open drafts."
-              : column.derivedOnly
-                ? "Set automatically from pickup-departure telematics — you can't drag a card here."
+              : column.manualStamp
+                ? `Fills from geofence / driver PWA — or drop a card here to stamp the ${column.manualStamp.stop} ${column.manualStamp.event === "arrive" ? "arrival" : "departure"} manually.`
                 : "(empty)"}
           </div>
         ) : null}
@@ -1808,6 +1870,63 @@ export function DispatchKanban({
       // Not the synthetic case — an unknown column or a load id the board is rendering but does not hold.
       // That is a bug state, not a user action, so it must not vanish silently.
       pushToast("Could not move that card — the board could not identify it. Refresh and try again.", "error");
+      return;
+    }
+    if (targetGroup.manualStamp) {
+      // KANBAN-DRAG-UNBLOCK — these three lanes are STOP EVENTS, not status changes. Write the
+      // real stamp on the real route (the one Truck Line already uses), recorded as Manual.
+      const { stop: stopRole, event } = targetGroup.manualStamp;
+      if (!operatingCompanyId) {
+        pushToast("No operating company in scope — refresh the board and try again.", "error");
+        return;
+      }
+      try {
+        // The stop id is not on the board's own row model, so it is read from the load's own
+        // stops record rather than guessed. Pickup = the FIRST pickup-type stop by sequence,
+        // delivery = the LAST delivery-type stop by sequence, matching how the Stops record
+        // itself orders them. A multi-stop load therefore stamps its real first/last stop, never
+        // stop[0]/stop[n] by array position.
+        const record = await getLoadStopsRecord(loadId, operatingCompanyId);
+        const ordered = [...record.stops].sort((a, b) => a.sequence - b.sequence);
+        const isPickup = (t: string) => /pick|origin|shipper/i.test(t);
+        const isDelivery = (t: string) => /deliv|dest|consignee|receiver|drop/i.test(t);
+        const candidates = ordered.filter((st) => (stopRole === "pickup" ? isPickup(st.stop_type) : isDelivery(st.stop_type)));
+        const target = stopRole === "pickup" ? candidates[0] : candidates[candidates.length - 1];
+        if (!target) {
+          // EMPTY IS A QUESTION: say which stop is missing, never a generic failure.
+          pushToast(
+            `Load ${load.load_number} has no ${stopRole} stop on its stops record, so there is nothing to stamp. Add the stop in the Book Load wizard first.`,
+            "error"
+          );
+          return;
+        }
+        // Never overwrite a stamp that already exists — a second stamp would silently move the
+        // recorded time and, through it, dwell and detention. Say it is already stamped instead.
+        const existing = event === "arrive" ? target.arrived_at : target.departed_at;
+        if (existing) {
+          pushToast(
+            `Load ${load.load_number} already has a ${event === "arrive" ? "arrival" : "departure"} stamp on its ${stopRole} stop (source: ${target.source}). It was not overwritten.`,
+            "info"
+          );
+          return;
+        }
+        if (event === "depart" && !target.arrived_at) {
+          // Ordering is real: a truck cannot leave a stop it never reached.
+          pushToast(
+            `Load ${load.load_number} has no arrival on its ${stopRole} stop yet — drop it on "At pickup" first, then on "Loaded".`,
+            "error"
+          );
+          return;
+        }
+        if (event === "arrive") await stampTruckLineArrival(loadId, target.stop_id, operatingCompanyId);
+        else await stampTruckLineDeparture(loadId, target.stop_id, operatingCompanyId);
+        pushToast(`Load ${load.load_number} moved to ${targetGroup.title} — stamped manually (recorded as Manual).`, "success");
+        // Same key the assign mutation already invalidates — one refresh contract on this board.
+        await queryClient.invalidateQueries({ queryKey: ["loads"] });
+      } catch (error) {
+        const reason = userFacingApiError(error, "the server rejected it and gave no reason").trim();
+        pushToast(`Can't move ${load.load_number} to ${targetGroup.title} — ${reason}`, "error");
+      }
       return;
     }
     if (targetGroup.derivedOnly) {

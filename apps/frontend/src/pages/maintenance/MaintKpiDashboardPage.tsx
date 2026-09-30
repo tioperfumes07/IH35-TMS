@@ -226,7 +226,7 @@ export function MaintKpiDashboardPage() {
       {/* ROUND 285.4.9 / #33 — idle events with no idle_source need human review. */}
       <section className="rounded-sm border border-amber-200 bg-amber-50 p-3" data-testid="idle-events-needs-review">
         <div className="mb-2 flex items-baseline justify-between gap-2">
-          <h2 className="text-[11px] font-bold uppercase tracking-wide text-gray-600">
+          <h2 className="text-section-header font-bold uppercase tracking-wide text-gray-600">
             Idle events needing review
           </h2>
           <span className="text-xs text-gray-600" data-testid="idle-events-needs-review-count">
@@ -237,7 +237,12 @@ export function MaintKpiDashboardPage() {
           Engine-on idle hours with no Samsara/manual source. Confirm sets idle source to manual (CHECK allows only samsara or manual).
         </p>
         {idleReviewQ.isError ? (
-          <ListErrorState title="Could not load idle review queue" onRetry={() => void idleReviewQ.refetch()} />
+          <ListErrorState
+            title="Could not load idle review queue"
+            status={0}
+            message={(idleReviewQ.error as Error)?.message}
+            onRetry={() => void idleReviewQ.refetch()}
+          />
         ) : idleReviewQ.isPending ? (
           <p className="text-xs text-gray-500">Loading…</p>
         ) : (idleReviewQ.data?.rows.length ?? 0) === 0 ? (
