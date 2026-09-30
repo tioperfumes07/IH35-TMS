@@ -1,0 +1,129 @@
+{
+  "measuredAt": "2026-09-30T03:02:16.537Z",
+  "sourceSha": "397142465569034e4a335af323e50231832b41ed",
+  "originalMeasurementSha": "1aac87a172617b16cfe4bfddc55127dc1799b8e5",
+  "originalFailures": 399,
+  "lawRegisteredIntersection": 15,
+  "results": [
+    {
+      "file": "/tmp/ih35-codex-guard-cleanup/scripts/verify-banking-matched-bill-drill.mjs",
+      "name": "verify-banking-matched-bill-drill.mjs",
+      "kind": "FAIL-test",
+      "detail": "- apps/backend/src/integrations/plaid/link.routes.ts: both transaction readers must project and company-scope matched settlements (labels 0/2, joins 2/2; never use phantom driver_finance.settlements —; --selftest failed",
+      "failureEvidence": "verify-banking-matched-bill-drill FAIL\n- apps/backend/src/integrations/plaid/link.routes.ts: both transaction readers must project and company-scope matched settlements (labels 0/2, joins 2/2; never use phantom driver_finance.settlements — BANK-F5627)\n--selftest:\nverify-banking-matched-bill-drill SELFTEST FAIL — real repo state rejected:\n- apps/backend/src/integrations/plaid/link.routes.ts: both transaction readers must project and company-scope matched settlements (labels 0/2, joins 2/2; never use phantom driver_finance.settlements — BANK-F5627)",
+      "infrastructureFailure": false
+    },
+    {
+      "file": "/tmp/ih35-codex-guard-cleanup/scripts/verify-class-scoreboard-fresh.mjs",
+      "name": "verify-class-scoreboard-fresh.mjs",
+      "kind": "FAIL-test",
+      "detail": "Fix: node scripts/gen-class-scoreboard.mjs && commit the regenerated data file.",
+      "failureEvidence": "verify-class-scoreboard-fresh FAIL — the Programs by-class board no longer matches the wave queue:\n\n  - summary drift:\n    committed {\"total\":31,\"drained\":27,\"building\":0,\"notStarted\":4,\"liveDefect\":4,\"drainedWithoutGuard\":1}\n    queue now {\"total\":31,\"drained\":27,\"building\":0,\"notStarted\":4,\"liveDefect\":4,\"drainedWithoutGuard\":0}\n  - row drift (3+ shown):\n    CLS-DISP-WIRE-06: board=NN queue=CC\n    CLS-GL-DARK: board=CC queue=NN\n    CLS-LINKAGE-ONEWAY: board=CC queue=CC\n\nFix: node scripts/gen-class-scoreboard.mjs && commit the regenerated data file.",
+      "infrastructureFailure": false
+    },
+    {
+      "file": "/tmp/ih35-codex-guard-cleanup/scripts/verify-disp-wire-07-departure-evidence.mjs",
+      "name": "verify-disp-wire-07-departure-evidence.mjs",
+      "kind": "FAIL-test",
+      "detail": "- apps/backend/src/telematics/geofence-detector.service.ts: writes actual_departure_at = $4::timestamptz, — a client-supplied value can arrive null, leaving a delivered load with NO delivery evidence.",
+      "failureEvidence": "verify-disp-wire-07-departure-evidence FAIL — a delivered load could be left with no delivery evidence:\n\n  - apps/backend/src/driver-finance/settlement-creator.service.ts: writes actual_departure_at = COALESCE(actual_departure_at, $2::timestamptz), — a client-supplied value can arrive null, leaving a delivered load with NO delivery evidence. Use now() or COALESCE($n::timestamptz, now()).\n  - apps/backend/src/telematics/geofence-detector.service.ts: writes actual_departure_at = $4::timestamptz, — a client-supplied value can arrive null, leaving a delivered load with NO delivery evidence. Use now() or COALESCE($n::timestamptz, now()).",
+      "infrastructureFailure": false
+    },
+    {
+      "file": "/tmp/ih35-codex-guard-cleanup/scripts/verify-display-id-lookups-entity-scoped.mjs",
+      "name": "verify-display-id-lookups-entity-scoped.mjs",
+      "kind": "FAIL-test",
+      "detail": "✗ 1 NEW unscoped display_id lookup(s) — this is the shape that nearly voided a real PAID invoice:; --selftest failed",
+      "failureEvidence": "✗ 1 NEW unscoped display_id lookup(s) — this is the shape that nearly voided a real PAID invoice:\n  apps/backend/src/driver-finance/settlements.routes.ts|, [params.data.id] ); await appendCrudAu\n--selftest:\n✗ verify-display-id-lookups-entity-scoped: case5 FAIL — real tree flagged against baseline: 1 NEW unscoped display_id lookup(s) — this is the shape that nearly voided a real PAID invoice:\n  apps/backend/src/driver-finance/settlements.routes.ts|, [params.data.id] ); await appendCrudAu",
+      "infrastructureFailure": false
+    },
+    {
+      "file": "/tmp/ih35-codex-guard-cleanup/scripts/verify-fleet-unit-profile-edit-detail.mjs",
+      "name": "verify-fleet-unit-profile-edit-detail.mjs",
+      "kind": "FAIL-test",
+      "detail": "- apps/frontend/src/pages/fleet/VehicleProfilePage.tsx: unit.profile.maintenance distinct mounted connectivity missing; --selftest failed",
+      "failureEvidence": "verify-fleet-unit-profile-edit-detail FAIL\n- apps/frontend/src/pages/fleet/VehicleProfilePage.tsx: unit.profile.maintenance distinct mounted connectivity missing\n--selftest:\nverify-fleet-unit-profile-edit-detail SELFTEST FAIL — real repo state rejected:\n- apps/frontend/src/pages/fleet/VehicleProfilePage.tsx: unit.profile.maintenance distinct mounted connectivity missing",
+      "infrastructureFailure": false
+    },
+    {
+      "file": "/tmp/ih35-codex-guard-cleanup/scripts/verify-honest-built-launch-law-present.mjs",
+      "name": "verify-honest-built-launch-law-present.mjs",
+      "kind": "FAIL-test",
+      "detail": "- docs/bus/INBOX-CC-2.md (does not cite HONEST-BUILT-LAUNCH-LAW-2026-08-14)",
+      "failureEvidence": "verify-honest-built-launch-law-present FAIL:\n - docs/bus/INBOX-CURSOR.md (does not cite HONEST-BUILT-LAUNCH-LAW-2026-08-14)\n - docs/bus/INBOX-CC-1.md (does not cite HONEST-BUILT-LAUNCH-LAW-2026-08-14)\n - docs/bus/INBOX-CODEX.md (does not cite HONEST-BUILT-LAUNCH-LAW-2026-08-14)\n - docs/bus/INBOX-CC-2.md (does not cite HONEST-BUILT-LAUNCH-LAW-2026-08-14)",
+      "infrastructureFailure": false
+    },
+    {
+      "file": "/tmp/ih35-codex-guard-cleanup/scripts/verify-join-entity-scoped.mjs",
+      "name": "verify-join-entity-scoped.mjs",
+      "kind": "FAIL-test",
+      "detail": "✗ 94 NEW entity-unscoped JOIN(s) — the shape that puts another entity's driver/unit on a legal or money record:; --selftest failed",
+      "failureEvidence": "✗ 94 NEW entity-unscoped JOIN(s) — the shape that puts another entity's driver/unit on a legal or money record:\n  apps/backend/src/accounting/bank-recon/match.service.ts|JOIN|mdata.customers|c\n  apps/backend/src/accounting/bank-recon/match.service.ts|JOIN|mdata.vendors|v\n  apps/backend/src/accounting/bill-render.routes.ts|FROM|accounting.bills|-\n  apps/backend/src/accounting/company-settlement-close-manual.service.ts|JOIN|driver_finance.driver_settlements|ds\n  apps/backend/src/accounting/company-settlement-report.service.ts|FROM|mdata.loads|-\n  apps/backend/src/accounting/company-settlement-report.service.ts|JOIN|mdata.loads|l\n  apps/backend/src/accounting/company-settlement-report.service.ts|JOIN|mdata.vendors|v\n  apps/backend/src/accounting/driver-subaccount-provision.service.ts|FROM|catalogs.accounts|-\n  apps/backend/src/accounting/expenses.routes.ts|JOIN|catalogs.accounts|acc\n  apps/backend/src/accounting/factoring-posting/lifecycle-repair.ts|JOIN|accounting.journal_entries|je\n  apps/backend/src/accounting/fuel-posting/maybe-post-from-fuel-transaction.service.ts|JOIN|mdata.units|u\n  apps/backend/src/accounting/invoice-disputes.service.ts|JOIN|accounting.invoices|i\n  apps/backend/src/accounting/invoice-disputes.service.ts|JOIN|mdata.customers|c\n  apps/backend/src/accounting/invoice-render.routes.ts|FROM|accounting.invoices|-\n  apps/backend/src/accounting/invoice-send.service.ts|JOIN|driver_finance.driver_settlements|ds\n  ✗ verify-join-entity-scoped: offender count rose 70 -> 151. The baseline may only SHRINK.\n--selftest:\n✗ verify-join-entity-scoped: case8 FAIL — real tree flagged against baseline: 94 NEW entity-unscoped JOIN(s) — the shape that puts another entity's driver/unit on a legal or money record:\n  apps/backend/src/accounting/bank-recon/match.service.ts|JOIN|mdata.customers|c\n  apps/backend/src/accounting/bank-recon/match.service.ts|JOIN|mdata.vendors|v\n  apps/backend/src/accounting/bill-render.routes.ts|FROM|accounting.bills|-\n  apps/backend/src/accounting/company-settlement-close-manual.service.ts|JOIN|driver_finance.driver_settlements|ds\n  apps/backend/src/accounting/company-settlement-report.service.ts|FROM|mdata.loads|-\n  apps/backend/src/accounting/company-settlement-report.service.ts|JOIN|mdata.loads|l\n  apps/backend/src/accounting/company-settlement-report.service.ts|JOIN|mdata.vendors|v\n  apps/backend/src/accounting/driver-subaccount-provision.service.ts|FROM|catalogs.accounts|-\n  apps/backend/src/accounting/expenses.routes.ts|JOIN|catalogs.accounts|acc\n  apps/backend/src/accounting/factoring-posting/lifecycle-repair.ts|JOIN|accounting.journal_entries|je\n  apps/backend/src/accounting/fuel-posting/maybe-post-from-fuel-transaction.service.ts|JOIN|mdata.units|u\n  apps/backend/src/accounting/invoice-disputes.service.ts|JOIN|accounting.invoices|i\n  apps/backend/src/accounting/invoice-disputes.service.ts|JOIN|mdata.customers|c\n  apps/backend/src/accounting/invoice-render.routes.ts|FROM|accounting.invoices|-\n  apps/backend/src/accounting/invoice-send.service.ts|JOIN|driver_finance.driver_settlements|ds | verify-join-entity-scoped: offender count rose 70 -> 151. The baseline may only SHRINK.",
+      "infrastructureFailure": false
+    },
+    {
+      "file": "/tmp/ih35-codex-guard-cleanup/scripts/verify-load-column-all-modules.mjs",
+      "name": "verify-load-column-all-modules.mjs",
+      "kind": "FAIL-test",
+      "detail": "- apps/frontend/src/pages/dispatch/TripProfitability.tsx: Trip-profitability load drill; --selftest failed",
+      "failureEvidence": "verify-load-column-all-modules FAIL\n- apps/frontend/src/pages/dispatch/TripProfitability.tsx: Trip-profitability load drill\n--selftest:\nverify-load-column-all-modules SELFTEST FAIL — real tree rejected:\n- apps/frontend/src/pages/dispatch/TripProfitability.tsx: Trip-profitability load drill",
+      "infrastructureFailure": false
+    },
+    {
+      "file": "/tmp/ih35-codex-guard-cleanup/scripts/verify-no-uuid-label-rendering.mjs",
+      "name": "verify-no-uuid-label-rendering.mjs",
+      "kind": "FAIL-test",
+      "detail": "✗ 2 NEW truncated-uuid label(s) — the ratchet may only shrink:; --selftest failed",
+      "failureEvidence": "✗ 2 NEW truncated-uuid label(s) — the ratchet may only shrink:\n  apps/frontend/src/pages/dispatch/MapView.tsx|p.load_uuid\n  apps/frontend/src/pages/dispatch/MapView.tsx|p.unit_uuid\nReturn a display name from the query (LEFT JOIN) and label the link with it.\n  ✗ verify-no-uuid-label-rendering: truncated-uuid offender count rose 0 -> 2. The baseline may only shrink.\n--selftest:\n✗ verify-no-uuid-label-rendering: case10 FAIL — real tree flagged against baseline: 2 NEW truncated-uuid label(s) — the ratchet may only shrink:\n  apps/frontend/src/pages/dispatch/MapView.tsx|p.load_uuid\n  apps/frontend/src/pages/dispatch/MapView.tsx|p.unit_uuid\nReturn a display name from the query (LEFT JOIN) and label the link with it. | verify-no-uuid-label-rendering: truncated-uuid offender count rose 0 -> 2. The baseline may only shrink.",
+      "infrastructureFailure": false
+    },
+    {
+      "file": "/tmp/ih35-codex-guard-cleanup/scripts/verify-regclass-fallback-intent.mjs",
+      "name": "verify-regclass-fallback-intent.mjs",
+      "kind": "FAIL-test",
+      "detail": "Fix: throw, fail closed, or degrade WITH a signal. Copy fuel.loves_prices_daily.",
+      "failureEvidence": "verify-regclass-fallback-intent FAIL — new to_regclass false-branch(es) with no declared intent:\n\n  - apps/backend/src/dispatch/arch-tabs.service.ts: 1 to_regclass false-branch(es) with no declared intent, baseline allows 0. A probe whose false branch returns the permissive value degrades silently — make it throw, fail closed, or signal (CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE).\n  - apps/backend/src/dispatch/truck-line/truck-line.routes.ts: 1 to_regclass false-branch(es) with no declared intent, baseline allows 0. A probe whose false branch returns the permissive value degrades silently — make it throw, fail closed, or signal (CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE).\n  - apps/backend/src/driver-finance/settlement-engine.ts: 2 to_regclass false-branch(es) with no declared intent, baseline allows 1. A probe whose false branch returns the permissive value degrades silently — make it throw, fail closed, or signal (CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE).\n  - apps/backend/src/driver-finance/tour-readout.routes.ts: 1 to_regclass false-branch(es) with no declared intent, baseline allows 0. A probe whose false branch returns the permissive value degrades silently — make it throw, fail closed, or signal (CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE).\n  - apps/backend/src/governance/void-cancel-executors.ts: 21 to_regclass false-branch(es) with no declared intent, baseline allows 8. A probe whose false branch returns the permissive value degrades silently — make it throw, fail closed, or signal (CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE).\n  - apps/backend/src/jobs/predictive-alerts-worker.ts: 1 to_regclass false-branch(es) with no declared intent, baseline allows 0. A probe whose false branch returns the permissive value degrades silently — make it throw, fail closed, or signal (CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE).\n  - apps/backend/src/maintenance/predictive-alerts.routes.ts: 1 to_regclass false-branch(es) with no declared intent, baseline allows 0. A probe whose false branch returns the permissive value degrades silently — make it throw, fail closed, or signal (CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE).\n  - apps/backend/src/mdata/driver-tags.routes.ts: 1 to_regclass false-branch(es) with no declared intent, baseline allows 0. A probe whose false branch returns the permissive value degrades silently — make it throw, fail closed, or signal (CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE).\n\nFix: throw, fail closed, or degrade WITH a signal. Copy fuel.loves_prices_daily.",
+      "infrastructureFailure": false
+    },
+    {
+      "file": "/tmp/ih35-codex-guard-cleanup/scripts/verify-standing-directive-present.mjs",
+      "name": "verify-standing-directive-present.mjs",
+      "kind": "FAIL-test",
+      "detail": "- AGENTS.md: missing reference to SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md; --selftest failed",
+      "failureEvidence": "verify-standing-directive-present FAIL — standing directive / boot pointers incomplete\n  - .cursor/rules/47-lead-contract-tripwire.mdc: alwaysApply: true required\n  - .cursor/rules/33-standing-session-directive.mdc: alwaysApply: true required\n  - MISSING pointer file .windsurf/rules/standing-session-directive.md\n  - .cursor/rules/00-always-read-first.mdc: alwaysApply: true required\n  - AGENTS.md: missing reference to STANDING-SESSION-DIRECTIVE.md\n  - AGENTS.md: missing reference to SEARCH BEFORE YOU ASK\n  - AGENTS.md: missing reference to CREATE-TEST-THEN-VOID-LAW-2026-08-22.md\n  - AGENTS.md: missing reference to URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md\n  - AGENTS.md: missing reference to SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md\n--selftest:\nverify-standing-directive-present SELFTEST PASS — planted missing refs caught (31)\nverify-standing-directive-present note: live still has 9 problem(s) — fix before merge\n  - .cursor/rules/47-lead-contract-tripwire.mdc: alwaysApply: true required\n  - .cursor/rules/33-standing-session-directive.mdc: alwaysApply: true required\n  - MISSING pointer file .windsurf/rules/standing-session-directive.md\n  - .cursor/rules/00-always-read-first.mdc: alwaysApply: true required\n  - AGENTS.md: missing reference to STANDING-SESSION-DIRECTIVE.md\n  - AGENTS.md: missing reference to SEARCH BEFORE YOU ASK\n  - AGENTS.md: missing reference to CREATE-TEST-THEN-VOID-LAW-2026-08-22.md\n  - AGENTS.md: missing reference to URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md\n  - AGENTS.md: missing reference to SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md",
+      "infrastructureFailure": false
+    },
+    {
+      "file": "/tmp/ih35-codex-guard-cleanup/scripts/verify-surface-bar-combobox-inventory.mjs",
+      "name": "verify-surface-bar-combobox-inventory.mjs",
+      "kind": "FAIL-test",
+      "detail": "- pages/samsara-driver-mapping/SamsaraDriverMappingPage.tsx: Combobox host has no required.json leaf.surface_path / FILE_OWNED_BY_LEAF / ALLOWED_NESTED — add a leaf or map it",
+      "failureEvidence": "verify-surface-bar-combobox-inventory FAIL (2/83 Combobox hosts):\n - components/locations/FuelStopLocationPicker.tsx: Combobox host has no required.json leaf.surface_path / FILE_OWNED_BY_LEAF / ALLOWED_NESTED — add a leaf or map it\n - pages/samsara-driver-mapping/SamsaraDriverMappingPage.tsx: Combobox host has no required.json leaf.surface_path / FILE_OWNED_BY_LEAF / ALLOWED_NESTED — add a leaf or map it",
+      "infrastructureFailure": false
+    },
+    {
+      "file": "/tmp/ih35-codex-guard-cleanup/scripts/verify-surface-bar-modal-inventory.mjs",
+      "name": "verify-surface-bar-modal-inventory.mjs",
+      "kind": "FAIL-test",
+      "detail": "- components/checks/WriteCheckForm.tsx: Modal host has no required.json leaf.surface_path / FILE_OWNED_BY_LEAF / ALLOWED_NESTED — add a leaf or map it",
+      "failureEvidence": "verify-surface-bar-modal-inventory FAIL (1/130 Modal hosts):\n - components/checks/WriteCheckForm.tsx: Modal host has no required.json leaf.surface_path / FILE_OWNED_BY_LEAF / ALLOWED_NESTED — add a leaf or map it",
+      "infrastructureFailure": false
+    },
+    {
+      "file": "/tmp/ih35-codex-guard-cleanup/scripts/verify-surface-bar-paritydrawer-inventory.mjs",
+      "name": "verify-surface-bar-paritydrawer-inventory.mjs",
+      "kind": "FAIL-test",
+      "detail": "- pages/settlements/SettlementCreatorDrawer.tsx: ParityDrawer host has no required.json leaf.surface_path / FILE_OWNED_BY_LEAF / ALLOWED_NESTED — add a leaf or map it",
+      "failureEvidence": "verify-surface-bar-paritydrawer-inventory FAIL (1/66 ParityDrawer hosts):\n - pages/settlements/SettlementCreatorDrawer.tsx: ParityDrawer host has no required.json leaf.surface_path / FILE_OWNED_BY_LEAF / ALLOWED_NESTED — add a leaf or map it",
+      "infrastructureFailure": false
+    },
+    {
+      "file": "/tmp/ih35-codex-guard-cleanup/scripts/verify-wave-c-ap-bill-fe-all-modules.mjs",
+      "name": "verify-wave-c-ap-bill-fe-all-modules.mjs",
+      "kind": "FAIL-test",
+      "detail": "- verify-ap-bill-column-wave.mjs: composed FE guard failed",
+      "failureEvidence": "verify-wave-c-ap-bill-fe-all-modules FAIL:\n - verify-ap-bill-column-wave.mjs: composed FE guard failed\n[verify-ap-bill-column-wave] FAILED — 2 check(s) regressed:\n  ✗ LST-F5198: BillsPage must not keep silent patchEntityFilter: apps/frontend/src/pages/accounting/BillsPage.tsx no longer matches expected shape\n  ✗ LST-F5199: InvoicesListPage source_load_id filter write (single combined applyUrlFilters call): apps/frontend/src/pages/accounting/InvoicesListPage.tsx no longer matches expected shape",
+      "infrastructureFailure": false
+    }
+  ]
+}
