@@ -1,3 +1,22 @@
+# FINISH LAW — OWNER, 2026-09-30. ABOVE EVERY ITEM BELOW.
+
+**Nothing is left half built. Not one thing.**
+
+- You FINISH the job you are on. Completely. Engine, schema, writer, reader,
+  screen, guard, deploy. Then it is done.
+- If a new task is assigned to you mid-job, you FINISH the job you are on
+  first, then take the new one. You do not switch. You do not leave a stub.
+- There is no "phase 1 landed, phase 2 next session." There is no "structure
+  only." There is no "wired but not backfilled." An engine that runs but has
+  never produced a row is NOT BUILT.
+- A task is complete when the owner can open it in Chrome and click it, and
+  the live query backs it up. Anything less is in progress, and you say so.
+- Do not report a partial as done. Do not mark a register line closed with a
+  caveat. If you have a caveat, it is open.
+- If finishing requires something in another seat's file, you finish it
+  anyway and say what you touched. Blocked is a word you may use only when
+  the owner said it.
+
 # MASTER WORK REGISTER — 2026-09-30 — ASSIGNED AND SEQUENCED
 # EVERY SEAT: THIS IS YOUR WORK LIST. READ IT FROM THE REPO, NOT FROM A HANDOFF.
 
