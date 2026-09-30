@@ -5675,3 +5675,28 @@ proof_query: BEFORE/AFTER printed by the script itself, live prod, 2026-09-30 --
   (source_transaction_type='factoring_advance' join, 5-column liveness test) -- the double-count
   is fully closed, each real Faro invoice now counted exactly once via its twin
   (FAC-2026-00094/110/111/129, untouched, still the sole live record).
+
+## AUTH-158
+issued_at: 2026-09-30T11:15:00.000Z
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- split 17 driver_finance.settlement_lines
+rows (item_id IS NULL, ROUND 292/293 G2) into their real constituent line items, per Lead RULING 2
+(ROUND 293): each row currently merges 2-5 real settlement-document line items of different
+categories into one generic "AlwaysTrack tarp/other/extra-stop" line posting to account 6890 Cost
+of Labor-MX. Full per-row split, verified to the cent against the real settlement-document corpus
+(~/Downloads/_lead_parser/parsed.json), is in docs/bus/2026-09-30-CC1-G2-SETTLEMENT-LINE-SPLIT-SCOPE.md
+-- read that file for the complete row-by-row breakdown, item-id mapping, GL-account-movement
+analysis, and the two open items still requiring resolution before this AUTH may run (4 of 26
+constituent lines, $92.76, lack a confirmed existing-item match; the exact sanctioned engine for
+correcting an already-posted line on a CLOSED settlement was not conclusively identified and must
+be confirmed by reading the real code before execution). All 17 target rows are POSTED (settlement
+status='closed') -- none may be corrected by a raw UPDATE; each requires void+recreate through
+whichever sanctioned engine the scope doc's open question resolves to. Total in scope: $1,806.02
+across 17 rows / 26 constituent lines. Company-wide trial balance total will not move (pure
+reclassification); individual GL account balances (6890 decreasing, 5100/5300/5310/5500 and others
+increasing) will move by design -- see the scope doc's own "what TB must not move actually means"
+section.
+action: NOT YET WRITTEN. Execution script + exact engine call to be added to this AUTH's action line
+once the scope doc's two open questions are resolved and the Lead has reviewed the scope, per the
+Lead's own order ("Execution after I see the scope").
+expires_at: 2026-10-01T11:15:00.000Z
+status: OPEN
