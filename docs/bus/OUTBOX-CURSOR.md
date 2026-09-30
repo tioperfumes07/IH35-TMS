@@ -1,5 +1,8 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T09:20Z · ROUND 292 Load Costs FACTOR-BUT-NOT-DELIVERED · boards@16**
+CURSOR | Load Costs passed `l.status` into money CTE (matches Lead invoice exclusion) · 13625/13626 on board · boards-agree PASS accounting=16 + dispatch-work=16 | GUARD verify-load-boards-agree · verify-load-costs-board-excludes-settled | LIVE PROOF both sets 16 | NEXT: Owner Chrome 13615 BOL→Faro · FAST-MERGE this PR.
+
 **2026-09-30T09:05Z · ROUND 292 ACK · 285.4.9 CLOSED · boards@16 · Chrome=13615**
 CURSOR | ACK Round 292: AT Dispatched 16 is law · boards PASS dispatch-work 16 · 285.4.9 #31/#58/#59/#32/#33 re-proved on tip · awaiting-BOL queue=**13615** only · FE `93c84ac` | GUARD load-boards-agree · company-settlement-pdf · ldt-5 · auto-invoice-on-bol | LIVE PROOF dispatched 13624–13639 · queue SQL count=1 | NEXT: Owner Chrome 13615 BOL→invoice→Faro · METHOD when detention exists · no baseline raises.
 
