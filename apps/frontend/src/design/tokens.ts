@@ -25,7 +25,8 @@ export const colors = {
   // stay for call sites that still import colors.* until they migrate.
   bodyBg: "#F4F6F8",
   cardBg: "#FFFFFF",
-  cardBorder: "#E3E8EF",
+  // C-18: was #E3E8EF (too close to canvas #F4F6F8). Locked baseline edge is #E5E7EB.
+  cardBorder: "#E5E7EB",
   cardBorderStrong: "#D1D5DB",
   pageHeading: "#1A2233",
   bodyText: "#1A2233",
@@ -175,13 +176,18 @@ export const spacing = {
    * TableSearch was h-8 sitting next to a h-9 Combobox in the SAME row — a real, visible size
    * mismatch across every list page, not a cosmetic nit. Change this ONE number, not per-file
    * h-8/h-9 literals, if the app's control scale ever needs to move. */
-  filterControlHeight: 36,
+  // D52 (2026-09-30): QuickBooks filter/control sizes — was h-9 (36px); live bare inputs measured
+  // 131×33 with border:0. House toolbar filter is now h-10 (40px) + min-width. Border chrome stays
+  // on the Combobox / TableSearch shell (those already paint a 1px edge).
+  filterControlHeight: 40,
 } as const;
 
 /** FILTER LAW — the literal Tailwind class pairing every filter-row control (search box, combobox
  * trigger, range popover fields) must share. A plain string constant (not a computed style) so
  * Tailwind's static class scanner still finds it; the underlying number is `spacing.filterControlHeight`. */
-export const FILTER_CONTROL_SIZE_CLASS = "h-9 text-xs";
+// D52 (2026-09-30): was h-9 (36px). QuickBooks filter controls are taller; house is h-10 (40px) +
+// min-width. Border chrome stays on the Combobox / TableSearch shell (already paints a 1px edge).
+export const FILTER_CONTROL_SIZE_CLASS = "h-10 min-w-[10rem] text-xs";
 
 /** FORM FIELD LAW — a SEPARATE, deliberately shorter scale for a dense data-entry FORM (Book Load
  * and any future wizard), where `Combobox`/`ReferenceSelect`/`EntityPicker` sit on the same grid

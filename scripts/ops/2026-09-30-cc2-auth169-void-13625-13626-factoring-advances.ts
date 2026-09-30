@@ -39,6 +39,7 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { assertNotProduction, assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -67,6 +68,11 @@ async function main() {
 
   const client = new pg.Client({ connectionString: url });
   await client.connect();
+  // R-01 / ROUND 293 P0: assert target before any write. AUTH-gated apply → intended production;
+  // dry-run without AUTH must refuse production.
+  await (APPLY ? assertIsIntendedProduction : assertNotProduction)(client, {
+    label: "scripts/ops/2026-09-30-cc2-auth169-void-13625-13626-factoring-advances.ts",
+  });
 
   try {
     await client.query("BEGIN");

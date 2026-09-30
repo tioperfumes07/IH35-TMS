@@ -29,24 +29,50 @@ function pad2(n: number): string {
  * Returns "" for null / undefined / empty / unparseable input (so callers can render a blank cell
  * instead of "Invalid Date").
  */
-export function formatDateUS(value: unknown): string {
-  if (value === null || value === undefined || value === "") return "";
-  // Row fields are frequently typed `unknown`; only string/number/Date are formattable dates.
-  if (typeof value !== "string" && typeof value !== "number" && !(value instanceof Date)) return "";
+function calendarParts(value: unknown): { y: number; mo: number; d: number } | null {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value !== "string" && typeof value !== "number" && !(value instanceof Date)) return null;
 
   if (typeof value === "string") {
     // Bare or leading ISO date — format the calendar parts directly (no Date(), no TZ shift).
     const m = ISO_DATE_ONLY.exec(value.length > 10 ? value.slice(0, 10) : value);
     if (m) {
-      const [, y, mo, d] = m;
-      return `${mo}/${d}/${y}`;
+      return { y: Number(m[1]), mo: Number(m[2]), d: Number(m[3]) };
     }
-    // Fall through to Date parsing for other string shapes (e.g. RFC timestamps).
   }
 
   const dt = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(dt.getTime())) return "";
-  return `${pad2(dt.getMonth() + 1)}/${pad2(dt.getDate())}/${dt.getFullYear()}`;
+  if (Number.isNaN(dt.getTime())) return null;
+  return { y: dt.getFullYear(), mo: dt.getMonth() + 1, d: dt.getDate() };
+}
+
+/**
+ * Format a date value as "MM/DD/YYYY" for display (D47 banking / statements / forms —
+ * QuickBooks `07/31/2026` shape).
+ *
+ * Accepts:
+ *  - a bare ISO date "YYYY-MM-DD"                → formatted with no timezone shift
+ *  - a full ISO timestamp "YYYY-MM-DDTHH:mm..."  → the calendar date portion is formatted
+ *  - a Date object                               → its local calendar date is formatted
+ *
+ * Returns "" for null / undefined / empty / unparseable input (so callers can render a blank cell
+ * instead of "Invalid Date").
+ */
+export function formatDateUS(value: unknown): string {
+  const parts = calendarParts(value);
+  if (!parts) return "";
+  return `${pad2(parts.mo)}/${pad2(parts.d)}/${parts.y}`;
+}
+
+/**
+ * D47 — QuickBooks transaction-list date: `M/D/YY` (e.g. 9/14/26).
+ * Use on roster / ParityTable date columns. Banking lists keep `formatDateUS` (MM/DD/YYYY).
+ */
+export function formatDateQboList(value: unknown): string {
+  const parts = calendarParts(value);
+  if (!parts) return "";
+  const yy = String(parts.y).slice(-2);
+  return `${parts.mo}/${parts.d}/${yy}`;
 }
 
 /**
@@ -135,7 +161,9 @@ export function parseDateUS(input: string): string | null {
 }
 
 // The placeholder every date input should show. Single source of truth so the CI guard can assert it.
+// D47: banking/forms keep MM/DD/YYYY; list cells use formatDateQboList (M/D/YY) without a typed placeholder.
 export const DATE_PLACEHOLDER_US = "MM/DD/YYYY";
+export const DATE_PLACEHOLDER_QBO_LIST = "M/D/YY";
 
 // The placeholder every date+time input should show. Mirrors DATE_PLACEHOLDER_US.
 export const DATETIME_PLACEHOLDER_US = "MM/DD/YYYY, --:-- --";

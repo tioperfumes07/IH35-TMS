@@ -30,6 +30,7 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { assertNotProduction, assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -63,6 +64,9 @@ async function main() {
 
   const client = new pg.Client({ connectionString: url });
   await client.connect();
+  await (APPLY ? assertIsIntendedProduction : assertNotProduction)(client, {
+    label: "scripts/ops/2026-09-30-cc2-auth173-reverse-13625-13626-advance-and-invoice-voids.ts",
+  });
 
   try {
     await client.query("BEGIN");

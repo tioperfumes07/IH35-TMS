@@ -36,6 +36,11 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-ops-scripts-assert-not-production";
 const ASSERT_MODULE_BASENAME = "assert-not-production";
 
+// Static source-order scan only — never opens a DB. Declared so verify-no-silent-db-skip (03d)
+// does not treat a clean exit without DATABASE_URL as a silent money skip.
+export const ALLOW_OFFLINE_SKIP =
+  "static textual-order assertNotProduction scan; no DATABASE_URL path by design";
+
 // Files that are exempt: the assertion module itself, this guard, and any file that only READS
 // (a DRY_RUN-only or pure-report script never reaches this guard's write markers at all, so it
 // naturally passes without needing the call -- exemption by content, not by name).

@@ -38,6 +38,7 @@ import { ActionButton } from "../../../components/shared/ActionButton";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { Button } from "../../../components/Button";
+import { QBO_BANKING_ACTIONS, QBO_BANKING_ACTION_TEXT_CLASS } from "../../../design/qbo-parity";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import { useBulkSelection } from "../../../hooks/useBulkSelection";
 import { Combobox, SelectCombobox } from "../../../components/Combobox";
@@ -2087,12 +2088,13 @@ export function BankingTransactionsDesignView({
     cols.push(
       {
         key: "matchCategorize",
-        label: "Match/Categorize",
+        // D54 — QuickBooks action set: Add · Match · Record transfer (not "Match/Categorize").
+        label: "Action type",
         sortable: true,
         className: REGISTER_COLUMN_HEADER_CLASS,
         render: (tx) => (
-          <span className="rounded-sm bg-gray-100 px-2 py-1 text-[11px] text-gray-700">
-            {getDraft(tx).mode === "match" ? "Match" : "Categorize"}
+          <span className={`rounded-sm bg-gray-100 px-2 py-1 ${QBO_BANKING_ACTION_TEXT_CLASS}`}>
+            {getDraft(tx).mode === "match" ? QBO_BANKING_ACTIONS.match : QBO_BANKING_ACTIONS.add}
           </span>
         ),
       },
@@ -2425,14 +2427,14 @@ export function BankingTransactionsDesignView({
                 );
               }}
             >
-              Match
+              {QBO_BANKING_ACTIONS.match}
             </button>
             <button
               type="button"
-              className={`rounded-sm px-2 py-1 text-xs ${draft.mode === "categorize" ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-700"}`}
+              className={`rounded-sm px-2 py-1 ${QBO_BANKING_ACTION_TEXT_CLASS} ${draft.mode === "categorize" ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-700"}`}
               onClick={() => setDraft(tx, { mode: "categorize" })}
             >
-              Categorize
+              {QBO_BANKING_ACTIONS.add}
             </button>
           </div>
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
@@ -2450,7 +2452,7 @@ export function BankingTransactionsDesignView({
               >
                 <option value="Money in">Money in</option>
                 <option value="Money out">Money out</option>
-                <option value="Transfer">Transfer</option>
+                <option value="Transfer">{QBO_BANKING_ACTIONS.recordTransfer}</option>
                 <option value="CC Payment">CC Payment</option>
                 <option value="Expense">Expense</option>
               </SelectCombobox>

@@ -53,10 +53,15 @@
   --green: #1a7a3c;
 
   /* ROUND 150 palette (owner 2026-09-28) — tokens on :root only; components use var(--color-*).
-     Status NEVER by color alone: every status carries an icon or text label. */
+     Status NEVER by color alone: every status carries an icon or text label.
+     C-18 (2026-09-30): border/divider contrast raised to locked #E5E7EB / #D8DEE6 so panes and
+     rows are visible on #F4F6F8 (was near-white #E3E8EF / oklch hairlines). */
   --color-canvas: #F4F6F8;
   --color-card: #FFFFFF;
-  --color-border: #E3E8EF;
+  --color-border: #E5E7EB;
+  --color-divider: #D8DEE6;
+  --color-divider-strong: #C7D2DC;
+  --color-row-stripe: #FAFBFC;
   --color-text: #1A2233;
   --color-text-secondary: #5A6779;
   --color-accent: #1E63C4;
@@ -65,6 +70,7 @@
   --color-danger: #C0392F;
   --color-row-hover: #EEF2F7;
   --color-rail: #14314F;
+  --shadow-pane: 0 1px 2px rgba(15, 23, 42, 0.06);
 }
 
 @media (prefers-color-scheme: dark) {

@@ -29,8 +29,9 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { colors, spacing, typography, MIN_HIT_TARGET_CLASS, TOOLBAR_ICON_SIZE_CLASS } from "../../design/tokens";
+import { QBO_SURFACE, QBO_TOOLBAR_ICON_SLOT } from "../../design/qbo-parity";
 import { Button } from "../Button";
-import { Settings as GearIcon } from "lucide-react";
+import { Printer as PrintIcon, Settings as GearIcon } from "lucide-react";
 import { UniversalListToolbar, applyUniversalListFilters, type UniversalRange } from "../table/UniversalListToolbar";
 
 export type ParityDensity = "regular" | "compact" | "ultra";
@@ -1225,6 +1226,8 @@ export function ParityTable<T>({
   // selection, expansion (incl. A1 controlled expansion), density, and row actions all compose.
   // `rowIndex` drives zebra striping (COLUMNS-MUST-DISTINGUISH LAW) — set per data-td explicitly
   // (not relied on via <tr> background) since a grouped column's own tint must win per-cell.
+  // D50 / QBO-ROWS-NOT-COLUMNS (owner ruling 2026-09-30): body = horizontal row rule only.
+  // COMPLETE-OUTLINE stays on header/group bands (unchanged). No vertical body column rules.
   const renderDataRow = (row: T, rowIndex = 0) => {
     const id = rowKey(row);
     const isExpanded = expanded.has(id);
@@ -1233,14 +1236,12 @@ export function ParityTable<T>({
       <Fragment key={id}>
       <tr
         data-testid={rowTestId ? rowTestId(row) : undefined}
-        // GLB-06 (owner 2026-09-03): "columns and rows need a real divider" -- gray-100 is a
-        // near-invisible hairline next to every other border in this app (gray-200, the same
-        // weight the table's own outer frame/toolbar/pager already use). One border weight.
-        className={`border-t border-gray-200 ${
+        className={`border-t ${
           onRowClick || (expandOnRowClick && renderExpanded) ? "cursor-pointer hover:bg-gray-50" : ""
         } ${rowClassName ? rowClassName(row) : ""}`}
         style={{
           height: d.rowH,
+          borderTopColor: QBO_SURFACE.divider,
           ...(virtualizeRows ? { contentVisibility: "auto", containIntrinsicSize: `${d.rowH}px` } : {}),
           ...(selected.has(id) ? { backgroundColor: colors.accentTint } : {}),
         }}
@@ -1319,6 +1320,7 @@ export function ParityTable<T>({
               // spreadsheet instead of a register. The ROW rule stays and is the whole point of the
               // ruling; only the COLUMN rule goes. Header and group bands keep their own outline
               // (COMPLETE-OUTLINE LAW, untouched) — the owner's ruling is about the BODY.
+              // C-18: tableBodyRule is the locked #D8DEE6 divider (QBO_SURFACE.divider).
               borderBottom: `1px solid ${colors.tableBodyRule}`,
               ...(cellBg ? { backgroundColor: cellBg } : {}),
               ...(String(column.key) in stickyLeftPx
@@ -1415,13 +1417,27 @@ export function ParityTable<T>({
             <span className="text-gray-400">{toolbar ? null : ""}</span>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className={`flex items-center gap-2 ${QBO_TOOLBAR_ICON_SLOT}`} data-qbo-toolbar-icons="true">
           {toolbar}
+          {/* D53 — Print + Export in QuickBooks toolbar position (right of pager chrome, beside gear). */}
+          <Button
+            type="button"
+            variant="tertiary"
+            size="sm"
+            aria-label="Print"
+            data-testid="parity-table-print"
+            onClick={() => {
+              if (typeof window !== "undefined") window.print();
+            }}
+          >
+            <PrintIcon className={TOOLBAR_ICON_SIZE_CLASS} aria-hidden />
+            <span className="sr-only">Print</span>
+          </Button>
           {exportFilename ? (
             // UI CONTROL LAW — this used to be a hand-rolled <button> with its own ad-hoc,
             // smaller fixed size, a THIRD button size alongside Button.tsx's own two. Now the
             // real shared Button primitive, matching every other toolbar action's size.
-            <Button type="button" variant="tertiary" size="sm" aria-label="Export CSV" onClick={exportCsv}>
+            <Button type="button" variant="tertiary" size="sm" aria-label="Export CSV" data-testid="parity-table-export" onClick={exportCsv}>
               ⤓ Export
             </Button>
           ) : null}
@@ -1662,7 +1678,7 @@ export function ParityTable<T>({
                     // ParityTable header renders — was emergent from padding/line-height alone, so
                     // two live instances (Dispatch 30px, Load Costs 34px) silently drifted apart.
                     height: spacing.tableHeaderHeight,
-                    // QBO-HEADER-OUTRANKS-ROW (owner ruling 2026-09-30): "the size of the text in
+                    // QBO-HEADER-OUTRANKS-ROW (owner ruling 2026-09-30) / D51: "the size of the text in
                     // the row headers should be a little bit larger than the text in the rows. FOR
                     // ALL." We shipped the inverse — header 11px sitting over a 12px body — so the
                     // column labels read as a footnote to their own data. QuickBooks sizes the

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDateUS, formatDateTimeUS, parseDateUS, DATE_PLACEHOLDER_US } from "./formatDate";
+import { formatDateUS, formatDateTimeUS, formatDateQboList, parseDateUS, DATE_PLACEHOLDER_US } from "./formatDate";
 
 describe("formatDateUS", () => {
   it("formats a bare ISO date as MM/DD/YYYY with no timezone shift", () => {
@@ -28,6 +28,19 @@ describe("formatDateUS", () => {
   it("never emits the ISO YYYY-MM-DD shape", () => {
     const out = formatDateUS("2026-07-03");
     expect(out).not.toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+});
+
+describe("formatDateQboList (D47)", () => {
+  it("formats as M/D/YY without leading zeros", () => {
+    expect(formatDateQboList("2026-09-14")).toBe("9/14/26");
+    expect(formatDateQboList("2026-07-31")).toBe("7/31/26");
+    expect(formatDateQboList("2026-01-05")).toBe("1/5/26");
+  });
+
+  it("returns empty for blank input", () => {
+    expect(formatDateQboList(null)).toBe("");
+    expect(formatDateQboList("")).toBe("");
   });
 });
 
