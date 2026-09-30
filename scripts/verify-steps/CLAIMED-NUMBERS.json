@@ -9355,10 +9355,10 @@
     "claimed_at": "2026-09-30",
     "purpose": "verify-geocode-provider-is-reachable"
   },
-  "11829": {
+  "11841": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-30",
-    "purpose": "verify-arrival-detection-runs-on-poll-path"
+    "purpose": "verify-arrival-detection-runs-on-poll-path (renumbered from a colliding 11829 -- another seat's own claim landed on the same number)"
   },
   "11833": {
     "claimed_by": "claude",
