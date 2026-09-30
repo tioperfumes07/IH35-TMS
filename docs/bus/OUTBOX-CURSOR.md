@@ -25,5 +25,6 @@ ACK 2026-09-30 · CURSOR · read NOW-CURSOR · starting C-20
 **2026-09-30T16:12Z · C-20 DRIVER PROFILE · PR #23444 · `cursor/c20-driver-profile-module-c89b`**
 Tabbed shell (NavyPageSubNav before KPI strip), A-13 payee tabs, A-14 report shells, Proper Case + `(956) 000-0000` phone. Ops: `scripts/ops/verify-c20-driver-profile-module.mjs`.
 
-**2026-09-30T16:45Z · C-21 ODOMETER HONESTY · branch `cursor/c21-maintenance-odometer-honest-c89b`**
-C-21 · what changed: PM countdown + fleet odometer never invent miles when Samsara odometer is null. Backend `odometer_reading_at` on `/api/v1/maint/pm/due` + fleet-table rows. FE `odometerHonesty.ts` + `MaintenancePmCountdownCards` / `FleetTable` say "No odometer reading since <date>". Ops: `scripts/ops/verify-c21-odometer-honesty.mjs`. · LIVE PROOF: ops --selftest PASS; vitest odometerHonesty 3/3; tsc -b exit 0. · LEFT: D24 WO modal restore + rest of C-21 shell; C-22 next.
+**2026-09-30T17:05Z · C-21 D24–D33 SHELL · branch `cursor/c21-maintenance-odometer-honest-c89b` · PR #23446**
+C-21 · what changed: D24 Create WO is modal via `?create_wo=1` (WorkOrderNewPage redirects); D25 SelectCombobox on WO header fields; D27 dark navy section headers; D29/D30 fleet status KPIs + class chips in filter toolbar; D31 Active WOs source-type multi-select; D32/D33 list tabs drop stacked PM/Alerts/DTC (D10 min-scroll). Ops: `scripts/ops/verify-c21-maintenance-shell.mjs`. · LIVE PROOF: ops shell --selftest PASS; tsc -b exit 0. · LEFT: Chrome click-proof; C-22 tabs/KPIs next.
+
