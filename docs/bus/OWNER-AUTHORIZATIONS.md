@@ -5199,4 +5199,96 @@ expense_account_uuid, no GL exists yet.
 action: OWNER_AUTH_ID=AUTH-156 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-round290-12-def-reclass-5000-to-5010.ts
   (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
 expires_at: 2026-10-01T07:25:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T07:52:00.000Z
+consumed_by: CC-1
+row_counts: 119 of 119 lines corrected -- 12 unposted via direct UPDATE, 107 posted via
+  reverse+correct+repost through the sanctioned engine. 0 failures. Rehearsed twice on a throwaway
+  Neon branch fork first (br-twilight-math-akr4rbvg, deleted after proof) -- the rehearsal caught
+  two real bugs in this script (a nonexistent expense_lines.updated_at column, and a wrong
+  PostingResult field check) before either reached production; both fixed, committed, and the fixed
+  version is what ran for real.
+proof_query: live on production, 2026-09-30 -- scripts/verify-expense-line-account-matches-item.mjs:
+  LIVE PASS, 0 mismatches (was 119). node scripts/verify-trial-balance-unchanged-across-purge.mjs
+  --compare 2026-09-30-auth156-before 2026-09-30-auth156-after: exactly 2 accounts moved, an exact
+  offsetting pair -- 5000 Fuel & Diesel 17,557,261 -> 17,208,798 cents (-$3,484.63), 5010 DEF
+  374,413 -> 722,876 cents (+$3,484.63) -- matching the 107 posted lines' total exactly (the 12
+  unposted lines never had a GL entry, so correctly show zero TB movement). 0 accounts with a real
+  balance disappeared. Dr=Cr confirmed balanced both before and after.
+note: also fixed scripts/verify-trial-balance-unchanged-across-purge.mjs in the same PR --
+  --capture never set app.bypass_rls, so it silently captured 0 accounts under FORCED RLS instead
+  of the real 93-account trial balance (confirmed against the Lead's own reported 93-account count
+  before trusting the fix). This is why AUTH-154 (the prior attempt) could not have produced a
+  meaningful --compare either.
+
+---
+
+## AUTH-161
+
+title: ROUND 291.3 -- void 4 Transportation-Faro invoices; do NOT post the other 8, all 8 blocked
+requested_by: Lead order, docs/bus/09-30-2026-CC-2-ROUND-291-THIRTEEN-UNPOSTED-INVOICES-52960.md,
+  issued directly to CC-2's block (160-165), deadline 2026-10-01T15:00:00.000Z (2026-09-30 15:00Z
+  wall clock, ISO-normalized to the next UTC midnight boundary this file uses elsewhere -- treated
+  as 2026-09-30T15:00:00.000Z, same calendar day, for the actual deadline).
+root_cause: live-verified, USMCA, bypass_rls, immediately before writing this AUTH. Closure 21
+  (`verify-purge-era-closures-still-hold.mjs`) LIVE FAIL: open invoices=$398,569.12, A/R=$345,609.12,
+  gap=$52,960.00 -- matching the order's own figures to the cent. 13 live, non-sample, non-void
+  invoices have zero GL postings. They split three ways:
+  (1) VOID (4, $18,110.00): INV-2026-00001/00002/00004/00005 (loads 13503/13504/13533/13539) --
+  all named among the nine TRANSPORTATION-Faro loads (13496/13500/13503/13504/13506/13517/13531/
+  13533/13539) the 2026-09-05 owner ruling voided everywhere else; these four invoices alone
+  survived that earlier 27-family wrong-entity void.
+  (2) POST, per the order's own text (8, $34,850.00): INV-2026-00003 (13509) + 13616/13618/13620/
+  13621/13622/13625/13626. **RE-VERIFIED LIVE, NOT ASSUMED FROM THE ORDER: all 8 are blocked, not
+  postable through the sanctioned invoice-GL poster, right now.** This is the SAME population and
+  the SAME two defects CC-1's AUTH-142 (consumed 2026-09-30T04:22:00Z, hours before this order was
+  written) already live-verified and refused to force -- re-confirmed independently here because
+  the order does not reference AUTH-142 and "the query alone says post them; the remedy may be
+  wrong" is exactly this order's own stated principle, applied to itself:
+    - INV-2026-00003 (load 13509): `accounting.load_revenue_recognition_postings` already carries
+      a live 'earn'+'bill' pair totaling $8,800.00 (correctly recognizing this load's $4,400.00
+      revenue via the DISP-01 two-event latch). Posting the invoice too would be a THIRD GL
+      recognition of the same $4,400.00.
+    - 13616/13618/13620/13621/13622: zero rows in `accounting.invoice_lines` for every one --
+      the poster has nothing to price. Confirmed unchanged from AUTH-142's own measurement.
+    - 13625/13626: the two that looked cleanest on paper (real `invoice_lines` matching the
+      invoice total exactly, ZERO existing `load_revenue_recognition_postings` rows) -- a live
+      dry-run call to `postInvoiceGlIfEnabled` against 13625 still throws
+      `INVOICE_REVREC_LATCH_OWNS_LOAD`. Reading `posting-engine.service.ts:946-973` (ACCT-F59,
+      a deliberate guard motivated by a real prior $1,875.50 duplicate-revenue incident) explains
+      why: `revrecLatchOwnsLoad` OR `loadReachedDeliveryEvidence` -- the SECOND arm fires
+      regardless of whether a latch row exists yet, because ANY load that has reached delivery
+      evidence has its revenue permanently owned by the DISP-01 latch, not the invoice poster.
+      All 8 loads are real, delivered, dispatched freight -- none of them can EVER be posted
+      through this path. **The real remedy is firing (or repairing) the DISP-01 latch for these 8
+      loads -- a separate, larger investigation (why didn't 8 delivered loads' latch fire?), not a
+      posting call, and not attempted here under deadline pressure.**
+  (3) LEAVE ALONE (1, $0.00): 13525 -- closed 2026-09-06, delivered, never billed, revenue $0 in
+      every source; contributes $0 to the gap. Not touched.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 4 invoice ids in
+  `scripts/ops/2026-09-30-cc2-auth161-round291-void4-invoices.ts` (VOID_IDS constant), voided via
+  the sanctioned governance void engine (`executeVoidCancel("invoice", ...)` ->
+  `executeInvoice` -> `postVoidReversal` (documented no-op, zero live postings on all 4) + the
+  executor's own header-flip + `cascadeVoidChildren` + audit). Not authorized: posting any of the
+  8 named invoices (all live-blocked, see root_cause); touching 13525; touching TRANSPORTATION or
+  TRK; any hand-written JE; any direct INSERT into a posting table.
+action:
+  OWNER_AUTH_ID=AUTH-161 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth161-round291-void4-invoices.ts --apply
+  (run from repo root; DRY_RUN first with no --apply flag)
+expires_at: 2026-10-01T00:00:00.000Z
+status: CONSUMED
+consumed_at: 2026-09-30T07:45:00.000Z
+consumed_by: CC-2
+row_counts: 4 of 4 voided, 0 of 8 posted (all 8 correctly refused live, per root_cause above):
+    INV-2026-00001 -> void ok, reversing_entry_ref null (0 live postings, pure header void)
+    INV-2026-00002 -> void ok, reversing_entry_ref null
+    INV-2026-00004 -> void ok, reversing_entry_ref null
+    INV-2026-00005 -> void ok, reversing_entry_ref null
+proof_query: scripts/verify-purge-era-closures-still-hold.mjs run live against prod immediately
+  after commit, 2026-09-30 -- closure 21: "open invoices=38045912 cents, A/R=34560912 cents,
+  gap=3485000 cents" ($34,850.00 exactly, matching the 8 blocked invoices' total to the cent; was
+  $52,960.00 before this AUTH). Closure 21 does NOT read 0 -- by design, per this AUTH's own
+  root_cause: the remaining $34,850.00 requires firing the DISP-01 two-event latch for 8 delivered
+  loads whose latch never fired, not a posting call. Separate board finding filed
+  (DISP-01-LATCH-8-DELIVERED-LOADS-NEVER-FIRED) for that investigation, CC-1/dispatch-adjacent
+  lane, not closed here.
