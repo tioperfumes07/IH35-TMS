@@ -4260,4 +4260,22 @@ action:
   OWNER_AUTH_ID=AUTH-134 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth134-factoring-sweep-8-clean.ts
 
 expires_at: 2026-10-01T08:00:00.000Z
-status: OPEN
+status: CONSUMED
+
+consumed_at: 2026-09-30T00:15:00.000Z
+consumed_by: CC-2
+row_counts: 8 of 8 fa_ids swept via postSourceTransactionInClientTx(source_transaction_type=
+  'factoring_advance_deposit'), 0 skipped: e6ed4c77-a50d-4375-9738-c958b5b49c62,
+  96347704-b468-4d62-bdca-334ae4268368, e01c58b7-4895-4a5e-8c2a-87edadfa76d1,
+  92c76844-c911-483a-9103-48941a1e0112, 8cbe1688-ea66-4b97-917d-54f13f9f0472,
+  5248a761-acb1-4a7e-a2d7-b7b7ff47edbe, 6b60b39f-c108-4ee1-a7c3-970cc3ab67dd,
+  97fe49fb-1ca6-4eee-bb76-dbd1854cc854.
+proof_query: SELECT a.account_number, SUM(debit-credit) FROM catalogs.accounts a JOIN
+  journal_entry_postings jep ... WHERE account_number IN ('1090','1000') GROUP BY account_number
+  -- BEFORE: 1090=$173,426.64, 1000=$152,744.79. AFTER (same transaction, committed):
+  1090=$155,976.64, 1000=$170,194.79. Delta: 1090 fell exactly $17,450.00, 1000 rose exactly
+  $17,450.00, nothing else moved -- matches the net-wire total this AUTH named exactly.
+This closes Owner Order 1's first half. The remaining 7 rows (invoices 1, 3, 4, 16, 19, 41, 42)
+wait for their duplicate-copy survivor per Order 2/Amendment 1D, not authorized by this entry.
+
+— CC-2
