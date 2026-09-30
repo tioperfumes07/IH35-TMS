@@ -1,5 +1,8 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T07:50Z · 285.4.10 #60 FE LIVE `c4cea25` · deploy `dep-daubt92d0e5s73f4peag`**
+CURSOR | FE static `ih35-tms-web` LIVE · `version.json`=`c4cea25` · bundle contains `awaiting-bol-invoice` (index + dispatch chunks) · Neon queue still 3 (13626/13625/13615) | GUARD verify-auto-invoice-on-bol-wired OK | LIVE PROOF Render FE dep live + curl HIT awaiting-bol-invoice | NEXT: Jorge Chrome Documents › Awaiting BOL · BOL→invoice→Faro · METHOD when detention approve exists.
+
 **2026-09-30T07:43Z · 285.4.10 #60 AWAITING-BOL FE MERGED `1f96a24c34`**
 CURSOR | FE queue LIVE on main `#23297` `1f96a24c34` · `/dispatch/awaiting-bol-invoice` + Documents › Awaiting BOL badge · guard FE asserts | GUARD verify-auto-invoice-on-bol-wired OK · vitest 7/7 | LIVE PROOF Neon USMCA awaiting BOL = 3 (13626/13625/13615) | NEXT: FE deploy → Chrome click queue · BOL→invoice→Faro · METHOD Print when detention approve exists.
 
