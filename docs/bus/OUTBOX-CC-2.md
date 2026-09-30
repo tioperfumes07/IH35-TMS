@@ -144,3 +144,29 @@ separate follow-up work: pulling docs.files/POD/BOL, GPS positions, and customer
 for each.
 
 — CC-2
+
+## AUTH-176 -- PURGE-SCOPE-NARROWED executed on the 16 dispatched loads -- DONE
+
+Job ID: AUTH-176. PR #23399/#23401, merged, --apply run for real.
+
+What changed: 14 proforma pre-invoices (13624,13627-13639) void-then-deleted. 2 sent invoices
+(13625/13626) voided, NOT deleted. Factoring advances FAC-2026-00139/00140 untouched (still
+'advanced' -- Faro-proven real, AUTH-173).
+
+Pasted live proof (post-commit, independent re-verification):
+```
+of 14, still present in accounting.invoices: 0
+audit.row_changes DELETE rows captured for the 14: 14
+13625/13626: status='void', voided_at=2026-09-30 13:50:11.940697+00 (both)
+FAC-2026-00139/00140: status='advanced' (both, untouched)
+whole-company live-posting sum: 0 before, 0 after (unchanged -- zero GL impact on all 16, matches pre-flight)
+```
+
+What is left: the 5 zero-line invoices on 'invoiced'-status loads (13616/13618/13620/13621/13622)
+-- POD-DECIDES ruling, separate work: pull docs.files/POD/BOL, GPS positions from
+integrations.samsara_vehicle_positions, and customer payment records for each, then split
+backfill-authorized vs void. Also still open: import the Faro 09-25 CSVs, then reconcile every
+advance against Faro's own file; and the two closing guards (no load->'invoiced' except from
+'delivered'; no invoice header commits without a line).
+
+— CC-2
