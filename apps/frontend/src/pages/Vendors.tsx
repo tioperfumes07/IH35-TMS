@@ -51,7 +51,7 @@ type VendorTransactionRow = {
   /** Bills carry a running open balance; an expense is a point-in-time outflow (null → "—"). */
   balance_cents: number | null;
 };
-const VENDOR_LIST_TAB_IDS = ["all", "active", "inactive", "by-category"] as const;
+const VENDOR_LIST_TAB_IDS = ["with_transactions", "all", "active", "inactive", "by-category"] as const;
 type VendorListTabId = (typeof VENDOR_LIST_TAB_IDS)[number];
 
 // ACC-45 (row 45, OWNER-ISSUE-INVENTORY-2026-09-05.md #45): "statements and all that … should
@@ -77,9 +77,15 @@ export function parseVendorDetailTab(raw: string | null): VendorTabId {
 }
 
 function parseVendorListTab(raw: string | null): VendorListTabId {
-  const normalized = (raw ?? "active").toLowerCase().replace(/\s+/g, "-");
-  const id = normalized === "by_category" ? "by-category" : normalized;
-  return (VENDOR_LIST_TAB_IDS as readonly string[]).includes(id) ? (id as VendorListTabId) : "active";
+  // C-31 — default is With transactions (A-21), not Active.
+  const normalized = (raw ?? "with_transactions").toLowerCase().replace(/\s+/g, "-");
+  const id =
+    normalized === "by_category"
+      ? "by-category"
+      : normalized === "with-txn" || normalized === "txn"
+        ? "with_transactions"
+        : normalized;
+  return (VENDOR_LIST_TAB_IDS as readonly string[]).includes(id) ? (id as VendorListTabId) : "with_transactions";
 }
 
 
@@ -157,28 +163,18 @@ export function VendorsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   // §7 list segments are URL-addressable via `listTab` — NOT `tab`, which belongs to the vendor DETAIL tabs
   // (:74) and whose existing deep-links must keep working (CURSOR-RULING-PARAM-LIST-TAB, locked 2026-08-08).
-  const listStatus = parseVendorListTab(searchParams.get("listTab") ?? "active");
+  const listStatus = parseVendorListTab(searchParams.get("listTab"));
   const categoryFilter = searchParams.get("category") ?? "";
   const setListStatus = (next: VendorListTabId) => {
     const params = new URLSearchParams(searchParams);
-    // "active" is the default view, so keep the URL clean rather than pinning the default.
-    if (next === "active") params.delete("listTab");
+    // With transactions is the default — keep the URL clean.
+    if (next === "with_transactions") params.delete("listTab");
     else params.set("listTab", next);
     if (next !== "by-category") params.delete("category");
+    params.delete("txn");
     setSearchParams(params, { replace: true });
   };
-  // C-19 / A-21 (owner 2026-09-30): default roster = parties with REAL money movement only.
-  // Voided does not count. Full roster stays behind the explicit "All vendors" control.
-  const txnScope = ((): "with" | "all" => {
-    const raw = (searchParams.get("txn") ?? "with").toLowerCase();
-    return raw === "all" ? "all" : "with";
-  })();
-  const setTxnScope = (next: "with" | "all") => {
-    const params = new URLSearchParams(searchParams);
-    if (next === "with") params.delete("txn");
-    else params.set("txn", "all");
-    setSearchParams(params, { replace: true });
-  };
+  const useHasTransactions = listStatus === "with_transactions";
   const setCategoryFilter = (value: string) => {
     const params = new URLSearchParams(searchParams);
     params.set("listTab", "by-category");
@@ -226,47 +222,42 @@ export function VendorsPage() {
   // CLOSURE-31: default to the prior "master-detail" design; "list" is opt-in only.
   const { viewMode, setViewMode, viewModeSaveError, retryViewModeSave } = useViewModePref("vendors", "master-detail");
 
-  const vendorsQuery = useQuery({
-    queryKey: ["vendors", "page", companyId, txnScope],
-    // VEND-1: load the FULL vendor roster (the client-side table paginates/searches over it); without an
-    // explicit limit the endpoint returns only the default 50.
-    // PAGER-SERVERTOTAL-01: keep server `total` (COUNT) — never derive pager totalCount from .length.
-    // C-19: default has_transactions=true via A-21 shared predicate (never a client-side filter).
+  // C-31 — A-21 with-transactions set is the default tab; full roster powers All/Active/etc.
+  const withTxnVendorsQuery = useQuery({
+    queryKey: ["vendors", "page", companyId, "with_transactions"],
     queryFn: () =>
       listAllVendors({
         operating_company_id: companyId,
         active_company_only: true,
-        ...(txnScope === "with" ? { has_transactions: true } : {}),
+        has_transactions: true,
       }),
     enabled: Boolean(companyId),
   });
-  const vendorsRoster = vendorsQuery.data?.vendors ?? [];
-  // ACCT-F5793 — `active_company_only: true` above scopes to the ACTIVE company's records, and
-  // mdata.vendors' own vendors_select RLS additionally hides any deactivated_at-set row for a
-  // non-bypass reader. Both are correct for the base roster (vendorTypes/categoryOptions below must
-  // stay active-only), but it means vendorsRoster NEVER contains an inactive vendor, so the
-  // Inactive tab always counted/showed zero regardless of real data (ACCT-F5768 fixed the backend
-  // status=inactive branch itself; this is the frontend half — the master-list page never called
-  // it, the exact CUSTOMERS-MASTER-LIST-NEVER-FETCHES-INACTIVE / ACCT-F5790 sibling for vendors).
-  // A SEPARATE, explicit status=inactive fetch, additive-only: does not touch active_company_only's
-  // semantics or any other consumer of vendorsRoster (vendorTypes/categoryOptions stay sourced from
-  // the active-only roster below, unchanged).
+  const vendorsQuery = useQuery({
+    queryKey: ["vendors", "page", companyId, "all"],
+    queryFn: () =>
+      listAllVendors({
+        operating_company_id: companyId,
+        active_company_only: true,
+      }),
+    enabled: Boolean(companyId),
+  });
+  const vendorsRoster = useHasTransactions
+    ? (withTxnVendorsQuery.data?.vendors ?? [])
+    : (vendorsQuery.data?.vendors ?? []);
   const inactiveVendorsQuery = useQuery({
-    queryKey: ["vendors", "inactive", companyId, txnScope],
+    queryKey: ["vendors", "inactive", companyId],
     queryFn: () =>
       listAllVendors({
         operating_company_id: companyId,
         status: "inactive",
-        ...(txnScope === "with" ? { has_transactions: true } : {}),
       }),
     enabled: Boolean(companyId),
   });
   const inactiveVendorsRoster = inactiveVendorsQuery.data?.vendors ?? [];
-  // Full roster (active + inactive) for the list/table view and tab counts ONLY — every other
-  // consumer of vendorsRoster (vendorTypes, categoryOptions) stays active-only on purpose.
   const fullVendorsRoster = useMemo(
-    () => [...vendorsRoster, ...inactiveVendorsRoster],
-    [vendorsRoster, inactiveVendorsRoster]
+    () => (useHasTransactions ? vendorsRoster : [...vendorsRoster, ...inactiveVendorsRoster]),
+    [useHasTransactions, vendorsRoster, inactiveVendorsRoster]
   );
   // LV-VENDORS-BY-CATEGORY-PICKER-LAW — this filter reads the same company-scoped catalog as
   // VendorCreateModal. Deriving options only from existing vendors made new catalog values
@@ -300,9 +291,14 @@ export function VendorsPage() {
   // inactive fetch, not just the active-only base roster (avoids a "No vendors found" flash on the
   // Inactive tab while that second query is still in flight).
   const vendorsStatus = {
-    isPending: vendorsQuery.isPending || inactiveVendorsQuery.isPending,
-    isError: vendorsQuery.isError || inactiveVendorsQuery.isError,
-    isFetching: vendorsQuery.isFetching || inactiveVendorsQuery.isFetching,
+    isPending:
+      withTxnVendorsQuery.isPending ||
+      (!useHasTransactions && (vendorsQuery.isPending || inactiveVendorsQuery.isPending)),
+    isError:
+      withTxnVendorsQuery.isError ||
+      (!useHasTransactions && (vendorsQuery.isError || inactiveVendorsQuery.isError)),
+    isFetching:
+      withTxnVendorsQuery.isFetching || vendorsQuery.isFetching || inactiveVendorsQuery.isFetching,
   };
 
   const vendorTypes = useMemo<ReferenceOption[]>(() => {
@@ -335,9 +331,11 @@ export function VendorsPage() {
   // Inactive tab actually has rows to filter down to.
   const visibleVendors = useMemo(() => {
     let all = fullVendorsRoster;
-    if (listStatus === "inactive") all = all.filter((vendor) => vendor.deactivated_at != null);
-    else if (listStatus === "active") all = all.filter((vendor) => vendor.deactivated_at == null);
-    else if (listStatus === "by-category" && categoryFilter) {
+    if (!useHasTransactions) {
+      if (listStatus === "inactive") all = all.filter((vendor) => vendor.deactivated_at != null);
+      else if (listStatus === "active") all = all.filter((vendor) => vendor.deactivated_at == null);
+    }
+    if (listStatus === "by-category" && categoryFilter) {
       const selected = vendorTypes.find((type) => type.value === categoryFilter);
       const accepted = new Set([categoryFilter, selected?.label ?? ""].map((value) => value.toLowerCase()));
       all = all.filter((vendor) => accepted.has(String(vendor.vendor_type ?? "").toLowerCase()));
@@ -351,16 +349,17 @@ export function VendorsPage() {
       all = all.filter((vendor) => accepted.has(String(vendor.vendor_type ?? "").toLowerCase()));
     }
     return all;
-  }, [fullVendorsRoster, listStatus, rosterCategory, rosterVendorType, categoryFilter, vendorTypes]);
+  }, [fullVendorsRoster, listStatus, rosterCategory, rosterVendorType, categoryFilter, vendorTypes, useHasTransactions]);
 
   // §7 RESTORE (FE-LIST-SEGMENT-TABS-DELETED-B3690EB68). Counts off full roster BEFORE status filter.
   // ACCT-F5793 — sourced from fullVendorsRoster (active + inactive); was vendorsRoster, which made
   // the Inactive tab always count 0 regardless of real data.
   const vendorTabCounts = useMemo(
     () => ({
+      with_transactions: withTxnVendorsQuery.data?.total ?? withTxnVendorsQuery.data?.vendors?.length ?? 0,
       all: fullVendorsRoster.length,
-      active: fullVendorsRoster.filter((vendor) => vendor.deactivated_at == null).length,
-      inactive: fullVendorsRoster.filter((vendor) => vendor.deactivated_at != null).length,
+      active: vendorsQuery.data?.total ?? vendorsQuery.data?.vendors?.length ?? 0,
+      inactive: inactiveVendorsQuery.data?.total ?? inactiveVendorsQuery.data?.vendors?.length ?? 0,
       byCategory: categoryFilter
         ? fullVendorsRoster.filter((vendor) => {
             const selected = vendorTypes.find((type) => type.value === categoryFilter);
@@ -370,7 +369,7 @@ export function VendorsPage() {
           }).length
         : fullVendorsRoster.length,
     }),
-    [fullVendorsRoster, categoryFilter, vendorTypes]
+    [withTxnVendorsQuery.data, vendorsQuery.data, inactiveVendorsQuery.data, categoryFilter, vendorTypes, fullVendorsRoster]
   );
 
   // ACCT-F5793 — PAGER-SERVERTOTAL-01 still holds (never derive from .length) wherever a server COUNT
@@ -384,15 +383,17 @@ export function VendorsPage() {
   // that). With a categoryFilter, there is no server-side category COUNT, so fall back to the same
   // clientside vendorTabCounts.byCategory the tab label itself already uses — never a fresh divergent count.
   const vendorsServerTotal =
-    listStatus === "inactive"
-      ? inactiveVendorsQuery.data?.total ?? 0
-      : listStatus === "all"
-        ? (vendorsQuery.data?.total ?? 0) + (inactiveVendorsQuery.data?.total ?? 0)
-        : listStatus === "by-category"
-          ? categoryFilter
-            ? vendorTabCounts.byCategory
-            : (vendorsQuery.data?.total ?? 0) + (inactiveVendorsQuery.data?.total ?? 0)
-          : vendorsQuery.data?.total ?? 0;
+    listStatus === "with_transactions"
+      ? withTxnVendorsQuery.data?.total ?? 0
+      : listStatus === "inactive"
+        ? inactiveVendorsQuery.data?.total ?? 0
+        : listStatus === "all"
+          ? (vendorsQuery.data?.total ?? 0) + (inactiveVendorsQuery.data?.total ?? 0)
+          : listStatus === "by-category"
+            ? categoryFilter
+              ? vendorTabCounts.byCategory
+              : (vendorsQuery.data?.total ?? 0) + (inactiveVendorsQuery.data?.total ?? 0)
+            : vendorsQuery.data?.total ?? 0;
 
   // V8 — distinct categories present across the full roster (before the category filter), sorted.
   const categoryOptions = useMemo(() => {
@@ -640,29 +641,20 @@ export function VendorsPage() {
                 { value: "master-detail", label: "Master-detail", testId: "vendors-view-master-detail" },
               ]}
             />
-            {/* C-01 — same SegmentedControl family as the view toggle. */}
-            <SegmentedControl
-              value={listStatus === "by-category" ? "all" : (listStatus as "active" | "inactive" | "all")}
-              onChange={(value) => setListStatus(value)}
-              dataAttributes={{ "data-list-status-filter": "vendors", "data-vendors-roster-filter-toolbar": "inline" }}
-              options={[
-                { value: "active", label: "Active" },
-                { value: "inactive", label: "Inactive" },
-                { value: "all", label: "All" },
-              ]}
-            />
-            {/* C-19 — A-21 server predicate; default With transactions (real money only). */}
-            <SegmentedControl
-              value={txnScope}
-              onChange={setTxnScope}
-              testId="vendors-txn-scope"
-              dataAttributes={{ "data-c19-txn-scope": "vendors" }}
-              options={[
-                { value: "with", label: "With transactions", testId: "vendors-txn-with" },
-                { value: "all", label: "All vendors", testId: "vendors-txn-all" },
-              ]}
-            />
-            {/* V8 — roster Category filter (filters the left vendor list, not transactions). */}
+            {/* C-01 — Active/Inactive soft-delete filter (not the default list tab). */}
+            <div data-list-status-filter="vendors" data-vendors-roster-filter-toolbar="inline">
+              <SegmentedControl
+                value={listStatus === "by-category" || listStatus === "with_transactions" ? "active" : (listStatus as "active" | "inactive" | "all")}
+                onChange={(value) => setListStatus(value)}
+                dataAttributes={{ "data-list-status-filter": "vendors", "data-vendors-roster-filter-toolbar": "inline" }}
+                options={[
+                  { value: "active", label: "Active" },
+                  { value: "inactive", label: "Inactive" },
+                  { value: "all", label: "All" },
+                ]}
+              />
+            </div>
+            {/* C-31 — With transactions is the DEFAULT NAVY TAB below (A-21). */}
             {categoryOptions.length > 0 ? (
               <SelectCombobox
                 value={rosterCategory}
@@ -702,20 +694,23 @@ export function VendorsPage() {
         }
       />
       {companyId && qboAvailable ? <VendorsSyncPanel operatingCompanyId={companyId} /> : null}
-      {/* §7 RESTORE — segment tabs (All/Active/Inactive/By Category). listTab≠detail tab. */}
+      {/* C-31 — default tab = With transactions (A-21). */}
+      <div data-c31-list-default="vendors">
       <NavyPageSubNav
         activeId={listStatus}
         onTabChange={(id) => {
           if ((VENDOR_LIST_TAB_IDS as readonly string[]).includes(id)) setListStatus(id as VendorListTabId);
         }}
         items={[
+          { label: `With transactions (${vendorTabCounts.with_transactions})`, to: "#with_transactions" },
           { label: `All (${vendorTabCounts.all})`, to: "#all" },
           { label: `Active (${vendorTabCounts.active})`, to: "#active" },
           { label: `Inactive (${vendorTabCounts.inactive})`, to: "#inactive" },
           { label: `By Category (${vendorTabCounts.byCategory})`, to: "#by-category" },
         ]}
-        itemIds={["all", "active", "inactive", "by-category"]}
+        itemIds={["with_transactions", "all", "active", "inactive", "by-category"]}
       />
+      </div>
       {listStatus === "by-category" ? (
         <div className="space-y-2">
           {vendorTypesQuery.isError ? (

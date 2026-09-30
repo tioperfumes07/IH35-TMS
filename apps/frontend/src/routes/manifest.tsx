@@ -687,7 +687,8 @@ function MaintenanceTabRoute({ tabId }: { tabId: MaintenanceTabId }) {
 function DriversSubtabRoute({
   subnav,
 }: {
-  subnav: DriversSubnavId | "disputes" | "team_splits";
+  /** Peer tabs + C-33 retired ids (permits/deductions) kept for Rule 07 route shape; remapped in DriversPage. */
+  subnav: DriversSubnavId | "disputes" | "team_splits" | "permits" | "deductions";
 }) {
   return <DriversPage initialSubnav={subnav} />;
 }
@@ -1073,6 +1074,7 @@ export const ROUTES = React.Children.toArray(
           path="/drivers/permits"
           element={
             <ProtectedRoute>
+              {/* C-33 — Permits are unit-keyed (Safety). Route kept (Rule 07); DriversPage remaps to roster. */}
               <DriversSubtabRoute subnav="permits" />
             </ProtectedRoute>
           }
@@ -1089,6 +1091,7 @@ export const ROUTES = React.Children.toArray(
           path="/drivers/deductions"
           element={
             <ProtectedRoute>
+              {/* C-33 — Deductions fold under Settlements. Route kept (Rule 07); DriversPage remaps. */}
               <DriversSubtabRoute subnav="deductions" />
             </ProtectedRoute>
           }

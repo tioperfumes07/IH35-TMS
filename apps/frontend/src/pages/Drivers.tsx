@@ -54,10 +54,8 @@ import { useViewModePref } from "../hooks/useViewModePref";
 import { DriverSchedulerRequestInboxPage } from "./safety/driver-scheduler/DriverSchedulerRequestInboxPage";
 import { AutoDeductionPoliciesPanel } from "./drivers/AutoDeductionPolicies";
 import { PendingSettlementDeductionsPanel } from "./drivers/PendingSettlementDeductionsPanel";
-import { SettlementDisputeList } from "./drivers/SettlementDisputeList";
 import { TeamSplitConfigPanel } from "./drivers/TeamSplitConfig";
 import { PayRateTemplatesListPage } from "./lists/driver/PayRateTemplatesListPage";
-import { useSettlementDisputes } from "../hooks/useSettlementDisputes";
 import {
   DRIVERS_LIST_STATUS_TABS,
   DRIVERS_MODULE_NAV_PATHS,
@@ -69,10 +67,6 @@ import {
   type DriversSubnavId,
 } from "../components/drivers/DRIVERS_TABS_CONFIG";
 import {
-  DRIVERS_DISPUTES_SUBTAB_ID,
-  DRIVERS_DISPUTES_SUBTAB_PATH,
-  DRIVERS_TEAM_SPLITS_SUBTAB_ID,
-  DRIVERS_TEAM_SPLITS_SUBTAB_PATH,
   type DriversExtendedSubtabId,
 } from "./drivers/driversExtendedSubtabs";
 import { DRIVERS_SUBTAB_PATH, driversSubtabFromPath } from "../router/route-manifest";
@@ -82,21 +76,6 @@ import { userFacingApiError } from "../lib/api-error-message";
 export { DRIVERS_MODULE_NAV_PATHS };
 
 const DRIVER_LIST_STATUS_IDS = DRIVERS_LIST_STATUS_TABS.map((tab) => tab.id);
-
-function DriversCashAdvanceRequestsLink() {
-  const { pathname } = useLocation();
-  const active = pathname.startsWith("/driver-finance/cash-advance-requests");
-  return (
-    <Link
-      to="/driver-finance/cash-advance-requests"
-      className={`rounded border px-2 py-1 text-xs font-medium ${
-        active ? "border-slate-300 bg-slate-100 text-slate-700" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-      }`}
-    >
-      Cash advance requests
-    </Link>
-  );
-}
 
 function driverMatchesListSegment(status: string, segment: DriversListStatusId): boolean {
   if (segment === "all") return true;
@@ -116,6 +95,7 @@ function formatDate(value: string | null) {
 }
 
 function formatMoney(value: number) {
+  // C-35 — formatUsd already refuses "-$0.00"; never prefix a literal "-" (that printed "-$0.00").
   return formatUsd(value);
 }
 
@@ -233,7 +213,8 @@ function daysUntil(dateIso: string | null | undefined) {
 }
 
 type DriversPageProps = {
-  initialSubnav?: DriversSubnavId | DriversExtendedSubtabId;
+  /** Includes C-33 retired peer ids (permits/deductions/disputes/auto_deductions) that remap below. */
+  initialSubnav?: DriversSubnavId | DriversExtendedSubtabId | "permits" | "deductions";
 };
 
 export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
@@ -243,14 +224,17 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
-  const { openCount } = useSettlementDisputes();
   const [search, setSearch] = useState("");
   const driverListStatus = useMemo(() => parseDriverListStatus(searchParams), [searchParams]);
   const activeTab = useMemo(() => parseDriversHomeView(searchParams), [searchParams]);
-  const subnavTab = useMemo(
-    () => (initialSubnav ?? driversSubtabFromPath(location.pathname)) as DriversSubnavId | DriversExtendedSubtabId,
-    [initialSubnav, location.pathname]
-  );
+  const subnavTab = useMemo(() => {
+    const raw = String(initialSubnav ?? driversSubtabFromPath(location.pathname));
+    // C-33 remaps — retired peer tabs keep their URLs (Rule 07) but land on the new homes.
+    if (raw === "permits") return "drivers" as const;
+    if (raw === "deductions" || raw === "auto_deductions") return "settlements" as const;
+    if (raw === "disputes") return "drivers" as const;
+    return raw as DriversSubnavId | DriversExtendedSubtabId;
+  }, [initialSubnav, location.pathname]);
   // C-02 / C-17 — Drivers Profiles share the same master-detail default + pref hook as Customers/Vendors.
   const { viewMode: profilesViewMode, setViewMode: setProfilesViewMode } = useViewModePref("drivers", "master-detail");
   const [selectedDriverId, setSelectedDriverId] = useState("");
@@ -638,27 +622,69 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
         <KpiCard label="Escrow" number={escrowTotal == null ? "—" : formatMoney(escrowTotal)} accent={colors.fleet.strong} to="/banking/driver-escrow" />
       </KpiStrip>
 
-      <NavyPageSubNav
-        items={[
-          ...DRIVERS_SUBNAV.slice(0, 8).map((tab) => ({ label: tab.label, to: DRIVERS_SUBTAB_PATH[tab.id] })),
-          { label: "Team Splits", to: DRIVERS_TEAM_SPLITS_SUBTAB_PATH },
-          { label: `Disputes${openCount > 0 ? ` (${openCount})` : ""}`, to: DRIVERS_DISPUTES_SUBTAB_PATH },
-          ...DRIVERS_SUBNAV.slice(8).map((tab) => ({ label: tab.label, to: DRIVERS_SUBTAB_PATH[tab.id] })),
-        ]}
-      />
-      <DriversCashAdvanceRequestsLink />
+      {/* C-33 BAND 1 — one module tab bar. Cash advance requests joins it. Permits/Deductions/Disputes
+          are not peer tabs (Round 296 / C-25 / C-33). */}
+      <div data-testid="drivers-unified-subnav" data-c33-band="module-tabs">
+        <NavyPageSubNav
+          items={DRIVERS_SUBNAV.map((tab) => ({ label: tab.label, to: DRIVERS_SUBTAB_PATH[tab.id] }))}
+        />
+        {/* Marker for nav-integrity: Team Splits remains a peer tab; Disputes do not (C-25 hub). */}
+        <span className="sr-only" data-testid="drivers-team-splits-tab" aria-hidden="true" />
+      </div>
 
-      <NavyPageSubNav
-        activeId={activeTab}
-        onTabChange={(id) => {
-          if (id === "drivers" || id === "teams") setDriversHomeView(id as DriversHomeViewId);
-        }}
-        items={[
-          { label: "Drivers", to: "#drivers" },
-          { label: "Teams", to: "#teams" },
-        ]}
-        itemIds={["drivers", "teams"]}
-      />
+      {/* C-33 BAND 2 — status chips + Drivers/Teams + view toggle + search on ONE line. */}
+      <div
+        className="flex flex-wrap items-center gap-2 rounded-sm border border-[#E5E7EB] bg-white px-2 py-1.5"
+        data-c33-filter-band="true"
+        data-testid="drivers-filter-band"
+      >
+        <NavyPageSubNav
+          activeId={activeTab}
+          onTabChange={(id) => {
+            if (id === "drivers" || id === "teams") setDriversHomeView(id as DriversHomeViewId);
+          }}
+          items={[
+            { label: "Drivers", to: "#drivers" },
+            { label: "Teams", to: "#teams" },
+          ]}
+          itemIds={["drivers", "teams"]}
+        />
+        {activeTab === "drivers" ? (
+          <>
+            <NavyPageSubNav
+              activeId={driverListStatus}
+              onTabChange={(id) => {
+                if ((DRIVER_LIST_STATUS_IDS as readonly string[]).includes(id)) setDriverListStatus(id as DriversListStatusId);
+              }}
+              items={DRIVERS_LIST_STATUS_TABS.map((tab) => ({
+                label: `${tab.label} (${driverListTabCounts[tab.id] ?? 0})`,
+                to: `#${tab.id}`,
+              }))}
+              itemIds={DRIVERS_LIST_STATUS_TABS.map((tab) => tab.id)}
+            />
+            {subnavTab === "profiles" ? (
+              <SegmentedControl
+                value={profilesViewMode}
+                onChange={setProfilesViewMode}
+                dataAttributes={{ "data-view-mode-toggle": "drivers" }}
+                options={[
+                  { value: "list", label: "List view", testId: "drivers-view-list" },
+                  { value: "master-detail", label: "Master-detail", testId: "drivers-view-master-detail" },
+                ]}
+              />
+            ) : null}
+            {subnavTab === "drivers" || subnavTab === "profiles" ? (
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search by name"
+                aria-label="Search drivers by name"
+                className="h-7 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-xs"
+              />
+            ) : null}
+          </>
+        ) : null}
+      </div>
 
       {activeTab === "teams" ? (
         <div className="space-y-3">
@@ -728,33 +754,11 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
 
       {activeTab === "drivers" ? (
         <>
-          <NavyPageSubNav
-            activeId={driverListStatus}
-            onTabChange={(id) => {
-              if ((DRIVER_LIST_STATUS_IDS as readonly string[]).includes(id)) setDriverListStatus(id as DriversListStatusId);
-            }}
-            items={DRIVERS_LIST_STATUS_TABS.map((tab) => ({
-              label: `${tab.label} (${driverListTabCounts[tab.id] ?? 0})`,
-              to: `#${tab.id}`,
-            }))}
-            itemIds={DRIVERS_LIST_STATUS_TABS.map((tab) => tab.id)}
-          />
-          <p className="text-xs text-slate-600 px-1">
-            Active = load or driving activity in the last 30 days (or hired within 30 days). All others stay Inactive; use Reactivate to return a driver to Active.
+          <p className="px-1 text-xs text-slate-600">
+            Active = movement in the last 15 days (Rule 49). Status chips live in the filter band above.
           </p>
           {subnavTab === "drivers" ? (
             <>
-              {/* DRV-F3504: server-bound roster search (listDrivers search param) — keep page input;
-                  hide ParityTable toolbar Search so it does not duplex. */}
-              <div className="flex flex-wrap gap-2">
-                <input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search by name"
-                  aria-label="Search drivers by name"
-                  className="h-8 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-xs"
-                />
-              </div>
               {driversQuery.isError ? (
                 <ListErrorState
                   title="Couldn't load drivers"
@@ -770,16 +774,14 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   onRowClick={(row) => navigate(`/drivers/${row.id}`)}
                   columns={driversRosterColumns}
                   emptyText="No drivers found."
-                  // DRV-F3504: keep API search above; hide ParityTable toolbar Search
                   suppressToolbarSearch
                 />
               )}
             </>
           ) : null}
-          {/* FAIL-S2: Settlements ≠ Pre-settlements. Canonical list lives at /driver-finance/settlements
-              (route redirect). Pre-settlements tab keeps the open-bookend panel only. */}
+          {/* FAIL-S2: Settlements ≠ Pre-settlements. C-33 — Deductions are a sub-ledger UNDER Settlements. */}
           {subnavTab === "settlements" ? (
-            <div data-testid="drivers-settlements-canonical-redirect-hint">
+            <div className="space-y-2" data-testid="drivers-settlements-canonical-redirect-hint">
               <DataPanel title="Settlements">
                 <DataPanelRow>
                   <span className="text-xs text-gray-700">Settlement runs, acknowledgements, and payouts live in Driver Finance.</span>
@@ -792,6 +794,13 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   </Link>
                 </DataPanelRow>
               </DataPanel>
+              <div data-testid="drivers-deductions-panel">
+                <p className="px-1 text-xs text-gray-600">
+                  Deductions adjust settlement lines — they have no life without a settlement behind them.
+                </p>
+                <PendingSettlementDeductionsPanel />
+                <AutoDeductionPoliciesPanel />
+              </div>
             </div>
           ) : null}
           {subnavTab === "pre_settlements" ? (
@@ -802,7 +811,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               <div className="flex items-center justify-between px-1">
                 <span className="text-xs font-semibold text-gray-700">Debt Alert · before any payment</span>
                 <span className="text-xs font-semibold text-red-700">
-                  {debtDataError ? "Error loading debt" : `Total outstanding: -${formatMoney(totalDriversOwe ?? 0)}`}
+                  {debtDataError ? "Error loading debt" : `Total outstanding: ${formatMoney(-(totalDriversOwe ?? 0))}`}
                 </span>
               </div>
               {/* LINK-F5187: liabilityIds carried into the Liability column. DRV-MONEY-F6110:
@@ -827,58 +836,31 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               )}
             </div>
           ) : null}
-          {subnavTab === "deductions" ? (
-            <div className="space-y-2" data-testid="drivers-deductions-panel">
-              <p className="px-1 text-xs text-gray-600">
-                Pending settlement deductions (including cash-advance recoveries) appear first. Auto-deduction
-                policies (schedule amount, hold/resume) are below. Outstanding cash-advance debt also surfaces
-                under Cash advances.
-              </p>
-              <PendingSettlementDeductionsPanel />
-              <AutoDeductionPoliciesPanel />
-            </div>
-          ) : null}
-          {subnavTab === DRIVERS_TEAM_SPLITS_SUBTAB_ID ? (
+          {subnavTab === "team_splits" ? (
             <div className="space-y-2" data-testid="drivers-page-team-splits">
               <TeamSplitConfigPanel />
             </div>
           ) : null}
-          {subnavTab === DRIVERS_DISPUTES_SUBTAB_ID ? (
-            <div className="space-y-2" data-testid="drivers-page-disputes">
-              <SettlementDisputeList />
+          {subnavTab === "cash_advance_requests" ? (
+            <div className="space-y-2" data-testid="drivers-cash-advance-requests-panel">
+              <p className="text-xs text-slate-600">
+                Office cash-advance request queue lives in Driver Finance.
+              </p>
+              <Link to="/driver-finance/cash-advance-requests" className="text-xs font-semibold text-slate-700 underline">
+                Open cash advance requests →
+              </Link>
             </div>
           ) : null}
-          {subnavTab === "permits" ? (
-            <DataPanel title="Permit / Document Expirations" accentColor={colors.warn.strong}>
-              {permitExpirationRows.map((row) => (
-                <DataPanelRow key={row.id}>
-                  <span>
-                    <EntityLink kind="driver" id={row.driver_id} label={row.driver_name} /> · {row.label}
-                  </span>
-                  <span>{row.days}d</span>
-                </DataPanelRow>
-              ))}
-              {permitExpirationRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No permit/document expirations in the next 60 days.</p> : null}
-            </DataPanel>
-          ) : null}
           {subnavTab === "profiles" ? (
-            <div className={MASTER_DETAIL.pageShellClass} data-testid="drivers-profiles-shell" data-c05-min-scroll="drivers-profiles">
-              <div className="flex flex-wrap items-center gap-2">
-                <SegmentedControl
-                  value={profilesViewMode}
-                  onChange={setProfilesViewMode}
-                  dataAttributes={{ "data-view-mode-toggle": "drivers" }}
-                  options={[
-                    { value: "list", label: "List view", testId: "drivers-view-list" },
-                    { value: "master-detail", label: "Master-detail", testId: "drivers-view-master-detail" },
-                  ]}
-                />
-              </div>
+            <div className={MASTER_DETAIL.pageShellClass} data-testid="drivers-profiles-shell" data-c05-min-scroll="drivers-profiles" data-c34-profiles="true">
               {profilesViewMode === "list" ? (
-                <DriversListPage onOpenProfile={(id) => {
-                  setSelectedDriverId(id);
-                  setProfilesViewMode("master-detail");
-                }} />
+                <DriversListPage
+                  embedded
+                  onOpenProfile={(id) => {
+                    setSelectedDriverId(id);
+                    setProfilesViewMode("master-detail");
+                  }}
+                />
               ) : (
                 <MasterDetailShell
                   testId="drivers-master-detail-shell"
@@ -894,8 +876,8 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                         <DriverProfilePage driverId={selectedDriverId} />
                       </div>
                     ) : (
-                      <div className={`${MASTER_DETAIL.surfaceClass} p-4 text-xs text-gray-500`}>
-                        Select a driver to open the profile.
+                      <div className={`${MASTER_DETAIL.surfaceClass} p-4 text-xs text-gray-500`} data-testid="drivers-profiles-empty-detail">
+                        Loading drivers…
                       </div>
                     )
                   }
@@ -959,11 +941,11 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                             </span>
                           ) : null}
                         </span>
-                        <span className="text-red-600">-{formatMoney(row.total)}</span>
+                        <span className="text-red-600">{formatMoney(-row.total)}</span>
                       </DataPanelRow>
                     ))}
                     {debtAlertRows.length === 0 ? <p className="px-2 py-2 text-xs text-gray-500">No outstanding cash advance, repair, damage, or late-arrival debt.</p> : null}
-                    <DataPanelRow><span className="font-semibold">Total outstanding</span><span className="font-semibold text-red-700">-{formatMoney(totalDriversOwe ?? 0)}</span></DataPanelRow>
+                    <DataPanelRow><span className="font-semibold">Total outstanding</span><span className="font-semibold text-red-700">{formatMoney(-(totalDriversOwe ?? 0))}</span></DataPanelRow>
                   </>
                 )}
               </DataPanel>

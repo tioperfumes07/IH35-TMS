@@ -20,6 +20,8 @@ import { companyToday } from "../../lib/businessDate";
 
 type DriversListPageProps = {
   onOpenProfile?: (driverId: string) => void;
+  /** C-33 — when nested under Drivers module, skip duplicate PageHeader / KPI stack. */
+  embedded?: boolean;
 };
 
 type DriverDqfSummaryRow = {
@@ -31,7 +33,7 @@ type DriverDqfSummaryRow = {
 
 type DqfFocus = Exclude<DqfComplianceLevel, "unknown"> | null;
 
-export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
+export function DriversListPage({ onOpenProfile, embedded = false }: DriversListPageProps) {
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -220,55 +222,82 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <PageHeader
-        title="Driver qualification profiles"
-        subtitle="Fleet DQF checklist and compliance status chips"
-        actions={
-          <div className="flex items-center gap-2">
-            <label className="flex items-center gap-1.5 text-xs text-slate-600">
+    <div className={embedded ? "space-y-2" : "space-y-4"} data-c34-profiles-list="true">
+      {!embedded ? (
+        <PageHeader
+          title="Driver qualification profiles"
+          subtitle="Fleet DQF checklist and compliance status chips"
+          actions={
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-1.5 text-xs text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={showInactive}
+                  onChange={(event) => {
+                    setShowInactive(event.target.checked);
+                    setPage(0);
+                  }}
+                />
+                Show inactive
+              </label>
               <input
-                type="checkbox"
-                checked={showInactive}
+                className="h-8 w-[220px] rounded-sm border border-gray-300 px-2 text-xs"
+                value={search}
                 onChange={(event) => {
-                  setShowInactive(event.target.checked);
+                  setSearch(event.target.value);
                   setPage(0);
                 }}
+                placeholder="Search drivers"
+                aria-label="Search drivers"
               />
-              Show inactive
-            </label>
+              <button
+                type="button"
+                onClick={handleExportCsv}
+                disabled={exporting || !companyId}
+                className="h-8 rounded-sm border border-gray-300 px-3 text-xs text-slate-700 hover:bg-gray-50 disabled:opacity-40"
+              >
+                {exporting ? "Exporting…" : "Export profiles (CSV)"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowImport(true)}
+                disabled={!companyId}
+                className="h-8 rounded-sm border border-gray-300 px-3 text-xs text-slate-700 hover:bg-gray-50 disabled:opacity-40"
+              >
+                Import drivers (CSV)
+              </button>
+              <Button type="button" size="sm" onClick={() => setShowCreate(true)} disabled={!companyId}>
+                + Create driver
+              </Button>
+            </div>
+          }
+        />
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-1.5 text-xs text-slate-600">
             <input
-              className="h-8 w-[220px] rounded-sm border border-gray-300 px-2 text-xs"
-              value={search}
+              type="checkbox"
+              checked={showInactive}
               onChange={(event) => {
-                setSearch(event.target.value);
+                setShowInactive(event.target.checked);
                 setPage(0);
               }}
-              placeholder="Search drivers"
-              aria-label="Search drivers"
             />
-            <button
-              type="button"
-              onClick={handleExportCsv}
-              disabled={exporting || !companyId}
-              className="h-8 rounded-sm border border-gray-300 px-3 text-xs text-slate-700 hover:bg-gray-50 disabled:opacity-40"
-            >
-              {exporting ? "Exporting…" : "Export profiles (CSV)"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowImport(true)}
-              disabled={!companyId}
-              className="h-8 rounded-sm border border-gray-300 px-3 text-xs text-slate-700 hover:bg-gray-50 disabled:opacity-40"
-            >
-              Import drivers (CSV)
-            </button>
-            <Button type="button" size="sm" onClick={() => setShowCreate(true)} disabled={!companyId}>
-              + Create driver
-            </Button>
-          </div>
-        }
-      />
+            Show inactive
+          </label>
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            disabled={exporting || !companyId}
+            className="h-7 rounded-sm border border-gray-300 px-2 text-xs text-slate-700 hover:bg-gray-50 disabled:opacity-40"
+          >
+            {exporting ? "Exporting…" : "Export CSV"}
+          </button>
+          <Button type="button" size="sm" onClick={() => setShowCreate(true)} disabled={!companyId}>
+            + Create driver
+          </Button>
+        </div>
+      )}
 
       {showImport ? (
         <DriverImportModal
@@ -285,7 +314,7 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
         onCreated={onOpenProfile}
       />
 
-      {!dqfQ.isError ? <KpiStrip>
+      {!embedded && !dqfQ.isError ? <KpiStrip>
         <KpiCard
           label="Drivers"
           number={String(totals.total)}

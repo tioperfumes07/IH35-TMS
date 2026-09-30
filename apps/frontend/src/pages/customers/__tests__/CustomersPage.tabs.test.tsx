@@ -149,7 +149,7 @@ function renderCustomersAt(path: string) {
 }
 
 describe("CustomersPage list tabs", () => {
-  it("defaults to Active and shows quality-segment counts without duplicating the inactive roster", async () => {
+  it("defaults to With transactions and shows quality-segment counts without duplicating the inactive roster", async () => {
     mockCustomerRosters(
       [
         minimalCustomer({ id: "1", name: "Preferred Co", quality_overall_flag: "preferred" }),
@@ -158,11 +158,11 @@ describe("CustomersPage list tabs", () => {
     );
     const router = renderCustomersAt("/customers");
     await waitFor(() => expect(listCustomersMock).toHaveBeenCalled());
-    expect(await screen.findByRole("button", { name: /preferred \(1\)/i })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /with transactions/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /preferred \(1\)/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /watch \(1\)/i })).toBeInTheDocument();
-    // The active segment is marked by NavyPageSubNav with aria-current="page" + a white bottom
-    // border (was the stale border-[#1f2a44] before the navy sub-nav restyle).
-    expect(screen.getByRole("button", { name: /active \(2\)/i })).toHaveAttribute("aria-current", "page");
+    // C-31 — With transactions is the default tab (aria-current=page).
+    expect(screen.getByRole("button", { name: /with transactions/i })).toHaveAttribute("aria-current", "page");
     expect(router.state.location.search).toBe("");
     expect(screen.getAllByText("Preferred Co")).toHaveLength(1);
   });

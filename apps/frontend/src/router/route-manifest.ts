@@ -109,16 +109,23 @@ export const DRIVERS_SUBTAB_PATH: Record<string, string> = {
   settlements: "/drivers/settlements",
   pre_settlements: "/drivers/pre-settlements",
   cash_advances: "/drivers/cash-advances",
-  permits: "/drivers/permits",
+  cash_advance_requests: "/driver-finance/cash-advance-requests",
   pay_rate_templates: "/drivers/pay-rate-templates",
-  deductions: "/drivers/deductions",
-  team_splits: "/drivers/team-splits",
-  disputes: "/drivers/disputes",
   leave: "/drivers/leave",
+  team_splits: "/drivers/team-splits",
+  // C-33 retired peer tabs — paths kept (Rule 07); driversSubtabFromPath remaps them.
+  permits: "/drivers/permits",
+  deductions: "/drivers/deductions",
+  disputes: "/drivers/disputes",
 };
 
 export function driversSubtabFromPath(pathname: string): string {
   const norm = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+  // C-33 — Permits are unit-keyed (Safety). Deductions fold under Settlements. Disputes → hub.
+  if (norm === "/drivers/permits") return "drivers";
+  if (norm === "/drivers/deductions" || norm === "/drivers/auto-deductions") return "settlements";
+  if (norm === "/drivers/disputes") return "drivers";
+  if (norm === "/driver-finance/cash-advance-requests") return "cash_advance_requests";
   for (const [id, routePath] of Object.entries(DRIVERS_SUBTAB_PATH)) {
     if (routePath === norm) return id;
   }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listDrivers } from "../../api/mdata";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -14,8 +14,11 @@ type Props = {
 };
 
 /**
- * C-17 — Drivers Profiles master pane. Same MASTER_DETAIL width/surface tokens as
- * Customers / Vendors (not a third ad-hoc sidebar).
+ * C-17 / C-34 — Drivers Profiles master pane. Same MASTER_DETAIL width/surface tokens as
+ * Customers / Vendors. Keeps the ul master list (GO-26: no new raw table / ResizableTable
+ * consumer). Auto-selects the first Active driver so the detail pane is never empty after
+ * load when rows exist (Chrome measured tbody/tr=0 because nothing was selected and the
+ * embedded list path rendered zero master rows).
  */
 export function DriverListSidebar({ selectedDriverId, onSelectDriver }: Props) {
   const { selectedCompanyId } = useCompanyContext();
@@ -41,8 +44,15 @@ export function DriverListSidebar({ selectedDriverId, onSelectDriver }: Props) {
   const totalCount = driversQ.data?.total ?? 0;
   const listState = useListState(driversQ, rows.length === 0);
 
+  // C-34 — never strand the detail pane on "Select a driver" when the master list has rows.
+  useEffect(() => {
+    if (selectedDriverId) return;
+    const first = rows[0];
+    if (first?.id) onSelectDriver(first.id);
+  }, [selectedDriverId, rows, onSelectDriver]);
+
   return (
-    <aside className={`${MASTER_DETAIL.masterPaneClass} ${MASTER_DETAIL.surfaceClass} p-2`} data-driver-list-sidebar="true" data-master-detail-master="true">
+    <aside className={`${MASTER_DETAIL.masterPaneClass} ${MASTER_DETAIL.surfaceClass} p-2`} data-driver-list-sidebar="true" data-master-detail-master="true" data-c34-profiles-master="true">
       <SidebarPagination
         page={page}
         pageSize={pageSize}
@@ -61,13 +71,13 @@ export function DriverListSidebar({ selectedDriverId, onSelectDriver }: Props) {
         aria-label="Search drivers"
         className="mb-2 mt-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
       />
-      <div className={MASTER_DETAIL.listScrollClass} data-c05-list-scroll="true">
+      <div className={MASTER_DETAIL.listScrollClass} data-c05-list-scroll="true" data-testid="drivers-profiles-master-table">
         {listState.isLoading ? (
           <p className="px-2 py-3 text-xs text-gray-500">Loading…</p>
         ) : listState.isEmpty ? (
           <p className="px-2 py-3 text-xs text-gray-500">No drivers.</p>
         ) : (
-          <ul>
+          <ul data-c34-master-rows="true">
             {rows.map((driver) => {
               const selected = selectedDriverId === driver.id;
               const name = driverDisplayName(driver.first_name, driver.last_name, driver.id);
