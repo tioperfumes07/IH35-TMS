@@ -500,7 +500,7 @@ async function fetchSamsaraStatsPage(
 
 async function fetchSamsaraPage(
   token: string,
-  endpoint: "/fleet/drivers" | "/fleet/vehicles" | "/fleet/trailers" | "/addresses",
+  endpoint: "/fleet/drivers" | "/fleet/vehicles" | "/fleet/trailers" | "/addresses" | "/fleet/safety-events",
   after: string | null,
   extraParams?: Record<string, string>
 ): Promise<{
@@ -936,6 +936,36 @@ export class SamsaraClient {
         if (typeof row.id === "string" && row.id.trim().length > 0) {
           out.push({ id: row.id.trim(), raw: row });
         }
+      }
+      if (!hasNextPage || !cursor) break;
+      after = cursor;
+    }
+    return out;
+  }
+
+  /**
+   * ROUND 301 T-30 — Samsara's dedicated Safety Events feed (harsh braking/accel/turn, speeding,
+   * distracted/mobile-use, no-seatbelt). This is the poll fallback for a category the webhook was
+   * meant to carry but has never once delivered (T-28). A SEPARATE endpoint from /fleet/vehicles/
+   * stats -- safety events are not a "stat" and do not compete with the odometer/fault-code
+   * types-cap. Raw rows only; safety/harsh-events-ingestion.service.ts's own
+   * processHarshEventsFromVehiclePayload() already tolerates several real-world field-name
+   * variants, so it is handed the row as-is rather than this client guessing a single rigid shape.
+   */
+  async listSafetyEvents(startTimeIso: string, endTimeIso: string): Promise<{ id: string; raw: Record<string, unknown> }[]> {
+    const token = this._token();
+    if (!token) return [];
+    const out: { id: string; raw: Record<string, unknown> }[] = [];
+    let after: string | null = null;
+    for (let page = 0; page < 500; page += 1) {
+      const { data, hasNextPage, cursor } = await fetchSamsaraPage(token, "/fleet/safety-events", after, {
+        startTime: startTimeIso,
+        endTime: endTimeIso,
+      });
+      for (const row of data) {
+        const id = typeof row.id === "string" && row.id.trim().length > 0 ? row.id.trim() : null;
+        if (!id) continue;
+        out.push({ id, raw: row });
       }
       if (!hasNextPage || !cursor) break;
       after = cursor;

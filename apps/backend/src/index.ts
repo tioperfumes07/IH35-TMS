@@ -346,6 +346,7 @@ import { initializePmAutoEngineCron } from "./maintenance/pm-auto-engine.cron.js
 import { initializeOdometerSnapshotCron } from "./telematics/odometer-snapshot.cron.js";
 import { registerOdometerManualRoutes } from "./telematics/odometer-manual.routes.js";
 import { initializeSamsaraFaultPollCron } from "./integrations/samsara/fault-poll.cron.js";
+import { initializeHarshEventsPollCron } from "./safety/harsh-events-poll.cron.js";
 import { registerMaintPartsRoutes } from "./maint/parts.routes.js";
 import { registerMaintPmRoutes } from "./maint/pm.routes.js";
 import { registerPmDueEngineRoutes } from "./maintenance/pm-due-engine.service.js";
@@ -1818,6 +1819,9 @@ async function main() {
 
       initializeSamsaraFaultPollCron(app);
       app.log.info("[STARTUP] samsara-fault-poll-cron initialized");
+
+      initializeHarshEventsPollCron(app);
+      app.log.info("[STARTUP] harsh-events-poll-cron initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] safety-reminders-cron failed");
     }
