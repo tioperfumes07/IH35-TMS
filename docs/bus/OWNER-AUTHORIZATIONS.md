@@ -5507,6 +5507,16 @@ action:
   OWNER_AUTH_ID=AUTH-152 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc3-auth152-backfill-13637-pickup-stamp.ts
   (run from the repo root)
 expires_at: 2026-10-01T12:00:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T09:00:00.000Z
+consumed_by: CC-3
+row_counts: 1 of 1 -- load 13637's pickup stop (005d414c-66ba-484d-bc0a-1d99e0be8fe6) stamped
+  actual_arrival_at=2026-09-28T17:35:04Z, actual_departure_at=2026-09-28T18:35:14Z,
+  actual_arrival_source='eld_geofence'. 13630/13634/13635 correctly left NULL -- no real GPS
+  convergence found for any of them (closest approach 5,963 ft / 172,982 ft / 5,438,523 ft).
+proof_query: scripts/ops/2026-09-30-cc3-auth152-backfill-13637-pickup-stamp.ts run live against
+  prod 2026-09-30 -- {"result":"COMMITTED","stamped":{"id":"005d414c-66ba-484d-bc0a-1d99e0be8fe6",
+  "actual_arrival_at":"2026-09-28T17:35:04.000Z","actual_departure_at":"2026-09-28T18:35:14.000Z",
+  "actual_arrival_source":"eld_geofence"}}.
 
 — CC-3
