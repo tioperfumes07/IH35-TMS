@@ -23,6 +23,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 
+export const REQUIRES_LIVE_DB =
+  "live money guard -- queries invoices/loads/manual_delivery_authorizations against Postgres; " +
+  "fails closed with no DATABASE_URL per ROUND 29.9-B, so it must never run in verify-static's " +
+  "dead-port sweep.";
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-issued-invoice-on-rolling-load-needs-authorization";
 const BASELINE = path.join(ROOT, "scripts", `${LABEL}.baseline.json`);

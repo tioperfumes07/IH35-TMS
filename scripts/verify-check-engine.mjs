@@ -21,6 +21,10 @@
 // arms itself the moment a real check exists, never claims 13/13 green against zero rows.
 import pg from "pg";
 
+export const REQUIRES_LIVE_DB =
+  "live money guard -- queries checks/lines/accounts against Postgres; fails closed with no " +
+  "DATABASE_URL per ROUND 29.9-B, so it must never run in verify-static's dead-port sweep.";
+
 const LABEL = "verify-check-engine";
 const FORBIDDEN_SYSTEM_PURPOSES = new Set(["accounts_receivable", "ar_control", "undeposited_funds"]);
 const ALLOWED_DEBIT_ACCOUNT_TYPES = new Set(["Expense", "CostOfGoodsSold", "OtherExpense", "Asset", "Liability", "Equity"]);
