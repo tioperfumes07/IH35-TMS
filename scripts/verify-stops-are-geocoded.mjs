@@ -8,6 +8,14 @@
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 export const ALLOW_OFFLINE_SKIP = "live-data invariant by design, no static-only path";
+// verify-static.mjs's dead-port sweep asks a different question than verify-no-silent-db-skip.mjs
+// (03d): the ALLOW_OFFLINE_SKIP export above is NOT passed to requireLiveDbOrExit as a runtime
+// option, so this guard still correctly fails closed with no DB (ROUND 29.9-B) when actually run.
+// REQUIRES_LIVE_DB is verify-static.mjs's own exclusion mechanism (see its header comment) -- a
+// ROUND-29.9-B fail-closed guard is EXCLUDED from the offline dead-port sweep entirely rather than
+// asked a question it cannot answer and recorded as a false-positive rot finding.
+export const REQUIRES_LIVE_DB =
+  "live-data invariant; fails closed with no DATABASE_URL (ROUND 29.9-B)";
 
 const LABEL = "verify-stops-are-geocoded";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
