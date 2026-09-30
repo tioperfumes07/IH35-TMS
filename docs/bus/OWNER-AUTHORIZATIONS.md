@@ -4660,3 +4660,32 @@ note: this AUTH's own $52,960.00 figure is corrected by this consumption: $32,16
 — CC-1
 
 — CC-1
+
+## AUTH-144
+issued_at: 2026-09-30T04:40:00.000Z
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- repost 2 factoring advances,
+accounting.factoring_advances ids 1f09c82c-81f2-4908-b1a4-577461be4ade (load 13619) and
+9667e71c-9f29-44ff-af31-f28ffb43282b (load 13615), via the sanctioned engine ONLY
+(postFactoringAdvanceEventInClientTx, apps/backend/src/accounting/factoring-posting/poster.service.ts)
+-- never a raw INSERT into accounting.journal_entries/journal_entry_postings. Both rows currently
+show ZERO live GL entry (confirmed live 2026-09-30). AUTH-113 (2026-09-28) found these same two
+loads' factoring already correct via a live twin advance at that time (FAC-2026-00097/00125); a
+later, separate correction round ("ROUND-175 reversal -- load identity unproven, Lead ruling
+172-Updated") voided those twins and every restore attempt on top of them chasing an alternate
+load-identity theory, leaving both loads with no live advance today. That alternate theory is
+refuted with source: Faro's own workbooks
+(~/Downloads/IH35-MASTER-RECONCILIATION/07-RECONCILIATION-OUTPUT/09-22-2026-FARO-COMPLETE-
+CROSS-REFERENCE-FINAL.xlsx sheet "FARO INVOICE -> LOAD" confirms Faro Inv#87/PO SEM66538 = Load
+13615; ...IH35-FARO-FULL-RECONCILIATION-2026-09-22.xlsx AGING sheet confirms Faro ID 405560/Invoice
+1013272-2/Refrigerx = the same PO already on load 13619's own customer_wo_number) -- both loads'
+live customer_wo_number already matches by exact string, not fuzzy. Dollar figures are Faro's own
+reported breakdown and tie to the cent to invoice_total_cents, matching the EXACT cents already on
+each voided row (13619: escrow $78.15 / discount $78.15 / fees $0 / net adv $5,053.70, wired 9/8/26
+per Faro's PAYMENTS sheet; 13615: escrow $73.50 / discount $73.50 / fees $0 / net adv $4,753.00, per
+Faro's FUNDS DUE sheet). Full detail and source citations in the ops script's own header comment.
+action: OWNER_AUTH_ID=AUTH-144 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth144-repost-faro-13619-13615.ts
+  (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
+expires_at: 2026-10-01T04:40:00.000Z
+status: OPEN
+
+— CC-1
