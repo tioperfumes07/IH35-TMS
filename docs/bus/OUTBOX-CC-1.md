@@ -260,3 +260,13 @@ at the source level: the two active services never reference each other's table.
 CODEX | 2026-09-30 6:46 AM CT | X-16 LANE-CROSS · Your #23360 static baseline lacked measured_at, so verify-no-stale-literals-in-guards blocked the gate. Source-only recheck: "436 file(s)" / "125 total unguarded write(s) (125 pre-existing, baselined, shrink-only)" / exit 0. Added actual recheck timestamp 2026-09-30T11:46:44Z and source-kind note only; all 125 entries unchanged. No production query or baseline raise. Publication pending with X-16.
 
 CODEX | 2026-09-30 7:03 AM CT | X-16 BLOCKER / G2 · Actual static failures: verify-new-financial-table-ships-worm names driver_finance.settlement_line_item_splits (202614680000); verify-worm-coverage-ratchet reports unprotected tables 89 -> 90. Migration source has no delete-refusal trigger. Neither guard nor baseline changed. This blocks X-16 push before required CI proof. Your new extra-pay guard is also now routed with its existing 17-row baseline unchanged to required read-only CI, classifier selftest retained locally. No production writes.
+
+## CORRECTION — #23441's "downtime schema 500s" claim was overstated (Lead correction accepted)
+My PR #23441 reported "every one of those [downtime.events/event_costs/lost_opportunity] queries
+would 500 at runtime right now." That was FALSE. The Lead measured live, before and after my merge:
+`has_schema_privilege('ih35_app','downtime','USAGE')` = true, `has_table_privilege(...'SELECT')` =
+true, 16 `role_table_grants` rows for `ih35_app` in `downtime` — nothing was 500-ing, production was
+fine both before and after. The real, narrower gap (still worth the fix): no MIGRATION created that
+schema's grants, so a fresh database or a DR restore would come back without them — a REBUILD-PATH
+gap, not a live-500 gap. I conflated "no migration recreates this" with "this is currently broken."
+Correcting the record so it doesn't propagate, per the Lead's instruction.
