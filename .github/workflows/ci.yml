@@ -34,6 +34,34 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
+  # X-01: independent of frontend build and precommit fail-fast. No production
+  # credentials; load-costs-wizard-amounts runs its static contract here only.
+  required-static-guards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Prove batch failure propagation
+        run: node --test scripts/lib/run-required-guards.test.mjs
+      - name: Required static guard batch
+        run: |
+          node scripts/lib/run-required-guards.mjs \
+            scripts/verify-check-stock-allocator.mjs \
+            scripts/verify-dedupe-keys-cannot-collide.mjs \
+            scripts/verify-live-loads-bills-require-closed-settlement.mjs \
+            scripts/verify-load-costs-wizard-amounts.mjs \
+            scripts/verify-match-window-date-cascade-is-3-7-custom.mjs \
+            scripts/verify-new-financial-table-ships-worm.mjs \
+            scripts/verify-one-match-engine-owns-this-surface.mjs \
+            scripts/verify-resolve-fully-wired.mjs \
+            scripts/verify-seed-in-bulk-never-row-by-row.mjs \
+            scripts/verify-universal-reinstate-engine.mjs
+
   verify-branch-fresh:
     # Base-DEPENDENT gate: it asserts the PR base is 0 commits behind origin/main.
     # That question is only meaningful for a PR that merges INTO main. On a stacked
@@ -1473,7 +1501,7 @@ jobs:
   # Code PRs: heavy must be success or this fails.
   build-typecheck:
     name: build-typecheck
-    needs: [detect-scope, build-typecheck-heavy]
+    needs: [detect-scope, build-typecheck-heavy, required-static-guards]
     if: always() && needs.detect-scope.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -1482,6 +1510,11 @@ jobs:
         run: |
           DOC="${{ needs.detect-scope.outputs.doc_only }}"
           HEAVY="${{ needs.build-typecheck-heavy.result }}"
+          STATIC="${{ needs.required-static-guards.result }}"
+          if [ "$STATIC" != "success" ]; then
+            echo "Required static guards did not succeed: $STATIC"
+            exit 1
+          fi
           echo "doc_only=$DOC heavy=$HEAVY"
           if [ "$DOC" = "true" ]; then
             echo "DOC-ONLY — heavy matrix suspended (owner 2026-08-31). Required check green."
@@ -1493,4 +1526,3 @@ jobs:
           fi
           echo "Heavy matrix did not succeed: $HEAVY"
           exit 1
-
