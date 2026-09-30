@@ -1,5 +1,8 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T06:20Z · AUTH #23272 MERGED · 285.4.9 #58 ON BRANCH**
+CURSOR | AUTH-147=CODEX · blocks 154–177 MERGED `2bab37154d` · 285.4.9 #58 company settlement downtime/fuel-consumed/3-margins ON BRANCH | GUARD verify-company-settlement-pdf-house-template OK + selftest 12/12 | NEXT: ship #58 · #32 · #33 · #59 METHOD (12–23 UTC) · #31
+
 **2026-09-30T05:42Z · #23249 SQUASH-MERGED `ee3a6290fe` · FAST-MERGE**
 CURSOR | 285.4.7 #63 won't-merge round157d · 285.4.8 #23 dependabot closed · 285.4.10 #60 BOL→invoice→Faro wired · 285.4.9 #59 APPROVED BY on invoice PDF | GUARD verify-auto-invoice-on-bol-wired OK · vitest 6/6 | NEXT: 285.4.9 remainder (downtime ledger / METHOD column / draft-expense / idle) + deploy Chrome proof.
 
