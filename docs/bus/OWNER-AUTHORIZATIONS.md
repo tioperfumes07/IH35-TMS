@@ -5176,6 +5176,82 @@ Inside your block you self-assign freely. Outside it, never. If you need more, a
 
 **Cursor / Lead:** do not self-assign an AUTH number. Cursor code / docs PRs that are not a production write need no AUTH.
 
+---
+
+## AUTH-163
+
+title: ROUND 282.7 item 1 -- match ONE clean Faro wire-in bank transaction to its factoring advance, USMCA
+requested_by: Lead order 282.7 (relayed 2026-09-30, per CC-1's item-6 handoff
+  `docs/bus/09-30-2026-CC-1-ITEM6-166868-PLUG-HANDOFF-TO-CC2.md`): "Get the 12 ids from CC-1. Match
+  each one INDIVIDUALLY through the banking suggestion engine. Owner law: we only categorize what
+  is 100% identical. No batch, no automatch, no bulk accept on these 12. One at a time, each to its
+  own Faro advance/invoice."
+root_cause: live-verified (USMCA, bypass_rls, re-checked fresh 2026-09-30 immediately before this
+  AUTH -- nothing has changed since the original investigation) all 12 `for_review` Faro wire-in
+  bank_transactions ($191,929.68 total, matching CC-1's handoff figure exactly) and the two manual
+  plug JEs (ACCT-F20260925i `43d6f4bf-a6ea-4c78-b074-4b1b4a9dcf78` $166,743.94 + ACCT-F20260925j
+  `36223f47-f279-4993-abb1-e8e8f670a509` $125.00 = $166,868.94, matching the handoff exactly).
+  `findCandidates()` (the banking Match drawer's own suggestion engine,
+  accounting/bank-recon/match.service.ts) returns ZERO factoring_advance candidates for ANY credit
+  transaction -- `fetchLedgerCandidates()`'s `isCredit` branch queries ONLY `accounting.payments`,
+  never `accounting.factoring_advances`, for all 12 (a separate, out-of-scope defect, named on the
+  board, not fixed here). Cross-referenced against `accounting.factoring_advances.faro_invoice_number`
+  and Faro's own authoritative payment-report exports invoice-by-invoice: of the 12, ONLY ONE is a
+  genuine, unambiguous 1:1 exact match with no complicating factor -- wire
+  `3feba937-1aa5-463b-9ce7-054d404c1024` (2026-09-25, $4,161.00) against
+  `accounting.factoring_advances` FAC-2026-00138 / faro_invoice 101 (Bennett International
+  Logistics), advanced 2026-09-25, expected net EXACTLY $4,161.00 (advance $4,161.00 + reserve
+  $64.50 + factor fee $64.50 + wire fee $10.00 = invoice $4,300.00; net to bank = advance
+  $4,161.00, zero variance), currently `for_review`/unmatched, funding JE already posted and live.
+  Re-verified live immediately before this AUTH: both the bank_transaction and the advance are
+  still in the exact same state as originally found -- unmatched, unchanged. The other 11 are real
+  multi-invoice Faro wire batches (proven via faro_invoice_number + the CSV exports, exact invoice
+  lists recorded on the board) further complicated by a second, separately confirmed defect: Faro's
+  own "negative reserve" internal-transfer/deposit mechanism ($49,216.41 total across just these 12
+  wires' dates) has ZERO representation anywhere in `accounting.factoring_reserve_movements` (144
+  real rows exist, all `movement_type = 'held'`, $5.02-$102.75 each -- none anywhere near these
+  day-level amounts). A "100% identical" multi-document match cannot be honestly executed for those
+  11 without either fixing that tracking gap or an explicit ruling on how to book the
+  negative-reserve portions -- reported in full on the board, NOT forced. This leaves an
+  unexplained $25,060.74 gap between the 12 wires' sum and the $166,868.94 plug, per CC-1's own
+  handoff -- not resolved by this AUTH, which touches only the one clean match.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY: bank_transaction
+  `3feba937-1aa5-463b-9ce7-054d404c1024` matched to factoring_advance
+  `a925526e-b2cf-4513-98bf-40ed1cbb3f6d` (FAC-2026-00138) via the sanctioned
+  `acceptMatchWithResolveDifference` engine call (ledger_entry_kind='factoring_advance', zero
+  variance, no difference JE posted), then the standard deposit sweep
+  (`postSourceTransactionInClientTx({source_transaction_type:'factoring_advance_deposit',
+  source_transaction_id:'a925526e-b2cf-4513-98bf-40ed1cbb3f6d'})`) to clear 1090->1000 for this one
+  advance. Not authorized: the other 11 bank transactions, the plug JEs (i/j -- untouched, reversal
+  explicitly held per the order's own sequencing until all 12 are resolved), any
+  factoring_reserve_movements write (out of scope, needs its own ruling), the
+  fetchLedgerCandidates() factoring-advance-candidate gap (separate defect, named on the board).
+addendum_during_rehearsal: `acceptMatchWithResolveDifference` (match.service.ts:1203-1205) ignores
+  any client/transaction argument -- it wraps its own work in `withLuciaBypass` internally -- so
+  the intended dry-run rehearsal of this AUTH's own script committed the match FOR REAL the
+  instant it was called (a real, undocumented footgun in that function for any caller attempting a
+  rollback-wrapped rehearsal; separate finding filed on the board, not fixed here). Result: zero
+  variance, exactly as diagnosed -- no harm, but not a rehearsal. A second, independently-found
+  defect in `storeMatch()`'s `ON CONFLICT` clause (match.service.ts:826-831) does not clear
+  `voided_at`/`void_reason` when re-accepting a natural-key match that was previously voided; this
+  bank_transaction/advance pair carried a stale 2026-09-28 Lead-reversal void from an earlier,
+  improperly-persisted attempt, so the freshly (correctly, through-the-engine) accepted row showed
+  `match_state='user_matched'` AND `voided_at` set simultaneously. Corrected directly (voided_at/
+  void_reason/voided_by_user_id set NULL on reconciliation_matches id
+  `80c480c2-11bc-4b9d-8d91-6da84e6c4178`) since the row is now the genuine active match this AUTH
+  authorizes -- also filed on the board, not fixed at the code level here. The script was updated
+  in place to remove the now-already-executed match step and keep only the remaining sweep
+  (`postSourceTransactionInClientTx`, confirmed to genuinely honor the passed client/transaction --
+  a real dry run, rolled back and re-verified clean before commit).
+action:
+  OWNER_AUTH_ID=AUTH-163 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth163-match-one-clean-faro-wire.ts --apply
+  (run from repo root; DRY_RUN first with no --apply flag; script now performs ONLY the deposit
+  sweep -- the match itself already happened for real during rehearsal, see addendum above)
+expires_at: 2026-10-01T00:00:00.000Z
+status: OPEN
+
+---
+
 ## AUTH-156
 issued_at: 2026-09-30T07:25:00.000Z
 scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- correct EVERY expense_lines row whose
@@ -5220,6 +5296,53 @@ note: also fixed scripts/verify-trial-balance-unchanged-across-purge.mjs in the 
   of the real 93-account trial balance (confirmed against the Lead's own reported 93-account count
   before trusting the fix). This is why AUTH-154 (the prior attempt) could not have produced a
   meaningful --compare either.
+
+---
+
+## AUTH-162
+
+title: ROUND 282.3/282.4 residual -- backfill voided_by_user_id on 24 correctly-voided invoices, USMCA
+requested_by: CC-2, self-authorized. Continuing ROUND-282's own sequence: re-ran
+  `verify-void-is-whole.mjs` live (the 282.3 guard) before starting 282.4's "reverse the 1,065"
+  reversal work, and found the live population has already moved substantially since the 282
+  doc was written -- ZERO `2-stranded-posting` violations remain across ALL 12 families (loads,
+  invoices, expenses, bills, credit memos, vendor credits, payments, driver bills, driver
+  settlements, settlement lines, factoring advances, fuel purchases): re-verified directly for
+  expenses specifically (the largest named bucket, 842 per the 282 doc and per CC-1's own
+  09-30-2026-CC-1-281-1 handoff) via a fresh, independent query matching the guard's exact
+  liveness predicate -- 1091 voided expenses total, 0 with a live posting, $0. CC-1's handoff
+  figure ($79,899.34 / 781 unremediated) is stale as of this measurement -- flagged back on
+  `docs/bus/NOW-CC-2.md` separately, not disputed here, just superseded by a fresher live count.
+  The ONLY remaining `verify-void-is-whole` violations, live, right now, are 24 accounting.invoices
+  rows, ALL classified `1-silent-void` ("ledger all dead but header lacks a real
+  voided_by_user_id") -- a metadata-completeness gap, not a live-posting/financial-risk gap (their
+  ledgers are correctly, fully dead; no reversal is needed, no cash is at risk).
+root_cause: ROOT-CAUSED in the same PR, not left as "someone else's bug": all 24 share the exact
+  same load-cancellation cascade (`apps/backend/src/dispatch/cancellation.service.ts`, ROUND 153
+  item 1, 2026-09-25, "Pre-Faro TRANSPORTATION/QBO, not USMCA" reclassification). That cascade's
+  raw `UPDATE accounting.invoices` (around line 656) set `status`/`voided_at`/`void_reason`/
+  `updated_by_user_id` but never `voided_by_user_id`, even though the real actor (`userId`) was
+  already in scope and used two lines below for `updated_by_user_id`. Confirmed via
+  `audit.row_changes`/`audit.audit_events` that the real actor for every one of these 24 voids is
+  `e4117991-d2c0-406d-8cda-74e98d95bccd` (Owner, tioperfumes07@gmail.com) -- the SAME actor every
+  sibling artifact of this exact cascade (the paired `fuel.fuel_transactions` and
+  `driver_finance.driver_bills` voids from the identical cascade run) already correctly recorded.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. Two parts, same PR: (1) CODE FIX --
+  `cancellation.service.ts`'s invoice-void UPDATE now also sets
+  `voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid)` (the existing `userId` param),
+  closing the writer so this never recurs. (2) DATA BACKFILL -- EXACTLY the 24 invoice ids in
+  `scripts/ops/2026-09-30-cc2-auth162-backfill-24-invoice-voided-by-user-id.ts`
+  (`INVOICE_IDS` constant), pure metadata `UPDATE ... SET voided_by_user_id = $1 WHERE id = ANY($2)
+  AND voided_at IS NOT NULL AND voided_by_user_id IS NULL` -- no JE, no GL, no other column. Script
+  preflights every row (voided, ledger all-dead, currently-NULL voider) and refuses on any
+  mismatch or partial-update count. Not authorized: any other invoice; any other column; any
+  GL/JE write; the fuel/driver-bill siblings of this cascade (already correctly stamped, nothing
+  to fix there).
+action:
+  OWNER_AUTH_ID=AUTH-162 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth162-backfill-24-invoice-voided-by-user-id.ts --apply
+  (run from repo root; DRY_RUN first with no --apply flag)
+expires_at: 2026-10-01T00:00:00.000Z
+status: OPEN
 
 ---
 
