@@ -4602,4 +4602,36 @@ proof_query: live re-run immediately after commit, USMCA, bypass_rls=lucia -- ve
 
 — CC-1
 
+## AUTH-142
+
+title: 285.1.2 (280.2) -- post the 12 invoices that never hit the GL, $52,960.00, USMCA
+requested_by: CC-1, 2026-09-30, per ROUND 285 PART B item 285.1.2.
+root_cause: live-verified, USMCA, bypass_rls. 27 non-voided invoices carry no live
+  journal_entry_postings row. 12 of the 27 are status='sent' (a real, issued A/R obligation) and
+  sum to exactly $52,960.00: 13625/13616/13621/13503(INV-2026-00001)/13504(INV-2026-00002)/
+  13539(INV-2026-00005)/13509(INV-2026-00003)/13620/13618/13533(INV-2026-00004)/13626/13622. 5 of
+  the 12 (13618, 13620, 13622, 13625, 13626) already carry a live factoring_advance -- confirmed by
+  direct join, matching the count named in the round's own text exactly. The remaining 15 of the 27
+  are status='proforma' (not yet issued, correctly unposted; several are the Transportation-owned
+  block from the withdrawn 280.4 investigation, excluded on that basis too).
+  13525 ($0.00, status='sent') is deliberately excluded, not one of the 12: its own load
+  (mdata.loads 13525) carries rate_total_cents=0, a real zero-rate load, not a data error. Posting
+  a $0 invoice is a no-op either way; left out rather than invented a reason to post it.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 12 invoice ids listed in
+  scripts/ops/2026-09-30-cc1-285-1-2-post-12-unposted-invoices.ts (INVOICE_IDS constant). Action:
+  call postInvoiceGlIfEnabled -- the SAME sanctioned poster invoice-send.service.ts's
+  sendDraftInvoice and invoices-bulk.routes.ts's bulk status-change path already call for an issued
+  invoice. No manual journal entry, no new GL math -- the poster's own existing logic (idempotent
+  per-invoice key, ACCT-F205 double-post-via-delivery-latch refusal) governs. Not authorized:
+  touching invoice 13525 or any of the 15 proforma invoices; touching TRANSP or TRK.
+dry_run_proof: scripts/ops/2026-09-30-cc1-285-1-2-post-12-unposted-invoices.ts run without --apply
+  against production, 2026-09-30 -- pre-flight confirms all 12 live/sent/matching totals/no live
+  posting; per-invoice outcomes logged; AFTER query + trial balance printed; ROLLED BACK (dry run).
+action:
+  OWNER_AUTH_ID=AUTH-142 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-285-1-2-post-12-unposted-invoices.ts
+  (run from the repo root, not apps/backend/ -- see AUTH-135's CONSUMED note on why; DRY_RUN=1
+  first for the rollback-only rehearsal, then the same command without DRY_RUN to commit)
+expires_at: 2026-10-01T00:00:00.000Z
+status: OPEN
+
 — CC-1
