@@ -19,6 +19,7 @@ import { patchUnit } from "../api/mdata";
 import { patchTrailer } from "../api/fleet-trailers";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatOosDate, formatOosDays } from "../lib/oos-display";
+import { formatOdometerCellHonest } from "../lib/odometerHonesty";
 import { useColumnReorder } from "./lists/ListView/hooks/useColumnReorder";
 
 export type FleetRow = {
@@ -39,6 +40,7 @@ export type FleetRow = {
   state?: string | null;
   // Keystone: live maintenance status merged from /maintenance/fleet-table/rows (owner-company units).
   odometer_mi?: number | null;
+  odometer_reading_at?: string | null;
   next_due_odometer?: number | null;
   open_wo_count?: number | null;
   oos_since?: string | null;
@@ -106,8 +108,8 @@ const FLEET_MAINT_COLUMNS: TableColumn[] = [
   { key: "open_wo", label: "Open WO" },
 ];
 
-function fmtMiles(value: number | null | undefined): string {
-  if (value == null) return "—";
+function fmtMiles(value: number | null | undefined, readingAt?: string | null): string {
+  if (value == null) return formatOdometerCellHonest({ odometerMi: null, odometerReadingAt: readingAt });
   return `${Math.round(value).toLocaleString()} mi`;
 }
 
@@ -516,7 +518,7 @@ export function FleetTable({
       case "estimated_completion_date": return <td key={key} className="px-2 py-1 tabular-nums">{formatOosDate(row.estimated_completion_date)}</td>;
       case "work_order_id": return <td key={key} className="px-2 py-1" onClick={(e) => e.stopPropagation()}>{row.work_order_id ? <EntityLink kind="work_order" id={row.work_order_id} label={entityLabel(row.work_order_display_id, row.work_order_id, "Work order")} /> : "—"}</td>;
       case "location": return <td key={key} className="truncate px-2 py-1 text-xs text-slate-700">{fleetLocationText(row) || row.oos_location || "—"}</td>;
-      case "odometer": return <td key={key} className="px-2 py-1 tabular-nums">{fmtMiles(row.odometer_mi)}</td>;
+      case "odometer": return <td key={key} className="px-2 py-1 tabular-nums">{fmtMiles(row.odometer_mi, row.odometer_reading_at)}</td>;
       case "next_pm": return <td key={key} className="px-2 py-1 tabular-nums">{fmtMiles(row.next_due_odometer)}</td>;
       case "open_wo": return <td key={key} className="px-2 py-1 tabular-nums">{Number(row.open_wo_count ?? 0) > 0 ? <span className="font-semibold text-slate-800">{row.open_wo_count ?? 0}</span> : <span className="text-gray-400">{row.kind === "trailer" ? "—" : "0"}</span>}</td>;
       case "dot_oo": return <td key={key} className="px-2 py-1">{row.kind === "trailer" ? "—" : row.is_oos ? "Yes" : "No"}</td>;
