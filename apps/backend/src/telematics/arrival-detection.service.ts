@@ -7,6 +7,13 @@ type RemainingStopRow = {
   stop_label: string | null;
   latitude: number | string;
   longitude: number | string;
+  /**
+   * Which table the coordinate came from: "stop" (mdata.load_stops.latitude/longitude, the
+   * coordinate the load was actually booked to) or "location" (the mdata.locations catalog row
+   * the stop points at). Never inferred, never blank — a coordinate with no stated source is
+   * not usable evidence for an arrival.
+   */
+  coord_source: "stop" | "location";
 };
 
 type LastArrivalRow = {
@@ -85,14 +92,39 @@ async function getDriverForVehicleAtTime(
   }
 }
 
+/**
+ * T-01b — THE COORDINATE SOURCE WAS THE WRONG TABLE.
+ *
+ * This query used to read latitude/longitude ONLY from mdata.locations, reached through
+ * mdata.load_stops.location_id, and required both to be non-null. Measured live on
+ * br-fancy-credit-akjnd07a for USMCA (5c854333-6ea5-4faa-af31-67cb272fef80):
+ *
+ *   active assigned loads                         17
+ *   candidate stops before the geo filter         35
+ *   of those, stops with location_id populated     0
+ *   of those, stops carrying their OWN lat/lng    35
+ *   mdata.locations rows for USMCA               621  (616 with coordinates)
+ *
+ * So the catalog is healthy and the stops are geocoded — they are simply not joined. Every one
+ * of the 35 candidate stops was discarded by `loc.latitude IS NOT NULL`, and the function
+ * returned an empty array on every call. Wiring arrival detection onto the poll path (T-01)
+ * would still have produced zero rows, forever, and it would have looked like the trucks were
+ * never near their stops.
+ *
+ * FIX: take the coordinate from the stop itself when it has one — that is the coordinate the
+ * load was actually booked to — and fall back to the catalog row when it does not. The source is
+ * returned as coord_source and is never inferred: a stop with neither coordinate is excluded, not
+ * guessed at.
+ */
 async function fetchRemainingStops(client: DbClient, input: ArrivalGpsInput): Promise<RemainingStopRow[]> {
   const res = await client.query<RemainingStopRow>(
     `
       SELECT
         s.id::text AS stop_id,
         COALESCE(loc.location_name, s.address_line1, concat_ws(', ', s.city, s.state)) AS stop_label,
-        loc.latitude,
-        loc.longitude
+        COALESCE(s.latitude, loc.latitude) AS latitude,
+        COALESCE(s.longitude, loc.longitude) AS longitude,
+        CASE WHEN s.latitude IS NOT NULL AND s.longitude IS NOT NULL THEN 'stop' ELSE 'location' END AS coord_source
       FROM mdata.loads l
       JOIN mdata.load_stops s ON s.load_id = l.id
       LEFT JOIN mdata.locations loc ON loc.id = s.location_id
@@ -102,8 +134,8 @@ async function fetchRemainingStops(client: DbClient, input: ArrivalGpsInput): Pr
         AND l.soft_deleted_at IS NULL
         AND l.status::text NOT IN ('delivered', 'delivered_pending_docs', 'invoiced', 'paid', 'closed', 'cancelled')
         AND s.status::text <> 'departed'
-        AND loc.latitude IS NOT NULL
-        AND loc.longitude IS NOT NULL
+        AND COALESCE(s.latitude, loc.latitude) IS NOT NULL
+        AND COALESCE(s.longitude, loc.longitude) IS NOT NULL
       ORDER BY s.sequence_number ASC
     `,
     [input.operating_company_id, input.unit_id]
