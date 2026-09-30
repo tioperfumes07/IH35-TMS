@@ -115,19 +115,27 @@ async function runCapture(label) {
   }
   const client = new Client({ connectionString: databaseUrl });
   await client.connect();
-  // accounting.* is FORCED RLS -- without this every fn_account_balances_as_of() call above silently
-  // returns 0 rows per company (a "0" is not a verdict, per this repo's own §0 law) and the snapshot
-  // was captured empty. Session-scoped (false), not transaction-scoped, since this script issues no
-  // explicit BEGIN.
-  await client.query("SELECT set_config('app.bypass_rls', 'lucia', false)");
+  // accounting.* is FORCED RLS -- without bypass every fn_account_balances_as_of() call silently
+  // returns 0 rows (a "0" is not a verdict). Transaction-local SET LOCAL inside an explicit BEGIN
+  // (DB-F01) — never session-scoped set_config(..., false) under Neon -pooler.
   try {
+    await client.query("BEGIN");
+    await client.query("SET LOCAL app.bypass_rls = 'lucia'");
     const snapshot = await captureSnapshot(client);
+    await client.query("COMMIT");
     fs.mkdirSync(SNAPSHOT_DIR, { recursive: true });
     fs.writeFileSync(snapshotPath(label), JSON.stringify(snapshot, null, 2) + "\n", "utf8");
     const totalAccounts = Object.values(snapshot.companies).reduce((n, rows) => n + rows.length, 0);
     console.log(
       `Captured trial-balance snapshot "${label}": ${totalAccounts} accounts across ${Object.keys(snapshot.companies).length} companies, at ${snapshot.captured_at}`
     );
+  } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      /* ignore */
+    }
+    throw err;
   } finally {
     await client.end();
   }
