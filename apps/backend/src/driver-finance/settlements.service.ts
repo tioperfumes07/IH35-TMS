@@ -236,9 +236,10 @@ export async function listDriverBillsForSettlementPeriod(
  * The lane now comes from mdata.load_stops (first pickup → last delivery) and the dates with it.
  * `notes` is kept only as the last fallback, for a bill with no load behind it at all.
  *
- * Miles and rate carry their source: a mileage filled from mdata.loads reads "1,436 mi (practical,
- * load)" and never passes itself off as the agreed basis, and a rate divided out of gross ÷ miles
- * reads "$0.55/mi eff" and is never printed as a contracted rate.
+ * Miles and rate print PLAIN on the driver document — owner ruling 2026-09-30: "The driver just
+ * needs to know the miles he is being paid, not short, driven or practical. That is for us." The
+ * basis and the effective-rate flag are still resolved and still carried on the row for the company
+ * settlement and the audit trail; they are simply not printed on a driver's pay document.
  */
 /**
  * S-01 — pickup/delivery dates for the lane column. Dates are printed only when the underlying
@@ -263,15 +264,23 @@ function formatLaneDates(pickupAt: string | null, deliveryAt: string | null): st
 export function driverBillRowsToSettlementLoads(rows: DriverBillSettlementRow[]): SettlementLoadRow[] {
   return rows.map((row) => {
     const gross = Number(row.gross_amount_cents ?? 0);
+    // OWNER RULING 2026-09-30: "The driver just needs to know the miles he is being paid, not
+    // short, driven or practical. That is for us."
+    //
+    // So the DRIVER document prints the number he is paid on and nothing else. No basis suffix, no
+    // "eff" marker — those are internal accounting distinctions and putting them on a pay document
+    // invites an argument about a word the driver was never party to.
+    //
+    // The source is NOT discarded: miles_basis_type and rate_is_effective still ride on
+    // DriverBillSettlementRow and are still resolved by the query, for the company settlement, the
+    // audit trail and any internal report that must state which mileage it counted. This function
+    // is the driver-facing renderer, and only here is the label dropped.
     const milesNum = row.miles_basis != null ? Number(row.miles_basis) : null;
-    const basisLabel = row.miles_basis_type ? String(row.miles_basis_type) : null;
     const miles =
-      milesNum != null && Number.isFinite(milesNum)
-        ? `${Math.round(milesNum).toLocaleString("en-US")}${basisLabel ? ` (${basisLabel})` : ""}`
-        : "—";
+      milesNum != null && Number.isFinite(milesNum) ? Math.round(milesNum).toLocaleString("en-US") : "—";
     const rpm =
       row.rate_per_mile_cents != null && Number.isFinite(Number(row.rate_per_mile_cents))
-        ? `${formatMoney(Number(row.rate_per_mile_cents))}/mi${row.rate_is_effective ? " eff" : ""}`
+        ? `${formatMoney(Number(row.rate_per_mile_cents))}/mi`
         : "—";
     const loadNum = String(row.load_number ?? "—").toUpperCase();
     const dateRange = formatLaneDates(row.pickup_at ?? null, row.delivery_at ?? null);

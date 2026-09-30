@@ -17,8 +17,11 @@
  *
  * THE PROPERTY:
  *  - the query resolves lane / pickup_at / delivery_at from mdata.load_stops
- *  - a mileage filled from mdata.loads is labelled "(load)" and never passes as the agreed basis
- *  - a rate divided out of gross / miles is flagged rate_is_effective and printed " eff"
+ *  - a mileage filled from mdata.loads is labelled "(load)" ON THE ROW, for the company settlement
+ *    and the audit trail
+ *  - a rate divided out of gross / miles is flagged rate_is_effective ON THE ROW
+ *  - NEITHER label is printed on the DRIVER document (owner ruling 2026-09-30: "the driver just
+ *    needs to know the miles he is being paid, not short, driven or practical - that is for us")
  *  - the memo is a LAST fallback, never the primary lane
  *
  * SELFTEST: --selftest plants each regression and requires the guard to catch it.
@@ -45,11 +48,19 @@ export function checkSettlementLegs(source) {
   if (!/rate_is_effective/.test(source)) {
     failures.push("a rate divided out of gross / miles must be flagged rate_is_effective, never printed as a contracted rate");
   }
-  if (!/row\.rate_is_effective\s*\?\s*" eff"/.test(source)) {
-    failures.push("the rendered rate must carry the ' eff' suffix when it is effective rather than agreed");
+  // OWNER RULING 2026-09-30 — the DRIVER document prints the miles he is paid on, plain. The basis
+  // and the effective-rate flag are internal; printing them on a pay document invites an argument
+  // about a word the driver was never party to. So the guard now enforces the OPPOSITE of what it
+  // first enforced on the render side: the source must be RESOLVED (asserted above) and must NOT be
+  // PRINTED (asserted here).
+  if (/row\.rate_is_effective\s*\?\s*" eff"/.test(source)) {
+    failures.push('the driver leg must not print an " eff" rate suffix — owner ruling 2026-09-30, that label is internal');
   }
-  if (!/basisLabel\s*\?\s*`\s*\(\$\{basisLabel\}\)`/.test(source)) {
-    failures.push("the rendered mileage must carry its basis label");
+  if (/\$\{basisLabel\}/.test(source)) {
+    failures.push("the driver leg must not print the mileage basis label — owner ruling 2026-09-30, the driver sees the miles he is paid on");
+  }
+  if (!/OWNER RULING 2026-09-30/.test(source)) {
+    failures.push("the ruling that put this behaviour here must stay recorded at the code that implements it");
   }
   // the memo must not be the primary lane again
   if (/const lane = String\(row\.notes/.test(source)) {
@@ -73,7 +84,20 @@ if (process.argv.includes("--selftest")) {
     ["pickup/delivery dates dropped", good.replace(/AS pickup_at/g, "AS px_removed"), 1],
     ["mileage source label stripped", good.replace(/'practical \(load\)'/g, "'practical'"), 1],
     ["miles no longer fall back to mdata.loads", good.replace("COALESCE(db.miles_basis, dbl.miles_practical, dbl.miles_shortest)", "db.miles_basis"), 1],
-    ["effective-rate flag dropped from the render", good.replace(/\$\{row\.rate_is_effective \? " eff" : ""\}/, ""), 1],
+    [
+      "the internal basis label leaks back onto the driver leg",
+      good.replace(
+        'milesNum != null && Number.isFinite(milesNum) ? Math.round(milesNum).toLocaleString("en-US") : "—";',
+        'milesNum != null ? `${Math.round(milesNum)} (${basisLabel})` : "—";'
+      ),
+      1,
+    ],
+    [
+      "the eff suffix leaks back onto the driver leg",
+      good.replace('`${formatMoney(Number(row.rate_per_mile_cents))}/mi`', '`${formatMoney(Number(row.rate_per_mile_cents))}/mi${row.rate_is_effective ? " eff" : ""}`'),
+      1,
+    ],
+    ["the owner ruling comment is deleted", good.replace(/OWNER RULING 2026-09-30/g, "x"), 1],
   ];
 
   let ok = 0;
@@ -94,4 +118,4 @@ if (failures.length > 0) {
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log(`${NAME} PASS — settlement legs carry the lane, the dates, and the mileage/rate source`);
+console.log(`${NAME} PASS — legs carry the lane and dates; the mileage source rides the row, not the driver's document`);
