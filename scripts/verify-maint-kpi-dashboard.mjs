@@ -11,6 +11,7 @@ const read = (f) => fs.readFileSync(path.join(ROOT, f), "utf8");
 const dashboard = read("apps/frontend/src/pages/maintenance/MaintKpiDashboardPage.tsx");
 const KPI_ROUTES = "apps/backend/src/maintenance/kpi.routes.ts";
 const kpiRoutes = read(KPI_ROUTES);
+const maintenanceApi = read("apps/frontend/src/api/maintenance.ts");
 
 function fleetScopeFailures(source) {
   const failures = [];
@@ -50,6 +51,9 @@ const checks = [
   ["computeMtbfHours", read("apps/backend/src/maintenance/kpi.routes.ts").includes("computeMtbfHours")],
   ["5 backend tests", (read("apps/backend/src/maintenance/__tests__/kpi.routes.test.ts").match(/\bit\(/g) ?? []).length >= 5],
   ["dashboard page", dashboard.includes('data-testid="maint-kpi-dashboard"')],
+  ["idle review queue", dashboard.includes('data-testid="idle-events-needs-review"')],
+  ["idle confirm route wired in API", maintenanceApi.includes("idle-events/needs-review") && maintenanceApi.includes("confirm-manual")],
+  ["idle confirm route on backend", kpiRoutes.includes("/api/v1/maintenance/idle-events/needs-review") && kpiRoutes.includes("confirm-manual")],
   ["sparkline tiles", dashboard.includes("MiniSparkline")],
   ["date filters", dashboard.includes("maint-kpi-filter-start")],
   ["searchable unit picker", /<EntityPicker[\s\S]*?kind="unit"[\s\S]*?allowCreate=\{false\}[\s\S]*?dataTestId="maint-kpi-filter-unit"/.test(dashboard)],
