@@ -267,12 +267,23 @@ export function RoundTripsTimeline({ loads, rangeFrom, rangeTo, onLoadClick }: P
  * THE FIX IS THE SHAPE, NOT THE NUMBER: the window is now RELATIVE TO TODAY and fixed in LENGTH, so
  * it can never ratchet again regardless of how long the app runs. A round trip is out-and-back in
  * about a week — the board's own "long leg" flag has used 7 days as that threshold all along — so
- * one day of look-back (a trip that left yesterday is still mid-flight and must stay visible) plus
- * six days ahead covers the whole live set at ~7 columns. Bars outside the window already clamp
- * gracefully via Math.max(start, rangeStart) / Math.min(end, rangeEnd); nothing is fabricated.
+ * a look-back (a trip that left yesterday is still mid-flight and must stay visible) plus the days
+ * ahead covers the live set. Bars outside the window already clamp gracefully via
+ * Math.max(start, rangeStart) / Math.min(end, rangeEnd); nothing is fabricated.
+ *
+ * OWNER CORRECTION, same session: "caps at 7-10 days because usually a tour nb and sb, but can have
+ * more days, remember triangulation, up to 15-20 days. if i want to see more days, i change in
+ * calendar." So the DEFAULT covers a normal NB+SB tour — 10 days — and is NOT a hard ceiling: the
+ * calendar already drives rangeFrom/rangeTo as props, so a 15-20 day triangulation is seen by
+ * widening the calendar, not by re-coding this. My first pass at 8 columns was too tight and would
+ * have clipped an ordinary tour; corrected before it could mislead.
+ *
+ * THIS WINDOW IS THE ROUND TRIPS CALENDAR ONLY. Kanban, Truck Line and List are NOT date-windowed
+ * and must never be — they show the current load and its SB load, selected by load, not by day.
+ * Nothing in this file is imported by them.
  */
-export const RT_TIMELINE_DAYS_BACK = 1;
-export const RT_TIMELINE_DAYS_FORWARD = 6;
+export const RT_TIMELINE_DAYS_BACK = 2;
+export const RT_TIMELINE_DAYS_FORWARD = 7;
 
 function shiftIsoDay(iso: string, deltaDays: number): string {
   const d = new Date(`${iso}T00:00:00`);
