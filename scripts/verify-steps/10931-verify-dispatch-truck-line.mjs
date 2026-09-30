@@ -29,5 +29,8 @@ export default {
     ctx.run("node", ["scripts/verify-settlement-line-off-is-voided.mjs"]);
     ctx.run("node", ["scripts/verify-stops-are-geocoded.mjs"]);
     ctx.run("node", ["scripts/verify-telematics-feed-is-live.mjs"]);
+    // ROUND 283.3 — no unscoped listAllLoads/listLoads (fail-closed with backend else)
+    ctx.run("node", ["scripts/verify-list-loads-requires-board-scope.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-list-loads-requires-board-scope.mjs"]);
   },
 };

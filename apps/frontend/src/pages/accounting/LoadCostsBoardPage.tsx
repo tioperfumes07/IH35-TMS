@@ -606,12 +606,25 @@ export function LoadCostsBoardPage() {
     queryFn: () => listUnitsWithoutLoad(companyId),
     enabled: Boolean(companyId),
   });
-  // Company-wide load set (unbounded, all statuses) purely to run pairOutboundReturn per unit --
-  // the SAME pairing engine RoundTrips.tsx uses, reused rather than reimplemented so this column
-  // and the Dispatch Round Trips board can never disagree about whether a unit's return is booked.
+  // Company-wide load set for pairOutboundReturn per unit — SAME pairing engine RoundTrips uses.
+  // ROUND 283.2 — must declare scope; pairing needs both open + closed legs, so merge live+history
+  // (never an unscoped call that used to dump the whole table).
   const allLoadsForPairingQuery = useQuery({
     queryKey: ["load-costs-board", "all-loads-for-return-pairing", companyId],
-    queryFn: () => listAllLoads({ operating_company_id: [companyId] }),
+    queryFn: async () => {
+      const [live, history] = await Promise.all([
+        listAllLoads({ operating_company_id: [companyId], board_scope: "live", include_open_tour_legs: true }),
+        listAllLoads({ operating_company_id: [companyId], board_scope: "history" }),
+      ]);
+      const seen = new Set<string>();
+      const loads: DispatchLoadRow[] = [];
+      for (const row of [...live.loads, ...history.loads]) {
+        if (seen.has(row.id)) continue;
+        seen.add(row.id);
+        loads.push(row);
+      }
+      return { loads, total_count: loads.length };
+    },
     enabled: Boolean(companyId),
     staleTime: 60_000,
   });

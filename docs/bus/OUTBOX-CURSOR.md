@@ -1,9 +1,14 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T03:25Z · ROUND 283.1–283.3 LOADBOARD FAIL-CLOSED**
+CURSOR | 283.1–283.3 IN FLIGHT | backend else → live open-dispatch | FE callers scoped | guard-list-loads-requires-board-scope PASS | LAW.json |
+LIVE: verify-load-boards-agree PASS canonical=12; truck-line===canonical 12 loads |
+NEXT: Fast-merge · 283.5 UI after re-check · Phase 3 waits · Chrome cancelled.
+
 **2026-09-30T03:05Z · ROUND 280 UNBLOCK #23205 + CURSOR ORPHAN WIRE**
 CURSOR | UNBLOCK `#23205` `bcda09bd5a` + orphan wire (this PR) | guard-wired orphan **38→19** via 10931 (19 Cursor/dispatch/settlement PASS guards) | settlementLabel Open false-positive fixed |
 LEFT (other seats / red): check-engine cluster · bank-match · stop-stamps rot 13630/34/35/37 · geocode-provider env · money seed/match · universal-reinstate |
-NEXT: Fast-merge this PR · Phase 3 waits CC-1 280.5 + CC-2 280.7–280.10 · 280.19/280.20 Codex · Chrome cancelled · stop-stamps ratchet not grown.
+MERGED `#23209` `e2b6f4f4d2` · NEXT was Fast-merge · Phase 3 waits CC-1 280.5 + CC-2 280.7–280.10 · 280.19/280.20 Codex · Chrome cancelled · stop-stamps ratchet not grown.
 
 
 **2026-09-30T02:40Z · ROUND 280.17 + 280.18 FAST-MERGED**

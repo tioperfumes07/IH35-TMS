@@ -42,6 +42,8 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
     queryFn: () =>
       listAllLoads({
         operating_company_id: [operatingCompanyId],
+        // ROUND 283.2 — current-trip load costs = live open-dispatch only (status kept as belt+suspenders).
+        board_scope: "live",
         status: IN_MOTION,
         sort: "created_at:desc",
       }),

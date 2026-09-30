@@ -299,8 +299,11 @@ const ENTITY_PICKERS: Record<EntityPickerKind, EntityPickerConfig> = {
     inlineCreate: { available: true },
     serverSearch: true,
     async list(operatingCompanyId, opts) {
+      // ROUND 283.2 — EntityPicker load list is cross-module (claims/expenses/etc.), not Dispatch;
+      // history so operators can attach a closed/settled load. Never omit scope (283.1 fail-closed).
       const res = await listLoads({
         operating_company_id: [operatingCompanyId],
+        board_scope: "history",
         limit: 200,
         sort: "-created_at",
         search: opts?.search || undefined,

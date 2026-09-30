@@ -654,6 +654,12 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       } else if (board_scope === "history") {
         values.push(DISPATCH_LIVE_EXCLUDED_STATUSES);
         filters.push(`l.status = ANY($${values.length}::mdata.load_status_enum[])`);
+      } else {
+        // ROUND 283.1 — fail closed. No status filter and no board_scope used to return EVERY
+        // load (closed/cancelled/settled/billing-tail). Owner law 2026-09-11 OPEN-ONLY: Dispatch
+        // and everything inside it renders only current/open loads. A caller must OPT IN to
+        // history (or pass an explicit status list); forgetting scope must never dump the table.
+        filters.push(liveLoadsOpenDispatchExistsSql("l.id"));
       }
       if (customer_id) {
         values.push(customer_id);

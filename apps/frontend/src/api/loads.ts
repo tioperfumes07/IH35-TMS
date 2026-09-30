@@ -227,6 +227,7 @@ export type LoadsListFilters = {
   operating_company_id?: string[];
   include_progress?: boolean;
   include_live_eta?: boolean;
+  /** ROUND 283 — required with status[] or drafts_only; backend defaults missing scope to live (fail closed). */
   board_scope?: "live" | "history";
   /** ROUND-20.2 (RT-FULL-TOUR) — Round Trips-only opt-in; every other board_scope=live caller must
    * leave this unset so OPEN-ONLY stays unchanged for them. See mdata/loads.routes.ts. */
