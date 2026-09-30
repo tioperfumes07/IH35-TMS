@@ -28,6 +28,7 @@ vi.mock("../../../api/maintenance", () => ({
 
 vi.mock("../../../api/client", () => ({
   apiRequest: vi.fn().mockResolvedValue({ rules: [] }),
+  resolveApiUrl: (path: string) => path,
 }));
 
 function wrap(ui: ReactElement, initialEntries = ["/maintenance/fault-rules"]) {
@@ -98,7 +99,7 @@ describe("maintenance create vocabulary (B25)", () => {
     expect(screen.getByRole("button", { name: "+ Create Work Order" })).toBeInTheDocument();
   });
 
-  it("vehicle ActionBar links to work-orders/new with unit_id", () => {
+  it("vehicle ActionBar opens Create WO modal deep-link on Maintenance Home", () => {
     const unitId = "unit-abc-123";
     render(
       wrap(
@@ -108,6 +109,6 @@ describe("maintenance create vocabulary (B25)", () => {
     );
     const link = screen.getByTestId("vp-create-work-order");
     expect(link).toHaveTextContent("+ Create Work Order");
-    expect(link).toHaveAttribute("href", `/maintenance/work-orders/new?unit_id=${encodeURIComponent(unitId)}`);
+    expect(link).toHaveAttribute("href", `/maintenance?create_wo=1&unit_id=${encodeURIComponent(unitId)}`);
   });
 });

@@ -34,7 +34,7 @@ export function ActionBar({
       </Button>
       <Link
         className={linkClass}
-        to={`/maintenance/work-orders/new?unit_id=${encodeURIComponent(unitId)}`}
+        to={`/maintenance?create_wo=1&unit_id=${encodeURIComponent(unitId)}`}
         data-testid="vp-create-work-order"
       >
         + Create Work Order

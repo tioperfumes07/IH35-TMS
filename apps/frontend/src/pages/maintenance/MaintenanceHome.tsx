@@ -123,13 +123,45 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null);
   const statusGenerationRef = useRef(0);
   // Service/Location drill-through: ?location=&bucket= narrow the Active-WOs list to that location.
-  const [searchParams] = useSearchParams();
+  // D24: ?create_wo=1&unit_id= / equipment_id= opens Create Work Order as a modal (never full page).
+  const [searchParams, setSearchParams] = useSearchParams();
   const locationFilter = searchParams.get("location") ?? "";
   const bucketFilter = searchParams.get("bucket") ?? "";
   const partInventoryId = searchParams.get("part_inventory_id")?.trim() ?? "";
   const driverReportId = searchParams.get("driver_report_id")?.trim() ?? "";
   const driverReportsDriverId = searchParams.get("driver_id")?.trim() ?? "";
   const driverReportsLoadId = searchParams.get("load_id")?.trim() ?? "";
+  const createWoDeepLink = searchParams.get("create_wo") === "1";
+  const createWoUnitId = searchParams.get("unit_id")?.trim() ?? "";
+  const createWoEquipmentId = searchParams.get("equipment_id")?.trim() ?? "";
+
+  // D10 / D32 / D33 — list tabs must show the list in one screen; stacked PM/Alerts/DTC cards eat it.
+  const isListTab =
+    tab === "active_wos" ||
+    tab === "fleet_table" ||
+    tab === "arriving_soon" ||
+    tab === "service_location" ||
+    tab === "in_transit_issues" ||
+    tab === "parts_inventory" ||
+    tab === "damage_reports" ||
+    tab === "driver_reports";
+
+  useEffect(() => {
+    if (createWoDeepLink) {
+      setCreateWoType("pm");
+      setPrefillFromIssue(null);
+      setCreateWoOpen(true);
+    }
+  }, [createWoDeepLink, createWoUnitId, createWoEquipmentId]);
+
+  const clearCreateWoDeepLink = () => {
+    if (!createWoDeepLink && !createWoUnitId && !createWoEquipmentId) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("create_wo");
+    next.delete("unit_id");
+    next.delete("equipment_id");
+    setSearchParams(next, { replace: true });
+  };
 
   const kpisQuery = useQuery({
     queryKey: ["maintenance", "dashboard", "kpis", companyId],
@@ -189,7 +221,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
     ],
     queryFn: () =>
       listWorkOrdersFiltered(companyId, {
-        source_type: sourceTypeFilter || undefined,
+        source_type: sourceTypeFilter.includes(",") ? undefined : sourceTypeFilter || undefined,
         external_vendor_id: externalVendorFilter || undefined,
         location: locationFilter || undefined,
         bucket: bucketFilter || undefined,
@@ -328,10 +360,11 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
       {/* MAINT-F7528 — R&M owns its purpose-built RMStatStrip below. Rendering the global strip
           here as well duplicated Open WOs and PM Due with different labels on the same surface. */}
-      {tab !== "rm_status_board" ? <MaintKpiRows kpis={kpis} isError={kpisQuery.isError} /> : null}
-      {/* On the R&M Status Board these three cards move into the right sidebar (compact) below; every
-          other tab keeps its existing full-width layout. */}
-      {companyId && tab !== "rm_status_board" ? (
+      {tab !== "rm_status_board" && tab !== "settings" ? (
+        <MaintKpiRows kpis={kpis} isError={kpisQuery.isError} compact={isListTab} />
+      ) : null}
+      {/* D10/D32/D33: PM countdown / Alerts / DTC stay on R&M sidebar only — list tabs need the list visible. */}
+      {companyId && !isListTab && tab !== "rm_status_board" && tab !== "settings" ? (
         pmDueQuery.isError ? (
           <ListErrorState
             title="Couldn't load PM countdown"
@@ -343,9 +376,15 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           <MaintenancePmCountdownCards rows={pmDueQuery.data?.rows ?? []} loading={pmDueQuery.isLoading} />
         )
       ) : null}
-      <IntegrationsStrip pendingQboCount={kpis.pending_qbo} />
-      {companyId && tab !== "rm_status_board" ? <MaintenanceAlertsCard operatingCompanyId={companyId} /> : null}
-      {companyId && tab !== "rm_status_board" ? <DtcAutoWorkOrdersCard operatingCompanyId={companyId} /> : null}
+      {!isListTab && tab !== "rm_status_board" && tab !== "settings" ? (
+        <IntegrationsStrip pendingQboCount={kpis.pending_qbo} />
+      ) : null}
+      {companyId && !isListTab && tab !== "rm_status_board" && tab !== "settings" ? (
+        <MaintenanceAlertsCard operatingCompanyId={companyId} />
+      ) : null}
+      {companyId && !isListTab && tab !== "rm_status_board" && tab !== "settings" ? (
+        <DtcAutoWorkOrdersCard operatingCompanyId={companyId} />
+      ) : null}
 
       {tab === "active_wos" ? (
         <div data-testid="maintenance-active-wos-tab" data-maintenance-tab="active_wos">
@@ -753,14 +792,18 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
                 bucket: "roadside",
                 class_hint: "Prefilled from triage issue",
               }
-            : undefined
+            : createWoUnitId || createWoEquipmentId
+              ? { unit_id: createWoUnitId, equipment_id: createWoEquipmentId }
+              : undefined
         }
         onClose={() => {
           setCreateWoOpen(false);
           setPrefillFromIssue(null);
+          clearCreateWoDeepLink();
         }}
         onCreated={async () => {
           setPrefillFromIssue(null);
+          clearCreateWoDeepLink();
           await Promise.all([
             queryClient.invalidateQueries({ queryKey: ["maintenance", "dashboard", "kpis", companyId] }),
             queryClient.invalidateQueries({ queryKey: ["maintenance", "dashboard", "rm-status", companyId] }),

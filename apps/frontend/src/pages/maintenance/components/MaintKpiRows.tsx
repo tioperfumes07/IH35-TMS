@@ -5,6 +5,8 @@ type Props = {
   kpis: MaintenanceKpis;
   /** When the dashboard KPI query failed — every tile must show "—", never a fabricated 0. */
   isError?: boolean;
+  /** D10/D32 — list tabs drop the prose header so the KPI strip stays one row. */
+  compact?: boolean;
 };
 
 /**
@@ -29,7 +31,7 @@ function pick(...candidates: Array<unknown>): number | null {
 const days = (n: number | null) => (n === null ? null : `${n.toFixed(1)} d`);
 const usd = (n: number | null) => (n === null ? null : `$${n.toLocaleString()}`);
 
-export function MaintKpiRows({ kpis, isError = false }: Props) {
+export function MaintKpiRows({ kpis, isError = false, compact = false }: Props) {
   const dynamicKpis = kpis as Record<string, unknown>;
   const pastDue = isError ? null : pick(dynamicKpis.past_due, kpis.past_due_pm);
   const avgCloseDays = isError ? null : pick(dynamicKpis.avg_close_days, kpis.avg_wo_age_days);
@@ -40,8 +42,12 @@ export function MaintKpiRows({ kpis, isError = false }: Props) {
 
   return (
     <section className="space-y-1" data-testid="maint-kpi-work-orders">
-      <h2 className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Work orders — live open set</h2>
-      <p className="text-[11px] text-gray-500">These seven boxes count work orders and PM alerts, not fleet units. Click any card to open the list it counts.</p>
+      {!compact ? (
+        <>
+          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Work orders — live open set</h2>
+          <p className="text-[11px] text-gray-500">These seven boxes count work orders and PM alerts, not fleet units. Click any card to open the list it counts.</p>
+        </>
+      ) : null}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-7" data-testid="maint-kpi-rows">
         <DrillKpiCard
           label="Open WOs"

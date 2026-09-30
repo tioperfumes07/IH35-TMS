@@ -52,12 +52,13 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 const FLD = "h-[30px] w-full rounded-[5px] border border-[#d6dae1] bg-white px-2 text-xs text-sidebar-bg outline-hidden focus:border-[#1f2a44]";
 
 function SectionCard({ badge, title, right, testid, children }: { badge: string; title: string; right?: string; testid?: string; children: ReactNode }) {
+  // D27 — section headers dark navy with light letters (NAVY-NOT-BLACK #14314F), not light grey bars.
   return (
-    <section data-testid={testid} className="rounded-[7px] border border-[#d6dae1] bg-white">
-      <div className="flex items-center gap-2 rounded-t-[7px] border-b border-[#e6e9ee] bg-[#fafbfc] px-2.5 py-1.5">
-        <span className="grid h-[18px] w-[18px] place-items-center rounded-sm bg-[#1d2b45] text-xs font-bold text-white">{badge}</span>
-        <span className="text-[11px] font-bold uppercase tracking-wide text-sidebar-active">{title}</span>
-        {right ? <span className="ml-auto text-xs text-inactive">{right}</span> : null}
+    <section data-testid={testid} className="rounded-sm border border-[#E5E7EB] bg-white">
+      <div className="flex items-center gap-2 rounded-t-sm border-b border-[#14314F] bg-[#14314F] px-2.5 py-1.5">
+        <span className="grid h-[18px] w-[18px] place-items-center rounded-sm bg-white/15 text-xs font-bold text-white">{badge}</span>
+        <span className="text-[11px] font-bold uppercase tracking-wide text-white">{title}</span>
+        {right ? <span className="ml-auto text-xs text-[#CDD6E6]">{right}</span> : null}
       </div>
       <div className="p-2.5">{children}</div>
     </section>
