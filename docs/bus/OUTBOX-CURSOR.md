@@ -19,3 +19,5 @@ C-17 · what changed: `MasterDetailShell` + `DriverListSidebar` on Drivers Profi
 C-04..C-15 / C-19 · LEFT: next (row treatment sweep, min-scroll, cash-flow, banking boxes, driver profile polish, multi-select filters, WO modal, has-transactions default).
 
 GUARD: verify-c01-c17-master-detail-shell + verify-md-width-0. No Aug/Sep money. No seat fixtures.
+
+ACK 2026-09-30 · CURSOR · read NOW-CURSOR · starting C-20
