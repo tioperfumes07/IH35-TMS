@@ -66,6 +66,59 @@ export function computeNextDueDate(
   return base.toISOString().slice(0, 10);
 }
 
+export type ProjectedPmDueFromRate = {
+  projected_due_date: string | null;
+  /** Non-null whenever projected_due_date is null -- the engine never returns a bare null, per
+   *  ROUND 301 T-29: "A unit with no baseline PM odometer, or an odometer gap in the window,
+   *  returns NULL with a stated reason. It never estimates and never guesses a baseline." */
+  reason: string | null;
+};
+
+/**
+ * ROUND 301 T-29 -- project a calendar due date for a MILES-based PM interval using THAT UNIT'S
+ * OWN trailing-window mileage rate. Never the owner's 12,000-mi/month rule of thumb -- that is a
+ * fleet-wide guess, not a fact about any one truck's actual duty cycle.
+ *
+ * Pure and DB-free by design (mirrors computeNextDueDate/computeNextDueMiles above) -- the live
+ * per-unit rate itself is computed elsewhere (maintenance/pm-due-engine.service.ts, against
+ * telematics.odometer_readings) and handed in here already resolved or already explained.
+ */
+export function projectPmDueDateFromRate(
+  milesRemaining: number | null,
+  milesPerDay: number | null,
+  rateUnavailableReason: string | null,
+  todayIso = companyBusinessDate()
+): ProjectedPmDueFromRate {
+  if (milesRemaining == null) {
+    return { projected_due_date: null, reason: "no baseline PM odometer on file" };
+  }
+  if (!Number.isFinite(milesRemaining)) {
+    return { projected_due_date: null, reason: "non-finite input" };
+  }
+  const today = new Date(`${todayIso}T00:00:00.000Z`);
+  if (Number.isNaN(today.getTime())) {
+    return { projected_due_date: null, reason: "invalid business date" };
+  }
+  // Already at or past the interval -- overdue as of TODAY, independent of any mileage rate.
+  // A rate is only needed to project a FUTURE date, never to know the unit is already overdue.
+  if (milesRemaining <= 0) {
+    return { projected_due_date: today.toISOString().slice(0, 10), reason: null };
+  }
+  if (milesPerDay == null) {
+    return { projected_due_date: null, reason: rateUnavailableReason ?? "no usable odometer rate for this unit" };
+  }
+  if (!Number.isFinite(milesPerDay)) {
+    return { projected_due_date: null, reason: "non-finite input" };
+  }
+  if (milesPerDay <= 0) {
+    return { projected_due_date: null, reason: "no positive mileage rate in the trailing window" };
+  }
+  const daysOut = Math.ceil(milesRemaining / milesPerDay);
+  const due = new Date(today);
+  due.setUTCDate(due.getUTCDate() + daysOut);
+  return { projected_due_date: due.toISOString().slice(0, 10), reason: null };
+}
+
 export function recomputePmScheduleDueFields(schedule: {
   interval_miles: number | null;
   interval_days: number | null;

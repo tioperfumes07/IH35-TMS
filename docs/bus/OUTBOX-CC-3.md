@@ -441,3 +441,51 @@ polling fallback (Samsara's stats/vehicle endpoints do carry some harsh-event da
 integrations, not confirmed available on this account's plan) or whether fixing the webhook
 delivery (Samsara-dashboard-side, outside this repo) is the intended path -- that decision is
 outside a "report, change nothing" task.
+
+## CC-3 — ROUND 301 T-29 SHIPPED — PM due engine, off the odometer ledger, no Samsara call, no fleet average
+
+Built exactly on the 03:00 CT odometer snapshot (Round 297.1's own J-1/J-2 ledger,
+telematics.odometer_readings) -- zero new Samsara calls, verified by guard.
+
+NEW: apps/backend/src/maintenance/pm-due-engine.service.ts --
+  computeUnitMileageRate(): trailing-90-day miles/day for ONE unit, computed live from its own
+    'measured'/'entered' odometer_readings rows. A 'suggested' (honest gap) row ANYWHERE in the
+    90-day window refuses the whole rate -- "odometer gap in the trailing 90-day window" --
+    rather than silently spanning the hole. Fewer than 2 real readings in the window, or a
+    non-positive mileage delta, both refuse with their own named reason.
+  currentOdometer(): the unit's MOST RECENT odometer_readings row decides "current" -- if that
+    latest row is itself an honest 'suggested' gap, current_odometer is null (not a stale
+    fallback value), because the newest thing the ledger knows about that truck IS "we don't
+    know right now." Found this exact case live: T122's raw latest-real-value naive query
+    returned 927437 mi from a 2026-07-01 row, three months stale, with a newer 2026-09-26
+    'suggested' gap row sitting on top of it -- tightened before shipping so it correctly
+    reports null instead of that stale number.
+  GET /api/v1/maintenance/pm-due-engine -- per unit, per miles-kind PM schedule row: last
+    service odometer, current odometer, miles since service, miles to due, the unit's own
+    miles/day, and a projected calendar due date (or null + a stated reason).
+  projectPmDueDateFromRate() (new, apps/backend/src/maint/pm-due.shared.ts, pure/DB-free,
+    matches the file's own existing computeNextDueMiles/computeNextDueDate style): checks
+    no-baseline FIRST (never guesses), then already-overdue-on-miles-alone (needs no rate to
+    know it's overdue TODAY), then the per-unit rate -- never the owner's 12,000-mi/month
+    rule of thumb, which never appears anywhere in this computation.
+
+The manual-baseline loop is ALREADY CLOSED, not left half-built: maintenance/pm-schedule.routes.ts
+already accepts last_service_odometer on create (the owner's own "I'll input mileage manually"
+plan for the PM baseline), and Round 297.1's J-2 (odometer-manual.routes.ts) already accepts a
+manual CURRENT odometer entry into the same ledger this engine reads -- both first-class writers
+into the same table, no side table, nothing new needed on either write path.
+
+LIVE PROOF (USMCA, today): 64 miles-based PM schedule rows (16 units x 4 labels: BRK/PM-A/PM-B/
+TIRE) evaluated. 64 of 64 return projected_due_date=null, reason='no baseline PM odometer on
+file' -- because last_service_odometer is NULL on every single row right now (confirmed live
+before building). This is the CORRECT, honest answer given today's real data, not a bug --
+exactly matching the owner's own stated plan to enter baselines manually. current_odometer and
+miles_per_day already compute correctly underneath for units that DO have real odometer history
+(e.g. T148: current=641417.2, rate=99.3 mi/day; T152: current=756852.3, rate=278.1 mi/day),
+visible in the raw response even while the final projected date stays null pending a baseline.
+
+GUARD: scripts/verify-pm-due-engine-no-fleet-average-no-samsara-call.mjs + --selftest. Fails on
+a 12,000/12,000-mi-month literal anywhere in the engine or shared file (comment-stripped before
+checking, so the doc-comment quoting the owner's own rule of thumb doesn't trip its own guard),
+a Samsara-client reference in the engine file, or projectPmDueDateFromRate's no-baseline/gap
+checks not being the first things the function does.

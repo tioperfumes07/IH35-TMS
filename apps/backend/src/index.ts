@@ -348,6 +348,7 @@ import { registerOdometerManualRoutes } from "./telematics/odometer-manual.route
 import { initializeSamsaraFaultPollCron } from "./integrations/samsara/fault-poll.cron.js";
 import { registerMaintPartsRoutes } from "./maint/parts.routes.js";
 import { registerMaintPmRoutes } from "./maint/pm.routes.js";
+import { registerPmDueEngineRoutes } from "./maintenance/pm-due-engine.service.js";
 import { registerMaintWoApRoutes } from "./maint/wo-ap.routes.js";
 import { registerInsuranceCoiRequestRoutes } from "./insurance/coi-request.routes.js";
 import { registerInsuranceClaimRoutes } from "./insurance/claim.routes.js";
@@ -1267,6 +1268,7 @@ async function main() {
   await registerDriverMetricsRoutes(app);
   await registerAnomalyStatusRoutes(app);
   await registerMaintPmRoutes(app);
+  await registerPmDueEngineRoutes(app);
   await registerMaintWoApRoutes(app);
   await registerForm425CRoutes(app);
   // Form 425-C Exhibits A–F generator. Previously left unmounted (held as "financial-adjacent"),
