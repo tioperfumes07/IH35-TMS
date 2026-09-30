@@ -246,6 +246,38 @@ async function ensureFreshDbProductionIdentity(client, file) {
     `[db:migrate] fresh-DB identity bootstrap: ensured identity.users ${FRESH_DB_PROD_IDENTITY_UUID} before ${file} (non-prod target only)`
   );
 }
+
+// ── FRESH-DB PRODUCTION-SCHEMA BOOTSTRAP (Lead, 2026-09-30) ──────────────────
+// The SECOND instance of the same class the identity bootstrap above exists for, found the moment
+// that one unblocked the chain: production carries a `status_before_void` column on EIGHTEEN money
+// tables and NO migration in this repo creates a single one of them. They were added live, by hand,
+// and never expressed as a migration. 202614601800_r274_void_status_checks_and_liability_drift.sql
+// reads driver_finance.driver_liabilities.status_before_void, so on any database built from source
+// it dies with 'column "status_before_void" does not exist' (CI 2026-09-30T11:01:42Z) — and that
+// migration is itself ALREADY APPLIED in production (2026-09-30T01:00:42Z), so it cannot be edited.
+//
+// This is NOT the real fix and must not be mistaken for one. The real fix is a schema-parity
+// migration that expresses the full status_before_void family, owned by whoever created those
+// columns live. This keeps every fresh database — CI, a DR restore, a new Neon branch — buildable
+// until that lands. Non-prod only; IF NOT EXISTS; production is never touched by this path.
+const FRESH_DB_SCHEMA_NEEDED_BY = "202614601800_r274_void_status_checks_and_liability_drift.sql";
+let freshDbSchemaBootstrapped = false;
+async function ensureFreshDbProductionSchema(client, file) {
+  if (TARGET_IS_PROD || freshDbSchemaBootstrapped) return;
+  if (file < FRESH_DB_SCHEMA_NEEDED_BY) return;
+  const present = await client.query(
+    `SELECT to_regclass('driver_finance.driver_liabilities') IS NOT NULL AS ok`
+  );
+  if (!present.rows[0]?.ok) return;
+  await client.query(
+    `ALTER TABLE driver_finance.driver_liabilities ADD COLUMN IF NOT EXISTS status_before_void text`
+  );
+  freshDbSchemaBootstrapped = true;
+  console.log(
+    `[db:migrate] fresh-DB schema bootstrap: ensured driver_finance.driver_liabilities.status_before_void before ${file} (non-prod target only; production drift — needs a real parity migration)`
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function ensureLedgerGrants(client) {
@@ -658,6 +690,7 @@ try {
     }
 
     await ensureFreshDbProductionIdentity(client, file);
+    await ensureFreshDbProductionSchema(client, file);
     console.log(`APPLY ${file}`);
     await applyMigration(client, file, sql, checksum);
     if (!ledgerFilesByChecksum.has(checksum)) ledgerFilesByChecksum.set(checksum, []);
