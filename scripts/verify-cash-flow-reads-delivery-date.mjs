@@ -87,6 +87,16 @@ async function selftest() {
   // checked against delivery+terms, never against a blanket delivery_date-only equality.
   if (termsRow.due_date === termsRow.delivery_date) failures.push("selftest fixture invalid: terms row must NOT have due_date===delivery_date (that was the bug this round fixed)");
 
+  // ROUND 300 H-3 lane-cross correction: an undelivered load ('dispatched') with no invoice is
+  // CORRECT (revenue-at-delivery), not a failure; only a delivered-enough load with no invoice is.
+  const DELIVERED_ENOUGH_STATUSES_TEST = new Set(["completed_docs_received", "invoiced", "closed"]);
+  if (DELIVERED_ENOUGH_STATUSES_TEST.has("dispatched")) {
+    failures.push("selftest: 'dispatched' must NOT be treated as delivered-enough to require an invoice");
+  }
+  if (!DELIVERED_ENOUGH_STATUSES_TEST.has("invoiced")) {
+    failures.push("selftest: 'invoiced' must be treated as delivered-enough to require an invoice");
+  }
+
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
     process.exit(1);
@@ -134,6 +144,21 @@ async function main() {
       [USMCA, BATCH_LOAD_NUMBERS]
     );
 
+    // ROUND 300 H-3 lane-cross correction: the original "every one of the 16 batch loads must have
+    // a non-void invoice" check fired unconditionally, regardless of whether the load had actually
+    // delivered. Revenue-at-delivery is a LOCKED decision (docs memory: revenue is recognized at
+    // delivery, never before) -- a load still in 'dispatched' has not delivered and MUST NOT have an
+    // invoice yet; flagging that as "missing" is the guard demanding a violation of the very law it
+    // is supposed to protect. Only a load whose own status shows it has actually reached delivery
+    // (completed_docs_received / invoiced / closed) is required to carry an invoice.
+    const DELIVERED_ENOUGH_STATUSES = new Set(["completed_docs_received", "invoiced", "closed"]);
+    const statusRes = await client.query(
+      `SELECT load_number, status::text FROM mdata.loads
+        WHERE operating_company_id = $1::uuid AND load_number = ANY($2::text[])`,
+      [USMCA, BATCH_LOAD_NUMBERS]
+    );
+    const loadStatusByNumber = new Map(statusRes.rows.map((r) => [r.load_number, r.status]));
+
     const today = new Date().toISOString().slice(0, 10);
     const rows = await getRollingLedgerRows(client, USMCA, today);
     await client.query("ROLLBACK");
@@ -156,7 +181,13 @@ async function main() {
       }
     }
     for (const n of BATCH_LOAD_NUMBERS) {
-      if (!foundLoads.has(n)) failures.push(`load ${n}: no non-void invoice found at all`);
+      if (foundLoads.has(n)) continue;
+      const loadStatus = loadStatusByNumber.get(n);
+      if (DELIVERED_ENOUGH_STATUSES.has(loadStatus)) {
+        failures.push(`load ${n}: status=${loadStatus} (delivered) but no non-void invoice found at all`);
+      }
+      // else: not yet delivered (e.g. 'dispatched') -- correctly has no invoice yet, per
+      // revenue-at-delivery. Not a failure.
     }
 
     const rollingLedgerByLoad = new Map(
@@ -181,8 +212,10 @@ async function main() {
       process.exitCode = 1;
       return;
     }
+    const deliveredCount = BATCH_LOAD_NUMBERS.filter((n) => DELIVERED_ENOUGH_STATUSES.has(loadStatusByNumber.get(n))).length;
     console.log(
-      `${LABEL}: PASS — all ${BATCH_LOAD_NUMBERS.length} batch loads' invoices have issue_date=delivery_date and due_date=delivery_date+payment_terms_days (real per-customer terms respected, ROUND 241). ` +
+      `${LABEL}: PASS — every invoice that DOES exist among the ${BATCH_LOAD_NUMBERS.length} batch loads has issue_date=delivery_date and due_date=delivery_date+payment_terms_days (real per-customer terms respected, ROUND 241); ` +
+        `${deliveredCount} of ${BATCH_LOAD_NUMBERS.length} loads have reached a delivered-enough status and all of those carry a non-void invoice — the rest are still in transit and correctly have none yet (revenue-at-delivery). ` +
         `${sentCount} of ${Object.keys(PINNED_DATES).length} pinned loads are sent/partial and were confirmed in the live rolling ledger` +
         (sentCount === 0 ? " (none sent yet — cash-flow visibility for this batch is currently zero; that is a real, separate finding, not a guard failure)." : ".")
     );
