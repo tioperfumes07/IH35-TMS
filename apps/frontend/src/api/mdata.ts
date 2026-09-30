@@ -1288,6 +1288,9 @@ type CompanyScopedListParams = {
   // the list shows solely the ACTIVE company's records. Shared pickers/dropdowns MUST NOT pass this (they
   // legitimately need the per-call operating_company_id scope for cross-entity booking).
   active_company_only?: boolean;
+  // A-21 (2026-09-30, owner): the shared "has transactions" default filter — same predicate on both
+  // the customers and vendors list endpoints (customerHasTransactionsSql / vendorHasTransactionsSql).
+  has_transactions?: boolean;
 };
 
 function appendCompanyScopedQuery(query: URLSearchParams, params: CompanyScopedListParams) {
@@ -1300,6 +1303,7 @@ function appendCompanyScopedQuery(query: URLSearchParams, params: CompanyScopedL
   if (params.limit != null) query.set("limit", String(params.limit));
   if (params.offset != null) query.set("offset", String(params.offset));
   if (params.active_company_only) query.set("active_company_only", "true");
+  if (params.has_transactions) query.set("has_transactions", "true");
 }
 
 /**
