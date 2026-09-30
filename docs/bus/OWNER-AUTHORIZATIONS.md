@@ -5175,3 +5175,28 @@ Owner, verbatim (chat 2026-09-30):
 Inside your block you self-assign freely. Outside it, never. If you need more, ask Lead — Lead extends the block.
 
 **Cursor / Lead:** do not self-assign an AUTH number. Cursor code / docs PRs that are not a production write need no AUTH.
+
+## AUTH-156
+issued_at: 2026-09-30T07:25:00.000Z
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- correct EVERY expense_lines row whose
+expense_account_uuid disagrees with its own item's catalogs.items.default_expense_account_id (the
+identical selector scripts/verify-expense-line-account-matches-item.mjs already uses), both
+directions, both months. Measured live 2026-09-30: 119 lines / 119 docs / $4,236.57 -- 2026-08
+Fuel-DEF-Diesel Exhaust Fluid 2 lines posted (5000->5010); 2026-08 Fuel-Reefer-Diesel 3 lines
+unposted, REVERSE direction (5010->5000); 2026-09 Driver Reimbursement-Fuel Def 1 line posted
+(5000->5010); 2026-09 Fuel-DEF-Diesel Exhaust Fluid 113 lines, 104 posted + 9 unposted
+(5000->5010). Totals: 107 posted, 12 unposted. Corrects AUTH-154's incomplete memo-text-selector
+reclass (August-only, missed the reverse-direction reefer-diesel rows and two DEF rows whose memo
+had neither "DEF" nor "exhaust") -- AUTH-154's own script was never committed to the repository;
+this PR commits the real, item-based, direction-agnostic script at
+scripts/ops/2026-09-30-cc1-round290-12-def-reclass-5000-to-5010.ts, closing that governance gap.
+Posted lines: reversePostedSourceTransactionInClientTx then, after correcting the line's own
+expense_account_uuid, postSourceTransactionInClientTx with posting_purpose:'repost' -- the same
+two-call pattern apps/backend/src/banking/bank-ledger-repoint-remediation.service.ts already uses
+for a wrong-account-resolved-at-post-time correction. Never a raw INSERT/UPDATE into
+accounting.journal_entries/journal_entry_postings. Unposted lines: one set-based UPDATE of
+expense_account_uuid, no GL exists yet.
+action: OWNER_AUTH_ID=AUTH-156 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-round290-12-def-reclass-5000-to-5010.ts
+  (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
+expires_at: 2026-10-01T07:25:00.000Z
+status: OPEN
