@@ -28,6 +28,9 @@ import {
 import { Button } from "../components/Button";
 import { ActionButton } from "../components/shared/ActionButton";
 import { ToolbarSegmentControl } from "../components/layout/ToolbarSegmentControl";
+import { SegmentedControl } from "../components/SegmentedControl";
+import { MasterDetailShell } from "../components/layout/MasterDetailShell";
+import { MASTER_DETAIL } from "../design/master-detail";
 import { SelectCombobox } from "../components/Combobox";
 import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -1152,22 +1155,17 @@ export function CustomersPage() {
                 { value: "master-detail", label: "Master-detail", testId: "customers-view-master-detail" },
               ]}
             />
-            {/* K.9 — roster-level Status/Type/Credit-status filters INLINE (visible on first load, 0 clicks).
-                Restored from pre-CHROME-04 (1e4a6282d7^). Filters the left customer list in BOTH
-                list and master-detail view modes. Direct state — no staging popover. */}
-            <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-xs" data-list-status-filter="customers" data-customers-roster-filter-toolbar="inline">
-              {(["active", "inactive", "all"] as const).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  data-testid={`customers-roster-status-${value}`}
-                  className={`rounded-sm px-2 py-1 font-medium capitalize ${listStatus === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
-                  onClick={() => setListTab(value)}
-                >
-                  {value}
-                </button>
-              ))}
-            </div>
+            {/* C-01 — same SegmentedControl family as the view toggle (height/padding/min-width/tint). */}
+            <SegmentedControl
+              value={listStatus}
+              onChange={(value) => setListTab(value)}
+              dataAttributes={{ "data-list-status-filter": "customers", "data-customers-roster-filter-toolbar": "inline" }}
+              options={[
+                { value: "active", label: "Active", testId: "customers-roster-status-active" },
+                { value: "inactive", label: "Inactive", testId: "customers-roster-status-inactive" },
+                { value: "all", label: "All", testId: "customers-roster-status-all" },
+              ]}
+            />
             {/* V8 — roster Type + Credit-status filters (filter the left customer list, not transactions). */}
             <SelectCombobox
               value={rosterType}
@@ -1251,30 +1249,33 @@ export function CustomersPage() {
           </main>
         </div>
       ) : (
-      <div className="flex flex-col gap-3 xl:flex-row">
-        <CustomerListSidebar
-          customers={visibleCustomers}
-          status={customersStatus}
-          totalCount={customersServerTotal}
-          page={sidebarPage}
-          pageSize={sidebarPageSize}
-          search={search}
-          sortByName={sortByName}
-          selectedCustomerId={selectedCustomer?.id ?? ""}
-          openByCustomerId={openByCustomerId}
-          openBalancesAvailable={!allInvoicesQuery.isError}
-          onSearchChange={setSearch}
-          onSortChange={setSortByName}
-          onPageChange={setSidebarPage}
-          onPageSizeChange={setSidebarPageSize}
-          onSelectCustomer={setSelectedCustomerId}
-        />
-
-        <main className="min-w-0 flex-1 space-y-3">
+      <MasterDetailShell
+        testId="customers-master-detail-shell"
+        master={
+          <CustomerListSidebar
+            customers={visibleCustomers}
+            status={customersStatus}
+            totalCount={customersServerTotal}
+            page={sidebarPage}
+            pageSize={sidebarPageSize}
+            search={search}
+            sortByName={sortByName}
+            selectedCustomerId={selectedCustomer?.id ?? ""}
+            openByCustomerId={openByCustomerId}
+            openBalancesAvailable={!allInvoicesQuery.isError}
+            onSearchChange={setSearch}
+            onSortChange={setSortByName}
+            onPageChange={setSidebarPage}
+            onPageSizeChange={setSidebarPageSize}
+            onSelectCustomer={setSelectedCustomerId}
+          />
+        }
+        detail={
+          <div className="space-y-3">
           {selectedCustomer ? (
             <>
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_320px]">
-                <section className="rounded-sm border border-gray-200 bg-white p-3">
+                <section className={`${MASTER_DETAIL.surfaceClass} p-3`}>
                   <div className="mb-2 flex items-center justify-between">
                     <div>
                       <h2 className="text-page-title font-semibold text-gray-900">{selectedCustomer.name}</h2>
@@ -1587,10 +1588,11 @@ export function CustomersPage() {
               )}
             </>
           ) : (
-            <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">No customer selected.</div>
+            <div className={`${MASTER_DETAIL.surfaceClass} p-4 text-xs text-gray-500`}>No customer selected.</div>
           )}
-        </main>
-      </div>
+          </div>
+        }
+      />
       )}
       <Modal variant="drawer" open={createOpen} onClose={closeCreate} title="Create Customer" modalKind="customer-create" sizePreset="xl">
         <form

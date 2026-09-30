@@ -12,6 +12,9 @@ import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
 import { ActionButton } from "../components/shared/ActionButton";
 import { SelectCombobox } from "../components/Combobox";
+import { SegmentedControl } from "../components/SegmentedControl";
+import { MasterDetailShell } from "../components/layout/MasterDetailShell";
+import { MASTER_DETAIL } from "../design/master-detail";
 import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
 import { PageHeader } from "../components/layout/PageHeader";
 import { CollapsedListFilters, useStagedListFilters } from "../components/table";
@@ -605,37 +608,26 @@ export function VendorsPage() {
         subtitle="Vendor list and transactions"
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-xs" data-view-mode-toggle="vendors">
-              <button
-                type="button"
-                className={`rounded-sm px-2 py-1 font-medium ${viewMode === "list" ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
-                onClick={() => setViewMode("list")}
-              >
-                List view
-              </button>
-              <button
-                type="button"
-                className={`rounded-sm px-2 py-1 font-medium ${viewMode === "master-detail" ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
-                onClick={() => setViewMode("master-detail")}
-              >
-                Master-detail
-              </button>
-            </div>
-            {/* K.9 — roster-level Status/Category filters INLINE (visible on first load, 0 clicks).
-                Restored from pre-CHROME-04 (1e4a6282d7^). Filters the left vendor list in BOTH
-                list and master-detail view modes. Direct state — no staging popover. */}
-            <div className="inline-flex rounded-sm border border-gray-300 bg-white p-0.5 text-xs" data-list-status-filter="vendors" data-vendors-roster-filter-toolbar="inline">
-              {(["active", "inactive", "all"] as const).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  className={`rounded-sm px-2 py-1 font-medium capitalize ${listStatus === value ? "bg-[#1F2A44] text-white" : "text-gray-700 hover:bg-gray-50"}`}
-                  onClick={() => setListStatus(value)}
-                >
-                  {value}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              value={viewMode}
+              onChange={setViewMode}
+              dataAttributes={{ "data-view-mode-toggle": "vendors" }}
+              options={[
+                { value: "list", label: "List view", testId: "vendors-view-list" },
+                { value: "master-detail", label: "Master-detail", testId: "vendors-view-master-detail" },
+              ]}
+            />
+            {/* C-01 — same SegmentedControl family as the view toggle. */}
+            <SegmentedControl
+              value={listStatus === "by-category" ? "all" : (listStatus as "active" | "inactive" | "all")}
+              onChange={(value) => setListStatus(value)}
+              dataAttributes={{ "data-list-status-filter": "vendors", "data-vendors-roster-filter-toolbar": "inline" }}
+              options={[
+                { value: "active", label: "Active" },
+                { value: "inactive", label: "Inactive" },
+                { value: "all", label: "All" },
+              ]}
+            />
             {/* V8 — roster Category filter (filters the left vendor list, not transactions). */}
             {categoryOptions.length > 0 ? (
               <SelectCombobox
@@ -744,29 +736,32 @@ export function VendorsPage() {
           </main>
         </div>
       ) : (
-      <div className="flex flex-col gap-3 xl:flex-row">
-        <VendorListSidebar
-          vendors={visibleVendors}
-          status={vendorsStatus}
-          totalCount={vendorsServerTotal}
-          page={sidebarPage}
-          pageSize={sidebarPageSize}
-          search={search}
-          sortByName={sortByName}
-          selectedVendorId={selectedVendor?.id ?? ""}
-          openByVendorId={openByVendorId}
-          onSearchChange={setSearch}
-          onSortChange={setSortByName}
-          onPageChange={setSidebarPage}
-          onPageSizeChange={setSidebarPageSize}
-          onSelectVendor={setSelectedVendorId}
-        />
-
-        <main className="min-w-0 flex-1 space-y-3">
+      <MasterDetailShell
+        testId="vendors-master-detail-shell"
+        master={
+          <VendorListSidebar
+            vendors={visibleVendors}
+            status={vendorsStatus}
+            totalCount={vendorsServerTotal}
+            page={sidebarPage}
+            pageSize={sidebarPageSize}
+            search={search}
+            sortByName={sortByName}
+            selectedVendorId={selectedVendor?.id ?? ""}
+            openByVendorId={openByVendorId}
+            onSearchChange={setSearch}
+            onSortChange={setSortByName}
+            onPageChange={setSidebarPage}
+            onPageSizeChange={setSidebarPageSize}
+            onSelectVendor={setSelectedVendorId}
+          />
+        }
+        detail={
+          <div className="space-y-3">
           {selectedVendor ? (
             <>
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_320px]">
-                <section className="rounded-sm border border-gray-200 bg-white p-3">
+                <section className={`${MASTER_DETAIL.surfaceClass} p-3`}>
                   <div className="mb-2 flex items-center justify-between">
                     <div>
                       <h2 className="text-page-title font-semibold text-gray-900">
@@ -1014,10 +1009,11 @@ export function VendorsPage() {
               )}
             </>
           ) : (
-            <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-500">No vendor selected.</div>
+            <div className={`${MASTER_DETAIL.surfaceClass} p-4 text-xs text-gray-500`}>No vendor selected.</div>
           )}
-        </main>
-      </div>
+          </div>
+        }
+      />
       )}
       <VendorCreateModal open={createOpen} onClose={closeCreate} operatingCompanyId={companyId} />
       {/* CUR-2: Edit-in-side-drawer (QBO style). Full-page /vendors/:id stays reachable by URL. */}

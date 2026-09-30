@@ -7,6 +7,7 @@ import { SidebarPagination } from "../../components/shared/SidebarPagination";
 import { SelectCombobox } from "../../components/Combobox";
 import { useListState, type ListQueryStatus } from "../../components/list-state";
 import { formatUsdCents } from "../../lib/money";
+import { MASTER_DETAIL } from "../../design/master-detail";
 
 function fmtMoney(cents: number) {
   return formatUsdCents(cents);
@@ -95,10 +96,10 @@ export function VendorListSidebar({
   // empty + "0-0 of 0".
   const listState = useListState(status, pagedVendors.length === 0);
 
-  // MD-WIDTH-0 (lead 2026-09-06, measured live: aside 1770px, main 0px at 1920 viewport) — the master list must have an
-  // explicit width beside the detail pane; `w-full` + `shrink-0` alone swallowed the whole flex row and the detail never showed.
+  // MD-WIDTH-0 + C-16: explicit xl:w-[Npx] pin lives in MASTER_DETAIL.masterPaneClass (was hardcoded 440px).
+  // C-03: surfaceClass is the locked pane edge (border + shadow), not a transparent flex child.
   return (
-    <aside className="w-full shrink-0 rounded-sm border border-gray-200 bg-white p-2 xl:w-[440px] xl:min-w-[300px] xl:max-w-[560px]" data-vendor-list-sidebar="true">
+    <aside className={`${MASTER_DETAIL.masterPaneClass} ${MASTER_DETAIL.surfaceClass} p-2`} data-vendor-list-sidebar="true" data-master-detail-master="true">
       <SidebarPagination
         page={safePage}
         pageSize={pageSize}
@@ -148,7 +149,7 @@ export function VendorListSidebar({
                 return (
                   <tr
                     key={vendor.id}
-                    className={`border-b border-gray-100 ${selected ? "bg-slate-100" : "hover:bg-gray-50"}`}
+                    className={`${MASTER_DETAIL.rowBorderClass} ${selected ? MASTER_DETAIL.rowSelectedClass : MASTER_DETAIL.rowHoverClass}`}
                   >
                     <td style={{ width: widths.name }} className="max-w-0 truncate px-2 py-1.5">
                       {/* Anchor navigation (cmd-click / keyboard) via CardLink; also selects the master-detail row. */}
