@@ -5469,3 +5469,44 @@ proof_query: live on prod, 2026-09-30 -- scripts/verify-fuel-cost-posts-exactly-
   fails). Rehearsed identically on a throwaway Neon branch fork first (fork deleted after proof).
 
 — CC-1
+
+## AUTH-152
+
+title: DISPATCH-STAMPS -- backfill load 13637's pickup stamp from real GPS convergence, USMCA
+requested_by: Lead/owner, 2026-09-30 ("13630 / 13634 / 13635 / 13637: both stops exist and are
+  correctly typed, ZERO actual_arrival_at and actual_departure_at, actual_arrival_source NULL on
+  all 8 stops... Backfill them from the real geofence events; where no event exists, leave NULL
+  and report the count -- never invent a timestamp.") Renumbered from AUTH-147 to AUTH-152 per
+  Lead's collision resolution, 2026-09-30 (AUTH-147 was independently assigned to Codex's USMCA
+  sample-data purge and already merged to main as 7c0ed1d3a9 -- that one wins, this one renumbers).
+root_cause: live-verified, USMCA, bypass_rls. dispatch.stop_arrivals (the live geofence/ELD
+  proximity detector's own output table) has ZERO rows for any of the 8 pickup/delivery stops on
+  these 4 loads -- the automated detector never fired for any of them. telematics.vehicle_locations
+  (raw Samsara GPS pings) carries dense position history for all 4 assigned units. Of the 4
+  pickups, only load 13637 (unit T176, Wilkes-Barre PA pickup) shows the unit's GPS track actually
+  converging on the stop's own geocoded coordinates: a clean, monotonic approach from 474,399 ft
+  away down to a steady ~293 ft dwell held from 2026-09-28T17:35:04Z to 18:35:14Z, then a rapid
+  monotonic departure past 2,000+ ft. 293 ft sits just outside the live detector's own 250 ft
+  ARRIVAL_RADIUS_FEET (apps/backend/src/telematics/arrival-detection.service.ts) -- explaining why
+  the automated detector never caught this real, physical arrival. The other 3 loads (13630 unit
+  T164, 13634 unit T152, 13635 unit T148) show NO plausible GPS convergence anywhere in the unit's
+  full position history since load creation: closest approach measured 5,963 ft / 172,982 ft /
+  5,438,523 ft respectively. All three pickup addresses are independently well-geocoded (confidence
+  0.5-0.95, rooftop precision) -- not a geocode error. Per the owner's own instruction, these three
+  are NOT backfilled; no real event exists for them in this data. Lead accepted this root cause and
+  this scope as-is, 2026-09-30.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY ONE stop: load 13637's pickup
+  stop (id 005d414c-66ba-484d-bc0a-1d99e0be8fe6). Writes actual_arrival_at=2026-09-28T17:35:04Z,
+  actual_departure_at=2026-09-28T18:35:14Z, actual_arrival_source='eld_geofence'. Does NOT touch
+  mdata.loads.status, does NOT call stampStopArrival/stampStopDeparture (both hardcode now(), the
+  wrong tool for a backfill of a real past timestamp), does NOT invoke
+  mintProformaInvoiceOnFirstPickup or any other real-time financial side effect. Not authorized:
+  touching 13630, 13634 or 13635 (no real event found for any of them -- left NULL by design);
+  touching any other load's stamps; touching TRANSP or TRK; a load-status change.
+action:
+  OWNER_AUTH_ID=AUTH-152 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc3-auth152-backfill-13637-pickup-stamp.ts
+  (run from the repo root)
+expires_at: 2026-10-01T12:00:00.000Z
+status: OPEN
+
+— CC-3
