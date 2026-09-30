@@ -1285,7 +1285,8 @@ export function DispatchBoard({
           <button
             type="button"
             disabled={settlementNumberBusy || !settlementNumberDraft.trim()}
-            className="h-6 rounded-sm bg-[#14314F] px-1.5 text-xs font-semibold text-white disabled:opacity-60"
+            className="h-6 rounded-sm px-1.5 text-xs font-semibold text-white disabled:opacity-60"
+            style={{ backgroundColor: colors.actionNavy }}
             onClick={() => void saveSettlementNumber(settlementId)}
             data-testid={`presettlement-number-save-${settlementId}`}
           >

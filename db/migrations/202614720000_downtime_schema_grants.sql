@@ -27,6 +27,25 @@
 
 BEGIN;
 
+-- CI PROVED THE POINT HARDER THAN THE GUARD DID. The first version of this file granted on the
+-- schema and CI answered:
+--
+--   Migration failed: schema "downtime" does not exist
+--
+-- So it is not only the GRANT that no migration creates — the SCHEMA ITSELF does not exist in a
+-- database built from source. Production carries downtime, its four tables and their grants, and the
+-- migration history can rebuild NONE of it. A disaster-recovery restore would come back without the
+-- downtime ledger entirely, and the company settlement's downtime section would fail on a database
+-- that looks otherwise healthy.
+--
+-- This migration creates the schema so the grant has something to attach to, and the table grants
+-- below stay guarded by to_regclass so a fresh database that legitimately has no downtime tables yet
+-- is not failed by them. It does NOT invent the four tables: writing a CREATE TABLE here from a
+-- reading of production would be me guessing at a schema I did not author. That gap is REGISTERED,
+-- not silently papered over — the real end-state is a schema-parity pass that expresses everything
+-- production has and no migration creates, of which this is the second instance found today.
+CREATE SCHEMA IF NOT EXISTS downtime;
+
 GRANT USAGE ON SCHEMA downtime TO ih35_app;
 
 -- Named per table rather than ALL TABLES IN SCHEMA, so this file states exactly which objects it
