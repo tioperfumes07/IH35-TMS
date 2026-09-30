@@ -82,11 +82,49 @@ export function analyse(src) {
   // The credit branch must still fail loud (throw) rather than defaulting when neither
   // payment_account_uuid nor vendor_uuid is set — a silent default here is where a hardcoded
   // account would be reintroduced.
-  if (!/ACCOUNT_MAPPING_MISSING["'][\s\S]{0,120}neither a payment account nor a vendor/i.test(code)) {
+  //
+  // GUARD-WINDOW-DRIFT (Lead, 09-30-2026). This assertion used to be
+  //   /ACCOUNT_MAPPING_MISSING["'][\s\S]{0,120}neither a payment account nor a vendor/i
+  // — a CHARACTER-DISTANCE proxy for "the phrase is inside that throw". It went red on main with
+  // the posting engine fully correct. Root cause measured: R-185 board #9 added a SECOND, STRICTER
+  // branch to the same throw ("Expense has a vendor but no payment account — an unpaid vendor
+  // obligation is a Bill (accounting.bills), not an Expense"), which pushed the orphan phrase from
+  // inside the 120-char window out to 231 characters. The engine did not weaken; it got stricter,
+  // and the guard called that a regression. A guard that fails when the code improves trains people
+  // to merge past it, which is exactly how the other reds on this branch got there.
+  //
+  // Widening the number would only move the next false alarm. The assertion below checks the
+  // STRUCTURE instead: find the orphan phrase, walk back to the PostingEngineError call it sits
+  // inside, and require that call to be a `throw` carrying ACCOUNT_MAPPING_MISSING with no
+  // assignment between the two. That is the real invariant — "this path throws, it does not
+  // default" — and it holds however long the message grows or how many branches the ternary gains.
+  const ORPHAN_PHRASE = "neither a payment account nor a vendor";
+  const phraseIdx = code.indexOf(ORPHAN_PHRASE);
+  if (phraseIdx === -1) {
     problems.push(
       "buildExpenseLines() no longer fails loud when neither payment_account_uuid nor vendor_uuid is " +
-        "set — the orphan guard that prevents a silent default account was removed or weakened."
+        "set — the orphan-path error message is gone entirely."
     );
+  } else {
+    const callIdx = code.lastIndexOf("PostingEngineError(", phraseIdx);
+    const between = callIdx === -1 ? "" : code.slice(callIdx, phraseIdx);
+    const isThrown = callIdx !== -1 && /throw\s+new\s+$/.test(code.slice(Math.max(0, callIdx - 24), callIdx));
+    if (!isThrown) {
+      problems.push(
+        "buildExpenseLines()'s orphan-path message is no longer inside a `throw new PostingEngineError(...)` — " +
+          "the path that must fail loud now constructs the error without throwing it, or assigns instead."
+      );
+    } else if (!between.includes("ACCOUNT_MAPPING_MISSING")) {
+      problems.push(
+        "buildExpenseLines()'s orphan path throws, but no longer with the ACCOUNT_MAPPING_MISSING code — " +
+          "callers keying on that code would stop seeing the orphan refusal."
+      );
+    } else if (/=[^=>]/.test(between)) {
+      problems.push(
+        "buildExpenseLines()'s orphan path has an assignment between the ACCOUNT_MAPPING_MISSING throw and its " +
+          "message — a credit account is being set on the path that must refuse."
+      );
+    }
   }
   return problems;
 }
@@ -117,8 +155,31 @@ if (process.argv.includes("--selftest")) {
       creditAccount = await resolveDisbursementCashAccountForCompany(client, operatingCompanyId);
     }
   `);
+  // GUARD-WINDOW-DRIFT regression case: the REAL shape on main, where a second stricter branch
+  // pushes the orphan phrase 231 chars past the old 120-char window. The old distance-based
+  // assertion failed this; the structural one must pass it, because the engine is correct here.
+  const goodLongTernary = wrap(`
+    if (!exp.payment_account_uuid) {
+      throw new PostingEngineError(
+        "ACCOUNT_MAPPING_MISSING",
+        exp.vendor_uuid
+          ? "Expense has a vendor but no payment account — an unpaid vendor obligation is a Bill (accounting.bills), not an Expense. Enter it as a Bill instead of posting this Expense."
+          : "Expense has neither a payment account nor a vendor — cannot post (no orphan payable)"
+      );
+    }
+  `);
+  // And the weakening it must still catch even with that same long message present.
+  const badConstructedNotThrown = wrap(`
+    const err = new PostingEngineError(
+      "ACCOUNT_MAPPING_MISSING",
+      "Expense has neither a payment account nor a vendor — cannot post (no orphan payable)"
+    );
+    creditAccount = await resolveDisbursementCashAccountForCompany(client, operatingCompanyId);
+  `);
   const cases = [
     ["clean fail-loud shape passes", analyse(good).length === 0],
+    ["long two-branch message still passes (the drift that went red on main)", analyse(goodLongTernary).length === 0],
+    ["constructed-but-not-thrown error is caught", analyse(badConstructedNotThrown).some((p) => p.includes("throw new PostingEngineError"))],
     ["hardcoded 1000 is caught", analyse(badHardcoded1000).some((p) => p.includes("1000"))],
     ["silent default instead of throw is caught", analyse(badSilentDefault).some((p) => p.includes("no longer fails loud"))],
     ["missing function entirely is caught", analyse("// nothing here").some((p) => p.includes("not found"))],
