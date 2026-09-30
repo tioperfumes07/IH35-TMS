@@ -83,7 +83,12 @@ const EXCEPTION_RED = "#991B1B";
 // the first three tracks). Leg / Live-signal columns retired from the header (signal + CURRENT
 // LOCATION render after the transit line).
 const GRID_TEMPLATE_COLUMNS =
-  "minmax(88px,8vw) minmax(100px,9vw) minmax(120px,11vw) minmax(100px,9vw) minmax(100px,9vw)";
+  // TRUCK-LINE-FILL (Lead, 09-30-2026, owner: "the page still does not autoadjust"). MEASURED LIVE:
+  // all five tracks were capped (8+9+11+9+9 = 46vw MAX) with no flexible track, so the grid could
+  // never exceed ~46% of the viewport. On the owner's 1850px screen the board stopped at ~1010px and
+  // ~840px rendered as empty white. It was not failing to adjust — it was told not to. LOAD now
+  // takes 1fr and absorbs the remainder; the other four keep their min/max discipline.
+  "minmax(88px,8vw) minmax(100px,9vw) minmax(120px,1fr) minmax(100px,9vw) minmax(100px,9vw)";
 const GRID_TEMPLATE_COLUMNS_NARROW =
   "minmax(72px,14vw) minmax(84px,16vw) minmax(88px,18vw) minmax(72px,14vw) minmax(72px,14vw)";
 const FOLD_BREAKPOINT_PX = 860;
@@ -527,8 +532,16 @@ function TruckLineTrack({
   const exceptionPct = pct(STATUS_STATION_INDEX);
   const trackWidthPct = timelineWidthPercent(row);
 
+  // TRUCK-LINE-CAPTION-CLIP (Lead, 09-30-2026, owner: "the load timeline is wrong, you removed the
+  // live location"). The live location was never removed — it was being painted ON TOP OF.
+  // MEASURED: station captions render at top:54 inside a box that was h-[52px], so every caption
+  // began 2px BELOW its own container and ran ~14px further, straight through the CURRENT LOCATION
+  // line that follows with mt-0.5. The live DOM showed them merged as
+  // "Loaded CURRENT LOCATION · Live · In transit, Springville, AL On time". 54 > 52 was the whole
+  // defect. 70px clears the caption baseline; the row's padding is trimmed below so the total row
+  // height does NOT grow (owner: "the height of each unit is still too tall").
   return (
-    <div className="relative h-[52px]" data-testid={`truck-line-track-${row.unit_id}`}>
+    <div className="relative h-[70px]" data-testid={`truck-line-track-${row.unit_id}`}>
     <div
       className="relative mx-auto h-full"
       style={{ width: `${trackWidthPct}%`, maxWidth: "100%" }}
@@ -1019,10 +1032,16 @@ export function TruckLineBoard({
           font-weight: 600;
           color: ${LOCKED_TEXT_SECONDARY};
         }
+        /* TRUCK-LINE-ROW-HEIGHT (Lead, 09-30-2026, owner: "the height of each unit is still too
+           tall"). Measured live: ~132px per unit. The track grew 52px -> 70px to stop the caption
+           clipping above, so the row's own chrome is trimmed to absorb it — vertical padding
+           3px -> 1px and min-height 56px -> 40px. Net effect is a SHORTER row than before, with
+           captions and CURRENT LOCATION no longer overlapping. min-height only floors a row with
+           no track (available trucks); loaded rows are sized by the track itself. */
         .truck-line-v4-row {
-          padding: 3px 10px 3px 13px;
+          padding: 1px 10px 1px 13px;
           border-bottom: 1px solid ${LOCKED_BORDER};
-          min-height: 56px;
+          min-height: 40px;
         }
         /* ROUND-20.4 -- row rules the owner can actually see: an every-other-row tint and a hover
            state so one unit's row is visibly distinct from its neighbors, plus a 3px left spine per
