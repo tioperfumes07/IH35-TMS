@@ -499,10 +499,10 @@ export async function buildCompanySettlementReport(
   // rows excluded. Hours / costs come from live tables only — never fabricated.
   const unitIdsRes = await client.query<{ unit_id: string }>(
     `
-      SELECT DISTINCT unit_id::text AS unit_id
+      SELECT DISTINCT assigned_unit_id::text AS unit_id
       FROM mdata.loads
       WHERE id = ANY($1::uuid[])
-        AND unit_id IS NOT NULL
+        AND assigned_unit_id IS NOT NULL
     `,
     [loadIds.length ? loadIds : ["00000000-0000-0000-0000-000000000000"]]
   );
