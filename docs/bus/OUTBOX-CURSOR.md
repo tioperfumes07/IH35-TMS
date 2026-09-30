@@ -1,5 +1,25 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T04:25Z · ROUND 285.4.1 + 285.4.2 IN FLIGHT**
+CURSOR | 285.4.1 board_scope guard + listLoads throw | 285.4.2 one open_dispatch set all 7 boards |
+GUARD: verify-load-boards-agree PASS all 7 @ 12 loads; verify-list-loads-requires-board-scope PASS |
+Files: loads.routes.ts AND status+scope · trip-pairing-board.service.ts · load-costs-board.routes.ts · Dispatch.tsx · DispatchLoadCostsPanel.tsx · verify-load-boards-agree.mjs |
+NEXT: fast-merge → 285.4.3 UI re-check.
+
+**2026-09-30T04:15Z · ROUND 285.4.2 INVESTIGATION DONE**
+CURSOR | 285.4.2 report-only | `verify-load-boards-agree` PASS 4/7 (12 loads) | gaps: Trip Pairing 11 (13624 no trip_type), Round Trips 24 (include_open_tour_legs), DispatchLoadCostsPanel status bypass 14 | report `claude/2026-09-30-Cursor-ROUND-285-4-2-REPORT.md` |
+Files Modified: report + NOW-CURSOR + OUTBOX only — no code yet |
+NEXT: implement 285.4.2 (guard extend + backend predicate unify) on `cursor/r285-part-e-c89b` after 285.4.1 fast-merge.
+
+**2026-09-30T04:05Z · ROUND 285.4.1 IN FLIGHT**
+CURSOR | PART E queue | Lead `lead/loadboard-283-one-source` already MERGED #23216 `218cc70131` |
+285.4.1: board_scope-mandatory static guard + listLoads runtime throw | selftest fails unscoped+status-alone, green on tip |
+NEXT: Fast-merge 285.4.1 → 285.4.2 canonical set across ALL boards.
+
+**2026-09-30T03:50Z · ROUND 283.3 HARDEN + 283.5 RE-CHECK**
+CURSOR | 283.3 board_scope-mandatory guard+listLoads throw | 283.5 #26–#29 NOT filter symptoms (T176 13638→13637 only real return pair; R255 guards still PASS; boards=12) | report `claude/2026-09-30-Cursor-ROUND-283-3-5-REPORT.md`
+NEXT: Fast-merge · Phase 3 waits · no 283.5 UI rebuild.
+
 **2026-09-30T03:36Z · ROUND 283.1–283.4 FAST-MERGED**
 CURSOR | 283.1–283.4 DONE | squash `#23212` `8915dd1d81` | fail-closed listLoads else → live | FE callers scoped | guard+LAW PASS | boards agree canonical=12 |
 NEXT: re-check #26–29 after filter fix before building 283.5 UI · Phase 3 waits CC-1 280.5 + CC-2 280.7–280.10 · Chrome cancelled.

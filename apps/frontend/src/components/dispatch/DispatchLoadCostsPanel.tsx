@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { listAllLoads, type LoadStatus } from "../../api/loads";
+import { listAllLoads } from "../../api/loads";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { colors, typography } from "../../design/tokens";
@@ -11,20 +11,6 @@ type SortKey = "load" | "unit" | "revenue" | "costs" | "driver" | "margin";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const formatMoney = (cents: number) => money.format(cents / 100);
-
-/** Same in-motion set as LoadCostsBoardPage — dispatch reads that board; it does not invent a second population. */
-const IN_MOTION: LoadStatus[] = [
-  "draft",
-  "booked",
-  "planned",
-  "unassigned",
-  "assigned",
-  "assigned_not_dispatched",
-  "dispatched",
-  "at_pickup",
-  "in_transit",
-  "at_delivery",
-];
 
 type Props = { operatingCompanyId: string };
 
@@ -42,9 +28,8 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
     queryFn: () =>
       listAllLoads({
         operating_company_id: [operatingCompanyId],
-        // ROUND 283.2 — current-trip load costs = live open-dispatch only (status kept as belt+suspenders).
+        // ROUND 285.4.2 — same open_dispatch set as Load Costs board; no status[] bypass.
         board_scope: "live",
-        status: IN_MOTION,
         sort: "created_at:desc",
       }),
     enabled: Boolean(operatingCompanyId),

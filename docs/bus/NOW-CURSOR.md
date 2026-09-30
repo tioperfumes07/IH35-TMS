@@ -1,13 +1,12 @@
-# NOW-CURSOR — 2026-09-30 ROUND 283
+# NOW-CURSOR — 2026-09-30 ROUND 285 PART E
 
 ## HARD LINE
-Obey `claude/00-SEAT-CONTRACT.md` + `claude/00-ROUND-283-LOADBOARD-ONE-SOURCE-ROOT-CAUSE.md`.
-Laws: **280.0.a/b/c**. Chrome cancelled by owner.
+Obey `claude/00-ROUND-285-FULL-WORK-SEQUENCE-EVERY-SEAT.md` PART E. Finish one, start next. Chrome cancelled.
 
 ## DONE
-- 280.17+280.18 `#23198` · unblock `#23205` · orphan wire `#23209` `e2b6f4f4d2`
-- **283.1–283.4** squash `#23212` `8915dd1d81` — fail-closed listLoads + scoped callers + guard; boards agree at 12
+- 283.1–283.4 `#23212` · Lead branch `#23216` on main `218cc70131`
+- **285.4.1** board_scope-mandatory guard + listLoads throw
+- **285.4.2** one open_dispatch set all 7 boards — guard PASS 12 loads (this PR)
 
 ## NEXT
-1. Re-measure #26–29 after filter fix; only then build 283.5 UI if still broken.
-2. Do **not** start Phase 3 purge (waits CC-1 **280.5** + CC-2 **280.7–280.10**).
+**285.4.3** — re-check UI #26–#29 against corrected filter. Then 285.4.4 → … → 285.4.10.

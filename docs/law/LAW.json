@@ -1,7 +1,7 @@
 [
   {
     "id": "LAW-2026-09-30-LIST-LOADS-REQUIRES-BOARD-SCOPE",
-    "title": "ROUND 283 \u2014 every listLoads/listAllLoads call declares status, board_scope, or drafts_only; backend defaults unscoped calls to live open-dispatch (fail closed), never the whole table",
+    "title": "ROUND 283.3 \u2014 every listLoads/listAllLoads/GET /mdata/loads list call site must declare board_scope (drafts_only only exception); status alone is not enough; static guard fails the build; client hub throws if board_scope omitted",
     "source_file": "claude/00-ROUND-283-LOADBOARD-ONE-SOURCE-ROOT-CAUSE.md",
     "guard": "scripts/verify-list-loads-requires-board-scope.mjs",
     "type": "enforced"
