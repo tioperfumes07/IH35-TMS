@@ -19,11 +19,15 @@ Touched scripts/-lane files, one per queue item, each its own PR:
 - `scripts/verify-harsh-events-poll-fallback-exists.mjs` (Round 301 T-30) -- fails if the
   harsh-events poll fallback is absent/unwired, a fixture id literal leaks into the poller's own
   source, the normalizer's kind/id guards aren't checked first, or the webhook path is touched.
-- further Round 301 T-31 through T-36 guards/reports to follow under this same ruling, named as
+- `scripts/verify-fault-code-alerts-use-shared-driver-attribution.mjs` (Round 301 T-33) -- fails
+  if the fault-code alert route or processor stops using the shared driverAtTimeSql helper, or
+  re-inlines the assignment-window predicate it exists to centralize.
+- further Round 301 T-34 through T-36 guards/reports to follow under this same ruling, named as
   they land.
 
 No money-app posting path touched (NON-FINANCIAL lane -- measurement/reporting guards, a
-read-only PM-due computation, and a poll-fallback cron reusing an existing ingestion function;
-no schema or table changed, no existing writer edited).
+read-only PM-due computation, a poll-fallback cron reusing an existing ingestion function, and a
+new maintenance-alert read route + notification emitter; no schema or table changed, no existing
+writer edited).
 
 — CC-3, 2026-09-30

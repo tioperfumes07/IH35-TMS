@@ -125,3 +125,52 @@ export async function emitPredictiveAutoWoNotifications(
     );
   }
 }
+
+export type FaultCodeNotificationInput = {
+  operating_company_id: string;
+  unit_label: string;
+  fault_code: string;
+  description: string | null;
+  severity: string;
+  fault_history_id: string;
+  driver_label: string | null;
+};
+
+/**
+ * ROUND 301 T-33 -- owner verbatim: "WE ALL NEED TO READ SAMSARA FOR ANY ENGINE FAILURES AND
+ * FAULTS AND CODES." One alert per fault-code history row, regardless of whether it also crossed
+ * the auto-create-WO threshold (emitPredictiveAutoWoNotifications above stays the separate,
+ * narrower "a draft WO now needs a shop assigned" alert). This is the broader visibility layer.
+ */
+export async function emitFaultCodeNotifications(
+  client: DbClient,
+  input: FaultCodeNotificationInput
+): Promise<void> {
+  const userIds = await listCompanyNotifyUserIds(client, input.operating_company_id, [
+    "Owner",
+    "Administrator",
+    "Manager",
+  ]);
+  const notifSeverity: NotificationSeverity =
+    input.severity === "critical" ? "critical" : input.severity === "high" ? "high" : input.severity === "medium" ? "medium" : "low";
+
+  const driverPart = input.driver_label ? ` -- driver at time: ${input.driver_label}` : "";
+
+  for (const userId of userIds) {
+    await createNotification(
+      {
+        operating_company_id: input.operating_company_id,
+        user_id: userId,
+        type: "maintenance_alert",
+        severity: notifSeverity,
+        title: `${input.unit_label}: fault ${input.fault_code}${input.description ? ` (${input.description})` : ""}`,
+        body: `Severity: ${input.severity}.${driverPart}`,
+        action_link: `/maintenance/fault-code-alerts/${input.fault_history_id}`,
+        entity_type: "samsara_fault_code_history",
+        entity_id: input.fault_history_id,
+        source_block: "fault_code_alert",
+      },
+      client
+    );
+  }
+}

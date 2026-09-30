@@ -1,4 +1,5 @@
-import { emitPredictiveAutoWoNotifications } from "../../notifications/notification.service.js";
+import { emitPredictiveAutoWoNotifications, emitFaultCodeNotifications } from "../../notifications/notification.service.js";
+import { driverAtTimeSql } from "../../maintenance/driver-attribution.js";
 import type { SamsaraWebhookEvent } from "./webhook-projection.types.js";
 
 type DbClient = {
@@ -284,6 +285,33 @@ export async function processVehicleFaultCodeWebhookEvent(
     });
     if (history.inserted) historiesInserted += 1;
     if (!history.id) continue;
+
+    // ROUND 301 T-33 -- "WE ALL NEED TO READ SAMSARA FOR ANY ENGINE FAILURES AND FAULTS AND
+    // CODES." One alert per NEW fault-code history row, unit + driver-at-the-time + severity,
+    // regardless of whether it also crosses the (separate, narrower) auto-create-WO threshold
+    // below. Driver-at-time is resolved via driverAtTimeSql (driver-attribution.ts) -- the one
+    // shared predicate, never re-inlined -- at READ time, not stored: a driver assignment can
+    // change after the fault, and this must always answer "who was driving WHEN this fired."
+    if (history.inserted) {
+      const driverAtTime = await client.query<{ driver_label: string | null }>(
+        `
+          SELECT d.first_name || ' ' || d.last_name AS driver_label
+          FROM (SELECT 1) _dummy
+          ${driverAtTimeSql("$2::uuid", "$3::timestamptz")}
+          LEFT JOIN mdata.drivers d ON d.id = driver_at_time.driver_id
+        `,
+        [event.operating_company_id, localUnitId, occurredAt]
+      );
+      await emitFaultCodeNotifications(client, {
+        operating_company_id: event.operating_company_id,
+        unit_label: unitLabel,
+        fault_code: fault.code,
+        description: rule?.description ?? fault.description ?? null,
+        severity,
+        fault_history_id: history.id,
+        driver_label: driverAtTime.rows[0]?.driver_label ?? null,
+      });
+    }
 
     const shouldAutoWo =
       rule?.auto_create_wo === true && (severity === "high" || severity === "critical");
