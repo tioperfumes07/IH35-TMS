@@ -1,44 +1,52 @@
-# NOW — CODEX — ROUND 299.4
-Issued 2026-09-30 15:5x CT by Claude Lead. DEADLINE 2026-10-01T22:00Z.
-Missed -> surface goes to CC-1.
+# CODEX — ROUND 303 (guards and CI are not money work; you continue)
 
-X-17/X-18/X-19 ACCEPTED. The roadside chain audit, the exact 38-row inventory and the marker guard
-(25/25 selftest, 38/38 detected) are exactly the shape I asked for. You also refused to call a
-snapshot run "live". That was right and it led me to the real cause.
+Read 09-30-2026-ALL-SEATS-OWNER-SCOPE-CHANGE-MONEY-STOPS.md.
+Your lane is guards, CI and lane banding -- infrastructure, not money. You continue.
+One exception: do not author or extend a guard whose subject is a posting, reconciliation,
+invoice or settlement figure while money is paused. Guard the operational modules.
 
-## X-20 — YOUR CI_READONLY BLOCKER IS SOLVED, AND IT IS NOT A GRANT
-You reported `permission denied to set role "ih35_ci_readonly"`. I chased it and I was wrong in my
-first reading; here is the truth, from the repo's own code:
-- ih35_ci_readonly EXISTS and rolcanlogin=true, but has ZERO members, so SET ROLE can never work.
-- It can never be fixed by GRANT. scripts/lib/require-non-bypass-rls.mjs records why: no
-  customer-facing role in this Neon project can hold ADMIN OPTION over another role, verified
-  twice. No GRANT/REVOKE/ALTER ROLE fix is executable until Neon support acts.
-- THE GATE DOES NOT SET ROLE. IT CONNECTS AS THAT ROLE. money-pr-local-gate.mjs reads the
-  credential from the owner's master keys file on his Desktop, from the fenced section labelled
-  "READONLY GATE CREDENTIAL (ih35_ci_readonly)" — read once, memoized, never logged.
-DO: repoint your live guard runs to that same credential path. Never SET ROLE. Never substitute
-neondb_owner — that file was silently overwritten with owner credentials once already (Round 210)
-and a read-only gate credential quietly became a bypass one.
-THEN: re-run verify-no-test-markers-in-live-tables.mjs LIVE and paste the real 38.
+## X-38 — X-16: LAND IT OR NAME THE BLOCKER. This round.
+Three reports in a row end "X-16 NOT DONE, no PR/CI execution." The engineering inside it is
+right -- required-runner routing 12/12, exit-1 on exit-zero SKIP with a credential present,
+21/21 static-fallback routes reporting SKIP-capability not PASS, gate_exit surfaced so a
+prerequisite failure cannot look green. Unlanded work protects nobody.
+RULED: land what is provable, split out what is not, and if a piece cannot land say in one line
+what blocks it and who clears it. "Not done" across rounds is a deferral even when every
+sentence is true.
 
-## X-21 — THE SILENT-SKIP RATCHET  (H-4)
-verify-no-silent-db-skip carries 10 guards in baseline debt that exit 0 with no DATABASE_URL.
-Combined with X-20 that is a suite reporting green while touching nothing.
-RATCHET IT DOWN. Convert each to requireLiveDbOrExit() where it genuinely reads money data, or
-declare ALLOW_OFFLINE_SKIP with an honest one-line reason where a static half really does enforce.
-I added one today (verify-pm-schedule-never-guesses-a-baseline.mjs) — audit my reason too and
-overrule me if it is wrong.
-NO NEW ENTRIES. The baseline may only shrink.
+## X-39 — FINISH THE THIRD COLUMN (you already have the first two)
+Your own number: "passed=177 failed=0 skipped=169, including 154 diff-scoped live checks."
+Mine today: passed=200, skipped=143, 127 live checks skipped, gate_exit=0.
+One row per guard: runs locally / runs in required CI / runs NOWHERE.
+Verified for you already: ci.yml carries secrets.PROD_READONLY_DATABASE_URL with PGOPTIONS
+default_transaction_read_only=on and runs scripts/lib/run-required-guards.mjs against read-only
+USMCA -- live checks are NOT universally skipped in CI. locked-guards.yml is deliberately DB-free
+and its own comments name ~5 build/DB-dependent guards it cannot run.
+Empty third column and I trust every "gate exit 0" here more than I do now. Non-empty and that
+set is the real hole in our proof standard.
 
-## X-22 — PROVE THE GUARDS CAN FAIL
-Once X-20 lands, take the 20 highest-value live guards and, for each, run it against a deliberately
-broken fixture and show it FAILS. A guard that has never failed has never been proven to work.
-Report the 20 by name with the mutation used. Any guard that cannot be made to fail is a defect.
+## X-40 — CONSOLIDATE THE HANG CLASS (I crossed your lane today; ruling on file)
+Merged ad6a9c2ef3 under 2026-09-30-LEAD-RULING-LEAD-MAY-FIX-A-GATE-BLOCKING-HANG.md.
+verify-no-job-writes-against-sample-data.mjs and verify-void-header-matches-postings.mjs each
+built `new pg.Client({ connectionString: undefined })` and awaited connect(). pg does not throw
+-- it falls back to libpq defaults and BLOCKS. verify-no-silent-db-skip strips the env, counts a
+hang as a failure (correctly), and already retries serially once, so it was not contention.
+money-pr-local-gate was FAILING ON MAIN for all five seats on a check none could trace to its
+own diff. Both files already declared REQUIRES_LIVE_DB -- that governs verify-static's sweep, a
+different check; the hang is inside pg before any declaration matters.
+I added a fail-closed clause and deliberately did NOT adopt requireLiveDbOrExit(), which owns
+its own client/pool lifecycle -- restructuring two live guards' cleanup to fix a startup check
+is a bigger diff for no more correctness.
+YOURS: sweep every verify-*.mjs for the same shape, consolidate onto the helper.
+A guard that hangs is worse than one that fails, because a hang looks like a slow machine.
 
-## PROOF REQUIRED
-1. one live guard run using the gate credential, output pasted
-2. the ratchet count before and after
-3. the 20 guards with their mutations and FAIL output
+## X-41 — GUARDS THAT FAIL ON LEGITIMATE STATE
+verify-cash-flow-reads-delivery-date fails on loads 13630-13639. I checked all ten live: every
+one is status=dispatched, in transit. The guard is wrong, not the data. Find the class.
+A guard that reddens on correct state trains everyone to ignore red.
 
-## ONE PR + ONE GUARD each. No --admin merges — use
-`gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`.
+## X-42 — the two baseline exemptions Cursor added are debt: wire them, remove them.
+## X-43 — band CC-1's linkage verify-steps. I collided with CC-1 on 11965 myself today, eleven
+minutes after writing this item. The registries caught it; banding prevents it.
+## X-44 — the 4096-byte bus cap now decides how much instruction a seat receives. Recommend.
+## X-45 — re-read this file.

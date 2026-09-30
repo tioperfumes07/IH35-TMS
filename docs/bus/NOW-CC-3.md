@@ -1,60 +1,41 @@
-# CC-3 — ROUND 301 STANDING QUEUE
+# CC-3 — ROUND 303 (money paused; you were already fully in scope)
 
-Finish an item, ACK in OUTBOX-CC-3.md, start the next. Do not wait for a new order.
-Round 300 T-23..T-28 accepted as reported. Every number below is yours, measured live.
+Read 09-30-2026-ALL-SEATS-OWNER-SCOPE-CHANGE-MONEY-STOPS.md first.
+Nothing of yours is paused. Every item you hold is a maintenance or dispatch engine.
 
-## T-29 — PM DUE ENGINE, off the odometer ledger (OWNER ORDER, highest)
-Owner, verbatim: "WE BUILT THE MAINTENANCE CATALOG ALREADY, AVERAGING 12K MILES PER MONTH
-THE PM EVERY 25K MILES ... I BELIEVE TO SAVE SPACE, WE WOULD CALL SAMSARA ONLY 1 TIME A
-DAY FOR THE MILEAGE ... ILL INPUT MILEAGE MANUALLY."
-Build the due engine on the 03:00 CT odometer snapshot you already ship — no second poll.
-Per unit: last PM odometer, current odometer, miles since, miles to 25,000, projected due
-date from that unit's own trailing 90-day miles/day. NEVER from the 12K/month average —
-that is the owner's rule of thumb, not a per-unit fact. A unit with no baseline PM odometer
-or an odometer gap in the window returns NULL with a stated reason and renders as "—".
-It never estimates and never guesses a baseline. Manual odometer entry is a first-class
-writer into the same ledger with actor + source recorded, not a side table.
-Guard: fails on any projected due date derived from a fleet average, any non-null result
-across an odometer gap, and any second daily Samsara mileage call.
+## T-37 — THE PM CRON WRITES AGAINST A FAKE TRUCK (still your top item, it is a LIVE writer)
+maintenance.pm_schedules 756b5701-9ed2-4402-b6d6-086fd133af98, USMCA, unit T-TESTMTDP79YF,
+is_sample_data TRUE, is_active TRUE, next_due_odometer 1, last_service_odometer 1.
+Permanently overdue and active, so the PM auto-WO cron creates a work order against a truck that
+does not exist, inside USMCA, on every tick, forever.
+CODE (yours, now): listActiveSchedules and every PM auto-WO selection must exclude
+is_sample_data. A writer that CAN reach a sample row is a defect whether or not one exists today.
+DATA (owner AUTH, dry run first): deactivate that one schedule. Keep the two apart.
+T-29 tie-in: last_service_odometer = 1 is a placeholder, not a baseline. A baseline of 1 mile is
+a guessed baseline wearing a number. T-29 must treat it as ABSENT and return NULL with a reason.
 
-## T-30 — HARSH EVENTS + DASHCAM: build the poll fallback
-Your own T-28: samsara_webhook_events 0 rows ever, 0 rejected-signature rows ever, secret
-configured since 2026-08-21 — nothing has ever reached the endpoint. safety.harsh_events
-has 1 row and it is a fixture (TEST-TESTMTDQ4UCF); telematics.dashcam_clips has 0.
-You called the decision out of scope. I am the decision: POLL IT. Every other category
-already has a poll; this is the one hole. processHarshEventsFromVehiclePayload() gets a
-second caller. Do not touch the webhook path — leave it in place and leave it unused.
-Guard: fails if the poller is absent, if it writes a row with no raw_samsara_id, or if a
-fixture id can enter the real table.
+## T-40 — THE DISPATCH NODE HAS NEVER ADVANCED. THIS IS THE BIGGEST HOLE YOU OWN.
+dispatch.stop_arrivals has 0 rows. Ever. The truck-line graphic moves, the arrival engine T-01
+is built and merged, and no stop has ever been recorded as arrived. T-01's only caller is the
+webhook -- and you proved the webhook has never delivered a single request since 2026-08-21.
+So arrival detection exists and has never once run.
+You already fixed the same class in T-30 by polling instead of waiting on the webhook. Do it
+here: arrival detection on the POLL path, using positions and geofences, which you proved are
+current and healthy. Full linkage: stop -> load -> unit -> driver-at-time via driverAtTimeSql.
+DONE = a real stop_arrivals row from live data, pasted, with the load and unit it belongs to.
 
-## T-31 — T122's STALE samsara_vehicle_id
-mdata.units carries an id that last reported 2024-08-21; the mirror carries the live one.
-Harmless today only because loadUnitIdBySamsaraVehicleId() prefers the mirror. Repair the
-hub column so both agree. FINANCIAL-adjacent data write: dry-run report first, then an
-AUTH from the owner, then apply. Never write it on your own authority.
+## T-41 — GEOFENCE MILEAGE CAPTURE (T-21, still NOT BUILT)
+604 Love's geofences active, clean enter/exit pairs. This is how real driven miles get captured
+without trusting a single odometer read. Feeds the PM engine and the integrity engine.
 
-## T-32 — ODOMETER-DUP-01, dry run only
-921 duplicate groups, 176,960 of 177,906 rows, retired writer already proven gone.
-Produce the dedupe plan and the dry-run counts plus the unique index that makes a repeat
-impossible. NO DELETES. That is an owner AUTH, same as T-31.
+## T-42 — ARRIVING SOON on Maintenance Home
+Backend feed only -- Cursor owns the screen, and Maintenance is already at 9 tabs (C-36).
+Units inbound, ETA, geofence state, what PM or work order is due on arrival.
 
-## T-33 — FAULT CODES INTO THE ALERT CHAIN
-Owner: "WE ALL NEED TO READ SAMSARA FOR ANY ENGINE FAILURES AND FAULTS AND CODES."
-J-3's poller lands the codes. Route them: unit, driver at the time (use CC-2's
-driverAtTimeSql, do not re-inline it), severity, and an alert that reaches Maintenance
-Home. Linkage per docs/laws/TRANSACTION-LINKAGE-LAW.md, both directions.
+## T-43 — SAMSARA_TOKEN_ENCRYPTION_KEY: one note, not three UNVERIFIED lines
+T-26, T-30 and T-33 all end on the same unset variable. You were right to refuse to claim proof
+three times. Write ONE note: the variable, where it is set, what breaks without it, what the
+first real tick proves. Then point at the note. It is with the owner.
 
-## T-34 — ARRIVING SOON, on Maintenance Home
-Owner killed the separate tab: "ARRIVING SOON ... SHOULD BE IN THE HOME PAGE, NOT ITS OWN
-TAB." Serve the feed for it: units inbound, ETA, geofence state, what is due on arrival.
-Backend only — Cursor owns the screen.
-
-## T-35 — CLOSE DAMAGE-WO-UNITS-ZERO-ASSIGNMENT-COVERAGE-2026093006
-CC-2 routed it to you. All 5 units are coder test artifacts — your own T-23
-KNOWN_TEST_UNIT_NUMBERS proves it. Close the finding as VOID with that proof, and report
-the real pairing hole instead: T122 and T124, the two real units with zero assignment rows.
-
-## T-36 — re-read this file.
-
-Not yours and do not chase: T147/T170/T173 stopped reporting 2026-08-26 and need a
-Samsara-side resync — that is the owner's. T-24's 03:00 CT tick fires on its own.
+## T-44 — re-read this file.
+LANE: no apps/frontend, no accounting schemas, no money paths.

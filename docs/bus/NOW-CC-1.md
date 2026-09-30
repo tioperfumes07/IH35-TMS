@@ -1,37 +1,37 @@
-# NOW — CC-1 — ROUND 300 QUEUE. Work it top to bottom. DO NOT GO IDLE.
-Issued 2026-09-30 16:1x CT by Claude Lead. Each item: one PR + one named guard + live proof.
-When an item is done, ACK in OUTBOX and START THE NEXT ONE. Do not wait for a new order.
+# CC-1 — ROUND 303 (money paused; maintenance + dispatch engines only)
 
-## RULING ON YOUR H-3 BLOCK — you were right to stop, twice
-The ALLOW_PROD_MIGRATE denial is at the OWNER'S permission layer, not something you can clear.
-You refused to route around it via Neon MCP, raw SQL, or splitting the command. That is exactly
-right — routing around it would repeat the anti-pattern H-3 exists to stop.
-The migrate command is now the owner's to run. H-3 is PARKED, not failed. Move to A-30.
-Also flagged for the owner: the APP.IH35DISPATCH MCP server failed to connect
-("Invalid content from server"). Not yours. Raised.
+Read 09-30-2026-ALL-SEATS-OWNER-SCOPE-CHANGE-MONEY-STOPS.md first.
+A-35 escrow GL, A-36 factoring reserve, A-37 A/P gap, A-38 the 931 routing: ALL PAUSED.
+Your five unapplied migrations: leave them. Do not ask again, do not attempt db:migrate.
 
-## THE QUEUE
-1. **A-30 LINKAGE GUARD** — read docs/laws/TRANSACTION-LINKAGE-LAW.md first.
-   Three tiers from ONE shared declaration. Tier 1 (fuel, DEF, tolls, crossings, scales, lumper,
-   detention, OTR repair, roadside, tow, accident, citation) requires unit AND driver AND load.
-   Tier 2 (shop PM, in-house repair, parts, yard tires, DOT inspection, wash, unit insurance,
-   registration, lease, depreciation) requires unit only — and the guard FAILS ANY CODE DEMANDING
-   a load there. Tier 3 (rent, utilities, software, bank fees, interest) is company + GL only;
-   a unit link is a defect. Live half uses requireLiveDbOrExit() with the gate's readonly
-   credential — never SET ROLE.
-2. **A-31 TIER-1 CONSTRAINT TRIGGER** — deferrable, same shape as B-26's lineless-invoice trigger,
-   so a Tier 1 row with no unit cannot exist even when every guard is bypassed. Going-forward only.
-3. **A-32 CASH GL UNBOUND ON 3 OF 8 BANK ACCOUNTS** — measured live on /banking right now. Bank
-   Register and bank-feed posting need a Cash GL per account. Name the 3, bind them, prove posting
-   works on each. This blocks every bank-feed posting path.
-4. **A-33 TYPE-DRIVEN GL ROUTING** — MEASURE FIRST, report before code: how many live USMCA
-   vendors and customers carry a type, and how many expense rows reached their account by type
-   versus by hand. Then wire vendor type + category -> expense account -> P&L line; unit capital
-   spend -> fixed asset -> balance sheet + depreciation; customer type + charge -> revenue.
-   A type that does not resolve is HELD for coding. Never suspense. Never guessed.
-5. **A-34 THE 931 UNCATEGORIZED** — 931 of 947 bank transactions are uncategorized, 98%.
-   Dreamline Diesel Card alone carries 397, Relay Fuel Wallet 76. Diagnose WHY the categorizer is
-   not running or not matching. Measure and report before writing a single rule.
-6. **A-35 RECONCILIATION HAS NEVER RUN** — 0 of 8 accounts have ever been reconciled. Establish
-   what a first reconciliation needs per account and what is missing today.
-7. **A-36** — when 1-6 are shipped, re-read this file. A new queue will be here.
+## A-40 — wo_type "tire" ROUTED BY source_type (top item, maintenance logic, NOT money)
+docs/bus/2026-09-30-LEAD-RULING-WO-TYPE-TIRE-IS-SPLIT-BY-SOURCE-TYPE.md
+verify-transaction-linkage-law has been printing a [WARN] asking the Lead for this ruling. It is
+answered. Act on it.
+    source_type RS / roadside  -> TIER 1, unit AND driver AND load
+    source_type IS / in_house  -> TIER 2, UNIT ONLY, load and settlement NEVER forced
+Remove "tire" from the forced-load_id set in work-orders.routes.ts. The guard must FAIL if a
+Tier 2 tire row is DEMANDED to carry a load.
+Forcing load_id on a yard tire change is the defect: a writer compelled to supply one invents it,
+and an invented load link looks correct forever.
+
+## A-41 — THE WORK ORDER WIZARD (owner has raised it more than once)
+Owner, verbatim: "I TOLD YOU ABOUT THE ISSUES WITH THE WORK ORDER WIZARD, MANY MORE."
+Audit the wizard end to end and report before changing: every required field, whether each is
+genuinely required, what it writes, and every field that is required but should not be. A
+required-field asterisk that lies is the UI form of A-40's defect. Report, then fix.
+
+## A-42 — WORK ORDER LINKAGE, BOTH DIRECTIONS
+Per the law, section 6: a link that resolves one way and not the other is HALF A LINK and counts
+as unlinked. For maintenance.work_orders prove BOTH: unit -> its work orders, and work order ->
+its unit, driver, and where Tier 1, its load. Same for road_service_tickets. Name what does not
+resolve in reverse rather than forcing it.
+
+## A-43 — WORK ORDER COLUMNS the owner named, served from the backend
+Owner, verbatim: "all work orders must show and views report date, date in shop, and expected
+release." Those three fields must exist, be populated where known, and render "—" where not.
+If any of the three does not exist as a column today, say so plainly -- do not derive it.
+
+## A-44 — re-read this file.
+
+LANE: no apps/frontend (Cursor owns screens). NO money paths at all this round.
