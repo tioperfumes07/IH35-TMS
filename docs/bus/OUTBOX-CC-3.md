@@ -385,3 +385,59 @@ No change since Round 297.1's own report: J-3's fault-count proof remains UNVERI
 on SAMSARA_TOKEN_ENCRYPTION_KEY (Render-only secret, no tool this session can read it). Keeping
 the word as-is per this item's own instruction -- not softening it. Will paste the live count
 the moment the owner clears the key and a real tick completes.
+
+## CC-3 — ROUND 300 T-28 SHIPPED — Samsara webhooks: never fired, here is why and what still covers it
+
+MEASURED LIVE (br-fancy-credit-akjnd07a, USMCA):
+  integrations.samsara_webhook_events        0 rows, ever (confirmed, matches the order's own number)
+  audit_events 'integrations.samsara_webhook_signature_invalid'   0 rows, ever
+  integrations.samsara_config (USMCA)        is_enabled=true, connected_at=2026-08-21, HAS a
+                                              webhook_secret configured (92 bytes encrypted)
+
+IS A WEBHOOK CONFIGURED ON THE SAMSARA SIDE? Cannot be answered directly -- that setting lives
+entirely inside Samsara's own dashboard, which this session has no access to. But the evidence on
+OUR side points one way: a webhook_secret IS stored for USMCA (someone completed the "paste the
+secret Samsara shows you" half of setup), yet there is not even ONE rejected-signature audit row,
+which our endpoint writes for EVERY request that reaches it with a bad/missing signature, BEFORE
+persisting anything. Zero accepted AND zero rejected means no HTTP request has ever reached our
+webhook endpoint at all -- not a signature mismatch, a complete absence of delivery attempts. That
+is consistent with either (a) the matching half of setup -- actually creating a webhook subscription
+in Samsara's dashboard and pointing it at our URL -- was never completed, or (b) it points at a
+stale/wrong URL. Cannot distinguish (a) from (b) without Samsara-side access; naming both, not
+changing anything on the vendor side per this item's own instruction.
+
+WHAT THE POLLER NOW COVERS (from README_WEBHOOK_PROJECTION.md's own event-type table, cross-checked
+against every currently-wired cron):
+  vehicle.* (mirror), gps/location/position         COVERED -- samsara-positions.service.ts cron
+                                                     (syncSamsaraVehicleLocations/Stats), plus
+                                                     geofence + arrival detection (T-01, this
+                                                     session), plus odometer (Round 297.1 J-1)
+  driver.* / vehicle_assigned/unassigned pairing    COVERED, differently -- pairCurrentDriver()
+                                                     inside the same stats cron reconciles current
+                                                     assignment on every poll, a periodic
+                                                     reconciliation rather than the webhook's
+                                                     event-driven open/close, but the same table
+                                                     ends up populated (see T-23's own coverage
+                                                     numbers, which already reflect this path)
+  hos / eld / duty_status                           COVERED -- initializeSamsaraHosPullCron,
+                                                     wired and running independently of the webhook
+  dtc / fault / diagnostic                          COVERED -- Round 300's own J-3 (fault-poll.cron.ts)
+
+NOT COVERED BY ANY POLLER -- webhook-only, and the webhook has never fired:
+  harsh / speeding / distracted / mobile_use / seatbelt   -> safety.harsh_events,
+                                                              telematics.dashcam_clips
+  safety.harsh_events has exactly 1 row, ever, and it is raw_samsara_id='TEST-TESTMTDQ4UCF' -- a
+  fixture row, not real data. telematics.dashcam_clips has 0 rows. The only caller anywhere in the
+  repo of processHarshEventsFromVehiclePayload() (safety/harsh-events-ingestion.service.ts) is
+  webhook-projectors/vehicle-projector.ts -- no cron, no poller, nothing else invokes it. This
+  means the ENTIRE harsh-driving-event and dashcam-clip-auto-linking pipeline has been completely
+  dark since it was built: every harsh brake, speed event, distracted-driving flag, phone-use flag
+  and seatbelt event Samsara has ever detected on this fleet has gone unrecorded, because its only
+  ingestion path depends on a webhook that has never delivered a single request.
+
+REMAINING: reported per this item's own instruction ("change nothing on the vendor side"). No
+code changed. Whoever owns safety/telematics should decide whether harsh-event coverage needs a
+polling fallback (Samsara's stats/vehicle endpoints do carry some harsh-event data in other
+integrations, not confirmed available on this account's plan) or whether fixing the webhook
+delivery (Samsara-dashboard-side, outside this repo) is the intended path -- that decision is
+outside a "report, change nothing" task.
