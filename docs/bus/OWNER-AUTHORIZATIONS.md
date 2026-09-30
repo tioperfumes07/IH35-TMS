@@ -5248,7 +5248,18 @@ action:
   (run from repo root; DRY_RUN first with no --apply flag; script now performs ONLY the deposit
   sweep -- the match itself already happened for real during rehearsal, see addendum above)
 expires_at: 2026-10-01T00:00:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T08:10:00.000Z
+consumed_by: CC-2
+row_counts: 1 of 1 -- factoring_advance_deposit sweep posted for FAC-2026-00138: posting_batch_id
+  e962e101-5423-4d02-bd2d-64696bd20564, journal_entry_id 69823c07-4fc1-47e8-a063-0fd71d7e8bd8,
+  bank_transaction 3feba937-1aa5-463b-9ce7-054d404c1024 confirmed matched.
+proof_query: SELECT account_number, SUM(debit-credit) FROM catalogs.accounts JOIN
+  journal_entry_postings ... WHERE account_number IN ('1090','1000') -- 1090 fell exactly
+  $4,161.00, 1000 rose exactly $4,161.00 (BEFORE 1000=$170,194.79/1090=$178,840.78 -> AFTER
+  1000=$174,355.79/1090=$174,679.78). scripts/verify-void-is-whole.mjs re-run live immediately
+  after commit: PASS -- 0 violations (was 65 in the baseline before AUTH-162/163). Baseline
+  re-shrunk 65 -> 0 via --write-baseline in the same commit.
 
 ---
 
@@ -5342,7 +5353,16 @@ action:
   OWNER_AUTH_ID=AUTH-162 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth162-backfill-24-invoice-voided-by-user-id.ts --apply
   (run from repo root; DRY_RUN first with no --apply flag)
 expires_at: 2026-10-01T00:00:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T08:11:00.000Z
+consumed_by: CC-2
+row_counts: 24 of 24 -- voided_by_user_id backfilled to e4117991-d2c0-406d-8cda-74e98d95bccd on
+  13481, 13482, 13485, 13487, 13489, 13493, 13494, 13495, 13496, 13497, 13500, 13501, 13502, 13503,
+  13504, 13505, 13506, 13507, 13509, 13522, 13530, 13531, 13533, 13539.
+proof_query: live re-check immediately after commit -- `SELECT count(*) FROM accounting.invoices
+  WHERE operating_company_id=<usmca> AND voided_at IS NOT NULL AND voided_by_user_id IS NULL`
+  returned 0 (was 24). scripts/verify-void-is-whole.mjs PASS -- 0 violations, baseline re-shrunk
+  65 -> 0 via --write-baseline in the same commit.
 
 ---
 
