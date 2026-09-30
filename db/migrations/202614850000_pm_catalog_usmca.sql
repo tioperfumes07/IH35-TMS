@@ -1,4 +1,4 @@
--- 202614820000_pm_catalog_usmca.sql
+-- 202614850000_pm_catalog_usmca.sql
 -- ROUND 297.2 A-27 (Lead order, owner-approved, 2026-09-30): the real preventive-maintenance
 -- interval catalog for USMCA. Live-measured before this migration: catalogs.pm_intervals carries
 -- exactly 1 row, 'CC3-TEST-PMINTERVAL-20260822', is_active=false already -- no real intervals exist
