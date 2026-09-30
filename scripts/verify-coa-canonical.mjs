@@ -177,6 +177,24 @@ async function withBypass(client, sql, params = []) {
   }
 }
 
+// A hanging DB check never returns, so it never fails and never passes — every caller waiting on
+// this guard (CI, a coder's pre-push, another agent's pipeline) blocks forever. `pg`'s own
+// connectionTimeoutMillis only bounds the TCP/auth handshake; a query that hangs after connecting
+// (e.g. lock contention, a dead-but-not-yet-dropped connection) is not covered by it. This wraps
+// the whole DB-check phase in a wall-clock race so a hang FAILS CLOSED with a named reason instead
+// of hanging the whole guard.
+const DB_CHECKS_TIMEOUT_MS = Number(process.env.COA_CANONICAL_DB_TIMEOUT_MS) || 20_000;
+
+function withTimeout(promise, ms, label) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error(`verify-coa-canonical: TIMEOUT — could not reach ${label} within ${ms}ms — failing closed`));
+    }, ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 async function dbChecks(threshold) {
   const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
   if (!connectionString) {
@@ -184,13 +202,21 @@ async function dbChecks(threshold) {
     return { skipped: true };
   }
 
-  const pool = new pg.Pool({ connectionString });
+  // connectionTimeoutMillis bounds the connect() call itself; statement_timeout/query_timeout
+  // bound any single query once connected. All three are defense-in-depth alongside the
+  // wall-clock withTimeout() wrapper around the whole phase (belt + suspenders, not either/or).
+  const pool = new pg.Pool({
+    connectionString,
+    connectionTimeoutMillis: Math.min(DB_CHECKS_TIMEOUT_MS, 10_000),
+    statement_timeout: Math.min(DB_CHECKS_TIMEOUT_MS, 10_000),
+    query_timeout: Math.min(DB_CHECKS_TIMEOUT_MS, 10_000),
+  });
   let client;
   try {
-    client = await pool.connect();
+    client = await withTimeout(pool.connect(), DB_CHECKS_TIMEOUT_MS, "the database (pool.connect)");
   } catch (e) {
     console.log(`verify:coa-canonical — DB checks SKIPPED (cannot connect: ${String(e?.message || e)})`);
-    await pool.end();
+    await pool.end().catch(() => {});
     return { skipped: true };
   }
 
@@ -287,7 +313,10 @@ async function main() {
   const { artifact } = staticChecks();
   const threshold = resolveThreshold(artifact);
   console.log(`verify:coa-canonical — static checks OK (threshold ${threshold}%, floor ${THRESHOLD_FLOOR_PCT}%)`);
-  await dbChecks(threshold);
+  // Outer wrap too: covers any hang anywhere inside dbChecks (connect, a query, pool teardown),
+  // not just the connect() call — a single line of defense that can't be bypassed by a code path
+  // inside dbChecks that forgets to thread the per-call timeout through.
+  await withTimeout(dbChecks(threshold), DB_CHECKS_TIMEOUT_MS + 2_000, "the database (verify-coa-canonical DB checks)");
   console.log("verify:coa-canonical — OK");
 }
 
