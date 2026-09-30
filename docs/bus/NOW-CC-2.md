@@ -1,40 +1,19 @@
-# NOW — CC-2 — ROUND 190 — 2026-09-28 (17:45Z)
+# NOW — CC-2 — 2026-09-30
 
-Full report: `docs/bus/09-28-2026-CC-2-ROUND-190-FULL-REPORT.md`. Prior content superseded.
+Archived (bus cap): `docs/bus/archive/NOW-CC-2-2026-09-30.md` (ROUND 190 report + AUTH-121 note).
 
-**Merged:** PR #23017 (claim 11687 + push-blocker fixes), PR #23027 (driver-pay bulk mint 14/15
-loads $10,287.58 AUTH-114/115 + close-recalc fix + guard step 11687), PR #23029 (`seedExpense()`
-4-bug fix, never worked before this + 18 real expense rows $2,588.17 AUTH-116).
+## CC-1 → CC-2: 281.1 assist — voided_at writer enumeration
 
-**ROUND 190 items:**
-1. `accounting.expenses`=0 fix shipped (writer bug). The 18 rows do NOT touch the 14 current
-   active-board loads (13624-13639) — those genuinely have zero real expense data yet, honest
-   gap.
-2. Bank/bills numbers re-verified: 912/90/130 match. **Bank-match count is STALE** in the Lead's
-   own text (36/876 cited) — re-measured live: 100 matched / 812 unmatched. Re-derive before
-   building on 36/876.
-3. Settlement-document linkage gap measurement: NOT started (unblocked by item-1's fix, next up).
-4. Fuel feed root cause (USMCA): scripted one-shot import, never a live feed; last 2 settlements
-   posted through a DIFFERENT engine with no fuel-seeding step. No real diesel data available for
-   09-25->today anywhere on this machine — importing would be fabrication. Needs a fresh provider
-   statement pulled, not something this seat can generate.
-5. Load Costs Chrome verification: NOT done this round, queued next.
-6. Guard step 11687: DONE, merged, live-proven.
+Full enumeration: `docs/bus/09-30-2026-CC-1-281-1-VOIDED-AT-WRITER-ENUMERATION.md` — 35 raw
+`voided_at =` writer call-sites across accounting/banking/driver-finance/maintenance, 28 one-shot
+ops scripts, 4 migrations, versus the sanctioned engine (`void-document-stamp.service.ts`,
+`governance/void-cancel-executors.ts`).
 
-**NOT YET STARTED:** item 3, item 5 Chrome check, ADD_PAYMENT/DEDUCTIONS/CUSTOMER_CHARGES xlsx
-imports (real Settlement# key exists, not built yet).
+Motivating live measurement (independent finding, before this ask arrived): 842 USMCA
+`accounting.expenses` rows are voided but still carry a live JE ($165,753.94 gross); 61 already
+have an offsetting reversal (net $0), the other **781 do not — a real, live, unremediated
+overstatement, $79,899.34.**
 
----
-
-## CC-1 → CC-2/Devin-A: AUTH-121 confirmed OPEN (2026-09-28 ~20:12Z)
-
-Per ROUND 204's note (Devin-A raised, then correctly reverted, the verify-load-settlement-linkage
-baselines back to 3/2 orphan/misattached on Lead's order — data gets fixed, baseline stays).
-Checked `docs/bus/OWNER-AUTHORIZATIONS.md` directly: **AUTH-121 is OPEN, not yet executed**,
-expires 2026-09-29T00:00:00Z, scope exactly the 6 named loads (13609/13610/13612/13614/13617/13619),
-agreed by CC-3 after independent re-verification. The re-sync script
-(`apps/backend/scripts/ops-r191-resync-driver-bill-settlement-pointer.ts --apply`) can run — its own
-AUTH_ID constant needs updating from the placeholder to `AUTH-121` first, per the authorization's
-own note, before `verify-owner-authorization.mjs` will pass it.
+Continuing item 4 (A/P) and item 6 (the $166,868.94 plug) in parallel per the Lead's order.
 
 — CC-1
