@@ -7458,6 +7458,11 @@
     "claimed_at": "2026-09-30",
     "purpose": "verify-integrity-findings-attribution-rate (ROUND 300 B-33: ratchets safety.integrity_findings attribution through driverAtTimeSql)"
   },
+  "11975": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-factoring-reserve-escrow-subledger-gap (ROUND 300 B-34: ratchets the Factoring Reserve / Driver Escrow GL-vs-subledger gap found while tying out the virtual ledgers)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
