@@ -435,3 +435,37 @@ the real decision (build a Faro-receipts ingestion path, or keep manual entry an
 NEXT: B-32 (the diesel card / Relay Fuel Wallet balances).
 
 — CC-2
+
+---
+## 2026-09-30 — B-32 REPORT (diesel card balances, measure only)
+
+JOB ID: B-32 (ROUND 300)
+
+FOUND: both GL accounts are real (Dreamline -$141,197.23/842 postings, Relay -$32,324.02/117
+postings) but close-not-exact to your /banking figures (~$970 / ~$402 gaps, not chased further).
+`banking.bank_accounts` is completely empty for USMCA — neither label has a formal bank-account
+row; /banking must render these straight off catalogs.accounts + GL.
+
+Neither balance is traceable to individual purchases:
+- Dreamline: zero sub-ledger rows anywhere. No fuel.fuel_transactions rows for this vendor, no
+  dedicated Dreamline table in the schema at all. The whole $141K is raw journal postings, no
+  per-fill detail.
+- Relay: a real integration table exists (integrations.relay_fuel_transactions, 119 rows) — but
+  0 of the 75 rows flagged posted_to_gl=true have a traceable JE via the standard
+  source_transaction_type='fuel_event' linkage every other fuel JE uses. Either the flag is wrong
+  or there's a different linkage I didn't find — not resolved here.
+
+NOT CHASED: the "cash on hand -$21,042.31 across 8 real accounts" figure — didn't find the right
+query in the time available, naming it as an open gap rather than guessing.
+
+GUARD: scripts/verify-fuel-card-gl-subledger-traceability.mjs (verify-step 11967, reserved via
+#23514) — a ratchet, not a pass/fail on the existing gap (which is already at rock bottom):
+measures both accounts' sub-ledger traceability and fails only if it gets WORSE than today.
+LIVE PASS, --selftest 1/1 mutation caught.
+
+NOT ADJUSTED: measure only, per the order. Filed on the board as
+FUEL-CARD-GL-BALANCES-UNTRACEABLE-TO-SUBLEDGER-2026093010.
+
+NEXT: B-33 (attribute the existing integrity engine findings through driverAtTimeSql).
+
+— CC-2
