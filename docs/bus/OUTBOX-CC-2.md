@@ -712,3 +712,30 @@ NEXT: B-36 (QBO not connected, last sync never -- report what connecting would p
 today, without connecting).
 
 — CC-2
+
+## ROUND 301 B-36 — QBO connect push/overwrite report (DONE, did not connect)
+
+Did not connect. Measured what connecting would do, precisely:
+
+PUSH: confirmed at the per-entity override row (not the global default) -- USMCA has an
+EXPLICIT lib.feature_flag_overrides row for both QBO_JE_PUSH_ENABLED and QBO_ENTITY_PUSH_ENABLED,
+both enabled=false, set 2026-08-16. Connecting alone pushes ZERO records; push requires a
+separate, explicit owner action to flip those flags first. If ever flipped, it would be a FULL
+initial push, not incremental: 0 of 1,238 customers and 0 of 622 vendors currently carry a
+qbo_customer_id/qbo_vendor_id link, alongside 170 accounts / 110 invoices / 93 bills.
+
+OVERWRITE: mdata.qbo_accounts already holds 365 rows from a one-time clone that was never kept
+live -- a first CoA pull would need to reconcile against this stale mirror, and against WHICH
+QBO company file (realm_id is an undecided question -- TRANSP and TRK already use two different
+realm_ids, so USMCA's own is not merely unset, it's undecided). mdata.qbo_customers/vendors/
+invoices/bills mirrors are all empty (0 each) -- a first pull there is pure addition, no
+overwrite risk.
+
+Shipped scripts/verify-steps/11995-verify-qbo-usmca-connect-push-overwrite-report.mjs
+(claim-reserved first, PR #23575), report-only, ratcheting the push-override-off state and
+candidate counts so a silent flag flip or connection attempt is caught.
+
+NEXT: B-37 (re-read docs/bus/2026-09-30-LEAD-ROUND-301-CC-2-STANDING-QUEUE.md once 1-6 are
+shipped, for the next queue).
+
+— CC-2
