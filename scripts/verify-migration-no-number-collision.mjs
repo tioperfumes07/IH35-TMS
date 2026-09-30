@@ -249,6 +249,30 @@ const KNOWN_COLLISIONS = new Map(Object.entries({
     "202614550000_fuel_transactions_genesis_anchor_gross_cost_discount_fee_documented.sql",
     "202614550000_live_loads_settlement_lines_require_closed.sql"
   ],
+  // MIGR-COLLISION-01 (CC-3, 2026-09-30, filed docs/audit/GUARD-WORKORDERS.md, discovered while
+  // applying T-21's own migration): four more numbers each stamped on prod under TWO different
+  // filenames, only one of which survives in db/migrations today. All four measured live on
+  // production before freezing: every filename below IS in `_system._schema_migrations` under
+  // this exact number. The "prod-only" name in each pair has no matching .sql file anywhere in
+  // the repo or its git history that could be recovered here -- renaming or deleting either name
+  // is the dangerous act (same reasoning as the four above); this freezes what already happened
+  // rather than pretending the repo can rebuild prod's exact history for these four.
+  "202614420000": [
+    "202614420000_fuel_transactions_genesis_anchor_gross_cost_discount_fee.sql",
+    "202614420000_mdata_drivers_merged_into_driver_id.sql"
+  ],
+  "202614430000": [
+    "202614430000_fuel_transactions_genesis_anchor_gross_cost_discount_fee.sql",
+    "202614430000_worm_check_engine_banking_tables.sql"
+  ],
+  "202614560000": [
+    "202614560000_expenses_review_queue.sql",
+    "202614560000_geocode_precision_google_native_values.sql"
+  ],
+  "202614570000": [
+    "202614570000_factoring_advance_status_matches_voided_at.sql",
+    "202614570000_fix_driver_samsara_accounts_rls_empty_uuid_cast.sql"
+  ],
 }));
 
 /** PURE: group migration filenames by numeric prefix; any group > 1 is a collision. */
