@@ -1,5 +1,9 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T02:40Z · ROUND 280.17 + 280.18 FAST-MERGED**
+CURSOR | 280.17+280.18 DONE | squash `c1c4b0cafb` (#23198) | LIVE PROOF: board===canonical 12; verify-load-boards-agree PASS 12; verify-one-source-per-number OK 0/81; LAW-5 Truck Line hook restored (Net not painted) | 280.0.a/b/c held | NEXT: Chrome control-response only after FE tip (280.0.c — not linkage); Phase 3 purge waits CC-1 280.5 + CC-2 280.7–280.10.
+
+
 **2026-09-29T17:00Z · ROUND 224 DONE · AUTH-126 CONSUMED**
 
 CURSOR | R224 DONE | squash #23117 `2661b67017` + AUTH-126 CONSUMED |
