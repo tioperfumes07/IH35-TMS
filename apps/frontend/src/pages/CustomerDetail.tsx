@@ -607,12 +607,32 @@ export function CustomerDetailPage() {
   // same queryKey, so opening the modal after visiting Loads is a cache hit, not a second fetch).
   const customerLoadsQuery = useQuery({
     queryKey: ["customer-loads", id, operatingCompanyId],
-    queryFn: () =>
-      listAllLoads({
-        customer_id: id,
-        operating_company_id: operatingCompanyId ? [operatingCompanyId] : undefined,
-        sort: "created_at:desc",
-      }).then((res) => res.loads),
+    queryFn: async () => {
+      // ROUND 283.2 — Customer Detail is NOT a Dispatch surface; show full history for the customer.
+      // Merge live + history (never an unscoped call — 283.1 fail-closed).
+      const [live, history] = await Promise.all([
+        listAllLoads({
+          customer_id: id,
+          operating_company_id: operatingCompanyId ? [operatingCompanyId] : undefined,
+          board_scope: "live",
+          sort: "created_at:desc",
+        }),
+        listAllLoads({
+          customer_id: id,
+          operating_company_id: operatingCompanyId ? [operatingCompanyId] : undefined,
+          board_scope: "history",
+          sort: "created_at:desc",
+        }),
+      ]);
+      const seen = new Set<string>();
+      const loads: DispatchLoadRow[] = [];
+      for (const row of [...live.loads, ...history.loads]) {
+        if (seen.has(row.id)) continue;
+        seen.add(row.id);
+        loads.push(row);
+      }
+      return loads;
+    },
     enabled: Boolean(id && operatingCompanyId && (activeTab === "Loads" || qualityModalOpen)),
   });
   // Per-Customer P&L tab — reuse the EXISTING Customer Profitability report endpoint

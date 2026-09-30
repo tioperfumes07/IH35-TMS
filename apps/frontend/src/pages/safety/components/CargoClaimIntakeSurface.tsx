@@ -296,7 +296,14 @@ export function CargoClaimIntakeSurface({
   // Label map for ParityTable EntityLink — form pickers use EntityPicker server search.
   const loadsQuery = useQuery({
     queryKey: ["mdata", "loads", "cargo-claim-labels", operatingCompanyId],
-    queryFn: () => listLoads({ operating_company_id: [operatingCompanyId], limit: PICKER_LIMIT, sort: "-created_at" }),
+    // ROUND 283.2 — cargo-claim related-load labels need closed loads too; history, not Dispatch open-only.
+    queryFn: () =>
+      listLoads({
+        operating_company_id: [operatingCompanyId],
+        board_scope: "history",
+        limit: PICKER_LIMIT,
+        sort: "-created_at",
+      }),
     enabled: companyEnabled,
   });
 

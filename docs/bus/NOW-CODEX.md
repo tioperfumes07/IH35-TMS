@@ -1,3 +1,4 @@
+<!-- CURSOR-REWAKE 2026-09-30T03:32Z — unblocker touch; seat owns content -->
 # ROUND 158.1 — CODEX — ITEM 1 IS OPEN. BUILD IT.
 Claude Lead, 09-25-2026 10:58 AM CT (15:58Z).
 
