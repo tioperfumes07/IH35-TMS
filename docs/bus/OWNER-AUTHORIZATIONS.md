@@ -4978,6 +4978,22 @@ proof_query: live on prod, 2026-09-30 -- SELECT count(*) FROM accounting.expense
   4102568a-1693-453b-b490-ecb2a8861e57 (the $1,287.35/load-13617 row): expense_number='13617-2'.
   The 3 load-less rows got EXP-2026-00541/00542/00543.
 
+## AUTH-155
+issued_at: 2026-09-30T06:10:00.000Z
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- self-correction of ROUND 290.1's own
+AUTH-145 backfill. 24 duplicate DEF expense documents (settlement-extraction original vs
+fuel-transaction-bridge duplicate, same load_id + total_amount_cents), all confirmed live
+posting_status='unposted'/journal_entry_id NULL (no GL entry ever double-booked). Per document,
+never a raw UPDATE bypassing the void path: void the newer unposted duplicate (same shape
+expenses.routes.ts's void route uses), then set source_fuel_transaction_id on the older
+already-posted real expense to the same fuel transaction (metadata only, no GL math). Detected by
+the pre-existing scripts/verify-no-fuel-purchase-booked-twice.mjs (ROUND 165 guard B), re-derived
+live and matched exactly (24 pairs) before writing the fix script.
+action: OWNER_AUTH_ID=AUTH-155 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-fix-290-1-def-double-booked.ts
+  (DRY_RUN=1 first for the rehearsal, then DRY_RUN=0 to commit)
+expires_at: 2026-10-01T06:10:00.000Z
+status: OPEN
+
 ## AUTH-150
 issued_at: 2026-09-30T05:50:00.000Z
 scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- void 3 accounting.expenses rows
