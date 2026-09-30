@@ -4978,7 +4978,7 @@ action: OWNER_AUTH_ID=AUTH-150 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-3
 expires_at: 2026-10-01T05:50:00.000Z
 status: OPEN
 
-## AUTH-149
+## AUTH-151
 
 title: correct invoice_total_cents on 4 factoring_advances rows (FAC-2026-00048/63/64/82), USMCA
 requested_by: CC-2, self-authorized -- discovered running verify-costs-are-expenses guard chain
@@ -4993,14 +4993,14 @@ root_cause: verify-ldt-4-factoring-money.mjs FAIL live: advance_amount_cents + r
   postings, confirmed by direct query) already used notes.purchase's value for the 2150 credit and
   1090 debit on all 4 -- the GL was never wrong, only this one header field.
 scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 4 ids in
-  scripts/ops/2026-09-30-cc2-auth149-fix-4-stale-invoice-total-cents.ts (CORRECTIONS constant):
+  scripts/ops/2026-09-30-cc2-auth151-fix-4-stale-invoice-total-cents.ts (CORRECTIONS constant):
   invoice_total_cents 590000->611500 (FAC-48), 412000->415000 (FAC-63), 400000->412000 (FAC-64),
   370000->320000 (FAC-82). A pure metadata UPDATE -- no journal entry (Law 280.0.b), no GL touched,
   no other column changed. Script self-verifies each row's 4 components sum to the exact correction
   target before writing, refuses otherwise. Not authorized: any other factoring_advances row; any
   other column; any GL/JE write.
 action:
-  OWNER_AUTH_ID=AUTH-149 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth149-fix-4-stale-invoice-total-cents.ts --apply
+  OWNER_AUTH_ID=AUTH-151 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth151-fix-4-stale-invoice-total-cents.ts --apply
   (run from repo root; DRY_RUN first with no --apply flag)
 expires_at: 2026-10-01T00:00:00.000Z
 status: OPEN
