@@ -3,6 +3,11 @@
 // Plain counts get thousands separators too ("1,234"). This is the single source of truth — do NOT
 // hand-roll `toFixed(2)`, `toLocaleString`, or per-file `Intl.NumberFormat` money variants; import from
 // here so nothing drifts out of QBO format again.
+//
+// D48 — every money COLUMN also uses QBO_MONEY_CELL_CLASS (right-align + tabular-nums) from
+// design/qbo-parity.ts so alignment matches QuickBooks, not just the string shape.
+
+export { QBO_MONEY_CELL_CLASS } from "../design/qbo-parity";
 
 const USD = new Intl.NumberFormat("en-US", {
   style: "currency",

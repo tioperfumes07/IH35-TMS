@@ -38,7 +38,9 @@ const COMBOBOX_PATH = "apps/frontend/src/components/Combobox.tsx";
 const TOOLBAR_PATH = "apps/frontend/src/components/table/UniversalListToolbar.tsx";
 
 export function tokensExportSizeClass(src) {
-  return /export const FILTER_CONTROL_SIZE_CLASS\s*=\s*"[^"]*h-9[^"]*"/.test(src);
+  // D52 (2026-09-30): house filter is h-10 (was h-9). Still one shared constant — height may move,
+  // but TableSearch / Combobox / Range must keep importing it.
+  return /export const FILTER_CONTROL_SIZE_CLASS\s*=\s*"[^"]*h-10[^"]*"/.test(src);
 }
 
 export function fileUsesSharedSizeClass(src) {
@@ -63,7 +65,7 @@ export function fileHasStrayFilterHeight(src) {
 
 if (SELFTEST) {
   const cases = [
-    { name: "tokens.ts exporting the real h-9 constant passes", fn: () => tokensExportSizeClass('export const FILTER_CONTROL_SIZE_CLASS = "h-9 text-[13px]";') === true },
+    { name: "tokens.ts exporting the real h-10 constant passes", fn: () => tokensExportSizeClass('export const FILTER_CONTROL_SIZE_CLASS = "h-10 min-w-[10rem] text-xs";') === true },
     { name: "tokens.ts with a downgraded h-8 constant fails", fn: () => tokensExportSizeClass('export const FILTER_CONTROL_SIZE_CLASS = "h-8 text-[13px]";') === false },
     { name: "a file importing/using the shared constant passes", fn: () => fileUsesSharedSizeClass('className={`${FILTER_CONTROL_SIZE_CLASS} w-full`}') === true },
     { name: "a file with no reference to the shared constant fails", fn: () => fileUsesSharedSizeClass('className="h-8 w-full"') === false },
@@ -72,7 +74,7 @@ if (SELFTEST) {
       fn: () => fileHasStrayFilterHeight('<input type="number" className="h-8 w-full rounded-sm border px-2 text-[12px]" />') === true,
     },
     {
-      name: "the fixed h-9+text-[13px] pair on an <input> is NOT flagged as a stray",
+      name: "the fixed h-10 shared constant on an <input> is NOT flagged as a stray",
       fn: () => fileHasStrayFilterHeight('<input type="number" className={`mt-1 ${FILTER_CONTROL_SIZE_CLASS} w-full`} />') === false,
     },
     {
@@ -92,7 +94,7 @@ if (SELFTEST) {
 }
 
 const checks = [
-  { path: TOKENS_PATH, assert: tokensExportSizeClass, label: "exports FILTER_CONTROL_SIZE_CLASS at h-9" },
+  { path: TOKENS_PATH, assert: tokensExportSizeClass, label: "exports FILTER_CONTROL_SIZE_CLASS at h-10 (D52)" },
   { path: TABLE_SEARCH_PATH, assert: fileUsesSharedSizeClass, label: "uses the shared constant (not a re-hardcoded height)" },
   { path: COMBOBOX_PATH, assert: fileUsesSharedSizeClass, label: "uses the shared constant (not a re-hardcoded height)" },
   { path: TOOLBAR_PATH, assert: fileUsesSharedSizeClass, label: "Range popover fields use the shared constant" },

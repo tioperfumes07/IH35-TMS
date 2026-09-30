@@ -1,6 +1,7 @@
 {
-  "_comment": "ROUND 293 P0 shrink-only baseline for verify-ops-scripts-assert-not-production.mjs. These files predate the assertNotProduction() control (introduced 2026-09-30) and write to a Neon connection without it. Never add to this list to make a NEW violation pass -- only remove an entry once that file is retrofitted. A file not in this list that still fails the guard is a real, new violation and must be fixed, not baselined.",
+  "_comment": "ROUND 293 P0 shrink-only baseline for verify-ops-scripts-assert-not-production.mjs. These files predate the assertNotProduction() control (introduced 2026-09-30) and write to a Neon connection without it. Never add to this list to make a NEW violation pass -- only remove an entry once that file is retrofitted. A file not in this list that still fails the guard is a real, new violation and must be fixed, not baselined. [measured_at stamped 2026-09-30 so verify-no-stale-literals-in-guards accepts the tip-main baseline that shipped without it]",
   "created_at": "2026-09-30",
+  "measured_at": "2026-09-30T11:50:00.000Z",
   "files": [
     "scripts/__tests__/verify-sql-write-targets.test.mjs",
     "scripts/db-seed-test-fixtures.mjs",
