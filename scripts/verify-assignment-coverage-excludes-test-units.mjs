@@ -11,11 +11,13 @@
  * elsewhere) and fails if a coverage/attribution report includes one of them, or if the known
  * list itself silently grows without a name attached.
  */
-import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "..", "..");
+const LABEL = "verify-assignment-coverage-excludes-test-units";
+const USMCA_OPERATING_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
 /** The coder test artifacts named in CC-2's T-22 finding (Round 300, T-23) -- never real trucks. */
 export const KNOWN_TEST_UNIT_NUMBERS = Object.freeze(["T120", "T149", "T150", "T151", "USMCA-001"]);
@@ -104,15 +106,45 @@ function selftest() {
   return ok;
 }
 
+async function runLive() {
+  const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
+  try {
+    await client.query("BEGIN");
+    await client.query("SELECT set_config('app.bypass_rls', 'lucia', true)");
+    const rows = await measureAssignmentCoverage(client, USMCA_OPERATING_COMPANY_ID, 90);
+    await client.query("ROLLBACK");
+
+    if (rows.length !== 16) { // STALE-LITERAL-OK: live fleet size measured 2026-09-30 (T-23); a real change should surface loudly, not be silently accepted
+      console.error(
+        `${LABEL}: FAIL — expected 16 real USMCA units, measured ${rows.length}. The real fleet ` +
+          `count changed (a unit added/removed/reclassified) -- update this guard's expectation, ` +
+          `don't silently accept a different count.`
+      );
+      process.exit(1);
+    }
+
+    const zero = rows.filter((r) => r.covered_days === 0);
+    console.log(`${LABEL}: OK — 16/16 real units measured, 90-day window, test units excluded.`);
+    console.table(rows);
+    if (zero.length > 0) {
+      console.log(`${LABEL}: NOTE — ${zero.length} unit(s) with ZERO assignment coverage: ${zero.map((r) => r.unit_number).join(", ")} (informational, not a failure — see T-23/OUTBOX for the named cause).`);
+    }
+    process.exit(0);
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    console.error(`${LABEL}: FAIL — ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
+  } finally {
+    client.release();
+    await pool.end();
+  }
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   if (process.argv.includes("--selftest")) {
     const passed = selftest();
     console.log(passed ? "verify-assignment-coverage-excludes-test-units selftest PASS" : "verify-assignment-coverage-excludes-test-units selftest FAIL");
     process.exit(passed ? 0 : 1);
   }
-  console.log(
-    `verify-assignment-coverage-excludes-test-units: static OK -- known test units: ${KNOWN_TEST_UNIT_NUMBERS.join(", ")}. ` +
-      `Run with a live DATABASE_URL via .tmp-scratch tooling to measure real coverage; this file's job is the exclusion invariant, not the live report.`
-  );
-  process.exit(0);
+  await runLive();
 }
