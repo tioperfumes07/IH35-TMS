@@ -37,6 +37,7 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -74,6 +75,9 @@ async function main() {
 
   try {
     await client.query("BEGIN");
+    if (APPLY) {
+      await assertIsIntendedProduction(client);
+    }
     await client.query("SET LOCAL ROLE neondb_owner");
     await client.query("SET LOCAL app.bypass_rls = 'lucia'");
 
