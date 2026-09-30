@@ -392,6 +392,8 @@ async function fetchSamsaraStatsPage(token: string, after: string | null): Promi
   cursor: string | null;
   /** Which types set actually succeeded. DEGRADED carries NO odometer, fuel or engine-hours. */
   typesUsed: string;
+  /** Samsara's OWN refusal of the full set, verbatim, when we had to fall back. */
+  fullSetError: string | null;
 }> {
   // VALID stats types only. driverAssignments is NOT a valid /fleet/vehicles/stats type — including it
   // 400s the whole request (the bug that left city/state blank). Driver login lives on the separate
@@ -422,6 +424,10 @@ async function fetchSamsaraStatsPage(token: string, after: string | null): Promi
   let res: Response | null = null;
   let lastError: SamsaraApiError | null = null;
   let typesUsed = SAMSARA_STATS_TYPES_FULL;
+  // Samsara's own words for WHY the full set was refused. Without this, a degrade is a mystery we
+  // can only guess at from the outside -- and guessing is what turned 35 days of missing odometer
+  // into an open question instead of an answer. Captured here, recorded by the caller.
+  let fullSetError: string | null = null;
   for (const types of typesSets) {
     typesUsed = types;
     const url = new URL(`${SAMSARA_API_BASE}/fleet/vehicles/stats`);
@@ -436,6 +442,18 @@ async function fetchSamsaraStatsPage(token: string, after: string | null): Promi
     const body = await readJsonResponse(res);
     const retryable = res.status === 429 || res.status >= 500;
     lastError = new SamsaraApiError(`samsara_http_${res.status}`, res.status, body, retryable);
+    if (types === SAMSARA_STATS_TYPES_FULL) {
+      // Keep Samsara's verbatim refusal of the FULL set. `message` names the offending type or the
+      // missing scope; that one string is the whole diagnosis.
+      const detail = (() => {
+        try {
+          return typeof body === "string" ? body : JSON.stringify(body);
+        } catch {
+          return String(body);
+        }
+      })();
+      fullSetError = `http_${res.status}: ${String(detail).slice(0, 500)}`;
+    }
     if (res.status !== 400) break; // only retry on 400 (bad types)
     res = null;
   }
@@ -450,7 +468,7 @@ async function fetchSamsaraStatsPage(token: string, after: string | null): Promi
     .map((row) => parseVehicleStatRow(row))
     .filter((row): row is SamsaraVehicleStat => Boolean(row));
   const { hasNextPage, cursor } = parsePagination(json);
-  return { data, hasNextPage, cursor, typesUsed };
+  return { data, hasNextPage, cursor, typesUsed, fullSetError };
 }
 
 async function fetchSamsaraPage(
@@ -699,21 +717,29 @@ export class SamsaraClient {
    * odometer (driven miles, MPG, PM countdowns) must check `degraded` rather than discover a null
    * column weeks later -- see the measurement in fetchSamsaraStatsPage.
    */
-  async listVehicleStatsWithMeta(): Promise<{ data: SamsaraVehicleStat[]; typesUsed: string; degraded: boolean }> {
+  async listVehicleStatsWithMeta(): Promise<{
+    data: SamsaraVehicleStat[];
+    typesUsed: string;
+    degraded: boolean;
+    /** Samsara's verbatim refusal of the full types set, when we had to fall back. */
+    fullSetError: string | null;
+  }> {
     const token = this._token();
-    if (!token) return { data: [], typesUsed: SAMSARA_STATS_TYPES_FULL, degraded: false };
+    if (!token) return { data: [], typesUsed: SAMSARA_STATS_TYPES_FULL, degraded: false, fullSetError: null };
     const out: SamsaraVehicleStat[] = [];
     let after: string | null = null;
     let typesUsed = SAMSARA_STATS_TYPES_FULL;
+    let fullSetError: string | null = null;
     for (let page = 0; page < 50; page += 1) {
       const page_ = await fetchSamsaraStatsPage(token, after);
       // Any page that fell back marks the whole pull degraded -- odometer is missing from it either way.
       if (page_.typesUsed === SAMSARA_STATS_TYPES_DEGRADED) typesUsed = SAMSARA_STATS_TYPES_DEGRADED;
+      if (page_.fullSetError && !fullSetError) fullSetError = page_.fullSetError;
       out.push(...page_.data);
       if (!page_.hasNextPage || !page_.cursor) break;
       after = page_.cursor;
     }
-    return { data: out, typesUsed, degraded: typesUsed === SAMSARA_STATS_TYPES_DEGRADED };
+    return { data: out, typesUsed, degraded: typesUsed === SAMSARA_STATS_TYPES_DEGRADED, fullSetError };
   }
 
   async listVehicles(): Promise<SamsaraVehicle[]> {

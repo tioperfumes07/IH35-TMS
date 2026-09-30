@@ -326,6 +326,7 @@ export async function syncSamsaraVehicleStats(
   let stats: SamsaraVehicleStat[];
   let statsDegraded = false;
   let statsTypesUsed = "";
+  let statsFullSetError: string | null = null;
   try {
     // WITH META (Lead, 2026-09-30): the stats fetch falls back to a types set that carries NO
     // odometer when the full set 400s. That fallback is correct -- it keeps the dispatch board's
@@ -339,6 +340,7 @@ export async function syncSamsaraVehicleStats(
     stats = pull.data;
     statsDegraded = pull.degraded;
     statsTypesUsed = pull.typesUsed;
+    statsFullSetError = pull.fullSetError;
   } catch (error) {
     const message =
       error instanceof SamsaraApiError
@@ -362,7 +364,8 @@ export async function syncSamsaraVehicleStats(
     const reason =
       `samsara_stats_degraded_types:${statsTypesUsed} — this account did not serve ` +
       `obdOdometerMeters/fuelPercents/obdEngineSeconds, so odometer, fuel level and engine hours are ` +
-      `NULL for every row in this pull. Driven miles and MPG cannot be computed from it.`;
+      `NULL for every row in this pull. Driven miles and MPG cannot be computed from it. ` +
+      `SAMSARA SAID: ${statsFullSetError ?? "(no refusal captured — the full set was never attempted)"}`;
     errors.push(reason);
     await writeSyncLog(client, {
       operatingCompanyId,
