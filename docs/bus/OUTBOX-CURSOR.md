@@ -1,5 +1,8 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T05:42Z · #23249 SQUASH-MERGED `ee3a6290fe` · FAST-MERGE**
+CURSOR | 285.4.7 #63 won't-merge round157d · 285.4.8 #23 dependabot closed · 285.4.10 #60 BOL→invoice→Faro wired · 285.4.9 #59 APPROVED BY on invoice PDF | GUARD verify-auto-invoice-on-bol-wired OK · vitest 6/6 | NEXT: 285.4.9 remainder (downtime ledger / METHOD column / draft-expense / idle) + deploy Chrome proof.
+
 **2026-09-30T04:45Z · 13619 SYNCED · 285.4.1–285.4.3 READY TO PUSH**
 CURSOR | 13619 completed_docs_received→closed via syncLoadStatusToBillingInClientTx (invoice sent) |
 verify-settled-load-carries-settled-status green · 285.4.3 no UI rebuild · NEXT: push/fast-merge → 285.4.4 Load Costs wizard amounts.
