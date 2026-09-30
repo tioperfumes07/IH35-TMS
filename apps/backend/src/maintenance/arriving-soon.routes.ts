@@ -94,8 +94,22 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
       const offsetParam = values.length;
       const res = await client.query(
         `
-          SELECT *
-          FROM maintenance.v_arriving_soon
+          SELECT v.*, gvs.current_state AS geofence_state, gvs.distance_m AS geofence_distance_m,
+                 gvs.state_updated_at AS geofence_state_updated_at
+          FROM maintenance.v_arriving_soon v
+          -- ROUND 301 T-34 -- "units inbound, ETA, geofence state, what is due on arrival."
+          -- Latest geofence state for this unit, across every geofence it has ever approached
+          -- (geo.geofence_vehicle_state has no load-scoped row for most units today, so this is
+          -- unit-scoped, not load-scoped -- the most recent state is the truck's REAL current
+          -- proximity signal regardless of which geofence produced it).
+          LEFT JOIN LATERAL (
+            SELECT g.current_state, g.distance_m, g.state_updated_at
+            FROM geo.geofence_vehicle_state g
+            WHERE g.unit_id = v.unit_id
+              AND g.operating_company_id = v.operating_company_id
+            ORDER BY g.state_updated_at DESC
+            LIMIT 1
+          ) gvs ON true
           ${whereSql}
           ORDER BY
             COALESCE(predicted_yard_arrival_at, now() + interval '999 days') ASC,
@@ -127,6 +141,11 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
         hours_until_yard_arrival: row.hours_until_yard_arrival,
         already_arrived: Boolean(row.already_arrived),
         eta_confidence: row.eta_confidence,
+        // ROUND 301 T-34 -- null is honest ("this unit has never approached a tracked geofence"),
+        // never guessed or defaulted to a state string.
+        geofence_state: row.geofence_state ?? null,
+        geofence_distance_m: row.geofence_distance_m != null ? Number(row.geofence_distance_m) : null,
+        geofence_state_updated_at: row.geofence_state_updated_at ?? null,
         issues,
         severe_count: Number(row.severe_count ?? 0),
         warning_count: Number(row.warning_count ?? 0),

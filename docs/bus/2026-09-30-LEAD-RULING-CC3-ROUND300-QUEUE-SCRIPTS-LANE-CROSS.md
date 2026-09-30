@@ -22,8 +22,10 @@ Touched scripts/-lane files, one per queue item, each its own PR:
 - `scripts/verify-fault-code-alerts-use-shared-driver-attribution.mjs` (Round 301 T-33) -- fails
   if the fault-code alert route or processor stops using the shared driverAtTimeSql helper, or
   re-inlines the assignment-window predicate it exists to centralize.
-- further Round 301 T-34 through T-36 guards/reports to follow under this same ruling, named as
-  they land.
+- `scripts/verify-arriving-soon-serves-geofence-state.mjs` (Round 301 T-34) -- fails if the
+  Arriving Soon feed stops joining the real geofence-state table, stops exposing it, or defaults
+  a null state to a guessed string.
+- further Round 301 T-35/T-36 guards/reports to follow under this same ruling, named as they land.
 
 No money-app posting path touched (NON-FINANCIAL lane -- measurement/reporting guards, a
 read-only PM-due computation, a poll-fallback cron reusing an existing ingestion function, and a
