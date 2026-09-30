@@ -41,6 +41,23 @@ const CHECKS = [
 ];
 
 async function main() {
+  // H-4 / X-31 (ROUND 301) -- FAIL CLOSED BEFORE CONNECTING, never hang.
+  // This guard already declares REQUIRES_LIVE_DB, which excludes it from verify-static's no-DB
+  // sweep. That declaration does NOT make it safe under verify-no-silent-db-skip, which strips
+  // DATABASE_URL and captures the real exit code: `new pg.Client({ connectionString: undefined })`
+  // does not throw, it falls back to libpq defaults (local socket, PGUSER) and BLOCKS until the
+  // harness timeout. The harness counts a hang as a failure, correctly -- "a hang is not a pass
+  // either" -- so both this guard and every seat's money-pr-local-gate run were red on main with
+  // nothing in any PR's own diff to explain it. ROUND 29.9-B owner ruling: a live money guard that
+  // cannot connect is a FAIL, never a pass. An explicit non-zero exit is how that ruling is
+  // honoured; hanging silently is the one outcome it forbids.
+  if (!process.env.DATABASE_URL) {
+    console.error(
+      "verify-no-job-writes-against-sample-data FAILED -- DATABASE_URL not set. This is a live-data guard (see REQUIRES_LIVE_DB above); " +
+      "it refuses to report success it cannot prove, and exits rather than blocking on libpq defaults."
+    );
+    process.exit(1);
+  }
   const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
   await client.connect();
 
