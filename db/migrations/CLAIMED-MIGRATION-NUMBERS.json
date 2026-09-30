@@ -8,6 +8,11 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202614640000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-30",
+      "purpose": "ROUND 290.12: fix USMCA catalogs.items DEF-item account misconfiguration -- 'Fuel-DEF-Diesel Exhaust Fluid' and 'Driver Reimbursement-Fuel Def' both point default_expense_account_id at 5000 Fuel & Diesel instead of 5010 DEF (Diesel Exhaust Fluid), which exists and has zero postings all-time. Root cause is data, not code -- both apps/backend/src/fuel/fuel-expense-document.service.ts and apps/backend/src/feed/seed-settlement-document.service.ts resolve the account from this catalog row, never hardcode it. Additive/idempotent UPDATE, only flips the two rows if still pointed at 5000."
+    },
     "202614440000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-28",
