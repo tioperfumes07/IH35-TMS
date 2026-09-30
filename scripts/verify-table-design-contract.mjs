@@ -121,8 +121,19 @@ function auditParity(src) {
     f.push(`${PARITY}: body cells must use the group's even-row variant (group.bgEven ?? group.bg) on even rows`);
   // Body td 1px right rule — the lighter --line shade (tableBodyRule), distinct from --line2
   // (tableColumnRule) which owns the header/group-band rows only.
-  if (!/borderRight:\s*`1px solid \$\{colors\.tableBodyRule\}`/.test(src))
-    f.push(`${PARITY}: body td must carry a 1px right column rule (colors.tableBodyRule, the --line shade)`);
+  // QBO-ROWS-NOT-COLUMNS (owner ruling 2026-09-30) — this check is INVERTED from its original
+  // form and that inversion is deliberate. It used to REQUIRE a vertical rule on every body cell
+  // (DESIGN-CONTRACT-LOAD-COSTS-BOARD-2026-09-05). The owner, comparing our tables to QuickBooks
+  // side by side, ruled the opposite: "there should be distinction between rows, but there should
+  // NOT be lines between columns." A body cell that carries borderRight re-draws the spreadsheet
+  // grid the ruling removed, so the guard now fails on its PRESENCE. The row rule is asserted
+  // immediately below and is unchanged — losing THAT is still a failure.
+  if (/borderRight:\s*`1px solid \$\{colors\.tableBodyRule\}`/.test(src))
+    f.push(`${PARITY}: body td must NOT carry a vertical column rule — owner ruling 2026-09-30, rows are separated, columns are not (QuickBooks parity). Remove borderRight: 1px solid ${colors.tableBodyRule} from the body cell.`);
+  if (!/borderBottom:\s*`1px solid \$\{colors\.tableBodyRule\}`/.test(src))
+    f.push(`${PARITY}: body td must carry a HORIZONTAL row rule (borderBottom: 1px solid colors.tableBodyRule) — row distinction is the half of the owner's 2026-09-30 ruling that must survive`);
+  if (!/fontSize:\s*Math\.max\(typography\.panelHeader \?\? 11, d\.font \+ 1\)/.test(src))
+    f.push(`${PARITY}: column header text must be one step LARGER than the row text (owner ruling 2026-09-30: "the size of the text in the row headers should be a little bit larger than the text in the rows. FOR ALL")`);
   // COMPLETE-OUTLINE LAW (owner ruling 2026-09-05): every header th gets a full 1px border box on
   // all four sides (colors.tableColumnRule, --line2), not just a bottom rule — supersedes the
   // 2026-09-04 ruling's 2px border-bottom width. Matched as ONE contiguous, ordered sequence (not

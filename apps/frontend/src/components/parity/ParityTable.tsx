@@ -1311,9 +1311,14 @@ export function ParityTable<T>({
             style={{
               paddingTop: d.padY,
               paddingBottom: d.padY,
-              // DESIGN-CONTRACT-LOAD-COSTS-BOARD-2026-09-05.md: body td rules are the lighter
-              // --line shade (tableBodyRule), distinct from the darker --line2 on header/group rows.
-              borderRight: `1px solid ${colors.tableBodyRule}`,
+              // QBO-ROWS-NOT-COLUMNS (owner ruling 2026-09-30, SUPERSEDES the vertical body rule in
+              // DESIGN-CONTRACT-LOAD-COSTS-BOARD-2026-09-05.md). Owner, measuring our tables against
+              // QuickBooks side by side: "there should be distinction between rows, but there should
+              // NOT be lines between columns." QuickBooks separates rows and never draws a vertical
+              // rule between data cells — the grid of boxes is what made our lists read as a
+              // spreadsheet instead of a register. The ROW rule stays and is the whole point of the
+              // ruling; only the COLUMN rule goes. Header and group bands keep their own outline
+              // (COMPLETE-OUTLINE LAW, untouched) — the owner's ruling is about the BODY.
               borderBottom: `1px solid ${colors.tableBodyRule}`,
               ...(cellBg ? { backgroundColor: cellBg } : {}),
               ...(String(column.key) in stickyLeftPx
@@ -1657,7 +1662,14 @@ export function ParityTable<T>({
                     // ParityTable header renders — was emergent from padding/line-height alone, so
                     // two live instances (Dispatch 30px, Load Costs 34px) silently drifted apart.
                     height: spacing.tableHeaderHeight,
-                    fontSize: typography.panelHeader ?? 11,
+                    // QBO-HEADER-OUTRANKS-ROW (owner ruling 2026-09-30): "the size of the text in
+                    // the row headers should be a little bit larger than the text in the rows. FOR
+                    // ALL." We shipped the inverse — header 11px sitting over a 12px body — so the
+                    // column labels read as a footnote to their own data. QuickBooks sizes the
+                    // header above the row. Take whichever is larger so a denser table cannot
+                    // silently invert it again: ultra (11px body) lands 12, regular/compact
+                    // (12px body) land 13.
+                    fontSize: Math.max(typography.panelHeader ?? 11, d.font + 1),
                     fontWeight: headerWeight ?? 700,
                     letterSpacing: 0.3,
                     backgroundColor: dragOverKey === key ? colors.accentTint : resolvedHeaderBg,
