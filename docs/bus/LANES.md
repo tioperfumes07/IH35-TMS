@@ -142,6 +142,7 @@ apps/backend/src/index.ts  (route registration only — declare which register*R
 .github/workflows/**      (CI is infrastructure every seat depends on — declare the job in the PR body)
 feed-input/**             (parsed source-document truth data every seat reads against, not one seat's own)
 scripts/feed/**           (the parsers that produce feed-input/** — same shared-reference-data rationale)
+scripts/day_control.json  (verify-feed-day.mjs's CONTROL file, a mirror of scripts/feed/day_control.json above — same shared-reference-data rationale)
 
 ## FORBIDDEN TO EVERY SEAT
 Any write to: payroll.* · settlement.* · accounting.qbo_* · bank.* · maint.*
