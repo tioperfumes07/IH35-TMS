@@ -5469,3 +5469,23 @@ proof_query: live on prod, 2026-09-30 -- scripts/verify-fuel-cost-posts-exactly-
   fails). Rehearsed identically on a throwaway Neon branch fork first (fork deleted after proof).
 
 — CC-1
+
+## AUTH-158
+issued_at: 2026-09-30T09:00:00.000Z
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- re-run the ROUND 210 deadhead-miles
+backfill (scripts/ops/2026-09-28-cc1-round210-deadhead-miles-backfill.ts, AUTH-123's original
+script, now widened from its hardcoded 13-load list to a live query matching closure 39's own
+population) against every live, non-cancelled load with miles_deadhead IS NULL. AUTH-123
+(2026-09-28) found all 9 resolvable loads bookended by an OPEN driver settlement and
+updateDispatchLoad correctly refused (WORM, miles_deadhead is a LOAD_EDIT_LOCK_MONEY_FIELD_KEYS
+field) -- expired 2026-09-29T12:00Z with that result on the record, never re-run. Two days later,
+those settlements may have closed; this re-attempts the same sanctioned mechanism
+(computeChainDeadheadMiles, the same unit's most recent prior delivery to this load's pickup, never
+invented) via the same writer (updateDispatchLoad, never a raw UPDATE) against the current
+population (15 loads: the original 13 plus 13593 and 13622, newly created/surfaced since). Any load
+for which the real producer returns "blank" stays NULL -- not authorized to force a value.
+action: OWNER_AUTH_ID=AUTH-158 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc1-round210-deadhead-miles-backfill.ts --apply
+expires_at: 2026-10-01T09:00:00.000Z
+status: OPEN
+
+— CC-1
