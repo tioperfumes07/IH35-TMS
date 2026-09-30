@@ -5617,6 +5617,52 @@ executed: 2026-09-30, PR #23339 merged (squash 72f1b7a2ae), then --apply run for
 
 ---
 
+## AUTH-176
+
+title: void-then-delete 14 proforma pre-invoices, void (not delete) 2 sent invoices -- the 16
+  dispatched loads, PURGE-SCOPE-NARROWED ruling
+requested_by: Lead ruling (docs/bus/2026-09-30-LEAD-RULING-CC2-PURGE-SCOPE-NARROWED-OWNER-QUOTED.md),
+  owner quoted verbatim: "THE TRUCK LINE, THE 16 DISPATCHED LOADS ... THEY APPEARED INVOICED, BUT
+  THEY SHOULD NOT BE THEY ARE IN TRANSIT, NOT AUTHORIZED TO INVOICE. SO EITHER DELETE THIS
+  TRANSACTIONS COMPLETELY SO YOU CAN REFEED BATCH INSTANTLY ... OR FIX THE ISSUE NOW." Executed
+  against the settling table CC-2 posted per the separate STOP-WORK order (docs/bus/OUTBOX-CC-2.md),
+  which resolved the "16 vs 19" count discrepancy: 14 zero-line/zero-posting proformas
+  (13624,13627-13639) + 2 sent invoices (13625/13626, each carrying exactly 1 real line) = 16.
+root_cause: these 16 documents were emitted against loads that were still 'dispatched' (in
+  transit, never delivered) -- unauthorized to invoice by the owner's own standing rule. Live-
+  confirmed immediately before writing this AUTH: all 14 proformas status='proforma',
+  total_cents matching the original survey exactly, 0 invoice_lines, 0 GL postings. Both sent
+  invoices status='sent', 1 real line each, 0 GL postings (their factoring advances,
+  FAC-2026-00139/00140, are the ones independently proven real by owner-supplied Faro CSVs under
+  AUTH-173, already merged/applied -- the advance being real Faro money and the invoice being sent
+  before the load delivered are two separate facts; this AUTH corrects only the second).
+  PRE-FLIGHT FINDING (not in the original order): 2 docs.file_links rows point at invoice 13633
+  (both "invoice-13633.pdf", an auto-rendered PDF snapshot uploaded by the shared ops-actor id,
+  description "Invoice 13633 PDF (Round 244)" -- confirmed NOT customer-supplied evidence, just a
+  redundant rendered copy). Deleted as children before the parent invoice row.
+  WORM DISCOVERY (not anticipated, found live): `accounting.invoices` DELETE is guarded by
+  `accounting.refuse_financial_row_delete()` (migration 202614490000) -- refuses every role
+  unconditionally UNLESS `app.purge_auth_id` is set to a real `AUTH-NNN`-format string AND the
+  target row's own `voided_at` is already non-null. This script sets
+  `SET LOCAL app.purge_auth_id = 'AUTH-176'` immediately before the delete loop, after each row is
+  already voided in the same transaction -- matching the "void first, then delete, both, in that
+  order" law exactly, now confirmed DB-enforced, not just convention.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 14 proforma ids + 2 sent
+  invoice ids in `scripts/ops/2026-09-30-cc2-auth176-purge-14-proformas-void-2-invoices.ts`
+  (PROFORMAS + SENT_INVOICES constants), plus the 2 named `docs.file_links` rows on 13633. Void
+  via `executeVoidCancel("invoice", ...)` for all 16; DELETE only the 14 proformas (never the 2
+  sent). Factoring advances FAC-2026-00139/00140 explicitly NOT touched -- confirmed still
+  'advanced' after, in the same transaction. Not authorized: the 5 separate zero-line "sent on an
+  'invoiced'-status load" invoices (13616/13618/13620/13621/13622 -- POD-DECIDES ruling, separate
+  follow-up); TRANSPORTATION or TRUCKING; any factoring_advance; any bank transaction.
+action:
+  OWNER_AUTH_ID=AUTH-176 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth176-purge-14-proformas-void-2-invoices.ts --apply
+  (run from repo root; DRY_RUN first with no --apply flag)
+expires_at: 2026-10-01T00:00:00.000Z
+status: OPEN
+
+---
+
 ## AUTH-174
 
 title: B-03/D44 -- backfill the missing linehaul line on 5 already-sent invoices
