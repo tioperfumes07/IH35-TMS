@@ -29,3 +29,6 @@ C-20 · what changed: `DriverProfilePage` is now a Customers/Vendors-style tabbe
 **2026-09-30T17:05Z · C-21 D24–D33 SHELL · branch `cursor/c21-maintenance-odometer-honest-c89b` · PR #23446**
 C-21 · what changed: D24 Create WO is modal via `?create_wo=1` (WorkOrderNewPage redirects); D25 SelectCombobox on WO header fields; D27 dark navy section headers; D29/D30 fleet status KPIs + class chips in filter toolbar; D31 Active WOs source-type multi-select; D32/D33 list tabs drop stacked PM/Alerts/DTC (D10 min-scroll). Ops: `scripts/ops/verify-c21-maintenance-shell.mjs`. · LIVE PROOF: ops shell --selftest PASS; tsc -b exit 0. · LEFT: Chrome click-proof; C-22 tabs/KPIs next.
 
+**2026-09-30T17:10Z · C-22 TABS + KPIs · branch `cursor/c22-tabs-kpis-layout-c89b`**
+C-22 · what changed: NavyPageSubNav locked h-7 + #14314F; DrillKpiCard empty tiles explain why; MaintKpiRows unavailable on error; Fleet Avg Age → DrillKpiCard; KpiStrip data-c22. Ops: `scripts/ops/verify-c22-tabs-kpis.mjs`. · LIVE PROOF: ops --selftest PASS; vitest 12/12; tsc -b exit 0. · LEFT: Chrome re-measure; C-23 kanban drag next.
+
