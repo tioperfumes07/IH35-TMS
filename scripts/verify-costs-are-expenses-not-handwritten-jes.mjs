@@ -185,6 +185,22 @@ async function measure(client) {
   );
   const jeWithExpense = new Set(expAll.rows.map((r) => r.je_id));
 
+  // G2 (ROUND 292/293, AUTH-168) exemption: a closed-settlement-line reclassification cannot be
+  // backed by an accounting.expenses row (settlements 5769-5819 are permanently closed, never
+  // reopened -- the Lead's own explicit order was "ONE adjusting journal entry", not a document).
+  // Its real "document" is driver_finance.settlement_line_item_splits, a permanent, append-only,
+  // FK-linked mapping table this session built specifically so the reclassification is auditable
+  // without touching the signed settlement -- the same evidentiary role an expense row plays for
+  // an ordinary cost JE. Narrow on purpose: only a JE with a REAL row in that table is exempt, not
+  // manual_je as a class -- a genuinely undocumented handwritten JE still fails this check.
+  const g2SplitAll = await client.query(
+    `SELECT DISTINCT adjusting_journal_entry_id::text AS je_id
+       FROM driver_finance.settlement_line_item_splits
+      WHERE operating_company_id = $1::uuid AND adjusting_journal_entry_id IS NOT NULL`,
+    [USMCA_COMPANY_ID],
+  );
+  for (const r of g2SplitAll.rows) jeWithExpense.add(r.je_id);
+
   const results = [];
   for (const je of jeRes.rows) {
     const postings = postingsByJe.get(je.je_id) ?? [];

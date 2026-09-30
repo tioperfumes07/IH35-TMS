@@ -696,7 +696,21 @@ export function DispatchBoard({
     staleTime: 60_000,
     refetchInterval: 60_000,
   });
-  const inShopUnits = inShopUnitsQuery.data ?? [];
+  // FAILED FEED MUST NOT RENDER STALE TRUCKS (Lead, 2026-09-30). verify-dispatch-in-shop-feed-wired
+  // was RED on origin/main — measured by running it against origin/main content, so every seat was
+  // blocked — and the property it asks for is real, not ceremonial.
+  //
+  // react-query keeps the LAST SUCCESSFUL `data` on the query object after a later fetch fails. With
+  // a bare `data ?? []`, a failed in-shop refresh left the previous fetch's trucks rendering in the
+  // In-shop section and counted in the section totals, underneath an error banner. A board that
+  // shows an error AND the numbers it could not refresh is worse than one that shows only the error:
+  // a dispatcher reads the trucks, not the banner, and acts on a list the shop may have emptied an
+  // hour ago.
+  //
+  // On error the feed is EMPTY. The error state (section.key === "in_shop" && isError, below) is
+  // what the user sees, and the Awaiting count — which subtracts in-shop units — recomputes from the
+  // same empty list rather than from a stale one.
+  const inShopUnits = inShopUnitsQuery.isError ? [] : (inShopUnitsQuery.data ?? []);
   // ROUND 203 F17 — isError handled via ListErrorBanner/ListErrorState, not silent [].
   // DispatchInShopUnit's real key is unit_id (api/dispatch.ts) — .id never existed on this type;
   // this line only typechecked before because a prior tsc pass didn't reach it.
@@ -1285,7 +1299,8 @@ export function DispatchBoard({
           <button
             type="button"
             disabled={settlementNumberBusy || !settlementNumberDraft.trim()}
-            className="h-6 rounded-sm bg-[#14314F] px-1.5 text-xs font-semibold text-white disabled:opacity-60"
+            className="h-6 rounded-sm px-1.5 text-xs font-semibold text-white disabled:opacity-60"
+            style={{ backgroundColor: colors.actionNavy }}
             onClick={() => void saveSettlementNumber(settlementId)}
             data-testid={`presettlement-number-save-${settlementId}`}
           >

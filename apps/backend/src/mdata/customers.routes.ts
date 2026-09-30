@@ -1,6 +1,7 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { customerHasTransactionsSql } from "../accounting/has-transactions-predicate.js";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { looksLikeSampleDataName } from "./sample-data-name-detection.js";
@@ -39,6 +40,9 @@ const listQuerySchema = z.object({
   // must show ONLY the ACTIVE company's records. This is an OPT-IN flag passed by the Customers list page
   // alone; shared pickers/autocomplete NEVER pass it, so cross-entity booking dropdowns are unaffected.
   active_company_only: z.coerce.boolean().optional().default(false),
+  // A-21: shared with mdata/vendors.routes.ts via customerHasTransactionsSql — the ONE "has
+  // transactions" definition, so the two lists' default filter can never disagree.
+  has_transactions: z.coerce.boolean().optional(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -546,7 +550,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const { limit, offset, status, search, q, active_only, autocomplete, customer_type, operating_company_id, active_company_only } = parsedQuery.data;
+    const { limit, offset, status, search, q, active_only, autocomplete, customer_type, operating_company_id, active_company_only, has_transactions } = parsedQuery.data;
     const term = (q ?? search ?? "").trim();
     if (autocomplete) {
       if (!operating_company_id) {
@@ -621,6 +625,11 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
       if (customer_type) {
         values.push(customer_type);
         filters.push(`customer_type = $${values.length}`);
+      }
+      // A-21 (2026-09-30, owner): the ONE "has transactions" predicate, shared with
+      // mdata/vendors.routes.ts via customerHasTransactionsSql — see A-16.
+      if (has_transactions) {
+        filters.push(customerHasTransactionsSql("id"));
       }
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
 

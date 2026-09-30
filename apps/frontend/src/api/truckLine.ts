@@ -95,12 +95,34 @@ export type TruckLineGroup = {
 
 export type TruckLineStationDef = { key: string; index: number; label: string };
 
+export type TruckLinePendingRow = {
+  load_id: string;
+  load_number: string;
+  status: string;
+  trip_type: string | null;
+  created_at: string;
+  customer_name: string | null;
+  pickup_city: string | null;
+  pickup_state: string | null;
+  pickup_scheduled_at: string | null;
+  delivery_city: string | null;
+  delivery_state: string | null;
+  unit_id: string | null;
+  unit_number: string | null;
+};
+
 export type TruckLineResponse = {
   groups: TruckLineGroup[];
   rows: TruckLineRow[];
+  /** T-04 (Lead order, 2026-09-30): booked/planned/assigned loads not yet actively rolling --
+   *  the "bottom section" feed. Never unit-grouped; promotes into `rows`/`groups` the instant a
+   *  load's status crosses into an actively-dispatched one (dispatched/at_pickup/in_transit/
+   *  at_delivery), so there is no separate promotion write path to keep in sync. */
+  pending_rows: TruckLinePendingRow[];
   total_count: number;
   loaded_count: number;
   available_count: number;
+  pending_count?: number;
   tour_count?: number;
   in_transit_count?: number;
   stations: TruckLineStationDef[];
