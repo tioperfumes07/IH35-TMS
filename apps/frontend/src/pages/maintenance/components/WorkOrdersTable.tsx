@@ -1,6 +1,7 @@
 import type { WorkOrder } from "../../../api/maintenance";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../../lib/entity-label";
+import { formatDateQboList } from "../../../lib/formatDate";
 import { Button } from "../../../components/Button";
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import { EntityPicker } from "../../../components/EntityPicker";
@@ -219,7 +220,7 @@ export function WorkOrdersTable({
         label: "Opened",
         sortable: true,
         sortValue: (row) => woSortValue(row, "opened_at"),
-        render: (row) => (row.opened_at ? String(row.opened_at).slice(0, 10) : "—"),
+        render: (row) => (row.opened_at ? formatDateQboList(row.opened_at) || "—" : "—"),
       },
       { key: "timing", label: "Timing", sortable: false, render: (row) => renderDuration(row) },
     ],

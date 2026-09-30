@@ -34,3 +34,6 @@ C-22 · what changed: NavyPageSubNav locked h-7 + #14314F; DrillKpiCard empty ti
 
 **2026-09-30T17:20Z · C-23 KANBAN DISPATCHED→AT PICKUP · branch `cursor/c23-kanban-dispatched-pickup-c89b`**
 C-23 · what changed: Manual stamp drop now keeps the card in At pickup / Loaded / At delivery via `stampOverrides` + `optimisticGeofenceAfterManualStamp` (survives loads refetch). Empty lane drop targets min-h 120px. Stale REG-048 two-live-assigned test aligned to live-leg dedupe. Ops: `scripts/ops/verify-c23-kanban-dispatched-pickup.mjs`. · LIVE PROOF: ops --selftest PASS; vitest DispatchKanban 27/27. · LEFT: Chrome drag recording; C-24 QBO parity tail.
+
+**2026-09-30T17:30Z · C-24 QBO PARITY TAIL · branch `cursor/c24-qbo-parity-tail-c89b`**
+C-24 · what changed: D47 list-column sweep — Customers/Vendors/Load Costs/Transaction Register/Active WOs date cells use `formatDateQboList` (M/D/YY); banking stays MM/DD/YYYY; tokens D48–D54 already on tip from #23385 re-asserted. Ops: `scripts/ops/verify-c24-qbo-parity-tail.mjs`. · LIVE PROOF: ops --selftest PASS; verify-qbo-parity-tokens OK; formatDate 12/12; tsc -b exit 0. · LEFT: Chrome getComputedStyle on list dates; C-25 DisputesHub (new) if Lead queues it.

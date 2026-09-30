@@ -48,7 +48,7 @@ import { TasksTab } from "../components/tasks/TasksTab";
 import { useViewModePref } from "../hooks/useViewModePref";
 import { useListPageSizePref } from "../hooks/useListPageSizePref";
 import { useUrlSort } from "../hooks/useUrlSort";
-import { formatDateTimeUS, formatDateUS, mmmDd } from "../lib/formatDate";
+import { formatDateTimeUS, formatDateQboList, mmmDd } from "../lib/formatDate";
 import { customerStatusLabel, customerTypeLabel } from "../lib/customerStatusLabel";
 import { userFacingApiError } from "../lib/api-error-message";
 import { listSpineEvents, type SpineEvent } from "../api/audit";
@@ -364,7 +364,7 @@ function CustomerFinancialActivityTab({
 
   const columns = useMemo<ParityColumn<CustomerActivityRow>[]>(
     () => [
-      { key: "date", label: "Date", sortable: true, render: (r) => formatDateUS(r.date) },
+      { key: "date", label: "Date", sortable: true, render: (r) => formatDateQboList(r.date) },
       {
         key: "type",
         label: "Type",
@@ -986,7 +986,7 @@ export function CustomersPage() {
   // defaulting them hidden (toggle on via the gear) exactly as the old column chooser did.
   const txColumns = useMemo<ParityColumn<(typeof txRows)[number]>[]>(
     () => [
-      { key: "date", label: "Date", sortable: true, render: (r) => formatDateUS(r.issue_date) },
+      { key: "date", label: "Date", sortable: true, render: (r) => formatDateQboList(r.issue_date) },
       { key: "type", label: "Type", sortable: true, render: (r) => String(r.invoice_type ?? "manual") },
       {
         key: "doc_no",
@@ -1036,7 +1036,7 @@ export function CustomersPage() {
   };
   const customerTransactionColumns = useMemo<ParityColumn<CustomerActivityRow>[]>(
     () => [
-      { key: "date", label: "Date", sortable: true, sortValue: (r) => r.date ?? "", render: (r) => formatDateUS(r.date) || "—" },
+      { key: "date", label: "Date", sortable: true, sortValue: (r) => r.date ?? "", render: (r) => formatDateQboList(r.date) || "—" },
       { key: "type", label: "Type", sortable: true, sortValue: (r) => r.type, render: (r) => customerTransactionTypeLabel(r.type) },
       {
         key: "ref",
@@ -1084,8 +1084,8 @@ export function CustomersPage() {
         label: "Invoice",
         render: (r) => <EntityLinkOrTombstone kind="invoice" id={r.id} name={r.display_id} noun="Invoice" />,
       },
-      { key: "date", label: "Date", render: (r) => formatDateUS(r.issue_date) },
-      { key: "due", label: "Due", render: (r) => formatDateUS(r.due_date) },
+      { key: "date", label: "Date", render: (r) => formatDateQboList(r.issue_date) },
+      { key: "due", label: "Due", render: (r) => formatDateQboList(r.due_date) },
       { key: "status", label: "Status", render: (r) => (isVoidInvoice(r) ? "Voided" : r.status) },
       { key: "total", label: "Total", render: (r) => fmtMoney(r.total_cents) },
       { key: "open", label: "Open", render: (r) => fmtMoney(invoiceOpenCentsForDisplay(r)) },
@@ -1112,7 +1112,7 @@ export function CustomersPage() {
       },
       { key: "kind", label: "Kind", render: (r) => r.kind },
       { key: "cadence", label: "Cadence", render: (r) => r.cadence },
-      { key: "next", label: "Next run", render: (r) => formatDateUS(r.next_run_at) },
+      { key: "next", label: "Next run", render: (r) => formatDateQboList(r.next_run_at) },
       { key: "active", label: "Active", render: (r) => (r.is_active ? "Yes" : "No") },
       { key: "runs", label: "Runs", render: (r) => String(r.run_count) },
     ],
