@@ -97,10 +97,28 @@ const EXCEPTION_RED = "#991B1B";
 // FIX: TRANSIT is the sixth grid track. It takes 1fr, so every rail begins and ends on the same two
 // x positions in every row, PU/DEL precede it, CURRENT LOCATION sits beside Delivered inside the
 // same cell, the row is one line, and UNIT/TOUR shrink to what their values actually need.
+// CUSTOMER-UNDER-THE-THREE (Lead, 09-30-2026). Owner, verbatim: "put the customer name under unit,
+// tour and load. let it render in those 3 columns. this way the important view, the LINE, doesn't
+// shrink so much as it is now. I told you the unit and tour columns were too wide. THE HEIGHT IS
+// PERFECT. It must still be the same height as it is right now, but with the name under those 3
+// columns."
+//
+// The customer name used to live INSIDE the LOAD cell, so LOAD had to be wide enough to hold a name
+// like "C and A TRANSPORTATION & LOGISTICS INC" — 13vw of the row spent on text, taken straight out
+// of the transit line, which is the column that actually matters on this board.
+//
+// The name now renders on its own second grid row spanning columns 1-3 (UNIT + TOUR + LOAD
+// together), so no single column has to be wide enough for it. That frees UNIT 5vw->3.4, TOUR
+// 6vw->4.4 and LOAD 13vw->6, and every point of it goes to TRANSIT.
+//
+// HEIGHT IS UNCHANGED, and that is the constraint, not a side effect: the row's height is set by the
+// 70px transit rail, which now spans BOTH grid rows (grid-row: 1 / 3). The text column's two stacked
+// lines are far shorter than 70px, so they sit inside the height the rail already dictated. The row
+// is exactly as tall as it was.
 const GRID_TEMPLATE_COLUMNS =
-  "minmax(62px,5vw) minmax(80px,6vw) minmax(150px,13vw) minmax(92px,7vw) minmax(92px,7vw) minmax(360px,1fr)";
+  "minmax(52px,3.4vw) minmax(68px,4.4vw) minmax(84px,6vw) minmax(88px,6.4vw) minmax(88px,6.4vw) minmax(420px,1fr)";
 const GRID_TEMPLATE_COLUMNS_NARROW =
-  "minmax(56px,10vw) minmax(68px,11vw) minmax(96px,17vw) minmax(64px,10vw) minmax(64px,10vw) minmax(200px,1fr)";
+  "minmax(48px,8vw) minmax(60px,9vw) minmax(76px,11vw) minmax(62px,9.5vw) minmax(62px,9.5vw) minmax(200px,1fr)";
 const FOLD_BREAKPOINT_PX = 860;
 const CAPTION_FOLD_BREAKPOINT_PX = 1180;
 const AVAILABLE_ROW_TINT = "color-mix(in srgb, #16A34A 4%, #fff)";
@@ -1089,16 +1107,31 @@ export function TruckLineBoard({
            the 70px rail and the short text cells on one baseline, so the row is exactly as tall as
            the rail and never taller. */
         .truck-line-v4-transit-header { text-align: center; }
-        .truck-line-v4-transit-cell { align-self: center; }
+        /* CUSTOMER-UNDER-THE-THREE — the ROW (not the header) is a 2-row grid. Row 1 holds the five
+           value cells; row 2 holds the customer name spanning UNIT+TOUR+LOAD. TRANSIT spans BOTH
+           rows, so the 70px rail still sets the row height exactly as before and the two stacked
+           text lines sit inside it. Placement is explicit so a 7th child can never auto-flow into
+           the wrong track. */
+        .truck-line-v4-row { grid-template-rows: auto auto; row-gap: 0; }
+        .truck-line-v4-unit-cell { grid-column: 1; grid-row: 1; }
+        .truck-line-v4-tour-cell { grid-column: 2; grid-row: 1; }
+        .truck-line-v4-load-cell { grid-column: 3; grid-row: 1; }
+        .truck-line-v4-pu-cell   { grid-column: 4; grid-row: 1; }
+        .truck-line-v4-del-cell  { grid-column: 5; grid-row: 1; }
+        .truck-line-v4-customer-row {
+          grid-column: 1 / 4;
+          grid-row: 2;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          line-height: 1.1;
+        }
+        .truck-line-v4-transit-cell { grid-column: 6; grid-row: 1 / 3; align-self: center; }
         /* The LOAD column is now 13vw instead of 1fr (TRANSIT took the remainder), so a long
            customer name must truncate inside its own cell rather than widen the grid. The full name
            stays available on hover via title=. */
         .truck-line-v4-load-cell { min-width: 0; }
-        .truck-line-v4-customer {
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
         /* ROUND-20.4 -- row rules the owner can actually see: an every-other-row tint and a hover
            state so one unit's row is visibly distinct from its neighbors, plus a 3px left spine per
            row (inline style, colored by trip-type -- see rowSpineColor()) so a unit's row is
@@ -1330,7 +1363,7 @@ export function TruckLineBoard({
                           data-testid={`truck-line-row-available-${a.driver_id}`}
                           data-unit-id={g.unit_id}
                         >
-                          <div>
+                          <div className="truck-line-v4-unit-cell">
                             <div className="truck-line-v4-unit font-semibold text-[#0F1219]">{r.unit_number}</div>
                             <div className="truck-line-v4-sub text-[#6B7280]">available truck</div>
                           </div>
@@ -1351,6 +1384,7 @@ export function TruckLineBoard({
                           </div>
                           <div className="truck-line-v4-pu-cell"><span className="truck-line-v4-sub text-[#6B7280]">—</span></div>
                           <div className="truck-line-v4-del-cell"><span className="truck-line-v4-sub text-[#6B7280]">—</span></div>
+                          <div className="truck-line-v4-customer-row truck-line-v4-sub text-[#6B7280]" data-testid={`truck-line-customer-available-${a.driver_id}`}>—</div>
                           <div className="truck-line-v4-transit-cell min-w-0" data-testid={`truck-line-track-available-${a.driver_id}`}>
                             <span className="truck-line-v4-sub text-[#6B7280]">no trip in progress</span>
                           </div>
@@ -1372,7 +1406,7 @@ export function TruckLineBoard({
                         data-return-trip={returnTrip ? "true" : "false"}
                         data-schedule-conflict={conflict ? "true" : "false"}
                       >
-                        <div>
+                        <div className="truck-line-v4-unit-cell">
                           <div className="truck-line-v4-unit font-semibold text-[#0F1219]">
                             {returnTrip ? <span className="mr-1 text-[#16A34A]" aria-hidden>↳</span> : null}
                             {g.unit_number}
@@ -1411,12 +1445,6 @@ export function TruckLineBoard({
                               >
                                 {r.load.load_number}
                               </button>
-                              <div
-                                className="truck-line-v4-sub truck-line-v4-customer text-[#6B7280]"
-                                title={r.load.customer_name ?? undefined}
-                              >
-                                {r.load.customer_name ?? "—"}
-                              </div>
                               <button
                                 type="button"
                                 className="truck-line-v4-cap mt-0.5 rounded-sm border border-[#E5E7EB] px-1.5 py-0.5 font-semibold uppercase text-[#4B5563]"
@@ -1461,6 +1489,16 @@ export function TruckLineBoard({
                           <div className="truck-line-v4-cap text-[#6B7280]">
                             {formatLocationLabel({ city: r.load?.delivery.city ?? null, state: r.load?.delivery.state ?? null })}
                           </div>
+                        </div>
+                        {/* CUSTOMER-UNDER-THE-THREE: its own grid row, spanning UNIT+TOUR+LOAD, so no
+                            single column has to be wide enough to hold a full customer name and the
+                            width goes to the transit line instead. */}
+                        <div
+                          className="truck-line-v4-customer-row truck-line-v4-sub text-[#6B7280]"
+                          title={r.load?.customer_name ?? undefined}
+                          data-testid={`truck-line-customer-${g.unit_id}`}
+                        >
+                          {r.load?.customer_name ?? "—"}
                         </div>
                         <div
                           className="truck-line-v4-transit-cell min-w-0"

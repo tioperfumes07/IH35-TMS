@@ -1,18 +1,15 @@
 // Trip Pairing Board (Block 05) — read-only aggregation. Entity-scoped, NO cap (all ~32 units on one
 // screen). KPI definitions reconcile: Active = NB + NB-unbooked; Northbound = SB + SB-unbooked.
-import { assertCanonicalSubset } from "./canonical-active-load-set.js";
+import { canonicalDispatchWorkWhereClause } from "./canonical-active-load-set.js";
 
 type DbClient = { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> };
 
-// In-flight load statuses (a tour leg is "booked" while in this set). mdata.loads.status stores the
-// dispatch status string; include both the enum + the dispatch-only 'assigned_not_dispatched'.
-//
-// ROUND 31.2 (2026-09-23): a narrower view of the canonical active-load set
-// (canonical-active-load-set.ts) — CC-3's objection SUSTAINED on the same-shaped
-// fleet-location-hos.service.ts; this board asks the same "in the truck right now" question.
-// assertCanonicalSubset throws at import time if this ever drifts outside canonical.
-const ACTIVE_LOAD_STATUSES = ["assigned", "assigned_not_dispatched", "dispatched", "at_pickup", "in_transit", "at_delivery"];
-assertCanonicalSubset("trip-pairing-board.service.ts ACTIVE_LOAD_STATUSES", ACTIVE_LOAD_STATUSES);
+// TRUCKLINE-16 (Lead, 2026-09-30): "is a unit carrying this load right now" is the dispatch-work
+// question — same predicate Truck Line, Load board tiles, List and Kanban all use, so this board
+// returns the SAME number they do. The prior ACTIVE_LOAD_STATUSES const (asserted against the
+// canonical set but never actually wired into the query below, which read views.live_loads's
+// open_dispatch bucket instead) is retired; canonicalDispatchWorkWhereClause is now the real,
+// live predicate this board queries.
 
 export type TripLeg = {
   load_id: string;
@@ -145,7 +142,7 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
               nullif(trim(coalesce(ld.first_name,'') || ' ' || coalesce(ld.last_name,'')), ''),
               mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id)
             ) AS load_driver_name
-       FROM views.live_loads l
+       FROM mdata.loads l
        LEFT JOIN mdata.drivers ld ON ld.id = l.assigned_primary_driver_id
         AND (
           ld.operating_company_id = l.operating_company_id
@@ -166,8 +163,8 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
          SELECT city, state, scheduled_arrival_at FROM mdata.load_stops
          WHERE load_id = l.id AND stop_type = 'delivery' AND soft_deleted_at IS NULL
          ORDER BY sequence_number DESC LIMIT 1) de ON true
-      WHERE l.operating_company_id = $1::uuid
-        AND l.live_state = 'open_dispatch'
+      WHERE l.soft_deleted_at IS NULL
+        AND ${canonicalDispatchWorkWhereClause("l", "$1::uuid")}
         AND l.assigned_unit_id IS NOT NULL`,
     [operatingCompanyId]
   );

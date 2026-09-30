@@ -41,9 +41,11 @@ function main() {
   if (!/export function currentTruckLineLoadSql/.test(helperSrc) || !/export const CURRENT_TRUCK_LINE_LOAD_SQL/.test(helperSrc)) {
     problems.push("current-truck-line-load.ts must export currentTruckLineLoadSql + CURRENT_TRUCK_LINE_LOAD_SQL");
   }
-  // ROUND 255 — AUTH-061 48h hide retired; CURRENT aliases canonicalActiveLoadWhereClause.
-  if (!/canonicalActiveLoadWhereClause/.test(helperSrc)) {
-    problems.push("CURRENT helper must alias canonicalActiveLoadWhereClause (ROUND 255)");
+  // ROUND 255 — AUTH-061 48h hide retired. TRUCKLINE-16 (Lead, 2026-09-30): CURRENT now aliases
+  // canonicalDispatchWorkWhereClause (dispatch-work, not accounting — see canonical-active-load-
+  // set.ts's file-header section "TWO CANONICAL QUESTIONS, NOT ONE").
+  if (!/canonicalDispatchWorkWhereClause/.test(helperSrc)) {
+    problems.push("CURRENT helper must alias canonicalDispatchWorkWhereClause (TRUCKLINE-16)");
   }
   if (!/truck-line-section-\$\{section\}/.test(boardSrc) || !/SECTION_ORDER/.test(boardSrc) || !/"tour"/.test(boardSrc) || !/"in_transit"/.test(boardSrc) || !/"available"/.test(boardSrc)) {
     problems.push("TruckLineBoard must render three sections via SECTION_ORDER (tour / in_transit / available)");

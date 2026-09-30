@@ -11,7 +11,7 @@ import { emitAutoProposedEscrowEvents } from "../driver-finance/escrow-deduction
 import { computeProgressStatus } from "../telematics/load-progress.service.js";
 import { enrichLoadsLiveEta } from "../telematics/dispatch-live-eta.service.js";
 import { effectiveDeliverySelectSql } from "../dispatch/effective-delivery.js";
-import { liveLoadsOpenDispatchExistsSql } from "../dispatch/live-loads-view.js";
+import { canonicalDispatchWorkStatusClause } from "../dispatch/canonical-active-load-set.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { loadRefMatchSql, loadRefParamSchema } from "../lib/load-ref.js";
@@ -627,8 +627,15 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         // status[] from the UI narrows WITHIN that set (AND), never replaces the money gate.
         // The old else-if let DispatchLoadCostsPanel's IN_MOTION list bypass open_dispatch (14 vs 12).
         if (board_scope === "live") {
-          // ROUND 36.1 / E11-D2 — see the comment above DISPATCH_LIVE_EXCLUDED_STATUSES.
-          const existsSql = liveLoadsOpenDispatchExistsSql("l.id");
+          // TRUCKLINE-16 (Lead, 2026-09-30): "is a unit carrying this load right now" is the
+          // dispatch-work question (canonical-active-load-set.ts), not the narrower
+          // views.live_loads open_dispatch bucket (5 statuses, missing booked/planned/assigned/
+          // unassigned) — verify-load-boards-agree.mjs caught List/Kanban disagreeing with Truck
+          // Line/Trip Pairing by exactly those pre-dispatch statuses (13633, 13634 live). The
+          // entity gate is already applied separately below (l.operating_company_id = ANY($1)),
+          // so only the status half is used here — canonicalDispatchWorkWhereClause's own
+          // required entity-gate param is for callers with no scoping of their own.
+          const existsSql = canonicalDispatchWorkStatusClause("l");
           if (include_open_tour_legs) {
             // ROUND-20.2 (RT-FULL-TOUR) — retired for 285.4.2 one-set law: no live caller passes
             // this flag anymore; branch kept so stale URLs fail closed to open_dispatch only.
@@ -653,7 +660,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           // load (closed/cancelled/settled/billing-tail). Owner law 2026-09-11 OPEN-ONLY: Dispatch
           // and everything inside it renders only current/open loads. A caller must OPT IN to
           // history (or pass an explicit status list); forgetting scope must never dump the table.
-          filters.push(liveLoadsOpenDispatchExistsSql("l.id"));
+          // TRUCKLINE-16: same dispatch-work predicate as the board_scope==="live" branch above.
+          filters.push(canonicalDispatchWorkStatusClause("l"));
         }
         if (status && status.length > 0) {
           values.push(status);

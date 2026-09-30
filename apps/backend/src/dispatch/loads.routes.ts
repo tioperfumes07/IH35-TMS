@@ -40,7 +40,8 @@ import { getCurrentClocks } from "../telematics/hos-clocks.service.js";
 import { getLatestHosClocksByDriver } from "../integrations/samsara/samsara-hos-clocks-pull.service.js";
 import type { PgClient } from "../integrations/samsara/samsara.service.js";
 import { detectAssetCoverageGap } from "../insurance/coverage-gap.service.js";
-import { countActiveDispatchLoads, countInTransitDispatchLoads, countOnLoadDispatchLoads } from "./active-loads-count.js";
+import { countInTransitDispatchLoads } from "./active-loads-count.js";
+import { countCanonicalDispatchWorkLoads } from "./canonical-active-load-set.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
@@ -2155,9 +2156,12 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
     const metrics = await withCompanyScope(authUser.uuid, operatingCompanyId, async (client) => {
-      const [activeLoads, onLoad, inTransit, dispatchedRes, deliveredRes, projectedRes] = await Promise.all([
-        countActiveDispatchLoads(client, operatingCompanyId),
-        countOnLoadDispatchLoads(client, operatingCompanyId),
+      const [dispatchWork, inTransit, dispatchedRes, deliveredRes, projectedRes] = await Promise.all([
+        // TRUCKLINE-16 (Lead, 2026-09-30): ACTIVE LOADS / ON LOAD must read the SAME canonical
+        // dispatch-work predicate Truck Line, List, Kanban and Trip Pairing all use, so the owner
+        // sees one consistent number everywhere instead of the tile's own narrower open_dispatch
+        // view undercounting against Truck Line's broader set.
+        countCanonicalDispatchWorkLoads(client, operatingCompanyId),
         countInTransitDispatchLoads(client, operatingCompanyId),
         client.query<{ count: number }>(
           `
@@ -2194,8 +2198,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         ),
       ]);
       return {
-        active_loads: activeLoads,
-        on_load: onLoad,
+        active_loads: dispatchWork,
+        on_load: dispatchWork,
         dispatched: Number(dispatchedRes.rows[0]?.count ?? 0),
         need_load: 0,
         delivered: Number(deliveredRes.rows[0]?.count ?? 0),
