@@ -95,3 +95,9 @@ Home attention strip + Escrow liability on main. NEXT: C-52 alerts side-dock.
 
 **2026-09-30T23:25Z · C-52 ALERTS SIDE-DOCK · branch `cursor/c52-alerts-side-dock-c89b`**
 C-52 · Toast house side-dock (bottom-right, smaller, rounded-sm, dismiss, no layout shift); Customers/Vendors view-mode save errors fixed side-dock. Ops: verify-c52-alerts-side-dock. NEXT after merge: C-53 recon shell.
+
+**2026-09-30T23:23Z · C-52 MERGED · PR #23555 · `80ed0e5b83`**
+LST-F05 side-dock on main. NEXT: C-53 recon shell.
+
+**2026-09-30T23:35Z · C-53 RECONCILIATION SCREEN SHELL · branch `cursor/c53-recon-screen-shell-c89b`**
+C-53 · what changed: `ReconciliationTabContent` replaces thin recon tab — per-account readiness tiles, statement object (beginning / ending / difference must $0.00), MATCHED tri-state legend marked `data-c53-a27-pending` (wire waits CC-1 A-27), SAVE+CLOSE start opener calling existing `startReconciliationSession`, Home attention strip deep-links `?start=1`. Ops: `scripts/ops/verify-c53-recon-screen-shell.mjs`. · LEFT: Lead Chrome after deploy; A-27 engine wire for Matched column. NEXT: C-55 Regular + Master-detail toggle.

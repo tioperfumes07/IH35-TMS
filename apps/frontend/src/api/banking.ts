@@ -227,6 +227,8 @@ export type ReconciliationSession = {
   period_start: string;
   period_end: string;
   statement_balance_cents: number;
+  /** Carried from prior reconciled session statement ending (QBO beginning). Present when DOM-03 columns exist. */
+  beginning_balance_cents?: number | null;
   book_balance_cents: number | null;
   variance_cents: number | null;
   status: "open" | "reconciled" | "disputed";
