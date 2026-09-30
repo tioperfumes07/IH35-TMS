@@ -5470,82 +5470,22 @@ proof_query: live on prod, 2026-09-30 -- scripts/verify-fuel-cost-posts-exactly-
 
 — CC-1
 
-## AUTH-152
+## AUTH-158
+issued_at: 2026-09-30T09:00:00.000Z
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- re-run the ROUND 210 deadhead-miles
+backfill (scripts/ops/2026-09-28-cc1-round210-deadhead-miles-backfill.ts, AUTH-123's original
+script, now widened from its hardcoded 13-load list to a live query matching closure 39's own
+population) against every live, non-cancelled load with miles_deadhead IS NULL. AUTH-123
+(2026-09-28) found all 9 resolvable loads bookended by an OPEN driver settlement and
+updateDispatchLoad correctly refused (WORM, miles_deadhead is a LOAD_EDIT_LOCK_MONEY_FIELD_KEYS
+field) -- expired 2026-09-29T12:00Z with that result on the record, never re-run. Two days later,
+those settlements may have closed; this re-attempts the same sanctioned mechanism
+(computeChainDeadheadMiles, the same unit's most recent prior delivery to this load's pickup, never
+invented) via the same writer (updateDispatchLoad, never a raw UPDATE) against the current
+population (15 loads: the original 13 plus 13593 and 13622, newly created/surfaced since). Any load
+for which the real producer returns "blank" stays NULL -- not authorized to force a value.
+action: OWNER_AUTH_ID=AUTH-158 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-28-cc1-round210-deadhead-miles-backfill.ts --apply
+expires_at: 2026-10-01T09:00:00.000Z
+status: OPEN
 
-title: DISPATCH-STAMPS -- backfill load 13637's pickup stamp from real GPS convergence, USMCA
-requested_by: Lead/owner, 2026-09-30 ("13630 / 13634 / 13635 / 13637: both stops exist and are
-  correctly typed, ZERO actual_arrival_at and actual_departure_at, actual_arrival_source NULL on
-  all 8 stops... Backfill them from the real geofence events; where no event exists, leave NULL
-  and report the count -- never invent a timestamp.") Renumbered from AUTH-147 to AUTH-152 per
-  Lead's collision resolution, 2026-09-30 (AUTH-147 was independently assigned to Codex's USMCA
-  sample-data purge and already merged to main as 7c0ed1d3a9 -- that one wins, this one renumbers).
-root_cause: live-verified, USMCA, bypass_rls. dispatch.stop_arrivals (the live geofence/ELD
-  proximity detector's own output table) has ZERO rows for any of the 8 pickup/delivery stops on
-  these 4 loads -- the automated detector never fired for any of them. telematics.vehicle_locations
-  (raw Samsara GPS pings) carries dense position history for all 4 assigned units. Of the 4
-  pickups, only load 13637 (unit T176, Wilkes-Barre PA pickup) shows the unit's GPS track actually
-  converging on the stop's own geocoded coordinates: a clean, monotonic approach from 474,399 ft
-  away down to a steady ~293 ft dwell held from 2026-09-28T17:35:04Z to 18:35:14Z, then a rapid
-  monotonic departure past 2,000+ ft. 293 ft sits just outside the live detector's own 250 ft
-  ARRIVAL_RADIUS_FEET (apps/backend/src/telematics/arrival-detection.service.ts) -- explaining why
-  the automated detector never caught this real, physical arrival. The other 3 loads (13630 unit
-  T164, 13634 unit T152, 13635 unit T148) show NO plausible GPS convergence anywhere in the unit's
-  full position history since load creation: closest approach measured 5,963 ft / 172,982 ft /
-  5,438,523 ft respectively. All three pickup addresses are independently well-geocoded (confidence
-  0.5-0.95, rooftop precision) -- not a geocode error. Per the owner's own instruction, these three
-  are NOT backfilled; no real event exists for them in this data. Lead accepted this root cause and
-  this scope as-is, 2026-09-30.
-scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY ONE stop: load 13637's pickup
-  stop (id 005d414c-66ba-484d-bc0a-1d99e0be8fe6). Writes actual_arrival_at=2026-09-28T17:35:04Z,
-  actual_departure_at=2026-09-28T18:35:14Z, actual_arrival_source='eld_geofence'. Does NOT touch
-  mdata.loads.status, does NOT call stampStopArrival/stampStopDeparture (both hardcode now(), the
-  wrong tool for a backfill of a real past timestamp), does NOT invoke
-  mintProformaInvoiceOnFirstPickup or any other real-time financial side effect. Not authorized:
-  touching 13630, 13634 or 13635 (no real event found for any of them -- left NULL by design);
-  touching any other load's stamps; touching TRANSP or TRK; a load-status change.
-action:
-  OWNER_AUTH_ID=AUTH-152 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc3-auth152-backfill-13637-pickup-stamp.ts
-  (run from the repo root)
-expires_at: 2026-10-01T12:00:00.000Z
-status: CONSUMED
-consumed_at: 2026-09-30T09:00:00.000Z
-consumed_by: CC-3
-row_counts: 1 of 1 -- load 13637's pickup stop (005d414c-66ba-484d-bc0a-1d99e0be8fe6) stamped
-  actual_arrival_at=2026-09-28T17:35:04Z, actual_departure_at=2026-09-28T18:35:14Z,
-  actual_arrival_source='eld_geofence'. 13630/13634/13635 correctly left NULL -- no real GPS
-  convergence found for any of them (closest approach 5,963 ft / 172,982 ft / 5,438,523 ft).
-proof_query: scripts/ops/2026-09-30-cc3-auth152-backfill-13637-pickup-stamp.ts run live against
-  prod 2026-09-30 -- {"result":"COMMITTED","stamped":{"id":"005d414c-66ba-484d-bc0a-1d99e0be8fe6",
-  "actual_arrival_at":"2026-09-28T17:35:04.000Z","actual_departure_at":"2026-09-28T18:35:14.000Z",
-  "actual_arrival_source":"eld_geofence"}}.
-
-## AUTH-153
-
-title: ROUND 290.3 -- driver escrow counter-leg fix (2170 Driver Net-Pay Clearing, not 1090 Undeposited Funds), USMCA
-requested_by: Lead/owner, 2026-09-30 (ROUND 290 engine audit, RED 2: "the escrow engine is wrong
-  in both directions... Correct shape: Dr 2170 Driver Net-Pay Clearing / Cr 2100-00-NNN <DRIVER
-  NAME> - Driver Escrow. 290.3 -- CC-3 -- fix the engine." Lead reviewed and accepted the fix as
-  correct, 2026-09-30: "2170 instead of 1090 is the correct shape. Ship it as AUTH-153.")
-root_cause: apps/backend/src/accounting/escrow/service.ts's postEscrowTransactionOnClient()
-  resolved ONE counter-account role ("cash_clearing") for every escrow deposit/release regardless
-  of holder_type. For USMCA that role resolves to 1090 Undeposited Funds -- correct for a
-  factor/vendor holder where real cash is withheld, but wrong for a driver holder: the settlement
-  that funded the driver's escrow already parked the pay in 2170 Driver Net-Pay Clearing, so a
-  driver escrow release moves no cash at all. Live-measured: 16 escrow_account-sourced journal
-  entries (all driver-holder, all source_type='reconciliation') credited/debited 1090 instead of
-  2170.
-scope: this AUTH tracks a CODE FIX (apps/backend/src/accounting/escrow/service.ts), not a live
-  prod data write -- there is no scripts/ops/*.ts action to run under it. It is filed for audit
-  tracking per the Lead's own instruction ("ship it as AUTH-153"), same numbering discipline as a
-  data-write AUTH. The 16 pre-fix bad documents this fix does NOT correct are separate, higher-risk
-  follow-up work (correct by document, never by a blanket JE, per the owner's own ROUND 290.3
-  order) and will carry their own AUTH-ID when that follow-up is scoped.
-action: N/A -- this AUTH authorizes merging the code fix itself (PR touching
-  apps/backend/src/accounting/escrow/service.ts), not a scripts/ops/*.ts run. No prod data is
-  written by this AUTH.
-expires_at: 2026-10-01T12:00:00.000Z
-status: CONSUMED
-consumed_at: 2026-09-30T00:00:00.000Z
-consumed_by: CC-3
-
-— CC-3
+— CC-1
