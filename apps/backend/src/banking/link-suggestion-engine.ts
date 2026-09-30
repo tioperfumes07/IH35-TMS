@@ -51,6 +51,16 @@ export type LinkSuggestion = {
    * ranked candidate with no stated reason is exactly the kind of unexplained suggestion the
    * owner has said he does not trust. */
   reason: string;
+  /** Owner rule (ROUND 276, verbatim): "only 100% identical matches (amount, date, payee) may be
+   * pre-ticked. Anything less comes up unticked for him." True only when amountGap is exactly 0,
+   * the two dates are the same calendar day, AND the candidate's counterparty_name is an exact
+   * normalized match against the bank transaction's merchant_name ALONE — the structured payee
+   * field, not vendorNameScore's fuzzier merchant_name+description haystack (that combined text
+   * scores a truncated/suffixed real match at 0.85, which is correctly "high confidence" but not
+   * "100% identical"). Consumed by the frontend's bulk-accept default selection ONLY — it never
+   * gates whether a candidate is shown, scored, or acceptable; a low-confidence candidate is
+   * still fully accept-able by hand, exactly as Law B requires. */
+  exact_match: boolean;
 };
 
 const AMOUNT_TOLERANCE_CENTS = 500; // $5 — a wide net; the score itself penalizes any gap
@@ -99,6 +109,15 @@ export function scoreLinkCandidate(txn: LinkTransactionInput, candidate: LinkCan
 
   const score = 0.5 * amountScore + 0.3 * dateScore + 0.2 * vendorScore;
   const confidence: LinkConfidence = score >= 0.85 ? "high" : score >= 0.55 ? "medium" : "low";
+  // Payee exactness for the ROUND 276 pre-tick rule is checked against merchant_name ALONE, not
+  // vendorScore's combined merchant_name+description haystack — description is free text that can
+  // contain anything, so "LOVES" (merchant_name) matching vendor "LOVES" exactly still scores 0.85
+  // on vendorScore whenever description carries extra words (e.g. "#0412 LAREDO TX"). merchant_name
+  // is the bank feed's actual structured payee field; that is what "payee" means here.
+  const payeeExact =
+    normalizeName(candidate.counterparty_name).length > 0 &&
+    normalizeName(candidate.counterparty_name) === normalizeName(txn.merchant_name);
+  const exactMatch = amountGap === 0 && days === 0 && payeeExact;
 
   const reasonParts: string[] = [];
   reasonParts.push(
@@ -120,6 +139,7 @@ export function scoreLinkCandidate(txn: LinkTransactionInput, candidate: LinkCan
     score,
     confidence,
     reason: reasonParts.join(", "),
+    exact_match: exactMatch,
   };
 }
 

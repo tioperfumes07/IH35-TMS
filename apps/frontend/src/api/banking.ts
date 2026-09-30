@@ -1773,6 +1773,9 @@ export type LinkSuggestionCandidate = {
   score: number;
   confidence: "high" | "medium" | "low";
   reason: string;
+  /** ROUND 276 owner rule: only a 100%-identical (amount, date, payee) candidate may be
+   * pre-ticked for bulk accept. Never used to gate whether a candidate is shown or acceptable. */
+  exact_match: boolean;
 };
 
 export type LinkSuggestionTransaction = {
@@ -1811,6 +1814,29 @@ export function acceptLinkSuggestion(
       obligation_id: obligationId,
     },
   });
+}
+
+// ROUND 276 — bulk accept, the same human-click acceptance as acceptLinkSuggestion above, just
+// exercised over every row the human ticked in one request. `items` is exactly what the checkboxes
+// selected — never derived here, never a confidence filter.
+export function bulkAcceptLinkSuggestions(
+  companyId: string,
+  items: Array<{ bankTransactionId: string; obligationType: string; obligationId: string }>
+) {
+  return apiRequest<{ results: Array<{ bank_transaction_id: string; ok: boolean; reason?: string }> }>(
+    `/api/v1/banking/link-suggestions/bulk-accept`,
+    {
+      method: "POST",
+      body: {
+        operating_company_id: companyId,
+        items: items.map((i) => ({
+          bank_transaction_id: i.bankTransactionId,
+          obligation_type: i.obligationType,
+          obligation_id: i.obligationId,
+        })),
+      },
+    }
+  );
 }
 
 export function rejectLinkSuggestion(

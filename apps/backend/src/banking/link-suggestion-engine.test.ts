@@ -11,6 +11,34 @@ describe("link-suggestion-engine", () => {
     expect(s.reason).toContain("same amount");
     expect(s.reason).toContain("same day");
     expect(s.reason).toContain("same vendor LOVES");
+    expect(s.exact_match).toBe(true);
+  });
+
+  it("exact_match is false for a high-confidence but merely-substring vendor name (ROUND 276 pre-tick rule)", () => {
+    // "LOVES #0412" vs vendor "LOVES" scores vendorNameScore 0.85 (substring credit), not the
+    // strict ===1 an exact payee match requires — high confidence, but NOT pre-tick eligible.
+    const s = scoreLinkCandidate(
+      { amount_cents: 6_294, transaction_date: "2026-09-07", description: null, merchant_name: "LOVES #0412" },
+      { obligation_type: "expense", obligation_id: "e1", label: "Expense E-1", amount_cents: 6_294, event_date: "2026-09-07", counterparty_name: "LOVES" }
+    );
+    expect(s.confidence).toBe("high");
+    expect(s.exact_match).toBe(false);
+  });
+
+  it("exact_match is false when the date differs by even one day, even at same amount/vendor", () => {
+    const s = scoreLinkCandidate(
+      { amount_cents: 6_294, transaction_date: "2026-09-08", description: null, merchant_name: "LOVES" },
+      { obligation_type: "expense", obligation_id: "e1", label: "Expense E-1", amount_cents: 6_294, event_date: "2026-09-07", counterparty_name: "LOVES" }
+    );
+    expect(s.exact_match).toBe(false);
+  });
+
+  it("exact_match is false with no counterparty_name at all, even at exact amount/date", () => {
+    const s = scoreLinkCandidate(
+      { amount_cents: 100, transaction_date: "2026-01-01", description: null, merchant_name: null },
+      { obligation_type: "expense", obligation_id: "e3", label: "Expense E-3", amount_cents: 100, event_date: "2026-01-01" }
+    );
+    expect(s.exact_match).toBe(false);
   });
 
   it("scores a same-amount-different-vendor-and-date candidate lower, never as high", () => {

@@ -165,6 +165,34 @@ function auditTargetColumnWrites(files) {
   return failures;
 }
 
+/**
+ * ROUND 276 — bulk accept must never become a back door around Law B: the accept list must come
+ * from the human's own request body (a required, non-empty array), never a server-side re-query
+ * (e.g. "every suggestion above confidence X"). A file whose route path contains "bulk-accept"
+ * must (a) call requireAuth, (b) declare a zod array schema with `.min(1)` near its body, and (c)
+ * never build its accept list from a live SELECT with an ORDER BY/confidence-threshold shape.
+ */
+function auditBulkAcceptRequiresHumanRequestBody(files) {
+  const failures = [];
+  for (const abs of files) {
+    const rel = relFile(abs);
+    const src = fs.readFileSync(abs, "utf8");
+    // Short, path-shaped literal only (e.g. "/api/v1/.../bulk-accept") -- never a bare substring
+    // match against a comment or unrelated prose mentioning "bulk-accept" elsewhere in the file.
+    if (!/["'`]\/[^"'`]{0,150}bulk-accept[^"'`]{0,40}["'`]/.test(src)) continue;
+    if (!/requireAuth\(/.test(src)) {
+      failures.push(`${rel}: has a "bulk-accept" route with no requireAuth(...) call — bulk accept must be a real, authenticated human request`);
+    }
+    if (!/z\s*\.array\([\s\S]{0,400}\.min\(1\)/.test(src)) {
+      failures.push(`${rel}: has a "bulk-accept" route with no required non-empty array schema (z.array(...).min(1)) — the accept list must be the human's own ticked rows, never optional/empty-allowed`);
+    }
+    if (/confidence\s*>=|ORDER BY[\s\S]{0,80}?confidence[\s\S]{0,80}?LIMIT/i.test(src)) {
+      failures.push(`${rel}: a "bulk-accept" file appears to select rows by a confidence threshold — the accept list must come from the request body, never a server-side re-query`);
+    }
+  }
+  return failures;
+}
+
 function loadFiles() {
   return walk(BACKEND_SRC);
 }
@@ -176,6 +204,7 @@ function auditAll() {
     ...auditNoNewAutoMatchedLiteral(files),
     ...auditNoNewAutoMatchCron(files),
     ...auditTargetColumnWrites(files),
+    ...auditBulkAcceptRequiresHumanRequestBody(files),
   ];
 }
 
@@ -226,11 +255,18 @@ if (process.argv.includes("--selftest")) {
       .filter((d) => !fs.existsSync(path.join(ROOT, d.file)))
       .map((d) => `${d.file}: missing`);
     assert.ok(failuresForFakeDebt.length > 0, "MUTATION 4 (debt file missing) escaped detection");
+
+    // MUTATION 5 — a "bulk-accept" route with no requireAuth and no required non-empty array (a
+    // hypothetical unauthenticated or server-derived bulk-accept back door around Law B).
+    const f5 = path.join(tmpDir, "rogue-bulk-accept.routes.ts");
+    fs.writeFileSync(f5, `app.post("/api/v1/banking/link-suggestions/bulk-accept", async (req) => { return {}; });\n`);
+    const files5 = [...loadFiles(), f5];
+    assert.ok(auditBulkAcceptRequiresHumanRequestBody(files5).length > 0, "MUTATION 5 (unauthenticated/server-derived bulk-accept) escaped detection");
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 
-  console.log("verify-no-automatch --selftest PASS (4/4 mutations caught)");
+  console.log("verify-no-automatch --selftest PASS (5/5 mutations caught)");
   process.exit(0);
 }
 
