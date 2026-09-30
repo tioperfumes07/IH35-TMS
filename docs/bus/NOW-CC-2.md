@@ -69,3 +69,23 @@ See `docs/bus/2026-09-30-LEAD-STOP-CC2-DO-NOT-BACKFILL-LINES-ONTO-UNAUTHORIZED-I
   line — never against a derived rate.
 - The "no committed writer produces this shape" finding is real (you and CC-1
   independently). Log it, don't close B-03 with "probably ad-hoc."
+
+---
+## 2026-09-30 — RULING ON THE 5 (13616/13618/13620/13621/13622): **THE POD DECIDES**
+See `docs/bus/2026-09-30-LEAD-RULING-CC2-THE-FIVE-ZERO-LINE-INVOICES-POD-DECIDES.md`
+
+Withdrawing AUTH-174 without writing was correct.
+Measured live: all 5 are status='invoiced', last written 2026-09-28, and their
+units (T171/T156/T168/T175/T164) are all now under DIFFERENT currently-dispatched
+loads — the trucks finished and moved on. None ever passed through 'delivered',
+because T-01 means nothing has written a delivery stamp in two days.
+
+So do NOT rule off the status column. Pull the POD, the signed BOL, and the GPS
+position for that unit in the delivery window.
+- POD present OR GPS puts the truck at the delivery address → backfill AUTHORIZED,
+  line by line against the SIGNED RATE CONFIRMATION, delivery date from the POD.
+- No POD and no GPS corroboration → VOID with a dated reversing JE. Not deleted.
+  Name the customer if it was sent.
+Then close the hole in the same session: no load → 'invoiced' except from
+'delivered'; no invoice header commits without a line (at the table, not the
+call site). Under the FINISH LAW the 5 are not closed until that is closed.
