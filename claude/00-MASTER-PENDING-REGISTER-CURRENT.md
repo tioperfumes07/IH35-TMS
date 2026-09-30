@@ -71,7 +71,7 @@ Owner: *"I NEED THE FACTORING ENGINE FULLY BUILT FIRST, COMPLETELY DONE NOW. REN
 | 62 | Cursor | Clear NO_CLEARING_PILEUP + open-tour guards holding CC-2's 3 branches (9 commits) | **DONE-VERIFIED** — #23158 NO_CLEARING_PILEUP excl in-transit FA → live E PASS `$0.00`; open-tour #23153+#23155 on main; `verify-open-tour-posts-nothing PASS`; CC-2 named branches still seat-local (blockers cleared) |
 | 63 | Cursor | **Do NOT merge cc-3/round157d-settlement-screens as-is** — 57 files / −3,579 lines, deletes unrelated guards. Stale rebase drift. | FLAGGED — commit comment on `60f10b6915` |
 | 23 | Cursor | Close 7 dependabot PRs + 7 preview services | **DONE-VERIFIED** (R259) — Dependabot #22980–#22986 CLOSED; preview srv-dat5* all 404 |
-| 24–29 | Cursor | Board UI: 11-vs-14-vs-16 · canonical active-load set · return-trip rows · transit line · row height/filters · responsive width | OPEN — needs Chrome click-proof; waits until after R274 void engine per Lead |
+| 24–29 | Cursor | Board UI: 11-vs-14-vs-16 · canonical active-load set · return-trip rows · transit line · row height/filters · responsive width | **DONE-VERIFIED (R255+#23137)** — board===canonical 12 loads live; AUTH-061 retired; return-trip dual rows; green drag transit; LAW-5 rollup restored under LOAD (not a 6th header). Follow-on: Chrome click-proof once FE deploy carries tip. |
 
 ## F. DISPATCH / TELEMATICS
 
