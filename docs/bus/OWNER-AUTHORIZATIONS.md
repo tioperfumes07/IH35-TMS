@@ -5478,7 +5478,15 @@ action:
   OWNER_AUTH_ID=AUTH-164 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth164-backfill-8-stale-void-reconciliation-matches.ts --apply
   (run from repo root; DRY_RUN first with no --apply flag)
 expires_at: 2026-10-01T00:00:00.000Z
-status: OPEN
+status: CONSUMED
+executed: 2026-09-30, PR #23313 merged (squash 19647d88c9), then --apply run for real against
+  ep-broad-block-akykk7bw-pooler.c-3.us-west-2.aws.neon.tech. Preflight OK: 8 rows, all
+  user_matched/voided/re-confirmed active. Updated 8 rows: f3511525, 48bbc9d1, a844bd37,
+  690d89c2,415ef6d5, 7e6a0f08, 480cd215, 3994df3f. COMMITTED. Independently re-verified
+  post-commit (separate SELECT, bypass_rls transaction, rolled back): all 8 rows now
+  voided_at/void_reason/voided_by_user_id = NULL. Code-level fix (storeMatch ON CONFLICT +
+  acceptMatchWithResolveDifference client param) remains proposed to CC-1 on
+  docs/bus/NOW-CC-2.md, not applied here per lane ownership.
 
 ---
 
