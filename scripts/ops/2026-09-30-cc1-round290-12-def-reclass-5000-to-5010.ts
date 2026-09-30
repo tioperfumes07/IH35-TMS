@@ -53,6 +53,7 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { assertNotProduction, assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const REQUIRED_AUTH_ID = process.env.OWNER_AUTH_ID;
@@ -96,6 +97,7 @@ async function main() {
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
 
   const readClient = await pool.connect();
+  await (process.env.OWNER_AUTH_ID ? assertIsIntendedProduction : assertNotProduction)(readClient, { label: "scripts/ops/2026-09-30-cc1-round290-12-def-reclass-5000-to-5010.ts" });
   let rows: Array<{
     line_id: string;
     expense_id: string;

@@ -34,6 +34,7 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { assertNotProduction, assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const REQUIRED_AUTH_ID = process.env.OWNER_AUTH_ID;
@@ -79,6 +80,7 @@ async function main() {
     }
 
     const client = await pool.connect();
+  await (process.env.OWNER_AUTH_ID ? assertIsIntendedProduction : assertNotProduction)(client, { label: "scripts/ops/2026-09-30-cc1-auth167-g5-close-3-orphan-company-settlements.ts" });
     try {
       await client.query("BEGIN");
       await client.query("RESET ROLE");
