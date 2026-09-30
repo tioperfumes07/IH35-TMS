@@ -167,6 +167,18 @@ export function VendorsPage() {
     if (next !== "by-category") params.delete("category");
     setSearchParams(params, { replace: true });
   };
+  // C-19 / A-21 (owner 2026-09-30): default roster = parties with REAL money movement only.
+  // Voided does not count. Full roster stays behind the explicit "All vendors" control.
+  const txnScope = ((): "with" | "all" => {
+    const raw = (searchParams.get("txn") ?? "with").toLowerCase();
+    return raw === "all" ? "all" : "with";
+  })();
+  const setTxnScope = (next: "with" | "all") => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "with") params.delete("txn");
+    else params.set("txn", "all");
+    setSearchParams(params, { replace: true });
+  };
   const setCategoryFilter = (value: string) => {
     const params = new URLSearchParams(searchParams);
     params.set("listTab", "by-category");
@@ -215,11 +227,17 @@ export function VendorsPage() {
   const { viewMode, setViewMode, viewModeSaveError, retryViewModeSave } = useViewModePref("vendors", "master-detail");
 
   const vendorsQuery = useQuery({
-    queryKey: ["vendors", "page", companyId],
+    queryKey: ["vendors", "page", companyId, txnScope],
     // VEND-1: load the FULL vendor roster (the client-side table paginates/searches over it); without an
     // explicit limit the endpoint returns only the default 50.
     // PAGER-SERVERTOTAL-01: keep server `total` (COUNT) — never derive pager totalCount from .length.
-    queryFn: () => listAllVendors({ operating_company_id: companyId, active_company_only: true }),
+    // C-19: default has_transactions=true via A-21 shared predicate (never a client-side filter).
+    queryFn: () =>
+      listAllVendors({
+        operating_company_id: companyId,
+        active_company_only: true,
+        ...(txnScope === "with" ? { has_transactions: true } : {}),
+      }),
     enabled: Boolean(companyId),
   });
   const vendorsRoster = vendorsQuery.data?.vendors ?? [];
@@ -234,8 +252,13 @@ export function VendorsPage() {
   // semantics or any other consumer of vendorsRoster (vendorTypes/categoryOptions stay sourced from
   // the active-only roster below, unchanged).
   const inactiveVendorsQuery = useQuery({
-    queryKey: ["vendors", "inactive", companyId],
-    queryFn: () => listAllVendors({ operating_company_id: companyId, status: "inactive" }),
+    queryKey: ["vendors", "inactive", companyId, txnScope],
+    queryFn: () =>
+      listAllVendors({
+        operating_company_id: companyId,
+        status: "inactive",
+        ...(txnScope === "with" ? { has_transactions: true } : {}),
+      }),
     enabled: Boolean(companyId),
   });
   const inactiveVendorsRoster = inactiveVendorsQuery.data?.vendors ?? [];
@@ -626,6 +649,17 @@ export function VendorsPage() {
                 { value: "active", label: "Active" },
                 { value: "inactive", label: "Inactive" },
                 { value: "all", label: "All" },
+              ]}
+            />
+            {/* C-19 — A-21 server predicate; default With transactions (real money only). */}
+            <SegmentedControl
+              value={txnScope}
+              onChange={setTxnScope}
+              testId="vendors-txn-scope"
+              dataAttributes={{ "data-c19-txn-scope": "vendors" }}
+              options={[
+                { value: "with", label: "With transactions", testId: "vendors-txn-with" },
+                { value: "all", label: "All vendors", testId: "vendors-txn-all" },
               ]}
             />
             {/* V8 — roster Category filter (filters the left vendor list, not transactions). */}

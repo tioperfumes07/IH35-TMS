@@ -22,7 +22,8 @@ const LABEL = "verify-vendors-list-master-detail";
 
 export function audit(src) {
   const failures = [];
-  if (!/listVendors\(\{ operating_company_id: companyId/.test(src.vendors)) {
+  // C-19: listAllVendors may be multiline + has_transactions spread; still company-scoped.
+  if (!/listAllVendors\(\{[\s\S]{0,160}operating_company_id: companyId/.test(src.vendors)) {
     failures.push(`${FILES.vendors}: home.roster must query the real vendor roster`);
   }
   if (!/vendor\.deactivated_at != null/.test(src.vendors) || !/vendor\.deactivated_at == null/.test(src.vendors)) {
@@ -46,7 +47,8 @@ export function audit(src) {
   if (!/<VendorsSyncPanel operatingCompanyId=\{companyId\} \/>/.test(src.vendors)) {
     failures.push(`${FILES.vendors}: list.sync must mount the real sync panel`);
   }
-  if (!/onClick=\{\(\) => navigate\(`\/vendors\/\$\{selectedVendor\.id\}`\)\}\s*data-testid="vendor-header-edit"/.test(src.vendors)) {
+  // CUR-2: Edit opens ParityDrawer via setEditVendorId; navigate to /vendors/:id remains acceptable.
+  if (!/onClick=\{\(\) => (?:navigate\(`\/vendors\/\$\{selectedVendor\.id\}`\)|setEditVendorId\(selectedVendor\.id\))\}\s*data-testid="vendor-header-edit"/.test(src.vendors)) {
     failures.push(`${FILES.vendors}: md.header.edit must navigate to the real selected vendor's own record`);
   }
   if (!/vendor_id=\$\{selectedVendor\.id\}/.test(src.vendors)) {
@@ -78,14 +80,14 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const mutations = [
-    ["roster-query", "vendors", /listVendors\(\{ operating_company_id: companyId/, "listSomethingElse({ operating_company_id: companyId"],
+    ["roster-query", "vendors", /listAllVendors\(/g, "listSomethingElse("],
     ["inactive-filter", "vendors", /vendor\.deactivated_at != null/g, "false"],
     ["category-filter", "vendors", /accepted\.has\(String\(vendor\.vendor_type \?\? ""\)\.toLowerCase\(\)\)/g, "false"],
     ["category-picker-law", "vendors", /createKind="vendor_type"/, 'createKind="__PLANTED_REMOVED__"'],
     ["create-modal", "vendors", /<VendorCreateModal/g, "<div"],
     ["sync-panel", "vendors", /<VendorsSyncPanel operatingCompanyId=\{companyId\} \/>/, "null"],
-    ["header-edit-nav", "vendors", /onClick=\{\(\) => navigate\(`\/vendors\/\$\{selectedVendor\.id\}`\)\}\s*data-testid="vendor-header-edit"/, 'onClick={() => navigate(`/vendors`)} data-testid="vendor-header-edit"'],
-    ["header-new-tx-nav", "vendors", /vendor_id=\$\{selectedVendor\.id\}/, "vendor_id=none"],
+    ["header-edit-nav", "vendors", /onClick=\{\(\) => (?:navigate\(`\/vendors\/\$\{selectedVendor\.id\}`\)|setEditVendorId\(selectedVendor\.id\))\}\s*data-testid="vendor-header-edit"/, 'onClick={() => navigate(`/vendors`)} data-testid="vendor-header-edit"'],
+    ["header-new-tx-nav", "vendors", /vendor_id=\$\{selectedVendor\.id\}/g, "vendor_id=none"],
     ["full-profile-entitylink", "vendors", /data-testid="vendor-details-full-profile-record-link"/, 'data-testid="vendor-details-full-profile-plain"'],
     ["full-profile-human-name", "vendors", /name=\{selectedVendor\.name\}/, 'name="Open full vendor profile"'],
     ["bulk-resource", "listView", /bulkUpdate\(\{ domain: "mdata", resource: "vendors"/, 'bulkUpdate({ domain: "mdata", resource: "units"'],

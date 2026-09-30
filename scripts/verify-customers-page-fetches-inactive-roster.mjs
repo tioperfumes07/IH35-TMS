@@ -9,13 +9,13 @@
  *
  * Fixed additively: a SEPARATE, explicit status=inactive fetch (inactiveCustomersQuery), merged with
  * the existing active-only roster into fullCustomersRoster for the list/table view and tab counts
- * ONLY. parentCustomerOptions (a picker) stays sourced from the original active-only customersRoster,
- * unchanged — active-only picker semantics must not regress.
+ * ONLY. parentCustomerOptions (a picker) stays sourced from an ACTIVE-ONLY roster (customersRoster
+ * or C-19 parentCustomersRoster — never fullCustomersRoster / inactive).
  *
  * INVARIANT (static — no database): Customers.tsx must define inactiveCustomersQuery (status:
  * "inactive"), must define fullCustomersRoster combining the active and inactive rosters, must source
  * visibleCustomers and customerTabCounts from fullCustomersRoster (not the active-only customersRoster
- * alone), and parentCustomerOptions must stay sourced from customersRoster (active-only, unchanged).
+ * alone), and parentCustomerOptions must stay sourced from an active-only roster (never inactive).
  *
  * Self-test: node scripts/verify-customers-page-fetches-inactive-roster.mjs --selftest
  */
@@ -41,8 +41,13 @@ export function checkPageSource(src) {
   if (!/all: fullCustomersRoster\.length/.test(src)) {
     problems.push("customerTabCounts no longer sources from fullCustomersRoster — tab counts would go back to active-only");
   }
-  if (!/const parentCustomerOptions = useMemo\(\s*\(\) =>\s*customersRoster/.test(src)) {
-    problems.push("parentCustomerOptions no longer sourced from the active-only customersRoster — a picker must not start offering deactivated customers");
+  // C-19: parent picker may use parentCustomersRoster (active-only, unfiltered for transactions)
+  // or customersRoster — never fullCustomersRoster / inactive.
+  if (!/const parentCustomerOptions = useMemo\(\s*\(\) =>\s*(?:parentCustomersRoster|customersRoster)/.test(src)) {
+    problems.push("parentCustomerOptions no longer sourced from an active-only roster — a picker must not start offering deactivated customers");
+  }
+  if (/const parentCustomerOptions = useMemo\(\s*\(\) =>\s*fullCustomersRoster/.test(src)) {
+    problems.push("parentCustomerOptions must not source from fullCustomersRoster (would leak inactive)");
   }
   return problems;
 }
