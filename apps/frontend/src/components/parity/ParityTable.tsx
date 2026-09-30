@@ -29,7 +29,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { colors, spacing, typography, MIN_HIT_TARGET_CLASS, TOOLBAR_ICON_SIZE_CLASS } from "../../design/tokens";
-import { QBO_SURFACE, QBO_TOOLBAR_ICON_SLOT } from "../../design/qbo-parity";
+import { QBO_SURFACE, QBO_SURFACE_CLASS, QBO_TOOLBAR_ICON_SLOT } from "../../design/qbo-parity";
 import { Button } from "../Button";
 import { Printer as PrintIcon, Settings as GearIcon } from "lucide-react";
 import { UniversalListToolbar, applyUniversalListFilters, type UniversalRange } from "../table/UniversalListToolbar";
@@ -1236,14 +1236,15 @@ export function ParityTable<T>({
       <Fragment key={id}>
       <tr
         data-testid={rowTestId ? rowTestId(row) : undefined}
-        className={`border-t ${
-          onRowClick || (expandOnRowClick && renderExpanded) ? "cursor-pointer hover:bg-gray-50" : ""
+        className={`border-t ${QBO_SURFACE_CLASS.rowHover} ${
+          onRowClick || (expandOnRowClick && renderExpanded) ? "cursor-pointer" : ""
         } ${rowClassName ? rowClassName(row) : ""}`}
+        data-c04-row="true"
         style={{
           height: d.rowH,
           borderTopColor: QBO_SURFACE.divider,
+          ...(selected.has(id) ? { backgroundColor: QBO_SURFACE.rowSelected } : {}),
           ...(virtualizeRows ? { contentVisibility: "auto", containIntrinsicSize: `${d.rowH}px` } : {}),
-          ...(selected.has(id) ? { backgroundColor: colors.accentTint } : {}),
         }}
         onClick={onRowClick ? (event) => {
           if (isParityTableInteractiveTarget(event.target)) return;
@@ -1292,11 +1293,11 @@ export function ParityTable<T>({
           // back to plain zebra. Selection wins over both.
           const groupBg = group ? (isEvenRow ? group.bgEven ?? group.bg : group.bg) : undefined;
           const cellBg = selected.has(id)
-            ? colors.accentTint
+            ? QBO_SURFACE.rowSelected
             : groupBg
               ? groupBg
               : isEvenRow
-                ? colors.tableRowStripe
+                ? QBO_SURFACE.rowStripe
                 : undefined;
           return (
           <td

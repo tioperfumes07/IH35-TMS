@@ -121,7 +121,7 @@ function customerQualityRating(paymentScore: string | null | undefined, overallF
 
 function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-3 border-b border-gray-100 py-1.5 text-xs last:border-b-0">
+    <div className="flex items-start justify-between gap-3 border-b border-[#D8DEE6] py-1.5 text-xs last:border-b-0">
       <span className="shrink-0 text-xs font-semibold text-gray-500">{label}</span>
       <span className="min-w-0 break-words text-right text-gray-800">{value ?? "—"}</span>
     </div>

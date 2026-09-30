@@ -72,7 +72,7 @@ export function DriverListSidebar({ selectedDriverId, onSelectDriver }: Props) {
               const selected = selectedDriverId === driver.id;
               const name = driverDisplayName(driver.first_name, driver.last_name, driver.id);
               return (
-                <li key={driver.id}>
+                <li key={driver.id} className={MASTER_DETAIL.rowStripeClass} data-c04-row="true">
                   <button
                     type="button"
                     className={`block w-full truncate px-2 py-1.5 text-left text-xs font-medium ${MASTER_DETAIL.rowBorderClass} ${

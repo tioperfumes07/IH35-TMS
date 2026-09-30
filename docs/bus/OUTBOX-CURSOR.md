@@ -40,3 +40,6 @@ C-24 · what changed: D47 list-column sweep — Customers/Vendors/Load Costs/Tra
 
 **2026-09-30T17:45Z · C-25 DISPUTES HUB THREE-WAY · branch `cursor/c25-disputes-hub-split-c89b`**
 C-25 · what changed: `/accounting/disputes` SegmentedControl Driver|Customer|Vendor; only one party panel mounts; Customer → invoice disputes; Driver → settlement disputes; Vendor → honest empty (no TMS table — CC-1 A-25). Ops: `scripts/ops/verify-c25-disputes-hub-split.mjs`. · LIVE PROOF: ops --selftest PASS; tsc -b. · LEFT: Chrome click three parties; A-25 table name from CC-1.
+
+**2026-09-30T18:20Z · C-04 ROW TREATMENT · branch `cursor/c04-row-treatment-c89b`**
+C-04 · what changed: ParityTable hover/stripe/selected → QBO_SURFACE (#EEF2F7 / #FAFBFC / #EAECF1); dropped weak `hover:bg-gray-50`; Customers/Vendors/Drivers master sidebars add `rowStripeClass` + `data-c04-row`; Customers DetailRow divider `#D8DEE6` (was gray-100). Ops: `scripts/ops/verify-c04-row-treatment.mjs`. · LIVE PROOF: ops --selftest PASS; tsc -b; ratchet PASS. · LEFT: Chrome getComputedStyle rows 1..4 on /customers; C-19 has-transactions default next.
