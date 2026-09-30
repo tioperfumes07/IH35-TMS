@@ -5553,4 +5553,19 @@ action:
   OWNER_AUTH_ID=AUTH-165 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth165-reverse-4-mistaken-reinstates.ts --apply
   (run from repo root; DRY_RUN first with no --apply flag)
 expires_at: 2026-10-01T00:00:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T09:20:00.000Z
+consumed_by: CC-2
+row_counts: 4 of 4 reversed. Each target's live reinstate JE reversed, 4 lines each (16 lines
+  total):
+    FAC-2026-00048 -> reversal JE 5a196036-c613-485f-9733-0d8e6f5aa3bb
+    FAC-2026-00063 -> reversal JE ccf1ed7f-c31f-4f7c-b72b-0e8e38fc0b57
+    FAC-2026-00064 -> reversal JE fc874797-9b54-4a83-b058-065431e89999
+    FAC-2026-00082 -> reversal JE c05a0e93-e81a-44fe-8e37-1214e38f54dc
+proof_query: BEFORE/AFTER printed by the script itself, live prod, 2026-09-30 -- account 1090 fell
+  exactly $17,057.44 (1000000 * cents math: 17867978 -> 16162234, delta -1705744 cents), 2150 rose
+  $17,585.00 credit-side (-36350717 -> -34592217), 1230/6400 each fell $263.78 (reserve/factor-fee
+  totals). Independently re-verified after commit: all 4 targets now have 0 live postings
+  (source_transaction_type='factoring_advance' join, 5-column liveness test) -- the double-count
+  is fully closed, each real Faro invoice now counted exactly once via its twin
+  (FAC-2026-00094/110/111/129, untouched, still the sole live record).
