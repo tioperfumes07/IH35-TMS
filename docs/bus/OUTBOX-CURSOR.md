@@ -107,3 +107,6 @@ Recon shell on main. NEXT: C-55 Regular + Master-detail every list.
 
 **2026-09-30T23:50Z · C-55 REGULAR + MASTER-DETAIL · branch `cursor/c55-regular-master-detail-c89b`**
 C-55 · what changed: house label **Regular** (was List view) on Customers/Vendors/Drivers; shared `EntityViewModeToggle`; `useViewModePref` admits units+users; Fleet Home + Users get Regular table / Master-detail shell (same SegmentedControl size/place). Ops: `scripts/ops/verify-c55-regular-master-detail.mjs`. · LEFT: Lead Chrome toggle on /customers /fleet /users. NEXT: C-57 re-read queue.
+
+**2026-09-30T23:41Z · C-55 MERGED · PR #23568 · `3ae18a149f`**
+Regular+MD on main (customers/vendors/drivers/fleet/users). Round 301 Cursor queue C-50→C-55 shipped (C-54/C-56 were prior dups). LEFT: Lead Chrome measure before DONE close; C-57 = re-read NOW-CURSOR for next queue.

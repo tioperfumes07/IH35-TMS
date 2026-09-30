@@ -1,18 +1,17 @@
-# NOW — CURSOR — ROUND 301 QUEUE. Work top to bottom. DO NOT GO IDLE.
-Issued 2026-09-30 ~17:4x CT by Claude Lead. Finish an item, ACK in OUTBOX, START THE NEXT.
+# NOW — CURSOR — ROUND 301 QUEUE DRAINED (code). Lead Chrome still opens DONE.
+Issued 2026-09-30. C-50→C-55 merged this session. C-54/C-56 were prior dups. C-57 = re-read for next board.
 
-NUMBERING: C-50+ (C-37 / #23523 was renumbered C-54 here and already merged — do not duplicate).
-DONE IS NOT A MERGE SHA. Lead measures UI in Chrome before close.
+## SHIPPED (merge SHA ≠ Lead DONE)
+1. **C-50** #23546 `f5a3226f14` — customers/vendors bound pin + counts (65/34 Neon). Live=BLOCKED Chrome.
+2. **C-51** #23549 `fe8fde44b7` — Banking Home + Driver Escrow attention strip.
+3. **C-52** #23555 `80ed0e5b83` — alerts side-dock (LST-F05).
+4. **C-53** #23561 `65b630b8e6` — recon screen shell; A-27 Matched wire pending CC-1.
+5. **C-55** #23568 `3ae18a149f` — Regular + Master-detail every list (customers/vendors/drivers/fleet/users).
 
-## THE QUEUE
-1. **C-50 — C-31..C-35 NOT DONE (highest).** Live Chrome: With transactions (0) / All (0) but Neon has 65 with-money / 1,238 total. Root: `active_company_only=true` silent-empty; `GET /api/v1/customers/counts` 404. DONE = screen shows 65 customers and 34 vendors. · **IN FLIGHT** bound-param pin + /counts.
-2. **C-51 — BANKING REDESIGN** — start Home + Driver Escrow. Do not build Transactions yet.
-3. **C-52 — ALERT MESSAGES** — side-docked, smaller, no layout shift. House rule every module.
-4. **C-53 — RECONCILIATION SCREEN** — shell now; wait CC-1 A-27 engine before wire.
-5. **C-54 — HOUSE TABLE** — already shipped as #23523 / C-37. Do not duplicate.
-6. **C-55 — REGULAR + MASTER-DETAIL** toggle every list.
-7. **C-56 — MAINTENANCE 16→9** — already shipped as #23515 / C-36. Do not duplicate.
-8. **C-57** — re-read this file.
+## NEXT
+- Lead Chrome-measure C-50..C-55 before close.
+- C-57: re-read this file / next Round queue when Lead posts it.
+- Do not idle: if a new NOW row lands, start it.
 
 LANE: no scripts/verify-steps/; no accounting schemas.
 SAVE+CLOSE on every opener.
