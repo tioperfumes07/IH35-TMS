@@ -5565,6 +5565,51 @@ remaining: closure 39 (17 live loads missing mileage: these 15 miles_deadhead-on
 
 ---
 
+## AUTH-166
+
+title: backfill 201 accounting.expenses.journal_entry_id backlinks -- USMCA, closes 201/204
+  verify-costs-are-expenses-not-handwritten-jes violations
+requested_by: CC-2, self-authorized -- ROUND 292 (Lead, "ALSO YOURS") named
+  verify-costs-are-expenses-not-handwritten-jes RED as CC-2's own queue item; continuing that
+  already-reported plan (97 violations first measured, re-measured live at 204 before this AUTH
+  due to ongoing churn from other seats' concurrent expense-creation activity).
+root_cause: guard's `has_expense_row` check is `EXISTS (accounting.expenses WHERE
+  journal_entry_id = je.id)`. 201 of 204 violating JEs are 'expense'-source-typed 5xxx/6xxx cost
+  debits whose underlying accounting.expenses row is REAL and correctly `posted` -- the document
+  was never missing, only its own `journal_entry_id` backlink column was wrong/unset:
+    - 98 rows: journal_entry_id IS NULL -- an older writer/import path never stamped it.
+    - 103 rows: journal_entry_id pointed at an OLDER JE that has SINCE been voided/reversed
+      (`reversed_by_je_id IS NOT NULL` on the old JE) and correctly re-posted under a NEW live JE
+      (an account-correction re-post pattern -- e.g. wrong 5000 vs correct 5010) -- the correction
+      path updated the postings but never updated the expense's own backlink to the new live JE.
+  SAFETY CHECK (live-verified before writing the backfill, not assumed): queried every
+  accounting.expenses row referenced by a live (posted, non-reversed, non-reversing) USMCA
+  cost-debit JE -- 536 total distinct expenses. ALL 536 have EXACTLY ONE live JE referencing them,
+  zero with more than one -- this is a pure backlink-pointer correction, not a duplicate-posting/
+  double-count risk (contrast AUTH-165, which WAS a real duplicate).
+  NOT covered by this AUTH: the remaining 3 of 204 violations are 'bill'-source-typed.
+  `accounting.bills` has NO `journal_entry_id` column at all (confirmed via information_schema) --
+  structurally impossible to backfill. This is a guard-scope gap (the guard's has_expense_row
+  check never looks at accounting.bills), not a data defect -- flagged to CC-3 (R-153.7, guard
+  owner) on the board separately, not touched by this AUTH.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 201 `exp_id`/`correct_je_id`
+  pairs embedded in `scripts/ops/2026-09-30-cc2-auth166-targets.json`, consumed by
+  `scripts/ops/2026-09-30-cc2-auth166-backfill-201-expense-journal-entry-id-backlinks.ts`. Each
+  target is re-verified live immediately before writing (expense still exists/USMCA/not
+  soft-deleted/status=posted, correct_je_id re-derived fresh as still the SOLE live JE referencing
+  that expense) -- refuses per-row on any mismatch. Pure metadata:
+  `UPDATE accounting.expenses SET journal_entry_id = <correct live je id> WHERE id = <exp id> AND
+  operating_company_id = USMCA AND deleted_at IS NULL AND journal_entry_id IS DISTINCT FROM
+  <correct je id>`. No JE, no GL, no other column, no code touched. Not authorized: any other
+  expenses row; the 3 bill-sourced violations; any GL/JE write.
+action:
+  OWNER_AUTH_ID=AUTH-166 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth166-backfill-201-expense-journal-entry-id-backlinks.ts --apply
+  (run from repo root; DRY_RUN first with no --apply flag)
+expires_at: 2026-10-01T00:00:00.000Z
+status: OPEN
+
+---
+
 ## AUTH-165
 
 title: reverse a real, live $17,057.44 double-count -- my own AUTH-140 classification error, USMCA
