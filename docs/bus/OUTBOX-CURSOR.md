@@ -1,5 +1,8 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T07:14Z · 285.4.9 #59 METHOD FAST-MERGED `39eff3b07f` · Neon applied**
+CURSOR | #59 METHOD `#23287` `39eff3b07f` · migrate `202614651200` ADD COLUMN approval_method · approve requires method · invoice SELECT · FE METHOD picker | GUARD lifecycle 8/8 · company-settlement-pdf OK · ratchet PASS | LIVE PROOF Neon br-fancy-credit-akjnd07a: `dispatch.detention_requests.approval_method` text NULL + ledger row checksum `fb8ea0a133…` applied_at `2026-09-30T07:14:03.087Z` | NEXT: Chrome Print proof of METHOD on detention invoice.
+
 **2026-09-30T06:48Z · 285.4.9 #59 METHOD ON BRANCH (merge after 12:00 UTC)**
 CURSOR | #59 METHOD: claim `#23286` `6cb5f4b515` · migrate `202614651200` + approve `approval_method` required + invoice SELECT + FE METHOD picker on Detention board | GUARD detention-approval-lifecycle selftest 8/8 · company-settlement-pdf OK · vitest 12/12 | NEXT: **merge after 12:00 UTC** · Neon apply · Chrome Print proof.
 
