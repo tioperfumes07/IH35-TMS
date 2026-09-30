@@ -189,7 +189,7 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
       {hasDefaultHref ? (
         <NavLink
           to={item.to}
-          className={parentActive ? "border-b border-white pb-0.5 font-semibold" : ""}
+          className={`inline-flex h-7 items-center ${parentActive ? "border-b border-white pb-0.5 font-semibold" : ""}`}
         >
           {item.label}
         </NavLink>
@@ -200,7 +200,7 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
         aria-haspopup="true"
         aria-expanded={open}
         aria-controls={menuId}
-        className={hasDefaultHref ? "" : parentActive ? "border-b border-white pb-0.5 font-semibold" : ""}
+        className={`inline-flex h-7 items-center ${hasDefaultHref ? "" : parentActive ? "border-b border-white pb-0.5 font-semibold" : ""}`}
         onClick={toggleFromClick}
         onKeyDown={onButtonKeyDown}
       >
@@ -241,12 +241,17 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
 export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPageSubNavProps) {
   const { pathname } = useLocation();
   const useLocalState = activeId !== undefined && onTabChange !== undefined;
+  // C-22 — locked tab-row height (28px clickable boxes law): every module's NavyPageSubNav is h-7.
+  const tabClass = (active: boolean) =>
+    `inline-flex h-7 items-center gap-1 whitespace-nowrap ${active ? "border-b border-white pb-0.5 font-semibold" : ""}`;
   return (
     <nav
       aria-label="Section navigation"
-      className="overflow-x-auto rounded-sm bg-[#1A1F36] px-2 py-1 text-[11px] text-white"
+      data-testid="navy-page-subnav"
+      data-c22-tab-height="h-7"
+      className="h-9 overflow-x-auto rounded-sm bg-[#14314F] px-2 py-1 text-[11px] text-white"
     >
-      <div className="flex min-w-max gap-4">
+      <div className="flex min-w-max items-center gap-4">
         {items.map((item, index) => {
           if (item.children?.length) {
             return <NavyDropdown key={item.to || item.label} item={item} pathname={pathname} />;
@@ -259,7 +264,7 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
                 key={id}
                 type="button"
                 aria-current={active ? "page" : undefined}
-                className={`inline-flex items-center gap-1 ${active ? "border-b border-white pb-0.5 font-semibold" : ""}`}
+                className={tabClass(active)}
                 onClick={() => onTabChange(id)}
               >
                 {item.label}
@@ -272,7 +277,7 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
               key={item.to}
               to={item.to}
               aria-current={isActive(pathname, item.to) ? "page" : undefined}
-              className={`inline-flex items-center gap-1 ${isActive(pathname, item.to) ? "border-b border-white pb-0.5 font-semibold" : ""}`}
+              className={tabClass(isActive(pathname, item.to))}
             >
               {item.label}
               {item.hasData ? <DataDot /> : null}
