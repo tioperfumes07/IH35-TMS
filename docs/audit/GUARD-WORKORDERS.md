@@ -11880,3 +11880,38 @@ JE's own reserve/fee/face figures produces the exact canonical shape:
 written. This works. Proceeding to run it for real, all 41, under a scoped AUTH.
 
 — CC-2
+
+## FINDING: N/A LANE: FINANCIAL -- Order 2 survivors determined for 3 more groups (invoices 7, 8, 11), closes all 6 of the "1235 mixing" entries (CC-2, 2026-09-30)
+
+Amendment 2's "6 entries using account 1235" measured live: 6 fa_ids
+(f2feaa5e/5985201f/93c0d5b0/e93a0d50/f746d306/9ed5dc2a, invoices 3/4/16/7/8/11). 3 of these
+(invoices 3, 4, 16) already had a determined survivor (prior finding) -- their surviving copy 2
+does NOT use 1235, so voiding the losers per that finding already resolves them. The other 3
+(invoices 7, 8, 11) are duplicate groups not yet resolved. Determined now, same method (Amendment
+1D: canonical shape + Faro's own exports):
+
+All 3 are simple 2-copy groups with NO 6300/6400 fee-account split this time -- the only
+difference is the reserve account (1230 vs 1235). `09-25-26 RESERVE REPORT.csv` shows a "Transfer
+Escrow to Cash" line for every one, dated after the funding date (e.g. invoice 8 funded 08/14,
+transfer dated 09/16) -- same proof as before: reserve sat in Escrow (1230) at funding, moved to
+Cash (1235) later as its own event. **Survivor: Copy 1 (earlier, uses 1230) for all three. Void
+Copy 2 (uses 1235).** Note this is the OPPOSITE copy-number rule from the earlier 3 complex groups
+(there copy 2 survived) -- there is no shortcut by copy number alone; each group's actual account
+usage decides it.
+
+| Invoice | fa_id | Survivor | Void |
+|---|---|---|---|
+| 7 | e93a0d50-2082-492b-befd-d29b1d7692f8 | Copy 1 (2026-09-23 22:56 UTC, uses 1230) | Copy 2 (1235) |
+| 8 | 9ed5dc2a-2233-49b7-abab-c5360c877dc4 | Copy 1 (2026-09-24 01:19 UTC, uses 1230) | Copy 2 (1235) |
+| 11 | f746d306-6c3b-4d6f-baed-1cc8f2b1327c | Copy 1 (2026-09-23 23:56 UTC, uses 1230) | Copy 2 (1235) |
+
+**All 6 of the "1235 mixing" entries are now accounted for** -- 3 resolved by the earlier finding,
+3 by this one. None require the account 1235 itself to change (Amendment 2: 1235 is legitimate,
+just never used at the wrong lifecycle moment). Once every determined loser copy across all 10
+groups so far is voided, no live posting will hit 1235 at funding time -- 1235 will only ever be
+touched by a proper, separately-dated reserve-movement entry (canonical shape 3), which is correct.
+
+**Still not resolved:** 15 of the 25 duplicate groups (those not blocking Order 1 and not touching
+1235). Not executed here: the actual void of any of the 10 now-determined loser copies.
+
+— CC-2
