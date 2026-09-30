@@ -78,6 +78,7 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { assertNotProduction, assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const REQUIRED_AUTH_ID = process.env.OWNER_AUTH_ID;
@@ -149,6 +150,7 @@ async function main() {
 
   // READ PHASE -- confirm current header state before writing anything.
   const readClient = await pool.connect();
+  await (process.env.OWNER_AUTH_ID ? assertIsIntendedProduction : assertNotProduction)(readClient, { label: "scripts/ops/2026-09-30-cc1-auth144-repost-faro-13619-13615.ts" });
   let rows: Array<{ id: string; display_id: string; status: string; voided_at: string | null; invoice_total_cents: string; faro_invoice_number: string | null }>;
   try {
     await readClient.query("BEGIN");

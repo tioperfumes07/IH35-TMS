@@ -52,6 +52,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import pg from "pg";
+import { assertNotProduction, assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -70,6 +71,7 @@ execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"),
 
 const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
 await client.connect();
+  await (process.env.OWNER_AUTH_ID ? assertIsIntendedProduction : assertNotProduction)(client, { label: "scripts/ops/2026-09-30-cc3-auth152-backfill-13637-pickup-stamp.ts" });
 await client.query("BEGIN");
 await client.query("SET LOCAL app.bypass_rls = 'lucia'");
 try {

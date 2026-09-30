@@ -38,6 +38,7 @@
  * (run from repo root; DRY RUN first with no --apply flag)
  */
 import { execFileSync } from "node:child_process";
+import { assertNotProduction, assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
@@ -66,6 +67,7 @@ async function main() {
 
   const client = new pg.Client({ connectionString: url });
   await client.connect();
+  await (process.env.OWNER_AUTH_ID ? assertIsIntendedProduction : assertNotProduction)(client, { label: "scripts/ops/2026-09-30-cc2-auth166-backfill-201-expense-journal-entry-id-backlinks.ts" });
 
   try {
     await client.query("BEGIN");

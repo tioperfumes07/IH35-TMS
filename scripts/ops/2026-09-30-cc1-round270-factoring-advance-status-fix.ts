@@ -11,6 +11,7 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Client } from "pg";
+import { assertNotProduction, assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 {
@@ -39,6 +40,7 @@ async function main() {
 
   const client = new Client({ connectionString: process.env.DATABASE_URL });
   await client.connect();
+  await (process.env.OWNER_AUTH_ID ? assertIsIntendedProduction : assertNotProduction)(client, { label: "2026-09-30-cc1-round270-factoring-advance-status-fix.ts" });
   try {
     await client.query("BEGIN");
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [USMCA]);

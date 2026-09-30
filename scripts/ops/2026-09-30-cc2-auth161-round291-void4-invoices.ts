@@ -38,6 +38,7 @@
  */
 import { execFileSync } from "node:child_process";
 import path from "node:path";
+import { assertNotProduction, assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 
@@ -84,6 +85,7 @@ async function main() {
 
   const client = new pg.Client({ connectionString: url });
   await client.connect();
+  await (process.env.OWNER_AUTH_ID ? assertIsIntendedProduction : assertNotProduction)(client, { label: "scripts/ops/2026-09-30-cc2-auth161-round291-void4-invoices.ts" });
 
   try {
     await client.query("BEGIN");

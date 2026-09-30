@@ -51,6 +51,7 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { assertNotProduction, assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const REQUIRED_AUTH_ID = process.env.OWNER_AUTH_ID;
@@ -130,6 +131,7 @@ async function main() {
 
   // READ PHASE -- confirm the 3 expenses still credit 2000 and are still live before touching anything.
   const readClient = await pool.connect();
+  await (process.env.OWNER_AUTH_ID ? assertIsIntendedProduction : assertNotProduction)(readClient, { label: "scripts/ops/2026-09-30-cc1-auth150-void-3-ap-expenses-create-bills.ts" });
   let liveRows: Array<{ id: string; status: string; total_amount_cents: string }>;
   try {
     await readClient.query("BEGIN");

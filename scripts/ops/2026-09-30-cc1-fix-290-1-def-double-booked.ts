@@ -38,6 +38,7 @@
  */
 import { execFileSync } from "node:child_process";
 import path from "node:path";
+import { assertNotProduction, assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 
@@ -74,6 +75,7 @@ async function main() {
   // scripts/verify-no-fuel-purchase-booked-twice.mjs's findDuplicatePairs, so this script and the
   // guard can never disagree about what counts as a duplicate.
   const readClient = await pool.connect();
+  await (process.env.OWNER_AUTH_ID ? assertIsIntendedProduction : assertNotProduction)(readClient, { label: "scripts/ops/2026-09-30-cc1-fix-290-1-def-double-booked.ts" });
   let rows: Array<{ id: string; load_id: string; total_amount_cents: string; source_fuel_transaction_id: string | null }>;
   try {
     await readClient.query("BEGIN");
