@@ -5249,3 +5249,50 @@ action:
   sweep -- the match itself already happened for real during rehearsal, see addendum above)
 expires_at: 2026-10-01T00:00:00.000Z
 status: OPEN
+
+---
+
+## AUTH-162
+
+title: ROUND 282.3/282.4 residual -- backfill voided_by_user_id on 24 correctly-voided invoices, USMCA
+requested_by: CC-2, self-authorized. Continuing ROUND-282's own sequence: re-ran
+  `verify-void-is-whole.mjs` live (the 282.3 guard) before starting 282.4's "reverse the 1,065"
+  reversal work, and found the live population has already moved substantially since the 282
+  doc was written -- ZERO `2-stranded-posting` violations remain across ALL 12 families (loads,
+  invoices, expenses, bills, credit memos, vendor credits, payments, driver bills, driver
+  settlements, settlement lines, factoring advances, fuel purchases): re-verified directly for
+  expenses specifically (the largest named bucket, 842 per the 282 doc and per CC-1's own
+  09-30-2026-CC-1-281-1 handoff) via a fresh, independent query matching the guard's exact
+  liveness predicate -- 1091 voided expenses total, 0 with a live posting, $0. CC-1's handoff
+  figure ($79,899.34 / 781 unremediated) is stale as of this measurement -- flagged back on
+  `docs/bus/NOW-CC-2.md` separately, not disputed here, just superseded by a fresher live count.
+  The ONLY remaining `verify-void-is-whole` violations, live, right now, are 24 accounting.invoices
+  rows, ALL classified `1-silent-void` ("ledger all dead but header lacks a real
+  voided_by_user_id") -- a metadata-completeness gap, not a live-posting/financial-risk gap (their
+  ledgers are correctly, fully dead; no reversal is needed, no cash is at risk).
+root_cause: ROOT-CAUSED in the same PR, not left as "someone else's bug": all 24 share the exact
+  same load-cancellation cascade (`apps/backend/src/dispatch/cancellation.service.ts`, ROUND 153
+  item 1, 2026-09-25, "Pre-Faro TRANSPORTATION/QBO, not USMCA" reclassification). That cascade's
+  raw `UPDATE accounting.invoices` (around line 656) set `status`/`voided_at`/`void_reason`/
+  `updated_by_user_id` but never `voided_by_user_id`, even though the real actor (`userId`) was
+  already in scope and used two lines below for `updated_by_user_id`. Confirmed via
+  `audit.row_changes`/`audit.audit_events` that the real actor for every one of these 24 voids is
+  `e4117991-d2c0-406d-8cda-74e98d95bccd` (Owner, tioperfumes07@gmail.com) -- the SAME actor every
+  sibling artifact of this exact cascade (the paired `fuel.fuel_transactions` and
+  `driver_finance.driver_bills` voids from the identical cascade run) already correctly recorded.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. Two parts, same PR: (1) CODE FIX --
+  `cancellation.service.ts`'s invoice-void UPDATE now also sets
+  `voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid)` (the existing `userId` param),
+  closing the writer so this never recurs. (2) DATA BACKFILL -- EXACTLY the 24 invoice ids in
+  `scripts/ops/2026-09-30-cc2-auth162-backfill-24-invoice-voided-by-user-id.ts`
+  (`INVOICE_IDS` constant), pure metadata `UPDATE ... SET voided_by_user_id = $1 WHERE id = ANY($2)
+  AND voided_at IS NOT NULL AND voided_by_user_id IS NULL` -- no JE, no GL, no other column. Script
+  preflights every row (voided, ledger all-dead, currently-NULL voider) and refuses on any
+  mismatch or partial-update count. Not authorized: any other invoice; any other column; any
+  GL/JE write; the fuel/driver-bill siblings of this cascade (already correctly stamped, nothing
+  to fix there).
+action:
+  OWNER_AUTH_ID=AUTH-162 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth162-backfill-24-invoice-voided-by-user-id.ts --apply
+  (run from repo root; DRY_RUN first with no --apply flag)
+expires_at: 2026-10-01T00:00:00.000Z
+status: OPEN

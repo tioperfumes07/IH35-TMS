@@ -659,6 +659,7 @@ export async function cancelLoadInClientTx(
               SET status = 'void',
                   voided_at = now(),
                   void_reason = COALESCE(void_reason, $3),
+                  voided_by_user_id = COALESCE(voided_by_user_id, $4::uuid),
                   updated_at = now(),
                   updated_by_user_id = $4
               WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'void'
