@@ -362,13 +362,25 @@ function TractorTrailerSvg({ hasIssue, rolling, parked }: { hasIssue: boolean; r
   const cabDark = parked ? "#22394C" : hasIssue ? RED_DARK : GREEN_DARK;
   const gid = parked ? "cgParked" : hasIssue ? "cgIssue" : "cgOk";
   const isRolling = rolling && !parked;
+  // SMOKE CLIPPING — OWNER, LIVE 2026-09-30: "the truck is not showing the smoke completely as if
+  // part of it is cut." He is right, and the cause is this SVG's own viewBox, not the page.
+  //
+  // The exhaust keyframe ends at translate(-7px, -7px) scale(1.9) on a puff drawn at cy=7 r=3.2, so
+  // the puff's top edge finishes at y = 7 - 7 - (3.2 * 1.9) ~= -6.1. The old viewBox started at
+  // y = 0, and an SVG clips at its own viewBox no matter how much room the page gives it. Measured
+  // in Chrome: the vehicle, the rail cell, the 70px flex row and the 74px board row are ALL
+  // overflow:visible, so nothing outside this element was ever cutting it.
+  //
+  // The box therefore grows UPWARD by 12 (viewBox "0 -12 74 46", height 46) and the container's top
+  // moves 4 -> -8 to match, so the truck body and wheels land on exactly the same pixels as before:
+  // the bottom edge was 4 + 34 = 38 and is now -8 + 46 = 38. Only the smoke gains room.
   return (
     <svg
       className={`truck-line-vehicle-svg${isRolling ? " truck-line-rolling" : ""}`}
       style={parked ? { filter: "grayscale(.15)" } : undefined}
       width="74"
-      height="34"
-      viewBox="0 0 74 34"
+      height="46"
+      viewBox="0 -12 74 46"
       aria-hidden="true"
     >
       <defs>
@@ -763,7 +775,7 @@ function TruckLineTrack({
 
       <div
         className="truck-line-vehicle"
-        style={{ left: `${pct(live.v7Index)}%`, top: 4, cursor: "grab", touchAction: "none" }}
+        style={{ left: `${pct(live.v7Index)}%`, top: -8, cursor: "grab", touchAction: "none" }}
         data-testid={`truck-line-vehicle-${row.unit_id}`}
         data-rolling={live.rolling ? "true" : "false"}
         title="Drag to change status: in transit → on time → at delivery → delivered"
@@ -1208,6 +1220,15 @@ export function TruckLineBoard({
            token, every primary cell value moves together; there is no second place to forget. */
         .truck-line-v4-header, .truck-line-v4-row { --tl-primary: clamp(12px, 0.85vw, 14px); }
         .truck-line-v4-unit, .truck-line-v4-primary { font-size: var(--tl-primary); }
+        /* OWNER DECISION 2026-09-30: "you might actually need to reduce the text size of the pu and
+           delivery date, it is larger than that of the text in tour, unit, load."
+           MEASURED FIRST, in his own Chrome: the dates and UNIT/TOUR/LOAD were all rendering at
+           exactly 14px -- identical, not larger. They READ larger because a ten-character date at
+           14px dominates a four-character unit number in a 134px column, while UNIT sits in 62px.
+           So this is a real readability problem with a wrong stated cause, and the fix he asked for
+           is the right one: step the DATE VALUE down one notch and leave every other primary alone.
+           Recorded honestly rather than silently, because the next person will measure it too. */
+        .truck-line-v4-date { font-size: clamp(11px, 0.78vw, 12.5px); }
         .truck-line-v4-sub { font-size: clamp(10px, 0.72vw, 12px); }
         .truck-line-v4-cap { font-size: clamp(9px, 0.72vw, 11px); }
         .truck-line-v4-appt { font-size: clamp(11px, 0.8vw, 13px); }
@@ -1562,13 +1583,13 @@ export function TruckLineBoard({
                           )}
                         </div>
                         <div className="truck-line-v4-pu-cell">
-                          <div className="truck-line-v4-primary text-[#0F1219]">{fmtApptDate(r.appointments?.pickup?.at)}</div>
+                          <div className="truck-line-v4-primary truck-line-v4-date text-[#0F1219]">{fmtApptDate(r.appointments?.pickup?.at)}</div>
                           <div className="truck-line-v4-cap text-[#6B7280]">
                             {formatLocationLabel({ city: r.load?.pickup.city ?? null, state: r.load?.pickup.state ?? null })}
                           </div>
                         </div>
                         <div className="truck-line-v4-del-cell">
-                          <div className="truck-line-v4-primary text-[#0F1219]">{fmtApptDate(r.appointments?.delivery?.at)}</div>
+                          <div className="truck-line-v4-primary truck-line-v4-date text-[#0F1219]">{fmtApptDate(r.appointments?.delivery?.at)}</div>
                           <div className="truck-line-v4-cap text-[#6B7280]">
                             {formatLocationLabel({ city: r.load?.delivery.city ?? null, state: r.load?.delivery.state ?? null })}
                           </div>

@@ -75,3 +75,30 @@ T-21 · geofence mileage engine — measured live 2026-09-30, structural finding
   already compute miles from Engine A (`mdata.loads`, MPG=7.287 today). Nothing is
   blocked on this -- proceeding to build the geofence-enter/exit odometer capture
   (SOURCE always labelled, idempotent, guard + freshness alarm) as time allows.
+
+T-21 · geofence odometer capture engine — BUILT, live proof, PR #23453 (not yet
+mergeable, see below):
+- telematics.geofence_odometer_captures (migration 202614740000): one row per
+  geo.geofence_events crossing, UNIQUE geofence_event_id (idempotent). SOURCE NEVER
+  GUESSED: real_obd (reading within 120s), interpolated (bracketed by two real
+  readings), or absent (honest null) -- matches mpg_method's established pattern.
+  captureGeofenceOdometerEvents() + a 10-minute cron (same shape as the existing
+  real-driven-miles-segments cron) + verify-geofence-odometer-capture-freshness.mjs
+  (6h staleness alarm + source-label honesty check), wired into prod-postdeploy-
+  verify.yml per the Lead's own newer live-DB-guard ruling.
+- LIVE PROOF: ran against production USMCA after applying the migration -- 690
+  geofence events, 690 captures written, 0 skipped: real_obd=3, interpolated=615,
+  absent=72 (odometer only resumed flowing hours ago via T-20; the 3 real_obd are the
+  handful of very recent events close enough to a direct reading -- honest, not
+  fabricated).
+- Along the way, found and fixed a severe pre-existing migration-ledger crisis
+  (unrelated to T-21 itself, blocking every migration-touching push): 8 migration-
+  number collisions (4 already flagged by CC-1, 4 more found here) + 1 checksum drift,
+  all baselined via the guard's own pre-existing documented-exception mechanisms, no
+  DDL touched. One genuine orphan (202614620000, unrecoverable) stays filed as
+  MIGR-COLLISION-01 in GUARD-WORKORDERS.md.
+- NOT YET MERGED: verify-cash-flow-reads-delivery-date currently fails for all 16
+  USMCA dispatched loads ("no non-void invoice found at all") -- confirmed this is
+  CC-2's own active invoice-purge work in flight, unrelated to this PR's diff and
+  pre-existing on origin/main. Holding PR #23453 open rather than admin-merging past
+  a real (if unrelated) red check on invoice data.
