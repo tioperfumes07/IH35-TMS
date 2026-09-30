@@ -238,3 +238,22 @@ A-12's real finding (1 document row company-wide, belongs to a TEST driver, zero
 have any document on file) without touching it.
 **Left:** Recommend a real FK constraint (named, not added). Data-population gap is the owner's to
 fill. A-20 through A-24 sequence complete.
+
+## A-26 — accounting.bills.mdata_vendor_id gets a real FK
+**Changed:** Migration 202614770000 adds a FOREIGN KEY on the already-populated, correctly-typed
+`mdata_vendor_id` column (16338/16340 rows, 0 mismatches vs the legacy text `vendor_uuid`, 0 orphans
+against `mdata.vendors`) — DDL only, no data touched, freeze-compliant.
+**Live proof:** BEFORE 0 FK constraints on that column; AFTER `bills_mdata_vendor_id_fkey` live on
+prod. Guard `verify-bills-mdata-vendor-id-fk.mjs` (verify-step 11949) selftest + live PASS.
+**Left:** Repointing the 242 existing call sites from `vendor_uuid` to `mdata_vendor_id` (dropping
+the cast entirely) is a separate, larger job — named, not done here.
+
+## A-25 — dispute object separation confirmed, no vendor table exists
+**Changed:** Nothing to data. Added a permanent guard.
+**Live proof:** `docs/bus/2026-09-30-CC1-A25-DISPUTE-OBJECT-SEPARATION.md` — exhaustive table scan
+finds exactly 4 dispute-named tables (driver_finance.driver_settlement_disputes canonical/active,
+driver_finance.settlement_disputes archived, settlements.settlement_disputes retired-duplicate
+schema, accounting.invoice_disputes canonical/active) — no vendor-scoped table anywhere. Confirmed
+at the source level: the two active services never reference each other's table. New guard
+`verify-dispute-object-sets-never-share-a-query.mjs` (verify-step 11953) makes this permanent.
+**Left:** None. A-20 through A-26 sequence complete.
