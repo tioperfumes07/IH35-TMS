@@ -9364,5 +9364,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-30",
     "purpose": "verify-dispatched-load-gps-not-stale"
+  },
+  "11837": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-dispatched-load-has-stop-stamps"
   }
 }
