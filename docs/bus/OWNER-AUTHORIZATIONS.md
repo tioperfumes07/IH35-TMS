@@ -5175,3 +5175,59 @@ Owner, verbatim (chat 2026-09-30):
 Inside your block you self-assign freely. Outside it, never. If you need more, ask Lead — Lead extends the block.
 
 **Cursor / Lead:** do not self-assign an AUTH number. Cursor code / docs PRs that are not a production write need no AUTH.
+
+---
+
+## AUTH-161
+
+title: ROUND 282.7 item 1 -- match ONE clean Faro wire-in bank transaction to its factoring advance, USMCA
+requested_by: Lead order 282.7 (relayed 2026-09-30, per CC-1's item-6 handoff
+  `docs/bus/09-30-2026-CC-1-ITEM6-166868-PLUG-HANDOFF-TO-CC2.md`): "Get the 12 ids from CC-1. Match
+  each one INDIVIDUALLY through the banking suggestion engine. Owner law: we only categorize what
+  is 100% identical. No batch, no automatch, no bulk accept on these 12. One at a time, each to its
+  own Faro advance/invoice."
+root_cause: live-verified (USMCA, bypass_rls, re-checked fresh 2026-09-30 immediately before this
+  AUTH -- nothing has changed since the original investigation) all 12 `for_review` Faro wire-in
+  bank_transactions ($191,929.68 total, matching CC-1's handoff figure exactly) and the two manual
+  plug JEs (ACCT-F20260925i `43d6f4bf-a6ea-4c78-b074-4b1b4a9dcf78` $166,743.94 + ACCT-F20260925j
+  `36223f47-f279-4993-abb1-e8e8f670a509` $125.00 = $166,868.94, matching the handoff exactly).
+  `findCandidates()` (the banking Match drawer's own suggestion engine,
+  accounting/bank-recon/match.service.ts) returns ZERO factoring_advance candidates for ANY credit
+  transaction -- `fetchLedgerCandidates()`'s `isCredit` branch queries ONLY `accounting.payments`,
+  never `accounting.factoring_advances`, for all 12 (a separate, out-of-scope defect, named on the
+  board, not fixed here). Cross-referenced against `accounting.factoring_advances.faro_invoice_number`
+  and Faro's own authoritative payment-report exports invoice-by-invoice: of the 12, ONLY ONE is a
+  genuine, unambiguous 1:1 exact match with no complicating factor -- wire
+  `3feba937-1aa5-463b-9ce7-054d404c1024` (2026-09-25, $4,161.00) against
+  `accounting.factoring_advances` FAC-2026-00138 / faro_invoice 101 (Bennett International
+  Logistics), advanced 2026-09-25, expected net EXACTLY $4,161.00 (advance $4,161.00 + reserve
+  $64.50 + factor fee $64.50 + wire fee $10.00 = invoice $4,300.00; net to bank = advance
+  $4,161.00, zero variance), currently `for_review`/unmatched, funding JE already posted and live.
+  Re-verified live immediately before this AUTH: both the bank_transaction and the advance are
+  still in the exact same state as originally found -- unmatched, unchanged. The other 11 are real
+  multi-invoice Faro wire batches (proven via faro_invoice_number + the CSV exports, exact invoice
+  lists recorded on the board) further complicated by a second, separately confirmed defect: Faro's
+  own "negative reserve" internal-transfer/deposit mechanism ($49,216.41 total across just these 12
+  wires' dates) has ZERO representation anywhere in `accounting.factoring_reserve_movements` (144
+  real rows exist, all `movement_type = 'held'`, $5.02-$102.75 each -- none anywhere near these
+  day-level amounts). A "100% identical" multi-document match cannot be honestly executed for those
+  11 without either fixing that tracking gap or an explicit ruling on how to book the
+  negative-reserve portions -- reported in full on the board, NOT forced. This leaves an
+  unexplained $25,060.74 gap between the 12 wires' sum and the $166,868.94 plug, per CC-1's own
+  handoff -- not resolved by this AUTH, which touches only the one clean match.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY: bank_transaction
+  `3feba937-1aa5-463b-9ce7-054d404c1024` matched to factoring_advance
+  `a925526e-b2cf-4513-98bf-40ed1cbb3f6d` (FAC-2026-00138) via the sanctioned
+  `acceptMatchWithResolveDifference` engine call (ledger_entry_kind='factoring_advance', zero
+  variance, no difference JE posted), then the standard deposit sweep
+  (`postSourceTransactionInClientTx({source_transaction_type:'factoring_advance_deposit',
+  source_transaction_id:'a925526e-b2cf-4513-98bf-40ed1cbb3f6d'})`) to clear 1090->1000 for this one
+  advance. Not authorized: the other 11 bank transactions, the plug JEs (i/j -- untouched, reversal
+  explicitly held per the order's own sequencing until all 12 are resolved), any
+  factoring_reserve_movements write (out of scope, needs its own ruling), the
+  fetchLedgerCandidates() factoring-advance-candidate gap (separate defect, named on the board).
+action:
+  OWNER_AUTH_ID=AUTH-161 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth161-match-one-clean-faro-wire.ts --apply
+  (run from repo root; DRY_RUN first with no --apply flag)
+expires_at: 2026-10-01T00:00:00.000Z
+status: OPEN
