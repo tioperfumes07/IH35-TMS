@@ -1,13 +1,5 @@
 [
   {
-    "filename": "202614720000_downtime_schema_grants.sql",
-    "ledger_checksum": "2883506f594c99b4b8598e79572f1f5727459648d5408c1cd39b28ba5bdee666",
-    "disk_checksum": "ae02d9058d5c819faeea2dff9b0ad787c393cfbee4df318a94c74d3e546406a8",
-    "reason": "Two seats independently authored a missing migration for the same claimed number (202614720000, 'downtime schema + table grants') around the same time, 2026-09-30: this seat's own simpler GRANT-only version was applied and ledgered first, then #23441's more defensive DO-block version (schema-existence guard, sequence grants) landed on disk under the same filename. Both are idempotent and grant the identical live state (verified: has_schema_privilege/has_table_privilege all true either way); the disk version is kept as canonical going forward since it is strictly more defensive. Checksum drift recorded rather than re-ledgering or renaming an already-applied migration.",
-    "added_at": "2026-09-30",
-    "added_in_pr": "claude/t21-geofence-odometer-captures"
-  },
-  {
     "filename": "0050_two_section_v5_and_safety_restructure.sql",
     "ledger_checksum": "1d5f77d669ceb800c60f3b4cbf51060e174568fb22126be9ab3f3cadeb05c5de",
     "disk_checksum": "8919f0ed54012cbbb865852a7074e0c69c9dad399357e5f14fefcffb682ec2ef",
@@ -446,5 +438,13 @@
     "reason": "Comment-only edit: added the '-- CANONICAL-CHECK:' block verify-no-duplicate-financial-ledger requires for the new driver_finance.deduction_recovery_links table (locked-guards red on main since #22355). No SQL statement changed; prod already applied the original and nothing is re-run.",
     "added_at": "2026-09-26",
     "added_in_pr": "claude/r186-creator-je-preview-paritytable"
+  },
+  {
+    "filename": "202614720000_downtime_schema_grants.sql",
+    "ledger_checksum": "2883506f594c99b4b8598e79572f1f5727459648d5408c1cd39b28ba5bdee666",
+    "disk_checksum": "ae02d9058d5c819faeea2dff9b0ad787c393cfbee4df318a94c74d3e546406a8",
+    "reason": "P0, 2026-09-30: applied to production at 16:33:02Z from a version of this file that no longer exists in ANY branch -- searched every commit in every ref that touches it and found only 20014c78 and ae02d905, neither matching the ledger's 2883506f. The file was therefore edited after it applied, and the applied bytes are unrecoverable, so a byte-for-byte restore (the fix used for 202614560000 and 202614680000 the same hour) is impossible here. Every production deploy was blocked behind it. This override records the EXACT (ledger, disk) pair, which is the mechanism db-migrate and verify-applied-migrations-immutable both honour; it does not disable the check for anything else, and a third checksum on this file still fails. The migration is GRANT-only and idempotent -- the version on disk grants ih35_app usage and table privileges on schema downtime only when the schema exists -- so replaying it or not replaying it cannot change data. Verified live before writing this: has_schema_privilege('ih35_app','downtime','USAGE') = true, so the grants the file exists to make are already in place.",
+    "added_at": "2026-09-30",
+    "added_in_pr": "LEAD-P0-DEPLOY-UNBLOCK-2026-09-30"
   }
 ]

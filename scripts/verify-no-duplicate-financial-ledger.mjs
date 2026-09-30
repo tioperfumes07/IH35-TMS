@@ -206,6 +206,58 @@ function readJson(rel, fallback) {
   try { return JSON.parse(fs.readFileSync(path.join(ROOT, rel), "utf8")); } catch { return fallback; }
 }
 
+const DECLARATIONS_REL = "scripts/canonical-ledger-declarations.json";
+
+/**
+ * RELOCATED declarations (Lead, 2026-09-30).
+ *
+ * An applied migration is IMMUTABLE — scripts/verify-applied-migrations-immutable.mjs enforces it,
+ * and editing one makes db-migrate refuse to migrate, red-lining every backend pre-deploy. So when a
+ * financial table lands WITHOUT its '-- CANONICAL-CHECK:' block and is applied to production before
+ * the omission is caught, the block can no longer be added where it belongs.
+ *
+ * It happened twice: accounting.expenses_review_queue (applied 2026-09-29T20:44:07Z) and
+ * driver_finance.settlement_line_item_splits (applied 2026-09-30T11:26:26Z). main was RED on this
+ * guard for both — verified by running the guard against origin/main content, not inferred from one
+ * PR — which blocked every seat.
+ *
+ * The requirement is NOT waived here, it is relocated. A relocated declaration carries exactly the
+ * content the in-migration block would, is checked by exactly the same rules in
+ * assertNoDuplicateLedger (which this function does not touch), and is honoured ONLY when the named
+ * migration exists on disk AND actually CREATEs that table — so this file cannot declare a table
+ * into existence, nor cover a table it does not name.
+ *
+ * A NEW table still declares inside its own migration. That is cheaper, it stays the default, and
+ * nothing here makes it optional.
+ */
+function mergeRelocatedDeclarations(declText, tables) {
+  const file = readJson(DECLARATIONS_REL, null);
+  if (!file || typeof file.declarations !== "object" || file.declarations === null) return declText;
+  const known = new Set(tables.map((t) => t.fq));
+  const CREATE_RE = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)/gi;
+
+  for (const [fqName, entry] of Object.entries(file.declarations)) {
+    if (!entry || typeof entry !== "object") continue;
+    const key = String(fqName).toLowerCase();
+    if (!known.has(key)) continue; // cannot declare a table that no migration creates
+    const migration = typeof entry.migration === "string" ? entry.migration : "";
+    const text = typeof entry.text === "string" ? entry.text : "";
+    if (!migration || !text) continue;
+
+    const abs = path.join(MIGRATIONS_DIR, migration);
+    if (!fs.existsSync(abs)) continue; // the named migration must really be on disk
+    const sql = fs.readFileSync(abs, "utf8");
+    let createsIt = false;
+    for (const m of sql.matchAll(CREATE_RE)) {
+      if (fq(m[1].toLowerCase(), m[2].toLowerCase()) === key) { createsIt = true; break; }
+    }
+    if (!createsIt) continue; // the named migration must really CREATE that table
+
+    declText[key] = (declText[key] ? `${declText[key]}\n` : "") + text;
+  }
+  return declText;
+}
+
 /** The set of tables that WOULD be evaluated (financial-schema OR concept-colliding) — used to build the baseline. */
 function evaluableSet(tables, registry) {
   const financial = new Set(registry.financial_schemas || []);
@@ -273,6 +325,7 @@ function realRun() {
   }
   const baseline = readJson(BASELINE_REL, { frozen_tables: [] }).frozen_tables || [];
   const { tables, declText } = scanMigrations();
+  mergeRelocatedDeclarations(declText, tables);
   const { errors, evaluated } = assertNoDuplicateLedger({ registry, baseline, tables, declText });
 
   for (const w of serviceWarnings(registry)) console.warn(`[verify-no-duplicate-financial-ledger] WARN (service soft-check): ${w}`);

@@ -193,3 +193,48 @@ churn. Corrected predicate SQL committed to
 `docs/bus/2026-09-30-CC1-A13-A14-A16-DRIVER-PROFILE-AND-HAS-TRANSACTIONS-ANALYSIS.md`.
 **Left:** Same as before — Lead's ruling on Disputes tab placement; Cursor builds the UI off this
 spec. A-16 itself is closed on CC-1's side.
+
+## A-21 — has-transactions predicate shipped as shared code, then corrected
+**Changed:** Shipped `apps/backend/src/accounting/has-transactions-predicate.ts` exporting
+`customerHasTransactionsSql`/`vendorHasTransactionsSql`, wired into `mdata/customers.routes.ts` and
+`mdata/vendors.routes.ts` under `has_transactions`, guarded by
+`verify-has-transactions-predicate-shared.mjs` (PR #23439). Then corrected per your r294d ruling
+(owner overrule on the voided-invoice edge case): a voided invoice no longer counts (PR #23451).
+**Live proof:**
+```
+BEFORE correction: customers with_transactions = 76/1,249
+AFTER correction:  customers with_transactions = 65/1,249  (exact match to your stated count)
+vendors with_transactions = 34/623, unchanged both times
+```
+`verify-has-transactions-predicate-shared.mjs --selftest`: 12/12 PASS. Live run: PASS.
+**Left:** A-25 (three-way dispute split, prove no shared query) and A-26 (bills.vendor_uuid text/uuid
+cast, own migration) are new jobs from r294d, not started. Proceeding to A-23 per the sequence.
+
+## A-23 — test/proof/sample rows: enumerated, not written
+**Changed:** Nothing to data (enumeration only, as instructed).
+**Live proof:** `docs/bus/2026-09-30-CC1-A23-TEST-ROWS-ENUMERATION.md` — 6 accounting.expenses proof
+rows (5 mine, AUTH-117/120/122/125/126; 1 CC-2's "live-test check" $25.00), ALL already voided AND
+their JEs already reversed same-session — TB impact if removed is $0.00, already net zero. Plus 2
+TEST-named mdata.drivers rows (one with the company's only safety.driver_documents row, per A-12) —
+neither voided, no GL impact. Plus 1 downtime.events row with is_sample_data=true. 5 other apparent
+hits investigated and ruled out as real business rows (AUTH- mentioned for provenance only, or a
+real bank ACH fee).
+**Left:** Proceeding to A-22 per the sequence. Nothing written.
+
+## A-22 — 120 unresolved item_ids: reported, not resolved
+**Changed:** Nothing to data (report only, as instructed).
+**Live proof:** `docs/bus/2026-09-30-CC1-A22-UNRESOLVED-ITEM-IDS-REPORT.md` — re-verified live, still
+exactly 120 rows / $4,901.31 (unchanged from PR #23380's original analysis). Full per-row
+enumeration supplied (id, amount, expense_number, transaction_date, description) — the source doc
+had only described the pattern groups, not printed the full list. No item_id guessed or assigned.
+**Left:** The owner decides. Proceeding to A-24 per the sequence.
+
+## A-24 — safety.driver_documents ↔ mdata.drivers linkage declaration
+**Changed:** Wrote the missing cross-module linkage declaration (data left alone, as instructed).
+**Live proof:** `docs/trackers/LINKAGE-DECLARATION-safety-driver_documents-mdata-drivers.md` — live-
+confirmed the FK is application-level only (zero real FOREIGN KEY constraints on the table, not even
+the org.companies one the wiring doc credits it with), named every read/write surface, and restated
+A-12's real finding (1 document row company-wide, belongs to a TEST driver, zero real USMCA drivers
+have any document on file) without touching it.
+**Left:** Recommend a real FK constraint (named, not added). Data-population gap is the owner's to
+fill. A-20 through A-24 sequence complete.

@@ -3,6 +3,7 @@ import {
   deriveEngineState,
   ingestVehicleLocationEvent,
 } from "../../telematics/vehicle-locations.service.js";
+import { processArrivalDetectionsForGpsPoint } from "../../telematics/arrival-detection.service.js";
 import { processGeofenceDetectionsForGpsPoint } from "../../telematics/geofence-detector.service.js";
 import { SamsaraApiError, SamsaraClient } from "./samsara-client.js";
 import type { SamsaraVehicleStat } from "./samsara-client.js";
@@ -11,6 +12,8 @@ import { getSamsaraConfigForCompany } from "./samsara.service.js";
 import { buildSamsaraAssignmentId } from "./vehicle-driver-pairing/pairing.service.js";
 
 export type SyncPositionsStats = {
+  /** T-01: arrivals this run triggered. Zero forever means the engine is dead -- surface it. */
+  arrivals_triggered: number;
   fetched: number;
   inserted: number;
   skipped_no_unit: number;
@@ -109,6 +112,64 @@ async function loadUnitIdBySamsaraVehicleId(
   return out;
 }
 
+
+/**
+ * T-01 (Lead, 2026-09-30) — ARRIVAL DETECTION ON THE POLLING PATH.
+ *
+ * MEASURED LIVE before writing this, on br-fancy-credit-akjnd07a:
+ *   dispatch.stop_arrivals                     0 rows, EVER
+ *   integrations.samsara_webhook_events        0 rows, EVER
+ *   telematics.vehicle_locations         828,445 rows, newest seconds old
+ *   all 16 open loads status='dispatched', newest status write 2026-09-28
+ *
+ * processArrivalDetectionsForGpsPoint had EXACTLY ONE caller: the Samsara webhook projector
+ * (integrations/samsara/webhook-projectors/vehicle-projector.ts). That projector runs only on
+ * webhook events, and this account has never delivered one. So the engine that advances a load
+ * through its stops has never executed against a single GPS point, while the CRON path -- the one
+ * that actually feeds this system, hundreds of thousands of points -- ingested every one of them
+ * and called only the GEOFENCE detector beside it.
+ *
+ * That is why every truck on the Truck Line sits on "Dispatched": nothing has written a stop
+ * arrival, so nothing advances the load. The board was honest; the engine was never wired.
+ *
+ * Both cron ingest paths now call arrival detection on every position they persist, immediately
+ * after the geofence detector that has always run there, with the SAME inputs.
+ *
+ * WHY THIS IS SAFE TO CALL PER POINT:
+ *   - It only runs on `didInsert` -- ingestVehicleLocationEvent is ON CONFLICT DO NOTHING against
+ *     (operating_company_id, raw_samsara_event_id), so a replayed point is a no-op and detection
+ *     cannot double-fire for it.
+ *   - The service is itself idempotent per stop: shouldTriggerArrival() consults the last arrival
+ *     for that (stop, unit) and refuses to re-trigger.
+ *   - It returns {checked_stops: 0} immediately when the unit has no remaining stops, which is the
+ *     common case, so the cost on an unassigned truck is one indexed query.
+ *
+ * ISOLATED ON PURPOSE: a failure here must never take position ingest down with it. Positions are
+ * the live map and the dispatch board; arrivals are a derived signal. The error is LOGGED with its
+ * ids and counted, never swallowed -- silence is what let this stay invisible.
+ */
+async function detectArrivalsForIngestedPoint(
+  client: Parameters<typeof processArrivalDetectionsForGpsPoint>[0],
+  input: { operating_company_id: string; unit_id: string; latitude: number; longitude: number; occurred_at: string },
+  errors: string[]
+): Promise<number> {
+  try {
+    const res = await processArrivalDetectionsForGpsPoint(client, {
+      operating_company_id: input.operating_company_id,
+      unit_id: input.unit_id,
+      latitude: input.latitude,
+      longitude: input.longitude,
+      occurred_at: input.occurred_at,
+    });
+    return res.arrivals_triggered;
+  } catch (error) {
+    errors.push(
+      `arrival_detection_failed:unit=${input.unit_id}:${String((error as Error)?.message ?? error).slice(0, 200)}`
+    );
+    return 0;
+  }
+}
+
 export async function syncSamsaraVehicleLocations(
   client: PgClient,
   operatingCompanyId: string
@@ -116,7 +177,7 @@ export async function syncSamsaraVehicleLocations(
   const errors: string[] = [];
   const cfg = await getSamsaraConfigForCompany(client, operatingCompanyId);
   if (!cfg || !Boolean(cfg.is_enabled)) {
-    return { fetched: 0, inserted: 0, skipped_no_unit: 0, errors };
+    return { fetched: 0, inserted: 0, arrivals_triggered: 0, skipped_no_unit: 0, errors };
   }
 
   const token = decryptSamsaraSecret(readEncryptedToken(cfg));
@@ -142,12 +203,13 @@ export async function syncSamsaraVehicleLocations(
       skippedNoUnit: 0,
       errorMessage: message,
     });
-    return { fetched: 0, inserted: 0, skipped_no_unit: 0, errors };
+    return { fetched: 0, inserted: 0, arrivals_triggered: 0, skipped_no_unit: 0, errors };
   }
 
   const unitByVehicleId = await loadUnitIdBySamsaraVehicleId(client, operatingCompanyId);
   let inserted = 0;
   let skippedNoUnit = 0;
+  let arrivalsTriggered = 0;
 
   for (const location of locations) {
     const unitId = unitByVehicleId.get(location.id);
@@ -179,26 +241,45 @@ export async function syncSamsaraVehicleLocations(
         occurred_at: location.captured_at,
         source: "samsara_gps",
       });
+      // T-01 — see detectArrivalsForIngestedPoint above. This is the call that has never run.
+      arrivalsTriggered += await detectArrivalsForIngestedPoint(
+        client as never,
+        {
+          operating_company_id: operatingCompanyId,
+          unit_id: unitId,
+          latitude: location.latitude,
+          longitude: location.longitude,
+          occurred_at: location.captured_at,
+        },
+        errors
+      );
     }
   }
 
+  // T-01: the arrival count rides the sync log. A run that ingests hundreds of points and triggers
+  // zero arrivals forever is exactly how this engine stayed dead for its whole life without one
+  // error anywhere -- the number has to be WRITTEN DOWN or nobody can see it stop.
   await writeSyncLog(client, {
     operatingCompanyId,
-    success: true,
+    success: errors.length === 0,
     fetched: locations.length,
     inserted,
     skippedNoUnit,
+    errorMessage: errors[0] ?? null,
   });
 
   return {
     fetched: locations.length,
     inserted,
+    arrivals_triggered: arrivalsTriggered,
     skipped_no_unit: skippedNoUnit,
     errors,
   };
 }
 
 export type SyncStatsResult = {
+  /** T-01: arrivals this run triggered. Zero forever means the engine is dead -- surface it. */
+  arrivals_triggered: number;
   fetched: number;
   positions_inserted: number;
   drivers_paired: number;
@@ -314,7 +395,7 @@ export async function syncSamsaraVehicleStats(
   const errors: string[] = [];
   const cfg = await getSamsaraConfigForCompany(client, operatingCompanyId);
   if (!cfg || !Boolean(cfg.is_enabled)) {
-    return { fetched: 0, positions_inserted: 0, drivers_paired: 0, skipped_no_unit: 0, errors };
+    return { fetched: 0, positions_inserted: 0, arrivals_triggered: 0, drivers_paired: 0, skipped_no_unit: 0, errors };
   }
 
   const token = decryptSamsaraSecret(readEncryptedToken(cfg));
@@ -357,7 +438,7 @@ export async function syncSamsaraVehicleStats(
       skippedNoUnit: 0,
       errorMessage: message,
     });
-    return { fetched: 0, positions_inserted: 0, drivers_paired: 0, skipped_no_unit: 0, errors };
+    return { fetched: 0, positions_inserted: 0, arrivals_triggered: 0, drivers_paired: 0, skipped_no_unit: 0, errors };
   }
 
   if (statsDegraded) {
@@ -379,6 +460,7 @@ export async function syncSamsaraVehicleStats(
 
   const unitByVehicleId = await loadUnitIdBySamsaraVehicleId(client, operatingCompanyId);
   let positionsInserted = 0;
+  let statsArrivalsTriggered = 0;
   let driversPaired = 0;
   let skippedNoUnit = 0;
 
@@ -422,6 +504,18 @@ export async function syncSamsaraVehicleStats(
           occurred_at: stat.captured_at,
           source: "samsara_gps",
         });
+        // T-01 — see detectArrivalsForIngestedPoint above. This is the call that has never run.
+        statsArrivalsTriggered += await detectArrivalsForIngestedPoint(
+          client as never,
+          {
+            operating_company_id: operatingCompanyId,
+            unit_id: unitId,
+            latitude: stat.latitude,
+            longitude: stat.longitude,
+            occurred_at: stat.captured_at,
+          },
+          errors
+        );
       }
     }
 
@@ -445,5 +539,12 @@ export async function syncSamsaraVehicleStats(
     errorMessage: errors[0] ?? null,
   });
 
-  return { fetched: stats.length, positions_inserted: positionsInserted, drivers_paired: driversPaired, skipped_no_unit: skippedNoUnit, errors };
+  return {
+    fetched: stats.length,
+    positions_inserted: positionsInserted,
+    arrivals_triggered: statsArrivalsTriggered,
+    drivers_paired: driversPaired,
+    skipped_no_unit: skippedNoUnit,
+    errors,
+  };
 }

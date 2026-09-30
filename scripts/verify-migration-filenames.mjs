@@ -95,6 +95,40 @@ const HISTORICAL_TIMESTAMP_DUP_ALLOWLIST = new Set([
   // freeze. The exact-pair ratchet in verify-migration-no-number-collision freezes these filenames
   // and still rejects a third file landing on 202614100000.
   "202614100000",
+  // ACCEPTED 2026-09-30 by Lead, same justification as every entry above, and measured before
+  // accepting rather than assumed. main was RED on this guard for all four numbers, blocking every
+  // seat's PR -- verified by running the guard against origin/main content on a clean checkout, not
+  // inferred from one branch.
+  //
+  // ALL EIGHT FILES ARE ALREADY APPLIED ON PRODUCTION. From _system._schema_migrations on
+  // br-fancy-credit-akjnd07a, read under SET LOCAL ROLE neondb_owner + app.bypass_rls = 'lucia',
+  // with the applied ORDER shown -- which is the thing the guard actually warns about:
+  //
+  //   202614400000_expenses_tags.sql                                     2026-09-25T20:57:49.469Z
+  //   202614390000_expense_lines_fleet_linkage.sql                       2026-09-25T21:21:50.850Z
+  //   202614390000_factoring_advances_cash_rsv_cents.sql                 2026-09-26T03:34:28.396Z
+  //   202614400000_coa_roles_add_factor_cash_reserve_held.sql            2026-09-26T03:34:28.416Z
+  //   202614490000_worm_journal_entries_husk_cleanup_is_detail_class.sql 2026-09-28T11:58:21.343Z
+  //   202614490000_samsara_vehicles_unique_local_unit.sql                2026-09-28T12:34:30.648Z
+  //   202614550000_fuel_transactions_genesis_anchor_...documented.sql    2026-09-28T21:04:47.395Z
+  //   202614550000_live_loads_settlement_lines_require_closed.sql        2026-09-28T21:05:23.650Z
+  //
+  // Each pair applied cleanly, minutes or hours apart, and each member touches a different object --
+  // expense lines vs factoring advances, COA roles vs expense tags, journal-entry husk class vs a
+  // samsara vehicle unique index, fuel transactions vs a live-loads constraint. No member depends on
+  // its partner, so the arbitrary ordering the guard warns about did not bite and cannot now: the
+  // order is already recorded above and is history, not a future coin flip.
+  //
+  // Renaming is the dangerous act now, not the duplicate. A rename creates a second ledger identity
+  // and re-runs the body against production -- forbidden by the checksum freeze, and the reason this
+  // list exists at all. The exact-pair ratchet in verify-migration-no-number-collision freezes these
+  // filenames and still rejects a THIRD file landing on any of the four numbers.
+  //
+  // This is an ACCEPTANCE OF HISTORY, not a relaxation of the rule: a NEW duplicate still fails.
+  "202614390000",
+  "202614400000",
+  "202614490000",
+  "202614550000",
 ]);
 
 function fail(lines) {

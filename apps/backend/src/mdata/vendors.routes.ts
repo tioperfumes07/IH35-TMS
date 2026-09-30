@@ -3,6 +3,7 @@ import { ensureDriverVendor } from "./ensure-driver-vendor.shared.js";
 import { looksLikeSampleDataName } from "./sample-data-name-detection.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { vendorHasTransactionsSql } from "../accounting/has-transactions-predicate.js";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
@@ -103,6 +104,9 @@ const listQuerySchema = z.object({
   // must show ONLY the ACTIVE company's records. OPT-IN flag passed by the Vendors list page alone; shared
   // pickers/autocomplete NEVER pass it, so cross-entity bill/expense vendor dropdowns are unaffected.
   active_company_only: z.coerce.boolean().optional().default(false),
+  // A-21: shared with mdata/customers.routes.ts via vendorHasTransactionsSql — the ONE "has
+  // transactions" definition, so the two lists' default filter can never disagree.
+  has_transactions: z.coerce.boolean().optional(),
 });
 
 const idParamSchema = z.object({ id: z.string().uuid() });
@@ -370,7 +374,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const { limit, offset, status, search, vendor_type, operating_company_id, autocomplete, q, active_only, active_company_only } = parsedQuery.data;
+    const { limit, offset, status, search, vendor_type, operating_company_id, autocomplete, q, active_only, active_company_only, has_transactions } = parsedQuery.data;
     const resolvedOperatingCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
       resolveOperatingCompanyId(client, authUser.uuid, operating_company_id)
     );
@@ -420,6 +424,11 @@ export async function registerVendorRoutes(app: FastifyInstance) {
       // do not pass the flag and keep their per-call operating_company_id scope untouched.
       if (active_company_only) {
         filters.push(`operating_company_id = current_setting('app.operating_company_id', true)::uuid`);
+      }
+      // A-21 (2026-09-30, owner): the ONE "has transactions" predicate, shared with
+      // mdata/customers.routes.ts via vendorHasTransactionsSql — see A-16.
+      if (has_transactions) {
+        filters.push(vendorHasTransactionsSql("id"));
       }
       const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
 

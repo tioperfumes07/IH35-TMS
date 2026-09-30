@@ -19,6 +19,8 @@ apps/backend/src/dispatch/**
 apps/backend/src/feed/**
 apps/backend/src/mdata/drivers**
 apps/backend/src/mdata/loads.routes.ts
+apps/backend/src/mdata/customers.routes.ts
+apps/backend/src/mdata/vendors.routes.ts
 apps/backend/src/cron/retry-held-expense-postings.cron.ts
 apps/backend/src/governance/void-cancel-executors.ts
 **/*.db.test.ts
@@ -133,6 +135,17 @@ TABLES: none. The Lead owns no module code and no tables. Anything else the Lead
 # accounting.factoring_advances void hole CC-1 root-caused and already fixed the data for
 # (ACCT-F2026093002, PR #23144/#23156) -- same one-job-one-seat reasoning as the two grants
 # immediately above. Scoped to this one filename. Owner may move it; until then it is CC-1's.
+#
+# **`apps/backend/src/mdata/customers.routes.ts` and `apps/backend/src/mdata/vendors.routes.ts`
+# added to CC-1 (ROUND 294, A-21, 2026-09-30).** Both had no seat -- UNASSIGNED per
+# verify-lane-ownership.mjs. A-21 shares ONE "has transactions" predicate between the Customers and
+# Vendors lists -- the exact accounting-domain predicate CC-1 already derived and live-verified this
+# same session (see `docs/bus/2026-09-30-CC1-A13-A14-A16-DRIVER-PROFILE-AND-HAS-TRANSACTIONS-ANALYSIS.md`
+# §A-16: proforma/void semantics, invoice/bill/payment/credit-memo/expense/fuel predicates, live
+# counts). Splitting the predicate's definition (CC-1's accounting lane) from its two call sites
+# would recreate the exact "one job, two seats" problem §0b exists to prevent, same reasoning as the
+# three grants immediately above. Scoped to these two filenames. Owner may move it; until then it is
+# CC-1's.
 
 ## SHARED — any seat, but say so in the PR body
 docs/**

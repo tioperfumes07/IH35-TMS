@@ -15,7 +15,10 @@
 //     never hardcoded to specific line-item names ("Quick Pay"/"Additional Driver Pay" in the
 //     5753 example) that this codebase has no canonical source table for; whatever real lines
 //     exist on the driver settlement are what post here, labeled by their real type/description.
-//   - MILES + MPG       = sum(loads.miles_shortest) / sum(fuel_transactions.gallons)
+//   - MILES + MPG       = sum(COALESCE(loads.miles_practical, loads.miles_shortest))
+//                         / sum(fuel_transactions.gallons), with the mileage basis reported.
+//                         See M-01 at section 7: this used miles_shortest alone, which is
+//                         populated on 29 of 138 live loads, and understated fleet MPG ~4.5x.
 //
 // Net Revenue ties to the cent BY CONSTRUCTION: Revenue - Driver Salary - every other real
 // settlement_lines deduction - Fuel - Expenses -- the same shape as the 5753 example's P&L rollup
@@ -164,7 +167,14 @@ export type CompanySettlementReport = {
     expenses: { rows: CompanySettlementExpenseRow[]; total_cents: number };
     revenue: { invoiced_cents: number };
     pl_rollup: { lines: CompanySettlementPLLine[]; net_revenue_cents: number };
-    miles_and_mpg: { total_miles: number; mpg: number | null };
+    miles_and_mpg: {
+      total_miles: number;
+      mpg: number | null;
+      /** How the miles were counted: "practical", "shortest", a stated mix, or "no mileage on file". */
+      miles_basis: string;
+      /** Loads in this settlement carrying no mileage at all — surfaced, never treated as zero. */
+      loads_missing_mileage: number;
+    };
     /** ROUND 285.4.9 / #58 — auto-printed with every company settlement (owner: no toggle). */
     downtime_ledger: {
       events: CompanySettlementDowntimeEventRow[];
@@ -262,7 +272,7 @@ export async function buildCompanySettlementReport(
       expenses: { rows: [], total_cents: 0 },
       revenue: { invoiced_cents: 0 },
       pl_rollup: { lines: [], net_revenue_cents: 0 },
-      miles_and_mpg: { total_miles: 0, mpg: null },
+      miles_and_mpg: { total_miles: 0, mpg: null, miles_basis: "no mileage on file", loads_missing_mileage: 0 },
       downtime_ledger: {
         events: [],
         costs: [],
@@ -483,16 +493,62 @@ export async function buildCompanySettlementReport(
   const netRevenueCents = revenueCents - driverSalaryCents - otherDeductionsCents - fuelTotal - expensesTotal;
 
   // 7) MILES + MPG
-  const milesRes = await client.query<{ total_miles: string | null }>(
+  //
+  // M-01 (Lead, 2026-09-30) — THIS DIVIDED BY THE WRONG MILEAGE COLUMN AND UNDERSTATED COMPANY MPG
+  // BY ROUGHLY FOUR AND A HALF TIMES.
+  //
+  // Measured live on br-fancy-credit-akjnd07a, USMCA 5c854333-6ea5-4faa-af31-67cb272fef80:
+  //   mdata.loads (not soft-deleted)   138
+  //     with miles_shortest             29     SUM  45,587.1 mi
+  //     with miles_practical           135     SUM 198,665.8 mi
+  //
+  // SUM(miles_shortest) skipped 109 of 138 loads, so the numerator was a quarter of the miles the
+  // trucks actually ran while the denominator stayed the full fuel purchase. A company settlement
+  // showing roughly 1.5 MPG for a fleet running near 7 is not a small display defect — it is a
+  // wrong number on a financial report, and it is wrong in the direction that makes the fleet look
+  // like it is burning fuel it never burned.
+  //
+  // PRACTICAL is the correct basis for fuel economy: it is the route actually driven. SHORTEST is a
+  // pay/IFTA basis and is not what put fuel in the tank. So practical leads, shortest fills a gap,
+  // and the basis is REPORTED, never assumed — a fleet-wide MPG with no stated mileage basis cannot
+  // be checked against anything.
+  const milesRes = await client.query<{
+    miles_practical: string | null;
+    miles_shortest: string | null;
+    total_miles: string | null;
+    loads_with_practical: string | null;
+    loads_with_shortest: string | null;
+    loads_with_neither: string | null;
+  }>(
     `
-      SELECT COALESCE(SUM(miles_shortest), 0)::text AS total_miles
+      SELECT
+        COALESCE(SUM(miles_practical), 0)::text AS miles_practical,
+        COALESCE(SUM(miles_shortest), 0)::text AS miles_shortest,
+        COALESCE(SUM(COALESCE(miles_practical, miles_shortest)), 0)::text AS total_miles,
+        COUNT(miles_practical)::text AS loads_with_practical,
+        COUNT(miles_shortest)::text AS loads_with_shortest,
+        COUNT(*) FILTER (WHERE miles_practical IS NULL AND miles_shortest IS NULL)::text AS loads_with_neither
       FROM mdata.loads
       WHERE id = ANY($1::uuid[])
     `,
     [loadIds.length ? loadIds : ["00000000-0000-0000-0000-000000000000"]]
   );
-  const totalMiles = Number(milesRes.rows[0]?.total_miles ?? 0);
-  const mpg = fuelGallonsTotal > 0 ? Math.round((totalMiles / fuelGallonsTotal) * 1000) / 1000 : null;
+  const milesRow = milesRes.rows[0];
+  const totalMiles = Number(milesRow?.total_miles ?? 0);
+  const loadsWithPractical = Number(milesRow?.loads_with_practical ?? 0);
+  const loadsWithShortest = Number(milesRow?.loads_with_shortest ?? 0);
+  const loadsWithNeitherMileage = Number(milesRow?.loads_with_neither ?? 0);
+  // The basis is stated as what it actually is, including when it is mixed. A load with no mileage
+  // at all is counted and surfaced rather than quietly treated as zero miles driven.
+  const milesBasis =
+    loadsWithPractical > 0 && loadsWithShortest > 0 && loadsWithPractical + loadsWithShortest > loadIds.length
+      ? "practical, shortest where practical is missing"
+      : loadsWithPractical > 0
+        ? "practical"
+        : loadsWithShortest > 0
+          ? "shortest"
+          : "no mileage on file";
+  const mpg = fuelGallonsTotal > 0 && totalMiles > 0 ? Math.round((totalMiles / fuelGallonsTotal) * 1000) / 1000 : null;
 
   // 8) DOWNTIME LEDGER — ROUND 285.4.9 / #58. Events for units that ran this settlement's loads,
   // overlapping the company-settlement period (or linked via preceding/following load). Sample
@@ -749,7 +805,12 @@ export async function buildCompanySettlementReport(
       expenses: { rows: expenseRows, total_cents: expensesTotal },
       revenue: { invoiced_cents: revenueCents },
       pl_rollup: { lines: plLines, net_revenue_cents: netRevenueCents },
-      miles_and_mpg: { total_miles: totalMiles, mpg },
+      miles_and_mpg: {
+        total_miles: totalMiles,
+        mpg,
+        miles_basis: milesBasis,
+        loads_missing_mileage: loadsWithNeitherMileage,
+      },
       downtime_ledger: {
         events: downtimeEventRows,
         costs: downtimeCostRows,

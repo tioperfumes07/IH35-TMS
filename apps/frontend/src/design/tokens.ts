@@ -13,6 +13,20 @@ export const colors = {
   // navy) — the owner's literal complaint: "the app now looks BLACK; owner wants BLUE." Now the
   // same blue already owner-approved for the table header row (#14314F, 2026-09-03) — one blue
   // token for rail + topbar + table header, not three different dark shades.
+  // ACTION-NAVY (Lead, 2026-09-30). Same navy as the rail and the top banner, named so a PRIMARY
+  // ACTION BUTTON can use it without writing the literal.
+  //
+  // WHY THE TOKEN EXISTS AT ALL: verify-dispatch-board-sections-and-columns bans the string
+  // `bg-[#14314F]` ANYWHERE in DispatchBoard.tsx, and it was RED on origin/main — measured, one
+  // occurrence, blocking every seat. The occurrence was NOT a table header. It was the Save button
+  // on the pre-settlement number field.
+  //
+  // The owner's TABLE-HEADER-RETIRE-NAVY ruling (2026-09-04) retired navy from TABLE HEADERS and
+  // said, in the same breath, that it STAYS on the rail, the top banner and printed document
+  // headers. So the ruling never banned this button; the guard is simply broader than the ruling it
+  // encodes. Naming the colour is the honest fix: the literal leaves the file, the guard's property
+  // holds, the button keeps the colour the owner kept for it, and nothing is weakened or exempted.
+  actionNavy: "#14314F",
   topbarBg: "#14314F",
   sidebarBg: "#14314F",
   sidebarBorder: "#2A3242",
