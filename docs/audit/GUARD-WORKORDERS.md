@@ -12034,3 +12034,48 @@ Not done unilaterally. This is the same recommendation as two sections above; re
 is now confirmed to be exactly what is blocking CC-3's guard.
 
 — CC-2
+
+## ROUND 281.1 status report — grep list posted, guard-coverage gap found, AUTH-140 HELD per the non-negotiable sequence (CC-2, 2026-09-30)
+
+**Grep, as ordered, before anything was changed:** every file with a raw `voided_at = ` write
+outside `void-cancel-executors.ts`/`void-document-stamp.service.ts` (the two sanctioned files):
+73 files, spanning accounting, banking, dispatch, driver-finance, maintenance, safety, qbo-sync,
+plus one-time `scripts/run-*-once.mts` historical scripts and `scripts/verify-*.mjs` guards (the
+latter two categories are read-only checks/already-executed history, not live-code risk). The live
+application-code subset needing real triage: 30 files under `apps/backend/src/`, spanning far
+outside this seat's own lane (safety/, maintenance/, driver-finance/, qbo-sync/, banking/). Full
+list available on request; too large to paste inline here without drowning the finding.
+
+**Factoring specifically is already clean going forward:** zero raw `factoring_advances.voided_at`
+writes anywhere outside `executeFactoringAdvance` (confirmed by grep). The 51 (41 still-live)
+factoring violations are 100% historical debt from a one-time repair script (2026-09-24), not an
+ongoing leak. No code fix needed for this table's own void path.
+
+**Guard-coverage gap found:** `verify-void-is-whole.mjs` -- which looks like the natural home for
+the "ratchet starting at 1,065" guard -- only sees **41** violations total, **all factoring**. Zero
+for invoices, fuel, or expenses, even though the owner's own live measurement puts those at
+24/148/842. Checked why: this guard's "live posting" test joins through
+`accounting.transaction_source_links`; the other three families' violating population apparently
+isn't linked that way (uses `journal_entry_postings.source_transaction_type/id` directly instead,
+unconfirmed for all three -- not yet individually verified per table). **This guard cannot serve as
+the 1,065 ratchet as-is.** Either it needs extending to check both linkage patterns per family, or
+a new, purpose-built guard is needed. Not built here -- flagging before building the wrong thing.
+
+**DB constraint ("a record carrying voided_at may not have live postings") is a migration** --
+`verify-migration-lane-band.mjs` hard-bars cc-2/-prefixed branches from authoring one. Spec for
+CC-1 (or whoever authors it): a trigger on each voidable table's `voided_at` column that, on
+UPDATE, refuses if any journal_entry_postings row (matched by whichever linkage pattern that table
+uses: transaction_source_links OR source_transaction_type+id) is still live (not voided, not
+reversed). Needs per-family linkage-pattern confirmation first, per the point above.
+
+**AUTH-140 (reverse the 41 factoring postings) is written, dry-run tested clean, NOT pushed to
+--apply.** Per 281's own non-negotiable sequence ("281.2 ... after 281.1 is deployed so nothing
+new is created behind you") and per the direct order to fix the engine first -- holding until the
+engine fix (whatever form it takes) actually deploys, even though factoring's own path is already
+clean, since the shared guard/constraint infrastructure isn't in place yet.
+
+**Not done:** fixing the 30 non-factoring call sites (other seats' lanes); the DB constraint
+migration (CC-1); extending or replacing verify-void-is-whole for the other 3 families; 281.2/281.3
+for any table.
+
+— CC-2
