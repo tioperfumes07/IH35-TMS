@@ -815,22 +815,32 @@ const executeDriverSettlement: EntityExecutor = async (ctx) => {
 // UPDATE that sets voided_at without flipping status... is a hole in the engine"). Migration
 // 202614570000/202614590000 already added a DB-level CHECK (voided_at IS NULL OR status='voided')
 // so this can never silently drift again even if some future caller bypasses this executor too.
-// accounting.factoring_advances carries no journal_entry_id of its own (verified live -- the
-// advance funding is tracked via banking.reconciliation_matches / linked invoices, not a direct
-// JE on this table), so there is no GL reversal to call here, unlike executeExpense above. The
-// header write goes through stampDocumentVoided ONLY (same rule as executeFuelTransaction above) --
-// 'factoring_advance' is already a registered VOID_DOCUMENT_FAMILIES entry
+//
+// BANK-F-FACTORING-VOID-NO-REVERSAL (2026-09-30, CC-2) — the prior version of this executor's own
+// comment claimed "accounting.factoring_advances carries no journal_entry_id of its own... there is
+// no GL reversal to call here" and header-voided ONLY, leaving any live posting fully intact. That
+// claim was live-verified FALSE: factoring_advance postings are found the same way fuel_event/
+// expense postings are, via accounting.journal_entry_postings.source_transaction_type=
+// 'factoring_advance' + source_transaction_id (exactly how AUTH-165 this same session found and
+// reversed 4 live duplicate factoring postings via postVoidReversal directly, bypassing this
+// executor for that reason). Calling this executor on a factoring_advance that still carries a
+// live posting silently created a voided-header/live-GL mismatch -- real money still counted while
+// the document reads "voided". verify-no-voided-doc-has-live-postings.mjs (the guard built to catch
+// exactly this defect class) did not even include factoring_advance in its scan, so this was
+// invisible to CI too (fixed in the same commit). FIX mirrors executeFuelTransaction's pattern
+// above: check for a live posting first, reverse it via postVoidReversal if one exists, THEN stamp
+// the header -- 'factoring_advance' is already a registered VOID_DOCUMENT_FAMILIES entry
 // (voidStatusValue:'voided'), and it is already in cascade-void-engine.service.ts's
-// CASCADE_ELIGIBLE_FAMILIES, so this call gets the correct status flip AND child cascade for free,
-// with zero risk of drifting from the DB-level CHECK constraint #23144 added.
+// CASCADE_ELIGIBLE_FAMILIES, so this call still gets the correct status flip AND child cascade.
 const executeFactoringAdvance: EntityExecutor = async (ctx) => {
   const { client, operatingCompanyId, entityId, userId, reason } = ctx;
 
   const ready = await client.query<{ ok: boolean }>(`SELECT to_regclass('accounting.factoring_advances') IS NOT NULL AS ok`);
   if (!ready.rows[0]?.ok) return { kind: "unsupported_entity" };
 
-  const pre = await client.query<{ status: string }>(
-    `SELECT status::text AS status FROM accounting.factoring_advances
+  const pre = await client.query<{ status: string; advanced_at: string | null; created_at: string }>(
+    `SELECT status::text AS status, advanced_at::text AS advanced_at, created_at::text AS created_at
+       FROM accounting.factoring_advances
       WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
     [entityId, operatingCompanyId]
   );
@@ -839,6 +849,28 @@ const executeFactoringAdvance: EntityExecutor = async (ctx) => {
 
   const flagOn = await isVoidEnforcementEnabled(client, operatingCompanyId, userId);
   if (!flagOn) return { kind: "void_not_enabled" };
+
+  const liveJe = await client.query<{ n: string }>(
+    `SELECT count(*)::text AS n
+       FROM accounting.journal_entry_postings jep
+       JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+      WHERE je.operating_company_id = $1::uuid
+        AND jep.source_transaction_type = 'factoring_advance' AND jep.source_transaction_id::text = $2
+        AND je.status = 'posted' AND je.voided_at IS NULL
+        AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL`,
+    [operatingCompanyId, entityId]
+  );
+  let reversingEntryRef: string | null = null;
+  if (Number(liveJe.rows[0]?.n ?? 0) > 0) {
+    const originalDate = (pre.rows[0].advanced_at ?? pre.rows[0].created_at).slice(0, 10);
+    const reversal = await postVoidReversal(
+      client,
+      { operatingCompanyId, entityType: "factoring_advance", entityId, originalDate, memo: `Void reversal of factoring advance ${entityId}: ${reason}` },
+      { userId }
+    );
+    reversingEntryRef = reversal.reversal_journal_entry_id;
+    await auditVoid(client, userId, "factoring_advance", { operatingCompanyId, entityId, reason, reversal });
+  }
 
   const previousStatus = pre.rows[0].status;
   const stamped = await stampDocumentVoided(client, {
@@ -864,11 +896,17 @@ const executeFactoringAdvance: EntityExecutor = async (ctx) => {
     client,
     userId,
     "factoring_advance.voided",
-    { factoring_advance_id: entityId, operating_company_id: operatingCompanyId, reason, via: "governance.void_cancel_requests" },
+    {
+      factoring_advance_id: entityId,
+      operating_company_id: operatingCompanyId,
+      reason,
+      reversing_journal_entry_id: reversingEntryRef,
+      via: "governance.void_cancel_requests",
+    },
     "warning",
     "VOID-CANCEL-GOV"
   );
-  return { kind: "ok", reversing_entry_ref: null };
+  return { kind: "ok", reversing_entry_ref: reversingEntryRef };
 };
 
 const executeBankTransaction: EntityExecutor = async (ctx) => {

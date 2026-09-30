@@ -76,7 +76,16 @@ export type VoidableEntityType =
   // banking.bank_transactions.linked_entity_id = <fuel_transaction id>. Verified by reading
   // unmatchBankTransactionsForVoid + postVoidReversal + readOriginalGlPostings directly, not assumed.
   | "fuel_event"
-  | "driver_reimbursement";
+  | "driver_reimbursement"
+  // BANK-F-FACTORING-VOID-NO-REVERSAL (2026-09-30, CC-2) — 'factoring_advance' added. Already
+  // supported at RUNTIME (readOriginalGlPostings' generic source_transaction_type/id predicate
+  // handles any string; AUTH-165 this same session called postVoidReversal with this exact
+  // entityType via a dynamic import + as-any-cast ops script and it correctly found/reversed 4
+  // live duplicate factoring postings) but absent from this TYPE, so any strictly-typed caller
+  // (e.g. governance/void-cancel-executors.ts's executeFactoringAdvance) could not call it without
+  // a cast. Adding it here closes that gap for good — the type now matches what the function has
+  // always actually done.
+  | "factoring_advance";
 
 type QueryableClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -887,6 +896,7 @@ export async function auditVoid(
     // ROUND 125/126 — the audit row names the real document table, same convention as every other member.
     fuel_event: "fuel.fuel_transactions",
     driver_reimbursement: "driver_finance.driver_reimbursements",
+    factoring_advance: "accounting.factoring_advances",
   };
   const resourceType = resourceTypeByEntity[entityType];
   await appendCrudAudit(
