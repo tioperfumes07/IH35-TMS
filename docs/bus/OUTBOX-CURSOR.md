@@ -74,3 +74,9 @@ C-31..C-35 on main. Tip-main orphans (odometer + assignment-coverage) exempted. 
 **2026-09-30T22:10Z · ROUND 300 #3 C-37 HOUSE TABLE FORMAT · branch `cursor/c37-house-table-format-c89b`**
 
 C-37 · what changed: `lib/money.ts` adds `formatUsdCentsTable` / `formatUsdTable` / `formatNumberTable` — accounting parentheses negatives, missing → "—", keeps `usdFormatNoNegativeZero` on legacy formatters. `TableMoneyCell` reddens negatives. `ParityTable` inherits C-37 defaults: `QBO_MONEY_CELL_CLASS` merge on numeric keys, auto `_cents` → `TableMoneyCell`, horizontal rules only (no th/td borderLeft/borderRight), sticky header default, pinned sticky `tfoot` when `footerCells`. Ops: `scripts/ops/verify-c37-house-table-format.mjs`; `verify-table-design-contract` updated for C-37 rows-only lines. · LIVE PROOF: `node scripts/ops/verify-c37-house-table-format.mjs --selftest` PASS; `node scripts/verify-table-design-contract.mjs --selftest` PASS; vitest money + TableMoneyCell; tsc -b. · LEFT: Lead Chrome — getComputedStyle on list money cells (text-right, tabular-nums, red `($n)` negatives, em dash missing, no vertical td borders, sticky header + pinned footer on a footerCells table); migrate custom `render` columns still on legacy `formatUsdCents` to `TableMoneyCell` / `formatUsdCentsTable`; C-38 controls next.
+
+**2026-09-30T21:53Z · ROUND 300 #2 C-36 MERGED · PR #23515 · `9cbaa7642e`**
+Maintenance 9 tabs on main. LEFT: Lead Chrome (9 tabs, Kind, single IntegrationsStrip).
+
+**2026-09-30T22:06Z · ROUND 300 #3 C-37 MERGED · PR #23523 · `c12248b4bb`**
+House table format on main (ParityTable sticky/zebra/no vertical borders + TableMoneyCell parentheses). LEFT: Lead Chrome money cells; migrate remaining custom money renders. NEXT: C-38 house control sizes.
