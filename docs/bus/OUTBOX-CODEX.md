@@ -2,6 +2,8 @@
 # One entry per job id: JOB ID · what I changed · pasted live proof · what is left.
 # Append below. Do not delete another seat's entries.
 
+CODEX | 2026-09-30 10:39 AM CT | X-16 · ACK 2026-09-30 · CODEX · read NOW-CODEX · X-16 pushed as PR #23417 (https://github.com/tioperfumes07/IH35-TMS/pull/23417). Rebased onto 9e7b06e9f1; preserved both bus entries in the sole conflict. Fresh runner tests: tests 12 / pass 12 / fail 0 / skipped 0 / exit 0. Remaining: actual required CI conclusion and its live-check skip counts; not DONE, not merged. No --no-verify, no production writes, no applied migration edits. X-06 promoted per latest Lead order after X-16 publication/proof.
+
 CODEX | 2026-09-30 10:36 AM CT | X-16 · ACK 2026-09-30 · CODEX · read NOW-CODEX on origin/main 6f74db60bd · publishing the existing X-16 branch now; PR number pending creation, not yet pushed. Required CI execution and skip-count output remain owed. No production writes; Lead-owned applied migrations untouched.
 
 CODEX | 2026-09-30 7:18 AM CT | X-16 WORKING · Rebased onto a231e86990. 21 reviewed database phases routed in the pending code through money gate, verify-step context AND static fallback; available static assertions remain local. Workflow fixtures isolated to verified loopback DB. Required runner rejects exit-zero skips, including nonzero textual/key-value/JSON counts. Push precheck prints child outcome counts even on exit 0; summary now includes gate_exit so prerequisite failures cannot look green. Lead measured_at=2026-09-30T10:45:00.000Z and 222/142 retained unchanged.
