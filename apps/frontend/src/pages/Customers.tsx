@@ -17,7 +17,7 @@ import { listAllAccountingRecurringTemplates } from "../api/accountingRecurringT
 import { companyToday, addDaysIso } from "../lib/businessDate";
 import { ApiError } from "../api/client";
 import { invoiceOpenCentsForDisplay, isVoidInvoice } from "./accounting/InvoicesListPage";
-import { createCustomer, getCustomerBillingSummary, listAllCustomers, listPaymentTermOptions, getCustomerFinanceRollup, type Customer, type CustomerBillingSummary, type CustomerFinanceRollup } from "../api/mdata";
+import { createCustomer, getCustomerBillingSummary, getCustomerRosterCounts, listAllCustomers, listPaymentTermOptions, getCustomerFinanceRollup, type Customer, type CustomerBillingSummary, type CustomerFinanceRollup } from "../api/mdata";
 import {
   CustomerProfileForm,
   emptyCustomerProfileValues,
@@ -682,6 +682,12 @@ export function CustomersPage() {
       }),
     enabled: Boolean(companyId),
   });
+  // C-50 — dedicated counts route for tab badges (never silent 0 from an empty roster).
+  const customerCountsQuery = useQuery({
+    queryKey: ["customers", "counts", companyId],
+    queryFn: () => getCustomerRosterCounts(companyId),
+    enabled: Boolean(companyId),
+  });
   // Full active roster for All / Active / quality tabs (and for tab counts beside With transactions).
   const customersQuery = useQuery({
     queryKey: ["customers", "page", companyId, "all"],
@@ -743,12 +749,15 @@ export function CustomersPage() {
   // Inactive tab while that second query is still in flight).
   const customersStatus = {
     isPending:
+      customerCountsQuery.isPending ||
       withTxnCustomersQuery.isPending ||
       (!useHasTransactions && (customersQuery.isPending || inactiveCustomersQuery.isPending)),
     isError:
+      customerCountsQuery.isError ||
       withTxnCustomersQuery.isError ||
       (!useHasTransactions && (customersQuery.isError || inactiveCustomersQuery.isError)),
     isFetching:
+      customerCountsQuery.isFetching ||
       withTxnCustomersQuery.isFetching ||
       customersQuery.isFetching ||
       inactiveCustomersQuery.isFetching,
@@ -781,18 +790,32 @@ export function CustomersPage() {
     return all;
   }, [fullCustomersRoster, listStatus, rosterType, rosterCreditStatus, qualitySegment, useHasTransactions]);
 
-  // Tab counts: With transactions = A-21 server total; other tabs from the full roster query.
+  // Tab counts: prefer C-50 /counts (A-21); fall back to roster totals only while counts load.
   const customerTabCounts = useMemo(
     () => ({
-      with_transactions: withTxnCustomersQuery.data?.total ?? withTxnCustomersQuery.data?.customers?.length ?? 0,
-      all: fullCustomersRoster.length,
-      active: customersQuery.data?.total ?? customersQuery.data?.customers?.length ?? 0,
-      inactive: inactiveCustomersQuery.data?.total ?? inactiveCustomersQuery.data?.customers?.length ?? 0,
+      with_transactions:
+        customerCountsQuery.data?.with_transactions ??
+        withTxnCustomersQuery.data?.total ??
+        withTxnCustomersQuery.data?.customers?.length ??
+        0,
+      all: customerCountsQuery.data?.all ?? fullCustomersRoster.length,
+      active: customerCountsQuery.data?.active ?? customersQuery.data?.total ?? customersQuery.data?.customers?.length ?? 0,
+      inactive:
+        customerCountsQuery.data?.inactive ??
+        inactiveCustomersQuery.data?.total ??
+        inactiveCustomersQuery.data?.customers?.length ??
+        0,
       preferred: fullCustomersRoster.filter((c) => c.quality_overall_flag === "preferred").length,
       watch: fullCustomersRoster.filter((c) => c.quality_overall_flag === "caution").length,
       factored: fullCustomersRoster.filter((c) => Boolean(c.factoring_company_vendor_id)).length,
     }),
-    [withTxnCustomersQuery.data, customersQuery.data, inactiveCustomersQuery.data, fullCustomersRoster]
+    [
+      customerCountsQuery.data,
+      withTxnCustomersQuery.data,
+      customersQuery.data,
+      inactiveCustomersQuery.data,
+      fullCustomersRoster,
+    ]
   );
 
   const customersServerTotal =
@@ -1143,15 +1166,31 @@ export function CustomersPage() {
   // CUST-F6058: both roster reads feed the same list. A failed inactive-roster GET used to
   // fall through because this branch only inspected customersQuery, so Inactive/All looked
   // legitimately empty after a 500. Keep the two reads recoverable as one roster operation.
-  if (customersQuery.isError || inactiveCustomersQuery.isError) {
-    const rosterError = customersQuery.error ?? inactiveCustomersQuery.error;
+  if (
+    customerCountsQuery.isError ||
+    withTxnCustomersQuery.isError ||
+    customersQuery.isError ||
+    inactiveCustomersQuery.isError
+  ) {
+    const rosterError =
+      customerCountsQuery.error ??
+      withTxnCustomersQuery.error ??
+      customersQuery.error ??
+      inactiveCustomersQuery.error;
     return (
       <div className="p-3">
         <ListErrorState
           title="Couldn't load customers"
           status={0}
           message={(rosterError as Error)?.message}
-          onRetry={() => void Promise.all([customersQuery.refetch(), inactiveCustomersQuery.refetch()])}
+          onRetry={() =>
+            void Promise.all([
+              customerCountsQuery.refetch(),
+              withTxnCustomersQuery.refetch(),
+              customersQuery.refetch(),
+              inactiveCustomersQuery.refetch(),
+            ])
+          }
         />
       </div>
     );

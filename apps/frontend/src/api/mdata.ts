@@ -1418,6 +1418,20 @@ export async function listAllCustomers(
   }
 }
 
+/** C-50 — tab counts from the dedicated counts route (never invent client-side money filters). */
+export type CustomerVendorRosterCounts = {
+  operating_company_id: string;
+  with_transactions: number;
+  active: number;
+  all: number;
+  inactive: number;
+};
+
+export function getCustomerRosterCounts(operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<CustomerVendorRosterCounts>(`/api/v1/mdata/customers/counts?${query.toString()}`);
+}
+
 export function getCustomerRelationshipScore(customerUuid: string, operatingCompanyId: string) {
   const query = new URLSearchParams();
   query.set("operating_company_id", operatingCompanyId);
@@ -1800,6 +1814,12 @@ export async function listAllVendors(
     if (page.vendors.length === 0) throw new Error("Vendor roster pagination stopped before the reported total.");
     offset += page.vendors.length;
   }
+}
+
+/** C-50 — tab counts from the dedicated counts route (A-21 predicate server-side). */
+export function getVendorRosterCounts(operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<CustomerVendorRosterCounts>(`/api/v1/mdata/vendors/counts?${query.toString()}`);
 }
 
 export function getVendor(id: string, operatingCompanyId?: string | null) {

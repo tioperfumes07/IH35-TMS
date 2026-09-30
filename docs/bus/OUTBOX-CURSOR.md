@@ -80,3 +80,6 @@ Maintenance 9 tabs on main. LEFT: Lead Chrome (9 tabs, Kind, single Integrations
 
 **2026-09-30T22:06Z · ROUND 300 #3 C-37 MERGED · PR #23523 · `c12248b4bb`**
 House table format on main (ParityTable sticky/zebra/no vertical borders + TableMoneyCell parentheses). LEFT: Lead Chrome money cells; migrate remaining custom money renders. NEXT: C-38 house control sizes.
+
+**2026-09-30T22:50Z · ROUND 301 ACK + C-50 IN FLIGHT · branch `cursor/c50-active-company-bound-pin-c89b`**
+Parked `docs/bus/ROUND-301-CURSOR-STANDING-QUEUE.md` + rewrote NOW-CURSOR to Round 301. FAST-MERGE: open Cursor PRs cleared (#23525 already on main). C-50 root fix: `active_company_only` no longer pins via `current_setting(... )::uuid` (silent empty / 500); pin uses bound `companyScopeIdx`. Added `/api/v1/mdata/customers|vendors/counts` + `/api/v1/customers|vendors/counts` aliases. FE tab badges call `getCustomerRosterCounts` / `getVendorRosterCounts`. Neon proof (bypass lucia, USMCA): with_txn customers **65**, vendors **34**. Guards: verify-master-data-list-active-company-scope + ops/verify-c50. · LEFT: Lead Chrome 65/34 after deploy. NEXT after merge: C-51 Banking Home + Driver Escrow.

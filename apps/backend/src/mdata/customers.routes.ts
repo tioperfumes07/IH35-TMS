@@ -614,13 +614,15 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         );
       }
       values.push(resolvedOperatingCompanyId);
-      filters.push(`operating_company_id = $${values.length}::uuid`);
-      // ITEM 3 = B: LIST-VIEW-ONLY active-company pin. When the Customers list page opts in, additionally
-      // constrain rows to the ACTIVE session company (app.operating_company_id, set above). This is layered
-      // ON TOP of the existing access check so the list can never regress to a cross-entity roster; shared
-      // pickers do not pass the flag and keep their per-call operating_company_id scope untouched.
+      const companyScopeIdx = values.length;
+      filters.push(`operating_company_id = $${companyScopeIdx}::uuid`);
+      // ITEM 3 = B + C-50 (2026-09-30): LIST-VIEW-ONLY active-company pin. The list page opts in so the
+      // roster can never regress to a cross-entity set. Pin via the SAME bound company id already in
+      // values — never `current_setting('app.operating_company_id')::uuid` alone. An empty GUC makes
+      // `''::uuid` throw (500) or, with NULLIF, compare to NULL and return silent 0 rows (Chrome:
+      // With-transactions/All = 0 while Neon has 65/1,238). Shared pickers never pass the flag.
       if (active_company_only) {
-        filters.push(`operating_company_id = current_setting('app.operating_company_id', true)::uuid`);
+        filters.push(`operating_company_id = $${companyScopeIdx}::uuid`);
       }
       if (customer_type) {
         values.push(customer_type);
@@ -703,6 +705,50 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     });
     return { customers: result.rows, total: result.total };
   });
+
+  // C-50 — tab/KPI counts without exhausting the full roster. Same filters as the list endpoint
+  // (active_company_only pin = bound company id; A-21 has_transactions predicate shared).
+  // Also mounted at /api/v1/customers/counts (alias) so a stale client path cannot 404 to silent 0.
+  const customerCountsHandler = async (req: FastifyRequest, reply: FastifyReply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    const parsed = z
+      .object({ operating_company_id: z.string().uuid() })
+      .safeParse(req.query ?? {});
+    if (!parsed.success) return sendValidationError(reply, parsed.error);
+    const resolvedOperatingCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
+      resolveOperatingCompanyId(client, authUser.uuid, parsed.data.operating_company_id)
+    );
+    if (!resolvedOperatingCompanyId) {
+      return reply.code(400).send({ error: "operating_company_id_required" });
+    }
+    const counts = await withCurrentUser(authUser.uuid, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
+      const base = `${EXCLUDE_ARCHIVED_MDATA_CUSTOMERS_SQL} AND is_sample_data IS NOT TRUE AND operating_company_id = $1::uuid`;
+      const withTxnPred = customerHasTransactionsSql("id");
+      const res = await client.query<{
+        all_active: number;
+        with_transactions: number;
+        inactive: number;
+      }>(
+        `SELECT
+           (SELECT count(*)::int FROM mdata.customers WHERE ${base} AND deactivated_at IS NULL) AS all_active,
+           (SELECT count(*)::int FROM mdata.customers WHERE ${base} AND deactivated_at IS NULL AND ${withTxnPred}) AS with_transactions,
+           (SELECT count(*)::int FROM mdata.list_customers_same_company($1::uuid) WHERE is_sample_data IS NOT TRUE AND deactivated_at IS NOT NULL) AS inactive`,
+        [resolvedOperatingCompanyId]
+      );
+      return res.rows[0] ?? { all_active: 0, with_transactions: 0, inactive: 0 };
+    });
+    return {
+      operating_company_id: resolvedOperatingCompanyId,
+      with_transactions: counts.with_transactions,
+      active: counts.all_active,
+      all: counts.all_active + counts.inactive,
+      inactive: counts.inactive,
+    };
+  };
+  app.get("/api/v1/mdata/customers/counts", RL_READ, customerCountsHandler);
+  app.get("/api/v1/customers/counts", RL_READ, customerCountsHandler);
 
   app.post("/api/v1/mdata/customers", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
