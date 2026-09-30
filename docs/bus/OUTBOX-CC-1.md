@@ -435,3 +435,79 @@ stop.
 task):** no reconciliation session was started, no balance was entered on the owner's behalf, and
 the two balance-quality flags (Dreamline $0, Relay's placeholder-looking figure) were not
 investigated further or corrected.
+
+## H-3 CLOSED — landed properly, one small mechanical step remains
+db/migrations/202614900000_refuse_mirror_only_ledger_writes.sql is merged to main (PR #23504's
+content, landed as #23536 claim + #23537 file, after fixing the real in-my-lane blocker:
+scripts/verify-cash-flow-reads-delivery-date.mjs was unconditionally requiring all 16 ROUND 177/241
+batch loads to carry an invoice regardless of delivery status -- all 16 are status='dispatched'
+(in transit, correctly have no invoice yet under revenue-at-delivery). Fixed to only require an
+invoice once a load's own status shows actual delivery; guard now passes live.
+**"Find the writer" (H-3's original second half), closed:** grepped the current repo for any
+persistent code path writing to ih35_migrations.applied_migrations directly, excluding
+db-migrate.mjs's own sanctioned writer and repair/verification tooling -- none exists. The writer
+was ad-hoc, never-committed raw scripts run against prod this session (already in memory), not a
+discoverable file:line. The trigger plus the standing settings-level db:migrate/ALLOW_PROD_MIGRATE
+deny both independently make the pattern structurally impossible going forward.
+**One thing NOT done, and it needs the owner's path, not mine:** merging to GitHub does not apply a
+migration. Checked live post-merge: canonical ledger rows for 202614900000 = 0, mirror = 0 -- still
+unset. The trigger itself has been live and working since the original out-of-band apply, so nothing
+is unsafe, but the ledger record is still incomplete until someone with a working db:migrate path
+runs it once. Per ROUND 300's own ruling, that command is the owner's to run now.
+
+## ROUND 301 A-27 — THE RECONCILIATION ENGINE — MEASURED, reporting before code per the order
+**The core finding: most of what the owner described as missing already EXISTS in the schema and
+even in the route code -- it has simply never been exercised, because reconciliation has never run
+once (0 of 8 sessions, same root cause as A-35).** Before building anything new, here is what is
+already there, verified by reading the code and the live schema, not assumed:
+- **CREATE DATE vs POST DATE:** already two separate columns on `banking.bank_transactions` --
+  `created_at` and `posted_date`. `posted_date` is populated on only 527 of 947 (56%) live USMCA
+  rows -- a real, if partial, gap, not a missing concept.
+- **CLEARED:** `banking.bank_transactions.reconciliation_cleared` (boolean) already exists,
+  distinct from any matched concept. 0 of 947 are cleared today, consistent with 0 sessions ever run
+  -- not evidence the column is broken.
+- **The statement object:** `banking.reconciliation_sessions` already carries
+  `statement_balance_cents`, `beginning_balance_cents`, `deposits_in_transit_cents`,
+  `outstanding_checks_cents`, `adjusted_bank_balance_cents`, `adjusted_book_balance_cents`,
+  `variance_cents` -- essentially the full statement object the order describes, already modeled.
+- **Difference must reach exactly 0.00 to finish:** already enforced in code --
+  `apps/backend/src/banking/reconciliation.routes.ts` line 1337 returns
+  `409 reconciliation_difference_not_zero` when variance is nonzero at complete-time. Not missing.
+- **WORM / audit on edits:** `banking.reconciliation_sessions` already carries
+  `tg_audit_row_reconciliation_sessions` (full audit trail) and `trg_worm_refuse_delete` (delete
+  refused) at the TABLE level -- a session row cannot be silently edited or deleted outside the
+  audited path.
+- **MATCHED, and this is the real gap the owner is pointing at:** there are, right now, THREE
+  overlapping "is this matched" mechanisms that have drifted apart:
+  1. `bank_transactions.matched_transfer_id` / `matched_load_id` / `matched_bill_id` /
+     `matched_settlement_id` / `matched_expense_id` / `matched_journal_entry_id` -- direct columns,
+     0% used by any reconciliation session (they're populated by categorization/dispatch flows, not
+     by reconciliation). This is what the LIVE "Matched" column on the Bank Register
+     (`apps/frontend/src/pages/banking/BankAccountDetail.tsx:37-45`,
+     `matchedTransactionLinks`) actually renders today -- and it is a plain boolean shape: EntityLinks
+     if anything is set, the literal string `"No"` otherwise. No third state exists here at all.
+  2. `bank_transactions.reconciled_obligation_type` / `reconciled_obligation_id` -- a second,
+     separate matched-link pair, seemingly meant for the reconciliation flow specifically. 0 of 947
+     populated.
+  3. `banking.reconciliation_matches` -- a THIRD, fully separate table (`bank_transaction_id`,
+     `ledger_entry_kind`, `ledger_entry_id`, `match_score`, `match_state`) with its own
+     `match_state` CHECK constraint limited to `('auto_matched','user_matched','rejected')` -- STILL
+     not the owner's matched/unmatched/matched-with-difference tri-state. No amount-comparison
+     ("matched with difference") concept exists ANYWHERE in the schema today. 0 rows exist (0
+     sessions ever run).
+**What this means for the build, once authorized:** the owner's ask is real and not yet met, but the
+fix is narrower than "build the engine from scratch" -- it is (a) decide which of the three matched
+mechanisms is canonical going forward and retire or bridge the other two (an owner/architecture
+call, not mine to pick alone given three live, referenced schemas), (b) add the missing
+matched-with-difference state (an amount-comparison threshold against the linked GL entry), and (c)
+surface that tri-state -- not a boolean -- on the Bank Register's existing "Matched" column. The
+difference-must-be-zero rule, the statement object, and the audit trail do NOT need to be built --
+they already exist and are already correct.
+**What a first reconciliation needs and how (same finding as A-35, restated for this order):** a
+human-entered `statement_balance_cents` is the ONE universal blocker; nothing else in the engine
+is missing to run the FIRST session on USMCA FREIGHT (the best-history account). Beginning balance
+for that first session defaults to $0 (no prior session exists to carry one forward) -- the owner
+should confirm this is acceptable for a first-ever reconciliation, or provide the account's real
+opening balance as of when tracking should start.
+**Not built here, per the order's own "report before code" framing:** no matched-with-difference
+state added, no mechanism consolidation decided, no UI change made.
