@@ -108,3 +108,26 @@ per Lead's explanation (AUTH-177 purge, not CC-2, caused the cash-flow red) · T
 confirmed merged and LIVE (backend deployed 17:04 CT) · dispatch.stop_arrivals=0 rows is
 CORRECT right now (closest truck 93mi from its next stop, 250ft arrival radius) · starting
 T-02, building against the real engine.
+
+T-02 · Truck Line node advancing off the real engine — VERIFIED, no code change needed:
+- Confirmed live (backend deploy 218bdbc4a8, deriveTruckLineStation/station.ts +
+  deriveLiveStation/TruckLineBoard.tsx): both are pure functions reading directly from
+  mdata.load_stops.actual_arrival_at/actual_departure_at + dispatch.pod_documents +
+  accounting.invoices -- no fixture, no mock, no separate "station" column anywhere in
+  either path. The rail node and the live truck graphic were already correctly wired
+  before today; nothing needed building.
+- LIVE PER-LOAD STAMP COUNTS (all 16 USMCA dispatched loads, measured just now):
+  15 of 16 show 0 arrivals / 0 departures / 0 dispatch.stop_arrivals rows -- honestly
+  matching the Lead's own measurement (closest truck 93mi from its next stop, 250ft
+  arrival radius). Load 13637/T176 carries 1 arrival + 1 departure (the AUTH-152 real
+  backfill from earlier this session). dispatch.stop_arrivals = 0 rows total, all
+  companies -- matches exactly.
+- BOARD SCREENSHOT: live Truck Line view, every row's rail correctly stuck at
+  "Dispatched" (green node lit at position 0 only), truck graphics showing real
+  Live/Stale GPS position + city/road separately from the stamped rail -- e.g. T170
+  and T173 correctly flagged "Stale ... 20h ago" / "5h ago" rather than silently
+  parked. Screenshot on file
+  (screenshot-1790790166640-0.jpg).
+- CONCLUSION: the board is honest end-to-end right now. It will advance its own rail
+  the instant dispatch.stop_arrivals/load_stops gets a real row from the now-live
+  arrival-detection engine -- no further CC-3 work required for T-02 itself.
