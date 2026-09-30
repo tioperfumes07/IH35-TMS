@@ -4316,3 +4316,35 @@ expires_at: 2026-10-01T00:00:00.000Z
 status: OPEN — not yet executed
 
 — CC-1
+
+## AUTH-136
+
+date: 2026-09-30
+
+scope: claude/00-POSTING-AUDIT-ROUND-1-FOUR-DEFECTS-FIX-THESE.md DEFECT 1 (Lead, owner-confirmed,
+  CC-2's ROUND 278 hold explicitly lifted) — repost the 41 factoring-advance funding entries whose
+  net-wire amount was originally misposted to account 6300 (Bank Service Charges & Wire Fees)
+  instead of 1090 (Undeposited Funds). Live-verified: all 41 were ALREADY reversed by a prior,
+  undocumented repair pass (each reversal's own memo: "repair zero-advance: ach_cents was Net Adv
+  (feed-sep-faro-fas bug)"), leaving these 41 real Faro advances with ZERO net GL footprint right
+  now — not money in the wrong account, money in NO account. This authorizes ONLY step 2 (the
+  missing repost) through the sanctioned engine (postFactoringAdvanceEventInClientTx,
+  apps/backend/src/accounting/factoring-posting/poster.service.ts), reusing each entry's own
+  already-reversed reserve_cents/factor_fee_cents/invoice_total_cents figures (read from the
+  original, now-reversed JE — these were never wrong, only the account for one line was),
+  ach_cents=0 for all 41 (none carry a genuine separate wire fee; confirmed no 6300 line existed
+  independent of the misposted net-wire amount on any of the 41). Total net-wire across all 41:
+  $159,585.12 exactly (invoice_total - reserve - fee, summed). Twin-checked (prior finding,
+  ACCT board): 0 of 41 have a duplicate/twin advance. Tested dry-run (BEGIN...ROLLBACK) against
+  one sample (fa_id 12ed0f66-e912-4987-9af8-f42ecd5bcd98, FAC-2026-00051): produced exactly
+  `1090 Dr $4,268.00 / 1230 Dr $66.00 / 2150 Cr $4,400.00 / 6400 Dr $66.00`, matching the
+  canonical shape in `claude/00-CANONICAL-FACTORING-POSTING-LOCKED.md`. Not authorized: any
+  change to the 6 entries using account 1235 (Faro Cash Reserve) — that is a separate item under
+  Amendment 2's more nuanced escrow/cash-bucket split, not part of this AUTH; any change to
+  advance headers/status; touching TRANSP or TRK. All 41 fa_ids: 12ed0f66-e912-4987-9af8-f42ecd5bcd98, 134ed807-5cc9-41a7-8a43-71998d520c25, 13df2248-64fc-49c9-a756-007a08f4958b, 187d0386-b1e1-4181-9d02-4760478c4f0a, 27862cbc-9ed8-4ea3-a883-ab9df789b32e, 280b0225-eae8-4e35-ba73-d4984c3eba2a, 3b68e8e7-14ab-4936-b92c-19332231b2c3, 3deb5c6b-ede5-4ef1-99a8-14c4e28a4093, 3f679023-18a8-4343-847d-e557e49bb6e9, 3fb5ed8b-2e05-446f-bc98-a5234947e1d6, 43bf2fc5-4984-4b56-8d13-7eeaf244d080, 449b660c-9c75-4d29-903f-25d4f9e08abf, 5038df26-f95b-434f-8f57-4b1ab7364b5c, 51a844cb-0985-44ff-a2df-49fda17f5373, 52d17900-c8d5-4c36-ac82-921a4fc4e573, 5c44b184-aecc-4132-8247-7543f14e618a, 5e38e177-02b5-4d39-841c-b7492781eb9f, 715871cd-8792-4d42-bd71-67786f690ef4, 75e07f0c-5e10-4b92-a0c0-7e0b2de80099, 779d5e2d-c4c6-45de-9024-104ffea55344, 7b2da4bc-fcf0-4649-a3a6-ebbac086666c, 83b34f22-f36e-45c4-b259-39f1c56b09a3, 848b0038-c151-4ca4-b938-e44ee863e3ab, 86d9a162-5835-4395-864b-e02ba3ad0c6f, 89e88642-353c-4c69-a03e-6145560d34af, 94f29401-8c4f-4321-b1ad-20bccf99a87e, 9d0cf33f-9cbf-4eed-9ee0-51ef072f539a, a3d02d96-0c3e-4a4a-a5c2-ff924485bab3, afa05f35-b653-41ac-92a0-25feb3fca802, b49e47b1-e057-4f96-9626-df9ea2acc6a1, bbc2597b-e740-472d-837d-8fae9935d89c, c4135326-0d17-49a0-a529-494e21ae4229, cba06b11-612d-41e6-a1ea-ddd14f005eb0, d0cdf081-f964-4e6d-87db-27f2ecffd120, dce6834c-624c-40aa-b485-ccb1bcf74c2e, ddfd1b8c-a20c-460f-b42b-768d0d9ba421, e409769c-a618-4233-aa16-6788abfa5cca, e9f9df8a-a91c-46b4-a5bf-0dced674b933, eb05c290-4de9-4b47-b9dd-2b50b885cc53, ebf46cea-03a3-498c-982f-fcf15007bfbf, fe658d97-002c-4754-bf0a-53cfbee560b3
+
+action:
+  OWNER_AUTH_ID=AUTH-136 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth136-repost-41-factoring-entries.ts
+
+expires_at: 2026-10-01T08:00:00.000Z
+status: OPEN
