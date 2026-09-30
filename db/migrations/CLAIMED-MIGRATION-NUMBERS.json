@@ -8,6 +8,11 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202614820000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-30",
+      "purpose": "ROUND 297.1 (Claude Lead, owner-approved, deadline 2026-10-01T22:00Z) -- SUPERSEDES the 202614790000 claim (PR #23487): live-verified against production (ih35_migrations.applied_migrations, the mirror ledger) that 202614790000/800000/810000 are ALREADY used there under unrelated filenames (pm_catalog_usmca / pm_schedules_usmca_16units / work_orders_backfill_source_type) -- not in the canonical _system._schema_migrations ledger, not in db/migrations/, not in CLAIMED-MIGRATION-NUMBERS.json before this claim, so the claim-reserve process itself never saw the collision (it only checks the canonical ledger + this registry, not the mirror table). Filed as a MIGR-COLLISION addendum in docs/audit/GUARD-WORKORDERS.md. This claim (202614820000) was independently verified clean on BOTH ledgers before being reserved. Same purpose as the superseded claim: telematics.odometer_readings.odometer_miles DROP NOT NULL + a new date-grain UNIQUE index on (operating_company_id, unit_id, (read_at::date), source) for Round 297.1's J-1 daily odometer snapshot cron."
+    },
     "202614790000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-30",
