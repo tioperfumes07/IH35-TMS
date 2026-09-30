@@ -4279,3 +4279,40 @@ This closes Owner Order 1's first half. The remaining 7 rows (invoices 1, 3, 4, 
 wait for their duplicate-copy survivor per Order 2/Amendment 1D, not authorized by this entry.
 
 — CC-2
+
+## AUTH-135 — re-open of AUTH-121 (expired unexecuted): resync driver_bills.settled_in_settlement_id (6 loads)
+
+requested_by: CC-1, 2026-09-30. AUTH-121 (same scope, same script, same requester/agreement chain)
+  expired at 2026-09-29T00:00:00.000Z, status OPEN — not yet executed, before anyone ran --apply.
+  Nothing about the finding, the review, or the fix changed — only the clock. Re-opening under a
+  new id rather than editing the expired entry (WORM: AUTH-121 stands as written, unmodified).
+requested_by (original): CC-2 (PR #23045, merged 2026-09-28T18:21:20Z)
+agreed_by (original): CC-3, 2026-09-28, independent live re-verification — see AUTH-121 above for
+  the full row-by-row review (unchanged, reproduced here by reference, not retyped).
+re-verified live by CC-1, 2026-09-30, immediately before opening this entry — fresh query against
+  mdata.loads + driver_finance.driver_bills for all 6 loads, same shape as AUTH-121's original
+  measurement:
+    13609: canonical ae0db193-3328-4934-b62b-f89a12a4df1c; bill pointer NULL
+    13610: canonical 2983941f-7396-48da-bdb9-8415243789ce; bill pointer b69dfafb-... (wrong, matches AUTH-121)
+    13612: canonical 55306f73-4ec7-47b9-ba7b-3a2a14746256; bill pointer 8fefac42-... (wrong, matches AUTH-121)
+    13614: canonical ae0db193-3328-4934-b62b-f89a12a4df1c; bill pointer 2ef96b64-... (wrong, matches AUTH-121)
+    13617: canonical 55306f73-4ec7-47b9-ba7b-3a2a14746256; bill pointer NULL
+    13619: canonical 2983941f-7396-48da-bdb9-8415243789ce; bill pointer b69dfafb-... (wrong, matches AUTH-121)
+  Zero drift since AUTH-121 was written — every row still exactly matches CC-3's original
+  before-state. No re-review of the script needed; it is unchanged
+  (apps/backend/scripts/ops-r191-resync-driver-bill-settlement-pointer.ts), dry-run already proven,
+  touches only settled_in_settlement_id (+ updated_at) on exactly these 6 rows.
+
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 6 named loads' driver_bills
+  rows: 13609, 13610, 13612, 13614, 13617, 13619. Column touched: settled_in_settlement_id (+
+  updated_at) only, set to each load's own mdata.loads.presettlement_link_id. Not authorized:
+  touching P-0001/P-0002/P-0004 themselves, their other live children, settlement_lines, or any
+  settlement number/display_id. Identical scope to AUTH-121, unchanged.
+
+action:
+  DATABASE_URL=<prod> npx tsx apps/backend/scripts/ops-r191-resync-driver-bill-settlement-pointer.ts --apply
+  (script's own AUTH_ID constant updated from the AUTH-121 placeholder to AUTH-135 in this same PR)
+expires_at: 2026-10-01T00:00:00.000Z
+status: OPEN — not yet executed
+
+— CC-1
