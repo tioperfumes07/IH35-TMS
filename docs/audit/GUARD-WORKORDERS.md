@@ -11788,3 +11788,42 @@ survivor; execution is a separate, code-level step (reversal JE dated the void d
 delete per Order 3's one purge definition).
 
 — CC-2
+
+## FINDING: N/A LANE: FINANCIAL -- the 41 skip-1090 entries root-caused, twin-checked clean, fix identified but NOT executed (CC-2, 2026-09-30)
+
+Item 45/register (`00-MASTER-PENDING-REGISTER-CURRENT.md`) -- "41 funding entries never debited
+Undeposited Funds" -- root-caused live (USMCA, `bypass_rls=lucia`).
+
+**The bug:** every one of the 41 has its entire net-wire amount posted to account **6300 Bank
+Service Charges & Wire Fees** (an expense account) instead of **1090 Undeposited Funds**. Sample
+(fa memo "Factoring funding FAC-2026-00084"): `1230:debit:900, 2150:credit:60000, 6300:debit:58200,
+6400:debit:900` -- 60000(face) - 900(reserve) - 900(fee) = 58200 = exactly the net-wire amount,
+sitting in the wrong account. Every sampled row fits this same shape. All 41 postings' created_at
+cluster 2026-09-24 20:4x-20:5x -- one batch, one bug, not 41 independent mistakes.
+
+**Distinct from AUTH-113 (2026-09-28, "repost the 44 reversed Faro advances"):** that population
+was VOIDED advances with NO GL entry at all; CC-1's repost attempt there hit duplicate-key
+violations because 39 of 44 already had a correct, live "twin" advance elsewhere from an earlier
+untracked repair -- reposting would have double-counted real cash, and CC-1 correctly aborted.
+**These 41 are NOT voided** (`voided_at IS NULL` throughout) and already carry a live GL entry --
+just a miscoded one. Overlapping FAC numbers exist between the two populations (e.g. FAC-2026-00084,
+00047-00050) but they are two different defects on two different rows.
+
+**Twin-checked before proposing any fix, precisely because of the AUTH-113 precedent:** all 41
+JEs' memos carry a `FAC-2026-NNNNN` number (their `factoring_advances.faro_invoice_number` column
+is itself empty -- a separate, smaller data-quality gap). Searched every other live, non-voided
+`factoring_advance` JE for a memo matching the same FAC number. **Result: 0 of 41 have a twin.**
+No duplicate-money risk in reclassifying these.
+
+**The fix, not yet executed:** these are single miscoded postings, not missing ones -- the
+correct amounts already exist on the JE, just under account 6300 instead of 1090. The safe pattern
+is a reclass: void the original JE through the sanctioned void engine (reversal dated the void
+date, per Seat Contract Section 4), then post a new, correct JE with the identical lines except
+6300 replaced by 1090, dated at the original entry_date so it lands in the right period. **Not
+attempted here** -- this needs the exact void/reclass call verified against
+`executeVoidCancel`'s `factoring_advance` case (ACCT-F2026093009, merged this round) before
+writing a backfill script, to avoid a second raw-UPDATE-style void-contamination pattern on top of
+everything already found this session. Recommend a follow-up AUTH scoped to exactly these 41
+fa_ids (listed in this branch's commit), reclass only, no new GL math, verified twin-free.
+
+— CC-2
