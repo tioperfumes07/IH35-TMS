@@ -1207,3 +1207,16 @@ Full coder instructions: `claude/2026-09-13-ABSORPTION-INGEST-AND-DISPUTE-WINDOW
   open disputes 13581/13586), extensible to any future type (bill/factoring-chargeback). Invoice disputes
   stay tracking-only (never mutate `accounting.invoices`; A/R stays open for the delta). Additive — keep
   existing pages. Spec in the instructions doc, guard `verify-dispute-window-unified.mjs`.
+
+## Active Architectural Decisions — ROUND 285.4.10 awaiting-BOL FE (Cursor, 2026-09-30)
+
+- **Named queue:** delivered loads without a `docs.files` BOL (`catalogs.file_categories.code='bol'`) wait on `GET /api/v1/dispatch/awaiting-bol-invoice`. FE: `/dispatch/awaiting-bol-invoice` under Documents › Awaiting BOL (red badge). Guard `verify-auto-invoice-on-bol-wired.mjs` asserts BE + FE.
+- **Fire path:** delivery latch + late BOL upload → `autoInvoiceOnBol` → `sendDraftInvoice` → `autoSubmitDeliveredLoadToFactor`. Proforma stays non-posting; convert/create official draft before send.
+- **Live measure (USMCA):** loads **13626 / 13625 / 13615** awaiting BOL (`completed_docs_received`, invoices already exist). Upload BOL on load Documents tab — do not invent fixtures.
+- **METHOD (#59):** `dispatch.detention_requests.approval_method` stamps on approve; invoice PDF `.appr` prints METHOD. Chrome Print blocked while USMCA has **0** detention_requests / detention_events.
+
+## Next Immediate Milestones — ROUND 285.4.10 (Cursor, 2026-09-30)
+
+1. Owner Chrome: Documents › Awaiting BOL → 13626/13625/13615 (FE live `version.json=c4cea25`).
+2. One BOL upload → invoice send → Faro queue proof (screenshots + live row).
+3. METHOD Print when a real detention approve stamps `approval_method`.

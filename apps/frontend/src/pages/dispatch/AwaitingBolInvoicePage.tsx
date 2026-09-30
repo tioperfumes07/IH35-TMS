@@ -42,7 +42,7 @@ export function AwaitingBolInvoicePage() {
         key: "status",
         label: "Status",
         sortable: true,
-        render: (row) => <StatusBadge status={row.status} />,
+        render: (row) => <StatusBadge status={row.status.replace(/_/g, " ")} />,
       },
       {
         key: "customer_name",
