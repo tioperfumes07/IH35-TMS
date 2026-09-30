@@ -9434,5 +9434,10 @@
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-30",
     "purpose": "verify-invoice-header-requires-line-constraint (B-26)"
+  },
+  "11961": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-pm-schedule-never-guesses-a-baseline (ROUND 297.2 A-27/A-28/A-29)"
   }
 }
