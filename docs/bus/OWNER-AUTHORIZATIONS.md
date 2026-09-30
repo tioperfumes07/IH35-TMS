@@ -5647,7 +5647,24 @@ action:
   OWNER_AUTH_ID=AUTH-174 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc2-auth174-backfill-5-sent-invoice-lines.ts --apply
   (run from repo root; DRY_RUN first with no --apply flag)
 expires_at: 2026-10-01T00:00:00.000Z
-status: OPEN
+status: WITHDRAWN
+withdrawn_at: 2026-09-30T12:33:00.000Z
+withdrawn_by: owner, direct instruction: "do not back fill unauthorized invoices"
+withdrawal_reason: correct call, not executed -- the --apply run was interrupted before it wrote
+  anything (dry-run only ever ran; live re-verified after this withdrawal: all 5 invoices still
+  carry 0 lines). This AUTH fixed the wrong layer: it derived a correct LINE AMOUNT from the
+  load's own rate, but never asked whether the INVOICE ITSELF was authorized to exist. Per the
+  owner defect register item G (same session): "no invoice AND no pre-invoice may exist against a
+  load in dispatched / at_pickup / in_transit / at_delivery without a row in
+  dispatch.manual_delivery_authorizations. That table exists for exactly this and holds ZERO rows
+  today." All 5 target loads are still rolling (dispatched/at_pickup/in_transit), so these 5
+  invoices are themselves unauthorized documents by that standing rule -- backfilling a correct
+  line onto an unauthorized invoice does not fix the defect, it makes the unauthorized document
+  look more complete and legitimate than it already wrongly does. The ops script
+  (scripts/ops/2026-09-30-cc2-auth174-backfill-5-sent-invoice-lines.ts) is left in the repo as a
+  record of the analysis (real, honest line-derivation math) but MUST NOT be run with --apply.
+  Correct remedy for these 5, if any, is a Lead ruling on whether they should be voided (same
+  class as the earlier fabricated-13625/13626 question) or otherwise handled -- not decided here.
 
 ---
 
@@ -6093,4 +6110,13 @@ status change on any of the 3 rows.
 action: OWNER_AUTH_ID=AUTH-175 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth175-fix-13503-expense-numbers.ts
   (DRY_RUN=1 first for the rehearsal, then the same command without DRY_RUN to commit)
 expires_at: 2026-10-01T12:20:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T12:40:00.000Z
+consumed_by: CC-1
+row_counts: 3 of 3 renumbered exactly as the rehearsal predicted -- EXP-2026-00544/545/546 ->
+  13503-11/12/13.
+proof_query: live on prod, 2026-09-30 -- node scripts/verify-load-to-cash-chain.mjs: "LIVE PASS --
+  123 eligible USMCA load(s); every driver-having load has a driver_bill and a
+  presettlement_link_id; 0 expense_number mismatches." CC-3's blocking LINK 3 check is clear.
+
+— CC-1
