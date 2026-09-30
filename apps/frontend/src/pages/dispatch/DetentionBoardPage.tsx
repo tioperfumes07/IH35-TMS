@@ -117,7 +117,7 @@ function DetentionApprovalQueue({
 
   return (
     <div data-testid="detention-approval-queue" className="rounded-sm border border-slate-200 bg-white">
-      <div className="border-b border-slate-200 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">
+      <div className="border-b border-slate-200 px-3 py-2 text-section-header font-bold uppercase tracking-wide text-[#4B5563]">
         Pending approval · METHOD required for invoice
       </div>
       <ul className="divide-y divide-slate-100">
@@ -131,7 +131,7 @@ function DetentionApprovalQueue({
               <span className="min-w-[6rem] text-center">{stopLabel}</span>
               <span className="min-w-[4rem] text-center">{formatMoney(Number(row.amount_cents ?? 0))}</span>
               <label className="flex items-center gap-1">
-                <span className="text-[11px] font-bold uppercase text-[#4B5563]">Method</span>
+                <span className="text-section-header font-bold uppercase text-[#4B5563]">Method</span>
                 <select
                   className="h-7 rounded-sm border border-slate-200 px-2 text-xs"
                   value={method}
