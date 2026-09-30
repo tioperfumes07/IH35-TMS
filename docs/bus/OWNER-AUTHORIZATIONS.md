@@ -4546,3 +4546,47 @@ This closes the discovery made mid-AUTH-137: all 10 determined-survivor groups n
 one live, correct funding JE each.
 
 — CC-2
+
+## AUTH-141
+
+title: DEFECT ITEM 4 (Lead order) -- 12 LOVES-vendor expenses void+recreate with real funding account, USMCA
+requested_by: CC-1, 2026-09-30, in response to Lead order ("The expense engine is creating A/P... If
+  paid, it is an Expense crediting the real funding account... Guard: no expense posting may touch
+  2000."). Law 280.0.b: no journal entries, create the document.
+root_cause: live-verified (USMCA, bypass_rls). Account 2000 Accounts Payable carries $2,117.49 of
+  live expense-sourced credits (15 rows) with zero accounting.bills behind any of them. 12 of the
+  15 are vendor LOVES, all manually-entered (no source_fuel_transaction_id, i.e. not adopted from a
+  real fuel-card feed), Fuel-DEF/Scale/Tire category, all with payment_account_uuid IS NULL.
+  posting-engine.service.ts's own expense-posting logic (~line 1455): credits
+  `payment_account_uuid` directly when set, else falls back to `ap_control` (2000) -- these 12 were
+  created with that field unset, so the engine correctly-per-its-own-logic defaulted to AP; the
+  documents themselves are what's wrong, not the posting engine.
+  Every OTHER LOVES expense of the exact same shape (no fuel_transaction link) credits 1000 Bank of
+  America - Operating (USMCA) 202 times out of 217 (93%) -- confirmed live, this is the real
+  funding account for this population, not a guess. Only these 12 (AP-fallback), 2 (2510), and 3
+  (1295) diverge from that pattern; none of the 12 carries any fuel_transaction/card link
+  suggesting an alternate funding source.
+  The other 3 non-LOVES rows in the same $2,117.49 population (TRUCK WASH HEBRON $47.25, Smithfield
+  Foods Inc $269.10, TERRENCE SMITH $250.00) are explicitly NOT covered by this AUTH -- each is a
+  single first-ever expense for its vendor with zero precedent, zero bank/fuel-transaction link,
+  and no payment_account_uuid evidence. Guessing a funding account for those would be invented
+  data. Reported separately for a real Bill to be created against them instead (per the Lead's own
+  "if owed, create a Bill" branch) -- a different write path, out of scope here.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 12 accounting.expenses ids
+  listed in scripts/ops/2026-09-30-cc1-item4-loves-ap-to-bank-reclass.ts (EXPENSE_IDS constant).
+  Action: void each original (verbatim shape of expenses.routes.ts's own POST /:expenseId/void
+  handler -- reversePostedSourceTransactionInClientTx then the same UPDATE +
+  cascadeVoidChildren + audit), then recreate each with every field identical (vendor, driver,
+  load, date, amount, category/expense_account_uuid, memo) except payment_account_uuid: NULL ->
+  1000 Bank of America - Operating (USMCA) (c7af1219-f6a6-4169-a2d8-8f556fb0c2f3), then post
+  through the real posting engine (postSourceTransactionInClientTx) -- the engine's own existing
+  logic then correctly credits 1000 instead of 2000. NO manual journal entry anywhere in this
+  script (Law 280.0.b). Not authorized: touching the 3 non-LOVES rows named above; touching any
+  other LOVES expense outside this exact 12; touching TRANSP or TRK; inventing a Bill.
+action:
+  OWNER_AUTH_ID=AUTH-141 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-item4-loves-ap-to-bank-reclass.ts
+  (run from the repo root, not apps/backend/ -- see AUTH-135's CONSUMED note on why; DRY_RUN=1 first)
+expires_at: 2026-10-01T00:00:00.000Z
+status: OPEN
+
+— CC-1
