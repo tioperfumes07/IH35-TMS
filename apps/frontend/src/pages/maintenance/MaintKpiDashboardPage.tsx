@@ -237,7 +237,12 @@ export function MaintKpiDashboardPage() {
           Engine-on idle hours with no Samsara/manual source. Confirm sets idle source to manual (CHECK allows only samsara or manual).
         </p>
         {idleReviewQ.isError ? (
-          <ListErrorState title="Could not load idle review queue" onRetry={() => void idleReviewQ.refetch()} />
+          <ListErrorState
+            title="Could not load idle review queue"
+            status={0}
+            message={(idleReviewQ.error as Error)?.message}
+            onRetry={() => void idleReviewQ.refetch()}
+          />
         ) : idleReviewQ.isPending ? (
           <p className="text-xs text-gray-500">Loading…</p>
         ) : (idleReviewQ.data?.rows.length ?? 0) === 0 ? (
