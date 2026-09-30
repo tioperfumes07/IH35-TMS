@@ -657,3 +657,35 @@ regression class driver-attribution.ts exists to prevent).
 
 REMAINING: real alert volume depends on J-3 actually completing a tick (SAMSARA_TOKEN_ENCRYPTION_KEY,
 same UNVERIFIED as T-26/T-30). T-34 next in the Round 301 queue.
+
+## CC-3 — ROUND 301 T-34 SHIPPED — Arriving Soon feed gains geofence state (backend only)
+
+Owner killed the tab, not the feed. apps/backend/src/maintenance/arriving-soon.routes.ts
+(GET /api/v1/maintenance/arriving-soon) already existed and already served units inbound
+(unit_id/unit_number/driver), ETA (predicted_yard_arrival_at, hours_until_yard_arrival,
+eta_confidence) and what's due on arrival (issues_json, severe/warning/info counts) -- built for
+the old tab, equally consumable from Home, nothing there needed to change.
+
+THE GAP: geofence state. Not served anywhere before this. NEW: a LEFT JOIN LATERAL to
+geo.geofence_vehicle_state (the real per-unit current-proximity table, 803 live rows,
+current_state values like 'approaching'/'in_geofence'/etc.), latest row per unit_id, added to
+both the SQL and the card mapping -- geofence_state, geofence_distance_m,
+geofence_state_updated_at. Null stays null (a unit that has never approached a tracked geofence
+reports unknown, never a guessed state) -- enforced by the new guard.
+
+BACKEND ONLY, per this item's own lane boundary -- Cursor owns moving the screen onto Home;
+nothing in apps/frontend touched.
+
+GUARD: scripts/verify-arriving-soon-serves-geofence-state.mjs + --selftest. Fails if the route
+stops joining the real geofence table, stops exposing geofence_state, or falls back to a
+guessed string instead of null.
+
+LIVE PROOF: apps/backend npx tsc --noEmit exit 0. Guard --selftest and real-file run both PASS.
+Ran the real route handler live against production: 0 cards -- maintenance.v_arriving_soon
+itself has 0 rows for USMCA right now (confirmed independently, matches T-02's own earlier
+finding on live dispatch-board state; not caused by this change). Proved the geofence JOIN logic
+correct in isolation against a real unit with real data: T147 correctly resolves
+current_state='approaching', distance_m=805.9, matching geo.geofence_vehicle_state's own live
+row exactly.
+
+REMAINING: T-35 next in the Round 301 queue.
