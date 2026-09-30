@@ -23,6 +23,7 @@ apps/backend/src/mdata/customers.routes.ts
 apps/backend/src/mdata/vendors.routes.ts
 apps/backend/src/cron/retry-held-expense-postings.cron.ts
 apps/backend/src/governance/void-cancel-executors.ts
+apps/backend/src/maintenance/service-history-backfill.routes.ts
 **/*.db.test.ts
 TABLES: accounting.company_settlements · driver_finance.driver_bills · mdata.drivers · identity.*
         mdata.loads
@@ -146,6 +147,14 @@ TABLES: none. The Lead owns no module code and no tables. Anything else the Lead
 # would recreate the exact "one job, two seats" problem §0b exists to prevent, same reasoning as the
 # three grants immediately above. Scoped to these two filenames. Owner may move it; until then it is
 # CC-1's.
+#
+# **`apps/backend/src/maintenance/service-history-backfill.routes.ts` added to CC-1 (ROUND 297.2,
+# A-29, 2026-09-30).** `apps/backend/src/maintenance/**` has no seat -- UNASSIGNED per
+# verify-lane-ownership.mjs. This is a brand-new file (the Lead's own A-29 order), not an existing
+# file another seat already owns work in -- the new backfill route is inseparable from A-27/A-28
+# (the pm_intervals catalog + pm_schedules migrations it reads/writes, both squarely CC-1's
+# migrations lane) and from the guard verifying all three together. Same one-job-one-seat reasoning
+# as the four grants above. Scoped to this one filename. Owner may move it; until then it is CC-1's.
 
 ## SHARED — any seat, but say so in the PR body
 docs/**

@@ -180,6 +180,16 @@ export async function registerServiceHistoryBackfillRoutes(app: FastifyInstance)
             [workOrderId, description, body.total_cost_cents / 100]
           );
 
+          // KNOWN INTERACTION (not yet live, flagged for whoever finishes it): CC-3's ROUND 297.1
+          // odometer ledger work (docs/bus/2026-09-30-LEAD-RULING-CC3-R297-ODOMETER-LEDGER-LANE-
+          // CROSS.md) adds a new UNIQUE index on (operating_company_id, unit_id, read_at::date,
+          // source) to this table. Once that lands, backfilling TWO different pm_codes for the
+          // SAME unit on the SAME service_date in two separate requests would violate it on the
+          // second insert (both are source='manual' on the same day) -- a real owner workflow
+          // (servicing PM-A and BRK together) that this route does not yet guard against. Not
+          // fixed here: the constraint does not exist yet, so there is nothing to guard against
+          // today; whoever reviews that migration should know this route is a second writer to
+          // the same uniqueness key.
           const odoRes = await client.query<{ id: string }>(
             `
               INSERT INTO telematics.odometer_readings
