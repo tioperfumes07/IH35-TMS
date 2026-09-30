@@ -177,3 +177,19 @@ verify-g2-extra-pay-requires-item: PASS
 **Left:** Lead's ruling on Disputes tab placement; Cursor to build the A-14/A-16 UI off this spec.
 
 ACK 2026-09-30 · CC-1 · read NOW-CC-1 · starting A-16
+
+## A-16 — re-verified fresh per restart order (read-only, freeze-compliant)
+**Changed:** Nothing to data. Found and fixed a real bug in my own already-delivered A-16 doc:
+the vendor predicate referenced `accounting.vendor_credits.vendor_uuid`, a column that does not
+exist (real name is `vendor_id`) — would have thrown at runtime. Caught by re-running the live
+query fresh instead of trusting the prior text.
+**Live proof:**
+```
+customers_with_txn=76  customers_total=1249
+vendors_with_txn=34    vendors_total=623
+```
+Both counts identical to this morning's delivery — unaffected by today's void/reversal/purge
+churn. Corrected predicate SQL committed to
+`docs/bus/2026-09-30-CC1-A13-A14-A16-DRIVER-PROFILE-AND-HAS-TRANSACTIONS-ANALYSIS.md`.
+**Left:** Same as before — Lead's ruling on Disputes tab placement; Cursor builds the UI off this
+spec. A-16 itself is closed on CC-1's side.
