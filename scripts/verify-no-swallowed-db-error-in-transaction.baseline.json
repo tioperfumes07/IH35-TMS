@@ -1,6 +1,9 @@
 {
   "total": 222,
   "files": 142,
+  "reason": "A DB read inside a transaction wrapped in a catch that neither logs, rethrows, replies, nor rolls back to a SAVEPOINT. One of these killed every driver settlement PDF with an opaque 25P02 that named the audit write instead of the query that actually failed (Render srv-d7rpem7avr4c73fhp4n0, 2026-09-30T10:37:55Z). Measured by running the guard across apps/backend/src at the commit that introduced it. SHRINK-ONLY - drive it down, highest-money files first; never raise this number.",
+  "established": "2026-09-30",
+  "measured_at": "2026-09-30T10:45:00.000Z",
   "byFile": {
     "apps/backend/src/accounting/bulk-void.service.ts": 1,
     "apps/backend/src/accounting/checks/check-create.service.ts": 1,
