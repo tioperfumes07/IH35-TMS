@@ -214,6 +214,7 @@ import { registerUserLocalePreferenceRoutes } from "./users/preferences/locale.r
 import { registerUtilizationRoutes } from "./utilization/utilization.routes.js";
 import { registerFuelTransactionImportRoutes } from "./fuel/fuel-transaction-import.routes.js";
 import { registerFuelTransactionsRoutes } from "./fuel/fuel-transactions.routes.js";
+import { registerFuelGeofenceRecommendationsRoutes } from "./fuel/fuel-geofence-recommendations.routes.js";
 import { registerFuelGlReflushRoutes } from "./fuel/fuel-gl-reflush.routes.js";
 import { registerFuelCardOverageRoutes } from "./fuel/fuel-card-overage.routes.js";
 import { registerFuelFraudAlertRoutes } from "./integrations/fuel/fraud-detector/routes.js";
@@ -1089,6 +1090,8 @@ async function main() {
   await registerUtilizationRoutes(app);
   await registerFuelTransactionImportRoutes(app);
   await registerFuelTransactionsRoutes(app);
+  // B-25 — read-only geofence-based recommendation surface for manual fuel entry (never writes)
+  await registerFuelGeofenceRecommendationsRoutes(app);
   // FUEL-01 — owner-gated idempotent re-flush for unposted fuel.fuel_transactions → GL
   await registerFuelGlReflushRoutes(app);
   // BANK-F10 / FUEL-03 — list + approve-then-recover for fuel-card overage events
