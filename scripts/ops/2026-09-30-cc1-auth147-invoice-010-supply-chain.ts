@@ -1,5 +1,5 @@
 /**
- * AUTH-147 — record invoice 010 (SUPPLY CHAIN MANAGEMENT, $4,000.00), a genuinely load-less
+ * AUTH-148 — record invoice 010 (SUPPLY CHAIN MANAGEMENT, $4,000.00), a genuinely load-less
  * self-carried invoice the customer already holds. Backfilling an ISSUED paper document, not
  * issuing new paper (Lead ruling, ROUND 290): "sendDraftInvoice['s live_feed path] is wrong ...
  * Use historical_backfill with the PDF as the named evidence source."
@@ -17,10 +17,15 @@
  * export row anywhere under IH35-MASTER-RECONCILIATION, exists for "Supply Chain Management" +
  * 08/13/2026 + $4,000 -- this is a genuinely load-less document, not a missing-load defect.
  *
- * CUSTOMER: mdata.customers id 296fd87b-fc93-48e0-9503-d27772c14cf7 ("SUPPLY CHAIN MANAGEMENT",
- * source_system='qbo', qbo_customer_id='648') -- the real, actively-used QBO-sourced record
- * (carries an unrelated 2022 invoice already). NOT 4fa300b3-45b6-4eef-a484-1c3fe065ad72, a
- * zero-usage TMS-native duplicate of the same name (0 invoices, 0 loads).
+ * CUSTOMER: mdata.customers id 4fa300b3-45b6-4eef-a484-1c3fe065ad72 ("SUPPLY CHAIN MANAGEMENT",
+ * source_system='tms', operating_company_id=USMCA). CORRECTED during Neon-branch rehearsal: a
+ * same-named QBO-sourced record (296fd87b-fc93-48e0-9503-d27772c14cf7, qbo_customer_id='648')
+ * looked more "canonical" by source/usage, but its operating_company_id is TRANSPORTATION
+ * (91e0bf0a-133f-4ce8-a734-2586cfa66d96), a DIFFERENT entity -- using it would have been a
+ * cross-entity write. A third same-named record (dd60e618-..., "SUPPLY CHAIN MANAGEMENT LLC")
+ * belongs to TRK. Entity scope, not source/usage recency, is the decisive discriminator here.
+ * 4fa300b3's zero prior usage is simply because this invoice is its first, not evidence of being
+ * wrong.
  *
  * WRITER -- the real invoice engine, not a reimplementation:
  *   1. accounting.invoices INSERT, same columns/shape as invoices.routes.ts POST /invoices
@@ -37,12 +42,12 @@
  * Idempotent: skips if a live (non-voided) invoice with display_id "010" already exists for this
  * customer.
  *
- * AUTHORIZATION: OWNER_AUTH_ID=AUTH-147, docs/bus/OWNER-AUTHORIZATIONS.md, verified via
+ * AUTHORIZATION: OWNER_AUTH_ID=AUTH-148, docs/bus/OWNER-AUTHORIZATIONS.md, verified via
  * scripts/verify-owner-authorization.mjs (run from repo root).
  *
  * USAGE
  *   DRY_RUN=1 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth147-invoice-010-supply-chain.ts
- *   OWNER_AUTH_ID=AUTH-147 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth147-invoice-010-supply-chain.ts
+ *   OWNER_AUTH_ID=AUTH-148 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-auth147-invoice-010-supply-chain.ts
  */
 import { execFileSync } from "node:child_process";
 import path from "node:path";
@@ -68,7 +73,7 @@ if (!DRY_RUN) {
 
 const USMCA_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const SYSTEM_ACTOR_USER_ID = "00000000-0000-4000-8000-000000000001";
-const CUSTOMER_ID = "296fd87b-fc93-48e0-9503-d27772c14cf7";
+const CUSTOMER_ID = "4fa300b3-45b6-4eef-a484-1c3fe065ad72";
 const DISPLAY_ID = "010";
 const AMOUNT_CENTS = 400000;
 const ISSUE_DATE = "2026-08-13";
@@ -127,7 +132,7 @@ async function main() {
         1,
         customer.ar_email,
         customer.ar_phone,
-        "AUTH-147 -- self-carried invoice, never a Faro purchase, genuinely load-less. Source: Invoice 010 SUPPLY CHAIN MANAGEMENT.pdf. \"Load Number - 010\" on the PDF is the invoice's own number, not a TMS load reference.",
+        "AUTH-148 -- self-carried invoice, never a Faro purchase, genuinely load-less. Source: Invoice 010 SUPPLY CHAIN MANAGEMENT.pdf. \"Load Number - 010\" on the PDF is the invoice's own number, not a TMS load reference.",
         null,
         SYSTEM_ACTOR_USER_ID,
         Boolean(customer.is_sample_data),
