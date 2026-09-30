@@ -152,7 +152,7 @@ async function main() {
       const lineIds = unposted.map((r) => r.line_id);
       const res = await client.query(
         `UPDATE accounting.expense_lines el
-            SET expense_account_uuid = i.default_expense_account_id, updated_at = now()
+            SET expense_account_uuid = i.default_expense_account_id
            FROM catalogs.items i
           WHERE el.item_id = i.id AND el.id = ANY($1::uuid[])
         RETURNING el.id::text`,
@@ -197,7 +197,7 @@ async function main() {
 
       await client.query(
         `UPDATE accounting.expense_lines el
-            SET expense_account_uuid = i.default_expense_account_id, updated_at = now()
+            SET expense_account_uuid = i.default_expense_account_id
            FROM catalogs.items i
           WHERE el.item_id = i.id AND el.id = $1::uuid`,
         [row.line_id]
@@ -215,8 +215,8 @@ async function main() {
         { userId: SYSTEM_ACTOR_USER_ID }
       );
 
-      if (!repost.posted || !repost.journal_entry_id) {
-        throw new Error(`repost failed -- posted=${repost.posted} reason=${(repost as { reason?: string }).reason}`);
+      if (!repost.journal_entry_id) {
+        throw new Error(`repost returned no journal_entry_id -- result=${repost.result}`);
       }
 
       await client.query("COMMIT");
