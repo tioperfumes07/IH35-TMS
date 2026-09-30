@@ -36,11 +36,9 @@
 import { postLoadRevenueLatch } from "../accounting/revrec-delivery-posting/poster.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { enqueueAfterCommit } from "../lib/after-commit.js";
-import { convertProformaToOfficial } from "../accounting/proforma-convert.service.js";
-import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
+import { autoInvoiceOnBol } from "../accounting/auto-invoice-on-bol.service.js";
 import { autoSubmitDeliveredLoadToFactor } from "../factoring/auto-submit-on-delivery.service.js";
 import { syncLoadStatusToBilling } from "./load-billing-lifecycle.service.js";
-import { isEnabled } from "../lib/feature-flags/service.js";
 // SYS-F5509 — moved to its own leaf module so accounting/posting-engine.service.ts can depend on the
 // status definition without depending on this whole latch module (which itself depends on
 // accounting/invoice-send.service.ts) — that indirect path was the import cycle. Re-imported here so
@@ -171,34 +169,17 @@ async function convertAndSendInvoiceOnDelivery(
   // (L-20260808-0099). Isolate invoice work so delivery status can still commit.
   await db.query("SAVEPOINT delivery_invoice_convert_send");
   try {
-    const pipelineOn = await isEnabled(db as never, "INVOICE_PROFORMA_PIPELINE_ENABLED", {
-      operating_company_id: input.operatingCompanyId,
-      user_uuid: input.actorUserId,
-    });
-    if (!pipelineOn) {
-      await db.query("RELEASE SAVEPOINT delivery_invoice_convert_send");
-      return;
-    }
-
-    const converted = await convertProformaToOfficial(db as never, {
+    // ROUND 285.4.10 / #60 — BOL gate: generate+send only when a saved BOL exists; otherwise audit
+    // awaiting_bol (named queue) and leave the receivable for the BOL-upload retry path.
+    const result = await autoInvoiceOnBol(db as never, {
       operatingCompanyId: input.operatingCompanyId,
       loadId: input.loadId,
       userId: input.actorUserId,
     });
-    if (!converted.converted || !converted.invoiceId) {
-      await db.query("RELEASE SAVEPOINT delivery_invoice_convert_send");
-      return;
-    }
-
-    const sent = await sendDraftInvoice(db as never, {
-      invoiceId: converted.invoiceId,
-      operatingCompanyId: input.operatingCompanyId,
-      userId: input.actorUserId,
-    });
-    if (!sent.ok) {
+    if (!result.ok && result.reason !== "awaiting_bol" && result.reason !== "pipeline_off") {
       console.warn(
-        { load_id: input.loadId, invoice_id: converted.invoiceId, error: sent.error },
-        "acct_f351_auto_send_after_delivery_failed"
+        { load_id: input.loadId, reason: result.reason, detail: result.detail },
+        "acct_f351_auto_invoice_on_bol_failed"
       );
     }
     await db.query("RELEASE SAVEPOINT delivery_invoice_convert_send");

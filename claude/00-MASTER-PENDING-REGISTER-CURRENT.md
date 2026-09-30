@@ -58,7 +58,7 @@ Owner: *"I NEED THE FACTORING ENGINE FULLY BUILT FIRST, COMPLETELY DONE NOW. REN
 | 31 | Devin-A | Build the 3 locked v10 documents — driver settlement, company settlement, invoice | IN PROGRESS (R272) |
 | 58 | Devin-A | Company settlement must auto-print the downtime ledger + real fuel cost per load + the 3 margins | IN PROGRESS |
 | 59 | Devin-A | Invoice: APPROVED BY + METHOD under each detention/layover line | IN PROGRESS |
-| 60 | Devin-A | Invoice auto-generates on delivered/closed when BOL exists → auto to the Faro queue | NOT STARTED |
+| 60 | Cursor | Invoice auto-generates on delivered/closed when BOL exists → auto to the Faro queue | **IN PROGRESS** (R285.4.10) — BOL gate + awaiting queue + upload retry wired; see `claude/2026-09-30-Cursor-ROUND-285-4-10-REPORT.md` |
 | 32 | Devin-A | Draft-expense unposted flag on settlements | OPEN |
 | 33 | Devin-A | 26 flagged idle events needing human review | OPEN |
 
@@ -69,8 +69,8 @@ Owner: *"I NEED THE FACTORING ENGINE FULLY BUILT FIRST, COMPLETELY DONE NOW. REN
 | 22 | Cursor | Main CI red — migration 202614530000 edited after apply | **DONE-VERIFIED** — restored byte-for-byte, deploy `dep-dau3h9u0tbcc73fr127g` live |
 | 61 | Cursor | Register void-predicate leaf mappings for WriteCheckForm.tsx + SettlementCreatorDrawer.tsx — blocks CC-3's TruckLine | **DONE-VERIFIED** — #23158 `85dd08c643`; `verify-void-predicate-map-current OK — 81 tables`; TruckLine on origin `claude/truckline-schedule-conflict-detector` `f0b099c892`; re-proved tip main 2026-09-29 |
 | 62 | Cursor | Clear NO_CLEARING_PILEUP + open-tour guards holding CC-2's 3 branches (9 commits) | **DONE-VERIFIED** — #23158 NO_CLEARING_PILEUP excl in-transit FA → live E PASS `$0.00`; open-tour #23153+#23155 on main; `verify-open-tour-posts-nothing PASS`; CC-2 named branches still seat-local (blockers cleared) |
-| 63 | Cursor | **Do NOT merge cc-3/round157d-settlement-screens as-is** — 57 files / −3,579 lines, deletes unrelated guards. Stale rebase drift. | FLAGGED — commit comment on `60f10b6915` |
-| 23 | Cursor | Close 7 dependabot PRs + 7 preview services | **DONE-VERIFIED** (R259) — Dependabot #22980–#22986 CLOSED; preview srv-dat5* all 404 |
+| 63 | Cursor | **Do NOT merge cc-3/round157d-settlement-screens as-is** — feature already on main via #23089; tip is −91k stale. Never merge. | **DONE-VERIFIED** (R285.4.7) — close/won't-merge; see `claude/2026-09-30-Cursor-ROUND-285-4-7-REPORT.md` |
+| 23 | Cursor | Close 7 dependabot PRs + 7 preview services | **DONE-VERIFIED** (R259+#285.4.8) — #22980–#22986 CLOSED; #23217+#23218 CLOSED; srv-dat5* 404; see `claude/2026-09-30-Cursor-ROUND-285-4-8-REPORT.md` |
 | 24–29 | Cursor | Board UI: 11-vs-14-vs-16 · canonical active-load set · return-trip rows · transit line · row height/filters · responsive width | **DONE-VERIFIED (R255+#23137)** — board===canonical 12 loads live; AUTH-061 retired; return-trip dual rows; green drag transit; LAW-5 rollup restored under LOAD (not a 6th header). Follow-on: Chrome click-proof once FE deploy carries tip. |
 
 ## F. DISPATCH / TELEMATICS
