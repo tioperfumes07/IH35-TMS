@@ -27,6 +27,7 @@ export function Shell({ auth, children }: Props) {
         className="ih35-responsive-shell flex h-dvh max-h-dvh flex-col overflow-hidden"
         data-ih35-shell="laptop-desktop-tv"
         data-c05-min-scroll="chrome"
+        data-c06-viewport="true"
         style={{ backgroundColor: colors.bodyBg, fontFamily: typography.fontSans }}
       >
         <PostReloadToastHost />
@@ -41,7 +42,7 @@ export function Shell({ auth, children }: Props) {
             {/* Edge-breakpoint hardening (EDGE-BREAKPOINTS-AUDIT): centers + caps page content on
                 ultra-wide monitors (>=1920px); a no-op below that width.
                 C-05: flex column fill + internal scroll so documentElement does not grow. */}
-            <UltraWideContainer className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+            <UltraWideContainer className="flex min-h-0 min-w-0 w-full max-w-full flex-1 flex-col overflow-y-auto">
               {children}
             </UltraWideContainer>
             <footer className="mt-2 flex shrink-0 justify-end border-t border-gray-200/80 py-2">
