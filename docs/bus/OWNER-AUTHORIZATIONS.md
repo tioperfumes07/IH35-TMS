@@ -6189,3 +6189,60 @@ proof_query: live on prod, 2026-09-30 -- node scripts/verify-load-to-cash-chain.
   presettlement_link_id; 0 expense_number mismatches." CC-3's blocking LINK 3 check is clear.
 
 — CC-1
+
+## AUTH-177
+issued_at: 2026-09-30T16:16:30Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). accounting.expenses, accounting.expense_lines,
+  accounting.bills, accounting.bill_lines, accounting.factoring_advances, accounting.journal_entries,
+  accounting.journal_entry_postings, accounting.transaction_source_links,
+  accounting.factoring_reserve_movements, accounting.factoring_default_interest_accruals,
+  accounting.factoring_lifecycle_posting_keys, banking.bank_transactions, banking.bank_transaction_splits,
+  plus the NON-WORM tables fuel.fuel_transactions, maintenance.work_orders, safety.incidents,
+  legal.contract_instances, downtime.events, mdata.units, mdata.equipment, mdata.drivers,
+  mdata.customers, mdata.vendors.
+  TRUCKING and TRANSPORTATION are OUT OF SCOPE and are not referenced by any statement.
+action: hard-DELETE every row where voided_at IS NOT NULL, or revoked_at IS NOT NULL, or
+  is_sample_data = true, scoped to the operating company above, executed with
+  app.purge_auth_id = 'AUTH-177' and in children-before-parents order, in ONE transaction that rolls
+  back whole on any foreign-key refusal.
+  Script of record: scripts/ops/2026-09-30-lead-owner-purge-voided-and-sample-usmca.ts
+expires_at: 2026-10-01T16:16:30Z
+status: OPEN
+
+OWNER ORDER, verbatim, 2026-09-30:
+> "I WANT THE VOIDED TRANSACTIONS BULD DELETED IMMEDIATELY. INVOICES, TRANSACTIONS, WORK ORDERS,
+>  MAINTENANCE ORDERS, LOADS, INOVICES, EXPENESE, BILLS, BILL PAYMENTS, RECEIVE PAYMENTS, FUEL, DEF,
+>  CUSTOMER, VENDORS, DRIVERS, ANDYTHING THAT IS OR WAS A SAMPLE, TEST, DEMO, PRACTICE, EXAMPLE, ANY
+>  SYNONYM, OF THESE VOIDED INSTANTLY AND REMOVED, CMOPLETELY DELETED, NEVER A TRACE OF THEM IN THE
+>  APP. NOW. DO NOT ASK, ALL HAS BEEN ASKED AND ANSWERED, I KNOW WAHT YOU ARE GOING TO ASK. DO NOT
+>  TOUCH TRUCKING OR TRANSPROTATION."
+
+MEASURED SCOPE, live on br-fancy-credit-akjnd07a before this authorization was written:
+  accounting.expenses 1091 · banking.reconciliation_matches 632 · fuel.fuel_transactions 276 ·
+  accounting.factoring_advances 45 · accounting.invoices 31 · mdata.units 17 · mdata.customers 11 ·
+  banking.bank_transactions 10 · mdata.drivers 6 · banking.check_number_registry 5 · mdata.equipment 5 ·
+  driver_finance.settlement_lines 5 · accounting.bills 3 · driver_finance.driver_settlements 3 ·
+  driver_finance.driver_bills 2 · driver_finance.driver_liabilities 2 · safety.incidents 1 ·
+  maintenance.work_orders 1 · downtime.events 1 · mdata.vendors 1 · legal.contract_instances 1
+  TOTAL 2149
+
+WHAT THIS AUTHORIZATION CANNOT COVER, and it is not a hedge. The WORM trigger
+accounting.refuse_financial_row_delete() sits on 66 tables and refuses DELETE for EVERY role. Its
+AUTH-gated bypass whitelists only 13 of them. These tables are therefore UNDELETABLE under the
+current engine even with this authorization open, and attempting it aborts the whole transaction:
+
+  accounting.invoices                 31 voided   <- NOT in the bypass list
+  banking.reconciliation_matches     632
+  driver_finance.settlement_lines      5
+  driver_finance.driver_settlements    3
+  driver_finance.driver_bills          2
+  driver_finance.driver_liabilities    2
+  banking.check_number_registry        5
+
+Removing them requires EXTENDING the bypass whitelist in a new migration — that is a change to a
+financial control, not a purge, and it is the owner's to order explicitly, table by table. It is
+recorded here rather than done quietly.
+
+mdata.loads is absent from every list above because it has ZERO qualifying rows: the 09-24
+bulk-import block is not flagged voided or sample, and the owner's own tie-out ruled those loads
+belong to IH 35 TRANSPORTATION — which this same order says not to touch. The two instructions agree.
