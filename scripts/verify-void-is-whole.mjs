@@ -4,7 +4,19 @@
 // Liveness of a journal entry, the five-column test, per posting:
 //   je.status = 'posted' AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL
 //   AND je.reverses_je_id IS NULL AND p.reversed_by_line_id IS NULL
-// A document's entries are found through accounting.transaction_source_links (posting -> document).
+// A document's entries are found through accounting.transaction_source_links (posting -> document)
+// UNIONED with journal_entry_postings.source_transaction_type/source_transaction_id (the same
+// generic predicate accounting/void.service.ts's postVoidReversal/readOriginalGlPostings uses).
+// ROUND 282.3 (Lead): measured live 2026-09-30 that 104 voided accounting.expenses and 128 voided
+// fuel.fuel_transactions rows carry ZERO accounting.transaction_source_links rows -- the join this
+// guard used alone silently returned live_jes=0/dead_jes=0 for every one of them (neither Direction
+// fires on a 0/0 doc), a real coverage blind spot even though a direct check via
+// source_transaction_type/id found 0 live JEs hiding there today (see docs/audit/GUARD-WORKORDERS.md,
+// ACCT-282.3 entry, for the queries). Both linkage paths are now read and de-duplicated per (doc_id,
+// je_id) so a je counted by either or both paths counts once. This is the actual fix for "it only
+// sees factoring's 41" -- factoring already had transaction_source_links coverage; the other three
+// families' gap was this missing second linkage path, not a missing FAMILIES entry (all 4 -- loads,
+// invoices, expenses, bills, factoring advances, fuel purchases -- were already listed below).
 //
 // DIRECTION 1 — NO SILENT VOID: a document whose linked entries are ALL dead carries voided_at, a
 //   non-empty void_reason and a voided_by_user_id that exists in identity.users.
@@ -52,13 +64,22 @@ const LIVE = `je.status = 'posted' AND je.voided_at IS NULL AND je.reversed_by_j
 
 function perDocSql(linkType) {
   return `
-    WITH je_state AS (
-      SELECT l.linked_object_id AS doc_id, je.id AS je_id, bool_or(${LIVE}) AS live
+    WITH raw AS (
+      SELECT l.linked_object_id AS doc_id, je.id AS je_id, (${LIVE}) AS live
         FROM accounting.transaction_source_links l
         JOIN accounting.journal_entry_postings p ON p.id = l.journal_entry_posting_id
         JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = l.operating_company_id
        WHERE l.operating_company_id = '${USMCA}' AND l.linked_object_type = '${linkType}' AND je.is_sample_data = false
-       GROUP BY 1, 2
+      UNION
+      -- ROUND 282.3: same generic predicate postVoidReversal/readOriginalGlPostings uses, closes the
+      -- coverage gap for documents transaction_source_links never got a row for.
+      SELECT p.source_transaction_id AS doc_id, je.id AS je_id, (${LIVE}) AS live
+        FROM accounting.journal_entry_postings p
+        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+       WHERE je.operating_company_id = '${USMCA}' AND p.source_transaction_type = '${linkType}' AND je.is_sample_data = false
+    ),
+    je_state AS (
+      SELECT doc_id, je_id, bool_or(live) AS live FROM raw GROUP BY 1, 2
     )
     SELECT doc_id, count(*) FILTER (WHERE live)::int AS live_jes, count(*) FILTER (WHERE NOT live)::int AS dead_jes
       FROM je_state GROUP BY 1`;
