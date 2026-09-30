@@ -1,5 +1,15 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T04:45Z · 13619 SYNCED · 285.4.1–285.4.3 READY TO PUSH**
+CURSOR | 13619 completed_docs_received→closed via syncLoadStatusToBillingInClientTx (invoice sent) |
+verify-settled-load-carries-settled-status green · 285.4.3 no UI rebuild · NEXT: push/fast-merge → 285.4.4 Load Costs wizard amounts.
+
+**2026-09-30T04:35Z · ROUND 285.4.1+285.4.2 REBASED · PUSH BLOCKED**
+CURSOR | agent-sync-main OK → tip rebased on `origin/main` `f47421ce65` | local `cursor/r285-part-e-c89b` |
+GUARD: verify-load-boards-agree PASS all 7 @ 12 · verify-list-loads-requires-board-scope PASS |
+PUSH BLOCKED: verify-settled-load-carries-settled-status — load **13619** stale (`completed_docs_received`, settlement closed, invoice sent) — CC-1 write-path / back-sync |
+NEXT: CC-1 clears 13619 → push/fast-merge · then **285.4.3** UI #26–29 re-check.
+
 **2026-09-30T04:25Z · ROUND 285.4.1 + 285.4.2 IN FLIGHT**
 CURSOR | 285.4.1 board_scope guard + listLoads throw | 285.4.2 one open_dispatch set all 7 boards |
 GUARD: verify-load-boards-agree PASS all 7 @ 12 loads; verify-list-loads-requires-board-scope PASS |
