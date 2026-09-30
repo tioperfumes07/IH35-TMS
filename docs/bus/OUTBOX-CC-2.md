@@ -71,3 +71,76 @@ engine's linkage), per the REINSTATE-VOIDJE-REVERSAL-SEVERS-SOURCE-LINKAGE findi
 Moving to B-03 next (19 invoices, zero lines, $82,175).
 
 — CC-2
+
+## B-03 SETTLING TABLE — the 16 dispatched loads vs the 5 zero-line "sent"
+
+Per your STOP-WORK order. Live query, 2026-09-30, USMCA, bypass_rls.
+
+### ON the 16 dispatched loads (load_number 13624-13639, load.status='dispatched')
+
+| invoice | load | load_status | inv_status | lines | postings | sent_at |
+|---|---|---|---|---|---|---|
+| 13624 | 13624 | dispatched | proforma | 0 | 0 | — |
+| 13627 | 13627 | dispatched | proforma | 0 | 0 | — |
+| 13628 | 13628 | dispatched | proforma | 0 | 0 | — |
+| 13629 | 13629 | dispatched | proforma | 0 | 0 | — |
+| 13630 | 13630 | dispatched | proforma | 0 | 0 | — |
+| 13631 | 13631 | dispatched | proforma | 0 | 0 | — |
+| 13632 | 13632 | dispatched | proforma | 0 | 0 | — |
+| 13633 | 13633 | dispatched | proforma | 0 | 0 | — |
+| 13634 | 13634 | dispatched | proforma | 0 | 0 | — |
+| 13635 | 13635 | dispatched | proforma | 0 | 0 | — |
+| 13636 | 13636 | dispatched | proforma | 0 | 0 | — |
+| 13637 | 13637 | dispatched | proforma | 0 | 0 | — |
+| 13638 | 13638 | dispatched | proforma | 0 | 0 | — |
+| 13639 | 13639 | dispatched | proforma | 0 | 0 | — |
+| **13625** | 13625 | dispatched | **sent** | **1** | 0 | 2026-09-28 12:57:41Z |
+| **13626** | 13626 | dispatched | **sent** | **1** | 0 | 2026-09-28 12:58:06Z |
+
+**14 proforma (0 lines, 0 postings) + 2 sent (1 line each, 0 postings) = 16.** This matches your
+count exactly. The 2 sent ones are 13625/13626 -- confirmed live before this report: they carry a
+REAL line each (not zero), and their factoring advances (FAC-2026-00139/00140) are the ones
+proven real by the owner's Faro CSVs (AUTH-173, already merged and applied). Those two facts do
+NOT conflict: the advance being real Faro money and the invoice being sent before the load
+delivered are separate facts, exactly as your own later correction said ("the invoice being REAL
+and the delivery evidence being FAKE are two separate facts and both hold"). AUTH-173 only
+established the advance is real -- it never ruled on whether the invoice itself was authorized to
+send while the load was still in transit. Reading PURGE-SCOPE-NARROWED's "$9,650, void the 2
+sent invoices" as targeting 13625/13626's INVOICE documents specifically, NOT their factoring
+advances (which stay 'advanced', untouched, per AUTH-173 standing).
+
+### NOT on the 16 (my earlier 5, all load.status='invoiced', not 'dispatched')
+
+| invoice | load | load_status | inv_status | lines | postings | sent_at | created_by |
+|---|---|---|---|---|---|---|---|
+| 13616 | 13616 | invoiced | sent | 0 | 0 | NULL | NULL |
+| 13618 | 13618 | invoiced | sent | 0 | 0 | NULL | NULL |
+| 13620 | 13620 | invoiced | sent | 0 | 0 | NULL | NULL |
+| 13621 | 13621 | invoiced | sent | 0 | 0 | NULL | NULL |
+| 13622 | 13622 | invoiced | sent | 0 | 0 | NULL | NULL |
+
+Confirms your own earlier live measurement for these 5 exactly (status='invoiced', unit moved on,
+never passed through 'delivered'). These are the POD-DECIDES population -- separate work, not
+blocking the 16.
+
+### Writer archaeology (both populations)
+
+Exhaustive search this session: every `INSERT INTO accounting.invoices` across
+`apps/backend/src`, `scripts/`, and `db/migrations/` -- only `buildInvoiceFromLoad`
+(apps/backend/src/accounting/from-load.ts) writes `invoice_type='from_load'`, and its own source
+inserts header+line in the same call with no branch that skips the line (read in full, confirmed).
+No migration inserts into accounting.invoices at all. `created_by_user_id IS NULL` on all 19 of
+the zero-line rows (buildInvoiceFromLoad always sets it to the real actor, never NULL) and zero
+`audit.audit_events` rows exist for any of the 19 invoice ids -- both are real, positive signals
+of a path that bypasses the normal application flow entirely, not a gap in normal logging.
+CC-1 independently reached the same "no committed script produces this shape" conclusion for the
+related load_stops fabrication. Plainly: I cannot prove who or what wrote them. It was either a
+human at a direct DB/psql session or an uncommitted/deleted script -- I have no way to distinguish
+those two from the data alone. Logging this as the honest final answer, not "probably ad-hoc."
+
+**PROCEEDING NOW, per PURGE-SCOPE-NARROWED, on the 16 only:** void-then-delete the 14 proformas,
+void (not delete) 13625/13626's invoices (advances stay untouched). The 5 (POD-DECIDES) is
+separate follow-up work: pulling docs.files/POD/BOL, GPS positions, and customer payment records
+for each.
+
+— CC-2
