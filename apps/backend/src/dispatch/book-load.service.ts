@@ -1434,6 +1434,21 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     }
   }
 
+  // ROUND 285.3.6 (owner order, 2026-09-30): "W/O or PO REQUIRED at load creation. Not optional,
+  // not a warning. The whole Faro join depends on customer_po_number existing." Same shape as the
+  // DSP-49 appointment checks directly above -- first thing bookLoad() does, before any database
+  // access, exempting save_mode='draft' (ROUND 24.3 quicksave: a draft may carry incomplete
+  // required fields, tracked via quicksave_pending_fields, and is not yet a real booked load).
+  // historical_backfill imports go through createLoadWithFullSideEffects directly, never through
+  // this bookLoad() wrapper, so real past records that predate this rule are never blocked here.
+  if (input.save_mode !== "draft") {
+    const hasWo = Boolean(input.customer_wo_number?.trim());
+    const hasPo = Boolean(input.customer_po_number?.trim());
+    if (!hasWo && !hasPo) {
+      return { kind: "error", status: 400, payload: { error: "customer_po_or_wo_number_required" } };
+    }
+  }
+
   const result = await bookLoadInTransaction(input);
 
   // Inv #40 (owner order 2026-09-05, SAMSARA-CAPABILITIES-AND-INTEGRATION-PLAN-2026-09-05.md §4):
