@@ -39,8 +39,9 @@ const MIGRATIONS_DIR = "db/migrations";
 const NUM_RE = /^(\d{4,14})[_-]/;
 
 /**
- * FROZEN BASELINE — 31 numbers (63 files) that were already applied before their collisions
- * were detected.
+ * FROZEN BASELINE — 36 numbers (73 files) that were already applied before their collisions
+ * were detected. Count last verified 2026-09-30 by counting this map, not by trusting the last
+ * number written here: a stale count in a guard's own header is the first sign nobody is reading it.
  *
  * They are historical and inert: `db-migrate.mjs` keys its skip decision on FILENAME, not number, so a
  * duplicated number never caused a wrong skip. They are frozen rather than fixed because renaming an
@@ -213,7 +214,41 @@ const KNOWN_COLLISIONS = new Map(Object.entries({
   "202614100000": [
     "202614100000_drivers_status_locked_reason_admits_test_fixture_quarantine.sql",
     "202614100000_load_exception_reasons_rls_fix.sql"
-  ]
+  ],
+  // ACCEPTED 2026-09-30 by Lead. Four numbers, eight files, EVERY ONE already applied on production
+  // before the duplicate was detected. Read from _system._schema_migrations on
+  // br-fancy-credit-akjnd07a under SET LOCAL ROLE neondb_owner + app.bypass_rls = 'lucia', with the
+  // applied ORDER, which is the thing this guard actually cares about:
+  //   202614400000_expenses_tags.sql                                      2026-09-25T20:57:49.469Z
+  //   202614390000_expense_lines_fleet_linkage.sql                        2026-09-25T21:21:50.850Z
+  //   202614390000_factoring_advances_cash_rsv_cents.sql                  2026-09-26T03:34:28.396Z
+  //   202614400000_coa_roles_add_factor_cash_reserve_held.sql             2026-09-26T03:34:28.416Z
+  //   202614490000_worm_journal_entries_husk_cleanup_is_detail_class.sql  2026-09-28T11:58:21.343Z
+  //   202614490000_samsara_vehicles_unique_local_unit.sql                 2026-09-28T12:34:30.648Z
+  //   202614550000_fuel_transactions_genesis_anchor_gross_cost_discount_fee_documented.sql
+  //                                                                       2026-09-28T21:04:47.395Z
+  //   202614550000_live_loads_settlement_lines_require_closed.sql         2026-09-28T21:05:23.650Z
+  // No member of any pair depends on its partner -- expense lines vs factoring advances, COA roles
+  // vs expense tags, journal-entry husk class vs a samsara unique index, fuel transactions vs a
+  // live-loads constraint -- so the arbitrary ordering never bit, and it cannot now: the order above
+  // is recorded history, not a future coin flip. Renaming is the dangerous act at this point, not
+  // the duplicate. Frozen as EXACT PAIRS: a THIRD file on any of these four numbers still fails.
+  "202614390000": [
+    "202614390000_expense_lines_fleet_linkage.sql",
+    "202614390000_factoring_advances_cash_rsv_cents.sql"
+  ],
+  "202614400000": [
+    "202614400000_coa_roles_add_factor_cash_reserve_held.sql",
+    "202614400000_expenses_tags.sql"
+  ],
+  "202614490000": [
+    "202614490000_samsara_vehicles_unique_local_unit.sql",
+    "202614490000_worm_journal_entries_husk_cleanup_is_detail_class.sql"
+  ],
+  "202614550000": [
+    "202614550000_fuel_transactions_genesis_anchor_gross_cost_discount_fee_documented.sql",
+    "202614550000_live_loads_settlement_lines_require_closed.sql"
+  ],
 }));
 
 /** PURE: group migration filenames by numeric prefix; any group > 1 is a collision. */
