@@ -666,9 +666,9 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               <SegmentedControl
                 value={profilesViewMode}
                 onChange={setProfilesViewMode}
-                dataAttributes={{ "data-view-mode-toggle": "drivers" }}
+                dataAttributes={{ "data-view-mode-toggle": "drivers", "data-c55-view-toggle": "1" }}
                 options={[
-                  { value: "list", label: "List view", testId: "drivers-view-list" },
+                  { value: "list", label: "Regular", testId: "drivers-view-list" },
                   { value: "master-detail", label: "Master-detail", testId: "drivers-view-master-detail" },
                 ]}
               />

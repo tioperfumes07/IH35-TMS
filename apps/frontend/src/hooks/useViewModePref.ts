@@ -40,12 +40,19 @@ function writeChosen(key: string) {
   }
 }
 
+export type ViewModeEntity =
+  | "customers"
+  | "vendors"
+  | "drivers"
+  | "units"
+  | "users";
+
 // CLOSURE-31 + C-02 (2026-09-30): DEFAULT is master-detail. localStorage may only override
 // AFTER an explicit user click (chosen flag). Cleared storage / first visit → master-detail.
 const DEFAULT_VIEW_MODE: EntityViewMode = "master-detail";
 
 export function useViewModePref(
-  entity: "customers" | "vendors" | "drivers",
+  entity: ViewModeEntity,
   defaultMode: EntityViewMode = DEFAULT_VIEW_MODE
 ) {
   const storageKey = `${STORAGE_PREFIX}${entity}`;

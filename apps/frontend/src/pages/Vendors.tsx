@@ -677,9 +677,9 @@ export function VendorsPage() {
             <SegmentedControl
               value={viewMode}
               onChange={setViewMode}
-              dataAttributes={{ "data-view-mode-toggle": "vendors" }}
+              dataAttributes={{ "data-view-mode-toggle": "vendors", "data-c55-view-toggle": "1" }}
               options={[
-                { value: "list", label: "List view", testId: "vendors-view-list" },
+                { value: "list", label: "Regular", testId: "vendors-view-list" },
                 { value: "master-detail", label: "Master-detail", testId: "vendors-view-master-detail" },
               ]}
             />

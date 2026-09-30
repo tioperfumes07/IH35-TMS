@@ -101,3 +101,9 @@ LST-F05 side-dock on main. NEXT: C-53 recon shell.
 
 **2026-09-30T23:35Z · C-53 RECONCILIATION SCREEN SHELL · branch `cursor/c53-recon-screen-shell-c89b`**
 C-53 · what changed: `ReconciliationTabContent` replaces thin recon tab — per-account readiness tiles, statement object (beginning / ending / difference must $0.00), MATCHED tri-state legend marked `data-c53-a27-pending` (wire waits CC-1 A-27), SAVE+CLOSE start opener calling existing `startReconciliationSession`, Home attention strip deep-links `?start=1`. Ops: `scripts/ops/verify-c53-recon-screen-shell.mjs`. · LEFT: Lead Chrome after deploy; A-27 engine wire for Matched column. NEXT: C-55 Regular + Master-detail toggle.
+
+**2026-09-30T23:32Z · C-53 MERGED · PR #23561 · `65b630b8e6`**
+Recon shell on main. NEXT: C-55 Regular + Master-detail every list.
+
+**2026-09-30T23:50Z · C-55 REGULAR + MASTER-DETAIL · branch `cursor/c55-regular-master-detail-c89b`**
+C-55 · what changed: house label **Regular** (was List view) on Customers/Vendors/Drivers; shared `EntityViewModeToggle`; `useViewModePref` admits units+users; Fleet Home + Users get Regular table / Master-detail shell (same SegmentedControl size/place). Ops: `scripts/ops/verify-c55-regular-master-detail.mjs`. · LEFT: Lead Chrome toggle on /customers /fleet /users. NEXT: C-57 re-read queue.

@@ -24,6 +24,7 @@ import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { ActionButton } from "../components/shared/ActionButton";
 import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
+import { EntityLink } from "../components/shared/EntityLink";
 import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
 import { StatusBadge } from "../components/StatusBadge";
 import { companyToday } from "../lib/businessDate";
@@ -45,6 +46,10 @@ import type { IdentityUser, UserRole } from "../types/api";
 import { isInvitePending, userStatus } from "../lib/user-status";
 import { getAdminJob, triggerDeactivateProbeAccounts } from "../api/admin-jobs";
 import { ConfirmModal } from "../components/shared/ConfirmModal";
+import { EntityViewModeToggle } from "../components/EntityViewModeToggle";
+import { useViewModePref } from "../hooks/useViewModePref";
+import { MasterDetailShell } from "../components/layout/MasterDetailShell";
+import { MASTER_DETAIL } from "../design/master-detail";
 
 const ROLE_OPTIONS: Array<UserRole | "Viewer"> = [
   "Owner",
@@ -170,6 +175,8 @@ export function UsersPage() {
     companyId: string | null;
     generation: number;
   } | null>(null);
+  const { viewMode, setViewMode } = useViewModePref("users", "master-detail");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const probeJobQuery = useQuery({
     queryKey: ["admin-job", probeJobId],
@@ -620,8 +627,17 @@ export function UsersPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[min(1280px,calc(100vw-2rem))] space-y-3">
-      <PageHeader title="Users" subtitle={`${filteredUsers.length} records`} actions={<ActionButton onClick={openInvite}>+ Create User</ActionButton>} />
+    <div className="mx-auto flex w-full max-w-[min(1280px,calc(100vw-2rem))] min-h-0 flex-1 flex-col space-y-3" data-c55-users-view={viewMode}>
+      <PageHeader
+        title="Users"
+        subtitle={`${filteredUsers.length} records`}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <EntityViewModeToggle entity="users" value={viewMode} onChange={setViewMode} />
+            <ActionButton onClick={openInvite}>+ Create User</ActionButton>
+          </div>
+        }
+      />
 
       {/* USERS-LIST-SILENT-50-CAP: this page fetches at most 200 users; below this, only the
           Total-users KPI (which reads the server's own total_count) stays accurate beyond that —
@@ -658,6 +674,7 @@ export function UsersPage() {
 
       {usersQuery.isError ? <ListErrorBanner onRetry={() => void usersQuery.refetch()} /> : null}
 
+      {viewMode === "list" ? (
       <ParityTable<IdentityUser>
         columns={userColumns}
         rows={filteredUsers}
@@ -724,6 +741,78 @@ export function UsersPage() {
           </div>
         )}
       />
+      ) : (
+        <MasterDetailShell
+          testId="users-master-detail-shell"
+          master={
+            <aside
+              className={`${MASTER_DETAIL.masterPaneClass} ${MASTER_DETAIL.surfaceClass} p-2`}
+              data-master-detail-master="true"
+              data-c55-users-master="1"
+            >
+              <p className="mb-2 px-1 text-xs font-bold uppercase tracking-wide text-[#4B5563]">
+                Users ({filteredUsers.length})
+              </p>
+              <div className={MASTER_DETAIL.listScrollClass}>
+                {filteredUsers.map((user) => {
+                  const active = (selectedUserId ?? filteredUsers[0]?.id) === user.id;
+                  return (
+                    <button
+                      key={user.id}
+                      type="button"
+                      className={`mb-1 w-full rounded-sm border px-2 py-1.5 text-left text-xs ${
+                        active ? MASTER_DETAIL.rowSelectedClass : `border-transparent ${MASTER_DETAIL.rowHoverClass}`
+                      }`}
+                      onClick={() => setSelectedUserId(user.id)}
+                    >
+                      <span className="font-semibold text-[#0F1219]">{user.name || "User"}</span>
+                      <span className="mt-0.5 block text-center text-[#6B7280]">
+                        {ROLE_LABEL[user.role as UserRole] ?? user.role} · {userStatus(user)}
+                      </span>
+                    </button>
+                  );
+                })}
+                {filteredUsers.length === 0 ? (
+                  <p className="px-1 text-xs text-[#6B7280]">No users found.</p>
+                ) : null}
+              </div>
+            </aside>
+          }
+          detail={(() => {
+            const selected =
+              filteredUsers.find((u) => u.id === selectedUserId) ?? filteredUsers[0] ?? null;
+            if (!selected) {
+              return (
+                <div className={`${MASTER_DETAIL.surfaceClass} p-3 text-xs text-[#6B7280]`}>
+                  Select a user to preview.
+                </div>
+              );
+            }
+            return (
+              <div className={`${MASTER_DETAIL.surfaceClass} space-y-3 p-3 text-xs`} data-c55-users-detail="1">
+                <p className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">User profile</p>
+                <dl className="grid grid-cols-2 gap-x-3 gap-y-1">
+                  <dt className="text-[#6B7280]">Name</dt>
+                  <dd className="text-center font-medium text-[#0F1219]">
+                    <EntityLink kind="user" id={selected.id} label={selected.name || "User"} />
+                  </dd>
+                  <dt className="text-[#6B7280]">Email</dt>
+                  <dd className="text-center text-[#0F1219]">{selected.email ?? "—"}</dd>
+                  <dt className="text-[#6B7280]">Role</dt>
+                  <dd className="text-center text-[#0F1219]">
+                    {ROLE_LABEL[selected.role as UserRole] ?? selected.role}
+                  </dd>
+                  <dt className="text-[#6B7280]">Status</dt>
+                  <dd className="text-center text-[#0F1219]">{userStatus(selected)}</dd>
+                  <dt className="text-[#6B7280]">Last login</dt>
+                  <dd className="text-center text-[#0F1219]">{formatLastLoginAt(selected.last_login_at)}</dd>
+                </dl>
+                <ActionButton onClick={() => navigate(`/users/${selected.id}`)}>Open full user profile</ActionButton>
+              </div>
+            );
+          })()}
+        />
+      )}
 
       <Modal
         variant="drawer"
@@ -947,7 +1036,7 @@ export function UsersPage() {
               </p>
               {probeJobId && probeJobQuery.data ? (
                 <p className="mt-1 text-xs text-slate-500">
-                  Job {entityLabel(null, probeJobId, "Job")}{" "}
+                  Job {probeJobId.slice(0, 8)}…{" "}
                   <span
                     className={
                       probeJobQuery.data.status === "completed"
