@@ -4806,6 +4806,28 @@ proof_query: live on prod, 2026-09-30, verified via a fresh Neon read (not the s
   The throwaway rehearsal Neon branch (br-rapid-band-ak0qnb0c) was deleted after this proof.
 
 — CC-1
+## AUTH-154
+issued_at: 2026-09-30T05:55:00.000Z
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- ROUND 290.12, August 2026 slice.
+Reclassify 94 expense documents currently debiting account 5000 "Fuel & Diesel" to the dedicated
+5010 "DEF (Diesel Exhaust Fluid)" account, via the sanctioned void+recreate pattern (reversePosted
+SourceTransactionInClientTx to void, postSourceTransactionInClientTx to repost -- same engine every
+other expense uses, never a raw JE edit), with a real expense_number assigned via the same
+generateExpenseNumber/nextExpenseDisplayId generator every other create path uses. Root cause
+(catalogs.items DEF-item misconfiguration) already fixed in a separate PR (migration 202614640000)
+before this AUTH runs, so a re-import cannot recreate the defect. Selector re-derived live and
+matched the Lead's own numbers exactly: accounting.expenses e JOIN journal_entry_postings jep ON
+source_transaction_type='expense' AND source_transaction_id=e.id, jep.account_id=5000 (debit),
+je.status='posted' AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL AND je.reverses_je_id
+IS NULL, e.voided_at IS NULL, e.memo ILIKE '%DEF%' OR e.memo ILIKE '%exhaust%', month=2026-08 ->
+94 docs / $3,744.13 / 98 lines. September (114 docs/$3,698.49) is explicitly NOT covered by this
+AUTH and runs under its own AUTH only after August's proof is confirmed live, per the Lead's staged
+order (August first, stop and report, then September).
+action: MONTH=2026-08 OWNER_AUTH_ID=AUTH-154 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-round290-12-def-reclass-5000-to-5010.ts
+  (DRY_RUN=1 first for the rehearsal, then DRY_RUN=0 to commit)
+expires_at: 2026-10-01T05:55:00.000Z
+status: OPEN
+
 ## AUTH-140
 
 title: ROUND 285.2.1-R -- classify-then-execute the 41 factoring advances (REVERSE 37 / REINSTATE 4), USMCA
