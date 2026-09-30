@@ -146,7 +146,10 @@ export function CustomerListSidebar({
                 return (
                   <tr
                     key={customer.id}
-                    className={`${MASTER_DETAIL.rowBorderClass} ${selected ? MASTER_DETAIL.rowSelectedClass : MASTER_DETAIL.rowHoverClass}`}
+                    data-c04-row="true"
+                    className={`${MASTER_DETAIL.rowBorderClass} ${MASTER_DETAIL.rowStripeClass} ${
+                      selected ? MASTER_DETAIL.rowSelectedClass : MASTER_DETAIL.rowHoverClass
+                    }`}
                   >
                     <td style={{ width: widths.name }} className="max-w-0 truncate px-2 py-1.5">
                       {/* Anchor navigation (cmd-click / keyboard) via CardLink; also selects the master-detail row. */}
