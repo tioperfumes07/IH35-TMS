@@ -1,5 +1,9 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T03:36Z · ROUND 283.1–283.4 FAST-MERGED**
+CURSOR | 283.1–283.4 DONE | squash `#23212` `8915dd1d81` | fail-closed listLoads else → live | FE callers scoped | guard+LAW PASS | boards agree canonical=12 |
+NEXT: re-check #26–29 after filter fix before building 283.5 UI · Phase 3 waits CC-1 280.5 + CC-2 280.7–280.10 · Chrome cancelled.
+
 **2026-09-30T03:25Z · ROUND 283.1–283.3 LOADBOARD FAIL-CLOSED**
 CURSOR | 283.1–283.3 IN FLIGHT | backend else → live open-dispatch | FE callers scoped | guard-list-loads-requires-board-scope PASS | LAW.json |
 LIVE: verify-load-boards-agree PASS canonical=12; truck-line===canonical 12 loads |
