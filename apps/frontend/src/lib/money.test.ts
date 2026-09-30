@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { formatUsdCents, formatUsd, formatNumber } from "./money";
+import {
+  formatUsdCents,
+  formatUsd,
+  formatNumber,
+  formatUsdCentsTable,
+  formatUsdTable,
+  formatNumberTable,
+  isNegativeMoneyCents,
+  TABLE_MISSING,
+} from "./money";
 
 describe("money (QBO format)", () => {
   it("formats cents with $, thousands commas, and exactly 2 decimals", () => {
@@ -29,5 +38,20 @@ describe("money (QBO format)", () => {
     expect(formatNumber(1234)).toBe("1,234");
     expect(formatNumber(1234.56, 1)).toBe("1,234.6");
     expect(formatNumber(null)).toBe("0");
+  });
+
+  it("C-37 table helpers — missing renders em dash, never fabricated zero", () => {
+    expect(formatUsdCentsTable(null)).toBe(TABLE_MISSING);
+    expect(formatUsdCentsTable(undefined)).toBe(TABLE_MISSING);
+    expect(formatUsdTable("")).toBe(TABLE_MISSING);
+    expect(formatNumberTable(null)).toBe(TABLE_MISSING);
+    expect(formatUsdCentsTable(0)).toBe("$0.00");
+  });
+
+  it("C-37 table money uses accounting parentheses for negatives", () => {
+    expect(formatUsdCentsTable(-125000)).toBe("($1,250.00)");
+    expect(formatUsdCentsTable(-125000)).not.toContain("-$");
+    expect(isNegativeMoneyCents(-100)).toBe(true);
+    expect(isNegativeMoneyCents(null)).toBe(false);
   });
 });

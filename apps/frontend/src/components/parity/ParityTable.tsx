@@ -33,6 +33,9 @@ import { QBO_SURFACE, QBO_SURFACE_CLASS, QBO_TOOLBAR_ICON_SLOT } from "../../des
 import { Button } from "../Button";
 import { Printer as PrintIcon, Settings as GearIcon } from "lucide-react";
 import { UniversalListToolbar, applyUniversalListFilters, type UniversalRange } from "../table/UniversalListToolbar";
+import { QBO_MONEY_CELL_CLASS } from "../../design/qbo-parity";
+import { TABLE_MISSING } from "../../lib/money";
+import { TableMoneyCell } from "../table/TableMoneyCell";
 
 export type ParityDensity = "regular" | "compact" | "ultra";
 
@@ -68,6 +71,8 @@ export type ParityColumn<T> = {
   defaultHidden?: boolean;
   /** Exclude from the gear column-toggle list (always shown). */
   alwaysVisible?: boolean;
+  /** C-37 — auto table money formatting (accounting parentheses, missing → "—") when no `render`. */
+  kind?: "money" | "number";
   /**
    * Optional sort-value extractor for columns whose sort key isn't a plain `row[key]` lookup
    * (e.g. a computed/derived display column like a running balance). Default: `row[key]`.
@@ -446,6 +451,37 @@ const AUTO_FIT_CHROME_PX = 28;
 // filter would be real, needless canvas work. 40 rows is enough to catch the page's longest value
 // in practice without being a performance concern.
 const AUTO_FIT_SAMPLE_ROWS = 40;
+
+/** C-37 — numeric/money columns inherit right-aligned tabular-nums unless they declare alignment. */
+const PARITY_NUMERIC_KEY =
+  /(_cents|_amount|balance|total|qty|quantity|count|rate|price|cost|pay|fee|gross|net|variance|debit|credit|miles|odometer)$/i;
+
+function isParityMoneyColumn<T>(column: ParityColumn<T>): boolean {
+  if (column.kind === "money") return true;
+  return /_cents$/i.test(String(column.key));
+}
+
+function isParityNumericColumn<T>(column: ParityColumn<T>): boolean {
+  if (column.kind === "number" || column.kind === "money") return true;
+  if (/\btext-right\b/.test(column.cellClass ?? "") || /\btext-right\b/.test(column.className ?? "")) return true;
+  return PARITY_NUMERIC_KEY.test(String(column.key));
+}
+
+function parityMergedCellClass<T>(column: ParityColumn<T>): string {
+  const base = column.cellClass ?? column.className ?? "";
+  if (!isParityNumericColumn(column)) return base;
+  if (/\btext-right\b/.test(base) && /\btabular-nums\b/.test(base)) return base;
+  return `${QBO_MONEY_CELL_CLASS}${base ? ` ${base}` : ""}`;
+}
+
+function defaultParityCellContent<T>(column: ParityColumn<T>, row: T): ReactNode {
+  const raw = (row as Record<string, unknown>)[String(column.key)];
+  if (isParityMoneyColumn(column)) {
+    return <TableMoneyCell cents={raw as number | string | null | undefined} />;
+  }
+  if (raw == null || raw === "") return TABLE_MISSING;
+  return String(raw);
+}
 
 let measureCanvasCtx: CanvasRenderingContext2D | null | undefined;
 function getMeasureCanvasCtx(): CanvasRenderingContext2D | null {
@@ -1309,7 +1345,7 @@ export function ParityTable<T>({
             }
             className={`overflow-hidden px-2 align-top text-gray-800 ${
               column.allowWrap ? "wrap-break-word" : "whitespace-nowrap text-ellipsis"
-            } ${column.cellClass ?? column.className ?? ""}`}
+            } ${parityMergedCellClass(column)}`}
             style={{
               paddingTop: d.padY,
               paddingBottom: d.padY,
@@ -1339,7 +1375,7 @@ export function ParityTable<T>({
           >
             {column.render
               ? column.render(row)
-              : String((row as Record<string, unknown>)[String(column.key)] ?? "")}
+              : defaultParityCellContent(column, row)}
           </td>
           );
         })}
@@ -1563,7 +1599,7 @@ export function ParityTable<T>({
               {renderExpanded || selectable ? (
                 <th
                   colSpan={(renderExpanded ? 1 : 0) + (selectable ? 1 : 0)}
-                  style={{ backgroundColor: colors.tableGroupBandBg, borderRight: `1px solid ${colors.tableColumnRule}`, borderBottom: `1px solid ${colors.tableColumnRule}` }}
+                  style={{ backgroundColor: colors.tableGroupBandBg, borderBottom: `1px solid ${colors.tableColumnRule}` }}
                 />
               ) : null}
               {(() => {
@@ -1599,7 +1635,6 @@ export function ParityTable<T>({
                       // the more-specific `thead tr.grp th` rule). Per-group colour lives on BODY tds.
                       backgroundColor: colors.tableGroupBandBg,
                       color: colors.mutedText,
-                      borderRight: `1px solid ${colors.tableColumnRule}`,
                       borderBottom: `1px solid ${colors.tableColumnRule}`,
                     }}
                   >
@@ -1691,14 +1726,10 @@ export function ParityTable<T>({
                     letterSpacing: 0.3,
                     backgroundColor: dragOverKey === key ? colors.accentTint : resolvedHeaderBg,
                     color: resolvedHeaderInk,
-                    // COMPLETE-OUTLINE LAW (owner ruling 2026-09-05, supersedes the 2026-09-04
-                    // bottom-only/2px COLUMNS-MUST-DISTINGUISH ruling's border-bottom width): every
-                    // th gets a full 1px border box on all four sides, not just a bottom rule —
-                    // measured with getComputedStyle, verify-table-design-contract.mjs asserts it.
+                    // C-37 (Round 300 #3) — LINES FOR ROWS, NEVER FOR COLUMNS. Header cells carry
+                    // horizontal rules only (top + bottom). No borderLeft/borderRight anywhere.
                     borderTop: `1px solid ${colors.tableColumnRule}`,
-                    borderRight: `1px solid ${colors.tableColumnRule}`,
                     borderBottom: `1px solid ${colors.tableColumnRule}`,
-                    borderLeft: `1px solid ${colors.tableColumnRule}`,
                     ...(w ? (columnLayout === "auto" ? { minWidth: w } : { width: w }) : {}),
                     ...(dragOverKey === key ? { outlineColor: colors.navy } : {}),
                     ...(key in stickyLeftPx
@@ -1750,7 +1781,7 @@ export function ParityTable<T>({
                       onTouchStart={(e) => startResizeTouch(key, e)}
                       onKeyDown={(e) => onResizeKey(key, e)}
                       onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
-                      className="absolute right-0 top-0 flex h-full w-2 cursor-col-resize touch-none select-none items-center justify-center border-r border-slate-400 bg-slate-200/90 hover:bg-slate-300 focus:bg-slate-400 focus:outline-hidden"
+                      className="absolute right-0 top-0 flex h-full w-2 cursor-col-resize touch-none select-none items-center justify-center bg-slate-200/90 hover:bg-slate-300 focus:bg-slate-400 focus:outline-hidden"
                     >
                       <span aria-hidden className="block h-3 w-px bg-slate-500" />
                     </span>
@@ -1815,7 +1846,11 @@ export function ParityTable<T>({
           )}
         </tbody>
         {footerCells ? (
-          <tfoot data-testid="parity-table-footer">
+          <tfoot
+            data-testid="parity-table-footer"
+            data-c37-pinned-footer="true"
+            className="sticky bottom-0 z-[5]"
+          >
             <tr
               className="border-t-2 border-slate-700 font-semibold"
               // Same shade as the group-band row (colors.tableGroupBandBg, --grp-bg) — a totals
@@ -1832,9 +1867,9 @@ export function ParityTable<T>({
                   <td
                     key={key}
                     data-testid={column.testId ? `${column.testId}-footer` : undefined}
-                    // Same alignment class as this column's own body cells (cellClass ?? className)
-                    // — a money/right-aligned column's total right-aligns with zero extra config.
-                    className={`px-2 py-1.5 font-mono ${column.cellClass ?? column.className ?? ""}`}
+                    // Same alignment class as this column's own body cells — money/right-aligned totals
+                    // inherit C-37 tabular-nums + text-right without extra config.
+                    className={`px-2 py-1.5 font-mono ${parityMergedCellClass(column)}`}
                   >
                     {content ?? null}
                   </td>

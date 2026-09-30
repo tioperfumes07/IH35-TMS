@@ -1,8 +1,12 @@
 // Canonical money + number formatting — QuickBooks Online style, used app-wide so every amount reads the
-// SAME everywhere: "$1,234.56" (thousands separators, exactly two decimals; negatives "-$1,234.56").
+// SAME everywhere: "$1,234.56" (thousands separators, exactly two decimals).
 // Plain counts get thousands separators too ("1,234"). This is the single source of truth — do NOT
 // hand-roll `toFixed(2)`, `toLocaleString`, or per-file `Intl.NumberFormat` money variants; import from
 // here so nothing drifts out of QBO format again.
+//
+// C-37 (Round 300 #3) — table display helpers use accounting parentheses for negatives and render
+// missing as "—" (never fabricate $0.00). Non-table formatUsdCents/formatUsd keep legacy QBO minus
+// sign and null→$0.00 for exports, KPIs, and existing callers outside ParityTable cells.
 //
 // D48 — every money COLUMN also uses QBO_MONEY_CELL_CLASS (right-align + tabular-nums) from
 // design/qbo-parity.ts so alignment matches QuickBooks, not just the string shape.
@@ -18,9 +22,24 @@ const USD = new Intl.NumberFormat("en-US", {
 
 const INT = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 
+/** C-37 — missing numeric/money cells render em dash, never a fabricated zero. */
+export const TABLE_MISSING = "—";
+
+/** Tailwind class for C-37 accounting negatives in table cells (red parentheses). */
+export const TABLE_MONEY_NEGATIVE_CLASS = "text-red-600";
+
 function toNumber(value: number | string | null | undefined): number {
   const n = typeof value === "string" ? Number(value) : value ?? 0;
   return Number.isFinite(n) ? (n as number) : 0;
+}
+
+function parseDisplayNumber(value: number | string): number | null {
+  const n = typeof value === "string" ? Number(value) : value;
+  return Number.isFinite(n) ? n : null;
+}
+
+function isMissingDisplayValue(value: unknown): boolean {
+  return value == null || value === "";
 }
 
 /**
@@ -32,6 +51,65 @@ function usdFormatNoNegativeZero(dollars: number): string {
     return USD.format(0);
   }
   return USD.format(dollars);
+}
+
+function formatAccountingDollars(dollars: number): string {
+  if (!Number.isFinite(dollars) || Object.is(dollars, -0) || Math.abs(dollars) < 0.005) {
+    return USD.format(0);
+  }
+  if (dollars < 0) {
+    return `(${USD.format(Math.abs(dollars))})`;
+  }
+  return USD.format(dollars);
+}
+
+/** True when a cents value should render as a red accounting negative in a table cell. */
+export function isNegativeMoneyCents(cents: number | string | null | undefined): boolean {
+  if (isMissingDisplayValue(cents)) return false;
+  const n = parseDisplayNumber(cents as number | string);
+  return n != null && n < 0 && Math.abs(n) >= 0.5;
+}
+
+/** True when a dollar value should render as a red accounting negative in a table cell. */
+export function isNegativeMoneyDollars(dollars: number | string | null | undefined): boolean {
+  if (isMissingDisplayValue(dollars)) return false;
+  const n = parseDisplayNumber(dollars as number | string);
+  return n != null && n < -0.005;
+}
+
+/**
+ * C-37 table money from integer CENTS — missing → "—"; negatives → "($1,234.56)" (no leading minus).
+ * Zero → "$0.00". Prefer TableMoneyCell in JSX columns; this is the plain-text twin for CSV/export.
+ */
+export function formatUsdCentsTable(cents: number | string | null | undefined): string {
+  if (isMissingDisplayValue(cents)) return TABLE_MISSING;
+  const n = parseDisplayNumber(cents as number | string);
+  if (n == null) return TABLE_MISSING;
+  return formatAccountingDollars(n / 100);
+}
+
+/**
+ * C-37 table money from DOLLARS — missing → "—"; negatives → accounting parentheses.
+ */
+export function formatUsdTable(dollars: number | string | null | undefined): string {
+  if (isMissingDisplayValue(dollars)) return TABLE_MISSING;
+  const n = parseDisplayNumber(dollars as number | string);
+  if (n == null) return TABLE_MISSING;
+  return formatAccountingDollars(n);
+}
+
+/**
+ * C-37 plain numeric table cell — missing → "—", never "0" unless the value is a real zero.
+ */
+export function formatNumberTable(
+  value: number | string | null | undefined,
+  maxFractionDigits = 0,
+): string {
+  if (isMissingDisplayValue(value)) return TABLE_MISSING;
+  const n = parseDisplayNumber(value as number | string);
+  if (n == null) return TABLE_MISSING;
+  if (maxFractionDigits <= 0) return INT.format(n);
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: maxFractionDigits }).format(n);
 }
 
 /** Money from integer CENTS → QBO "$1,234.56". The app stores money as integer cents, so this is the
@@ -53,3 +131,6 @@ export function formatNumber(value: number | string | null | undefined, maxFract
   if (maxFractionDigits <= 0) return INT.format(toNumber(value));
   return new Intl.NumberFormat("en-US", { maximumFractionDigits: maxFractionDigits }).format(toNumber(value));
 }
+
+// Guard + tests anchor — C-35 negative-zero scrubber stays the non-table money path.
+export { usdFormatNoNegativeZero };
