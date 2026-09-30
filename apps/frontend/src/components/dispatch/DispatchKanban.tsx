@@ -434,11 +434,29 @@ function computeAllUnits(
     seenUnits.add(unitId);
   }
 
-  // Loads (deduped by unit) go in their resolved lane
+  // SWIM-LANE-DROPS-THE-SECOND-LEG (Lead, 09-30-2026). This loop used `if (unitId &&
+  // seenUnits.has(unitId)) continue;` and so enforced one row per unit a SECOND time, downstream of
+  // dedupeLoadsByUnit. Fixing the dedupe alone changed nothing on screen, because whatever the
+  // dedupe let through, this `continue` then threw away.
+  //
+  // MEASURED LIVE 2026-09-30, after both earlier fixes were deployed: the API returned all 14
+  // dispatched loads (verified by calling /api/v1/mdata/loads?board_scope=live directly from the
+  // page: returned 14, total 14, including 13633 and 13637) and the board still rendered 12. The
+  // two it dropped were the second leg of each double-legged unit — T152's 13633 and T176's 13637.
+  //
+  // The owner's 2026-09-11 instruction is ROW ALIGNMENT: a unit sits at the same vertical position
+  // whichever lane it is in, so the eye can track one truck across the board. That is about where a
+  // row is drawn, not about how many of a unit's real loads are allowed to exist. A round trip is
+  // two legs on one truck and a dispatcher has to act on both. Alignment is preserved by keying the
+  // row on the unit; a second leg gets its own row keyed unit + load id, so it aligns under its
+  // sibling instead of replacing it. seenUnits keeps its FIRST job intact — an awaiting-truck row
+  // and a load row for the same unit still never both render.
+  const unitsWithAwaitingRow = new Set(seenUnits);
   for (const load of dedupeLoadsByUnit(loads)) {
     const unitId = load.assigned_unit_id;
-    if (unitId && seenUnits.has(unitId)) continue;
-    const key = unitId ?? `load:${load.id}`;
+    // A unit already shown as an awaiting truck must not also appear as a load row.
+    if (unitId && unitsWithAwaitingRow.has(unitId)) continue;
+    const key = unitId ? `unit:${unitId}:load:${load.id}` : `load:${load.id}`;
     rows.push({
       unitKey: key,
       unitId: unitId ?? undefined,
