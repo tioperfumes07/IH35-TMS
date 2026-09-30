@@ -4720,3 +4720,59 @@ expires_at: 2026-10-01T05:10:00.000Z
 status: OPEN
 
 — CC-1
+
+## AUTH-146
+
+title: 287.3.1 / THE-CLOSE section 9 item 1 -- create load 13593 + invoice 074-13593 (ALIGATOR
+  LOGISTICS, $4,800.00), its driver bill, and its 3 real fuel-card transactions + their linked
+  expense documents, USMCA
+requested_by: Lead, THE-CLOSE section 9 item 1 (claude/00-THE-CLOSE-LOCKED-EVERY-QUESTION-HAS-AN-ANSWER.md,
+  origin/main 37a2a0c6e2) and 287.3.1; direct chat order 2026-09-30 confirming "load 13593 does not
+  exist - create it per the closed doc."
+  (originally drafted as AUTH-145; renumbered to AUTH-146 on merge -- AUTH-145 was concurrently
+  claimed by the ROUND 290.1 fuel-to-expense bridge backfill, a different task, same day.)
+root_cause: load 13593 has never existed in mdata.loads (confirmed live, prod, 2026-09-30).
+  AlwaysTrack's own status flag for it reads "Cancelled" and the app followed that flag, but two
+  independent Lead rulings (~/Downloads/09-22-2026-Claude-Lead-ROUND-57-I-WAS-WRONG-SELF-CARRIED-AND-13593.md
+  and THE-CLOSE section 2/9) establish the flag is wrong: the load ran and was invoiced, proven by
+  the owner's own signed PDF (Invoice 074-13593, ALIGATOR, $4,800.00, issued 09/14/2026, due
+  09/15/2026, "1 Day Quick Pay"). The prior attempt to seed this invoice
+  (scripts/ops/2026-09-25-cc1-r153-item6-self-carried-invoices.ts) is documented in its own header
+  as BLOCKED: sendDraftInvoice's delivery-evidence gate refuses to send any invoice with no
+  source_load_id. Creating the real load supplies that evidence and unblocks it.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. Exactly one load (load_number 13593),
+  one invoice (source_load_id = the new load, from-load minted, display_id resolves to "13593" per
+  INVOICE-DISPLAY-ID-EQUALS-LOAD-NUMBER -- the owner's "074-13593" label fails
+  accounting.invoices_display_id_check and is preserved in internal_notes instead), one driver bill
+  (minted as the load-creation side effect, gross_amount_cents computed by the sanctioned
+  createDriverBillArtifacts from the driver's real $0.48/mi USMCA rate x the load's real 1670.4
+  miles -- not hardcoded here), and exactly 3 real fuel-card transactions (PILOT BLOOMSBURY 280, NJ,
+  2026-09-11, unit T170 / driver LUIS ARMANDO SOSA PEREZ: 161.39gal/$978.67, 49.00gal/$297.14,
+  9.71gal/$49.51) each bridged to its own accounting.expenses document via
+  createExpenseFromFuelTransaction per ROUND 290 item 290.1 (origin/main 808bfa2313 --
+  fuel<->expense linkage is now an invariant at seed time, not a later gap). A stale 2026-09-22 doc
+  asserted "4 fuel rows" existed for this load from a since-purged measurement with no amounts
+  recorded anywhere; a real search of every reconciliation source on disk found only these 3 --
+  the unfindable 4th is deliberately NOT invented. Full source citations, field-by-field, in the ops
+  script's own header comment. Not authorized: any other load, any other invoice, touching TRANSP
+  or TRK, or a 4th fuel row.
+dry_run_proof: scripts/ops/2026-09-30-cc1-287-3-1-create-load-13593-invoice-driver-bill-fuel.ts run
+  with DRY_RUN=1 against a throwaway Neon branch fork of prod (br-rapid-band-ak0qnb0c, parent
+  br-fancy-credit-akjnd07a) on 2026-09-30: load created, driver bill minted at gross_amount_cents=
+  80179 (1670.4mi x 48c/mi, rounds down from 801.792), invoice built+sent (display_id=13593,
+  total_cents=480000, status=sent, issue_date=2026-09-14, due_date=2026-09-15), 3 fuel rows
+  inserted and linked to the new load (load_id corrected from the generic resolver's correct
+  ambiguity-abstention -- load 13600, same unit/driver, has an overlapping stop window -- to the
+  source-document-confirmed load via a narrow post-insert UPDATE, same for vendor_id ->
+  the canonical live Pilot vendor 62dd25a7-460e-4fd0-b4f7-d80ec59fd8a7, already used by 8 other real
+  USMCA Pilot fuel rows), and all 3 fuel rows bridged to a linked accounting.expenses row via
+  createExpenseFromFuelTransaction (expense_number 13593/13593-1/13593-2, amounts 97867/29714/4951
+  cents, exact). Also run with DRY_RUN=0 against the SAME throwaway fork (not prod) to confirm a
+  real commit succeeds end to end before touching prod.
+action:
+  OWNER_AUTH_ID=AUTH-146 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-287-3-1-create-load-13593-invoice-driver-bill-fuel.ts
+  (run from the repo root; DRY_RUN=1 is the default -- pass DRY_RUN=0 to commit for real)
+expires_at: 2026-10-01T12:00:00.000Z
+status: OPEN
+
+— CC-1
