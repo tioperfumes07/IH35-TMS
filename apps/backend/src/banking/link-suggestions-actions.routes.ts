@@ -63,6 +63,22 @@ const acceptBodySchema = z.object({
   obligation_id: z.string().uuid(),
 });
 const rejectBodySchema = acceptBodySchema;
+// ROUND 276 — bulk accept. `items` must be a real, non-empty array read straight from the request
+// body -- the human's own ticked checkboxes, never a server-side confidence-threshold re-query.
+// verify-no-automatch.mjs's bulk-accept extension asserts this route reads its accept list from
+// req.body (this schema) and refuses an empty array, never selecting rows itself.
+const bulkAcceptBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  items: z
+    .array(
+      z.object({
+        bank_transaction_id: z.string().uuid(),
+        obligation_type: OBLIGATION_TYPE,
+        obligation_id: z.string().uuid(),
+      })
+    )
+    .min(1),
+});
 const excludeBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   bank_transaction_id: z.string().uuid(),
@@ -75,6 +91,132 @@ const undoBodySchema = z.object({
 
 function sendValidationError(reply: { code: (n: number) => { send: (b: unknown) => unknown } }, error: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: error.flatten() });
+}
+
+export type AcceptLinkSuggestionOutcome =
+  | { ok: true }
+  | { ok: false; reason: "obligation_not_found" | "transaction_not_found_or_already_matched" };
+
+/**
+ * ROUND 276 — the ONE accept handler, extracted so the single `/accept` route and the new
+ * `/bulk-accept` route call the exact same code, never a second implementation ("no side door").
+ * One call = one `withCurrentUser` transaction (BEGIN/COMMIT per call, not shared across a batch),
+ * so a bad row in a bulk request cannot roll back or poison any other row's accept.
+ */
+async function acceptLinkSuggestionForUser(
+  userUuid: string,
+  companyId: string,
+  txnId: string,
+  kind: ObligationType,
+  obligationId: string,
+  auditSourceTag: string,
+  auditExtra: Record<string, unknown> = {}
+): Promise<AcceptLinkSuggestionOutcome> {
+  return withCurrentUser(userUuid, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
+
+    const existenceSql = OBLIGATION_EXISTENCE_SQL[kind];
+    if (existenceSql) {
+      const exists = await client.query(existenceSql, [obligationId, companyId]);
+      if (!exists.rows[0]) return { ok: false, reason: "obligation_not_found" as const };
+    }
+
+    const txnRes = await client.query<{ id: string }>(
+      `
+      SELECT id FROM banking.bank_transactions
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
+        AND voided_at IS NULL
+        AND matched_expense_id IS NULL AND matched_bill_id IS NULL AND matched_load_id IS NULL
+        AND matched_settlement_id IS NULL AND matched_invoice_id IS NULL
+      FOR UPDATE
+      `,
+      [txnId, companyId]
+    );
+    if (!txnRes.rows[0]) return { ok: false, reason: "transaction_not_found_or_already_matched" as const };
+
+    // Written as a literal switch (not a `${column} = $1` template interpolation) on purpose:
+    // scripts/verify-no-automatch.mjs's static writer-audit greps source text for the five exact
+    // "matched_<kind>_id = $N" shapes to find every writer of these columns — a dynamically
+    // interpolated column name would write the same data but be INVISIBLE to that grep, silently
+    // defeating the one guard whose whole job is never letting a target-column writer go
+    // unreviewed. This file is (correctly) still on that guard's TARGET_COLUMN_WRITE_ALLOWLIST.
+    switch (kind) {
+      case "expense":
+        await client.query(
+          `UPDATE banking.bank_transactions
+           SET matched_expense_id = $1::uuid, categorized_by_user_id = $2::uuid, categorized_at = now(), review_state = 'matched', updated_at = now()
+           WHERE id = $3::uuid AND operating_company_id = $4::uuid`,
+          [obligationId, userUuid, txnId, companyId]
+        );
+        break;
+      case "bill":
+        await client.query(
+          `UPDATE banking.bank_transactions
+           SET matched_bill_id = $1::uuid, categorized_by_user_id = $2::uuid, categorized_at = now(), review_state = 'matched', updated_at = now()
+           WHERE id = $3::uuid AND operating_company_id = $4::uuid`,
+          [obligationId, userUuid, txnId, companyId]
+        );
+        break;
+      case "ar_invoice":
+        await client.query(
+          `UPDATE banking.bank_transactions
+           SET matched_invoice_id = $1::uuid, categorized_by_user_id = $2::uuid, categorized_at = now(), review_state = 'matched', updated_at = now()
+           WHERE id = $3::uuid AND operating_company_id = $4::uuid`,
+          [obligationId, userUuid, txnId, companyId]
+        );
+        break;
+      case "settlement":
+        await client.query(
+          `UPDATE banking.bank_transactions
+           SET matched_settlement_id = $1::uuid, categorized_by_user_id = $2::uuid, categorized_at = now(), review_state = 'matched', updated_at = now()
+           WHERE id = $3::uuid AND operating_company_id = $4::uuid`,
+          [obligationId, userUuid, txnId, companyId]
+        );
+        break;
+      case "load":
+        await client.query(
+          `UPDATE banking.bank_transactions
+           SET matched_load_id = $1::uuid, categorized_by_user_id = $2::uuid, categorized_at = now(), review_state = 'matched', updated_at = now()
+           WHERE id = $3::uuid AND operating_company_id = $4::uuid`,
+          [obligationId, userUuid, txnId, companyId]
+        );
+        break;
+    }
+
+    const rmKind = RECONCILIATION_MATCHES_KIND[kind];
+    if (rmKind) {
+      await client.query(
+        `
+        INSERT INTO banking.reconciliation_matches (
+          operating_company_id, bank_transaction_id, ledger_entry_kind, ledger_entry_id,
+          match_score, match_state, matched_at, matched_by_user_uuid
+        )
+        VALUES ($1::uuid, $2::uuid, $3::text, $4::uuid, 1, 'user_matched', now(), $5::uuid)
+        ON CONFLICT (bank_transaction_id, ledger_entry_kind, ledger_entry_id)
+        DO UPDATE SET
+          match_score = 1,
+          match_state = 'user_matched',
+          matched_at = now(),
+          matched_by_user_uuid = EXCLUDED.matched_by_user_uuid,
+          voided_at = NULL,
+          void_reason = NULL,
+          voided_by_user_id = NULL
+        `,
+        [companyId, txnId, rmKind, obligationId, userUuid]
+      );
+    }
+
+    await appendCrudAudit(
+      client,
+      userUuid,
+      "banking.link_suggestion.accepted",
+      { bank_transaction_id: txnId, obligation_type: kind, obligation_id: obligationId, operating_company_id: companyId, ...auditExtra },
+      "info",
+      auditSourceTag
+    );
+
+    return { ok: true as const };
+  });
 }
 
 export async function registerBankingLinkSuggestionActionsRoutes(app: FastifyInstance) {
@@ -92,114 +234,56 @@ export async function registerBankingLinkSuggestionActionsRoutes(app: FastifyIns
 
       await assertCompanyMembership(user.uuid, companyId);
 
-      const result = await withCurrentUser(user.uuid, async (client) => {
-        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
-
-        const existenceSql = OBLIGATION_EXISTENCE_SQL[kind];
-        if (existenceSql) {
-          const exists = await client.query(existenceSql, [obligationId, companyId]);
-          if (!exists.rows[0]) return { ok: false, reason: "obligation_not_found" as const };
-        }
-
-        const txnRes = await client.query<{ id: string }>(
-          `
-          SELECT id FROM banking.bank_transactions
-          WHERE id = $1::uuid AND operating_company_id = $2::uuid
-            AND voided_at IS NULL
-            AND matched_expense_id IS NULL AND matched_bill_id IS NULL AND matched_load_id IS NULL
-            AND matched_settlement_id IS NULL AND matched_invoice_id IS NULL
-          FOR UPDATE
-          `,
-          [txnId, companyId]
-        );
-        if (!txnRes.rows[0]) return { ok: false, reason: "transaction_not_found_or_already_matched" as const };
-
-        // Written as a literal switch (not a `${column} = $1` template interpolation) on purpose:
-        // scripts/verify-no-automatch.mjs's static writer-audit greps source text for the five exact
-        // "matched_<kind>_id = $N" shapes to find every writer of these columns — a dynamically
-        // interpolated column name would write the same data but be INVISIBLE to that grep, silently
-        // defeating the one guard whose whole job is never letting a target-column writer go
-        // unreviewed. This file is (correctly) still on that guard's TARGET_COLUMN_WRITE_ALLOWLIST.
-        switch (kind) {
-          case "expense":
-            await client.query(
-              `UPDATE banking.bank_transactions
-               SET matched_expense_id = $1::uuid, categorized_by_user_id = $2::uuid, categorized_at = now(), review_state = 'matched', updated_at = now()
-               WHERE id = $3::uuid AND operating_company_id = $4::uuid`,
-              [obligationId, user.uuid, txnId, companyId]
-            );
-            break;
-          case "bill":
-            await client.query(
-              `UPDATE banking.bank_transactions
-               SET matched_bill_id = $1::uuid, categorized_by_user_id = $2::uuid, categorized_at = now(), review_state = 'matched', updated_at = now()
-               WHERE id = $3::uuid AND operating_company_id = $4::uuid`,
-              [obligationId, user.uuid, txnId, companyId]
-            );
-            break;
-          case "ar_invoice":
-            await client.query(
-              `UPDATE banking.bank_transactions
-               SET matched_invoice_id = $1::uuid, categorized_by_user_id = $2::uuid, categorized_at = now(), review_state = 'matched', updated_at = now()
-               WHERE id = $3::uuid AND operating_company_id = $4::uuid`,
-              [obligationId, user.uuid, txnId, companyId]
-            );
-            break;
-          case "settlement":
-            await client.query(
-              `UPDATE banking.bank_transactions
-               SET matched_settlement_id = $1::uuid, categorized_by_user_id = $2::uuid, categorized_at = now(), review_state = 'matched', updated_at = now()
-               WHERE id = $3::uuid AND operating_company_id = $4::uuid`,
-              [obligationId, user.uuid, txnId, companyId]
-            );
-            break;
-          case "load":
-            await client.query(
-              `UPDATE banking.bank_transactions
-               SET matched_load_id = $1::uuid, categorized_by_user_id = $2::uuid, categorized_at = now(), review_state = 'matched', updated_at = now()
-               WHERE id = $3::uuid AND operating_company_id = $4::uuid`,
-              [obligationId, user.uuid, txnId, companyId]
-            );
-            break;
-        }
-
-        const rmKind = RECONCILIATION_MATCHES_KIND[kind];
-        if (rmKind) {
-          await client.query(
-            `
-            INSERT INTO banking.reconciliation_matches (
-              operating_company_id, bank_transaction_id, ledger_entry_kind, ledger_entry_id,
-              match_score, match_state, matched_at, matched_by_user_uuid
-            )
-            VALUES ($1::uuid, $2::uuid, $3::text, $4::uuid, 1, 'user_matched', now(), $5::uuid)
-            ON CONFLICT (bank_transaction_id, ledger_entry_kind, ledger_entry_id)
-            DO UPDATE SET
-              match_score = 1,
-              match_state = 'user_matched',
-              matched_at = now(),
-              matched_by_user_uuid = EXCLUDED.matched_by_user_uuid,
-              voided_at = NULL,
-              void_reason = NULL,
-              voided_by_user_id = NULL
-            `,
-            [companyId, txnId, rmKind, obligationId, user.uuid]
-          );
-        }
-
-        await appendCrudAudit(
-          client,
-          user.uuid,
-          "banking.link_suggestion.accepted",
-          { bank_transaction_id: txnId, obligation_type: kind, obligation_id: obligationId, operating_company_id: companyId },
-          "info",
-          "LINK4-PR2"
-        );
-
-        return { ok: true as const };
-      });
+      const result = await acceptLinkSuggestionForUser(user.uuid, companyId, txnId, kind, obligationId, "LINK4-PR2");
 
       if (!result.ok) return reply.code(409).send({ error: result.reason });
       return { ok: true };
+    }
+  );
+
+  // ROUND 276 — bulk accept. Owner: "match in a single batch all those expenses that you could
+  // match, and I would match the rest myself" / "YES, JUST LIKE QUICKBOOKS DOES." Law B is
+  // satisfied by the SAME mechanism as a single accept: one authenticated, role-gated human
+  // request, containing the human's own ticked rows (`items`, required non-empty) — the bulk click
+  // itself is the human acceptance, exercised once per ticked row through the identical handler.
+  // Never a nightly job, an import, or a migration: this route requires requireAuth + canDecide
+  // exactly like /accept, with no other caller anywhere in the codebase.
+  app.post(
+    "/api/v1/banking/link-suggestions/bulk-accept",
+    { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = requireAuth(req, reply) ? req.user : null;
+      if (!user) return;
+      if (!canDecide(user.role)) return reply.code(403).send({ error: "forbidden" });
+
+      const body = bulkAcceptBodySchema.safeParse(req.body ?? {});
+      if (!body.success) return sendValidationError(reply, body.error);
+      const { operating_company_id: companyId, items } = body.data;
+
+      await assertCompanyMembership(user.uuid, companyId);
+
+      // One withCurrentUser transaction PER ROW (acceptLinkSuggestionForUser opens its own) — a
+      // bad row (already matched, obligation deleted) fails and rolls back only itself, never the
+      // rest of the batch.
+      const results: Array<{ bank_transaction_id: string; ok: boolean; reason?: string }> = [];
+      for (const item of items) {
+        const outcome = await acceptLinkSuggestionForUser(
+          user.uuid,
+          companyId,
+          item.bank_transaction_id,
+          item.obligation_type,
+          item.obligation_id,
+          "ROUND276-BULK-ACCEPT",
+          { bulk_accept: true, bulk_accept_batch_size: items.length }
+        );
+        results.push(
+          outcome.ok
+            ? { bank_transaction_id: item.bank_transaction_id, ok: true }
+            : { bank_transaction_id: item.bank_transaction_id, ok: false, reason: outcome.reason }
+        );
+      }
+
+      return { results };
     }
   );
 
