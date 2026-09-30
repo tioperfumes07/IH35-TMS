@@ -207,6 +207,24 @@ export function canonicalActiveLoadInvoiceExclusionCte(loadIdColumn = "l.id"): s
  * currently-being-prepared (not yet finished) settlement looks like. Both halves now require the
  * settlement to have actually CLOSED, or the bill to have actually been SETTLED — "money moved
  * and is done," not "money exists."
+ *
+ * TRUCK-INVISIBLE-ON-THE-BOARD (Lead, 09-30-2026). Owner, live: "there are 16 dispatched ... now I
+ * still only see 11." The paragraph above claimed BOTH halves require the settlement to have
+ * closed. Only the settlement_lines half actually did. The driver_bills half still read
+ * `settled_in_settlement_id IS NOT NULL` on its own — the exact defect this comment says was
+ * fixed, left in place one clause below the sentence describing its own repair.
+ *
+ * WHAT IT COST, measured live on prod 2026-09-30: 14 loads in status 'dispatched' across 12 units.
+ * Unit T152 carries 13633 and 13634. Both driver bills are status 'open' — the truck is rolling —
+ * and both carry settled_in_settlement_id pointing at driver settlement b3912fde, which is
+ * status 'open', period 2026-09-25..2026-09-25, source_document_ref NULL, with both of its bills
+ * still open. Nothing was settled. A bill gets that pointer when it is ATTACHED to a settlement
+ * being prepared, not when it is paid. So the predicate declared a rolling truck finished and
+ * every dispatch surface hid the whole unit. A dispatcher could not see T152 at all.
+ *
+ * FIX: the driver_bills half now joins driver_settlements and requires ds2.status = 'closed',
+ * exactly as the settlement_lines half four lines above already does. "Settled" means the
+ * settlement closed and the money left, never that a draft references the bill.
  */
 export function canonicalActiveLoadNotFinishedByMoneyCte(loadIdColumn = "l.id"): string {
   return `
@@ -217,9 +235,10 @@ export function canonicalActiveLoadNotFinishedByMoneyCte(loadIdColumn = "l.id"):
     )
     AND NOT EXISTS (
       SELECT 1 FROM driver_finance.driver_bills db
+       JOIN driver_finance.driver_settlements ds2 ON ds2.id = db.settled_in_settlement_id
+        AND ds2.status = 'closed'
        WHERE db.load_id = ${loadIdColumn}
          AND db.status <> 'void'
-         AND db.settled_in_settlement_id IS NOT NULL
     )
     AND ${canonicalActiveLoadInvoiceExclusionCte(loadIdColumn)}
   `;

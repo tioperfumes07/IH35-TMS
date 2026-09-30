@@ -1,5 +1,14 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T07:43Z · 285.4.10 #60 AWAITING-BOL FE MERGED `1f96a24c34`**
+CURSOR | FE queue LIVE on main `#23297` `1f96a24c34` · `/dispatch/awaiting-bol-invoice` + Documents › Awaiting BOL badge · guard FE asserts | GUARD verify-auto-invoice-on-bol-wired OK · vitest 7/7 | LIVE PROOF Neon USMCA awaiting BOL = 3 (13626/13625/13615) | NEXT: FE deploy → Chrome click queue · BOL→invoice→Faro · METHOD Print when detention approve exists.
+
+**2026-09-30T07:32Z · ROUND 291.5 ACK · ratchet correction · #59 already live**
+CURSOR | ACK Round 291.5: window stood; tip ENV reds not ours (do not wait). CORRECTION: baseline stayed **1253** — Lead retired +5 Kanban raw sizes to `.text-section-header`; Cursor mis-said "lowered ratchet." #59 already FAST-MERGED `39eff3b07f` + Neon applied (owner order beat 12:05Z timer). | GUARD ratchet PASS · Neon column live | NEXT: Chrome Print METHOD proof (0 USMCA invoiced detention_requests yet) · 285.4.10 BOL→invoice→Faro Chrome.
+
+**2026-09-30T07:14Z · 285.4.9 #59 METHOD FAST-MERGED `39eff3b07f` · Neon applied**
+CURSOR | #59 METHOD `#23287` `39eff3b07f` · migrate `202614651200` ADD COLUMN approval_method · approve requires method · invoice SELECT · FE METHOD picker | GUARD lifecycle 8/8 · company-settlement-pdf OK · ratchet PASS | LIVE PROOF Neon br-fancy-credit-akjnd07a: `dispatch.detention_requests.approval_method` text NULL + ledger row checksum `fb8ea0a133…` applied_at `2026-09-30T07:14:03.087Z` | NEXT: Chrome Print proof of METHOD on detention invoice.
+
 **2026-09-30T06:48Z · 285.4.9 #59 METHOD ON BRANCH (merge after 12:00 UTC)**
 CURSOR | #59 METHOD: claim `#23286` `6cb5f4b515` · migrate `202614651200` + approve `approval_method` required + invoice SELECT + FE METHOD picker on Detention board | GUARD detention-approval-lifecycle selftest 8/8 · company-settlement-pdf OK · vitest 12/12 | NEXT: **merge after 12:00 UTC** · Neon apply · Chrome Print proof.
 

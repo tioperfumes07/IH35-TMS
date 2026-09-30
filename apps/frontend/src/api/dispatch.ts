@@ -1908,3 +1908,23 @@ export function getDeadheadNextLoadSuggestions(params: {
     `/api/v1/dispatch/deadhead/next-load-suggestions?${u.toString()}`
   );
 }
+
+/** ROUND 285.4.10 / #60 — delivered loads waiting on a BOL before auto-invoice → Faro. */
+export type AwaitingBolInvoiceRow = {
+  load_id: string;
+  load_number: string | null;
+  status: string;
+  customer_name: string | null;
+  waiting_for: "BOL";
+  has_invoice: boolean;
+};
+
+export function listAwaitingBolInvoice(operatingCompanyId: string) {
+  const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{
+    operating_company_id: string;
+    waiting_for: "BOL";
+    count: number;
+    rows: AwaitingBolInvoiceRow[];
+  }>(`/api/v1/dispatch/awaiting-bol-invoice?${params}`);
+}

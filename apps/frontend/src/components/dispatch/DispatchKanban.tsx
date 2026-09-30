@@ -14,7 +14,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DispatchLoadRow, LoadStatus } from "../../api/loads";
 import { getLoadStopsRecord, patchAssignUnit } from "../../api/dispatch";
-import { LOCKED_BORDER, LOCKED_HEADER_TEXT, LOCKED_PAGE_BG, LOCKED_SURFACE } from "../../design/locked-baseline-tokens";
+import { LOCKED_BORDER, LOCKED_HEADER_TEXT, LOCKED_SURFACE } from "../../design/locked-baseline-tokens";
 import { stampTruckLineArrival, stampTruckLineDeparture } from "../../api/truckLine";
 import type { UnitsWithoutLoad } from "../../api/dispatch";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -140,26 +140,48 @@ type KanbanDensity = "compact" | "standard" | "detailed";
  * rendered as the same white and the board read as floating text. The borders made it worse by
  * being off-palette hand-picked Tailwind grays (gray-300, gray-400) rather than the locked border.
  *
- * FIX — three tones that actually step, taken from the locked palette, never hand-picked:
- *   header band  rgb(228,234,241)  darkest — the same band TruckLineBoard's header already uses,
- *                                   so the two dispatch boards finally agree
- *   lane body    LOCKED_PAGE_BG    middle  — the lane is a container, so it recedes
- *   card         LOCKED_SURFACE    white   — the card is the object, so it sits on top
- * Header text is LOCKED_HEADER_TEXT (#4B5563), the locked column/section-header color, and every
- * border is LOCKED_BORDER. Defined once here; the four header sites read these, so the ladder
- * cannot drift apart again the way gray-100/gray-300/gray-400 did.
+ * FIX: a real tonal ladder, defined once below. The first attempt at it got the ORDER wrong and
+ * the correction is documented immediately after this block — read that one, it is the truth.
+ * Header text is LOCKED_HEADER_TEXT (#4B5563) and every border is LOCKED_BORDER, so the four
+ * header sites cannot drift apart again the way gray-100/gray-300/gray-400 did.
  */
+// KANBAN-LADDER-INVERTED (Lead, 09-30-2026, second pass). Owner, live: "it still looks like crap,
+// the colors, the outlines, it feels too weird."
+//
+// MY OWN BUG, measured live on the deployed build before this fix:
+//   page      rgb(244,246,248)
+//   column    rgb(247,248,250)   <- LIGHTER than the page. A container must recede, not advance.
+//   lane body rgb(255,255,255)   <- WHITE
+//   card      #fff + border      <- WHITE CARD ON A WHITE LANE. The cards vanished.
+// I had the ladder upside down: I put the page tint on the COLUMN and the white surface on the
+// LANE, so the one element that must read as a liftable object (these cards are draggable) had
+// nothing behind it to lift off. That is the "feels weird" — there were no cards on screen, just
+// text floating on a white sheet inside a container lighter than the page behind it.
+//
+// THE RIGHT ORDER, outermost to innermost — each step DARKER until the card, which is the object:
+//   page      #F4F6F8   the desk
+//   column    #FFFFFF   a panel sitting ON the desk: white, real border, one soft shadow
+//   header    #E4EAF1   the panel's own title band (same band TruckLineBoard uses)
+//   lane body #EDF1F6   RECESSED well — the tray the cards sit in
+//   card      #FFFFFF   white + border + shadow, so it reads as pick-up-able against the well
+// Every value is from the locked palette except the well, which is one deliberate step between
+// the header band and white so the tray reads as inset rather than as a third competing surface.
 const KANBAN_HEADER_BAND = "rgb(228,234,241)";
+const KANBAN_LANE_WELL = "#EDF1F6";
 const KANBAN_HEADER_STYLE = {
   background: KANBAN_HEADER_BAND,
   color: LOCKED_HEADER_TEXT,
-  borderBottom: `2px solid ${LOCKED_BORDER}`,
+  borderBottom: `1px solid #C9D4E0`,
 } as const;
 const KANBAN_COLUMN_STYLE = {
-  background: LOCKED_PAGE_BG,
+  background: LOCKED_SURFACE,
   border: `1px solid ${LOCKED_BORDER}`,
+  boxShadow: "0 1px 2px rgba(15,23,42,0.06)",
 } as const;
-const KANBAN_LANE_BODY_STYLE = { background: LOCKED_SURFACE } as const;
+const KANBAN_LANE_BODY_STYLE = {
+  background: KANBAN_LANE_WELL,
+  boxShadow: "inset 0 1px 2px rgba(15,23,42,0.05)",
+} as const;
 
 const KANBAN_DENSITIES: readonly KanbanDensity[] = ["compact", "standard", "detailed"] as const;
 const KANBAN_DEFAULT_DENSITY: KanbanDensity = "standard";
@@ -303,6 +325,38 @@ export function resolveKanbanColumnKey(load: DispatchLoadRow): string {
 // competing Kanban card). A unit whose only loads are all cancelled still shows its (cancelled)
 // card rather than vanishing. Loads with no assigned_unit_id never compete against each other.
 const KANBAN_TERMINAL_CANCELLED_STATUSES = new Set(["cancelled", "abandoned", "driver_walkoff", "driver_no_show"]);
+
+// KANBAN-HIDES-A-REAL-LEG (Lead, 09-30-2026, owner live: "there are 16 dispatched ... now I still
+// only see 11").
+//
+// REG-048 above fixed a REAL defect and its intent is kept intact: a unit whose OLD
+// delivered_pending_docs load still sits open must not render a second competing card next to its
+// CURRENT one. But the rule it used to do that was "one card per unit, newest wins," and that is
+// broader than the defect. It also collapses two loads that are BOTH live dispatch work — which is
+// exactly what a round trip is on this fleet: a northbound leg and its southbound return, both
+// dispatched, both on the same truck, both needing a dispatcher.
+//
+// MEASURED LIVE on prod 2026-09-30: 14 loads in status 'dispatched' across 12 units. Two units run
+// two legs each — T152 (13633, 13634) and T176 (13637, 13638). The backend returned both legs; this
+// function threw one away per unit, so 13637 never reached the screen. A dispatched load that is
+// nowhere on the dispatch board is the same class of defect as the settled-pointer bug fixed in the
+// backend predicate today: work that exists and cannot be seen.
+//
+// THE CORRECTED RULE — separate the two cases REG-048 conflated:
+//   * BACKLOG loads (delivered and past — money/paperwork tail) yield to live work on the same unit.
+//     That is REG-048's actual defect and it stays fixed.
+//   * Two or more LIVE loads on one unit are both real legs. Render both. The board is a dispatch
+//     board; a leg the dispatcher must act on is never collapsed to make the grid tidier.
+// A unit with only backlog loads still shows its newest one rather than vanishing, and a unit with
+// only cancelled loads still shows its cancelled card, both exactly as before.
+const KANBAN_BACKLOG_STATUSES = new Set([
+  "delivered",
+  "delivered_pending_docs",
+  "completed_docs_received",
+  "invoiced",
+  "paid",
+  "closed",
+]);
 function dedupeLoadsByUnit(loads: DispatchLoadRow[]): DispatchLoadRow[] {
   const byUnit = new Map<string, DispatchLoadRow[]>();
   const unassigned: DispatchLoadRow[] = [];
@@ -315,18 +369,23 @@ function dedupeLoadsByUnit(loads: DispatchLoadRow[]): DispatchLoadRow[] {
     list.push(load);
     byUnit.set(load.assigned_unit_id, list);
   }
+  const newestFirst = (a: DispatchLoadRow, b: DispatchLoadRow) =>
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   const current: DispatchLoadRow[] = [...unassigned];
   for (const list of byUnit.values()) {
     if (list.length === 1) {
       current.push(list[0]!);
       continue;
     }
-    const active = list.filter((load) => !KANBAN_TERMINAL_CANCELLED_STATUSES.has(String(load.status)));
-    const pool = active.length > 0 ? active : list;
-    const winner = pool.reduce((latest, load) =>
-      new Date(load.created_at).getTime() > new Date(latest.created_at).getTime() ? load : latest
-    );
-    current.push(winner);
+    const notCancelled = list.filter((load) => !KANBAN_TERMINAL_CANCELLED_STATUSES.has(String(load.status)));
+    const pool = notCancelled.length > 0 ? notCancelled : list;
+    // Every leg still in live dispatch work renders. Only the delivered-and-past tail yields.
+    const live = pool.filter((load) => !KANBAN_BACKLOG_STATUSES.has(String(load.status)));
+    if (live.length > 0) {
+      current.push(...[...live].sort(newestFirst));
+      continue;
+    }
+    current.push([...pool].sort(newestFirst)[0]!);
   }
   return current;
 }

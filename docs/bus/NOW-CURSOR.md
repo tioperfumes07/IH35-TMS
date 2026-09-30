@@ -1,12 +1,13 @@
-# NOW-CURSOR — 2026-09-30 ROUND 285 PART E
+# NOW-CURSOR — 2026-09-30 285.4.10 #60 FE MERGED
 
 ## HARD LINE
-Obey `claude/00-ROUND-285-FULL-WORK-SEQUENCE-EVERY-SEAT.md` PART E. AUTH: never self-assign outside seat blocks (Lead #23272).
+Obey ROUND 285 PART E + Round 291.5 ACK. AUTH: never self-assign. Tip ENV reds — do not wait.
 
-## DONE (285.4.9)
-- AUTH collision law `#23272`
-- **#58** `#23275` · **#32** `#23276` · **#33** `#23279` · **#31** v10 PDFs `#23283` `c57f610b4b`
-- Migration claim **202614651200** `#23286` `6cb5f4b515`
+## DONE
+- 285.4.9 **#58/#32/#33/#31/#59** on main · METHOD Neon live
+- **285.4.10 #60 FE** `#23297` squash `1f96a24c34` — page + Documents › Awaiting BOL + route + guard FE
 
 ## NEXT
-**#59** METHOD — ON BRANCH `cursor/r285-4-9-method-59-c89b`: migrate + approve capture + invoice SELECT + FE METHOD picker. **MERGE AFTER 12:00 UTC** Cursor migrate window. Then Neon apply + Chrome Print proof.
+1. FE deploy carrying `1f96a24c34` → Chrome `/dispatch/awaiting-bol-invoice` shows 13626/13625/13615
+2. One BOL upload → invoice send → Faro Chrome proof
+3. METHOD Chrome Print when a real detention approve stamps `approval_method`

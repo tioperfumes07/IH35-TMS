@@ -247,6 +247,7 @@ export function getSidebarFlyoutItems(id: SidebarItemId, role: UserRole): Sideba
         { label: "Equipment Transfers", to: "/dispatch/equipment-transfers" },
         { label: "Customer ETA Notify", to: "/dispatch/notify-preferences" },
         { label: "POD Review + BOL", to: "/dispatch/pod-review" },
+        { label: "Awaiting BOL for invoice", to: "/dispatch/awaiting-bol-invoice" },
         { label: "Dispatch Settings", to: "/dispatch/settings" },
         { label: "Geofencing", to: "/dispatch/geofencing" },
         { label: "Alerts", to: "/dispatch/alerts" },
