@@ -1,14 +1,14 @@
-# NOW-CURSOR — 2026-09-30 ROUND 292 · boards@16 · Chrome = 13615
+# NOW-CURSOR — 2026-09-30 ROUND 292 · API LIVE · Chrome = 13615
 
 ## HARD LINE
-AlwaysTrack Dispatched = 16 (law). All boards @ 16. No seat fixtures. No baseline raises.
+AlwaysTrack Dispatched = 16. Boards @ 16. No seat fixtures. No baseline raises.
 
 ## DONE
-- 285.4.9 #31/#58/#59/#32/#33 on tip
-- 285.4.10 #60 FE LIVE `93c84ac`
-- `#23312` live_loads bills-closed
-- **ROUND 292:** Load Costs money CTE now passes `l.status` (FACTOR-BUT-NOT-DELIVERED) — boards-agree PASS **16/16**
+- `#23332` `8c3ac5e02e` Load Costs FACTOR-BUT-NOT-DELIVERED · **API LIVE** healthz=`8c3ac5e02e`
+- 285.4.9 remainder CODE CLOSED · 285.4.10 FE awaiting-BOL · boards-agree 16/16
+- Awaiting-BOL queue = **13615** only
 
 ## NEXT
-1. Owner Chrome: Documents › Awaiting BOL → **13615** BOL → invoice → Faro
+1. Owner Chrome: https://app.ih35dispatch.com/dispatch/awaiting-bol-invoice → **13615** BOL → invoice → Faro (screenshots + live row)
 2. METHOD Print when detention approve stamps `approval_method`
+3. Tip phantom `accounting.escrow_ledger` = **CC-2** (Round 292) — not Cursor

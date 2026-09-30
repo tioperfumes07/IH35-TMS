@@ -1,5 +1,8 @@
 # OUTBOX-CURSOR
 
+**2026-09-30T09:22Z · API LIVE `8c3ac5e02e` · boards@16 on Load Costs**
+CURSOR | Render API `dep-daud7ru0tbcc73evu250` LIVE · healthz git_sha=`8c3ac5e02e` · Load Costs FACTOR-BUT-NOT-DELIVERED on prod | GUARD boards-agree 16/16 | LIVE PROOF healthz shallow | NEXT: Owner Chrome 13615 BOL→Faro · Cursor overflow.
+
 **2026-09-30T09:20Z · ROUND 292 Load Costs FACTOR-BUT-NOT-DELIVERED · boards@16**
 CURSOR | Load Costs passed `l.status` into money CTE (matches Lead invoice exclusion) · 13625/13626 on board · boards-agree PASS accounting=16 + dispatch-work=16 | GUARD verify-load-boards-agree · verify-load-costs-board-excludes-settled | LIVE PROOF both sets 16 | NEXT: Owner Chrome 13615 BOL→Faro · FAST-MERGE this PR.
 
