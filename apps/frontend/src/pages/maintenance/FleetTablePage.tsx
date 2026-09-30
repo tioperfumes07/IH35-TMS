@@ -11,7 +11,6 @@ import { downloadFleetLocationHosXlsx, getFleetLocationHos } from "../../api/rep
 import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
-import { KpiCard } from "../../components/layout/KpiCard";
 import { BUTTON_MD_SIZE_CLASS } from "../../design/tokens";
 
 type Props = {
@@ -417,16 +416,21 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
           active={effectiveStatus === "OutOfService"}
           onClick={() => setStatus("OutOfService")}
         />
-        <KpiCard
-          label="Avg Age"
-          number={kpis.avg_age_years == null ? "—" : `${Number(kpis.avg_age_years).toFixed(1)} y`}
-          onClick={() => {
-            const params = new URLSearchParams(searchParams);
-            params.set("sort", "year");
-            params.set("dir", "asc");
-            setSearchParams(params, { replace: true });
-          }}
-        />
+        {kpisQuery.isError ? (
+          <DrillKpiCard label="Avg Age" value={null} unavailable="Fleet age metrics could not be loaded" />
+        ) : (
+          <DrillKpiCard
+            label="Avg Age"
+            value={kpis.avg_age_years == null ? null : `${Number(kpis.avg_age_years).toFixed(1)} y`}
+            hint={kpis.avg_age_years == null ? "No age data for this fleet filter" : undefined}
+            onClick={() => {
+              const params = new URLSearchParams(searchParams);
+              params.set("sort", "year");
+              params.set("dir", "asc");
+              setSearchParams(params, { replace: true });
+            }}
+          />
+        )}
       </div>
 
       {kpisQuery.isError ? <ListErrorState status={0} message="Fleet age metrics could not be loaded." onRetry={() => void kpisQuery.refetch()} /> : null}

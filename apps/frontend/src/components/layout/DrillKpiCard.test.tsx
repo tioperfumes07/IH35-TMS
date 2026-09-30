@@ -70,5 +70,17 @@ describe("DrillKpiCard — click-through", () => {
     );
     expect(screen.getByText(KPI_NO_VALUE)).toBeInTheDocument();
     expect(screen.queryByText("0")).not.toBeInTheDocument();
+    // C-22 — empty is never silent: default "No data" reason under the dash.
+    expect(screen.getByText("No data")).toBeInTheDocument();
+    expect(screen.getByText("No data").closest("[data-kpi-empty-reason]")).not.toBeNull();
+  });
+
+  it("renders unavailable reason under the dash (C-22)", () => {
+    render(
+      <MemoryRouter>
+        <DrillKpiCard label="Total Revenue" value={null} unavailable="Profitability feed is not connected." />
+      </MemoryRouter>
+    );
+    expect(screen.getByText("Profitability feed is not connected.")).toBeInTheDocument();
   });
 });
