@@ -77,8 +77,17 @@ async function main() {
            FROM accounting.expenses WHERE id = $1::uuid AND operating_company_id = $2::uuid FOR UPDATE`,
         [expId, USMCA]
       );
-      if (pre.rows[0]?.expense_number || pre.rows[0]?.journal_entry_id) {
-        throw new Error(`SAFETY: this expense is no longer an unnumbered/unlinked orphan (expense_number=${pre.rows[0]?.expense_number}, journal_entry_id=${pre.rows[0]?.journal_entry_id}) -- refusing`);
+      // A concurrent, independent fix (2026-09-30, a separate session's fork) backfilled
+      // expense_number on these 12 rows to close a different, narrower violation (the
+      // null-expense_number law) -- confirmed directly with that fork: it never asserted these are
+      // legitimate distinct records, never checked for a duplicate-twin counterpart, and touched
+      // ONLY expense_number/updated_at. void-not-delete keeps the number on the row after voiding,
+      // so an expense_number alone is no longer a safety signal here -- only journal_entry_id
+      // (still null on all 12, confirmed live) matters: a real journal_entry_id would mean this
+      // row is now properly linked to its own JE, which would be the real "someone already fixed
+      // this differently" signal this check exists to catch.
+      if (pre.rows[0]?.journal_entry_id) {
+        throw new Error(`SAFETY: this expense now has a journal_entry_id (${pre.rows[0].journal_entry_id}) -- no longer an orphan, refusing`);
       }
       if (pre.rows[0]?.voided_at) {
         console.log(`SKIP ${expId}: already voided`);
