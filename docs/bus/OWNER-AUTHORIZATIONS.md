@@ -4444,3 +4444,54 @@ for 10 of 25 duplicate-JE groups. 15 of 25 groups remain undetermined. Step 3 (d
 first) not started -- separate AUTH, per Order 3's one purge definition.
 
 — CC-2
+
+## AUTH-138
+
+title: DEFECT 3 (claude/00-POSTING-AUDIT-ROUND-1-FOUR-DEFECTS-FIX-THESE.md) -- reverse 60 orphaned "Dr 2000 AP / Cr 9000" JEs, USMCA
+requested_by: CC-1, 2026-09-30, in response to Lead order ("9000 Ask My Accountant, 60 postings
+  each way. No plugs.").
+root_cause: live-verified (USMCA, bypass_rls transaction) before writing this entry. A bulk
+  automated action on 2026-09-25 00:27:28-00:29:44 UTC (actor e4117991-d2c0-406d-8cda-74e98d95bccd
+  -- the same system actor other reversal scripts in this repo already use, e.g.
+  apps/backend/scripts/reverse-repost-usmca-settlements.mts) reversed 60 accounting.expenses-
+  sourced journal entries originally miscoded to account 9000 "Ask My Accountant" suspense, and
+  replaced each with a blanket "Dr 2000 Accounts Payable / Cr 9000" posting, memo "Reversal of
+  journal entry <id>" -- no category, vendor, or finding reference. $2,976.63 gross each side,
+  60 rows each direction (the "60 postings each way" the order names).
+  Confirmed live: ALL 60 of these replacement JEs' source accounting.expenses rows are VOIDED (9
+  posting_status='reversed', 51 posting_status='unposted', 0 live, 0 missing) -- a voided document
+  must never carry a live posted JE (same invariant scripts/verify-no-voided-doc-has-live-postings.mjs
+  exists to enforce elsewhere). There is no real liability behind any of these 60 Accounts Payable
+  debits; nothing to categorize. This population is CONFIRMED DISTINCT from ACCT-F20260925J's
+  earlier, correctly-handled 2-item reclass (EXP-2026-00053 lumper -> 5310, EXP-2026-00050 tires
+  -> 5400) and its own later ROUND 157 STEP 0 correction (PR #22643, JEs 0f2c79b8/102d28cd) -- those
+  4 JEs debit 9000 against 5310/5400 with source_transaction_type='journal_entry', not 'expense',
+  and are not in the 60-id list below. Also confirmed distinct from AUTH-137 (CC-2, CONSUMED
+  immediately above) -- that AUTH voided duplicate factoring-advance JE copies on accounts
+  1090/1230/1235/2150; this one reverses 60 orphaned expense-suspense replacement JEs on accounts
+  9000/2000; no shared JE ids, no shared accounts.
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only. EXACTLY the 60 journal_entries ids listed
+  in apps/backend/scripts/ops-defect3-reverse-orphaned-9000-ap-plug.mts (JE_IDS constant). Action:
+  call reverseJournalEntryNoFlip (the one sanctioned, linked, idempotent reversal primitive -- the
+  original is never flipped, status stays 'posted', bidirectional linkage recorded) on each of the
+  60. NO new category assigned, no plug substituted -- pure reversal of an orphaned posting whose
+  source document is void. Not authorized: touching the source accounting.expenses rows themselves
+  (already voided, untouched), touching the 4 unrelated 0f2c79b8/102d28cd-family JEs, touching any
+  AUTH-137 rows, or resolving the separate $3,631.73 of pre-existing/post-reversal 9000 dust that
+  remains genuinely unresolved suspense after this fix (a real, smaller, separate item -- not
+  addressed here, not plugged).
+dry_run_proof: apps/backend/scripts/ops-defect3-reverse-orphaned-9000-ap-plug.mts run without
+  --apply against production, 2026-09-30 -- "PRE-FLIGHT OK: all 120 JEs live, unreversed, source
+  expense voided." (120 = 60 JEs x 2 lines/JE checked), "Reversed 60 JEs.", AFTER query showing the
+  arithmetic ties exactly: 64 live debit-side 9000 rows summing to $3,631.73 = the 60 new
+  reversals' own debit-to-9000 lines ($2,976.63) + the 4 pre-existing 0f2c79b8-family dust debits
+  ($655.10) already on the books, zero live credits remaining from this population. ROLLED BACK
+  (dry run).
+action:
+  DATABASE_URL=<prod> npx tsx apps/backend/scripts/ops-defect3-reverse-orphaned-9000-ap-plug.mts --apply
+  (run from the repo root, not apps/backend/ -- see AUTH-135's CONSUMED note on why; script's own
+  AUTH_ID constant is already AUTH-138)
+expires_at: 2026-10-01T00:00:00.000Z
+status: OPEN
+
+— CC-1
