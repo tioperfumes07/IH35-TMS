@@ -4930,7 +4930,13 @@ action: OWNER_AUTH_ID=AUTH-149 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-3
   consumption block below. Re-running now would be a no-op: the script is idempotent and every
   target row already carries a non-null expense_number.)
 expires_at: 2026-10-01T05:30:00.000Z
-status: OPEN
-note: the 12-row backfill already ran successfully under the original AUTH-148 id (before the
-  collision). The 3-row load-less backfill has NOT run yet -- pending this AUTH landing on main so
-  its own verify-owner-authorization check passes; will be marked CONSUMED with live proof once run.
+status: CONSUMED
+consumed_at: 2026-09-30T05:41:00.000Z
+consumed_by: CC-1
+row_counts: 12 of 12 numbered (first script, under the original AUTH-148 id) + 3 of 3 numbered
+  (second, load-less script, under this AUTH-149 id) = 15 of 15 total.
+proof_query: live on prod, 2026-09-30 -- SELECT count(*) FROM accounting.expenses WHERE
+  operating_company_id='5c854333-6ea5-4faa-af31-67cb272fef80' AND expense_number IS NULL AND
+  status <> 'void' returned 0 (was 15 before either script ran). Spot-checked
+  4102568a-1693-453b-b490-ecb2a8861e57 (the $1,287.35/load-13617 row): expense_number='13617-2'.
+  The 3 load-less rows got EXP-2026-00541/00542/00543.
