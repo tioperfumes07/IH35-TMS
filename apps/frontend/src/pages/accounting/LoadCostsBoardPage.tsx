@@ -11,7 +11,7 @@ import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { hasInAppHistory } from "../../lib/smart-back";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateQboList } from "../../lib/formatDate";
 import { useDispatchLoad, listAllLoads, updateLoadStatus, type DispatchLoadRow, type LoadStatus } from "../../api/loads";
 import { listUnitsWithoutLoad } from "../../api/dispatch";
 import { pairOutboundReturn, NEEDS_RETURN_STATUSES } from "../dispatch/roundTripsLegs";
@@ -253,7 +253,7 @@ type RegisterRow = {
 };
 const REGISTER_COLUMNS: Array<ParityColumn<RegisterRow>> = [
   { key: "number", label: "Number", testId: "reg-col-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.number, render: r => <span className="font-semibold text-slate-700">{r.number}</span> },
-  { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateUS(r.date) : DASH },
+  { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateQboList(r.date) : DASH },
   { key: "party", label: "Vendor / Driver", testId: "reg-col-party", sortable: true, sortValue: r => r.party, render: r => r.party || DASH },
   { key: "load", label: "Load Number", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <Link className="font-semibold text-slate-700 underline" to={`/accounting/load-costs/${r.loadId}?tab=Costs`}>{r.loadNumber ?? r.loadId}</Link> : DASH },
   { key: "detail", label: "Description", testId: "reg-col-detail", sortable: true, sortValue: r => r.detail, render: r => <span className="text-[#4B5563]">{r.detail || DASH}</span> },
@@ -280,7 +280,7 @@ function statusPill(status: string) {
 }
 const DRIVER_PAY_COLUMNS: Array<ParityColumn<RegisterRow>> = [
   { key: "number", label: "Number", testId: "reg-col-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.number, render: r => <span className="font-semibold">{r.number}</span> },
-  { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateUS(r.date) : DASH },
+  { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateQboList(r.date) : DASH },
   { key: "party", label: "Driver", testId: "reg-col-party", sortable: true, sortValue: r => r.party, render: r => r.party || DASH },
   { key: "load", label: "Load Number", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <Link className="ldt-link" style={{ display: "inline" }} to={`/accounting/load-costs/${r.loadId}?tab=Costs`}>{r.loadNumber ?? r.loadId}</Link> : DASH },
   { key: "loaded_miles", label: "Loaded miles", testId: "reg-col-loaded_miles", sortable: true, className: `${NUM} ldt-m`, sortValue: r => r.loadedMiles == null ? -Infinity : Number(r.loadedMiles), render: r => fmtMiles(r.loadedMiles ?? null) },
@@ -314,7 +314,7 @@ function loadCell(loadsById: Map<string, string>): ParityColumn<RegisterRow> {
 // LCB-REG — Broker advances register: "date · load · category · instrument · amount ·
 // applied-to-invoice status" (owner's exact column list).
 const BROKER_ADVANCE_COLUMNS = (loadsById: Map<string, string>): Array<ParityColumn<RegisterRow>> => [
-  { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateUS(r.date) : DASH },
+  { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateQboList(r.date) : DASH },
   loadCell(loadsById),
   { key: "advance_category", label: "Category", testId: "reg-col-category", sortable: true, sortValue: r => r.category ?? "", render: r => r.category ? r.category.replaceAll("_", " ") : DASH },
   { key: "instrument", label: "Instrument", testId: "reg-col-instrument", sortable: true, sortValue: r => r.instrument ?? "", render: r => r.instrument || DASH },
@@ -360,7 +360,7 @@ function DocumentOpenCell({ row, companyId }: { row: RegisterRow; companyId: str
   );
 }
 const DOCUMENT_COLUMNS = (companyId: string, loadsById: Map<string, string>): Array<ParityColumn<RegisterRow>> => [
-  { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateUS(r.date) : DASH },
+  { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateQboList(r.date) : DASH },
   loadCell(loadsById),
   { key: "type", label: "Type", testId: "reg-col-type", sortable: true, sortValue: r => r.docType ?? "", render: r => r.docType || DASH },
   { key: "filename", label: "Filename", testId: "reg-col-filename", sortable: true, sortValue: r => r.filename ?? "", render: r => <span className="ldt-sub" style={{ display: "inline" }}>{r.filename || DASH}</span> },
@@ -739,8 +739,8 @@ export function LoadCostsBoardPage() {
     // column can tell "nothing to show" apart from "nobody's driving this yet".
     { key: "unit", label: "Unit", testId: "col-unit", sortable: true, className: "whitespace-nowrap", sortValue: r => r.unit_number ?? "", render: r => r.unit_number ?? "Unassigned" },
     { key: "driver_name", label: "Driver", testId: "col-driver-name", sortable: true, className: "whitespace-nowrap", sortValue: r => r.driver_name ?? "", render: r => r.driver_name ?? "Not assigned" },
-    { key: "pu_date", label: "PU Date", testId: "col-pu-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.pickup_date ?? "", render: r => r.pickup_date ? formatDateUS(r.pickup_date) : "—" },
-    { key: "del_date", label: "Del Date", testId: "col-del-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.actual_delivery_at ?? "", render: r => r.actual_delivery_at ? formatDateUS(r.actual_delivery_at) : "—" },
+    { key: "pu_date", label: "PU Date", testId: "col-pu-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.pickup_date ?? "", render: r => r.pickup_date ? formatDateQboList(r.pickup_date) : "—" },
+    { key: "del_date", label: "Del Date", testId: "col-del-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.actual_delivery_at ?? "", render: r => r.actual_delivery_at ? formatDateQboList(r.actual_delivery_at) : "—" },
     {
       key: "status",
       label: "Status",

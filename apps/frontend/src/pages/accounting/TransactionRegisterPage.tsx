@@ -5,7 +5,7 @@ import { ArrowRightCircle, Download } from "lucide-react";
 import { listTransactionRegister, type RegisterTransaction, type TransactionSource } from "../../api/accounting";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatDateQboList } from "../../lib/formatDate";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -54,7 +54,7 @@ function toCsv(rows: RegisterTransaction[]): string {
   const lines = rows.map((r) =>
     [
       r.source,
-      r.date ? formatDateUS(r.date) : "",
+      r.date ? formatDateQboList(r.date) : "",
       r.description ?? "",
       r.type,
       r.counterparty ?? "",
@@ -132,7 +132,7 @@ export function TransactionRegisterPage() {
         sortable: true,
         sortValue: (r) => r.date ?? "",
         cellClass: "whitespace-nowrap text-slate-700",
-        render: (r) => (r.date ? formatDateUS(r.date) : "—"),
+        render: (r) => (r.date ? formatDateQboList(r.date) : "—"),
       },
       {
         key: "description",

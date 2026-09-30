@@ -49,22 +49,23 @@ export function CreateWOSectionRenderV5Header({
       <div className="mb-1 font-semibold text-[#1F2A44]">Work order header</div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
         <Cell label="Status">
-          <select {...register("status")} className={INPUT}>
+          {/* D25 — every wizard box is a combo dropdown (SelectCombobox), not a bare <select>. */}
+          <SelectCombobox {...register("status")} className={INPUT} aria-label="Status">
             <option value="open">Open</option>
             <option value="in_progress">In progress</option>
             <option value="waiting_parts">Awaiting parts</option>
             <option value="complete">Complete</option>
             <option value="cancelled">Cancelled</option>
-          </select>
+          </SelectCombobox>
         </Cell>
         <Cell label="Priority">
           {/* mig-0310 CHECK: stored value is exactly routine|urgent|immediate (display labels only). */}
-          <select {...register("wo_priority")} className={INPUT}>
+          <SelectCombobox {...register("wo_priority")} className={INPUT} aria-label="Priority">
             <option value="">— select —</option>
             <option value="routine">Routine</option>
             <option value="urgent">Urgent</option>
             <option value="immediate">Immediate</option>
-          </select>
+          </SelectCombobox>
         </Cell>
         <Cell label="Open date">
           <DatePicker value={watch("open_date") || ""} onChange={(v) => setValue("open_date", v, { shouldDirty: true })} className={INPUT} />
@@ -100,22 +101,22 @@ export function CreateWOSectionRenderV5Header({
           )}
         </Cell>
         <Cell label="Repaired by">
-          <select {...register("repaired_by")} className={INPUT}>
+          <SelectCombobox {...register("repaired_by")} className={INPUT} aria-label="Repaired by">
             <option value="">— select —</option>
             <option value="in_house">In house</option>
             <option value="outside_vendor">Outside vendor</option>
-          </select>
+          </SelectCombobox>
         </Cell>
         <Cell label="Authorization #">
           <input {...register("authorization_number")} className={INPUT} placeholder="Authorization #" />
         </Cell>
         <Cell label="Service location (mobile / roadside)">
-          <select {...register("service_location_type")} className={INPUT}>
+          <SelectCombobox {...register("service_location_type")} className={INPUT} aria-label="Service location">
             <option value="">— select —</option>
             <option value="shop">Shop</option>
             <option value="mobile">Mobile</option>
             <option value="roadside">Roadside</option>
-          </select>
+          </SelectCombobox>
         </Cell>
       </div>
     </section>

@@ -28,7 +28,7 @@ import { VendorEditDrawer } from "../components/vendors/VendorEditDrawer";
 import { useViewModePref } from "../hooks/useViewModePref";
 import { useListPageSizePref } from "../hooks/useListPageSizePref";
 import { useUrlSort } from "../hooks/useUrlSort";
-import { formatDateUS, mmmDd } from "../lib/formatDate";
+import { formatDateQboList, mmmDd } from "../lib/formatDate";
 import { EntityLink } from "../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
 import { ReferenceSelect, type ReferenceOption } from "../components/parity/ReferenceSelect";
@@ -466,7 +466,7 @@ export function VendorsPage() {
   // defaulting them hidden (toggle on via the gear) exactly as the old column chooser did.
   const txColumns = useMemo<ParityColumn<(typeof txRows)[number]>[]>(
     () => [
-      { key: "date", label: "Date", sortable: true, render: (r) => formatDateUS(r.bill_date) },
+      { key: "date", label: "Date", sortable: true, render: (r) => formatDateQboList(r.bill_date) },
       { key: "type", label: "Type", sortable: true, sortValue: (r) => r.driver_id ? "driver_bill" : "vendor_bill", render: (r) => r.driver_id ? "Driver bill" : "Vendor bill" },
       {
         key: "doc_no",
@@ -545,7 +545,7 @@ export function VendorsPage() {
 
   const vendorTransactionColumns = useMemo<ParityColumn<VendorTransactionRow>[]>(
     () => [
-      { key: "date", label: "Date", sortable: true, sortValue: (r) => r.date ?? "", render: (r) => formatDateUS(r.date) || "—" },
+      { key: "date", label: "Date", sortable: true, sortValue: (r) => r.date ?? "", render: (r) => formatDateQboList(r.date) || "—" },
       { key: "type", label: "Type", sortable: true, render: (r) => r.type },
       {
         key: "ref",
