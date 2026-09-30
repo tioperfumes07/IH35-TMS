@@ -13,8 +13,26 @@ export type DqfComplianceSummary = {
   amberExpiryCount: number;
 };
 
+/** C-12 / D12 — person names: capital first letter only. Never ALL CAPS, never all lowercase. */
+function properDriverNamePart(value: unknown): string {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  return raw
+    .split(/([\s'-]+)/)
+    .map((part) => {
+      if (!part || /^[\s'-]+$/.test(part)) return part;
+      return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+    })
+    .join("");
+}
+
+/** C-12 / D12 — Proper Case on every driver name surface. */
 export function driverDisplayName(first?: string | null, last?: string | null, fallbackId?: string) {
-  const name = [first, last].filter(Boolean).join(" ").trim();
+  const name = [first, last]
+    .filter(Boolean)
+    .map((part) => properDriverNamePart(part))
+    .join(" ")
+    .trim();
   return name || fallbackId || "Driver";
 }
 

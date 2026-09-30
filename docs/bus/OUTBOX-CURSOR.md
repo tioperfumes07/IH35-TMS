@@ -21,3 +21,8 @@ C-04..C-15 / C-19 · LEFT: next (row treatment sweep, min-scroll, cash-flow, ban
 GUARD: verify-c01-c17-master-detail-shell + verify-md-width-0. No Aug/Sep money. No seat fixtures.
 
 ACK 2026-09-30 · CURSOR · read NOW-CURSOR · starting C-20
+
+**2026-09-30T16:12Z · C-20 DRIVER PROFILE MODULE · branch `cursor/c20-driver-profile-module-c89b`**
+
+C-20 · what changed: `DriverProfilePage` is now a Customers/Vendors-style tabbed shell — `NavyPageSubNav` first, then horizontal DQF `KpiStrip` (Overview only; never above tabs — C-11/D11). Tabs: Overview / Settlements / Cash Advances / Deductions / Loads / Maintenance / Safety / Documents / Legal / Communications / Reports / Activity (`driverProfileTabs.ts`, `?tab=` URL). A-13 accounting tabs on the payee profile; Permits stay operational; Disputes cross-link from Settlements. A-14 Reports shells (Statement/Activity/Transactions/Deductions) via `SegmentedControl`. C-12: `driverDisplayName` forces Proper Case (never ALL CAPS); `formatPhoneAsTyped` / `formatPhoneDisplay` = `(956) 000-0000`; IdentityHeader + DriverDetail use them. Surfaces use `MASTER_DETAIL.surfaceClass`. Ops guard: `scripts/ops/verify-c20-driver-profile-module.mjs`. · LIVE PROOF: `npx tsc -b` (apps/frontend) exit 0; `node scripts/ops/verify-c20-driver-profile-module.mjs --selftest` PASS; vitest DriverProfilePage ×2 files 6/6 + assign-truck 1/1. · LEFT: Chrome click tabs + measure KPI band below nav on `/drivers?subtab=profiles`; C-21 Maintenance next.
+

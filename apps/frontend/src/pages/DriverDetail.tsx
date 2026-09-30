@@ -1,5 +1,5 @@
 import { entityLabel } from "../lib/entity-label";
-import { formatPhoneAsTyped } from "../lib/formatPhoneAsTyped";
+import { formatPhoneAsTyped, formatPhoneDisplay } from "../lib/formatPhoneAsTyped";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DatePicker } from "../components/forms/DatePicker";
 import { FORM_INPUT_CLASS, FORM_TEXTAREA_CLASS } from "../components/forms/inputClass";
@@ -858,7 +858,7 @@ export function DriverDetailPage() {
   // unguarded string operation in this component and the same field is already guarded at L363
   // (`driver.phone ?? ""`) and L842 (`driver.phone ?? "—"`), so it was inconsistent as well as
   // fragile. A formatter at render-top must never assume an optional field is present.
-  const maskedPhone = (driver.phone ?? "").replace(/^(\+?\d{0,2})?(\d{3})(\d{3})(\d{4})$/, "$2-$3-$4");
+  const maskedPhone = formatPhoneDisplay(driver.phone);
   const qualifications = qualificationsQuery.data ?? [];
   const companies = companiesQuery.data ?? [];
   const authorizations = companyAuthQuery.data ?? [];
