@@ -1,6 +1,23 @@
 /**
  * FUEL GETS ITS DOCUMENT — closing the only posting in this system with nothing behind it.
  *
+ * ROUND 290.1 CANONICAL RULE (2026-09-30) — WRITTEN DOWN SO NOBODY RE-LITIGATES IT:
+ * A fuel purchase is ONE economic event. `fuel.fuel_transactions` is the CANONICAL,
+ * operational source-of-truth record (gallons, card, IFTA, vendor) — it is what actually
+ * happened at the pump. `accounting.expenses` is its ACCOUNTING PROJECTION — the document that
+ * carries it into the GL. `source_fuel_transaction_id` is the join key and it is MANDATORY in
+ * both directions: a live fuel_transaction with no live expense has no cost and is invisible to
+ * the P&L; a live expense on account 5000 "Fuel & Diesel" with no source_fuel_transaction_id has
+ * no gallons behind it and cannot be reconciled to a card statement. Every code path that
+ * creates a fuel_transaction row MUST create its expense in the same operation (call
+ * `createExpenseFromFuelTransaction` below, never skip it) — see
+ * `scripts/verify-fuel-expense-bridge-is-whole.mjs` for the fail-closed guard on both
+ * directions. The one documented exception is a settlement-corpus-derived 5000-account expense
+ * (`source_settlement_ref` set) — a driver-settlement line item for DEF/reefer-diesel/etc. is a
+ * real fuel-category cost with no corresponding fuel-card transaction to link to, because it was
+ * never run through a fuel card; that is expected state, not a gap, and the guard excludes it by
+ * name rather than treating it as unlinked.
+ *
  * WHAT WAS WRONG, MEASURED LIVE ON PRODUCTION (USMCA, 2026-09-23):
  *
  *     fuel.fuel_transactions rows ....................... 627

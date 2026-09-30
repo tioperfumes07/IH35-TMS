@@ -1,4 +1,9 @@
 {
+  "11751": {
+    "claimed_at": "2026-09-30",
+    "claimed_by": "cc-1",
+    "purpose": "verify-fuel-expense-bridge-is-whole"
+  },
   "2426": {
     "claimed_at": "2026-08-31",
     "claimed_by": "cursor",
