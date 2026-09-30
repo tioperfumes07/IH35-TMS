@@ -4701,6 +4701,27 @@ proof_query: live on prod, 2026-09-30 -- accounting.factoring_advances: both row
 — CC-1
 
 ## AUTH-145
+issued_at: 2026-09-30T05:10:00.000Z
+scope: USMCA (5c854333-6ea5-4faa-af31-67cb272fef80) only -- ROUND 290.1 fuel-to-expense bridge
+backfill. Create the missing accounting.expenses document for the 32 (of 34 measured) live
+fuel.fuel_transactions rows that have no linked live expense, via the sanctioned, already-existing,
+idempotent bridge function createExpenseFromFuelTransaction (apps/backend/src/fuel/
+fuel-expense-document.service.ts) ONLY -- never a raw INSERT into accounting.expenses or
+accounting.journal_entries/journal_entry_postings. All 34 rows already exist (source='import',
+created 2026-09-24/25, real load_id on every row) -- this creates no new fuel purchase, only the
+missing document for ones that already happened. Of the 34: 32 have a positive total_cost and will
+create cleanly; 2 are correctly refused by the function's own existing safety checks (one
+total_cost=0.00, one archived_at set) and are left untouched, not forced.
+action: OWNER_AUTH_ID=AUTH-145 DATABASE_URL=<prod> npx tsx
+  scripts/ops/2026-09-30-cc1-r290-1-fuel-expense-bridge-backfill.ts
+  (DRY_RUN=1 first for the rehearsal -- already run clean, 32 would_create / 2 correctly refused --
+  then the same command without DRY_RUN to commit)
+expires_at: 2026-10-01T05:10:00.000Z
+status: OPEN
+
+— CC-1
+
+## AUTH-146
 
 title: 287.3.1 / THE-CLOSE section 9 item 1 -- create load 13593 + invoice 074-13593 (ALIGATOR
   LOGISTICS, $4,800.00), its driver bill, and its 3 real fuel-card transactions + their linked
@@ -4708,6 +4729,8 @@ title: 287.3.1 / THE-CLOSE section 9 item 1 -- create load 13593 + invoice 074-1
 requested_by: Lead, THE-CLOSE section 9 item 1 (claude/00-THE-CLOSE-LOCKED-EVERY-QUESTION-HAS-AN-ANSWER.md,
   origin/main 37a2a0c6e2) and 287.3.1; direct chat order 2026-09-30 confirming "load 13593 does not
   exist - create it per the closed doc."
+  (originally drafted as AUTH-145; renumbered to AUTH-146 on merge -- AUTH-145 was concurrently
+  claimed by the ROUND 290.1 fuel-to-expense bridge backfill, a different task, same day.)
 root_cause: load 13593 has never existed in mdata.loads (confirmed live, prod, 2026-09-30).
   AlwaysTrack's own status flag for it reads "Cancelled" and the app followed that flag, but two
   independent Lead rulings (~/Downloads/09-22-2026-Claude-Lead-ROUND-57-I-WAS-WRONG-SELF-CARRIED-AND-13593.md
@@ -4747,7 +4770,7 @@ dry_run_proof: scripts/ops/2026-09-30-cc1-287-3-1-create-load-13593-invoice-driv
   cents, exact). Also run with DRY_RUN=0 against the SAME throwaway fork (not prod) to confirm a
   real commit succeeds end to end before touching prod.
 action:
-  OWNER_AUTH_ID=AUTH-145 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-287-3-1-create-load-13593-invoice-driver-bill-fuel.ts
+  OWNER_AUTH_ID=AUTH-146 DATABASE_URL=<prod> npx tsx scripts/ops/2026-09-30-cc1-287-3-1-create-load-13593-invoice-driver-bill-fuel.ts
   (run from the repo root; DRY_RUN=1 is the default -- pass DRY_RUN=0 to commit for real)
 expires_at: 2026-10-01T12:00:00.000Z
 status: OPEN

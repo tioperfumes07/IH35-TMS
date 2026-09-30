@@ -325,6 +325,29 @@ export async function maybePostFuelExpenseFromCanonicalTxn(
       });
     }
 
+    // ROUND 290.1 — the fuel-to-expense bridge is mandatory, not optional. postFuelExpenseFromEvent
+    // (above) posts the JE directly from the fuel event with no accounting.expenses document
+    // behind it. createExpenseFromFuelTransaction ADOPTS that same journal entry (via its own
+    // idempotent source_fuel_transaction_id check) instead of posting a second one — no new GL
+    // math. This is the single shared flush point for every fuel import path (fleet-card CSV,
+    // Relay bridge, cron ingest), so fixing it here closes the creation-path gap everywhere at once.
+    if (posting.result === "posted" || posting.result === "already_posted") {
+      await withLuciaBypass(async (client) => {
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+          candidate.operating_company_id,
+        ]);
+        const { createExpenseFromFuelTransaction } = await import("../../fuel/fuel-expense-document.service.js");
+        await createExpenseFromFuelTransaction(client, {
+          operating_company_id: candidate.operating_company_id,
+          fuel_transaction_id: candidate.fuel_transaction_id,
+          requesting_user_uuid: actorUserId,
+        });
+      }).catch(() => {
+        // Never block posting success on the document step; the ROUND 290.1 guard catches any
+        // row left without one and it is backfillable the same way the original 34 were.
+      });
+    }
+
     return {
       status: posting.result === "already_posted" ? "already_posted" : "posted",
       posting,

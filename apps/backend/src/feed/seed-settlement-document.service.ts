@@ -67,6 +67,8 @@ import { createHistoricalDriverBill } from "../driver-finance/historical-driver-
 import { postLoadBookendedSettlementGlAfterClose } from "../driver-finance/settlement-payrun-close.service.js";
 import { postLoadRevenueLatch } from "../accounting/revrec-delivery-posting/poster.service.js";
 import { postFuelExpenseFromEvent } from "../accounting/fuel-posting/poster.service.js";
+import { createExpenseFromFuelTransaction } from "../fuel/fuel-expense-document.service.js";
+import { withLuciaBypass } from "../auth/db.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { postFactoringAdvanceEvent } from "../accounting/factoring-posting/poster.service.js";
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
@@ -1263,6 +1265,25 @@ export async function postGlForSeededDocument(
       return null;
     });
     report.fuelPosted[fuel.fuelTransactionId] = posted?.result === "posted" || posted?.result === "already_posted";
+
+    // ROUND 290.1 — the bridge is mandatory, not optional. postFuelExpenseFromEvent (above)
+    // posts the JE directly from the fuel event with no accounting.expenses document behind
+    // it — the exact "fuel posts with nothing to void" defect fuel-expense-document.service.ts
+    // exists to close. createExpenseFromFuelTransaction ADOPTS the journal entry
+    // postFuelExpenseFromEvent just posted (via its own idempotent source_fuel_transaction_id
+    // check) rather than posting a second one — no new GL math, no double-posting.
+    await withLuciaBypass(async (client) => {
+      const doc = await createExpenseFromFuelTransaction(client, {
+        operating_company_id: operatingCompanyId,
+        fuel_transaction_id: fuel.fuelTransactionId,
+        requesting_user_uuid: actorUserId,
+      });
+      if (doc.outcome === "refused") {
+        report.errors.push(`fuel expense document ${fuel.fuelTransactionId}: ${doc.reason}`);
+      }
+    }).catch((err) => {
+      report.errors.push(`fuel expense document ${fuel.fuelTransactionId}: ${(err as Error)?.message}`);
+    });
   }
 
   if (result.settlementId) {

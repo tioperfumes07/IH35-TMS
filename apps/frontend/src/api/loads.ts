@@ -269,6 +269,12 @@ function encodeMulti(query: URLSearchParams, key: string, values?: string[]) {
 }
 
 export function listLoads(filters: LoadsListFilters) {
+  // ROUND 283.3 — fail closed at the client hub too: no silent unscoped GET /mdata/loads.
+  if (!filters.board_scope && !filters.drafts_only) {
+    throw new Error(
+      "listLoads requires board_scope (\"live\"|\"history\") or drafts_only — ROUND 283.3 fail-closed; status alone is not enough"
+    );
+  }
   const query = new URLSearchParams();
   if (filters.limit !== undefined) query.set("limit", String(filters.limit));
   if (filters.offset !== undefined) query.set("offset", String(filters.offset));

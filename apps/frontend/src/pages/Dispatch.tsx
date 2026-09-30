@@ -246,10 +246,7 @@ export function DispatchPage({
     include_progress: true,
     include_live_eta: true,
     board_scope: boardScope,
-    // ROUND-20.2 (RT-FULL-TOUR, owner 2026-09-12): Round Trips is the one OPEN-ONLY exception — an
-    // open tour renders whole, delivered/invoiced legs included. Only this fetch passes it; every
-    // other Dispatch surface (Kanban/List/Trip Pairing) stays exactly OPEN-ONLY.
-    include_open_tour_legs: roundTripsFullFetch,
+    // ROUND 285.4.2 — one open_dispatch set for every board view (List/Kanban/Round Trips included).
     drafts_only: draftsOnly || undefined,
   };
   const loadsQuery = useQuery({

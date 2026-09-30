@@ -1,6 +1,6 @@
 {
   "healthzSha": "808bfa2",
-  "generated_at": "2026-09-30T05:05:32.296Z",
+  "generated_at": "2026-09-30T05:09:15.917Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 23234,
+      "title": "FINDING: ROUND-290.1 — the fuel-to-expense bridge becomes an invariant before any seed",
+      "state": "merged",
+      "mergedAtCt": "09/30/2026, 12:07 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23234",
+      "sha": "6509389711",
+      "committedAtIso": "2026-09-30T00:07:17-05:00"
+    },
+    {
       "number": 23230,
       "title": "Cursor-285.4.1–4.3 board_scope mandatory + seven boards agree @ 12",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23224",
       "sha": "8787b7d543",
       "committedAtIso": "2026-09-29T23:21:09-05:00"
-    },
-    {
-      "number": 23223,
-      "title": "FINDING: ROUND-286 — the books close except for 9 invoices voided as \"Transportation\" worth 32,750.00, and 4 revenue loads with no driver pay",
-      "state": "merged",
-      "mergedAtCt": "09/29/2026, 11:17 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23223",
-      "sha": "f47421ce65",
-      "committedAtIso": "2026-09-29T23:17:39-05:00"
     }
   ]
 }
