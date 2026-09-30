@@ -8,6 +8,16 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202614740000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-30",
+      "purpose": "T-21 (owner order): telematics.geofence_odometer_captures -- one row per geo.geofence_events row (unique on geofence_event_id, idempotent), capturing the unit's odometer at every Love's/DOT-scale/customer-site/yard geofence crossing with an honest odometer_source (real_obd/interpolated/absent), never inferred."
+    },
+    "202614730000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-09-30",
+      "purpose": "extend the AUTH-gated WORM purge bypass to the remaining tables in AUTH-177's scope — the owner ordered every voided and sample record deleted and the engine refuses, because one un-whitelisted table (accounting.expenses_review_queue) FK-locks the whole chain"
+    },
     "202614720000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-30",

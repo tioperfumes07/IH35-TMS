@@ -16,6 +16,7 @@ import { z } from "zod";
 import { currentAuthUser, withCompanyScope } from "../../accounting/shared.js";
 import { openWorkOrderPredicateSql } from "../../maintenance/in-shop-condition.js";
 import { CURRENT_TRUCK_LINE_LOAD_SQL } from "../current-truck-line-load.js";
+import { DISPATCH_WORK_LOAD_STATUSES } from "../canonical-active-load-set.js";
 import { groupTruckLineByUnit } from "./group-by-unit.js";
 import { deriveTruckLineStation, STATION_KEYS, STATION_LABELS, type StampSource } from "./station.js";
 
@@ -83,6 +84,34 @@ type AvailableRow = {
   pos_state: string | null;
   pos_captured_at: string | null;
 };
+
+type PendingRow = {
+  load_id: string;
+  load_number: string;
+  raw_status: string;
+  trip_type: string | null;
+  created_at: string;
+  customer_name: string | null;
+  pickup_city: string | null;
+  pickup_state: string | null;
+  pickup_scheduled_at: string | null;
+  delivery_city: string | null;
+  delivery_state: string | null;
+  unit_id: string | null;
+  unit_number: string | null;
+};
+
+// T-04 (Lead order, 2026-09-30): "undispatched loads live in a lower section and PROMOTE to the
+// top section the moment they are dispatched" — this is the FEED half; the section UI is a
+// separate build. DISPATCH_WORK_LOAD_STATUSES is the canonical dispatch-work set (booked through
+// at_delivery); the pending/bottom set is that set MINUS the four "actively rolling" statuses the
+// main `rows` query already covers, so the two lists can never overlap for the SAME reason (a
+// load promotes the instant its status crosses into ACTIVE_DISPATCH_STATUSES -- no separate
+// "promote" write path to build or keep in sync).
+export const ACTIVE_DISPATCH_STATUSES = ["dispatched", "at_pickup", "in_transit", "at_delivery"] as const;
+export const PENDING_LOAD_STATUSES = DISPATCH_WORK_LOAD_STATUSES.filter(
+  (s) => !(ACTIVE_DISPATCH_STATUSES as readonly string[]).includes(s)
+);
 
 const LOC_STALE_MIN = 60;
 const HOS_STALE_MIN = 120;
@@ -265,7 +294,51 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
         [operating_company_id]
       );
 
-      return { rows: res.rows as Row[], availableRows: availableRes.rows as AvailableRow[], reasonsTableExists };
+      // T-04: the bottom-section feed. LEFT JOIN units (a booked load may not have one yet) and
+      // exclude any load that already qualifies for the top `rows` query (a pre-assigned,
+      // in-service unit) -- the NOT EXISTS below is UNIT_IN_SERVICE_SQL's own predicate, aliased,
+      // so the two lists can never disagree about which side a load is on.
+      const pendingRes = await client.query(
+        `
+        SELECT
+          l.id::text AS load_id, l.load_number, l.status::text AS raw_status, l.trip_type::text AS trip_type,
+          l.created_at::text AS created_at,
+          COALESCE(cust.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)) AS customer_name,
+          pu.city AS pickup_city, pu.state AS pickup_state, pu.scheduled_arrival_at::text AS pickup_scheduled_at,
+          de.city AS delivery_city, de.state AS delivery_state,
+          u.id::text AS unit_id, u.unit_number
+        FROM mdata.loads l
+        LEFT JOIN mdata.customers cust ON cust.id = l.customer_id AND cust.operating_company_id = l.operating_company_id
+        LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+        LEFT JOIN LATERAL (
+          SELECT * FROM mdata.load_stops s
+          WHERE s.load_id = l.id AND s.stop_type = 'pickup'::mdata.stop_type_enum AND s.soft_deleted_at IS NULL
+          ORDER BY s.sequence_number ASC LIMIT 1
+        ) pu ON true
+        LEFT JOIN LATERAL (
+          SELECT * FROM mdata.load_stops s
+          WHERE s.load_id = l.id AND s.stop_type = 'delivery'::mdata.stop_type_enum AND s.soft_deleted_at IS NULL
+          ORDER BY s.sequence_number DESC LIMIT 1
+        ) de ON true
+        WHERE l.operating_company_id = $1::uuid
+          AND l.soft_deleted_at IS NULL
+          AND l.status::text IN (${PENDING_LOAD_STATUSES.map((_, i) => `$${i + 2}`).join(", ")})
+          AND NOT EXISTS (
+            SELECT 1 FROM mdata.units u2
+            WHERE u2.id = l.assigned_unit_id
+              AND ${UNIT_IN_SERVICE_SQL.replace(/\bu\./g, "u2.")}
+          )
+        ORDER BY l.created_at ASC
+        `,
+        [operating_company_id, ...PENDING_LOAD_STATUSES]
+      );
+
+      return {
+        rows: res.rows as Row[],
+        availableRows: availableRes.rows as AvailableRow[],
+        pendingRows: pendingRes.rows as PendingRow[],
+        reasonsTableExists,
+      };
     });
 
     const now = Date.now();
@@ -447,12 +520,33 @@ export async function registerTruckLineRoutes(app: FastifyInstance) {
     const loadedCount = groups.filter((g) => g.section !== "available").reduce((n, g) => n + g.legs.length, 0);
     const availableCount = groups.filter((g) => g.section === "available").length;
 
+    // T-04: bottom-section feed -- booked/planned/assigned loads not yet actively rolling. Never
+    // unit-grouped (a booked load may carry no unit at all), so it ships as its own flat list
+    // beside `groups` rather than forced into groupTruckLineByUnit's per-unit shape.
+    const pendingRows = payload.pendingRows.map((r) => ({
+      load_id: r.load_id,
+      load_number: r.load_number,
+      status: r.raw_status,
+      trip_type: r.trip_type,
+      created_at: r.created_at,
+      customer_name: r.customer_name,
+      pickup_city: r.pickup_city,
+      pickup_state: r.pickup_state,
+      pickup_scheduled_at: r.pickup_scheduled_at,
+      delivery_city: r.delivery_city,
+      delivery_state: r.delivery_state,
+      unit_id: r.unit_id,
+      unit_number: r.unit_number,
+    }));
+
     return reply.code(200).send({
       groups,
       rows: flatRows,
+      pending_rows: pendingRows,
       total_count: groups.length,
       loaded_count: loadedCount,
       available_count: availableCount,
+      pending_count: pendingRows.length,
       tour_count: groups.filter((g) => g.section === "tour").length,
       in_transit_count: groups.filter((g) => g.section === "in_transit").length,
       stations: STATION_KEYS.map((key, i) => ({ key, index: i, label: STATION_LABELS[key] })),

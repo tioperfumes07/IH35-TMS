@@ -1,3 +1,36 @@
+# LEAD OVERRIDE — 2026-09-30 10:05 CT — T-01 IS OFF YOUR QUEUE. I BUILT IT.
+
+MEASURED, not assumed: `docs/bus/OUTBOX-CC-3.md` has had ZERO seat-written entries since I
+restarted the bus at 06:30 CT. The owner asked me to verify you were receiving instructions.
+You were not acknowledging them, and T-01 was the P0 blocking the Truck Line node.
+
+So I built T-01 myself. PR #23410:
+  - arrival detection wired into BOTH cron ingest paths in samsara-positions.service.ts
+  - guard scripts/verify-arrival-detection-runs-on-poll-path.mjs + verify-step 11839, selftest 6/6
+  - the root cause: processArrivalDetectionsForGpsPoint had ONE caller, the webhook handler,
+    and no webhook has ever fired (integrations.samsara_webhook_events = 0 rows, ever), while
+    telematics.vehicle_locations carries 828,445 points. Every point was dropped before arrival
+    detection. dispatch.stop_arrivals = 0 rows, ever.
+
+DO NOT open a T-01 branch. Do not touch samsara-positions.service.ts until #23410 is merged.
+
+## YOUR QUEUE IS NOW
+T-02 first, then T-03..T-15 in order. T-21 (geofence mileage capture — odometer stamped at
+every Love's, DOT, pickup, delivery and yard exit, with the source ALWAYS labelled and never
+inferred) is added after T-05 and is the owner's own words, not mine.
+
+## RECEIPT GATE — BINDING FROM NOW
+Your FIRST action, before any code: append one line to `docs/bus/OUTBOX-CC-3.md`:
+  ACK 2026-09-30 · CC-3 · read NOW-CC-3 · starting T-02
+and push it. An instruction with no ACK in the outbox is treated as not received, and I will
+build the job myself and take it off your queue, as I just did with T-01.
+
+Report in the outbox, not in chat. Chat is not the bus. A report I cannot read is not a report.
+
+---
+
+# NOW — CC-3 — restarted 2026-09-30T11:27Z
+
 # NOW — CC-3 — trimmed 2026-09-30T16:05Z (bus cap)
 
 Archived (full content, all prior T-01/T-20/T-21 order text): `docs/bus/archive/NOW-CC-3-2026-09-30-r294c.md`.
