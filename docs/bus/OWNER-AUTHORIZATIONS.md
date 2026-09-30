@@ -4717,6 +4717,20 @@ action: OWNER_AUTH_ID=AUTH-145 DATABASE_URL=<prod> npx tsx
   (DRY_RUN=1 first for the rehearsal -- already run clean, 32 would_create / 2 correctly refused --
   then the same command without DRY_RUN to commit)
 expires_at: 2026-10-01T05:10:00.000Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-09-30T05:25:00.000Z
+consumed_by: CC-1
+row_counts: 32 of 34 created; 2 correctly refused by the function's own existing safety checks
+  (one total_cost=0.00, one archived_at set) and left untouched.
+proof_query: live re-run after execution -- 0 live fuel_transactions rows without a linked live
+  expense (was 34). accounting.expenses rows created: cac2bce7.../ee21a73b.../9d3d5ab8.../
+  cdb60f2b.../a78086fa.../9ba4adb8.../4ada4cd2.../9df86b31.../d6b99d65.../445b9dae.../
+  4e60a754.../298ebbf8.../ecf753fc.../3574b2f8.../cd8ef31f.../b3ef891c.../1ce4b40a.../
+  654cfbe6.../5e87d50c.../5b46887c.../d5d2230c.../512721c7.../5f8b8504.../d98c499f.../
+  3e114332.../04df2f49.../8753f36f.../c43017f1.../ec0a25b6.../1d61c715.../5402f751.../
+  4bd97a53... (32 ids, full ids in commit history). All 32 show adopted_journal_entry_id=null --
+  these fuel purchases were never posted to GL before (EXPENSE_GL_POSTING_ENABLED-gated); the
+  document now exists and is postable through the normal expense GL path when that flag posts
+  it, same as any other expense. No new GL entry was created by this AUTH.
 
 — CC-1
