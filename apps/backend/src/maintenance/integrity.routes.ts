@@ -3,12 +3,29 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { computeDriverFuelScorecard } from "./fuel-driver-scorecard.service.js";
+import { computeDriverDamageScorecard } from "./driver-damage-scorecard.service.js";
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
   limit: z.coerce.number().int().min(1).max(500).default(200),
 });
 const idSchema = z.object({ unit_id: z.string().uuid().optional(), driver_id: z.string().uuid().optional(), vendor_id: z.string().uuid().optional() });
+
+// B-30 — driver-scorecard / fuel-anomalies default to a trailing 30-day period when not given
+// explicitly, matching B-28's own "30+ days" MPG-flag requirement (a shorter window makes the
+// fleet-mean/SD comparison too noisy to mean anything).
+const periodQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  period_start: z.string().datetime({ offset: true }).optional(),
+  period_end: z.string().datetime({ offset: true }).optional(),
+});
+
+function resolvePeriod(data: { period_start?: string; period_end?: string }): { periodStart: string; periodEnd: string } {
+  const periodEnd = data.period_end ?? new Date().toISOString();
+  const periodStart = data.period_start ?? new Date(new Date(periodEnd).getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  return { periodStart, periodEnd };
+}
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -134,6 +151,56 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
         [query.data.operating_company_id]
       );
       return res.rows;
+    });
+    return { rows };
+  });
+
+  // B-30 — one driver scorecard combining B-28 (fuel/MPG) and B-29 (damage/tire/accident),
+  // both attributed by driverAtTimeSql (B-27), never mdata.units.assigned_driver_id.
+  app.get("/api/v1/maintenance/integrity/driver-scorecard", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const query = periodQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+    const { periodStart, periodEnd } = resolvePeriod(query.data);
+    const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+      const [fuel, damage] = await Promise.all([
+        computeDriverFuelScorecard(client, query.data.operating_company_id, periodStart, periodEnd),
+        computeDriverDamageScorecard(client, query.data.operating_company_id, periodStart, periodEnd),
+      ]);
+      const fuelByDriver = new Map(fuel.map((r) => [r.driver_id, r]));
+      const damageByDriver = new Map(damage.map((r) => [r.driver_id, r]));
+      const driverIds = new Set<string>([...fuelByDriver.keys(), ...damageByDriver.keys()]);
+      return [...driverIds].sort().map((driverId) => ({
+        driver_id: driverId,
+        period_start: periodStart,
+        period_end: periodEnd,
+        fuel: fuelByDriver.get(driverId) ?? null,
+        damage: damageByDriver.get(driverId) ?? null,
+      }));
+    });
+    return { rows };
+  });
+
+  // B-30 — fuel-anomalies: the flattened anomaly worklist (one row per flag, not per driver),
+  // for an ops reviewer to scan. Every row states its own evidence — see fuel-driver-scorecard
+  // .service.ts's file header for why these are flags to look at, never accusations.
+  app.get("/api/v1/maintenance/integrity/fuel-anomalies", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const query = periodQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+    const { periodStart, periodEnd } = resolvePeriod(query.data);
+    const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
+      const scorecards = await computeDriverFuelScorecard(client, query.data.operating_company_id, periodStart, periodEnd);
+      return scorecards.flatMap((driver) =>
+        driver.flags.map((flag) => ({
+          driver_id: driver.driver_id,
+          period_start: periodStart,
+          period_end: periodEnd,
+          ...flag,
+        }))
+      );
     });
     return { rows };
   });
