@@ -511,3 +511,30 @@ should confirm this is acceptable for a first-ever reconciliation, or provide th
 opening balance as of when tracking should start.
 **Not built here, per the order's own "report before code" framing:** no matched-with-difference
 state added, no mechanism consolidation decided, no UI change made.
+
+## URGENT — 5 merged migrations today are NOT applied to prod (db:migrate is owner-only, per ROUND 300)
+Merging to GitHub does not apply a migration. Checked live against `_system._schema_migrations` just
+now: NONE of today's 5 CC-1 migrations exist in the canonical ledger --
+  202614900000_refuse_mirror_only_ledger_writes.sql              (H-3 trigger -- already live via
+                                                                    the earlier out-of-band apply,
+                                                                    but the LEDGER ROW is still
+                                                                    missing)
+  202614980000_tier1_linkage_unit_driver_constraint.sql          (A-31, NOT live -- Tier1 rows can
+                                                                    still be written without
+                                                                    unit/driver/load today)
+  202614990000_odometer_readings_update_grant.sql                (ACCT-F180 grant -- low risk if
+                                                                    delayed, prod already has the
+                                                                    grant via a non-migration path)
+  202615000000_bind_usmca_cash_gl_accounts.sql                   (A-28/old-A-32, NOT live -- the 3
+                                                                    bank accounts are STILL unbound
+                                                                    right now, bank-feed posting on
+                                                                    Faro Cash Reserve/Faro Escrow
+                                                                    Reserve/Petty Cash still cannot
+                                                                    post)
+  202615010000_reconciliation_match_tristate.sql                 (A-27 tri-state MATCHED, NOT live)
+Every one of these is design-verified (rolled-back-transaction proof in its own PR) and merged
+clean. `db:migrate`/`ALLOW_PROD_MIGRATE` remain hard-denied at the permission layer for this coder
+(confirmed again just now, unchanged since ROUND 300's ruling) -- not attempting to route around it.
+**Ask: one db:migrate run against prod picks up all 5 at once.** The two that matter most for live
+money right now are A-31 (Tier1 rows can still be written incomplete) and A-28/A-32 (3 bank accounts
+still cannot post a single dollar to the GL).
