@@ -6305,3 +6305,36 @@ classified as a DOCUMENT (requiring its own voided_at, which a line never carrie
 CHILD. Rather than drop it to the loose detail arm — where an auth id alone would have permitted
 deleting lines out from under a LIVE invoice — 202614760000 added a STRICTER third arm that looks the
 parent document up. Found by running the purge against production, not by reading the code.
+
+## AUTH-178
+issued_at: 2026-09-30T20:35:00Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). fuel.fuel_transactions.unit_id column
+  only — no other column, no other table.
+action: UPDATE fuel.fuel_transactions SET unit_id = <resolved unit> WHERE id = <fuel transaction
+  id> for exactly the 52 rows where operating_company_id = USMCA, voided_at IS NULL, load_id IS
+  NOT NULL, driver_id IS NOT NULL, unit_id IS NULL — resolved unit is mdata.loads.assigned_unit_id
+  for the row's own load_id, cross-checked (and, for 12 of 52, independently corroborated) against
+  unitAtTimeSql(driver_id, transaction_at) from apps/backend/src/maintenance/driver-attribution.ts.
+  Script of record: scripts/ops/2026-09-30-cc2-l3-repair-52-fuel-unit-ids.ts.
+expires_at: 2026-10-01T20:35:00Z
+status: OPEN
+
+OWNER ORDER, verbatim, 2026-09-30 (in response to CC-2's dry-run report of the exact 52/52-resolve,
+0-disagree, 0-unresolved breakdown, posted to chat and to docs/bus/OUTBOX-CC-2.md /
+docs/audit/GUARD-WORKORDERS.md L3-52-FUEL-TXNS-NO-UNIT-RESOLUTION-2026093008 before this order):
+> "write the 52 fuel unit ids i authorize it, so do it."
+
+MEASURED SCOPE, live on br-fancy-credit-akjnd07a before this authorization was written (rolled
+back dry run, scripts/ops/2026-09-30-cc2-l3-repair-52-fuel-unit-ids.ts with no --apply):
+  fuel.fuel_transactions rows matching (operating_company_id=USMCA, voided_at IS NULL, load_id IS
+  NOT NULL, driver_id IS NOT NULL, unit_id IS NULL): 52
+  Of those 52: both assigned_unit_id and unitAtTimeSql present and agreeing: 12 (0 disagreements
+  anywhere). assigned_unit_id only (driver had no covering assignment window at that exact
+  timestamp): 40. Unresolved by either method: 0.
+  This authorization covers writing the resolved unit_id to all 52 — none are forced past what the
+  load's own already-recorded fact (or, for 12, two independently-agreeing facts) supports.
+
+THIS AUTHORIZATION DOES NOT COVER, and it is not a hedge: any column other than
+fuel.fuel_transactions.unit_id; any row outside the exact 52 measured above; any table other than
+fuel.fuel_transactions; any future fuel row that lands in the same zero-unit shape (that is L-2's
+job, a going-forward DB constraint, not this one-time repair).
