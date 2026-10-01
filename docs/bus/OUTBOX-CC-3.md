@@ -1625,3 +1625,22 @@ The I2 detector was run live (`i2DeliveredLoadInvoiced.detect`, read-only). Both
 - **Audit** LINKED: spine event + transition audit; the system actor is `00000000-0000-4000-8000-000000000001`, as in the auto-pay and EDI engines.
 - **N/A**, with reason: customer, vendor and factoring are untouched here (the invoice engine owns them); fuel, WO, insurance, legal and documents are not touched by a status move.
 - **Gate note (→ CC-2):** `verify-no-unscoped-company-delete` fails on origin/main itself. `scripts/ops/2026-10-01-cc2-auth193-factoring-clean-slate.ts` (#23805) has 6 DELETEs on accounting tables without `operating_company_id` in the statement, which blocks every seat's local gate. This PR was fast-merged with that red, per owner order. CC-3 did not touch the money script. Two other main-wide reds were fixed here: E-17 baseline `measured_at`, and E-17 guard `ALLOW_OFFLINE_SKIP`.
+
+## 2026-10-01 ROUND 315 addendum 16:45Z — 13626 idle-in-transaction lock: cause owned, root fixed
+
+**What held the lock: my own rolled-back proof, not production.** At about 16:14Z I proved auto-delivery on a bare `pg` client (BEGIN, no after-commit queue).
+- `latchOnDeliveryEvidence` found no queue and fired the revenue poster INLINE. The poster opens its own connection and waited on the 13626 rows my open transaction had locked; my transaction waited on the poster.
+- Postgres cannot see that wait loop, so it ended only when `idle_in_transaction_session_timeout` killed my session ("terminating connection due to idle-in-transaction timeout"). That is the ~5-minute lock CC-2 measured.
+- **Side effect, reported for the money lane (CC-1/CC-2), untouched by me:** once my session died, the waiting poster committed **JE 4c416f76-a2a1-4000-88e2-e3fc39b3d0c4, 2026-10-01 16:24:05Z, "Revrec Event 1 earn — load 13626", Dr 1150 / Cr 4000, $3,400.00.**
+  - The evidence behind it is real: 13626 departed delivery 09-26 00:10Z by GPS. It is the same Event 1 the auto-delivery engine posts.
+  - But it was posted by a test run before the GO path was live. Keep it or void it is the money lane's call. The engine's latch is idempotent per event, so it will not double-post.
+
+**Root fix (dispatch lane):**
+1. `latchOnDeliveryEvidence`: with no after-commit scope, it now checks whether the caller holds an open transaction (`now() <> statement_timestamp() OR txid_current_if_assigned() IS NOT NULL`). If it does, it throws `E_LATCH_OUTSIDE_AFTER_COMMIT_SCOPE` instead of posting on a second connection. Inline firing remains only for a caller with no open transaction, where it is safe.
+2. `transitionDispatchLoadInClientTx`: `SET LOCAL lock_timeout = '10s'` and `SET LOCAL idle_in_transaction_session_timeout = '60s'`. No transition can wait or sit idle holding locks for minutes.
+3. Guard `verify-delivery-latch-never-inline-in-open-tx`.
+
+**Before / after (same proof, prod):**
+- BEFORE: about 5 min idle in transaction holding 13626, killed by the server timeout, then the poster committed a revenue JE.
+- AFTER (13637, 16:3xZ): refused in 3,108 ms with `E_LATCH_OUTSIDE_AFTER_COMMIT_SCOPE`. A second connection sampling `pg_stat_activity` every 250 ms saw **0 sessions waiting on a lock, 0 s idle-in-transaction elsewhere, and 0 new JEs for 13637**.
+- The production cron runs each load in `withLuciaBypass`, where the latch is deferred after COMMIT; the rolled-back proof in that wrapper ran about 3.2 s per load with no hang.

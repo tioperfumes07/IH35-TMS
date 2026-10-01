@@ -206,6 +206,14 @@ async function convertAndSendInvoiceOnDelivery(
  *          "fired" when run inline because the client is not inside a managed transaction,
  *          "skipped" when the status is not delivery evidence.
  */
+/** True when the caller's client is inside an open transaction (txn start != this statement's start). */
+async function callerHoldsOpenTransaction(client: LatchClient): Promise<boolean> {
+  const q = (client as { query?: (sql: string) => Promise<{ rows: Array<{ in_tx: boolean }> }> }).query;
+  if (typeof q !== "function") return false;
+  const r = await q.call(client, "SELECT (now() <> statement_timestamp() OR txid_current_if_assigned() IS NOT NULL) AS in_tx");
+  return Boolean(r.rows?.[0]?.in_tx);
+}
+
 export async function latchOnDeliveryEvidence(
   client: LatchClient,
   input: DeliveryEvidenceLatchInput
@@ -238,6 +246,17 @@ export async function latchOnDeliveryEvidence(
     if (!factoringQueued) await fireFactoringAutoSubmit(input);
     if (!billingQueued) await fireLoadBillingSync(input);
     return "deferred";
+  }
+  // ROUND 315 (CC-2 measured a ~5 min idle-in-transaction lock on load 13626): with no after-commit scope the
+  // latch used to fire INLINE. The poster opens its OWN connection and writes rows this caller's still-open
+  // transaction has locked, so the two sessions wait on each other (invisible to Postgres' deadlock detector)
+  // until idle_in_transaction_session_timeout kills the caller -- and then the poster commits anyway. Inline is
+  // only safe when the caller holds NO open transaction. Inside one, refuse loudly instead of hanging.
+  if (await callerHoldsOpenTransaction(client)) {
+    throw new Error(
+      "E_LATCH_OUTSIDE_AFTER_COMMIT_SCOPE: delivery latch called inside an open transaction with no after-commit queue " +
+        "(use withCurrentUser / withLuciaBypass / withCompanyScope) -- refusing to post on a second connection that would wait on this one"
+    );
   }
   await firePostLoadRevenueLatch(input);
   await fireFactoringAutoSubmit(input);

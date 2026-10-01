@@ -63,6 +63,7 @@ Touched scripts/-lane files, one per queue item, each its own PR:
 - `scripts/verify-samsara-webhook-tenant-resolution.mjs` (ROUND 313 E-13: webhook tenant from payload orgId; verify before persist).
 - `scripts/verify-samsara-route-push-contract.mjs` (ROUND 313 E-31: Samsara route body rules + no push of delivered loads).
 - `scripts/verify-geofence-auto-delivery-canonical.mjs` (ROUND 315: auto-delivery only via the canonical transition).
+- `scripts/verify-delivery-latch-never-inline-in-open-tx.mjs` (ROUND 315: no inline latch inside an open transaction; transition lock/idle timeouts).
 - `scripts/verify-load-cancellation-reversal-canonical.mjs` (ROUND 313: one canonical undo of a wrong cancellation).
 - `scripts/ops/2026-10-01-cc3-reverse-false-cancellations.mts` (AUTH-192).
 - `scripts/verify-driver-prompts-flag-off-idempotent.mjs` (E-30 addition).
