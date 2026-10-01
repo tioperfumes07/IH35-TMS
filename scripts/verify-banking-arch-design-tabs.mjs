@@ -22,6 +22,8 @@ const REQUIRED_LIVE_TAB_IDS = [
   "driver_escrow",
   "relay_card",
   "reports",
+  "statement_import",
+  "plaid_connections",
   "settings",
 ];
 

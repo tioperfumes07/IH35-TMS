@@ -33,9 +33,10 @@ const REQUIRED_PATHS = [
 const REQUIRED_TAB_IDS = [
   "driver_escrow",
   "relay_card",
+  "plaid_connections",
+  "statement_import",
 ];
 
-// C-64 — Statement Import + Plaid are + New / deep-link panels, not BANKING_MODULE_TABS.
 const REQUIRED_PANEL_REFS = [
   "statement_import",
   "plaid_connections",

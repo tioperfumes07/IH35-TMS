@@ -24,7 +24,7 @@ export function FactoringSummaryCard({ reserve, outstandingLiability, lastAdvanc
         </Link>
       </div>
       <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-        <dt className="text-[#6B7280]">Reserve held</dt>
+        <dt className="text-[#6B7280]">Reserves held</dt>
         <dd className="text-right font-medium tabular-nums text-[#0F1219]">{formatUsd(reserve)}</dd>
         <dt className="text-[#6B7280]">Outstanding liability</dt>
         <dd className="text-right font-medium tabular-nums text-[#0F1219]">

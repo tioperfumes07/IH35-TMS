@@ -44,9 +44,19 @@ const leaf = (doc.leaves || []).find((l) => l.id === "factoring");
 if (!leaf) failures.push("banking missing factoring leaf");
 else if (!(leaf.required || []).includes("liability")) failures.push("banking.factoring must KEEP liability");
 
+// C-64: Factoring is a Home summary card (not a tab). Reserves held lives on the card;
+// BankingHome still wires factoringReserve into KPIs + FactoringSummaryCard.
 const home = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/banking/BankingHome.tsx"), "utf8");
-if (!/factoringReserve/.test(home) || !/Reserves held/.test(home)) {
-  failures.push("BankingHome factoring tab must show Reserves held from factoringReserve");
+const cardPath = path.join(ROOT, "apps/frontend/src/pages/banking/components/FactoringSummaryCard.tsx");
+const card = fs.existsSync(cardPath) ? fs.readFileSync(cardPath, "utf8") : "";
+if (!/factoringReserve/.test(home)) {
+  failures.push("BankingHome must wire factoringReserve");
+}
+if (!/FactoringSummaryCard/.test(home) && !/Reserves held/.test(home)) {
+  failures.push("BankingHome must mount FactoringSummaryCard (or inline Reserves held)");
+}
+if (!/Reserves held/.test(card) && !/Reserves held/.test(home)) {
+  failures.push("Factoring summary must show Reserves held from factoringReserve");
 }
 
 if (failures.length) {

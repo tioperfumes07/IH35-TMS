@@ -42,7 +42,7 @@ import { StatementUpload } from "../../components/banking/StatementUpload";
 import { BANKING_TAB_PATH, bankingTabFromPath } from "../../router/route-manifest";
 import {
   BANKING_MODULE_TABS,
-  type BankingLegacyPanelId,
+  BANKING_SUBNAV_TAB_IDS,
   type BankingModuleTabId,
 } from "./BANKING_NAV_CONFIG";
 import { formatUsd } from "../../lib/money";
@@ -57,7 +57,7 @@ import { BankingReconHomeCard } from "./components/BankingReconHomeCard";
 import { FactoringSummaryCard } from "./components/FactoringSummaryCard";
 
 
-type BankingTabId = BankingModuleTabId | BankingLegacyPanelId;
+type BankingTabId = BankingModuleTabId;
 
 type Props = {
   initialTab?: BankingTabId;
@@ -387,12 +387,12 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             items: [
               {
                 key: "statement-import",
-                label: "Statement Import",
+                label: "Import bank statement",
                 onClick: () => navigate(BANKING_TAB_PATH.statement_import),
               },
               {
                 key: "plaid-connections",
-                label: "Plaid Connections",
+                label: "Manage bank connections",
                 onClick: () => navigate(BANKING_TAB_PATH.plaid_connections),
               },
               {
@@ -444,7 +444,9 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         actions={headerActions}
       />
       <NavyPageSubNav
-        items={BANKING_MODULE_TABS.map((tab) => ({
+        items={BANKING_MODULE_TABS.filter((tab) =>
+          (BANKING_SUBNAV_TAB_IDS as readonly string[]).includes(tab.id),
+        ).map((tab) => ({
           label: tab.label,
           to: BANKING_TAB_PATH[tab.id],
         }))}

@@ -57,8 +57,8 @@ const CHECKS = [
     pattern: /je\.id = ep\.linked_journal_entry_id/,
   },
   {
-    name: "DriverEscrowTabContent.tsx renders the Journal Entry column",
-    file: "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx",
+    name: "DriverEscrowLedgerSection.tsx renders the Journal Entry column",
+    file: "apps/frontend/src/pages/banking/components/DriverEscrowLedgerSection.tsx",
     pattern: /banking-escrow-journal-entry-link/,
   },
   {

@@ -16,9 +16,9 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-driver-escrow-tab-content-uses-paritytable";
-const PAGE = "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx";
+const PAGE = "apps/frontend/src/pages/banking/components/DriverEscrowLedgerSection.tsx";
 
-const COLUMN_LABELS = ["Date", "Description", "Deposits", "Withdrawals", "Status", "Category"];
+const COLUMN_LABELS = ["Date", "Driver", "Type", "Description", "Amount", "Status", "Settlement", "Journal Entry"];
 
 function assertMigrated(src) {
   const errors = [];
