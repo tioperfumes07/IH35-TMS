@@ -24,7 +24,7 @@ describe("T-21 geofence odometer capture", () => {
     expect(insertSql).toContain("NOT EXISTS");
   });
 
-  it("never guesses a source: real_obd requires a close reading, interpolated requires two real readings, everything else is absent with no number", async () => {
+  it("never guesses a source: real_obd requires a close reading, everything else is absent with no number (R-02: never interpolated)", async () => {
     let insertSql = "";
     const client = { query: async (sql: string) => {
       if (sql.includes("INSERT INTO telematics.geofence_odometer_captures")) insertSql = sql;
@@ -32,7 +32,8 @@ describe("T-21 geofence odometer capture", () => {
     } };
     await captureGeofenceOdometerEvents(client as never, { operatingCompanyId: "c" });
     expect(insertSql).toContain("'real_obd'");
-    expect(insertSql).toContain("'interpolated'");
+    expect(insertSql).not.toMatch(/THEN 'interpolated'/);
+    expect(insertSql).not.toContain("before_r");
     expect(insertSql).toContain("'absent'");
     // absent is the ELSE branch -- no interpolation math runs when it fires
     expect(insertSql).toMatch(/ELSE\s+NULL\s+END AS odometer_mi/);

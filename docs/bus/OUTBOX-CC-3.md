@@ -1039,3 +1039,20 @@ directly — maint/pm.routes.ts, driver/pwa-live.routes.ts, jobs/samsara-positio
 (local_unit_id), column as fallback only. Live check: T122 old join 0 hits -> new join resolves 212014918197571 with payload; T176 unchanged.
 GUARD: scripts/verify-position-poll-odometer-and-mirror-first.mjs + --selftest PASS.
 NEXT: E-04.
+
+## 2026-10-01 — ROUND 306 E-04 — geofence odometer capture verified; R-02 fix; fence id handed to E-03 stops
+ROUND: 306 · ROW: E-04 · STATUS: shipped.
+VERIFIED LIVE: telematics.geofence_odometer_captures 719 rows — real_obd 31, absent 73, INTERPOLATED 615 (newest interpolated 2026-09-30 13:45Z).
+DEFECT FOUND + FIXED (R-02 "READ or ABSENT, never computed between two readings"): the writer's middle CASE branch linearly
+interpolated between the readings before and after a crossing. Branch + its two bracket laterals removed: a crossing with no real
+read within 120 s is now 'absent', odometer NULL. The 615 historic rows are left as they are (no data writes); every reader treats
+them as no reading (driven-miles-legs already did; the new stop link surfaces the crossing but never the computed number).
+HAND-OFF TO E-03 (REDUNDANCY R-1): loadFenceCapturesForStop (E-04 service) returns the entered/exited crossings bounding the SAME VISIT
+as a stop (no exit between entry and stop; no re-entry between stop and exit). geofenceForStopSql (E-03) now also returns the
+fence radius (additive). New consumer telematics/unit-stops.service.ts + GET /api/v1/telematics/unit-stops?operating_company_id&unit_id
+[&geofence_id = reverse] — E-03 stops, each with containing fence (inside its own radius) + E-04 crossings + driver-at-time (driverAtTimeSql).
+LIVE PROOF (rolled back, 48 h): T171 22 stops / 6 in fence / 6 with crossings; T164 10/7/7; T174 19/8/8.
+  T171 2026-09-30 22:39:57Z 13.6 min at Love's #762 Laredo: stop odo 436,963.1 · entered 436,963.0 real_obd · exited 436,964.5 real_obd.
+  Reverse (geofence_id = Love's #471 Natalia) -> 3 stops. Writer re-run: 0 new captures (idempotent).
+GUARD: scripts/verify-fence-capture-feeds-stops-never-interpolates.mjs + --selftest PASS; vitest geofence-odometer-capture 4/4.
+NEXT: E-05 (depends on E-03 persisted — Lead's migration). Will check its state; if not persisted, report and continue E-06.
