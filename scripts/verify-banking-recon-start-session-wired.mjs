@@ -43,6 +43,11 @@ export function run(rootDir = root) {
   const backend = read(rootDir, backendRoutesPath);
   const apiClient = read(rootDir, apiClientPath);
   const bankingHome = read(rootDir, bankingHomePath);
+  const reconShellPath = "apps/frontend/src/pages/banking/components/ReconciliationTabContent.tsx";
+  const reconShell = fs.existsSync(path.join(rootDir, reconShellPath))
+    ? read(rootDir, reconShellPath)
+    : "";
+  const bankingReconUi = bankingHome + "\n" + reconShell;
   const workspace = read(rootDir, workspacePath);
   const reconPage = read(rootDir, reconPagePath);
   const manifest = read(rootDir, manifestPath);
@@ -68,9 +73,10 @@ export function run(rootDir = root) {
     failures.push("startReconciliationSession must POST the exact mounted backend path");
   }
 
-  const bankingHomeCallsStart = bankingHome.includes("void startReconciliationSession({");
+  const bankingHomeCallsStart = bankingReconUi.includes("void startReconciliationSession({");
   const bankingHomeHasEntryButtons =
-    bankingHome.includes('ActionButton onClick={openStartReconciliation}>+ Start first reconciliation</ActionButton>') &&
+    (bankingReconUi.includes("+ Start first reconciliation") ||
+      bankingHome.includes('ActionButton onClick={openStartReconciliation}>+ Start first reconciliation</ActionButton>')) &&
     bankingHome.includes('ActionButton onClick={openStartReconciliation}>+ Reconcile</ActionButton>');
   if (!bankingHomeCallsStart) {
     failures.push("BankingHome.tsx must call startReconciliationSession — the Start-recon modal must submit the real request, not a no-op");
@@ -86,8 +92,8 @@ export function run(rootDir = root) {
     failures.push("ReconciliationWorkspace start form must pick a real bank tile — URL-only bank_account_hint leaves Create Session disabled");
   }
 
-  if (!bankingHome.includes('to="/banking/reconciliation-workspace"') || !/Open Workspace/.test(bankingHome)) {
-    failures.push("BankingHome 'Open Workspace' must target /banking/reconciliation-workspace (not /banking/reconciliation Close-period chrome)");
+  if (!bankingReconUi.includes('to="/banking/reconciliation-workspace"') || !/Open Workspace/.test(bankingReconUi)) {
+    failures.push("BankingHome/Recon shell 'Open Workspace' must target /banking/reconciliation-workspace (not /banking/reconciliation Close-period chrome)");
   }
   if (!reconPage.includes('to="/banking/reconciliation-workspace"') || !reconPage.includes('data-testid="banking-recon-start-session"')) {
     failures.push("BankReconciliationPage (sidebar Reconciliation) must expose Start reconciliation → /banking/reconciliation-workspace — a self-link is a dead hop");
@@ -120,6 +126,10 @@ if (process.argv.includes("--selftest")) {
       [workspacePath]: read(root, workspacePath),
       [reconPagePath]: read(root, reconPagePath),
       [manifestPath]: read(root, manifestPath),
+      ["apps/frontend/src/pages/banking/components/ReconciliationTabContent.tsx"]: read(
+        root,
+        "apps/frontend/src/pages/banking/components/ReconciliationTabContent.tsx",
+      ),
     };
     for (const [rel, contents] of Object.entries(files)) write(temp, rel, contents);
 
@@ -164,15 +174,19 @@ if (process.argv.includes("--selftest")) {
 
     write(
       temp,
-      bankingHomePath,
-      files[bankingHomePath].replace(
+      "apps/frontend/src/pages/banking/components/ReconciliationTabContent.tsx",
+      files["apps/frontend/src/pages/banking/components/ReconciliationTabContent.tsx"].replace(
         'to="/banking/reconciliation-workspace"',
         'to="/banking/reconciliation"'
       )
     );
     mutationFailures = run(temp);
     if (mutationFailures.length === 0) throw new Error("Home Open Workspace mis-route was not detected");
-    write(temp, bankingHomePath, files[bankingHomePath]);
+    write(
+      temp,
+      "apps/frontend/src/pages/banking/components/ReconciliationTabContent.tsx",
+      files["apps/frontend/src/pages/banking/components/ReconciliationTabContent.tsx"],
+    );
 
     write(
       temp,

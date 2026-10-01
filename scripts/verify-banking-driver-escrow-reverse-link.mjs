@@ -25,7 +25,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const HISTORY_VIEW = "apps/frontend/src/pages/drivers/operations/EscrowHistoryView.tsx";
-const TAB_CONTENT = "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx";
+const TAB_CONTENT = "apps/frontend/src/pages/banking/components/DriverEscrowLedgerSection.tsx";
 const MATRIX = "docs/specs/scoreboard/modules/banking.required.json";
 const SELF = "scripts/verify-banking-driver-escrow-reverse-link.mjs";
 const FILES = [HISTORY_VIEW, TAB_CONTENT];

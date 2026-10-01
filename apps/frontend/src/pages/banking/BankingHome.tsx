@@ -40,14 +40,21 @@ import { BankingReportsTabContent } from "./components/BankingReportsTabContent"
 import { BankingTransactionsDesignView } from "./components/BankingTransactionsDesignView";
 import { StatementUpload } from "../../components/banking/StatementUpload";
 import { BANKING_TAB_PATH, bankingTabFromPath } from "../../router/route-manifest";
-import { BANKING_MODULE_TABS, type BankingModuleTabId } from "./BANKING_NAV_CONFIG";
+import {
+  BANKING_MODULE_TABS,
+  BANKING_SUBNAV_TAB_IDS,
+  type BankingModuleTabId,
+} from "./BANKING_NAV_CONFIG";
 import { formatUsd } from "../../lib/money";
 import { entityLabel } from "../../lib/entity-label";
 import { BankingNewMenu } from "./components/BankingNewMenu";
 import { LinkSuggestionsPanel } from "./components/LinkSuggestionsPanel";
-import { MoneyKpiTile, MoneySparkline } from "../../components/money/MoneyKpiTile";
+import { MoneyKpiTile } from "../../components/money/MoneyKpiTile";
 import { NotApplicable } from "../../components/money/NotApplicable";
-import { staleSyncLabel, MONEY_TONE_COLORS } from "../../design/money-design-system";
+import { WhereTheMoneyIsRail, type MoneyRailRow } from "./components/WhereTheMoneyIsRail";
+import { NeedsCategorizingQueue, type NeedsCategorizingRow } from "./components/NeedsCategorizingQueue";
+import { BankingReconHomeCard } from "./components/BankingReconHomeCard";
+import { FactoringSummaryCard } from "./components/FactoringSummaryCard";
 
 
 type BankingTabId = BankingModuleTabId;
@@ -193,7 +200,6 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   // here — #3997 converted cents at the selector; #4011 moved conversion to the API, and a second
   // /100 made TRANSP render ~$1,739 instead of ~−$173,932 (100× deflation vs tile sum).
   const cashPosting = Number(kpiQuery.data?.total_cash ?? 0);
-  const dipBalance = Number(kpiQuery.data?.dip_operating ?? 0) + Number(kpiQuery.data?.dip_payroll ?? 0);
   const uncategorizedCount = Number(kpiQuery.data?.total_uncategorized ?? 0);
   const factoringVirtualSummary = useMemo(() => {
     const companies = factoringVirtualQuery.data?.companies ?? [];
@@ -245,6 +251,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   );
   const showVirtualTilesEmptyHonesty =
     tilesQuery.isSuccess &&
+    sortedBankTiles.length === 0 &&
     realBankTiles.length === 0 &&
     virtualBankTiles.length === 0 &&
     (allAccountsQuery.isSuccess ? (allAccountsQuery.data?.accounts ?? []).length === 0 : false);
@@ -258,7 +265,20 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   // qbo_sync_queue entities (any type) in status 'synced', which is NOT a bank-transaction total and
   // showed "Transactions: 0" for companies with hundreds of un-pushed categorized transactions.
   const qboStats = qboSyncStatsQuery.data;
-  const syncedAt = qboStats?.last_successful_sync_at ?? null;
+  // ROUND-20.8 A5 — the "Bank feed" KPI tile's staleness, from the same last_synced_at
+  // PlaidSyncStatusPanel used to read (that panel is gone now — B9 — so this is its one remaining
+  // consumer). The account with the newest last_synced_at wins.
+  const bankFeedLastSync = useMemo(() => {
+    const accounts = plaidAccountsQuery.data?.accounts ?? [];
+    return (
+      accounts
+        .map((a) => a.last_synced_at)
+        .filter((v): v is string => Boolean(v))
+        .sort()
+        .reverse()[0] ?? null
+    );
+  }, [plaidAccountsQuery.data?.accounts]);
+  const syncedAt = qboStats?.last_successful_sync_at ?? bankFeedLastSync ?? null;
   const syncTransactionCount = Number(kpiQuery.data?.total_transactions ?? 0);
   const pendingSyncCount = Number(qboStats?.pending ?? 0);
   const bankAccountsPanelRows = useMemo(() => {
@@ -277,20 +297,11 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     }));
   }, [plaidAccountsQuery.data?.accounts, sortedBankTiles]);
   const totalBankAccountsForRecon = bankAccountsPanelRows.length;
-  // ROUND-20.8 A5 — the "Bank feed" KPI tile's staleness, from the same last_synced_at
-  // PlaidSyncStatusPanel used to read (that panel is gone now — B9 — so this is its one remaining
-  // consumer). The account with the newest last_synced_at wins.
-  const bankFeedLastSync = useMemo(() => {
-    const accounts = plaidAccountsQuery.data?.accounts ?? [];
-    return (
-      accounts
-        .map((a) => a.last_synced_at)
-        .filter((v): v is string => Boolean(v))
-        .sort()
-        .reverse()[0] ?? null
-    );
-  }, [plaidAccountsQuery.data?.accounts]);
-  const bankFeedInstitution = plaidAccountsQuery.data?.accounts?.[0]?.institution_name ?? null;
+  const factoringTile = sortedBankTiles.find(
+    (t) =>
+      String(t.tile_kind) === "virtual" &&
+      (t.tag === "Factoring" || t.display_name.toLowerCase().includes("factoring")),
+  );
   useEffect(() => {
     if (!selectedAccountId) return;
     if (!bankAccountsPanelRows.some((row) => row.id === selectedAccountId)) setSelectedAccountId(null);
@@ -343,24 +354,13 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       return ai - bi;
     });
   }, [plaidAccountsQuery.data?.accounts, bankAccountsPanelRows]);
-  const factoringTile = useMemo(
-    () => tiles.find((t) => String(t.tile_kind) === "virtual" || t.display_name.toLowerCase().includes("factoring")) ?? null,
-    [tiles]
-  );
-  const dipAccountId = useMemo(() => {
-    const dip = (allAccountsQuery.data?.accounts ?? []).find((a) => Boolean((a as Record<string, unknown>).is_dip));
-    return dip ? String((dip as Record<string, unknown>).id ?? "") || null : null;
-  }, [allAccountsQuery.data?.accounts]);
   // C-53 — start opener lives on the Reconciliation shell (SAVE+CLOSE). Home / attention strip deep-link here.
   const openStartReconciliation = () => {
     setActiveTab("reconciliation");
     navigate(`${BANKING_TAB_PATH.reconciliation}?start=1`);
   };
 
-  // Doc-18 defects #10/#11 — QBO always surfaces "Bank Register" + "Chart of Accounts" as persistent
-  // Banking nav actions (not buried in Lists), so both render on every Banking tab, alongside whatever
-  // tab-specific actions apply. Bank Register MUST pre-bind the selected bank's Cash GL
-  // (ledger_account_id) — same path as CoA "View register". Never open the unbound empty picker.
+  // Doc-18 — Bank Register MUST pre-bind the selected bank's Cash GL.
   const openBankRegister = () => {
     const bankRow = (allAccountsQuery.data?.accounts ?? []).find((a) => String(a.id) === String(selectedId ?? ""));
     const ledgerAccountId = bankRow?.ledger_account_id ? String(bankRow.ledger_account_id) : null;
@@ -369,24 +369,12 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       return;
     }
     if (selectedId) {
-      // FAIL-3: Cash GL setup was routed but unreachable — send operator to the wired surface.
       navigate("/banking/cash-gl-setup");
       pushToast("This bank has no Cash GL mapping. Map it here, then open Bank Register.", "error");
       return;
     }
     pushToast("Select a bank account first, then open Bank Register.", "error");
   };
-  // ROUND-20.8 B1/B2 — was THIRTEEN unstyled text links crammed into one header line (measured live
-  // on the Accounts tab: Bank Register, Chart of Accounts, +Record Transfer, +Record Deposit, View
-  // Transfers, +Import Statement, Cash GL setup, Email Queue, +Create Account/Manage Accounts,
-  // +Petty Cash, Connect Bank, +Connect Credit Card, +Connect Other). B2 deletes 5 of those outright
-  // — +Import Statement (duplicates the Statement Import tab), Connect Bank / +Connect Credit Card /
-  // +Connect Other (duplicate the Plaid Connections tab — now live inside
-  // BankingPlaidConnectionsPanel itself, see that file), +Create Account/Manage Accounts (duplicates
-  // the Accounts tab, which already has its own "+" manage-accounts affordance in the Bank accounts
-  // panel below). Bank Register stays a separate persistent button (Doc-18 #10/#11 — must render on
-  // every tab, pre-binding the selected bank's Cash GL). Everything else folds into ONE "+ New"
-  // grouped menu.
   const handleCreatePettyCash = async () => {
     try {
       const result = await createPettyCashAccount(companyId);
@@ -397,6 +385,8 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       pushToast(`Failed to create Petty Cash account: ${(err as Error)?.message ?? "Unknown error"}`, "error");
     }
   };
+  // ROUND 304 / C-64 — Statement Import, Plaid Connections, + Create Account fold into + New
+  // (no longer header links or tabs). Bank Register stays persistent (Doc-18).
   const navActions = (
     <>
       <ActionButton onClick={openBankRegister}>Bank Register</ActionButton>
@@ -409,13 +399,32 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 key: "record-transfer",
                 label: "+ Record Transfer",
                 onClick: () => setTransferModalOpen(true),
-                // BANK-F02 — keep a stable, dedicated selector for the trigger even though ROUND-20.8
-                // B1/B2 folded it into this grouped "+ New" menu (verify-bank-record-transfer-trigger-wired.mjs).
                 testId: "banking-home-record-transfer",
               },
               { key: "record-deposit", label: "+ Record Deposit", onClick: () => setRecordDepositOpen(true) },
               { key: "petty-cash", label: "+ Petty Cash", onClick: () => void handleCreatePettyCash() },
               { key: "view-transfers", label: "View Transfers", onClick: () => navigate("/banking/transfers") },
+            ],
+          },
+          {
+            heading: "Import & connect",
+            items: [
+              {
+                key: "statement-import",
+                label: "Import bank statement",
+                onClick: () => navigate(BANKING_TAB_PATH.statement_import),
+              },
+              {
+                key: "plaid-connections",
+                label: "Manage bank connections",
+                onClick: () => navigate(BANKING_TAB_PATH.plaid_connections),
+              },
+              {
+                key: "create-account",
+                label: "+ Create Account",
+                onClick: () => setManageOpen(true),
+                testId: "banking-new-create-account",
+              },
             ],
           },
           {
@@ -459,7 +468,9 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         actions={headerActions}
       />
       <NavyPageSubNav
-        items={BANKING_MODULE_TABS.map((tab) => ({
+        items={BANKING_MODULE_TABS.filter((tab) =>
+          (BANKING_SUBNAV_TAB_IDS as readonly string[]).includes(tab.id),
+        ).map((tab) => ({
           label: tab.label,
           to: BANKING_TAB_PATH[tab.id],
         }))}
@@ -473,9 +484,10 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           on Accounts/Plaid Connections/Settings — the same fact rendered up to 3x on one page.
           BankingPlaidConnectionsPanel is now the ONE canonical panel (it grew its own
           + Connect bank/credit card/other buttons, see that file) — this duplicate pair is deleted. */}
+
       {activeTab === "accounts" ? (
         <>
-          {/* C-51 — buried live facts first: uncategorized / never-reconciled / Cash GL / QBO / Escrow. */}
+          {/* C-65 — fixed side-dock; never in-flow (no layout shift). */}
           <BankingHomeAttentionStrip
             facts={{
               uncategorizedCount,
@@ -500,8 +512,250 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               navigate(BANKING_TAB_PATH.driver_escrow);
             }}
           />
-          {/* QBO-parity banking home: horizontal account-tiles row + QBO sync strip (May-1 spec).
-              Additive — the KPI grid, vertical Bank-accounts list, and register below are unchanged. */}
+
+          {/* C-64 — 6 KPI tiles across (never stacked bars). */}
+          <div
+            className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-6"
+            data-c64-home-kpis="1"
+          >
+            {(() => {
+              const unboundCashGl = (allAccountsQuery.data?.accounts ?? []).filter((a) => !a.ledger_account_id).length;
+              const uncatTone = uncategorizedCount === 0 ? "good" : "warn";
+              const reconTone =
+                totalBankAccountsForRecon === 0
+                  ? "neutral"
+                  : reconciledAccountsCount === 0
+                    ? "bad"
+                    : reconciledAccountsCount === totalBankAccountsForRecon
+                      ? "good"
+                      : "warn";
+              const cashGlTone = unboundCashGl === 0 ? "good" : "bad";
+              return (
+                <>
+                  <MoneyKpiTile
+                    label="Uncategorized"
+                    value={String(uncategorizedCount)}
+                    tone={uncatTone}
+                    sub={`${uncategorizedCount} of ${syncTransactionCount} transactions`}
+                    onClick={() => {
+                      setTransactionsInitialFilter("uncategorized");
+                      navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`);
+                    }}
+                    data-testid="banking-kpi-uncategorized"
+                  />
+                  <MoneyKpiTile
+                    label="Reconciled"
+                    value={
+                      totalBankAccountsForRecon > 0
+                        ? `${reconciledAccountsCount} of ${totalBankAccountsForRecon}`
+                        : "—"
+                    }
+                    tone={reconTone}
+                    sub={
+                      totalBankAccountsForRecon === 0
+                        ? "no bank accounts yet"
+                        : "accounts ever reconciled"
+                    }
+                    onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}
+                    data-testid="banking-kpi-recon-accounts"
+                  />
+                  <MoneyKpiTile
+                    label="Cash on hand"
+                    value={formatUsd(cashPosting)}
+                    tone="neutral"
+                    sub={`${realBankTiles.length} real bank account(s)`}
+                    onClick={() => navigate(BANKING_TAB_PATH.bank_accounts)}
+                    data-testid="banking-kpi-cash-on-hand"
+                  />
+                  <MoneyKpiTile
+                    label="Cash GL unbound"
+                    value={String(unboundCashGl)}
+                    tone={cashGlTone}
+                    sub={unboundCashGl === 0 ? "all accounts mapped" : "cannot post until mapped"}
+                    action={
+                      unboundCashGl > 0
+                        ? { label: "Map Cash GL", onClick: () => navigate("/banking/cash-gl-setup") }
+                        : undefined
+                    }
+                    onClick={() => navigate("/banking/cash-gl-setup")}
+                    data-testid="banking-kpi-cash-gl-unbound"
+                  />
+                  <MoneyKpiTile
+                    label="Factoring reserve"
+                    value={money.format(factoringReserve)}
+                    tone="good"
+                    sub="held by Faro · virtual ledger"
+                    onClick={() => navigate("/factoring/reserve-tracker")}
+                    data-testid="banking-kpi-factoring-reserve"
+                  />
+                  <MoneyKpiTile
+                    label="Driver escrow"
+                    value={money.format(escrowFeed)}
+                    tone="good"
+                    sub={`${Number(kpiQuery.data?.drivers_with_escrow_balance ?? 0)} driver(s) · liability`}
+                    onClick={() => navigate(BANKING_TAB_PATH.driver_escrow)}
+                    data-testid="banking-kpi-driver-escrow"
+                  />
+                </>
+              );
+            })()}
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.6fr_1fr]">
+            <WhereTheMoneyIsRail
+              realRows={
+                realBankTiles.length > 0
+                  ? realBankTiles.map(
+                      (t): MoneyRailRow => ({
+                        id: t.id,
+                        name: t.display_name,
+                        kind: t.account_type || t.tag || "Bank",
+                        balance: Number(t.current_balance ?? 0),
+                        uncategorizedCount: Number(t.uncategorized_count ?? 0),
+                        tileKind: "real",
+                      }),
+                    )
+                  : bankAccountsPanelRows.map(
+                      (r): MoneyRailRow => ({
+                        id: r.id,
+                        name: r.displayName,
+                        kind: "Bank",
+                        balance: r.balance,
+                        uncategorizedCount: 0,
+                        tileKind: "real",
+                      }),
+                    )
+              }
+              virtualRows={virtualBankTiles.map(
+                (t): MoneyRailRow => ({
+                  id: t.id,
+                  name: t.display_name,
+                  kind: t.tag || t.account_type || "Virtual",
+                  balance: Number(t.current_balance ?? 0),
+                  uncategorizedCount: Number(t.uncategorized_count ?? 0),
+                  tileKind: "virtual",
+                }),
+              )}
+              formatMoney={(n) => money.format(n)}
+              onView={(id) => {
+                const tile = sortedBankTiles.find((t) => t.id === id);
+                const virtualPath = virtualTileRoute(tile);
+                if (virtualPath) {
+                  navigate(virtualPath);
+                  return;
+                }
+                setSelectedAccountId(id);
+                navigate(`/banking/accounts/${id}`);
+              }}
+              onInspect={(id) => setInspectTileId(id)}
+            />
+            <div className="space-y-3">
+              <FactoringSummaryCard
+                reserve={factoringReserve}
+                outstandingLiability={factoringOutstandingLiability}
+                lastAdvanceAt={factoringVirtualSummary.lastAdvanceAt}
+              />
+              <BankingReconHomeCard
+                reconciledAccountsCount={reconciledAccountsCount}
+                totalBankAccounts={totalBankAccountsForRecon}
+                differenceCents={
+                  reconciliationSessionsQuery.data?.open_sessions?.[0]?.variance_cents ?? null
+                }
+                onStart={openStartReconciliation}
+              />
+            </div>
+          </div>
+
+          {inspectTileId ? (
+            <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="bank-account-inspect-panel">
+              {(() => {
+                const tile = sortedBankTiles.find((t) => t.id === inspectTileId);
+                const plaid = (plaidAccountsQuery.data?.accounts ?? []).find((a) => a.id === inspectTileId);
+                return (
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-1 text-xs text-gray-800">
+                      <p className="font-semibold text-gray-900">{tile?.display_name ?? "Account"}</p>
+                      <p className="text-xs text-gray-600">
+                        Type: {tile?.account_type ?? plaid?.account_type ?? <NotApplicable reason="no_source" />}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        Balance: $
+                        {Number(tile?.current_balance ?? (plaid?.current_balance_cents ?? 0) / 100).toFixed(2)}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        Uncategorized: {Number(tile?.uncategorized_count ?? 0) || "—"}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        className="h-[34px] rounded-sm border border-gray-300 px-2 text-xs"
+                        onClick={() => {
+                          const virtualPath = virtualTileRoute(tile);
+                          if (virtualPath) {
+                            navigate(virtualPath);
+                            setInspectTileId(null);
+                            return;
+                          }
+                          setSelectedAccountId(inspectTileId);
+                          setActiveTab("transactions");
+                          navigate(BANKING_TAB_PATH.transactions);
+                          setInspectTileId(null);
+                        }}
+                      >
+                        View
+                      </button>
+                      <button
+                        type="button"
+                        className="h-[34px] rounded-sm border border-gray-300 px-2 text-xs"
+                        onClick={() => setInspectTileId(null)}
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          ) : null}
+
+          <NeedsCategorizingQueue
+            companyId={companyId}
+            rows={(uncategorizedQuery.data?.transactions ?? []).slice(0, 8).map((raw): NeedsCategorizingRow => {
+              const r = raw as Record<string, unknown>;
+              const amountCents = Number(
+                r.amount_cents ?? (Number(r.amount ?? 0) * 100),
+              );
+              return {
+                id: String(r.id ?? ""),
+                date: (r.transaction_date as string | null) ?? (r.date as string | null) ?? null,
+                description: String(r.description ?? r.name ?? r.memo ?? ""),
+                suggestedAccount:
+                  (r.suggested_account_name as string | null) ??
+                  (r.suggested_gl_account_name as string | null) ??
+                  null,
+                suggestedAccountId:
+                  (r.suggested_account_id as string | null) ??
+                  (r.suggested_gl_account_id as string | null) ??
+                  null,
+                unit: (r.unit_number as string | null) ?? (r.unit_name as string | null) ?? null,
+                amountCents,
+              };
+            })}
+            onChange={(row) => {
+              setTransactionsInitialFilter("uncategorized");
+              navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized&txn_id=${row.id}`);
+            }}
+            onAccepted={() => {
+              void queryClient.invalidateQueries({ queryKey: ["banking", "uncategorized", companyId] });
+              void queryClient.invalidateQueries({ queryKey: ["banking", "kpis", companyId] });
+            }}
+          />
+        </>
+      ) : null}
+
+      {activeTab === "bank_accounts" ? (
+        <div className="space-y-3" data-c64-accounts-tab="1">
           <SyncStatusStrip
             syncedAt={syncedAt}
             transactionCount={syncTransactionCount}
@@ -519,8 +773,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <p className="mt-1">
                 DIP, Factoring reserve, and Driver Escrow KPIs normally come from the banking account summary
                 feed. When that feed returns no rows, zeros here are unproven. Connect Plaid / map Cash GL
-                accounts, or open Factoring and Driver Escrow
-                tabs for canonical virtual-bank truth.
+                accounts, or open Factoring and Driver Escrow for canonical virtual-bank truth.
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <ActionButton onClick={() => navigate("/factoring")}>Factoring entry</ActionButton>
@@ -531,31 +784,14 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               </div>
             </div>
           ) : null}
-          {tilesQuery.isSuccess &&
-          sortedBankTiles.length > 0 &&
-          virtualBankTiles.length === 0 &&
-          factoringReserve === 0 &&
-          escrowFeed === 0 &&
-          dipBalance === 0 ? (
-            <div
-              className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600"
-              data-testid="banking-dip-factoring-escrow-zero-density-banner"
-            >
-              Real bank tiles are wired; DIP / Factoring / Escrow virtual pools read $0 on live density — honest empty
-              until settlements, Faro advances, or escrow postings populate.
-            </div>
-          ) : null}
           {allAccountsQuery.isSuccess &&
           (() => {
             const accts = allAccountsQuery.data?.accounts ?? [];
             const unbound = accts.filter((a) => !a.ledger_account_id).length;
             if (accts.length === 0 || unbound === 0) return null;
-            // ROUND-20.8 B5 — this is a POSTING BLOCKER (an unbound bank cannot post at all), not
-            // routine information. Bad treatment (border-left spine + tinted background from
-            // MONEY_TONE_COLORS.bad) and a real primary button, not a text link.
             return (
               <div
-                className="rounded-[9px] border border-[#C7D2DC] px-3 py-2 text-xs"
+                className="rounded-sm border border-[#C7D2DC] px-3 py-2 text-xs"
                 style={{ borderLeft: "4px solid #B42318", background: "#fdecea" }}
                 data-testid="banking-accounts-cash-gl-unbound-banner"
               >
@@ -567,14 +803,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                   cannot post — do not treat Accounts home as posting-ready.
                 </p>
                 <div className="mt-2">
-                  <button
-                    type="button"
-                    onClick={() => navigate("/banking/cash-gl-setup")}
-                    className="rounded-sm px-2.5 py-1 font-bold text-white"
-                    style={{ background: "#B42318", fontSize: "11px" }}
-                  >
-                    Map Cash GL
-                  </button>
+                  <ActionButton onClick={() => navigate("/banking/cash-gl-setup")}>Map Cash GL</ActionButton>
                 </div>
               </div>
             );
@@ -605,161 +834,10 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             onInspect={(id) => setInspectTileId(id)}
             onManageAccounts={() => setManageOpen(true)}
           />
-          {inspectTileId ? (
-            <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="bank-account-inspect-panel">
-              {(() => {
-                const tile = sortedBankTiles.find((t) => t.id === inspectTileId);
-                const plaid = (plaidAccountsQuery.data?.accounts ?? []).find((a) => a.id === inspectTileId);
-                return (
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="space-y-1 text-xs text-gray-800">
-                      <p className="font-semibold text-gray-900">{tile?.display_name ?? "Account"}</p>
-                      <p className="text-xs text-gray-600">Type: {tile?.account_type ?? plaid?.account_type ?? <NotApplicable reason="no_source" />}</p>
-                      <p className="text-xs text-gray-600">Institution: {plaid?.institution_name ?? <NotApplicable reason="not_applicable" data-testid="bank-account-inspect-no-institution" />}</p>
-                      <p className="text-xs text-gray-600">Mask: {plaid?.account_mask ? `••••${plaid.account_mask}` : <NotApplicable reason="not_applicable" />}</p>
-                      <p className="text-xs text-gray-600">
-                        Balance: ${Number(tile?.current_balance ?? (plaid?.current_balance_cents ?? 0) / 100).toFixed(2)}
-                      </p>
-                      <p className="text-xs text-gray-600">Last txn: {tile?.last_txn_date ? String(tile.last_txn_date).slice(0, 10) : <NotApplicable reason="not_loaded" />}</p>
-                      <p className="text-xs text-gray-600">Uncategorized: {Number(tile?.uncategorized_count ?? 0)}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                        onClick={() => {
-                          const virtualPath = virtualTileRoute(tile);
-                          if (virtualPath) {
-                            navigate(virtualPath);
-                            setInspectTileId(null);
-                            return;
-                          }
-                          setSelectedAccountId(inspectTileId);
-                          setActiveTab("transactions");
-                          navigate(BANKING_TAB_PATH.transactions);
-                          setInspectTileId(null);
-                        }}
-                      >
-                        {virtualTileRoute(tile) ? "View ledger" : "View register"}
-                      </button>
-                      <button type="button" className="rounded-sm border border-gray-300 px-2 py-1 text-xs" onClick={() => setInspectTileId(null)}>
-                        Close
-                      </button>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-          ) : null}
-          {/* ROUND-20.8 PART A/B4/B6/B7 — the Money Design System's KPI anatomy, replacing the flat
-              KpiStatCard band (every number was the same gray at the same weight — a 59%
-              uncategorized rate read identically to a routine cash balance). Each tile's tone
-              below is a THRESHOLD, named in its own comment, never a developer's mood (A1). */}
-          <div className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-6">
-            {(() => {
-              // THRESHOLD: 0 uncategorized -> good; any uncategorized -> warn. Never bad — an
-              // uncategorized backlog is routine review work, not a blocked/failed state.
-              const uncatPct = syncTransactionCount > 0 ? (uncategorizedCount / syncTransactionCount) * 100 : 0;
-              const uncatTone = uncategorizedCount === 0 ? "good" : "warn";
-              return (
-                <MoneyKpiTile
-                  label="Uncategorized"
-                  value={`${Math.round(uncatPct)}%`}
-                  tone={uncatTone}
-                  sub={`${uncategorizedCount} of ${syncTransactionCount} transactions`}
-                  sparkline={<MoneySparkline kind="fill" pct={uncatPct} colorHex={MONEY_TONE_COLORS[uncatTone].text} />}
-                  action={uncategorizedCount > 0 ? { label: "Categorize now", onClick: () => { setTransactionsInitialFilter("uncategorized"); navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`); } } : undefined}
-                  onClick={() => { setTransactionsInitialFilter("uncategorized"); navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`); }}
-                  data-testid="banking-kpi-uncategorized"
-                />
-              );
-            })()}
-            {(() => {
-              // THRESHOLD: 0 real bank accounts -> neutral (nothing to reconcile yet); 0 of N
-              // reconciled -> bad (a real gap, never routine gray); some but not all -> warn;
-              // all reconciled -> good.
-              const reconTone =
-                totalBankAccountsForRecon === 0 ? "neutral" : reconciledAccountsCount === 0 ? "bad" : reconciledAccountsCount === totalBankAccountsForRecon ? "good" : "warn";
-              const reconPct = totalBankAccountsForRecon > 0 ? (reconciledAccountsCount / totalBankAccountsForRecon) * 100 : 0;
-              return (
-                <MoneyKpiTile
-                  label="Accounts reconciled"
-                  value={totalBankAccountsForRecon > 0 ? `${reconciledAccountsCount} of ${totalBankAccountsForRecon}` : "—"}
-                  tone={reconTone}
-                  sub={totalBankAccountsForRecon === 0 ? "no bank accounts yet" : reconciledAccountsCount === 0 ? "no account has ever been reconciled" : `${reconciledAccountsCount} of ${totalBankAccountsForRecon} ever reconciled`}
-                  sparkline={totalBankAccountsForRecon > 0 ? <MoneySparkline kind="fill" pct={reconPct} colorHex={MONEY_TONE_COLORS[reconTone].text} /> : undefined}
-                  action={reconciledAccountsCount === 0 && totalBankAccountsForRecon > 0 ? { label: "Start reconciliation", onClick: openStartReconciliation } : undefined}
-                  onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}
-                  data-testid="banking-kpi-recon-accounts"
-                />
-              );
-            })()}
-            {/* THRESHOLD: always neutral — a cash balance is informational money, never a pass/fail
-                verdict on its own. */}
-            <MoneyKpiTile
-              label="Cash on hand"
-              value={formatUsd(cashPosting)}
-              tone="neutral"
-              sub={`${realBankTiles.length} real bank account(s)`}
-              onClick={() => navigate("/lists/accounting/chart-of-accounts")}
-              data-testid="banking-kpi-cash-on-hand"
-            />
-            {/* THRESHOLD: always neutral — informational money. B6: "DIP BALANCE" jargon spelled out
-                rather than removed — this is a real Chapter 11 debtor-in-possession cash figure,
-                not decoration, and dropping it silently would hide a compliance-relevant balance. */}
-            <MoneyKpiTile
-              label="Debtor-in-possession cash"
-              value={money.format(dipBalance)}
-              tone="neutral"
-              sub="operating + payroll DIP accounts (Ch. 11)"
-              onClick={() => (dipAccountId ? navigate(`/banking/accounts/${dipAccountId}`) : setActiveTab("accounts"))}
-              data-testid="banking-kpi-dip-balance"
-            />
-            {/* THRESHOLD: always good — a reserve Faro is actually holding is funded, not at risk. */}
-            <MoneyKpiTile
-              label="Factoring reserve"
-              value={money.format(factoringReserve)}
-              tone="good"
-              sub="held by Faro · virtual ledger"
-              onClick={() => navigate("/factoring/reserve-tracker")}
-              data-testid="banking-kpi-factoring-reserve"
-            />
-            {/* THRESHOLD: always good — escrow held in trust for drivers is a funded liability, not
-                a risk signal. */}
-            <MoneyKpiTile
-              label="Driver escrow"
-              value={money.format(escrowFeed)}
-              tone="good"
-              sub={`${Number(kpiQuery.data?.drivers_with_escrow_balance ?? 0)} driver(s) · liability, held in trust`}
-              onClick={() => navigate(BANKING_TAB_PATH.driver_escrow)}
-              data-testid="banking-kpi-driver-escrow"
-            />
-            {(() => {
-              // THRESHOLD: staleSyncLabel() — >4h since last sync -> warn (A5); never synced -> bad.
-              const stale = staleSyncLabel(bankFeedLastSync);
-              const stalePct = bankFeedLastSync ? Math.min(100, ((Date.now() - new Date(bankFeedLastSync).getTime()) / (24 * 60 * 60 * 1000)) * 100) : 100;
-              return (
-                <MoneyKpiTile
-                  label="Bank feed"
-                  value={stale.label}
-                  tone={stale.tone}
-                  sub={bankFeedInstitution ? `${bankFeedInstitution} · last sync` : "no bank feed connected yet"}
-                  sparkline={<MoneySparkline kind="fill" pct={stalePct} colorHex={MONEY_TONE_COLORS[stale.tone].text} />}
-                  action={stale.tone !== "good" && plaidAccountsQuery.data?.accounts?.[0]?.id ? { label: "Sync now", onClick: () => navigate(BANKING_TAB_PATH.plaid_connections) } : undefined}
-                  data-testid="banking-kpi-bank-feed"
-                />
-              );
-            })()}
-          </div>
-
-          <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1.3fr_1fr_1fr]">
+          <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1.3fr_1fr]">
             <div className="rounded-sm border border-gray-200 bg-white">
               <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
                 <span>Bank accounts</span>
-                {/* CLS-CHROME-LAW-8: this bare "+" panel-header shortcut (same action as the "+
-                    Create Account / Manage Accounts" button above) had no accessible label at
-                    all. Added aria-label so it identifies itself to screen readers / a11y
-                    tooling; kept the compact glyph visually since space here is tight. */}
                 <button
                   className="text-slate-700 hover:underline"
                   type="button"
@@ -769,7 +847,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                   +
                 </button>
               </div>
-              <div className="max-h-[260px] overflow-y-auto">
+              <div className="max-h-[320px] overflow-y-auto">
                 {bankAccountsPanelRows.map((row, idx) => (
                   <div
                     key={row.id}
@@ -785,7 +863,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                     >
                       {row.displayName}
                     </button>
-                    <span className="font-medium">{money.format(row.balance)}</span>
+                    <span className="font-medium tabular-nums">{money.format(row.balance)}</span>
                     <span className="flex flex-col">
                       <button
                         type="button"
@@ -810,22 +888,30 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                     </span>
                   </div>
                 ))}
-                {bankAccountsPanelRows.length === 0 ? <EntityEmptyState entityName={selectedCompany?.legal_name} noun="bank accounts" /> : null}
+                {bankAccountsPanelRows.length === 0 ? (
+                  <EntityEmptyState entityName={selectedCompany?.legal_name} noun="bank accounts" />
+                ) : null}
               </div>
               <label className="flex cursor-pointer items-center gap-2 px-3 py-2 text-xs text-gray-600">
-                <input type="checkbox" checked={showDisconnectedBankAccounts} onChange={(e) => setShowDisconnectedBankAccounts(e.target.checked)} />
+                <input
+                  type="checkbox"
+                  checked={showDisconnectedBankAccounts}
+                  onChange={(e) => setShowDisconnectedBankAccounts(e.target.checked)}
+                />
                 Show disconnected history
               </label>
             </div>
-
             <div className="rounded-sm border border-slate-300 bg-slate-100">
               <div className="flex items-center justify-between border-b border-slate-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
-                <Link to="/factoring" className="hover:underline">Factoring · virtual bank</Link>
+                <Link to="/factoring" className="hover:underline">
+                  Factoring · virtual bank
+                </Link>
                 <span className="text-xs">Open</span>
               </div>
               <div className="space-y-1 px-3 py-2 text-xs">
                 <Link to="/factoring/reserve-tracker" className="flex justify-between hover:underline">
-                  <span>Reserves held</span><span>{money.format(factoringReserve)}</span>
+                  <span>Reserves held</span>
+                  <span>{money.format(factoringReserve)}</span>
                 </Link>
                 <div className="flex justify-between">
                   <span>Advances funded MTD</span>
@@ -834,47 +920,32 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                   </span>
                 </div>
                 <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
-                  {/* FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: honest label
-                      for what this figure actually is (Advance + Reserve owed to the factor). */}
-                  <span>Outstanding liability</span><span className="text-red-700">{money.format(factoringOutstandingLiability)}</span>
+                  <span>Outstanding liability</span>
+                  <span className="text-red-700">{money.format(factoringOutstandingLiability)}</span>
                 </Link>
                 <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
                   <span>+30 aging fees</span>
-                  <span className="text-slate-700" title="No aging_fees_30d field on factoring-virtual — open Chargebacks & Fees">
+                  <span
+                    className="text-slate-700"
+                    title="No aging_fees_30d field on factoring-virtual — open Chargebacks & Fees"
+                  >
                     — (see Chargebacks & Fees)
                   </span>
                 </Link>
                 <div className="pt-1 text-xs text-gray-500">
-                  Last advance: {factoringVirtualSummary.lastAdvanceAt ? String(factoringVirtualSummary.lastAdvanceAt).slice(0, 10) : <NotApplicable reason="not_applicable" />}
+                  Last advance:{" "}
+                  {factoringVirtualSummary.lastAdvanceAt ? (
+                    String(factoringVirtualSummary.lastAdvanceAt).slice(0, 10)
+                  ) : (
+                    <NotApplicable reason="not_applicable" />
+                  )}
                 </div>
                 {factoringTile ? <div className="text-xs text-slate-700">{factoringTile.display_name}</div> : null}
               </div>
             </div>
-
-            <div className="rounded-sm border border-slate-300 bg-slate-100">
-              <div className="border-b border-slate-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">Driver escrow visualizer</div>
-              <div className="space-y-1 px-3 py-2 text-xs">
-                <div className="flex justify-between"><span>Total escrow held</span><span>{money.format(escrowFeed)}</span></div>
-                <div className="flex justify-between">
-                  <span
-                    title="Count of drivers whose escrow balance is currently non-zero."
-                    className="cursor-help border-b border-dotted border-slate-400"
-                  >
-                    Drivers with escrow:
-                  </span>
-                  <span>{Number(kpiQuery.data?.drivers_with_escrow_balance ?? 0)}</span>
-                </div>
-                <div className="flex justify-between"><span>Contributions MTD</span><span>{money.format(0)}</span></div>
-                <div className="flex justify-between"><span>Deductions MTD</span><span>{money.format(0)}</span></div>
-                <button type="button" onClick={() => setActiveTab("driver_escrow")} className="pt-1 text-xs text-slate-700 hover:underline">
-                  Filter by name + date
-                </button>
-              </div>
-            </div>
           </div>
-
           <BankingPlaidConnectionsPanel companyId={companyId} />
-        </>
+        </div>
       ) : null}
 
       {activeTab === "transactions" ? (

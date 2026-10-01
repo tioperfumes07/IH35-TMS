@@ -16,9 +16,9 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-driver-escrow-tab-content-uses-paritytable";
-const PAGE = "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx";
+const PAGE = "apps/frontend/src/pages/banking/components/DriverEscrowLedgerSection.tsx";
 
-const COLUMN_LABELS = ["Date", "Description", "Deposits", "Withdrawals", "Status", "Category"];
+const COLUMN_LABELS = ["Date", "Driver", "Type", "Description", "Amount", "Status", "Settlement", "Journal Entry"];
 
 function assertMigrated(src) {
   const errors = [];
@@ -66,11 +66,13 @@ function selftest() {
     import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
     const columns = [
       { key: "txn_date", label: "Date" },
+      { key: "driver", label: "Driver" },
+      { key: "type", label: "Type" },
       { key: "description", label: "Description" },
-      { key: "deposits", label: "Deposits", render: (row) => (Number(row.deposits ?? 0) > 0 ? \`$\${Number(row.deposits ?? 0).toFixed(2)}\` : "—") },
-      { key: "withdrawals", label: "Withdrawals" },
+      { key: "amount", label: "Amount", render: (row) => (Number(row.amount ?? 0) !== 0 ? \`$\${Number(row.amount ?? 0).toFixed(2)}\` : "—") },
       { key: "status", label: "Status" },
-      { key: "category", label: "Category" },
+      { key: "settlement", label: "Settlement" },
+      { key: "journal", label: "Journal Entry" },
     ];
     <ListErrorBanner onRetry={() => {}} />
     <ParityTable

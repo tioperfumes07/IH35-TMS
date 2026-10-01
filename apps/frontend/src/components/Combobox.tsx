@@ -134,7 +134,7 @@ function measureListboxStyle(anchor: HTMLElement): CSSProperties {
   // tree, with the underlying catalog fetch returning 200 — but the drawer's own opaque panel painted
   // over it, so the dropdown was invisible and unusable to an actual user. 220 sits above every explicit
   // z-index in the codebase (max found: z-[210]) so no known drawer/modal can occlude it again.
-  const LISTBOX_Z_INDEX = 220;
+  const LISTBOX_Z_INDEX = 240;
   if (openUp) {
     return {
       position: "fixed",

@@ -44,8 +44,23 @@ vi.mock("../../api/banking", async (importOriginal) => {
     getReconciliationSessions: vi.fn(),
     getAllAccounts: vi.fn(),
     startReconciliationSession: vi.fn(),
+    getEscrowDriverBalances: vi.fn().mockResolvedValue({ drivers: [] }),
+    getFactoringVirtual: vi.fn().mockResolvedValue({ companies: [] }),
+    getQboSyncQueueStats: vi.fn().mockResolvedValue({
+      pending: 0,
+      in_flight: 0,
+      synced: 0,
+      failed: 0,
+      blocked: 0,
+      average_sync_ms: 0,
+      last_successful_sync_at: null,
+    }),
   };
 });
+
+vi.mock("../../api/forensic", () => ({
+  getQboConnectionStatus: vi.fn().mockResolvedValue({ connected: false }),
+}));
 
 function wrap(ui: ReactElement) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -189,7 +204,7 @@ describe("BankingHomePage accounts summary", () => {
     expect(screen.queryByText("No accounts yet.")).not.toBeInTheDocument();
   });
 
-  it('labels escrow visualizer count as "Drivers with escrow:"', async () => {
+  it("shows Driver escrow KPI with driver count (C-64 Home board)", async () => {
     vi.mocked(bankingApi.getBankingKpis).mockResolvedValue({
       total_cash: 1000,
       dip_operating: 200,
@@ -205,11 +220,22 @@ describe("BankingHomePage accounts summary", () => {
     vi.mocked(bankingApi.getReconciliationSessions).mockResolvedValue({ open_sessions: [], completed_sessions: [] });
     vi.mocked(bankingApi.getAllAccounts).mockResolvedValue({ accounts: [] });
     vi.mocked(bankingApi.getPlaidBankAccounts).mockResolvedValue({ accounts: [] });
+    vi.mocked(bankingApi.getEscrowDriverBalances).mockResolvedValue({ drivers: [] });
+    vi.mocked(bankingApi.getFactoringVirtual).mockResolvedValue({ companies: [] });
+    vi.mocked(bankingApi.getQboSyncQueueStats).mockResolvedValue({
+      pending: 0,
+      in_flight: 0,
+      synced: 0,
+      failed: 0,
+      blocked: 0,
+      average_sync_ms: 0,
+      last_successful_sync_at: null,
+    });
 
     render(wrap(<BankingHomePage />));
 
-    expect(await screen.findByText("Drivers with escrow:")).toBeInTheDocument();
-    expect(await screen.findByText("5")).toBeInTheDocument();
+    expect(await screen.findByTestId("banking-kpi-driver-escrow")).toBeInTheDocument();
+    expect(screen.getByTestId("banking-kpi-driver-escrow")).toHaveTextContent(/driver/i);
     expect(screen.queryByText("Active drivers")).not.toBeInTheDocument();
   });
 });

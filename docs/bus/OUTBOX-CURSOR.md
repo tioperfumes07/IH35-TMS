@@ -110,3 +110,12 @@ C-55 · what changed: house label **Regular** (was List view) on Customers/Vendo
 
 **2026-09-30T23:41Z · C-55 MERGED · PR #23568 · `3ae18a149f`**
 Regular+MD on main (customers/vendors/drivers/fleet/users). Round 301 Cursor queue C-50→C-55 shipped (C-54/C-56 were prior dups). LEFT: Lead Chrome measure before DONE close; C-57 = re-read NOW-CURSOR for next queue.
+
+**2026-10-01T00:15Z · ACK ROUND 304 | C-64 approved boards | GO**
+Read ROUND 304 packet. Scope: Banking Home + Driver Escrow + Reconciliation BACK ON (owner-directed); A/R A/P GL QBO bank-feed settlements stay paused. Lane: `apps/frontend/**` only. Building C-64 boards exactly (8→Home/Accounts/… Settings; Statement Import+Plaid fold into +New; Factoring = summary card not tab; C-65 side-dock alerts; C-67 QBO recon shell). Branch `cursor/c64-banking-approved-boards-c89b`.
+
+**2026-10-01T00:30Z · ROUND 304 C-64..C-68 FE · branch `cursor/c64-banking-approved-boards-c89b`**
+C-64 · Banking Home board: 9-tab subnav (Home·Accounts·Transactions·Link suggestions·Reconciliation·Driver escrow·Relay card·Reports·Settings); Statement Import + Plaid + Create Account in + New only; Factoring summary card; 6 KPIs across; Where-the-money-is rail; Needs categorizing Accept/Change + Accept-all; Recon card. Driver Escrow board: Driver·Unit·Held·Target·Progress·Last withheld·Settlement·Release + gear chooser + footer totals + right rail (Both sides display-only + Release rules Save/Close). C-65 · AttentionStrip + Toast fixed right dock ~380px, no layout shift. C-67 · Recon statement strip + matched tri-state + statement header 132/120. C-66/C-68 · normal app type + house widths. LIVE PROOF: `npx tsc -b` exit 0; vitest BankingHome 6/6; `node scripts/ops/verify-c51-banking-home-escrow.mjs` OK. LEFT: Lead Chrome measure (DONE ≠ merge SHA).
+
+**2026-10-01T01:10Z · ROUND 304 PR OPEN · #23592 · `cursor/c64-banking-approved-boards-c89b`**
+C-64/C-65/C-67 shipped to PR: escrow Board+Ledger split (never-delete ParityTable/JE kept); Statement/Plaid stay registered + filtered from subnav; Accounts Factoring · virtual bank + Cash GL/virtual-tile honesty restored; Combobox listbox z=240 above C-65 docks. LIVE PROOF: `node scripts/money-pr-local-gate.mjs` exit 0. LEFT: Lead Chrome on /banking Home + Driver escrow + Reconciliation (DONE ≠ merge SHA). A/R A/P GL QBO bank-feed settlements stay paused.

@@ -29,7 +29,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TARGET = "apps/backend/src/banking/banking.routes.ts";
-const FRONTEND_TARGET = "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx";
+const FRONTEND_TARGET = "apps/frontend/src/pages/banking/components/DriverEscrowLedgerSection.tsx";
 const LABEL = "verify-banking-escrow-register-settlement-je-link";
 
 function read(rel) {

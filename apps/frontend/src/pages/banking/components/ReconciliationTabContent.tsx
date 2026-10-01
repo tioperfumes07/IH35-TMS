@@ -252,42 +252,93 @@ export function ReconciliationTabContent({
           )}
         </div>
 
+        {/* C-67 — QBO-shaped statement strip across the top. */}
+        <div
+          className="mb-3 grid grid-cols-2 gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 sm:grid-cols-5"
+          data-c67-statement-strip="1"
+          data-testid="banking-recon-statement-strip"
+        >
+          {[
+            { label: "Statement ending", value: activeOpenSession ? money(statementBalanceCents) : "—" },
+            { label: "Beginning balance", value: money(beginningBalanceCents) },
+            { label: "Cleared payments", value: "—" },
+            { label: "Cleared deposits", value: "—" },
+            {
+              label: "Difference",
+              value: activeOpenSession ? money(varianceCents) : "—",
+              emphasize: true,
+              zero: varianceCents === 0,
+            },
+          ].map((cell) => (
+            <div key={cell.label} className="rounded-sm bg-white px-2 py-1.5 text-center">
+              <p className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">{cell.label}</p>
+              <p
+                className={`mt-0.5 text-xs font-semibold tabular-nums ${
+                  cell.emphasize
+                    ? cell.zero
+                      ? "text-[#16A34A]"
+                      : "text-[#0F1219]"
+                    : "text-[#0F1219]"
+                }`}
+                data-c53-difference={cell.label === "Difference" ? (varianceCents ?? "none") : undefined}
+              >
+                {cell.value}
+              </p>
+            </div>
+          ))}
+        </div>
+        <p className="mb-2 text-center text-xs text-[#6B7280]">
+          Difference must read exactly $0.00 before Finish is enabled. POSTING DATE and TRANSACTION DATE stay
+          separate columns in the workspace — never collapsed to one &quot;Date&quot;.
+        </p>
+
         <div className="mb-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
           {/* Statement object — fields already on reconciliation_sessions; A-27 does not reinvent these. */}
           <div
             className="rounded-sm border border-gray-200 bg-[#F7F8FA] p-3"
             data-c53-statement-object="1"
+            data-c67-statement-header="1"
           >
             <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[#4B5563]">
-              Statement
+              Statement header
             </p>
-            <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-              <dt className="text-[#6B7280]">Beginning balance</dt>
-              <dd className="text-center font-medium text-[#0F1219]">{money(beginningBalanceCents)}</dd>
-              <dt className="text-[#6B7280]">Statement ending balance</dt>
-              <dd className="text-center font-medium text-[#0F1219]">
-                {activeOpenSession ? money(statementBalanceCents) : "— enter to start"}
-              </dd>
-              <dt className="text-[#6B7280]">Cleared (session)</dt>
-              <dd className="text-center text-[#6B7280]">Opens in workspace</dd>
-              <dt className="text-[#6B7280]">Deposits in transit</dt>
-              <dd className="text-center text-[#6B7280]">Workspace compute</dd>
-              <dt className="text-[#6B7280]">Outstanding checks</dt>
-              <dd className="text-center text-[#6B7280]">Workspace compute</dd>
-              <dt className="text-[#6B7280]">Difference</dt>
-              <dd
-                className={`text-center font-semibold ${
-                  varianceCents === 0
-                    ? "text-[#16A34A]"
-                    : varianceCents == null
-                      ? "text-[#6B7280]"
-                      : "text-amber-800"
-                }`}
-                data-c53-difference={varianceCents ?? "none"}
-              >
-                {activeOpenSession ? money(varianceCents) : "— must reach $0.00 to finish"}
-              </dd>
-            </dl>
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="block text-xs">
+                <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-[#4B5563]">
+                  Account
+                </span>
+                <SelectCombobox
+                  value={selectedAccountId}
+                  onChange={(event) => setSelectedAccountId(event.target.value)}
+                  className="h-[34px] min-w-[180px] rounded-sm border border-gray-300 px-2 text-xs"
+                >
+                  <option value="">Select account</option>
+                  {accounts.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.label}
+                    </option>
+                  ))}
+                </SelectCombobox>
+              </label>
+              <label className="block text-xs">
+                <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-[#4B5563]">
+                  Statement ending date
+                </span>
+                <DatePicker
+                  value={activeOpenSession?.period_end ?? reconPeriodEnd}
+                  onChange={setReconPeriodEnd}
+                  className="h-[34px] w-[132px]"
+                />
+              </label>
+              <label className="block text-xs">
+                <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-[#4B5563]">
+                  Ending balance
+                </span>
+                <div className="flex h-[34px] w-[120px] items-center justify-end rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs tabular-nums">
+                  {activeOpenSession ? money(statementBalanceCents) : "—"}
+                </div>
+              </label>
+            </div>
             {activeOpenSession ? (
               <div className="mt-2 flex flex-wrap gap-2">
                 <ActionButton onClick={() => openWorkspace(activeOpenSession)}>
@@ -297,32 +348,36 @@ export function ReconciliationTabContent({
             ) : null}
           </div>
 
-          {/* MATCHED tri-state shell — engine wire waits on CC-1 A-27. Do not invent boolean match here. */}
+          {/* MATCHED tri-state — never a checkbox. CC-1 merged onto banking.reconciliation_matches. */}
           <div
             className="rounded-sm border border-dashed border-gray-300 bg-white p-3"
             data-c53-matched-tristate="1"
-            data-c53-a27-pending="1"
+            data-c67-matched-column="1"
           >
             <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[#4B5563]">
-              Matched state (A-27)
+              Matched column
             </p>
             <p className="mb-2 text-xs text-[#6B7280]">
-              Bank Register Matched must be a three-state, not Yes/No. Shell reserved; engine wire waits
-              on CC-1 A-27 (matched / unmatched / matched with difference). Parallel books — reconcile
-              first.
+              Three states — never a checkbox. A boolean hides matched-with-difference (the case that matters).
             </p>
             <ul className="space-y-1 text-xs">
               <li className="flex items-center justify-between rounded-sm border border-gray-100 px-2 py-1">
                 <span className="font-medium text-[#0F1219]">Matched</span>
-                <span className="text-[#6B7280]">Awaiting A-27</span>
+                <span className="rounded-sm bg-[#ecfdf3] px-1.5 py-0.5 text-xs font-semibold text-[#027A48]">
+                  matched
+                </span>
               </li>
               <li className="flex items-center justify-between rounded-sm border border-gray-100 px-2 py-1">
                 <span className="font-medium text-[#0F1219]">Unmatched</span>
-                <span className="text-[#6B7280]">Awaiting A-27</span>
+                <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#6B7280]">
+                  unmatched
+                </span>
               </li>
               <li className="flex items-center justify-between rounded-sm border border-gray-100 px-2 py-1">
                 <span className="font-medium text-[#0F1219]">Matched with difference</span>
-                <span className="text-[#6B7280]">Awaiting A-27</span>
+                <span className="rounded-sm bg-[#fffaeb] px-1.5 py-0.5 text-xs font-semibold text-[#B54708]">
+                  matched-with-difference
+                </span>
               </li>
             </ul>
           </div>

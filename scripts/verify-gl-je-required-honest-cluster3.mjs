@@ -57,7 +57,7 @@ const KEEP_SOURCES = {
   bankingTransactions: "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx",
   matchDrawer: "apps/frontend/src/pages/banking/components/MatchDrawer.tsx",
   bankReconciliation: "apps/frontend/src/pages/banking/BankReconciliationPage.tsx",
-  driverEscrow: "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx",
+  driverEscrow: "apps/frontend/src/pages/banking/components/DriverEscrowLedgerSection.tsx",
   factoringDetail: "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx",
   fineDetail: "apps/frontend/src/pages/safety/components/FineDetailDrawer.tsx",
 };

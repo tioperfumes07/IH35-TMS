@@ -63,7 +63,7 @@ const CHECKS = [
   // co-occur.
   ["apps/frontend/src/pages/VendorDetail.tsx", /kind="driver"[\s\S]{0,20}id=\{vendor\.driver_id\}/],
   // banking: driver_escrow
-  ["apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx", /to=\{`\/drivers\/\$\{selectedDriver\.driver_id\}`\}/],
+  ["apps/frontend/src/pages/banking/components/DriverEscrowLedgerSection.tsx", /to=\{`\/drivers\/\$\{row\.driver_id\}`\}/],
   // factoring: home.vendor_merges, factoring.parity.driver_autocomplete
   ["apps/frontend/src/pages/factoring/FactoringHome.tsx", /<EntityLinkOrTombstone kind="driver" id=\{row\.driver_id\} name=\{row\.driver_name\} noun="Driver" \/>/],
   ["apps/frontend/src/components/factoring/DriverAutocomplete.tsx", /kind="driver"/],

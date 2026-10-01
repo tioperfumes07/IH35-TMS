@@ -45,7 +45,7 @@ function main() {
       { name: "drops virtualTileRoute helper", src: clean.replace(/function virtualTileRoute[\s\S]*?\n}\n/, "") },
       { name: "drops onSelect gate", src: clean.replace(/onSelect=\{\(id\) => \{\s*const virtualPath = virtualTileRoute\(sortedBankTiles\.find\(\(t\) => t\.id === id\)\);\s*if \(virtualPath\) \{\s*navigate\(virtualPath\);\s*return;\s*\}\s*/, "onSelect={(id) => {\n              ") },
       { name: "drops onView gate", src: clean.replace(/onView=\{\(id\) => \{\s*const virtualPath = virtualTileRoute\(sortedBankTiles\.find\(\(t\) => t\.id === id\)\);\s*if \(virtualPath\) \{\s*navigate\(virtualPath\);\s*return;\s*\}\s*/, "onView={(id) => {\n              ") },
-      { name: "drops inspect-panel gate", src: clean.replace("const virtualPath = virtualTileRoute(tile);", "const virtualPath = null;") },
+      { name: "drops inspect-panel gate", src: clean.replace(/const virtualPath = virtualTileRoute\(tile\);/g, "const virtualPath = null;") },
       { name: "breaks the escrow route string", src: clean.replace('"/banking/driver-escrow"', '"/banking/escrow-typo"') },
     ];
     let failures = 0;

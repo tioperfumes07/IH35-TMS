@@ -11,6 +11,8 @@
  * snapshot to accounting.escrow_postings, the canonical GL-linked subledger.
  * A settlement link is therefore present only when source_type identifies a
  * driver settlement; source_id is the canonical settlement FK in that case.
+ *
+ * @matrix-built {"modules":["banking"],"cols":["reverse_link"],"leafRe":"^driver_escrow$","task":"BANK-ESCROW-SETTLEMENT-LINKAGE","vertical":"column-wave"}
  */
 import fs from "node:fs";
 
@@ -19,7 +21,7 @@ export function run(root = process.cwd()) {
   const routes = fs.readFileSync(`${root}/apps/backend/src/banking/escrow-visualizer.routes.ts`, "utf8");
   const api = fs.readFileSync(`${root}/apps/frontend/src/api/banking.ts`, "utf8");
   const escrow = fs.readFileSync(
-    `${root}/apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx`,
+    `${root}/apps/frontend/src/pages/banking/components/DriverEscrowLedgerSection.tsx`,
     "utf8"
   );
   const settlement = fs.readFileSync(
@@ -87,7 +89,7 @@ if (process.argv.includes("--selftest")) {
   );
   mk("apps/frontend/src/api/banking.ts", `settlement_id?: string | null;\n`);
   mk(
-    "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx",
+    "apps/frontend/src/pages/banking/components/DriverEscrowLedgerSection.tsx",
     `kind="settlement"\nbanking-escrow-settlement-link\n`
   );
   mk(
@@ -99,10 +101,10 @@ if (process.argv.includes("--selftest")) {
     `/banking/driver-escrow\nescrow-banking-virtual-bank-link\n`
   );
   if (run(tmp).length) throw new Error("PASS fail: " + run(tmp).join("; "));
-  mk("apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx", "x\n");
+  mk("apps/frontend/src/pages/banking/components/DriverEscrowLedgerSection.tsx", "x\n");
   if (!run(tmp).length) throw new Error("FAIL fail");
   mk(
-    "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx",
+    "apps/frontend/src/pages/banking/components/DriverEscrowLedgerSection.tsx",
     `kind="settlement"\nbanking-escrow-settlement-link\n`
   );
   mk(
