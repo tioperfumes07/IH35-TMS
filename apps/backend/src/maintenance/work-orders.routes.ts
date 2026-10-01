@@ -686,7 +686,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       // operating companies (USMCA isolation); a foreign unit LEFT-JOINs to NULL → UUID fallback.
       // ROUND 313/319 §10-B: list rows must carry bill + JE ids so EntityLink can drill both ways
       // without opening the detail modal. Primary bill = earliest non-void linked_work_order_uuid;
-      // primary JE = that bill's journal_entry_id (expense JEs stay on the detail surface).
+      // primary JE = journal_entry_postings for that bill (bills have no journal_entry_id column).
       const rowsRes = await client.query(
         `SELECT w.*, u.unit_number, e.equipment_number,
                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
@@ -718,7 +718,16 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
            LEFT JOIN mdata.vendors v ON v.id = COALESCE(w.external_vendor_id, w.vendor_id) AND v.operating_company_id = w.operating_company_id
            LEFT JOIN mdata.loads l ON l.id = w.load_id AND l.operating_company_id = w.operating_company_id
            LEFT JOIN LATERAL (
-             SELECT b.id, b.bill_number, b.journal_entry_id
+             SELECT b.id, b.bill_number,
+                    (
+                      SELECT p.journal_entry_uuid
+                        FROM accounting.journal_entry_postings p
+                       WHERE p.operating_company_id = b.operating_company_id
+                         AND p.source_transaction_type = 'bill'
+                         AND p.source_transaction_id = b.id
+                       ORDER BY p.journal_entry_uuid
+                       LIMIT 1
+                    ) AS journal_entry_id
                FROM accounting.bills b
               WHERE b.operating_company_id = w.operating_company_id
                 AND b.linked_work_order_uuid = w.id
