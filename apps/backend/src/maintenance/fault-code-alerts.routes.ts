@@ -18,7 +18,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
-import { driverAtTimeSql } from "./driver-attribution.js";
+import { driverAtTimeWithLoadFallbackSql } from "./driver-attribution.js";
 
 const querySchema = z
   .object({
@@ -77,13 +77,14 @@ export async function registerFaultCodeAlertsRoutes(app: FastifyInstance) {
             h.auto_wo_id::text,
             wo.display_id AS auto_wo_display_id,
             driver_at_time.driver_id::text AS driver_id,
+            driver_at_time.attribution_source,
             d.first_name || ' ' || d.last_name AS driver_label
           FROM maintenance.samsara_fault_code_history h
           LEFT JOIN mdata.units u ON u.id = h.unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = h.operating_company_id
           LEFT JOIN maintenance.work_orders wo ON wo.id = h.auto_wo_id
                                                AND wo.operating_company_id = h.operating_company_id
-          ${driverAtTimeSql("h.unit_id", "h.occurred_at")}
+          ${driverAtTimeWithLoadFallbackSql("h.unit_id", "h.occurred_at")}
           LEFT JOIN mdata.drivers d ON d.id = driver_at_time.driver_id
           WHERE ${conditions.join(" AND ")}
           ${driverFilterIdx ? `AND driver_at_time.driver_id = $${driverFilterIdx}::uuid` : ""}

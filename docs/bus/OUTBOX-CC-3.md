@@ -1865,3 +1865,80 @@ Main run **36912142385**, job **required-live-load-guard 110537820214** (19:12Z)
 - `Required guards: executed=22 passed=21 failed=1 skipped=0 attempted=22; required_skip_failures=0`. The required skip failure is gone.
 
 The job's one remaining red is `verify-no-test-markers-in-live-tables` (38 marked rows of 140): the 38 USMCA test survivors in maintenance tables. That is the Lead's queued purge (ROUND 317 CC-1 item 4), not CC-3's.
+
+CC-3 | ACK WRAP | FAULT-DRIVER-AT-TIME | GO
+
+## 2026-10-01 ROUND 321 (d) — fault / harsh driver-at-time with load fallback + attribution_source
+
+- **One resolver:** `driverAtTimeWithLoadFallbackSql`, composed from the existing `driverAtTimeSql` (Samsara window → 'samsara_driver') and `loadAtTimeSql` (the dispatcher-assigned primary driver of the load the truck carried then → 'load_assignment'). Otherwise the driver is NULL with a NULL source.
+  - `driverAtTimeSql` is **unchanged**: 0 changed lines in `git diff origin/main`. Fuel and settlement attribution keep calling it.
+- **Readers switched**, each returning `attribution_source`:
+  - `GET /api/v1/maintenance/fault-code-alerts` (forward by unit, reverse by driver);
+  - driver profile Safety tab (faults + harsh events, reverse by driver);
+  - truck panel (faults + harsh events, with the driver).
+  - Screens show a "Driver from" column on the truck panel and the driver Safety tab.
+- **Before / after (prod, read-only):**
+
+| | Before | After |
+|---|---|---|
+| Faults with a driver | **9 / 51** | **16 / 51** (samsara_driver 9, load_assignment 7) |
+| Driver without a source | — | **0** |
+| Harsh events with a driver | 2 / 2 (stored from Samsara) | 2 / 2 |
+| Fuel attribution through `driverAtTimeSql` | 141 / 322 | **141 / 322** (resolver body byte-identical) |
+
+- **Guards:**
+  - New: `verify-fault-driver-attribution-sourced` (resolver shape: driver and source from the same branches; plain `driverAtTimeSql` stays Samsara-only; 3 readers).
+  - Updated: `verify-driver-profile-tabs-read-only-and-attributed` (faults + harsh through the composed resolver; fuel still plain `driverAtTimeSql`).
+
+**For Cursor (ROUND 321 B.9):** 3 posted USMCA expenses on load **13503** with no `expense_attribution.expense_load_links` row:
+
+| Expense | Amount | id |
+|---|---|---|
+| 13503-11 | $37.10 | `1c08aa97-0bde-4a02-a01c-18f75d4d1a3d` |
+| 13503-12 | $30.71 | `f267f1f1-12cc-48c5-8ef7-ce51f38b2b51` |
+| 13503-13 | $37.24 | `ef97d3af-a636-4edf-b82d-f188c98dd43f` |
+
+CC-3 | WRAP 2026-10-01 | DONE: see the table below | LIVE PROOF: see the list below | UNFINISHED: see the list below | HANDOFF-TO-CURSOR: none (only the 13503 expense list above, already assigned to Cursor's B.9)
+
+**DONE (merged today, squash shas on main):**
+
+| PR | What |
+|---|---|
+| #23734 ec3c284 | loadAtTimeSql, 5 engines |
+| #23737 67617f0 | reverse links |
+| #23742 13d182c | fence-exit finish |
+| #23754 d11f098 | screens |
+| #23794 aab446e | E-05 |
+| #23795 f7cd7a4 | cancellation reversal + AUTH-192 |
+| #23796 5d97898 | E-13 tenant |
+| #23821 25f2a8f | routes fix + geofence auto-delivery |
+| #23823 f21671a | latch timeouts |
+| #23845 81825b6 | E-31 route id + read-back |
+| #23847 d3d3707 | route id stamped from the ledger |
+| #23854 2681d07 | E-23 fuel reports |
+| #23858 7614b50 | E-30 messaging both ways |
+| #23863 2c1efaf | E-32 POD documents |
+| #23867 51ae477 | webhook → detector |
+| #23883 88115c2 | alwaystrack parity in CI |
+| this PR | ROUND 321 (d) |
+
+**LIVE PROOF:**
+- `unit_stop_events` 372 rows (155 with a load).
+- `load_odometer_segments` 49.
+- Routes: 7 live Samsara routes; `samsara_route_stop_progress` 14.
+- `samsara_fuel_reports` 727.
+- 13626 / 13637 auto-delivered at 16:41Z (driver bills DB-000266 / DB-000275).
+- AUTH-192 consumed (3 loads reversed).
+- CI job 110537820214: alwaystrack executed, `required_skip_failures=0`.
+- Faults with a driver 9 → 16 / 51.
+
+**UNFINISHED:**
+1. Fuel push first scheduled run at 23:00Z (`fuel-purchase-push.cron.ts`): not run yet. Next step: read `integration_sync_log` sync_kind `fuel_purchase_push` after 23:00Z and paste the count, min/max `transaction_at` and zero-gallon diesel = 0.
+2. First real driver reply (E-30), POD (E-32) and webhook post (E-13): engines are live; paste the message id / docs.files id / webhook event id when each lands.
+3. E-05 10-day catch-up runs at 02:41 CT: paste the leg count after it.
+
+**Branches deleted:** Neon throwaway `br-dawn-mud-akhnuh54` (the only one I created).
+
+**Ambient reds, not caused by CC-3** (not patched):
+- `verify-no-test-markers-in-live-tables`: 38 maintenance test survivors (Lead purge).
+- `verify-driver-attribution-is-time-boxed`: fuel-scorecard fixtures fail identically on origin/main.

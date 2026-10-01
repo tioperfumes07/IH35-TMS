@@ -9,7 +9,7 @@
  *    driverAtTimeSql / unitAtTimeSql — never mdata.units' current driver, never re-inlined.
  * Fuel verdicts are CC-2's (fuel.fraud_alerts, safety.fuel_gps_matches) — composed, not recomputed.
  */
-import { driverAtTimeSql } from "../maintenance/driver-attribution.js";
+import { driverAtTimeSql, driverAtTimeWithLoadFallbackSql } from "../maintenance/driver-attribution.js";
 import { fuelPurchaseIneligibleReason, FUEL_ROWS_WITH_STAMP_COUNT_SQL, type FuelRowForEligibility } from "../fuel/fuel-purchase-eligibility.js";
 import { computeUnitStops } from "../telematics/unit-stops.service.js";
 
@@ -113,10 +113,11 @@ export async function driverSafety(client: Db, oc: string, driverId: string, w: 
   const args = [oc, driverId, w.fromIso, w.toIso];
   // Sequential: one pg client cannot run queries concurrently.
   const faults = await client.query(
-      `SELECT h.id::text, h.unit_id::text, u.unit_number, h.fault_code, h.severity, h.occurred_at, h.resolved_at, h.auto_wo_id::text
+      `SELECT h.id::text, h.unit_id::text, u.unit_number, h.fault_code, h.severity, h.occurred_at, h.resolved_at, h.auto_wo_id::text,
+              driver_at_time.attribution_source
          FROM maintenance.samsara_fault_code_history h
          JOIN mdata.units u ON u.id = h.unit_id
-         ${driverAtTimeSql("h.unit_id", "h.occurred_at")}
+         ${driverAtTimeWithLoadFallbackSql("h.unit_id", "h.occurred_at")}
         WHERE h.operating_company_id = $1::uuid AND driver_at_time.driver_id = $2::uuid
           AND h.occurred_at >= $3::timestamptz AND h.occurred_at < $4::timestamptz
         ORDER BY h.occurred_at DESC`,
@@ -124,9 +125,11 @@ export async function driverSafety(client: Db, oc: string, driverId: string, w: 
     );
   const harsh = await client.query(
       `SELECT e.id::text, e.unit_id::text, (SELECT u.unit_number FROM mdata.units u WHERE u.id = e.unit_id) AS unit_number,
-              e.event_at, e.event_kind, e.severity, e.speed_at_event_mph, e.g_force
+              e.event_at, e.event_kind, e.severity, e.speed_at_event_mph, e.g_force,
+              CASE WHEN e.driver_id IS NOT NULL THEN 'samsara_driver' ELSE driver_at_time.attribution_source END AS attribution_source
          FROM safety.harsh_events e
-        WHERE e.operating_company_id = $1::uuid AND e.driver_id = $2::uuid
+         ${driverAtTimeWithLoadFallbackSql("e.unit_id", "e.event_at")}
+        WHERE e.operating_company_id = $1::uuid AND COALESCE(e.driver_id, driver_at_time.driver_id) = $2::uuid
           AND e.event_at >= $3::timestamptz AND e.event_at < $4::timestamptz
         ORDER BY e.event_at DESC`,
       args

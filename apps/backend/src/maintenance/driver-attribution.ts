@@ -62,6 +62,30 @@ export function driverAtTimeSql(unitAlias: string, tsExpr: string, resultAlias =
 export const DRIVER_ATTRIBUTION_RESULT_ALIAS_DEFAULT = "driver_at_time";
 
 /**
+ * ROUND 321 (d), Lead GO 14:45 CT: driver-at-time WITH the load fallback, for fault / harsh-event attribution.
+ * Composed from the two existing resolvers -- never a second inlined rule, and driverAtTimeSql itself is
+ * untouched (fuel and settlement attribution keep calling it unchanged):
+ *   1. driverAtTimeSql -- the Samsara assignment window (attribution_source 'samsara_driver');
+ *   2. else the dispatcher-assigned primary driver of the load the truck carried at that moment, via
+ *      loadAtTimeSql (attribution_source 'load_assignment');
+ *   3. else driver_id NULL with attribution_source NULL -- never a driver without a source.
+ * Output: ${resultAlias}.driver_id, ${resultAlias}.attribution_source.
+ */
+export function driverAtTimeWithLoadFallbackSql(unitAlias: string, tsExpr: string, resultAlias = "driver_at_time"): string {
+  const sam = `${resultAlias}_samsara`;
+  const ld = `${resultAlias}_load`;
+  return `${driverAtTimeSql(unitAlias, tsExpr, sam)}
+  ${loadAtTimeSql(unitAlias, tsExpr, ld)}
+  LEFT JOIN LATERAL (
+    SELECT COALESCE(${sam}.driver_id, ll.assigned_primary_driver_id) AS driver_id,
+           CASE WHEN ${sam}.driver_id IS NOT NULL THEN 'samsara_driver'
+                WHEN ll.assigned_primary_driver_id IS NOT NULL THEN 'load_assignment' END AS attribution_source
+      FROM (SELECT 1) one
+      LEFT JOIN mdata.loads ll ON ll.id = ${ld}.load_id
+  ) ${resultAlias} ON true`;
+}
+
+/**
  * L-3 (Lead order, ROUND 299): the mirror of driverAtTimeSql — given a DRIVER + a timestamp,
  * resolve which UNIT he was holding. Needed to repair fuel.fuel_transactions rows that carry a
  * driver_id and a load_id but no unit_id: the driver is already known, so the missing fact is

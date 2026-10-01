@@ -10,7 +10,7 @@
  *          odometer anchors (E-06), stops (E-03), fence crossings with odometer (E-04), engine faults (E-10),
  *          harsh events (E-12), DVIRs as tractor or as trailer (T-51), fuel fills.
  */
-import { driverAtTimeSql, loadAtTimeSql } from "../maintenance/driver-attribution.js";
+import { driverAtTimeSql, driverAtTimeWithLoadFallbackSql, loadAtTimeSql } from "../maintenance/driver-attribution.js";
 import { STOP_ARRIVAL_EVENTS_SQL } from "./stop-arrival-events.js";
 
 /** Display labels so a screen never renders a uuid (verify-no-uuid-label-rendering). */
@@ -90,10 +90,18 @@ export async function unitTelematicsLinks(client: Db, oc: string, unitId: string
     fence_crossings: await q(`SELECT c.id::text, g.label, c.geofence_kind, c.event_kind, c.occurred_at, c.odometer_mi, c.odometer_source
                                 FROM telematics.geofence_odometer_captures c JOIN geo.geofences g ON g.id = c.geofence_id
                                WHERE c.operating_company_id = $1::uuid AND c.unit_id = $2::uuid AND c.occurred_at >= ${since} ORDER BY c.occurred_at DESC`),
-    engine_faults: await q(`SELECT h.id::text, h.fault_code, h.severity, h.occurred_at, h.resolved_at, h.auto_wo_id::text
-                              FROM maintenance.samsara_fault_code_history h WHERE h.operating_company_id = $1::uuid AND h.unit_id = $2::uuid AND h.occurred_at >= ${since} ORDER BY h.occurred_at DESC`),
-    harsh_events: await q(`SELECT e.id::text, e.event_kind, e.event_at, e.g_force, e.driver_id::text, ${DL("e.driver_id")}
-                             FROM safety.harsh_events e WHERE e.operating_company_id = $1::uuid AND e.unit_id = $2::uuid AND e.event_at >= ${since} ORDER BY e.event_at DESC`),
+    engine_faults: await q(`SELECT h.id::text, h.fault_code, h.severity, h.occurred_at, h.resolved_at, h.auto_wo_id::text,
+                                   driver_at_time.driver_id::text AS driver_id, driver_at_time.attribution_source, ${DL("driver_at_time.driver_id")}
+                              FROM maintenance.samsara_fault_code_history h
+                              ${driverAtTimeWithLoadFallbackSql("h.unit_id", "h.occurred_at")}
+                             WHERE h.operating_company_id = $1::uuid AND h.unit_id = $2::uuid AND h.occurred_at >= ${since} ORDER BY h.occurred_at DESC`),
+    harsh_events: await q(`SELECT e.id::text, e.event_kind, e.event_at, e.g_force,
+                                  COALESCE(e.driver_id, driver_at_time.driver_id)::text AS driver_id,
+                                  CASE WHEN e.driver_id IS NOT NULL THEN 'samsara_driver' ELSE driver_at_time.attribution_source END AS attribution_source,
+                                  ${DL("COALESCE(e.driver_id, driver_at_time.driver_id)")}
+                             FROM safety.harsh_events e
+                             ${driverAtTimeWithLoadFallbackSql("e.unit_id", "e.event_at")}
+                            WHERE e.operating_company_id = $1::uuid AND e.unit_id = $2::uuid AND e.event_at >= ${since} ORDER BY e.event_at DESC`),
     dvirs: await q(`SELECT d.id::text, d.type, d.submitted_at, d.has_major_defect, d.load_id::text, d.driver_id::text, ${LN("d.load_id")}, ${DL("d.driver_id")},
                            CASE WHEN d.unit_id = $2::uuid THEN 'tractor' ELSE 'trailer' END AS role
                       FROM safety.dvir_submissions d
