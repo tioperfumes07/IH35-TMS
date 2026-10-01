@@ -6409,3 +6409,35 @@ after verify-owner-authorization OK (AUTH-180 OPEN on origin/main 319b20ae93). R
 voided, rowCount asserted = 3, voided_by = owner user e4117991-d2c0-406d-8cda-74e98d95bccd,
 void_reason 'coder test fixture, not a real complaint (AUTH-180)'. Re-verified: USMCA live
 complaints 5 -> 2; nothing deleted.
+
+## AUTH-180
+issued_at: 2026-10-01T03:43:02Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). (1) accounting.factoring_advances HEADERS
+  43bf2fc5-4984-4b56-8d13-7eeaf244d080 (FAC-2026-00048), 7b2da4bc-fcf0-4649-a3a6-ebbac086666c
+  (FAC-2026-00063), 5c44b184-aecc-4132-8247-7543f14e618a (FAC-2026-00064),
+  e9f9df8a-a91c-46b4-a5bf-0dced674b933 (FAC-2026-00082). Header void only through the sanctioned
+  void engine (executeVoidCancel 'factoring_advance'); it must find nothing live to reverse. No
+  other row, no JE beyond what the engine writes. (2) Then the AUTH-177 purge re-run: DELETE of every
+  voided_at / revoked_at / is_sample_data row in the purge script's fixed table list, USMCA only.
+action: re-void the four duplicate advance headers that R-191-UNIVERSAL-UNVOID (2026-09-30 05:28Z)
+  flipped live on a faro_invoice_number-keyed twin check (NULL on the voided copies). Their live
+  twins FAC-2026-00094 / 00110 / 00111 / 00129 (Faro inv 52 / 69 / 70 / 91) carry the money; the
+  duplicates' GL has been clean since AUTH-165 (2026-09-30 09:11Z) reversed the AUTH-140 re-post.
+  Script of record: scripts/ops/2026-10-01-lead-auth180-revoid-4-duplicate-advance-headers.ts.
+expires_at: 2026-10-02T03:43:02Z
+status: OPEN
+
+OWNER ORDER, verbatim, 2026-10-01:
+> "lets go, ok contfix the issues, permante soutions and fixes only.  all voided transactions youwere instructed to delte from the app." (in reply to the Lead's message laying out exactly these four duplicate headers, the $17,585 feed delta and the ask "void the 4")
+
+STANDING ORDER this also re-executes (AUTH-177, 2026-09-30, verbatim): "I WANT THE VOIDED TRANSACTIONS BULD DELETED IMMEDIATELY ..." -- after the four headers are voided, the owner purge script of record (scripts/ops/2026-09-30-lead-owner-purge-voided-and-sample-usmca.ts) is re-run: dry run first with per-table counts pasted here, then --apply, so no voided row remains in USMCA.
+
+MEASURED SCOPE, live 2026-10-01 before this authorization was written: 4 headers status='advanced',
+voided_at NULL, faro_invoice_number NULL, 0 live tagged postings each; each twin live exactly once
+with the invoice number set. verify-feed-is-whole: 9/4 fed 5/$23,430 vs manifest 4/$17,315; 9/11
+8/$37,550 vs 7/$33,400; 9/14 8/$34,890 vs 7/$30,770; 9/21 8/$35,967 vs 7/$32,767 -- the four
+deltas are exactly the four duplicates ($6,115 + $4,150 + $4,120 + $3,200 = $17,585). The owner's
+2026-09-30 reconciliation workbook lists one Faro row per invoice 52/69/70/91.
+
+THIS AUTHORIZATION DOES NOT COVER: the twins, any other advance, any invoice, any JE not written by
+the void engine itself, or the R-191 unvoid writer (that is a code fix, filed separately).
