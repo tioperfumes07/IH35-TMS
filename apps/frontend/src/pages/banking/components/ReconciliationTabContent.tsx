@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   getReconciliationSessions,
+  getReconciliationWorkspace,
   startReconciliationSession,
   type ReconciliationSession,
 } from "../../../api/banking";
@@ -93,6 +94,15 @@ export function ReconciliationTabContent({
   const allOpen = allSessionsQuery.data?.open_sessions ?? [];
   const allCompleted = allSessionsQuery.data?.completed_sessions ?? [];
 
+  const activeOpenSession = openSessions[0] ?? null;
+
+  /** B-2 — live cleared payment/deposit totals from the open workspace (not placeholder —). */
+  const openWorkspaceQuery = useQuery({
+    queryKey: ["banking", "reconciliation-workspace", activeOpenSession?.id, companyId],
+    queryFn: () => getReconciliationWorkspace(activeOpenSession!.id, companyId),
+    enabled: Boolean(companyId && activeOpenSession?.id),
+  });
+
   const accountStatus = useMemo(() => {
     return accounts.map((acct) => {
       const open = allOpen.filter((s) => s.bank_account_id === acct.id);
@@ -113,16 +123,28 @@ export function ReconciliationTabContent({
   }, [accounts, allOpen, allCompleted]);
 
   const neverReconciledCount = accountStatus.filter((r) => r.neverReconciled).length;
-  const activeOpenSession = openSessions[0] ?? null;
   const priorCompleted = completedSessions[0] ?? null;
 
   const beginningBalanceCents =
     (activeOpenSession as ReconciliationSession & { beginning_balance_cents?: number | null })
       ?.beginning_balance_cents ??
     priorCompleted?.statement_balance_cents ??
-    0;
+    Number(openWorkspaceQuery.data?.summary.beginning_balance_cents ?? 0);
   const statementBalanceCents = activeOpenSession?.statement_balance_cents ?? null;
-  const varianceCents = activeOpenSession?.variance_cents ?? null;
+  const clearedPaymentsCents = Number(
+    openWorkspaceQuery.data?.summary.cleared_debits_cents ??
+      openWorkspaceQuery.data?.summary.matched_debits_cents ??
+      0,
+  );
+  const clearedDepositsCents = Number(
+    openWorkspaceQuery.data?.summary.cleared_credits_cents ??
+      openWorkspaceQuery.data?.summary.matched_credits_cents ??
+      0,
+  );
+  const clearedBalanceCents =
+    Number(beginningBalanceCents ?? 0) - clearedPaymentsCents + clearedDepositsCents;
+  const varianceCents =
+    statementBalanceCents != null ? Number(statementBalanceCents) - clearedBalanceCents : null;
 
   const closeStart = () => {
     setStartOpen(false);
@@ -256,18 +278,26 @@ export function ReconciliationTabContent({
         <div
           className="mb-3 grid grid-cols-2 gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 sm:grid-cols-5"
           data-c67-statement-strip="1"
+          data-b2-reconcile-strip="1"
           data-testid="banking-recon-statement-strip"
         >
           {[
             { label: "Statement ending", value: activeOpenSession ? money(statementBalanceCents) : "—" },
             { label: "Beginning balance", value: money(beginningBalanceCents) },
-            { label: "Cleared payments", value: "—" },
-            { label: "Cleared deposits", value: "—" },
+            {
+              label: "Cleared payments",
+              value: activeOpenSession ? money(clearedPaymentsCents) : "—",
+            },
+            {
+              label: "Cleared deposits",
+              value: activeOpenSession ? money(clearedDepositsCents) : "—",
+            },
             {
               label: "Difference",
-              value: activeOpenSession ? money(varianceCents) : "—",
+              value: activeOpenSession && varianceCents != null ? money(varianceCents) : "—",
               emphasize: true,
               zero: varianceCents === 0,
+              warn: varianceCents != null && varianceCents !== 0,
             },
           ].map((cell) => (
             <div key={cell.label} className="rounded-sm bg-white px-2 py-1.5 text-center">
@@ -277,7 +307,9 @@ export function ReconciliationTabContent({
                   cell.emphasize
                     ? cell.zero
                       ? "text-[#16A34A]"
-                      : "text-[#0F1219]"
+                      : cell.warn
+                        ? "text-red-700"
+                        : "text-[#0F1219]"
                     : "text-[#0F1219]"
                 }`}
                 data-c53-difference={cell.label === "Difference" ? (varianceCents ?? "none") : undefined}
