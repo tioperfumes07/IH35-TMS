@@ -244,6 +244,9 @@
       "route_hint": "surface://pages/fuel/components/CreateFuelTransactionModal.tsx",
       "surface_kind": "modal",
       "surface_path": "pages/fuel/components/CreateFuelTransactionModal.tsx",
+      "owned_surface_paths": [
+        "components/locations/FuelStopLocationPicker.tsx"
+      ],
       "required": [
         "connectivity",
         "picker_law",

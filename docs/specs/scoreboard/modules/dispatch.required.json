@@ -239,6 +239,22 @@
       ]
     },
     {
+      "id": "home.truck_line",
+      "tab": "Home",
+      "sub": "Truck Line board",
+      "route_hint": "/dispatch?view=truck-line",
+      "surface_kind": "leaf",
+      "surface_path": "pages/dispatch/TruckLineBoard.tsx",
+      "required": [
+        "driver",
+        "unit",
+        "load",
+        "connectivity",
+        "reverse_link",
+        "picker_law"
+      ]
+    },
+    {
       "id": "secondary.book_load",
       "tab": "Book load",
       "sub": "+ Book Load wizard",
