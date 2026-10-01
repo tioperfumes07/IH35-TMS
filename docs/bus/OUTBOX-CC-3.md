@@ -1529,6 +1529,17 @@ guard: scripts/verify-driver-prompts-flag-off-idempotent.mjs + --selftest PASS; 
 - 23 of 24 loads due in the last 10 days now have at least 2 stops with an odometer. Before the fix: 8.
 - Guard `verify-e05-legs-evidence-chain` (9 checks).
 - **Live = after deploy + the 02:41 CT catch-up.** Each 15-minute E-05 tick then writes legs for the live window.
+
+## 2026-10-01 ROUND 313 item 4a — E-13 webhook: 0 rows ever → root cause and fix
+
+- **Measured:**
+  - Samsara `GET /webhooks` has ONE webhook, "IH35-TMS" (id 1839499484286657, v2024-12-20, events GeofenceEntry + GeofenceExit), url `https://api.ih35dispatch.com/api/v1/integrations/samsara/webhook`, with **no `?operating_company_id=`**.
+  - Our route required that param. `curl -X POST` on that url returns 400 `validation_error operating_company_id`, so every delivery died before the signature check.
+  - No `integrations.samsara_webhook*` audit row exists, ever. `samsara_config.samsara_org_id` is NULL for USMCA.
+- **Fix:** the tenant comes from the query param, else payload `orgId` = `samsara_config.samsara_org_id`, else the ONE enabled Samsara config (USMCA). The signature is still verified against that company's secret BEFORE anything is stored. Guard `verify-samsara-webhook-tenant-resolution`.
+- **After deploy, to confirm live:**
+  - `integrations.samsara_webhook_events` rows arriving with `signature_valid`. If audit `integrations.samsara_webhook_signature_invalid` appears instead, the stored/env `SAMSARA_WEBHOOK_SECRET` does not match the secret Samsara holds for this webhook. That is a config value only the owner can set in Render; I won't touch secrets.
+  - The projection has no GeofenceEntry/GeofenceExit handler yet, so those rows dead-letter `mirror_table_missing` after they are stored. Feeding them to the canonical fence detector is the next E-13 step.
 ## 2026-10-01 ROUND 313 item 5 — canonical cancellation reversal (13625 / 13627 / 13638)
 
 - **Root cause:** there was no canonical way to undo a cancellation. In ROUND-155.26 a one-off script put the status back but left `load_cancellations` at 'approved', and the 0281 trigger's stamp stayed on the load.
