@@ -22,6 +22,7 @@ import { TransferModal } from "./TransferModal";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { Modal } from "../../components/Modal";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
+import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBankingMatchBanner";
 
 const PAGE_SIZE = 50;
 
@@ -41,6 +42,60 @@ function memoText(memo: string | null | undefined): string {
   const s = (memo ?? "").trim();
   if (s === "" || looksLikeSerializedJson(s)) return "-";
   return s;
+}
+
+function TransferDetailModalBody({
+  transferId,
+  companyId,
+}: {
+  transferId: string;
+  companyId: string;
+}) {
+  const query = useQuery({
+    queryKey: ["banking", "transfer", companyId, transferId],
+    queryFn: () => getTransfer(transferId, companyId),
+  });
+  if (query.isPending) return <p className="text-xs text-slate-600">Loading transfer…</p>;
+  if (query.isError || !query.data) {
+    return <p className="text-xs text-red-700">Could not load transfer.</p>;
+  }
+  const transfer = query.data.transfer;
+  return (
+    <div className="space-y-2 text-xs text-slate-800">
+      {transfer.matched_bank_transaction_id ? (
+        <OnlineBankingMatchBanner
+          companyId={companyId}
+          bankTransactionId={transfer.matched_bank_transaction_id}
+          txnDate={transfer.transfer_date}
+          description={transfer.matched_bank_transaction_label}
+          amountCents={transfer.amount_cents}
+          invalidateKeys={[
+            ["banking", "transfer", companyId, transferId],
+            ["banking", "transfers", companyId],
+          ]}
+        />
+      ) : null}
+      <p>Type: {transfer.transfer_type}</p>
+      <p>Amount: {formatMoney(Number(transfer.amount_cents))}</p>
+      <p>Memo: {memoText(transfer.memo)}</p>
+      <p>
+        TMS JE:{" "}
+        {transfer.journal_entry_id ? (
+          <EntityLink
+            kind="journal_entry"
+            id={transfer.journal_entry_id}
+            label={entityLabel(transfer.journal_entry_memo, transfer.journal_entry_id, "Journal entry")}
+          />
+        ) : (
+          "none (TRANSFER_GL_POSTING_ENABLED off or not posted)"
+        )}
+      </p>
+      <p data-testid="transfer-matched-bank">
+        Bank txn: {transfer.matched_bank_transaction_id ? "Matched — Unmatch from the banner above" : "none"}
+      </p>
+      <p>QBO JE: {transfer.qbo_journal_entry_id || "pending"}</p>
+    </div>
+  );
 }
 
 export function TransfersListPage() {
@@ -244,33 +299,10 @@ export function TransfersListPage() {
               className="text-xs text-slate-700 hover:underline"
               onClick={() => {
                 if (!companyId) return;
-                void getTransfer(row.id, companyId)
-                  .then((detail) => {
-                    setInfoModal({
-                      title: `Transfer ${detail.transfer.id}`,
-                      body: (
-                        <div className="space-y-1 text-xs text-slate-800">
-                          <p>Type: {detail.transfer.transfer_type}</p>
-                          <p>Amount: {formatMoney(Number(detail.transfer.amount_cents))}</p>
-                          <p>Memo: {memoText(detail.transfer.memo)}</p>
-                          <p>
-                            TMS JE:{" "}
-                            {detail.transfer.journal_entry_id ? (
-                              <EntityLink kind="journal_entry" id={detail.transfer.journal_entry_id} label={entityLabel(detail.transfer.journal_entry_memo, detail.transfer.journal_entry_id, "Journal entry")} />
-                            ) : "none (TRANSFER_GL_POSTING_ENABLED off or not posted)"}
-                          </p>
-                          <p>
-                            Bank txn:{" "}
-                            {detail.transfer.matched_bank_transaction_id ? (
-                              <EntityLink kind="bank_transaction" id={detail.transfer.matched_bank_transaction_id} label={entityLabel(detail.transfer.matched_bank_transaction_label, detail.transfer.matched_bank_transaction_id, "Bank transaction")} />
-                            ) : "none"}
-                          </p>
-                          <p>QBO JE: {detail.transfer.qbo_journal_entry_id || "pending"}</p>
-                        </div>
-                      ),
-                    });
-                  })
-                  .catch((error) => pushToast(userFacingApiError(error, "Failed to load transfer detail"), "error"));
+                setInfoModal({
+                  title: `Transfer ${row.id}`,
+                  body: <TransferDetailModalBody transferId={row.id} companyId={companyId} />,
+                });
               }}
             >
               View

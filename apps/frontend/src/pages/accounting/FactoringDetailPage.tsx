@@ -29,6 +29,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBankingMatchBanner";
 
 import { formatUsdCents } from "../../lib/money";
 
@@ -185,6 +186,16 @@ export function FactoringDetailPage() {
 
   return (
     <AccountingSubNavWrapper>
+      {detail.matched_bank_transaction_id && selectedCompanyId ? (
+        <OnlineBankingMatchBanner
+          companyId={selectedCompanyId}
+          bankTransactionId={detail.matched_bank_transaction_id}
+          txnDate={detail.advanced_at ?? detail.submitted_at}
+          description={detail.matched_bank_transaction_label}
+          amountCents={detail.advance_amount_cents}
+          invalidateKeys={[["accounting", "factoring-advance", selectedCompanyId, id]]}
+        />
+      ) : null}
       <PageHeader
         title={entityLabel(detail.display_id, detail.id, "Advance")}
         backHref="/factoring"
@@ -264,15 +275,7 @@ export function FactoringDetailPage() {
             <span className="text-xs text-gray-600">Bank wire</span>
             <span className="text-xs text-gray-900">
               {detail.matched_bank_transaction_id ? (
-                <EntityLink
-                  kind="bank_transaction"
-                  id={detail.matched_bank_transaction_id}
-                  label={entityLabel(
-                    detail.matched_bank_transaction_label,
-                    detail.matched_bank_transaction_id,
-                    "Bank transaction"
-                  )}
-                />
+                <span data-testid="factoring-matched-bank">Matched — Unmatch from the banner above</span>
               ) : (
                 <span className="text-slate-400">—</span>
               )}

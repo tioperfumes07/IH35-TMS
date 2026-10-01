@@ -32,9 +32,16 @@ function main() {
     "apps/frontend/src/pages/accounting/ExpenseDetailPage.tsx",
     "apps/frontend/src/pages/accounting/BillPaymentDetailPage.tsx",
     "apps/frontend/src/pages/accounting/PaymentDetailPage.tsx",
+    "apps/frontend/src/pages/accounting/journal-entries/JournalEntryDetailPage.tsx",
+    "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx",
+    "apps/frontend/src/pages/banking/TransfersListPage.tsx",
   ]) {
     assertIncludes(read(file), "OnlineBankingMatchBanner", file);
   }
+
+  const recon = read("apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts");
+  assertIncludes(recon, 'app.post("/api/v1/bank-recon/unmatch"', "recon-worklist.routes.ts");
+  assertIncludes(recon, "Journal entry / Transfer / Factoring advance", "recon-worklist.routes.ts");
 
   console.log(`${LABEL}: PASS`);
 }
