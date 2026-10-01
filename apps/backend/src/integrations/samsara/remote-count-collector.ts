@@ -1,6 +1,6 @@
+import { resolveSamsaraApiToken } from "./samsara-token.js";
 import { randomUUID } from "node:crypto";
 import { withLuciaBypass } from "../../auth/db.js";
-import { decryptSamsaraSecret } from "../../lib/samsara-crypto.js";
 import { SamsaraApiError, SamsaraClient, type SamsaraRemoteEntityType } from "./samsara-client.js";
 import { getSamsaraConfigForCompany } from "./samsara.service.js";
 
@@ -58,15 +58,6 @@ function classifyCollectorError(error: unknown): { failureClass: FailureClass; s
     return { failureClass: "not_configured", statusCode: null, message };
   }
   return { failureClass: "transient_error", statusCode: null, message };
-}
-
-function readEncryptedToken(config: Record<string, unknown> | null): Buffer | null {
-  if (!config) return null;
-  const canonical = config.encrypted_api_token;
-  if (Buffer.isBuffer(canonical) && canonical.length > 0) return canonical;
-  const legacy = config.api_token_encrypted;
-  if (Buffer.isBuffer(legacy) && legacy.length > 0) return legacy;
-  return null;
 }
 
 async function appendAuditEvent(
@@ -203,7 +194,7 @@ export async function collectSamsaraRemoteCounts(
       };
     }
 
-    const token = decryptSamsaraSecret(readEncryptedToken(config));
+    const token = resolveSamsaraApiToken(config as Record<string, unknown>);
     const samsara = new SamsaraClient({
       apiToken: token,
       samsaraOrgId: config.samsara_org_id ? String(config.samsara_org_id) : null,

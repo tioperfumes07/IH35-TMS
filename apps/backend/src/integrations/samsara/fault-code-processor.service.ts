@@ -52,6 +52,40 @@ export function extractFaultCodesFromPayload(payload: Record<string, unknown>): 
   const out: ParsedFaultCode[] = [];
   const seen = new Set<string>();
 
+  // ROUND 306 E-10/E-11 — the shape Samsara actually sends on /fleet/vehicles/stats?types=faultCodes,
+  // measured live 2026-10-01 (95 vehicles, 134 J1939 DTCs): faultCodes is an OBJECT
+  //   { j1939: { checkEngineLights, diagnosticTroubleCodes: [{ spnId, fmiId, spnDescription, fmiDescription,
+  //     occurrenceCount, milStatus, txId, sourceAddressName }] }, obdii: { diagnosticTroubleCodes: [{ confirmedDtcs,
+  //     pendingDtcs, permanentDtcs, ... }] }, canBusType, time }
+  // The array-only parser below never matched it, so every live DTC was dropped (0 history rows ever).
+  // Code = SAE J1939 "SPN <spn> FMI <fmi>"; OBD-II confirmed/permanent DTC strings are taken as-is
+  // (all lists were empty live, so only plain string items are accepted -- never an invented field).
+  for (const container of [asObject(record.faultCodes), asObject(payload.faultCodes)]) {
+    if (!container) continue;
+    const j1939 = asObject(container.j1939);
+    for (const item of Array.isArray(j1939?.diagnosticTroubleCodes) ? j1939!.diagnosticTroubleCodes as unknown[] : []) {
+      const d = asObject(item);
+      if (!d || d.spnId == null || d.fmiId == null) continue;
+      const code = `SPN ${String(d.spnId)} FMI ${String(d.fmiId)}`;
+      if (seen.has(code)) continue;
+      seen.add(code);
+      const parts = [d.spnDescription, d.fmiDescription].filter((x): x is string => typeof x === "string" && x.length > 0);
+      const src = typeof d.sourceAddressName === "string" && d.sourceAddressName ? ` (${d.sourceAddressName})` : "";
+      out.push({ code, description: parts.length ? `${parts.join(" — ")}${src}` : null, source: "j1939_dtc" });
+    }
+    const obdii = asObject(container.obdii);
+    for (const block of Array.isArray(obdii?.diagnosticTroubleCodes) ? obdii!.diagnosticTroubleCodes as unknown[] : []) {
+      const b = asObject(block);
+      for (const list of [b?.confirmedDtcs, b?.permanentDtcs]) {
+        for (const dtc of Array.isArray(list) ? list : []) {
+          if (typeof dtc !== "string" || !dtc.trim() || seen.has(dtc.trim())) continue;
+          seen.add(dtc.trim());
+          out.push({ code: dtc.trim(), description: null, source: "samsara" });
+        }
+      }
+    }
+  }
+
   for (const raw of candidates) {
     if (!Array.isArray(raw)) continue;
     for (const item of raw) {
@@ -77,7 +111,9 @@ export function extractFaultCodesFromPayload(payload: Record<string, unknown>): 
 
 function extractOccurredAt(payload: Record<string, unknown>): string {
   const record = extractVehicleRecord(payload);
-  const raw = String(record.timestamp ?? record.time ?? record.occurred_at ?? payload.timestamp ?? new Date().toISOString());
+  // E-10: the measured stats shape carries the reading time on faultCodes.time.
+  const fc = asObject(record.faultCodes) ?? asObject(payload.faultCodes);
+  const raw = String(fc?.time ?? record.timestamp ?? record.time ?? record.occurred_at ?? payload.timestamp ?? new Date().toISOString());
   return new Date(raw).toISOString();
 }
 

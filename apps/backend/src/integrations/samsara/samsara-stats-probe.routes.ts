@@ -7,11 +7,11 @@
 //   • gps.reverseGeo.formattedLocation (city/state) + engineStates.value (engine) from /fleet/vehicles/stats
 //   • the CURRENT logged-in driver from /fleet/vehicles/driver-assignments
 // and reports the HTTP status of the deployed types=...,driverAssignments call (to prove the 400).
+import { resolveSamsaraApiToken } from "./samsara-token.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
-import { decryptSamsaraSecret } from "../../lib/samsara-crypto.js";
 import { getSamsaraConfigForCompany } from "./samsara.service.js";
 import { runSamsaraStatsProbe, localPairingDiagnostics } from "./samsara-stats-probe.service.js";
 
@@ -25,15 +25,6 @@ function currentOfficeAdmin(req: FastifyRequest, reply: FastifyReply) {
     return null;
   }
   return user;
-}
-
-function readEncryptedToken(config: Record<string, unknown> | null): Buffer | null {
-  if (!config) return null;
-  const canonical = config.encrypted_api_token;
-  if (Buffer.isBuffer(canonical) && canonical.length > 0) return canonical;
-  const legacy = config.api_token_encrypted;
-  if (Buffer.isBuffer(legacy) && legacy.length > 0) return legacy;
-  return null;
 }
 
 export async function registerSamsaraStatsProbeRoutes(app: FastifyInstance) {
@@ -53,7 +44,7 @@ export async function registerSamsaraStatsProbeRoutes(app: FastifyInstance) {
     if (!cfg || !Boolean((cfg as Record<string, unknown>).is_enabled)) {
       return reply.code(409).send({ error: "samsara_not_enabled" });
     }
-    const token = decryptSamsaraSecret(readEncryptedToken(cfg as Record<string, unknown>));
+    const token = resolveSamsaraApiToken(cfg as Record<string, unknown> as Record<string, unknown>);
     if (!token) return reply.code(409).send({ error: "samsara_token_unavailable" });
 
     const result = await runSamsaraStatsProbe(token, new Date());

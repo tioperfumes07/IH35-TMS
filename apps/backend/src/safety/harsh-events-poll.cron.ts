@@ -28,11 +28,11 @@
  * ERROR POLICY: same as relay-fuel-ingest.cron.ts and fault-poll.cron.ts -- one company's failure
  * is isolated, but the whole tick's aggregated failure is re-thrown at the end, never swallowed.
  */
+import { resolveSamsaraApiToken } from "../integrations/samsara/samsara-token.js";
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
-import { decryptSamsaraSecret } from "../lib/samsara-crypto.js";
 import { processHarshEventsFromVehiclePayload } from "./harsh-events-ingestion.service.js";
 import { SamsaraApiError, SamsaraClient } from "../integrations/samsara/samsara-client.js";
 import type { PgClient } from "../integrations/samsara/samsara.service.js";
@@ -40,15 +40,6 @@ import { getSamsaraConfigForCompany } from "../integrations/samsara/samsara.serv
 import { loadUnitIdBySamsaraVehicleId } from "../integrations/samsara/samsara-positions.service.js";
 
 const HARSH_EVENTS_POLL_AUDIT_SOURCE = "HARSH-EVENTS-POLL-CRON-1";
-
-function readEncryptedToken(config: Record<string, unknown> | null): Buffer | null {
-  if (!config) return null;
-  const canonical = config.encrypted_api_token;
-  if (Buffer.isBuffer(canonical) && canonical.length > 0) return canonical;
-  const legacy = config.api_token_encrypted;
-  if (Buffer.isBuffer(legacy) && legacy.length > 0) return legacy;
-  return null;
-}
 
 async function listActiveCompanyIds(client: PgClient): Promise<string[]> {
   const res = await client.query(
@@ -65,6 +56,12 @@ function asObject(value: unknown): Record<string, unknown> | null {
  *  — see the file header's NORMALIZATION CAVEAT. An unrecognized label falls through to null,
  *  which parseHarshEntries() correctly skips rather than miscategorizing. */
 const BEHAVIOR_LABEL_MAP = new Map<string, string>([
+  // ROUND 306 E-12 — labels MEASURED on /fleet/safety-events (USMCA, 30 days, 182 events, 2026-10-01):
+  // braking 19 ("Harsh Brake"), harshTurn 16, rollingStop 9 map to our kinds. followingDistance 57,
+  // edgeRailroadCrossingViolation 67, unsafeParking 13, laneDeparture 1 have NO safety.harsh_events kind
+  // (CHECK constraint) -> skipped and counted, never forced into a wrong kind. "braking" was missing:
+  // every Harsh Brake was being dropped.
+  ["braking", "harsh_brake"],
   ["harshbrake", "harsh_brake"],
   ["harsh_braking", "harsh_brake"],
   ["harshaccel", "harsh_accel"],
@@ -96,7 +93,17 @@ function extractBehaviorKind(raw: Record<string, unknown>): string | null {
     }
   }
   const direct = String(raw.event_kind ?? raw.kind ?? raw.type ?? "").trim();
-  return direct.length > 0 ? direct : null;
+  return (HARSH_EVENT_KINDS as readonly string[]).includes(direct) ? direct : null;
+}
+
+/** safety.harsh_events.event_kind CHECK values. */
+export const HARSH_EVENT_KINDS = ["harsh_brake", "harsh_accel", "harsh_turn", "speeding", "mobile_use", "distracted", "rolling_stop", "no_seatbelt"] as const;
+
+/** Labels on a raw Samsara safety event, for counting the ones we cannot store. */
+export function rawBehaviorLabels(raw: Record<string, unknown>): string[] {
+  const labels = raw.behaviorLabels ?? raw.behavior_labels ?? raw.labels;
+  if (!Array.isArray(labels)) return [];
+  return labels.map((e) => { const o = asObject(e); return String((o ? (o.label ?? o.name ?? o.type) : e) ?? ""); }).filter(Boolean);
 }
 
 export function normalizeSafetyEventRow(raw: Record<string, unknown>): Record<string, unknown> | null {
@@ -112,12 +119,15 @@ export function normalizeSafetyEventRow(raw: Record<string, unknown>): Record<st
   const severityRaw = String(raw.severity ?? raw.severityLabel ?? "minor");
   const speedCandidates = [raw.speedAtEventMph, raw.speed_at_event_mph, raw.speedMph, raw.speed_mph, raw.speed];
   const speed = speedCandidates.map(Number).find((v) => Number.isFinite(v)) ?? null;
-  const gForceCandidates = [raw.gForce, raw.g_force, raw.gforce];
+  const gForceCandidates = [raw.maxAccelerationGForce, raw.gForce, raw.g_force, raw.gforce];
   const gForce = gForceCandidates.map(Number).find((v) => Number.isFinite(v)) ?? null;
   const gps = asObject(raw.gps) ?? asObject(raw.location);
   const latitude = Number(gps?.latitude ?? gps?.lat ?? raw.latitude ?? raw.lat ?? NaN);
   const longitude = Number(gps?.longitude ?? gps?.lng ?? gps?.lon ?? raw.longitude ?? raw.lng ?? raw.lon ?? NaN);
-  const occurredAt = String(raw.time ?? raw.eventTime ?? raw.event_time ?? raw.occurred_at ?? new Date().toISOString());
+  // The event's own time or nothing -- never the poll time.
+  const occurredRaw = raw.time ?? raw.eventTime ?? raw.event_time ?? raw.occurred_at;
+  if (typeof occurredRaw !== "string" || Number.isNaN(Date.parse(occurredRaw))) return null;
+  const occurredAt = occurredRaw;
 
   return {
     __vehicle_id: vehicleId,
@@ -143,7 +153,7 @@ async function pollHarshEventsForCompany(
     return { events_seen: 0, inserted: 0 };
   }
 
-  const token = decryptSamsaraSecret(readEncryptedToken(cfg));
+  const token = resolveSamsaraApiToken(cfg as Record<string, unknown>);
   const api = new SamsaraClient({
     apiToken: token,
     samsaraOrgId: cfg.samsara_org_id ? String(cfg.samsara_org_id) : null,
@@ -155,9 +165,13 @@ async function pollHarshEventsForCompany(
   let inserted = 0;
   let eventsSeen = 0;
 
+  const skippedLabels: Record<string, number> = {};
   for (const row of rawRows) {
     const normalized = normalizeSafetyEventRow(row.raw);
-    if (!normalized) continue;
+    if (!normalized) {
+      for (const l of rawBehaviorLabels(row.raw)) skippedLabels[l] = (skippedLabels[l] ?? 0) + 1;
+      continue;
+    }
     const vehicleId = normalized.__vehicle_id as string | null;
     if (!vehicleId) continue;
     const unitId = unitByVehicleId.get(vehicleId);
@@ -182,6 +196,7 @@ async function pollHarshEventsForCompany(
       window: `${windowStartIso}..${windowEndIso}`,
       events_seen: eventsSeen,
       inserted,
+      skipped_no_harsh_kind: skippedLabels,
     }),
     HARSH_EVENTS_POLL_AUDIT_SOURCE,
   ]);

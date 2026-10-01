@@ -538,7 +538,10 @@ async function fetchSamsaraPage(
   cursor: string | null;
 }> {
   const url = new URL(`${SAMSARA_API_BASE}${endpoint}`);
-  url.searchParams.set("limit", "512");
+  // ROUND 306 E-12: measured live 2026-10-01 -- /fleet/safety-events rejects limit > 200 with HTTP 400
+  // ("Limit must be <= 200"), so the harsh-events poller never read a single event. The other four
+  // endpoints accept 512.
+  url.searchParams.set("limit", endpoint === "/fleet/safety-events" ? "200" : "512");
   if (after) url.searchParams.set("after", after);
   for (const [key, value] of Object.entries(extraParams ?? {})) url.searchParams.set(key, value);
   let res: Response;

@@ -94,16 +94,15 @@ export async function deliverChatMessageToSamsara(client: Db, messageId: string,
 export async function deliverChatMessageAfterCommit(operatingCompanyId: string, messageId: string): Promise<DeliveryResult | null> {
   if (!samsaraDriverMessagingEnabled()) return null;
   const { withLuciaBypass } = await import("../../../auth/db.js");
-  const { decryptSamsaraSecret } = await import("../../../lib/samsara-crypto.js");
+  const { resolveSamsaraApiToken } = await import("../samsara-token.js");
   const { SamsaraClient } = await import("../samsara-client.js");
   const { getSamsaraConfigForCompany } = await import("../samsara.service.js");
   return withLuciaBypass(async (client) => {
     // membership-scope-exempt: caller already authorised for this entity (chat route)
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     const cfg = await getSamsaraConfigForCompany(client as never, operatingCompanyId);
-    const enc = cfg?.encrypted_api_token ?? cfg?.api_token_encrypted;
-    const sender = cfg && cfg.is_enabled && Buffer.isBuffer(enc) && enc.length
-      ? new SamsaraClient({ apiToken: decryptSamsaraSecret(enc), samsaraOrgId: cfg.samsara_org_id ? String(cfg.samsara_org_id) : null })
+    const sender = cfg && cfg.is_enabled
+      ? new SamsaraClient({ apiToken: resolveSamsaraApiToken(cfg as Record<string, unknown>), samsaraOrgId: cfg.samsara_org_id ? String(cfg.samsara_org_id) : null })
       : null;
     return deliverChatMessageToSamsara(client as never, messageId, sender);
   });

@@ -8,11 +8,11 @@
  * ERROR POLICY: same as fault-poll.cron.ts — one company's failure is isolated and audited, and the
  * aggregated failure is re-thrown at the end of the tick, never swallowed.
  */
+import { resolveSamsaraApiToken } from "./samsara-token.js";
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../../auth/db.js";
 import { assertTenantContext } from "../../cron/_helpers/tenant-context-guard.js";
-import { decryptSamsaraSecret } from "../../lib/samsara-crypto.js";
 import { runFuelPurchasePush } from "./fuel-purchase-push.service.js";
 import { SamsaraClient } from "./samsara-client.js";
 import type { PgClient } from "./samsara.service.js";
@@ -24,22 +24,13 @@ export function fuelPurchasePushApplyEnabled(): boolean {
   return process.env.SAMSARA_FUEL_PURCHASE_PUSH_APPLY === "true";
 }
 
-function readEncryptedToken(config: Record<string, unknown> | null): Buffer | null {
-  if (!config) return null;
-  const canonical = config.encrypted_api_token;
-  if (Buffer.isBuffer(canonical) && canonical.length > 0) return canonical;
-  const legacy = config.api_token_encrypted;
-  if (Buffer.isBuffer(legacy) && legacy.length > 0) return legacy;
-  return null;
-}
-
 async function pushForCompany(client: PgClient, operatingCompanyId: string): Promise<void> {
   const cfg = await getSamsaraConfigForCompany(client, operatingCompanyId);
   if (!cfg || !Boolean(cfg.is_enabled)) return;
   const apply = fuelPurchasePushApplyEnabled();
   const poster = apply
     ? new SamsaraClient({
-        apiToken: decryptSamsaraSecret(readEncryptedToken(cfg)),
+        apiToken: resolveSamsaraApiToken(cfg as Record<string, unknown>),
         samsaraOrgId: cfg.samsara_org_id ? String(cfg.samsara_org_id) : null,
       })
     : null;

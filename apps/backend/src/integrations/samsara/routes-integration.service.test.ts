@@ -2,16 +2,17 @@ import { describe, expect, it, vi } from "vitest";
 import { listLeaseScopedDispatchedRoutes, projectRouteStopEvent } from "./routes-integration.service.js";
 
 describe("Samsara Routes integration", () => {
-  it("lists only dispatched loads whose assigned unit is leased to the company", async () => {
+  it("lists on-road loads whose assigned unit this company operates (lease, else owner -- E-31)", async () => {
     const query = vi.fn()
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [{ load_id: "load-1" }] });
     const rows = await listLeaseScopedDispatchedRoutes({ query }, "5c854333-6ea5-4faa-af31-67cb272fef80");
     expect(rows).toEqual([{ load_id: "load-1" }]);
     const sql = String(query.mock.calls[1]?.[0]);
-    expect(sql).toContain("u.currently_leased_to_company_id = $1::uuid");
+    expect(sql).toContain("COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid");
     expect(sql).toContain("l.operating_company_id = $1::uuid");
-    expect(sql).toContain("'dispatched','at_pickup','in_transit','at_delivery'");
+    expect(sql).toContain("l.status::text = ANY($2::text[])");
+    expect(query.mock.calls[1]?.[1]?.[1]).toEqual(["dispatched", "at_pickup", "in_transit", "at_delivery"]);
     expect(sql).not.toContain("last_seen_at");
   });
 
