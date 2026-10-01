@@ -17,7 +17,9 @@ function posting(over: Partial<RawPosting>): RawPosting {
     split_account: null,
     class_name: null,
     reconcile_status: "",
+    cleared_by_bank_match: false,
     attachment_count: 0,
+    location: null,
     ...over,
   };
 }

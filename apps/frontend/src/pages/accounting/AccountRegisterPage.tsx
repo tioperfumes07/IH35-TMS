@@ -3,16 +3,22 @@ import { formatUsdCents } from "../../lib/money";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BankTieoutHeader } from "../../components/banking/BankTieoutHeader";
 
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/Combobox";
 import { ListErrorState } from "../../components/ListErrorState";
+import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { listCoaAccountsForJe, listAccountingAuditTrail, type AccountingAuditTrailEvent } from "../../api/accounting";
 import { getAllAccounts } from "../../api/banking";
-import { getAccountRegister, type AccountRegisterReport, type AccountRegisterRow } from "../../api/account-register";
+import {
+  getAccountRegister,
+  toggleAccountRegisterCleared,
+  type AccountRegisterReport,
+  type AccountRegisterRow,
+} from "../../api/account-register";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";
 import { entityLabel } from "../../lib/entity-label";
@@ -24,6 +30,7 @@ import { coaAccountReferenceOption } from "../../components/parity/referenceOpti
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 const fmtCents = (cents: number) => formatUsdCents(cents);
 
@@ -144,6 +151,8 @@ export function AccountRegisterPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const [searchParams] = useSearchParams();
   // BANK-SORT-ROLLOUT-ACCT: register column sort persists in URL (?sort=&dir=).
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
@@ -219,6 +228,31 @@ export function AccountRegisterPage() {
         type: typeLabel ? TYPE_TO_SOURCE[typeLabel] : undefined,
       }),
     enabled: Boolean(companyId && accountId),
+  });
+
+  const toggleClearedMutation = useMutation({
+    mutationFn: (input: { posting_id: string; cleared: boolean }) =>
+      toggleAccountRegisterCleared({
+        operating_company_id: companyId,
+        posting_id: input.posting_id,
+        cleared: input.cleared,
+      }),
+    onSuccess: (result) => {
+      pushToast(result.reconcile_status === "C" ? "Marked cleared (C)" : "Cleared mark removed", "success");
+      void queryClient.invalidateQueries({ queryKey: ["account-register", companyId, accountId] });
+    },
+    onError: (error) => {
+      const code = String((error as { body?: { error?: string } })?.body?.error ?? "");
+      if (code === "reconcile_status_locked") {
+        pushToast("Reconciled (R) is locked — reopen the reconciliation report to change it", "error");
+        return;
+      }
+      if (code === "unmatch_bank_first") {
+        pushToast("Unmatch this row in Bank Transactions first", "error");
+        return;
+      }
+      pushToast(userFacingApiError(error, "Could not update cleared mark"), "error");
+    },
   });
 
   const auditQuery = useQuery({
@@ -397,23 +431,48 @@ export function AccountRegisterPage() {
       className: "text-center",
       cellClass: "text-center tabular-nums",
       sortValue: (r) => r.reconcile_status || "",
-      headerTitle: "✓ blank = unmatched · C = cleared (bank match) · R = reconciled (locked)",
+      headerTitle: "✓ blank = unmatched · C = cleared (bank match or manual) · R = reconciled (locked). Click toggles blank↔C.",
       render: (r) => {
         const status = r.reconcile_status || "";
+        const busy = toggleClearedMutation.isPending && toggleClearedMutation.variables?.posting_id === r.posting_id;
         return (
-          <span
+          <button
+            type="button"
+            data-testid="b1-reconcile-toggle"
             data-b1-reconcile-status={status || "blank"}
+            data-b1-cleared-by-match={r.cleared_by_bank_match ? "1" : "0"}
+            disabled={busy || status === "R"}
             title={
               status === "R"
                 ? "Reconciled — locked by a closed reconciliation"
                 : status === "C"
-                  ? "Cleared — matched to bank feed"
-                  : "Not matched"
+                  ? r.cleared_by_bank_match
+                    ? "Cleared via bank match — unmatch in Bank Transactions to blank"
+                    : "Cleared — click to remove mark"
+                  : "Not cleared — click to mark C"
             }
-            className={status === "R" ? "font-semibold text-slate-800" : status === "C" ? "text-slate-700" : "text-gray-400"}
+            className={`min-w-[1.5rem] rounded-sm px-1 text-center tabular-nums ${
+              status === "R"
+                ? "cursor-not-allowed font-semibold text-slate-800"
+                : status === "C"
+                  ? "text-slate-700 hover:bg-slate-100"
+                  : "text-gray-400 hover:bg-slate-100 hover:text-slate-700"
+            }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (status === "R") {
+                pushToast("Reconciled (R) is locked — reopen the reconciliation report to change it", "error");
+                return;
+              }
+              if (status === "C" && r.cleared_by_bank_match) {
+                pushToast("Unmatch this row in Bank Transactions first", "error");
+                return;
+              }
+              toggleClearedMutation.mutate({ posting_id: r.posting_id, cleared: status !== "C" });
+            }}
           >
             {status || "\u00a0"}
-          </span>
+          </button>
         );
       },
     },
@@ -436,8 +495,15 @@ export function AccountRegisterPage() {
     },
     { key: "type", label: "Type", sortable: true, defaultHidden: true, render: (r) => r.type },
     { key: "split_account", label: "Account", sortable: true, defaultHidden: true, render: (r) => r.split_account ?? "—" },
-    // Location is not on journal_entry_postings yet — honest "—", never fabricated.
-    { key: "location", label: "Location", sortable: true, defaultHidden: true, sortValue: () => "", render: () => "—" },
+    // Location from bank categorization when present — honest "—" otherwise (no fabricated place).
+    {
+      key: "location",
+      label: "Location",
+      sortable: true,
+      defaultHidden: true,
+      sortValue: (r) => r.location ?? "",
+      render: (r) => r.location?.trim() || "—",
+    },
   ];
 
   // Audit-history view — display-only ledger audit stream (same shape as the former hand-rolled

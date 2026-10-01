@@ -41,16 +41,30 @@ function main() {
   assertIncludes(page, '"n/a"', PAGE);
   assertIncludes(page, "Bank transactions", PAGE);
   assertIncludes(page, "Reconcile", PAGE);
+  assertIncludes(page, "toggleAccountRegisterCleared", PAGE);
+  assertIncludes(page, 'data-testid="b1-reconcile-toggle"', PAGE);
+  assertIncludes(page, "Unmatch this row in Bank Transactions first", PAGE);
 
   assertIncludes(service, "reconcile_status", SERVICE);
   assertIncludes(service, "attachment_count", SERVICE);
   assertIncludes(service, "bank_balance_cents", SERVICE);
   assertIncludes(service, "reconciled_through", SERVICE);
   assertIncludes(service, "reconciliation_sessions", SERVICE);
+  assertIncludes(service, "toggleAccountRegisterCleared", SERVICE);
+  assertIncludes(service, "register_cleared", SERVICE);
+  assertIncludes(service, "categorization_location", SERVICE);
 
   assertIncludes(api, "reconcile_status", API);
   assertIncludes(api, "bank_balance_cents", API);
   assertIncludes(api, "attachment_count", API);
+  assertIncludes(api, "toggleAccountRegisterCleared", API);
+  assertIncludes(api, "toggle-cleared", API);
+
+  const routes = read("apps/backend/src/accounting/account-register.routes.ts");
+  assertIncludes(routes, "/api/v1/accounting/account-register/toggle-cleared", "account-register.routes.ts");
+
+  const migration = read("db/migrations/202615201200_journal_entry_postings_register_cleared.sql");
+  assertIncludes(migration, "register_cleared", "202615201200 migration");
 
   assertIncludes(coa, "BOOK BALANCE", COA);
   if (coa.includes("QUICKBOOKS BALANCE")) {

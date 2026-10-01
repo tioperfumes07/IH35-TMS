@@ -39,10 +39,14 @@ export type RawPosting = {
   payee: string | null; // from the source transaction (bill→vendor, invoice→customer); null when unresolved
   split_account: string | null; // the contra account(s); "-Split-" when the JE touches >1 other account
   class_name: string | null; // catalogs.classes via posting.class_id
-  /** B-1 / QBO ✓ — blank | C (matched to bank feed) | R (locked by closed reconciliation). */
+  /** B-1 / QBO ✓ — blank | C (matched to bank feed OR register_cleared) | R (locked by closed reconciliation). */
   reconcile_status: "" | "C" | "R";
-  /** B-1 — docs.file_links count on the source document (0 when unlinked / no docs). */
+  /** True when C/R comes from a bank_transactions match (blank↔C then requires unmatch). */
+  cleared_by_bank_match: boolean;
+  /** B-1 📎 count from docs.file_links on the source document (0 when unlinked / no docs). */
   attachment_count: number;
+  /** Location label when bank categorization carried one; honest null otherwise. */
+  location: string | null;
 };
 
 export type AccountRegisterRow = {
@@ -63,7 +67,9 @@ export type AccountRegisterRow = {
   split_account: string | null;
   class_name: string | null;
   reconcile_status: "" | "C" | "R";
+  cleared_by_bank_match: boolean;
   attachment_count: number;
+  location: string | null;
   // QBO labels the amount columns Increase/Decrease by account normal-balance; debit/credit are the raw
   // ledger sides. The frontend renders Increase/Decrease from these + normal_balance.
   debit_cents: number;
@@ -139,7 +145,9 @@ export function buildRegisterRows(
       split_account: p.split_account ?? null,
       class_name: p.class_name ?? null,
       reconcile_status: p.reconcile_status === "R" || p.reconcile_status === "C" ? p.reconcile_status : "",
+      cleared_by_bank_match: Boolean(p.cleared_by_bank_match),
       attachment_count: Number(p.attachment_count) || 0,
+      location: p.location ?? null,
       debit_cents: debit,
       credit_cents: credit,
       running_balance_cents: running,
@@ -229,14 +237,30 @@ export async function getAccountRegister(
   //  - payee: derived from the source transaction — bill→vendor, invoice→customer (the unambiguous cases);
   //    honest NULL otherwise. source_transaction_id is text; targets cast to text for a safe compare.
   const res = await client.query<
-    RawPosting & { amount_cents: string | number; reconcile_status: string | null; attachment_count: string | number | null }
+    RawPosting & {
+      amount_cents: string | number;
+      reconcile_status: string | null;
+      attachment_count: string | number | null;
+      cleared_by_bank_match: boolean | null;
+      location: string | null;
+      register_cleared: boolean | null;
+      match_status: string | null;
+    }
   >(
     `SELECT p.id::text AS posting_id, je.id::text AS journal_entry_id, je.entry_date::text AS entry_date,
             je.memo, p.description, p.debit_or_credit, p.amount_cents::bigint AS amount_cents,
             p.source_transaction_type, p.source_transaction_id,
             cls.class_name,
-            COALESCE(match_info.reconcile_status, '') AS reconcile_status,
+            COALESCE(p.register_cleared, false) AS register_cleared,
+            COALESCE(match_info.match_status, '') AS match_status,
+            CASE
+              WHEN COALESCE(match_info.match_status, '') = 'R' THEN 'R'
+              WHEN COALESCE(match_info.match_status, '') = 'C' OR COALESCE(p.register_cleared, false) THEN 'C'
+              ELSE ''
+            END AS reconcile_status,
+            (COALESCE(match_info.match_status, '') IN ('C', 'R')) AS cleared_by_bank_match,
             COALESCE(att.attachment_count, 0)::int AS attachment_count,
+            NULLIF(btrim(match_info.location_label), '') AS location,
             -- Payee derived from the source transaction's real party (verified FKs, no phantom columns):
             --   bill→vendor, expense→vendor, invoice→customer, customer_payment→customer, settlement→driver.
             --   bill_payment has no clean direct party link → honest NULL (not fabricated).
@@ -306,15 +330,16 @@ export async function getAccountRegister(
                     AND op.account_id <> p.account_id) d
            JOIN catalogs.accounts sa ON sa.id = d.account_id AND sa.operating_company_id = p.operating_company_id
        ) sp ON true
-       -- B-1 ✓ column: blank / C / R from bank-feed match + closed reconciliation session.
+       -- B-1 ✓ column: blank / C / R from bank-feed match + closed reconciliation session + register_cleared.
        -- R when the matched bank row's reconciliation_session is status=reconciled;
-       -- C when matched to a bank row otherwise; blank when no bank link.
+       -- C when matched to a bank row otherwise OR posting.register_cleared; blank when neither.
        LEFT JOIN LATERAL (
          SELECT CASE
                   WHEN bool_or(rs.status = 'reconciled') THEN 'R'
                   WHEN bool_or(bt.id IS NOT NULL) THEN 'C'
                   ELSE ''
-                END AS reconcile_status
+                END AS match_status,
+                MAX(NULLIF(btrim(bt.categorization_location), '')) AS location_label
            FROM banking.bank_transactions bt
            LEFT JOIN banking.reconciliation_sessions rs
              ON rs.id = bt.reconciliation_session_id
@@ -391,7 +416,9 @@ export async function getAccountRegister(
     ...r,
     amount_cents: Number(r.amount_cents),
     reconcile_status: r.reconcile_status === "R" || r.reconcile_status === "C" ? r.reconcile_status : "",
+    cleared_by_bank_match: Boolean(r.cleared_by_bank_match),
     attachment_count: Number(r.attachment_count) || 0,
+    location: r.location ?? null,
   }));
 
   const { rows, total_debit_cents, total_credit_cents, closing_balance_cents } = buildRegisterRows(
@@ -447,5 +474,105 @@ export async function getAccountRegister(
     transaction_count: rows.length,
     rows,
     generated_at: new Date().toISOString(),
+  };
+}
+
+export class AccountRegisterToggleError extends Error {
+  constructor(
+    readonly code:
+      | "posting_not_found"
+      | "reconcile_status_locked"
+      | "unmatch_bank_first"
+      | "register_cleared_column_missing",
+    readonly httpStatus: 404 | 409 | 503 = 409
+  ) {
+    super(code);
+    this.name = "AccountRegisterToggleError";
+  }
+}
+
+/**
+ * B-1b — toggle blank↔C on one register posting.
+ * R (closed reconciliation) is locked. C from a bank-feed match cannot be blanked here
+ * (operator must unmatch in Bank Transactions). Manual C uses register_cleared.
+ */
+export async function toggleAccountRegisterCleared(
+  client: QueryableClient,
+  input: {
+    operating_company_id: string;
+    posting_id: string;
+    cleared: boolean;
+    actor_user_id: string;
+  }
+): Promise<{ posting_id: string; reconcile_status: "" | "C" | "R"; cleared_by_bank_match: boolean; register_cleared: boolean }> {
+  const rowRes = await client.query<{
+    posting_id: string;
+    register_cleared: boolean;
+    match_status: string | null;
+  }>(
+    `SELECT p.id::text AS posting_id,
+            COALESCE(p.register_cleared, false) AS register_cleared,
+            COALESCE(match_info.match_status, '') AS match_status
+       FROM accounting.journal_entry_postings p
+       JOIN accounting.journal_entries je
+         ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+       LEFT JOIN LATERAL (
+         SELECT CASE
+                  WHEN bool_or(rs.status = 'reconciled') THEN 'R'
+                  WHEN bool_or(bt.id IS NOT NULL) THEN 'C'
+                  ELSE ''
+                END AS match_status
+           FROM banking.bank_transactions bt
+           LEFT JOIN banking.reconciliation_sessions rs
+             ON rs.id = bt.reconciliation_session_id
+            AND rs.operating_company_id = bt.operating_company_id
+          WHERE bt.operating_company_id = p.operating_company_id
+            AND (
+              bt.matched_journal_entry_id = je.id
+              OR (p.source_transaction_type = 'expense' AND bt.matched_expense_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type = 'bill' AND bt.matched_bill_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type = 'settlement' AND bt.matched_settlement_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type = 'transfer' AND bt.matched_transfer_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type = 'bank_categorization' AND bt.id::text = p.source_transaction_id)
+            )
+       ) match_info ON true
+      WHERE p.id = $1::uuid
+        AND p.operating_company_id = $2::uuid
+      LIMIT 1`,
+    [input.posting_id, input.operating_company_id]
+  );
+  const row = rowRes.rows[0];
+  if (!row) throw new AccountRegisterToggleError("posting_not_found", 404);
+
+  const matchRaw = String(row.match_status ?? "");
+  const matchStatus: "" | "C" | "R" = matchRaw === "R" || matchRaw === "C" ? matchRaw : "";
+  if (matchStatus === "R") throw new AccountRegisterToggleError("reconcile_status_locked", 409);
+  if (!input.cleared && matchStatus === "C") throw new AccountRegisterToggleError("unmatch_bank_first", 409);
+
+  try {
+    await client.query(
+      `UPDATE accounting.journal_entry_postings
+          SET register_cleared = $3::boolean,
+              register_cleared_at = CASE WHEN $3::boolean THEN now() ELSE NULL END,
+              register_cleared_by_user_id = CASE WHEN $3::boolean THEN $4::uuid ELSE NULL END
+        WHERE id = $1::uuid
+          AND operating_company_id = $2::uuid`,
+      [input.posting_id, input.operating_company_id, input.cleared, input.actor_user_id]
+    );
+  } catch (err) {
+    const msg = String((err as Error)?.message ?? err);
+    if (/register_cleared/.test(msg) && /does not exist|undefined_column/i.test(msg)) {
+      throw new AccountRegisterToggleError("register_cleared_column_missing", 503);
+    }
+    throw err;
+  }
+
+  const registerCleared = input.cleared;
+  const reconcileStatus: "" | "C" | "R" = matchStatus === "C" || registerCleared ? "C" : "";
+  return {
+    posting_id: row.posting_id,
+    reconcile_status: reconcileStatus,
+    cleared_by_bank_match: matchStatus === "C",
+    register_cleared: registerCleared,
   };
 }

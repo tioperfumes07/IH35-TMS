@@ -20,8 +20,12 @@ export type AccountRegisterRow = {
   class_name: string | null;
   /** B-1 ✓ — blank / C / R */
   reconcile_status: AccountRegisterReconcileStatus;
+  /** True when C/R is from a bank-feed match (blanking requires unmatch). */
+  cleared_by_bank_match: boolean;
   /** B-1 📎 count from docs.file_links on the source document */
   attachment_count: number;
+  /** Bank categorization location when present; otherwise null. */
+  location: string | null;
   debit_cents: number;
   credit_cents: number;
   running_balance_cents: number;
@@ -68,4 +72,21 @@ export function getAccountRegister(input: {
   if (input.search) q.set("search", input.search);
   if (input.type) q.set("type", input.type);
   return apiRequest<AccountRegisterReport>(`/api/v1/accounting/account-register?${q.toString()}`);
+}
+
+/** B-1b — toggle ✓ blank↔C. R locked; bank-match C refuses blank. */
+export function toggleAccountRegisterCleared(input: {
+  operating_company_id: string;
+  posting_id: string;
+  cleared: boolean;
+}) {
+  return apiRequest<{
+    posting_id: string;
+    reconcile_status: AccountRegisterReconcileStatus;
+    cleared_by_bank_match: boolean;
+    register_cleared: boolean;
+  }>(`/api/v1/accounting/account-register/toggle-cleared`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
