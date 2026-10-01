@@ -11,6 +11,8 @@
  * snapshot to accounting.escrow_postings, the canonical GL-linked subledger.
  * A settlement link is therefore present only when source_type identifies a
  * driver settlement; source_id is the canonical settlement FK in that case.
+ *
+ * @matrix-built {"modules":["banking"],"cols":["reverse_link"],"leafRe":"^driver_escrow$","task":"BANK-ESCROW-SETTLEMENT-LINKAGE","vertical":"column-wave"}
  */
 import fs from "node:fs";
 
