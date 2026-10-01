@@ -12,6 +12,11 @@ import { AssignTruckModal } from "../../components/driver-profile/AssignTruckMod
 import { BorderCredentialsSection } from "../../components/driver-profile/BorderCredentialsSection";
 import { CurrentAssignmentSection } from "../../components/driver-profile/CurrentAssignmentSection";
 import { StopsMilesSection } from "../../components/shared/StopsMilesSection";
+import { DriverIntegritySection } from "../../components/drivers/DriverIntegritySection";
+import {
+  countedComplaints,
+  getDriverIntegrityProfile,
+} from "../../api/driver-integrity";
 import { DocumentsTab } from "../../components/documents/DocumentsTab";
 import { DrugProgramSection } from "../../components/driver-profile/DrugProgramSection";
 import { HOSStatusSection } from "../../components/driver-profile/HOSStatusSection";
@@ -230,6 +235,13 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
     requestAnimationFrame(() => document.getElementById("driver-dqf-checklist")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   };
 
+  const focusIntegrity = () => {
+    if (activeTab !== "Overview") setActiveTab("Overview");
+    requestAnimationFrame(() =>
+      document.getElementById("driver-integrity-profile")?.scrollIntoView({ behavior: "smooth", block: "start" })
+    );
+  };
+
   const refreshDriver = () => {
     void queryClient.invalidateQueries({ queryKey: ["driver", id] });
     void queryClient.invalidateQueries({ queryKey: ["driver-profile", id, companyId] });
@@ -281,6 +293,21 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
     enabled: Boolean(companyId && id),
     queryFn: () => listDriverQualificationItems(id, companyId).then((result) => result.items),
   });
+
+  // C-57 — integrity + complaints KPIs (CC-2 B-50/B-51 composed profile).
+  const integrityQ = useQuery({
+    queryKey: ["maintenance", "integrity", "driver-profile", companyId, id],
+    queryFn: () => getDriverIntegrityProfile(companyId, id),
+    enabled: Boolean(companyId && id),
+    retry: (failureCount, err) => {
+      if ((err as { status?: number } | null)?.status === 404) return false;
+      return failureCount < 2;
+    },
+  });
+  const integrity404 = (integrityQ.error as { status?: number } | null)?.status === 404;
+  const integrityProfile = integrityQ.isError && integrity404 ? null : integrityQ.data ?? null;
+  const integrityFindings = integrityProfile?.score.findings ?? 0;
+  const integrityComplaints = countedComplaints(integrityProfile);
 
   const summary = summarizeDriverDqf(itemsQ.data);
   const aggregate = profileQ.data;
@@ -450,6 +477,39 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
                 accent={colors.info.strong}
                 onClick={() => focusDqf("expiry_alerts")}
               />
+              {/* C-57 — Integrity + Complaints tiles across (same strip; never bars down). */}
+              <KpiCard
+                label="Integrity findings"
+                number={
+                  integrityQ.isLoading
+                    ? "…"
+                    : integrityQ.isError && !integrity404
+                      ? "—"
+                      : String(integrityFindings)
+                }
+                accent={integrityFindings > 0 ? colors.crit.strong : colors.positive.strong}
+                onClick={focusIntegrity}
+                disabled={integrityQ.isError && !integrity404}
+                disabledReason={
+                  integrityQ.isError && !integrity404 ? "Integrity profile could not be loaded." : undefined
+                }
+              />
+              <KpiCard
+                label="Complaints"
+                number={
+                  integrityQ.isLoading
+                    ? "…"
+                    : integrityQ.isError && !integrity404
+                      ? "—"
+                      : String(integrityComplaints)
+                }
+                accent={integrityComplaints > 0 ? colors.warn.strong : colors.positive.strong}
+                to={integrityQ.isError && !integrity404 ? undefined : `/safety/complaints?driver_id=${id}`}
+                disabled={integrityQ.isError && !integrity404}
+                disabledReason={
+                  integrityQ.isError && !integrity404 ? "Integrity profile could not be loaded." : undefined
+                }
+              />
             </KpiStrip>
           </div>
         )
@@ -515,6 +575,9 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             <div className="mt-3">
               <StopsMilesSection driverId={id} hours={24} />
             </div>
+          </div>
+          <div data-testid="dp-section-integrity" className="mt-3">
+            <DriverIntegritySection driverId={id} />
           </div>
           <div data-testid="dp-section-7-performance">
             <PerformanceScorecardSection scorecard={aggregate.performance_scorecard ?? null} unavailable={aggregate.performance_scorecard_unavailable === true} />

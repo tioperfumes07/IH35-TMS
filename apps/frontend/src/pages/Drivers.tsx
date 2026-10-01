@@ -47,6 +47,7 @@ import { DriverPickerWithCreate } from "../components/drivers/DriverPickerWithCr
 import { DriversListPage } from "./drivers/DriversListPage";
 import { DriverListSidebar } from "./drivers/DriverListSidebar";
 import { DriverProfilePage } from "./drivers/DriverProfilePage";
+import { DriverProfilesIntegrityKpiStrip } from "../components/drivers/DriverProfilesIntegrityKpiStrip";
 import { MasterDetailShell } from "../components/layout/MasterDetailShell";
 import { SegmentedControl } from "../components/SegmentedControl";
 import { MASTER_DETAIL } from "../design/master-detail";
@@ -852,7 +853,9 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             </div>
           ) : null}
           {subnavTab === "profiles" ? (
-            <div className={MASTER_DETAIL.pageShellClass} data-testid="drivers-profiles-shell" data-c05-min-scroll="drivers-profiles" data-c34-profiles="true">
+            <div className={MASTER_DETAIL.pageShellClass} data-testid="drivers-profiles-shell" data-c05-min-scroll="drivers-profiles" data-c34-profiles="true" data-c57-profiles="true">
+              {/* C-57 — Integrity + Complaints KPI tiles across on /drivers/profiles (list + master-detail). */}
+              <DriverProfilesIntegrityKpiStrip />
               {profilesViewMode === "list" ? (
                 <DriversListPage
                   embedded

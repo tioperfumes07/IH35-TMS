@@ -140,3 +140,17 @@ FAST-MERGE squash --admin. NEXT: E-42 dashcam viewer.
 
 **2026-10-01T03:40Z · E-44 STOPS+MILES · branch `cursor/e44-stops-miles-profile-c89b`**
 E-44 · GET /telematics/stop-events (E-03 compute) + StopsMilesSection on Vehicle + Driver profiles. E-43 parked (E-30 PENDING). No seed.
+
+**2026-10-01T03:55Z · E-42 MERGED · PR #23619**
+Dashcam viewer on main. LEFT: Lead Chrome /safety dashcam. NEXT was E-44 (then C-57).
+
+**2026-10-01T04:00Z · E-44 MERGED · PR #23622 · `daafa6bd98`**
+Stops + miles on unit/driver profiles on main. E-43 stays PARKED until CC-3 E-30 Samsara messaging. NEXT: C-57 Integrity + complaints KPIs on /drivers/profiles.
+
+**2026-10-01T04:15Z · ACK C-57 | GO · branch `cursor/c57-integrity-complaints-kpis-c89b`**
+C-57 · wire CC-2 B-50/B-51 GET /maintenance/integrity/driver-profiles onto /drivers/profiles: fleet Integrity findings + Complaints KPI tiles (KpiStrip across), per-driver Overview tiles + DriverIntegritySection (ParityTable lines on rows), list columns. No seed. No invented weights.
+
+**2026-10-01T04:20Z · ACK ORDERS-2026-10-01 | C-57 (row 2 in flight) then MAINTENANCE | GO**
+Read ORDERS-2026-10-01-ALL-SEATS-COMMON + ORDERS-2026-10-01-CURSOR. E-40..E-42+E-44 ACK merged. E-43 parked on E-30. Finishing C-57 (Integrity+Complaints on /drivers/profiles — named three times, mid-flight at orders drop) then MAINTENANCE module complete (row 1). No seed. No business-data writes.
+
+

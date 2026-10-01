@@ -18,8 +18,24 @@ function verify(read = (file) => fs.readFileSync(path.join(root, file), "utf8"))
   if (missingContracts.length) throw new Error(`rendered KPI missing contract: ${missingContracts.join(", ")}`);
   for (const action of registry.actions) {
     if (!renderedLabels.includes(action.label)) throw new Error(`contract is not rendered: ${action.label}`);
-    if (!action.focus || typeof action.focus !== "string") throw new Error(`contract missing focus: ${action.label}`);
-    if (!source.includes(`focusDqf("${action.focus}")`)) throw new Error(`KPI is not bound to focus ${action.focus}: ${action.label}`);
+    if (action.focus) {
+      if (typeof action.focus !== "string") throw new Error(`contract missing focus: ${action.label}`);
+      if (!source.includes(`focusDqf("${action.focus}")`)) throw new Error(`KPI is not bound to focus ${action.focus}: ${action.label}`);
+      continue;
+    }
+    // C-57 — Integrity / Complaints tiles: scroll to integrity section or link to complaints hub.
+    if (action.action === "focusIntegrity") {
+      if (!source.includes("focusIntegrity")) throw new Error(`KPI is not bound to focusIntegrity: ${action.label}`);
+      if (!source.includes('id="driver-integrity-profile"') && !source.includes("DriverIntegritySection")) {
+        throw new Error(`Integrity KPI missing scroll target: ${action.label}`);
+      }
+      continue;
+    }
+    if (action.action === "complaints_link") {
+      if (!source.includes("/safety/complaints")) throw new Error(`Complaints KPI missing /safety/complaints link: ${action.label}`);
+      continue;
+    }
+    throw new Error(`contract missing focus or action: ${action.label}`);
   }
   for (const token of ['id="driver-dqf-checklist"', "scrollIntoView", "focus={dqfFocus}", 'focus === "expiry_alerts"', 'item.expiry_pill === "red"', 'item.expiry_pill === "amber"', "rows={visibleItems}", "onClearFocus"]) {
     if (!source.includes(token) && !target.includes(token)) throw new Error(`required action token missing: ${token}`);

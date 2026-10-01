@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listDrivers } from "../../api/mdata";
 import { DriverImportModal } from "./DriverImportModal";
 import { getDriverQualificationSummary, listDriverQualificationItems, type DriverQualificationFileItem } from "../../api/safety";
+import { countedComplaints, listDriverIntegrityProfiles } from "../../api/driver-integrity";
 import { Button } from "../../components/Button";
 import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
 import { KpiCard } from "../../components/layout/KpiCard";
@@ -14,7 +15,7 @@ import { useToast } from "../../components/Toast";
 import { colors } from "../../design/tokens";
 import { type DqfComplianceLevel, driverDisplayName, summarizeDriverDqf } from "../../lib/driverDqf";
 import { formatDateUS } from "../../lib/formatDate";
-import { DriversTable } from "./DriversTable";
+import { DriversTable, type DriverTableRow } from "./DriversTable";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { companyToday } from "../../lib/businessDate";
 
@@ -22,13 +23,6 @@ type DriversListPageProps = {
   onOpenProfile?: (driverId: string) => void;
   /** C-33 — when nested under Drivers module, skip duplicate PageHeader / KPI stack. */
   embedded?: boolean;
-};
-
-type DriverDqfSummaryRow = {
-  driverId: string;
-  name: string;
-  status: string;
-  summary: ReturnType<typeof summarizeDriverDqf>;
 };
 
 type DqfFocus = Exclude<DqfComplianceLevel, "unknown"> | null;
@@ -80,17 +74,38 @@ export function DriversListPage({ onOpenProfile, embedded = false }: DriversList
     },
   });
 
-  const rows = useMemo<DriverDqfSummaryRow[]>(() => {
+  // C-57 — fleet integrity profiles (findings + complaints) for the profiles list columns.
+  const integrityQ = useQuery({
+    queryKey: ["maintenance", "integrity", "driver-profiles", companyId],
+    queryFn: () => listDriverIntegrityProfiles(companyId),
+    enabled: Boolean(companyId),
+  });
+  const integrityByDriver = useMemo(() => {
+    const map = new Map<string, { findings: number; complaints: number }>();
+    if (integrityQ.isError) return map;
+    for (const row of integrityQ.data?.rows ?? []) {
+      map.set(row.driver_id, {
+        findings: row.score.findings,
+        complaints: countedComplaints(row),
+      });
+    }
+    return map;
+  }, [integrityQ.data?.rows, integrityQ.isError]);
+
+  const rows = useMemo<DriverTableRow[]>(() => {
     return pageDrivers.map((driver) => {
       const items = dqfQ.data?.get(driver.id);
+      const integrity = integrityByDriver.get(driver.id);
       return {
         driverId: driver.id,
         name: driverDisplayName(driver.first_name, driver.last_name, driver.id),
         status: driver.status,
         summary: summarizeDriverDqf(items),
+        integrityFindings: integrityQ.isLoading ? null : integrity?.findings ?? null,
+        complaintsCount: integrityQ.isLoading ? null : integrity?.complaints ?? null,
       };
     });
-  }, [dqfQ.data, pageDrivers]);
+  }, [dqfQ.data, pageDrivers, integrityByDriver, integrityQ.isLoading]);
 
   // DRIVER-DQF-KPI-PAGE-1-SILENT-TRUNCATION: these counts used to be derived from `rows` (the
   // CURRENTLY LOADED PAGE of pageSize=25 drivers), so a fleet of any size beyond one page silently
