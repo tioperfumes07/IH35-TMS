@@ -37,6 +37,7 @@ Touched scripts/-lane files, one per queue item, each its own PR:
   exposed fields.
 - `scripts/verify-fuel-purchases-have-gallons-and-real-stamps.mjs` (Round 304 T-45).
 - `scripts/verify-geofence-samsara-link-never-guesses.mjs` (Round 304 T-46).
+- `scripts/verify-driven-miles-legs-never-interpolate.mjs` (Round 304 T-47).
 - further Round 304 guards to follow under this same ruling, named as they land.
 
 No money-app posting path touched (NON-FINANCIAL lane -- measurement/reporting guards, a

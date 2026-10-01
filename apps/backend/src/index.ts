@@ -346,6 +346,7 @@ import { initializePmAutoEngineCron } from "./maintenance/pm-auto-engine.cron.js
 import { initializeOdometerSnapshotCron } from "./telematics/odometer-snapshot.cron.js";
 import { registerOdometerManualRoutes } from "./telematics/odometer-manual.routes.js";
 import { registerFaultCodeAlertsRoutes } from "./maintenance/fault-code-alerts.routes.js";
+import { registerDrivenMilesLegsRoutes } from "./telematics/driven-miles-legs.routes.js";
 import { registerGeofenceAddressLinkRoutes } from "./integrations/samsara/geofences/geofence-address-link.routes.js";
 import { initializeSamsaraFaultPollCron } from "./integrations/samsara/fault-poll.cron.js";
 import { initializeHarshEventsPollCron } from "./safety/harsh-events-poll.cron.js";
@@ -1242,6 +1243,7 @@ async function main() {
   await registerMaintenancePmAutoEngineRoutes(app);
   await registerOdometerManualRoutes(app);
   await registerFaultCodeAlertsRoutes(app);
+  await registerDrivenMilesLegsRoutes(app);
   await registerGeofenceAddressLinkRoutes(app);
   await registerMaintenanceServiceTimelineRoutes(app);
   await registerUnitMaintenanceHistoryRoutes(app);
