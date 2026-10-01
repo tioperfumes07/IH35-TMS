@@ -1,4 +1,9 @@
 {
+  "12075": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-broker-named-customers-are-brokers: owner law 2026-10-01 -- every active customer whose name matches the broker pattern carries customer_type broker + the company's BROKER customer_type_id; trigger present."
+  },
   "12071": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-01",
