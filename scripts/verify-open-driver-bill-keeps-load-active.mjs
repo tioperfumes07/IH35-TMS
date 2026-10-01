@@ -36,10 +36,17 @@ export const REQUIRES_LIVE_DB =
 function selftestStaticShape() {
   const src = fs.readFileSync(MODULE_PATH, "utf8");
   const failures = [];
-  if (!/db\.settled_in_settlement_id\s+IS\s+NOT\s+NULL/i.test(src)) {
+  // TRUCK-INVISIBLE-ON-THE-BOARD (Lead, 2026-09-30) replaced the bare `IS NOT NULL` with a JOIN to
+  // driver_settlements requiring ds2.status = 'closed' — strictly stronger (a draft pointer no
+  // longer counts as settled). Accept either shape; the static check must not force the weaker one
+  // back in. (Lead, 2026-10-01: this stale regex turned the gate red for every seat.)
+  const bareNotNull = /db\.settled_in_settlement_id\s+IS\s+NOT\s+NULL/i.test(src);
+  const closedJoin = /driver_settlements\s+ds2\s+ON\s+ds2\.id\s*=\s*db\.settled_in_settlement_id\s+AND\s+ds2\.status\s*=\s*'closed'/i.test(src);
+  if (!bareNotNull && !closedJoin) {
     failures.push(
-      "canonical-active-load-set.ts no longer requires settled_in_settlement_id IS NOT NULL on " +
-        "the driver_bills exclusion — an open/unsettled bill would again be treated as 'finished'."
+      "canonical-active-load-set.ts no longer requires the driver_bills exclusion to be settled " +
+        "(neither `settled_in_settlement_id IS NOT NULL` nor a JOIN to a CLOSED driver_settlements row) " +
+        "— an open/unsettled bill would again be treated as 'finished'."
     );
   }
   if (!/driver_settlements\s+ds\s+ON\s+ds\.id\s*=\s*sl\.settlement_id\s+AND\s+ds\.status\s*=\s*'closed'/i.test(src)) {

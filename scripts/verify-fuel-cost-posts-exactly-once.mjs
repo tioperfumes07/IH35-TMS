@@ -356,7 +356,14 @@ async function measureLive(client) {
     [USMCA_COMPANY_ID],
   );
 
-  // C: 5000 Fuel & Diesel net, all live (non-voided-JE) postings to that account
+  // C: 5000 Fuel & Diesel net, all live (non-voided-JE) postings to that account.
+  // G2 / AUTH-168 (Lead, 2026-10-01): the ONE owner-ordered adjusting entry that reclassified 16
+  // closed-settlement extra_pay lines out of 6890 carries three $10.00 fuel-reimbursement lines on
+  // 5000. Its document is driver_finance.settlement_line_item_splits (adjusting_journal_entry_id),
+  // never an accounting.expenses row -- exactly the exemption verify-costs-are-expenses-not-
+  // handwritten-jes already carries. Found live 2026-10-01: that $30.00 was the whole mismatch and
+  // turned this guard red for every seat. Excluded here by its own document link, nothing wider:
+  // a 5000 line on any other manual JE still counts and still fails.
   const fuel5000Res = await client.query(
     `SELECT COALESCE(SUM(CASE WHEN jep.debit_or_credit = 'debit' THEN jep.amount_cents ELSE -jep.amount_cents END), 0)::bigint AS net_cents
        FROM accounting.journal_entry_postings jep
@@ -364,7 +371,11 @@ async function measureLive(client) {
        JOIN catalogs.accounts a ON a.id = jep.account_id
       WHERE je.operating_company_id = $1::uuid AND je.voided_at IS NULL
         AND a.operating_company_id = $1::uuid
-        AND a.account_number = '5000'`,
+        AND a.account_number = '5000'
+        AND NOT EXISTS (
+          SELECT 1 FROM driver_finance.settlement_line_item_splits g2
+           WHERE g2.operating_company_id = $1::uuid AND g2.adjusting_journal_entry_id = je.id
+        )`,
     [USMCA_COMPANY_ID],
   );
 

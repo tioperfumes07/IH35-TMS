@@ -1,0 +1,18 @@
+-- 202614620000_vehicle_locations_engine_state_nullable.sql
+-- RECONSTRUCTED 2026-10-01 by the Lead from production's own state. The original file was applied
+-- to production at 2026-09-30 04:02:40 UTC (it is stamped in _system._schema_migrations) but was
+-- NEVER COMMITTED to any branch in git history -- verify-migration-no-number-collision caught it:
+-- "stamped in the prod ledger but ABSENT from db/migrations -- the repo can no longer rebuild prod."
+-- That blocked every seat's gate. Same defect class as H-3 (202614900000), one layer over: H-3 was a
+-- trigger live in prod and in NEITHER ledger; this is in the canonical ledger and in NO file.
+--
+-- WHAT PRODUCTION SAYS, read 2026-10-01: information_schema.columns reports
+--   telematics.vehicle_locations.engine_state  is_nullable = YES
+-- which is exactly what the filename describes. This file is the minimal DDL that produces that
+-- observed state. If the lost original did more than this, production will show it and a follow-up
+-- names it -- nothing here is guessed beyond the column the filename names.
+--
+-- Idempotent: DROP NOT NULL on an already-nullable column is a no-op in PostgreSQL. Because the
+-- ledger already carries this filename, db:migrate on deploy will SKIP it; this file exists so a
+-- fresh rebuild of the schema produces the same database production has.
+ALTER TABLE telematics.vehicle_locations ALTER COLUMN engine_state DROP NOT NULL;

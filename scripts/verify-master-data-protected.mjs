@@ -39,8 +39,14 @@ const FLOORS = {
   "banking.bank_transactions": { floor: 911 },
   "geo.geofences": { floor: 611 },
   "mdata.locations": { floor: 621 },
-  "mdata.customers": { floor: 1239 },
-  "mdata.vendors": { floor: 623 },
+  // LOWERED 2026-10-01 (Lead, live-verified 1238 / 622 before editing): AUTH-177 (owner order
+  // 2026-09-30, verbatim in docs/bus/OWNER-AUTHORIZATIONS.md, EXECUTED block) deleted every
+  // is_sample_data customer (11) and vendor (1) in USMCA; the floors below were taken after part
+  // of that purge had already landed, so they sat 1 above the post-purge truth and turned the gate
+  // red for every seat on 2026-10-01. Same deliberate, reviewed, one-time floor drop as AUTH-101
+  // above -- not a silent lowering. Deletes stay forbidden for every non-AUTH write path.
+  "mdata.customers": { floor: 1238 },
+  "mdata.vendors": { floor: 622 },
   "catalogs.accounts": { floor: 193 },
   "mdata.drivers": { floor: 167 },
   "catalogs.items": { floor: 148 },

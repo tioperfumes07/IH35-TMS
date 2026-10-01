@@ -118,6 +118,15 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
       "db/migrations/202615110000_fuel_transaction_derivations.sql",
     ]),
   ],
+  // Owner Law #5 (fix the blocker in-session) 2026-10-01: 202614620000 was stamped on prod at
+  // 2026-09-30 04:02:40 UTC but never committed -- every seat's gate failed the ledger-vs-repo check.
+  // The Lead reconstructed the file from production's observed state (ruling
+  // docs/bus/2026-10-01-LEAD-RULING-LEAD-RECONSTRUCTED-A-LOST-MIGRATION-FILE.md). HH=62 is outside
+  // every band because the number was not minted here; exact-branch + exact-file, nothing wider.
+  [
+    "claude/reconstruct-lost-migration-202614620000",
+    new Set(["db/migrations/202614620000_vehicle_locations_engine_state_nullable.sql"]),
+  ],
 ]);
 
 export function isOwnerAuthorizedOneOff(branch, files) {

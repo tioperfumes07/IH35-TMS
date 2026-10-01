@@ -210,6 +210,44 @@ async function measure(client) {
   );
   for (const r of g2SplitAll.rows) jeWithExpense.add(r.je_id);
 
+  // VENDOR BILL (Lead, 2026-10-01): a bill is the other first-class cost document this system
+  // has (Dr 5xxx/6xxx expense, Cr 2000 A/P -- bill-posting.service), and it is by design never
+  // accompanied by an accounting.expenses row. Found live: three AUTH-150 / ROUND 290.2 bills
+  // (BILL-2026-00026/27/28, re-entered from wrongly-posted expenses) flagged as "handwritten" and
+  // turned the gate red for every seat. Narrow on purpose: a JE is documented by a bill only when
+  // EVERY cost-debiting line carries source_transaction_type='bill' AND its source_transaction_id
+  // is a live (not voided, not sample) accounting.bills row -- a JE merely labelled 'bill' with no
+  // bill behind it still fails. The posting row's own source columns are the join, never the memo.
+  const billIdsRes = await client.query(
+    `SELECT id::text AS bill_id FROM accounting.bills
+      WHERE operating_company_id = $1::uuid AND voided_at IS NULL AND is_sample_data IS NOT TRUE`,
+    [USMCA_COMPANY_ID],
+  );
+  const liveBillIds = new Set(billIdsRes.rows.map((r) => r.bill_id));
+  const costDebitSourceRes = await client.query(
+    `SELECT jep.journal_entry_uuid::text AS je_id, jep.source_transaction_type, jep.source_transaction_id::text AS source_transaction_id
+       FROM accounting.journal_entry_postings jep
+       JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+       JOIN catalogs.accounts a ON a.id = jep.account_id
+      WHERE je.operating_company_id = $1::uuid
+        AND je.status = 'posted'
+        AND je.is_sample_data IS NOT TRUE
+        AND jep.debit_or_credit = 'debit'
+        AND a.account_number ~ '^(5|6)[0-9]{3}'`,
+    [USMCA_COMPANY_ID],
+  );
+  const costDebitSourcesByJe = new Map();
+  for (const r of costDebitSourceRes.rows) {
+    if (!costDebitSourcesByJe.has(r.je_id)) costDebitSourcesByJe.set(r.je_id, []);
+    costDebitSourcesByJe.get(r.je_id).push(r);
+  }
+  for (const [jeId, lines] of costDebitSourcesByJe) {
+    const allBackedByLiveBill = lines.length > 0 && lines.every(
+      (l) => l.source_transaction_type === "bill" && l.source_transaction_id && liveBillIds.has(l.source_transaction_id),
+    );
+    if (allBackedByLiveBill) jeWithExpense.add(jeId);
+  }
+
   const results = [];
   for (const je of jeRes.rows) {
     const postings = postingsByJe.get(je.je_id) ?? [];

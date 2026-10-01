@@ -41,6 +41,7 @@ async function main() {
   try {
     await client.query("BEGIN");
     // Prefer bypass_rls alone — SET ROLE neondb_owner fails on app-role DATABASE_URL credentials
+    // NEONDB-OWNER-OK: the line above DESCRIBES why this guard does not SET ROLE; it opens no owner connection (Lead 2026-10-01, surfaced by verify-gate-live-reads-use-ci-readonly on any scripts/ diff)
     // (permission denied) and is unnecessary when lucia bypass is set.
     await client.query("SET LOCAL app.bypass_rls = 'lucia'");
     const res = await client.query(

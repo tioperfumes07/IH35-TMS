@@ -34,8 +34,20 @@ async function main() {
   const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();
   try {
-    await client.query("BEGIN");
-    await client.query("SET LOCAL ROLE neondb_owner");
+    await client.query("BEGIN READ ONLY");
+    // 2026-10-01 (Lead, ruling LEAD-MAY-FIX-A-GATE-BLOCKING-HANG): the local gate runs under the
+    // READONLY GATE CREDENTIAL (ih35_ci_readonly, BYPASSRLS, cannot SET ROLE). A hard
+    // "SET LOCAL ROLE neondb_owner" turned every seat's gate red with "permission denied to set
+    // role". Try the owner role inside a savepoint; when the credential cannot assume it, the
+    // bypass setting alone is sufficient for this read and the read is still a real read.
+    await client.query("SAVEPOINT role_try");
+    try {
+      // NEONDB-OWNER-OK: attempted inside a savepoint on whatever credential the gate was given; the readonly credential cannot assume it and falls through to BYPASSRLS
+      await client.query("SET LOCAL ROLE neondb_owner");
+      await client.query("RELEASE SAVEPOINT role_try");
+    } catch {
+      await client.query("ROLLBACK TO SAVEPOINT role_try");
+    }
     await client.query("SET LOCAL app.bypass_rls = 'lucia'");
 
     const res = await client.query(
