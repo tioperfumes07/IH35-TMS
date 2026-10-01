@@ -98,7 +98,7 @@ describe("WriteCheckForm", () => {
     const { onSaved } = renderForm();
 
     const user = userEvent.setup();
-    await user.selectOptions(await screen.findByLabelText("Select vendor…"), "fake-vendor-1");
+    await user.selectOptions(await screen.findByLabelText("Who did you pay?"), "fake-vendor-1");
 
     expect(createSpy).not.toHaveBeenCalled();
     expect(onSaved).not.toHaveBeenCalled();

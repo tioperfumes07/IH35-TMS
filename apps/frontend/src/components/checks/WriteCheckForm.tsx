@@ -63,6 +63,23 @@ function todayCT(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" }); // en-CA => YYYY-MM-DD
 }
 
+/** B-4 §15 — auto-draft key per company (never sample/fixtures). */
+function checkDraftStorageKey(operatingCompanyId: string) {
+  return `ih35.check-draft.v1.${operatingCompanyId}`;
+}
+
+type PersistedCheckDraft = {
+  payeeKind: CheckPayeeKind;
+  payeeId: string | null;
+  bankAccountId: string | null;
+  checkDate: string;
+  checkNumber: string;
+  printLater: boolean;
+  memo: string;
+  tagsText: string;
+  savedAt: string;
+};
+
 type DraftLine = {
   key: string;
   kind: "category" | "item";
@@ -263,6 +280,9 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
   // exists; this random draft id is re-keyed onto the real expense id server-side on save (Option B,
   // the same mechanism RecordExpenseForm/VendorBillForm already use).
   const [draftAttachmentEntityId, setDraftAttachmentEntityId] = useState<string>(() => crypto.randomUUID());
+  // B-4 §15 — auto-draft / Restore draft (local only; never a money write).
+  const [restoreDraftOffer, setRestoreDraftOffer] = useState<PersistedCheckDraft | null>(null);
+  const [draftHydrated, setDraftHydrated] = useState(false);
 
   const bankAccountsQuery = useQuery({
     queryKey: ["checks", "bank-accounts", operatingCompanyId],
@@ -469,21 +489,39 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
   const billsToPayColumns: Array<ParityColumn<VendorBill>> = [
     {
       key: "id",
-      label: "Bill",
+      label: "Description",
       sortable: false,
-      render: (b) => <EntityLink kind="bill" id={b.id} label={b.display_id ?? b.bill_number ?? undefined} />,
+      render: (b) => (
+        <span>
+          <EntityLink kind="bill" id={b.id} label={b.display_id ?? b.bill_number ?? undefined} />
+          {" · "}
+          {formatDateUS(b.bill_date)}
+        </span>
+      ),
     },
-    { key: "bill_date", label: "Date", sortable: false, render: (b) => formatDateUS(b.bill_date) },
+    {
+      key: "due_date",
+      label: "Due date",
+      sortable: false,
+      render: (b) => formatDateUS((b as { due_date?: string | null }).due_date ?? b.bill_date),
+    },
+    {
+      key: "amount_cents",
+      label: "Original amount",
+      sortable: false,
+      className: "w-28",
+      render: (b) => formatMoneyCents(b.amount_cents),
+    },
     {
       key: "balance_cents",
-      label: "Remaining",
+      label: "Open balance",
       sortable: false,
       className: "w-28",
       render: (b) => formatMoneyCents(b.balance_cents ?? b.amount_cents - b.paid_cents),
     },
     {
       key: "pay_amount",
-      label: "Pay amount",
+      label: "Payment",
       sortable: false,
       className: "w-28",
       render: (b) => {
@@ -724,6 +762,15 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
       totalCents > 0 &&
       !saving;
 
+  function clearPersistedDraft() {
+    try {
+      localStorage.removeItem(checkDraftStorageKey(operatingCompanyId));
+    } catch {
+      /* ignore quota / private mode */
+    }
+    setRestoreDraftOffer(null);
+  }
+
   function resetForm() {
     setPayeeKind("vendor");
     setPayeeId(null);
@@ -739,7 +786,69 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
     setBillToPayAmounts({});
     setDraftAttachmentEntityId(crypto.randomUUID());
     setSaveError(null);
+    clearPersistedDraft();
   }
+
+  // B-4 §15 — offer Restore draft when opening a blank check (not copy / initial payee).
+  useEffect(() => {
+    if (!open || !operatingCompanyId || copyFromCheckId || initialPayee) {
+      setRestoreDraftOffer(null);
+      setDraftHydrated(false);
+      return;
+    }
+    try {
+      const raw = localStorage.getItem(checkDraftStorageKey(operatingCompanyId));
+      if (!raw) {
+        setRestoreDraftOffer(null);
+        setDraftHydrated(true);
+        return;
+      }
+      const parsed = JSON.parse(raw) as PersistedCheckDraft;
+      if (parsed?.payeeId || parsed?.bankAccountId || parsed?.memo || parsed?.checkNumber) {
+        setRestoreDraftOffer(parsed);
+      } else {
+        setRestoreDraftOffer(null);
+      }
+    } catch {
+      setRestoreDraftOffer(null);
+    }
+    setDraftHydrated(true);
+  }, [open, operatingCompanyId, copyFromCheckId, initialPayee]);
+
+  // Persist a lightweight header draft while the form is open (never lines — avoid stale GL maps).
+  useEffect(() => {
+    if (!open || !operatingCompanyId || !draftHydrated || restoreDraftOffer) return;
+    if (!payeeId && !bankAccountId && !memo.trim() && !checkNumber.trim()) return;
+    const payload: PersistedCheckDraft = {
+      payeeKind,
+      payeeId,
+      bankAccountId,
+      checkDate,
+      checkNumber,
+      printLater,
+      memo,
+      tagsText,
+      savedAt: new Date().toISOString(),
+    };
+    try {
+      localStorage.setItem(checkDraftStorageKey(operatingCompanyId), JSON.stringify(payload));
+    } catch {
+      /* ignore */
+    }
+  }, [
+    open,
+    operatingCompanyId,
+    draftHydrated,
+    restoreDraftOffer,
+    payeeKind,
+    payeeId,
+    bankAccountId,
+    checkDate,
+    checkNumber,
+    printLater,
+    memo,
+    tagsText,
+  ]);
 
   // R-172 step 6 -- footer buttons (spec §6): Save keeps the drawer open on the same check; Save and
   // new resets to a fresh check without closing; Save and close is today's original behavior
@@ -768,6 +877,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
       } else {
         savedId = await saveExpenseCheck(forcePrintLater);
       }
+      clearPersistedDraft();
       if (after === "new") {
         resetForm();
         onSavedKeepOpen?.(savedId);
@@ -842,8 +952,41 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
 
   return (
     <Modal open={open} onClose={onClose} title="Check" modalKind="check-write" sizePreset="xl">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4" data-b4-check-creator="1">
         {saveError ? <div className="rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">{saveError}</div> : null}
+
+        {restoreDraftOffer ? (
+          <div
+            className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2.5 py-2 text-xs text-[#0F1219]"
+            data-b4-restore-draft="1"
+            data-testid="check-restore-draft-banner"
+          >
+            <p>You have a draft saved. Restore draft?</p>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="primary"
+                onClick={() => {
+                  const d = restoreDraftOffer;
+                  setPayeeKind(d.payeeKind);
+                  setPayeeId(d.payeeId);
+                  setBankAccountId(d.bankAccountId);
+                  setCheckDate(d.checkDate || todayCT());
+                  setCheckNumber(d.checkNumber ?? "");
+                  setPrintLater(Boolean(d.printLater));
+                  setMemo(d.memo ?? "");
+                  setTagsText(d.tagsText ?? "");
+                  setRestoreDraftOffer(null);
+                }}
+              >
+                Restore draft
+              </Button>
+              <Button type="button" variant="tertiary" onClick={() => clearPersistedDraft()}>
+                Discard
+              </Button>
+            </div>
+          </div>
+        ) : null}
 
         <div className="grid grid-cols-3 gap-3">
           <label className="text-xs font-semibold text-gray-700">
@@ -871,8 +1014,8 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
             </select>
           </label>
 
-          <label className="text-xs font-semibold text-gray-700">
-            Payee
+          <label className="text-xs font-semibold text-gray-700" data-b4-who-did-you-pay="1">
+            Who did you pay?
             <div className="mt-1">
               {payeeKind === "vendor" || payeeKind === "customer" ? (
                 <ReferenceSelect
@@ -882,14 +1025,14 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                   options={payeeOptions}
                   createKind={payeeKind}
                   operatingCompanyId={operatingCompanyId}
-                  placeholder={payeeKind === "vendor" ? "Select vendor…" : "Select customer…"}
+                  placeholder="Who did you pay?"
                 />
               ) : payeeKind === "driver" ? (
-                <DriverPickerWithCreate operatingCompanyId={operatingCompanyId} value={payeeId} onChange={setPayeeId} shell="drawer" placeholder="Select driver…" />
+                <DriverPickerWithCreate operatingCompanyId={operatingCompanyId} value={payeeId} onChange={setPayeeId} shell="drawer" placeholder="Who did you pay?" />
               ) : (
                 <input
                   className="h-9 w-full rounded border border-gray-300 px-2 text-xs"
-                  placeholder="Employee user id (no picker built yet)"
+                  placeholder="Who did you pay?"
                   value={payeeId ?? ""}
                   onChange={(e) => setPayeeId(e.target.value || null)}
                 />
@@ -956,11 +1099,13 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
             category/item grids below disappear the moment a bill is queued -- the bills ARE the
             lines, not something layered on top of them. */}
         {vendorIdForBills ? (
-          <div className="rounded border border-gray-200 p-3">
-            <div className="mb-2 text-xs font-semibold text-gray-700">Open bills for this payee</div>
+          <div className="rounded border border-gray-200 p-3" data-b4-add-to-check="1">
+            <div className="mb-2 text-xs font-semibold text-gray-700">
+              {isBillPayment ? "Outstanding Transactions" : "Add to Check"}
+            </div>
             {isBillPayment ? (
               <div className="mb-2 rounded border border-blue-200 bg-blue-50 px-2 py-1.5 text-xs text-blue-800">
-                This check will be saved as a Bill Payment (Check) -- the category/item lines below are not used.
+                This check will be saved as a Bill Payment (Check) — the category/item lines below are not used.
               </div>
             ) : null}
             {billsToPay.length > 0 ? (
@@ -975,6 +1120,16 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                   enableColumnResize={false}
                   enableColumnReorder={false}
                 />
+                <div
+                  className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 px-2 py-1.5 text-xs text-gray-700"
+                  data-b4-amount-to-apply="1"
+                >
+                  <span>
+                    Amount to Apply: <strong>{formatMoneyCents(billPaymentTotalCents)}</strong>
+                  </span>
+                  <span>Amount to Credit: <strong>$0.00</strong></span>
+                  <span>Clear Payment</span>
+                </div>
               </div>
             ) : null}
             {openBillsQuery.isLoading ? (
@@ -1167,6 +1322,23 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
               Print check
             </Button>
           ) : null}
+          <a
+            href="/accounting/checks/print"
+            className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#1F2A44] hover:bg-[#F7F8FA]"
+            data-b4-order-checks="1"
+            onClick={onClose}
+          >
+            Order checks
+          </a>
+          <Button
+            type="button"
+            variant="tertiary"
+            disabled
+            title="Make recurring is not wired for checks yet — use Save and new for repeats."
+            data-b4-make-recurring="1"
+          >
+            Make recurring
+          </Button>
           <Button variant="tertiary" onClick={() => void handleSave("keep_open")} disabled={!canSave}>
             {saving ? "Saving…" : "Save"}
           </Button>
