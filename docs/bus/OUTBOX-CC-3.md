@@ -896,3 +896,35 @@ T-48 consume it; no consumer writes its own copy.
 GUARD: scripts/verify-fuel-purchases-have-gallons-and-real-stamps.mjs + --selftest (live,
 fails closed with no DB): 0 motor-fuel rows without gallons beyond the disclosed 42, 0 import-
 stamped motor-fuel rows. Live now: PASS (42/42 baseline, 0 stamped, 52 DEF charges reported).
+
+## CC-3 — ROUND 304 T-46 SHIPPED — Samsara address list linked to our fences (engine built, dry-run proven, NOT applied)
+
+Owner token works for org 3926 (USMCA FREIGHT SOLUTIONS); GET /addresses = 255 addresses (250
+circles, 5 polygons). The existing address-import.service.ts creates NEW fences from Samsara
+addresses -- wrong tool here (it would duplicate our 604 Love's). Built a separate linker:
+apps/backend/src/integrations/samsara/geofences/geofence-address-link.service.ts.
+  MATCH = proximity (fence center <= 300 m from the Samsara point) AND identity (normalized name
+  containment, or the same street number + street word), unique in BOTH directions -> sets
+  geo.geofences.samsara_address_id. One signal, or two without uniqueness = PROPOSAL; never
+  auto-linked. Never creates a fence. Apply mirrors integrations.samsara_addresses and links
+  matches only, requires an AUTH-NNN id, audited.
+  GET  /api/v1/geofences/samsara-address-links            -- live plan (dry-run, read-only)
+  POST /api/v1/geofences/:id/samsara-address-link          -- a human accepts a proposal
+       (re-verifies >= 1 live signal, never overwrites an existing link, audited)
+
+LIVE DRY-RUN (real 255 addresses vs our 934 active non-Samsara fences, nothing written):
+  matched (auto-linkable)            0
+  proposed (human review)           30   (15 proximity-only, 11 identity-only, 4 both-but-not-unique)
+  our fences, no Samsara counterpart 917  (expected: 604 Love's + 258 DOT + 29 border are ours alone)
+  Samsara addresses, no fence of ours 241
+The 4 both-signal pairs are blocked by OUR OWN duplicate fences: "Inter-Global Solutions Group —
+LAREDO, TX" and "S E Mares Inc Forwarding Services — Laredo, TX" each exist twice as
+customer_site fences (auto_dispatch created them twice). Correctly refused, not guessed; deduping
+those fences is the fix. First run's word-overlap identity produced 538 false hits (city names in
+both conventions) -- removed; the guard keeps it out.
+The Lead's premise "we already have many geofences there": Samsara holds 255 addresses, and only
+~30 of them sit at or are named like one of ours. Our 954 are mostly Love's/DOT/border fences
+Samsara never had.
+NOT APPLIED: populating integrations.samsara_addresses and setting links is a production write --
+needs an owner AUTH id. Run: runGeofenceAddressLink({ operatingCompanyId, apply: { authId } }).
+GUARD: scripts/verify-geofence-samsara-link-never-guesses.mjs + --selftest.
