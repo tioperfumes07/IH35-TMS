@@ -1,3 +1,6 @@
+**2026-10-01T18:20Z · FAST-MERGE DRAIN COMPLETE · DRIVER FUEL TAB**
+CURSOR | MERGED: #23853 maint designs · #23730 · #23862 factoring drawer (`e1a962767d`) · #23865 WO list bill/JE · #23869 JE postings hotfix (`056fc3433e`); closed #23848. Open PRs: 0. NOW: Driver Profile Fuel tab (E-21/E-22 out of Legal) on `cursor/r319-driver-engines-c89b`. NEXT: gate→API merge · Customers · Vendors.
+
 **2026-10-01T18:10Z · FAST-MERGE DRAIN + MAINT ENGINES**
 CURSOR | FAST-MERGED #23853 · #23730 · #23862 (factoring drawer; sha `e1a962767d`); closed conflicted #23848. Backend deploy `dep-dava1kjtqb8s73d1665g` triggered for #23862. NOW: WO list §10-B bill/JE EntityLinks on `cursor/r319-maint-engines-c89b`. NEXT: gate→push→API merge · Driver/Customer/Vendor.
 

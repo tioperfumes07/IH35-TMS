@@ -877,6 +877,13 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
               data-testid="driver-profile-bills-reverse"
             />
           </div>
+          <CashForecastReverseSection operatingCompanyId={companyId} filter={{ party_ref_kind: "driver", party_ref_id: id }} />
+        </div>
+      ) : null}
+
+      {activeTab === "Fuel" ? (
+        <div className="space-y-3" data-testid="dp-tab-fuel">
+          {/* ORDERS-2026-10-01 DRIVER PROFILE: fuel with E-21/E-22 verdicts — own tab, not buried under Legal. */}
           <div data-testid="dp-section-fuel-reverse">
             {companyId ? <DriverProfileFuelVerdictsSection companyId={companyId} driverId={id} /> : null}
             <FuelTransactionsReverseSection
@@ -893,12 +900,8 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             contextLabel="this driver"
             data-testid="driver-profile-fuel-cards"
           />
-          {/* Linkage law §6 (PR #23729) — fraud alerts raised on this driver's purchases, and the
-              Relay fills matched to them (integrations.relay_fuel_transactions never becomes a
-              fuel.fuel_transactions row, so this is the only reverse hop to them). */}
           <FuelFraudAlertsReverseSection operatingCompanyId={companyId} filter={{ driver_id: id }} contextLabel="this driver" />
           <RelayFillsReverseSection operatingCompanyId={companyId} filter={{ driver_id: id }} contextLabel="this driver" />
-          <CashForecastReverseSection operatingCompanyId={companyId} filter={{ party_ref_kind: "driver", party_ref_id: id }} />
         </div>
       ) : null}
 

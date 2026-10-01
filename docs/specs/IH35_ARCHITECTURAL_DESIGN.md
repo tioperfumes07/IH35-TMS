@@ -1132,6 +1132,8 @@ Sections 7–11 on `VehicleProfilePage`: reefer (conditional), financial P&amp;L
 
 Route: `/drivers/:id/profile` renders `DriverProfilePage` with six sections (identity, license/endorsements, medical card, drug program, HOS, current assignment). Full driver record remains at `/drivers/:id` (`DriverDetailPage`).
 
+**Tabs (C-20 + ROUND 319):** Overview · Settlements · Cash Advances · Deductions · Loads · **Fuel** (E-21/E-22 verdicts + fuel reverse; was incorrectly under Legal) · Maintenance · Safety · Documents · Legal · Communications · Reports · Activity.
+
 **License:** `mdata.drivers` CDL fields + six endorsement booleans (`0297`). Medical prefers `safety.medical_cards` with fallback to `dot_medical_expires_at`.
 
 **Drug:** Latest `safety.drug_test`; random pool from `safety.random_pool` open rows.
