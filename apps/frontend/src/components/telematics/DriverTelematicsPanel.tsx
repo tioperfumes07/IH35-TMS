@@ -25,6 +25,8 @@ const SECTIONS: Record<Part, Array<Section & { from: string }>> = {
       columns: [col("started_at", "Stopped", when), col("dwell_minutes", "Dwell min"), UNIT, LOAD, col("city", "City"), col("state", "State"), col("odometer_mi", "Odometer", num(1)), col("miles_since_previous_stop", "Miles since prior", num(1))] },
     { from: "fuel", key: "fills", title: "Fuel", note: "Fills on the truck this driver held at fill time.", empty: "No fuel in the last 30 days.",
       columns: [col("transaction_at", "When", when), col("fuel_type", "Fuel"), col("gallons", "Gallons", num(3)), col("total_cost", "Cost", num(2)), UNIT, LOAD, col("location_city", "City"), col("location_state", "State")] },
+    { from: "fuel", key: "samsara_fuel_reports", title: "Samsara fuel burn (daily)", note: "Gallons the engine burned while this driver drove, per day (Samsara).", empty: "No Samsara fuel report in the last 30 days.",
+      columns: [col("report_date", "Day"), col("fuel_burned_gal", "Burned gal", num(1)), col("distance_mi", "Miles", num(1)), col("efficiency_mpg", "MPG", num(2)), col("engine_idle_hours", "Idle h", num(1))] },
     { from: "samsara", key: "samsara_accounts", title: "Samsara accounts", note: "Samsara driver logins mapped to this driver.", empty: "No Samsara account mapped.",
       columns: [col("samsara_username", "Username"), col("samsara_driver_id", "Samsara id"), col("last_login_at", "Last login", when), col("is_active", "Active", yes)] },
   ],

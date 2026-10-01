@@ -54,6 +54,8 @@ const UNIT_SECTIONS: Section[] = [
     columns: [col("submitted_at", "Submitted", when), col("type", "Type"), col("role", "As"), LOAD, DRIVER, col("has_major_defect", "Major", yes)] },
   { key: "fuel_fills", title: "Fuel", note: "Fuel purchases on this truck.", empty: "No fuel in this window.",
     columns: [col("transaction_at", "When", when), col("fuel_type", "Fuel"), col("gallons", "Gallons", num(3)), { ...col("total_cost", "Cost", num(2)), kind: "money" } as ParityColumn<Row>, LOAD] },
+  { key: "samsara_fuel_reports", title: "Fuel — burned vs purchased (daily)", note: "Samsara engine burn per day beside the eligible gallons bought on this truck that day.", empty: "No Samsara fuel report in this window.",
+    columns: [col("report_date", "Day"), col("fuel_burned_gal", "Burned gal", num(1)), col("purchased_gal", "Bought gal", num(1)), col("purchase_count", "Fills"), col("distance_mi", "Miles", num(1)), col("efficiency_mpg", "MPG", num(2)), col("engine_idle_hours", "Idle h", num(1))] },
   { key: "samsara_route_progress", title: "Samsara routes", note: "Route stops this truck ran, read back from Samsara.", empty: "No Samsara route stops in this window.",
     columns: [col("read_at", "Read", when), LOAD, col("sequence_number", "Stop #"), col("state", "State"), col("eta", "ETA", when), col("actual_arrival_at", "Arrived", when), col("actual_departure_at", "Departed", when)] },
   { key: "odometer_anchors", title: "Odometer readings", note: "Odometer anchors (Samsara and hand-entered).", empty: "No odometer readings in this window.",

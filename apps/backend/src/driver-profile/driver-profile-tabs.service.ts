@@ -96,7 +96,16 @@ export async function driverFuel(client: Db, oc: string, driverId: string, w: Wi
     ...r,
     purchase_ineligible_reason: fuelPurchaseIneligibleReason(r as unknown as FuelRowForEligibility, { requirePumpTime: false }),
   }));
-  return { driver_id: driverId, window: w, attribution: "driver_at_fill_time", fills: rows };
+  // E-23: Samsara's own daily burn for this driver (driver-subject rows), beside the fills.
+  const reports = await client.query(
+    `SELECT report_date, fuel_burned_gal, distance_mi, efficiency_mpg, engine_idle_hours, engine_run_hours
+       FROM integrations.samsara_fuel_reports
+      WHERE operating_company_id = $1::uuid AND driver_id = $2::uuid AND subject_kind = 'driver'
+        AND report_date >= ($3::timestamptz AT TIME ZONE 'UTC')::date AND report_date < ($4::timestamptz AT TIME ZONE 'UTC')::date + 1
+      ORDER BY report_date DESC`,
+    [oc, driverId, w.fromIso, w.toIso]
+  );
+  return { driver_id: driverId, window: w, attribution: "driver_at_fill_time", fills: rows, samsara_fuel_reports: reports.rows };
 }
 
 /** Safety: engine faults (driver at fault time), harsh events, DVIRs (signer), DOT inspection dwell. */
