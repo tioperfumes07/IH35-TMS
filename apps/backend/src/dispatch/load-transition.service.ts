@@ -26,6 +26,11 @@ export type DispatchTransitionInput = {
 export type TransitionClient = { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> };
 
 export async function transitionDispatchLoadInClientTx(client: TransitionClient, actorUserId: string, operatingCompanyId: string, loadId: string, input: DispatchTransitionInput) {
+  // ROUND 315: a status transition never waits minutes on a lock nor sits idle holding one. Every caller runs this
+  // in a managed transaction (after-commit queue), so the money side effects run after COMMIT; these bound the
+  // window if anything inside still blocks. SET LOCAL -> ends with the transaction.
+  await client.query(`SET LOCAL lock_timeout = '10s'`);
+  await client.query(`SET LOCAL idle_in_transaction_session_timeout = '60s'`);
   // MILES-ON-BOOK — set on delivery mint; returned so the board can toast a skip.
   let driverBillOutcome: DriverBillMintOutcome | null = null;
   const currentRes = await client.query<{
