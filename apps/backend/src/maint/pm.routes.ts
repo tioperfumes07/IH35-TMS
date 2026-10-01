@@ -2,9 +2,9 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
-import { evaluatePmDue, extractSamsaraOdometerMi } from "./pm-due.shared.js";
+import { evaluatePmDue } from "./pm-due.shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
-import { latestStopCapturedOdometer, type OdometerReading } from "../maintenance/pm-current-odometer.js";
+import { absentOdometerReason, loadPmOdometers, type PmOdometer } from "../maintenance/pm-current-odometer.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -29,9 +29,6 @@ type PmScheduleRow = {
   next_due_date: string | null;
   samsara_unit_id: string | null;
   samsara_raw_payload: unknown;
-  live_odometer_mi: number | null;
-  /** C-21 — when the live telematics position was captured (may exist even if odometer_mi is NULL). */
-  odometer_reading_at: string | null;
 };
 
 function authUser(req: FastifyRequest, reply: FastifyReply) {
@@ -78,14 +75,13 @@ async function listSchedules(client: Queryable, operatingCompanyId: string, asse
         s.next_due_odometer::int AS next_due_miles,
         NULL::text AS next_due_date,
         COALESCE(sv.samsara_vehicle_id, u.samsara_vehicle_id) AS samsara_vehicle_id,
-        sv.raw_payload AS samsara_raw_payload,
-        vlp.odometer_mi::float8 AS live_odometer_mi,
-        vlp.captured_at::text AS odometer_reading_at
+        sv.raw_payload AS samsara_raw_payload
       FROM maintenance.pm_schedules s
       JOIN mdata.units u
         ON u.id = s.unit_id
        AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = s.operating_company_id
        AND u.deactivated_at IS NULL
+       AND COALESCE(u.is_sample_data, false) = false
       LEFT JOIN LATERAL (
         -- E-01 / T122: mirror-first. integrations.samsara_vehicles.local_unit_id is the live link;
         -- mdata.units.samsara_vehicle_id is only the fallback (T122 carries a 2024 id there).
@@ -95,13 +91,6 @@ async function listSchedules(client: Queryable, operatingCompanyId: string, asse
          ORDER BY (sv0.local_unit_id = u.id) DESC NULLS LAST, sv0.last_seen_at DESC NULLS LAST
          LIMIT 1
       ) sv ON true
-      -- Live odometer from the Samsara stats-poll ingest (#1289): the webhook raw_payload is empty
-      -- because we POLL, not webhook, so the current odometer must come from telematics.vehicle_latest_position.
-      -- C-21: also return captured_at so the UI can say "no odometer reading since <date>" when
-      -- odometer_mi is NULL (obdOdometerMeters feed dead since 2026-09-10) instead of a confident zero.
-      LEFT JOIN telematics.vehicle_latest_position vlp
-        ON vlp.operating_company_id = s.operating_company_id
-       AND vlp.unit_id = s.unit_id
       WHERE ${filters.join(" AND ")}
       ORDER BY COALESCE(s.next_due_odometer, 2147483647) ASC, s.created_at DESC
     `,
@@ -110,41 +99,13 @@ async function listSchedules(client: Queryable, operatingCompanyId: string, asse
   return result.rows;
 }
 
-function hasLiveOdometer(row: PmScheduleRow): boolean {
-  return typeof row.live_odometer_mi === "number" && Number.isFinite(row.live_odometer_mi);
-}
-
 /**
- * ROUND 305 A-46: the latest fix usually carries no odometer (22 % of position instants do), which
- * left a working truck with no PM reading. For those units only, the odometer READ at its most
- * recent stop (the Lead's stop-odometer engine) -- never interpolated.
+ * E-15 (ORDERS 2026-10-01 row 2): the SAME odometer source as the E-14 cron and the PM due engine --
+ * telematics.unit_stop_events -> telematics.odometer_readings -> ABSENT, from one shared loader.
+ * C-21 stays honest: an absent odometer is null with a reason, never a confident zero.
  */
-async function stopOdometersForUnitsWithoutLive(client: Queryable, rows: PmScheduleRow[]) {
-  const out = new Map<string, OdometerReading>();
-  const unitIds = [...new Set(rows.filter((r) => !hasLiveOdometer(r)).map((r) => r.asset_id))];
-  for (const unitId of unitIds) {
-    const stop = await latestStopCapturedOdometer(client, unitId);
-    if (stop) out.set(unitId, stop);
-  }
-  return out;
-}
-
-function mapDueRow(row: PmScheduleRow, stop: OdometerReading | null = null) {
-  // Prefer the live odometer ingested by the Samsara stats poll (#1289, vehicle_latest_position.odometer_mi);
-  // then the odometer read at the unit's last stop (A-46); then the webhook raw_payload.
-  const rawPayloadOdometer = extractSamsaraOdometerMi(row.samsara_raw_payload);
-  const currentOdometer = hasLiveOdometer(row)
-    ? Math.round(row.live_odometer_mi as number)
-    : stop
-      ? Math.round(stop.odometer_miles)
-      : rawPayloadOdometer;
-  const odometerSource = hasLiveOdometer(row)
-    ? "vehicle_latest_position"
-    : stop
-      ? "stop_capture"
-      : rawPayloadOdometer != null
-        ? "samsara_raw_payload"
-        : null;
+function mapDueRow(row: PmScheduleRow, odo: PmOdometer | null, stopEventsLive: boolean) {
+  const currentOdometer = odo ? Math.round(odo.odometer) : null;
   const evaluation = evaluatePmDue(
     {
       interval_miles: row.interval_miles,
@@ -166,8 +127,9 @@ function mapDueRow(row: PmScheduleRow, stop: OdometerReading | null = null) {
     interval_days: row.interval_days,
     last_done_miles: row.last_done_miles,
     last_done_date: row.last_done_date,
-    odometer_reading_at: odometerSource === "stop_capture" && stop ? stop.read_at : row.odometer_reading_at,
-    odometer_source: odometerSource,
+    odometer_reading_at: odo?.read_at ?? null,
+    odometer_source: odo?.source ?? null,
+    odometer_note: odo ? null : absentOdometerReason(stopEventsLive),
     ...evaluation,
   };
 }
@@ -200,8 +162,8 @@ export async function registerMaintPmRoutes(app: FastifyInstance) {
 
     const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
       const schedules = await listSchedules(client, parsed.data.operating_company_id, parsed.data.asset_id);
-      const stops = await stopOdometersForUnitsWithoutLive(client, schedules);
-      return schedules.map((row) => mapDueRow(row, stops.get(row.asset_id) ?? null));
+      const odo = await loadPmOdometers(client, parsed.data.operating_company_id, [...new Set(schedules.map((r) => r.asset_id))]);
+      return schedules.map((row) => mapDueRow(row, odo.byUnit.get(row.asset_id) ?? null, odo.stopEventsLive));
     });
     return { rows };
   });
@@ -214,12 +176,12 @@ export async function registerMaintPmRoutes(app: FastifyInstance) {
 
     const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
       const schedules = await listSchedules(client, parsed.data.operating_company_id, parsed.data.asset_id);
-      const stops = await stopOdometersForUnitsWithoutLive(client, schedules);
-      const mapped = schedules.map((row) => mapDueRow(row, stops.get(row.asset_id) ?? null));
+      const odo = await loadPmOdometers(client, parsed.data.operating_company_id, [...new Set(schedules.map((r) => r.asset_id))]);
+      const mapped = schedules.map((row) => mapDueRow(row, odo.byUnit.get(row.asset_id) ?? null, odo.stopEventsLive));
       return parsed.data.include_not_due ? mapped : mapped.filter((row) => row.is_due);
     });
 
-    return { rows, computed_from: "live_odometer_and_schedule_dates" };
+    return { rows, computed_from: "unit_stop_events -> odometer_readings -> ABSENT, schedule dates" };
   });
 
   app.post("/api/v1/maint/pm/schedules", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (_req, reply) => {

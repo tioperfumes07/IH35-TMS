@@ -931,3 +931,17 @@ insert commits: `void runPmAutoEngineAfterManualOdometer(operatingCompanyId)` fr
 `../maintenance/pm-auto-engine.service.js` (fire-and-forget, log on error). CC-1's service-history route
 already calls it.
 **next:** E-15 re-point onto the same source.
+
+## E-15 PM due — BUILT (ORDERS 2026-10-01 row 2) + E-14 manual trigger wired (no hand-off)
+**what:** one shared loader (`maintenance/pm-current-odometer.ts`, `loadPmOdometers`) is now the ONLY
+odometer source for the E-14 cron, the PM due engine and Maintenance Home `/maint/pm/due` + `/schedules`:
+`unit_stop_events` (feature-detected, "E-03 pending") → `odometer_readings` → ABSENT with reason. Latest
+fix / raw_payload / my A-46 in-memory stop recompute retired (superseded by the orders). Baseline NULL or
+≤1 = ABSENT via the shared rule; days-interval schedules listed with reason (no last-service date column);
+every row names its odometer source. The manual-odometer call landed in
+`telematics/odometer-manual.routes.ts` via CC-3 #23643 (same line); CC-1's service-history route calls it too.
+**proof:** live read-only due list — 96 schedules / 16 units, 96 with an odometer (source
+odometer_readings), 0 due dates: 64 mileage schedules NULL baseline (BRK, PM-A, PM-B, TIRE × T122 T124
+T147 T148 T152 T156 T163 T164 T168 T170 T171 T173 T174 T175 T176 T177) + 32 days schedules (COOL, DOT ×
+same 16). Expected-empty until seeding. vitest 26/26, tsc 0, guard 12005 selftest PASS.
+**blocker:** none. **next:** E-16 work-order linkage.
