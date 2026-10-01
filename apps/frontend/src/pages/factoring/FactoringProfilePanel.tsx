@@ -32,7 +32,8 @@ const FULL_FIELDS = (factor: Factor) => {
   return [
     { label: "Advance rate %", value: dash(rateToPctString(factor.advance_rate)) },
     { label: "Fee rate %", value: dash(rateToPctString(factor.fee_rate)) },
-    { label: "Reserve rate %", value: dash(rateToPctString(factor.reserve_rate)) },
+    { label: "Escrow reserve rate %", value: dash(rateToPctString(factor.reserve_rate)) },
+    { label: "Cash reserve rate %", value: dash(rateToPctString(factor.cash_reserve_rate ?? 0)) },
     { label: "Recourse days", value: dash(factor.recourse_days) },
     { label: "Telephone", value: dash(remit.telephone) },
     { label: "Address", value: dash(remit.address) },
@@ -83,7 +84,8 @@ export function FactoringProfilePanel({ factor, saving, onSave, variant = "full"
         </div>
         <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-700" data-testid="factoring-profile-rates">
           <span>Advance <b className="text-gray-900">{dash(rateToPctString(factor.advance_rate))}%</b></span>
-          <span>Reserve <b className="text-gray-900">{dash(rateToPctString(factor.reserve_rate))}%</b></span>
+          <span>Escrow reserve <b className="text-gray-900">{dash(rateToPctString(factor.reserve_rate))}%</b></span>
+          <span>Cash reserve <b className="text-gray-900">{dash(rateToPctString(factor.cash_reserve_rate ?? 0))}%</b></span>
           <span>Fee <b className="text-gray-900">{dash(rateToPctString(factor.fee_rate))}%</b></span>
           <span>Recourse <b className="text-gray-900">{dash(factor.recourse_days)}d</b></span>
         </div>

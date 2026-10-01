@@ -144,7 +144,13 @@ export function buildCandidateQuery(oci: string, f: CandidateFilters): { sql: st
 export async function listFactoringVendorOptions(client: DbClient, oci: string): Promise<FactoringVendorOption[]> {
   const r = await client.query<Record<string, unknown>>(
     `
-      SELECT v.id::text, v.vendor_name, NULLIF(TRIM(v.email), '') AS email,
+      -- ROUND 321 item 4: "Send to" default = the factor setup's submission email (then its general email, then the vendor's).
+      SELECT v.id::text, v.vendor_name, COALESCE(
+               (SELECT NULLIF(TRIM(COALESCE(f.remittance_details->>'submissionEmail', f.remittance_details->>'generalEmail', f.remittance_details->>'general_email')), '')
+                  FROM factoring.canonical_factor_agreements a JOIN factoring.factor f ON f.id = a.factor_profile_id
+                 WHERE a.factor_vendor_id = v.id AND a.voided_at IS NULL AND f.voided_at IS NULL
+                 ORDER BY a.effective_from DESC LIMIT 1),
+               NULLIF(TRIM(v.email), '')) AS email,
              (EXISTS (SELECT 1 FROM accounting.factoring_purchases p WHERE p.factoring_company_vendor_id = v.id AND p.operating_company_id = $1::uuid)
               OR EXISTS (SELECT 1 FROM accounting.factoring_advances fa WHERE fa.factoring_company_vendor_id = v.id AND fa.operating_company_id = $1::uuid)) AS used,
              (COALESCE(v.is_duplicate, false) OR v.merge_target_id IS NOT NULL) AS dup
@@ -174,14 +180,14 @@ export async function listPurchaseCandidates(client: DbClient, oci: string, filt
   // tab's default purchase date). The factor carries no cash-reserve rate, so the expected cash reserve is 0 —
   // Faro's actual cash reserve, when it holds one, is entered from the purchase report.
   const asOf = companyBusinessDate();
-  const rates = new Map<string, { id: string | null; name: string | null; reserve: number; fee: number }>();
+  const rates = new Map<string, { id: string | null; name: string | null; reserve: number; cash: number; fee: number }>();
   const candidates: PurchaseCandidate[] = [];
   for (const row of rows) {
     const customerId = row.customer_id ? String(row.customer_id) : null;
     let rate = customerId ? rates.get(customerId) : undefined;
     if (customerId && !rate) {
       const f = await getFactorForCustomer(oci, customerId, asOf, { client: client as never });
-      rate = { id: f?.id ?? null, name: f?.name ?? null, reserve: num(f?.reserve_rate), fee: num(f?.fee_rate) };
+      rate = { id: f?.id ?? null, name: f?.name ?? null, reserve: num(f?.reserve_rate), cash: num(f?.cash_reserve_rate), fee: num(f?.fee_rate) };
       rates.set(customerId, rate);
     }
     const open = num(row.open_cents);
@@ -217,9 +223,9 @@ export async function listPurchaseCandidates(client: DbClient, oci: string, filt
       factor_name: rate?.name ?? null,
       reserve_rate: rate?.reserve ?? 0,
       fee_rate: rate?.fee ?? 0,
-      cash_reserve_rate: 0,
+      cash_reserve_rate: rate?.cash ?? 0,
       expected_escrow_reserve_cents: Math.round(open * (rate?.reserve ?? 0)),
-      expected_cash_reserve_cents: 0,
+      expected_cash_reserve_cents: Math.round(open * (rate?.cash ?? 0)),
       expected_fee_cents: Math.round(open * (rate?.fee ?? 0)),
       has_bol: hasBol,
       has_pod: hasPod,
@@ -414,7 +420,12 @@ export type SendPacketDoc = { load_id: string; load_number: string | null; categ
 export async function loadPurchaseSendPacket(client: DbClient, oci: string, purchaseId: string) {
   const head = (await client.query<Record<string, unknown>>(
     `SELECT p.id::text, p.display_id, p.status, p.purchase_date::text AS purchase_date, p.faro_report_ref, p.invoice_count,
-            p.gross_cents, v.vendor_name, NULLIF(TRIM(v.email), '') AS vendor_email, co.legal_name AS company_name,
+            p.gross_cents, v.vendor_name, COALESCE(
+               (SELECT NULLIF(TRIM(COALESCE(f.remittance_details->>'submissionEmail', f.remittance_details->>'generalEmail', f.remittance_details->>'general_email')), '')
+                  FROM factoring.canonical_factor_agreements a JOIN factoring.factor f ON f.id = a.factor_profile_id
+                 WHERE a.factor_vendor_id = v.id AND a.voided_at IS NULL AND f.voided_at IS NULL
+                 ORDER BY a.effective_from DESC LIMIT 1),
+               NULLIF(TRIM(v.email), '')) AS vendor_email, co.legal_name AS company_name,
             p.docs_override_at::text AS docs_override_at, p.docs_override_reason
        FROM accounting.factoring_purchases p
        JOIN mdata.vendors v ON v.id = p.factoring_company_vendor_id
