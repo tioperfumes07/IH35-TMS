@@ -1269,3 +1269,45 @@ running; any missing reverse view in my lane gets built next.
 - CORRECTION: the retry-held-expense-postings cron runs "20 */6" America/Chicago = 05:20/11:20/17:20/23:20 UTC.
   - My earlier "06:20Z" was wrong.
   - The first run on the fixed system actor is 11:20Z; the 11 fuel drafts post then.
+
+## 2026-10-01 07:15Z — CC-2 | Lead 06:45Z + 06:50Z: 146 fuel rows DONE; Faro 13625 / 13638 verified
+### 146 fuel rows — DONE
+- AUTH-190 (#23740) applied:
+  - 146 rows / $91,492.34 reinstated (header only, no GL).
+  - 109 trucks filled from each row's own expense (= the load's truck).
+- Baseline re-stamped from the live count (#23743): 322 / $174,619.42 = 176 + 146, exact delta.
+- Guard 12047 now enforces "a posted fuel expense points at a live fuel row": 310 posted, 0 on a voided purchase.
+  AUTH-190 CONSUMED.
+- Reverse-routing screens shipped (#23739): vendor fuel; fraud alerts on unit/driver/load/vendor;
+  fuel <-> expense/JE; Relay fills + unmatched worklist.
+### Faro 09-25 — rows (live, USMCA)
+| advance | Faro inv | load (Faro remittance) | purchase | net adv | funding JE (live) | reserve held | invoice link |
+|---|---|---|---|---|---|---|---|
+| FAC-2026-00138 | 101 | 13620 | $4,300.00 | $4,161.00 | funding, 2026-09-25, posted | $64.50, 09-25, JE | invoice 13620 (sent) |
+| FAC-2026-00139 | 103 | **13625** (PO LGMX142 = load PO) | $6,250.00 | $6,062.50 | funding#rev1, 2026-09-25, posted | $93.75, 09-25, JE | **none**: invoice voided by AUTH-176 (owner rule: no invoice on an undelivered load; advance kept as real Faro money) |
+| FAC-2026-00140 | 104 | 13626 | $3,400.00 | $3,298.00 | funding#rev1, 2026-09-25, posted | $51.00, 09-25, JE | none (same AUTH-176) |
+| — | **102** | **13638** (owner fact) | $4,900.00 | $4,743.00 | **MISSING** | **MISSING** | none: 13638's pro-forma was deleted by AUTH-176 |
+- 13625: VERIFIED. The advance exists, is posted, is dated 09-25 and has its reserve.
+  - Linked to the load only by the Faro note (load "13625").
+  - It will link to an invoice when 13625 is delivered and invoiced.
+- 13638: MISSING. Faro 102 (PO SEM66542, S E Mares) is on the owner-supplied Faro CSV (AUTH-173 tie-out,
+  docs/bus/09-28-2026-CC-2-ROUND-173-ITEM3-FARO-CSV-TIEOUT.md).
+  - It was HELD on 09-28 (feed-round172 JOB3: "five Semares loads are $4,900").
+  - The owner fact assigns it to 13638 (13638's own PO is 56713; Semares uses two numbering schemes).
+- Money side:
+  - The 09-25 $4,161.00 wire is matched to FAC-138.
+  - The 09-25 $19,960.50 wire is matched to nothing.
+  - Faro 099+100+102+103+104 nets total $21,960.50 ($2,000.00 above the wire); the remittance's deduction
+    line is needed to close that.
+### The engine gap (factoring lane, now mine) — building next
+- POST /accounting/factoring-advances requires >= 1 live invoice.
+  - A Faro purchase made at pickup (before delivery) cannot be created without breaking the owner's
+    no-invoice-before-delivery rule.
+  - That is why 13625/13626 are tied to their loads only by notes text (no FK: linkage law gap).
+- Build:
+  - factoring_advances.source_load_id (own migration).
+  - The engine accepts a pre-invoice purchase anchored to the load.
+  - The invoice created at delivery auto-links to that load's open advance.
+  - Then FAC for Faro 102 -> 13638 through the engine under an AUTH.
+  - Backfill 13625/13626 to the FK; guard.
+- 11:20Z cron + 12:00Z Relay proofs will be pasted here when they land.
