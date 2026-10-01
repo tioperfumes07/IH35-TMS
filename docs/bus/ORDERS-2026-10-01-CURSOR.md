@@ -75,3 +75,25 @@ OWNER_LOCK_OVERRIDE_ALLOWED_FIELD_KEYS scalars — no stops, no charges, no mile
 4. Guard: `verify-owner-lock-override-propagates.mjs` — a locked load whose charges differ from its unpaid invoice lines = FAIL; an override
    audit event without a reason = FAIL. Linkage declaration both ways (load ↔ invoice ↔ driver bill ↔ settlement ↔ JE).
 Live proof: the owner changes 13593's trip type and a stop address on the live app and sees the propagation message.
+
+---
+
+## ROUND 312 — 2026-10-01 07:1xZ — LEAD → CURSOR — NEXT BLOCK (owner: "assign more work to Cursor")
+
+STANDING LAW (owner, verbatim intent): EACH CODER FULLY BUILDS, NO HANDOFF, NO TRANSFER. EACH DOES THE FULL COMPLETE ECONOMIC, MECHANICAL, MONEY DOUBLE-SIDED, REVERSE, ROUTED LINKAGE AND CONNECTIVITY — TO VENDORS, DRIVERS, CUSTOMERS, TRUCKS, TRAILERS, LOADS, COSTS, SETTLEMENTS, TOURS, ETC. No test/sample/demo rows in USMCA. Fix at root, never patch, never defer. Live means live: Chrome-clickable, proof pasted.
+
+Order of work (finish each one fully — migration, service, routes, screen, nav, guard, Chrome proof — before starting the next):
+
+D-H0  Owner lock override on Edit Load (already ordered; finish first). Owner/Administrator may change trip_type (TR→SB…), rate/amount, addresses on a LOCKED load. Every change: audit row with before/after, re-run the SET-01 linker (presettlement_link), re-rate miles (practical/short) when a stop address changes, re-bind E-25 fences (bindLoadToGeofences) when a stop moves, and re-propagate to the invoice draft if the invoice is still draft (never to a sent/posted invoice — refuse with the void-and-reissue pointer). Proof: load 13593 trip_type set by the owner in Chrome, linker stamps presettlement_link_id.
+
+D-H1  Load History (/dispatch/loads/:id/history): every status transition, edit (field, before, after, who, when, source), stop stamps (arrived/departed, fence event id), linked documents (invoice, factoring advance, settlement line, expenses, work orders), from audit.audit_events + the load's own linkage columns. Read-only, EntityLink to every linked record.
+
+D-H2  Loads Report (/reports/loads): filters company (USMCA default), date range (pickup/delivery), customer, driver, unit, trailer, trip_type, status, factoring status; columns load#, customer, driver, unit, trailer, pickup, delivery, miles practical/short/driven_actual, rate, invoice#, factored (Faro advance), settlement#, margin. Totals row. CSV export. ReferenceSelect for every entity filter, DatePicker, MoneyInput law applies to any editable money.
+
+B-1  QBO-style Bank Register (/banking/register/:accountId): running-balance register per bank account from accounting.journal_entry_postings on that bank account (not the feed), columns date, ref#, payee, memo, account (offset), payment, deposit, balance, reconciled flag; click a row → the source document (expense, deposit, bill payment, settlement payout, transfer, JE). This is the register QBO shows; the current /banking "register" is the feed review page — keep that page, add this one, link both from the Banking subnav.
+
+B-2  Bank Deposits creator (QBO Make Deposit, spec §23): pick undeposited-funds receipts (customer payments, factoring advances) → one deposit JE (Dr bank, Cr Undeposited Funds), one accounting.deposits header with lines linked to each receipt; cash-back line optional; void = reversal, never delete. Batch grid per §23 (paste rows, fill down, duplicate).
+
+B-3  Batch Settlements grid (spec §23): per-row driver, period, settlement lines (loads auto-pulled from the SET-01 link), deductions, advances; Save all → driver_finance.* via the canonical settlement service only (never payroll.*/settlement.*), one JE per settlement, reverse linkage to loads/driver/unit.
+
+Each block's commit: FINDING/LANE/ROOT CAUSE/FIX/GUARD/LIVE PROOF (exit 0, sha, counts or "UNVERIFIED: <blocker>")/REMAINING; claim migration numbers first (Cursor band HH 12–23) in db/migrations/CLAIMED-MIGRATION-NUMBERS.json via a claim-only PR; gate exit 0 before merge; Chrome pass pasted. Report in OUTBOX-CURSOR.md after every block. Questions to the Lead only when a FACT is missing — decisions above are made.
