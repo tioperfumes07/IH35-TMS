@@ -1358,3 +1358,32 @@ running; any missing reverse view in my lane gets built next.
 - Item 3 (FACT-TIEOUT-01 statement import + /factoring/statements + AUTH-191) is NOT started.
   - Per the owner's reconciliation, Faro 102 = load 13621 (not 13638) and 13638 = Faro 112 (09-28).
   - AUTH-191 will follow the owner's sheet, not "102->13638".
+
+## 2026-10-01 16:10Z — ROUND 315 item 1 DONE: factoring clean slate LIVE (AUTH-193, #23805)
+
+Owner decision applied: Faro is clean — **0 purchases**; all **110 USMCA invoices still listed** (93 unlinked → `not_factored`).
+One transaction, sanctioned WORM purge bypass (`app.purge_auth_id='AUTH-193'`), 1 audit row `b7b25e3d`.
+Row list (every advance id + amount + its JE ids): `docs/audit/2026-10-01-auth193-factoring-clean-slate-rows.json` (sha256 5754cb5d…).
+
+| | before | after |
+|---|---|---|
+| factoring_advances (USMCA) | 95 / $325,162.98 | 0 |
+| journal_entries (factoring chain) | 625 | 0 |
+| journal_entry_postings | 2,009 | 0 |
+| reserve movements / interest accruals / posting keys | 95 / 242 / 376 | 0 / 0 / 0 |
+| invoices listed | 110 | 110 (factored: 0) |
+| bank lines matched to an advance | 16 | 0 (lines kept) |
+| USMCA posted trial balance net | 0 | 0 |
+
+GL (debit +): **1100 A/R** 345,609.12 → 345,609.12 · **2150 Factoring Advance** -345,986.66 → 0.00 · **1230 Reserves** 5,175.30 → 0.00 ·
+**6400 Fees** 5,191.74 → 0.00 · 6300 wire fees 230.00 → 0.00 · 6830 default interest 419.94 → 0.00 · 1210/1220/1235 0 → 0 ·
+**1090 Undeposited Funds** 161,622.34 → **-151,736.34** · 1000 BofA Operating 174,005.11 → 152,394.11.
+
+Why 625 JEs, not 440: rehearsal found (a) 3 reversal JEs outside the advance join (2 ROUND-175 reinstate reversals + the AUTH-169
+reversal of FAC-00140's JE), tied by posting-level `reversal_of_line_id`; (b) 132 "Factoring funding FAC-2026-000NN" JEs whose advance
+row had already been deleted by an earlier incarnation of the same purchase, plus their reversals. The 182 extra entries net to zero on every account.
+
+**For the Lead / CC-1 — 1090 and 1000 (not a plug, not fixed by me):** the Faro wires are real cash, and the 16 bank lines stay. Two things
+cleared 1090 against factoring funding: the 9 `factoring_advance_deposit` JEs (DR 1000, $21,611, now deleted) and CC-1's TB-close manual
+JE ACCT-F20260925i (1090 → bank, $166,743.94, kept — not a factoring JE). Until the app regenerates the purchases (Submit tab →
+funding DR 1090 / CR 2150), 1090 shows the Faro cash with no source. Closure path: the rebuilt Faro posting + bank match, never a manual plug.
