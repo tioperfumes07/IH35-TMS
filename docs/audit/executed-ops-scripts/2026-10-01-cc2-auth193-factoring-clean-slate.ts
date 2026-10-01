@@ -1,3 +1,6 @@
+// ARCHIVED 2026-10-01 (CC-2): EXECUTED under AUTH-193 at 2026-10-01T16:09:51Z (audit b7b25e3d, CONSUMED). Moved out of
+// scripts/ops/ unchanged (precedent #23409): its purge DELETEs, scoped by explicit row lists, trip the static
+// unscoped-delete guard by design. Never re-run; kept as the evidence of what ran.
 /**
  * AUTH-193 — ROUND 315 item 1, OWNER DECISION (testing phase): factoring clean slate for USMCA.
  * Owner, verbatim via the Lead: "Undo each purchase, void and permanently delete, have Faro clean again — zero
