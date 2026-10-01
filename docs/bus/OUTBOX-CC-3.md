@@ -1474,7 +1474,7 @@ guard: scripts/verify-driver-prompts-flag-off-idempotent.mjs + --selftest PASS; 
 
 ## 2026-10-01 — Reverse linkage reaches the screens (load drawer, truck profile, driver profile)
 
-- **Load drawer → Geofence Timeline tab:** `TelematicsLinksPanel kind="load"` is mounted under the timeline. It shows 10 sections: stops, driven miles, arrivals, fence state, border crossings, DVIRs, detention, fuel, driver prompts, Samsara route pushes. The owner-locked tab order is unchanged (`verify-ldt-0-tabbar-header` OK).
+- **Load drawer mount HELD (pending):** editing LoadDetailDrawer runs `verify-ldt-5-presettlement-readout`, which is red on live data (1 USMCA link-created settlement lacks `settlement_model='load_bookended'`; money lane CC-1). The panel is built and supports `kind="load"`; mounting it is a 3-line change once that guard is green. Planned placement: under the Geofence Timeline tab. It shows 10 sections: stops, driven miles, arrivals, fence state, border crossings, DVIRs, detention, fuel, driver prompts, Samsara route pushes. The owner-locked tab order is unchanged (`verify-ldt-0-tabbar-header` OK).
 - **Truck profile (/fleet/units/:id):** new section `vp-section-10t-telematics-links`. It shows "now on load / driver" from the shared loadAtTimeSql / driverAtTimeSql, then stops, fence crossings with odometer, engine faults, harsh events, DVIRs (as tractor or trailer), fuel and odometer readings, for the last 30 days.
 - **Driver profile:**
   - Loads tab: truck assignments, stops + miles with the load, fuel, Samsara accounts.

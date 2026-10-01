@@ -66,7 +66,6 @@ import {
   type OfficeTransitionButton,
 } from "@ih35/shared-types";
 import { LoadStatusChanger } from "./LoadStatusChanger";
-import { TelematicsLinksPanel } from "../telematics/TelematicsLinksPanel";
 
 const tabs = [
   "Overview",
@@ -1486,13 +1485,10 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
 
           {activeTab === "Geofence Timeline" ? (
             load ? (
-              <div className="space-y-3">
-                <LoadDetailGeofenceTimelineTab
-                  loadId={load.id}
-                  operatingCompanyId={load.operating_company_id}
-                />
-                <TelematicsLinksPanel kind="load" id={load.id} operatingCompanyId={load.operating_company_id} />
-              </div>
+              <LoadDetailGeofenceTimelineTab
+                loadId={load.id}
+                operatingCompanyId={load.operating_company_id}
+              />
             ) : (
               <div className="text-xs text-gray-500">Loading…</div>
             )

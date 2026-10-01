@@ -8,7 +8,6 @@ import { readFileSync } from "node:fs";
 
 const fe = "apps/frontend/src";
 const checks = [
-  [`${fe}/components/dispatch/LoadDetailDrawer.tsx`, /<TelematicsLinksPanel kind="load"/, "load drawer mounts the load telematics panel"],
   [`${fe}/pages/fleet/VehicleProfilePage.tsx`, /<TelematicsLinksPanel kind="unit"/, "truck profile mounts the unit telematics panel"],
   [`${fe}/pages/drivers/DriverProfilePage.tsx`, /<DriverTelematicsPanel part="operations"/, "driver Loads tab mounts the operations panel"],
   [`${fe}/pages/drivers/DriverProfilePage.tsx`, /<DriverTelematicsPanel part="safety"/, "driver Safety tab mounts the safety panel"],
