@@ -254,6 +254,7 @@ export const FUEL_TAB_PATH: Record<string, string> = {
   loves_prices: "/fuel/loves-prices",
   compliance: "/fuel/compliance",
   integrity: "/fuel/integrity",
+  cards: "/fuel/cards",
 };
 
 export function fuelTabFromPath(pathname: string): string {
