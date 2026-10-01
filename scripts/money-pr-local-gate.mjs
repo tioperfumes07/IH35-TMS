@@ -440,6 +440,7 @@ const ONE_SHOT_WRITER_RE = /^scripts\/run-[^/]+-once\.m?[jt]s$/;
 const LIVE_DOMAIN_GUARDS = [
   // RECLASSIFY (Lead 2026-10-01, QBO spec §24) — every applied reclassify line is carried by a RECLASSIFICATION JE pair; WORM on postings.
   ["verify-reclassify-batches-are-whole", ["apps/backend/src/accounting/reclassify/", "apps/backend/src/accounting/journal-entries.service.ts"]],
+  ["verify-feed-gate-blocks-incomplete", ["apps/backend/src/driver-finance/feed-gate/", "apps/backend/src/settlements/approval.service.ts", "db/migrations/202615170400_feed_gate_intakes.sql"]],
   // E-41 (Lead 2026-10-01) — every engine-status catalog probe names a live relation + columns.
   // Runs when the catalog or any migration changes (a migration can rename the column a probe reads).
   ["verify-engine-catalog-probes-exist", ["apps/backend/src/system/engine-status.catalog.ts", "db/migrations/"]],
