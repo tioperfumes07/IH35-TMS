@@ -1,3 +1,9 @@
+**2026-10-01T22:03Z · DEPLOY-READY · tip `7c62874db2` · #23908 MERGED**
+ACK: CURSOR | ACK FACTORING-TAKEOVER | DEPLOY-READY | GO
+FT1 #23906 · FT2 #23907 · FT3–FT5 #23908 MERGED. AUTH-201 #23904 · C #23905 closed earlier.
+Tip main: `7c62874db2`. Owner: deploy FE (+ BE if needed). Chrome after deploy.
+NEXT: owner deploy — Cursor idle on factoring lane until next NOW.
+
 **2026-10-01T21:50Z · FT3+FT4+FT5 SHIPPING · `cursor/ft3-home-kpi-ledger-c89b`**
 ACK: CURSOR | ACK FACTORING-TAKEOVER | FT3-FT5 | GO
 FT3 · Home cash-flow KPI strip from same purchase/candidates ledger.
