@@ -278,6 +278,67 @@ async function ensureFreshDbProductionSchema(client, file) {
   );
 }
 
+// ── FRESH-DB: telematics.odometer_readings (CC-1, 2026-10-01) ───────────────
+// Same class as the bootstrap above. telematics.odometer_readings exists in production but NO
+// migration creates it -- it was made live. 202614950000_odometer_readings_gap_rows_and_date_grain_idemp
+// .sql ALTERs it (and 202614990000 grants on it), so every database built from source dies with
+// 'relation "telematics.odometer_readings" does not exist' (CI 2026-10-01, build-typecheck-heavy, once
+// 202614850000 stopped killing the chain first). 202614950000 is applied in production, so it cannot
+// be edited. This recreates the table exactly as production carried it BEFORE 202614950000 (read from
+// prod's catalog 2026-10-01: odometer_miles NOT NULL -- 950 drops that; the day function and the
+// date-grain index are 950's own). Not the real fix: that is a parity migration owned by the table's
+// author. Non-prod only; IF NOT EXISTS; production is never touched by this path.
+const FRESH_DB_ODOMETER_LEDGER_NEEDED_BY = "202614950000_odometer_readings_gap_rows_and_date_grain_idemp.sql";
+let freshDbOdometerLedgerBootstrapped = false;
+async function ensureFreshDbOdometerLedger(client, file) {
+  if (TARGET_IS_PROD || freshDbOdometerLedgerBootstrapped) return;
+  if (file < FRESH_DB_ODOMETER_LEDGER_NEEDED_BY) return;
+  const present = await client.query(
+    `SELECT to_regclass('telematics.odometer_readings') IS NOT NULL AS ok,
+            to_regclass('mdata.units') IS NOT NULL AS units_ok`
+  );
+  if (present.rows[0]?.ok || !present.rows[0]?.units_ok) {
+    freshDbOdometerLedgerBootstrapped = true;
+    return;
+  }
+  await client.query(`
+    CREATE TABLE telematics.odometer_readings (
+      id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+      operating_company_id uuid NOT NULL,
+      unit_id uuid NOT NULL REFERENCES mdata.units(id),
+      read_at timestamptz NOT NULL,
+      odometer_miles numeric NOT NULL,
+      source text NOT NULL CHECK (source = ANY (ARRAY['samsara','geofence','manual','fuel_receipt','settlement'])),
+      geofence_visit_id uuid,
+      recorded_by_user_id uuid,
+      confidence text NOT NULL CHECK (confidence = ANY (ARRAY['measured','suggested','entered'])),
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      CONSTRAINT odometer_readings_unit_id_read_at_source_key UNIQUE (unit_id, read_at, source)
+    );
+    ALTER TABLE telematics.odometer_readings ENABLE ROW LEVEL SECURITY;
+    CREATE POLICY odometer_readings_select ON telematics.odometer_readings FOR SELECT
+      USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+    CREATE POLICY odometer_readings_insert ON telematics.odometer_readings FOR INSERT
+      WITH CHECK (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+    CREATE POLICY odometer_readings_update ON telematics.odometer_readings FOR UPDATE
+      USING (identity.is_lucia_bypass() OR operating_company_id = NULLIF(current_setting('app.operating_company_id', true), '')::uuid);
+    DO $$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ih35_app') THEN
+        GRANT SELECT, INSERT, UPDATE, DELETE ON telematics.odometer_readings TO ih35_app;
+      END IF;
+      IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ih35_ci_readonly') THEN
+        GRANT SELECT ON telematics.odometer_readings TO ih35_ci_readonly;
+      END IF;
+    END $$;
+  `);
+  freshDbOdometerLedgerBootstrapped = true;
+  console.log(
+    `[db:migrate] fresh-DB schema bootstrap: created telematics.odometer_readings (pre-202614950000 production shape) before ${file} (non-prod target only; production drift — needs a real parity migration)`
+  );
+}
+
 // ── FRESH-DB: PRODUCTION-DATA-ONLY MIGRATIONS (Lead, 2026-09-30) ─────────────
 // THE THIRD instance today of "production has drifted from the migration set", and I said in the
 // second one that a third means the general fix rather than a third special-case. This is that
@@ -783,6 +844,7 @@ try {
 
     await ensureFreshDbProductionIdentity(client, file);
     await ensureFreshDbProductionSchema(client, file);
+    await ensureFreshDbOdometerLedger(client, file);
     const dataOnlyReason = freshDbProductionDataOnlySkip(file);
     if (dataOnlyReason) {
       console.log(
