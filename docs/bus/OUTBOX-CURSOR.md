@@ -128,3 +128,9 @@ Read NOW-CURSOR Round 306. Queue E-40→E-44 in order. Starting E-40 FAULTS view
 
 **2026-10-01T02:20Z · E-40 FAULTS VIEW · branch `cursor/e40-faults-view-c89b`**
 E-40 · FaultCodeAlertsPage + listFaultCodeAlerts → GET /fault-code-alerts; routes /maintenance/fault-code-alerts + /:id (notification deep-link); nav Faults (module 14 / master 12); EntityLink fault_code_alerts_unit/driver; vehicle snapshot View fault history → E-40. Ops: verify-e40-faults-view. No seed. NEXT after merge: E-41 ENGINE STATUS BOARD.
+
+**2026-10-01T02:35Z · E-40 MERGED · PR #23612 · `ddb6034097`**
+FAST-MERGE: money-pr-local-gate exit 0 → squash --admin (branch-policy). LEFT: Lead Chrome /maintenance/fault-code-alerts. NEXT: E-41 ENGINE STATUS BOARD.
+
+**2026-10-01T02:50Z · E-41 ENGINE STATUS BOARD · branch `cursor/e41-engine-status-board-c89b`**
+E-41 · GET /api/v1/system/engine-status + catalog of registry engines + EngineStatusBoardPage at /system/engine-status (Owner); System overview card link; red when producer wrote 0 in window. Ops: verify-e41-engine-status-board. No seed. NEXT after merge: E-42 dashcam viewer.

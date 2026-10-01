@@ -32,6 +32,9 @@ const ModuleMatrixPreviewPage = React.lazy(() =>
   import("../pages/program/ModuleMatrixPreviewPage").then((m) => ({ default: m.ModuleMatrixPreviewPage }))
 );
 const SystemModulePage = React.lazy(() => import("../pages/system/SystemModulePage").then((m) => ({ default: m.SystemModulePage })));
+const EngineStatusBoardPage = React.lazy(() =>
+  import("../pages/system/EngineStatusBoardPage").then((m) => ({ default: m.EngineStatusBoardPage })),
+);
 const DomainCatalogHubPage = React.lazy(() => import("../pages/lists/DomainCatalogHubPage").then((m) => ({ default: m.DomainCatalogHubPage })));
 // CATALOG-2 — factory-backed generic catalog CRUD (registry-driven, additive to the hand-rolled
 // per-catalog list pages). Distinct route namespace (/lists/catalogs/...) so it never collides with
@@ -986,6 +989,15 @@ export const ROUTES = React.Children.toArray(
           element={
             <OwnerOnlyRoute>
               <SystemModulePage />
+            </OwnerOnlyRoute>
+          }
+        />
+        {/* E-41 Round 306 — Engine status board (Owner-only, same SYSTEM home). */}
+        <Route
+          path="/system/engine-status"
+          element={
+            <OwnerOnlyRoute>
+              <EngineStatusBoardPage />
             </OwnerOnlyRoute>
           }
         />
