@@ -315,6 +315,7 @@ const AuditPeriodCloseHistoryPage = React.lazy(() => import("../pages/reports/au
 const QboSyncDetailPage = React.lazy(() => import("../pages/qbo-sync-detail/QboSyncDetailPage").then((m) => ({ default: m.QboSyncDetailPage })));
 const InvoicesListPage = React.lazy(() => import("../pages/accounting/InvoicesListPage").then((m) => ({ default: m.InvoicesListPage })));
 const TransactionRegisterPage = React.lazy(() => import("../pages/accounting/TransactionRegisterPage").then((m) => ({ default: m.TransactionRegisterPage })));
+const ReclassifyTransactionsPage = React.lazy(() => import("../pages/accounting/ReclassifyTransactionsPage").then((m) => ({ default: m.ReclassifyTransactionsPage })));
 const MultiEntityAccountingPage = React.lazy(() => import("../pages/accounting/MultiEntityAccountingPage").then((m) => ({ default: m.MultiEntityAccountingPage })));
 const AccountingHubPage = React.lazy(() => import("../pages/accounting/AccountingHubPage").then((m) => ({ default: m.AccountingHubPage })));
 const MoneyProofTrailPage = React.lazy(() => import("../pages/accounting/MoneyProofTrailPage").then((m) => ({ default: m.MoneyProofTrailPage })));
@@ -4245,6 +4246,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <TransactionRegisterPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/reclassify"
+          element={
+            <ProtectedRoute>
+              <ReclassifyTransactionsPage />
             </ProtectedRoute>
           }
         />

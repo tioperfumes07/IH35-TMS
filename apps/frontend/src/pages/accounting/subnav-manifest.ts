@@ -136,6 +136,7 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "Journal entries", path: "/accounting/journal-entries", section: "more" },
   { label: "Account Register", path: "/accounting/account-register", section: "more" },
   { label: "All Transactions", path: "/accounting/transactions", section: "more" },
+  { label: "Reclassify transactions", path: "/accounting/reclassify", section: "more" },
   { label: "Recurring transactions", path: "/accounting/recurring-transactions", section: "more" },
   { label: "Integration transactions", path: "/accounting/integration-transactions", section: "more" },
 
@@ -218,6 +219,7 @@ export const ACCOUNTING_CLEAN_TABS = [
   { label: "Account Register", to: "/accounting/account-register" },
   { label: "A/P Aging",        to: "/accounting/accounts-payable" },
   { label: "All Transactions", to: "/accounting/transactions" },
+  { label: "Reclassify transactions", to: "/accounting/reclassify" },
   { label: "Daily Recon",      to: "/accounting/daily-recon" },
   { label: "Reports",          to: "/reports" },
 ] as const;
