@@ -25,8 +25,6 @@ import { classesCatalogClient } from "../../../api/catalogs-accounting";
 import { listVendors } from "../../../api/mdata";
 import { createExpense } from "../../../api/accounting";
 import { isExpenseAccount, isPaymentAccount } from "../../../lib/account-picker-scope";
-import { useShowAccountNumbers } from "../../../lib/useShowAccountNumbers";
-import { formatAccountDisplayLabel } from "../../../lib/show-account-numbers";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import {
   batchTotals, dollarsToCents, duplicateRow, fillDown, isRowEmpty, newRow, parsePastedRows, validateRow,
@@ -39,7 +37,6 @@ export function BatchExpensesPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
-  const [showAccountNumbers] = useShowAccountNumbers();
   const [rows, setRows] = useState<BatchExpenseRow[]>(() => Array.from({ length: 5 }, () => newRow()));
   const [saving, setSaving] = useState(false);
   const [lastBatch, setLastBatch] = useState<{ saved: number; failed: number; cents: number } | null>(null);
@@ -54,8 +51,6 @@ export function BatchExpensesPage() {
   const categoryAccounts = useMemo(() => accounts.filter(isExpenseAccount), [accounts]);
   const vendors = vendorsQ.data?.vendors ?? [];
   const classes = classesQ.data?.rows ?? [];
-  // showAccountNumbers gate — every account label goes through formatAccountDisplayLabel
-  const accLabel = (a: { account_name: string; account_number?: string | null }) => formatAccountDisplayLabel(a, { showNumber: showAccountNumbers });
   const vendorOptions = useMemo<ReferenceOption[]>(() => vendors.map(vendorReferenceOption), [vendors]);
   const paymentOptions = useMemo<ReferenceOption[]>(() => paymentAccounts.map((a) => coaAccountReferenceOption({ id: a.id, account_name: a.account_name, account_type: a.account_type ?? null, account_number: a.account_number ?? null })), [paymentAccounts]);
   const categoryOptions = useMemo<ReferenceOption[]>(() => categoryAccounts.map((a) => coaAccountReferenceOption({ id: a.id, account_name: a.account_name, account_type: a.account_type ?? null, account_number: a.account_number ?? null })), [categoryAccounts]);
@@ -136,7 +131,7 @@ export function BatchExpensesPage() {
         <span className="ml-auto font-semibold" data-testid="batch-expenses-totals">{totals.rows} row(s) · {formatCurrencyFromCents(totals.cents)} · {totals.ready} ready · {totals.errors} with errors · {totals.saved} saved</span>
         <Button type="button" size="sm" loading={saving} disabled={totals.ready === 0} onClick={() => void saveAll()} data-testid="batch-expenses-save">Save {totals.ready} expense(s)</Button>
       </div>
-      {accountsQ.error ? <ListErrorState message={formatQueryErrorDetail(accountsQ.error)} /> : null}
+      {accountsQ.error ? <ListErrorState {...formatQueryErrorDetail(accountsQ.error)} onRetry={() => void accountsQ.refetch()} /> : null}
       {lastBatch ? <div className="mb-2 rounded border border-slate-200 bg-slate-100 p-2 text-xs" data-testid="batch-expenses-result">Batch saved: {lastBatch.saved} expense(s) posted ({formatCurrencyFromCents(lastBatch.cents)}), {lastBatch.failed} kept unsaved with their reason.</div> : null}
       <div className="overflow-x-auto rounded border border-gray-200 bg-white">
         <table className="w-full min-w-[80rem] text-xs" data-testid="batch-expenses-grid">

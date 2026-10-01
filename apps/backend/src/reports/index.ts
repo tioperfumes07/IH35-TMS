@@ -14,6 +14,7 @@ import { registerCsaFleetScoreRoutes } from "./csa-fleet-score.routes.js";
 import { registerDetentionClaimsRoutes } from "./detention-claims.routes.js";
 import { registerReportsArAgingRoutes } from "./ar-aging.routes.js";
 import { registerDispatchMarginRoutes } from "./dispatch-margin.routes.js";
+import { registerLoadsReportRoutes } from "./loads-report.routes.js";
 import { registerIftaStatusRoutes } from "./ifta-status.routes.js";
 import { registerScheduledReportAdminRoutes } from "./scheduled-report-admin.routes.js";
 import { registerGeofenceDwellRoutes } from "./geofence-dwell.routes.js";
@@ -42,6 +43,7 @@ export async function registerReportsRoutes(app: FastifyInstance) {
   // Distinct path from the accounting module's /api/v1/accounting/ap-aging, so no route collision.
   await registerReportsApAgingRoutes(app);
   await registerDispatchMarginRoutes(app);
+  await registerLoadsReportRoutes(app);
   await registerFuelReconciliationRoutes(app);
   await registerFuelSavingsRoutes(app);
   await registerFuelPriceVarianceRoutes(app);

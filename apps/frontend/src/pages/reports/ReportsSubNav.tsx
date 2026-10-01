@@ -30,6 +30,7 @@ const PHASE_6_RUNNER_ITEMS: Array<{ id: string; label: string }> = [
   { id: "fuel-reconciliation", label: "Fuel reconciliation" },
   { id: "maintenance-cost-per-unit", label: "Maintenance cost per unit" },
   { id: "geofence-dwell", label: "Geofence dwell report" },
+  { id: "loads-report", label: "Loads report" },
   { id: "deadhead", label: "Deadhead optimization" },
   { id: "scheduled-reports", label: "Default subscriptions" },
 ];
@@ -124,6 +125,7 @@ export function reportsSubNavActiveHref(pathname: string): string {
     pathname === "/reports/fuel-reconciliation" ||
     pathname === "/reports/maintenance-cost-per-unit" ||
     pathname === "/reports/geofence-dwell" ||
+    pathname === "/reports/loads" ||
     pathname === "/reports/deadhead" ||
     pathname === "/reports/cancellations" ||
     pathname === "/reports/duplicate-masters" ||
