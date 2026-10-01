@@ -817,3 +817,30 @@ CapturesCron, apps/backend/src/index.ts:1558), and actively running:
 Nothing built here -- the premise was stale, corrected with live evidence instead. 604 Love's
 geofences feeding the PM engine and the integrity engine (this item's own stated purpose) is
 already happening, today, live.
+
+## CC-3 — ROUND 303 T-42 SHIPPED — Arriving Soon adds "what PM or WO is due on arrival" (backend only)
+
+Round 301 T-34 already served units inbound / ETA / what's due (in-transit issues) / geofence
+state. T-42 asks for the maintenance half specifically -- not yet served. Added:
+
+  pm_due_label / pm_next_due_odometer / pm_has_baseline -- the soonest active miles-based PM
+    schedule for the unit (never a sample/test unit, same law as Round 303 T-37's PM-writer
+    fix), ranked by next_due_odometer. pm_has_baseline is false whenever last_service_odometer
+    is null OR <=1 (T-37's own placeholder rule) -- the caller can tell "no real baseline yet"
+    from "a real baseline exists but nothing is due soon" instead of a bare null meaning both.
+  open_work_order_id / open_work_order_display_id / open_work_order_status /
+    open_work_order_title -- any work order already open/in_progress/waiting_parts/draft against
+    the unit, so an inbound truck with a known repair waiting shows it, not just a future
+    projection.
+
+BACKEND ONLY, same lane boundary as T-34 -- no apps/frontend file touched.
+
+GUARD: scripts/verify-arriving-soon-serves-pm-and-wo-due.mjs + --selftest.
+
+LIVE PROOF: apps/backend npx tsc --noEmit exit 0. Guard --selftest and real-file run both PASS.
+Proved the JOIN logic correct in isolation against a real unit with a real PM schedule: T147
+correctly resolves pm_due_label='PM-A' (its soonest active miles-based schedule), null
+next_due/last_service (honest -- no unit has a real baseline yet, matches T-37's own finding),
+and no open WO (correctly null, T147 has none).
+
+REMAINING: T-43 next in the Round 303 queue.
