@@ -235,3 +235,6 @@ B-2 Make Deposit merged. Neon USMCA: `accounting.deposits` + `deposit_lines` CRE
 
 **2026-10-01T11:05Z · B-3 BATCH SETTLEMENTS · branch `cursor/b3-batch-settlements-c89b`**
 B-3 · what changed: GET eligible SET-01 loads + POST batch Save → `postSettlementCreatorInClientTx` only; BatchSettlementsPage at `/driver-finance/settlements/batch` (§23 paste/fill-down/duplicate); Settlements subnav link; reverse EntityLink to load + settlement. Guard: verify-batch-settlements-grid. · LIVE PROOF: guard --selftest PASS; backend tsc exit 0. Chrome UNVERIFIED: FE deploy pending. · NEXT: FAST-MERGE then Driver/Customers/Vendors if still owed.
+
+**2026-10-01T11:15Z · B-3 MERGED · PR #23771 · `9d45b8ba39`**
+B-3 Batch Settlements `/driver-finance/settlements/batch` → postSettlementCreatorInClientTx. NEXT: Driver profile / Customers / Vendors (ORDERS after B-3).
