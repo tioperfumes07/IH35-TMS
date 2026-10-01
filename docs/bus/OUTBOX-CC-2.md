@@ -1445,3 +1445,22 @@ committed. Something after `convertAndSendInvoiceOnDelivery` awaits non-DB work 
 
 **Next (same 24h):** AUTH-195 — invoices for 13626 + 13637 through `buildInvoiceFromLoad` → `sendDraftInvoice` (script on branch,
 rehearsal waiting on the lock above), then I2 proof; then step 2 (purchase document + one posting engine).
+
+## 2026-10-01 16:32Z — ROUND 315 addendum (13626 / 13637 invoices): BLOCKED BY THE ENGINE'S OWN LAW — owner act needed
+
+Script ready (not run, no AUTH opened): `scripts/ops/2026-10-01-cc2-auth195-invoice-delivered-13626-13637.ts` — the BOL path's exact
+chain `buildInvoiceFromLoad` → `sendDraftInvoice`, one audit row; refuses sample data / no rate / no customer / no delivery stamp / a live invoice.
+Rehearsal on production (rolled back): both loads pass those checks (13626 $3,400.00, departure 2026-09-26 00:10:03Z; 13637 $5,200.00,
+departure 2026-10-01 15:04:53Z), the draft builds, and **send refuses**: `invoice_on_rolling_load_needs_authorization` — "its load is
+still 'dispatched' and has not delivered, and no active manual delivery authorization is recorded" (invoice-send.service.ts:221).
+That is the owner's own rule (no invoice on an undelivered load, AUTH-176), and `dispatch.manual_delivery_authorizations` has 0 rows.
+I will not fabricate a customer approval or bypass the send gate.
+
+**What unblocks it (owner act, one of):** (a) the owner records the delivered transition on 13626 / 13637 (AUTH-192 scope note:
+"the owner enters these loads' delivery manually") — the delivery latch then converts + sends the invoice itself; or (b) a manual
+delivery authorization with the customer's approval. After either, I run the script (or confirm the latch issued them) and paste
+invoice ids, JEs and I2 = 13/13.
+
+Note on the latch: the stuck `delivery_invoice_convert_send` transaction (pid 27664, 16:23:59Z, blocked revrec pid 24485) ended by itself
+at ~16:28:40Z, after the 16:27Z deploy cutover; I terminated nothing. Defect for the dispatch lane stands (entry above).
+Correction to the entry above: AUTH-194's PR is #23808 (as written — verified).
