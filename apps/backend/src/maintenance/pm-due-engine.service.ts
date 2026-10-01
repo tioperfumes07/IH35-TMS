@@ -46,6 +46,8 @@ export type PmDueEngineRow = {
 };
 
 const TRAILING_WINDOW_DAYS = 90;
+/** ROUND 303 T-37: a last_service_odometer this low is a placeholder, never a real baseline. */
+const PLACEHOLDER_BASELINE_MAX_MILES = 1;
 
 /**
  * The unit's own trailing-window mileage rate, from telematics.odometer_readings alone -- no
@@ -166,6 +168,8 @@ export async function computePmDueEngineForCompany(
       WHERE s.operating_company_id = $1::uuid
         AND s.is_active = true
         AND s.interval_kind = 'miles'
+        -- ROUND 303 T-37: a sample/test unit's schedule is never a real PM due date, no exceptions.
+        AND COALESCE(u.is_sample_data, false) = false
       ORDER BY u.unit_number, s.label
     `,
     [operatingCompanyId]
@@ -185,7 +189,13 @@ export async function computePmDueEngineForCompany(
     const rate = rateCache.get(row.unit_id)!;
     const odo = odoCache.get(row.unit_id)!;
 
-    const lastService = row.last_service_odometer;
+    // ROUND 303 T-37: last_service_odometer <= 1 is a placeholder wearing a number, not a real
+    // baseline (a truck's last PM was never genuinely done at mile 1) -- treated as ABSENT, the
+    // same honest NULL+reason path as a genuinely-missing baseline, never a guessed due date.
+    const lastService =
+      row.last_service_odometer != null && row.last_service_odometer > PLACEHOLDER_BASELINE_MAX_MILES
+        ? row.last_service_odometer
+        : null;
     const milesSince =
       lastService != null && odo.odometer_miles != null ? odo.odometer_miles - lastService : null;
     const milesToDue = milesSince != null ? row.interval_value - milesSince : null;
