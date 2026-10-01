@@ -420,6 +420,9 @@ export type BillPayment = {
   matched_bank_transaction_date?: string | null;
   matched_bank_transaction_description?: string | null;
   matched_bank_transaction_amount_cents?: number | string | null;
+  /** Bill payment -> bill -> work order (maintenance money linkage). */
+  work_order_id?: string | null;
+  work_order_display_id?: string | null;
 };
 
 function withCompany(path: string, operatingCompanyId: string) {
@@ -1338,6 +1341,8 @@ export type WorkOrderLinkedFinancials = {
     memo: string | null;
     journal_entry_id?: string | null;
     journal_entry_memo?: string | null;
+    /** Bank line that paid the expense (matched_expense_id). */
+    bank_transaction_id?: string | null;
   }>;
   bill_payments?: Array<{
     id: string;
@@ -1348,6 +1353,8 @@ export type WorkOrderLinkedFinancials = {
     status: string | null;
     journal_entry_id: string | null;
     vendor_id: string | null;
+    /** Bank line that cleared the payment (source_bank_transaction_id, else matched_bill_payment_id). */
+    bank_transaction_id?: string | null;
   }>;
   invoices?: Array<{
     id: string;

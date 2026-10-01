@@ -1184,3 +1184,19 @@ read-only MCP connection cannot create branches), so I delete nothing — the Le
 **Status of 1–3:** E-15 PM cost per mile → PR #23714. Maintenance money linkage both ways → PR #23720.
 Next money row (three-mile CPM: real driven miles stored on load + leg, CPM per load/unit/driver/lane, MPG on
 both bases) → claim PR #23723, build in progress.
+## 2026-10-01 — Maintenance money linkage both ways (WO → bill → JE → bill payment → bank line, and back)
+
+**forward (work order page):** `listWorkOrderLinkedFinancials` now returns the bank line on every WO bill
+payment (shared `BILL_PAYMENT_BANK_TRANSACTION_ID_SQL`: `source_bank_transaction_id`, else
+`matched_bill_payment_id`) and on every WO expense (shared `EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL`). The WO
+page shows a Bank transaction EntityLink column on both tables, beside the JE column already there.
+**reverse:** bill payment detail now shows its Work order (bill → `linked_work_order_uuid`). Bill, expense and
+JE detail already linked back to the WO; bank line → bill payment → WO now closes the loop.
+**defect fixed:** bill payment detail resolved its bank line only through `matched_bill_payment_id`, so a
+payment created from a bank line (`source_bank_transaction_id`) showed no bank transaction. It now uses the
+one shared rule every other bill-payment read uses.
+**guard:** `checkMaintenanceMoneyBankLegs` in step 11965 `verify-transaction-linkage-law.mjs` (selftest
+proves it FAILs when the bill payment → WO link or the shared rule is removed).
+**live proof (prod read-only):** completeness 6,674 visible = 6,674 live bill payments; 0 carry
+`source_bank_transaction_id` and 0 are on WO-linked bills today (maintenance unseeded) — latent defect, not yet
+hit. Rewritten detail SQL executed on USMCA payments without error.

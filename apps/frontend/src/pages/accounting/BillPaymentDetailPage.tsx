@@ -214,6 +214,12 @@ export function BillPaymentDetailPage() {
           <span className="text-xs font-semibold text-gray-600">Created</span>
           <span className="text-xs text-gray-900">{formatDateUS(payment.created_at)}</span>
         </DataPanelRow>
+        {payment.work_order_id ? (
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Work order</span>
+            <EntityLink kind="work_order" id={payment.work_order_id} label={visibleDocumentLabel(payment.work_order_display_id, payment.work_order_id, "Work order")} />
+          </DataPanelRow>
+        ) : null}
       </DataPanel>
       </div>
       <MoneyProofTrailPanel operatingCompanyId={selectedCompanyId!} documentType="bill_payment" documentId={id} />

@@ -18,6 +18,7 @@ import { insertTransferInClient, type TransferInput } from "../banking/transfers
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { vendorIdentitySetSql } from "./vendor-identity.js";
 import { cascadeVoidChildren } from "./cascade-void-engine.service.js";
+import { EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL } from "./expenses.routes.js";
 import {
   auditVoid,
   canVoid,
@@ -1365,6 +1366,8 @@ export async function listWorkOrderLinkedFinancials(
     status: string | null;
     memo: string | null;
     journal_entry_id: string | null;
+    /** Bank line that paid it (banking.bank_transactions.matched_expense_id). */
+    bank_transaction_id: string | null;
   }>;
   bill_payments: Array<{
     id: string;
@@ -1375,6 +1378,8 @@ export async function listWorkOrderLinkedFinancials(
     status: string | null;
     journal_entry_id: string | null;
     vendor_id: string | null;
+    /** Bank line that cleared it (source_bank_transaction_id, else matched_bill_payment_id). */
+    bank_transaction_id: string | null;
   }>;
   /** Invoices on the WO's linked load (Law §9 WO→load→invoice). */
   invoices: Array<{
@@ -1450,6 +1455,7 @@ export async function listWorkOrderLinkedFinancials(
       status: string | null;
       memo: string | null;
       journal_entry_id: string | null;
+      bank_transaction_id: string | null;
     }> = [];
     if (await colExists("accounting", "expenses", "linked_work_order_uuid")) {
       const hasMemo = await colExists("accounting", "expenses", "memo");
@@ -1458,7 +1464,8 @@ export async function listWorkOrderLinkedFinancials(
         `SELECT e.id::text AS id, e.transaction_date::text AS transaction_date,
                 COALESCE(e.total_amount_cents, 0)::bigint AS total_amount_cents, e.status,
                 ${hasMemo ? "e.memo" : "NULL::text AS memo"},
-                ${hasJe ? "e.journal_entry_id::text AS journal_entry_id" : "NULL::text AS journal_entry_id"}
+                ${hasJe ? "e.journal_entry_id::text AS journal_entry_id" : "NULL::text AS journal_entry_id"},
+                ${EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL} AS bank_transaction_id
            FROM accounting.expenses e
           WHERE e.operating_company_id = $1::uuid
             AND e.linked_work_order_uuid = $2
@@ -1473,6 +1480,7 @@ export async function listWorkOrderLinkedFinancials(
         status: (r.status as string) ?? null,
         memo: (r.memo as string) ?? null,
         journal_entry_id: (r.journal_entry_id as string) ?? null,
+        bank_transaction_id: (r.bank_transaction_id as string) ?? null,
       }));
     }
 
@@ -1486,6 +1494,7 @@ export async function listWorkOrderLinkedFinancials(
       status: string | null;
       journal_entry_id: string | null;
       vendor_id: string | null;
+      bank_transaction_id: string | null;
     }> = [];
     if (bills.length > 0 && (await colExists("accounting", "bill_payments", "bill_id"))) {
       const billIds = bills.map((b) => b.id);
@@ -1503,7 +1512,8 @@ export async function listWorkOrderLinkedFinancials(
                      AND jep.source_transaction_id = bp.id::text
                    ORDER BY jep.created_at ASC
                    LIMIT 1
-                ) AS journal_entry_id
+                ) AS journal_entry_id,
+                ${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL} AS bank_transaction_id
            FROM accounting.bill_payments bp
            JOIN accounting.bills b
              ON b.id = bp.bill_id
@@ -1523,6 +1533,7 @@ export async function listWorkOrderLinkedFinancials(
         status: (r.status as string) ?? null,
         journal_entry_id: (r.journal_entry_id as string) ?? null,
         vendor_id: (r.vendor_id as string) ?? null,
+        bank_transaction_id: (r.bank_transaction_id as string) ?? null,
       }));
     }
 
@@ -2197,6 +2208,8 @@ export async function getBillPaymentDetail(userId: string, operatingCompanyId: s
         matched_bank_transaction_amount_cents: string | null;
         vendor_name: string | null;
         bill_number: string | null;
+        work_order_id: string | null;
+        work_order_display_id: string | null;
       }
     >(
       `
@@ -2205,6 +2218,9 @@ export async function getBillPaymentDetail(userId: string, operatingCompanyId: s
           ${BILL_PAYMENT_MDATA_VENDOR_ID_SQL} AS mdata_vendor_id,
           v.vendor_name,
           b.bill_number,
+          -- Bill payment -> bill -> work order (maintenance money linkage, reverse half).
+          b.linked_work_order_uuid::text AS work_order_id,
+          wo.display_id AS work_order_display_id,
           je_link.journal_entry_id,
           je.entry_date AS journal_entry_date,
           COALESCE(NULLIF(btrim(je.memo), ''), 'Bill payment') AS journal_entry_memo,
@@ -2237,13 +2253,13 @@ export async function getBillPaymentDetail(userId: string, operatingCompanyId: s
         LEFT JOIN accounting.journal_entries je
           ON je.id = je_link.journal_entry_id::uuid
          AND je.operating_company_id = bp.operating_company_id
+        LEFT JOIN maintenance.work_orders wo
+          ON wo.id = b.linked_work_order_uuid
+         AND wo.operating_company_id = bp.operating_company_id
+        -- Same bank-line rule as every other bill-payment read: source_bank_transaction_id first
+        -- (payment created from the bank line), else the bank line matched to the payment.
         LEFT JOIN LATERAL (
-          SELECT bt.id::text AS matched_bank_transaction_id
-          FROM banking.bank_transactions bt
-          WHERE bt.operating_company_id = bp.operating_company_id
-            AND bt.matched_bill_payment_id = bp.id
-          ORDER BY bt.transaction_date DESC, bt.created_at DESC
-          LIMIT 1
+          SELECT ${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id
         ) bt_link ON true
         LEFT JOIN banking.bank_transactions bt
           ON bt.id = bt_link.matched_bank_transaction_id::uuid
@@ -2264,6 +2280,8 @@ export async function getBillPaymentDetail(userId: string, operatingCompanyId: s
         journal_entry_date: row.journal_entry_date ?? null,
         journal_entry_memo: row.journal_entry_memo ?? null,
         matched_bank_transaction_id: row.matched_bank_transaction_id ?? null,
+        work_order_id: row.work_order_id ?? null,
+        work_order_display_id: row.work_order_display_id ?? null,
         matched_bank_transaction_date: row.matched_bank_transaction_date ?? null,
         matched_bank_transaction_description: row.matched_bank_transaction_description ?? null,
         matched_bank_transaction_amount_cents: row.matched_bank_transaction_amount_cents ?? null,

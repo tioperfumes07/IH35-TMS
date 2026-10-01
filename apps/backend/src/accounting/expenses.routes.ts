@@ -267,7 +267,7 @@ export type ExpenseListRow = {
 };
 
 /** Bank-recon accept stamps banking.bank_transactions.matched_expense_id — reverse hop for Expenses. */
-const EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL = `
+export const EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL = `
   (
     SELECT bt.id::text
     FROM banking.bank_transactions bt
