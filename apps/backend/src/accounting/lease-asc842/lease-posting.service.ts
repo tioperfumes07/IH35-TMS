@@ -104,7 +104,8 @@ async function loadLease(client: DbClient, operatingCompanyId: string, leaseCont
   const res = await client.query<LeaseRow>(
     `SELECT id::text, election, status, display_id, commencement_date::text, end_date::text,
             payment_amount_cents::text, number_of_periods,
-            lessor_operating_company_id::text, lessee_operating_company_id::text, lessee_customer_id::text
+            lessor_operating_company_id::text, lessee_operating_company_id::text, lessee_customer_id::text,
+            lessor_vendor_id::text AS lessor_vendor_id
        FROM accounting.lease_contract
       WHERE operating_company_id = $1::uuid AND id = $2::uuid
       LIMIT 1 FOR UPDATE`,
@@ -112,6 +113,14 @@ async function loadLease(client: DbClient, operatingCompanyId: string, leaseCont
   );
   const row = res.rows[0];
   if (!row) throw new LeasePostingError("LEASE_NOT_FOUND", `Lease contract ${leaseContractId} not found`);
+  // ROUND 316: a contract with a lessor VENDOR is recorded in the lessee's books and bills monthly through the
+  // canonical bill engine (leases/lease-bill-engine.service.ts). It must never also post bare rent JEs here.
+  if ((row as LeaseRow & { lessor_vendor_id?: string | null }).lessor_vendor_id) {
+    throw new LeasePostingError(
+      "LEASE_BILLS_THROUGH_BILL_ENGINE",
+      `Lease ${row.display_id ?? row.id} bills through the monthly lease bill engine (POST /api/v1/leases/bills/generate); it does not post rent journal entries directly.`
+    );
+  }
   if (!POSTABLE_STATUSES.has(row.status)) {
     throw new LeasePostingError("LEASE_NOT_POSTABLE", `Lease ${row.display_id ?? row.id} is not postable (status=${row.status})`);
   }
