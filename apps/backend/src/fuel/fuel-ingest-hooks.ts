@@ -13,6 +13,8 @@
  */
 import type { FastifyBaseLogger } from "fastify";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { withLuciaBypass } from "../auth/db.js";
+import { writeFuelTimeDerivations } from "./fuel-time-derivation.service.js";
 import {
   FUEL_FRAUD_DETECTOR_JOB,
   fuelFraudDetectorEnabled,
@@ -24,6 +26,23 @@ export async function onFuelIngestComplete(
   source: "loves_card_import" | "fuel_statement_upload",
   companyIds?: string[]
 ): Promise<void> {
+  // ORDERS-2026-10-01 rows 5-6: derive pump time + IFTA state for date-only rows (own output table).
+  await wrapBackgroundJobTick(
+    "fuel.time_derivation",
+    async () => {
+      const companies = companyIds ?? (await withLuciaBypass(async (client) =>
+        (await client.query<{ id: string }>(`SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL`)).rows.map((r) => r.id)));
+      for (const id of companies) {
+        const res = await withLuciaBypass(async (client) => {
+          await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [id]);
+          return writeFuelTimeDerivations(client, id);
+        });
+        log.info({ operating_company_id: id, ...res, source }, "[FUEL_INGEST_HOOK] fuel time derivation");
+      }
+    },
+    log
+  );
+
   if (fuelFraudDetectorEnabled()) {
     await wrapBackgroundJobTick(
       FUEL_FRAUD_DETECTOR_JOB,

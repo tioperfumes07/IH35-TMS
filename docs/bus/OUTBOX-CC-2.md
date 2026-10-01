@@ -1070,3 +1070,43 @@ unit_number, is_purchase, not_purchase_reason, date_only, fraud_classification, 
 rules_matched, rules_refused_date_only, why}], relay_fills[{transaction_id, pump_time, station,
 gallons, card_unit_number, candidates[{unit_number, metres, at}], verdict, why}], summary }.
 Rows 2 and 4 wait (CC-1 migration; owner TRANSP flag). Next: rows 5 + 6 (pump time + IFTA state).
+
+## ORDERS-2026-10-01 rows 5-6 — pump time + IFTA state derivation (engine DONE; storage needs CC-1)
+
+Engine: apps/backend/src/fuel/fuel-time-derivation.service.ts. For each date-only motor-fuel row
+(shared purchase predicate), the truck's own stops that Chicago day (telematics.unit_stop_events
+when live — feature-detected — else dwell >= 3 min from vehicle_locations via detectStops), kept
+only inside a fuel_stop geofence (its own radius). 1 fill + 1 fuel stop -> time + state (high);
+n fills + 1 fuel stop -> time + state (medium); more fuel stops than can be told apart -> state
+only when every fuel stop is in one state; none -> nothing, reason stated. Never touches
+transaction_at or any source field. GET /api/v1/fuel/time-derivations (on read). Writer runs from
+the fuel-ingest hook, FUEL_TIME_DERIVATION_ENABLED default on (own output), logged no-op until the
+side table exists.
+
+HIT RATE, live USMCA, read-only: 125 date-only rows -> 32 with a derived time, 41 with a derived
+state, 73 nothing. Main miss: trucks stop at Love's 2-14 times a day (parking, showers), so one fill
+cannot be pinned to one of them — not guessed. The tie-breaker is a fuel-level jump at the stop
+(Samsara Fuel & Energy, CC-3 T-50 data); that is the addition after DONE.
+
+TO CC-1 (migration, my lane cannot author it) — fuel.fuel_transaction_derivations:
+  fuel_transaction_id uuid PRIMARY KEY REFERENCES fuel.fuel_transactions(id)  (no cascade; nothing deletable)
+  operating_company_id uuid NOT NULL REFERENCES org.companies(id)
+  transaction_at_derived timestamptz NULL
+  state_derived text NULL                      (2-letter US / MX state as Samsara reports it)
+  derived_from_kind text NULL CHECK (derived_from_kind IN ('unit_stop_event','vehicle_locations_dwell'))
+  derived_from_ref text NULL                   (unit_stop_events.id, or "unit:start..end" for dwell)
+  geofence_id uuid NULL REFERENCES geo.geofences(id)
+  confidence text NULL CHECK (confidence IN ('high','medium'))
+  reason text NOT NULL
+  derived_at timestamptz NOT NULL DEFAULT now()
+  FORCED RLS on operating_company_id (canonical predicate), GRANT SELECT/INSERT/UPDATE to ih35_app,
+  audit like any engine output table. Example row: (fuel txn of T171 2026-08-18, USMCA,
+  2026-08-18T15:29:55Z, 'OH', 'vehicle_locations_dwell', '<unit>:2026-08-18T15:29:55Z..', <Love's fence>,
+  'high', 'one fill, one fuel stop that day ...').
+
+TO CC-3 (T-49 IFTA): read fuel.fuel_transaction_derivations.state_derived (and
+transaction_at_derived) joined on fuel_transaction_id; until the table lands, GET
+/api/v1/fuel/time-derivations returns the same fields computed on read. Never the source field.
+
+Next wiring once the table exists: E-21/E-22 read transaction_at_derived (confidence high) as the
+pump time instead of refusing the row.
