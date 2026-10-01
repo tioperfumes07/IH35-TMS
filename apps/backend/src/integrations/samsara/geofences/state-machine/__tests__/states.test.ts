@@ -63,3 +63,30 @@ describe("hysteresis — enter and exit radii differ, so a boundary position nev
     expect(computeProposedState("idle", distance, { arriveRadiusM: 500 })).toBe("at");
   });
 });
+
+describe("ROUND 306 E-08 — inside/outside comes from the canonical detector, never this machine's radii", () => {
+  it("canonical inside walks idle -> approaching -> at, one legal edge per tick", async () => {
+    const { computeProposedStateFromCanonical, validateGeofenceTransition } = await import("../states.js");
+    expect(computeProposedStateFromCanonical("idle", true, 50_000)).toBe("approaching");
+    expect(computeProposedStateFromCanonical("approaching", true, 50_000)).toBe("at");
+    expect(computeProposedStateFromCanonical("departing", true, 0)).toBe("at");
+    expect(computeProposedStateFromCanonical("dwelling", true, 0)).toBe("dwelling");
+    for (const s of ["idle", "approaching", "at", "dwelling", "departing", "departed"] as const) {
+      for (const inside of [true, false]) {
+        for (const d of [0, 500, 5_000, 50_000]) {
+          const next = computeProposedStateFromCanonical(s, inside, d);
+          expect(validateGeofenceTransition(s, next)).toBeNull();
+        }
+      }
+    }
+  });
+
+  it("distance alone never puts a truck 'at' a fence: 0 m from centre but canonically outside stays approaching", async () => {
+    const { computeProposedStateFromCanonical } = await import("../states.js");
+    expect(computeProposedStateFromCanonical("approaching", false, 0)).toBe("approaching");
+    expect(computeProposedStateFromCanonical("at", false, 0)).toBe("departing");
+    expect(computeProposedStateFromCanonical("departing", false, 0)).toBe("departed");
+    expect(computeProposedStateFromCanonical("departed", false, 50_000)).toBe("idle");
+    expect(computeProposedStateFromCanonical("idle", false, 1_000)).toBe("approaching");
+  });
+});

@@ -69,6 +69,36 @@ export function validateGeofenceTransition(
 }
 
 /**
+ * ROUND 306 E-08 — ONE inside/outside decider (REDUNDANCY R-2). Inside vs outside a fence is decided
+ * by exactly one engine: telematics/geofence-detector.service.ts (polygon containment per position
+ * fix -> geo.geofence_events). This machine no longer measures "inside" with its own radii; it reads
+ * the canonical event log (`canonicalInside` = the unit's last geofence_events row for this fence is
+ * 'entered') and only owns what nobody else decides: the APPROACH ring (near, not inside) and the
+ * lifecycle labels. Every proposal is a single legal edge of VALID_TRANSITIONS.
+ */
+export function computeProposedStateFromCanonical(
+  currentState: GeofenceState,
+  canonicalInside: boolean,
+  distanceM: number,
+  radii: GeofenceRadii = {}
+): GeofenceState {
+  if (canonicalInside) {
+    if (currentState === "at" || currentState === "dwelling") return currentState;
+    if (currentState === "approaching" || currentState === "departing") return "at";
+    return "approaching"; // idle / departed: one legal step toward "at"; the next tick lands it
+  }
+  if (currentState === "at" || currentState === "dwelling") return "departing";
+  if (currentState === "departing") return "departed";
+  const approachRadiusM = radii.approachRadiusM ?? DEFAULT_APPROACH_RADIUS_M;
+  if (distanceM <= approachRadiusM) {
+    return currentState === "idle" || currentState === "departed" ? "approaching" : currentState;
+  }
+  return currentState === "approaching" || currentState === "departed" ? "idle" : currentState;
+}
+
+/**
+ * SUPERSEDED for the live engine by computeProposedStateFromCanonical (ROUND 306 E-08) — kept, not
+ * deleted, because its radius rules are still the documented GAP-39 reference and its tests pin them.
  * Pure DISTANCE-only geometric proposal. Speed-gating for at/dwelling -> departing lives in
  * engine.ts (transitionState), never here — "distance alone must not fire it" (owner order,
  * 2026-09-05): GPS jitter right at the arrive/depart boundary is exactly what produced 3,127
