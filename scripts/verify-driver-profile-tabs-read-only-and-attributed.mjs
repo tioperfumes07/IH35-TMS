@@ -20,7 +20,10 @@ export function check(raw) {
   const p = [];
   if (/\b(INSERT INTO|UPDATE\s+[a-z_]+\.|DELETE FROM)\b/i.test(src)) p.push("a driver-profile tab writes data.");
   if (!/driverAtTimeSql\("f\.unit_id", "f\.transaction_at"\)/.test(src)) p.push("fuel fills are not attributed with driverAtTimeSql at the fill time.");
-  if (!/driverAtTimeSql\("h\.unit_id", "h\.occurred_at"\)/.test(src)) p.push("engine faults are not attributed with driverAtTimeSql at the fault time.");
+  // ROUND 321 (d): faults use the composed resolver (driverAtTimeSql, else the load-at-time driver) and carry
+  // attribution_source; fuel above stays on plain driverAtTimeSql (money attribution unchanged).
+  if (!/driverAtTimeWithLoadFallbackSql\("h\.unit_id", "h\.occurred_at"\)/.test(src) || !/attribution_source/.test(src)) p.push("engine faults are not attributed with the shared driver-at-time resolver (with attribution_source) at the fault time.");
+  if (!/driverAtTimeWithLoadFallbackSql\("e\.unit_id", "e\.event_at"\)/.test(src)) p.push("harsh events are not attributed with the shared driver-at-time resolver at the event time.");
   if (/assigned_driver_id|current_driver_id/.test(src)) p.push("a tab reads a unit's current driver to attribute history.");
   if (!/FROM fuel\.fraud_alerts/.test(src) || !/FROM safety\.fuel_gps_matches/.test(src)) p.push("fuel verdicts are no longer composed from CC-2's tables.");
   return p;

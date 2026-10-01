@@ -32,11 +32,11 @@ const SECTIONS: Record<Part, Array<Section & { from: string }>> = {
   ],
   safety: [
     { from: "safety", key: "harsh_events", title: "Harsh events", note: "Samsara harsh events while driving.", empty: "No harsh events in the last 30 days.",
-      columns: [col("event_at", "When", when), col("event_kind", "Event"), col("severity", "Severity"), col("speed_at_event_mph", "Speed mph", num(0)), col("g_force", "G", num(2)), UNIT] },
+      columns: [col("event_at", "When", when), col("event_kind", "Event"), col("severity", "Severity"), col("speed_at_event_mph", "Speed mph", num(0)), col("g_force", "G", num(2)), UNIT, col("attribution_source", "Driver from")] },
     { from: "safety", key: "dvirs", title: "DVIRs", note: "Inspections this driver submitted.", empty: "No DVIRs in the last 30 days.",
       columns: [col("submitted_at", "Submitted", when), col("type", "Type"), UNIT, col("has_any_defect", "Defect", yes), col("has_major_defect", "Major", yes), col("from_samsara", "Samsara", yes)] },
     { from: "safety", key: "faults", title: "Engine faults", note: "Faults on the truck while this driver held it.", empty: "No faults in the last 30 days.",
-      columns: [col("occurred_at", "When", when), col("fault_code", "Code"), col("severity", "Severity"), UNIT, col("resolved_at", "Resolved", when)] },
+      columns: [col("occurred_at", "When", when), col("fault_code", "Code"), col("severity", "Severity"), UNIT, col("attribution_source", "Driver from"), col("resolved_at", "Resolved", when)] },
     { from: "safety", key: "dot_inspections", title: "DOT station stops", note: "Weigh / inspection station visits from the station fences.", empty: "No station stops in the last 30 days.",
       columns: [col("arrived_at", "Arrived", when), col("departed_at", "Departed", when), col("station", "Station"), col("dwell_minutes", "Dwell min"), col("follow_up_state", "Follow-up")] },
   ],
