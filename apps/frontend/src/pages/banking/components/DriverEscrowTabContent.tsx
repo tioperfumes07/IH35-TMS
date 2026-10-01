@@ -14,6 +14,7 @@ import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
 import { formatUsd } from "../../../lib/money";
 import { useToast } from "../../../components/Toast";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
 
 type Props = {
   operatingCompanyId: string;
@@ -74,7 +75,7 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
   const [releaseDriverId, setReleaseDriverId] = useState<string | null>(null);
   const [releaseRuleDraft, setReleaseRuleDraft] = useState({
     autoReleaseAtTarget: false,
-    minHeldDollars: "",
+    minHeldDollars: null as number | null,
     note: "",
   });
   const [savedRules, setSavedRules] = useState(releaseRuleDraft);
@@ -379,15 +380,15 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
           </label>
           <label className="mt-2 block text-xs text-[#4B5563]">
             Minimum held
-            <input
-              type="text"
-              inputMode="decimal"
-              className="mt-1 block h-[34px] w-full rounded-sm border border-[#E5E7EB] px-2 text-xs tabular-nums"
-              style={{ maxWidth: 120 }}
-              value={releaseRuleDraft.minHeldDollars}
-              onChange={(e) => setReleaseRuleDraft((d) => ({ ...d, minHeldDollars: e.target.value }))}
-              placeholder="—"
-            />
+            <div className="mt-1" style={{ maxWidth: 120 }}>
+              <MoneyInput
+                valueDollars={releaseRuleDraft.minHeldDollars}
+                onChangeDollars={(d) => setReleaseRuleDraft((prev) => ({ ...prev, minHeldDollars: d }))}
+                ariaLabel="Minimum held (USD)"
+                placeholder="—"
+                className="w-[120px]"
+              />
+            </div>
           </label>
           <label className="mt-2 block text-xs text-[#4B5563]">
             Note
