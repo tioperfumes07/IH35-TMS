@@ -56,6 +56,7 @@ import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { factorToProfileForm, profileFormToFactorPatch, resolveActiveFactorFromSummary, type FactorProfileForm } from "../../lib/factorProfile";
 import { FactoringProfilePanel } from "./FactoringProfilePanel";
+import { SubmitToFactorTab } from "./SubmitToFactorTab";
 import { ChargebacksTable, type ChargebackFeeRow } from "./ChargebacksTable";
 import { RecoursePipelineTable } from "./RecoursePipelineTable";
 import { ReserveTracker } from "./ReserveTracker";
@@ -987,13 +988,12 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
         items={[
           ...SUBNAV.map((item) => ({
             label: item.label,
-            // "Submit Invoice" reuses the existing real Submit-to-Factor page rather than the
-            // FactoringTabRoute stub at FACTORING_TAB_PATH.submit_invoice -- that workflow already
-            // exists and works; no reason to reinvent it here. (Restored: PR #22066's P0 fix had
-            // repointed this tab at the stub, believing the /factoring/submit target was a leftover
-            // mis-wire from the #21952 consolidation -- it was not; it was this original, deliberate
-            // reuse, undone by accident while fixing an unrelated defect in the same PR.)
-            to: item.id === "submit_invoice" ? "/factoring/submit" : FACTORING_TAB_PATH[item.id],
+            // ROUND 315 step 3 (owner, 2026-10-01): "Submit Invoice" is now the Submit to Factor tab
+            // INSIDE this module (SubmitToFactorTab, rendered below at FACTORING_TAB_PATH.submit_invoice)
+            // -- every open invoice, expected reserves/fee, docs, customer direct pay, totals, and
+            // Save / Save and send through the purchase engine. The older /factoring/submit queue
+            // page stays reachable (Rule 07) for its EntityLink deep links.
+            to: FACTORING_TAB_PATH[item.id],
           })),
           {
             label: "Internal Tools",
@@ -1223,6 +1223,8 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
           real portal shows the same "nothing due" once everything submitted has funded), never
           fabricated. The moment a real submission is awaiting advance this table populates
           automatically -- no further wiring required. */}
+      {tab === "submit_invoice" ? <SubmitToFactorTab companyId={companyId} isOwner={user?.role === "Owner"} /> : null}
+
       {tab === "funds_due" ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-funds-due-report">
           <div className="mb-2 text-xs font-medium text-gray-900">Funds Due</div>

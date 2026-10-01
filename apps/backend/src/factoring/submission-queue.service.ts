@@ -44,6 +44,41 @@ export type WorkqueueItem = {
   days_until_recourse_expiry: number | null;
 };
 
+/**
+ * Load-document presence predicates — the ONE definition of "this load has its POD / BOL / rate confirmation",
+ * shared by the submission queue below and the ROUND 315 Submit to Factor candidates (purchase-candidates.service.ts).
+ * POD gate: at least one approved dispatch.pod_documents row on the load.
+ */
+export function loadHasApprovedPodSql(loadIdExpr: string, companyIdExpr: string): string {
+  return `COALESCE((
+          SELECT true
+          FROM dispatch.pod_documents pd
+          WHERE pd.load_id   = ${loadIdExpr}
+            AND pd.operating_company_id = ${companyIdExpr}
+            AND pd.status     = 'approved'
+            AND pd.archived_at IS NULL
+          LIMIT 1
+        ), false)::boolean`;
+}
+
+/** A live docs.files row whose catalogs.file_categories.code is one of `categoryCodes`, linked to the load. */
+export type LoadDocCategoryCode = "rate_confirmation" | "rate_con" | "bol" | "pod";
+export function loadHasFileCategorySql(loadIdExpr: string, categoryCodes: LoadDocCategoryCode | LoadDocCategoryCode[]): string {
+  const codes = (Array.isArray(categoryCodes) ? categoryCodes : [categoryCodes]).map((c) => `'${c}'`).join(", ");
+  return `COALESCE((
+          SELECT true
+          FROM docs.file_links fl
+          JOIN docs.files      f  ON f.id = fl.file_id
+          JOIN catalogs.file_categories fc ON fc.id = f.category_id
+          WHERE fl.entity_type = 'load'
+            AND fl.entity_id   = ${loadIdExpr}
+            AND fl.deleted_at  IS NULL
+            AND f.deleted_at   IS NULL
+            AND fc.code        IN (${codes})
+          LIMIT 1
+        ), false)::boolean`;
+}
+
 function toNumber(v: unknown): number {
   if (typeof v === "number") return v;
   if (typeof v === "string") return Number(v);
@@ -83,28 +118,9 @@ export async function listSubmissionQueueInvoices(
         assigned_factor.id::text            AS factor_id,
         assigned_factor.name                AS factor_name,
         -- POD gate: at least one approved POD on this load
-        COALESCE((
-          SELECT true
-          FROM dispatch.pod_documents pd
-          WHERE pd.load_id   = i.source_load_id
-            AND pd.operating_company_id = i.operating_company_id
-            AND pd.status     = 'approved'
-            AND pd.archived_at IS NULL
-          LIMIT 1
-        ), false)::boolean                  AS has_approved_pod,
+        ${loadHasApprovedPodSql("i.source_load_id", "i.operating_company_id")} AS has_approved_pod,
         -- Rate-con gate: a rate_confirmation file linked to this load
-        COALESCE((
-          SELECT true
-          FROM docs.file_links fl
-          JOIN docs.files      f  ON f.id = fl.file_id
-          JOIN catalogs.file_categories fc ON fc.id = f.category_id
-          WHERE fl.entity_type = 'load'
-            AND fl.entity_id   = i.source_load_id
-            AND fl.deleted_at  IS NULL
-            AND f.deleted_at   IS NULL
-            AND fc.code        = 'rate_confirmation'
-          LIMIT 1
-        ), false)::boolean                  AS has_rate_confirmation
+        ${loadHasFileCategorySql("i.source_load_id", "rate_confirmation")} AS has_rate_confirmation
       FROM accounting.invoices i
       -- ACCT-F5787 — mdata.customers' customers_select RLS excludes a deactivated customer for a
       -- non-bypass reader, and a plain JOIN here silently dropped this real, currently-sendable
