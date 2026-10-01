@@ -265,7 +265,20 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   // qbo_sync_queue entities (any type) in status 'synced', which is NOT a bank-transaction total and
   // showed "Transactions: 0" for companies with hundreds of un-pushed categorized transactions.
   const qboStats = qboSyncStatsQuery.data;
-  const syncedAt = qboStats?.last_successful_sync_at ?? null;
+  // ROUND-20.8 A5 — the "Bank feed" KPI tile's staleness, from the same last_synced_at
+  // PlaidSyncStatusPanel used to read (that panel is gone now — B9 — so this is its one remaining
+  // consumer). The account with the newest last_synced_at wins.
+  const bankFeedLastSync = useMemo(() => {
+    const accounts = plaidAccountsQuery.data?.accounts ?? [];
+    return (
+      accounts
+        .map((a) => a.last_synced_at)
+        .filter((v): v is string => Boolean(v))
+        .sort()
+        .reverse()[0] ?? null
+    );
+  }, [plaidAccountsQuery.data?.accounts]);
+  const syncedAt = qboStats?.last_successful_sync_at ?? bankFeedLastSync ?? null;
   const syncTransactionCount = Number(kpiQuery.data?.total_transactions ?? 0);
   const pendingSyncCount = Number(qboStats?.pending ?? 0);
   const bankAccountsPanelRows = useMemo(() => {
@@ -284,19 +297,6 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     }));
   }, [plaidAccountsQuery.data?.accounts, sortedBankTiles]);
   const totalBankAccountsForRecon = bankAccountsPanelRows.length;
-  // ROUND-20.8 A5 — the "Bank feed" KPI tile's staleness, from the same last_synced_at
-  // PlaidSyncStatusPanel used to read (that panel is gone now — B9 — so this is its one remaining
-  // consumer). The account with the newest last_synced_at wins.
-  const bankFeedLastSync = useMemo(() => {
-    const accounts = plaidAccountsQuery.data?.accounts ?? [];
-    return (
-      accounts
-        .map((a) => a.last_synced_at)
-        .filter((v): v is string => Boolean(v))
-        .sort()
-        .reverse()[0] ?? null
-    );
-  }, [plaidAccountsQuery.data?.accounts]);
   const factoringTile = sortedBankTiles.find(
     (t) =>
       String(t.tile_kind) === "virtual" &&
