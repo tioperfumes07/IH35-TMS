@@ -1,5 +1,4 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, expect, it } from "vitest";
 import { circlePolygon, loadStopFenceLabel, loadStopFenceRadiusMeters } from "../../dispatch/geofences/load-stop-geofence-geometry.js";
 import { pointInPolygon } from "../geofence.js";
 
@@ -13,41 +12,41 @@ function metersBetween(lat1: number, lng1: number, lat2: number, lng2: number) {
 
 describe("E-25 load-stop geofence geometry", () => {
   it("radius is decided by geocode precision, never guessed", () => {
-    assert.equal(loadStopFenceRadiusMeters("rooftop"), 400);
-    assert.equal(loadStopFenceRadiusMeters("ROOFTOP"), 400);
-    assert.equal(loadStopFenceRadiusMeters("range"), 400);
-    assert.equal(loadStopFenceRadiusMeters("RANGE_INTERPOLATED"), 400);
-    assert.equal(loadStopFenceRadiusMeters("GEOMETRIC_CENTER"), 600);
-    assert.equal(loadStopFenceRadiusMeters("APPROXIMATE"), 600);
-    assert.equal(loadStopFenceRadiusMeters("locality"), null, "a city centroid is not a stop");
-    assert.equal(loadStopFenceRadiusMeters(null), null);
-    assert.equal(loadStopFenceRadiusMeters(undefined), null);
-    assert.equal(loadStopFenceRadiusMeters("whatever"), null);
+    expect(loadStopFenceRadiusMeters("rooftop")).toBe(400);
+    expect(loadStopFenceRadiusMeters("ROOFTOP")).toBe(400);
+    expect(loadStopFenceRadiusMeters("range")).toBe(400);
+    expect(loadStopFenceRadiusMeters("RANGE_INTERPOLATED")).toBe(400);
+    expect(loadStopFenceRadiusMeters("GEOMETRIC_CENTER")).toBe(600);
+    expect(loadStopFenceRadiusMeters("APPROXIMATE")).toBe(600);
+    expect(loadStopFenceRadiusMeters("locality")).toBe(null);
+    expect(loadStopFenceRadiusMeters(null)).toBe(null);
+    expect(loadStopFenceRadiusMeters(undefined)).toBe(null);
+    expect(loadStopFenceRadiusMeters("whatever")).toBe(null);
   });
 
   it("circle polygon contains the measured dock offsets that the 250 ft diamond missed", () => {
     // Walmart 6858 Mebane NC rooftop pin; T156 dwelled 89-295 m away (measured 2026-10-01).
     const lat = 36.0561962, lng = -79.3253782;
     const poly = circlePolygon(lat, lng, 400);
-    assert.equal(poly.length, 24);
+    expect(poly.length).toBe(24);
     for (const v of poly) {
       const d = metersBetween(lat, lng, v.lat, v.lng);
-      assert.ok(Math.abs(d - 400) < 2, `vertex at ${d.toFixed(1)} m, expected ~400 m`);
+      expect(Math.abs(d - 400) < 2, `vertex at ${d.toFixed(1)} m, expected ~400 m`).toBe(true);
     }
     // 295 m east of the pin -> inside; 450 m east -> outside.
     const dLng = 1 / (111_320 * Math.cos((lat * Math.PI) / 180));
-    assert.equal(pointInPolygon(lat, lng + 295 * dLng, poly), true);
-    assert.equal(pointInPolygon(lat, lng + 450 * dLng, poly), false);
+    expect(pointInPolygon(lat, lng + 295 * dLng, poly)).toBe(true);
+    expect(pointInPolygon(lat, lng + 450 * dLng, poly)).toBe(false);
     // The old diamond (250 ft = 76 m, 4 vertices) could not contain a truck 89 m from the pin.
     const diamondDeg = 250 / 364000;
     const diamond = [
       { lat: lat + diamondDeg, lng }, { lat, lng: lng + diamondDeg },
       { lat: lat - diamondDeg, lng }, { lat, lng: lng - diamondDeg },
     ];
-    assert.equal(pointInPolygon(lat, lng + 89 * dLng, diamond), false);
+    expect(pointInPolygon(lat, lng + 89 * dLng, diamond)).toBe(false);
   });
 
   it("label scheme matches the D-1 stamp join in geofence-detector.service.ts", () => {
-    assert.equal(loadStopFenceLabel("abc", 2), "load-abc-stop-2");
+    expect(loadStopFenceLabel("abc", 2)).toBe("load-abc-stop-2");
   });
 });

@@ -25,6 +25,7 @@ import { bindLoadToGeofences } from "../dispatch/geofences/load-geofence-binding
 import { CANONICAL_ACTIVE_LOAD_STATUSES } from "../dispatch/canonical-active-load-set.js";
 import { processGeofenceDetectionsForGpsPoint } from "./geofence-detector.service.js";
 import { normalizeVertices, pointInPolygon } from "./geofence.js";
+import { geocodeStopsWithClient } from "./stops-geocode-backfill.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
@@ -45,6 +46,9 @@ export type LoadStopGeofenceSyncResult = {
   replay_events_written: number;
   stops_stamped_arrival: number;
   stops_stamped_departure: number;
+  geocode_resweep_loads: number;
+  geocode_resweep_stops_geocoded: number;
+  geocode_resweep_failures: number;
 };
 
 type ActiveLoadRow = { load_id: string; unit_id: string | null; created_at: string; earliest_scheduled: string | null };
@@ -252,7 +256,45 @@ export function retroStampEnabled(): boolean {
   return (process.env.LOAD_STOP_RETRO_STAMP_ENABLED ?? "false").trim() === "true";
 }
 
+/**
+ * Lead 2026-10-01 (measured on load 13593): the post-book geocode hook is fire-and-forget; when it
+ * dies (deploy restart, provider outage, one bad stop rolling back the sweep) the stops stay at
+ * latitude NULL with no evidence, and this engine can never fence them. Before building fences,
+ * re-sweep every active load that still has an un-geocoded stop (never attempted, or last
+ * attempted more than 6 hours ago) under the user who booked the load — real attribution, no
+ * phantom system user (identity.users has none). Provider calls are paced inside the backfill.
+ */
+export async function resweepUngeocodedActiveStops(
+  client: DbClient,
+  operatingCompanyId: string,
+): Promise<{ loads: number; stops_geocoded: number; failures: number }> {
+  const { rows } = await client.query<{ load_id: string; actor_id: string | null }>(
+    `SELECT DISTINCT l.id::text AS load_id, l.booked_by_user_id::text AS actor_id
+       FROM mdata.loads l
+       JOIN mdata.load_stops s ON s.load_id = l.id AND s.soft_deleted_at IS NULL
+      WHERE l.operating_company_id = $1::uuid
+        AND l.soft_deleted_at IS NULL
+        AND l.status NOT IN ('cancelled','delivered')
+        AND (s.latitude IS NULL OR s.longitude IS NULL)
+        AND (s.geocode_attempted_at IS NULL OR s.geocode_attempted_at < now() - interval '6 hours')
+      ORDER BY l.id`,
+    [operatingCompanyId],
+  );
+  let geocoded = 0;
+  let failures = 0;
+  let loads = 0;
+  for (const row of rows) {
+    if (!row.actor_id) continue; // no booking user on the row: nothing to attribute a location to; stays visible to verify-stops-geocoded
+    loads += 1;
+    const result = await geocodeStopsWithClient(client, row.actor_id, operatingCompanyId, row.load_id);
+    geocoded += result.stops_geocoded;
+    failures += result.failures.length;
+  }
+  return { loads, stops_geocoded: geocoded, failures };
+}
+
 export async function runLoadStopGeofenceSync(client: DbClient, operatingCompanyId: string): Promise<LoadStopGeofenceSyncResult> {
+  const resweep = await resweepUngeocodedActiveStops(client, operatingCompanyId);
   const sync = await syncLoadStopGeofences(client, operatingCompanyId);
   const replay = await replayUnitHistoryForFences(client, operatingCompanyId, sync.loads, sync.newFenceIds);
   const stamps = retroStampEnabled()
@@ -271,5 +313,8 @@ export async function runLoadStopGeofenceSync(client: DbClient, operatingCompany
     replay_events_written: replay.events_written,
     stops_stamped_arrival: stamps.arrivals,
     stops_stamped_departure: stamps.departures,
+    geocode_resweep_loads: resweep.loads,
+    geocode_resweep_stops_geocoded: resweep.stops_geocoded,
+    geocode_resweep_failures: resweep.failures,
   };
 }

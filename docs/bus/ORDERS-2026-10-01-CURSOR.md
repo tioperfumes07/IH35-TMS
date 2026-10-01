@@ -43,3 +43,35 @@ Read `docs/bus/2026-10-01-OWNER-LAW-MONEY-PAUSE-LIFTED-ALL-SEATS-BUILD-EVERYTHIN
 and "fix all issues at root, we do not patch, nor defer, we fix permanently." Every money engine on your
 list is ON. Nothing is paused except seeding (owner seeds) and handoffs (you build your own). A blocker is
 fixed at its root in the same PR — no skip flags, no hidden baseline bumps, no TODO, no "deferred".
+
+## LEAD → CURSOR, 2026-10-01 — OWNER FOUND TWO MISSING DISPATCH SCREENS (build after the current Maintenance item, before the Banking register set)
+Owner, verbatim, 2026-10-01: "there is not loads history, loads report, etc."
+D-H1 **Load History** (per load, tab on the load detail + /dispatch/loads/:id/history): every status change, driver/unit/trailer
+  (re)assignment, stop add/edit/arrival/departure stamp, rate/charge change, invoice/bill/settlement event, lock/unlock, void/reinstate —
+  read from audit.audit_events + dispatch.load_assignment_history + the stop stamps, newest first, actor + source + timestamp, EntityLink
+  on every id. Nothing derived from memory; if an event class is not audited today, say so in the row ("not recorded") and file the gap.
+D-H2 **Loads Report** (/dispatch/reports/loads): filter by date range (pickup / delivery / created), customer, driver, unit, trailer, status,
+  trip type, lane; columns load#, customer, PO/WO, origin→destination, pickup/delivery dates, driver, unit, miles (practical/short/real driven),
+  revenue, driver pay, fuel cost, margin, invoice#, settlement#; totals row; Print + Export (xlsx/csv) through the existing Range/Print/Export
+  bar; owner sees all three companies' loads only via the company switcher, USMCA default. Money columns read the ledger, never a cached
+  figure. Guard: report totals tie to the same canonical active/closed load set as the Truck Line board (verify-load-boards-agree pattern).
+Both end to end (backend route, screen, guard, linkage declaration); report in OUTBOX-CURSOR.md with the live URL.
+
+## LEAD → CURSOR, 2026-10-01 — D-H0 OWNER LOCK OVERRIDE: THE OWNER EDITS ANYTHING ON A LOCKED LOAD (build FIRST, before D-H1/D-H2)
+Owner, verbatim, 2026-10-01: "i should be able to change or edit a load, from tr to sb, etc. or amount, or address etc. as for bypass"
+Today `update-load.service.ts` lets an Owner PATCH a locked load (open settlement / issued invoice / non-open driver bill) only for the
+OWNER_LOCK_OVERRIDE_ALLOWED_FIELD_KEYS scalars — no stops, no charges, no miles/pay. That is the owner's decision to change. Build:
+1. Owner (role Owner only) may PATCH **every** field on a locked load — trip_type, tour, charges/rate, driver pay inputs, miles, stops/addresses,
+   driver/unit — with a REQUIRED `override_reason` (min 10 chars) and an audit event `dispatch.load_edit_lock_overridden` carrying the
+   before/after diff, actor, reason, and which lock(s) were crossed. Dispatcher/other roles stay locked exactly as today.
+2. Propagation is the engine, not a warning: charges changed → the load's invoice is re-derived (lines rebuilt, header total updated) when the
+   invoice is unpaid and not yet sent/synced; if it is paid or synced to QBO, REFUSE with `invoice_paid_or_synced_void_and_reissue` and point to
+   the void/reissue flow — never silently diverge the invoice from the load. Pay inputs changed → the OPEN driver bill is re-derived through
+   ensureDriverBillArtifactsForLoad; a bill on a closed settlement → REFUSE with `driver_bill_settled_adjust_on_next_settlement` and create the
+   adjustment line instead. Stops/addresses changed → re-geocode (stops-geocode-backfill, now savepoint-safe) and the E-25 fence sync re-fences
+   on its next tick. trip_type changed → presettlement re-link (update-load already re-enters the linker).
+3. Edit Load UI: when the load is locked and the user is Owner, show the lock as an amber "Owner override" banner with the reason box, not a
+   dead 409; every field stays editable; on save show exactly what propagated (invoice re-derived / bill re-derived / refused and why).
+4. Guard: `verify-owner-lock-override-propagates.mjs` — a locked load whose charges differ from its unpaid invoice lines = FAIL; an override
+   audit event without a reason = FAIL. Linkage declaration both ways (load ↔ invoice ↔ driver bill ↔ settlement ↔ JE).
+Live proof: the owner changes 13593's trip type and a stop address on the live app and sees the propagation message.
