@@ -551,8 +551,18 @@ export async function processDriftForLoad(
     return { drift, result: { flagged: true, event_uuid: flagged.event_uuid } };
   }
 
+  // ORDERS 2026-10-01 rule 2: an engine that touches a business record (mdata.loads.status) ships
+  // flag-OFF; the Lead carries the switch to the owner. Detection still runs and is returned.
+  if (!autoStatusApplyEnabled()) {
+    return { drift, result: { applied: false, skipped: "AUTO_STATUS_SWITCH_APPLY_not_true", proposed_status: drift.proposed_status } };
+  }
   const applied = await applyAutoSwitch(client, operatingCompanyId, loadUuid, drift.proposed_status, drift.reason, drift);
   return { drift, result: applied };
+}
+
+/** Writes to mdata.loads.status only when AUTO_STATUS_SWITCH_APPLY=true (default OFF). */
+export function autoStatusApplyEnabled(): boolean {
+  return process.env.AUTO_STATUS_SWITCH_APPLY === "true";
 }
 
 export async function recordPositionSnapshotsForCompany(client: DbClient, operatingCompanyId: string): Promise<number> {

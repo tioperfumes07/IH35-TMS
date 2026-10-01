@@ -3,10 +3,26 @@ export type LatLngVertex = {
   lng: number;
 };
 
+/**
+ * ROUND 306 E-29: geo.geofences.vertices_json comes in two shapes, both measured live 2026-10-01:
+ *   612 fences: [{lat, lng}, ...]
+ *   342 fences (all 258 DOT stations, all 29 border crossings, 55 others): GeoJSON [[lng, lat], ...]
+ *     -- every one of the 342 has its first vertex within 0.2 deg of its own center in [lng, lat]
+ *     order, none in [lat, lng] order.
+ * The [lng, lat] shape used to normalize to ZERO vertices, so pointInPolygon was always false and
+ * those 342 fences never produced a single geofence event (DOT dwell, border, auto-status all dead).
+ */
 export function normalizeVertices(raw: unknown): LatLngVertex[] {
   if (!Array.isArray(raw)) return [];
   const out: LatLngVertex[] = [];
   for (const entry of raw) {
+    if (Array.isArray(entry)) {
+      // GeoJSON position: [longitude, latitude]
+      const lng = typeof entry[0] === "number" ? entry[0] : Number.NaN;
+      const lat = typeof entry[1] === "number" ? entry[1] : Number.NaN;
+      if (Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) out.push({ lat, lng });
+      continue;
+    }
     if (!entry || typeof entry !== "object") continue;
     const value = entry as { lat?: unknown; lng?: unknown };
     const lat = typeof value.lat === "number" ? value.lat : Number.NaN;

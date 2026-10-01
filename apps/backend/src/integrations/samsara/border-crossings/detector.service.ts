@@ -46,7 +46,8 @@ export async function detectCrossings(
     operating_company_id: string;
     lat: number;
     lng: number;
-    direction: "northbound" | "southbound";
+    /** Ignored since E-29: direction is measured from the unit's previous position. */
+    direction?: "northbound" | "southbound";
     recorded_at: string;
   }>
 ): Promise<number> {
@@ -67,11 +68,26 @@ export async function detectCrossings(
     );
 
     if (existing.rows.length === 0) {
+      // ROUND 306 E-29: direction is MEASURED, never assumed. The caller used to hard-code
+      // 'northbound' on every row. The unit's previous recorded position before this fix tells
+      // which way it was moving across the river (US side is north at every Laredo bridge); with
+      // no previous position the crossing is not written rather than written with a guess.
+      const prev = await client.query<{ lat: number }>(
+        `SELECT lat::float8 AS lat FROM integrations.samsara_vehicle_positions
+          WHERE unit_uuid = $1::uuid AND recorded_at < $2::timestamptz
+          ORDER BY recorded_at DESC LIMIT 1`,
+        [ev.unit_uuid, ev.recorded_at]
+      );
+      const prevLat = prev.rows[0]?.lat;
+      if (prevLat == null || prevLat === ev.lat) continue;
+      const direction: "northbound" | "southbound" = ev.lat > prevLat ? "northbound" : "southbound";
       // New entry — resolve the active load for this unit (canonical: mdata.loads.assigned_unit_id).
+      // E-29: the old filter ('assigned','in_transit') matched no real load status, so load_uuid was
+      // always NULL; these are the on-road statuses mdata.loads actually carries.
       const activeLoad = await client.query<{ id: string }>(
         `SELECT l.id FROM mdata.loads l
          WHERE l.assigned_unit_id = $1::uuid
-           AND l.status IN ('assigned','in_transit')
+           AND l.status::text IN ('assigned_not_dispatched','dispatched','at_pickup','in_transit','at_delivery')
            AND l.operating_company_id = $2::uuid
            AND l.soft_deleted_at IS NULL
          ORDER BY l.updated_at DESC NULLS LAST, l.created_at DESC
@@ -83,7 +99,7 @@ export async function detectCrossings(
            (operating_company_id, vehicle_id, crossing_point, direction, entered_geofence_at, load_uuid)
          VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT DO NOTHING`,
-        [ev.operating_company_id, vehicleId, gf.crossingPoint, ev.direction, ev.recorded_at, activeLoad.rows[0]?.id ?? null]
+        [ev.operating_company_id, vehicleId, gf.crossingPoint, direction, ev.recorded_at, activeLoad.rows[0]?.id ?? null]
       );
       inserted++;
     } else {
