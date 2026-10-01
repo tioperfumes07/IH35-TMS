@@ -60,11 +60,28 @@
  *   tsx scripts/ops/2026-09-30-lead-owner-purge-voided-and-sample-usmca.ts --dry-run
  *   tsx scripts/ops/2026-09-30-lead-owner-purge-voided-and-sample-usmca.ts --apply
  */
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { Client } from "pg";
+import { assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
 
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const APPLY = process.argv.includes("--apply");
 const DRY = process.argv.includes("--dry-run") || !APPLY;
+// 2026-10-01 (Lead): accounting.refuse_financial_row_delete() is WORM for every role and opens its
+// voided-row bypass only when app.purge_auth_id carries an AUTH-NNN. The database cannot check that
+// the AUTH is OPEN; this script does, through verify-owner-authorization.mjs, before setting it.
+// Re-run under AUTH-181 (owner, verbatim: "all voided transactions you were instructed to delete
+// from the app"). Every run -- dry or apply -- names its AUTH; a dry run still needs it so the
+// per-table counts are measured through the same DELETE path the apply will take.
+const AUTH_ID = (process.env.OWNER_AUTH_ID ?? "").trim();
+if (!/^AUTH-\d+$/.test(AUTH_ID)) {
+  console.error("OWNER_AUTH_ID=AUTH-<n> is required (the OPEN owner authorization this purge runs under).");
+  process.exit(1);
+}
+execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), AUTH_ID], { stdio: "inherit" });
 
 /** Children BEFORE parents. Order is the control; do not sort this list alphabetically. */
 const ORDER: Array<{ table: string; pred: string; opco: boolean }> = [
@@ -108,9 +125,10 @@ async function main() {
   console.log(`target: db=${who.rows[0].db} user=${who.rows[0].usr} company=${opco.rows[0].n} (${USMCA})`);
   console.log(APPLY ? "MODE: APPLY — this will permanently delete rows" : "MODE: DRY RUN — every change is rolled back");
 
+  if (APPLY) await assertIsIntendedProduction(client, { label: "scripts/ops/2026-09-30-lead-owner-purge-voided-and-sample-usmca.ts" });
   await client.query("BEGIN");
-  await client.query("SET LOCAL ROLE neondb_owner");
   await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+  await client.query("SELECT set_config('app.purge_auth_id', $1, true)", [AUTH_ID]);
 
   const counts: Array<{ table: string; n: number }> = [];
   for (const step of ORDER) {
@@ -132,13 +150,14 @@ async function main() {
       "warning",
       JSON.stringify({
         owner_order_at: "2026-09-30",
+        auth_id: AUTH_ID,
         scope: "USMCA only; voided_at / revoked_at / is_sample_data",
         excluded: "TRUCKING and TRANSPORTATION never referenced; mdata.loads has zero qualifying rows",
         per_table: counts,
         total,
         mode: APPLY ? "apply" : "dry-run",
       }),
-      "OWNER-PURGE-2026-09-30",
+      `OWNER-PURGE-${AUTH_ID}`,
     ]
   );
 

@@ -6410,7 +6410,8 @@ voided, rowCount asserted = 3, voided_by = owner user e4117991-d2c0-406d-8cda-74
 void_reason 'coder test fixture, not a real complaint (AUTH-180)'. Re-verified: USMCA live
 complaints 5 -> 2; nothing deleted.
 
-## AUTH-180
+## AUTH-181
+(renumbered from a colliding AUTH-180 that CC-2 consumed first the same hour; identical content)
 issued_at: 2026-10-01T03:43:02Z
 scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). (1) accounting.factoring_advances HEADERS
   43bf2fc5-4984-4b56-8d13-7eeaf244d080 (FAC-2026-00048), 7b2da4bc-fcf0-4649-a3a6-ebbac086666c
@@ -6423,7 +6424,7 @@ action: re-void the four duplicate advance headers that R-191-UNIVERSAL-UNVOID (
   flipped live on a faro_invoice_number-keyed twin check (NULL on the voided copies). Their live
   twins FAC-2026-00094 / 00110 / 00111 / 00129 (Faro inv 52 / 69 / 70 / 91) carry the money; the
   duplicates' GL has been clean since AUTH-165 (2026-09-30 09:11Z) reversed the AUTH-140 re-post.
-  Script of record: scripts/ops/2026-10-01-lead-auth180-revoid-4-duplicate-advance-headers.ts.
+  Script of record: scripts/ops/2026-10-01-lead-auth181-revoid-4-duplicate-advance-headers.ts.
 expires_at: 2026-10-02T03:43:02Z
 status: OPEN
 
