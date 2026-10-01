@@ -33,6 +33,13 @@ function audit() {
   if (!/Settlements/.test(tabs) || !/Cash Advances/.test(tabs) || !/Deductions/.test(tabs)) {
     f.push(`${FILES.tabs}: C-20 accounting tabs missing`);
   }
+  // ROUND 319 ORDERS — Fuel is a first-class profile tab (E-21/E-22 verdicts), not under Legal.
+  if (!/"Fuel"/.test(tabs) || !/Fuel: "fuel"/.test(tabs)) {
+    f.push(`${FILES.tabs}: ROUND 319 Fuel tab missing from DRIVER_PROFILE_TABS`);
+  }
+  if (!/activeTab === "Fuel"/.test(profile) || !/dp-tab-fuel/.test(profile)) {
+    f.push(`${FILES.profile}: ROUND 319 Fuel tab panel missing`);
+  }
   if (!/Statement/.test(tabs) || !/Transactions/.test(tabs)) {
     f.push(`${FILES.tabs}: C-20 report set missing`);
   }
