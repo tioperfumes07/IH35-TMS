@@ -349,6 +349,8 @@ import { registerUnitMaintenanceHistoryRoutes } from "./maintenance/unit-mainten
 import { registerMaintenanceKpiRoutes } from "./maintenance/kpi.routes.js";
 import { initializePmAutoEngineCron } from "./maintenance/pm-auto-engine.cron.js";
 import { initializeOdometerSnapshotCron } from "./telematics/odometer-snapshot.cron.js";
+import { initializeLeaseBillCron } from "./leases/lease-bill.cron.js";
+import { registerLeaseRoutes } from "./leases/lease.routes.js";
 import { initializeRosterIntegrityCron } from "./fleet/roster-integrity.cron.js";
 import { registerRosterIntegrityRoutes } from "./fleet/roster-integrity.service.js";
 import { initializeBankTieoutCron } from "./banking/bank-tieout.cron.js";
@@ -1320,6 +1322,7 @@ async function main() {
   await registerPmCostPerMileRoutes(app);
   await registerLoadRealDrivenMilesRoutes(app);
   await registerThreeMileCpmRoutes(app);
+  await registerLeaseRoutes(app);
   await registerRosterIntegrityRoutes(app);
   await registerBankTieoutRoutes(app);
   await registerMaintWoApRoutes(app);
@@ -1871,6 +1874,9 @@ async function main() {
 
       initializeOdometerSnapshotCron(app);
       app.log.info("[STARTUP] odometer-snapshot-cron initialized");
+
+      initializeLeaseBillCron(app);
+      app.log.info("[STARTUP] lease-bill-cron initialized");
 
       initializeRosterIntegrityCron(app);
       app.log.info("[STARTUP] roster-integrity-cron initialized");
