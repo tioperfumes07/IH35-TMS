@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildLineWhere, buildReclassPairs, classifySelection, controlAccountReason } from "../reclassify.service.js";
+import { buildLineWhere, buildReclassPairs, classifySelection, controlAccountReason, rewriteDocumentLine, type SelectedPosting } from "../reclassify.service.js";
 
 const base = {
   posting_id: "p1", journal_entry_id: "je1", entry_date: "2026-08-31", source_transaction_type: "expense", source_transaction_id: "e1", source_transaction_line_id: "el1",
@@ -73,5 +73,48 @@ describe("Reclassify engine — pure rules (QBO spec §24)", () => {
     expect(refused[0]!.why).toMatch(/control account/);
     // class-only reclass on a control line is allowed (no account change)
     expect(classifySelection([{ ...base, account_subtype: "Accounts Payable (A/P)" }], { to_class_id: "cls-9" }).eligible).toHaveLength(1);
+  });
+});
+
+describe("Reclassify engine — document line rewrite (invoice / cash documents)", () => {
+  function fakeClient(rowCount = 1) {
+    const calls: Array<{ sql: string; params: unknown[] }> = [];
+    return { calls, client: { query: async (sql: string, params: unknown[] = []) => { calls.push({ sql, params }); return { rows: [], rowCount }; } } as never };
+  }
+  const posting = (over: Partial<SelectedPosting> = {}): SelectedPosting => ({
+    posting_id: "p1", journal_entry_id: "je1", account_id: "acc-old", class_id: null, entity_uuid: null, entity_type: null,
+    debit_or_credit: "credit", amount_cents: 4238, description: null, source_transaction_type: "invoice", source_transaction_id: "inv1",
+    source_transaction_line_id: "il1", document_number: "INV-1", posting_status: "posted", reversed_by_line_id: null, reversal_of_line_id: null,
+    control_reason: null, already_reclassified: false, ...over,
+  } as unknown as SelectedPosting);
+
+  it("invoice: rewrites the income account on the invoice line (by line id), refuses the customer (A/R subledger) and class (no header)", async () => {
+    const { calls, client } = fakeClient(1);
+    const r = await rewriteDocumentLine(client, "co", posting(), { account_id: "acc-new", class_id: null, entity_uuid: null, entity_type: null });
+    expect(r.updated).toBe(true);
+    expect(calls[0]!.sql).toMatch(/UPDATE accounting\.invoice_lines SET account_id/);
+    expect(calls[0]!.params).toEqual(["il1", "co", "acc-new"]);
+    const r2 = await rewriteDocumentLine(client, "co", posting(), { account_id: null, class_id: "cls", entity_uuid: "cust", entity_type: "customer" });
+    expect(r2.updated).toBe(false);
+    expect(r2.note).toMatch(/A\/R subledger/);
+    expect(r2.note).toMatch(/no class header/);
+  });
+
+  it("invoice without a line id matches the one live line by (account, amount); zero matches is reported, never guessed", async () => {
+    const { calls, client } = fakeClient(0);
+    const r = await rewriteDocumentLine(client, "co", posting({ source_transaction_line_id: null }), { account_id: "acc-new", class_id: null, entity_uuid: null, entity_type: null });
+    expect(calls[0]!.sql).toMatch(/line_total_cents = \$5::bigint AND soft_deleted_at IS NULL/);
+    expect(r.updated).toBe(false);
+    expect(r.note).toMatch(/no 1:1 live invoice line/);
+  });
+
+  it("cash documents (bill_payment / customer_payment / transfer / bank_categorization) have no category line: ledger-only move, no document write", async () => {
+    for (const t of ["bill_payment", "customer_payment", "transfer", "bank_categorization"]) {
+      const { calls, client } = fakeClient(1);
+      const r = await rewriteDocumentLine(client, "co", posting({ source_transaction_type: t }), { account_id: "acc-new", class_id: null, entity_uuid: null, entity_type: null });
+      expect(calls.length).toBe(0);
+      expect(r.updated).toBe(false);
+      expect(r.note).toMatch(/control account/);
+    }
   });
 });
