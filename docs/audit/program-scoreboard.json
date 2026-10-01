@@ -1,10 +1,10 @@
 {
-  "healthzSha": "e8b138e",
-  "generated_at": "2026-09-30T23:17:34.727Z",
+  "healthzSha": "8a4592e",
+  "generated_at": "2026-10-01T03:42:56.714Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "e8b138e",
+    "deployedSha": "8a4592e",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 23553,
-      "title": "FINDING: N/A LANE: DOCS -- ROUND 301 T-35: close DAMAGE-WO-UNITS-ZERO-ASSIGNMENT-COVERAGE-2026093006 VOID",
+      "number": 23653,
+      "title": "FINDING: N/A LANE: DOCS (Lead Chrome pass: E-40 DONE, E-42 DONE, E-41 RED -- aborted transaction in engine-status probes; E-44 pending URL)",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 06:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23553",
-      "sha": "77b1e2ff0e",
-      "committedAtIso": "2026-09-30T18:16:55-05:00"
+      "mergedAtCt": "09/30/2026, 10:42 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23653",
+      "sha": "b83bee2874",
+      "committedAtIso": "2026-09-30T22:42:31-05:00"
     },
     {
-      "number": 23551,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL (CLAIM-RESERVE: verify-step 11983 for ROUND 301 B-32)",
+      "number": 23652,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL (CLAIM-RESERVE: verify-step 12029 for E-17 fleet roster guard)",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 06:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23551",
-      "sha": "b7d119ccde",
-      "committedAtIso": "2026-09-30T18:15:01-05:00"
+      "mergedAtCt": "09/30/2026, 10:41 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23652",
+      "sha": "2127a0fccb",
+      "committedAtIso": "2026-09-30T22:41:43-05:00"
     },
     {
-      "number": 23550,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL -- ROUND 301 T-34: Arriving Soon feed gains geofence state (backend)",
+      "number": 23651,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL -- Round 306 E-31: Samsara Routes push with Samsara's own ids + stop coordinates (flag OFF)",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 06:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23550",
-      "sha": "aca76faf2f",
-      "committedAtIso": "2026-09-30T18:14:41-05:00"
+      "mergedAtCt": "09/30/2026, 10:41 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23651",
+      "sha": "3aa1acb612",
+      "committedAtIso": "2026-09-30T22:41:00-05:00"
     },
     {
-      "number": 23549,
-      "title": "FINDING: BANK-F05",
+      "number": 23649,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL -- Round 306 E-29: 342 GeoJSON fences never fired; border direction measured; auto-status load writes flag-OFF",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 06:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23549",
-      "sha": "fe8fde44b7",
-      "committedAtIso": "2026-09-30T18:14:09-05:00"
+      "mergedAtCt": "09/30/2026, 10:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23649",
+      "sha": "942e14d208",
+      "committedAtIso": "2026-09-30T22:37:07-05:00"
     },
     {
-      "number": 23548,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL -- ROUND 301 T-33: fault codes into the maintenance alert chain",
+      "number": 23648,
+      "title": "FINDING: COMPLAINTS-CODER-TEST-ROWS-LIVE-IN-USMCA-2026100101 LANE: DOCS (AUTH-180 CONSUMED: 3 test complaints voided, board row resolved)",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 06:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23548",
-      "sha": "e8b138e4ea",
-      "committedAtIso": "2026-09-30T18:09:30-05:00"
+      "mergedAtCt": "09/30/2026, 10:33 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23648",
+      "sha": "5ca71313b9",
+      "committedAtIso": "2026-09-30T22:33:00-05:00"
     },
     {
-      "number": 23547,
-      "title": "FINDING: GATE-HANG-TWO-LIVE-GUARDS-BLOCK-EVERY-SEAT-2026093010 LANE: NON-FINANCIAL",
+      "number": 23645,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL (CLAIM-RESERVE: migration 202615120000 -- E-16 work-order dates)",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 06:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23547",
-      "sha": "ad6a9c2ef3",
-      "committedAtIso": "2026-09-30T18:09:03-05:00"
+      "mergedAtCt": "09/30/2026, 10:32 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23645",
+      "sha": "8a4592e848",
+      "committedAtIso": "2026-09-30T22:32:26-05:00"
     },
     {
-      "number": 23546,
-      "title": "FINDING: C-50 Customers/Vendors With-txn/All = 0 while Neon 65/34",
+      "number": 23646,
+      "title": "FINDING: COMPLAINTS-CODER-TEST-ROWS-LIVE-IN-USMCA-2026100101 LANE: NON-FINANCIAL (AUTH-180: owner authorizes voiding the 3 coder test complaints; script of record, dry run first)",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 06:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23546",
-      "sha": "f5a3226f14",
-      "committedAtIso": "2026-09-30T18:04:13-05:00"
+      "mergedAtCt": "09/30/2026, 10:32 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23646",
+      "sha": "a1fecb553d",
+      "committedAtIso": "2026-09-30T22:32:18-05:00"
     },
     {
-      "number": 23545,
-      "title": "FINDING: PWA-LIVE-T122-STALE-SAMSARA-ID-JOIN-MISS LANE: NON-FINANCIAL -- ROUND 301 T-31/T-32 dry-run reports",
+      "number": 23643,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL -- E-14 linkage: manual odometer entry re-runs the PM auto-engine (CC-1 ask)",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 06:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23545",
-      "sha": "4f97b0882d",
-      "committedAtIso": "2026-09-30T18:02:48-05:00"
+      "mergedAtCt": "09/30/2026, 10:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23643",
+      "sha": "99e8d2a3f6",
+      "committedAtIso": "2026-09-30T22:31:35-05:00"
     },
     {
-      "number": 23544,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL -- ROUND 301 T-30: harsh-events/dashcam poll fallback",
+      "number": 23642,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL -- ORDERS 2026-10-01 row 7: E-23 fuel push reads CC-2 derived pump time (high confidence only, flag OFF)",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 05:58 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23544",
-      "sha": "cc6824ecdf",
-      "committedAtIso": "2026-09-30T17:58:15-05:00"
+      "mergedAtCt": "09/30/2026, 10:30 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23642",
+      "sha": "acf42e303b",
+      "committedAtIso": "2026-09-30T22:30:18-05:00"
     },
     {
-      "number": 23543,
-      "title": "FINDING: N/A LANE: DOCS (OUTBOX: URGENT -- 5 merged CC-1 migrations not yet applied to prod)",
+      "number": 23639,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL -- ORDERS 2026-10-01 row 6: DVIR import every 15 min + daily re-read; engine-status row",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 05:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23543",
-      "sha": "ecc21f5104",
-      "committedAtIso": "2026-09-30T17:57:10-05:00"
+      "mergedAtCt": "09/30/2026, 10:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23639",
+      "sha": "9ced3f9c6f",
+      "committedAtIso": "2026-09-30T22:29:54-05:00"
     }
   ]
 }
