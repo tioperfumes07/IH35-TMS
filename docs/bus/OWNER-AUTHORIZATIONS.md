@@ -6837,3 +6837,19 @@ Lead ruling 2026-10-01 16:45Z item 1: "90007: DELETE ... under one AUTH, keep th
 Logistics load; no twin found. The duplicate pair in the same window is 13513 (FLS TRANSPORTATION SERVICES LIMITED, $525,
 PO 5772267, invoiced) / 13515 (FLS Transport Inc., $525, PO 005772267, closed) — NOT covered here; owner to say which is real.
 
+## AUTH-198
+issued_at: 2026-10-01T17:49:47Z
+scope: ALL operating companies (owner: "in the app"). mdata.customers master data only: every customer whose name matches
+  mdata.customer_name_is_broker (broker / brokers / brokerage / logistic(s) / logistica(s) / logistix / freight / forwarding /
+  forwarder(s) / 3pl / supply chain) and is not yet Broker gets customer_type 'broker' + its company's catalogs.customer_types
+  BROKER id — written by trigger trg_customer_broker_by_name (migration 202615190700) through a no-op name touch; audit row per
+  customer via trg_audit_customers + one summary audit row. Measured 2026-10-01: USMCA 640 to change (652 match), the other two
+  entities 722 + 677; 0 direct shippers among them. Refuses above 2,100 rows or if any direct shipper would be overridden.
+action: npx tsx scripts/ops/2026-10-01-cc2-auth198-classify-broker-named-customers.ts --apply (after the deploy applies 202615190700).
+expires_at: 2026-10-02T17:49:47Z
+status: OPEN
+
+Owner in chat to CC-2, 2026-10-01: "ALL CUSTOMERS WITH THE NAME BROKERS, LOGISITCIS, OR FREIGHT, ETC MUST BE CATEGORIZED IN THE APP AS
+BROKERS." Master data classification, not a business transaction (ROUND 319 item 3 untouched). NOT COVERED: names that only say
+transport / trucking / express / carrier (owner classifies those; list in OUTBOX-CC-2), any transaction, any other customer field.
+

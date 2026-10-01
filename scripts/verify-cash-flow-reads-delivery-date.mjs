@@ -56,7 +56,9 @@ const PINNED_DATES = {
   "13630": "2026-09-30",
   "13634": "2026-09-30",
   "13635": "2026-10-01",
-  "13637": "2026-10-01",
+  // Owner 2026-10-01 (in chat to CC-2): "CUSTOMERS WITH NO PAYMENT TERMS 30 DAYS" -- 13637 (Westgate, no terms on file) is
+  // Net-30 from its 10-01 delivery, exactly as the from-load engine stamps it (payment_terms_days ?? 30).
+  "13637": "2026-10-31",
 };
 
 function addDays(isoDate, days) {
