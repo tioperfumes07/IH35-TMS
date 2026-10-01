@@ -7648,6 +7648,11 @@
     "claimed_at": "2026-10-01",
     "purpose": "verify-legal-contract-linkage (ROUND 316): contract_instances real FKs + extended link types; matters customer/vendor/load; matter reserve posts a JE."
   },
+  "12085": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-no-double-encoded-api-body (ROUND 316 systemic sweep): apiRequest already JSON.stringifies options.body; a caller passing body: JSON.stringify(...) sends a JSON string, the server parses it to a string and every zod object schema 400s."
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
