@@ -64,6 +64,12 @@ export type CreateBillLineInput = {
   quantity?: number | null;
   rateCents?: number | null;
   unitOfMeasure?: string | null;
+  /** ROUND 316 — per-line Class (class = unit on lease bills), unit / trailer, and the lease the line charges. */
+  classId?: string | null;
+  unitId?: string | null;
+  equipmentId?: string | null;
+  leaseContractId?: string | null;
+  leaseAssetLineId?: string | null;
 };
 
 type CreateBillInput = {
@@ -110,6 +116,11 @@ type CreateBillInput = {
   legalMatterId?: string | null;
   /** QBO Class reporting dimension — persisted on accounting.bills.class_id when column present. */
   classId?: string | null;
+  /** ROUND 316 — lease month this bill covers (first day); set only by the lease bill engine. */
+  leasePeriodStart?: string | null;
+  leaseContractId?: string | null;
+  /** Idempotency key: 'C:<contract>:<yyyy-mm>' or 'A:<asset line>:<yyyy-mm>'. */
+  leaseBillKey?: string | null;
   // Draft id used by UploadZone for create-time bill attachments; reconciled onto the real bill id in
   // the same txn (Option B inc 2 — docs/specs/ATTACHMENT-DRAFT-LINKAGE-FIX.md).
   attachmentDraftId?: string | null;
@@ -2736,6 +2747,14 @@ export async function createBill(input: CreateBillInput, userId: string) {
       }
     }
 
+    if (insertedId && (input.leasePeriodStart || input.leaseContractId || input.leaseBillKey)) {
+      await client.query(
+        `UPDATE accounting.bills SET lease_period_start = $3::date, lease_contract_id = $4::uuid, lease_bill_key = $5
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+        [insertedId, input.operatingCompanyId, input.leasePeriodStart ?? null, input.leaseContractId ?? null, input.leaseBillKey ?? null]
+      );
+    }
+
     if (insertedId) {
       const billDisplayId = await resolveBillDisplayId(
         client,
@@ -2823,6 +2842,16 @@ export async function createBill(input: CreateBillInput, userId: string) {
           if (!item.rows[0]) throw new Error("bill_line_item_not_in_company");
         }
 
+        // ROUND 316 — a per-line Class is entity-scoped like accountId / itemId (never a cross-company class).
+        const lineClassId = line.classId?.trim() || null;
+        if (lineClassId) {
+          const cls = await client.query<{ id: string }>(
+            `SELECT id::text FROM catalogs.classes WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
+            [lineClassId, input.operatingCompanyId]
+          );
+          if (!cls.rows[0]) throw new Error("bill_line_class_not_in_company");
+        }
+
         await client.query(
           `
             INSERT INTO accounting.bill_lines (
@@ -2842,12 +2871,19 @@ export async function createBill(input: CreateBillInput, userId: string) {
               item_id,
               quantity,
               rate_cents,
-              unit_of_measure
+              unit_of_measure,
+              class_id,
+              unit_id,
+              equipment_id,
+              lease_contract_id,
+              lease_asset_line_id,
+              operating_company_id
             )
             VALUES (
               $1::uuid, $2, $3, $4, $5,
               $6::uuid, $7::uuid, $8, $9, $10::uuid, $11::uuid, $12, $13,
-              $14::uuid, $15, $16, $17
+              $14::uuid, $15, $16, $17,
+              $18::uuid, $19::uuid, $20::uuid, $21::uuid, $22::uuid, $23::uuid
             )
           `,
           [
@@ -2879,6 +2915,12 @@ export async function createBill(input: CreateBillInput, userId: string) {
             quantity,
             rateCents,
             unitOfMeasure,
+            lineClassId,
+            line.unitId ?? null,
+            line.equipmentId ?? null,
+            line.leaseContractId ?? null,
+            line.leaseAssetLineId ?? null,
+            input.operatingCompanyId,
           ]
         );
       }

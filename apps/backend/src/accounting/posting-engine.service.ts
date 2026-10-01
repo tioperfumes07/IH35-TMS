@@ -1249,6 +1249,7 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
     account_id: string | null;
     category_kind: string | null;
     category_code: string | null;
+    class_id: string | null;
   }>(
     `
       SELECT
@@ -1258,7 +1259,8 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
         bl.description,
         bl.account_id::text,
         bl.category_kind,
-        bl.category_code
+        bl.category_code,
+        bl.class_id::text
       FROM accounting.bill_lines bl
       WHERE bl.bill_id::uuid = $1::uuid
         AND bl.voided_at IS NULL
@@ -1310,7 +1312,8 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
       source_transaction_line_id: row.id ?? null,
       relationship_role: null,
       // GO-19-09 — header-level Class, applied to every cost line; never the AP credit line below.
-      class_id: bill.class_id,
+      // ROUND 316: a line's own Class (class = unit on lease bills, one line per unit / trailer) wins over the header.
+      class_id: row.class_id ?? bill.class_id,
     });
   }
 
