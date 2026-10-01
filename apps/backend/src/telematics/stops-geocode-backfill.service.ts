@@ -1,14 +1,14 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 import { squareVerticesFromCenter } from "./auto-geofence.service.js";
-import { geocodeAddressWithEvidence } from "./stop-geocode-fallback.service.js";
+import { stableProviderFailureReason, geocodeAddressWithEvidence } from "./stop-geocode-fallback.service.js";
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 type StopRow = {
   stop_id: string; load_id: string; sequence_number: number; stop_type: string;
   location_id: string | null; address_line1: string | null; city: string | null;
   state: string | null; postal_code: string | null; country: string | null;
-  latitude: number | null; longitude: number | null;
+  latitude: number | null; longitude: number | null; geocode_precision: string | null; geocode_source: string | null;
   location_latitude: number | null; location_longitude: number | null;
 };
 export type StopGeocodeFailure = { stop_id: string; load_id: string; reason: string };
@@ -40,7 +40,7 @@ async function candidateStops(client: DbClient, companyId: string, loadId?: stri
   return (await client.query<StopRow>(`
     SELECT s.id::text stop_id, s.load_id::text load_id, s.sequence_number, s.stop_type::text,
            s.location_id::text, s.address_line1, s.city, s.state, s.postal_code, s.country,
-           s.latitude::double precision, s.longitude::double precision,
+           s.latitude::double precision, s.longitude::double precision, s.geocode_precision, s.geocode_source,
            loc.latitude::double precision location_latitude, loc.longitude::double precision location_longitude
       FROM mdata.load_stops s
       JOIN mdata.loads l ON l.id = s.load_id
@@ -91,12 +91,37 @@ export async function geocodeStopsWithClient(client: DbClient, actorId: string, 
   const stops = await candidateStops(client, companyId, loadId);
   const failures: StopGeocodeFailure[] = [];
   let geocoded = 0, locations = 0, fences = 0, rooftop = 0, locality = 0, lastProviderAt = 0;
+  // Lead 2026-10-01 (measured on load 13593, stops c83ba2a2/886d3f7f: booked 2026-09-30 05:13Z with
+  // city/state only, latitude NULL, geocode_attempted_at NULL, geocode_failure_reason NULL — zero
+  // evidence a geocode was ever tried). The whole sweep ran as ONE transaction, so any throw after
+  // the first stop (provider, locations insert, geofence insert) rolled back every stamp written so
+  // far and the post-book caller only console.error'd it. Each stop now runs inside its own
+  // SAVEPOINT: a thrown error is rolled back to that savepoint, the stop is stamped with a stable
+  // failure reason (durable evidence, re-swept later), and the loop continues.
   for (const stop of stops) {
+    await client.query("SAVEPOINT geocode_stop");
+    try {
+      await geocodeOneStop(stop);
+      await client.query("RELEASE SAVEPOINT geocode_stop");
+    } catch (error) {
+      await client.query("ROLLBACK TO SAVEPOINT geocode_stop");
+      const reason = `unexpected:${stableProviderFailureReason(error)}`;
+      await client.query(`UPDATE mdata.load_stops SET geocode_attempted_at=now(), geocode_failure_reason=$2, updated_at=now() WHERE id=$1::uuid`, [stop.stop_id, reason]);
+      failures.push({ stop_id: stop.stop_id, load_id: stop.load_id, reason });
+      await client.query("RELEASE SAVEPOINT geocode_stop");
+    }
+  }
+  return { stops_checked: stops.length, stops_geocoded: geocoded, locations_linked: locations, geofences_created: fences, rooftop, locality, failures };
+
+  async function geocodeOneStop(stop: StopRow): Promise<void> {
     const hasPickerCoordinates = stop.latitude != null && stop.longitude != null;
     const hasCanonicalCoordinates = stop.location_latitude != null && stop.location_longitude != null;
     if (!hasPickerCoordinates && !hasCanonicalCoordinates) lastProviderAt = await paceProviderCalls(lastProviderAt);
     const outcome = hasPickerCoordinates
-      ? { ok: true as const, latitude: stop.latitude!, longitude: stop.longitude!, source: "picker", confidence: 1, precision: "rooftop" as const }
+      // Lead 2026-10-01: coordinates already on the stop keep the precision they were stamped with
+      // (13508's pickup carried GEOMETRIC_CENTER from Google; relabelling it 'rooftop' here would
+      // lie to E-25's radius rule). Only a stop with no stamped precision is treated as a picker pin.
+      ? { ok: true as const, latitude: stop.latitude!, longitude: stop.longitude!, ...(stop.geocode_source ? { source: stop.geocode_source } : { source: "picker" }), confidence: 1, precision: (stop.geocode_precision ?? "rooftop") as "rooftop" }
       : hasCanonicalCoordinates
       ? { ok: true as const, latitude: stop.location_latitude!, longitude: stop.location_longitude!, source: "location_existing", confidence: 1, precision: "range" as const }
       : await geocodeAddressWithEvidence(stop);
@@ -104,7 +129,7 @@ export async function geocodeStopsWithClient(client: DbClient, actorId: string, 
       const reason = outcome.ok ? "zero_coordinates_rejected" : outcome.reason;
       await client.query(`UPDATE mdata.load_stops SET geocode_attempted_at=now(), geocode_failure_reason=$2, updated_at=now() WHERE id=$1::uuid`, [stop.stop_id, reason]);
       failures.push({ stop_id: stop.stop_id, load_id: stop.load_id, reason });
-      continue;
+      return;
     }
     if (outcome.precision === "locality") {
       const updated = await client.query<{ id: string }>(`
@@ -113,14 +138,14 @@ export async function geocodeStopsWithClient(client: DbClient, actorId: string, 
           geocode_failure_reason=NULL, location_id=NULL, updated_at=now()
         WHERE id=$1::uuid RETURNING id::text`, [stop.stop_id, outcome.latitude, outcome.longitude, outcome.source, outcome.confidence]);
       if (updated.rows[0]) { geocoded += 1; locality += 1; }
-      continue;
+      return;
     }
     const locationId = stop.location_id ?? await findOrCreateLocation(client, companyId, actorId, stop, outcome.latitude, outcome.longitude, outcome.source);
     const updated = await client.query<{ id: string }>(`
       UPDATE mdata.load_stops SET location_id=$2::uuid, latitude=$3, longitude=$4,
         geocode_source=$5, geocode_confidence=$6, geocode_precision=$7, geocode_attempted_at=now(), geocode_failure_reason=NULL, updated_at=now()
       WHERE id=$1::uuid RETURNING id::text`, [stop.stop_id, locationId, outcome.latitude, outcome.longitude, outcome.source, outcome.confidence, outcome.precision]);
-    if (!updated.rows[0]) continue;
+    if (!updated.rows[0]) return;
     geocoded += 1; locations += 1; rooftop += 1;
     const inserted = await client.query<{ id: string }>(`
       INSERT INTO geo.geofences
@@ -131,7 +156,6 @@ export async function geocodeStopsWithClient(client: DbClient, actorId: string, 
       RETURNING id::text`, [companyId, labelOf(stop), locationId, JSON.stringify(squareVerticesFromCenter(outcome.latitude, outcome.longitude, ENTER_RADIUS_M * 2)), outcome.latitude, outcome.longitude, ENTER_RADIUS_M, EXIT_RADIUS_M, actorId]);
     if (inserted.rows[0]) fences += 1;
   }
-  return { stops_checked: stops.length, stops_geocoded: geocoded, locations_linked: locations, geofences_created: fences, rooftop, locality, failures };
 }
 
 export async function geocodeStopsBackfill(actorId: string, companyId: string, loadId?: string) {

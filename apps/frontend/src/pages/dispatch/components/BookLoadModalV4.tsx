@@ -1744,6 +1744,14 @@ export function BookLoadModalV4({
           });
           return;
         }
+        if (error.status === 400 && code === "trip_type_required_when_driver_assigned") {
+          // SET-01 at the API (Lead 2026-10-01): the backend refuses a driver-seated booking with no
+          // trip type whatever client sent it; mirror the inline error the wizard's own gate shows.
+          form.setError("trip_type", { type: "required", message: "Select a Trip Type (NB / TR / SB) — a load with a driver joins its pre-settlement at creation" });
+          setSubmitErrorMessage("Trip Type is required when a driver is assigned. Not saved.");
+          pushToast("Select a Trip Type before booking", "error");
+          return;
+        }
         if (error.status === 409 && (code === "duplicate_load_number" || code === "duplicate_document_number")) {
           const existingId = String(data.existing_id ?? "").trim();
           const loadNo = String(data.load_number ?? "").trim();
