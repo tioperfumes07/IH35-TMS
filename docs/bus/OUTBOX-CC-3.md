@@ -1406,3 +1406,14 @@ getOrCreateLoadThread accepts a system caller (no office participant) — additi
 proof (rolled back, last 24 h): 21 fuel-stop prompts posted for real stops (13 drive-bys / no-single-load skipped), each with its event
 log row; re-run posted 0 (idempotent). e.g. load 13631: "Fuel stop recorded at Love's #615 — Carthage, TX (load 13631, Sep 30, 9:00 PM CT)".
 guard: scripts/verify-driver-prompts-flag-off-idempotent.mjs + --selftest PASS; vitest chat + messaging 6/6.
+
+## 2026-10-01 05:40Z — LIVE PROOF after the Lead's deploy (production rows, not rolled back)
+- E-01 odometer decoration: telematics.vehicle_locations rows from the locations path (cron:locations), last hour: 228 of 229 carry
+  odometer_mi (was 0 of 4,608 per day before E-01).
+- T-51 DVIR import (every 15 min): 57 Samsara DVIRs in safety.dvir_submissions (client_request_id samsara-dvir:*); last tick 05:30:04Z.
+- E-09 migration 202615150900 applied: dispatch.detention_events.geofence_event_id present.
+- E-03 table live (telematics.unit_stop_events) but 0 rows yet -> E-05's stop-to-stop source switches on by itself with the first rows
+  (feature-detected); proof to follow.
+- E-10 / E-12 (fault + harsh pollers, fixed in #23664): both run daily 03:00 America/Chicago = 08:00Z today -> first real fault/harsh
+  rows proof to follow (rolled-back proof already: 56 fault rows on 17 trucks, 5 harsh events).
+- Flags still OFF and waiting on the owner/Lead: fuel push, routes, driver messaging, driver prompts, fence push, auto-status, master sync.
