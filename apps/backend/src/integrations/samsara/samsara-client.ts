@@ -68,6 +68,23 @@ export type SamsaraFuelEnergyRow = {
   engine_idle_time_ms: number | null;
 };
 
+/** ROUND 304 T-51 — one DVIR from /fleet/dvirs/history, fields measured live 2026-10-01. */
+export type SamsaraDvir = {
+  id: string;
+  type: string | null;
+  safety_status: string | null;
+  signer_user_id: string | null;
+  signer_type: string | null;
+  signed_at: string | null;
+  end_time: string | null;
+  odometer_meters: number | null;
+  location: string | null;
+  samsara_vehicle_id: string | null;
+  trailer_name: string | null;
+  vehicle_defects: unknown[];
+  trailer_defects: unknown[];
+};
+
 export type SamsaraHosDailyLog = {
   samsara_driver_id: string;
   start_time: string;
@@ -832,6 +849,61 @@ export class SamsaraClient {
           distance_traveled_meters: num(r.distanceTraveledMeters),
           engine_run_time_ms: num(r.engineRunTimeDurationMs),
           engine_idle_time_ms: num(r.engineIdleTimeDurationMs),
+        });
+      }
+      const { hasNextPage, cursor } = parsePagination(json);
+      if (!hasNextPage || !cursor) break;
+      after = cursor;
+    }
+    return out;
+  }
+
+  /**
+   * ROUND 304 T-51 — GET /fleet/dvirs/history (200 on the USMCA token 2026-10-01; window max 30 days).
+   * Live fields: id, type (preTrip/postTrip), safetyStatus, authorSignature{signatoryUser{id,name},
+   * signedAtTime,type}, startTime, endTime, odometerMeters, location, vehicle{id,name}, trailerName,
+   * trailer. Defect arrays are passed through untouched (none observed live yet -- never re-shaped).
+   */
+  async listDvirs(startIso: string, endIso: string): Promise<SamsaraDvir[]> {
+    const token = this._token();
+    if (!token) throw new SamsaraApiError("samsara_token_missing", null, null, false);
+    const str = (v: unknown) => (typeof v === "string" && v.length > 0 ? v : null);
+    const out: SamsaraDvir[] = [];
+    let after: string | null = null;
+    for (let page = 0; page < 200; page += 1) {
+      const url = new URL(`${SAMSARA_API_BASE}/fleet/dvirs/history`);
+      url.searchParams.set("startTime", startIso);
+      url.searchParams.set("endTime", endIso);
+      if (after) url.searchParams.set("after", after);
+      let res: Response;
+      try {
+        res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }, 30_000));
+      } catch (error) {
+        throw new SamsaraApiError(`samsara_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
+      }
+      const json = await readJsonResponse(res);
+      if (!res.ok) throw new SamsaraApiError(`samsara_dvirs_http_${res.status}`, res.status, json, res.status === 429 || res.status >= 500);
+      for (const raw of Array.isArray(json.data) ? json.data : []) {
+        const r = raw as Record<string, unknown>;
+        if (r.id == null) continue;
+        const sig = (r.authorSignature ?? {}) as Record<string, unknown>;
+        const signer = (sig.signatoryUser ?? {}) as Record<string, unknown>;
+        const vehicle = (r.vehicle ?? {}) as Record<string, unknown>;
+        const odo = Number(r.odometerMeters);
+        out.push({
+          id: String(r.id),
+          type: str(r.type),
+          safety_status: str(r.safetyStatus),
+          signer_user_id: signer.id == null ? null : String(signer.id),
+          signer_type: str(sig.type),
+          signed_at: str(sig.signedAtTime),
+          end_time: str(r.endTime),
+          odometer_meters: r.odometerMeters == null || !Number.isFinite(odo) ? null : odo,
+          location: str(r.location),
+          samsara_vehicle_id: vehicle.id == null ? null : String(vehicle.id),
+          trailer_name: str(r.trailerName),
+          vehicle_defects: Array.isArray(r.vehicleDefects) ? r.vehicleDefects : [],
+          trailer_defects: Array.isArray(r.trailerDefects) ? r.trailerDefects : [],
         });
       }
       const { hasNextPage, cursor } = parsePagination(json);

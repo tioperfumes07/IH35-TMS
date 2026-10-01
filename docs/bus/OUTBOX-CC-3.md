@@ -1001,3 +1001,22 @@ FINDING (cross-lane, NOT changed — integrity engine owner): safety.v_fuel_mpg_
 FROM safety.dot_inspections, gallons/computed_mpg = NULL, anomaly_type from csa_points>50/<1. The integrity "fuel_anomaly" rule
 therefore has ZERO fuel signals today; this T-50 output is the only real one.
 GUARD: scripts/verify-fuel-efficiency-signal-never-invents.mjs + --selftest PASS.
+
+## 2026-10-01 — ROUND 304 T-51 — DVIR read + the maintenance-write answer — BUILT
+ROUND: 304 · ROW: T-51 · STATUS: shipped (client + ingest engine + 2-hourly cron + guard).
+ANSWER (plain, measured on the live USMCA token 2026-10-01, no records created):
+- MAINTENANCE WRITE: Samsara HAS a maintenance work-order API (/maintenance/work-orders) that takes writes, but this account is
+  NOT licensed for it: GET and POST both return 403 "No access to required licenses". So today Samsara does NOT accept
+  maintenance records from us. It becomes writable only if the owner adds Samsara's maintenance license. (/fleet/maintenance/* = 404.)
+- DVIR WRITE: POST /fleet/dvirs is accepted by the validator (400 "Missing parameter: safetyStatus" on an empty body) — Samsara
+  takes mechanic DVIR sign-offs from us. Not built (no order to write).
+- DVIR READ: /fleet/dvirs/history 200 (30-day max window); /fleet/defects/history 200 (0 defects in Sept).
+ENGINE: SamsaraClient.listDvirs + safety/samsara-dvir-ingest.service.ts -> safety.dvir_submissions (the table WF-050 reads).
+Signer-attributed (mdata.drivers / samsara_drivers mirror, merges followed, active record wins), unsafe -> has_major_defect,
+idempotent on client_request_id 'samsara-dvir:<id>' with flag UPDATE (a later 'resolved' clears the block).
+CRON: safety/samsara-dvir-poll.cron.ts every 2 h, 7-day lookback.
+LIVE PROOF (rolled back): last 7 days 58 Samsara DVIRs -> 56 inserted, 2 skipped no_location; re-run 56 unchanged, 0 dupes; unsafe 0.
+e.g. pre_trip T176 NEFTALI URBANO CORONADO odo 429,382 "Iowa, LA, 70647" 2026-10-01T01:32Z.
+FINDING (data, not changed): 32 Samsara driver ids link to TWO local driver rows (mdata.drivers.samsara_driver_id vs the
+samsara_drivers mirror's local_driver_id disagree) — duplicate driver records, e.g. MARIO ALBERTO RODRIGUEZ, Leonel Antonio Morales.
+GUARD: scripts/verify-samsara-dvir-ingest-never-guesses.mjs + --selftest PASS.

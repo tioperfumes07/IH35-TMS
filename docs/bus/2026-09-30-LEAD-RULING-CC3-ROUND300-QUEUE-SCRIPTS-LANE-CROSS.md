@@ -41,6 +41,7 @@ Touched scripts/-lane files, one per queue item, each its own PR:
 - `scripts/verify-samsara-fuel-push-never-substitutes.mjs` (Round 304 T-48).
 - `scripts/verify-ifta-miles-never-guesses.mjs` (Round 304 T-49).
 - `scripts/verify-fuel-efficiency-signal-never-invents.mjs` (Round 304 T-50).
+- `scripts/verify-samsara-dvir-ingest-never-guesses.mjs` (Round 304 T-51).
 - further Round 304 guards to follow under this same ruling, named as they land.
 
 No money-app posting path touched (NON-FINANCIAL lane -- measurement/reporting guards, a
