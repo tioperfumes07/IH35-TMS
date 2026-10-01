@@ -1110,3 +1110,17 @@ PROPOSED RULING (draft — NOT applied; CC-3 did not widen arrival-detection):
 4. Guard: no INSERT INTO dispatch.stop_arrivals anywhere; no new reader of it.
 On signature, CC-3 executes 2 + the arrival-prompts part of 3 + the guard in one PR.
 next: E-05 (feature-detected re-point onto telematics.unit_stop_events).
+
+## 2026-10-01 — ORDERS row 3 — E-05 re-pointed onto telematics.unit_stop_events (feature-detected)
+what: real-driven-miles is ONE engine with one source at a time: when telematics.unit_stop_events exists, segments are built ONLY from it
+(stop -> next stop on the load via load_id_at_time; miles = delta of the two READ odometers; ABSENT/negative -> no row); until then the
+fence-bounded path keeps producing (cron logs `source`). Kind from the load's own actual times: deadhead_to_pickup / loaded / empty_home;
+unjudgeable pairs not written. A load carrying fence-bounded segments is HELD (no deletes, no double count). Links: load_id, unit_id,
+from/to load_stop ids; driver via the stop's driver_id_at_time.
+proof (rolled back; table created in-txn from the Lead's column list, filled with live E-03 stops for loads 13625/13626/13637):
+  table absent -> source fence_events; table present -> source unit_stop_events, 1 segment: load 13626, empty_home,
+  Vinton LA (stop ended 2026-09-30 17:39Z, odo 571,543.5) -> Lowndes County AL (02:24Z, odo 572,046.3) = 502.8 mi.
+  Only 12 of 112 stops carry an odometer (pre-09-30 13:00Z fixes have none) -> most pairs ABSENT, as designed.
+  First run held nothing it should not; after the fix, 13626's earlier fence segments hold the load (guard-checked).
+guard: scripts/verify-driven-miles-segments-from-stop-events.mjs + --selftest PASS; vitest real-driven-miles 4/4.
+blocker: telematics.unit_stop_events lands with the Lead's deploy (202615030000). next: row 4 driver-profile backend.

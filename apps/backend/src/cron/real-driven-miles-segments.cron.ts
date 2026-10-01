@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
-import { getRealDrivenMilesSegmentStatus, materializeRealDrivenMilesSegments } from "../integrations/samsara/geofences/real-driven-miles.service.js";
+import { getRealDrivenMilesSegmentStatus, materializeRealDrivenMilesSegmentsWithSource } from "../integrations/samsara/geofences/real-driven-miles.service.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -15,12 +15,12 @@ export function initializeRealDrivenMilesSegmentsCron(app: FastifyInstance) {
   cron.schedule("*/15 * * * *", async () => {
     await wrapBackgroundJobTick(CRON_NAME, async () => {
       assertTenantContext(USMCA_COMPANY_ID, CRON_NAME);
-      const rows = await withLuciaBypass((client) => materializeRealDrivenMilesSegments(client, {
+      const { source, segments: rows } = await withLuciaBypass((client) => materializeRealDrivenMilesSegmentsWithSource(client, {
         operatingCompanyId: USMCA_COMPANY_ID,
       }));
       const status = await withLuciaBypass((client) => getRealDrivenMilesSegmentStatus(client, USMCA_COMPANY_ID));
       app.log.info(
-        { operating_company_id: USMCA_COMPANY_ID, segments_written: rows.length, ...status },
+        { operating_company_id: USMCA_COMPANY_ID, source, segments_written: rows.length, ...status },
         `${CRON_NAME} complete`
       );
     }, app.log);

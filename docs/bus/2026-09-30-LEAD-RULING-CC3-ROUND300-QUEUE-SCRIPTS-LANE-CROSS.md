@@ -45,6 +45,7 @@ Touched scripts/-lane files, one per queue item, each its own PR:
 - `scripts/verify-position-poll-odometer-and-mirror-first.mjs` (Round 306 E-01).
 - `scripts/verify-fence-capture-feeds-stops-never-interpolates.mjs` (Round 306 E-04).
 - `scripts/verify-one-geofence-inside-decider.mjs` (Round 306 E-08).
+- `scripts/verify-driven-miles-segments-from-stop-events.mjs` (Round 306 E-05).
 - further Round 304 guards to follow under this same ruling, named as they land.
 
 No money-app posting path touched (NON-FINANCIAL lane -- measurement/reporting guards, a
