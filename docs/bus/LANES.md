@@ -24,6 +24,11 @@ apps/backend/src/mdata/vendors.routes.ts
 apps/backend/src/cron/retry-held-expense-postings.cron.ts
 apps/backend/src/governance/void-cancel-executors.ts
 apps/backend/src/maintenance/service-history-backfill.routes.ts
+apps/backend/src/maintenance/pm-current-odometer.ts
+apps/backend/src/maintenance/pm-auto-engine.service.ts
+apps/backend/src/maintenance/pm-due-engine.service.ts
+apps/backend/src/maintenance/__tests__/pm-current-odometer.test.ts
+apps/backend/src/maint/pm.routes.ts
 **/*.db.test.ts
 TABLES: accounting.company_settlements · driver_finance.driver_bills · mdata.drivers · identity.*
         mdata.loads
@@ -167,6 +172,17 @@ TABLES: none. The Lead owns no module code and no tables. Anything else the Lead
 # "one job, two seats" problem §0b exists to prevent. Scoped to this one narrow edit (the
 # driver_id/load_id validation block only) in this one filename -- not a blanket grant of the file.
 # Owner may move it; until then this one edit is CC-1's.
+#
+# **PM-due odometer wiring added to CC-1 (ROUND 305, A-46, 2026-10-01):**
+# `maintenance/pm-current-odometer.ts` (new), `maintenance/pm-auto-engine.service.ts`,
+# `maintenance/pm-due-engine.service.ts`, `maint/pm.routes.ts`, and the new test file.
+# `apps/backend/src/maintenance/**` and `apps/backend/src/maint/**` have no seat -- UNASSIGNED per
+# verify-lane-ownership.mjs. The Lead's ROUND 305 queue assigns A-46 ("WIRE THE STOP-ODOMETER ENGINE
+# INTO PM DUE") to CC-1 by name, and the guard that pins the wiring (verify-step 12005) is CC-1's
+# scripts/** lane -- splitting the three consumer edits from the guard that enforces them would
+# recreate the "one job, two seats" problem §0b exists to prevent. The Lead's engine files
+# (telematics/stop-odometer-capture.service.ts, telematics/live-fleet.ts) are imported, NOT edited.
+# Scoped to these filenames. Owner may move them; until then they are CC-1's.
 
 ## SHARED — any seat, but say so in the PR body
 docs/**

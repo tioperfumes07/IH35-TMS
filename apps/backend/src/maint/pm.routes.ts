@@ -4,6 +4,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { evaluatePmDue, extractSamsaraOdometerMi } from "./pm-due.shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { latestStopCapturedOdometer, type OdometerReading } from "../maintenance/pm-current-odometer.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -103,13 +104,41 @@ async function listSchedules(client: Queryable, operatingCompanyId: string, asse
   return result.rows;
 }
 
-function mapDueRow(row: PmScheduleRow) {
+function hasLiveOdometer(row: PmScheduleRow): boolean {
+  return typeof row.live_odometer_mi === "number" && Number.isFinite(row.live_odometer_mi);
+}
+
+/**
+ * ROUND 305 A-46: the latest fix usually carries no odometer (22 % of position instants do), which
+ * left a working truck with no PM reading. For those units only, the odometer READ at its most
+ * recent stop (the Lead's stop-odometer engine) -- never interpolated.
+ */
+async function stopOdometersForUnitsWithoutLive(client: Queryable, rows: PmScheduleRow[]) {
+  const out = new Map<string, OdometerReading>();
+  const unitIds = [...new Set(rows.filter((r) => !hasLiveOdometer(r)).map((r) => r.asset_id))];
+  for (const unitId of unitIds) {
+    const stop = await latestStopCapturedOdometer(client, unitId);
+    if (stop) out.set(unitId, stop);
+  }
+  return out;
+}
+
+function mapDueRow(row: PmScheduleRow, stop: OdometerReading | null = null) {
   // Prefer the live odometer ingested by the Samsara stats poll (#1289, vehicle_latest_position.odometer_mi);
-  // fall back to the webhook raw_payload for any unit still on the webhook path.
-  const currentOdometer =
-    typeof row.live_odometer_mi === "number" && Number.isFinite(row.live_odometer_mi)
-      ? Math.round(row.live_odometer_mi)
-      : extractSamsaraOdometerMi(row.samsara_raw_payload);
+  // then the odometer read at the unit's last stop (A-46); then the webhook raw_payload.
+  const rawPayloadOdometer = extractSamsaraOdometerMi(row.samsara_raw_payload);
+  const currentOdometer = hasLiveOdometer(row)
+    ? Math.round(row.live_odometer_mi as number)
+    : stop
+      ? Math.round(stop.odometer_miles)
+      : rawPayloadOdometer;
+  const odometerSource = hasLiveOdometer(row)
+    ? "vehicle_latest_position"
+    : stop
+      ? "stop_capture"
+      : rawPayloadOdometer != null
+        ? "samsara_raw_payload"
+        : null;
   const evaluation = evaluatePmDue(
     {
       interval_miles: row.interval_miles,
@@ -131,7 +160,8 @@ function mapDueRow(row: PmScheduleRow) {
     interval_days: row.interval_days,
     last_done_miles: row.last_done_miles,
     last_done_date: row.last_done_date,
-    odometer_reading_at: row.odometer_reading_at,
+    odometer_reading_at: odometerSource === "stop_capture" && stop ? stop.read_at : row.odometer_reading_at,
+    odometer_source: odometerSource,
     ...evaluation,
   };
 }
@@ -164,7 +194,8 @@ export async function registerMaintPmRoutes(app: FastifyInstance) {
 
     const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
       const schedules = await listSchedules(client, parsed.data.operating_company_id, parsed.data.asset_id);
-      return schedules.map(mapDueRow);
+      const stops = await stopOdometersForUnitsWithoutLive(client, schedules);
+      return schedules.map((row) => mapDueRow(row, stops.get(row.asset_id) ?? null));
     });
     return { rows };
   });
@@ -177,7 +208,8 @@ export async function registerMaintPmRoutes(app: FastifyInstance) {
 
     const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
       const schedules = await listSchedules(client, parsed.data.operating_company_id, parsed.data.asset_id);
-      const mapped = schedules.map(mapDueRow);
+      const stops = await stopOdometersForUnitsWithoutLive(client, schedules);
+      const mapped = schedules.map((row) => mapDueRow(row, stops.get(row.asset_id) ?? null));
       return parsed.data.include_not_due ? mapped : mapped.filter((row) => row.is_due);
     });
 

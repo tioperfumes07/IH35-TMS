@@ -875,3 +875,40 @@ picked it up (their current lane is the Banking boards, ROUND 304 C-64). `mainte
 column list is unchanged -- A-49's verdict stands: 1 of 3 (`opened_at` for "report date") exists by
 mapping, "date in shop" and "expected release" do not exist as columns. No new PR needed for these
 three; pointing back to #23577 rather than re-filing the same finding.
+
+## ROUND 305 A-46 — STOP-ODOMETER ENGINE WIRED INTO PM DUE (engine landed; done)
+The Lead's `telematics/stop-odometer-capture.service.ts` reached main after my blocker report; wired
+the same session, reused UNCHANGED via one helper (`maintenance/pm-current-odometer.ts`) into all
+three PM-due consumers:
+- **PM auto-WO cron** (`pm-auto-engine.service.ts`): stop-read odometer is the fallback when the
+  latest fix carries none (only 22 % of position instants do), ranked above the old raw_payload.
+  Replayed the 41 unit-runs skipped as no-odometer in the prior 7 days at each skip's own time:
+  **19 recovered** (every skip of every reporting truck); 22 correctly stay skipped (dark T122/T147,
+  and T170/T173 stretches where the odometer feed itself sent nothing — nothing to recover).
+- **Maintenance Home `/maint/pm/due` + `/maint/pm/schedules`** (`maint/pm.routes.ts`): same fallback,
+  `odometer_source` now named on every row.
+- **T-29 engine** (`pm-due-engine.service.ts`): ledger (one row/unit/day, ~6 h stale) and stop read
+  through one chooser — newest real read wins; live: 11 of 16 trucks fresher (T174 +323 mi, T152 +191,
+  T176 +190, T164 +164, T148 +158); T170/T173 recovered past a gap row; a gap newer than every read
+  stays unknown.
+- **Held rule fires on real data**: T171's newer OBD stop read (436,992.5) is 12.5 mi BELOW its manual
+  ledger entry (437,005) — held, not used, reason returned in `current_odometer_note`.
+Same measurement verified: snapshot vs vehicle_locations at the same instant = 0.0 mi diff on every
+sample. No migration, no ledger writes (source CHECK + date-grain index allow no honest write path).
+Guard: verify-step 12005 (`verify-pm-due-feeds-from-stop-odometer`, 7 mutations caught). Tests: 12 new.
+
+**STILL BLOCKING PM DUE — owner data, not code:** all 96 active PM schedules on the 16 live trucks have
+`last_service_odometer` and `next_due_odometer` NULL (created 2026-09-30) and zero completed PM work
+orders exist. No due date is computable for any truck until a real last service is entered per truck
+via `POST /api/v1/maintenance/service-history` (A-29, never guessed). Until then the cron's
+`resolveNextDueOdometer` (telematics/maintenance-predictor.service.ts) uses baseline = today's odometer
+and silently reports every such truck "current"; an honest `skipped_no_baseline` log action needs a
+CHECK-constraint migration (db:migrate is paused), so it is named here, not faked with another action.
+
+**Observed, not material:** vehicle_locations stores nearly every instant twice (`cron:locations` +
+`cron:stats`, 8,527 dup groups / 48 h, engine_state always differs). Replayed: 133 vs 122 stops, dwell
+within 0.2 % — not deduped in the wiring so stops stay identical to the Lead's one engine.
+
+**Main is red from Cursor's #23592 (apps/frontend, not my lane):** `go26-consolidation-ratchet`
+raw_table_outside_infra 41→43, and `verify-go20-b-predictive-alerts-wired` (MaintenanceHome SUBNAV
+lost "At Risk" / PredictiveAlertsPage). Named for Cursor; untouched by CC-1.
