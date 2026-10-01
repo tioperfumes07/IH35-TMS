@@ -82,6 +82,12 @@ type QueryFn = (sql: string, values?: unknown[]) => Promise<{ rows: unknown[] }>
  * backfillDeliveryEvidence query would see. */
 function makeClient(opts: { settlementFound: boolean; faroFound: boolean }): { query: QueryFn } {
   const query: QueryFn = vi.fn(async (sql: string) => {
+    // FEED GATE (2026-10-01): sendDraftInvoice runs the gate before 'sent'. This test is about the delivery-evidence
+    // gate, so the feed intake is routed as already CLOSED (green) and the runner short-circuits.
+    if (sql.includes("FROM driver_finance.feed_intakes WHERE operating_company_id")) {
+      return { rows: [{ id: "intake-1", operating_company_id: "co", feed_kind: "invoice", subject_table: "accounting.invoices", subject_id: "inv-1", driver_id: null, status: "closed", opened_at: "", last_run_no: 1, last_run_at: null, checks_total: 0, checks_failed: 0, passed_at: null, closed_at: "" }] };
+    }
+    if (sql.includes("FROM driver_finance.feed_intake_checks WHERE intake_id")) return { rows: [] };
     if (sql.includes("FROM accounting.invoices WHERE id")) {
       return { rows: [DRAFT_INVOICE_ROW] };
     }

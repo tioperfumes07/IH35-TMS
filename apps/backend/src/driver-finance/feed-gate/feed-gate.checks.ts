@@ -170,12 +170,101 @@ const SETTLEMENT_CHECKS: FeedCheckDef[] = [
 
 const LOAD_CHECKS: FeedCheckDef[] = loadChecks(LOAD_SUBJECT);
 
+
+// ---- INVOICE feed: the invoice's own load (when it has one) runs the load/revenue set; plus header checks ----
+const INVOICE_LOAD = `
+  SELECT l.id, l.load_number FROM accounting.invoices i JOIN mdata.loads l ON l.id = i.source_load_id
+   WHERE i.operating_company_id = $1::uuid AND i.id = $2::uuid AND l.soft_deleted_at IS NULL`;
+const INVOICE_CHECKS: FeedCheckDef[] = [
+  { key: "invoice.header_complete", group: "revenue", sql: `
+      SELECT 'accounting.invoices', i.id, 'Invoice ' || i.display_id,
+             (i.customer_id IS NOT NULL AND c.id IS NOT NULL AND c.deactivated_at IS NULL AND i.issue_date IS NOT NULL AND i.due_date IS NOT NULL AND coalesce(i.total_cents, 0) > 0),
+             concat_ws('; ', CASE WHEN i.customer_id IS NULL OR c.id IS NULL THEN 'no customer' END, CASE WHEN c.deactivated_at IS NOT NULL THEN 'customer deactivated' END,
+                             CASE WHEN i.issue_date IS NULL THEN 'no issue date' END, CASE WHEN i.due_date IS NULL THEN 'no due date' END, CASE WHEN coalesce(i.total_cents, 0) <= 0 THEN 'total is zero' END),
+             '/accounting/invoices/' || i.id::text, jsonb_build_object('customer', c.customer_name, 'total_cents', i.total_cents, 'status', i.status)
+        FROM accounting.invoices i LEFT JOIN mdata.customers c ON c.id = i.customer_id WHERE i.operating_company_id = $1::uuid AND i.id = $2::uuid` },
+  { key: "invoice.lines_carry_income_account", group: "revenue", sql: `
+      SELECT 'accounting.invoice_lines', il.id, 'Line ' || coalesce(il.line_type, '?') || ' ' || il.line_total_cents || 'c',
+             (il.account_id IS NOT NULL AND a.id IS NOT NULL AND a.deactivated_at IS NULL AND il.line_total_cents <> 0),
+             concat_ws('; ', CASE WHEN il.account_id IS NULL THEN 'no income account' END, CASE WHEN il.account_id IS NOT NULL AND a.id IS NULL THEN 'account id points at no account' END, CASE WHEN a.deactivated_at IS NOT NULL THEN 'account deactivated' END, CASE WHEN il.line_total_cents = 0 THEN 'zero line' END),
+             '/accounting/invoices/' || il.invoice_id::text, jsonb_build_object('account', a.account_name, 'cents', il.line_total_cents)
+        FROM accounting.invoice_lines il LEFT JOIN catalogs.accounts a ON a.id = il.account_id WHERE il.operating_company_id = $1::uuid AND il.invoice_id = $2::uuid AND il.soft_deleted_at IS NULL` },
+  { key: "invoice.has_live_line", group: "revenue", sql: `
+      SELECT 'accounting.invoices', i.id, 'Invoice ' || i.display_id, EXISTS (SELECT 1 FROM accounting.invoice_lines il WHERE il.invoice_id = i.id AND il.soft_deleted_at IS NULL),
+             CASE WHEN NOT EXISTS (SELECT 1 FROM accounting.invoice_lines il WHERE il.invoice_id = i.id AND il.soft_deleted_at IS NULL) THEN 'invoice has no live line' END,
+             '/accounting/invoices/' || i.id::text, '{}'::jsonb FROM accounting.invoices i WHERE i.operating_company_id = $1::uuid AND i.id = $2::uuid` },
+  { key: "invoice.total_equals_lines", group: "controls", sql: `
+      SELECT 'accounting.invoices', i.id, 'Invoice ' || i.display_id, i.total_cents = coalesce((SELECT sum(il.line_total_cents) FROM accounting.invoice_lines il WHERE il.invoice_id = i.id AND il.soft_deleted_at IS NULL), 0) + coalesce(i.tax_cents, 0),
+             CASE WHEN i.total_cents <> coalesce((SELECT sum(il.line_total_cents) FROM accounting.invoice_lines il WHERE il.invoice_id = i.id AND il.soft_deleted_at IS NULL), 0) + coalesce(i.tax_cents, 0) THEN 'header total ' || i.total_cents || 'c ≠ Σ lines + tax' END,
+             '/accounting/invoices/' || i.id::text, jsonb_build_object('total_cents', i.total_cents, 'tax_cents', i.tax_cents)
+        FROM accounting.invoices i WHERE i.operating_company_id = $1::uuid AND i.id = $2::uuid` },
+  ...loadChecks(INVOICE_LOAD).filter((d) => !d.key.startsWith("invoice.")),
+];
+
+// ---- EXPENSE feed ----
+const EXPENSE_CHECKS: FeedCheckDef[] = [
+  { key: "expense.header_complete", group: "costs", sql: `
+      SELECT 'accounting.expenses', e.id, 'Expense ' || coalesce(e.expense_number, left(e.id::text, 8)),
+             (e.vendor_uuid IS NOT NULL AND v.id IS NOT NULL AND e.payment_account_uuid IS NOT NULL AND pa.id IS NOT NULL AND e.transaction_date IS NOT NULL AND coalesce(e.total_amount_cents, 0) <> 0),
+             concat_ws('; ', CASE WHEN e.vendor_uuid IS NULL OR v.id IS NULL THEN 'no vendor/payee' END, CASE WHEN e.payment_account_uuid IS NULL OR pa.id IS NULL THEN 'no paid-from account' END, CASE WHEN e.transaction_date IS NULL THEN 'no date' END, CASE WHEN coalesce(e.total_amount_cents, 0) = 0 THEN 'amount is zero' END),
+             '/accounting/expenses/' || e.id::text, jsonb_build_object('vendor', v.vendor_name, 'paid_from', pa.account_name, 'date', e.transaction_date, 'cents', e.total_amount_cents)
+        FROM accounting.expenses e LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid LEFT JOIN catalogs.accounts pa ON pa.id = e.payment_account_uuid WHERE e.operating_company_id = $1::uuid AND e.id = $2::uuid` },
+  { key: "expense.lines_carry_category", group: "costs", sql: `
+      SELECT 'accounting.expense_lines', el.id, 'Line ' || el.amount_cents || 'c', (el.expense_account_uuid IS NOT NULL AND a.id IS NOT NULL AND a.deactivated_at IS NULL),
+             CASE WHEN el.expense_account_uuid IS NULL THEN 'no category account' WHEN a.id IS NULL THEN 'account id points at no account' WHEN a.deactivated_at IS NOT NULL THEN 'account deactivated' END,
+             '/accounting/expenses/' || el.expense_id::text, jsonb_build_object('account', a.account_name, 'cents', el.amount_cents)
+        FROM accounting.expense_lines el LEFT JOIN catalogs.accounts a ON a.id = el.expense_account_uuid WHERE el.operating_company_id = $1::uuid AND el.expense_id = $2::uuid` },
+  { key: "expense.posted", group: "controls", sql: `
+      SELECT 'accounting.expenses', e.id, 'Expense ' || coalesce(e.expense_number, left(e.id::text, 8)),
+             (e.posting_status = 'posted' AND e.journal_entry_id IS NOT NULL AND EXISTS (SELECT 1 FROM accounting.journal_entries je WHERE je.id = e.journal_entry_id AND je.status = 'posted')),
+             CASE WHEN e.posting_status <> 'posted' OR e.journal_entry_id IS NULL THEN 'not posted (' || e.posting_status || ')' END,
+             '/accounting/expenses/' || e.id::text, jsonb_build_object('posting_status', e.posting_status, 'journal_entry_id', e.journal_entry_id)
+        FROM accounting.expenses e WHERE e.operating_company_id = $1::uuid AND e.id = $2::uuid` },
+  { key: "expense.linked_to_operations", group: "linkage", sql: `
+      SELECT 'accounting.expenses', e.id, 'Expense ' || coalesce(e.expense_number, left(e.id::text, 8)), (e.load_id IS NOT NULL OR e.unit_id IS NOT NULL OR e.driver_uuid IS NOT NULL OR e.class_id IS NOT NULL),
+             CASE WHEN e.load_id IS NULL AND e.unit_id IS NULL AND e.driver_uuid IS NULL AND e.class_id IS NULL THEN 'no load / unit / driver / class on the expense' END,
+             '/accounting/expenses/' || e.id::text, jsonb_build_object('load_id', e.load_id, 'unit_id', e.unit_id, 'driver_uuid', e.driver_uuid, 'class_id', e.class_id)
+        FROM accounting.expenses e WHERE e.operating_company_id = $1::uuid AND e.id = $2::uuid` },
+];
+
+// ---- BILL feed ----
+const BILL_CHECKS: FeedCheckDef[] = [
+  { key: "bill.header_complete", group: "costs", sql: `
+      SELECT 'accounting.bills', b.id, 'Bill ' || coalesce(b.display_id, b.bill_number, left(b.id::text, 8)),
+             (b.mdata_vendor_id IS NOT NULL AND v.id IS NOT NULL AND b.bill_date IS NOT NULL AND b.due_date IS NOT NULL AND coalesce(b.amount_cents, 0) <> 0),
+             concat_ws('; ', CASE WHEN b.mdata_vendor_id IS NULL OR v.id IS NULL THEN 'no vendor' END, CASE WHEN b.bill_date IS NULL THEN 'no bill date' END, CASE WHEN b.due_date IS NULL THEN 'no due date' END, CASE WHEN coalesce(b.amount_cents, 0) = 0 THEN 'amount is zero' END),
+             '/accounting/bills/' || b.id::text, jsonb_build_object('vendor', v.vendor_name, 'cents', b.amount_cents, 'status', b.status)
+        FROM accounting.bills b LEFT JOIN mdata.vendors v ON v.id = b.mdata_vendor_id WHERE b.operating_company_id = $1::uuid AND b.id = $2::uuid` },
+  { key: "bill.lines_carry_account", group: "costs", sql: `
+      SELECT 'accounting.bill_lines', bl.id, 'Line $' || coalesce(round(bl.amount, 2)::text, '?'), (bl.account_id IS NOT NULL AND a.id IS NOT NULL AND a.deactivated_at IS NULL),
+             CASE WHEN bl.account_id IS NULL THEN 'no account' WHEN a.id IS NULL THEN 'account id points at no account' WHEN a.deactivated_at IS NOT NULL THEN 'account deactivated' END,
+             '/accounting/bills/' || bl.bill_id::text, jsonb_build_object('account', a.account_name, 'amount', bl.amount)
+        FROM accounting.bill_lines bl LEFT JOIN catalogs.accounts a ON a.id = bl.account_id WHERE bl.operating_company_id = $1::uuid AND bl.bill_id = $2::uuid AND bl.voided_at IS NULL` },
+  { key: "bill.ap_je_posted", group: "controls", sql: `
+      SELECT 'accounting.bills', b.id, 'Bill ' || coalesce(b.display_id, b.bill_number, left(b.id::text, 8)),
+             EXISTS (SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid WHERE p.source_transaction_type = 'bill' AND p.source_transaction_id = b.id::text AND je.status = 'posted'),
+             CASE WHEN NOT EXISTS (SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid WHERE p.source_transaction_type = 'bill' AND p.source_transaction_id = b.id::text AND je.status = 'posted') THEN 'no posted A/P journal entry for this bill' END,
+             '/accounting/bills/' || b.id::text, jsonb_build_object('status', b.status)
+        FROM accounting.bills b WHERE b.operating_company_id = $1::uuid AND b.id = $2::uuid` },
+  { key: "bill.linked_to_operations", group: "linkage", sql: `
+      SELECT 'accounting.bills', b.id, 'Bill ' || coalesce(b.display_id, b.bill_number, left(b.id::text, 8)), (b.unit_id IS NOT NULL OR b.linked_work_order_uuid IS NOT NULL OR b.load_id IS NOT NULL OR b.legal_matter_id IS NOT NULL OR b.class_id IS NOT NULL),
+             CASE WHEN b.unit_id IS NULL AND b.linked_work_order_uuid IS NULL AND b.load_id IS NULL AND b.legal_matter_id IS NULL AND b.class_id IS NULL THEN 'no unit / work order / load / matter / class on the bill' END,
+             '/accounting/bills/' || b.id::text, jsonb_build_object('unit_id', b.unit_id, 'work_order_id', b.linked_work_order_uuid, 'load_id', b.load_id, 'class_id', b.class_id)
+        FROM accounting.bills b WHERE b.operating_company_id = $1::uuid AND b.id = $2::uuid` },
+];
+
 export const FEED_CHECKS: Record<string, FeedCheckDef[]> = {
   settlement: SETTLEMENT_CHECKS,
   load: LOAD_CHECKS,
+  invoice: INVOICE_CHECKS,
+  expense: EXPENSE_CHECKS,
+  bill: BILL_CHECKS,
 };
 
 export const FEED_SUBJECT_TABLE: Record<string, string> = {
   settlement: "driver_finance.driver_settlements",
   load: "mdata.loads",
+  invoice: "accounting.invoices",
+  expense: "accounting.expenses",
+  bill: "accounting.bills",
 };
