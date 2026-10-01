@@ -14,6 +14,10 @@ const checks = [
   [/externalIds: \{ ih35Stop: String\(st\.stop_id\) \}/.test(svc), "stops carry ih35Stop only (no duplicate ih35Load value)"],
   [/actual_arrival_at IS NOT NULL[\s\S]{0,200}stopFenceTimeSql/.test(svc), "a delivered load is never pushed"],
   [/samsaraReason/.test(svc), "Samsara's error message is recorded in the ledger"],
+  [/UPDATE mdata\.loads SET samsara_route_id = \$3/.test(svc), "a pushed route id is stamped on the load"],
+  [/export async function readBackSamsaraRoutes\(/.test(svc) && /samsara_route_stop_progress/.test(svc), "route read-back writes per-stop progress"],
+  [/readBackSamsaraRoutes\(/.test(readFileSync("apps/backend/src/integrations/samsara/routes-push.cron.ts", "utf8")), "read-back runs on the routes cron"],
+  [/samsara_route_progress/.test(readFileSync("apps/backend/src/telematics/telematics-linkage.service.ts", "utf8")), "load/unit reverse links include route progress"],
 ];
 const fails = checks.filter(([ok]) => !ok).map(([, w]) => w);
 if (fails.length) { console.error("verify-samsara-route-push-contract: FAIL\n  " + fails.join("\n  ")); process.exit(1); }

@@ -1,3 +1,4 @@
+import { canonicalDispatchWorkStatusClause } from "../../dispatch/canonical-active-load-set.js";
 import { stopFenceTimeSql } from "../../telematics/stop-arrival-events.js";
 import { resolveSamsaraApiToken } from "./samsara-token.js";
 import { SamsaraClient } from "./samsara-client.js";
@@ -173,6 +174,12 @@ export async function pushRoutePlanItem(
   try {
     const r = await api.upsertRoute(item.body);
     await recordRoutePush(client, operatingCompanyId, { load_id: item.load_id, outcome: "pushed", body_hash: item.body_hash, samsara_route_id: r.id, created: r.created, driver_note: item.driver_note }, true, null);
+    // E-31: the route id is stamped on the load (forward link); the route's externalIds.ih35Load is the reverse.
+    await client.query(
+      `UPDATE mdata.loads SET samsara_route_id = $3 WHERE id = $1::uuid AND operating_company_id = $2::uuid
+          AND samsara_route_id IS DISTINCT FROM $3`,
+      [item.load_id, operatingCompanyId, r.id]
+    );
     return { load_id: item.load_id, outcome: "pushed", samsara_route_id: r.id };
   } catch (error) {
     // Keep Samsara's own reason (SamsaraApiError.body.message) -- "samsara_http_400" alone hid the cause for 64 runs.
@@ -181,6 +188,10 @@ export async function pushRoutePlanItem(
     await recordRoutePush(client, operatingCompanyId, { load_id: item.load_id, outcome: "failed", body_hash: item.body_hash }, false, message);
     return { load_id: item.load_id, outcome: "failed", error: message };
   }
+}
+
+export async function samsaraRouteApiFor(client: RouteDbClient, operatingCompanyId: string): Promise<SamsaraClient> {
+  return samsaraClientFor(client, operatingCompanyId);
 }
 
 async function samsaraClientFor(client: RouteDbClient, operatingCompanyId: string): Promise<SamsaraClient> {
@@ -251,4 +262,58 @@ export async function projectRouteStopEvent(client: RouteDbClient, input: {
     [input.operatingCompanyId, loadId, stopId, arrival, occurredAt, departure]
   );
   return update.rows[0] ? { success: true } : { success: false, error: "route_stop_not_found_in_company" };
+}
+
+
+/**
+ * E-31 read-back: every load carrying a Samsara route id that is still in dispatch work (or moved in the last 2
+ * days) -> GET the route -> one integrations.samsara_route_stop_progress row per stop (matched by the stop's
+ * externalIds.ih35Stop): Samsara state, ETA, actual arrival / departure, en-route / skipped times, planned
+ * distance, live-share URL. Evidence only -- arrivals of record stay geo.geofence_events.
+ */
+export async function readBackSamsaraRoutes(
+  client: RouteDbClient,
+  operatingCompanyId: string,
+  api: { getRoute: (id: string) => Promise<Record<string, unknown> | null> }
+) {
+  const loads = await client.query<{ load_id: string; route_id: string; unit_id: string | null }>(
+    `SELECT l.id::text AS load_id, l.samsara_route_id AS route_id, l.assigned_unit_id::text AS unit_id
+       FROM mdata.loads l
+      WHERE l.operating_company_id = $1::uuid AND l.samsara_route_id IS NOT NULL AND l.soft_deleted_at IS NULL
+        AND (${canonicalDispatchWorkStatusClause("l")} OR l.updated_at > now() - interval '2 days')`,
+    [operatingCompanyId]
+  );
+  const ts = (v: unknown) => (typeof v === "string" && !Number.isNaN(Date.parse(v)) ? v : null);
+  let routes = 0, stops = 0, missing = 0;
+  for (const l of loads.rows) {
+    const route = await api.getRoute(l.route_id);
+    if (!route) { missing += 1; continue; }
+    routes += 1;
+    for (const raw of Array.isArray(route.stops) ? (route.stops as Array<Record<string, unknown>>) : []) {
+      const stopId = typeof object(raw.externalIds)?.ih35Stop === "string" ? String(object(raw.externalIds)!.ih35Stop) : null;
+      if (!stopId || raw.id == null) continue;
+      const res = await client.query(
+        `INSERT INTO integrations.samsara_route_stop_progress
+           (operating_company_id, load_id, stop_id, unit_id, samsara_route_id, samsara_stop_id, sequence_number, state, eta,
+            actual_arrival_at, actual_departure_at, en_route_at, skipped_at, planned_distance_meters, live_sharing_url, read_at)
+         SELECT $1::uuid, $2::uuid, s.id, $4::uuid, $5, $6, $7, $8, $9::timestamptz, $10::timestamptz, $11::timestamptz,
+                $12::timestamptz, $13::timestamptz, $14::numeric, $15, now()
+           FROM mdata.load_stops s WHERE s.id = $3::uuid AND s.load_id = $2::uuid
+         ON CONFLICT (load_id, stop_id) DO UPDATE SET
+           unit_id = EXCLUDED.unit_id, samsara_route_id = EXCLUDED.samsara_route_id, samsara_stop_id = EXCLUDED.samsara_stop_id,
+           sequence_number = EXCLUDED.sequence_number, state = EXCLUDED.state, eta = EXCLUDED.eta,
+           actual_arrival_at = EXCLUDED.actual_arrival_at, actual_departure_at = EXCLUDED.actual_departure_at,
+           en_route_at = EXCLUDED.en_route_at, skipped_at = EXCLUDED.skipped_at,
+           planned_distance_meters = EXCLUDED.planned_distance_meters, live_sharing_url = EXCLUDED.live_sharing_url,
+           read_at = now(), updated_at = now()
+         RETURNING load_id`,
+        [operatingCompanyId, l.load_id, stopId, l.unit_id, l.route_id, String(raw.id), Number(raw.sequenceNumber ?? 0),
+         typeof raw.state === "string" ? raw.state : null, ts(raw.eta), ts(raw.actualArrivalTime), ts(raw.actualDepartureTime),
+         ts(raw.enRouteTime), ts(raw.skippedTime), raw.plannedDistanceMeters == null ? null : Number(raw.plannedDistanceMeters),
+         typeof raw.liveSharingUrl === "string" ? raw.liveSharingUrl : null]
+      );
+      stops += res.rows.length;
+    }
+  }
+  return { loads_with_route: loads.rows.length, routes_read: routes, routes_missing: missing, stops_upserted: stops };
 }

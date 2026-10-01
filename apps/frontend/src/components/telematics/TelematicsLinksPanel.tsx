@@ -35,6 +35,8 @@ const LOAD_SECTIONS: Section[] = [
     columns: [col("transaction_at", "When", when), col("fuel_type", "Fuel"), col("gallons", "Gallons", num(3)), { ...col("total_cost", "Cost", num(2)), kind: "money" } as ParityColumn<Row>, UNIT, col("location_city", "City"), col("location_state", "State")] },
   { key: "driver_prompts", title: "Driver prompts", note: "Automatic prompts sent in this load's chat.", empty: "No prompts sent.",
     columns: [col("server_ts", "Sent", when), col("msg_type", "Type"), col("body", "Message")] },
+  { key: "samsara_route_progress", title: "Samsara route progress", note: "Per stop, read back from the Samsara route: state, ETA, actual times, live share link.", empty: "No Samsara route read back yet.",
+    columns: [col("sequence_number", "Stop #"), col("state", "State"), col("eta", "ETA", when), col("actual_arrival_at", "Arrived", when), col("actual_departure_at", "Departed", when), UNIT, col("live_sharing_url", "Live link"), col("read_at", "Read", when)] },
   { key: "samsara_route_pushes", title: "Samsara route", note: "Each push of this load as a Samsara route.", empty: "Not pushed to Samsara.",
     columns: [col("started_at", "When", when), col("success", "OK", yes), col("outcome", "Outcome"), col("samsara_route_id", "Samsara route")] },
 ];
@@ -52,6 +54,8 @@ const UNIT_SECTIONS: Section[] = [
     columns: [col("submitted_at", "Submitted", when), col("type", "Type"), col("role", "As"), LOAD, DRIVER, col("has_major_defect", "Major", yes)] },
   { key: "fuel_fills", title: "Fuel", note: "Fuel purchases on this truck.", empty: "No fuel in this window.",
     columns: [col("transaction_at", "When", when), col("fuel_type", "Fuel"), col("gallons", "Gallons", num(3)), { ...col("total_cost", "Cost", num(2)), kind: "money" } as ParityColumn<Row>, LOAD] },
+  { key: "samsara_route_progress", title: "Samsara routes", note: "Route stops this truck ran, read back from Samsara.", empty: "No Samsara route stops in this window.",
+    columns: [col("read_at", "Read", when), LOAD, col("sequence_number", "Stop #"), col("state", "State"), col("eta", "ETA", when), col("actual_arrival_at", "Arrived", when), col("actual_departure_at", "Departed", when)] },
   { key: "odometer_anchors", title: "Odometer readings", note: "Odometer anchors (Samsara and hand-entered).", empty: "No odometer readings in this window.",
     columns: [col("read_at", "When", when), col("odometer_miles", "Odometer", num(1)), col("source", "Source")] },
 ];
