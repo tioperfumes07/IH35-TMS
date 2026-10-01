@@ -1,40 +1,18 @@
 #!/usr/bin/env node
-// ROUND 303 B-43 item 1 (Lead order): "B-29 returns 0 attributed drivers. Your own note names
-// why: all 15 live work_orders reference 5 units with ZERO vehicle_driver_assignments coverage
-// -- and I verified those 5 units are CODER TEST ARTIFACTS. So the damage scorecard has never
-// run against real data. Re-measure against the 16 REAL units and report the real numbers."
+// ROUND 303 B-43 item 1, rewritten for ROUND 305 B-48: "B-29 HAS NEVER RUN ON REAL DATA ...
+// Re-measure against the live fleet — read it from live-fleet.ts, do not hardcode 14 or 16, and
+// note that 24 units are REAL TRUCKS GONE DARK, not test data."
 //
-// RE-MEASURED LIVE (2026-09-30, USMCA, bypass_rls=lucia, rolled back) by RUNNING the real
-// computeDriverDamageScorecard() (driver-damage-scorecard.service.ts, B-29) for all of 2026,
-// not by reconstructing its SQL by hand:
+// The first version of this guard hardcoded a 14-unit floor and repeated the "coder test artifacts"
+// label for T120/T149/T150/T151. Both were wrong: the fleet is measured, and those four are real
+// trucks (six-figure odometers, years of GPS) that went dark. This version hardcodes no fleet size.
 //
-//   computeDriverDamageScorecard() returns 0 rows. Confirmed empirically, not inferred.
-//
-// WHY, with the real numbers (correcting the cited "16" -- the real count is 14, not 16; board
-// figures get re-measured, never trusted, per this session's own standing practice):
-//   14 units carry real telematics.vehicle_driver_assignments coverage: T147, T148, T152, T156,
-//   T163, T164, T168, T170, T171, T173, T174, T175, T176, T177.
-//   ALL 20 live damage-adjacent events in the whole system -- 15 work_orders (repair+accident),
-//   1 tire_event, 1 safety.accidents row, 3 safety.accident_reports rows -- fall OUTSIDE that
-//   set of 14: the 15 work_orders sit on exactly 5 units (T120, T149, T150, T151, USMCA-001),
-//   every one with ZERO vehicle_driver_assignments coverage (confirmed, matching the order's own
-//   claim); the 1 tire_event is tagged to unit "T-TESTMTDP79YF" (is_sample_data=true, owned by a
-//   DIFFERENT operating_company_id entirely -- a cross-tenant test fixture, not even USMCA's own
-//   unit, despite the tire_event row itself carrying operating_company_id=USMCA); the 1
-//   safety.accidents row and 1 of 3 safety.accident_reports rows carry unit_id=NULL; the other 2
-//   accident_reports sit on 2 of the same 5 untracked units (USMCA-001, T150).
-//
-// This is a genuine, complete data-coverage gap -- not a code defect in driver-attribution.ts,
-// not a bug in the aggregation SQL, not an estimation shortcut papering over NULL (the "NULL,
-// never estimated" line from B-28/item 5 is upheld: the function correctly returns an EMPTY
-// array rather than fabricating a driver attribution it cannot support). The scorecard is wired
-// correctly; the live data simply has not yet produced a single damage/accident/tire event on
-// a unit with known driver history.
-//
-// FAILS IF: this honest-zero result silently changes shape without a deliberate re-measurement
-// -- either the real-telematics-coverage unit count drops below 14 (losing tracked fleet), or
-// the scorecard starts returning nonzero rows (which would mean real data finally landed and
-// this guard's own "honest zero" narrative needs updating, not quietly passing through).
+// --selftest (no DB): a unit with telemetry history and no recent GPS classifies "dark", never
+//   "sample"; a placeholder with no telemetry ever is "no_telemetry_ever", never "sample".
+// live: runs computeDamageEventAttribution() and computeDriverDamageScorecard() on USMCA and FAILS
+//   if (a) any event lacks a driver or a named gap reason, (b) any event on a unit with telemetry
+//   history is classed "sample" without is_sample_data, or (c) the scorecard's drivers differ from
+//   the drivers the event-level view attributes — the aggregate and the evidence must agree.
 import pg from "pg";
 import { register as registerTsx } from "tsx/esm/api";
 
@@ -42,91 +20,94 @@ registerTsx();
 
 const LABEL = "verify-damage-scorecard-honest-zero";
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
+const mod = (p) => import(new URL(`../../apps/backend/src/${p}`, import.meta.url));
 
-async function measure(client) {
-  const { computeDriverDamageScorecard } = await import(
-    new URL("../../apps/backend/src/maintenance/driver-damage-scorecard.service.ts", import.meta.url)
-  );
-  const scorecardRows = await computeDriverDamageScorecard(client, USMCA, "2026-01-01", "2026-12-31");
-
-  const coveredUnits = await client.query(
-    `
-    SELECT count(DISTINCT u.id)::int AS n
-    FROM telematics.vehicle_driver_assignments vda
-    JOIN mdata.units u ON u.id = vda.unit_id
-    WHERE u.currently_leased_to_company_id = $1::uuid OR u.owner_company_id = $1::uuid
-    `,
-    [USMCA]
-  );
-
-  const woUncoveredUnits = await client.query(
-    `
-    SELECT count(DISTINCT wo.unit_id)::int AS n
-    FROM maintenance.work_orders wo
-    LEFT JOIN telematics.vehicle_driver_assignments vda ON vda.unit_id = wo.unit_id
-    WHERE wo.operating_company_id = $1::uuid AND wo.voided_at IS NULL AND vda.id IS NULL
-    `,
-    [USMCA]
-  );
-
-  return {
-    scorecardRowCount: scorecardRows.length,
-    coveredUnitCount: coveredUnits.rows[0].n,
-    woUncoveredUnitCount: woUncoveredUnits.rows[0].n,
-  };
-}
-
-async function run() {
-  const url = process.env.DATABASE_URL;
-  if (!url) {
-    console.error(`${LABEL}: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP. A live money guard that cannot connect is a FAIL, never a pass.`);
-    process.exit(1);
-  }
-  const client = new pg.Client({ connectionString: url });
-  await client.connect();
-  // CI's verify:pre-commit runs verify-steps against a fresh, empty database. Without the USMCA
-  // company row there is nothing production-shaped to measure: run the offline selftest and say so.
-  {
-    const probe = await client.query("SELECT 1 FROM org.companies WHERE id = $1::uuid", [USMCA]);
-    if (probe.rows.length === 0) {
-      await client.end();
-      const { spawnSync } = await import("node:child_process");
-      const r = spawnSync(process.execPath, [new URL(import.meta.url).pathname, "--selftest"], { stdio: "inherit" });
-      console.log(`DATABASE PHASE: USMCA company absent (fresh CI DB) — selftest only, NOT live proof`);
-      process.exit(r.status ?? 1);
-    }
-  }
-  try {
-    await client.query("BEGIN");
-    await client.query("SET LOCAL ROLE neondb_owner");
-    await client.query("SET LOCAL app.bypass_rls = 'lucia'");
-    const m = await measure(client);
-    await client.query("ROLLBACK");
-
-    if (m.coveredUnitCount < 14) {
-      console.error(`${LABEL}: FAIL — real telematics-covered unit count dropped below the measured floor: ${m.coveredUnitCount} < 14. Fleet tracking coverage regressed.`);
-      process.exit(1);
-    }
-
-    console.log(
-      `${LABEL}: LIVE PASS (honest-zero, measure-only, B-43 item 1) — computeDriverDamageScorecard() ` +
-        `returns ${m.scorecardRowCount} row(s) for USMCA 2026, confirmed by RUNNING the real service, not reconstructed SQL. ` +
-        `${m.coveredUnitCount} units carry real telematics.vehicle_driver_assignments coverage (corrected from the cited 16). ` +
-        `${m.woUncoveredUnitCount} distinct unit(s) referenced by live work_orders have ZERO such coverage — ` +
-        `every live damage/accident/tire event in the system falls on an untracked unit, a NULL unit, or a cross-tenant test fixture, ` +
-        `not a code defect. This is an honest zero, not a bug.`
-    );
-  } finally {
-    await client.end();
-  }
+async function selftest() {
+  const assert = (await import("node:assert/strict")).default;
+  const { classifyFleetUnit } = await mod("telematics/live-fleet.ts");
+  const now = new Date("2026-10-01T00:00Z");
+  const base = { unitId: "u", unitNumber: "T149", isSampleData: false };
+  assert.equal(classifyFleetUnit({ ...base, lastGpsAt: new Date("2024-08-04T00:00Z"), everHadOdometer: true }, now).fleetClass, "dark", "a real truck gone dark is never test data");
+  assert.equal(classifyFleetUnit({ ...base, lastGpsAt: null, everHadOdometer: false }, now).fleetClass, "no_telemetry_ever");
+  assert.equal(classifyFleetUnit({ ...base, isSampleData: true, lastGpsAt: null, everHadOdometer: true }, now).fleetClass, "sample", "only is_sample_data makes a sample");
+  assert.equal(classifyFleetUnit({ ...base, lastGpsAt: new Date("2026-09-30T20:00Z"), everHadOdometer: true }, now).fleetClass, "reporting");
+  console.log(`${LABEL} --selftest PASS (4/4)`);
 }
 
 if (process.argv.includes("--selftest")) {
-  const assert = await import("node:assert/strict").then((m) => m.default);
-  const worse = { coveredUnitCount: 10 };
-  assert.ok(worse.coveredUnitCount < 14, "MUTATION: a drop in covered-unit count below 14 must be detected");
-  console.log(`${LABEL} --selftest PASS (1/1 mutation caught)`);
+  await selftest();
   process.exit(0);
 }
 
-await run();
+const url = process.env.DATABASE_URL;
+if (!url) {
+  console.error(`${LABEL}: FAIL — DATABASE_URL not set and this guard does not declare ALLOW_OFFLINE_SKIP.`);
+  process.exit(1);
+}
+const client = new pg.Client({ connectionString: url });
+await client.connect();
+// CI's verify:pre-commit runs verify-steps against a fresh, empty database: without the USMCA row
+// there is nothing production-shaped to measure, so only the offline proof runs, and it says so.
+const probe = await client.query("SELECT 1 FROM org.companies WHERE id = $1::uuid", [USMCA]);
+if (probe.rows.length === 0) {
+  await client.end();
+  await selftest();
+  console.log(`DATABASE PHASE: USMCA company absent (fresh CI DB) — selftest only, NOT live proof`);
+  process.exit(0);
+}
+
+const { computeDamageEventAttribution } = await mod("maintenance/damage-event-attribution.service.ts");
+const { computeDriverDamageScorecard } = await mod("maintenance/driver-damage-scorecard.service.ts");
+const { classifyFleetUnit, fleetUnitFactsSql } = await mod("telematics/live-fleet.ts");
+
+let coverage;
+let scorecard;
+let fleet;
+try {
+  await client.query("BEGIN");
+  await client.query("SET LOCAL ROLE neondb_owner");
+  await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+  const start = "2020-01-01T00:00:00Z";
+  const end = new Date().toISOString();
+  coverage = await computeDamageEventAttribution(client, USMCA, start, end);
+  scorecard = await computeDriverDamageScorecard(client, USMCA, start, end);
+  const facts = await client.query(fleetUnitFactsSql(), [USMCA]);
+  const now = new Date();
+  fleet = facts.rows.map((r) =>
+    classifyFleetUnit(
+      { unitId: r.unit_id, unitNumber: r.unit_number, isSampleData: r.is_sample_data, lastGpsAt: r.last_gps_at ? new Date(r.last_gps_at) : null, everHadOdometer: r.ever_had_odometer },
+      now
+    )
+  );
+  await client.query("ROLLBACK");
+} finally {
+  await client.end();
+}
+
+const problems = [];
+const factsById = new Map(fleet.map((u) => [u.unitId, u]));
+for (const e of coverage.events) {
+  if (e.attribution === "attributed" && !e.driver_id) problems.push(`${e.source} ${e.event_id}: attributed without a driver`);
+  if (e.attribution === "gap" && !e.gap_reason) problems.push(`${e.source} ${e.event_id}: gap without a reason`);
+  const u = e.unit_id ? factsById.get(e.unit_id) : null;
+  if (u && u.fleetClass === "sample" && !u.isSampleData) problems.push(`${e.unit_number}: classed sample without is_sample_data`);
+}
+const eventDrivers = new Set(coverage.events.filter((e) => e.driver_id).map((e) => e.driver_id));
+const scoreDrivers = new Set(scorecard.map((r) => r.driver_id));
+const missing = [...eventDrivers].filter((d) => !scoreDrivers.has(d));
+const extra = [...scoreDrivers].filter((d) => !eventDrivers.has(d));
+if (missing.length || extra.length) problems.push(`scorecard/event drivers disagree: missing ${missing.join(",")} extra ${extra.join(",")}`);
+
+if (problems.length > 0) {
+  console.error(`${LABEL}: FAIL — ${problems.slice(0, 10).join("; ")}`);
+  process.exit(1);
+}
+const byClass = (c) => fleet.filter((u) => u.fleetClass === c);
+console.log(
+  `${LABEL}: LIVE PASS — fleet MEASURED via live-fleet.ts: ${byClass("reporting").length} reporting, ` +
+    `${byClass("dark").length} REAL TRUCKS DARK (${byClass("dark").map((u) => u.unitNumber).join(", ")}), ` +
+    `${byClass("no_telemetry_ever").length} no telemetry ever, ${byClass("sample").length} sample. ` +
+    `Damage events all-time: ${coverage.summary.total} — ${coverage.summary.attributed} attributed, ${coverage.summary.gap} gap ` +
+    `${JSON.stringify(coverage.summary.gap_by_reason)}; where they sit ${JSON.stringify(coverage.summary.by_unit_fleet_class)}. ` +
+    `Scorecard drivers (${scoreDrivers.size}) match event-level attribution exactly.`
+);

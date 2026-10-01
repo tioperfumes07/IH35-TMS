@@ -6,6 +6,8 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { computeDriverFuelScorecard } from "./fuel-driver-scorecard.service.js";
 import { computeDriverDamageScorecard } from "./driver-damage-scorecard.service.js";
 import { computeDriverFuelIntegrity } from "./fuel-integrity.service.js";
+import { listIntegrityFindingsAttribution } from "./integrity-findings-attribution.service.js";
+import { computeDamageEventAttribution } from "./damage-event-attribution.service.js";
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -165,10 +167,8 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     const { periodStart, periodEnd } = resolvePeriod(query.data);
     const rows = await withCompany(user.uuid, query.data.operating_company_id, async (client) => {
-      const [fuel, damage] = await Promise.all([
-        computeDriverFuelScorecard(client, query.data.operating_company_id, periodStart, periodEnd),
-        computeDriverDamageScorecard(client, query.data.operating_company_id, periodStart, periodEnd),
-      ]);
+      const fuel = await computeDriverFuelScorecard(client, query.data.operating_company_id, periodStart, periodEnd);
+      const damage = await computeDriverDamageScorecard(client, query.data.operating_company_id, periodStart, periodEnd);
       const fuelByDriver = new Map(fuel.map((r) => [r.driver_id, r]));
       const damageByDriver = new Map(damage.map((r) => [r.driver_id, r]));
       const driverIds = new Set<string>([...fuelByDriver.keys(), ...damageByDriver.keys()]);
@@ -217,6 +217,54 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
     const { periodStart, periodEnd } = resolvePeriod(query.data);
     return withCompany(user.uuid, query.data.operating_company_id, (client) =>
       computeDriverFuelIntegrity(client, query.data.operating_company_id, periodStart, periodEnd)
+    );
+  });
+
+  // ROUND 305 B-49 — geofence integrity findings with their driver. Attributed only through the
+  // truck's assignment window at occurred_at; anything unplaceable comes back driver_id = null with
+  // a named gap_reason. Forward: finding -> driver. Reverse: /findings/driver/:driver_id.
+  const findingsQuerySchema = z.object({
+    operating_company_id: z.string().uuid(),
+    period_start: z.string().datetime({ offset: true }).optional(),
+    period_end: z.string().datetime({ offset: true }).optional(),
+  });
+  app.get("/api/v1/maintenance/integrity/findings", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const query = findingsQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+    return withCompany(user.uuid, query.data.operating_company_id, (client) =>
+      listIntegrityFindingsAttribution(client, query.data.operating_company_id, {
+        periodStart: query.data.period_start ?? null,
+        periodEnd: query.data.period_end ?? null,
+      })
+    );
+  });
+  app.get("/api/v1/maintenance/integrity/findings/driver/:driver_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const query = findingsQuerySchema.safeParse(req.query ?? {});
+    const params = z.object({ driver_id: z.string().uuid() }).safeParse(req.params ?? {});
+    if (!query.success || !params.success) return reply.code(400).send({ error: "validation_error" });
+    return withCompany(user.uuid, query.data.operating_company_id, (client) =>
+      listIntegrityFindingsAttribution(client, query.data.operating_company_id, {
+        driverId: params.data.driver_id,
+        periodStart: query.data.period_start ?? null,
+        periodEnd: query.data.period_end ?? null,
+      })
+    );
+  });
+
+  // ROUND 305 B-48 — every damage / accident / tire event with its driver or the named reason it has
+  // none, plus where the events sit in the live fleet (reporting / dark real trucks / placeholders).
+  app.get("/api/v1/maintenance/integrity/damage-events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const query = periodQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+    const { periodStart, periodEnd } = resolvePeriod(query.data);
+    return withCompany(user.uuid, query.data.operating_company_id, (client) =>
+      computeDamageEventAttribution(client, query.data.operating_company_id, periodStart, periodEnd)
     );
   });
 }

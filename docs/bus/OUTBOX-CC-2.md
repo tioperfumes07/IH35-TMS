@@ -874,3 +874,59 @@ rejected (22 live guards), and fresh-DB migration replay fails on pm_intervals_o
 NEXT: make my 11 earlier production-data guards CI-fresh-DB safe the same way (my own lane), then B-48.
 
 — CC-2
+
+## ROUND 305 B-49 — integrity findings: attribute what can be placed, state the rest (DONE)
+
+Built apps/backend/src/maintenance/integrity-findings-attribution.service.ts + GET
+/api/v1/maintenance/integrity/findings (finding -> driver) and
+/findings/driver/:driver_id (driver -> findings). Reads safety.integrity_findings as the cron
+wrote it; no second findings table, no write, no schema change. Driver comes ONLY from
+driverAtTimeSql at occurred_at.
+
+Live, USMCA: 116 findings — 46 attributed, 70 stated as a gap (matches the order's 46/70). The 70,
+by named reason: 2 no unit on the finding; 13 on units never assigned a driver (T149, T150, T166 —
+real trucks gone dark per live-fleet.ts — plus USMCA-001 placeholder and TEST-U01); 24 where the
+covering assignment window records NO driver (truck in use, nobody signed in — not attributed, and
+worth an ops look on its own); 31 where no window covers the moment. Every gap row carries its
+unit's live-fleet class so a dark real truck reads differently from a placeholder.
+
+Measured on the way: 52 of 620 USMCA assignment windows have driver_id NULL. A naive "a window
+covers it" count reads 70 attributable — wrong, because 24 of those windows say nobody was driving.
+
+Guard 12011: selftest 5/5 (no attribution without a window driver; every gap reason); live
+cross-checks every attributed row against an independent hand-written window recomputation and
+that the summary adds up. Does not freeze 46/70 — the split moves with assignment coverage.
+
+NEXT: B-48 (damage scorecard against live-fleet.ts), then B-50, B-51.
+
+— CC-2
+
+## ROUND 305 B-48 — damage scorecard against the MEASURED live fleet (DONE)
+
+New apps/backend/src/maintenance/damage-event-attribution.service.ts + GET
+/api/v1/maintenance/integrity/damage-events: every work order (repair/accident), tire event, safety
+accident and accident report, one row each, with its driver (assignment window at event time) or a
+named gap reason, plus where it sits in live-fleet.ts's measured classes.
+
+Live, USMCA, all-time: fleet measured (no hardcoded size) = 16 reporting, 23 REAL TRUCKS DARK, 3
+no telemetry ever, 1 sample. 19 damage events, 0 attributable: 10 on dark real trucks (T149, T150,
+T151, T120 — not test data, never were), 6 on the USMCA-001 placeholder, 1 tire event on a unit
+outside USMCA's fleet, 2 with no unit. The damage scorecard has genuinely never touched a reporting
+truck; the scorecard's empty driver list matches the event-level view exactly.
+
+Corrected my own guard 11999: removed the hardcoded 14-unit floor and the "coder test artifact"
+wording I had repeated. It now reads the fleet from live-fleet.ts, and fails if any event lacks
+a driver or reason, if a real truck is ever classed sample, or if scorecard and events disagree.
+Also fixed B-28/B-29: concurrent queries on one pg client (Promise.all) replaced with sequential
+reads — deprecated and able to interleave.
+
+B-51 STATUS: safety.complaints ALREADY EXISTS (with catalogs.complaint_types and routes), so it is
+extended, not rebuilt. It carries driver (respondent_driver_id), source (complainant_type +
+customer/user/driver/external), category, date, detail and recorded-by — but NO load_id and NO
+unit_id, so load -> complaints linkage is impossible today. Adding those two columns is a migration,
+and verify-migration-lane-band.mjs fails closed on any CC-2 branch adding one; its only crossing is
+an owner-authorized exact-branch/exact-file one-off. I am not authorizing myself in CC-1's guard.
+Building the complaints component on the existing columns next; the two-column migration needs the
+owner's one-off authorization (or CC-1) — named here, not hidden.
+
+— CC-2
