@@ -1180,3 +1180,8 @@ blocker: fuel.fuel_transaction_derivations = CC-1 migration (CC-2's spec); APPLY
 T-37 DONE: maintenance.pm_schedules 756b5701-9ed2-4402-b6d6-086fd133af98 (unit T-TESTMTDP79YF, is_sample_data=true, odometer 1/1)
 is_active true -> false, 2026-10-01T03:27:58Z, audit.audit_events source CC-3-T37-SAMPLE-VOID. Row kept (no delete). The other 24 sample
 schedules (TEST-TRUCK-1..4, TRANSP) were already inactive. No real record touched.
+
+## 2026-10-01 — CC-1 ask DONE: manual odometer entry re-runs the PM auto-engine
+odometer-manual.routes.ts: after the entry commits (201 path only; a refused rollback 409 does not trigger), fire-and-forget
+`runPmAutoEngineAfterManualOdometer(operating_company_id)` (CC-1's #23632, merged 03:26Z), error logged
+`pm_auto_engine_after_manual_odometer_failed`. Same call shape as CC-1's service-history route. tsc clean.

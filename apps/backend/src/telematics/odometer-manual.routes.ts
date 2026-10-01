@@ -16,6 +16,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { runPmAutoEngineAfterManualOdometer } from "../maintenance/pm-auto-engine.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -122,6 +123,10 @@ export async function registerOdometerManualRoutes(app: FastifyInstance) {
     });
 
     if (result.rejected) return reply.code(409).send({ error: "odometer_rollback_refused", ...result });
+    // E-14 (CC-1 ask): a manual odometer entry re-runs the PM auto-engine for this entity, after commit.
+    void runPmAutoEngineAfterManualOdometer(b.operating_company_id).catch((err: unknown) =>
+      req.log.error({ err }, "pm_auto_engine_after_manual_odometer_failed")
+    );
     return reply.code(201).send(result);
   });
 }
