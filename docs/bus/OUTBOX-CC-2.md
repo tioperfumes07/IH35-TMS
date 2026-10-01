@@ -1626,3 +1626,27 @@ costs (T175 fuel / expenses / settlement 5776) — they are real costs of a seco
 
 **Next (in order):** Feed Gate override as na-with-reason (item 3 remainder) → item 4 (factor setup: Faro submission email default, escrow + cash
 reserve rate fields read by candidates + engine) → ROUND 315 steps 4–8.
+
+## 2026-10-01 19:35Z — WRAP
+
+ACK: CC-2 | ACK WRAP | ROUND 321 item 4 (factor escrow + cash reserve rates + Faro submission email) | GO
+
+CC-2 | WRAP 2026-10-01 | DONE: #23884 e7cf65c35d (WORM trigger fuel_card_assignments + bank_account_tieouts) · #23888 2ca848311e (WORM baseline
+correction, 89) · #23887 a379ea869d (POD releases the invoice, ACCT-F9621) · #23892 fde7bc0426 (Feed Gate docs override na-with-reason, ACCT-F9622) ·
+#23898 be6e8877aa (factor cash_reserve_rate + submission email, ACCT-F9623) · earlier today #23849 / #23864 / #23878 (purchase document, Submit to
+Factor tab, override approval) | LIVE PROOF: factoring.factor.cash_reserve_rate live 19:31Z (migration 202615200700), both factors reserve 0.0150 /
+cash 0.000000; trg_worm_refuse_delete live on both tables 19:03Z, verify-worm-coverage-ratchet OK (79 protected / 89 at baseline),
+verify-new-financial-table-ships-worm OK; 12079 LIVE PASS (bol+pod categories); backend factoring vitest 95/95; health ok on be6e8877aa |
+UNFINISHED: (1) ROUND 321 item 2 — 13515 delete HELD: the database contradicts the ruling's premise (13515 has a PAID invoice — payment 411c9b24
+$525 applied — two different trucks/drivers T175 Leonel vs T152 Pedro, closed settlements 5776 vs 5772, T175 fuel $2,991.65 + 14 expenses);
+exact next step: owner/Lead re-confirm with those facts; if one billable load, re-apply payment 411c9b24 to 13513, void invoice 13515 + reverse JEs
+2c730468 / 396efaa2, keep 13515's trip costs or name where they belong — one AUTH. (2) ROUND 315 steps 4–8 not started: Payments to You per wire →
+tabs root fixes + Escrow tab + ×100 money-formatter guard → Home KPIs + cash flow per day → reserves shared with banking. (3) Owner to enter:
+Faro submission email + cash reserve rate on Factoring → Edit Factoring Profile. | HANDOFF-TO-CURSOR: none.
+
+Ambient reds (NOT CC-2, not patched): verify-migration-no-number-collision — 202610011900_recon_service_charge_expense_fk.sql is stamped in the prod
+ledger but absent from db/migrations (blocks pre-push for every seat); report-only: verify-purge-era-closures-still-hold (closure 21 A/R gap $20,800
+= invoices 13616/13618/13620/13621/13622 without A/R; closure 39 loads missing mileage), verify-usmca-book-equals-faro-and-alwaystrack (5 issues),
+verify-costs-are-expenses-not-handwritten-jes (JE cf78c2aa, Cursor). FactoringHome.vendor-merge-deeplink frontend test fails on main.
+Neon throwaway branches deleted: br-silent-fog-ak2l100x, br-bitter-haze-akhap2i3, br-summer-mode-ak5t7ruu, br-rapid-rain-akz830pt (today) +
+br-empty-rice-akqh08we, br-plain-mouse-akjigngx, br-billowing-lake-akmom1dj (CC-2 rehearsals from 09-25). None remain.
