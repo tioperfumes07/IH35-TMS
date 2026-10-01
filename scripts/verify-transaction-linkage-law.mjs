@@ -307,6 +307,25 @@ export function checkUnitWorkOrderReverseLink(src = readFileSync(join(ROOT, WORK
   return [{ level: "FAIL", message: `${WORK_ORDERS_ROUTES_PATH}: unit -> its work orders is HALF A LINK -- the list route no longer ${acceptsUnit ? "applies" : "accepts"} unit_id (TRANSACTION-LINKAGE-LAW §6).` }];
 }
 
+// E-16 (ORDERS 2026-10-01 CC-1 row 3): WO <-> unit <-> driver-at-time <-> vendor <-> bill <-> JE, both
+// directions, and the owner's three dates as real columns.
+export function checkWorkOrderLinkageBothWays(src = readFileSync(join(ROOT, WORK_ORDERS_ROUTES_PATH), "utf8")) {
+  const f = [];
+  const loader = src.match(/export async function loadWorkOrderLinkage\([\s\S]*?\n\}/);
+  if (!loader) return [{ level: "FAIL", message: `${WORK_ORDERS_ROUTES_PATH}: loadWorkOrderLinkage is gone -- the WO detail no longer resolves its hubs.` }];
+  const body = loader[0];
+  if (!/driverAtTimeSql\(/.test(body)) f.push("driver-at-time must come from driverAtTimeSql, never re-inlined");
+  if (!/accounting\.bills[\s\S]{0,160}linked_work_order_uuid/.test(body)) f.push("WO -> bills via linked_work_order_uuid missing");
+  if (!/accounting\.expenses[\s\S]{0,160}linked_work_order_uuid/.test(body)) f.push("WO -> expenses via linked_work_order_uuid missing");
+  if (!/journal_entry_postings[\s\S]{0,300}source_transaction_type IN \('bill', 'expense'\)/.test(body)) f.push("bill/expense -> JE via postings missing");
+  if (!/loadWorkOrderLinkage\(client, companyId, params\.data\.id\)/.test(src)) f.push("the detail route no longer returns linkage");
+  for (const col of ["reported_at", "in_shop_at", "expected_release_at"]) {
+    if (!new RegExp(`${col} = COALESCE\\(\\$\\d+::timestamptz, ${col}\\)`).test(src)) f.push(`PATCH no longer writes ${col}`);
+  }
+  if (f.length) return [{ level: "FAIL", message: `${WORK_ORDERS_ROUTES_PATH}: HALF A LINK (law §6) -- ${f.join("; ")}.` }];
+  return [{ level: "OK", message: `${WORK_ORDERS_ROUTES_PATH}: WO resolves unit, driver-at-time, vendor, bills, expenses and JEs; three dates are columns.` }];
+}
+
 function checkTier2LoadDemand() {
   const findings = [];
   const src = readFileSync(join(ROOT, WORK_ORDERS_ROUTES_PATH), "utf8");
@@ -383,6 +402,11 @@ function runSelftest() {
   const brokenRoutes = readFileSync(join(ROOT, WORK_ORDERS_ROUTES_PATH), "utf8").replace(/if \(q\.unit_id\)/, "if (false)");
   if (!checkUnitWorkOrderReverseLink(brokenRoutes).some((f) => f.level === "FAIL")) failures.push("checkUnitWorkOrderReverseLink did not FAIL when the unit_id filter was removed");
 
+  const woLink = checkWorkOrderLinkageBothWays();
+  if (!woLink.some((x) => x.level === "OK")) failures.push(`checkWorkOrderLinkageBothWays not OK on current source: ${woLink.map((x) => x.message).join(" | ")}`);
+  const brokenWo = readFileSync(join(ROOT, WORK_ORDERS_ROUTES_PATH), "utf8").replace(/driverAtTimeSql\(/g, "inlined(");
+  if (!checkWorkOrderLinkageBothWays(brokenWo).some((x) => x.level === "FAIL")) failures.push("checkWorkOrderLinkageBothWays did not FAIL when driverAtTimeSql was removed");
+
   if (failures.length > 0) {
     console.error(`${LABEL} --selftest: FAIL`);
     for (const f of failures) console.error(`  - ${f}`);
@@ -404,7 +428,7 @@ async function main() {
   const infoLines = [];
 
   // --- STATIC HALF ---
-  for (const finding of [...checkTier2LoadDemand(), ...checkUnitWorkOrderReverseLink()]) {
+  for (const finding of [...checkTier2LoadDemand(), ...checkUnitWorkOrderReverseLink(), ...checkWorkOrderLinkageBothWays()]) {
     infoLines.push(`[${finding.level}] ${finding.message}`);
     if (finding.level === "FAIL") failures.push(finding.message);
   }

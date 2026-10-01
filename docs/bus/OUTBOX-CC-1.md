@@ -945,3 +945,15 @@ odometer_readings), 0 due dates: 64 mileage schedules NULL baseline (BRK, PM-A, 
 T147 T148 T152 T156 T163 T164 T168 T170 T171 T173 T174 T175 T176 T177) + 32 days schedules (COOL, DOT ×
 same 16). Expected-empty until seeding. vitest 26/26, tsc 0, guard 12005 selftest PASS.
 **blocker:** none. **next:** E-16 work-order linkage.
+## E-16 work-order linkage — BUILT (ORDERS 2026-10-01 row 3)
+**what:** `maintenance.work_orders` gains `reported_at`, `in_shop_at`, `expected_release_at` (migration
+202615120000, claimed #23645) — real columns, accepted on create (v5 header) and PATCH, order-checked
+(reported ≤ in shop ≤ expected release, 422 otherwise), returned by detail/list via `w.*`; "—" when NULL
+is Cursor's render. Detail now returns `linkage`: unit, driver AT THE TIME (`driverAtTimeSql`, never
+re-inlined), vendor, bills + expenses via `linked_work_order_uuid`, and their JEs via postings. Reverse:
+unit→WO (A-48 `?unit_id=`), driver→WO (`?driver_id=`), vendor→WO (`?vendor_id=`), bill/expense→WO
+(`linked_work_order_uuid`), JE→bill/expense→WO (postings source). A-40 tire split already live.
+**proof:** live read-only on `WO-T150-AC-08-29-2026-0001-PEND0`: WO→unit T150 and unit→WO both
+resolve; driver-at-time none (T150 dark), no vendor/bill/expense/JE on any USMCA WO yet (unseeded —
+not created). Bill/expense/JE legs proven by test (4/4). Guard step 11965 `checkWorkOrderLinkageBothWays`.
+**blocker:** none. **next:** E-17 fleet roster guard (report already in ROUND 305 A-45).
