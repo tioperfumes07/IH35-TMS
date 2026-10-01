@@ -316,6 +316,7 @@ const QboSyncDetailPage = React.lazy(() => import("../pages/qbo-sync-detail/QboS
 const InvoicesListPage = React.lazy(() => import("../pages/accounting/InvoicesListPage").then((m) => ({ default: m.InvoicesListPage })));
 const TransactionRegisterPage = React.lazy(() => import("../pages/accounting/TransactionRegisterPage").then((m) => ({ default: m.TransactionRegisterPage })));
 const ReclassifyTransactionsPage = React.lazy(() => import("../pages/accounting/ReclassifyTransactionsPage").then((m) => ({ default: m.ReclassifyTransactionsPage })));
+const BatchExpensesPage = React.lazy(() => import("../pages/accounting/batch/BatchExpensesPage").then((m) => ({ default: m.BatchExpensesPage })));
 const MultiEntityAccountingPage = React.lazy(() => import("../pages/accounting/MultiEntityAccountingPage").then((m) => ({ default: m.MultiEntityAccountingPage })));
 const AccountingHubPage = React.lazy(() => import("../pages/accounting/AccountingHubPage").then((m) => ({ default: m.AccountingHubPage })));
 const MoneyProofTrailPage = React.lazy(() => import("../pages/accounting/MoneyProofTrailPage").then((m) => ({ default: m.MoneyProofTrailPage })));
@@ -4254,6 +4255,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ReclassifyTransactionsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/accounting/batch-transactions"
+          element={
+            <ProtectedRoute>
+              <BatchExpensesPage />
             </ProtectedRoute>
           }
         />

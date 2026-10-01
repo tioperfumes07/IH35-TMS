@@ -8,6 +8,16 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00–11 / 12–23) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202615170100": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-10-01",
+      "purpose": "DEPLOY BLOCKER ROOT FIX (Lead, HH 01): partial expression btree on audit.audit_events ((payload->>'resource_id'), created_at DESC) WHERE event_class='dispatch.stop_arrival_confirmed' -- STOP_ARRIVAL_EVENTS_SQL's LATERAL confirmation lookup ran a trigram bitmap scan over 2.87M audit rows per entered fence event (499 x), so the customer relationship scorer's boot-time tick held AccessShareLock on mdata.loads for ~1 h and every ALTER TABLE mdata.loads failed its lock_timeout at pre-deploy. CREATE INDEX CONCURRENTLY, IH35_MIGRATION_NO_TRANSACTION."
+    },
+    "202615170200": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-10-01",
+      "purpose": "DEPLOY BLOCKER ROOT FIX (Lead, HH 02): plain btree on audit.audit_events (event_class, created_at DESC) -- every equality reader of event_class (E-25 sync, reclassify audit, stop-arrival confirm/dismiss, detention) was served by the pg_trgm GIN bitmap (cost 3022 per probe); a btree makes equality O(log n). CREATE INDEX CONCURRENTLY, IH35_MIGRATION_NO_TRANSACTION."
+    },
     "202615170800": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-01",

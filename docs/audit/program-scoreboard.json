@@ -1,10 +1,10 @@
 {
-  "healthzSha": "6494c6b",
-  "generated_at": "2026-10-01T06:51:31.793Z",
+  "healthzSha": "7ace9f4",
+  "generated_at": "2026-10-01T06:56:55.118Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "6494c6b",
+    "deployedSha": "7ace9f4",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,42 @@
   },
   "recentActivity": [
     {
+      "number": 23752,
+      "title": "FINDING: ACCT-F9601 LANE: NON-FINANCIAL (Batch transactions — Expenses / Checks: spreadsheet grid, paste-from-sheet, fill-down, duplicate, per-cell validation, one Save posting each row as a real expense through the canonical engine)",
+      "state": "merged",
+      "mergedAtCt": "10/01/2026, 01:55 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23752",
+      "sha": "92fe320842",
+      "committedAtIso": "2026-10-01T01:55:43-05:00"
+    },
+    {
+      "number": 23753,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL (frontend build broken on main: ReclassifyTransactionsPage type errors block every frontend deploy)",
+      "state": "merged",
+      "mergedAtCt": "10/01/2026, 01:55 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23753",
+      "sha": "81f32a7a5b",
+      "committedAtIso": "2026-10-01T01:55:13-05:00"
+    },
+    {
+      "number": 23751,
+      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migrations 202615170100 + 202615170200 for the Lead's audit_events index root fix of the deploy lock-timeout blocker)",
+      "state": "merged",
+      "mergedAtCt": "10/01/2026, 01:53 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23751",
+      "sha": "ea094d0a81",
+      "committedAtIso": "2026-10-01T01:53:50-05:00"
+    },
+    {
+      "number": 23750,
+      "title": "FINDING: FACTORING-ADVANCE-HAS-NO-LOAD-LINK-2026100112 LANE: FINANCIAL (factoring engine: pre-invoice Faro purchase anchored to its load, own migration 202615170800; + 4 SQL placeholders restored that a $$ edit had collapsed)",
+      "state": "merged",
+      "mergedAtCt": "10/01/2026, 01:53 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23750",
+      "sha": "7ace9f4f5d",
+      "committedAtIso": "2026-10-01T01:53:27-05:00"
+    },
+    {
       "number": 23749,
       "title": "FINDING: N/A",
       "state": "merged",
@@ -2175,42 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23744",
       "sha": "84d3207bb8",
       "committedAtIso": "2026-10-01T01:36:53-05:00"
-    },
-    {
-      "number": 23741,
-      "title": "FINDING: N/A",
-      "state": "merged",
-      "mergedAtCt": "10/01/2026, 01:35 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23741",
-      "sha": "5796d18688",
-      "committedAtIso": "2026-10-01T01:35:55-05:00"
-    },
-    {
-      "number": 23743,
-      "title": "FINDING: FUEL-SOURCE-VOIDED-UNDER-LIVE-EXPENSE-2026100109 LANE: NON-FINANCIAL (AUTH-190 consumed: 146 fuel rows reinstated; per-load baseline re-stamped from the live count; guard: posted fuel expense -> live fuel row)",
-      "state": "merged",
-      "mergedAtCt": "10/01/2026, 01:34 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23743",
-      "sha": "ae378abd35",
-      "committedAtIso": "2026-10-01T01:34:07-05:00"
-    },
-    {
-      "number": 23742,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL -- loadAtTimeSql: a load finishes at the unit's delivery-fence exit when TMS has no delivery stamp",
-      "state": "merged",
-      "mergedAtCt": "10/01/2026, 01:33 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23742",
-      "sha": "13d182c02a",
-      "committedAtIso": "2026-10-01T01:33:45-05:00"
-    },
-    {
-      "number": 23740,
-      "title": "FINDING: FUEL-SOURCE-VOIDED-UNDER-LIVE-EXPENSE-2026100109 LANE: DOCS (Lead ruling 06:45Z: AUTH-190 + script to reinstate the 146 fuel rows; expenses never voided)",
-      "state": "merged",
-      "mergedAtCt": "10/01/2026, 01:30 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23740",
-      "sha": "c4f5519f36",
-      "committedAtIso": "2026-10-01T01:30:37-05:00"
     }
   ]
 }

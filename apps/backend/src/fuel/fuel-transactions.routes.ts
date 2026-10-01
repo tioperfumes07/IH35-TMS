@@ -166,11 +166,11 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
       }
       if (q.load_id) {
         values.push(q.load_id);
-        filters.push(`ft.load_id = ${values.length}`);
+        filters.push(`ft.load_id = $${values.length}`);
       }
       if (q.vendor_id) {
         values.push(q.vendor_id);
-        filters.push(`ft.vendor_id = ${values.length}`);
+        filters.push(`ft.vendor_id = $${values.length}`);
       }
       // The G18 worklist. Without this the 1,547 unattributed transactions ($625,546.39 on prod
       // 2026-08-03) are individually visible but cannot be listed AS the backlog they are.
