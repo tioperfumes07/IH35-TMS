@@ -984,3 +984,23 @@ verify-data-repair-migrations-noop-when-absent PASS.
 **noted for row 6:** catalog also carries coder test types active in USMCA (`CC2TYPECODE`, `CC3TEST`,
 `CODEX_P44_COMPLAINT`) — handled with the test complaints under the owner's void authorization.
 **next:** row 6.
+## Rows 6–8 — DONE
+**Row 6 (coder test complaints):** the three (`5e691a6a…`, `9e52b358…`, `e81cd567…`) were already voided
+2026-10-01 03:32Z by `e4117991…` under AUTH-180 ("coder test fixture, not a real complaint") — verified.
+Under the owner's chat authorization (anyone may void test/sample/demo items) CC-1 deactivated the three
+coder test complaint TYPES still active in USMCA — `CC2TYPECODE` (ad4decd3…), `CODEX_P44_COMPLAINT`
+(1d1727b1…), `CC3TEST` (0c2cccb1…) — `is_active=false`, guarded on 0 live complaints referencing them,
+one transaction + `audit.append_event('catalogs.complaint_type.deactivated', …, 'ORDERS-2026-10-01-CC1-ROW6')`.
+Reversible; nothing deleted.
+**Row 7 (fresh-DB migrate, pm_intervals FK):** fixed in #23602 (merged) — 202614850000 + 202615000000 run
+on prod, recorded-as-applied on non-prod (FRESH_DB_PRODUCTION_DATA_ONLY), telematics.odometer_readings
+bootstrapped on non-prod (prod drift: no migration creates it). Proof: CI's own from-zero migrate on
+#23632 / #23644 applied the full chain (no "Migration failed"); the heavy job now stops later at
+verify:arch-design (frontend sub-nav tabs, Cursor). A Neon branch copies prod data, so CI's empty Postgres
+is the true from-zero proof. Guard: verify-data-repair-migrations-noop-when-absent catches the INSERT shape.
+**Row 8 (CI readonly password) → OWNER:** GitHub Actions secret **`PROD_READONLY_DATABASE_URL`** (connects
+as `ih35_ci_readonly`). Read by `.github/workflows/ci.yml` job **`required-live-load-guard`** (as
+`DATABASE_URL` and `DATABASE_DIRECT_URL`, lines 66–67) and `.github/workflows/prod-postdeploy-verify.yml`
+(`DATABASE_URL`). Update its value to the current `ih35_ci_readonly` connection string; the
+`required-live-load-guard` → `build-typecheck` / `security-audit` / `locked-guards` cascade clears with it.
+**next:** row 9 (Cursor's backend fields).
