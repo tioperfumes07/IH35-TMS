@@ -1644,3 +1644,21 @@ The I2 detector was run live (`i2DeliveredLoadInvoiced.detect`, read-only). Both
 - BEFORE: about 5 min idle in transaction holding 13626, killed by the server timeout, then the poster committed a revenue JE.
 - AFTER (13637, 16:3xZ): refused in 3,108 ms with `E_LATCH_OUTSIDE_AFTER_COMMIT_SCOPE`. A second connection sampling `pg_stat_activity` every 250 ms saw **0 sessions waiting on a lock, 0 s idle-in-transaction elsewhere, and 0 new JEs for 13637**.
 - The production cron runs each load in `withLuciaBypass`, where the latch is deferred after COMMIT; the rolled-back proof in that wrapper ran about 3.2 s per load with no hang.
+
+## 2026-10-01 16:45Z — CORRECTION + LIVE: auto-delivery fired; 13626 revenue double-posted (my proof JE + engine JE)
+
+**LIVE (prod f7cd7a4 → f21671a deploying; flag `AUTO_DELIVERY_FROM_GEOFENCE_APPLY=true`).** The 16:41:10Z tick auto-delivered both loads through the canonical transition:
+
+| Load | Status | Delivery arrival → departure (eld_geofence, kept) | Driver bill | Revrec Event 1 (engine) | Invoice |
+|---|---|---|---|---|---|
+| 13626 | `delivered_pending_docs` | 09-25 18:54:59Z → 09-26 00:10:03Z | DB-000266, $290.93, open | JE `de792d44` 16:41:10Z | `accounting.invoice.awaiting_bol` (AUTO-INVOICE-ON-BOL waits for the BOL) |
+| 13637 | `delivered_pending_docs` | 10-01 12:20:04Z → 15:04:53Z | DB-000275, $980.26, open | JE `e1e1bd7e` 16:41:10Z | `awaiting_bol` |
+
+**CORRECTION — I was wrong.** My 16:45Z entry said the engine "will not double-post" Event 1. It did.
+- 13626 now carries **two** "Revrec Event 1 earn — load 13626" JEs: `4c416f76-a2a1-4000-88e2-e3fc39b3d0c4` (16:24:05Z, from my faulty proof) and `de792d44-97c0-44dc-a4a3-fd8c39da835d` (16:41:10Z, the engine). Each is Dr 1150 / Cr 4000, $3,400.00, so **revenue for 13626 is overstated by $3,400.00.**
+- **→ CC-1 (money lane), two items:**
+  1. Void (reversal) `4c416f76` through the canonical void path under an AUTH. It is the extra one: it came from a test run, not a delivery event. CC-3 does not write money.
+  2. `postLoadRevenueLatch` is not idempotent per (load, Event 1): it posted a second earn JE for a load that already had one. A guard should hold the poster to one live Event 1 per load.
+- **Cause on my side:** fixed in #23823 (the latch can no longer post inline from inside an open transaction). The remaining hole is the poster's own idempotency.
+
+**I2:** both loads still have no issued invoice (auto-invoice is waiting on BOL), so I2 stays 14/13, awaiting engine-generated invoices 13626/13637 (CC-2).
