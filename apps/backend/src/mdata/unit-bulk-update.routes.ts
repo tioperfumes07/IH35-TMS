@@ -1,6 +1,7 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
+import { vehicleTypeInputSchema } from "./fleet-type-filter.js";
 import { buildPatchChanges } from "../audit/crud-audit.js";
 import {
   appendLegacyFleetBulkAudit,
@@ -33,7 +34,7 @@ const bulkUpdateBodySchema = z.object({
   patch: z
     .object({
       status: bulkStatusInputSchema.optional(),
-      vehicle_type: z.string().trim().min(1).max(80).optional(),
+      vehicle_type: vehicleTypeInputSchema.optional(),
     })
     .refine((v) => Object.keys(v).length > 0, { message: "patch must include at least one field" }),
 });

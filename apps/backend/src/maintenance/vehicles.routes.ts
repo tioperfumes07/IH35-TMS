@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { normalizeVehicleType, VEHICLE_TYPE_VALUES, vehicleTypeInputSchema } from "../mdata/fleet-type-filter.js";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -16,7 +17,7 @@ const idParamsSchema = z.object({ id: z.string().uuid() });
 
 const createSchema = z.object({
   unit_display_id: z.string().trim().min(1).max(100),
-  vehicle_type: z.string().trim().max(80).optional(),
+  vehicle_type: vehicleTypeInputSchema.optional(),
   make: z.string().trim().max(100).optional(),
   model: z.string().trim().max(100).optional(),
   year: z.number().int().min(1980).max(2100).optional(),
@@ -29,7 +30,7 @@ const createSchema = z.object({
 
 const updateSchema = z
   .object({
-    vehicle_type: z.string().trim().max(80).nullable().optional(),
+    vehicle_type: vehicleTypeInputSchema.nullable().optional(),
     make: z.string().trim().max(100).nullable().optional(),
     model: z.string().trim().max(100).nullable().optional(),
     year: z.number().int().min(1980).max(2100).nullable().optional(),
@@ -83,9 +84,16 @@ function parseVehiclesCsv(text: string): CsvVehicleRow[] {
     if (!validStatuses.has(statusRaw)) {
       throw new Error(`Invalid status "${statusRaw}" in CSV`);
     }
+    // E-17 addition: same vocabulary as every other writer; an unknown type rejects the CSV with its
+    // value named, never stored as free text and never silently nulled.
+    const vehicleTypeRaw = get("vehicle_type");
+    const vehicleType = vehicleTypeRaw ? normalizeVehicleType(vehicleTypeRaw) : null;
+    if (vehicleTypeRaw && !vehicleType) {
+      throw new Error(`Invalid vehicle_type "${vehicleTypeRaw}" in CSV (allowed: ${VEHICLE_TYPE_VALUES.join(", ")})`);
+    }
     return {
       unit_display_id: get("unit_display_id"),
-      vehicle_type: get("vehicle_type") || null,
+      vehicle_type: vehicleType,
       make: get("make") || null,
       model: get("model") || null,
       year: yearRaw ? Number(yearRaw) : null,
