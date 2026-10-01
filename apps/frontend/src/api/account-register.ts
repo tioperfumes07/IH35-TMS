@@ -90,3 +90,20 @@ export function toggleAccountRegisterCleared(input: {
     body: JSON.stringify(input),
   });
 }
+
+/** B-1c — inline Save for memo + location. Date/payee/amount/account → open_original_document. */
+export function saveAccountRegisterInline(input: {
+  operating_company_id: string;
+  posting_id: string;
+  memo?: string | null;
+  location?: string | null;
+  requires_original_document?: boolean;
+}) {
+  return apiRequest<{ posting_id: string; memo: string | null; location: string | null }>(
+    `/api/v1/accounting/account-register/inline-save`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    }
+  );
+}

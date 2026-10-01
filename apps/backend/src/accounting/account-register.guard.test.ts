@@ -43,4 +43,10 @@ describe("account-register service guard", () => {
   it("has no stub / placeholder strings", () => {
     expect(svc).not.toMatch(/TODO|FIXME|coming soon|not implemented/i);
   });
+
+  it("B-1c inline Save refuses date/payee/amount with open_original_document", () => {
+    expect(svc).toContain("saveAccountRegisterInline");
+    expect(svc).toContain("open_original_document");
+    expect(svc).toContain("categorization_location");
+  });
 });

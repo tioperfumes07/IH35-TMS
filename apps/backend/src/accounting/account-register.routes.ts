@@ -3,8 +3,10 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import {
+  AccountRegisterInlineSaveError,
   AccountRegisterToggleError,
   getAccountRegister,
+  saveAccountRegisterInline,
   toggleAccountRegisterCleared,
 } from "./account-register.service.js";
 
@@ -19,6 +21,13 @@ const accountRegisterQuerySchema = companyQuerySchema.extend({
 const toggleClearedBodySchema = companyQuerySchema.extend({
   posting_id: z.string().uuid("posting_id must be a uuid"),
   cleared: z.boolean(),
+});
+
+const inlineSaveBodySchema = companyQuerySchema.extend({
+  posting_id: z.string().uuid("posting_id must be a uuid"),
+  memo: z.string().max(2000).nullable().optional(),
+  location: z.string().max(200).nullable().optional(),
+  requires_original_document: z.boolean().optional(),
 });
 
 function canAccessAccountRegister(role: string): boolean {
@@ -82,6 +91,40 @@ async function registerAccountRegisterRoutes(app: FastifyInstance) {
         return reply.code(200).send(result);
       } catch (error) {
         if (error instanceof AccountRegisterToggleError) {
+          return reply.code(error.httpStatus).send({ error: error.code });
+        }
+        throw error;
+      }
+    }
+  );
+
+  // B-1c — inline Save (memo + location). Date/payee/amount/account → open_original_document.
+  app.post(
+    "/api/v1/accounting/account-register/inline-save",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      if (!canAccessAccountRegister(String(user.role ?? ""))) {
+        return reply.code(403).send({ error: "forbidden" });
+      }
+      const body = inlineSaveBodySchema.safeParse(req.body ?? {});
+      if (!body.success) return validationError(reply, body.error);
+
+      try {
+        const result = await withCompanyScope(user.uuid, body.data.operating_company_id, (client) =>
+          saveAccountRegisterInline(client, {
+            operating_company_id: body.data.operating_company_id,
+            posting_id: body.data.posting_id,
+            memo: body.data.memo,
+            location: body.data.location,
+            requires_original_document: body.data.requires_original_document === true,
+            actor_user_id: user.uuid,
+          })
+        );
+        return reply.code(200).send(result);
+      } catch (error) {
+        if (error instanceof AccountRegisterInlineSaveError) {
           return reply.code(error.httpStatus).send({ error: error.code });
         }
         throw error;
