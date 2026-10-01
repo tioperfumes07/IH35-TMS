@@ -29,11 +29,13 @@ export async function runCustomerRelationshipScorerTick(): Promise<{
   let companiesProcessed = 0;
   let customersScored = 0;
 
-  await withLuciaBypass(async (client) => {
-    if (!(await relationshipScoresTableExists(client))) {
-      return;
-    }
-
+  // One SHORT transaction per customer. Measured 2026-10-01: the whole fleet of customers used to be scored
+  // inside ONE withLuciaBypass transaction that stayed open ~1 h (pgbouncer pid 24562, 58 min), holding
+  // AccessShareLock on mdata.loads and every table the scorer reads -- so no ALTER TABLE on those tables could
+  // ever take its lock, and prod pre-deploy failed twice on lock timeout (migration 202615160000), blocking
+  // every seat's deploy. A failure on one customer now loses only that customer, never the whole run.
+  const work = await withLuciaBypass(async (client) => {
+    if (!(await relationshipScoresTableExists(client))) return null;
     const companies = await client.query<{ id: string }>(
       `
         SELECT id::text AS id
@@ -43,7 +45,7 @@ export async function runCustomerRelationshipScorerTick(): Promise<{
         ORDER BY id
       `
     );
-
+    const out: Array<{ companyId: string; customerIds: string[] }> = [];
     for (const company of companies.rows) {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
       const customers = await client.query<{ id: string }>(
@@ -55,19 +57,26 @@ export async function runCustomerRelationshipScorerTick(): Promise<{
         `,
         [company.id]
       );
+      out.push({ companyId: company.id, customerIds: customers.rows.map((c) => c.id) });
+    }
+    return out;
+  });
+  if (!work) return { companies_processed: 0, customers_scored: 0 };
 
-      for (const customer of customers.rows) {
+  for (const { companyId, customerIds } of work) {
+    for (const customerId of customerIds) {
+      await withLuciaBypass(async (client) => {
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
         const computed = await computeRelationshipScore(client, {
-          operating_company_id: company.id,
-          customer_uuid: customer.id,
+          operating_company_id: companyId,
+          customer_uuid: customerId,
         });
         await upsertRelationshipScore(client, computed);
-        customersScored += 1;
-      }
-
-      companiesProcessed += 1;
+      });
+      customersScored += 1;
     }
-  });
+    companiesProcessed += 1;
+  }
 
   return { companies_processed: companiesProcessed, customers_scored: customersScored };
 }
