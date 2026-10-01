@@ -1151,3 +1151,19 @@ blocker: owner decision per pair (Lead carries). The one-line order needed: "for
 CC-1 ASK RECEIVED (pm-auto-engine on manual odometer): runPmAutoEngineAfterManualOdometer is in CC-1's open PR #23632, not on main —
 CC-3 adds the one-line call to odometer-manual.routes.ts the moment #23632 merges (calling it now would break main's build).
 next: row 6 (DVIR engine every 15 min + engine-status + Maintenance table for Cursor).
+
+## 2026-10-01 — ORDERS row 7 — E-23 Samsara fuel push reads CC-2's derived pump time (flag stays OFF)
+what: fuel-purchase-push.service.ts LEFT JOINs fuel.fuel_transaction_derivations (feature-detected). A date-only row is pushed with
+CC-2's transaction_at_derived ONLY at confidence 'high' (one fill, one fuel-stop stop that day); medium -> skip
+'derived_time_not_high_confidence'. Location: the fill's city/state, else the fuel-stop fence label the time came from. Live POST still
+requires SAMSARA_FUEL_PURCHASE_PUSH_APPLY=true (owner's word).
+proof (rolled back; side table created in-txn, filled by CC-2's own writeFuelTimeDerivations): table absent -> would_push 0;
+derivations 125 (high 22 / medium 30 with 10 times / none 73) -> would_push 22, skipped date_only 93, medium 10, DEF 52.
+Sample body: Love's #762 — Laredo, TX, 2026-08-05T02:31:54Z, 189.293 L, $267.48, vehicle 212014918145347 (T147), Diesel.
+guard: verify-samsara-fuel-push-never-substitutes extended (derived time high-confidence only) + --selftest PASS.
+blocker: fuel.fuel_transaction_derivations = CC-1 migration (CC-2's spec); APPLY flag = owner.
+
+## 2026-10-01 — OWNER-AUTHORIZED VOID (owner: "anyone can void a test and sample and demo item, not real transactions")
+T-37 DONE: maintenance.pm_schedules 756b5701-9ed2-4402-b6d6-086fd133af98 (unit T-TESTMTDP79YF, is_sample_data=true, odometer 1/1)
+is_active true -> false, 2026-10-01T03:27:58Z, audit.audit_events source CC-3-T37-SAMPLE-VOID. Row kept (no delete). The other 24 sample
+schedules (TEST-TRUCK-1..4, TRANSP) were already inactive. No real record touched.
