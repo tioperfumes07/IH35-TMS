@@ -64,7 +64,7 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     expectedWindowHours: 2,
     shouldProduce: true,
     syncKinds: [],
-    output: { relation: "telematics.unit_stop_events", tsColumn: "stopped_at", companyColumn: "operating_company_id" },
+    output: { relation: "telematics.unit_stop_events", tsColumn: "started_at", companyColumn: "operating_company_id" },
     ownerSeat: "Lead",
     kind: "engine",
   },

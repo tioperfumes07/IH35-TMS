@@ -13,10 +13,12 @@
  *    into Canada = northbound.
  *  - crossing_point from the fence: Laredo I (Gateway) laredo-i, Laredo II (Juárez–Lincoln) laredo-ii,
  *    Colombia Solidarity colombia, World Trade (Laredo IV) laredo-iv, every other crossing 'other'.
- *  - load = the unit's one on-road load (mdata.loads.assigned_unit_id); driver = the fence event's driver.
+ *  - load = the load the unit was carrying at entry (shared loadAtTimeSql, joined on mdata.loads.assigned_unit_id);
+ *    driver = the fence event's driver.
  *  - idempotent: a (vehicle, crossing point, entered time) already recorded is never written again.
  */
 import type { PoolClient } from "pg";
+import { loadAtTimeSql } from "../../../maintenance/driver-attribution.js";
 
 type Db = Pick<PoolClient, "query">;
 export type CrossingPoint = "laredo-i" | "laredo-ii" | "laredo-iii" | "laredo-iv" | "colombia" | "other";
@@ -56,7 +58,6 @@ export function directionOf(before: Country | null, after: Country | null): "nor
   return null;
 }
 
-const ON_ROAD = ["assigned_not_dispatched", "dispatched", "at_pickup", "in_transit", "at_delivery"];
 
 export type CrossingProjection = {
   visits: number;
@@ -113,18 +114,16 @@ export async function projectBorderCrossingsFromFenceEvents(client: Db, operatin
     if (!before || !after) { out.skipped.country_unknown += 1; continue; }
     const direction = directionOf(before, after);
     if (!direction) { out.skipped.no_country_change += 1; continue; }
-    const load = await client.query<{ id: string }>(
-      `SELECT l.id::text FROM mdata.loads l
-        WHERE l.assigned_unit_id = $1::uuid AND l.operating_company_id = $2::uuid
-          AND l.soft_deleted_at IS NULL AND l.status::text = ANY($3::text[])
-        LIMIT 2`,
-      [v.unit_id, operatingCompanyId, ON_ROAD]
+    // The load the truck was carrying at the crossing (shared loadAtTimeSql; NB vs booked return by time).
+    const load = await client.query<{ id: string | null }>(
+      `SELECT load_at_time.load_id::text AS id FROM (SELECT 1) _one ${loadAtTimeSql("$2::uuid", "$3::timestamptz")}`,
+      [operatingCompanyId, v.unit_id, v.entered_at]
     );
     await client.query(
       `INSERT INTO dispatch.border_crossing_events
          (operating_company_id, vehicle_id, driver_uuid, load_uuid, crossing_point, direction, entered_geofence_at, exited_geofence_at)
        VALUES ($1::uuid, $2, $3::uuid, $4::uuid, $5, $6, $7::timestamptz, $8::timestamptz)`,
-      [operatingCompanyId, v.unit_id, v.driver_id, load.rows.length === 1 ? load.rows[0]!.id : null, point, direction, v.entered_at, v.exited_at]
+      [operatingCompanyId, v.unit_id, v.driver_id, load.rows[0]?.id ?? null, point, direction, v.entered_at, v.exited_at]
     );
     out.written += 1;
   }

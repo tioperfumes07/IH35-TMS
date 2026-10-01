@@ -1417,3 +1417,11 @@ guard: scripts/verify-driver-prompts-flag-off-idempotent.mjs + --selftest PASS; 
 - E-10 / E-12 (fault + harsh pollers, fixed in #23664): both run daily 03:00 America/Chicago = 08:00Z today -> first real fault/harsh
   rows proof to follow (rolled-back proof already: 56 fault rows on 17 trucks, 5 harsh events).
 - Flags still OFF and waiting on the owner/Lead: fuel push, routes, driver messaging, driver prompts, fence push, auto-status, master sync.
+
+## 2026-10-01 — Linkage: one "load at time T" rule + reverse links (load → / unit → telematics)
+
+- **Owner rule (NB load, SB return booked while NB rolls):** defined ONCE as `loadAtTimeSql` (`maintenance/driver-attribution.ts`). Earliest-pickup unfinished load owns the truck until its delivery; then the return load owns it, deadhead included. Callers: E-03 stop writer, E-08 state machine, E-29 border crossings, E-30 prompts, T-51 DVIR, linkage reads. Guard `verify-load-at-time-single-definition`.
+- **Bug fixed — Lead's E-03 writer** read `l.delivered_at` (not a column) → `unit_stop_events` stayed empty. Rolled-back proof: 118 stops, 102 with load, 71 odometer, 55 miles, 43 in fence; T152 stop → 13634.
+- **DVIR linkage:** `load_id` from loadAtTimeSql (rolled-back: 56/57 linked); `trailer_id` from the single mdata.units match. Most trailers live in mdata.equipment, so the `trailer_equipment_id` column (migration 202615151000, claim #23726; rolled-back: 9 linked) ships in a follow-up PR. Any `.sql` in a diff runs every live guard, and the fuel guard below is red.
+- **Reverse links** (`GET /api/v1/loads/:id/telematics`, `GET /api/v1/units/:id/telematics`): built and proven read-only on 13634/T152 (94 fence crossings, 4 DVIRs, 5 fuel fills), but held out of this PR. They read `fuel.fuel_transactions`, which runs the live guard `verify-fuel-cost-posts-exactly-once`, and that guard is red on main data: **FUEL_5000_MISMATCH, 5000 Fuel & Diesel net $172,087.98 vs posted expense lines $172,606.78 (−$518.80)**. $518.80 matches fuel txn c4f21539 (T173, 2026-08-13, invoice 99418954, KEEP_RELAY). **→ CC-1 (money lane).** The routes ship once that guard is green.
+- **Data question (owner):** loads 13625 and 13638 have `canceled_at` set while status is dispatched; status is trusted.

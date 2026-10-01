@@ -57,8 +57,9 @@ export function assertGuard({ job, svc }) {
   if (/BORDER_GEOFENCES|findGeofenceForPosition|haversine/i.test(s))
     errs.push(`${DETECTOR_SVC}: a hard-coded border geofence / distance check is back (second inside decider)`);
   // ── detector service: must resolve the active load via the canonical unit->load column ──
-  if (!/assigned_unit_id/.test(s))
-    errs.push(`${DETECTOR_SVC}: must resolve the active load via mdata.loads.assigned_unit_id`);
+  // The load at the crossing comes from the shared loadAtTimeSql (which keys on mdata.loads.assigned_unit_id).
+  if (!/loadAtTimeSql\(/.test(s) && !/assigned_unit_id/.test(s))
+    errs.push(`${DETECTOR_SVC}: must resolve the load via the shared loadAtTimeSql (mdata.loads.assigned_unit_id)`);
   // load PK is mdata.loads.id — the original l.uuid was itself phantom
   if (/\bl\.uuid\b/.test(s))
     errs.push(`${DETECTOR_SVC}: mdata.loads has no uuid column — select l.id (the real PK)`);

@@ -4,7 +4,8 @@
  *  arrival   : a unit ENTERS its load's own stop fence (label load-<id>-stop-<n>)  -> "Arrival recorded ..."
  *              (confirmation_request; the driver confirms in the IH35 driver app's existing arrival prompt)
  *  fuel_stop : a unit STOPS (>= STOP_MIN_DWELL_MINUTES, E-03) inside a fuel_stop fence while it has exactly one
- *              on-road load -> "Fuel stop recorded ..." (a drive-by through the fence prompts nothing)
+ *              load it was carrying at that moment (shared loadAtTimeSql) -> "Fuel stop recorded ..."
+ *              (a drive-by through the fence prompts nothing)
  * Each prompt is a SYSTEM message in that load's chat thread (the one message store; the thread is created
  * with the load's primary driver when missing), idempotent per fence event (client_key prompt:<kind>:<event>),
  * then delivered to the driver's Samsara app by the shared delivery (its own flag). Times shown in
@@ -13,6 +14,7 @@
 import { createHash } from "node:crypto";
 import { getOrCreateLoadThread, postMessage } from "../../../chat/chat.service.js";
 import { STOP_MIN_DWELL_MINUTES } from "../../../telematics/stop-odometer-capture.service.js";
+import { loadAtTimeSql } from "../../../maintenance/driver-attribution.js";
 
 type Db = { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[]; rowCount?: number | null }> };
 
@@ -68,13 +70,13 @@ export async function postDriverPromptsForRecentFenceEvents(client: Db, operatin
     } else {
       // A fuel stop is a STOP (E-03 threshold), not a drive-by through the fence.
       if (Number(e.dwell_minutes) < STOP_MIN_DWELL_MINUTES) { skipped += 1; continue; }
-      const loads = (await client.query(
-        `SELECT id::text FROM mdata.loads WHERE assigned_unit_id = $1::uuid AND operating_company_id = $2::uuid
-            AND soft_deleted_at IS NULL AND status::text IN ('dispatched','at_pickup','in_transit','at_delivery') LIMIT 2`,
-        [e.unit_id, operatingCompanyId]
-      )).rows;
-      if (loads.length !== 1) { skipped += 1; continue; }
-      loadId = String(loads[0]!.id);
+      // The load the truck was carrying at the stop (shared loadAtTimeSql: NB vs the booked return by time).
+      const at = (await client.query(
+        `SELECT load_at_time.load_id::text AS id FROM (SELECT 1) _one ${loadAtTimeSql("$2::uuid", "$3::timestamptz")}`,
+        [operatingCompanyId, e.unit_id, e.occurred_at]
+      )).rows[0];
+      if (!at?.id) { skipped += 1; continue; }
+      loadId = String(at.id);
     }
     const loadNumber = String((await client.query(`SELECT load_number FROM mdata.loads WHERE id = $1::uuid`, [loadId])).rows[0]?.load_number ?? "");
     const body = DRIVER_PROMPT_TEMPLATES[kind](place, loadNumber, new Date(String(e.occurred_at)));

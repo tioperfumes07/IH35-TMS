@@ -14,7 +14,7 @@
  * Odometer is READ or NULL. The CHECK constraints in the migration refuse an inconsistent row and a
  * negative miles delta, so a bad write fails loudly at the table rather than silently in a report.
  */
-import { driverAtTimeSql } from "../maintenance/driver-attribution.js";
+import { driverAtTimeSql, loadAtTimeSql } from "../maintenance/driver-attribution.js";
 import {
   attachNearestOdometer,
   detectStops,
@@ -110,16 +110,10 @@ export async function writeUnitStopEvents(client: DbClient, operatingCompanyId: 
 
       // Driver and load at the stop START, resolved at read time -- never stored from a stale FK.
       const ctx = await client.query(
-        `SELECT driver_at_time.driver_id::text AS driver_id,
-                (SELECT l.id::text FROM mdata.loads l
-                  WHERE l.operating_company_id = $1::uuid
-                    AND l.assigned_unit_id = u.id
-                    AND coalesce(l.is_sample_data, false) = false
-                    AND l.created_at <= $3::timestamptz
-                    AND (l.delivered_at IS NULL OR l.delivered_at >= $3::timestamptz)
-                  ORDER BY l.created_at DESC LIMIT 1) AS load_id
+        `SELECT driver_at_time.driver_id::text AS driver_id, load_at_time.load_id::text AS load_id
            FROM mdata.units u
            ${driverAtTimeSql("u.id", "$3::timestamptz")}
+           ${loadAtTimeSql("u.id", "$3::timestamptz")}
           WHERE u.id = $2::uuid`,
         [operatingCompanyId, unit.unitId, s.startedAt.toISOString()]
       );
