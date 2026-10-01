@@ -25,6 +25,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { processMaintenanceWorkOrderClose } from "../accounting/maintenance-posting/poster.service.js";
+import { runPmAutoEngineAfterManualOdometer } from "./pm-auto-engine.service.js";
 import { withCompanyScope } from "../accounting/shared.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { generateWorkOrderNumber } from "../work-orders/wo-number.service.js";
@@ -258,6 +259,11 @@ export async function registerServiceHistoryBackfillRoutes(app: FastifyInstance)
         });
         bill_id = posting.bill_id;
       }
+
+      // E-14: a manual odometer entry re-runs the PM auto-engine for this entity (after commit).
+      void runPmAutoEngineAfterManualOdometer(body.operating_company_id).catch((err: unknown) =>
+        req.log.error({ err }, "pm_auto_engine_after_manual_odometer_failed")
+      );
 
       return reply.code(201).send({
         work_order_id: result.work_order_id,
