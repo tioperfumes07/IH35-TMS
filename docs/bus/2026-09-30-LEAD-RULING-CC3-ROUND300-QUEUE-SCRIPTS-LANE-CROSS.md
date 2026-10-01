@@ -48,6 +48,7 @@ Touched scripts/-lane files, one per queue item, each its own PR:
 - `scripts/verify-driven-miles-segments-from-stop-events.mjs` (Round 306 E-05).
 - `scripts/verify-driver-profile-tabs-read-only-and-attributed.mjs` (ORDERS 2026-10-01 row 4).
 - `scripts/verify-e29-fences-fire-and-status-switch-flag-off.mjs` (Round 306 E-29).
+- `scripts/verify-samsara-routes-push-real-ids-flag-off.mjs` (Round 306 E-31).
 - further Round 304 guards to follow under this same ruling, named as they land.
 
 No money-app posting path touched (NON-FINANCIAL lane -- measurement/reporting guards, a

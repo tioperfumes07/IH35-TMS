@@ -148,9 +148,10 @@ describe("Samsara externalIds standard", () => {
 
     await expect(client.upsertRoute({
       loadId: "load-1", name: "13508", unitId: "unit-1", driverId: "driver-1",
+      samsaraVehicleId: "281474985873184", samsaraDriverId: "55066742",
       stops: [
-        { externalIds: { ih35Load: "load-1", ih35Stop: "stop-1" }, addressId: "ih35Stop:stop-1" },
-        { externalIds: { ih35Load: "load-1", ih35Stop: "stop-2" }, addressId: "ih35Stop:stop-2" },
+        { externalIds: { ih35Load: "load-1", ih35Stop: "stop-1" }, singleUseLocation: { address: "Laredo, TX", latitude: 27.5, longitude: -99.5 } },
+        { externalIds: { ih35Load: "load-1", ih35Stop: "stop-2" }, singleUseLocation: { address: "Dallas, TX", latitude: 32.7, longitude: -96.8 } },
       ],
     })).resolves.toEqual({ id: "route-1", created: true });
 
@@ -159,10 +160,10 @@ describe("Samsara externalIds standard", () => {
     expect(create.method).toBe("POST");
     expect(JSON.parse(String(create.body))).toMatchObject({
       externalIds: { ih35Load: "load-1" },
-      vehicleId: "ih35Unit:unit-1",
-      driverId: "ih35Driver:driver-1",
+      vehicleId: "281474985873184",
+      driverId: "55066742",
       stops: [
-        { externalIds: { ih35Load: "load-1", ih35Stop: "stop-1" } },
+        { externalIds: { ih35Load: "load-1", ih35Stop: "stop-1" }, singleUseLocation: { address: "Laredo, TX", latitude: 27.5, longitude: -99.5 } },
         { externalIds: { ih35Load: "load-1", ih35Stop: "stop-2" } },
       ],
     });
