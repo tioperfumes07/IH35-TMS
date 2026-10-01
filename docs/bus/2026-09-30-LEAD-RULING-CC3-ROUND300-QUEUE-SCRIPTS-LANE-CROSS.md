@@ -46,6 +46,7 @@ Touched scripts/-lane files, one per queue item, each its own PR:
 - `scripts/verify-fence-capture-feeds-stops-never-interpolates.mjs` (Round 306 E-04).
 - `scripts/verify-one-geofence-inside-decider.mjs` (Round 306 E-08).
 - `scripts/verify-driven-miles-segments-from-stop-events.mjs` (Round 306 E-05).
+- `scripts/verify-driver-profile-tabs-read-only-and-attributed.mjs` (ORDERS 2026-10-01 row 4).
 - further Round 304 guards to follow under this same ruling, named as they land.
 
 No money-app posting path touched (NON-FINANCIAL lane -- measurement/reporting guards, a

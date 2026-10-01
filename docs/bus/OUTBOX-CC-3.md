@@ -1124,3 +1124,18 @@ proof (rolled back; table created in-txn from the Lead's column list, filled wit
   First run held nothing it should not; after the fix, 13626's earlier fence segments hold the load (guard-checked).
 guard: scripts/verify-driven-miles-segments-from-stop-events.mjs + --selftest PASS; vitest real-driven-miles 4/4.
 blocker: telematics.unit_stop_events lands with the Lead's deploy (202615030000). next: row 4 driver-profile backend.
+
+## 2026-10-01 — ORDERS row 4 — DRIVER PROFILE backend: endpoint list (TO CURSOR)
+All GET, all take ?operating_company_id=<uuid>; dated tabs take &from=YYYY-MM-DD&to=YYYY-MM-DD (default last 30 days). Read-only.
+| Tab | Endpoint | Notes |
+| Identity / documents / expirations | GET /api/v1/mdata/drivers/:id?aggregate=true (existing) + GET /api/v1/safety/driver-profiles/:driver_id (existing) + GET /api/v1/safety/medical-cards/drivers/:driver_id + GET /api/v1/safety/drug-program/drivers/:driver_id/drug-status | existing, unchanged |
+| Assignment history | GET /api/v1/drivers/:driverId/profile/assignments (NEW) | rows of telematics.vehicle_driver_assignments (the table driverAtTimeSql reads): unit_id, unit_number, started_at, ended_at, source |
+| Loads | GET /api/v1/drivers/:id/loads (existing) | |
+| Stops + miles | GET /api/v1/drivers/:driverId/profile/stops-miles (NEW) | `source`: unit_stop_events (when the Lead's table is live) or computed_e03; each stop: startedAt, endedAt, dwellMinutes, city/state, odometerMi + odometerNote, milesSincePreviousStop + milesNote, fence{label, captures}; `read_miles` = sum of READ deltas |
+| Fuel | GET /api/v1/drivers/:driverId/profile/fuel (NEW) | fills on units the driver held AT the fill time; per fill: purchase_ineligible_reason (null = real purchase), fraud_alerts[] (CC-2 fuel.fraud_alerts), gps_match (CC-2 safety.fuel_gps_matches) |
+| Safety | GET /api/v1/drivers/:driverId/profile/safety (NEW) | faults (driver at fault time), harsh_events, dvirs (signer; from_samsara flag), dot_inspections (station, dwell) |
+| Samsara link | GET /api/v1/drivers/:driverId/profile/samsara (NEW) | samsara_links[{samsara_driver_id, linked_via[], other_local_drivers[]}], duplicate_warning boolean |
+proof (live read, rolled back): Carlos Mauricio Pena Carvallo — assignments 3 (T164 since 2026-09-30 10:41Z), stops 14 / read_miles 163.6,
+samsara 60695293 duplicate_warning=true (other row "Carlos Mauricio Carvallo", Inactive). Driver 6be5233e…: fuel 13 fills (T173), all eligible,
+0 fraud alerts, 0 GPS matches (CC-2's engines run on ingest; none recorded yet). Unknown driver for the company -> 404.
+guard: scripts/verify-driver-profile-tabs-read-only-and-attributed.mjs + --selftest PASS. next: row 5 (32 duplicate pairs report).
