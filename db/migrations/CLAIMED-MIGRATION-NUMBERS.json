@@ -8,6 +8,11 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202615120000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-10-01",
+      "purpose": "E-16 work-order linkage: maintenance.work_orders reported_at / in_shop_at / expected_release_at as real nullable columns (owner: report date, date in shop, expected release -- columns, not notes)."
+    },
     "202615050000": {
       "claimed_by": "claude",
       "claimed_at": "2026-10-01",
