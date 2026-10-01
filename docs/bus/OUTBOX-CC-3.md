@@ -1185,3 +1185,25 @@ schedules (TEST-TRUCK-1..4, TRANSP) were already inactive. No real record touche
 odometer-manual.routes.ts: after the entry commits (201 path only; a refused rollback 409 does not trigger), fire-and-forget
 `runPmAutoEngineAfterManualOdometer(operating_company_id)` (CC-1's #23632, merged 03:26Z), error logged
 `pm_auto_engine_after_manual_odometer_failed`. Same call shape as CC-1's service-history route. tsc clean.
+
+## 2026-10-01 — ORDERS row 8 — E-29 DOT dwell / border / auto-status: verified against fences on live data
+FOUND (live): geo.geofence_events for dot_inspection_station = 0 EVER, border_crossing = 0 EVER, though 73 slow fixes sat within
+300 m of 6 DOT stations in 14 days. ROOT CAUSE: 342 fences (all 258 DOT, all 29 border, 55 others) store vertices as GeoJSON
+[lng, lat]; normalizeVertices read only {lat,lng} objects -> 0 vertices -> pointInPolygon always false. All 342 verified [lng, lat]
+(first vertex within 0.2 deg of the fence's own centre; 0 in [lat, lng]). FIX: normalizeVertices reads both shapes (code only).
+PROOF (rolled back): 250 real fixes near DOT/border fences replayed through processGeofenceDetectionsForGpsPoint -> 76 transitions:
+DOT 37 entered / 37 exited, border 1/1; compliance.dot_inspection_events produced with driver linked, e.g. T168 Troutville Scale
+(VA) 2026-09-17 22:34Z -> 2026-09-18 00:55Z, 140 min; T177 Stephens City 140 min. Fires live from the next deploy.
+Observation: some DOT dwells are 1,275-3,930 min (T175 Newbern, T171 Lexington) — the station polygon (~0.8 km) likely covers a
+truck stop / parking next to the scale. Report only; fence geometry is data.
+BORDER: the 29 'border_crossing' fences are mostly STATE ports of entry (OK/KS/NM etc.), only 6 international; the 5 Laredo bridges
+are NOT fenced (2 labels mention Laredo/Colombia). dispatch.border_crossing_events is fed by a separate hard-coded 5-circle detector
+(jobs/border-crossing-detector.ts) — a second inside decider (R-10), left running because the canonical fence set has no Laredo
+bridges. Fixed its two data bugs: direction was hard-coded 'northbound' on every row -> now measured from the unit's previous
+position (no previous position -> not written); load filter used statuses mdata.loads never carries ('assigned','in_transit') ->
+load_uuid was always NULL -> now real on-road statuses. Owner/Lead: fence the Laredo bridges + relabel state POEs, then CC-3
+retires the hard-coded detector onto geofence_events.
+AUTO-STATUS: integrations auto-status-switch worker UPDATEs mdata.loads.status and was default ON (only off when =false).
+Per rule 2 it is now flag-OFF: writes only with AUTO_STATUS_SWITCH_APPLY=true; detection still runs and returns the proposal.
+3 historic auto_status_switch_events (last 2026-09-21). telematics/auto-status.service.ts (suggestions) already reads geofence_events.
+guard: scripts/verify-e29-fences-fire-and-status-switch-flag-off.mjs + --selftest PASS; vitest geofence/border/auto-status 23/23.
