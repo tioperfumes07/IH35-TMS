@@ -1447,6 +1447,15 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     if (!hasWo && !hasPo) {
       return { kind: "error", status: 400, payload: { error: "customer_po_or_wo_number_required" } };
     }
+    // SET-01 at the API (Lead 2026-10-01, measured on load 13593): the owner's law is "the instant a
+    // load is CREATED it joins a pre-settlement" -- that link needs trip_type (NB/TR/SB/LOCAL). The
+    // wizard requires it in book_dispatch mode, yet 13593 reached this service on 2026-09-30 with a
+    // driver seated and trip_type null, so the link was deferred to a review queue nobody works and
+    // the load aged past verify-load-to-cash-chain's 24-hour LINK 2 window. A booked load with a
+    // driver and no trip type is refused here, whatever client sent it. Drafts stay exempt.
+    if (input.assigned_primary_driver_id && !input.trip_type) {
+      return { kind: "error", status: 400, payload: { error: "trip_type_required_when_driver_assigned" } };
+    }
   }
 
   const result = await bookLoadInTransaction(input);

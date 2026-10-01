@@ -142,6 +142,9 @@ async function live() {
       SELECT l.load_number, l.status::text AS status,
              (l.assigned_primary_driver_id IS NOT NULL OR l.assigned_secondary_driver_id IS NOT NULL) AS has_driver,
              (l.presettlement_link_id IS NOT NULL) AS has_presettlement,
+             (l.trip_type IS NULL) AS trip_type_missing,
+             EXISTS (SELECT 1 FROM driver_finance.presettlement_link_suggestions s
+                      WHERE s.load_id = l.id AND s.status = 'pending' AND s.suggested_settlement_id IS NULL) AS in_review_queue,
              EXISTS (SELECT 1 FROM driver_finance.driver_bills db WHERE db.load_id = l.id) AS has_bill
         FROM mdata.loads l
        WHERE l.soft_deleted_at IS NULL
@@ -174,8 +177,19 @@ async function live() {
 
     // LINK 2 — every driver-having load must be on a pre-settlement/tour. The owner-pending baseline
     // (see const above) is excluded; a driver-having unlinked load NOT in it is a real regression.
+    // Lead 2026-10-01 (measured on 13593): a driver-having load booked WITHOUT trip_type cannot be
+    // linked (book-load defers it into driver_finance.presettlement_link_suggestions, status
+    // 'pending', no suggested settlement) until a human sets the trip type -- Edit Load then
+    // re-enters the linker. That queue row is a visible, named, owner-actionable state, so it is
+    // REPORTED by load number, never hidden and never a silent pass. bookLoad() now refuses a
+    // book_dispatch call with a driver and no trip_type (trip_type_required_when_driver_assigned),
+    // so this queue can only grow from drafts. A driver-having unlinked load with NO queue row is
+    // still a hard LINK 2 failure.
+    const awaitingTripType = loads
+      .filter((r) => r.has_driver && !r.has_presettlement && r.trip_type_missing && r.in_review_queue && !OWNER_PENDING_UNLINKED.has(r.load_number))
+      .map((r) => r.load_number);
     const link2Fail = loads
-      .filter((r) => r.has_driver && !r.has_presettlement && !OWNER_PENDING_UNLINKED.has(r.load_number))
+      .filter((r) => r.has_driver && !r.has_presettlement && !OWNER_PENDING_UNLINKED.has(r.load_number) && !awaitingTripType.includes(r.load_number))
       .map((r) => r.load_number);
     const ownerPendingPresent = loads
       .filter((r) => !r.has_presettlement && OWNER_PENDING_UNLINKED.has(r.load_number))
@@ -186,6 +200,9 @@ async function live() {
     }
     if (ownerPendingPresent.length > 0) {
       console.log(`${LABEL}: REPORT — ${ownerPendingPresent.length} owner-pending unlinked load(s) baselined (script-cancelled OPEN pre-settlement, driver moved on): ${ownerPendingPresent.join(", ")}`);
+    }
+    if (awaitingTripType.length > 0) {
+      console.log(`${LABEL}: REPORT — ${awaitingTripType.length} driver-having load(s) sit in the pre-settlement review queue with NO trip type (owner sets NB/TR/SB/LOCAL in Edit Load; the linker then runs): ${awaitingTripType.join(", ")}`);
     }
     if (link1PendingPresent.length > 0) {
       console.log(`${LABEL}: REPORT — ${link1PendingPresent.length} load(s) pending a real mileage source before a driver bill can mint (never fabricated, owner-locked P1 rule): ${link1PendingPresent.join(", ")}`);
@@ -223,7 +240,7 @@ async function live() {
       process.exit(1);
     }
     console.log(
-      `${LABEL}: LIVE PASS — ${loads.length} eligible USMCA load(s); every driver-having load has a driver_bill and a presettlement_link_id; 0 expense_number mismatches.`
+      `${LABEL}: LIVE PASS — ${loads.length} eligible USMCA load(s); every driver-having load has a driver_bill and a presettlement_link_id${awaitingTripType.length ? ` except the ${awaitingTripType.length} named above awaiting a trip type in the review queue` : ""}; 0 expense_number mismatches.`
     );
   } finally {
     client.release();
