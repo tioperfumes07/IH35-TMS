@@ -1,4 +1,9 @@
 {
+  "12079": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-auto-invoice-on-bol-or-pod: ROUND 321 item 6 -- a signed BOL or POD releases the invoice; one shared billing-evidence code list used by the existence check, the awaiting queue and the upload trigger."
+  },
   "12075": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-01",
