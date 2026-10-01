@@ -1,4 +1,9 @@
 {
+  "12089": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-one-event1-je-per-load: ROUND 321 EVENT1-IDEMPOTENCY -- live, fail-closed: at most one live revenue JE per (load, event), each owned by an active latch row; static: the poster retires stale (reversed) active latch rows before the unique insert, inside the JE transaction."
+  },
   "12079": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-01",
