@@ -350,7 +350,6 @@ import { registerOdometerManualRoutes } from "./telematics/odometer-manual.route
 import { registerFaultCodeAlertsRoutes } from "./maintenance/fault-code-alerts.routes.js";
 import { registerDrivenMilesLegsRoutes } from "./telematics/driven-miles-legs.routes.js";
 import { registerIftaMilesRoutes } from "./telematics/ifta-miles.routes.js";
-import { registerTelematicsLinkageRoutes } from "./telematics/telematics-linkage.routes.js";
 import { registerUnitStopsRoutes } from "./telematics/unit-stops.routes.js";
 import { registerDriverProfileTabRoutes } from "./driver-profile/driver-profile-tabs.routes.js";
 import { registerFuelEfficiencySignalRoutes } from "./telematics/fuel-efficiency-signal.routes.js";
@@ -1266,7 +1265,6 @@ async function main() {
   await registerFaultCodeAlertsRoutes(app);
   await registerDrivenMilesLegsRoutes(app);
   await registerIftaMilesRoutes(app);
-  await registerTelematicsLinkageRoutes(app);
   await registerUnitStopsRoutes(app);
   await registerDriverProfileTabRoutes(app);
   await registerFuelEfficiencySignalRoutes(app);

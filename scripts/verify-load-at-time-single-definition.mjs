@@ -19,7 +19,6 @@ const callers = [
   "integrations/samsara/border-crossings/detector.service.ts",
   "integrations/samsara/messaging/driver-prompts.service.ts",
   "safety/samsara-dvir-ingest.service.ts",
-  "telematics/telematics-linkage.service.ts",
 ];
 for (const f of callers) if (!readFileSync(join(root, f), "utf8").includes("loadAtTimeSql(")) fails.push(`${f} must call loadAtTimeSql`);
 if (/TRANSITION_ACTIVE_LOAD_STATUSES/.test(readFileSync(join(root, callers[1]), "utf8"))) fails.push("state machine re-declares an on-road status list");
