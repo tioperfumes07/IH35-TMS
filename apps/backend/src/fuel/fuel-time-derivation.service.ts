@@ -285,3 +285,18 @@ export async function writeFuelTimeDerivations(
   }
   return { written, skipped_reason: null };
 }
+
+/**
+ * Pump times the engine has stored with HIGH confidence (one fill, one fuel stop). E-21 and E-22
+ * use these instead of refusing a date-only row. Empty until the side table exists.
+ */
+export async function loadHighConfidenceDerivedTimes(client: DbClient, operatingCompanyId: string): Promise<Map<string, string>> {
+  if (!(await derivationTableReady(client))) return new Map();
+  const r = await client.query<{ id: string; t: string }>(
+    `SELECT fuel_transaction_id::text AS id, transaction_at_derived::text AS t
+       FROM fuel.fuel_transaction_derivations
+      WHERE operating_company_id = $1::uuid AND confidence = 'high' AND transaction_at_derived IS NOT NULL`,
+    [operatingCompanyId]
+  );
+  return new Map(r.rows.map((x) => [x.id, x.t]));
+}

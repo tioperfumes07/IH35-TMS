@@ -17,6 +17,9 @@ const complaintsQuerySchema = companyQuerySchema.extend({
   driver_id: z.string().uuid().optional(),
   customer_id: z.string().uuid().optional(),
   user_id: z.string().uuid().optional(),
+  // E-28 (owner order 2026-10-01): load -> complaints and unit -> complaints, the other half of the link.
+  load_id: z.string().uuid().optional(),
+  unit_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -50,6 +53,10 @@ const complaintSchema = z.object({
   severity: z.enum(["low", "medium", "high", "critical"]),
   status: z.enum(["open", "investigating", "resolved", "dismissed", "escalated"]).optional(),
   resolution: z.string().optional(),
+  // E-28: the load and truck the complaint is about, where applicable. Same company only — validated
+  // here and enforced by trg_complaints_same_company_links (202615100000).
+  load_id: z.string().uuid().optional(),
+  unit_id: z.string().uuid().optional(),
 });
 
 function currentUser(req: FastifyRequest, reply: FastifyReply) {
@@ -134,6 +141,14 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
       if (query.data.user_id) {
         values.push(query.data.user_id);
         filters.push(`(c.complainant_user_id = $${values.length} OR c.respondent_user_id = $${values.length})`);
+      }
+      if (query.data.load_id) {
+        values.push(query.data.load_id);
+        filters.push(`c.load_id = $${values.length}`);
+      }
+      if (query.data.unit_id) {
+        values.push(query.data.unit_id);
+        filters.push(`c.unit_id = $${values.length}`);
       }
       const reverseFilter = filters.length > 0 ? `AND ${filters.join(" AND ")}` : "";
       const countRes = await client.query(
@@ -287,7 +302,14 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
               WHERE f.id = ANY(COALESCE($8::uuid[], ARRAY[]::uuid[]))
                 AND f.operating_company_id = $1::uuid
                 AND f.deleted_at IS NULL
-           )) AS evidence_docs_ok`,
+           )) AS evidence_docs_ok,
+           ($9::uuid IS NULL OR EXISTS (
+             SELECT 1 FROM mdata.loads l WHERE l.id = $9::uuid AND l.operating_company_id = $1::uuid
+           )) AS load_ok,
+           ($10::uuid IS NULL OR EXISTS (
+             SELECT 1 FROM mdata.units u WHERE u.id = $10::uuid
+               AND (u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid)
+           )) AS unit_ok`,
         [
           query.data.operating_company_id,
           body.data.complainant_driver_id ?? null,
@@ -297,6 +319,8 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
           body.data.respondent_user_id ?? null,
           body.data.complaint_type_id,
           body.data.evidence_doc_ids ?? [],
+          body.data.load_id ?? null,
+          body.data.unit_id ?? null,
         ]
       );
       const validity = linked.rows[0];
@@ -325,7 +349,9 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
             --   complaint_type_id  = FK to catalogs.complaint_types, resolved from the v6.4 type_code
             --                        text within the same operating company (type_code is UNIQUE per company).
             respondent_id,
-            complaint_type_id
+            complaint_type_id,
+            load_id,
+            unit_id
           )
           VALUES (
             $1, COALESCE($2::timestamptz, now()), $3, $4, $5, $6, $7, $8, $9, $10, $11,
@@ -333,7 +359,9 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
             $13, $14, $15, COALESCE($16, 'open'), $17, $18,
             COALESCE($2::timestamptz, now())::date,
             COALESCE($10::uuid, $11::uuid),
-            $12::uuid
+            $12::uuid,
+            $19::uuid,
+            $20::uuid
           )
           RETURNING *
         `,
@@ -356,11 +384,13 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
           body.data.status ?? "open",
           body.data.resolution ?? null,
           user.uuid,
+          body.data.load_id ?? null,
+          body.data.unit_id ?? null,
         ]
       );
       const row = res.rows[0] as Record<string, unknown> | undefined;
       if (!row?.id) throw new Error("safety_complaint_insert_failed");
-      await appendCrudAudit(client, user.uuid, "safety.complaint.filed", { complaint_id: row.id, operating_company_id: query.data.operating_company_id, severity: row.severity }, "warning", "P3-T11.17.2-SAFETY-V6.4");
+      await appendCrudAudit(client, user.uuid, "safety.complaint.filed", { complaint_id: row.id, operating_company_id: query.data.operating_company_id, severity: row.severity, load_id: row.load_id ?? null, unit_id: row.unit_id ?? null }, "warning", "P3-T11.17.2-SAFETY-V6.4");
       return row;
     });
     if (!created) {
@@ -397,13 +427,20 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
           SET status = COALESCE($3, status),
               resolution = COALESCE($4, resolution),
               resolved_at = CASE WHEN COALESCE($3, status) IN ('resolved', 'dismissed') THEN now() ELSE resolved_at END,
-              resolved_by = CASE WHEN COALESCE($3, status) IN ('resolved', 'dismissed') THEN $5 ELSE resolved_by END
+              resolved_by = CASE WHEN COALESCE($3, status) IN ('resolved', 'dismissed') THEN $5 ELSE resolved_by END,
+              load_id = COALESCE($6::uuid, load_id),
+              unit_id = COALESCE($7::uuid, unit_id)
           WHERE id = $1
             AND operating_company_id = $2::uuid
           RETURNING *
         `,
-        [params.data.id, query.data.operating_company_id, body.data.status ?? null, body.data.resolution ?? null, user.uuid]
-      );
+        [params.data.id, query.data.operating_company_id, body.data.status ?? null, body.data.resolution ?? null, user.uuid, body.data.load_id ?? null, body.data.unit_id ?? null]
+      ).catch((err: { code?: string; message?: string }) => {
+        // trg_complaints_same_company_links refuses another entity's load or truck.
+        if (err?.code === "23514") return { rows: [{ __cross_company: true, message: err.message }] };
+        throw err;
+      });
+      if ((res.rows[0] as { __cross_company?: boolean } | undefined)?.__cross_company) return { __cross_company: true } as const;
       const row = res.rows[0];
       if (!row) return null;
       await appendCrudAudit(client, user.uuid, "safety.complaint.status_changed", { complaint_id: row.id, operating_company_id: query.data.operating_company_id, status: row.status }, "info", "P3-T11.17.2-SAFETY-V6.4");
@@ -412,6 +449,9 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
       }
       return row;
     });
+    if (updated && "__cross_company" in updated) {
+      return reply.code(400).send({ error: "linked_entity_not_in_operating_company", message: "That load or truck belongs to another company." });
+    }
     if (!updated) {
       return reply.code(404).send({
         error: "complaint_not_found",

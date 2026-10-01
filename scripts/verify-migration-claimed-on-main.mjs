@@ -92,6 +92,16 @@ const OWNER_AUTHORIZED_ONE_OFFS = new Map([
       "db/migrations/202614390000_expense_lines_fleet_linkage.sql",
     ]),
   ],
+  // Owner order 2026-10-01 (docs/bus/2026-10-01-OWNER-ORDER-CC-2-NO-HANDOFF-BUILD-OWN-MIGRATIONS.md):
+  // "fully complete and build their own engine, no handing off" -- CC-2's two engine migrations,
+  // claimed first (#23641) under claimed_by cc-2. Same exact-branch + exact-file shape as above.
+  [
+    "cc-2/owner-1001-complaints-fuel-derivation-migrations",
+    new Set([
+      "db/migrations/202615100000_complaints_load_unit_link_and_categories.sql",
+      "db/migrations/202615110000_fuel_transaction_derivations.sql",
+    ]),
+  ],
 ]);
 
 function isOwnerAuthorizedOneOff(branch, files) {

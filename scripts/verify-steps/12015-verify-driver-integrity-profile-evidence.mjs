@@ -25,7 +25,14 @@ async function selftest() {
   assert.match(s.arithmetic, /suspicion \(fuel\)/);
   assert.match(s.arithmetic, /No weighted total/, "the score must state it is not a weighted blend");
   assert.equal(scoreProfile([c("fuel", "finding")]).findings, 1);
-  console.log(`${LABEL} --selftest PASS (4/4)`);
+  // E-28: complaint <-> load <-> unit both ways, same company only.
+  const { readFileSync } = await import("node:fs");
+  const root = new URL("../../", import.meta.url);
+  const route = readFileSync(new URL("apps/backend/src/routes/safety/complaints.ts", root), "utf8");
+  assert.ok(/load_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(route) && /c\.load_id = \$/.test(route) && /c\.unit_id = \$/.test(route), "complaints: write load/unit and list by load/unit");
+  const mig = readFileSync(new URL("db/migrations/202615100000_complaints_load_unit_link_and_categories.sql", root), "utf8");
+  assert.ok(/trg_complaints_same_company_links/.test(mig) && /LATENESS/.test(mig) && /REFUSED-DISPATCH/.test(mig), "same-company trigger + owner categories");
+  console.log(`${LABEL} --selftest PASS (6/6)`);
 }
 
 if (process.argv.includes("--selftest")) {

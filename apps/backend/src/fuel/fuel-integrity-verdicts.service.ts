@@ -9,6 +9,7 @@
  */
 import { fuelPurchaseIneligibleReason, type FuelPurchaseIneligibleReason } from "./fuel-purchase-eligibility.js";
 import { evaluateTransactionRules } from "../integrations/fuel/fraud-detector/rules.service.js";
+import { loadHighConfidenceDerivedTimes } from "./fuel-time-derivation.service.js";
 import { classifyFraudMatches } from "../integrations/fuel/fraud-detector/signal-independence.js";
 import { computeRelayFillGpsVerdicts, type RelayFillGpsVerdict } from "./fuel-gps-verdict.service.js";
 
@@ -55,6 +56,7 @@ export async function computeFuelIntegrityVerdicts(
     [operatingCompanyId, periodStart, periodEnd]
   );
 
+  const derivedTimes = await loadHighConfidenceDerivedTimes(client, operatingCompanyId);
   const card_rows: CardRowVerdict[] = [];
   for (const t of rows.rows) {
     const e = {
@@ -87,8 +89,11 @@ export async function computeFuelIntegrityVerdicts(
       });
       continue;
     }
-    const dateOnly = fuelPurchaseIneligibleReason(e, { requirePumpTime: true }) === "date_only_precision";
-    const v = classifyFraudMatches(await evaluateTransactionRules(client, t), { dateOnly });
+    // A date-only row with a high-confidence derived pump time (one fill, one fuel stop) is
+    // evaluated at that time instead of being refused; transaction_at itself is never changed.
+    const derived = derivedTimes.get(String(t.id));
+    const dateOnly = !derived && fuelPurchaseIneligibleReason(e, { requirePumpTime: true }) === "date_only_precision";
+    const v = classifyFraudMatches(await evaluateTransactionRules(client, derived ? { ...t, transaction_at: derived } : t), { dateOnly });
     card_rows.push({
       ...base,
       is_purchase: true,
@@ -98,7 +103,7 @@ export async function computeFuelIntegrityVerdicts(
       suspicion_count: v.classification === "suspicion" ? v.matches.length : 0,
       rules_matched: v.matches.map((m) => m.rule_id),
       rules_refused_date_only: v.skipped_rules,
-      why: v.basis + (dateOnly ? " (date-only source: pump-time rules not asked)" : ""),
+      why: v.basis + (derived ? ` (pump time derived from the truck's fuel stop: ${derived})` : dateOnly ? " (date-only source: pump-time rules not asked)" : ""),
     });
   }
 

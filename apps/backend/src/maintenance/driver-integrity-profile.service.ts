@@ -16,8 +16,8 @@
  * against a driver only when (a) the driver is linked — respondent_driver_id, or the legacy
  * respondent_id when respondent_type = 'driver' and it resolves to a real mdata.drivers row — and
  * (b) it names who recorded it (created_by), a field the order makes mandatory. Anything else is
- * listed as excluded, with the reason. safety.complaints has no load_id or unit_id column, so
- * load -> complaints linkage is reported as unavailable, never inferred.
+ * listed as excluded, with the reason. Each complaint carries its load, truck and customer where
+ * recorded (load_id / unit_id from 202615100000, feature-detected; never inferred).
  */
 import { computeDriverFuelIntegrity, type DriverFuelIntegrity } from "./fuel-integrity.service.js";
 import { computeDamageEventAttribution, type DamageEvent } from "./damage-event-attribution.service.js";
@@ -39,8 +39,10 @@ export type ComplaintEvidence = {
   summary: string | null;
   recorded_by_user_id: string | null;
   driver_link: "respondent_driver_id" | "legacy_respondent_id";
-  load_id: null;
-  unit_id: null;
+  customer_id: string | null;
+  /** E-28: the load and truck the complaint is about (202615100000); null where not applicable. */
+  load_id: string | null;
+  unit_id: string | null;
   counted: boolean;
   excluded_reason: string | null;
 };
@@ -76,6 +78,9 @@ type ComplaintRow = {
   created_by: string | null;
   driver_id: string;
   driver_link: "respondent_driver_id" | "legacy_respondent_id";
+  customer_id: string | null;
+  load_id: string | null;
+  unit_id: string | null;
 };
 
 export async function listDriverComplaints(
@@ -84,6 +89,12 @@ export async function listDriverComplaints(
   periodStart: string,
   periodEnd: string
 ): Promise<Map<string, ComplaintEvidence[]>> {
+  // E-28 columns arrive with migration 202615100000; until it is deployed they read as null.
+  const linkCols = await client.query<{ n: number }>(
+    `SELECT count(*)::int AS n FROM information_schema.columns
+      WHERE table_schema = 'safety' AND table_name = 'complaints' AND column_name IN ('load_id', 'unit_id')`
+  );
+  const hasLinks = (linkCols.rows[0]?.n ?? 0) === 2;
   const res = await client.query<ComplaintRow>(
     `
     SELECT c.id::text AS complaint_id, c.complaint_date::text AS complaint_date, c.complainant_type,
@@ -91,7 +102,10 @@ export async function listDriverComplaints(
            COALESCE(ct.type_code, c.complaint_type) AS category, c.severity, c.status, c.summary,
            c.created_by::text AS created_by,
            d.id::text AS driver_id,
-           CASE WHEN c.respondent_driver_id IS NOT NULL THEN 'respondent_driver_id' ELSE 'legacy_respondent_id' END AS driver_link
+           CASE WHEN c.respondent_driver_id IS NOT NULL THEN 'respondent_driver_id' ELSE 'legacy_respondent_id' END AS driver_link,
+           c.complainant_customer_id::text AS customer_id,
+           ${hasLinks ? "c.load_id::text" : "NULL::text"} AS load_id,
+           ${hasLinks ? "c.unit_id::text" : "NULL::text"} AS unit_id
       FROM safety.complaints c
       JOIN mdata.drivers d
         ON d.id = COALESCE(c.respondent_driver_id, CASE WHEN c.respondent_type = 'driver' THEN c.respondent_id END)
@@ -116,8 +130,9 @@ export async function listDriverComplaints(
       summary: r.summary,
       recorded_by_user_id: r.created_by,
       driver_link: r.driver_link,
-      load_id: null,
-      unit_id: null,
+      customer_id: r.customer_id,
+      load_id: r.load_id,
+      unit_id: r.unit_id,
       counted: r.created_by !== null,
       excluded_reason: r.created_by === null ? "no recorded_by user — the order requires who recorded it; not counted" : null,
     });
@@ -251,7 +266,7 @@ export async function computeDriverIntegrityProfiles(
                     .join(", ")})`
                 : "") +
               (cp.length > counted.length ? `; ${cp.length - counted.length} excluded (no recorded_by)` : ""),
-            basis: "no owner-set threshold; load/unit linkage unavailable — safety.complaints has no load_id/unit_id column",
+            basis: "no owner-set threshold; each complaint carries its load, truck and customer where recorded",
             evidence: cp,
           },
     ];

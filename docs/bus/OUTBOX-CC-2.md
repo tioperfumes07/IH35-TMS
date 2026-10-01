@@ -1110,3 +1110,24 @@ transaction_at_derived) joined on fuel_transaction_id; until the table lands, GE
 
 Next wiring once the table exists: E-21/E-22 read transaction_at_derived (confidence high) as the
 pump time instead of refusing the row.
+
+## Owner order 2026-10-01 — no handoff: CC-2 built its own migrations + E-28 + derived-time wiring
+Owner: "fully complete and build their own engine, no handing off". Recorded as
+docs/bus/2026-10-01-OWNER-ORDER-CC-2-NO-HANDOFF-BUILD-OWN-MIGRATIONS.md; numbers claimed first (#23641);
+owner one-off added to verify-migration-lane-band.mjs (exact branch + exact two files).
+- 202615100000: safety.complaints load_id + unit_id (FKs, indexes) + trg_complaints_same_company_links
+  (another entity's load or truck is refused) + LATENESS / REFUSED-DISPATCH / DAMAGE for USMCA.
+- 202615110000: fuel.fuel_transaction_derivations (forced RLS, grants, audit trigger, CHECK: a
+  derived time must name its source stop). Never touches fuel.fuel_transactions.
+- Complaint write path: create + owner update accept load_id / unit_id (validated same company);
+  list filters ?load_id= and ?unit_id= (load page / unit page), ?driver_id= and ?customer_id= already
+  existed. FOR CURSOR: GET /api/v1/safety/complaints?operating_company_id=&load_id=  |  &unit_id=  |
+  &driver_id=  |  &customer_id=; POST/PATCH body fields load_id, unit_id; categories via
+  catalogs.complaint_types (LATENESS, REFUSED-DISPATCH, DAMAGE, MISCONDUCT = conduct).
+- Integrity profile complaints carry load_id, unit_id, customer_id (feature-detected until deploy).
+- E-21 fraud detector + Fuel page evaluate a date-only row at its HIGH-confidence derived pump time
+  instead of refusing it; transaction_at never changes.
+Rehearsed both migrations in a rolled-back transaction on production: idempotent, categories land,
+same-company load accepted / cross-company refused, sourceless derived time refused, audit trigger on.
+AUTH-180: owner authorized voiding test items — 3 coder test complaints voided (#23646), AUTH CONSUMED.
+Live after the Lead's next deploy (db:migrate runs pre-deploy).

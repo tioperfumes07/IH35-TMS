@@ -32,7 +32,13 @@ async function selftest() {
   const src = readFileSync(new URL(SVC, ROOT), "utf8");
   assert.ok(!/UPDATE\s+fuel\.fuel_transactions/i.test(src), "must never overwrite the source row");
   assert.ok(/derivationTableReady/.test(src), "writer must feature-detect its side table");
-  console.log(`${LABEL} --selftest PASS (9/9)`);
+  for (const f of ["apps/backend/src/jobs/fuel-fraud-detector-worker.ts", "apps/backend/src/fuel/fuel-integrity-verdicts.service.ts"]) {
+    assert.ok(/loadHighConfidenceDerivedTimes/.test(readFileSync(new URL(f, ROOT), "utf8")), `${f} must read high-confidence derived pump times`);
+  }
+  const mig = readFileSync(new URL("db/migrations/202615110000_fuel_transaction_derivations.sql", ROOT), "utf8");
+  assert.ok(/FORCE ROW LEVEL SECURITY/.test(mig) && /tg_audit_row/.test(mig), "side table must be forced-RLS and audited");
+  assert.ok(!/UPDATE\s+fuel\.fuel_transactions\b/i.test(mig), "migration must never touch the source row");
+  console.log(`${LABEL} --selftest PASS (13/13)`);
 }
 
 if (process.argv.includes("--selftest")) {
