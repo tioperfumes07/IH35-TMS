@@ -1993,10 +1993,10 @@ export function BookLoadModalV4({
 
           {isEditMode && loadIsEditLocked ? (
             <div
-              className="border-b border-amber-300 bg-amber-50 px-3 py-2 text-xs text-slate-800"
+              className="border-b border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-800"
               data-testid="owner-lock-override-banner"
             >
-              <p className="font-semibold text-amber-900">Owner override</p>
+              <p className="font-semibold text-slate-900">Owner override</p>
               <p className="mt-0.5 text-slate-700">
                 This load is locked
                 {editLockQuery.data?.lock?.reason ? ` (${editLockQuery.data.lock.reason.replace(/_/g, " ")})` : ""}
@@ -2011,7 +2011,7 @@ export function BookLoadModalV4({
                 <label className="mt-2 block">
                   <span className="text-[11px] font-bold uppercase tracking-wide text-slate-600">Override reason</span>
                   <textarea
-                    className="mt-1 w-full rounded-sm border border-amber-400 bg-white px-2 py-1 text-xs text-slate-900"
+                    className="mt-1 w-full rounded-sm border border-slate-400 bg-white px-2 py-1 text-xs text-slate-900"
                     rows={2}
                     value={overrideReason}
                     onChange={(e) => setOverrideReason(e.target.value)}
