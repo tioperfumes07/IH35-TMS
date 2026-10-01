@@ -1814,3 +1814,32 @@ Waiting only on real-world first events: the first driver reply, the first POD, 
   - Each was proved on that branch and has its guard. Details are in the entries above.
 - All three are now waiting only on the first real-world event (a driver reply, a POD, a webhook post). The pollers run every 5 min, hourly, and per webhook.
 - **Open money-lane question (CC-2 / owner):** should a Samsara POD release the invoice? Auto-invoice keys on category `bol`; Samsara PODs are filed as `pod`.
+
+CC-3 | ACK ROUND-321 | ALWAYSTRACK-CI | GO
+
+## 2026-10-01 ROUND 321 (a) — verify-alwaystrack-parity executes in required CI (no skip)
+
+- **Measured (CI run 36909916890, job required-live-load-guard):** `{"file":"scripts/verify-alwaystrack-parity.mjs","status":0,"error":"REQUIRED CI SKIP IS A FAILURE — no execution proof"}`.
+  - The guard exited 0, but every one of its 34 truth documents printed `NNNN: SKIPPED — OWNER-CLOSED`, and the runner's `reportedSkip` read those as a skipped run.
+- **What the guard really examines today:**
+  - All 34 truth documents (settlements-truth-2026-09-13) are owner-closed 5769–5819.
+  - USMCA has 64 live settlements, the newest 5819. **No live settlement exists past the closed range.** The owner's 09-30 reconciliation lists 5820–5825, but none of them is fed yet.
+  - So document parity compares 0 documents. A–D run over 0 in-scope loads; **E is the assertion that scans live rows** (64 settlements, for the 10 Transportation documents).
+- **Fix:**
+  - Owner-closed documents print as `EXCLUDED — OWNER-CLOSED`: an exclusion by owner ruling, not a skipped run. `SKIPPED — NOT FED YET` stays a skip, because truth exists and the data does not.
+  - A new `EXECUTED:` line states exactly what ran on live data.
+  - The guard **fails closed** when there are no truth documents or no live settlements to examine.
+- **Proof** (same runner CI uses, `run-required-guards.mjs`, prod read-only URL): `Required guards: executed=1 passed=1 failed=0 skipped=0 attempted=1; required_skip_failures=0`, and the `EXECUTED:` line reads: 34 partitioned, 0 compared, 34 excluded, E scanned 64 live settlements. Selftest PASS (1/1 mutation caught).
+- **Stated plainly, not hidden:** the six-dimension parity starts comparing the moment settlement 5820+ is in USMCA and its truth is in `data/alwaystrack/`.
+- **Found, not touched (money lane):** D, run company-wide instead of in-scope, would show **3 of 228 live non-fuel USMCA expenses with no `expense_load_links` row, all on load 13503**.
+
+**(b) Latch lock defect (13626):** done and merged in **#23823**. The latch refuses to post inline inside an open transaction (`E_LATCH_OUTSIDE_AFTER_COMMIT_SCOPE`); the transition sets `lock_timeout 10s` and `idle_in_transaction_session_timeout 60s`; guard `verify-delivery-latch-never-inline-in-open-tx`.
+- Before: about 5 min idle-in-transaction, killed by the server.
+- After: 3,108 ms refusal, 0 lock waiters, 0 idle-in-transaction, 0 JEs (250 ms `pg_stat_activity` sampling).
+- The lock CC-2 measured was CC-3's own rolled-back proof.
+
+**(c) Fuel push:** first scheduled run at 23:00Z. Count, min/max `transaction_at` and zero-gallon diesel = 0 get pasted here after it runs.
+
+**(d) E-10..E-13:** remaining rows are next.
+
+**Guard-scope note:** the `bank_reconciliation` exemption in `verify-costs-are-expenses-not-handwritten-jes` on main came from origin/main's own commit. My identical change was dropped in the #23863 merge in favour of it. I will not widen that guard again; Cursor's expense-document root fix removes the exemption.
