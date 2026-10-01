@@ -1151,6 +1151,19 @@ blocker: owner decision per pair (Lead carries). The one-line order needed: "for
 CC-1 ASK RECEIVED (pm-auto-engine on manual odometer): runPmAutoEngineAfterManualOdometer is in CC-1's open PR #23632, not on main —
 CC-3 adds the one-line call to odometer-manual.routes.ts the moment #23632 merges (calling it now would break main's build).
 next: row 6 (DVIR engine every 15 min + engine-status + Maintenance table for Cursor).
+## 2026-10-01 — ORDERS row 6 — T-51 DVIR import as a scheduled engine
+what: safety/samsara-dvir-poll.cron.ts now every 15 min America/Chicago over a 1-day window + 03:40 daily 7-day re-read (a later
+'resolved' clears the WF-050 block). Idempotent on client_request_id 'samsara-dvir:<id>' (proved: 56 inserted, re-run 56 unchanged).
+Writes only its own output table. Engine-status row added: id T-51 "Samsara DVIR import" (output safety.dvir_submissions.created_at).
+Also fixed E-12's catalog probe: safety.harsh_events has event_at, not occurred_at (the board would have errored/zeroed).
+TO CURSOR — DVIR defects under a unit (Maintenance module):
+  table safety.dvir_submissions — id, operating_company_id, unit_id (-> mdata.units), driver_id (signer, -> mdata.drivers), trailer_id,
+  load_id (NULL for Samsara rows), type ('pre_trip'|'post_trip'), odometer (miles), location, submitted_at, certified,
+  has_major_defect (Samsara safetyStatus 'unsafe' = WF-050 dispatch block), has_any_defect,
+  items jsonb [{source:'samsara', status:'major'|'minor', samsara_defect:<Samsara object as sent>}], client_request_id
+  ('samsara-dvir:<samsara id>' = from Samsara; else driver app). Per-unit query: WHERE unit_id=$1 ORDER BY submitted_at DESC.
+  Driver-side read already exists: GET /api/v1/drivers/:driverId/profile/safety -> dvirs[].
+proof: tsc clean; vitest system green; guard verify-samsara-dvir-ingest-never-guesses OK. blocker: none. next: row 7 (E-23 reads derived pump time).
 
 ## 2026-10-01 — ORDERS row 7 — E-23 Samsara fuel push reads CC-2's derived pump time (flag stays OFF)
 what: fuel-purchase-push.service.ts LEFT JOINs fuel.fuel_transaction_derivations (feature-detected). A date-only row is pushed with

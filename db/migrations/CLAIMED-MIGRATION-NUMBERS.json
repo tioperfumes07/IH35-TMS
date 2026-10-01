@@ -13,6 +13,16 @@
       "claimed_at": "2026-10-01",
       "purpose": "E-14 PM auto-engine: extend maintenance.pm_auto_wo_log action CHECK with skipped_no_baseline and due_wo_flag_off so every per-unit reason is recorded honestly (no guessed baseline, WO creation flag-OFF)."
     },
+    "202615100000": {
+      "claimed_by": "cc-2",
+      "claimed_at": "2026-10-01",
+      "purpose": "E-28 (owner order 2026-10-01, no handoff): safety.complaints load_id + unit_id (FKs, indexes) so load -> complaints and unit -> complaints link both ways; catalogs.complaint_types LATENESS / REFUSED-DISPATCH / DAMAGE for USMCA. Owner one-off: docs/bus/2026-10-01-OWNER-ORDER-CC-2-NO-HANDOFF-BUILD-OWN-MIGRATIONS.md"
+    },
+    "202615110000": {
+      "claimed_by": "cc-2",
+      "claimed_at": "2026-10-01",
+      "purpose": "ORDERS-2026-10-01 CC-2 rows 5-6 (owner order, no handoff): fuel.fuel_transaction_derivations side table -- derived pump time + IFTA state, never the source row. Owner one-off: docs/bus/2026-10-01-OWNER-ORDER-CC-2-NO-HANDOFF-BUILD-OWN-MIGRATIONS.md"
+    },
     "202614990000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-30",

@@ -912,3 +912,22 @@ within 0.2 % — not deduped in the wiring so stops stay identical to the Lead's
 **Main is red from Cursor's #23592 (apps/frontend, not my lane):** `go26-consolidation-ratchet`
 raw_table_outside_infra 41→43, and `verify-go20-b-predictive-alerts-wired` (MaintenanceHome SUBNAV
 lost "At Risk" / PredictiveAlertsPage). Named for Cursor; untouched by CC-1.
+
+CC-1 | ACK ORDERS-2026-10-01 | E-14 | GO
+
+## E-14 PM auto-engine — BUILT (ORDERS 2026-10-01 row 1)
+**what:** daily 03:30 America/Chicago + on manual odometer entry; tick scoped to companies with
+active PM schedules (frozen entities untouched); odometer = `telematics.unit_stop_events`
+(feature-detected; logs "E-03 pending" until the Lead's 202615030000 deploys) → `odometer_readings`
+(E-06) → ABSENT with reason; NULL/≤1/days baseline → `skipped_no_baseline` (never guessed); due →
+`due_wo_flag_off` unless `PM_AUTO_ENGINE_CREATE_WORK_ORDERS` (no row = OFF; Lead carries the switch);
+sample + deactivated + leased-away units excluded at the query; E-41 row reads `pm_schedule_runs`.
+Migration 202615050000 widens the log's action CHECK.
+**proof:** rolled-back prod tick exit 0 — 96 schedules / 16 units, 0 WOs, run row `skipped`
+"nothing_evaluable: 0 no odometer, 96 no baseline"; per-unit odometer + source logged. vitest 27/27.
+**blocker:** none. Baselines are expected-empty (not seeded yet).
+**ask → CC-3:** in `apps/backend/src/telematics/odometer-manual.routes.ts`, after the manual odometer
+insert commits: `void runPmAutoEngineAfterManualOdometer(operatingCompanyId)` from
+`../maintenance/pm-auto-engine.service.js` (fire-and-forget, log on error). CC-1's service-history route
+already calls it.
+**next:** E-15 re-point onto the same source.
