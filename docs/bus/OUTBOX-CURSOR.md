@@ -185,3 +185,10 @@ Law §9 complete wire on WO detail (no seed):
 Ops: verify-maint-wo-three-dates asserts invoices + customer_payments + parts + customer.
 LEFT: expected_release_at (E-16 claim 202615120000 / Cursor may author band HH12 after claim if E-16 stalls); docs.file_links work_order CHECK widen (Cursor claim 202610011200 next); PM due + Faults/DVIR/Engine widget; Lead Chrome.
 SUPERSEDES prior OUTBOX handoff lines to CC-1 for file_links — Lead ruling each seat builds own engine (docs/bus/2026-10-01-LEAD-RULING-EACH-SEAT-BUILDS-ITS-ENGINE-END-TO-END.md).
+
+**2026-10-01T04:10Z · MAINTENANCE WO TOTAL LINKAGE MERGED · PR #23647 · `fdd90a0469`**
+Three dates + Law §9 reverse: bills/expenses/bill_payments/invoices/receive-payments/JE + parts + customer/unit/driver/vendor/load/trailer. Bill-source JE exempt in handwritten-cost guard. No seed.
+
+**2026-10-01T04:15Z · E-41 SAVEPOINT MERGED · PR #23667 · `e541f463ac`**
+Lead Chrome RED fixed: SAVEPOINT around engine-status probes so one failed count does not abort the board transaction. Guard: verify-e41-engine-status-savepoint. LEFT: Lead re-Chrome /system/engine-status.
+
