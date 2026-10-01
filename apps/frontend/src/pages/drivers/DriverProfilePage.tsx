@@ -61,6 +61,8 @@ import { SafetyAlertsReverseSection } from "../../components/safety/SafetyAlerts
 import { InsuranceLawsuitsReverseSection } from "../../components/insurance/InsuranceLawsuitsReverseSection";
 import { FuelCardOverageReverseSection } from "../../components/fuel/FuelCardOverageReverseSection";
 import { FuelCardsReverseSection } from "../../components/fuel/FuelCardsReverseSection";
+import { FuelFraudAlertsReverseSection } from "../../components/fuel/FuelFraudAlertsReverseSection";
+import { RelayFillsReverseSection } from "../../components/fuel/RelayFillsReverseSection";
 import { CashForecastReverseSection } from "../../components/cash-flow/CashForecastReverseSection";
 import { W8BenModal } from "../../components/drivers/W8BenModal";
 import { KpiCard } from "../../components/layout/KpiCard";
@@ -859,6 +861,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             contextLabel="this driver"
             data-testid="driver-profile-fuel-cards"
           />
+          {/* Linkage law §6 (PR #23729) — fraud alerts raised on this driver's purchases, and the
+              Relay fills matched to them (integrations.relay_fuel_transactions never becomes a
+              fuel.fuel_transactions row, so this is the only reverse hop to them). */}
+          <FuelFraudAlertsReverseSection operatingCompanyId={companyId} filter={{ driver_id: id }} contextLabel="this driver" />
+          <RelayFillsReverseSection operatingCompanyId={companyId} filter={{ driver_id: id }} contextLabel="this driver" />
           <CashForecastReverseSection operatingCompanyId={companyId} filter={{ party_ref_kind: "driver", party_ref_id: id }} />
         </div>
       ) : null}

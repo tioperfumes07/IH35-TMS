@@ -48,6 +48,7 @@ import { LoadDetentionReverseSection } from "./LoadDetentionReverseSection";
 import { LoadInTransitIssuesReverseSection } from "./LoadInTransitIssuesReverseSection";
 import { LoadDriverReportsReverseSection } from "../maintenance/LoadDriverReportsReverseSection";
 import { FuelTransactionsReverseSection } from "../fuel/FuelTransactionsReverseSection";
+import { FuelFraudAlertsReverseSection } from "../fuel/FuelFraudAlertsReverseSection";
 import { ExpensesReverseSection } from "../accounting/ExpensesReverseSection";
 import { RecordExpenseModal } from "../expenses/RecordExpenseModal";
 import { BillsReverseSection } from "../accounting/BillsReverseSection";
@@ -1382,6 +1383,15 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                     filter={{ load_id: load.id }}
                     contextLabel="this load"
                     data-testid="load-detail-fuel-transactions"
+                  />
+                ) : null}
+                {load.operating_company_id ? (
+                  // Linkage law §6 (PR #23729) — fraud alerts raised on this load's fuel purchases.
+                  <FuelFraudAlertsReverseSection
+                    operatingCompanyId={load.operating_company_id}
+                    filter={{ load_id: load.id }}
+                    contextLabel="this load"
+                    data-testid="load-detail-fuel-fraud-alerts"
                   />
                 ) : null}
                 {load.operating_company_id ? (

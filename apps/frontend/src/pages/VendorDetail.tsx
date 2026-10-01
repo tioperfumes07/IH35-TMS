@@ -64,6 +64,8 @@ import { VendorLegalContractsReverseSection } from "../components/legal/VendorLe
 import { CashForecastReverseSection } from "../components/cash-flow/CashForecastReverseSection";
 import { VendorEquipmentLoansReverseSection } from "../components/vendors/VendorEquipmentLoansReverseSection";
 import { VendorMergesReverseSection } from "../components/vendors/VendorMergesReverseSection";
+import { FuelTransactionsReverseSection } from "../components/fuel/FuelTransactionsReverseSection";
+import { FuelFraudAlertsReverseSection } from "../components/fuel/FuelFraudAlertsReverseSection";
 import { LinkedBankTransactionsPanel } from "../components/banking/LinkedBankTransactionsPanel";
 
 type SaferEntityStatus = {
@@ -997,6 +999,19 @@ export function VendorDetailPage() {
           {/* Edit/Save/Cancel moved to the top of the panel (discoverable). */}
         </DataPanel>
         <VendorWorkOrdersReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
+        {/* Linkage law §6 (vendor row, PR #23729) — "Fuel purchases" + the fraud alerts on them. */}
+        <FuelTransactionsReverseSection
+          operatingCompanyId={companyId}
+          filter={{ vendor_id: vendor.id }}
+          contextLabel="this vendor"
+          data-testid="vendor-fuel-transactions-reverse"
+        />
+        <FuelFraudAlertsReverseSection
+          operatingCompanyId={companyId}
+          filter={{ vendor_id: vendor.id }}
+          contextLabel="this vendor"
+          data-testid="vendor-fuel-fraud-alerts-reverse"
+        />
         <RoadServiceReverseSection
           filter={{ vendor_id: vendor.id }}
           contextLabel="this vendor"

@@ -255,6 +255,7 @@ export const FUEL_TAB_PATH: Record<string, string> = {
   compliance: "/fuel/compliance",
   integrity: "/fuel/integrity",
   cards: "/fuel/cards",
+  relay_unmatched: "/fuel/relay-unmatched",
 };
 
 export function fuelTabFromPath(pathname: string): string {

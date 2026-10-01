@@ -3,7 +3,7 @@ import { useBulkPermission } from "../../hooks/useBulkPermission";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
 import { VoidedRowBadge, voidedRowClassName } from "../../components/accounting/VoidedRowIndicator";
 import { companyToday } from "../../lib/businessDate";
@@ -28,6 +28,10 @@ export type FuelTransactionRow = {
   /** R-102-B item 2 — fuel.fuel_transactions.voided_at/void_reason (R-102.1-A). Optional, same reason. */
   voided_at?: string | null;
   void_reason?: string | null;
+  /** Linkage law §8 (PR #23729) — the live accounting document this purchase posted through, if any. */
+  expense_id?: string | null;
+  expense_number?: string | null;
+  journal_entry_id?: string | null;
 };
 
 type Props = {
@@ -202,6 +206,29 @@ export function FuelTransactionsTable({ rows, operatingCompanyId }: Props) {
         },
         { key: "gallons", label: "Gallons", sortable: true, render: (row) => row.gallons == null ? "—" : row.gallons.toFixed(2) },
         { key: "amount_cents", label: "Amount", sortable: true, render: (row) => money(row.amount_cents) },
+        {
+          key: "expense_number",
+          label: "Expense",
+          sortable: true,
+          // Linkage law §8 (PR #23729) — the live accounting document this purchase posted
+          // through. A fuel purchase can predate GL posting entirely, so "—" is a real state.
+          render: (row) =>
+            row.expense_id ? (
+              <EntityLink
+                kind="expense"
+                id={row.expense_id}
+                label={visibleDocumentLabel(row.expense_number ?? null, row.expense_id, "Expense")}
+              />
+            ) : (
+              "—"
+            ),
+        },
+        {
+          key: "journal_entry_id",
+          label: "JE",
+          sortable: false,
+          render: (row) => (row.journal_entry_id ? <EntityLink kind="journal_entry" id={row.journal_entry_id} label="JE" /> : "—"),
+        },
       ]}
     />
   );

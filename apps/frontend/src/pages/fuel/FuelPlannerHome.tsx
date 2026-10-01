@@ -41,6 +41,7 @@ import { UploadLovesPricesModal } from "./components/UploadLovesPricesModal";
 import { FuelHomePage } from "./FuelHome";
 import { FuelIntegrityPage } from "./integrity/FuelIntegrityPage";
 import { FuelCardsPage } from "./cards/FuelCardsPage";
+import { RelayUnmatchedPage } from "./relay-unmatched/RelayUnmatchedPage";
 import { FuelTransactionsTable } from "./FuelTransactionsTable";
 import { ExpensiveStatesMultiselect } from "./components/ExpensiveStatesMultiselect";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -87,6 +88,10 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   const deepLinkUnitId = searchParams.get("unit_id");
   const deepLinkLoadId = searchParams.get("load_id");
   const deepLinkTrailerId = searchParams.get("trailer_id");
+  // Linkage law §6 (vendor row, PR #23729) — "Open Fuel History" from VendorDetail's own
+  // FuelTransactionsReverseSection carries ?vendor_id=. Exact-id deep link, not a staged
+  // EntityPicker filter (mirrors deepLinkTransactionId below).
+  const deepLinkVendorId = searchParams.get("vendor_id") ?? undefined;
   // ACCT-F5725: accounting fuel_event source ids are canonical fuel_transactions.id values.
   // Keep this exact-id deep link independent from the operator's staged entity filters.
   const deepLinkTransactionId = searchParams.get("transaction_id") ?? undefined;
@@ -196,6 +201,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       effectiveUnitId,
       effectiveLoadId,
       effectiveTrailerId,
+      deepLinkVendorId,
       deepLinkTransactionId,
       fuelHistoryPage,
       includeVoidedFuel,
@@ -208,6 +214,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
         unit_id: effectiveUnitId,
         load_id: effectiveLoadId,
         trailer_id: effectiveTrailerId,
+        vendor_id: deepLinkVendorId,
         transaction_id: deepLinkTransactionId,
         include_voided: includeVoidedFuel,
       }),
@@ -218,7 +225,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   const fuelHistoryPageCount = Math.max(1, Math.ceil(fuelHistoryTotal / fuelHistoryPageSize));
   useEffect(() => {
     setFuelHistoryPage(1);
-  }, [companyId, effectiveDriverId, effectiveUnitId, effectiveLoadId, effectiveTrailerId, deepLinkTransactionId]);
+  }, [companyId, effectiveDriverId, effectiveUnitId, effectiveLoadId, effectiveTrailerId, deepLinkVendorId, deepLinkTransactionId]);
   useEffect(() => {
     if (fuelHistoryPage > fuelHistoryPageCount) setFuelHistoryPage(fuelHistoryPageCount);
   }, [fuelHistoryPage, fuelHistoryPageCount]);
@@ -554,6 +561,8 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       {tab === "integrity" ? <FuelIntegrityPage /> : null}
 
       {tab === "cards" ? <FuelCardsPage /> : null}
+
+      {tab === "relay_unmatched" ? <RelayUnmatchedPage /> : null}
 
       {tab === "compliance" ? (
         complianceQuery.isError ? (
