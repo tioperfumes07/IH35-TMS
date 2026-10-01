@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-contract-creator-customer-search";
 const FILE = "apps/frontend/src/pages/legal/contracts/UnifiedContractCreatorModal.tsx";
+const CATALOG_FILE = "apps/frontend/src/components/legal/CatalogReferenceSelect.tsx";
 function readRel(root, rel) {
   const p = path.join(root, rel);
   return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : null;
@@ -37,7 +38,21 @@ export function collectProblems(root = ROOT) {
     /operatingCompanyId=\{operatingCompanyId\}/.test(code) &&
     /value=\{signerEntityId \|\| null\}/.test(code) &&
     /onChange=\{\(id, option\) =>/.test(code);
-  if (!referenceSelectContract && !entityPickerContract) {
+  // ROUND 316 (CC-1): the contract pages' canonical CatalogReferenceSelect — accepted only while the component
+  // itself does company-scoped SERVER search (onSearch -> listCustomers search) with inline create; a capped
+  // local roster fails this contract exactly like the retired one.
+  const catalogSrc = readRel(root, CATALOG_FILE) ?? "";
+  const catalogContract =
+    /<CatalogReferenceSelect[\s\S]{0,300}kind=["']customer["'][\s\S]{0,300}allowCreate/.test(code) &&
+    /operatingCompanyId=\{operatingCompanyId\}/.test(code) &&
+    /value=\{signerEntityId \|\| null\}/.test(code) &&
+    /onChange=\{\(id, option\) =>/.test(code) &&
+    /onSearch=\{setPartySearch\}/.test(catalogSrc) &&
+    /listCustomers\(params\)/.test(catalogSrc) &&
+    /search:\s*debouncedSearch/.test(catalogSrc) &&
+    /operating_company_id:\s*operatingCompanyId/.test(catalogSrc) &&
+    /createKind=\{kind\}/.test(catalogSrc);
+  if (!referenceSelectContract && !entityPickerContract && !catalogContract) {
     problems.push(`${FILE}: customer signer must use a company-scoped searchable canonical picker with inline create`);
   }
   // Customer party must not be a bare SelectCombobox of options
@@ -56,6 +71,14 @@ if (process.argv.includes("--selftest")) {
     fs.writeFileSync(path.join(dir, "UnifiedContractCreatorModal.tsx"),
       `signerType === "customer"\n<SelectCombobox>{customerPartyOptions.map()}</SelectCombobox>\nlistCustomers({ operating_company_id })\n`);
     if (!collectProblems(stubRoot).length) { console.error("plant miss"); process.exit(1); }
+    // CatalogReferenceSelect usage over a capped local roster (no server search) must fail.
+    fs.writeFileSync(path.join(dir, "UnifiedContractCreatorModal.tsx"),
+      `<CatalogReferenceSelect kind="customer" allowCreate operatingCompanyId={operatingCompanyId} value={signerEntityId || null} onChange={(id, option) => {}} />\n`);
+    const cdir = path.join(stubRoot, "apps/frontend/src/components/legal");
+    fs.mkdirSync(cdir, { recursive: true });
+    fs.writeFileSync(path.join(cdir, "CatalogReferenceSelect.tsx"),
+      `listCustomers({ operating_company_id: operatingCompanyId, limit: 2000 })\n<ReferenceSelect createKind={kind} />\n`);
+    if (!collectProblems(stubRoot).length) { console.error("plant miss (capped CatalogReferenceSelect)"); process.exit(1); }
   } finally { fs.rmSync(stubRoot, { recursive: true, force: true }); }
   console.log(LABEL, "SELFTEST OK");
 } else {
