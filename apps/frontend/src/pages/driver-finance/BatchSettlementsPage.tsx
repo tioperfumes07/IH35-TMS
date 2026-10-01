@@ -41,7 +41,6 @@ type BatchRow = {
   error: string | null;
   settlement_id: string | null;
   source_document_ref: string | null;
-  display_id: string | null;
 };
 
 function todayChicago(): string {
@@ -80,7 +79,6 @@ function newBatchRow(today: string): BatchRow {
     error: null,
     settlement_id: null,
     source_document_ref: null,
-    display_id: null,
   };
 }
 
@@ -180,7 +178,6 @@ export function BatchSettlementsPage() {
               error: null,
               settlement_id: result.settlement.settlement_id,
               source_document_ref: result.settlement.source_document_ref,
-              display_id: result.settlement.display_id,
             };
           } else {
             next[target] = {
@@ -283,7 +280,7 @@ export function BatchSettlementsPage() {
                 setRows((prev) => {
                   const last = prev[prev.length - 1];
                   if (!last) return [newBatchRow(today)];
-                  return [...prev, { ...newBatchRow(today), ...last, key: crypto.randomUUID(), status: "draft", error: null, settlement_id: null, source_document_ref: null, display_id: null, loads: last.loads }];
+                  return [...prev, { ...newBatchRow(today), ...last, key: crypto.randomUUID(), status: "draft", error: null, settlement_id: null, source_document_ref: null, loads: last.loads }];
                 })
               }
             >
@@ -331,7 +328,7 @@ export function BatchSettlementsPage() {
                       />
                       <button
                         type="button"
-                        className="mt-1 text-[10px] text-[#6B7280] underline"
+                        className="mt-1 text-[11px] text-[#6B7280] underline"
                         onClick={() => fillDown("driver_id", idx)}
                       >
                         Fill down
@@ -398,7 +395,7 @@ export function BatchSettlementsPage() {
                       )}
                       <button
                         type="button"
-                        className="mt-1 text-[10px] text-[#6B7280] underline"
+                        className="mt-1 text-[11px] text-[#6B7280] underline"
                         onClick={() => void refreshLoads(idx, row)}
                         disabled={!row.driver_id || row.status === "saved"}
                       >
@@ -443,7 +440,7 @@ export function BatchSettlementsPage() {
                         <EntityLink
                           kind="settlement"
                           id={row.settlement_id}
-                          label={row.source_document_ref || row.display_id || "Settlement"}
+                          label={row.source_document_ref || "Settlement"}
                         />
                       ) : row.status === "error" ? (
                         <span className="text-[#B91C1C]">{row.error}</span>
