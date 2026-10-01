@@ -663,6 +663,21 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
               [header.id, input.load_id]
             );
           }
+          // EVENT1-IDEMPOTENCY (CC-1, ROUND 321): an ACTIVE latch row whose JE was since reversed / voided (invoice
+          // void reversing Event 2, owner-authorized reversals) is not standing — loadLatchExists already lets the
+          // event re-post — but it still holds the unique (load, event) WHERE is_active slot, so the insert below
+          // collided and every re-fire answered already_posted forever (prod: 26 such rows, 25 bill + load
+          // L-20260624-0083's earn). Retire exactly those rows in THIS transaction first. A racer blocks on the row
+          // lock, re-checks, finds it inactive, then loses on the unique insert and rolls its JE back.
+          await client.query(
+            `
+              UPDATE accounting.load_revenue_recognition_postings p
+                 SET is_active = false, status = 'voided', voided_at = now(), voided_by_user_id = $4::uuid
+               WHERE p.operating_company_id = $1::uuid AND p.load_id = $2::uuid AND p.event = $3
+                 AND p.is_active AND NOT ${STANDING_LATCH_JE_PREDICATE}
+            `,
+            [input.operating_company_id, input.load_id, prepared.event, input.actor_user_id]
+          );
           const latch = await client.query(
             `
               INSERT INTO accounting.load_revenue_recognition_postings (

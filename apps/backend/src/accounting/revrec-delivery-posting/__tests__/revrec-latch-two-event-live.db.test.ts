@@ -29,6 +29,7 @@ import {
   type IsolatedOperatingCompany,
 } from "../../../../test-helpers/db-fixture.js";
 import { postLoadRevenueLatch, REVENUE_RECOGNITION_POST_FLAG } from "../poster.service.js";
+import { voidJournalEntry } from "../../journal-entries.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -210,6 +211,89 @@ describeIntegration("LV-REVREC-LEDGER-DBTEST — two-event revenue latch posts a
     const balance = await journalEntryIsBalanced(row!.journal_entry_id);
     expect(balance.debits).toBe(RATE_CENTS);
     expect(balance.credits).toBe(RATE_CENTS);
+  });
+
+  it("EVENT1-IDEMPOTENCY (ROUND 321): Event 1 fired twice at once and again after — exactly ONE live Event 1 JE and one active latch row (prod duplicate 13626 / 13571)", async () => {
+    const { loadId } = await seedLoad();
+    const fire = () =>
+      postLoadRevenueLatch({
+        operating_company_id: companyId,
+        load_id: loadId,
+        target_status: "delivered_pending_docs",
+        entry_date_iso: new Date().toISOString(),
+        actor_user_id: userId,
+      });
+
+    // Two concurrent fires both pass the pre-check and race on the unique (load, event) latch row inside the JE's
+    // own transaction; the loser's JE must roll back.
+    const [a, b] = await Promise.all([fire(), fire()]);
+    const outcomes = [a, b].map((r) => (r.posted ? "posted" : r.reason)).sort();
+    expect(outcomes).toEqual(["already_posted", "posted"]);
+
+    // A later fire (status re-transition, retry, cron) is refused too.
+    const c = await fire();
+    expect(c.posted).toBe(false);
+
+    const jes = await db.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM accounting.journal_entries
+        WHERE operating_company_id = $1::uuid AND memo LIKE $2 AND voided_at IS NULL AND reversed_by_je_id IS NULL`,
+      [companyId, `Revrec Event 1 earn — %[${loadId}]%`]
+    );
+    expect(Number(jes.rows[0]?.n)).toBe(1);
+    const latches = await db.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM accounting.load_revenue_recognition_postings
+        WHERE operating_company_id = $1::uuid AND load_id = $2::uuid AND event = 'earn' AND is_active`,
+      [companyId, loadId]
+    );
+    expect(Number(latches.rows[0]?.n)).toBe(1);
+    const row = await latchRow(loadId, "earn");
+    const balance = await journalEntryIsBalanced(row!.journal_entry_id);
+    expect(balance.credits).toBe(RATE_CENTS);
+  });
+
+  it("EVENT1-IDEMPOTENCY (ROUND 321): a reversed Event 1 no longer blocks re-recognition — the stale active latch row is retired and exactly one live Event 1 JE remains", async () => {
+    const { loadId } = await seedLoad();
+    const fire = () =>
+      postLoadRevenueLatch({
+        operating_company_id: companyId,
+        load_id: loadId,
+        target_status: "delivered_pending_docs",
+        entry_date_iso: new Date().toISOString(),
+        actor_user_id: userId,
+      });
+    const first = await fire();
+    expect(first.posted, JSON.stringify(first)).toBe(true);
+
+    // Reverse it through the app's own void (reversing JE, original keeps status 'posted' + reversed_by_je_id).
+    await bypass(async () => {
+      await db.query(
+        `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, enabled, set_by_user_uuid)
+         VALUES ('MONEY_CONTROL_VOID_REVERSAL_ENABLED', $1::uuid, true, $2::uuid) ON CONFLICT DO NOTHING`,
+        [companyId, userId]
+      );
+    });
+    await voidJournalEntry(companyId, first.journal_entry_id!, "EVENT1-IDEMPOTENCY test reversal", { userId, role: "Owner" });
+
+    const again = await fire();
+    expect(again.posted, `re-recognition refused: ${JSON.stringify(again)}`).toBe(true);
+    expect(again.journal_entry_id).not.toBe(first.journal_entry_id);
+
+    const rows = await db.query<{ journal_entry_id: string; is_active: boolean; status: string }>(
+      `SELECT journal_entry_id::text, is_active, status FROM accounting.load_revenue_recognition_postings
+        WHERE operating_company_id = $1::uuid AND load_id = $2::uuid AND event = 'earn' ORDER BY created_at`,
+      [companyId, loadId]
+    );
+    expect(rows.rows.map((r) => [r.journal_entry_id, r.is_active, r.status])).toEqual([
+      [first.journal_entry_id, false, "voided"],
+      [again.journal_entry_id, true, "posted"],
+    ]);
+    const live = await db.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM accounting.journal_entries
+        WHERE operating_company_id = $1::uuid AND memo LIKE $2 AND voided_at IS NULL AND reversed_by_je_id IS NULL AND reverses_je_id IS NULL`,
+      [companyId, `Revrec Event 1 earn — %[${loadId}]%`]
+    );
+    expect(Number(live.rows[0]?.n)).toBe(1);
+    expect((await fire()).posted).toBe(false);
   });
 
   it("Event 2 (bill) REFUSES (missing_issued_invoice) with no issued invoice, then POSTS a balanced DR A/R / CR Unbilled JE once one exists — WITH NO APPROVED POD REQUIRED — through the real DB (OWNER DECISION B, 2026-08-27 23:00 CT, supersedes ACCT-F5692's POD posting block)", async () => {
