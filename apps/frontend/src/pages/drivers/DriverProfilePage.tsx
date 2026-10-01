@@ -11,6 +11,7 @@ import { ActionBar } from "../../components/driver-profile/ActionBar";
 import { AssignTruckModal } from "../../components/driver-profile/AssignTruckModal";
 import { BorderCredentialsSection } from "../../components/driver-profile/BorderCredentialsSection";
 import { CurrentAssignmentSection } from "../../components/driver-profile/CurrentAssignmentSection";
+import { StopsMilesSection } from "../../components/shared/StopsMilesSection";
 import { DocumentsTab } from "../../components/documents/DocumentsTab";
 import { DrugProgramSection } from "../../components/driver-profile/DrugProgramSection";
 import { HOSStatusSection } from "../../components/driver-profile/HOSStatusSection";
@@ -511,6 +512,9 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
               driverId={id}
               driverName={displayName}
             />
+            <div className="mt-3">
+              <StopsMilesSection driverId={id} hours={24} />
+            </div>
           </div>
           <div data-testid="dp-section-7-performance">
             <PerformanceScorecardSection scorecard={aggregate.performance_scorecard ?? null} unavailable={aggregate.performance_scorecard_unavailable === true} />

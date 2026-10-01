@@ -19,6 +19,7 @@ import { MaintenanceAlertsBanner } from "../../components/vehicle-profile/Mainte
 import { IdentityStatusHeader } from "../../components/vehicle-profile/IdentityStatusHeader";
 import { MissingRequiredChip } from "../../components/compliance/MissingRequiredChip";
 import { LiveTelemetrySection } from "../../components/vehicle-profile/LiveTelemetrySection";
+import { StopsMilesSection } from "../../components/shared/StopsMilesSection";
 import { DriverAssignmentSection } from "../../components/vehicle-profile/DriverAssignmentSection";
 import { CurrentLoadSection } from "../../components/vehicle-profile/CurrentLoadSection";
 import { TripCostCalculator } from "../../components/vehicle-profile/TripCostCalculator";
@@ -338,6 +339,9 @@ export function VehicleProfilePage() {
               />
             ) : null}
             <LiveTelemetrySection samsara={telemetry?.samsara ?? null} latestPosition={telemetry?.latest_position ?? null} />
+            <div className="mt-3">
+              <StopsMilesSection unitId={id} hours={24} />
+            </div>
           </div>
           <div data-testid="vp-section-3-driver">
             <DriverAssignmentSection
