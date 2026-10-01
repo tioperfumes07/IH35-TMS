@@ -135,4 +135,101 @@ export const TRUCK_LEASE_CONTENT_HTML_EN = `<!DOCTYPE html>
 </body>
 </html>`;
 
-export const TRUCK_LEASE_CONTENT_HTML_ES = TRUCK_LEASE_CONTENT_HTML_EN;
+// Spanish print design: same stylesheet, same fifteen clauses, same {{tokens}} (the data binds identically). A
+// draft for the owner's / counsel's review (attorney-review flow), like the English text — not legal advice.
+const STYLESHEET = TRUCK_LEASE_CONTENT_HTML_EN.match(/<style[\s\S]*?<\/style>/)?.[0] ?? "";
+
+export const TRUCK_LEASE_CONTENT_HTML_ES = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+${STYLESHEET}
+</head>
+<body>
+<h1>Contrato de Arrendamiento de Camión Comercial</h1>
+<p class="center" style="font-size:9.5pt;color:#555">Referencia No. {{terms.reference_no}} &nbsp;|&nbsp; Fecha de Firma: {{terms.execution_date}}</p>
+
+<h2>1. Partes</h2>
+<table class="parties"><tr>
+  <td><strong>ARRENDADOR:</strong><br/>{{lessor.legal_name}}<br/>{{lessor.address}}<br/>{{lessor.city_state_zip}}<br/>Atención: {{lessor.contact_name}}, {{lessor.contact_title}}</td>
+  <td><strong>ARRENDATARIO:</strong><br/>{{lessee.legal_name}} {{lessee.entity_type}}<br/>{{lessee.address}}<br/>{{lessee.city_state_zip}}<br/>Atención: {{lessee.signer_name}}, {{lessee.signer_title}}</td>
+</tr></table>
+
+<h2>2. Vehículos Arrendados</h2>
+<p>El Arrendador otorga en arrendamiento al Arrendatario, y el Arrendatario toma en arrendamiento del Arrendador, los vehículos automotores comerciales que se identifican a continuación (en conjunto, el "<strong>Equipo</strong>"):</p>
+<table class="vehicles">
+  <thead><tr><th>#</th><th>Unidad</th><th>Año</th><th>Marca / Modelo</th><th>VIN</th><th>Acreedor Prendario</th><th>Uso Permitido</th><th>Límite Anual de Millas</th></tr></thead>
+  <tbody>
+  {{#each vehicles}}
+  <tr>
+    <td>{{sort_order}}</td><td>{{unit_number}}</td><td>{{year}}</td>
+    <td>{{make}} {{model}}</td><td style="font-family:monospace">{{vin}}</td>
+    <td>{{lienholder}}</td><td>{{permitted_use}}</td><td>{{mileage_limit_annual}}</td>
+  </tr>
+  {{/each}}
+  </tbody>
+</table>
+
+<h2>3. Plazo del Arrendamiento</h2>
+<p>El plazo del arrendamiento iniciará el <strong>{{terms.start_date}}</strong> y vencerá el <strong>{{terms.end_date}}</strong>, un periodo de aproximadamente <strong>{{terms.term_months}} meses</strong> (el "<strong>Plazo</strong>"), salvo que se dé por terminado anticipadamente conforme a lo aquí dispuesto.</p>
+
+<h2>4. Renta y Pago</h2>
+<p><strong>4.1 Renta Mensual.</strong> El Arrendatario pagará al Arrendador una renta de <strong>{{terms.monthly_lease_amount_display}}</strong> por vehículo por mes (la "<strong>Renta Mensual</strong>"), pagadera el día <strong>{{terms.payment_due_day}}</strong> de cada mes calendario durante el Plazo.</p>
+<p><strong>4.2 Cargo por Mora.</strong> Si algún pago de Renta Mensual no se recibe dentro de los <strong>{{terms.late_fee_grace_days}}</strong> días naturales siguientes a su vencimiento, se causará un cargo por mora de <strong>{{terms.late_fee_display}}</strong> por vehículo por mes, exigible de inmediato.</p>
+<p><strong>4.3 Depósito en Garantía.</strong> A la firma de este Contrato, el Arrendatario entregará al Arrendador la cantidad de <strong>{{terms.security_deposit_display}}</strong> como depósito en garantía (el "<strong>Depósito en Garantía</strong>"). El Arrendador conservará el Depósito en Garantía como garantía del fiel cumplimiento de todas las obligaciones del Arrendatario y lo devolverá al Arrendatario, sin intereses, dentro de los treinta (30) días siguientes al vencimiento o terminación de este Contrato, menos cualquier cantidad adeudada al Arrendador.</p>
+
+<h2>5. Escrow</h2>
+<p>El Arrendatario depositará <strong>{{terms.escrow_display}}</strong> por mes por vehículo en una cuenta de escrow administrada por <strong>{{terms.escrow_agent_name}}</strong> (el "<strong>Escrow</strong>"), que se aplicará a reservas de mantenimiento o se devolverá al Arrendatario al concluir satisfactoriamente el Plazo. Los fondos del Escrow no se considerarán renta y no se mezclarán con las cuentas operativas del Arrendador.</p>
+
+<h2>6. Seguros y Mantenimiento</h2>
+<p><strong>6.1 Seguros.</strong> El Arrendatario mantendrá vigentes durante todo el Plazo, por su exclusiva cuenta y cargo: (a) seguro de responsabilidad civil vehicular comercial con límite único combinado no menor a $1,000,000 por evento; (b) cobertura de daños materiales (amplia y colisión) para cada vehículo por un monto no menor a su valor real en efectivo; y (c) cualquier otro seguro que exija la legislación federal o estatal aplicable. El Arrendatario designará al Arrendador como asegurado adicional y beneficiario de pérdidas en todas dichas pólizas y le entregará los certificados de seguro antes de tomar posesión del Equipo.</p>
+<p><strong>6.2 Mantenimiento.</strong> El Arrendatario mantendrá cada vehículo en buen estado de funcionamiento, reparación y conservación, en cumplimiento de todas las leyes, reglamentos y requisitos federales, estatales y locales aplicables, incluidos los de la FMCSA, por su exclusiva cuenta. El Arrendatario no realizará modificaciones sustanciales al Equipo sin el consentimiento previo y por escrito del Arrendador. Al vencimiento o terminación del Plazo, el Arrendatario devolverá cada vehículo al Arrendador en las mismas condiciones en que lo recibió, salvo el desgaste normal por el uso.</p>
+<p><strong>6.3 Permisos y Cumplimiento.</strong> El Arrendatario obtendrá y mantendrá todas las autoridades de operación, permisos, licencias y registros necesarios para la operación lícita del Equipo, incluidos, entre otros, la autoridad USDOT, UCR, IRP e IFTA, por su exclusiva cuenta.</p>
+
+<h2>7. Uso del Equipo</h2>
+<p>El Arrendatario usará el Equipo exclusivamente para fines lícitos de transporte comercial dentro de los Estados Unidos continentales. El Arrendatario no subarrendará el Equipo ni permitirá que un tercero lo opere sin el consentimiento previo y por escrito del Arrendador. El Arrendatario cumplirá con todas las leyes, reglamentos y normas de operación de transportistas aplicables a la operación del Equipo.</p>
+
+<h2>8. Incumplimiento y Recursos</h2>
+<p><strong>8.1 Causas de Incumplimiento.</strong> Constituirá una Causa de Incumplimiento cualquiera de las siguientes: (a) la falta de pago de cualquier Renta Mensual u otra cantidad adeudada conforme a este Contrato dentro de los cinco (5) días siguientes a la notificación por escrito del Arrendador; (b) el incumplimiento de cualquier obligación no monetaria que no se subsane dentro de los diez (10) días siguientes a la notificación por escrito; (c) la insolvencia, quiebra o cesión general en beneficio de acreedores del Arrendatario; (d) el abandono de cualquier vehículo; o (e) la pérdida, suspensión o revocación de cualquier autoridad de operación necesaria para el uso lícito del Equipo.</p>
+<p><strong>8.2 Recursos.</strong> Al ocurrir una Causa de Incumplimiento, el Arrendador podrá, a su elección y sin necesidad de aviso adicional: (a) dar por terminado este Contrato; (b) recuperar la posesión de cualquiera o todos los vehículos; (c) ejercer todos los recursos disponibles conforme a derecho o equidad, incluida la recuperación de toda la renta vencida, honorarios razonables de abogados y los costos de recuperación.</p>
+
+<h2>9. Devolución del Equipo</h2>
+<p>Al vencimiento o terminación de este Contrato, el Arrendatario devolverá cada vehículo al Arrendador en el lugar que éste designe por escrito con al menos cinco (5) días hábiles de anticipación a la fecha de devolución. Los vehículos se devolverán limpios, con registro vigente y con todas las llaves, documentos y accesorios entregados originalmente. El Arrendatario cubrirá todos los costos de traslado al lugar de devolución.</p>
+
+<h2>10. Titularidad y Propiedad</h2>
+<p>La titularidad del Equipo permanecerá en todo momento en el Arrendador (o en su acreedor prendario, según corresponda). Este Contrato no se interpretará como una compraventa ni como una opción de compra del Equipo. El Arrendatario no tendrá derecho, título ni interés alguno sobre el Equipo salvo como arrendatario conforme a este Contrato. El Arrendatario no constituirá, contraerá, asumirá ni permitirá que exista gravamen, cargo, garantía real o afectación alguna sobre el Equipo.</p>
+
+<h2>11. Sin Opción de Compra</h2>
+<p>Este es un arrendamiento puro (operativo). El Arrendatario no tendrá opción de compra sobre ningún vehículo amparado por este Contrato, salvo que un contrato escrito por separado, firmado por ambas partes, otorgue expresamente dicha opción.</p>
+
+<h2>12. Indemnización</h2>
+<p>El Arrendatario indemnizará, defenderá y sacará en paz y a salvo al Arrendador y a sus funcionarios, consejeros, empleados y agentes de y contra toda reclamación, daño, pérdida, costo y gasto (incluidos honorarios razonables de abogados) que surja de o resulte de: (a) la operación, uso o posesión del Equipo por el Arrendatario; (b) cualquier incumplimiento de este Contrato por el Arrendatario; o (c) cualquier negligencia o conducta dolosa del Arrendatario o de sus operadores.</p>
+
+<h2>13. Ley Aplicable; Solución de Controversias</h2>
+<p>Este Contrato se regirá e interpretará conforme a las leyes del Estado de <strong>{{terms.governing_law}}</strong>, sin consideración a sus normas de conflicto de leyes. Toda controversia que surja de o se relacione con este Contrato se resolverá exclusivamente ante los tribunales estatales o federales ubicados en el Condado de <strong>{{terms.venue_county}}, {{terms.governing_law}}</strong>, y las partes se someten irrevocablemente a su jurisdicción y competencia.</p>
+
+<h2>14. Acuerdo Total; Modificaciones</h2>
+<p>Este Contrato, junto con sus anexos, constituye el acuerdo total de las partes respecto de su objeto y sustituye todas las negociaciones, declaraciones, garantías y acuerdos previos y contemporáneos. Ninguna modificación a este Contrato será válida salvo que conste por escrito y esté firmada por ambas partes.</p>
+
+<h2>15. Notificaciones</h2>
+<p>Todas las notificaciones requeridas o permitidas conforme a este Contrato se harán por escrito y se entregarán por correo certificado, mensajería al día siguiente o correo electrónico con acuse de recibo, en los domicilios señalados en la Sección 1, o en cualquier otro domicilio que una parte designe por escrito.</p>
+
+<hr style="margin:32px 0 20px"/>
+
+<div class="sig-block">
+  <div style="flex:1">
+    <p><strong>ARRENDADOR:</strong> {{lessor.legal_name}}</p>
+    <div class="sig-line">Firma</div>
+    <div class="sig-line">{{lessor.contact_name}}, {{lessor.contact_title}}</div>
+    <div class="sig-line">Fecha</div>
+  </div>
+  <div style="flex:1">
+    <p><strong>ARRENDATARIO:</strong> {{lessee.legal_name}} {{lessee.entity_type}}</p>
+    <div class="sig-line">Firma</div>
+    <div class="sig-line">{{lessee.signer_name}}, {{lessee.signer_title}}</div>
+    <div class="sig-line">Fecha</div>
+  </div>
+</div>
+
+</body>
+</html>`;
