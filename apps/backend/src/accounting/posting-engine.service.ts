@@ -68,6 +68,9 @@ export const POSTING_SOURCE_TYPES = [
   // REVERSE pointer banking.bank_transactions.matched_factoring_advance_id (already written by the
   // existing match path — no new column, no migration needed).
   "factoring_advance_deposit",
+  // ROUND 312 B-2 — QBO Make Deposit: one JE for a basket of UF receipts (Dr bank / Cr UF + optional cash-back).
+  // sourceId = accounting.deposits.id. Distinct from per-payment customer_payment_deposit match sweeps.
+  "bank_deposit",
 ] as const;
 
 export type PostingSourceType = (typeof POSTING_SOURCE_TYPES)[number];
@@ -1620,6 +1623,21 @@ async function buildCustomerPaymentDepositSweepLines(client: DbClient, operating
   const payment = paymentRes.rows[0];
   if (!payment) throw new PostingEngineError("SOURCE_NOT_FOUND", "Customer payment not found");
   if (payment.voided_at) throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided customer payment is not deposit-sweep eligible");
+  const alreadyDeposited = await client.query(
+    `
+      SELECT 1 FROM accounting.deposit_lines dl
+      JOIN accounting.deposits d ON d.id = dl.deposit_id
+      WHERE dl.source_payment_id = $1::uuid AND d.voided_at IS NULL
+      LIMIT 1
+    `,
+    [payment.id]
+  );
+  if (alreadyDeposited.rows[0]) {
+    throw new PostingEngineError(
+      "DEPOSIT_ALREADY_AT_BANK",
+      "Customer payment already included on a live bank deposit (Make Deposit) — match sweep skipped"
+    );
+  }
   if ((payment.source_system ?? "").toLowerCase() === "qbo" || (payment.qbo_payment_id ?? "").trim() !== "") {
     throw new PostingEngineError(
       "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED",
@@ -1718,6 +1736,21 @@ async function buildFactoringAdvanceDepositSweepLines(client: DbClient, operatin
   const advance = advanceRes.rows[0];
   if (!advance) throw new PostingEngineError("SOURCE_NOT_FOUND", "Factoring advance not found");
   if (advance.voided_at) throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided factoring advance is not deposit-sweep eligible");
+  const alreadyDeposited = await client.query(
+    `
+      SELECT 1 FROM accounting.deposit_lines dl
+      JOIN accounting.deposits d ON d.id = dl.deposit_id
+      WHERE dl.source_factoring_advance_id = $1::uuid AND d.voided_at IS NULL
+      LIMIT 1
+    `,
+    [advance.id]
+  );
+  if (alreadyDeposited.rows[0]) {
+    throw new PostingEngineError(
+      "DEPOSIT_ALREADY_AT_BANK",
+      "Factoring advance already included on a live bank deposit (Make Deposit) — match sweep skipped"
+    );
+  }
   if ((advance.source_system ?? "").toLowerCase() === "qbo") {
     throw new PostingEngineError(
       "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED",
@@ -1778,6 +1811,86 @@ async function buildFactoringAdvanceDepositSweepLines(client: DbClient, operatin
         source_transaction_line_id: null,
       },
     ],
+  };
+}
+
+/** ROUND 312 B-2 — QBO Make Deposit. sourceId = accounting.deposits.id.
+ * Dr bank (amount_deposited) + optional Dr cash_back_account (cash_back) / Cr UF (total_receipts). */
+async function buildBankDepositLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
+  const depRes = await client.query<{
+    id: string;
+    display_id: string;
+    deposit_date: string;
+    bank_ledger_account_id: string;
+    undeposited_funds_account_id: string;
+    total_receipts_cents: number;
+    cash_back_cents: number;
+    amount_deposited_cents: number;
+    cash_back_account_id: string | null;
+    memo: string | null;
+    voided_at: string | null;
+  }>(
+    `
+      SELECT id::text, display_id, deposit_date::text,
+             bank_ledger_account_id::text, undeposited_funds_account_id::text,
+             total_receipts_cents::bigint, cash_back_cents::bigint, amount_deposited_cents::bigint,
+             cash_back_account_id::text, memo, voided_at::text
+      FROM accounting.deposits
+      WHERE operating_company_id = $1::uuid AND id::text = $2
+      LIMIT 1
+      FOR UPDATE
+    `,
+    [operatingCompanyId, sourceId]
+  );
+  const dep = depRes.rows[0];
+  if (!dep) throw new PostingEngineError("SOURCE_NOT_FOUND", "Bank deposit not found");
+  if (dep.voided_at) throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided bank deposit is not posting-eligible");
+
+  const totalReceipts = Number(dep.total_receipts_cents ?? 0);
+  const cashBack = Number(dep.cash_back_cents ?? 0);
+  const deposited = Number(dep.amount_deposited_cents ?? 0);
+  if (!Number.isFinite(totalReceipts) || totalReceipts <= 0) {
+    throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Bank deposit has no receipt total");
+  }
+  if (deposited + cashBack !== totalReceipts) {
+    throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Bank deposit amount math does not balance");
+  }
+
+  const label = `Deposit ${dep.display_id}`;
+  const lines: PostingLineDraft[] = [];
+  if (deposited > 0) {
+    lines.push({
+      account_id: dep.bank_ledger_account_id,
+      debit_or_credit: "debit",
+      amount_cents: deposited,
+      description: `${label} to bank`,
+      source_transaction_line_id: null,
+    });
+  }
+  if (cashBack > 0) {
+    if (!dep.cash_back_account_id) {
+      throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash-back account missing on deposit");
+    }
+    lines.push({
+      account_id: dep.cash_back_account_id,
+      debit_or_credit: "debit",
+      amount_cents: cashBack,
+      description: `${label} cash back`,
+      source_transaction_line_id: null,
+    });
+  }
+  lines.push({
+    account_id: dep.undeposited_funds_account_id,
+    debit_or_credit: "credit",
+    amount_cents: totalReceipts,
+    description: `${label} cleared from Undeposited Funds`,
+    source_transaction_line_id: null,
+  });
+
+  return {
+    postingDate: dep.deposit_date,
+    memo: dep.memo ? `${label} — ${dep.memo}` : `${label} posting`,
+    lines,
   };
 }
 
@@ -2509,6 +2622,7 @@ async function buildPostingDraft(
   if (sourceType === "customer_payment") return buildCustomerPaymentLines(client, operatingCompanyId, sourceId);
   if (sourceType === "customer_payment_deposit") return buildCustomerPaymentDepositSweepLines(client, operatingCompanyId, sourceId);
   if (sourceType === "factoring_advance_deposit") return buildFactoringAdvanceDepositSweepLines(client, operatingCompanyId, sourceId);
+  if (sourceType === "bank_deposit") return buildBankDepositLines(client, operatingCompanyId, sourceId);
   if (sourceType === "bill_payment") return buildBillPaymentLines(client, operatingCompanyId, sourceId);
   if (sourceType === "cash_advance") return buildCashAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
   if (sourceType === "driver_advance") return buildDriverAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);

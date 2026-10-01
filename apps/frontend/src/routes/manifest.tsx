@@ -363,6 +363,7 @@ const BillPaymentsListPage = React.lazy(() => import("../pages/accounting/BillPa
 const BillPaymentDetailPage = React.lazy(() => import("../pages/accounting/BillPaymentDetailPage").then((m) => ({ default: m.BillPaymentDetailPage })));
 const JournalEntryDetailPage = React.lazy(() => import("../pages/accounting/journal-entries/JournalEntryDetailPage").then((m) => ({ default: m.JournalEntryDetailPage })));
 const AccountRegisterPage = React.lazy(() => import("../pages/accounting/AccountRegisterPage").then((m) => ({ default: m.AccountRegisterPage })));
+const MakeDepositPage = React.lazy(() => import("../pages/banking/MakeDepositPage").then((m) => ({ default: m.MakeDepositPage })));
 const AccountingPreSettlementsPage = React.lazy(() => import("../pages/accounting/AccountingPreSettlementsPage").then((m) => ({ default: m.AccountingPreSettlementsPage })));
 const PayrollAggregatedPage = React.lazy(() => import("../pages/accounting/PayrollAggregatedPage").then((m) => ({ default: m.PayrollAggregatedPage })));
 const ExpenseCategoryMapPage = React.lazy(() => import("../pages/accounting/ExpenseCategoryMapPage").then((m) => ({ default: m.ExpenseCategoryMapPage })));
@@ -1721,6 +1722,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <AccountRegisterPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/banking/deposits"
+          element={
+            <ProtectedRoute>
+              <MakeDepositPage />
             </ProtectedRoute>
           }
         />

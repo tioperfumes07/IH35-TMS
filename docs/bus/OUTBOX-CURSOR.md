@@ -226,3 +226,6 @@ D-H2 Loads Report `/reports/loads` + GET /api/v1/reports/loads. NEXT: B-1 Bank R
 
 **2026-10-01T09:00Z · B-1 BANK REGISTER · branch `cursor/b1-bank-register-c89b`**
 B-1 · what changed: mount QBO JE register at `/banking/register` + `/banking/register/:accountId` (AccountRegisterPage / journal_entry_postings); Banking subnav adds Register beside Transactions (feed kept). Guard: verify-bank-register-route.
+
+**2026-10-01T12:10Z · B-2 BANK DEPOSITS · branch `cursor/b2-bank-deposits-c89b`**
+B-2 · what changed: accounting.deposits + deposit_lines (mig 202615171200); create/void service posts bank_deposit JE (Dr bank / Cr UF + optional cash-back); GET undeposited + POST/void/batch routes; MakeDepositPage at /banking/deposits (single + §23 batch grid); Banking subnav Deposits; match sweeps skip receipts already on a live deposit. Guard: verify-bank-deposits-make-deposit. · LIVE PROOF: guard --selftest PASS; backend+frontend tsc exit 0. Chrome /banking/deposits UNVERIFIED: FE deploy pending; Neon apply mig pending. · NEXT: B-3 Batch Settlements after merge.

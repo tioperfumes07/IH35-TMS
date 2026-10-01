@@ -34,6 +34,7 @@ export type EntityKind =
   | "factoring_batch"
   | "payment"
   | "bill_payment"
+  | "deposit"
   // S.1b/L5 (2026-09-05): settlement earnings/deadhead lines' source driver bill
   // (driver_finance.driver_bills) — a DIFFERENT table from accounting.bills (see
   // driver-finance-driver-bills-not-accounting-bills landmine: kind="bill" 404s here). No dedicated
@@ -356,6 +357,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/factoring/batches/${id}`;
     case "payment":
       return `/accounting/payments/${id}`;
+    case "deposit":
+      return `/banking/deposits`;
     case "bill_payment":
       return `/accounting/bill-payments/${id}`;
     case "transfer":
