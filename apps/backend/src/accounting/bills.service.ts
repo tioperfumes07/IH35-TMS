@@ -1348,8 +1348,55 @@ export async function listWorkOrderLinkedFinancials(
   operatingCompanyId: string,
   workOrderId: string
 ): Promise<{
-  bills: Array<{ id: string; bill_number: string | null; bill_date: string | null; amount_cents: number; status: string | null; memo: string | null }>;
-  expenses: Array<{ id: string; transaction_date: string | null; total_amount_cents: number; status: string | null; memo: string | null }>;
+  bills: Array<{
+    id: string;
+    bill_number: string | null;
+    bill_date: string | null;
+    amount_cents: number;
+    status: string | null;
+    memo: string | null;
+    journal_entry_id: string | null;
+    vendor_id: string | null;
+  }>;
+  expenses: Array<{
+    id: string;
+    transaction_date: string | null;
+    total_amount_cents: number;
+    status: string | null;
+    memo: string | null;
+    journal_entry_id: string | null;
+  }>;
+  bill_payments: Array<{
+    id: string;
+    bill_id: string;
+    bill_number: string | null;
+    payment_date: string | null;
+    amount_cents: number;
+    status: string | null;
+    journal_entry_id: string | null;
+    vendor_id: string | null;
+  }>;
+  /** Invoices on the WO's linked load (Law §9 WO→load→invoice). */
+  invoices: Array<{
+    id: string;
+    display_id: string | null;
+    invoice_date: string | null;
+    total_cents: number;
+    status: string | null;
+    customer_id: string | null;
+    journal_entry_id: string | null;
+  }>;
+  /** Customer (receive) payments applied to those invoices. */
+  customer_payments: Array<{
+    id: string;
+    display_id: string | null;
+    payment_date: string | null;
+    amount_cents: number;
+    invoice_id: string | null;
+    invoice_display_id: string | null;
+    customer_id: string | null;
+    journal_entry_id: string | null;
+  }>;
 }> {
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
@@ -1361,11 +1408,22 @@ export async function listWorkOrderLinkedFinancials(
       return (r.rowCount ?? 0) > 0;
     };
 
-    let bills: Array<{ id: string; bill_number: string | null; bill_date: string | null; amount_cents: number; status: string | null; memo: string | null }> = [];
+    let bills: Array<{
+      id: string;
+      bill_number: string | null;
+      bill_date: string | null;
+      amount_cents: number;
+      status: string | null;
+      memo: string | null;
+      journal_entry_id: string | null;
+      vendor_id: string | null;
+    }> = [];
     if (await colExists("accounting", "bills", "linked_work_order_uuid")) {
       const res = await client.query(
         `SELECT b.id::text AS id, b.bill_number, b.bill_date::text AS bill_date,
-                COALESCE(b.amount_cents, 0)::bigint AS amount_cents, b.status, b.memo
+                COALESCE(b.amount_cents, 0)::bigint AS amount_cents, b.status, b.memo,
+                b.vendor_id::text AS vendor_id,
+                ${BILL_JOURNAL_ENTRY_ID_SQL} AS journal_entry_id
            FROM accounting.bills b
           WHERE b.operating_company_id = $1::uuid
             AND b.linked_work_order_uuid = $2
@@ -1380,16 +1438,27 @@ export async function listWorkOrderLinkedFinancials(
         amount_cents: Number(r.amount_cents ?? 0),
         status: (r.status as string) ?? null,
         memo: (r.memo as string) ?? null,
+        journal_entry_id: (r.journal_entry_id as string) ?? null,
+        vendor_id: (r.vendor_id as string) ?? null,
       }));
     }
 
-    let expenses: Array<{ id: string; transaction_date: string | null; total_amount_cents: number; status: string | null; memo: string | null }> = [];
+    let expenses: Array<{
+      id: string;
+      transaction_date: string | null;
+      total_amount_cents: number;
+      status: string | null;
+      memo: string | null;
+      journal_entry_id: string | null;
+    }> = [];
     if (await colExists("accounting", "expenses", "linked_work_order_uuid")) {
       const hasMemo = await colExists("accounting", "expenses", "memo");
+      const hasJe = await colExists("accounting", "expenses", "journal_entry_id");
       const res = await client.query(
         `SELECT e.id::text AS id, e.transaction_date::text AS transaction_date,
                 COALESCE(e.total_amount_cents, 0)::bigint AS total_amount_cents, e.status,
-                ${hasMemo ? "e.memo" : "NULL::text AS memo"}
+                ${hasMemo ? "e.memo" : "NULL::text AS memo"},
+                ${hasJe ? "e.journal_entry_id::text AS journal_entry_id" : "NULL::text AS journal_entry_id"}
            FROM accounting.expenses e
           WHERE e.operating_company_id = $1::uuid
             AND e.linked_work_order_uuid = $2
@@ -1403,10 +1472,165 @@ export async function listWorkOrderLinkedFinancials(
         total_amount_cents: Number(r.total_amount_cents ?? 0),
         status: (r.status as string) ?? null,
         memo: (r.memo as string) ?? null,
+        journal_entry_id: (r.journal_entry_id as string) ?? null,
       }));
     }
 
-    return { bills, expenses };
+    // Bill payments for WO-linked bills — reverse half of Bill → BillPayment → JE (Law §9).
+    let bill_payments: Array<{
+      id: string;
+      bill_id: string;
+      bill_number: string | null;
+      payment_date: string | null;
+      amount_cents: number;
+      status: string | null;
+      journal_entry_id: string | null;
+      vendor_id: string | null;
+    }> = [];
+    if (bills.length > 0 && (await colExists("accounting", "bill_payments", "bill_id"))) {
+      const billIds = bills.map((b) => b.id);
+      const res = await client.query(
+        `SELECT bp.id::text AS id, bp.bill_id::text AS bill_id, b.bill_number,
+                bp.payment_date::text AS payment_date,
+                COALESCE(bp.amount_cents, 0)::bigint AS amount_cents,
+                bp.status::text AS status,
+                bp.vendor_id::text AS vendor_id,
+                (
+                  SELECT jep.journal_entry_uuid::text
+                    FROM accounting.journal_entry_postings jep
+                   WHERE jep.operating_company_id = bp.operating_company_id
+                     AND jep.source_transaction_type = 'bill_payment'
+                     AND jep.source_transaction_id = bp.id::text
+                   ORDER BY jep.created_at ASC
+                   LIMIT 1
+                ) AS journal_entry_id
+           FROM accounting.bill_payments bp
+           JOIN accounting.bills b
+             ON b.id = bp.bill_id
+            AND b.operating_company_id = bp.operating_company_id
+          WHERE bp.operating_company_id = $1::uuid
+            AND bp.bill_id = ANY($2::uuid[])
+            AND bp.voided_at IS NULL
+          ORDER BY bp.payment_date DESC NULLS LAST, bp.created_at DESC`,
+        [operatingCompanyId, billIds]
+      );
+      bill_payments = res.rows.map((r: Record<string, unknown>) => ({
+        id: String(r.id),
+        bill_id: String(r.bill_id),
+        bill_number: (r.bill_number as string) ?? null,
+        payment_date: (r.payment_date as string) ?? null,
+        amount_cents: Number(r.amount_cents ?? 0),
+        status: (r.status as string) ?? null,
+        journal_entry_id: (r.journal_entry_id as string) ?? null,
+        vendor_id: (r.vendor_id as string) ?? null,
+      }));
+    }
+
+    // WO → load → invoice → customer payment (receive payments). Read-only reverse half.
+    let invoices: Array<{
+      id: string;
+      display_id: string | null;
+      invoice_date: string | null;
+      total_cents: number;
+      status: string | null;
+      customer_id: string | null;
+      journal_entry_id: string | null;
+    }> = [];
+    let customer_payments: Array<{
+      id: string;
+      display_id: string | null;
+      payment_date: string | null;
+      amount_cents: number;
+      invoice_id: string | null;
+      invoice_display_id: string | null;
+      customer_id: string | null;
+      journal_entry_id: string | null;
+    }> = [];
+    if (await colExists("maintenance", "work_orders", "load_id") && (await colExists("accounting", "invoices", "source_load_id"))) {
+      const loadRes = await client.query(
+        `SELECT load_id::text AS load_id
+           FROM maintenance.work_orders
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid
+          LIMIT 1`,
+        [workOrderId, operatingCompanyId]
+      );
+      const loadId = (loadRes.rows[0]?.load_id as string | null | undefined) ?? null;
+      if (loadId) {
+        const invRes = await client.query(
+          `SELECT i.id::text AS id, i.display_id, i.invoice_date::text AS invoice_date,
+                  COALESCE(i.total_cents, 0)::bigint AS total_cents, i.status::text AS status,
+                  i.customer_id::text AS customer_id,
+                  (
+                    SELECT jep.journal_entry_uuid::text
+                      FROM accounting.journal_entry_postings jep
+                     WHERE jep.operating_company_id = i.operating_company_id
+                       AND jep.source_transaction_type = 'invoice'
+                       AND jep.source_transaction_id = i.id::text
+                     ORDER BY jep.created_at ASC
+                     LIMIT 1
+                  ) AS journal_entry_id
+             FROM accounting.invoices i
+            WHERE i.operating_company_id = $1::uuid
+              AND i.source_load_id = $2::uuid
+              AND i.voided_at IS NULL
+            ORDER BY i.invoice_date DESC NULLS LAST, i.created_at DESC`,
+          [operatingCompanyId, loadId]
+        );
+        invoices = invRes.rows.map((r: Record<string, unknown>) => ({
+          id: String(r.id),
+          display_id: (r.display_id as string) ?? null,
+          invoice_date: (r.invoice_date as string) ?? null,
+          total_cents: Number(r.total_cents ?? 0),
+          status: (r.status as string) ?? null,
+          customer_id: (r.customer_id as string) ?? null,
+          journal_entry_id: (r.journal_entry_id as string) ?? null,
+        }));
+
+        if (invoices.length > 0 && (await colExists("accounting", "payment_applications", "invoice_id"))) {
+          const invoiceIds = invoices.map((i) => i.id);
+          const payRes = await client.query(
+            `SELECT p.id::text AS id, p.display_id, p.payment_date::text AS payment_date,
+                    COALESCE(pa.amount_cents, 0)::bigint AS amount_cents,
+                    i.id::text AS invoice_id, i.display_id AS invoice_display_id,
+                    p.customer_id::text AS customer_id,
+                    (
+                      SELECT jep.journal_entry_uuid::text
+                        FROM accounting.journal_entry_postings jep
+                       WHERE jep.operating_company_id = p.operating_company_id
+                         AND jep.source_transaction_type IN ('payment', 'customer_payment', 'ar_payment')
+                         AND jep.source_transaction_id = p.id::text
+                       ORDER BY jep.created_at ASC
+                       LIMIT 1
+                    ) AS journal_entry_id
+               FROM accounting.payment_applications pa
+               JOIN accounting.payments p
+                 ON p.id = pa.payment_id
+                AND p.operating_company_id = pa.operating_company_id
+               JOIN accounting.invoices i
+                 ON i.id = pa.invoice_id
+                AND i.operating_company_id = pa.operating_company_id
+              WHERE pa.operating_company_id = $1::uuid
+                AND pa.invoice_id = ANY($2::uuid[])
+                AND pa.unapplied_at IS NULL
+                AND p.voided_at IS NULL
+              ORDER BY p.payment_date DESC NULLS LAST, p.created_at DESC`,
+            [operatingCompanyId, invoiceIds]
+          );
+          customer_payments = payRes.rows.map((r: Record<string, unknown>) => ({
+            id: String(r.id),
+            display_id: (r.display_id as string) ?? null,
+            payment_date: (r.payment_date as string) ?? null,
+            amount_cents: Number(r.amount_cents ?? 0),
+            invoice_id: (r.invoice_id as string) ?? null,
+            invoice_display_id: (r.invoice_display_id as string) ?? null,
+            customer_id: (r.customer_id as string) ?? null,
+            journal_entry_id: (r.journal_entry_id as string) ?? null,
+          }));
+        }
+      }
+    }
+
+    return { bills, expenses, bill_payments, invoices, customer_payments };
   });
 }
 

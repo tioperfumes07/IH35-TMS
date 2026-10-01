@@ -58,6 +58,11 @@ export type WorkOrder = {
   equipment_number?: string | null;
   driver_id?: string | null;
   driver_name?: string | null;
+  /** WO customer_id, else load.customer_id (detail join). */
+  resolved_customer_id?: string | null;
+  resolved_customer_name?: string | null;
+  customer_id?: string | null;
+  service_location_type?: "shop" | "mobile" | "roadside" | string | null;
   load_id?: string | null;
   /** Snapshot string written at link time — EntityLink prefers load_id FK. */
   linked_load_number?: string | null;
@@ -81,6 +86,14 @@ export type WorkOrder = {
   external_vendor_invoice_number?: string | null;
   severity?: string | null;
   opened_at?: string | null;
+  /** In-shop start (ORDERS three dates — maps to "In shop"). */
+  work_started_at?: string | null;
+  work_completed_at?: string | null;
+  /**
+   * Expected release — NOT on maintenance.work_orders yet (CC-1 E-16).
+   * FE surfaces "pending CC-1" until the column + API land; never invent a date.
+   */
+  expected_release_at?: string | null;
   closed_at?: string | null;
   duration_seconds?: number | null;
   roadside_callout_at?: string | null;

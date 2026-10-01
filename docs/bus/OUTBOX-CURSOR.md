@@ -153,4 +153,35 @@ C-57 · wire CC-2 B-50/B-51 GET /maintenance/integrity/driver-profiles onto /dri
 **2026-10-01T04:20Z · ACK ORDERS-2026-10-01 | C-57 (row 2 in flight) then MAINTENANCE | GO**
 Read ORDERS-2026-10-01-ALL-SEATS-COMMON + ORDERS-2026-10-01-CURSOR. E-40..E-42+E-44 ACK merged. E-43 parked on E-30. Finishing C-57 (Integrity+Complaints on /drivers/profiles — named three times, mid-flight at orders drop) then MAINTENANCE module complete (row 1). No seed. No business-data writes.
 
+**2026-10-01T03:25Z · C-57 MERGED · PR #23637 · `f253f51b3c`**
+Integrity + Complaints KPIs on /drivers/profiles on main. LEFT: Lead Chrome. NEXT: ORDERS-2026-10-01 MAINTENANCE module (row 1) — WO three dates + PM due + Faults/DVIR/Engine status wire.
 
+**2026-10-01T03:30Z · ACK ORDERS-2026-10-01 | MAINTENANCE | GO**
+Starting Maintenance complete: Work orders list three dates (reported / in shop / expected release) as columns first.
+
+**2026-10-01T03:40Z · → CC-1 E-16 · expected_release_at MISSING**
+TO: CC-1. Field: `maintenance.work_orders.expected_release_at timestamptz NULL` (America/Chicago display).
+Also confirm writers for Reported=`opened_at` and In shop=`work_started_at` (both exist live).
+Endpoint: GET/PATCH `/api/v1/maintenance/work-orders` + `/:id` must select/accept `expected_release_at`.
+Example row: any open USMCA WO (list returns w.* today — column simply absent on Neon).
+Cursor FE now renders "pending CC-1" on list + detail until the column lands. Never stubbed a date.
+
+**2026-10-01T03:40Z · MAINTENANCE WO THREE DATES · branch `cursor/maint-wo-three-dates-c89b`**
+List columns Reported / In shop / Expected release; detail strip; modal labels. Ops: verify-maint-wo-three-dates.
+
+**2026-10-01T03:50Z · → CC-1 · docs.file_links work_order entity_type MISSING**
+TO: CC-1. Widen docs.file_links.entity_type CHECK to include `work_order` (and catalogs if needed).
+Cursor WO detail shows honest pending until that lands — never stubs documents on a unit/vendor as if they were WO docs.
+
+**2026-10-01T03:50Z · MAINTENANCE WO FULL LINKAGE (same branch)**
+listWorkOrderLinkedFinancials now returns bill JE + expense JE + bill_payments (with JE). FE: JE columns on bills/expenses + bill-payments reverse ParityTable. Forward: unit/trailer/driver/vendor/load/claim already EntityLinked. Three dates retained. No seed.
+
+**2026-10-01T04:55Z · MAINTENANCE WO TOTAL LINKAGE EXPAND · same branch `cursor/maint-wo-three-dates-c89b`**
+Law §9 complete wire on WO detail (no seed):
+- Reverse: bills · expenses · bill_payments · invoices (via load) · receive payments (payment_applications) · JE EntityLinks
+- Parts: parts_invoice_links reverse ParityTable + AddPartsLinkDrawer
+- Forward: customer (WO.customer_id else load.customer_id) · trailer · service location · unit/driver/vendor/load/claim
+- Backend detail JOIN resolved_customer_id/name
+Ops: verify-maint-wo-three-dates asserts invoices + customer_payments + parts + customer.
+LEFT: expected_release_at (E-16 claim 202615120000 / Cursor may author band HH12 after claim if E-16 stalls); docs.file_links work_order CHECK widen (Cursor claim 202610011200 next); PM due + Faults/DVIR/Engine widget; Lead Chrome.
+SUPERSEDES prior OUTBOX handoff lines to CC-1 for file_links — Lead ruling each seat builds own engine (docs/bus/2026-10-01-LEAD-RULING-EACH-SEAT-BUILDS-ITS-ENGINE-END-TO-END.md).

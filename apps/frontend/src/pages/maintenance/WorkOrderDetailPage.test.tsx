@@ -33,7 +33,7 @@ const getWorkOrder = vi.fn((_id: string, _operatingCompanyId: string) =>
 // undefined and the page crashes on `.expenses.map`, which surfaces as "page-header-back not found" rather
 // than as a missing mock.
 vi.mock("../../api/accounting", () => ({
-  listWorkOrderLinkedFinancials: vi.fn().mockResolvedValue({ expenses: [], bills: [], journal_entries: [] }),
+  listWorkOrderLinkedFinancials: vi.fn().mockResolvedValue({ expenses: [], bills: [], journal_entries: [], bill_payments: [] }),
 }));
 
 vi.mock("../../api/workOrdersConsole", () => ({

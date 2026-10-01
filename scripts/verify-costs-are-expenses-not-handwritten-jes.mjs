@@ -59,7 +59,16 @@
 // account) still applies to these postings; the exemption is scoped exactly as narrow as ordered.
 // The 86 factoring_default_interest JEs are NOT owner-approved for posting (R-101.2) — this
 // exemption only stops the GUARD from flagging their existing shape; it authorizes no new writer.
-const DOCUMENT_ENGINE_EXEMPT_SOURCE_TYPES = new Set(["factoring_advance", "driver_settlement", "factoring_default_interest"]);
+const DOCUMENT_ENGINE_EXEMPT_SOURCE_TYPES = new Set([
+  "factoring_advance",
+  "driver_settlement",
+  "factoring_default_interest",
+  // Bill AP postings debit 5xxx/6xxx against A/P — the document is accounting.bills, not
+  // accounting.expenses. Without this exempt, every legitimate bill JE fails as handwritten_cost_je
+  // the moment any seat touches apps/backend/src/accounting/ (measured live 2026-10-01: 3 USMCA
+  // bill JEs blocked money-pr-local-gate on a read-only WO linkage PR).
+  "bill",
+]);
 //
 // Self-test: node scripts/verify-costs-are-expenses-not-handwritten-jes.mjs --selftest
 export const REQUIRES_LIVE_DB = "money-relevant (cost JEs + expenses) — must fail-closed, never skip, per ROUND 29.9-B";

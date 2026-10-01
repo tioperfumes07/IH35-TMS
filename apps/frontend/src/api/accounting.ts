@@ -1319,8 +1319,55 @@ export function createVendorBill(
 }
 
 export type WorkOrderLinkedFinancials = {
-  bills: Array<{ id: string; bill_number: string | null; bill_date: string | null; amount_cents: number; status: string | null; memo: string | null; journal_entry_id?: string | null; journal_entry_memo?: string | null }>;
-  expenses: Array<{ id: string; transaction_date: string | null; total_amount_cents: number; status: string | null; memo: string | null; journal_entry_id?: string | null; journal_entry_memo?: string | null }>;
+  bills: Array<{
+    id: string;
+    bill_number: string | null;
+    bill_date: string | null;
+    amount_cents: number;
+    status: string | null;
+    memo: string | null;
+    journal_entry_id?: string | null;
+    journal_entry_memo?: string | null;
+    vendor_id?: string | null;
+  }>;
+  expenses: Array<{
+    id: string;
+    transaction_date: string | null;
+    total_amount_cents: number;
+    status: string | null;
+    memo: string | null;
+    journal_entry_id?: string | null;
+    journal_entry_memo?: string | null;
+  }>;
+  bill_payments?: Array<{
+    id: string;
+    bill_id: string;
+    bill_number: string | null;
+    payment_date: string | null;
+    amount_cents: number;
+    status: string | null;
+    journal_entry_id: string | null;
+    vendor_id: string | null;
+  }>;
+  invoices?: Array<{
+    id: string;
+    display_id: string | null;
+    invoice_date: string | null;
+    total_cents: number;
+    status: string | null;
+    customer_id: string | null;
+    journal_entry_id: string | null;
+  }>;
+  customer_payments?: Array<{
+    id: string;
+    display_id: string | null;
+    payment_date: string | null;
+    amount_cents: number;
+    invoice_id: string | null;
+    invoice_display_id: string | null;
+    customer_id: string | null;
+    journal_entry_id: string | null;
+  }>;
 };
 
 // Reverse drill-through for the WO↔bill/expense HARD link: bills + expenses that FK-reference this WO.

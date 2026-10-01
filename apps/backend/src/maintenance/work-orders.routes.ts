@@ -662,6 +662,8 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
                 COALESCE(w.external_vendor_id, w.vendor_id)::text AS resolved_vendor_id,
                 v.vendor_name AS resolved_vendor_name,
                 l.load_number AS linked_load_number,
+                COALESCE(w.customer_id, l.customer_id)::text AS resolved_customer_id,
+                COALESCE(cu.customer_name, lcu.customer_name) AS resolved_customer_name,
                 rl.load_number AS roadside_breakdown_load_number,
                 si.issue_category AS source_intransit_issue_category,
                 si.issue_description AS source_intransit_issue_description,
@@ -690,6 +692,8 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
                                       )
            LEFT JOIN mdata.vendors v ON v.id = COALESCE(w.external_vendor_id, w.vendor_id) AND v.operating_company_id = w.operating_company_id
            LEFT JOIN mdata.loads l ON l.id = w.load_id AND l.operating_company_id = w.operating_company_id
+           LEFT JOIN mdata.customers cu ON cu.id = w.customer_id AND cu.operating_company_id = w.operating_company_id
+           LEFT JOIN mdata.customers lcu ON lcu.id = l.customer_id AND lcu.operating_company_id = w.operating_company_id
            LEFT JOIN mdata.loads rl ON rl.id = w.roadside_breakdown_load_id AND rl.operating_company_id = w.operating_company_id
            LEFT JOIN dispatch.intransit_issues si ON si.id = w.source_intransit_issue_id AND si.operating_company_id = w.operating_company_id
            LEFT JOIN insurance.claim ic ON ic.id = w.insurance_claim_id AND ic.tenant_id = w.operating_company_id
