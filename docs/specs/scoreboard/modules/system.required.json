@@ -124,6 +124,19 @@
       ]
     },
     {
+      "id": "system.samsara_driver_mapping",
+      "tab": "Samsara",
+      "sub": "Samsara driver ID mapping",
+      "route_hint": "/samsara/driver-mapping",
+      "surface_kind": "leaf",
+      "surface_path": "pages/samsara-driver-mapping/SamsaraDriverMappingPage.tsx",
+      "required": [
+        "driver",
+        "connectivity",
+        "picker_law"
+      ]
+    },
+    {
       "id": "home",
       "tab": "Home",
       "sub": "System module home",

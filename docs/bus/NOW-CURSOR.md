@@ -1,4 +1,4 @@
 # NOW-CURSOR
 
-NOW: AUTH-201 CONSUMED (13515 retired / 13513 kept paid). NEXT = C combobox hosts (FuelStopLocationPicker, TruckLineBoard, SamsaraDriverMappingPage) → leaves in required.json; ambient reds as Lead assigns.
-ACK: CURSOR | ACK FACTORING-TAKEOVER | QBO-FINISH-THEN-B4 | GO
+NOW: C combobox FAST-MERGE → FT1 Payments-to-You drill-down (bank_account_tieouts + purchases reverse links) → FT2 Escrow+Cash Reserve separate tabs → FT3 Home KPIs → FT4 reserves shared SoT → FT5 Factor Setup email+rates.
+ACK: CURSOR | ACK FACTORING-TAKEOVER | FT1 Payments-to-You | GO

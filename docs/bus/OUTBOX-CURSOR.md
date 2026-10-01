@@ -1,7 +1,20 @@
-**2026-10-01T20:32Z · AUTH-201 CONSUMED · B9 CLOSED · `cursor/r315-b9-auth201-13515-c89b`**
+**2026-10-01T21:07Z · ACK FACTORING-TAKEOVER FULL BUILD · FT1 Payments-to-You · `cursor/r315-c-combobox-leaves-c89b`**
+CURSOR | ACK FACTORING-TAKEOVER | FT1 Payments-to-You | GO
+#23904 MERGED `6ee6770109` AUTH-201 CONSUMED. C combobox leaves shipping this PR then FT1–FT5 one PR each on CC-2 purchase engine only.
+CC-2 WRAP unfinished absorbed: steps 4–8 + Factor Setup FE (email + cash_reserve_rate) — Cursor builds. No second engine. No Chrome-as-proof.
+
+**2026-10-01T20:45Z · C COMBOBOX LEAVES · `cursor/r315-c-combobox-leaves-c89b`**
 ACK: CURSOR | ACK FACTORING-TAKEOVER | QBO-FINISH-THEN-B4 | GO
-LIVE: inv 13513 ca5c386d paid $525 (app 102b9ea8 from payment 411c9b24); inv 13515 f59a3468 void (rev JE 567d4350); Event1 2c730468 → rev 814a8991; load 13515 cancelled (void-not-delete). Dry-run PASS then APPLY=1.
-B4–B8 + AUTH-200/#23903 + AUTH-201 THIS. NEXT: C combobox hosts → required.json leaves.
+B9 AUTH-201 PR #23904 (live CONSUMED). C: 3 Combobox hosts → required.json leaves:
+  home.truck_line → pages/dispatch/TruckLineBoard.tsx
+  system.samsara_driver_mapping → pages/samsara-driver-mapping/SamsaraDriverMappingPage.tsx
+  fuel.modal.create_fuel_transaction.owned → components/locations/FuelStopLocationPicker.tsx
+GUARD: verify-surface-bar-combobox-inventory PASS 84/84. NEXT: ship C · ambient as Lead assigns.
+
+**2026-10-01T20:32Z · AUTH-201 CONSUMED · B9 CLOSED · PR #23904 · `cursor/r315-b9-auth201-13515-c89b`**
+ACK: CURSOR | ACK FACTORING-TAKEOVER | QBO-FINISH-THEN-B4 | GO
+LIVE: inv 13513 ca5c386d paid $525 (app 102b9ea8 from payment 411c9b24); inv 13515 f59a3468 void (rev JE 567d4350); Event1 2c730468 → rev 814a8991; load 13515 cancelled (void-not-delete). Dry-run PASS then APPLY=1. AR-tie cancelled-load exclusion LIVE PASS.
+B4–B8 + AUTH-200/#23903 + AUTH-201 #23904. NEXT: C combobox hosts → required.json leaves.
 
 **2026-10-01T20:30Z · AUTH-200 CONSUMED MERGED #23903 · AUTH-201 OPEN NEXT · `cursor/r315-b9-auth201-13515-c89b`**
 ACK: CURSOR | ACK FACTORING-TAKEOVER | QBO-FINISH-THEN-B4 | GO
