@@ -57,6 +57,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { factorToProfileForm, profileFormToFactorPatch, resolveActiveFactorFromSummary, type FactorProfileForm } from "../../lib/factorProfile";
 import { FactoringProfilePanel } from "./FactoringProfilePanel";
 import { SubmitToFactorTab } from "./SubmitToFactorTab";
+import { PaymentsToYouPanel } from "./PaymentsToYouPanel";
 import { ChargebacksTable, type ChargebackFeeRow } from "./ChargebacksTable";
 import { RecoursePipelineTable } from "./RecoursePipelineTable";
 import { ReserveTracker } from "./ReserveTracker";
@@ -72,39 +73,35 @@ import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { NotApplicable } from "../../components/money/NotApplicable";
 import type { NaReason } from "../../design/money-design-system";
 import { CollapsedListFilters } from "../../components/table/CollapsedListFilters";
+import { formatUsdCents } from "../../lib/money";
+import { listFactoringPurchases } from "../../api/factoring-purchases";
 
-// FAC-09a (owner 2026-09-08, "CORRECTED FROM REAL SCREENSHOTS"): the real Faro debtor portal's
-// own left-nav, in its own real order — rebuilt here to match exactly. Messages & Support is a
-// contact/inbox action (envelope), not a data report, styled distinctly per the source doc.
+// ROUND 315 / Lead B5 (2026-10-01): remove Account Summary + Request Debtor Credit Check from the
+// primary Faro-parity tab strip (parked under Internal Tools — Rule 07, never delete surfaces).
+// ADD Escrow Account. Every money column with a *_cents field uses formatUsdCents (shared), never
+// a dollars Intl formatter on raw cents (Debtor Receipts ×100 bug).
 const SUBNAV = [
   { id: "submit_invoice", label: "Submit Invoice" },
-  { id: "request_debtor_credit_check", label: "Request Debtor / Credit Check" },
   { id: "funds_due", label: "Funds Due" },
   { id: "payments_to_you", label: "Payments to You" },
   { id: "debtor_receipts", label: "Debtor Receipts" },
   { id: "purchase_report", label: "Purchase Report" },
-  { id: "account_summary", label: "Account Summary" },
   { id: "fees_paid", label: "Fees Paid" },
   { id: "aging", label: "Aging" },
   { id: "reserve", label: "Reserve" },
+  { id: "escrow_account", label: "Escrow Account" },
   { id: "chargebacks_overpayments", label: "Chargebacks & Overpayments" },
   { id: "loan_save", label: "Loan / Save" },
   { id: "unapplied_cash", label: "Unapplied Cash" },
-  // ROUND 21.0 item 2 (owner ruling: "either it is trustworthy and the tag comes off, or it is
-  // not and it is behind a flag" -- decided, not deferred): this report is real, sourced (invoice
-  // + settlement + advance/reserve/fee join, same query already exercised by Aging/Purchase
-  // Report), and every missing field renders the same honest "—" convention as every other tab in
-  // this file -- no different from its siblings that never carried a BETA tag. Tag removed.
   { id: "invoice_status_report", label: "Invoice Status Report" },
   { id: "messages_support", label: "✉ Messages & Support" },
 ] as const;
 
 // Pre-existing internal-ops tabs — kept fully reachable (Rule 07, never delete) under an
-// "Internal Tools" dropdown rather than folded into the 15-item list above, since they are a
-// different kind of tool (internal ops actions: CSV imports, QBO vendor-merge cleanup, CCG
-// equipment financing, the pre-9a operational reserve/statement views) than the debtor-facing
-// report list the owner's screenshots describe.
+// "Internal Tools" dropdown. Account Summary + Request Debtor Credit Check moved here (Lead B5).
 const INTERNAL_TOOLS_SUBNAV = [
+  { id: "account_summary", label: "Account Summary" },
+  { id: "request_debtor_credit_check", label: "Request Debtor / Credit Check" },
   { id: "reserve_tracker", label: "Reserve Tracker" },
   { id: "recourse_pipeline", label: "Recourse Pipeline" },
   { id: "chargebacks_fees", label: "Chargebacks & Fees" },
@@ -122,8 +119,14 @@ type FactoringHomeProps = {
 
 const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
 
+/** Dollar amounts already in dollars (views.factoring_summary / recourse dollar columns). */
 function fmtCurrency(value: unknown) {
   return currency.format(Number(value ?? 0));
+}
+
+/** Integer cents → QBO "$1,234.56". ALWAYS use for *_cents fields (Debtor Receipts ×100 fix). */
+function fmtCents(value: unknown) {
+  return formatUsdCents(value as number | string | null | undefined);
 }
 
 // REG-049: shared From/To DatePicker label class. text-xs (the locked scale's semantic 12px
@@ -307,7 +310,7 @@ function daysSince(dateIso: string): number {
   return Math.max(0, Math.floor((Date.now() - then) / 86_400_000));
 }
 
-export function FactoringHomePage({ initialTab = "account_summary" }: FactoringHomeProps = {}) {
+export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHomeProps = {}) {
   const location = useLocation();
   const { selectedCompanyId, isLoading: companyContextLoading } = useCompanyContext();
   const { user } = useAuth();
@@ -708,22 +711,6 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     return totals;
   }, [agingRows]);
 
-  // GLB-25157: Payments to You — same recourseQuery rows sorted by factored_at (advanced_at)
-  // with a running total of advance_amount (the actual dollar Faro paid IH35 per advance).
-  const paymentsToYouRows = useMemo(() => {
-    let running = 0;
-    return [...agingRows]
-      .sort((a, b) => new Date(a.factored_at).getTime() - new Date(b.factored_at).getTime())
-      .map((row) => {
-        running += Number(row.advance_amount ?? 0);
-        return { ...row, running_total: running };
-      });
-  }, [agingRows]);
-  const paymentsToYouTotal = useMemo(
-    () => paymentsToYouRows.reduce((sum, row) => sum + Number(row.advance_amount ?? 0), 0),
-    [paymentsToYouRows],
-  );
-
   // FAC-09a Fees Paid "Open Invoices" view — Accrued Fees per invoice, summed from the same
   // feesQuery.data.history (views.factoring_chargebacks_fees) rows the "All Fees" view and the
   // Chargebacks & Fees internal tool tab already render, keyed by the shared factoring_advance_id
@@ -784,12 +771,34 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   // FAC-09a Reserve (owner mega-report 2026-09-09, real per the FAC09a-CORRECTED spec): the SAME
   // real reserve-movement ledger ReserveTracker.tsx's "Reserve movement history" already renders
   // (getReserveBalanceHistory), scoped to the page's own active factor instead of a picker -- no
-  // new backend query, no new table. This system tracks ONE combined reserve_balance with no
-  // Escrow/Cash type split (confirmed multiple times this session, e.g. Account Summary's own
-  // footnote) -- the spec's "Escrow Reserve / Cash Reserve" split and "Show Cash"/"Show Escrow"
-  // toggle are honestly not buildable without fabricating a split this schema doesn't have; Total
-  // Reserve (real) renders, the two split figures render "—" with the same honest footnote
-  // pattern already used elsewhere on this page.
+  // ROUND 315 / Lead B4–B5: posted purchases (= Faro wires) drive Escrow/Cash reserve split + Escrow tab.
+  const purchasesQuery = useQuery({
+    queryKey: ["factoring", "purchases", "posted", companyId, dateFromFromUrl, dateToFromUrl],
+    queryFn: () =>
+      listFactoringPurchases(companyId, {
+        status: "posted",
+        from: dateFromFromUrl || undefined,
+        to: dateToFromUrl || undefined,
+      }),
+    enabled: Boolean(companyId),
+  });
+  const purchaseEscrowTotals = useMemo(() => {
+    let escrow = 0;
+    let cash = 0;
+    let fee = 0;
+    let wire = 0;
+    let net = 0;
+    for (const p of purchasesQuery.data?.purchases ?? []) {
+      escrow += Number(p.escrow_reserve_cents ?? 0);
+      cash += Number(p.cash_reserve_cents ?? 0);
+      fee += Number(p.fee_cents ?? 0);
+      wire += Number(p.wire_fee_cents ?? 0);
+      net += Number(p.net_to_company_cents ?? 0);
+    }
+    return { escrow, cash, fee, wire, net, count: (purchasesQuery.data?.purchases ?? []).length };
+  }, [purchasesQuery.data?.purchases]);
+  // ROUND 315 / Lead B5: Escrow/Cash split from purchase lines (ledger-backed document), not fabricated.
+  // Combined reserve_balance (dollars) still shown as Total Reserve from views.factoring_summary.
   const reserveHistoryQuery = useQuery({
     queryKey: ["factoring", "reserves", "history", companyId, summaryQuery.data?.active_factor_id],
     queryFn: () => getReserveBalanceHistory(summaryQuery.data!.active_factor_id!, companyId, { limit: 100 }),
@@ -1259,8 +1268,8 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                       row.invoice_id ? <EntityLink kind="invoice" id={row.invoice_id} label={row.display_id ?? row.invoice_id} /> : (row.display_id ?? "—"),
                   },
                   { key: "submitted_at", label: "Submitted", sortable: true, render: (row: (typeof fundsDueRows)[number]) => fmtDate(row.submitted_at) },
-                  { key: "invoice_total_cents", label: "Invoice Amount", sortable: true, cellClass: "text-right", render: (row: (typeof fundsDueRows)[number]) => fmtCurrency(row.invoice_total_cents / 100) },
-                  { key: "advance_amount_cents", label: "Expected Advance", sortable: true, cellClass: "text-right", render: (row: (typeof fundsDueRows)[number]) => fmtCurrency(row.advance_amount_cents / 100) },
+                  { key: "invoice_total_cents", label: "Invoice Amount", sortable: true, cellClass: "text-right", render: (row: (typeof fundsDueRows)[number]) => fmtCents(row.invoice_total_cents) },
+                  { key: "advance_amount_cents", label: "Expected Advance", sortable: true, cellClass: "text-right", render: (row: (typeof fundsDueRows)[number]) => fmtCents(row.advance_amount_cents) },
                 ]}
                 rows={fundsDueRows}
                 rowKey={(row) => row.factoring_advance_id}
@@ -1269,7 +1278,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 storageKey="factoring-funds-due"
                 footerCells={{
                   customer_name: `${fundsDueRows.length} invoice(s)`,
-                  advance_amount_cents: fmtCurrency(fundsDueRows.reduce((sum, row) => sum + Number(row.advance_amount_cents ?? 0), 0) / 100),
+                  advance_amount_cents: fmtCents(fundsDueRows.reduce((sum, row) => sum + Number(row.advance_amount_cents ?? 0), 0)),
                 }}
               />
               <p className="mt-2 text-xs text-gray-500" data-testid="factoring-funds-due-footnote">
@@ -1399,9 +1408,9 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 { key: "advance_display_id", label: "Advance", render: (row) => row.factoring_advance_id ? (
                   <EntityLink kind="factoring_advance" id={row.factoring_advance_id} label={row.advance_display_id ?? "—"} />
                 ) : "—" },
-                { key: "amount_cents", label: "Payment Amount", sortable: true, render: (row) => fmtCurrency(row.amount_cents) },
-                { key: "amount_applied_cents", label: "Applied", sortable: true, render: (row) => fmtCurrency(row.amount_applied_cents) },
-                { key: "amount_unapplied_cents", label: "Unapplied", sortable: true, render: (row) => fmtCurrency(row.amount_unapplied_cents) },
+                { key: "amount_cents", label: "Payment Amount", sortable: true, render: (row) => fmtCents(row.amount_cents) },
+                { key: "amount_applied_cents", label: "Applied", sortable: true, render: (row) => fmtCents(row.amount_applied_cents) },
+                { key: "amount_unapplied_cents", label: "Unapplied", sortable: true, render: (row) => fmtCents(row.amount_unapplied_cents) },
                 { key: "payment_reference", label: "Reference", sortable: true, sortValue: (row) => row.payment_reference ?? "", render: (row) => row.payment_reference || "—" },
               ];
               return (
@@ -1513,9 +1522,9 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 { key: "customer_name", label: "Customer", render: (row) => row.customer_id ? (
                   <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
                 ) : "—" },
-                { key: "amount_cents", label: "Payment Amount", sortable: true, render: (row) => fmtCurrency(row.amount_cents) },
-                { key: "amount_applied_cents", label: "Applied", sortable: true, render: (row) => fmtCurrency(row.amount_applied_cents) },
-                { key: "amount_unapplied_cents", label: "Unapplied", sortable: true, render: (row) => fmtCurrency(row.amount_unapplied_cents) },
+                { key: "amount_cents", label: "Payment Amount", sortable: true, render: (row) => fmtCents(row.amount_cents) },
+                { key: "amount_applied_cents", label: "Applied", sortable: true, render: (row) => fmtCents(row.amount_applied_cents) },
+                { key: "amount_unapplied_cents", label: "Unapplied", sortable: true, render: (row) => fmtCents(row.amount_unapplied_cents) },
                 { key: "payment_reference", label: "Reference", sortable: true, sortValue: (row) => row.payment_reference ?? "", render: (row) => row.payment_reference || "—" },
                 { key: "notes", label: "Notes", sortable: true, sortValue: (row) => row.notes ?? "", render: (row) => row.notes || "—" },
               ];
@@ -1567,10 +1576,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 { key: "issue_date", label: "Invoiced Date", sortable: true, render: (row) => fmtDate(row.issue_date) },
                 { key: "lc_settlement_number", label: "Settlement #", alwaysVisible: true, sortable: true, render: (row) => row.lc_settlement_number || "—" },
                 { key: "delivery_date", label: "Delivery Date", sortable: true, render: (row) => fmtDate(row.delivery_date) },
-                { key: "total_cents", label: "Original Invoice Amount", sortable: true, render: (row) => fmtCurrency(row.total_cents) },
-                { key: "advance_amount_cents", label: "Advance", sortable: true, render: (row) => row.advance_amount_cents != null ? fmtCurrency(row.advance_amount_cents) : "—" },
-                { key: "reserve_amount_cents", label: "Reserve", sortable: true, render: (row) => row.reserve_amount_cents != null ? fmtCurrency(row.reserve_amount_cents) : "—" },
-                { key: "factor_fee_cents", label: "Fees", sortable: true, render: (row) => row.factor_fee_cents != null ? fmtCurrency(row.factor_fee_cents) : "—" },
+                { key: "total_cents", label: "Original Invoice Amount", sortable: true, render: (row) => fmtCents(row.total_cents) },
+                { key: "advance_amount_cents", label: "Advance", sortable: true, render: (row) => row.advance_amount_cents != null ? fmtCents(row.advance_amount_cents) : "—" },
+                { key: "reserve_amount_cents", label: "Reserve", sortable: true, render: (row) => row.reserve_amount_cents != null ? fmtCents(row.reserve_amount_cents) : "—" },
+                { key: "factor_fee_cents", label: "Fees", sortable: true, render: (row) => row.factor_fee_cents != null ? fmtCents(row.factor_fee_cents) : "—" },
                 { key: "invoice_display_id", label: "Invoice", render: (row) => (
                   <EntityLink kind="invoice" id={row.invoice_id} label={entityLabel(row.invoice_display_id, row.invoice_id, "Invoice")} />
                 ) },
@@ -1665,16 +1674,16 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             <DrillKpiCard
               testId="factoring-reserve-escrow"
               label="Escrow Reserve"
-              value="—"
-              hint="No Escrow/Cash split in this schema"
-              to={FACTORING_TAB_PATH.reserve_tracker}
+              value={purchasesQuery.isError ? null : fmtCents(purchaseEscrowTotals.escrow)}
+              hint="Sum of escrow_reserve_cents on posted purchases"
+              to={FACTORING_TAB_PATH.escrow_account}
             />
             <DrillKpiCard
               testId="factoring-reserve-cash"
               label="Cash Reserve"
-              value="—"
-              hint="No Escrow/Cash split in this schema"
-              to={FACTORING_TAB_PATH.reserve_tracker}
+              value={purchasesQuery.isError ? null : fmtCents(purchaseEscrowTotals.cash)}
+              hint="Sum of cash_reserve_cents on posted purchases"
+              to={FACTORING_TAB_PATH.escrow_account}
             />
             <DrillKpiCard
               testId="factoring-reserve-total"
@@ -1684,9 +1693,9 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             />
             <DrillKpiCard
               testId="factoring-reserve-available"
-              label="Available for Release"
+              label="Available for release"
               value="—"
-              hint="See Reserve Tracker's release forecast"
+              hint="Release forecast not yet on purchase ledger"
               to={FACTORING_TAB_PATH.reserve_tracker}
             />
           </div>
@@ -1711,14 +1720,14 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   label: "Amount",
                   sortable: true,
                   cellClass: "text-right",
-                  render: (row: FactoringReserveBalanceHistoryEntry) => fmtCurrency(row.signed_amount_cents / 100),
+                  render: (row: FactoringReserveBalanceHistoryEntry) => fmtCents(row.signed_amount_cents),
                 },
                 {
                   key: "running_balance_cents",
                   label: "Balance",
                   sortable: true,
                   cellClass: "text-right",
-                  render: (row: FactoringReserveBalanceHistoryEntry) => fmtCurrency(row.running_balance_cents / 100),
+                  render: (row: FactoringReserveBalanceHistoryEntry) => fmtCents(row.running_balance_cents),
                 },
               ]}
               rows={reserveHistoryQuery.data?.movements ?? []}
@@ -1729,77 +1738,137 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             />
           )}
           <p className="mt-2 text-xs text-gray-500" data-testid="factoring-reserve-footnote">
-            "Escrow Reserve" / "Cash Reserve" are shown separately in the real Faro portal; this
-            system tracks one combined reserve_balance with no type split, so both rows above are
-            honestly "—" rather than duplicating the combined figure into each. "ID", "Inv", "PO
-            Ref#", "Debtor", and "Pmt Ref" columns from the real portal's per-entry table have no
-            backing field on this batch-level movement ledger — the real Date/Note/Amount/Balance
-            columns above are never fabricated.
+            Escrow Reserve and Cash Reserve are summed from posted factoring_purchases (the Faro
+            wire document). Total Reserve still reads views.factoring_summary.reserve_balance
+            (dollars). Movement history is the reserve ledger for the active factor.
           </p>
         </div>
       ) : null}
 
-      {/* GLB-25157 (owner 2026-09-09): Factoring "Payments to You" — real table sourced from
-          the SAME recourseQuery rows already fetched for Aging (views.factoring_recourse_at_risk,
-          which is built on accounting.factoring_advances). The view's factored_at IS
-          COALESCE(fa.advanced_at, fa.created_at) and advance_amount IS
-          fa.advance_amount_cents / 100 — so these are the real advanced_at / advance_amount_cents
-          rows the owner asked for, no new backend query. Columns: Date, Advance/Invoice ref,
-          Gross advance amount (invoice_amount), Net paid to IH35 (advance_amount), running total.
-          No fabricated columns — every field has real backing from the advances table. */}
-      {tab === "payments_to_you" ? (
-        <div className="space-y-3">
+      {/* ROUND 315 / Lead B5 — Escrow Account tab: escrow + cash reserve per posted purchase wire. */}
+      {tab === "escrow_account" ? (
+        <div className="space-y-3" data-testid="factoring-escrow-account">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-xs font-medium text-gray-900">Payments to You</div>
-            <div className="text-xs text-gray-500" data-testid="factoring-payments-to-you-note">
-              Dollar amounts Faro advanced to IH35 per factored invoice, sourced from
-              the factoring advance records (advance amount + advanced date).
+            <div className="mb-2 text-xs font-medium text-gray-900">Escrow Account</div>
+            <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-escrow-account")}</div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="factoring-escrow-summary-strip">
+              <DrillKpiCard
+                testId="factoring-escrow-kpi-escrow"
+                label="Escrow held"
+                value={purchasesQuery.isError ? null : fmtCents(purchaseEscrowTotals.escrow)}
+                to={FACTORING_TAB_PATH.payments_to_you}
+              />
+              <DrillKpiCard
+                testId="factoring-escrow-kpi-cash"
+                label="Cash reserve held"
+                value={purchasesQuery.isError ? null : fmtCents(purchaseEscrowTotals.cash)}
+                to={FACTORING_TAB_PATH.payments_to_you}
+              />
+              <DrillKpiCard
+                testId="factoring-escrow-kpi-wires"
+                label="Posted wires"
+                value={purchasesQuery.isError ? null : String(purchaseEscrowTotals.count)}
+                to={FACTORING_TAB_PATH.payments_to_you}
+              />
+              <DrillKpiCard
+                testId="factoring-escrow-kpi-net"
+                label="Net paid to IH35"
+                value={purchasesQuery.isError ? null : fmtCents(purchaseEscrowTotals.net)}
+                to={FACTORING_TAB_PATH.payments_to_you}
+              />
             </div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              {dateRangeOnlyFilterBar("factoring-home-payments-to-you")}
-              {summaryDetailToggle(paymentsToYouView, setPaymentsToYouView, "factoring-payments-to-you")}
-            </div>
-            {recourseQuery.isError ? (
+            {purchasesQuery.isError ? (
               <ListErrorState
-                title="Couldn't load payments"
-                {...formatQueryErrorDetail(recourseQuery.error)}
-                onRetry={() => void recourseQuery.refetch()}
+                title="Couldn't load escrow purchases"
+                {...formatQueryErrorDetail(purchasesQuery.error)}
+                onRetry={() => void purchasesQuery.refetch()}
               />
             ) : (
-              <div className="overflow-x-auto">
-                <ParityTable
-                  columns={[
-                    { key: "factored_at", label: "Date", sortable: true, render: (row: (typeof agingRows)[number]) => fmtDate(row.factored_at) },
-                    {
-                      key: "invoice_reference",
-                      label: "Advance/Invoice Ref",
-                      sortable: true,
-                      render: (row: (typeof agingRows)[number]) =>
-                        row.invoice_id ? <EntityLink kind="invoice" id={row.invoice_id} label={row.invoice_reference} /> : row.invoice_reference,
-                    },
-                    { key: "customer_name", label: "Debtor", sortable: true, render: (row: (typeof agingRows)[number]) => row.customer_name },
-                    { key: "invoice_amount", label: "Gross Advance Amount", sortable: true, cellClass: "text-right", render: (row: (typeof agingRows)[number]) => fmtCurrency(row.invoice_amount) },
-                    { key: "advance_amount", label: "Net Paid to IH35", sortable: true, cellClass: "text-right font-semibold", render: (row: (typeof agingRows)[number]) => fmtCurrency(row.advance_amount) },
-                    { key: "running_total", label: "Running Total", sortable: true, cellClass: "text-right", render: (row: (typeof paymentsToYouRows)[number]) => fmtCurrency(row.running_total) },
-                  ]}
-                  rows={paymentsToYouRows}
-                  rowKey={(row) => row.factoring_advance_id}
-                  loading={recourseQuery.isLoading}
-                  emptyText="No advance payments recorded."
-                  storageKey="factoring-payments-to-you"
-                  tableTestId="factoring-payments-to-you-table"
-                  footerCells={{
-                    invoice_reference: `${paymentsToYouRows.length} records`,
-                    advance_amount: fmtCurrency(paymentsToYouTotal),
-                    running_total: fmtCurrency(paymentsToYouTotal),
-                  }}
-                />
-              </div>
+              <ParityTable
+                columns={[
+                  {
+                    key: "purchase_date",
+                    label: "Purchase date",
+                    sortable: true,
+                    render: (row) => formatDateUS(row.purchase_date),
+                  },
+                  {
+                    key: "display_id",
+                    label: "Purchase",
+                    sortable: true,
+                    render: (row) => row.display_id,
+                  },
+                  {
+                    key: "invoice_count",
+                    label: "Invoices",
+                    cellClass: "text-right tabular-nums",
+                    render: (row) => String(row.invoice_count),
+                  },
+                  {
+                    key: "escrow_reserve_cents",
+                    label: "Escrow",
+                    cellClass: "text-right tabular-nums",
+                    render: (row) => fmtCents(row.escrow_reserve_cents),
+                  },
+                  {
+                    key: "cash_reserve_cents",
+                    label: "Cash rsv",
+                    cellClass: "text-right tabular-nums",
+                    render: (row) => fmtCents(row.cash_reserve_cents),
+                  },
+                  {
+                    key: "fee_cents",
+                    label: "Fee",
+                    cellClass: "text-right tabular-nums",
+                    render: (row) => fmtCents(row.fee_cents),
+                  },
+                  {
+                    key: "net_to_company_cents",
+                    label: "Net wire",
+                    cellClass: "text-right tabular-nums font-semibold",
+                    render: (row) => fmtCents(row.net_to_company_cents),
+                  },
+                  {
+                    key: "bank_transaction_id",
+                    label: "Bank match",
+                    render: (row) =>
+                      row.bank_transaction_id ? (
+                        <EntityLink kind="bank_transaction" id={row.bank_transaction_id} label="Matched" />
+                      ) : (
+                        "Unmatched"
+                      ),
+                  },
+                ]}
+                rows={purchasesQuery.data?.purchases ?? []}
+                rowKey={(row) => row.id}
+                loading={purchasesQuery.isLoading}
+                emptyText="No posted factoring purchases — escrow is empty until the owner posts a wire."
+                storageKey="factoring-escrow-account"
+                tableTestId="factoring-escrow-account-table"
+                footerCells={{
+                  display_id: `${purchaseEscrowTotals.count} wire(s)`,
+                  escrow_reserve_cents: fmtCents(purchaseEscrowTotals.escrow),
+                  cash_reserve_cents: fmtCents(purchaseEscrowTotals.cash),
+                  net_to_company_cents: fmtCents(purchaseEscrowTotals.net),
+                }}
+              />
             )}
           </div>
         </div>
+      ) : null}
+
+      {/* ROUND 315 / Lead B4: Payments to You — one row per Faro wire (= factoring_purchases).
+          Click → invoices / fees / reserves / bank match. CC-2 purchase engine only. */}
+      {tab === "payments_to_you" ? (
+        <PaymentsToYouPanel
+          companyId={companyId}
+          dateFrom={dateFromFromUrl || undefined}
+          dateTo={dateToFromUrl || undefined}
+          filterBar={dateRangeOnlyFilterBar("factoring-home-payments-to-you")}
+          summaryDetailToggle={summaryDetailToggle(paymentsToYouView, setPaymentsToYouView, "factoring-payments-to-you")}
+        />
       ) : null}
 
       {/* FAC-09a Chargebacks & Overpayments (real, this pass): the real portal's own screenshot
