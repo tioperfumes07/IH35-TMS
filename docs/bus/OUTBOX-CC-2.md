@@ -1387,3 +1387,61 @@ row had already been deleted by an earlier incarnation of the same purchase, plu
 cleared 1090 against factoring funding: the 9 `factoring_advance_deposit` JEs (DR 1000, $21,611, now deleted) and CC-1's TB-close manual
 JE ACCT-F20260925i (1090 → bank, $166,743.94, kept — not a factoring JE). Until the app regenerates the purchases (Submit tab →
 funding DR 1090 / CR 2150), 1090 shows the Faro cash with no source. Closure path: the rebuilt Faro posting + bank match, never a manual plug.
+
+## 2026-10-01 16:40Z — ROUND 315 (FINAL) steps 0–1: status
+
+**Order of events (honest):** the FINAL arrived after AUTH-193 had already applied (16:09Z). AUTH-193 nulled only
+`matched_factoring_advance_id` on the 16 deposits so the advances could be deleted — not the canonical unmatch. All 16
+were left `review_state='matched'`, which `match.service` refuses to re-match. Repaired under **AUTH-194** (#23808 + apply)
+through the canonical `void.service.ts unmatchBankTransactionById` + one audit row each (16 rows, source CC-2-AUTH-194).
+
+**Step 0 — 16 bank deposits, before → after** (status / review_state):
+
+| id | date | amount | before | after |
+|---|---|---|---|---|
+| 641d51be-4fb1-4dc5-a3fd-6ff2bd4cee75 | 08-10 | 5,325.00 | uncategorized / matched | pending_categorization / for_review |
+| ab67cf21-eda1-4b95-809c-8f354acbb6c3 | 08-11 | 3,482.00 | uncategorized / matched | pending_categorization / for_review |
+| 3e7b0fe6-3c29-49c9-a0e0-e70dcf09b8e7 | 08-12 | 1,639.00 | uncategorized / matched | pending_categorization / for_review |
+| 6015691c-07f9-4394-b5f9-9e1f774b22d0 | 08-17 | 6,877.00 | uncategorized / matched | pending_categorization / for_review |
+| 4e85aa7d-eb43-4ba0-bf05-03b214c5d964 | 08-18 | 3,676.00 | uncategorized / matched | pending_categorization / for_review |
+| bb0d7690-fa3d-44f9-a71f-12947b3fcac6 | 08-19 | 6,392.00 | uncategorized / matched | pending_categorization / for_review |
+| 6bd50475-1954-4b90-8de9-3f47206ae35c | 08-21 | 16,383.00 | uncategorized / matched | pending_categorization / for_review |
+| 3c8eaab0-7888-4a5c-9485-949bd81b75b0 | 08-24 | 3,967.00 | uncategorized / matched | pending_categorization / for_review |
+| 91b6c3e2-9fa5-48df-a272-5da3def18051 | 08-26 | 2,997.00 | uncategorized / matched | pending_categorization / for_review |
+| b13ccf4f-13c2-4c8b-ad4c-a14f497553e9 | 08-31 | 13,473.00 | pending_categorization / matched | pending_categorization / for_review |
+| 857028d1-95fc-4a89-9b3e-802356598f84 | 09-01 | 14,200.50 | pending_categorization / matched | pending_categorization / for_review |
+| ec4ee110-a2af-4971-9ca6-2780fa7f2e2d | 09-03 | 10,466.00 | pending_categorization / matched | pending_categorization / for_review |
+| bc2a018a-1f84-41cb-af74-bf54bc15e414 | 09-04 | 16,785.54 | pending_categorization / matched | pending_categorization / for_review |
+| 193c4c52-4da6-4dec-8eef-deeaa5984e0f | 09-10 | 2,997.00 | pending_categorization / matched | pending_categorization / for_review |
+| afa3616a-586e-404d-b0b7-4b7759736840 | 09-18 | 27,441.00 | pending_categorization / matched | pending_categorization / for_review |
+| 3feba937-1aa5-463b-9ce7-054d404c1024 | 09-25 | 4,161.00 | pending_categorization / matched | pending_categorization / for_review |
+
+**Step 1:** 95 advances + 625 JEs (= the 519 factoring-sourced JEs you listed + 106 reversals of them, net zero) — DONE, AUTH-193,
+numbers in the 16:10Z entry above. **The two debtor-less fee rows** (Faro 103/104) were advances FAC-2026-00139/00140 —
+deleted in the same AUTH-193 run (row list `docs/audit/2026-10-01-auth193-factoring-clean-slate-rows.json`).
+**Factoring Default Interest 6830:** 419.94 → 0.00.
+
+**OWNER-ONLY LAW — BUILT (#23815, ACCT-F9615):** one gate `apps/backend/src/factoring/owner-only-purchase.ts` on create, batch submit,
+submission-queue submit, advance, reserve-held, release, recourse-return, and both bank-match accept paths (kind factoring_advance).
+Non-Owner → 403 `factoring_purchase_owner_only` + committed audit row `factoring.purchase_refused_non_owner`. Delivery auto-submit
+never creates a purchase now (2026-09-09 auto-purchase ruling superseded). Guard 12067 (static + live: 0 non-Owner purchases since
+the clean slate). Deploy dep-dav8i367 (26258583c7) in progress; Chrome 403 proof with a non-Owner session follows the deploy.
+
+**QUESTION FOR THE LEAD — 90007 NOT DELETED (fact conflict, not a decision):** the FINAL calls 90007 "ITS Logistics $350 (junk)".
+The row is invoice `bba8411e-909e-4f1d-af21-1729a25a1ae7`, display 90007, status sent, $350, `is_sample_data=false`, A/R JE
+d324689e (DR 1100 / CR 1150, revrec Event 2 of fabricated load 90007). Its own note (ROUND 166 JOB 3): "Invoice itself is real --
+Faro purchased it -- kept as a non-freight invoice with no load link". The owner's reconciliation (09-30-26-UPDATED FIRST
+RECONCILIATION.xlsx row 9) lists Faro 7 = ITS Logistics $350, "NO ALLWAYS LOAD" — guard 12055 carried it as named exception
+FAC-2026-00007. So the record says real money. "All invoices stay listed" + "delete 90007" cannot both hold. Which is it: (a) delete
+the invoice + its A/R JE + the Event-1 JE on load 90007 under an AUTH, or (b) keep it listed (it reappears only on the Submit tab,
+since its advance is gone)? I hold until answered.
+
+**DEFECT FOR THE DISPATCH LANE (CC-3 / Lead) — delivery latch leaves a transaction idle on mdata.loads:** at 16:21–16:27Z pid 27664
+sat `idle in transaction` (ClientRead) for 3+ minutes right after `RELEASE SAVEPOINT delivery_invoice_convert_send`
+(`dispatch/delivery-evidence-latch.ts:185`), holding a row lock on load 13626. It blocked the revenue-recognition insert (pid 24485)
+and the leg-miles updates (pids 527 → 526). 13626 stays `dispatched` with no invoice, so the transaction that ran the latch never
+committed. Something after `convertAndSendInvoiceOnDelivery` awaits non-DB work while the transaction is open. Measured with
+`pg_blocking_pids`; not touched by me.
+
+**Next (same 24h):** AUTH-195 — invoices for 13626 + 13637 through `buildInvoiceFromLoad` → `sendDraftInvoice` (script on branch,
+rehearsal waiting on the lock above), then I2 proof; then step 2 (purchase document + one posting engine).
