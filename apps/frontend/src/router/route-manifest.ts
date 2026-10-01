@@ -46,6 +46,8 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
   { path: "/maintenance/settings", label: "Maintenance Settings", module: "maintenance" },
   { path: "/maintenance/work-orders", label: "Work Orders List", module: "maintenance" },
   { path: "/factoring", label: "Factoring Home", module: "factoring" },
+  { path: "/factoring/advances/:id", label: "Factoring Advance Drawer", module: "factoring" },
+  { path: "/factoring/statements", label: "Factoring Statement Tie-out", module: "factoring" },
   { path: "/factoring/recourse-pipeline", label: "Recourse Pipeline", module: "factoring" },
   { path: "/factoring/chargebacks-fees", label: "Chargebacks & Fees", module: "factoring" },
   { path: "/factoring/statements-settings", label: "Statements & Settings", module: "factoring" },

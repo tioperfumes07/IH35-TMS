@@ -6781,10 +6781,19 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). banking.reconciliation
   postReconciliationAdjustments → createJournalEntryOnClient. ROUND 313 BANK-SURF-04/ECON-04 live close at $0 difference.
 action: OWNER_AUTH_ID=AUTH-195 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-01-cursor-r313-recon-service-charge-live-proof.ts
 expires_at: 2026-10-02T16:20:00Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-01T16:21:00Z
+consumed_by: Cursor
+row_counts: 1 reconciliation_sessions row reconciled at variance_cents=0; 2 posted JEs (SC + IE)
+proof_query: session 7a7d1da9-aa5b-4de7-b133-fe529dbde3c2 status=reconciled variance=0 SC=500 IE=500; JE cf78c2aa (SC) + 2ef10657 (IE)
 derivation: docs/bus/ORDERS-2026-10-01-ROUND-313-ALL-SEATS.md Cursor item 1 — "a real reconciliation_sessions row closed at
   zero difference on a USMCA account (statement balance, cleared lines, service charge/interest via canonical poster)".
 THIS AUTHORIZATION DOES NOT COVER: any other bank account, any amount other than $5.00+$5.00 netting to $0, any QBO write-back.
+
+EXECUTION, 2026-10-01T16:21:00Z: OWNER_AUTH_ID=AUTH-195 npx tsx scripts/ops/2026-10-01-cursor-r313-recon-service-charge-live-proof.ts
+— verify-owner-authorization confirmed AUTH-195 OPEN on origin/main at 55e746df65. COMMITTED Petty Cash session
+7a7d1da9 reconciled variance_cents=0; service_charge JE cf78c2aa-f78c-497d-9062-4e4ba9eb3100 posted; interest JE
+2ef10657-37c5-4dc5-adca-d88f565adc9c posted. No QBO write-back.
 
 ## AUTH-196
 issued_at: 2026-10-01T17:00:11Z
@@ -6847,7 +6856,11 @@ scope: ALL operating companies (owner: "in the app"). mdata.customers master dat
   entities 722 + 677; 0 direct shippers among them. Refuses above 2,100 rows or if any direct shipper would be overridden.
 action: npx tsx scripts/ops/2026-10-01-cc2-auth198-classify-broker-named-customers.ts --apply (after the deploy applies 202615190700).
 expires_at: 2026-10-02T17:49:47Z
-status: OPEN
+status: CONSUMED
+consumed_by: CC-2
+row_counts: 2,056 customers re-stamped Broker through trg_customer_broker_by_name (USMCA 657 incl. deactivated, 91e0bf0a 677, b49a737b 722); 0 direct shippers
+proof_query: verify-steps/12075 LIVE PASS — all 2056 broker-named customers are Broker (type + catalog id)
+audit: 4bf5bfe9-ec8b-46bf-84a6-43a5db8f84db (source CC-2-AUTH-198) + one audit.row_changes row per customer
 
 Owner in chat to CC-2, 2026-10-01: "ALL CUSTOMERS WITH THE NAME BROKERS, LOGISITCIS, OR FREIGHT, ETC MUST BE CATEGORIZED IN THE APP AS
 BROKERS." Master data classification, not a business transaction (ROUND 319 item 3 untouched). NOT COVERED: names that only say
