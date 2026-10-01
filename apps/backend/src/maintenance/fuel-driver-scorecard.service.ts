@@ -19,6 +19,7 @@
  * accusation."
  */
 import { driverAtTimeSql, computeDriverMilesInPeriod } from "./driver-attribution.js";
+import { fuelPurchaseIneligibleReason, type FuelPurchaseIneligibleReason } from "../fuel/fuel-purchase-eligibility.js";
 import { evaluateTankOverflow, haversineMiles, DEFAULT_TANK_CAPACITY_GAL, type FuelTransactionContext } from "../integrations/fuel/fraud-detector/rules.service.js";
 
 type DbClient = {
@@ -79,16 +80,11 @@ export type DriverFuelScorecardRow = {
   cost_per_mile_cents: number | null;
   fills_with_no_load: number;
   fill_count: number;
+  /** Rows attributed to the driver that are not real motor-fuel purchases (fuel-purchase-eligibility.ts), by reason. */
+  excluded_fill_reasons: Partial<Record<FuelPurchaseIneligibleReason, number>>;
   flags: EvidencedFuelFlag[];
 };
 
-type FuelAggRow = {
-  driver_id: string;
-  gallons: string | null;
-  total_cost_cents: string | null;
-  fills_with_no_load: string;
-  fill_count: string;
-};
 
 type FuelFillRow = {
   id: string;
@@ -103,45 +99,10 @@ type FuelFillRow = {
   unit_number: string | null;
   total_cost: number | null;
   vendor_name: string | null;
+  fuel_type: string | null;
+  load_id: string | null;
+  same_stamp_count: number;
 };
-
-/** Per-driver gallons/cost/fill-count in the period, attributed via driverAtTimeSql — never
- * fuel_transactions.driver_id directly. */
-async function computeDriverFuelInPeriod(
-  client: DbClient,
-  operatingCompanyId: string,
-  periodStart: string,
-  periodEnd: string
-): Promise<Map<string, { gallons: number; totalCostCents: number; fillsWithNoLoad: number; fillCount: number }>> {
-  const res = await client.query<FuelAggRow>(
-    `
-    SELECT
-      dat.driver_id::text AS driver_id,
-      sum(ft.gallons)::text AS gallons,
-      sum(round(ft.total_cost * 100))::text AS total_cost_cents,
-      count(*) FILTER (WHERE ft.load_id IS NULL)::text AS fills_with_no_load,
-      count(*)::text AS fill_count
-    FROM fuel.fuel_transactions ft
-    ${driverAtTimeSql("ft.unit_id", "ft.transaction_at", "dat")}
-    WHERE ft.operating_company_id = $1::uuid
-      AND ft.voided_at IS NULL
-      AND ft.transaction_at >= $2::timestamptz AND ft.transaction_at < $3::timestamptz
-      AND dat.driver_id IS NOT NULL
-    GROUP BY dat.driver_id
-    `,
-    [operatingCompanyId, periodStart, periodEnd]
-  );
-  const out = new Map<string, { gallons: number; totalCostCents: number; fillsWithNoLoad: number; fillCount: number }>();
-  for (const row of res.rows) {
-    out.set(row.driver_id, {
-      gallons: Number(row.gallons ?? 0),
-      totalCostCents: Number(row.total_cost_cents ?? 0),
-      fillsWithNoLoad: Number(row.fills_with_no_load),
-      fillCount: Number(row.fill_count),
-    });
-  }
-  return out;
-}
 
 /** Every fill attributed to a driver in the period, for the per-driver anomaly checks (tank
  * overflow, impossible-distance-refuel) that need row-level detail, not just the aggregate. */
@@ -165,7 +126,12 @@ async function fetchDriverFillsInPeriod(
       ft.unit_id::text AS unit_id,
       u.unit_number,
       ft.total_cost::float8 AS total_cost,
-      v.vendor_name
+      v.vendor_name,
+      ft.fuel_type,
+      ft.load_id::text AS load_id,
+      (SELECT count(*) FROM fuel.fuel_transactions x
+        WHERE x.operating_company_id = ft.operating_company_id AND x.transaction_at = ft.transaction_at
+          AND x.voided_at IS NULL)::int AS same_stamp_count
     FROM fuel.fuel_transactions ft
     LEFT JOIN mdata.units u ON u.id = ft.unit_id
     LEFT JOIN mdata.vendors v ON v.id = ft.vendor_id
@@ -217,8 +183,34 @@ export async function computeDriverFuelScorecard(
 ): Promise<DriverFuelScorecardRow[]> {
   // Sequential on one client — concurrent queries on a single pg client are deprecated.
   const milesByDriver = await computeDriverMilesInPeriod(client, operatingCompanyId, periodStart, periodEnd);
-  const fuelByDriver = await computeDriverFuelInPeriod(client, operatingCompanyId, periodStart, periodEnd);
-  const fillsByDriver = await fetchDriverFillsInPeriod(client, operatingCompanyId, periodStart, periodEnd);
+  const allFillsByDriver = await fetchDriverFillsInPeriod(client, operatingCompanyId, periodStart, periodEnd);
+
+  // ROUND 306 E-19/E-21: only real motor-fuel purchases enter MPG or any fuel flag — the ONE shared
+  // predicate (fuel-purchase-eligibility.ts). DEF charges, gallon-less rows and import-stamped
+  // batches are excluded and counted by reason, never silently mixed into a driver's gallons.
+  const fillsByDriver = new Map<string, FuelFillRow[]>();
+  const excludedByDriver = new Map<string, Partial<Record<FuelPurchaseIneligibleReason, number>>>();
+  const fuelByDriver = new Map<string, { gallons: number; totalCostCents: number; fillsWithNoLoad: number; fillCount: number }>();
+  for (const [driverId, rows] of allFillsByDriver) {
+    const eligible: FuelFillRow[] = [];
+    const excluded: Partial<Record<FuelPurchaseIneligibleReason, number>> = {};
+    for (const r of rows) {
+      const reason = fuelPurchaseIneligibleReason(
+        { fuel_type: r.fuel_type, gallons: r.gallons, transaction_at: r.transaction_at, voided_at: null, same_stamp_count: r.same_stamp_count },
+        { requirePumpTime: false }
+      );
+      if (reason) excluded[reason] = (excluded[reason] ?? 0) + 1;
+      else eligible.push(r);
+    }
+    fillsByDriver.set(driverId, eligible);
+    excludedByDriver.set(driverId, excluded);
+    fuelByDriver.set(driverId, {
+      gallons: eligible.reduce((a, r) => a + (r.gallons ?? 0), 0),
+      totalCostCents: eligible.reduce((a, r) => a + Math.round((r.total_cost ?? 0) * 100), 0),
+      fillsWithNoLoad: eligible.filter((r) => r.load_id === null).length,
+      fillCount: eligible.length,
+    });
+  }
 
   const driverIds = new Set<string>([...milesByDriver.keys(), ...fuelByDriver.keys()]);
 
@@ -366,6 +358,7 @@ export async function computeDriverFuelScorecard(
       cost_per_mile_cents: miles.miles != null && miles.miles > 0 ? Number((fuel.totalCostCents / miles.miles).toFixed(1)) : null,
       fills_with_no_load: fuel.fillsWithNoLoad,
       fill_count: fuel.fillCount,
+      excluded_fill_reasons: excludedByDriver.get(driverId) ?? {},
       flags,
     });
   }

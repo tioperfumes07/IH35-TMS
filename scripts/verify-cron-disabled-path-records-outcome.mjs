@@ -42,7 +42,7 @@ const TARGETS = [
   },
   {
     file: "apps/backend/src/jobs/fuel-fraud-detector-worker.ts",
-    disabledCheck: '(process.env.ENABLE_FUEL_FRAUD_DETECTOR_WORKER ?? "false").trim() !== "true"',
+    disabledCheck: "!fuelFraudDetectorEnabled()",
     jobName: "fuel.fraud_detector_worker",
   },
 ];

@@ -1,37 +1,14 @@
 import type { FastifyInstance } from "fastify";
-import cron from "node-cron";
-import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
-import { withLuciaBypass } from "../auth/db.js";
-import { runFuelGpsMatchBatch } from "../safety/fuel-gps-match.service.js";
 
 let initialized = false;
 
+/**
+ * ROUND 306 E-22: the fuel<->GPS match no longer runs hourly over every company. It runs when fuel
+ * rows arrive — fuel/fuel-ingest-hooks.ts onFuelIngestComplete — which is the only time there is
+ * anything new to match. FUEL_GPS_MATCH_CRON_ENABLED=false still switches it off there.
+ */
 export function initializeFuelGpsMatchCron(app: FastifyInstance) {
   if (initialized) return;
   initialized = true;
-  if ((process.env.FUEL_GPS_MATCH_CRON_ENABLED ?? "true").trim() === "false") {
-    app.log.info("Fuel GPS match cron disabled via FUEL_GPS_MATCH_CRON_ENABLED=false");
-    return;
-  }
-
-  cron.schedule(
-    "0 * * * *",
-    async () => {
-      await withLuciaBypass(async (client) => {
-        const companies = await client.query<{ id: string }>(
-          `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
-        );
-        for (const company of companies.rows) {
-          assertTenantContext(company.id, "safety.fuel_gps_match_cron");
-          await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
-          const matched = await runFuelGpsMatchBatch(client, company.id);
-          app.log.info({ operating_company_id: company.id, matched }, "[FUEL_GPS_MATCH_CRON] run complete");
-        }
-      });
-    },
-    {
-      maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
-  );
-
-  app.log.info("Fuel GPS match cron scheduled (hourly)");
+  app.log.info("Fuel GPS match runs on fuel-ingest completion (fuel/fuel-ingest-hooks.ts), not hourly");
 }

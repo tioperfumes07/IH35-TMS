@@ -32,6 +32,62 @@ import {
   RelayApiError,
 } from "./relay-client.js";
 import { upsertRelayFuelTransaction } from "./relay-fuel-ingest.service.js";
+import { computeRelayIngestWindow } from "./relay-fuel-ingest-window.js";
+
+const RELAY_SYNC_KIND = "relay_fuel_daily_pull";
+
+/**
+ * ROUND 306 E-20 — claim this company's tick in integrations.integration_sync_log under an advisory
+ * lock. The backend runs 2 instances and each fires this cron, so every company was pulled twice a
+ * day. The first instance claims; the second sees a claim from the last 30 minutes and skips. The
+ * claim row is also the tick's visible record (the Relay cron previously wrote nothing there).
+ */
+async function claimRelayTick(client: DbClient, operatingCompanyId: string): Promise<string | null> {
+  await client.query(`SELECT pg_advisory_xact_lock(hashtext('relay_fuel_ingest:' || $1))`, [operatingCompanyId]);
+  const recent = await client.query<{ id: string }>(
+    `SELECT id::text FROM integrations.integration_sync_log
+      WHERE operating_company_id = $1::uuid AND integration = 'relay' AND sync_kind = $2
+        AND started_at > now() - interval '30 minutes'
+      LIMIT 1`,
+    [operatingCompanyId, RELAY_SYNC_KIND]
+  );
+  if (recent.rows.length > 0) return null;
+  const ins = await client.query<{ id: string }>(
+    `INSERT INTO integrations.integration_sync_log (operating_company_id, integration, sync_kind)
+     VALUES ($1::uuid, 'relay', $2) RETURNING id::text`,
+    [operatingCompanyId, RELAY_SYNC_KIND]
+  );
+  return ins.rows[0]?.id ?? null;
+}
+
+/** End date of this company's last SUCCESSFUL tick — the sync log, or the older audit trail. */
+async function lastCoveredEndDate(client: DbClient, operatingCompanyId: string): Promise<string | null> {
+  const res = await client.query<{ end_date: string | null }>(
+    `SELECT max(d)::text AS end_date FROM (
+       SELECT (payload->>'end_date')::date AS d FROM integrations.integration_sync_log
+        WHERE operating_company_id = $1::uuid AND integration = 'relay' AND sync_kind = $2 AND success = true
+       UNION ALL
+       SELECT (payload->>'end_date')::date FROM audit.audit_events
+        WHERE source = $3 AND event_class = 'integrations.relay_fuel_ingest_daily_pull'
+          AND payload->>'operating_company_id' = $1::text
+     ) t`,
+    [operatingCompanyId, RELAY_SYNC_KIND, RELAY_FUEL_INGEST_AUDIT_SOURCE]
+  );
+  return res.rows[0]?.end_date ?? null;
+}
+
+async function finishRelayTick(
+  client: DbClient,
+  logId: string,
+  outcome: { success: boolean; rowsAdded: number; error: string | null; payload: Record<string, unknown> }
+): Promise<void> {
+  await client.query(
+    `UPDATE integrations.integration_sync_log
+        SET finished_at = now(), success = $2, rows_added = $3, error_message = $4, payload = $5::jsonb
+      WHERE id = $1::uuid`,
+    [logId, outcome.success, outcome.rowsAdded, outcome.error, JSON.stringify(outcome.payload)]
+  );
+}
 
 let initialized = false;
 const RELAY_FUEL_INGEST_AUDIT_SOURCE = "RELAY-FUEL-INGEST-1";
@@ -174,10 +230,9 @@ export function initializeRelayFuelIngestCron(app: FastifyInstance) {
   }
 
   cron.schedule(
-    "0 7 * * *", // 07:00 America/Chicago daily — prior day's transactions
+    "0 7 * * *", // 07:00 America/Chicago daily — resumes from the last covered day (E-20)
     async () => {
-      const startDate = yesterdayIsoDate();
-      const endDate = startDate;
+      const yesterday = yesterdayIsoDate();
       const failures: { operating_company_id: string; error: unknown }[] = [];
       const pendingGlPosts: FuelTxnGlPostCandidate[] = [];
 
@@ -196,46 +251,69 @@ export function initializeRelayFuelIngestCron(app: FastifyInstance) {
         }
         companiesPulled += 1;
 
+        const logId = await withLuciaBypass(async (client) => claimRelayTick(client, operatingCompanyId));
+        if (logId === null) {
+          app.log.info({ operating_company_id: operatingCompanyId }, "[RELAY_FUEL_INGEST_CRON] tick already claimed by another instance — skipped");
+          continue;
+        }
+        const lastEnd = await withLuciaBypass(async (client) => lastCoveredEndDate(client, operatingCompanyId));
+        const window = computeRelayIngestWindow(lastEnd, yesterday);
         try {
-          // Server-side date filter via dtstart/dtend (Mike 2026-07-16) — daily delta, not full dump.
-          // Client-side filter remains as a defensive fallback after the response.
-          const { rows: apiRows, meta } = await fetchAllRelayFuelTransactions(entityCode, {
-            startDate,
-            endDate,
-          });
-          const windowRows = filterRelayFuelTransactionsByDateRange(apiRows, startDate, endDate);
-          app.log.info(
-            {
-              operating_company_id: operatingCompanyId,
-              entity_code: entityCode,
-              api_rows: meta.api_row_count,
-              window_rows: windowRows.length,
-              window: `${startDate}..${endDate}`,
-              dtstart: startDate,
-              dtend: endDate,
-            },
-            "[RELAY_FUEL_INGEST_CRON] relay pull complete"
-          );
-
-          const stats = await withLuciaBypass(async (client) =>
-            ingestForCompany(client, app, operatingCompanyId, startDate, endDate, entityCode, {
-              preloaded: windowRows,
+          let pulled = 0;
+          let upserted = 0;
+          let skipped = 0;
+          // Server-side date filter via dtstart/dtend, chunked like the backfill so a catch-up never
+          // exceeds the per-request timeout. Client-side filter stays as the defensive fallback.
+          for (const chunk of dayWindows(window.startDate, window.endDate, relayIngestWindowDays())) {
+            const { rows: apiRows, meta } = await fetchAllRelayFuelTransactions(entityCode, {
+              startDate: chunk.startDate,
+              endDate: chunk.endDate,
+            });
+            const windowRows = filterRelayFuelTransactionsByDateRange(apiRows, chunk.startDate, chunk.endDate);
+            app.log.info(
+              {
+                operating_company_id: operatingCompanyId,
+                entity_code: entityCode,
+                api_rows: meta.api_row_count,
+                window_rows: windowRows.length,
+                window: `${chunk.startDate}..${chunk.endDate}`,
+                window_reason: window.reason,
+              },
+              "[RELAY_FUEL_INGEST_CRON] relay pull complete"
+            );
+            const stats = await withLuciaBypass(async (client) =>
+              ingestForCompany(client, app, operatingCompanyId, chunk.startDate, chunk.endDate, entityCode, {
+                preloaded: windowRows,
+              })
+            );
+            pendingGlPosts.push(...stats.gl_post_candidates);
+            pulled += stats.pulled;
+            upserted += stats.upserted;
+            skipped += stats.skipped;
+          }
+          await withLuciaBypass(async (client) =>
+            finishRelayTick(client, logId, {
+              success: true,
+              rowsAdded: upserted,
+              error: null,
+              payload: { start_date: window.startDate, end_date: window.endDate, window_reason: window.reason, last_covered_end: lastEnd, pulled, upserted, skipped, entity_code: entityCode },
             })
           );
-          pendingGlPosts.push(...stats.gl_post_candidates);
           app.log.info(
-            {
-              operating_company_id: operatingCompanyId,
-              pulled: stats.pulled,
-              upserted: stats.upserted,
-              skipped: stats.skipped,
-              gl_post_pending: stats.gl_post_candidates.length,
-            },
+            { operating_company_id: operatingCompanyId, window: `${window.startDate}..${window.endDate}`, pulled, upserted, skipped },
             "[RELAY_FUEL_INGEST_CRON] run complete"
           );
         } catch (error) {
           app.log.error({ err: error, operating_company_id: operatingCompanyId }, "[RELAY_FUEL_INGEST_CRON] company ingest failed");
           failures.push({ operating_company_id: operatingCompanyId, error });
+          await withLuciaBypass(async (client) =>
+            finishRelayTick(client, logId, {
+              success: false,
+              rowsAdded: 0,
+              error: String((error as Error)?.message ?? error),
+              payload: { start_date: window.startDate, end_date: window.endDate, window_reason: window.reason, last_covered_end: lastEnd, entity_code: entityCode },
+            })
+          ).catch((logErr) => app.log.warn({ err: logErr, operating_company_id: operatingCompanyId }, "[RELAY_FUEL_INGEST_CRON] sync-log finish failed"));
           await withLuciaBypass(async (client) => {
             await client
               .query(`SELECT audit.append_event($1, $2, $3::jsonb, NULL, $4)`, [
