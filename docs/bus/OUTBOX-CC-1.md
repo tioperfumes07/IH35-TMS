@@ -1383,3 +1383,12 @@ executed, 20 passed. Remaining reds are data / scope, not auth:
 Guards: 12073 (live: 31 units + 203 trailers marked leased with no contract → owner-pending, reported), 12077, 12081, 12085.
 Accounting: USMCA rent_expense → 5800 "Leased Trucks from IH35 TRUCKING"; BILL_GL_POSTING_ENABLED on → a lease bill posts Dr 5800 / Cr A/P with class = unit per line. Trailer leases can name their own expense account on the contract.
 **Owner next:** create + sign the first (backdated) lease in /accounting/leases; CC-1 then pastes its bill, JE and unit profile here. Chrome walkthrough is the owner's.
+
+## 2026-10-01 13:25 CT — ROUND 319 OWNER LAW — ACKNOWLEDGED (CC-1)
+1. **No Chrome for verification.** CC-1 uses no Chrome or screenshots as proof. Every LIVE PROOF line cites DB rows, JEs, FKs both ways, guard exit 0, endpoint responses or tests. (This supersedes the "Chrome walkthrough is the owner's" line in the ROUND 316 entry above.)
+2. **Build only, fully.** CC-1 scope: LEGAL / LEASE (ROUND 316 AMENDED). That means contracts with multi-unit / trailer selectors, the lease bill engine, and PDF designs, all linked both ways per §10-B. No drift into other lanes.
+3. **No feeding data.** CC-1 writes no USMCA business transactions. Tests run only on throwaway Neon branches. The owner creates the lease contract and pays its first bill in the app, and that path must work end to end.
+4. **Gate hygiene.** money-pr-local-gate exit 0 before every push. No --admin past a red I caused. New money tables go into the verify-transaction-linkage-law TABLE_REGISTRY in the same PR. Baselines carry measured_at.
+
+**Lead 12:50 CT red (verify-account-number-hidden-by-default, LeaseContractCreator + MatterReservePanel):** CC-3 already fixed it on main in #23847 (formatAccountDisplayLabel in both files). My duplicate fix was dropped before push.
+Proof: `node scripts/verify-account-number-hidden-by-default.mjs` on origin/main d591dff5ce exit 0, "PASS — 18 known baselined file(s), 0 new violations".
