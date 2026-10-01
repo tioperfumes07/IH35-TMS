@@ -6901,6 +6901,29 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80).
 action: OWNER_AUTH_ID=AUTH-200 APPLY=1 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-01-cursor-auth200-link-13503-expenses.ts
   Dry-run first (default): OWNER_AUTH_ID=AUTH-200 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-01-cursor-auth200-link-13503-expenses.ts
 expires_at: 2026-10-02T20:40:00Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-01T20:25:00Z
+consumed_by: Cursor
+row_counts: 3 expense_attribution.expense_load_links inserted — cdb6abcd (13503-11), 1a3eb4fb (13503-12), 63cec187 (13503-13). link_count 0→1 each. No expense header/JE change. Script fix: attribution_confidence='high' (not 1.0).
+proof_query: SELECT e.expense_number, (SELECT COUNT(*) FROM expense_attribution.expense_load_links ell WHERE ell.expense_id=e.id) AS link_count FROM accounting.expenses e WHERE e.id IN ('1c08aa97…','f267f1f1…','ef97d3af…') → all link_count=1
 derivation: Lead REPLY 14:55 CT FACTORING-TAKEOVER B.9 + OUTBOX-CC-3 WRAP 13503 expense list.
 THIS AUTHORIZATION DOES NOT COVER: load 13515, any invoice void, any JE, any DELETE, any other expense.
+
+## AUTH-201
+issued_at: 2026-10-01T20:20:40Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80).
+  Owner/Lead override (14:55 CT): 13513/13515 same billable load; keep 13513; retire 13515 under one AUTH.
+  Measured (bypass_rls):
+    13513 invoiced — invoice ca5c386d sent $525 unpaid
+    13515 closed — invoice f59a3468 paid $525 (payment applied); different truck/driver trip costs exist
+  Action (void-not-delete; one AUTH):
+    (1) Re-apply the $525 customer payment from invoice 13515 → invoice 13513 (13513 becomes paid)
+    (2) Void invoice 13515 + reverse its live revenue JEs (Event 1 / Event 2) so revenue counts once
+    (3) Cancel load 13515 (status cancel / void register) — NEVER DELETE FROM mdata.loads; trip costs
+        (fuel/expenses/settlement already posted on 13515) stay as historical register on the cancelled load
+action: OWNER_AUTH_ID=AUTH-201 APPLY=1 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-01-cursor-auth201-retire-13515-keep-13513.ts
+  Dry-run first (default). Rehearse on throwaway branch before APPLY.
+expires_at: 2026-10-02T21:00:00Z
+status: OPEN
+derivation: Lead REPLY 14:55 CT FACTORING-TAKEOVER B.9 + owner confirmed 13513/13515 same load keep 13513; CC-2 WRAP HELD facts absorbed into void-not-delete shape.
+THIS AUTHORIZATION DOES NOT COVER: DELETE FROM any table; voiding 13513; touching any other load; QBO write-back.

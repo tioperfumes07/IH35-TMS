@@ -94,8 +94,8 @@ async function main() {
         $2::text,
         COALESCE(NULLIF(regexp_replace(e.expense_number, '^${LOAD_NUMBER}-', ''), ''), '0')::int,
         e.expense_number,
-        'manual_backfill',
-        1.0,
+        'manual_override',
+        'high',
         'AUTH-200 Cursor B.9 — CC-3 WRAP: expense already load_id-bound; mint missing expense_load_links',
         NULL
       FROM accounting.expenses e
