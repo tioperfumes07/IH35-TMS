@@ -6728,7 +6728,17 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). Every row listed in
   Sanctioned WORM purge bypass: SET LOCAL app.purge_auth_id = 'AUTH-193', one transaction, one audit row.
 action: npx tsx scripts/ops/2026-10-01-cc2-auth193-factoring-clean-slate.ts --apply. Dry run + --rehearse (rolled back) on production 2026-10-01: counts above exact; refuses unless the live row list hashes to the sha256 above.
 expires_at: 2026-10-02T18:30:00Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-01T16:09:51Z
+consumed_by: CC-2
+row_counts: factoring_advances 95 deleted ($325,162.98) | journal_entries 625 deleted | journal_entry_postings 2,009 deleted |
+  transaction_source_links 3,425 | factoring_reserve_movements 95 | factoring_default_interest_accruals 242 |
+  factoring_lifecycle_posting_keys 376 | invoices 93 unlinked (110 USMCA invoices still listed) | bank_transactions 16 unmatched (kept)
+proof_query: separate transaction after commit -- USMCA factoring_advances 0; factoring-sourced postings 0; USMCA posted TB net 0 cents;
+  invoices 110, factoring_status <> 'not_factored' 0
+audit: b7b25e3d-8678-4972-bbdb-fd7d2165a847 (accounting.factoring_clean_slate, source CC-2-AUTH-193)
+correction: issued_at above reads 18:30Z -- written in error by CC-2; the block actually merged ~16:08Z (#23805, 1cf0524215).
+  Landed fields are never edited; recorded here instead.
 
 OWNER DECISION, ROUND 315 item 1 (Lead, testing phase): "delete ALL 95 USMCA factoring advances ($325,162.98, 08-10..09-25)
 AND their journal entries via the sanctioned mass-delete engine under ONE AUTH listing every row + JE id; paste before/after
