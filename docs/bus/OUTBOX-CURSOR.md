@@ -1,3 +1,14 @@
+**2026-10-01T20:45Z · B4–B8 CLOSED · B7 SHIPPING · AUTH-200 OPEN · `cursor/r315-b7-reserves-shared-c89b`**
+ACK: CURSOR | ACK FACTORING-TAKEOVER | QBO-FINISH-THEN-B4 | GO
+A QBO DONE (no half-built): B-1 #23713+#23761 · B-2 #23762 · B-3 #23763 · B-4 #23764 · B-5 #23765 · Deposit #23770 · Batch Settlements #23771 · SC #23894.
+B4 MERGED #23900 `e857fa26aa` · Payments to You per purchase wire.
+B5 MERGED #23900 · tabs + Escrow + ×100 formatUsdCents.
+B6 MERGED #23901 `720cfe4f35` · Home cash-flow TOTAL PER DAY.
+B7 THIS PR · FactoringReservesSharedPanel mounted Factoring Reserve + Banking Home; CCG loans + categorize/transfer/apply; guard `scripts/ops/verify-factoring-r315-reserves-shared.mjs` SELFTEST PASS.
+B8 CLAIM · POD/BOL auto-invoice already on main #23887 `a379ea869d` (CC-2 WRAP; guard 12079 LIVE PASS bol+pod). No Cursor rewrite.
+B9 OPEN · AUTH-200 OPEN (13503 expense_load_links ×3). 13515 delete AUTH next (Lead override keep 13513; CC-2 WRAP still HELD — measured paid invoice + trip costs).
+LIVE PROOF: node scripts/ops/verify-factoring-r315-reserves-shared.mjs --selftest PASS; frontend tsc -b exit 0. NEXT: FAST-MERGE B7 → consume AUTH-200 → AUTH-201 13515.
+
 **2026-10-01T20:15Z · B4+B5 SHIPPED · PR #23900 · Payments to You + tabs + ×100 · `cursor/r315-factoring-payments-tabs-c89b`**
 ACK: CURSOR | ACK FACTORING-TAKEOVER | QBO-FINISH-THEN-B4 | GO
 B4 · Payments to You = one row per `accounting.factoring_purchases` wire; Open → lines + escrow/cash/fees + bank match EntityLink. CC-2 purchase engine only.

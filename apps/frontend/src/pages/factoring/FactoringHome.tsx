@@ -15,13 +15,11 @@ import {
   getFactoringStatementsSettings,
   getFactoringSummary,
   getFactoringUnappliedCash,
-  getReserveBalanceHistory,
   listFactors,
   updateFactor,
   type FactoringDebtorReceipt,
   type FactoringInvoiceStatusRow,
   type FactoringMonthlyFeeSummary,
-  type FactoringReserveBalanceHistoryEntry,
   type FactoringSettingsRow,
   type FactoringUnappliedCashRow,
 } from "../../api/factoring";
@@ -59,6 +57,7 @@ import { FactoringProfilePanel } from "./FactoringProfilePanel";
 import { SubmitToFactorTab } from "./SubmitToFactorTab";
 import { PaymentsToYouPanel } from "./PaymentsToYouPanel";
 import { FactoringCashFlowPanel } from "./FactoringCashFlowPanel";
+import { FactoringReservesSharedPanel } from "../../components/factoring/FactoringReservesSharedPanel";
 import { ChargebacksTable, type ChargebackFeeRow } from "./ChargebacksTable";
 import { RecoursePipelineTable } from "./RecoursePipelineTable";
 import { ReserveTracker } from "./ReserveTracker";
@@ -800,11 +799,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   }, [purchasesQuery.data?.purchases]);
   // ROUND 315 / Lead B5: Escrow/Cash split from purchase lines (ledger-backed document), not fabricated.
   // Combined reserve_balance (dollars) still shown as Total Reserve from views.factoring_summary.
-  const reserveHistoryQuery = useQuery({
-    queryKey: ["factoring", "reserves", "history", companyId, summaryQuery.data?.active_factor_id],
-    queryFn: () => getReserveBalanceHistory(summaryQuery.data!.active_factor_id!, companyId, { limit: 100 }),
-    enabled: Boolean(companyId && summaryQuery.data?.active_factor_id),
-  });
+  // B7: reserve movement history lives in FactoringReservesSharedPanel (shared with Banking).
   const faroImportsQuery = useQuery({
     queryKey: ["data-infra", "faro-imports", companyId],
     queryFn: () => listFaroDailyImports(companyId),
@@ -1665,91 +1660,11 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
         </div>
       ) : null}
 
-      {/* FAC-09a Reserve (real, this pass, owner mega-report 2026-09-09): Total Reserve is the
-          same real summary.reserve_balance every other tab already uses; the movement history
-          table below is the same real getReserveBalanceHistory ledger ReserveTracker.tsx already
-          proves correct, scoped to this page's own active factor. Escrow/Cash split and the
-          Show-Cash/Show-Escrow toggle are honestly not built -- this schema has no type split on
-          reserve_balance (same constraint as Account Summary's own Escrow/Cash rows above). */}
-      {tab === "reserve" ? (
-        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-reserve-report">
-          <div className="mb-2 text-xs font-medium text-gray-900">Reserve</div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="factoring-reserve-summary-strip">
-            {/* verify-no-dead-kpi-cards: honest "—" values (no Escrow/Cash split, no distinct
-                available-for-release figure exist in this schema) still get a real drill target
-                rather than a dead click -- Reserve Tracker carries the combined balance and the
-                real release forecast these three would otherwise have no destination for. */}
-            <DrillKpiCard
-              testId="factoring-reserve-escrow"
-              label="Escrow Reserve"
-              value={purchasesQuery.isError ? null : fmtCents(purchaseEscrowTotals.escrow)}
-              hint="Sum of escrow_reserve_cents on posted purchases"
-              to={FACTORING_TAB_PATH.escrow_account}
-            />
-            <DrillKpiCard
-              testId="factoring-reserve-cash"
-              label="Cash Reserve"
-              value={purchasesQuery.isError ? null : fmtCents(purchaseEscrowTotals.cash)}
-              hint="Sum of cash_reserve_cents on posted purchases"
-              to={FACTORING_TAB_PATH.escrow_account}
-            />
-            <DrillKpiCard
-              testId="factoring-reserve-total"
-              label="Total Reserve"
-              value={summaryQuery.isError ? null : fmtCurrency(summary?.reserve_balance)}
-              to={FACTORING_TAB_PATH.reserve_tracker}
-            />
-            <DrillKpiCard
-              testId="factoring-reserve-available"
-              label="Available for release"
-              value="—"
-              hint="Release forecast not yet on purchase ledger"
-              to={FACTORING_TAB_PATH.reserve_tracker}
-            />
-          </div>
-          <div className="mt-3 text-xs font-medium text-gray-900">Reserve movement history</div>
-          {reserveHistoryQuery.isError ? (
-            <ListErrorState
-              title="Couldn't load reserve movement history"
-              {...formatQueryErrorDetail(reserveHistoryQuery.error)}
-              onRetry={() => void reserveHistoryQuery.refetch()}
-            />
-          ) : !summary?.active_factor_id ? (
-            <div className="mt-2 rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 text-xs text-gray-500">
-              No active factor configured — reserve movement history has no factor to scope to.
-            </div>
-          ) : (
-            <ParityTable
-              columns={[
-                { key: "created_at", label: "Date", sortable: true, render: (row: FactoringReserveBalanceHistoryEntry) => fmtDate(row.created_at) },
-                { key: "reason", label: "Note", sortable: true, sortValue: (row: FactoringReserveBalanceHistoryEntry) => row.reason ?? "", render: (row: FactoringReserveBalanceHistoryEntry) => row.reason },
-                {
-                  key: "signed_amount_cents",
-                  label: "Amount",
-                  sortable: true,
-                  cellClass: "text-right",
-                  render: (row: FactoringReserveBalanceHistoryEntry) => fmtCents(row.signed_amount_cents),
-                },
-                {
-                  key: "running_balance_cents",
-                  label: "Balance",
-                  sortable: true,
-                  cellClass: "text-right",
-                  render: (row: FactoringReserveBalanceHistoryEntry) => fmtCents(row.running_balance_cents),
-                },
-              ]}
-              rows={reserveHistoryQuery.data?.movements ?? []}
-              rowKey={(row) => row.id}
-              loading={reserveHistoryQuery.isLoading}
-              emptyText="No reserve movements recorded yet."
-              storageKey="factoring-reserve-report"
-            />
-          )}
-          <p className="mt-2 text-xs text-gray-500" data-testid="factoring-reserve-footnote">
-            Escrow Reserve and Cash Reserve are summed from posted factoring_purchases (the Faro
-            wire document). Total Reserve still reads views.factoring_summary.reserve_balance
-            (dollars). Movement history is the reserve ledger for the active factor.
-          </p>
+      {/* ROUND 315 / Lead B7 — Reserve tab mounts the SAME shared panel Banking Home uses
+          (escrow/cash from purchases + reserve ledger + CCG loans + categorize/transfer/apply). */}
+      {tab === "reserve" && companyId ? (
+        <div data-testid="factoring-reserve-report">
+          <FactoringReservesSharedPanel companyId={companyId} host="factoring" />
         </div>
       ) : null}
 

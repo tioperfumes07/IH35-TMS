@@ -56,6 +56,7 @@ import { WhereTheMoneyIsRail, type MoneyRailRow } from "./components/WhereTheMon
 import { NeedsCategorizingQueue, type NeedsCategorizingRow } from "./components/NeedsCategorizingQueue";
 import { BankingReconHomeCard } from "./components/BankingReconHomeCard";
 import { FactoringSummaryCard } from "./components/FactoringSummaryCard";
+import { FactoringReservesSharedPanel } from "../../components/factoring/FactoringReservesSharedPanel";
 
 
 type BankingTabId = BankingModuleTabId;
@@ -665,11 +666,17 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               onInspect={(id) => setInspectTileId(id)}
             />
             <div className="space-y-3">
+              {/* ROUND 315 / Lead B7 — same FactoringReservesSharedPanel as Factoring → Reserve.
+                  FactoringSummaryCard kept (Rule 07 + verify-banking-factoring-liability-built) as
+                  the compact KPI strip above the shared ledger panel. */}
               <FactoringSummaryCard
                 reserve={factoringReserve}
                 outstandingLiability={factoringOutstandingLiability}
                 lastAdvanceAt={factoringVirtualSummary.lastAdvanceAt}
               />
+              {companyId ? (
+                <FactoringReservesSharedPanel companyId={companyId} host="banking" />
+              ) : null}
               <BankingReconHomeCard
                 reconciledAccountsCount={reconciledAccountsCount}
                 totalBankAccounts={totalBankAccountsForRecon}
