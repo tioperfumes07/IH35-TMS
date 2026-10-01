@@ -1367,3 +1367,15 @@ crossings is the true answer, not a gap. (First run counted it country_unknown: 
 same fix; the lookup now uses only fixes that carry a location.)
 guards: verify-border-crossing-canonical-relations updated (projection from geo.geofence_events; hard-coded geofences/distance forbidden),
 verify-e29-fences-fire-and-status-switch-flag-off updated; vitest border 18/18 (old circle tests replaced).
+
+## 2026-10-01 — E-07 addition: push our fences with no Samsara counterpart (built; flag OFF)
+what: geofences/fence-push.service.ts + GET /api/v1/geofences/samsara-push/plan (read-only) + POST /api/v1/geofences/samsara-push
+{operating_company_id, kinds[]} (Owner/Administrator/Manager; 409 unless SAMSARA_FENCE_PUSH_ENABLED=true). Each fence -> Samsara address
+(circle at the fence's own centre + enter radius, externalIds ih35Site = fence id); GET /addresses/ih35Site:<id> first (measured: unknown
+id -> 404) so an existing address is LINKED, never duplicated; geo.geofences.samsara_address_id written back; integration_sync_log
+'fence_push' per fence. Load-stop fences excluded (E-25 outbox owns them).
+proof (live read): 933 candidates — fuel_stop 603, dot_inspection_station 258, customer_site 36, border_crossing 32, custom 3, yard 1;
+push_enabled=false. vitest geofences 60/60 (flag off refuses; existing ih35Site linked not created; own centre/radius).
+DECISION for the Lead/owner: which kinds to push (recommend border_crossing + customer_site + yard first = 69 fences; 861 fuel/DOT fences
+only if Samsara-side alerts are wanted there).
+guard: scripts/verify-samsara-fence-push-flag-off-no-duplicates.mjs + --selftest PASS.
