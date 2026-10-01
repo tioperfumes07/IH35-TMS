@@ -17,6 +17,7 @@
 // version) DO NOTHING, so re-running on every deploy adds zero duplicates and never mutates an
 // existing row.
 
+import { ENSURABLE_CONTRACT_TYPES, ensureContractTypeTemplate } from "./contract-type-templates.service.js";
 import type pg from "pg";
 import { withLuciaBypass } from "../auth/db.js";
 import { ensureLegalTemplateLibrary } from "./template-library.service.js";
@@ -76,10 +77,15 @@ export async function provisionLegalTemplateLibraryForCompany(
   args: { operatingCompanyId: string; actorUserId: string }
 ) {
   await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [args.operatingCompanyId]);
-  return ensureLegalTemplateLibrary(client, {
+  const result = await ensureLegalTemplateLibrary(client, {
     operatingCompanyId: args.operatingCompanyId,
     actorUserId: args.actorUserId,
   });
+  // ROUND 316: the contract-type print designs (trailer lease, transportation services agreement) ride with the library.
+  for (const code of ENSURABLE_CONTRACT_TYPES) {
+    await ensureContractTypeTemplate(client as never, args.operatingCompanyId, args.actorUserId, code);
+  }
+  return result;
 }
 
 /**
