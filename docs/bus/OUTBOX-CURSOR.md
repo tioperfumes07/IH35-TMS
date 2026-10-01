@@ -227,6 +227,9 @@ D-H2 Loads Report `/reports/loads` + GET /api/v1/reports/loads. NEXT: B-1 Bank R
 **2026-10-01T09:00Z · B-1 BANK REGISTER · branch `cursor/b1-bank-register-c89b`**
 B-1 · what changed: mount QBO JE register at `/banking/register` + `/banking/register/:accountId` (AccountRegisterPage / journal_entry_postings); Banking subnav adds Register beside Transactions (feed kept). Guard: verify-bank-register-route.
 
+**2026-10-01T09:50Z · B-5 RECLASSIFY / BATCH · branch `cursor/b5-reclassify-batch-68be` · PR #23765**
+B-5 · what changed: Topbar + Create → Other adds Batch transactions + Reclassify transactions; Reclassify modal adds Change location (honest-disabled) + Change vendor/customer (vendor|customer kind + ReferenceSelect); BatchExpenses type strip Expenses/Checks · Bills link · Deposits/Settlements honesty. Ops: `scripts/ops/verify-b5-reclassify-batch.mjs`. Engines unchanged (`applyReclassify` / `createExpense`). · LIVE PROOF: `node scripts/ops/verify-b5-reclassify-batch.mjs --selftest` PASS; frontend `tsc -b` exit 0. · LEFT: Lead Chrome; merge.
+
 **2026-10-01T12:10Z · B-2 BANK DEPOSITS · branch `cursor/b2-bank-deposits-c89b`**
 B-2 · what changed: accounting.deposits + deposit_lines (mig 202615171200); create/void service posts bank_deposit JE (Dr bank / Cr UF + optional cash-back); GET undeposited + POST/void/batch routes; MakeDepositPage at /banking/deposits (single + §23 batch grid); Banking subnav Deposits; match sweeps skip receipts already on a live deposit. Guard: verify-bank-deposits-make-deposit. · LIVE PROOF: guard --selftest PASS; backend+frontend tsc exit 0. Chrome /banking/deposits UNVERIFIED: FE deploy pending; Neon apply mig pending. · NEXT: B-3 Batch Settlements after merge.
 
@@ -235,3 +238,12 @@ B-2 Make Deposit merged. Neon USMCA: `accounting.deposits` + `deposit_lines` CRE
 
 **2026-10-01T11:05Z · B-3 BATCH SETTLEMENTS · branch `cursor/b3-batch-settlements-c89b`**
 B-3 · what changed: GET eligible SET-01 loads + POST batch Save → `postSettlementCreatorInClientTx` only; BatchSettlementsPage at `/driver-finance/settlements/batch` (§23 paste/fill-down/duplicate); Settlements subnav link; reverse EntityLink to load + settlement. Guard: verify-batch-settlements-grid. · LIVE PROOF: guard --selftest PASS; backend tsc exit 0. Chrome UNVERIFIED: FE deploy pending. · NEXT: FAST-MERGE then Driver/Customers/Vendors if still owed.
+
+**2026-10-01T11:15Z · B-3 MERGED · PR #23771 · `9d45b8ba39`**
+B-3 Batch Settlements `/driver-finance/settlements/batch` → postSettlementCreatorInClientTx. NEXT: Driver profile / Customers / Vendors (ORDERS after B-3).
+
+**2026-10-01T10:00Z · DRIVER PROFILE ORDERS COMPLETE · branch `cursor/driver-profile-complete-68be` · PR #23766**
+DRIVER PROFILE · what changed: FE wires CC-3 `GET /api/v1/drivers/:id/profile/{assignments,fuel,safety,samsara}` — Assignment history; Samsara duplicate warning (show never fix); Fuel E-21/E-22 verdicts; Safety faults/harsh/DVIR/DOT dwell; ComplaintsReverseSection `driver_id`; Settlements tab read-only (auto-pay write removed). Ops: `scripts/ops/verify-driver-profile-orders-complete.mjs`. · LIVE PROOF: ops --selftest PASS; frontend tsc -b exit 0; vitest DriverProfilePage 7/7. · LEFT: Lead Chrome on `/drivers/:id/profile`. · NEXT: tip-main merge conflict resolved; FAST-MERGE then Customers #23767 / Vendors #23768.
+
+**2026-10-01T11:20Z · GO-20 HOOK · DRIVER PROFILE AUDIT → #23766**
+Audit confirmed ORDERS §2 gaps = exactly what #23766 ships. Rebased onto tip main (OUTBOX conflict only). Ambient CI same class as B-2/B-3 (go26 raw_table +4, arch-design sub-nav, phantom-relation, live-load). Own guard PASS. FAST-MERGE next.

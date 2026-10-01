@@ -11,7 +11,13 @@ type Props = {
   operatingCompanyId: string;
   // E-28 (owner order 2026-10-01): load -> complaints and unit -> complaints, the reverse half of
   // the load/truck linkage added to the complaint create form.
-  filter: { customer_id: string } | { user_id: string } | { load_id: string } | { unit_id: string };
+  // ORDERS DRIVER PROFILE: driver_id (complainant OR respondent — server SAF-F16).
+  filter:
+    | { customer_id: string }
+    | { user_id: string }
+    | { load_id: string }
+    | { unit_id: string }
+    | { driver_id: string };
   contextLabel: string;
   "data-testid"?: string;
 };
@@ -20,6 +26,7 @@ function entityIdFromFilter(filter: Props["filter"]): string {
   if ("customer_id" in filter) return filter.customer_id;
   if ("user_id" in filter) return filter.user_id;
   if ("load_id" in filter) return filter.load_id;
+  if ("driver_id" in filter) return filter.driver_id;
   return filter.unit_id;
 }
 
