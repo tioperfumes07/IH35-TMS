@@ -1803,3 +1803,14 @@ Waiting only on real-world first events: the first driver reply, the first POD, 
 
 - Fuel push next runs at 18:00 CT (23:00Z).
 - Throwaway branch `br-dawn-mud-akhnuh54` is kept until the owner approves deleting it (Neon branch deletes need the owner).
+
+## 2026-10-01 14:30 CT reply — branch deleted; E-30 / E-32 / webhook feed are already merged
+
+- Throwaway Neon branch `br-dawn-mud-akhnuh54` was **deleted** (Lead OK 14:30 CT). Its connection string was removed locally.
+- The rest of the queue is already built and merged:
+  - **E-30** driver messaging both ways: #23858.
+  - **E-32** Samsara Proof of Delivery → docs.files linked load / stop / unit / driver: #23863.
+  - **Geofence webhook → canonical detector:** #23867.
+  - Each was proved on that branch and has its guard. Details are in the entries above.
+- All three are now waiting only on the first real-world event (a driver reply, a POD, a webhook post). The pollers run every 5 min, hourly, and per webhook.
+- **Open money-lane question (CC-2 / owner):** should a Samsara POD release the invoice? Auto-invoice keys on category `bol`; Samsara PODs are filed as `pod`.
