@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
@@ -123,6 +123,7 @@ export function TransfersListPage() {
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [infoModal, setInfoModal] = useState<{ title: string; body: ReactNode } | null>(null);
   const [revokeTarget, setRevokeTarget] = useState<Transfer | null>(null);
+  const openedDeepLinkTransferId = useRef("");
 
   const canRevoke = auth.user?.role === "Owner";
 
@@ -153,6 +154,16 @@ export function TransfersListPage() {
   useEffect(() => {
     if (deepLinkGroupId) openIntercompanyGroup(deepLinkGroupId);
   }, [deepLinkGroupId, openIntercompanyGroup]);
+
+  useEffect(() => {
+    if (!companyId || !deepLinkTransferId) return;
+    if (openedDeepLinkTransferId.current === deepLinkTransferId) return;
+    openedDeepLinkTransferId.current = deepLinkTransferId;
+    setInfoModal({
+      title: `Transfer ${deepLinkTransferId}`,
+      body: <TransferDetailModalBody transferId={deepLinkTransferId} companyId={companyId} />,
+    });
+  }, [companyId, deepLinkTransferId]);
 
   const bankAccountsQuery = useQuery({
     queryKey: ["banking", "plaid-accounts", companyId],

@@ -342,6 +342,11 @@ export type VendorBill = {
   linked_pickup_date?: string | null;
   linked_delivery_date?: string | null;
   linked_loaded_miles?: number | null;
+  /** B-1 §5 — bank hop when banking.bank_transactions.matched_bill_id is stamped. */
+  matched_bank_transaction_id?: string | null;
+  matched_bank_transaction_date?: string | null;
+  matched_bank_transaction_description?: string | null;
+  matched_bank_transaction_amount_cents?: number | string | null;
 };
 
 /** ACCT-F603 — never pass legacy QBO vendor_id text to EntityLink (404s /vendors/472). */
