@@ -150,23 +150,27 @@ describe("Samsara externalIds standard", () => {
       loadId: "load-1", name: "13508", unitId: "unit-1", driverId: "driver-1",
       samsaraVehicleId: "281474985873184", samsaraDriverId: "55066742",
       stops: [
-        { externalIds: { ih35Load: "load-1", ih35Stop: "stop-1" }, singleUseLocation: { address: "Laredo, TX", latitude: 27.5, longitude: -99.5 } },
-        { externalIds: { ih35Load: "load-1", ih35Stop: "stop-2" }, singleUseLocation: { address: "Dallas, TX", latitude: 32.7, longitude: -96.8 } },
+        { externalIds: { ih35Stop: "stop-1" }, singleUseLocation: { address: "Laredo, TX", latitude: 27.5, longitude: -99.5 }, scheduledArrivalTime: "2026-10-01T00:00:00.000Z" },
+        { externalIds: { ih35Stop: "stop-2" }, singleUseLocation: { address: "Dallas, TX", latitude: 32.7, longitude: -96.8 }, scheduledArrivalTime: "2026-10-02T00:00:00.000Z" },
       ],
     })).resolves.toEqual({ id: "route-1", created: true });
 
     expect(String(fetchMock.mock.calls[0]?.[0])).toContain("/fleet/routes/ih35Load%3Aload-1");
     const create = fetchMock.mock.calls[1]?.[1] as RequestInit;
     expect(create.method).toBe("POST");
-    expect(JSON.parse(String(create.body))).toMatchObject({
+    const sent = JSON.parse(String(create.body));
+    // Samsara's own rules (each probed live 2026-10-01, HTTP 400): vehicle OR driver, not both; no external id
+    // value twice in one route; the first stop of a departFirstStop route carries a departure, never an arrival.
+    expect(sent).toMatchObject({
       externalIds: { ih35Load: "load-1" },
       vehicleId: "281474985873184",
-      driverId: "55066742",
       stops: [
-        { externalIds: { ih35Load: "load-1", ih35Stop: "stop-1" }, singleUseLocation: { address: "Laredo, TX", latitude: 27.5, longitude: -99.5 } },
-        { externalIds: { ih35Load: "load-1", ih35Stop: "stop-2" } },
+        { externalIds: { ih35Stop: "stop-1" }, singleUseLocation: { address: "Laredo, TX", latitude: 27.5, longitude: -99.5 }, scheduledDepartureTime: "2026-10-01T00:00:00.000Z" },
+        { externalIds: { ih35Stop: "stop-2" }, scheduledArrivalTime: "2026-10-02T00:00:00.000Z" },
       ],
     });
+    expect(sent.driverId).toBeUndefined();
+    expect(sent.stops[0].scheduledArrivalTime).toBeUndefined();
   });
 });
 

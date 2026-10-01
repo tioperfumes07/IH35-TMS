@@ -1476,22 +1476,31 @@ export class SamsaraClient {
     const body = {
       name: input.name.slice(0, 255),
       externalIds: buildIh35SamsaraExternalIds({ ih35Load: input.loadId }),
+      // Samsara (probed 2026-10-01, HTTP 400): "Route can be assigned to a vehicle or a driver, but not both."
+      // Assign the TRUCK: the unit->vehicle map is one-to-one, a driver can hold several Samsara accounts, and
+      // whoever is logged into that vehicle sees the route.
       vehicleId: input.samsaraVehicleId,
-      ...(input.samsaraDriverId ? { driverId: input.samsaraDriverId } : {}),
       settings: {
         routeStartingCondition: "departFirstStop",
         routeCompletionCondition: "arriveLastStop",
         sequencingMethod: "manual",
       },
-      stops: input.stops.map((stop, index) => ({
+      stops: input.stops.map((stop, index) => {
+        // Samsara (probed 2026-10-01, HTTP 400): "scheduledArrival for first stop should not be set if
+        // routeStartingCondition is departFirstStop" -- the route starts when the truck LEAVES stop 1, so stop 1
+        // carries a departure time only (its own, else its scheduled arrival -- the pickup appointment).
+        const first = index === 0;
+        const departure = first ? stop.scheduledDepartureTime ?? stop.scheduledArrivalTime : stop.scheduledDepartureTime;
+        return {
         externalIds: buildIh35SamsaraExternalIds(stop.externalIds),
         ...(stop.addressId ? { addressId: stop.addressId } : {}),
         ...(stop.singleUseLocation ? { singleUseLocation: stop.singleUseLocation } : {}),
         sequenceNumber: index + 1,
-        ...(stop.scheduledArrivalTime ? { scheduledArrivalTime: stop.scheduledArrivalTime } : {}),
-        ...(stop.scheduledDepartureTime ? { scheduledDepartureTime: stop.scheduledDepartureTime } : {}),
+        ...(!first && stop.scheduledArrivalTime ? { scheduledArrivalTime: stop.scheduledArrivalTime } : {}),
+        ...(departure ? { scheduledDepartureTime: departure } : {}),
         ...(stop.notes ? { notes: stop.notes.slice(0, 2000) } : {}),
-      })),
+        };
+      }),
     };
 
     const existingUrl = new URL(`${SAMSARA_API_BASE}/fleet/routes/${encodeURIComponent(externalRouteId)}`);

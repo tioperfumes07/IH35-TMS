@@ -1586,3 +1586,42 @@ The I2 detector was run live (`i2DeliveredLoadInvoiced.detect`, read-only). Both
 - The canonical delivered transition also creates driver-bill artifacts, so turning it on is an owner call.
 
 **Guard output now:** `✗ I2 invoice: 14 exception(s), ceiling 13`. It goes green the moment 13626 and 13637 carry an issued invoice.
+
+## 2026-10-01 ROUND 315 — E-31 routes push root fix + auto-status (geofence-evidence path) built
+
+**Lead item 3, flags:**
+- The restart finished. Prod is at 4ab17b7, live since 16:03Z.
+- **Routes push failed 64/64 with `samsara_http_400`.** The ledger kept no reason. Probed live, Samsara refused for three reasons, all fixed:
+  1. *"scheduledArrival for first stop should not be set if routeStartingCondition is departFirstStop"*. Stop 1 now carries a departure only.
+  2. *"Route can be assigned to a vehicle or a driver, but not both"*. Routes are assigned to the truck (the unit→vehicle map is one-to-one, and drivers hold several Samsara accounts).
+  3. *"Duplicate external id value already exists"*. Stops now carry `ih35Stop` only; the route carries `ih35Load`.
+- **First live route:** load **13639 → Samsara route 4446734085** (truck T173; stops Laredo 810 Union Pacific Blvd → Quakertown PA). Read back: `liveSharingUrl` per stop, `plannedDistanceMeters` 3,076,410, state `scheduled`.
+- **Loads already delivered are never pushed.** The last delivery stop is stamped or its fence was entered. The plan went from 16 loads to 7.
+- The ledger now keeps Samsara's own error text.
+- **Fuel push:** the next tick is 18:00 CT. **Messaging:** fires on the first dispatcher message to a Samsara-linked driver; `chat.messages` is 0 so far.
+
+**Lead item 4, E-13:** Samsara webhook 1839499484286657 "IH35-TMS", v2024-12-20, events GeofenceEntry + GeofenceExit, URL `https://api.ih35dispatch.com/api/v1/integrations/samsara/webhook`. The route fix is live (#23796).
+- **Signature-verified delivery: not yet observed.** No rows and no `signature_invalid` audit row since the deploy.
+- I did not post a synthetic signed event: it would write a test row into USMCA. The first real GeofenceEntry proves it either way.
+
+**GO: auto-status, geofence-evidence path. BUILT here and flagged on after the deploy.**
+- **Root cause:** the old auto-status engine (GAP-56) only moved `at_pickup`/`in_transit` → `in_transit`/`at_delivery` from GPS drift. It never delivered a load and never minted a driver bill. Flipping its flag would have done nothing for 13626/13637.
+- **Built:**
+  - `transitionDispatchLoadInClientTx`: the office `PATCH /dispatch/loads/:id/transition` body, extracted unchanged. The route is now a one-line delegate.
+  - `geofence-auto-delivery.service.ts` + a 15-minute cron. A dispatch-work load whose final delivery stop has an `eld_geofence` departure walks `dispatched → in_transit → delivered_pending_docs` through that one service. The departure stamp is kept (never overwritten); driver-bill mint, revenue latch + invoice after COMMIT, settlement ping and spine event all run.
+  - Its own flag, `AUTO_DELIVERY_FROM_GEOFENCE_APPLY`. The GPS-drift `AUTO_STATUS_SWITCH_APPLY` stays OFF.
+- **Rolled-back proof inside `withLuciaBypass` (prod data):**
+  - 13626: → `delivered_pending_docs`, departure kept at 2026-09-26 00:10:03Z, driver bill DB-000266 $290.93 (`already_exists`, minted at booking).
+  - 13637: → `delivered_pending_docs`, departure kept at 2026-10-01 15:04:53Z, driver bill DB-000275.
+
+**§10-B linkage for these blocks:**
+- **Load** LINKED: route `externalIds.ih35Load`; the auto-delivery runs on the load.
+- **Stop** LINKED: `ih35Stop` per Samsara stop; the delivery stamp is on the stop.
+- **Unit** LINKED: Samsara vehicleId from the unit map.
+- **Driver** LINKED: driver bill `driver_id`; the route is visible to whoever drives the vehicle.
+- **Driver bill** LINKED: the canonical mint.
+- **Invoice / A/R + JE** LINKED through `latchOnDeliveryEvidence` after commit.
+- **Settlement** LINKED: settlement ping.
+- **Audit** LINKED: spine event + transition audit; the system actor is `00000000-0000-4000-8000-000000000001`, as in the auto-pay and EDI engines.
+- **N/A**, with reason: customer, vendor and factoring are untouched here (the invoice engine owns them); fuel, WO, insurance, legal and documents are not touched by a status move.
+- **Gate note (→ CC-2):** `verify-no-unscoped-company-delete` fails on origin/main itself. `scripts/ops/2026-10-01-cc2-auth193-factoring-clean-slate.ts` (#23805) has 6 DELETEs on accounting tables without `operating_company_id` in the statement, which blocks every seat's local gate. This PR was fast-merged with that red, per owner order. CC-3 did not touch the money script. Two other main-wide reds were fixed here: E-17 baseline `measured_at`, and E-17 guard `ALLOW_OFFLINE_SKIP`.

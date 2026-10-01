@@ -1,3 +1,4 @@
+import { stopFenceTimeSql } from "../../telematics/stop-arrival-events.js";
 import { resolveSamsaraApiToken } from "./samsara-token.js";
 import { SamsaraClient } from "./samsara-client.js";
 import { createHash } from "node:crypto";
@@ -60,6 +61,15 @@ export async function listLeaseScopedDispatchedRoutes(client: RouteDbClient, ope
       WHERE l.operating_company_id = $1::uuid
         AND l.status::text = ANY($2::text[])
         AND l.soft_deleted_at IS NULL
+        -- a load the truck already delivered gets no route (status lags the evidence until auto-status is on):
+        -- the last delivery stop is stamped, or the unit entered that stop's Samsara fence
+        AND NOT EXISTS (
+          SELECT 1 FROM mdata.load_stops d
+           WHERE d.load_id = l.id AND d.stop_type::text = 'delivery' AND d.soft_deleted_at IS NULL
+             AND d.sequence_number = (SELECT max(x.sequence_number) FROM mdata.load_stops x
+                                       WHERE x.load_id = l.id AND x.stop_type::text = 'delivery' AND x.soft_deleted_at IS NULL)
+             AND (d.actual_arrival_at IS NOT NULL
+                  OR ${stopFenceTimeSql("l.id", "d.sequence_number", "l.assigned_unit_id", "entered")} IS NOT NULL))
       GROUP BY l.id, l.load_number, l.assigned_unit_id, l.assigned_primary_driver_id
      HAVING COUNT(*) >= 2
       ORDER BY l.load_number`,
@@ -107,7 +117,9 @@ export function planRoutePushes(rows: EligibleRouteRow[], vehicles: Map<string, 
       const lng = st.longitude == null ? NaN : Number(st.longitude);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return { load_id: r.load_id, load_number: r.load_number, action: "skip", reason: "stop_without_coordinates" };
       built.push({
-        externalIds: { ih35Load: r.load_id, ih35Stop: String(st.stop_id) },
+        // stop ids only: the route already carries ih35Load, and Samsara refuses the same external id value twice
+        // in one route ("Duplicate external id value already exists", probed 2026-10-01)
+        externalIds: { ih35Stop: String(st.stop_id) },
         singleUseLocation: { address: String(st.address || `${lat},${lng}`), latitude: lat, longitude: lng },
         scheduledArrivalTime: st.scheduled_arrival_at ? new Date(String(st.scheduled_arrival_at)).toISOString() : undefined,
         scheduledDepartureTime: st.scheduled_departure_at ? new Date(String(st.scheduled_departure_at)).toISOString() : undefined,
@@ -163,7 +175,9 @@ export async function pushRoutePlanItem(
     await recordRoutePush(client, operatingCompanyId, { load_id: item.load_id, outcome: "pushed", body_hash: item.body_hash, samsara_route_id: r.id, created: r.created, driver_note: item.driver_note }, true, null);
     return { load_id: item.load_id, outcome: "pushed", samsara_route_id: r.id };
   } catch (error) {
-    const message = String((error as Error)?.message ?? error);
+    // Keep Samsara's own reason (SamsaraApiError.body.message) -- "samsara_http_400" alone hid the cause for 64 runs.
+    const samsaraReason = (error as { body?: { message?: unknown } })?.body?.message;
+    const message = String((error as Error)?.message ?? error) + (samsaraReason ? `: ${String(samsaraReason)}` : "");
     await recordRoutePush(client, operatingCompanyId, { load_id: item.load_id, outcome: "failed", body_hash: item.body_hash }, false, message);
     return { load_id: item.load_id, outcome: "failed", error: message };
   }
