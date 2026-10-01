@@ -69,7 +69,7 @@ export function ReclassifyTransactionsPage() {
   const accountsQ = useQuery({ queryKey: ["reclassify-accounts", companyId, fromDate, toDate], queryFn: () => getReclassifyAccounts(companyId, fromDate, toDate), enabled: !!companyId });
   const coaQ = useQuery({ queryKey: ["reclassify-coa", companyId], queryFn: () => listCoaAccountsForJe(companyId), enabled: !!companyId });
   const classesQ = useQuery({ queryKey: ["reclassify-classes"], queryFn: () => listClassesForJe() });
-  const vendorsQ = useQuery({ queryKey: ["reclassify-vendors", companyId], queryFn: () => listVendors({ operating_company_id: companyId, limit: 200 }), enabled: modalOpen && !!companyId });
+  const vendorsQ = useQuery({ queryKey: ["reclassify-vendors", companyId], queryFn: () => listVendors({ operating_company_id: companyId, limit: 1000 }), enabled: modalOpen && !!companyId });
   const batchesQ = useQuery({ queryKey: ["reclassify-batches", companyId], queryFn: () => listReclassifyBatches(companyId), enabled: !!companyId });
 
   const linesQ = useQuery({

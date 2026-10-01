@@ -283,6 +283,7 @@ const InvoiceSearchReportPage = React.lazy(() => import("../pages/reports/Invoic
 const FuelReconciliationPage = React.lazy(() => import("../pages/reports/FuelReconciliationPage").then((m) => ({ default: m.FuelReconciliationPage })));
 const MaintenanceCostPerUnitPage = React.lazy(() => import("../pages/reports/MaintenanceCostPerUnitPage").then((m) => ({ default: m.MaintenanceCostPerUnitPage })));
 const DispatchMarginPage = React.lazy(() => import("../pages/reports/DispatchMarginPage").then((m) => ({ default: m.DispatchMarginPage })));
+const LoadsReportPage = React.lazy(() => import("../pages/reports/LoadsReportPage").then((m) => ({ default: m.LoadsReportPage })));
 const SubscriptionManager = React.lazy(() => import("../pages/reports/SubscriptionManager").then((m) => ({ default: m.SubscriptionManager })));
 const GeofenceDwellReport = React.lazy(() => import("../pages/reports/GeofenceDwellReport").then((m) => ({ default: m.GeofenceDwellReport })));
 const GeofenceReconciliationReport = React.lazy(() => import("../pages/reports/GeofenceReconciliationReport").then((m) => ({ default: m.GeofenceReconciliationReport })));
@@ -3817,6 +3818,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DispatchMarginPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports/loads"
+          element={
+            <ProtectedRoute>
+              <LoadsReportPage />
             </ProtectedRoute>
           }
         />

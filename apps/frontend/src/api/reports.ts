@@ -1235,6 +1235,85 @@ export type DispatchMarginResponse = {
   rows: DispatchMarginRow[];
 };
 
+export type LoadsReportDateField = "created" | "pickup" | "delivery";
+
+export type LoadsReportRow = {
+  load_id: string;
+  load_number: string | null;
+  status: string | null;
+  trip_type: string | null;
+  customer_id: string | null;
+  customer_name: string | null;
+  driver_id: string | null;
+  driver_name: string | null;
+  unit_id: string | null;
+  unit_number: string | null;
+  trailer_id: string | null;
+  trailer_number: string | null;
+  customer_po_number: string | null;
+  customer_wo_number: string | null;
+  origin_city: string | null;
+  origin_state: string | null;
+  destination_city: string | null;
+  destination_state: string | null;
+  pickup_date: string | null;
+  delivery_date: string | null;
+  miles_practical: number | null;
+  miles_shortest: number | null;
+  miles_driven_actual: number | null;
+  revenue_cents: number;
+  driver_pay_cents: number;
+  fuel_cents: number;
+  margin_cents: number;
+  invoice_id: string | null;
+  invoice_number: string | null;
+  factoring_advance_id: string | null;
+  factoring_display: string | null;
+  factoring_status: string | null;
+  settlement_number: string | null;
+};
+
+export type LoadsReportResponse = {
+  date_field: LoadsReportDateField;
+  period: { start: string; end: string };
+  totals: {
+    load_count: number;
+    revenue_cents: number;
+    driver_pay_cents: number;
+    fuel_cents: number;
+    margin_cents: number;
+  };
+  rows: LoadsReportRow[];
+};
+
+export async function getLoadsReport(params: {
+  operating_company_id: string;
+  from: string;
+  to: string;
+  date_field?: LoadsReportDateField;
+  customer_id?: string;
+  driver_id?: string;
+  unit_id?: string;
+  trailer_id?: string;
+  status?: string;
+  trip_type?: string;
+  factoring_status?: string;
+}): Promise<LoadsReportResponse> {
+  const q = new URLSearchParams({
+    from: params.from,
+    to: params.to,
+    date_field: params.date_field ?? "created",
+  });
+  if (params.customer_id) q.set("customer_id", params.customer_id);
+  if (params.driver_id) q.set("driver_id", params.driver_id);
+  if (params.unit_id) q.set("unit_id", params.unit_id);
+  if (params.trailer_id) q.set("trailer_id", params.trailer_id);
+  if (params.status) q.set("status", params.status);
+  if (params.trip_type) q.set("trip_type", params.trip_type);
+  if (params.factoring_status) q.set("factoring_status", params.factoring_status);
+  return apiRequest<LoadsReportResponse>(withCompany(`/api/v1/reports/loads?${q.toString()}`, params.operating_company_id));
+}
+
 export async function getDispatchMargin(params: {
   operating_company_id: string;
   from: string;

@@ -118,6 +118,13 @@ export const REPORT_LIBRARY: ReportLibraryRow[] = [
     status: "real",
   },
   {
+    id: "loads-report",
+    name: "Loads report",
+    category: "operations",
+    description: "Filterable per-load roster with revenue, driver pay, fuel, margin, invoice, factoring, and settlement context.",
+    status: "real",
+  },
+  {
     id: "geofence-dwell",
     name: "Geofence dwell report",
     category: "operations",

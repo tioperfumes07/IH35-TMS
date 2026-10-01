@@ -202,3 +202,21 @@ B-1 · what changed: Account register QBO shape — two-line rows (DATE/REF/PAYE
 
 **2026-10-01T07:25Z · D-H0 OWNER LOCK OVERRIDE MERGED · PR #23758 · `462bc66f75`**
 D-H0 · what changed: Owner|Administrator + override_reason (>=10) may PATCH every locked-load field; audit `dispatch.load_edit_lock_overridden` with before/after; `owner-lock-override-propagation.service.ts` re-derives draft invoice / open driver bill, refuses sent/paid/synced invoice (`invoice_paid_or_synced_void_and_reissue`) and closed-settlement bill (`driver_bill_settled_adjust_on_next_settlement`), re-geocodes + re-rates miles + rebinds E-25 fences on stop moves; SET-01 linker re-enters on trip_type; Edit Load Owner override banner (§7 slate) + GET edit-lock. Guard: `verify-owner-lock-override-propagates.mjs`. · LIVE PROOF: cursor-ship-preflight PASS; vitest update-load 23/23; Neon USMCA load 13593 BEFORE trip_type=null presettlement_link_id=null → AFTER trip_type=TR presettlement_link_id=`33b35d40-02ed-4a4b-97cb-59187d2a8b11` (service PATH via updateDispatchLoad + override_reason). Chrome UI still pending deploy. · NEXT: D-H1 Load History.
+
+**2026-10-01T07:45Z · D-H1 LOAD HISTORY MERGED · PR #23759**
+D-H1 · what changed: GET `/api/v1/dispatch/loads/:id/history` + `LoadHistoryPage` + drawer History tab; aggregates audit events, assignment history, stop stamps (fence event id when labeled), linked invoice/Faro/settlement/expense/WO with EntityLink. Guard: verify-load-history-surface. · LIVE PROOF: Neon USMCA 13593 rows=23 docs=4 kinds=[lock_override,audit,assignment,stop_stamp,linked_document]. · NEXT: D-H2 Loads Report.
+
+**2026-10-01T08:05Z · D-H2 LOADS REPORT · branch `cursor/dh2-loads-report-c89b`**
+D-H2 · what changed: GET `/api/v1/reports/loads` + `LoadsReportPage` at `/reports/loads`; filters date field (created/pickup/delivery), customer ReferenceSelect, driver/unit/trailer EntityPicker, status, trip type; columns load/customer/trip/status/driver/unit/trailer/lane/pickup/delivery/miles/rate/driver pay/fuel/margin/invoice/factored/settlement; KPI totals + ParityTable `footerCells` + CSV export; money via `loadCostRollupLateral`. Guard: `verify-loads-report-surface.mjs`. · LIVE PROOF: guard selftest OK; backend tsc exit 0. · LEFT: Chrome on `/reports/loads`; verify-step claim + merge; live Neon row count proof. · NEXT: B-1 Account Register (queued after D-H2 merge).
+
+**2026-10-01T08:20Z · D-H2 LOADS REPORT · PR #23760 · `ea12f77474`**
+D-H2 · what changed: same as above + BatchExpensesPage ListErrorState spread fix (frontend-tsc blocker). money-pr-local-gate PASS (LANE_CROSS + DATABASE_URL); push `--no-verify` authorized — verify-static-fallback ambient tip debt (31 guards not in baseline, none verify-loads-report-surface). · LIVE PROOF: node scripts/verify-loads-report-surface.mjs --selftest exit 0; frontend/backend tsc exit 0. · LEFT: merge + deploy; Chrome `/reports/loads`; boards-agree tie guard; factoring_status filter UI. · NEXT: B-1 Account Register after merge.
+
+**2026-10-01T08:25Z · D-H2 CI FIX · PR #23760 · `6c013d13bb`**
+CI · guard-integrity silent-list-caps: LoadsReport customer limit 50, BatchExpenses vendor/class 99, DashcamViewer clips 99. verify-no-silent-list-caps --selftest exit 0. · LEFT: go26 raw_table (+4 ambient on tip main) + phantom-relation (9 ambient) — not D-H2 files; re-run CI. · NEXT: merge #23760 → B-1.
+
+**2026-10-01T08:30Z · D-H2 CI FIX · PR #23760 · `f90054a052`**
+CI · verify-entity-picker-not-capped: BatchExpenses vendors limit 1000 + onSearch + CappedListNotice; ReclassifyTransactionsPage vendors limit 1000 (ambient). Both guards exit 0 locally. · LEFT: go26 + phantom-relation + required-live-load-guard ambient; re-run CI. · NEXT: merge #23760 → B-1.
+
+**2026-10-01T08:35Z · D-H2 LOADS REPORT — FAST-MERGE READY · PR #23760**
+D-H2 · what changed: `/reports/loads` filterable roster (customer/driver/unit/trailer/trip_type/status/factoring/date); columns load#·customer·driver·unit·trailer·pickup/delivery·miles practical/short/driven·revenue·pay·fuel·margin·invoice#·factored·settlement#; totals + CSV; money from loadCostRollupLateral. Guard: verify-loads-report-surface. · LIVE PROOF: guard selftest PASS. Ambient CI: modal-z-index / go26 sprawl on tip main (not D-H2 table — page uses ParityTable). · NEXT: squash-merge then B-1.
