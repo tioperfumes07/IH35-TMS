@@ -6384,3 +6384,22 @@ MEASURED SCOPE, live on br-fancy-credit-akjnd07a 2026-10-01 before this authoriz
 
 THIS AUTHORIZATION DOES NOT COVER: any other stop, any load status change, any invoice/advance/
 settlement side effect, any future back-dated load (that is E-25, the retro-arrival engine).
+
+## AUTH-180
+issued_at: 2026-10-01T04:30:00Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). safety.complaints void columns only
+  (voided_at, voided_by, void_reason) — no other column, no other table, nothing deleted.
+action: UPDATE safety.complaints SET voided_at = now(), voided_by = <owner user>, void_reason =
+  'coder test fixture, not a real complaint (AUTH-180)' WHERE id IN (exactly three ids) AND
+  voided_at IS NULL:
+    5e691a6a-a3bc-48b8-935f-8144be577509  "TEST DATA complaint keep"
+    9e52b358-690c-47bc-9fac-18f704f6a4bb  "TEST DATA company complaint keep ..."
+    e81cd567-92eb-412e-888a-241842ea181b  "CODEX P44 complaint type FK smoke"
+  Script of record: scripts/ops/2026-10-01-cc2-auth180-void-3-test-complaints.ts (dry run first).
+expires_at: 2026-10-02T04:30:00Z
+status: OPEN
+
+OWNER ORDER, verbatim, 2026-10-01 (CC-2 session, after the board row
+COMPLAINTS-CODER-TEST-ROWS-LIVE-IN-USMCA-2026100101 named the three ids):
+  "you have mny authorization to void these test items, anyone can void a test and sample and demo
+   itemn, not real transactions."
