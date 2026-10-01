@@ -26,7 +26,7 @@ import {
   type UndepositedReceipt,
 } from "../../api/bankDeposits";
 import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
-import { formatDateUS } from "../../lib/formatDateUS";
+import { formatDateUS } from "../../lib/formatDate";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
 
