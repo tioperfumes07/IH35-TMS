@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// --apply requires --auth AUTH-NNN and runs scripts/verify-owner-authorization.mjs (in 2026-10-01-cc3-lib.mjs args()) before any write.
 // Delete EXACT-repeat telematics.odometer_readings: same unit, same America/Chicago day (the table's own
 // telematics.odometer_reading_day), same source, same odometer value -- keep the earliest (read_at, id).
 // Distinct readings on the same day are REAL reads and are kept (R-02). With --apply the deleted rows

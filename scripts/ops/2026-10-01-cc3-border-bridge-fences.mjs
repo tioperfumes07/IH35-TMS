@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// --apply requires --auth AUTH-NNN and runs scripts/verify-owner-authorization.mjs (in 2026-10-01-cc3-lib.mjs args()) before any write.
 // BUILD the 5 international bridges as border_crossing fences (USMCA), 400 m, from published coordinates
 // (Wikipedia, read 2026-10-01). Polygon = 32-point circle, GeoJSON [lng, lat] like the other 287 border/DOT
 // fences. A bridge that already has a border_crossing fence within 1 km is SKIPPED and reported (measured

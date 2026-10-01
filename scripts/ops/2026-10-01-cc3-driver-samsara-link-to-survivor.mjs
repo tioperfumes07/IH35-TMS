@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// --apply requires --auth AUTH-NNN and runs scripts/verify-owner-authorization.mjs (in 2026-10-01-cc3-lib.mjs args()) before any write.
 // Finish the 5 clear driver merges (USMCA). The losers already carry merged_into_driver_id = survivor
 // (CC-1, 2026-09-28) but still hold mdata.drivers.samsara_driver_id, which is what split 5 Samsara ids
 // across two rows. Move the id to the survivor when the survivor has none; clear it from the loser when

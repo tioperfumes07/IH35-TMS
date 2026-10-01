@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// --apply requires --auth AUTH-NNN and runs scripts/verify-owner-authorization.mjs (in 2026-10-01-cc3-lib.mjs args()) before any write.
 // T122 stored Samsara vehicle id correction (1 row). Refuses unless the row is exactly as measured.
 import { run, USMCA } from "./2026-10-01-cc3-lib.mjs";
 const UNIT = "c9f6737d-3f0b-4a20-aa7e-5cebc8e48787", STALE = "212014918407330", LIVE = "212014918197571";

@@ -1,4 +1,5 @@
 #!/usr/bin/env tsx
+// --apply requires --auth AUTH-NNN and runs scripts/verify-owner-authorization.mjs (in 2026-10-01-cc3-lib.mjs args()) before any write.
 // Apply the T-46 fence <-> Samsara address links (USMCA). Mirrors Samsara's address list, then accepts
 // each PROPOSAL through acceptProposal() (re-verifies a live signal, never overwrites a linked fence).
 // Only pairs a person verified as the SAME place are linked (LEAD DECISION 2026-10-01 "apply the 30" was
