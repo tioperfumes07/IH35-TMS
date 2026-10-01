@@ -1,9 +1,9 @@
 /**
- * ROUND 285.4.10 — after a BOL is saved+linked to a load, retry auto-invoice → Faro submit.
+ * ROUND 285.4.10 — after a BOL (ROUND 321: or a POD) is saved+linked to a load, retry auto-invoice → Faro submit.
  * Swallow-and-log: never 500 a document upload because invoicing hiccuped.
  */
 import { withCompanyScope } from "../accounting/shared.js";
-import { autoInvoiceOnBol } from "../accounting/auto-invoice-on-bol.service.js";
+import { autoInvoiceOnBol, BILLING_EVIDENCE_DOC_CODES } from "../accounting/auto-invoice-on-bol.service.js";
 import { autoSubmitDeliveredLoadToFactor } from "../factoring/auto-submit-on-delivery.service.js";
 import { isDeliveryEvidenceStatus } from "../dispatch/delivery-evidence-status.js";
 
@@ -50,7 +50,8 @@ export async function maybeFireAutoInvoiceAfterBolSaved(input: {
     );
     const row = meta.rows[0];
     if (!row) return;
-    if (row.category_code !== "bol") return;
+    // ROUND 321 item 6: a signed BOL OR a signed POD releases the invoice (one shared list).
+    if (!(BILLING_EVIDENCE_DOC_CODES as readonly string[]).includes(row.category_code ?? "")) return;
     if (!row.upload_completed_at) return;
     if (!isDeliveryEvidenceStatus(row.load_status)) return;
 

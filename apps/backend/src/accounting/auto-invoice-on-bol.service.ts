@@ -37,7 +37,15 @@ export type AutoInvoiceOnBolResult =
   | { ok: true; invoiceId: string; created: boolean; converted: boolean; sent: boolean; bolFileId: string }
   | { ok: false; reason: "awaiting_bol" | "pipeline_off" | "no_invoice" | "send_failed" | "load_not_delivery"; detail?: string };
 
-/** Shared BOL existence predicate — identical to dispatch/factoring-queue.routes.ts has_bol. */
+/**
+ * ROUND 321 item 6 (Lead ruling, money lane CC-2; owner may reverse): a signed POD is delivery evidence exactly like a
+ * signed BOL — McLeod / Alvys / Faro accept either as the billing document. ONE list, used by the existence check below,
+ * the awaiting queue and the upload trigger (docs/maybe-fire-auto-invoice-after-bol.ts). Same gates otherwise
+ * (delivery-evidence status + delivery stamp + rate); idempotent per load. CC-3's Samsara PODs file as 'pod' (#23863).
+ */
+export const BILLING_EVIDENCE_DOC_CODES = ["bol", "pod"] as const;
+
+/** Shared billing-document (BOL or POD) existence predicate — the newest completed one is linked to the invoice. */
 export async function loadHasBolDocument(
   client: Queryable,
   loadId: string
@@ -53,11 +61,11 @@ export async function loadHasBolDocument(
         AND dfl.deleted_at IS NULL
         AND df.deleted_at IS NULL
         AND df.upload_completed_at IS NOT NULL
-        AND dfc.code = 'bol'
+        AND dfc.code = ANY($2::text[])
       ORDER BY df.upload_completed_at DESC NULLS LAST, df.created_at DESC
       LIMIT 1
     `,
-    [loadId]
+    [loadId, [...BILLING_EVIDENCE_DOC_CODES]]
   );
   const fileId = res.rows[0]?.file_id ?? null;
   return { hasBol: Boolean(fileId), fileId };
@@ -263,12 +271,12 @@ export async function listLoadsAwaitingBolInvoice(
             AND dfl.deleted_at IS NULL
             AND df.deleted_at IS NULL
             AND df.upload_completed_at IS NOT NULL
-            AND dfc.code = 'bol'
+            AND dfc.code = ANY($2::text[])
         )
       ORDER BY l.updated_at DESC
       LIMIT 200
     `,
-    [operatingCompanyId]
+    [operatingCompanyId, [...BILLING_EVIDENCE_DOC_CODES]]
   );
   return res.rows.map((r) => ({ ...r, waiting_for: "BOL" as const }));
 }
