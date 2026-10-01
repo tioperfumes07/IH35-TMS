@@ -7,8 +7,35 @@ import { verifySamsaraWebhookSignature } from "./samsara-webhook-verify.js";
 const SAMSARA_AUDIT_SOURCE = "SMS-FIX-2-WEBHOOKS";
 
 const webhookQuerySchema = z.object({
-  operating_company_id: z.string().uuid(),
+  operating_company_id: z.string().uuid().optional(),
 });
+
+/**
+ * ROUND 313 E-13 — 0 rows EVER: Samsara's webhook "IH35-TMS" (GeofenceEntry/GeofenceExit) posts to
+ * /api/v1/integrations/samsara/webhook WITHOUT ?operating_company_id=, so every delivery got a 400 before the
+ * signature was even read. One Samsara org = one webhook, so the tenant comes from the payload when the URL has
+ * none: payload.orgId matched to integrations.samsara_config.samsara_org_id, else the ONE enabled Samsara config.
+ * The orgId read here is untrusted -- it only selects whose signing secret to check; nothing is stored unless the
+ * signature verifies against that company's secret.
+ */
+async function resolveWebhookCompany(rawBody: Buffer, fromQuery: string | undefined): Promise<string | null> {
+  if (fromQuery) return fromQuery;
+  let orgId: string | null = null;
+  try {
+    const parsed = JSON.parse(rawBody.toString("utf8")) as Record<string, unknown>;
+    orgId = parsed.orgId != null ? String(parsed.orgId) : null;
+  } catch {
+    orgId = null;
+  }
+  return withLuciaBypass(async (client) => {
+    const rows = await client.query<{ operating_company_id: string; samsara_org_id: string | null }>(
+      `SELECT operating_company_id::text, samsara_org_id::text FROM integrations.samsara_config WHERE is_enabled = true`
+    );
+    const byOrg = orgId ? rows.rows.filter((r) => r.samsara_org_id === orgId) : [];
+    if (byOrg.length === 1) return byOrg[0].operating_company_id;
+    return rows.rows.length === 1 ? rows.rows[0].operating_company_id : null;
+  });
+}
 
 const WEBHOOK_PATHS = [
   "/api/v1/integrations/samsara/webhook",
@@ -24,10 +51,13 @@ async function handleSamsaraWebhookPost(req: FastifyRequest, reply: FastifyReply
   if (!q.success) {
     return reply.code(400).send({ error: "validation_error", details: q.error.flatten() });
   }
-  const operatingCompanyId = q.data.operating_company_id;
   const rawBody = req.body as Buffer;
   if (!Buffer.isBuffer(rawBody)) {
     return reply.code(400).send({ error: "invalid_body" });
+  }
+  const operatingCompanyId = await resolveWebhookCompany(rawBody, q.data.operating_company_id);
+  if (!operatingCompanyId) {
+    return reply.code(400).send({ error: "samsara_org_not_configured" });
   }
 
   req.log.info(
