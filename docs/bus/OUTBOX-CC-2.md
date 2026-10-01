@@ -1224,3 +1224,22 @@ Owner, verbatim (chat, 2026-10-01 ~04:27Z): "you have full permissions and autho
 - Remaining money row: Relay/fuel-card GL routing. Blocked on the Lead's ruling for
   RELAY-SAME-FILL-IN-TWO-ENTITIES-2026100104, because the same Relay fill sits in TRANSP and USMCA, so the
   owning entity of each fill must be ruled before it can route to any GL.
+
+## 2026-10-01 06:00Z — CC-2 | linkage-law audit of my fuel lane (owner order: "total and complete linkage")
+FORWARD, live USMCA (177 live fuel rows, 175 fuel expense documents):
+- Every live fuel row has load, driver, unit and vendor: 177/177 each.
+- 0 fuel rows disagree with their load's unit or drivers.
+- 67 rows carry their load's assigned trailer.
+  - 102 have no trailer, and their load never had one assigned.
+  - 4 could take one from the load. Tier 1 does not require a trailer.
+- Fuel expense documents: unit, driver, vendor, GL account, payment account and JE all agree with their
+  fuel row (0 mismatches).
+  - 35 lack an expense_load_links row.
+  - The 3 on R-160 loads were relinked by AUTH-018.
+- FINDING FUEL-SOURCE-VOIDED-UNDER-LIVE-EXPENSE-2026100109 (board):
+  - 146 live fuel expenses ($91,492.34) sit on fuel rows that E10 R-102-C voided on 09-28.
+  - The money is booked once (each expense has its own entry).
+  - The operational record is gone from MPG, IFTA, fraud, integrity and the scorecards.
+  - The ruling needed is reinstate-without-repost or void the documents.
+REVERSE (unit / driver / load / trailer / vendor -> fuel, expenses, recoveries, alerts, Relay fills): code audit
+running; any missing reverse view in my lane gets built next.
