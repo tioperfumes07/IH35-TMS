@@ -40,7 +40,8 @@ export async function processCompanyFuelFraudDetection(
   client: {
     query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
   },
-  operatingCompanyId: string
+  operatingCompanyId: string,
+  opts: { backlog?: boolean } = {}
 ): Promise<{ transactions_scanned: number; alerts_created: number; critical_notifications: number; findings: number; suspicions: number; skipped_not_purchases: number }> {
   const txns = await client.query<Record<string, unknown>>(
     `
@@ -64,7 +65,10 @@ export async function processCompanyFuelFraudDetection(
       WHERE ft.operating_company_id = $1::uuid
         AND ft.archived_at IS NULL
         AND ft.voided_at IS NULL
-        AND ft.transaction_at >= now() - interval '7 days'
+        -- ROUND 313: the window is when the row ARRIVED, not when the fuel was bought. Statement imports land dated
+        -- weeks back, so a purchase-date window never saw them (0 alerts ever, 0 of 1,953 live rows in window on
+        -- 2026-10-01). backlog = every live row not yet alerted (one-off catch-up, run through this same engine).
+        AND ($2::boolean OR ft.created_at >= now() - interval '7 days' OR ft.transaction_at >= now() - interval '7 days')
         AND NOT EXISTS (
           SELECT 1
           FROM fuel.fraud_alerts fa
@@ -72,9 +76,9 @@ export async function processCompanyFuelFraudDetection(
             AND fa.fuel_transaction_uuid = ft.id
         )
       ORDER BY ft.transaction_at DESC
-      LIMIT 500
+      LIMIT CASE WHEN $2::boolean THEN 5000 ELSE 500 END
     `,
-    [operatingCompanyId]
+    [operatingCompanyId, Boolean(opts.backlog)]
   );
 
   const derivedTimes = await loadHighConfidenceDerivedTimes(client, operatingCompanyId);
@@ -130,7 +134,7 @@ export function fuelFraudDetectorEnabled(): boolean {
 }
 
 /** One pass for the given companies (or all active ones). Called by fuel/fuel-ingest-hooks.ts. */
-export async function runFuelFraudDetectorTick(companyIds?: string[]): Promise<FuelFraudDetectorTickSummary> {
+export async function runFuelFraudDetectorTick(companyIds?: string[], opts: { backlog?: boolean } = {}): Promise<FuelFraudDetectorTickSummary> {
   const summary: FuelFraudDetectorTickSummary = {
     companies_processed: 0,
     transactions_scanned: 0,
@@ -157,7 +161,7 @@ export async function runFuelFraudDetectorTick(companyIds?: string[]): Promise<F
     for (const company of companies.rows) {
       assertTenantContext(company.id, CRON_NAME);
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
-      const result = await processCompanyFuelFraudDetection(client, company.id);
+      const result = await processCompanyFuelFraudDetection(client, company.id, opts);
       summary.companies_processed += 1;
       summary.transactions_scanned += result.transactions_scanned;
       summary.alerts_created += result.alerts_created;
