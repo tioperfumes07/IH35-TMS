@@ -4,7 +4,7 @@ import { getFuelTransactions } from "../../api/fuelPlanner";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatMoneyCents } from "../dispatch/constants";
 import { EntityLink, resolveEntityRoute } from "../shared/EntityLink";
-import { entityLabel } from "../../lib/entity-label";
+import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 
@@ -19,19 +19,24 @@ import { userFacingApiError } from "../../lib/api-error-message";
  * trailer_id added once the list endpoint accepted it (EXPENSE-FUEL-TRAILER-LIST-FILTER-MISSING,
  * closed same session — the column and create path existed since #6316, only the list filter was
  * missing, mirroring what #6324 shipped for accidents).
+ *
+ * vendor_id added for PR #23729 (linkage law §6, vendor row) — a fuel purchase carries vendor_id
+ * and GET /api/v1/fuel/transactions?vendor_id=... now accepts it; VendorDetail had no reverse hop.
  */
 
 type Filter =
-  | { driver_id: string; unit_id?: never; load_id?: never; trailer_id?: never }
-  | { unit_id: string; driver_id?: never; load_id?: never; trailer_id?: never }
-  | { load_id: string; driver_id?: never; unit_id?: never; trailer_id?: never }
-  | { trailer_id: string; driver_id?: never; unit_id?: never; load_id?: never };
+  | { driver_id: string; unit_id?: never; load_id?: never; trailer_id?: never; vendor_id?: never }
+  | { unit_id: string; driver_id?: never; load_id?: never; trailer_id?: never; vendor_id?: never }
+  | { load_id: string; driver_id?: never; unit_id?: never; trailer_id?: never; vendor_id?: never }
+  | { trailer_id: string; driver_id?: never; unit_id?: never; load_id?: never; vendor_id?: never }
+  | { vendor_id: string; driver_id?: never; unit_id?: never; load_id?: never; trailer_id?: never };
 
 const FUEL_HISTORY_KIND = {
   driver_id: "fuel_history_driver",
   unit_id: "fuel_history_unit",
   load_id: "fuel_history_load",
   trailer_id: "fuel_history_trailer",
+  vendor_id: "fuel_history_vendor",
 } as const;
 
 type Props = {
@@ -126,10 +131,28 @@ export function FuelTransactionsReverseSection({
                     <EntityLink kind="trailer" id={row.trailer_id} label={entityLabel(row.trailer_number, row.trailer_id, "Trailer")} />
                   </>
                 ) : null}
-                {row.vendor_id ? (
+                {filterKey !== "vendor_id" && row.vendor_id ? (
                   <>
                     {" · "}
                     <EntityLink kind="vendor" id={row.vendor_id} label={entityLabel(row.vendor_name, row.vendor_id, "Vendor")} />
+                  </>
+                ) : null}
+                {/* Linkage law §8 (PR #23729) — forward drill to the accounting document this
+                    purchase posted through, and its own posting, from the embedded reverse list too. */}
+                {row.expense_id ? (
+                  <>
+                    {" · "}
+                    <EntityLink
+                      kind="expense"
+                      id={row.expense_id}
+                      label={visibleDocumentLabel(row.expense_number, row.expense_id, "Expense")}
+                    />
+                  </>
+                ) : null}
+                {row.journal_entry_id ? (
+                  <>
+                    {" · "}
+                    <EntityLink kind="journal_entry" id={row.journal_entry_id} label="JE" />
                   </>
                 ) : null}
               </span>

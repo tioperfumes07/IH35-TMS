@@ -159,6 +159,7 @@ export type EntityKind =
   | "fuel_history_unit"
   | "fuel_history_load"
   | "fuel_history_trailer"
+  | "fuel_history_vendor"
   | "driver_deductions_filter"
   | "management_report_package"
   | "program_matrix_module"
@@ -566,6 +567,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/fuel/history?load_id=${id}`;
     case "fuel_history_trailer":
       return `/fuel/history?trailer_id=${id}`;
+    case "fuel_history_vendor":
+      return `/fuel/history?vendor_id=${id}`;
     case "driver_deductions_filter":
       return `/drivers/deductions?driver_id=${id}`;
     case "management_report_package":

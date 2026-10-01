@@ -1064,6 +1064,10 @@ export type ExpenseDetail = {
   matched_bank_transaction_date?: string | null;
   matched_bank_transaction_description?: string | null;
   matched_bank_transaction_amount_cents?: number | string | null;
+  /** Linkage law §8 (PR #23729) — the fuel purchase this expense was created from, if any, and
+   *  whether that source purchase has since been voided underneath this still-live expense. */
+  source_fuel_transaction_id?: string | null;
+  source_fuel_voided_at?: string | null;
 };
 
 export function getExpense(id: string, operatingCompanyId: string) {

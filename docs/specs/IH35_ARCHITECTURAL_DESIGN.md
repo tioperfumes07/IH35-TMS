@@ -325,6 +325,7 @@ BOA Balance · IBC Balance · Factoring Available · Escrow Total · MTD Inflow 
 | **Settings** | Preferred fuel networks · Avoid states · HOS thresholds | Owner only |
 | **Integrity** | Per-transaction GPS verdict (E-22), fraud classification (E-21), and derived pump time/state (E-19/E-20), each with its "why" — read-only, computed on read | Phase 3 ✅ (ORDERS-2026-10-01) |
 | **Cards** | E-22 card -> truck (+ driver) registry over effective dates — assign/end/void a fuel card's truck, with reverse sections on the Unit and Driver profiles | Phase 3 ✅ (ORDERS-2026-10-01) |
+| **Relay — unmatched** | Relay fuel fills (integrations.relay_fuel_transactions, never becomes a fuel.fuel_transactions row) this company has not matched to a truck or driver yet, with Relay's own free-text unit/driver so a person can match them — reverse sections on the Unit and Driver profiles | Phase 3 ✅ (ORDERS-2026-10-01) |
 
 ### KPI row — 5 cards
 MPG Fleet Avg · MTD Gallons · MTD Fuel Cost · IFTA Tax (Q-to-date) · Savings vs Plan (90d)

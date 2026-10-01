@@ -207,6 +207,10 @@ export type FuelTransactionListItem = {
   /** R-102-B item 2 — fuel.fuel_transactions.voided_at/void_reason (R-102.1-A, migration 202614310100). */
   voided_at?: string | null;
   void_reason?: string | null;
+  /** Linkage law §8 (PR #23729) — the live accounting document this purchase posted through, if any. */
+  expense_id?: string | null;
+  expense_number?: string | null;
+  journal_entry_id?: string | null;
 };
 
 export type FuelTransactionListResponse = {
@@ -228,6 +232,8 @@ export function getFuelTransactions(
     unit_id?: string;
     load_id?: string;
     trailer_id?: string;
+    /** Linkage law §6 (vendor row, PR #23729) — a fuel purchase carries vendor_id. */
+    vendor_id?: string;
     from?: string;
     to?: string;
     /** R-102-B item 5 — default false (hide voided), matching every sibling family. */
@@ -242,6 +248,7 @@ export function getFuelTransactions(
   if (params.unit_id) search.set("unit_id", params.unit_id);
   if (params.load_id) search.set("load_id", params.load_id);
   if (params.trailer_id) search.set("trailer_id", params.trailer_id);
+  if (params.vendor_id) search.set("vendor_id", params.vendor_id);
   if (params.from) search.set("from", params.from);
   if (params.to) search.set("to", params.to);
   if (params.include_voided) search.set("include_voided", "true");

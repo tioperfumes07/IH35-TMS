@@ -63,6 +63,8 @@ import { UnitTaxFilingsReverseSection } from "../../components/compliance/UnitTa
 import { SafetyAlertsReverseSection } from "../../components/safety/SafetyAlertsReverseSection";
 import { InsuranceLawsuitsReverseSection } from "../../components/insurance/InsuranceLawsuitsReverseSection";
 import { FuelCardOverageReverseSection } from "../../components/fuel/FuelCardOverageReverseSection";
+import { FuelFraudAlertsReverseSection } from "../../components/fuel/FuelFraudAlertsReverseSection";
+import { RelayFillsReverseSection } from "../../components/fuel/RelayFillsReverseSection";
 import { CashForecastReverseSection } from "../../components/cash-flow/CashForecastReverseSection";
 import { UnitDriverHistoryStrip } from "../units/UnitDriverHistoryStrip";
 
@@ -487,6 +489,15 @@ export function VehicleProfilePage() {
           </div>
           <div data-testid="vp-section-fuel-card-overage-reverse">
             <FuelCardOverageReverseSection operatingCompanyId={companyId} filter={{ unit_id: id }} />
+          </div>
+          {/* Linkage law §6 (PR #23729) — fraud alerts raised on this unit's purchases, and the
+              Relay fills matched to it (integrations.relay_fuel_transactions never becomes a
+              fuel.fuel_transactions row, so this is the only reverse hop to them). */}
+          <div data-testid="vp-section-fuel-fraud-alerts-reverse">
+            <FuelFraudAlertsReverseSection operatingCompanyId={companyId} filter={{ unit_id: id }} contextLabel="this unit" />
+          </div>
+          <div data-testid="vp-section-relay-fills-reverse">
+            <RelayFillsReverseSection operatingCompanyId={companyId} filter={{ unit_id: id }} contextLabel="this unit" />
           </div>
           <div data-testid="vp-section-cash-forecast-reverse">
             <CashForecastReverseSection operatingCompanyId={companyId} filter={{ ref_kind: "unit", ref_external_id: id }} />

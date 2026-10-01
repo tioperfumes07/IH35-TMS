@@ -329,6 +329,15 @@ export function ExpenseDetailPage() {
             />
           </DataPanelRow>
         ) : null}
+        {expense.source_fuel_transaction_id ? (
+          <DataPanelRow>
+            <span className="text-xs font-semibold text-gray-600">Source fuel purchase</span>
+            <span className="flex items-center gap-2 text-xs text-gray-900">
+              <EntityLink kind="fuel_transaction" id={expense.source_fuel_transaction_id} label="Fuel purchase" />
+              {expense.source_fuel_voided_at ? <StatusBadge variant="crit">Source purchase voided</StatusBadge> : null}
+            </span>
+          </DataPanelRow>
+        ) : null}
         {expense.payment_account_uuid ? (
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Payment account</span>
