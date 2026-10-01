@@ -231,7 +231,9 @@ export type ResolvedDriverMiles = {
   byDriver: Map<string, { miles: number | null }>;
 };
 
-export const STOP_EVENT_REQUIRED_COLUMNS = ["operating_company_id", "unit_id", "stopped_at", "miles_since_previous_stop"] as const;
+// Column list published by the Lead (ORDERS-2026-10-01-ALL-SEATS-COMMON, 202615030000). The table
+// has no operating_company_id: it is scoped through the unit's owner / lessee company.
+export const STOP_EVENT_REQUIRED_COLUMNS = ["unit_id", "started_at", "miles_since_previous_stop", "miles_note"] as const;
 
 async function stopEventsReadable(client: DbClient): Promise<boolean> {
   const res = await client.query<{ n: number }>(
@@ -252,17 +254,18 @@ export async function resolveDriverMilesInPeriod(
     const res = await client.query<{ driver_id: string; miles: string }>(
       `
       WITH seg AS (
-        SELECT s.unit_id, s.stopped_at, s.miles_since_previous_stop AS miles,
-               lag(s.stopped_at) OVER (PARTITION BY s.unit_id ORDER BY s.stopped_at) AS prev_stopped_at
+        SELECT s.unit_id, s.started_at, s.miles_since_previous_stop AS miles, s.miles_note,
+               lag(s.started_at) OVER (PARTITION BY s.unit_id ORDER BY s.started_at) AS prev_started_at
           FROM telematics.unit_stop_events s
-         WHERE s.operating_company_id = $1::uuid
+          JOIN mdata.units u ON u.id = s.unit_id
+         WHERE u.owner_company_id = $1::uuid OR u.currently_leased_to_company_id = $1::uuid
       )
       SELECT d_end.driver_id::text AS driver_id, sum(seg.miles)::text AS miles
         FROM seg
-        ${driverAtTimeSql("seg.unit_id", "seg.stopped_at", "d_end")}
-        ${driverAtTimeSql("seg.unit_id", "seg.prev_stopped_at", "d_start")}
-       WHERE seg.miles IS NOT NULL AND seg.miles >= 0
-         AND seg.stopped_at >= $2::timestamptz AND seg.stopped_at < $3::timestamptz
+        ${driverAtTimeSql("seg.unit_id", "seg.started_at", "d_end")}
+        ${driverAtTimeSql("seg.unit_id", "seg.prev_started_at", "d_start")}
+       WHERE seg.miles IS NOT NULL AND seg.miles >= 0 AND seg.miles_note IS NULL
+         AND seg.started_at >= $2::timestamptz AND seg.started_at < $3::timestamptz
          AND d_end.driver_id IS NOT NULL AND d_end.driver_id = d_start.driver_id
        GROUP BY d_end.driver_id
       `,
@@ -270,7 +273,7 @@ export async function resolveDriverMilesInPeriod(
     );
     return {
       source: "stop_events",
-      label: "stop-odometer miles (E-03): odometer deltas between stops, same driver at both ends",
+      label: "stop-odometer miles (E-03): odometer deltas between stops (miles_note IS NULL), same driver at both ends",
       byDriver: new Map(res.rows.map((r) => [r.driver_id, { miles: Number(r.miles) }])),
     };
   }

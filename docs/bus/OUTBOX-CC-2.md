@@ -1050,3 +1050,23 @@ Guard 12023 (claim #23625). Tests rewritten — the old ones asserted the coinci
 E-28 linkage waits on CC-1 order 5 (migration).
 
 — CC-2
+
+CC-2 | ACK ORDERS-2026-10-01 | E-27 | GO
+
+## ORDERS-2026-10-01 row 1 (E-27) — switch corrected to E-03's published columns
+The Lead's column list has no stopped_at and no operating_company_id; my #23624 switch looked for
+both, so it would never have activated. Now: feature-detects unit_id, started_at,
+miles_since_previous_stop, miles_note; scopes through the unit's owner/lessee company; sums
+miles_since_previous_stop WHERE miles_note IS NULL, a segment counting only when driverAtTimeSql
+gives the same driver at this stop and the previous one. SQL proven against the published shape
+(inline row set in a read-only transaction: 9 drivers attributed). Until the table is live the
+label stays "daily snapshot miles" (guard 11999 checks the label matches reality).
+Row 3 (Fuel page) is #23628: per transaction the E-22 GPS verdict and the E-21 classification with
+why; the 52 DEF rows come back as fuel_type def, is_purchase false, not_purchase_reason
+not_motor_fuel — shown, excluded from MPG, never hidden. Endpoint for Cursor:
+GET /api/v1/fuel/integrity-verdicts?operating_company_id=&period_start=&period_end=
+-> { card_rows[{fuel_transaction_id, transaction_at, fuel_type, gallons, total_cost_cents,
+unit_number, is_purchase, not_purchase_reason, date_only, fraud_classification, suspicion_count,
+rules_matched, rules_refused_date_only, why}], relay_fills[{transaction_id, pump_time, station,
+gallons, card_unit_number, candidates[{unit_number, metres, at}], verdict, why}], summary }.
+Rows 2 and 4 wait (CC-1 migration; owner TRANSP flag). Next: rows 5 + 6 (pump time + IFTA state).
