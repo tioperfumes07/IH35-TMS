@@ -90,7 +90,9 @@ vi.mock("../../components/driver-profile/DriverSamsaraDuplicateBanner", () => ({
 vi.mock("../../components/driver-profile/DriverProfileFuelVerdictsSection", () => ({ DriverProfileFuelVerdictsSection: () => null }));
 vi.mock("../../components/driver-profile/DriverProfileSafetyAttributedSection", () => ({ DriverProfileSafetyAttributedSection: () => null }));
 vi.mock("../../components/safety/ComplaintsReverseSection", () => ({ ComplaintsReverseSection: () => null }));
-vi.mock("../../components/shared/StopsMilesSection", () => ({ StopsMilesSection: () => null }));
+vi.mock("../../components/driver-profile/DriverProfileStopsMilesSection", () => ({
+  DriverProfileStopsMilesSection: () => null,
+}));
 vi.mock("../../components/drivers/DriverIntegritySection", () => ({ DriverIntegritySection: () => null }));
 vi.mock("../../api/driver-integrity", () => ({
   getDriverIntegrityProfile: vi.fn().mockResolvedValue(null),

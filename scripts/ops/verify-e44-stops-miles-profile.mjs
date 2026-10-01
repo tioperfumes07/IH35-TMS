@@ -25,7 +25,11 @@ function audit() {
   const vp = read("apps/frontend/src/pages/fleet/VehicleProfilePage.tsx");
   if (!/StopsMilesSection/.test(vp) || !/unitId=\{id\}/.test(vp)) f.push("vehicle profile missing section");
   const dp = read("apps/frontend/src/pages/drivers/DriverProfilePage.tsx");
-  if (!/StopsMilesSection/.test(dp) || !/driverId=\{id\}/.test(dp)) f.push("driver profile missing section");
+  if (!/DriverProfileStopsMilesSection/.test(dp) || !/driverId=\{id\}/.test(dp)) {
+    f.push("driver profile missing DriverProfileStopsMilesSection wired to profile/stops-miles");
+  }
+  const stopsSection = read("apps/frontend/src/components/driver-profile/DriverProfileStopsMilesSection.tsx");
+  if (!/getDriverProfileStopsMiles/.test(stopsSection)) f.push("driver profile stops section must call getDriverProfileStopsMiles");
   return f;
 }
 
