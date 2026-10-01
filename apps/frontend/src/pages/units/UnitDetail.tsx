@@ -17,6 +17,7 @@ import { UnitTireProgramReverseSection } from "../../components/maintenance/Unit
 import { UnitSevereRepairsReverseSection } from "../../components/maintenance/UnitSevereRepairsReverseSection";
 import { UnitTempCoverReverseSection } from "../../components/safety/UnitTempCoverReverseSection";
 import { ComplaintsReverseSection } from "../../components/safety/ComplaintsReverseSection";
+import { FuelCardsReverseSection } from "../../components/fuel/FuelCardsReverseSection";
 import { getUnit } from "../../api/mdata";
 import { ListErrorState } from "../../components/ListErrorState";
 
@@ -83,6 +84,15 @@ export function UnitDetail() {
           filter={{ unit_id: id }}
           contextLabel="this unit"
           data-testid="unit-detail-complaints"
+        />
+      ) : null}
+      {companyId ? (
+        // E-22: unit -> fuel cards, the reverse half of the card -> truck registry (Fuel > Cards tab).
+        <FuelCardsReverseSection
+          operatingCompanyId={companyId}
+          filter={{ unit_id: id }}
+          contextLabel="this unit"
+          data-testid="unit-detail-fuel-cards"
         />
       ) : null}
       <div className="flex flex-wrap gap-1 rounded-sm border border-gray-200 bg-white p-1">
