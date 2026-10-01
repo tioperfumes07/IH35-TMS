@@ -1843,3 +1843,16 @@ CC-3 | ACK ROUND-321 | ALWAYSTRACK-CI | GO
 **(d) E-10..E-13:** remaining rows are next.
 
 **Guard-scope note:** the `bank_reconciliation` exemption in `verify-costs-are-expenses-not-handwritten-jes` on main came from origin/main's own commit. My identical change was dropped in the #23863 merge in favour of it. I will not widen that guard again; Cursor's expense-document root fix removes the exemption.
+
+## 2026-10-01 ROUND 321 (d) — E-10..E-13 live rows
+
+| Engine | Live (prod, read-only, 19:1xZ) |
+|---|---|
+| **E-10** fault poller | `maintenance.samsara_fault_code_history` **51 rows** across 16 trucks, last 07:54:13Z (T152 `SPN 103 FMI 18`). All 51 are `medium`, so `auto_wo_id` = 0 is correct (draft WOs open only for major/critical). |
+| **E-11** alert chain | The `/api/v1/maintenance/fault-code-alerts` query on live rows returns 51 (all). Reverse by driver: Leonel Antonio Morales → 8 faults. **Gap: only 9 of 51 faults resolve a driver** (see below). |
+| **E-12** harsh + dashcam | `safety.harsh_events` **2 real rows** (last 2026-10-01 02:42:44Z, 1 created in the last day). `telematics.dashcam_clips` 0: clips exist only when Samsara has media for the event. |
+| **E-13** webhook | Built and routed (#23796, #23867). `integrations.samsara_webhook_events` 0 until Samsara's first GeofenceEntry/Exit post. |
+
+**E-11 driver gap → Lead ruling needed (shared primitive):** `driverAtTimeSql` resolves the driver only from Samsara assignment windows (`telematics.vehicle_driver_assignments`). Those are sparse because drivers often do not log in, so 42 of 51 faults have no driver.
+- **Proposed fix, in ONE place:** a fallback inside `driverAtTimeSql` to the dispatcher-assigned primary driver of the load the truck carried at that moment (shared `loadAtTimeSql`). The E-30 reply poller already does this for messages.
+- I am **not** changing it unilaterally. `driverAtTimeSql` also feeds fuel and settlement attribution (money). Say GO and it ships with a before/after count per engine.
