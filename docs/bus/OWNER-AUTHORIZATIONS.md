@@ -6675,7 +6675,12 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). Loads 13625, 13627, 13
   mdata.loads.status untouched (all three are 'dispatched'). No stop stamp, no invoice, no advance, no settlement, no GL.
 action: npx tsx scripts/ops/2026-10-01-cc3-reverse-false-cancellations.mts --apply --auth AUTH-192 (after the deploy applies migration 202615180900). Dry run first; refuses unless each load still carries the measured 2026-09-28 10:09Z stamp.
 expires_at: 2026-10-02T15:26:18Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-01T15:57:21Z
+consumed_by: CC-3
+row_counts: dispatch.load_cancellations 3 rows -> reversed; mdata.loads canceled_at/canceled_by cleared on 13625, 13627, 13638 (status stays dispatched)
+proof_query: re-read in a separate transaction -- all three canceled_at NULL, lc_status reversed, reversed_at 2026-10-01 15:57:21Z
+audit: 63568bde / b7930f81 / 524fcff0 (dispatch.load.cancellation_reversed) + 18e88d93 (cc3.reverse_false_cancellations), source CC-3-AUTH-192
 
 OWNER ORDER, ROUND 313 (pasted by the owner to CC-3, 2026-10-01): "13625 / 13627 / 13638: clear the false canceled_at
 through the canonical transition (owner: delivered, factored 09-25), audit row each."
