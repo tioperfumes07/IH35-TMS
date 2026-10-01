@@ -1330,6 +1330,28 @@ export class SamsaraClient {
    * Blueprint §5.2.3 outbound geofence: POST /addresses (Samsara Addresses API).
    * Circle radius is WF-051 250 ft, integer meters.
    */
+  /**
+   * ROUND 306 E-07 — GET /addresses/{externalKey:value}. Measured live 2026-10-01: an unknown external id
+   * answers 404 "unable to find address id by external id"; that is returned as null, never thrown.
+   */
+  async findAddressByExternalId(key: string, value: string): Promise<{ id: string } | null> {
+    const token = this._token();
+    if (!token) throw new SamsaraApiError("samsara_not_configured", null, null, false);
+    const url = new URL(`${SAMSARA_API_BASE}/addresses/${encodeURIComponent(`${key}:${value}`)}`);
+    let res: Response;
+    try {
+      res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }));
+    } catch (error) {
+      throw new SamsaraApiError(`samsara_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
+    }
+    const json = await readJsonResponse(res);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new SamsaraApiError(`samsara_http_${res.status}`, res.status, json, res.status === 429 || res.status >= 500);
+    const nested = asObject(json.data);
+    const id = json.id ?? nested?.id;
+    return typeof id === "string" && id ? { id } : null;
+  }
+
   async createAddress(input: {
     name: string;
     formattedAddress: string;
