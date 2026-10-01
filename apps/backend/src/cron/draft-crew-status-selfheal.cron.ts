@@ -4,10 +4,12 @@ import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { SYSTEM_ACTOR_USER_ID } from "../lib/system-actor.js";
 
 let initialized = false;
 
-const SYSTEM_ACTOR_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-0000-0000-000000000001";
+// Canonical system actor (lib/system-actor.ts) — the old default id does not exist in identity.users.
+const SYSTEM_ACTOR_ID = SYSTEM_ACTOR_USER_ID;
 
 /**
  * WIZ-STATUS-01 DURABLE FIX, self-heal half (owner order 2026-09-05, spec §1.1 step 1b): "a

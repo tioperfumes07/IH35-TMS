@@ -13,11 +13,13 @@ import { retryHeldExpensePostings } from "../accounting/tour-close-posting.servi
 import { listActiveOperatingCompanyIds } from "./depreciation-autopost.cron.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
+import { SYSTEM_ACTOR_USER_ID } from "../lib/system-actor.js";
 
 const CRON_NAME = "accounting.retry_held_expense_postings";
 const CRON_EXPRESSION = "20 */6 * * *";
 const CRON_TZ = "America/Chicago";
-const SYSTEM_ACTOR_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-0000-0000-000000000001";
+// Canonical system actor (lib/system-actor.ts) — the old default id does not exist in identity.users.
+const SYSTEM_ACTOR_ID = SYSTEM_ACTOR_USER_ID;
 
 let initialized = false;
 

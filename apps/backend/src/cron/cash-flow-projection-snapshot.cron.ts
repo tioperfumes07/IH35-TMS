@@ -7,6 +7,7 @@ import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { listActiveOperatingCompanyIds } from "./depreciation-autopost.cron.js";
 import { getDailyPrediction } from "../cash-flow/cash-flow.service.js";
+import { SYSTEM_ACTOR_USER_ID } from "../lib/system-actor.js";
 
 // CASH-FLOW-ACTUAL-VS-PROJECTED-INCOME-STRUCTURALLY-ALWAYS-ZERO — captures each company's daily
 // income prediction once, early, before the day's loads have had a chance to deliver/invoice/pay
@@ -17,7 +18,8 @@ import { getDailyPrediction } from "../cash-flow/cash-flow.service.js";
 const CRON_NAME = "cash_flow.projection_snapshot";
 const CRON_EXPRESSION = "10 6 * * *"; // daily 06:10 America/Chicago — after the AM bank-recon cadence
 const CRON_TZ = "America/Chicago";
-const SYSTEM_ACTOR_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-0000-0000-000000000001";
+// Canonical system actor (lib/system-actor.ts) — the old default id does not exist in identity.users.
+const SYSTEM_ACTOR_ID = SYSTEM_ACTOR_USER_ID;
 
 let initialized = false;
 

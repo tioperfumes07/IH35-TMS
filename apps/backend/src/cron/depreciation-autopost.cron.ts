@@ -7,12 +7,14 @@ import { AmortizationPostingError } from "../accounting/amortization-posting/amo
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
+import { SYSTEM_ACTOR_USER_ID } from "../lib/system-actor.js";
 
 const CRON_NAME = "accounting.depreciation_autopost";
 const CRON_EXPRESSION = "15 6 1 * *";
 const CRON_TZ = "America/Chicago";
 const FIXED_ASSET_AUTOPOST_FLAG_KEY = "FIXED_ASSET_AUTOPOST_ENABLED";
-const SYSTEM_ACTOR_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-0000-0000-000000000001";
+// Canonical system actor (lib/system-actor.ts) — the old default id does not exist in identity.users.
+const SYSTEM_ACTOR_ID = SYSTEM_ACTOR_USER_ID;
 
 let initialized = false;
 

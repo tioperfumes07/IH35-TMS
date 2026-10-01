@@ -10,6 +10,7 @@
 import type { FastifyInstance } from "fastify";
 import { DateTime } from "luxon";
 import { runRecurringBillGeneratorTick } from "../accounting/bills/recurring/generator.service.js";
+import { SYSTEM_ACTOR_USER_ID } from "../lib/system-actor.js";
 
 const WORKER_NAME = "accounting.recurring_bill_generator";
 const CT_ZONE = "America/Chicago";
@@ -17,7 +18,8 @@ const CT_ZONE = "America/Chicago";
 let timer: NodeJS.Timeout | undefined;
 
 /** System actor UUID for cron-initiated bills. Falls back to lucia bypass. */
-const SYSTEM_ACTOR_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-0000-0000-000000000001";
+// Canonical system actor (lib/system-actor.ts) — the old default id does not exist in identity.users.
+const SYSTEM_ACTOR_ID = SYSTEM_ACTOR_USER_ID;
 
 function msUntilNext0600CT(): number {
   const now = DateTime.now().setZone(CT_ZONE);
