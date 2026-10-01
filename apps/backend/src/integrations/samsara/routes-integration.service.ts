@@ -276,6 +276,18 @@ export async function readBackSamsaraRoutes(
   operatingCompanyId: string,
   api: { getRoute: (id: string) => Promise<Record<string, unknown> | null> }
 ) {
+  // Loads pushed before the stamp existed (or whose body has not changed since) carry the route id only in the
+  // push ledger: stamp it from the latest successful push so the read-back -- and the load's forward link -- see it.
+  await client.query(
+    `UPDATE mdata.loads l SET samsara_route_id = x.rid
+       FROM (SELECT DISTINCT ON (s.payload->>'load_id') s.payload->>'load_id' AS load_id, s.payload->>'samsara_route_id' AS rid
+               FROM integrations.integration_sync_log s
+              WHERE s.operating_company_id = $1::uuid AND s.integration = 'samsara' AND s.sync_kind = $2
+                AND s.success AND s.payload->>'outcome' = 'pushed' AND s.payload->>'samsara_route_id' IS NOT NULL
+              ORDER BY s.payload->>'load_id', s.started_at DESC) x
+      WHERE l.id::text = x.load_id AND l.operating_company_id = $1::uuid AND l.samsara_route_id IS DISTINCT FROM x.rid`,
+    [operatingCompanyId, ROUTE_PUSH_SYNC_KIND]
+  );
   const loads = await client.query<{ load_id: string; route_id: string; unit_id: string | null }>(
     `SELECT l.id::text AS load_id, l.samsara_route_id AS route_id, l.assigned_unit_id::text AS unit_id
        FROM mdata.loads l

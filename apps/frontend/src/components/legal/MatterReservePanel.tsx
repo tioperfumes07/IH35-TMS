@@ -10,6 +10,7 @@ import { DatePicker } from "../forms/DatePicker";
 import { MoneyInput } from "../forms/MoneyInput";
 import { ReferenceSelect, type ReferenceOption } from "../parity/ReferenceSelect";
 import { EntityLink } from "../shared/EntityLink";
+import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 
 /**
  * ROUND 316 — a matter's reserve posts to the books. Pick the legal-expense and accrued-legal-liability accounts;
@@ -26,7 +27,7 @@ export function MatterReservePanel({ operatingCompanyId, matterId, reserveCents,
   const [msg, setMsg] = useState<string | null>(null);
   const accounts = useQuery({ queryKey: ["coa", "matter-reserve", operatingCompanyId], queryFn: () => listCoaAccountsForJe(operatingCompanyId, { postableOnly: true }) });
   const options: ReferenceOption[] = useMemo(
-    () => (accounts.data?.accounts ?? []).map((a) => ({ value: a.id, label: a.account_number ? `${a.account_number} ${a.account_name}` : a.account_name, type: a.account_type ?? undefined })),
+    () => (accounts.data?.accounts ?? []).map((a) => ({ value: a.id, label: formatAccountDisplayLabel(a), type: a.account_type ?? undefined })),
     [accounts.data]
   );
   const post = useMutation({

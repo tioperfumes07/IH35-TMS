@@ -1675,3 +1675,21 @@ The I2 detector was run live (`i2DeliveredLoadInvoiced.detect`, read-only). Both
 - **§10-B for this block:**
   - LINKED: load (both ways), stop, unit, driver (through the load's driver on the panel), audit (ledger rows per push).
   - N/A: customer, vendor and every money target. A route read-back is telematics evidence and moves no money.
+
+## 2026-10-01 E-31 — LIVE first scheduled run + stamp-from-ledger fix
+
+- **First live scheduled routes push, 16:45:00Z, 7 of 7 succeeded:**
+
+| Load | Samsara route |
+|---|---|
+| 13627 | 4446737905 |
+| 13629 | 4446737906 |
+| 13630 | 4446737907 |
+| 13631 | 4446737908 |
+| 13634 | 4446737909 |
+| 13635 | 4446737910 |
+| 13639 | 4446734085 (found by external id, PATCHed, not duplicated) |
+
+- **Gap in #23845, fixed here:** the route id was stamped only on a changed push, so these 7 unchanged routes never got the stamp. The read-back now stamps from the latest successful push in the ledger first.
+- **Rolled-back on prod (live schema at 81825b6):** 7 loads stamped, 7 routes read, 14 stops upserted.
+- **All stops are `scheduled` with ETA null.** These routes were created AFTER their pickups had happened (the loads were already rolling), so Samsara's `departFirstStop` start condition never fires for them. ETA and progress start on loads that are routed before pickup, which is the normal flow now that the push runs every 15 min.
