@@ -63,6 +63,11 @@
       "claimed_at": "2026-10-01",
       "purpose": "ROUND 313 E-28: safety.complaints gains stop_id, driver_caused, broker/shipper sources and the approved chargeback link (driver_finance.driver_settlement_deductions) -- one complaints store, not a second table."
     },
+    "202615200600": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-01",
+      "purpose": "ROUND 321 item 1: canonical WORM trg_worm_refuse_delete (accounting.refuse_financial_row_delete) on fuel.fuel_card_assignments + banking.bank_account_tieouts (unblocks verify-worm-coverage-ratchet / verify-new-financial-table-ships-worm for every seat)."
+    },
     "202615190800": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-01",
