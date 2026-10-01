@@ -760,3 +760,32 @@ Moving to ROUND 303's B-43 (finish the Integrity Engine -- a driver-profile/main
 explicitly allowed under the new scope) and B-44 (driver complaints, driver-profile module).
 
 — CC-2
+
+## ROUND 303 B-43 item 1 — damage scorecard re-measured, honest zero confirmed (DONE)
+
+Re-measured against the REAL numbers, not the cited ones, by RUNNING the live service
+(computeDriverDamageScorecard, B-29) for all of 2026 on USMCA, not reconstructing its SQL by
+hand: it returns 0 rows, confirmed empirically.
+
+Corrected the cited "16 REAL units" to the real count: 14 units carry actual
+telematics.vehicle_driver_assignments coverage (T147, T148, T152, T156, T163, T164, T168, T170,
+T171, T173, T174, T175, T176, T177). Named why the scorecard is empty, with full rows, not a
+hand-wave: ALL 20 live damage-adjacent events in the whole system fall outside that set of 14 --
+the 15 live work_orders sit on exactly 5 units (T120, T149, T150, T151, USMCA-001), every one
+with ZERO driver-assignment coverage (matches the order's own claim exactly); the 1 tire_event
+is tagged to a unit that is BOTH is_sample_data=true AND owned by a completely different
+operating_company_id (a cross-tenant test fixture, despite its own row claiming
+operating_company_id=USMCA); the 1 safety.accidents row and 1 of 3 safety.accident_reports rows
+carry unit_id=NULL; the other 2 accident_reports sit on 2 of the same 5 untracked units.
+
+This is a genuine data-coverage gap, not a code defect -- driver-attribution.ts and the
+aggregation SQL are correct; B-28's "NULL, never estimated" discipline holds (the function
+returns an empty array rather than fabricating attribution). Shipped
+scripts/verify-steps/11999-verify-damage-scorecard-honest-zero.mjs (claim-reserved first),
+locking this honest-zero result and ratcheting the 14-unit coverage floor.
+
+NEXT: B-43 item 2 (attribute the 46 of 116 integrity_findings that DO resolve via
+driverAtTimeSql, report the other 70 as a coverage gap -- building on the already-shipped
+guard 11971's own measurement).
+
+— CC-2
