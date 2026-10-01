@@ -117,9 +117,15 @@ export async function registerDriverPwaLiveRoutes(app: FastifyInstance) {
           FROM telematics.vehicle_driver_assignments vda
           JOIN mdata.units u ON u.id = vda.unit_id
                              AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
-          LEFT JOIN integrations.samsara_vehicles sv
-            ON sv.samsara_vehicle_id = u.samsara_vehicle_id
-           AND sv.operating_company_id = vda.operating_company_id
+          LEFT JOIN LATERAL (
+        -- E-01 / T122: mirror-first. integrations.samsara_vehicles.local_unit_id is the live link;
+        -- mdata.units.samsara_vehicle_id is only the fallback (T122 carries a 2024 id there).
+        SELECT sv0.raw_payload FROM integrations.samsara_vehicles sv0
+         WHERE sv0.operating_company_id = vda.operating_company_id
+           AND (sv0.local_unit_id = u.id OR (sv0.local_unit_id IS NULL AND sv0.samsara_vehicle_id = u.samsara_vehicle_id))
+         ORDER BY (sv0.local_unit_id = u.id) DESC NULLS LAST, sv0.last_seen_at DESC NULLS LAST
+         LIMIT 1
+      ) sv ON true
           WHERE vda.driver_id = $1::uuid
             AND vda.operating_company_id = $2::uuid
             AND vda.ended_at IS NULL

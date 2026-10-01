@@ -110,6 +110,9 @@ export type SamsaraVehicleLocation = {
   speed_mph: number | null;
   heading_deg: number | null;
   engine_on: boolean | null;
+  /** E-01: odometer READ at this exact fix (gps decoration obdOdometerMeters), miles; null when Samsara sent none. */
+  odometer_mi?: number | null;
+  formatted_location?: string | null;
   raw: Record<string, unknown>;
 };
 // /fleet/vehicles/stats?types=gps,engineStates — one call gives the latest GPS fix
@@ -214,77 +217,38 @@ function asObject(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
 }
 
-function parseVehicleLocationRow(row: Record<string, unknown>): SamsaraVehicleLocation | null {
-  const id = typeof row.id === "string" && row.id.trim().length > 0 ? row.id.trim() : null;
-  if (!id) return null;
-
-  const locationCandidates = [
-    asObject(row.location),
-    asObject(row.gps),
-    asObject(row.position),
-  ].filter((v): v is Record<string, unknown> => Boolean(v));
-
-  for (const location of locationCandidates) {
-    const latRaw = location.latitude ?? location.lat;
-    const lngRaw = location.longitude ?? location.lng ?? location.lon;
-    const latitude = Number(latRaw);
-    const longitude = Number(lngRaw);
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) continue;
-
-    const timeRaw =
-      location.time ??
-      location.timestamp ??
-      location.recorded_at ??
-      location.recordedAt ??
-      location.occurred_at ??
-      row.time ??
-      row.timestamp;
-    const captured_at =
-      typeof timeRaw === "string" && timeRaw.trim().length > 0
-        ? new Date(timeRaw).toISOString()
-        : new Date().toISOString();
-
-    const speedCandidates = [location.speed_mph, location.speedMph, location.speed];
-    let speed_mph: number | null = null;
-    for (const raw of speedCandidates) {
-      const value = Number(raw);
-      if (Number.isFinite(value) && value >= 0) {
-        speed_mph = value;
-        break;
-      }
-    }
-
-    const headingCandidates = [location.heading_deg, location.heading, location.bearing];
-    let heading_deg: number | null = null;
-    for (const raw of headingCandidates) {
-      const value = Number(raw);
-      if (!Number.isFinite(value)) continue;
-      heading_deg = Number((((value % 360) + 360) % 360).toFixed(2));
-      break;
-    }
-
-    const engineRaw = row.engine_on ?? row.engineOn ?? row.is_engine_on ?? asObject(row.engine)?.on;
-    let engine_on: boolean | null = null;
-    if (typeof engineRaw === "boolean") engine_on = engineRaw;
-    else if (typeof engineRaw === "string") {
-      const lowered = engineRaw.toLowerCase();
-      if (lowered === "on" || lowered === "true") engine_on = true;
-      if (lowered === "off" || lowered === "false") engine_on = false;
-    }
-
-    return {
-      id,
-      latitude,
-      longitude,
-      captured_at,
-      speed_mph,
-      heading_deg,
-      engine_on,
-      raw: row,
-    };
-  }
-
-  return null;
+/**
+ * ROUND 306 E-01 — the per-fix pull. Was GET /fleet/vehicles/locations, which carries NO odometer and
+ * ignores `decorations` (measured live 2026-10-01). Now GET /fleet/vehicles/stats/feed?types=gps&
+ * decorations=obdOdometerMeters: same one call for every vehicle (95, hasNextPage=false), and each GPS
+ * point carries the odometer Samsara read AT THAT POINT (gps[].decorations.obdOdometerMeters.value) —
+ * a read, never a nearest-in-time pairing. A point without the decoration keeps odometer_mi = null.
+ * No cursor is stored, so each tick reads the latest point per vehicle (same cadence as before).
+ */
+export function parseGpsFeedRow(row: Record<string, unknown>): SamsaraVehicleLocation | null {
+  const id = row.id == null ? "" : String(row.id);
+  const points = Array.isArray(row.gps) ? (row.gps as unknown[]) : [];
+  const last = points.length > 0 ? asObject(points[points.length - 1]) : null;
+  if (!id || !last) return null;
+  const latitude = Number(last.latitude);
+  const longitude = Number(last.longitude);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || typeof last.time !== "string") return null;
+  const speed = Number(last.speedMilesPerHour);
+  const heading = Number(last.headingDegrees);
+  const odoMeters = Number(asObject(asObject(last.decorations)?.obdOdometerMeters)?.value ?? NaN);
+  const fl = asObject(last.reverseGeo)?.formattedLocation;
+  return {
+    id,
+    latitude,
+    longitude,
+    captured_at: new Date(last.time).toISOString(),
+    speed_mph: Number.isFinite(speed) && speed >= 0 ? speed : null,
+    heading_deg: Number.isFinite(heading) ? Number((((heading % 360) + 360) % 360).toFixed(2)) : null,
+    engine_on: null,
+    odometer_mi: Number.isFinite(odoMeters) && odoMeters >= 0 ? Number((odoMeters * 0.000621371).toFixed(1)) : null,
+    formatted_location: typeof fl === "string" && fl.trim().length > 0 ? fl.trim() : null,
+    raw: row,
+  };
 }
 
 async function fetchSamsaraLocationsPage(token: string, after: string | null): Promise<{
@@ -292,8 +256,9 @@ async function fetchSamsaraLocationsPage(token: string, after: string | null): P
   hasNextPage: boolean;
   cursor: string | null;
 }> {
-  const url = new URL(`${SAMSARA_API_BASE}/fleet/vehicles/locations`);
-  url.searchParams.set("limit", "512");
+  const url = new URL(`${SAMSARA_API_BASE}/fleet/vehicles/stats/feed`);
+  url.searchParams.set("types", "gps");
+  url.searchParams.set("decorations", "obdOdometerMeters");
   if (after) url.searchParams.set("after", after);
   let res: Response;
   try {
@@ -316,7 +281,7 @@ async function fetchSamsaraLocationsPage(token: string, after: string | null): P
     ? json.data.filter((row): row is Record<string, unknown> => Boolean(row && typeof row === "object"))
     : [];
   const data = rows
-    .map((row) => parseVehicleLocationRow(row))
+    .map((row) => parseGpsFeedRow(row))
     .filter((row): row is SamsaraVehicleLocation => Boolean(row));
   const { hasNextPage, cursor } = parsePagination(json);
   return { data, hasNextPage, cursor };

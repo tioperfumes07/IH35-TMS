@@ -77,7 +77,7 @@ async function listSchedules(client: Queryable, operatingCompanyId: string, asse
         NULL::text AS last_done_date,
         s.next_due_odometer::int AS next_due_miles,
         NULL::text AS next_due_date,
-        u.samsara_vehicle_id,
+        COALESCE(sv.samsara_vehicle_id, u.samsara_vehicle_id) AS samsara_vehicle_id,
         sv.raw_payload AS samsara_raw_payload,
         vlp.odometer_mi::float8 AS live_odometer_mi,
         vlp.captured_at::text AS odometer_reading_at
@@ -86,9 +86,15 @@ async function listSchedules(client: Queryable, operatingCompanyId: string, asse
         ON u.id = s.unit_id
        AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = s.operating_company_id
        AND u.deactivated_at IS NULL
-      LEFT JOIN integrations.samsara_vehicles sv
-        ON sv.operating_company_id = s.operating_company_id
-       AND sv.samsara_vehicle_id = u.samsara_vehicle_id
+      LEFT JOIN LATERAL (
+        -- E-01 / T122: mirror-first. integrations.samsara_vehicles.local_unit_id is the live link;
+        -- mdata.units.samsara_vehicle_id is only the fallback (T122 carries a 2024 id there).
+        SELECT sv0.raw_payload, sv0.samsara_vehicle_id FROM integrations.samsara_vehicles sv0
+         WHERE sv0.operating_company_id = s.operating_company_id
+           AND (sv0.local_unit_id = u.id OR (sv0.local_unit_id IS NULL AND sv0.samsara_vehicle_id = u.samsara_vehicle_id))
+         ORDER BY (sv0.local_unit_id = u.id) DESC NULLS LAST, sv0.last_seen_at DESC NULLS LAST
+         LIMIT 1
+      ) sv ON true
       -- Live odometer from the Samsara stats-poll ingest (#1289): the webhook raw_payload is empty
       -- because we POLL, not webhook, so the current odometer must come from telematics.vehicle_latest_position.
       -- C-21: also return captured_at so the UI can say "no odometer reading since <date>" when

@@ -1020,3 +1020,22 @@ e.g. pre_trip T176 NEFTALI URBANO CORONADO odo 429,382 "Iowa, LA, 70647" 2026-10
 FINDING (data, not changed): 32 Samsara driver ids link to TWO local driver rows (mdata.drivers.samsara_driver_id vs the
 samsara_drivers mirror's local_driver_id disagree) — duplicate driver records, e.g. MARIO ALBERTO RODRIGUEZ, Leonel Antonio Morales.
 GUARD: scripts/verify-samsara-dvir-ingest-never-guesses.mjs + --selftest PASS.
+
+ACK: CC-3 | ACK R306 | E-01 | GO   (Round 304 T-45..T-51 all merged: #23599 #23601 #23606 #23609 #23611 #23613 #23614)
+
+## 2026-10-01 — ROUND 306 E-01 — position poll: odometer on every fix + T122 stale id defused
+ROUND: 306 · ROW: E-01 · STATUS: shipped (code). Data UPDATE of T122's column NOT written (no-seed order) — no longer needed by any reader.
+MEASURED (telematics.vehicle_locations, last 24 h): two writers of the SAME fixes —
+  cron:stats      4,552 rows, odometer 100% since 2026-09-30 13:00Z (0% before: the degraded-types period)
+  cron:locations  4,608 rows, odometer 0 — GET /fleet/vehicles/locations carries no odometer and IGNORES `decorations` (probed live);
+                  4,306 of them are the identical (unit, captured_at) fix the stats path also wrote. That writer is the 21%.
+FIX: the per-fix pull is now GET /fleet/vehicles/stats/feed?types=gps&decorations=obdOdometerMeters (one call, 95 vehicles,
+hasNextPage=false) — every GPS point carries the odometer Samsara read AT THAT POINT (a read, not a nearest pairing), plus
+reverseGeo -> city/state. No new poller; same cron, same raw_samsara_event_id prefix.
+LIVE PROOF (raw token, read only): 95 fixes, 40 mapped to units, 34 with odometer; the 16 live trucks (last 24 h): 14 with
+odometer, 16 with city/state (T147 + one other send no OBD odometer -> null, honest). T176 @ 02:47:02Z odo 429,449.5 mi "Rose City, TX".
+T122: mdata.units.samsara_vehicle_id = 212014918407330 (2024) vs mirror 212014918197571 (live). Readers that joined on the column
+directly — maint/pm.routes.ts, driver/pwa-live.routes.ts, jobs/samsara-position-poll-worker.ts — are now mirror-first
+(local_unit_id), column as fallback only. Live check: T122 old join 0 hits -> new join resolves 212014918197571 with payload; T176 unchanged.
+GUARD: scripts/verify-position-poll-odometer-and-mirror-first.mjs + --selftest PASS.
+NEXT: E-04.
