@@ -202,7 +202,7 @@ export type ReclassifyBatchResult = {
   documents: ReclassifyDocumentResult[];
 };
 
-type SelectedPosting = ReclassifyLineRow & { je_status: string; memo: string | null };
+export type SelectedPosting = ReclassifyLineRow & { je_status: string; memo: string | null };
 
 /**
  * CONTROL ACCOUNTS (QBO's own Reclassify rule, made explicit): A/R, A/P, bank, credit card, undeposited
@@ -281,7 +281,7 @@ async function loadSelectedPostings(client: DbClient, companyId: string, posting
 }
 
 /** Rewrite the source document line so document and ledger agree. Returns a note when it cannot. */
-async function rewriteDocumentLine(
+export async function rewriteDocumentLine(
   client: DbClient,
   companyId: string,
   p: SelectedPosting,
@@ -326,6 +326,36 @@ async function rewriteDocumentLine(
       notes.push("bill posting carries no line id; ledger moved, bill line unchanged");
     }
     return { updated: notes.length === 0, note: notes.length ? notes.join("; ") : null };
+  }
+  if (type === "invoice") {
+    // QBO parity: an invoice line's income account can be reclassified; the customer is the A/R subledger
+    // (void-and-reissue), and invoices carry no class header -- class moves on the ledger only.
+    if (target.entity_uuid) notes.push("invoice customer is the A/R subledger: void-and-reissue the invoice to change it; customer dimension not moved");
+    if (target.class_id) notes.push("invoice has no class header; class moved on the ledger only");
+    if (target.account_id) {
+      let lineUpdated = 0;
+      if (p.source_transaction_line_id) {
+        const r = await client.query(
+          `UPDATE accounting.invoice_lines SET account_id = $3::uuid WHERE id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL`,
+          [p.source_transaction_line_id, companyId, target.account_id],
+        );
+        lineUpdated = r.rowCount ?? 0;
+      } else {
+        // posting carries no line id: the one live invoice line with this exact income account + amount
+        const r = await client.query(
+          `UPDATE accounting.invoice_lines SET account_id = $4::uuid
+            WHERE id = (SELECT id FROM accounting.invoice_lines WHERE invoice_id = $1::uuid AND operating_company_id = $2::uuid
+                          AND account_id = $3::uuid AND line_total_cents = $5::bigint AND soft_deleted_at IS NULL ORDER BY display_order LIMIT 1)`,
+          [p.source_transaction_id, companyId, p.account_id, target.account_id, p.amount_cents],
+        );
+        lineUpdated = r.rowCount ?? 0;
+      }
+      if (lineUpdated === 0) notes.push("no 1:1 live invoice line matched this posting; ledger moved, invoice line unchanged");
+    }
+    return { updated: notes.length === 0, note: notes.length ? notes.join("; ") : null };
+  }
+  if (type === "bill_payment" || type === "customer_payment" || type === "transfer" || type === "bank_categorization") {
+    return { updated: false, note: `${type}: a cash document carries no category line; the bank side is a control account and the offset is the subledger -- ledger moved by the reclass JE only` };
   }
   return { updated: false, note: `${type}: ledger moved by the reclass JE; this document type has no line rewrite yet` };
 }
@@ -482,6 +512,20 @@ export async function undoReclassifyBatch(input: { operating_company_id: string;
         await client.query(`UPDATE accounting.expenses SET class_id = $2::uuid, vendor_uuid = coalesce($3::uuid, vendor_uuid), updated_at = now() WHERE id = $1::uuid`, [l.source_transaction_id, l.from_class_id, l.from_entity_uuid]);
       } else if (l.source_transaction_type === "bill" && l.source_transaction_line_id) {
         await client.query(`UPDATE accounting.bill_lines SET account_id = $2::uuid WHERE id = $1::uuid`, [l.source_transaction_line_id, l.from_account_id]);
+      } else if (l.source_transaction_type === "invoice" && l.source_transaction_id) {
+        if (l.source_transaction_line_id) {
+          await client.query(`UPDATE accounting.invoice_lines SET account_id = $2::uuid WHERE id = $1::uuid`, [l.source_transaction_line_id, l.from_account_id]);
+        } else {
+          // the applied line was matched by (to_account, amount) at apply time; restore the one line that now carries the target
+          await client.query(
+            `UPDATE accounting.invoice_lines SET account_id = $2::uuid
+              WHERE id = (SELECT il.id FROM accounting.invoice_lines il
+                           JOIN accounting.reclassify_batch_lines bl ON bl.batch_id = $3::uuid AND bl.source_transaction_id = il.invoice_id::text
+                          WHERE il.invoice_id = $1::uuid AND il.account_id = bl.to_account_id AND il.line_total_cents = bl.amount_cents AND il.soft_deleted_at IS NULL
+                          ORDER BY il.display_order LIMIT 1)`,
+            [l.source_transaction_id, l.from_account_id, input.batch_id],
+          );
+        }
       }
     }
     await client.query(`UPDATE accounting.reclassify_batches SET status = 'undone', undone_at = now(), undone_by_user_id = $2::uuid, undo_reason = $3 WHERE id = $1::uuid`, [input.batch_id, actor.userId, reason]);
