@@ -4,6 +4,8 @@ import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
+import { canVoidCancel } from "../../lib/authz/void-cancel-authz.js";
+import { createSettlementDeduction } from "../../driver-finance/deductions.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -38,7 +40,8 @@ const voidBodySchema = z.object({
 
 const complaintSchema = z.object({
   filed_at: z.string().datetime().optional(),
-  complainant_type: z.enum(["driver", "customer", "employee", "external", "anonymous"]),
+  // ROUND 313 E-28: broker and shipper are first-class sources (both are customers in mdata or named externally).
+  complainant_type: z.enum(["driver", "customer", "broker", "shipper", "employee", "external", "anonymous"]),
   complainant_driver_id: z.string().uuid().optional(),
   complainant_user_id: z.string().uuid().optional(),
   complainant_customer_id: z.string().uuid().optional(),
@@ -57,6 +60,15 @@ const complaintSchema = z.object({
   // here and enforced by trg_complaints_same_company_links (202615100000).
   load_id: z.string().uuid().optional(),
   unit_id: z.string().uuid().optional(),
+  // ROUND 313 E-28: the stop the complaint is about (must be a stop of load_id — trg_complaints_stop_link) and the
+  // investigation's determination. A chargeback to the driver needs driver_caused = true (owner C5:A).
+  stop_id: z.string().uuid().optional(),
+  driver_caused: z.boolean().optional(),
+});
+
+const chargebackBodySchema = z.object({
+  amount_cents: z.number().int().positive(),
+  reason: z.string().trim().min(5).max(500),
 });
 
 function currentUser(req: FastifyRequest, reply: FastifyReply) {
@@ -109,6 +121,8 @@ function validateConsistency(input: z.infer<typeof complaintSchema>) {
     (input.complainant_type === "driver" && Boolean(input.complainant_driver_id)) ||
     (input.complainant_type === "employee" && Boolean(input.complainant_user_id)) ||
     (input.complainant_type === "customer" && Boolean(input.complainant_customer_id)) ||
+    ((input.complainant_type === "broker" || input.complainant_type === "shipper") &&
+      (Boolean(input.complainant_customer_id) || Boolean(input.complainant_external_name))) ||
     (input.complainant_type === "external" && Boolean(input.complainant_external_name)) ||
     input.complainant_type === "anonymous";
   const respondentOk =
@@ -358,7 +372,9 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
             respondent_id,
             complaint_type_id,
             load_id,
-            unit_id
+            unit_id,
+            stop_id,
+            driver_caused
           )
           VALUES (
             $1, COALESCE($2::timestamptz, now()), $3, $4, $5, $6, $7, $8, $9, $10, $11,
@@ -368,7 +384,9 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
             COALESCE($10::uuid, $11::uuid),
             $12::uuid,
             $19::uuid,
-            $20::uuid
+            $20::uuid,
+            $21::uuid,
+            $22::boolean
           )
           RETURNING *
         `,
@@ -393,8 +411,15 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
           user.uuid,
           body.data.load_id ?? null,
           body.data.unit_id ?? null,
+          body.data.stop_id ?? null,
+          body.data.driver_caused ?? null,
         ]
-      );
+      ).catch((err: { code?: string; message?: string }) => {
+        // trg_complaints_same_company_links / trg_complaints_stop_link refuse a foreign load, truck or stop.
+        if (err?.code === "23514") return { rows: [{ __cross_company: true }] };
+        throw err;
+      });
+      if ((res.rows[0] as { __cross_company?: boolean } | undefined)?.__cross_company) return null;
       const row = res.rows[0] as Record<string, unknown> | undefined;
       if (!row?.id) throw new Error("safety_complaint_insert_failed");
       await appendCrudAudit(client, user.uuid, "safety.complaint.filed", { complaint_id: row.id, operating_company_id: query.data.operating_company_id, severity: row.severity, load_id: row.load_id ?? null, unit_id: row.unit_id ?? null }, "warning", "P3-T11.17.2-SAFETY-V6.4");
@@ -436,12 +461,14 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
               resolved_at = CASE WHEN COALESCE($3, status) IN ('resolved', 'dismissed') THEN now() ELSE resolved_at END,
               resolved_by = CASE WHEN COALESCE($3, status) IN ('resolved', 'dismissed') THEN $5 ELSE resolved_by END,
               load_id = COALESCE($6::uuid, load_id),
-              unit_id = COALESCE($7::uuid, unit_id)
+              unit_id = COALESCE($7::uuid, unit_id),
+              stop_id = COALESCE($8::uuid, stop_id),
+              driver_caused = COALESCE($9::boolean, driver_caused)
           WHERE id = $1
             AND operating_company_id = $2::uuid
           RETURNING *
         `,
-        [params.data.id, query.data.operating_company_id, body.data.status ?? null, body.data.resolution ?? null, user.uuid, body.data.load_id ?? null, body.data.unit_id ?? null]
+        [params.data.id, query.data.operating_company_id, body.data.status ?? null, body.data.resolution ?? null, user.uuid, body.data.load_id ?? null, body.data.unit_id ?? null, body.data.stop_id ?? null, body.data.driver_caused ?? null]
       ).catch((err: { code?: string; message?: string }) => {
         // trg_complaints_same_company_links refuses another entity's load or truck.
         if (err?.code === "23514") return { rows: [{ __cross_company: true, message: err.message }] };
@@ -466,6 +493,87 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
       });
     }
     return { complaint: updated };
+  });
+
+  // ROUND 313 E-28 — chargeback to the driver (owner C5:A): only a RESOLVED, DRIVER-CAUSED complaint against a driver,
+  // approved by an accounting executor who is not the person who filed it (maker != checker, F13:A). The deduction is
+  // created through the canonical driver-finance writer (createSettlementDeduction) so settlement close recovers it with
+  // its existing GL routing; the complaint keeps the link (chargeback_deduction_id) and the CHECK
+  // complaints_chargeback_only_driver_caused_approved refuses any other shape.
+  app.post("/api/v1/safety/complaints/:id/chargeback", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentUser(req, reply);
+    if (!user) return;
+    if (!canVoidCancel(String(user.role ?? ""))) {
+      return reply.code(403).send({ error: "forbidden", message: "Approving a chargeback requires Owner, Administrator or Accountant." });
+    }
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const body = chargebackBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+    const appRole = normalizeRole(String(user.role ?? ""));
+    const result = await withCompany(user.uuid, appRole, query.data.operating_company_id, async (client) => {
+      const c = (await client.query(
+        `SELECT id::text, status, voided_at, respondent_type, respondent_driver_id::text, driver_caused, created_by::text,
+                chargeback_deduction_id::text, load_id::text, upper(coalesce(complaint_type, '')) AS type_code
+           FROM safety.complaints WHERE id = $1::uuid AND operating_company_id = $2::uuid FOR UPDATE`,
+        [params.data.id, query.data.operating_company_id]
+      )).rows[0] as Record<string, unknown> | undefined;
+      if (!c) return { code: 404, error: "complaint_not_found" } as const;
+      if (c.voided_at) return { code: 409, error: "complaint_voided" } as const;
+      if (c.chargeback_deduction_id) return { code: 409, error: "chargeback_already_created", deduction_id: c.chargeback_deduction_id } as const;
+      if (c.status !== "resolved") return { code: 409, error: "complaint_not_resolved" } as const;
+      if (c.driver_caused !== true) return { code: 409, error: "not_driver_caused" } as const;
+      if (c.respondent_type !== "driver" || !c.respondent_driver_id) return { code: 409, error: "complaint_not_against_a_driver" } as const;
+      if (c.created_by === user.uuid) return { code: 409, error: "maker_cannot_approve_own_complaint" } as const;
+      const deduction = await createSettlementDeduction(client, {
+        driverId: String(c.respondent_driver_id),
+        operatingCompanyId: query.data.operating_company_id,
+        amountCents: body.data.amount_cents,
+        reason: `Complaint chargeback (complaint ${c.id}): ${body.data.reason}`,
+        sourceType: String(c.type_code).includes("DAMAGE") ? "damage" : "other",
+        loadId: (c.load_id as string | null) ?? null,
+        createdByUserId: user.uuid,
+      } as Parameters<typeof createSettlementDeduction>[1]);
+      await client.query(
+        `UPDATE safety.complaints
+            SET chargeback_deduction_id = $3::uuid, chargeback_cents = $4, chargeback_approved_by = $5::uuid, chargeback_approved_at = now()
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+        [params.data.id, query.data.operating_company_id, deduction.id, body.data.amount_cents, user.uuid]
+      );
+      await appendCrudAudit(client, user.uuid, "safety.complaint.chargeback_approved", { complaint_id: params.data.id, operating_company_id: query.data.operating_company_id, deduction_id: deduction.id, amount_cents: body.data.amount_cents, driver_id: c.respondent_driver_id }, "warning", "ROUND-313-E-28");
+      return { code: 201, complaint_id: params.data.id, deduction } as const;
+    });
+    const { code, ...payload } = result as { code: number } & Record<string, unknown>;
+    return reply.code(code).send(payload);
+  });
+
+  // ROUND 313 E-28 — reverse: the driver's own complaint list (same read roles as /safety/complaints).
+  app.get("/api/v1/drivers/:id/complaints", async (req, reply) => {
+    const user = currentUser(req, reply);
+    if (!user) return;
+    const appRole = ensureComplaintReadRole(user, reply);
+    if (!appRole) return;
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const query = companyQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const rows = await withCompany(user.uuid, appRole, query.data.operating_company_id, async (client) =>
+      (await client.query(
+        `SELECT c.id::text, c.filed_at, c.complainant_type, c.severity, c.status, c.summary, c.resolution, c.complaint_type,
+                c.load_id::text, l.load_number, c.unit_id::text, u.unit_number, c.stop_id::text, c.driver_caused,
+                c.chargeback_deduction_id::text, c.chargeback_cents, d.status AS chargeback_status, d.applied_to_settlement_id::text
+           FROM safety.complaints c
+           LEFT JOIN mdata.loads l ON l.id = c.load_id AND l.operating_company_id = c.operating_company_id
+           LEFT JOIN mdata.units u ON u.id = c.unit_id
+           LEFT JOIN driver_finance.driver_settlement_deductions d ON d.id = c.chargeback_deduction_id
+          WHERE c.operating_company_id = $1::uuid AND c.respondent_driver_id = $2::uuid AND c.voided_at IS NULL
+          ORDER BY c.filed_at DESC NULLS LAST`,
+        [query.data.operating_company_id, params.data.id]
+      )).rows
+    );
+    return { rows };
   });
 
   app.post("/api/v1/safety/complaints/:id/void", async (req, reply) => {
