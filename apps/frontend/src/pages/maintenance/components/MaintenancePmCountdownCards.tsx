@@ -20,8 +20,21 @@ const CARD_TYPES: PmCardType[] = [
   { id: "brake", label: "Brake" },
 ];
 
+function dueSourceLabel(row: MaintPmDueRow): string | null {
+  const reasons = Array.isArray(row.due_reasons) ? row.due_reasons : [];
+  const parts: string[] = [];
+  if (reasons.includes("miles")) parts.push("by odometer");
+  if (reasons.includes("date")) parts.push("by days");
+  if (parts.length === 0) {
+    if (row.miles_remaining != null) parts.push("by odometer");
+    if (row.days_remaining != null) parts.push("by days");
+  }
+  return parts.length ? parts.join(" · ") : null;
+}
+
 function formatCountdown(row: MaintPmDueRow | undefined) {
   if (!row) return "No active schedule";
+  const source = dueSourceLabel(row);
   // C-21 — never invent miles left when the live odometer feed is null (Samsara obdOdometerMeters
   // dead since 2026-09-10). Prefer an honest "no odometer reading since <date>" over "0 mi left".
   const milesHonesty = formatMilesRemainingHonest({
@@ -29,22 +42,25 @@ function formatCountdown(row: MaintPmDueRow | undefined) {
     currentOdometerMi: row.current_odometer_mi,
     odometerReadingAt: row.odometer_reading_at,
   });
+  const withSource = (text: string) => (source ? `${text} · ${source}` : text);
   if (row.current_odometer_mi == null && milesHonesty) {
     // Still allow a date-based countdown when the schedule has interval_days.
     if (row.days_remaining != null) {
       const isOverdue = row.days_remaining < 0;
-      if (isOverdue) return `Overdue now · ${milesHonesty}`;
-      return `${Math.max(0, row.days_remaining)} day${Math.max(0, row.days_remaining) === 1 ? "" : "s"} left · ${milesHonesty}`;
+      if (isOverdue) return withSource(`Overdue now · ${milesHonesty}`);
+      return withSource(
+        `${Math.max(0, row.days_remaining)} day${Math.max(0, row.days_remaining) === 1 ? "" : "s"} left · ${milesHonesty}`,
+      );
     }
-    return milesHonesty;
+    return withSource(milesHonesty);
   }
   const isOverdue = (row.days_remaining ?? 0) < 0 || (row.miles_remaining ?? 0) < 0;
-  if (isOverdue) return "Overdue now";
+  if (isOverdue) return withSource("Overdue now");
   if (row.days_remaining != null) {
-    return `${Math.max(0, row.days_remaining)} day${Math.max(0, row.days_remaining) === 1 ? "" : "s"} left`;
+    return withSource(`${Math.max(0, row.days_remaining)} day${Math.max(0, row.days_remaining) === 1 ? "" : "s"} left`);
   }
-  if (milesHonesty) return milesHonesty;
-  return "Countdown unavailable";
+  if (milesHonesty) return withSource(milesHonesty);
+  return withSource("Countdown unavailable");
 }
 
 function pmCardMetrics(rows: MaintPmDueRow[], card: PmCardType) {
@@ -67,23 +83,23 @@ export function MaintenancePmCountdownCards({ rows, loading = false, compact = f
   if (compact) {
     return (
       <section className="overflow-hidden rounded-sm border border-gray-200 bg-white">
-        <div className="bg-gray-50 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+        <div className="bg-gray-50 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600">
           PM Countdown
         </div>
         {loading ? (
-          <div className="px-2 py-1.5 text-[11px] text-gray-400">Loading...</div>
+          <div className="px-2 py-1.5 text-xs text-slate-500">Loading...</div>
         ) : (
           <div className="flex flex-col">
             {CARD_TYPES.map((card) => {
               const { dueCount, overdueCount, nextRow } = pmCardMetrics(rows, card);
               return (
-                <div key={card.id} className="border-t border-gray-100 px-2 py-1 first:border-t-0">
+                <div key={card.id} className="border-t border-gray-100 px-2 py-1 first:border-t-0" data-testid={`pm-due-card-${card.id}`}>
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] uppercase tracking-wide text-gray-500">{card.label}</span>
-                    <span className="text-[11px] font-semibold text-gray-900">{dueCount}</span>
+                    <span className="text-xs uppercase tracking-wide text-slate-500">{card.label}</span>
+                    <span className="text-xs font-semibold text-slate-900">{dueCount}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-500">{formatCountdown(nextRow)}</span>
+                    <span className="text-slate-500" data-testid={`pm-due-source-${card.id}`}>{formatCountdown(nextRow)}</span>
                     {overdueCount > 0 ? <span className="text-red-600">{overdueCount} overdue</span> : null}
                   </div>
                 </div>
@@ -108,12 +124,12 @@ export function MaintenancePmCountdownCards({ rows, loading = false, compact = f
           {CARD_TYPES.map((card) => {
             const { dueCount, overdueCount, nextRow } = pmCardMetrics(rows, card);
             return (
-              <div key={card.id} className="border-t border-gray-100 px-3 py-2 first:border-t-0">
-                <div className="text-[11px] uppercase tracking-wide text-gray-500">{card.label}</div>
-                <div className="mt-1 text-page-title font-semibold text-gray-900">{dueCount}</div>
-                <div className="text-[11px] text-gray-600">{formatCountdown(nextRow)}</div>
+                <div key={card.id} className="border-t border-gray-100 px-3 py-2 first:border-t-0" data-testid={`pm-due-card-${card.id}`}>
+                <div className="text-xs uppercase tracking-wide text-slate-500">{card.label}</div>
+                <div className="mt-1 text-page-title font-semibold text-slate-900">{dueCount}</div>
+                <div className="text-xs text-slate-600" data-testid={`pm-due-source-${card.id}`}>{formatCountdown(nextRow)}</div>
                 {overdueCount > 0 ? (
-                  <div className="mt-1 text-[11px] text-red-600">{overdueCount} overdue</div>
+                  <div className="mt-1 text-xs text-red-600">{overdueCount} overdue</div>
                 ) : null}
               </div>
             );

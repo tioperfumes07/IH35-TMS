@@ -53,6 +53,7 @@ import { UnitPmSchedulesReverseSection } from "../../components/maintenance/Unit
 import { UnitBorderCrossingsReverseSection } from "../../components/dispatch/UnitBorderCrossingsReverseSection";
 import { UnitInTransitIssuesReverseSection } from "../../components/dispatch/UnitInTransitIssuesReverseSection";
 import { UnitDefaultDriversReverseSection } from "../../components/fleet/UnitDefaultDriversReverseSection";
+import { UnitFaultsReverseSection } from "../../components/fleet/UnitFaultsReverseSection";
 import { UnitTireProgramReverseSection } from "../../components/maintenance/UnitTireProgramReverseSection";
 import { UnitSevereRepairsReverseSection } from "../../components/maintenance/UnitSevereRepairsReverseSection";
 import { UnitTempCoverReverseSection } from "../../components/safety/UnitTempCoverReverseSection";
@@ -379,6 +380,12 @@ export function VehicleProfilePage() {
               activeFaultCount={faultSummaryQuery.isError ? 0 : faultSummaryQuery.data?.total_count ?? 0}
               pendingFaultDraftCount={faultSummaryQuery.isError ? 0 : faultSummaryQuery.data?.auto_wo_count ?? 0}
               workOrders={profile.recent_activity?.work_orders ?? []}
+            />
+            <UnitFaultsReverseSection
+              unitId={id}
+              activeFaultCount={faultSummaryQuery.isError ? 0 : faultSummaryQuery.data?.total_count ?? 0}
+              pendingFaultDraftCount={faultSummaryQuery.isError ? 0 : faultSummaryQuery.data?.auto_wo_count ?? 0}
+              loading={faultSummaryQuery.isLoading}
             />
             <UnitMaintenanceHistorySection operatingCompanyId={companyId} unitId={id} />
             <div className="mt-3">
