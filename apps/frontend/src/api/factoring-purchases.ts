@@ -98,12 +98,13 @@ export type CreateFactoringPurchaseBody = {
   docs_override_reason?: string;
 };
 
-export type FactoringPurchaseDetail = {
+export type FactoringPurchaseListRow = {
   id: string;
   display_id: string;
   status: "draft" | "posted" | "voided";
   purchase_date: string;
   wire_date: string | null;
+  faro_report_ref: string | null;
   invoice_count: number;
   gross_cents: number | string;
   escrow_reserve_cents: number | string;
@@ -114,8 +115,61 @@ export type FactoringPurchaseDetail = {
   net_to_company_cents: number | string;
   factoring_advance_id: string | null;
   journal_entry_id: string | null;
+  posted_at: string | null;
+  voided_at: string | null;
+  bank_transaction_id: string | null;
   factoring_company_name: string | null;
 };
+
+export type FactoringPurchaseLine = {
+  id: string;
+  line_no: number;
+  invoice_id: string;
+  invoice_display_id: string | null;
+  invoice_total_cents: number | string | null;
+  invoice_status: string | null;
+  customer_id: string;
+  customer_name: string | null;
+  load_id: string | null;
+  load_number: string | null;
+  settlement_id: string | null;
+  settlement_display_id: string | null;
+  gross_cents: number | string;
+  escrow_reserve_cents: number | string;
+  cash_reserve_cents: number | string;
+  fee_cents: number | string;
+};
+
+export type FactoringPurchaseDetail = FactoringPurchaseListRow & {
+  factoring_advance_display_id?: string | null;
+  bank_transaction_date?: string | null;
+  bank_transaction_amount_cents?: number | string | null;
+  lines: FactoringPurchaseLine[];
+};
+
+export type ListFactoringPurchasesFilters = {
+  status?: "draft" | "posted" | "voided";
+  from?: string;
+  to?: string;
+  invoice_id?: string;
+  load_id?: string;
+  customer_id?: string;
+  settlement_id?: string;
+  bank_transaction_id?: string;
+};
+
+/** ROUND 315 step 5 / Lead B4 — one row per Faro wire (= purchase). */
+export function listFactoringPurchases(companyId: string, filters: ListFactoringPurchasesFilters = {}) {
+  const qs = new URLSearchParams({ operating_company_id: companyId });
+  for (const [k, v] of Object.entries(filters)) if (v) qs.set(k, v);
+  return apiRequest<{ purchases: FactoringPurchaseListRow[] }>(`/api/v1/factoring/purchases?${qs.toString()}`);
+}
+
+export function getFactoringPurchase(companyId: string, purchaseId: string) {
+  return apiRequest<FactoringPurchaseDetail>(
+    `/api/v1/factoring/purchases/${encodeURIComponent(purchaseId)}?${q(companyId)}`
+  );
+}
 
 export function createFactoringPurchase(companyId: string, body: CreateFactoringPurchaseBody) {
   return apiRequest<FactoringPurchaseDetail>(`/api/v1/factoring/purchases?${q(companyId)}`, { method: "POST", body });

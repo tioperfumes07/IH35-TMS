@@ -726,6 +726,7 @@ type FactoringTabId =
   | "fees_paid"
   | "aging"
   | "reserve"
+  | "escrow_account"
   | "chargebacks_overpayments"
   | "loan_save"
   | "unapplied_cash"
@@ -2533,6 +2534,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <FactoringTabRoute tabId="reserve" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/escrow-account"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="escrow_account" />
             </ProtectedRoute>
           }
         />

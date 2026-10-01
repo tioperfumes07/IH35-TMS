@@ -218,6 +218,7 @@ export const FACTORING_TAB_PATH: Record<string, string> = {
   fees_paid: "/factoring/fees-paid",
   aging: "/factoring/aging",
   reserve: "/factoring/reserve",
+  escrow_account: "/factoring/escrow-account",
   chargebacks_overpayments: "/factoring/chargebacks-overpayments",
   loan_save: "/factoring/loan-save",
   unapplied_cash: "/factoring/unapplied-cash",
@@ -235,7 +236,7 @@ export const FACTORING_TAB_PATH: Record<string, string> = {
 
 export function factoringTabFromPath(pathname: string): string {
   const norm = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
-  if (norm === "/factoring") return "account_summary";
+  if (norm === "/factoring") return "submit_invoice";
   for (const [id, routePath] of Object.entries(FACTORING_TAB_PATH)) {
     if (routePath === norm) return id;
   }
