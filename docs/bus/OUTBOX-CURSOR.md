@@ -1,3 +1,9 @@
+**2026-10-01T20:20:40Z · B7 MERGED #23902 · AUTH-200 CONSUMED · AUTH-201 OPEN · `cursor/r315-b9-auth200-consume-c89b`**
+ACK: CURSOR | ACK FACTORING-TAKEOVER | QBO-FINISH-THEN-B4 | GO
+B4–B6 MERGED #23900/#23901 · B7 MERGED #23902 `7912d82b6b` tip · B8 claim #23887 · AUTH-200 CONSUMED: 3 expense_load_links on load 13503 (13503-11/12/13 link_count 0→1; ids cdb6abcd / 1a3eb4fb / 63cec187).
+AUTH-201 OPEN: retire 13515 keep 13513 (re-apply $525 payment → void inv 13515 + reverse revenue JEs → cancel load 13515; void-not-delete).
+NEXT: build+apply AUTH-201 script · C combobox leaves.
+
 **2026-10-01T20:45Z · B4–B8 CLOSED · B7 SHIPPING · AUTH-200 OPEN · `cursor/r315-b7-reserves-shared-c89b`**
 ACK: CURSOR | ACK FACTORING-TAKEOVER | QBO-FINISH-THEN-B4 | GO
 A QBO DONE (no half-built): B-1 #23713+#23761 · B-2 #23762 · B-3 #23763 · B-4 #23764 · B-5 #23765 · Deposit #23770 · Batch Settlements #23771 · SC #23894.
