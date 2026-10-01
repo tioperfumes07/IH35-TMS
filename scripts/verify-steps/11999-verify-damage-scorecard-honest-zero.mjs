@@ -76,7 +76,7 @@ try {
     (await client.query(
       `SELECT count(*)::int AS n FROM information_schema.columns
         WHERE table_schema = 'telematics' AND table_name = 'unit_stop_events'
-          AND column_name = ANY(ARRAY['operating_company_id','unit_id','stopped_at','miles_since_previous_stop'])`
+          AND column_name = ANY(ARRAY['unit_id','started_at','miles_since_previous_stop','miles_note'])`
     )).rows[0].n === 4;
   const facts = await client.query(fleetUnitFactsSql(), [USMCA]);
   const now = new Date();
