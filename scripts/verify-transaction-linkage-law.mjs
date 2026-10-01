@@ -320,12 +320,18 @@ export function checkWorkOrderLinkageBothWays(src = readFileSync(join(ROOT, WORK
   if (!/accounting\.bills[\s\S]{0,160}linked_work_order_uuid/.test(body)) f.push("WO -> bills via linked_work_order_uuid missing");
   if (!/accounting\.expenses[\s\S]{0,160}linked_work_order_uuid/.test(body)) f.push("WO -> expenses via linked_work_order_uuid missing");
   if (!/journal_entry_postings[\s\S]{0,300}source_transaction_type IN \('bill', 'expense'\)/.test(body)) f.push("bill/expense -> JE via postings missing");
+  if (!/accounting\.bill_payments[\s\S]{0,160}bill_id = ANY/.test(body)) f.push("bill -> bill payments missing");
+  if (!/accounting\.invoices[\s\S]{0,160}source_load_id = ANY/.test(body)) f.push("load -> invoices (received side) missing");
+  if (!/accounting\.payment_applications[\s\S]{0,200}accounting\.payments/.test(body)) f.push("invoice -> received payments missing");
+  if (!/mdata\.equipment eq ON eq\.id = w\.equipment_id/.test(body)) f.push("WO -> trailer missing");
+  if (!/mdata\.customers cu ON cu\.id = w\.customer_id/.test(body)) f.push("WO -> customer missing");
+  if (!/if \(q\.customer_id\)\s*\{[\s\S]{0,120}w\.customer_id = \$\$\{values\.length\}/.test(src)) f.push("customer -> WO list filter missing");
   if (!/loadWorkOrderLinkage\(client, companyId, params\.data\.id\)/.test(src)) f.push("the detail route no longer returns linkage");
   for (const col of ["reported_at", "in_shop_at", "expected_release_at"]) {
     if (!new RegExp(`${col} = COALESCE\\(\\$\\d+::timestamptz, ${col}\\)`).test(src)) f.push(`PATCH no longer writes ${col}`);
   }
   if (f.length) return [{ level: "FAIL", message: `${WORK_ORDERS_ROUTES_PATH}: HALF A LINK (law §6) -- ${f.join("; ")}.` }];
-  return [{ level: "OK", message: `${WORK_ORDERS_ROUTES_PATH}: WO resolves unit, driver-at-time, vendor, bills, expenses and JEs; three dates are columns.` }];
+  return [{ level: "OK", message: `${WORK_ORDERS_ROUTES_PATH}: WO resolves unit, trailer, driver-at-time, vendor, customer, loads, bills, bill payments, expenses, JEs, load invoices and received payments; three dates are columns.` }];
 }
 
 function checkTier2LoadDemand() {
