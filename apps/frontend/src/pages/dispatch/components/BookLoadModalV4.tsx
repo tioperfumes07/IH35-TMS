@@ -22,7 +22,7 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { properPersonOrPlaceName } from "../../../lib/properDisplayText";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
-import { getLoad, updateDispatchLoadFull, type LoadDetail } from "../../../api/loads";
+import { getLoad, getDispatchLoadEditLock, updateDispatchLoadFull, type LoadDetail } from "../../../api/loads";
 import { buildEditPrefill, buildEditPatchBody, shouldApplyEditPrefill } from "./book-load-v4/editLoadMapping";
 import { bookLoadToastMessage, bookLoadToastTone, serverStatusOf } from "./book-load-toast";
 import { searchCustomersAutocomplete } from "../../../api/mdata";
@@ -1054,9 +1054,18 @@ export function BookLoadModalV4({
     return reservedLoadNumber || "—";
   }, [reservedLoadNumber]);
 
-  const canOverrideHardBlock = auth.user?.role === "Owner";
+  const canOverrideHardBlock = auth.user?.role === "Owner" || auth.user?.role === "Administrator";
   const canOverrideHos = ["Owner", "Administrator", "Manager"].includes(String(auth.user?.role ?? ""));
   const canOverrideCreditLimit = ["Owner", "Administrator", "Manager"].includes(String(auth.user?.role ?? ""));
+  const canOwnerLockOverride = canOverrideHardBlock;
+
+  const editLockQuery = useQuery({
+    queryKey: ["dispatch-load-edit-lock", operatingCompanyId, editLoadId],
+    queryFn: () => getDispatchLoadEditLock(editLoadId as string, operatingCompanyId),
+    enabled: Boolean(open && isEditMode && editLoadId && operatingCompanyId),
+    staleTime: 15_000,
+  });
+  const loadIsEditLocked = Boolean(editLockQuery.data?.locked);
 
   // FAIL-B5 — double Book+dispatch. There was NO in-flight state anywhere in this modal: no `isSubmitting`
   // tracking, no re-entry guard, and the submit button's `disabled` covered only the repair-block and
@@ -1206,6 +1215,12 @@ export function BookLoadModalV4({
         ? overrideReason.trim()
         : (recordedOverrides[0]?.[1]?.reason ?? (repairOverrideApplied ? repairOverrideReason.trim() : undefined))
       : undefined;
+    // D-H0 — locked load + Owner/Admin: require override_reason even when no qualification override fired.
+    const lockOverrideReason =
+      isEditMode && loadIsEditLocked && canOwnerLockOverride && overrideReason.trim().length >= 10
+        ? overrideReason.trim()
+        : undefined;
+    const effectiveOverrideReason = lockOverrideReason ?? primaryOverrideReason;
 
     const driverId = String(values.assigned_primary_driver_id || "").trim();
     const unitId = String(values.assigned_unit_id || "").trim();
@@ -1244,6 +1259,20 @@ export function BookLoadModalV4({
     // Trip-type is not editable here, so the create-only trip_type gate below does not apply.
     if (isEditMode && editLoadId) {
       try {
+        if (loadIsEditLocked && canOwnerLockOverride && !(effectiveOverrideReason && effectiveOverrideReason.length >= 10)) {
+          setSubmitErrorMessage(
+            "This load is locked (settlement / issued invoice / driver bill). Enter an Owner override reason (10+ characters) below, then save."
+          );
+          pushToast("Owner override reason required", "error");
+          return;
+        }
+        if (loadIsEditLocked && !canOwnerLockOverride) {
+          setSubmitErrorMessage(
+            "This load is locked — only Owner or Administrator can override with a reason."
+          );
+          pushToast("Load locked — can't edit", "error");
+          return;
+        }
         // GO-23 per-blocker Override: `opts?.override` used to be dropped on the Edit path (this
         // branch returned before the create-only override plumbing below ever ran) — Override &
         // dispatch on an Edit did a normal save with no reason, so the backend still 422'd.
@@ -1251,7 +1280,7 @@ export function BookLoadModalV4({
           values as unknown as Record<string, unknown>,
           form.formState.dirtyFields as unknown as Record<string, unknown>,
           operatingCompanyId,
-          primaryOverrideReason,
+          effectiveOverrideReason,
           applyOverrides ? overrideRuleRows : undefined
         );
         // DRV-BILL-SKIP-PATHS — Edit Load calls ensureDriverBillArtifactsForLoad (#5408); surface mint skips
@@ -1267,20 +1296,40 @@ export function BookLoadModalV4({
         } else if (mint?.outcome === "refused_no_shortest_miles") {
           pushToast(mint.reason ?? "No driver bill was created — shortest miles are required.", "error");
         }
+        const prop = patchResult.lock_override_propagation;
+        if (Array.isArray(prop) && prop.length > 0) {
+          pushToast(prop.map((p) => p.detail).join(" · "), "info");
+        }
         if (applyPostSaveIntent(editLoadId, loadNumber)) return;
         setSaveAck({
           id: editLoadId,
           loadNumber,
-          summary: "The load was saved. Open it to continue, or close this window.",
+          summary:
+            Array.isArray(prop) && prop.length > 0
+              ? `Saved. Propagation: ${prop.map((p) => p.detail).join(" · ")}`
+              : "The load was saved. Open it to continue, or close this window.",
         });
       } catch (error) {
         const data = error instanceof ApiError ? ((error.data as Record<string, unknown>) ?? {}) : {};
-        if (error instanceof ApiError && error.status === 409 && String(data.error ?? "") === "load_edit_locked") {
+        const errCode = String(data.error ?? "");
+        if (error instanceof ApiError && error.status === 409 && errCode === "load_edit_locked") {
           setSubmitErrorMessage(
-            "This load is locked — it's behind an open settlement, an issued invoice, or a driver bill, so it can't be edited."
+            canOwnerLockOverride
+              ? "This load is locked. Enter an Owner override reason (10+ characters) in the Owner override banner and save again."
+              : "This load is locked — it's behind an open settlement, an issued invoice, or a driver bill, so it can't be edited."
           );
-          pushToast("Load locked — can't edit", "error");
-        } else if (error instanceof ApiError && error.status === 422 && String(data.error ?? "") === "E_DRIVER_NOT_QUALIFIED") {
+          pushToast(canOwnerLockOverride ? "Owner override reason required" : "Load locked — can't edit", "error");
+        } else if (error instanceof ApiError && error.status === 409 && errCode === "invoice_paid_or_synced_void_and_reissue") {
+          setSubmitErrorMessage(
+            String(data.message ?? "Invoice is sent/paid/synced — void and reissue before changing charges.")
+          );
+          pushToast("Void and reissue invoice first", "error");
+        } else if (error instanceof ApiError && error.status === 409 && errCode === "driver_bill_settled_adjust_on_next_settlement") {
+          setSubmitErrorMessage(
+            String(data.message ?? "Driver bill is on a closed settlement — adjust on the next settlement.")
+          );
+          pushToast("Adjust on next settlement", "error");
+        } else if (error instanceof ApiError && error.status === 422 && errCode === "E_DRIVER_NOT_QUALIFIED") {
           // GO-23 per-blocker Override: same gate as Book Load's create path (CDL / DOT medical /
           // hazmat) — point the user at the pre-dispatch panel's "Override & dispatch" control
           // (canOwnerOverride) instead of a dead-end error, since that control now actually reaches
@@ -1939,6 +1988,38 @@ export function BookLoadModalV4({
               settings</span> round-trip on edit. <span className="font-semibold">Hazmat</span> is owner-locked
               out of edit (create-path only). <span className="font-semibold">Load type / trailer type</span>{" "}
               are not edit-PATCH columns yet.
+            </div>
+          ) : null}
+
+          {isEditMode && loadIsEditLocked ? (
+            <div
+              className="border-b border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-800"
+              data-testid="owner-lock-override-banner"
+            >
+              <p className="font-semibold text-slate-900">Owner override</p>
+              <p className="mt-0.5 text-slate-700">
+                This load is locked
+                {editLockQuery.data?.lock?.reason ? ` (${editLockQuery.data.lock.reason.replace(/_/g, " ")})` : ""}
+                {editLockQuery.data?.lock?.reference_display_id
+                  ? ` — ${editLockQuery.data.lock.reference_display_id}`
+                  : ""}
+                . {canOwnerLockOverride
+                  ? "Every field stays editable. Enter a reason (10+ characters) to save — invoice re-derives only while draft; paid/synced invoices must be voided and reissued."
+                  : "Only Owner or Administrator can override."}
+              </p>
+              {canOwnerLockOverride ? (
+                <label className="mt-2 block">
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-slate-600">Override reason</span>
+                  <textarea
+                    className="mt-1 w-full rounded-sm border border-slate-400 bg-white px-2 py-1 text-xs text-slate-900"
+                    rows={2}
+                    value={overrideReason}
+                    onChange={(e) => setOverrideReason(e.target.value)}
+                    placeholder="Why this locked load must change (min 10 characters)"
+                    data-testid="owner-lock-override-reason"
+                  />
+                </label>
+              ) : null}
             </div>
           ) : null}
 

@@ -17,6 +17,8 @@ import {
   updateDispatchLoad,
   LoadNotFoundError,
   LoadEditLockedError,
+  OwnerLockPropagationRefuseError,
+  detectLoadEditLock,
   type UpdateDispatchLoadFields,
 } from "./update-load.service.js";
 import { DriverNotQualifiedError } from "./driver-qualification.service.js";
@@ -1758,6 +1760,30 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     }
   });
 
+  // D-H0 — lock probe so Edit Load can show amber Owner override banner before save.
+  app.get("/api/v1/dispatch/loads/:id/edit-lock", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    const params = dispatchLoadIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+    if (!q.success) return sendValidationError(reply, q.error);
+    const result = await withCompanyScope(authUser.uuid, q.data.operating_company_id, async (client) => {
+      const exists = await client.query<{ id: string }>(
+        `SELECT id::text FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL LIMIT 1`,
+        [params.data.id, q.data.operating_company_id]
+      );
+      if (!exists.rows[0]) return null;
+      const lock = await detectLoadEditLock(client, q.data.operating_company_id, params.data.id);
+      return { locked: Boolean(lock), lock };
+    });
+    if (!result) return reply.code(404).send({ error: "load_not_found" });
+    return reply.send(result);
+  });
+
   // Block 06 (Inc 2) — FULL load edit. Money/evidence-guarded: a load behind an open settlement, an
   // issued invoice, or a non-open driver bill is LOCKED (409). Stops are replaced evidence-safely
   // (archive-not-delete). GATED PR — financial-adjacent (edits rate_total_cents). Jorge merges.
@@ -1792,6 +1818,16 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       if (error instanceof LoadNotFoundError) return reply.code(404).send({ error: "load_not_found" });
       if (error instanceof LoadEditLockedError) {
         return reply.code(409).send({ error: "load_edit_locked", lock: error.lock });
+      }
+      if (error instanceof OwnerLockPropagationRefuseError) {
+        return reply.code(409).send({
+          error: error.code,
+          message: error.message,
+          propagation: error.propagation,
+          reference_id: error.reference_id,
+          reference_display_id: error.reference_display_id,
+          void_and_reissue: error.code === "invoice_paid_or_synced_void_and_reissue",
+        });
       }
       if (error instanceof DriverNotQualifiedError) {
         return reply.code(422).send({

@@ -95,7 +95,7 @@ describe("updateDispatchLoad — money/evidence guards", () => {
     expect(sqls.some((s) => /UPDATE mdata\.loads SET/.test(s))).toBe(true);
   });
 
-  it("blocks Owner from changing miles behind an issued invoice (WORM — reverse document first)", async () => {
+  it("blocks Owner from changing miles behind an issued invoice without override_reason (WORM)", async () => {
     const { client } = makeClient([
       loadExists,
       noSettlement,
@@ -112,7 +112,37 @@ describe("updateDispatchLoad — money/evidence guards", () => {
     ).rejects.toMatchObject({ lock: { reason: "issued_invoice", reference_display_id: "INV-9" } });
   });
 
-  it("blocks Owner from changing charges behind an open settlement", async () => {
+  it("D-H0: Owner + override_reason (>=10) may change miles behind issued invoice with audit", async () => {
+    const auditSqls: string[] = [];
+    const { client, sqls } = makeClient([
+      loadExists,
+      noSettlement,
+      { match: /FROM accounting\.invoices/, rows: [{ id: "i1", display_id: "INV-9", status: "sent" }] },
+      // assertInvoiceAllowsRateOverride — only fires on charges; miles alone skips it
+      { match: /UPDATE mdata\.loads SET/, rows: [{ id: LOAD_ID, rate_total_cents: 100000 }] },
+      { match: /SELECT \* FROM mdata\.loads WHERE id/, rows: [{ id: LOAD_ID, rate_total_cents: 100000, miles_practical: 500 }] },
+      { match: /SELECT \* FROM mdata\.load_stops WHERE load_id/, rows: [] },
+      driverBillReentryNoDriver,
+    ]);
+    const origQuery = client.query.bind(client);
+    client.query = async (sql: string, values?: unknown[]) => {
+      if (/audit\.append_event/.test(sql)) auditSqls.push(String(values?.[0] ?? ""));
+      return origQuery(sql, values);
+    };
+    const result = await updateDispatchLoad(client, {
+      loadId: LOAD_ID,
+      operatingCompanyId: OCI,
+      requestingUserUuid: USER,
+      requestingUserRole: "Owner",
+      override_reason: "Owner correcting practical miles after route audit",
+      fields: { miles_practical: 500 },
+    });
+    expect(auditSqls.some((e) => e === "dispatch.load_edit_lock_overridden")).toBe(true);
+    expect(result.lock_override_applied).toBe(true);
+    expect(sqls.some((s) => /UPDATE mdata\.loads SET/.test(s))).toBe(true);
+  });
+
+  it("blocks Owner from changing charges behind an open settlement without override_reason", async () => {
     const { client } = makeClient([
       loadExists,
       { match: /FROM driver_finance\.driver_settlements/, rows: [{ id: "s1", display_id: "SETT-1" }] },
@@ -127,6 +157,33 @@ describe("updateDispatchLoad — money/evidence guards", () => {
         fields: {},
       })
     ).rejects.toMatchObject({ lock: { reason: "open_settlement" } });
+  });
+
+  it("D-H0: Owner + override_reason refuses charge change when invoice is sent (void-and-reissue)", async () => {
+    const { client } = makeClient([
+      {
+        match: /SELECT \* FROM mdata\.loads WHERE id/,
+        rows: [{ id: LOAD_ID, rate_total_cents: 100000 }],
+      },
+      noSettlement,
+      {
+        match: /FROM accounting\.invoices/,
+        rows: [{ id: "i1", display_id: "INV-9", status: "sent" }],
+      },
+    ]);
+    await expect(
+      updateDispatchLoad(client, {
+        loadId: LOAD_ID,
+        operatingCompanyId: OCI,
+        requestingUserUuid: USER,
+        requestingUserRole: "Owner",
+        override_reason: "Owner correcting customer rate after quote mismatch",
+        charges: [{ code: "LINEHAUL", amount_cents: 120000 }],
+        fields: {},
+      })
+    ).rejects.toMatchObject({
+      code: "invoice_paid_or_synced_void_and_reissue",
+    });
   });
 
   it("blocks the edit (issued_invoice) when a non-draft invoice is sourced from the load", async () => {

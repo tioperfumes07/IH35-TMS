@@ -349,12 +349,28 @@ export function updateLoad(id: string, operatingCompanyId: string, body: Record<
  * archive-not-delete). Body must be a PARTIAL update — only fields present are touched.
  */
 export function updateDispatchLoadFull(id: string, body: Record<string, unknown>) {
-  // PATCH returns { load, stops, driver_bill_mint } from updateDispatchLoad (#5408 mint on edit).
+  // PATCH returns { load, stops, driver_bill_mint, lock_override_propagation } from updateDispatchLoad.
   return apiRequest<{
     load: LoadDetail;
     stops?: unknown[];
     driver_bill_mint?: { outcome?: string; missing?: string[]; reason?: string } | null;
+    lock_override_propagation?: Array<{ kind: string; detail: string; reference_id?: string | null; reference_display_id?: string | null }> | null;
+    lock_override_applied?: boolean;
   }>(`/api/v1/dispatch/loads/${id}`, { method: "PATCH", body });
+}
+
+/** D-H0 — probe whether Edit Load is behind settlement / issued invoice / non-open driver bill. */
+export function getDispatchLoadEditLock(id: string, operatingCompanyId: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{
+    locked: boolean;
+    lock: {
+      reason: "open_settlement" | "issued_invoice" | "driver_bill_locked";
+      detail: string;
+      reference_id: string | null;
+      reference_display_id: string | null;
+    } | null;
+  }>(`/api/v1/dispatch/loads/${id}/edit-lock?${q.toString()}`);
 }
 
 /**
