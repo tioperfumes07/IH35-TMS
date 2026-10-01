@@ -58,7 +58,7 @@ describeIntegration("legal lease-to-own fleet picker (real Postgres schema)", ()
     await withBypass(async () => {
       await db.query(
         `INSERT INTO mdata.units (id, unit_number, vin, status, owner_company_id, vehicle_type, is_sample_data)
-         VALUES ($1::uuid, $2, $3, 'InService', $4::uuid, 'tractor', true)`,
+         VALUES ($1::uuid, $2, $3, 'InService', $4::uuid, 'Tractor', true)`,
         [unitId, `LTO-${suffix.slice(0, 8)}`, `LTOVIN${suffix.replace(/-/g, "").slice(0, 11)}`, companyId]
       );
     });

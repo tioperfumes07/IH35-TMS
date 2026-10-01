@@ -80,6 +80,8 @@ export type DriverFuelScorecardRow = {
   cost_per_mile_cents: number | null;
   fills_with_no_load: number;
   fill_count: number;
+  /** Of `gallons`, the reefer_diesel share — it feeds the trailer unit, never the truck engine (E-21 Samsara signal subtracts it). */
+  reefer_gallons: number;
   /** Rows attributed to the driver that are not real motor-fuel purchases (fuel-purchase-eligibility.ts), by reason. */
   excluded_fill_reasons: Partial<Record<FuelPurchaseIneligibleReason, number>>;
   flags: EvidencedFuelFlag[];
@@ -190,7 +192,7 @@ export async function computeDriverFuelScorecard(
   // batches are excluded and counted by reason, never silently mixed into a driver's gallons.
   const fillsByDriver = new Map<string, FuelFillRow[]>();
   const excludedByDriver = new Map<string, Partial<Record<FuelPurchaseIneligibleReason, number>>>();
-  const fuelByDriver = new Map<string, { gallons: number; totalCostCents: number; fillsWithNoLoad: number; fillCount: number }>();
+  const fuelByDriver = new Map<string, { gallons: number; reeferGallons: number; totalCostCents: number; fillsWithNoLoad: number; fillCount: number }>();
   for (const [driverId, rows] of allFillsByDriver) {
     const eligible: FuelFillRow[] = [];
     const excluded: Partial<Record<FuelPurchaseIneligibleReason, number>> = {};
@@ -206,6 +208,7 @@ export async function computeDriverFuelScorecard(
     excludedByDriver.set(driverId, excluded);
     fuelByDriver.set(driverId, {
       gallons: eligible.reduce((a, r) => a + (r.gallons ?? 0), 0),
+      reeferGallons: eligible.filter((r) => r.fuel_type === "reefer_diesel").reduce((a, r) => a + (r.gallons ?? 0), 0),
       totalCostCents: eligible.reduce((a, r) => a + Math.round((r.total_cost ?? 0) * 100), 0),
       fillsWithNoLoad: eligible.filter((r) => r.load_id === null).length,
       fillCount: eligible.length,
@@ -232,7 +235,7 @@ export async function computeDriverFuelScorecard(
   const rows: DriverFuelScorecardRow[] = [];
   for (const driverId of driverIds) {
     const miles = milesByDriver.get(driverId) ?? { miles: null, windowCount: 0, gapCount: 0 };
-    const fuel = fuelByDriver.get(driverId) ?? { gallons: 0, totalCostCents: 0, fillsWithNoLoad: 0, fillCount: 0 };
+    const fuel = fuelByDriver.get(driverId) ?? { gallons: 0, reeferGallons: 0, totalCostCents: 0, fillsWithNoLoad: 0, fillCount: 0 };
     const fills = fillsByDriver.get(driverId) ?? [];
 
     const mpg = mpgByDriver.get(driverId) ?? null;
@@ -358,6 +361,7 @@ export async function computeDriverFuelScorecard(
       cost_per_mile_cents: miles.miles != null && miles.miles > 0 ? Number((fuel.totalCostCents / miles.miles).toFixed(1)) : null,
       fills_with_no_load: fuel.fillsWithNoLoad,
       fill_count: fuel.fillCount,
+      reefer_gallons: Math.round(fuel.reeferGallons * 1000) / 1000,
       excluded_fill_reasons: excludedByDriver.get(driverId) ?? {},
       flags,
     });

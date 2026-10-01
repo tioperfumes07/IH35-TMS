@@ -1,4 +1,9 @@
 {
+  "12031": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-fuel-integrity-samsara-signal (E-21 addition): Samsara Fuel & Energy driver report as signal 4 of fuel integrity; never faked when the feed is unreadable; never a finding with the MPG signals (shared fuel_card_gallons); tank slack = fraud detector tank model."
+  },
   "12029": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-01",

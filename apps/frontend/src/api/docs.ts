@@ -20,7 +20,9 @@ export type FileEntityType =
   | "expense"
   | "bill"
   // GO-21 B8 (owner 2026-09-02): receipt/confirmation upload for a cash/fuel advance.
-  | "cash_advance";
+  | "cash_advance"
+  // ORDERS-2026-10-01 MAINTENANCE — WO documents (migration 202610011200).
+  | "work_order";
 
 export type FileCategory = {
   id: string;

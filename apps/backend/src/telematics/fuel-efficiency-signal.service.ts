@@ -81,6 +81,22 @@ export type FuelEfficiencySignalResult = {
   purchase_rows_excluded_by_reason: Record<string, number>;
 };
 
+/**
+ * Samsara driver id -> our driver id(s). samsara_driver_id lives on mdata.drivers for most drivers and
+ * only in the integrations.samsara_drivers mirror for some -- use either, never guess (same rule as
+ * driven-miles-legs.service.ts). A Samsara id that maps to more than one of our drivers is ambiguous;
+ * callers treat size !== 1 as unmapped. Shared by T-50 and the E-21 integrity signal.
+ */
+/**
+ * Samsara driver id -> local driver ids (Set kept for CC-2's fuel-integrity caller). Backed by the
+ * CANONICAL map mdata.driver_samsara_accounts via the shared resolver (merges followed) -- never the
+ * legacy mdata.drivers.samsara_driver_id column or the ingestion mirror. Each set has exactly one driver.
+ */
+export async function loadDriverIdsBySamsaraDriverId(client: PgClient, operatingCompanyId: string): Promise<Map<string, Set<string>>> {
+  const byId = await loadDriverIdBySamsaraId(client as never, operatingCompanyId);
+  return new Map([...byId].map(([sid, driverId]) => [sid, new Set([driverId])]));
+}
+
 export async function computeFuelEfficiencySignals(
   client: PgClient,
   input: {

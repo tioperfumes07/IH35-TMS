@@ -189,9 +189,10 @@ export async function computeDriverIntegrityProfiles(
   client: DbClient,
   operatingCompanyId: string,
   periodStart: string,
-  periodEnd: string
+  periodEnd: string,
+  opts?: Parameters<typeof computeDriverFuelIntegrity>[4]
 ): Promise<DriverIntegrityProfile[]> {
-  const fuel = await computeDriverFuelIntegrity(client, operatingCompanyId, periodStart, periodEnd);
+  const fuel = await computeDriverFuelIntegrity(client, operatingCompanyId, periodStart, periodEnd, opts);
   const damage = await computeDamageEventAttribution(client, operatingCompanyId, periodStart, periodEnd);
   const damageScore = await computeDriverDamageScorecard(client, operatingCompanyId, periodStart, periodEnd);
   const findings = await listIntegrityFindingsAttribution(client, operatingCompanyId, { periodStart, periodEnd });
