@@ -24,6 +24,7 @@ import type { FuelTxnGlPostCandidate } from "../accounting/fuel-posting/maybe-po
 import { resolveFuelOverageContractAuthority } from "./fuel-card-overage-contract.service.js";
 import { postFuelOverageReceivable } from "./fuel-card-overage-posting.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { markFraudAlertsRecovered } from "./fuel-fraud-recovery.service.js";
 
 export const FUEL_CARD_OVERAGE_ENGINE_FLAG_KEY = "FUEL_CARD_OVERAGE_ENGINE_ENABLED";
 export const FUEL_CARD_OVERAGE_GL_POSTING_FLAG_KEY = "FUEL_CARD_OVERAGE_GL_POSTING_ENABLED";
@@ -466,6 +467,9 @@ export async function approveAndPostFuelCardOverage(
         actor_user_id: input.actor_user_id,
         actor_role: input.actor_role,
       });
+
+      // Fuel fraud chain: a confirmed alert is RECOVERED once its purchase's receivable is on the books.
+      if (posted.journal_entry_id) await markFraudAlertsRecovered(client, input.operating_company_id, row.id);
 
       return {
         status: "posted",

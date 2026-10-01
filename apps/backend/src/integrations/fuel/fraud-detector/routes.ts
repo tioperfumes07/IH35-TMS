@@ -7,6 +7,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../../../audit/crud-audit.js";
 import { withCurrentUser } from "../../../auth/db.js";
+import { openFraudRecoveryForAlert } from "../../../fuel/fuel-fraud-recovery.service.js";
 import { requireAuth } from "../../../auth/session-middleware.js";
 
 type DbClient = {
@@ -30,6 +31,8 @@ const mutateBody = z.object({
   operating_company_id: z.string().uuid(),
   resolution_notes: z.string().max(2000).optional(),
 });
+/** confirm-fraud may name how much of the purchase to recover (cents); default is the whole purchase. */
+const confirmBody = mutateBody.extend({ recover_cents: z.number().int().positive().optional() });
 
 function getAuth(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -56,6 +59,9 @@ async function fetchAlert(client: DbClient, operatingCompanyId: string, alertUui
         fa.investigated_at::text,
         fa.resolution_notes,
         fa.resolved_at::text,
+        fa.recovery_event_id::text,
+        (SELECT ev.status FROM fuel.fuel_card_overage_events ev WHERE ev.id = fa.recovery_event_id) AS recovery_status,
+        (SELECT ev.overage_cents::bigint FROM fuel.fuel_card_overage_events ev WHERE ev.id = fa.recovery_event_id) AS recovery_cents,
         ft.transaction_at::text AS transaction_at,
         ft.gallons::float8 AS gallons,
         ft.location_city,
@@ -103,6 +109,8 @@ export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promis
             fa.status,
             fa.investigated_at::text,
             fa.resolution_notes,
+            fa.recovery_event_id::text,
+            (SELECT ev.status FROM fuel.fuel_card_overage_events ev WHERE ev.id = fa.recovery_event_id) AS recovery_status,
             ft.transaction_at::text,
             ft.gallons::float8 AS gallons,
             ft.location_city,
@@ -194,7 +202,7 @@ export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promis
     if (!user) return;
     if (!canInvestigate(user.role)) return reply.code(403).send({ error: "forbidden" });
     const params = uuidParams.safeParse(req.params ?? {});
-    const body = mutateBody.safeParse(req.body ?? {});
+    const body = confirmBody.safeParse(req.body ?? {});
     if (!params.success || !body.success) return reply.code(400).send({ error: "validation_error" });
 
     const alert = await withCurrentUser(user.uuid, async (client) => {
@@ -226,12 +234,33 @@ export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promis
         { resource_type: "fuel.fraud_alerts", resource_id: params.data.uuid },
         "warning"
       );
-      return { alert: await fetchAlert(client, body.data.operating_company_id, params.data.uuid) };
+      // Fuel fraud -> recovery chain: confirmation opens (or reuses) the purchase's recovery event in the
+      // FUEL-03 overage engine. It never posts — the approve route does, with contract authority.
+      const recovery = await openFraudRecoveryForAlert(client as never, {
+        operating_company_id: body.data.operating_company_id,
+        alert_uuid: params.data.uuid,
+        actor_user_id: user.uuid,
+        recover_cents: body.data.recover_cents ?? null,
+      });
+      if (recovery.outcome !== "refused") {
+        await client.query(
+          `UPDATE fuel.fraud_alerts SET recovery_event_id = $3::uuid WHERE operating_company_id = $1::uuid AND uuid = $2::uuid`,
+          [body.data.operating_company_id, params.data.uuid, recovery.recovery_event_id]
+        );
+      }
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        recovery.outcome === "refused" ? "fuel.fraud_alert.recovery_refused" : "fuel.fraud_alert.recovery_opened",
+        { resource_type: "fuel.fraud_alerts", resource_id: params.data.uuid, ...recovery },
+        recovery.outcome === "refused" ? "warning" : "info"
+      );
+      return { alert: await fetchAlert(client, body.data.operating_company_id, params.data.uuid), recovery };
     });
 
     if (!alert) return reply.code(404).send({ error: "not_found" });
     if ("error" in alert) return reply.code(409).send({ error: alert.error });
-    return reply.send({ alert: alert.alert });
+    return reply.send({ alert: alert.alert, recovery: alert.recovery });
   });
 
   app.patch("/api/v1/fuel/fraud-alerts/:uuid/dismiss", async (req, reply) => {
