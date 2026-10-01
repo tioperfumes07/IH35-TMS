@@ -1163,3 +1163,31 @@ Owner, verbatim (chat, 2026-10-01 ~04:27Z): "you have full permissions and autho
     the audit count).
 - ENGINE: runRelayFuelIngestTick extracted (cron + new runner dist/sync/run-relay-fuel-ingest-tick.js),
   so the next on-demand pull uses the daily-tick path (claim + sync-log row), not the backfill.
+
+## 2026-10-01 05:45Z — CC-2 | rows DONE + registry additions shipped (fast-merge law)
+- Rows (ORDERS-2026-10-01-CC-2): all merged and live.
+  - E-27 miles switch: #23631.
+  - E-28 linkage, own migration: #23655, live since the 04:31Z deploy.
+  - Fuel verdict page / Integrity tab: #23678.
+  - Integrity report sections + complaints load/truck + reverse sections: #23685.
+- Relay proof + fraud detector ON: #23679 (see 04:45Z entry).
+- E-21 addition, Samsara Fuel & Energy as fuel-integrity signal 4: #23688.
+  - Compares the ECU burn per driver (Samsara driver report) with the truck fuel bought for that driver
+    (card gallons less reefer).
+  - Anomalous only past one tank per truck driven, using the fraud detector's own tank model.
+  - With an MPG signal it is a suspicion (they share card gallons); with Relay pump presence it is a finding.
+  - Guard 12031.
+  - Verdicts appear after the next deploy: the Samsara token decrypts only in Render, and until then the
+    engine reports the feed error instead of a number.
+- E-22 addition, card -> truck registry: #23695.
+  - Own migration 202615140600 (CC-2 band HH 06), table fuel.fuel_card_assignments.
+  - Routes: /api/v1/fuel/card-assignments (list / resolve / create / end / void; reverse via ?unit_id= / ?driver_id=).
+  - The statement importer resolves a missing/unmatched unit from the card at transaction time, or states why not.
+  - Notes keep only the last 4 digits of the card field.
+  - Guard 12035. The screen is in progress.
+- FINDING (measured): fuel.fuel_transactions.fuel_card_id is a card TYPE (DREAMLINE catalog row), not a card.
+  Only 3 of 177 USMCA rows carry a card field at all.
+  The registry is empty until the owner enters card -> truck assignments. That is data entry, not seeding:
+  CC-2 writes none.
+- Next: E-20 addition (Relay webhook, if Relay offers one). Then E-26 -> E-28 "after DONE" items are
+  Cursor's Driver Profile KPI, not mine.
