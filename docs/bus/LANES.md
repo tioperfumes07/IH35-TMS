@@ -30,6 +30,9 @@ apps/backend/src/maintenance/pm-due-engine.service.ts
 apps/backend/src/maintenance/__tests__/pm-current-odometer.test.ts
 apps/backend/src/maint/pm.routes.ts
 apps/backend/src/maintenance/work-orders.routes.ts
+apps/backend/src/maintenance/pm-auto-engine.cron.ts
+apps/backend/src/maintenance/__tests__/pm-auto-engine-e14.test.ts
+apps/backend/src/system/engine-status.catalog.ts
 scripts/db-migrate.mjs
 **/*.db.test.ts
 TABLES: accounting.company_settlements · driver_finance.driver_bills · mdata.drivers · identity.*
@@ -195,6 +198,10 @@ TABLES: none. The Lead owns no module code and no tables. Anything else the Lead
 # database build; the sanctioned fix is its FRESH_DB_PRODUCTION_DATA_ONLY entry in this runner, kept
 # honest by CC-1's guard verify-data-repair-migrations-noop-when-absent.mjs. db/migrations/** is
 # already CC-1's -- the runner that applies it belongs with it. Owner may move it.
+#
+# **E-14 (ORDERS 2026-10-01 CC-1 row 1):** `maintenance/pm-auto-engine.cron.ts` (the engine's own
+# schedule) and `system/engine-status.catalog.ts` -- the E-14/E-15 rows ONLY (the orders' "engine status
+# row (E-41 reads it)"); every other row in that catalog stays the Lead's.
 
 ## SHARED — any seat, but say so in the PR body
 docs/**

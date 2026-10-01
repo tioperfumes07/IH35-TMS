@@ -33,3 +33,6 @@ data as if it existed.
 Blockers anticipated: E-43 waits on E-30; E-44 miles column empty until E-03 table lives (label
 "pending E-03"); backend fields missing (OUTBOX, keep building); Chrome proof (Lead).
 Report after every module to OUTBOX-CURSOR.md. ACK: `CURSOR | ACK ORDERS-2026-10-01 | MAINTENANCE | GO`.
+
+## 2026-10-01 LATER — SUPERSEDED IN PART
+Ruling docs/bus/2026-10-01-LEAD-RULING-EACH-SEAT-BUILDS-ITS-ENGINE-END-TO-END.md (owner: no handoffs) withdraws every line in these ORDERS files that routes work to another seat. Each seat builds its own engine end to end: migration (own band), backend, screen, guard. Read the ruling.

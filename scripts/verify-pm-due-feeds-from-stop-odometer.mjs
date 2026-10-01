@@ -9,7 +9,7 @@
  *   2. chooseCurrentOdometer loses its backwards-delta hold: a newer reading LOWER than an older one
  *      must be held, never used.
  *   3. any of the three PM-due consumers stops consulting it:
- *        - maintenance/pm-auto-engine.service.ts  (the PM auto-WO cron): stop tier BEFORE raw_payload
+ *        - maintenance/pm-auto-engine.service.ts  (E-14 cron): unit_stop_events -> odometer_readings -> ABSENT
  *        - maint/pm.routes.ts                       (Maintenance Home /maint/pm/due): both GET routes
  *        - maintenance/pm-due-engine.service.ts     (T-29 engine): ledger + stop through the chooser
  *
@@ -58,22 +58,29 @@ export function checkHelper(src) {
 }
 
 export function checkAutoEngine(src) {
+  // E-14 (ORDERS 2026-10-01): source order is unit_stop_events -> odometer_readings -> ABSENT, nothing else.
   const p = [];
   const code = stripComments(src);
-  if (!/import\s*\{[^}]*\blatestStopCapturedOdometer\b[^}]*\}\s*from\s*["']\.\/pm-current-odometer\.js["']/.test(code)) {
-    p.push(`${AUTO} does not import latestStopCapturedOdometer -- the PM auto-WO cron is blind whenever the latest fix has no odometer.`);
-    return p;
-  }
   const fn = code.match(/async function loadUnitOdometers\([\s\S]*?\n\}/);
   if (!fn) {
     p.push(`${AUTO} has no loadUnitOdometers to check.`);
     return p;
   }
-  const stopIdx = fn[0].search(/latestStopCapturedOdometer\(/);
-  const rawIdx = fn[0].search(/integrations\.samsara_vehicles/);
-  if (stopIdx === -1) p.push(`${AUTO} loadUnitOdometers never calls latestStopCapturedOdometer.`);
-  else if (rawIdx !== -1 && stopIdx > rawIdx) {
-    p.push(`${AUTO} consults the stop-captured odometer AFTER the raw_payload fallback -- a real stop read must outrank it.`);
+  const body = fn[0];
+  const stopIdx = body.search(/FROM telematics\.unit_stop_events/);
+  const snapIdx = body.search(/FROM telematics\.odometer_readings/);
+  if (stopIdx === -1) p.push(`${AUTO} loadUnitOdometers no longer reads telematics.unit_stop_events (E-03) first.`);
+  if (snapIdx === -1) p.push(`${AUTO} loadUnitOdometers no longer falls back to telematics.odometer_readings (E-06).`);
+  if (stopIdx !== -1 && snapIdx !== -1 && stopIdx > snapIdx) p.push(`${AUTO} reads the E-06 snapshot before unit_stop_events -- E-14 order is stops first.`);
+  if (/vehicle_latest_position|raw_payload|interpolat/i.test(body)) {
+    p.push(`${AUTO} loadUnitOdometers reads a source outside the E-14 order (vehicle_latest_position / raw_payload) or interpolates.`);
+  }
+  if (!/relationExists\(client,\s*"telematics\.unit_stop_events"\)/.test(body)) {
+    p.push(`${AUTO} does not feature-detect telematics.unit_stop_events -- the cron must no-op that tier until E-03 is live, never crash.`);
+  }
+  if (!/skipped_no_baseline/.test(code)) p.push(`${AUTO} no longer records skipped_no_baseline -- a missing baseline would be guessed again.`);
+  if (!/due_wo_flag_off/.test(code) || !/PM_AUTO_ENGINE_CREATE_WORK_ORDERS/.test(code)) {
+    p.push(`${AUTO} creates work orders without the flag-OFF gate (ORDERS rule 2: business records ship flag-OFF).`);
   }
   return p;
 }
@@ -167,8 +174,13 @@ function selftest() {
     true
   );
   expect(
-    "cron forgets the stop tier",
-    checkAutoEngine(real(AUTO).replace(/latestStopCapturedOdometer\(client, unitId\)/, "Promise.resolve(null)")),
+    "cron drops the unit_stop_events tier",
+    checkAutoEngine(real(AUTO).replace(/FROM telematics\.unit_stop_events/, "FROM telematics.other")),
+    true
+  );
+  expect(
+    "cron loses the work-order flag gate",
+    checkAutoEngine(real(AUTO).replace(/due_wo_flag_off/g, "x")),
     true
   );
   expect(

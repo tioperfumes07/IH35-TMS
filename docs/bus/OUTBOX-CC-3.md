@@ -1140,6 +1140,17 @@ samsara 60695293 duplicate_warning=true (other row "Carlos Mauricio Carvallo", I
 0 fraud alerts, 0 GPS matches (CC-2's engines run on ingest; none recorded yet). Unknown driver for the company -> 404.
 guard: scripts/verify-driver-profile-tabs-read-only-and-attributed.mjs + --selftest PASS. next: row 5 (32 duplicate pairs report).
 
+## 2026-10-01 — ORDERS row 5 — 32 Samsara driver duplicate pairs: REPORT (no merge, no deactivation)
+what: docs/bus/2026-10-01-CC3-SAMSARA-DRIVER-DUPLICATES-REPORT.md — 32 Samsara ids -> 64 mdata.drivers rows, evidence per row
+(loads, settlements, assignments, fuel, status, created_at, which link) + proposed survivor.
+proof: 5 clear (Leonel Antonio Morales 5dd518ff, Angel Alfonso Sosa Perez 52037e93, Genaro Guerrero Chavez 6edcb351, HUGO GAYTAN 3445cf68,
+Carlos Mauricio Pena Carvallo 61727a46 — each the only row with loads/settlements/assignments/fuel). 27 judgment: neither row has activity.
+FINDING: in all 5 clear pairs mdata.drivers.samsara_driver_id is on the INACTIVE duplicate; the live row is linked only via the mirror.
+Every engine that maps Samsara -> driver must read both links (DVIR ingest + driver-profile tabs already do; driven-miles-legs does).
+blocker: owner decision per pair (Lead carries). The one-line order needed: "for each pair, survivor = <id>; move samsara_driver_id to it".
+CC-1 ASK RECEIVED (pm-auto-engine on manual odometer): runPmAutoEngineAfterManualOdometer is in CC-1's open PR #23632, not on main —
+CC-3 adds the one-line call to odometer-manual.routes.ts the moment #23632 merges (calling it now would break main's build).
+next: row 6 (DVIR engine every 15 min + engine-status + Maintenance table for Cursor).
 ## 2026-10-01 — ORDERS row 6 — T-51 DVIR import as a scheduled engine
 what: safety/samsara-dvir-poll.cron.ts now every 15 min America/Chicago over a 1-day window + 03:40 daily 7-day re-read (a later
 'resolved' clears the WF-050 block). Idempotent on client_request_id 'samsara-dvir:<id>' (proved: 56 inserted, re-run 56 unchanged).

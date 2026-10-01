@@ -4,8 +4,7 @@ import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
-import { extractSamsaraOdometerMi } from "../maint/pm-due.shared.js";
-import { latestStopCapturedOdometer } from "./pm-current-odometer.js";
+import { isEnabled } from "../lib/feature-flags/service.js";
 import {
   DEFAULT_PM_LOOKAHEAD_MILES,
   processMaintenancePredictorForOdometer,
@@ -221,60 +220,78 @@ async function createPmAutoWorkOrder(
   return createdWorkOrder.id;
 }
 
+export type UnitOdometer = {
+  odometer: number;
+  source: "unit_stop_events" | "odometer_readings";
+  read_at: string | null;
+};
+
+/**
+ * E-14 (ORDERS 2026-10-01, CC-1 row 1) odometer source order, nothing else:
+ *   1. telematics.unit_stop_events -- the latest stop that carried an odometer (E-03, the Lead's stop
+ *      engine, persisted). Feature-detected: until that table is live this tier no-ops ("E-03 pending").
+ *   2. telematics.odometer_readings -- the E-06 daily snapshot ledger, latest measured/entered row.
+ *   3. ABSENT -- the unit is skipped with a stated reason. Never 0, never interpolated, never guessed.
+ */
 async function loadUnitOdometers(
   client: DbClient,
   operatingCompanyId: string,
   unitIds: string[]
-): Promise<Map<string, number>> {
-  const map = new Map<string, number>();
-  if (unitIds.length === 0) return map;
+): Promise<{ byUnit: Map<string, UnitOdometer>; stopEventsLive: boolean }> {
+  const byUnit = new Map<string, UnitOdometer>();
+  const stopEventsLive = await relationExists(client, "telematics.unit_stop_events");
+  if (unitIds.length === 0) return { byUnit, stopEventsLive };
 
-  // PRIMARY: live odometer from the Samsara stats-poll ingest (#1289). The fleet POLLS rather than
-  // receiving odometer webhooks, so the integrations.samsara_vehicles.raw_payload below is empty for
-  // odometer — without this, every unit was skipped as "no odometer" and the PM auto-engine did nothing.
-  const liveRes = await client.query<{ unit_id: string; odometer_mi: number | string | null }>(
+  if (stopEventsLive) {
+    const stops = await client.query<{ unit_id: string; odometer_mi: number | string; read_at: string | null }>(
+      `
+        SELECT DISTINCT ON (unit_id)
+          unit_id::text AS unit_id, odometer_mi, COALESCE(odometer_read_at, started_at)::text AS read_at
+        FROM telematics.unit_stop_events
+        WHERE unit_id = ANY($1::uuid[])
+          AND odometer_mi IS NOT NULL
+          AND COALESCE(odometer_note, '') <> 'ABSENT'
+        ORDER BY unit_id, started_at DESC
+      `,
+      [unitIds]
+    );
+    for (const row of stops.rows) {
+      const odo = Number(row.odometer_mi);
+      if (Number.isFinite(odo)) byUnit.set(row.unit_id, { odometer: Math.round(odo), source: "unit_stop_events", read_at: row.read_at });
+    }
+  }
+
+  const snapshot = await client.query<{ unit_id: string; odometer_miles: number | string; read_at: string }>(
     `
-      SELECT unit_id::text AS unit_id, odometer_mi
-      FROM telematics.vehicle_latest_position
+      SELECT DISTINCT ON (unit_id) unit_id::text AS unit_id, odometer_miles, read_at::text AS read_at
+      FROM telematics.odometer_readings
       WHERE operating_company_id = $1::uuid
         AND unit_id = ANY($2::uuid[])
-        AND odometer_mi IS NOT NULL
+        AND confidence IN ('measured', 'entered')
+        AND odometer_miles IS NOT NULL
+      ORDER BY unit_id, read_at DESC
     `,
     [operatingCompanyId, unitIds]
   );
-  for (const row of liveRes.rows) {
-    const odo = Number(row.odometer_mi);
-    if (Number.isFinite(odo)) map.set(row.unit_id, Math.round(odo));
+  for (const row of snapshot.rows) {
+    if (byUnit.has(row.unit_id)) continue;
+    const odo = Number(row.odometer_miles);
+    if (Number.isFinite(odo)) byUnit.set(row.unit_id, { odometer: Math.round(odo), source: "odometer_readings", read_at: row.read_at });
   }
+  return { byUnit, stopEventsLive };
+}
 
-  // ROUND 305 A-46: the latest fix usually carries no odometer (22 % of position instants do), which
-  // skipped a working truck for that whole run. Fall back to the odometer READ at its most recent stop.
-  for (const unitId of unitIds) {
-    if (map.has(unitId)) continue;
-    const stop = await latestStopCapturedOdometer(client, unitId);
-    if (stop) map.set(unitId, Math.round(stop.odometer_miles));
+/** ORDERS 2026-10-01 rule 2: creating a work order touches a business record -- flag-OFF by default. */
+export const PM_AUTO_ENGINE_CREATE_WORK_ORDERS_FLAG = "PM_AUTO_ENGINE_CREATE_WORK_ORDERS";
+
+/** last_service_odometer NULL or <= 1 with no next_due_odometer is ABSENT, never a guessed baseline. */
+export function pmScheduleBaselineAbsentReason(schedule: Pick<PmAutoEngineScheduleRow, "interval_kind" | "last_service_odometer" | "next_due_odometer">): string | null {
+  if (schedule.interval_kind !== "miles") {
+    return `${schedule.interval_kind}-interval schedule: maintenance.pm_schedules carries no last-service date, so it cannot be evaluated`;
   }
-
-  // FALLBACK: webhook raw_payload for any unit without a live stats-poll fix yet.
-  const res = await client.query<{ unit_id: string; raw_payload: unknown }>(
-    `
-      SELECT DISTINCT ON (sv.local_unit_id)
-        sv.local_unit_id::text AS unit_id,
-        sv.raw_payload
-      FROM integrations.samsara_vehicles sv
-      WHERE sv.operating_company_id = $1::uuid
-        AND sv.local_unit_id = ANY($2::uuid[])
-      ORDER BY sv.local_unit_id, sv.last_seen_at DESC NULLS LAST
-    `,
-    [operatingCompanyId, unitIds]
-  );
-
-  for (const row of res.rows) {
-    if (map.has(row.unit_id)) continue;
-    const odometer = extractSamsaraOdometerMi(row.raw_payload);
-    if (odometer != null) map.set(row.unit_id, odometer);
-  }
-  return map;
+  if (schedule.next_due_odometer != null) return null;
+  if (schedule.last_service_odometer != null && Number(schedule.last_service_odometer) > 1) return null;
+  return "no baseline PM odometer on file (last_service_odometer absent) -- awaiting the owner's real service history, never guessed";
 }
 
 async function listActiveSchedules(client: DbClient, operatingCompanyId: string): Promise<PmAutoEngineScheduleRow[]> {
@@ -290,7 +307,10 @@ async function listActiveSchedules(client: DbClient, operatingCompanyId: string)
         ps.last_service_odometer,
         ps.next_due_odometer
       FROM maintenance.pm_schedules ps
-      JOIN mdata.units u ON u.id = ps.unit_id
+      JOIN mdata.units u
+        ON u.id = ps.unit_id
+       AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ps.operating_company_id
+       AND u.deactivated_at IS NULL
       WHERE ps.operating_company_id = $1::uuid
         AND ps.is_active = true
         AND u.is_sample_data IS NOT TRUE
@@ -341,7 +361,10 @@ export async function runPmAutoEngineForTenant(
   const occurredAt = new Date().toISOString();
   const schedules = await listActiveSchedules(client, operatingCompanyId);
   const unitIds = [...new Set(schedules.map((s) => s.unit_id))];
-  const odometerByUnit = await loadUnitOdometers(client, operatingCompanyId, unitIds);
+  const { byUnit: odometerByUnit, stopEventsLive } = await loadUnitOdometers(client, operatingCompanyId, unitIds);
+  const createWorkOrders = await isEnabled(client, PM_AUTO_ENGINE_CREATE_WORK_ORDERS_FLAG, {
+    operating_company_id: operatingCompanyId,
+  });
 
   let workOrdersCreated = 0;
   let alertsCreated = 0;
@@ -350,20 +373,42 @@ export async function runPmAutoEngineForTenant(
   // error_message NULL, 0 created — while 41,070 of 41,070 evaluations logged skipped_no_odometer.
   // Counting the skips is what lets the finalize step below tell "nothing to do" from "did nothing".
   let skippedNoOdometer = 0;
+  let skippedNoBaseline = 0;
 
   try {
     for (const schedule of schedules) {
-      const currentOdometer = odometerByUnit.get(schedule.unit_id) ?? null;
-      if (currentOdometer == null) {
+      const reading = odometerByUnit.get(schedule.unit_id) ?? null;
+      if (reading == null) {
         await appendPmAutoLog(client, {
           run_id: runId,
           operating_company_id: operatingCompanyId,
           pm_schedule_id: schedule.id,
           unit_id: schedule.unit_id,
           action: "skipped_no_odometer",
-          detail: { label: schedule.label },
+          detail: {
+            label: schedule.label,
+            reason: stopEventsLive
+              ? "ABSENT: no odometer in telematics.unit_stop_events or telematics.odometer_readings"
+              : "ABSENT: E-03 pending (telematics.unit_stop_events not live) and no odometer in telematics.odometer_readings",
+          },
         });
         skippedNoOdometer += 1;
+        continue;
+      }
+      const currentOdometer = reading.odometer;
+      const odometerDetail = { current_odometer: currentOdometer, odometer_source: reading.source, odometer_read_at: reading.read_at };
+
+      const baselineAbsent = pmScheduleBaselineAbsentReason(schedule);
+      if (baselineAbsent) {
+        await appendPmAutoLog(client, {
+          run_id: runId,
+          operating_company_id: operatingCompanyId,
+          pm_schedule_id: schedule.id,
+          unit_id: schedule.unit_id,
+          action: "skipped_no_baseline",
+          detail: { label: schedule.label, reason: baselineAbsent, ...odometerDetail },
+        });
+        skippedNoBaseline += 1;
         continue;
       }
 
@@ -387,7 +432,7 @@ export async function runPmAutoEngineForTenant(
             pm_schedule_id: schedule.id,
             unit_id: schedule.unit_id,
             action: "near_due_alert",
-            detail: { current_odometer: currentOdometer, next_due_odometer: nextDue },
+            detail: { ...odometerDetail, next_due_odometer: nextDue },
           });
         }
         continue;
@@ -404,7 +449,19 @@ export async function runPmAutoEngineForTenant(
           pm_schedule_id: schedule.id,
           unit_id: schedule.unit_id,
           action: "skipped_open_wo",
-          detail: { current_odometer: currentOdometer, next_due_odometer: nextDue },
+          detail: { ...odometerDetail, next_due_odometer: nextDue },
+        });
+        continue;
+      }
+
+      if (!createWorkOrders) {
+        await appendPmAutoLog(client, {
+          run_id: runId,
+          operating_company_id: operatingCompanyId,
+          pm_schedule_id: schedule.id,
+          unit_id: schedule.unit_id,
+          action: "due_wo_flag_off",
+          detail: { ...odometerDetail, next_due_odometer: nextDue, flag: PM_AUTO_ENGINE_CREATE_WORK_ORDERS_FLAG },
         });
         continue;
       }
@@ -426,7 +483,7 @@ export async function runPmAutoEngineForTenant(
           unit_id: schedule.unit_id,
           action: "wo_created",
           work_order_id: workOrderId,
-          detail: { current_odometer: currentOdometer, next_due_odometer: nextDue },
+          detail: { ...odometerDetail, next_due_odometer: nextDue },
         });
       }
     }
@@ -445,13 +502,13 @@ export async function runPmAutoEngineForTenant(
       runDiagnostic =
         "no_active_pm_schedules: 0 active PM schedules for this entity — no unit is under " +
         "preventive-maintenance coverage. This is a finding, not a quiet no-op.";
-    } else if (noEffect && skippedNoOdometer === schedules.length) {
+    } else if (noEffect && skippedNoOdometer + skippedNoBaseline === schedules.length) {
       runStatus = "skipped";
       runDiagnostic =
-        `no_odometer_for_all_units: all ${schedules.length} evaluated schedule(s) across ` +
-        `${unitIds.length} unit(s) were skipped for a missing odometer reading in ` +
-        "telematics.vehicle_latest_position. Nothing was created. Check that the schedules point " +
-        "at real, telemetry-reporting units — not deactivated or demo units.";
+        `nothing_evaluable: ${schedules.length} schedule(s) across ${unitIds.length} unit(s) -- ` +
+        `${skippedNoOdometer} with no odometer (${stopEventsLive ? "unit_stop_events + odometer_readings" : "E-03 pending; odometer_readings"}), ` +
+        `${skippedNoBaseline} with no baseline (awaiting the owner's service history). Per-unit reasons are in ` +
+        "maintenance.pm_auto_wo_log for this run.";
     }
 
     if (runId && (await relationExists(client, "maintenance.pm_schedule_runs"))) {
@@ -495,7 +552,11 @@ export async function runPmAutoEngineForTenant(
 export async function runPmAutoEngineCronTick(): Promise<void> {
   await withLuciaBypass(async (client) => {
     const companies = await client.query<{ id: string }>(
-      `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
+      `SELECT DISTINCT c.id::text AS id
+         FROM org.companies c
+         JOIN maintenance.pm_schedules ps ON ps.operating_company_id = c.id AND ps.is_active = true
+        WHERE c.is_active = true AND c.deactivated_at IS NULL
+        ORDER BY 1`
     );
     for (const company of companies.rows) {
       assertTenantContext(String(company.id ?? ""), "maintenance.pm_auto_engine_cron");
@@ -503,6 +564,16 @@ export async function runPmAutoEngineCronTick(): Promise<void> {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
       await runPmAutoEngineForTenant(client as DbClient, company.id, { trigger_source: "cron" });
     }
+  });
+}
+
+/** E-14: "+ on manual odometer entry" -- one tenant run, after the entry has committed. */
+export async function runPmAutoEngineAfterManualOdometer(operatingCompanyId: string): Promise<void> {
+  await withLuciaBypass(async (client) => {
+    assertTenantContext(operatingCompanyId, "maintenance.pm_auto_engine_manual_odometer");
+    // membership-scope-exempt: caller already authorised for this entity
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    await runPmAutoEngineForTenant(client as DbClient, operatingCompanyId, { trigger_source: "manual" });
   });
 }
 
