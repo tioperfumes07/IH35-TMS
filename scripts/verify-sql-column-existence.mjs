@@ -373,7 +373,31 @@ function analyzeSqlFragment(sql, schema) {
     " ON CONFLICT DO "
   );
   const norm = withoutConflictTarget.replace(/\s+/g, " ").trim();
-  const low = norm.toLowerCase();
+  let low = norm.toLowerCase();
+
+  // INSERT INTO <t> ... ON CONFLICT DO UPDATE SET <col> = … — the SET targets are STRUCTURALLY UNQUALIFIABLE and
+  // belong to the INSERT target table, never to the FROM/JOIN tables of the INSERT's SELECT. Left in place, the
+  // unqualified pass attributed `read_at = now()` (integrations.samsara_route_stop_progress) to mdata.load_stops,
+  // the SELECT's FROM table (2026-10-01). Check those SET columns against the insert target here, then excise the
+  // clause so no later pass re-attributes them. Nothing else in the statement is skipped.
+  const insertTargetRe = /\binsert\s+into\s+([a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*)/;
+  const itm = insertTargetRe.exec(low);
+  const conflictSetRe = /\bdo\s+update\s+set\b([\s\S]*?)(?=\bwhere\b|\breturning\b|$)/;
+  const csm = itm ? conflictSetRe.exec(low) : null;
+  if (itm && csm) {
+    const insTable = itm[1];
+    if (TARGET_TABLES.has(insTable) && schema.has(insTable)) {
+      const cols = schema.get(insTable);
+      const assignRe = /(?:^|,)\s*([a-z_][a-z0-9_]*)\s*=/g;
+      let am;
+      while ((am = assignRe.exec(csm[1])) !== null) {
+        const col = am[1];
+        if (SQL_NOISE.has(col)) continue;
+        if (cols && !cols.has(col)) violations.push({ table: insTable, column: col, ctx: `unqualified ${col} (ON CONFLICT DO UPDATE SET)` });
+      }
+    }
+    low = low.replace(csm[0], " do update set ");
+  }
 
   // FROM/JOIN <schema.table> [AS] [alias] — build alias→table map.
   //

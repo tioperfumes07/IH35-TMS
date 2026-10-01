@@ -75,7 +75,7 @@ export async function listUndepositedReceipts(operatingCompanyId: string, userId
     }>(
       `
       SELECT p.id::text, p.display_id, p.amount_cents::bigint, p.payment_date::text,
-             c.name AS payee_name, NULL::text AS memo
+             c.customer_name AS payee_name, NULL::text AS memo
       FROM accounting.payments p
       LEFT JOIN mdata.customers c ON c.id = p.customer_id
       WHERE p.operating_company_id = $1::uuid

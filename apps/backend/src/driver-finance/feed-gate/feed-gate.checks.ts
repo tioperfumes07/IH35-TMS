@@ -65,13 +65,13 @@ function loadChecks(loadSet: string): FeedCheckDef[] {
         FROM loads x JOIN mdata.loads l ON l.id = x.id JOIN accounting.invoices i ON i.source_load_id = l.id AND i.voided_at IS NULL` },
     { key: "invoice.ar_je_posted", group: "controls", sql: `${L}
       SELECT 'accounting.invoices', i.id, 'Invoice ' || i.display_id,
-             CASE WHEN i.status IN ('sent','partial','paid','overdue') THEN EXISTS (SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid WHERE p.source_transaction_type = 'invoice' AND p.source_transaction_id = i.id::text AND je.status = 'posted') ELSE NULL END,
-             CASE WHEN i.status IN ('sent','partial','paid','overdue') AND NOT EXISTS (SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid WHERE p.source_transaction_type = 'invoice' AND p.source_transaction_id = i.id::text AND je.status = 'posted') THEN 'invoice is ' || i.status || ' but no posted A/R journal entry exists' END,
+             CASE WHEN i.status IN ('sent','partial','paid') THEN EXISTS (SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid WHERE p.source_transaction_type = 'invoice' AND p.source_transaction_id = i.id::text AND je.status = 'posted') ELSE NULL END,
+             CASE WHEN i.status IN ('sent','partial','paid') AND NOT EXISTS (SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid WHERE p.source_transaction_type = 'invoice' AND p.source_transaction_id = i.id::text AND je.status = 'posted') THEN 'invoice is ' || i.status || ' but no posted A/R journal entry exists' END,
              '/accounting/invoices/' || i.id::text, jsonb_build_object('status', i.status, 'sent_at', i.sent_at)
         FROM loads x JOIN mdata.loads l ON l.id = x.id JOIN accounting.invoices i ON i.source_load_id = l.id AND i.voided_at IS NULL` },
     { key: "invoice.sent_stamped", group: "stamps", sql: `${L}
-      SELECT 'accounting.invoices', i.id, 'Invoice ' || i.display_id, CASE WHEN i.status IN ('sent','partial','paid','overdue') THEN (i.sent_at IS NOT NULL AND i.issue_date IS NOT NULL AND i.due_date IS NOT NULL) ELSE NULL END,
-             concat_ws('; ', CASE WHEN i.status IN ('sent','partial','paid','overdue') AND i.sent_at IS NULL THEN 'sent_at not stamped' END, CASE WHEN i.issue_date IS NULL THEN 'no issue date' END, CASE WHEN i.due_date IS NULL THEN 'no due date' END),
+      SELECT 'accounting.invoices', i.id, 'Invoice ' || i.display_id, CASE WHEN i.status IN ('sent','partial','paid') THEN (i.sent_at IS NOT NULL AND i.issue_date IS NOT NULL AND i.due_date IS NOT NULL) ELSE NULL END,
+             concat_ws('; ', CASE WHEN i.status IN ('sent','partial','paid') AND i.sent_at IS NULL THEN 'sent_at not stamped' END, CASE WHEN i.issue_date IS NULL THEN 'no issue date' END, CASE WHEN i.due_date IS NULL THEN 'no due date' END),
              '/accounting/invoices/' || i.id::text, jsonb_build_object('issue_date', i.issue_date, 'due_date', i.due_date, 'sent_at', i.sent_at)
         FROM loads x JOIN mdata.loads l ON l.id = x.id JOIN accounting.invoices i ON i.source_load_id = l.id AND i.voided_at IS NULL` },
     { key: "invoice.factoring_linked", group: "linkage", sql: `${L}
