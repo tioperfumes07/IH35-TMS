@@ -11,6 +11,8 @@ import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { StatusBadge } from "../../../components/layout/StatusBadge";
+import { EntityLink } from "../../../components/shared/EntityLink";
 
 type FraudAlertRow = {
   uuid: string;
@@ -24,12 +26,81 @@ type FraudAlertRow = {
   gallons: number | null;
   location_city: string | null;
   location_state: string | null;
+  // GAP-61/FUEL-F7512 — fuel fraud -> recovery chain (#23710): confirming fraud opens/reuses a
+  // fuel.fuel_card_overage_events row; these surface here so the list shows where it stands.
+  recovery_event_id: string | null;
+  recovery_status: string | null;
 };
+
+type FraudRecoveryOutcome =
+  | {
+      outcome: "opened" | "reused";
+      recovery_event_id: string;
+      status: string;
+      recover_cents: number;
+      total_cents: number;
+      review_reason: string;
+    }
+  | { outcome: "refused"; reason: string };
+
+type ConfirmFraudResponse = { alert: FraudAlertRow; recovery: FraudRecoveryOutcome };
+
+type BadgeVariant = "crit" | "warn" | "info" | "positive" | "neutral";
 
 function severityClass(severity: FraudAlertRow["severity"]) {
   if (severity === "critical") return "bg-red-100 text-red-800";
   if (severity === "warn") return "bg-slate-100 text-slate-700";
   return "bg-slate-100 text-slate-700";
+}
+
+function money(cents: number) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
+}
+
+function alertStatusBadge(status: string): { variant: BadgeVariant; label: string } {
+  switch (status) {
+    case "open":
+      return { variant: "warn", label: "Open" };
+    case "investigating":
+      return { variant: "info", label: "Investigating" };
+    case "dismissed":
+      return { variant: "neutral", label: "Dismissed" };
+    case "confirmed_fraud":
+      return { variant: "crit", label: "Confirmed fraud" };
+    case "recovered":
+      return { variant: "positive", label: "Recovered" };
+    default:
+      return { variant: "neutral", label: status.replace(/_/g, " ") };
+  }
+}
+
+function recoveryStatusBadge(status: string | null): { variant: BadgeVariant; label: string } | null {
+  if (!status) return null;
+  switch (status) {
+    case "pending_review":
+      return { variant: "warn", label: "Pending review" };
+    case "approved":
+      return { variant: "info", label: "Approved" };
+    case "posted":
+      return { variant: "positive", label: "Posted" };
+    case "company_variance":
+      return { variant: "neutral", label: "Company variance" };
+    case "voided":
+      return { variant: "crit", label: "Voided" };
+    default:
+      return { variant: "neutral", label: status.replace(/_/g, " ") };
+  }
+}
+
+/** Dollars-string input -> integer cents, or `undefined` to recover the whole purchase (backend default). */
+function parseRecoverCents(input: string): { cents: number | undefined } | { error: string } {
+  const trimmed = input.trim();
+  if (!trimmed) return { cents: undefined };
+  const dollars = Number(trimmed);
+  if (!Number.isFinite(dollars) || dollars <= 0) return { error: "Enter a positive dollar amount." };
+  const cents = Math.round(dollars * 100);
+  if (cents <= 0) return { error: "Enter a positive dollar amount." };
+  return { cents };
 }
 
 async function listAlerts(companyId: string, status?: string, severity?: string) {
@@ -48,6 +119,11 @@ export function FraudAlertsListPage() {
   const [dismissTarget, setDismissTarget] = useState<FraudAlertRow | null>(null);
   const [dismissReason, setDismissReason] = useState("");
   const [attemptDismissClose, setAttemptDismissClose] = useState<() => void>(() => () => {});
+  const [confirmFraudTarget, setConfirmFraudTarget] = useState<FraudAlertRow | null>(null);
+  const [recoverAmountInput, setRecoverAmountInput] = useState("");
+  const [confirmFraudResult, setConfirmFraudResult] = useState<
+    { kind: "opened"; message: string } | { kind: "refused"; reason: string } | null
+  >(null);
   const lifecycleGenerationRef = useRef(0);
 
   const alertsQuery = useQuery({
@@ -80,14 +156,27 @@ export function FraudAlertsListPage() {
   });
 
   const confirmMut = useMutation({
-    mutationFn: (input: AlertAction) =>
-      apiRequest(`/api/v1/fuel/fraud-alerts/${input.uuid}/confirm-fraud`, {
+    mutationFn: (input: AlertAction & { recover_cents?: number }) =>
+      apiRequest<ConfirmFraudResponse>(`/api/v1/fuel/fraud-alerts/${input.uuid}/confirm-fraud`, {
         method: "PATCH",
-        body: { operating_company_id: input.companyId },
+        body: { operating_company_id: input.companyId, recover_cents: input.recover_cents },
       }),
-    onSuccess: (_result, input) => {
+    onSuccess: (result, input) => {
       if (input.generation !== lifecycleGenerationRef.current) return;
-      pushToast("Alert confirmed as fraud.", "error");
+      const { recovery } = result;
+      if (recovery.outcome === "refused") {
+        setConfirmFraudResult({ kind: "refused", reason: recovery.reason });
+        pushToast(`Alert confirmed as fraud. Recovery not opened: ${recovery.reason}`, "error");
+      } else if (recovery.status === "company_variance") {
+        const message = "No signed contract authority — company absorbs the loss";
+        setConfirmFraudResult({ kind: "opened", message });
+        pushToast(message, "error");
+      } else {
+        const statusLabel = recoveryStatusBadge(recovery.status)?.label ?? recovery.status;
+        const message = `Recovery opened: ${statusLabel}, ${money(recovery.recover_cents)} of ${money(recovery.total_cents)} — awaiting approval`;
+        setConfirmFraudResult({ kind: "opened", message });
+        pushToast(message, "success");
+      }
       invalidate(input.companyId);
     },
     onError: (error, input) => {
@@ -126,6 +215,9 @@ export function FraudAlertsListPage() {
     dismissMut.reset();
     setDismissTarget(null);
     setDismissReason("");
+    setConfirmFraudTarget(null);
+    setRecoverAmountInput("");
+    setConfirmFraudResult(null);
     setStatusFilter("open");
   }, [companyId]); // Mutation reset functions are stable; company transitions own fresh action state.
 
@@ -136,6 +228,15 @@ export function FraudAlertsListPage() {
     setDismissTarget(null);
     setDismissReason("");
   };
+
+  const closeConfirmFraud = () => {
+    if (confirmMut.isPending) return;
+    setConfirmFraudTarget(null);
+    setRecoverAmountInput("");
+    setConfirmFraudResult(null);
+  };
+
+  const parsedRecoverAmount = parseRecoverCents(recoverAmountInput);
 
   const columns = useMemo<ParityColumn<FraudAlertRow>[]>(
     () => [
@@ -156,7 +257,32 @@ export function FraudAlertsListPage() {
         render: (row) => [row.location_city, row.location_state].filter(Boolean).join(", ") || "—",
       },
       { key: "gallons", label: "Gallons", sortable: true, render: (row) => (row.gallons != null ? row.gallons.toFixed(1) : "—") },
-      { key: "status", label: "Status", sortable: true, render: (row) => row.status },
+      {
+        key: "status",
+        label: "Status",
+        sortable: true,
+        render: (row) => {
+          const badge = alertStatusBadge(row.status);
+          return <StatusBadge variant={badge.variant}>{badge.label}</StatusBadge>;
+        },
+      },
+      {
+        key: "recovery_status",
+        label: "Recovery",
+        sortable: true,
+        render: (row) => {
+          const badge = recoveryStatusBadge(row.recovery_status);
+          if (!badge || !row.recovery_event_id) return <span className="text-xs text-gray-500">—</span>;
+          return (
+            <EntityLink
+              kind="fuel_card_overage_event"
+              id={row.recovery_event_id}
+              label={<StatusBadge variant={badge.variant}>{badge.label}</StatusBadge>}
+              className=""
+            />
+          );
+        },
+      },
       {
         key: "actions",
         label: "Actions",
@@ -171,7 +297,9 @@ export function FraudAlertsListPage() {
             </ActionButton>
             <ActionButton disabled={actionPending} onClick={() => {
               if (actionPending) return;
-              confirmMut.mutate({ uuid: row.uuid, companyId, generation: lifecycleGenerationRef.current });
+              setConfirmFraudTarget(row);
+              setRecoverAmountInput("");
+              setConfirmFraudResult(null);
             }}>
               Confirm fraud
             </ActionButton>
@@ -287,6 +415,68 @@ export function FraudAlertsListPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal open={Boolean(confirmFraudTarget)} onClose={closeConfirmFraud} title="Confirm fuel fraud">
+        {confirmFraudResult ? (
+          <div className="space-y-3" data-testid="fraud-confirm-recovery-result">
+            <p
+              className={`rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 ${
+                confirmFraudResult.kind === "refused" ? "font-semibold" : ""
+              }`}
+            >
+              {confirmFraudResult.kind === "refused"
+                ? `Recovery not opened: ${confirmFraudResult.reason}`
+                : confirmFraudResult.message}
+            </p>
+            <div className="flex justify-end">
+              <Button type="button" variant="secondary" onClick={closeConfirmFraud}>
+                Close
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <form
+            className="space-y-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!confirmFraudTarget || "error" in parsedRecoverAmount) return;
+              confirmMut.mutate({
+                uuid: confirmFraudTarget.uuid,
+                companyId,
+                generation: lifecycleGenerationRef.current,
+                recover_cents: parsedRecoverAmount.cents,
+              });
+            }}
+          >
+            <p className="text-xs text-gray-700">
+              Confirming opens a recovery of the purchase through the fuel card overage engine. It never
+              posts — approval happens on the overage review screen.
+            </p>
+            <label className="block space-y-1 text-xs font-semibold text-gray-700">
+              Amount to recover from driver ($)
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={recoverAmountInput}
+                onChange={(event) => setRecoverAmountInput(event.target.value)}
+                className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs font-normal"
+                placeholder="Full purchase amount"
+                autoFocus
+              />
+            </label>
+            {"error" in parsedRecoverAmount ? <p className="text-xs text-red-700">{parsedRecoverAmount.error}</p> : null}
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="secondary" disabled={confirmMut.isPending} onClick={closeConfirmFraud}>
+                Cancel
+              </Button>
+              <Button type="submit" loading={confirmMut.isPending} disabled={"error" in parsedRecoverAmount}>
+                Confirm fraud
+              </Button>
+            </div>
+          </form>
+        )}
       </Modal>
     </div>
   );
