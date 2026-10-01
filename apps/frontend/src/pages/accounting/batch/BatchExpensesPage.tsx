@@ -43,8 +43,8 @@ export function BatchExpensesPage() {
   const pasteRef = useRef<HTMLTextAreaElement | null>(null);
 
   const accountsQ = useQuery({ queryKey: ["batch-expenses", "accounts", companyId], queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: companyId, postable_only: true }), enabled: !!companyId, staleTime: 60_000 });
-  const vendorsQ = useQuery({ queryKey: ["batch-expenses", "vendors", companyId], queryFn: () => listVendors({ operating_company_id: companyId, limit: 200 }), enabled: !!companyId, staleTime: 60_000 });
-  const classesQ = useQuery({ queryKey: ["batch-expenses", "classes", companyId], queryFn: () => classesCatalogClient.list({ operating_company_id: companyId, is_active: "true", limit: 200 }), enabled: !!companyId, staleTime: 60_000 });
+  const vendorsQ = useQuery({ queryKey: ["batch-expenses", "vendors", companyId], queryFn: () => listVendors({ operating_company_id: companyId, limit: 99 }), enabled: !!companyId, staleTime: 60_000 });
+  const classesQ = useQuery({ queryKey: ["batch-expenses", "classes", companyId], queryFn: () => classesCatalogClient.list({ operating_company_id: companyId, is_active: "true", limit: 99 }), enabled: !!companyId, staleTime: 60_000 });
 
   const accounts = accountsQ.data?.accounts ?? [];
   const paymentAccounts = useMemo(() => accounts.filter(isPaymentAccount), [accounts]);

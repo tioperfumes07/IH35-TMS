@@ -92,7 +92,7 @@ export function LoadsReportPage() {
 
   const customersQuery = useQuery({
     queryKey: ["loads-report-customers", companyId, customerSearch],
-    queryFn: () => searchCustomersAutocomplete(companyId, customerSearch, { limit: 500 }),
+    queryFn: () => searchCustomersAutocomplete(companyId, customerSearch, { limit: 50 }),
     enabled: Boolean(companyId),
     staleTime: 15_000,
   });

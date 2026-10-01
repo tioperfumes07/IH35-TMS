@@ -65,7 +65,7 @@ export function DashcamViewerPage() {
   const effectiveUnitId = applied.unitId.trim() || undefined;
   const clipsQ = useQuery({
     queryKey: ["telematics", "dashcam-clips", companyId, effectiveUnitId ?? ""],
-    queryFn: () => listDashcamClips(companyId, { unitId: effectiveUnitId, limit: 100 }),
+    queryFn: () => listDashcamClips(companyId, { unitId: effectiveUnitId, limit: 99 }),
     enabled: Boolean(companyId),
   });
 
