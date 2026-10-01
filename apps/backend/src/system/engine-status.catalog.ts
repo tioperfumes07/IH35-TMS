@@ -388,12 +388,13 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     module: "complaints",
     domain: "Driver profile",
     schedule: "On entry",
+    // On entry: a complaint row exists only when one is filed, so silence is not a failure (shouldProduce false).
     expectedWindowHours: null,
     shouldProduce: false,
     syncKinds: [],
-    output: null,
+    output: { relation: "safety.complaints", tsColumn: "created_at", companyColumn: "operating_company_id" },
     ownerSeat: "CC-2",
-    kind: "pending",
+    kind: "engine",
   },
   {
     id: "E-29",
