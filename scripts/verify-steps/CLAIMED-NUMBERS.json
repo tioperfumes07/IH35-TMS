@@ -1,4 +1,9 @@
 {
+  "12051": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-posted-expense-line-matches-its-ledger: every posted expense line account equals the account its journal entry leg posted; the immutability trigger exists."
+  },
   "12047": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-01",
