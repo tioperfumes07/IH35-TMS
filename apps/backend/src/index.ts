@@ -348,6 +348,8 @@ import { registerUnitMaintenanceHistoryRoutes } from "./maintenance/unit-mainten
 import { registerMaintenanceKpiRoutes } from "./maintenance/kpi.routes.js";
 import { initializePmAutoEngineCron } from "./maintenance/pm-auto-engine.cron.js";
 import { initializeOdometerSnapshotCron } from "./telematics/odometer-snapshot.cron.js";
+import { initializeRosterIntegrityCron } from "./fleet/roster-integrity.cron.js";
+import { registerRosterIntegrityRoutes } from "./fleet/roster-integrity.service.js";
 import { initializeLoadRealDrivenMilesCron } from "./telematics/load-real-driven-miles.cron.js";
 import { registerLoadRealDrivenMilesRoutes } from "./telematics/load-real-driven-miles.service.js";
 import { registerThreeMileCpmRoutes } from "./reports/three-mile-cpm.service.js";
@@ -1313,6 +1315,7 @@ async function main() {
   await registerPmCostPerMileRoutes(app);
   await registerLoadRealDrivenMilesRoutes(app);
   await registerThreeMileCpmRoutes(app);
+  await registerRosterIntegrityRoutes(app);
   await registerMaintWoApRoutes(app);
   await registerForm425CRoutes(app);
   // Form 425-C Exhibits A–F generator. Previously left unmounted (held as "financial-adjacent"),
@@ -1861,6 +1864,9 @@ async function main() {
 
       initializeOdometerSnapshotCron(app);
       app.log.info("[STARTUP] odometer-snapshot-cron initialized");
+
+      initializeRosterIntegrityCron(app);
+      app.log.info("[STARTUP] roster-integrity-cron initialized");
 
       initializeLoadRealDrivenMilesCron(app);
       app.log.info("[STARTUP] load-real-driven-miles-cron initialized");

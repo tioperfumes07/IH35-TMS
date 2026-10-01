@@ -1283,3 +1283,27 @@ string; it is why `required-live-load-guard` is red on every PR.
 **Owner/Cursor note:** `build-typecheck` is red on main itself — `verify:arch-design` reports 8 missing sub-nav
 tabs (banking: Driver Escrow; drivers: Permits, Deductions; maintenance: R&M Status Board, Arriving Soon,
 In-Transit Issues, Damage Reports, Severe Repairs) — Cursor's nav surface.
+
+## 2026-10-01 — ROUND 313 · #3 settlement_model never NULL MERGED (#23780) · #1 E-17 fleet roster integrity BUILT
+
+**#3:** four writers omitted settlement_model; each now stamps it (calendar periods / weekly close = week_calendar,
+fed settlement document = load_bookended); migration 202615180000 makes the DB refuse NULL; guard 12057. Live: 64
+settlements, 0 NULL, all load_bookended.
+**#1 E-17 engine:** `fleet/roster-integrity.service.ts` reconciles every active unit (entity = leased-to else owner)
+vs Samsara (link, staleness from real positions, VIN, entity, orphans, deactivated still reporting), the insurance
+schedule (policy_unit → assets.unit_id → policy: not scheduled, only expired/cancelled, still insured after
+deactivation, insured tractor not linked), IRP (missing / expired, trucks only), lease (truck ran loads for an
+entity that neither owns nor leases it), vehicle type unset. IFTA is per carrier, not per unit. Table
+`fleet.roster_findings` (migration 202615180100: RLS forced, one open finding per key, resolved when cleared,
+void with reason, no DELETE grant). Nightly cron 02:40 CT + "Run now". Screen `/fleet/roster-integrity` with
+EntityLink unit / insurance policy / insurer vendor. Engine board E-17 → engine, probe on
+`fleet.roster_findings.last_detected_at` (not created_at: a stable fleet creates no new rows and would read dead).
+Guard 12061 (selftest 5/5).
+**live proof (prod read-only dry run, ~150 ms/entity):** USMCA 22 findings — T122 no position since 09/26 14:32;
+deactivated Versa-02 still reporting; T122 + T124 on no insurance schedule; deactivated T149 still on policy
+TEST-CODEX-BATTERY-20260824; insured tractor asset TEST-UNIT-20260806-01 not linked to a unit; 16 units with no
+vehicle type. TRANSP 45 (12 trucks silent since 05/23 — fleet moved to USMCA; 15 on no schedule; 3 unlinked).
+TRK 0. **Root finding:** `integrations.samsara_vehicles.last_seen_at` is not refreshed by the live ingest (all 16
+USMCA trucks read 05/23 11:38) — the engine reads real positions instead.
+**Also today:** CI secret `PROD_READONLY_DATABASE_URL` set to the owner-confirmed `ih35_ci_readonly` string (tested:
+current_user ih35_ci_readonly, writes blocked); local API docs updated.
