@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { ENSURABLE_CONTRACT_TYPES, ensureContractTypeTemplate } from "./contract-type-templates.service.js";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -298,6 +299,23 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
     return withCurrentUser(authUser.uuid, async (client) => {
       await setOperatingCompany(client, parsed.data.operating_company_id);
       const template = await ensureTruckLeaseTemplate(client, parsed.data.operating_company_id, authUser.uuid);
+      return { template };
+    });
+  });
+
+  // ROUND 316 — seed a contract type's print design (trailer lease, transportation services agreement).
+  app.post("/api/v1/legal/contracts/templates/:code/ensure", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+    if (!truckLeaseEnabled()) return reply.code(404).send({ error: "not_found" });
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    if (!writeRoles.has(String(authUser.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    const code = String((req.params as { code?: string } | undefined)?.code ?? "");
+    if (!ENSURABLE_CONTRACT_TYPES.includes(code)) return reply.code(404).send({ error: "unknown_contract_type", allowed: ENSURABLE_CONTRACT_TYPES });
+    const parsed = operatingCompanyQuerySchema.safeParse(req.body ?? {});
+    if (!parsed.success) return sendValidationError(reply, parsed.error);
+    return withCurrentUser(authUser.uuid, async (client) => {
+      await setOperatingCompany(client, parsed.data.operating_company_id);
+      const template = await ensureContractTypeTemplate(client, parsed.data.operating_company_id, authUser.uuid, code);
       return { template };
     });
   });
