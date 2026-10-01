@@ -1355,3 +1355,14 @@ attached to USMCA — **T122, T124, T156** — held as an OWNER-PENDING baseline
 fails. The 13 active TRK-owned trucks on USMCA are leases (TRK = leases only) and are correct.
 **OWNER DECISION NEEDED:** T122 / T124 / T156 — move to a TRK lease, re-own under USMCA, or deactivate. Once applied,
 remove the unit from the baseline file.
+
+## 2026-10-01 16:00Z — required-live-load-guard now EXECUTES (CI secret fixed) · 2 real findings for the Lead
+
+With `PROD_READONLY_DATABASE_URL` reset (owner-confirmed ih35_ci_readonly), the job connects: 22 required guards
+executed, 20 passed. Remaining reds are data / scope, not auth:
+1. `verify-no-test-markers-in-live-tables` (Codex #23485, R297.5 X-19): **38 USMCA test survivors** —
+   maintenance.work_orders 15/15, severe_repair_estimates 14/14, parts_inventory 5/5, road_service_tickets 2/2,
+   catalogs.pm_intervals 1/7, maintenance.pm_schedules 1/97 (e.g. "TEST-CC3-LIVEVERIFY-20260824 … void after
+   proof"). The guard counts cancelled/draft rows too, so voiding does not clear it; clearing them is the Lead's
+   purge (snapshot first). CC-1 deletes nothing. → **LEAD.**
+2. `verify-alwaystrack-parity` reports a required CI skip (no execution proof) — CC-3's AlwaysTrack lane. → **CC-3.**
