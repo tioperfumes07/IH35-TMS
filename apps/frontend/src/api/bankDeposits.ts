@@ -60,12 +60,12 @@ export function createBankDeposit(body: CreateBankDepositBody) {
       cash_back_cents: number;
       amount_deposited_cents: number;
     };
-  }>("/api/v1/accounting/bank-deposits", { method: "POST", body: JSON.stringify(body) });
+  }>("/api/v1/accounting/bank-deposits", { method: "POST", body: body });
 }
 
 export function voidBankDeposit(id: string, body: { operating_company_id: string; reason: string }) {
   return apiRequest<{ deposit: { id: string; display_id: string; reversal_journal_entry_id: string | null } }>(
     `/api/v1/accounting/bank-deposits/${encodeURIComponent(id)}/void`,
-    { method: "POST", body: JSON.stringify(body) }
+    { method: "POST", body: body }
   );
 }

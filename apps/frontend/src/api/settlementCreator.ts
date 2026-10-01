@@ -113,7 +113,7 @@ export type SettlementCreatorPreview = {
 export async function previewSettlementCreator(draft: SettlementCreatorDraft) {
   return apiRequest<{ preview: SettlementCreatorPreview }>(
     "/api/v1/driver-finance/settlement-creator/preview",
-    { method: "POST", body: JSON.stringify(draft) },
+    { method: "POST", body: draft },
   );
 }
 
@@ -131,7 +131,7 @@ export async function postSettlementCreator(draft: SettlementCreatorDraft) {
     preview: SettlementCreatorPreview;
   }>("/api/v1/driver-finance/settlement-creator/post", {
     method: "POST",
-    body: JSON.stringify(draft),
+    body: draft,
   });
 }
 

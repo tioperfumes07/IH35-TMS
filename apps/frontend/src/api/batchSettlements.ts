@@ -87,6 +87,6 @@ export function postBatchSettlements(body: {
 }) {
   return apiRequest<{ results: BatchSettlementRowResult[]; saved: number; failed: number }>(
     `/api/v1/driver-finance/batch-settlements`,
-    { method: "POST", body: JSON.stringify(body) },
+    { method: "POST", body: body },
   );
 }

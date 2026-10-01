@@ -37,6 +37,6 @@ export function runRosterIntegrity(operatingCompanyId: string) {
 export function voidRosterFinding(operatingCompanyId: string, id: string, reason: string) {
   return apiRequest<{ voided: string }>(`/api/v1/fleet/roster-integrity/${id}/void`, {
     method: "POST",
-    body: JSON.stringify({ operating_company_id: operatingCompanyId, reason }),
+    body: { operating_company_id: operatingCompanyId, reason },
   });
 }
