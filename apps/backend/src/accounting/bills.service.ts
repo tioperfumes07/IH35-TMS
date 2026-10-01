@@ -1579,7 +1579,7 @@ export async function listWorkOrderLinkedFinancials(
       const loadId = (loadRes.rows[0]?.load_id as string | null | undefined) ?? null;
       if (loadId) {
         const invRes = await client.query(
-          `SELECT i.id::text AS id, i.display_id, i.invoice_date::text AS invoice_date,
+          `SELECT i.id::text AS id, i.display_id, i.issue_date::text AS invoice_date,
                   COALESCE(i.total_cents, 0)::bigint AS total_cents, i.status::text AS status,
                   i.customer_id::text AS customer_id,
                   (
@@ -1595,7 +1595,7 @@ export async function listWorkOrderLinkedFinancials(
             WHERE i.operating_company_id = $1::uuid
               AND i.source_load_id = $2::uuid
               AND i.voided_at IS NULL
-            ORDER BY i.invoice_date DESC NULLS LAST, i.created_at DESC`,
+            ORDER BY i.issue_date DESC NULLS LAST, i.created_at DESC`,
           [operatingCompanyId, loadId]
         );
         invoices = invRes.rows.map((r: Record<string, unknown>) => ({
