@@ -656,6 +656,19 @@ prod post is a separate, intentional, owner-authorized action, not a repoint of 
 - #21414 — MEMORY_BANK.md (MERGED) · #21416 — preview harness + doc 5780 tie-out 21/21 (MERGED)
 
 
+## Active Architectural Decisions — B-1c Account Register inline edit (Cursor, 2026-10-01)
+
+- Row expand is a real edit form (`RegisterInlineEditPanel`): DATE/REF/PAYEE/MEMO/LOCATION +
+  attachments list + [Delete] [Edit] [Cancel] [Save].
+- **Save** posts memo (+ expense/bill header memo) and bank `categorization_location` via
+  `POST /account-register/inline-save`. Date / payee / amount / account refuse with
+  `open_original_document` → Edit opens the source document (posted reverse+repost not invented
+  in the register). R rows locked same as ✓.
+- **Delete** voids through existing voidExpense / voidVendorBill / voidVendorBillPayment /
+  voidPayment / voidJournalEntry (reversal, never DELETE).
+- Guard: `scripts/ops/verify-b1-account-register.mjs` asserts Save/Cancel/Delete/attachments +
+  inline-save route.
+
 ## Active Architectural Decisions — ROUND 313 recon service charge/interest (Cursor, 2026-10-01)
 
 - Finish reconcile posts bank fee + interest through `postReconciliationAdjustments`.

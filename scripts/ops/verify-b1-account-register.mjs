@@ -36,14 +36,24 @@ function main() {
   assertIncludes(page, "Reconciled through", PAGE);
   assertIncludes(page, "initialPageSize={100}", PAGE);
   assertIncludes(page, "renderExpanded", PAGE);
-  assertIncludes(page, "b1-register-edit-original", PAGE);
+  assertIncludes(page, "toggleAccountRegisterCleared", PAGE);
+  assertIncludes(page, 'data-testid="b1-reconcile-toggle"', PAGE);
+  assertIncludes(page, "Unmatch this row in Bank Transactions first", PAGE);
+  assertIncludes(page, "RegisterInlineEditPanel", PAGE);
+  assertIncludes(page, "expandOnRowClick", PAGE);
   assertIncludes(page, 'label: "C/R"', PAGE);
   assertIncludes(page, '"n/a"', PAGE);
   assertIncludes(page, "Bank transactions", PAGE);
   assertIncludes(page, "Reconcile", PAGE);
-  assertIncludes(page, "toggleAccountRegisterCleared", PAGE);
-  assertIncludes(page, 'data-testid="b1-reconcile-toggle"', PAGE);
-  assertIncludes(page, "Unmatch this row in Bank Transactions first", PAGE);
+
+  const inlinePanel = read("apps/frontend/src/pages/accounting/RegisterInlineEditPanel.tsx");
+  assertIncludes(inlinePanel, 'data-testid="b1-register-edit-original"', "RegisterInlineEditPanel");
+  assertIncludes(inlinePanel, 'data-testid="b1-register-save"', "RegisterInlineEditPanel");
+  assertIncludes(inlinePanel, 'data-testid="b1-register-cancel"', "RegisterInlineEditPanel");
+  assertIncludes(inlinePanel, 'data-testid="b1-register-delete"', "RegisterInlineEditPanel");
+  assertIncludes(inlinePanel, 'data-testid="b1-inline-attachments"', "RegisterInlineEditPanel");
+  assertIncludes(inlinePanel, "saveAccountRegisterInline", "RegisterInlineEditPanel");
+  assertIncludes(inlinePanel, "voidExpense", "RegisterInlineEditPanel");
 
   assertIncludes(service, "reconcile_status", SERVICE);
   assertIncludes(service, "attachment_count", SERVICE);
@@ -53,15 +63,20 @@ function main() {
   assertIncludes(service, "toggleAccountRegisterCleared", SERVICE);
   assertIncludes(service, "register_cleared", SERVICE);
   assertIncludes(service, "categorization_location", SERVICE);
+  assertIncludes(service, "saveAccountRegisterInline", SERVICE);
+  assertIncludes(service, "open_original_document", SERVICE);
 
   assertIncludes(api, "reconcile_status", API);
   assertIncludes(api, "bank_balance_cents", API);
   assertIncludes(api, "attachment_count", API);
   assertIncludes(api, "toggleAccountRegisterCleared", API);
   assertIncludes(api, "toggle-cleared", API);
+  assertIncludes(api, "saveAccountRegisterInline", API);
+  assertIncludes(api, "inline-save", API);
 
   const routes = read("apps/backend/src/accounting/account-register.routes.ts");
   assertIncludes(routes, "/api/v1/accounting/account-register/toggle-cleared", "account-register.routes.ts");
+  assertIncludes(routes, "/api/v1/accounting/account-register/inline-save", "account-register.routes.ts");
 
   const migration = read("db/migrations/202615201200_journal_entry_postings_register_cleared.sql");
   assertIncludes(migration, "register_cleared", "202615201200 migration");

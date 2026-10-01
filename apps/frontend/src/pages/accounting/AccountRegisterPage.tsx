@@ -31,6 +31,7 @@ import { printLetterHtml } from "../../lib/openPrintableDocument";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { RegisterInlineEditPanel } from "./RegisterInlineEditPanel";
 
 const fmtCents = (cents: number) => formatUsdCents(cents);
 
@@ -176,6 +177,8 @@ export function AccountRegisterPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [typeLabel, setTypeLabel] = useState("");
+  // B-1c — controlled expand so Cancel can collapse the inline edit panel.
+  const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
   // ROUND 83 RULING 1 (owner, verbatim: "I DO NOT LIKE TO SEE THE ACCOUNT NUMBERS SHOWING
   // ANYWHERE... IN FILTERS ADD OPTION TO SHOW") — default OFF, global toggle shared with Chart of
   // Accounts via the same localStorage key (lib/show-account-numbers.ts).
@@ -808,62 +811,18 @@ export function AccountRegisterPage() {
           // ACCT-F3498: server-bound memo/ref search above — suppress ParityTable toolbar Search.
           suppressToolbarSearch
           tableTestId="b1-account-register"
+          expandOnRowClick
+          expandMode="single"
+          expandedKeys={expandedKeys}
+          onExpandedChange={setExpandedKeys}
           renderExpanded={(r) => (
-            <div className="space-y-2 px-2 py-2 text-xs" data-b1-inline-edit="1">
-              <p className="text-[#6B7280]">
-                Inline field edit posts through the original document engine (B-1). Use Edit to open the source
-                document; Cancel collapses this row.
-              </p>
-              <div className="grid gap-2 sm:grid-cols-3">
-                <div>
-                  <span className="font-semibold text-[#4B5563]">DATE</span>
-                  <div>{formatDateUS(r.entry_date)}</div>
-                </div>
-                <div>
-                  <span className="font-semibold text-[#4B5563]">REF NO.</span>
-                  <div>{r.reference ?? "—"}</div>
-                </div>
-                <div>
-                  <span className="font-semibold text-[#4B5563]">PAYEE</span>
-                  <div>{r.payee ?? "—"}</div>
-                </div>
-                <div>
-                  <span className="font-semibold text-[#4B5563]">CLASS</span>
-                  <div>{r.class_name ?? "—"}</div>
-                </div>
-                <div>
-                  <span className="font-semibold text-[#4B5563]">TYPE</span>
-                  <div>{r.type}</div>
-                </div>
-                <div>
-                  <span className="font-semibold text-[#4B5563]">ACCOUNT</span>
-                  <div>{r.split_account ?? "—"}</div>
-                </div>
-                <div>
-                  <span className="font-semibold text-[#4B5563]">✓</span>
-                  <div data-b1-reconcile-status={r.reconcile_status || "blank"}>{r.reconcile_status || "blank"}</div>
-                </div>
-                <div>
-                  <span className="font-semibold text-[#4B5563]">📎</span>
-                  <div>{r.attachment_count}</div>
-                </div>
-                <div>
-                  <span className="font-semibold text-[#4B5563]">LOCATION</span>
-                  <div>—</div>
-                </div>
-              </div>
-              <div className="flex flex-wrap justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => navigate(sourceRoute(r.source_transaction_type, r.source_transaction_id))}
-                  data-testid="b1-register-edit-original"
-                >
-                  Edit
-                </Button>
-              </div>
-            </div>
+            <RegisterInlineEditPanel
+              row={r}
+              companyId={companyId}
+              onEditOriginal={() => navigate(sourceRoute(r.source_transaction_type, r.source_transaction_id))}
+              onCancel={() => setExpandedKeys((keys) => keys.filter((k) => k !== r.posting_id))}
+              onVoided={() => setExpandedKeys((keys) => keys.filter((k) => k !== r.posting_id))}
+            />
           )}
           toolbar={
             <>

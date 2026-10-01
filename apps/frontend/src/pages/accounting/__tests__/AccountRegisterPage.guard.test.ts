@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import page from "../AccountRegisterPage.tsx?raw";
+import inlinePanel from "../RegisterInlineEditPanel.tsx?raw";
 import manifest from "../../../routes/manifest.tsx?raw";
 import parityTableSrc from "../../../components/parity/ParityTable.tsx?raw";
 
@@ -25,8 +26,17 @@ describe("AccountRegisterPage CA-05 guard", () => {
 
   it("wires Edit → original document via sourceRoute (B-1 inline expand)", () => {
     expect(page).toContain("renderExpanded");
+    expect(page).toContain("RegisterInlineEditPanel");
     expect(page).toMatch(/navigate\(sourceRoute\(r\.source_transaction_type,\s*r\.source_transaction_id\)\)/);
-    expect(page).toContain('data-testid="b1-register-edit-original"');
+    expect(page).toContain("expandOnRowClick");
+  });
+
+  it("B-1c inline panel has Save / Cancel / Delete / attachments", () => {
+    expect(inlinePanel).toContain('data-testid="b1-register-save"');
+    expect(inlinePanel).toContain('data-testid="b1-register-cancel"');
+    expect(inlinePanel).toContain('data-testid="b1-register-delete"');
+    expect(inlinePanel).toContain('data-testid="b1-inline-attachments"');
+    expect(inlinePanel).toContain("saveAccountRegisterInline");
   });
 
   it("every drill-through target route exists in the manifest", () => {
