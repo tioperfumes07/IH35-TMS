@@ -48,6 +48,11 @@
       "claimed_at": "2026-10-01",
       "purpose": "ROUND 313 E-28: safety.complaints gains stop_id, driver_caused, broker/shipper sources and the approved chargeback link (driver_finance.driver_settlement_deductions) -- one complaints store, not a second table."
     },
+    "202615190700": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-01",
+      "purpose": "Owner law 2026-10-01: a customer whose name says broker / brokerage / logistics / freight / forwarding / 3PL / supply chain is categorized Broker (customer_type + customer_type_id) by trigger on insert and name/type change."
+    },
     "202615190600": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-01",
