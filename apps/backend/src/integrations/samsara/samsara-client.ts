@@ -955,6 +955,36 @@ export class SamsaraClient {
     return { status: res.status };
   }
 
+  /**
+   * E-30 replies: GET /v1/fleet/messages?endMs&durationMs (200, data [] on 2026-10-01 -- no message has ever
+   * existed). Parsed to Samsara's documented v1 shape {driverId, text, sentAtMs, sender:{type,name}}; anything
+   * missing a driver, text or time is dropped, never guessed.
+   */
+  async listDriverMessages(endMs: number, durationMs: number): Promise<Array<{ samsaraDriverId: string; text: string; sentAtMs: number; senderType: string; senderName: string | null }>> {
+    const token = this._token();
+    if (!token) throw new SamsaraApiError("samsara_token_missing", null, null, false);
+    const url = new URL(`${SAMSARA_API_BASE}/v1/fleet/messages`);
+    url.searchParams.set("endMs", String(endMs));
+    url.searchParams.set("durationMs", String(durationMs));
+    const res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }, 20_000));
+    const json = await readJsonResponse(res);
+    if (!res.ok) throw new SamsaraApiError(`samsara_messages_http_${res.status}`, res.status, json, res.status === 429 || res.status >= 500);
+    const out = [];
+    for (const raw of Array.isArray(json.data) ? (json.data as Record<string, unknown>[]) : []) {
+      const sender = asObject(raw.sender) ?? {};
+      const sentAtMs = Number(raw.sentAtMs);
+      if (raw.driverId == null || typeof raw.text !== "string" || !raw.text.trim() || !Number.isFinite(sentAtMs)) continue;
+      out.push({
+        samsaraDriverId: String(raw.driverId),
+        text: raw.text,
+        sentAtMs,
+        senderType: String(sender.type ?? "").toLowerCase(),
+        senderName: typeof sender.name === "string" ? sender.name : null,
+      });
+    }
+    return out;
+  }
+
   async listHosDailyLogs(startDate: string, endDate: string): Promise<SamsaraHosDailyLog[]> {
     const token = this._token();
     if (!token) return [];

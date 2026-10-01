@@ -1720,3 +1720,27 @@ The I2 detector was run live (`i2DeliveredLoadInvoiced.detect`, read-only). Both
   - LINKED: unit, driver, and fuel transaction (by unit + UTC day, with count and gallons on the row; reverse = fuel rows of that unit and day).
   - N/A: load (a day's burn can span two loads; per-load fuel is E-05 legs plus the fuel transaction's own `load_id`), and money (no posting).
 - **Gate note (→ CC-2):** `verify-transaction-linkage-law` fails on live prod. `accounting.factoring_purchases` and `accounting.factoring_purchase_lines` exist in the database but are not classified in TABLE_REGISTRY, and origin/main has no entry for them. That classification is CC-2's money call. This PR was merged with that red (owner fast-merge order); CC-3's own migration and RLS guards are green.
+
+CC-3 | ACK ROUND 319 OWNER LAW (13:20 / 13:25 CT) | GO
+- Chrome is never used as proof. LIVE PROOF means DB rows, JEs, FKs both ways, guard exit 0, endpoint responses and tests.
+- Build only, fully, with §10-B linkage both ways.
+- No business data into USMCA. Every write-proof runs on a throwaway Neon branch forked from prod (`br-dawn-mud-akhnuh54` from this entry on); no more rolled-back write proofs on prod.
+- Gate exit 0 before push; no `--admin` past a red I caused; a new money table is classified in TABLE_REGISTRY in the same PR.
+- My merges of #23795, #23821, #23823 and #23845 went through `--admin` past reds that were not mine. Each was stated in its PR and OUTBOX entry.
+
+## 2026-10-01 ROUND 313 E-30 — driver messaging BOTH ways (inbound replies)
+
+- **Outbound (office → driver):** `driver-message-delivery.service.ts`, flag ON since 16:0xZ. No send yet, because no dispatcher has posted to a Samsara-linked driver.
+- **Inbound, new:**
+  - `SamsaraClient.listDriverMessages` reads GET `/v1/fleet/messages`. It returned 200 with `data []` live (no message has ever existed in this Samsara org), so it is parsed to Samsara's documented v1 shape; malformed rows are dropped, never guessed.
+  - `driver-message-inbound.service.ts`: a driver reply becomes a `chat.messages` row (sender_party_type `driver`, sender_driver_id = the driver from the canonical map).
+  - Thread = the load the driver's truck carried at reply time (Samsara assignment → unit → loadAtTimeSql; else the dispatcher-assigned load whose truck was on it), else the driver's `driver_direct` thread.
+  - Idempotent on `client_key = samsara-msg:<samsara id>:<sentAtMs>`. Office notes typed in the Samsara dashboard are counted, not copied (there is no TMS author for them).
+  - Poller every 5 min (48 h window), under the same `SAMSARA_DRIVER_MESSAGING_ENABLED` switch.
+- **Throwaway-branch proof** (`br-dawn-mud-akhnuh54`, forked from prod), three messages:
+  - A real mapped driver of 13634: inserted 1 into **load 13634's thread**, sender `driver`, same driver id.
+  - A dispatch note: skipped. An unknown Samsara id: unmapped.
+  - Re-run: deduped 1, inserted 0.
+- **§10-B:**
+  - LINKED: driver, load (thread), unit (via assignment / loadAtTime), audit (chat event log).
+  - N/A: money, customer, vendor (a message moves no money).
