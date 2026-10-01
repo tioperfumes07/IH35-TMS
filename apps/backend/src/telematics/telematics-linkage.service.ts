@@ -94,6 +94,11 @@ export async function unitTelematicsLinks(client: Db, oc: string, unitId: string
                       FROM safety.dvir_submissions d
                      WHERE d.operating_company_id = $1::uuid AND (d.unit_id = $2::uuid OR d.trailer_id = $2::uuid) AND d.submitted_at >= ${since}
                      ORDER BY d.submitted_at DESC`),
+    samsara_fuel_reports: await q(`SELECT r.report_date, r.fuel_burned_gal, r.purchased_gal, r.purchase_count, r.distance_mi, r.efficiency_mpg,
+                                          r.engine_idle_hours, r.engine_run_hours
+                                     FROM integrations.samsara_fuel_reports r
+                                    WHERE r.operating_company_id = $1::uuid AND r.unit_id = $2::uuid AND r.subject_kind = 'vehicle'
+                                      AND r.report_date >= (${since})::date ORDER BY r.report_date DESC`),
     samsara_route_progress: await q(`SELECT p.stop_id::text, p.sequence_number, p.samsara_route_id, p.state, p.eta, p.actual_arrival_at, p.actual_departure_at,
                                              p.read_at, p.load_id::text, ${LN("p.load_id")}
                                         FROM integrations.samsara_route_stop_progress p

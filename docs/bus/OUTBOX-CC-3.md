@@ -1693,3 +1693,30 @@ The I2 detector was run live (`i2DeliveredLoadInvoiced.detect`, read-only). Both
 - **Gap in #23845, fixed here:** the route id was stamped only on a changed push, so these 7 unchanged routes never got the stamp. The read-back now stamps from the latest successful push in the ledger first.
 - **Rolled-back on prod (live schema at 81825b6):** 7 loads stamped, 7 routes read, 14 stops upserted.
 - **All stops are `scheduled` with ETA null.** These routes were created AFTER their pickups had happened (the loads were already rolling), so Samsara's `departFirstStop` start condition never fires for them. ETA and progress start on loads that are routed before pickup, which is the normal flow now that the push runs every 15 min.
+
+## 2026-10-01 ROUND 313 E-23 — Samsara fuel reports kept daily, linked, on the truck + driver screens
+
+- **Migration 202615181100** (claim #23851): `integrations.samsara_fuel_reports`, one row per vehicle or driver per day.
+  - Fields: gallons burned, miles, MPG, engine and idle hours, and purchased gallons with the fill count.
+  - FKs to unit, driver and company; FORCED RLS.
+- **Engine:** `samsara-fuel-reports.service.ts` and a daily cron at 05:20 CT for yesterday + today. One catch-up of 30 days runs at first boot on an empty table.
+  - Vehicle → unit and driver → driver through the canonical maps.
+  - Purchased gallons pass the same T-45 eligibility gate (reefer fuel excluded) as the T-50 signal.
+- **Measured fact (probed T148):** Samsara buckets this report by **whole UTC day**. A window touching two days returns both: 09-30 05:00Z → 10-01 05:00Z gave 1,172 mi / 36 engine hours, while the true 09-30 is 930 mi / 24 h. One report_date is therefore one UTC day, asked for strictly inside it.
+- **Purchased gallons are NULL** for days after the newest imported fuel transaction (currently 2026-09-24). It means "not imported yet", never 0.
+- **Rolled-back on prod (migration in the transaction):**
+
+| UTC day | Burned (gal) | Bought (gal) | Fills |
+|---|---|---|---|
+| 09-20 | 700 | 208 | 2 |
+| 09-21 | 698 | 112 | 1 |
+| 09-22 | 584 | 0 | 0 |
+| 09-30 | 1,013 | NULL (not imported) | — |
+
+  - Max engine hours per row is 24, as it should be.
+  - 21–24 rows per day, about 90% linked; unlinked rows are Samsara vehicles with no TMS unit.
+- **Screens:** the truck panel has a "Fuel — burned vs purchased (daily)" section. The driver's Loads tab has "Samsara fuel burn (daily)" (`/profile/fuel` → `samsara_fuel_reports`).
+- **§10-B:**
+  - LINKED: unit, driver, and fuel transaction (by unit + UTC day, with count and gallons on the row; reverse = fuel rows of that unit and day).
+  - N/A: load (a day's burn can span two loads; per-load fuel is E-05 legs plus the fuel transaction's own `load_id`), and money (no posting).
+- **Gate note (→ CC-2):** `verify-transaction-linkage-law` fails on live prod. `accounting.factoring_purchases` and `accounting.factoring_purchase_lines` exist in the database but are not classified in TABLE_REGISTRY, and origin/main has no entry for them. That classification is CC-2's money call. This PR was merged with that red (owner fast-merge order); CC-3's own migration and RLS guards are green.
