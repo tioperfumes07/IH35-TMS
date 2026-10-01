@@ -27,6 +27,7 @@ export function check(raw) {
   if (!/transactionReference: row\.id,/.test(src)) p.push("transactionReference is no longer our fuel_transactions id.");
   if (/imported_at|Date\.now\(\)|new Date\(\)/.test(src)) p.push("the pusher references import time / the current clock -- pump time must be the row's transaction_at only.");
   if (!/transactionTime: at\.toISOString\(\)/.test(src) || !/const rawAt = useDerived \? row\.derived_time! : row\.transaction_at;/.test(src)) p.push("transactionTime is no longer the row's own transaction_at (or its high-confidence derived time).");
+  if (!/if \(!derivedReady\) \{[\s\S]*?computeFuelTimeDerivations\(client/.test(src)) p.push("without the derivation table, E-23 no longer derives pump time by calling the shared derivation engine.");
   if (!/const useDerived = gate === "date_only_precision" && row\.derived_time != null && row\.derived_confidence === "high";/.test(src)) p.push("a derived pump time can be used below confidence 'high' or for a non-date-only row.");
   if (!/fuelQuantityLiters: \(gallons \* LITERS_PER_US_GALLON\)/.test(src) || !/const gallons = Number\(row\.gallons\)/.test(src)) p.push("litres are no longer the row's gallons converted -- never an estimate.");
   const mirrorAt = src.indexOf("FROM integrations.samsara_vehicles");
@@ -45,6 +46,7 @@ function selftest() {
     [good.replaceAll("transactionReference: row.id,", "transactionReference: String(Math.random()),"), true],
     [good.replaceAll("transactionTime: at.toISOString()", "transactionTime: new Date().toISOString()"), true],
     [good.replaceAll('row.derived_confidence === "high"', 'row.derived_confidence != null'), true],
+    [good.replaceAll("computeFuelTimeDerivations(client", "x(client"), true],
     [good.replaceAll("(gallons * LITERS_PER_US_GALLON)", "(100)"), true],
     [good.replaceAll('"ambiguous_samsara_vehicle"', '"x"'), true],
     [good.replaceAll("if (!opts.apply) continue;", ""), true],

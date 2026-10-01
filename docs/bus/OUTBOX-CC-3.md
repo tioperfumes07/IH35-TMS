@@ -1279,3 +1279,10 @@ FIX: the cron schedules only with ENABLE_SAMSARA_MASTER_SYNC_CRON=true (was: on 
 positions, pairing and the manual import routes are untouched. LEAD -> OWNER: keep OFF until the 32 driver pairs and the VIN /
 equipment-number collisions are decided; then the sync needs a single-runner lock before it is switched back on.
 guard: scripts/verify-samsara-master-sync-flag-off.mjs + --selftest PASS; vitest cron 46/46.
+
+## 2026-10-01 — LEAD RULING (no handoffs) applied to E-23: pump time derived on read inside E-23
+E-23 no longer waits on fuel.fuel_transaction_derivations: when the table is absent it calls the shared derivation engine
+(computeFuelTimeDerivations — the truck's own fuel-stop dwell; called, not copied) and uses high-confidence times only.
+proof (live read, nothing written): would_push 22 today (was 0) — skipped date_only 93, medium-confidence 10, DEF 52; sample
+Love's #762 Laredo TX 2026-08-05T02:31:54Z 189.293 L $267.48 T147. Live POST stays behind SAMSARA_FUEL_PURCHASE_PUSH_APPLY (owner).
+guard: verify-samsara-fuel-push-never-substitutes extended + --selftest PASS.
