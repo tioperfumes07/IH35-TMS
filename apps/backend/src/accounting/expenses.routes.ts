@@ -654,7 +654,12 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
             -- ACCT-F5072: matched bank date/description are the EntityLink human labels (never UUID chrome).
             bt.transaction_date                            AS matched_bank_transaction_date,
             bt.description                                 AS matched_bank_transaction_description,
-            bt.amount_cents::text                          AS matched_bank_transaction_amount_cents
+            bt.amount_cents::text                          AS matched_bank_transaction_amount_cents,
+            -- Linkage law §8 back-link: a fuel expense document drills to the purchase it was made from,
+            -- and says so when that purchase has since been voided (FUEL-SOURCE-VOIDED-UNDER-LIVE-EXPENSE).
+            e.source_fuel_transaction_id::text             AS source_fuel_transaction_id,
+            (SELECT ft.voided_at::text FROM fuel.fuel_transactions ft
+              WHERE ft.id = e.source_fuel_transaction_id AND ft.operating_company_id = e.operating_company_id) AS source_fuel_voided_at
           FROM accounting.expenses e
           LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = e.operating_company_id
           LEFT JOIN mdata.drivers dr ON dr.id = e.driver_uuid AND dr.operating_company_id = e.operating_company_id

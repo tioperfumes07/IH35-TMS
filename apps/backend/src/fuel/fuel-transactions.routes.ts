@@ -26,6 +26,9 @@ const listFuelTransactionsQuerySchema = z.object({
   // list endpoint never did. Mirrors #6324's accident list filter exactly.
   trailer_id: z.string().uuid().optional(),
   load_id: z.string().uuid().optional(),
+  // Linkage law §6 (vendor row): a fuel purchase carries vendor_id, so the vendor page must be able
+  // to list every fuel purchase from it — the reverse half of that link.
+  vendor_id: z.string().uuid().optional(),
   /** G18 worklist: only transactions with NO load attributed. */
   unlinked: z.coerce.boolean().optional(),
   from: z.string().date().optional(),
@@ -163,7 +166,11 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
       }
       if (q.load_id) {
         values.push(q.load_id);
-        filters.push(`ft.load_id = $${values.length}`);
+        filters.push(`ft.load_id = ${values.length}`);
+      }
+      if (q.vendor_id) {
+        values.push(q.vendor_id);
+        filters.push(`ft.vendor_id = ${values.length}`);
       }
       // The G18 worklist. Without this the 1,547 unattributed transactions ($625,546.39 on prod
       // 2026-08-03) are individually visible but cannot be listed AS the backlog they are.
@@ -240,8 +247,20 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
             ft.load_exemption_reason,
             ft.created_at,
             ft.voided_at,
-            ft.void_reason
+            ft.void_reason,
+            fx.expense_id,
+            fx.expense_number,
+            fx.journal_entry_id
           FROM fuel.fuel_transactions ft
+          -- Forward drill (linkage law §8): the purchase's accounting document and its posting. One live
+          -- document per purchase (createExpenseFromFuelTransaction is idempotent on the source id).
+          LEFT JOIN LATERAL (
+            SELECT e.id AS expense_id, e.expense_number, e.journal_entry_id
+              FROM accounting.expenses e
+             WHERE e.source_fuel_transaction_id = ft.id AND e.operating_company_id = ft.operating_company_id
+               AND e.voided_at IS NULL
+             ORDER BY e.created_at DESC LIMIT 1
+          ) fx ON true
           -- Entity-scope the joins to the SAME company as the transaction (defense in depth: a
           -- load_id/driver_id/unit_id should never point cross-company, but never trust that silently).
           LEFT JOIN mdata.loads l ON l.id = ft.load_id AND l.operating_company_id = ft.operating_company_id
@@ -297,6 +316,9 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           // (0 rows live), but the list must be ready to render one the day a writer does.
           voided_at: row.voided_at,
           void_reason: row.void_reason,
+          expense_id: row.expense_id ?? null,
+          expense_number: row.expense_number ?? null,
+          journal_entry_id: row.journal_entry_id ?? null,
         })),
         total: Number((countRes.rows[0] as { total?: number } | undefined)?.total ?? 0),
         voidedCount: Number((voidedCountRes.rows[0] as { n?: number } | undefined)?.n ?? 0),

@@ -18,6 +18,12 @@ const companyQuery = z.object({
   operating_company_id: z.string().uuid(),
   status: z.enum(["open", "investigating", "dismissed", "confirmed_fraud", "recovered"]).optional(),
   severity: z.enum(["info", "warn", "critical"]).optional(),
+  // Linkage law §6: a truck, driver, load or vendor page lists the fraud alerts on its purchases.
+  // The alert reaches those hubs through its fuel purchase (fraud_alerts carries no hub columns).
+  unit_id: z.string().uuid().optional(),
+  driver_id: z.string().uuid().optional(),
+  load_id: z.string().uuid().optional(),
+  vendor_id: z.string().uuid().optional(),
 });
 
 const uuidParams = z.object({ uuid: z.string().uuid() });
@@ -95,7 +101,14 @@ export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promis
       }
       if (parsed.data.severity) {
         params.push(parsed.data.severity);
-        filters.push(`fa.severity = $${params.length}`);
+        filters.push(`fa.severity = ${params.length}`);
+      }
+      for (const [key, col] of [["unit_id", "ft.unit_id"], ["driver_id", "ft.driver_id"], ["load_id", "ft.load_id"], ["vendor_id", "ft.vendor_id"]] as const) {
+        const v = parsed.data[key];
+        if (v) {
+          params.push(v);
+          filters.push(`${col} = ${params.length}::uuid`);
+        }
       }
       const res = await client.query(
         `
@@ -114,7 +127,12 @@ export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promis
             ft.transaction_at::text,
             ft.gallons::float8 AS gallons,
             ft.location_city,
-            ft.location_state
+            ft.location_state,
+            ft.unit_id::text AS unit_id,
+            ft.driver_id::text AS driver_id,
+            ft.load_id::text AS load_id,
+            ft.vendor_id::text AS vendor_id,
+            ft.total_cost::float8 AS total_cost
           FROM fuel.fraud_alerts fa
           JOIN fuel.fuel_transactions ft ON ft.id = fa.fuel_transaction_uuid
           WHERE ${filters.join(" AND ")}
