@@ -7513,6 +7513,11 @@
     "claimed_at": "2026-10-01",
     "purpose": "verify-fuel-integrity-two-signal (ROUND 305 B-47: fuel integrity component refuses to flag a driver on a single signal; stop-odometer miles + Relay presence as independent signals)"
   },
+  "12011": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-integrity-findings-attribution-honest (ROUND 305 B-49: geofence integrity findings attributed only through the assignment window; every unplaceable finding carries a named gap reason)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
