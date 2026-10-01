@@ -1,3 +1,6 @@
+**2026-10-01T18:12Z · FAST-MERGE DRAIN · FACTORING ADVANCE DRAWER SHIP**
+CURSOR | FAST-MERGE: #23853 maintenance designs + #23730 tracker squash-merged admin. #23848 factoring designs conflicted — absorbing unique drawer/statements into this PR. · ROUND 319 ACK · AUTH-195 CONSUMED (Petty Cash `7a7d1da9` SC `cf78c2aa` IE `2ef10657`). · THIS: `/factoring/advances/:id` + EntityLink + bank/load/invoice both-way; `/factoring/statements` → FactorReconciliationPage. NEXT: close open PRs · Maintenance EntityLink engines.
+
 **2026-10-01T18:05Z · R313 CURSOR ITEM 3 MAINTENANCE DESIGNS (subnav)**
 Branch `cursor/r313-maintenance-designs-24d9`. WHAT: primary Maintenance SUBNAV keeps C-36 nine and ADDS PM Due (`/maintenance/pm-schedule`), Faults E-40 (`/maintenance/fault-code-alerts`), In Shop (`/maintenance/fleet-table?status=in-shop`), Cost/mi E-15 (`/reports/maintenance-cost-per-unit`); MaintenanceShell now renders the same NavyPageSubNav; parts inventory surfaces locked **$7,000** capitalize rule (R313 "$50" not in LAW — owner clarify if a separate SKU rule is meant). GUARD: `node scripts/ops/verify-r313-maintenance-designs.mjs --selftest` PASS; C-36 guard updated for additive R313 tabs. LEFT: EntityLink audit every WO/parts row → unit/vendor/bill/JE; Chrome; $50 owner ruling. NEXT: finish EntityLink sweep · #4 Chrome.
 

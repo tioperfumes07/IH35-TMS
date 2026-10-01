@@ -68,6 +68,11 @@ const DOCUMENT_ENGINE_EXEMPT_SOURCE_TYPES = new Set([
   // the moment any seat touches apps/backend/src/accounting/ (measured live 2026-10-01: 3 USMCA
   // bill JEs blocked money-pr-local-gate on a read-only WO linkage PR).
   "bill",
+  // ROUND 313 BANK-ECON-04: reconciliation workspace service charge / interest earned post through
+  // the canonical JE poster as source_transaction_type='bank_reconciliation' (session id). There is
+  // no accounting.expenses row by design — the document is banking.reconciliation_sessions. Exempt
+  // invariant 1 only, by source type on the posting (same narrow rule as bill/factoring).
+  "bank_reconciliation",
 ]);
 //
 // Self-test: node scripts/verify-costs-are-expenses-not-handwritten-jes.mjs --selftest

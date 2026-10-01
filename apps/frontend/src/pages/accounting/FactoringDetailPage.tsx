@@ -187,10 +187,9 @@ export function FactoringDetailPage() {
     <AccountingSubNavWrapper>
       <PageHeader
         title={entityLabel(detail.display_id, detail.id, "Advance")}
-        backHref="/accounting/factoring"
+        backHref="/factoring"
         breadcrumb={[
-          { label: "Accounting", href: "/accounting" },
-          { label: "Factoring", href: "/accounting/factoring" },
+          { label: "Factoring", href: "/factoring" },
           { label: entityLabel(detail.display_id, detail.id, "Advance") },
         ]}
         subtitle={`Factor: ${detail.factoring_company_name}`}
@@ -203,6 +202,13 @@ export function FactoringDetailPage() {
               data-testid="factoring-advance-banking-reverse-link"
             >
               Banking · Factoring entry
+            </Link>
+            <Link
+              to="/factoring/statements"
+              className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-800 hover:bg-slate-50"
+              data-testid="factoring-advance-statements-link"
+            >
+              Statement tie-out
             </Link>
             <Button variant="secondary" onClick={() => navigate(`/vendors/${detail.factoring_company_vendor_id}`)}>
               Edit factoring company profile
@@ -229,10 +235,48 @@ export function FactoringDetailPage() {
       />
 
       <div className="grid gap-3 md:grid-cols-2">
-        <DataPanel title="Header">
+        <DataPanel title="Header" data-testid="factoring-advance-linkage-panel">
           <DataPanelRow>
             <span className="text-xs text-gray-600">Factor</span>
-            <span className="text-xs text-gray-900">{detail.factoring_company_name}</span>
+            <span className="text-xs text-gray-900">
+              <EntityLink
+                kind="vendor"
+                id={detail.factoring_company_vendor_id}
+                label={entityLabel(detail.factoring_company_name, detail.factoring_company_vendor_id, "Factor")}
+              />
+            </span>
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs text-gray-600">Load</span>
+            <span className="text-xs text-gray-900">
+              {detail.source_load_id ? (
+                <EntityLink
+                  kind="load"
+                  id={detail.source_load_id}
+                  label={entityLabel(detail.source_load_number, detail.source_load_id, "Load")}
+                />
+              ) : (
+                <span className="text-slate-400">—</span>
+              )}
+            </span>
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs text-gray-600">Bank wire</span>
+            <span className="text-xs text-gray-900">
+              {detail.matched_bank_transaction_id ? (
+                <EntityLink
+                  kind="bank_transaction"
+                  id={detail.matched_bank_transaction_id}
+                  label={entityLabel(
+                    detail.matched_bank_transaction_label,
+                    detail.matched_bank_transaction_id,
+                    "Bank transaction"
+                  )}
+                />
+              ) : (
+                <span className="text-slate-400">—</span>
+              )}
+            </span>
           </DataPanelRow>
           <DataPanelRow>
             <span className="text-xs text-gray-600">Submitted</span>
