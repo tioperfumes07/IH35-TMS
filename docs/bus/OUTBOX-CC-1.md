@@ -1113,3 +1113,17 @@ br-fancy-bread-akdjd5lp  2026-09-13T20:31  archived  14.47GB  b5-full-recut-rehe
 br-mute-boat-ak2p387r  2026-09-13T20:39  archived  14.47GB  b5-full-recut-rehearsal-3
 br-silent-salad-ak4flpy4  2026-09-22T21:02  ready     15.05GB  FEEDER-DRYRUN-2026-09-22
 ```
+
+## E-17 addition — vehicle_type vocabulary — BUILT
+**what:** migration 202615140000 (claimed #23676): `mdata.units.vehicle_type` CHECK — NULL (= unclassified)
+or `Tractor | Straight Truck | Box Truck | Pickup | Passenger Car | Other` (NOT VALID + VALIDATE,
+lock_timeout). Shared `mdata/fleet-type-filter.ts`: `VEHICLE_TYPE_VALUES`, `TRUCK_VEHICLE_TYPES`
+(Tractor/Straight Truck/Box Truck), `isTruckVehicleType`, `normalizeVehicleType`, `vehicleTypeInputSchema`.
+**Defect fixed:** the units "Truck" filter counted NULL/blank `vehicle_type` as a truck (Tacoma pickup and
+Versa cars counted as trucks); "Truck" now = truck types only, new `Unclassified` filter shows NULL. All
+writers (unit bulk update, vehicles create/update, vehicles CSV import) use the vocabulary; an unknown
+CSV value rejects with its value named. E-02 (Lead) can call `isTruckVehicleType` to say "trucks".
+**proof:** rolled-back prod dry run — constraint `convalidated=true` against all 196 rows; free-text
+'Sleeper' blocked. vitest 10/10, tsc 0. 195 of 196 units are NULL today — the owner sets each type when
+seeding (nothing inferred from unit names).
+**blocker:** none.
