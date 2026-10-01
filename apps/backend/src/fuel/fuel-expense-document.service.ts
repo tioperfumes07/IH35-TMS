@@ -442,10 +442,16 @@ export async function createExpenseFromFuelTransaction(
       INSERT INTO accounting.expenses (
         operating_company_id, vendor_uuid, status, transaction_date, total_amount_cents,
         memo, expense_number, source_fuel_transaction_id, load_id, is_sample_data,
-        journal_entry_id, posted_at, payment_account_uuid, driver_uuid, unit_id, trailer_id
+        journal_entry_id, posted_at, payment_account_uuid, driver_uuid, unit_id, trailer_id,
+        posting_status
       )
       VALUES ($1::uuid, $2::uuid, $9, $3::date, $4::bigint, $5, $6, $7::uuid, $8::uuid, false,
-              $10::uuid, $11, $12::uuid, $13::uuid, $14::uuid, $15::uuid)
+              $10::uuid, $11, $12::uuid, $13::uuid, $14::uuid, $15::uuid,
+              -- A document that carries a journal entry is posted in the GL, so it says so: the void
+              -- route reverses only posting_status='posted' rows, and 'unposted' with a live JE left 5
+              -- fuel documents (94 expenses in all) voidable with their entry still on the books.
+              -- accounting.expenses CHECK expenses_journal_entry_implies_not_unposted (202615140700).
+              CASE WHEN $10::uuid IS NULL THEN 'unposted' ELSE 'posted' END)
       RETURNING id::text
     `,
     [

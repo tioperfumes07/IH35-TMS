@@ -6596,7 +6596,12 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). accounting.expenses: e
   posted_at -> the journal entry's entry_date where posted_at is null. No amount, account, line or journal entry changes.
 action: npx tsx scripts/ops/2026-10-01-cc2-auth188-expense-je-posting-status.ts --apply. Dry run: targets 94 (5 fuel documents, 89 other), $3744.13.
 expires_at: 2026-10-02T05:10:15Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-01T05:16:08Z
+consumed_by: CC-2
+row_counts: accounting.expenses 94 rows posting_status unposted -> posted (5 fuel documents, 89 other), $3,744.13; posted_at set from the journal entry's entry_date
+proof_query: SELECT count(*) FROM accounting.expenses WHERE journal_entry_id IS NOT NULL AND posting_status='unposted' -> 0 (was 94); 536 expenses carry a journal entry
+audit: audit.audit_events source CC-2-AUTH-188 (1 row)
 
 WHY: the expense void route reverses only posting_status = 'posted'; each of these 94 would void with its entry still on
 the books. Root fix in the same work: createExpenseFromFuelTransaction writes posting_status with the JE, and migration
