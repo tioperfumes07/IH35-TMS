@@ -8,6 +8,7 @@ import { computeDriverDamageScorecard } from "./driver-damage-scorecard.service.
 import { computeDriverFuelIntegrity } from "./fuel-integrity.service.js";
 import { listIntegrityFindingsAttribution } from "./integrity-findings-attribution.service.js";
 import { computeDamageEventAttribution } from "./damage-event-attribution.service.js";
+import { samsaraFuelEnergyFetcher } from "../telematics/samsara-fuel-energy-fetcher.js";
 import { computeDriverIntegrityProfiles } from "./driver-integrity-profile.service.js";
 
 const querySchema = z.object({
@@ -215,7 +216,9 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     const { periodStart, periodEnd } = resolvePeriod(query.data);
     return withCompany(user.uuid, query.data.operating_company_id, (client) =>
-      computeDriverFuelIntegrity(client, query.data.operating_company_id, periodStart, periodEnd)
+      computeDriverFuelIntegrity(client, query.data.operating_company_id, periodStart, periodEnd, {
+        samsaraDriverReport: () => samsaraFuelEnergyFetcher(client as never, query.data.operating_company_id, periodStart, periodEnd)("drivers"),
+      })
     );
   });
 
@@ -277,7 +280,9 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     const { periodStart, periodEnd } = resolvePeriod(query.data);
     const rows = await withCompany(user.uuid, query.data.operating_company_id, (client) =>
-      computeDriverIntegrityProfiles(client, query.data.operating_company_id, periodStart, periodEnd)
+      computeDriverIntegrityProfiles(client, query.data.operating_company_id, periodStart, periodEnd, {
+        samsaraDriverReport: () => samsaraFuelEnergyFetcher(client as never, query.data.operating_company_id, periodStart, periodEnd)("drivers"),
+      })
     );
     return { rows };
   });
@@ -289,7 +294,9 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
     if (!query.success || !params.success) return reply.code(400).send({ error: "validation_error" });
     const { periodStart, periodEnd } = resolvePeriod(query.data);
     const rows = await withCompany(user.uuid, query.data.operating_company_id, (client) =>
-      computeDriverIntegrityProfiles(client, query.data.operating_company_id, periodStart, periodEnd)
+      computeDriverIntegrityProfiles(client, query.data.operating_company_id, periodStart, periodEnd, {
+        samsaraDriverReport: () => samsaraFuelEnergyFetcher(client as never, query.data.operating_company_id, periodStart, periodEnd)("drivers"),
+      })
     );
     const row = rows.find((r) => r.driver_id === params.data.driver_id);
     if (!row) return reply.code(404).send({ error: "no_integrity_data_for_driver_in_period" });
