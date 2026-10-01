@@ -6785,3 +6785,45 @@ status: OPEN
 derivation: docs/bus/ORDERS-2026-10-01-ROUND-313-ALL-SEATS.md Cursor item 1 — "a real reconciliation_sessions row closed at
   zero difference on a USMCA account (statement balance, cleared lines, service charge/interest via canonical poster)".
 THIS AUTHORIZATION DOES NOT COVER: any other bank account, any amount other than $5.00+$5.00 netting to $0, any QBO write-back.
+
+## AUTH-196
+issued_at: 2026-10-01T17:00:11Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80).
+  (1) accounting.journal_entries/journal_entry_postings: reverse exactly two duplicate revenue JEs through the canonical
+      reverseJournalEntryNoFlip (a linked reversing JE; nothing deleted): 4c416f76-a2a1-4000-88e2-e3fc39b3d0c4 (Revrec Event 1,
+      load 13626, $3,400.00, CC-3 proof JE with no latch row — CC-3 #23824 asks for this reversal) and
+      715378ea-d8d4-4315-a859-f62e91b8f09e (Revrec Event 1, load 13571, $4,900.00, 2026-09-24, no latch row). The latched
+      Event 1 of each load (de792d44 / 86c07f57) stays. Root fix ACCT-F9616 #23828.
+  (2) accounting.invoices/invoice_lines + the latch's Event 2 JE: issue one invoice each for loads 13626 ($3,400.00) and 13637
+      ($5,200.00) through the from-load engine buildInvoiceFromLoad -> sendDraftInvoice, then the DISP-01 latch Event 2
+      (DR 1100 A/R / CR 1150 Unbilled). Both loads are delivered_pending_docs (CC-3 geofence auto-delivery #23821, 16:41:10Z).
+  One audit row (source CC-2-AUTH-196).
+action: npx tsx scripts/ops/2026-10-01-cc2-auth196-revrec-duplicates-and-invoice-13626-13637.ts --apply. Rehearsed end to end on
+  throwaway branch br-summer-mode-ak5t7ruu (parent prod 16:58Z): reversals 44b4060d / 6e634fb1; invoice 13626 sent, Event 2 JE
+  DR 1100 / CR 1150 $3,400; invoice 13637 sent, Event 2 JE DR 1100 / CR 1150 $5,200; 12071 LIVE PASS (0 orphan revenue JEs);
+  verify-reconciler-exceptions I2 = 12 (ceiling 14).
+expires_at: 2026-10-02T17:00:11Z
+status: OPEN
+
+Lead ruling 2026-10-01 16:45Z item 2 ("run the from-load invoice engine on both, send (the gate + A/R post must pass), paste invoice
+ids, JEs, I2"). Send was unblocked by ACCT-F9617 #23831 (latch-owned A/R is the invoice posting). NOT COVERED: any other JE,
+any load status, any amount change.
+
+## AUTH-197
+issued_at: 2026-10-01T17:00:11Z
+scope: USMCA ONLY. Load 90007 (f465285d-fe9a-4b24-bcd7-e5a03cdadc9e, ITS Logistics, $350, Faro 7 / PO 68747), invoice 90007
+  (bba8411e-909e-4f1d-af21-1729a25a1ae7) and its two JEs 1ae2e78a-fa5d-4319-a1b6-d4cf754aae98 (Revrec Event 1 DR 1150 / CR 4000
+  $350) + d324689e-03db-4fda-a754-6cf117760076 (Revrec Event 2 DR 1100 / CR 1150 $350): deleted under the sanctioned WORM purge
+  bypass (void-stamp first). Detail rows deleted: 6 transaction_source_links, 2 revrec latch rows, 4 postings, 1 invoice line,
+  2 stops, 2 assignment-history rows, 1 cancellation record, 1 charge line, 1 load_fuel_cost row. KEPT and unlinked (they belong
+  to other records): 2 docs.files, 1 fuel.tank_events row, 1 downtime.events row. One audit row (source CC-2-AUTH-197).
+action: npx tsx docs/audit/authorized-ops-scripts/2026-10-01-cc2-auth197-delete-duplicate-load-90007.ts --apply. Rehearsed (rolled back) on branch
+  br-silent-fog-ak2l100x: every count above exact, after = 0 load / 0 invoice / 0 JE.
+expires_at: 2026-10-02T17:00:11Z
+status: OPEN
+
+Owner in chat to CC-2, 2026-10-01: "I BELIEVE IT IS A DUPLICATE LOAD. LETS DELETE IT, IF I AM INCORRECT WE CREATE IT IN THE FUTURE."
+Lead ruling 2026-10-01 16:45Z item 1: "90007: DELETE ... under one AUTH, keep the audit rows". Measured: 90007 is the only ITS
+Logistics load; no twin found. The duplicate pair in the same window is 13513 (FLS TRANSPORTATION SERVICES LIMITED, $525,
+PO 5772267, invoiced) / 13515 (FLS Transport Inc., $525, PO 005772267, closed) — NOT covered here; owner to say which is real.
+

@@ -1,3 +1,4 @@
+// ARCHIVED 2026-10-01 (CC-2): EXECUTED under AUTH-188 (CONSUMED). Moved out of scripts/ops/ unchanged (precedent #23409). Never re-run.
 /**
  * AUTH-188 — repair the 94 USMCA accounting.expenses rows that carry a LIVE journal entry while
  * posting_status = 'unposted' (measured 2026-10-01; 5 fuel documents + 89 settlement-feed documents).
