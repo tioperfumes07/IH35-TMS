@@ -35,6 +35,7 @@ import {
   SettlementVoidBlockedError,
 } from "./void-document-callees.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { assertSubjectMayCloseOnClient } from "./feed-gate/feed-gate.service.js";
 import type {
   SettlementCreatorDraft,
   SettlementCreatorJeLine,
@@ -1540,6 +1541,15 @@ export async function postSettlementCreatorInClientTx(
     AUDIT_TAG,
   );
 
+  // FEED GATE (owner law 2026-10-01: "a settlement — all data input settlement by settlement before the next").
+  // The creator (single and Batch Settlements grid) commits a settlement ONLY when every intake check is green:
+  // loads (customer/driver/unit/trailer, trip type, geocoded + stamped stops, rate = invoice), invoice + A/R JE,
+  // driver bills, deductions sourced, gross = Σ bills, net math, settlement JE, dates. Runs on this client inside
+  // the creator's transaction; a red check throws FeedGateError('feed_gate_blocked') listing every red row and the
+  // whole settlement (and its expenses/fuel/advances written above) rolls back. The one-settlement-at-a-time
+  // trigger refuses a second open intake for the same driver.
+  const gate = await assertSubjectMayCloseOnClient(client as never, draft.operating_company_id, "settlement", settlementId, actorUserId);
+
   return {
     settlement_id: settlementId,
     source_document_ref: sourceDocumentRef ?? displayId,
@@ -1551,6 +1561,7 @@ export async function postSettlementCreatorInClientTx(
     journal_entry_ids: journalEntryIds,
     invoice_ids: invoiceIds,
     preview,
+    feed_gate: { intake_id: gate.intake.id, status: gate.intake.status, checks_total: gate.intake.checks_total, checks_failed: gate.intake.checks_failed },
   };
 }
 
