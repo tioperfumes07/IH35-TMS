@@ -1229,3 +1229,26 @@ driven", legs table, truck EntityLink.
 The odometer is flowing again since 2026-09-30 (1,727 + 2,188 fixes with odometer; 49 real_obd geofence
 captures today), so every load dispatched from now on measures. Part B (CPM per load/unit/driver/lane + MPG
 on both bases) follows.
+
+## 2026-10-01 — Three-mile CPM part A MERGED (#23732, d91f293156) · part B: CPM per load/unit/driver/lane + MPG — BUILT
+
+**engine:** `reports/three-mile-cpm.service.ts` → `GET /api/v1/reports/three-mile-cpm?from&to&group_by=unit|driver|lane|load`.
+Direct cost per load comes ONLY from the canonical per-load cost read model (`accounting/load-cost-rollup.sql.ts`:
+fuel + other expenses + bill lines + driver pay) — no cost math in the report. Three named bases: practical
+(billed), short (shortest + deadhead, paid), real driven (real loaded legs + real deadhead leg, from part A).
+A group's CPM = summed cost of the loads that HAVE that basis ÷ their summed miles, with included/excluded
+counts — never all-load cost over some-load miles. MPG = miles ÷ diesel gallons (`fuel.fuel_transactions`,
+not voided, fuel_type diesel) on the real and practical bases. Lane = first pickup → last delivery city/state.
+**screen:** "Three-mile cost per mile" panel at the top of Reports › Per-truck CPM dashboard: group selector
+(Truck / Driver / Lane / Load), fleet tiles per basis + MPG, ParityTable with EntityLink unit/driver/load.
+**guard:** step 12045 extended — report must use the canonical rollup, never sum cost tables itself, divide
+each basis only into its own loads, keep basis labels, exclude voided/non-diesel gallons (selftest 11/11).
+vitest 30/30 across three-mile, E-15, KPI, load legs.
+**live proof (prod read-only, USMCA, delivered 2026-07-01..09-30):** 117 loads, $330,575.78 direct cost.
+Practical CPM **$1.958/mi** over 168,842.4 mi (116 loads); short **$0.573/mi** over 14,226.7 mi (10 loads — 107
+loads carry no miles_shortest); real driven "—" for every load with the per-leg reason (manual stop times /
+Sept odometer gap). Practical MPG **5.396** (78,949.6 mi / 14,630 gal) vs the owner's AlwaysTrack 5.420 — the
+cost and gallons plumbing ties out. 14 trucks, 82 lanes. 1.1 s.
+**next (part C, one CPM engine):** the existing Per-truck CPM dashboard computes its own CPM on practical miles
+from non-canonical cost (counts voided driver bills) and is subtitled "Real cost-per-mile" — re-point it onto
+this engine and label its basis.
