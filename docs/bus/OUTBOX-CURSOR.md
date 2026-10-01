@@ -119,3 +119,6 @@ C-64 · Banking Home board: 9-tab subnav (Home·Accounts·Transactions·Link sug
 
 **2026-10-01T01:10Z · ROUND 304 PR OPEN · #23592 · `cursor/c64-banking-approved-boards-c89b`**
 C-64/C-65/C-67 shipped to PR: escrow Board+Ledger split (never-delete ParityTable/JE kept); Statement/Plaid stay registered + filtered from subnav; Accounts Factoring · virtual bank + Cash GL/virtual-tile honesty restored; Combobox listbox z=240 above C-65 docks. LIVE PROOF: `node scripts/money-pr-local-gate.mjs` exit 0. LEFT: Lead Chrome on /banking Home + Driver escrow + Reconciliation (DONE ≠ merge SHA). A/R A/P GL QBO bank-feed settlements stay paused.
+
+**2026-10-01T01:51Z · ROUND 304 MERGED · PR #23592 · `25803d65b2`**
+FAST-MERGE: money-pr-local-gate exit 0 → squash merge (no --admin). LEFT: Lead Chrome measure before DONE close.
