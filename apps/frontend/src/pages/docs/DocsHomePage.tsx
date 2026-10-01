@@ -28,6 +28,8 @@ function docsLinkToEntityKind(entityType: FileEntityType): EntityKind | null {
     case "settlement":
     case "invoice":
       return entityType;
+    case "work_order":
+      return "work_order";
     case "equipment":
       return "unit";
     default:
@@ -52,6 +54,8 @@ function docsEntityNoun(entityType: FileEntityType | string): string {
       return "Settlement";
     case "invoice":
       return "Invoice";
+    case "work_order":
+      return "Work order";
     default:
       return "Record";
   }
