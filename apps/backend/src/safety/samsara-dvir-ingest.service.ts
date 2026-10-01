@@ -18,7 +18,8 @@
  *   client_request_id  'samsara-dvir:<id>' — idempotent; a re-read DVIR UPDATES its safety flags
  *                   (a later 'resolved' status clears the WF-050 block), never inserts a duplicate.
  *   load_id         the load the unit was carrying at the inspection (shared loadAtTimeSql).
- *   trailer_id      the one mdata.units row of this company numbered Samsara's trailerName; else NULL.
+ *   trailer_id / trailer_equipment_id  the one row of this company numbered Samsara's trailerName -- in mdata.units
+ *                   (trailer_id) or mdata.equipment (trailer_equipment_id, migration 202615151000); else NULL.
  */
 import type { SamsaraDvir } from "../integrations/samsara/samsara-client.js";
 import { loadUnitIdBySamsaraVehicleId } from "../integrations/samsara/samsara-positions.service.js";
@@ -147,12 +148,15 @@ export async function ingestSamsaraDvirs(
       // unit_number is Samsara's trailerName (trailers are mdata.units here; dvir_submissions.trailer_id -> units). Unresolvable links stay NULL, never guessed.
       `INSERT INTO safety.dvir_submissions
          (operating_company_id, driver_id, unit_id, type, odometer, location, items, certified, submitted_at,
-          has_major_defect, has_any_defect, client_request_id, load_id, trailer_id)
+          has_major_defect, has_any_defect, client_request_id, load_id, trailer_id, trailer_equipment_id)
        SELECT $1::uuid, $2::uuid, $3::uuid, $4, $5, $6, $7::jsonb, $8, $9::timestamptz, $10, $11, $12,
               load_at_time.load_id,
               (SELECT CASE WHEN count(*) = 1 THEN (array_agg(t.id))[1] END FROM mdata.units t
                 WHERE $13::text IS NOT NULL AND t.unit_number = $13::text AND t.deactivated_at IS NULL
-                  AND COALESCE(t.currently_leased_to_company_id, t.owner_company_id) = $1::uuid)
+                  AND COALESCE(t.currently_leased_to_company_id, t.owner_company_id) = $1::uuid),
+              (SELECT CASE WHEN count(*) = 1 THEN (array_agg(e.id))[1] END FROM mdata.equipment e
+                WHERE $13::text IS NOT NULL AND e.equipment_number = $13::text
+                  AND COALESCE(e.currently_leased_to_company_id, e.owner_company_id) = $1::uuid)
          FROM (SELECT 1) _one
          ${loadAtTimeSql("$3::uuid", "$9::timestamptz")}
        ON CONFLICT (operating_company_id, client_request_id) WHERE client_request_id IS NOT NULL
@@ -160,12 +164,14 @@ export async function ingestSamsaraDvirs(
                      has_any_defect = EXCLUDED.has_any_defect,
                      items = EXCLUDED.items,
                      load_id = COALESCE(safety.dvir_submissions.load_id, EXCLUDED.load_id),
-                     trailer_id = COALESCE(safety.dvir_submissions.trailer_id, EXCLUDED.trailer_id)
+                     trailer_id = COALESCE(safety.dvir_submissions.trailer_id, EXCLUDED.trailer_id),
+                     trailer_equipment_id = COALESCE(safety.dvir_submissions.trailer_equipment_id, EXCLUDED.trailer_equipment_id)
          WHERE safety.dvir_submissions.has_major_defect IS DISTINCT FROM EXCLUDED.has_major_defect
             OR safety.dvir_submissions.has_any_defect IS DISTINCT FROM EXCLUDED.has_any_defect
             OR safety.dvir_submissions.items IS DISTINCT FROM EXCLUDED.items
             OR (safety.dvir_submissions.load_id IS NULL AND EXCLUDED.load_id IS NOT NULL)
             OR (safety.dvir_submissions.trailer_id IS NULL AND EXCLUDED.trailer_id IS NOT NULL)
+            OR (safety.dvir_submissions.trailer_equipment_id IS NULL AND EXCLUDED.trailer_equipment_id IS NOT NULL)
        RETURNING (xmax = 0) AS inserted, true AS changed`,
       [operatingCompanyId, r.driver_id, r.unit_id, r.type, r.odometer, r.location, JSON.stringify(r.items), r.certified, r.submitted_at, r.has_major_defect, r.has_any_defect, r.client_request_id, r.trailer_name]
     );

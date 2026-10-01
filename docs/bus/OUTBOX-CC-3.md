@@ -1425,3 +1425,11 @@ guard: scripts/verify-driver-prompts-flag-off-idempotent.mjs + --selftest PASS; 
 - **DVIR linkage:** `load_id` from loadAtTimeSql (rolled-back: 56/57 linked); `trailer_id` from the single mdata.units match. Most trailers live in mdata.equipment, so the `trailer_equipment_id` column (migration 202615151000, claim #23726; rolled-back: 9 linked) ships in a follow-up PR. Any `.sql` in a diff runs every live guard, and the fuel guard below is red.
 - **Reverse links** (`GET /api/v1/loads/:id/telematics`, `GET /api/v1/units/:id/telematics`): built and proven read-only on 13634/T152 (94 fence crossings, 4 DVIRs, 5 fuel fills), but held out of this PR. They read `fuel.fuel_transactions`, which runs the live guard `verify-fuel-cost-posts-exactly-once`, and that guard is red on main data: **FUEL_5000_MISMATCH, 5000 Fuel & Diesel net $172,087.98 vs posted expense lines $172,606.78 (−$518.80)**. $518.80 matches fuel txn c4f21539 (T173, 2026-08-13, invoice 99418954, KEEP_RELAY). **→ CC-1 (money lane).** The routes ship once that guard is green.
 - **Data question (owner):** loads 13625 and 13638 have `canceled_at` set while status is dispatched; status is trusted.
+
+## 2026-10-01 — Reverse links shipped + DVIR trailer_equipment_id
+
+- The fuel guard is green again on re-run, so the −$518.80 was transient (CC-1 mid-write). The held pieces ship now.
+- `GET /api/v1/loads/:id/telematics` returns: stops, driven-miles segments, arrivals, fence transitions, border crossings, DVIRs, detention, fuel fills, driver prompts, Samsara route pushes.
+- `GET /api/v1/units/:id/telematics` returns: load and driver now (shared loadAtTimeSql / driverAtTimeSql), latest position, odometer anchors, stops, fence crossings, faults, harsh events, DVIRs as tractor or trailer, fuel fills.
+- Read-only run on 13634 / T152: 2 arrivals, 94 fence crossings, 4 DVIRs, 5 fuel fills.
+- Migration 202615151000 adds `safety.dvir_submissions.trailer_equipment_id` (FK to mdata.equipment). The DVIR ingest links the single matching equipment row. Rolled back: 9 linked.
