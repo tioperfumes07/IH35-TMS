@@ -6615,3 +6615,25 @@ Owner, in chat to CC-2, 2026-10-01: "you have full permissions and authoriztions
 
 THIS AUTHORIZATION DOES NOT COVER: any expense whose journal entry is voided or reversed, any other entity, the 11 draft
 fuel documents awaiting posting, or any amount/account change.
+
+## AUTH-189
+issued_at: 2026-10-01T06:11:35Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). accounting.expenses 13523-27, 13523-28, 13523-29 (settlement 5781,
+  load 13523): each reversed through reversePostedSourceTransactionInClientTx, its header voided, and reissued as a new expense
+  with the SAME date, load, vendor, payment account and lines (accounts/items/amounts unchanged), plus the truck and driver of
+  load 13523 (exactly one of each), its expense_load_links row, posted through postSourceTransactionInClientTx. Audit rows source CC-2-AUTH-189.
+action: npx tsx scripts/ops/2026-10-01-cc2-auth189-reissue-5781-reefer-misposted-to-def.ts --apply. Dry run: 3 documents, $518.80 misposted to 5010; --rehearse on production: all 3 reissued and rolled back, every line on its own account.
+expires_at: 2026-10-02T06:11:35Z
+status: OPEN
+
+WHY: the reefer-diesel line of each document is coded to 5000 Fuel & Diesel (the item's own default account) but its journal
+entry posted it to 5010 DEF ($518.80 in all) -- the 2026-09-30 feed inserted the line on 5010, posted, then recoded the line
+without reposting. Measured: these are the ONLY 3 of 544 posted USMCA expense lines whose ledger leg disagrees with the line.
+verify-fuel-cost-posts-exactly-once fails on exactly this $518.80. Root fix ships next: migration 202615170700 refuses a
+change to a posted line's account/amount; guard 12051.
+
+OWNER LAW, verbatim, 2026-10-01: "fix all issues at root, we do not patch, nor defer, we fix permanently." and rule 3:
+"If the root cause is a prod data defect, write the ops script with dry-run + `--apply` + audit row, open an AUTH block, and run it — same session."
+Owner, in chat to CC-2, 2026-10-01: "you have full permissions and authoriztions".
+
+THIS AUTHORIZATION DOES NOT COVER: any other expense, any amount or account change, any document outside settlement 5781.
