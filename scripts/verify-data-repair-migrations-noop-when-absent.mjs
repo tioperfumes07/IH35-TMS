@@ -43,6 +43,9 @@ export const KNOWN_DEBT = new Set([
   // Second shape (see migrationInsertsProductionCompanyUnguarded): INSERT ... VALUES with the USMCA
   // id into an FK-backed table, no existence guard. Applied 2026-09-30, uneditable.
   "202614850000_pm_catalog_usmca.sql",
+  // Same shape via INSERT ... SELECT '<id>' WHERE NOT EXISTS (idempotency, not existence). Applied
+  // 2026-09-30T23:12:04Z, uneditable.
+  "202615000000_bind_usmca_cash_gl_accounts.sql",
 ]);
 
 /**
@@ -100,7 +103,19 @@ export function migrationInsertsProductionCompanyUnguarded(sql) {
     [...code.matchAll(new RegExp(`(\\w+)\\s+uuid\\s*(?::=|DEFAULT)\\s*'${id}'`, "gi"))].map((m) => m[1])
   );
   const binds = (text) => ids.some((id) => text.includes(id)) || vars.some((v) => new RegExp(`\\b${v}\\b`).test(text));
-  return [...code.matchAll(/INSERT\s+INTO\s+[\w.]+[^;]*?\bVALUES\b([\s\S]*?);/gi)].some((m) => binds(m[1]));
+  // VALUES (...) always writes the row. A SELECT writes it unconditionally only when it has no top-level
+  // FROM (a bare literal row) -- `INSERT ... SELECT ... FROM <table> WHERE <prod id>` selects zero rows
+  // on a fresh database and is safe (202614860000, proven by the CI log). Subqueries don't count.
+  const topLevel = (text) => {
+    let t = text;
+    for (let prev = ""; prev !== t; ) { prev = t; t = t.replace(/\([^()]*\)/g, " "); }
+    return t;
+  };
+  return [...code.matchAll(/INSERT\s+INTO\s+[\w.]+[^;]*?\b(VALUES|SELECT)\b([\s\S]*?);/gi)].some((m) => {
+    if (!binds(m[2])) return false;
+    if (m[1].toUpperCase() === "VALUES") return true;
+    return !/\bFROM\b/i.test(topLevel(m[2]));
+  });
 }
 
 export function assertMigrator(migratorSrc) {
@@ -230,6 +245,19 @@ if (process.argv.includes("--selftest")) {
     assertMigrations([{ name: "202612520200_old.sql", sql: `INSERT INTO t (operating_company_id) VALUES ('${ID}');` }])
   );
 
+  // 11. INSERT ... SELECT '<id>' WHERE NOT EXISTS (same row) -- idempotent, still unguarded (202615000000's shape).
+  expect(
+    "insert-select-literal-unguarded",
+    assertMigrations([{ name: "202699990003_new.sql", sql: `INSERT INTO catalogs.accounts (id, operating_company_id, account_number) SELECT gen_random_uuid(), '${ID}', '1236' WHERE NOT EXISTS (SELECT 1 FROM catalogs.accounts WHERE operating_company_id = '${ID}' AND account_number = '1236');` }]),
+    "no existence guard"
+  );
+
+  // 12. INSERT ... SELECT ... FROM <table> WHERE <prod id> selects zero rows on a fresh DB -- must stay silent.
+  refute(
+    "insert-select-from-table-passes",
+    assertMigrations([{ name: "202699990004_ok.sql", sql: `DO $$ DECLARE usmca_id uuid := '${ID}'; BEGIN INSERT INTO t (id, operating_company_id, unit_id) SELECT gen_random_uuid(), usmca_id, u.id FROM mdata.units u WHERE u.owner_company_id = usmca_id; END $$;` }])
+  );
+
   // 5. Known debt is exempt (it cannot be edited).
   refute("known-debt-exempt", assertMigrations([{ name: "202614640000_fix_usmca_def_item_account_5010.sql", sql: `RAISE EXCEPTION 'x'; UPDATE catalogs.items SET a=1 WHERE operating_company_id='${ID}';` }]));
 
@@ -251,7 +279,7 @@ if (process.argv.includes("--selftest")) {
     for (const f of failures) console.error(`  - ${f}`);
     process.exitCode = 1;
   } else {
-    console.log(`${LABEL} selftest 13/13 OK`);
+    console.log(`${LABEL} selftest 15/15 OK`);
   }
 } else {
   const problems = [

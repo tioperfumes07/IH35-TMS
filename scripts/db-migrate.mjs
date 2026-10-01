@@ -394,6 +394,14 @@ const FRESH_DB_PRODUCTION_DATA_ONLY = new Map([
       "production 2026-09-30T19:59:25Z, therefore uneditable. The follow-up 202614860000 keeps running " +
       "on fresh databases: its UNIQUE constraint is schema, and its insert selects zero rows there.",
   ],
+  [
+    "202615000000_bind_usmca_cash_gl_accounts.sql",
+    "Creates USMCA GL accounts 1236/1005 via INSERT ... SELECT '<USMCA id>' WHERE NOT EXISTS (same " +
+      "account) -- an idempotency check, not a company-existence check -- then binds three USMCA " +
+      "bank_accounts rows. No migration inserts USMCA into org.companies, so on a fresh database the " +
+      "insert violates accounts_operating_company_id_fkey and kills the chain (CI 2026-10-01). Pure " +
+      "data, no DDL; applied in production 2026-09-30T23:12:04Z, therefore uneditable.",
+  ],
 ]);
 
 function freshDbProductionDataOnlySkip(file) {
