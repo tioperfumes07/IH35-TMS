@@ -1,4 +1,9 @@
 {
+  "12001": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-live-fleet-is-measured-not-hardcoded (ROUND 304 LEAD-BUILD): one measured definition of the live fleet (GPS within the window), and the stop-odometer capture engine that reads it. Fails on any hardcoded fleet-size literal, on a real truck being classed as a coder test artifact, and on an interpolated odometer at a stop."
+  },
   "2426": {
     "claimed_at": "2026-08-31",
     "claimed_by": "cursor",
