@@ -7618,6 +7618,11 @@
     "claimed_at": "2026-10-01",
     "purpose": "verify-bank-tieout-live (ROUND 313 CC-1 #2 BANK-TIEOUT-01): every live bank account's feed balance ties to its ledger_account_id GL balance or the difference is explained line by line."
   },
+  "12069": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-no-frozen-entity-unit-on-usmca (registry E-17 recommendation): fails on any active unit owned by a frozen entity (IH 35 Transportation) attached to USMCA beyond the owner-pending baseline (T122, T124, T156)."
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
