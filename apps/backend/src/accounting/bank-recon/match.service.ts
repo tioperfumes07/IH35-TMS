@@ -1,4 +1,5 @@
 import { withLuciaBypass } from "../../auth/db.js";
+import { checkFactoringPurchaseOwner, FactoringPurchaseOwnerOnlyError } from "../../factoring/owner-only-purchase.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import {
   bankAccountHiddenFilterSql,
@@ -1200,7 +1201,30 @@ export async function findCandidates(input: {
   });
 }
 
+/**
+ * ROUND 315 OWNER-ONLY LAW: matching a bank deposit to a factoring purchase is the Owner's act alone. Runs in its own
+ * committed transaction BEFORE the match transaction, so the refusal's audit row survives the thrown 403.
+ */
+async function assertOwnerMayMatchFactoringPurchase(
+  operatingCompanyId: string,
+  actorUserUuid: string,
+  kinds: LedgerEntryKind[],
+  bankTransactionId: string
+): Promise<void> {
+  if (!kinds.includes("factoring_advance")) return;
+  const ok = await withLuciaBypass((client) =>
+    checkFactoringPurchaseOwner(client, {
+      operatingCompanyId,
+      userUuid: actorUserUuid,
+      action: "bank_match",
+      targetId: bankTransactionId,
+    })
+  );
+  if (!ok) throw new FactoringPurchaseOwnerOnlyError("bank_match");
+}
+
 export async function acceptMatchWithResolveDifference(input: ResolveDifferenceInput): Promise<ResolveDifferenceResult> {
+  await assertOwnerMayMatchFactoringPurchase(input.operating_company_id, input.actor_user_uuid, [input.ledger_entry_kind], input.bank_transaction_id);
   return withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     // ACCT-F5647 — FOR UPDATE, locking this bank transaction for the entire accept-match flow below.
@@ -1494,6 +1518,12 @@ export async function acceptExactMultiDocumentMatch(input: {
   cleared_ledger_entry_id: string | null;
 }> {
   if (!input.entries.length) throw new Error("multi_match_requires_entries");
+  await assertOwnerMayMatchFactoringPurchase(
+    input.operating_company_id,
+    input.actor_user_uuid,
+    input.entries.map((e) => e.ledger_entry_kind),
+    input.bank_transaction_id
+  );
 
   return withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);

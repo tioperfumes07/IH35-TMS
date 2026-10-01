@@ -27,6 +27,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { emitBankingSpineEvent } from "./banking-spine-emit.js";
 import { assertBankAccountUsable, bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
 import { computeAdjustedBalanceSummary } from "./adjusted-balance-rec.js";
+import { postReconciliationAdjustments } from "./recon-adjustments.service.js";
 import { ageUnclearedTransactions, type ReconcilingItemClass } from "./reconciling-item-aging.js";
 
 const startBodySchema = z.object({
@@ -77,6 +78,13 @@ const MATCHED_EVENT_EXISTENCE_SQL: Record<z.infer<typeof matchBodySchema.shape.m
 const completeBodySchema = z.object({
   force_complete: z.boolean().optional().default(false),
   reason: z.string().trim().max(500).optional(),
+  // BANK-ECON-04 — QBO Finish service charge / interest (persisted + posted on complete).
+  service_charge_cents: z.coerce.number().int().nonnegative().optional().default(0),
+  service_charge_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  service_charge_account_id: z.string().uuid().nullable().optional(),
+  interest_earned_cents: z.coerce.number().int().nonnegative().optional().default(0),
+  interest_earned_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  interest_earned_account_id: z.string().uuid().nullable().optional(),
 });
 
 const voidBodySchema = z.object({
@@ -185,7 +193,12 @@ function computeSummaryFromTransactions(
     matched_transfer_id?: string | null;
     matched_journal_entry_id?: string | null;
   }>,
-  opts: { beginningBalanceCents: number; statementEndingCents: number }
+  opts: {
+    beginningBalanceCents: number;
+    statementEndingCents: number;
+    serviceChargeCents?: number;
+    interestEarnedCents?: number;
+  }
 ) {
   // BANK-DOM-03: prefer explicit reconciliation_cleared. Until operators clear rows, fall back to
   // prior matched_* linkage so existing sessions are not stuck at all-uncleared.
@@ -201,6 +214,8 @@ function computeSummaryFromTransactions(
     beginningBalanceCents: opts.beginningBalanceCents,
     statementEndingCents: opts.statementEndingCents,
     transactions: normalized,
+    serviceChargeCents: opts.serviceChargeCents,
+    interestEarnedCents: opts.interestEarnedCents,
   });
 }
 
@@ -1296,6 +1311,15 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     const session = await loadSession(user.uuid, params.data.sessionId, query.data.operating_company_id);
     if (!session) return reply.code(404).send({ error: "session_not_found" });
 
+    const serviceChargeCents = Number(body.data.service_charge_cents ?? 0);
+    const interestEarnedCents = Number(body.data.interest_earned_cents ?? 0);
+    if (serviceChargeCents > 0 && (!body.data.service_charge_date || !body.data.service_charge_account_id)) {
+      return reply.code(400).send({ error: "service_charge_date_and_account_required" });
+    }
+    if (interestEarnedCents > 0 && (!body.data.interest_earned_date || !body.data.interest_earned_account_id)) {
+      return reply.code(400).send({ error: "interest_earned_date_and_account_required" });
+    }
+
     const { varianceCents, summary } = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const txnRes = await client.query<{
         amount_cents: number;
@@ -1326,6 +1350,8 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       const summaryInner = computeSummaryFromTransactions(txnRes.rows, {
         beginningBalanceCents,
         statementEndingCents: Number(session.statement_balance_cents ?? 0),
+        serviceChargeCents,
+        interestEarnedCents,
       });
       return { varianceCents: summaryInner.varianceCents, summary: summaryInner };
     });
@@ -1345,6 +1371,47 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     }
 
     const transactionsToSync = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      // BANK-ECON-04 — resolve bank GL + post service charge / interest through the canonical poster
+      // before the session flips to reconciled (same transaction; void-not-delete if complete fails).
+      const bankRes = await client.query<{ ledger_account_id: string | null }>(
+        `SELECT ledger_account_id::text AS ledger_account_id
+           FROM banking.bank_accounts
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid
+          LIMIT 1`,
+        [session.bank_account_id, query.data.operating_company_id]
+      );
+      const bankLedgerId = bankRes.rows[0]?.ledger_account_id ?? null;
+      if ((serviceChargeCents > 0 || interestEarnedCents > 0) && !bankLedgerId) {
+        throw Object.assign(new Error("bank_account_missing_ledger_account"), { statusCode: 409 });
+      }
+
+      let serviceChargeJeId: string | null =
+        (session as { service_charge_journal_entry_id?: string | null }).service_charge_journal_entry_id ?? null;
+      let interestJeId: string | null =
+        (session as { interest_earned_journal_entry_id?: string | null }).interest_earned_journal_entry_id ?? null;
+
+      if (bankLedgerId && (serviceChargeCents > 0 || interestEarnedCents > 0)) {
+        const posted = await postReconciliationAdjustments(
+          client,
+          {
+            operating_company_id: query.data.operating_company_id,
+            session_id: session.id,
+            bank_ledger_account_id: bankLedgerId,
+            service_charge_cents: serviceChargeCents,
+            service_charge_date: body.data.service_charge_date ?? null,
+            service_charge_account_id: body.data.service_charge_account_id ?? null,
+            service_charge_journal_entry_id: serviceChargeJeId,
+            interest_earned_cents: interestEarnedCents,
+            interest_earned_date: body.data.interest_earned_date ?? null,
+            interest_earned_account_id: body.data.interest_earned_account_id ?? null,
+            interest_earned_journal_entry_id: interestJeId,
+          },
+          { userId: user.uuid, role: user.role }
+        );
+        serviceChargeJeId = posted.service_charge_journal_entry_id;
+        interestJeId = posted.interest_earned_journal_entry_id;
+      }
+
       const completeParams = [
         session.id,
         user.uuid,
@@ -1355,6 +1422,14 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         summary.outstandingChecksCents,
         summary.adjustedBankBalanceCents,
         summary.adjustedBookBalanceCents,
+        serviceChargeCents,
+        body.data.service_charge_date ?? null,
+        body.data.service_charge_account_id ?? null,
+        serviceChargeJeId,
+        interestEarnedCents,
+        body.data.interest_earned_date ?? null,
+        body.data.interest_earned_account_id ?? null,
+        interestJeId,
       ] as const;
       try {
         await client.query(
@@ -1370,6 +1445,14 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
               outstanding_checks_cents = $7,
               adjusted_bank_balance_cents = $8,
               adjusted_book_balance_cents = $9,
+              service_charge_cents = $10,
+              service_charge_date = $11::date,
+              service_charge_account_id = $12::uuid,
+              service_charge_journal_entry_id = $13::uuid,
+              interest_earned_cents = $14,
+              interest_earned_date = $15::date,
+              interest_earned_account_id = $16::uuid,
+              interest_earned_journal_entry_id = $17::uuid,
               updated_at = now(),
               notes = CASE
                 WHEN $4::text IS NULL THEN notes
@@ -1439,6 +1522,8 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           variance_cents: varianceCents,
           force_complete: body.data.force_complete,
           force_complete_reason: body.data.reason ?? null,
+          service_charge_cents: serviceChargeCents,
+          interest_earned_cents: interestEarnedCents,
         },
         "info",
         "P5-T2-RECON"

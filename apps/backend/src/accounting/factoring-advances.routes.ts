@@ -21,6 +21,7 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope,
 import { getFactorForCustomer } from "../factoring/factor.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { requireVoidCancelExecutorWired } from "../lib/authz/void-cancel-authz.js";
+import { requireFactoringPurchaseOwner } from "../factoring/owner-only-purchase.js";
 
 const idParamsSchema = z.object({
   id: z.string().uuid(),
@@ -431,6 +432,17 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
       })
     );
     if (!allowedCreate) return;
+    // ROUND 315 OWNER-ONLY LAW: only the Owner creates, closes or matches a purchase (403 + audit row).
+    const ownerOkCreate = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      requireFactoringPurchaseOwner(reply, client, {
+        operatingCompanyId: query.data.operating_company_id,
+        userUuid: user.uuid,
+        role: String(user.role ?? ""),
+        action: "create",
+        targetId: null,
+      })
+    );
+    if (!ownerOkCreate) return;
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const vendorRes = await client.query(
@@ -750,6 +762,17 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
       })
     );
     if (!allowedAdvance) return;
+    // ROUND 315 OWNER-ONLY LAW: only the Owner creates, closes or matches a purchase (403 + audit row).
+    const ownerOkAdvance = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      requireFactoringPurchaseOwner(reply, client, {
+        operatingCompanyId: query.data.operating_company_id,
+        userUuid: user.uuid,
+        role: String(user.role ?? ""),
+        action: "advance",
+        targetId: params.data.id,
+      })
+    );
+    if (!ownerOkAdvance) return;
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const advanceRes = await client.query(`SELECT * FROM accounting.factoring_advances WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
@@ -850,6 +873,17 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
       })
     );
     if (!allowedReserveHeld) return;
+    // ROUND 315 OWNER-ONLY LAW: only the Owner creates, closes or matches a purchase (403 + audit row).
+    const ownerOkReserveHeld = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      requireFactoringPurchaseOwner(reply, client, {
+        operatingCompanyId: query.data.operating_company_id,
+        userUuid: user.uuid,
+        role: String(user.role ?? ""),
+        action: "reserve_held",
+        targetId: params.data.id,
+      })
+    );
+    if (!ownerOkReserveHeld) return;
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const advanceRes = await client.query(`SELECT * FROM accounting.factoring_advances WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
@@ -942,6 +976,17 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
       })
     );
     if (!allowedRelease) return;
+    // ROUND 315 OWNER-ONLY LAW: only the Owner creates, closes or matches a purchase (403 + audit row).
+    const ownerOkRelease = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      requireFactoringPurchaseOwner(reply, client, {
+        operatingCompanyId: query.data.operating_company_id,
+        userUuid: user.uuid,
+        role: String(user.role ?? ""),
+        action: "release",
+        targetId: params.data.id,
+      })
+    );
+    if (!ownerOkRelease) return;
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const advanceRes = await client.query(`SELECT * FROM accounting.factoring_advances WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [
@@ -1070,6 +1115,17 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
       })
     );
     if (!allowedRecourse) return;
+    // ROUND 315 OWNER-ONLY LAW: only the Owner creates, closes or matches a purchase (403 + audit row).
+    const ownerOkRecourse = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      requireFactoringPurchaseOwner(reply, client, {
+        operatingCompanyId: query.data.operating_company_id,
+        userUuid: user.uuid,
+        role: String(user.role ?? ""),
+        action: "recourse_return",
+        targetId: params.data.id,
+      })
+    );
+    if (!ownerOkRecourse) return;
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const advanceRes = await client.query(`SELECT * FROM accounting.factoring_advances WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`, [

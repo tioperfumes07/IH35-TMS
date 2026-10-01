@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { FactoringPurchaseOwnerOnlyError } from "../../factoring/owner-only-purchase.js";
 import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "../shared.js";
@@ -105,6 +106,9 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
       return { ok: true, result };
     } catch (error) {
       const message = String((error as Error).message ?? "");
+      if (error instanceof FactoringPurchaseOwnerOnlyError) {
+        return reply.code(403).send({ error: error.message, message: "Only the Owner matches a deposit to a factoring purchase." });
+      }
       if (error instanceof ReconciledSessionLockedError) {
         return reply.code(409).send({ error: error.code, message: error.message });
       }
@@ -186,6 +190,9 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
       return { ok: true, result };
     } catch (error) {
       const message = String((error as Error).message ?? "");
+      if (error instanceof FactoringPurchaseOwnerOnlyError) {
+        return reply.code(403).send({ error: error.message, message: "Only the Owner matches a deposit to a factoring purchase." });
+      }
       if (error instanceof ReconciledSessionLockedError) {
         return reply.code(409).send({ error: error.code, message: error.message });
       }
@@ -225,6 +232,9 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
       return { ok: true, result };
     } catch (error) {
       const message = String((error as Error).message ?? "");
+      if (error instanceof FactoringPurchaseOwnerOnlyError) {
+        return reply.code(403).send({ error: error.message, message: "Only the Owner matches a deposit to a factoring purchase." });
+      }
       if (error instanceof ReconciledSessionLockedError) {
         return reply.code(409).send({ error: error.code, message: error.message });
       }

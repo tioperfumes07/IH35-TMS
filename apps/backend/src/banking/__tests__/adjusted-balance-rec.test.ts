@@ -37,4 +37,18 @@ describe("BANK-DOM-03 adjusted-balance recon", () => {
     // adjusted_bank = 10500+800-0 = 11300; book = 11000; variance 300
     expect(summary.varianceCents).toBe(300);
   });
+
+  it("BANK-ECON-04: service charge − interest nets into book so Finish can close at $0", () => {
+    // Petty Cash: beginning 0, statement 0, no txns; enter $5 fee + $5 interest → variance 0
+    const summary = computeAdjustedBalanceSummary({
+      beginningBalanceCents: 0,
+      statementEndingCents: 0,
+      transactions: [],
+      serviceChargeCents: 500,
+      interestEarnedCents: 500,
+    });
+    expect(summary.adjustedBookBalanceCents).toBe(0);
+    expect(summary.adjustedBankBalanceCents).toBe(0);
+    expect(summary.varianceCents).toBe(0);
+  });
 });

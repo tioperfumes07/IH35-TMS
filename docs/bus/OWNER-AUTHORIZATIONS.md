@@ -6773,3 +6773,15 @@ matched_factoring_advance_id; all 16 still read review_state 'matched', which ma
 NOT COVERED: any amount, any bank line beyond these 16, any match to a new purchase (owner-only by ROUND 315 law).
 Owner, in chat to CC-2, 2026-10-01: "you have full permissions and authoriztions".
 
+## AUTH-195
+issued_at: 2026-10-01T16:20:00Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). banking.reconciliation_sessions (one Petty Cash session
+  1b9760dd-e7f1-452c-8b61-1d8f11269dd8), accounting.journal_entries + accounting.journal_entry_postings (exactly two
+  JEs: service charge $5.00 Dr 6300 / Cr 1005; interest earned $5.00 Dr 1005 / Cr 7100) via
+  postReconciliationAdjustments → createJournalEntryOnClient. ROUND 313 BANK-SURF-04/ECON-04 live close at $0 difference.
+action: OWNER_AUTH_ID=AUTH-195 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-01-cursor-r313-recon-service-charge-live-proof.ts
+expires_at: 2026-10-02T16:20:00Z
+status: OPEN
+derivation: docs/bus/ORDERS-2026-10-01-ROUND-313-ALL-SEATS.md Cursor item 1 — "a real reconciliation_sessions row closed at
+  zero difference on a USMCA account (statement balance, cleared lines, service charge/interest via canonical poster)".
+THIS AUTHORIZATION DOES NOT COVER: any other bank account, any amount other than $5.00+$5.00 netting to $0, any QBO write-back.
