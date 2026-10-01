@@ -176,6 +176,7 @@ import { registerPaymentMethodsCatalogRoutes } from "./driver-finance/payment-me
 import { registerSettlementPayRunCloseRoutes } from "./driver-finance/settlement-payrun-close.routes.js";
 import { registerHistoricalFeedDayRoutes } from "./driver-finance/historical-feed-day.routes.js";
 import { registerSettlementCreatorRoutes } from "./driver-finance/settlement-creator.routes.js";
+import { registerBatchSettlementsRoutes } from "./driver-finance/batch-settlements.routes.js";
 import { registerSeedSettlementDocumentRoutes } from "./feed/seed-settlement-document.routes.js";
 import { registerDriverInboxReportingRoutes } from "./driver-finance/inbox-reporting.routes.js";
 import { registerOwnerApprovalPortalRoutes } from "./driver-finance/owner-approval.routes.js";
@@ -1087,6 +1088,7 @@ async function main() {
   registerSettlementPayRunCloseRoutes(app);
   registerHistoricalFeedDayRoutes(app);
   await registerSettlementCreatorRoutes(app);
+  await registerBatchSettlementsRoutes(app);
   registerSeedSettlementDocumentRoutes(app);
   registerDriverInboxReportingRoutes(app);
   await registerAbandonmentRoutes(app);

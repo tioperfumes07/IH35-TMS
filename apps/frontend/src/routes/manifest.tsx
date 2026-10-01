@@ -106,6 +106,9 @@ const SettlementsPage = React.lazy(() => import("../pages/driver-finance/Settlem
 const SettlementCreatorPage = React.lazy(() =>
   import("../pages/settlements/SettlementCreatorPage").then((m) => ({ default: m.SettlementCreatorPage }))
 );
+const BatchSettlementsPage = React.lazy(() =>
+  import("../pages/driver-finance/BatchSettlementsPage").then((m) => ({ default: m.BatchSettlementsPage }))
+);
 const CashAdvanceRequestsPage = React.lazy(() => import("../pages/driver-finance/CashAdvanceRequestsPage").then((m) => ({ default: m.CashAdvanceRequestsPage })));
 const CompanySettlementsPage = React.lazy(() => import("../pages/driver-finance/CompanySettlementsPage").then((m) => ({ default: m.CompanySettlementsPage })));
 const SettlementCloseArrivalPage = React.lazy(() => import("../pages/driver-finance/SettlementCloseArrivalPage").then((m) => ({ default: m.SettlementCloseArrivalPage })));
@@ -2695,6 +2698,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <SettlementsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/driver-finance/settlements/batch"
+          element={
+            <ProtectedRoute>
+              <BatchSettlementsPage />
             </ProtectedRoute>
           }
         />
