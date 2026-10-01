@@ -66,11 +66,13 @@ function selftest() {
     import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
     const columns = [
       { key: "txn_date", label: "Date" },
+      { key: "driver", label: "Driver" },
+      { key: "type", label: "Type" },
       { key: "description", label: "Description" },
-      { key: "deposits", label: "Deposits", render: (row) => (Number(row.deposits ?? 0) > 0 ? \`$\${Number(row.deposits ?? 0).toFixed(2)}\` : "—") },
-      { key: "withdrawals", label: "Withdrawals" },
+      { key: "amount", label: "Amount", render: (row) => (Number(row.amount ?? 0) !== 0 ? \`$\${Number(row.amount ?? 0).toFixed(2)}\` : "—") },
       { key: "status", label: "Status" },
-      { key: "category", label: "Category" },
+      { key: "settlement", label: "Settlement" },
+      { key: "journal", label: "Journal Entry" },
     ];
     <ListErrorBanner onRetry={() => {}} />
     <ParityTable

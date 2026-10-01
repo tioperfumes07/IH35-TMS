@@ -92,7 +92,7 @@ if (process.argv.includes("--selftest")) {
   const GOOD_FIXTURES = {
     "apps/backend/src/banking/escrow-visualizer.routes.ts":
       "JOIN accounting.escrow_postings ep ON ep.escrow_account_id = ea.id ... LEFT JOIN accounting.journal_entries je ON je.id = ep.linked_journal_entry_id",
-    "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx": 'data-testid="banking-escrow-journal-entry-link"',
+    "apps/frontend/src/pages/banking/components/DriverEscrowLedgerSection.tsx": 'data-testid="banking-escrow-journal-entry-link"',
     "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx":
       'kind="journal_entry"\nid={tx.matched_journal_entry_id}',
     "apps/frontend/src/pages/banking/BankReconciliationPage.tsx":

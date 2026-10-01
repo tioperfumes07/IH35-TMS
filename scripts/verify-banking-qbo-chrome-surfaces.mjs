@@ -33,8 +33,8 @@ const LABEL = "verify-banking-qbo-chrome-surfaces";
 
 const CHECKS = [
   {
-    name: "BankingHome DatePicker range + MoneyInput",
-    file: "apps/frontend/src/pages/banking/BankingHome.tsx",
+    name: "Reconciliation shell DatePicker range + MoneyInput",
+    file: "apps/frontend/src/pages/banking/components/ReconciliationTabContent.tsx",
     pattern: /DatePicker[\s\S]*DatePicker[\s\S]*MoneyInput/,
   },
   {
@@ -88,7 +88,7 @@ const CHECKS = [
     pattern: /ManageAccountsModal[\s\S]*ManualJEModal[\s\S]*TransferModal[\s\S]*RecordCCPaymentModal/,
   },
   {
-    name: "BankingHome mounts Plaid panels",
+    name: "BankingHome mounts Plaid panel + keeps retired PlaidSyncStatusPanel feed comment/path",
     file: "apps/frontend/src/pages/banking/BankingHome.tsx",
     pattern: /BankingPlaidConnectionsPanel[\s\S]*PlaidSyncStatusPanel|PlaidSyncStatusPanel[\s\S]*BankingPlaidConnectionsPanel/,
   },

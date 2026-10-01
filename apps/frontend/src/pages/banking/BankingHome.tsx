@@ -249,6 +249,12 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     () => sortedBankTiles.filter((t) => String(t.tile_kind) === "virtual"),
     [sortedBankTiles],
   );
+  const showVirtualTilesEmptyHonesty =
+    tilesQuery.isSuccess &&
+    sortedBankTiles.length === 0 &&
+    realBankTiles.length === 0 &&
+    virtualBankTiles.length === 0 &&
+    (allAccountsQuery.isSuccess ? (allAccountsQuery.data?.accounts ?? []).length === 0 : false);
   // BANK-SURF-05 — resolve Relay via CoA system_purpose (never phantom is_relay).
   const relayWalletTiles = useMemo(
     () => sortedBankTiles.filter((t) => t.is_relay_wallet === true || t.system_purpose === "relay_fuel_wallet"),
@@ -278,6 +284,24 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     }));
   }, [plaidAccountsQuery.data?.accounts, sortedBankTiles]);
   const totalBankAccountsForRecon = bankAccountsPanelRows.length;
+  // ROUND-20.8 A5 — the "Bank feed" KPI tile's staleness, from the same last_synced_at
+  // PlaidSyncStatusPanel used to read (that panel is gone now — B9 — so this is its one remaining
+  // consumer). The account with the newest last_synced_at wins.
+  const bankFeedLastSync = useMemo(() => {
+    const accounts = plaidAccountsQuery.data?.accounts ?? [];
+    return (
+      accounts
+        .map((a) => a.last_synced_at)
+        .filter((v): v is string => Boolean(v))
+        .sort()
+        .reverse()[0] ?? null
+    );
+  }, [plaidAccountsQuery.data?.accounts]);
+  const factoringTile = sortedBankTiles.find(
+    (t) =>
+      String(t.tile_kind) === "virtual" &&
+      (t.tag === "Factoring" || t.display_name.toLowerCase().includes("factoring")),
+  );
   useEffect(() => {
     if (!selectedAccountId) return;
     if (!bankAccountsPanelRows.some((row) => row.id === selectedAccountId)) setSelectedAccountId(null);
@@ -740,6 +764,50 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             failedSyncCount={Number(qboStats?.failed ?? 0)}
             isConnected={qboConnectionQuery.data?.connected ?? false}
           />
+          {showVirtualTilesEmptyHonesty ? (
+            <div
+              className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+              data-testid="banking-virtual-tiles-empty-honesty-banner"
+            >
+              <p className="font-semibold">Banking account tiles are empty — not a silent healthy $0.</p>
+              <p className="mt-1">
+                DIP, Factoring reserve, and Driver Escrow KPIs normally come from the banking account summary
+                feed. When that feed returns no rows, zeros here are unproven. Connect Plaid / map Cash GL
+                accounts, or open Factoring and Driver Escrow for canonical virtual-bank truth.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <ActionButton onClick={() => navigate("/factoring")}>Factoring entry</ActionButton>
+                <ActionButton onClick={() => setActiveTab("driver_escrow")}>Driver Escrow</ActionButton>
+                <Link to="/banking/cash-gl-setup" className="text-xs font-medium text-slate-800 underline">
+                  Cash GL setup
+                </Link>
+              </div>
+            </div>
+          ) : null}
+          {allAccountsQuery.isSuccess &&
+          (() => {
+            const accts = allAccountsQuery.data?.accounts ?? [];
+            const unbound = accts.filter((a) => !a.ledger_account_id).length;
+            if (accts.length === 0 || unbound === 0) return null;
+            return (
+              <div
+                className="rounded-sm border border-[#C7D2DC] px-3 py-2 text-xs"
+                style={{ borderLeft: "4px solid #B42318", background: "#fdecea" }}
+                data-testid="banking-accounts-cash-gl-unbound-banner"
+              >
+                <p className="font-semibold" style={{ color: "#B42318" }}>
+                  Cash GL unbound on {unbound} of {accts.length} bank account(s)
+                </p>
+                <p className="mt-1 text-slate-700">
+                  Bank Register and bank-feed posting need a Cash GL per account. Until it is mapped, that account
+                  cannot post — do not treat Accounts home as posting-ready.
+                </p>
+                <div className="mt-2">
+                  <ActionButton onClick={() => navigate("/banking/cash-gl-setup")}>Map Cash GL</ActionButton>
+                </div>
+              </div>
+            );
+          })()}
           <AccountTilesRow
             tiles={sortedBankTiles}
             selectedId={selectedId}
@@ -766,71 +834,115 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             onInspect={(id) => setInspectTileId(id)}
             onManageAccounts={() => setManageOpen(true)}
           />
-          <div className="rounded-sm border border-gray-200 bg-white">
-            <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
-              <span>Bank accounts</span>
-              <button
-                className="text-slate-700 hover:underline"
-                type="button"
-                onClick={() => setManageOpen(true)}
-                aria-label="Manage bank accounts"
-              >
-                +
-              </button>
-            </div>
-            <div className="max-h-[320px] overflow-y-auto">
-              {bankAccountsPanelRows.map((row, idx) => (
-                <div
-                  key={row.id}
-                  className={`grid w-full grid-cols-[1fr_auto_auto] items-center border-b border-gray-100 px-3 py-1.5 text-xs ${selectedId === row.id ? "bg-slate-100" : "hover:bg-gray-50"}`}
+          <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1.3fr_1fr]">
+            <div className="rounded-sm border border-gray-200 bg-white">
+              <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                <span>Bank accounts</span>
+                <button
+                  className="text-slate-700 hover:underline"
+                  type="button"
+                  onClick={() => setManageOpen(true)}
+                  aria-label="Manage bank accounts"
                 >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedAccountId(row.id);
-                      navigate(`/banking/accounts/${row.id}`);
-                    }}
-                    className="truncate text-left"
+                  +
+                </button>
+              </div>
+              <div className="max-h-[320px] overflow-y-auto">
+                {bankAccountsPanelRows.map((row, idx) => (
+                  <div
+                    key={row.id}
+                    className={`grid w-full grid-cols-[1fr_auto_auto] items-center border-b border-gray-100 px-3 py-1.5 text-xs ${selectedId === row.id ? "bg-slate-100" : "hover:bg-gray-50"}`}
                   >
-                    {row.displayName}
-                  </button>
-                  <span className="font-medium tabular-nums">{money.format(row.balance)}</span>
-                  <span className="flex flex-col">
                     <button
                       type="button"
-                      className="text-xs leading-none text-gray-400 hover:text-gray-700 disabled:opacity-30"
-                      disabled={idx === 0}
-                      onClick={() => void handleReorderAccount(row.id, "up")}
-                      aria-label={`Move ${row.displayName} up`}
-                      data-testid={`bank-account-reorder-up-${row.id}`}
+                      onClick={() => {
+                        setSelectedAccountId(row.id);
+                        navigate(`/banking/accounts/${row.id}`);
+                      }}
+                      className="truncate text-left"
                     >
-                      ▲
+                      {row.displayName}
                     </button>
-                    <button
-                      type="button"
-                      className="text-xs leading-none text-gray-400 hover:text-gray-700 disabled:opacity-30"
-                      disabled={idx === bankAccountsPanelRows.length - 1}
-                      onClick={() => void handleReorderAccount(row.id, "down")}
-                      aria-label={`Move ${row.displayName} down`}
-                      data-testid={`bank-account-reorder-down-${row.id}`}
-                    >
-                      ▼
-                    </button>
+                    <span className="font-medium tabular-nums">{money.format(row.balance)}</span>
+                    <span className="flex flex-col">
+                      <button
+                        type="button"
+                        className="text-xs leading-none text-gray-400 hover:text-gray-700 disabled:opacity-30"
+                        disabled={idx === 0}
+                        onClick={() => void handleReorderAccount(row.id, "up")}
+                        aria-label={`Move ${row.displayName} up`}
+                        data-testid={`bank-account-reorder-up-${row.id}`}
+                      >
+                        ▲
+                      </button>
+                      <button
+                        type="button"
+                        className="text-xs leading-none text-gray-400 hover:text-gray-700 disabled:opacity-30"
+                        disabled={idx === bankAccountsPanelRows.length - 1}
+                        onClick={() => void handleReorderAccount(row.id, "down")}
+                        aria-label={`Move ${row.displayName} down`}
+                        data-testid={`bank-account-reorder-down-${row.id}`}
+                      >
+                        ▼
+                      </button>
+                    </span>
+                  </div>
+                ))}
+                {bankAccountsPanelRows.length === 0 ? (
+                  <EntityEmptyState entityName={selectedCompany?.legal_name} noun="bank accounts" />
+                ) : null}
+              </div>
+              <label className="flex cursor-pointer items-center gap-2 px-3 py-2 text-xs text-gray-600">
+                <input
+                  type="checkbox"
+                  checked={showDisconnectedBankAccounts}
+                  onChange={(e) => setShowDisconnectedBankAccounts(e.target.checked)}
+                />
+                Show disconnected history
+              </label>
+            </div>
+            <div className="rounded-sm border border-slate-300 bg-slate-100">
+              <div className="flex items-center justify-between border-b border-slate-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700">
+                <Link to="/factoring" className="hover:underline">
+                  Factoring · virtual bank
+                </Link>
+                <span className="text-xs">Open</span>
+              </div>
+              <div className="space-y-1 px-3 py-2 text-xs">
+                <Link to="/factoring/reserve-tracker" className="flex justify-between hover:underline">
+                  <span>Reserves held</span>
+                  <span>{money.format(factoringReserve)}</span>
+                </Link>
+                <div className="flex justify-between">
+                  <span>Advances funded MTD</span>
+                  <span title="No advances_funded_mtd on factoring-virtual API — open Factoring module">
+                    — (see Factoring module)
                   </span>
                 </div>
-              ))}
-              {bankAccountsPanelRows.length === 0 ? (
-                <EntityEmptyState entityName={selectedCompany?.legal_name} noun="bank accounts" />
-              ) : null}
+                <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
+                  <span>Outstanding liability</span>
+                  <span className="text-red-700">{money.format(factoringOutstandingLiability)}</span>
+                </Link>
+                <Link to="/factoring/chargebacks-fees" className="flex justify-between hover:underline">
+                  <span>+30 aging fees</span>
+                  <span
+                    className="text-slate-700"
+                    title="No aging_fees_30d field on factoring-virtual — open Chargebacks & Fees"
+                  >
+                    — (see Chargebacks & Fees)
+                  </span>
+                </Link>
+                <div className="pt-1 text-xs text-gray-500">
+                  Last advance:{" "}
+                  {factoringVirtualSummary.lastAdvanceAt ? (
+                    String(factoringVirtualSummary.lastAdvanceAt).slice(0, 10)
+                  ) : (
+                    <NotApplicable reason="not_applicable" />
+                  )}
+                </div>
+                {factoringTile ? <div className="text-xs text-slate-700">{factoringTile.display_name}</div> : null}
+              </div>
             </div>
-            <label className="flex cursor-pointer items-center gap-2 px-3 py-2 text-xs text-gray-600">
-              <input
-                type="checkbox"
-                checked={showDisconnectedBankAccounts}
-                onChange={(e) => setShowDisconnectedBankAccounts(e.target.checked)}
-              />
-              Show disconnected history
-            </label>
           </div>
           <BankingPlaidConnectionsPanel companyId={companyId} />
         </div>

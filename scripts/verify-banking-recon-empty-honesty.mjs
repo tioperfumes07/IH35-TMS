@@ -4,26 +4,35 @@ import fs from "node:fs";
 export function run(root = process.cwd()) {
   const failures = [];
   const home = fs.readFileSync(`${root}/apps/frontend/src/pages/banking/BankingHome.tsx`, "utf8");
-  if (!home.includes('data-testid="banking-recon-never-completed-banner"')) {
+  const shell = fs.readFileSync(
+    `${root}/apps/frontend/src/pages/banking/components/ReconciliationTabContent.tsx`,
+    "utf8",
+  );
+  const src = home + "\n" + shell;
+  if (!src.includes('data-testid="banking-recon-never-completed-banner"')) {
     failures.push("missing never-completed recon honesty banner");
   }
-  if (!home.includes("Do not treat this screen as")) {
+  if (!src.includes("Do not treat this screen as")) {
     failures.push("banner must refuse fake 'reconciled' implication");
   }
-  if (!home.includes("Open for-review queue")) {
+  if (!src.includes("Open for-review queue")) {
     failures.push("banner must link for-review / uncategorized queue");
   }
   return failures;
 }
 if (process.argv.includes("--selftest")) {
   const tmp = fs.mkdtempSync("/tmp/verify-banking-recon-");
-  fs.mkdirSync(`${tmp}/apps/frontend/src/pages/banking`, { recursive: true });
+  fs.mkdirSync(`${tmp}/apps/frontend/src/pages/banking/components`, { recursive: true });
+  fs.writeFileSync(`${tmp}/apps/frontend/src/pages/banking/BankingHome.tsx`, "x\n");
   fs.writeFileSync(
-    `${tmp}/apps/frontend/src/pages/banking/BankingHome.tsx`,
-    `data-testid="banking-recon-never-completed-banner"\nDo not treat this screen as\nOpen for-review queue\n`
+    `${tmp}/apps/frontend/src/pages/banking/components/ReconciliationTabContent.tsx`,
+    `data-testid="banking-recon-never-completed-banner"\nDo not treat this screen as\nOpen for-review queue\n`,
   );
   if (run(tmp).length) throw new Error("PASS fail");
-  fs.writeFileSync(`${tmp}/apps/frontend/src/pages/banking/BankingHome.tsx`, "x\n");
+  fs.writeFileSync(
+    `${tmp}/apps/frontend/src/pages/banking/components/ReconciliationTabContent.tsx`,
+    "x\n",
+  );
   if (!run(tmp).length) throw new Error("FAIL fail");
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log("verify-banking-recon-empty-honesty --selftest OK");

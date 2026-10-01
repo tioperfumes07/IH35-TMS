@@ -27,7 +27,7 @@ import path from "node:path";
 import process from "node:process";
 
 const BANKING_HOME_REL = "apps/frontend/src/pages/banking/BankingHome.tsx";
-const ESCROW_TAB_REL = "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx";
+const ESCROW_TAB_REL = "apps/frontend/src/pages/banking/components/DriverEscrowLedgerSection.tsx";
 
 /**
  * Pure evaluation core (unit-testable / self-testable).
@@ -75,7 +75,10 @@ export function assertGuard({ bankingHomeSrc, escrowTabSrc }) {
   if (!hasRowClick) {
     failures.push(`${ESCROW_TAB_REL} — register rows have no onClick/onRowClick (dead click, Doc-18 defect #12)`);
   }
-  if (!/navigate\(`\/drivers\/\$\{rowDriverId\}`\)/.test(escrowTabSrc)) {
+  if (
+    !/navigate\(`\/drivers\/\$\{rowDriverId\}`\)/.test(escrowTabSrc) &&
+    !/navigate\(`\/drivers\/\$\{row\.driver_id\}`\)/.test(escrowTabSrc)
+  ) {
     failures.push(`${ESCROW_TAB_REL} — expected the row click to drill through to the driver (/drivers/:id)`);
   }
 

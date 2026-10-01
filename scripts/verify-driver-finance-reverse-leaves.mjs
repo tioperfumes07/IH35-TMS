@@ -9,7 +9,7 @@ const files = {
   deductions: "apps/frontend/src/pages/drivers/PendingSettlementDeductionsPanel.tsx",
   disputes: "apps/frontend/src/pages/drivers/SettlementDisputeList.tsx",
   disputeHook: "apps/frontend/src/hooks/useSettlementDisputes.ts",
-  banking: "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx",
+  banking: "apps/frontend/src/pages/banking/components/DriverEscrowLedgerSection.tsx",
   safety: "apps/frontend/src/pages/safety/tabs/EscrowRecordTab.tsx",
   driversMatrix: "docs/specs/scoreboard/modules/drivers.required.json",
   safetyMatrix: "docs/specs/scoreboard/modules/safety.required.json",
@@ -53,7 +53,7 @@ function audit(s) {
   if (!/operating_company_id: companyId/.test(s.disputeHook) || !/isError: listQuery\.isError/.test(s.disputeHook) || !/isSuccess: listQuery\.isSuccess/.test(s.disputeHook)) failures.push("dispute scope/status contract missing");
   if (!/<EntityLink[\s\S]{0,100}kind="driver"[\s\S]{0,100}id=\{row\.driver_id\}/.test(s.disputes) || !/<EntityLink[\s\S]{0,100}kind="settlement"/.test(s.disputes)) failures.push("dispute canonical drills missing");
   if (!/Could not load settlement disputes\./.test(s.disputes) || !/No settlement disputes found\./.test(s.disputes)) failures.push("dispute honest states missing");
-  if (!/getEscrowDriverBalances\(operatingCompanyId\)/.test(s.banking) || !/navigate\([^\n]*rowDriverId/.test(s.banking)) failures.push("bank escrow driver reverse/scope missing");
+  if (!/getEscrowDriverBalances\(operatingCompanyId\)/.test(s.banking) || !/navigate\([^\n]*(rowDriverId|row\.driver_id)/.test(s.banking)) failures.push("bank escrow driver reverse/scope missing");
   if (!/listState\.isError/.test(s.banking) || !/No escrow ledger rows found for this filter\./.test(s.banking)) failures.push("bank escrow honest states missing");
   if (!/listEscrowRecords\(operatingCompanyId\)/.test(s.safety) || !/<EntityLink[\s\S]{0,100}kind="driver"[\s\S]{0,100}id=\{row\.id \|\| null\}/.test(s.safety)) failures.push("safety escrow driver reverse/scope missing");
   if (!/escrowQuery\.isError/.test(s.safety) || !/No escrow records available for the selected company\./.test(s.safety)) failures.push("safety escrow honest states missing");
@@ -96,7 +96,7 @@ if (process.argv.includes("--selftest")) {
     ["dispute-empty", "disputes", /No settlement disputes found\./g, "No rows"],
     ["dispute-driver-drill", "disputes", /kind="driver"/g, 'kind="vendor"'],
     ["dispute-drill", "disputes", /kind="settlement"/g, 'kind="driver"'],
-    ["bank-route", "banking", /navigate\([^\n]*rowDriverId[^\n]*\)/g, "navigate('/drivers')"],
+    ["bank-route", "banking", /navigate\([^\n]*(rowDriverId|row\.driver_id)[^\n]*\)/g, "navigate('/drivers')"],
     ["bank-scope", "banking", /getEscrowDriverBalances\(operatingCompanyId\)/g, "getEscrowDriverBalances('')"],
     ["bank-error", "banking", /listState\.isError/g, "false"],
     ["bank-state", "banking", /No escrow ledger rows found for this filter\./g, "Loading"],

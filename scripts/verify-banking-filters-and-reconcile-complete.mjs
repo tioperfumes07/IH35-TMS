@@ -14,7 +14,7 @@ import { readFileSync } from "node:fs";
 const LABEL = "verify-banking-filters-and-reconcile-complete";
 export const ALLOW_OFFLINE_SKIP = "pure static source-shape check, no live data involved";
 
-const ESCROW_FILE = "apps/frontend/src/pages/banking/components/DriverEscrowTabContent.tsx";
+const ESCROW_FILE = "apps/frontend/src/pages/banking/components/DriverEscrowLedgerSection.tsx";
 const RECON_FILE = "apps/frontend/src/pages/banking/ReconciliationWorkspace.tsx";
 
 function checkEscrowFilter(failures) {
@@ -104,7 +104,7 @@ function checkReconcile(failures) {
 function selftest() {
   const failures = [];
   if (ESCROW_FILE === RECON_FILE) failures.push("ESCROW_FILE and RECON_FILE must be distinct paths.");
-  if (!/DriverEscrowTabContent/.test(ESCROW_FILE)) failures.push("ESCROW_FILE path drifted.");
+  if (!/DriverEscrowLedgerSection/.test(ESCROW_FILE)) failures.push("ESCROW_FILE path drifted.");
   if (!/ReconciliationWorkspace/.test(RECON_FILE)) failures.push("RECON_FILE path drifted.");
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
