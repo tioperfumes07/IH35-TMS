@@ -77,6 +77,7 @@ const tabs = [
   "Cargo Sensors",
   "Settlement",
   "Geofence Timeline",
+  "History",
   "Assignment History",
   "Audit",
   "Pre-Settlement",
@@ -127,6 +128,7 @@ const LDT0_MORE_TAB_ORDER = [
   "Documents",
   "Cargo Sensors",
   "Geofence Timeline",
+  "History",
   "Assignment History",
 ] as const;
 
@@ -1547,6 +1549,21 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
 
           {activeTab === "Audit" && load ? (
             <LoadAuditTab load={load} operatingCompanyId={load.operating_company_id} />
+          ) : null}
+          {activeTab === "History" && load ? (
+            <div className="space-y-3 p-3" data-testid="load-drawer-history-tab">
+              <p className="text-xs text-slate-700">
+                Full load history — status changes, field edits, assignments, stop stamps, and linked documents
+                (invoice, Faro advance, settlement, expenses, work orders).
+              </p>
+              <Link
+                to={`/dispatch/loads/${encodeURIComponent(load.id)}/history`}
+                className="inline-flex h-7 items-center rounded-sm border border-slate-300 bg-white px-2 text-xs font-medium text-slate-800"
+                data-testid="load-drawer-open-history"
+              >
+                Open load history
+              </Link>
+            </div>
           ) : null}
           {activeTab === "Assignment History" ? (
             <div className="space-y-3">

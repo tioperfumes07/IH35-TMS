@@ -5,6 +5,7 @@ const ApiDocumentPassthrough = React.lazy(() =>
 const LoadBankingLinkagePage = React.lazy(() =>
   import("../pages/dispatch/LoadBankingLinkagePage").then((m) => ({ default: m.LoadBankingLinkagePage }))
 );
+const LoadHistoryPage = React.lazy(() => import("../pages/dispatch/LoadHistoryPage"));
 import React from "react";
 import { Navigate, Route, useLocation, useParams } from "react-router-dom";
 import type { ReactNode } from "react";
@@ -1526,6 +1527,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <GeofencesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/loads/:id/history"
+          element={
+            <ProtectedRoute>
+              <LoadHistoryPage />
             </ProtectedRoute>
           }
         />
