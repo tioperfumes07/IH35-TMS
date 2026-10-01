@@ -18,6 +18,7 @@ const SAMSARA = "apps/frontend/src/components/driver-profile/DriverSamsaraDuplic
 const FUEL = "apps/frontend/src/components/driver-profile/DriverProfileFuelVerdictsSection.tsx";
 const SAFETY = "apps/frontend/src/components/driver-profile/DriverProfileSafetyAttributedSection.tsx";
 const COMPLAINTS = "apps/frontend/src/components/safety/ComplaintsReverseSection.tsx";
+const STOPS = "apps/frontend/src/components/driver-profile/DriverProfileStopsMilesSection.tsx";
 const ROUTES = "apps/backend/src/driver-profile/driver-profile-tabs.routes.ts";
 
 function read(rel) {
@@ -36,6 +37,7 @@ function main() {
   const fuel = read(FUEL);
   const safety = read(SAFETY);
   const complaints = read(COMPLAINTS);
+  const stops = read(STOPS);
   const routes = read(ROUTES);
 
   assertIncludes(api, "/profile/assignments", API);
@@ -47,6 +49,7 @@ function main() {
   assertIncludes(routes, "/api/v1/drivers/:driverId/profile/", ROUTES);
 
   assertIncludes(page, "DriverAssignmentHistorySection", PAGE);
+  assertIncludes(page, "DriverProfileStopsMilesSection", PAGE);
   assertIncludes(page, "DriverSamsaraDuplicateBanner", PAGE);
   assertIncludes(page, "DriverProfileFuelVerdictsSection", PAGE);
   assertIncludes(page, "DriverProfileSafetyAttributedSection", PAGE);
@@ -82,6 +85,13 @@ function main() {
   assertIncludes(safety, "dp-safety-dot-dwell", SAFETY);
 
   assertIncludes(complaints, "{ driver_id: string }", COMPLAINTS);
+
+  assertIncludes(stops, 'data-dp-stops-miles="1"', STOPS);
+  assertIncludes(stops, "getDriverProfileStopsMiles", STOPS);
+  assertIncludes(stops, "read_miles", STOPS);
+  if (/telematics\/stop-events/.test(stops)) {
+    throw new Error(`${STOPS}: driver profile stops must use profile/stops-miles, not telematics/stop-events`);
+  }
 
   console.log(`${LABEL}: PASS`);
 }

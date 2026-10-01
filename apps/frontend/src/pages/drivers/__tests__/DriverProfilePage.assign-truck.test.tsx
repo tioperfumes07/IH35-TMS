@@ -19,7 +19,9 @@ vi.mock("../../../components/driver-profile/DriverAssignmentHistorySection", () 
 vi.mock("../../../components/driver-profile/DriverSamsaraDuplicateBanner", () => ({
   DriverSamsaraDuplicateBanner: () => null,
 }));
-vi.mock("../../../components/shared/StopsMilesSection", () => ({ StopsMilesSection: () => null }));
+vi.mock("../../../components/driver-profile/DriverProfileStopsMilesSection", () => ({
+  DriverProfileStopsMilesSection: () => null,
+}));
 vi.mock("../../../components/drivers/DriverIntegritySection", () => ({ DriverIntegritySection: () => null }));
 vi.mock("../../../components/safety/ComplaintsReverseSection", () => ({ ComplaintsReverseSection: () => null }));
 vi.mock("../../../api/driver-integrity", () => ({

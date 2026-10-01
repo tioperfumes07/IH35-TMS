@@ -93,8 +93,8 @@ vi.mock("../../../components/safety/ComplaintsReverseSection", () => ({
   ComplaintsReverseSection: () => null,
 }));
 
-vi.mock("../../../components/shared/StopsMilesSection", () => ({
-  StopsMilesSection: () => null,
+vi.mock("../../../components/driver-profile/DriverProfileStopsMilesSection", () => ({
+  DriverProfileStopsMilesSection: () => null,
 }));
 
 vi.mock("../../../api/driver-integrity", () => ({

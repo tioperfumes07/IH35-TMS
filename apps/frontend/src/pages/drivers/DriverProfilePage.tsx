@@ -16,7 +16,7 @@ import { DriverAssignmentHistorySection } from "../../components/driver-profile/
 import { DriverSamsaraDuplicateBanner } from "../../components/driver-profile/DriverSamsaraDuplicateBanner";
 import { DriverProfileFuelVerdictsSection } from "../../components/driver-profile/DriverProfileFuelVerdictsSection";
 import { DriverProfileSafetyAttributedSection } from "../../components/driver-profile/DriverProfileSafetyAttributedSection";
-import { StopsMilesSection } from "../../components/shared/StopsMilesSection";
+import { DriverProfileStopsMilesSection } from "../../components/driver-profile/DriverProfileStopsMilesSection";
 import { DriverIntegritySection } from "../../components/drivers/DriverIntegritySection";
 import { ComplaintsReverseSection } from "../../components/safety/ComplaintsReverseSection";
 import {
@@ -586,9 +586,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
                 <DriverAssignmentHistorySection companyId={companyId} driverId={id} />
               </div>
             ) : null}
-            <div className="mt-3">
-              <StopsMilesSection driverId={id} hours={24} />
-            </div>
+            {companyId ? (
+              <div className="mt-3">
+                <DriverProfileStopsMilesSection companyId={companyId} driverId={id} />
+              </div>
+            ) : null}
           </div>
           <div data-testid="dp-section-integrity" className="mt-3">
             <DriverIntegritySection driverId={id} />
@@ -751,6 +753,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           {companyId ? (
             <div data-testid="dp-section-loads">
               <LoadsSection driverId={id} operatingCompanyId={companyId} />
+            </div>
+          ) : null}
+          {companyId ? (
+            <div data-testid="dp-section-loads-stops-miles">
+              <DriverProfileStopsMilesSection companyId={companyId} driverId={id} />
             </div>
           ) : null}
           <DriverBorderCrossingsReverseSection operatingCompanyId={companyId} driverId={id} />

@@ -277,3 +277,6 @@ B-5 · what changed: Topbar Create→Other Batch + Reclassify; Reclassify modal 
 
 **2026-10-01T13:50Z · BANKING REGISTER SET B-2..B-5 MERGED**
 B-2 Reconcile #23762 `40cd7a2eb2` · B-3 feed+match #23763 `d0fb82228f` · B-4 check #23764 `4d687296fb` · B-5 reclassify #23765 `4a92bd4a0c`. #23772 closed superseded. · LEFT: Lead Chrome on reconcile / banking feed / check creator / reclassify+batch.
+
+**2026-10-01T12:31Z · C-57 G1 STOPS+MILES · branch `cursor/driver-profile-stops-miles-fe29` · LOCAL ONLY (`ae41d9945d`)**
+C-57 G1 · what changed: `DriverProfileStopsMilesSection` consumes `GET /api/v1/drivers/:id/profile/stops-miles` (30d, driver-at-time, source + read_miles) on Overview + Loads tabs; replaces 24h `/telematics/stop-events` mount. Guards: `verify-driver-profile-orders-complete` + `verify-e44-stops-miles-profile` updated. · LIVE PROOF: guard --selftest PASS; vitest DriverProfilePage 7/7; tsc exit 0. · LEFT: push blocked — pre-push verify-static 16 ambient main failures (not this diff); branch not on remote. · NEXT: main verify-static baseline fix → push → FAST-MERGE → Lead Chrome.
