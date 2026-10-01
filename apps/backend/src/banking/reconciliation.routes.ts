@@ -1387,6 +1387,8 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
 
       let serviceChargeJeId: string | null =
         (session as { service_charge_journal_entry_id?: string | null }).service_charge_journal_entry_id ?? null;
+      let serviceChargeExpenseId: string | null =
+        (session as { service_charge_expense_id?: string | null }).service_charge_expense_id ?? null;
       let interestJeId: string | null =
         (session as { interest_earned_journal_entry_id?: string | null }).interest_earned_journal_entry_id ?? null;
 
@@ -1397,10 +1399,12 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
             operating_company_id: query.data.operating_company_id,
             session_id: session.id,
             bank_ledger_account_id: bankLedgerId,
+            bank_account_id: session.bank_account_id,
             service_charge_cents: serviceChargeCents,
             service_charge_date: body.data.service_charge_date ?? null,
             service_charge_account_id: body.data.service_charge_account_id ?? null,
             service_charge_journal_entry_id: serviceChargeJeId,
+            service_charge_expense_id: serviceChargeExpenseId,
             interest_earned_cents: interestEarnedCents,
             interest_earned_date: body.data.interest_earned_date ?? null,
             interest_earned_account_id: body.data.interest_earned_account_id ?? null,
@@ -1409,6 +1413,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           { userId: user.uuid, role: user.role }
         );
         serviceChargeJeId = posted.service_charge_journal_entry_id;
+        serviceChargeExpenseId = posted.service_charge_expense_id;
         interestJeId = posted.interest_earned_journal_entry_id;
       }
 
@@ -1426,6 +1431,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         body.data.service_charge_date ?? null,
         body.data.service_charge_account_id ?? null,
         serviceChargeJeId,
+        serviceChargeExpenseId,
         interestEarnedCents,
         body.data.interest_earned_date ?? null,
         body.data.interest_earned_account_id ?? null,
@@ -1449,10 +1455,11 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
               service_charge_date = $11::date,
               service_charge_account_id = $12::uuid,
               service_charge_journal_entry_id = $13::uuid,
-              interest_earned_cents = $14,
-              interest_earned_date = $15::date,
-              interest_earned_account_id = $16::uuid,
-              interest_earned_journal_entry_id = $17::uuid,
+              service_charge_expense_id = $14::uuid,
+              interest_earned_cents = $15,
+              interest_earned_date = $16::date,
+              interest_earned_account_id = $17::uuid,
+              interest_earned_journal_entry_id = $18::uuid,
               updated_at = now(),
               notes = CASE
                 WHEN $4::text IS NULL THEN notes

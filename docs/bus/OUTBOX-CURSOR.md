@@ -1,3 +1,32 @@
+**2026-10-01T19:00Z · ROUND 321 ACK · SERVICE-CHARGE EXPENSE + AMBIENT-16 LIST**
+ACK: CURSOR | ACK ROUND-321 | SERVICE-CHARGE-EXPENSE | GO
+NOW: `cursor/r319-recon-sc-expense-c89b` — reverse JE `cf78c2aa` + re-post as expense; recon engine SC → `createAndPostServiceChargeExpense` (expense engine); remove `bank_reconciliation` costs-guard exempt (#23863 carve-out); AUTH-199 OPEN; migration `202610011900` `service_charge_expense_id`. Interest earned stays income JE (Dr bank / Cr 7100 — expense engine cannot express interest earned). IE does not trip costs-guard.
+
+### AMBIENT verify-static reds (ROUND 317 #2 / ROUND 321 #2) — tip-main measured from `/tmp/push-r319.txt` freshness + `/tmp/push-319.log` capability FAIL set (16 unique)
+
+| # | Guard | File | Known owner (Lead) |
+|---|-------|------|--------------------|
+| 1 | verify-worm-coverage-ratchet.mjs | scripts/verify-worm-coverage-ratchet.mjs | CC-2 (Lead: WORM ratchet) |
+| 2 | verify-rls-uuid-cast-nullif.mjs | scripts/verify-rls-uuid-cast-nullif.mjs · offender db/migrations/202614380000_driver_samsara_accounts_operating_company.sql:94 | Lead |
+| 3 | verify-applied-migrations-immutable.mjs | scripts/verify-applied-migrations-immutable.mjs | TBD |
+| 4 | verify-bills-mdata-vendor-id-fk.mjs | scripts/verify-bills-mdata-vendor-id-fk.mjs | TBD |
+| 5 | verify-company-settlement-pdf-house-template.mjs | scripts/verify-company-settlement-pdf-house-template.mjs | TBD |
+| 6 | verify-factoring-reserve-escrow-subledger-gap.mjs | scripts/verify-factoring-reserve-escrow-subledger-gap.mjs | TBD |
+| 7 | verify-fuel-card-gl-subledger-traceability.mjs | scripts/verify-fuel-card-gl-subledger-traceability.mjs | TBD |
+| 8 | verify-integrity-findings-attribution-rate.mjs | scripts/verify-integrity-findings-attribution-rate.mjs | TBD |
+| 9 | verify-invoice-amount-paid-matches-applications.mjs | scripts/verify-invoice-amount-paid-matches-applications.mjs | TBD |
+| 10 | verify-invoice-header-requires-line-constraint.mjs | scripts/verify-invoice-header-requires-line-constraint.mjs | TBD |
+| 11 | verify-migration-checksum-collision.mjs | scripts/verify-migration-checksum-collision.mjs | TBD |
+| 12 | verify-new-financial-table-ships-worm.mjs | scripts/verify-new-financial-table-ships-worm.mjs | TBD (related WORM → CC-2?) |
+| 13 | verify-new-units-have-gps-or-deactivation-reason.mjs | scripts/verify-new-units-have-gps-or-deactivation-reason.mjs | TBD |
+| 14 | verify-qbo-connection-status-honest.mjs | scripts/verify-qbo-connection-status-honest.mjs | TBD |
+| 15 | verify-schema-parity.mjs | scripts/verify-schema-parity.mjs | TBD |
+| 16 | verify-void-predicate-map-current.mjs | scripts/verify-void-predicate-map-current.mjs | TBD |
+
+Do not --admin past; do not patch baselines. Lead assigns #3–#16.
+
+NEXT after SC merge: D-H0 → D-H1 → D-H2 · Factoring designs (Payments-to-You / Escrow / Reserve / Home cash-flow-per-day).
+
 **2026-10-01T18:35Z · FAST-MERGE CONTINUOUS · VENDORS PROVEN**
 CURSOR | FAST-MERGED since drain: #23862 factoring · #23865+#23869 maint bill/JE · #23870 driver Fuel · #23871 customer details · #23872 rollup empty-set. Open=0. NOW: Vendor engines guard (ORDERS complete on VendorDetail) `cursor/r319-vendors-engines-c89b`. NEXT: D-H0/D-H1 after Vendors merge.
 

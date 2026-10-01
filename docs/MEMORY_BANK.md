@@ -658,10 +658,17 @@ prod post is a separate, intentional, owner-authorized action, not a repoint of 
 
 ## Active Architectural Decisions — ROUND 313 recon service charge/interest (Cursor, 2026-10-01)
 
-- Finish reconcile posts bank fee + interest through `postReconciliationAdjustments` → `createJournalEntryOnClient` (source `bank_reconciliation`), not FE-local only.
+- Finish reconcile posts bank fee + interest through `postReconciliationAdjustments`.
+- **ROUND 321 root fix (Lead 17:20Z):** service charge is an `accounting.expenses` document
+  (`createAndPostServiceChargeExpense` → `postSourceTransactionInClientTx`, vendor=bank name,
+  category=fee account, paid-from=bank GL). Session carries `service_charge_expense_id` (migration
+  `202610011900`) + `service_charge_journal_entry_id` (the expense's JE). Never a bare cost JE.
+- Interest earned stays Dr bank / Cr income via `createJournalEntryOnClient` (income, not a
+  5xxx/6xxx cost — expense-engine credit math cannot express interest earned). Costs-guard
+  `bank_reconciliation` exemption REMOVED (#23863 carve-out gone).
 - Session columns (migration `202615141200`): `service_charge_*` + `interest_earned_*` cents/date/account/JE FK.
 - QBO math: `adjusted_book = beginning + clearedCredits − clearedDebits − serviceCharge + interestEarned`; variance must be 0 to close.
-- Live proof path: Petty Cash (0 txns) + $5 fee + $5 interest nets to $0; AUTH-195.
+- Live proof path: Petty Cash (0 txns) + $5 fee + $5 interest nets to $0; AUTH-195 posted the handwritten SC JE; AUTH-199 reverses `cf78c2aa` + re-posts as expense.
 
 ## Active Architectural Decisions — Banking ROUND 186 bulk-accept (Cursor, 2026-09-28)
 
