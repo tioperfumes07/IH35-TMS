@@ -431,6 +431,7 @@ export function updateFactor(
     advance_rate: number;
     fee_rate: number;
     reserve_rate: number;
+    cash_reserve_rate: number;
     recourse_days: number;
     active: boolean;
     fee_schedule: Array<{ from_day: number; to_day: number | null; fee_rate: number }> | null;

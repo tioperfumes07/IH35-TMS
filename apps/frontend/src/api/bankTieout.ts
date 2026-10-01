@@ -21,7 +21,15 @@ export type BankTieout = {
 };
 export type BankTieoutDrill = {
   ledger_account_id: string | null;
-  feed_only: Array<{ bank_transaction_id: string; transaction_date: string; description: string | null; status: string; signed_cents: number }>;
+  feed_only: Array<{
+    bank_transaction_id: string;
+    transaction_date: string;
+    description: string | null;
+    status: string;
+    signed_cents: number;
+    matched_factoring_advance_id?: string | null;
+    factoring_purchase_id?: string | null;
+  }>;
   gl_only: Array<{ journal_entry_id: string; entry_date: string; memo: string | null; source_transaction_type: string | null; source_transaction_id: string | null; signed_cents: number }>;
 };
 const q = (c: string) => new URLSearchParams({ operating_company_id: c }).toString();

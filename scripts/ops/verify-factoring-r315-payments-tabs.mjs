@@ -7,6 +7,8 @@
  *    — never a dollars Intl formatter on raw cents (×100 bug)
  *  - Primary SUBNAV removes Account Summary + Request Debtor Credit Check; adds Escrow Account
  *  - Routes + FACTORING_TAB_PATH include /factoring/escrow-account
+ *  - FT1: factoring_purchase EntityLink + running escrow/cash reserve columns + purchase_id deep-link
+ *  - FT1: bank tie-out drill surfaces factoring_purchase reverse link
  *
  * --selftest mutates load-bearing facts and requires FAIL; clean sources PASS.
  */
@@ -22,10 +24,13 @@ const PANEL = "apps/frontend/src/pages/factoring/PaymentsToYouPanel.tsx";
 const API = "apps/frontend/src/api/factoring-purchases.ts";
 const MANIFEST = "apps/frontend/src/router/route-manifest.ts";
 const ROUTES = "apps/frontend/src/routes/manifest.tsx";
+const ENTITY = "apps/frontend/src/components/shared/EntityLink.tsx";
+const TIEOUT = "apps/frontend/src/components/banking/BankTieoutHeader.tsx";
+const TIEOUT_SVC = "apps/backend/src/banking/bank-tieout.service.ts";
 
 function analyze(src) {
   const e = [];
-  const { home, panel, api, manifest, routes } = src;
+  const { home, panel, api, manifest, routes, entity, tieout, tieoutSvc } = src;
 
   if (!api.includes("listFactoringPurchases") || !api.includes("/api/v1/factoring/purchases?")) {
     e.push("API must export listFactoringPurchases → GET /api/v1/factoring/purchases");
@@ -45,6 +50,33 @@ function analyze(src) {
   }
   if (!panel.includes("bank_transaction")) {
     e.push("PaymentsToYouPanel must surface bank match via EntityLink kind bank_transaction");
+  }
+  if (!panel.includes('kind="factoring_purchase"')) {
+    e.push("FT1: PaymentsToYouPanel must link purchases via EntityLink kind factoring_purchase");
+  }
+  if (!panel.includes("running_escrow_cents") || !panel.includes("running_cash_cents")) {
+    e.push("FT1: PaymentsToYouPanel must show running escrow + cash reserve columns");
+  }
+  if (!panel.includes("useSearchParams") || !panel.includes("purchase_id")) {
+    e.push("FT1: PaymentsToYouPanel must deep-link open via ?purchase_id=");
+  }
+  if (!panel.includes("payments-to-you-bank-tieout-link")) {
+    e.push("FT1: purchase detail must link to bank tie-out when bank_account_id present");
+  }
+  if (!entity?.includes('"factoring_purchase"') || !entity?.includes("/factoring/payments-to-you?purchase_id=")) {
+    e.push("FT1: EntityLink must resolve factoring_purchase → /factoring/payments-to-you?purchase_id=");
+  }
+  if (!tieout?.includes('kind="factoring_purchase"') || !tieout?.includes("factoring_purchase_id")) {
+    e.push("FT1: BankTieoutHeader drill must show factoring_purchase EntityLink when factoring_purchase_id set");
+  }
+  if (!tieoutSvc?.includes("factoring_purchase_id")) {
+    e.push("FT1: bank-tieout.service tieoutDrill must return factoring_purchase_id on feed_only rows");
+  }
+  if (!api.includes("bank_account_id")) {
+    e.push("FT1: FactoringPurchaseDetail type must include bank_account_id for tie-out link");
+  }
+  if (!home.includes("cash_reserve_rate: patch.cash_reserve_rate")) {
+    e.push("FT5: FactoringHome updateFactor must persist cash_reserve_rate from profile patch");
   }
 
   if (!home.includes('import { PaymentsToYouPanel }')) {
@@ -119,6 +151,9 @@ function selftest() {
     api: read(API),
     manifest: read(MANIFEST),
     routes: read(ROUTES),
+    entity: read(ENTITY),
+    tieout: read(TIEOUT),
+    tieoutSvc: read(TIEOUT_SVC),
   };
   const clean = analyze(base);
   if (clean.length) {
@@ -161,6 +196,9 @@ if (args.includes("--selftest")) {
     api: read(API),
     manifest: read(MANIFEST),
     routes: read(ROUTES),
+    entity: read(ENTITY),
+    tieout: read(TIEOUT),
+    tieoutSvc: read(TIEOUT_SVC),
   });
   if (fails.length) {
     console.error("verify-factoring-r315-payments-tabs: FAIL");

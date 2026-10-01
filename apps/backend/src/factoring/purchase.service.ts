@@ -336,11 +336,12 @@ export async function getPurchaseDetail(client: DbClient, oci: string, purchaseI
   const head = (await client.query<Record<string, unknown>>(
     `
       SELECT p.*, v.vendor_name AS factoring_company_name, fa.display_id AS factoring_advance_display_id,
-             bt.id AS bank_transaction_id, bt.transaction_date AS bank_transaction_date, bt.amount_cents AS bank_transaction_amount_cents
+             bt.id AS bank_transaction_id, bt.bank_account_id, bt.transaction_date AS bank_transaction_date,
+             bt.amount_cents AS bank_transaction_amount_cents
         FROM accounting.factoring_purchases p
         JOIN mdata.vendors v ON v.id = p.factoring_company_vendor_id
         LEFT JOIN accounting.factoring_advances fa ON fa.id = p.factoring_advance_id
-        LEFT JOIN LATERAL (SELECT b.id, b.transaction_date, b.amount_cents FROM banking.bank_transactions b
+        LEFT JOIN LATERAL (SELECT b.id, b.bank_account_id, b.transaction_date, b.amount_cents FROM banking.bank_transactions b
                             WHERE p.factoring_advance_id IS NOT NULL AND b.matched_factoring_advance_id = p.factoring_advance_id
                             ORDER BY b.transaction_date LIMIT 1) bt ON true
        WHERE p.id = $1::uuid AND p.operating_company_id = $2::uuid
