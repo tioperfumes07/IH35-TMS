@@ -137,3 +137,6 @@ E-41 · GET /api/v1/system/engine-status + catalog of registry engines + EngineS
 
 **2026-10-01T03:05Z · E-41 MERGED · PR #23615**
 FAST-MERGE squash --admin. NEXT: E-42 dashcam viewer.
+
+**2026-10-01T03:40Z · E-44 STOPS+MILES · branch `cursor/e44-stops-miles-profile-c89b`**
+E-44 · GET /telematics/stop-events (E-03 compute) + StopsMilesSection on Vehicle + Driver profiles. E-43 parked (E-30 PENDING). No seed.

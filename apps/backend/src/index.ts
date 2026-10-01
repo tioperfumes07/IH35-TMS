@@ -521,6 +521,7 @@ import { registerQboSyncEventLogRoutes } from "./qbo/sync-event-log.routes.js";
 import { default as registerLedgerHealthRoutes } from "./system/ledger-health.routes.js";
 import { registerTransactionHealthRoutes } from "./system/transaction-health.routes.js";
 import { default as registerEngineStatusRoutes } from "./system/engine-status.routes.js";
+import { registerStopEventsRoutes } from "./telematics/stop-events.routes.js";
 import { registerRunnerStatusRoutes } from "./admin/runner-status.routes.js";
 import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
 import { registerLaunchReadinessRoutes } from "./admin/launch-readiness.routes.js";
@@ -864,6 +865,7 @@ async function main() {
   await registerLedgerHealthRoutes(app);
   await registerTransactionHealthRoutes(app);
   await registerEngineStatusRoutes(app);
+  await registerStopEventsRoutes(app);
   await registerEmailRoutes(app);
   await registerEmailQueueAdminRoutes(app);
   await registerAdminClientErrorRoutes(app);
