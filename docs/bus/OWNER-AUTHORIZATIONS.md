@@ -6642,3 +6642,22 @@ OWNER LAW, verbatim, 2026-10-01: "fix all issues at root, we do not patch, nor d
 Owner, in chat to CC-2, 2026-10-01: "you have full permissions and authoriztions".
 
 THIS AUTHORIZATION DOES NOT COVER: any other expense, any amount or account change, any document outside settlement 5781.
+
+## AUTH-190
+issued_at: 2026-10-01T06:30:28Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). fuel.fuel_transactions: exactly the 146 rows voided + archived
+  2026-09-28 03:55–03:58Z (AUTH-075 header stamp, "E10 fuel-void-runner R-102-C: GL reversed") whose accounting.expenses
+  document is LIVE and POSTED with the same amount ($91,492.34). Columns: voided_at, void_reason, voided_by_user_id,
+  archived_at cleared; reinstated_at / reinstate_reason / reinstated_by_user_id stamped; unit_id written from the row's own
+  expense where the row has none (109 rows; expense truck = load's assigned truck in every case). NO GL leg.
+action: npx tsx scripts/ops/2026-10-01-cc2-auth190-reinstate-146-fuel-rows.ts --apply. Dry run: 146 rows, $91492.34, 109 trucks from their expense; --rehearse on production: 322 live rows / $174,619.42, 0 without a truck, 0 posted expenses on a voided fuel row.
+expires_at: 2026-10-02T06:30:28Z
+status: OPEN
+
+LEAD RULING, verbatim, 2026-10-01 06:45Z (pasted by the owner to CC-2): "The VOID on the purchase rows is the error, not the
+expenses. RULED: REINSTATE the 146 fuel_transactions rows (clear voided_at / void_reason, stamp reinstated_at + reinstate_reason
+'voided by E10 R-102-C 2026-09-28 while expense + GL stayed live; expense ties to a closed settlement') under an AUTH you open:
+dry run → --apply → audit row per batch. Never void the expenses."
+Owner, in chat to CC-2, 2026-10-01: "you have full permissions and authoriztions".
+
+THIS AUTHORIZATION DOES NOT COVER: any expense, any journal entry, any other fuel row, any amount change.
