@@ -1685,7 +1685,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               <span className="font-semibold text-gray-900" data-testid="factoring-escrow-recourse-days">
                 {activeFactor?.recourse_days != null ? `${activeFactor.recourse_days} days` : "—"}
               </span>{" "}
-              (from factoring.factor.recourse_days). Ledger = posted purchase escrow_reserve_cents.
+              (from the factor profile recourse setting). Ledger = posted purchase escrow cents.
             </div>
             <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-escrow-account")}</div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-escrow-summary-strip">
@@ -1798,7 +1798,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               <span className="font-semibold text-gray-900" data-testid="factoring-cash-reserve-recourse-days">
                 {activeFactor?.recourse_days != null ? `${activeFactor.recourse_days} days` : "—"}
               </span>{" "}
-              (from factoring.factor.recourse_days). Ledger = posted purchase cash_reserve_cents.
+              (from the factor profile recourse setting). Ledger = posted purchase cash reserve cents.
             </div>
             <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-cash-reserve")}</div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-cash-reserve-summary-strip">

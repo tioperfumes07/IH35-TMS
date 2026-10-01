@@ -1,4 +1,4 @@
 # NOW-CURSOR
 
-NOW: FT2 Escrow+Cash Reserve tabs shipping → FT3 Home KPIs → FT4 reserves SoT → FT5 Factor Setup email+rates.
-ACK: CURSOR | ACK FACTORING-TAKEOVER | FT2 Escrow+Cash-Reserve | GO
+NOW: FT3+FT4+FT5 closing → FAST-MERGE → deploy-ready.
+ACK: CURSOR | ACK FACTORING-TAKEOVER | FT3-FT5 | GO

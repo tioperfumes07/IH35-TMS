@@ -1,3 +1,11 @@
+**2026-10-01T21:50Z · FT3+FT4+FT5 SHIPPING · `cursor/ft3-home-kpi-ledger-c89b`**
+ACK: CURSOR | ACK FACTORING-TAKEOVER | FT3-FT5 | GO
+FT3 · Home cash-flow KPI strip from same purchase/candidates ledger.
+FT4 · FactoringReservesSharedPanel SoT already on main (B7); re-asserted PASS.
+FT5 · Profile shows submission email + both reserve rates (rateToPctString 2dp); edit persists remittance_details.submissionEmail + cash_reserve_rate.
+GUARD: verify-factoring-r315-home-cash-flow · verify-factoring-r315-reserves-shared · verify-factoring-ft5-setup-email-rates SELFTEST+PASS.
+NEXT: FAST-MERGE → tip deploy-ready.
+
 **2026-10-01T21:45Z · FT2 SHIPPING · `cursor/ft2-escrow-cash-reserve-tabs-c89b`**
 ACK: CURSOR | ACK FACTORING-TAKEOVER | FT2 Escrow+Cash-Reserve | GO
 FT2 · Escrow Account + Cash Reserve SEPARATE tabs; rateToPctString → 1.50 (2dp); recourse_days release trigger on each; ledger = purchase escrow/cash cents.

@@ -38,6 +38,7 @@ const FULL_FIELDS = (factor: Factor) => {
     { label: "Telephone", value: dash(remit.telephone) },
     { label: "Address", value: dash(remit.address) },
     { label: "General email", value: dash(remit.generalEmail) },
+    { label: "Submission email", value: dash(remit.submissionEmail) },
     { label: "Primary contact", value: dash(remit.primaryContactName) },
     { label: "Primary contact email", value: dash(remit.primaryContactEmail) },
     { label: "Accounting contact", value: dash(remit.accountingContact) },
@@ -58,6 +59,7 @@ export function FactoringProfilePanel({ factor, saving, onSave, variant = "full"
   if (variant === "compact") {
     const remit = parseRemittanceDetails(factor.remittance_details);
     const contact = remit.primaryContactName || remit.telephone || remit.generalEmail || "—";
+    const submissionEmail = remit.submissionEmail || "—";
     return (
       <section
         className="rounded-sm border border-gray-200 bg-white p-3 text-xs"
@@ -90,6 +92,13 @@ export function FactoringProfilePanel({ factor, saving, onSave, variant = "full"
           <span>Recourse <b className="text-gray-900">{dash(factor.recourse_days)}d</b></span>
         </div>
         <div className="mt-1 truncate text-xs text-gray-600" title={contact}>Contact: {contact}</div>
+        <div
+          className="mt-0.5 truncate text-xs text-gray-600"
+          title={submissionEmail}
+          data-testid="factoring-profile-submission-email-display"
+        >
+          Submission: {submissionEmail}
+        </div>
         <button
           type="button"
           className="mt-2 text-xs font-medium text-slate-700 hover:underline"
