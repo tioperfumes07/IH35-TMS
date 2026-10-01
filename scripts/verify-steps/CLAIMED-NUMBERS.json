@@ -1,4 +1,9 @@
 {
+  "12035": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-fuel-card-assignments (E-22 addition): card -> unit registry is forced-RLS, audited, void-not-delete, refuses overlaps and full card numbers; the statement importer resolves a missing/unmatched unit from the card at transaction time and never guesses on ambiguity."
+  },
   "12031": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-01",
