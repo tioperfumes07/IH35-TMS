@@ -204,7 +204,7 @@ async function main() {
     // WRONG load data, not QBO -- that is the same "needs investigation" bucket as an
     // already-issued mismatch, not a safe auto-create.
     const loadRes = await client.query(
-      `SELECT l.load_number, l.rate_total_cents::text, c.customer_name
+      `SELECT l.load_number, l.rate_total_cents::text, c.customer_name, l.soft_deleted_at
          FROM mdata.loads l
          LEFT JOIN mdata.customers c ON c.id = l.customer_id
         WHERE l.operating_company_id = $1::uuid`,
@@ -217,6 +217,14 @@ async function main() {
 
     const actionable = []; // real, safely-creatable gap: found in QBO, load matches, customer+amount agree, not yet issued
     const mismatched = []; // load or invoice disagrees with QBO on customer/amount -- needs investigation
+    // 2026-10-01 (Lead): a SOFT-DELETED load is never an invoice to create. Found live: 13503/13504/
+    // 13509/13533/13539 were soft-deleted 2026-09-25 (R-160: Transportation-entity loads keyed under
+    // USMCA; their invoices voided with reversal JEs) and the owner's AUTH-177 purge (2026-09-30)
+    // then hard-deleted the voided invoices -- leaving "load exists, no live invoice", which this
+    // guard read as "safely creatable" and asked every seat to mint 5 invoices against loads the
+    // owner had already retired. QBO still lists them because QBO is where the R-160 correction
+    // has not been applied; that is a QBO-side question, reported here, never auto-created.
+    const softDeleted = [];
     let actionableCents = 0;
 
     for (const row of withLoad) {
@@ -224,6 +232,10 @@ async function main() {
       const existing = byLoad.get(row.load);
       if (!existing) {
         const load = loadByNumber.get(row.load);
+        if (load && load.soft_deleted_at) {
+          softDeleted.push({ ...row, soft_deleted_at: load.soft_deleted_at });
+          continue;
+        }
         const amountOk = load && Number(load.rate_total_cents) === qboCents;
         const nameOk = load && customerNamesLikelyMatch(load.customer_name, row.name);
         if (!load || !amountOk || !nameOk) {
@@ -248,6 +260,8 @@ async function main() {
     console.log(`  mismatched (QBO vs our load disagree, needs investigation): ${mismatched.length} row(s), $${(mismatchedCents / 100).toFixed(2)}`);
     console.log(`  unmatched (blank/text LOAD, never guessed): ${unmatchedBlank.length} row(s), $${(unmatchedCents / 100).toFixed(2)}`);
     console.log(`  excluded (different billing entity): ${excludedWrongEntity.length} row(s)`);
+    console.log(`  excluded (load soft-deleted in our book, never auto-invoiced; QBO-side correction pending): ${softDeleted.length} row(s)`);
+    for (const d of softDeleted) console.log(`    - load ${d.load}: ${d.name} $${d.amount} (soft_deleted_at ${new Date(d.soft_deleted_at).toISOString()})`);
 
     if (actionable.length > 0) {
       console.error(`${LABEL}: FAIL — ${actionable.length} invoice(s) with a real, matching load/customer/amount still not created:`);

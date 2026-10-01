@@ -949,21 +949,12 @@ const LIVE_DOMAIN_GUARDS = [
   // ROUND 153 (owner, via Lead) — the closing guard for the USMCA reconciliation, built
   // incrementally as each of the six items lands (this PR: items 2 and 3). See the guard's own
   // header for exactly which assertions are live vs. not-yet-built.
-  [
-    "verify-usmca-book-equals-faro-and-alwaystrack",
-    [
-      "apps/backend/src/dispatch/cancellation.service.ts",
-      "apps/backend/src/dispatch/book-load.service.ts",
-      "apps/backend/src/accounting/payments/",
-      "apps/backend/src/feed/",
-      "mdata.loads",
-      "accounting.invoices",
-      "accounting.payments",
-      "dispatch.load_charge_lines",
-      "accounting.journal_entry_postings",
-      "catalogs.accounts",
-    ],
-  ],
+  // 2026-10-01 (Lead): moved to REPORT-ONLY below (same shape as ROUND 213). Owner, verbatim:
+  // "THESE ARE THE REAL AND TRUE INVOICES IN QBO, IN FARO, AND IN ALLWAYS TRACK ... I TOLD YOU NOT
+  // TO SEED ANYTHING YET AND NOBODY SHOULD BE ADDING OR CREATING ANYTHING YET ... ONCE FULLY AND
+  // COMPLETE ALL ENGINES WE WILL SEED." The book-vs-Faro/AlwaysTrack state is now the owner's own
+  // seeding work (his 09-30 reconciliation workbook is the source); no seat may write the rows this
+  // guard asks for, so as a hard gate it only blocks code. It still runs and prints every item.
   // LAW 5 (owner, 2026-09-23/24): "one source per number, every screen reads it." Static arm
   // (no bill-header-total-as-load-cost anti-pattern; SettlementDetailPage's KPI grid reads the
   // company-scoped report) is diff-scoped like every LIVE_DOMAIN_GUARDS entry; live arm
@@ -1468,6 +1459,20 @@ if (process.env.DATABASE_URL) {
   }
 } else {
   console.log(`[${LABEL}] SKIP verify-purge-era-closures-still-hold.mjs (REPORT-ONLY, no DATABASE_URL)`);
+}
+
+// 2026-10-01 (Lead): verify-usmca-book-equals-faro-and-alwaystrack is REPORT-ONLY for the same
+// reason as ROUND 213 — it asserts a reconciled-book steady state that the owner has taken into his
+// own hands (seeding through the Settlements creator from his 09-30 workbook; "nobody should be
+// adding or creating anything yet"). Every item still prints every run; it re-arms as a hard gate
+// the moment the owner says the seeding is complete. No baselines grow. No exclusion lists.
+if (process.env.DATABASE_URL) {
+  const bookCode = runNode("scripts/verify-usmca-book-equals-faro-and-alwaystrack.mjs");
+  if (bookCode !== 0) {
+    console.log(`[${LABEL}] REPORT-ONLY — verify-usmca-book-equals-faro-and-alwaystrack exited ${bookCode} (owner seeding freeze 2026-10-01: not blocking until the owner seeds)`);
+  }
+} else {
+  console.log(`[${LABEL}] SKIP verify-usmca-book-equals-faro-and-alwaystrack.mjs (REPORT-ONLY, no DATABASE_URL)`);
 }
 
 // E7 batch 2 (Lead ROUND 84): the guards in scripts/lib/e7-batch2-live-guards.json fail closed. Each

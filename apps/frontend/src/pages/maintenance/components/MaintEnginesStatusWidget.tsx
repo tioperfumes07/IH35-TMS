@@ -77,9 +77,13 @@ export function MaintEnginesStatusWidget({ operatingCompanyId }: Props) {
             data-health={row.health}
             title={row.health_reason}
           >
-            <span className="min-w-0 truncate text-slate-800">
+            <Link
+              to={`/system/engine-status#${row.id}`}
+              className="min-w-0 truncate text-slate-800 underline-offset-2 hover:underline"
+              data-testid={`maint-engine-link-${row.id}`}
+            >
               {row.id} {row.name}
-            </span>
+            </Link>
             <span className={row.health === "red" ? "shrink-0 font-semibold text-slate-900" : "shrink-0 text-slate-600"}>
               {healthLabel(row)}
             </span>
