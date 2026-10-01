@@ -957,3 +957,18 @@ unit→WO (A-48 `?unit_id=`), driver→WO (`?driver_id=`), vendor→WO (`?vendor
 resolve; driver-at-time none (T150 dark), no vendor/bill/expense/JE on any USMCA WO yet (unseeded —
 not created). Bill/expense/JE legs proven by test (4/4). Guard step 11965 `checkWorkOrderLinkageBothWays`.
 **blocker:** none. **next:** E-17 fleet roster guard (report already in ROUND 305 A-45).
+## E-17 fleet roster — GUARD BUILT + CORRECTION TO MY A-45 REPORT (ORDERS 2026-10-01 row 4)
+**what:** verify-step 12029 `verify-new-units-have-gps-or-deactivation-reason` — FAILs on any USMCA unit
+created on/after 2026-10-01, past a 72 h device grace, with no GPS ever and no deactivation + reason.
+Read-only, rolled-back txn, RLS completeness discriminator on mdata.units. No deactivations by me.
+**proof:** live exit 0 — 0 new units since 2026-10-01; discriminator 196/196. Same query over all history
+(cutoff moved to 2000): 42 units, every no-GPS unit is deactivated with a written reason. Selftest 4/4.
+**CORRECTION (my ROUND 305 A-45 said "7 InService units dark, poisoning averages" — overstated):**
+T120, T149, T150, T151, USMCA-001, SAM-c4530bd3, SAM-fa16e203 carry `deactivated_at = 2026-08-31` with
+reason "USMCA insurance schedule only — owner 2026-08-31: deactivate". Every engine filters
+`deactivated_at IS NULL`, so the ACTIVE roster is 16 trucks (= the PM schedule set): 15 reporting
+(T147 back online 2026-10-01 01:30Z), T122 dark since 2026-09-26. **Real finding for the owner:** on
+T120/T149/T150/T151/USMCA-001 `status` still reads `InService` while `deactivated_at` is set — the status
+column disagrees with the deactivation. Owner decides whether status should read OutOfService; nothing
+changed. The 7 TRANSPORTATION-named trucks are owner_company_id TRUCKING and deactivated (stale labels).
+**blocker:** none. **next:** row 5 (complaints migration for CC-2).
