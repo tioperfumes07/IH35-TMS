@@ -39,6 +39,7 @@ import { StopReasoningTable } from "./components/StopReasoningTable";
 import { TripPlanSummaryBanner } from "./components/TripPlanSummaryBanner";
 import { UploadLovesPricesModal } from "./components/UploadLovesPricesModal";
 import { FuelHomePage } from "./FuelHome";
+import { FuelIntegrityPage } from "./integrity/FuelIntegrityPage";
 import { FuelTransactionsTable } from "./FuelTransactionsTable";
 import { ExpensiveStatesMultiselect } from "./components/ExpensiveStatesMultiselect";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -548,6 +549,8 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
           </section>
         )
       ) : null}
+
+      {tab === "integrity" ? <FuelIntegrityPage /> : null}
 
       {tab === "compliance" ? (
         complianceQuery.isError ? (

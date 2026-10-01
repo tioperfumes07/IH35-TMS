@@ -253,6 +253,7 @@ export const FUEL_TAB_PATH: Record<string, string> = {
   history: "/fuel/history",
   loves_prices: "/fuel/loves-prices",
   compliance: "/fuel/compliance",
+  integrity: "/fuel/integrity",
 };
 
 export function fuelTabFromPath(pathname: string): string {
