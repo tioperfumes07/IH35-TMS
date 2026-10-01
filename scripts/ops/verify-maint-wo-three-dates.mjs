@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * ORDERS-2026-10-01 MAINTENANCE — WO three dates as columns (reported / in shop / expected release).
- * Expected release may render "pending CC-1" until E-16 lands the column.
+ * E-16 landed expected_release_at — never show "pending CC-1"; bind the real column.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -16,6 +16,7 @@ const FILES = {
   detail: "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
   modal: "apps/frontend/src/components/maintenance/WorkOrderDetailModal.tsx",
   api: "apps/frontend/src/api/maintenance.ts",
+  migration: "db/migrations/202615120000_work_orders_reported_in_shop_expected_release.sql",
 };
 
 function read(rel) {
@@ -28,8 +29,10 @@ function audit() {
   for (const label of ['label: "Reported"', 'label: "In shop"', 'label: "Expected release"']) {
     if (!table.includes(label)) f.push(`${FILES.table}: missing column ${label}`);
   }
-  if (!/pending CC-1/.test(table)) f.push(`${FILES.table}: Expected release must mark pending CC-1 when column absent`);
+  if (/pending CC-1/.test(table)) f.push(`${FILES.table}: must not show pending CC-1 (E-16 landed)`);
+  if (!/expected_release_at/.test(table)) f.push(`${FILES.table}: Expected release must bind expected_release_at`);
   if (!/work_started_at/.test(table)) f.push(`${FILES.table}: In shop must bind work_started_at`);
+
   const detailExtra = read(FILES.detail);
   if (!/wo-detail-linked-bill-payments-parity/.test(detailExtra)) f.push(`${FILES.detail}: bill payments reverse table required`);
   if (!/wo-detail-linked-invoices-parity/.test(detailExtra)) f.push(`${FILES.detail}: invoices reverse table required`);
@@ -40,16 +43,24 @@ function audit() {
 
   const detail = read(FILES.detail);
   if (!/wo-three-dates/.test(detail)) f.push(`${FILES.detail}: three-dates strip missing`);
-  if (!/pending CC-1/.test(detail)) f.push(`${FILES.detail}: Expected release pending CC-1 missing`);
+  if (/pending CC-1/.test(detail)) f.push(`${FILES.detail}: must not show pending CC-1 (E-16 landed)`);
+  if (!/expected_release_at/.test(detail)) f.push(`${FILES.detail}: Expected release must bind expected_release_at`);
 
   const modal = read(FILES.modal);
   if (!/wo-date-reported/.test(modal) || !/wo-date-in-shop/.test(modal) || !/wo-date-expected-release/.test(modal)) {
     f.push(`${FILES.modal}: three date testids required`);
   }
+  if (/pending CC-1/.test(modal)) f.push(`${FILES.modal}: must not show pending CC-1 (E-16 landed)`);
+  if (!/expected_release_at/.test(modal)) f.push(`${FILES.modal}: Expected release must bind expected_release_at`);
 
   const api = read(FILES.api);
   if (!/work_started_at\?:/.test(api) || !/expected_release_at\?:/.test(api)) {
     f.push(`${FILES.api}: WorkOrder type must declare work_started_at + expected_release_at`);
+  }
+
+  const mig = read(FILES.migration);
+  if (!/ADD COLUMN IF NOT EXISTS expected_release_at/.test(mig)) {
+    f.push(`${FILES.migration}: must ADD expected_release_at`);
   }
   return f;
 }
@@ -71,5 +82,5 @@ if (failures.length) {
   for (const x of failures) console.error(`  - ${x}`);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — WO three dates on list + detail`);
+console.log(`${LABEL}: OK — WO three dates on list + detail (E-16 expected_release_at live)`);
 process.exit(0);

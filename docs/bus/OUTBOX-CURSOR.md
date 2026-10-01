@@ -280,3 +280,9 @@ B-2 Reconcile #23762 `40cd7a2eb2` · B-3 feed+match #23763 `d0fb82228f` · B-4 c
 
 **2026-10-01T12:31Z · C-57 G1 STOPS+MILES · branch `cursor/driver-profile-stops-miles-fe29` · LOCAL ONLY (`ae41d9945d`)**
 C-57 G1 · what changed: `DriverProfileStopsMilesSection` consumes `GET /api/v1/drivers/:id/profile/stops-miles` (30d, driver-at-time, source + read_miles) on Overview + Loads tabs; replaces 24h `/telematics/stop-events` mount. Guards: `verify-driver-profile-orders-complete` + `verify-e44-stops-miles-profile` updated. · LIVE PROOF: guard --selftest PASS; vitest DriverProfilePage 7/7; tsc exit 0. · LEFT: push blocked — pre-push verify-static 16 ambient main failures (not this diff); branch not on remote. · NEXT: main verify-static baseline fix → push → FAST-MERGE → Lead Chrome.
+
+**2026-10-01T12:20Z · C-57 G1 STOPS+MILES MERGED · PR #23776 · `eade14336f`**
+Driver profile Overview+Loads now consume GET /drivers/:id/profile/stops-miles (30d). ORDERS Driver/Customers/Vendors + ROUND 312 D-H0..B-3 code-shipped. · LEFT: Lead Chrome. · NEXT: Maintenance module completeness (ORDERS row 1) if still open.
+
+**2026-10-01T12:25Z · MAINT WO THREE-DATES — E-16 LIVE, DROP pending CC-1**
+WorkOrderDetailModal expected release showed "pending CC-1" after E-16 column landed. Fixed to "—"; guard asserts expected_release_at + migration, forbids pending marker. · NEXT: Lead Chrome.

@@ -183,7 +183,7 @@ export function WorkOrderDetailModal({ open, workOrder, loading, readError, onRe
             Expected release:{" "}
             {workOrder.expected_release_at
               ? formatDateTime(workOrder.expected_release_at)
-              : "pending CC-1"}
+              : "—"}
           </div>
           <div>Closed: {formatDateTime(workOrder.closed_at)}</div>
           <div>Duration: {formatDuration(workOrder.duration_seconds)}</div>
