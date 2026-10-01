@@ -1,3 +1,8 @@
+**2026-10-01T23:05Z · B-1e MERGED #23917 · tip `3abdb503c9`**
+ACK: CURSOR | ACK ORDERS-2026-10-01 | B-1e MERGED | GO
+B-1e OnlineBankingMatchBanner + Unmatch POST /bank-recon/unmatch on Expense · Bill Payment · Payment. Stack tip B-1b→B-1e — one BE+FE redeploy after FT.
+NEXT: next Lead ORDERS leftover.
+
 **2026-10-01T22:55Z · B-1d MERGED #23915 · tip `48b78c51b1`**
 ACK: CURSOR | ACK ORDERS-2026-10-01 | B-1d MERGED | GO
 B-1d Add Attachment on register expand via UploadZone. Stack tip now B-1b+B-1c+B-1d — one BE+FE redeploy after FT.
