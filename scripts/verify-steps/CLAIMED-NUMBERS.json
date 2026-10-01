@@ -1,4 +1,9 @@
 {
+  "12071": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-revrec-latch-atomic: the revenue JE and its load_revenue_recognition_postings row commit in one transaction; live: 0 unreversed Revrec JEs without a latch row (double recognition)."
+  },
   "12067": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-01",
