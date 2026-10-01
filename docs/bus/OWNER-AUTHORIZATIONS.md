@@ -6751,3 +6751,25 @@ The 1090/1000 effect is the honest interim: real Faro wires stay in the bank (16
 ACCT-F20260925i moved 166,743.94 1090 -> bank) with no factoring source until the app regenerates the purchases.
 NOT COVERED: any invoice delete or amount change, any bank line, any manual JE, any non-factoring JE, TRANSP/TRK rows.
 Owner, in chat to CC-2, 2026-10-01: "you have full permissions and authoriztions".
+
+## AUTH-194
+issued_at: 2026-10-01T16:15:55Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). banking.bank_transactions, exactly these 16 rows (the deposits AUTH-193
+  unlinked from the deleted factoring advances), through the canonical reset void.service.ts unmatchBankTransactionById
+  (status pending_categorization, review_state for_review, every matched_*/categorization_*/linked_entity_id cleared) + 1 audit row each:
+  641d51be-4fb1-4dc5-a3fd-6ff2bd4cee75 08-10 5,325.00 | ab67cf21-eda1-4b95-809c-8f354acbb6c3 08-11 3,482.00 | 3e7b0fe6-3c29-49c9-a0e0-e70dcf09b8e7 08-12 1,639.00
+  6015691c-07f9-4394-b5f9-9e1f774b22d0 08-17 6,877.00 | 4e85aa7d-eb43-4ba0-bf05-03b214c5d964 08-18 3,676.00 | bb0d7690-fa3d-44f9-a71f-12947b3fcac6 08-19 6,392.00
+  6bd50475-1954-4b90-8de9-3f47206ae35c 08-21 16,383.00 | 3c8eaab0-7888-4a5c-9485-949bd81b75b0 08-24 3,967.00 | 91b6c3e2-9fa5-48df-a272-5da3def18051 08-26 2,997.00
+  b13ccf4f-13c2-4c8b-ad4c-a14f497553e9 08-31 13,473.00 | 857028d1-95fc-4a89-9b3e-802356598f84 09-01 14,200.50 | ec4ee110-a2af-4971-9ca6-2780fa7f2e2d 09-03 10,466.00
+  bc2a018a-1f84-41cb-af74-bf54bc15e414 09-04 16,785.54 | 193c4c52-4da6-4dec-8eef-deeaa5984e0f 09-10 2,997.00 | afa3616a-586e-404d-b0b7-4b7759736840 09-18 27,441.00
+  3feba937-1aa5-463b-9ce7-054d404c1024 09-25 4,161.00
+action: npx tsx scripts/ops/2026-10-01-cc2-auth194-unmatch-16-faro-bank-lines.ts --apply. Rehearsed on production (rolled back): 16 -> pending_categorization / for_review.
+expires_at: 2026-10-02T16:15:55Z
+status: OPEN
+
+ROUND 315 (FINAL) step 0: "clear matched_factoring_advance_id (and any categorization pointing at a factoring row) on the 16 bank
+transactions through the canonical unmatch service with audit rows". AUTH-193 (applied before the FINAL arrived) nulled only
+matched_factoring_advance_id; all 16 still read review_state 'matched', which match.service refuses to re-match.
+NOT COVERED: any amount, any bank line beyond these 16, any match to a new purchase (owner-only by ROUND 315 law).
+Owner, in chat to CC-2, 2026-10-01: "you have full permissions and authoriztions".
+
