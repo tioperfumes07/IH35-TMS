@@ -7498,6 +7498,11 @@
     "claimed_at": "2026-09-30",
     "purpose": "verify-damage-scorecard-honest-zero (ROUND 303 B-43 item 1: re-measures the damage scorecard against real telematics-covered units -- 14, not the cited 16 -- and locks the honest 0-attributed-driver result)"
   },
+  "12003": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-relay-fuel-gallons-root-cause (ROUND 305 B-46: Relay's raw API shape (products empty, fuel_items populated) + the real root cause of the 52 zero-gallon fuel.fuel_transactions rows -- an unrelated Faro DEF-feed import, not Relay)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
