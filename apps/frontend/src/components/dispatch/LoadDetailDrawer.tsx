@@ -40,6 +40,7 @@ import { FinesDeductionsCard } from "./tabs/FinesDeductionsCard";
 import { SettlementProfitabilityCard } from "./tabs/SettlementProfitabilityCard";
 import { InsuranceClaimsReverseSection } from "../insurance/InsuranceClaimsReverseSection";
 import { LoadSafetyReverseSection } from "../safety/LoadSafetyReverseSection";
+import { ComplaintsReverseSection } from "../safety/ComplaintsReverseSection";
 import { LoadWorkOrdersReverseSection } from "./LoadWorkOrdersReverseSection";
 import { LoadQualityEventsReverseSection } from "./LoadQualityEventsReverseSection";
 import { LoadDetentionReverseSection } from "./LoadDetentionReverseSection";
@@ -1327,6 +1328,16 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                     operatingCompanyId={load.operating_company_id}
                     loadId={load.id}
                     data-testid="load-detail-safety-records"
+                  />
+                ) : null}
+                {load.operating_company_id ? (
+                  // E-28 (owner order 2026-10-01): load -> complaints, the reverse half of the
+                  // load/truck linkage added to the complaint create form.
+                  <ComplaintsReverseSection
+                    operatingCompanyId={load.operating_company_id}
+                    filter={{ load_id: load.id }}
+                    contextLabel="this load"
+                    data-testid="load-detail-complaints"
                   />
                 ) : null}
                 {load.operating_company_id ? (

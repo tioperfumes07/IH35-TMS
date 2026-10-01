@@ -1,6 +1,7 @@
 import { Lock } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { formatDateUS } from "../../../lib/formatDate";
 import { entityLabel } from "../../../lib/entity-label";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -46,6 +47,9 @@ const EMPTY_COMPLAINT_FORM = {
   complaint_type_id: "",
   summary: "",
   severity: "medium" as "low" | "medium" | "high" | "critical",
+  // E-28 (owner order 2026-10-01): the load and truck a complaint is about, where applicable.
+  load_id: "",
+  unit_id: "",
 };
 
 export function ComplaintsTab() {
@@ -237,6 +241,9 @@ export function ComplaintsTab() {
     if (form.complainant_type !== "anonymous") payload[complainantIdentityKey] = complainantIdentityValue;
     if (form.respondent_type === "driver") payload.respondent_driver_id = form.respondent_driver_id;
     else payload.respondent_user_id = form.respondent_user_id;
+    // E-28: optional — the load and/or truck this complaint is about.
+    if (form.load_id) payload.load_id = form.load_id;
+    if (form.unit_id) payload.unit_id = form.unit_id;
     return payload;
   }
 
@@ -325,6 +332,31 @@ export function ComplaintsTab() {
     { key: "complainant", label: "Complainant", render: (row) => resolveComplainant(row) },
     { key: "respondent", label: "Respondent", render: (row) => resolveRespondent(row) },
     { key: "complaint_type", label: "Type", sortable: true, render: (row) => resolveType(row) },
+    {
+      // E-28 (owner order 2026-10-01): the load and truck this complaint is about.
+      key: "load",
+      label: "Load",
+      render: (row) => (
+        <EntityLinkOrTombstone
+          kind="load"
+          id={row.load_id == null ? null : String(row.load_id)}
+          name={row.complaint_load_number}
+          noun="Load"
+        />
+      ),
+    },
+    {
+      key: "unit",
+      label: "Truck",
+      render: (row) => (
+        <EntityLinkOrTombstone
+          kind="unit"
+          id={row.unit_id == null ? null : String(row.unit_id)}
+          name={row.complaint_unit_number}
+          noun="Unit"
+        />
+      ),
+    },
     { key: "severity", label: "Severity", sortable: true, render: (row) => String(row.severity ?? "—") },
     { key: "status", label: "Status", sortable: true, render: (row) => String(row.status ?? "open") },
     {
@@ -520,6 +552,29 @@ export function ComplaintsTab() {
               <option value="high">high</option>
               <option value="critical">critical</option>
             </SelectCombobox>
+            {/* E-28 (owner order 2026-10-01): the load and truck this complaint is about — the SAME
+                EntityPicker used for load/unit links elsewhere (e.g. VendorBillForm); never a new
+                picker. A complaint is about an EXISTING load/unit, so no inline create here. */}
+            <EntityPicker
+              kind="load"
+              operatingCompanyId={companyId}
+              value={form.load_id || null}
+              onChange={(next) => setForm((v) => ({ ...v, load_id: next ?? "" }))}
+              allowCreate={false}
+              allowClear
+              placeholder="Load (optional)"
+              dataTestId="complaint-form-load-picker"
+            />
+            <EntityPicker
+              kind="unit"
+              operatingCompanyId={companyId}
+              value={form.unit_id || null}
+              onChange={(next) => setForm((v) => ({ ...v, unit_id: next ?? "" }))}
+              allowCreate={false}
+              allowClear
+              placeholder="Truck (optional)"
+              dataTestId="complaint-form-unit-picker"
+            />
             <button
               type="button"
               className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"

@@ -16,6 +16,7 @@ import { UnitDefaultDriversReverseSection } from "../../components/fleet/UnitDef
 import { UnitTireProgramReverseSection } from "../../components/maintenance/UnitTireProgramReverseSection";
 import { UnitSevereRepairsReverseSection } from "../../components/maintenance/UnitSevereRepairsReverseSection";
 import { UnitTempCoverReverseSection } from "../../components/safety/UnitTempCoverReverseSection";
+import { ComplaintsReverseSection } from "../../components/safety/ComplaintsReverseSection";
 import { getUnit } from "../../api/mdata";
 import { ListErrorState } from "../../components/ListErrorState";
 
@@ -74,6 +75,16 @@ export function UnitDetail() {
       {companyId ? <UnitTireProgramReverseSection operatingCompanyId={companyId} unitId={id} /> : null}
       {companyId ? <UnitSevereRepairsReverseSection operatingCompanyId={companyId} unitId={id} /> : null}
       {companyId ? <UnitTempCoverReverseSection operatingCompanyId={companyId} unitId={id} /> : null}
+      {companyId ? (
+        // E-28 (owner order 2026-10-01): unit -> complaints, the reverse half of the load/truck
+        // linkage added to the complaint create form.
+        <ComplaintsReverseSection
+          operatingCompanyId={companyId}
+          filter={{ unit_id: id }}
+          contextLabel="this unit"
+          data-testid="unit-detail-complaints"
+        />
+      ) : null}
       <div className="flex flex-wrap gap-1 rounded-sm border border-gray-200 bg-white p-1">
         {(["permits", "toll-tags", "tasks", "brakes", "tires", "finance"] as const).map((tab) => (
           <button

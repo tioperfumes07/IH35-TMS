@@ -104,14 +104,20 @@ export function pullCsaFromSafer(companyId: string) {
   });
 }
 
+// E-28 (owner order 2026-10-01): load_id/unit_id are the reverse half of load -> complaints /
+// unit -> complaints — kept on the SAME line as the bounded range params below; a required static
+// guard (verify-safety-complaints-range-vertical.mjs) asserts "limit?: number; offset?: number"
+// stay adjacent in this contract.
 export function listComplaints(
   companyId: string,
-  params: { driver_id?: string; customer_id?: string; user_id?: string; limit?: number; offset?: number } = {}
+  params: { driver_id?: string; customer_id?: string; user_id?: string; load_id?: string; unit_id?: string; limit?: number; offset?: number } = {}
 ) {
   const query = new URLSearchParams({ operating_company_id: companyId });
   if (params.driver_id) query.set("driver_id", params.driver_id);
   if (params.customer_id) query.set("customer_id", params.customer_id);
   if (params.user_id) query.set("user_id", params.user_id);
+  if (params.load_id) query.set("load_id", params.load_id);
+  if (params.unit_id) query.set("unit_id", params.unit_id);
   if (params.limit != null) query.set("limit", String(params.limit));
   if (params.offset != null) query.set("offset", String(params.offset));
   return apiRequest<{ complaints: Array<Record<string, unknown>>; total_count: number }>(`/api/v1/safety/complaints?${query.toString()}`);
