@@ -1,10 +1,10 @@
 {
-  "healthzSha": "8a4592e",
-  "generated_at": "2026-10-01T03:40:02.987Z",
+  "healthzSha": "6494c6b",
+  "generated_at": "2026-10-01T06:51:31.793Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "8a4592e",
+    "deployedSha": "6494c6b",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 23649,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL -- Round 306 E-29: 342 GeoJSON fences never fired; border direction measured; auto-status load writes flag-OFF",
+      "number": 23749,
+      "title": "FINDING: N/A",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 10:37 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23649",
-      "sha": "942e14d208",
-      "committedAtIso": "2026-09-30T22:37:07-05:00"
+      "mergedAtCt": "10/01/2026, 01:49 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23749",
+      "sha": "ad9b6d392c",
+      "committedAtIso": "2026-10-01T01:49:36-05:00"
     },
     {
-      "number": 23648,
-      "title": "FINDING: COMPLAINTS-CODER-TEST-ROWS-LIVE-IN-USMCA-2026100101 LANE: DOCS (AUTH-180 CONSUMED: 3 test complaints voided, board row resolved)",
+      "number": 23748,
+      "title": "FINDING: N/A",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 10:33 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23648",
-      "sha": "5ca71313b9",
-      "committedAtIso": "2026-09-30T22:33:00-05:00"
+      "mergedAtCt": "10/01/2026, 01:47 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23748",
+      "sha": "6494c6b63b",
+      "committedAtIso": "2026-10-01T01:47:30-05:00"
     },
     {
-      "number": 23645,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL (CLAIM-RESERVE: migration 202615120000 -- E-16 work-order dates)",
+      "number": 23747,
+      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migration 202615170800 + verify-step 12055 for CC-2 factoring advance -> load link)",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 10:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23645",
-      "sha": "8a4592e848",
-      "committedAtIso": "2026-09-30T22:32:26-05:00"
+      "mergedAtCt": "10/01/2026, 01:40 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23747",
+      "sha": "d761ccc63f",
+      "committedAtIso": "2026-10-01T01:40:48-05:00"
     },
     {
-      "number": 23646,
-      "title": "FINDING: COMPLAINTS-CODER-TEST-ROWS-LIVE-IN-USMCA-2026100101 LANE: NON-FINANCIAL (AUTH-180: owner authorizes voiding the 3 coder test complaints; script of record, dry run first)",
+      "number": 23746,
+      "title": "FINDING: N/A LANE: DOCS (OUTBOX CC-2: 146 fuel rows done; Faro 13625 verified, 13638 missing; factoring engine gap named)",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 10:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23646",
-      "sha": "a1fecb553d",
-      "committedAtIso": "2026-09-30T22:32:18-05:00"
+      "mergedAtCt": "10/01/2026, 01:39 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23746",
+      "sha": "58ec36082d",
+      "committedAtIso": "2026-10-01T01:39:15-05:00"
     },
     {
-      "number": 23643,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL -- E-14 linkage: manual odometer entry re-runs the PM auto-engine (CC-1 ask)",
+      "number": 23745,
+      "title": "FINDING: ACCT-F9600 LANE: FINANCIAL (Reclassify Transactions engine: QBO Tools→Reclassify clone — account tree with period balances, GL-line finder, multi-select reclassify of account/class/vendor through one linked RECLASSIFICATION JE per document, document line rewrite, undo per batch, guard)",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 10:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23643",
-      "sha": "99e8d2a3f6",
-      "committedAtIso": "2026-09-30T22:31:35-05:00"
+      "mergedAtCt": "10/01/2026, 01:38 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23745",
+      "sha": "4e6bff329e",
+      "committedAtIso": "2026-10-01T01:38:44-05:00"
     },
     {
-      "number": 23642,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL -- ORDERS 2026-10-01 row 7: E-23 fuel push reads CC-2 derived pump time (high confidence only, flag OFF)",
+      "number": 23744,
+      "title": "FINDING: N/A LANE: DOCS (CC-1 OUTBOX: money rows merged; awaiting deploy for 202615160000 + three routes; row 8 secret still open)",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 10:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23642",
-      "sha": "acf42e303b",
-      "committedAtIso": "2026-09-30T22:30:18-05:00"
+      "mergedAtCt": "10/01/2026, 01:36 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23744",
+      "sha": "84d3207bb8",
+      "committedAtIso": "2026-10-01T01:36:53-05:00"
     },
     {
-      "number": 23639,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL -- ORDERS 2026-10-01 row 6: DVIR import every 15 min + daily re-read; engine-status row",
+      "number": 23741,
+      "title": "FINDING: N/A",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 10:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23639",
-      "sha": "9ced3f9c6f",
-      "committedAtIso": "2026-09-30T22:29:54-05:00"
+      "mergedAtCt": "10/01/2026, 01:35 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23741",
+      "sha": "5796d18688",
+      "committedAtIso": "2026-10-01T01:35:55-05:00"
     },
     {
-      "number": 23640,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL (owner order: no handoffs -- each seat builds its engine end to end; every building seat gets its own migration band; standing LANE_CROSS ruling)",
+      "number": 23743,
+      "title": "FINDING: FUEL-SOURCE-VOIDED-UNDER-LIVE-EXPENSE-2026100109 LANE: NON-FINANCIAL (AUTH-190 consumed: 146 fuel rows reinstated; per-load baseline re-stamped from the live count; guard: posted fuel expense -> live fuel row)",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 10:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23640",
-      "sha": "0f9ab3ef96",
-      "committedAtIso": "2026-09-30T22:29:18-05:00"
+      "mergedAtCt": "10/01/2026, 01:34 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23743",
+      "sha": "ae378abd35",
+      "committedAtIso": "2026-10-01T01:34:07-05:00"
     },
     {
-      "number": 23641,
-      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migrations 202615100000 + 202615110000 for CC-2's own engines, owner order no-handoff)",
+      "number": 23742,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL -- loadAtTimeSql: a load finishes at the unit's delivery-fence exit when TMS has no delivery stamp",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 10:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23641",
-      "sha": "c98a48f0ea",
-      "committedAtIso": "2026-09-30T22:29:14-05:00"
+      "mergedAtCt": "10/01/2026, 01:33 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23742",
+      "sha": "13d182c02a",
+      "committedAtIso": "2026-10-01T01:33:45-05:00"
     },
     {
-      "number": 23632,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL (E-14 PM auto-engine: daily 03:30 CT, E-03 -> E-06 -> ABSENT, no guessed baseline, WO flag-OFF)",
+      "number": 23740,
+      "title": "FINDING: FUEL-SOURCE-VOIDED-UNDER-LIVE-EXPENSE-2026100109 LANE: DOCS (Lead ruling 06:45Z: AUTH-190 + script to reinstate the 146 fuel rows; expenses never voided)",
       "state": "merged",
-      "mergedAtCt": "09/30/2026, 10:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23632",
-      "sha": "fa7100a2f5",
-      "committedAtIso": "2026-09-30T22:26:35-05:00"
+      "mergedAtCt": "10/01/2026, 01:30 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23740",
+      "sha": "c4f5519f36",
+      "committedAtIso": "2026-10-01T01:30:37-05:00"
     }
   ]
 }

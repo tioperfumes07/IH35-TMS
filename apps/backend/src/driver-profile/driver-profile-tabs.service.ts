@@ -46,10 +46,14 @@ async function tableExists(client: Db, schema: string, table: string): Promise<b
 export async function driverStopsAndMiles(client: Db, oc: string, driverId: string, w: Window) {
   if (await tableExists(client, "telematics", "unit_stop_events")) {
     const res = await client.query(
-      `SELECT e.*, u.unit_number FROM telematics.unit_stop_events e JOIN mdata.units u ON u.id = e.unit_id
-        WHERE e.driver_id_at_time = $1::uuid AND e.started_at >= $2::timestamptz AND e.started_at < $3::timestamptz
+      `SELECT e.*, u.unit_number, e.load_id_at_time::text AS load_id, l.load_number
+         FROM telematics.unit_stop_events e
+         JOIN mdata.units u ON u.id = e.unit_id
+         LEFT JOIN mdata.loads l ON l.id = e.load_id_at_time
+        WHERE e.operating_company_id = $4::uuid
+          AND e.driver_id_at_time = $1::uuid AND e.started_at >= $2::timestamptz AND e.started_at < $3::timestamptz
         ORDER BY e.started_at DESC`,
-      [driverId, w.fromIso, w.toIso]
+      [driverId, w.fromIso, w.toIso, oc]
     );
     const miles = res.rows.reduce((s, r) => s + (r.miles_since_previous_stop == null ? 0 : Number(r.miles_since_previous_stop)), 0);
     return { source: "unit_stop_events", stops: res.rows, read_miles: Math.round(miles * 10) / 10 };
@@ -75,6 +79,7 @@ export async function driverFuel(client: Db, oc: string, driverId: string, w: Wi
     `WITH f AS (${FUEL_ROWS_WITH_STAMP_COUNT_SQL})
      SELECT f.id::text, f.unit_id::text, u.unit_number, f.transaction_at, f.fuel_type, f.gallons, f.total_cost,
             f.location_city, f.location_state, f.voided_at, f.same_stamp_count, f.load_id::text,
+            (SELECT x.load_number FROM mdata.loads x WHERE x.id = f.load_id) AS load_number,
             (SELECT json_agg(json_build_object('rule_id', fa.rule_id, 'severity', fa.severity, 'status', fa.status, 'detected_at', fa.detected_at))
                FROM fuel.fraud_alerts fa WHERE fa.fuel_transaction_uuid = f.id) AS fraud_alerts,
             (SELECT json_build_object('distance_m', m.distance_m, 'confidence', m.confidence, 'review_flag', m.review_flag, 'reason', m.reason)
@@ -109,7 +114,8 @@ export async function driverSafety(client: Db, oc: string, driverId: string, w: 
       args
     );
   const harsh = await client.query(
-      `SELECT e.id::text, e.unit_id::text, e.event_at, e.event_kind, e.severity, e.speed_at_event_mph, e.g_force
+      `SELECT e.id::text, e.unit_id::text, (SELECT u.unit_number FROM mdata.units u WHERE u.id = e.unit_id) AS unit_number,
+              e.event_at, e.event_kind, e.severity, e.speed_at_event_mph, e.g_force
          FROM safety.harsh_events e
         WHERE e.operating_company_id = $1::uuid AND e.driver_id = $2::uuid
           AND e.event_at >= $3::timestamptz AND e.event_at < $4::timestamptz

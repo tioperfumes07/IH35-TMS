@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DriverTelematicsPanel } from "../../components/telematics/DriverTelematicsPanel";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -733,6 +734,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       {activeTab === "Loads" ? (
         <div className="space-y-3" data-testid="dp-tab-loads">
           {companyId ? (
+            <div data-testid="dp-section-loads-telematics">
+              <DriverTelematicsPanel part="operations" driverId={id} operatingCompanyId={companyId} />
+            </div>
+          ) : null}
+          {companyId ? (
             <div data-testid="dp-section-loads">
               <LoadsSection driverId={id} operatingCompanyId={companyId} />
             </div>
@@ -762,6 +768,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
 
       {activeTab === "Safety" ? (
         <div className="space-y-3" data-testid="dp-tab-safety">
+          {companyId ? (
+            <div data-testid="dp-section-safety-telematics">
+              <DriverTelematicsPanel part="safety" driverId={id} operatingCompanyId={companyId} />
+            </div>
+          ) : null}
           <div data-testid="dp-section-9-training">
             <BackgroundChecksSection operatingCompanyId={companyId} driverId={id} />
             <TrainingRecordsSection
