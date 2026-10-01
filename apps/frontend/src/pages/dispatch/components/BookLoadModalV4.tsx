@@ -1315,7 +1315,7 @@ export function BookLoadModalV4({
         if (error instanceof ApiError && error.status === 409 && errCode === "load_edit_locked") {
           setSubmitErrorMessage(
             canOwnerLockOverride
-              ? "This load is locked. Enter an Owner override reason (10+ characters) in the amber banner and save again."
+              ? "This load is locked. Enter an Owner override reason (10+ characters) in the Owner override banner and save again."
               : "This load is locked — it's behind an open settlement, an issued invoice, or a driver bill, so it can't be edited."
           );
           pushToast(canOwnerLockOverride ? "Owner override reason required" : "Load locked — can't edit", "error");
