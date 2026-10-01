@@ -5,6 +5,9 @@
 // (nor the document back to its purchase); Relay fills (never bridged into fuel.fuel_transactions)
 // were reachable from no hub — 100 of USMCA's 119 had no truck or driver matched.
 //
+// Lead ruling 2026-10-01 06:45Z (AUTH-190): a live posted expense with source_fuel_transaction_id must point at a LIVE
+// fuel row — 146 did not (voided 09-28 while the expense + GL stayed live), reinstated under AUTH-190.
+//
 // static: each route accepts the hub filter and returns the link columns. live (read-only): the SQL
 // shapes the routes use resolve on this database and the positive controls are non-zero.
 import pg from "pg";
@@ -65,18 +68,24 @@ try {
        (SELECT count(*)::int FROM integrations.relay_fuel_transactions WHERE operating_company_id = $1 AND voided_at IS NULL
           AND (matched_unit_id IS NULL OR matched_driver_id IS NULL)) relay_unmatched,
        (SELECT count(*)::int FROM fuel.fraud_alerts fa JOIN fuel.fuel_transactions ft ON ft.id = fa.fuel_transaction_uuid WHERE fa.operating_company_id = $1) alerts_reachable,
-       (SELECT count(*)::int FROM fuel.fraud_alerts WHERE operating_company_id = $1) alerts`,
+       (SELECT count(*)::int FROM fuel.fraud_alerts WHERE operating_company_id = $1) alerts,
+       (SELECT count(*)::int FROM accounting.expenses e JOIN fuel.fuel_transactions f ON f.id = e.source_fuel_transaction_id
+         WHERE e.operating_company_id = $1 AND e.voided_at IS NULL AND e.posting_status = 'posted'
+           AND (f.voided_at IS NOT NULL OR f.archived_at IS NOT NULL)) posted_on_dead_fuel,
+       (SELECT count(*)::int FROM accounting.expenses e WHERE e.operating_company_id = $1 AND e.voided_at IS NULL
+           AND e.posting_status = 'posted' AND e.source_fuel_transaction_id IS NOT NULL) posted_fuel_docs`,
     [USMCA]
   )).rows[0];
   await client.query("ROLLBACK");
   const problems = [];
+  if (r.posted_on_dead_fuel > 0) problems.push(`${r.posted_on_dead_fuel} posted fuel expense(s) point at a voided/archived fuel row — the purchase must be live while its money is (Lead ruling 2026-10-01, AUTH-190)`);
   if (r.alerts !== r.alerts_reachable) problems.push(`${r.alerts - r.alerts_reachable} fraud alert(s) name no live fuel purchase — unreachable from every hub`);
   if (r.fuel > 0 && r.fuel_with_vendor === 0) problems.push("positive control: no fuel purchase carries a vendor — the vendor reverse read would be vacuous");
   if (problems.length) {
     console.error(`${LABEL}: FAIL — ${problems.join("; ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: LIVE PASS — ${r.fuel} live fuel purchases (${r.fuel_with_vendor} with a vendor, ${r.fuel_with_doc} drill to an expense document); ${r.alerts} fraud alert(s), all reachable; ${r.relay} Relay fills, ${r.relay_unmatched} on the unmatched worklist.`);
+  console.log(`${LABEL}: LIVE PASS — ${r.fuel} live fuel purchases (${r.fuel_with_vendor} with a vendor, ${r.fuel_with_doc} drill to an expense document); ${r.alerts} fraud alert(s), all reachable; ${r.relay} Relay fills, ${r.relay_unmatched} on the unmatched worklist; ${r.posted_fuel_docs} posted fuel expenses, 0 on a voided purchase.`);
 } finally {
   await client.end();
 }
