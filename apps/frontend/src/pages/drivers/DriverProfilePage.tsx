@@ -60,6 +60,7 @@ import { DriverHosViolationsReverseSection } from "../../components/safety/Drive
 import { SafetyAlertsReverseSection } from "../../components/safety/SafetyAlertsReverseSection";
 import { InsuranceLawsuitsReverseSection } from "../../components/insurance/InsuranceLawsuitsReverseSection";
 import { FuelCardOverageReverseSection } from "../../components/fuel/FuelCardOverageReverseSection";
+import { FuelCardsReverseSection } from "../../components/fuel/FuelCardsReverseSection";
 import { CashForecastReverseSection } from "../../components/cash-flow/CashForecastReverseSection";
 import { W8BenModal } from "../../components/drivers/W8BenModal";
 import { KpiCard } from "../../components/layout/KpiCard";
@@ -852,6 +853,12 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             />
           </div>
           <FuelCardOverageReverseSection operatingCompanyId={companyId} filter={{ driver_id: id }} />
+          <FuelCardsReverseSection
+            operatingCompanyId={companyId}
+            filter={{ driver_id: id }}
+            contextLabel="this driver"
+            data-testid="driver-profile-fuel-cards"
+          />
           <CashForecastReverseSection operatingCompanyId={companyId} filter={{ party_ref_kind: "driver", party_ref_id: id }} />
         </div>
       ) : null}

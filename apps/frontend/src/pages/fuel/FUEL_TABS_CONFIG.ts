@@ -9,6 +9,7 @@ export const FUEL_SUBNAV = [
   { id: "loves_prices", label: "Loves prices" },
   { id: "compliance", label: "Compliance" },
   { id: "integrity", label: "Integrity" },
+  { id: "cards", label: "Cards" },
 ] as const;
 
 export type FuelTabId = (typeof FUEL_SUBNAV)[number]["id"];

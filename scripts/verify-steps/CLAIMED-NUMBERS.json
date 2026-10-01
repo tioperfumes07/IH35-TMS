@@ -1,34 +1,4 @@
 {
-  "12039": {
-    "claimed_by": "CC-2",
-    "claimed_at": "2026-10-01",
-    "purpose": "verify-expense-with-je-is-never-unposted: no accounting.expenses row carries a journal_entry_id while posting_status=unposted; the constraint exists; createExpenseFromFuelTransaction writes posting_status with status."
-  },
-  "12035": {
-    "claimed_by": "CC-2",
-    "claimed_at": "2026-10-01",
-    "purpose": "verify-fuel-card-assignments (E-22 addition): card -> unit registry is forced-RLS, audited, void-not-delete, refuses overlaps and full card numbers; the statement importer resolves a missing/unmatched unit from the card at transaction time and never guesses on ambiguity."
-  },
-  "12031": {
-    "claimed_by": "CC-2",
-    "claimed_at": "2026-10-01",
-    "purpose": "verify-fuel-integrity-samsara-signal (E-21 addition): Samsara Fuel & Energy driver report as signal 4 of fuel integrity; never faked when the feed is unreadable; never a finding with the MPG signals (shared fuel_card_gallons); tank slack = fraud detector tank model."
-  },
-  "12029": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-01",
-    "purpose": "verify-new-units-have-gps-or-deactivation-reason (ORDERS 2026-10-01 E-17): FAILs on any USMCA unit created on/after 2026-10-01 (past a 72 h device grace) that has never reported GPS and carries no deactivation + reason. Read-only; no deactivations."
-  },
-  "12005": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-01",
-    "purpose": "verify-pm-due-feeds-from-stop-odometer (ROUND 305 A-46): every PM-due consumer (PM auto-WO cron, /maint/pm/due, T-29 pm-due-engine) falls back to / considers the odometer READ at the unit's latest stop via the Lead's stop-odometer engine, never interpolated, and a backwards reading is held rather than used."
-  },
-  "12001": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-01",
-    "purpose": "verify-live-fleet-is-measured-not-hardcoded (ROUND 304 LEAD-BUILD): one measured definition of the live fleet (GPS within the window), and the stop-odometer capture engine that reads it. Fails on any hardcoded fleet-size literal, on a real truck being classed as a coder test artifact, and on an interpolated odometer at a stop."
-  },
   "2426": {
     "claimed_at": "2026-08-31",
     "claimed_by": "cursor",
@@ -7478,6 +7448,11 @@
     "claimed_at": "2026-09-30",
     "purpose": "verify-invoice-amount-paid-matches-applications (ROUND 300 B-31: locks the clean payment_applications->invoice.amount_paid_cents link found while tracing the A/R overstatement)"
   },
+  "11965": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-transaction-linkage-law (ROUND 300 A-30): the shared TIER1/TIER2/TIER3 linkage declaration + table-registry drift check + tier2-load-demand static scan, per docs/laws/TRANSACTION-LINKAGE-LAW.md"
+  },
   "11967": {
     "claimed_by": "claude",
     "claimed_at": "2026-09-30",
@@ -7523,10 +7498,20 @@
     "claimed_at": "2026-09-30",
     "purpose": "verify-damage-scorecard-honest-zero (ROUND 303 B-43 item 1: re-measures the damage scorecard against real telematics-covered units -- 14, not the cited 16 -- and locks the honest 0-attributed-driver result)"
   },
+  "12001": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-live-fleet-is-measured-not-hardcoded (ROUND 304 LEAD-BUILD): one measured definition of the live fleet (GPS within the window), and the stop-odometer capture engine that reads it. Fails on any hardcoded fleet-size literal, on a real truck being classed as a coder test artifact, and on an interpolated odometer at a stop."
+  },
   "12003": {
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-01",
     "purpose": "verify-relay-fuel-gallons-root-cause (ROUND 305 B-46: Relay's raw API shape (products empty, fuel_items populated) + the real root cause of the 52 zero-gallon fuel.fuel_transactions rows -- an unrelated Faro DEF-feed import, not Relay)"
+  },
+  "12005": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-pm-due-feeds-from-stop-odometer (ROUND 305 A-46): every PM-due consumer (PM auto-WO cron, /maint/pm/due, T-29 pm-due-engine) falls back to / considers the odometer READ at the unit's latest stop via the Lead's stop-odometer engine, never interpolated, and a backwards reading is held rather than used."
   },
   "12007": {
     "claimed_by": "cc-2",
@@ -7557,6 +7542,36 @@
     "claimed_by": "cc-2",
     "claimed_at": "2026-10-01",
     "purpose": "verify-fuel-time-derivation (ORDERS-2026-10-01 CC-2 rows 5-6: pump time + IFTA state derived from the truck's own fuel-stop dwell; never overwrites transaction_at)"
+  },
+  "12029": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-new-units-have-gps-or-deactivation-reason (ORDERS 2026-10-01 E-17): FAILs on any USMCA unit created on/after 2026-10-01 (past a 72 h device grace) that has never reported GPS and carries no deactivation + reason. Read-only; no deactivations."
+  },
+  "12031": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-fuel-integrity-samsara-signal (E-21 addition): Samsara Fuel & Energy driver report as signal 4 of fuel integrity; never faked when the feed is unreadable; never a finding with the MPG signals (shared fuel_card_gallons); tank slack = fraud detector tank model."
+  },
+  "12035": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-fuel-card-assignments (E-22 addition): card -> unit registry is forced-RLS, audited, void-not-delete, refuses overlaps and full card numbers; the statement importer resolves a missing/unmatched unit from the card at transaction time and never guesses on ambiguity."
+  },
+  "12039": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-expense-with-je-is-never-unposted: no accounting.expenses row carries a journal_entry_id while posting_status=unposted; the constraint exists; createExpenseFromFuelTransaction writes posting_status with status."
+  },
+  "12041": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-pm-cost-per-mile-real-driven (E-15 PM cost per mile): every CPM names its mileage basis; real driven miles come only from the odometer (never practical/short); missing real miles are NULL with a reason, never 0; a unit with real miles and cost has a non-null real CPM; no second CPM engine (KPI tile, KPI drilldown, Maintenance report all read E-15)."
+  },
+  "12043": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-fuel-fraud-recovery-chain: confirm-fraud opens (or reuses) the purchase recovery event through the overage engine, never posts on its own, refuses with a reason when there is no driver or another recovery is open; alerts reach recovered only when the receivable posts."
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -9559,10 +9574,5 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
-  },
-  "11965": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-09-30",
-    "purpose": "verify-transaction-linkage-law (ROUND 300 A-30): the shared TIER1/TIER2/TIER3 linkage declaration + table-registry drift check + tier2-load-demand static scan, per docs/laws/TRANSACTION-LINKAGE-LAW.md"
   }
 }
