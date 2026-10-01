@@ -1342,3 +1342,16 @@ stores them); `driver_settlements_settlement_model_not_null` convalidated = true
 banking.bank_account_tieouts RLS forced. Routes `/api/v1/fleet/roster-integrity` and
 `/api/v1/banking/accounts/:id/tieout` answer 401 (mounted, auth-gated). E-17 nightly 02:40 CT and tie-out nightly
 05:50 CT run from tonight; both also run on demand from their screens.
+
+## 2026-10-01 — CC-1 QUEUE EMPTY + proof · registry additions for E-14..E-17 DONE · E-17 frozen-entity guard
+
+**ORDERS-2026-10-01-CC-1 rows 1–9 and ROUND 313 #1–#3: DONE** (merged + live on 4cb4a69, proof in the blocks above).
+**Registry additions (docs/engines/IH35-ENGINE-REGISTRY-2026-10-01.xlsx, sheet ENGINES, column "Additions"):**
+E-14 Arriving-Soon "PM due on arrival" — built (maintenance/arriving-soon.routes.ts reads the PM due engine);
+E-15 PM cost per mile — #23714; E-16 three WO date columns — 202615120000 + routes; E-17 vehicle_type — 202615140000.
+**E-17 recommendation ("guard that fails if a frozen-entity unit is attached to USMCA") — BUILT:** verify-step 12069
+`verify-no-frozen-entity-unit-on-usmca`. Live read (ih35_ci_readonly): three IH 35 TRANSPORTATION-owned trucks are
+attached to USMCA — **T122, T124, T156** — held as an OWNER-PENDING baseline (reported, not failed); any new one
+fails. The 13 active TRK-owned trucks on USMCA are leases (TRK = leases only) and are correct.
+**OWNER DECISION NEEDED:** T122 / T124 / T156 — move to a TRK lease, re-own under USMCA, or deactivate. Once applied,
+remove the unit from the baseline file.
