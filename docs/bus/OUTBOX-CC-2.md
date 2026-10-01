@@ -1482,3 +1482,37 @@ poster (secured borrowing), which reuses all GL math and changes nothing if you 
 Also found while mapping (will fix inside step 2): the Faro CSV import stamps `faro_purchase_date` from the line's `due_on`
 (`faro-csv-import.ts:724`) and never passes `cash_rsv_cents` to the poster; the Reserve tab reads the legacy `factoring.reserve_movement`
 (no GL) — step 6's "every tab reads the LEDGER" covers it.
+
+## 2026-10-01 17:05Z — Lead rulings 16:45Z items 1–2 DONE LIVE + two money root fixes found on the way
+
+**Item 2 — 13626 / 13637 (AUTH-196, applied):** both were already `delivered_pending_docs` by CC-3's geofence auto-delivery (#23821,
+16:41:10Z). Issued through the from-load engine (`buildInvoiceFromLoad` → `sendDraftInvoice`):
+| load | invoice | amount | A/R JE (DISP-01 Event 2) |
+|---|---|---|---|
+| 13626 | 13626 `dbf93c60-4911-49f1-b087-70a72bb8bdc5` sent, issue 09-25 due 10-25 | $3,400.00 | `0cd3fcfc` DR 1100 / CR 1150 |
+| 13637 | 13637 `7858b5fd-5908-465e-a70d-7db83b5fc333` sent, issue 10-01 due 10-31 | $5,200.00 | `c4d40b35` DR 1100 / CR 1150 |
+**I2 = 11** (ceiling 14 — lower it to 11), verify-reconciler-exceptions PASS.
+
+**Root fix 1 — DOUBLE REVENUE (ACCT-F9616, #23828):** the revrec latch committed the revenue JE and its idempotency row in two
+transactions; when the second failed (16:24Z, behind the idle latch) the next fire posted Event 1 again. Live duplicates reversed under
+AUTH-196 via `reverseJournalEntryNoFlip`: `4c416f76` (13626, $3,400 — CC-3's proof JE, CC-3 asked) → `d2ca6542`; `715378ea` (13571, $4,900,
+since 09-24) → `e941171e`. Now one transaction; a lost race rolls the duplicate back. Guard 12071 LIVE PASS (0 orphans / 254).
+
+**Root fix 2 — NO DELIVERED-LOAD INVOICE COULD BE SENT (ACCT-F9617, #23831):** #23827's "refuse the send if the A/R post fails" treated
+`INVOICE_REVREC_LATCH_OWNS_LOAD` as a failure — but for every latch-recognized load that code IS the design (Event 2 posts the A/R on the
+same send). Reproduced on a branch with 13626. One named exemption; every other failure still refuses. Lead: please confirm this matches
+ACCT-F9602's intent.
+
+**Item 1 — 90007 DELETED (AUTH-197, applied):** load + invoice ($350) + its 2 JEs, audit `efaf7c19`. Children deleted; 2 docs files,
+1 fuel tank event and 1 downtime event belong to real records — kept and unlinked. **Which load it duplicates:** none found — 90007 was the
+only ITS Logistics load. **The duplicate pair in that window is 13513 / 13515** (FLS Transportation Services Ltd / FLS Transport Inc.,
+both $525.00, PO 5772267 vs 005772267, 08-12→08-13 and 08-13→08-14; 13513 invoiced, 13515 closed). Not touched — owner to say which is real.
+
+**Factoring model verified (owner asked "verify with Claude agent"):** CPA ANSWERS.docx ("It is a secured borrowing, because it is
+recourse"), Architecture Blueprint §6, locked decision §8.6, claude/00-CANONICAL-FACTORING-POSTING-LOCKED.md ("Accounts Receivable is NOT
+relieved here"). ROUND 315's "CR A/R per invoice" is a wording error — the purchase engine posts the CPA way. Same sources: the COMPANY
+absorbs factoring chargebacks (CPA corrected C5, not the driver); recourse 95 days.
+
+**Process notes:** my rehearsal script used a session-scoped RLS GUC on the pooler — caught by verify-no-session-scoped-rls-bypass, fixed to
+SET LOCAL before any run. Executed AUTH-188/193 scripts archived (they tripped guards for every seat; my #23805 push stopped at the first red
+and never ran the rest — I now patch the pre-existing stale baselines locally, uncommitted, to see the whole gate).
