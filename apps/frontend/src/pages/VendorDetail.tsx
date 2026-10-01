@@ -1,15 +1,12 @@
 import { entityLabel, visibleDocumentLabel } from "../lib/entity-label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { DatePicker } from "../components/forms/DatePicker";
-import { MoneyInput } from "../components/forms/MoneyInput";
 import { ParityTable } from "../components/parity/ParityTable";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
 import { listExpenses, listVendorBills, type ExpenseListRow, type VendorBill } from "../api/accounting";
 import { listVendorCredits } from "../api/vendor-credits";
 import { ApiError, apiRequest } from "../api/client";
-import { listVendorBillPayments, recordVendorBillPayment, type VendorBillPaymentListRow } from "../api/vendors";
-import { getAllAccounts } from "../api/banking";
+import { listVendorBillPayments, type VendorBillPaymentListRow } from "../api/vendors";
 import { getVendor, updateVendor, deactivateVendor, reactivateVendor, listPaymentTermOptions } from "../api/mdata";
 import { listCatalogAccounts } from "../api/catalog-accounts";
 import { getVendorIntegrityHistory } from "../api/maintenance";
@@ -104,11 +101,6 @@ function parseVendorDetailTab(raw: string | null): VendorTab {
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
-function billOpenBalanceCents(b: { balance_cents?: number; amount_cents: number; paid_cents: number }) {
-  if (b.balance_cents != null) return Number(b.balance_cents);
-  return Number(b.amount_cents ?? 0) - Number(b.paid_cents ?? 0);
-}
-
 type VendorProfileForm = VendorProfileMeta & {
   name: string;
   vendorType: string;
@@ -160,16 +152,6 @@ export function VendorDetailPage() {
     else params.set("tab", slug);
     setSearchParams(params, { replace: true });
   };
-  const [billPayOpen, setBillPayOpen] = useState(false);
-  const [billPayDate, setBillPayDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [billPayAmount, setBillPayAmount] = useState("");
-  const [billPayMethod, setBillPayMethod] = useState("ach");
-  const [billPayBankAccountId, setBillPayBankAccountId] = useState("");
-  const [billPayRef, setBillPayRef] = useState("");
-  const [billPayMemo, setBillPayMemo] = useState("");
-  const [billPayAuto, setBillPayAuto] = useState(true);
-  const [billPayInclude, setBillPayInclude] = useState<Record<string, boolean>>({});
-  const [billPayAmt, setBillPayAmt] = useState<Record<string, string>>({});
 
   const [categoryDraft, setCategoryDraft] = useState<VendorCategoryValue>("other");
   const [lockCategory, setLockCategory] = useState(false);
@@ -278,35 +260,6 @@ export function VendorDetailPage() {
     retry: false,
   });
 
-  // VEND-F-VENDORDETAIL-PAYMENT-NEVER-SENDS-BANK-ACCOUNT: same account list + "which methods need a
-  // funding account" convention already shipped in PayBillModal.tsx (the single-bill pay flow) — this
-  // form (multi-bill vendor payment) never had the picker at all.
-  const bankAccountsQuery = useQuery({
-    queryKey: ["vendor-bill-pay", "accounts", companyId],
-    queryFn: () => getAllAccounts(companyId),
-    enabled: Boolean(companyId && billPayOpen),
-  });
-
-  const billPayBankOptions = useMemo(
-    () =>
-      (bankAccountsQuery.data?.accounts ?? []).map((account: Record<string, unknown>) => ({
-        value: String(account.id ?? ""),
-        label: String(account.display_name ?? account.account_name ?? "Account"),
-      })),
-    [bankAccountsQuery.data?.accounts]
-  );
-
-  const billPayNeedsBankAccount =
-    billPayMethod === "check" || billPayMethod === "ach" || billPayMethod === "wire" || billPayMethod === "credit_card";
-
-  // Default to the first account once the list arrives, but never overwrite an explicit selection.
-  useEffect(() => {
-    if (!billPayOpen) return;
-    if (billPayBankAccountId) return;
-    const firstId = billPayBankOptions[0]?.value;
-    if (firstId) setBillPayBankAccountId(firstId);
-  }, [billPayOpen, billPayBankAccountId, billPayBankOptions]);
-
   const saferStatusQuery = useQuery({
     queryKey: ["fmcsa-safer-status", "vendor", id, companyId],
     queryFn: () => {
@@ -340,74 +293,6 @@ export function VendorDetailPage() {
       pushToast("SAFER verification refreshed", "success");
     },
     onError: () => pushToast("SAFER verification failed", "error"),
-  });
-
-  const openBillsForPay = useMemo(
-    () =>
-      (billsQuery.data?.rows ?? [])
-        .filter((b) => b.status !== "voided" && b.status !== "paid" && billOpenBalanceCents(b) > 0)
-        .sort((a, b) => a.bill_date.localeCompare(b.bill_date)),
-    [billsQuery.data?.rows]
-  );
-
-  const billPayCents = Math.round(Number(billPayAmount) * 100) || 0;
-
-  const vendorBillPayBreakdown = useMemo(() => {
-    if (billPayAuto) {
-      let remaining = billPayCents;
-      const apps: Array<{ bill_id: string; amount_cents: number }> = [];
-      for (const b of openBillsForPay) {
-        if (remaining <= 0) break;
-        const open = billOpenBalanceCents(b);
-        const apply = Math.min(open, remaining);
-        if (apply > 0) {
-          apps.push({ bill_id: b.id, amount_cents: apply });
-          remaining -= apply;
-        }
-      }
-      const appliedSum = billPayCents - remaining;
-      return { applications: apps, appliedSum, creditCents: remaining };
-    }
-    let total = 0;
-    const apps: Array<{ bill_id: string; amount_cents: number }> = [];
-    for (const b of openBillsForPay) {
-      if (!billPayInclude[b.id]) continue;
-      const cents = Math.round(Number(billPayAmt[b.id] || 0) * 100);
-      if (cents > 0) {
-        apps.push({ bill_id: b.id, amount_cents: cents });
-        total += cents;
-      }
-    }
-    return { applications: apps, appliedSum: total, creditCents: Math.max(0, billPayCents - total) };
-  }, [billPayAuto, billPayCents, openBillsForPay, billPayInclude, billPayAmt]);
-
-  const billPayManualInvalid = !billPayAuto && vendorBillPayBreakdown.appliedSum > billPayCents;
-
-  const recordVendorBillPayMutation = useMutation({
-    mutationFn: () =>
-      recordVendorBillPayment(id, {
-        operating_company_id: companyId,
-        date: billPayDate,
-        amount_cents: billPayCents,
-        method: billPayMethod,
-        bank_account_id: billPayNeedsBankAccount ? billPayBankAccountId : undefined,
-        reference: billPayRef.trim() || undefined,
-        memo: billPayMemo.trim() || undefined,
-        applications: vendorBillPayBreakdown.applications,
-        remaining_to_credit_balance_cents: vendorBillPayBreakdown.creditCents,
-      }),
-    onSuccess: () => {
-      pushToast(`Bill payment of ${money.format(billPayCents / 100)} recorded`, "success");
-      void queryClient.invalidateQueries({ queryKey: ["vendor-ap-bills", companyId, id] });
-      void queryClient.invalidateQueries({ queryKey: ["vendor-bill-payments", id, companyId] });
-      setBillPayOpen(false);
-      setBillPayAmount("");
-      setBillPayBankAccountId("");
-      setBillPayRef("");
-      setBillPayMemo("");
-      setBillPayDate(new Date().toISOString().slice(0, 10));
-    },
-    onError: (e) => pushToast(String((e as Error).message ?? "Failed"), "error"),
   });
 
   const patchCategoryMutation = useMutation({
@@ -667,7 +552,7 @@ export function VendorDetailPage() {
       />
 
       {activeTab === "Profile" ? (
-        <div className="space-y-2">
+        <div className="space-y-2" data-vend-mdata="1" data-testid="vendor-profile-mdata">
         {/* CUST-01 C7: the 16 reverse-link sections below (work orders, road service, warranty,
             insurance, legal, border crossings, parts, maintenance catalog, safety alerts, cash
             forecast, equipment loans, merges, A/P aging, payment methods, bank transactions) each
@@ -1042,162 +927,18 @@ export function VendorDetailPage() {
       ) : null}
 
       {activeTab === "A/P" ? (
-        <div className="space-y-2">
+        <div className="space-y-2" data-testid="vendor-ap-readonly">
           {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
-          <div className="rounded-sm border border-gray-200 bg-white">
-            <button
-              type="button"
-              className="flex w-full items-center justify-between px-3 py-2 text-left text-xs font-semibold text-gray-900 hover:bg-gray-50"
-              onClick={() => setBillPayOpen((o) => !o)}
-            >
-              <span>Record Bill Payment</span>
-              <span className="text-xs font-normal text-gray-500">{billPayOpen ? "Hide" : "Show"}</span>
-            </button>
-            {billPayOpen ? (
-              <div className="space-y-3 border-t border-gray-100 p-3 text-xs">
-                {vendorPaymentsQuery.isError ? (
-                  <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-red-700">
-                    Failed to load bill payments — {(vendorPaymentsQuery.error as Error)?.message ?? "unknown error"}.{" "}
-                    <button type="button" className="font-semibold text-red-700 underline" onClick={() => void vendorPaymentsQuery.refetch()}>
-                      Retry
-                    </button>
-                  </div>
-                ) : null}
-                <div className="grid gap-2 md:grid-cols-2">
-                  <label className="block">
-                    Payment date
-                    <DatePicker className="mt-0.5 w-full" value={billPayDate} onChange={setBillPayDate} />
-                  </label>
-                  <label className="block">
-                    Amount (USD)
-                    {/* M-1: dollars-mode QBO money entry; bridged so Math.round(billPayAmount*100) is byte-for-byte. */}
-                    <MoneyInput valueDollars={billPayAmount ? Number(billPayAmount) : null} onChangeDollars={(d) => setBillPayAmount(d == null ? "" : String(d))} ariaLabel="Payment amount (USD)" className="mt-0.5 w-full" />
-                  </label>
-                  <label className="block">
-                    Method
-                    <SelectCombobox className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1" value={billPayMethod} onChange={(e) => setBillPayMethod(e.target.value)}>
-                      <option value="ach">ACH</option>
-                      <option value="check">Check</option>
-                      <option value="wire">Wire</option>
-                      <option value="credit_card">Credit Card</option>
-                      <option value="other">Other</option>
-                    </SelectCombobox>
-                  </label>
-                  <label className="block">
-                    Reference
-                    <input className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1" value={billPayRef} onChange={(e) => setBillPayRef(e.target.value)} />
-                  </label>
-                  {billPayNeedsBankAccount ? (
-                    <label className="block">
-                      From bank account
-                      <SelectCombobox
-                        className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1"
-                        value={billPayBankAccountId}
-                        onChange={(e) => setBillPayBankAccountId(e.target.value)}
-                      >
-                        <option value="">Select account…</option>
-                        {billPayBankOptions.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </SelectCombobox>
-                      {!billPayBankAccountId ? (
-                        <p className="mt-1 text-red-600">Required for {billPayMethod} payments.</p>
-                      ) : null}
-                    </label>
-                  ) : null}
-                </div>
-                <label className="block">
-                  Memo
-                  <textarea className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1" rows={2} value={billPayMemo} onChange={(e) => setBillPayMemo(e.target.value)} />
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={billPayAuto}
-                    onChange={(e) => {
-                      const on = e.target.checked;
-                      if (!on) {
-                        let remaining = billPayCents;
-                        const snapI: Record<string, boolean> = {};
-                        const snapA: Record<string, string> = {};
-                        for (const b of openBillsForPay) {
-                          if (remaining <= 0) break;
-                          const open = billOpenBalanceCents(b);
-                          const apply = Math.min(open, remaining);
-                          if (apply > 0) {
-                            snapI[b.id] = true;
-                            snapA[b.id] = (apply / 100).toFixed(2);
-                            remaining -= apply;
-                          }
-                        }
-                        setBillPayInclude(snapI);
-                        setBillPayAmt(snapA);
-                      }
-                      setBillPayAuto(on);
-                    }}
-                  />
-                  Auto-match oldest open bills first
-                </label>
-                <div className="rounded-sm border border-gray-100 bg-gray-50 p-2">
-                  <div className="font-semibold text-gray-800">Apply to bills</div>
-                  <p className="mt-1 text-gray-600">
-                    Applying {money.format(vendorBillPayBreakdown.appliedSum / 100)} of {money.format(billPayCents / 100)} payment
-                    {vendorBillPayBreakdown.creditCents > 0 ? (
-                      <span className="text-slate-700"> · {money.format(vendorBillPayBreakdown.creditCents / 100)} vendor credit</span>
-                    ) : null}
-                  </p>
-                  {billPayManualInvalid ? <p className="mt-1 text-red-600">Total applied cannot exceed payment amount.</p> : null}
-                  <div className="mt-2 max-h-48 space-y-1 overflow-y-auto">
-                    {openBillsForPay.length === 0 ? <p className="text-gray-500">No open bills.</p> : null}
-                    {openBillsForPay.map((b) => (
-                      <div key={b.id} className="flex flex-wrap items-center gap-2 border-b border-gray-100 py-1">
-                        {!billPayAuto ? (
-                          <input
-                            type="checkbox"
-                            checked={Boolean(billPayInclude[b.id])}
-                            onChange={(e) => setBillPayInclude((p) => ({ ...p, [b.id]: e.target.checked }))}
-                          />
-                        ) : null}
-                        <EntityLink kind="bill" id={b.id} label={visibleDocumentLabel(b.bill_number, b.id, "Record")} className="font-medium text-gray-800" data-testid="vendor-payment-bill-link" />
-                        <span className="text-gray-600">Open {money.format(billOpenBalanceCents(b) / 100)}</span>
-                        {!billPayAuto ? (
-                          <MoneyInput
-                            valueDollars={billPayAmt[b.id] ? Number(billPayAmt[b.id]) : null}
-                            onChangeDollars={(d) => setBillPayAmt((p) => ({ ...p, [b.id]: d == null ? "" : String(d) }))}
-                            ariaLabel={`Apply to ${visibleDocumentLabel(b.bill_number, b.id, "Record")}`}
-                            className="w-24"
-                          />
-                        ) : (
-                          <span className="text-gray-700">
-                            {(() => {
-                              const row = vendorBillPayBreakdown.applications.find((a) => a.bill_id === b.id);
-                              return row ? money.format(row.amount_cents / 100) : "—";
-                            })()}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    size="sm"
-                    disabled={
-                      billPayCents <= 0 ||
-                      billPayManualInvalid ||
-                      (billPayNeedsBankAccount && !billPayBankAccountId) ||
-                      recordVendorBillPayMutation.isPending
-                    }
-                    loading={recordVendorBillPayMutation.isPending}
-                    onClick={() => void recordVendorBillPayMutation.mutateAsync()}
-                  >
-                    Record payment
-                  </Button>
-                </div>
-              </div>
-            ) : null}
+          <div
+            className="rounded-sm border border-dashed border-gray-200 bg-white px-3 py-2 text-xs text-slate-600"
+            data-testid="vendor-record-bill-payment-disabled"
+            data-vend-ap-readonly="1"
+          >
+            Bills and A/P on this vendor profile are read only. Record bill payments from{" "}
+            <Link to="/accounting/pay-bills" className="font-semibold text-slate-800 underline">
+              Accounting → Pay bills
+            </Link>
+            .
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-xs font-semibold text-gray-900">Recent bill payments</div>

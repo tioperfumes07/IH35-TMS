@@ -1,13 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError } from "../api/client";
 import * as vendorsApi from "../api/vendors";
 import * as accountingApi from "../api/accounting";
-import * as bankingApi from "../api/banking";
 import * as mdataApi from "../api/mdata";
 import { VendorDetailPage } from "./VendorDetail";
 import { ToastProvider } from "../components/Toast";
@@ -34,15 +31,19 @@ vi.mock("../api/catalog-accounts", () => ({
 
 vi.mock("../api/accounting", () => ({
   listVendorBills: vi.fn(),
+  listExpenses: vi.fn().mockResolvedValue({ rows: [] }),
 }));
 
 vi.mock("../api/vendors", () => ({
   listVendorBillPayments: vi.fn(),
-  recordVendorBillPayment: vi.fn(),
 }));
 
-vi.mock("../api/banking", () => ({
-  getAllAccounts: vi.fn(),
+vi.mock("../api/vendor-credits", () => ({
+  listVendorCredits: vi.fn().mockResolvedValue({ credits: [] }),
+}));
+
+vi.mock("../api/maintenance", () => ({
+  getVendorIntegrityHistory: vi.fn().mockResolvedValue({ findings: [] }),
 }));
 
 function wrap(ui: ReactElement) {
@@ -60,7 +61,7 @@ function wrap(ui: ReactElement) {
   );
 }
 
-describe("VendorDetail bill payment", () => {
+describe("VendorDetail A/P read-only (ORDERS §4)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(mdataApi.getVendor).mockResolvedValue({
@@ -84,55 +85,17 @@ describe("VendorDetail bill payment", () => {
       ],
     });
     vi.mocked(vendorsApi.listVendorBillPayments).mockResolvedValue({ payments: [], rows: [] });
-    vi.mocked(bankingApi.getAllAccounts).mockResolvedValue({
-      accounts: [{ id: "bank-1", display_name: "Ops Checking" }],
-    } as never);
-    vi.mocked(vendorsApi.recordVendorBillPayment).mockResolvedValue({ ok: true, id: "pay-1" });
   });
 
-  it("shows Record Bill Payment on AP tab", async () => {
+  it("disables Record Bill Payment on vendor profile (A/P read only)", async () => {
     render(wrap(<VendorDetailPage />));
-    await waitFor(() => expect(screen.getByText("Record Bill Payment")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId("vendor-record-bill-payment-disabled")).toBeInTheDocument());
+    expect(screen.getByText(/Bills and A\/P on this vendor profile are read only/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Record payment/i })).not.toBeInTheDocument();
   });
 
-  it("shows backend pending when payments API 404", async () => {
-    vi.mocked(vendorsApi.listVendorBillPayments).mockRejectedValue(new ApiError(404, {}));
+  it("still lists bills read-only", async () => {
     render(wrap(<VendorDetailPage />));
-    await waitFor(() => expect(screen.getByText(/Backend pending/i)).toBeInTheDocument());
-  });
-
-  // VEND-F-VENDORDETAIL-PAYMENT-NEVER-SENDS-BANK-ACCOUNT
-  it("sends the selected bank_account_id on submit for a method that needs one", async () => {
-    const user = userEvent.setup();
-    render(wrap(<VendorDetailPage />));
-    await user.click(await screen.findByText("Record Bill Payment"));
-    await waitFor(() => expect(screen.getByLabelText(/Payment amount/i)).toBeInTheDocument());
-
-    await user.type(screen.getByLabelText(/Payment amount/i), "50");
-    // default method is ACH -> needsBankAccount -> account auto-selects the only option
-    await waitFor(() => expect(screen.getByDisplayValue("Ops Checking")).toBeInTheDocument());
-
-    const submit = screen.getByRole("button", { name: /Record payment/i });
-    await waitFor(() => expect(submit).toBeEnabled());
-    await user.click(submit);
-
-    await waitFor(() =>
-      expect(vendorsApi.recordVendorBillPayment).toHaveBeenCalledWith(
-        "v1",
-        expect.objectContaining({ bank_account_id: "bank-1" })
-      )
-    );
-  });
-
-  it("keeps submit disabled when no bank account is available for a method that needs one", async () => {
-    vi.mocked(bankingApi.getAllAccounts).mockResolvedValue({ accounts: [] } as never);
-    const user = userEvent.setup();
-    render(wrap(<VendorDetailPage />));
-    await user.click(await screen.findByText("Record Bill Payment"));
-    await user.type(screen.getByLabelText(/Payment amount/i), "50");
-
-    const submit = screen.getByRole("button", { name: /Record payment/i });
-    await waitFor(() => expect(submit).toBeDisabled());
-    expect(vendorsApi.recordVendorBillPayment).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByText("B-1")).toBeInTheDocument());
   });
 });

@@ -253,3 +253,9 @@ Driver Profile ORDERS complete on main. BatchSettlements EntityPicker + tip-debt
 
 **2026-10-01T12:45Z · CUSTOMERS ORDERS COMPLETE · branch `cursor/customers-orders-complete-4953` · PR #23767**
 CUSTOMERS · what changed: `GET /api/v1/mdata/customers/:id/locations` (stop places from load_stops + linked mdata.locations; geocode_precision normalized rooftop/approximate/locality); FE `CustomerLocationsSection` + `GeocodePrecisionBadge` (locality red "not a stop"); A/R tab banner `data-cust-ar-readonly` + Record Payment disabled (payments stay Accounting → Receive payment); Faro factoring wrap `data-cust-faro`; complaints/credit/COI/documents already present. Ops: `scripts/ops/verify-customers-orders-complete.mjs`. · LIVE PROOF: ops --selftest PASS; frontend `tsc -b` exit 0. · LEFT: Lead Chrome on `/customers/:id` locations + A/R read-only. · NEXT: tip-main rebase + FAST-MERGE then Vendors #23768.
+
+**2026-10-01T12:50Z · CUSTOMERS MERGED · PR #23767 · `0234fe78d1`**
+Customers ORDERS complete on main. · NEXT: Vendors #23768.
+
+**2026-10-01T12:55Z · VENDORS ORDERS COMPLETE · branch `cursor/vendors-orders-complete-4953` · PR #23768**
+VENDORS · what changed: Remove Record Bill Payment write UI/mutation from VendorDetail A/P; readonly banner + Pay bills link; assert mdata.vendors + contacts/WO/fuel/docs/W9/insurance via ops guard; update AP tests. Ops: `scripts/ops/verify-vendors-orders-complete.mjs`. · LIVE PROOF: ops --selftest PASS; frontend tsc -b; vitest VendorDetail.bill-payment 2/2. · LEFT: Lead Chrome on `/vendors/:id` A/P read-only. · NEXT: FAST-MERGE then C-64/C-65/C-67 if owed.
