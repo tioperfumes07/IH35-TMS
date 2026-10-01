@@ -1,0 +1,81 @@
+#!/usr/bin/env node
+/**
+ * B-3 BANK TRANSACTIONS (feed) + MATCH — ORDERS-2026-10-01-BANKING-REGISTER-SET §16–§21.
+ * Asserts Home connection-error strip, MatchDrawer "Find other matches" + arithmetic box,
+ * and the four QBO expand radios (Categorize · Match · Record as transfer · Record as CC payment).
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const LABEL = "verify-b3-bank-feed-match";
+
+const HOME = "apps/frontend/src/pages/banking/BankingHome.tsx";
+const STRIP = "apps/frontend/src/pages/banking/components/BankingHomeConnectionErrorStrip.tsx";
+const MATCH = "apps/frontend/src/pages/banking/components/MatchDrawer.tsx";
+const FEED = "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx";
+const TOKENS = "apps/frontend/src/design/qbo-parity.ts";
+
+function read(rel) {
+  return fs.readFileSync(path.join(ROOT, rel), "utf8");
+}
+
+function assertIncludes(src, needle, where) {
+  if (!src.includes(needle)) throw new Error(`${where}: missing ${JSON.stringify(needle)}`);
+}
+
+function main() {
+  const home = read(HOME);
+  const strip = read(STRIP);
+  const match = read(MATCH);
+  const feed = read(FEED);
+  const tokens = read(TOKENS);
+
+  assertIncludes(home, "BankingHomeConnectionErrorStrip", HOME);
+  assertIncludes(strip, 'data-b3-connection-error-strip="1"', STRIP);
+  assertIncludes(strip, "Fix now", STRIP);
+  assertIncludes(strip, "Disconnect", STRIP);
+  assertIncludes(strip, "Send request", STRIP);
+  assertIncludes(strip, "needs_reauth", STRIP);
+  assertIncludes(strip, "keep your existing transactions", STRIP);
+
+  assertIncludes(match, 'title="Find other matches"', MATCH);
+  assertIncludes(match, 'data-b3-find-other-matches="1"', MATCH);
+  assertIncludes(match, 'data-b3-match-arithmetic="1"', MATCH);
+  assertIncludes(match, "Bank transaction amount:", MATCH);
+  assertIncludes(match, "Selected amount:", MATCH);
+  assertIncludes(match, "Difference:", MATCH);
+  assertIncludes(match, "text-red-700", MATCH);
+
+  assertIncludes(feed, 'data-b3-expand-modes="1"', FEED);
+  assertIncludes(feed, "banking-expand-mode-${modeId}", FEED);
+  assertIncludes(feed, '["categorize", QBO_BANKING_ACTIONS.categorize]', FEED);
+  assertIncludes(feed, '["match", QBO_BANKING_ACTIONS.match]', FEED);
+  assertIncludes(feed, '["transfer", QBO_BANKING_ACTIONS.recordAsTransfer]', FEED);
+  assertIncludes(feed, '["cc_payment", QBO_BANKING_ACTIONS.recordCcPayment]', FEED);
+  assertIncludes(feed, "QBO_BANKING_ACTIONS.findOtherMatches", FEED);
+  assertIncludes(feed, "1 match found", FEED);
+  assertIncludes(feed, 'mode: "match" | "categorize" | "transfer" | "cc_payment"', FEED);
+
+  assertIncludes(tokens, 'categorize: "Categorize"', TOKENS);
+  assertIncludes(tokens, 'recordTransfer: "Record transfer"', TOKENS);
+  assertIncludes(tokens, 'recordAsTransfer: "Record as transfer"', TOKENS);
+  assertIncludes(tokens, 'recordCcPayment: "Record as credit card payment"', TOKENS);
+  assertIncludes(tokens, 'findOtherMatches: "Find other matches"', TOKENS);
+
+  console.log(`${LABEL}: PASS`);
+}
+
+function selftest() {
+  try {
+    main();
+  } catch (err) {
+    console.error(`${LABEL}: SELFTEST FAIL — ${err instanceof Error ? err.message : err}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL}: SELFTEST PASS`);
+}
+
+if (process.argv.includes("--selftest")) selftest();
+else main();

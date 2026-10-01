@@ -92,6 +92,12 @@ export const QBO_TOOLBAR_ICON_SLOT = "parity-qbo-toolbar-icons";
  */
 export const QBO_BANKING_ACTIONS = {
   add: "Add",
+  categorize: "Categorize",
   match: "Match",
+  /** D54 short label (action column / type option). */
   recordTransfer: "Record transfer",
+  /** B-3 §20 expand radio — QBO full wording. */
+  recordAsTransfer: "Record as transfer",
+  recordCcPayment: "Record as credit card payment",
+  findOtherMatches: "Find other matches",
 } as const;
