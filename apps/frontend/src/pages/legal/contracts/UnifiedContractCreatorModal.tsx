@@ -10,7 +10,7 @@ import { legalContractsApi, type LegalContractLanguage, type LegalSignerType } f
 import { legalTemplatesApi, type LegalTemplateSummary } from "../../../api/legal-templates";
 import { getDriver, getVendor, getCustomerDetail } from "../../../api/mdata";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
-import { EntityPicker } from "../../../components/EntityPicker";
+import { CatalogReferenceSelect } from "../../../components/legal/CatalogReferenceSelect";
 import { useListState } from "../../../components/list-state";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { entityLabel } from "../../../lib/entity-label";
@@ -175,6 +175,8 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
         signer_phone: signerPhone.trim() || undefined,
         language,
         filled_variables: buildFilledVariables(),
+        // ROUND 316: the Exhibit A trucks are real links (contract <-> unit, both ways), not just template text.
+        links: isLease && leaseUnitIds.length ? { unit_ids: leaseUnitIds } : undefined,
       });
       const deliveryChannel = signerEmail.trim() ? "email" : signerPhone.trim() ? "sms" : null;
       if (deliveryChannel) {
@@ -485,7 +487,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                   />
                 ) : signerType === "customer" ? (
                   /* CLS-SILENT-CAP: EntityPicker server-search — no capped listCustomers roster. */
-                  <EntityPicker
+                  <CatalogReferenceSelect
                     kind="customer"
                     allowCreate
                     nestedInDrawer
@@ -515,7 +517,7 @@ export function UnifiedContractCreatorModal({ open, operatingCompanyId, onClose,
                   />
                 ) : (
                   /* CLS-SILENT-CAP: EntityPicker server-search — no capped listVendors roster. */
-                  <EntityPicker
+                  <CatalogReferenceSelect
                     kind="vendor"
                     allowCreate
                     nestedInDrawer

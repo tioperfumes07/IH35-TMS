@@ -1,7 +1,7 @@
 import { apiRequest, resolveApiUrl } from "./client";
 
 export type LegalContractStatus = "draft" | "sent" | "viewed" | "signed_electronically" | "voided" | "expired";
-export type LegalSignerType = "driver" | "employee" | "customer" | "vendor" | "other";
+export type LegalSignerType = "driver" | "employee" | "customer" | "vendor" | "company" | "other";
 export type LegalContractLanguage = "en" | "es" | "bilingual";
 export type LegalDeliveryChannel = "email" | "sms" | "whatsapp";
 export type LegalVerificationChannel = "none" | "sms" | "email";
@@ -64,6 +64,19 @@ export type CreateLegalContractInput = {
   signer_phone?: string;
   language: LegalContractLanguage;
   filled_variables?: Record<string, unknown>;
+  /** ROUND 316 (§10-B): what the contract binds — real FKs + link rows on the server. */
+  links?: {
+    customer_id?: string | null;
+    vendor_id?: string | null;
+    driver_id?: string | null;
+    unit_ids?: string[];
+    equipment_ids?: string[];
+    load_id?: string | null;
+    lease_contract_id?: string | null;
+    invoice_ids?: string[];
+    bill_ids?: string[];
+    counterparty_company_id?: string | null;
+  };
 };
 
 export type SendLegalContractInput = {

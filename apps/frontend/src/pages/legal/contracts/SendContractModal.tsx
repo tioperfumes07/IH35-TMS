@@ -7,7 +7,7 @@ import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/Combobox";
 import { userFacingApiError } from "../../../lib/api-error-message";
-import { EntityPicker } from "../../../components/EntityPicker";
+import { CatalogReferenceSelect } from "../../../components/legal/CatalogReferenceSelect";
 import { getCustomerDetail, getVendor } from "../../../api/mdata";
 
 type Props = {
@@ -185,7 +185,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
               <div className="flex flex-col gap-1 md:col-span-2">
                 <label className="text-xs font-semibold text-gray-600">Vendor signer *</label>
                 {/* CLS-SILENT-CAP: EntityPicker server-search — no capped listVendors roster. */}
-                <EntityPicker
+                <CatalogReferenceSelect
                   kind="vendor"
                   allowCreate
                   nestedInDrawer
@@ -212,7 +212,7 @@ export function SendContractModal({ open, operatingCompanyId, onClose, onSent }:
               <div className="flex flex-col gap-1 md:col-span-2">
                 <label className="text-xs font-semibold text-gray-600">Customer signer *</label>
                 {/* CLS-SILENT-CAP: EntityPicker server-search — no capped listCustomers roster. */}
-                <EntityPicker
+                <CatalogReferenceSelect
                   kind="customer"
                   allowCreate
                   nestedInDrawer

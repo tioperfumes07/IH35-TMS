@@ -15,7 +15,7 @@ import { useToast } from "../../../components/Toast";
 import { entityLabel } from "../../../lib/entity-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { Combobox } from "../../../components/Combobox";
-import { EntityPicker } from "../../../components/EntityPicker";
+import { CatalogReferenceSelect } from "../../../components/legal/CatalogReferenceSelect";
 import { getCustomerDetail } from "../../../api/mdata";
 
 type Props = {
@@ -217,6 +217,8 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
         signer_name: lessee.name || "Lessee",
         language: "en",
         filled_variables: filledVariables,
+        // ROUND 316: each selected truck is a real link (contract <-> unit, both ways).
+        links: selectedList.length ? { unit_ids: selectedList.map((x) => x.unit.id) } : undefined,
       }),
     onSuccess: async (created) => {
       pushToast("Lease-to-own draft saved", "success");
@@ -281,7 +283,7 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
             <div className="flex flex-col gap-1 text-xs md:col-span-2" data-testid="lease-to-own-lessee-customer-block">
               <label>Lessee customer *</label>
               {/* CLS-SILENT-CAP: EntityPicker server-search — no capped listCustomers roster. */}
-              <EntityPicker
+              <CatalogReferenceSelect
                 kind="customer"
                 allowCreate
                 nestedInDrawer
