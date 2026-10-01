@@ -70,10 +70,13 @@ function str(value: unknown): string {
   return String(value);
 }
 
-/** DB stores 0–1 fractions; UI edits percent (0–100). */
+/**
+ * DB stores 0–1 fractions; UI edits/displays percent (0–100).
+ * Always two decimal places ("1.50", never "1.5") — owner FACTORING-TAKEOVER FT2 rate-display law.
+ */
 export function rateToPctString(rate: number | null | undefined): string {
   if (rate == null || Number.isNaN(Number(rate))) return "";
-  return String(Number((Number(rate) * 100).toFixed(4)));
+  return (Number(rate) * 100).toFixed(2);
 }
 
 export function pctStringToRate(pct: string): number | null {

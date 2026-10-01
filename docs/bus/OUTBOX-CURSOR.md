@@ -1,3 +1,9 @@
+**2026-10-01T21:45Z · FT2 SHIPPING · `cursor/ft2-escrow-cash-reserve-tabs-c89b`**
+ACK: CURSOR | ACK FACTORING-TAKEOVER | FT2 Escrow+Cash-Reserve | GO
+FT2 · Escrow Account + Cash Reserve SEPARATE tabs; rateToPctString → 1.50 (2dp); recourse_days release trigger on each; ledger = purchase escrow/cash cents.
+#23905 C MERGED · #23906 FT1 MERGED. GUARD: verify-factoring-ft2-escrow-cash-tabs SELFTEST+PASS.
+NEXT: FAST-MERGE FT2 → FT3 Home KPIs ledger · FT4 · FT5.
+
 **2026-10-01T21:35Z · FT1 SHIPPING · `cursor/ft1-payments-drilldown-6f2f`**
 ACK: CURSOR | ACK FACTORING-TAKEOVER | FT1 Payments-to-You | GO
 FT1 · factoring_purchase EntityLink + running escrow/cash/net + ?purchase_id= deep-link; purchase detail bank tie-out; tieoutDrill factoring_purchase_id; cash_reserve_rate save; entity-link-adoption baseline.
