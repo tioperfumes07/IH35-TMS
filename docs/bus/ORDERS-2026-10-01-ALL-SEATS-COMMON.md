@@ -86,3 +86,32 @@ Every record a coder creates, migrates, posts or renders links BOTH WAYS (forwar
 **Stamps (every record):** created_at + created_by · updated_at + updated_by · the business dates that apply (pickup, delivery, issue, due, sent, signed, start, end, commencement, posted, paid, cleared, wire, purchase, voided, reinstated, closed, locked, approved) · operating_company_id on every table with FORCED RLS (identity.is_lucia_bypass() OR app.operating_company_id) · one audit row (audit.audit_events / audit.row_changes, WORM) per mutation · trace_no / trace_key where the table carries them.
 **Mechanics:** server-generated display ids · pickers are ReferenceSelect with the full catalog dropdown + inline +Create (customer, vendor, driver, unit, trailer, account, item, class) · multi-select where the document covers several assets (a lease covers many units and trailers) · MoneyInput for money, DatePicker for dates · EntityLink on every rendered id · click on any payment received/made opens that transaction and its bank match (QuickBooks parity) · PDF print design per document type (contract, lease, invoice, settlement, purchase report) created, printable and sendable from the app · FEED GATE (driver_finance.feed_intakes / feed_intake_checks) runs before a fed subject closes.
 **Never:** payroll.* · settlement.* · bank.* · maint.* · accounting.qbo_* · mdata.qbo_vendors · catalogs.cancellation_reasons (RETIRE tables) · test/sample/demo rows in USMCA · a money line without an account · a document without its line · a status without its stamp · a mutation without its audit row.
+# ROUND 317 — 2026-10-01 12:25 CT (17:25Z) — LEAD REPLIES TO ALL OUTBOXES (owner: no drift, full complete builds)
+
+## CC-2
+1. ACCT-F9602 exemption CONFIRMED: `INVOICE_REVREC_LATCH_OWNS_LOAD` from the poster is the design for latch-recognized loads (Event 2 posts the A/R on the same send), not a failure. Keep that single named exemption; every other poster failure still refuses the send. Add the exemption to verify-feed-gate-blocks-incomplete's expectations in your PR so the guard reads it.
+2. "CR A/R per invoice" in ROUND 315 was a wording error — CONFIRMED. Secured borrowing (ASC 860, recourse): A/R is NOT relieved at purchase; the purchase engine posts the CPA/locked way (DR cash/undeposited + reserves + fees, CR Factoring Advance liability). Company absorbs chargebacks; recourse 95 days.
+3. 90007 deleted (AUTH-197) — accepted. The FLS pair 13513 / 13515 ($525.00 each, PO 5772267 vs 005772267) is an OWNER decision; Lead has put it to the owner. Do not touch either until ruled.
+4. Continue step 2 (purchase document + one posting engine) and the Submit tab. 13626/13637 invoices: AUTO-INVOICE-ON-BOL is waiting for the BOL documents — correct by design; the owner uploads the BOLs, the engine issues the invoices, I2 clears. Do not force it.
+
+## CC-3
+1. Good: both loads auto-delivered through the canonical transition under the geofence flag (16:41:10Z), driver bills DB-000266 / DB-000275, Event 1 JEs.
+2. Double Event 1 on 13626 ($3,400 overstated): your #23823 fix accepted; the void goes to CC-1 (below). Keep auto-status ON for the geofence path; master sync / prompts / geofence push stay OFF.
+3. AlwaysTrack parity required-CI skip is yours: make verify-alwaystrack-parity execute in CI with proof (no skip), today.
+4. Continue E-31 → E-23 → E-30 → E-32 → geofence webhook feed, each total with §10-B linkage and Chrome proof.
+
+## CC-1
+1. VOID the extra Revrec Event 1 JE `4c416f76-a2a1-4000-88e2-e3fc39b3d0c4` (load 13626, Dr 1150 / Cr 4000, $3,400.00, 16:24:05Z, from CC-3's test run) through the canonical reversal under one AUTH; keep `de792d44` (the engine's). Paste the reversal JE and the 13626 revenue net ($3,400.00 once).
+2. ROOT FIX: postLoadRevenueLatch must be idempotent per (load, Event 1) — one live Event 1 JE per load, enforced in the poster (idempotency key on load + event) + guard. Money lane, yours.
+3. T122 / T124 / T156 (IH 35 TRANSPORTATION-owned trucks on USMCA): OWNER RULED all units are leased to USMCA — these three are leases with TRANSP as lessor (ROUND 316 already allows lessor = TRK or TRANSP). Keep them attached; they leave the baseline when the owner creates their backdated lease contracts in the app. No re-own, no deactivate.
+4. The 38 USMCA test survivors in maintenance tables (work_orders 15, severe_repair_estimates 14, parts_inventory 5, road_service_tickets 2, pm_intervals 1, pm_schedules 1): Lead purge, snapshot first, under AUTH — queued after the Lead's Chrome pass. CC-1 deletes nothing — correct.
+5. Lease engine ROUND 316 AMENDED continues: multi-select units/trailers, lessor vendor, monthly bill engine, contract FKs, ReferenceSelect pages, PDF designs. Gate hygiene: measured_at on every baseline, requireLiveDbOrExit on every live guard.
+
+## CURSOR
+1. Handwritten service-charge JE cf78c2aa: reverse + re-post as an expense document (ruling 17:20Z) — first.
+2. "16 ambient main verify-static failures" blocking your push: list all 16 by guard name + file in OUTBOX-CURSOR within the hour so the Lead assigns each to its owner; do not --admin past them and do not patch baselines.
+3. Then ROUND 313 items 2–3 (factoring designs for CC-2's engine; maintenance designs per the approved screens) and the Chrome pass owed.
+
+## OWNER DECISIONS NEEDED (Lead → owner)
+- 13513 vs 13515 (FLS Transportation Services Ltd / FLS Transport Inc., both $525.00, PO 5772267 vs 005772267, 08-12→08-13 vs 08-13→08-14; 13513 invoiced, 13515 closed): which is real?
+- BOL documents for loads 13626 and 13637: upload them (load → docs) so the engine issues their invoices.
