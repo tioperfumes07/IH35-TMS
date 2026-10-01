@@ -30,6 +30,25 @@ function analyze(src) {
   if (!panel.includes("kind: \"posted\"") && !panel.includes('kind: "posted"')) {
     e.push("CashFlowPanel must distinguish posted vs projected days");
   }
+  // FT3 — Home KPI strip from the same ledger totals (not a second engine).
+  if (!panel.includes('data-testid="factoring-home-cash-flow-kpis"')) {
+    e.push("FT3: CashFlowPanel must render factoring-home-cash-flow-kpis strip");
+  }
+  for (const id of [
+    "factoring-home-kpi-wires",
+    "factoring-home-kpi-invoices",
+    "factoring-home-kpi-net",
+    "factoring-home-kpi-escrow",
+    "factoring-home-kpi-cash",
+    "factoring-home-kpi-projected",
+  ]) {
+    if (!panel.includes(`"${id}"`) && !panel.includes(`'${id}'`)) {
+      e.push(`FT3: CashFlowPanel missing KPI tile testid ${id}`);
+    }
+  }
+  if (!panel.includes("totals.wires") || !panel.includes("totals.net") || !panel.includes("totals.escrow")) {
+    e.push("FT3: KPI tiles must bind to posted-day ledger totals");
+  }
   return e;
 }
 

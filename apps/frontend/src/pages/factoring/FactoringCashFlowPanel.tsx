@@ -196,7 +196,8 @@ export function FactoringCashFlowPanel({ companyId, dateFrom, dateTo }: Props) {
           <div className="text-xs font-medium text-gray-900">Cash flow · TOTAL PER DAY</div>
           <div className="text-xs text-gray-500">
             Posted Faro wires from factoring purchases + projected open invoices (expected escrow /
-            cash / fee from the purchase candidates engine).
+            cash / fee from the purchase candidates engine). Same ledger as Payments to You / Escrow /
+            Cash Reserve tabs.
           </div>
         </div>
         <div className="text-xs text-gray-600" data-testid="factoring-home-cash-flow-totals">
@@ -208,6 +209,21 @@ export function FactoringCashFlowPanel({ companyId, dateFrom, dateTo }: Props) {
             Payments to You
           </Link>
         </div>
+      </div>
+      <div
+        className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6"
+        data-testid="factoring-home-cash-flow-kpis"
+      >
+        <KpiTile testId="factoring-home-kpi-wires" label="Posted wires" value={String(totals.wires)} />
+        <KpiTile testId="factoring-home-kpi-invoices" label="Invoices on wires" value={String(totals.invoices)} />
+        <KpiTile testId="factoring-home-kpi-net" label="Net wired" value={formatUsdCents(totals.net)} />
+        <KpiTile testId="factoring-home-kpi-escrow" label="Escrow / day sum" value={formatUsdCents(totals.escrow)} />
+        <KpiTile testId="factoring-home-kpi-cash" label="Cash rsv / day sum" value={formatUsdCents(totals.cash)} />
+        <KpiTile
+          testId="factoring-home-kpi-projected"
+          label="Projected open inv"
+          value={projected ? String(projected.invoice_count) : "0"}
+        />
       </div>
       {error ? (
         <ListErrorState
@@ -230,6 +246,21 @@ export function FactoringCashFlowPanel({ companyId, dateFrom, dateTo }: Props) {
           tableTestId="factoring-home-cash-flow-table"
         />
       )}
+    </div>
+  );
+}
+
+function KpiTile({ testId, label, value }: { testId: string; label: string; value: string }) {
+  return (
+    <div
+      className="flex min-h-[93px] max-h-[101px] flex-col items-center justify-center rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-center"
+      data-testid={testId}
+    >
+      {/* Locked 11px header via inline style — do not use arbitrary text bracket classes */}
+      <div className="font-bold uppercase text-[#4B5563]" style={{ fontSize: "11px" }}>
+        {label}
+      </div>
+      <div className="mt-1 text-xs font-semibold tabular-nums text-[#0F1219]">{value}</div>
     </div>
   );
 }
