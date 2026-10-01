@@ -55,6 +55,7 @@ export type EntityKind =
   | "fixed_asset"
   | "finance_loan"
   | "lease_contract"
+  | "legal_contract"
   | "recurring_template"
   | "period_close"
   | "prepaid_amortization_row"
@@ -393,6 +394,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/finance/amortization?loan_id=${id}`;
     case "lease_contract":
       return `/accounting/leases/${id}`;
+    case "legal_contract":
+      return `/legal/contracts?contract_id=${id}`;
     case "recurring_template":
       return `/accounting/recurring-templates/${id}`;
     case "period_close":

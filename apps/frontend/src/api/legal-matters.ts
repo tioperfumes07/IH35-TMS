@@ -88,6 +88,13 @@ export const legalMattersApi = {
     );
   },
 
+  /** ROUND 316: post (or adjust) the matter's reserve as a journal entry — owner picks the two accounts. */
+  postReserve(operatingCompanyId: string, id: string, body: { expense_account_id: string; liability_account_id: string; entry_date: string; reserve_cents?: number }) {
+    return apiRequest<{ posted: boolean; journal_entry_id?: string; reserve_cents: number; delta_cents?: number; reason?: string }>(
+      withCompany(`/api/v1/legal/matters/${encodeURIComponent(id)}/reserve`, operatingCompanyId),
+      { method: "POST", body }
+    );
+  },
   close(operatingCompanyId: string, id: string, body: { outcome_summary: string }) {
     return apiRequest<{ matter: LegalMatterRow }>(
       withCompany(`/api/v1/legal/matters/${encodeURIComponent(id)}/close`, operatingCompanyId),

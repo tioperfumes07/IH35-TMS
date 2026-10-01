@@ -334,6 +334,7 @@ const DisputeQueuePage = React.lazy(() => import("../pages/accounting/DisputeQue
 const DisputesHubPage = React.lazy(() => import("../pages/accounting/DisputesHubPage").then((m) => ({ default: m.DisputesHubPage })));
 const AbandonmentQueuePage = React.lazy(() => import("../pages/accounting/AbandonmentQueuePage").then((m) => ({ default: m.AbandonmentQueuePage })));
 const LoansAdvancesPage = React.lazy(() => import("../pages/accounting/loans/LoansAdvancesPage").then((m) => ({ default: m.LoansAdvancesPage })));
+const LeasesPage = React.lazy(() => import("../pages/accounting/LeasesPage").then((m) => ({ default: m.LeasesPage })));
 const AccountingLeaseDetailPage = React.lazy(() => import("../pages/accounting/AccountingLeaseDetailPage").then((m) => ({ default: m.AccountingLeaseDetailPage })));
 const AccountingRecurringTemplateDetailPage = React.lazy(() => import("../pages/accounting/AccountingRecurringTemplateDetailPage").then((m) => ({ default: m.AccountingRecurringTemplateDetailPage })));
 const AccountingPeriodCloseDetailPage = React.lazy(() => import("../pages/accounting/AccountingPeriodCloseDetailPage").then((m) => ({ default: m.AccountingPeriodCloseDetailPage })));
@@ -4852,6 +4853,7 @@ export const ROUTES = React.Children.toArray(
         <Route path="/accounting/undeposited-funds" element={<ProtectedRoute><UndepositedFundsPage /></ProtectedRoute>} />
         <Route path="/accounting/revenue-recognition" element={<ProtectedRoute><RevenueRecognitionPage /></ProtectedRoute>} />
         <Route path="/accounting/fixed-assets" element={<ProtectedRoute><FixedAssetsPage /></ProtectedRoute>} />
+        <Route path="/accounting/leases" element={<ProtectedRoute><LeasesPage /></ProtectedRoute>} />
         <Route path="/accounting/leases/:id" element={<ProtectedRoute><AccountingLeaseDetailPage /></ProtectedRoute>} />
         <Route path="/accounting/recurring-templates/:id" element={<ProtectedRoute><AccountingRecurringTemplateDetailPage /></ProtectedRoute>} />
         <Route path="/accounting/period-closes/:fiscalYearId" element={<ProtectedRoute><AccountingPeriodCloseDetailPage /></ProtectedRoute>} />
