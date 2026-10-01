@@ -64,15 +64,19 @@ async function listActiveSchedules(client: DbClient, input: MaintenancePredictor
   const res = await client.query<PmScheduleRow>(
     `
       SELECT
-        id::text,
-        interval_kind::text,
-        interval_value,
-        last_service_odometer,
-        next_due_odometer
-      FROM maintenance.pm_schedules
-      WHERE operating_company_id = $1::uuid
-        AND unit_id = $2::uuid
-        AND is_active = true
+        ps.id::text,
+        ps.interval_kind::text,
+        ps.interval_value,
+        ps.last_service_odometer,
+        ps.next_due_odometer
+      FROM maintenance.pm_schedules ps
+      JOIN mdata.units u ON u.id = ps.unit_id
+      WHERE ps.operating_company_id = $1::uuid
+        AND ps.unit_id = $2::uuid
+        AND ps.is_active = true
+        -- ROUND 303 T-37: a sample/test unit never triggers a real PM alert, even via the
+        -- (today unreachable, since webhooks never fire) webhook-driven caller.
+        AND COALESCE(u.is_sample_data, false) = false
     `,
     [input.operating_company_id, input.unit_id]
   );

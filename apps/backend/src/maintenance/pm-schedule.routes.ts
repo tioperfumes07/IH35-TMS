@@ -97,7 +97,9 @@ export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) 
           FROM maintenance.pm_schedules s
           LEFT JOIN mdata.units u ON u.id = s.unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = s.operating_company_id
-          WHERE ${filters.join(" AND ")}
+          -- ROUND 303 T-37: a schedule against a sample/test unit is never a real PM record.
+          WHERE COALESCE(u.is_sample_data, false) = false
+            AND ${filters.join(" AND ")}
           ORDER BY COALESCE(s.next_due_odometer, 2147483647) ASC, s.created_at DESC
         `,
         values
@@ -130,6 +132,8 @@ export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) 
           WHERE id = $1::uuid
             AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid
             AND deactivated_at IS NULL
+            -- ROUND 303 T-37: never create a PM schedule against a sample/test unit.
+            AND COALESCE(is_sample_data, false) = false
           LIMIT 1`,
         [body.unit_id, body.operating_company_id]
       );
@@ -181,6 +185,8 @@ export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) 
                    ON pm_schedule_unit.id = pm_schedule.unit_id
                   AND COALESCE(pm_schedule_unit.currently_leased_to_company_id, pm_schedule_unit.owner_company_id) = pm_schedule.operating_company_id
                   AND pm_schedule_unit.deactivated_at IS NULL
+                  -- ROUND 303 T-37: never generate a work order against a sample/test unit.
+                  AND COALESCE(pm_schedule_unit.is_sample_data, false) = false
           WHERE pm_schedule.id = $1
             AND pm_schedule.operating_company_id = $2::uuid
             AND pm_schedule.is_active = true

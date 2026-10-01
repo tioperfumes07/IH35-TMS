@@ -711,3 +711,54 @@ a real per-unit pairing gap.
 
 MEASURED ONLY, nothing changed: no assignment rows written, no unit reclassified, no is_sample_data
 flag touched.
+
+## CC-3 — ROUND 303 T-37 SHIPPED (CODE) — PM writers now exclude the fake truck everywhere reachable
+
+CONFIRMED LIVE: pm-auto-engine.service.ts's listActiveSchedules (the actual cron) ALREADY excluded
+is_sample_data correctly before this PR -- verified live, the fake schedule 756b5701... does not
+appear in its query result, and 0 work orders exist against the fake unit. That part was already
+safe. Audited every other repo-wide reader/writer of maintenance.pm_schedules (14 files) for the
+same gap and fixed the real writers:
+
+  pm-schedule.routes.ts -- THE REAL LIVE VECTOR, found here, not in the cron:
+    POST /api/v1/maintenance/pm-schedule/:id/generate-wo (manual WO-from-schedule trigger) had
+    ZERO is_sample_data protection -- callable right now, would create a real work order against
+    the fake truck on demand. Fixed. Live-proven: calling it against schedule 756b5701... now
+    returns 404 pm_schedule_not_found (was previously a live WO-creation path). Also fixed the
+    CREATE route (can no longer create a NEW schedule against a sample unit) and the LIST route
+    (no longer surfaces sample-unit schedules to the UI).
+  pm-due-engine.service.ts (mine, Round 301 T-29) -- excluded is_sample_data from its own query,
+    AND last_service_odometer <= 1 is now treated as an ABSENT placeholder baseline (never a
+    guessed due date), exactly per this item's own T-29 tie-in. Live-proven: 64 rows, same count
+    as before (the fake unit was never counted, but the fix is now structural, not coincidental).
+  telematics/maintenance-predictor.service.ts -- the webhook-path alert trigger (unreachable
+    today, webhooks have never fired, but "a writer that CAN reach a sample row is a defect
+    whether or not one exists today") -- fixed defensively.
+  service-history-backfill.routes.ts -- the manual service-history backfill writer (writes
+    last_service_odometer directly) -- fixed.
+
+NOT FIXED, named for a follow-up sweep (read-only report/KPI/dashboard/settings-count surfaces,
+not writers -- lower priority than the live WO-creation vector above): catalogs/maintenance/
+services.routes.ts, maintenance/kpi.routes.ts (partially filtered already), reports.routes.ts,
+settings.routes.ts, dashboard.routes.ts (partially filtered already), reefer-hours.routes.ts,
+pm-alerts.routes.ts, maint/pm.routes.ts, dispatch/auth-gates/wf-044-advisory.gate.ts. None of
+these create a work order or mutate pm_schedules; several may still display the fake truck's
+numbers in a report/dashboard, which is a real but lower-severity defect than a live writer.
+
+GUARD: scripts/verify-pm-writers-exclude-sample-units.mjs + --selftest.
+
+LIVE PROOF: apps/backend npx tsc --noEmit exit 0. Guard --selftest and real-file run both PASS.
+Ran the real generate-wo route handler live against production targeting the exact fake
+schedule (756b5701-9ed2-4402-b6d6-086fd133af98): 404 pm_schedule_not_found (confirmed 0 work
+orders exist against the fake unit afterward). Ran the real pm-due-engine live: 64 rows, fake
+unit absent.
+
+## CC-3 — ROUND 303 T-37 (DATA) — DRY-RUN REPORT, owner AUTH required, not applied
+
+PROPOSED (not applied):
+  UPDATE maintenance.pm_schedules SET is_active = false
+  WHERE id = '756b5701-9ed2-4402-b6d6-086fd133af98'; -- T-TESTMTDP79YF, USMCA
+
+This schedule is already UNREACHABLE by every writer after the code fix above (it was already
+unreachable by the main cron before this PR too). Deactivating it is belt-and-suspenders, not
+urgent -- the live exposure (generate-wo) is closed. Awaiting owner AUTH before applying.

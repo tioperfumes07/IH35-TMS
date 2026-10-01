@@ -82,7 +82,9 @@ export async function registerServiceHistoryBackfillRoutes(app: FastifyInstance)
       const result = await withCompanyScope(user.uuid, body.operating_company_id, async (rawClient) => {
         const client = rawClient as DbClient;
         const unitRes = await client.query<{ id: string }>(
-          `SELECT id FROM mdata.units WHERE id = $1::uuid AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid) LIMIT 1`,
+          // ROUND 303 T-37: never backfill service history (which WRITES last_service_odometer)
+          // against a sample/test unit.
+          `SELECT id FROM mdata.units WHERE id = $1::uuid AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid) AND COALESCE(is_sample_data, false) = false LIMIT 1`,
           [body.unit_id, body.operating_company_id]
         );
         if (unitRes.rows.length === 0) return { kind: "unit_not_found" as const };
