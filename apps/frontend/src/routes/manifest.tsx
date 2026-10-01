@@ -106,6 +106,8 @@ const SettlementsPage = React.lazy(() => import("../pages/driver-finance/Settlem
 const SettlementCreatorPage = React.lazy(() =>
   import("../pages/settlements/SettlementCreatorPage").then((m) => ({ default: m.SettlementCreatorPage }))
 );
+const FeedGatePage = React.lazy(() => import("../pages/feed-gate/FeedGatePage").then((m) => ({ default: m.FeedGatePage })));
+const FeedGateIntakePage = React.lazy(() => import("../pages/feed-gate/FeedGatePage").then((m) => ({ default: m.FeedGateIntakePage })));
 const BatchSettlementsPage = React.lazy(() =>
   import("../pages/driver-finance/BatchSettlementsPage").then((m) => ({ default: m.BatchSettlementsPage }))
 );
@@ -2702,6 +2704,8 @@ export const ROUTES = React.Children.toArray(
             </ProtectedRoute>
           }
         />
+        <Route path="/feed-gate" element={<ProtectedRoute><FeedGatePage /></ProtectedRoute>} />
+        <Route path="/feed-gate/:intakeId" element={<ProtectedRoute><FeedGateIntakePage /></ProtectedRoute>} />
         <Route
           path="/driver-finance/settlements/batch"
           element={

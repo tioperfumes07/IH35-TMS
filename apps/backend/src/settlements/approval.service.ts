@@ -30,6 +30,7 @@
  * Escrow tables (driver_finance.escrow_balances / escrow_ledger) are natively CENTS — left as-is.
  */
 
+import { assertSubjectMayCloseOnClient } from "../driver-finance/feed-gate/feed-gate.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { recordEscrowPostingOnly } from "../accounting/escrow/service.js";
 import { signedEscrowLedgerAmountCents } from "../driver-finance/escrow-ledger-sign.js";
@@ -506,6 +507,11 @@ export async function approveSettlement(
   if (!check.allApproved) {
     throw new Error(`Cannot approve: ${check.pendingCount} lines pending, ${check.rejectedCount} lines rejected`);
   }
+
+  // FEED GATE (owner law 2026-10-01): a settlement is approved only when every intake check is green —
+  // loads, invoice + A/R JE, driver bills, deductions sourced, gross = Σ bills, net math, stamps, factoring link.
+  // Runs now on this client (fresh evidence, WORM run row); throws FeedGateError('feed_gate_blocked') with the red rows.
+  await assertSubjectMayCloseOnClient(client as never, operatingCompanyId, "settlement", settlementId, approvedBy);
 
   await client.query(`
     UPDATE driver_finance.driver_settlements

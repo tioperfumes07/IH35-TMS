@@ -284,6 +284,7 @@ export function SettlementsPage() {
           { label: "Pre-Settlements",    to: "/drivers/pre-settlements" },
           { label: "Settlements",        to: "/driver-finance/settlements" },
           { label: "Batch Settlements",  to: "/driver-finance/settlements/batch" },
+          { label: "Feed Gate",          to: "/feed-gate" },
           { label: "Company Settlements", to: "/driver-finance/company-settlements" },
           { label: "Settlement Close",   to: "/driver-finance/settlement-close" },
           { label: "Cash Advance Requests", to: "/driver-finance/cash-advance-requests" },
