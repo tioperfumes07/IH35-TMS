@@ -52,7 +52,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { factorToProfileForm, profileFormToFactorPatch, resolveActiveFactorFromSummary, type FactorProfileForm } from "../../lib/factorProfile";
+import { factorToProfileForm, profileFormToFactorPatch, rateToPctString, resolveActiveFactorFromSummary, type FactorProfileForm } from "../../lib/factorProfile";
 import { FactoringProfilePanel } from "./FactoringProfilePanel";
 import { SubmitToFactorTab } from "./SubmitToFactorTab";
 import { PaymentsToYouPanel } from "./PaymentsToYouPanel";
@@ -90,6 +90,7 @@ const SUBNAV = [
   { id: "aging", label: "Aging" },
   { id: "reserve", label: "Reserve" },
   { id: "escrow_account", label: "Escrow Account" },
+  { id: "cash_reserve", label: "Cash Reserve" },
   { id: "chargebacks_overpayments", label: "Chargebacks & Overpayments" },
   { id: "loan_save", label: "Loan / Save" },
   { id: "unapplied_cash", label: "Unapplied Cash" },
@@ -1669,23 +1670,29 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
         </div>
       ) : null}
 
-      {/* ROUND 315 / Lead B5 — Escrow Account tab: escrow + cash reserve per posted purchase wire. */}
+      {/* FT2 — Escrow Account tab: ESCROW pool only (factor.reserve_rate). Do not merge with Cash Reserve. */}
       {tab === "escrow_account" ? (
         <div className="space-y-3" data-testid="factoring-escrow-account">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-xs font-medium text-gray-900">Escrow Account</div>
+            <div className="mb-2 text-xs text-gray-600">
+              Escrow reserve rate{" "}
+              <span className="font-semibold text-gray-900" data-testid="factoring-escrow-rate-pct">
+                {activeFactor ? `${rateToPctString(activeFactor.reserve_rate)}%` : "—"}
+              </span>
+              {" · "}
+              Release trigger: recourse{" "}
+              <span className="font-semibold text-gray-900" data-testid="factoring-escrow-recourse-days">
+                {activeFactor?.recourse_days != null ? `${activeFactor.recourse_days} days` : "—"}
+              </span>{" "}
+              (from factoring.factor.recourse_days). Ledger = posted purchase escrow_reserve_cents.
+            </div>
             <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-escrow-account")}</div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="factoring-escrow-summary-strip">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-escrow-summary-strip">
               <DrillKpiCard
                 testId="factoring-escrow-kpi-escrow"
                 label="Escrow held"
                 value={purchasesQuery.isError ? null : fmtCents(purchaseEscrowTotals.escrow)}
-                to={FACTORING_TAB_PATH.payments_to_you}
-              />
-              <DrillKpiCard
-                testId="factoring-escrow-kpi-cash"
-                label="Cash reserve held"
-                value={purchasesQuery.isError ? null : fmtCents(purchaseEscrowTotals.cash)}
                 to={FACTORING_TAB_PATH.payments_to_you}
               />
               <DrillKpiCard
@@ -1695,10 +1702,10 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 to={FACTORING_TAB_PATH.payments_to_you}
               />
               <DrillKpiCard
-                testId="factoring-escrow-kpi-net"
-                label="Net paid to IH35"
-                value={purchasesQuery.isError ? null : fmtCents(purchaseEscrowTotals.net)}
-                to={FACTORING_TAB_PATH.payments_to_you}
+                testId="factoring-escrow-kpi-rate"
+                label="Escrow rate"
+                value={activeFactor ? `${rateToPctString(activeFactor.reserve_rate)}%` : null}
+                to={FACTORING_TAB_PATH.statements_settings}
               />
             </div>
           </div>
@@ -1737,12 +1744,6 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     render: (row) => fmtCents(row.escrow_reserve_cents),
                   },
                   {
-                    key: "cash_reserve_cents",
-                    label: "Cash rsv",
-                    cellClass: "text-right tabular-nums",
-                    render: (row) => fmtCents(row.cash_reserve_cents),
-                  },
-                  {
                     key: "fee_cents",
                     label: "Fee",
                     cellClass: "text-right tabular-nums",
@@ -1774,6 +1775,118 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 footerCells={{
                   display_id: `${purchaseEscrowTotals.count} wire(s)`,
                   escrow_reserve_cents: fmtCents(purchaseEscrowTotals.escrow),
+                  net_to_company_cents: fmtCents(purchaseEscrowTotals.net),
+                }}
+              />
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {/* FT2 — Cash Reserve tab: CASH pool only (factor.cash_reserve_rate). Separate from Escrow. */}
+      {tab === "cash_reserve" ? (
+        <div className="space-y-3" data-testid="factoring-cash-reserve">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <div className="mb-2 text-xs font-medium text-gray-900">Cash Reserve</div>
+            <div className="mb-2 text-xs text-gray-600">
+              Cash reserve rate{" "}
+              <span className="font-semibold text-gray-900" data-testid="factoring-cash-reserve-rate-pct">
+                {activeFactor ? `${rateToPctString(activeFactor.cash_reserve_rate ?? 0)}%` : "—"}
+              </span>
+              {" · "}
+              Release trigger: recourse{" "}
+              <span className="font-semibold text-gray-900" data-testid="factoring-cash-reserve-recourse-days">
+                {activeFactor?.recourse_days != null ? `${activeFactor.recourse_days} days` : "—"}
+              </span>{" "}
+              (from factoring.factor.recourse_days). Ledger = posted purchase cash_reserve_cents.
+            </div>
+            <div className="mb-2">{dateRangeOnlyFilterBar("factoring-home-cash-reserve")}</div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-cash-reserve-summary-strip">
+              <DrillKpiCard
+                testId="factoring-cash-reserve-kpi-held"
+                label="Cash reserve held"
+                value={purchasesQuery.isError ? null : fmtCents(purchaseEscrowTotals.cash)}
+                to={FACTORING_TAB_PATH.payments_to_you}
+              />
+              <DrillKpiCard
+                testId="factoring-cash-reserve-kpi-wires"
+                label="Posted wires"
+                value={purchasesQuery.isError ? null : String(purchaseEscrowTotals.count)}
+                to={FACTORING_TAB_PATH.payments_to_you}
+              />
+              <DrillKpiCard
+                testId="factoring-cash-reserve-kpi-rate"
+                label="Cash rate"
+                value={activeFactor ? `${rateToPctString(activeFactor.cash_reserve_rate ?? 0)}%` : null}
+                to={FACTORING_TAB_PATH.statements_settings}
+              />
+            </div>
+          </div>
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            {purchasesQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load cash-reserve purchases"
+                {...formatQueryErrorDetail(purchasesQuery.error)}
+                onRetry={() => void purchasesQuery.refetch()}
+              />
+            ) : (
+              <ParityTable
+                columns={[
+                  {
+                    key: "purchase_date",
+                    label: "Purchase date",
+                    sortable: true,
+                    render: (row) => formatDateUS(row.purchase_date),
+                  },
+                  {
+                    key: "display_id",
+                    label: "Purchase",
+                    sortable: true,
+                    render: (row) => row.display_id,
+                  },
+                  {
+                    key: "invoice_count",
+                    label: "Invoices",
+                    cellClass: "text-right tabular-nums",
+                    render: (row) => String(row.invoice_count),
+                  },
+                  {
+                    key: "cash_reserve_cents",
+                    label: "Cash rsv",
+                    cellClass: "text-right tabular-nums",
+                    render: (row) => fmtCents(row.cash_reserve_cents),
+                  },
+                  {
+                    key: "fee_cents",
+                    label: "Fee",
+                    cellClass: "text-right tabular-nums",
+                    render: (row) => fmtCents(row.fee_cents),
+                  },
+                  {
+                    key: "net_to_company_cents",
+                    label: "Net wire",
+                    cellClass: "text-right tabular-nums font-semibold",
+                    render: (row) => fmtCents(row.net_to_company_cents),
+                  },
+                  {
+                    key: "bank_transaction_id",
+                    label: "Bank match",
+                    render: (row) =>
+                      row.bank_transaction_id ? (
+                        <EntityLink kind="bank_transaction" id={row.bank_transaction_id} label="Matched" />
+                      ) : (
+                        "Unmatched"
+                      ),
+                  },
+                ]}
+                rows={purchasesQuery.data?.purchases ?? []}
+                rowKey={(row) => row.id}
+                loading={purchasesQuery.isLoading}
+                emptyText="No posted factoring purchases — cash reserve is empty until the owner posts a wire."
+                storageKey="factoring-cash-reserve"
+                tableTestId="factoring-cash-reserve-table"
+                footerCells={{
+                  display_id: `${purchaseEscrowTotals.count} wire(s)`,
                   cash_reserve_cents: fmtCents(purchaseEscrowTotals.cash),
                   net_to_company_cents: fmtCents(purchaseEscrowTotals.net),
                 }}

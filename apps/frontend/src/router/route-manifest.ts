@@ -219,6 +219,7 @@ export const FACTORING_TAB_PATH: Record<string, string> = {
   aging: "/factoring/aging",
   reserve: "/factoring/reserve",
   escrow_account: "/factoring/escrow-account",
+  cash_reserve: "/factoring/cash-reserve",
   chargebacks_overpayments: "/factoring/chargebacks-overpayments",
   loan_save: "/factoring/loan-save",
   unapplied_cash: "/factoring/unapplied-cash",
