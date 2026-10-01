@@ -217,6 +217,27 @@ export async function runFuelPurchasePush(
     [operatingCompanyId]
   );
   const rows = rowsRes.rows as FuelPushRow[];
+  // LEAD RULING 2026-10-01 (each seat builds its engine end to end): when the derivation side table is
+  // not there, E-23 derives the pump time ON READ by calling the shared derivation engine
+  // (computeFuelTimeDerivations — the truck's own fuel-stop dwell), never a copy of it.
+  if (!derivedReady) {
+    const { computeFuelTimeDerivations } = await import("../../fuel/fuel-time-derivation.service.js");
+    const derived = await computeFuelTimeDerivations(client as never, operatingCompanyId);
+    const byId = new Map(derived.rows.map((d) => [d.fuel_transaction_id, d]));
+    const fenceIds = [...new Set(derived.rows.map((d) => d.geofence_id).filter((x): x is string => Boolean(x)))];
+    const labels = new Map<string, string>();
+    if (fenceIds.length) {
+      const l = await client.query(`SELECT id::text AS id, label FROM geo.geofences WHERE id = ANY($1::uuid[])`, [fenceIds]);
+      for (const r of l.rows) labels.set(String(r.id), String(r.label ?? ""));
+    }
+    for (const row of rows) {
+      const d = byId.get(row.id);
+      if (!d) continue;
+      row.derived_time = d.transaction_at_derived;
+      row.derived_confidence = d.confidence;
+      row.derived_fuel_stop_label = d.geofence_id ? labels.get(d.geofence_id) ?? null : null;
+    }
+  }
   const ledger = await loadLedger(client, operatingCompanyId);
   const vehicles = await loadSamsaraVehicleIdsByUnit(client, operatingCompanyId);
   const plan = planFuelPurchasePushes(rows, vehicles, ledger.pushed);
