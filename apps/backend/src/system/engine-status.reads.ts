@@ -56,10 +56,17 @@ async function countLast24h(
   const { relation, tsColumn, companyColumn } = entry.output;
   assertIdent(tsColumn, "tsColumn");
   if (companyColumn) assertIdent(companyColumn, "companyColumn");
-  const exists = await relationExists(client, relation);
-  if (!exists) return { count: null, note: `${relation} not present` };
-  const { schema, table } = splitRelation(relation);
+  // Lead Chrome 2026-10-01: a failed probe inside withCompanyScope's transaction aborted the
+  // whole board ("current transaction is aborted…"). Isolate every probe in a SAVEPOINT.
+  const sp = `e41_probe_${entry.id.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 40)}`;
+  await client.query(`SAVEPOINT ${sp}`);
   try {
+    const exists = await relationExists(client, relation);
+    if (!exists) {
+      await client.query(`RELEASE SAVEPOINT ${sp}`);
+      return { count: null, note: `${relation} not present` };
+    }
+    const { schema, table } = splitRelation(relation);
     if (companyColumn) {
       const res = await client.query<{ n: string }>(
         `SELECT COUNT(*)::text AS n
@@ -68,6 +75,7 @@ async function countLast24h(
             AND ${tsColumn} >= now() - interval '24 hours'`,
         [operatingCompanyId]
       );
+      await client.query(`RELEASE SAVEPOINT ${sp}`);
       return { count: Number(res.rows[0]?.n ?? 0), note: null };
     }
     const res = await client.query<{ n: string }>(
@@ -75,8 +83,10 @@ async function countLast24h(
          FROM ${schema}.${table}
         WHERE ${tsColumn} >= now() - interval '24 hours'`
     );
+    await client.query(`RELEASE SAVEPOINT ${sp}`);
     return { count: Number(res.rows[0]?.n ?? 0), note: null };
   } catch (err) {
+    await client.query(`ROLLBACK TO SAVEPOINT ${sp}`).catch(() => {});
     return { count: null, note: `probe failed: ${(err as Error).message?.slice(0, 120) ?? "error"}` };
   }
 }
@@ -89,28 +99,41 @@ async function latestSyncLog(
   if (syncKinds.length === 0) {
     return { finished_at: null, success: null, error_message: null, rows_added: null };
   }
-  const res = await client.query<{
-    finished_at: string | null;
-    success: boolean | null;
-    error_message: string | null;
-    rows_added: number | null;
-  }>(
-    `SELECT finished_at::text, success, error_message, rows_added
-       FROM integrations.integration_sync_log
-      WHERE operating_company_id = $1::uuid
-        AND sync_kind = ANY($2::text[])
-      ORDER BY COALESCE(finished_at, started_at) DESC
-      LIMIT 1`,
-    [operatingCompanyId, syncKinds]
-  );
-  const row = res.rows[0];
-  if (!row) return { finished_at: null, success: null, error_message: null, rows_added: null };
-  return {
-    finished_at: row.finished_at,
-    success: row.success,
-    error_message: row.error_message,
-    rows_added: row.rows_added,
-  };
+  const sp = "e41_sync_log";
+  await client.query(`SAVEPOINT ${sp}`);
+  try {
+    const res = await client.query<{
+      finished_at: string | null;
+      success: boolean | null;
+      error_message: string | null;
+      rows_added: number | null;
+    }>(
+      `SELECT finished_at::text, success, error_message, rows_added
+         FROM integrations.integration_sync_log
+        WHERE operating_company_id = $1::uuid
+          AND sync_kind = ANY($2::text[])
+        ORDER BY COALESCE(finished_at, started_at) DESC
+        LIMIT 1`,
+      [operatingCompanyId, syncKinds]
+    );
+    await client.query(`RELEASE SAVEPOINT ${sp}`);
+    const row = res.rows[0];
+    if (!row) return { finished_at: null, success: null, error_message: null, rows_added: null };
+    return {
+      finished_at: row.finished_at,
+      success: row.success,
+      error_message: row.error_message,
+      rows_added: row.rows_added,
+    };
+  } catch (err) {
+    await client.query(`ROLLBACK TO SAVEPOINT ${sp}`).catch(() => {});
+    return {
+      finished_at: null,
+      success: null,
+      error_message: `sync log probe failed: ${(err as Error).message?.slice(0, 120) ?? "error"}`,
+      rows_added: null,
+    };
+  }
 }
 
 function nextRunHint(schedule: string, lastRunAt: string | null, windowHours: number | null): string | null {
