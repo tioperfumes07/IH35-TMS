@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["accounting"],"cols":["connectivity","reverse_link"],"leafRe":"^(accounting\\.parity\\.account_register|accounting\\.parity\\.all_transactions)$","task":"ACCT-SURF-07-REGISTER-TRANSACTIONS-DOD","vertical":"column-wave"}
  * ACCT-SURF-07 — Account Register + All Transactions deep structural DoD.
  *
  * Frozen surface map: docs/trackers/ACCT-08-SURF-SURFACE-MAP-2026-07-25.md
@@ -99,8 +100,16 @@ function contractErrors(src) {
       errors.push(`VERIFY-4: sourceRoute must deep-link ${type} → money doc (${needle})`);
     }
   }
-  if (!src.accountRegister.includes("onRowClick") || !src.accountRegister.includes("sourceRoute")) {
-    errors.push("VERIFY-4: AccountRegisterPage ParityTable onRowClick must call sourceRoute");
+  // B-1: reverse drill moved from onRowClick to inline-expand Edit (renderExpanded) — still must
+  // call sourceRoute with the raw source_transaction_id UUID.
+  if (
+    !src.accountRegister.includes("sourceRoute") ||
+    !/navigate\(sourceRoute\(r\.source_transaction_type,\s*r\.source_transaction_id\)\)/.test(src.accountRegister)
+  ) {
+    errors.push("VERIFY-4: AccountRegisterPage must navigate(sourceRoute(..., source_transaction_id)) for reverse drill");
+  }
+  if (!src.accountRegister.includes("renderExpanded") && !src.accountRegister.includes("onRowClick")) {
+    errors.push("VERIFY-4: AccountRegisterPage must expose reverse drill via renderExpanded Edit or onRowClick");
   }
   // Multi-line JSX (`<EntityLink\n  kind="journal_entry"`, the real formatting on both the Ref
   // No. and audit-tab Journal entry columns) has a newline+indentation between the tag and the
@@ -180,7 +189,8 @@ function selftest() {
       "`/banking/transactions?txn_id=${reference}`",
       "settlement_id=${reference}",
       'if (t === "transfer") return "/banking/transfers"',
-      "onRowClick={(r) => navigate(sourceRoute",
+      "navigate(sourceRoute(r.source_transaction_type, r.source_transaction_id))",
+      "renderExpanded",
       '<EntityLink\n  kind="journal_entry"',
       "getAccountRegister",
       "AccountingSubNavWrapper",

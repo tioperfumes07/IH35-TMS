@@ -612,9 +612,18 @@ const LIVE_DOMAIN_GUARDS = [
   ],
   ["verify-purge-window-state", ["scripts/purge/", "scripts/lib/purge-window.mjs", "purge_state.json"]],
   ["verify-faro-invoice-lines-load-linkage", ["apps/backend/src/data-infra/", "apps/backend/src/factoring/"]],
+  // GATE-SCOPE B-1 (2026-10-01): whole apps/backend/src/accounting/ was too broad — the account
+  // register read model (account-register.service) cannot create Faro variance / invoice disputes.
+  // Keep data-infra + factoring + the dispute writers only (same pattern as driver-bill-settlement-link).
   [
     "verify-dispute-window-unified",
-    ["apps/backend/src/data-infra/", "apps/backend/src/factoring/", "apps/backend/src/accounting/"],
+    [
+      "apps/backend/src/data-infra/",
+      "apps/backend/src/factoring/",
+      "apps/backend/src/accounting/invoice-disputes",
+      "apps/backend/src/accounting/disputes",
+      "scripts/verify-dispute-window-unified.mjs",
+    ],
   ],
   // ROUND 23.3 B6 — driver bills whose load already has a settlement must be linked.
   // Domain narrowed 2026-09-28 (GATE-SCOPE): whole apps/backend/src/accounting/ was too broad —
@@ -1413,7 +1422,14 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
           if (
             p === "apps/backend/src/accounting/" &&
             (f.startsWith("apps/backend/src/accounting/bank-recon/") ||
-              R224_ACCOUNTING_LIVE_DOMAIN_SKIP.has(f))
+              R224_ACCOUNTING_LIVE_DOMAIN_SKIP.has(f) ||
+              // GATE-SCOPE B-1 (2026-10-01): account-register is a read-only GL ledger surface —
+              // it cannot create fuel rows, Faro variance, or voided headers. Do not pull tip-debt
+              // fuel/dispute/void censuses into a register-only PR.
+              f === "apps/backend/src/accounting/account-register.service.ts" ||
+              f === "apps/backend/src/accounting/account-register.service.test.ts" ||
+              f === "apps/backend/src/accounting/account-register.routes.ts" ||
+              f === "apps/backend/src/accounting/account-register.guard.test.ts")
           ) {
             return false;
           }

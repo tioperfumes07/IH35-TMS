@@ -39,6 +39,10 @@ export type RawPosting = {
   payee: string | null; // from the source transaction (bill→vendor, invoice→customer); null when unresolved
   split_account: string | null; // the contra account(s); "-Split-" when the JE touches >1 other account
   class_name: string | null; // catalogs.classes via posting.class_id
+  /** B-1 / QBO ✓ — blank | C (matched to bank feed) | R (locked by closed reconciliation). */
+  reconcile_status: "" | "C" | "R";
+  /** B-1 — docs.file_links count on the source document (0 when unlinked / no docs). */
+  attachment_count: number;
 };
 
 export type AccountRegisterRow = {
@@ -58,6 +62,8 @@ export type AccountRegisterRow = {
   description: string | null;
   split_account: string | null;
   class_name: string | null;
+  reconcile_status: "" | "C" | "R";
+  attachment_count: number;
   // QBO labels the amount columns Increase/Decrease by account normal-balance; debit/credit are the raw
   // ledger sides. The frontend renders Increase/Decrease from these + normal_balance.
   debit_cents: number;
@@ -77,6 +83,12 @@ export type AccountRegisterReport = {
   to_date: string;
   opening_balance_cents: number;
   closing_balance_cents: number;
+  /** Feed-side balance from banking.bank_accounts.current_balance_cents when a bank maps to this GL. */
+  bank_balance_cents: number | null;
+  /** banking.bank_accounts.id when this GL is linked; null for pure CoA accounts. */
+  bank_account_id: string | null;
+  /** Last closed reconciliation statement date (period_end), or null. */
+  reconciled_through: string | null;
   total_debit_cents: number;
   total_credit_cents: number;
   transaction_count: number;
@@ -126,6 +138,8 @@ export function buildRegisterRows(
       description: p.description ?? null,
       split_account: p.split_account ?? null,
       class_name: p.class_name ?? null,
+      reconcile_status: p.reconcile_status === "R" || p.reconcile_status === "C" ? p.reconcile_status : "",
+      attachment_count: Number(p.attachment_count) || 0,
       debit_cents: debit,
       credit_cents: credit,
       running_balance_cents: running,
@@ -214,11 +228,15 @@ export async function getAccountRegister(
   //  - class_name: catalogs.classes via posting.class_id (honest NULL when unclassed).
   //  - payee: derived from the source transaction — bill→vendor, invoice→customer (the unambiguous cases);
   //    honest NULL otherwise. source_transaction_id is text; targets cast to text for a safe compare.
-  const res = await client.query<RawPosting & { amount_cents: string | number }>(
+  const res = await client.query<
+    RawPosting & { amount_cents: string | number; reconcile_status: string | null; attachment_count: string | number | null }
+  >(
     `SELECT p.id::text AS posting_id, je.id::text AS journal_entry_id, je.entry_date::text AS entry_date,
             je.memo, p.description, p.debit_or_credit, p.amount_cents::bigint AS amount_cents,
             p.source_transaction_type, p.source_transaction_id,
             cls.class_name,
+            COALESCE(match_info.reconcile_status, '') AS reconcile_status,
+            COALESCE(att.attachment_count, 0)::int AS attachment_count,
             -- Payee derived from the source transaction's real party (verified FKs, no phantom columns):
             --   bill→vendor, expense→vendor, invoice→customer, customer_payment→customer, settlement→driver.
             --   bill_payment has no clean direct party link → honest NULL (not fabricated).
@@ -288,6 +306,45 @@ export async function getAccountRegister(
                     AND op.account_id <> p.account_id) d
            JOIN catalogs.accounts sa ON sa.id = d.account_id AND sa.operating_company_id = p.operating_company_id
        ) sp ON true
+       -- B-1 ✓ column: blank / C / R from bank-feed match + closed reconciliation session.
+       -- R when the matched bank row's reconciliation_session is status=reconciled;
+       -- C when matched to a bank row otherwise; blank when no bank link.
+       LEFT JOIN LATERAL (
+         SELECT CASE
+                  WHEN bool_or(rs.status = 'reconciled') THEN 'R'
+                  WHEN bool_or(bt.id IS NOT NULL) THEN 'C'
+                  ELSE ''
+                END AS reconcile_status
+           FROM banking.bank_transactions bt
+           LEFT JOIN banking.reconciliation_sessions rs
+             ON rs.id = bt.reconciliation_session_id
+            AND rs.operating_company_id = bt.operating_company_id
+          WHERE bt.operating_company_id = p.operating_company_id
+            AND (
+              bt.matched_journal_entry_id = je.id
+              OR (p.source_transaction_type = 'expense' AND bt.matched_expense_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type = 'bill' AND bt.matched_bill_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type = 'settlement' AND bt.matched_settlement_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type = 'transfer' AND bt.matched_transfer_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type = 'bank_categorization' AND bt.id::text = p.source_transaction_id)
+            )
+       ) match_info ON true
+       LEFT JOIN LATERAL (
+         SELECT COUNT(*)::int AS attachment_count
+           FROM docs.file_links fl
+          WHERE fl.deleted_at IS NULL
+            AND p.source_transaction_id IS NOT NULL
+            AND fl.entity_id::text = p.source_transaction_id
+            AND fl.entity_type = CASE p.source_transaction_type
+              WHEN 'expense' THEN 'expense'
+              WHEN 'bill' THEN 'bill'
+              WHEN 'bill_payment' THEN 'bill'
+              WHEN 'invoice' THEN 'invoice'
+              WHEN 'customer_payment' THEN 'payment'
+              WHEN 'settlement' THEN 'settlement'
+              ELSE p.source_transaction_type
+            END
+       ) att ON true
       WHERE ${where}
       -- ACCT-F349 — ORDER BY DOCUMENT, THEN BY LINE WITHIN THAT DOCUMENT.
       --
@@ -330,13 +387,45 @@ export async function getAccountRegister(
                je.created_at ASC, je.id ASC, p.line_sequence ASC, p.created_at ASC`,
     params
   );
-  const postings: RawPosting[] = res.rows.map((r) => ({ ...r, amount_cents: Number(r.amount_cents) }));
+  const postings: RawPosting[] = res.rows.map((r) => ({
+    ...r,
+    amount_cents: Number(r.amount_cents),
+    reconcile_status: r.reconcile_status === "R" || r.reconcile_status === "C" ? r.reconcile_status : "",
+    attachment_count: Number(r.attachment_count) || 0,
+  }));
 
   const { rows, total_debit_cents, total_credit_cents, closing_balance_cents } = buildRegisterRows(
     openingNatural,
     normal,
     postings
   );
+
+  // B-1 header: Bank balance (feed) vs Ending balance (book) + Reconciled through.
+  const bankMeta = await client.query<{
+    bank_account_id: string;
+    bank_balance_cents: string | number | null;
+    reconciled_through: string | null;
+  }>(
+    `SELECT ba.id::text AS bank_account_id,
+            ba.current_balance_cents AS bank_balance_cents,
+            (
+              SELECT rs.period_end::text
+                FROM banking.reconciliation_sessions rs
+               WHERE rs.bank_account_id = ba.id
+                 AND rs.operating_company_id = ba.operating_company_id
+                 AND rs.status = 'reconciled'
+               ORDER BY rs.period_end DESC NULLS LAST
+               LIMIT 1
+            ) AS reconciled_through
+       FROM banking.bank_accounts ba
+      WHERE ba.operating_company_id = $1::uuid
+        AND ba.ledger_account_id = $2::uuid
+        AND ba.deactivated_at IS NULL
+      ORDER BY ba.updated_at DESC NULLS LAST
+      LIMIT 1`,
+    [input.operating_company_id, input.account_id]
+  );
+  const bankRow = bankMeta.rows[0];
 
   return {
     account: {
@@ -350,6 +439,9 @@ export async function getAccountRegister(
     to_date: input.to_date,
     opening_balance_cents: openingNatural,
     closing_balance_cents,
+    bank_balance_cents: bankRow?.bank_balance_cents != null ? Number(bankRow.bank_balance_cents) : null,
+    bank_account_id: bankRow?.bank_account_id ?? null,
+    reconciled_through: bankRow?.reconciled_through ?? null,
     total_debit_cents,
     total_credit_cents,
     transaction_count: rows.length,

@@ -161,7 +161,9 @@ function buildColumns(
     },
     {
       id: "qb_balance",
-      label: "QUICKBOOKS BALANCE",
+      // B-1 / ORDERS 2026-10-01 — QBO shows Book balance vs Bank balance side by side.
+      // Field id stays qb_balance (book from account-balances); label is Book, never QuickBooks.
+      label: "BOOK BALANCE",
       width: 160,
       sortType: "currency",
       render: (row) => <span className="block text-right tabular-nums">{row.qb_balance}</span>,

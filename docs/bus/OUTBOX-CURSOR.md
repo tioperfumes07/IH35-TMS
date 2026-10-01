@@ -192,3 +192,10 @@ Three dates + Law §9 reverse: bills/expenses/bill_payments/invoices/receive-pay
 **2026-10-01T04:15Z · E-41 SAVEPOINT MERGED · PR #23667 · `e541f463ac`**
 Lead Chrome RED fixed: SAVEPOINT around engine-status probes so one failed count does not abort the board transaction. Guard: verify-e41-engine-status-savepoint. LEFT: Lead re-Chrome /system/engine-status.
 
+
+
+**2026-10-01T05:00Z · MAINTENANCE file_links work_order + engines widget MERGED · PR #23680 · `8d864cd8f4`**
+WO DocumentsTab (docs.file_links entity_type=work_order, Neon CHECK applied); MaintEnginesStatusWidget on Maintenance home; Expected release list/detail drop pending CC-1. Claim #23675. NEXT: BANKING REGISTER SET B-1 account register.
+
+**2026-10-01T05:35Z · BANKING REGISTER SET B-1 · branch `cursor/banking-b1-register-c89b`**
+B-1 · what changed: Account register QBO shape — two-line rows (DATE/REF/PAYEE… over TYPE/ACCOUNT); header Bank balance vs Ending balance + Reconciled through; ✓ blank/C/R + 📎 from bank match / file_links; page size 100; inline expand Edit → original document; CoA BOOK BALANCE label; Bank transactions + Reconcile buttons. Backend `account-register.service` adds reconcile_status, attachment_count, bank_balance_cents, reconciled_through. Ops: `scripts/ops/verify-b1-account-register.mjs`. Guards: verify-b1 + acct-surf-07 + paritytable + ref-JE EntityLink + matrix-built tags; ops-scripts duplicate ALLOW_OFFLINE_SKIP SyntaxError fixed. money-pr-local-gate PASS (LANE_CROSS). · Ambient tip debt (VERIFY-STATIC-BASELINE measured 2026-09-01; not B-1): same class as #23647 — push after own guards green. · LEFT: blank↔C click write (display-only this slice); location field; Lead Chrome on `/accounting/account-register`. NEXT: B-2 Reconcile after merge.
