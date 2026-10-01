@@ -1143,3 +1143,25 @@ an invented link. A work order carries no invoice of its own; received payments 
 **proof:** live read-only — every query runs on prod; legs present in data resolve (unit, trailer 3/15,
 vendor 9/15, insurance claim, location); load/customer/bill/payment legs empty on USMCA (unseeded) —
 covered by vitest (4/4). Guard step 11965 now pins every leg.
+
+## 2026-10-01 — E-15 PM cost per mile (real driven miles) — BUILT
+
+**engine:** `apps/backend/src/maintenance/pm-cost-per-mile.service.ts` → `GET /api/v1/maintenance/pm-cost-per-mile?from&to[&unit_id]`.
+Real driven miles = odometer end anchor − start anchor (`telematics.vehicle_locations.odometer_mi` ∪
+`telematics.odometer_readings`); an anchor is the latest real reading at/before the boundary, valid only if the
+unit has not moved since (or within 30 min). Otherwise real miles are NULL with the reason — never zero, never
+practical/short substituted. Practical (`miles_practical`) and short (`miles_shortest+miles_deadhead`) sit beside
+it (three-mile comparison, ORDER-2026-09-04). Cost = `accounting.bills.linked_work_order_uuid` (parts / labor /
+other split) + linked expenses; PM = `wo_type='pm'`. Per unit + fleet, each CPM states its basis.
+**one engine:** the KPI CPM tile (was practical miles) and the Maintenance report "cost_per_mile" (had no miles)
+both re-pointed to this engine.
+**screen:** `PmCostPerMilePanel` on Unit profile + Maintenance › Reports › Cost per mile; EntityLink unit / work
+order / bill in every row (both ways: WO and bill pages already link back to unit).
+**guard:** step 12041 `verify-pm-cost-per-mile-real-driven.mjs` (never divides by practical/short for real CPM;
+null-with-reason, never zero; basis stated). vitest 8/8 + kpi 7/7.
+**live proof (prod read-only, USMCA):** Sept 2026 — 0/16 units measurable: odometer_mi empty 2026-08-26..09-29
+while positions flowed (feed gap, reason shown per unit); practical 89,484 mi / short 14,227 mi. July 2026 — 14/16
+units measurable, 122,154.5 real driven mi. 0 bills linked to work orders (maintenance unseeded) → CPM "—" with
+reason, not $0.
+**finding for owner:** Samsara odometer feed gap 2026-08-26..09-29 (positions without odometer) — real miles for
+that window cannot be recovered from GPS without interpolation, which the law forbids.

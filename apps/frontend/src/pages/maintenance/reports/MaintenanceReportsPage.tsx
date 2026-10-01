@@ -5,6 +5,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
+import { PmCostPerMilePanel } from "../../../components/maintenance/PmCostPerMilePanel";
 
 type ReportRow = Record<string, unknown>;
 
@@ -79,7 +80,10 @@ export function MaintenanceReportsPage() {
           </select>
         </label>
         {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to the empty state — an outage presenting as a report with no findings. */}
-        {reportQ.isError ? (
+        {/* E-15: "Cost per mile" is the real-driven PM cost-per-mile engine with its own period + three bases. */}
+        {report === "cost_per_mile" && companyId ? (
+          <PmCostPerMilePanel operatingCompanyId={companyId} />
+        ) : reportQ.isError ? (
           <ListErrorState
             title="Couldn't load the maintenance report"
             status={0}
