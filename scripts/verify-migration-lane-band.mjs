@@ -18,12 +18,35 @@
 import { spawnSync } from "node:child_process";
 
 const LANES = [
+  // EACH-SEAT-BUILDS-ITS-ENGINE-END-TO-END (owner order 2026-10-01, Lead ruling
+  // docs/bus/2026-10-01-LEAD-RULING-EACH-SEAT-BUILDS-ITS-ENGINE-END-TO-END.md): "have them fully
+  // build their own engines, not handoff". A seat that cannot author its own migration hands the
+  // engine off; that is the exact behaviour the owner forbade. Every building seat therefore gets
+  // its own band. Bands stay disjoint so two seats can never mint the same HH; the CLAIMED
+  // registry remains the first line against intra-lane races. Chrome-only stays chrome-only for
+  // the seats that do not build engines (codex/cascade/devin/audit).
   {
     lane: "cc-1",
     branchPrefixes: ["claude/", "cc-1/", "cc1/"],
     minHour: 0,
+    maxHour: 5,
+    label: "HH 00–05",
+    authorMigrations: true,
+  },
+  {
+    lane: "cc-2",
+    branchPrefixes: ["cc-2/", "cc2/"],
+    minHour: 6,
+    maxHour: 8,
+    label: "HH 06–08",
+    authorMigrations: true,
+  },
+  {
+    lane: "cc-3",
+    branchPrefixes: ["cc-3/", "cc3/"],
+    minHour: 9,
     maxHour: 11,
-    label: "HH 00–11 (morning)",
+    label: "HH 09–11",
     authorMigrations: true,
   },
   {
@@ -48,10 +71,6 @@ const LANES = [
   {
     lane: "chrome-only",
     branchPrefixes: [
-      "cc-2/",
-      "cc2/",
-      "cc-3/",
-      "cc3/",
       "codex/",
       "cascade/",
       "devin/",
@@ -122,7 +141,7 @@ export function checkFiles(files, lane) {
     for (const f of files) {
       problems.push(
         `${f.split("/").pop()} — lane "${lane.lane}" (${lane.label}) must not author migrations. ` +
-          `Chrome + TEST need neither. Money/schema migrations stay on cc-1/claude (HH 00–11) or cursor (HH 12–23).`,
+          `Chrome + TEST need neither. Money/schema migrations stay on cc-1/claude (HH 00–05), cc-2 (HH 06–08), cc-3 (HH 09–11) or cursor (HH 12–23).`,
       );
     }
     return problems;
@@ -205,12 +224,19 @@ export function run() {
 }
 
 function selftest() {
-  const cc1 = LANES[0];
-  const cursor = LANES[1];
-  const chrome = LANES[2];
+  const cc1 = LANES.find((l) => l.lane === "cc-1");
+  const cc2 = LANES.find((l) => l.lane === "cc-2");
+  const cc3 = LANES.find((l) => l.lane === "cc-3");
+  const cursor = LANES.find((l) => l.lane === "cursor");
+  const chrome = LANES.find((l) => l.lane === "chrome-only");
   const cases = [
     { name: "cc-1 branch, morning slot -> OK", files: ["db/migrations/202610100000_x.sql"], lane: cc1, expectProblems: 0 },
     { name: "cc-1 branch, afternoon slot -> FAIL", files: ["db/migrations/202610101200_x.sql"], lane: cc1, expectProblems: 1 },
+    { name: "cc-1 branch, HH 06 (cc-2's band) -> FAIL", files: ["db/migrations/202610100600_x.sql"], lane: cc1, expectProblems: 1 },
+    { name: "cc-2 branch, HH 07 -> OK", files: ["db/migrations/202610100700_x.sql"], lane: cc2, expectProblems: 0 },
+    { name: "cc-2 branch, HH 03 (cc-1's band) -> FAIL", files: ["db/migrations/202610100300_x.sql"], lane: cc2, expectProblems: 1 },
+    { name: "cc-3 branch, HH 10 -> OK", files: ["db/migrations/202610101000_x.sql"], lane: cc3, expectProblems: 0 },
+    { name: "cc-3 branch, HH 12 (cursor's band) -> FAIL", files: ["db/migrations/202610101200_x.sql"], lane: cc3, expectProblems: 1 },
     { name: "cursor branch, afternoon slot -> OK", files: ["db/migrations/202610101500_x.sql"], lane: cursor, expectProblems: 0 },
     { name: "cursor branch, morning slot -> FAIL", files: ["db/migrations/202610100900_x.sql"], lane: cursor, expectProblems: 1 },
     { name: "the real 2026-07-28 collision number is outside cursor band", files: ["db/migrations/202610060000_x.sql"], lane: cursor, expectProblems: 1 },
@@ -235,8 +261,12 @@ function selftest() {
     console.error("  FAIL: cc-1/ branch did not map to the cc-1 lane");
     bad += 1;
   }
-  if (laneForBranch("cc-3/lists")?.lane !== "chrome-only") {
-    console.error("  FAIL: cc-3/ must map to chrome-only");
+  if (laneForBranch("cc-3/lists")?.lane !== "cc-3" || laneForBranch("cc-2/fuel")?.lane !== "cc-2") {
+    console.error("  FAIL: cc-2/ and cc-3/ must map to their own migration lanes (owner order 2026-10-01: no handoffs)");
+    bad += 1;
+  }
+  if (laneForBranch("codex/x")?.lane !== "chrome-only" || laneForBranch("devin/x")?.lane !== "chrome-only") {
+    console.error("  FAIL: codex/ and devin/ must stay chrome-only");
     bad += 1;
   }
   if (laneForBranch("main") !== null) {

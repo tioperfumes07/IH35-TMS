@@ -63,3 +63,6 @@ ANTICIPATED BLOCKERS AND THE ANSWER (do not stop for these):
 - "CI red on main": known — readonly DB secret stale in GitHub Actions (owner updates), fresh-db
   pm_intervals FK (CC-1 row 7). Local gate exit 0 + Lead --admin merge is the path until fixed.
 - "Chrome proof": the Lead does the Chrome pass; DONE = sha until then. Keep building.
+
+## 2026-10-01 LATER — SUPERSEDED IN PART
+Ruling docs/bus/2026-10-01-LEAD-RULING-EACH-SEAT-BUILDS-ITS-ENGINE-END-TO-END.md (owner: no handoffs) withdraws every line in these ORDERS files that routes work to another seat. Each seat builds its own engine end to end: migration (own band), backend, screen, guard. Read the ruling.
