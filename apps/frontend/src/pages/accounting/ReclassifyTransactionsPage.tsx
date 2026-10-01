@@ -98,7 +98,7 @@ export function ReclassifyTransactionsPage() {
   });
 
   const accountRefOptions = useMemo<ReferenceOption[]>(() => (coaQ.data?.accounts ?? []).map((a) => coaAccountReferenceOption({ id: a.id, account_name: a.account_name, account_type: a.account_type ?? null, account_number: a.account_number })), [coaQ.data]);
-  const vendorRefOptions = useMemo<ReferenceOption[]>(() => (vendorsQ.data?.vendors ?? []).map((v) => ({ id: v.id, label: v.name })), [vendorsQ.data]);
+  const vendorRefOptions = useMemo<ReferenceOption[]>(() => (vendorsQ.data?.vendors ?? []).map((v) => ({ value: v.id, label: v.name })), [vendorsQ.data]);
   const tree = useMemo(() => {
     const rows = (accountsQ.data?.accounts ?? []).filter((a) => a.period_activity_cents !== 0 || a.account_id === accountId);
     const f = accountFilter.trim().toLowerCase();
@@ -131,7 +131,7 @@ export function ReclassifyTransactionsPage() {
             <label className="mt-1 flex items-center gap-1 text-xs text-slate-600"><input type="checkbox" checked={showAccountNumbers} onChange={(e) => setShowAccountNumbers(e.target.checked)} /> Show account numbers</label>
           </div>
           {accountsQ.isLoading ? <div className="p-2 text-xs text-slate-600">Loading…</div> : null}
-          {accountsQ.error ? <div className="p-2"><ListErrorState message={formatQueryErrorDetail(accountsQ.error)} /></div> : null}
+          {accountsQ.error ? <div className="p-2"><ListErrorState {...formatQueryErrorDetail(accountsQ.error)} onRetry={() => void accountsQ.refetch()} /></div> : null}
           <ul className="text-xs">
             <li>
               <button type="button" onClick={() => { setAccountId(null); }} className={`flex w-full items-center justify-between px-2 py-1 text-left hover:bg-slate-50 ${accountId === null ? "bg-slate-100 font-semibold" : ""}`}>
@@ -197,7 +197,7 @@ export function ReclassifyTransactionsPage() {
                 </div>
                 <span className="text-slate-600">{linesQ.data ? `${linesQ.data.total_lines} line(s) match · net ${formatCurrencyFromCents(linesQ.data.total_net_amount_cents)}` : ""}</span>
               </div>
-              {linesQ.error ? <ListErrorState message={formatQueryErrorDetail(linesQ.error)} /> : null}
+              {linesQ.error ? <ListErrorState {...formatQueryErrorDetail(linesQ.error)} onRetry={() => void linesQ.refetch()} /> : null}
               <div className="mt-1 overflow-x-auto rounded border border-gray-200 bg-white">
                 <table className="w-full text-xs" data-testid="reclassify-grid">
                   <thead className="bg-slate-50 text-left uppercase tracking-wide text-gray-600">
@@ -278,7 +278,7 @@ export function ReclassifyTransactionsPage() {
                 {batchesQ.data && batchesQ.data.batches.length === 0 ? <tr><td colSpan={8} className="p-2 text-slate-600">No batches yet.</td></tr> : null}
               </tbody>
             </table>
-            {undoMut.error ? <div className="p-2"><ListErrorState message={formatQueryErrorDetail(undoMut.error)} /></div> : null}
+            {undoMut.error ? <div className="p-2"><ListErrorState {...formatQueryErrorDetail(undoMut.error)} onRetry={() => undoMut.reset()} /></div> : null}
           </div>
         </section>
       </div>
@@ -304,7 +304,7 @@ export function ReclassifyTransactionsPage() {
             <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-slate-600">Reason (required, audited on every document)
               <input value={reason} onChange={(e) => setReason(e.target.value)} className="h-9 rounded border border-gray-300 px-2 text-xs" placeholder="e.g. Zelle to Dreamline belongs on Relay/Dreamline payables" data-testid="reclassify-reason" />
             </label>
-            {applyMut.error ? <div className="mt-2"><ListErrorState message={formatQueryErrorDetail(applyMut.error)} /></div> : null}
+            {applyMut.error ? <div className="mt-2"><ListErrorState {...formatQueryErrorDetail(applyMut.error)} onRetry={() => applyMut.reset()} /></div> : null}
             <div className="mt-3 flex justify-end gap-2">
               <Button type="button" variant="tertiary" onClick={() => setModalOpen(false)}>Cancel</Button>
               <Button type="button" loading={applyMut.isPending} disabled={reason.trim().length < 3 || (!toAccount && !toClass && !toVendor)} onClick={() => applyMut.mutate()} data-testid="reclassify-apply">Apply</Button>
