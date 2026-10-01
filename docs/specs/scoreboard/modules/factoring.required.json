@@ -278,6 +278,22 @@
       ]
     },
     {
+      "id": "factoring.tab.submit_to_factor",
+      "tab": "Submit Invoice",
+      "sub": "Submit to Factor tab (ROUND 315 step 3): every open invoice, select -> purchase document through the secured-borrowing poster, Save / Save and send, Owner override for missing docs",
+      "route_hint": "/factoring/submit",
+      "surface_kind": "tab",
+      "surface_path": "pages/factoring/SubmitToFactorTab.tsx",
+      "required": [
+        "customer",
+        "load",
+        "invoice",
+        "qbo_chrome",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
       "id": "batches.create",
       "tab": "Batch wizard",
       "sub": "Create factoring batch",

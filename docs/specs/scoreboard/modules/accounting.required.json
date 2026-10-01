@@ -1069,6 +1069,23 @@
       ]
     },
     {
+      "id": "accounting.parity.lease_contract_creator",
+      "tab": "Parity / side panels",
+      "sub": "ParityDrawer site: Lease Contract Creator (ROUND 316: multi-select units/trailers, lessor vendor, monthly bill engine; Owner-only)",
+      "route_hint": "surface://components/leases/LeaseContractCreator.tsx",
+      "surface_kind": "parity_site",
+      "surface_path": "components/leases/LeaseContractCreator.tsx",
+      "required": [
+        "vendor",
+        "unit",
+        "trailer",
+        "ap_bill",
+        "gl_je",
+        "connectivity",
+        "reverse_link"
+      ]
+    },
+    {
       "id": "accounting.modal.bill_payment",
       "tab": "Modals",
       "sub": "Modal: Bill Payment",
