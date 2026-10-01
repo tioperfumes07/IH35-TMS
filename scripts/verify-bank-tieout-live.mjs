@@ -18,6 +18,9 @@ export const ALLOW_OFFLINE_SKIP = "static half authoritative offline; live tie-o
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "..", "..");
 const LABEL = "verify-bank-tieout-live";
+/** Static half always runs and is authoritative offline; live half needs DATABASE_URL. */
+export const ALLOW_OFFLINE_SKIP =
+  "static source-shape check is authoritative offline; live half only reports when DATABASE_URL is set";
 const P = {
   mig: "db/migrations/202615180200_bank_account_tieouts.sql",
   svc: "apps/backend/src/banking/bank-tieout.service.ts",
