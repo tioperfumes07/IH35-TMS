@@ -26,6 +26,7 @@ import {
   type UndepositedReceipt,
 } from "../../api/bankDeposits";
 import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
+import { formatDateUS } from "../../lib/formatDateUS";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
 
@@ -315,7 +316,7 @@ export function MakeDepositPage() {
                             )}
                           </td>
                           <td className="px-2 py-[7px] text-center">{r.payee_name ?? "—"}</td>
-                          <td className="px-2 py-[7px] text-center">{r.receipt_date ?? "—"}</td>
+                          <td className="px-2 py-[7px] text-center">{r.receipt_date ? formatDateUS(r.receipt_date) : "—"}</td>
                           <td className="px-2 py-[7px] text-center">{formatCurrencyFromCents(r.amount_cents)}</td>
                         </tr>
                       );
@@ -528,7 +529,7 @@ export function MakeDepositPage() {
               {(depositsQ.data?.rows ?? []).map((d) => (
                 <tr key={d.id} className="border-b border-[#E5E7EB]">
                   <td className="px-2 py-[7px] text-center"><EntityLink kind="deposit" id={d.id} label={d.display_id} /></td>
-                  <td className="px-2 py-[7px] text-center">{d.deposit_date}</td>
+                  <td className="px-2 py-[7px] text-center">{formatDateUS(d.deposit_date)}</td>
                   <td className="px-2 py-[7px] text-center">{d.bank_account_name ?? "—"}</td>
                   <td className="px-2 py-[7px] text-center">{formatCurrencyFromCents(Number(d.amount_deposited_cents))}</td>
                   <td className="px-2 py-[7px] text-center">
