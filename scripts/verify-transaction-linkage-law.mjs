@@ -195,6 +195,7 @@ export const TABLE_REGISTRY = {
   "fuel.fuel_card_overage_policies": { status: "NOT_TRANSACTIONAL", reason: "config" },
   "fuel.fuel_planner_settings": { status: "NOT_TRANSACTIONAL", reason: "config" },
   "fuel.fuel_transactions": { status: TIER.TIER1, reason: "the purest TIER1 table -- always unit+driver+load" },
+  "fuel.fuel_transaction_derivations": { status: "NOT_TRANSACTIONAL", reason: "1:1 derived attributes (pump time/state from stop dwell + geofence); PK = FK to fuel.fuel_transactions, which carries the TIER1 linkage" },
   "fuel.load_fuel_cost": { status: "OUT_OF_SCOPE", reason: "derived/aggregated rollup, not itself a transaction" },
   "fuel.loves_prices_daily": { status: "NOT_TRANSACTIONAL", reason: "reference price feed" },
   "fuel.tank_events": { status: "NOT_TRANSACTIONAL", reason: "operational telemetry, no cost column" },

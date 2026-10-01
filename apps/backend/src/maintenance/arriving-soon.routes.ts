@@ -4,6 +4,37 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { computePmDueEngineForCompany, type PmDueEngineRow } from "./pm-due-engine.service.js";
+
+/**
+ * The most urgent PM row per unit: a dated/overdue row beats an undated one, then fewest miles to due.
+ * Rows E-15 refused (no baseline, ABSENT odometer, days interval) stay available for their reason.
+ */
+export function soonestPmDueByUnit(rows: PmDueEngineRow[]): Map<string, PmDueEngineRow> {
+  const out = new Map<string, PmDueEngineRow>();
+  const rank = (r: PmDueEngineRow) => (r.miles_to_due != null ? 0 : 1);
+  for (const r of rows) {
+    const cur = out.get(r.unit_id);
+    if (!cur) { out.set(r.unit_id, r); continue; }
+    if (rank(r) < rank(cur) || (rank(r) === rank(cur) && (r.miles_to_due ?? Infinity) < (cur.miles_to_due ?? Infinity))) out.set(r.unit_id, r);
+  }
+  return out;
+}
+
+/** Card fields for "PM due on arrival". Existing keys kept; null is honest, with the reason beside it. */
+export function pmDueFields(r: PmDueEngineRow | null) {
+  return {
+    pm_due_label: r?.label ?? null,
+    pm_next_due_odometer:
+      r?.miles_to_due != null && r.current_odometer != null ? Math.round(r.current_odometer + r.miles_to_due) : null,
+    pm_has_baseline: r?.last_service_odometer != null,
+    pm_current_odometer: r?.current_odometer ?? null,
+    pm_odometer_source: r?.current_odometer_source ?? null,
+    pm_miles_to_due: r?.miles_to_due ?? null,
+    pm_projected_due_date: r?.projected_due_date ?? null,
+    pm_due_reason: r ? r.reason : "no active PM schedule for this unit",
+  };
+}
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -95,7 +126,11 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
       const res = await client.query(
         `
           SELECT v.*, gvs.current_state AS geofence_state, gvs.distance_m AS geofence_distance_m,
-                 gvs.state_updated_at AS geofence_state_updated_at
+                 gvs.state_updated_at AS geofence_state_updated_at,
+                 -- the lateral's columns must be SELECTed -- v_arriving_soon has no id/display_id/
+                 -- status/wo_title, so these card fields were always null before (measured 2026-10-01).
+                 openwo.id::text AS open_wo_id, openwo.display_id AS open_wo_display_id,
+                 openwo.status::text AS open_wo_status, openwo.wo_title AS open_wo_title
           FROM maintenance.v_arriving_soon v
           -- ROUND 301 T-34 -- "units inbound, ETA, geofence state, what is due on arrival."
           -- Latest geofence state for this unit, across every geofence it has ever approached
@@ -110,20 +145,6 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
             ORDER BY g.state_updated_at DESC
             LIMIT 1
           ) gvs ON true
-          -- ROUND 303 T-42 -- "what PM or work order is due on arrival." The soonest active
-          -- miles-based PM schedule for this unit (never a sample/test unit, same law as
-          -- Round 303 T-37's PM-writer fix), ranked by next_due_odometer.
-          LEFT JOIN LATERAL (
-            SELECT ps.label, ps.next_due_odometer, ps.last_service_odometer
-            FROM maintenance.pm_schedules ps
-            JOIN mdata.units pu ON pu.id = ps.unit_id AND COALESCE(pu.is_sample_data, false) = false
-            WHERE ps.unit_id = v.unit_id
-              AND ps.operating_company_id = v.operating_company_id
-              AND ps.is_active = true
-              AND ps.interval_kind = 'miles'
-            ORDER BY COALESCE(ps.next_due_odometer, 2147483647) ASC
-            LIMIT 1
-          ) pm ON true
           -- Any OPEN work order already sitting against this unit -- so "what's due on arrival"
           -- includes an already-known repair, not only a future PM projection.
           LEFT JOIN LATERAL (
@@ -147,6 +168,11 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
         `,
         values
       );
+
+      // E-14 addition (registry 2026-10-01): "what PM is due on arrival" comes from E-15 -- the one PM
+      // due engine (shared odometer loader, shared ABSENT-baseline rule) -- never a second projection.
+      const pmDue = await computePmDueEngineForCompany(client as never, q.operating_company_id);
+      const pmByUnit = soonestPmDueByUnit(pmDue);
 
       const cards = res.rows.map((row: Record<string, unknown>) => {
         const issues = (Array.isArray(row.issues_json) ? row.issues_json : []) as Array<{ issue_type?: string; severity?: string }>;
@@ -174,14 +200,11 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
         // ROUND 303 T-42 -- what PM or work order is due on arrival. Null is honest (no active
         // miles-based schedule, or no last_service_odometer baseline on file yet -- Round 303
         // T-37's own placeholder-baseline rule applies here too: never guess a due state).
-        pm_due_label: row.label ?? null,
-        pm_next_due_odometer: row.next_due_odometer != null ? Number(row.next_due_odometer) : null,
-        pm_has_baseline:
-          row.last_service_odometer != null && Number(row.last_service_odometer) > 1,
-        open_work_order_id: row.id ?? null,
-        open_work_order_display_id: row.display_id ?? null,
-        open_work_order_status: row.status ?? null,
-        open_work_order_title: row.wo_title ?? null,
+        ...pmDueFields(pmByUnit.get(String(row.unit_id)) ?? null),
+        open_work_order_id: row.open_wo_id ?? null,
+        open_work_order_display_id: row.open_wo_display_id ?? null,
+        open_work_order_status: row.open_wo_status ?? null,
+        open_work_order_title: row.open_wo_title ?? null,
         issues,
         severe_count: Number(row.severe_count ?? 0),
         warning_count: Number(row.warning_count ?? 0),
