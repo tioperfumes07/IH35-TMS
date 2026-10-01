@@ -1464,3 +1464,21 @@ invoice ids, JEs and I2 = 13/13.
 Note on the latch: the stuck `delivery_invoice_convert_send` transaction (pid 27664, 16:23:59Z, blocked revrec pid 24485) ended by itself
 at ~16:28:40Z, after the 16:27Z deploy cutover; I terminated nothing. Defect for the dispatch lane stands (entry above).
 Correction to the entry above: AUTH-194's PR is #23808 (as written — verified).
+
+## 2026-10-01 16:45Z — ROUND 315 step 2: one DECISION conflict before the posting engine (building the document meanwhile)
+
+Step 2 says the purchase posts "DR Factoring Advance receivable/undeposited, DR escrow reserve, DR cash reserve, DR fee, DR wire fee,
+**CR A/R per invoice**". The live engine and the owner-locked accounting model (skill §D, questionnaire v3: "Factoring — secured
+borrowing / recourse (ASC 860), NOT a sale: … A/R stays on books, no derecognition") post funding as:
+DR 1090 cash clearing (net) + DR 1230 escrow reserve + DR 1235 cash reserve + DR 6400 fee + DR 6300 wire fee / **CR 2150 Factoring
+Advance (liability, full invoice total)**; A/R goes down only when the debtor pays (DR 2150 / CR 1100) — `poster.service.ts:1-14, :976`,
+guarded by verify-factoring-treatment. "CR A/R per invoice" at purchase is the SALE model (derecognition) — it would reverse §D.
+
+**Question:** keep secured borrowing (A/R stays until the customer pays; the purchase lines carry the per-invoice A/R link, not a
+credit) — or switch to sale treatment (CR A/R per invoice at purchase)? Until answered I build the purchase document (header + lines
+per invoice, escrow and cash reserve as two columns, links invoice ↔ purchase ↔ load ↔ settlement ↔ customer ↔ bank) on the EXISTING
+poster (secured borrowing), which reuses all GL math and changes nothing if you confirm §D.
+
+Also found while mapping (will fix inside step 2): the Faro CSV import stamps `faro_purchase_date` from the line's `due_on`
+(`faro-csv-import.ts:724`) and never passes `cash_rsv_cents` to the poster; the Reserve tab reads the legacy `factoring.reserve_movement`
+(no GL) — step 6's "every tab reads the LEDGER" covers it.
