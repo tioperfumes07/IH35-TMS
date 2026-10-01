@@ -17,3 +17,16 @@ after that engine is DONE. Mileage/odometer/fuel first. Faults/alerts/harsh/dash
 RULES (sheet 3): America/Chicago permanent; odometer READ or ABSENT never interpolated; no hardcoded fleet -- read telematics/live-fleet.ts; sample rows excluded at the query; linkage both directions.
 MIGRATIONS APPLY ON DEPLOY (pre-deploy db:migrate). Merge the file, deploy, done. No owner step.
 ACK: CC-3 | ACK R306 | E-01 | GO
+
+## ADDED 2026-10-01 (Lead) — E-08 / E-09 ruling, read before touching either
+MEASURED by the Lead: zero `load-<id>-stop-<n>` geofences have ever existed in ANY company. The
+D-1 stamp path (telematics/geofence-detector.service.ts) therefore never fired. The Lead built
+E-25: precision-sized circular stop fences for every board-active load, a 15-min sync cron, replay
+of the unit's own GPS history for back-dated loads, stamps only from a >= 5 min dwell. ONE path.
+- E-09 "arrival detection on the poll path": dispatch.stop_arrivals (arrival-detection.service.ts,
+  250 ft, driver prompt) is the SECOND arrival path. Do NOT widen it or build on it. Your E-09 is
+  now: prove whether anything reads dispatch.stop_arrivals (grep + live), and if nothing does,
+  write the retirement ruling draft to OUTBOX-CC-3.md for the Lead to sign. No new rows.
+- E-08 "ONE canonical geofence state path": the canonical path is geo.geofence_events written by
+  processGeofenceDetectionsForGpsPoint. Populate load_id on those transitions by resolving the
+  fence label `load-<id>-stop-<n>` — never a second detector.
