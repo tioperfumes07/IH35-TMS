@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { requireFactoringPurchaseOwner } from "./owner-only-purchase.js";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
@@ -69,6 +70,17 @@ export async function registerSubmissionQueueRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     const { operating_company_id, invoice_ids } = body.data;
+    // ROUND 315 OWNER-ONLY LAW: submitting a purchase report to the factor is the Owner's act (403 + audit row).
+    const ownerOk = await withCompanyScope(user.uuid, operating_company_id, (client) =>
+      requireFactoringPurchaseOwner(reply, client, {
+        operatingCompanyId: operating_company_id,
+        userUuid: user.uuid,
+        role: String(user.role ?? ""),
+        action: "create",
+        targetId: null,
+      })
+    );
+    if (!ownerOk) return;
 
     type DocError = { ok: false; code: string; items: Array<{ invoice_id: string; display_id: string | null; missing_docs: string[] }> };
     type BatchOk = { ok: true; batch: unknown };

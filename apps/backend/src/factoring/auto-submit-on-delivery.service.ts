@@ -70,7 +70,15 @@ export function computeFactoringSubmitAmounts(pledgeCents: number, reservePct: n
  * (purchase). Never throws — swallow-and-log to match the revenue latch: a factoring hiccup must
  * never 500 a driver's "I delivered" tap.
  */
+// ROUND 315 OWNER-ONLY LAW (owner, 2026-10-01 16:05Z) SUPERSEDES the 2026-09-09 auto-purchase ruling above: "NO coder
+// creates, closes or matches a purchase — the owner creates every purchase report himself in the app." A purchase born
+// from a delivery latch is not the owner's act, so this path never creates one; delivered invoices wait on the Submit
+// Invoice tab for the owner. Kept as a named no-op (not deleted) so every caller's reason handling stays wired.
+export const AUTO_SUBMIT_REFUSED_REASON = "factoring_purchase_owner_only";
+const FACTORING_PURCHASE_IS_OWNER_ONLY: boolean = true;
+
 export async function autoSubmitDeliveredLoadToFactor(input: AutoSubmitInput): Promise<AutoSubmitResult> {
+  if (FACTORING_PURCHASE_IS_OWNER_ONLY) return { submitted: false, reason: AUTO_SUBMIT_REFUSED_REASON };
   try {
     return await withCompanyScope(input.actorUserId, input.operatingCompanyId, async (client) => {
       const oci = input.operatingCompanyId;
