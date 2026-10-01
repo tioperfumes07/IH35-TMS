@@ -1588,3 +1588,13 @@ audit 4bf5bfe9.
 **Open for the owner:** 13513/13515 (two real trips, one $525 billing?) · which of 237 transport/trucking/express names are also Brokers.
 **Next (CC-2 factoring scope, ROUND 315 steps 4–8):** invoice posting law check on create paths, Payments to You per wire, tabs root fixes +
 Escrow tab, Home KPIs + cash flow per day, reserves/deductions shared with banking — every tab reads the LEDGER.
+
+## 2026-10-01 18:55Z — Owner override approval + Faro actuals per invoice LIVE (#23878, ACCT-F9620)
+Live proof: deploy 487333ab51 healthy; accounting.factoring_purchases.docs_override_at / _by_user_id / _reason present 18:53Z (migration 202615190800).
+**Override approval:** Save and send with missing BOL / POD / rate con proceeds only with an Owner reason (>= 10 chars), stamped on the purchase +
+audit row `accounting.factoring_purchase_docs_override_approved`; without a reason it is refused as before (guard 12067 pins it).
+**Cash reserve rates (owner asked; CPA file):** contract = ONE 1.5% Security Reserve per invoice (CPA ANSWERS.docx). Faro's 89 purchases (PURCHASE REPORT
+ALL.csv): fee 1.5% 89/89; reserve 1.5% 86/89 — Escrow Rsv on 83, Cash Rsv on 6, never both. App rates (factor + canonical agreement: reserve 1.5%, fee 1.5%)
+already match; no rate change. New per-invoice actuals editor (escrow / cash reserve / fee + "Reserve in cash") records Faro's bucket on each line.
+Local gate exit 0. Report-only reds noted (not CC-2): purge-era closure 21 — A/R vs open invoices gap $20,800 = the five line-less invoices
+13616/13618/13620/13621/13622 (Lead's repair script, held by the no-feed rule); closure 39 — 17 loads missing mileage (dispatch).
