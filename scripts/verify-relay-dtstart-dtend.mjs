@@ -60,7 +60,8 @@ function fetchAllInFnPassesDates(source, fnName) {
   return /fetchAllRelayFuelTransactions\(\s*entityCode\s*,[\s\S]*?startDate[\s\S]*?endDate[\s\S]*?\)/.test(body);
 }
 
-if (!fetchAllInFnPassesDates(cron, "initializeRelayFuelIngestCron")) {
+// The daily tick body lives in runRelayFuelIngestTick (the cron and the on-demand runner both call it).
+if (!fetchAllInFnPassesDates(cron, "runRelayFuelIngestTick")) {
   failures.push(
     "daily cron must call fetchAllRelayFuelTransactions(entityCode, { startDate, endDate }) — bare call = full dump every night"
   );
