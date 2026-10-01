@@ -31,6 +31,15 @@ export type SamsaraHosDriverLogs = { driverId: string; logs: SamsaraHosLog[] };
 // Samsara's COMPUTED HOS clocks (GET /fleet/hos/clocks) — DOT-certified remaining, displayed verbatim (Blueprint
 // §3.15.9.2). Durations are ms in the API; we convert to minutes. cycle_started_at distinguishes a real 34h restart
 // (Samsara legitimately returns a fresh 70h) from a default reading for a driver who is off the clock.
+/** ROUND 304 T-47 -- GET /fleet/hos/daily-logs, fields probed live 2026-10-01 (not guessed):
+ *  driver.id, startTime, endTime, distanceTraveled.driveDistanceMeters. No vehicle on the row. */
+export type SamsaraHosDailyLog = {
+  samsara_driver_id: string;
+  start_time: string;
+  end_time: string;
+  drive_distance_meters: number | null;
+};
+
 export type SamsaraHosClocks = {
   driverId: string;
   cycle_remaining_min: number | null;
@@ -669,6 +678,50 @@ export class SamsaraClient {
 
   /** Samsara's COMPUTED HOS clocks per driver (GET /fleet/hos/clocks). Scope-confirmed live (200, 468 drivers).
    *  Durations are ms; converted to minutes. Scoped to driverIds (the active board drivers). */
+  /** ROUND 304 T-47 -- per-driver per-day HOS drive distance, the independent second signal for
+   *  driven miles per leg. startDate/endDate are YYYY-MM-DD. */
+  async listHosDailyLogs(startDate: string, endDate: string): Promise<SamsaraHosDailyLog[]> {
+    const token = this._token();
+    if (!token) return [];
+    const out: SamsaraHosDailyLog[] = [];
+    // Samsara 400s with "endDate must be on or before the current date" -- current date in the org's
+    // timezone (America/Chicago for this fleet), not UTC. Clamp, never fail the whole pull.
+    const orgToday = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago" }).format(new Date());
+    const end = endDate > orgToday ? orgToday : endDate;
+    if (startDate > end) return [];
+    let after: string | null = null;
+    for (let page = 0; page < 200; page += 1) {
+      const url = new URL(`${SAMSARA_API_BASE}/fleet/hos/daily-logs`);
+      url.searchParams.set("startDate", startDate);
+      url.searchParams.set("endDate", end);
+      if (after) url.searchParams.set("after", after);
+      let res: Response;
+      try {
+        // Measured live: a 16-day window's first page takes ~8 s, so the default 12 s timeout aborts
+        // later pages. 30 s for this endpoint only.
+        res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }, 30_000));
+      } catch (error) {
+        throw new SamsaraApiError(`samsara_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
+      }
+      const json = await readJsonResponse(res);
+      if (!res.ok) throw new SamsaraApiError(`samsara_hos_daily_logs_http_${res.status}`, res.status, json, res.status === 429 || res.status >= 500);
+      const rows = Array.isArray(json.data) ? json.data : [];
+      for (const row of rows) {
+        const r = row as Record<string, unknown>;
+        const driver = (r.driver ?? {}) as Record<string, unknown>;
+        const dist = (r.distanceTraveled ?? {}) as Record<string, unknown>;
+        const id = driver.id == null ? "" : String(driver.id);
+        if (!id || typeof r.startTime !== "string" || typeof r.endTime !== "string") continue;
+        const meters = Number(dist.driveDistanceMeters);
+        out.push({ samsara_driver_id: id, start_time: r.startTime, end_time: r.endTime, drive_distance_meters: Number.isFinite(meters) ? meters : null });
+      }
+      const { hasNextPage, cursor } = parsePagination(json);
+      if (!hasNextPage || !cursor) break;
+      after = cursor;
+    }
+    return out;
+  }
+
   async listHosClocks(driverIds?: string[]): Promise<SamsaraHosClocks[]> {
     const token = this._token();
     if (!token) return [];

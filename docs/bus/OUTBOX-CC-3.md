@@ -928,3 +928,27 @@ Samsara never had.
 NOT APPLIED: populating integrations.samsara_addresses and setting links is a production write --
 needs an owner AUTH id. Run: runGeofenceAddressLink({ operatingCompanyId, apply: { authId } }).
 GUARD: scripts/verify-geofence-samsara-link-never-guesses.mjs + --selftest.
+
+## CC-3 — ROUND 304 T-47 SHIPPED — real driven miles per leg, never interpolated, HOS as second signal
+
+The Lead's "301/299 crossings carry odometer" counts T-21's 'interpolated' captures -- a straight
+line between two readings that can be hours apart. T-47 forbids interpolation, so the honest
+denominator is real_obd only (within 120 s of the crossing): since 09-15, 13 fuel-stop entries and
+14 exits.
+ENGINE: apps/backend/src/telematics/driven-miles-legs.service.ts -- leg = EXIT a stop -> next ENTRY;
+miles = entry odometer - exit odometer (cumulative counter, exact between two real reads). NULL with
+reason: exit/entry_odometer_interpolated, exit/entry_odometer_absent, odometer_went_backwards,
+implausible_average_speed (>85 mph avg: ECU swap/reset). Sample units excluded. Driver-at-time via
+driverAtTimeSql; samsara_driver_id from mdata.drivers OR the integrations.samsara_drivers mirror.
+SECOND SIGNAL: new SamsaraClient.listHosDailyLogs() -- fields probed live (driver.id, startTime,
+endTime, distanceTraveled.driveDistanceMeters; no vehicle on the row). Two live API behaviours
+handled, not guessed: endDate must be <= TODAY IN THE ORG TIMEZONE (America/Chicago) or it 400s;
+a 16-day window's first page takes ~8 s, so this endpoint gets a 30 s timeout (default 12 s aborted).
+GET /api/v1/telematics/driven-miles-legs?operating_company_id=&from=&to= (read-only).
+LIVE (USMCA, 2026-09-15..10-01, nothing written): 330 legs; 9 with exact real miles = 792.7 mi;
+321 NULL (285 exit interpolated, 36 exit absent). HOS cross-check ran on 2 legs (47.1 and 80.0 mi
+vs 405 HOS drive miles that driver-day: consistent, 0 exceed); 7 blocked by no driver-at-time --
+the same assignment-coverage gap T-23 measured (47.6%).
+WHAT WOULD RAISE THE 9: more crossings within 120 s of a real odometer read. Not by loosening the
+rule -- by a denser odometer feed (T147/T170/T173's 08-26 dropout is the owner's Samsara-side fix).
+GUARD: scripts/verify-driven-miles-legs-never-interpolate.mjs + --selftest.
