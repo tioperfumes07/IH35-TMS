@@ -1165,3 +1165,22 @@ units measurable, 122,154.5 real driven mi. 0 bills linked to work orders (maint
 reason, not $0.
 **finding for owner:** Samsara odometer feed gap 2026-08-26..09-29 (positions without odometer) — real miles for
 that window cannot be recovered from GPS without interpolation, which the law forbids.
+## 2026-10-01 06:10Z — Lead items 4 + 5
+
+**4. Migrations ledger (prod `ih35_migrations.applied_migrations`, read after the 05:47Z deploy):**
+```
+202615120000_work_orders_reported_in_shop_expected_release.sql   applied_at 2026-10-01T04:27:41Z
+202615140000_units_vehicle_type_vocabulary.sql                   applied_at 2026-10-01T05:38:08Z
+```
+Effective, not just ledgered: `maintenance.work_orders` has `reported_at, in_shop_at, expected_release_at`;
+`units_vehicle_type_vocabulary_check` exists with `convalidated = true`.
+
+**5. Neon branch sweep — re-verified 06:00Z:** `list_branches` returns **84** = `production`
+(br-fancy-credit-akjnd07a, primary) + the **same 83** non-production rows listed under "Extra row 9" above
+(owner / purpose / age / size per row). Diff vs that table: 0 added, 0 removed. **KEEP
+br-morning-math-akbxhnmd** (PRE-PURGE-SNAPSHOT-2026-09-23-RUN2-ATOMIC). None of the 83 is CC-1's own (my
+read-only MCP connection cannot create branches), so I delete nothing — the Lead deletes.
+
+**Status of 1–3:** E-15 PM cost per mile → PR #23714. Maintenance money linkage both ways → PR #23720.
+Next money row (three-mile CPM: real driven miles stored on load + leg, CPM per load/unit/driver/lane, MPG on
+both bases) → claim PR #23723, build in progress.
