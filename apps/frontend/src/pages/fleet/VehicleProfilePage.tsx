@@ -20,6 +20,7 @@ import { IdentityStatusHeader } from "../../components/vehicle-profile/IdentityS
 import { MissingRequiredChip } from "../../components/compliance/MissingRequiredChip";
 import { LiveTelemetrySection } from "../../components/vehicle-profile/LiveTelemetrySection";
 import { StopsMilesSection } from "../../components/shared/StopsMilesSection";
+import { TelematicsLinksPanel } from "../../components/telematics/TelematicsLinksPanel";
 import { DriverAssignmentSection } from "../../components/vehicle-profile/DriverAssignmentSection";
 import { CurrentLoadSection } from "../../components/vehicle-profile/CurrentLoadSection";
 import { TripCostCalculator } from "../../components/vehicle-profile/TripCostCalculator";
@@ -544,6 +545,9 @@ export function VehicleProfilePage() {
               contextLabel="this unit"
               data-testid="vehicle-profile-road-service-reverse"
             />
+          </div>
+          <div data-testid="vp-section-10t-telematics-links" className="xl:col-span-2">
+            <TelematicsLinksPanel kind="unit" id={id} operatingCompanyId={companyId} />
           </div>
           <div data-testid="vp-section-10h-maintenance-inspections">
             <UnitMaintenanceInspectionsReverseSection operatingCompanyId={companyId} unitId={id} />

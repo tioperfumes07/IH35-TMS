@@ -1471,3 +1471,20 @@ guard: scripts/verify-driver-prompts-flag-off-idempotent.mjs + --selftest PASS; 
 - **Owner's reconciliation file (`09-30-26-UPDATED FIRST RECONCILIATION.xlsx`, informational only, NOT seeded):**
   - **13638:** Faro inv **112** dated **2026-09-28** ($4,900, SMX14683), not 09-25; T176, flatbed FB-56713, delivered 09-28. This matches the GPS Edison dwell 09-28 14:24–15:10Z.
   - **13625:** Faro inv 103 dated 09-25 ($6,250, LGMX142); T148, reefer 10222, AlwaysTrack delivery 09-28 Breinigsville PA. T148's GPS never reached PA, so the most likely explanation is a trailer 10222 relay or swap to a non-Samsara unit (not verified).
+
+## 2026-10-01 — Reverse linkage reaches the screens (load drawer, truck profile, driver profile)
+
+- **Load drawer mount HELD (pending):** editing LoadDetailDrawer runs `verify-ldt-5-presettlement-readout`, which is red on live data (1 USMCA link-created settlement lacks `settlement_model='load_bookended'`; money lane CC-1). The panel is built and supports `kind="load"`; mounting it is a 3-line change once that guard is green. Planned placement: under the Geofence Timeline tab. It shows 10 sections: stops, driven miles, arrivals, fence state, border crossings, DVIRs, detention, fuel, driver prompts, Samsara route pushes. The owner-locked tab order is unchanged (`verify-ldt-0-tabbar-header` OK).
+- **Truck profile (/fleet/units/:id):** new section `vp-section-10t-telematics-links`. It shows "now on load / driver" from the shared loadAtTimeSql / driverAtTimeSql, then stops, fence crossings with odometer, engine faults, harsh events, DVIRs (as tractor or trailer), fuel and odometer readings, for the last 30 days.
+- **Driver profile:**
+  - Loads tab: truck assignments, stops + miles with the load, fuel, Samsara accounts.
+  - Safety tab: harsh events, DVIRs, engine faults, DOT station stops.
+  - These are the five `/profile/*` endpoints, which nothing on screen called before. The C-20 tab list is unchanged.
+- Every load / unit / driver cell is a drill-through link (EntityLinkOrTombstone), never a uuid. Every table is ParityTable with sortable headers.
+- **Backend fixes:**
+  - Driver stops read is now scoped `operating_company_id = $oc`; before, it was unscoped on an Owner session.
+  - Load numbers added to driver stops and fuel; unit numbers added to harsh events.
+  - Labels (load number, unit number, driver name) added to every reverse-link row.
+- **Guard:** `verify-telematics-linkage-screens-wired` (8 links).
+- **Not certified live.** A live Chrome walk follows the Lead's deploy. Pre-existing reds on main, not this PR: `verify-table-header-and-date-column`, `verify-ui-control-law`, `verify-no-uuid-label-rendering` (they fail on origin/main without these changes).
+- **E-31 readback poller:** not built yet. Samsara holds **0 routes** (`/fleet/routes` empty, `/fleet/routes/audit-logs/feed` empty), so there is nothing to prove the field names against. It gets built once the routes push runs after the deploy.

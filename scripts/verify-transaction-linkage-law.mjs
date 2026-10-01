@@ -166,6 +166,11 @@ export const TABLE_REGISTRY = {
   "accounting.qbo_remote_count_collection_state": { status: "NOT_TRANSACTIONAL" },
   "accounting.qbo_remote_counts": { status: "NOT_TRANSACTIONAL" },
   "accounting.qbo_vendors": { status: "NOT_TRANSACTIONAL" },
+  // Lead's RECLASSIFY engine (migration 202615170000): the batch register + per-line evidence of a bulk
+  // re-categorization. The money moves ONLY in its RECLASSIFICATION journal entries (journal_entries /
+  // journal_entry_postings, the OUT_OF_SCOPE hub above); every line FKs posting_id + reclass_journal_entry_id.
+  "accounting.reclassify_batch_lines": { status: "NOT_TRANSACTIONAL", reason: "reclassify evidence lines -- money lives in the RECLASSIFICATION JE they reference" },
+  "accounting.reclassify_batches": { status: "NOT_TRANSACTIONAL", reason: "reclassify batch register -- money lives in its RECLASSIFICATION JEs" },
   "accounting.recon_exceptions": { status: "NOT_TRANSACTIONAL" },
   "accounting.recon_runs": { status: "NOT_TRANSACTIONAL" },
   "accounting.recurring_bill_generation_log": { status: "NOT_TRANSACTIONAL", reason: "log" },
