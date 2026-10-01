@@ -61,6 +61,8 @@ Touched scripts/-lane files, one per queue item, each its own PR:
 - `scripts/verify-telematics-linkage-screens-wired.mjs` (linkage reverse direction reaches the load / truck / driver screens).
 - `scripts/verify-e05-legs-evidence-chain.mjs` (ROUND 313 E-05: evidence chain + 10-day catch-up with Samsara odometer history).
 - `scripts/verify-samsara-webhook-tenant-resolution.mjs` (ROUND 313 E-13: webhook tenant from payload orgId; verify before persist).
+- `scripts/verify-load-cancellation-reversal-canonical.mjs` (ROUND 313: one canonical undo of a wrong cancellation).
+- `scripts/ops/2026-10-01-cc3-reverse-false-cancellations.mts` (AUTH-192).
 - `scripts/verify-driver-prompts-flag-off-idempotent.mjs` (E-30 addition).
 - further Round 304 guards to follow under this same ruling, named as they land.
 

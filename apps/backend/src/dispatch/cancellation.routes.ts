@@ -8,6 +8,10 @@ import {
   listCancellationReasons,
   listCancellations,
 } from "./cancellation.service.js";
+import { reverseLoadCancellationInClientTx } from "./cancellation-reversal.service.js";
+import { withCurrentUser } from "../auth/db.js";
+import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
+import { DISPATCH_WORK_LOAD_STATUSES } from "./canonical-active-load-set.js";
 
 const loadIdParamsSchema = z.object({ id: z.string().uuid() });
 const cancellationIdParamsSchema = z.object({ id: z.string().uuid() });
@@ -44,6 +48,8 @@ function mapServiceError(error: unknown) {
   if (code === "E_LOAD_NOT_FOUND" || code === "E_NOT_FOUND") return { status: 404, payload: { error: code } };
   if (code === "E_REASON_NOT_FOUND") return { status: 400, payload: { error: code } };
   if (code === "E_OWNER_ONLY") return { status: 403, payload: { error: code } };
+  if (code === "E_REVERSAL_REASON_MIN_10" || code === "E_RESTORE_STATUS_REQUIRED") return { status: 400, payload: { error: code } };
+  if (code === "E_NO_ACTIVE_CANCELLATION" || code === "E_CANCEL_STAMP_NOT_CLEARED") return { status: 409, payload: { error: code } };
   return null;
 }
 
@@ -109,6 +115,30 @@ export async function registerDispatchCancellationRoutes(app: FastifyInstance) {
     const query = listQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
     return listCancellations(user.uuid, query.data);
+  });
+
+  // ROUND 313 — the canonical undo of a wrong cancellation (Owner only). :id is the LOAD.
+  app.post("/api/v1/dispatch/loads/:id/cancellation/reverse", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    if (user.role !== "Owner") return reply.code(403).send({ error: "E_OWNER_ONLY" });
+    const params = loadIdParamsSchema.safeParse(req.params ?? {});
+    const body = z.object({
+      operating_company_id: z.string().uuid(),
+      reason: z.string().trim().min(10),
+      restore_status: z.enum(DISPATCH_WORK_LOAD_STATUSES).optional(),
+    }).safeParse(req.body ?? {});
+    if (!params.success || !body.success) return reply.code(400).send({ error: "validation_error" });
+    try {
+      return await withCurrentUser(user.uuid, async (client) => {
+        await setScopedCompanyContext(client, user.uuid, body.data.operating_company_id);
+        return reverseLoadCancellationInClientTx(client as never, user.uuid, { load_id: params.data.id, ...body.data });
+      });
+    } catch (error) {
+      const mapped = mapServiceError(error);
+      if (mapped) return reply.code(mapped.status).send(mapped.payload);
+      throw error;
+    }
   });
 
   app.post("/api/v1/dispatch/load-cancellations/:id/approve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {

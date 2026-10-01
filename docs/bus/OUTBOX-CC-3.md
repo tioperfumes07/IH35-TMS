@@ -1540,3 +1540,13 @@ guard: scripts/verify-driver-prompts-flag-off-idempotent.mjs + --selftest PASS; 
 - **After deploy, to confirm live:**
   - `integrations.samsara_webhook_events` rows arriving with `signature_valid`. If audit `integrations.samsara_webhook_signature_invalid` appears instead, the stored/env `SAMSARA_WEBHOOK_SECRET` does not match the secret Samsara holds for this webhook. That is a config value only the owner can set in Render; I won't touch secrets.
   - The projection has no GeofenceEntry/GeofenceExit handler yet, so those rows dead-letter `mirror_table_missing` after they are stored. Feeding them to the canonical fence detector is the next E-13 step.
+## 2026-10-01 ROUND 313 item 5 — canonical cancellation reversal (13625 / 13627 / 13638)
+
+- **Root cause:** there was no canonical way to undo a cancellation. In ROUND-155.26 a one-off script put the status back but left `load_cancellations` at 'approved', and the 0281 trigger's stamp stayed on the load.
+- **Built:**
+  - Migration 202615180900 (claim #23786): status 'reversed' plus reversed_at, reversed_by and reversal_reason. The trigger now clears this cancellation's stamp on reversal.
+  - `cancellation-reversal.service.ts` and `POST /api/v1/dispatch/loads/:id/cancellation/reverse` (Owner only).
+  - Guard `verify-load-cancellation-reversal-canonical`.
+- **Rolled-back proof on prod**, migration applied in the transaction: 13625 / 13627 / 13638 → canceled_at NULL, status stays 'dispatched'. A second reversal is refused (E_NO_ACTIVE_CANCELLATION).
+- **AUTH-192 is OPEN.** The script `scripts/ops/2026-10-01-cc3-reverse-false-cancellations.mts` runs after the deploy applies 202615180900: dry run, then `--apply --auth AUTH-192`, one audit row per load plus the batch row.
+- **Not done, by design:** status 'delivered'. The canonical delivered transition stamps now() as the delivery departure and creates driver-bill artifacts. The owner said they will enter these loads' delivery themselves.
