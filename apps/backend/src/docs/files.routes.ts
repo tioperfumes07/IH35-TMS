@@ -58,6 +58,8 @@ const SUPPORTED_LINK_ENTITY_TYPES = [
   "expense",
   "bill",
   "cash_advance",
+  // ORDERS-2026-10-01 MAINTENANCE — WO documents (migration 202610011200).
+  "work_order",
 ] as const;
 
 const idParamSchema = z.object({ file_id: z.string().uuid() });
@@ -82,6 +84,7 @@ const entityTypeSchema = z.enum([
   "expense",
   "bill",
   "cash_advance",
+  "work_order",
 ]);
 
 function optionalQueryString() {
@@ -320,6 +323,17 @@ async function ensureLinkEntityExists(
     // terminal exclusion (matches AdvanceDetailDrawer.tsx's own reverseCashAdvance action).
     const res = await client.query(
       "SELECT id FROM driver_finance.driver_advances WHERE id = $1 AND operating_company_id = $2::uuid AND disbursement_status <> 'reversed' LIMIT 1",
+      [entityId, operatingCompanyId]
+    );
+    return res.rows.length > 0;
+  }
+  if (entityType === "work_order") {
+    // ORDERS-2026-10-01 — maintenance.work_orders; exclude voided/cancelled (void-never-delete).
+    const res = await client.query(
+      `SELECT id FROM maintenance.work_orders
+       WHERE id = $1 AND operating_company_id = $2::uuid
+         AND voided_at IS NULL AND cancelled_at IS NULL
+       LIMIT 1`,
       [entityId, operatingCompanyId]
     );
     return res.rows.length > 0;

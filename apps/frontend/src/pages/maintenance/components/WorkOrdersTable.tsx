@@ -220,7 +220,7 @@ export function WorkOrdersTable({
         render: (row) => money((row as Record<string, unknown>).total_actual_cost),
       },
       // ORDERS-2026-10-01 MAINTENANCE — three dates as columns (not notes).
-      // Reported = opened_at; In shop = work_started_at; Expected release = pending CC-1 E-16 column.
+      // Reported = opened_at; In shop = work_started_at; Expected release = expected_release_at (E-16).
       {
         key: "opened_at",
         label: "Reported",
@@ -240,14 +240,7 @@ export function WorkOrdersTable({
         label: "Expected release",
         sortable: true,
         sortValue: (row) => woSortValue(row, "expected_release_at"),
-        render: (row) =>
-          row.expected_release_at ? (
-            formatDateQboList(row.expected_release_at) || "—"
-          ) : (
-            <span className="text-slate-500" title="Expected release date column pending from accounting seat E-16">
-              pending CC-1
-            </span>
-          ),
+        render: (row) => (row.expected_release_at ? formatDateQboList(row.expected_release_at) || "—" : "—"),
       },
       { key: "timing", label: "Timing", sortable: false, render: (row) => renderDuration(row) },
     ],

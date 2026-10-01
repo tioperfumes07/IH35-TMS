@@ -42,6 +42,7 @@ import { SevereAlertsBand } from "./components/SevereAlertsBand";
 import { IntegrationsStrip } from "./components/IntegrationsStrip";
 import { MaintKpiRows } from "./components/MaintKpiRows";
 import { MaintenancePmCountdownCards } from "./components/MaintenancePmCountdownCards";
+import { MaintEnginesStatusWidget } from "./components/MaintEnginesStatusWidget";
 import { MaintenanceAlertsCard } from "./components/MaintenanceAlertsCard";
 import { PartsInventoryTable } from "./components/PartsInventoryTable";
 import { QuickActionsBar } from "./components/QuickActionsBar";
@@ -516,6 +517,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
                 <MaintenancePmCountdownCards rows={pmDueQuery.data?.rows ?? []} loading={pmDueQuery.isLoading} compact />
               )
             ) : null}
+            {companyId ? <MaintEnginesStatusWidget operatingCompanyId={companyId} /> : null}
             {companyId ? <MaintenanceAlertsCard operatingCompanyId={companyId} compact /> : null}
             {companyId ? (
               <DtcAutoWorkOrdersCard operatingCompanyId={companyId} compact onOpen={(id) => setSelectedWorkOrderId(id)} />
