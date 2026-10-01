@@ -6442,3 +6442,27 @@ deltas are exactly the four duplicates ($6,115 + $4,150 + $4,120 + $3,200 = $17,
 
 THIS AUTHORIZATION DOES NOT COVER: the twins, any other advance, any invoice, any JE not written by
 the void engine itself, or the R-191 unvoid writer (that is a code fix, filed separately).
+
+## AUTH-182
+issued_at: 2026-10-01T04:17:10Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). accounting.factoring_advances row
+  f2feaa5e-a306-4fe2-88d3-dadf64d766be (FAC-2026-00001, Faro inv 3, purchase 2026-08-10, $2,500.00):
+  one funding JE re-posted through postFactoringAdvanceEventInClientTx with the exact figures of the
+  reversed JE 3a231533 (1090 $2,415.00 / 1230 $30.90 / 6400 $44.10 / 6300 $10.00 / 2150 $2,500.00);
+  the 2026-09-30 default-interest accrual row deleted (its JE 2b4087a9 was reversed) and re-posted
+  through postFactoringDefaultInterestAccrualEventInClientTx. No other row, no header change.
+action: restore the ledger a coder's "A-10 round-trip proof (rehearsal branch only)" destroyed when it
+  ran against PRODUCTION on 2026-09-30T11:15:17Z (system actor) -- it reversed the live funding and
+  day-51 interest and never re-posted, leaving a live header with no ledger (the only one in USMCA,
+  measured live; verify-no-document-without-a-ledger red for every migration PR).
+  Script of record: scripts/ops/2026-10-01-lead-auth182-repost-fac-00001.ts (refuses unless the header
+  is exactly as measured and 0 live tagged postings exist; asserts the new JE's lines equal the reversed one).
+expires_at: 2026-10-02T04:17:10Z
+status: OPEN
+
+OWNER ORDER, verbatim, 2026-10-01 (after the Lead laid out exactly this repost and asked for one word):
+> "lets go, ok contfix the issues, permante soutions and fixes only."
+> "recordsk , get al lcoders buikding noni stop, go let sgo. all yo you."
+
+THIS AUTHORIZATION DOES NOT COVER: any other advance, any header field, the rehearsal script's author
+(filed as a finding: a rehearsal must never hold a production connection string).
