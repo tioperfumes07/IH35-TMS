@@ -1,4 +1,9 @@
 {
+  "12043": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-fuel-fraud-recovery-chain: confirm-fraud opens (or reuses) the purchase recovery event through the overage engine, never posts on its own, refuses with a reason when there is no driver or another recovery is open; alerts reach recovered only when the receivable posts."
+  },
   "12039": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-01",
