@@ -1,4 +1,4 @@
-import { decryptSamsaraSecret } from "../../lib/samsara-crypto.js";
+import { resolveSamsaraApiToken } from "./samsara-token.js";
 import { SamsaraClient } from "./samsara-client.js";
 import { createHash } from "node:crypto";
 import { loadSamsaraVehicleIdsByUnit } from "./fuel-purchase-push.service.js";
@@ -177,9 +177,8 @@ async function samsaraClientFor(client: RouteDbClient, operatingCompanyId: strin
     [operatingCompanyId]
   );
   const cfg = config.rows[0];
-  const token = cfg ? encryptedToken(cfg) : null;
-  if (!cfg || !token) throw new Error("samsara_not_configured");
-  return new SamsaraClient({ apiToken: decryptSamsaraSecret(token), samsaraOrgId: String(cfg.samsara_org_id ?? "") || null });
+  if (!cfg) throw new Error("samsara_not_configured");
+  return new SamsaraClient({ apiToken: resolveSamsaraApiToken(cfg), samsaraOrgId: String(cfg.samsara_org_id ?? "") || null });
 }
 
 export async function pushLeaseScopedDispatchedRoute(client: RouteDbClient, operatingCompanyId: string, loadId: string) {

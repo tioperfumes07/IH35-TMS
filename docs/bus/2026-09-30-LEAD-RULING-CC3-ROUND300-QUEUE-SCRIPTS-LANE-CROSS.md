@@ -50,6 +50,7 @@ Touched scripts/-lane files, one per queue item, each its own PR:
 - `scripts/verify-e29-fences-fire-and-status-switch-flag-off.mjs` (Round 306 E-29).
 - `scripts/verify-samsara-routes-push-real-ids-flag-off.mjs` (Round 306 E-31).
 - `scripts/verify-samsara-driver-messaging-flag-off-one-store.mjs` (Round 306 E-30).
+- `scripts/verify-samsara-one-token-path-and-measured-shapes.mjs` (Round 306 E-10..E-12).
 - further Round 304 guards to follow under this same ruling, named as they land.
 
 No money-app posting path touched (NON-FINANCIAL lane -- measurement/reporting guards, a

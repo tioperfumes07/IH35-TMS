@@ -3,7 +3,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
-import { decryptSamsaraSecret } from "../lib/samsara-crypto.js";
+import { resolveSamsaraApiToken } from "../integrations/samsara/samsara-token.js";
 import { SamsaraClient } from "../integrations/samsara/samsara-client.js";
 import { getSamsaraConfigForCompany } from "../integrations/samsara/samsara.service.js";
 import { computeIftaMiles } from "./ifta-miles.service.js";
@@ -37,9 +37,8 @@ export async function registerIftaMilesRoutes(app: FastifyInstance) {
         period: { year: q.data.year, month: q.data.month, quarter: q.data.quarter as 1 | 2 | 3 | 4 | undefined },
         fetchReport: async (p) => {
           const config = await getSamsaraConfigForCompany(client as never, q.data.operating_company_id);
-          const encrypted = config?.encrypted_api_token ?? config?.api_token_encrypted;
-          if (!Buffer.isBuffer(encrypted) || encrypted.length === 0) throw new Error("samsara_not_configured");
-          return new SamsaraClient({ apiToken: decryptSamsaraSecret(encrypted), samsaraOrgId: null }).listIftaVehicleReports(p);
+          if (!config) throw new Error("samsara_not_configured");
+          return new SamsaraClient({ apiToken: resolveSamsaraApiToken(config as Record<string, unknown>), samsaraOrgId: null }).listIftaVehicleReports(p);
         },
       });
     });

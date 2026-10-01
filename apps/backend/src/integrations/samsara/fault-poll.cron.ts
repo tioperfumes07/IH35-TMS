@@ -15,12 +15,12 @@
  * whole tick's error is re-thrown (aggregated) at the end so the failure is never silently
  * swallowed. Deliberately does NOT use wrapBackgroundJobTick, which only logs and does not rethrow.
  */
+import { resolveSamsaraApiToken } from "./samsara-token.js";
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { createHash } from "node:crypto";
 import { withLuciaBypass } from "../../auth/db.js";
 import { assertTenantContext } from "../../cron/_helpers/tenant-context-guard.js";
-import { decryptSamsaraSecret } from "../../lib/samsara-crypto.js";
 import { processVehicleFaultCodeWebhookEvent } from "./fault-code-processor.service.js";
 import type { SamsaraWebhookEvent } from "./webhook-projection.types.js";
 import { SamsaraApiError, SamsaraClient } from "./samsara-client.js";
@@ -29,15 +29,6 @@ import { getSamsaraConfigForCompany } from "./samsara.service.js";
 import { loadUnitIdBySamsaraVehicleId } from "./samsara-positions.service.js";
 
 const SAMSARA_FAULT_POLL_AUDIT_SOURCE = "SAMSARA-FAULT-POLL-CRON-1";
-
-function readEncryptedToken(config: Record<string, unknown> | null): Buffer | null {
-  if (!config) return null;
-  const canonical = config.encrypted_api_token;
-  if (Buffer.isBuffer(canonical) && canonical.length > 0) return canonical;
-  const legacy = config.api_token_encrypted;
-  if (Buffer.isBuffer(legacy) && legacy.length > 0) return legacy;
-  return null;
-}
 
 async function listActiveCompanyIds(client: PgClient): Promise<string[]> {
   const res = await client.query(
@@ -69,7 +60,7 @@ async function pollFaultsForCompany(
     return { vehicles_with_faults: 0, histories_inserted: 0, draft_wos_created: 0 };
   }
 
-  const token = decryptSamsaraSecret(readEncryptedToken(cfg));
+  const token = resolveSamsaraApiToken(cfg as Record<string, unknown>);
   const api = new SamsaraClient({
     apiToken: token,
     samsaraOrgId: cfg.samsara_org_id ? String(cfg.samsara_org_id) : null,

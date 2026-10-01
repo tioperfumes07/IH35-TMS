@@ -1243,3 +1243,29 @@ guard: scripts/verify-samsara-driver-messaging-flag-off-one-store.mjs + --selfte
 E-32 Documents: needs a real Samsara route stop (E-31 flag) — /fleet/documents empty, document type "Proof of Delivery" exists
 (fieldTypes: photo). Built after the first route, against measured fields.
 next: E-10..E-13.
+
+## 2026-10-01 — ORDERS row 10 — E-10..E-13: one token path; first real fault + harsh rows (proved, rolled back)
+FOUND (live, production audit): SAMSARA-FAULT-POLL-CRON-1 and HARSH-EVENTS-POLL-CRON-1 each ran once and died:
+"Unsupported state or unable to authenticate data" (token decrypt). Then three shape defects measured against the live API:
+ 1. FAULTS (E-10/E-11): faultCodes is an OBJECT {j1939:{diagnosticTroubleCodes[{spnId,fmiId,spnDescription,fmiDescription,occurrenceCount,
+    milStatus,txId,sourceAddressName}]}, obdii:{...}, canBusType, time}; the parser only read arrays -> every DTC dropped (0 rows ever).
+ 2. HARSH (E-12): GET /fleet/safety-events with limit=512 -> HTTP 400 "Limit must be <= 200" on every call.
+ 3. HARSH: measured labels braking 19 / harshTurn 16 / rollingStop 9 / followingDistance 57 / edgeRailroadCrossingViolation 67 /
+    unsafeParking 13 / laneDeparture 1 (30 days); "braking" was unmapped (every Harsh Brake dropped); poll time was used when an
+    event had no time; g-force field is maxAccelerationGForce.
+FIX: integrations/samsara/samsara-token.ts resolveSamsaraApiToken — decrypt canonical, else legacy, else SAMSARA_API_TOKEN, else a
+named error — now the ONLY token path in 15 files (positions, master sync, driver mirror, remote counts, stats probe, geofence outbox,
+fault, harsh, DVIR, fuel push, routes, messaging, IFTA, efficiency, driven-miles). Fault parser reads J1939 as "SPN <spn> FMI <fmi>"
+(+ OBD-II string DTCs), time = faultCodes.time. safety-events limit 200. Label map + measured fields; events without a storable kind
+are counted in the tick audit (skipped_no_harsh_kind), never forced into a wrong kind.
+PROOF (rolled back, token via resolver fallback): faults — 95 vehicles, 40 mapped, 17 with DTCs -> 56 history rows (T164 SPN 2791 FMI 9,
+SPN 3064 FMI 0, SPN 3226 FMI 5); 0 draft WOs (maintenance.fault_code_severity_rules is empty -> nothing auto-creates).
+Harsh — 7 days 37 events: 7 storable (harsh_brake 3, rolling_stop 2, harsh_turn 2) -> 5 inserted with driver (2 on unmapped vehicles),
+e.g. T170 harsh_brake 2026-10-01T02:42Z 0.62 g; 30 skipped (followingDistance 11, railroad 15, unsafeParking 4).
+E-13 webhook: left in place, unused (0 deliveries ever).
+Tests: vitest samsara+safety 482 pass; fixed 2 stale test files (routes-integration scope from my E-31; remote-count-collector never
+updated when 'addresses' became the 3rd entity). Pre-existing red NOT mine: safety/photo-comparison session-list-paging.test.ts.
+FINDING (Samsara master sync — business records, reported): integration_sync_log assets_master + trailers_master failed 48/48 runs today:
+unit_upsert_failed "units_vin_key" duplicates + "deadlock detected" (two instances), trailer_upsert_failed "equipment_equipment_number_key".
+It upserts mdata.units / equipment every 30 min — per ORDERS rule 2 a business-record writer should ship flag-OFF. Next CC-3 row.
+guard: scripts/verify-samsara-one-token-path-and-measured-shapes.mjs + --selftest PASS.

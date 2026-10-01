@@ -1,6 +1,6 @@
+import { resolveSamsaraApiToken } from "./samsara-token.js";
 import { randomUUID } from "node:crypto";
 import { withLuciaBypass } from "../../auth/db.js";
-import { decryptSamsaraSecret } from "../../lib/samsara-crypto.js";
 import { SamsaraClient } from "./samsara-client.js";
 import { getSamsaraConfigForCompany } from "./samsara.service.js";
 
@@ -31,15 +31,6 @@ type CollectorResult = {
   linked_count: number;
   skipped_not_configured: boolean;
 };
-
-function readEncryptedToken(config: Record<string, unknown> | null): Buffer | null {
-  if (!config) return null;
-  const canonical = config.encrypted_api_token;
-  if (Buffer.isBuffer(canonical) && canonical.length > 0) return canonical;
-  const legacy = config.api_token_encrypted;
-  if (Buffer.isBuffer(legacy) && legacy.length > 0) return legacy;
-  return null;
-}
 
 function readString(raw: Record<string, unknown>, ...keys: string[]): string | null {
   for (const key of keys) {
@@ -114,7 +105,7 @@ export async function collectSamsaraDriverMirror(
       };
     }
 
-    const token = decryptSamsaraSecret(readEncryptedToken(config));
+    const token = resolveSamsaraApiToken(config as Record<string, unknown>);
     const samsara = new SamsaraClient({
       apiToken: token,
       samsaraOrgId: config.samsara_org_id ? String(config.samsara_org_id) : null,

@@ -1,7 +1,7 @@
+import { resolveSamsaraApiToken } from "../../integrations/samsara/samsara-token.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { SAMSARA_GEOFENCE_RADIUS_METERS } from "../../integrations/samsara/geofences/wf-051-radius.js";
 import { SamsaraApiError, SamsaraClient } from "../../integrations/samsara/samsara-client.js";
-import { decryptSamsaraSecret } from "../../lib/samsara-crypto.js";
 import { getSamsaraConfigForCompany, rowIsConfigured } from "../../integrations/samsara/samsara.service.js";
 import type { OutboxEventHandler, OutboxHandlerContext, OutboxPayload } from "./outbox-handler.types.js";
 
@@ -15,15 +15,6 @@ function requireCoord(value: unknown, field: string): number {
   const n = Number(value);
   if (!Number.isFinite(n)) throw new Error(`${field}_invalid`);
   return n;
-}
-
-function readEncryptedToken(config: Record<string, unknown> | null): Buffer | null {
-  if (!config) return null;
-  const canonical = config.encrypted_api_token;
-  if (Buffer.isBuffer(canonical) && canonical.length > 0) return canonical;
-  const legacy = config.api_token_encrypted;
-  if (Buffer.isBuffer(legacy) && legacy.length > 0) return legacy;
-  return null;
 }
 
 export class SamsaraCreateGeofenceHandler implements OutboxEventHandler {
@@ -50,7 +41,7 @@ export class SamsaraCreateGeofenceHandler implements OutboxEventHandler {
 
     let token: string | null = null;
     try {
-      token = decryptSamsaraSecret(readEncryptedToken(config as Record<string, unknown>));
+      token = resolveSamsaraApiToken(config as Record<string, unknown> as Record<string, unknown>);
     } catch {
       token = null;
     }

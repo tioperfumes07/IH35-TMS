@@ -8,11 +8,11 @@
  * ERROR POLICY: same as fault-poll.cron.ts — one company's failure is isolated and audited, and the
  * aggregated failure is re-thrown at the end of the tick, never swallowed.
  */
+import { resolveSamsaraApiToken } from "../integrations/samsara/samsara-token.js";
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
-import { decryptSamsaraSecret } from "../lib/samsara-crypto.js";
 import { SamsaraClient } from "../integrations/samsara/samsara-client.js";
 import type { PgClient } from "../integrations/samsara/samsara.service.js";
 import { getSamsaraConfigForCompany } from "../integrations/samsara/samsara.service.js";
@@ -22,20 +22,11 @@ const AUDIT_SOURCE = "SAMSARA-DVIR-POLL-CRON-1";
 export const DVIR_POLL_LOOKBACK_DAYS = 1;
 export const DVIR_DAILY_REREAD_DAYS = 7;
 
-function readEncryptedToken(config: Record<string, unknown> | null): Buffer | null {
-  if (!config) return null;
-  const canonical = config.encrypted_api_token;
-  if (Buffer.isBuffer(canonical) && canonical.length > 0) return canonical;
-  const legacy = config.api_token_encrypted;
-  if (Buffer.isBuffer(legacy) && legacy.length > 0) return legacy;
-  return null;
-}
-
 async function pollForCompany(client: PgClient, operatingCompanyId: string, tickAt: Date, lookbackDays: number): Promise<void> {
   const cfg = await getSamsaraConfigForCompany(client, operatingCompanyId);
   if (!cfg || !Boolean(cfg.is_enabled)) return;
   const api = new SamsaraClient({
-    apiToken: decryptSamsaraSecret(readEncryptedToken(cfg)),
+    apiToken: resolveSamsaraApiToken(cfg as Record<string, unknown>),
     samsaraOrgId: cfg.samsara_org_id ? String(cfg.samsara_org_id) : null,
   });
   const endIso = tickAt.toISOString();

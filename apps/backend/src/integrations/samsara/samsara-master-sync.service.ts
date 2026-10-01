@@ -1,4 +1,4 @@
-import { decryptSamsaraSecret } from "../../lib/samsara-crypto.js";
+import { resolveSamsaraApiToken } from "./samsara-token.js";
 import { SamsaraClient } from "./samsara-client.js";
 import type { PgClient } from "./samsara.service.js";
 import { getSamsaraConfigForCompany } from "./samsara.service.js";
@@ -77,19 +77,10 @@ function splitName(full: string): { first: string; last: string } {
   return { first: parts[0] ?? "Driver", last: parts.slice(1).join(" ") || "—" };
 }
 
-function readEncryptedToken(config: Record<string, unknown> | null): Buffer | null {
-  if (!config) return null;
-  const canonical = config.encrypted_api_token;
-  if (Buffer.isBuffer(canonical) && canonical.length > 0) return canonical;
-  const legacy = config.api_token_encrypted;
-  if (Buffer.isBuffer(legacy) && legacy.length > 0) return legacy;
-  return null;
-}
-
 export async function syncSamsaraDriversMaster(client: PgClient, operatingCompanyId: string): Promise<SyncStats> {
   const errors: string[] = [];
   const cfg = await getSamsaraConfigForCompany(client, operatingCompanyId);
-  const token = decryptSamsaraSecret(readEncryptedToken(cfg));
+  const token = resolveSamsaraApiToken(cfg as Record<string, unknown>);
   const api = new SamsaraClient({
     apiToken: token,
     samsaraOrgId: cfg?.samsara_org_id ? String(cfg.samsara_org_id) : null,
@@ -190,7 +181,7 @@ export async function syncSamsaraDriversMaster(client: PgClient, operatingCompan
 export async function syncSamsaraVehiclesMaster(client: PgClient, operatingCompanyId: string): Promise<SyncStats> {
   const errors: string[] = [];
   const cfg = await getSamsaraConfigForCompany(client, operatingCompanyId);
-  const token = decryptSamsaraSecret(readEncryptedToken(cfg));
+  const token = resolveSamsaraApiToken(cfg as Record<string, unknown>);
   const api = new SamsaraClient({
     apiToken: token,
     samsaraOrgId: cfg?.samsara_org_id ? String(cfg.samsara_org_id) : null,
@@ -502,7 +493,7 @@ export function isExcludedCompanyVehicle(make: string | null, model: string | nu
 export async function syncSamsaraTrailersMaster(client: PgClient, operatingCompanyId: string): Promise<SyncStats> {
   const errors: string[] = [];
   const cfg = await getSamsaraConfigForCompany(client, operatingCompanyId);
-  const token = decryptSamsaraSecret(readEncryptedToken(cfg));
+  const token = resolveSamsaraApiToken(cfg as Record<string, unknown>);
   const api = new SamsaraClient({
     apiToken: token,
     samsaraOrgId: cfg?.samsara_org_id ? String(cfg.samsara_org_id) : null,

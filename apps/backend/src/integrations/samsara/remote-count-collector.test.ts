@@ -6,9 +6,10 @@ import { getSamsaraConfigForCompany } from "./samsara.service.js";
 import { decryptSamsaraSecret } from "../../lib/samsara-crypto.js";
 import { SamsaraApiError, SamsaraClient } from "./samsara-client.js";
 
-const { countDriversMock, countVehiclesMock } = vi.hoisted(() => ({
+const { countDriversMock, countVehiclesMock, countAddressesMock } = vi.hoisted(() => ({
   countDriversMock: vi.fn(),
   countVehiclesMock: vi.fn(),
+  countAddressesMock: vi.fn(),
 }));
 
 vi.mock("../../auth/db.js", () => ({
@@ -41,6 +42,7 @@ vi.mock("./samsara-client.js", () => ({
     return {
       countDrivers: countDriversMock,
       countVehicles: countVehiclesMock,
+      countAddresses: countAddressesMock,
     };
   }),
 }));
@@ -50,6 +52,9 @@ describe("samsara remote-count collector", () => {
     vi.clearAllMocks();
     countDriversMock.mockReset();
     countVehiclesMock.mockReset();
+    countAddressesMock.mockReset();
+    // the collector sizes three entities (drivers, vehicles, addresses -- ORDER 2026-09-04 step 1)
+    countAddressesMock.mockResolvedValue(255);
   });
 
   it("skips when tenant has no enabled config", async () => {
@@ -96,9 +101,9 @@ describe("samsara remote-count collector", () => {
 
     const result = await collectSamsaraRemoteCounts("11111111-1111-1111-1111-111111111111");
 
-    expect(result.collected_count).toBe(2);
+    expect(result.collected_count).toBe(3);
     expect(result.failed_entities).toEqual([]);
-    expect(inserts.sort()).toEqual(["drivers", "vehicles"]);
+    expect(inserts.sort()).toEqual(["addresses", "drivers", "vehicles"]);
   });
 
   it("marks auth failure and continues with other entity", async () => {
@@ -155,7 +160,7 @@ describe("samsara remote-count collector", () => {
     const result = await collectSamsaraRemoteCounts("11111111-1111-1111-1111-111111111111");
 
     expect(result.failed_entities).toEqual([]);
-    expect(result.collected_count).toBe(2);
+    expect(result.collected_count).toBe(3);
     expect(countDriversMock).toHaveBeenCalledTimes(2);
   });
 });
