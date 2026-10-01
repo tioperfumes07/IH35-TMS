@@ -63,6 +63,7 @@ const { classifyFleetUnit, fleetUnitFactsSql } = await mod("telematics/live-flee
 let coverage;
 let scorecard;
 let fleet;
+let stopEventsReady;
 try {
   await client.query("BEGIN");
   await client.query("SET LOCAL ROLE neondb_owner");
@@ -71,6 +72,12 @@ try {
   const end = new Date().toISOString();
   coverage = await computeDamageEventAttribution(client, USMCA, start, end);
   scorecard = await computeDriverDamageScorecard(client, USMCA, start, end);
+  stopEventsReady =
+    (await client.query(
+      `SELECT count(*)::int AS n FROM information_schema.columns
+        WHERE table_schema = 'telematics' AND table_name = 'unit_stop_events'
+          AND column_name = ANY(ARRAY['operating_company_id','unit_id','stopped_at','miles_since_previous_stop'])`
+    )).rows[0].n === 4;
   const facts = await client.query(fleetUnitFactsSql(), [USMCA]);
   const now = new Date();
   fleet = facts.rows.map((r) =>
@@ -96,6 +103,12 @@ const eventDrivers = new Set(coverage.events.filter((e) => e.driver_id).map((e) 
 const scoreDrivers = new Set(scorecard.map((r) => r.driver_id));
 const missing = [...eventDrivers].filter((d) => !scoreDrivers.has(d));
 const extra = [...scoreDrivers].filter((d) => !eventDrivers.has(d));
+// ROUND 306 E-27: the per-100k figures must say which miles they divide by, and the label must
+// match reality — snapshot miles must never be presented as stop-measured miles.
+const expectedSource = stopEventsReady ? "stop_events" : "daily_snapshot_miles";
+for (const r of scorecard) {
+  if (r.miles_source !== expectedSource || !r.miles_source_label) problems.push(`${r.driver_id}: miles_source ${r.miles_source} but expected ${expectedSource}`);
+}
 if (missing.length || extra.length) problems.push(`scorecard/event drivers disagree: missing ${missing.join(",")} extra ${extra.join(",")}`);
 
 if (problems.length > 0) {
@@ -109,5 +122,5 @@ console.log(
     `${byClass("no_telemetry_ever").length} no telemetry ever, ${byClass("sample").length} sample. ` +
     `Damage events all-time: ${coverage.summary.total} — ${coverage.summary.attributed} attributed, ${coverage.summary.gap} gap ` +
     `${JSON.stringify(coverage.summary.gap_by_reason)}; where they sit ${JSON.stringify(coverage.summary.by_unit_fleet_class)}. ` +
-    `Scorecard drivers (${scoreDrivers.size}) match event-level attribution exactly.`
+    `Scorecard drivers (${scoreDrivers.size}) match event-level attribution exactly. Miles source: ${expectedSource} (telematics.unit_stop_events ${stopEventsReady ? "present" : "absent"}).`
 );

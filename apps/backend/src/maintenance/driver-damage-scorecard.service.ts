@@ -19,7 +19,7 @@
  * live on USMCA, 2026-09-30) with no confirmed FK linking them; reporting them as two separate
  * counted fields rather than guessing they are duplicates of each other.
  */
-import { driverAtTimeSql, computeDriverMilesInPeriod } from "./driver-attribution.js";
+import { driverAtTimeSql, resolveDriverMilesInPeriod, type MilesSource } from "./driver-attribution.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -162,6 +162,9 @@ function rowsToMap(rows: SourceAggRow[]): Map<string, SourceAgg> {
 }
 
 export type DriverDamageScorecardRow = {
+  /** E-27: which miles the per-100k figures divide by — shown on screen, never implied. */
+  miles_source: MilesSource;
+  miles_source_label: string;
   driver_id: string;
   period_start: string;
   period_end: string;
@@ -195,7 +198,8 @@ export async function computeDriverDamageScorecard(
   const tireEvents = await aggregateTireEvents(client, operatingCompanyId, periodStart, periodEnd);
   const safetyAccidents = await aggregateSafetyAccidents(client, operatingCompanyId, periodStart, periodEnd);
   const accidentReports = await aggregateAccidentReports(client, operatingCompanyId, periodStart, periodEnd);
-  const milesByDriver = await computeDriverMilesInPeriod(client, operatingCompanyId, periodStart, periodEnd);
+  const resolvedMiles = await resolveDriverMilesInPeriod(client, operatingCompanyId, periodStart, periodEnd);
+  const milesByDriver = resolvedMiles.byDriver;
 
   const driverIds = new Set<string>([
     ...damageWo.keys(),
@@ -226,6 +230,8 @@ export async function computeDriverDamageScorecard(
       driver_id: driverId,
       period_start: periodStart,
       period_end: periodEnd,
+      miles_source: resolvedMiles.source,
+      miles_source_label: resolvedMiles.label,
       miles_driven: miles,
       damage_wo_count: dmg.count,
       accident_wo_count: acc.count,

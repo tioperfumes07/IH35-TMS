@@ -207,3 +207,78 @@ export function unitAssignmentWindowsSql(): string {
      WHERE operating_company_id = $1::uuid AND unit_id = $2::uuid
      ORDER BY started_at ASC`;
 }
+
+/**
+ * ROUND 306 E-27 addition — where a driver's miles come from, and the label that says so.
+ *
+ * Target source: telematics.unit_stop_events.miles_since_previous_stop (E-03, the Lead's stop-
+ * odometer engine — odometer deltas between real stops, never interpolated). The table is not in
+ * production yet (to_regclass = NULL on 2026-10-01) and its migration is not published, so this
+ * does NOT guess its shape: it switches only when the table exists AND information_schema shows
+ * every column it reads. Until then the source stays the daily odometer snapshot and is LABELLED
+ * as such, so no screen presents snapshot miles as stop-measured miles.
+ *
+ * Stop-event attribution follows the B-47 rule: a segment's miles count for a driver only when the
+ * same driver held the truck at both of its ends (driverAtTimeSql at this stop and the previous
+ * one); a segment straddling a handover is excluded, never split.
+ */
+export type MilesSource = "stop_events" | "daily_snapshot_miles";
+
+export type ResolvedDriverMiles = {
+  source: MilesSource;
+  /** Plain words for the screen. Never empty. */
+  label: string;
+  byDriver: Map<string, { miles: number | null }>;
+};
+
+export const STOP_EVENT_REQUIRED_COLUMNS = ["operating_company_id", "unit_id", "stopped_at", "miles_since_previous_stop"] as const;
+
+async function stopEventsReadable(client: DbClient): Promise<boolean> {
+  const res = await client.query<{ n: number }>(
+    `SELECT count(*)::int AS n FROM information_schema.columns
+      WHERE table_schema = 'telematics' AND table_name = 'unit_stop_events' AND column_name = ANY($1::text[])`,
+    [[...STOP_EVENT_REQUIRED_COLUMNS]]
+  );
+  return (res.rows[0]?.n ?? 0) === STOP_EVENT_REQUIRED_COLUMNS.length;
+}
+
+export async function resolveDriverMilesInPeriod(
+  client: DbClient,
+  operatingCompanyId: string,
+  periodStart: string,
+  periodEnd: string
+): Promise<ResolvedDriverMiles> {
+  if (await stopEventsReadable(client)) {
+    const res = await client.query<{ driver_id: string; miles: string }>(
+      `
+      WITH seg AS (
+        SELECT s.unit_id, s.stopped_at, s.miles_since_previous_stop AS miles,
+               lag(s.stopped_at) OVER (PARTITION BY s.unit_id ORDER BY s.stopped_at) AS prev_stopped_at
+          FROM telematics.unit_stop_events s
+         WHERE s.operating_company_id = $1::uuid
+      )
+      SELECT d_end.driver_id::text AS driver_id, sum(seg.miles)::text AS miles
+        FROM seg
+        ${driverAtTimeSql("seg.unit_id", "seg.stopped_at", "d_end")}
+        ${driverAtTimeSql("seg.unit_id", "seg.prev_stopped_at", "d_start")}
+       WHERE seg.miles IS NOT NULL AND seg.miles >= 0
+         AND seg.stopped_at >= $2::timestamptz AND seg.stopped_at < $3::timestamptz
+         AND d_end.driver_id IS NOT NULL AND d_end.driver_id = d_start.driver_id
+       GROUP BY d_end.driver_id
+      `,
+      [operatingCompanyId, periodStart, periodEnd]
+    );
+    return {
+      source: "stop_events",
+      label: "stop-odometer miles (E-03): odometer deltas between stops, same driver at both ends",
+      byDriver: new Map(res.rows.map((r) => [r.driver_id, { miles: Number(r.miles) }])),
+    };
+  }
+  const snap = await computeDriverMilesInPeriod(client, operatingCompanyId, periodStart, periodEnd);
+  return {
+    source: "daily_snapshot_miles",
+    label:
+      "daily snapshot miles — telematics.odometer_readings once a day; stop-odometer miles (E-03) take over when telematics.unit_stop_events exists",
+    byDriver: new Map([...snap].map(([d, v]) => [d, { miles: v.miles }])),
+  };
+}
