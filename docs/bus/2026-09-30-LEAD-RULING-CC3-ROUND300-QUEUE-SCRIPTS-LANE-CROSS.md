@@ -59,6 +59,7 @@ Touched scripts/-lane files, one per queue item, each its own PR:
 - `scripts/verify-ifta-filing-export-honest.mjs` (E-23 addition).
 - `scripts/verify-load-at-time-single-definition.mjs` (linkage: one load-at-time rule, owner NB/SB).
 - `scripts/verify-telematics-linkage-screens-wired.mjs` (linkage reverse direction reaches the load / truck / driver screens).
+- `scripts/verify-e05-legs-evidence-chain.mjs` (ROUND 313 E-05: evidence chain + 10-day catch-up with Samsara odometer history).
 - `scripts/verify-driver-prompts-flag-off-idempotent.mjs` (E-30 addition).
 - further Round 304 guards to follow under this same ruling, named as they land.
 

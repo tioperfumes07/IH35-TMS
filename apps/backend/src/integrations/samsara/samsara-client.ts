@@ -787,6 +787,49 @@ export class SamsaraClient {
    * fuelConsumedMl, distanceTraveledMeters, engineRunTimeDurationMs, engineIdleTimeDurationMs.
    * A missing number stays null -- never 0.
    */
+  /**
+   * ROUND 313 E-05 — GET /fleet/vehicles/stats/history?types=obdOdometerMeters (probed 2026-10-01: HTTP 200,
+   * T148 2026-09-25 = 1,250 readings, ~30 s apart). The REAL odometer Samsara read at each instant -- the source
+   * the stop writer's catch-up uses for stops older than the E-01 gps-decoration era. Meters -> miles here.
+   */
+  async listOdometerHistory(vehicleIds: string[], startIso: string, endIso: string): Promise<Map<string, Array<{ at: Date; miles: number }>>> {
+    const token = this._token();
+    if (!token) throw new SamsaraApiError("samsara_token_missing", null, null, false);
+    const out = new Map<string, Array<{ at: Date; miles: number }>>();
+    let after: string | null = null;
+    for (let page = 0; page < 500; page += 1) {
+      const url = new URL(`${SAMSARA_API_BASE}/fleet/vehicles/stats/history`);
+      url.searchParams.set("types", "obdOdometerMeters");
+      url.searchParams.set("vehicleIds", vehicleIds.join(","));
+      url.searchParams.set("startTime", startIso);
+      url.searchParams.set("endTime", endIso);
+      if (after) url.searchParams.set("after", after);
+      let res: Response;
+      try {
+        res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }, 30_000));
+      } catch (error) {
+        throw new SamsaraApiError(`samsara_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
+      }
+      const json = await readJsonResponse(res);
+      if (!res.ok) throw new SamsaraApiError(`samsara_odometer_history_http_${res.status}`, res.status, json, res.status === 429 || res.status >= 500);
+      for (const raw of Array.isArray(json.data) ? (json.data as unknown[]) : []) {
+        const v = raw as Record<string, unknown>;
+        if (v.id == null) continue;
+        const list = out.get(String(v.id)) ?? [];
+        for (const p of Array.isArray(v.obdOdometerMeters) ? (v.obdOdometerMeters as Record<string, unknown>[]) : []) {
+          const meters = Number(p.value);
+          const at = new Date(String(p.time));
+          if (Number.isFinite(meters) && meters > 0 && !Number.isNaN(at.getTime())) list.push({ at, miles: meters / 1609.344 });
+        }
+        out.set(String(v.id), list);
+      }
+      const { hasNextPage, cursor } = parsePagination(json);
+      if (!hasNextPage || !cursor) break;
+      after = cursor;
+    }
+    return out;
+  }
+
   async listFuelEnergyReports(kind: "vehicles" | "drivers", startIso: string, endIso: string): Promise<SamsaraFuelEnergyRow[]> {
     const token = this._token();
     if (!token) throw new SamsaraApiError("samsara_token_missing", null, null, false);

@@ -50,3 +50,15 @@ export const STOP_ARRIVAL_EVENTS_SQL = `
    WHERE ge.event_kind = 'entered'
    ORDER BY ls.id, ge.unit_id, ge.occurred_at
 `;
+
+/**
+ * The first time a unit ENTERED or EXITED one load stop's Samsara fence (E-25 label load-<uuid>-stop-<seq>,
+ * written only by the canonical detector). The fallback every engine uses when TMS has no actual stamp on the
+ * stop — one definition, so "when did the truck arrive / leave" never differs between engines.
+ */
+export function stopFenceTimeSql(loadIdExpr: string, sequenceExpr: string, unitIdExpr: string, kind: "entered" | "exited"): string {
+  return `(SELECT min(x.occurred_at) FROM geo.geofences g
+             JOIN geo.geofence_events x ON x.geofence_id = g.id
+            WHERE g.label = 'load-' || (${loadIdExpr})::text || '-stop-' || (${sequenceExpr})::text
+              AND x.unit_id = ${unitIdExpr} AND x.event_kind = '${kind}')`;
+}

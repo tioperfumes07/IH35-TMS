@@ -1,3 +1,5 @@
+import { stopFenceTimeSql } from "../../../telematics/stop-arrival-events.js";
+
 type QueryClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
@@ -110,6 +112,15 @@ export async function materializeRealDrivenMilesSegmentsWithSource(
  * A load that already carries fence-bounded segments is HELD (nothing deletable; mixing the two
  * sources would double-count its miles).
  */
+/** First E-03 dwell of the unit within 500 m of a load stop's own coordinates, after a floor time. */
+const STOP_DWELL_SQL = (stopAlias: string, unitExpr: string, col: "started_at" | "ended_at", floorExpr: string) =>
+  `(SELECT min(e.${col}) FROM telematics.unit_stop_events e
+     WHERE e.unit_id = ${unitExpr} AND ${stopAlias}.latitude IS NOT NULL AND ${stopAlias}.longitude IS NOT NULL
+       AND e.lat IS NOT NULL AND e.started_at >= ${floorExpr}
+       AND e.lat BETWEEN ${stopAlias}.latitude - 0.01 AND ${stopAlias}.latitude + 0.01
+       AND 2 * 6371000 * asin(sqrt(sin(radians(e.lat - ${stopAlias}.latitude) / 2) ^ 2
+             + cos(radians(${stopAlias}.latitude)) * cos(radians(e.lat)) * sin(radians(e.lng - ${stopAlias}.longitude) / 2) ^ 2)) < 500)`;
+
 export async function materializeStopToStopSegments(
   client: QueryClient,
   input: { operatingCompanyId: string; driverId?: string; includeClosedLoads?: boolean }
@@ -118,24 +129,38 @@ export async function materializeStopToStopSegments(
   const result = await client.query<MaterializedMilesSegment>(
     `WITH load_context AS (
        SELECT l.id AS load_id, l.assigned_unit_id AS unit_id,
-              p.id AS pickup_stop_id, p.actual_departure_at AS pickup_departed_at,
-              d.id AS delivery_stop_id, d.actual_arrival_at AS delivery_arrived_at
+              p.id AS pickup_stop_id,
+              -- TMS stamp first; else the unit's first exit from / entry into the stop's Samsara fence
+              -- (shared stopFenceTimeSql). Most loads never get a hand stamp -- without this fallback no leg
+              -- could be classified and the engine went silent after 2026-09-29.
+              -- third evidence level: the unit's own E-03 dwell within 500 m of the stop's coordinates (same rule
+              -- AUTH-179 used by hand) -- loads keyed in after pickup have no fence event to read.
+              COALESCE(p.actual_departure_at, ${stopFenceTimeSql("l.id", "p.sequence_number", "l.assigned_unit_id", "exited")},
+                       ${STOP_DWELL_SQL("p", "l.assigned_unit_id", "ended_at", "COALESCE(p.scheduled_arrival_at, l.created_at) - interval '3 days'")}) AS pickup_departed_at,
+              d.id AS delivery_stop_id,
+              COALESCE(d.actual_arrival_at, ${stopFenceTimeSql("l.id", "d.sequence_number", "l.assigned_unit_id", "entered")},
+                       ${STOP_DWELL_SQL("d", "l.assigned_unit_id", "started_at", "COALESCE(p.actual_departure_at, p.scheduled_arrival_at, l.created_at)")}) AS delivery_arrived_at
          FROM mdata.loads l
          JOIN LATERAL (
-           SELECT id, actual_departure_at FROM mdata.load_stops
+           SELECT id, sequence_number, actual_departure_at, scheduled_arrival_at, latitude, longitude FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type::text = 'pickup' AND soft_deleted_at IS NULL
             ORDER BY sequence_number ASC LIMIT 1
          ) p ON true
          JOIN LATERAL (
-           SELECT id, actual_arrival_at FROM mdata.load_stops
+           SELECT id, sequence_number, actual_arrival_at, scheduled_arrival_at, latitude, longitude FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type::text = 'delivery' AND soft_deleted_at IS NULL
             ORDER BY sequence_number DESC LIMIT 1
          ) d ON true
         WHERE l.operating_company_id = $1::uuid
           AND l.assigned_unit_id IS NOT NULL
           AND l.soft_deleted_at IS NULL
+          AND l.voided_at IS NULL
+          AND COALESCE(l.is_sample_data, false) = false
           AND ($2::uuid IS NULL OR l.assigned_primary_driver_id = $2::uuid OR l.assigned_secondary_driver_id = $2::uuid)
-          AND ($3::boolean OR l.status::text = ANY($4::text[]))
+          -- active loads PLUS every load due to deliver in the last 7 days: a delivered leg still owes its
+          -- empty_home segment, and status leaves "active" the moment it delivers.
+          AND ($3::boolean OR l.status::text = ANY($4::text[])
+               OR COALESCE(d.actual_arrival_at, d.scheduled_arrival_at) >= now() - interval '7 days')
           AND NOT EXISTS (
             -- a segment this path wrote always starts at one of the load's stop ends; any other
             -- segment on the load came from the fence-bounded path -> the load is HELD.
@@ -155,8 +180,10 @@ export async function materializeStopToStopSegments(
        SELECT o.*,
               CASE
                 WHEN o.pickup_departed_at IS NOT NULL AND o.to_started_at <= o.pickup_departed_at THEN 'deadhead_to_pickup'
-                WHEN o.pickup_departed_at IS NOT NULL AND o.delivery_arrived_at IS NOT NULL
-                     AND o.from_ended_at >= o.pickup_departed_at AND o.to_started_at <= o.delivery_arrived_at THEN 'loaded'
+                -- in transit (no delivery evidence yet): every leg after the pickup departure is loaded
+                WHEN o.pickup_departed_at IS NOT NULL
+                     AND o.from_ended_at >= o.pickup_departed_at
+                     AND (o.delivery_arrived_at IS NULL OR o.to_started_at <= o.delivery_arrived_at) THEN 'loaded'
                 WHEN o.delivery_arrived_at IS NOT NULL AND o.from_ended_at >= o.delivery_arrived_at THEN 'empty_home'
               END AS segment_kind
          FROM ordered o
@@ -168,12 +195,15 @@ export async function materializeStopToStopSegments(
          operating_company_id, load_id, unit_id, segment_kind, from_stop_id, to_stop_id,
          started_at, ended_at, odometer_start_mi, odometer_end_mi
        )
-       SELECT $1::uuid, load_id, unit_id, segment_kind,
+       -- one leg per (load, unit, kind, start): two stop rows can end at the same instant; keep the nearest next stop
+       SELECT DISTINCT ON (load_id, unit_id, segment_kind, from_ended_at)
+              $1::uuid, load_id, unit_id, segment_kind,
               CASE segment_kind WHEN 'loaded' THEN pickup_stop_id WHEN 'empty_home' THEN delivery_stop_id END,
               CASE segment_kind WHEN 'deadhead_to_pickup' THEN pickup_stop_id WHEN 'loaded' THEN delivery_stop_id END,
               from_ended_at, to_started_at, from_odo, to_odo
          FROM pairs
         WHERE segment_kind IS NOT NULL
+        ORDER BY load_id, unit_id, segment_kind, from_ended_at, to_started_at
        ON CONFLICT (operating_company_id, load_id, unit_id, segment_kind, started_at)
        DO UPDATE SET ended_at = EXCLUDED.ended_at,
                      odometer_start_mi = EXCLUDED.odometer_start_mi,
