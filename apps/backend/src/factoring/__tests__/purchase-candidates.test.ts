@@ -11,6 +11,8 @@ const VENDOR = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
 const USER = "ffffffff-ffff-4fff-8fff-ffffffffffff";
 
 const calls: Array<{ sql: string; values?: unknown[] }> = [];
+// ROUND 321: per-invoice missing load documents returned by the purchase Feed Gate pre-check ([] = BOL/POD/rate con on file).
+let missingDocsByInvoice: Record<string, string[]> = {};
 const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
   calls.push({ sql, values });
   if (sql.includes("set_config('app.operating_company_id'")) return { rows: [] };
@@ -33,7 +35,7 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
   }
   if (sql.includes("AS has_load")) {
     const ids = (values?.[1] as string[]) ?? [];
-    return { rows: ids.map((id) => ({ id, display_id: id === INV_A ? "13626" : "13637", has_load: id === INV_A, ar_je_posted: true })) };
+    return { rows: ids.map((id) => ({ id, display_id: id === INV_A ? "13626" : "13637", has_load: id === INV_A, ar_je_posted: true, missing_docs: missingDocsByInvoice[id] ?? [] })) };
   }
   return { rows: [] };
 });
@@ -193,6 +195,41 @@ describe("Submit to Factor routes", () => {
     // INV_B also has no load (purchase pre-check) on top of the gate's own red
     expect(body.details[0].reds.map((r: { check_key: string }) => r.check_key)).toEqual(["purchase.invoice_has_load", "invoice.lines_carry_income_account"]);
     expect(calls.some((c) => c.sql.includes("INSERT INTO accounting.factoring_purchases"))).toBe(false);
+  });
+
+  it("ROUND 321: missing load documents are a Feed Gate red without an Owner override (no draft written)", async () => {
+    missingDocsByInvoice = { [INV_A]: ["BOL", "POD"] };
+    gateMock.mockImplementation(async (_c: unknown, _o: string, _k: string, id: string) => ({ intake: { id: `intake-${id}` }, checks: [] }));
+    const app = await buildApp("Owner");
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/factoring/purchases?operating_company_id=${OCI}`,
+      payload: { factoring_company_vendor_id: VENDOR, purchase_date: "2026-10-01", lines: [{ invoice_id: INV_A }] },
+    });
+    expect(res.statusCode).toBe(409);
+    expect(res.json().details[0].reds.map((r: { check_key: string }) => r.check_key)).toEqual(["purchase.invoice_billing_docs"]);
+    expect(calls.some((c) => c.sql.includes("'purchase.invoice_billing_docs', 'na'"))).toBe(false);
+    expect(calls.some((c) => c.sql.includes("INSERT INTO accounting.factoring_purchases"))).toBe(false);
+    missingDocsByInvoice = {};
+  });
+
+  it("ROUND 321: with the Owner's override reason the docs check is recorded 'na' WITH the reason (never a silent pass)", async () => {
+    missingDocsByInvoice = { [INV_A]: ["BOL", "POD"] };
+    gateMock.mockImplementation(async (_c: unknown, _o: string, _k: string, id: string) => ({ intake: { id: `intake-${id}` }, checks: [] }));
+    const app = await buildApp("Owner");
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/factoring/purchases?operating_company_id=${OCI}`,
+      payload: {
+        factoring_company_vendor_id: VENDOR, purchase_date: "2026-10-01", lines: [{ invoice_id: INV_A }],
+        docs_override_reason: "Faro accepted these on the dispatch packet",
+      },
+    });
+    expect(res.json().error).not.toBe("feed_gate_blocked");
+    const na = calls.find((c) => c.sql.includes("'purchase.invoice_billing_docs', 'na'"));
+    expect(na).toBeTruthy();
+    expect(String(na!.values?.[4])).toContain("Owner override: Faro accepted these on the dispatch packet");
+    missingDocsByInvoice = {};
   });
 
   it("POST /factoring/purchases from a non-Owner is refused before the Feed Gate runs", async () => {

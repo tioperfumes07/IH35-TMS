@@ -41,11 +41,13 @@ export async function sendPurchaseToFactor(
   const head = packet.head;
   // Missing BOL / POD / rate confirmation blocks the send unless the Owner approves an override with a reason (the route
   // already admits only the Owner). The approval is stamped on the purchase BEFORE anything is sent, and audited.
-  const overrideReason = (input.docsOverrideReason ?? "").trim();
+  // An override approved at Save (stamped on the purchase) carries to the send; a new reason here stamps it now.
+  const overrideReason = (input.docsOverrideReason ?? (head.docs_override_reason as string | null) ?? "").trim();
+  const alreadyApproved = Boolean(head.docs_override_at);
   if (packet.missing.length && overrideReason.length < 10) {
     throw new PurchaseCandidateError("factoring_send_missing_docs", 409, packet.missing);
   }
-  if (packet.missing.length) {
+  if (packet.missing.length && !alreadyApproved) {
     await withCompanyScope(input.actorUserId, oci, async (client) => {
       await client.query(
         `UPDATE accounting.factoring_purchases
@@ -53,7 +55,7 @@ export async function sendPurchaseToFactor(
           WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
         [input.purchaseId, oci, input.actorUserId, overrideReason]
       );
-      await appendCrudAudit(client, input.actorUserId, "accounting.factoring_purchase_docs_override_approved", {
+      await appendCrudAudit(client, input.actorUserId, "factoring.purchase_docs_override", {
         resource_type: "accounting.factoring_purchases",
         resource_id: input.purchaseId,
         operating_company_id: oci,

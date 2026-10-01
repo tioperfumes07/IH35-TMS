@@ -57,6 +57,8 @@ const createBody = z.object({
   faro_report_ref: z.string().trim().max(80).nullable().optional(),
   wire_fee_cents: cents.optional(),
   notes: z.string().trim().max(2000).nullable().optional(),
+  // ROUND 321 item 3: Owner override reason for missing BOL / POD / rate confirmation (documents only).
+  docs_override_reason: z.string().trim().min(10).max(1000).optional(),
   lines: z
     .array(
       z.object({
@@ -212,7 +214,7 @@ export async function registerFactoringPurchaseRoutes(app: FastifyInstance) {
     if (!(await ownerGate(reply, user, q.data.operating_company_id, "create", null))) return;
     // FEED GATE first, in its own committed scope (the intake/check rows are WORM evidence even when red).
     const gate = await withCompanyScope(user.uuid, q.data.operating_company_id, (client) =>
-      runPurchaseFeedGate(client, q.data.operating_company_id, b.data.lines.map((l) => l.invoice_id), user.uuid)
+      runPurchaseFeedGate(client, q.data.operating_company_id, b.data.lines.map((l) => l.invoice_id), user.uuid, b.data.docs_override_reason ?? null)
     );
     const red = gate.filter((g) => !g.passed);
     if (red.length) return reply.code(409).send({ error: "feed_gate_blocked", details: red });
@@ -228,6 +230,7 @@ export async function registerFactoringPurchaseRoutes(app: FastifyInstance) {
           wireFeeCents: b.data.wire_fee_cents,
           notes: b.data.notes ?? null,
           lines: b.data.lines,
+          docsOverrideReason: b.data.docs_override_reason ?? null,
         })
       );
       return reply.code(201).send(detail);

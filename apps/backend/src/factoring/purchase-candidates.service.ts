@@ -311,12 +311,26 @@ export type FeedGateInvoiceResult = {
  * each invoice and collects the reds instead of stopping at the first. The intake + check rows are WORM evidence, so the
  * caller runs this in its own scope that COMMITS (it returns, never throws, on a red).
  */
-export async function runPurchaseFeedGate(client: DbClient, oci: string, invoiceIds: string[], userId: string): Promise<FeedGateInvoiceResult[]> {
+export async function runPurchaseFeedGate(
+  client: DbClient,
+  oci: string,
+  invoiceIds: string[],
+  userId: string,
+  // ROUND 321 item 3: the Owner's override reason for missing BOL / POD / rate confirmation (>= 10 chars). With it the
+  // documents check is recorded on the intake as 'na' WITH the reason (never a silent pass); without it, missing docs are red.
+  docsOverrideReason: string | null = null
+): Promise<FeedGateInvoiceResult[]> {
+  const override = (docsOverrideReason ?? "").trim();
   // Purchase-entry pre-checks the generic invoice check set does not carry: the invoice is tied to a load (the
   // receivable Faro buys is a load's freight bill) and its A/R journal entry is posted (the invoice feed set filters
   // the load set's invoice.* keys, so invoice.ar_je_posted does not run on kind 'invoice'). Same SQL as that check.
-  const pre = await client.query<{ id: string; display_id: string | null; has_load: boolean; ar_je_posted: boolean }>(
+  const pre = await client.query<{ id: string; display_id: string | null; has_load: boolean; ar_je_posted: boolean; missing_docs: string[] }>(
     `SELECT i.id::text, i.display_id,
+            CASE WHEN i.source_load_id IS NULL THEN '{}'::text[] ELSE array_remove(ARRAY[
+              CASE WHEN ${loadHasFileCategorySql("i.source_load_id", "bol")} THEN NULL ELSE 'BOL' END,
+              CASE WHEN (${loadHasApprovedPodSql("i.source_load_id", "i.operating_company_id")} OR ${loadHasFileCategorySql("i.source_load_id", "pod")}) THEN NULL ELSE 'POD' END,
+              CASE WHEN ${loadHasFileCategorySql("i.source_load_id", ["rate_confirmation", "rate_con"])} THEN NULL ELSE 'Rate confirmation' END
+            ], NULL) END AS missing_docs,
             (i.source_load_id IS NOT NULL AND EXISTS (SELECT 1 FROM mdata.loads l WHERE l.id = i.source_load_id AND l.operating_company_id = i.operating_company_id AND l.soft_deleted_at IS NULL)) AS has_load,
             EXISTS (SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
                      WHERE p.source_transaction_type = 'invoice' AND p.source_transaction_id = i.id::text AND je.status = 'posted'
@@ -335,6 +349,10 @@ export async function runPurchaseFeedGate(client: DbClient, oci: string, invoice
     else {
       if (!p.has_load) extra.push({ check_key: "purchase.invoice_has_load", check_group: "purchase", subject_label: label, missing: "invoice has no load", fix_link: fix });
       if (!p.ar_je_posted) extra.push({ check_key: "purchase.invoice_ar_je_posted", check_group: "purchase", subject_label: label, missing: "no posted A/R journal entry for this invoice", fix_link: fix });
+      // Documents: an override covers DOCUMENTS only -- the load and the posted A/R JE above stay hard requirements.
+      if (p.missing_docs.length && override.length < 10) {
+        extra.push({ check_key: "purchase.invoice_billing_docs", check_group: "purchase", subject_label: label, missing: `load missing ${p.missing_docs.join(", ")} (an Owner override reason releases it)`, fix_link: fix });
+      }
     }
     if (!p) {
       out.push({ invoice_id: invoiceId, passed: false, intake_id: null, error: "feed_gate_subject_not_found", reds: extra });
@@ -342,10 +360,16 @@ export async function runPurchaseFeedGate(client: DbClient, oci: string, invoice
     }
     try {
       const run = await assertSubjectMayCloseOnClient(client as never, oci, "invoice", invoiceId, userId);
+      if (p.missing_docs.length && override.length >= 10) {
+        await recordDocsOverrideCheck(client, oci, run.intake.id, invoiceId, label, p.missing_docs, override);
+      }
       out.push({ invoice_id: invoiceId, passed: extra.length === 0, intake_id: run.intake.id, error: extra.length ? "feed_gate_blocked" : null, reds: extra });
     } catch (err) {
       if (!(err instanceof FeedGateError)) throw err;
       const details = (err.details ?? {}) as { intake_id?: string; reds?: FeedCheckRow[] };
+      if (details.intake_id && p.missing_docs.length && override.length >= 10) {
+        await recordDocsOverrideCheck(client, oci, details.intake_id, invoiceId, label, p.missing_docs, override);
+      }
       out.push({
         invoice_id: invoiceId,
         passed: false,
@@ -363,13 +387,35 @@ export async function runPurchaseFeedGate(client: DbClient, oci: string, invoice
   return out;
 }
 
+/** Owner docs override on the invoice's Feed Gate intake: one WORM check row, status 'na', carrying the reason. */
+async function recordDocsOverrideCheck(
+  client: DbClient,
+  oci: string,
+  intakeId: string,
+  invoiceId: string,
+  label: string,
+  missingDocs: string[],
+  reason: string
+) {
+  await client.query(
+    `INSERT INTO driver_finance.feed_intake_checks
+       (operating_company_id, intake_id, run_no, check_group, check_key, status, subject_table, subject_id, subject_label, missing, fix_link, measured)
+     SELECT $1::uuid, $2::uuid, fi.last_run_no, 'purchase', 'purchase.invoice_billing_docs', 'na', 'accounting.invoices', $3::uuid, $4,
+            $5, $6, $7::jsonb
+       FROM driver_finance.feed_intakes fi WHERE fi.id = $2::uuid AND fi.operating_company_id = $1::uuid`,
+    [oci, intakeId, invoiceId, label, `Owner override: ${reason} (missing ${missingDocs.join(", ")})`, `/accounting/invoices/${invoiceId}`,
+      JSON.stringify({ override: true, missing_docs: missingDocs, reason })]
+  );
+}
+
 export type SendPacketDoc = { load_id: string; load_number: string | null; category_code: string; file_id: string; filename: string; mime_type: string | null; size_bytes: number; r2_key: string };
 
 /** Everything "Save and send" needs about a POSTED purchase: header, recipient, lines and each line's load docs. */
 export async function loadPurchaseSendPacket(client: DbClient, oci: string, purchaseId: string) {
   const head = (await client.query<Record<string, unknown>>(
     `SELECT p.id::text, p.display_id, p.status, p.purchase_date::text AS purchase_date, p.faro_report_ref, p.invoice_count,
-            p.gross_cents, v.vendor_name, NULLIF(TRIM(v.email), '') AS vendor_email, co.legal_name AS company_name
+            p.gross_cents, v.vendor_name, NULLIF(TRIM(v.email), '') AS vendor_email, co.legal_name AS company_name,
+            p.docs_override_at::text AS docs_override_at, p.docs_override_reason
        FROM accounting.factoring_purchases p
        JOIN mdata.vendors v ON v.id = p.factoring_company_vendor_id
        JOIN org.companies co ON co.id = p.operating_company_id

@@ -187,7 +187,9 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
       setSaveError({ kind: "message", text: "Select the factoring company." });
       return;
     }
-    if (andSend && missingDocsRows.length && !docsOverrideOk) {
+    // ROUND 321: missing documents block Save AND Save and send unless the Owner gives an override reason (the Feed Gate
+    // records it as 'na' with the reason; the load + posted A/R JE stay hard requirements).
+    if (missingDocsRows.length && !docsOverrideOk) {
       setSaveError({
         kind: "missing_docs",
         rows: missingDocsRows.map((r) => ({ invoice_id: r.invoice_id, invoice_display_id: r.invoice_display_id, load_id: r.load_id, load_number: r.load_number, missing: r.missing_docs })),
@@ -211,6 +213,7 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
         faro_report_ref: reportRef.trim() || null,
         wire_fee_cents: wireFeeCents ?? 0,
         lines: selectedRows.map((r) => ({ invoice_id: r.invoice_id, ...lineFigures(r, lineActuals[r.invoice_id]) })),
+        ...(missingDocsRows.length && docsOverrideOk ? { docs_override_reason: docsOverrideReason.trim() } : {}),
       });
       let posted: FactoringPurchaseDetail;
       try {
@@ -623,8 +626,8 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
             <span className="text-xs text-slate-600">
               {missingDocsRows.length
                 ? docsOverrideOk
-                  ? `${missingDocsRows.length} invoice(s) missing docs — Owner override approved for Save and send`
-                  : `${missingDocsRows.length} selected invoice(s) missing docs — Save and send needs an override approval`
+                  ? `${missingDocsRows.length} invoice(s) missing docs — Owner override approved`
+                  : `${missingDocsRows.length} selected invoice(s) missing docs — Save needs an Owner override approval`
                 : "Expected split from the factor rates unless Faro's actuals are entered per invoice."}
             </span>
             <SaveDropdown
