@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { LOVES_CARD_IMPORT_JOB, runLovesCardImportTick } from "../sync/loves-card-import.js";
+import { onFuelIngestComplete } from "../fuel/fuel-ingest-hooks.js";
 
 let initialized = false;
 const CRON_EXPRESSION = "0 6 * * *";
@@ -27,6 +28,8 @@ export function initializeLovesCardImportCron(app: FastifyInstance) {
         },
         app.log
       );
+      // ROUND 306 E-21/E-22: matching and fraud detection run once, after the import lands.
+      await onFuelIngestComplete(app.log, "loves_card_import");
     },
     {
       maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: CRON_TZ }

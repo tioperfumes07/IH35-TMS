@@ -958,3 +958,49 @@ recorder complaint ever counted; score recomputes from components.
 ROUND 305 status: B-46, B-47, B-48, B-49, B-50, B-51 shipped. B-52 = re-read the file.
 
 — CC-2
+
+## ROUND 306 — ACK: CC-2 | ACK R306 | E-19 | GO.  E-19, E-20, E-21, E-22 (DONE in one PR)
+
+E-19: CC-3's T-45 had already built the one fuel-purchase predicate (fuel/fuel-purchase-eligibility.ts)
+and its guard — not rebuilt. Its guard was never registered (no verify-step ran it); 12019 now runs
+it. My fuel scorecard now uses that predicate: DEF charges, gallon-less rows and import-stamped
+batches no longer enter MPG or any flag; they are counted per driver by reason. The 52 are DEF
+charges from scripts/feed/close-faro-day.mjs (source has no gallons) — not Relay rows. "Re-import the
+52" from Relay is not possible: Relay never had them. Re-dating them from their settlement lines is
+a data write and needs owner AUTH (CC-3 named the same).
+
+E-20: root cause, from the audit trail + Render logs, not the flag theory: the TRANSPORTATION Relay
+key is the one that carries the USMCA trucks' fills, and its flag was switched OFF 2026-09-28 04:32
+UTC from the owner's account. The USMCA key returns raw_rows=0 on every tick. integration_sync_log
+had ZERO Relay rows ever — the tick was invisible there. Request fields: answered in B-46 — no field
+selection is sent; gallons arrive in fuel_items (117/119), products only carries CAT Scales fees.
+Engine fixes: (1) gap-aware window — resumes from the last covered day, re-reads a 3-day overlap for
+late-published fills, capped at 30 days, chunked like the backfill; turning the TRANSP flag back on
+recovers 09-27 onward automatically; (2) single runner — Render runs 2 instances and both pulled
+every company daily; the tick now claims under an advisory lock; (3) every tick writes
+integration_sync_log (start, finish, window, reason, rows). Board: RELAY-TRANSPORTATION-FLAG-SWITCHED-OFF-2026-09-28 (owner action).
+
+E-21: fuel.fraud_alerts had ZERO rows ever in every company — the worker is default-OFF and its
+"successful runs" were boot-time disabled records. Now: no timer; runs once on fuel-ingest
+completion; scans only real purchases; pump-time rules refused on date-only rows; a FINDING needs
+two rules with independent evidence (GPS-mismatch + inactive-truck both read GPS = one signal);
+one rule = 'warn' suspicion, never a critical notification. Dry run on live USMCA (no write, no
+dispatch): 176 rows, 52 DEF skipped, 124 purchases → 0 findings, 25 suspicions (tank overflow),
+99 clear; 33 off-duty/inactive hits refused as date-only — the old code would have raised them.
+Still behind ENABLE_FUEL_FRAUD_DETECTOR_WORKER (default OFF) — enabling writes alerts; owner's call.
+
+E-22: fuel<->GPS match no longer hourly over every company; runs from the same ingest hook (Loves
+import daily = also the sweep for manual rows; statement upload for that company). Card->unit
+registry (fuel.fuel_card_assignments) is an "after DONE" addition and needs a migration —
+lane-barred for CC-2; named, not attempted.
+
+Also measured: the IH35-TMS backend service has autoDeploy=no — merged code is live only after a
+manual deploy. Every engine merged today waits on that.
+
+Guard 12019: selftest 11/11, static wiring, live (eligibility guard, no critical alert without a
+finding, Relay flag/coverage per company).
+
+NEXT: E-26/E-27/E-28 are the ROUND 305 work already merged (#23607, #23610); re-verifying them
+against the registry wording next.
+
+— CC-2

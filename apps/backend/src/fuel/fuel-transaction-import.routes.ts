@@ -15,6 +15,7 @@ import {
 } from "./fuel-transaction-import.js";
 import { flushFuelGlPostsAfterCommit } from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 import { flushFuelCardOverageAfterCommit } from "./fuel-card-overage.service.js";
+import { onFuelIngestComplete } from "./fuel-ingest-hooks.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 
 const companyQuerySchema = z.object({
@@ -137,6 +138,14 @@ export async function registerFuelTransactionImportRoutes(app: FastifyInstance) 
     // Separate flag (FUEL_CARD_OVERAGE_RECOVERY_ENABLED, default OFF) and separate failure domain:
     // the expense post and the driver recovery must not be able to break each other.
     const overage = await flushFuelCardOverageAfterCommit(result.counts.gl_post_candidates, req.log);
+
+    // ROUND 306 E-21/E-22 — AFTER COMMIT: match the new rows to trucks and run fraud detection once,
+    // for this company only. Not awaited by the response; failures are logged, never swallowed silently.
+    if (result.counts.rows_inserted > 0) {
+      void onFuelIngestComplete(req.log, "fuel_statement_upload", [companyId]).catch((err: unknown) =>
+        req.log.error({ err, operating_company_id: companyId }, "[FUEL_INGEST_HOOK] post-upload matching failed")
+      );
+    }
 
     const { gl_post_candidates: _gl, ...publicCounts } = result.counts;
     return {

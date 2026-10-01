@@ -60,9 +60,23 @@ contains("apps/backend/src/integrations/fuel/fraud-detector/routes.ts", routes, 
 ]);
 
 const worker = read("apps/backend/src/jobs/fuel-fraud-detector-worker.ts");
+// ROUND 306 E-21: the detector runs once per fuel-ingest completion, not every 15 minutes, and
+// refuses to make a finding from one signal. The schedule moved to fuel/fuel-ingest-hooks.ts.
 contains("apps/backend/src/jobs/fuel-fraud-detector-worker.ts", worker, [
-  { pattern: /\*\/15 \* \* \* \*/, label: "15 minute cron" },
   { pattern: /initializeFuelFraudDetectorWorker/, label: "worker init export" },
+  { pattern: /classifyFraudMatches/, label: "two-independent-signal classification" },
+  { pattern: /fuelPurchaseIneligibleReason/, label: "shared fuel-purchase eligibility predicate" },
+]);
+if (/cron\.schedule\(/.test(worker)) failures.push("apps/backend/src/jobs/fuel-fraud-detector-worker.ts: must not run on a timer (E-21: on ingest only)");
+const hooks = read("apps/backend/src/fuel/fuel-ingest-hooks.ts");
+contains("apps/backend/src/fuel/fuel-ingest-hooks.ts", hooks, [
+  { pattern: /runFuelFraudDetectorTick/, label: "fraud detection on ingest" },
+]);
+contains("apps/backend/src/cron/loves-card-import.cron.ts", read("apps/backend/src/cron/loves-card-import.cron.ts"), [
+  { pattern: /onFuelIngestComplete/, label: "Loves import triggers the ingest hook" },
+]);
+contains("apps/backend/src/fuel/fuel-transaction-import.routes.ts", read("apps/backend/src/fuel/fuel-transaction-import.routes.ts"), [
+  { pattern: /onFuelIngestComplete/, label: "statement upload triggers the ingest hook" },
 ]);
 
 read("apps/backend/src/integrations/fuel/fraud-detector/__tests__/rules.test.ts");
