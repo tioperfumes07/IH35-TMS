@@ -49,6 +49,14 @@ function selftest() {
     if (!/requireFactoringPurchaseOwner\(reply, client, \{[^}]*action: "create"/s.test(read(f))) problems.push(`${f}: submit lacks the owner gate`);
   }
 
+  // ROUND 315 step 2 — the purchase document: every write route gates first, and the service re-checks the actor.
+  const pr = read("apps/backend/src/factoring/purchase.routes.ts");
+  for (const action of ["create", "advance", "release"]) {
+    if (!new RegExp(`await ownerGate\\(reply, user, q\\.data\\.operating_company_id, "${action}"`).test(pr)) problems.push(`purchase.routes.ts: ${action} route lacks the owner gate`);
+  }
+  const ps = read("apps/backend/src/factoring/purchase.service.ts");
+  if ((ps.match(/await assertOwnerActor\(client, oci, input\.actorUserId, "/g) ?? []).length < 3) problems.push("purchase.service.ts: create/post/void must each re-check the Owner actor");
+
   const match = read("apps/backend/src/accounting/bank-recon/match.service.ts");
   const gateCalls = match.match(/await assertOwnerMayMatchFactoringPurchase\(/g) ?? [];
   if (gateCalls.length < 2) problems.push(`match.service.ts: both accept functions must call assertOwnerMayMatchFactoringPurchase (found ${gateCalls.length})`);
@@ -69,7 +77,7 @@ function selftest() {
     console.error(`${LABEL} --selftest FAIL — ${problems.join("; ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS (static: insert sites, 7 routes, 2 match paths, auto-submit, gate)`);
+  console.log(`${LABEL} --selftest PASS (static: insert sites, 7 routes, 3 purchase routes + service, 2 match paths, auto-submit, gate)`);
 }
 
 selftest();

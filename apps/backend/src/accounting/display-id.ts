@@ -230,6 +230,27 @@ export async function nextFactoringDisplayId(client: Queryable, operatingCompany
   return `${prefix}${String(nextNumber).padStart(5, "0")}`;
 }
 
+/** ROUND 315: one factoring purchase (= one Faro wire) per document — FP-YYYY-#####, server-generated, gap-safe under lock. */
+export async function nextFactoringPurchaseDisplayId(client: Queryable, operatingCompanyId: string, referenceDate: Date = new Date()) {
+  const year = toYear(referenceDate);
+  const prefix = `FP-${year}-`;
+  await withDisplayLock(client, `accounting.factoring_purchase.display_id:${operatingCompanyId}`);
+  const res = await client.query<{ next_number: number }>(
+    `
+      SELECT COALESCE(
+        MAX(CASE WHEN display_id ~ ('^' || $2 || '[0-9]+$') THEN substr(display_id, length($2) + 1)::bigint END),
+        0
+      ) + 1 AS next_number
+      FROM accounting.factoring_purchases
+      WHERE operating_company_id = $1::uuid
+        AND display_id LIKE $2 || '%'
+    `,
+    [operatingCompanyId, prefix]
+  );
+  const nextNumber = Number(res.rows[0]?.next_number ?? 1);
+  return `${prefix}${String(nextNumber).padStart(5, "0")}`;
+}
+
 /**
  * QBO-style document number for expenses that are not load-attributed.
  * Load-scoped numbers stay `L-<load>-<seq>` via generateExpenseNumber; this series is EXP-YYYY-#####

@@ -300,6 +300,7 @@ import { registerBankingLinkSuggestionActionsRoutes } from "./banking/link-sugge
 import { registerReconRoutes } from "./accounting/recon/recon.routes.js";
 import { registerFactoringRoutes } from "./factoring/factoring.routes.js";
 import { registerFactoringBatchRoutes } from "./factoring/batch.routes.js";
+import { registerFactoringPurchaseRoutes } from "./factoring/purchase.routes.js";
 import { registerFactorRoutes } from "./factoring/factor.routes.js";
 import { registerReserveRoutes } from "./factoring/reserve.routes.js";
 import { registerFaroCsvImportRoutes } from "./factoring/faro-csv-import.routes.js";
@@ -1224,6 +1225,7 @@ async function main() {
   await registerReconRoutes(app);
   await registerFactoringRoutes(app);
   await registerFactoringBatchRoutes(app);
+  await registerFactoringPurchaseRoutes(app);
   await registerFactorRoutes(app);
   await registerReserveRoutes(app);
   await registerFaroCsvImportRoutes(app);
