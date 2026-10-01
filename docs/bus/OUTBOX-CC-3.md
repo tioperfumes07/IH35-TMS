@@ -1550,3 +1550,20 @@ guard: scripts/verify-driver-prompts-flag-off-idempotent.mjs + --selftest PASS; 
 - **Rolled-back proof on prod**, migration applied in the transaction: 13625 / 13627 / 13638 → canceled_at NULL, status stays 'dispatched'. A second reversal is refused (E_NO_ACTIVE_CANCELLATION).
 - **AUTH-192 is OPEN.** The script `scripts/ops/2026-10-01-cc3-reverse-false-cancellations.mts` runs after the deploy applies 202615180900: dry run, then `--apply --auth AUTH-192`, one audit row per load plus the batch row.
 - **Not done, by design:** status 'delivered'. The canonical delivered transition stamps now() as the delivery departure and creates driver-bill artifacts. The owner said they will enter these loads' delivery themselves.
+
+## 2026-10-01 ROUND 313 — LIVE readings (prod at f7cd7a4)
+
+- **Item 5 DONE LIVE (AUTH-192 consumed 15:57:21Z):**
+  - 13625 / 13627 / 13638: canceled_at NULL, cancellation rows `reversed`, status `dispatched`.
+  - Audit `63568bde` / `b7930f81` / `524fcff0` plus batch `18e88d93`.
+  - Merged #23795; migration 202615180900 applied by the deploy.
+- **E-05 live:** `load_odometer_segments` 49 rows (40 before; new legs since 15:45Z). Stop events 372, 155 linked to a load. The 10-day catch-up first runs at 02:41 CT.
+- **E-13:** deployed (#23796). 0 webhook rows so far; Samsara posts only on GeofenceEntry/Exit at its addresses. Next check: rows arriving, or `samsara_webhook_signature_invalid` audit rows (that would mean a secret mismatch, for the owner).
+- **Flags set ON in Render (owner decision: on after the deploy):** `SAMSARA_FUEL_PURCHASE_PUSH_APPLY`, `SAMSARA_ROUTES_PUSH_ENABLED`, `SAMSARA_DRIVER_MESSAGING_ENABLED`. Driver prompts, fence push, auto-status and master sync stay OFF.
+- **Still open from ROUND 313:**
+  - E-23 `integrations.samsara_fuel_reports` table + unit tab.
+  - E-30 `dispatch.driver_messages` both ways.
+  - E-31 route id on `mdata.loads` + ETA read-back.
+  - E-32 BOL/POD/DVIR into `docs.files`.
+  - GeofenceEntry/Exit projection.
+- **Merged with I2 red (owner order):** #23795 went in while `verify-reconciler-exceptions` I2 = 14 > 13. The new exception is 13637 (delivery evidence, no invoice), CC-2 lane, owner invoices manually.
