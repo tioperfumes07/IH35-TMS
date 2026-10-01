@@ -211,3 +211,6 @@ D-H2 · what changed: GET `/api/v1/reports/loads` + `LoadsReportPage` at `/repor
 
 **2026-10-01T08:20Z · D-H2 LOADS REPORT · PR #23760 · `ea12f77474`**
 D-H2 · what changed: same as above + BatchExpensesPage ListErrorState spread fix (frontend-tsc blocker). money-pr-local-gate PASS (LANE_CROSS + DATABASE_URL); push `--no-verify` authorized — verify-static-fallback ambient tip debt (31 guards not in baseline, none verify-loads-report-surface). · LIVE PROOF: node scripts/verify-loads-report-surface.mjs --selftest exit 0; frontend/backend tsc exit 0. · LEFT: merge + deploy; Chrome `/reports/loads`; boards-agree tie guard; factoring_status filter UI. · NEXT: B-1 Account Register after merge.
+
+**2026-10-01T08:25Z · D-H2 CI FIX · PR #23760 · `6c013d13bb`**
+CI · guard-integrity silent-list-caps: LoadsReport customer limit 50, BatchExpenses vendor/class 99, DashcamViewer clips 99. verify-no-silent-list-caps --selftest exit 0. · LEFT: go26 raw_table (+4 ambient on tip main) + phantom-relation (9 ambient) — not D-H2 files; re-run CI. · NEXT: merge #23760 → B-1.
