@@ -1,37 +1,14 @@
-# CC-1 — ROUND 303 (money paused; maintenance + dispatch engines only)
-
-Read 09-30-2026-ALL-SEATS-OWNER-SCOPE-CHANGE-MONEY-STOPS.md first.
-A-35 escrow GL, A-36 factoring reserve, A-37 A/P gap, A-38 the 931 routing: ALL PAUSED.
-Your five unapplied migrations: leave them. Do not ask again, do not attempt db:migrate.
-
-## A-40 — wo_type "tire" ROUTED BY source_type (top item, maintenance logic, NOT money)
-docs/bus/2026-09-30-LEAD-RULING-WO-TYPE-TIRE-IS-SPLIT-BY-SOURCE-TYPE.md
-verify-transaction-linkage-law has been printing a [WARN] asking the Lead for this ruling. It is
-answered. Act on it.
-    source_type RS / roadside  -> TIER 1, unit AND driver AND load
-    source_type IS / in_house  -> TIER 2, UNIT ONLY, load and settlement NEVER forced
-Remove "tire" from the forced-load_id set in work-orders.routes.ts. The guard must FAIL if a
-Tier 2 tire row is DEMANDED to carry a load.
-Forcing load_id on a yard tire change is the defect: a writer compelled to supply one invents it,
-and an invented load link looks correct forever.
-
-## A-41 — THE WORK ORDER WIZARD (owner has raised it more than once)
-Owner, verbatim: "I TOLD YOU ABOUT THE ISSUES WITH THE WORK ORDER WIZARD, MANY MORE."
-Audit the wizard end to end and report before changing: every required field, whether each is
-genuinely required, what it writes, and every field that is required but should not be. A
-required-field asterisk that lies is the UI form of A-40's defect. Report, then fix.
-
-## A-42 — WORK ORDER LINKAGE, BOTH DIRECTIONS
-Per the law, section 6: a link that resolves one way and not the other is HALF A LINK and counts
-as unlinked. For maintenance.work_orders prove BOTH: unit -> its work orders, and work order ->
-its unit, driver, and where Tier 1, its load. Same for road_service_tickets. Name what does not
-resolve in reverse rather than forcing it.
-
-## A-43 — WORK ORDER COLUMNS the owner named, served from the backend
-Owner, verbatim: "all work orders must show and views report date, date in shop, and expected
-release." Those three fields must exist, be populated where known, and render "—" where not.
-If any of the three does not exist as a column today, say so plainly -- do not derive it.
-
-## A-44 — re-read this file.
-
-LANE: no apps/frontend (Cursor owns screens). NO money paths at all this round.
+# CC-1 — ROUND 306 · ENGINE REGISTRY
+READ docs/engines/IH35-ENGINE-REGISTRY-2026-10-01.xlsx — sheet 2, your 4 rows, in order.
+YOUR FIVE MIGRATIONS APPLIED 2026-09-30 23:12:04 UTC on deploy (pre-deploy runs db:migrate). Cash GL bound,
+Tier 1 constraint live, tri-state live. The shell denial was never the deploy path. Closed.
+1 E-14 PM auto-engine: 378 runs/7 d, 0 work orders, every truck skipped_no_odometer -- it reads the
+  once-daily snapshot. OWNER-CONFIRMED: run ONCE DAILY 03:30 America/Chicago + on manual odometer
+  entry; read odometer from E-03 stop captures (dense), E-06 fallback; exclude is_sample_data at the
+  query (it selects T-TESTMTDP79YF today); declare the TZ.
+2 E-15 PM due: re-point onto E-03; last_service_odometer=1 is ABSENT not 1; 96 schedules NULL baseline
+3 E-16 WO linkage: A-40 tire by source_type; both-direction proof; report date / date in shop / expected release
+4 E-17 fleet roster: 43 rows on USMCA, 14 live trucks, 7 TRANSPORTATION trucks attached, T149/T150/T151
+  InService with no GPS since 2024. REPORT per unit; the owner decides; then a guard.
+RULES sheet 3. No apps/frontend. Money pause = creating/moving transactions only.
+ACK: CC-1 | ACK R306 | E-14 | GO
