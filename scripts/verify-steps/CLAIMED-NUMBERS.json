@@ -1,4 +1,14 @@
 {
+  "12059": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-driver-complaints-chargeback-chain: E-28 complaints carry stop/driver_caused/source; a chargeback exists only for a driver-caused, approved complaint and links its deduction both ways."
+  },
+  "12063": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-faro-statement-tieout: every imported Faro statement line is matched to an advance or a bank line, or named unmatched with the difference; no plug rows."
+  },
   "12055": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-01",
