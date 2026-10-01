@@ -5,8 +5,8 @@
  * Mapping (every field measured live; nothing guessed):
  *   type            preTrip -> pre_trip, postTrip -> post_trip; any other type is skipped.
  *   unit_id         vehicle.id via loadUnitIdBySamsaraVehicleId (mirror-first); unmapped -> skipped.
- *   driver_id       the SIGNER (authorSignature.signatoryUser.id) via mdata.drivers.samsara_driver_id or
- *                   the integrations.samsara_drivers mirror (merges followed, deactivated/sample excluded);
+ *   driver_id       the SIGNER (authorSignature.signatoryUser.id) via the canonical map
+ *                   mdata.driver_samsara_accounts (merges followed);
  *                   unmapped/ambiguous -> skipped (never the
  *                   assignment-table driver: the signer is who actually inspected).
  *   odometer        round(odometerMeters / 1609.344) miles; absent -> skipped.
@@ -21,6 +21,7 @@
  */
 import type { SamsaraDvir } from "../integrations/samsara/samsara-client.js";
 import { loadUnitIdBySamsaraVehicleId } from "../integrations/samsara/samsara-positions.service.js";
+import { loadDriverIdBySamsaraId } from "../integrations/samsara/driver-samsara-map.js";
 import type { PgClient } from "../integrations/samsara/samsara.service.js";
 
 export const METERS_PER_MILE = 1609.344;
@@ -86,38 +87,12 @@ export function mapSamsaraDvir(
 }
 
 /**
- * Samsara driver id -> local driver ids. Both link sources (mdata.drivers.samsara_driver_id and the
- * integrations.samsara_drivers mirror) are read; a merged driver resolves to merged_into_driver_id; a
- * sample driver is never a candidate. When an id links to an active AND a deactivated record, the
- * active ones win; a lone deactivated record is still the signer (the DVIR is a fact). More than one
- * survivor stays ambiguous.
+ * Samsara driver id -> local driver ids, from the CANONICAL map mdata.driver_samsara_accounts (merged
+ * drivers resolve to the survivor) via the shared resolver -- never the legacy mdata.drivers column.
  */
 export async function loadDriversBySamsaraId(client: PgClient, operatingCompanyId: string): Promise<Map<string, Set<string>>> {
-  const res = await client.query(
-    `WITH links AS (
-       SELECT d.samsara_driver_id::text AS sid, d.id AS driver_id FROM mdata.drivers d
-        WHERE d.operating_company_id = $1::uuid AND d.samsara_driver_id IS NOT NULL
-       UNION
-       SELECT sd.samsara_driver_id::text, sd.local_driver_id FROM integrations.samsara_drivers sd
-        WHERE sd.operating_company_id = $1::uuid AND sd.local_driver_id IS NOT NULL
-     )
-     SELECT DISTINCT l.sid, target.id::text AS driver_id, (target.deactivated_at IS NOT NULL) AS deactivated
-       FROM links l
-       JOIN mdata.drivers src ON src.id = l.driver_id
-       JOIN mdata.drivers target ON target.id = COALESCE(src.merged_into_driver_id, src.id)
-      WHERE COALESCE(target.is_sample_data, false) = false`,
-    [operatingCompanyId]
-  );
-  const active = new Map<string, Set<string>>();
-  const inactive = new Map<string, Set<string>>();
-  for (const r of res.rows) {
-    const bucket = r.deactivated ? inactive : active;
-    const set = bucket.get(String(r.sid)) ?? new Set<string>();
-    set.add(String(r.driver_id));
-    bucket.set(String(r.sid), set);
-  }
-  for (const [sid, set] of inactive) if (!active.has(sid)) active.set(sid, set);
-  return active;
+  const byId = await loadDriverIdBySamsaraId(client as never, operatingCompanyId);
+  return new Map([...byId].map(([sid, driverId]) => [sid, new Set([driverId])]));
 }
 
 export type DvirIngestResult = {

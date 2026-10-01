@@ -53,6 +53,7 @@ Touched scripts/-lane files, one per queue item, each its own PR:
 - `scripts/verify-samsara-one-token-path-and-measured-shapes.mjs` (Round 306 E-10..E-12).
 - `scripts/verify-samsara-master-sync-flag-off.mjs` (ORDERS 2026-10-01 rule 2).
 - `scripts/verify-samsara-master-sync-link-only.mjs` (LEAD DECISION 2026-10-01).
+- `scripts/verify-cc3-driver-resolution-uses-canonical-map.mjs` (canonical driver map).
 - further Round 304 guards to follow under this same ruling, named as they land.
 
 No money-app posting path touched (NON-FINANCIAL lane -- measurement/reporting guards, a

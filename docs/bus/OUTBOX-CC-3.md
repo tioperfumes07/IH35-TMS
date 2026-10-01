@@ -1316,3 +1316,13 @@ trailers 97 -> 97 other_company, 0 errors. mdata.drivers 273/273, units 196/196,
 ASK (Lead -> owner): ENABLE_SAMSARA_MASTER_SYNC_CRON=true is now safe. Also report: 85 "SAM-" DryVan equipment + 6 "SAM-" units are sync
 junk (not real assets) — voidable under the test/sample/demo authority on your word; 3 Samsara vehicle ids sit on 3 units each.
 guard: scripts/verify-samsara-master-sync-link-only.mjs + --selftest PASS; vitest samsara 246 pass.
+
+CORRECTION (CC-3, 2026-10-01) — driver <-> Samsara resolution. mdata.driver_samsara_accounts is the CANONICAL map (one driver may hold
+several Samsara accounts; 95 active USMCA rows; 0 Samsara ids on two drivers). My row-5 "32 duplicate pairs" report read the legacy
+mdata.drivers.samsara_driver_id column + the ingestion mirror — the wrong source: by the canonical map there are NO split drivers.
+AUTH-186 edited only that legacy column (4 moved to survivors, 1 cleared); the canonical map was untouched and already right. The losers'
+original legacy values are preserved in audit.audit_events source CC-3-AUTH-186 (they were meant to stay on the losers for audit — CC-3
+can restore them on a word). FIX in this PR: one shared resolver (integrations/samsara/driver-samsara-map.ts) over the canonical map, now
+used by the master sync, DVIR import, driver-profile Samsara tab, routes, messaging (every account of the driver), fuel efficiency and
+driven-miles HOS cross-check. Proof (rolled back): master sync drivers 34/34 resolved (was 31 + 3 false conflicts); DVIR 57/59 resolved.
+guard: scripts/verify-cc3-driver-resolution-uses-canonical-map.mjs + --selftest PASS.

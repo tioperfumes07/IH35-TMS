@@ -15,6 +15,7 @@ import { fuelPurchaseIneligibleReason, FUEL_ROWS_WITH_STAMP_COUNT_SQL } from "..
 import type { FuelRowForEligibility } from "../fuel/fuel-purchase-eligibility.js";
 import type { SamsaraFuelEnergyRow } from "../integrations/samsara/samsara-client.js";
 import { loadUnitIdBySamsaraVehicleId } from "../integrations/samsara/samsara-positions.service.js";
+import { loadDriverIdBySamsaraId } from "../integrations/samsara/driver-samsara-map.js";
 import type { PgClient } from "../integrations/samsara/samsara.service.js";
 
 export const ML_PER_US_GALLON = 3785.411784;
@@ -117,28 +118,13 @@ export async function computeFuelEfficiencySignals(
     return classifyUnitFuelSignal(v, unitId, unitId ? purchases.get(unitId) : undefined);
   });
 
-  // samsara_driver_id lives on mdata.drivers for most drivers and only in the integrations.samsara_drivers
-  // mirror for some -- use either, never guess (same rule as driven-miles-legs.service.ts).
-  const driverMap = await client.query(
-    `SELECT d.samsara_driver_id::text AS sid, d.id::text AS driver_id FROM mdata.drivers d
-      WHERE d.operating_company_id = $1::uuid AND d.samsara_driver_id IS NOT NULL
-     UNION
-     SELECT sd.samsara_driver_id::text, sd.local_driver_id::text FROM integrations.samsara_drivers sd
-      WHERE sd.operating_company_id = $1::uuid AND sd.local_driver_id IS NOT NULL`,
-    [input.operatingCompanyId]
-  );
-  const driverIds = new Map<string, Set<string>>();
-  for (const r of driverMap.rows) {
-    const set = driverIds.get(String(r.sid)) ?? new Set<string>();
-    set.add(String(r.driver_id));
-    driverIds.set(String(r.sid), set);
-  }
+  // Samsara driver -> local driver: the CANONICAL map (shared resolver, merges followed).
+  const driverBySid = await loadDriverIdBySamsaraId(client as never, input.operatingCompanyId);
   const drivers = driverRows.map((d) => {
-    const ids = driverIds.get(d.subject_id);
     return {
       samsara_driver_id: d.subject_id,
       driver_name: d.subject_name,
-      driver_id: ids && ids.size === 1 ? [...ids][0]! : null,
+      driver_id: driverBySid.get(d.subject_id) ?? null,
       samsara_mpg: d.efficiency_mpge == null ? null : r1(d.efficiency_mpge),
       samsara_miles: d.distance_traveled_meters == null ? null : r1(d.distance_traveled_meters / METERS_PER_MILE),
       idle_pct: d.engine_run_time_ms && d.engine_idle_time_ms != null ? r1((d.engine_idle_time_ms / d.engine_run_time_ms) * 100) : null,

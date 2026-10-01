@@ -25,14 +25,14 @@ describe("ROUND 306 E-30 — chat message -> driver's Samsara app", () => {
     expect(send).not.toHaveBeenCalled();
   });
 
-  it("sends to exactly-one-linked drivers only, and records the delivery with the load", async () => {
+  it("sends to every canonical Samsara account of each driver, skips unlinked drivers, records the delivery with the load", async () => {
     process.env.SAMSARA_DRIVER_MESSAGING_ENABLED = "true";
     const send = vi.fn().mockResolvedValue({ status: 200 });
     const d = db([["55066742"], ["1", "2"], []]);
     const r = await deliverChatMessageToSamsara(d as never, "m1", { sendDriverMessage: send });
     expect(r.outcome).toBe("sent");
-    expect(send).toHaveBeenCalledWith(["55066742"], "Call dispatch");
-    expect(r.per_driver.map((x) => x.reason)).toEqual([null, "driver_linked_to_2_samsara_ids", "driver_not_linked_to_samsara"]);
+    expect(send).toHaveBeenCalledWith(["55066742", "1", "2"], "Call dispatch");
+    expect(r.per_driver.map((x) => x.reason)).toEqual([null, null, "driver_not_linked_to_samsara"]);
     expect(JSON.parse(String(d.writes[0]?.[5]))).toMatchObject({ message_id: "m1", load_id: "l1", outcome: "sent" });
   });
 

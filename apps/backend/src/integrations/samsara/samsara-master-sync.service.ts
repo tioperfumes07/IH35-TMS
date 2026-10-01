@@ -131,41 +131,31 @@ export async function syncSamsaraDriversMaster(client: PgClient, operatingCompan
     const phone = str(raw.phone) ?? str(raw.mobilePhone);
     await client.query("SAVEPOINT driver_row");
     try {
-      // The Samsara id on mdata.drivers, else the mirror's local link (a merged row resolves to its survivor).
+      // The CANONICAL map mdata.driver_samsara_accounts decides who this Samsara driver is (merges followed);
+      // the legacy mdata.drivers.samsara_driver_id column is never a lookup key.
       const found = await client.query(
-        `SELECT d.id::text, d.operating_company_id::text AS oc, d.samsara_driver_id::text AS sid
-           FROM mdata.drivers d
-          WHERE d.samsara_driver_id = $2
-             OR d.id = (SELECT COALESCE(m.merged_into_driver_id, m.id) FROM integrations.samsara_drivers sd
-                          JOIN mdata.drivers m ON m.id = sd.local_driver_id
-                         WHERE sd.operating_company_id = $1::uuid AND sd.samsara_driver_id = $2 AND sd.local_driver_id IS NOT NULL
-                         LIMIT 1)
-          ORDER BY (d.operating_company_id = $1::uuid) DESC, (d.merged_into_driver_id IS NULL) DESC
+        `SELECT COALESCE(d.merged_into_driver_id, d.id)::text AS id, a.operating_company_id::text AS oc, NULL::text AS sid
+           FROM mdata.driver_samsara_accounts a JOIN mdata.drivers d ON d.id = a.driver_id
+          WHERE a.samsara_driver_id = $1 AND a.is_active
           LIMIT 1`,
-        [operatingCompanyId, d.id]
+        [d.id]
       );
       const row = found.rows[0] as { id: string; oc: string; sid: string | null } | undefined;
       if (!row) bump(counts, "no_local_record");
       else if (row.oc !== operatingCompanyId) bump(counts, "other_company");
       else if (row.sid && row.sid !== d.id) bump(counts, "linked_to_other_samsara_id");
       else {
-        const taken = row.sid ? 0 : Number((await client.query(
-          `SELECT count(*) AS n FROM mdata.drivers WHERE operating_company_id = $1::uuid AND samsara_driver_id = $2 AND id <> $3::uuid`,
-          [operatingCompanyId, d.id, row.id])).rows[0]?.n ?? 0);
-        if (taken > 0) bump(counts, "linked_to_other_samsara_id");
-        else {
-          await client.query(
-            `UPDATE mdata.drivers
-                SET samsara_driver_id = COALESCE(samsara_driver_id, $2),
-                    email = COALESCE(NULLIF(email, ''), $3),
-                    phone = CASE WHEN phone IS NULL OR phone = '' OR phone = '000-000-0000' THEN COALESCE($4, phone) ELSE phone END,
-                    updated_at = now()
-              WHERE id = $1::uuid`,
-            [row.id, d.id, email, phone]
-          );
-          bump(counts, row.sid ? "already_linked" : "linked");
-          updated += 1;
-        }
+        // Fill EMPTY contact fields only; identity fields and the legacy Samsara column are never written.
+        await client.query(
+          `UPDATE mdata.drivers
+              SET email = COALESCE(NULLIF(email, ''), $2),
+                  phone = CASE WHEN phone IS NULL OR phone = '' OR phone = '000-000-0000' THEN COALESCE($3, phone) ELSE phone END,
+                  updated_at = now()
+            WHERE id = $1::uuid`,
+          [row.id, email, phone]
+        );
+        bump(counts, "already_linked");
+        updated += 1;
       }
       await client.query("RELEASE SAVEPOINT driver_row");
     } catch (e) {

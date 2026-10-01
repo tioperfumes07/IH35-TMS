@@ -4,8 +4,8 @@
  * delivered to each driver participant's Samsara app.
  *
  * - Flag: SAMSARA_DRIVER_MESSAGING_ENABLED=true (default OFF — this messages real drivers).
- * - Driver -> Samsara id: mdata.drivers.samsara_driver_id or the integrations.samsara_drivers mirror;
- *   exactly one id, else that driver is skipped with a reason (32 Samsara ids map to 2 local rows).
+ * - Driver -> Samsara ids: the CANONICAL map mdata.driver_samsara_accounts (merges followed); a driver
+ *   with several Samsara accounts gets the message on each; a driver with none is skipped with a reason.
  * - Every delivery attempt is recorded in integrations.integration_sync_log (sync_kind
  *   'driver_message_send'): message_id, thread_id, load_id (thread's), driver_id, samsara ids, outcome.
  *   A message already delivered is never re-sent.
@@ -24,7 +24,7 @@ export function samsaraDriverMessagingEnabled(): boolean {
 export type DeliveryResult = {
   message_id: string;
   outcome: "disabled" | "not_office_text" | "no_driver_participants" | "already_delivered" | "sent" | "failed" | "no_deliverable_driver";
-  per_driver: { driver_id: string; samsara_driver_id: string | null; reason: string | null }[];
+  per_driver: { driver_id: string; samsara_driver_ids: string[]; reason: string | null }[];
   error?: string;
 };
 
@@ -50,23 +50,23 @@ export async function deliverChatMessageToSamsara(client: Db, messageId: string,
   const drivers = (
     await client.query<{ driver_id: string; sids: string[] | null }>(
       `SELECT p.driver_id::text,
-              (SELECT array_agg(DISTINCT sid) FROM (
-                 SELECT d.samsara_driver_id::text AS sid FROM mdata.drivers d WHERE d.id = p.driver_id AND d.samsara_driver_id IS NOT NULL
-                 UNION
-                 SELECT sd.samsara_driver_id::text FROM integrations.samsara_drivers sd
-                  WHERE sd.local_driver_id = p.driver_id AND sd.operating_company_id = $2::uuid) x) AS sids
+              (SELECT array_agg(DISTINCT a.samsara_driver_id::text) FROM mdata.driver_samsara_accounts a
+                 JOIN mdata.drivers x ON x.id = a.driver_id
+                WHERE a.operating_company_id = $2::uuid AND a.is_active
+                  AND COALESCE(x.merged_into_driver_id, x.id) = p.driver_id) AS sids
          FROM chat.participants p
         WHERE p.thread_id = $1::uuid AND p.party_type = 'driver' AND p.left_at IS NULL`,
       [m.thread_id, m.oc]
     )
   ).rows;
   if (drivers.length === 0) return { ...base, outcome: "no_driver_participants" };
+  // One driver may hold several Samsara accounts (canonical map): the message goes to every one of them.
   const per_driver = drivers.map((d) => {
     const sids = d.sids ?? [];
-    if (sids.length === 1) return { driver_id: d.driver_id, samsara_driver_id: sids[0]!, reason: null };
-    return { driver_id: d.driver_id, samsara_driver_id: null, reason: sids.length === 0 ? "driver_not_linked_to_samsara" : `driver_linked_to_${sids.length}_samsara_ids` };
+    if (sids.length === 0) return { driver_id: d.driver_id, samsara_driver_ids: [] as string[], reason: "driver_not_linked_to_samsara" };
+    return { driver_id: d.driver_id, samsara_driver_ids: sids, reason: null };
   });
-  const targets = per_driver.filter((d) => d.samsara_driver_id).map((d) => d.samsara_driver_id!);
+  const targets = per_driver.flatMap((d) => d.samsara_driver_ids);
   const record = async (outcome: string, error: string | null) =>
     client.query(
       `INSERT INTO integrations.integration_sync_log

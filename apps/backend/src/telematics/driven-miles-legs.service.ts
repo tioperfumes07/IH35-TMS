@@ -116,16 +116,16 @@ const METERS_PER_MILE = 1609.344;
 /** Pure. HOS miles over every daily log that overlaps the leg window, for that driver. */
 export function crossCheckLeg(
   leg: DrivenLeg,
-  driver: { driver_id: string | null; samsara_driver_id: string | null },
+  driver: { driver_id: string | null; samsara_driver_ids: string[] },
   logs: SamsaraHosDailyLog[]
 ): HosCrossCheck {
   if (leg.miles == null) return { status: "leg_miles_null" };
   if (!driver.driver_id) return { status: "no_driver_at_time" };
-  if (!driver.samsara_driver_id) return { status: "driver_not_mapped_to_samsara" };
+  if (driver.samsara_driver_ids.length === 0) return { status: "driver_not_mapped_to_samsara" };
   const from = new Date(leg.exited_at).getTime();
   const to = new Date(leg.entered_at).getTime();
   const overlapping = logs.filter(
-    (l) => l.samsara_driver_id === driver.samsara_driver_id && new Date(l.start_time).getTime() < to && new Date(l.end_time).getTime() > from && l.drive_distance_meters != null
+    (l) => driver.samsara_driver_ids.includes(l.samsara_driver_id) && new Date(l.start_time).getTime() < to && new Date(l.end_time).getTime() > from && l.drive_distance_meters != null
   );
   if (overlapping.length === 0) return { status: "no_hos_log_for_window" };
   const hosMiles = overlapping.reduce((s, l) => s + Number(l.drive_distance_meters), 0) / METERS_PER_MILE;
@@ -157,21 +157,20 @@ export async function driverForLeg(
   client: Db,
   operatingCompanyId: string,
   leg: DrivenLeg
-): Promise<{ driver_id: string | null; samsara_driver_id: string | null }> {
-  const res = await client.query<{ driver_id: string | null; samsara_driver_id: string | null }>(
-    // samsara_driver_id lives on mdata.drivers for most drivers; for 4 of 27 live USMCA drivers it
-    // exists only in the integrations.samsara_drivers mirror -- use either, never guess.
+): Promise<{ driver_id: string | null; samsara_driver_ids: string[] }> {
+  // Samsara accounts from the CANONICAL map mdata.driver_samsara_accounts (one driver may hold several).
+  const res = await client.query<{ driver_id: string | null; sids: string[] | null }>(
     `SELECT driver_at_time.driver_id::text,
-            COALESCE(d.samsara_driver_id,
-                     (SELECT sd.samsara_driver_id FROM integrations.samsara_drivers sd
-                       WHERE sd.local_driver_id = driver_at_time.driver_id AND sd.operating_company_id = $1::uuid
-                       ORDER BY sd.last_seen_at DESC NULLS LAST LIMIT 1)) AS samsara_driver_id
+            (SELECT array_agg(a.samsara_driver_id::text) FROM mdata.driver_samsara_accounts a
+               JOIN mdata.drivers x ON x.id = a.driver_id
+              WHERE a.operating_company_id = $1::uuid AND a.is_active
+                AND COALESCE(x.merged_into_driver_id, x.id) = driver_at_time.driver_id) AS sids
        FROM (SELECT 1) _one
-       ${driverAtTimeSql("$2::uuid", "$3::timestamptz")}
-       LEFT JOIN mdata.drivers d ON d.id = driver_at_time.driver_id`,
+       ${driverAtTimeSql("$2::uuid", "$3::timestamptz")}`,
     [operatingCompanyId, leg.unit_id, leg.exited_at]
   );
-  return res.rows[0] ?? { driver_id: null, samsara_driver_id: null };
+  const r = res.rows[0];
+  return { driver_id: r?.driver_id ?? null, samsara_driver_ids: r?.sids ?? [] };
 }
 
 export type LegReport = {

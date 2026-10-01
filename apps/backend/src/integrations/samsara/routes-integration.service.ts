@@ -68,14 +68,13 @@ export async function listLeaseScopedDispatchedRoutes(client: RouteDbClient, ope
   return result.rows;
 }
 
-/** Local driver -> Samsara driver ids (mdata.drivers column + mirror). */
+/** Local driver -> Samsara driver ids from the CANONICAL map (merges followed), most recent login first. */
 async function loadSamsaraDriverIdsByDriver(client: RouteDbClient, operatingCompanyId: string): Promise<Map<string, Set<string>>> {
   const res = await client.query<{ driver_id: string; sid: string }>(
-    `SELECT d.id::text AS driver_id, d.samsara_driver_id::text AS sid FROM mdata.drivers d
-      WHERE d.operating_company_id = $1::uuid AND d.samsara_driver_id IS NOT NULL
-     UNION
-     SELECT sd.local_driver_id::text, sd.samsara_driver_id::text FROM integrations.samsara_drivers sd
-      WHERE sd.operating_company_id = $1::uuid AND sd.local_driver_id IS NOT NULL`,
+    `SELECT COALESCE(d.merged_into_driver_id, d.id)::text AS driver_id, a.samsara_driver_id::text AS sid
+       FROM mdata.driver_samsara_accounts a JOIN mdata.drivers d ON d.id = a.driver_id
+      WHERE a.operating_company_id = $1::uuid AND a.is_active
+      ORDER BY a.last_login_at DESC NULLS LAST`,
     [operatingCompanyId]
   );
   const out = new Map<string, Set<string>>();
@@ -116,8 +115,9 @@ export function planRoutePushes(rows: EligibleRouteRow[], vehicles: Map<string, 
       });
     }
     const sids = r.driver_id ? [...(drivers.get(r.driver_id) ?? [])] : [];
-    const samsaraDriverId = sids.length === 1 ? sids[0]! : null;
-    const driver_note = !r.driver_id ? "load has no primary driver" : sids.length === 0 ? "driver not linked to Samsara" : sids.length > 1 ? `driver linked to ${sids.length} Samsara ids — omitted` : null;
+    // A route takes one Samsara driver: the driver's most recently logged-in account (canonical map order).
+    const samsaraDriverId = sids[0] ?? null;
+    const driver_note = !r.driver_id ? "load has no primary driver" : sids.length === 0 ? "driver not linked to Samsara" : sids.length > 1 ? `driver holds ${sids.length} Samsara accounts — most recent login used` : null;
     const body = { loadId: r.load_id, name: r.load_number, unitId: r.unit_id, driverId: r.driver_id, samsaraVehicleId: vids[0]!, samsaraDriverId, stops: built };
     const body_hash = createHash("sha256").update(JSON.stringify(body)).digest("hex");
     return { load_id: r.load_id, load_number: r.load_number, action: "push", body, driver_note, body_hash };
