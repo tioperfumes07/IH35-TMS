@@ -162,6 +162,12 @@ const LINKED_EXPENSE_COLUMNS: Array<ParityColumn<LinkedExpenseTableRow>> = [
       ) : (
         "—"
       ),
+  },  {
+    key: "bank_transaction_id",
+    label: "Bank transaction",
+    sortable: false,
+    render: (row) =>
+      row.bank_transaction_id ? <EntityLink kind="bank_transaction" id={row.bank_transaction_id} label="Bank transaction" /> : "—",
   },
 ];
 
@@ -196,6 +202,13 @@ const LINKED_BILL_PAYMENT_COLUMNS: Array<ParityColumn<LinkedBillPaymentRow>> = [
     sortable: false,
     render: (row) =>
       row.journal_entry_id ? <EntityLink kind="journal_entry" id={row.journal_entry_id} label="Journal entry" /> : "—",
+  },
+  {
+    key: "bank_transaction_id",
+    label: "Bank transaction",
+    sortable: false,
+    render: (row) =>
+      row.bank_transaction_id ? <EntityLink kind="bank_transaction" id={row.bank_transaction_id} label="Bank transaction" /> : "—",
   },
 ];
 

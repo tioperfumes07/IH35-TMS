@@ -335,6 +335,36 @@ export function checkWorkOrderLinkageBothWays(src = readFileSync(join(ROOT, WORK
   return [{ level: "OK", message: `${WORK_ORDERS_ROUTES_PATH}: WO resolves unit, trailer, driver-at-time, vendor, customer, loads, bills, bill payments, expenses, JEs, load invoices and received payments; three dates are columns.` }];
 }
 
+// Maintenance money linkage both ways (ORDERS 2026-10-01 CC-1): work order -> bill / expense -> bill
+// payment -> journal entry -> bank line, and back from the bill payment to its work order. The bank
+// line is resolved by ONE rule (BILL_PAYMENT_BANK_TRANSACTION_ID_SQL: source_bank_transaction_id first,
+// else matched_bill_payment_id) on every bill-payment read -- the detail page used to check only the
+// match column and showed no bank line for payments created from the bank line itself.
+const BILLS_SERVICE_PATH = "apps/backend/src/accounting/bills.service.ts";
+const WO_DETAIL_PAGE_PATH = "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx";
+const BILL_PAYMENT_DETAIL_PAGE_PATH = "apps/frontend/src/pages/accounting/BillPaymentDetailPage.tsx";
+export function checkMaintenanceMoneyBankLegs(
+  svc = readFileSync(join(ROOT, BILLS_SERVICE_PATH), "utf8"),
+  woPage = readFileSync(join(ROOT, WO_DETAIL_PAGE_PATH), "utf8"),
+  bpPage = readFileSync(join(ROOT, BILL_PAYMENT_DETAIL_PAGE_PATH), "utf8")
+) {
+  const f = [];
+  const fin = svc.match(/export async function listWorkOrderLinkedFinancials\([\s\S]*?\n\}\n/);
+  if (!fin) return [{ level: "FAIL", message: `${BILLS_SERVICE_PATH}: listWorkOrderLinkedFinancials is gone.` }];
+  if (!/EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL\} AS bank_transaction_id/.test(fin[0])) f.push("WO expense -> bank line missing");
+  if (!/source_transaction_type = 'bill_payment'[\s\S]{0,200}BILL_PAYMENT_BANK_TRANSACTION_ID_SQL\} AS bank_transaction_id/.test(fin[0])) f.push("WO bill payment -> JE + bank line missing");
+  const det = svc.match(/export async function getBillPaymentDetail\([\s\S]*?\n\}\n/);
+  if (!det) f.push("getBillPaymentDetail is gone");
+  else {
+    if (!/b\.linked_work_order_uuid::text AS work_order_id/.test(det[0])) f.push("bill payment -> work order missing");
+    if (!/SELECT \$\{BILL_PAYMENT_BANK_TRANSACTION_ID_SQL\} AS matched_bank_transaction_id/.test(det[0])) f.push("bill payment detail must use the shared bank-line rule");
+  }
+  if ((woPage.match(/kind="bank_transaction" id=\{row\.bank_transaction_id\}/g) ?? []).length < 2) f.push("WO page must link the bank line on bill payments and expenses");
+  if (!/kind="work_order" id=\{payment\.work_order_id\}/.test(bpPage)) f.push("bill payment page must link its work order");
+  if (f.length) return [{ level: "FAIL", message: `maintenance money linkage: HALF A LINK (law §6) -- ${f.join("; ")}.` }];
+  return [{ level: "OK", message: "maintenance money linkage: WO -> bill/expense -> bill payment -> JE -> bank line, and bill payment -> WO, resolve both ways." }];
+}
+
 function checkTier2LoadDemand() {
   const findings = [];
   const src = readFileSync(join(ROOT, WORK_ORDERS_ROUTES_PATH), "utf8");
@@ -416,6 +446,13 @@ function runSelftest() {
   const brokenWo = readFileSync(join(ROOT, WORK_ORDERS_ROUTES_PATH), "utf8").replace(/driverAtTimeSql\(/g, "inlined(");
   if (!checkWorkOrderLinkageBothWays(brokenWo).some((x) => x.level === "FAIL")) failures.push("checkWorkOrderLinkageBothWays did not FAIL when driverAtTimeSql was removed");
 
+  const money = checkMaintenanceMoneyBankLegs();
+  if (!money.some((x) => x.level === "OK")) failures.push(`checkMaintenanceMoneyBankLegs not OK on current source: ${money.map((x) => x.message).join(" | ")}`);
+  const brokenBp = readFileSync(join(ROOT, BILL_PAYMENT_DETAIL_PAGE_PATH), "utf8").replace(/kind="work_order"/g, 'kind="unit"');
+  if (!checkMaintenanceMoneyBankLegs(undefined, undefined, brokenBp).some((x) => x.level === "FAIL")) failures.push("checkMaintenanceMoneyBankLegs did not FAIL when the bill payment -> WO link was removed");
+  const brokenSvc = readFileSync(join(ROOT, BILLS_SERVICE_PATH), "utf8").replace("SELECT ${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL} AS matched_bank_transaction_id", "SELECT NULL AS matched_bank_transaction_id");
+  if (!checkMaintenanceMoneyBankLegs(brokenSvc).some((x) => x.level === "FAIL")) failures.push("checkMaintenanceMoneyBankLegs did not FAIL when the detail dropped the shared bank-line rule");
+
   if (failures.length > 0) {
     console.error(`${LABEL} --selftest: FAIL`);
     for (const f of failures) console.error(`  - ${f}`);
@@ -437,7 +474,7 @@ async function main() {
   const infoLines = [];
 
   // --- STATIC HALF ---
-  for (const finding of [...checkTier2LoadDemand(), ...checkUnitWorkOrderReverseLink(), ...checkWorkOrderLinkageBothWays()]) {
+  for (const finding of [...checkTier2LoadDemand(), ...checkUnitWorkOrderReverseLink(), ...checkWorkOrderLinkageBothWays(), ...checkMaintenanceMoneyBankLegs()]) {
     infoLines.push(`[${finding.level}] ${finding.message}`);
     if (finding.level === "FAIL") failures.push(finding.message);
   }
