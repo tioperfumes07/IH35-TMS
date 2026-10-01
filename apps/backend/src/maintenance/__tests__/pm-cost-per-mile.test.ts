@@ -21,7 +21,7 @@ describe("E-15 real driven miles -- odometer only, NULL with a reason, never 0 f
   it("miles = end anchor minus start anchor; backwards is held", () => {
     expect(realDrivenMiles(A(500000, "x"), A(512345.6, "y"), null, null)).toEqual({ miles: 12345.6, reason: null });
     expect(realDrivenMiles(A(500000, "x"), A(499000, "y"), null, null).miles).toBeNull();
-    expect(realDrivenMiles(null, A(1, "y"), "gap", null)).toEqual({ miles: null, reason: "period start: gap" });
+    expect(realDrivenMiles(null, A(1, "y"), "gap", null)).toEqual({ miles: null, reason: "start: gap" });
   });
 });
 
@@ -43,9 +43,10 @@ describe("E-15 engine end to end (mocked db)", () => {
       query: async <T>(sql: string): Promise<{ rows: T[] }> => {
         const r = (x: unknown[]) => ({ rows: x as T[] });
         if (sql.includes("FROM mdata.units u")) return r([{ id: "u1", unit_number: "T174" }]);
-        if (sql.includes("WITH b AS")) return r([{ unit_id: "u1", start_ts: "2026-07-01 05:00:00+00", end_ts: "2026-08-01 05:00:00+00",
-          sb_odo: "440000", sb_at: "2026-07-01 04:50:00+00", sb_src: "vehicle_locations",
-          eb_odo: "450000", eb_at: "2026-08-01 04:55:00+00", eb_src: "vehicle_locations", s_moving: "3", e_moving: "2" }]);
+        if (sql.includes("AS start_ts")) return r([{ start_ts: "2026-07-01 05:00:00+00", end_ts: "2026-08-01 05:00:00+00" }]);
+        if (sql.includes("WITH q AS")) return r([
+          { k: "u1:start", at: "2026-07-01T05:00:00.000Z", b_odo: "440000", b_at: "2026-07-01 04:50:00+00", b_src: "vehicle_locations", b_moving: "3", a_odo: null, a_at: null, a_src: null, a_moving: null },
+          { k: "u1:end", at: "2026-08-01T05:00:00.000Z", b_odo: "450000", b_at: "2026-08-01 04:55:00+00", b_src: "vehicle_locations", b_moving: "2", a_odo: null, a_at: null, a_src: null, a_moving: null }]);
         if (sql.includes("WITH delivered AS")) return r([{ unit_id: "u1", loads: "4", practical: "9500", short: "9200", missing_practical: "0", missing_short: "0" }]);
         if (sql.includes("FROM accounting.bills b")) return r([{ unit_id: "u1", work_order_id: "w1", wo_type: "pm", bill_id: "b1", amount_cents: "60000", parts_cents: "35000", labor_cents: "20000" },
                                                                 { unit_id: "u1", work_order_id: "w2", wo_type: "repair", bill_id: "b2", amount_cents: "40000", parts_cents: "0", labor_cents: "40000" }]);

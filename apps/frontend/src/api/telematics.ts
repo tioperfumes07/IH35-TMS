@@ -51,3 +51,36 @@ export function listLatestPositions(operatingCompanyId: string) {
   const qs = new URLSearchParams({ operating_company_id: operatingCompanyId });
   return apiRequest<{ rows: LatestUnitPosition[] }>(`/api/v1/telematics/positions/latest?${qs.toString()}`);
 }
+
+/** ORDER-2026-09-04 three-mile CPM: real driven miles per leg of one load (odometer only). */
+export type LoadRealDrivenLeg = {
+  stop_id: string;
+  sequence_number: number;
+  kind: "deadhead" | "loaded";
+  from_at: string | null;
+  to_at: string | null;
+  miles: number | null;
+  source: string | null;
+  reason: string | null;
+};
+export type LoadRealDrivenMiles = {
+  load: { id: string; load_number: string | null };
+  unit: { id: string; unit_number: string | null } | null;
+  legs: LoadRealDrivenLeg[];
+  comparison: {
+    real_driven_loaded_miles: number | null;
+    real_driven_loaded_reason: string | null;
+    real_driven_deadhead_miles: number | null;
+    real_driven_deadhead_reason: string | null;
+    practical_miles: number | null;
+    short_miles: number | null;
+    real_minus_practical_miles: number | null;
+    real_minus_short_miles: number | null;
+  } | null;
+  stored: boolean;
+  basis: Record<"real_driven" | "practical" | "short", string>;
+};
+export function getLoadRealDrivenMiles(operatingCompanyId: string, loadId: string) {
+  const qs = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<LoadRealDrivenMiles>(`/api/v1/loads/${loadId}/real-driven-miles?${qs.toString()}`);
+}

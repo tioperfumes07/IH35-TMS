@@ -41,6 +41,7 @@ import { SettlementProfitabilityCard } from "./tabs/SettlementProfitabilityCard"
 import { InsuranceClaimsReverseSection } from "../insurance/InsuranceClaimsReverseSection";
 import { LoadSafetyReverseSection } from "../safety/LoadSafetyReverseSection";
 import { ComplaintsReverseSection } from "../safety/ComplaintsReverseSection";
+import { LoadRealDrivenMilesSection } from "./LoadRealDrivenMilesSection";
 import { LoadWorkOrdersReverseSection } from "./LoadWorkOrdersReverseSection";
 import { LoadQualityEventsReverseSection } from "./LoadQualityEventsReverseSection";
 import { LoadDetentionReverseSection } from "./LoadDetentionReverseSection";
@@ -1349,6 +1350,9 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                 ) : null}
                 {load.operating_company_id ? (
                   <LoadDriverReportsReverseSection operatingCompanyId={load.operating_company_id} loadId={load.id} />
+                ) : null}
+                {load.operating_company_id ? (
+                  <LoadRealDrivenMilesSection operatingCompanyId={load.operating_company_id} loadId={load.id} />
                 ) : null}
                 {load.operating_company_id ? (
                   <LoadWorkOrdersReverseSection

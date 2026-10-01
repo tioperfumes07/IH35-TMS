@@ -20,21 +20,25 @@ const LABEL = "verify-pm-cost-per-mile-real-driven";
 const ENGINE = "apps/backend/src/maintenance/pm-cost-per-mile.service.ts";
 const KPI = "apps/backend/src/maintenance/kpi.routes.ts";
 const REPORTS = "apps/backend/src/maintenance/reports.routes.ts";
+// The odometer-at-a-moment rule is shared with the load/leg real-driven-miles engine (ORDER-2026-09-04).
+const ANCHOR = "apps/backend/src/telematics/odometer-anchor.ts";
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 
-export function checkEngine(src) {
+export function checkEngine(src, anchorSrc = read(ANCHOR)) {
   const p = [];
   const code = strip(src);
-  const odoSql = code.match(/WITH b AS \([\s\S]*?\[operatingCompanyId, unitIds, from, to\]/);
-  if (!odoSql) p.push(`${ENGINE}: the odometer anchor query is gone.`);
+  const anchor = strip(anchorSrc);
+  if (!/fetchOdometerAnchors\(client, operatingCompanyId,/.test(code)) p.push(`${ENGINE}: period boundaries no longer resolve through the shared fetchOdometerAnchors.`);
+  const odoSql = anchor.match(/export async function fetchOdometerAnchors\([\s\S]*?\n\}/);
+  if (!odoSql) p.push(`${ANCHOR}: the odometer anchor query is gone.`);
   else {
-    if (!/telematics\.vehicle_locations/.test(odoSql[0])) p.push(`${ENGINE}: real miles no longer read telematics.vehicle_locations.odometer_mi.`);
-    if (/miles_practical|miles_shortest|miles_deadhead/.test(odoSql[0])) p.push(`${ENGINE}: real driven miles read practical/short miles.`);
+    if (!/telematics\.vehicle_locations/.test(odoSql[0])) p.push(`${ANCHOR}: real miles no longer read telematics.vehicle_locations.odometer_mi.`);
+    if (/miles_practical|miles_shortest|miles_deadhead/.test(odoSql[0])) p.push(`${ANCHOR}: real driven miles read practical/short miles.`);
   }
-  if (/\binterpolat|\blerp\b/i.test(code)) p.push(`${ENGINE}: interpolation code found -- odometer is READ or ABSENT.`);
-  const real = code.match(/export function realDrivenMiles\([\s\S]*?\n\}/);
-  if (!real || !/miles: null, reason:/.test(real[0])) p.push(`${ENGINE}: realDrivenMiles no longer returns NULL with a reason for a missing anchor.`);
-  if (real && /miles: 0\b/.test(real[0])) p.push(`${ENGINE}: realDrivenMiles can return 0 for a missing mileage.`);
+  for (const [f, c] of [[ENGINE, code], [ANCHOR, anchor]]) if (/\binterpolat|\blerp\b/i.test(c)) p.push(`${f}: interpolation code found -- odometer is READ or ABSENT.`);
+  const real = anchor.match(/export function realDrivenMiles\([\s\S]*?\n\}/);
+  if (!real || !/miles: null, reason:/.test(real[0])) p.push(`${ANCHOR}: realDrivenMiles no longer returns NULL with a reason for a missing anchor.`);
+  if (real && /miles: 0\b/.test(real[0])) p.push(`${ANCHOR}: realDrivenMiles can return 0 for a missing mileage.`);
   const cpm = code.match(/export function cpmFor\([\s\S]*?\n\}/);
   if (!cpm) p.push(`${ENGINE}: cpmFor is gone.`);
   else {
@@ -64,11 +68,12 @@ if (process.argv.includes("--selftest")) {
   };
   expect("real engine", checkEngine(read(ENGINE)), false);
   expect("real no-second-engine", checkNoSecondEngine(read(KPI), read(REPORTS)), false);
-  expect("real miles from practical", checkEngine(read(ENGINE).replace("FROM telematics.vehicle_locations\n             WHERE unit_id = u.unit_id AND operating_company_id = $1::uuid AND odometer_mi IS NOT NULL AND captured_at <= b.start_ts", "FROM telematics.vehicle_locations\n             WHERE unit_id = u.unit_id AND miles_practical > 0 AND odometer_mi IS NOT NULL AND captured_at <= b.start_ts")), true);
-  expect("missing miles become 0", checkEngine(read(ENGINE).replace("if (!start) return { miles: null, reason:", "if (!start) return { miles: 0, reason:")), true);
+  expect("real miles from practical", checkEngine(read(ENGINE), read(ANCHOR).replace("AND odometer_mi IS NOT NULL AND captured_at <= q.ts", "AND miles_practical > 0 AND captured_at <= q.ts")), true);
+  expect("missing miles become 0", checkEngine(read(ENGINE), read(ANCHOR).replace("if (!start) return { miles: null, reason:", "if (!start) return { miles: 0, reason:")), true);
+  expect("E-15 stops using the shared anchors", checkEngine(read(ENGINE).replace(/fetchOdometerAnchors\(client/g, "localAnchors(client")), true);
   expect("CPM loses its basis", checkEngine(read(ENGINE).replace("basis_label: MILEAGE_BASES[basis]", "basis_label: ''")), true);
   expect("KPI back on practical miles", checkNoSecondEngine(read(KPI).replace(/computePmCostPerMile\(/g, "x(") + "\nCOALESCE(l.miles_practical, 0)", read(REPORTS)), true);
-  console.log(ok ? `${LABEL} --selftest PASS (6/6)` : `${LABEL} --selftest FAIL`);
+  console.log(ok ? `${LABEL} --selftest PASS (7/7)` : `${LABEL} --selftest FAIL`);
   process.exit(ok ? 0 : 1);
 }
 const problems = [...checkEngine(read(ENGINE)), ...checkNoSecondEngine(read(KPI), read(REPORTS))];

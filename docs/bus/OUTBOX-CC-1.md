@@ -1200,3 +1200,32 @@ proves it FAILs when the bill payment → WO link or the shared rule is removed)
 **live proof (prod read-only):** completeness 6,674 visible = 6,674 live bill payments; 0 carry
 `source_bank_transaction_id` and 0 are on WO-linked bills today (maintenance unseeded) — latent defect, not yet
 hit. Rewritten detail SQL executed on USMCA payments without error.
+
+## 2026-10-01 — Three-mile CPM part A: real driven miles stored per load and leg (ORDER-2026-09-04) — BUILT
+
+**storage:** migration 202615160000 — `mdata.loads.miles_driven_actual` + `_source/_reason/_computed_at`,
+`mdata.load_stops.leg_miles_driven_actual` + `_source/_reason`; CHECKs refuse a computed load with no miles and
+no reason, negative miles, and leg miles without a source (proven on a local PG16: applies twice, all 3 bad
+writes refused). Applies on the owner's next deploy (db:migrate is not mine to run).
+**engine:** `telematics/load-real-driven-miles.service.ts`. Leg k = stop k−1 exit → stop k entry; stop 1's leg
+is the deadhead from the truck's previous load. Boundary = geofence enter/exit capture
+(`telematics.geofence_odometer_captures`) for the load's truck at a fence containing the stop with a
+**real_obd** odometer; else a stop time recorded by a device/driver tap (eld_geofence, samsara_route,
+driver_app) through the shared anchor rule; else NULL with the reason. Load total = loaded legs only
+(compares with practical); loaded + deadhead compares with short. Never practical/short, never interpolated,
+never a partial sum.
+**one rule:** `telematics/odometer-anchor.ts` now holds "the odometer at a moment" for both this engine and
+E-15 PM cost per mile (E-15 re-pointed, guard 12041 updated to check the shared module).
+**writer:** hourly cron (no-op until the migration applies). **read:** `GET /api/v1/loads/:id/real-driven-miles`
+(legs + three-mile comparison, each basis named). **screen:** load drawer "Miles — billed vs paid vs really
+driven", legs table, truck EntityLink.
+**guard:** step 12045 `verify-load-real-driven-miles.mjs` (selftest 7/7). vitest 10/10 + E-15/KPI 15/15.
+**live proof (prod read-only, USMCA, 134 loads):** 0 loads measurable today — honest:
+- 216 of 384 stop times are `manual` and all sit on the hour (legs spanned exactly 23/47/71/95 h; with them,
+  real/practical ran 0.16×–5.95×) → refused as "manual entry, not a measurement";
+- every geofence match falls in 2026-09-01..09-29 where the capture odometer is `absent`/`interpolated`;
+- 11 loads have a pickup departure AFTER the delivery arrival (e.g. 12:00 → 08:00 same day) — refused as
+  "stop times out of order", not reported as the odometer running backwards.
+The odometer is flowing again since 2026-09-30 (1,727 + 2,188 fixes with odometer; 49 real_obd geofence
+captures today), so every load dispatched from now on measures. Part B (CPM per load/unit/driver/lane + MPG
+on both bases) follows.
