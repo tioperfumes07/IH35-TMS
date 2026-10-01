@@ -1191,3 +1191,36 @@ Owner, verbatim (chat, 2026-10-01 ~04:27Z): "you have full permissions and autho
   CC-2 writes none.
 - Next: E-20 addition (Relay webhook, if Relay offers one). Then E-26 -> E-28 "after DONE" items are
   Cursor's Driver Profile KPI, not mine.
+
+## 2026-10-01 05:45Z — CC-2 | money side (owner law 2026-10-01) — shipped AND live (deploy dep-dauv2igjo6nc73eoar40, 1667208f32)
+- DEPLOY UNBLOCKED (#23712): every deploy failed pre-deploy because #23681's reconstructed
+  202614620000 differs in bytes from what prod stamped.
+  - Prod already has engine_state nullable, so it is the same change.
+  - Fixed with one entry in migration-checksum-overrides.json (guard pins the bytes).
+  - Deployed main: live, /api/v1/health 200.
+- EXPENSE-JE-LIVE-BUT-UNPOSTED (#23702 AUTH-188 + #23703 root fix):
+  - 94 USMCA expenses ($3,744.13: 5 fuel docs + 89 settlement-feed) carried a live JE while
+    posting_status=unposted, so a void would have skipped the reversal.
+  - Repaired under AUTH-188 (CONSUMED, 1 audit row).
+  - The fuel document writer now sets posting_status.
+  - New CHECK expenses_journal_entry_implies_not_unposted.
+  - LIVE: guard 12039 "536 expenses carry a JE, 0 read unposted; constraint VALIDATED".
+- RETRY-HELD-EXPENSE-CRON-NEVER-SUCCEEDED (#23705):
+  - The cron that posts held/draft expenses ran as an all-zero system user that does not exist;
+    every run failed with forbidden_company_membership since 2026-09-29.
+  - Six jobs now share lib/system-actor.ts.
+  - The 11 USMCA fuel drafts ($1,515.78) post through the existing engine on its next run (06:20Z).
+- FUEL-FRAUD-CONFIRM-IS-A-DEAD-END (#23710, migration 202615140800):
+  - Confirm-fraud now opens or reuses the purchase's recovery in the FUEL-03 overage engine:
+    pending_review with contract authority, else company_variance.
+  - Approve posts Dr fuel_overage_receivable / Cr fuel expense, and the alerts become recovered.
+  - LIVE: guard 12043 pass (0 alerts so far; the detector has been ON since 04:31Z).
+- E-21 Samsara signal 4 LIVE (Render job job-dauv4pd9fdbs73ahefdg, read-only):
+  - The feed was read; 18 drivers have ECU burn; 0 Samsara drivers unmapped.
+  - Signal 4: 3 normal, 22 unavailable with reasons (15 have burn but no card gallons attributed; 7 have no 1:1 map).
+  - 0 anomalies.
+- E-22 card registry LIVE (guard 12035: table present, 0 assignments). Screen #23709: Fuel > Cards, plus unit/driver
+  reverse sections.
+- Remaining money row: Relay/fuel-card GL routing. Blocked on the Lead's ruling for
+  RELAY-SAME-FILL-IN-TWO-ENTITIES-2026100104, because the same Relay fill sits in TRANSP and USMCA, so the
+  owning entity of each fill must be ruled before it can route to any GL.
