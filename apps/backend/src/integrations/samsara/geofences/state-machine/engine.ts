@@ -6,6 +6,7 @@ import {
   DEPART_SPEED_MPH,
   DEPART_SUSTAINED_MIN,
   computeProposedState,
+  computeProposedStateFromCanonical,
   isGeofenceState,
   validateGeofenceTransition,
   type GeofenceRadii,
@@ -186,17 +187,17 @@ export async function transitionState(
   if (input.forceToState) {
     proposed = input.forceToState;
   } else {
-    proposed = computeProposedState(currentState, distanceM, radii);
-
-    // Speed gate: computeProposedState is distance-only and may propose leaving "at"/"dwelling"
-    // (implicitly, by NOT proposing a change while distance alone climbed past arriveRadiusM —
-    // see states.ts's own comment: that function deliberately never proposes "departing" from
-    // at/dwelling). The actual at/dwelling -> departing edge is decided HERE, gated on sustained
-    // speed, a real edge distinct from computeProposedState's distance-only universe.
-    if ((currentState === "at" || currentState === "dwelling") && distanceM > (radii.arriveRadiusM ?? DEFAULT_ARRIVE_RADIUS_M)) {
-      const sustained = await hasSustainedDepartureSpeed(client, input.operatingCompanyId, input.vehicleId);
-      proposed = sustained ? "departing" : currentState;
-    }
+    // ROUND 306 E-08: inside/outside comes from the ONE canonical decider (geo.geofence_events,
+    // written by the polygon detector on every fix) -- never from this machine's own radii.
+    const canonical = await client.query<{ event_kind: string | null }>(
+      `SELECT ge.event_kind::text AS event_kind
+         FROM geo.geofence_events ge
+        WHERE ge.operating_company_id = $1::uuid AND ge.geofence_id = $2::uuid AND ge.unit_id = $3::uuid
+        ORDER BY ge.occurred_at DESC, ge.created_at DESC
+        LIMIT 1`,
+      [input.operatingCompanyId, input.geofenceId, input.vehicleId]
+    );
+    proposed = computeProposedStateFromCanonical(currentState, canonical.rows[0]?.event_kind === "entered", distanceM, radii);
   }
 
   if (proposed === currentState) {
@@ -218,6 +219,10 @@ export async function transitionState(
 
   const now = new Date().toISOString();
   const trigger = input.triggerSource ?? "gps_event";
+  // ROUND 306 E-08: every transition carries the load the unit was on (and the stop, when this fence
+  // IS one of that load's stops). Exactly one active load or none -- two active loads are HELD (null).
+  const loadContext =
+    input.loadId != null ? { load_id: input.loadId, stop_id: input.stopId ?? null } : await resolveTransitionLoadContext(client, input.operatingCompanyId, input.vehicleId, input.geofenceId);
   const inserted = await client.query<{ id: string }>(
     `
       INSERT INTO geo.geofence_state_transitions (
@@ -231,8 +236,8 @@ export async function transitionState(
       input.operatingCompanyId,
       input.geofenceId,
       input.vehicleId,
-      input.loadId ?? null,
-      input.stopId ?? null,
+      loadContext.load_id,
+      loadContext.stop_id,
       currentState,
       proposed,
       now,
@@ -273,8 +278,8 @@ export async function transitionState(
       stampEntry,
       input.odometerMi ?? null,
       stampExit,
-      input.loadId ?? null,
-      input.stopId ?? null,
+      loadContext.load_id,
+      loadContext.stop_id,
     ]
   );
 
@@ -295,6 +300,42 @@ export async function transitionState(
     to_state: proposed,
     transition_id: inserted.rows[0]?.id ?? "",
   };
+}
+
+/** Statuses in which a load is on the road with its unit (delivered_pending_docs excluded: the truck has moved on). */
+export const TRANSITION_ACTIVE_LOAD_STATUSES = [
+  "assigned_not_dispatched",
+  "dispatched",
+  "at_pickup",
+  "in_transit",
+  "at_delivery",
+] as const;
+
+export async function resolveTransitionLoadContext(
+  client: QueryClient,
+  operatingCompanyId: string,
+  unitId: string,
+  geofenceId: string
+): Promise<{ load_id: string | null; stop_id: string | null }> {
+  const res = await client.query<{ load_id: string; stop_id: string | null }>(
+    `SELECT l.id::text AS load_id,
+            (SELECT ls.id::text
+               FROM mdata.load_stops ls
+               JOIN geo.geofences g ON g.id = $3::uuid
+              WHERE ls.load_id = l.id AND ls.soft_deleted_at IS NULL
+                AND (ls.location_id = g.location_ref_id OR g.label = 'load-' || l.id::text || '-stop-' || ls.sequence_number::text)
+              ORDER BY ls.sequence_number ASC
+              LIMIT 1) AS stop_id
+       FROM mdata.loads l
+      WHERE l.operating_company_id = $1::uuid
+        AND l.assigned_unit_id = $2::uuid
+        AND l.soft_deleted_at IS NULL
+        AND l.status::text = ANY($4::text[])
+      LIMIT 2`,
+    [operatingCompanyId, unitId, geofenceId, [...TRANSITION_ACTIVE_LOAD_STATUSES]]
+  );
+  if (res.rows.length !== 1) return { load_id: null, stop_id: null };
+  return { load_id: res.rows[0]!.load_id, stop_id: res.rows[0]!.stop_id ?? null };
 }
 
 export { DEFAULT_APPROACH_RADIUS_M, DEFAULT_ARRIVE_RADIUS_M, DEFAULT_DEPART_RADIUS_M };

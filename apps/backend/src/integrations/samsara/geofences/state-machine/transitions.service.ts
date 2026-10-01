@@ -114,6 +114,18 @@ export async function processGpsBatch(
   geofences: ActiveGeofenceVehicle[]
 ): Promise<TransitionStateResult[]> {
   const results: TransitionStateResult[] = [];
+  // ROUND 306 E-08: a (fence, unit) pair already OUT of idle is always re-evaluated, however far the
+  // truck now is -- otherwise a truck that left the prefilter ring keeps a stale "at" forever
+  // (measured live: 89 of 91 "at/dwelling" rows were outside per the canonical detector).
+  const unitIds = positions.map((p) => p.vehicle_id);
+  const open = unitIds.length && (await geofenceVehicleStateTableExists(client))
+    ? await client.query<{ geofence_id: string; unit_id: string }>(
+        `SELECT geofence_id::text, unit_id::text FROM geo.geofence_vehicle_state
+          WHERE operating_company_id = $1::uuid AND unit_id = ANY($2::uuid[]) AND current_state <> 'idle'`,
+        [operatingCompanyId, unitIds]
+      )
+    : { rows: [] as { geofence_id: string; unit_id: string }[] };
+  const openPairs = new Set(open.rows.map((r) => `${r.geofence_id}:${r.unit_id}`));
   for (const gf of geofences) {
     const center =
       gf.center_lat != null && gf.center_lng != null
@@ -127,7 +139,7 @@ export async function processGpsBatch(
     const prefilterRadiusM = gf.approach_radius_m ?? 8047;
 
     for (const pos of positions) {
-      if (!withinBoundingBox(pos.position, center, prefilterRadiusM)) continue;
+      if (!withinBoundingBox(pos.position, center, prefilterRadiusM) && !openPairs.has(`${gf.geofence_id}:${pos.vehicle_id}`)) continue;
       try {
         const result = await transitionState(client, {
           operatingCompanyId,

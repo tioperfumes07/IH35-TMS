@@ -1056,3 +1056,26 @@ LIVE PROOF (rolled back, 48 h): T171 22 stops / 6 in fence / 6 with crossings; T
   Reverse (geofence_id = Love's #471 Natalia) -> 3 stops. Writer re-run: 0 new captures (idempotent).
 GUARD: scripts/verify-fence-capture-feeds-stops-never-interpolates.mjs + --selftest PASS; vitest geofence-odometer-capture 4/4.
 NEXT: E-05 (depends on E-03 persisted — Lead's migration). Will check its state; if not persisted, report and continue E-06.
+
+## 2026-10-01 — ROUND 306 E-05 / E-06 / E-07 — state
+E-05: BLOCKED on E-03 persisted (telematics.unit_stop_events does not exist on prod; Lead's migration not on main). The engine itself
+reads real fixes within ±10 min (no interpolation). Re-point waits on the table.
+E-06: forward is DONE — partial unique index odometer_readings_oci_unit_date_source_key live; 0 duplicate groups since 2026-09-30.
+Historic: 921 groups / 176,960 surplus rows. Removing them is a DELETE -> owner AUTH (nothing written).
+E-07: built in Round 304 T-46 (#23601). Dry run: 255 Samsara addresses vs 934 fences -> 0 matches, 30 proposals. Apply = owner AUTH.
+
+## 2026-10-01 — ROUND 306 E-08 — ONE geofence inside/outside decider; load_id on transitions
+ROUND: 306 · ROW: E-08 · STATUS: shipped.
+MEASURED: two deciders disagreed — detector (polygon per fix -> geo.geofence_events, only writer; backfill calls it) vs state machine
+(fixed 402/805 m radii on the latest fix every 5 min -> geofence_state_transitions). 89 of 91 state-machine "at/dwelling" pairs were
+OUTSIDE per the detector. Transitions: load_id 0%, stop_id 0% (7 days, 1,115 rows).
+RULING APPLIED (R-2): the polygon detector is the ONE inside/outside decider. transitionState now reads the unit's last
+geo.geofence_events row for the fence (computeProposedStateFromCanonical); the machine only owns the approach ring + lifecycle labels.
+computeProposedState / hasSustainedDepartureSpeed retired from the live path with a note (tests still pin them).
+processGpsBatch re-evaluates every (fence, unit) pair already out of idle, however far the truck is (stale "at" used to live forever).
+Each transition resolves load_id (exactly one on-road load for the unit, else NULL/held) and stop_id (fence is that load's stop by
+location_ref_id or load-stop label).
+LIVE PROOF (rolled back, 3 ticks, 15 live units): tick1 665 / tick2 93 / tick3 88 transitions; disagreement 89 -> 1;
+846 transitions, 543 with load_id (e.g. T175 -> load 13636, T164 -> 13630), stop_id 0 (no live stop fence crossed in the window).
+GUARD: scripts/verify-one-geofence-inside-decider.mjs + --selftest PASS; vitest state-machine 26/26.
+NEXT: E-09.
