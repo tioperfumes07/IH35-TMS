@@ -59,7 +59,18 @@ export const matterCreateSchema = z.object({
   unit_id: z.string().uuid().optional().nullable(),
   // Trailers live in mdata.equipment, NOT mdata.units - a separate key space, so a separate column.
   equipment_id: z.string().uuid().optional().nullable(),
+  // ROUND 316 (§10-B, migration 202615190100): the customer / vendor / load the matter is about.
+  customer_id: z.string().uuid().optional().nullable(),
+  vendor_id: z.string().uuid().optional().nullable(),
+  load_id: z.string().uuid().optional().nullable(),
 });
+
+/** ROUND 316: entity-scope a matter's customer / vendor / load before it is linked. */
+async function assertMatterPartyInCompany(client: QueryableClient, table: "mdata.customers" | "mdata.vendors" | "mdata.loads", id: string | null | undefined, opco: string) {
+  if (!id) return;
+  const r = await client.query(`SELECT 1 FROM ${table} WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`, [id, opco]);
+  if (!r.rows.length) throw new Error(`legal_matter_${table.split(".")[1].replace(/s$/, "")}_not_in_company`);
+}
 
 export const matterUpdateSchema = matterCreateSchema
   .partial()
@@ -550,6 +561,9 @@ export async function createMatter(
   await assertUnitInCompany(client, input.unit_id, args.operatingCompanyId);
   await assertInsuranceClaimInCompany(client, input.insurance_claim_id, args.operatingCompanyId);
   await assertInsuranceLawsuitInCompany(client, input.insurance_lawsuit_id, args.operatingCompanyId);
+  await assertMatterPartyInCompany(client, "mdata.customers", input.customer_id, args.operatingCompanyId);
+  await assertMatterPartyInCompany(client, "mdata.vendors", input.vendor_id, args.operatingCompanyId);
+  await assertMatterPartyInCompany(client, "mdata.loads", input.load_id, args.operatingCompanyId);
   const ins = await client.query(
     `
       INSERT INTO legal.matters (
@@ -626,6 +640,14 @@ export async function createMatter(
   );
   const row = ins.rows[0]!;
   const mid = String(row.id);
+  if (input.customer_id || input.vendor_id || input.load_id) {
+    const linked = await client.query(
+      `UPDATE legal.matters SET customer_id = $3::uuid, vendor_id = $4::uuid, load_id = $5::uuid
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid RETURNING *`,
+      [mid, args.operatingCompanyId, input.customer_id ?? null, input.vendor_id ?? null, input.load_id ?? null]
+    );
+    if (linked.rows[0]) Object.assign(row, linked.rows[0]);
+  }
   await appendMatterEvent(client, {
     operatingCompanyId: args.operatingCompanyId,
     matterId: mid,
@@ -655,6 +677,9 @@ export async function updateMatter(
   await assertUnitInCompany(client, input.unit_id, args.operatingCompanyId);
   await assertInsuranceClaimInCompany(client, input.insurance_claim_id, args.operatingCompanyId);
   await assertInsuranceLawsuitInCompany(client, input.insurance_lawsuit_id, args.operatingCompanyId);
+  await assertMatterPartyInCompany(client, "mdata.customers", input.customer_id, args.operatingCompanyId);
+  await assertMatterPartyInCompany(client, "mdata.vendors", input.vendor_id, args.operatingCompanyId);
+  await assertMatterPartyInCompany(client, "mdata.loads", input.load_id, args.operatingCompanyId);
   const fields: string[] = [];
   const values: unknown[] = [];
   let i = 1;
@@ -690,6 +715,9 @@ export async function updateMatter(
   if (input.incident_id !== undefined) push("incident_id", input.incident_id);
   if (input.unit_id !== undefined) push("unit_id", input.unit_id);
   if (input.equipment_id !== undefined) push("equipment_id", input.equipment_id);
+  if (input.customer_id !== undefined) push("customer_id", input.customer_id);
+  if (input.vendor_id !== undefined) push("vendor_id", input.vendor_id);
+  if (input.load_id !== undefined) push("load_id", input.load_id);
   if (fields.length === 0) {
     const cur = await client.query(`SELECT * FROM legal.matters WHERE id = $1 AND operating_company_id = $2::uuid`, [
       args.matterId,
@@ -1109,4 +1137,77 @@ export async function appendDeadlineReminderSent(client: QueryableClient, deadli
     `,
     [deadlineId]
   );
+}
+
+// ROUND 316 (§10-B): a matter's financial_reserve_cents POSTS. The owner picks the two accounts (legal expense +
+// accrued legal liability) in the "Post reserve" action; the entry books only the CHANGE since the last posted
+// reserve (increase: Dr expense / Cr liability; release: Dr liability / Cr expense), through the shared JE service,
+// sourced to the matter, tagged with the matter's vendor / customer. The matter keeps the latest JE + amount.
+export const matterReserveSchema = z.object({
+  expense_account_id: z.string().uuid(),
+  liability_account_id: z.string().uuid(),
+  entry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  reserve_cents: z.number().int().nonnegative().optional(),
+});
+
+/** Pure: the reserve change to post. */
+export function reserveDelta(targetCents: number, postedCents: number | null): number {
+  return targetCents - (postedCents ?? 0);
+}
+
+export async function postMatterReserve(
+  client: QueryableClient,
+  args: { operatingCompanyId: string; actor: { userId: string; role: string }; matterId: string; body: z.infer<typeof matterReserveSchema> }
+) {
+  const input = matterReserveSchema.parse(args.body);
+  if (!["Owner", "Administrator", "Accountant"].includes(args.actor.role)) throw new Error("legal_matter_reserve_forbidden");
+  if (input.expense_account_id === input.liability_account_id) throw new Error("legal_matter_reserve_accounts_must_differ");
+  await setOperatingCompany(client, args.operatingCompanyId);
+  const m = (await client.query(
+    `SELECT id::text, matter_number, financial_reserve_cents, reserve_posted_cents, vendor_id::text, customer_id::text
+       FROM legal.matters WHERE id = $1::uuid AND operating_company_id = $2::uuid FOR UPDATE`,
+    [args.matterId, args.operatingCompanyId]
+  )).rows[0] as { id: string; matter_number: string; financial_reserve_cents: number | null; reserve_posted_cents: number | null; vendor_id: string | null; customer_id: string | null } | undefined;
+  if (!m) throw new Error("legal_matter_not_found");
+  for (const acct of [input.expense_account_id, input.liability_account_id]) {
+    const ok = await client.query(`SELECT 1 FROM catalogs.accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [acct, args.operatingCompanyId]);
+    if (!ok.rows.length) throw new Error("legal_matter_reserve_account_not_in_company");
+  }
+  const target = input.reserve_cents ?? Number(m.financial_reserve_cents ?? 0);
+  const delta = reserveDelta(target, m.reserve_posted_cents == null ? null : Number(m.reserve_posted_cents));
+  if (delta === 0) return { posted: false, reason: "reserve already posted at this amount", reserve_cents: target };
+  const amount = Math.abs(delta);
+  const entity = m.vendor_id ? { entity_uuid: m.vendor_id, entity_type: "vendor" as const } : m.customer_id ? { entity_uuid: m.customer_id, entity_type: "customer" as const } : {};
+  const { createJournalEntryOnClient } = await import("../accounting/journal-entries.service.js");
+  const je = await createJournalEntryOnClient(
+    client as never,
+    {
+      operating_company_id: args.operatingCompanyId,
+      entry_date: input.entry_date,
+      memo: `Legal reserve ${delta > 0 ? "increase" : "release"} — matter ${m.matter_number}`,
+      source: "auto",
+      source_transaction_type: "legal_matter_reserve",
+      source_transaction_id: m.id,
+      postings: [
+        { account_id: delta > 0 ? input.expense_account_id : input.liability_account_id, debit_or_credit: "debit", amount_cents: amount, description: `Matter ${m.matter_number} reserve`, ...entity },
+        { account_id: delta > 0 ? input.liability_account_id : input.expense_account_id, debit_or_credit: "credit", amount_cents: amount, description: `Matter ${m.matter_number} reserve`, ...entity },
+      ],
+    },
+    args.actor
+  );
+  await client.query(
+    `UPDATE legal.matters SET reserve_journal_entry_id = $3::uuid, reserve_posted_cents = $4, reserve_posted_at = now(), updated_by_user_id = $5::uuid, updated_at = now()
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [m.id, args.operatingCompanyId, je.id, target, args.actor.userId]
+  );
+  await appendMatterEvent(client, {
+    operatingCompanyId: args.operatingCompanyId,
+    matterId: m.id,
+    eventType: "reserve_posted",
+    eventBody: { journal_entry_id: je.id, reserve_cents: target, delta_cents: delta },
+    createdByUserId: args.actor.userId,
+  });
+  await appendCrudAudit(client, args.actor.userId, "legal.matter.reserve_posted",
+    { matter_id: m.id, journal_entry_id: je.id, reserve_cents: target, delta_cents: delta, operating_company_id: args.operatingCompanyId }, "info", "ROUND-316-LEGAL");
+  return { posted: true, journal_entry_id: je.id, reserve_cents: target, delta_cents: delta };
 }

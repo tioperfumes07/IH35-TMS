@@ -4,6 +4,8 @@ import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import {
+  matterReserveSchema,
+  postMatterReserve,
   addMatterDeadlineRow,
   addMatterDocumentRow,
   addMatterEventRow,
@@ -261,6 +263,34 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
     if (result === null) return reply.code(404).send({ error: "matter_not_found" });
     if ("error" in result) return reply.code(409).send({ error: result.error });
     return result;
+  });
+
+  // ROUND 316: post (or adjust) the matter's reserve as a journal entry — Owner / Administrator / Accountant.
+  app.post("/api/v1/legal/matters/:id/reserve", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    if (!["Owner", "Administrator", "Accountant"].includes(String(authUser.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    const p = matterIdParamsSchema.safeParse(req.params ?? {});
+    if (!p.success) return sendValidationError(reply, p.error);
+    const q = operatingCompanyQuerySchema.safeParse(req.query ?? {});
+    if (!q.success) return sendValidationError(reply, q.error);
+    const body = matterReserveSchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+    try {
+      return await withCompanyScope(authUser.uuid, q.data.operating_company_id, async (client) =>
+        postMatterReserve(client, {
+          operatingCompanyId: q.data.operating_company_id,
+          actor: { userId: authUser.uuid, role: String(authUser.role ?? "") },
+          matterId: p.data.id,
+          body: body.data,
+        })
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "error";
+      if (msg === "legal_matter_not_found") return reply.code(404).send({ error: msg });
+      if (msg.startsWith("legal_matter_reserve") || msg.startsWith("journal_entry") || msg.includes("period")) return reply.code(422).send({ error: msg });
+      throw e;
+    }
   });
 
   app.post("/api/v1/legal/matters/:id/events", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {

@@ -25,7 +25,15 @@ export type LinkType =
   | "matter"
   | "deduction_schedule"
   | "fixed_asset"
-  | "dq_file";
+  | "dq_file"
+  // ROUND 316 (§10-B, migration 202615190100)
+  | "vendor"
+  | "load"
+  | "invoice"
+  | "bill"
+  | "equipment"
+  | "lease_contract"
+  | "company";
 
 // Idempotent upsert of a single link (reactivates a previously deactivated link).
 export async function writeContractInstanceLink(

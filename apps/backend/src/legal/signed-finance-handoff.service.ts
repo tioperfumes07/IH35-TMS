@@ -122,6 +122,16 @@ export async function applySignedFinanceHandoff(
   if (!instance) return { handoff: null as null | string };
   const actor = args.actorUserId ?? instance.created_by_user_id;
 
+  // ROUND 316 (§10-B): a signed contract that names its lease stamps the lease back (lease -> signed contract),
+  // whichever side was signed first. Never overwrites a lease already bound to another contract.
+  await client.query(
+    `UPDATE accounting.lease_contract lc SET contract_instance_id = ci.id, updated_at = now()
+       FROM legal.contract_instances ci
+      WHERE ci.id = $1::uuid AND ci.operating_company_id = $2::uuid AND ci.lease_contract_id = lc.id
+        AND lc.operating_company_id = $2::uuid AND lc.contract_instance_id IS NULL`,
+    [instance.id, args.operatingCompanyId]
+  );
+
   // --- Deduction authorization consent handoff (FIN-18 consumes the gate) ---
   // Fires for the signed HIRE CONTRACT (primary, owner-locked authorizing document) OR a legacy
   // standalone deduction-auth instance. Writes the driver -> signed-contract -> deduction_schedule
