@@ -985,6 +985,31 @@ export class SamsaraClient {
     return out;
   }
 
+  /**
+   * E-32: GET /fleet/documents?startTime&endTime (200 with data null on 2026-10-01 -- no driver has submitted a
+   * document yet; one document type exists, "Proof of Delivery", field "Photos"). Raw rows, paginated.
+   */
+  async listDocuments(startIso: string, endIso: string): Promise<Record<string, unknown>[]> {
+    const token = this._token();
+    if (!token) throw new SamsaraApiError("samsara_token_missing", null, null, false);
+    const out: Record<string, unknown>[] = [];
+    let after: string | null = null;
+    for (let page = 0; page < 100; page += 1) {
+      const url = new URL(`${SAMSARA_API_BASE}/fleet/documents`);
+      url.searchParams.set("startTime", startIso);
+      url.searchParams.set("endTime", endIso);
+      if (after) url.searchParams.set("after", after);
+      const res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }, 30_000));
+      const json = await readJsonResponse(res);
+      if (!res.ok) throw new SamsaraApiError(`samsara_documents_http_${res.status}`, res.status, json, res.status === 429 || res.status >= 500);
+      for (const d of Array.isArray(json.data) ? (json.data as unknown[]) : []) { const o = asObject(d); if (o) out.push(o); }
+      const { hasNextPage, cursor } = parsePagination(json);
+      if (!hasNextPage || !cursor) break;
+      after = cursor;
+    }
+    return out;
+  }
+
   async listHosDailyLogs(startDate: string, endDate: string): Promise<SamsaraHosDailyLog[]> {
     const token = this._token();
     if (!token) return [];

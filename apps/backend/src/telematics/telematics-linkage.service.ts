@@ -49,6 +49,11 @@ export async function loadTelematicsLinks(client: Db, oc: string, loadId: string
     driver_prompts: await q(`SELECT m.id::text, m.msg_type, m.body, m.server_ts
                                FROM chat.messages m JOIN chat.threads t ON t.id = m.thread_id
                               WHERE t.operating_company_id = $1::uuid AND t.load_id = $2 AND m.client_key LIKE 'prompt:%' ORDER BY m.server_ts`),
+    documents: await q(`SELECT f.id::text, f.original_filename, f.document_date, fc.code AS category, f.description, f.upload_completed_at
+                          FROM docs.files f JOIN docs.file_links fl ON fl.file_id = f.id AND fl.deleted_at IS NULL
+                          LEFT JOIN catalogs.file_categories fc ON fc.id = f.category_id
+                         WHERE f.operating_company_id = $1::uuid AND f.deleted_at IS NULL AND fl.entity_type = 'load' AND fl.entity_id = $2::uuid
+                         ORDER BY f.upload_completed_at DESC NULLS LAST LIMIT 200`),
     samsara_route_progress: await q(`SELECT p.stop_id::text, p.sequence_number, p.samsara_route_id, p.state, p.eta, p.actual_arrival_at, p.actual_departure_at,
                                              p.live_sharing_url, p.read_at, ${UN("p.unit_id")}, p.unit_id::text
                                         FROM integrations.samsara_route_stop_progress p
@@ -94,6 +99,11 @@ export async function unitTelematicsLinks(client: Db, oc: string, unitId: string
                       FROM safety.dvir_submissions d
                      WHERE d.operating_company_id = $1::uuid AND (d.unit_id = $2::uuid OR d.trailer_id = $2::uuid) AND d.submitted_at >= ${since}
                      ORDER BY d.submitted_at DESC`),
+    documents: await q(`SELECT f.id::text, f.original_filename, f.document_date, fc.code AS category, f.description, f.upload_completed_at
+                          FROM docs.files f JOIN docs.file_links fl ON fl.file_id = f.id AND fl.deleted_at IS NULL
+                          LEFT JOIN catalogs.file_categories fc ON fc.id = f.category_id
+                         WHERE f.operating_company_id = $1::uuid AND f.deleted_at IS NULL AND fl.entity_type = 'unit' AND fl.entity_id = $2::uuid
+                         ORDER BY f.upload_completed_at DESC NULLS LAST LIMIT 200`),
     samsara_fuel_reports: await q(`SELECT r.report_date, r.fuel_burned_gal, r.purchased_gal, r.purchase_count, r.distance_mi, r.efficiency_mpg,
                                           r.engine_idle_hours, r.engine_run_hours
                                      FROM integrations.samsara_fuel_reports r
