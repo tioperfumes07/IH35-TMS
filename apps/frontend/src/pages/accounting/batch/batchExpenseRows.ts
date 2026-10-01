@@ -23,6 +23,8 @@ export type BatchExpenseRow = {
   status: "draft" | "saving" | "saved" | "error";
   error: string | null;
   expenseId: string | null;
+  /** FEED GATE result handed back by the create endpoint (intake id, status, red count) — shown per saved row. */
+  feedGate: { intake_id: string; status: string; checks_failed: number; checks_total: number } | null;
 };
 
 export type BatchExpenseField = keyof Pick<BatchExpenseRow, "date" | "payee" | "paymentAccount" | "paymentMethod" | "refNo" | "amount" | "category" | "classId" | "loadNumber" | "memo">;
@@ -34,7 +36,7 @@ export function newRow(partial: Partial<BatchExpenseRow> = {}): BatchExpenseRow 
     key: `r${Date.now().toString(36)}${seq}`,
     date: "", payee: "", payeeText: "", paymentAccount: "", paymentMethod: "", refNo: "", amount: "",
     category: "", categoryText: "", classId: "", classText: "", loadNumber: "", memo: "",
-    status: "draft", error: null, expenseId: null, ...partial,
+    status: "draft", error: null, expenseId: null, feedGate: null, ...partial,
   };
 }
 
@@ -135,7 +137,7 @@ export function duplicateRow(rows: BatchExpenseRow[], index: number): BatchExpen
   const src = rows[index];
   if (!src) return rows;
   const { key: _key, ...rest } = src;
-  const copy = newRow({ ...rest, status: "draft", error: null, expenseId: null, refNo: "" });
+  const copy = newRow({ ...rest, status: "draft", error: null, expenseId: null, feedGate: null, refNo: "" });
   return [...rows.slice(0, index + 1), copy, ...rows.slice(index + 1)];
 }
 

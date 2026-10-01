@@ -1498,7 +1498,7 @@ export function createExpense(
     vendor_document_number?: string;
   }
 ) {
-  return apiRequest<{ expense_id: string; posting_status: "posted" | "unposted"; journal_entry_id: string | null }>(
+  return apiRequest<{ expense_id: string; posting_status: "posted" | "unposted"; journal_entry_id: string | null; feed_gate?: { intake_id: string; status: string; checks_failed: number; checks_total: number } | null }>(
     "/api/v1/expenses",
     { method: "POST", body: { operating_company_id: operatingCompanyId, ...body } }
   );

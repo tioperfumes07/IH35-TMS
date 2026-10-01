@@ -27,8 +27,13 @@ const REQUIRED_KEYS = [
   "bill.header_complete", "bill.lines_carry_account", "bill.ap_je_posted", "bill.linked_to_operations",
 ];
 
-export function check({ approval, migration, checks, routes, send }) {
+export function check({ approval, migration, checks, routes, send, expenses }) {
   const problems = [];
+  if (expenses !== undefined) {
+    if (!expenses.includes("postSourceTransactionInClientTx(")) problems.push("POST /api/v1/expenses no longer posts inside the creation transaction (owner law: an expense always posts)");
+    if (!expenses.includes("throw new ExpensePostRefused(")) problems.push("POST /api/v1/expenses no longer refuses the create when the poster fails");
+    if (!expenses.includes('openAndRunIntake(String(user.uuid), body.operating_company_id, "expense"')) problems.push("POST /api/v1/expenses no longer runs the feed gate on the created expense");
+  }
   if (send !== undefined) {
     const gateIdx = send.indexOf('assertSubjectMayCloseOnClient(client as never, input.operatingCompanyId, "invoice"');
     const sentIdx = send.indexOf("SET status = 'sent'");
@@ -60,6 +65,7 @@ function load() {
     checks: read("apps/backend/src/driver-finance/feed-gate/feed-gate.checks.ts"),
     routes: read("apps/backend/src/driver-finance/feed-gate/feed-gate.routes.ts"),
     send: read("apps/backend/src/accounting/invoice-send.service.ts"),
+    expenses: read("apps/backend/src/accounting/expenses.routes.ts"),
   };
 }
 
@@ -73,6 +79,8 @@ function selftest() {
     ["route without rate limit", { ...base, routes: base.routes.replace('app.get("/api/v1/feed-gate/intakes", RL,', 'app.get("/api/v1/feed-gate/intakes", {},') }],
     ["send path gate removed", { ...base, send: base.send.replace('assertSubjectMayCloseOnClient(client as never, input.operatingCompanyId, "invoice"', 'noop("invoice"') }],
     ["send path post failure tolerated", { ...base, send: base.send.replace("invoice_send_refused_gl_post_failed", "ignored") }],
+    ["expense create tolerates post failure", { ...base, expenses: base.expenses.replace("throw new ExpensePostRefused(", "void (") }],
+    ["expense create skips the gate", { ...base, expenses: base.expenses.replace('openAndRunIntake(String(user.uuid), body.operating_company_id, "expense"', 'noop("expense"') }],
   ];
   let bad = 0;
   for (const [name, input] of cases) { const p = check(input); if (p.length === 0) { console.error(`selftest FAIL: '${name}' not caught`); bad++; } }
