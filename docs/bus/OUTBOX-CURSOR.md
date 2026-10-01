@@ -1,3 +1,9 @@
+**2026-10-01T22:15Z · B-1b REGISTER ✓ TOGGLE · `cursor/b1b-register-clear-toggle-c89b`**
+ACK: CURSOR | ACK ORDERS-2026-10-01 | B-1b register-cleared | GO
+B-1b · journal_entry_postings.register_cleared (+at/by); POST /account-register/toggle-cleared; FE click blank↔C; R locked; bank-match C refuses blank; Location from bank categorization_location.
+Claim #23910 `202615201200` MERGED. GUARD: verify-b1-account-register SELFTEST+PASS; vitest account-register 14/14.
+NEXT: FAST-MERGE B-1b → continue ORDERS leftovers.
+
 **2026-10-01T22:03Z · DEPLOY-READY · tip `7c62874db2` · #23908 MERGED**
 ACK: CURSOR | ACK FACTORING-TAKEOVER | DEPLOY-READY | GO
 FT1 #23906 · FT2 #23907 · FT3–FT5 #23908 MERGED. AUTH-201 #23904 · C #23905 closed earlier.
