@@ -132,6 +132,10 @@ export const TABLE_REGISTRY = {
   "accounting.factoring_advances": { status: "OUT_OF_SCOPE", reason: "factoring/AR financing" },
   "accounting.factoring_default_interest_accruals": { status: "OUT_OF_SCOPE" },
   "accounting.factoring_lifecycle_posting_keys": { status: "OUT_OF_SCOPE" },
+  // CC-2 #23849 (migration 202615180800): the factor-purchase document that creates a factoring_advances row + its
+  // JE (FKs factoring_advance_id, journal_entry_id) -- same factoring/AR-financing family as the advances above.
+  "accounting.factoring_purchase_lines": { status: "OUT_OF_SCOPE", reason: "factoring/AR financing -- lines of a factoring_purchases document" },
+  "accounting.factoring_purchases": { status: "OUT_OF_SCOPE", reason: "factoring/AR financing -- the purchase document behind factoring_advances" },
   "accounting.factoring_reserve_movements": { status: "OUT_OF_SCOPE" },
   "accounting.fixed_asset_classes": { status: "NOT_TRANSACTIONAL", reason: "catalog" },
   "accounting.fixed_asset_disposals": { status: "NEEDS_JOIN_PATH", tier: TIER.TIER2 },
