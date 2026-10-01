@@ -54,7 +54,13 @@ function rowsToFixes(rows: any[]): PositionFix[] {
   }));
 }
 
-export async function writeUnitStopEvents(client: DbClient, operatingCompanyId: string, now = new Date()): Promise<StopWriterSummary> {
+export async function writeUnitStopEvents(
+  client: DbClient,
+  operatingCompanyId: string,
+  now = new Date(),
+  /** Catch-up only: real Samsara odometer history per unit (stats/history), used as extra odometer candidates. */
+  odometerHistoryByUnit?: Map<string, PositionFix[]>
+): Promise<StopWriterSummary> {
   const facts = await client.query(fleetUnitFactsSql(), [operatingCompanyId]);
   const live = liveFleet(
     facts.rows.map((r: any) =>
@@ -80,7 +86,23 @@ export async function writeUnitStopEvents(client: DbClient, operatingCompanyId: 
   for (const unit of live) {
     const fixRes = await client.query(unitFixesSql(), [unit.unitId, from.toISOString(), now.toISOString()]);
     const fixes = rowsToFixes(fixRes.rows);
-    const odoCandidates = fixes.filter((f) => f.odometerMi !== null);
+    // Odometer candidates: the fixes' own odometer PLUS the unit's real Samsara odometer readings
+    // (telematics.odometer_readings). GPS fixes only carry odometer since E-01 (2026-10-01); every older
+    // stop would otherwise have no reading and E-05 could not measure its leg. Same tolerance rule applies
+    // (attachNearestOdometer) -- a reading too far from the stop is never used, never interpolated.
+    const readings = await client.query(
+      `SELECT read_at, odometer_miles FROM telematics.odometer_readings
+        WHERE unit_id = $1::uuid AND read_at BETWEEN $2::timestamptz AND $3::timestamptz AND odometer_miles IS NOT NULL`,
+      [unit.unitId, from.toISOString(), now.toISOString()]
+    );
+    const odoCandidates: PositionFix[] = [
+      ...fixes.filter((f) => f.odometerMi !== null),
+      ...readings.rows.map((r: any) => ({
+        capturedAt: new Date(r.read_at), lat: null, lng: null, speedMph: null, engineState: null,
+        odometerMi: Number(r.odometer_miles), city: null, state: null,
+      }) as PositionFix),
+      ...(odometerHistoryByUnit?.get(unit.unitId) ?? []).filter((f) => f.capturedAt >= from && f.capturedAt <= now),
+    ];
     const stops: StopWithMiles[] = milesBetweenStops(
       detectStops(unit.unitId, fixes).map((s) => attachNearestOdometer(s, odoCandidates))
     );
@@ -158,4 +180,58 @@ export async function writeUnitStopEvents(client: DbClient, operatingCompanyId: 
     }
   }
   return summary;
+}
+
+/**
+ * Catch-up: re-run the 36 h writer over consecutive windows (6 h overlap) reaching `days` back. The writer
+ * upserts on (unit_id, started_at), so a re-read stop is updated, never duplicated. Runs once a day so a stop
+ * missed by a late GPS batch -- or every stop before the writer first ran (2026-09-29) -- still gets a row, and
+ * E-05 can classify legs whose pickup predates the 15-minute cadence.
+ */
+export async function writeUnitStopEventsCatchUp(
+  client: DbClient,
+  operatingCompanyId: string,
+  days = 10,
+  now = new Date(),
+  /** Real odometer history source (Samsara stats/history). Omitted -> local readings only. */
+  fetchOdometerHistory?: (samsaraVehicleIds: string[], startIso: string, endIso: string) => Promise<Map<string, Array<{ at: Date; miles: number }>>>
+) {
+  const stepMs = (STOP_WRITER_WINDOW_HOURS - 6) * 3_600_000;
+  const floor = now.getTime() - days * 86_400_000;
+  let historyByUnit: Map<string, PositionFix[]> | undefined;
+  let historyReadings = 0;
+  if (fetchOdometerHistory) {
+    const units = await client.query(
+      `SELECT u.id::text AS unit_id, u.samsara_vehicle_id::text AS vid FROM mdata.units u
+        WHERE COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
+          AND u.samsara_vehicle_id IS NOT NULL AND u.deactivated_at IS NULL AND COALESCE(u.is_sample_data, false) = false`,
+      [operatingCompanyId]
+    );
+    const unitByVid = new Map(units.rows.map((r: any) => [String(r.vid), String(r.unit_id)]));
+    historyByUnit = new Map();
+    const vids = [...unitByVid.keys()];
+    for (let i = 0; i < vids.length; i += 10) {
+      // one day per call keeps each page small (~1,250 readings per truck-day)
+      for (let t = floor - stepMs; t < now.getTime(); t += 86_400_000) {
+        const hist = await fetchOdometerHistory(vids.slice(i, i + 10), new Date(t).toISOString(), new Date(Math.min(t + 86_400_000, now.getTime())).toISOString());
+        for (const [vid, pts] of hist) {
+          const unitId = unitByVid.get(vid);
+          if (!unitId) continue;
+          const list = historyByUnit.get(unitId) ?? [];
+          for (const p of pts) list.push({ capturedAt: p.at, lat: null, lng: null, speedMph: null, engineState: null, odometerMi: p.miles, city: null, state: null } as PositionFix);
+          historyByUnit.set(unitId, list);
+          historyReadings += pts.length;
+        }
+      }
+    }
+  }
+  const windows: StopWriterSummary[] = [];
+  for (let t = now.getTime(); t - STOP_WRITER_WINDOW_HOURS * 3_600_000 > floor - stepMs; t -= stepMs) {
+    windows.push(await writeUnitStopEvents(client, operatingCompanyId, new Date(t), historyByUnit));
+  }
+  return {
+    operatingCompanyId, days, windows: windows.length, odometerHistoryReadings: historyReadings,
+    rowsUpserted: windows.reduce((s, w) => s + w.rowsUpserted, 0),
+    stopsDetected: windows.reduce((s, w) => s + w.stopsDetected, 0),
+  };
 }

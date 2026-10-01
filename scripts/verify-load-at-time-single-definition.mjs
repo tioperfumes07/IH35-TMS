@@ -12,7 +12,7 @@ const root = join(process.cwd(), "apps/backend/src");
 const fails = [];
 const helper = readFileSync(join(root, "maintenance/driver-attribution.ts"), "utf8");
 if (!/export function loadAtTimeSql\(/.test(helper)) fails.push("loadAtTimeSql missing from driver-attribution.ts");
-if (!/x\.event_kind = 'exited'/.test(helper)) fails.push("loadAtTimeSql must fall back to the delivery fence exit when TMS has no delivery stamp");
+if (!/stopFenceTimeSql\("l\.id", "d\.sequence_number", "l\.assigned_unit_id", "exited"\)/.test(helper)) fails.push("loadAtTimeSql must fall back to the delivery fence exit when TMS has no delivery stamp");
 if (!/canonicalDispatchWorkStatusClause\("l"\)/.test(helper)) fails.push("loadAtTimeSql must use canonicalDispatchWorkStatusClause");
 const callers = [
   "telematics/unit-stop-events.writer.ts",
