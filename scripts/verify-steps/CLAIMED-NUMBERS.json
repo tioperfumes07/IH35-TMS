@@ -7488,6 +7488,11 @@
     "claimed_at": "2026-09-30",
     "purpose": "verify-qbo-usmca-connect-push-overwrite-report (ROUND 301 B-36: quantifies exactly what connecting USMCA to QBO would push and overwrite today, without connecting)"
   },
+  "11999": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-09-30",
+    "purpose": "verify-damage-scorecard-honest-zero (ROUND 303 B-43 item 1: re-measures the damage scorecard against real telematics-covered units -- 14, not the cited 16 -- and locks the honest 0-attributed-driver result)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
