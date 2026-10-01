@@ -1570,3 +1570,21 @@ as direct_shipper is forced to broker, touching an existing row re-stamps it), g
 re-stamps existing rows after deploy: USMCA 640 (652 match), other entities 722 + 677, 0 direct shippers overridden.
 **For the owner — NOT auto-classified (name says transport / trucking / express / carrier / shipping / cargo, 237 in USMCA):** these can be
 carriers or shippers; tell me which words also mean Broker and I add them to the rule.
+
+## 2026-10-01 18:12Z — ROUND 315 step 3 LIVE: Submit to Factor tab (#23864, ACCT-F9619) · broker classification live (AUTH-198)
+
+**Live proof (ROUND 319 — rows/endpoints, no screenshots):** deploy 07362a6470 live 18:10Z; accounting.invoices.factoring_direct_pay_at /
+_by_user_id / _reason present (migration 202615190600); GET /api/v1/factoring/purchases/candidates → 401 unauthenticated (mounted);
+read-only candidate query on live USMCA = **106 open invoices, $374,659.12** (old submission queue: 13). Health ok.
+**What the owner does (Factoring → Submit Invoice):** select invoices → totals (gross / escrow / fee / advance / cash reserve / wire fee / net)
+→ **Save** = create + post FP-YYYY-##### through the purchase engine (CPA: A/R not relieved) or **Save and send** = + email Faro the invoices PDF,
+CSV schedule and load docs. Feed Gate runs server-side before every create (adds: load present + posted A/R JE). Owner-only (403 + audit).
+Customer direct pay per row (+ undo). Tests: backend 24/24 + feed-gate 9/9, frontend 4/4; tsc clean; 12067 / linkage-law / lane-band OK.
+**Known limits the owner will meet:** (1) Save and send is blocked for every open load today — none has BOL / POD / rate con on file (only
+dispatch instructions); Save works. (2) No Faro vendor email on file — the tab has a "Send to" field. (3) Expected cash reserve = 0 (no
+cash-reserve rate on the factor); Faro's actuals can be entered per line.
+**Broker classification LIVE:** AUTH-198 applied — 2,056 broker-named customers categorized Broker (USMCA 657 incl. deactivated); 12075 LIVE PASS;
+audit 4bf5bfe9.
+**Open for the owner:** 13513/13515 (two real trips, one $525 billing?) · which of 237 transport/trucking/express names are also Brokers.
+**Next (CC-2 factoring scope, ROUND 315 steps 4–8):** invoice posting law check on create paths, Payments to You per wire, tabs root fixes +
+Escrow tab, Home KPIs + cash flow per day, reserves/deductions shared with banking — every tab reads the LEDGER.
