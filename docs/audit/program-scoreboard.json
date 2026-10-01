@@ -1,10 +1,10 @@
 {
-  "healthzSha": "81825b6",
-  "generated_at": "2026-10-01T17:37:03.348Z",
+  "healthzSha": "7192aec",
+  "generated_at": "2026-10-01T17:51:27.229Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "81825b6",
+    "deployedSha": "7192aec",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,69 @@
   },
   "recentActivity": [
     {
+      "number": 23855,
+      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migration 202615190700 + verify-step 12075 for CC-2 broker-by-name customer classification, owner law 2026-10-01)",
+      "state": "merged",
+      "mergedAtCt": "10/01/2026, 12:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23855",
+      "sha": "d591dff5ce",
+      "committedAtIso": "2026-10-01T12:47:53-05:00"
+    },
+    {
+      "number": 23854,
+      "title": "Claude-3-R313-E23-samsara-fuel-reports-daily-linked",
+      "state": "merged",
+      "mergedAtCt": "10/01/2026, 12:46 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23854",
+      "sha": "2681d0764c",
+      "committedAtIso": "2026-10-01T12:46:59-05:00"
+    },
+    {
+      "number": 23852,
+      "title": "FINDING: N/A LANE: DOCS (OUTBOX CC-2: ROUND 318 -- 13515 held (second real trip, billing duplicate only); step 2 live path; 13571 reversal id for CC-1; branches deleted; Net-30 default question)",
+      "state": "merged",
+      "mergedAtCt": "10/01/2026, 12:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23852",
+      "sha": "9d32f7a8f1",
+      "committedAtIso": "2026-10-01T12:43:36-05:00"
+    },
+    {
+      "number": 23851,
+      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migration 202615181100 for CC-3 E-23 Samsara fuel reports)",
+      "state": "merged",
+      "mergedAtCt": "10/01/2026, 12:41 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23851",
+      "sha": "8bd6244c56",
+      "committedAtIso": "2026-10-01T12:41:04-05:00"
+    },
+    {
+      "number": 23850,
+      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migration 202615190600 for CC-2 ROUND 315 step 3 customer direct pay)",
+      "state": "merged",
+      "mergedAtCt": "10/01/2026, 12:40 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23850",
+      "sha": "88a7fb3729",
+      "committedAtIso": "2026-10-01T12:40:40-05:00"
+    },
+    {
+      "number": 23849,
+      "title": "FINDING: ACCT-F9618 LANE: FINANCIAL (ROUND 315 step 2: factoring PURCHASE = THE DOCUMENT -- one accounting.factoring_purchases per Faro wire + one line per invoice, posted through the existing secured-borrowing poster (CPA: A/R not relieved), Owner-only)",
+      "state": "merged",
+      "mergedAtCt": "10/01/2026, 12:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23849",
+      "sha": "7192aec248",
+      "committedAtIso": "2026-10-01T12:39:35-05:00"
+    },
+    {
+      "number": 23847,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL -- ROUND 313 E-31: read-back stamps the Samsara route id from the push ledger (unchanged routes never got it)",
+      "state": "merged",
+      "mergedAtCt": "10/01/2026, 12:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23847",
+      "sha": "d3d3707dcf",
+      "committedAtIso": "2026-10-01T12:39:06-05:00"
+    },
+    {
       "number": 23846,
       "title": "FINDING: ACCT-F9602 LANE: FINANCIAL (FEED GATE: fuel_import kind — unit/driver/vendor/load, gallons + stamp, posted expense, card assignment; page text lists every kind; replies to CC-2/CC-3)",
       "state": "merged",
@@ -2148,69 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23844",
       "sha": "a8459eca0d",
       "committedAtIso": "2026-10-01T12:31:54-05:00"
-    },
-    {
-      "number": 23843,
-      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migration 202615181000 for CC-3 E-31 route id on load + route stop progress)",
-      "state": "merged",
-      "mergedAtCt": "10/01/2026, 12:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23843",
-      "sha": "e861f89af3",
-      "committedAtIso": "2026-10-01T12:29:06-05:00"
-    },
-    {
-      "number": 23842,
-      "title": "FINDING: ACCT-F9602 LANE: FINANCIAL (FEED GATE inside the settlement creator: single creator and Batch Settlements grid commit a settlement only when every check is green; red rows returned with fix links)",
-      "state": "merged",
-      "mergedAtCt": "10/01/2026, 12:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23842",
-      "sha": "3c13bc8089",
-      "committedAtIso": "2026-10-01T12:23:02-05:00"
-    },
-    {
-      "number": 23839,
-      "title": "FINDING: N/A",
-      "state": "merged",
-      "mergedAtCt": "10/01/2026, 12:19 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23839",
-      "sha": "c1ef276a1e",
-      "committedAtIso": "2026-10-01T12:19:04-05:00"
-    },
-    {
-      "number": 23841,
-      "title": "FINDING: N/A LANE: DOCS (CC-1 OUTBOX: ROUND 316 lease engine + legal contracts built and merged; owner creates the first backdated lease)",
-      "state": "merged",
-      "mergedAtCt": "10/01/2026, 12:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23841",
-      "sha": "9203381c4b",
-      "committedAtIso": "2026-10-01T12:15:46-05:00"
-    },
-    {
-      "number": 23840,
-      "title": "FINDING: N/A LANE: DOCS (ROUND 317: Lead replies to all seats — latch exemption confirmed, A/R not relieved at purchase, duplicate Event 1 void to CC-1 + poster idempotency, T122/T124/T156 are TRANSP leases, AlwaysTrack CI, Cursor lists ambient reds)",
-      "state": "merged",
-      "mergedAtCt": "10/01/2026, 12:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23840",
-      "sha": "adb6dc2cd6",
-      "committedAtIso": "2026-10-01T12:15:04-05:00"
-    },
-    {
-      "number": 23838,
-      "title": "FINDING: N/A",
-      "state": "merged",
-      "mergedAtCt": "10/01/2026, 12:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23838",
-      "sha": "1b77cda61a",
-      "committedAtIso": "2026-10-01T12:14:30-05:00"
-    },
-    {
-      "number": 23837,
-      "title": "FINDING: ACCT-F9602 LANE: FINANCIAL (FEED GATE on the expense creator and the Batch Expenses grid: an expense posts inside its own creation transaction or the create is refused; every saved row shows its gate result)",
-      "state": "merged",
-      "mergedAtCt": "10/01/2026, 12:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23837",
-      "sha": "f486c455e7",
-      "committedAtIso": "2026-10-01T12:09:30-05:00"
     }
   ]
 }

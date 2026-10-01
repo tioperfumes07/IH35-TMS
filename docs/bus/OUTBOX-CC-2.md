@@ -1552,3 +1552,21 @@ engine stamps Net-30 when a customer has no terms (`payment_terms_days ?? 30`, f
 customers with no terms are Net-30 that way; 1 is due on delivery. The guard's invoice-level rule (due = delivery + the invoice's terms) passes.
 Decision: is the no-terms default Net-30 (then re-pin 13637 to 10-31) or due-on-delivery (then the engine default changes and 62 invoices'
 due dates need an AUTH)? Not touched.
+
+## 2026-10-01 18:30Z — ROUND 319 ACKNOWLEDGED · owner decisions: Net-30 default, broker-by-name
+
+**ROUND 319 acknowledged (CC-2):** no Chrome / screenshots as proof (proof = rows, JEs, FKs both ways, guard exit 0, tests — the Submit tab
+proof will be the candidates endpoint response + a posted purchase on a throwaway branch, not a screenshot); build only, fully; no feeding data
+into USMCA (rehearsals on throwaway Neon branches only); the owner posts every factoring purchase himself; gate hygiene — and my miss today:
+202615180800's tables were not classified in verify-transaction-linkage-law TABLE_REGISTRY (the Lead did it). Cause: my gate run stopped at
+another seat's red before that guard ran. From now on every new table is classified in the same PR and I run that guard explicitly.
+
+**Owner: "CUSTOMERS WITH NO PAYMENT TERMS 30 DAYS"** — matches the from-load engine (payment_terms_days ?? 30). verify-cash-flow-reads-delivery-date
+re-pinned 13637 → 2026-10-31; guard PASS live.
+
+**Owner: broker / logistics / freight names are Brokers** — migration 202615190700 (trigger trg_customer_broker_by_name sets customer_type
+'broker' + the company's BROKER customer_type_id on insert / name / type change; rehearsed rolled back on prod: idempotent, a broker name saved
+as direct_shipper is forced to broker, touching an existing row re-stamps it), guard 12075 (fails closed live until the pass runs), AUTH-198
+re-stamps existing rows after deploy: USMCA 640 (652 match), other entities 722 + 677, 0 direct shippers overridden.
+**For the owner — NOT auto-classified (name says transport / trucking / express / carrier / shipping / cargo, 237 in USMCA):** these can be
+carriers or shippers; tell me which words also mean Broker and I add them to the rule.
