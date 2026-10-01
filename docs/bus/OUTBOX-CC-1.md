@@ -1307,3 +1307,23 @@ TRK 0. **Root finding:** `integrations.samsara_vehicles.last_seen_at` is not ref
 USMCA trucks read 05/23 11:38) — the engine reads real positions instead.
 **Also today:** CI secret `PROD_READONLY_DATABASE_URL` set to the owner-confirmed `ih35_ci_readonly` string (tested:
 current_user ih35_ci_readonly, writes blocked); local API docs updated.
+## 2026-10-01 — ROUND 313 · #1 E-17 MERGED (#23784, 3b5f9b3a73) · #2 BANK-TIEOUT-01 BUILT
+
+**engine:** `banking/bank-tieout.service.ts` — per live bank account per day: feed balance
+(bank_accounts.current_balance_cents) vs GL closing of ledger_account_id (accounting.fn_account_balances_as_of,
+the function the drift engine already uses — reused, not reimplemented), diff, **feed-only** (bank lines not posted
+to the GL, dated from the ledger account's first posting, canonical sign +|amt| when is_credit) and **GL-only**
+(postings on the ledger account no bank line matches, same population as the balance function), unexplained
+remainder, status tied / explained / unexplained / no_gl_account, stale-feed flag. Table
+`banking.bank_account_tieouts` (migration 202615180200: RLS forced, one row per account per day, no DELETE).
+Feed keeps only its current balance, so history accrues forward from the first run — never back-filled.
+Nightly 05:50 CT + live on the register. Routes `GET /api/v1/banking/accounts/:id/tieout` (+ 30-day history) and
+`/tieout/drill` (the actual lines). Header on `/banking/register/:accountId` with the drill (EntityLink bank
+transaction / journal entry). Guard 12065 verify-bank-tieout-live (static selftest 5/5; live half fails only if
+the engine goes silent, reports unexplained differences as data).
+**live proof (prod read-only, 2026-10-01):** USMCA operating account feed $11,684.14 vs GL $174,005.11 →
+−$162,320.97, explained to **$25.67** by 336 unposted bank lines and 1,490 unmatched GL lines. TRANSP checking
+…6103 diff $9,191.56 (unexplained $6,538.27), …6129 $68,758.02 (−$15,600.26), …6137 $4,193.22 (−$5.57),
+Platinum card −$18,839.05; TRK …3500 $7,272.95 (−$1,344.78). Dreamline Diesel Card and USMCA Relay Fuel Wallet
+read unexplained because their feed reports no real balance ($0 / −$123.45 vs GL −$141,197.23 / −$33,839.80).
+Zero-balance accounts (Faro reserves, petty cash, Amex-Scentsx, TRANSP Relay) tie.
