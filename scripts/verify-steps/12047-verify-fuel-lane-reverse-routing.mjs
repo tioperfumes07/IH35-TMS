@@ -17,26 +17,38 @@ const LABEL = "verify-fuel-lane-reverse-routing";
 const ROOT = new URL("../../", import.meta.url);
 const read = (p) => readFileSync(new URL(p, ROOT), "utf8");
 
-function selftest() {
+async function selftest() {
   const problems = [];
   const ft = read("apps/backend/src/fuel/fuel-transactions.routes.ts");
-  if (!/vendor_id: z\.string\(\)\.uuid\(\)\.optional\(\)/.test(ft) || !/ft\.vendor_id = \$/.test(ft)) problems.push("fuel transactions list must filter by vendor_id");
+  if (!/vendor_id: z\.string\(\)\.uuid\(\)\.optional\(\)/.test(ft) || !ft.includes("filters.push(`ft.vendor_id = $"+"${values.length}`)")) problems.push("fuel transactions list must filter by vendor_id");
   if (!/source_fuel_transaction_id = ft\.id/.test(ft) || !/journal_entry_id: row\.journal_entry_id/.test(ft)) problems.push("fuel transactions must carry their expense + JE (forward drill)");
   const fa = read("apps/backend/src/integrations/fuel/fraud-detector/routes.ts");
   for (const k of ["unit_id", "driver_id", "load_id", "vendor_id"]) if (!new RegExp(`\\["${k}", "ft\\.${k}"\\]`).test(fa)) problems.push(`fraud alerts must filter by ${k}`);
+  if (!fa.includes("filters.push(`${col} = $"+"${params.length}::uuid`)")) problems.push("fraud alert hub filters must bind a $N placeholder");
   const ex = read("apps/backend/src/accounting/expenses.routes.ts");
   if (!/AS source_fuel_transaction_id/.test(ex) || !/AS source_fuel_voided_at/.test(ex)) problems.push("expense detail must link back to its fuel purchase and say when it is voided");
   const rf = read("apps/backend/src/fuel/relay-fills.routes.ts");
   if (!/r\.matched_unit_id = \$/.test(rf) || !/r\.matched_driver_id = \$/.test(rf) || !/unmatched === "true"/.test(rf)) problems.push("Relay fills must list by unit, driver and unmatched");
   if (!/registerRelayFillRoutes\(app\)/.test(read("apps/backend/src/index.ts"))) problems.push("Relay fills route must be mounted");
+  // Bug class found 2026-10-01: a JS String.replace edit turned "$$"+"{values.length}" into "$"+"{values.length}", so the SQL got
+  // a bare number ("ft.load_id = 3") — broke two working filters and two new ones before deploy. Scan the backend for it.
+  const { readdirSync, statSync } = await import("node:fs");
+  const walk = (d) => readdirSync(d).flatMap((n) => { const p = d + "/" + n; return statSync(p).isDirectory() ? (n === "node_modules" || n === "__tests__" ? [] : walk(p)) : [p]; });
+  const src = new URL("apps/backend/src", ROOT).pathname;
+  const bare = /(=|<>|<|>|IN|ANY\(|LIMIT|OFFSET) \$\{(values|params)\.length\}/;
+  for (const p of walk(src)) {
+    if (!p.endsWith(".ts") || p.endsWith(".test.ts")) continue;
+    const lines = readFileSync(p, "utf8").split("\n");
+    lines.forEach((l, i) => { if (bare.test(l)) problems.push(`${p.slice(src.length + 1)}:${i + 1} binds a bare number instead of a $N placeholder`); });
+  }
   if (problems.length) {
     console.error(`${LABEL} --selftest FAIL — ${problems.join("; ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS (10/10)`);
+  console.log(`${LABEL} --selftest PASS (12/12)`);
 }
 
-selftest();
+await selftest();
 if (process.argv.includes("--selftest")) process.exit(0);
 
 const url = process.env.DATABASE_URL;

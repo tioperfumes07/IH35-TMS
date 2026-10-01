@@ -101,13 +101,13 @@ export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promis
       }
       if (parsed.data.severity) {
         params.push(parsed.data.severity);
-        filters.push(`fa.severity = ${params.length}`);
+        filters.push(`fa.severity = $${params.length}`);
       }
       for (const [key, col] of [["unit_id", "ft.unit_id"], ["driver_id", "ft.driver_id"], ["load_id", "ft.load_id"], ["vendor_id", "ft.vendor_id"]] as const) {
         const v = parsed.data[key];
         if (v) {
           params.push(v);
-          filters.push(`${col} = ${params.length}::uuid`);
+          filters.push(`${col} = $${params.length}::uuid`);
         }
       }
       const res = await client.query(
