@@ -6349,3 +6349,38 @@ commit, in a separate rolled-back read transaction: `fuel.fuel_transactions` row
 (USMCA, voided_at IS NULL, load_id NOT NULL, driver_id NOT NULL, unit_id IS NULL) = **0**
 (was 52). Total live USMCA fuel transactions carrying a unit_id = **177 of 177** — exactly
 ROUND 299's own stated target (125 already had one + these 52 = 177).
+
+## AUTH-179
+issued_at: 2026-10-01T02:54:59Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). mdata.load_stops rows
+  6de58e1c-2b89-4be3-b955-a82020c8fb16 (13625 pickup), a1f50f4e-98b5-4458-a4b4-63c8ab285025
+  (13626 pickup), 737a0781-5241-4264-b973-6bc3fcbc823f (13626 delivery) — columns
+  actual_arrival_at, actual_departure_at, actual_arrival_source, and for the 13625 pickup only:
+  latitude, longitude, geocode_source, geocode_precision, geocode_confidence, geocode_attempted_at,
+  geocode_failure_reason. No other row, column or table. mdata.loads.status untouched.
+action: UPDATE mdata.load_stops SET actual_arrival_at/actual_departure_at = the first/last real
+  telematics.vehicle_locations fix of the load's assigned unit inside the stop radius,
+  actual_arrival_source = 'eld_geofence', for exactly those 3 stops; and UPDATE the 13625 pickup
+  coordinates to the US Census geocoder rooftop match for 14411 Import Rd, Laredo TX 78045
+  (27.624523712429, -99.535908573934). 13625 delivery (8b6132da-be36-45f5-b43f-be06df03a82c) is
+  NOT stamped — no real event. Script of record:
+  scripts/ops/2026-10-01-lead-backfill-13625-13626-stamps-from-gps.ts.
+expires_at: 2026-10-02T02:54:59Z
+status: OPEN
+
+OWNER ORDER, verbatim, 2026-10-01:
+> "THEN JUST FOR THIS INSTANCE WRRITE DATA, UPATE CHANTE STATUS OR WHATEER AND LETS GO I CANNOT HAE CODERS IDLE." (in reply to the Lead's message laying out exactly these three stamps + the 13625 pickup re-geocode, and the Lead's withdrawal of it under the seeding freeze)
+
+Standing order this extends (AUTH-152, DISPATCH-STAMPS, 2026-09-30): "Backfill them from the real
+geofence events; where no event exists, leave NULL and report the count -- never invent a timestamp."
+
+MEASURED SCOPE, live on br-fancy-credit-akjnd07a 2026-10-01 before this authorization was written:
+  13625 pickup  T148, 72 fixes < 300 m of the Census rooftop, 68 stopped, 160–255 m,
+                2026-09-24 15:29:56Z → 18:20:14Z. Stop's stored pin was a nominatim LOCALITY
+                centroid 9 mi south of the address.
+  13626 pickup  T156, dwell ~321 m from rooftop pin, 2026-09-24 16:45:45Z → 17:00:10Z.
+  13626 delivery T156, 126 fixes < 300 m, 124 stopped, 89–295 m, 2026-09-25 18:54:59Z → 09-26 00:10:03Z.
+  13625 delivery T148 never inside ~1.4 mi of the pin since 2026-09-23 — left NULL.
+
+THIS AUTHORIZATION DOES NOT COVER: any other stop, any load status change, any invoice/advance/
+settlement side effect, any future back-dated load (that is E-25, the retro-arrival engine).
