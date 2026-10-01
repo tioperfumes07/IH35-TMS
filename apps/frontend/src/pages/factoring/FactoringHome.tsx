@@ -58,6 +58,7 @@ import { factorToProfileForm, profileFormToFactorPatch, resolveActiveFactorFromS
 import { FactoringProfilePanel } from "./FactoringProfilePanel";
 import { SubmitToFactorTab } from "./SubmitToFactorTab";
 import { PaymentsToYouPanel } from "./PaymentsToYouPanel";
+import { FactoringCashFlowPanel } from "./FactoringCashFlowPanel";
 import { ChargebacksTable, type ChargebackFeeRow } from "./ChargebacksTable";
 import { RecoursePipelineTable } from "./RecoursePipelineTable";
 import { ReserveTracker } from "./ReserveTracker";
@@ -1095,6 +1096,13 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           )}
         </div>
       </div>
+
+      {/* ROUND 315 / Lead B6 — Home cash-flow: TOTAL PER DAY from posted purchases + projected candidates. */}
+      <FactoringCashFlowPanel
+        companyId={companyId}
+        dateFrom={dateFromFromUrl || undefined}
+        dateTo={dateToFromUrl || undefined}
+      />
 
       {activeFactor && profileEditForm && (
             <Modal open={profileEditOpen} onClose={() => { setProfileEditOpen(false); setProfileEditForm(null); }} title="Edit Factoring Profile">
