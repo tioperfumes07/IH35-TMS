@@ -6624,7 +6624,12 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). accounting.expenses 13
   load 13523 (exactly one of each), its expense_load_links row, posted through postSourceTransactionInClientTx. Audit rows source CC-2-AUTH-189.
 action: npx tsx scripts/ops/2026-10-01-cc2-auth189-reissue-5781-reefer-misposted-to-def.ts --apply. Dry run: 3 documents, $518.80 misposted to 5010; --rehearse on production: all 3 reissued and rolled back, every line on its own account.
 expires_at: 2026-10-02T06:11:35Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-01T06:35:00Z
+consumed_by: CC-2
+row_counts: 3 expenses reversed + voided (13523-27/28/29), 3 reissued and posted (13523-30/31/32, each with load 13523's truck and driver); reversal JEs 5c04fcc9, d44678d9, 79e213f0; new JEs cdf36731, c4a4c32c, 7e36960c
+proof_query: verify-fuel-cost-posts-exactly-once PASS (GL 5000 net = its posted expense lines); verify-posted-expense-line-matches-its-ledger 544/544 lines agree; verify-void-is-whole 0 violations
+audit: audit.audit_events source CC-2-AUTH-189 (6 rows)
 
 WHY: the reefer-diesel line of each document is coded to 5000 Fuel & Diesel (the item's own default account) but its journal
 entry posted it to 5010 DEF ($518.80 in all) -- the 2026-09-30 feed inserted the line on 5010, posted, then recoded the line
