@@ -15,8 +15,13 @@
  *   relay_fill_presence    every Relay fill (real pump time + station lat/lng) checked against the
  *                          truck's own GPS: was it stopped within PRESENCE_RADIUS_M of the pump at
  *                          that time? Shares nothing with the MPG signals.
- *   samsara_fuel_energy    Samsara's Fuel & Energy report — CC-3's T-50. Reported unavailable
- *                          until that feed exists; never faked.
+ *   samsara_fuel_energy    Samsara's Fuel & Energy DRIVER report (CC-3's T-50 feed): gallons the
+ *                          engine burned (ECU) while this driver was logged in, vs the truck fuel we
+ *                          bought for this driver (fuel-card gallons less reefer). Purchases can lead
+ *                          burn only by what the tanks absorb, so it is anomalous only past one full
+ *                          tank per truck driven (the fraud detector's own tank model). It shares
+ *                          fuel_card_gallons with both MPG signals, so with them it is never a finding;
+ *                          with relay_fill_presence it is independent.
  *
  * What this engine will not do: estimate miles across a gap, split a segment that straddles a
  * driver handover, call a fill "absent" when the truck had no GPS at all, or compute MPG from a
@@ -40,6 +45,9 @@ import {
   type PositionFix,
 } from "../telematics/stop-odometer-capture.service.js";
 import { classifyFleetUnit, fleetUnitFactsSql } from "../telematics/live-fleet.js";
+import { loadDriverIdsBySamsaraDriverId, ML_PER_US_GALLON } from "../telematics/fuel-efficiency-signal.service.js";
+import type { SamsaraFuelEnergyRow } from "../integrations/samsara/samsara-client.js";
+import { DEFAULT_TANK_CAPACITY_GAL, TANK_OVERFLOW_TOLERANCE } from "../integrations/fuel/fraud-detector/rules.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -70,7 +78,16 @@ export type FuelSignal = {
 export type FuelIntegrityResult = {
   rows: DriverFuelIntegrity[];
   /** Relay fills that could not reach any driver — counted, never silently dropped. */
-  coverage: { relay_fills_in_period: number; relay_fills_no_unit_or_location: number; relay_fills_no_driver_at_pump_time: number };
+  coverage: {
+    relay_fills_in_period: number;
+    relay_fills_no_unit_or_location: number;
+    relay_fills_no_driver_at_pump_time: number;
+    /** Why signal 4 is unavailable for everyone (null = the report was read). */
+    samsara_feed_error: string | null;
+    samsara_drivers_with_burn: number;
+    /** Samsara drivers whose id maps to none or several of ours, or with no burn figure — never guessed. */
+    samsara_drivers_unmapped: number;
+  };
 };
 
 export type FuelIntegrityStatus = "finding" | "suspicion" | "clear" | "insufficient_data";
@@ -299,13 +316,61 @@ function mpgFleetFloor(values: number[]): { mean: number; sd: number; floor: num
 const SNAPSHOT_SOURCES = ["fuel_card_gallons", "odometer_daily_snapshot"];
 const STOP_SOURCES = ["fuel_card_gallons", "stop_odometer_capture"];
 const PRESENCE_SOURCES = ["relay_pump_location", "unit_gps_positions"];
-const SAMSARA_SOURCES = ["samsara_fuel_energy"];
+const SAMSARA_SOURCES = ["samsara_ecu_fuel_burn", "fuel_card_gallons", "unit_tank_capacity"];
+
+/** Tank slack per truck: what one truck's tanks can absorb between the first and last day (fraud detector's model). */
+export const SAMSARA_TANK_SLACK_GAL = DEFAULT_TANK_CAPACITY_GAL * TANK_OVERFLOW_TOLERANCE;
+
+export type SamsaraDriverBurn = { burnedGallons: number; samsaraDriverIds: string[]; samsaraMiles: number | null };
+
+/**
+ * Signal 4, pure. truckGallons = fuel-card gallons attributed to the driver less reefer. Unavailable
+ * (with why) when Samsara could not be read, the driver is not mapped to a Samsara driver, Samsara
+ * reports no burn, or nothing was bought — never a zero standing in for a missing number.
+ */
+export function decideSamsaraFuelSignal(input: {
+  feedError: string | null;
+  burn: SamsaraDriverBurn | null;
+  truckGallons: number | null;
+  trucksDriven: number;
+}): FuelSignal {
+  const base = { signal: "samsara_fuel_energy" as const, sources: SAMSARA_SOURCES };
+  const unavailable = (reason: string): FuelSignal => ({
+    ...base,
+    verdict: "unavailable",
+    arithmetic: "excess = fuel-card truck gallons - Samsara ECU gallons burned — not computable",
+    reason,
+    evidence: [],
+  });
+  if (input.feedError) return unavailable(`Samsara Fuel & Energy report could not be read (${input.feedError})`);
+  if (!input.burn) return unavailable("driver has no Samsara driver mapped one-to-one (mdata.drivers / integrations.samsara_drivers), or Samsara reported no driving for them");
+  if (!(input.burn.burnedGallons > 0)) return unavailable("Samsara reported no ECU fuel burn for this driver in the period");
+  if (input.truckGallons === null || !(input.truckGallons > 0)) return unavailable("no truck fuel purchases attributed to this driver in the period — nothing to compare the burn against");
+  const trucks = Math.max(1, input.trucksDriven);
+  const slack = SAMSARA_TANK_SLACK_GAL * trucks;
+  const excess = Math.round((input.truckGallons - input.burn.burnedGallons) * 10) / 10;
+  const anomalous = excess > slack;
+  return {
+    ...base,
+    verdict: anomalous ? "anomalous" : "normal",
+    arithmetic:
+      `${input.truckGallons.toFixed(1)} gal bought - ${input.burn.burnedGallons.toFixed(1)} gal burned (ECU) = ${excess} gal; ` +
+      `slack ${trucks} truck(s) x ${DEFAULT_TANK_CAPACITY_GAL} gal x ${TANK_OVERFLOW_TOLERANCE} = ${slack.toFixed(1)} gal`,
+    reason: anomalous
+      ? "bought more truck fuel than the engine burned by more than the tanks could hold"
+      : excess > 0
+        ? "bought more than burned, but within what the tanks could absorb — not anomalous"
+        : "purchases at or below the engine's own burn",
+    evidence: [{ samsara_driver_ids: input.burn.samsaraDriverIds, samsara_miles: input.burn.samsaraMiles, burned_gallons: Number(input.burn.burnedGallons.toFixed(1)), truck_gallons: Number(input.truckGallons.toFixed(1)), trucks_driven: trucks, excess_gallons: excess }],
+  };
+}
 
 export async function computeDriverFuelIntegrity(
   client: DbClient,
   operatingCompanyId: string,
   periodStart: string,
-  periodEnd: string
+  periodEnd: string,
+  opts?: { samsaraDriverReport?: () => Promise<SamsaraFuelEnergyRow[]> }
 ): Promise<FuelIntegrityResult> {
   const start = new Date(periodStart);
   const end = new Date(periodEnd);
@@ -338,28 +403,58 @@ export async function computeDriverFuelIntegrity(
     .filter((u) => u.fleetClass === "reporting" || u.fleetClass === "dark");
 
   const units: UnitData[] = [];
+  // Trucks each driver held in the period — every real truck, GPS or not (Samsara tank slack).
+  const trucksByDriver = new Map<string, Set<string>>();
   for (const u of realUnits) {
+    const winRes = await client.query<{ driver_id: string; started_at: Date; ended_at: Date | null; created_at: Date }>(
+      unitAssignmentWindowsSql(),
+      [operatingCompanyId, u.unitId]
+    );
+    const windows = winRes.rows.map((w) => ({
+      driverId: w.driver_id,
+      startedAt: new Date(w.started_at),
+      endedAt: w.ended_at ? new Date(w.ended_at) : null,
+      createdAt: new Date(w.created_at),
+    }));
+    for (const w of windows) {
+      if (!w.driverId || w.startedAt >= end || (w.endedAt !== null && w.endedAt <= start)) continue;
+      const set = trucksByDriver.get(w.driverId) ?? new Set<string>();
+      set.add(u.unitId);
+      trucksByDriver.set(w.driverId, set);
+    }
     const fixesRes = await client.query<FixRow>(unitFixesSql(), [
       u.unitId,
       new Date(start.getTime() - pad).toISOString(),
       new Date(end.getTime() + pad).toISOString(),
     ]);
     if (fixesRes.rows.length === 0) continue;
-    const winRes = await client.query<{ driver_id: string; started_at: Date; ended_at: Date | null; created_at: Date }>(
-      unitAssignmentWindowsSql(),
-      [operatingCompanyId, u.unitId]
-    );
-    units.push({
-      unitId: u.unitId,
-      unitNumber: u.unitNumber,
-      fixes: fixesRes.rows.map(toFix),
-      windows: winRes.rows.map((w) => ({
-        driverId: w.driver_id,
-        startedAt: new Date(w.started_at),
-        endedAt: w.ended_at ? new Date(w.ended_at) : null,
-        createdAt: new Date(w.created_at),
-      })),
-    });
+    units.push({ unitId: u.unitId, unitNumber: u.unitNumber, fixes: fixesRes.rows.map(toFix), windows });
+  }
+
+  // Signal 4 input — Samsara ECU burn per OUR driver, through the shared one-to-one driver map.
+  let samsaraFeedError: string | null = opts?.samsaraDriverReport ? null : "not requested by this caller";
+  const burnByDriver = new Map<string, SamsaraDriverBurn>();
+  let samsaraDriversUnmapped = 0;
+  if (opts?.samsaraDriverReport) {
+    try {
+      const rows = await opts.samsaraDriverReport();
+      const idMap = await loadDriverIdsBySamsaraDriverId(client as never, operatingCompanyId);
+      for (const r of rows) {
+        const ids = idMap.get(r.subject_id);
+        if (!ids || ids.size !== 1 || r.fuel_consumed_ml == null) {
+          samsaraDriversUnmapped += 1;
+          continue;
+        }
+        const driverId = [...ids][0]!;
+        const b = burnByDriver.get(driverId) ?? { burnedGallons: 0, samsaraDriverIds: [], samsaraMiles: null };
+        b.burnedGallons += r.fuel_consumed_ml / ML_PER_US_GALLON;
+        b.samsaraDriverIds.push(r.subject_id);
+        if (r.distance_traveled_meters != null) b.samsaraMiles = Number(((b.samsaraMiles ?? 0) + r.distance_traveled_meters / 1609.344).toFixed(1));
+        burnByDriver.set(driverId, b);
+      }
+    } catch (err) {
+      samsaraFeedError = String((err as Error)?.message ?? err);
+    }
   }
   const unitById = new Map(units.map((u) => [u.unitId, u]));
 
@@ -410,7 +505,7 @@ export async function computeDriverFuelIntegrity(
   }
   const stopFloor = mpgFleetFloor([...stopMpg.values()]);
 
-  const driverIds = new Set<string>([...scoreByDriver.keys(), ...stopMiles.keys(), ...presenceByDriver.keys()]);
+  const driverIds = new Set<string>([...scoreByDriver.keys(), ...stopMiles.keys(), ...presenceByDriver.keys(), ...burnByDriver.keys()]);
   const out: DriverFuelIntegrity[] = [];
   for (const driverId of [...driverIds].sort()) {
     const sc = scoreByDriver.get(driverId) ?? null;
@@ -500,15 +595,15 @@ export async function computeDriverFuelIntegrity(
       evidence: fills,
     });
 
-    // 4 — CC-3 T-50.
-    signals.push({
-      signal: "samsara_fuel_energy",
-      sources: SAMSARA_SOURCES,
-      verdict: "unavailable",
-      arithmetic: "Samsara-reported fuel used vs fuel bought — not computable",
-      reason: "Samsara Fuel & Energy feed is CC-3's T-50 and does not exist yet; reported as unavailable, never faked",
-      evidence: [],
-    });
+    // 4 — Samsara ECU burn vs truck fuel bought (T-50 feed).
+    signals.push(
+      decideSamsaraFuelSignal({
+        feedError: samsaraFeedError,
+        burn: burnByDriver.get(driverId) ?? null,
+        truckGallons: sc ? sc.gallons - sc.reefer_gallons : null,
+        trucksDriven: trucksByDriver.get(driverId)?.size ?? 0,
+      })
+    );
 
     const decision = decideFuelIntegrity(signals);
     out.push({ driver_id: driverId, period_start: periodStart, period_end: periodEnd, ...decision, signals });
@@ -519,6 +614,9 @@ export async function computeDriverFuelIntegrity(
       relay_fills_in_period: relayRes.rows.length,
       relay_fills_no_unit_or_location: relayNoUnitOrPlace,
       relay_fills_no_driver_at_pump_time: relayNoDriver,
+      samsara_feed_error: samsaraFeedError,
+      samsara_drivers_with_burn: burnByDriver.size,
+      samsara_drivers_unmapped: samsaraDriversUnmapped,
     },
   };
 }

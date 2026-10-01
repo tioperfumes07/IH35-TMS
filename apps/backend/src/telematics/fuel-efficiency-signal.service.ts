@@ -80,6 +80,30 @@ export type FuelEfficiencySignalResult = {
   purchase_rows_excluded_by_reason: Record<string, number>;
 };
 
+/**
+ * Samsara driver id -> our driver id(s). samsara_driver_id lives on mdata.drivers for most drivers and
+ * only in the integrations.samsara_drivers mirror for some -- use either, never guess (same rule as
+ * driven-miles-legs.service.ts). A Samsara id that maps to more than one of our drivers is ambiguous;
+ * callers treat size !== 1 as unmapped. Shared by T-50 and the E-21 integrity signal.
+ */
+export async function loadDriverIdsBySamsaraDriverId(client: PgClient, operatingCompanyId: string): Promise<Map<string, Set<string>>> {
+  const driverMap = await client.query(
+    `SELECT d.samsara_driver_id::text AS sid, d.id::text AS driver_id FROM mdata.drivers d
+      WHERE d.operating_company_id = $1::uuid AND d.samsara_driver_id IS NOT NULL
+     UNION
+     SELECT sd.samsara_driver_id::text, sd.local_driver_id::text FROM integrations.samsara_drivers sd
+      WHERE sd.operating_company_id = $1::uuid AND sd.local_driver_id IS NOT NULL`,
+    [operatingCompanyId]
+  );
+  const driverIds = new Map<string, Set<string>>();
+  for (const r of driverMap.rows) {
+    const set = driverIds.get(String(r.sid)) ?? new Set<string>();
+    set.add(String(r.driver_id));
+    driverIds.set(String(r.sid), set);
+  }
+  return driverIds;
+}
+
 export async function computeFuelEfficiencySignals(
   client: PgClient,
   input: {
@@ -117,22 +141,7 @@ export async function computeFuelEfficiencySignals(
     return classifyUnitFuelSignal(v, unitId, unitId ? purchases.get(unitId) : undefined);
   });
 
-  // samsara_driver_id lives on mdata.drivers for most drivers and only in the integrations.samsara_drivers
-  // mirror for some -- use either, never guess (same rule as driven-miles-legs.service.ts).
-  const driverMap = await client.query(
-    `SELECT d.samsara_driver_id::text AS sid, d.id::text AS driver_id FROM mdata.drivers d
-      WHERE d.operating_company_id = $1::uuid AND d.samsara_driver_id IS NOT NULL
-     UNION
-     SELECT sd.samsara_driver_id::text, sd.local_driver_id::text FROM integrations.samsara_drivers sd
-      WHERE sd.operating_company_id = $1::uuid AND sd.local_driver_id IS NOT NULL`,
-    [input.operatingCompanyId]
-  );
-  const driverIds = new Map<string, Set<string>>();
-  for (const r of driverMap.rows) {
-    const set = driverIds.get(String(r.sid)) ?? new Set<string>();
-    set.add(String(r.driver_id));
-    driverIds.set(String(r.sid), set);
-  }
+  const driverIds = await loadDriverIdsBySamsaraDriverId(client, input.operatingCompanyId);
   const drivers = driverRows.map((d) => {
     const ids = driverIds.get(d.subject_id);
     return {
