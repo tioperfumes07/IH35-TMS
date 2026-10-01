@@ -1504,6 +1504,31 @@ guard: scripts/verify-driver-prompts-flag-off-idempotent.mjs + --selftest PASS; 
   4. Owner data: 13625 / 13627 / 13638 still carry stale `canceled_at` from the AUTH-093 script; the owner is entering 13625/13638 manually. FAC-2026-00139 has no invoice (CC-2; #23750 adds source_load_id, AUTH-191 pending).
   5. Flags still OFF: auto-status, master sync. Fuel push, routes, messaging, prompts and fence push are ON per ROUND 310 once deployed.
 
+## 2026-10-01 ROUND 313 item 4b — E-05 driven-miles legs: silent since 09-29 → fixed at the root
+
+**LIVE after the deploy (cd5f701, includes #23734–#23754):**
+- `telematics.unit_stop_events`: 349 rows, 147 linked to a load (it was 0 before the `l.delivered_at` fix).
+- Samsara DVIRs: 61, of which 46 link to a load and 10 to a trailer in equipment.
+- `load_odometer_segments`: the last row was still 2026-09-29.
+
+**Root causes, measured:**
+1. A leg's kind was judged only from TMS hand stamps (pickup actual_departure, delivery actual_arrival). Most loads never get those.
+2. Delivered loads fell out of the active-status filter.
+3. A loaded leg needed a delivery arrival, so in-transit loads produced nothing.
+4. Stops before the writer first ran (2026-09-29 18:52) did not exist, because it only reads a 36 h window.
+5. GPS fixes carry odometer only since E-01 (today). T148 had 180 odometer fixes out of 4,316 since 09-22, and 1 local odometer reading.
+
+**Fix:**
+- Departure and arrival come from the TMS stamp, else the stop's Samsara fence (new shared `stopFenceTimeSql`, which loadAtTimeSql now calls too), else the unit's own E-03 dwell within 500 m of the stop.
+- Loads due to deliver in the last 7 days stay in scope. In-transit legs after pickup count as loaded. One leg per start.
+- The stop writer gets a daily 10-day catch-up (02:41 CT). It is fed by real Samsara odometer history (`SamsaraClient.listOdometerHistory`, `/fleet/vehicles/stats/history`, probed at 200 with 1,250 readings per truck-day) plus `telematics.odometer_readings`. The 45-minute tolerance still applies; nothing is interpolated.
+
+**Rolled-back run on prod:**
+- Catch-up: 8 windows, 112,280 odometer readings, 865 stops upserted, 7.7 min.
+- E-05 then wrote **182 legs**: loaded 85 (12,103 mi), deadhead_to_pickup 93 (3,971 mi), empty_home 4. The last run before the fix wrote 8 legs, on 2 loads.
+- 23 of 24 loads due in the last 10 days now have at least 2 stops with an odometer. Before the fix: 8.
+- Guard `verify-e05-legs-evidence-chain` (9 checks).
+- **Live = after deploy + the 02:41 CT catch-up.** Each 15-minute E-05 tick then writes legs for the live window.
 ## 2026-10-01 ROUND 313 item 5 — canonical cancellation reversal (13625 / 13627 / 13638)
 
 - **Root cause:** there was no canonical way to undo a cancellation. In ROUND-155.26 a one-off script put the status back but left `load_cancellations` at 'approved', and the 0281 trigger's stamp stayed on the load.

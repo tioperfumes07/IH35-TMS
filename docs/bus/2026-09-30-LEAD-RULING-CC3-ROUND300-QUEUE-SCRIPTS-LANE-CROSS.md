@@ -59,6 +59,7 @@ Touched scripts/-lane files, one per queue item, each its own PR:
 - `scripts/verify-ifta-filing-export-honest.mjs` (E-23 addition).
 - `scripts/verify-load-at-time-single-definition.mjs` (linkage: one load-at-time rule, owner NB/SB).
 - `scripts/verify-telematics-linkage-screens-wired.mjs` (linkage reverse direction reaches the load / truck / driver screens).
+- `scripts/verify-e05-legs-evidence-chain.mjs` (ROUND 313 E-05: evidence chain + 10-day catch-up with Samsara odometer history).
 - `scripts/verify-load-cancellation-reversal-canonical.mjs` (ROUND 313: one canonical undo of a wrong cancellation).
 - `scripts/ops/2026-10-01-cc3-reverse-false-cancellations.mts` (AUTH-192).
 - `scripts/verify-driver-prompts-flag-off-idempotent.mjs` (E-30 addition).

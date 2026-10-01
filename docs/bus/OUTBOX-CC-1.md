@@ -1327,3 +1327,18 @@ the engine goes silent, reports unexplained differences as data).
 Platinum card −$18,839.05; TRK …3500 $7,272.95 (−$1,344.78). Dreamline Diesel Card and USMCA Relay Fuel Wallet
 read unexplained because their feed reports no real balance ($0 / −$123.45 vs GL −$141,197.23 / −$33,839.80).
 Zero-balance accounts (Faro reserves, petty cash, Amex-Scentsx, TRANSP Relay) tie.
+
+## 2026-10-01 15:35Z — ROUND 313 LIVE (deploy 4cb4a69)
+
+`/healthz/shallow` git_sha **4cb4a69** (BANK-TIEOUT-01 merge #23788). Ledger `ih35_migrations.applied_migrations`:
+```
+202615160000_load_real_driven_miles.sql                        07:08:32Z  (applied by hand after the scorer fix; still carries its HELD marker — applied file, checksum frozen, db:migrate skips it)
+202615180000_driver_settlements_settlement_model_not_null.sql  15:24:55Z
+202615180100_fleet_roster_findings.sql                         15:24:55Z
+202615180200_bank_account_tieouts.sql                          15:29:47Z
+```
+Effective (read as ih35_ci_readonly): 7 real-driven-miles columns on mdata.loads / load_stops (the hourly writer now
+stores them); `driver_settlements_settlement_model_not_null` convalidated = true; fleet.roster_findings and
+banking.bank_account_tieouts RLS forced. Routes `/api/v1/fleet/roster-integrity` and
+`/api/v1/banking/accounts/:id/tieout` answer 401 (mounted, auth-gated). E-17 nightly 02:40 CT and tie-out nightly
+05:50 CT run from tonight; both also run on demand from their screens.

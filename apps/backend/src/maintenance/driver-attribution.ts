@@ -1,3 +1,4 @@
+import { stopFenceTimeSql } from "../telematics/stop-arrival-events.js";
 import { canonicalDispatchWorkStatusClause } from "../dispatch/canonical-active-load-set.js";
 
 /**
@@ -320,10 +321,7 @@ export function loadAtTimeSql(unitAlias: string, tsExpr: string, resultAlias = "
       -- Samsara fence (E-25 label load-<uuid>-stop-<seq>, canonical detector). Owner 2026-10-01: 13625/13638
       -- were delivered and factored but nobody stamped the delivery in TMS -- the fence saw it.
       SELECT COALESCE(d.actual_departure_at, d.actual_arrival_at,
-               (SELECT min(x.occurred_at) FROM geo.geofences g
-                  JOIN geo.geofence_events x ON x.geofence_id = g.id
-                 WHERE g.label = 'load-' || l.id::text || '-stop-' || d.sequence_number::text
-                   AND x.unit_id = l.assigned_unit_id AND x.event_kind = 'exited')) AS actual_finished_at,
+               ${stopFenceTimeSql("l.id", "d.sequence_number", "l.assigned_unit_id", "exited")}) AS actual_finished_at,
              COALESCE(d.scheduled_departure_at, d.scheduled_arrival_at) AS scheduled_finished_at
       FROM mdata.load_stops d
       WHERE d.load_id = l.id AND d.stop_type::text = 'delivery' AND d.soft_deleted_at IS NULL
