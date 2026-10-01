@@ -350,6 +350,7 @@ import { registerFaultCodeAlertsRoutes } from "./maintenance/fault-code-alerts.r
 import { registerDrivenMilesLegsRoutes } from "./telematics/driven-miles-legs.routes.js";
 import { registerIftaMilesRoutes } from "./telematics/ifta-miles.routes.js";
 import { registerUnitStopsRoutes } from "./telematics/unit-stops.routes.js";
+import { registerDriverProfileTabRoutes } from "./driver-profile/driver-profile-tabs.routes.js";
 import { registerFuelEfficiencySignalRoutes } from "./telematics/fuel-efficiency-signal.routes.js";
 import { registerFuelPurchasePushRoutes } from "./integrations/samsara/fuel-purchase-push.routes.js";
 import { initializeFuelPurchasePushCron } from "./integrations/samsara/fuel-purchase-push.cron.js";
@@ -1258,6 +1259,7 @@ async function main() {
   await registerDrivenMilesLegsRoutes(app);
   await registerIftaMilesRoutes(app);
   await registerUnitStopsRoutes(app);
+  await registerDriverProfileTabRoutes(app);
   await registerFuelEfficiencySignalRoutes(app);
   await registerFuelPurchasePushRoutes(app);
   await registerGeofenceAddressLinkRoutes(app);
