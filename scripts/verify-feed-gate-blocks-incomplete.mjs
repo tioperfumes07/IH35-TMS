@@ -25,6 +25,7 @@ const REQUIRED_KEYS = [
   "invoice.header_complete", "invoice.lines_carry_income_account", "invoice.has_live_line", "invoice.total_equals_lines",
   "expense.header_complete", "expense.lines_carry_category", "expense.posted", "expense.linked_to_operations",
   "bill.header_complete", "bill.lines_carry_account", "bill.ap_je_posted", "bill.linked_to_operations",
+  "fuel.linked_unit_driver_vendor_load", "fuel.quantity_and_stamp", "fuel.expense_posted", "fuel.card_assigned",
 ];
 
 export function check({ approval, migration, checks, routes, send, expenses, creator }) {

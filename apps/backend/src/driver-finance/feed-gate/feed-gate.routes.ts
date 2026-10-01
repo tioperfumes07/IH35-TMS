@@ -5,7 +5,7 @@ import { assertCompanyMembership } from "../../_helpers/company-membership-guard
 import { currentAuthUser, validationError } from "../../accounting/shared.js";
 import { FeedGateError, closeIntake, getIntake, listIntakes, openAndRunIntake } from "./feed-gate.service.js";
 
-const KIND = z.enum(["settlement", "load", "invoice", "expense", "bill"]);
+const KIND = z.enum(["settlement", "load", "invoice", "expense", "bill", "fuel_import"]);
 const RL = { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } };
 
 function sendGateError(reply: { code: (n: number) => { send: (b: unknown) => unknown } }, error: unknown) {
