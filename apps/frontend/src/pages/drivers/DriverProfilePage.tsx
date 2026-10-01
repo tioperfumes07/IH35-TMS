@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { apiRequest } from "../../api/client";
-import { updateDriver, deactivateDriver, reactivateDriver } from "../../api/mdata";
+import { deactivateDriver, reactivateDriver } from "../../api/mdata";
 import { listDriverQualificationItems } from "../../api/safety";
 import { formatDateUS } from "../../lib/formatDate";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -12,8 +12,13 @@ import { ActionBar } from "../../components/driver-profile/ActionBar";
 import { AssignTruckModal } from "../../components/driver-profile/AssignTruckModal";
 import { BorderCredentialsSection } from "../../components/driver-profile/BorderCredentialsSection";
 import { CurrentAssignmentSection } from "../../components/driver-profile/CurrentAssignmentSection";
+import { DriverAssignmentHistorySection } from "../../components/driver-profile/DriverAssignmentHistorySection";
+import { DriverSamsaraDuplicateBanner } from "../../components/driver-profile/DriverSamsaraDuplicateBanner";
+import { DriverProfileFuelVerdictsSection } from "../../components/driver-profile/DriverProfileFuelVerdictsSection";
+import { DriverProfileSafetyAttributedSection } from "../../components/driver-profile/DriverProfileSafetyAttributedSection";
 import { StopsMilesSection } from "../../components/shared/StopsMilesSection";
 import { DriverIntegritySection } from "../../components/drivers/DriverIntegritySection";
+import { ComplaintsReverseSection } from "../../components/safety/ComplaintsReverseSection";
 import {
   countedComplaints,
   getDriverIntegrityProfile,
@@ -220,7 +225,6 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
   const queryClient = useQueryClient();
   const [addTrainingOpen, setAddTrainingOpen] = useState(false);
   const [w8benOpen, setW8benOpen] = useState(false);
-  const [autoPaySaving, setAutoPaySaving] = useState(false);
   const [dqfFocus, setDqfFocus] = useState<"all" | "present" | "missing" | "expired" | "expiry_alerts">("all");
   // C-20 / D11 — tabs own the URL; KPIs render BELOW the tab strip (never above).
   const activeTab = parseDriverProfileTab(searchParams.get("tab"));
@@ -310,7 +314,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
   });
   const integrity404 = (integrityQ.error as { status?: number } | null)?.status === 404;
   const integrityProfile = integrityQ.isError && integrity404 ? null : integrityQ.data ?? null;
-  const integrityFindings = integrityProfile?.score.findings ?? 0;
+  const integrityFindings = integrityProfile?.score?.findings ?? 0;
   const integrityComplaints = countedComplaints(integrityProfile);
 
   const summary = summarizeDriverDqf(itemsQ.data);
@@ -532,6 +536,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             <p className="mt-1 text-xs text-slate-600" data-testid="driver-last-samsara-login">
               Last Samsara login: {formatSamsaraLogin(profileDriver.last_samsara_login_at)}
             </p>
+            {companyId ? <DriverSamsaraDuplicateBanner companyId={companyId} driverId={id} /> : null}
           </div>
           <div data-testid="dp-section-2-license">
             <div className="mb-2 flex justify-end">
@@ -576,6 +581,11 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
               driverId={id}
               driverName={displayName}
             />
+            {companyId ? (
+              <div className="mt-3">
+                <DriverAssignmentHistorySection companyId={companyId} driverId={id} />
+              </div>
+            ) : null}
             <div className="mt-3">
               <StopsMilesSection driverId={id} hours={24} />
             </div>
@@ -583,6 +593,16 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
           <div data-testid="dp-section-integrity" className="mt-3">
             <DriverIntegritySection driverId={id} />
           </div>
+          {companyId ? (
+            <div data-testid="dp-section-complaints" className="mt-3">
+              <ComplaintsReverseSection
+                operatingCompanyId={companyId}
+                filter={{ driver_id: id }}
+                contextLabel="this driver"
+                data-testid="driver-profile-complaints"
+              />
+            </div>
+          ) : null}
           <div data-testid="dp-section-7-performance">
             <PerformanceScorecardSection scorecard={aggregate.performance_scorecard ?? null} unavailable={aggregate.performance_scorecard_unavailable === true} />
           </div>
@@ -648,9 +668,9 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       ) : null}
 
       {activeTab === "Settlements" ? (
-        <div className="space-y-3" data-testid="dp-tab-settlements">
+        <div className="space-y-3" data-testid="dp-tab-settlements" data-dp-settlements-readonly="1">
           <p className="text-xs text-slate-600">
-            Payee ledger for this driver. Pre-settlements are open drafts of the same settlement document — not a separate record.
+            Settlements and bills on this profile are read only. Pre-settlements are open drafts of the same settlement document — not a separate record.
             {" "}
             <EntityLink kind="settlement_disputes_driver" id={id} label="Open settlement disputes →" className="font-semibold text-slate-700 hover:underline" />
           </p>
@@ -659,16 +679,6 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
               settlements={aggregate.settlements ?? {}}
               driverId={id}
               autoPayEnabled={Boolean((aggregate.driver as Record<string, unknown>).settlement_auto_pay_enabled)}
-              autoPaySaving={autoPaySaving}
-              onAutoPayChange={async (enabled) => {
-                setAutoPaySaving(true);
-                try {
-                  await updateDriver(id, { settlement_auto_pay_enabled: enabled });
-                  await queryClient.invalidateQueries({ queryKey: ["driver-profile", id, companyId] });
-                } finally {
-                  setAutoPaySaving(false);
-                }
-              }}
             />
             <DriverPaymentMethodsCard driverId={id} companyId={companyId} />
             {companyId ? (
@@ -769,6 +779,9 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       {activeTab === "Safety" ? (
         <div className="space-y-3" data-testid="dp-tab-safety">
           {companyId ? (
+            <DriverProfileSafetyAttributedSection companyId={companyId} driverId={id} />
+          ) : null}
+          {companyId ? (
             <div data-testid="dp-section-safety-telematics">
               <DriverTelematicsPanel part="safety" driverId={id} operatingCompanyId={companyId} />
             </div>
@@ -858,6 +871,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             />
           </div>
           <div data-testid="dp-section-fuel-reverse">
+            {companyId ? <DriverProfileFuelVerdictsSection companyId={companyId} driverId={id} /> : null}
             <FuelTransactionsReverseSection
               operatingCompanyId={companyId}
               filter={{ driver_id: id }}

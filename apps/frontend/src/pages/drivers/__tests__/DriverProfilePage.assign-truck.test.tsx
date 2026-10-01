@@ -13,6 +13,20 @@ vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
 }));
 
+vi.mock("../../../components/driver-profile/DriverAssignmentHistorySection", () => ({
+  DriverAssignmentHistorySection: () => null,
+}));
+vi.mock("../../../components/driver-profile/DriverSamsaraDuplicateBanner", () => ({
+  DriverSamsaraDuplicateBanner: () => null,
+}));
+vi.mock("../../../components/shared/StopsMilesSection", () => ({ StopsMilesSection: () => null }));
+vi.mock("../../../components/drivers/DriverIntegritySection", () => ({ DriverIntegritySection: () => null }));
+vi.mock("../../../components/safety/ComplaintsReverseSection", () => ({ ComplaintsReverseSection: () => null }));
+vi.mock("../../../api/driver-integrity", () => ({
+  getDriverIntegrityProfile: vi.fn().mockResolvedValue(null),
+  countedComplaints: () => 0,
+}));
+
 const profileFixture = {
   driver: { id: "d-test-1", first_name: "Jane", last_name: "Driver", status: "Active" },
   license: {},

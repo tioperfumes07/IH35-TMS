@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["drivers"],"cols":["picker_law","connectivity"],"leafRe":"entity.picker.driver","task":"EP-DRIVER-KIND-SWEEP"} */
 /**
  * EP-DRIVER-KIND-SWEEP — ONE generalized guard for silent listDrivers driver pickers.
  * Delivery §9.0 item 17: every driver field picker must use EntityPicker kind="driver"
@@ -19,6 +20,8 @@ const ALLOWLIST = new Set([
   // Drivers module roster pages — display/table, not a driver FK field picker.
   "apps/frontend/src/pages/drivers/DriversListPage.tsx",
   "apps/frontend/src/pages/Drivers.tsx",
+  // C-17 Profiles master pane — ul roster click-to-select, not a Combobox FK picker.
+  "apps/frontend/src/pages/drivers/DriverListSidebar.tsx",
   // Safety dashboard cards — read-only roster aggregation, not a picker.
   "apps/frontend/src/components/safety/DriverSafetyCards.tsx",
   // HOS page bulk-loads drivers for dashboard rows — not a combobox picker.

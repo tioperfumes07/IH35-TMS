@@ -3,18 +3,17 @@
  * Per row: driver, period, SET-01 loads auto-pulled, deductions, advances.
  * Save all → driver_finance.* via settlement creator only.
  */
-import { useMemo, useRef, useState, type ClipboardEvent } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useRef, useState, type ClipboardEvent } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
-import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
+import { EntityPicker } from "../../components/EntityPicker";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
-import { listDrivers } from "../../api/mdata";
 import {
   listBatchSettlementEligibleLoads,
   postBatchSettlements,
@@ -41,7 +40,6 @@ type BatchRow = {
   error: string | null;
   settlement_id: string | null;
   source_document_ref: string | null;
-  display_id: string | null;
 };
 
 function todayChicago(): string {
@@ -80,7 +78,6 @@ function newBatchRow(today: string): BatchRow {
     error: null,
     settlement_id: null,
     source_document_ref: null,
-    display_id: null,
   };
 }
 
@@ -90,23 +87,6 @@ export function BatchSettlementsPage() {
   const today = todayChicago();
   const [rows, setRows] = useState<BatchRow[]>(() => [newBatchRow(today), newBatchRow(today)]);
   const pasteRef = useRef<HTMLTextAreaElement | null>(null);
-
-  const driversQ = useQuery({
-    queryKey: ["batch-settlements", "drivers", companyId],
-    queryFn: () => listDrivers({ operating_company_id: companyId, limit: 500 }),
-    enabled: !!companyId,
-  });
-
-  const driverOptions = useMemo<ReferenceOption[]>(() => {
-    const list = driversQ.data?.drivers ?? [];
-    return list.map((d) => ({
-      value: d.id,
-      label:
-        (d as { full_name?: string }).full_name ||
-        [d.first_name, d.last_name].filter(Boolean).join(" ") ||
-        d.id.slice(0, 8),
-    }));
-  }, [driversQ.data]);
 
   const refreshLoads = async (idx: number, row: BatchRow) => {
     if (!companyId || !row.driver_id || !row.period_start || !row.period_end) return;
@@ -180,7 +160,6 @@ export function BatchSettlementsPage() {
               error: null,
               settlement_id: result.settlement.settlement_id,
               source_document_ref: result.settlement.source_document_ref,
-              display_id: result.settlement.display_id,
             };
           } else {
             next[target] = {
@@ -249,14 +228,8 @@ export function BatchSettlementsPage() {
           </Link>
         </div>
 
-        {(driversQ.isError || saveMut.isError) && (
-          <ListErrorBanner
-            message={
-              driversQ.isError
-                ? userFacingApiError(driversQ.error, "Drivers failed to load")
-                : userFacingApiError(saveMut.error, "Batch save failed")
-            }
-          />
+        {saveMut.isError && (
+          <ListErrorBanner message={userFacingApiError(saveMut.error, "Batch save failed")} />
         )}
 
         <section className="space-y-3 rounded-sm border border-[#E5E7EB] bg-white p-3" data-section="batch-settlements-grid">
@@ -283,7 +256,7 @@ export function BatchSettlementsPage() {
                 setRows((prev) => {
                   const last = prev[prev.length - 1];
                   if (!last) return [newBatchRow(today)];
-                  return [...prev, { ...newBatchRow(today), ...last, key: crypto.randomUUID(), status: "draft", error: null, settlement_id: null, source_document_ref: null, display_id: null, loads: last.loads }];
+                  return [...prev, { ...newBatchRow(today), ...last, key: crypto.randomUUID(), status: "draft", error: null, settlement_id: null, source_document_ref: null, loads: last.loads }];
                 })
               }
             >
@@ -318,20 +291,26 @@ export function BatchSettlementsPage() {
                 {rows.map((row, idx) => (
                   <tr key={row.key} className="border-b border-[#E5E7EB] align-top" data-testid={`batch-settlement-row-${idx}`}>
                     <td className="px-2 py-1.5">
-                      <ReferenceSelect
+                      <EntityPicker
+                        kind="driver"
+                        operatingCompanyId={companyId}
                         value={row.driver_id || null}
                         onChange={(v) => {
                           const next = { ...row, driver_id: v ?? "" };
                           setRows((prev) => prev.map((r, i) => (i === idx ? next : r)));
                           void refreshLoads(idx, next);
                         }}
-                        options={driverOptions}
+                        allowCreate={false}
                         placeholder="Driver"
-                        disabled={row.status === "saved"}
+                        disabled={row.status === "saved" || !companyId}
+                        driverRoster="active_or_probation"
+                        size="sm"
+                        ariaLabel="Driver"
+                        dataTestId={`batch-settlement-driver-${idx}`}
                       />
                       <button
                         type="button"
-                        className="mt-1 text-[10px] text-[#6B7280] underline"
+                        className="mt-1 text-[11px] text-[#6B7280] underline"
                         onClick={() => fillDown("driver_id", idx)}
                       >
                         Fill down
@@ -398,7 +377,7 @@ export function BatchSettlementsPage() {
                       )}
                       <button
                         type="button"
-                        className="mt-1 text-[10px] text-[#6B7280] underline"
+                        className="mt-1 text-[11px] text-[#6B7280] underline"
                         onClick={() => void refreshLoads(idx, row)}
                         disabled={!row.driver_id || row.status === "saved"}
                       >
@@ -443,7 +422,7 @@ export function BatchSettlementsPage() {
                         <EntityLink
                           kind="settlement"
                           id={row.settlement_id}
-                          label={row.source_document_ref || row.display_id || "Settlement"}
+                          label={row.source_document_ref || "Settlement"}
                         />
                       ) : row.status === "error" ? (
                         <span className="text-[#B91C1C]">{row.error}</span>

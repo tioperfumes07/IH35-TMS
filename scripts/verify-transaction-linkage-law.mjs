@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting","fuel","maintenance"],"cols":["connectivity","unit","driver","load"],"leafRe":"transaction.linkage.law","task":"TRANSACTION-LINKAGE-LAW-A30"} */
+export const REQUIRES_LIVE_DB = "TABLE_REGISTRY drift + USMCA tier density need Neon; static half is --static-only";
 /**
  * verify-transaction-linkage-law.mjs
  *
@@ -116,6 +118,9 @@ export const TABLE_REGISTRY = {
   "accounting.credit_memo_applications": { status: "OUT_OF_SCOPE", reason: "AR" },
   "accounting.credit_memos": { status: "OUT_OF_SCOPE", reason: "AR" },
   "accounting.customer_classifications": { status: "NOT_TRANSACTIONAL", reason: "catalog" },
+  // B-2 Make Deposit (202615171200) — UF receipts → bank JE; not a truck/trip expense origin.
+  "accounting.deposit_lines": { status: "OUT_OF_SCOPE", reason: "Make Deposit line (customer payment / factoring advance / cash-back); money moves via deposit JE" },
+  "accounting.deposits": { status: "OUT_OF_SCOPE", reason: "Make Deposit header (bank deposit of undeposited funds); posts bank_deposit JE, not a truck transaction" },
   "accounting.depreciation_autopost_runs": { status: "NOT_TRANSACTIONAL", reason: "batch run log" },
   "accounting.depreciation_schedule_rows": { status: "NEEDS_JOIN_PATH", tier: TIER.TIER2, reason: "per-asset depreciation, join through the fixed asset" },
   "accounting.escrow_accounts": { status: "OUT_OF_SCOPE", reason: "driver financial instrument, not a truck/trip expense" },

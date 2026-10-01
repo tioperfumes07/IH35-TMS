@@ -261,7 +261,8 @@ export function auditRegisteredSurfaces() {
  * confusingly-named snake data field `settlement_display_id` (source_document_ref value) are not
  * falsely flagged. The `tour` arm catches the REG-032 leak class (headerTour.display_id rendered as
  * the load's settlement number in the Load Detail drawer). Company-settlement display_id (a distinct
- * accounting document, not the tour/driver settlement) is intentionally out of scope here. */
+ * accounting document, not the tour/driver settlement) is intentionally out of scope here.
+ * 2026-10-01: BatchSettlementsPage closed — no store/fallback to retired display_id (B-3 tip). */
 function findDisplayIdAsSettlementNumber(src) {
   const hits = [];
   const re = /\{[^{}]*(?:settlement|tour)[a-zA-Z_]*\.display_id[^{}]*\}/gi;

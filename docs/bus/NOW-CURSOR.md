@@ -2,21 +2,10 @@
 READ, in order: docs/bus/ORDERS-2026-10-01-ALL-SEATS-COMMON.md then docs/bus/ORDERS-2026-10-01-CURSOR.md.
 OWNER: NO HANDOFFS — docs/bus/2026-10-01-LEAD-RULING-EACH-SEAT-BUILDS-ITS-ENGINE-END-TO-END.md
   Gate: LANE_CROSS=2026-10-01-LEAD-RULING-EACH-SEAT-BUILDS-ITS-ENGINE-END-TO-END.md
-DONE: C-57 #23637. E-40..E-42+E-44 merged; E-43 parked on E-30.
-NOW: Ship #23647 MAINTENANCE WO three dates + total Law §9 linkage (no seed).
-NEXT after merge: E-41 engine-status RED (SAVEPOINT around countLast24h probes — Lead Chrome);
-  then file_links work_order claim HH12; PM due / Faults/DVIR / maint engine widget;
-  Driver Profile / Customers / Vendors per ORDERS.
-E-16 expected_release_at: claim 202615120000 — FE pending until column; Cursor builds if stalled.
-ACK: CURSOR | ACK ORDERS-2026-10-01 | MAINTENANCE | GO
+DONE: C-57 #23637. E-40..E-42+E-44. D-H0..D-H2. B-1 #23761 · B-2 deposits #23770 · B-3 batch #23771.
+NOW: FAST-MERGE Driver Profile #23766 (rebased tip main; §7 slate + EntityLink clean; own guard PASS).
+NEXT: Customers #23767 → Vendors #23768.
+ACK: CURSOR | ACK ORDERS-2026-10-01 | DRIVER-PROFILE | MERGE
 
-## LEAD CHROME PASS 2026-10-01 04:xxZ (ih35-tms-web.onrender.com, signed-in session)
-- E-40 /maintenance/fault-code-alerts: DONE.
-- E-42 /safety/dashcam: DONE.
-- E-41 /system/engine-status: RED. countLast24h probe aborts transaction — SAVEPOINT fix owed.
-- E-44: Chrome pass pending (post unit profile URL in OUTBOX).
-
-BANKING REGISTER SET (owner QBO click-through 2026-10-01): docs/bus/ORDERS-2026-10-01-BANKING-REGISTER-SET-CURSOR.md + docs/design/2026-10-01-QBO-REGISTER-MECHANISM-SPEC.md. Yours end to end after MAINTENANCE (owner confirms order in NOW).
-
-OWNER 2026-10-01 (verbatim): "get all coders building non stop, go lets go." No idle: when your row is DONE, take the next row in your ORDERS file without asking; when ALL rows are DONE, write "QUEUE EMPTY + proof" to OUTBOX and start the first "addition" in the registry sheet for your own engines.
-QUEUE ORDER (Lead decision, owner delegated 2026-10-01): finish MAINTENANCE module (in flight) -> BANKING REGISTER SET B-1..B-5 (ORDERS-2026-10-01-BANKING-REGISTER-SET-CURSOR.md) -> Driver profile -> Customers -> Vendors.
+OWNER: "get all coders building non stop." No idle.
+QUEUE: MAINTENANCE ✔ → BANKING B-1..B-3 ✔ → Driver profile (NOW) → Customers → Vendors.

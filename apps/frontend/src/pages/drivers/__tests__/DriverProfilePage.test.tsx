@@ -73,6 +73,39 @@ vi.mock("../../../components/driver-profile/W8BenSection", () => ({
   W8BenSection: () => null,
 }));
 
+vi.mock("../../../components/driver-profile/DriverAssignmentHistorySection", () => ({
+  DriverAssignmentHistorySection: () => null,
+}));
+
+vi.mock("../../../components/driver-profile/DriverSamsaraDuplicateBanner", () => ({
+  DriverSamsaraDuplicateBanner: () => null,
+}));
+
+vi.mock("../../../components/driver-profile/DriverProfileFuelVerdictsSection", () => ({
+  DriverProfileFuelVerdictsSection: () => null,
+}));
+
+vi.mock("../../../components/driver-profile/DriverProfileSafetyAttributedSection", () => ({
+  DriverProfileSafetyAttributedSection: () => null,
+}));
+
+vi.mock("../../../components/safety/ComplaintsReverseSection", () => ({
+  ComplaintsReverseSection: () => null,
+}));
+
+vi.mock("../../../components/shared/StopsMilesSection", () => ({
+  StopsMilesSection: () => null,
+}));
+
+vi.mock("../../../api/driver-integrity", () => ({
+  getDriverIntegrityProfile: vi.fn().mockResolvedValue(null),
+  countedComplaints: () => 0,
+}));
+
+vi.mock("../../../components/drivers/DriverIntegritySection", () => ({
+  DriverIntegritySection: () => null,
+}));
+
 const driverFixture = {
   id: "d-test-1",
   first_name: "Jane",
