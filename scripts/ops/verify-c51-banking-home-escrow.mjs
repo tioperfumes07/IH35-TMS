@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 /**
  * C-51 / ROUND 304 C-64 — Banking Home + Driver Escrow.
- * Asserts: Home tab label, Accounts tab, 9-tab subnav (Statement/Plaid + New only),
- * C-65 side-dock attention, Driver Escrow liability board.
+ * Asserts: Home + Accounts tabs (9 total), C-65 side-dock, Escrow board, Home board pieces.
  * Self-test: node scripts/ops/verify-c51-banking-home-escrow.mjs --selftest
  */
 import fs from "node:fs";
@@ -23,11 +22,12 @@ export function check(s) {
   if (!/id:\s*"bank_accounts",\s*label:\s*"Accounts"/.test(s.nav)) {
     f.push('BANKING_MODULE_TABS must include bank_accounts "Accounts" (C-64)');
   }
-  if (!/BANKING_SUBNAV_TAB_IDS/.test(s.nav)) {
-    f.push("BANKING_SUBNAV_TAB_IDS required — Statement/Plaid stay off the visible subnav");
+  const tabCount = (s.nav.match(/^\s*\{ id:/gm) || []).length;
+  if (tabCount !== 9) f.push(`BANKING_MODULE_TABS must be exactly 9 tabs (got ${tabCount})`);
+  if (/id:\s*"statement_import"/.test(s.nav) || /id:\s*"plaid_connections"/.test(s.nav)) {
+    f.push("Statement Import / Plaid must not be module tabs");
   }
   if (!/BankingHomeAttentionStrip/.test(s.home)) f.push("BankingHome must mount BankingHomeAttentionStrip");
-  if (!/BANKING_SUBNAV_TAB_IDS/.test(s.home)) f.push("BankingHome must filter subnav via BANKING_SUBNAV_TAB_IDS");
   if (!/data-c51-home-attention/.test(s.strip)) f.push("attention strip missing data-c51-home-attention");
   if (!/data-c65-alert-dock/.test(s.strip)) f.push("attention strip must be C-65 side-dock (data-c65-alert-dock)");
   if (!/fixed/.test(s.strip)) f.push("attention strip must be position fixed (no layout shift)");

@@ -354,11 +354,15 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
           {releaseDriverId ? (
             <p className="mt-1 text-xs text-[#6B7280]">
               Releasing for{" "}
-              {entityLabel(
-                enrichedRows.find((r) => r.driver_id === releaseDriverId)?.driver_name,
-                releaseDriverId,
-                "Driver",
-              )}
+              <EntityLink
+                kind="driver"
+                id={releaseDriverId}
+                label={entityLabel(
+                  enrichedRows.find((r) => r.driver_id === releaseDriverId)?.driver_name,
+                  releaseDriverId,
+                  "Driver",
+                )}
+              />
             </p>
           ) : (
             <p className="mt-1 text-xs text-[#6B7280]">Company-wide defaults. Click Release on a row to scope.</p>

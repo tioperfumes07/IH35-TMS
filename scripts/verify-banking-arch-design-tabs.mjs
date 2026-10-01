@@ -16,13 +16,12 @@ const PATHS = "apps/frontend/src/router/route-manifest.ts";
 // /banking/factoring now redirects rather than 404s (see routes/manifest.tsx).
 const REQUIRED_LIVE_TAB_IDS = [
   "accounts",
+  "bank_accounts",
   "transactions",
   "reconciliation",
   "driver_escrow",
   "relay_card",
   "reports",
-  "statement_import",
-  "plaid_connections",
   "settings",
 ];
 

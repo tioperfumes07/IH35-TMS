@@ -42,7 +42,7 @@ import { StatementUpload } from "../../components/banking/StatementUpload";
 import { BANKING_TAB_PATH, bankingTabFromPath } from "../../router/route-manifest";
 import {
   BANKING_MODULE_TABS,
-  BANKING_SUBNAV_TAB_IDS,
+  type BankingLegacyPanelId,
   type BankingModuleTabId,
 } from "./BANKING_NAV_CONFIG";
 import { formatUsd } from "../../lib/money";
@@ -57,7 +57,7 @@ import { BankingReconHomeCard } from "./components/BankingReconHomeCard";
 import { FactoringSummaryCard } from "./components/FactoringSummaryCard";
 
 
-type BankingTabId = BankingModuleTabId;
+type BankingTabId = BankingModuleTabId | BankingLegacyPanelId;
 
 type Props = {
   initialTab?: BankingTabId;
@@ -444,9 +444,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         actions={headerActions}
       />
       <NavyPageSubNav
-        items={BANKING_MODULE_TABS.filter((tab) =>
-          (BANKING_SUBNAV_TAB_IDS as readonly string[]).includes(tab.id),
-        ).map((tab) => ({
+        items={BANKING_MODULE_TABS.map((tab) => ({
           label: tab.label,
           to: BANKING_TAB_PATH[tab.id],
         }))}

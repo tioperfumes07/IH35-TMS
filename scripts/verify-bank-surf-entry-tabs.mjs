@@ -33,8 +33,12 @@ const REQUIRED_PATHS = [
 const REQUIRED_TAB_IDS = [
   "driver_escrow",
   "relay_card",
-  "plaid_connections",
+];
+
+// C-64 — Statement Import + Plaid are + New / deep-link panels, not BANKING_MODULE_TABS.
+const REQUIRED_PANEL_REFS = [
   "statement_import",
+  "plaid_connections",
 ];
 
 export function run(root = ROOT) {
@@ -55,11 +59,17 @@ export function run(root = ROOT) {
     if (!nav.includes(`id: "${id}"`)) failures.push(`BANKING_MODULE_TABS missing ${id}`);
   }
 
+  for (const id of REQUIRED_PANEL_REFS) {
+    if (!home.includes(`"${id}"`) && !home.includes(`'${id}'`)) {
+      failures.push(`BankingHome must reference panel id ${id} (+ New / deep link)`);
+    }
+  }
+
   for (const p of REQUIRED_PATHS) {
     if (!routes.includes(`"${p}"`)) failures.push(`route-manifest missing "${p}"`);
   }
 
-  // Home must still branch on these tabs (active path, not orphan routes).
+  // Home must still branch on escrow/relay tabs.
   for (const id of REQUIRED_TAB_IDS) {
     if (!home.includes(`"${id}"`) && !home.includes(`'${id}'`)) {
       failures.push(`BankingHome must reference tab id ${id}`);
@@ -78,7 +88,7 @@ if (process.argv.includes("--selftest")) {
   const pathsBody = REQUIRED_PATHS.map((p) => `path="${p}"`).join("\n");
   const idsBody = REQUIRED_TAB_IDS.map((id) => `id: "${id}"`).join("\n");
   const quoted = REQUIRED_PATHS.map((p) => `"${p}"`).join("\n");
-  const homeIds = REQUIRED_TAB_IDS.map((id) => `"${id}"`).join("\n");
+  const homeIds = [...REQUIRED_TAB_IDS, ...REQUIRED_PANEL_REFS].map((id) => `"${id}"`).join("\n");
   mk(FILES.manifest, pathsBody + "\n");
   mk(FILES.nav, idsBody + "\n");
   mk(FILES.routes, quoted + "\n");
