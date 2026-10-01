@@ -22,6 +22,7 @@ import {
   markSubscriptionSent,
   type ScheduledSubscription,
 } from "./subscription.service.js";
+import { SYSTEM_ACTOR_USER_ID } from "../../lib/system-actor.js";
 
 // B7 (Devin sweep, 2026-09-28) -- investigated before changing anything, per the owner's own
 // "report what you find before you fix" order. Verdict: NOT exploitable today.
@@ -41,7 +42,8 @@ import {
 //     it would not harden this path, it would break every scheduled report. This is deliberately
 //     the "dedicated service role" branch, not the "same membership assertion" branch: it trusts
 //     the subscriptions table because that table's own write path is what is actually gated.
-const SYSTEM_ACTOR_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-0000-0000-000000000001";
+// Canonical system actor (lib/system-actor.ts) — the old default id does not exist in identity.users.
+const SYSTEM_ACTOR_ID = SYSTEM_ACTOR_USER_ID;
 
 const SLUG_TO_LEGACY: Partial<Record<string, ScheduledReportId>> = {
   "weekly-cash-position": "cash-position-ar",

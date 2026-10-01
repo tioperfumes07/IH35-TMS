@@ -6,10 +6,12 @@
 //
 // --selftest (static): the CHECK constraint migration exists with the exact predicate and a
 //   data-safe conditional VALIDATE; createExpenseFromFuelTransaction writes posting_status from the
-//   adopted journal entry. live: zero violators in every company, and once the constraint is on this
+//   adopted journal entry; no backend runtime file defaults a job's actor to the NON-EXISTENT
+//   00000000-0000-0000-0000-000000000001 (the retry-held-expense-postings cron that posts held/draft
+//   expenses failed every run on it since 2026-09-29). live: zero violators in every company, and once the constraint is on this
 //   database it must be VALIDATED (NOT VALID means old rows are unchecked).
 import pg from "pg";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 
 const LABEL = "verify-expense-with-je-is-never-unposted";
 const ROOT = new URL("../../", import.meta.url);
@@ -22,11 +24,21 @@ function selftest() {
   if (!/VALIDATE CONSTRAINT expenses_journal_entry_implies_not_unposted/.test(mig) || !/RAISE NOTICE/.test(mig)) problems.push("VALIDATE must be conditional (NOTICE, never an aborting RAISE on data)");
   const w = read("apps/backend/src/fuel/fuel-expense-document.service.ts");
   if (!/CASE WHEN \$10::uuid IS NULL THEN 'unposted' ELSE 'posted' END/.test(w)) problems.push("createExpenseFromFuelTransaction must write posting_status from the adopted journal entry");
+  const BAD_ACTOR = "00000000-0000-0000-0000-000000000001";
+  const walk = (dir) => readdirSync(dir).flatMap((n) => {
+    const p = `${dir}/${n}`;
+    return statSync(p).isDirectory() ? (n === "__tests__" || n === "node_modules" ? [] : walk(p)) : [p];
+  });
+  const srcRoot = new URL("apps/backend/src", ROOT).pathname;
+  for (const p of walk(srcRoot)) {
+    if (!/\.ts$/.test(p) || /\.test\.ts$/.test(p) || /dev-fixtures\.ts$/.test(p)) continue;
+    if (readFileSync(p, "utf8").includes(BAD_ACTOR)) problems.push(`${p.slice(srcRoot.length + 1)} uses the non-existent system actor ${BAD_ACTOR} — import SYSTEM_ACTOR_USER_ID from lib/system-actor.ts`);
+  }
   if (problems.length) {
     console.error(`${LABEL} --selftest FAIL — ${problems.join("; ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS (3/3)`);
+  console.log(`${LABEL} --selftest PASS (4/4)`);
 }
 
 selftest();
