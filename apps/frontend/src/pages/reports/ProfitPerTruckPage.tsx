@@ -8,6 +8,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockTPendingBanner } from "./ReportBlockTPendingBanner";
+import { ThreeMileCpmPanel } from "../../components/reports/ThreeMileCpmPanel";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { useStagedListFilters } from "../../components/table";
@@ -317,6 +318,7 @@ export function ProfitPerTruckPage() {
           </div>
         }
       />
+      {companyId ? <ThreeMileCpmPanel operatingCompanyId={companyId} /> : null}
 
       {!companyId ? <p className="text-xs text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}

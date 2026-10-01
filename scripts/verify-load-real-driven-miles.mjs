@@ -10,7 +10,10 @@
  *   4. a missing leg can become 0, or the load total can be a partial sum of its legs;
  *   5. the engine stops using the shared odometer-anchor rule (telematics/odometer-anchor.ts) -- one definition;
  *   6. migration 202615160000 loses its "NULL needs a reason, never negative" CHECK, or the cron/route is unwired;
- *   7. the load screen stops naming each mileage basis.
+ *   7. the load screen stops naming each mileage basis;
+ *   8. the three-mile CPM report (reports/three-mile-cpm.service.ts) computes its own cost instead of the
+ *      canonical per-load cost rollup, divides one basis's miles into the cost of loads without that basis,
+ *      loses a basis label, counts voided or non-diesel gallons in MPG, or is unwired from the route/screen.
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -23,6 +26,9 @@ const MIGRATION = "db/migrations/202615160000_load_real_driven_miles.sql";
 const INDEX = "apps/backend/src/index.ts";
 const SCREEN = "apps/frontend/src/components/dispatch/LoadRealDrivenMilesSection.tsx";
 const DRAWER = "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx";
+const REPORT = "apps/backend/src/reports/three-mile-cpm.service.ts";
+const REPORT_PANEL = "apps/frontend/src/components/reports/ThreeMileCpmPanel.tsx";
+const REPORT_PAGE = "apps/frontend/src/pages/reports/ProfitPerTruckPage.tsx";
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 const read = (rel) => readFileSync(resolve(ROOT, rel), "utf8");
 
@@ -64,6 +70,22 @@ export function checkWiring(migration, index, screen, drawer) {
   return p;
 }
 
+export function checkReport(src, index, panel, page) {
+  const p = [];
+  const code = strip(src);
+  if (!/\$\{loadCostRollupLateral\("l\.id", "l\.operating_company_id"\)\}/.test(code)) p.push(`${REPORT}: direct cost no longer comes from the canonical loadCostRollupLateral.`);
+  if (/FROM accounting\.(expenses|bill_lines|bills)\b|FROM driver_finance\.driver_bills/.test(code)) p.push(`${REPORT}: the report sums cost tables itself -- second cost engine.`);
+  const bf = code.match(/export function basisFigure\([\s\S]*?\n\}/);
+  if (!bf || !/const with_ = loads\.filter\(\(l\) => l\.miles\[basis\] != null/.test(bf[0]) || !/with_\.reduce\(\(s, l\) => s \+ l\.direct_cost_cents, 0\)/.test(bf[0])) p.push(`${REPORT}: a basis no longer divides only the cost of loads that have that basis.`);
+  if (!bf || !/basis_label: MILEAGE_BASES\[basis\]/.test(bf[0])) p.push(`${REPORT}: a CPM figure lost its basis label.`);
+  if (!/ft\.voided_at IS NULL AND ft\.fuel_type = 'diesel'/.test(code)) p.push(`${REPORT}: MPG gallons no longer exclude voided and non-diesel fuel.`);
+  if (!/computeLoadRealDrivenMiles\(client, operatingCompanyId,/.test(code)) p.push(`${REPORT}: real driven miles no longer come from the load real-driven-miles engine.`);
+  if (!/registerThreeMileCpmRoutes\(app\)/.test(index)) p.push(`${INDEX}: the three-mile CPM route is not registered.`);
+  for (const label of ["Real driven", "Practical (billed)", "Short (paid)"]) if (!panel.includes(label)) p.push(`${REPORT_PANEL}: the "${label}" basis label is gone.`);
+  if (!/<ThreeMileCpmPanel /.test(page)) p.push(`${REPORT_PAGE}: the three-mile panel is not mounted.`);
+  return p;
+}
+
 if (process.argv.includes("--selftest")) {
   let ok = true;
   const expect = (name, problems, wantFail) => {
@@ -77,9 +99,18 @@ if (process.argv.includes("--selftest")) {
   expect("partial sum", checkEngine(e.replace("legs.find((l) => l.miles == null)", "undefined")), true);
   expect("practical miles in the engine", checkEngine(e.replace("s.actual_arrival_source AS arrival_source", "s.actual_arrival_source AS arrival_source, l.miles_practical")), true);
   expect("cron unwired", checkWiring(w[0], w[1].replace("initializeLoadRealDrivenMilesCron(app)", "x(app)"), w[2], w[3]), true);
-  console.log(ok ? `${LABEL} --selftest PASS (7/7)` : `${LABEL} --selftest FAIL`);
+  const rp = [read(REPORT), read(INDEX), read(REPORT_PANEL), read(REPORT_PAGE)];
+  expect("real report", checkReport(...rp), false);
+  expect("report sums bills itself", checkReport(rp[0] + "\nconst x = `SELECT 1 FROM accounting.bill_lines`;", rp[1], rp[2], rp[3]), true);
+  expect("report mixes bases", checkReport(rp[0].replace("const with_ = loads.filter((l) => l.miles[basis] != null", "const with_ = loads.filter((l) => true || l.miles[basis] != null").replace("with_.reduce((s, l) => s + l.direct_cost_cents, 0)", "loads.reduce((s, l) => s + l.direct_cost_cents, 0)"), rp[1], rp[2], rp[3]), true);
+  expect("MPG counts voided fuel", checkReport(rp[0].replace("ft.voided_at IS NULL AND ft.fuel_type = 'diesel'", "ft.fuel_type = 'diesel'"), rp[1], rp[2], rp[3]), true);
+  console.log(ok ? `${LABEL} --selftest PASS (11/11)` : `${LABEL} --selftest FAIL`);
   process.exit(ok ? 0 : 1);
 }
-const problems = [...checkEngine(read(ENGINE)), ...checkWiring(read(MIGRATION), read(INDEX), read(SCREEN), read(DRAWER))];
+const problems = [
+  ...checkEngine(read(ENGINE)),
+  ...checkWiring(read(MIGRATION), read(INDEX), read(SCREEN), read(DRAWER)),
+  ...checkReport(read(REPORT), read(INDEX), read(REPORT_PANEL), read(REPORT_PAGE)),
+];
 if (problems.length) { console.error(`${LABEL} FAILED:\n  - ${problems.join("\n  - ")}`); process.exit(1); }
-console.log(`${LABEL}: OK -- load/leg real driven miles from geofence or device-recorded odometer only; NULL with reason, never 0 or partial; one anchor rule; stored, cron and screen wired.`);
+console.log(`${LABEL}: OK -- load/leg real driven miles from geofence or device-recorded odometer only; NULL with reason, never 0 or partial; one anchor rule; stored, cron and screen wired; three-mile CPM report on the canonical cost rollup, every basis named.`);

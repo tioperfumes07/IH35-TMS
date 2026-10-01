@@ -349,6 +349,7 @@ import { initializePmAutoEngineCron } from "./maintenance/pm-auto-engine.cron.js
 import { initializeOdometerSnapshotCron } from "./telematics/odometer-snapshot.cron.js";
 import { initializeLoadRealDrivenMilesCron } from "./telematics/load-real-driven-miles.cron.js";
 import { registerLoadRealDrivenMilesRoutes } from "./telematics/load-real-driven-miles.service.js";
+import { registerThreeMileCpmRoutes } from "./reports/three-mile-cpm.service.js";
 import { registerOdometerManualRoutes } from "./telematics/odometer-manual.routes.js";
 import { registerFaultCodeAlertsRoutes } from "./maintenance/fault-code-alerts.routes.js";
 import { registerDrivenMilesLegsRoutes } from "./telematics/driven-miles-legs.routes.js";
@@ -1309,6 +1310,7 @@ async function main() {
   await registerPmDueEngineRoutes(app);
   await registerPmCostPerMileRoutes(app);
   await registerLoadRealDrivenMilesRoutes(app);
+  await registerThreeMileCpmRoutes(app);
   await registerMaintWoApRoutes(app);
   await registerForm425CRoutes(app);
   // Form 425-C Exhibits A–F generator. Previously left unmounted (held as "financial-adjacent"),

@@ -31,7 +31,7 @@ type DbClient = {
 };
 
 export const MILEAGE_BASES = {
-  real_driven: "real driven -- telematics odometer (last minus first reading in the period)",
+  real_driven: "real driven -- telematics odometer readings only (never practical or short miles)",
   practical: "practical -- PC*MILER miles billed to the customer (mdata.loads.miles_practical)",
   short: "short -- PC*MILER miles paid to the driver (miles_shortest + miles_deadhead)",
 } as const;
