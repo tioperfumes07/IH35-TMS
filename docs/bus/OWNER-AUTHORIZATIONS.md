@@ -6889,3 +6889,18 @@ proof_query: cf78c2aa.reversed_by_je_id=d4301625; expense 101e4ac4 journal_entry
 derivation: docs/bus/ORDERS-2026-10-01-CURSOR.md Lead ruling 17:20Z + ORDERS-2026-10-01-ALL-SEATS-COMMON.md CURSOR #1.
 THIS AUTHORIZATION DOES NOT COVER: interest JE 2ef10657, any other JE, any amount other than the $5.00 SC reverse+repost, any QBO write-back.
 
+## AUTH-200
+issued_at: 2026-10-01T20:40:00Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80).
+  expense_attribution.expense_load_links — INSERT exactly 3 rows for expenses already load_id-bound
+  to load 13503 (2c2d9ae7-386d-4ede-9c8f-888bce2896d7) with zero link rows today:
+    1c08aa97-0bde-4a02-a01c-18f75d4d1a3d (13503-11, $37.10)
+    f267f1f1-12cc-48c5-8ef7-ce51f38b2b51 (13503-12, $30.71)
+    ef97d3af-a636-4edf-b82d-f188c98dd43f (13503-13, $37.24)
+  SET-BASED one INSERT…SELECT. No expense header rewrite. No JE. No amount change.
+action: OWNER_AUTH_ID=AUTH-200 APPLY=1 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-01-cursor-auth200-link-13503-expenses.ts
+  Dry-run first (default): OWNER_AUTH_ID=AUTH-200 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-01-cursor-auth200-link-13503-expenses.ts
+expires_at: 2026-10-02T20:40:00Z
+status: OPEN
+derivation: Lead REPLY 14:55 CT FACTORING-TAKEOVER B.9 + OUTBOX-CC-3 WRAP 13503 expense list.
+THIS AUTHORIZATION DOES NOT COVER: load 13515, any invoice void, any JE, any DELETE, any other expense.
