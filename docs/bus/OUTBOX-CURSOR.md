@@ -227,7 +227,6 @@ D-H2 Loads Report `/reports/loads` + GET /api/v1/reports/loads. NEXT: B-1 Bank R
 **2026-10-01T09:00Z · B-1 BANK REGISTER · branch `cursor/b1-bank-register-c89b`**
 B-1 · what changed: mount QBO JE register at `/banking/register` + `/banking/register/:accountId` (AccountRegisterPage / journal_entry_postings); Banking subnav adds Register beside Transactions (feed kept). Guard: verify-bank-register-route.
 
-<<<<<<< HEAD
 **2026-10-01T09:50Z · B-5 RECLASSIFY / BATCH · branch `cursor/b5-reclassify-batch-68be` · PR #23765**
 B-5 · what changed: Topbar + Create → Other adds Batch transactions + Reclassify transactions; Reclassify modal adds Change location (honest-disabled) + Change vendor/customer (vendor|customer kind + ReferenceSelect); BatchExpenses type strip Expenses/Checks · Bills link · Deposits/Settlements honesty. Ops: `scripts/ops/verify-b5-reclassify-batch.mjs`. Engines unchanged (`applyReclassify` / `createExpense`). · LIVE PROOF: `node scripts/ops/verify-b5-reclassify-batch.mjs --selftest` PASS; frontend `tsc -b` exit 0. · LEFT: Lead Chrome; merge.
 
