@@ -5,10 +5,10 @@
  * PM EVERY 25K MILES ... I BELIEVE TO SAVE SPACE, WE WOULD CALL SAMSARA ONLY 1 TIME A DAY FOR
  * THE MILEAGE ... ILL INPUT MILEAGE MANUALLY."
  *
- * Reads telematics.odometer_readings (the ledger the daily snapshot cron writes, J-1/J-2 from Round
- * 297.1) and, since ROUND 305 A-46, the odometer READ at each unit's most recent stop from
- * telematics.vehicle_locations via the Lead's stop-odometer engine -- already-ingested fixes, so this
- * file still makes no Samsara API call of any kind, directly or transitively. Manual odometer entries (source='manual') are a FIRST-CLASS input here, exactly
+ * E-15 (ORDERS 2026-10-01 row 2): current odometer comes from the ONE shared loader
+ * (pm-current-odometer.ts: telematics.unit_stop_events -> telematics.odometer_readings -> ABSENT), the
+ * same source as the E-14 cron; the mileage RATE reads telematics.odometer_readings. Already-ingested
+ * data only -- this file makes no Samsara API call of any kind, directly or transitively. Manual odometer entries (source='manual') are a FIRST-CLASS input here, exactly
  * as real as a 'samsara' row -- both land in the same ledger and this engine reads both alike.
  *
  * NEVER the owner's 12,000-mi/month rule of thumb: every projected due date comes from THAT
@@ -20,12 +20,8 @@ import { projectPmDueDateFromRate } from "../maint/pm-due.shared.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
-import {
-  chooseCurrentOdometer,
-  latestStopCapturedOdometer,
-  type OdometerReading,
-  type OdometerSource,
-} from "./pm-current-odometer.js";
+import { absentOdometerReason, loadPmOdometers, type PmOdometerSource } from "./pm-current-odometer.js";
+import { pmScheduleBaselineAbsentReason } from "./pm-auto-engine.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -41,12 +37,15 @@ export type PmDueEngineRow = {
   unit_id: string;
   unit_number: string;
   label: string;
-  interval_miles: number;
+  interval_kind: string;
+  /** Miles schedules only; null for a days interval. */
+  interval_miles: number | null;
+  interval_days: number | null;
   last_service_odometer: number | null;
   current_odometer: number | null;
   current_odometer_read_at: string | null;
-  current_odometer_source: OdometerSource | null;
-  /** Why current_odometer is null, or which newer reading was held for going backwards. */
+  current_odometer_source: PmOdometerSource | null;
+  /** Why current_odometer is null (ABSENT), else null. */
   current_odometer_note: string | null;
   miles_since_service: number | null;
   miles_to_due: number | null;
@@ -120,69 +119,6 @@ export async function computeUnitMileageRate(
   return { miles_per_day: milesDelta / daysDelta, reason: null };
 }
 
-type CurrentOdometer = {
-  odometer_miles: number | null;
-  read_at: string | null;
-  source: OdometerSource | null;
-  note: string | null;
-};
-
-/**
- * The NEWEST record about this unit decides. Candidates are the ledger's latest real reading and
- * the odometer READ at the unit's most recent stop (ROUND 305 A-46, the Lead's stop-odometer
- * engine) -- the ledger alone is one row per unit per day. The newer real read wins unless it went
- * backwards against the older one (held, named in `note`). If an honest "suggested" gap row is newer
- * than every real read, that IS the current state -- unknown right now -- never an older number.
- */
-async function currentOdometer(
-  client: DbClient,
-  operatingCompanyId: string,
-  unitId: string
-): Promise<CurrentOdometer> {
-  const latest = await client.query<{ odometer_miles: string | null; read_at: Date; confidence: string }>(
-    `
-      SELECT odometer_miles::text, read_at, confidence
-      FROM telematics.odometer_readings
-      WHERE operating_company_id = $1::uuid
-        AND unit_id = $2::uuid
-      ORDER BY read_at DESC
-      LIMIT 1
-    `,
-    [operatingCompanyId, unitId]
-  );
-  const lastReal = await client.query<{ odometer_miles: string; read_at: Date }>(
-    `
-      SELECT odometer_miles::text, read_at
-      FROM telematics.odometer_readings
-      WHERE operating_company_id = $1::uuid
-        AND unit_id = $2::uuid
-        AND confidence IN ('measured', 'entered')
-        AND odometer_miles IS NOT NULL
-      ORDER BY read_at DESC
-      LIMIT 1
-    `,
-    [operatingCompanyId, unitId]
-  );
-  const real = lastReal.rows[0];
-  const ledger: OdometerReading | null = real
-    ? { odometer_miles: Number(real.odometer_miles), read_at: new Date(real.read_at).toISOString(), source: "odometer_readings" }
-    : null;
-  const stop = await latestStopCapturedOdometer(client, unitId);
-  const chosen = chooseCurrentOdometer([ledger, stop]);
-
-  const row = latest.rows[0];
-  const rowIsGap = row != null && (row.confidence === "suggested" || row.odometer_miles == null);
-  if (rowIsGap && (chosen.read_at == null || new Date(row.read_at).getTime() > new Date(chosen.read_at).getTime())) {
-    return {
-      odometer_miles: null,
-      read_at: new Date(row.read_at).toISOString(),
-      source: null,
-      note: ["newest record is a recorded odometer gap", chosen.held_note].filter(Boolean).join("; "),
-    };
-  }
-  return { odometer_miles: chosen.odometer_miles, read_at: chosen.read_at, source: chosen.source, note: chosen.held_note };
-}
-
 export async function computePmDueEngineForCompany(
   client: DbClient,
   operatingCompanyId: string
@@ -192,8 +128,10 @@ export async function computePmDueEngineForCompany(
     unit_id: string;
     unit_number: string;
     label: string;
+    interval_kind: "miles" | "hours" | "days";
     interval_value: number;
     last_service_odometer: number | null;
+    next_due_odometer: number | null;
   }>(
     `
       SELECT
@@ -201,8 +139,10 @@ export async function computePmDueEngineForCompany(
         s.unit_id::text,
         u.unit_number,
         s.label,
+        s.interval_kind::text AS interval_kind,
         s.interval_value,
-        s.last_service_odometer
+        s.last_service_odometer,
+        s.next_due_odometer
       FROM maintenance.pm_schedules s
       JOIN mdata.units u
         ON u.id = s.unit_id
@@ -210,7 +150,6 @@ export async function computePmDueEngineForCompany(
        AND u.deactivated_at IS NULL
       WHERE s.operating_company_id = $1::uuid
         AND s.is_active = true
-        AND s.interval_kind = 'miles'
         -- ROUND 303 T-37: a sample/test unit's schedule is never a real PM due date, no exceptions.
         AND COALESCE(u.is_sample_data, false) = false
       ORDER BY u.unit_number, s.label
@@ -218,44 +157,62 @@ export async function computePmDueEngineForCompany(
     [operatingCompanyId]
   );
 
+  // E-15 (ORDERS 2026-10-01 row 2): the SAME odometer source as E-14 -- one loader, never a second.
+  const unitIds = [...new Set(schedules.rows.map((r) => r.unit_id))];
+  const { byUnit, stopEventsLive } = await loadPmOdometers(client, operatingCompanyId, unitIds);
+
   const out: PmDueEngineRow[] = [];
   const rateCache = new Map<string, UnitMileageRate>();
-  const odoCache = new Map<string, CurrentOdometer>();
 
   for (const row of schedules.rows) {
-    if (!rateCache.has(row.unit_id)) {
-      rateCache.set(row.unit_id, await computeUnitMileageRate(client, operatingCompanyId, row.unit_id));
-    }
-    if (!odoCache.has(row.unit_id)) {
-      odoCache.set(row.unit_id, await currentOdometer(client, operatingCompanyId, row.unit_id));
-    }
-    const rate = rateCache.get(row.unit_id)!;
-    const odo = odoCache.get(row.unit_id)!;
+    const odo = byUnit.get(row.unit_id) ?? null;
+    const isMiles = row.interval_kind === "miles";
+    const baselineAbsent = pmScheduleBaselineAbsentReason(row);
 
-    // ROUND 303 T-37: last_service_odometer <= 1 is a placeholder wearing a number, not a real
-    // baseline (a truck's last PM was never genuinely done at mile 1) -- treated as ABSENT, the
-    // same honest NULL+reason path as a genuinely-missing baseline, never a guessed due date.
-    const lastService =
-      row.last_service_odometer != null && row.last_service_odometer > PLACEHOLDER_BASELINE_MAX_MILES
-        ? row.last_service_odometer
-        : null;
-    const milesSince =
-      lastService != null && odo.odometer_miles != null ? odo.odometer_miles - lastService : null;
-    const milesToDue = milesSince != null ? row.interval_value - milesSince : null;
+    let milesSince: number | null = null;
+    let milesToDue: number | null = null;
+    let rate: UnitMileageRate = { miles_per_day: null, reason: null };
+    let projected: { projected_due_date: string | null; reason: string | null };
 
-    const projected = projectPmDueDateFromRate(milesToDue, rate.miles_per_day, rate.reason);
+    if (!isMiles || baselineAbsent) {
+      projected = { projected_due_date: null, reason: baselineAbsent };
+    } else if (odo == null) {
+      projected = { projected_due_date: null, reason: absentOdometerReason(stopEventsLive) };
+    } else {
+      if (!rateCache.has(row.unit_id)) {
+        rateCache.set(row.unit_id, await computeUnitMileageRate(client, operatingCompanyId, row.unit_id));
+      }
+      rate = rateCache.get(row.unit_id)!;
+      // ROUND 303 T-37: last_service_odometer <= 1 is a placeholder, never a baseline -- baselineAbsent
+      // above already refused it; an explicit next_due_odometer wins over interval arithmetic.
+      const dueAt =
+        row.next_due_odometer != null
+          ? Number(row.next_due_odometer)
+          : Number(row.last_service_odometer) + row.interval_value;
+      milesSince =
+        row.last_service_odometer != null && Number(row.last_service_odometer) > PLACEHOLDER_BASELINE_MAX_MILES
+          ? odo.odometer - Number(row.last_service_odometer)
+          : null;
+      milesToDue = dueAt - odo.odometer;
+      projected = projectPmDueDateFromRate(milesToDue, rate.miles_per_day, rate.reason);
+    }
 
     out.push({
       pm_schedule_id: row.id,
       unit_id: row.unit_id,
       unit_number: row.unit_number,
       label: row.label,
-      interval_miles: row.interval_value,
-      last_service_odometer: lastService,
-      current_odometer: odo.odometer_miles,
-      current_odometer_read_at: odo.read_at,
-      current_odometer_source: odo.source,
-      current_odometer_note: odo.note,
+      interval_kind: row.interval_kind,
+      interval_miles: isMiles ? row.interval_value : null,
+      interval_days: row.interval_kind === "days" ? row.interval_value : null,
+      last_service_odometer:
+        row.last_service_odometer != null && Number(row.last_service_odometer) > PLACEHOLDER_BASELINE_MAX_MILES
+          ? Number(row.last_service_odometer)
+          : null,
+      current_odometer: odo?.odometer ?? null,
+      current_odometer_read_at: odo?.read_at ?? null,
+      current_odometer_source: odo?.source ?? null,
+      current_odometer_note: odo ? null : absentOdometerReason(stopEventsLive),
       miles_since_service: milesSince,
       miles_to_due: milesToDue,
       miles_per_day: rate.miles_per_day,
@@ -286,6 +243,6 @@ export async function registerPmDueEngineRoutes(app: FastifyInstance) {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [parsed.data.operating_company_id]);
       return computePmDueEngineForCompany(client as DbClient, parsed.data.operating_company_id);
     });
-    return { rows, computed_from: "telematics.odometer_readings + stop-odometer-capture", never: "fleet_average" };
+    return { rows, computed_from: "telematics.unit_stop_events -> telematics.odometer_readings -> ABSENT", never: "fleet_average" };
   });
 }
