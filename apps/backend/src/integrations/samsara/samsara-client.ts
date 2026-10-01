@@ -57,6 +57,17 @@ export type SamsaraIftaVehicleReportResult = {
   troubleshooting: Record<string, unknown> | null;
 };
 
+/** ROUND 304 T-50 — one row of /fleet/reports/{vehicles|drivers}/fuel-energy, fields measured live 2026-10-01. */
+export type SamsaraFuelEnergyRow = {
+  subject_id: string;
+  subject_name: string | null;
+  efficiency_mpge: number | null;
+  fuel_consumed_ml: number | null;
+  distance_traveled_meters: number | null;
+  engine_run_time_ms: number | null;
+  engine_idle_time_ms: number | null;
+};
+
 export type SamsaraHosDailyLog = {
   samsara_driver_id: string;
   start_time: string;
@@ -780,6 +791,54 @@ export class SamsaraClient {
       after = cursor;
     }
     return { vehicles, troubleshooting };
+  }
+
+  /**
+   * ROUND 304 T-50 — GET /fleet/reports/{vehicles|drivers}/fuel-energy (scope "Read Fuel & Energy";
+   * 200 on the USMCA token 2026-10-01). Live fields: vehicle|driver{id,name}, efficiencyMpge,
+   * fuelConsumedMl, distanceTraveledMeters, engineRunTimeDurationMs, engineIdleTimeDurationMs.
+   * A missing number stays null -- never 0.
+   */
+  async listFuelEnergyReports(kind: "vehicles" | "drivers", startIso: string, endIso: string): Promise<SamsaraFuelEnergyRow[]> {
+    const token = this._token();
+    if (!token) throw new SamsaraApiError("samsara_token_missing", null, null, false);
+    const num = (v: unknown) => (v == null || !Number.isFinite(Number(v)) ? null : Number(v));
+    const out: SamsaraFuelEnergyRow[] = [];
+    let after: string | null = null;
+    for (let page = 0; page < 200; page += 1) {
+      const url = new URL(`${SAMSARA_API_BASE}/fleet/reports/${kind}/fuel-energy`);
+      url.searchParams.set("startDate", startIso);
+      url.searchParams.set("endDate", endIso);
+      if (after) url.searchParams.set("after", after);
+      let res: Response;
+      try {
+        res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }, 30_000));
+      } catch (error) {
+        throw new SamsaraApiError(`samsara_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
+      }
+      const json = await readJsonResponse(res);
+      if (!res.ok) throw new SamsaraApiError(`samsara_fuel_energy_http_${res.status}`, res.status, json, res.status === 429 || res.status >= 500);
+      const data = (json.data ?? {}) as Record<string, unknown>;
+      const rows = (kind === "vehicles" ? data.vehicleReports : data.driverReports) as unknown[] | undefined;
+      for (const raw of Array.isArray(rows) ? rows : []) {
+        const r = raw as Record<string, unknown>;
+        const subject = ((kind === "vehicles" ? r.vehicle : r.driver) ?? {}) as Record<string, unknown>;
+        if (subject.id == null) continue;
+        out.push({
+          subject_id: String(subject.id),
+          subject_name: typeof subject.name === "string" ? subject.name : null,
+          efficiency_mpge: num(r.efficiencyMpge),
+          fuel_consumed_ml: num(r.fuelConsumedMl),
+          distance_traveled_meters: num(r.distanceTraveledMeters),
+          engine_run_time_ms: num(r.engineRunTimeDurationMs),
+          engine_idle_time_ms: num(r.engineIdleTimeDurationMs),
+        });
+      }
+      const { hasNextPage, cursor } = parsePagination(json);
+      if (!hasNextPage || !cursor) break;
+      after = cursor;
+    }
+    return out;
   }
 
   async listHosDailyLogs(startDate: string, endDate: string): Promise<SamsaraHosDailyLog[]> {
