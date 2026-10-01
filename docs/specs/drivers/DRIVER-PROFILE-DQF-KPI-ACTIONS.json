@@ -7,6 +7,8 @@
     { "label": "Present", "focus": "present" },
     { "label": "Missing", "focus": "missing" },
     { "label": "Expired", "focus": "expired" },
-    { "label": "Expiry alerts", "focus": "expiry_alerts" }
+    { "label": "Expiry alerts", "focus": "expiry_alerts" },
+    { "label": "Integrity findings", "action": "focusIntegrity" },
+    { "label": "Complaints", "action": "complaints_link" }
   ]
 }

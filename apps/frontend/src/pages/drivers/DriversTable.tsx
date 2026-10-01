@@ -34,6 +34,10 @@ export type DriverTableRow = {
   name: string;
   status: string;
   summary: ReturnType<typeof summarizeDriverDqf>;
+  /** C-57 — integrity findings count for the trailing 30-day profile (null = no signal). */
+  integrityFindings?: number | null;
+  /** C-57 — counted complaints against this driver (null = no signal). */
+  complaintsCount?: number | null;
 };
 
 // Enriched with flat sort keys for the DQF chip + checklist-stats columns (ParityTable sorts by
@@ -41,6 +45,8 @@ export type DriverTableRow = {
 type EnrichedDriverRow = DriverTableRow & {
   dqf_level: string;
   dqf_present_count: number;
+  integrity_findings: number;
+  complaints_count: number;
 };
 
 type Props = {
@@ -115,7 +121,14 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
   });
 
   const enrichedRows = useMemo<EnrichedDriverRow[]>(
-    () => rows.map((row) => ({ ...row, dqf_level: row.summary.level, dqf_present_count: row.summary.presentCount })),
+    () =>
+      rows.map((row) => ({
+        ...row,
+        dqf_level: row.summary.level,
+        dqf_present_count: row.summary.presentCount,
+        integrity_findings: row.integrityFindings ?? 0,
+        complaints_count: row.complaintsCount ?? 0,
+      })),
     [rows]
   );
 
@@ -305,6 +318,34 @@ export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Prop
           cellClass: "text-slate-600",
           sortable: true,
           render: (row) => `${row.summary.presentCount} present · ${row.summary.missingCount} missing · ${row.summary.expiredCount} expired`,
+        },
+        {
+          key: "integrity_findings",
+          label: "Integrity findings",
+          sortable: true,
+          cellClass: "text-center tabular-nums",
+          render: (row) =>
+            row.integrityFindings == null ? (
+              <span className="text-slate-400">—</span>
+            ) : (
+              <span className={row.integrityFindings > 0 ? "font-semibold text-slate-900" : "text-slate-600"}>
+                {row.integrityFindings}
+              </span>
+            ),
+        },
+        {
+          key: "complaints_count",
+          label: "Complaints",
+          sortable: true,
+          cellClass: "text-center tabular-nums",
+          render: (row) =>
+            row.complaintsCount == null ? (
+              <span className="text-slate-400">—</span>
+            ) : (
+              <span className={row.complaintsCount > 0 ? "font-semibold text-slate-900" : "text-slate-600"}>
+                {row.complaintsCount}
+              </span>
+            ),
         },
         {
           // EXEMPT (derived from a batch reverse-lookup, no single sortable scalar on the row).
