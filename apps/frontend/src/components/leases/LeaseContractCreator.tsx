@@ -12,6 +12,7 @@ import { ParityDrawer } from "../parity/ParityDrawer";
 import { ReferenceSelect, type ReferenceOption } from "../parity/ReferenceSelect";
 import { DatePicker } from "../forms/DatePicker";
 import { MoneyInput } from "../forms/MoneyInput";
+import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 
 /**
  * ROUND 316 — Truck Lease / Trailer Lease / Lease-to-Own creator. Owner-only (the API refuses everyone else).
@@ -53,7 +54,7 @@ export function LeaseContractCreator({ open, onClose, onCreated, defaultType = "
   }, [vendors.data]);
   const accounts = useQuery({ queryKey: ["coa", "lease-expense", opco], queryFn: () => listCoaAccountsForJe(opco, { postableOnly: true }), enabled: open && Boolean(opco) });
   const accountOptions: ReferenceOption[] = useMemo(
-    () => (accounts.data?.accounts ?? []).map((a) => ({ value: a.id, label: a.account_number ? `${a.account_number} ${a.account_name}` : a.account_name, type: a.account_type ?? undefined })),
+    () => (accounts.data?.accounts ?? []).map((a) => ({ value: a.id, label: formatAccountDisplayLabel(a), type: a.account_type ?? undefined })),
     [accounts.data]
   );
   const wantTrailers = leaseType === "trailer_lease";
