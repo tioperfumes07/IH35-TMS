@@ -13,6 +13,10 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+// Offline it still checks its baseline file (frozen owners, owner-pending units); the live half needs the database
+// and runs in CI + the live gate.
+export const ALLOW_OFFLINE_SKIP = "baseline half runs offline; live unit query runs only with DATABASE_URL (CI + live gate)";
+
 const ROOT = resolve(fileURLToPath(import.meta.url), "..", "..");
 const LABEL = "verify-no-frozen-entity-unit-on-usmca";
 const BASELINE = "scripts/verify-no-frozen-entity-unit-on-usmca.baseline.json";

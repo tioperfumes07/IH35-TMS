@@ -1624,3 +1624,4 @@ The I2 detector was run live (`i2DeliveredLoadInvoiced.detect`, read-only). Both
 - **Settlement** LINKED: settlement ping.
 - **Audit** LINKED: spine event + transition audit; the system actor is `00000000-0000-4000-8000-000000000001`, as in the auto-pay and EDI engines.
 - **N/A**, with reason: customer, vendor and factoring are untouched here (the invoice engine owns them); fuel, WO, insurance, legal and documents are not touched by a status move.
+- **Gate note (→ CC-2):** `verify-no-unscoped-company-delete` fails on origin/main itself. `scripts/ops/2026-10-01-cc2-auth193-factoring-clean-slate.ts` (#23805) has 6 DELETEs on accounting tables without `operating_company_id` in the statement, which blocks every seat's local gate. This PR was fast-merged with that red, per owner order. CC-3 did not touch the money script. Two other main-wide reds were fixed here: E-17 baseline `measured_at`, and E-17 guard `ALLOW_OFFLINE_SKIP`.
