@@ -1127,3 +1127,19 @@ CSV value rejects with its value named. E-02 (Lead) can call `isTruckVehicleType
 'Sleeper' blocked. vitest 10/10, tsc 0. 195 of 196 units are NULL today — the owner sets each type when
 seeding (nothing inferred from unit names).
 **blocker:** none.
+## E-16 — TOTAL LINKAGE (owner: wire every leg, both directions)
+**what:** `GET /api/v1/maintenance/work-orders/:id` → `linkage` now resolves every leg that exists in the
+schema, each by its real FK: unit · trailer (`equipment_id` → mdata.equipment) · driver at the time
+(`driverAtTimeSql`) · vendor · roadside provider vendor · customer (`customer_id` → mdata.customers) ·
+loads (trip `load_id` + `roadside_breakdown_load_id`) · vendor invoice document (docs.files) · in-transit
+issue · insurance claim · bills (`linked_work_order_uuid`) → **bill payments** (`bill_payments.bill_id`) ·
+expenses → journal entries (postings) · **load invoices** (`invoices.source_load_id`) → **received
+payments** (`payment_applications` → `payments`). Reverse on the list: `?unit_id` `?equipment_id`
+`?driver_id` `?vendor_id` `?load_id` and new `?customer_id`; bill/bill payment/expense/JE/invoice/payment
+walk back through the same FKs.
+**honest gaps:** locations — work orders store repair location as TEXT (`repair_location`, shop name/
+address, roadside location); there is no FK to a location record, so it is returned as attributes, never
+an invented link. A work order carries no invoice of its own; received payments reach it only via its load.
+**proof:** live read-only — every query runs on prod; legs present in data resolve (unit, trailer 3/15,
+vendor 9/15, insurance claim, location); load/customer/bill/payment legs empty on USMCA (unseeded) —
+covered by vitest (4/4). Guard step 11965 now pins every leg.

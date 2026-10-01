@@ -51,6 +51,8 @@ const listQuerySchema = z.object({
   // UNIT-WO-REVERSE (ROUND 305 A-48): every work order carries unit_id, but nothing could ask for a
   // unit's work orders -- half a link per TRANSACTION-LINKAGE-LAW §6. Same pattern as load_id.
   unit_id: z.string().uuid().optional(),
+  // CUSTOMER-WO-REVERSE: work_orders.customer_id is an FK; a customer must resolve back to its work orders.
+  customer_id: z.string().uuid().optional(),
 });
 
 const listByBucketQuerySchema = z.object({
@@ -464,17 +466,39 @@ export async function loadWorkOrderLinkage(client: LinkageClient, companyId: str
   const head = await client.query<{
     unit_id: string | null; unit_number: string | null; driver_at_time_id: string | null; driver_at_time_name: string | null;
     vendor_id: string | null; vendor_name: string | null; at: string | null;
+    equipment_id: string | null; equipment_number: string | null;
+    customer_id: string | null; customer_name: string | null;
+    load_id: string | null; load_number: string | null;
+    roadside_load_id: string | null; roadside_load_number: string | null;
+    roadside_vendor_id: string | null; roadside_vendor_name: string | null;
+    source_intransit_issue_id: string | null; insurance_claim_id: string | null;
+    vendor_invoice_doc_id: string | null; vendor_invoice_doc_name: string | null;
+    repair_location: string | null; service_location_type: string | null; shop_name: string | null; shop_address: string | null; roadside_location: string | null;
   }>(
     `SELECT w.unit_id::text, u.unit_number,
             dat.driver_id::text AS driver_at_time_id,
             NULLIF(TRIM(COALESCE(dd.first_name, '') || ' ' || COALESCE(dd.last_name, '')), '') AS driver_at_time_name,
             COALESCE(w.external_vendor_id, w.vendor_id)::text AS vendor_id, v.vendor_name,
-            COALESCE(w.opened_at, w.created_at)::text AS at
+            COALESCE(w.opened_at, w.created_at)::text AS at,
+            w.equipment_id::text, eq.equipment_number,
+            w.customer_id::text, cu.customer_name,
+            w.load_id::text, l.load_number,
+            w.roadside_breakdown_load_id::text AS roadside_load_id, rl.load_number AS roadside_load_number,
+            w.roadside_provider_vendor_id::text AS roadside_vendor_id, rv.vendor_name AS roadside_vendor_name,
+            w.source_intransit_issue_id::text, w.insurance_claim_id::text,
+            w.external_vendor_invoice_doc_id::text AS vendor_invoice_doc_id, df.original_filename AS vendor_invoice_doc_name,
+            w.repair_location, w.service_location_type::text, w.shop_name, w.shop_address, w.roadside_location
        FROM maintenance.work_orders w
        LEFT JOIN mdata.units u ON u.id = w.unit_id
        ${driverAtTimeSql("w.unit_id", "COALESCE(w.opened_at, w.created_at)", "dat")}
        LEFT JOIN mdata.drivers dd ON dd.id = dat.driver_id
        LEFT JOIN mdata.vendors v ON v.id = COALESCE(w.external_vendor_id, w.vendor_id) AND v.operating_company_id = w.operating_company_id
+       LEFT JOIN mdata.equipment eq ON eq.id = w.equipment_id
+       LEFT JOIN mdata.customers cu ON cu.id = w.customer_id AND cu.operating_company_id = w.operating_company_id
+       LEFT JOIN mdata.loads l ON l.id = w.load_id AND l.operating_company_id = w.operating_company_id
+       LEFT JOIN mdata.loads rl ON rl.id = w.roadside_breakdown_load_id AND rl.operating_company_id = w.operating_company_id
+       LEFT JOIN mdata.vendors rv ON rv.id = w.roadside_provider_vendor_id AND rv.operating_company_id = w.operating_company_id
+       LEFT JOIN docs.files df ON df.id = w.external_vendor_invoice_doc_id AND df.operating_company_id = w.operating_company_id
       WHERE w.operating_company_id = $1::uuid AND w.id = $2::uuid`,
     [companyId, workOrderId]
   );
@@ -488,7 +512,8 @@ export async function loadWorkOrderLinkage(client: LinkageClient, companyId: str
        FROM accounting.expenses WHERE operating_company_id = $1::uuid AND linked_work_order_uuid = $2::uuid ORDER BY id`,
     [companyId, workOrderId]
   );
-  const docIds = [...bills.rows.map((b) => b.id), ...expenses.rows.map((e) => e.id)];
+  const billIds = bills.rows.map((b) => b.id);
+  const docIds = [...billIds, ...expenses.rows.map((e) => e.id)];
   const jes =
     docIds.length === 0
       ? { rows: [] as Array<{ journal_entry_id: string; source_transaction_type: string; source_transaction_id: string }> }
@@ -500,14 +525,64 @@ export async function loadWorkOrderLinkage(client: LinkageClient, companyId: str
               AND p.source_transaction_id = ANY($2::uuid[])`,
           [companyId, docIds]
         );
+  // Bill -> bill payments (accounting.bill_payments.bill_id).
+  const billPayments =
+    billIds.length === 0
+      ? { rows: [] as Array<{ id: string; bill_id: string; payment_date: string | null; amount_cents: string; payment_method: string | null; reference_number: string | null; voided_at: string | null }> }
+      : await client.query<{ id: string; bill_id: string; payment_date: string | null; amount_cents: string; payment_method: string | null; reference_number: string | null; voided_at: string | null }>(
+          `SELECT id::text, bill_id::text, payment_date::text, amount_cents::text, payment_method, reference_number, voided_at::text
+             FROM accounting.bill_payments WHERE operating_company_id = $1::uuid AND bill_id = ANY($2::uuid[]) ORDER BY payment_date, id`,
+          [companyId, billIds]
+        );
   const h = head.rows[0];
+  // Received payments: a work order carries no invoice. The real path is the load it rode on ->
+  // invoices.source_load_id -> payment_applications -> payments. Never inferred from the customer alone.
+  const loadIds = [h?.load_id, h?.roadside_load_id].filter((x): x is string => Boolean(x));
+  const loadInvoices =
+    loadIds.length === 0
+      ? { rows: [] as Array<{ id: string; display_id: string | null; source_load_id: string; customer_id: string | null; total_cents: string; status: string | null; voided_at: string | null }> }
+      : await client.query<{ id: string; display_id: string | null; source_load_id: string; customer_id: string | null; total_cents: string; status: string | null; voided_at: string | null }>(
+          `SELECT id::text, display_id, source_load_id::text, customer_id::text, total_cents::text, status, voided_at::text
+             FROM accounting.invoices WHERE operating_company_id = $1::uuid AND source_load_id = ANY($2::uuid[]) ORDER BY id`,
+          [companyId, loadIds]
+        );
+  const invoiceIds = loadInvoices.rows.map((i) => i.id);
+  const receivedPayments =
+    invoiceIds.length === 0
+      ? { rows: [] as Array<{ payment_id: string; display_id: string | null; invoice_id: string; applied_cents: string; payment_date: string | null; payment_method: string | null; voided_at: string | null }> }
+      : await client.query<{ payment_id: string; display_id: string | null; invoice_id: string; applied_cents: string; payment_date: string | null; payment_method: string | null; voided_at: string | null }>(
+          `SELECT p.id::text AS payment_id, p.display_id, pa.invoice_id::text, pa.amount_cents::text AS applied_cents,
+                  p.payment_date::text, p.payment_method, p.voided_at::text
+             FROM accounting.payment_applications pa
+             JOIN accounting.payments p ON p.id = pa.payment_id AND p.operating_company_id = pa.operating_company_id
+            WHERE pa.operating_company_id = $1::uuid AND pa.invoice_id = ANY($2::uuid[])
+            ORDER BY p.payment_date, p.id`,
+          [companyId, invoiceIds]
+        );
   return {
     unit: h?.unit_id ? { id: h.unit_id, unit_number: h.unit_number } : null,
+    trailer: h?.equipment_id ? { id: h.equipment_id, equipment_number: h.equipment_number } : null,
     driver_at_time: h?.driver_at_time_id ? { id: h.driver_at_time_id, name: h.driver_at_time_name, as_of: h.at } : null,
     vendor: h?.vendor_id ? { id: h.vendor_id, name: h.vendor_name } : null,
+    roadside_provider_vendor: h?.roadside_vendor_id ? { id: h.roadside_vendor_id, name: h.roadside_vendor_name } : null,
+    customer: h?.customer_id ? { id: h.customer_id, name: h.customer_name } : null,
+    loads: [
+      ...(h?.load_id ? [{ id: h.load_id, load_number: h.load_number, role: "trip" as const }] : []),
+      ...(h?.roadside_load_id ? [{ id: h.roadside_load_id, load_number: h.roadside_load_number, role: "roadside_breakdown" as const }] : []),
+    ],
+    // Locations are recorded as text on the work order -- there is no FK to a location record.
+    location: h
+      ? { repair_location: h.repair_location, service_location_type: h.service_location_type, shop_name: h.shop_name, shop_address: h.shop_address, roadside_location: h.roadside_location }
+      : null,
+    source_intransit_issue_id: h?.source_intransit_issue_id ?? null,
+    insurance_claim_id: h?.insurance_claim_id ?? null,
+    vendor_invoice_document: h?.vendor_invoice_doc_id ? { id: h.vendor_invoice_doc_id, name: h.vendor_invoice_doc_name } : null,
     bills: bills.rows,
+    bill_payments: billPayments.rows,
     expenses: expenses.rows,
     journal_entries: jes.rows,
+    load_invoices: loadInvoices.rows,
+    received_payments: receivedPayments.rows,
   };
 }
 
@@ -545,7 +620,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         values.push(q.status);
         where.push(`w.status = $${values.length}`);
         where.push("w.voided_at IS NULL");
-      } else if (q.equipment_id || q.load_id || q.driver_id || q.vendor_id || q.unit_id) {
+      } else if (q.equipment_id || q.load_id || q.driver_id || q.vendor_id || q.unit_id || q.customer_id) {
         // LOAD-WO-REVERSE / DRV-LINK-WO-REVERSE: caller-controlled scope — include completed history;
         // voided stay hidden (void-not-delete).
         where.push("w.voided_at IS NULL");
@@ -563,6 +638,10 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (q.unit_id) {
         values.push(q.unit_id);
         where.push(`w.unit_id = $${values.length}`);
+      }
+      if (q.customer_id) {
+        values.push(q.customer_id);
+        where.push(`w.customer_id = $${values.length}`);
       }
       if (q.wo_type) {
         values.push(q.wo_type);
