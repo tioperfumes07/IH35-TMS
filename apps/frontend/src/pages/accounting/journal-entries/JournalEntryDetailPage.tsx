@@ -21,6 +21,7 @@ import { formatUsdCents } from "../../../lib/money";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
 import { VoidedBanner } from "../../../components/accounting/VoidedBanner";
+import { OnlineBankingMatchBanner } from "../../../components/accounting/OnlineBankingMatchBanner";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -241,6 +242,16 @@ export function JournalEntryDetailPage() {
   return (
     <AccountingSubNavWrapper>
       <VoidedBanner voidedAt={entry.voided_at} voidReason={entry.void_reason} voidedByUserId={entry.voided_by_user_id} documentLabel="Journal entry" />
+      {entry.matched_bank_transaction_id && selectedCompanyId ? (
+        <OnlineBankingMatchBanner
+          companyId={selectedCompanyId}
+          bankTransactionId={entry.matched_bank_transaction_id}
+          txnDate={entry.entry_date}
+          description={entry.matched_bank_transaction_description}
+          amountCents={entry.debit_total_cents}
+          invalidateKeys={[["accounting", "journal-entry", selectedCompanyId, id]]}
+        />
+      ) : null}
       <PageHeader
         title={chromeLabel}
         backHref="/accounting/journal-entries"
@@ -323,11 +334,7 @@ export function JournalEntryDetailPage() {
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">Bank transaction</span>
             <span className="text-xs text-gray-900" data-testid="journal-entry-matched-bank">
-              <EntityLink
-                kind="bank_transaction"
-                id={entry.matched_bank_transaction_id}
-                label={entityLabel(entry.matched_bank_transaction_description, entry.matched_bank_transaction_id, "Bank transaction")}
-              />
+              Matched — Unmatch from the banner above
             </span>
           </DataPanelRow>
         ) : null}
