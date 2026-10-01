@@ -204,7 +204,8 @@ async function main() {
     // WRONG load data, not QBO -- that is the same "needs investigation" bucket as an
     // already-issued mismatch, not a safe auto-create.
     const loadRes = await client.query(
-      `SELECT l.load_number, l.rate_total_cents::text, c.customer_name, l.soft_deleted_at
+      `SELECT l.load_number, l.rate_total_cents::text, c.customer_name, l.soft_deleted_at,
+              l.status::text AS status
          FROM mdata.loads l
          LEFT JOIN mdata.customers c ON c.id = l.customer_id
         WHERE l.operating_company_id = $1::uuid`,
@@ -224,6 +225,10 @@ async function main() {
     // guard read as "safely creatable" and asked every seat to mint 5 invoices against loads the
     // owner had already retired. QBO still lists them because QBO is where the R-160 correction
     // has not been applied; that is a QBO-side question, reported here, never auto-created.
+    //
+    // 2026-10-01 (AUTH-201): CANCELLED loads are the same class — void-not-delete retirement
+    // (13515 cancelled; twin 13513 kept paid). Never ask seats to re-mint an invoice against a
+    // cancelled duplicate. Counted + reported, never actionable.
     const softDeleted = [];
     let actionableCents = 0;
 
@@ -232,8 +237,12 @@ async function main() {
       const existing = byLoad.get(row.load);
       if (!existing) {
         const load = loadByNumber.get(row.load);
-        if (load && load.soft_deleted_at) {
-          softDeleted.push({ ...row, soft_deleted_at: load.soft_deleted_at });
+        if (load && (load.soft_deleted_at || load.status === "cancelled" || load.status === "canceled")) {
+          softDeleted.push({
+            ...row,
+            soft_deleted_at: load.soft_deleted_at,
+            status: load.status,
+          });
           continue;
         }
         const amountOk = load && Number(load.rate_total_cents) === qboCents;
@@ -260,9 +269,13 @@ async function main() {
     console.log(`  mismatched (QBO vs our load disagree, needs investigation): ${mismatched.length} row(s), $${(mismatchedCents / 100).toFixed(2)}`);
     console.log(`  unmatched (blank/text LOAD, never guessed): ${unmatchedBlank.length} row(s), $${(unmatchedCents / 100).toFixed(2)}`);
     console.log(`  excluded (different billing entity): ${excludedWrongEntity.length} row(s)`);
-    console.log(`  excluded (load soft-deleted in our book, never auto-invoiced; QBO-side correction pending): ${softDeleted.length} row(s)`);
-    for (const d of softDeleted) console.log(`    - load ${d.load}: ${d.name} $${d.amount} (soft_deleted_at ${new Date(d.soft_deleted_at).toISOString()})`);
-
+    console.log(`  excluded (load soft-deleted/cancelled in our book, never auto-invoiced; QBO-side correction pending): ${softDeleted.length} row(s)`);
+    for (const d of softDeleted) {
+      const why = d.soft_deleted_at
+        ? `soft_deleted_at ${new Date(d.soft_deleted_at).toISOString()}`
+        : `status=${d.status}`;
+      console.log(`    - load ${d.load}: ${d.name} $${d.amount} (${why})`);
+    }
     if (actionable.length > 0) {
       console.error(`${LABEL}: FAIL — ${actionable.length} invoice(s) with a real, matching load/customer/amount still not created:`);
       for (const a of actionable) console.error(`  ✗ load ${a.load}: ${a.name} $${a.amount}`);

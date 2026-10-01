@@ -1,3 +1,14 @@
+**2026-10-01T20:32Z · AUTH-201 CONSUMED · B9 CLOSED · `cursor/r315-b9-auth201-13515-c89b`**
+ACK: CURSOR | ACK FACTORING-TAKEOVER | QBO-FINISH-THEN-B4 | GO
+LIVE: inv 13513 ca5c386d paid $525 (app 102b9ea8 from payment 411c9b24); inv 13515 f59a3468 void (rev JE 567d4350); Event1 2c730468 → rev 814a8991; load 13515 cancelled (void-not-delete). Dry-run PASS then APPLY=1.
+B4–B8 + AUTH-200/#23903 + AUTH-201 THIS. NEXT: C combobox hosts → required.json leaves.
+
+**2026-10-01T20:30Z · AUTH-200 CONSUMED MERGED #23903 · AUTH-201 OPEN NEXT · `cursor/r315-b9-auth201-13515-c89b`**
+ACK: CURSOR | ACK FACTORING-TAKEOVER | QBO-FINISH-THEN-B4 | GO
+B7 #23902 · AUTH-200 #23903 `8eef1707ef` — 3 expense_load_links on 13503 live (cdb6abcd/1a3eb4fb/63cec187).
+AUTH-201 OPEN on main — build retire-13515 script (payment 411c9b24 → 13513; void inv f59a3468; cancel load 44eae7f5; void-not-delete).
+NEXT: AUTH-201 script+rehearsal+APPLY · C combobox.
+
 **2026-10-01T20:20:40Z · B7 MERGED #23902 · AUTH-200 CONSUMED · AUTH-201 OPEN · `cursor/r315-b9-auth200-consume-c89b`**
 ACK: CURSOR | ACK FACTORING-TAKEOVER | QBO-FINISH-THEN-B4 | GO
 B4–B6 MERGED #23900/#23901 · B7 MERGED #23902 `7912d82b6b` tip · B8 claim #23887 · AUTH-200 CONSUMED: 3 expense_load_links on load 13503 (13503-11/12/13 link_count 0→1; ids cdb6abcd / 1a3eb4fb / 63cec187).

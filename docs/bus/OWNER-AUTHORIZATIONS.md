@@ -6924,6 +6924,10 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80).
 action: OWNER_AUTH_ID=AUTH-201 APPLY=1 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-01-cursor-auth201-retire-13515-keep-13513.ts
   Dry-run first (default). Rehearse on throwaway branch before APPLY.
 expires_at: 2026-10-02T21:00:00Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-01T20:31:38Z
+consumed_by: Cursor
+row_counts: payment 411c9b24 re-applied to inv 13513 (app 102b9ea8); inv 13515 voided (reversal JE 567d4350, 2 lines); Event1 earn 2c730468 reversed (JE 814a8991); load 13515 status cancelled (catalog reason missing → status stamp + audit; void-not-delete). inv 13513 customer repointed FLS TRANSPORTATION→FLS Transport Inc. (paying customer).
+proof_query: inv ca5c386d status=paid amount_paid=52500; inv f59a3468 status=void voided_at set; je 2c730468 reversed_by=814a8991; load 44eae7f5 status=cancelled.
 derivation: Lead REPLY 14:55 CT FACTORING-TAKEOVER B.9 + owner confirmed 13513/13515 same load keep 13513; CC-2 WRAP HELD facts absorbed into void-not-delete shape.
 THIS AUTHORIZATION DOES NOT COVER: DELETE FROM any table; voiding 13513; touching any other load; QBO write-back.

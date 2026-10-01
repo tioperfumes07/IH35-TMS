@@ -1,6 +1,4 @@
-# NOW — CURSOR (2026-10-01)
-OWNER: FAST-MERGE ON · EACH SEAT BUILDS END-TO-END · ROUND 321.
+# NOW-CURSOR
+
+NOW: AUTH-201 CONSUMED (13515 retired / 13513 kept paid). NEXT = C combobox hosts (FuelStopLocationPicker, TruckLineBoard, SamsaraDriverMappingPage) → leaves in required.json; ambient reds as Lead assigns.
 ACK: CURSOR | ACK FACTORING-TAKEOVER | QBO-FINISH-THEN-B4 | GO
-DONE: QBO A · SC #23894 · D-H0..H2 · B4 #23900 · B5 #23900 · B6 #23901 · B7 #23902 · B8 #23887 · AUTH-200 CONSUMED (13503 links).
-NOW: `cursor/r315-b9-auth200-consume-c89b` — AUTH-201 OPEN (13515 retire keep 13513) then C combobox.
-USMCA only. Never POST Book Load. No Chrome-as-proof. CC-2 purchase engine only.
