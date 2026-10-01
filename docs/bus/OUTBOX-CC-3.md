@@ -1207,3 +1207,20 @@ AUTO-STATUS: integrations auto-status-switch worker UPDATEs mdata.loads.status a
 Per rule 2 it is now flag-OFF: writes only with AUTO_STATUS_SWITCH_APPLY=true; detection still runs and returns the proposal.
 3 historic auto_status_switch_events (last 2026-09-21). telematics/auto-status.service.ts (suggestions) already reads geofence_events.
 guard: scripts/verify-e29-fences-fire-and-status-switch-flag-off.mjs + --selftest PASS; vitest geofence/border/auto-status 23/23.
+
+## 2026-10-01 — ORDERS row 9 — E-31 Samsara Routes push (built; flag OFF)
+Licensing probed live: /fleet/routes 200, /fleet/document-types 200 ("Proof of Delivery"), /fleet/documents 200, /v1/fleet/messages 200
+— none blocked, so the queue order stands (E-31, E-32, E-30).
+FOUND: the existing push could never have been accepted — vehicleId `ih35Unit:<uuid>`, driverId `ih35Driver:<uuid>`, stop addressId
+`ih35Stop:<uuid>`: Samsara has none of those external ids (0/934 fences linked to a Samsara address). Lease scope dropped
+USMCA-owned unleased trucks.
+FIX: Samsara's own vehicle id (mirror-first; ambiguous -> skip), driver id (exactly one link, else omitted + note), each stop as
+singleUseLocation {address, latitude, longitude} from the stop's own coordinates (shape measured with rejected probes). Scope
+COALESCE(lease, owner). Body-hash ledger (integration_sync_log 'route_push'): a load is re-sent only when it changed.
+GET /api/v1/integrations/samsara/routes/plan (read-only); routes-push.cron.ts every 15 min America/Chicago and the manual push both
+require SAMSARA_ROUTES_PUSH_ENABLED=true (default OFF; Lead carries to owner).
+proof (live read): 16 dispatched USMCA loads -> 16 valid route bodies (14 driver linked, 2 ambiguous driver omitted); e.g. 13624 vehicle
+281474985855584, driver 35268314, Wilkes Barre PA -> Roma TX. Before: 0 of 16 could be accepted.
+Readback (route stop arrival/departure, ETA, leg miles): /fleet/routes/audit-logs/feed and /route-events/stream answer 200 but are empty
+(no route ever existed) — field shapes cannot be measured yet; built right after the first real route lands (flag on), never guessed.
+guard: scripts/verify-samsara-routes-push-real-ids-flag-off.mjs + --selftest PASS; vitest samsara-client 12/12.
