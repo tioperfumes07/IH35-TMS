@@ -1458,6 +1458,18 @@ export class SamsaraClient {
     return { id };
   }
 
+  /** E-31 read-back: GET /fleet/routes/{id} (raw `data`; probed 2026-10-01 on route 4446734085 -> 200). */
+  async getRoute(routeId: string): Promise<Record<string, unknown> | null> {
+    const token = this._token();
+    if (!token) throw new SamsaraApiError("samsara_not_configured", null, null, false);
+    const url = new URL(`${SAMSARA_API_BASE}/fleet/routes/${encodeURIComponent(routeId)}`);
+    const res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }));
+    const json = await readJsonResponse(res);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new SamsaraApiError(`samsara_http_${res.status}`, res.status, json, res.status === 429 || res.status >= 500);
+    return asObject(json.data) ?? null;
+  }
+
   /** Idempotent route delivery keyed by ih35Load; a retry patches the same Samsara route. */
   async upsertRoute(input: {
     loadId: string;

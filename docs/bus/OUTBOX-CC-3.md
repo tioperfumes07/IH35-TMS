@@ -1662,3 +1662,16 @@ The I2 detector was run live (`i2DeliveredLoadInvoiced.detect`, read-only). Both
 - **Cause on my side:** fixed in #23823 (the latch can no longer post inline from inside an open transaction). The remaining hole is the poster's own idempotency.
 
 **I2:** both loads still have no issued invoice (auto-invoice is waiting on BOL), so I2 stays 14/13, awaiting engine-generated invoices 13626/13637 (CC-2).
+
+## 2026-10-01 ROUND 313 E-31 — route id on the load + ETA/progress read-back
+
+- **Migration 202615181000** (claim #23843):
+  - `mdata.loads.samsara_route_id`.
+  - `integrations.samsara_route_stop_progress`: one row per load stop with state, ETA, actual arrival/departure, en-route/skipped times, planned distance and live-share URL. FKs to the load, stop, unit and company; FORCED RLS.
+- **Push** stamps the route id on the load. The route's `externalIds.ih35Load` is the reverse link.
+- **Read-back** (`readBackSamsaraRoutes`) runs on the same 15-minute routes tick. It covers every load with a route id that is in dispatch work or moved in the last 2 days, matching each Samsara stop by `externalIds.ih35Stop`.
+- **Reverse links:** `/loads/:id/telematics` gains `samsara_route_progress` (per stop, with the unit); `/units/:id/telematics` gains route stops with the load. The panel has a "Samsara route progress" section on the load and a "Samsara routes" section on the truck.
+- **Rolled-back proof on prod** (migration in the transaction; 13639 stamped with route 4446734085): read-back read 1 route and upserted 2 stops. The load link shows stop 1 and stop 2 as `scheduled`, unit T173, live-share URLs present.
+- **§10-B for this block:**
+  - LINKED: load (both ways), stop, unit, driver (through the load's driver on the panel), audit (ledger rows per push).
+  - N/A: customer, vendor and every money target. A route read-back is telematics evidence and moves no money.

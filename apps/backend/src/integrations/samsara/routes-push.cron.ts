@@ -7,7 +7,7 @@ import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../../auth/db.js";
 import { assertTenantContext } from "../../cron/_helpers/tenant-context-guard.js";
-import { pushAllChangedRoutes, samsaraRoutesPushEnabled } from "./routes-integration.service.js";
+import { pushAllChangedRoutes, readBackSamsaraRoutes, samsaraRouteApiFor, samsaraRoutesPushEnabled } from "./routes-integration.service.js";
 
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const CRON_NAME = "integrations.samsara_routes_push";
@@ -28,7 +28,10 @@ export function initializeSamsaraRoutesPushCron(app: FastifyInstance) {
         const summary = await withLuciaBypass(async (client) => {
           // membership-scope-exempt: internally-scoped single entity
           await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [USMCA_COMPANY_ID]);
-          return pushAllChangedRoutes(client as never, USMCA_COMPANY_ID);
+          const push = await pushAllChangedRoutes(client as never, USMCA_COMPANY_ID);
+          // E-31 read-back on the same tick: state / ETA / actuals per stop for every routed load
+          const readBack = await readBackSamsaraRoutes(client as never, USMCA_COMPANY_ID, await samsaraRouteApiFor(client as never, USMCA_COMPANY_ID));
+          return { ...push, read_back: readBack };
         });
         app.log.info({ ...summary, results: summary.results.length }, `${CRON_NAME} tick`);
       } catch (error) {

@@ -49,6 +49,10 @@ export async function loadTelematicsLinks(client: Db, oc: string, loadId: string
     driver_prompts: await q(`SELECT m.id::text, m.msg_type, m.body, m.server_ts
                                FROM chat.messages m JOIN chat.threads t ON t.id = m.thread_id
                               WHERE t.operating_company_id = $1::uuid AND t.load_id = $2 AND m.client_key LIKE 'prompt:%' ORDER BY m.server_ts`),
+    samsara_route_progress: await q(`SELECT p.stop_id::text, p.sequence_number, p.samsara_route_id, p.state, p.eta, p.actual_arrival_at, p.actual_departure_at,
+                                             p.live_sharing_url, p.read_at, ${UN("p.unit_id")}, p.unit_id::text
+                                        FROM integrations.samsara_route_stop_progress p
+                                       WHERE p.operating_company_id = $1::uuid AND p.load_id = $2::uuid ORDER BY p.sequence_number`),
     samsara_route_pushes: await q(`SELECT started_at, success, payload->>'outcome' AS outcome, payload->>'samsara_route_id' AS samsara_route_id
                                      FROM integrations.integration_sync_log
                                     WHERE operating_company_id = $1::uuid AND integration = 'samsara' AND sync_kind = 'route_push'
@@ -90,6 +94,10 @@ export async function unitTelematicsLinks(client: Db, oc: string, unitId: string
                       FROM safety.dvir_submissions d
                      WHERE d.operating_company_id = $1::uuid AND (d.unit_id = $2::uuid OR d.trailer_id = $2::uuid) AND d.submitted_at >= ${since}
                      ORDER BY d.submitted_at DESC`),
+    samsara_route_progress: await q(`SELECT p.stop_id::text, p.sequence_number, p.samsara_route_id, p.state, p.eta, p.actual_arrival_at, p.actual_departure_at,
+                                             p.read_at, p.load_id::text, ${LN("p.load_id")}
+                                        FROM integrations.samsara_route_stop_progress p
+                                       WHERE p.operating_company_id = $1::uuid AND p.unit_id = $2::uuid AND p.read_at >= ${since} ORDER BY p.read_at DESC`),
     fuel_fills: await q(`SELECT f.id::text, f.transaction_at, f.fuel_type, f.gallons, f.total_cost, f.load_id::text, ${LN("f.load_id")}
                            FROM fuel.fuel_transactions f WHERE f.operating_company_id = $1::uuid AND f.unit_id = $2::uuid AND f.voided_at IS NULL
                             AND f.transaction_at >= ${since} ORDER BY f.transaction_at DESC`),
