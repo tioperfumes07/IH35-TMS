@@ -9,6 +9,7 @@ export type FactorRemittanceDetails = {
   telephone?: string;
   address?: string;
   generalEmail?: string;
+  submissionEmail?: string;
   primaryContactName?: string;
   primaryContactEmail?: string;
   accountingContact?: string;
@@ -35,10 +36,14 @@ export type FactorProfileForm = {
   advanceRatePct: string;
   feeRatePct: string;
   reserveRatePct: string;
+  /** ROUND 321 item 4: the factor's CASH reserve rate (Faro "Cash Rsv"), separate from the escrow reserveRatePct. */
+  cashReserveRatePct: string;
   recourseDays: string;
   telephone: string;
   address: string;
   generalEmail: string;
+  /** ROUND 321 item 4: where purchase reports are emailed ("Save and send" default recipient). */
+  submissionEmail: string;
   primaryContactName: string;
   primaryContactEmail: string;
   accountingContact: string;
@@ -85,6 +90,7 @@ export function parseRemittanceDetails(raw: unknown): FactorRemittanceDetails {
     telephone: str(r.telephone),
     address: str(r.address),
     generalEmail: str(r.generalEmail ?? r.general_email),
+    submissionEmail: str(r.submissionEmail ?? r.submission_email),
     primaryContactName: str(r.primaryContactName ?? r.primary_contact_name),
     primaryContactEmail: str(r.primaryContactEmail ?? r.primary_contact_email),
     accountingContact: str(r.accountingContact ?? r.accounting_contact),
@@ -156,10 +162,12 @@ export function factorToProfileForm(factor: Factor): FactorProfileForm {
     advanceRatePct: rateToPctString(factor.advance_rate),
     feeRatePct: rateToPctString(factor.fee_rate),
     reserveRatePct: rateToPctString(factor.reserve_rate),
+    cashReserveRatePct: rateToPctString(factor.cash_reserve_rate ?? 0),
     recourseDays: String(factor.recourse_days ?? ""),
     telephone: remit.telephone ?? "",
     address: remit.address ?? "",
     generalEmail: remit.generalEmail ?? "",
+    submissionEmail: remit.submissionEmail ?? "",
     primaryContactName: remit.primaryContactName ?? "",
     primaryContactEmail: remit.primaryContactEmail ?? "",
     accountingContact: remit.accountingContact ?? "",
@@ -203,6 +211,7 @@ export function profileFormToFactorPatch(form: FactorProfileForm): {
   advance_rate: number;
   fee_rate: number;
   reserve_rate: number;
+  cash_reserve_rate: number;
   recourse_days: number;
   remittance_details: FactorRemittanceDetails;
   fee_schedule: FactorFeeTier[] | null;
@@ -214,6 +223,8 @@ export function profileFormToFactorPatch(form: FactorProfileForm): {
   if (advance == null || fee == null || reserve == null) {
     throw new Error("Advance, fee, and reserve rates are required (percent 0–100)");
   }
+  const cashReserve = form.cashReserveRatePct.trim() ? pctStringToRate(form.cashReserveRatePct) : 0;
+  if (cashReserve == null) throw new Error("Cash reserve rate must be a percent 0–100 (or blank for 0)");
   const recourse = Number(form.recourseDays);
   if (!Number.isInteger(recourse) || recourse < 1) {
     throw new Error("Recourse days must be a positive integer");
@@ -222,11 +233,13 @@ export function profileFormToFactorPatch(form: FactorProfileForm): {
     advance_rate: advance,
     fee_rate: fee,
     reserve_rate: reserve,
+    cash_reserve_rate: cashReserve,
     recourse_days: recourse,
     remittance_details: {
       telephone: form.telephone.trim(),
       address: form.address.trim(),
       generalEmail: form.generalEmail.trim(),
+      submissionEmail: form.submissionEmail.trim(),
       primaryContactName: form.primaryContactName.trim(),
       primaryContactEmail: form.primaryContactEmail.trim(),
       accountingContact: form.accountingContact.trim(),

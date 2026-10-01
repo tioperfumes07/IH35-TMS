@@ -1091,7 +1091,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             <Modal open={profileEditOpen} onClose={() => { setProfileEditOpen(false); setProfileEditForm(null); }} title="Edit Factoring Profile">
               <div className="flex flex-col gap-3 text-xs" data-testid="factoring-profile-edit-modal">
                 <p className="text-xs text-gray-500">
-                  Rates write to the factoring profile record (advance_rate / fee_rate / reserve_rate). Contacts → remittance_details. Not vendor notes.
+                  Rates write to the factoring profile record (advance_rate / fee_rate / escrow reserve_rate / cash_reserve_rate). Contacts → remittance_details. Not vendor notes.
                 </p>
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Canonical rates (%)</p>
                 <div className="grid grid-cols-2 gap-3">
@@ -1099,7 +1099,8 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                     [
                       ["advanceRatePct", "Advance rate %"],
                       ["feeRatePct", "Fee rate %"],
-                      ["reserveRatePct", "Reserve rate %"],
+                      ["reserveRatePct", "Escrow reserve rate %"],
+                      ["cashReserveRatePct", "Cash reserve rate %"],
                       ["recourseDays", "Recourse days"],
                     ] as const
                   ).map(([key, label]) => (
@@ -1127,6 +1128,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                     <input type="email" className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs" value={profileEditForm.generalEmail} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, generalEmail: e.target.value } : f))} />
                   </label>
                 </div>
+                <label className="block">
+                  <span className="text-xs font-medium text-gray-700">Submission email (purchase reports — "Save and send" default)</span>
+                  <input type="email" className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs" value={profileEditForm.submissionEmail} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, submissionEmail: e.target.value } : f))} data-testid="factoring-profile-submission-email" />
+                </label>
                 <label className="block">
                   <span className="text-xs font-medium text-gray-700">Address</span>
                   <input className="mt-1 w-full rounded-sm border border-gray-300 px-2.5 py-1.5 text-xs" value={profileEditForm.address} onChange={(e) => setProfileEditForm((f) => (f ? { ...f, address: e.target.value } : f))} />

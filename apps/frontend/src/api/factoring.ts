@@ -343,6 +343,7 @@ export type Factor = {
   advance_rate: number;
   fee_rate: number;
   reserve_rate: number;
+  cash_reserve_rate?: number;
   recourse_days: number;
   active: boolean;
   /** Canonical structured profile (not vendor notes). Optional until all clients hydrate. */

@@ -108,14 +108,14 @@ export async function createPurchaseDraft(client: DbClient, input: CreatePurchas
 
   // Expected split from the customer's factor assignment (reserve_rate / fee_rate); Faro's actuals override per line.
   const asOf = input.purchaseDate || companyBusinessDate();
-  const rateByCustomer = new Map<string, { reserve: number; fee: number }>();
+  const rateByCustomer = new Map<string, { reserve: number; cash: number; fee: number }>();
   const lines = [] as Array<Required<PurchaseLineInput> & { customer_id: string; load_id: string | null; settlement_id: string | null }>;
   for (const l of input.lines) {
     const r = byId.get(l.invoice_id)!;
     const customerId = String(r.customer_id);
     if (!rateByCustomer.has(customerId)) {
       const f = await getFactorForCustomer(oci, customerId, asOf, { client: client as never });
-      rateByCustomer.set(customerId, { reserve: Number(f?.reserve_rate ?? 0), fee: Number(f?.fee_rate ?? 0) });
+      rateByCustomer.set(customerId, { reserve: Number(f?.reserve_rate ?? 0), cash: Number(f?.cash_reserve_rate ?? 0), fee: Number(f?.fee_rate ?? 0) });
     }
     const rate = rateByCustomer.get(customerId)!;
     const gross = nonneg(l.gross_cents ?? Number(r.pledge_cents ?? 0), "purchase_line_gross_invalid");
@@ -124,7 +124,7 @@ export async function createPurchaseDraft(client: DbClient, input: CreatePurchas
       invoice_id: l.invoice_id,
       gross_cents: gross,
       escrow_reserve_cents: nonneg(l.escrow_reserve_cents ?? Math.round(gross * rate.reserve), "purchase_line_escrow_invalid"),
-      cash_reserve_cents: nonneg(l.cash_reserve_cents ?? 0, "purchase_line_cash_reserve_invalid"),
+      cash_reserve_cents: nonneg(l.cash_reserve_cents ?? Math.round(gross * rate.cash), "purchase_line_cash_reserve_invalid"),
       fee_cents: nonneg(l.fee_cents ?? Math.round(gross * rate.fee), "purchase_line_fee_invalid"),
       customer_id: customerId,
       load_id: (r.load_id as string | null) ?? null,

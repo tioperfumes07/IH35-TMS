@@ -9,6 +9,8 @@ export type FactorRow = {
   advance_rate: number;
   fee_rate: number;
   reserve_rate: number;
+  /** ROUND 321 item 4: the factor's CASH reserve rate (Faro "Cash Rsv"), separate from the escrow reserve_rate. */
+  cash_reserve_rate: number;
   recourse_days: number;
   active: boolean;
   fee_schedule: unknown[] | null;
@@ -100,6 +102,7 @@ function mapFactorRow(row: Record<string, unknown>): FactorRow {
     advance_rate: toNumber(row.advance_rate),
     fee_rate: toNumber(row.fee_rate),
     reserve_rate: toNumber(row.reserve_rate),
+    cash_reserve_rate: toNumber(row.cash_reserve_rate ?? 0),
     recourse_days: toNumber(row.recourse_days),
     active: Boolean(row.active),
     fee_schedule: Array.isArray(row.fee_schedule) ? row.fee_schedule : null,
@@ -161,6 +164,7 @@ export async function listFactors(
         f.advance_rate::numeric,
         f.fee_rate::numeric,
         f.reserve_rate::numeric,
+        f.cash_reserve_rate::numeric,
         f.recourse_days,
         f.active,
         f.fee_schedule,
@@ -208,6 +212,7 @@ export async function getFactorForCustomer(
         f.advance_rate::numeric,
         f.fee_rate::numeric,
         f.reserve_rate::numeric,
+        f.cash_reserve_rate::numeric,
         f.recourse_days,
         f.active,
         f.fee_schedule,
@@ -324,6 +329,7 @@ export async function createFactor(
           advance_rate::numeric,
           fee_rate::numeric,
           reserve_rate::numeric,
+          cash_reserve_rate::numeric,
           recourse_days,
           active,
           fee_schedule,
@@ -374,6 +380,7 @@ export async function updateFactor(
     advance_rate: number;
     fee_rate: number;
     reserve_rate: number;
+    cash_reserve_rate: number;
     recourse_days: number;
     active: boolean;
     fee_schedule: unknown[] | null;
@@ -406,6 +413,10 @@ export async function updateFactor(
   if (patch.reserve_rate !== undefined) {
     values.push(patch.reserve_rate);
     updates.push(`reserve_rate = $${values.length}::numeric`);
+  }
+  if (patch.cash_reserve_rate !== undefined) {
+    values.push(patch.cash_reserve_rate);
+    updates.push(`cash_reserve_rate = $${values.length}::numeric`);
   }
   if (patch.recourse_days !== undefined) {
     values.push(patch.recourse_days);
@@ -462,6 +473,7 @@ export async function updateFactor(
           advance_rate::numeric,
           fee_rate::numeric,
           reserve_rate::numeric,
+          cash_reserve_rate::numeric,
           recourse_days,
           active,
           fee_schedule,
@@ -502,6 +514,7 @@ export async function updateFactor(
           advance_rate::numeric,
           fee_rate::numeric,
           reserve_rate::numeric,
+          cash_reserve_rate::numeric,
           recourse_days,
           active,
           fee_schedule,
@@ -573,6 +586,7 @@ export async function deactivateFactor(tenantId: string, factorId: string, deps:
         advance_rate::numeric,
         fee_rate::numeric,
         reserve_rate::numeric,
+        cash_reserve_rate::numeric,
         recourse_days,
         active,
         fee_schedule,
