@@ -1,4 +1,9 @@
 {
+  "12029": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-new-units-have-gps-or-deactivation-reason (ORDERS 2026-10-01 E-17): FAILs on any USMCA unit created on/after 2026-10-01 (past a 72 h device grace) that has never reported GPS and carries no deactivation + reason. Read-only; no deactivations."
+  },
   "12005": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-01",

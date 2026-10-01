@@ -1,6 +1,6 @@
 {
   "healthzSha": "8a4592e",
-  "generated_at": "2026-10-01T03:42:56.714Z",
+  "generated_at": "2026-10-01T03:40:02.987Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
@@ -2123,33 +2123,6 @@
   },
   "recentActivity": [
     {
-      "number": 23653,
-      "title": "FINDING: N/A LANE: DOCS (Lead Chrome pass: E-40 DONE, E-42 DONE, E-41 RED -- aborted transaction in engine-status probes; E-44 pending URL)",
-      "state": "merged",
-      "mergedAtCt": "09/30/2026, 10:42 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23653",
-      "sha": "b83bee2874",
-      "committedAtIso": "2026-09-30T22:42:31-05:00"
-    },
-    {
-      "number": 23652,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL (CLAIM-RESERVE: verify-step 12029 for E-17 fleet roster guard)",
-      "state": "merged",
-      "mergedAtCt": "09/30/2026, 10:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23652",
-      "sha": "2127a0fccb",
-      "committedAtIso": "2026-09-30T22:41:43-05:00"
-    },
-    {
-      "number": 23651,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL -- Round 306 E-31: Samsara Routes push with Samsara's own ids + stop coordinates (flag OFF)",
-      "state": "merged",
-      "mergedAtCt": "09/30/2026, 10:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23651",
-      "sha": "3aa1acb612",
-      "committedAtIso": "2026-09-30T22:41:00-05:00"
-    },
-    {
       "number": 23649,
       "title": "FINDING: N/A LANE: NON-FINANCIAL -- Round 306 E-29: 342 GeoJSON fences never fired; border direction measured; auto-status load writes flag-OFF",
       "state": "merged",
@@ -2211,6 +2184,33 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23639",
       "sha": "9ced3f9c6f",
       "committedAtIso": "2026-09-30T22:29:54-05:00"
+    },
+    {
+      "number": 23640,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL (owner order: no handoffs -- each seat builds its engine end to end; every building seat gets its own migration band; standing LANE_CROSS ruling)",
+      "state": "merged",
+      "mergedAtCt": "09/30/2026, 10:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23640",
+      "sha": "0f9ab3ef96",
+      "committedAtIso": "2026-09-30T22:29:18-05:00"
+    },
+    {
+      "number": 23641,
+      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migrations 202615100000 + 202615110000 for CC-2's own engines, owner order no-handoff)",
+      "state": "merged",
+      "mergedAtCt": "09/30/2026, 10:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23641",
+      "sha": "c98a48f0ea",
+      "committedAtIso": "2026-09-30T22:29:14-05:00"
+    },
+    {
+      "number": 23632,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL (E-14 PM auto-engine: daily 03:30 CT, E-03 -> E-06 -> ABSENT, no guessed baseline, WO flag-OFF)",
+      "state": "merged",
+      "mergedAtCt": "09/30/2026, 10:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23632",
+      "sha": "fa7100a2f5",
+      "committedAtIso": "2026-09-30T22:26:35-05:00"
     }
   ]
 }

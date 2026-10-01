@@ -21,7 +21,10 @@ export type SamsaraTrailer = { id: string; raw: Record<string, unknown> };
 export type SamsaraAddress = { id: string; raw: Record<string, unknown> };
 export type SamsaraRouteStopInput = {
   externalIds: Ih35SamsaraExternalIds;
-  addressId: string;
+  /** A Samsara address id, when the stop's place is linked to one (E-07). */
+  addressId?: string;
+  /** ROUND 306 E-31: shape measured live -- {address: string, latitude: number, longitude: number}. */
+  singleUseLocation?: { address: string; latitude: number; longitude: number };
   scheduledArrivalTime?: string;
   scheduledDepartureTime?: string;
   notes?: string;
@@ -1365,6 +1368,9 @@ export class SamsaraClient {
     name: string;
     unitId: string;
     driverId?: string | null;
+    /** ROUND 306 E-31: Samsara's OWN ids (mirror-first). Samsara has no ih35Unit/ih35Driver external ids. */
+    samsaraVehicleId: string;
+    samsaraDriverId?: string | null;
     stops: SamsaraRouteStopInput[];
   }): Promise<{ id: string; created: boolean }> {
     const token = this._token();
@@ -1374,8 +1380,8 @@ export class SamsaraClient {
     const body = {
       name: input.name.slice(0, 255),
       externalIds: buildIh35SamsaraExternalIds({ ih35Load: input.loadId }),
-      vehicleId: `ih35Unit:${input.unitId}`,
-      ...(input.driverId ? { driverId: `ih35Driver:${input.driverId}` } : {}),
+      vehicleId: input.samsaraVehicleId,
+      ...(input.samsaraDriverId ? { driverId: input.samsaraDriverId } : {}),
       settings: {
         routeStartingCondition: "departFirstStop",
         routeCompletionCondition: "arriveLastStop",
@@ -1383,7 +1389,8 @@ export class SamsaraClient {
       },
       stops: input.stops.map((stop, index) => ({
         externalIds: buildIh35SamsaraExternalIds(stop.externalIds),
-        addressId: stop.addressId,
+        ...(stop.addressId ? { addressId: stop.addressId } : {}),
+        ...(stop.singleUseLocation ? { singleUseLocation: stop.singleUseLocation } : {}),
         sequenceNumber: index + 1,
         ...(stop.scheduledArrivalTime ? { scheduledArrivalTime: stop.scheduledArrivalTime } : {}),
         ...(stop.scheduledDepartureTime ? { scheduledDepartureTime: stop.scheduledDepartureTime } : {}),
