@@ -229,3 +229,9 @@ B-1 · what changed: mount QBO JE register at `/banking/register` + `/banking/re
 
 **2026-10-01T12:10Z · B-2 BANK DEPOSITS · branch `cursor/b2-bank-deposits-c89b`**
 B-2 · what changed: accounting.deposits + deposit_lines (mig 202615171200); create/void service posts bank_deposit JE (Dr bank / Cr UF + optional cash-back); GET undeposited + POST/void/batch routes; MakeDepositPage at /banking/deposits (single + §23 batch grid); Banking subnav Deposits; match sweeps skip receipts already on a live deposit. Guard: verify-bank-deposits-make-deposit. · LIVE PROOF: guard --selftest PASS; backend+frontend tsc exit 0. Chrome /banking/deposits UNVERIFIED: FE deploy pending; Neon apply mig pending. · NEXT: B-3 Batch Settlements after merge.
+
+**2026-10-01T10:50Z · B-2 MERGED + NEON APPLIED · PR #23770 · `1420bb6617`**
+B-2 Make Deposit merged. Neon USMCA: `accounting.deposits` + `deposit_lines` CREATED; ledger `_system._schema_migrations` stamped `202615171200_accounting_bank_deposits.sql`. · NEXT: B-3 Batch Settlements.
+
+**2026-10-01T11:05Z · B-3 BATCH SETTLEMENTS · branch `cursor/b3-batch-settlements-c89b`**
+B-3 · what changed: GET eligible SET-01 loads + POST batch Save → `postSettlementCreatorInClientTx` only; BatchSettlementsPage at `/driver-finance/settlements/batch` (§23 paste/fill-down/duplicate); Settlements subnav link; reverse EntityLink to load + settlement. Guard: verify-batch-settlements-grid. · LIVE PROOF: guard --selftest PASS; backend tsc exit 0. Chrome UNVERIFIED: FE deploy pending. · NEXT: FAST-MERGE then Driver/Customers/Vendors if still owed.
