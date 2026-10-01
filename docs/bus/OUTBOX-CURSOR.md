@@ -1,3 +1,8 @@
+**2026-10-01T21:07Z · ACK FACTORING-TAKEOVER FULL BUILD · FT1 Payments-to-You · `cursor/r315-c-combobox-leaves-c89b`**
+CURSOR | ACK FACTORING-TAKEOVER | FT1 Payments-to-You | GO
+#23904 MERGED `6ee6770109` AUTH-201 CONSUMED. C combobox leaves shipping this PR then FT1–FT5 one PR each on CC-2 purchase engine only.
+CC-2 WRAP unfinished absorbed: steps 4–8 + Factor Setup FE (email + cash_reserve_rate) — Cursor builds. No second engine. No Chrome-as-proof.
+
 **2026-10-01T20:45Z · C COMBOBOX LEAVES · `cursor/r315-c-combobox-leaves-c89b`**
 ACK: CURSOR | ACK FACTORING-TAKEOVER | QBO-FINISH-THEN-B4 | GO
 B9 AUTH-201 PR #23904 (live CONSUMED). C: 3 Combobox hosts → required.json leaves:
