@@ -1302,5 +1302,10 @@
     "claimed_by": "cursor",
     "claimed_at": "2026-09-30",
     "purpose": "ROUND 274 voided_at/status CHECKs + driver_liabilities drift repair + check reinstate cols + plaid re-point"
+  },
+  "202615150900": {
+    "claimed_by": "cc-3",
+    "claimed_at": "2026-10-01",
+    "purpose": "E-09 retirement of dispatch.stop_arrivals: dispatch.detention_events.geofence_event_id uuid NULL REFERENCES geo.geofence_events(id) + index -- detention links to the canonical fence arrival event instead of the retiring stop_arrivals row (stop_arrival_id kept, nullable, history)."
   }
 }
