@@ -26,6 +26,7 @@
     "accounting.related_party_loan_schedule",
     "accounting.vendor_credits",
     "accounting.vendor_payment_methods",
+    "banking.bank_account_tieouts",
     "banking.bank_accounts",
     "banking.bank_transaction_splits",
     "banking.bank_transactions",
@@ -40,7 +41,6 @@
     "banking.reconciliation_sessions",
     "banking.transfers",
     "driver_finance.abandonment_chargebacks",
-    "driver_finance.settlement_line_item_splits",
     "driver_finance.cash_advance_owner_approval_audit",
     "driver_finance.cash_advance_request_audit",
     "driver_finance.driver_advances",
@@ -58,6 +58,7 @@
     "driver_finance.escrow_ledger",
     "driver_finance.historical_settlement_attribution_items",
     "driver_finance.historical_settlement_attributions",
+    "driver_finance.settlement_line_item_splits",
     "driver_finance.settlement_lines",
     "driver_finance.settlement_payment_events",
     "driver_finance.signed_acknowledgments",
@@ -66,7 +67,9 @@
     "factoring.customer_factor_assignment",
     "factoring.factor",
     "factoring.letter_of_release",
-    "factoring.reserve_movement"
+    "factoring.reserve_movement",
+    "fuel.fuel_card_assignments"
   ],
-  "unprotected_count": 89
+  "unprotected_count": 88,
+  "measured_at": "2026-10-01"
 }
