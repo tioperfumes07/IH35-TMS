@@ -6,7 +6,7 @@ import { Button } from "../../../components/Button";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
-import { EntityPicker } from "../../../components/EntityPicker";
+import { CatalogReferenceSelect } from "../../../components/legal/CatalogReferenceSelect";
 import { getVendor } from "../../../api/mdata";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
@@ -165,7 +165,7 @@ export function TruckLeaseCreatorModal({ open, operatingCompanyId, onClose, onSa
                 <div className="sm:col-span-2">
                   <label className="mb-0.5 block text-xs font-semibold text-gray-500">Lessee vendor *</label>
                   {/* CLS-SILENT-CAP: EntityPicker server-search — no capped listVendors roster. */}
-                  <EntityPicker
+                  <CatalogReferenceSelect
                     kind="vendor"
                     allowCreate
                     nestedInDrawer
