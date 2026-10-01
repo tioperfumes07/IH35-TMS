@@ -14,6 +14,9 @@ const REQUIRED = [
   { file: "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx", needles: ['label: "PM Due"', 'label: "Faults"', 'label: "In Shop"', 'label: "Cost/mi"', "maintenancePrimarySubNavItems"] },
   { file: "apps/frontend/src/router/route-manifest.ts", needles: ["pm_due:", "faults:", "in_shop:", "cost_per_mile:", '"/maintenance/pm-schedule"', '"/maintenance/fault-code-alerts"'] },
   { file: "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx", needles: ["NavyPageSubNav items={maintenancePrimarySubNavItems()}", "data-testid=\"maintenance-shell-r313\""] },
+  // ROUND 319 — each WO list row EntityLinks unit/vendor/bill/JE (§10-B), not detail-only.
+  { file: "apps/frontend/src/pages/maintenance/components/WorkOrdersTable.tsx", needles: ['kind="unit"', 'kind="vendor"', 'kind="bill"', 'kind="journal_entry"', "linked_bill_id", "linked_journal_entry_id"] },
+  { file: "apps/backend/src/maintenance/work-orders.routes.ts", needles: ["linked_bill_id", "linked_journal_entry_id", "linked_work_order_uuid"] },
 ];
 
 function check() {
