@@ -1015,3 +1015,101 @@ duplicate indexes. 202615100000 is the single owner of complaints load/unit link
 **Owner decisions pending:** `PROD_READONLY_DATABASE_URL` secret value; status vs deactivated_at on
 T120/T149/T150/T151/USMCA-001; `PM_AUTO_ENGINE_CREATE_WORK_ORDERS` switch (PM due is expected-empty until
 seeding — 96 schedules, 0 baselines).
+
+## Extra row 9 — Neon branch sweep (tiny-field-89581227) — DONE
+**what:** 88 branches total; 1 production (`br-fancy-credit-akjnd07a`, primary). 87 non-production, ALL older than 24h (newest 2026-09-26). Every branch reports `created_by: Jorge Pablo` via `console` — all seats share the owner's Neon credentials, so the creator field cannot tell seats apart; ownership below is by NAME only.
+**deleted (CC-1's own, unambiguous `cc1-*`):** `br-summer-grass-akgqhc0i` cc1-r232-settlement-repost-rehearse · `br-super-bird-akxhplor` cc1-r102-1-a-void-stamp-rehearse-2026-09-23 · `br-lingering-surf-ak6vl591` cc1-round125-fuel-rehearsal-1790180777 · `br-late-king-akfwlrff` cc1-r159-wirefee-rehearsal. Verified: search `cc1` now returns 0.
+**remaining for the Lead: 83 branches, 760 GB logical** (archived 67, ready 16). Not touched — not CC-1's. `claude-verify-b4-…` (07-22) left: "claude" names no single seat.
+```
+-- CC-2 (3)
+br-plain-mouse-akjigngx  2026-09-25T09:37  archived  15.34GB  cc2-r153-6-fuel-remediation-rehearsal-2026-09-25
+br-billowing-lake-akmom1dj  2026-09-25T12:59  ready     15.36GB  cc2-r153-bill-accept-rehearsal-2026-09-25
+br-empty-rice-akqh08we  2026-09-25T16:03  ready     15.39GB  cc2-check-engine-pr3-rehearsal
+-- CC-3 (6)
+br-orange-hat-akbo91eg  2026-08-08T04:15  archived  11.72GB  cc3-verify-4753-4744
+br-old-poetry-akuaihf9  2026-09-23T02:23  ready     14.95GB  cc3-e10-void-runner-proving-ground
+br-snowy-cake-ak9meo9f  2026-09-23T12:22  ready     14.95GB  cc3-e10-round102-proving-ground
+br-broad-cloud-ak70gyyf  2026-09-23T14:36  archived  14.96GB  cc3-round112-proving-ground
+br-silent-wave-akgj1aen  2026-09-23T16:21  ready     14.96GB  cc3-round125-never-posted-proving-ground
+br-summer-credit-akrmg6ew  2026-09-23T16:40  archived  14.97GB  cc3-round127-phase7-proving-ground
+-- CURSOR (1)
+br-sweet-math-akyen17f  2026-09-23T00:59  ready     14.74GB  cursor-test-TRUNCATED-NOT-A-PRE-PURGE-SNAPSHOT
+-- Claude (unattributed) (1)
+br-purple-dust-akb83gjo  2026-07-22T16:39  archived   4.54GB  claude-verify-b4-driver-default-account-2026-07-22
+-- LEAD (6)
+br-spring-dream-akk31fyt  2026-09-23T02:19  ready     14.95GB  lead-purge-dryrun-2026-09-23
+br-shiny-math-akg2qf20  2026-09-23T02:39  ready     14.93GB  lead-migration-test-202614290000
+br-bitter-bonus-akx4zu6l  2026-09-23T13:08  ready     14.95GB  lead-e10-rehearsal-2026-09-23-1305
+br-silent-water-ak0nfqcm  2026-09-25T12:44  ready     15.35GB  lead-fuel-close-rehearsal-2026-09-25
+br-super-waterfall-akf39qt8  2026-09-26T01:52  ready     15.49GB  lead-test-202614380000-samsara-opco
+br-wispy-voice-akxgoq66  2026-09-26T02:36  ready     15.49GB  lead-test-202614380000-v2-inline-fk
+-- LEAD snapshot (3)
+br-lingering-term-aklb268j  2026-09-22T20:43  ready     14.92GB  PRE-PURGE-SNAPSHOT-2026-09-22
+br-raspy-fog-akl1n2n2  2026-09-23T04:06  ready     14.94GB  PRE-PURGE-SNAPSHOT-2026-09-23-DO-NOT-WRITE
+br-morning-math-akbxhnmd  2026-09-23T05:27  ready     14.94GB  PRE-PURGE-SNAPSHOT-2026-09-23-RUN2-ATOMIC
+-- MCP migration (unattributed) (5)
+br-floral-cake-akj726vv  2026-07-26T17:30  archived   6.03GB  mcp-migration-2026-07-26T17-30-47
+br-small-dew-ak3tor9p  2026-07-30T17:34  archived   7.08GB  mcp-migration-2026-07-30T17-34-12
+br-delicate-frost-akqfx782  2026-08-13T01:24  archived  11.88GB  mcp-migration-2026-08-13T01-24-41
+br-wandering-sun-ak2n9746  2026-08-22T22:45  archived  12.42GB  mcp-migration-2026-08-22T22-45-43
+br-delicate-feather-akiswi33  2026-08-22T23:11  archived  12.43GB  mcp-migration-2026-08-22T23-11-44
+-- unattributed (58)
+br-rapid-union-akz208ej  2026-05-23T00:11  archived   1.57GB  tmp-replay-prevalidate-0199-0214
+br-fragrant-queen-ak1nobvs  2026-05-28T03:32  archived   1.63GB  tmp-block04-asset-ui-verify
+br-fragrant-rain-ak3z8v0r  2026-05-28T13:17  archived   1.66GB  saf-06-fresh-verify-20260528
+br-noisy-lake-akpyolsy  2026-06-08T00:15  archived   1.71GB  rls-bill-expense-lines-test
+br-wispy-wave-akqrhtiy  2026-06-12T18:39  archived   1.75GB  ci-migration-test
+br-sparkling-cloud-ak0g8f5c  2026-06-24T23:49  archived    1.9GB  w2-catalog-test
+br-fancy-silence-ake0hq1z  2026-06-25T00:46  archived    1.9GB  reconcile-1463-verify
+br-damp-rice-akkewyok  2026-06-25T03:15  archived    1.9GB  factory-catalogs-test
+br-wild-voice-ak69kk1c  2026-06-25T14:06  archived   1.91GB  audit-rls-test
+br-dark-frog-akv3sa1p  2026-06-25T22:24  archived   1.92GB  events-1491-verify
+br-lucky-mountain-aki9uozi  2026-06-27T21:16  archived   1.95GB  af1-v1fix-eb536add
+br-tiny-boat-ak6t9g2r  2026-06-29T13:23  archived   1.97GB  guard-verify-1632-rls-blocka
+br-round-glade-ak33tj41  2026-06-29T13:23  archived   1.97GB  verify-rls-block-a-coder
+br-divine-union-akk2bdnt  2026-06-29T15:01  archived   1.97GB  verify-rls-force-tail-coder
+br-falling-glitter-aki6j241  2026-06-29T19:58  archived   1.98GB  verify-1645-qbo-sync-isolation
+br-bold-river-aktfi29q  2026-06-29T22:46  archived   1.98GB  staging-money-test
+br-misty-river-akbrvhj8  2026-06-30T05:20  archived   1.98GB  guard-verify-1679-expense-path
+br-wispy-math-akurw7q9  2026-06-30T05:50  archived   1.98GB  guard-verify-wo-expense-1679
+br-green-sun-ak78y8h8  2026-06-30T15:21  archived   1.99GB  guard-verify-1687-voidcancel
+br-little-bonus-akemu6ub  2026-07-04T03:37  archived   2.05GB  usmca-import-test
+br-solitary-forest-akbad0yh  2026-07-04T16:30  archived   2.05GB  opening-je-tieout-test
+br-autumn-base-akk95azy  2026-07-06T01:56  archived   2.08GB  p0b-audit-log-lockdown-dryrun
+br-square-surf-ak885rnp  2026-07-06T03:54  archived   2.08GB  dryrun-p2-p4-2026-07-05
+br-mute-pine-akrbusi6  2026-07-06T07:06  archived   2.09GB  predeploy-repro-2026-07-06
+br-nameless-bread-ak999ufm  2026-07-11T14:39  archived   2.23GB  ceremony-fk-vendcust-parity-2026-07-11
+br-small-star-akuhkehv  2026-07-15T14:45  archived   2.33GB  guard-validate-held-migrations
+br-blue-flower-aklzi6re  2026-07-19T22:45  archived   3.74GB  guard-2724-proof
+br-patient-sound-akck1q2h  2026-07-20T14:57  archived    3.9GB  test-unbilled-revenue-2026-07-20
+br-young-dream-ak4axvb8  2026-07-25T17:42  archived    5.8GB  guard-apply-validate-2026-07-25
+br-silent-voice-ak77dr37  2026-07-29T00:56  archived   6.52GB  ob01-throwaway-validate
+br-twilight-breeze-ak07mvwt  2026-07-31T20:13  archived   7.37GB  acct-r24-proforma-rehearse-20260731
+br-dry-silence-akqywit1  2026-08-02T19:12  archived   9.66GB  rehearse-inv-cat01-2026-08-02
+br-wild-cake-ak17ogzv  2026-08-03T19:33  archived  10.25GB  loan08-rehearsal
+br-falling-dew-aksttr2j  2026-08-03T21:17  archived  10.28GB  rehearse-acct-f99-escrow-side-2026-08-03
+br-autumn-king-akkubn24  2026-08-06T16:42  archived  11.61GB  rehearse-acct-f142-0806
+br-raspy-base-akbu39th  2026-08-07T00:42  archived  11.64GB  rehearse-acct-f146-ar-lines
+br-solitary-block-ak055c0z  2026-08-08T00:34  archived  11.71GB  rehearse-acct-f174-void-state
+br-soft-pine-akr8xlf4  2026-08-08T01:23  archived  11.72GB  rehearse-acct-f177-worm-actor
+br-winter-tooth-akz2dec6  2026-08-08T01:40  archived  11.72GB  rehearse-acct-f178-money-audit
+br-divine-sunset-akprgsch  2026-08-08T01:43  archived  11.72GB  rehearse-acct-f178-v2
+br-bitter-waterfall-ak5yetf5  2026-08-11T01:06  archived  11.83GB  rehearse-202612480900-bill-void-markers
+br-hidden-river-akgzl80v  2026-08-11T01:22  archived  11.83GB  rehearse-202612481000-vendor-types-description
+br-calm-surf-ak4an4fd  2026-08-11T17:30  archived  11.84GB  rehearse-202612481100-invoice-line-item-fk
+br-wispy-wave-akkcuou3  2026-08-11T17:42  archived  11.84GB  rehearse-acct-f330-ap-reversal
+br-divine-sunset-akzroqmi  2026-08-11T18:07  archived  11.84GB  rehearse-acct-f331-prepaid-void
+br-noisy-lab-aky7xe86  2026-08-16T20:59  archived  11.97GB  guard-union-test-2026-08-16
+br-small-lake-ak5keqpa  2026-09-08T05:18  archived  14.16GB  rehearsal-settlement-reversal-2026-09-08
+br-withered-scene-akxx56xn  2026-09-08T05:32  archived  14.16GB  rehearsal-full-reverse-2026-09-08
+br-royal-grass-ak4y2evz  2026-09-08T06:35  archived  14.17GB  rebuild-phase1-rehearsal-2026-09-08
+br-small-silence-akmbih3c  2026-09-09T02:14  archived  14.23GB  rehearse-scopefix-14v28
+br-old-hall-akvjjtzc  2026-09-10T19:22  archived  14.35GB  reg048-rehearsal-20260910
+br-bitter-cake-akkjlzdf  2026-09-10T22:44  archived  14.35GB  rehearse-truck-lock-2026-09-10
+br-mute-mode-akit3szb  2026-09-11T19:55  archived  14.39GB  rehearse-settlement-rebuild-2026-09-11
+br-lucky-waterfall-akfrtqza  2026-09-11T20:05  archived  14.39GB  rehearse-settlement-rebuild-2b-2026-09-11
+br-nameless-water-aka2ews6  2026-09-13T20:19  archived  14.47GB  b5-load-reassignment-rehearsal
+br-fancy-bread-akdjd5lp  2026-09-13T20:31  archived  14.47GB  b5-full-recut-rehearsal-2
+br-mute-boat-ak2p387r  2026-09-13T20:39  archived  14.47GB  b5-full-recut-rehearsal-3
+br-silent-salad-ak4flpy4  2026-09-22T21:02  ready     15.05GB  FEEDER-DRYRUN-2026-09-22
+```
