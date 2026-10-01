@@ -94,7 +94,7 @@ async function queryUnitFinancialRow(
           l.id,
           l.assigned_unit_id,
           l.rate_total_cents,
-          COALESCE(l.miles_practical, l.miles_shortest, 0)::bigint AS trip_miles
+          COALESCE(l.miles_practical, 0) /* practical (billed) basis only -- ORDER-2026-09-04: never blended with shortest */::bigint AS trip_miles
         FROM mdata.loads l
         WHERE l.operating_company_id = $1::uuid
           AND l.assigned_unit_id = $2::uuid
@@ -251,7 +251,7 @@ async function queryFleetAverages(client: DbClient, operatingCompanyId: string, 
           l.id,
           l.assigned_unit_id,
           l.rate_total_cents,
-          COALESCE(l.miles_practical, l.miles_shortest, 0)::bigint AS trip_miles
+          COALESCE(l.miles_practical, 0) /* practical (billed) basis only -- ORDER-2026-09-04: never blended with shortest */::bigint AS trip_miles
         FROM mdata.loads l
         WHERE l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL
@@ -374,7 +374,7 @@ export async function getComparableMetrics(
   const res = await client.query<{ unit_id: string; maintenance_cents: string; miles: string }>(
     `
       WITH load_scope AS (
-        SELECT l.id, l.assigned_unit_id, COALESCE(l.miles_practical, l.miles_shortest, 0)::bigint AS trip_miles
+        SELECT l.id, l.assigned_unit_id, COALESCE(l.miles_practical, 0) /* practical (billed) basis only -- ORDER-2026-09-04: never blended with shortest */::bigint AS trip_miles
         FROM mdata.loads l
         WHERE l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL

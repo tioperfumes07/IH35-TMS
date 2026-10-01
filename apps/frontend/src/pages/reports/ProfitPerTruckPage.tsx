@@ -1,3 +1,4 @@
+import { formatNumberTable } from "../../lib/money";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -136,7 +137,15 @@ export function ProfitPerTruckPage() {
         ),
       },
       { key: "load_count", label: "Loads", sortable: true, className: "text-right", cellClass: "text-right" },
-      { key: "miles_driven", label: "Miles", sortable: true, className: "text-right", cellClass: "text-right" },
+      { key: "miles_driven", label: "Practical mi (billed)", sortable: true, className: "text-right", cellClass: "text-right" },
+      {
+        key: "real_driven_miles",
+        label: "Real driven mi",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (r) => (r.real_driven_miles == null ? <span title={r.real_driven_reason ?? undefined}>—</span> : formatNumberTable(r.real_driven_miles, 1)),
+      },
       { key: "revenue_cents", label: "Revenue", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.revenue_cents) },
       { key: "driver_pay_cents", label: "Driver pay", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.driver_pay_cents) },
       { key: "fuel_cents", label: "Fuel", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.fuel_cents) },
@@ -144,7 +153,15 @@ export function ProfitPerTruckPage() {
       { key: "net_profit_cents", label: "Net profit", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.net_profit_cents) },
       { key: "margin_pct", label: "Margin", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => pct(r.margin_pct) },
       { key: "revenue_per_mile_cents", label: "Rev/mi", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.revenue_per_mile_cents) },
-      { key: "cost_per_mile_cents", label: "Cost/mi", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.cost_per_mile_cents) },
+      { key: "cost_per_mile_cents", label: "Cost/mi · practical", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.cost_per_mile_cents) },
+      {
+        key: "cost_per_real_mile_cents",
+        label: "Cost/mi · real driven",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (r) => (r.cost_per_real_mile_cents == null ? <span title={r.real_driven_reason ?? undefined}>—</span> : money(r.cost_per_real_mile_cents)),
+      },
       { key: "profit_per_mile_cents", label: "Profit/mi", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.profit_per_mile_cents) },
       {
         key: "flags",
@@ -189,7 +206,7 @@ export function ProfitPerTruckPage() {
       "Type",
       "Driver",
       "Loads",
-      "Miles",
+      "Practical miles (billed)",
       "Revenue",
       "DriverPay",
       "Fuel",
@@ -275,7 +292,7 @@ export function ProfitPerTruckPage() {
           <thead>
             <tr>
               <th>Unit</th><th>Type</th><th>Driver</th>
-              <th style="text-align:right">Loads</th><th style="text-align:right">Miles</th>
+              <th style="text-align:right">Loads</th><th style="text-align:right">Practical mi</th>
               <th style="text-align:right">Revenue</th><th style="text-align:right">Net</th>
               <th style="text-align:right">Margin</th><th style="text-align:right">$/mi</th>
               <th>Flags</th>
@@ -304,7 +321,7 @@ export function ProfitPerTruckPage() {
       <ReportsSubNav />
       <PageHeader
         title="Per-truck CPM dashboard"
-        subtitle="Real cost-per-mile, revenue-per-mile, and margin by fleet unit"
+        subtitle="Cost, revenue and profit per mile by truck — practical (billed) and real driven (odometer) miles, each labelled"
         backHref="/reports"
         breadcrumb={["Reports", "Per-Truck CPM Dashboard"]}
         actions={
