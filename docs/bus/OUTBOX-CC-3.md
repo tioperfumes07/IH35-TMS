@@ -1392,3 +1392,17 @@ the same units burned 17,290.1 gal -> fills on file cover only 73% of the fuel u
 Samsara finishes (72 h). FINDING for the owner: ~27% of August's fuel is not on USMCA's books (likely bought on the TRANSPORTATION
 card / Relay key — CC-2's E-20 finding); the quarterly return cannot be filing-grade until those fills are on the books.
 guard: scripts/verify-ifta-filing-export-honest.mjs + --selftest PASS.
+
+## 2026-10-01 — E-30 addition: templated driver prompts (arrival / fuel stop) — built; flag OFF
+what: integrations/samsara/messaging/driver-prompts.service.ts + 15-min cron (DRIVER_PROMPTS_ENABLED=true to schedule). From the
+canonical fence events: entering the load's own stop fence -> "Arrival recorded at <stop> for load <n> (<time> CT). Please confirm the
+arrival in the IH35 driver app." (confirmation_request); a real stop (>= E-03's 3-min dwell) in a fuel_stop fence during exactly one
+on-road load -> "Fuel stop recorded at <fence> (load <n>, <time> CT). Please upload the fuel receipt in the IH35 driver app." Each is a
+SYSTEM message in the load's chat thread (created with the load's primary driver when missing), idempotent per fence event, then delivered
+to the driver's Samsara app by the shared delivery (now also for system prompts; SAMSARA_DRIVER_MESSAGING_ENABLED still gates it).
+DEFECT FIXED on the way (shared chat service): postMessage called events.log_event with 8 args; the text overload defaults source to NULL
+and events.event_log.source is NOT NULL -> EVERY chat post failed (chat.messages = 0 rows ever). Now passes source 'chat'.
+getOrCreateLoadThread accepts a system caller (no office participant) — additive.
+proof (rolled back, last 24 h): 21 fuel-stop prompts posted for real stops (13 drive-bys / no-single-load skipped), each with its event
+log row; re-run posted 0 (idempotent). e.g. load 13631: "Fuel stop recorded at Love's #615 — Carthage, TX (load 13631, Sep 30, 9:00 PM CT)".
+guard: scripts/verify-driver-prompts-flag-off-idempotent.mjs + --selftest PASS; vitest chat + messaging 6/6.
