@@ -30,6 +30,8 @@ apps/backend/src/maintenance/pm-due-engine.service.ts
 apps/backend/src/maintenance/__tests__/pm-current-odometer.test.ts
 apps/backend/src/maint/pm.routes.ts
 apps/backend/src/maintenance/work-orders.routes.ts
+apps/backend/src/maintenance/two-section-service.ts
+apps/backend/src/maintenance/__tests__/work-order-linkage-e16.test.ts
 apps/backend/src/maintenance/pm-auto-engine.cron.ts
 apps/backend/src/maintenance/__tests__/pm-auto-engine-e14.test.ts
 apps/backend/src/system/engine-status.catalog.ts
@@ -202,6 +204,10 @@ TABLES: none. The Lead owns no module code and no tables. Anything else the Lead
 # **E-14 (ORDERS 2026-10-01 CC-1 row 1):** `maintenance/pm-auto-engine.cron.ts` (the engine's own
 # schedule) and `system/engine-status.catalog.ts` -- the E-14/E-15 rows ONLY (the orders' "engine status
 # row (E-41 reads it)"); every other row in that catalog stays the Lead's.
+#
+# **E-16 (ORDERS 2026-10-01 CC-1 row 3):** `work-orders.routes.ts` (detail linkage + three dates) and
+# `two-section-service.ts` (persisting the three dates on create) -- UNASSIGNED, assigned to CC-1 by
+# the orders; guarded by CC-1's step 11965.
 
 ## SHARED — any seat, but say so in the PR body
 docs/**

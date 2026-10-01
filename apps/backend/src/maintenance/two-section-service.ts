@@ -72,6 +72,10 @@ export type TwoSectionHeader = {
   wo_priority?: "routine" | "urgent" | "immediate" | null;
   // W-FIX-8: render-v5 §A Close date/time → existing maintenance.work_orders.closed_at (no migration).
   closed_at?: string | null;
+  // E-16 (migration 202615120000): owner's three dates -- real columns, never notes.
+  reported_at?: string | null;
+  in_shop_at?: string | null;
+  expected_release_at?: string | null;
   // C9 (HOLD migration 202609180000) — post-insert; 42703-safe until owner Neon-applies.
   customer_id?: string | null;
   tax_rate_pct?: number | null;
@@ -332,6 +336,18 @@ export async function createWorkOrderWithLines(
         header.closed_at ?? null,
         wo.id,
       ]
+    );
+  }
+
+  if (header.reported_at != null || header.in_shop_at != null || header.expected_release_at != null) {
+    await client.query(
+      `UPDATE maintenance.work_orders
+         SET reported_at = COALESCE($1::timestamptz, reported_at),
+             in_shop_at = COALESCE($2::timestamptz, in_shop_at),
+             expected_release_at = COALESCE($3::timestamptz, expected_release_at),
+             updated_at = now()
+       WHERE id = $4`,
+      [header.reported_at ?? null, header.in_shop_at ?? null, header.expected_release_at ?? null, wo.id]
     );
   }
 

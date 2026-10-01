@@ -19,6 +19,7 @@ import { isWoInvoiceMismatch, validateWoVendorInvoiceTotals } from "./wo-cost-va
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { assertWorkOrderCostFinancialLink } from "./work-order-financial-link.js";
+import { driverAtTimeSql } from "./driver-attribution.js";
 
 const workOrderStatusSchema = z.enum(["open", "in_progress", "waiting_parts", "complete", "cancelled"]);
 const workOrderTypeSchema = z.enum(["pm", "repair", "tire", "accident"]);
@@ -194,6 +195,10 @@ const createWorkOrderV5Schema = z.object({
     // render-v5 header (migration 202606221200 #1353) — persisted post-insert in the service.
     opened_at: z.string().datetime({ offset: true }).optional(),
     closed_at: z.string().datetime({ offset: true }).optional(), // W-FIX-8: § A Close date/time → closed_at
+    // E-16 (migration 202615120000): owner's three dates, real columns.
+    reported_at: z.string().datetime({ offset: true }).optional().nullable(),
+    in_shop_at: z.string().datetime({ offset: true }).optional().nullable(),
+    expected_release_at: z.string().datetime({ offset: true }).optional().nullable(),
     authorized_by_user_id: z.string().uuid().optional(),
     authorization_number: z.string().trim().max(120).optional(),
     service_location_type: z.enum(["shop", "mobile", "roadside"]).optional(),
@@ -242,7 +247,21 @@ const updateWorkOrderSchema = z.object({
   authorization_number: z.string().trim().max(120).optional(),
   service_location_type: z.enum(["shop", "mobile", "roadside"]).optional(),
   repaired_by: z.enum(["in_house", "outside_vendor"]).optional(),
+  // E-16: non-cost dates, safe to PATCH after an AP document posts.
+  reported_at: z.string().datetime({ offset: true }).nullable().optional(),
+  in_shop_at: z.string().datetime({ offset: true }).nullable().optional(),
+  expected_release_at: z.string().datetime({ offset: true }).nullable().optional(),
 });
+
+/** E-16: reported <= in shop <= expected release, when two of them are both known. Never reorders. */
+export function workOrderDateOrderError(d: { reported_at?: string | null; in_shop_at?: string | null; expected_release_at?: string | null }): string | null {
+  const t = (v?: string | null) => (v ? new Date(v).getTime() : null);
+  const r = t(d.reported_at), i = t(d.in_shop_at), e = t(d.expected_release_at);
+  if (r != null && i != null && i < r) return "in_shop_at_before_reported_at";
+  if (i != null && e != null && e < i) return "expected_release_at_before_in_shop_at";
+  if (r != null && e != null && e < r) return "expected_release_at_before_reported_at";
+  return null;
+}
 
 const transitionSchema = z.object({
   new_status: workOrderStatusSchema,
@@ -430,6 +449,66 @@ async function maintenanceReady(client: any) {
     `SELECT to_regclass('maintenance.work_orders') IS NOT NULL AS ok`
   );
   return Boolean((res.rows[0] as { ok?: boolean } | undefined)?.ok);
+}
+
+type LinkageClient = {
+  query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
+};
+
+/**
+ * E-16 (ORDERS 2026-10-01 CC-1 row 3) -- one work order, every hub it links to: unit, driver AT THE
+ * TIME (driverAtTimeSql -- never re-inlined), vendor, the A/P bills and expenses that carry
+ * linked_work_order_uuid, and the journal entries those documents posted. Read-only.
+ */
+export async function loadWorkOrderLinkage(client: LinkageClient, companyId: string, workOrderId: string) {
+  const head = await client.query<{
+    unit_id: string | null; unit_number: string | null; driver_at_time_id: string | null; driver_at_time_name: string | null;
+    vendor_id: string | null; vendor_name: string | null; at: string | null;
+  }>(
+    `SELECT w.unit_id::text, u.unit_number,
+            dat.driver_id::text AS driver_at_time_id,
+            NULLIF(TRIM(COALESCE(dd.first_name, '') || ' ' || COALESCE(dd.last_name, '')), '') AS driver_at_time_name,
+            COALESCE(w.external_vendor_id, w.vendor_id)::text AS vendor_id, v.vendor_name,
+            COALESCE(w.opened_at, w.created_at)::text AS at
+       FROM maintenance.work_orders w
+       LEFT JOIN mdata.units u ON u.id = w.unit_id
+       ${driverAtTimeSql("w.unit_id", "COALESCE(w.opened_at, w.created_at)", "dat")}
+       LEFT JOIN mdata.drivers dd ON dd.id = dat.driver_id
+       LEFT JOIN mdata.vendors v ON v.id = COALESCE(w.external_vendor_id, w.vendor_id) AND v.operating_company_id = w.operating_company_id
+      WHERE w.operating_company_id = $1::uuid AND w.id = $2::uuid`,
+    [companyId, workOrderId]
+  );
+  const bills = await client.query<{ id: string; display_id: string | null; bill_number: string | null; amount_cents: string; status: string | null; voided_at: string | null }>(
+    `SELECT id::text, display_id, bill_number, amount_cents::text, status, voided_at::text
+       FROM accounting.bills WHERE operating_company_id = $1::uuid AND linked_work_order_uuid = $2::uuid ORDER BY bill_date, id`,
+    [companyId, workOrderId]
+  );
+  const expenses = await client.query<{ id: string; total_amount_cents: string; status: string | null; journal_entry_id: string | null; voided_at: string | null }>(
+    `SELECT id::text, total_amount_cents::text, status, journal_entry_id::text, voided_at::text
+       FROM accounting.expenses WHERE operating_company_id = $1::uuid AND linked_work_order_uuid = $2::uuid ORDER BY id`,
+    [companyId, workOrderId]
+  );
+  const docIds = [...bills.rows.map((b) => b.id), ...expenses.rows.map((e) => e.id)];
+  const jes =
+    docIds.length === 0
+      ? { rows: [] as Array<{ journal_entry_id: string; source_transaction_type: string; source_transaction_id: string }> }
+      : await client.query<{ journal_entry_id: string; source_transaction_type: string; source_transaction_id: string }>(
+          `SELECT DISTINCT p.journal_entry_uuid::text AS journal_entry_id, p.source_transaction_type, p.source_transaction_id::text
+             FROM accounting.journal_entry_postings p
+            WHERE p.operating_company_id = $1::uuid
+              AND p.source_transaction_type IN ('bill', 'expense')
+              AND p.source_transaction_id = ANY($2::uuid[])`,
+          [companyId, docIds]
+        );
+  const h = head.rows[0];
+  return {
+    unit: h?.unit_id ? { id: h.unit_id, unit_number: h.unit_number } : null,
+    driver_at_time: h?.driver_at_time_id ? { id: h.driver_at_time_id, name: h.driver_at_time_name, as_of: h.at } : null,
+    vendor: h?.vendor_id ? { id: h.vendor_id, name: h.vendor_name } : null,
+    bills: bills.rows,
+    expenses: expenses.rows,
+    journal_entries: jes.rows,
+  };
 }
 
 export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
@@ -620,7 +699,8 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (wo.rowCount === 0) return null;
       const lines = await client.query(`SELECT * FROM maintenance.work_order_lines WHERE work_order_uuid = $1 ORDER BY created_at ASC`, [params.data.id]);
       const history = await client.query(`SELECT * FROM maintenance.wo_status_history WHERE work_order_id = $1 ORDER BY created_at ASC`, [params.data.id]);
-      return { ...wo.rows[0], line_items: lines.rows, status_history: history.rows };
+      const linkage = await loadWorkOrderLinkage(client, companyId, params.data.id);
+      return { ...wo.rows[0], line_items: lines.rows, status_history: history.rows, linkage };
     });
 
     if (!detail) return reply.code(404).send({ error: "work_order_not_found" });
@@ -673,6 +753,10 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     const user = authed(req, reply);
     if (!user) return;
     const v5Parsed = createWorkOrderV5Schema.safeParse(req.body ?? {});
+    if (v5Parsed.success) {
+      const v5DateOrderError = workOrderDateOrderError(v5Parsed.data.header);
+      if (v5DateOrderError) return reply.code(422).send({ error: v5DateOrderError });
+    }
 
     // SHAPE-DISCRIMINATE BEFORE FALLING BACK. This endpoint accepts two body shapes: the two-section
     // V5 payload the Create WO modal sends, and a legacy flat one. Previously a V5 payload that failed
@@ -1182,6 +1266,8 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     const companyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
     if (!companyId) return reply.code(400).send({ error: "operating_company_id_required" });
     const body = parsed.data;
+    const dateOrderError = workOrderDateOrderError(body);
+    if (dateOrderError) return reply.code(422).send({ error: dateOrderError });
 
     const result = await withCompany(user.uuid, companyId, async (client) => {
       if (!(await maintenanceReady(client))) return { unavailable: true as const };
@@ -1228,6 +1314,9 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
             authorization_number = COALESCE($15, authorization_number),
             service_location_type = COALESCE($16, service_location_type),
             repaired_by = COALESCE($17, repaired_by),
+            reported_at = COALESCE($19::timestamptz, reported_at),
+            in_shop_at = COALESCE($20::timestamptz, in_shop_at),
+            expected_release_at = COALESCE($21::timestamptz, expected_release_at),
             updated_at = now()
           WHERE id = $1
             AND operating_company_id = $18::uuid
@@ -1252,6 +1341,9 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
           body.service_location_type ?? null,
           body.repaired_by ?? null,
           companyId,
+          body.reported_at ?? null,
+          body.in_shop_at ?? null,
+          body.expected_release_at ?? null,
         ]
       );
       let updated = updatedRes.rows[0] ?? null;

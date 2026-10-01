@@ -26,8 +26,8 @@ function engineClient(opts: { stopEventsLive: boolean; stopOdo: number | null; s
     query: async <T>(sql: string, values?: unknown[]): Promise<{ rows: T[] }> => {
       const rows = (x: unknown[]) => ({ rows: x as T[] });
       if (sql.includes("to_regclass")) {
-        const rel = String(values?.[0]);
-        return rows([{ ok: rel === "telematics.unit_stop_events" ? opts.stopEventsLive : true }]);
+        const isStops = sql.includes("unit_stop_events") || String(values?.[0]) === "telematics.unit_stop_events";
+        return rows([{ ok: isStops ? opts.stopEventsLive : true }]);
       }
       if (sql.includes("pm_auto_engine_settings")) return rows([{ is_paused: false }]);
       if (sql.includes("INSERT INTO maintenance.pm_schedule_runs")) return rows([{ id: "run-1" }]);

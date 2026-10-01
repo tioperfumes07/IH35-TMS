@@ -931,3 +931,76 @@ insert commits: `void runPmAutoEngineAfterManualOdometer(operatingCompanyId)` fr
 `../maintenance/pm-auto-engine.service.js` (fire-and-forget, log on error). CC-1's service-history route
 already calls it.
 **next:** E-15 re-point onto the same source.
+
+## E-15 PM due — BUILT (ORDERS 2026-10-01 row 2) + E-14 manual trigger wired (no hand-off)
+**what:** one shared loader (`maintenance/pm-current-odometer.ts`, `loadPmOdometers`) is now the ONLY
+odometer source for the E-14 cron, the PM due engine and Maintenance Home `/maint/pm/due` + `/schedules`:
+`unit_stop_events` (feature-detected, "E-03 pending") → `odometer_readings` → ABSENT with reason. Latest
+fix / raw_payload / my A-46 in-memory stop recompute retired (superseded by the orders). Baseline NULL or
+≤1 = ABSENT via the shared rule; days-interval schedules listed with reason (no last-service date column);
+every row names its odometer source. The manual-odometer call landed in
+`telematics/odometer-manual.routes.ts` via CC-3 #23643 (same line); CC-1's service-history route calls it too.
+**proof:** live read-only due list — 96 schedules / 16 units, 96 with an odometer (source
+odometer_readings), 0 due dates: 64 mileage schedules NULL baseline (BRK, PM-A, PM-B, TIRE × T122 T124
+T147 T148 T152 T156 T163 T164 T168 T170 T171 T173 T174 T175 T176 T177) + 32 days schedules (COOL, DOT ×
+same 16). Expected-empty until seeding. vitest 26/26, tsc 0, guard 12005 selftest PASS.
+**blocker:** none. **next:** E-16 work-order linkage.
+## E-16 work-order linkage — BUILT (ORDERS 2026-10-01 row 3)
+**what:** `maintenance.work_orders` gains `reported_at`, `in_shop_at`, `expected_release_at` (migration
+202615120000, claimed #23645) — real columns, accepted on create (v5 header) and PATCH, order-checked
+(reported ≤ in shop ≤ expected release, 422 otherwise), returned by detail/list via `w.*`; "—" when NULL
+is Cursor's render. Detail now returns `linkage`: unit, driver AT THE TIME (`driverAtTimeSql`, never
+re-inlined), vendor, bills + expenses via `linked_work_order_uuid`, and their JEs via postings. Reverse:
+unit→WO (A-48 `?unit_id=`), driver→WO (`?driver_id=`), vendor→WO (`?vendor_id=`), bill/expense→WO
+(`linked_work_order_uuid`), JE→bill/expense→WO (postings source). A-40 tire split already live.
+**proof:** live read-only on `WO-T150-AC-08-29-2026-0001-PEND0`: WO→unit T150 and unit→WO both
+resolve; driver-at-time none (T150 dark), no vendor/bill/expense/JE on any USMCA WO yet (unseeded —
+not created). Bill/expense/JE legs proven by test (4/4). Guard step 11965 `checkWorkOrderLinkageBothWays`.
+**blocker:** none. **next:** E-17 fleet roster guard (report already in ROUND 305 A-45).
+## E-17 fleet roster — GUARD BUILT + CORRECTION TO MY A-45 REPORT (ORDERS 2026-10-01 row 4)
+**what:** verify-step 12029 `verify-new-units-have-gps-or-deactivation-reason` — FAILs on any USMCA unit
+created on/after 2026-10-01, past a 72 h device grace, with no GPS ever and no deactivation + reason.
+Read-only, rolled-back txn, RLS completeness discriminator on mdata.units. No deactivations by me.
+**proof:** live exit 0 — 0 new units since 2026-10-01; discriminator 196/196. Same query over all history
+(cutoff moved to 2000): 42 units, every no-GPS unit is deactivated with a written reason. Selftest 4/4.
+**CORRECTION (my ROUND 305 A-45 said "7 InService units dark, poisoning averages" — overstated):**
+T120, T149, T150, T151, USMCA-001, SAM-c4530bd3, SAM-fa16e203 carry `deactivated_at = 2026-08-31` with
+reason "USMCA insurance schedule only — owner 2026-08-31: deactivate". Every engine filters
+`deactivated_at IS NULL`, so the ACTIVE roster is 16 trucks (= the PM schedule set): 15 reporting
+(T147 back online 2026-10-01 01:30Z), T122 dark since 2026-09-26. **Real finding for the owner:** on
+T120/T149/T150/T151/USMCA-001 `status` still reads `InService` while `deactivated_at` is set — the status
+column disagrees with the deactivation. Owner decides whether status should read OutOfService; nothing
+changed. The 7 TRANSPORTATION-named trucks are owner_company_id TRUCKING and deactivated (stale labels).
+**blocker:** none. **next:** row 5 (complaints migration for CC-2).
+## Row 5 — complaints migration for CC-2 E-28 — BUILT
+**→ CC-2: migration number 202615130000** (`202615130000_complaints_load_unit_links_and_owner_categories.sql`).
+`safety.complaints.load_id uuid → mdata.loads(id)` and `unit_id uuid → mdata.units(id)` (nullable,
+partial indexes `idx_complaints_load_id` / `idx_complaints_unit_id`, FKs NOT VALID + VALIDATE,
+lock_timeout 5s). Categories are the catalog (`catalogs.complaint_types`, FK with company), so the owner's
+three are catalog types for USMCA: `LATENESS` (medium), `REFUSED-DISPATCH` (high), `DAMAGE` (high) —
+existence-guarded, ON CONFLICT DO NOTHING. RLS unchanged. Lands with the next deploy (pre-deploy migrate).
+**proof:** rolled-back prod dry run exit 0 — both columns, both FKs `convalidated=true`, 3 catalog rows.
+verify-data-repair-migrations-noop-when-absent PASS.
+**noted for row 6:** catalog also carries coder test types active in USMCA (`CC2TYPECODE`, `CC3TEST`,
+`CODEX_P44_COMPLAINT`) — handled with the test complaints under the owner's void authorization.
+**next:** row 6.
+## Rows 6–8 — DONE
+**Row 6 (coder test complaints):** the three (`5e691a6a…`, `9e52b358…`, `e81cd567…`) were already voided
+2026-10-01 03:32Z by `e4117991…` under AUTH-180 ("coder test fixture, not a real complaint") — verified.
+Under the owner's chat authorization (anyone may void test/sample/demo items) CC-1 deactivated the three
+coder test complaint TYPES still active in USMCA — `CC2TYPECODE` (ad4decd3…), `CODEX_P44_COMPLAINT`
+(1d1727b1…), `CC3TEST` (0c2cccb1…) — `is_active=false`, guarded on 0 live complaints referencing them,
+one transaction + `audit.append_event('catalogs.complaint_type.deactivated', …, 'ORDERS-2026-10-01-CC1-ROW6')`.
+Reversible; nothing deleted.
+**Row 7 (fresh-DB migrate, pm_intervals FK):** fixed in #23602 (merged) — 202614850000 + 202615000000 run
+on prod, recorded-as-applied on non-prod (FRESH_DB_PRODUCTION_DATA_ONLY), telematics.odometer_readings
+bootstrapped on non-prod (prod drift: no migration creates it). Proof: CI's own from-zero migrate on
+#23632 / #23644 applied the full chain (no "Migration failed"); the heavy job now stops later at
+verify:arch-design (frontend sub-nav tabs, Cursor). A Neon branch copies prod data, so CI's empty Postgres
+is the true from-zero proof. Guard: verify-data-repair-migrations-noop-when-absent catches the INSERT shape.
+**Row 8 (CI readonly password) → OWNER:** GitHub Actions secret **`PROD_READONLY_DATABASE_URL`** (connects
+as `ih35_ci_readonly`). Read by `.github/workflows/ci.yml` job **`required-live-load-guard`** (as
+`DATABASE_URL` and `DATABASE_DIRECT_URL`, lines 66–67) and `.github/workflows/prod-postdeploy-verify.yml`
+(`DATABASE_URL`). Update its value to the current `ih35_ci_readonly` connection string; the
+`required-live-load-guard` → `build-typecheck` / `security-audit` / `locked-guards` cascade clears with it.
+**next:** row 9 (Cursor's backend fields).
