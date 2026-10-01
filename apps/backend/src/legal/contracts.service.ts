@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { applyContractLinkage, mergeLinks, signerLinks } from "./contract-linkage.service.js";
 import { z } from "zod";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { withLuciaBypass } from "../auth/db.js";
@@ -16,13 +17,28 @@ type QueryableClient = {
 const contractCreateSchema = z.object({
   template_id: z.string().uuid().optional(),
   template_code: z.string().trim().min(2).max(120).optional(),
-  signer_type: z.enum(["driver", "employee", "customer", "vendor", "other"]),
+  signer_type: z.enum(["driver", "employee", "customer", "vendor", "company", "other"]),
   signer_entity_id: z.string().uuid().optional(),
   signer_name: z.string().trim().min(2).max(200),
   signer_email: z.string().trim().email().optional(),
   signer_phone: z.string().trim().regex(/^\+\d{10,15}$/).optional(),
   language: z.enum(["en", "es", "bilingual"]),
   filled_variables: z.record(z.string(), z.unknown()).default({}),
+  // ROUND 316 (§10-B): what this contract binds — real FKs + link rows (units / trailers / invoices / bills many).
+  links: z
+    .object({
+      customer_id: z.string().uuid().nullable().optional(),
+      vendor_id: z.string().uuid().nullable().optional(),
+      driver_id: z.string().uuid().nullable().optional(),
+      unit_ids: z.array(z.string().uuid()).max(200).optional(),
+      equipment_ids: z.array(z.string().uuid()).max(500).optional(),
+      load_id: z.string().uuid().nullable().optional(),
+      lease_contract_id: z.string().uuid().nullable().optional(),
+      invoice_ids: z.array(z.string().uuid()).max(200).optional(),
+      bill_ids: z.array(z.string().uuid()).max(200).optional(),
+      counterparty_company_id: z.string().uuid().nullable().optional(),
+    })
+    .optional(),
 });
 
 const tokenSendSchema = z.object({
@@ -306,6 +322,13 @@ export async function createContractInstance(
     ]
   );
   const instance = insertRes.rows[0];
+  // ROUND 316 (§10-B): the signer's own FK + everything the contract binds, entity-scoped, both ways.
+  const linkage = await applyContractLinkage(client as never, {
+    operatingCompanyId: args.operatingCompanyId,
+    contractInstanceId: String(instance.id),
+    actorUserId: args.actorUserId,
+    links: mergeLinks(signerLinks(input.signer_type, input.signer_entity_id), input.links ?? {}),
+  });
   await appendContractAuditLog(client, {
     operatingCompanyId: args.operatingCompanyId,
     contractTemplateId: String(template.id),
@@ -316,6 +339,7 @@ export async function createContractInstance(
       template_version: template.version,
       signer_type: input.signer_type,
       signer_name: input.signer_name,
+      links_written: linkage.linked,
     },
     actorUserId: args.actorUserId,
     actorName: args.actorName,
