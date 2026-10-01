@@ -120,7 +120,28 @@ async function fetchAdvanceDetail(client: any, advanceId: string, operatingCompa
             AND i2.operating_company_id = fa.operating_company_id
         )::int AS invoice_count,
         (SELECT l.load_number FROM mdata.loads l
-          WHERE l.id = fa.source_load_id AND l.operating_company_id = fa.operating_company_id) AS source_load_number
+          WHERE l.id = fa.source_load_id AND l.operating_company_id = fa.operating_company_id) AS source_load_number,
+        -- R313 Cursor item 2: bank-wire reverse hop (matched_factoring_advance_id stamped by bank-recon match).
+        (SELECT bt.id FROM banking.bank_transactions bt
+          WHERE bt.matched_factoring_advance_id = fa.id
+            AND bt.operating_company_id = fa.operating_company_id
+          ORDER BY bt.transaction_date DESC NULLS LAST, bt.created_at DESC
+          LIMIT 1) AS matched_bank_transaction_id,
+        (SELECT bt.transaction_date::text FROM banking.bank_transactions bt
+          WHERE bt.matched_factoring_advance_id = fa.id
+            AND bt.operating_company_id = fa.operating_company_id
+          ORDER BY bt.transaction_date DESC NULLS LAST, bt.created_at DESC
+          LIMIT 1) AS matched_bank_transaction_date,
+        (SELECT COALESCE(bt.merchant_name, bt.description) FROM banking.bank_transactions bt
+          WHERE bt.matched_factoring_advance_id = fa.id
+            AND bt.operating_company_id = fa.operating_company_id
+          ORDER BY bt.transaction_date DESC NULLS LAST, bt.created_at DESC
+          LIMIT 1) AS matched_bank_transaction_description,
+        (SELECT bt.amount_cents FROM banking.bank_transactions bt
+          WHERE bt.matched_factoring_advance_id = fa.id
+            AND bt.operating_company_id = fa.operating_company_id
+          ORDER BY bt.transaction_date DESC NULLS LAST, bt.created_at DESC
+          LIMIT 1) AS matched_bank_transaction_amount_cents
       FROM accounting.factoring_advances fa
       -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): the advance is scoped, the factoring-company
       -- vendor it names was not. This supplies the vendor NAME shown on the advance.
@@ -302,7 +323,9 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
               FROM accounting.invoices i
               WHERE i.factoring_advance_id = fa.id
                 AND i.operating_company_id = fa.operating_company_id
-            )::int AS invoice_count
+            )::int AS invoice_count,
+            (SELECT l.load_number FROM mdata.loads l
+              WHERE l.id = fa.source_load_id AND l.operating_company_id = fa.operating_company_id) AS source_load_number
           -- CLS-JOIN-ENTITY-UNSCOPED: where[0] is always "fa.operating_company_id = $1::uuid" (set
           -- unconditionally above), so this is already scoped at runtime -- the static entity-scope
           -- guard cannot see a predicate assembled through a JS array, only literal SQL text, so a

@@ -131,6 +131,9 @@ export type FactoringAdvance = {
   recourse_reason: string | null;
   notes: string | null;
   invoice_count: number;
+  /** Pre-invoice purchase load (migration 202615170800); also reachable via linked invoices. */
+  source_load_id?: string | null;
+  source_load_number?: string | null;
 };
 
 export type FactoringAdvanceDetail = FactoringAdvance & {
@@ -143,6 +146,11 @@ export type FactoringAdvanceDetail = FactoringAdvance & {
     total_cents: number;
     factoring_status: string;
   }>;
+  /** Bank wire / deposit line matched to this advance (banking.bank_transactions.matched_factoring_advance_id). */
+  matched_bank_transaction_id?: string | null;
+  matched_bank_transaction_date?: string | null;
+  matched_bank_transaction_description?: string | null;
+  matched_bank_transaction_amount_cents?: number | string | null;
 };
 
 export type FactorReserveBalance = {

@@ -235,6 +235,30 @@ export function FactoringDetailPage() {
             <span className="text-xs text-gray-900">{detail.factoring_company_name}</span>
           </DataPanelRow>
           <DataPanelRow>
+            <span className="text-xs text-gray-600">Load</span>
+            <span className="text-xs text-gray-900" data-testid="factoring-detail-load-link">
+              {detail.source_load_id ? (
+                <EntityLink kind="load" id={detail.source_load_id} label={entityLabel(detail.source_load_number, detail.source_load_id, "Load")} />
+              ) : (
+                "—"
+              )}
+            </span>
+          </DataPanelRow>
+          <DataPanelRow>
+            <span className="text-xs text-gray-600">Bank wire</span>
+            <span className="text-xs text-gray-900" data-testid="factoring-detail-bank-wire-link">
+              {detail.matched_bank_transaction_id ? (
+                <EntityLink
+                  kind="bank_transaction"
+                  id={detail.matched_bank_transaction_id}
+                  label={entityLabel(detail.matched_bank_transaction_description, detail.matched_bank_transaction_id, "Bank wire")}
+                />
+              ) : (
+                "—"
+              )}
+            </span>
+          </DataPanelRow>
+          <DataPanelRow>
             <span className="text-xs text-gray-600">Submitted</span>
             <span className="text-xs text-gray-900">{new Date(detail.submitted_at).toLocaleString()}</span>
           </DataPanelRow>

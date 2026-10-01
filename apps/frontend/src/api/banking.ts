@@ -100,6 +100,9 @@ export type PlaidBankTransaction = {
   /** Canonical transfer stamped by transfer recognition; returned with a human reference/memo label. */
   matched_transfer_id?: string | null;
   matched_transfer_label?: string | null;
+  /** Bank ↔ factoring advance both-way (R313 Cursor item 2). */
+  matched_factoring_advance_id?: string | null;
+  matched_factoring_advance_display_id?: string | null;
   institution_name?: string | null;
   account_name?: string | null;
   account_mask?: string | null;

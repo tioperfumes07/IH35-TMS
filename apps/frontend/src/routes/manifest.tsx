@@ -7,7 +7,7 @@ const LoadBankingLinkagePage = React.lazy(() =>
 );
 const LoadHistoryPage = React.lazy(() => import("../pages/dispatch/LoadHistoryPage"));
 import React from "react";
-import { Navigate, Route, useLocation, useParams } from "react-router-dom";
+import { Navigate, Route, useLocation, useNavigate, useParams } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useAuth } from "../auth/useAuth";
 import { useCompanyContext } from "../contexts/CompanyContext";
@@ -196,6 +196,12 @@ const MaintenanceReportsPage = React.lazy(() => import("../pages/maintenance/rep
 const Compliance425CPage = React.lazy(() => import("../pages/maintenance/compliance/Compliance425CPage").then((m) => ({ default: m.Compliance425CPage })));
 const CashAdvancesHomePage = React.lazy(() => import("../pages/cash-advances/CashAdvancesHome").then((m) => ({ default: m.CashAdvancesHomePage })));
 const FactoringHomePage = React.lazy(() => import("../pages/factoring/FactoringHome").then((m) => ({ default: m.FactoringHomePage })));
+const FactoringAdvanceDrawer = React.lazy(() =>
+  import("../pages/factoring/FactoringAdvanceDrawer").then((m) => ({ default: m.FactoringAdvanceDrawer }))
+);
+const StatementsTieOutPage = React.lazy(() =>
+  import("../pages/factoring/StatementsTieOutPage").then((m) => ({ default: m.StatementsTieOutPage }))
+);
 const BatchWizard = React.lazy(() => import("../pages/factoring/BatchWizard").then((m) => ({ default: m.BatchWizard })));
 const BatchDetail = React.lazy(() => import("../pages/factoring/BatchDetail").then((m) => ({ default: m.BatchDetail })));
 const FactorAdmin = React.lazy(() => import("../pages/factoring/FactorAdmin").then((m) => ({ default: m.FactorAdmin })));
@@ -724,6 +730,7 @@ type FactoringTabId =
   | "purchase_report"
   | "account_summary"
   | "fees_paid"
+  | "advances"
   | "aging"
   | "reserve"
   | "chargebacks_overpayments"
@@ -771,6 +778,17 @@ function FactoringBatchDetailRoute() {
   }
 
   return <BatchDetail batchId={id} companyId={selectedCompanyId} />;
+}
+
+function FactoringAdvanceDrawerRoute() {
+  const { id = "" } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  return (
+    <>
+      <FactoringHomePage initialTab="advances" />
+      <FactoringAdvanceDrawer advanceId={id} open={Boolean(id)} onClose={() => navigate("/factoring/advances")} />
+    </>
+  );
 }
 
 // Locked UI-surface sentinel paths verified by architecture guard.
@@ -2525,6 +2543,30 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <FactoringTabRoute tabId="aging" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/advances/:id"
+          element={
+            <ProtectedRoute>
+              <FactoringAdvanceDrawerRoute />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/advances"
+          element={
+            <ProtectedRoute>
+              <FactoringTabRoute tabId="advances" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/statements"
+          element={
+            <ProtectedRoute>
+              <StatementsTieOutPage />
             </ProtectedRoute>
           }
         />

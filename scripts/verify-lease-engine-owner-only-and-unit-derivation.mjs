@@ -8,6 +8,9 @@
  * LIVE (DATABASE_URL): FAIL on any active asset marked leased with no live (active, signed) lease contract that is
  * not in the owner-pending baseline; REPORT the baseline and entries now covered (remove them).
  */
+export const ALLOW_OFFLINE_SKIP =
+  "baseline + static Owner-only checks run offline; live leased-with-no-contract query runs only with DATABASE_URL (CI + live gate)";
+
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";

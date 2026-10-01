@@ -25,6 +25,8 @@ import {
   type FactoringSettingsRow,
   type FactoringUnappliedCashRow,
 } from "../../api/factoring";
+import { listFactoringAdvances } from "../../api/accounting";
+import { formatUsdCents } from "../../lib/money";
 import { EntityPicker } from "../../components/EntityPicker";
 import { useStagedListFilters } from "../../components/table";
 import {
@@ -83,6 +85,8 @@ const SUBNAV = [
   { id: "debtor_receipts", label: "Debtor Receipts" },
   { id: "purchase_report", label: "Purchase Report" },
   { id: "account_summary", label: "Account Summary" },
+  // R313 Cursor item 2: advances list on /factoring home (drawer at /factoring/advances/:id).
+  { id: "advances", label: "Advances" },
   { id: "fees_paid", label: "Fees Paid" },
   { id: "aging", label: "Aging" },
   { id: "reserve", label: "Reserve" },
@@ -698,6 +702,22 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       }),
     [recourseQuery.data?.invoices],
   );
+  // R313 Cursor item 2: aging by factor — group the same rows under each factor name.
+  const agingByFactor = useMemo(() => {
+    const groups = new Map<string, { factor: string; rows: typeof agingRows; totals: Record<AgingBucket | "balance", number> }>();
+    for (const row of agingRows) {
+      const factor = row.active_factor_name?.trim() || summaryQuery.data?.active_factor_name || "Unknown factor";
+      let g = groups.get(factor);
+      if (!g) {
+        g = { factor, rows: [], totals: { "0-30": 0, "31-60": 0, "61-90": 0, "90+": 0, balance: 0 } };
+        groups.set(factor, g);
+      }
+      g.rows.push(row);
+      g.totals[row.bucket] += Number(row.invoice_amount ?? 0);
+      g.totals.balance += Number(row.invoice_amount ?? 0);
+    }
+    return [...groups.values()].sort((a, b) => a.factor.localeCompare(b.factor));
+  }, [agingRows, summaryQuery.data?.active_factor_name]);
   const agingTotals = useMemo(() => {
     const totals: Record<AgingBucket | "balance", number> = { "0-30": 0, "31-60": 0, "61-90": 0, "90+": 0, balance: 0 };
     for (const row of agingRows) {
@@ -706,6 +726,12 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     }
     return totals;
   }, [agingRows]);
+
+  const advancesListQuery = useQuery({
+    queryKey: ["factoring", "home-advances", companyId],
+    queryFn: () => listFactoringAdvances(companyId, { status: "active", limit: 200 }),
+    enabled: Boolean(companyId),
+  });
 
   // GLB-25157: Payments to You — same recourseQuery rows sorted by factored_at (advanced_at)
   // with a running total of advance_amount (the actual dollar Faro paid IH35 per advance).
@@ -2271,6 +2297,78 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
         </div>
       ) : null}
 
+      {tab === "advances" ? (
+        <div className="space-y-3" data-testid="factoring-home-advances-panel">
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="text-xs font-medium text-gray-900">Advances</div>
+              <Link to="/factoring/statements" className="text-xs font-medium text-slate-700 hover:underline">
+                Statement tie-out →
+              </Link>
+            </div>
+            {advancesListQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load advances"
+                {...formatQueryErrorDetail(advancesListQuery.error)}
+                onRetry={() => void advancesListQuery.refetch()}
+              />
+            ) : (
+              <ParityTable
+                columns={[
+                  {
+                    key: "display_id",
+                    label: "Advance #",
+                    sortable: true,
+                    render: (row) => (
+                      <EntityLink kind="factoring_advance" id={row.id} label={entityLabel(row.display_id, row.id, "Advance")} />
+                    ),
+                  },
+                  { key: "factoring_company_name", label: "Factor", sortable: true },
+                  { key: "submitted_at", label: "Submitted", sortable: true, render: (row) => fmtDate(row.submitted_at) },
+                  { key: "status", label: "Status", sortable: true, render: (row) => row.status.replaceAll("_", " ") },
+                  {
+                    key: "invoice_count",
+                    label: "Invoices",
+                    sortable: true,
+                    cellClass: "text-right",
+                  },
+                  {
+                    key: "advance_amount_cents",
+                    label: "Advance",
+                    sortable: true,
+                    cellClass: "text-right",
+                    render: (row) => formatUsdCents(row.advance_amount_cents),
+                  },
+                  {
+                    key: "reserve_amount_cents",
+                    label: "Reserve",
+                    sortable: true,
+                    cellClass: "text-right",
+                    render: (row) => formatUsdCents(row.reserve_amount_cents),
+                  },
+                  {
+                    key: "source_load_id",
+                    label: "Load",
+                    render: (row) =>
+                      row.source_load_id ? (
+                        <EntityLink kind="load" id={row.source_load_id} label={entityLabel(row.source_load_number, row.source_load_id, "Load")} />
+                      ) : (
+                        "—"
+                      ),
+                  },
+                ]}
+                rows={advancesListQuery.data?.rows ?? []}
+                rowKey={(row) => row.id}
+                loading={advancesListQuery.isLoading}
+                emptyText="No active factoring advances."
+                storageKey="factoring-home-advances"
+                tableTestId="factoring-home-advances-table"
+              />
+            )}
+          </div>
+        </div>
+      ) : null}
+
       {tab === "aging" ? (
         <div className="space-y-3">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
@@ -2279,9 +2377,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
               <div className="flex items-center gap-2">
                 {summaryDetailToggle(agingView, setAgingView, "factoring-aging")}
                 <div className="text-xs text-gray-500" data-testid="factoring-aging-date-basis-note">
-                Aged by factored date (the date each invoice entered the factoring register) —
-                the real portal's "View by Invoice Date / Purchase Date / Fund Date" toggle is not
-                wired this pass; this data model has one real date field to age against.
+                Aged by factored date · grouped by factor (R313). Date-basis toggle (Invoice/Purchase/Fund) not wired — one real date field.
                 </div>
               </div>
             </div>
@@ -2315,79 +2411,97 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 onRetry={() => void recourseQuery.refetch()}
               />
             ) : (
-              <div className="overflow-x-auto">
-                <ParityTable
-                  columns={[
-                    {
-                      key: "factoring_advance_id",
-                      label: "ID",
-                      sortable: true,
-                      render: (row: (typeof agingRows)[number]) => (
-                        <EntityLink kind="factoring_advance" id={row.factoring_advance_id} label={entityLabel(row.invoice_reference, row.factoring_advance_id, "Advance")} />
-                      ),
-                    },
-                    { key: "memos", label: "Memos", render: () => "—" },
-                    {
-                      key: "invoice_reference",
-                      label: "Invoice",
-                      sortable: true,
-                      render: (row: (typeof agingRows)[number]) =>
-                        row.invoice_id ? <EntityLink kind="invoice" id={row.invoice_id} label={row.invoice_reference} /> : row.invoice_reference,
-                    },
-                    {
-                      key: "customer_name",
-                      label: "Debtor",
-                      sortable: true,
-                      render: (row: (typeof agingRows)[number]) =>
-                        row.customer_id ? <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} /> : row.customer_name,
-                    },
-                    { key: "po_ref", label: "PO", render: () => "—" },
-                    { key: "other_ref", label: "Other Ref", render: () => "—" },
-                    // OWNER MEGA-REPORT 2026-09-09 ("settlement numbers are missing from
-                    // Factoring entirely"): a real settlement EntityLink where the advance has one
-                    // (settlement_id/settlement_display_id), falling back to the same
-                    // lc_settlement_number text Purchase Report's identical addition uses when the
-                    // advance has no linked settlement row yet -- no new backend query either way.
-                    { key: "load_number", label: "Load Number", sortable: true, alwaysVisible: true,
-                      sortValue: (row: (typeof agingRows)[number]) => row.lc_load_number ?? "",
-                      render: (row: (typeof agingRows)[number]) => row.load_id ? <EntityLink kind="load" id={row.load_id} label={row.lc_load_number ?? "—"} /> : row.lc_load_number ?? "—" },
-                  {
-                      key: "settlement_number",
-                      label: "Settlement/Tour",
-                      alwaysVisible: true,
-                      sortable: true,
-                      render: (row: (typeof agingRows)[number]) =>
-                        row.settlement_id ? (
-                          <EntityLink kind="settlement" id={row.settlement_id} label={row.settlement_display_id ?? row.lc_settlement_number ?? "—"} />
-                        ) : (
-                          row.lc_settlement_number || "—"
-                        ),
-                    },
-                    { key: "factored_at", label: "Inv Date", sortable: true, render: (row: (typeof agingRows)[number]) => fmtDate(row.factored_at) },
-                    { key: "recourse_expiry_date", label: "Due Date", sortable: true, render: (row: (typeof agingRows)[number]) => fmtDate(row.recourse_expiry_date) },
-                    { key: "age", label: "Age", sortable: true, cellClass: "text-right", render: (row: (typeof agingRows)[number]) => row.age },
-                    { key: "b0_30", label: "0-30", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "0-30" ? fmtCurrency(row.invoice_amount) : "—") },
-                    { key: "b31_60", label: "31-60", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "31-60" ? fmtCurrency(row.invoice_amount) : "—") },
-                    { key: "b61_90", label: "61-90", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "61-90" ? fmtCurrency(row.invoice_amount) : "—") },
-                    { key: "b90_plus", label: "90+", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "90+" ? fmtCurrency(row.invoice_amount) : "—") },
-                    { key: "balance", label: "Balance", sortable: true, cellClass: "text-right font-semibold", render: (row: (typeof agingRows)[number]) => fmtCurrency(row.invoice_amount) },
-                    { key: "purchased", label: "Purchase", render: () => "Y" },
-                  ]}
-                  rows={agingRows}
-                  rowKey={(row) => row.factoring_advance_id}
-                  loading={recourseQuery.isLoading}
-                  emptyText="No invoices inside the aging register."
-                  storageKey="factoring-aging-report"
-                  tableTestId="factoring-aging-table"
-                  footerCells={{
-                    settlement_display_id: `${agingRows.length} records`,
-                    b0_30: fmtCurrency(agingTotals["0-30"]),
-                    b31_60: fmtCurrency(agingTotals["31-60"]),
-                    b61_90: fmtCurrency(agingTotals["61-90"]),
-                    b90_plus: fmtCurrency(agingTotals["90+"]),
-                    balance: fmtCurrency(agingTotals.balance),
-                  }}
-                />
+              <div className="space-y-4" data-testid="factoring-aging-by-factor">
+                {agingByFactor.length === 0 ? (
+                  <p className="text-xs text-gray-500">No invoices inside the aging register.</p>
+                ) : (
+                  agingByFactor.map((group) => (
+                    <div key={group.factor} className="space-y-2" data-testid={`factoring-aging-factor-${group.factor}`}>
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 pb-1">
+                        <div className="text-xs font-semibold text-gray-900">Factor: {group.factor}</div>
+                        <div className="text-xs text-gray-600">
+                          {group.rows.length} · bal {fmtCurrency(group.totals.balance)}
+                        </div>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <ParityTable
+                          columns={[
+                            {
+                              key: "factoring_advance_id",
+                              label: "ID",
+                              sortable: true,
+                              render: (row: (typeof agingRows)[number]) => (
+                                <EntityLink kind="factoring_advance" id={row.factoring_advance_id} label={entityLabel(row.invoice_reference, row.factoring_advance_id, "Advance")} />
+                              ),
+                            },
+                            { key: "active_factor_name", label: "Factor", sortable: true, render: (row: (typeof agingRows)[number]) => row.active_factor_name ?? group.factor },
+                            { key: "memos", label: "Memos", render: () => "—" },
+                            {
+                              key: "invoice_reference",
+                              label: "Invoice",
+                              sortable: true,
+                              render: (row: (typeof agingRows)[number]) =>
+                                row.invoice_id ? <EntityLink kind="invoice" id={row.invoice_id} label={row.invoice_reference} /> : row.invoice_reference,
+                            },
+                            {
+                              key: "customer_name",
+                              label: "Debtor",
+                              sortable: true,
+                              render: (row: (typeof agingRows)[number]) =>
+                                row.customer_id ? <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} /> : row.customer_name,
+                            },
+                            { key: "po_ref", label: "PO", render: () => "—" },
+                            { key: "other_ref", label: "Other Ref", render: () => "—" },
+                            {
+                              key: "load_number",
+                              label: "Load Number",
+                              sortable: true,
+                              alwaysVisible: true,
+                              sortValue: (row: (typeof agingRows)[number]) => row.lc_load_number ?? "",
+                              render: (row: (typeof agingRows)[number]) =>
+                                row.load_id ? <EntityLink kind="load" id={row.load_id} label={row.lc_load_number ?? "—"} /> : row.lc_load_number ?? "—",
+                            },
+                            {
+                              key: "settlement_number",
+                              label: "Settlement/Tour",
+                              alwaysVisible: true,
+                              sortable: true,
+                              render: (row: (typeof agingRows)[number]) =>
+                                row.settlement_id ? (
+                                  <EntityLink kind="settlement" id={row.settlement_id} label={row.settlement_display_id ?? row.lc_settlement_number ?? "—"} />
+                                ) : (
+                                  row.lc_settlement_number || "—"
+                                ),
+                            },
+                            { key: "factored_at", label: "Inv Date", sortable: true, render: (row: (typeof agingRows)[number]) => fmtDate(row.factored_at) },
+                            { key: "recourse_expiry_date", label: "Due Date", sortable: true, render: (row: (typeof agingRows)[number]) => fmtDate(row.recourse_expiry_date) },
+                            { key: "age", label: "Age", sortable: true, cellClass: "text-right", render: (row: (typeof agingRows)[number]) => row.age },
+                            { key: "b0_30", label: "0-30", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "0-30" ? fmtCurrency(row.invoice_amount) : "—") },
+                            { key: "b31_60", label: "31-60", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "31-60" ? fmtCurrency(row.invoice_amount) : "—") },
+                            { key: "b61_90", label: "61-90", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "61-90" ? fmtCurrency(row.invoice_amount) : "—") },
+                            { key: "b90_plus", label: "90+", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "90+" ? fmtCurrency(row.invoice_amount) : "—") },
+                            { key: "balance", label: "Balance", sortable: true, cellClass: "text-right font-semibold", render: (row: (typeof agingRows)[number]) => fmtCurrency(row.invoice_amount) },
+                            { key: "purchased", label: "Purchase", render: () => "Y" },
+                          ]}
+                          rows={group.rows}
+                          rowKey={(row) => row.factoring_advance_id}
+                          loading={recourseQuery.isLoading}
+                          emptyText="No invoices for this factor."
+                          storageKey={`factoring-aging-report-${group.factor}`}
+                          tableTestId={`factoring-aging-table-${group.factor}`}
+                          footerCells={{
+                            settlement_display_id: `${group.rows.length} records`,
+                            b0_30: fmtCurrency(group.totals["0-30"]),
+                            b31_60: fmtCurrency(group.totals["31-60"]),
+                            b61_90: fmtCurrency(group.totals["61-90"]),
+                            b90_plus: fmtCurrency(group.totals["90+"]),
+                            balance: fmtCurrency(group.totals.balance),
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             )}
           </div>

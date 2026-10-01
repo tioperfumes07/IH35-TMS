@@ -2335,6 +2335,14 @@ export function BankingTransactionsDesignView({
                 {links?.load_id ? (
                   <EntityLink kind="load" id={links.load_id} label={entityLabel(links.load_number, links.load_id, "Load")} />
                 ) : null}
+                {tx.matched_factoring_advance_id ? (
+                  <EntityLink
+                    kind="factoring_advance"
+                    id={tx.matched_factoring_advance_id}
+                    label={entityLabel(tx.matched_factoring_advance_display_id, tx.matched_factoring_advance_id, "Factoring advance")}
+                    data-testid={`bank-txn-factoring-advance-${tx.id}`}
+                  />
+                ) : null}
                 {links?.vendor_id ? (
                   <EntityLink kind="vendor" id={links.vendor_id} label={entityLabel(links.vendor_name, links.vendor_id, "Vendor")} />
                 ) : null}

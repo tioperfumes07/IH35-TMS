@@ -1,5 +1,6 @@
 {
   "_note": "ROUND 316: assets marked leased (currently_leased_to_company_id) with NO lease contract when the lease engine landed, 2026-10-01. Owner: every unit is leased to USMCA and he will create each contract himself, backdated. These are OWNER-PENDING (reported, not failed); remove an entry once its contract is signed. Never add one.",
+  "measured_at": "2026-10-01T17:20:00.000Z",
   "owner_pending_unit_numbers": [
     "SAM-32012a58",
     "SAM-9f56aa11",
