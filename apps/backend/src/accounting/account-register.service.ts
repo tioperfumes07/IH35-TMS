@@ -349,6 +349,9 @@ export async function getAccountRegister(
               bt.matched_journal_entry_id = je.id
               OR (p.source_transaction_type = 'expense' AND bt.matched_expense_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'bill' AND bt.matched_bill_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type = 'invoice' AND bt.matched_invoice_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type = 'customer_payment' AND bt.matched_payment_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type = 'bill_payment' AND bt.matched_bill_payment_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'settlement' AND bt.matched_settlement_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'transfer' AND bt.matched_transfer_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'bank_categorization' AND bt.id::text = p.source_transaction_id)
@@ -531,6 +534,9 @@ export async function toggleAccountRegisterCleared(
               bt.matched_journal_entry_id = je.id
               OR (p.source_transaction_type = 'expense' AND bt.matched_expense_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'bill' AND bt.matched_bill_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type = 'invoice' AND bt.matched_invoice_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type = 'customer_payment' AND bt.matched_payment_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type = 'bill_payment' AND bt.matched_bill_payment_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'settlement' AND bt.matched_settlement_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'transfer' AND bt.matched_transfer_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'bank_categorization' AND bt.id::text = p.source_transaction_id)
@@ -652,6 +658,9 @@ export async function saveAccountRegisterInline(
               bt.matched_journal_entry_id = je.id
               OR (p.source_transaction_type = 'expense' AND bt.matched_expense_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'bill' AND bt.matched_bill_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type = 'invoice' AND bt.matched_invoice_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type = 'customer_payment' AND bt.matched_payment_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type = 'bill_payment' AND bt.matched_bill_payment_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'settlement' AND bt.matched_settlement_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'transfer' AND bt.matched_transfer_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'bank_categorization' AND bt.id::text = p.source_transaction_id)

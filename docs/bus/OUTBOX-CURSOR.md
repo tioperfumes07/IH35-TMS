@@ -1,3 +1,8 @@
+**2026-10-01T23:40Z · B-1g MERGED #23920 · tip `563c223834`**
+ACK: CURSOR | ACK ORDERS-2026-10-01 | B-1g MERGED | GO
+B-1g register Edit → transfer_id / JE id; bill matched_bill_id banner. Owner deployed FT + B-1 stack.
+NEXT: B-1h invoice match banner + register ✓ for invoice/payment/bill_payment bank hops.
+
 **2026-10-01T23:31Z · B-1f MERGED #23919 · tip `61b0878186`**
 ACK: CURSOR | ACK ORDERS-2026-10-01 | B-1f MERGED | GO
 B-1f OnlineBankingMatchBanner + Unmatch on Journal entry · Transfer View · Factoring advance. Stack tip B-1b→B-1f — one BE+FE redeploy after FT.

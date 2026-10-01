@@ -278,11 +278,33 @@ export async function enrichInvoice(client: { query: (sql: string, values?: unkn
     `,
     [invoiceId, invoice.operating_company_id]
   );
+  // B-1 §5 — reverse bank hop when banking.bank_transactions.matched_invoice_id is stamped
+  // (bank-invoice-backlink / link-suggestions accept). Read-only; no new GL math.
+  const matchedBankRes = await client.query(
+    `
+      SELECT
+        bt.id::text AS matched_bank_transaction_id,
+        bt.transaction_date::text AS matched_bank_transaction_date,
+        bt.description AS matched_bank_transaction_description,
+        bt.amount_cents::text AS matched_bank_transaction_amount_cents
+      FROM banking.bank_transactions bt
+      WHERE bt.operating_company_id = $2::uuid
+        AND bt.matched_invoice_id = $1::uuid
+      ORDER BY bt.transaction_date DESC, bt.created_at DESC
+      LIMIT 1
+    `,
+    [invoiceId, invoice.operating_company_id]
+  );
+  const matchedBank = matchedBankRes.rows[0] ?? null;
   return {
     ...invoice,
     lines: linesRes.rows,
     payment_applications: applicationsRes.rows,
     journal_entries: journalEntriesRes.rows,
+    matched_bank_transaction_id: matchedBank?.matched_bank_transaction_id ?? null,
+    matched_bank_transaction_date: matchedBank?.matched_bank_transaction_date ?? null,
+    matched_bank_transaction_description: matchedBank?.matched_bank_transaction_description ?? null,
+    matched_bank_transaction_amount_cents: matchedBank?.matched_bank_transaction_amount_cents ?? null,
   };
 }
 
