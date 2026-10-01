@@ -6803,7 +6803,12 @@ action: npx tsx scripts/ops/2026-10-01-cc2-auth196-revrec-duplicates-and-invoice
   DR 1100 / CR 1150 $3,400; invoice 13637 sent, Event 2 JE DR 1100 / CR 1150 $5,200; 12071 LIVE PASS (0 orphan revenue JEs);
   verify-reconciler-exceptions I2 = 12 (ceiling 14).
 expires_at: 2026-10-02T17:00:11Z
-status: OPEN
+status: CONSUMED
+consumed_by: CC-2
+row_counts: 2 reversing JEs (d2ca6542 reverses 4c416f76 load 13626 $3,400; e941171e reverses 715378ea load 13571 $4,900, dated 09-08);
+  invoice 13626 dbf93c60 sent $3,400 + Event 2 JE 0cd3fcfc DR 1100 / CR 1150; invoice 13637 7858b5fd sent $5,200 + Event 2 JE c4d40b35
+proof_query: verify-steps/12071 LIVE PASS (0 orphan revenue JEs among 254); verify-reconciler-exceptions I2 = 11 (ceiling 14); USMCA posted TB net 0
+audit: 1daa7d5a-a7d3-4f02-974e-16461bb8f674 (source CC-2-AUTH-196)
 
 Lead ruling 2026-10-01 16:45Z item 2 ("run the from-load invoice engine on both, send (the gate + A/R post must pass), paste invoice
 ids, JEs, I2"). Send was unblocked by ACCT-F9617 #23831 (latch-owned A/R is the invoice posting). NOT COVERED: any other JE,
@@ -6820,7 +6825,12 @@ scope: USMCA ONLY. Load 90007 (f465285d-fe9a-4b24-bcd7-e5a03cdadc9e, ITS Logisti
 action: npx tsx docs/audit/authorized-ops-scripts/2026-10-01-cc2-auth197-delete-duplicate-load-90007.ts --apply. Rehearsed (rolled back) on branch
   br-silent-fog-ak2l100x: every count above exact, after = 0 load / 0 invoice / 0 JE.
 expires_at: 2026-10-02T17:00:11Z
-status: OPEN
+status: CONSUMED
+consumed_by: CC-2
+row_counts: load 90007, invoice 90007, JEs 1ae2e78a + d324689e deleted; 6 source links, 2 latch rows, 4 postings, 1 invoice line, 2 stops,
+  2 assignment rows, 1 cancellation, 1 charge line, 1 fuel cost row deleted; 2 docs.files, 1 tank event, 1 downtime event kept + unlinked
+proof_query: separate transaction -- load 0 / invoice 0 / JE 0 rows; USMCA posted TB net 0
+audit: efaf7c19-324c-4ae4-821e-0f4135769ab7 (source CC-2-AUTH-197)
 
 Owner in chat to CC-2, 2026-10-01: "I BELIEVE IT IS A DUPLICATE LOAD. LETS DELETE IT, IF I AM INCORRECT WE CREATE IT IN THE FUTURE."
 Lead ruling 2026-10-01 16:45Z item 1: "90007: DELETE ... under one AUTH, keep the audit rows". Measured: 90007 is the only ITS
