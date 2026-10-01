@@ -1,3 +1,5 @@
+import { driverAtTimeSql } from "../maintenance/driver-attribution.js";
+
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
@@ -64,6 +66,12 @@ export function shouldTriggerArrival(distanceFeet: number, lastTriggeredAt: stri
   return elapsedMs >= ARRIVAL_DEDUPE_MINUTES * 60 * 1000;
 }
 
+/**
+ * ROUND 303 T-40 -- this file was one of the 8 sites driver-attribution.ts's own header names as
+ * having independently inlined this exact predicate before the shared helper existed. It was
+ * never actually migrated. Fixed here: delegates to driverAtTimeSql (the one shared fragment),
+ * never a second copy of the boundary condition.
+ */
 async function getDriverForVehicleAtTime(
   client: DbClient,
   operatingCompanyId: string,
@@ -73,14 +81,9 @@ async function getDriverForVehicleAtTime(
   try {
     const res = await client.query<{ driver_id: string | null }>(
       `
-        SELECT a.driver_id::text
-        FROM telematics.vehicle_driver_assignments a
-        WHERE a.operating_company_id = $1::uuid
-          AND a.unit_id = $2::uuid
-          AND a.started_at <= $3::timestamptz
-          AND (a.ended_at IS NULL OR a.ended_at > $3::timestamptz)
-        ORDER BY a.started_at DESC, a.created_at DESC
-        LIMIT 1
+        SELECT driver_at_time.driver_id::text
+        FROM (SELECT 1) _dummy
+        ${driverAtTimeSql("$2::uuid", "$3::timestamptz")}
       `,
       [operatingCompanyId, unitId, ts]
     );
