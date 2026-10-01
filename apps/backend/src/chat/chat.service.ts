@@ -41,13 +41,15 @@ const MESSAGE_COLS =
 /** Get the existing per-load thread or create it (kind='load'), seeding office creator + assigned driver. */
 export async function getOrCreateLoadThread(
   client: Client,
-  args: { operating_company_id: string; load_id: string; actor_user_id: string },
+  args: { operating_company_id: string; load_id: string; actor_user_id: string | null },
 ): Promise<{ id: string; created: boolean }> {
   const existing = await client.query<{ id: string }>(
     `SELECT id FROM chat.threads WHERE operating_company_id = $1::uuid AND load_id = $2 AND kind = 'load' LIMIT 1`,
     [args.operating_company_id, args.load_id],
   );
   if (existing.rows[0]) {
+    // E-30: a SYSTEM caller (driver prompt engine) has no office actor -- nothing to add.
+    if (!args.actor_user_id) return { id: existing.rows[0].id, created: false };
     // ensure the acting office user is a participant (idempotent) so they can see the thread under RLS.
     await client.query(
       `INSERT INTO chat.participants (thread_id, operating_company_id, party_type, office_user_id, role)
@@ -71,11 +73,13 @@ export async function getOrCreateLoadThread(
   );
   const threadId = thread.rows[0].id;
 
-  await client.query(
-    `INSERT INTO chat.participants (thread_id, operating_company_id, party_type, office_user_id, role)
-     VALUES ($1, $2, 'office', $3, 'dispatcher')`,
-    [threadId, args.operating_company_id, args.actor_user_id],
-  );
+  if (args.actor_user_id) {
+    await client.query(
+      `INSERT INTO chat.participants (thread_id, operating_company_id, party_type, office_user_id, role)
+       VALUES ($1, $2, 'office', $3, 'dispatcher')`,
+      [threadId, args.operating_company_id, args.actor_user_id],
+    );
+  }
   if (load.rows[0].assigned_primary_driver_id) {
     await client.query(
       `INSERT INTO chat.participants (thread_id, operating_company_id, party_type, driver_id, role)
@@ -244,8 +248,10 @@ export async function postMessage(
   const evActorType = actorId ? actorType : "system";
   const evActorId = actorId ?? eventSubject.subject_id;
   const ev = await client.query<{ log_event: string }>(
-    `SELECT events.log_event($1, $2, $3, $4, $5, $6, $7::jsonb, $8) AS log_event`,
-    [operatingCompanyId, eventType, evActorType, evActorId, eventSubject.subject_type, eventSubject.subject_id, JSON.stringify(payload), message.server_ts],
+    // source is NOT NULL on events.event_log; the text overload defaults it to NULL, so every chat post failed
+    // (chat.messages had 0 rows ever, measured 2026-10-01). Name the source.
+    `SELECT events.log_event($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9) AS log_event`,
+    [operatingCompanyId, eventType, evActorType, evActorId, eventSubject.subject_type, eventSubject.subject_id, JSON.stringify(payload), message.server_ts, "chat"],
   );
   await client.query(`UPDATE chat.messages SET event_log_id = $2 WHERE id = $1`, [messageId, ev.rows[0].log_event]);
 

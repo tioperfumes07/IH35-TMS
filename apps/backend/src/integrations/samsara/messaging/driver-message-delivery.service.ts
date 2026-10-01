@@ -38,7 +38,9 @@ export async function deliverChatMessageToSamsara(client: Db, messageId: string,
       [messageId]
     )
   ).rows[0];
-  if (!m || m.sender_party_type !== "office" || m.msg_type !== "text" || !m.body?.trim()) return { ...base, outcome: "not_office_text" };
+  // Office texts and the E-30 system driver prompts (arrival / fuel stop) are delivered; nothing else.
+  const deliverable = m && (m.sender_party_type === "office" || m.sender_party_type === "system") && (m.msg_type === "text" || m.msg_type === "confirmation_request");
+  if (!m || !deliverable || !m.body?.trim()) return { ...base, outcome: "not_office_text" };
   const prior = await client.query(
     `SELECT 1 FROM integrations.integration_sync_log
       WHERE operating_company_id = $1::uuid AND integration = 'samsara' AND sync_kind = $2

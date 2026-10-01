@@ -359,6 +359,7 @@ import { registerGeofenceAddressLinkRoutes } from "./integrations/samsara/geofen
 import { initializeSamsaraFaultPollCron } from "./integrations/samsara/fault-poll.cron.js";
 import { initializeHarshEventsPollCron } from "./safety/harsh-events-poll.cron.js";
 import { initializeSamsaraRoutesPushCron } from "./integrations/samsara/routes-push.cron.js";
+import { initializeDriverPromptsCron } from "./integrations/samsara/messaging/driver-prompts.cron.js";
 import { initializeSamsaraDvirPollCron } from "./safety/samsara-dvir-poll.cron.js";
 import { registerMaintPartsRoutes } from "./maint/parts.routes.js";
 import { registerMaintPmRoutes } from "./maint/pm.routes.js";
@@ -1853,6 +1854,7 @@ async function main() {
       app.log.info("[STARTUP] harsh-events-poll-cron initialized");
 
       initializeSamsaraRoutesPushCron(app);
+      initializeDriverPromptsCron(app);
       app.log.info("[STARTUP] samsara-routes-push-cron initialized");
 
       initializeSamsaraDvirPollCron(app);
