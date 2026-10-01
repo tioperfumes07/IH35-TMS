@@ -1488,3 +1488,18 @@ guard: scripts/verify-driver-prompts-flag-off-idempotent.mjs + --selftest PASS; 
 - **Guard:** `verify-telematics-linkage-screens-wired` (8 links).
 - **Not certified live.** A live Chrome walk follows the Lead's deploy. Pre-existing reds on main, not this PR: `verify-table-header-and-date-column`, `verify-ui-control-law`, `verify-no-uuid-label-rendering` (they fail on origin/main without these changes).
 - **E-31 readback poller:** not built yet. Samsara holds **0 routes** (`/fleet/routes` empty, `/fleet/routes/audit-logs/feed` empty), so there is nothing to prove the field names against. It gets built once the routes push runs after the deploy.
+
+## 2026-10-01 — CC-3 HANDOFF STATE (owner at budget limit; session closing)
+
+- **Merged this window:**
+  - #23734: shared loadAtTimeSql, 5 engines; E-03 writer `l.delivered_at` fix
+  - #23737: reverse-link routes; DVIR trailer_equipment_id
+  - #23742: finish on delivery-fence exit
+  - #23754: truck and driver screens; reclassify registry classified
+- **Deploy:** triggered on Render for backend `srv-d7rpem7avr4c73fhp4n0` and web `srv-d7s46dbrjlhs7383i150` from latest main, at the owner's order. The Lead's 81f32a7 / 92fe320 builds were already running.
+- **PENDING, for whoever picks up CC-3:**
+  1. Post live proof after the deploy is live: `unit_stop_events` count, DVIR→load links, `/api/v1/loads/<13625 id>/telematics` JSON, and a Chrome walk of the truck profile and driver Loads/Safety tabs.
+  2. Mount `TelematicsLinksPanel kind="load"` in LoadDetailDrawer under the Geofence Timeline tab (3 lines). This is blocked until `verify-ldt-5-presettlement-readout` is green: 1 USMCA settlement lacks `settlement_model='load_bookended'` (CC-1).
+  3. E-31 readback poller (`/fleet/routes/audit-logs/feed`) and E-32 documents. Both need Samsara routes, and there are 0 today until the routes push runs post-deploy.
+  4. Owner data: 13625 / 13627 / 13638 still carry stale `canceled_at` from the AUTH-093 script; the owner is entering 13625/13638 manually. FAC-2026-00139 has no invoice (CC-2; #23750 adds source_load_id, AUTH-191 pending).
+  5. Flags still OFF: auto-status, master sync. Fuel push, routes, messaging, prompts and fence push are ON per ROUND 310 once deployed.
