@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { requireFactoringPurchaseOwner } from "./owner-only-purchase.js";
 import { currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import {
   factoringBatchCompanyQuerySchema,
@@ -83,6 +84,17 @@ export async function registerFactoringBatchRoutes(app: FastifyInstance) {
     if (!params.success) return validationError(reply, params.error);
     const query = factoringBatchSubmitQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // ROUND 315 OWNER-ONLY LAW: submitting a purchase report to the factor is the Owner's act (403 + audit row).
+    const ownerOk = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+      requireFactoringPurchaseOwner(reply, client, {
+        operatingCompanyId: query.data.operating_company_id,
+        userUuid: user.uuid,
+        role: String(user.role ?? ""),
+        action: "create",
+        targetId: params.data.id,
+      })
+    );
+    if (!ownerOk) return;
 
     try {
       const batch = await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
