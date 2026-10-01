@@ -844,3 +844,13 @@ next_due/last_service (honest -- no unit has a real baseline yet, matches T-37's
 and no open WO (correctly null, T147 has none).
 
 REMAINING: T-43 next in the Round 303 queue.
+
+## CC-3 — ROUND 303 T-43 SHIPPED — one SAMSARA_TOKEN_ENCRYPTION_KEY note, not three UNVERIFIED lines
+
+docs/bus/2026-10-01-CC3-SAMSARA-TOKEN-ENCRYPTION-KEY-NOTE.md -- the variable, where it's set
+(Render only, indexed by name not value in the master-keys doc), what breaks without it (a
+local-dev-session-only AES-GCM auth-tag mismatch, fails safe, zero writes, proven for both T-26
+and T-30), and what the first real tick proves (both crons are already wired at 03:00 CT; the
+first real tick is a clock event against the already-correctly-configured deployed environment,
+not a build task). Future UNVERIFIED notes on this same gap point here instead of repeating the
+explanation.
