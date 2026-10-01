@@ -110,6 +110,31 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
             ORDER BY g.state_updated_at DESC
             LIMIT 1
           ) gvs ON true
+          -- ROUND 303 T-42 -- "what PM or work order is due on arrival." The soonest active
+          -- miles-based PM schedule for this unit (never a sample/test unit, same law as
+          -- Round 303 T-37's PM-writer fix), ranked by next_due_odometer.
+          LEFT JOIN LATERAL (
+            SELECT ps.label, ps.next_due_odometer, ps.last_service_odometer
+            FROM maintenance.pm_schedules ps
+            JOIN mdata.units pu ON pu.id = ps.unit_id AND COALESCE(pu.is_sample_data, false) = false
+            WHERE ps.unit_id = v.unit_id
+              AND ps.operating_company_id = v.operating_company_id
+              AND ps.is_active = true
+              AND ps.interval_kind = 'miles'
+            ORDER BY COALESCE(ps.next_due_odometer, 2147483647) ASC
+            LIMIT 1
+          ) pm ON true
+          -- Any OPEN work order already sitting against this unit -- so "what's due on arrival"
+          -- includes an already-known repair, not only a future PM projection.
+          LEFT JOIN LATERAL (
+            SELECT wo.id, wo.display_id, wo.status, wo.wo_title
+            FROM maintenance.work_orders wo
+            WHERE wo.unit_id = v.unit_id
+              AND wo.operating_company_id = v.operating_company_id
+              AND wo.status IN ('open', 'in_progress', 'waiting_parts', 'draft')
+            ORDER BY wo.opened_at DESC
+            LIMIT 1
+          ) openwo ON true
           ${whereSql}
           ORDER BY
             COALESCE(predicted_yard_arrival_at, now() + interval '999 days') ASC,
@@ -146,6 +171,17 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
         geofence_state: row.geofence_state ?? null,
         geofence_distance_m: row.geofence_distance_m != null ? Number(row.geofence_distance_m) : null,
         geofence_state_updated_at: row.geofence_state_updated_at ?? null,
+        // ROUND 303 T-42 -- what PM or work order is due on arrival. Null is honest (no active
+        // miles-based schedule, or no last_service_odometer baseline on file yet -- Round 303
+        // T-37's own placeholder-baseline rule applies here too: never guess a due state).
+        pm_due_label: row.label ?? null,
+        pm_next_due_odometer: row.next_due_odometer != null ? Number(row.next_due_odometer) : null,
+        pm_has_baseline:
+          row.last_service_odometer != null && Number(row.last_service_odometer) > 1,
+        open_work_order_id: row.id ?? null,
+        open_work_order_display_id: row.display_id ?? null,
+        open_work_order_status: row.status ?? null,
+        open_work_order_title: row.wo_title ?? null,
         issues,
         severe_count: Number(row.severe_count ?? 0),
         warning_count: Number(row.warning_count ?? 0),
