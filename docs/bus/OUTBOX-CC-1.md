@@ -1366,3 +1366,20 @@ executed, 20 passed. Remaining reds are data / scope, not auth:
    proof"). The guard counts cancelled/draft rows too, so voiding does not clear it; clearing them is the Lead's
    purge (snapshot first). CC-1 deletes nothing. → **LEAD.**
 2. `verify-alwaystrack-parity` reports a required CI skip (no execution proof) — CC-3's AlwaysTrack lane. → **CC-3.**
+
+## 2026-10-01 — ROUND 316 LEASE ENGINE + LEGAL CONTRACTS — BUILT (merged; deploy pending)
+
+| # | Piece | PR |
+|---|---|---|
+| — | claims (mig 202615190000 / 0100, steps 12073 / 12077 / 12081; 12085) | #23814, #23832 |
+| 1 | schema: lease lessor vendor, billing mode (owner: 1 bill per unit OR 1 for all), signing, deposit, escalation, expense account, owner close; asset monthly amount; bill <-> lease both ways (bills.lease_contract_id / lease_period_start / lease_bill_key, lines lease / asset / unit / trailer / class); class = unit (classes.unit_id / equipment_id); legal contract FKs + link types; matter customer / vendor / load / reserve JE; createBill + poster honour per-line class | #23818 |
+| 1–2 | lease engine (Owner-only create / sign / close 403 + audit; backdated sign bills every month to now; leased-to derives from the live contract) + monthly lease bill engine through createBill (gated: vendor / unit-trailer / period / account / class; idempotent per key; daily cron 06:10 CT + on demand); legacy posters refuse bill-engine contracts | #23822 |
+| 3 | legal linkage: contracts carry real FKs + link rows (entity-scoped), signer FK derived; matters customer / vendor / load; matter reserve posts a sourced JE; signed lease stamps back | #23829 |
+| 4 | screens: lease creator (billing-mode question, multi-select units / trailers each with monthly amount), /accounting/leases list, lease detail (Sign backdated / Close / bills), lease section on unit + trailer profiles, matter Post reserve | #23835 |
+| 4 | contract pages: ReferenceSelect everywhere (CatalogReferenceSelect, + Add new, capped notice); lease creators send their trucks as real links | #23838 |
+| 5 | print designs: Trailer Lease (same design as Truck Lease) + Transportation Services Agreement, provisioned with the library | #23839 |
+| sweep | 7 frontend calls double-encoded their body (bank deposit create / void, batch settlements, settlement creator preview / post, maintenance idle event, fleet roster void) → server 400; fixed + guard 12085 | #23834 |
+
+Guards: 12073 (live: 31 units + 203 trailers marked leased with no contract → owner-pending, reported), 12077, 12081, 12085.
+Accounting: USMCA rent_expense → 5800 "Leased Trucks from IH35 TRUCKING"; BILL_GL_POSTING_ENABLED on → a lease bill posts Dr 5800 / Cr A/P with class = unit per line. Trailer leases can name their own expense account on the contract.
+**Owner next:** create + sign the first (backdated) lease in /accounting/leases; CC-1 then pastes its bill, JE and unit profile here. Chrome walkthrough is the owner's.
