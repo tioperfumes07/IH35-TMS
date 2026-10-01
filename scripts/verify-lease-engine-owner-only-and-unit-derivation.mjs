@@ -11,6 +11,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "..", "..");
 const LABEL = "verify-lease-engine-owner-only-and-unit-derivation";
@@ -46,6 +47,8 @@ if (process.argv.includes("--selftest")) {
   process.exit(ok ? 0 : 1);
 }
 const problems = checkStatic(real);
+// ROUND 29.9-B: a live guard that cannot connect is a FAIL, never a pass (verify-no-silent-db-skip ratchet).
+await requireLiveDbOrExit({ label: LABEL });
 if (process.env.DATABASE_URL) {
   const { default: pg } = await import("pg");
   const c = new pg.Client({ connectionString: process.env.DATABASE_URL });
@@ -69,6 +72,6 @@ if (process.env.DATABASE_URL) {
     console.log(`${LABEL}: live REPORT -- owner-pending (no contract yet): ${r.pending.length}; now covered by a signed contract (remove from baseline): ${r.covered.map((a) => a.number).join(", ") || "none"}`);
     for (const v of r.violations) problems.push(`${v.kind} ${v.number} is marked leased with no live lease contract and is not owner-pending.`);
   } finally { await c.end(); }
-} else console.log(`${LABEL}: live half SKIP -- no DATABASE_URL.`);
+}
 if (problems.length) { console.error(`${LABEL} FAILED:\n  - ${problems.join("\n  - ")}`); process.exit(1); }
 console.log(`${LABEL}: OK -- lease create/sign/close Owner-only; leased-to derives from the live contract; legacy posters refuse bill-engine contracts.`);

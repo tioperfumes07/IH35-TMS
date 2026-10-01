@@ -8,7 +8,11 @@ import { attributeExpenseToLoad } from "../expense-attribution/attribute.service
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { resolveExpenseCategoryId } from "./expense-category-catalog.js";
-import { postSourceTransaction, reversePostedSourceTransactionInClientTx, PostingEngineError } from "./posting-engine.service.js";
+import { postSourceTransaction, postSourceTransactionInClientTx, reversePostedSourceTransactionInClientTx, PostingEngineError } from "./posting-engine.service.js";
+import { openAndRunIntake } from "../driver-finance/feed-gate/feed-gate.service.js";
+
+/** OWNER LAW 2026-10-01: an expense created in the app always posts; a poster failure refuses the create (transaction rolls back). */
+class ExpensePostRefused extends Error { constructor(public code: string, public detail: string) { super(`expense_post_refused_gl_post_failed:${code}`); } }
 import { todayIso } from "./void.service.js";
 import { canVoid, isVoidEnforcementEnabled } from "./void.service.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
@@ -1306,11 +1310,41 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           source_table: "accounting.expenses",
         });
 
+        // OWNER LAW 2026-10-01 ("an expense/invoice created in the app must always post to the correct accounts"):
+        // post INSIDE the creation transaction. With the entity's EXPENSE_GL_POSTING flag ON (USMCA: ON), a poster
+        // failure throws and the whole create rolls back — no expense row can exist unposted because the poster
+        // refused it. Same mechanism as the invoice send path (#23827). Flag OFF keeps the legacy unposted create.
+        let postedJournalEntryId: string | null = null;
+        if (categoryAccountId && body.payment_account_uuid) {
+          const flagOnInTx = await isEnabled(client, EXPENSE_GL_POSTING_FLAG_KEY, { operating_company_id: body.operating_company_id, user_uuid: String(user.uuid) });
+          if (flagOnInTx) {
+            try {
+              const posting = await postSourceTransactionInClientTx(
+                client,
+                { operating_company_id: body.operating_company_id, source_transaction_type: "expense", source_transaction_id: expenseId },
+                { userId: String(user.uuid) }
+              );
+              postedJournalEntryId = posting.journal_entry_id;
+              await client.query(
+                `UPDATE accounting.expenses
+                    SET status='posted', posting_status='posted', posted_at=now(), journal_entry_id=$2::uuid, updated_at=now()
+                  WHERE id=$1::uuid AND operating_company_id=$3::uuid`,
+                [expenseId, postedJournalEntryId, body.operating_company_id]
+              );
+              await appendCrudAudit(client, user.uuid, "expense.posted", { expense_id: expenseId, journal_entry_id: postedJournalEntryId, source: "record_expense_create_in_tx" }, "info", "ACCT-F9602");
+            } catch (err) {
+              if (err instanceof PostingEngineError) throw new ExpensePostRefused(err.code, err.message);
+              throw err;
+            }
+          }
+        }
+
         return {
           expense_id: expenseId,
           expense_number: expenseNumber,
           category_account_id: categoryAccountId,
           has_payment_account: Boolean(body.payment_account_uuid),
+          posted_journal_entry_id: postedJournalEntryId,
         };
       });
 
@@ -1374,12 +1408,12 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       // gated by EXPENSE_GL_POSTING_ENABLED (owner flag) — when OFF this is a no-op and the expense stays
       // unposted (identical to every other expense today), so flipping the flag is the single activation
       // switch. A posting failure is non-fatal: the expense exists and can be posted later via /:id/post.
-      const created = payload as { expense_id?: string; category_account_id?: string | null; has_payment_account?: boolean };
+      const created = payload as { expense_id?: string; category_account_id?: string | null; has_payment_account?: boolean; posted_journal_entry_id?: string | null };
       const expenseId = created.expense_id ?? "";
-      let posting_status: "posted" | "unposted" = "unposted";
-      let journal_entry_id: string | null = null;
+      let posting_status: "posted" | "unposted" = created.posted_journal_entry_id ? "posted" : "unposted";
+      let journal_entry_id: string | null = created.posted_journal_entry_id ?? null;
       let posting_hold_reason: string | null = null;
-      if (expenseId && created.category_account_id && created.has_payment_account) {
+      if (expenseId && !journal_entry_id && created.category_account_id && created.has_payment_account) {
         // ACC-50 REMOVED (claude/00-SEAT-CONTRACT.md §3 corollary, owner ruling 2026-09-29): "an
         // expense on an open load posts on its transaction date. No guard may block a post because
         // a tour is open. Cost attribution to a load is a reporting join, never a posting delay."
@@ -1418,8 +1452,22 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         }
       }
 
-      return reply.code(201).send({ ...payload, posting_status, journal_entry_id, posting_hold_reason });
+      // FEED GATE (owner law 2026-10-01): record the expense's linkage evidence now (vendor, paid-from, category line,
+      // posted JE, load/unit/driver/class) and hand it back so the creator / batch grid shows the red rows per row.
+      let feed_gate: { intake_id: string; status: string; checks_failed: number; checks_total: number } | null = null;
+      if (expenseId) {
+        try {
+          const run = await openAndRunIntake(String(user.uuid), body.operating_company_id, "expense", expenseId);
+          feed_gate = { intake_id: run.intake.id, status: run.intake.status, checks_failed: run.intake.checks_failed, checks_total: run.intake.checks_total };
+        } catch (err) {
+          await withCompanyScope(user.uuid, body.operating_company_id, (client) =>
+            appendCrudAudit(client, user.uuid, "expense.feed_gate_run_failed", { expense_id: expenseId, message: err instanceof Error ? err.message : String(err) }, "warning", "ACCT-F9602")
+          );
+        }
+      }
+      return reply.code(201).send({ ...payload, posting_status, journal_entry_id, posting_hold_reason, feed_gate });
     } catch (error) {
+      if (error instanceof ExpensePostRefused) return reply.code(409).send({ error: "expense_post_refused_gl_post_failed", code: error.code, message: error.detail });
       const code = (error as { code?: string }).code;
       if (code === "23503") return reply.code(400).send({ error: "invalid_foreign_key" });
       if (code === "23505") return reply.code(409).send({ error: "expense_conflict" });

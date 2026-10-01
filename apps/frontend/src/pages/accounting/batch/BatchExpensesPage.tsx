@@ -25,6 +25,7 @@ import { listCatalogAccounts } from "../../../api/catalog-accounts";
 import { classesCatalogClient } from "../../../api/catalogs-accounting";
 import { listVendors } from "../../../api/mdata";
 import { createExpense } from "../../../api/accounting";
+import { Link } from "react-router-dom";
 import { isExpenseAccount, isPaymentAccount } from "../../../lib/account-picker-scope";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import {
@@ -118,7 +119,7 @@ export function BatchExpensesPage() {
           ...(r.refNo.trim() ? { vendor_document_number: r.refNo.trim() } : {}),
         });
         saved += 1; cents += amount;
-        setRows((prev) => prev.map((x) => (x.key === r.key ? { ...x, status: "saved", error: null, expenseId: res.expense_id } : x)));
+        setRows((prev) => prev.map((x) => (x.key === r.key ? { ...x, status: "saved", error: null, expenseId: res.expense_id, feedGate: res.feed_gate ?? null } : x)));
       } catch (err) {
         failed += 1;
         setRows((prev) => prev.map((x) => (x.key === r.key ? { ...x, status: "error", error: userFacingApiError(err, "Could not save this row") } : x)));
@@ -200,7 +201,7 @@ export function BatchExpensesPage() {
                 <td className="p-1"><input value={r.loadNumber} onChange={(e) => set(r.key, { loadNumber: e.target.value })} className={cellCls(r, "loadNumber")} disabled={r.status === "saved"} placeholder="13xxx" /></td>
                 <td className="p-1"><input value={r.memo} onChange={(e) => set(r.key, { memo: e.target.value })} className={cellCls(r, "memo")} disabled={r.status === "saved"} /></td>
                 <td className="p-1 whitespace-nowrap">
-                  {r.status === "saved" && r.expenseId ? <EntityLink kind="expense" id={r.expenseId} label="Saved → open" /> : r.status === "error" ? <span className="text-red-700" title={r.error ?? ""}>Error: {r.error}</span> : r.status === "saving" ? "Saving…" : isRowEmpty(r) ? "" : Object.keys(validateRow(r)).length ? <span className="text-slate-700">Fix red cells</span> : "Ready"}
+                  {r.status === "saved" && r.expenseId ? <span className="inline-flex items-center gap-1"><EntityLink kind="expense" id={r.expenseId} label="Saved → open" />{r.feedGate ? <Link to={`/feed-gate/${r.feedGate.intake_id}`} className={`rounded px-1 text-xs ${r.feedGate.status === "passed" ? "bg-slate-800 text-white" : "bg-red-600 text-white"}`} data-testid="batch-expenses-feed-gate">{r.feedGate.status === "passed" ? "gate green" : `gate: ${r.feedGate.checks_failed} red`}</Link> : null}</span> : r.status === "error" ? <span className="text-red-700" title={r.error ?? ""}>Error: {r.error}</span> : r.status === "saving" ? "Saving…" : isRowEmpty(r) ? "" : Object.keys(validateRow(r)).length ? <span className="text-slate-700">Fix red cells</span> : "Ready"}
                 </td>
                 <td className="p-1 whitespace-nowrap">
                   <button type="button" className="mr-1 underline" onClick={() => setRows((p) => duplicateRow(p, i))} title="Duplicate row">Dup</button>
