@@ -1856,3 +1856,12 @@ CC-3 | ACK ROUND-321 | ALWAYSTRACK-CI | GO
 **E-11 driver gap → Lead ruling needed (shared primitive):** `driverAtTimeSql` resolves the driver only from Samsara assignment windows (`telematics.vehicle_driver_assignments`). Those are sparse because drivers often do not log in, so 42 of 51 faults have no driver.
 - **Proposed fix, in ONE place:** a fallback inside `driverAtTimeSql` to the dispatcher-assigned primary driver of the load the truck carried at that moment (shared `loadAtTimeSql`). The E-30 reply poller already does this for messages.
 - I am **not** changing it unilaterally. `driverAtTimeSql` also feeds fuel and settlement attribution (money). Say GO and it ships with a before/after count per engine.
+
+## 2026-10-01 ROUND 321 (a) — PROVEN IN REQUIRED CI
+
+Main run **36912142385**, job **required-live-load-guard 110537820214** (19:12Z):
+- `EXECUTED: 34 truth document(s) partitioned against live data (0 in scope compared on six dimensions, 34 excluded OWNER-CLOSED, 0 not fed yet); A-D ran over 0 in-scope load(s); E scanned 64 live USMCA settlement(s) for the 10 Transportation documents.`
+- `verify-alwaystrack-parity: LIVE PASS`
+- `Required guards: executed=22 passed=21 failed=1 skipped=0 attempted=22; required_skip_failures=0`. The required skip failure is gone.
+
+The job's one remaining red is `verify-no-test-markers-in-live-tables` (38 marked rows of 140): the 38 USMCA test survivors in maintenance tables. That is the Lead's queued purge (ROUND 317 CC-1 item 4), not CC-3's.
