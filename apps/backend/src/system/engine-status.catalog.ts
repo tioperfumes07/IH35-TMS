@@ -257,13 +257,16 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     name: "Fleet roster integrity",
     module: "fleet roster",
     domain: "Fleet",
-    schedule: "Report + guard",
-    expectedWindowHours: null,
+    schedule: "Nightly 02:40 CT + on demand",
+    // Findings are upserted (last_detected_at) on every run, so the probe reads last_detected_at: a clean fleet
+    // still shows the engine alive through the rows it keeps refreshing; a fleet with zero findings ever reads
+    // honest-empty rather than broken.
+    expectedWindowHours: 36,
     shouldProduce: false,
     syncKinds: [],
-    output: null,
+    output: { relation: "fleet.roster_findings", tsColumn: "last_detected_at", companyColumn: "operating_company_id" },
     ownerSeat: "CC-1",
-    kind: "pending",
+    kind: "engine",
   },
   {
     id: "E-19",
@@ -388,12 +391,13 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     module: "complaints",
     domain: "Driver profile",
     schedule: "On entry",
+    // On entry: a complaint row exists only when one is filed, so silence is not a failure (shouldProduce false).
     expectedWindowHours: null,
     shouldProduce: false,
     syncKinds: [],
-    output: null,
+    output: { relation: "safety.complaints", tsColumn: "created_at", companyColumn: "operating_company_id" },
     ownerSeat: "CC-2",
-    kind: "pending",
+    kind: "engine",
   },
   {
     id: "E-29",

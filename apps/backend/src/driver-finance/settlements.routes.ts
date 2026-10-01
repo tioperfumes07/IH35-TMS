@@ -1114,9 +1114,10 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
         `
           INSERT INTO driver_finance.driver_settlements (
             operating_company_id, display_id, driver_id, period_start, period_end, status,
-            gross_pay, deductions_total, reimbursements_total, net_pay, is_sample_data
+            gross_pay, deductions_total, reimbursements_total, net_pay, is_sample_data, settlement_model
           )
-          VALUES ($1,$2,$3,$4,$5,'presettle',$6,$7,$8,$9,$10)
+          -- ROUND 313: never NULL. A caller-supplied calendar period is a week_calendar settlement.
+          VALUES ($1,$2,$3,$4,$5,'presettle',$6,$7,$8,$9,$10,'week_calendar')
           RETURNING *
         `,
         [
