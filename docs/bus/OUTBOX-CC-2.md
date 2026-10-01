@@ -1598,3 +1598,31 @@ ALL.csv): fee 1.5% 89/89; reserve 1.5% 86/89 — Escrow Rsv on 83, Cash Rsv on 6
 already match; no rate change. New per-invoice actuals editor (escrow / cash reserve / fee + "Reserve in cash") records Faro's bucket on each line.
 Local gate exit 0. Report-only reds noted (not CC-2): purge-era closure 21 — A/R vs open invoices gap $20,800 = the five line-less invoices
 13616/13618/13620/13621/13622 (Lead's repair script, held by the no-feed rule); closure 39 — 17 loads missing mileage (dispatch).
+
+## 2026-10-01 19:15Z — ACK: CC-2 | ACK ROUND-321 | WORM-FUEL-CARD | GO — items 1, 3, 6 done; item 2 HELD with facts
+
+**1. WORM (done, with a correction):** #23884 attached the canonical trg_worm_refuse_delete -> accounting.refuse_financial_row_delete to
+fuel.fuel_card_assignments AND banking.bank_account_tieouts (migration 202615200600, live 19:03Z). Measured cause of every seat's red: the ratchet
+scans migration files for accounting / banking / driver_finance / factoring ONLY — **banking.bank_account_tieouts (202615180200)** was the 89 -> 90,
+not the fuel table (fuel is out of the ratchet's scope). My #23884 baseline wrongly listed the fuel table and set 88 → red; **#23888 corrected it:
+89 unprotected, verify-worm-coverage-ratchet OK (79 protected), verify-new-financial-table-ships-worm OK.** The fuel table keeps the canonical trigger anyway.
+
+**3. Override approval:** already live (#23878, 18:53Z) — Owner-only (route gate 403 + audit for every other role), reason >= 10 chars, purchase stamps
+docs_override_at / _by_user_id / _reason, audit event `accounting.factoring_purchase_docs_override_approved`, covers DOCUMENTS only (Feed Gate still
+requires load + posted A/R JE on every invoice). Still to do from item 3: record the override in the Feed Gate as na-with-reason — next.
+
+**6. POD releases the invoice — DONE (#23887, ACCT-F9621):** BILLING_EVIDENCE_DOC_CODES = ['bol','pod'] read by the existence check, the awaiting
+queue and the upload trigger; same gates; idempotent. vitest 5/5, guard 12079 (static + live: bol+pod categories present).
+
+**2. 13515 — HELD. The ruling's premise does not match the database; owner/Lead please re-confirm with these facts:**
+- 13515 is NOT "never invoiced": invoice 13515 is **paid** — customer payment 411c9b24 ($525.00, 09-21) is applied to it. Invoice 13513 is sent, unpaid.
+- Two different trucks and drivers ran them: 13513 = Pedro Abraham Lopez Collado / **T152**, pickup Carrollton 08-12, 1 fuel fill $734.19, settlement
+  **5772** closed; 13515 = Leonel Antonio Morales / **T175**, pickup Seagoville 08-13, **4 fuel fills on T175 08-09..08-13 ($2,991.65)**, 14 expenses
+  ($3,240.41), settlement **5776** closed, driver bill paid, escrow-ledger row, deduction, vendor bill.
+- Deleting load 13515 would orphan Leonel's paid settlement, T175's real fuel and expenses, and the $525 payment.
+If it truly is one billable load, the correct move is NOT a delete but: (a) re-apply payment 411c9b24 from invoice 13515 to 13513 (13513 becomes
+paid), (b) void invoice 13515 + reverse its two revenue JEs (2c730468 Event 1, 396efaa2 Event 2) so revenue counts once, (c) KEEP load 13515's trip
+costs (T175 fuel / expenses / settlement 5776) — they are real costs of a second truck — or tell me where they belong. Nothing written until answered.
+
+**Next (in order):** Feed Gate override as na-with-reason (item 3 remainder) → item 4 (factor setup: Faro submission email default, escrow + cash
+reserve rate fields read by candidates + engine) → ROUND 315 steps 4–8.
