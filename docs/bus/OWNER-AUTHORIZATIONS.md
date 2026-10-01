@@ -6666,3 +6666,22 @@ dry run → --apply → audit row per batch. Never void the expenses."
 Owner, in chat to CC-2, 2026-10-01: "you have full permissions and authoriztions".
 
 THIS AUTHORIZATION DOES NOT COVER: any expense, any journal entry, any other fuel row, any amount change.
+
+## AUTH-192
+issued_at: 2026-10-01T15:26:18Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). Loads 13625, 13627, 13638 only: dispatch.load_cancellations
+  (the one 2026-09-28 AUTH-093 row per load -> status 'reversed', reversed_at, reversed_by_user_id, reversal_reason) and,
+  through the 202615180900 trigger, mdata.loads.canceled_at / canceled_by / cancel_reason / cancel_reason_code cleared.
+  mdata.loads.status untouched (all three are 'dispatched'). No stop stamp, no invoice, no advance, no settlement, no GL.
+action: npx tsx scripts/ops/2026-10-01-cc3-reverse-false-cancellations.mts --apply --auth AUTH-192 (after the deploy applies migration 202615180900). Dry run first; refuses unless each load still carries the measured 2026-09-28 10:09Z stamp.
+expires_at: 2026-10-02T15:26:18Z
+status: OPEN
+
+OWNER ORDER, ROUND 313 (pasted by the owner to CC-3, 2026-10-01): "13625 / 13627 / 13638: clear the false canceled_at
+through the canonical transition (owner: delivered, factored 09-25), audit row each."
+ROOT CAUSE (measured 2026-10-01, OUTBOX-CC-3): audit 97f2fbd0 / a8c944ab / b9383cbf (P5-F4-CANCELLATIONS, AUTH-093 script,
+2026-09-28 10:09:51/54/57Z) cancelled them; ROUND-155.26 reinstated status at 10:21Z and left load_cancellations 'approved'
+and the 0281 trigger's canceled_at stamp. The canonical undo (cancellation-reversal.service.ts) did not exist; it does now.
+
+THIS AUTHORIZATION DOES NOT COVER: setting status 'delivered' (the canonical delivered transition stamps now() as the
+delivery departure and creates driver-bill artifacts -- the owner enters these loads' delivery manually), any money row.
