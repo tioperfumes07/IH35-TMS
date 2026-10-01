@@ -5,8 +5,8 @@
  *   REAL DRIVEN miles  -- the odometer is cumulative, so miles = reading at the period END minus reading at the
  *                         period START. Each boundary is anchored on the nearest REAL reading (telematics
  *                         .vehicle_locations.odometer_mi, or the telematics.odometer_readings measured/entered
- *                         ledger -- the same Samsara stat) at/before the boundary, valid only if the truck did not
- *                         move since (see pickAnchor); a gap in the middle of the period does not matter. No anchor, or an odometer
+ *                         ledger -- the same Samsara stat) by the shared rule in telematics/odometer-anchor.ts
+ *                         (pickAnchor); a gap in the middle of the period does not matter. No anchor, or an odometer
  *                         that went backwards, is NULL WITH A REASON -- never zero, never interpolated, never
  *                         borrowed from practical/short miles. Measured 2026-10-01: the odometer feed was dark
  *                         2026-08-26..2026-09-29 for every truck, so September is honestly not measurable.
@@ -24,6 +24,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { fetchOdometerAnchors, realDrivenMiles, type OdometerAnchor } from "../telematics/odometer-anchor.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -70,37 +71,8 @@ export function cpmFor(costCents: number, miles: number | null, basis: MileageBa
 
 /** A reading this close to the boundary is used even if the truck was moving: the few minutes of miles land in the
  *  adjacent period through the same shared anchor -- shifted, never lost, never counted twice. */
-export const MOVING_ANCHOR_MAX_MINUTES = 30;
-
-export type OdometerAnchor = { odometer_mi: number; read_at: string; source: "vehicle_locations" | "odometer_readings" };
-
-/**
- * Pure: the boundary anchor is the latest real reading AT/BEFORE the boundary, valid when the truck did not move
- * between that reading and the boundary (no position fix over 1 mph or of unknown speed -> the odometer cannot have changed, any age),
- * or when it is within MOVING_ANCHOR_MAX_MINUTES of the boundary. Otherwise the boundary is NOT measurable --
- * never a reading after it (that would drop the miles in between), never interpolated.
- * Measured 2026-10-01: positions flowed every day 2026-08-27..2026-09-29 while odometer_mi was empty on all of
- * them -- the trucks moved, the odometer was not captured, so those boundaries refuse.
- */
-export function pickAnchor(boundaryIso: string, before: OdometerAnchor | null, movingFixesSinceAnchor: number): { anchor: OdometerAnchor | null; reason: string | null } {
-  if (!before) return { anchor: null, reason: `no odometer reading at or before ${boundaryIso}` };
-  const ageMin = (new Date(boundaryIso).getTime() - new Date(before.read_at).getTime()) / 60_000;
-  if (movingFixesSinceAnchor === 0 || ageMin <= MOVING_ANCHOR_MAX_MINUTES) return { anchor: before, reason: null };
-  return {
-    anchor: null,
-    reason: `the truck moved (${movingFixesSinceAnchor} position fixes over 1 mph or unknown speed) after the last odometer reading ` +
-      `(${before.read_at}, ${Math.round(ageMin / 60)} h before ${boundaryIso}) -- odometer not captured, boundary not measurable`,
-  };
-}
-
-/** Pure: real driven miles between two boundary anchors. */
-export function realDrivenMiles(start: OdometerAnchor | null, end: OdometerAnchor | null, startReason: string | null, endReason: string | null): { miles: number | null; reason: string | null } {
-  if (!start) return { miles: null, reason: `period start: ${startReason ?? "no anchor"}` };
-  if (!end) return { miles: null, reason: `period end: ${endReason ?? "no anchor"}` };
-  const d = end.odometer_mi - start.odometer_mi;
-  if (d < 0) return { miles: null, reason: `odometer went backwards by ${Math.abs(d).toFixed(1)} mi between the anchors -- held, not reported` };
-  return { miles: Math.round(d * 10) / 10, reason: null };
-}
+// One definition of "the odometer at a moment", shared with the load/leg real-driven-miles engine.
+export { MOVING_ANCHOR_MAX_MINUTES, pickAnchor, realDrivenMiles, type OdometerAnchor } from "../telematics/odometer-anchor.js";
 
 export async function computePmCostPerMile(
   client: DbClient,
@@ -124,44 +96,19 @@ export async function computePmCostPerMile(
   const empty = { period: { from, to, timezone: "America/Chicago" as const }, units: [] as UnitCpmRow[], fleet: {} };
   if (unitIds.length === 0) return empty;
 
-  // Boundary anchors: [from 00:00 CT] and [min(to + 1 day 00:00 CT, now)], both real-read sources.
-  const odo = await client.query<{
-    unit_id: string; start_ts: string; end_ts: string;
-    sb_odo: string | null; sb_at: string | null; sb_src: string | null;
-    s_moving: string | null; e_moving: string | null;
-    eb_odo: string | null; eb_at: string | null; eb_src: string | null;
-  }>(
-    `WITH b AS (
-       SELECT ($3::date)::timestamp AT TIME ZONE 'America/Chicago' AS start_ts,
-              LEAST((($4::date) + 1)::timestamp AT TIME ZONE 'America/Chicago', now()) AS end_ts),
-     u AS (SELECT unnest($2::uuid[]) AS unit_id)
-     SELECT u.unit_id::text, b.start_ts::text, b.end_ts::text,
-            sb.odo::text AS sb_odo, sb.at::text AS sb_at, sb.src AS sb_src,
-            smv.n::text AS s_moving, emv.n::text AS e_moving,
-            eb.odo::text AS eb_odo, eb.at::text AS eb_at, eb.src AS eb_src
-       FROM u CROSS JOIN b
-       LEFT JOIN LATERAL (SELECT * FROM (
-           (SELECT odometer_mi AS odo, captured_at AS at, 'vehicle_locations' AS src FROM telematics.vehicle_locations
-             WHERE unit_id = u.unit_id AND operating_company_id = $1::uuid AND odometer_mi IS NOT NULL AND captured_at <= b.start_ts ORDER BY captured_at DESC LIMIT 1)
-           UNION ALL
-           (SELECT odometer_miles, read_at, 'odometer_readings' FROM telematics.odometer_readings
-             WHERE unit_id = u.unit_id AND operating_company_id = $1::uuid AND odometer_miles IS NOT NULL AND confidence IN ('measured','entered') AND read_at <= b.start_ts ORDER BY read_at DESC LIMIT 1)
-         ) x ORDER BY at DESC LIMIT 1) sb ON true
-       LEFT JOIN LATERAL (SELECT * FROM (
-           (SELECT odometer_mi AS odo, captured_at AS at, 'vehicle_locations' AS src FROM telematics.vehicle_locations
-             WHERE unit_id = u.unit_id AND operating_company_id = $1::uuid AND odometer_mi IS NOT NULL AND captured_at <= b.end_ts ORDER BY captured_at DESC LIMIT 1)
-           UNION ALL
-           (SELECT odometer_miles, read_at, 'odometer_readings' FROM telematics.odometer_readings
-             WHERE unit_id = u.unit_id AND operating_company_id = $1::uuid AND odometer_miles IS NOT NULL AND confidence IN ('measured','entered') AND read_at <= b.end_ts ORDER BY read_at DESC LIMIT 1)
-         ) x ORDER BY at DESC LIMIT 1) eb ON true
-       LEFT JOIN LATERAL (SELECT count(*) AS n FROM telematics.vehicle_locations v
-          WHERE v.unit_id = u.unit_id AND v.operating_company_id = $1::uuid AND (v.speed_mph IS NULL OR v.speed_mph > 1)
-            AND v.captured_at > sb.at AND v.captured_at <= b.start_ts) smv ON true
-       LEFT JOIN LATERAL (SELECT count(*) AS n FROM telematics.vehicle_locations v
-          WHERE v.unit_id = u.unit_id AND v.operating_company_id = $1::uuid AND (v.speed_mph IS NULL OR v.speed_mph > 1)
-            AND v.captured_at > eb.at AND v.captured_at <= b.end_ts) emv ON true`,
-    [operatingCompanyId, unitIds, from, to]
+  // Boundary anchors: [from 00:00 CT] and [min(to + 1 day 00:00 CT, now)], resolved by the shared anchor rule.
+  const b = await client.query<{ start_ts: string; end_ts: string }>(
+    `SELECT (($1::date)::timestamp AT TIME ZONE 'America/Chicago')::text AS start_ts,
+            LEAST((($2::date) + 1)::timestamp AT TIME ZONE 'America/Chicago', now())::text AS end_ts`,
+    [from, to]
   );
+  const bounds = b.rows[0];
+  const anchors = bounds
+    ? await fetchOdometerAnchors(client, operatingCompanyId, [
+        ...unitIds.map((id) => ({ key: `${id}:start`, unit_id: id, at: new Date(bounds.start_ts).toISOString() })),
+        ...unitIds.map((id) => ({ key: `${id}:end`, unit_id: id, at: new Date(bounds.end_ts).toISOString() })),
+      ])
+    : new Map<string, { anchor: OdometerAnchor | null; reason: string | null }>();
 
   const loads = await client.query<{ unit_id: string; loads: string; practical: string | null; short: string | null; missing_practical: string; missing_short: string }>(
     `WITH delivered AS (
@@ -212,15 +159,12 @@ export async function computePmCostPerMile(
     [operatingCompanyId, unitIds, from, to]
   );
 
-  const odoBy = new Map(odo.rows.map((r) => [r.unit_id, r]));
   const loadBy = new Map(loads.rows.map((r) => [r.unit_id, r]));
   const rows: UnitCpmRow[] = units.rows.map((u) => {
-    const o = odoBy.get(u.id);
-    const mk = (odo: string | null | undefined, at: string | null | undefined, src: string | null | undefined): OdometerAnchor | null =>
-      odo != null && at ? { odometer_mi: Number(odo), read_at: new Date(at).toISOString(), source: src as OdometerAnchor["source"] } : null;
-    const startPick = o ? pickAnchor(new Date(o.start_ts).toISOString(), mk(o.sb_odo, o.sb_at, o.sb_src), Number(o.s_moving ?? 0)) : { anchor: null, reason: "no odometer reading" };
-    const endPick = o ? pickAnchor(new Date(o.end_ts).toISOString(), mk(o.eb_odo, o.eb_at, o.eb_src), Number(o.e_moving ?? 0)) : { anchor: null, reason: "no odometer reading" };
-    const real = realDrivenMiles(startPick.anchor, endPick.anchor, startPick.reason, endPick.reason);
+    const startPick = anchors.get(`${u.id}:start`) ?? { anchor: null as OdometerAnchor | null, reason: "no odometer reading" };
+    const endPick = anchors.get(`${u.id}:end`) ?? { anchor: null as OdometerAnchor | null, reason: "no odometer reading" };
+    const r0 = realDrivenMiles(startPick.anchor, endPick.anchor, startPick.reason, endPick.reason);
+    const real = { miles: r0.miles, reason: r0.reason ? `period ${r0.reason}` : null };
     const l = loadBy.get(u.id);
     const myBills = bills.rows.filter((b) => b.unit_id === u.id);
     const myExp = expenses.rows.filter((e) => e.unit_id === u.id);
