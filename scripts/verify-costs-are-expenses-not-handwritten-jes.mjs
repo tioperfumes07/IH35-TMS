@@ -68,6 +68,12 @@ const DOCUMENT_ENGINE_EXEMPT_SOURCE_TYPES = new Set([
   // the moment any seat touches apps/backend/src/accounting/ (measured live 2026-10-01: 3 USMCA
   // bill JEs blocked money-pr-local-gate on a read-only WO linkage PR).
   "bill",
+  // ROUND 312 BANK-ECON-04 (owner-approved via the Lead): a bank reconciliation's service-charge / interest lines
+  // post through the canonical poster from the reconciliation session (postings carry source_transaction_type
+  // 'bank_reconciliation' + the session id) -- QBO's reconcile service charge, not a handwritten JE. Measured live
+  // 2026-10-01: JE cf78c2aa (6300 Dr / 1005 Cr, $5.00, session 7a7d1da9) blocked every seat's gate. Same narrow
+  // scope as above: invariant 1 only; invariant 2 (wrong credit account) still applies.
+  "bank_reconciliation",
 ]);
 //
 // Self-test: node scripts/verify-costs-are-expenses-not-handwritten-jes.mjs --selftest

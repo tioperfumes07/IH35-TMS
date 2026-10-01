@@ -66,6 +66,7 @@ Touched scripts/-lane files, one per queue item, each its own PR:
 - `scripts/verify-delivery-latch-never-inline-in-open-tx.mjs` (ROUND 315: no inline latch inside an open transaction; transition lock/idle timeouts).
 - `scripts/verify-samsara-fuel-reports-engine.mjs` (ROUND 313 E-23: daily Samsara fuel/energy per UTC day, linked).
 - `scripts/verify-driver-messaging-both-ways.mjs` (ROUND 313 E-30: inbound Samsara replies on the one chat store).
+- `scripts/verify-samsara-documents-engine.mjs` (ROUND 313 E-32: Samsara POD photos into docs.files, linked).
 - `scripts/verify-load-cancellation-reversal-canonical.mjs` (ROUND 313: one canonical undo of a wrong cancellation).
 - `scripts/ops/2026-10-01-cc3-reverse-false-cancellations.mts` (AUTH-192).
 - `scripts/verify-driver-prompts-flag-off-idempotent.mjs` (E-30 addition).

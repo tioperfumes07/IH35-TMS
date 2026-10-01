@@ -1744,3 +1744,22 @@ CC-3 | ACK ROUND 319 OWNER LAW (13:20 / 13:25 CT) | GO
 - **§10-B:**
   - LINKED: driver, load (thread), unit (via assignment / loadAtTime), audit (chat event log).
   - N/A: money, customer, vendor (a message moves no money).
+
+## 2026-10-01 ROUND 313 E-32 — Samsara driver documents (Proof of Delivery) into docs.files, linked both ways
+
+- **Measured:** Samsara `/fleet/document-types` has ONE type, "Proof of Delivery" (field Photos, photo). `/fleet/documents` returns 200 with `data null`: no driver has submitted one yet.
+- **Built:**
+  - `SamsaraClient.listDocuments` + `samsara-documents.service.ts` + an hourly cron (:17, 7-day window). Each POD photo: fetch, R2 (the store every upload uses), `docs.files` (category **pod**, `dispatch_load_id`, uploader = the System actor).
+  - `docs.file_links` to **load, load_stop, unit, driver**. The stop comes from the E-31 route stop's `externalIds.ih35Stop`, the driver and truck from the canonical maps.
+  - Idempotent on `r2_key = samsara/documents/<doc id>/<photo #>`.
+- **Migration 202615191000:** `file_links.entity_type` gains `load_stop`. The 202615190900 claim stays unused.
+- **Reverse links:** `/loads/:id/telematics` and `/units/:id/telematics` list linked documents; the panel has a Documents section on the load and the truck.
+- **Throwaway-branch proof (`br-dawn-mud-akhnuh54`):** one POD with 2 photos for 13639's delivery stop on T173:
+  - Stored 2. Links per photo: driver 2, load 2, load_stop 2, unit 2.
+  - Re-run: already_stored 2, stored 0.
+  - `/loads/13639/telematics` documents shows both PODs beside the existing dispatch PDFs.
+- **Not done here (money lane, CC-2 / owner):** auto-invoice fires only on category **bol** (`maybeFireAutoInvoiceAfterBolSaved`). Samsara's type is a Proof of Delivery, so it is filed as `pod` and does not release the invoice. Whether a POD photo may stand in for the BOL is a money rule, not a document-import rule.
+- **CORRECTION:** I said the System actor `00000000-0000-4000-8000-000000000001` had no `identity.users` row. It does: created 2026-09-22, role Administrator, no email / Google id / password. My earlier read was filtered by RLS. No identity change is made.
+- **§10-B:**
+  - LINKED: load, stop, unit, driver (both ways via file_links + the panels), document.
+  - N/A: invoice, money (POD does not release the invoice, see above).
