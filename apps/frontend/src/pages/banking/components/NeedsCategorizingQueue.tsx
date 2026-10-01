@@ -93,7 +93,7 @@ export function NeedsCategorizingQueue({ companyId, rows, onChange, onAccepted }
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-xs">
           <thead>
-            <tr className="border-b border-[#E5E7EB] bg-[#F7F8FA] text-center text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">
+            <tr className="border-b border-[#E5E7EB] bg-[#F7F8FA] text-center text-xs font-bold uppercase tracking-wide text-[#4B5563]">
               <th className="px-2 py-1.5 font-bold" style={{ width: 132 }}>
                 Date
               </th>

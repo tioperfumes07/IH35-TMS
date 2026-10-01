@@ -183,7 +183,7 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
               </button>
               {gearOpen ? (
                 <div className="absolute right-0 z-20 mt-1 w-52 rounded-sm border border-[#E5E7EB] bg-white p-2 shadow-sm">
-                  <p className="mb-1 text-[11px] font-bold uppercase text-[#4B5563]">Columns</p>
+                  <p className="mb-1 text-xs font-bold uppercase text-[#4B5563]">Columns</p>
                   {(Object.keys(COLUMN_LABELS) as ColumnId[]).map((id) => (
                     <label key={id} className="flex items-center gap-2 py-0.5 text-xs text-[#0F1219]">
                       <input
@@ -206,7 +206,7 @@ export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-xs" data-testid="driver-escrow-board-table">
               <thead>
-                <tr className="border-b border-[#E5E7EB] bg-[#F7F8FA] text-center text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">
+                <tr className="border-b border-[#E5E7EB] bg-[#F7F8FA] text-center text-xs font-bold uppercase tracking-wide text-[#4B5563]">
                   {colOn("driver") ? <th className="px-2 py-1.5 text-left font-bold">Driver</th> : null}
                   {colOn("unit") ? <th className="px-2 py-1.5 font-bold">Unit</th> : null}
                   {colOn("held") ? <th className="px-2 py-1.5 text-right font-bold" style={{ width: 120 }}>Held</th> : null}

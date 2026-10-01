@@ -271,7 +271,7 @@ export function ReconciliationTabContent({
             },
           ].map((cell) => (
             <div key={cell.label} className="rounded-sm bg-white px-2 py-1.5 text-center">
-              <p className="text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">{cell.label}</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">{cell.label}</p>
               <p
                 className={`mt-0.5 text-xs font-semibold tabular-nums ${
                   cell.emphasize
@@ -304,7 +304,7 @@ export function ReconciliationTabContent({
             </p>
             <div className="flex flex-wrap items-end gap-2">
               <label className="block text-xs">
-                <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">
+                <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-[#4B5563]">
                   Account
                 </span>
                 <SelectCombobox
@@ -321,7 +321,7 @@ export function ReconciliationTabContent({
                 </SelectCombobox>
               </label>
               <label className="block text-xs">
-                <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">
+                <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-[#4B5563]">
                   Statement ending date
                 </span>
                 <DatePicker
@@ -331,7 +331,7 @@ export function ReconciliationTabContent({
                 />
               </label>
               <label className="block text-xs">
-                <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">
+                <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-[#4B5563]">
                   Ending balance
                 </span>
                 <div className="flex h-[34px] w-[120px] items-center justify-end rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs tabular-nums">
@@ -363,19 +363,19 @@ export function ReconciliationTabContent({
             <ul className="space-y-1 text-xs">
               <li className="flex items-center justify-between rounded-sm border border-gray-100 px-2 py-1">
                 <span className="font-medium text-[#0F1219]">Matched</span>
-                <span className="rounded-sm bg-[#ecfdf3] px-1.5 py-0.5 text-[11px] font-semibold text-[#027A48]">
+                <span className="rounded-sm bg-[#ecfdf3] px-1.5 py-0.5 text-xs font-semibold text-[#027A48]">
                   matched
                 </span>
               </li>
               <li className="flex items-center justify-between rounded-sm border border-gray-100 px-2 py-1">
                 <span className="font-medium text-[#0F1219]">Unmatched</span>
-                <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-[11px] font-semibold text-[#6B7280]">
+                <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-xs font-semibold text-[#6B7280]">
                   unmatched
                 </span>
               </li>
               <li className="flex items-center justify-between rounded-sm border border-gray-100 px-2 py-1">
                 <span className="font-medium text-[#0F1219]">Matched with difference</span>
-                <span className="rounded-sm bg-[#fffaeb] px-1.5 py-0.5 text-[11px] font-semibold text-[#B54708]">
+                <span className="rounded-sm bg-[#fffaeb] px-1.5 py-0.5 text-xs font-semibold text-[#B54708]">
                   matched-with-difference
                 </span>
               </li>

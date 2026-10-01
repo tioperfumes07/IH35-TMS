@@ -85,7 +85,7 @@ export function WhereTheMoneyIsRail({ realRows, virtualRows, formatMoney, onView
       <div className="border-b border-[#E5E7EB] px-3 py-2">
         <p className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">Where the money is</p>
       </div>
-      <div className="grid grid-cols-[minmax(0,1.4fr)_120px_88px_72px_auto] gap-2 border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-1.5 text-center text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">
+      <div className="grid grid-cols-[minmax(0,1.4fr)_120px_88px_72px_auto] gap-2 border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-1.5 text-center text-xs font-bold uppercase tracking-wide text-[#4B5563]">
         <span className="text-left">Account</span>
         <span className="text-right">Balance</span>
         <span>30-day</span>
@@ -99,7 +99,7 @@ export function WhereTheMoneyIsRail({ realRows, virtualRows, formatMoney, onView
         <RailRow key={row.id} row={row} formatMoney={formatMoney} onView={onView} onInspect={onInspect} />
       ))}
       {virtualRows.length > 0 ? (
-        <div className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">
+        <div className="border-t border-[#E5E7EB] bg-[#F7F8FA] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[#4B5563]">
           Virtual ledgers
         </div>
       ) : null}

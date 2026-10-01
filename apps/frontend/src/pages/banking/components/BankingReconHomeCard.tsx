@@ -36,8 +36,7 @@ export function BankingReconHomeCard({
     >
       <p className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">Reconciliation</p>
       <p
-        className="mt-2 text-center font-semibold tabular-nums text-[#0F1219]"
-        style={{ fontSize: 22 }}
+        className="mt-2 text-center text-page-title font-semibold tabular-nums text-[#0F1219]"
         data-testid="banking-recon-home-figure"
       >
         {figure}
