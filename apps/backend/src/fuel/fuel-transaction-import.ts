@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { resolveUnitByCard, type CardResolution } from "./fuel-card-assignments.service.js";
 import type { FuelTxnGlPostCandidate } from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 
 /**
@@ -369,14 +370,24 @@ export async function importFuelCardTransactionsForCompany(
   };
 
   for (const row of parsed.rows) {
-    const unitId = await resolveUnitId(client, companyId, row.unit_number);
-    const driverId = await resolveDriverId(client, companyId, row.driver_name);
+    let unitId = await resolveUnitId(client, companyId, row.unit_number);
+    // E-22: a statement row with no (or an unmatched) unit number still names its card — the card
+    // registry places it on the truck that held the card at that moment, or says why it cannot.
+    let byCard: CardResolution | null = null;
+    if (!unitId && row.card_number) {
+      byCard = await resolveUnitByCard(client, companyId, row.card_number, row.transaction_at);
+      if (byCard.resolved) unitId = byCard.unit_id;
+    }
+    const driverId =
+      (await resolveDriverId(client, companyId, row.driver_name)) ?? (byCard?.resolved ? byCard.driver_id : null);
     const vendorId = await resolveVendorId(client, companyId, row.merchant);
     const loadId = await resolveLoadId(client, companyId, unitId, driverId, row.transaction_at);
     const loadExemptionReason = loadId ? null : NO_LOAD_EXEMPTION;
 
     const notes = [
-      row.card_number ? `card=${row.card_number}` : null,
+      // Last digits only — a full card number never lands in notes.
+      row.card_number ? `card=…${String(row.card_number).replace(/\D+/g, "").slice(-4) || "?"}` : null,
+      byCard ? (byCard.resolved ? `unit_from_card=…${byCard.card_last_digits}` : `card_unresolved=${byCard.reason}`) : null,
       row.merchant && !vendorId ? `merchant=${row.merchant}` : null,
       row.driver_name && !driverId ? `driver_unmatched=${row.driver_name}` : null,
       row.unit_number && !unitId ? `unit_unmatched=${row.unit_number}` : null,
