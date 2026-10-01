@@ -1417,3 +1417,11 @@ guard: scripts/verify-driver-prompts-flag-off-idempotent.mjs + --selftest PASS; 
 - E-10 / E-12 (fault + harsh pollers, fixed in #23664): both run daily 03:00 America/Chicago = 08:00Z today -> first real fault/harsh
   rows proof to follow (rolled-back proof already: 56 fault rows on 17 trucks, 5 harsh events).
 - Flags still OFF and waiting on the owner/Lead: fuel push, routes, driver messaging, driver prompts, fence push, auto-status, master sync.
+
+## 2026-10-01 — Linkage: one "load at time T" rule + reverse links (load → / unit → telematics)
+
+- **Owner rule (NB load, SB return booked while NB rolls):** defined ONCE as `loadAtTimeSql` (`maintenance/driver-attribution.ts`). Earliest-pickup unfinished load owns the truck until its delivery; then the return load owns it, deadhead included. Callers: E-03 stop writer, E-08 state machine, E-29 border crossings, E-30 prompts, T-51 DVIR, linkage reads. Guard `verify-load-at-time-single-definition`.
+- **Bug fixed — Lead's E-03 writer** read `l.delivered_at` (not a column) → `unit_stop_events` stayed empty. Rolled-back proof: 118 stops, 102 with load, 71 odometer, 55 miles, 43 in fence; T152 stop → 13634.
+- **DVIR linkage:** `load_id` from loadAtTimeSql; trailer → `trailer_id` (mdata.units) or new `trailer_equipment_id` (mdata.equipment, migration 202615151000). Rolled-back: 56/57 with load, 9 trailers linked.
+- **Reverse links (read-only):** `GET /api/v1/loads/:id/telematics` (stops, segments, arrivals, fence transitions, crossings, DVIRs, detention, fuel, prompts, route pushes) and `GET /api/v1/units/:id/telematics` (load+driver now, position, odometer, stops, fence crossings, faults, harsh, DVIRs tractor|trailer, fuel). Read-only live run on 13634/T152: arrivals 2; unit 94 fence crossings, 4 DVIRs, 5 fuel fills.
+- **Data question (owner):** loads 13625 and 13638 have `canceled_at` set while status is dispatched; status is trusted.

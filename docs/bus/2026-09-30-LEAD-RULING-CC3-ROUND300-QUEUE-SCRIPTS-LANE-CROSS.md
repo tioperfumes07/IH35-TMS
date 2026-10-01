@@ -57,6 +57,7 @@ Touched scripts/-lane files, one per queue item, each its own PR:
 - `scripts/verify-no-reader-of-stop-arrivals.mjs` (E-09).
 - `scripts/verify-samsara-fence-push-flag-off-no-duplicates.mjs` (E-07 addition).
 - `scripts/verify-ifta-filing-export-honest.mjs` (E-23 addition).
+- `scripts/verify-load-at-time-single-definition.mjs` (linkage: one load-at-time rule, owner NB/SB).
 - `scripts/verify-driver-prompts-flag-off-idempotent.mjs` (E-30 addition).
 - further Round 304 guards to follow under this same ruling, named as they land.
 

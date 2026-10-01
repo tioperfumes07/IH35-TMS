@@ -1,3 +1,5 @@
+import { canonicalDispatchWorkStatusClause } from "../dispatch/canonical-active-load-set.js";
+
 /**
  * B-27 — THE ATTRIBUTION FUNCTION, ONE, SHARED (Lead order, ROUND 297.3).
  *
@@ -284,4 +286,65 @@ export async function resolveDriverMilesInPeriod(
       "daily snapshot miles — telematics.odometer_readings once a day; stop-odometer miles (E-03) take over when telematics.unit_stop_events exists",
     byDriver: new Map([...snap].map(([d, v]) => [d, { miles: v.miles }])),
   };
+}
+
+/**
+ * The LOAD a unit was carrying at a moment -- the third shared attribution fragment (beside
+ * driverAtTimeSql / unitAtTimeSql), so no engine re-derives "which load" its own way.
+ *
+ * OWNER RULE (2026-10-01): a truck dispatched northbound is normally ALREADY assigned its southbound
+ * return / triangulating load (booked the moment NB is dispatched), so two live loads on one unit is
+ * normal (measured: 4 of 12 units). Among the unit's live loads not finished at ts:
+ *   - the one with the LATEST first pickup at or before ts (the trip under way -- NB until the return
+ *     load's pickup time arrives, then the return load);
+ *   - if no pickup has happened yet, the EARLIEST upcoming one (the deadhead to its pickup belongs to it).
+ * Never "newest created": loads are often entered in the TMS days after the trip starts (measured:
+ * 13625/13626/13633/13638 created after their 09-24/25 pickups), so created_at is not a time gate.
+ *   finished_at = LAST delivery stop actual_departure_at, else actual_arrival_at (mdata.loads has NO
+ *                 delivered_at column). A load still in the canonical DISPATCH-WORK set with no actual
+ *                 delivery time is OPEN (a late truck is still carrying it, whatever the schedule said);
+ *                 a load past dispatch work falls back to its scheduled delivery; a past-dispatch load
+ *                 with no stop time at all cannot be placed in time and never matches.
+ *   pickup_at   = FIRST pickup stop actual_arrival_at, else scheduled_arrival_at, else the load's created_at.
+ *   live        = status not 'cancelled', not voided / soft-deleted / sample. The lifecycle is the STATUS
+ *                 (the canonical load sets use it): loads 13625 and 13638 carry canceled_at while still
+ *                 'dispatched', and 13625 has real pickup stamps -- canceled_at is not trusted on its own.
+ * LEFT JOIN: no load -> NULL, never guessed. The caller's `$1` is operating_company_id.
+ */
+export function loadAtTimeSql(unitAlias: string, tsExpr: string, resultAlias = "load_at_time"): string {
+  return `LEFT JOIN LATERAL (
+    SELECT l.id AS load_id
+    FROM mdata.loads l
+    LEFT JOIN LATERAL (
+      SELECT COALESCE(d.actual_departure_at, d.actual_arrival_at) AS actual_finished_at,
+             COALESCE(d.scheduled_departure_at, d.scheduled_arrival_at) AS scheduled_finished_at
+      FROM mdata.load_stops d
+      WHERE d.load_id = l.id AND d.stop_type::text = 'delivery' AND d.soft_deleted_at IS NULL
+      ORDER BY d.sequence_number DESC
+      LIMIT 1
+    ) fin ON true
+    LEFT JOIN LATERAL (
+      SELECT COALESCE(p.actual_arrival_at, p.scheduled_arrival_at) AS pickup_at
+      FROM mdata.load_stops p
+      WHERE p.load_id = l.id AND p.stop_type::text = 'pickup' AND p.soft_deleted_at IS NULL
+      ORDER BY p.sequence_number ASC
+      LIMIT 1
+    ) pk ON true
+    WHERE l.operating_company_id = $1::uuid
+      AND l.assigned_unit_id = ${unitAlias}
+      AND l.soft_deleted_at IS NULL
+      AND l.voided_at IS NULL
+      AND l.status::text <> 'cancelled'
+      AND COALESCE(l.is_sample_data, false) = false
+      AND (
+        (fin.actual_finished_at IS NOT NULL AND fin.actual_finished_at >= ${tsExpr})
+        OR (fin.actual_finished_at IS NULL AND ${canonicalDispatchWorkStatusClause("l")})
+        OR (fin.actual_finished_at IS NULL AND NOT (${canonicalDispatchWorkStatusClause("l")})
+            AND fin.scheduled_finished_at IS NOT NULL AND fin.scheduled_finished_at >= ${tsExpr})
+      )
+    ORDER BY (COALESCE(pk.pickup_at, l.created_at) <= ${tsExpr}) DESC,
+             CASE WHEN COALESCE(pk.pickup_at, l.created_at) <= ${tsExpr} THEN COALESCE(pk.pickup_at, l.created_at) END DESC NULLS LAST,
+             COALESCE(pk.pickup_at, l.created_at) ASC
+    LIMIT 1
+  ) ${resultAlias} ON true`;
 }

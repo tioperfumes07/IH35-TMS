@@ -1,4 +1,5 @@
 import { appendCrudAudit } from "../../../../audit/crud-audit.js";
+import { loadAtTimeSql } from "../../../../maintenance/driver-attribution.js";
 import {
   DEFAULT_APPROACH_RADIUS_M,
   DEFAULT_ARRIVE_RADIUS_M,
@@ -222,7 +223,7 @@ export async function transitionState(
   // ROUND 306 E-08: every transition carries the load the unit was on (and the stop, when this fence
   // IS one of that load's stops). Exactly one active load or none -- two active loads are HELD (null).
   const loadContext =
-    input.loadId != null ? { load_id: input.loadId, stop_id: input.stopId ?? null } : await resolveTransitionLoadContext(client, input.operatingCompanyId, input.vehicleId, input.geofenceId);
+    input.loadId != null ? { load_id: input.loadId, stop_id: input.stopId ?? null } : await resolveTransitionLoadContext(client, input.operatingCompanyId, input.vehicleId, input.geofenceId, now);
   const inserted = await client.query<{ id: string }>(
     `
       INSERT INTO geo.geofence_state_transitions (
@@ -302,40 +303,31 @@ export async function transitionState(
   };
 }
 
-/** Statuses in which a load is on the road with its unit (delivered_pending_docs excluded: the truck has moved on). */
-export const TRANSITION_ACTIVE_LOAD_STATUSES = [
-  "assigned_not_dispatched",
-  "dispatched",
-  "at_pickup",
-  "in_transit",
-  "at_delivery",
-] as const;
-
+/**
+ * The load the unit was carrying at the transition (shared loadAtTimeSql -- NB until the booked return's
+ * pickup, then the return), and the stop when this fence IS one of that load's stops.
+ */
 export async function resolveTransitionLoadContext(
   client: QueryClient,
   operatingCompanyId: string,
   unitId: string,
-  geofenceId: string
+  geofenceId: string,
+  atIso: string = new Date().toISOString()
 ): Promise<{ load_id: string | null; stop_id: string | null }> {
-  const res = await client.query<{ load_id: string; stop_id: string | null }>(
-    `SELECT l.id::text AS load_id,
+  const res = await client.query<{ load_id: string | null; stop_id: string | null }>(
+    `SELECT load_at_time.load_id::text AS load_id,
             (SELECT ls.id::text
                FROM mdata.load_stops ls
                JOIN geo.geofences g ON g.id = $3::uuid
-              WHERE ls.load_id = l.id AND ls.soft_deleted_at IS NULL
-                AND (ls.location_id = g.location_ref_id OR g.label = 'load-' || l.id::text || '-stop-' || ls.sequence_number::text)
+              WHERE ls.load_id = load_at_time.load_id AND ls.soft_deleted_at IS NULL
+                AND (ls.location_id = g.location_ref_id OR g.label = 'load-' || ls.load_id::text || '-stop-' || ls.sequence_number::text)
               ORDER BY ls.sequence_number ASC
               LIMIT 1) AS stop_id
-       FROM mdata.loads l
-      WHERE l.operating_company_id = $1::uuid
-        AND l.assigned_unit_id = $2::uuid
-        AND l.soft_deleted_at IS NULL
-        AND l.status::text = ANY($4::text[])
-      LIMIT 2`,
-    [operatingCompanyId, unitId, geofenceId, [...TRANSITION_ACTIVE_LOAD_STATUSES]]
+       FROM (SELECT 1) _one
+       ${loadAtTimeSql("$2::uuid", "$4::timestamptz")}`,
+    [operatingCompanyId, unitId, geofenceId, atIso]
   );
-  if (res.rows.length !== 1) return { load_id: null, stop_id: null };
-  return { load_id: res.rows[0]!.load_id, stop_id: res.rows[0]!.stop_id ?? null };
+  return { load_id: res.rows[0]?.load_id ?? null, stop_id: res.rows[0]?.stop_id ?? null };
 }
 
 export { DEFAULT_APPROACH_RADIUS_M, DEFAULT_ARRIVE_RADIUS_M, DEFAULT_DEPART_RADIUS_M };
