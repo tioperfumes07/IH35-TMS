@@ -854,3 +854,13 @@ and T-30), and what the first real tick proves (both crons are already wired at 
 first real tick is a clock event against the already-correctly-configured deployed environment,
 not a build task). Future UNVERIFIED notes on this same gap point here instead of repeating the
 explanation.
+
+## CC-3 — ACK ROUND 304 (T-45 .. T-52) — received 2026-10-01, working in the stated order
+
+Received from ~/Downloads/10-01-2026-CC-3-ROUND-304-FUEL-GEOFENCE-SAMSARA-WRITE.md. Order: T-45
+(fuel import defect, REPORT before writing) -> T-46 (Samsara addresses import + fence linking) ->
+T-47 (driven miles per leg) -> T-48 (fuel-purchase push, hard-gated on T-45) -> T-49 (IFTA read)
+-> T-50 (fuel & energy read, probe real fields first) -> T-51 (DVIR read + maintenance-write
+answer). Owner directive this turn: build engines, no data seeding into our production until all
+engines are built; every proof is read-only or BEGIN...ROLLBACK. No live push into Samsara until
+T-45 lands and the gate is proven.
