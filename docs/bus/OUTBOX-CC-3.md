@@ -1790,3 +1790,16 @@ CC-3 | ACK ROUND 319 OWNER LAW (13:20 / 13:25 CT) | GO
 - E-05 / E-13 / item 5: live earlier.
 
 Waiting only on real-world first events: the first driver reply, the first POD, the first webhook delivery, and fuel push at 18:00 CT.
+
+## 2026-10-01 18:12Z — CC-3 live readings (prod, read-only)
+
+| Engine | Live state |
+|---|---|
+| E-23 `integrations.samsara_fuel_reports` | 30-day boot catch-up ran: driver rows 296 (296 linked), vehicle rows 431 (376 linked; unlinked are Samsara vehicles with no TMS unit), 2026-09-02 → 10-01 |
+| E-31 | 7 loads carry `samsara_route_id`; `samsara_route_stop_progress` 14 rows, last read 18:00:07Z |
+| E-05 `load_odometer_segments` | 49 rows, last 15:45Z; the 10-day catch-up with Samsara odometer history first runs 02:41 CT |
+| E-13 `samsara_webhook_events` | 0, waiting on Samsara's first GeofenceEntry/Exit post |
+| E-30 `chat.messages` | 0, no dispatcher message to a Samsara-linked driver yet, no driver reply |
+
+- Fuel push next runs at 18:00 CT (23:00Z).
+- Throwaway branch `br-dawn-mud-akhnuh54` is kept until the owner approves deleting it (Neon branch deletes need the owner).
