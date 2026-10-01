@@ -952,3 +952,20 @@ the same assignment-coverage gap T-23 measured (47.6%).
 WHAT WOULD RAISE THE 9: more crossings within 120 s of a real odometer read. Not by loosening the
 rule -- by a denser odometer feed (T147/T170/T173's 08-26 dropout is the owner's Samsara-side fix).
 GUARD: scripts/verify-driven-miles-legs-never-interpolate.mjs + --selftest.
+
+## 2026-10-01 — ROUND 304 T-48 — Samsara fuel-purchase push, twice daily (BUILT, gated, dry-run default)
+ROUND: 304 · ROW: T-48 · STATUS: shipped (engine + cron + plan route + guard). Live POST NOT run (no-seed order).
+API shape measured live on POST /fuel-purchase with rejected probes only (nothing created): all values strings —
+fuelQuantityLiters, transactionPrice{amount,currency}, vehicleId, ISO transactionTime, transactionLocation; iftaFuelType enum.
+ENGINE: apps/backend/src/integrations/samsara/fuel-purchase-push.service.ts — every row through
+fuelPurchaseIneligibleReason(row,{requirePumpTime:true}) (T-45 gate); transactionReference = fuel_transactions.id;
+litres = gallons x 3.785411784; vehicle mirror-first, ambiguous -> skip; reefer_diesel skipped (trailer reefer, not tractor).
+Skip reasons: voided/not_motor_fuel/no_gallons/shared_import_timestamp/date_only_precision/reefer_fuel_not_vehicle_fuel/
+no_unit/no_samsara_vehicle/ambiguous_samsara_vehicle/no_location/no_price. Ledger: integrations.integration_sync_log
+sync_kind='fuel_purchase_push', one row per pushed/failed/new-skip; pushed rows never re-pushed.
+CRON: fuel-purchase-push.cron.ts 06:00+18:00 America/Chicago; POSTs only with SAMSARA_FUEL_PURCHASE_PUSH_APPLY=true,
+else dry run + one audit event. ROUTE: GET /api/v1/integrations/samsara/fuel-purchase-push/plan (read-only).
+LIVE DRY RUN (rolled back, ledger 0 rows): USMCA 177 rows -> would_push 0 (date_only_precision 125, not_motor_fuel 52).
+USMCA has NO pushable purchase today: its diesel source carries a date, never a pump time. TRANSP Samsara config is_enabled=false -> never pushed.
+GUARD: scripts/verify-samsara-fuel-push-never-substitutes.mjs + --selftest PASS.
+REMAINING: owner flips SAMSARA_FUEL_PURCHASE_PUSH_APPLY on Render; first real push needs a fuel source with pump times.

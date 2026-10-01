@@ -33,6 +33,16 @@ export type SamsaraHosDriverLogs = { driverId: string; logs: SamsaraHosLog[] };
 // (Samsara legitimately returns a fresh 70h) from a default reading for a driver who is off the clock.
 /** ROUND 304 T-47 -- GET /fleet/hos/daily-logs, fields probed live 2026-10-01 (not guessed):
  *  driver.id, startTime, endTime, distanceTraveled.driveDistanceMeters. No vehicle on the row. */
+export type SamsaraFuelPurchaseBody = {
+  transactionReference: string;
+  transactionTime: string;
+  transactionLocation: string;
+  fuelQuantityLiters: string;
+  transactionPrice: { amount: string; currency: string };
+  vehicleId: string;
+  iftaFuelType: "Diesel" | "Gasoline";
+};
+
 export type SamsaraHosDailyLog = {
   samsara_driver_id: string;
   start_time: string;
@@ -680,6 +690,35 @@ export class SamsaraClient {
    *  Durations are ms; converted to minutes. Scoped to driverIds (the active board drivers). */
   /** ROUND 304 T-47 -- per-driver per-day HOS drive distance, the independent second signal for
    *  driven miles per leg. startDate/endDate are YYYY-MM-DD. */
+  /**
+   * ROUND 304 T-48 — POST /fuel-purchase. Body shape measured live against Samsara's validator
+   * (2026-10-01, rejected probes only, nothing created): every value is a STRING —
+   * fuelQuantityLiters "123.456", transactionPrice {amount:"1.00", currency}, vehicleId, ISO
+   * transactionTime, free-text transactionLocation; iftaFuelType is an enum ("Diesel", "Gasoline", ...).
+   * Throws SamsaraApiError on any non-2xx so the caller records the failure, never a silent drop.
+   */
+  async createFuelPurchase(body: SamsaraFuelPurchaseBody): Promise<{ samsara_fuel_purchase_id: string | null }> {
+    const token = this._token();
+    if (!token) throw new SamsaraApiError("samsara_token_missing", null, null, false);
+    let res: Response;
+    try {
+      res = await withCircuitBreaker("samsara", () =>
+        samsaraFetch(`${SAMSARA_API_BASE}/fuel-purchase`, {
+          method: "POST",
+          headers: { ...bearerHeaders(token), "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        })
+      );
+    } catch (error) {
+      throw new SamsaraApiError(`samsara_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
+    }
+    const json = await readJsonResponse(res);
+    if (!res.ok) throw new SamsaraApiError(`samsara_fuel_purchase_http_${res.status}`, res.status, json, res.status === 429 || res.status >= 500);
+    const data = (json.data ?? json) as Record<string, unknown>;
+    const id = data.uuid ?? data.id;
+    return { samsara_fuel_purchase_id: id == null ? null : String(id) };
+  }
+
   async listHosDailyLogs(startDate: string, endDate: string): Promise<SamsaraHosDailyLog[]> {
     const token = this._token();
     if (!token) return [];

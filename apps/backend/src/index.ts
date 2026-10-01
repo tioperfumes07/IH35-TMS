@@ -347,6 +347,8 @@ import { initializeOdometerSnapshotCron } from "./telematics/odometer-snapshot.c
 import { registerOdometerManualRoutes } from "./telematics/odometer-manual.routes.js";
 import { registerFaultCodeAlertsRoutes } from "./maintenance/fault-code-alerts.routes.js";
 import { registerDrivenMilesLegsRoutes } from "./telematics/driven-miles-legs.routes.js";
+import { registerFuelPurchasePushRoutes } from "./integrations/samsara/fuel-purchase-push.routes.js";
+import { initializeFuelPurchasePushCron } from "./integrations/samsara/fuel-purchase-push.cron.js";
 import { registerGeofenceAddressLinkRoutes } from "./integrations/samsara/geofences/geofence-address-link.routes.js";
 import { initializeSamsaraFaultPollCron } from "./integrations/samsara/fault-poll.cron.js";
 import { initializeHarshEventsPollCron } from "./safety/harsh-events-poll.cron.js";
@@ -1244,6 +1246,7 @@ async function main() {
   await registerOdometerManualRoutes(app);
   await registerFaultCodeAlertsRoutes(app);
   await registerDrivenMilesLegsRoutes(app);
+  await registerFuelPurchasePushRoutes(app);
   await registerGeofenceAddressLinkRoutes(app);
   await registerMaintenanceServiceTimelineRoutes(app);
   await registerUnitMaintenanceHistoryRoutes(app);
@@ -1828,6 +1831,9 @@ async function main() {
 
       initializeHarshEventsPollCron(app);
       app.log.info("[STARTUP] harsh-events-poll-cron initialized");
+
+      initializeFuelPurchasePushCron(app);
+      app.log.info("[STARTUP] samsara-fuel-purchase-push-cron initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] safety-reminders-cron failed");
     }
