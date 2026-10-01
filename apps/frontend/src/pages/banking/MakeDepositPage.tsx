@@ -230,8 +230,8 @@ export function MakeDepositPage() {
       <div className="mx-auto w-full max-w-[1200px] space-y-4 p-4">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
-            <h1 className="text-[22px] font-semibold text-[#0F1219]">Make Deposit</h1>
-            <p className="text-[12px] text-[#6B7280]">
+            <h1 className=" font-semibold text-[#0F1219]">Make Deposit</h1>
+            <p className=" text-[#6B7280]">
               Move Undeposited Funds receipts into a bank account (QBO Make Deposit). Void reverses the JE.
             </p>
           </div>
@@ -242,7 +242,7 @@ export function MakeDepositPage() {
             <Button type="button" variant={mode === "batch" ? "primary" : "secondary"} onClick={() => setMode("batch")}>
               Batch grid
             </Button>
-            <Link className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-[12px] text-[#1F2A44]" to="/banking/register">
+            <Link className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-[#1F2A44]" to="/banking/register">
               Register
             </Link>
           </div>
@@ -253,7 +253,7 @@ export function MakeDepositPage() {
         {mode === "single" ? (
           <section className="space-y-3 rounded-sm border border-[#E5E7EB] bg-white p-3" data-section="make-deposit-single">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-              <label className="block text-[12px] text-[#4B5563]">
+              <label className="block text-[#4B5563]">
                 <span className="mb-1 block font-bold uppercase">Deposit to</span>
                 <ReferenceSelect
                   size="sm"
@@ -265,14 +265,14 @@ export function MakeDepositPage() {
                   operatingCompanyId={companyId}
                 />
               </label>
-              <label className="block text-[12px] text-[#4B5563]">
+              <label className="block text-[#4B5563]">
                 <span className="mb-1 block font-bold uppercase">Date</span>
                 <DatePicker value={depositDate} onChange={setDepositDate} />
               </label>
-              <label className="block text-[12px] text-[#4B5563]">
+              <label className="block text-[#4B5563]">
                 <span className="mb-1 block font-bold uppercase">Memo</span>
                 <input
-                  className="h-7 w-full rounded-sm border border-[#E5E7EB] px-2 text-[12px]"
+                  className="h-7 w-full rounded-sm border border-[#E5E7EB] px-2"
                   value={memo}
                   onChange={(e) => setMemo(e.target.value)}
                 />
@@ -280,9 +280,9 @@ export function MakeDepositPage() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-[12px]">
+              <table className="w-full border-collapse">
                 <thead>
-                  <tr className="border-b border-[#E5E7EB] text-[11px] font-bold uppercase text-[#4B5563]">
+                  <tr className="border-b border-[#E5E7EB] text-column-header font-bold uppercase text-[#4B5563]">
                     <th className="px-2 py-[7px] text-center">☐</th>
                     <th className="px-2 py-[7px] text-center">Type</th>
                     <th className="px-2 py-[7px] text-center">Ref</th>
@@ -326,12 +326,12 @@ export function MakeDepositPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-              <label className="block text-[12px] text-[#4B5563]">
+              <label className="block text-[#4B5563]">
                 <span className="mb-1 block font-bold uppercase">Cash back</span>
                 <MoneyInput valueCents={cashBackCents} onChangeCents={(c) => setCashBackCents(c ?? 0)} />
               </label>
               {cashBackCents > 0 ? (
-                <label className="block text-[12px] text-[#4B5563]">
+                <label className="block text-[#4B5563]">
                   <span className="mb-1 block font-bold uppercase">Cash-back account</span>
                   <ReferenceSelect
                     size="sm"
@@ -344,15 +344,15 @@ export function MakeDepositPage() {
                   />
                 </label>
               ) : null}
-              <div className="flex flex-col justify-end text-[12px] text-[#1F2A44]">
+              <div className="flex flex-col justify-end text-[#1F2A44]">
                 <div>Selected: {formatCurrencyFromCents(selectedTotal)}</div>
                 <div>Net to bank: {formatCurrencyFromCents(netDeposit)}</div>
               </div>
             </div>
 
-            {createMut.isError ? <p className="text-[12px] text-red-700">{userFacingApiError(createMut.error, "Deposit failed")}</p> : null}
+            {createMut.isError ? <p className=" text-red-700">{userFacingApiError(createMut.error, "Deposit failed")}</p> : null}
             {createMut.isSuccess ? (
-              <p className="text-[12px] text-[#16A34A]">
+              <p className=" text-[#16A34A]">
                 Saved{" "}
                 <EntityLink kind="deposit" id={createMut.data.deposit.id} label={createMut.data.deposit.display_id} />
                 {createMut.data.deposit.journal_entry_id ? (
@@ -374,12 +374,12 @@ export function MakeDepositPage() {
           </section>
         ) : (
           <section className="space-y-3 rounded-sm border border-[#E5E7EB] bg-white p-3" data-section="make-deposit-batch">
-            <p className="text-[12px] text-[#6B7280]">
+            <p className=" text-[#6B7280]">
               §23 batch grid: paste date/memo rows, fill bank + receipt ids, Save all — each row posts through the same Make Deposit engine.
             </p>
             <textarea
               ref={pasteRef}
-              className="h-16 w-full rounded-sm border border-[#E5E7EB] p-2 text-[12px]"
+              className="h-16 w-full rounded-sm border border-[#E5E7EB] p-2"
               placeholder="Paste spreadsheet rows (date, memo) here"
               onPaste={onPasteBatch}
             />
@@ -417,9 +417,9 @@ export function MakeDepositPage() {
               </Button>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-[12px]">
+              <table className="w-full border-collapse">
                 <thead>
-                  <tr className="border-b border-[#E5E7EB] text-[11px] font-bold uppercase text-[#4B5563]">
+                  <tr className="border-b border-[#E5E7EB] text-column-header font-bold uppercase text-[#4B5563]">
                     <th className="px-2 py-[7px] text-center">Date</th>
                     <th className="px-2 py-[7px] text-center">Bank</th>
                     <th className="px-2 py-[7px] text-center">Payment ids</th>
@@ -512,10 +512,10 @@ export function MakeDepositPage() {
         )}
 
         <section className="space-y-2 rounded-sm border border-[#E5E7EB] bg-white p-3" data-section="deposits-list">
-          <h2 className="text-[11px] font-bold uppercase text-[#4B5563]">Recent deposits</h2>
-          <table className="w-full border-collapse text-[12px]">
+          <h2 className=" font-bold uppercase text-[#4B5563]">Recent deposits</h2>
+          <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-[#E5E7EB] text-[11px] font-bold uppercase text-[#4B5563]">
+              <tr className="border-b border-[#E5E7EB] text-column-header font-bold uppercase text-[#4B5563]">
                 <th className="px-2 py-[7px] text-center">Deposit</th>
                 <th className="px-2 py-[7px] text-center">Date</th>
                 <th className="px-2 py-[7px] text-center">Bank</th>
@@ -549,7 +549,7 @@ export function MakeDepositPage() {
           </table>
           {voidTargetId ? (
             <div className="flex flex-wrap items-end gap-2 border-t border-[#E5E7EB] pt-2">
-              <label className="block text-[12px]">
+              <label className="block">
                 <span className="mb-1 block font-bold uppercase text-[#4B5563]">Void reason</span>
                 <input
                   className="h-7 w-72 rounded-sm border border-[#E5E7EB] px-2"
@@ -567,7 +567,7 @@ export function MakeDepositPage() {
               <Button type="button" variant="secondary" onClick={() => setVoidTargetId(null)}>
                 Cancel
               </Button>
-              {voidMut.isError ? <span className="text-[12px] text-red-700">{userFacingApiError(voidMut.error, "Void failed")}</span> : null}
+              {voidMut.isError ? <span className=" text-red-700">{userFacingApiError(voidMut.error, "Void failed")}</span> : null}
             </div>
           ) : null}
         </section>
