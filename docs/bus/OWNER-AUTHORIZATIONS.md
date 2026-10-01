@@ -6473,7 +6473,12 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). mdata.units row c9f673
 action: node scripts/ops/2026-10-01-cc3-t122-samsara-id.mjs --apply --auth AUTH-183
   (212014918407330 -> 212014918197571; refuses unless the row, the mirror link and the free live id are exactly as measured). Dry run: 1 row.
 expires_at: 2026-10-02T04:34:23Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-01T04:39:21Z
+consumed_by: CC-3
+row_counts: mdata.units 1 row updated (T122 samsara_vehicle_id 212014918407330 -> 212014918197571)
+proof_query: SELECT samsara_vehicle_id FROM mdata.units WHERE id='c9f6737d-3f0b-4a20-aa7e-5cebc8e48787' -> 212014918197571
+audit: audit.audit_events source CC-3-AUTH-183 (1 row)
 
 OWNER/LEAD ORDER, verbatim, 2026-10-01 (in chat to CC-3; owner delegated "all to you"):
 > "APPROVED now, one script each (dry run counts, --apply, audit row): T122 id fix; delete the 176,960 odometer duplicates; apply the 30 fence links; merge the 5 clear driver pairs via merged_into_driver_id (never delete). BUILD the 5 Laredo bridge fences (border_crossing, 400 m, real coordinates)."
@@ -6486,7 +6491,12 @@ action: node scripts/ops/2026-10-01-cc3-odometer-dedupe.mjs --apply --auth AUTH-
   Dry run: before 177,935 rows / 52,511 distinct keys -> delete 125,424 -> survivors 52,511 = distinct keys.
   NOT the 176,960 figure: that was a per-day count that also contains 51,536 DISTINCT same-day readings (real reads, kept per R-02).
 expires_at: 2026-10-02T04:34:23Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-01T04:39:21Z
+consumed_by: CC-3
+row_counts: telematics.odometer_readings 125,424 rows deleted (exact repeats); 177,935 -> 52,511; 51,536 distinct same-day readings kept; deleted rows backed up to CC-3 scratchpad odometer-dedupe-2026-10-01.ndjson (125,424 lines, 49.8 MB)
+proof_query: SELECT count(*), count(DISTINCT (unit_id, telematics.odometer_reading_day(read_at), source, odometer_miles)) FROM telematics.odometer_readings -> 52511 | 52511
+audit: audit.audit_events source CC-3-AUTH-184 (1 row)
 
 OWNER/LEAD ORDER, verbatim, 2026-10-01 (in chat to CC-3; owner delegated "all to you"):
 > "APPROVED now, one script each (dry run counts, --apply, audit row): T122 id fix; delete the 176,960 odometer duplicates; apply the 30 fence links; merge the 5 clear driver pairs via merged_into_driver_id (never delete). BUILD the 5 Laredo bridge fences (border_crossing, 400 m, real coordinates)."
@@ -6499,7 +6509,12 @@ action: npx tsx scripts/ops/2026-10-01-cc3-fence-address-links.ts --apply --auth
   29 NOT linked: 26 one-to-many (one fence vs 3 addresses / one address vs 2 fences, identity hits up to 235 km away); 3 one-to-one pairs are
   neighbouring businesses (Love's #762 vs FRIO EXPRESS, Love's #960 vs Saori Produce, a warehouse vs Palos Garza Forwarding).
 expires_at: 2026-10-02T04:34:23Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-01T04:39:21Z
+consumed_by: CC-3
+row_counts: integrations.samsara_addresses 255 rows upserted (mirror); geo.geofences 1 row samsara_address_id set (Love's #298 — Encinal, TX); 29 proposals not linked (reasons in the script output)
+proof_query: SELECT count(*) FROM geo.geofences WHERE samsara_address_id IS NOT NULL -> 1; SELECT count(*) FROM integrations.samsara_addresses -> 255
+audit: audit.audit_events source CC-3-AUTH-185 (1 row)
 
 OWNER/LEAD ORDER, verbatim, 2026-10-01 (in chat to CC-3; owner delegated "all to you"):
 > "APPROVED now, one script each (dry run counts, --apply, audit row): T122 id fix; delete the 176,960 odometer duplicates; apply the 30 fence links; merge the 5 clear driver pairs via merged_into_driver_id (never delete). BUILD the 5 Laredo bridge fences (border_crossing, 400 m, real coordinates)."
@@ -6511,7 +6526,12 @@ scope: USMCA ONLY. mdata.drivers.samsara_driver_id on 5 merged pairs (losers alr
   mirror keeps the link). No delete, no other column; refuses any pair not exactly as measured or whose loser has activity.
 action: node scripts/ops/2026-10-01-cc3-driver-samsara-link-to-survivor.mjs --apply --auth AUTH-186. Dry run: 5 pairs; Samsara ids on two rows 32 -> 27.
 expires_at: 2026-10-02T04:34:23Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-01T04:39:21Z
+consumed_by: CC-3
+row_counts: mdata.drivers samsara_driver_id: 4 moved loser -> survivor (13680780, 55857614, 56507640, 60695293), 1 cleared on loser (58031381); 0 deletes
+proof_query: Samsara ids linked to two USMCA driver rows (column + mirror) -> 27 (was 32; the 27 are the dormant pairs left for the owner)
+audit: audit.audit_events source CC-3-AUTH-186 (1 row)
 
 OWNER/LEAD ORDER, verbatim, 2026-10-01 (in chat to CC-3; owner delegated "all to you"):
 > "APPROVED now, one script each (dry run counts, --apply, audit row): T122 id fix; delete the 176,960 odometer duplicates; apply the 30 fence links; merge the 5 clear driver pairs via merged_into_driver_id (never delete). BUILD the 5 Laredo bridge fences (border_crossing, 400 m, real coordinates)."
@@ -6524,7 +6544,12 @@ scope: USMCA ONLY. geo.geofences: INSERT 3 border_crossing fences (Juárez–Lin
   Laredo I/II are 464 m apart, so 225 m instead of 400 m (two 400 m circles would log one crossing on both bridges).
 action: node scripts/ops/2026-10-01-cc3-border-bridge-fences.mjs --apply --auth AUTH-187. Dry run: 3 created, 2 already fenced, border fences 29 -> 32.
 expires_at: 2026-10-02T04:34:23Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-01T04:39:21Z
+consumed_by: CC-3
+row_counts: geo.geofences 3 border_crossing fences inserted: Juárez–Lincoln (225 m), Gateway to the Americas (225 m), Camino Real Eagle Pass (400 m); World Trade + Colombia already fenced, not duplicated
+proof_query: SELECT count(*) FROM geo.geofences WHERE location_kind='border_crossing' -> 32 (was 29)
+audit: audit.audit_events source CC-3-AUTH-187 (1 row)
 
 OWNER/LEAD ORDER, verbatim, 2026-10-01 (in chat to CC-3; owner delegated "all to you"):
 > "APPROVED now, one script each (dry run counts, --apply, audit row): T122 id fix; delete the 176,960 odometer duplicates; apply the 30 fence links; merge the 5 clear driver pairs via merged_into_driver_id (never delete). BUILD the 5 Laredo bridge fences (border_crossing, 400 m, real coordinates)."
