@@ -1,7 +1,8 @@
 # NOW — CURSOR (2026-10-01)
-OWNER: FAST-MERGE ON · EACH SEAT BUILDS END-TO-END · ROUND 319 (no Chrome-as-proof).
-DONE: R313 #1–#3 · Factoring #23862 · Maint bill/JE #23865+#23869 · open PR drain 0.
-NOW: Driver Profile Fuel tab · `cursor/r319-driver-engines-c89b`.
-NEXT: Customers · Vendors · D-H0/D-H1/D-H2.
-ACK: CURSOR | ACK ROUND-319 | FAST-MERGE-ON | DRIVER-FUEL-TAB
-USMCA only. Never POST Book Load.
+OWNER: FAST-MERGE ON · EACH SEAT BUILDS END-TO-END · ROUND 321.
+ACK: CURSOR | ACK ROUND-321 | SERVICE-CHARGE-EXPENSE | GO
+DONE: AUTH-199 CONSUMED — cf78c2aa reversed `d4301625` · expense `101e4ac4` JE `ac77a55f` · costs-guard LIVE PASS 0.
+NOW: FAST-MERGE engine PR `cursor/r319-recon-sc-expense-c89b` (SC expense engine + exempt removed).
+NEXT: D-H0 → D-H1 → D-H2 · Factoring designs (Payments-to-You / Escrow / Reserve / Home cash-flow).
+Ambient-16 listed OUTBOX — Lead assigns.
+USMCA only. Never POST Book Load. No Chrome-as-proof (Jorge).

@@ -1391,6 +1391,11 @@
       "claimed_by": "cursor",
       "claimed_at": "2026-10-01",
       "purpose": "Widen docs.file_links.entity_type CHECK to admit work_order (Maintenance WO documents Law §9 both-way). Loop-drop all entity_type CHECKs; re-add full prior set + work_order + restore cash_advance dropped by invoice_dispute widen. No data touch."
+    },
+    "202610011900": {
+      "claimed_by": "cursor",
+      "claimed_at": "2026-10-01",
+      "purpose": "Lead ruling 17:20Z: banking.reconciliation_sessions.service_charge_expense_id FK to accounting.expenses — recon service charge posts as expense document, never bare cost JE."
     }
   },
   "202613590001": {

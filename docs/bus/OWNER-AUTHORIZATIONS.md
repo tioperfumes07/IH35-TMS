@@ -6881,7 +6881,11 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80).
 action: OWNER_AUTH_ID=AUTH-199 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-01-cursor-auth199-reverse-sc-repost-expense.ts
   Rehearse first: REHEARSAL=1 DATABASE_URL=<throwaway> npx tsx scripts/ops/2026-10-01-cursor-auth199-reverse-sc-repost-expense.ts
 expires_at: 2026-10-02T18:55:00Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-01T19:12:00Z
+consumed_by: Cursor
+row_counts: 1 reversing JE d4301625 reverses cf78c2aa; 1 expense 101e4ac4 posted JE ac77a55f (Dr 6300 / Cr 1005 $5.00); session 7a7d1da9 stamped service_charge_expense_id + service_charge_journal_entry_id
+proof_query: cf78c2aa.reversed_by_je_id=d4301625; expense 101e4ac4 journal_entry_id=ac77a55f has_expense_row; verify-costs-are-expenses-not-handwritten-jes LIVE PASS 0 violations
 derivation: docs/bus/ORDERS-2026-10-01-CURSOR.md Lead ruling 17:20Z + ORDERS-2026-10-01-ALL-SEATS-COMMON.md CURSOR #1.
 THIS AUTHORIZATION DOES NOT COVER: interest JE 2ef10657, any other JE, any amount other than the $5.00 SC reverse+repost, any QBO write-back.
 
