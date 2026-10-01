@@ -15,6 +15,7 @@ import { ApiError } from "../../api/client";
 import { Button } from "../../components/Button";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
+import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBankingMatchBanner";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
@@ -254,6 +255,16 @@ export function BillDetailPage() {
   return (
     <AccountingSubNavWrapper>
       <VoidedBanner voidedAt={bill.revoked_at} voidReason={bill.revoked_reason} voidedByUserId={bill.voided_by_user_id} documentLabel="Bill" />
+      {bill.matched_bank_transaction_id && selectedCompanyId ? (
+        <OnlineBankingMatchBanner
+          companyId={selectedCompanyId}
+          bankTransactionId={bill.matched_bank_transaction_id}
+          txnDate={bill.matched_bank_transaction_date}
+          description={bill.matched_bank_transaction_description}
+          amountCents={bill.matched_bank_transaction_amount_cents}
+          invalidateKeys={[["accounting", "bill", selectedCompanyId, id]]}
+        />
+      ) : null}
       <PageHeader
         title={displayId}
         backHref="/accounting/bills"

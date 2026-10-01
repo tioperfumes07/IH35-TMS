@@ -35,13 +35,18 @@ function main() {
     "apps/frontend/src/pages/accounting/journal-entries/JournalEntryDetailPage.tsx",
     "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx",
     "apps/frontend/src/pages/banking/TransfersListPage.tsx",
+    "apps/frontend/src/pages/accounting/BillDetailPage.tsx",
   ]) {
     assertIncludes(read(file), "OnlineBankingMatchBanner", file);
   }
 
   const recon = read("apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts");
   assertIncludes(recon, 'app.post("/api/v1/bank-recon/unmatch"', "recon-worklist.routes.ts");
-  assertIncludes(recon, "Journal entry / Transfer / Factoring advance", "recon-worklist.routes.ts");
+  assertIncludes(recon, "Journal entry / Transfer / Factoring advance / Bill", "recon-worklist.routes.ts");
+
+  const bills = read("apps/backend/src/accounting/bills.service.ts");
+  assertIncludes(bills, "bt.matched_bill_id = $1::uuid", "bills.service.ts");
+  assertIncludes(bills, "matched_bank_transaction_id: matchedBank?.id ?? null", "bills.service.ts");
 
   console.log(`${LABEL}: PASS`);
 }

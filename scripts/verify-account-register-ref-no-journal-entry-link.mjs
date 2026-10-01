@@ -56,7 +56,7 @@ const src = readFileSync(pagePath, "utf8");
 
 // B-1: drill-through moved from onRowClick to inline-expand Edit (renderExpanded) — still must
 // call sourceRoute with the raw UUID source_transaction_id, never the human reference.
-if (!/navigate\(sourceRoute\(r\.source_transaction_type,\s*r\.source_transaction_id\)\)/.test(src)) {
+if (!/navigate\(sourceRoute\(r\.source_transaction_type,\s*r\.source_transaction_id(?:,\s*r\.journal_entry_id)?\)\)/.test(src)) {
   failures.push(`${pagePath}: sourceRoute(..., r.source_transaction_id) missing — check it wasn't reverted to the now-human r.reference`);
 }
 if (/navigate\(sourceRoute\([^)]*r\.reference/.test(src)) {

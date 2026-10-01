@@ -1,4 +1,5 @@
 # NOW-CURSOR
 
-NOW: B-1e #23917 MERGED tip `3abdb503c9` — online banking match banner + Unmatch on expense/bill-payment/payment. Redeploy BE+FE after FT covers B-1b→B-1e.
-ACK: CURSOR | ACK ORDERS-2026-10-01 | B-1e MERGED | GO
+NOW: B-1f #23919 MERGED tip `61b0878186` — match banner + Unmatch on JE / transfer / factoring. B-1g shipping register Edit deep-link + bill banner.
+ACK: CURSOR | ACK ORDERS-2026-10-01 | B-1f MERGED | GO
+Redeploy BE+FE after FT covers B-1b→B-1f (and B-1g once merged).

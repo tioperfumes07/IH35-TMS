@@ -74,7 +74,11 @@ function bankPickerLabel(a: BankRegisterPickerRow): string {
 // ACCT-REGISTER-SOURCEROUTE-UUID-REGRESSION: this MUST be called with the raw source_transaction_id
 // UUID, never the (now human-readable, since ACCT-F5426) `reference` display field — every route
 // below expects the entity's real id, not its bill_number/display_id.
-function sourceRoute(type: string | null, sourceTransactionId: string | null): string {
+function sourceRoute(
+  type: string | null,
+  sourceTransactionId: string | null,
+  journalEntryId?: string | null,
+): string {
   const t = (type ?? "").toLowerCase();
   const reference = sourceTransactionId;
   if (t === "invoice" && reference) return `/accounting/invoices/${reference}`;
@@ -87,9 +91,12 @@ function sourceRoute(type: string | null, sourceTransactionId: string | null): s
   if (t === "settlement" && reference) return `/driver-finance/settlements?settlement_id=${reference}`;
   if (t === "settlement") return "/driver-finance/settlements";
   // Law §9 transfer reverse: banking transfers list (QBO Transfer / fund move).
+  if (t === "transfer" && reference) return `/banking/transfers?transfer_id=${reference}`;
   if (t === "transfer") return "/banking/transfers";
   // Law §9 bank reverse: bank_categorization source_transaction_id is the bank txn uuid.
   if (t === "bank_categorization" && reference) return `/banking/transactions?txn_id=${reference}`;
+  if (t === "journal_entry" && reference) return `/accounting/journal-entries/${reference}`;
+  if (journalEntryId) return `/accounting/journal-entries/${journalEntryId}`;
   return "/accounting/journal-entries";
 }
 
@@ -819,7 +826,7 @@ export function AccountRegisterPage() {
             <RegisterInlineEditPanel
               row={r}
               companyId={companyId}
-              onEditOriginal={() => navigate(sourceRoute(r.source_transaction_type, r.source_transaction_id))}
+              onEditOriginal={() => navigate(sourceRoute(r.source_transaction_type, r.source_transaction_id, r.journal_entry_id))}
               onCancel={() => setExpandedKeys((keys) => keys.filter((k) => k !== r.posting_id))}
               onVoided={() => setExpandedKeys((keys) => keys.filter((k) => k !== r.posting_id))}
             />

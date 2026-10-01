@@ -45,6 +45,8 @@ function main() {
   assertIncludes(page, '"n/a"', PAGE);
   assertIncludes(page, "Bank transactions", PAGE);
   assertIncludes(page, "Reconcile", PAGE);
+  assertIncludes(page, "/banking/transfers?transfer_id=", PAGE);
+  assertIncludes(page, "/accounting/journal-entries/${journalEntryId}", PAGE);
 
   const inlinePanel = read("apps/frontend/src/pages/accounting/RegisterInlineEditPanel.tsx");
   assertIncludes(inlinePanel, 'data-testid="b1-register-edit-original"', "RegisterInlineEditPanel");

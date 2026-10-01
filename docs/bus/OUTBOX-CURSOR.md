@@ -1,3 +1,8 @@
+**2026-10-01T23:31Z · B-1f MERGED #23919 · tip `61b0878186`**
+ACK: CURSOR | ACK ORDERS-2026-10-01 | B-1f MERGED | GO
+B-1f OnlineBankingMatchBanner + Unmatch on Journal entry · Transfer View · Factoring advance. Stack tip B-1b→B-1f — one BE+FE redeploy after FT.
+NEXT: B-1g register Edit deep-link (transfer_id / JE id) + bill matched_bill_id banner.
+
 **2026-10-01T23:05Z · B-1e MERGED #23917 · tip `3abdb503c9`**
 ACK: CURSOR | ACK ORDERS-2026-10-01 | B-1e MERGED | GO
 B-1e OnlineBankingMatchBanner + Unmatch POST /bank-recon/unmatch on Expense · Bill Payment · Payment. Stack tip B-1b→B-1e — one BE+FE redeploy after FT.

@@ -2090,6 +2090,27 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
     );
     const linkedCashAdvanceId = linkedCashAdvanceRes.rows[0]?.id ? String(linkedCashAdvanceRes.rows[0].id) : null;
     const linkedCashAdvanceDisplayId = linkedCashAdvanceRes.rows[0]?.display_id ?? null;
+    const matchedBankRes = await client.query<{
+      id: string;
+      txn_date: string | null;
+      description: string | null;
+      amount_cents: string | null;
+    }>(
+      `
+        SELECT
+          bt.id::text AS id,
+          bt.transaction_date::text AS txn_date,
+          bt.description,
+          bt.amount_cents::text AS amount_cents
+        FROM banking.bank_transactions bt
+        WHERE bt.operating_company_id = $2::uuid
+          AND bt.matched_bill_id = $1::uuid
+        ORDER BY bt.transaction_date DESC, bt.created_at DESC
+        LIMIT 1
+      `,
+      [billId, operatingCompanyId]
+    );
+    const matchedBank = matchedBankRes.rows[0] ?? null;
     const linesRes = await client.query<{
       id: string;
       line_sequence: number;
@@ -2168,6 +2189,10 @@ export async function getBillDetail(userId: string, operatingCompanyId: string, 
         linked_cash_advance_id: linkedCashAdvanceId,
         linked_cash_advance_display_id: linkedCashAdvanceDisplayId,
         insurance_claim_number: bill.insurance_claim_number ?? null,
+        matched_bank_transaction_id: matchedBank?.id ?? null,
+        matched_bank_transaction_date: matchedBank?.txn_date ?? null,
+        matched_bank_transaction_description: matchedBank?.description ?? null,
+        matched_bank_transaction_amount_cents: matchedBank?.amount_cents ?? null,
       },
       lines: linesRes.rows.map((row) => ({
         id: row.id,
