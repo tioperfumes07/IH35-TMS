@@ -27,6 +27,7 @@ import { LegalMattersReverseSection } from "../../components/legal/LegalMattersR
 import { FuelTransactionsReverseSection } from "../../components/fuel/FuelTransactionsReverseSection";
 import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
 import { BillsReverseSection } from "../../components/accounting/BillsReverseSection";
+import { AssetLeaseSection } from "../../components/leases/AssetLeaseSection";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { TrailerTiresReverseSection } from "../../components/maintenance/TrailerTiresReverseSection";
 import { EquipmentTransfersReverseSection } from "../../components/dispatch/EquipmentTransfersReverseSection";
@@ -263,6 +264,7 @@ export function TrailerProfilePage() {
         />
       </div>
       <div data-testid="tp-section-6f-bills">
+        {companyId && id ? <AssetLeaseSection operatingCompanyId={companyId} equipmentId={id} /> : null}
         <BillsReverseSection
           operatingCompanyId={companyId}
           filter={{ trailer_id: id }}

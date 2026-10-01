@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { MatterReservePanel } from "../../../components/legal/MatterReservePanel";
 import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
@@ -460,6 +461,17 @@ export function LegalMatterDetailPage() {
                 </div>
               ) : null}
 
+              {companyId && id && matter ? (
+                <div className="mt-3 border-t border-gray-100 pt-3">
+                  <MatterReservePanel
+                    operatingCompanyId={companyId}
+                    matterId={id}
+                    reserveCents={(matter as { financial_reserve_cents?: number | null }).financial_reserve_cents ?? null}
+                    postedCents={(matter as { reserve_posted_cents?: number | null }).reserve_posted_cents ?? null}
+                    reserveJournalEntryId={(matter as { reserve_journal_entry_id?: string | null }).reserve_journal_entry_id ?? null}
+                  />
+                </div>
+              ) : null}
               {companyId && id ? (
                 <div className="mt-3 border-t border-gray-100 pt-3">
                   <LegalMatterCostsReverseSection

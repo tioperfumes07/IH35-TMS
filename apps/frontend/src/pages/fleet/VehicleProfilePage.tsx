@@ -47,6 +47,7 @@ import { AssetSafetyReverseSection } from "../../components/safety/AssetSafetyRe
 import { FuelTransactionsReverseSection } from "../../components/fuel/FuelTransactionsReverseSection";
 import { ExpensesReverseSection } from "../../components/accounting/ExpensesReverseSection";
 import { BillsReverseSection } from "../../components/accounting/BillsReverseSection";
+import { AssetLeaseSection } from "../../components/leases/AssetLeaseSection";
 import { UnitPermitsReverseSection } from "../../components/safety/UnitPermitsReverseSection";
 import { RoadServiceReverseSection } from "../../components/maintenance/RoadServiceReverseSection";
 import { UnitMaintenanceInspectionsReverseSection } from "../../components/maintenance/UnitMaintenanceInspectionsReverseSection";
@@ -525,6 +526,7 @@ export function VehicleProfilePage() {
             />
           </div>
           <div data-testid="vp-section-10e3-bills-reverse">
+            {companyId && id ? <AssetLeaseSection operatingCompanyId={companyId} unitId={id} /> : null}
             <BillsReverseSection
               operatingCompanyId={companyId}
               filter={{ unit_id: id }}
