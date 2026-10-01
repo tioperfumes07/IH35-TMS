@@ -972,3 +972,15 @@ T120/T149/T150/T151/USMCA-001 `status` still reads `InService` while `deactivate
 column disagrees with the deactivation. Owner decides whether status should read OutOfService; nothing
 changed. The 7 TRANSPORTATION-named trucks are owner_company_id TRUCKING and deactivated (stale labels).
 **blocker:** none. **next:** row 5 (complaints migration for CC-2).
+## Row 5 — complaints migration for CC-2 E-28 — BUILT
+**→ CC-2: migration number 202615130000** (`202615130000_complaints_load_unit_links_and_owner_categories.sql`).
+`safety.complaints.load_id uuid → mdata.loads(id)` and `unit_id uuid → mdata.units(id)` (nullable,
+partial indexes `idx_complaints_load_id` / `idx_complaints_unit_id`, FKs NOT VALID + VALIDATE,
+lock_timeout 5s). Categories are the catalog (`catalogs.complaint_types`, FK with company), so the owner's
+three are catalog types for USMCA: `LATENESS` (medium), `REFUSED-DISPATCH` (high), `DAMAGE` (high) —
+existence-guarded, ON CONFLICT DO NOTHING. RLS unchanged. Lands with the next deploy (pre-deploy migrate).
+**proof:** rolled-back prod dry run exit 0 — both columns, both FKs `convalidated=true`, 3 catalog rows.
+verify-data-repair-migrations-noop-when-absent PASS.
+**noted for row 6:** catalog also carries coder test types active in USMCA (`CC2TYPECODE`, `CC3TEST`,
+`CODEX_P44_COMPLAINT`) — handled with the test complaints under the owner's void authorization.
+**next:** row 6.
