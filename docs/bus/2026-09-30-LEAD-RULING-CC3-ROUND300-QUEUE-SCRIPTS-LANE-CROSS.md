@@ -29,8 +29,11 @@ Touched scripts/-lane files, one per queue item, each its own PR:
 - `scripts/verify-pm-writers-exclude-sample-units.mjs` (Round 303 T-37) -- fails if any PM
   writer/selector loses its is_sample_data exclusion, or if the placeholder-baseline
   (last_service_odometer <= 1) absent-treatment is removed.
-- further Round 303 T-38 through T-44 guards/reports to follow under this same ruling, named as
-  they land.
+- `scripts/verify-arrival-detection-wired-on-poll-path.mjs` (Round 303 T-40) -- fails if the
+  poll-path arrival-detection wiring is lost, or if arrival-detection.service.ts stops using the
+  shared driverAtTimeSql helper.
+- further Round 303 T-38/T-39/T-41 through T-44 guards/reports to follow under this same ruling,
+  named as they land.
 
 No money-app posting path touched (NON-FINANCIAL lane -- measurement/reporting guards, a
 read-only PM-due computation, a poll-fallback cron reusing an existing ingestion function, and a

@@ -762,3 +762,40 @@ PROPOSED (not applied):
 This schedule is already UNREACHABLE by every writer after the code fix above (it was already
 unreachable by the main cron before this PR too). Deactivating it is belt-and-suspenders, not
 urgent -- the live exposure (generate-wo) is closed. Awaiting owner AUTH before applying.
+
+## CC-3 — ROUND 303 T-40 SHIPPED — the dispatch node: arrival detection is wired, and proven, and closes a real B-27 gap
+
+MEASURED LIVE first, before touching anything: dispatch.stop_arrivals = 0 rows, confirmed. But
+the premise "T-01's only caller is the webhook" is NOT what the current repo shows --
+samsara-positions.service.ts already calls detectArrivalsForIngestedPoint from BOTH poll
+functions (syncSamsaraVehicleLocations AND syncSamsaraVehicleStats), landed in #23431 (T-01/T-01b,
+merged and deployed per the Lead's own Round 296 message). The real reason stop_arrivals is still
+0: measured the closest real (load, stop, truck-position) triple in the whole fleet right now --
+load 13630 / T164, 483,164 ft from its next stop (~91.5 miles). Every other candidate is farther.
+No truck is within 93 miles of a stop, let alone the 250 ft arrival radius. The engine is wired
+and idle for the correct reason, same honest conclusion T-01's own header already reached.
+
+PROVED THE FULL CHAIN ANYWAY, live, real data, nothing fabricated except the single GPS
+coordinate (used to simulate "truck is there" since none actually is yet): called the REAL
+processArrivalDetectionsForGpsPoint() inside BEGIN...ROLLBACK with T164's real unit_id and real
+load 13630's stop 2's own real coordinates. Result: checked_stops=2, arrivals_triggered=1, a real
+stop_arrivals row with full linkage -- load_number='13630', unit_number='T164',
+driver_label='Carlos Mauricio Pena Carvallo' (the real driver resolved for that unit at that
+timestamp). Rolled back, nothing persisted (this was a controlled proof of the wiring, not a
+real arrival -- the real one happens on its own the moment a truck is actually close).
+
+REAL FIX FOUND AND SHIPPED WHILE PROVING THIS: driver-attribution.ts's own header names
+arrival-detection.service.ts as ONE OF THE 8 SITES that independently inlined the assignment-
+window predicate before the shared driverAtTimeSql helper existed -- and it was NEVER ACTUALLY
+MIGRATED. Fixed here, per this item's own explicit instruction ("Full linkage... via
+driverAtTimeSql"): getDriverForVehicleAtTime() now delegates to driverAtTimeSql, never its own
+copy of the boundary condition. Re-ran the exact same live proof after the refactor -- identical
+result, confirmed no regression.
+
+GUARD: scripts/verify-arrival-detection-wired-on-poll-path.mjs + --selftest. Fails if either
+poll-path call site to detectArrivalsForIngestedPoint disappears (the only path that has ever
+actually run), or if arrival-detection.service.ts stops using the shared driverAtTimeSql helper.
+
+LIVE PROOF: apps/backend npx tsc --noEmit exit 0. Guard --selftest and real-file run both PASS.
+Full chain proven live and pasted above. This is not a merge SHA claimed as proof -- the actual
+function was called, the actual row was built from actual production data, then rolled back.
