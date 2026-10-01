@@ -82,6 +82,10 @@ export type WorkOrder = {
   external_vendor_name?: string | null;
   resolved_vendor_id?: string | null;
   resolved_vendor_name?: string | null;
+  /** ROUND 313/319 list §10-B — primary linked bill / JE (earliest non-void). */
+  linked_bill_id?: string | null;
+  linked_bill_number?: string | null;
+  linked_journal_entry_id?: string | null;
   external_vendor_wo_number?: string | null;
   external_vendor_invoice_number?: string | null;
   severity?: string | null;

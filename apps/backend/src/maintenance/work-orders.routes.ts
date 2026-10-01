@@ -684,12 +684,18 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       // UUID fragment. The JOIN is entity-scoped (mdata.units has no operating_company_id — it uses
       // owner_company_id / currently_leased_to_company_id) so a unit name can NEVER leak across
       // operating companies (USMCA isolation); a foreign unit LEFT-JOINs to NULL → UUID fallback.
+      // ROUND 313/319 §10-B: list rows must carry bill + JE ids so EntityLink can drill both ways
+      // without opening the detail modal. Primary bill = earliest non-void linked_work_order_uuid;
+      // primary JE = that bill's journal_entry_id (expense JEs stay on the detail surface).
       const rowsRes = await client.query(
         `SELECT w.*, u.unit_number, e.equipment_number,
                 NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name,
                 COALESCE(w.external_vendor_id, w.vendor_id)::text AS resolved_vendor_id,
                 v.vendor_name AS resolved_vendor_name,
-                l.load_number AS linked_load_number
+                l.load_number AS linked_load_number,
+                lb.id::text AS linked_bill_id,
+                lb.bill_number AS linked_bill_number,
+                lb.journal_entry_id::text AS linked_journal_entry_id
            FROM maintenance.work_orders w
            LEFT JOIN mdata.units u
              ON u.id = w.unit_id
@@ -711,6 +717,15 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
                                       )
            LEFT JOIN mdata.vendors v ON v.id = COALESCE(w.external_vendor_id, w.vendor_id) AND v.operating_company_id = w.operating_company_id
            LEFT JOIN mdata.loads l ON l.id = w.load_id AND l.operating_company_id = w.operating_company_id
+           LEFT JOIN LATERAL (
+             SELECT b.id, b.bill_number, b.journal_entry_id
+               FROM accounting.bills b
+              WHERE b.operating_company_id = w.operating_company_id
+                AND b.linked_work_order_uuid = w.id
+                AND b.voided_at IS NULL
+              ORDER BY b.bill_date NULLS LAST, b.id
+              LIMIT 1
+           ) lb ON TRUE
           WHERE ${where.join(" AND ")}
           ORDER BY w.opened_at DESC NULLS LAST, w.created_at DESC
           LIMIT $${values.length - 1} OFFSET $${values.length}`,

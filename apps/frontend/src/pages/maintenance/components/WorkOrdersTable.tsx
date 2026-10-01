@@ -209,6 +209,28 @@ export function WorkOrdersTable({
             "—"
           ),
       },
+      {
+        key: "linked_bill_id",
+        label: "Bill",
+        sortable: false,
+        render: (row) =>
+          row.linked_bill_id ? (
+            <EntityLinkOrTombstone kind="bill" id={row.linked_bill_id} name={row.linked_bill_number} noun="Bill" />
+          ) : (
+            "—"
+          ),
+      },
+      {
+        key: "linked_journal_entry_id",
+        label: "JE",
+        sortable: false,
+        render: (row) =>
+          row.linked_journal_entry_id ? (
+            <EntityLinkOrTombstone kind="journal_entry" id={row.linked_journal_entry_id} name="Journal entry" noun="Journal entry" />
+          ) : (
+            "—"
+          ),
+      },
       { key: "status", label: "Status", sortable: true, sortValue: (row) => woSortValue(row, "status"), render: (row) => row.status ?? "—" },
       {
         key: "total_actual_cost",

@@ -1,3 +1,6 @@
+**2026-10-01T18:10Z · FAST-MERGE DRAIN + MAINT ENGINES**
+CURSOR | FAST-MERGED #23853 · #23730 · #23862 (factoring drawer; sha `e1a962767d`); closed conflicted #23848. Backend deploy `dep-dava1kjtqb8s73d1665g` triggered for #23862. NOW: WO list §10-B bill/JE EntityLinks on `cursor/r319-maint-engines-c89b`. NEXT: gate→push→API merge · Driver/Customer/Vendor.
+
 **2026-10-01T18:12Z · FAST-MERGE DRAIN · FACTORING ADVANCE DRAWER SHIP**
 CURSOR | FAST-MERGE: #23853 maintenance designs + #23730 tracker squash-merged admin. #23848 factoring designs conflicted — absorbing unique drawer/statements into this PR. · ROUND 319 ACK · AUTH-195 CONSUMED (Petty Cash `7a7d1da9` SC `cf78c2aa` IE `2ef10657`). · THIS: `/factoring/advances/:id` + EntityLink + bank/load/invoice both-way; `/factoring/statements` → FactorReconciliationPage. NEXT: close open PRs · Maintenance EntityLink engines.
 
