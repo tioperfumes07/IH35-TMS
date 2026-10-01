@@ -35,8 +35,8 @@ Touched scripts/-lane files, one per queue item, each its own PR:
 - `scripts/verify-arriving-soon-serves-pm-and-wo-due.mjs` (Round 303 T-42) -- fails if the
   Arriving Soon feed loses its PM-schedule or open-WO joins, the sample-unit exclusion, or the
   exposed fields.
-- further Round 303 T-38/T-39/T-43/T-44 guards/reports to follow under this same ruling, named as
-  they land.
+- `scripts/verify-fuel-purchases-have-gallons-and-real-stamps.mjs` (Round 304 T-45).
+- further Round 304 guards to follow under this same ruling, named as they land.
 
 No money-app posting path touched (NON-FINANCIAL lane -- measurement/reporting guards, a
 read-only PM-due computation, a poll-fallback cron reusing an existing ingestion function, and a
