@@ -8,7 +8,7 @@ type StopRow = {
   stop_id: string; load_id: string; sequence_number: number; stop_type: string;
   location_id: string | null; address_line1: string | null; city: string | null;
   state: string | null; postal_code: string | null; country: string | null;
-  latitude: number | null; longitude: number | null;
+  latitude: number | null; longitude: number | null; geocode_precision: string | null; geocode_source: string | null;
   location_latitude: number | null; location_longitude: number | null;
 };
 export type StopGeocodeFailure = { stop_id: string; load_id: string; reason: string };
@@ -40,7 +40,7 @@ async function candidateStops(client: DbClient, companyId: string, loadId?: stri
   return (await client.query<StopRow>(`
     SELECT s.id::text stop_id, s.load_id::text load_id, s.sequence_number, s.stop_type::text,
            s.location_id::text, s.address_line1, s.city, s.state, s.postal_code, s.country,
-           s.latitude::double precision, s.longitude::double precision,
+           s.latitude::double precision, s.longitude::double precision, s.geocode_precision, s.geocode_source,
            loc.latitude::double precision location_latitude, loc.longitude::double precision location_longitude
       FROM mdata.load_stops s
       JOIN mdata.loads l ON l.id = s.load_id
@@ -118,7 +118,10 @@ export async function geocodeStopsWithClient(client: DbClient, actorId: string, 
     const hasCanonicalCoordinates = stop.location_latitude != null && stop.location_longitude != null;
     if (!hasPickerCoordinates && !hasCanonicalCoordinates) lastProviderAt = await paceProviderCalls(lastProviderAt);
     const outcome = hasPickerCoordinates
-      ? { ok: true as const, latitude: stop.latitude!, longitude: stop.longitude!, source: "picker", confidence: 1, precision: "rooftop" as const }
+      // Lead 2026-10-01: coordinates already on the stop keep the precision they were stamped with
+      // (13508's pickup carried GEOMETRIC_CENTER from Google; relabelling it 'rooftop' here would
+      // lie to E-25's radius rule). Only a stop with no stamped precision is treated as a picker pin.
+      ? { ok: true as const, latitude: stop.latitude!, longitude: stop.longitude!, ...(stop.geocode_source ? { source: stop.geocode_source } : { source: "picker" }), confidence: 1, precision: (stop.geocode_precision ?? "rooftop") as "rooftop" }
       : hasCanonicalCoordinates
       ? { ok: true as const, latitude: stop.location_latitude!, longitude: stop.location_longitude!, source: "location_existing", confidence: 1, precision: "range" as const }
       : await geocodeAddressWithEvidence(stop);

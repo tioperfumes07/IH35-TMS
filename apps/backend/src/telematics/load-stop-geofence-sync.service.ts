@@ -275,9 +275,19 @@ export async function resweepUngeocodedActiveStops(
       WHERE l.operating_company_id = $1::uuid
         AND l.soft_deleted_at IS NULL
         AND l.status NOT IN ('cancelled','delivered')
-        AND (s.latitude IS NULL OR s.longitude IS NULL)
-        AND (s.geocode_attempted_at IS NULL OR s.geocode_attempted_at < now() - interval '6 hours')
-      ORDER BY l.id`,
+        AND (
+          ((s.latitude IS NULL OR s.longitude IS NULL)
+            AND (s.geocode_attempted_at IS NULL OR s.geocode_attempted_at < now() - interval '6 hours'))
+          OR (
+            -- same population the backfill itself sweeps: a street-level stop whose location has no
+            -- active fence yet (13508's pickup: coordinates present, location_id present, 0 fences)
+            s.latitude IS NOT NULL AND s.longitude IS NOT NULL AND s.location_id IS NOT NULL
+            AND coalesce(s.geocode_precision, 'rooftop') <> 'locality'
+            AND NOT EXISTS (SELECT 1 FROM geo.geofences g
+                             WHERE g.operating_company_id = $1::uuid AND g.location_ref_id = s.location_id AND g.is_active)
+          )
+        )
+      ORDER BY load_id`,
     [operatingCompanyId],
   );
   let geocoded = 0;
