@@ -54,9 +54,11 @@ export type IftaMilesResult =
       status: "ok";
       period: { start: string; end: string };
       jurisdictions: IftaJurisdictionRow[];
+      /** Miles of this company's own linked units only (the IFTA filing basis). */
+      linked_unit_miles: { jurisdiction: string; total_miles: number; taxable_miles: number }[];
       vehicles: { samsara_vehicle_id: string; vehicle_name: string | null; unit_id: string | null; total_miles: number }[];
       unlinked_samsara_vehicles: number;
-      gallons_coverage: { eligible_rows: number; rows_without_state: number; excluded_by_reason: Record<string, number> };
+      gallons_coverage: { eligible_rows: number; total_gallons: number; state_from_derivation: number; rows_without_state: number; excluded_by_reason: Record<string, number> };
       samsara_troubleshooting: Record<string, unknown> | null;
     };
 
@@ -88,9 +90,18 @@ export async function computeIftaMiles(
     if (!r) byJurisdiction.set(j, (r = { jurisdiction: j, total_miles: 0, taxable_miles: 0, tax_paid_gallons: 0, fuel_rows: 0 }));
     return r;
   };
+  // Miles of this company's OWN linked units only (an unlinked Samsara vehicle's fuel is not on our books).
+  const linkedMiles = new Map<string, { total_miles: number; taxable_miles: number }>();
   const vehicles = report.vehicles.map((v) => {
     let meters = 0;
+    const linked = unitByVehicle.has(v.samsara_vehicle_id);
     for (const j of v.jurisdictions) {
+      if (linked) {
+        const m = linkedMiles.get(j.jurisdiction) ?? { total_miles: 0, taxable_miles: 0 };
+        m.total_miles += j.total_meters / METERS_PER_MILE;
+        m.taxable_miles += j.taxable_meters / METERS_PER_MILE;
+        linkedMiles.set(j.jurisdiction, m);
+      }
       const r = row(j.jurisdiction);
       r.total_miles += j.total_meters / METERS_PER_MILE;
       r.taxable_miles += j.taxable_meters / METERS_PER_MILE;
@@ -101,20 +112,32 @@ export async function computeIftaMiles(
 
   const fuel = await client.query(
     `WITH f AS (${FUEL_ROWS_WITH_STAMP_COUNT_SQL})
-     SELECT f.fuel_type, f.gallons, f.transaction_at, f.voided_at, f.same_stamp_count, upper(trim(f.location_state)) AS state
+     SELECT f.id::text AS id, f.fuel_type, f.gallons, f.transaction_at, f.voided_at, f.same_stamp_count, upper(trim(f.location_state)) AS state
        FROM f WHERE f.transaction_at >= $2::timestamptz AND f.transaction_at < $3::timestamptz`,
     [input.operatingCompanyId, period.start, period.end]
   );
+  // E-23 addition: a fill with no state on record takes the state the shared derivation engine reads from
+  // the truck's own fuel-stop dwell that day (CC-2's computeFuelTimeDerivations -- called, never copied).
+  const { computeFuelTimeDerivations } = await import("../fuel/fuel-time-derivation.service.js");
+  const derived = await computeFuelTimeDerivations(client as never, input.operatingCompanyId, { periodStart: period.start, periodEnd: period.end });
+  const derivedState = new Map(derived.rows.filter((d) => d.state_derived).map((d) => [d.fuel_transaction_id, String(d.state_derived).toUpperCase()]));
   const excluded: Record<string, number> = {};
   let eligible = 0;
   let withoutState = 0;
-  for (const f of fuel.rows as (FuelRowForEligibility & { state: string | null })[]) {
+  let stateFromDerivation = 0;
+  let totalGallons = 0;
+  for (const f of fuel.rows as (FuelRowForEligibility & { id: string; state: string | null })[]) {
     const reason = fuelPurchaseIneligibleReason(f, { requirePumpTime: false }) ?? (f.fuel_type === "reefer_diesel" ? "reefer_fuel_not_vehicle_fuel" : null);
     if (reason) {
       excluded[reason] = (excluded[reason] ?? 0) + 1;
       continue;
     }
     eligible += 1;
+    totalGallons += Number(f.gallons);
+    if (!f.state && derivedState.has(f.id)) {
+      f.state = derivedState.get(f.id)!;
+      stateFromDerivation += 1;
+    }
     if (!f.state) {
       withoutState += 1;
       continue;
@@ -132,9 +155,10 @@ export async function computeIftaMiles(
     status: "ok",
     period,
     jurisdictions,
+    linked_unit_miles: [...linkedMiles].map(([jurisdiction, m]) => ({ jurisdiction, total_miles: round1(m.total_miles), taxable_miles: round1(m.taxable_miles) })),
     vehicles,
     unlinked_samsara_vehicles: vehicles.filter((v) => !v.unit_id).length,
-    gallons_coverage: { eligible_rows: eligible, rows_without_state: withoutState, excluded_by_reason: excluded },
+    gallons_coverage: { eligible_rows: eligible, total_gallons: round3(totalGallons), state_from_derivation: stateFromDerivation, rows_without_state: withoutState, excluded_by_reason: excluded },
     samsara_troubleshooting: report.troubleshooting,
   };
 }

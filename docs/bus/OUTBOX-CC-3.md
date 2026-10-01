@@ -1379,3 +1379,16 @@ push_enabled=false. vitest geofences 60/60 (flag off refuses; existing ih35Site 
 DECISION for the Lead/owner: which kinds to push (recommend border_crossing + customer_site + yard first = 69 fences; 861 fuel/DOT fences
 only if Samsara-side alerts are wanted there).
 guard: scripts/verify-samsara-fence-push-flag-off-no-duplicates.mjs + --selftest PASS.
+
+## 2026-10-01 — E-23 addition: IFTA filing export (IFTA-100 schedule, gallons) — built
+what: GET /api/v1/telematics/ifta-filing?operating_company_id&year&(quarter|month)[&format=csv]. Basis = this company's linked units'
+Samsara miles; fleet MPG = those miles / all T-45-eligible gallons bought; taxable gallons per jurisdiction = taxable miles / MPG;
+tax-paid gallons from fills by state (fill state, else the state CC-2's derivation engine reads from the truck's fuel-stop dwell —
+called, not copied); net taxable; IFTA members only (48 states + 10 provinces); gallons only (no tax rates on file); DRAFT with reasons.
+The IFTA engine now also returns linked_unit_miles and gallons_coverage.total_gallons / state_from_derivation.
+proof (live read, Aug 2026): DRAFT — 35 jurisdictions; 105,477.6 mi on our units; 12,669.5 gal bought -> 8.33 MPG, BUT Samsara ECU says
+the same units burned 17,290.1 gal -> fills on file cover only 73% of the fuel used (~4,620 gal missing from the books; engine MPG ~6.1).
+28 stateless fills got a derived state; 45 still have none; 6 Samsara vehicles (2,418.8 mi) are not our units. Q3 2026 -> not_ready until
+Samsara finishes (72 h). FINDING for the owner: ~27% of August's fuel is not on USMCA's books (likely bought on the TRANSPORTATION
+card / Relay key — CC-2's E-20 finding); the quarterly return cannot be filing-grade until those fills are on the books.
+guard: scripts/verify-ifta-filing-export-honest.mjs + --selftest PASS.
