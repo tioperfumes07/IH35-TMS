@@ -23,9 +23,9 @@ describe("dispatch detention routes (B21-D5)", () => {
     expect(src).toContain("registerDispatchDetentionRoutes");
   });
 
-  it("emits detention start/stop from dispatch.stop_arrivals", () => {
+  it("emits detention start/stop from the canonical fence arrival events (E-09)", () => {
     const src = readFileSync(servicePath, "utf8");
-    expect(src).toContain("dispatch.stop_arrivals");
+    expect(src).toContain("STOP_ARRIVAL_EVENTS_SQL");
     expect(src).toContain("syncDetentionEventsFromStopArrivals");
     expect(src).toContain("confirmed_at");
     expect(src).toContain("actual_departure_at");

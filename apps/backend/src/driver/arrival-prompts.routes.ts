@@ -4,6 +4,7 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireDriverSession } from "./auth.js";
+import { STOP_ARRIVAL_EVENTS_SQL } from "../telematics/stop-arrival-events.js";
 
 const confirmParamsSchema = z.object({
   id: z.string().uuid(),
@@ -56,7 +57,7 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
             COALESCE(loc.location_name, s.address_line1, concat_ws(', ', s.city, s.state)) AS stop_name,
             l.id::text AS load_id,
             l.load_number
-          FROM dispatch.stop_arrivals a
+          FROM (${STOP_ARRIVAL_EVENTS_SQL}) a
           JOIN mdata.load_stops s ON s.id = a.stop_id
           JOIN mdata.loads l ON l.id = s.load_id
                             AND l.operating_company_id = a.operating_company_id
@@ -109,19 +110,21 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
 
         await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
 
+        // E-09: the arrival is the canonical fence event (immutable); the driver's confirmation is the
+        // append-only 'dispatch.stop_arrival_confirmed' event below. Serialize by prompt id so a replay
+        // cannot confirm twice.
+        await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [params.data.id]);
         const res = await client.query<{ stop_id: string }>(
           `
-          UPDATE dispatch.stop_arrivals a
-          SET
-            confirmed_at = $4::timestamptz,
-            confirmed_by_driver_uuid = $3::uuid
-          WHERE a.id = $1::uuid
-            AND a.operating_company_id = $2::uuid
-            AND a.driver_id = $5::uuid
-            AND a.confirmed_at IS NULL
-          RETURNING a.stop_id::text
+          SELECT a.stop_id::text
+            FROM (${STOP_ARRIVAL_EVENTS_SQL}) a
+           WHERE a.id = $1::uuid
+             AND a.operating_company_id = $2::uuid
+             AND a.driver_id = $3::uuid
+             AND a.confirmed_at IS NULL
+           LIMIT 1
         `,
-          [params.data.id, operatingCompanyId, user.uuid, confirmedAt, driver.id],
+          [params.data.id, operatingCompanyId, driver.id],
         );
 
         const stopId = res.rows[0]?.stop_id ?? null;
@@ -153,10 +156,12 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
           user.uuid,
           "dispatch.stop_arrival_confirmed",
           {
-            resource_type: "dispatch.stop_arrivals",
+            resource_type: "geo.geofence_events",
             resource_id: params.data.id,
+            operating_company_id: operatingCompanyId,
             driver_id: driver.id,
             confirmed_at: confirmedAt,
+            confirmed_by_driver_uuid: user.uuid,
           },
           "info",
         );
@@ -210,7 +215,7 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
                     AND ae.payload->>'operating_company_id' = a.operating_company_id::text
                     AND ae.payload->>'driver_id' = a.driver_id::text
                 ) AS already_dismissed
-           FROM dispatch.stop_arrivals a
+           FROM (${STOP_ARRIVAL_EVENTS_SQL}) a
           WHERE a.id = $1::uuid
             AND a.operating_company_id = $2::uuid
             AND a.driver_id = $3::uuid
@@ -226,7 +231,7 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
         user.uuid,
         "dispatch.stop_arrival_dismissed",
         {
-          resource_type: "dispatch.stop_arrivals",
+          resource_type: "geo.geofence_events",
           resource_id: params.data.id,
           operating_company_id: operatingCompanyId,
           driver_id: driver.id,

@@ -1,4 +1,5 @@
 import type { PoolClient } from "pg";
+import { STOP_ARRIVAL_EVENTS_SQL } from "../../telematics/stop-arrival-events.js";
 
 type DbClient = Pick<PoolClient, "query">;
 
@@ -155,7 +156,7 @@ async function computeServiceQualitySubscore(
   operatingCompanyId: string,
   customerUuid: string
 ): Promise<number | null> {
-  const hasStopArrivals = await tableExists(client, "dispatch", "stop_arrivals");
+  const hasStopArrivals = await tableExists(client, "geo", "geofence_events");
   const hasLoadStops = await tableExists(client, "mdata", "load_stops");
   const hasLoads = await tableExists(client, "mdata", "loads");
   if (!hasStopArrivals || !hasLoadStops || !hasLoads) return null;
@@ -166,7 +167,7 @@ async function computeServiceQualitySubscore(
         SELECT
           COALESCE(sa.confirmed_at, sa.triggered_at) AS arrived_at,
           COALESCE(ls.appointment_end_at, ls.scheduled_arrival_at, ls.appointment_start_at) AS scheduled_at
-        FROM dispatch.stop_arrivals sa
+        FROM (${STOP_ARRIVAL_EVENTS_SQL}) sa
         JOIN mdata.load_stops ls ON ls.id = sa.stop_id
         JOIN mdata.loads l ON l.id = ls.load_id
         WHERE sa.operating_company_id = $1::uuid

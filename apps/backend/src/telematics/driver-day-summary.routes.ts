@@ -3,6 +3,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { STOP_ARRIVAL_EVENTS_SQL } from "./stop-arrival-events.js";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -125,7 +126,7 @@ const DRIVER_DAY_SUMMARY_SQL = `
               sa.driver_id,
               count(*) FILTER (WHERE sa.triggered_at <= COALESCE(ls.appointment_end_at, ls.scheduled_arrival_at, ls.appointment_start_at))::int AS on_time_arrivals,
               count(*) FILTER (WHERE sa.triggered_at > COALESCE(ls.appointment_end_at, ls.scheduled_arrival_at, ls.appointment_start_at))::int AS late_arrivals
-            FROM dispatch.stop_arrivals sa
+            FROM (${STOP_ARRIVAL_EVENTS_SQL}) sa
             JOIN mdata.load_stops ls ON ls.id = sa.stop_id
             CROSS JOIN bounds b
             WHERE sa.operating_company_id = $1::uuid

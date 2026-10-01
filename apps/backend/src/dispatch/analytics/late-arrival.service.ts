@@ -3,6 +3,7 @@ import type { PoolClient } from "pg";
 import { withCurrentUser } from "../../auth/db.js";
 import { lateArrivalGraceMinutes } from "../late-arrivals.service.js";
 import { companyBusinessDate } from "../../lib/company-business-date.js";
+import { STOP_ARRIVAL_EVENTS_SQL } from "../../telematics/stop-arrival-events.js";
 
 export type LateArrivalGroupBy = "driver" | "customer" | "lane";
 
@@ -91,7 +92,7 @@ const COMPLETED_STOPS_CTE = `
       lane.destination_state,
       COALESCE(sa.confirmed_at, sa.triggered_at) AS arrived_at,
       COALESCE(ls.appointment_end_at, ls.scheduled_arrival_at, ls.appointment_start_at) AS scheduled_at
-    FROM dispatch.stop_arrivals sa
+    FROM (${STOP_ARRIVAL_EVENTS_SQL}) sa
     JOIN mdata.load_stops ls ON ls.id = sa.stop_id
                             AND ls.soft_deleted_at IS NULL
     JOIN mdata.loads l ON l.id = ls.load_id
@@ -210,7 +211,7 @@ async function queryAggregates(
   groupBy: LateArrivalGroupBy,
   entityFilter?: { sql: string; value: string }
 ): Promise<LateArrivalAggregateRow[]> {
-  if (!(await tableExists(client, "dispatch.stop_arrivals"))) return [];
+  if (!(await tableExists(client, "geo.geofence_events"))) return [];
 
   const graceMinutes = lateArrivalGraceMinutes();
   const filterClause = entityFilter ? `AND ${entityFilter.sql}` : "";
@@ -402,7 +403,7 @@ export async function runLateArrivalAggregatorTick(client: PoolClient): Promise<
          SELECT sa.driver_id, ls.actual_arrival_at::date AS bucket_date,
                 CASE WHEN ls.appointment_end_at IS NOT NULL THEN 'appointment_window' ELSE 'scheduled_arrival' END AS basis,
                 EXTRACT(EPOCH FROM (ls.actual_arrival_at - COALESCE(ls.appointment_end_at, ls.scheduled_arrival_at))) / 60 AS minutes_late
-           FROM dispatch.stop_arrivals sa
+           FROM (${STOP_ARRIVAL_EVENTS_SQL}) sa
            JOIN mdata.load_stops ls ON ls.id = sa.stop_id
            JOIN mdata.loads l ON l.id = ls.load_id AND l.operating_company_id = sa.operating_company_id
           WHERE sa.operating_company_id = $1::uuid AND sa.driver_id IS NOT NULL

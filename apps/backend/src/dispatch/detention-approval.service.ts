@@ -6,6 +6,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { sendEmail } from "../notifications/email.service.js";
 import { bridgeDetentionToBillingInClientTx } from "./detention.service.js";
+import { STOP_ARRIVAL_EVENTS_SQL } from "../telematics/stop-arrival-events.js";
 
 const AUDIT_TAG = "GAP-19";
 
@@ -175,7 +176,7 @@ async function recordDetentionEvidence(
         'derived_from_stop_timestamps'
       FROM dispatch.detention_events de
       JOIN mdata.load_stops ls ON ls.id = de.stop_id
-      LEFT JOIN dispatch.stop_arrivals sa ON sa.id = de.stop_arrival_id
+      LEFT JOIN (${STOP_ARRIVAL_EVENTS_SQL}) sa ON sa.id = de.geofence_event_id
       LEFT JOIN integrations.samsara_vehicles sv ON sv.local_unit_id = de.unit_id
       WHERE de.id = $3
         AND de.operating_company_id = $1::uuid
