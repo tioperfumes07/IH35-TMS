@@ -5,9 +5,10 @@
  * PM EVERY 25K MILES ... I BELIEVE TO SAVE SPACE, WE WOULD CALL SAMSARA ONLY 1 TIME A DAY FOR
  * THE MILEAGE ... ILL INPUT MILEAGE MANUALLY."
  *
- * Reads ONLY telematics.odometer_readings (the ledger the 03:00 CT snapshot cron already writes,
- * J-1/J-2 from Round 297.1) -- this file makes no Samsara API call of any kind, directly or
- * transitively. Manual odometer entries (source='manual') are a FIRST-CLASS input here, exactly
+ * Reads telematics.odometer_readings (the ledger the daily snapshot cron writes, J-1/J-2 from Round
+ * 297.1) and, since ROUND 305 A-46, the odometer READ at each unit's most recent stop from
+ * telematics.vehicle_locations via the Lead's stop-odometer engine -- already-ingested fixes, so this
+ * file still makes no Samsara API call of any kind, directly or transitively. Manual odometer entries (source='manual') are a FIRST-CLASS input here, exactly
  * as real as a 'samsara' row -- both land in the same ledger and this engine reads both alike.
  *
  * NEVER the owner's 12,000-mi/month rule of thumb: every projected due date comes from THAT
@@ -19,6 +20,12 @@ import { projectPmDueDateFromRate } from "../maint/pm-due.shared.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import {
+  chooseCurrentOdometer,
+  latestStopCapturedOdometer,
+  type OdometerReading,
+  type OdometerSource,
+} from "./pm-current-odometer.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -38,6 +45,9 @@ export type PmDueEngineRow = {
   last_service_odometer: number | null;
   current_odometer: number | null;
   current_odometer_read_at: string | null;
+  current_odometer_source: OdometerSource | null;
+  /** Why current_odometer is null, or which newer reading was held for going backwards. */
+  current_odometer_note: string | null;
   miles_since_service: number | null;
   miles_to_due: number | null;
   miles_per_day: number | null;
@@ -110,21 +120,28 @@ export async function computeUnitMileageRate(
   return { miles_per_day: milesDelta / daysDelta, reason: null };
 }
 
+type CurrentOdometer = {
+  odometer_miles: number | null;
+  read_at: string | null;
+  source: OdometerSource | null;
+  note: string | null;
+};
+
 /**
- * The MOST RECENT row for this unit, regardless of confidence, decides everything: if the newest
- * thing this ledger knows about the truck is an honest "suggested" gap (J-1's own null-odometer
- * marker), that IS the current state -- unknown right now -- and silently falling back to an
- * older real number would be exactly the kind of guess the owner's own rule forbids. Only when
- * the latest row itself carries a real value is that value "current".
+ * The NEWEST record about this unit decides. Candidates are the ledger's latest real reading and
+ * the odometer READ at the unit's most recent stop (ROUND 305 A-46, the Lead's stop-odometer
+ * engine) -- the ledger alone is one row per unit per day. The newer real read wins unless it went
+ * backwards against the older one (held, named in `note`). If an honest "suggested" gap row is newer
+ * than every real read, that IS the current state -- unknown right now -- never an older number.
  */
 async function currentOdometer(
   client: DbClient,
   operatingCompanyId: string,
   unitId: string
-): Promise<{ odometer_miles: number | null; read_at: string | null }> {
-  const res = await client.query<{ odometer_miles: string | null; read_at: string; confidence: string }>(
+): Promise<CurrentOdometer> {
+  const latest = await client.query<{ odometer_miles: string | null; read_at: Date; confidence: string }>(
     `
-      SELECT odometer_miles::text, read_at::text, confidence
+      SELECT odometer_miles::text, read_at, confidence
       FROM telematics.odometer_readings
       WHERE operating_company_id = $1::uuid
         AND unit_id = $2::uuid
@@ -133,11 +150,37 @@ async function currentOdometer(
     `,
     [operatingCompanyId, unitId]
   );
-  const row = res.rows[0];
-  if (!row || row.confidence === "suggested" || row.odometer_miles == null) {
-    return { odometer_miles: null, read_at: row?.read_at ?? null };
+  const lastReal = await client.query<{ odometer_miles: string; read_at: Date }>(
+    `
+      SELECT odometer_miles::text, read_at
+      FROM telematics.odometer_readings
+      WHERE operating_company_id = $1::uuid
+        AND unit_id = $2::uuid
+        AND confidence IN ('measured', 'entered')
+        AND odometer_miles IS NOT NULL
+      ORDER BY read_at DESC
+      LIMIT 1
+    `,
+    [operatingCompanyId, unitId]
+  );
+  const real = lastReal.rows[0];
+  const ledger: OdometerReading | null = real
+    ? { odometer_miles: Number(real.odometer_miles), read_at: new Date(real.read_at).toISOString(), source: "odometer_readings" }
+    : null;
+  const stop = await latestStopCapturedOdometer(client, unitId);
+  const chosen = chooseCurrentOdometer([ledger, stop]);
+
+  const row = latest.rows[0];
+  const rowIsGap = row != null && (row.confidence === "suggested" || row.odometer_miles == null);
+  if (rowIsGap && (chosen.read_at == null || new Date(row.read_at).getTime() > new Date(chosen.read_at).getTime())) {
+    return {
+      odometer_miles: null,
+      read_at: new Date(row.read_at).toISOString(),
+      source: null,
+      note: ["newest record is a recorded odometer gap", chosen.held_note].filter(Boolean).join("; "),
+    };
   }
-  return { odometer_miles: Number(row.odometer_miles), read_at: row.read_at };
+  return { odometer_miles: chosen.odometer_miles, read_at: chosen.read_at, source: chosen.source, note: chosen.held_note };
 }
 
 export async function computePmDueEngineForCompany(
@@ -177,7 +220,7 @@ export async function computePmDueEngineForCompany(
 
   const out: PmDueEngineRow[] = [];
   const rateCache = new Map<string, UnitMileageRate>();
-  const odoCache = new Map<string, { odometer_miles: number | null; read_at: string | null }>();
+  const odoCache = new Map<string, CurrentOdometer>();
 
   for (const row of schedules.rows) {
     if (!rateCache.has(row.unit_id)) {
@@ -211,6 +254,8 @@ export async function computePmDueEngineForCompany(
       last_service_odometer: lastService,
       current_odometer: odo.odometer_miles,
       current_odometer_read_at: odo.read_at,
+      current_odometer_source: odo.source,
+      current_odometer_note: odo.note,
       miles_since_service: milesSince,
       miles_to_due: milesToDue,
       miles_per_day: rate.miles_per_day,
@@ -241,6 +286,6 @@ export async function registerPmDueEngineRoutes(app: FastifyInstance) {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [parsed.data.operating_company_id]);
       return computePmDueEngineForCompany(client as DbClient, parsed.data.operating_company_id);
     });
-    return { rows, computed_from: "telematics.odometer_readings", never: "fleet_average" };
+    return { rows, computed_from: "telematics.odometer_readings + stop-odometer-capture", never: "fleet_average" };
   });
 }

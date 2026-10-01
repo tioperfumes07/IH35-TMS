@@ -5,6 +5,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { extractSamsaraOdometerMi } from "../maint/pm-due.shared.js";
+import { latestStopCapturedOdometer } from "./pm-current-odometer.js";
 import {
   DEFAULT_PM_LOOKAHEAD_MILES,
   processMaintenancePredictorForOdometer,
@@ -244,6 +245,14 @@ async function loadUnitOdometers(
   for (const row of liveRes.rows) {
     const odo = Number(row.odometer_mi);
     if (Number.isFinite(odo)) map.set(row.unit_id, Math.round(odo));
+  }
+
+  // ROUND 305 A-46: the latest fix usually carries no odometer (22 % of position instants do), which
+  // skipped a working truck for that whole run. Fall back to the odometer READ at its most recent stop.
+  for (const unitId of unitIds) {
+    if (map.has(unitId)) continue;
+    const stop = await latestStopCapturedOdometer(client, unitId);
+    if (stop) map.set(unitId, Math.round(stop.odometer_miles));
   }
 
   // FALLBACK: webhook raw_payload for any unit without a live stats-poll fix yet.
