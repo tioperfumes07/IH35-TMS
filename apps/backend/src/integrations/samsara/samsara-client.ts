@@ -881,6 +881,34 @@ export class SamsaraClient {
     return out;
   }
 
+  /**
+   * ROUND 306 E-30 — POST /v1/fleet/messages. Shape measured live 2026-10-01 with rejected probes (nothing
+   * sent): {driverIds: number[] (Samsara driver ids as integers), text: string}; string ids are rejected.
+   */
+  async sendDriverMessage(samsaraDriverIds: string[], text: string): Promise<{ status: number }> {
+    const token = this._token();
+    if (!token) throw new SamsaraApiError("samsara_token_missing", null, null, false);
+    const ids = samsaraDriverIds.map((id) => Number(id)).filter((n) => Number.isSafeInteger(n) && n > 0);
+    if (ids.length === 0) throw new SamsaraApiError("samsara_message_no_driver_ids", null, null, false);
+    let res: Response;
+    try {
+      res = await withCircuitBreaker("samsara", () =>
+        samsaraFetch(`${SAMSARA_API_BASE}/v1/fleet/messages`, {
+          method: "POST",
+          headers: { ...bearerHeaders(token), "Content-Type": "application/json" },
+          body: JSON.stringify({ driverIds: ids, text: text.slice(0, 2500) }),
+        })
+      );
+    } catch (error) {
+      throw new SamsaraApiError(`samsara_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
+    }
+    if (!res.ok) {
+      const body = await readJsonResponse(res);
+      throw new SamsaraApiError(`samsara_message_http_${res.status}`, res.status, body, res.status === 429 || res.status >= 500);
+    }
+    return { status: res.status };
+  }
+
   async listHosDailyLogs(startDate: string, endDate: string): Promise<SamsaraHosDailyLog[]> {
     const token = this._token();
     if (!token) return [];
