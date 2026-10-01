@@ -1,114 +1,132 @@
 /**
- * GAP-26 — Border crossing detection service.
- * Detects when vehicles enter/exit 1000m geofences at Laredo border bridges.
+ * ROUND 306 E-29 addition — border crossings are PROJECTED from the canonical fence events, not from a
+ * second inside/outside engine. The old detector kept 5 hard-coded Laredo circles (one duplicated, with
+ * coordinates up to ~30 km off the real bridges), wrote 'northbound' on every row, and matched no real load
+ * status. Now:
+ *  - source: geo.geofence_events ('entered' then the next 'exited') written by the ONE detector, on the
+ *    international border_crossing fences (label names a Bridge, or the Champlain / Derby Line / Houlton
+ *    Canada ports). State truck ports of entry (OK/KS/NM...) are not border crossings and are ignored.
+ *  - a crossing is written ONLY when the country actually changes: the unit's last fix before entering and
+ *    its first fix after leaving (telematics.vehicle_locations, within 6 h) are in different countries.
+ *    Driving through a US-side customs lot is not a crossing. Direction from the destination country:
+ *    into the US from Mexico = northbound, into Mexico = southbound; from Canada into the US = southbound,
+ *    into Canada = northbound.
+ *  - crossing_point from the fence: Laredo I (Gateway) laredo-i, Laredo II (Juárez–Lincoln) laredo-ii,
+ *    Colombia Solidarity colombia, World Trade (Laredo IV) laredo-iv, every other crossing 'other'.
+ *  - load = the unit's one on-road load (mdata.loads.assigned_unit_id); driver = the fence event's driver.
+ *  - idempotent: a (vehicle, crossing point, entered time) already recorded is never written again.
  */
 import type { PoolClient } from "pg";
 
-export interface BorderGeofence {
-  id: string;
-  name: string;
-  crossingPoint: "laredo-i" | "laredo-ii" | "laredo-iii" | "laredo-iv" | "colombia" | "other";
-  centerLat: number;
-  centerLng: number;
-  radiusMeters: number;
+type Db = Pick<PoolClient, "query">;
+export type CrossingPoint = "laredo-i" | "laredo-ii" | "laredo-iii" | "laredo-iv" | "colombia" | "other";
+type Country = "US" | "MX" | "CA";
+
+const CANADA_PORT = /Champlain|Derby Line|Houlton/i;
+export function isInternationalCrossing(label: string): boolean {
+  return /Bridge/i.test(label) || CANADA_PORT.test(label);
+}
+export function crossingPointForFence(label: string): CrossingPoint {
+  if (/\(Laredo I\)/.test(label)) return "laredo-i";
+  if (/\(Laredo II\)/.test(label)) return "laredo-ii";
+  if (/Columbia Bridge|Colombia Solidarity/i.test(label)) return "colombia";
+  if (/World Trade Bridge|World Trade International Bridge/i.test(label)) return "laredo-iv";
+  return "other";
 }
 
-// 1000m radius geofences for Laredo-area border bridges
-export const BORDER_GEOFENCES: BorderGeofence[] = [
-  { id: "laredo-bridge-i",   name: "Laredo Bridge I (Gateway to the Americas)",  crossingPoint: "laredo-i",   centerLat: 27.4934, centerLng: -99.5117, radiusMeters: 1000 },
-  { id: "laredo-bridge-ii",  name: "Laredo Bridge II (Juarez-Lincoln)",           crossingPoint: "laredo-ii",  centerLat: 27.5037, centerLng: -99.5027, radiusMeters: 1000 },
-  { id: "laredo-bridge-iii", name: "Laredo Bridge III (World Trade Bridge)",      crossingPoint: "laredo-iii", centerLat: 27.5640, centerLng: -99.4697, radiusMeters: 1000 },
-  { id: "laredo-bridge-iv",  name: "Laredo Bridge IV (Colombia Solidarity)",      crossingPoint: "laredo-iv",  centerLat: 27.9022, centerLng: -99.5340, radiusMeters: 1000 },
-  { id: "colombia-bridge",   name: "Colombia-Solidarity International Bridge",    crossingPoint: "colombia",   centerLat: 27.9022, centerLng: -99.5340, radiusMeters: 1000 },
-];
+const US_STATES = new Set("AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC".split(" "));
+const MX_HINT = /,\s*(TAM|TAMPS|N\.?\s?L\.?|COAH|CHIH|SON|B\.?\s?C\.?|Tamaulipas|Nuevo Le[oó]n|Coahuila|Chihuahua|Sonora|Baja California)\b|M[eé]xico\b/i;
+const CA_HINT = /,\s*(ON|QC|NB|NS|BC|AB|MB|SK|PE|NL)\b(?!\w)|Canada\b/;
 
-function haversineDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371000;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-export function findGeofenceForPosition(lat: number, lng: number): BorderGeofence | null {
-  for (const gf of BORDER_GEOFENCES) {
-    const dist = haversineDistanceMeters(lat, lng, gf.centerLat, gf.centerLng);
-    if (dist <= gf.radiusMeters) return gf;
-  }
+/** Pure: the country of one GPS fix from its reverse-geocoded state / formatted location; null when unknown. */
+export function countryOfFix(state: string | null, formatted: string | null): Country | null {
+  if (formatted && MX_HINT.test(formatted)) return "MX";
+  if (state && US_STATES.has(state.toUpperCase())) return "US";
+  if (formatted && CA_HINT.test(formatted)) return "CA";
   return null;
 }
 
-export async function detectCrossings(
-  client: PoolClient,
-  events: Array<{
-    /** mdata.units(id) — canonical unit identifier from integrations.samsara_vehicle_positions.unit_uuid */
-    unit_uuid: string;
-    operating_company_id: string;
-    lat: number;
-    lng: number;
-    /** Ignored since E-29: direction is measured from the unit's previous position. */
-    direction?: "northbound" | "southbound";
-    recorded_at: string;
-  }>
-): Promise<number> {
-  let inserted = 0;
-  for (const ev of events) {
-    const gf = findGeofenceForPosition(ev.lat, ev.lng);
-    if (!gf) continue;
+/** Pure: direction for a country change; null when the country did not change or is unknown. */
+export function directionOf(before: Country | null, after: Country | null): "northbound" | "southbound" | null {
+  if (!before || !after || before === after) return null;
+  if (before === "MX" && after === "US") return "northbound";
+  if (before === "US" && after === "MX") return "southbound";
+  if (before === "CA" && after === "US") return "southbound";
+  if (before === "US" && after === "CA") return "northbound";
+  return null;
+}
 
-    // dispatch.border_crossing_events.vehicle_id is a TEXT stable identifier; we key it on the unit UUID.
-    const vehicleId = ev.unit_uuid;
+const ON_ROAD = ["assigned_not_dispatched", "dispatched", "at_pickup", "in_transit", "at_delivery"];
 
-    // Check if there's an open entry for this vehicle at this crossing
-    const existing = await client.query<{ uuid: string }>(
-      `SELECT uuid FROM dispatch.border_crossing_events
-       WHERE vehicle_id = $1 AND crossing_point = $2 AND exited_geofence_at IS NULL
-       ORDER BY entered_geofence_at DESC LIMIT 1`,
-      [vehicleId, gf.crossingPoint]
+export type CrossingProjection = {
+  visits: number;
+  written: number;
+  skipped: Record<"still_inside" | "no_country_change" | "country_unknown" | "already_recorded", number>;
+};
+
+export async function projectBorderCrossingsFromFenceEvents(client: Db, operatingCompanyId: string, sinceIso: string): Promise<CrossingProjection> {
+  const visits = await client.query<{
+    entered_id: string; unit_id: string; driver_id: string | null; label: string; geofence_id: string;
+    entered_at: string; exited_at: string | null;
+  }>(
+    `SELECT ge.id::text AS entered_id, ge.unit_id::text, ge.driver_id::text, g.label, g.id::text AS geofence_id,
+            ge.occurred_at AS entered_at,
+            (SELECT min(x.occurred_at) FROM geo.geofence_events x
+              WHERE x.geofence_id = ge.geofence_id AND x.unit_id = ge.unit_id
+                AND x.event_kind = 'exited' AND x.occurred_at > ge.occurred_at) AS exited_at
+       FROM geo.geofence_events ge
+       JOIN geo.geofences g ON g.id = ge.geofence_id AND g.location_kind = 'border_crossing'
+      WHERE ge.operating_company_id = $1::uuid AND ge.event_kind = 'entered' AND ge.occurred_at >= $2::timestamptz
+      ORDER BY ge.occurred_at`,
+    [operatingCompanyId, sinceIso]
+  );
+  const out: CrossingProjection = { visits: 0, written: 0, skipped: { still_inside: 0, no_country_change: 0, country_unknown: 0, already_recorded: 0 } };
+  for (const v of visits.rows) {
+    if (!isInternationalCrossing(v.label)) continue;
+    out.visits += 1;
+    if (!v.exited_at) { out.skipped.still_inside += 1; continue; }
+    const point = crossingPointForFence(v.label);
+    const dup = await client.query(
+      `SELECT 1 FROM dispatch.border_crossing_events
+        WHERE operating_company_id = $1::uuid AND vehicle_id = $2 AND crossing_point = $3 AND entered_geofence_at = $4::timestamptz LIMIT 1`,
+      [operatingCompanyId, v.unit_id, point, v.entered_at]
     );
-
-    if (existing.rows.length === 0) {
-      // ROUND 306 E-29: direction is MEASURED, never assumed. The caller used to hard-code
-      // 'northbound' on every row. The unit's previous recorded position before this fix tells
-      // which way it was moving across the river (US side is north at every Laredo bridge); with
-      // no previous position the crossing is not written rather than written with a guess.
-      const prev = await client.query<{ lat: number }>(
-        `SELECT lat::float8 AS lat FROM integrations.samsara_vehicle_positions
-          WHERE unit_uuid = $1::uuid AND recorded_at < $2::timestamptz
-          ORDER BY recorded_at DESC LIMIT 1`,
-        [ev.unit_uuid, ev.recorded_at]
+    if (dup.rows.length) { out.skipped.already_recorded += 1; continue; }
+    const fix = async (cmp: "before" | "after") => {
+      const r = await client.query<{ state: string | null; formatted_location: string | null }>(
+        cmp === "before"
+          ? `SELECT state, formatted_location FROM telematics.vehicle_locations
+              WHERE unit_id = $1::uuid AND captured_at < $2::timestamptz AND captured_at >= $2::timestamptz - interval '6 hours'
+                AND (state IS NOT NULL OR formatted_location IS NOT NULL)
+              ORDER BY captured_at DESC LIMIT 1`
+          : `SELECT state, formatted_location FROM telematics.vehicle_locations
+              WHERE unit_id = $1::uuid AND captured_at > $2::timestamptz AND captured_at <= $2::timestamptz + interval '6 hours'
+                AND (state IS NOT NULL OR formatted_location IS NOT NULL)
+              ORDER BY captured_at ASC LIMIT 1`,
+        [v.unit_id, cmp === "before" ? v.entered_at : v.exited_at]
       );
-      const prevLat = prev.rows[0]?.lat;
-      if (prevLat == null || prevLat === ev.lat) continue;
-      const direction: "northbound" | "southbound" = ev.lat > prevLat ? "northbound" : "southbound";
-      // New entry — resolve the active load for this unit (canonical: mdata.loads.assigned_unit_id).
-      // E-29: the old filter ('assigned','in_transit') matched no real load status, so load_uuid was
-      // always NULL; these are the on-road statuses mdata.loads actually carries.
-      const activeLoad = await client.query<{ id: string }>(
-        `SELECT l.id FROM mdata.loads l
-         WHERE l.assigned_unit_id = $1::uuid
-           AND l.status::text IN ('assigned_not_dispatched','dispatched','at_pickup','in_transit','at_delivery')
-           AND l.operating_company_id = $2::uuid
-           AND l.soft_deleted_at IS NULL
-         ORDER BY l.updated_at DESC NULLS LAST, l.created_at DESC
-         LIMIT 1`,
-        [ev.unit_uuid, ev.operating_company_id]
-      );
-      await client.query(
-        `INSERT INTO dispatch.border_crossing_events
-           (operating_company_id, vehicle_id, crossing_point, direction, entered_geofence_at, load_uuid)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         ON CONFLICT DO NOTHING`,
-        [ev.operating_company_id, vehicleId, gf.crossingPoint, direction, ev.recorded_at, activeLoad.rows[0]?.id ?? null]
-      );
-      inserted++;
-    } else {
-      // Mark exit
-      await client.query(
-        `UPDATE dispatch.border_crossing_events SET exited_geofence_at = $1 WHERE uuid = $2`,
-        [ev.recorded_at, existing.rows[0].uuid]
-      );
-    }
+      const f = r.rows[0];
+      return f ? countryOfFix(f.state, f.formatted_location) : null;
+    };
+    const before = await fix("before");
+    const after = await fix("after");
+    if (!before || !after) { out.skipped.country_unknown += 1; continue; }
+    const direction = directionOf(before, after);
+    if (!direction) { out.skipped.no_country_change += 1; continue; }
+    const load = await client.query<{ id: string }>(
+      `SELECT l.id::text FROM mdata.loads l
+        WHERE l.assigned_unit_id = $1::uuid AND l.operating_company_id = $2::uuid
+          AND l.soft_deleted_at IS NULL AND l.status::text = ANY($3::text[])
+        LIMIT 2`,
+      [v.unit_id, operatingCompanyId, ON_ROAD]
+    );
+    await client.query(
+      `INSERT INTO dispatch.border_crossing_events
+         (operating_company_id, vehicle_id, driver_uuid, load_uuid, crossing_point, direction, entered_geofence_at, exited_geofence_at)
+       VALUES ($1::uuid, $2, $3::uuid, $4::uuid, $5, $6, $7::timestamptz, $8::timestamptz)`,
+      [operatingCompanyId, v.unit_id, v.driver_id, load.rows.length === 1 ? load.rows[0]!.id : null, point, direction, v.entered_at, v.exited_at]
+    );
+    out.written += 1;
   }
-  return inserted;
+  return out;
 }

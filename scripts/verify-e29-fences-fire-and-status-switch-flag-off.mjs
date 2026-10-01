@@ -28,7 +28,7 @@ export function check(src) {
   if (!/if \(!autoStatusApplyEnabled\(\)\)/.test(body) || body.indexOf("autoStatusApplyEnabled()") > body.indexOf("await applyAutoSwitch(")) p.push("the auto-status worker can write load status without AUTO_STATUS_SWITCH_APPLY.");
   if (!/process\.env\.AUTO_STATUS_SWITCH_APPLY === "true"/.test(a)) p.push("AUTO_STATUS_SWITCH_APPLY is no longer default OFF.");
   const b = stripComments(src.border);
-  if (/ev\.direction, ev\.recorded_at/.test(b) || !/ev\.lat > prevLat \? "northbound" : "southbound"/.test(b)) p.push("the border detector no longer measures direction.");
+  if (!/const direction = directionOf\(before, after\);/.test(b) || /"northbound", ev\./.test(b)) p.push("the border projection no longer measures direction from a real country change.");
   if (/IN \('assigned','in_transit'\)/.test(b)) p.push("the border detector filters loads by statuses mdata.loads never carries.");
   return p;
 }
@@ -43,7 +43,7 @@ function selftest() {
     [mut("geo", "if (Array.isArray(entry))", "if (false)"), true],
     [mut("auto", "if (!autoStatusApplyEnabled())", "if (false)"), true],
     [mut("auto", 'process.env.AUTO_STATUS_SWITCH_APPLY === "true"', 'process.env.AUTO_STATUS_SWITCH_APPLY !== "false"'), true],
-    [mut("border", "direction, ev.recorded_at", "ev.direction, ev.recorded_at"), true],
+    [mut("border", "const direction = directionOf(before, after);", "const direction = \"northbound\";"), true],
   ];
   return cases.every(([s, f]) => (check(s).length > 0) === f);
 }

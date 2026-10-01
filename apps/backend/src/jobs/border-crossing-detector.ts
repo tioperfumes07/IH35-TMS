@@ -1,13 +1,17 @@
 /**
- * GAP-26 — Border crossing detector worker.
- * Runs every 5 minutes, processes recent Samsara position events.
+ * Border-crossing projector (ROUND 306 E-29 addition). Projects dispatch.border_crossing_events from the
+ * canonical geofence events (projectBorderCrossingsFromFenceEvents) every 5 minutes over the last 2 days;
+ * idempotent. Reads the database only -- no Samsara call, no second inside/outside decision.
+ * BORDER_CROSSING_DETECTOR_INTERVAL_MS overrides the interval (min 60 s).
  */
 import type { FastifyInstance } from "fastify";
 import { withLuciaBypass } from "../auth/db.js";
+import { USMCA_COMPANY_ID } from "../org/companies.routes.js";
+import { projectBorderCrossingsFromFenceEvents } from "../integrations/samsara/border-crossings/detector.service.js";
 
 const WORKER_NAME = "dispatch.border_crossing_detector";
-const DEFAULT_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
-
+const DEFAULT_INTERVAL_MS = 5 * 60 * 1000;
+const LOOKBACK_MS = 2 * 24 * 3600 * 1000;
 let timer: NodeJS.Timeout | undefined;
 
 function intervalMs(): number {
@@ -16,36 +20,16 @@ function intervalMs(): number {
 }
 
 async function tick(app: FastifyInstance) {
-  const processed = await withLuciaBypass(async (client) => {
-    // Get positions from last tick window near border area (TX/Tamaulipas bounding box)
-    const windowMs = intervalMs() + 60_000; // slight overlap
-    const res = await client.query(
-      `SELECT DISTINCT ON (unit_uuid)
-              unit_uuid,
-              operating_company_id,
-              lat,
-              lng,
-              'northbound' AS direction,
-              recorded_at::text
-       FROM integrations.samsara_vehicle_positions
-       WHERE recorded_at >= now() - ($1 * INTERVAL '1 millisecond')
-         AND lat BETWEEN 27.0 AND 29.0
-         AND lng BETWEEN -100.5 AND -99.0
-       ORDER BY unit_uuid, recorded_at DESC`,
-      [windowMs]
-    );
-
-    if (res.rows.length === 0) return 0;
-
-    const { detectCrossings } = await import("../integrations/samsara/border-crossings/detector.service.js");
-    return detectCrossings(client, res.rows);
+  const result = await withLuciaBypass(async (client) => {
+    // membership-scope-exempt: USMCA-only worker (standing rule 1)
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [USMCA_COMPANY_ID]);
+    return projectBorderCrossingsFromFenceEvents(client as never, USMCA_COMPANY_ID, new Date(Date.now() - LOOKBACK_MS).toISOString());
   });
-  app.log.info({ processed }, `[${WORKER_NAME}] tick complete`);
+  app.log.info(result, `[${WORKER_NAME}] tick complete`);
 }
 
 export function initializeBorderCrossingDetectorWorker(app: FastifyInstance) {
   const ms = intervalMs();
-
   const run = async () => {
     try {
       await tick(app);
@@ -53,11 +37,9 @@ export function initializeBorderCrossingDetectorWorker(app: FastifyInstance) {
       app.log.error({ err }, `[${WORKER_NAME}] tick failed`);
     }
   };
-
   void run();
   timer = setInterval(() => { void run(); }, ms);
-  app.log.info({ intervalMs: ms }, `[${WORKER_NAME}] started`);
-
+  app.log.info({ intervalMs: ms }, `[${WORKER_NAME}] started (projects from geo.geofence_events)`);
   return () => {
     if (timer) {
       clearInterval(timer);
