@@ -1,4 +1,9 @@
 {
+  "12005": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-pm-due-feeds-from-stop-odometer (ROUND 305 A-46): every PM-due consumer (PM auto-WO cron, /maint/pm/due, T-29 pm-due-engine) falls back to / considers the odometer READ at the unit's latest stop via the Lead's stop-odometer engine, never interpolated, and a backwards reading is held rather than used."
+  },
   "12001": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-01",
