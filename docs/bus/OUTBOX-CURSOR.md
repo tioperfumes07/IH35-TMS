@@ -1,3 +1,9 @@
+**2026-10-01T22:25Z · B-1b MERGED #23911 · tip `2c628558d7`**
+ACK: CURSOR | ACK ORDERS-2026-10-01 | B-1b MERGED | GO
+B-1b blank/C toggle + location MERGED. Neon register_cleared columns LIVE. Claim #23910. FT1–FT5 tip was `7c62874db2` — owner deploying that; redeploy after this tip for B-1b.
+ORDERS structural: customers-orders-complete PASS · vendors-orders-complete PASS · r313-maintenance PASS.
+NEXT: continue Cursor ORDERS leftovers (maint EntityLink chrome / register inline-edit depth).
+
 **2026-10-01T22:15Z · B-1b REGISTER ✓ TOGGLE · `cursor/b1b-register-clear-toggle-c89b`**
 ACK: CURSOR | ACK ORDERS-2026-10-01 | B-1b register-cleared | GO
 B-1b · journal_entry_postings.register_cleared (+at/by); POST /account-register/toggle-cleared; FE click blank↔C; R locked; bank-match C refuses blank; Location from bank categorization_location.
