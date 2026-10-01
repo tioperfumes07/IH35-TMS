@@ -1,4 +1,9 @@
 {
+  "12039": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-expense-with-je-is-never-unposted: no accounting.expenses row carries a journal_entry_id while posting_status=unposted; the constraint exists; createExpenseFromFuelTransaction writes posting_status with status."
+  },
   "12035": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-01",
