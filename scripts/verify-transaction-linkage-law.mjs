@@ -296,6 +296,17 @@ export function classifyExpenseLineCategoryCode(code, tier1Codes) {
 // forced). work-orders.routes.ts now gates the requirement on source_type === "RS" for tire. This
 // check is a PERMANENT REGRESSION GUARD, not a one-time fix record: it fails if the unconditional
 // forced-load pattern for "tire" ever comes back, and fails if the source_type gate disappears.
+// ROUND 305 A-48 -- law §6: a link that resolves one way only is HALF A LINK. Every work order carries
+// unit_id (WO -> unit resolves); the list route must also answer "this unit's work orders".
+export function checkUnitWorkOrderReverseLink(src = readFileSync(join(ROOT, WORK_ORDERS_ROUTES_PATH), "utf8")) {
+  const acceptsUnit = /unit_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(src.split("const listByBucketQuerySchema")[0] ?? "");
+  const filtersUnit = /if \(q\.unit_id\)\s*\{[\s\S]{0,120}?w\.unit_id = \$\$\{values\.length\}/.test(src);
+  if (acceptsUnit && filtersUnit) {
+    return [{ level: "OK", message: `${WORK_ORDERS_ROUTES_PATH}: unit -> its work orders resolves (list accepts and applies unit_id).` }];
+  }
+  return [{ level: "FAIL", message: `${WORK_ORDERS_ROUTES_PATH}: unit -> its work orders is HALF A LINK -- the list route no longer ${acceptsUnit ? "applies" : "accepts"} unit_id (TRANSACTION-LINKAGE-LAW §6).` }];
+}
+
 function checkTier2LoadDemand() {
   const findings = [];
   const src = readFileSync(join(ROOT, WORK_ORDERS_ROUTES_PATH), "utf8");
@@ -367,6 +378,11 @@ function runSelftest() {
     failures.push("selftest fixture invalid: fixedGateSnippet should match hasSourceTypeGate's detection regex (proves the guard recognizes the correct fix, not just the absence of the bug)");
   }
 
+  const reverse = checkUnitWorkOrderReverseLink();
+  if (!reverse.some((f) => f.level === "OK")) failures.push(`checkUnitWorkOrderReverseLink did not report OK against the current work-orders.routes.ts: ${reverse.map((f) => f.message).join(" | ")}`);
+  const brokenRoutes = readFileSync(join(ROOT, WORK_ORDERS_ROUTES_PATH), "utf8").replace(/if \(q\.unit_id\)/, "if (false)");
+  if (!checkUnitWorkOrderReverseLink(brokenRoutes).some((f) => f.level === "FAIL")) failures.push("checkUnitWorkOrderReverseLink did not FAIL when the unit_id filter was removed");
+
   if (failures.length > 0) {
     console.error(`${LABEL} --selftest: FAIL`);
     for (const f of failures) console.error(`  - ${f}`);
@@ -388,7 +404,7 @@ async function main() {
   const infoLines = [];
 
   // --- STATIC HALF ---
-  for (const finding of checkTier2LoadDemand()) {
+  for (const finding of [...checkTier2LoadDemand(), ...checkUnitWorkOrderReverseLink()]) {
     infoLines.push(`[${finding.level}] ${finding.message}`);
     if (finding.level === "FAIL") failures.push(finding.message);
   }

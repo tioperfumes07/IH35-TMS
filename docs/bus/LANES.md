@@ -29,6 +29,7 @@ apps/backend/src/maintenance/pm-auto-engine.service.ts
 apps/backend/src/maintenance/pm-due-engine.service.ts
 apps/backend/src/maintenance/__tests__/pm-current-odometer.test.ts
 apps/backend/src/maint/pm.routes.ts
+apps/backend/src/maintenance/work-orders.routes.ts
 **/*.db.test.ts
 TABLES: accounting.company_settlements · driver_finance.driver_bills · mdata.drivers · identity.*
         mdata.loads
@@ -183,6 +184,11 @@ TABLES: none. The Lead owns no module code and no tables. Anything else the Lead
 # recreate the "one job, two seats" problem §0b exists to prevent. The Lead's engine files
 # (telematics/stop-odometer-capture.service.ts, telematics/live-fleet.ts) are imported, NOT edited.
 # Scoped to these filenames. Owner may move them; until then they are CC-1's.
+#
+# **`work-orders.routes.ts` path listed for CC-1 (ROUND 305 A-48, 2026-10-01):** a second narrow edit
+# -- the list route accepts and applies `unit_id` (UNIT-WO-REVERSE), closing the unit -> work orders
+# half link that CC-1's own guard (verify-transaction-linkage-law, step 11965) now enforces. Same
+# one-job-one-seat basis as the A-34 grant above; still not a blanket grant of the file's other logic.
 
 ## SHARED — any seat, but say so in the PR body
 docs/**

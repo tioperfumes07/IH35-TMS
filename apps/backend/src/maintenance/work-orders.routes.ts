@@ -47,6 +47,9 @@ const listQuerySchema = z.object({
   // DRV-LINK-WO-REVERSE: work_orders.driver_id is written on create; list must accept driver_id
   // so DriverDetail can reverse-drill (same pattern as load_id).
   driver_id: z.string().uuid().optional(),
+  // UNIT-WO-REVERSE (ROUND 305 A-48): every work order carries unit_id, but nothing could ask for a
+  // unit's work orders -- half a link per TRANSACTION-LINKAGE-LAW §6. Same pattern as load_id.
+  unit_id: z.string().uuid().optional(),
 });
 
 const listByBucketQuerySchema = z.object({
@@ -463,7 +466,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         values.push(q.status);
         where.push(`w.status = $${values.length}`);
         where.push("w.voided_at IS NULL");
-      } else if (q.equipment_id || q.load_id || q.driver_id || q.vendor_id) {
+      } else if (q.equipment_id || q.load_id || q.driver_id || q.vendor_id || q.unit_id) {
         // LOAD-WO-REVERSE / DRV-LINK-WO-REVERSE: caller-controlled scope — include completed history;
         // voided stay hidden (void-not-delete).
         where.push("w.voided_at IS NULL");
@@ -477,6 +480,10 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
       if (q.driver_id) {
         values.push(q.driver_id);
         where.push(`w.driver_id = $${values.length}`);
+      }
+      if (q.unit_id) {
+        values.push(q.unit_id);
+        where.push(`w.unit_id = $${values.length}`);
       }
       if (q.wo_type) {
         values.push(q.wo_type);
