@@ -43,6 +43,29 @@ export type FuelAnomalyFlag =
     }
   | { kind: "gallons_exceed_worst_case_consumption"; gallons_bought: number; miles_driven: number; fleet_worst_mpg: number; max_plausible_gallons: number };
 
+/** ROUND 305 B-50: one fill, as a reviewer needs to see it — never just an id. */
+export type FillEvidence = {
+  fuel_transaction_id: string;
+  transaction_at: string;
+  gallons: number | null;
+  total_cost_cents: number | null;
+  unit_id: string | null;
+  unit_number: string | null;
+  vendor_name: string | null;
+  location: string | null;
+};
+
+/** ROUND 305 B-50: every flag carries its evidence and its period. A flag without them is an accusation. */
+export type FlagEvidence = {
+  period_start: string;
+  period_end: string;
+  /** The arithmetic in words with the real numbers. Never empty. */
+  arithmetic: string;
+  evidence_fills: FillEvidence[];
+};
+
+export type EvidencedFuelFlag = FuelAnomalyFlag & FlagEvidence;
+
 export type DriverFuelScorecardRow = {
   driver_id: string;
   period_start: string;
@@ -56,7 +79,7 @@ export type DriverFuelScorecardRow = {
   cost_per_mile_cents: number | null;
   fills_with_no_load: number;
   fill_count: number;
-  flags: FuelAnomalyFlag[];
+  flags: EvidencedFuelFlag[];
 };
 
 type FuelAggRow = {
@@ -77,6 +100,9 @@ type FuelFillRow = {
   location_city: string | null;
   location_state: string | null;
   unit_id: string | null;
+  unit_number: string | null;
+  total_cost: number | null;
+  vendor_name: string | null;
 };
 
 /** Per-driver gallons/cost/fill-count in the period, attributed via driverAtTimeSql — never
@@ -136,8 +162,13 @@ async function fetchDriverFillsInPeriod(
       ft.location_lng::float8 AS location_lng,
       ft.location_city,
       ft.location_state,
-      ft.unit_id::text AS unit_id
+      ft.unit_id::text AS unit_id,
+      u.unit_number,
+      ft.total_cost::float8 AS total_cost,
+      v.vendor_name
     FROM fuel.fuel_transactions ft
+    LEFT JOIN mdata.units u ON u.id = ft.unit_id
+    LEFT JOIN mdata.vendors v ON v.id = ft.vendor_id
     ${driverAtTimeSql("ft.unit_id", "ft.transaction_at", "dat")}
     WHERE ft.operating_company_id = $1::uuid
       AND ft.voided_at IS NULL
@@ -163,6 +194,19 @@ function stdDev(values: number[], m: number): number {
   if (values.length < 2) return 0;
   const variance = values.reduce((acc, v) => acc + (v - m) ** 2, 0) / values.length;
   return Math.sqrt(variance);
+}
+
+function fillEvidence(f: FuelFillRow): FillEvidence {
+  return {
+    fuel_transaction_id: f.id,
+    transaction_at: f.transaction_at,
+    gallons: f.gallons,
+    total_cost_cents: f.total_cost == null ? null : Math.round(f.total_cost * 100),
+    unit_id: f.unit_id,
+    unit_number: f.unit_number,
+    vendor_name: f.vendor_name,
+    location: [f.location_city, f.location_state].filter(Boolean).join(", ") || null,
+  };
 }
 
 export async function computeDriverFuelScorecard(
@@ -206,7 +250,9 @@ export async function computeDriverFuelScorecard(
     // whose real fuel purchases couldn't be matched to real miles.
     const mpgNullReason: "odometer_gap" | null = mpg == null && miles.gapCount > 0 && fuel.fillCount > 0 ? "odometer_gap" : null;
 
-    const flags: FuelAnomalyFlag[] = [];
+    const flags: EvidencedFuelFlag[] = [];
+    const period = { period_start: periodStart, period_end: periodEnd };
+    const allFills = fills.map(fillEvidence);
 
     // Flag 1: MPG > 1.5 SD below fleet mean.
     if (mpg != null && fleetMeanMpg != null && fleetSdMpg != null && fleetSdMpg > 0) {
@@ -218,6 +264,11 @@ export async function computeDriverFuelScorecard(
           fleet_mean_mpg: Number(fleetMeanMpg.toFixed(2)),
           fleet_sd_mpg: Number(fleetSdMpg.toFixed(2)),
           threshold_mpg: Number(thresholdMpg.toFixed(2)),
+          ...period,
+          arithmetic:
+            `${miles.miles} mi / ${fuel.gallons.toFixed(1)} gal = ${mpg.toFixed(2)} MPG; ` +
+            `fleet ${fleetMeanMpg.toFixed(2)} - ${FLEET_MPG_SD_THRESHOLD} x ${fleetSdMpg.toFixed(2)} SD = floor ${thresholdMpg.toFixed(2)}`,
+          evidence_fills: allFills,
         });
       }
     }
@@ -246,6 +297,9 @@ export async function computeDriverFuelScorecard(
           gallons: fill.gallons ?? 0,
           tank_capacity_gal: DEFAULT_TANK_CAPACITY_GAL,
           transaction_at: fill.transaction_at,
+          ...period,
+          arithmetic: `${fill.gallons ?? 0} gal in one fill > ${DEFAULT_TANK_CAPACITY_GAL} gal tank capacity`,
+          evidence_fills: [fillEvidence(fill)],
         });
       }
     }
@@ -263,6 +317,9 @@ export async function computeDriverFuelScorecard(
         const milesApart = haversineMiles(a.location_lat, a.location_lng, b.location_lat, b.location_lng);
         if (milesApart > RAPID_REFUEL_DISTANCE_MILES) {
           flags.push({
+            ...period,
+            arithmetic: `two fills ${minutesApart.toFixed(0)} min apart, ${milesApart.toFixed(1)} mi apart (> ${RAPID_REFUEL_DISTANCE_MILES} mi inside ${RAPID_REFUEL_WINDOW_MINUTES} min)`,
+            evidence_fills: [fillEvidence(a), fillEvidence(b)],
             kind: "impossible_distance_refuel",
             fuel_transaction_id_a: a.id,
             fuel_transaction_id_b: b.id,
@@ -282,6 +339,11 @@ export async function computeDriverFuelScorecard(
       const maxPlausibleGallons = miles.miles / fleetWorstMpg;
       if (fuel.gallons > maxPlausibleGallons) {
         flags.push({
+          ...period,
+          arithmetic:
+            `${miles.miles} mi / fleet worst ${fleetWorstMpg.toFixed(2)} MPG = ${maxPlausibleGallons.toFixed(1)} gal plausible; ` +
+            `bought ${fuel.gallons.toFixed(1)} gal`,
+          evidence_fills: allFills,
           kind: "gallons_exceed_worst_case_consumption",
           gallons_bought: Number(fuel.gallons.toFixed(1)),
           miles_driven: miles.miles,
