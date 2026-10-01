@@ -7,7 +7,7 @@ export type SegmentKind = "empty" | "deadhead_to_pickup" | "loaded" | "empty_hom
 export type MaterializedMilesSegment = {
   load_id: string;
   unit_id: string;
-  segment_kind: "deadhead_to_pickup" | "loaded";
+  segment_kind: "deadhead_to_pickup" | "loaded" | "empty_home";
   odometer_start_mi: number;
   odometer_end_mi: number;
   driven_miles: number;
@@ -63,7 +63,136 @@ export async function getRealDrivenMilesSegmentStatus(
  * Each boundary odometer is the nearest reading for the same entity + unit within ten minutes.
  * If either event or either odometer is absent, SQL produces no candidate and therefore no row.
  */
+export type SegmentSource = "unit_stop_events" | "fence_events";
+
+/** ROUND 306 E-05: E-03's persisted stop table (Lead migration 202615030000). Feature-detected, never assumed. */
+export async function unitStopEventsTableExists(client: QueryClient): Promise<boolean> {
+  const res = await client.query<{ ok: boolean }>(
+    `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'telematics' AND table_name = 'unit_stop_events') AS ok`
+  );
+  return Boolean(res.rows[0]?.ok);
+}
+
+/**
+ * ROUND 306 E-05 — ONE engine, re-pointed. When telematics.unit_stop_events exists, segments are
+ * built ONLY from it (stop to stop); the fence-bounded path below no longer runs. Until it exists,
+ * the fence-bounded path keeps producing (logged with its source) so the cutover loses nothing.
+ */
 export async function materializeRealDrivenMilesSegments(
+  client: QueryClient,
+  input: {
+    operatingCompanyId: string;
+    driverId?: string;
+    includeClosedLoads?: boolean;
+  }
+): Promise<MaterializedMilesSegment[]> {
+  return (await materializeRealDrivenMilesSegmentsWithSource(client, input)).segments;
+}
+
+export async function materializeRealDrivenMilesSegmentsWithSource(
+  client: QueryClient,
+  input: { operatingCompanyId: string; driverId?: string; includeClosedLoads?: boolean }
+): Promise<{ source: SegmentSource; segments: MaterializedMilesSegment[] }> {
+  if (await unitStopEventsTableExists(client)) {
+    return { source: "unit_stop_events", segments: await materializeStopToStopSegments(client, input) };
+  }
+  return { source: "fence_events", segments: await materializeFenceBoundedSegments(client, input) };
+}
+
+/**
+ * Segment = one E-03 stop to the next, for the unit on that load (load_id_at_time). Miles = the
+ * delta between the two stops' READ odometers; a stop without one yields no segment (ABSENT, never
+ * interpolated); a negative delta is held. Kind comes from the load's own actual stop times:
+ *   ends at/before first-pickup departure -> deadhead_to_pickup
+ *   between first-pickup departure and last-delivery arrival -> loaded
+ *   starts at/after last-delivery arrival -> empty_home
+ *   anything else (no actual time to judge by, or straddling a boundary) -> not written.
+ * A load that already carries fence-bounded segments is HELD (nothing deletable; mixing the two
+ * sources would double-count its miles).
+ */
+export async function materializeStopToStopSegments(
+  client: QueryClient,
+  input: { operatingCompanyId: string; driverId?: string; includeClosedLoads?: boolean }
+): Promise<MaterializedMilesSegment[]> {
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
+  const result = await client.query<MaterializedMilesSegment>(
+    `WITH load_context AS (
+       SELECT l.id AS load_id, l.assigned_unit_id AS unit_id,
+              p.id AS pickup_stop_id, p.actual_departure_at AS pickup_departed_at,
+              d.id AS delivery_stop_id, d.actual_arrival_at AS delivery_arrived_at
+         FROM mdata.loads l
+         JOIN LATERAL (
+           SELECT id, actual_departure_at FROM mdata.load_stops
+            WHERE load_id = l.id AND stop_type::text = 'pickup' AND soft_deleted_at IS NULL
+            ORDER BY sequence_number ASC LIMIT 1
+         ) p ON true
+         JOIN LATERAL (
+           SELECT id, actual_arrival_at FROM mdata.load_stops
+            WHERE load_id = l.id AND stop_type::text = 'delivery' AND soft_deleted_at IS NULL
+            ORDER BY sequence_number DESC LIMIT 1
+         ) d ON true
+        WHERE l.operating_company_id = $1::uuid
+          AND l.assigned_unit_id IS NOT NULL
+          AND l.soft_deleted_at IS NULL
+          AND ($2::uuid IS NULL OR l.assigned_primary_driver_id = $2::uuid OR l.assigned_secondary_driver_id = $2::uuid)
+          AND ($3::boolean OR l.status::text = ANY($4::text[]))
+          AND NOT EXISTS (
+            -- a segment this path wrote always starts at one of the load's stop ends; any other
+            -- segment on the load came from the fence-bounded path -> the load is HELD.
+            SELECT 1 FROM telematics.load_odometer_segments old
+             WHERE old.operating_company_id = l.operating_company_id AND old.load_id = l.id
+               AND NOT EXISTS (
+                 SELECT 1 FROM telematics.unit_stop_events e
+                  WHERE e.load_id_at_time = l.id AND e.unit_id = old.unit_id AND e.ended_at = old.started_at)
+          )
+     ), ordered AS (
+       SELECT lc.*, e.ended_at AS from_ended_at, e.odometer_mi AS from_odo,
+              lead(e.started_at) OVER w AS to_started_at, lead(e.odometer_mi) OVER w AS to_odo
+         FROM load_context lc
+         JOIN telematics.unit_stop_events e ON e.load_id_at_time = lc.load_id AND e.unit_id = lc.unit_id
+       WINDOW w AS (PARTITION BY lc.load_id ORDER BY e.started_at)
+     ), pairs AS (
+       SELECT o.*,
+              CASE
+                WHEN o.pickup_departed_at IS NOT NULL AND o.to_started_at <= o.pickup_departed_at THEN 'deadhead_to_pickup'
+                WHEN o.pickup_departed_at IS NOT NULL AND o.delivery_arrived_at IS NOT NULL
+                     AND o.from_ended_at >= o.pickup_departed_at AND o.to_started_at <= o.delivery_arrived_at THEN 'loaded'
+                WHEN o.delivery_arrived_at IS NOT NULL AND o.from_ended_at >= o.delivery_arrived_at THEN 'empty_home'
+              END AS segment_kind
+         FROM ordered o
+        WHERE o.to_started_at IS NOT NULL
+          AND o.from_odo IS NOT NULL AND o.to_odo IS NOT NULL
+          AND o.to_odo >= o.from_odo
+     ), inserted AS (
+       INSERT INTO telematics.load_odometer_segments (
+         operating_company_id, load_id, unit_id, segment_kind, from_stop_id, to_stop_id,
+         started_at, ended_at, odometer_start_mi, odometer_end_mi
+       )
+       SELECT $1::uuid, load_id, unit_id, segment_kind,
+              CASE segment_kind WHEN 'loaded' THEN pickup_stop_id WHEN 'empty_home' THEN delivery_stop_id END,
+              CASE segment_kind WHEN 'deadhead_to_pickup' THEN pickup_stop_id WHEN 'loaded' THEN delivery_stop_id END,
+              from_ended_at, to_started_at, from_odo, to_odo
+         FROM pairs
+        WHERE segment_kind IS NOT NULL
+       ON CONFLICT (operating_company_id, load_id, unit_id, segment_kind, started_at)
+       DO UPDATE SET ended_at = EXCLUDED.ended_at,
+                     odometer_start_mi = EXCLUDED.odometer_start_mi,
+                     odometer_end_mi = EXCLUDED.odometer_end_mi
+       RETURNING load_id::text, unit_id::text, segment_kind, odometer_start_mi, odometer_end_mi, driven_miles
+     )
+     SELECT * FROM inserted ORDER BY load_id, segment_kind`,
+    [input.operatingCompanyId, input.driverId ?? null, input.includeClosedLoads ?? false, [...ACTIVE_LOAD_STATUSES]]
+  );
+  return result.rows.map((row) => ({
+    ...row,
+    odometer_start_mi: Number(row.odometer_start_mi),
+    odometer_end_mi: Number(row.odometer_end_mi),
+    driven_miles: Number(row.driven_miles),
+  }));
+}
+
+/** Pre-E-03 path: fence-bounded legs. Runs only while telematics.unit_stop_events does not exist. */
+async function materializeFenceBoundedSegments(
   client: QueryClient,
   input: {
     operatingCompanyId: string;
