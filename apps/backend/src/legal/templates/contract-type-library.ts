@@ -100,6 +100,42 @@ ${stylesheetOf(TRUCK_LEASE_CONTENT_HTML_EN)}
 </tr></table></div>
 </body></html>`;
 
+// Spanish design of the same agreement: same stylesheet, same ten clauses, same {{tokens}} (the data binds identically).
+const SERVICES_ES = `<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"/><title>Contrato de Servicios de Transporte</title>
+${stylesheetOf(TRUCK_LEASE_CONTENT_HTML_ES)}
+</head><body>
+<h1>Contrato de Servicios de Transporte</h1>
+<p class="center" style="font-size:9.5pt;color:#555">Referencia No. {{terms.reference_no}} &nbsp;|&nbsp; Fecha de Vigencia: {{terms.effective_date}}</p>
+<h2>1. Partes</h2>
+<table class="parties"><tr>
+  <td><strong>TRANSPORTISTA:</strong><br/>{{carrier.legal_name}}<br/>{{carrier.address}}<br/>{{carrier.city_state_zip}}<br/>USDOT {{carrier.usdot}} &nbsp; MC {{carrier.mc}}<br/>Atención: {{carrier.contact_name}}, {{carrier.contact_title}}</td>
+  <td><strong>CLIENTE:</strong><br/>{{customer.legal_name}}<br/>{{customer.address}}<br/>{{customer.city_state_zip}}<br/>Atención: {{customer.signer_name}}, {{customer.signer_title}}</td>
+</tr></table>
+<h2>2. Servicios</h2>
+<p>El Transportista prestará servicios de autotransporte de la carga del Cliente que éste le entregue y el Transportista acepte. Cada embarque se rige por este Contrato y por la confirmación de tarifa y la carta de porte (bill of lading) emitidas para el mismo; en caso de contradicción, prevalece este Contrato salvo que la confirmación de tarifa disponga expresamente lo contrario.</p>
+<h2>3. Tarifas y Cargos Accesorios</h2>
+<p>Las tarifas son las indicadas en cada confirmación de tarifa, o en el Anexo A cuando se adjunte. Los cargos accesorios (tiempo de espera después de <strong>{{terms.free_time_hours}}</strong> horas libres, pernocta, maniobras de carga y descarga, lona, paradas adicionales) se aplican según lo indicado en la confirmación de tarifa o en el Anexo A.</p>
+<h2>4. Facturación y Pago</h2>
+<p>El Transportista facturará cada embarque al momento de la entrega, con prueba de entrega. El Cliente pagará dentro de los <strong>{{terms.payment_terms_days}}</strong> días siguientes a la fecha de la factura. El Transportista podrá ceder sus cuentas por cobrar a una empresa de factoraje; el Cliente respetará la notificación de cesión y pagará al cesionario indicado en ella.</p>
+<h2>5. Responsabilidad sobre la Carga</h2>
+<p>La responsabilidad del Transportista por pérdida o daño de la carga se rige por el Título 49 del Código de los Estados Unidos, § 14706 (49 U.S.C. § 14706), y se limita a <strong>{{terms.cargo_limit_display}}</strong> por embarque, salvo que se declare por escrito un valor mayor antes de la entrega de la carga y se acuerde el cargo correspondiente. Las reclamaciones deberán presentarse por escrito dentro de los nueve (9) meses siguientes a la entrega.</p>
+<h2>6. Seguros</h2>
+<p>El Transportista mantendrá un seguro de responsabilidad civil vehicular de al menos <strong>{{terms.auto_liability_display}}</strong> y un seguro de carga de al menos <strong>{{terms.cargo_insurance_display}}</strong>, y entregará los certificados cuando se le soliciten.</p>
+<h2>7. Contratista Independiente</h2>
+<p>El Transportista es un contratista independiente con control exclusivo sobre sus operadores, equipo y operaciones, y es el único responsable del cumplimiento de la normativa de la FMCSA y de toda la normativa de seguridad aplicable.</p>
+<h2>8. Vigencia y Terminación</h2>
+<p>Este Contrato inicia en la Fecha de Vigencia y continúa por <strong>{{terms.term_months}}</strong> meses, renovándose automáticamente por periodos iguales, salvo que cualquiera de las partes dé aviso por escrito con <strong>{{terms.termination_notice_days}}</strong> días de anticipación. La terminación no afecta los embarques ya entregados al Transportista ni las cantidades ya adeudadas.</p>
+<h2>9. Ley Aplicable</h2>
+<p>Este Contrato se rige por las leyes del Estado de <strong>{{terms.governing_law}}</strong>, sin consideración a sus normas de conflicto de leyes, y por la ley federal cuando aplique. La jurisdicción corresponde al Condado de <strong>{{terms.venue_county}}, {{terms.governing_law}}</strong>.</p>
+<h2>10. Acuerdo Total</h2>
+<p>Este Contrato, junto con sus anexos y las confirmaciones de tarifa emitidas conforme al mismo, constituye el acuerdo total de las partes y sólo podrá modificarse mediante documento escrito firmado por ambas.</p>
+<div class="sig-block"><table class="parties"><tr>
+  <td><p><strong>TRANSPORTISTA:</strong> {{carrier.legal_name}}</p><div class="sig-line">{{carrier.contact_name}}, {{carrier.contact_title}}</div><p>Fecha: ____________</p></td>
+  <td><p><strong>CLIENTE:</strong> {{customer.legal_name}}</p><div class="sig-line">{{customer.signer_name}}, {{customer.signer_title}}</div><p>Fecha: ____________</p></td>
+</tr></table></div>
+</body></html>`;
+
 export const CONTRACT_TYPE_TEMPLATES: Record<string, ContractTypeTemplate> = {
   trailer_lease: {
     code: "trailer_lease",
@@ -116,7 +152,7 @@ export const CONTRACT_TYPE_TEMPLATES: Record<string, ContractTypeTemplate> = {
     nameEs: "Contrato de Servicios de Transporte",
     category: "customer_contract",
     htmlEn: SERVICES_EN,
-    htmlEs: SERVICES_EN,
+    htmlEs: SERVICES_ES,
     schema: {},
   },
 };
