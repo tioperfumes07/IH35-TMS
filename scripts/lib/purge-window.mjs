@@ -82,6 +82,15 @@ export function purgeWindow(state = readPurgeState(), now = new Date()) {
   const verified = new Date(verifiedAt);
   if (Number.isNaN(verified.getTime())) return { open: false, verifiedAt, expiresAt: null, reason: `verified_at is not a timestamp: ${verifiedAt}` };
   const expiresAt = new Date(verified.getTime() + PURGE_WINDOW_HOURS * 3_600_000).toISOString();
+  // Owner seeding freeze (2026-10-01): "nobody should be adding or creating anything yet ... once fully
+  // and complete all engines we will seed." After a verified purge the transaction tables stay empty
+  // BY ORDER until the owner seeds through the app, so the 72-hour clock does not apply while the
+  // freeze is declared and not lifted. Lifting it = the owner seeds; whoever records that writes
+  // seeding_freeze.lifted_at in the same commit as the first seeded proof.
+  const freeze = state.seeding_freeze;
+  if (freeze && freeze.declared_at && !freeze.lifted_at) {
+    return { open: true, verifiedAt, expiresAt: null, reason: `owner seeding freeze declared ${freeze.declared_at}: ${freeze.order ?? ""}`.trim() };
+  }
   if (state.day1_closed_at) return { open: false, verifiedAt, expiresAt, reason: `day 1 closed at ${state.day1_closed_at}` };
   if (now.getTime() >= new Date(expiresAt).getTime()) return { open: false, verifiedAt, expiresAt, reason: `expired at ${expiresAt}` };
   return { open: true, verifiedAt, expiresAt, reason: "open" };
@@ -95,7 +104,7 @@ export function purgeWindow(state = readPurgeState(), now = new Date()) {
 export function exitIfEmptyByPurge(label, what) {
   const w = purgeWindowFor(label);
   if (!w.open) return;
-  console.log(`${label}: EMPTY BY PURGE (verified ${w.verifiedAt}, expires ${w.expiresAt}) — ${what} is empty; named skip, not a pass.`);
+  console.log(`${label}: EMPTY BY PURGE (verified ${w.verifiedAt}, ${w.expiresAt ? `expires ${w.expiresAt}` : w.reason}) — ${what} is empty; named skip, not a pass.`);
   process.exit(EMPTY_BY_PURGE_EXIT);
 }
 
