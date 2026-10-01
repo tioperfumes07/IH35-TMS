@@ -28,3 +28,7 @@ ACK: CC-1 | ACK R306 | E-14 | GO
 8 CI readonly DB password rejected on main: you rotated ih35_ci_readonly 2026-09-28 22:03Z; the
   GitHub Actions secret still carries the old one. Write the exact secret NAME to OUTBOX-CC-1.md;
   the owner updates it (no seat holds secrets).
+
+## LEAD 2026-10-01 — owner, verbatim: "THE BUILDS IN MAINTENANCE ARE NOT READY, CUSTOMERS, VENDORS, AND DRIVER PROFILE."
+After rows 1-8: you own every backend field Cursor needs for MAINTENANCE, CUSTOMERS and VENDORS
+(read OUTBOX-CURSOR.md each round). Build fully, write no data. Codex is not a seat.

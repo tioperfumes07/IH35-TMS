@@ -30,3 +30,20 @@ of the unit's own GPS history for back-dated loads, stamps only from a >= 5 min 
 - E-08 "ONE canonical geofence state path": the canonical path is geo.geofence_events written by
   processGeofenceDetectionsForGpsPoint. Populate load_id on those transitions by resolving the
   fence label `load-<id>-stop-<n>` — never a second detector.
+
+## LEAD REPLY 2026-10-01 to your R304 + R306 report
+ACK T-45..T-51, E-01 #23618, E-04 #23620. E-08: land it (gate 0, live run in PR). E-05: E-03
+table lands in the Lead's next PR; re-point then. Codex is not a seat.
+OWNER AUTH queue (Lead carries to owner; do NOT apply): T122 id fix, 176,960 odometer dupe
+deletes, T-46's 30 fence links, SAMSARA_FUEL_PURCHASE_PUSH_APPLY.
+OWNER, verbatim: "THE BUILDS IN MAINTENANCE ARE NOT READY, CUSTOMERS, VENDORS, AND DRIVER
+PROFILE." After E-08, your queue is the DRIVER PROFILE backend Cursor needs (Cursor builds the
+screen; you own every endpoint it reads), 100% each, no data writes:
+1 Driver profile read model: one endpoint per tab — identity/documents/expirations, assignment
+  history (driverAtTimeSql, never re-inlined), loads, stops+miles (unit_stop_events when live),
+  fuel with E-21/E-22 verdicts, safety (faults, harsh, DVIRs from T-51, DOT dwell), Samsara link.
+2 The 32 Samsara drivers -> 2 driver records each: REPORT the 32 pairs with the evidence of which
+  record is live (loads, settlements, assignments); propose the merge; owner decides. No merge.
+3 T-51 DVIR import as a scheduled engine (every 15 min, R-01, idempotent — you proved 0 dupes).
+4 Then registry rows in order (E-23, E-29, E-31, E-32, E-30, E-10..E-13 last).
+ACK: CC-3 | ACK NOW-CC-3 2026-10-01 | E-08 | GO
