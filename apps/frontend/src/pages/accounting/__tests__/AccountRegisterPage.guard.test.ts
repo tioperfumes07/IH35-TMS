@@ -37,6 +37,7 @@ describe("AccountRegisterPage CA-05 guard", () => {
     expect(inlinePanel).toContain('data-testid="b1-register-delete"');
     expect(inlinePanel).toContain('data-testid="b1-inline-attachments"');
     expect(inlinePanel).toContain("saveAccountRegisterInline");
+    expect(inlinePanel).toContain("UploadZone");
   });
 
   it("every drill-through target route exists in the manifest", () => {

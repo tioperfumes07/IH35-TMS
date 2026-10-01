@@ -5,7 +5,7 @@
  * Delete voids via the document's existing void route. Cancel collapses.
  */
 import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useToast } from "../../components/Toast";
@@ -20,14 +20,10 @@ import {
   voidVendorBill,
   voidVendorBillPayment,
 } from "../../api/accounting";
-import {
-  listAttachments,
-  type AttachmentEntityType,
-  type AttachmentRow,
-} from "../../api/attachments";
+import { type AttachmentEntityType } from "../../api/attachments";
+import { UploadZone } from "../../components/UploadZone";
 import { formatUsdCents } from "../../lib/money";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { formatDateUS } from "../../lib/formatDate";
 
 const inputCls = "h-7 w-full rounded-sm border border-[#E5E7EB] px-2 text-xs text-[#0F1219]";
 
@@ -42,11 +38,11 @@ function attachmentEntityType(sourceType: string | null): AttachmentEntityType |
   return "journal_entry";
 }
 
-function formatBytes(n: number): string {
-  if (!Number.isFinite(n) || n < 0) return "";
-  if (n < 1024) return `${n} b`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} kb`;
-  return `${(n / (1024 * 1024)).toFixed(1)} mb`;
+function defaultAttachmentCategory(sourceType: string | null): "receipt" | "vendor_invoice" | "other" {
+  const t = (sourceType ?? "").toLowerCase();
+  if (t === "expense") return "receipt";
+  if (t === "bill" || t === "bill_payment") return "vendor_invoice";
+  return "other";
 }
 
 export type RegisterInlineEditPanelProps = {
@@ -90,19 +86,6 @@ export function RegisterInlineEditPanel({
     attType === "journal_entry"
       ? row.journal_entry_id
       : row.source_transaction_id;
-
-  const attachmentsQuery = useQuery({
-    queryKey: ["register-inline-attachments", companyId, attType, attEntityId],
-    queryFn: () =>
-      listAttachments({
-        operating_company_id: companyId,
-        entity_type: attType!,
-        entity_id: attEntityId!,
-      }),
-    enabled: Boolean(companyId && attType && attEntityId),
-  });
-
-  const attachments: AttachmentRow[] = attachmentsQuery.data?.rows ?? [];
 
   const dirtyNeedsOriginal = useMemo(() => {
     const dateDirty = entryDate !== row.entry_date;
@@ -191,7 +174,8 @@ export function RegisterInlineEditPanel({
     <div className="space-y-2 px-2 py-2 text-xs text-[#0F1219]" data-b1-inline-edit="1" data-testid="b1-inline-edit-panel">
       <p className="text-xs text-[#6B7280]">
         Inline Save updates memo and location. Date, payee, payment, deposit, and account open the original
-        document (Edit). Delete voids with a reversing entry — never deletes the row.
+        document (Edit). Delete voids with a reversing entry — never deletes the row. Attachments upload
+        onto the source document here.
       </p>
       <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-4">
         <label className="block">
@@ -270,25 +254,22 @@ export function RegisterInlineEditPanel({
       </div>
 
       <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5" data-testid="b1-inline-attachments">
-        <div className="mb-1 text-xs font-bold uppercase text-[#4B5563]">
-          Attachments ({attachments.length || row.attachment_count})
-        </div>
-        {attachmentsQuery.isLoading ? (
-          <p className="text-xs text-[#6B7280]">Loading…</p>
-        ) : attachments.length === 0 ? (
-          <p className="text-xs text-[#6B7280]">No attachments on this document. Add them from Edit.</p>
+        {companyId && attType && attEntityId ? (
+          <UploadZone
+            operatingCompanyId={companyId}
+            entityType={attType}
+            entityId={attEntityId}
+            defaultCategory={defaultAttachmentCategory(row.source_transaction_type)}
+            title={`Attachments${row.attachment_count > 0 ? ` (${row.attachment_count})` : ""}`}
+            onUploaded={() => {
+              void queryClient.invalidateQueries({ queryKey: ["account-register", companyId] });
+            }}
+          />
         ) : (
-          <ul className="space-y-0.5">
-            {attachments.map((a) => (
-              <li key={a.id} className="flex justify-between gap-2 text-xs">
-                <span className="truncate">
-                  {a.filename}
-                  {a.size_bytes > 0 ? ` (${formatBytes(a.size_bytes)})` : ""}
-                </span>
-                <span className="shrink-0 text-xs text-[#6B7280]">{formatDateUS(a.uploaded_at.slice(0, 10))}</span>
-              </li>
-            ))}
-          </ul>
+          <p className="text-xs text-[#6B7280]">
+            No source document id on this row — open Edit to attach files.
+            {row.attachment_count > 0 ? ` Register shows ${row.attachment_count} linked.` : ""}
+          </p>
         )}
       </div>
 

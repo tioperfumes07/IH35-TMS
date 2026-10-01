@@ -54,6 +54,8 @@ function main() {
   assertIncludes(inlinePanel, 'data-testid="b1-inline-attachments"', "RegisterInlineEditPanel");
   assertIncludes(inlinePanel, "saveAccountRegisterInline", "RegisterInlineEditPanel");
   assertIncludes(inlinePanel, "voidExpense", "RegisterInlineEditPanel");
+  assertIncludes(inlinePanel, "UploadZone", "RegisterInlineEditPanel");
+  assertIncludes(inlinePanel, "onUploaded", "RegisterInlineEditPanel");
 
   assertIncludes(service, "reconcile_status", SERVICE);
   assertIncludes(service, "attachment_count", SERVICE);
