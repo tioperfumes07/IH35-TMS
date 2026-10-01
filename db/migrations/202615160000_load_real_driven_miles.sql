@@ -1,3 +1,11 @@
+-- DO NOT RUN ON PROD — HELD (db/migrations/.held-migrations.json). Measured 2026-10-01 06:40Z and 06:46Z: the
+-- prod pre-deploy failed twice on "canceling statement due to lock timeout" at this file — ALTER TABLE
+-- mdata.loads needs an ACCESS EXCLUSIVE lock, and a pgbouncer session (pid 24562, neondb_owner) had held a
+-- transaction on mdata.loads open for 58 minutes, so the 5 s lock_timeout can never be met and every
+-- seat's deploy was blocked. Runs on a Neon branch / in a quiet window by hand once that long transaction
+-- is found and closed, then ledger-backfilled. The code feature-detects these columns (storageReady): the
+-- read route computes on demand and the writer cron is a no-op until they exist.
+--
 -- 202615160000_load_real_driven_miles.sql
 -- ORDER-2026-09-04 (three-mile CPM): practical (billed) and short (paid) miles are stored on every load;
 -- REAL DRIVEN miles were stored nowhere. Measured on 37 signed settlements: driven exceeded paid by 5.3%.
