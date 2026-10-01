@@ -38,7 +38,22 @@ const MIGRATOR = "scripts/db-migrate.mjs";
 export const PRODUCTION_ONLY_COMPANY_IDS = ["5c854333-6ea5-4faa-af31-67cb272fef80"];
 
 /** Predates the rule; already applied, therefore uneditable. Neutralised on non-prod by the migrator. */
-export const KNOWN_DEBT = new Set(["202614640000_fix_usmca_def_item_account_5010.sql"]);
+export const KNOWN_DEBT = new Set([
+  "202614640000_fix_usmca_def_item_account_5010.sql",
+  // Second shape (see migrationInsertsProductionCompanyUnguarded): INSERT ... VALUES with the USMCA
+  // id into an FK-backed table, no existence guard. Applied 2026-09-30, uneditable.
+  "202614850000_pm_catalog_usmca.sql",
+  // Same shape via INSERT ... SELECT '<id>' WHERE NOT EXISTS (idempotency, not existence). Applied
+  // 2026-09-30T23:12:04Z, uneditable.
+  "202615000000_bind_usmca_cash_gl_accounts.sql",
+]);
+
+/**
+ * The INSERT rule applies only to migrations numbered AFTER this one. Every earlier migration that
+ * binds a production-only company id was proven to pass on a fresh database by the CI log of
+ * 2026-10-01 (the chain applied all of them and died first at 202614850000).
+ */
+export const INSERT_RULE_AFTER = "202614850000";
 
 export function migrationRaisesOnAbsentProductionSubject(sql) {
   const touchesProdCompany = PRODUCTION_ONLY_COMPANY_IDS.some((id) => sql.includes(id));
@@ -66,6 +81,40 @@ export function migrationRaisesOnAbsentProductionSubject(sql) {
     // to_regclass / to_regprocedure / to_regtype are SCHEMA questions, not data ones.
     if (/to_reg[a-z]*\s*\(/i.test(condition)) return false;
     return true;
+  });
+}
+
+/**
+ * SECOND SHAPE (CI 2026-10-01, build-typecheck-heavy): a migration INSERTs ... VALUES carrying a
+ * production-only company id into a table with an FK to org.companies, with no existence guard. On a
+ * fresh database that company does not exist, so the FK fails and the whole chain dies -- the same
+ * outcome as the RAISE shape above, reached without any RAISE. Recognised guards are the repo's own
+ * idioms: any reference to org.companies (WHERE EXISTS / JOIN / IF EXISTS), or an early skip on a
+ * lookup (IF NOT FOUND, or IS NULL THEN ... RETURN / RAISE NOTICE).
+ */
+export function migrationInsertsProductionCompanyUnguarded(sql) {
+  const code = sql.replace(/--[^\n]*/g, "");
+  const ids = PRODUCTION_ONLY_COMPANY_IDS.filter((id) => code.includes(id));
+  if (ids.length === 0) return false;
+  if (/org\.companies/i.test(code)) return false;
+  if (/\bNOT\s+FOUND\b/i.test(code)) return false;
+  if (/IS\s+NULL\s+THEN[\s\S]{0,160}?\b(RETURN|RAISE\s+NOTICE)\b/i.test(code)) return false;
+  const vars = ids.flatMap((id) =>
+    [...code.matchAll(new RegExp(`(\\w+)\\s+uuid\\s*(?::=|DEFAULT)\\s*'${id}'`, "gi"))].map((m) => m[1])
+  );
+  const binds = (text) => ids.some((id) => text.includes(id)) || vars.some((v) => new RegExp(`\\b${v}\\b`).test(text));
+  // VALUES (...) always writes the row. A SELECT writes it unconditionally only when it has no top-level
+  // FROM (a bare literal row) -- `INSERT ... SELECT ... FROM <table> WHERE <prod id>` selects zero rows
+  // on a fresh database and is safe (202614860000, proven by the CI log). Subqueries don't count.
+  const topLevel = (text) => {
+    let t = text;
+    for (let prev = ""; prev !== t; ) { prev = t; t = t.replace(/\([^()]*\)/g, " "); }
+    return t;
+  };
+  return [...code.matchAll(/INSERT\s+INTO\s+[\w.]+[^;]*?\b(VALUES|SELECT)\b([\s\S]*?);/gi)].some((m) => {
+    if (!binds(m[2])) return false;
+    if (m[1].toUpperCase() === "VALUES") return true;
+    return !/\bFROM\b/i.test(topLevel(m[2]));
   });
 }
 
@@ -119,6 +168,13 @@ export function assertMigrations(files) {
   const problems = [];
   for (const { name, sql } of files) {
     if (KNOWN_DEBT.has(name)) continue;
+    if (name.slice(0, INSERT_RULE_AFTER.length) > INSERT_RULE_AFTER && migrationInsertsProductionCompanyUnguarded(sql)) {
+      problems.push(
+        `db/migrations/${name}: INSERTs ... VALUES with a PRODUCTION-ONLY company id and no existence guard. On any ` +
+          `database built from source that company does not exist, so the FK to org.companies fails and kills the ` +
+          `whole migration chain. Guard it: \`WHERE EXISTS (SELECT 1 FROM org.companies WHERE id = ...)\`.`
+      );
+    }
     if (migrationRaisesOnAbsentProductionSubject(sql)) {
       problems.push(
         `db/migrations/${name}: repairs data scoped to a PRODUCTION-ONLY company id and RAISEs when its subject is ` +
@@ -168,6 +224,40 @@ if (process.argv.includes("--selftest")) {
     assertMigrations([{ name: "999_regproc.sql", sql: `DO $$ DECLARE v uuid; BEGIN SELECT id INTO v FROM t WHERE operating_company_id='${ID}'; IF to_regprocedure('x.y()') IS NULL THEN RAISE EXCEPTION 'missing fn'; END IF; UPDATE t SET a=1; END $$;` }])
   );
 
+  // 8. SECOND SHAPE -- INSERT ... VALUES binding the production-only id, no guard (202614850000's shape).
+  expect(
+    "insert-values-unguarded",
+    assertMigrations([{ name: "202699990000_new.sql", sql: `DO $$ DECLARE usmca_id uuid := '${ID}'; BEGIN INSERT INTO catalogs.pm_intervals (operating_company_id, code) VALUES (usmca_id, 'PM-A'); END $$;` }]),
+    "no existence guard"
+  );
+  // 9. The same insert guarded by the repo's idioms passes.
+  refute(
+    "insert-values-guarded-exists",
+    assertMigrations([{ name: "202699990001_ok.sql", sql: `INSERT INTO t (operating_company_id, c) SELECT v.id, 'x' FROM (VALUES ('${ID}'::uuid)) v(id) WHERE EXISTS (SELECT 1 FROM org.companies WHERE id = v.id);` }])
+  );
+  refute(
+    "insert-values-guarded-not-found",
+    assertMigrations([{ name: "202699990002_ok.sql", sql: `DO $$ DECLARE a uuid; BEGIN SELECT id INTO a FROM catalogs.accounts WHERE operating_company_id='${ID}'; IF NOT FOUND THEN RETURN; END IF; INSERT INTO t (operating_company_id) VALUES ('${ID}'); END $$;` }])
+  );
+  // 10. Migrations at or before the cutoff are proven by the 2026-10-01 CI log and exempt from the INSERT rule.
+  refute(
+    "insert-rule-pre-cutoff-exempt",
+    assertMigrations([{ name: "202612520200_old.sql", sql: `INSERT INTO t (operating_company_id) VALUES ('${ID}');` }])
+  );
+
+  // 11. INSERT ... SELECT '<id>' WHERE NOT EXISTS (same row) -- idempotent, still unguarded (202615000000's shape).
+  expect(
+    "insert-select-literal-unguarded",
+    assertMigrations([{ name: "202699990003_new.sql", sql: `INSERT INTO catalogs.accounts (id, operating_company_id, account_number) SELECT gen_random_uuid(), '${ID}', '1236' WHERE NOT EXISTS (SELECT 1 FROM catalogs.accounts WHERE operating_company_id = '${ID}' AND account_number = '1236');` }]),
+    "no existence guard"
+  );
+
+  // 12. INSERT ... SELECT ... FROM <table> WHERE <prod id> selects zero rows on a fresh DB -- must stay silent.
+  refute(
+    "insert-select-from-table-passes",
+    assertMigrations([{ name: "202699990004_ok.sql", sql: `DO $$ DECLARE usmca_id uuid := '${ID}'; BEGIN INSERT INTO t (id, operating_company_id, unit_id) SELECT gen_random_uuid(), usmca_id, u.id FROM mdata.units u WHERE u.owner_company_id = usmca_id; END $$;` }])
+  );
+
   // 5. Known debt is exempt (it cannot be edited).
   refute("known-debt-exempt", assertMigrations([{ name: "202614640000_fix_usmca_def_item_account_5010.sql", sql: `RAISE EXCEPTION 'x'; UPDATE catalogs.items SET a=1 WHERE operating_company_id='${ID}';` }]));
 
@@ -189,7 +279,7 @@ if (process.argv.includes("--selftest")) {
     for (const f of failures) console.error(`  - ${f}`);
     process.exitCode = 1;
   } else {
-    console.log(`${LABEL} selftest 9/9 OK`);
+    console.log(`${LABEL} selftest 15/15 OK`);
   }
 } else {
   const problems = [

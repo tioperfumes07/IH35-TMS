@@ -30,6 +30,7 @@ apps/backend/src/maintenance/pm-due-engine.service.ts
 apps/backend/src/maintenance/__tests__/pm-current-odometer.test.ts
 apps/backend/src/maint/pm.routes.ts
 apps/backend/src/maintenance/work-orders.routes.ts
+scripts/db-migrate.mjs
 **/*.db.test.ts
 TABLES: accounting.company_settlements · driver_finance.driver_bills · mdata.drivers · identity.*
         mdata.loads
@@ -189,6 +190,11 @@ TABLES: none. The Lead owns no module code and no tables. Anything else the Lead
 # -- the list route accepts and applies `unit_id` (UNIT-WO-REVERSE), closing the unit -> work orders
 # half link that CC-1's own guard (verify-transaction-linkage-law, step 11965) now enforces. Same
 # one-job-one-seat basis as the A-34 grant above; still not a blanket grant of the file's other logic.
+# **`scripts/db-migrate.mjs` added to CC-1 (2026-10-01).** UNASSIGNED per verify-lane-ownership.mjs.
+# CC-1's own migration 202614850000_pm_catalog_usmca.sql (applied, uneditable) breaks every fresh
+# database build; the sanctioned fix is its FRESH_DB_PRODUCTION_DATA_ONLY entry in this runner, kept
+# honest by CC-1's guard verify-data-repair-migrations-noop-when-absent.mjs. db/migrations/** is
+# already CC-1's -- the runner that applies it belongs with it. Owner may move it.
 
 ## SHARED — any seat, but say so in the PR body
 docs/**
