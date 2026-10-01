@@ -23,7 +23,7 @@ import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { listClassesForJe, listCoaAccountsForJe } from "../../api/accounting";
-import { listVendors } from "../../api/mdata";
+import { listCustomers, listVendors } from "../../api/mdata";
 import {
   applyReclassify, findReclassifyLines, getReclassifyAccounts, listReclassifyBatches, undoReclassifyBatch,
   type ReclassifyAccount, type ReclassifyBatchResult, type ReclassifyLine,
@@ -59,6 +59,7 @@ export function ReclassifyTransactionsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [toAccount, setToAccount] = useState("");
   const [toClass, setToClass] = useState("");
+  const [toEntityKind, setToEntityKind] = useState<"vendor" | "customer">("vendor");
   const [toVendor, setToVendor] = useState("");
   const [reason, setReason] = useState("");
   const [lastResult, setLastResult] = useState<ReclassifyBatchResult | null>(null);
@@ -69,7 +70,8 @@ export function ReclassifyTransactionsPage() {
   const accountsQ = useQuery({ queryKey: ["reclassify-accounts", companyId, fromDate, toDate], queryFn: () => getReclassifyAccounts(companyId, fromDate, toDate), enabled: !!companyId });
   const coaQ = useQuery({ queryKey: ["reclassify-coa", companyId], queryFn: () => listCoaAccountsForJe(companyId), enabled: !!companyId });
   const classesQ = useQuery({ queryKey: ["reclassify-classes"], queryFn: () => listClassesForJe() });
-  const vendorsQ = useQuery({ queryKey: ["reclassify-vendors", companyId], queryFn: () => listVendors({ operating_company_id: companyId, limit: 1000 }), enabled: modalOpen && !!companyId });
+  const vendorsQ = useQuery({ queryKey: ["reclassify-vendors", companyId], queryFn: () => listVendors({ operating_company_id: companyId, limit: 1000 }), enabled: modalOpen && !!companyId && toEntityKind === "vendor" });
+  const customersQ = useQuery({ queryKey: ["reclassify-customers", companyId], queryFn: () => listCustomers({ operating_company_id: companyId, limit: 1000 }), enabled: modalOpen && !!companyId && toEntityKind === "customer" });
   const batchesQ = useQuery({ queryKey: ["reclassify-batches", companyId], queryFn: () => listReclassifyBatches(companyId), enabled: !!companyId });
 
   const linesQ = useQuery({
@@ -84,11 +86,12 @@ export function ReclassifyTransactionsPage() {
   const applyMut = useMutation({
     mutationFn: () => applyReclassify({
       operating_company_id: companyId, posting_ids: Array.from(selected.keys()), reason,
-      to_account_id: toAccount || null, to_class_id: toClass || null, to_entity_uuid: toVendor || null, to_entity_type: toVendor ? "vendor" : null,
+      to_account_id: toAccount || null, to_class_id: toClass || null,
+      to_entity_uuid: toVendor || null, to_entity_type: toVendor ? toEntityKind : null,
       filter_snapshot: applied ?? {},
     }),
     onSuccess: (res) => {
-      setLastResult(res); setModalOpen(false); setSelected(new Map()); setToAccount(""); setToClass(""); setToVendor(""); setReason("");
+      setLastResult(res); setModalOpen(false); setSelected(new Map()); setToAccount(""); setToClass(""); setToVendor(""); setToEntityKind("vendor"); setReason("");
       void qc.invalidateQueries({ queryKey: ["reclassify-lines"] }); void qc.invalidateQueries({ queryKey: ["reclassify-accounts"] }); void qc.invalidateQueries({ queryKey: ["reclassify-batches"] });
     },
   });
@@ -99,6 +102,7 @@ export function ReclassifyTransactionsPage() {
 
   const accountRefOptions = useMemo<ReferenceOption[]>(() => (coaQ.data?.accounts ?? []).map((a) => coaAccountReferenceOption({ id: a.id, account_name: a.account_name, account_type: a.account_type ?? null, account_number: a.account_number })), [coaQ.data]);
   const vendorRefOptions = useMemo<ReferenceOption[]>(() => (vendorsQ.data?.vendors ?? []).map((v) => ({ value: v.id, label: v.name })), [vendorsQ.data]);
+  const customerRefOptions = useMemo<ReferenceOption[]>(() => (customersQ.data?.customers ?? []).map((c) => ({ value: c.id, label: c.name?.trim() || c.id })), [customersQ.data]);
   const tree = useMemo(() => {
     const rows = (accountsQ.data?.accounts ?? []).filter((a) => a.period_activity_cents !== 0 || a.account_id === accountId);
     const f = accountFilter.trim().toLowerCase();
@@ -122,9 +126,9 @@ export function ReclassifyTransactionsPage() {
 
   return (
     <AccountingSubNavWrapper title="Reclassify transactions" subtitle="Change the account, class or vendor on many GL lines at once. Every document is re-posted through a linked RECLASSIFICATION journal entry; undo per batch.">
-      <div className="flex min-h-[70vh] gap-3" data-testid="reclassify-page">
+      <div className="flex min-h-[70vh] gap-3" data-testid="reclassify-page" data-b5-reclassify="1">
         {/* LEFT PANE — chart of accounts with period activity */}
-        <aside className="w-72 shrink-0 overflow-y-auto rounded border border-gray-200 bg-white" data-testid="reclassify-account-tree">
+        <aside className="w-72 shrink-0 overflow-y-auto rounded border border-gray-200 bg-white" data-testid="reclassify-account-tree" data-b5-period-balances="1">
           <div className="border-b border-gray-200 p-2">
             <div className="text-xs font-bold uppercase tracking-wide text-gray-600">Accounts · {formatDateQboList(fromDate)} – {formatDateQboList(toDate)}</div>
             <input value={accountFilter} onChange={(e) => setAccountFilter(e.target.value)} placeholder="Filter accounts" className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-xs" data-testid="reclassify-account-filter" />
@@ -189,7 +193,7 @@ export function ReclassifyTransactionsPage() {
             </div>
           ) : (
             <>
-              <div className="mt-2 flex items-center justify-between rounded border border-gray-200 bg-white px-2 py-1 text-xs" data-testid="reclassify-selection-bar">
+              <div className="mt-2 flex items-center justify-between rounded border border-gray-200 bg-white px-2 py-1 text-xs" data-testid="reclassify-selection-bar" data-b5-selection-bar="1">
                 <div className="flex items-center gap-2">
                   <input type="checkbox" checked={pageAllSelected} onChange={togglePage} aria-label="Select all on this page" />
                   <Button type="button" size="sm" disabled={selected.size === 0} onClick={() => setModalOpen(true)} data-testid="reclassify-open-modal">Reclassify</Button>
@@ -284,10 +288,10 @@ export function ReclassifyTransactionsPage() {
       </div>
 
       {modalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" role="dialog" aria-modal="true" data-testid="reclassify-modal">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" role="dialog" aria-modal="true" data-testid="reclassify-modal" data-b5-reclassify-modal="1">
           <div className="w-[32rem] rounded border border-gray-300 bg-white p-4 shadow-lg">
             <h2 className="text-xs font-bold uppercase tracking-wide">Reclassify {selected.size} transaction line{selected.size === 1 ? "" : "s"} · {formatCurrencyFromCents(selectedSum)}</h2>
-            <p className="mt-1 text-xs text-slate-600">Leave a field blank to keep it unchanged. Each document gets its own linked RECLASSIFICATION journal entry; a bill's vendor is the A/P subledger and is not changed here.</p>
+            <p className="mt-1 text-xs text-slate-600">You can now reclassify the vendor/customer name from this page. Leave a field blank to keep it unchanged. Each document gets its own linked RECLASSIFICATION journal entry; a bill's vendor is the A/P subledger and is not changed here.</p>
             <div className="mt-3 flex flex-col gap-1 text-xs font-semibold text-slate-600">Change account to
               {/* ReferenceSelect createKind="account" — canonical picker, showAccountNumbers gate via coaAccountReferenceOption */}
               <ReferenceSelect value={toAccount || null} onChange={(next) => setToAccount(next ?? "")} options={accountRefOptions} createKind="account" operatingCompanyId={companyId} placeholder="Select…" loading={coaQ.isLoading} onOptionCreated={() => void coaQ.refetch()} />
@@ -298,8 +302,35 @@ export function ReclassifyTransactionsPage() {
                 {(classesQ.data?.classes ?? []).map((c) => <option key={c.id} value={c.id}>{c.class_name}</option>)}
               </SelectCombobox>
             </label>
-            <div className="mt-2 flex flex-col gap-1 text-xs font-semibold text-slate-600">Change vendor to
-              <ReferenceSelect value={toVendor || null} onChange={(next) => setToVendor(next ?? "")} options={vendorRefOptions} createKind="vendor" operatingCompanyId={companyId} placeholder="Select…" loading={vendorsQ.isLoading} onOptionCreated={() => void vendorsQ.refetch()} />
+            <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-slate-600" data-b5-change-location="1">
+              Change location to
+              <select disabled className="h-9 rounded border border-gray-200 bg-slate-50 px-2 text-xs text-slate-500" title="Location reclassify is not wired on postings yet — use class (unit) for fleet dimension.">
+                <option>Select… (not available yet)</option>
+              </select>
+              <span className="font-normal text-slate-500">Location is not a posting column today — use Class (unit) for fleet. Apply stays available for account / class / vendor-customer.</span>
+            </label>
+            <div className="mt-2 flex flex-col gap-1 text-xs font-semibold text-slate-600" data-b5-change-vendor-customer="1">
+              Change vendor/customer to
+              <div className="flex gap-2">
+                <SelectCombobox
+                  value={toEntityKind}
+                  onChange={(e) => {
+                    setToEntityKind(e.target.value as "vendor" | "customer");
+                    setToVendor("");
+                  }}
+                  data-testid="reclassify-to-entity-kind"
+                >
+                  <option value="vendor">Vendor</option>
+                  <option value="customer">Customer</option>
+                </SelectCombobox>
+                <div className="min-w-0 flex-1">
+                  {toEntityKind === "vendor" ? (
+                    <ReferenceSelect value={toVendor || null} onChange={(next) => setToVendor(next ?? "")} options={vendorRefOptions} createKind="vendor" operatingCompanyId={companyId} placeholder="Select…" loading={vendorsQ.isLoading} onOptionCreated={() => void vendorsQ.refetch()} />
+                  ) : (
+                    <ReferenceSelect value={toVendor || null} onChange={(next) => setToVendor(next ?? "")} options={customerRefOptions} createKind="customer" operatingCompanyId={companyId} placeholder="Select…" loading={customersQ.isLoading} onOptionCreated={() => void customersQ.refetch()} />
+                  )}
+                </div>
+              </div>
             </div>
             <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-slate-600">Reason (required, audited on every document)
               <input value={reason} onChange={(e) => setReason(e.target.value)} className="h-9 rounded border border-gray-300 px-2 text-xs" placeholder="e.g. Zelle to Dreamline belongs on Relay/Dreamline payables" data-testid="reclassify-reason" />
