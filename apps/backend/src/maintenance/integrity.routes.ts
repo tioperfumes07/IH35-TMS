@@ -5,6 +5,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { computeDriverFuelScorecard } from "./fuel-driver-scorecard.service.js";
 import { computeDriverDamageScorecard } from "./driver-damage-scorecard.service.js";
+import { computeDriverFuelIntegrity } from "./fuel-integrity.service.js";
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -203,5 +204,19 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
       );
     });
     return { rows };
+  });
+
+  // ROUND 305 B-47 — the fuel component of the integrity score. A driver is a "finding" only when
+  // two signals from independent sources agree; one signal is a "suspicion". Every signal carries
+  // its arithmetic and its row-level evidence (B-50).
+  app.get("/api/v1/maintenance/integrity/fuel-integrity", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const query = periodQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+    const { periodStart, periodEnd } = resolvePeriod(query.data);
+    return withCompany(user.uuid, query.data.operating_company_id, (client) =>
+      computeDriverFuelIntegrity(client, query.data.operating_company_id, periodStart, periodEnd)
+    );
   });
 }

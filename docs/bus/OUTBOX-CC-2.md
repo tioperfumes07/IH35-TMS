@@ -838,3 +838,39 @@ signal, now that stop-odometer-capture.service.ts gives a real second, independe
 signal).
 
 — CC-2
+
+## ROUND 305 B-47 — fuel integrity component, refuses to flag on a single signal (DONE)
+
+Built apps/backend/src/maintenance/fuel-integrity.service.ts + GET
+/api/v1/maintenance/integrity/fuel-integrity. Extends B-27/B-28 and the Lead's stop-odometer
+engine; no second engine, no data written, no apps/frontend.
+
+Four signals per driver, each carrying its sources, its arithmetic with real numbers, its reason,
+and row-level evidence: mpg_odometer_snapshot (B-28 unchanged), mpg_stop_odometer (same card
+gallons / stop-odometer miles, attributed only when the same driver held the truck at both ends of
+a segment; handovers and backwards odometers excluded and counted; withheld under 80% coverage of
+assigned hours), relay_fill_presence (each Relay fill's real pump time + station lat/lng vs the
+truck's own GPS: stopped within 500 m inside +/-60 min; no GPS = unverifiable, never counted
+against the driver; anomalous at >=2 absent), samsara_fuel_energy (CC-3 T-50 — reported
+unavailable, never faked).
+
+The refusal: "finding" requires two ANOMALOUS signals with DISJOINT sources. The two MPG signals
+share the card gallons, so together they are still only a suspicion.
+
+Live, USMCA, 61 days: 36 drivers — 0 finding, 1 suspicion, 18 clear, 17 insufficient_data. The one
+suspicion is the refusal working on real data: B-28's snapshot MPG reads below the fleet floor,
+the independent stop-odometer miles put the same driver at normal MPG. Measured honestly: the 125
+diesel card rows carry no location and 122 are date-only, so presence can only come from Relay;
+of 119 Relay fills, 40 lack a unit or location and 34 fall where no driver was assigned at pump
+time — both counted in the payload, never dropped.
+
+Guard 12007 (claim-reserved, PR #23598): selftest proves the refusal + the attribution mirror;
+live mode fails on any finding without two independent anomalous signals or any signal with empty
+arithmetic. On a database without USMCA (CI's fresh DB) it runs selftest only and says so.
+
+CI FINDING, not mine to fix: main's CI is red independent of this work — ih35_ci_readonly password
+rejected (22 live guards), and fresh-DB migration replay fails on pm_intervals_operating_company_id_fkey.
+
+NEXT: make my 11 earlier production-data guards CI-fresh-DB safe the same way (my own lane), then B-48.
+
+— CC-2
