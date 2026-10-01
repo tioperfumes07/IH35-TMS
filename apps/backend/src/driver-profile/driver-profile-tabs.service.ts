@@ -139,31 +139,28 @@ export async function driverSafety(client: Db, oc: string, driverId: string, w: 
 }
 
 /**
- * Samsara link + duplicate warning: every Samsara driver id linked to this driver (mdata.drivers column
- * and the integrations.samsara_drivers mirror), and every OTHER local driver row that shares one of
- * those ids. Report only — no merge, no deactivation (ORDERS row 5 owns the survivor proposal).
+ * Samsara link + duplicate warning. Accounts come from the CANONICAL map mdata.driver_samsara_accounts
+ * (one driver may hold several Samsara accounts). duplicate_warning = another LIVE (not merged) local
+ * driver still carries one of these Samsara ids in the legacy mdata.drivers.samsara_driver_id column.
+ * Report only -- no merge, no deactivation.
  */
 export async function driverSamsaraLink(client: Db, oc: string, driverId: string) {
-  const res = await client.query(
-    `WITH links AS (
-       SELECT d.samsara_driver_id::text AS sid, d.id AS driver_id, 'mdata.drivers' AS via FROM mdata.drivers d
-        WHERE d.operating_company_id = $1::uuid AND d.samsara_driver_id IS NOT NULL
-       UNION
-       SELECT sd.samsara_driver_id::text, sd.local_driver_id, 'integrations.samsara_drivers' FROM integrations.samsara_drivers sd
-        WHERE sd.operating_company_id = $1::uuid AND sd.local_driver_id IS NOT NULL
-     ), mine AS (SELECT DISTINCT sid FROM links WHERE driver_id = $2::uuid)
-     SELECT m.sid AS samsara_driver_id,
-            (SELECT json_agg(DISTINCT l.via) FROM links l WHERE l.sid = m.sid AND l.driver_id = $2::uuid) AS linked_via,
-            (SELECT json_agg(json_build_object('driver_id', o.id, 'name', concat_ws(' ', o.first_name, o.last_name),
-                                               'status', o.status, 'deactivated', o.deactivated_at IS NOT NULL, 'via', l.via))
-               FROM links l JOIN mdata.drivers o ON o.id = l.driver_id
-              WHERE l.sid = m.sid AND l.driver_id <> $2::uuid) AS other_local_drivers
-       FROM mine m`,
+  const accounts = await client.query(
+    `SELECT a.samsara_driver_id::text AS samsara_driver_id, a.samsara_username, a.last_login_at, a.is_active
+       FROM mdata.driver_samsara_accounts a JOIN mdata.drivers d ON d.id = a.driver_id
+      WHERE a.operating_company_id = $1::uuid AND COALESCE(d.merged_into_driver_id, d.id) = $2::uuid
+      ORDER BY a.last_login_at DESC NULLS LAST`,
     [oc, driverId]
   );
-  return {
-    driver_id: driverId,
-    samsara_links: res.rows,
-    duplicate_warning: res.rows.some((r) => Array.isArray(r.other_local_drivers) && r.other_local_drivers.length > 0),
-  };
+  const sids = accounts.rows.map((r) => String(r.samsara_driver_id));
+  const legacy = sids.length
+    ? await client.query(
+        `SELECT o.id::text AS driver_id, concat_ws(' ', o.first_name, o.last_name) AS name, o.status, o.samsara_driver_id::text AS samsara_driver_id
+           FROM mdata.drivers o
+          WHERE o.operating_company_id = $1::uuid AND o.samsara_driver_id = ANY($2::text[])
+            AND o.id <> $3::uuid AND o.merged_into_driver_id IS NULL AND o.deactivated_at IS NULL`,
+        [oc, sids, driverId]
+      )
+    : { rows: [] };
+  return { driver_id: driverId, samsara_accounts: accounts.rows, other_live_drivers_with_these_ids: legacy.rows, duplicate_warning: legacy.rows.length > 0 };
 }

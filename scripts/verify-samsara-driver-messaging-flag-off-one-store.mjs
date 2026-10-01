@@ -4,7 +4,8 @@
  * FAILS IF driver-message-delivery.service.ts:
  *   1. can send to Samsara without SAMSARA_DRIVER_MESSAGING_ENABLED=true;
  *   2. writes its own message table instead of riding chat.messages (one message store);
- *   3. sends to a driver with zero or several Samsara ids (guessed recipient);
+ *   3. takes recipients from anywhere but the canonical map mdata.driver_samsara_accounts, or messages a
+ *      driver with no Samsara account (guessed recipient);
  *   4. re-sends a message already delivered.
  */
 import { readFileSync } from "node:fs";
@@ -20,7 +21,8 @@ export function check(raw) {
   const p = [];
   if (!/process\.env\.SAMSARA_DRIVER_MESSAGING_ENABLED === "true"/.test(src) || !/if \(!samsaraDriverMessagingEnabled\(\) \|\| !sender\) return/.test(src)) p.push("Samsara driver messages can be sent without the flag.");
   if (/INSERT INTO (chat|mdata|messaging)\./.test(src)) p.push("delivery writes a message table of its own -- chat.messages is the one store.");
-  if (!/if \(sids\.length === 1\) return \{ driver_id: d\.driver_id, samsara_driver_id: sids\[0\]!/.test(src)) p.push("a driver with zero or several Samsara ids can be messaged.");
+  if (!/FROM mdata\.driver_samsara_accounts a/.test(src) || /mdata\.drivers d WHERE d\.id = p\.driver_id AND d\.samsara_driver_id/.test(src)) p.push("recipients no longer come from the canonical map mdata.driver_samsara_accounts.");
+  if (!/if \(sids\.length === 0\) return \{ driver_id: d\.driver_id, samsara_driver_ids: \[\] as string\[\], reason: "driver_not_linked_to_samsara" \}/.test(src)) p.push("a driver with no Samsara account can be messaged.");
   if (!/if \(prior\.rows\.length\) return \{ \.\.\.base, outcome: "already_delivered" \}/.test(src)) p.push("a delivered message can be re-sent.");
   return p;
 }
@@ -31,7 +33,7 @@ function selftest() {
     [g, false],
     [g.replace('process.env.SAMSARA_DRIVER_MESSAGING_ENABLED === "true"', 'process.env.SAMSARA_DRIVER_MESSAGING_ENABLED !== "false"'), true],
     [g + "\nconst x = `INSERT INTO chat.messages`;", true],
-    [g.replace("if (sids.length === 1) return", "if (sids.length >= 1) return"), true],
+    [g.replace("FROM mdata.driver_samsara_accounts a", "FROM x a"), true],
     [g.replace('if (prior.rows.length) return { ...base, outcome: "already_delivered" }', ""), true],
   ];
   return cases.every(([s, f]) => (check(s).length > 0) === f);

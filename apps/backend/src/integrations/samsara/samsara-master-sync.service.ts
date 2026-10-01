@@ -77,369 +77,163 @@ function splitName(full: string): { first: string; last: string } {
   return { first: parts[0] ?? "Driver", last: parts.slice(1).join(" ") || "—" };
 }
 
+/**
+ * ROUND 306 / LEAD DECISION 2026-10-01 — Samsara master sync is LINK-ONLY.
+ *
+ * Measured before this rewrite: 96/96 vehicle+trailer runs failed in 24 h (units_vin_key /
+ * equipment_equipment_number_key duplicates + deadlocks from two instances); the vehicle pass wrote every
+ * Samsara VEHICLE into mdata.equipment as a 'DryVan' trailer (85 "SAM-" rows) and invented "SAM-" units;
+ * the driver pass INSERTed a new driver (phone "000-000-0000") whenever no row carried the Samsara id --
+ * the origin of the 32 Samsara-id -> two-driver splits -- and overwrote real names/phones hourly.
+ *
+ * Now, for drivers, vehicles and trailers alike:
+ *  - match an EXISTING record by the Samsara id, else by its global natural key (VIN / equipment number,
+ *    both unique), regardless of which company it belongs to -- so a record is never invisible and never
+ *    re-inserted;
+ *  - a record operated by ANOTHER company is left untouched (skipped, counted);
+ *  - link: set the Samsara id when the row has none (a row already linked to a DIFFERENT id is a
+ *    conflict: skipped, counted, never overwritten); fill EMPTY columns only from Samsara;
+ *  - NEVER create a driver, unit or equipment row (master records are owned by the office) — an unmatched
+ *    Samsara record is counted in the sync log payload;
+ *  - one runner per company: pg_try_advisory_xact_lock, a second instance skips instead of deadlocking.
+ */
+async function takeSyncLock(client: PgClient, operatingCompanyId: string, kind: string): Promise<boolean> {
+  const r = await client.query(`SELECT pg_try_advisory_xact_lock(hashtext($1)) AS ok`, [`samsara_master_sync:${kind}:${operatingCompanyId}`]);
+  return Boolean(r.rows[0]?.ok);
+}
+
+type LinkOutcome = "linked" | "already_linked" | "other_company" | "linked_to_other_samsara_id" | "no_local_record" | "excluded_company_vehicle" | "failed";
+
+function bump(counts: Record<string, number>, k: LinkOutcome) {
+  counts[k] = (counts[k] ?? 0) + 1;
+}
+
+function str(v: unknown): string | null {
+  return typeof v === "string" && v.trim() ? v.trim() : null;
+}
+
+function yearOf(v: unknown): number | null {
+  const n = typeof v === "number" ? Math.trunc(v) : typeof v === "string" ? parseInt(v, 10) : NaN;
+  return Number.isFinite(n) ? n : null;
+}
+
 export async function syncSamsaraDriversMaster(client: PgClient, operatingCompanyId: string): Promise<SyncStats> {
   const errors: string[] = [];
+  if (!(await takeSyncLock(client, operatingCompanyId, "drivers"))) return { added: 0, updated: 0, removed: 0, errors: ["skipped_another_runner_holds_lock"] };
   const cfg = await getSamsaraConfigForCompany(client, operatingCompanyId);
-  const token = resolveSamsaraApiToken(cfg as Record<string, unknown>);
-  const api = new SamsaraClient({
-    apiToken: token,
-    samsaraOrgId: cfg?.samsara_org_id ? String(cfg.samsara_org_id) : null,
-  });
-
-  const hasOc = await columnExists(client, "mdata", "drivers", "operating_company_id");
-  const hasSid = await columnExists(client, "mdata", "drivers", "samsara_driver_id");
-  if (!hasOc || !hasSid) {
-    const msg = "missing_required_columns:mdata.drivers(operating_company_id|samsara_driver_id)";
-    errors.push(msg);
-    await writeSyncLog(client, {
-      operatingCompanyId,
-      syncKind: "drivers_master",
-      success: false,
-      rowsAdded: 0,
-      rowsUpdated: 0,
-      rowsRemoved: 0,
-      errorMessage: msg,
-    });
-    return { added: 0, updated: 0, removed: 0, errors };
-  }
-
+  const api = new SamsaraClient({ apiToken: resolveSamsaraApiToken(cfg as Record<string, unknown>), samsaraOrgId: cfg?.samsara_org_id ? String(cfg.samsara_org_id) : null });
   const drivers = await api.listDrivers();
-  let added = 0;
+  const counts: Record<string, number> = {};
   let updated = 0;
-
   for (const d of drivers) {
     const raw = d.raw;
-    const name =
-      typeof raw.name === "string"
-        ? raw.name
-        : `${typeof raw.firstName === "string" ? raw.firstName : ""} ${typeof raw.lastName === "string" ? raw.lastName : ""}`.trim();
-    const { first, last } = splitName(name || "Driver");
-    const phone =
-      (typeof raw.phone === "string" && raw.phone.trim()) ||
-      (typeof raw.mobilePhone === "string" && raw.mobilePhone.trim()) ||
-      "000-000-0000";
-    const email = typeof raw.email === "string" && raw.email.trim() ? raw.email.trim() : null;
-
-    const existing = await client.query(
-      `
-        SELECT id FROM mdata.drivers
-        WHERE operating_company_id = $1::uuid AND samsara_driver_id = $2
-        LIMIT 1
-      `,
-      [operatingCompanyId, d.id]
-    );
-    if (existing.rows[0]) {
-      await client.query(
-        `
-          UPDATE mdata.drivers
-          SET first_name = $3,
-              last_name = $4,
-              phone = $5,
-              email = COALESCE($6, email),
-              updated_at = now()
-          WHERE id = $2::uuid AND operating_company_id = $1::uuid
-        `,
-        [operatingCompanyId, String(existing.rows[0].id), first, last, phone, email]
+    const email = str(raw.email);
+    const phone = str(raw.phone) ?? str(raw.mobilePhone);
+    await client.query("SAVEPOINT driver_row");
+    try {
+      // The CANONICAL map mdata.driver_samsara_accounts decides who this Samsara driver is (merges followed);
+      // the legacy mdata.drivers.samsara_driver_id column is never a lookup key.
+      const found = await client.query(
+        `SELECT COALESCE(d.merged_into_driver_id, d.id)::text AS id, a.operating_company_id::text AS oc, NULL::text AS sid
+           FROM mdata.driver_samsara_accounts a JOIN mdata.drivers d ON d.id = a.driver_id
+          WHERE a.samsara_driver_id = $1 AND a.is_active
+          LIMIT 1`,
+        [d.id]
       );
-      updated += 1;
-    } else {
-      await client.query(
-        `
-          INSERT INTO mdata.drivers (
-            operating_company_id,
-            samsara_driver_id,
-            first_name,
-            last_name,
-            phone,
-            email,
-            status
-          ) VALUES ($1::uuid, $2, $3, $4, $5, $6, 'Active')
-        `,
-        [operatingCompanyId, d.id, first, last, phone, email]
-      );
-      added += 1;
+      const row = found.rows[0] as { id: string; oc: string; sid: string | null } | undefined;
+      if (!row) bump(counts, "no_local_record");
+      else if (row.oc !== operatingCompanyId) bump(counts, "other_company");
+      else if (row.sid && row.sid !== d.id) bump(counts, "linked_to_other_samsara_id");
+      else {
+        // Fill EMPTY contact fields only; identity fields and the legacy Samsara column are never written.
+        await client.query(
+          `UPDATE mdata.drivers
+              SET email = COALESCE(NULLIF(email, ''), $2),
+                  phone = CASE WHEN phone IS NULL OR phone = '' OR phone = '000-000-0000' THEN COALESCE($3, phone) ELSE phone END,
+                  updated_at = now()
+            WHERE id = $1::uuid`,
+          [row.id, email, phone]
+        );
+        bump(counts, "already_linked");
+        updated += 1;
+      }
+      await client.query("RELEASE SAVEPOINT driver_row");
+    } catch (e) {
+      await client.query("ROLLBACK TO SAVEPOINT driver_row").catch(() => {});
+      bump(counts, "failed");
+      errors.push(`driver_link_failed:${d.id}:${String((e as Error)?.message ?? e)}`);
     }
   }
-
   await writeSyncLog(client, {
-    operatingCompanyId,
-    syncKind: "drivers_master",
-    success: errors.length === 0,
-    rowsAdded: added,
-    rowsUpdated: updated,
-    rowsRemoved: 0,
-    // SAMSARA-SYNC-ERRORS-SILENTLY-DROPPED: same gap as the vehicles/trailers sync functions --
-    // errors was computed but never passed through, so a success:false row here had nothing to
-    // debug from.
+    operatingCompanyId, syncKind: "drivers_master", success: errors.length === 0,
+    rowsAdded: 0, rowsUpdated: updated, rowsRemoved: 0,
     errorMessage: errors.length > 0 ? errors.join("; ") : null,
-    payload: { remote_count: drivers.length },
+    payload: { remote_count: drivers.length, mode: "link_only", outcomes: counts },
   });
-
-  return { added, updated, removed: 0, errors };
+  return { added: 0, updated, removed: 0, errors };
 }
 
 export async function syncSamsaraVehiclesMaster(client: PgClient, operatingCompanyId: string): Promise<SyncStats> {
   const errors: string[] = [];
+  if (!(await takeSyncLock(client, operatingCompanyId, "vehicles"))) return { added: 0, updated: 0, removed: 0, errors: ["skipped_another_runner_holds_lock"] };
   const cfg = await getSamsaraConfigForCompany(client, operatingCompanyId);
-  const token = resolveSamsaraApiToken(cfg as Record<string, unknown>);
-  const api = new SamsaraClient({
-    apiToken: token,
-    samsaraOrgId: cfg?.samsara_org_id ? String(cfg.samsara_org_id) : null,
-  });
-
-  const hasEquipmentVehicleId = await columnExists(client, "mdata", "equipment", "samsara_vehicle_id");
-  if (!hasEquipmentVehicleId) {
-    const msg = "missing_required_column:mdata.equipment.samsara_vehicle_id";
-    errors.push(msg);
-    await writeSyncLog(client, {
-      operatingCompanyId,
-      syncKind: "assets_master",
-      success: false,
-      rowsAdded: 0,
-      rowsUpdated: 0,
-      rowsRemoved: 0,
-      errorMessage: msg,
-    });
-    return { added: 0, updated: 0, removed: 0, errors };
-  }
-  const hasUnitsVehicleId = await columnExists(client, "mdata", "units", "samsara_vehicle_id");
-  const hasUnitsOdometerMi = await columnExists(client, "mdata", "units", "odometer_mi");
-
+  const api = new SamsaraClient({ apiToken: resolveSamsaraApiToken(cfg as Record<string, unknown>), samsaraOrgId: cfg?.samsara_org_id ? String(cfg.samsara_org_id) : null });
   const vehicles = await api.listVehicles();
-  let added = 0;
+  const counts: Record<string, number> = {};
   let updated = 0;
-
   for (const v of vehicles) {
     const raw = v.raw;
-    const vinRaw = typeof raw.vin === "string" && raw.vin.trim() ? raw.vin.trim() : null;
-    const make = typeof raw.make === "string" ? raw.make : null;
-    const model = typeof raw.model === "string" ? raw.model : null;
-    const year =
-      typeof raw.year === "number" && Number.isFinite(raw.year)
-        ? Math.trunc(raw.year)
-        : typeof raw.year === "string"
-          ? parseInt(raw.year, 10)
-          : null;
-    const licensePlate = typeof raw.licensePlate === "string" ? raw.licensePlate : null;
-    const licenseState = typeof raw.state === "string" ? raw.state : null;
-
-    // SAMSARA-EQUIPMENT-VIN-COLLISION-500: this lookup used to match ONLY by samsara_vehicle_id, the
-    // exact same gap already fixed on the mdata.units block below (SAMSARA-UNITS-VIN-COLLISION-500) --
-    // a unit that already existed in mdata.equipment with the SAME VIN (no samsara_vehicle_id link
-    // yet) was invisible to it, so the code fell through to INSERT and collided on equipment_vin_key.
-    // Live-confirmed still firing every cron tick after the mdata.units fix shipped (this block was
-    // explicitly flagged, not fixed, in that PR pending Sentry evidence -- now confirmed). Mirrors the
-    // exact same already-proven pattern: match by samsara_vehicle_id OR vin, write samsara_vehicle_id
-    // on the VIN-matched UPDATE (linking, not just reading), and SAVEPOINT-isolate the row.
-    await client.query("SAVEPOINT equipment_row");
+    const vin = str(raw.vin);
+    const make = str(raw.make);
+    const model = str(raw.model);
+    if (isExcludedCompanyVehicle(make, model)) { bump(counts, "excluded_company_vehicle"); continue; }
+    await client.query("SAVEPOINT unit_row");
     try {
-      const existing = await client.query(
-        `
-          SELECT id FROM mdata.equipment
-          WHERE (samsara_vehicle_id = $2 OR ($3::text IS NOT NULL AND vin = $3))
-            AND COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid
-          LIMIT 1
-        `,
-        [operatingCompanyId, v.id, vinRaw]
+      // Vehicles are UNITS only -- never mdata.equipment (that wrote every truck in as a 'DryVan' trailer).
+      const found = await client.query(
+        `SELECT id::text, COALESCE(currently_leased_to_company_id, owner_company_id)::text AS oc, samsara_vehicle_id::text AS sid
+           FROM mdata.units
+          WHERE deactivated_at IS NULL AND (samsara_vehicle_id = $1 OR ($2::text IS NOT NULL AND vin = $2))
+          ORDER BY (samsara_vehicle_id = $1) DESC NULLS LAST
+          LIMIT 1`,
+        [v.id, vin]
       );
-
-      if (existing.rows[0]) {
-        const equipId = String(existing.rows[0].id);
+      const row = found.rows[0] as { id: string; oc: string; sid: string | null } | undefined;
+      if (!row) bump(counts, "no_local_record");
+      else if (row.oc !== operatingCompanyId) bump(counts, "other_company");
+      else if (row.sid && row.sid !== v.id) bump(counts, "linked_to_other_samsara_id");
+      else {
         await client.query(
-          `
-            UPDATE mdata.equipment
-            SET vin = COALESCE($1, vin),
-                make = COALESCE($2, make),
-                model = COALESCE($3, model),
-                year = COALESCE($4::int, year),
-                license_plate = COALESCE($5, license_plate),
-                license_state = COALESCE($6, license_state),
-                samsara_vehicle_id = $7,
-                updated_at = now()
-            WHERE id = $8::uuid
-          `,
-          [
-            vinRaw,
-            make,
-            model,
-            Number.isFinite(year as number) ? year : null,
-            licensePlate,
-            licenseState,
-            v.id,
-            equipId,
-          ]
-        );
-        updated += 1;
-      } else {
-        const numRes = await client.query(`SELECT gen_random_uuid() AS g`);
-        const suffix = String(numRes.rows[0]?.g ?? v.id).replace(/-/g, "").slice(0, 8);
-        const equipmentNumber = `SAM-${suffix}`;
-        await client.query(
-          `
-            INSERT INTO mdata.equipment (
-              equipment_number,
-              vin,
-              equipment_type,
-              make,
-              model,
-              year,
-              license_plate,
-              license_state,
-              owner_company_id,
-              currently_leased_to_company_id,
-              samsara_vehicle_id,
-              status
-            ) VALUES (
-              $1,
-              $2,
-              'DryVan',
-              $3,
-              $4,
-              $5,
-              $6,
-              $7,
-              $8::uuid,
-              $8::uuid,
-              $9,
-              'InService'
-            )
-          `,
-          [
-            equipmentNumber,
-            vinRaw,
-            make,
-            model,
-            Number.isFinite(year as number) ? year : null,
-            licensePlate,
-            licenseState,
-            operatingCompanyId,
-            v.id,
-          ]
-        );
-        added += 1;
-      }
-      await client.query("RELEASE SAVEPOINT equipment_row");
-    } catch (e) {
-      await client.query("ROLLBACK TO SAVEPOINT equipment_row").catch(() => {});
-      errors.push(`equipment_upsert_failed:${v.id}:${String((e as Error)?.message ?? e)}`);
-    }
-
-    // Keep /fleet/units views in sync when units support samsara_vehicle_id.
-    if (hasUnitsVehicleId) {
-      // SAMSARA-UNITS-VIN-COLLISION-500: this lookup used to match ONLY by samsara_vehicle_id, so a
-      // unit that already existed with the SAME VIN (created manually, or synced under a different
-      // samsara_vehicle_id / before this column existed) was invisible to it -- the code fell to the
-      // INSERT branch and collided on units_vin_key, throwing an unhandled rejection that (per this
-      // function having no per-row isolation, unlike syncSamsaraTrailersMaster's proven SAVEPOINT
-      // pattern below) could abort the rest of this sync run. Mirror the trailer sync's own
-      // already-proven fix exactly: match by samsara_vehicle_id OR vin (VIN match upgrades/links the
-      // existing row in place instead of colliding), and SAVEPOINT-isolate the row so any residual
-      // collision only fails that one vehicle, not the whole batch.
-      await client.query("SAVEPOINT unit_row");
-      try {
-        const existingUnit = await client.query(
-          `
-            SELECT id FROM mdata.units
-            WHERE (samsara_vehicle_id = $2 OR ($3::text IS NOT NULL AND vin = $3))
-              AND COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid
-            LIMIT 1
-          `,
-          [operatingCompanyId, v.id, vinRaw]
-        );
-
-        if (existingUnit.rows[0]) {
-          const unitId = String(existingUnit.rows[0].id);
-          const odoClause = hasUnitsOdometerMi
-            ? `, odometer_mi = (SELECT odometer_mi FROM telematics.vehicle_latest_position WHERE unit_id = $8::uuid AND operating_company_id = $9::uuid LIMIT 1)`
-            : "";
-          await client.query(
-            `
-              UPDATE mdata.units
-              SET vin = COALESCE($1, vin),
-                  make = COALESCE($2, make),
-                  model = COALESCE($3, model),
-                  year = COALESCE($4::int, year),
-                  license_plate = COALESCE($5, license_plate),
-                  license_state = COALESCE($6, license_state),
-                  samsara_vehicle_id = $7,
+          `UPDATE mdata.units
+              SET samsara_vehicle_id = COALESCE(samsara_vehicle_id, $2),
+                  vin = COALESCE(NULLIF(vin, ''), $3),
+                  make = COALESCE(NULLIF(make, ''), $4),
+                  model = COALESCE(NULLIF(model, ''), $5),
+                  year = COALESCE(year, $6::int),
+                  license_plate = COALESCE(NULLIF(license_plate, ''), $7),
+                  license_state = COALESCE(NULLIF(license_state, ''), $8),
                   updated_at = now()
-                  ${odoClause}
-              WHERE id = $8::uuid
-            `,
-            hasUnitsOdometerMi
-              ? [vinRaw, make, model, Number.isFinite(year as number) ? year : null, licensePlate, licenseState, v.id, unitId, operatingCompanyId]
-              : [vinRaw, make, model, Number.isFinite(year as number) ? year : null, licensePlate, licenseState, v.id, unitId]
-          );
-        } else {
-          const numRes = await client.query(`SELECT gen_random_uuid() AS g`);
-          const suffix = String(numRes.rows[0]?.g ?? v.id).replace(/-/g, "").slice(0, 8);
-          const unitNumber = `SAM-${suffix}`;
-          const insertOdoCol = hasUnitsOdometerMi ? `,\n              odometer_mi` : "";
-          const insertOdoVal = hasUnitsOdometerMi ? `,\n              NULL` : "";
-          await client.query(
-            `
-              INSERT INTO mdata.units (
-                unit_number,
-                vin,
-                make,
-                model,
-                year,
-                license_plate,
-                license_state,
-                owner_company_id,
-                currently_leased_to_company_id,
-                samsara_vehicle_id,
-                status${insertOdoCol}
-              ) VALUES (
-                $1,
-                $2,
-                $3,
-                $4,
-                $5,
-                $6,
-                $7,
-                $8::uuid,
-                $8::uuid,
-                $9,
-                'InService'${insertOdoVal}
-              )
-            `,
-            [unitNumber, vinRaw ?? `SAMVIN-${suffix}`, make, model, Number.isFinite(year as number) ? year : null, licensePlate, licenseState, operatingCompanyId, v.id]
-          );
-        }
-        await client.query("RELEASE SAVEPOINT unit_row");
-      } catch (e) {
-        await client.query("ROLLBACK TO SAVEPOINT unit_row").catch(() => {});
-        errors.push(`unit_upsert_failed:${v.id}:${String((e as Error)?.message ?? e)}`);
+            WHERE id = $1::uuid`,
+          [row.id, v.id, vin, make, model, yearOf(raw.year), str(raw.licensePlate), str(raw.state)]
+        );
+        bump(counts, row.sid ? "already_linked" : "linked");
+        updated += 1;
       }
+      await client.query("RELEASE SAVEPOINT unit_row");
+    } catch (e) {
+      await client.query("ROLLBACK TO SAVEPOINT unit_row").catch(() => {});
+      bump(counts, "failed");
+      errors.push(`unit_link_failed:${v.id}:${String((e as Error)?.message ?? e)}`);
     }
   }
-
   await writeSyncLog(client, {
-    operatingCompanyId,
-    syncKind: "assets_master",
-    success: errors.length === 0,
-    rowsAdded: added,
-    rowsUpdated: updated,
-    rowsRemoved: 0,
-    // SAMSARA-SYNC-ERRORS-SILENTLY-DROPPED: this call recorded success:false whenever a per-row
-    // SAVEPOINT caught a unit_upsert_failed/equipment_upsert_failed error (see above), but never
-    // passed errorMessage, so the actual failure reason was computed into `errors` and then
-    // discarded -- integration_sync_log showed a bare "success: false" with nothing to debug from.
-    // writeSyncLog already supports errorMessage (used on the early-exit path above); this call
-    // just never passed it.
+    operatingCompanyId, syncKind: "assets_master", success: errors.length === 0,
+    rowsAdded: 0, rowsUpdated: updated, rowsRemoved: 0,
     errorMessage: errors.length > 0 ? errors.join("; ") : null,
-    payload: { remote_count: vehicles.length },
+    payload: { remote_count: vehicles.length, mode: "link_only", outcomes: counts },
   });
-
-  return { added, updated, removed: 0, errors };
+  return { added: 0, updated, removed: 0, errors };
 }
-
-// --- Real trailer sync (E2 / tracker 886) -----------------------------------
-// Pulls Samsara's /fleet/trailers resource into mdata.equipment with the REAL
-// equipment_type, replacing the phantom hardcoded-DryVan SAM-* rows that the
-// vehicle (truck) sync above mis-writes. Trucks are intentionally left to the
-// vehicle sync — not touched here.
 
 type MdataEquipmentType =
   | "DryVan"
@@ -492,140 +286,62 @@ export function isExcludedCompanyVehicle(make: string | null, model: string | nu
 
 export async function syncSamsaraTrailersMaster(client: PgClient, operatingCompanyId: string): Promise<SyncStats> {
   const errors: string[] = [];
+  if (!(await takeSyncLock(client, operatingCompanyId, "trailers"))) return { added: 0, updated: 0, removed: 0, errors: ["skipped_another_runner_holds_lock"] };
   const cfg = await getSamsaraConfigForCompany(client, operatingCompanyId);
-  const token = resolveSamsaraApiToken(cfg as Record<string, unknown>);
-  const api = new SamsaraClient({
-    apiToken: token,
-    samsaraOrgId: cfg?.samsara_org_id ? String(cfg.samsara_org_id) : null,
-  });
-
-  const hasEquipmentVehicleId = await columnExists(client, "mdata", "equipment", "samsara_vehicle_id");
-  if (!hasEquipmentVehicleId) {
-    const msg = "missing_required_column:mdata.equipment.samsara_vehicle_id";
-    errors.push(msg);
-    await writeSyncLog(client, {
-      operatingCompanyId,
-      syncKind: "trailers_master",
-      success: false,
-      rowsAdded: 0,
-      rowsUpdated: 0,
-      rowsRemoved: 0,
-      errorMessage: msg,
-    });
-    return { added: 0, updated: 0, removed: 0, errors };
-  }
-
+  const api = new SamsaraClient({ apiToken: resolveSamsaraApiToken(cfg as Record<string, unknown>), samsaraOrgId: cfg?.samsara_org_id ? String(cfg.samsara_org_id) : null });
   const trailers = await api.listTrailers();
-  let added = 0;
+  const counts: Record<string, number> = {};
   let updated = 0;
-  let skipped = 0;
-
   for (const t of trailers) {
     const raw = t.raw;
-    const make = typeof raw.make === "string" ? raw.make : null;
-    const model = typeof raw.model === "string" ? raw.model : null;
-
-    // Drop company cars/pickups even if Samsara's type mislabels them as trailers.
-    if (isExcludedCompanyVehicle(make, model)) {
-      skipped += 1;
-      continue;
-    }
-
-    const vinRaw = typeof raw.vin === "string" && raw.vin.trim() ? raw.vin.trim() : null;
-    const yearNum =
-      typeof raw.year === "number" && Number.isFinite(raw.year)
-        ? Math.trunc(raw.year)
-        : typeof raw.year === "string"
-          ? parseInt(raw.year, 10)
-          : null;
-    const year = Number.isFinite(yearNum as number) ? yearNum : null;
-    const licensePlate = typeof raw.licensePlate === "string" ? raw.licensePlate : null;
-    const licenseState =
-      typeof raw.state === "string" ? raw.state : typeof raw.licenseState === "string" ? raw.licenseState : null;
-    const equipmentType = mapSamsaraTrailerType(raw);
-    const equipmentNumber = typeof raw.name === "string" && raw.name.trim() ? raw.name.trim() : null;
-
-    // Per-row SAVEPOINT: the sync runs inside one transaction, so a failed upsert
-    // (e.g. a VIN that already exists under another entity) would otherwise abort
-    // every following row. Roll back just this row and keep going.
+    const make = str(raw.make);
+    const model = str(raw.model);
+    if (isExcludedCompanyVehicle(make, model)) { bump(counts, "excluded_company_vehicle"); continue; }
+    const vin = str(raw.vin);
+    const equipmentNumber = str(raw.name);
     await client.query("SAVEPOINT trailer_row");
     try {
-      // Match an existing row by Samsara id OR VIN — VIN match also UPGRADES a
-      // phantom SAM-* DryVan to its real trailer identity in place.
-      const existing = await client.query(
-        `
-          SELECT id FROM mdata.equipment
-          WHERE (samsara_vehicle_id = $2 OR ($3::text IS NOT NULL AND vin = $3))
-            AND COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid
-          LIMIT 1
-        `,
-        [operatingCompanyId, t.id, vinRaw]
+      const found = await client.query(
+        `SELECT id::text, COALESCE(currently_leased_to_company_id, owner_company_id)::text AS oc, samsara_vehicle_id::text AS sid
+           FROM mdata.equipment
+          WHERE samsara_vehicle_id = $1 OR ($2::text IS NOT NULL AND vin = $2) OR ($3::text IS NOT NULL AND equipment_number = $3)
+          ORDER BY (samsara_vehicle_id = $1) DESC NULLS LAST, ($2::text IS NOT NULL AND vin = $2) DESC
+          LIMIT 1`,
+        [t.id, vin, equipmentNumber]
       );
-
-      if (existing.rows[0]) {
+      const row = found.rows[0] as { id: string; oc: string; sid: string | null } | undefined;
+      if (!row) bump(counts, "no_local_record");
+      else if (row.oc !== operatingCompanyId) bump(counts, "other_company");
+      else if (row.sid && row.sid !== t.id) bump(counts, "linked_to_other_samsara_id");
+      else {
         await client.query(
-          `
-            UPDATE mdata.equipment
-            SET equipment_number = COALESCE($1, equipment_number),
-                vin = COALESCE($2, vin),
-                equipment_type = $3,
-                make = COALESCE($4, make),
-                model = COALESCE($5, model),
-                year = COALESCE($6::int, year),
-                license_plate = COALESCE($7, license_plate),
-                license_state = COALESCE($8, license_state),
-                samsara_vehicle_id = $9,
-                updated_at = now()
-            WHERE id = $10::uuid
-          `,
-          [equipmentNumber, vinRaw, equipmentType, make, model, year, licensePlate, licenseState, t.id, String(existing.rows[0].id)]
+          `UPDATE mdata.equipment
+              SET samsara_vehicle_id = COALESCE(samsara_vehicle_id, $2),
+                  vin = COALESCE(NULLIF(vin, ''), $3),
+                  make = COALESCE(NULLIF(make, ''), $4),
+                  model = COALESCE(NULLIF(model, ''), $5),
+                  year = COALESCE(year, $6::int),
+                  license_plate = COALESCE(NULLIF(license_plate, ''), $7),
+                  license_state = COALESCE(NULLIF(license_state, ''), $8),
+                  updated_at = now()
+            WHERE id = $1::uuid`,
+          [row.id, t.id, vin, make, model, yearOf(raw.year), str(raw.licensePlate), str(raw.state) ?? str(raw.licenseState)]
         );
+        bump(counts, row.sid ? "already_linked" : "linked");
         updated += 1;
-      } else {
-        await client.query(
-          `
-            INSERT INTO mdata.equipment (
-              equipment_number,
-              vin,
-              equipment_type,
-              make,
-              model,
-              year,
-              license_plate,
-              license_state,
-              owner_company_id,
-              currently_leased_to_company_id,
-              samsara_vehicle_id,
-              status
-            ) VALUES (
-              $1, $2, $3, $4, $5, $6, $7, $8, $9::uuid, $9::uuid, $10, 'InService'
-            )
-          `,
-          [equipmentNumber ?? `T-${t.id.slice(0, 8)}`, vinRaw, equipmentType, make, model, year, licensePlate, licenseState, operatingCompanyId, t.id]
-        );
-        added += 1;
       }
       await client.query("RELEASE SAVEPOINT trailer_row");
     } catch (e) {
-      // Roll back just this row so the transaction stays usable; record the failure.
       await client.query("ROLLBACK TO SAVEPOINT trailer_row").catch(() => {});
-      errors.push(`trailer_upsert_failed:${t.id}:${String((e as Error)?.message ?? e)}`);
+      bump(counts, "failed");
+      errors.push(`trailer_link_failed:${t.id}:${String((e as Error)?.message ?? e)}`);
     }
   }
-
   await writeSyncLog(client, {
-    operatingCompanyId,
-    syncKind: "trailers_master",
-    success: errors.length === 0,
-    rowsAdded: added,
-    rowsUpdated: updated,
-    rowsRemoved: 0,
-    // SAMSARA-SYNC-ERRORS-SILENTLY-DROPPED: same gap as the vehicles/drivers sync functions --
-    // errors was computed (per-row SAVEPOINT catches) but never passed through, so a success:false
-    // row here had nothing to debug from.
+    operatingCompanyId, syncKind: "trailers_master", success: errors.length === 0,
+    rowsAdded: 0, rowsUpdated: updated, rowsRemoved: 0,
     errorMessage: errors.length > 0 ? errors.join("; ") : null,
-    payload: { remote_count: trailers.length, excluded_company_vehicles: skipped },
+    payload: { remote_count: trailers.length, mode: "link_only", outcomes: counts },
   });
-
-  return { added, updated, removed: 0, errors };
+  return { added: 0, updated, removed: 0, errors };
 }
