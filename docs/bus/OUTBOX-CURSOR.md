@@ -1,3 +1,9 @@
+**2026-10-01T20:15Z · B4+B5 SHIPPED · PR #23900 · Payments to You + tabs + ×100 · `cursor/r315-factoring-payments-tabs-c89b`**
+ACK: CURSOR | ACK FACTORING-TAKEOVER | QBO-FINISH-THEN-B4 | GO
+B4 · Payments to You = one row per `accounting.factoring_purchases` wire; Open → lines + escrow/cash/fees + bank match EntityLink. CC-2 purchase engine only.
+B5 · Primary SUBNAV drops Account Summary + Request Debtor Credit Check (Internal Tools); adds Escrow Account; `fmtCents`/`formatUsdCents` for all *_cents (Debtor Receipts ×100 fixed). Guard `scripts/ops/verify-factoring-r315-payments-tabs.mjs` SELFTEST PASS; tsc exit 0; entity-link-adoption PASS; money-pr-local-gate PASS.
+PR #23900. LIVE PROOF: UNVERIFIED FE deploy. NEXT: FAST-MERGE #23900 → B6 Home cash-flow/day.
+
 **2026-10-01T19:55Z · ACK FACTORING-TAKEOVER · QBO A CLOSED · B4 START**
 ACK: CURSOR | ACK FACTORING-TAKEOVER | QBO-FINISH-THEN-B4 | GO
 A QBO DONE (no half-built left): B-1 Account Register #23713+#23761 · B-2 Reconcile #23762 · B-3 feed+match #23763 · B-4 Check #23764 · B-5 Reclassify/Batch #23765 · Make Deposit #23770 · Batch Settlements #23771 · SC expense #23894 (Lead accepted). Ops selftests B-1..B-5 PASS on tip `617c15b7bb`.
@@ -6,7 +12,7 @@ NOW: Factoring B4–B9 on `cursor/r315-factoring-payments-tabs-c89b` — CC-2 pu
 
 **2026-10-01T19:12Z · ROUND 321 #1 DONE · SC JE → EXPENSE · AUTH-199 CONSUMED**
 ACK: CURSOR | ACK ROUND-321 | SERVICE-CHARGE-EXPENSE | GO
-LIVE: reverse `cf78c2aa` → JE `d4301625`; expense `101e4ac4` JE `ac77a55f` (Dr 6300 / Cr 1005 $5); session `7a7d1da9` stamped. Rehearsal `br-late-term-akav2wgi` first. `verify-costs-are-expenses-not-handwritten-jes` LIVE PASS 3732 JEs / 0 violations. Engine: `createAndPostServiceChargeExpense` + remove `bank_reconciliation` exempt. Branch `cursor/r319-recon-sc-expense-c89b`. NEXT: FAST-MERGE engine PR · D-H0 → D-H1 → D-H2 · Factoring designs.
+LIVE: reverse `cf78c2aa` → JE `d4301625`; expense `101e4ac4` JE `ac77a55f` (Dr 6300 / Cr 1005 $5); session `7a7d1da9` stamped. Rehearsal `br-late-term-akav2wgi` first. `verify-costs-are-expenses-not-handwritten-jes` LIVE PASS 3732 JEs / 0 violations. Engine: `createAndPostServiceChargeExpense` + remove `bank_reconciliation` exempt. Branch `cursor/r319-recon-sc-expense-c89b`. NEXT: FAST-MERGE engine PR · D-H0 → D-H1 · D-H2 · Factoring designs.
 
 **2026-10-01T19:00Z · ROUND 321 ACK · SERVICE-CHARGE EXPENSE + AMBIENT-16 LIST**
 ACK: CURSOR | ACK ROUND-321 | SERVICE-CHARGE-EXPENSE | GO
