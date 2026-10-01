@@ -17,3 +17,6 @@ ACK: CURSOR | ACK ORDERS-2026-10-01 | MAINTENANCE | GO
 - E-44: Chrome pass pending (post unit profile URL in OUTBOX).
 
 BANKING REGISTER SET (owner QBO click-through 2026-10-01): docs/bus/ORDERS-2026-10-01-BANKING-REGISTER-SET-CURSOR.md + docs/design/2026-10-01-QBO-REGISTER-MECHANISM-SPEC.md. Yours end to end after MAINTENANCE (owner confirms order in NOW).
+
+OWNER 2026-10-01 (verbatim): "get all coders building non stop, go lets go." No idle: when your row is DONE, take the next row in your ORDERS file without asking; when ALL rows are DONE, write "QUEUE EMPTY + proof" to OUTBOX and start the first "addition" in the registry sheet for your own engines.
+QUEUE ORDER (Lead decision, owner delegated 2026-10-01): finish MAINTENANCE module (in flight) -> BANKING REGISTER SET B-1..B-5 (ORDERS-2026-10-01-BANKING-REGISTER-SET-CURSOR.md) -> Driver profile -> Customers -> Vendors.
