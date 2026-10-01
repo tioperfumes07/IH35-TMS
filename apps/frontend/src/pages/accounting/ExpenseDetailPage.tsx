@@ -18,6 +18,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
+import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBankingMatchBanner";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
@@ -141,6 +142,16 @@ export function ExpenseDetailPage() {
   return (
     <AccountingSubNavWrapper>
       <VoidedBanner voidedAt={expense.voided_at} voidReason={expense.void_reason} voidedByUserId={expense.voided_by_user_id} documentLabel="Expense" />
+      {expense.matched_bank_transaction_id && selectedCompanyId ? (
+        <OnlineBankingMatchBanner
+          companyId={selectedCompanyId}
+          bankTransactionId={expense.matched_bank_transaction_id}
+          txnDate={expense.matched_bank_transaction_date}
+          description={expense.matched_bank_transaction_description}
+          amountCents={expense.matched_bank_transaction_amount_cents}
+          invalidateKeys={[["accounting", "expense", selectedCompanyId, id]]}
+        />
+      ) : null}
       <PageHeader
         title={displayId}
         backHref="/accounting/expenses/list"
@@ -300,32 +311,6 @@ export function ExpenseDetailPage() {
                 expense.id,
                 expenseHumanNumber(expense.expense_number) ?? "Expense",
               )}
-            />
-          </DataPanelRow>
-        ) : null}
-        {expense.matched_bank_transaction_id ? (
-          <DataPanelRow>
-            <span className="text-xs font-semibold text-gray-600">Bank transaction</span>
-            <EntityLink
-              kind="bank_transaction"
-              id={expense.matched_bank_transaction_id}
-              label={
-                expense.matched_bank_transaction_date
-                  ? `${formatDateUS(expense.matched_bank_transaction_date)}${
-                      expense.matched_bank_transaction_description
-                        ? ` — ${expense.matched_bank_transaction_description}`
-                        : ""
-                    }${
-                      expense.matched_bank_transaction_amount_cents
-                        ? ` (${money(expense.matched_bank_transaction_amount_cents)})`
-                        : ""
-                    }`
-                  : entityLabel(
-                      expense.matched_bank_transaction_description ?? null,
-                      expense.matched_bank_transaction_id,
-                      "Bank transaction",
-                    )
-              }
             />
           </DataPanelRow>
         ) : null}

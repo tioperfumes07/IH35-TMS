@@ -7,6 +7,7 @@ import { Button } from "../../components/Button";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
+import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBankingMatchBanner";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
@@ -170,6 +171,16 @@ export function PaymentDetailPage() {
   return (
     <AccountingSubNavWrapper>
       <VoidedBanner voidedAt={payment.voided_at} voidReason={payment.void_reason} voidedByUserId={payment.voided_by_user_id} documentLabel="Payment" />
+      {payment.matched_bank_transaction_id && selectedCompanyId ? (
+        <OnlineBankingMatchBanner
+          companyId={selectedCompanyId}
+          bankTransactionId={payment.matched_bank_transaction_id}
+          txnDate={payment.matched_bank_transaction_date}
+          description={payment.matched_bank_transaction_description}
+          amountCents={payment.matched_bank_transaction_amount_cents}
+          invalidateKeys={[["accounting", "payment", selectedCompanyId, id]]}
+        />
+      ) : null}
       <PageHeader
         title={entityLabel(payment.display_id, payment.id, "Payment")}
         backHref="/accounting/payments"
@@ -251,30 +262,6 @@ export function PaymentDetailPage() {
             />
           </span>
         </DataPanelRow>
-        {payment.matched_bank_transaction_id ? (
-          <DataPanelRow>
-            <span className="text-xs font-semibold text-gray-600">Bank transaction</span>
-            <span className="text-xs text-gray-900">
-              <EntityLink
-                kind="bank_transaction"
-                id={payment.matched_bank_transaction_id}
-                label={
-                  payment.matched_bank_transaction_date
-                    ? `${formatDateUS(payment.matched_bank_transaction_date)}${
-                        payment.matched_bank_transaction_description
-                          ? ` — ${payment.matched_bank_transaction_description}`
-                          : ""
-                      }${
-                        payment.matched_bank_transaction_amount_cents
-                          ? ` (${money(Number(payment.matched_bank_transaction_amount_cents))})`
-                          : ""
-                      }`
-                    : entityLabel(null, payment.matched_bank_transaction_id, "Bank transaction")
-                }
-              />
-            </span>
-          </DataPanelRow>
-        ) : null}
       </DataPanel>
 
       {/* WAVE-C-gl_je-payments-receive: forward payment -> GL JE, same shape as

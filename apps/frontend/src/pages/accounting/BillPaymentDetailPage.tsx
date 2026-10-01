@@ -17,6 +17,7 @@ import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrai
 import { EntityLink } from "../../components/shared/EntityLink";
 import { openPrintableDocument } from "../../lib/openPrintableDocument";
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
+import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBankingMatchBanner";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -81,6 +82,16 @@ export function BillPaymentDetailPage() {
   return (
     <AccountingSubNavWrapper>
       <VoidedBanner voidedAt={payment.revoked_at} voidReason={payment.revoked_reason} voidedByUserId={payment.voided_by_user_id} documentLabel="Bill payment" />
+      {payment.matched_bank_transaction_id && selectedCompanyId ? (
+        <OnlineBankingMatchBanner
+          companyId={selectedCompanyId}
+          bankTransactionId={payment.matched_bank_transaction_id}
+          txnDate={payment.matched_bank_transaction_date}
+          description={payment.matched_bank_transaction_description}
+          amountCents={payment.matched_bank_transaction_amount_cents}
+          invalidateKeys={[["accounting", "bill-payment", selectedCompanyId, id]]}
+        />
+      ) : null}
       <PageHeader
         title={displayId}
         backHref="/accounting/bill-payments"
@@ -166,28 +177,6 @@ export function BillPaymentDetailPage() {
                 ]
                   .filter((part) => part && part !== "—")
                   .join(" — ") || entityLabel(payment.journal_entry_memo, payment.journal_entry_id, "Journal entry")
-              }
-            />
-          </DataPanelRow>
-        ) : null}
-        {payment.matched_bank_transaction_id ? (
-          <DataPanelRow>
-            <span className="text-xs font-semibold text-gray-600">Bank transaction</span>
-            <EntityLink
-              kind="bank_transaction"
-              id={payment.matched_bank_transaction_id}
-              label={
-                payment.matched_bank_transaction_date
-                  ? `${formatDateUS(payment.matched_bank_transaction_date)}${
-                      payment.matched_bank_transaction_description
-                        ? ` — ${payment.matched_bank_transaction_description}`
-                        : ""
-                    }${
-                      payment.matched_bank_transaction_amount_cents
-                        ? ` (${money(Number(payment.matched_bank_transaction_amount_cents))})`
-                        : ""
-                    }`
-                  : entityLabel(null, payment.matched_bank_transaction_id, "Bank transaction")
               }
             />
           </DataPanelRow>
