@@ -1269,3 +1269,17 @@ beside and labelled.
 **guard:** step 12045 now fails on ANY backend blend of practical and shortest (exempt, with reasons: IFTA state
 apportionment; settlement driver-pay rate, which names its basis per row) and pins both truck reports to the
 odometer engine and the void filter (selftest 16/16). vitest backend 32 + frontend 8 green.
+
+## 2026-10-01 — Money rows DONE · awaiting deploy
+
+Merged (fast merge law): E-15 PM cost per mile #23714 · maintenance money linkage both ways #23720 ·
+three-mile CPM part A #23732 (migration 202615160000) · part B #23736 · part C #23741 (5796d18688).
+**Not live yet:** prod `/healthz/shallow` = `63ae8b3` (built 05:47Z), before all of the above —
+`/api/v1/reports/three-mile-cpm`, `/api/v1/maintenance/pm-cost-per-mile`, `/api/v1/loads/:id/real-driven-miles`
+return 404. The next deploy also applies 202615160000 (db:migrate is not CC-1's to run). After it: CC-1 reads
+the ledger, proves the three routes live, and pastes here.
+**Owner action still open (row 8):** GitHub secret `PROD_READONLY_DATABASE_URL` → current `ih35_ci_readonly`
+string; it is why `required-live-load-guard` is red on every PR.
+**Owner/Cursor note:** `build-typecheck` is red on main itself — `verify:arch-design` reports 8 missing sub-nav
+tabs (banking: Driver Escrow; drivers: Permits, Deductions; maintenance: R&M Status Board, Arriving Soon,
+In-Transit Issues, Damage Reports, Severe Repairs) — Cursor's nav surface.
