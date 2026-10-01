@@ -1286,3 +1286,16 @@ E-23 no longer waits on fuel.fuel_transaction_derivations: when the table is abs
 proof (live read, nothing written): would_push 22 today (was 0) — skipped date_only 93, medium-confidence 10, DEF 52; sample
 Love's #762 Laredo TX 2026-08-05T02:31:54Z 189.293 L $267.48 T147. Live POST stays behind SAMSARA_FUEL_PURCHASE_PUSH_APPLY (owner).
 guard: verify-samsara-fuel-push-never-substitutes extended + --selftest PASS.
+
+## 2026-10-01 — LEAD DECISIONS: approved data scripts APPLIED (AUTH-183..187, consumed 04:39Z)
+- AUTH-183 T122: samsara_vehicle_id 212014918407330 -> 212014918197571 (1 row).
+- AUTH-184 odometer: 125,424 exact repeats deleted (same unit / Chicago day / source / odometer value; earliest kept); 177,935 -> 52,511 =
+  distinct keys. The "176,960" figure was per-day and included 51,536 DISTINCT same-day readings — real reads, kept (R-02). Backup ndjson kept.
+- AUTH-185 fence links: Samsara address mirror 255 rows; 1 fence linked (Love's #298 Encinal). 29 of the 30 proposals were not linked: 26
+  one-to-many, 3 one-to-one pairs are neighbouring businesses (proximity alone picked the wrong place).
+- AUTH-186 drivers: the 5 losers were already merged (merged_into_driver_id, 2026-09-28); their samsara_driver_id moved to the survivor (4)
+  or cleared (1, survivor holds another id). Split Samsara ids 32 -> 27 (the 27 dormant pairs stay the owner's call).
+- AUTH-187 bridges: Juárez–Lincoln 225 m, Gateway to the Americas 225 m, Camino Real (Eagle Pass) 400 m created; World Trade and Colombia
+  Solidarity already fenced (CBP POE fences 140 m / 293 m away) — not duplicated. Laredo I/II are 464 m apart -> 225 m, not 400 m, so one
+  crossing never lands on both. Border fences 29 -> 32. Coordinates: Wikipedia bridge articles.
+Audit: 5 rows (sources CC-3-AUTH-183..187). next: master-sync VIN/number root cause, then E-09 reader repoint.
