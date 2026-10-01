@@ -17,6 +17,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ReferenceSelect, type ReferenceOption } from "../../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption, vendorReferenceOption } from "../../../components/parity/referenceOptionLabels";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { CappedListNotice } from "../../../components/CappedListNotice";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
 import { formatCurrencyFromCents } from "../../lists/accounting/coa-list-utils";
@@ -32,18 +33,30 @@ import {
 } from "./batchExpenseRows";
 
 const METHODS = ["ach", "card", "check", "wire", "cash"] as const;
+const VENDOR_PICKER_LIMIT = 1000;
 
 export function BatchExpensesPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
+  const [vendorSearch, setVendorSearch] = useState("");
   const [rows, setRows] = useState<BatchExpenseRow[]>(() => Array.from({ length: 5 }, () => newRow()));
   const [saving, setSaving] = useState(false);
   const [lastBatch, setLastBatch] = useState<{ saved: number; failed: number; cents: number } | null>(null);
   const pasteRef = useRef<HTMLTextAreaElement | null>(null);
 
   const accountsQ = useQuery({ queryKey: ["batch-expenses", "accounts", companyId], queryFn: () => listCatalogAccounts({ status: "active", operating_company_id: companyId, postable_only: true }), enabled: !!companyId, staleTime: 60_000 });
-  const vendorsQ = useQuery({ queryKey: ["batch-expenses", "vendors", companyId], queryFn: () => listVendors({ operating_company_id: companyId, limit: 99 }), enabled: !!companyId, staleTime: 60_000 });
+  const vendorsQ = useQuery({
+    queryKey: ["batch-expenses", "vendors", companyId, vendorSearch],
+    queryFn: () =>
+      listVendors({
+        operating_company_id: companyId,
+        limit: VENDOR_PICKER_LIMIT,
+        ...(vendorSearch.trim() ? { search: vendorSearch.trim() } : {}),
+      }),
+    enabled: !!companyId,
+    staleTime: 60_000,
+  });
   const classesQ = useQuery({ queryKey: ["batch-expenses", "classes", companyId], queryFn: () => classesCatalogClient.list({ operating_company_id: companyId, is_active: "true", limit: 99 }), enabled: !!companyId, staleTime: 60_000 });
 
   const accounts = accountsQ.data?.accounts ?? [];
@@ -132,6 +145,12 @@ export function BatchExpensesPage() {
         <Button type="button" size="sm" loading={saving} disabled={totals.ready === 0} onClick={() => void saveAll()} data-testid="batch-expenses-save">Save {totals.ready} expense(s)</Button>
       </div>
       {accountsQ.error ? <ListErrorState {...formatQueryErrorDetail(accountsQ.error)} onRetry={() => void accountsQ.refetch()} /> : null}
+      <CappedListNotice
+        shown={vendors.length}
+        limit={VENDOR_PICKER_LIMIT}
+        total={vendorsQ.data?.total}
+        hint="Type in the payee column to search the full vendor roster."
+      />
       {lastBatch ? <div className="mb-2 rounded border border-slate-200 bg-slate-100 p-2 text-xs" data-testid="batch-expenses-result">Batch saved: {lastBatch.saved} expense(s) posted ({formatCurrencyFromCents(lastBatch.cents)}), {lastBatch.failed} kept unsaved with their reason.</div> : null}
       <div className="overflow-x-auto rounded border border-gray-200 bg-white">
         <table className="w-full min-w-[80rem] text-xs" data-testid="batch-expenses-grid">
@@ -144,7 +163,7 @@ export function BatchExpensesPage() {
                 <td className="p-1 text-slate-500">{i + 1}</td>
                 <td className="p-1" title={title(r, "date")}><DatePicker value={r.date} onChange={(next) => set(r.key, { date: next })} className={cellCls(r, "date")} disabled={r.status === "saved"} /></td>
                 <td className="p-1 min-w-[12rem]" title={title(r, "payee") || r.payeeText}>
-                  <ReferenceSelect size="sm" value={r.payee || null} onChange={(next) => set(r.key, { payee: next ?? "", payeeText: "" })} options={vendorOptions} createKind="vendor" operatingCompanyId={companyId} placeholder={r.payeeText ? `? ${r.payeeText}` : "— no payee —"} disabled={r.status === "saved"} loading={vendorsQ.isLoading} onOptionCreated={() => void vendorsQ.refetch()} />
+                  <ReferenceSelect size="sm" value={r.payee || null} onChange={(next) => set(r.key, { payee: next ?? "", payeeText: "" })} options={vendorOptions} createKind="vendor" operatingCompanyId={companyId} placeholder={r.payeeText ? `? ${r.payeeText}` : "— no payee —"} disabled={r.status === "saved"} loading={vendorsQ.isLoading} onSearch={setVendorSearch} onOptionCreated={() => void vendorsQ.refetch()} />
                 </td>
                 <td className="p-1 min-w-[12rem]" title={title(r, "paymentAccount")}>
                   <ReferenceSelect size="sm" value={r.paymentAccount || null} onChange={(next) => set(r.key, { paymentAccount: next ?? "" })} options={paymentOptions} createKind="account" operatingCompanyId={companyId} placeholder="Select…" disabled={r.status === "saved"} loading={accountsQ.isLoading} onOptionCreated={() => void accountsQ.refetch()} />
