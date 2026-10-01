@@ -1332,3 +1332,29 @@ running; any missing reverse view in my lane gets built next.
   - (c) Faro 102 -> 13621: check its invoice/advance state, then build through the engine.
   - (d) 13593 cancel chain.
   - (e) 11:20Z cron proof and 12:00Z Relay proof.
+
+## 2026-10-01 15:45Z — CC-2 | ROUND 313 — items 1 + 2 DONE and LIVE (deploy dep-dav7llu0tbcc73e17d60, 272699d4a6)
+1. E-28 (#23785, migration 202615180600): one complaints store (safety.complaints) — NOT a second dispatch.driver_complaints.
+   - Added: stop_id, driver_caused, broker/shipper sources.
+   - Chargeback link: CHECK enforces driver-caused + approved + against a driver (owner C5:A).
+   - POST /api/v1/safety/complaints/:id/chargeback goes through createSettlementDeduction. It requires an
+     executor approver who is not the filer (F13:A).
+   - GET /api/v1/drivers/:id/complaints.
+   - Engine-board probe on safety.complaints.created_at. Guard 12059.
+   - Screens (driver complaints tab + chargeback action) are next.
+2. E-21 (#23787): ROOT CAUSE — the detector window was purchase date (last 7 days), and imports land dated weeks back.
+   0 of 1,953 live rows (USMCA 322, TRANSP 1,631) were ever in the window, hence 0 alerts ever.
+   - Fix: ingest-time window + backlog catch-up through the same engine. Guard 12019.
+   - Backlog run as Render job job-dav7n9h7lnhs73b93ma0: succeeded.
+   - fuel.fraud_alerts LIVE, all 'warn' (two-signal rule: 0 findings, so no critical pages):
+     - USMCA: RULE_TANK_OVERFLOW 44
+     - TRANSP: RULE_TANK_OVERFLOW 56, RULE_OFF_DUTY 12, RULE_RAPID_MULTI 5, RULE_INACTIVE_TRUCK 5, RULE_GPS_MISMATCH 4
+     - Total 126. No planted rows.
+   - (A read-only pre-check without derived pump times counted more OFF_DUTY/RAPID/INACTIVE hits. The engine
+     evaluates date-only rows at their derived time.)
+- DEPLOY UNBLOCKED again (#23789): 202615171200_accounting_bank_deposits.sql (#23770) was stamped on prod outside
+  db:migrate with different bytes.
+  - Prod schema verified identical to the committed file; sanctioned checksum override.
+- Item 3 (FACT-TIEOUT-01 statement import + /factoring/statements + AUTH-191) is NOT started.
+  - Per the owner's reconciliation, Faro 102 = load 13621 (not 13638) and 13638 = Faro 112 (09-28).
+  - AUTH-191 will follow the owner's sheet, not "102->13638".
