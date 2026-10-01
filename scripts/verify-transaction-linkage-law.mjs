@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["accounting","fuel","maintenance"],"cols":["connectivity","unit","driver","load"],"leafRe":"transaction.linkage.law","task":"TRANSACTION-LINKAGE-LAW-A30"} */
+export const REQUIRES_LIVE_DB = "TABLE_REGISTRY drift + USMCA tier density need Neon; static half is --static-only";
 /**
  * verify-transaction-linkage-law.mjs
  *

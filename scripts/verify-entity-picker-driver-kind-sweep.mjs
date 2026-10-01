@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["drivers"],"cols":["picker_law","connectivity"],"leafRe":"entity.picker.driver","task":"EP-DRIVER-KIND-SWEEP"} */
 /**
  * EP-DRIVER-KIND-SWEEP — ONE generalized guard for silent listDrivers driver pickers.
  * Delivery §9.0 item 17: every driver field picker must use EntityPicker kind="driver"
