@@ -5,6 +5,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
+import { deliverChatMessageAfterCommit } from "../integrations/samsara/messaging/driver-message-delivery.service.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireDriverSession } from "../driver/auth.js";
 import { generatePresignedUploadUrl, generatePresignedDownloadUrl, isR2Configured, verifyObjectExists } from "../storage/r2-client.js";
@@ -96,9 +97,33 @@ export async function registerChatRoutes(app: FastifyInstance) {
       const subject = await resolveEventSubject(client, threadId);
       return postMessage(client, { thread_id: threadId, operating_company_id: p.data.operating_company_id, sender, msg_type: p.data.msg_type, body: p.data.body ?? null, body_lang: p.data.body_lang ?? null, client_key: p.data.client_key, content_sha256: p.data.content_sha256, cash_advance_request_id: p.data.cash_advance_request_id ?? null, references_message_id: p.data.references_message_id ?? null, ack_content_sha256: p.data.ack_content_sha256 ?? null }, subject);
     });
+    // E-30: an office text is also delivered to the driver's Samsara app (flag SAMSARA_DRIVER_MESSAGING_ENABLED,
+    // default OFF), after this commit, in its own transaction; a delivery failure never fails the post.
+    const posted = out as { message?: { id?: unknown }; deduped?: boolean };
+    if (!posted.deduped && posted.message?.id) {
+      void deliverChatMessageAfterCommit(p.data.operating_company_id, String(posted.message.id)).catch((err: unknown) =>
+        req.log.error({ err }, "chat_samsara_delivery_failed")
+      );
+    }
     return reply.send(out);
   });
 
+  // E-30: Samsara delivery attempts for one chat message (newest first) -- for Cursor's E-43 screen.
+  app.get("/api/v1/chat/messages/:id/samsara-delivery", RL, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply); if (!user) return;
+    const q = (req.query ?? {}) as { operating_company_id?: string };
+    if (!q.operating_company_id) return reply.code(400).send({ error: "operating_company_id_required" });
+    const messageId = (req.params as { id: string }).id;
+    const rows = await withCompanyScope(String(user.uuid), q.operating_company_id, async (client: Client) =>
+      (await client.query(
+        `SELECT started_at, success, error_message, payload FROM integrations.integration_sync_log
+          WHERE operating_company_id = $1::uuid AND integration = 'samsara' AND sync_kind = 'driver_message_send'
+            AND payload->>'message_id' = $2 ORDER BY started_at DESC`,
+        [q.operating_company_id, messageId]
+      )).rows
+    );
+    return reply.send({ message_id: messageId, attempts: rows });
+  });
   app.post("/api/v1/chat/messages/:id/receipt", RL, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply); if (!user) return;
     const p = receiptSchema.safeParse(req.body ?? {}); if (!p.success) return validationError(reply, p.error);

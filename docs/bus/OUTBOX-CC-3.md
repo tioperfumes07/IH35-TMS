@@ -1224,3 +1224,22 @@ proof (live read): 16 dispatched USMCA loads -> 16 valid route bodies (14 driver
 Readback (route stop arrival/departure, ETA, leg miles): /fleet/routes/audit-logs/feed and /route-events/stream answer 200 but are empty
 (no route ever existed) — field shapes cannot be measured yet; built right after the first real route lands (flag on), never guessed.
 guard: scripts/verify-samsara-routes-push-real-ids-flag-off.mjs + --selftest PASS; vitest samsara-client 12/12.
+
+## 2026-10-01 — ORDERS row 9 — E-30 driver messaging backend via Samsara (built; flag OFF) — TO CURSOR (E-43)
+Built on the ONE message store (chat.threads / chat.messages — no second table). An office TEXT posted with
+POST /api/v1/chat/threads/:id/messages is, after commit and in its own transaction, delivered to every driver participant's Samsara
+app (POST /v1/fleet/messages; shape measured with rejected probes: driverIds = integer Samsara ids, text <= 2500). Recipient = the
+driver's ONE Samsara id (mdata.drivers column or mirror); 0 or 2+ ids -> skipped with reason. Every attempt recorded in
+integration_sync_log 'driver_message_send' {message_id, thread_id, load_id, outcome, per_driver[]}; delivered messages never re-sent.
+Flag SAMSARA_DRIVER_MESSAGING_ENABLED=true (default OFF — it messages real drivers; Lead carries to owner).
+FOR CURSOR E-43 (existing chat endpoints + one new): POST /api/v1/chat/threads/for-load · GET /api/v1/chat/threads ·
+GET /api/v1/chat/threads/:id/messages · POST /api/v1/chat/threads/:id/messages · POST /api/v1/chat/messages/:id/receipt ·
+NEW GET /api/v1/chat/messages/:id/samsara-delivery?operating_company_id= -> {attempts[{started_at, success, error_message,
+payload{outcome, per_driver[{driver_id, samsara_driver_id, reason}]}}]}.
+Replies: GET /v1/fleet/messages answers 200 with data [] (no message ever sent) -> reply shape unmeasured; the reply poller
+(-> chat.messages as sender driver, client_key 'samsara:<id>') is built right after the first real send, not guessed.
+proof: tsc clean; vitest chat + messaging 6/6 (flag off = no send; exactly-one-link recipients; no re-send).
+guard: scripts/verify-samsara-driver-messaging-flag-off-one-store.mjs + --selftest PASS.
+E-32 Documents: needs a real Samsara route stop (E-31 flag) — /fleet/documents empty, document type "Proof of Delivery" exists
+(fieldTypes: photo). Built after the first route, against measured fields.
+next: E-10..E-13.
