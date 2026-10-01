@@ -2173,6 +2173,37 @@ export function listMaintenancePredictiveAlerts(
   );
 }
 
+/** E-40 — Samsara fault-code history via GET /api/v1/maintenance/fault-code-alerts (Round 301 T-33 / Round 306). */
+export type FaultCodeAlertRow = {
+  id: string;
+  unit_id: string;
+  unit_number: string | null;
+  fault_code: string | null;
+  source: string | null;
+  severity: string | null;
+  occurred_at: string | null;
+  resolved_at: string | null;
+  auto_wo_id: string | null;
+  auto_wo_display_id: string | null;
+  driver_id: string | null;
+  driver_label: string | null;
+};
+
+export type FaultCodeAlertsResolved = "forward_by_unit" | "reverse_by_driver" | "all";
+
+export function listFaultCodeAlerts(
+  operatingCompanyId: string,
+  params: { unitId?: string; driverId?: string; limit?: number } = {}
+) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (params.unitId) q.set("unit_id", params.unitId);
+  if (params.driverId) q.set("driver_id", params.driverId);
+  if (params.limit != null) q.set("limit", String(params.limit));
+  return apiRequest<{ rows: FaultCodeAlertRow[]; resolved: FaultCodeAlertsResolved }>(
+    `/api/v1/maintenance/fault-code-alerts?${q.toString()}`
+  );
+}
+
 export function createWorkOrderFromPredictiveAlert(id: string, operatingCompanyId: string) {
   return apiRequest<{ ok: true; work_order_id: string; display_id: string | null; alreadyConverted?: boolean }>(
     `/api/v1/maintenance/predictive-alerts/${encodeURIComponent(id)}/create-work-order`,

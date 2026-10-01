@@ -72,8 +72,8 @@ export function checkSources({ navConfig, sidebarConfig, manifest, archDesign })
   if (!archDesign.includes("Fault Drafts") || !archDesign.includes("Fault Rules")) {
     failures.push("IH35_ARCHITECTURAL_DESIGN.md must name Fault Drafts and Fault Rules nav surfaces");
   }
-  if (!/13 sidebar flyout|13 module/.test(archDesign) && !archDesign.includes("13 sidebar flyout links")) {
-    failures.push("IH35_ARCHITECTURAL_DESIGN.md B24 counts must document 13 sidebar flyout links");
+  if (!/14 sidebar flyout|14 module/.test(archDesign) && !archDesign.includes("14 sidebar flyout links")) {
+    failures.push("IH35_ARCHITECTURAL_DESIGN.md B24 counts must document 14 sidebar flyout links (E-40 Faults)");
   }
 
   return failures;
@@ -96,7 +96,7 @@ export const MAINTENANCE_MASTER_DATA_LINKS = [
     archDesign:
       "Fleet managers review drafts at `/maintenance/fault-drafts`; rules CRUD at `/maintenance/fault-rules`.\n" +
       "**Fault Drafts** · **Fault Rules**\n" +
-      "Maintenance module nav counts (B24): 13 sidebar flyout links",
+      "Maintenance module nav counts (B24): 14 sidebar flyout links",
   };
 
   const cases = [
@@ -141,7 +141,7 @@ export const MAINTENANCE_MASTER_DATA_LINKS = [
       name: "missing arch path -> flagged",
       got: checkSources({
         ...base,
-        archDesign: "Maintenance module nav counts (B24): 13 sidebar flyout links\nFault Drafts · Fault Rules",
+        archDesign: "Maintenance module nav counts (B24): 14 sidebar flyout links\nFault Drafts · Fault Rules",
       }).some((r) => /fault-drafts/.test(r)),
       want: true,
     },

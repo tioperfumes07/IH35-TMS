@@ -58,7 +58,13 @@ export function MaintenanceSnapshotSection({
             ? ` — ${pendingFaultDraftCount} auto-WO draft${pendingFaultDraftCount === 1 ? "" : "s"} pending review`
             : ""}
           {" · "}
-          <EntityLink kind="fault_drafts_unit" id={unitId} label="View fault history" className="underline" />
+          <EntityLink kind="fault_code_alerts_unit" id={unitId} label="View fault history" className="underline" />
+          {pendingFaultDraftCount > 0 ? (
+            <>
+              {" · "}
+              <EntityLink kind="fault_drafts_unit" id={unitId} label="Review drafts" className="underline" />
+            </>
+          ) : null}
         </p>
       ) : null}
       <Link to="/maintenance" className="text-xs text-slate-700 underline">

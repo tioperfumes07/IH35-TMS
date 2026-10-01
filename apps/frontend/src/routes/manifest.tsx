@@ -282,6 +282,9 @@ const GeofenceReconciliationReport = React.lazy(() => import("../pages/reports/G
 import BookingGapReport from "../pages/reports/BookingGapReport";
 const FaultDraftsPage = React.lazy(() => import("../pages/maintenance/FaultDraftsPage").then((m) => ({ default: m.FaultDraftsPage })));
 const FaultRulesPage = React.lazy(() => import("../pages/maintenance/FaultRulesPage").then((m) => ({ default: m.FaultRulesPage })));
+const FaultCodeAlertsPage = React.lazy(() =>
+  import("../pages/maintenance/FaultCodeAlertsPage").then((m) => ({ default: m.FaultCodeAlertsPage })),
+);
 const DeadheadReportPage = React.lazy(() => import("../pages/reports/DeadheadReportPage").then((m) => ({ default: m.DeadheadReportPage })));
 const PostedWhileTourOpenReportPage = React.lazy(() => import("../pages/reports/PostedWhileTourOpenReportPage").then((m) => ({ default: m.PostedWhileTourOpenReportPage })));
 const AuditActivityByUserPage = React.lazy(() => import("../pages/reports/audit/AuditActivityByUserPage").then((m) => ({ default: m.AuditActivityByUserPage })));
@@ -2274,6 +2277,27 @@ export const ROUTES = React.Children.toArray(
             <ProtectedRoute>
               <MaintenanceShell>
                 <PositionHistoryPage />
+              </MaintenanceShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance/fault-code-alerts"
+          element={
+            <ProtectedRoute>
+              <MaintenanceShell>
+                <FaultCodeAlertsPage />
+              </MaintenanceShell>
+            </ProtectedRoute>
+          }
+        />
+        {/* Notification deep-link: action_link `/maintenance/fault-code-alerts/${fault_history_id}` */}
+        <Route
+          path="/maintenance/fault-code-alerts/:id"
+          element={
+            <ProtectedRoute>
+              <MaintenanceShell>
+                <FaultCodeAlertsPage />
               </MaintenanceShell>
             </ProtectedRoute>
           }
