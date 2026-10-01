@@ -13,13 +13,13 @@
 //      a variance. Assertions A and B apply to in-scope documents ONLY — an absent load on
 //      an out-of-scope document is the expected state, not a violation.
 //   2b. OWNER-CLOSED RANGE 5769–5819 (owner 2026-09-28): EXCLUDED from in-scope entirely.
-//      SKIPPED — OWNER-CLOSED. Shared Transportation/USMCA settlements, reconciled by the
+//      EXCLUDED — OWNER-CLOSED. Shared Transportation/USMCA settlements, reconciled by the
 //      owner. Never a variance. Never a LIVE FAIL. Fix the guard, never the data.
 //      Cite: claude/00-CLOSED-USMCA-SETTLEMENTS-5769-TO-5819-TIE-EXACTLY-NEVER-ASK-AGAIN.md
 //      Standing law: a permanent close goes in the GUARD, not just a doc.
 //   3. Six dimensions in cents, zero tolerance, in-scope only.
 //   4. Print every run, always, even when everything skips:
-//        "parity scope: N of X documents in scope, K skipped OWNER-CLOSED, M skipped NOT FED YET"
+//        "parity scope: N of X documents in scope, K excluded OWNER-CLOSED, M skipped NOT FED YET"
 //      X is the DYNAMIC document count from the ground-truth file — never hardcoded. Today
 //      it reads 35 (34 company + 1 driver-only, 5782). When CC-3's regenerated truth file
 //      lands, it reads 48 with no edit.
@@ -72,7 +72,7 @@ const TRANSPORTATION_DOCS = ["5753", "5760", "5761", "5762", "5763", "5764", "57
 // $22,510.00 of the owner's own completed resolution (5 live invoices, INV-2026-00001..00005, that
 // ARE the owner's shared-settlement resolution, not a duplicate-billing defect) before the owner
 // retracted it. Full mechanism: claude/00-CLOSED-USMCA-SETTLEMENTS-5769-TO-5819-TIE-EXACTLY-NEVER-ASK-AGAIN.md.
-// Owner order: EXCLUDE 5769–5819 from in-scope. Print SKIPPED — OWNER-CLOSED with plain language
+// Owner order: EXCLUDE 5769–5819 from in-scope. Print EXCLUDED — OWNER-CLOSED with plain language
 // that these are shared Transportation/USMCA and reconciled by the owner. Cite the closed doc in
 // the comment AND in any failure/skip text. Fix the guard. Never the data. Do NOT void money.
 const CLOSED_5769_5819_MIN = 5769;
@@ -372,7 +372,7 @@ async function live() {
     // ── Print SKIPPED documents (OWNER-CLOSED | NOT FED YET) ────────────────────────────
     for (const doc of skippedOwnerClosedDocs) {
       console.log(
-        `${doc}: SKIPPED — OWNER-CLOSED (shared Transportation/USMCA settlements, ` +
+        `${doc}: EXCLUDED — OWNER-CLOSED (shared Transportation/USMCA settlements, ` +
           `reconciled by the owner; see ${CLOSED_5769_5819_DOC})`
       );
     }
@@ -384,7 +384,7 @@ async function live() {
     console.log("");
     console.log(
       `parity scope: ${inScopeDocs.length} of ${documentCount} documents in scope, ` +
-        `${skippedOwnerClosedDocs.length} skipped OWNER-CLOSED (5769–5819; ${CLOSED_5769_5819_DOC}), ` +
+        `${skippedOwnerClosedDocs.length} excluded OWNER-CLOSED (5769–5819; ${CLOSED_5769_5819_DOC}), ` +
         `${skippedDocs.length} skipped NOT FED YET`
     );
 
@@ -503,6 +503,23 @@ async function live() {
       [USMCA_COMPANY_ID, TRANSPORTATION_DOCS]
     );
     const leaked = transportationRes.rows.map((r) => r.source_document_ref);
+    // ROUND 317 #3 / ROUND 321 (a): required CI must see EXECUTION, not a skip. Owner-closed documents are an
+    // exclusion by ruling (claude/00-CLOSED-USMCA-SETTLEMENTS-5769-TO-5819-...), not a skipped run -- so the guard
+    // states exactly what it examined on live data, and fails closed when there was nothing to examine.
+    const liveSettlementBase = Number((await client.query(
+      `SELECT count(*)::int AS n FROM driver_finance.driver_settlements WHERE operating_company_id = $1::uuid`,
+      [USMCA_COMPANY_ID]
+    )).rows[0].n);
+    if (documentCount === 0 || liveSettlementBase === 0) {
+      console.error(`${LABEL}: LIVE FAIL — nothing to execute against (truth documents=${documentCount}, live USMCA settlements=${liveSettlementBase}).`);
+      process.exit(1);
+    }
+    console.log(
+      `EXECUTED: ${documentCount} truth document(s) partitioned against live data ` +
+        `(${inScopeDocs.length} in scope compared on six dimensions, ${skippedOwnerClosedDocs.length} excluded OWNER-CLOSED, ` +
+        `${skippedDocs.length} not fed yet); A-D ran over ${inScopeLoadNumbers.length} in-scope load(s); ` +
+        `E scanned ${liveSettlementBase} live USMCA settlement(s) for the ${TRANSPORTATION_DOCS.length} Transportation documents.`
+    );
     structuralFailures.push({
       id: "E",
       label: "the 10 Transportation documents (5753, 5760-5768) are STILL ABSENT from USMCA",
@@ -526,7 +543,7 @@ async function live() {
 
     if (skippedOwnerClosedDocs.length > 0) {
       console.log(
-        `\n${LABEL}: ${skippedOwnerClosedDocs.length} document(s) SKIPPED — OWNER-CLOSED ` +
+        `\n${LABEL}: ${skippedOwnerClosedDocs.length} document(s) EXCLUDED — OWNER-CLOSED ` +
           `(shared Transportation/USMCA settlements, reconciled by the owner; see ${CLOSED_5769_5819_DOC}). ` +
           `Do NOT void money. Fix the guard if this range re-raises.`
       );
@@ -552,7 +569,7 @@ async function live() {
     }
     console.log(
       `\n${LABEL}: LIVE PASS — ${inScopeDocs.length} in scope, ` +
-        `${skippedOwnerClosedDocs.length} skipped OWNER-CLOSED (5769–5819), ` +
+        `${skippedOwnerClosedDocs.length} excluded OWNER-CLOSED (5769–5819), ` +
         `${skippedDocs.length} skipped NOT FED YET, 0 mismatches, 5/5 structural assertions hold.`
     );
   } finally {
