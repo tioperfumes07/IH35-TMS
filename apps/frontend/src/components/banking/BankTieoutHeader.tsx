@@ -56,6 +56,12 @@ export function BankTieoutHeader({ companyId, bankAccountId }: { companyId: stri
               {d.data.feed_only.map((r) => (
                 <li key={r.bank_transaction_id}>
                   <EntityLink kind="bank_transaction" id={r.bank_transaction_id} label={`${formatDateUS(r.transaction_date)} ${r.description ?? ""}`} /> · {formatUsdCentsTable(r.signed_cents)}
+                  {r.factoring_purchase_id ? (
+                    <>
+                      {" · "}
+                      <EntityLink kind="factoring_purchase" id={String(r.factoring_purchase_id)} label="Faro wire" />
+                    </>
+                  ) : null}
                 </li>
               ))}
               {d.data.feed_only.length === 0 ? <li className="text-gray-500">None</li> : null}

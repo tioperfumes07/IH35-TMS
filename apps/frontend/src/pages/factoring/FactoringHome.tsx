@@ -1209,6 +1209,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                           advance_rate: patch.advance_rate,
                           fee_rate: patch.fee_rate,
                           reserve_rate: patch.reserve_rate,
+                          cash_reserve_rate: patch.cash_reserve_rate,
                           recourse_days: patch.recourse_days,
                           remittance_details: patch.remittance_details as Record<string, unknown>,
                           ...(patch.fee_schedule ? { fee_schedule: patch.fee_schedule } : {}),

@@ -1,15 +1,12 @@
+**2026-10-01T21:35Z · FT1 SHIPPING · `cursor/ft1-payments-drilldown-6f2f`**
+ACK: CURSOR | ACK FACTORING-TAKEOVER | FT1 Payments-to-You | GO
+FT1 · factoring_purchase EntityLink + running escrow/cash/net + ?purchase_id= deep-link; purchase detail bank tie-out; tieoutDrill factoring_purchase_id; cash_reserve_rate save; entity-link-adoption baseline.
+GUARD: `node scripts/ops/verify-factoring-r315-payments-tabs.mjs --selftest` PASS; frontend tsc -b exit 0.
+#23905 C combobox MERGED · #23904 AUTH-201 MERGED. NEXT: FAST-MERGE FT1 → FT2 Esc/Cash tabs.
+
 **2026-10-01T21:07Z · ACK FACTORING-TAKEOVER FULL BUILD · FT1 Payments-to-You · `cursor/r315-c-combobox-leaves-c89b`**
 CURSOR | ACK FACTORING-TAKEOVER | FT1 Payments-to-You | GO
-#23904 MERGED `6ee6770109` AUTH-201 CONSUMED. C combobox leaves shipping this PR then FT1–FT5 one PR each on CC-2 purchase engine only.
-CC-2 WRAP unfinished absorbed: steps 4–8 + Factor Setup FE (email + cash_reserve_rate) — Cursor builds. No second engine. No Chrome-as-proof.
-
-**2026-10-01T20:45Z · C COMBOBOX LEAVES · `cursor/r315-c-combobox-leaves-c89b`**
-ACK: CURSOR | ACK FACTORING-TAKEOVER | QBO-FINISH-THEN-B4 | GO
-B9 AUTH-201 PR #23904 (live CONSUMED). C: 3 Combobox hosts → required.json leaves:
-  home.truck_line → pages/dispatch/TruckLineBoard.tsx
-  system.samsara_driver_mapping → pages/samsara-driver-mapping/SamsaraDriverMappingPage.tsx
-  fuel.modal.create_fuel_transaction.owned → components/locations/FuelStopLocationPicker.tsx
-GUARD: verify-surface-bar-combobox-inventory PASS 84/84. NEXT: ship C · ambient as Lead assigns.
+#23904 MERGED AUTH-201 CONSUMED. C→FT1–FT5 on CC-2 purchase engine only. No second engine. No Chrome-as-proof.
 
 **2026-10-01T20:32Z · AUTH-201 CONSUMED · B9 CLOSED · PR #23904 · `cursor/r315-b9-auth201-13515-c89b`**
 ACK: CURSOR | ACK FACTORING-TAKEOVER | QBO-FINISH-THEN-B4 | GO

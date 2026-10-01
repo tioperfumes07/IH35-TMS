@@ -4,7 +4,8 @@
  * invoices / escrow / cash reserve / fees / wire fee / bank match. Builds on CC-2's purchase
  * engine only — never a second engine.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   getFactoringPurchase,
@@ -34,7 +35,13 @@ type Props = {
 };
 
 export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, summaryDetailToggle }: Props) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const purchaseIdFromUrl = searchParams.get("purchase_id")?.trim() ?? "";
+  const [selectedId, setSelectedId] = useState<string | null>(purchaseIdFromUrl || null);
+
+  useEffect(() => {
+    if (purchaseIdFromUrl) setSelectedId(purchaseIdFromUrl);
+  }, [purchaseIdFromUrl]);
 
   const listQuery = useQuery({
     queryKey: ["factoring", "purchases", "payments-to-you", companyId, dateFrom, dateTo],
@@ -55,7 +62,9 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
 
   const rows = useMemo(() => {
     const purchases = listQuery.data?.purchases ?? [];
-    let running = 0;
+    let runningNet = 0;
+    let runningEscrow = 0;
+    let runningCash = 0;
     return [...purchases]
       .sort((a, b) => {
         const da = new Date(a.wire_date ?? a.purchase_date).getTime();
@@ -63,8 +72,15 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
         return da - db;
       })
       .map((row) => {
-        running += cents(row.net_to_company_cents);
-        return { ...row, running_total_cents: running };
+        runningNet += cents(row.net_to_company_cents);
+        runningEscrow += cents(row.escrow_reserve_cents);
+        runningCash += cents(row.cash_reserve_cents);
+        return {
+          ...row,
+          running_net_cents: runningNet,
+          running_escrow_cents: runningEscrow,
+          running_cash_cents: runningCash,
+        };
       });
   }, [listQuery.data?.purchases]);
 
@@ -73,7 +89,15 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
     [rows]
   );
 
-  const columns: Array<ParityColumn<FactoringPurchaseListRow & { running_total_cents: number }>> = [
+  const columns: Array<
+    ParityColumn<
+      FactoringPurchaseListRow & {
+        running_net_cents: number;
+        running_escrow_cents: number;
+        running_cash_cents: number;
+      }
+    >
+  > = [
     {
       key: "wire_date",
       label: "Wire date",
@@ -86,11 +110,7 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
       sortable: true,
       render: (row) => (
         <span className="inline-flex items-center gap-2">
-          {row.factoring_advance_id ? (
-            <EntityLink kind="factoring_advance" id={row.factoring_advance_id} label={row.display_id} />
-          ) : (
-            <span className="text-xs text-gray-900">{row.display_id}</span>
-          )}
+          <EntityLink kind="factoring_purchase" id={row.id} label={row.display_id} />
           <button
             type="button"
             className="text-xs font-medium text-[#14314F] underline"
@@ -151,11 +171,25 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
       render: (row) => formatUsdCents(row.net_to_company_cents),
     },
     {
-      key: "running_total_cents",
-      label: "Running total",
+      key: "running_escrow_cents",
+      label: "Run escrow",
       sortable: true,
       cellClass: "text-right tabular-nums",
-      render: (row) => formatUsdCents(row.running_total_cents),
+      render: (row) => formatUsdCents(row.running_escrow_cents),
+    },
+    {
+      key: "running_cash_cents",
+      label: "Run cash rsv",
+      sortable: true,
+      cellClass: "text-right tabular-nums",
+      render: (row) => formatUsdCents(row.running_cash_cents),
+    },
+    {
+      key: "running_net_cents",
+      label: "Run net paid",
+      sortable: true,
+      cellClass: "text-right tabular-nums",
+      render: (row) => formatUsdCents(row.running_net_cents),
     },
     {
       key: "bank_transaction_id",
@@ -202,7 +236,7 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
               footerCells={{
                 display_id: `${rows.length} wire(s)`,
                 net_to_company_cents: formatUsdCents(totalNet),
-                running_total_cents: formatUsdCents(totalNet),
+                running_net_cents: formatUsdCents(totalNet),
               }}
             />
           </div>
@@ -256,13 +290,26 @@ function PurchaseDetailCard(props: {
             <Total label="Net to IH35" value={formatUsdCents(detail.net_to_company_cents)} emphasis />
             <div className="bg-gray-50 p-2">
               <div className="text-xs uppercase tracking-wide text-gray-500">Bank match</div>
-              <div className="mt-1 text-xs font-medium text-gray-900">
+              <div className="mt-1 space-y-1 text-xs font-medium text-gray-900">
                 {detail.bank_transaction_id ? (
-                  <EntityLink
-                    kind="bank_transaction"
-                    id={detail.bank_transaction_id}
-                    label={`${formatDateUS(detail.bank_transaction_date)} · ${formatUsdCents(detail.bank_transaction_amount_cents)}`}
-                  />
+                  <>
+                    <EntityLink
+                      kind="bank_transaction"
+                      id={detail.bank_transaction_id}
+                      label={`${formatDateUS(detail.bank_transaction_date)} · ${formatUsdCents(detail.bank_transaction_amount_cents)}`}
+                    />
+                    {detail.bank_account_id ? (
+                      <div>
+                        <Link
+                          to={`/banking/accounts/${encodeURIComponent(String(detail.bank_account_id))}`}
+                          className="text-[#14314F] underline"
+                          data-testid="payments-to-you-bank-tieout-link"
+                        >
+                          Bank tie-out
+                        </Link>
+                      </div>
+                    ) : null}
+                  </>
                 ) : (
                   "Unmatched"
                 )}

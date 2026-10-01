@@ -31,6 +31,8 @@ export type EntityKind =
   | "liability"
   | "bank_account"
   | "factoring_advance"
+  /** ROUND 315 FT1 — accounting.factoring_purchases (= one Faro wire document). */
+  | "factoring_purchase"
   | "factoring_batch"
   | "payment"
   | "bill_payment"
@@ -351,6 +353,8 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       // ROUND 313/319: canonical drawer is /factoring/advances/:id (load/invoice/bank wire both ways).
       // /accounting/factoring/:id stays as a redirect alias.
       return `/factoring/advances/${id}`;
+    case "factoring_purchase":
+      return `/factoring/payments-to-you?purchase_id=${encodeURIComponent(id)}`;
     case "factoring_batch":
       // LINK-F5178 (2026-08-14): a real batch id (factoring.batch.id — the row shown by FactorAdmin's
       // "Batch History" table) drills to /factoring/batches/:id (BatchDetail.tsx's getBatchDetail),

@@ -157,6 +157,10 @@ export async function tieoutDrill(client: DbClient, opco: string, bankAccountId:
   if (!ledger) return { ledger_account_id: null, feed_only: [], gl_only: [] };
   const feed = await client.query(
     `SELECT bt.id::text AS bank_transaction_id, bt.transaction_date::text, bt.description, bt.status,
+            bt.matched_factoring_advance_id::text,
+            (SELECT fp.id::text FROM accounting.factoring_purchases fp
+              WHERE fp.factoring_advance_id = bt.matched_factoring_advance_id AND fp.voided_at IS NULL
+              LIMIT 1) AS factoring_purchase_id,
             (CASE WHEN bt.is_credit THEN abs(bt.amount_cents) ELSE -abs(bt.amount_cents) END)::bigint AS signed_cents
      ${FEED_ONLY_SQL} ORDER BY bt.transaction_date DESC, bt.id LIMIT 500`,
     [opco, bankAccountId, ledger, day]
