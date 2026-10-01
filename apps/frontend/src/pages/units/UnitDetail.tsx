@@ -15,6 +15,7 @@ import { UnitInTransitIssuesReverseSection } from "../../components/dispatch/Uni
 import { UnitDefaultDriversReverseSection } from "../../components/fleet/UnitDefaultDriversReverseSection";
 import { UnitTireProgramReverseSection } from "../../components/maintenance/UnitTireProgramReverseSection";
 import { UnitSevereRepairsReverseSection } from "../../components/maintenance/UnitSevereRepairsReverseSection";
+import { PmCostPerMilePanel } from "../../components/maintenance/PmCostPerMilePanel";
 import { UnitTempCoverReverseSection } from "../../components/safety/UnitTempCoverReverseSection";
 import { ComplaintsReverseSection } from "../../components/safety/ComplaintsReverseSection";
 import { FuelCardsReverseSection } from "../../components/fuel/FuelCardsReverseSection";
@@ -75,6 +76,7 @@ export function UnitDetail() {
       {companyId ? <UnitDefaultDriversReverseSection operatingCompanyId={companyId} unitId={id} /> : null}
       {companyId ? <UnitTireProgramReverseSection operatingCompanyId={companyId} unitId={id} /> : null}
       {companyId ? <UnitSevereRepairsReverseSection operatingCompanyId={companyId} unitId={id} /> : null}
+      {companyId ? <PmCostPerMilePanel operatingCompanyId={companyId} unitId={id} /> : null}
       {companyId ? <UnitTempCoverReverseSection operatingCompanyId={companyId} unitId={id} /> : null}
       {companyId ? (
         // E-28 (owner order 2026-10-01): unit -> complaints, the reverse half of the load/truck

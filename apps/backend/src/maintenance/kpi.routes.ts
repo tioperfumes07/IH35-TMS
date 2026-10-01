@@ -8,6 +8,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 // roster/KPI (mdata/fleet-visibility.ts) — otherwise a fixture unit silently inflates operating-hour
 // and downtime denominators (MTBF reads artificially healthier than the real fleet).
 import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visibility.js";
+import { computePmCostPerMile } from "./pm-cost-per-mile.service.js";
 
 const kpiQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -200,19 +201,13 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
       const truckCount = Math.max(1, Number(costRes.rows[0]?.truck_count ?? 0));
       const cost_per_truck_cents = Math.round(totalCostCents / truckCount);
 
-      const milesRes = await client.query(
-        `
-          SELECT COALESCE(SUM(COALESCE(l.miles_practical, l.miles_shortest, 0)), 0)::numeric AS miles
-          FROM mdata.loads l
-          WHERE l.operating_company_id = $1::uuid
-            AND l.soft_deleted_at IS NULL
-            AND l.created_at::date BETWEEN $2::date AND $3::date
-            ${unitId ? " AND l.assigned_unit_id = $4::uuid" : ""}
-        `,
-        baseParams
-      );
-      const totalMiles = Number(milesRes.rows[0]?.miles ?? 0);
-      const cpm_cents = computeCpmCents(totalCostCents, totalMiles);
+      // E-15 (Owner Law 2026-10-01): CPM divides by REAL DRIVEN miles from the one E-15 engine -- never practical
+      // or short miles (this tile used COALESCE(miles_practical, miles_shortest) by load created_at before).
+      const e15 = await computePmCostPerMile(client as never, companyId, startDay, endDay, unitId ?? undefined);
+      const realCpm = (e15.fleet as { maintenance_cpm?: Array<{ cents_per_mile: number | null; reason: string | null; units_included: number; units_excluded: number }> }).maintenance_cpm?.[0];
+      const cpm_cents = realCpm?.cents_per_mile != null ? Math.round(realCpm.cents_per_mile) : null;
+      const cpm_basis = "real_driven" as const;
+      const cpm_reason = realCpm?.reason ?? null;
 
       const pmRes = await client.query(
         `
@@ -283,6 +278,8 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
         downtime_hours: Math.round(downtime_hours * 10) / 10,
         mtbf_hours,
         cpm_cents,
+        cpm_basis,
+        cpm_reason,
         cost_per_truck_cents,
         pm_compliance_pct,
         sparklines: {
@@ -482,6 +479,25 @@ async function kpiDrilldown(req: FastifyRequest, reply: FastifyReply, kind: "dow
     let dataSql: string;
     let orderSql: string;
 
+    if (kind === "cpm") {
+      // E-15: one engine for cost per mile -- real driven miles, cost from WO -> bills/expenses, basis on every row.
+      const e15 = await computePmCostPerMile(client as never, q.operating_company_id, q.period_start, q.period_end, q.unit_id ?? undefined);
+      const all = e15.units
+        .map((u) => ({
+          unit_id: u.unit_id,
+          unit_number: u.unit_number,
+          total_cents: u.maintenance_cost_cents,
+          miles: u.real_driven_miles,
+          miles_basis: "real_driven",
+          miles_reason: u.real_driven_reason,
+          cost_per_mile_cents: u.maintenance_cpm[0]?.cents_per_mile != null ? Math.round(u.maintenance_cpm[0].cents_per_mile) : null,
+          cost_per_mile_reason: u.maintenance_cpm[0]?.reason ?? null,
+          practical_miles: u.practical_miles,
+          short_miles: u.short_miles,
+        }))
+        .sort((a, b) => b.total_cents - a.total_cents || a.unit_id.localeCompare(b.unit_id));
+      return { rows: all.slice(q.offset, q.offset + q.limit), total_count: all.length };
+    }
     if (kind === "downtime") {
       dataSql = `
           SELECT
@@ -520,42 +536,6 @@ async function kpiDrilldown(req: FastifyRequest, reply: FastifyReply, kind: "dow
           GROUP BY u.unit_number, wo.unit_id
         `;
       orderSql = "repair_count DESC, unit_id ASC";
-    } else if (kind === "cpm") {
-      dataSql = `
-          WITH wo_cost AS (
-            SELECT
-              wo.unit_id,
-              COALESCE(SUM(ROUND(COALESCE(wo.total_actual_cost, 0)::numeric * 100)), 0)::bigint AS total_cents
-            FROM maintenance.work_orders wo
-            WHERE wo.operating_company_id = $1::uuid
-              AND COALESCE(wo.closed_at, wo.opened_at, wo.updated_at)::date BETWEEN $2::date AND $3::date
-              ${unitClause}
-            GROUP BY wo.unit_id
-          ),
-          unit_miles AS (
-            SELECT
-              l.assigned_unit_id AS unit_id,
-              COALESCE(SUM(COALESCE(l.miles_practical, l.miles_shortest, 0)), 0)::numeric AS miles
-            FROM mdata.loads l
-            WHERE l.operating_company_id = $1::uuid
-              AND l.soft_deleted_at IS NULL
-              AND l.created_at::date BETWEEN $2::date AND $3::date
-              ${q.unit_id ? " AND l.assigned_unit_id = $4::uuid" : ""}
-            GROUP BY l.assigned_unit_id
-          )
-          SELECT
-            u.unit_number,
-            wc.unit_id::text,
-            wc.total_cents,
-            COALESCE(um.miles, 0)::numeric AS miles,
-            CASE WHEN COALESCE(um.miles, 0) > 0 THEN ROUND(wc.total_cents / um.miles)::int ELSE NULL END AS cost_per_mile_cents
-          FROM wo_cost wc
-          -- CLS-JOIN-ENTITY-UNSCOPED (§4: units carry owner/leased, never operating_company_id)
-          JOIN mdata.units u ON u.id = wc.unit_id
-                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
-          LEFT JOIN unit_miles um ON um.unit_id = wc.unit_id
-        `;
-      orderSql = "total_cents DESC, unit_id ASC";
     } else {
       dataSql = `
         SELECT

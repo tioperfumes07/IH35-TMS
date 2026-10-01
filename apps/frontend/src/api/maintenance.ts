@@ -426,6 +426,10 @@ export type MaintKpiSummary = {
   downtime_hours: number;
   mtbf_hours: number | null;
   cpm_cents: number | null;
+  /** E-15: the mileage the CPM divides by -- always real driven (odometer). */
+  cpm_basis?: "real_driven";
+  /** Why cpm_cents is null (e.g. odometer not measurable for the period). */
+  cpm_reason?: string | null;
   cost_per_truck_cents: number;
   pm_compliance_pct: number;
   sparklines: {
@@ -2332,4 +2336,51 @@ export function setPreFlightDvirSeverity(
     `/api/v1/maintenance/pre-flight-dvir/${encodeURIComponent(defectId)}/severity`,
     { method: "PATCH", body }
   );
+}
+
+
+// ── E-15 PM cost per mile (real driven miles; three-mile comparison) ─────────────────────────────
+export type PmCpmBasis = "real_driven" | "practical" | "short";
+export type PmCpm = { basis: PmCpmBasis; basis_label: string; cents_per_mile: number | null; reason: string | null };
+export type PmOdometerAnchor = { odometer_mi: number; read_at: string; source: "vehicle_locations" | "odometer_readings" };
+export type PmCostPerMileUnitRow = {
+  unit_id: string;
+  unit_number: string;
+  real_driven_miles: number | null;
+  real_driven_reason: string | null;
+  odometer_start_anchor: PmOdometerAnchor | null;
+  odometer_end_anchor: PmOdometerAnchor | null;
+  practical_miles: number | null;
+  short_miles: number | null;
+  loads_in_period: number;
+  loads_missing_practical: number;
+  loads_missing_short: number;
+  pm_cost_cents: number;
+  maintenance_cost_cents: number;
+  cost_breakdown_cents: { parts: number; labor: number; other: number; expenses: number };
+  work_order_ids: string[];
+  bill_ids: string[];
+  expense_ids: string[];
+  pm_cpm: PmCpm[];
+  maintenance_cpm: PmCpm[];
+};
+export type PmCostPerMileFleetCpm = PmCpm & { miles: number | null; cost_cents: number; units_included: number; units_excluded: number };
+export type PmCostPerMileResponse = {
+  period: { from: string; to: string; timezone: "America/Chicago" };
+  units: PmCostPerMileUnitRow[];
+  fleet: {
+    units?: number;
+    pm_cost_cents?: number;
+    maintenance_cost_cents?: number;
+    pm_cpm?: PmCostPerMileFleetCpm[];
+    maintenance_cpm?: PmCostPerMileFleetCpm[];
+    real_minus_short_miles?: number | null;
+  };
+  mileage_bases: Record<PmCpmBasis, string>;
+};
+
+export function getPmCostPerMile(companyId: string, filters: { from: string; to: string; unit_id?: string }) {
+  const params = new URLSearchParams({ operating_company_id: companyId, from: filters.from, to: filters.to });
+  if (filters.unit_id) params.set("unit_id", filters.unit_id);
+  return apiRequest<PmCostPerMileResponse>(`/api/v1/maintenance/pm-cost-per-mile?${params.toString()}`);
 }

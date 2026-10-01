@@ -168,7 +168,8 @@ export function MaintKpiDashboardPage() {
         id: "cpm" as const,
         label: "CPM",
         value: formatUsdFromCents(summary?.cpm_cents ?? null),
-        hint: "Maintenance cost per mile",
+        // E-15: divides by REAL DRIVEN (odometer) miles; when not measurable, say why instead of a blank.
+        hint: summary?.cpm_cents == null && summary?.cpm_reason ? `Real driven miles: ${summary.cpm_reason}` : "Maintenance cost per real driven mile",
         sparkline: summary?.sparklines.cpm ?? [],
       },
       {

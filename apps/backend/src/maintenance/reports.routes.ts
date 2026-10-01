@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { computePmCostPerMile } from "./pm-cost-per-mile.service.js";
 import ExcelJS from "exceljs";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -54,14 +55,31 @@ async function buildRows(client: any, companyId: string, report: ReportId): Prom
           [companyId]
         )
       ).rows;
-    case "cost_per_mile":
-      return (
-        await client.query(
-          `SELECT unit_id::text, COALESCE(SUM(total_actual_cost),0)::numeric(12,2) AS total_cost, COUNT(*)::int AS work_orders
-           FROM maintenance.work_orders WHERE operating_company_id = $1::uuid GROUP BY unit_id ORDER BY total_cost DESC NULLS LAST, unit_id ASC`,
-          [companyId]
-        )
-      ).rows;
+    case "cost_per_mile": {
+      // E-15 (Owner Law 2026-10-01): this report summed work-order cost and divided by nothing. It now reads the one
+      // E-15 engine: last 90 days (America/Chicago), real driven miles, cost from WO -> bills/expenses, every CPM
+      // labelled with its mileage basis, NULL with the reason when real miles are not measurable.
+      const fmt = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+      const toDay = fmt(new Date());
+      const fromDay = fmt(new Date(Date.now() - 89 * 86_400_000));
+      const e15 = await computePmCostPerMile(client, companyId, fromDay, toDay);
+      return e15.units.map((u) => ({
+        unit_number: u.unit_number,
+        unit_id: u.unit_id,
+        period: `${fromDay}..${toDay}`,
+        real_driven_miles: u.real_driven_miles,
+        real_driven_reason: u.real_driven_reason,
+        practical_miles: u.practical_miles,
+        short_miles: u.short_miles,
+        maintenance_cost: (u.maintenance_cost_cents / 100).toFixed(2),
+        pm_cost: (u.pm_cost_cents / 100).toFixed(2),
+        cpm_real_driven_cents: u.maintenance_cpm[0]?.cents_per_mile ?? null,
+        cpm_practical_cents: u.maintenance_cpm[1]?.cents_per_mile ?? null,
+        cpm_short_cents: u.maintenance_cpm[2]?.cents_per_mile ?? null,
+        work_orders: u.work_order_ids.length,
+        bills: u.bill_ids.length,
+      }));
+    }
     case "cost_by_source_type":
       return (
         await client.query(
