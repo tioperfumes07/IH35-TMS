@@ -1,4 +1,9 @@
 {
+  "12055": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-factoring-advance-links-its-load: every live factoring advance reaches its load (source_load_id or linked invoice); the pre-invoice create path and the invoice auto-link trigger exist."
+  },
   "12051": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-01",
