@@ -271,3 +271,6 @@ B-3 · what changed: Banking Home per-account connection-error strip (Fix now / 
 
 **2026-10-01T13:30Z · B-4 CHECK CREATOR (REGISTER SET §9–§15) · branch `cursor/b4-check-creator-4953` · PR #23764**
 B-4 · what changed: WriteCheckForm QBO chrome — Who did you pay · Add to Check drawer · Restore draft; bill payment conversion path. Ops: `scripts/ops/verify-b4-check-creator.mjs`. · LIVE PROOF: ops --selftest PASS. · LEFT: Lead Chrome check creator. · NEXT: tip-main rebase + FAST-MERGE then B-5 #23765.
+
+**2026-10-01T13:40Z · B-5 RECLASSIFY/BATCH (REGISTER SET §23–§24) · branch `cursor/b5-reclassify-batch-4953` · PR #23765**
+B-5 · what changed: Topbar Create→Other Batch + Reclassify; Reclassify modal Change location (honest-disabled) + vendor/customer; BatchExpenses type strip. Ops: `scripts/ops/verify-b5-reclassify-batch.mjs`. · LIVE PROOF: ops --selftest PASS. · LEFT: Lead Chrome. · NEXT: tip-main rebase + FAST-MERGE; banking register set B-2..B-5 complete.

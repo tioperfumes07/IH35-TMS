@@ -282,6 +282,9 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
                     [t("topbar.create_receive_payment", "Receive payment"), "/accounting/payments?create=1"],
                     [t("topbar.create_journal_entry", "Journal entry"), "/accounting/journal-entries?create=1"],
                     [t("topbar.create_bill_payment", "Bill payment"), "/accounting/bill-payments?create=1"],
+                    ["— Other —", ""],
+                    [t("topbar.create_batch_transactions", "Batch transactions"), "/accounting/batch-transactions"],
+                    [t("topbar.create_reclassify", "Reclassify transactions"), "/accounting/reclassify"],
                   ] as [string, string][]
                 ).map(([label, to]) =>
                   to ? (
@@ -289,6 +292,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
                       key={to}
                       type="button"
                       className="block w-full px-4 py-2 text-left text-xs text-gray-800 hover:bg-gray-50"
+                      data-b5-create={to.includes("batch") ? "batch" : to.includes("reclassify") ? "reclassify" : undefined}
                       onClick={() => {
                         setCreateOpen(false);
                         navigate(to);
