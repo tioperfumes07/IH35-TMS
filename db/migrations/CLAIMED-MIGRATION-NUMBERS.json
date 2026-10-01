@@ -8,10 +8,15 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00–11 / 12–23) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202615191000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-10-01",
+      "purpose": "ROUND 313 E-32 (CC-3) part 2: the System actor identity.users row (role 'System', added by 202615190900 in its own no-transaction migration -- a new enum value cannot be used in the transaction that adds it) + docs.file_links entity_type 'load_stop'."
+    },
     "202615190900": {
       "claimed_by": "claude",
       "claimed_at": "2026-10-01",
-      "purpose": "ROUND 313 E-32 (CC-3): the engines' System actor 00000000-0000-4000-8000-000000000001 as a real identity.users row (no login credentials) so engine-written FKs (docs.files.uploader_user_id ...) hold; docs.file_links entity_type gains 'load_stop' so Samsara POD/BOL documents link to their stop."
+      "purpose": "ROUND 313 E-32 (CC-3) part 1: identity.role_enum gains 'System' (no-transaction migration) for the engines' System actor row written by 202615191000."
     },
     "202615181100": {
       "claimed_by": "claude",
