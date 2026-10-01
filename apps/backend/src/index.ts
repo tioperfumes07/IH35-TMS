@@ -350,6 +350,8 @@ import { initializePmAutoEngineCron } from "./maintenance/pm-auto-engine.cron.js
 import { initializeOdometerSnapshotCron } from "./telematics/odometer-snapshot.cron.js";
 import { initializeRosterIntegrityCron } from "./fleet/roster-integrity.cron.js";
 import { registerRosterIntegrityRoutes } from "./fleet/roster-integrity.service.js";
+import { initializeBankTieoutCron } from "./banking/bank-tieout.cron.js";
+import { registerBankTieoutRoutes } from "./banking/bank-tieout.service.js";
 import { initializeLoadRealDrivenMilesCron } from "./telematics/load-real-driven-miles.cron.js";
 import { registerLoadRealDrivenMilesRoutes } from "./telematics/load-real-driven-miles.service.js";
 import { registerThreeMileCpmRoutes } from "./reports/three-mile-cpm.service.js";
@@ -1316,6 +1318,7 @@ async function main() {
   await registerLoadRealDrivenMilesRoutes(app);
   await registerThreeMileCpmRoutes(app);
   await registerRosterIntegrityRoutes(app);
+  await registerBankTieoutRoutes(app);
   await registerMaintWoApRoutes(app);
   await registerForm425CRoutes(app);
   // Form 425-C Exhibits A–F generator. Previously left unmounted (held as "financial-adjacent"),
@@ -1867,6 +1870,8 @@ async function main() {
 
       initializeRosterIntegrityCron(app);
       app.log.info("[STARTUP] roster-integrity-cron initialized");
+      initializeBankTieoutCron(app);
+      app.log.info("[STARTUP] bank-tieout-cron initialized");
 
       initializeLoadRealDrivenMilesCron(app);
       app.log.info("[STARTUP] load-real-driven-miles-cron initialized");
