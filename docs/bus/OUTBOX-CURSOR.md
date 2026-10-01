@@ -110,3 +110,6 @@ C-55 · what changed: house label **Regular** (was List view) on Customers/Vendo
 
 **2026-09-30T23:41Z · C-55 MERGED · PR #23568 · `3ae18a149f`**
 Regular+MD on main (customers/vendors/drivers/fleet/users). Round 301 Cursor queue C-50→C-55 shipped (C-54/C-56 were prior dups). LEFT: Lead Chrome measure before DONE close; C-57 = re-read NOW-CURSOR for next queue.
+
+**2026-10-01T00:15Z · ACK ROUND 304 | C-64 approved boards | GO**
+Read ROUND 304 packet. Scope: Banking Home + Driver Escrow + Reconciliation BACK ON (owner-directed); A/R A/P GL QBO bank-feed settlements stay paused. Lane: `apps/frontend/**` only. Building C-64 boards exactly (8→Home/Accounts/… Settings; Statement Import+Plaid fold into +New; Factoring = summary card not tab; C-65 side-dock alerts; C-67 QBO recon shell). Branch `cursor/c64-banking-approved-boards-c89b`.
