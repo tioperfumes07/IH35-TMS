@@ -76,6 +76,10 @@ const REVERSAL_WRAPPERS = [
   "reinstateDocumentThenVoidReversal",
   "reinstateDocument",
   "unvoidCheck",
+  // ROUND 315 step 2 — factoring/purchase.service.ts voidPurchase() reverses the purchase's funding JE through
+  // reverseFactoringAdvanceEventInClientTx (the factoring_advance engine named above) and stamps the advance via
+  // stampDocumentVoided, one transaction. Verified in source (purchase.routes.ts POST /factoring/purchases/:id/void).
+  "voidPurchase",
 ];
 
 /** All function names that satisfy the reversal requirement. */
