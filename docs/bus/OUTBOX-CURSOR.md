@@ -1,3 +1,6 @@
+**2026-10-01T18:05Z · R313 CURSOR ITEM 3 MAINTENANCE DESIGNS (subnav)**
+Branch `cursor/r313-maintenance-designs-24d9`. WHAT: primary Maintenance SUBNAV keeps C-36 nine and ADDS PM Due (`/maintenance/pm-schedule`), Faults E-40 (`/maintenance/fault-code-alerts`), In Shop (`/maintenance/fleet-table?status=in-shop`), Cost/mi E-15 (`/reports/maintenance-cost-per-unit`); MaintenanceShell now renders the same NavyPageSubNav; parts inventory surfaces locked **$7,000** capitalize rule (R313 "$50" not in LAW — owner clarify if a separate SKU rule is meant). GUARD: `node scripts/ops/verify-r313-maintenance-designs.mjs --selftest` PASS; C-36 guard updated for additive R313 tabs. LEFT: EntityLink audit every WO/parts row → unit/vendor/bill/JE; Chrome; $50 owner ruling. NEXT: finish EntityLink sweep · #4 Chrome.
+
 
 **2026-10-01T15:45Z · R313 BANK-SURF-04/ECON-04 RECON SERVICE CHARGE/INTEREST ENGINE**
 Claim `202615141200` #23791. Author: migration + `recon-adjustments.service` (canonical JE poster) + complete body/FE payload + adjusted-balance SC/IE + guard `verify-recon-service-charge-interest-posts` + AUTH-195. Neon columns applied. Variance formula $5+$5 → $0 on Petty Cash. · LIVE session close runs after AUTH-195 merges (ops proof script). · NEXT: Factoring designs · Maintenance designs · Chrome pass.

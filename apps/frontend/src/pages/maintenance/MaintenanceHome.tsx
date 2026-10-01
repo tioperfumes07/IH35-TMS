@@ -72,15 +72,20 @@ import { MAINTENANCE_TAB_PATH, maintenanceTabFromPath } from "../../router/route
 
 export { MAINTENANCE_MASTER_DATA_LINKS, MAINTENANCE_OPERATION_LINKS } from "../../components/maintenance/MAINTENANCE_NAV_CONFIG";
 
-// C-36 (Round 300) — owner canvas: 9 tabs. Retired peers stay routable (Rule 07) via remaps.
+// C-36 (Round 300) — owner canvas: 9 tabs. R313 Cursor item 3 ADDS PM Due / Faults / In Shop /
+// Cost/mi (owner: every tab live) without deleting the C-36 nine (Rule 07).
 const SUBNAV = [
   { id: "rm_status_board", label: "Home" },
   { id: "fleet_table", label: "Fleet Table" },
   { id: "active_wos", label: "Active WOs" },
+  { id: "pm_due", label: "PM Due" },
+  { id: "faults", label: "Faults" },
+  { id: "in_shop", label: "In Shop" },
   { id: "service_location", label: "Service / Location" },
   { id: "driver_reports", label: "Driver Reports" },
   { id: "road_service", label: "Road Service" },
   { id: "parts_inventory", label: "Parts Inventory" },
+  { id: "cost_per_mile", label: "Cost/mi" },
   { id: "integrity_report", label: "Integrity Report" },
   { id: "settings", label: "Settings" },
 ] as const;
@@ -95,6 +100,19 @@ export type MaintenanceTabId =
   | "tire_wear"
   | "predictive_alerts"
   | "pre_flight_dvir";
+
+/** Shared primary subnav items for MaintenanceHome + MaintenanceShell (R313 #3). */
+export function maintenancePrimarySubNavItems(): Array<{ label: string; to: string }> {
+  return SUBNAV.map((item) => ({
+    label: item.label,
+    to:
+      item.id === "in_shop"
+        ? "/maintenance/fleet-table?status=in-shop"
+        : item.id === "cost_per_mile"
+          ? "/reports/maintenance-cost-per-unit"
+          : MAINTENANCE_TAB_PATH[item.id] ?? "/maintenance",
+  }));
+}
 
 type DriverReportKind = "driver" | "damage" | "in_transit" | "dvir";
 
@@ -400,9 +418,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
       <MaintenanceSubNav />
 
-      <NavyPageSubNav
-        items={SUBNAV.map((item) => ({ label: item.label, to: MAINTENANCE_TAB_PATH[item.id] ?? "/maintenance" }))}
-      />
+      <NavyPageSubNav items={maintenancePrimarySubNavItems()} />
 
       {/* MAINT-F7528 — Home owns RMStatStrip (non-kanban tiles only, C-36). */}
       {!isHomeTab && tab !== "settings" ? (
@@ -698,6 +714,14 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
       {tab === "parts_inventory" ? (
         <div className="space-y-2" data-testid="maintenance-parts-inventory-tab" data-maintenance-tab="parts_inventory">
+          <p
+            className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs text-[#1F2A44]"
+            data-testid="maintenance-parts-capitalize-rule"
+          >
+            Parts inventory tracks on-hand stock. Repair capitalization stays the locked{" "}
+            <span className="font-semibold">$7,000</span> threshold (at/above → Fixed Asset; under → expense). R313&apos;s
+            &quot;$50&quot; wording is not a second GL threshold — OUTBOX for owner if a separate parts-sku rule is intended.
+          </p>
           {partsInventoryKpisQuery.isError ? (
             <ListErrorState
               title="Couldn't load parts inventory KPIs"
@@ -925,8 +949,9 @@ export function MaintenanceSubNav() {
 
 export function MaintenanceShell({ children }: { children: ReactNode }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-testid="maintenance-shell-r313">
       <MaintenanceSubNav />
+      <NavyPageSubNav items={maintenancePrimarySubNavItems()} />
       {children}
     </div>
   );
