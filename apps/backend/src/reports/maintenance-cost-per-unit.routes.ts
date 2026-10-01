@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import type { PoolClient } from "pg";
 import { z } from "zod";
 import { createTtlCache } from "../lib/ttl-cache.js";
+import { computePmCostPerMile } from "../maintenance/pm-cost-per-mile.service.js";
 import {
   companyQuerySchema,
   currentAuthUser,
@@ -115,8 +116,14 @@ type MaintTruckRow = {
   labor_cents: number;
   outsourced_cents: number;
   total_cents: number;
-  miles_driven: number;
+  /** Real driven miles (odometer, E-15 engine) -- NULL with miles_driven_reason when not measurable. */
+  miles_driven: number | null;
+  miles_driven_reason: string | null;
+  /** Maintenance cost per REAL driven mile. NULL when real miles are not measurable -- never billed miles. */
   cost_per_mile_cents: number | null;
+  /** Practical (billed, PC*MILER) miles on the truck's loads in the period -- shown beside, labelled. */
+  practical_miles: number;
+  cost_per_practical_mile_cents: number | null;
   avg_wo_cents: number;
   max_single_wo_cents: number;
   flags: MaintCostFlag[];
@@ -276,7 +283,9 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
         `
           SELECT
             l.assigned_unit_id::text AS unit_id,
-            COALESCE(SUM(COALESCE(l.miles_practical, l.miles_shortest, 0)), 0)::text AS miles
+            -- Practical (billed) miles only. Mixing in miles_shortest where practical was missing blended two
+            -- bases into one number; the real-driven basis comes from the E-15 odometer engine below.
+            COALESCE(SUM(l.miles_practical), 0)::text AS miles
           FROM mdata.loads l
           WHERE l.operating_company_id = $1::uuid
             AND l.soft_deleted_at IS NULL
@@ -302,6 +311,10 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
 
       const milesByUnit = new Map<string, number>();
       for (const row of milesRows.rows) milesByUnit.set(row.unit_id, num(row.miles));
+      // ORDER-2026-09-04 / E-15: real driven miles per truck from the ONE odometer engine (never practical/short).
+      const realByUnit = new Map(
+        (await computePmCostPerMile(client, operatingCompanyId, startDay, endDay)).units.map((u) => [u.unit_id, u])
+      );
 
       const lastInspectionByUnit = new Map<string, string>();
       for (const row of inspectionRows.rows) {
@@ -335,8 +348,12 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
         const outsourced_cents = num(row.outsourced_cents);
         const total_cents = num(row.total_cents);
         const max_single_wo_cents = num(row.max_single_wo_cents);
-        const miles_driven = milesByUnit.get(row.unit_id) ?? 0;
-        const cost_per_mile_cents = miles_driven > 0 ? Math.round(total_cents / miles_driven) : null;
+        const real = realByUnit.get(row.unit_id);
+        const miles_driven = real?.real_driven_miles ?? null;
+        const miles_driven_reason = miles_driven == null ? (real?.real_driven_reason ?? "truck not in the odometer engine's active fleet") : null;
+        const cost_per_mile_cents = miles_driven != null && miles_driven > 0 ? Math.round(total_cents / miles_driven) : null;
+        const practical_miles = milesByUnit.get(row.unit_id) ?? 0;
+        const cost_per_practical_mile_cents = practical_miles > 0 ? Math.round(total_cents / practical_miles) : null;
         const avg_wo_cents = wo_count > 0 ? Math.round(total_cents / wo_count) : 0;
 
         woCountTotal += wo_count;
@@ -358,7 +375,7 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
           p75,
           p25,
           median,
-          miles: miles_driven,
+          miles: miles_driven ?? 0,
           inspectionDue,
         });
 
@@ -371,7 +388,10 @@ export async function registerMaintenanceCostPerUnitRoutes(app: FastifyInstance)
           outsourced_cents,
           total_cents,
           miles_driven,
+          miles_driven_reason,
           cost_per_mile_cents,
+          practical_miles,
+          cost_per_practical_mile_cents,
           avg_wo_cents,
           max_single_wo_cents,
           flags,

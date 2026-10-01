@@ -1252,3 +1252,20 @@ cost and gallons plumbing ties out. 14 trucks, 82 lanes. 1.1 s.
 **next (part C, one CPM engine):** the existing Per-truck CPM dashboard computes its own CPM on practical miles
 from non-canonical cost (counts voided driver bills) and is subtitled "Real cost-per-mile" — re-point it onto
 this engine and label its basis.
+
+## 2026-10-01 — Three-mile CPM part B MERGED (#23736, 6f132a04cf) · part C: one basis per figure, systemwide
+
+**root finding:** 8 sites in 5 engines computed "miles" as `COALESCE(miles_practical, miles_shortest)` — billed
+miles for some loads, paid miles for others, in one number: Per-truck CPM dashboard, Maintenance cost per unit,
+per-truck CPM calculator, unit financials (3 queries), lane profitability (2), load profitability, and the
+company settlement report's MPG. The Per-truck dashboard also counted **voided driver bills** as pay (live:
+IH 35 Transportation 2 bills, $10,700.00) and was subtitled "Real cost-per-mile" while dividing by billed miles.
+Maintenance cost per unit was a second maintenance CPM per truck on those blended miles.
+**fix:** every one is now practical-only and says so (settlement MPG = practical, the owner's AlwaysTrack basis).
+Per-truck dashboard: voided driver bills excluded; columns "Practical mi (billed)", "Real driven mi",
+"Cost/mi · practical", "Cost/mi · real driven" (real miles from the E-15 odometer engine, "—" with reason);
+honest subtitle. Maintenance cost per unit: "Real driven mi" + "$/mi · real driven" from E-15, practical shown
+beside and labelled.
+**guard:** step 12045 now fails on ANY backend blend of practical and shortest (exempt, with reasons: IFTA state
+apportionment; settlement driver-pay rate, which names its basis per row) and pins both truck reports to the
+odometer engine and the void filter (selftest 16/16). vitest backend 32 + frontend 8 green.

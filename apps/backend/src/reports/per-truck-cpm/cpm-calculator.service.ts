@@ -38,7 +38,7 @@ export async function calculatePerTruckCpm(
         SELECT
           l.id,
           l.assigned_unit_id,
-          COALESCE(l.miles_practical, l.miles_shortest, 0)::bigint AS trip_miles
+          COALESCE(l.miles_practical, 0) /* practical (billed) basis only -- ORDER-2026-09-04: never blended with shortest */::bigint AS trip_miles
         FROM mdata.loads l
         WHERE l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL

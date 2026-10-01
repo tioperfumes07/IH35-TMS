@@ -13,9 +13,15 @@
  *   7. the load screen stops naming each mileage basis;
  *   8. the three-mile CPM report (reports/three-mile-cpm.service.ts) computes its own cost instead of the
  *      canonical per-load cost rollup, divides one basis's miles into the cost of loads without that basis,
- *      loses a basis label, counts voided or non-diesel gallons in MPG, or is unwired from the route/screen.
+ *      loses a basis label, counts voided or non-diesel gallons in MPG, or is unwired from the route/screen;
+ *   9. any backend file blends two mileage bases into one number -- COALESCE(miles_practical, miles_shortest)
+ *      (measured 2026-10-01: 8 sites in 5 engines did, so "miles" was billed for some loads and paid for others);
+ *      exempt: IFTA state apportionment (not a cost-per-mile figure) and the settlement driver-pay rate,
+ *      which names its basis on every row (miles_basis_type);
+ *  10. the truck-level CPM reports (Per-truck CPM dashboard, Maintenance cost per unit) stop taking real driven
+ *      miles from the one odometer engine, or the Per-truck dashboard counts voided driver bills as pay.
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -86,6 +92,34 @@ export function checkReport(src, index, panel, page) {
   return p;
 }
 
+const BLEND = /COALESCE\(\s*(?:SUM\()?\s*(?:\w+\.)?miles_practical\s*,\s*(?:\w+\.)?miles_shortest/;
+const BLEND_EXEMPT = new Map([
+  ["apps/backend/src/ifta/ifta-state-miles-aggregator.ts", "IFTA state apportionment, not a cost-per-mile figure"],
+  ["apps/backend/src/driver-finance/settlements.service.ts", "driver-pay effective rate; every row names its basis in miles_basis_type (CC-3 lane)"],
+]);
+function backendFiles(dir = "apps/backend/src", out = []) {
+  for (const name of readdirSync(resolve(ROOT, dir))) {
+    const rel = `${dir}/${name}`;
+    if (name === "__tests__" || name === "node_modules") continue;
+    if (statSync(resolve(ROOT, rel)).isDirectory()) backendFiles(rel, out);
+    else if (/\.ts$/.test(name) && !/\.test\.ts$/.test(name)) out.push(rel);
+  }
+  return out;
+}
+export function checkNoBlendedBasis(files) {
+  const p = [];
+  for (const [rel, src] of files) if (!BLEND_EXEMPT.has(rel) && BLEND.test(strip(src))) p.push(`${rel}: blends practical and shortest miles into one basis -- name ONE basis per figure.`);
+  return p;
+}
+const PPT = "apps/backend/src/reports/profit-per-truck.routes.ts";
+const MCPU = "apps/backend/src/reports/maintenance-cost-per-unit.routes.ts";
+export function checkTruckReports(ppt, mcpu) {
+  const p = [];
+  for (const [rel, src] of [[PPT, ppt], [MCPU, mcpu]]) if (!/computePmCostPerMile\(client,/.test(strip(src))) p.push(`${rel}: real driven miles no longer come from the one odometer engine (computePmCostPerMile).`);
+  if (!/db\.status <> 'void'/.test(ppt)) p.push(`${PPT}: driver pay counts voided driver bills.`);
+  return p;
+}
+
 if (process.argv.includes("--selftest")) {
   let ok = true;
   const expect = (name, problems, wantFail) => {
@@ -104,13 +138,21 @@ if (process.argv.includes("--selftest")) {
   expect("report sums bills itself", checkReport(rp[0] + "\nconst x = `SELECT 1 FROM accounting.bill_lines`;", rp[1], rp[2], rp[3]), true);
   expect("report mixes bases", checkReport(rp[0].replace("const with_ = loads.filter((l) => l.miles[basis] != null", "const with_ = loads.filter((l) => true || l.miles[basis] != null").replace("with_.reduce((s, l) => s + l.direct_cost_cents, 0)", "loads.reduce((s, l) => s + l.direct_cost_cents, 0)"), rp[1], rp[2], rp[3]), true);
   expect("MPG counts voided fuel", checkReport(rp[0].replace("ft.voided_at IS NULL AND ft.fuel_type = 'diesel'", "ft.fuel_type = 'diesel'"), rp[1], rp[2], rp[3]), true);
-  console.log(ok ? `${LABEL} --selftest PASS (11/11)` : `${LABEL} --selftest FAIL`);
+  const all = backendFiles().map((f) => [f, read(f)]);
+  expect("real backend has no blended basis", checkNoBlendedBasis(all), false);
+  expect("a new blend is caught", checkNoBlendedBasis([["apps/backend/src/x.ts", "SELECT COALESCE(l.miles_practical, l.miles_shortest, 0)"]]), true);
+  expect("IFTA exemption honoured", checkNoBlendedBasis([["apps/backend/src/ifta/ifta-state-miles-aggregator.ts", "COALESCE(SUM(COALESCE(l.miles_practical, l.miles_shortest, 0)), 0)"]]), false);
+  expect("real truck reports", checkTruckReports(read(PPT), read(MCPU)), false);
+  expect("voided driver bills counted", checkTruckReports(read(PPT).replace("db.status <> 'void'", "true"), read(MCPU)), true);
+  console.log(ok ? `${LABEL} --selftest PASS (16/16)` : `${LABEL} --selftest FAIL`);
   process.exit(ok ? 0 : 1);
 }
 const problems = [
   ...checkEngine(read(ENGINE)),
   ...checkWiring(read(MIGRATION), read(INDEX), read(SCREEN), read(DRAWER)),
   ...checkReport(read(REPORT), read(INDEX), read(REPORT_PANEL), read(REPORT_PAGE)),
+  ...checkNoBlendedBasis(backendFiles().map((f) => [f, read(f)])),
+  ...checkTruckReports(read(PPT), read(MCPU)),
 ];
 if (problems.length) { console.error(`${LABEL} FAILED:\n  - ${problems.join("\n  - ")}`); process.exit(1); }
-console.log(`${LABEL}: OK -- load/leg real driven miles from geofence or device-recorded odometer only; NULL with reason, never 0 or partial; one anchor rule; stored, cron and screen wired; three-mile CPM report on the canonical cost rollup, every basis named.`);
+console.log(`${LABEL}: OK -- load/leg real driven miles from geofence or device-recorded odometer only; NULL with reason, never 0 or partial; one anchor rule; stored, cron and screen wired; three-mile CPM report on the canonical cost rollup, every basis named; no blended mileage basis; truck CPM reports on the odometer engine.`);

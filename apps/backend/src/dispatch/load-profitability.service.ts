@@ -117,7 +117,7 @@ export async function computeLoadProfitability(
        l.status,
        l.customer_id::text AS customer_id,
        COALESCE(l.rate_total_cents, 0)::bigint AS revenue_cents,
-       COALESCE(l.miles_practical, l.miles_shortest, 0)::bigint AS miles,
+       COALESCE(l.miles_practical, 0) /* practical (billed) basis only -- ORDER-2026-09-04: never blended with shortest */::bigint AS miles,
        -- DISP-PHANTOM-CLASS: this read l.delivered_at, which DOES NOT EXIST on mdata.loads
        -- (verified on prod 2026-07-27: the table has created_at and updated_at, no delivered_at and
        -- no completed_at). Every call threw 42703, so per-load profitability — revenue vs cost per

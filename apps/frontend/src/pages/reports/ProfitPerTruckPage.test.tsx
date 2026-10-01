@@ -18,6 +18,8 @@ vi.mock("../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "00000000-0000-4000-8000-000000000099" }),
 }));
 
+// The three-mile panel (ORDER-2026-09-04) renders its own table/search; this test covers the per-truck table.
+vi.mock("../../components/reports/ThreeMileCpmPanel", () => ({ ThreeMileCpmPanel: () => null }));
 vi.mock("recharts", () => ({
   ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div data-testid="responsive-chart">{children}</div>,
   BarChart: ({ children }: { children: React.ReactNode }) => <div data-testid="bar-chart">{children}</div>,
@@ -113,7 +115,7 @@ describe("ProfitPerTruckPage", () => {
     expect(screen.getByText("High maintenance")).toBeInTheDocument();
   });
 
-  it("sorts when Miles header clicked", async () => {
+  it("sorts when Practical mi header clicked", async () => {
     const user = userEvent.setup();
     vi.spyOn(reportsApi, "getProfitPerTruck").mockResolvedValue(samplePayload);
     render(wrap(<ProfitPerTruckPage />));
@@ -123,7 +125,7 @@ describe("ProfitPerTruckPage", () => {
     // "Miles▲" and a second exact `getByText("Miles")` no longer matches — which is why clicking twice
     // failed while clicking once worked. Target the button by accessible name anchored at the start, so
     // the assertion survives the arrow instead of depending on the sort being off.
-    const milesHeader = () => within(table).getByRole("button", { name: /^Miles/ });
+    const milesHeader = () => within(table).getByRole("button", { name: /^Practical mi/ });
     const firstRow = () => within(table).getAllByRole("row")[1];
 
     // ParityTable.toggleSort: a NEW key sorts ASC, clicking the ACTIVE key flips to DESC. The page passes

@@ -870,10 +870,18 @@ export type ProfitPerTruckRow = {
   net_profit_cents: number;
   margin_pct: number;
   load_count: number;
+  /** Practical (billed) miles -- see miles_basis. */
   miles_driven: number;
+  miles_basis?: "practical";
+  loads_without_practical_miles?: number;
   revenue_per_mile_cents: number;
+  /** Cost per PRACTICAL (billed) mile. */
   cost_per_mile_cents: number;
   profit_per_mile_cents: number;
+  /** ORDER-2026-09-04: real driven miles (odometer) and cost per real mile; null with the reason. */
+  real_driven_miles?: number | null;
+  real_driven_reason?: string | null;
+  cost_per_real_mile_cents?: number | null;
   primary_driver_id: string | null;
   primary_driver_name: string | null;
   flags: ProfitPerTruckFlag[];
@@ -1142,8 +1150,13 @@ export type MaintenanceCostUnitRow = {
   labor_cents: number;
   outsourced_cents: number;
   total_cents: number;
-  miles_driven: number;
+  /** Real driven miles (odometer) -- null with miles_driven_reason when not measurable. */
+  miles_driven: number | null;
+  miles_driven_reason?: string | null;
+  /** Maintenance cost per REAL driven mile. */
   cost_per_mile_cents: number | null;
+  practical_miles?: number;
+  cost_per_practical_mile_cents?: number | null;
   avg_wo_cents: number;
   max_single_wo_cents: number;
   flags: MaintenanceCostFlag[];

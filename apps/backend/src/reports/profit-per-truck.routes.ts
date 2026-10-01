@@ -7,6 +7,7 @@ import { createTtlCache } from "../lib/ttl-cache.js";
 // real per-truck profit/revenue on this report. Live-confirmed 2026-08-24: 6 real loads with real
 // dollar amounts are attached to TEST-* units on prod, unprotected by either exclusion mechanism.
 import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visibility.js";
+import { computePmCostPerMile } from "../maintenance/pm-cost-per-mile.service.js";
 
 const legacyQuerySchema = companyQuerySchema.extend({
   month: z.string().regex(/^\d{4}-\d{2}$/),
@@ -50,10 +51,18 @@ type TruckAggRow = {
   net_profit_cents: number;
   margin_pct: number;
   load_count: number;
+  /** Practical (billed, PC*MILER) miles on the truck's loads. Named for compatibility; the basis is `miles_basis`. */
   miles_driven: number;
+  miles_basis: "practical";
+  loads_without_practical_miles: number;
   revenue_per_mile_cents: number;
+  /** Cost per PRACTICAL (billed) mile. */
   cost_per_mile_cents: number;
   profit_per_mile_cents: number;
+  /** ORDER-2026-09-04: real driven miles (odometer, E-15 engine) and cost per real mile; NULL with the reason. */
+  real_driven_miles: number | null;
+  real_driven_reason: string | null;
+  cost_per_real_mile_cents: number | null;
   primary_driver_id: string | null;
   primary_driver_name: string | null;
   flags: TruckFlag[];
@@ -65,6 +74,7 @@ type UnitSqlRow = {
   revenue_cents: string;
   miles_driven: string;
   load_count: string;
+  loads_without_practical: string;
   truck_type: string;
   driver_pay_cents: string;
   maintenance_cents: string;
@@ -104,7 +114,8 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
                 l.assigned_primary_driver_id,
                 l.rate_total_cents,
                 l.trailer_type,
-                COALESCE(l.miles_practical, l.miles_shortest, 0)::bigint AS trip_miles
+                -- Practical (billed) miles only -- never blended with shortest (a second basis).
+                l.miles_practical AS trip_miles
               FROM mdata.loads l
               WHERE l.operating_company_id = $1::uuid
                 AND l.soft_deleted_at IS NULL
@@ -117,6 +128,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
                 ls.assigned_unit_id AS unit_id,
                 COALESCE(SUM(ls.rate_total_cents), 0)::bigint AS revenue_cents,
                 COALESCE(SUM(ls.trip_miles), 0)::bigint AS miles_driven,
+                COUNT(*) FILTER (WHERE ls.trip_miles IS NULL)::int AS loads_without_practical,
                 COUNT(*)::int AS load_count,
                 MAX(ls.trailer_type::text) AS truck_type
               FROM load_scope ls
@@ -126,6 +138,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
               SELECT l.assigned_unit_id AS unit_id, COALESCE(SUM(db.gross_amount_cents), 0)::bigint AS driver_pay_cents
               FROM driver_finance.driver_bills db
               JOIN load_scope l ON l.id = db.load_id
+             WHERE db.status <> 'void' -- a voided driver bill is not pay (same rule as the canonical load-cost rollup)
               GROUP BY l.assigned_unit_id
             ),
             maint AS (
@@ -164,6 +177,7 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
               COALESCE(agg.revenue_cents, 0)::text AS revenue_cents,
               COALESCE(agg.miles_driven, 0)::text AS miles_driven,
               COALESCE(agg.load_count, 0)::text AS load_count,
+              COALESCE(agg.loads_without_practical, 0)::text AS loads_without_practical,
               COALESCE(agg.truck_type::text, 'unknown') AS truck_type,
               COALESCE(pay.driver_pay_cents, 0)::text AS driver_pay_cents,
               COALESCE(maint.maintenance_cents, 0)::text AS maintenance_cents,
@@ -234,6 +248,9 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
           }
         }
 
+        // ORDER-2026-09-04 / E-15: real driven miles per truck from the ONE odometer engine.
+        const realByUnit = new Map((await computePmCostPerMile(client, companyId, pStart, pEnd)).units.map((u) => [u.unit_id, u]));
+
         const by_truck: TruckAggRow[] = (baseRes.rows as UnitSqlRow[]).map((row) => {
           const unitId = String(row.unit_id);
           const revenue = num(row.revenue_cents);
@@ -251,6 +268,8 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
           const cpm = miles > 0 ? totalCost / miles : 0;
           const ppm = miles > 0 ? net / miles : 0;
           const primaryId = row.primary_driver_id ? String(row.primary_driver_id) : null;
+          const real = realByUnit.get(unitId);
+          const realMiles = real?.real_driven_miles ?? null;
 
           return {
             unit_id: unitId,
@@ -269,6 +288,11 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
             revenue_per_mile_cents: Math.round(rpm),
             cost_per_mile_cents: Math.round(cpm),
             profit_per_mile_cents: Math.round(ppm),
+            miles_basis: "practical" as const,
+            loads_without_practical_miles: Math.floor(num(row.loads_without_practical)),
+            real_driven_miles: realMiles,
+            real_driven_reason: realMiles == null ? (real?.real_driven_reason ?? "truck not in the odometer engine's active fleet") : null,
+            cost_per_real_mile_cents: realMiles != null && realMiles > 0 ? Math.round(totalCost / realMiles) : null,
             primary_driver_id: primaryId,
             primary_driver_name: primaryId ? namesMap.get(primaryId) ?? null : null,
             flags: [] as TruckFlag[],

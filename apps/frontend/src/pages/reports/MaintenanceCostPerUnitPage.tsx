@@ -1,3 +1,4 @@
+import { formatNumberTable } from "../../lib/money";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -117,8 +118,31 @@ export function MaintenanceCostPerUnitPage() {
       { key: "labor_cents", label: "Labor", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.labor_cents) },
       { key: "outsourced_cents", label: "Outsourced", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.outsourced_cents) },
       { key: "total_cents", label: "Total", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.total_cents) },
-      { key: "miles_driven", label: "Miles", sortable: true, className: "text-right", cellClass: "text-right" },
-      { key: "cost_per_mile_cents", label: "$/Mile", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => (r.cost_per_mile_cents === null ? "—" : money(r.cost_per_mile_cents)) },
+      {
+        key: "miles_driven",
+        label: "Real driven mi",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (r) => (r.miles_driven == null ? <span title={r.miles_driven_reason ?? undefined}>—</span> : formatNumberTable(r.miles_driven, 1)),
+      },
+      {
+        key: "cost_per_mile_cents",
+        label: "$/mi · real driven",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (r) => (r.cost_per_mile_cents === null ? <span title={r.miles_driven_reason ?? undefined}>—</span> : money(r.cost_per_mile_cents)),
+      },
+      { key: "practical_miles", label: "Practical mi (billed)", sortable: true, className: "text-right", cellClass: "text-right" },
+      {
+        key: "cost_per_practical_mile_cents",
+        label: "$/mi · practical",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right",
+        render: (r) => (r.cost_per_practical_mile_cents == null ? "—" : money(r.cost_per_practical_mile_cents)),
+      },
       {
         key: "flags",
         label: "Flags",
@@ -145,9 +169,9 @@ export function MaintenanceCostPerUnitPage() {
   );
 
   function exportCsv() {
-    const h = ["Unit", "WOs", "Parts", "Labor", "Outsourced", "Total", "Miles", "PerMile", "Flags"];
+    const h = ["Unit", "WOs", "Parts", "Labor", "Outsourced", "Total", "Real driven miles", "Per real mile", "Flags"];
     const lines = filtered.map((r) =>
-      [r.unit_number, r.wo_count, r.parts_cents, r.labor_cents, r.outsourced_cents, r.total_cents, r.miles_driven, r.cost_per_mile_cents ?? "", r.flags.join("|")].join(","),
+      [r.unit_number, r.wo_count, r.parts_cents, r.labor_cents, r.outsourced_cents, r.total_cents, r.miles_driven ?? "", r.cost_per_mile_cents ?? "", r.flags.join("|")].join(","),
     );
     const blob = new Blob([[h.join(","), ...lines].join("\n")], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -181,7 +205,7 @@ export function MaintenanceCostPerUnitPage() {
           <td style="text-align:right">${esc(money(r.labor_cents))}</td>
           <td style="text-align:right">${esc(money(r.outsourced_cents))}</td>
           <td style="text-align:right">${esc(money(r.total_cents))}</td>
-          <td style="text-align:right">${esc(r.miles_driven)}</td>
+          <td style="text-align:right">${esc(r.miles_driven ?? "—")}</td>
           <td style="text-align:right">${esc(r.cost_per_mile_cents === null ? "—" : money(r.cost_per_mile_cents))}</td>
           <td>${esc((r.flags ?? []).map((f) => FLAG_META[f]?.label ?? formatMaintCostFlagLabel(f)).join(", ") || "—")}</td>
         </tr>`,
@@ -216,7 +240,7 @@ export function MaintenanceCostPerUnitPage() {
               <th>Unit</th><th style="text-align:right">WOs</th>
               <th style="text-align:right">Parts</th><th style="text-align:right">Labor</th>
               <th style="text-align:right">Outsourced</th><th style="text-align:right">Total</th>
-              <th style="text-align:right">Miles</th><th style="text-align:right">$/mi</th>
+              <th style="text-align:right">Real driven mi</th><th style="text-align:right">$/real mi</th>
               <th>Flags</th>
             </tr>
           </thead>

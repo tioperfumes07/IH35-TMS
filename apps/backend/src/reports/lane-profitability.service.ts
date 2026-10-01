@@ -84,7 +84,7 @@ const LANE_COMPUTE_SQL = `
       d.destination_city,
       d.destination_state,
       COALESCE(l.rate_total_cents, 0)::bigint AS revenue_cents,
-      COALESCE(l.miles_practical, l.miles_shortest, 0)::bigint AS trip_miles,
+      COALESCE(l.miles_practical, 0) /* practical (billed) basis only -- ORDER-2026-09-04: never blended with shortest */::bigint AS trip_miles,
       COALESCE(l.loaded_miles, l.miles_practical, l.miles_shortest, 0)::bigint AS loaded_miles,
       COALESCE(l.deadhead_miles_to_pickup, l.miles_deadhead, 0)::bigint AS deadhead_miles,
       l.created_at::date AS load_date
@@ -481,7 +481,7 @@ export async function getLaneLoadDetails(
           l.load_number,
           l.created_at,
           COALESCE(l.rate_total_cents, 0)::bigint AS revenue_cents,
-          COALESCE(l.miles_practical, l.miles_shortest, 0)::bigint AS trip_miles
+          COALESCE(l.miles_practical, 0) /* practical (billed) basis only -- ORDER-2026-09-04: never blended with shortest */::bigint AS trip_miles
         FROM mdata.loads l
         JOIN pickup p ON p.load_id = l.id
         JOIN delivery d ON d.load_id = l.id

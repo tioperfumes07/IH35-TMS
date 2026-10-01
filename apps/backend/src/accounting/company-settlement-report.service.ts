@@ -524,7 +524,7 @@ export async function buildCompanySettlementReport(
       SELECT
         COALESCE(SUM(miles_practical), 0)::text AS miles_practical,
         COALESCE(SUM(miles_shortest), 0)::text AS miles_shortest,
-        COALESCE(SUM(COALESCE(miles_practical, miles_shortest)), 0)::text AS total_miles,
+        COALESCE(SUM(miles_practical), 0)::text AS total_miles /* practical (customer) miles -- the AlwaysTrack MPG basis (owner 2026-09-04); never blended with shortest */,
         COUNT(miles_practical)::text AS loads_with_practical,
         COUNT(miles_shortest)::text AS loads_with_shortest,
         COUNT(*) FILTER (WHERE miles_practical IS NULL AND miles_shortest IS NULL)::text AS loads_with_neither
