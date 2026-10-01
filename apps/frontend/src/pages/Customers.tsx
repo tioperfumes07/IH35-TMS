@@ -44,6 +44,10 @@ import { CustomerEditDrawer } from "../components/customers/CustomerEditDrawer";
 import { CustomerListSidebar } from "./customers/CustomerListSidebar";
 import { CustomersListView } from "./customers/CustomersListView";
 import { CustomersSyncPanel } from "./customers/CustomersSyncPanel";
+import { CustomerLocationsSection } from "../components/customers/CustomerLocationsSection";
+import { CustomerFactoringReverseSection } from "../components/customers/CustomerFactoringReverseSection";
+import { ComplaintsReverseSection } from "../components/safety/ComplaintsReverseSection";
+import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { TasksTab } from "../components/tasks/TasksTab";
 import { useViewModePref } from "../hooks/useViewModePref";
 import { useListPageSizePref } from "../hooks/useListPageSizePref";
@@ -129,18 +133,22 @@ function DetailRow({ label, value }: { label: string; value: ReactNode }) {
 }
 
 // Q1 (V7): QBO-style "Customer Details" tab — fully wired from real mdata.customers fields.
+// ROUND 319 ORDERS: locations (geocode badge) · Faro factoring · documents · complaints on the profile.
 function CustomerDetailsTab({
   customer,
   summary,
   onEdit,
+  companyId,
 }: {
   customer: Customer;
   summary: CustomerBillingSummary | undefined;
   onEdit: () => void;
+  companyId: string;
 }) {
   const dash = (v: string | number | null | undefined) => (v == null || v === "" ? "—" : String(v));
   const factoring = customer.factoring_eligible ? "Eligible" : "Not eligible";
   return (
+    <div className="space-y-3" data-testid="customer-details-r319">
     <div className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-xs font-semibold text-gray-900">Customer details</h3>
@@ -207,6 +215,26 @@ function CustomerDetailsTab({
           <DetailRow label="Open balance" value={fmtMoney(summary?.aging_buckets?.total_open ?? 0)} />
         </div>
       </div>
+    </div>
+    {companyId ? (
+      <>
+        <CustomerLocationsSection companyId={companyId} customerId={customer.id} />
+        <CustomerFactoringReverseSection operatingCompanyId={companyId} customerId={customer.id} />
+        <ComplaintsReverseSection
+          operatingCompanyId={companyId}
+          filter={{ customer_id: customer.id }}
+          contextLabel="this customer"
+        />
+        <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-documents-r319">
+          <DocumentsTab
+            entityType="customer"
+            entityId={customer.id}
+            entityName={customer.name}
+            operatingCompanyId={companyId}
+          />
+        </div>
+      </>
+    ) : null}
     </div>
   );
 }
@@ -1578,6 +1606,7 @@ export function CustomersPage() {
                   customer={selectedCustomer}
                   summary={summaryQuery.data}
                   onEdit={() => setEditDrawerCustomer(selectedCustomer)}
+                  companyId={companyId || ""}
                 />
               ) : activeTab === "activity_feed" ? (
                 <CustomerFinancialActivityTab
