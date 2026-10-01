@@ -1,3 +1,6 @@
+**2026-10-01T18:35Z · FAST-MERGE CONTINUOUS · VENDORS PROVEN**
+CURSOR | FAST-MERGED since drain: #23862 factoring · #23865+#23869 maint bill/JE · #23870 driver Fuel · #23871 customer details · #23872 rollup empty-set. Open=0. NOW: Vendor engines guard (ORDERS complete on VendorDetail) `cursor/r319-vendors-engines-c89b`. NEXT: D-H0/D-H1 after Vendors merge.
+
 **2026-10-01T18:20Z · FAST-MERGE DRAIN COMPLETE · DRIVER FUEL TAB**
 CURSOR | MERGED: #23853 maint designs · #23730 · #23862 factoring drawer (`e1a962767d`) · #23865 WO list bill/JE · #23869 JE postings hotfix (`056fc3433e`); closed #23848. Open PRs: 0. NOW: Driver Profile Fuel tab (E-21/E-22 out of Legal) on `cursor/r319-driver-engines-c89b`. NEXT: gate→API merge · Customers · Vendors.
 
