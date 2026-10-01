@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * C-51 — Banking Home + Driver Escrow redesign slice.
- * Asserts: Home tab label, attention strip, Driver Escrow liability banner, 10 tabs.
+ * C-51 / ROUND 304 C-64 — Banking Home + Driver Escrow.
+ * Asserts: Home tab label, Accounts tab, 9-tab subnav (Statement/Plaid + New only),
+ * C-65 side-dock attention, Driver Escrow liability board.
  * Self-test: node scripts/ops/verify-c51-banking-home-escrow.mjs --selftest
  */
 import fs from "node:fs";
@@ -19,9 +20,17 @@ export function check(s) {
   if (!/id:\s*"accounts",\s*label:\s*"Home"/.test(s.nav)) {
     f.push('BANKING_MODULE_TABS accounts label must be "Home"');
   }
-  if ((s.nav.match(/id:\s*"/g) || []).length < 10) f.push("BANKING_MODULE_TABS must keep 10 tabs");
+  if (!/id:\s*"bank_accounts",\s*label:\s*"Accounts"/.test(s.nav)) {
+    f.push('BANKING_MODULE_TABS must include bank_accounts "Accounts" (C-64)');
+  }
+  if (!/BANKING_SUBNAV_TAB_IDS/.test(s.nav)) {
+    f.push("BANKING_SUBNAV_TAB_IDS required — Statement/Plaid stay off the visible subnav");
+  }
   if (!/BankingHomeAttentionStrip/.test(s.home)) f.push("BankingHome must mount BankingHomeAttentionStrip");
+  if (!/BANKING_SUBNAV_TAB_IDS/.test(s.home)) f.push("BankingHome must filter subnav via BANKING_SUBNAV_TAB_IDS");
   if (!/data-c51-home-attention/.test(s.strip)) f.push("attention strip missing data-c51-home-attention");
+  if (!/data-c65-alert-dock/.test(s.strip)) f.push("attention strip must be C-65 side-dock (data-c65-alert-dock)");
+  if (!/fixed/.test(s.strip)) f.push("attention strip must be position fixed (no layout shift)");
   if (!/uncategorizedCount/.test(s.strip) || !/reconciledAccountsCount/.test(s.strip)) {
     f.push("attention strip must surface uncategorized + reconciled facts");
   }
@@ -32,6 +41,16 @@ export function check(s) {
   }
   if (!/Driver Escrow is a liability/.test(s.escrow)) {
     f.push("Driver Escrow must state liability (not expense) in operator copy");
+  }
+  if (!/data-c64-driver-escrow/.test(s.escrow)) f.push("Driver Escrow board missing data-c64-driver-escrow");
+  if (!/WhereTheMoneyIsRail|data-c64-money-rail/.test(s.home)) {
+    f.push("Banking Home must mount Where the money is rail (C-64)");
+  }
+  if (!/NeedsCategorizingQueue|data-c64-needs-categorizing/.test(s.home)) {
+    f.push("Banking Home must mount Needs categorizing queue (C-64)");
+  }
+  if (!/statement-import|Statement Import/.test(s.home)) {
+    f.push("Statement Import must remain reachable from + New");
   }
   return f;
 }
@@ -66,4 +85,4 @@ if (failures.length) {
   for (const x of failures) console.error(" ✗", x);
   process.exit(1);
 }
-console.log("verify-c51-banking-home-escrow OK (Home label + attention strip + escrow liability)");
+console.log("verify-c51-banking-home-escrow OK (C-64 Home+Escrow + C-65 side-dock)");

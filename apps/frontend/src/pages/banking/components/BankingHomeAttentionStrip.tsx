@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { ActionButton } from "../../../components/shared/ActionButton";
+import { X } from "lucide-react";
 
 export type BankingHomeAttentionFacts = {
   uncategorizedCount: number;
@@ -19,10 +21,18 @@ type Props = {
   onDriverEscrow: () => void;
 };
 
+type AttentionRow = {
+  id: string;
+  tone: "bad" | "warn" | "good";
+  title: string;
+  body: string;
+  action?: { label: string; onClick: () => void };
+};
+
 /**
- * C-51 — Banking Home attention strip. Surfaces the buried live facts the owner named
- * (uncategorized backlog, never-reconciled accounts, unbound Cash GL, QBO not connected,
- * Driver Escrow liability pool) in ONE composition above the tiles — not buried in KPI gray.
+ * C-65 / ROUND 304 — house alert surface: fixed right dock, narrow (~380px), enters from
+ * the side. Nothing behind them moves. Never full-width in-flow banners.
+ * Action buttons stay (Map Cash GL, Start reconciliation, …) — 09-12 money-modules pattern.
  */
 export function BankingHomeAttentionStrip({
   facts,
@@ -31,20 +41,27 @@ export function BankingHomeAttentionStrip({
   onCashGl,
   onDriverEscrow,
 }: Props) {
-  const rows: Array<{
-    id: string;
-    tone: "bad" | "warn" | "good";
-    title: string;
-    body: string;
-    action?: { label: string; onClick: () => void };
-  }> = [];
+  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
+
+  useEffect(() => {
+    setDismissed(new Set());
+  }, [
+    facts.uncategorizedCount,
+    facts.reconciledAccountsCount,
+    facts.unboundCashGlCount,
+    facts.qboConnected,
+    facts.escrowDriverCount,
+    facts.escrowBalanceCents,
+  ]);
+
+  const rows: AttentionRow[] = [];
 
   if (facts.transactionCount > 0 && facts.uncategorizedCount > 0) {
     rows.push({
       id: "uncategorized",
       tone: facts.uncategorizedCount / facts.transactionCount >= 0.5 ? "bad" : "warn",
-      title: `${facts.uncategorizedCount.toLocaleString()} of ${facts.transactionCount.toLocaleString()} bank transactions still need Match or Categorize`,
-      body: "This is the For-review backlog. Home must show it before any healthy zero.",
+      title: `${facts.uncategorizedCount.toLocaleString()} need Match or Categorize`,
+      body: `${facts.uncategorizedCount.toLocaleString()} of ${facts.transactionCount.toLocaleString()} bank transactions still for review.`,
       action: { label: "Categorize now", onClick: onCategorize },
     });
   }
@@ -53,16 +70,16 @@ export function BankingHomeAttentionStrip({
     rows.push({
       id: "never-reconciled",
       tone: "bad",
-      title: `0 of ${facts.totalBankAccounts} bank accounts have ever been reconciled`,
-      body: "Reconciliation is the books gate. Do not treat this screen as reconciled.",
+      title: `0 of ${facts.totalBankAccounts} accounts reconciled`,
+      body: "Reconciliation is the books gate.",
       action: { label: "Start reconciliation", onClick: onReconcile },
     });
   } else if (facts.totalBankAccounts > 0 && facts.reconciledAccountsCount < facts.totalBankAccounts) {
     rows.push({
       id: "partial-reconciled",
       tone: "warn",
-      title: `${facts.reconciledAccountsCount} of ${facts.totalBankAccounts} accounts ever reconciled`,
-      body: "Finish the remaining accounts before treating cash as closed.",
+      title: `${facts.reconciledAccountsCount} of ${facts.totalBankAccounts} accounts reconciled`,
+      body: "Finish remaining accounts before treating cash as closed.",
       action: { label: "Open reconciliation", onClick: onReconcile },
     });
   }
@@ -71,8 +88,8 @@ export function BankingHomeAttentionStrip({
     rows.push({
       id: "cash-gl",
       tone: "bad",
-      title: `Cash GL unbound on ${facts.unboundCashGlCount} of ${facts.totalBankAccounts} bank account(s)`,
-      body: "An unbound account cannot post. Map Cash GL before Bank Register work.",
+      title: `Cash GL unbound on ${facts.unboundCashGlCount}`,
+      body: "Map Cash GL before Bank Register work.",
       action: { label: "Map Cash GL", onClick: onCashGl },
     });
   }
@@ -81,8 +98,8 @@ export function BankingHomeAttentionStrip({
     rows.push({
       id: "qbo",
       tone: "warn",
-      title: "QuickBooks is not connected — last sync never",
-      body: "Parallel books. Reconcile first. Do not connect or push until the feed is clean.",
+      title: "QuickBooks is not connected",
+      body: "Parallel books. Reconcile only — no write-back.",
     });
   }
 
@@ -94,44 +111,58 @@ export function BankingHomeAttentionStrip({
     rows.push({
       id: "escrow",
       tone: "warn",
-      title: `Driver Escrow liability pool ${dollars} across ${facts.escrowDriverCount} driver(s)`,
-      body: "Escrow is a liability the company owes back — not an expense. Open the Driver Escrow register.",
+      title: `Driver Escrow ${dollars}`,
+      body: `Liability across ${facts.escrowDriverCount} driver(s).`,
       action: { label: "Driver Escrow", onClick: onDriverEscrow },
     });
   }
 
-  if (rows.length === 0) return null;
+  const visible = rows.filter((r) => !dismissed.has(r.id));
+  if (visible.length === 0) return null;
 
   return (
-    <section
-      className="space-y-2 rounded-sm border border-[#E5E7EB] bg-white p-2"
+    <aside
+      className="pointer-events-none fixed bottom-3 right-3 z-[220] flex w-[min(380px,calc(100vw-1.5rem))] flex-col gap-1.5"
       data-testid="banking-home-attention-strip"
       data-c51-home-attention="1"
+      data-c65-alert-dock="1"
       aria-label="Banking Home attention"
     >
-      <p className="px-1 text-xs font-bold uppercase tracking-wide text-[#4B5563]">Needs attention</p>
-      <ul className="space-y-2">
-        {rows.map((row) => {
-          const border = row.tone === "bad" ? "#B42318" : row.tone === "warn" ? "#B54708" : "#027A48";
-          const bg = row.tone === "bad" ? "#fdecea" : row.tone === "warn" ? "#fffaeb" : "#ecfdf3";
-          return (
-            <li
-              key={row.id}
-              className="rounded-sm border border-[#E5E7EB] px-3 py-2 text-xs"
-              style={{ borderLeft: `4px solid ${border}`, background: bg }}
-              data-attention-id={row.id}
-            >
-              <p className="font-semibold text-[#0F1219]">{row.title}</p>
-              <p className="mt-1 text-[#6B7280]">{row.body}</p>
-              {row.action ? (
-                <div className="mt-2">
-                  <ActionButton onClick={row.action.onClick}>{row.action.label}</ActionButton>
-                </div>
-              ) : null}
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+      {visible.map((row) => {
+        const border = row.tone === "bad" ? "#B42318" : row.tone === "warn" ? "#B54708" : "#027A48";
+        const bg = row.tone === "bad" ? "#fdecea" : row.tone === "warn" ? "#fffaeb" : "#ecfdf3";
+        return (
+          <div
+            key={row.id}
+            role="alert"
+            className="pointer-events-auto animate-[slideInRight_180ms_ease-out] rounded-sm border border-[#E5E7EB] px-2.5 py-2 text-xs shadow-sm"
+            style={{ borderLeft: `3px solid ${border}`, background: bg }}
+            data-attention-id={row.id}
+          >
+            <div className="flex items-start gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold leading-snug text-[#0F1219]">{row.title}</p>
+                <p className="mt-0.5 leading-snug text-[#6B7280]">{row.body}</p>
+                {row.action ? (
+                  <div className="mt-1.5">
+                    <ActionButton onClick={row.action.onClick}>{row.action.label}</ActionButton>
+                  </div>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                className="shrink-0 rounded-sm p-0.5 text-[#6B7280] hover:bg-black/5 hover:text-[#0F1219]"
+                aria-label={`Dismiss ${row.title}`}
+                data-testid={`attention-dismiss-${row.id}`}
+                onClick={() => setDismissed((prev) => new Set(prev).add(row.id))}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        );
+      })}
+      <style>{`@keyframes slideInRight{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}`}</style>
+    </aside>
   );
 }

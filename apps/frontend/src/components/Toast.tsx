@@ -22,8 +22,9 @@ function variantClasses(variant: ToastVariant) {
 }
 
 /**
- * C-52 — house alert surface for every module: fixed side-dock, smaller chips,
- * never in document flow (no layout shift). rounded-sm (SQUARE-EDGES LAW).
+ * C-52 + C-65 — house alert surface for every module: fixed right dock (~380px max),
+ * enters from the side, never in document flow (no layout shift). Smaller / subtle.
+ * rounded-sm (SQUARE-EDGES LAW).
  */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -49,9 +50,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={value}>
       {children}
       <div
-        className="pointer-events-none fixed bottom-3 right-3 z-[230] flex w-72 max-w-[min(18rem,calc(100vw-1.5rem))] flex-col gap-1.5"
+        className="pointer-events-none fixed top-14 right-3 z-[230] flex w-[min(380px,calc(100vw-1.5rem))] flex-col gap-1.5"
         data-testid="toast-side-dock"
         data-c52-alert-dock="1"
+        data-c65-alert-dock="1"
         aria-live="polite"
         aria-relevant="additions"
       >
@@ -61,7 +63,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             role="alert"
             data-testid="toast-message"
             data-variant={toast.variant}
-            className={`pointer-events-auto flex items-start gap-2 rounded-sm border px-2 py-1.5 text-xs font-medium shadow-sm ${variantClasses(toast.variant)}`}
+            className={`pointer-events-auto flex animate-[slideInRight_180ms_ease-out] items-start gap-2 rounded-sm border px-2 py-1.5 text-xs font-medium shadow-sm ${variantClasses(toast.variant)}`}
           >
             <span className="min-w-0 flex-1 leading-snug">{toast.message}</span>
             <button
@@ -76,6 +78,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           </div>
         ))}
       </div>
+      <style>{`@keyframes slideInRight{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}`}</style>
     </ToastContext.Provider>
   );
 }

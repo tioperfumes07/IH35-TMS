@@ -19,6 +19,7 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
   { path: "/drivers/disputes", label: "Disputes", module: "drivers" },
   { path: "/drivers/leave", label: "Leave", module: "drivers" },
   { path: "/banking", label: "Banking Home", module: "banking" },
+  { path: "/banking/bank-accounts", label: "Bank Accounts", module: "banking" },
   { path: "/banking/transactions", label: "Banking Transactions", module: "banking" },
   { path: "/banking/reconciliation", label: "Bank Reconciliation", module: "banking" },
   { path: "/banking/factoring", label: "Banking Factoring Entry", module: "banking" },
@@ -82,18 +83,21 @@ export const ROUTE_MANIFEST: RouteManifestEntry[] = [
 
 export const BANKING_TAB_PATH: Record<string, string> = {
   accounts: "/banking",
+  bank_accounts: "/banking/bank-accounts",
   transactions: "/banking/transactions",
   link_suggestions: "/banking/link-suggestions",
   reconciliation: "/banking/reconciliation",
   driver_escrow: "/banking/driver-escrow",
   relay_card: "/banking/relay",
   reports: "/banking/reports",
+  // C-64 — Statement Import + Plaid fold into + New (not tabs). Paths kept for deep links.
   statement_import: "/banking/statement-import",
   plaid_connections: "/banking/plaid-connections",
   settings: "/banking/settings",
 };
 
 export function bankingTabFromPath(pathname: string): string {
+  if (pathname === "/banking/bank-accounts") return "bank_accounts";
   if (pathname === "/banking/transactions") return "transactions";
   if (pathname === "/banking/link-suggestions") return "link_suggestions";
   if (pathname === "/banking/reconciliation") return "reconciliation";

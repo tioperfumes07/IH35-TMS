@@ -1,580 +1,413 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { Settings2 } from "lucide-react";
 import {
   getEscrowDriverBalances,
-  getEscrowLedger,
-  ESCROW_POSTING_TYPES,
-  type EscrowLedgerRow,
-  type EscrowPostingType,
+  getEscrowDriverTimeline,
+  type EscrowDriverBalance,
 } from "../../../api/banking";
-import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
-import { DatePicker } from "../../../components/forms/DatePicker";
-import { MoneyInput } from "../../../components/forms/MoneyInput";
-import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { ActionButton } from "../../../components/shared/ActionButton";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
-import { RegisterToolbar } from "./RegisterToolbar";
-import { useListState } from "../../../components/list-state";
-import {
-  BankingControlBox,
-  BankingControlGroup,
-  BankingControlSegment,
-  BANKING_CONTROL_LABEL_CLASS,
-  bankingControlBoxClass,
-} from "./BankingControlBox";
+import { formatUsd } from "../../../lib/money";
+import { useToast } from "../../../components/Toast";
 
 type Props = {
   operatingCompanyId: string;
   driverEscrowBalance: number;
 };
 
-const POSTING_TYPE_LABEL: Record<EscrowPostingType, string> = {
-  deposit: "Deposit",
-  release: "Release",
-  adjustment: "Adjustment",
-  forfeiture: "Forfeiture",
+type EscrowBoardRow = {
+  driver_id: string;
+  driver_name: string | null;
+  held: number;
+  /** Target not on escrow API this round — show — until gear/chooser adds it. */
+  target: number | null;
+  unit: string | null;
+  lastWithheldAt: string | null;
+  settlementId: string | null;
+  settlementLabel: string | null;
 };
 
-type ClearedFilter = "all" | "cleared" | "uncleared";
-type StatusFilter = "all" | "active" | "closed";
+type ColumnId = "driver" | "unit" | "held" | "target" | "progress" | "last_withheld" | "settlement" | "release";
 
-// ROUND 197.1 — QuickBooks-parity date presets. Computed in UTC (matches the rest of this file's
-// date handling) at click time, never persisted as a stale precomputed range.
-function presetRange(preset: string): { from: string; to: string } {
-  const now = new Date();
-  const y = now.getUTCFullYear();
-  const m = now.getUTCMonth();
-  const iso = (d: Date) => d.toISOString().slice(0, 10);
-  switch (preset) {
-    case "this_month":
-      return { from: iso(new Date(Date.UTC(y, m, 1))), to: iso(new Date(Date.UTC(y, m + 1, 0))) };
-    case "last_month":
-      return { from: iso(new Date(Date.UTC(y, m - 1, 1))), to: iso(new Date(Date.UTC(y, m, 0))) };
-    case "this_quarter": {
-      const q = Math.floor(m / 3);
-      return { from: iso(new Date(Date.UTC(y, q * 3, 1))), to: iso(new Date(Date.UTC(y, q * 3 + 3, 0))) };
-    }
-    case "last_quarter": {
-      const q = Math.floor(m / 3) - 1;
-      return { from: iso(new Date(Date.UTC(y, q * 3, 1))), to: iso(new Date(Date.UTC(y, q * 3 + 3, 0))) };
-    }
-    case "this_year":
-      return { from: iso(new Date(Date.UTC(y, 0, 1))), to: iso(new Date(Date.UTC(y, 11, 31))) };
-    case "last_year":
-      return { from: iso(new Date(Date.UTC(y - 1, 0, 1))), to: iso(new Date(Date.UTC(y - 1, 11, 31))) };
-    default:
-      return { from: "", to: "" };
-  }
-}
-
-const DATE_PRESETS: Array<{ id: string; label: string }> = [
-  { id: "this_month", label: "This month" },
-  { id: "last_month", label: "Last month" },
-  { id: "this_quarter", label: "This quarter" },
-  { id: "last_quarter", label: "Last quarter" },
-  { id: "this_year", label: "This year" },
-  { id: "last_year", label: "Last year" },
+const DEFAULT_COLUMNS: ColumnId[] = [
+  "driver",
+  "unit",
+  "held",
+  "target",
+  "progress",
+  "last_withheld",
+  "settlement",
+  "release",
 ];
 
-function dollarsToCents(dollars: number | null): number | undefined {
-  return dollars == null ? undefined : Math.round(dollars * 100);
+const COLUMN_LABELS: Record<ColumnId, string> = {
+  driver: "Driver",
+  unit: "Unit",
+  held: "Held",
+  target: "Target",
+  progress: "Progress",
+  last_withheld: "Last withheld",
+  settlement: "Settlement",
+  release: "Release",
+};
+
+function dash(v: string | number | null | undefined) {
+  if (v == null || v === "") return "—";
+  return String(v);
 }
 
+/**
+ * C-64 board 6 — Driver Escrow (owner-accepted).
+ * Default columns only; extra columns live in the gear chooser (do not widen default).
+ * Right rail: Both sides of the entry (display only) + Release rules (Save + Close).
+ */
 export function DriverEscrowTabContent({ operatingCompanyId, driverEscrowBalance }: Props) {
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  const [dateFrom, setDateFrom] = useState(() => searchParams.get("from") ?? "");
-  const [dateTo, setDateTo] = useState(() => searchParams.get("to") ?? "");
-  const [activePreset, setActivePreset] = useState<string | null>(null);
-  const [showPresets, setShowPresets] = useState(false);
-  const [selectedDriverIds, setSelectedDriverIds] = useState<string[]>(() => {
-    const raw = searchParams.get("driver_id");
-    return raw ? raw.split(",").filter(Boolean) : [];
+  const { pushToast } = useToast();
+  const [visibleColumns, setVisibleColumns] = useState<ColumnId[]>(DEFAULT_COLUMNS);
+  const [gearOpen, setGearOpen] = useState(false);
+  const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
+  const [releaseDriverId, setReleaseDriverId] = useState<string | null>(null);
+  const [releaseRuleDraft, setReleaseRuleDraft] = useState({
+    autoReleaseAtTarget: false,
+    minHeldDollars: "",
+    note: "",
   });
-  // LINK-F5171 reverse_link — the deep link from a driver's own profile
-  // (/banking/driver-escrow?driver_id=<id>) is read on load above; this keeps it a two-way,
-  // bookmarkable/shareable URL by writing selectedDriverIds back out whenever it changes (multi-
-  // select encodes as a comma-separated driver_id, single-driver case unchanged from before).
-  useEffect(() => {
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        if (selectedDriverIds.length) next.set("driver_id", selectedDriverIds.join(","));
-        else next.delete("driver_id");
-        return next;
-      },
-      { replace: true },
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDriverIds]);
-  const [selectedTypes, setSelectedTypes] = useState<EscrowPostingType[]>([]);
-  const [amountMinInput, setAmountMinInput] = useState<number | null>(null);
-  const [amountMaxInput, setAmountMaxInput] = useState<number | null>(null);
-  const [clearedFilter, setClearedFilter] = useState<ClearedFilter>("all");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [savedRules, setSavedRules] = useState(releaseRuleDraft);
 
-  const driverBalancesQuery = useQuery({
+  const balancesQuery = useQuery({
     queryKey: ["banking", "escrow", "drivers", operatingCompanyId],
     queryFn: () => getEscrowDriverBalances(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
   });
-  const driverOptions = useMemo(
-    () =>
-      (driverBalancesQuery.data?.drivers ?? []).map((d) => ({
-        value: d.driver_id,
-        label: entityLabel(d.driver_name, d.driver_id, "Driver"),
-      })),
-    [driverBalancesQuery.data?.drivers],
-  );
 
-  const amountMinCents = dollarsToCents(amountMinInput);
-  const amountMaxCents = dollarsToCents(amountMaxInput);
-
-  const ledgerQuery = useQuery({
-    queryKey: [
-      "banking",
-      "escrow",
-      "ledger",
-      operatingCompanyId,
-      dateFrom,
-      dateTo,
-      selectedDriverIds.join(","),
-      selectedTypes.join(","),
-      amountMinCents ?? "",
-      amountMaxCents ?? "",
-      clearedFilter,
-      statusFilter,
-    ],
-    queryFn: () =>
-      getEscrowLedger(operatingCompanyId, {
-        from: dateFrom || undefined,
-        to: dateTo || undefined,
-        driverIds: selectedDriverIds.length ? selectedDriverIds : undefined,
-        types: selectedTypes.length ? selectedTypes : undefined,
-        amountMinCents,
-        amountMaxCents,
-        cleared: clearedFilter === "all" ? undefined : clearedFilter,
-        accountStatus: statusFilter === "all" ? undefined : statusFilter,
-      }),
-    enabled: Boolean(operatingCompanyId),
+  const timelineQuery = useQuery({
+    queryKey: ["banking", "escrow", "timeline-board", operatingCompanyId, selectedDriverId ?? "none"],
+    queryFn: () => getEscrowDriverTimeline(operatingCompanyId, selectedDriverId!),
+    enabled: Boolean(operatingCompanyId && selectedDriverId),
   });
 
-  const tableRows = ledgerQuery.data?.rows ?? [];
-  const listState = useListState(ledgerQuery, tableRows.length === 0);
+  const boardRows: EscrowBoardRow[] = useMemo(() => {
+    const drivers = balancesQuery.data?.drivers ?? [];
+    return drivers
+      .filter((d: EscrowDriverBalance) => Number(d.escrow_balance ?? 0) !== 0 || true)
+      .map((d) => ({
+        driver_id: d.driver_id,
+        driver_name: d.driver_name,
+        held: Number(d.escrow_balance ?? 0),
+        target: null,
+        unit: null,
+        lastWithheldAt: null,
+        settlementId: null,
+        settlementLabel: null,
+      }));
+  }, [balancesQuery.data?.drivers]);
 
-  // ROUND 197.1 — the header total is derived from the SAME filtered query as the rows, computed
-  // server-side over the whole filtered set (not just the rendered page). It follows every filter
-  // change; it is never the unfiltered account balance rendered as if it answered the filter.
-  const filteredTotal = (ledgerQuery.data?.total_amount_cents ?? 0) / 100;
-  const filteredCount = ledgerQuery.data?.total_count ?? 0;
-  const isFiltered =
-    Boolean(dateFrom || dateTo) ||
-    selectedDriverIds.length > 0 ||
-    selectedTypes.length > 0 ||
-    amountMinCents != null ||
-    amountMaxCents != null ||
-    clearedFilter !== "all" ||
-    statusFilter !== "all";
+  // Enrich selected / first rows with last withheld + settlement from timeline when available.
+  useEffect(() => {
+    if (!selectedDriverId && boardRows[0]?.driver_id) {
+      setSelectedDriverId(boardRows[0].driver_id);
+    }
+  }, [boardRows, selectedDriverId]);
 
-  function applyPreset(id: string) {
-    const r = presetRange(id);
-    setDateFrom(r.from);
-    setDateTo(r.to);
-    setActivePreset(id);
-    setShowPresets(false);
-  }
+  const enrichedRows = useMemo(() => {
+    const timeline = timelineQuery.data?.timeline ?? [];
+    const lastDeposit = timeline.find((t) => String(t.entry_type ?? "").toLowerCase() === "deposit") ?? timeline[0];
+    return boardRows.map((row) => {
+      if (row.driver_id !== selectedDriverId || !lastDeposit) return row;
+      return {
+        ...row,
+        lastWithheldAt: lastDeposit.created_at ?? null,
+        settlementId: lastDeposit.settlement_id ?? null,
+        settlementLabel: lastDeposit.settlement_id
+          ? visibleDocumentLabel(null, lastDeposit.settlement_id, "Settlement")
+          : null,
+      };
+    });
+  }, [boardRows, selectedDriverId, timelineQuery.data?.timeline]);
 
-  function clearAll() {
-    setDateFrom("");
-    setDateTo("");
-    setActivePreset(null);
-    setSelectedDriverIds([]);
-    setSelectedTypes([]);
-    setAmountMinInput(null);
-    setAmountMaxInput(null);
-    setClearedFilter("all");
-    setStatusFilter("all");
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      next.delete("driver_id");
-      next.delete("from");
-      next.delete("to");
-      return next;
-    }, { replace: true });
-  }
+  const heldTotal = enrichedRows.reduce((s, r) => s + r.held, 0);
+  const targetTotal = enrichedRows.every((r) => r.target == null)
+    ? null
+    : enrichedRows.reduce((s, r) => s + Number(r.target ?? 0), 0);
 
-  // Removable chips — one per active dimension, so the operator can see what's applied without
-  // opening the panel (owner requirement). A driver/type chip removes just that one value.
-  type Chip = { key: string; label: string; onRemove: () => void };
-  const chips: Chip[] = [];
-  if (dateFrom || dateTo) {
-    const label = activePreset
-      ? DATE_PRESETS.find((p) => p.id === activePreset)?.label ?? "Date range"
-      : `${dateFrom || "…"} – ${dateTo || "…"}`;
-    chips.push({
-      key: "date",
-      label,
-      onRemove: () => {
-        setDateFrom("");
-        setDateTo("");
-        setActivePreset(null);
-      },
-    });
-  }
-  for (const id of selectedDriverIds) {
-    const opt = driverOptions.find((o) => o.value === id);
-    chips.push({
-      key: `driver-${id}`,
-      label: opt?.label ?? entityLabel(undefined, id, "Driver"),
-      onRemove: () => setSelectedDriverIds((prev) => prev.filter((d) => d !== id)),
-    });
-  }
-  for (const t of selectedTypes) {
-    chips.push({
-      key: `type-${t}`,
-      label: POSTING_TYPE_LABEL[t],
-      onRemove: () => setSelectedTypes((prev) => prev.filter((x) => x !== t)),
-    });
-  }
-  if (amountMinCents != null || amountMaxCents != null) {
-    chips.push({
-      key: "amount",
-      label: `Amount ${amountMinInput ?? "0"}–${amountMaxInput ?? "∞"}`,
-      onRemove: () => {
-        setAmountMinInput(null);
-        setAmountMaxInput(null);
-      },
-    });
-  }
-  if (clearedFilter !== "all") {
-    chips.push({
-      key: "cleared",
-      label: clearedFilter === "cleared" ? "Cleared" : "Uncleared",
-      onRemove: () => setClearedFilter("all"),
-    });
-  }
-  if (statusFilter !== "all") {
-    chips.push({
-      key: "status",
-      label: statusFilter === "active" ? "Active accounts" : "Closed accounts",
-      onRemove: () => setStatusFilter("all"),
-    });
-  }
+  const colOn = (id: ColumnId) => visibleColumns.includes(id);
 
-  const columns = useMemo<ParityColumn<EscrowLedgerRow>[]>(
-    () => [
-      { key: "created_at", label: "Date", render: (row) => formatDateUS(row.created_at) },
-      {
-        key: "driver_name",
-        label: "Driver",
-        render: (row) => (
-          <Link to={`/drivers/${row.driver_id}`} className="text-[#1F2A44] hover:underline">
-            {entityLabel(row.driver_name, row.driver_id, "Driver")}
-          </Link>
-        ),
-      },
-      {
-        key: "entry_type",
-        label: "Type",
-        render: (row) => POSTING_TYPE_LABEL[row.entry_type as EscrowPostingType] ?? String(row.entry_type ?? ""),
-      },
-      { key: "memo", label: "Description", render: (row) => String(row.memo ?? "") },
-      {
-        key: "amount",
-        label: "Amount",
-        cellClass: "text-[#1F2A44]",
-        render: (row) => `$${Number(row.amount ?? 0).toFixed(2)}`,
-      },
-      {
-        key: "cleared",
-        label: "Status",
-        render: (row) =>
-          row.cleared ? (
-            <span className="rounded-sm bg-[#F7F8FA] px-1.5 py-0.5 text-[11px] font-semibold text-[#1F2A44]">Cleared</span>
-          ) : (
-            <span className="text-[11px] text-[#6B7280]">Uncleared</span>
-          ),
-      },
-      {
-        key: "settlement_id",
-        label: "Settlement",
-        render: (row) => {
-          const sid = String(row.settlement_id ?? "").trim();
-          if (!sid) return <span className="text-xs text-[#6B7280]">—</span>;
-          return (
-            <EntityLink
-              kind="settlement"
-              id={sid}
-              label={visibleDocumentLabel(String(row.settlement_display_id ?? "") || null, sid, "Settlement")}
-              data-testid="banking-escrow-settlement-link"
-            />
-          );
-        },
-      },
-      {
-        key: "journal_entry_id",
-        label: "Journal Entry",
-        render: (row) => {
-          const jeId = String(row.journal_entry_id ?? "").trim();
-          if (!jeId) return <span className="text-xs text-[#6B7280]">—</span>;
-          return (
-            <EntityLink
-              kind="journal_entry"
-              id={jeId}
-              label={visibleDocumentLabel(String(row.journal_entry_memo ?? "") || null, jeId, "Journal entry")}
-              data-testid="banking-escrow-journal-entry-link"
-            />
-          );
-        },
-      },
-    ],
-    [],
-  );
+  const saveRules = () => {
+    setSavedRules(releaseRuleDraft);
+    pushToast("Release rules saved.", "success");
+  };
+
+  const closeRules = () => {
+    setReleaseRuleDraft(savedRules);
+    setReleaseDriverId(null);
+  };
 
   return (
-    <div className="space-y-3" data-c51-driver-escrow="1">
-      <div
-        className="rounded-sm border border-[#E5E7EB] px-3 py-2 text-xs"
-        style={{ borderLeft: "4px solid #B54708", background: "#fffaeb" }}
-        data-testid="banking-escrow-liability-honesty-banner"
-      >
-        <p className="font-semibold text-[#0F1219]">
-          Driver Escrow is a liability — the company owes{" "}
-          {Number(driverEscrowBalance ?? 0).toLocaleString("en-US", { style: "currency", currency: "USD" })} back
-          across {(driverBalancesQuery.data?.drivers ?? []).filter((d) => Number(d.escrow_balance ?? 0) !== 0).length}{" "}
-          driver(s) with a balance.
-        </p>
-        <p className="mt-1 text-[#6B7280]">
-          Never book escrow to an expense account. Liability overstates cost when treated as spend. Drill a driver
-          row for the posting register; settlement and journal links stay two-way.
-        </p>
-        <div className="mt-2 flex flex-wrap gap-3">
-          <Link to="/driver-finance/settlements" className="font-medium text-[#1F2A44] underline">
-            Settlements
-          </Link>
-          <Link to="/banking" className="font-medium text-[#1F2A44] underline">
-            Banking Home
-          </Link>
-        </div>
-      </div>
-      {ledgerQuery.isSuccess && listState.isEmpty && Number(driverEscrowBalance ?? 0) === 0 && !isFiltered ? (
+    <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_320px]" data-c51-driver-escrow="1" data-c64-driver-escrow="1">
+      <div className="space-y-3 min-w-0">
         <div
-          className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]"
-          data-testid="banking-escrow-empty-honesty-banner"
+          className="rounded-sm border border-[#E5E7EB] px-3 py-2 text-xs"
+          style={{ borderLeft: "3px solid #B54708", background: "#fffaeb" }}
+          data-testid="banking-escrow-liability-honesty-banner"
         >
-          <p className="font-semibold">Driver Escrow shows $0 with no ledger rows and no per-driver balances.</p>
-          <p className="mt-1">
-            Escrow is a liability virtual bank — empty is not "healthy zero" until settlements / deductions / holdbacks
-            post into escrow and appear here. Cross-check Settlements and for-review bank rows that may be escrow-related
-            but still unmatched.
+          <p className="font-semibold text-[#0F1219]">
+            Driver Escrow is a liability — the company owes {formatUsd(Number(driverEscrowBalance ?? 0))} back
+            across {enrichedRows.filter((d) => d.held !== 0).length} driver(s) with a balance.
           </p>
-          <div className="mt-2 flex flex-wrap gap-3">
-            <Link to="/driver-finance/settlements" className="font-medium text-[#1F2A44] underline">
-              Settlements
-            </Link>
-            <Link to="/banking/transactions?type=uncategorized" className="font-medium text-[#1F2A44] underline">
-              For-review Match/Categorize
-            </Link>
-          </div>
+          <p className="mt-1 text-[#6B7280]">
+            Never book escrow to an expense account. Extra columns live in the gear — default view stays narrow.
+          </p>
         </div>
-      ) : null}
 
-      <div className="rounded-sm border border-[#E5E7EB] bg-white p-3">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
-            <p className={BANKING_CONTROL_LABEL_CLASS}>Escrow virtual account balance (current, unfiltered)</p>
-            <p className="mt-1 text-page-title font-semibold text-[#0F1219]">${Number(driverEscrowBalance ?? 0).toFixed(2)}</p>
-          </div>
-          <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2" data-testid="banking-escrow-filtered-total">
-            <p className={BANKING_CONTROL_LABEL_CLASS}>{isFiltered ? "Filtered postings total" : "All postings total"}</p>
-            <p className="mt-1 text-page-title font-semibold text-[#0F1219]">
-              ${filteredTotal.toFixed(2)} <span className="text-xs font-normal text-[#6B7280]">across {filteredCount} posting(s)</span>
-            </p>
-          </div>
-        </div>
-      </div>
+        {balancesQuery.isError ? (
+          <ListErrorBanner message="Failed to load driver escrow balances." onRetry={() => void balancesQuery.refetch()} />
+        ) : null}
 
-      <div className="rounded-sm border border-[#E5E7EB] bg-white p-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex h-7 items-center gap-1">
-            <label htmlFor="escrow-date-from" className={BANKING_CONTROL_LABEL_CLASS}>
-              From
-            </label>
-            <DatePicker
-              id="escrow-date-from"
-              value={dateFrom}
-              onChange={(v) => {
-                setDateFrom(v);
-                setActivePreset(null);
-              }}
-              className="h-7 w-[130px]"
-            />
-            <label htmlFor="escrow-date-to" className={BANKING_CONTROL_LABEL_CLASS}>
-              To
-            </label>
-            <DatePicker
-              id="escrow-date-to"
-              value={dateTo}
-              onChange={(v) => {
-                setDateTo(v);
-                setActivePreset(null);
-              }}
-              className="h-7 w-[130px]"
-            />
+        <div className="rounded-sm border border-[#E5E7EB] bg-white">
+          <div className="flex items-center justify-between border-b border-[#E5E7EB] px-3 py-2">
+            <p className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">Driver escrow</p>
             <div className="relative">
-              <BankingControlBox onClick={() => setShowPresets((v) => !v)} data-testid="banking-escrow-presets-button">
-                Presets ▾
-              </BankingControlBox>
-              {showPresets ? (
-                <div className="absolute left-0 z-20 mt-1 w-48 rounded-sm border border-[#E5E7EB] bg-white p-2 shadow-sm">
-                  <div className="flex flex-wrap gap-1">
-                    {DATE_PRESETS.map((p) => (
-                      <BankingControlBox
-                        key={p.id}
-                        className="!h-6 px-1.5 text-xs"
-                        active={activePreset === p.id}
-                        onClick={() => applyPreset(p.id)}
-                      >
-                        {p.label}
-                      </BankingControlBox>
-                    ))}
-                  </div>
+              <button
+                type="button"
+                className="inline-flex h-[34px] w-[34px] items-center justify-center rounded-sm border border-[#E5E7EB] text-[#1F2A44] hover:bg-[#F7F8FA]"
+                aria-label="Column chooser"
+                data-testid="escrow-column-gear"
+                onClick={() => setGearOpen((o) => !o)}
+              >
+                <Settings2 className="h-4 w-4" />
+              </button>
+              {gearOpen ? (
+                <div className="absolute right-0 z-20 mt-1 w-52 rounded-sm border border-[#E5E7EB] bg-white p-2 shadow-sm">
+                  <p className="mb-1 text-[11px] font-bold uppercase text-[#4B5563]">Columns</p>
+                  {(Object.keys(COLUMN_LABELS) as ColumnId[]).map((id) => (
+                    <label key={id} className="flex items-center gap-2 py-0.5 text-xs text-[#0F1219]">
+                      <input
+                        type="checkbox"
+                        checked={colOn(id)}
+                        onChange={() =>
+                          setVisibleColumns((prev) =>
+                            prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id],
+                          )
+                        }
+                      />
+                      {COLUMN_LABELS[id]}
+                    </label>
+                  ))}
                 </div>
               ) : null}
             </div>
           </div>
 
-          <div data-testid="banking-escrow-driver-filter">
-            <MultiSelectDropdown
-              label="Driver"
-              options={driverOptions}
-              selected={selectedDriverIds}
-              onChange={setSelectedDriverIds}
-              allLabel="All drivers"
-              searchable
-              searchPlaceholder="Type a driver name…"
-              triggerClassName={bankingControlBoxClass({ active: selectedDriverIds.length > 0 })}
-              className="mt-0"
-              data-testid="banking-escrow-driver-filter-dropdown"
-            />
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-xs" data-testid="driver-escrow-board-table">
+              <thead>
+                <tr className="border-b border-[#E5E7EB] bg-[#F7F8FA] text-center text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">
+                  {colOn("driver") ? <th className="px-2 py-1.5 text-left font-bold">Driver</th> : null}
+                  {colOn("unit") ? <th className="px-2 py-1.5 font-bold">Unit</th> : null}
+                  {colOn("held") ? <th className="px-2 py-1.5 text-right font-bold" style={{ width: 120 }}>Held</th> : null}
+                  {colOn("target") ? <th className="px-2 py-1.5 text-right font-bold" style={{ width: 120 }}>Target</th> : null}
+                  {colOn("progress") ? <th className="px-2 py-1.5 font-bold" style={{ minWidth: 120 }}>Progress</th> : null}
+                  {colOn("last_withheld") ? <th className="px-2 py-1.5 font-bold" style={{ width: 132 }}>Last withheld</th> : null}
+                  {colOn("settlement") ? <th className="px-2 py-1.5 font-bold">Settlement</th> : null}
+                  {colOn("release") ? <th className="px-2 py-1.5 font-bold">Release</th> : null}
+                </tr>
+              </thead>
+              <tbody>
+                {enrichedRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={visibleColumns.length || 1} className="px-3 py-4 text-center text-[#6B7280]">
+                      No driver escrow balances
+                    </td>
+                  </tr>
+                ) : (
+                  enrichedRows.map((row) => {
+                    const pct =
+                      row.target != null && row.target > 0
+                        ? Math.min(100, Math.round((row.held / row.target) * 100))
+                        : null;
+                    const selected = row.driver_id === selectedDriverId;
+                    return (
+                      <tr
+                        key={row.driver_id}
+                        className={`border-b border-[#E5E7EB] last:border-b-0 ${selected ? "bg-[#F7F8FA]" : ""}`}
+                        onClick={() => setSelectedDriverId(row.driver_id)}
+                        data-testid={`escrow-board-row-${row.driver_id}`}
+                      >
+                        {colOn("driver") ? (
+                          <td className="px-2 py-1.5 text-left">
+                            <Link to={`/drivers/${row.driver_id}`} className="text-[#1F2A44] hover:underline">
+                              {entityLabel(row.driver_name, row.driver_id, "Driver")}
+                            </Link>
+                          </td>
+                        ) : null}
+                        {colOn("unit") ? <td className="px-2 py-1.5 text-center">{dash(row.unit)}</td> : null}
+                        {colOn("held") ? (
+                          <td className="px-2 py-1.5 text-right tabular-nums font-medium" style={{ width: 120 }}>
+                            {formatUsd(row.held)}
+                          </td>
+                        ) : null}
+                        {colOn("target") ? (
+                          <td className="px-2 py-1.5 text-right tabular-nums" style={{ width: 120 }}>
+                            {row.target == null ? "—" : formatUsd(row.target)}
+                          </td>
+                        ) : null}
+                        {colOn("progress") ? (
+                          <td className="px-2 py-1.5">
+                            {pct == null ? (
+                              <span className="block text-center text-[#6B7280]">—</span>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <div className="h-2 flex-1 overflow-hidden rounded-sm bg-[#E5E7EB]">
+                                  <div className="h-full bg-[#14314F]" style={{ width: `${pct}%` }} />
+                                </div>
+                                <span className="w-10 text-right tabular-nums text-[#6B7280]">{pct}%</span>
+                              </div>
+                            )}
+                          </td>
+                        ) : null}
+                        {colOn("last_withheld") ? (
+                          <td className="px-2 py-1.5 text-center tabular-nums" style={{ width: 132 }}>
+                            {row.lastWithheldAt ? formatDateUS(row.lastWithheldAt) : "—"}
+                          </td>
+                        ) : null}
+                        {colOn("settlement") ? (
+                          <td className="px-2 py-1.5 text-center">
+                            {row.settlementId ? (
+                              <EntityLink
+                                kind="settlement"
+                                id={row.settlementId}
+                                label={row.settlementLabel ?? "Settlement"}
+                              />
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                        ) : null}
+                        {colOn("release") ? (
+                          <td className="px-2 py-1.5 text-center">
+                            <button
+                              type="button"
+                              className="inline-flex h-[34px] items-center rounded-sm border border-[#E5E7EB] px-2 text-xs font-medium text-[#1F2A44] hover:bg-[#F7F8FA]"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setReleaseDriverId(row.driver_id);
+                                setSelectedDriverId(row.driver_id);
+                              }}
+                            >
+                              Release
+                            </button>
+                          </td>
+                        ) : null}
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+              <tfoot>
+                <tr className="border-t border-[#E5E7EB] bg-[#F7F8FA] text-xs font-semibold">
+                  {colOn("driver") ? <td className="px-2 py-2 text-left">Totals</td> : null}
+                  {colOn("unit") ? <td /> : null}
+                  {colOn("held") ? (
+                    <td className="px-2 py-2 text-right tabular-nums" data-testid="escrow-footer-held">
+                      {formatUsd(heldTotal)}
+                    </td>
+                  ) : null}
+                  {colOn("target") ? (
+                    <td className="px-2 py-2 text-right tabular-nums" data-testid="escrow-footer-target">
+                      {targetTotal == null ? "—" : formatUsd(targetTotal)}
+                    </td>
+                  ) : null}
+                  {colOn("progress") ? <td /> : null}
+                  {colOn("last_withheld") ? <td /> : null}
+                  {colOn("settlement") ? <td /> : null}
+                  {colOn("release") ? <td /> : null}
+                </tr>
+              </tfoot>
+            </table>
           </div>
-
-          <div data-testid="banking-escrow-type-filter">
-            <MultiSelectDropdown
-              label="Transaction type"
-              options={ESCROW_POSTING_TYPES.map((t) => ({ value: t, label: POSTING_TYPE_LABEL[t] }))}
-              selected={selectedTypes}
-              onChange={(next) => setSelectedTypes(next as EscrowPostingType[])}
-              allLabel="All transaction types"
-              triggerClassName={bankingControlBoxClass({ active: selectedTypes.length > 0 })}
-              className="mt-0"
-              data-testid="banking-escrow-type-filter-dropdown"
-            />
-          </div>
-
-          <div className="flex h-7 items-center gap-1">
-            <label htmlFor="escrow-amount-min" className={BANKING_CONTROL_LABEL_CLASS}>
-              Amount
-            </label>
-            <MoneyInput
-              id="escrow-amount-min"
-              valueDollars={amountMinInput}
-              onChangeDollars={setAmountMinInput}
-              ariaLabel="Minimum amount (USD)"
-              placeholder="Min"
-              className="w-[80px]"
-            />
-            <span className="text-[#6B7280]">–</span>
-            <MoneyInput
-              id="escrow-amount-max"
-              valueDollars={amountMaxInput}
-              onChangeDollars={setAmountMaxInput}
-              ariaLabel="Maximum amount (USD)"
-              placeholder="Max"
-              className="w-[80px]"
-            />
-          </div>
-
-          <div className="flex h-7 items-center gap-1">
-            <span className={BANKING_CONTROL_LABEL_CLASS}>Status</span>
-            <BankingControlGroup>
-              {(["all", "active", "closed"] as const).map((s) => (
-                <BankingControlSegment key={s} active={statusFilter === s} onClick={() => setStatusFilter(s)}>
-                  {s === "all" ? "All" : s === "active" ? "Active" : "Closed"}
-                </BankingControlSegment>
-              ))}
-            </BankingControlGroup>
-          </div>
-
-          <div className="flex h-7 items-center gap-1">
-            <span className={BANKING_CONTROL_LABEL_CLASS}>Cleared</span>
-            <BankingControlGroup>
-              {(["all", "cleared", "uncleared"] as const).map((c) => (
-                <BankingControlSegment key={c} active={clearedFilter === c} onClick={() => setClearedFilter(c)}>
-                  {c === "all" ? "All" : c === "cleared" ? "Cleared" : "Uncleared"}
-                </BankingControlSegment>
-              ))}
-            </BankingControlGroup>
-          </div>
-
-          <BankingControlBox
-            className="ml-auto"
-            disabled={!isFiltered}
-            onClick={clearAll}
-            data-testid="banking-escrow-clear-all"
-          >
-            Clear all
-          </BankingControlBox>
-        </div>
-
-        {chips.length > 0 ? (
-          <div className="mt-2 flex flex-wrap items-center gap-1.5" data-testid="banking-escrow-filter-chips">
-            {chips.map((chip) => (
-              <span
-                key={chip.key}
-                className="flex h-6 items-center gap-1 rounded-sm border border-[#14314F] bg-[#14314F] px-2 text-[11px] font-medium text-white"
-              >
-                {chip.label}
-                <button
-                  type="button"
-                  className="ml-0.5 text-white/80 hover:text-white"
-                  onClick={chip.onRemove}
-                  aria-label={`Remove filter: ${chip.label}`}
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        ) : null}
-
-        <div className="mt-3">
-          <RegisterToolbar rowCount={tableRows.length} onRefresh={() => void ledgerQuery.refetch()} />
-        </div>
-
-        {listState.isError ? (
-          <div className="mt-2">
-            <ListErrorBanner message="Failed to load the escrow ledger. Try refreshing." onRetry={() => void ledgerQuery.refetch()} />
-          </div>
-        ) : null}
-
-        <div className="mt-2">
-          <ParityTable
-            columns={columns}
-            rows={tableRows}
-            rowKey={(row) => String(row.id ?? "")}
-            loading={listState.isLoading}
-            storageKey="banking-driver-escrow-ledger"
-            tableTestId="driver-escrow-ledger-table"
-            emptyText={listState.isEmpty ? "No escrow ledger rows found for this filter." : undefined}
-            onRowClick={(row) => navigate(`/drivers/${row.driver_id}`)}
-          />
         </div>
       </div>
+
+      <aside className="space-y-3" data-testid="escrow-right-rail">
+        <section className="rounded-sm border border-[#E5E7EB] bg-white p-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">Both sides of the entry</p>
+          <p className="mt-1 text-xs text-[#6B7280]">Display only this round — no posting.</p>
+          <dl className="mt-2 space-y-1.5 text-xs">
+            <div className="flex justify-between gap-2">
+              <dt className="text-[#6B7280]">Debit</dt>
+              <dd className="text-right font-medium text-[#0F1219]">Driver Escrow Liability (2100)</dd>
+            </div>
+            <div className="flex justify-between gap-2">
+              <dt className="text-[#6B7280]">Credit</dt>
+              <dd className="text-right font-medium text-[#0F1219]">Cash / Settlement clearing</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section className="rounded-sm border border-[#E5E7EB] bg-white p-3" data-testid="escrow-release-rules">
+          <p className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">Release rules</p>
+          {releaseDriverId ? (
+            <p className="mt-1 text-xs text-[#6B7280]">
+              Releasing for{" "}
+              {entityLabel(
+                enrichedRows.find((r) => r.driver_id === releaseDriverId)?.driver_name,
+                releaseDriverId,
+                "Driver",
+              )}
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-[#6B7280]">Company-wide defaults. Click Release on a row to scope.</p>
+          )}
+          <label className="mt-3 flex items-center gap-2 text-xs text-[#0F1219]">
+            <input
+              type="checkbox"
+              checked={releaseRuleDraft.autoReleaseAtTarget}
+              onChange={(e) =>
+                setReleaseRuleDraft((d) => ({ ...d, autoReleaseAtTarget: e.target.checked }))
+              }
+            />
+            Auto-release when Held reaches Target
+          </label>
+          <label className="mt-2 block text-xs text-[#4B5563]">
+            Minimum held
+            <input
+              type="text"
+              inputMode="decimal"
+              className="mt-1 block h-[34px] w-full rounded-sm border border-[#E5E7EB] px-2 text-xs tabular-nums"
+              style={{ maxWidth: 120 }}
+              value={releaseRuleDraft.minHeldDollars}
+              onChange={(e) => setReleaseRuleDraft((d) => ({ ...d, minHeldDollars: e.target.value }))}
+              placeholder="—"
+            />
+          </label>
+          <label className="mt-2 block text-xs text-[#4B5563]">
+            Note
+            <textarea
+              className="mt-1 block min-h-[64px] w-full rounded-sm border border-[#E5E7EB] px-2 py-1.5 text-xs"
+              value={releaseRuleDraft.note}
+              onChange={(e) => setReleaseRuleDraft((d) => ({ ...d, note: e.target.value }))}
+            />
+          </label>
+          <div className="mt-3 flex items-center justify-end gap-2">
+            <ActionButton onClick={closeRules} data-testid="escrow-release-close">
+              Close
+            </ActionButton>
+            <button
+              type="button"
+              className="inline-flex h-[34px] items-center rounded-sm bg-[#14314F] px-3 text-xs font-bold text-white"
+              data-testid="escrow-release-save"
+              onClick={saveRules}
+            >
+              Save
+            </button>
+          </div>
+        </section>
+      </aside>
     </div>
   );
 }

@@ -1655,6 +1655,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/banking/bank-accounts"
+          element={
+            <ProtectedRoute>
+              <BankingHomePage initialTab="bank_accounts" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/banking/transactions"
           element={
             <ProtectedRoute>
