@@ -27,8 +27,14 @@ const REQUIRED_KEYS = [
   "bill.header_complete", "bill.lines_carry_account", "bill.ap_je_posted", "bill.linked_to_operations",
 ];
 
-export function check({ approval, migration, checks, routes, send, expenses }) {
+export function check({ approval, migration, checks, routes, send, expenses, creator }) {
   const problems = [];
+  if (creator !== undefined) {
+    const gateIdx = creator.indexOf('assertSubjectMayCloseOnClient(client as never, draft.operating_company_id, "settlement"');
+    const retIdx = creator.lastIndexOf("return {");
+    if (gateIdx < 0) problems.push("postSettlementCreatorInClientTx no longer runs the feed gate before committing a settlement");
+    else if (retIdx >= 0 && gateIdx > retIdx) problems.push("postSettlementCreatorInClientTx runs the gate after returning");
+  }
   if (expenses !== undefined) {
     if (!expenses.includes("postSourceTransactionInClientTx(")) problems.push("POST /api/v1/expenses no longer posts inside the creation transaction (owner law: an expense always posts)");
     if (!expenses.includes("throw new ExpensePostRefused(")) problems.push("POST /api/v1/expenses no longer refuses the create when the poster fails");
@@ -66,6 +72,7 @@ function load() {
     routes: read("apps/backend/src/driver-finance/feed-gate/feed-gate.routes.ts"),
     send: read("apps/backend/src/accounting/invoice-send.service.ts"),
     expenses: read("apps/backend/src/accounting/expenses.routes.ts"),
+    creator: read("apps/backend/src/driver-finance/settlement-creator.service.ts"),
   };
 }
 
@@ -80,6 +87,7 @@ function selftest() {
     ["send path gate removed", { ...base, send: base.send.replace('assertSubjectMayCloseOnClient(client as never, input.operatingCompanyId, "invoice"', 'noop("invoice"') }],
     ["send path post failure tolerated", { ...base, send: base.send.replace("invoice_send_refused_gl_post_failed", "ignored") }],
     ["expense create tolerates post failure", { ...base, expenses: base.expenses.replace("throw new ExpensePostRefused(", "void (") }],
+    ["settlement creator skips the gate", { ...base, creator: base.creator.replace('assertSubjectMayCloseOnClient(client as never, draft.operating_company_id, "settlement"', 'noop("settlement"') }],
     ["expense create skips the gate", { ...base, expenses: base.expenses.replace('openAndRunIntake(String(user.uuid), body.operating_company_id, "expense"', 'noop("expense"') }],
   ];
   let bad = 0;

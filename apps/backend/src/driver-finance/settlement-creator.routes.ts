@@ -2,6 +2,7 @@
  * ROUND 180 / R-186 — Settlement Creator routes.
  * POST preview + POST commit. USMCA + Owner/Admin/Accountant only. No Book Load.
  */
+import { FeedGateError } from "./feed-gate/feed-gate.service.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -312,6 +313,10 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
         factoring_advance_ids: factoringAdvanceIds,
       });
     } catch (err) {
+      if (err instanceof FeedGateError) {
+        // FEED GATE: the settlement did not commit; every red row + fix link is returned so the creator shows them.
+        return reply.code(409).send({ error: err.code, message: err.message, feed_gate: err.details ?? null });
+      }
       if (err instanceof SettlementCreatorError || err instanceof SettlementCreatorSeedError) {
         const conflict = new Set([
           "settlement_exists",

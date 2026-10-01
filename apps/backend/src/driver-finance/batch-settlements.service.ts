@@ -3,6 +3,7 @@
  * Per row: driver + period → SET-01 linked loads auto-pulled; optional deductions/advances;
  * Save all → postSettlementCreatorInClientTx only (never payroll or retired settlement schemas).
  */
+import { FeedGateError } from "./feed-gate/feed-gate.service.js";
 import { withCurrentUser } from "../auth/db.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import {
@@ -325,6 +326,8 @@ export type BatchSettlementRowResult =
       index: number;
       error: string;
       message: string;
+      /** FEED GATE red rows when error = feed_gate_blocked (intake id + every red check with its fix link). */
+      feed_gate?: { intake_id?: string; reds?: unknown[] } | null;
     };
 
 /**
@@ -381,7 +384,9 @@ export async function postBatchSettlements(opts: {
         load_numbers: settlement.load_numbers,
       });
     } catch (err) {
-      if (err instanceof BatchSettlementError || err instanceof SettlementCreatorError) {
+      if (err instanceof FeedGateError) {
+        results.push({ ok: false, index: i, error: err.code, message: err.message, feed_gate: (err.details as { intake_id?: string; reds?: unknown[] } | undefined) ?? null } as BatchSettlementRowResult);
+      } else if (err instanceof BatchSettlementError || err instanceof SettlementCreatorError) {
         results.push({
           ok: false,
           index: i,

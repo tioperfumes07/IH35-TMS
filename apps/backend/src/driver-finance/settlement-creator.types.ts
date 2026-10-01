@@ -173,6 +173,8 @@ export type SettlementCreatorPreview = {
 };
 
 export type SettlementCreatorPostResult = {
+  /** FEED GATE result (owner law 2026-10-01): the settlement committed only because every check was green. */
+  feed_gate?: { intake_id: string; status: string; checks_total: number; checks_failed: number };
   settlement_id: string;
   source_document_ref: string;
   display_id: string;
