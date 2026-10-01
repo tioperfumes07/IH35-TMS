@@ -1004,3 +1004,14 @@ as `ih35_ci_readonly`). Read by `.github/workflows/ci.yml` job **`required-live-
 (`DATABASE_URL`). Update its value to the current `ih35_ci_readonly` connection string; the
 `required-live-load-guard` → `build-typecheck` / `security-audit` / `locked-guards` cascade clears with it.
 **next:** row 9 (Cursor's backend fields).
+
+## ORDERS 2026-10-01 — CC-1 status (after the no-handoff ruling)
+**Built + merged:** E-14 #23632 (migration 202615050000 LIVE on prod 03:36Z), E-15 #23644, E-16 #23650
+(migration 202615120000 lands next deploy), E-17 #23654, rows 6–8 #23661, fresh-DB chain #23602.
+**Row 5 superseded:** the ruling gave it to CC-2, whose 202615100000 merged first. CC-1's 202615130000 was
+neutralised to a documented no-op (#23662) BEFORE it applied — prod ledger + pg_indexes confirm no
+duplicate indexes. 202615100000 is the single owner of complaints load/unit links + categories.
+**Row 9:** stands only for what is merged; per the ruling Cursor builds what its screens need.
+**Owner decisions pending:** `PROD_READONLY_DATABASE_URL` secret value; status vs deactivated_at on
+T120/T149/T150/T151/USMCA-001; `PM_AUTO_ENGINE_CREATE_WORK_ORDERS` switch (PM due is expected-empty until
+seeding — 96 schedules, 0 baselines).
