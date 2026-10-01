@@ -268,3 +268,6 @@ B-2 · what changed: QBO reconcile arithmetic on workspace (STATEMENT ENDING −
 
 **2026-10-01T13:20Z · B-3 BANK FEED+MATCH (REGISTER SET §16–§21) · branch `cursor/b3-bank-feed-match-4953` · PR #23763**
 B-3 · what changed: Banking Home per-account connection-error strip (Fix now / Disconnect / Send request); MatchDrawer QBO Bank/Selected/Difference arithmetic + Find other matches title; expand row four radios (Categorize · Match · Transfer · Credit card payment) + Find other matches CTA; "1 match found" badge. Ops: `scripts/ops/verify-b3-bank-feed-match.mjs`. · LIVE PROOF: ops --selftest PASS; vitest MatchDrawer+BankingHome. · LEFT: Lead Chrome `/banking`. · NEXT: tip-main rebase + FAST-MERGE then B-4 #23764.
+
+**2026-10-01T13:30Z · B-4 CHECK CREATOR (REGISTER SET §9–§15) · branch `cursor/b4-check-creator-4953` · PR #23764**
+B-4 · what changed: WriteCheckForm QBO chrome — Who did you pay · Add to Check drawer · Restore draft; bill payment conversion path. Ops: `scripts/ops/verify-b4-check-creator.mjs`. · LIVE PROOF: ops --selftest PASS. · LEFT: Lead Chrome check creator. · NEXT: tip-main rebase + FAST-MERGE then B-5 #23765.
