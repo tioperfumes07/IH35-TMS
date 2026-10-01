@@ -1,26 +1,30 @@
+**2026-10-01T19:12Z · ROUND 321 #1 DONE · SC JE → EXPENSE · AUTH-199 CONSUMED**
+ACK: CURSOR | ACK ROUND-321 | SERVICE-CHARGE-EXPENSE | GO
+LIVE: reverse `cf78c2aa` → JE `d4301625`; expense `101e4ac4` JE `ac77a55f` (Dr 6300 / Cr 1005 $5); session `7a7d1da9` stamped. Rehearsal `br-late-term-akav2wgi` first. `verify-costs-are-expenses-not-handwritten-jes` LIVE PASS 3732 JEs / 0 violations. Engine: `createAndPostServiceChargeExpense` + remove `bank_reconciliation` exempt. Branch `cursor/r319-recon-sc-expense-c89b`. NEXT: FAST-MERGE engine PR · D-H0 → D-H1 → D-H2 · Factoring designs.
+
 **2026-10-01T19:00Z · ROUND 321 ACK · SERVICE-CHARGE EXPENSE + AMBIENT-16 LIST**
 ACK: CURSOR | ACK ROUND-321 | SERVICE-CHARGE-EXPENSE | GO
 NOW: `cursor/r319-recon-sc-expense-c89b` — reverse JE `cf78c2aa` + re-post as expense; recon engine SC → `createAndPostServiceChargeExpense` (expense engine); remove `bank_reconciliation` costs-guard exempt (#23863 carve-out); AUTH-199 OPEN; migration `202610011900` `service_charge_expense_id`. Interest earned stays income JE (Dr bank / Cr 7100 — expense engine cannot express interest earned). IE does not trip costs-guard.
 
-### AMBIENT verify-static reds (ROUND 317 #2 / ROUND 321 #2) — tip-main measured from `/tmp/push-r319.txt` freshness + `/tmp/push-319.log` capability FAIL set (16 unique)
+### AMBIENT verify-static reds (ROUND 317 #2 / ROUND 321 #2) — tip-main measured 2026-10-01T19:05Z from verify-static-fallback (11 gated not-in-baseline) + known Lead-named + freshness set → 16 unique
 
 | # | Guard | File | Known owner (Lead) |
 |---|-------|------|--------------------|
 | 1 | verify-worm-coverage-ratchet.mjs | scripts/verify-worm-coverage-ratchet.mjs | CC-2 (Lead: WORM ratchet) |
 | 2 | verify-rls-uuid-cast-nullif.mjs | scripts/verify-rls-uuid-cast-nullif.mjs · offender db/migrations/202614380000_driver_samsara_accounts_operating_company.sql:94 | Lead |
-| 3 | verify-applied-migrations-immutable.mjs | scripts/verify-applied-migrations-immutable.mjs | TBD |
-| 4 | verify-bills-mdata-vendor-id-fk.mjs | scripts/verify-bills-mdata-vendor-id-fk.mjs | TBD |
-| 5 | verify-company-settlement-pdf-house-template.mjs | scripts/verify-company-settlement-pdf-house-template.mjs | TBD |
-| 6 | verify-factoring-reserve-escrow-subledger-gap.mjs | scripts/verify-factoring-reserve-escrow-subledger-gap.mjs | TBD |
-| 7 | verify-fuel-card-gl-subledger-traceability.mjs | scripts/verify-fuel-card-gl-subledger-traceability.mjs | TBD |
-| 8 | verify-integrity-findings-attribution-rate.mjs | scripts/verify-integrity-findings-attribution-rate.mjs | TBD |
-| 9 | verify-invoice-amount-paid-matches-applications.mjs | scripts/verify-invoice-amount-paid-matches-applications.mjs | TBD |
-| 10 | verify-invoice-header-requires-line-constraint.mjs | scripts/verify-invoice-header-requires-line-constraint.mjs | TBD |
-| 11 | verify-migration-checksum-collision.mjs | scripts/verify-migration-checksum-collision.mjs | TBD |
-| 12 | verify-new-financial-table-ships-worm.mjs | scripts/verify-new-financial-table-ships-worm.mjs | TBD (related WORM → CC-2?) |
-| 13 | verify-new-units-have-gps-or-deactivation-reason.mjs | scripts/verify-new-units-have-gps-or-deactivation-reason.mjs | TBD |
-| 14 | verify-qbo-connection-status-honest.mjs | scripts/verify-qbo-connection-status-honest.mjs | TBD |
-| 15 | verify-schema-parity.mjs | scripts/verify-schema-parity.mjs | TBD |
+| 3 | verify-bills-mdata-vendor-id-fk.mjs | scripts/verify-bills-mdata-vendor-id-fk.mjs | TBD |
+| 4 | verify-factoring-reserve-escrow-subledger-gap.mjs | scripts/verify-factoring-reserve-escrow-subledger-gap.mjs | TBD |
+| 5 | verify-fuel-card-gl-subledger-traceability.mjs | scripts/verify-fuel-card-gl-subledger-traceability.mjs | TBD |
+| 6 | verify-integrity-findings-attribution-rate.mjs | scripts/verify-integrity-findings-attribution-rate.mjs | TBD |
+| 7 | verify-invoice-amount-paid-matches-applications.mjs | scripts/verify-invoice-amount-paid-matches-applications.mjs | TBD |
+| 8 | verify-invoice-header-requires-line-constraint.mjs | scripts/verify-invoice-header-requires-line-constraint.mjs | TBD |
+| 9 | verify-new-financial-table-ships-worm.mjs | scripts/verify-new-financial-table-ships-worm.mjs | TBD (WORM-adjacent → CC-2?) |
+| 10 | verify-new-units-have-gps-or-deactivation-reason.mjs | scripts/verify-new-units-have-gps-or-deactivation-reason.mjs | TBD |
+| 11 | verify-no-raw-status-enum-in-ui.mjs | scripts/verify-no-raw-status-enum-in-ui.mjs | TBD |
+| 12 | verify-qbo-connection-status-honest.mjs | scripts/verify-qbo-connection-status-honest.mjs | TBD |
+| 13 | verify-schema-parity.mjs | scripts/verify-schema-parity.mjs | TBD |
+| 14 | verify-applied-migrations-immutable.mjs | scripts/verify-applied-migrations-immutable.mjs | TBD |
+| 15 | verify-migration-checksum-collision.mjs | scripts/verify-migration-checksum-collision.mjs | TBD |
 | 16 | verify-void-predicate-map-current.mjs | scripts/verify-void-predicate-map-current.mjs | TBD |
 
 Do not --admin past; do not patch baselines. Lead assigns #3–#16.

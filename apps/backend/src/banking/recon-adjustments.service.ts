@@ -169,13 +169,38 @@ async function createAndPostServiceChargeExpense(
   const expenseId = inserted.rows[0]?.id;
   if (!expenseId) throw new Error("recon_service_charge_expense_insert_failed");
 
+  // expense_lines_item_id_required (NOT VALID on legacy rows) — new lines must carry a catalogs.items id.
+  // Prefer an item whose default_expense_account_id is the service-charge GL account.
+  const itemRes = await client.query<{ id: string }>(
+    `SELECT id::text AS id
+       FROM catalogs.items
+      WHERE operating_company_id = $1::uuid
+        AND deactivated_at IS NULL
+        AND default_expense_account_id = $2::uuid
+      ORDER BY
+        CASE WHEN lower(item_name) LIKE '%monthly%bank%' THEN 0
+             WHEN lower(item_name) LIKE '%bank%charge%' THEN 1
+             ELSE 2 END,
+        item_name
+      LIMIT 1`,
+    [input.operating_company_id, input.service_charge_account_id]
+  );
+  const itemId = itemRes.rows[0]?.id ?? null;
+  if (!itemId) {
+    throw new Error(
+      `recon_service_charge_item_required: no catalogs.items with default_expense_account_id=${input.service_charge_account_id}`
+    );
+  }
+
   await client.query(
     `INSERT INTO accounting.expense_lines (
         operating_company_id, expense_id, line_sequence, amount, amount_cents,
-        description, load_required, expense_account_uuid
+        description, load_required, expense_account_uuid, item_id,
+        quantity, rate_cents, unit_of_measure
       ) VALUES (
         $1::uuid, $2::uuid, 1, $3::numeric, $4::bigint,
-        $5, false, $6::uuid
+        $5, false, $6::uuid, $7::uuid,
+        1, $4::bigint, 'each'
       )`,
     [
       input.operating_company_id,
@@ -184,6 +209,7 @@ async function createAndPostServiceChargeExpense(
       input.service_charge_cents,
       "Bank service charge",
       input.service_charge_account_id,
+      itemId,
     ]
   );
 

@@ -42,7 +42,9 @@ function main() {
   // SC must not mint a bare cost JE: only one createJournalEntryOnClient *call* (interest).
   const jeCallSites = [...poster.matchAll(/await createJournalEntryOnClient\s*\(/g)];
   assert.equal(jeCallSites.length, 1, "exactly one await createJournalEntryOnClient (interest); SC uses expense engine");
-  assert.match(poster, /createAndPostServiceChargeExpense\(/);
+  assert.match(poster, /item_id/);
+  assert.match(poster, /unit_of_measure/);
+  assert.match(poster, /'each'/);
 
   const routes = read("apps/backend/src/banking/reconciliation.routes.ts");
   assert.match(routes, /postReconciliationAdjustments/);
