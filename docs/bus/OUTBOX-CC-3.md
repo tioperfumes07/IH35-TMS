@@ -864,3 +864,35 @@ T-47 (driven miles per leg) -> T-48 (fuel-purchase push, hard-gated on T-45) -> 
 answer). Owner directive this turn: build engines, no data seeding into our production until all
 engines are built; every proof is read-only or BEGIN...ROLLBACK. No live push into Samsara until
 T-45 lands and the gate is proven.
+
+## CC-3 — ROUND 304 T-45 — the 52 "fuel rows with no gallons": REPORT (no data written)
+
+THE 52 ARE NOT DIESEL. All 52 are fuel_type='def' (Diesel Exhaust Fluid), $1,662.65 total,
+transaction_reference DEF-<load>-<n>, written by scripts/feed/close-faro-day.mjs (the Faro /
+AlwaysTrack settlement-day feed), which hardcodes gallons=0, transaction_at=now() and
+purchased_at=CURRENT_DATE. That is the 2026-09-24 12:08-12:09 shared stamp the Lead measured.
+SOURCE CHECK (feed_input.json, the file the script reads): 205 DEF lines; quantity=1.0 on 205/205
+with rate==amount on 205/205 -- a QuickBooks placeholder. THE SOURCE NEVER HAD GALLONS. It DOES
+carry a real purchase DATE on every line (date only, no time), which the script dropped.
+So: gallons -- never existed, cannot be recovered. DEF is not motor fuel; it never belongs in MPG
+and is not an IFTA-taxable fuel, so the honest classification is "charge", which is exactly the
+Lead's own rule. Date -- a parse defect: a re-import could set purchased_at to the real date.
+That is a production data write in the paused settlement-feed lane; NOT done, needs owner AUTH.
+
+THE REAL MOTOR-FUEL PICTURE, measured: USMCA's 125 diesel rows all carry real gallons (14,630 gal)
+but DATE-ONLY precision -- 122 at exactly 00:00:00 UTC, 3 at exactly 12:00:00. No USMCA fuel row
+has a pump time of day. That, not the 52, is why 0 of them match a fuel-stop crossing within
+±90 min: matching must be by day, and the Samsara push (T-48) cannot send a real transactionTime
+for any current row.
+
+SEPARATE PRE-EXISTING DEFECT FOUND, not mine to write: 42 TRANSP diesel rows (source='other',
+created 2026-07-16..08-14) carry NULL gallons -- real motor fuel recorded without quantity.
+Baselined (shrink-only) in the guard, named here.
+
+ENGINE: apps/backend/src/fuel/fuel-purchase-eligibility.ts -- the ONE shared predicate for "is
+this a real fuel purchase": motor fuel only, gallons > 0, not an import stamp (>=3 rows sharing
+an exact stamp with seconds), and, when a consumer needs a pump time, not date-only. T-47 and
+T-48 consume it; no consumer writes its own copy.
+GUARD: scripts/verify-fuel-purchases-have-gallons-and-real-stamps.mjs + --selftest (live,
+fails closed with no DB): 0 motor-fuel rows without gallons beyond the disclosed 42, 0 import-
+stamped motor-fuel rows. Live now: PASS (42/42 baseline, 0 stamped, 52 DEF charges reported).
