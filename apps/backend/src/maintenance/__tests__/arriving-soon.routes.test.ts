@@ -24,6 +24,10 @@ describe("maintenance arriving-soon route", () => {
   it("returns a deterministic page and exact full-filter counts", async () => {
     mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
       if (sql.includes("set_config")) return { rows: [] };
+      // E-14 addition: PM due on arrival comes from E-15 (schedules + shared odometer loader).
+      if (sql.includes("FROM maintenance.pm_schedules")) return { rows: [] };
+      if (sql.includes("to_regclass('telematics.unit_stop_events')")) return { rows: [{ ok: false }] };
+      if (sql.includes("FROM telematics.odometer_readings")) return { rows: [] };
       if (sql.includes("FROM dispatch.intransit_issues") && sql.includes("COUNT(*)::int AS total_count")) {
         expect(values).toEqual([COMPANY]);
         return { rows: [{ total_count: 19 }] };
@@ -48,5 +52,20 @@ describe("maintenance arriving-soon route", () => {
     const response = await app.inject({ method: "GET", url: `/api/v1/maintenance/arriving-soon?operating_company_id=${COMPANY}&limit=25&offset=50` });
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({ counts: { total: 326, warning: 44 }, cards: [{ load_id: "load-1" }], recent_conversions_total_count: 19, recent_conversions_limit: 12, recent_conversions_offset: 0 });
+  });
+});
+
+import { pmDueFields, soonestPmDueByUnit } from "../arriving-soon.routes.js";
+describe("E-14 addition: PM due on arrival from E-15", () => {
+  const row = (over: Record<string, unknown>) => ({ pm_schedule_id: "s", unit_id: "u1", unit_number: "T174", label: "PM-A", interval_kind: "miles", interval_miles: 25000, interval_days: null, last_service_odometer: null, current_odometer: 455164, current_odometer_read_at: null, current_odometer_source: "odometer_readings", current_odometer_note: null, miles_since_service: null, miles_to_due: null, miles_per_day: null, projected_due_date: null, reason: "no baseline PM odometer on file", ...over }) as never;
+  it("picks the most urgent dated schedule per unit", () => {
+    const m = soonestPmDueByUnit([row({ label: "PM-B", miles_to_due: 9000 }), row({ label: "PM-A", miles_to_due: 1200, last_service_odometer: 430000 }), row({ label: "DOT" })]);
+    expect(m.get("u1")?.label).toBe("PM-A");
+  });
+  it("no baseline: honest nulls with E-15's reason, never a guessed due", () => {
+    expect(pmDueFields(row({}))).toMatchObject({ pm_due_label: "PM-A", pm_has_baseline: false, pm_miles_to_due: null, pm_projected_due_date: null, pm_due_reason: "no baseline PM odometer on file", pm_odometer_source: "odometer_readings" });
+  });
+  it("no schedule at all is said, not blank", () => {
+    expect(pmDueFields(null).pm_due_reason).toBe("no active PM schedule for this unit");
   });
 });
