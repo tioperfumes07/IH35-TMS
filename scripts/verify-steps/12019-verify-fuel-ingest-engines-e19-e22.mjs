@@ -60,7 +60,8 @@ function staticWiring() {
   need("apps/backend/src/jobs/fuel-fraud-detector-worker.ts", /classifyFraudMatches/, "fraud detector must classify by independent signals (E-21)");
   forbid("apps/backend/src/jobs/fuel-fraud-detector-worker.ts", /cron\.schedule\(/, "fraud detector must not run on a timer (E-21)");
   forbid("apps/backend/src/cron/fuel-gps-match.cron.ts", /cron\.schedule\(/, "fuel<->GPS match must not run hourly (E-22)");
-  need("apps/backend/src/fuel/fuel-ingest-hooks.ts", /runFuelGpsMatchBatch[\s\S]*runFuelFraudDetectorTick/, "ingest hook runs GPS match, then fraud detection");
+  need("apps/backend/src/fuel/fuel-ingest-hooks.ts", /runFuelFraudDetectorTick/, "ingest hook runs fraud detection");
+  forbid("apps/backend/src/fuel/fuel-ingest-hooks.ts", /runFuelGpsMatchBatch/, "the bank-line GPS matcher can only guess; E-22's verdict is computed on read (fuel-gps-verdict.service.ts)");
   need("apps/backend/src/cron/loves-card-import.cron.ts", /onFuelIngestComplete/, "Loves import triggers the ingest hook");
   need("apps/backend/src/fuel/fuel-transaction-import.routes.ts", /onFuelIngestComplete/, "statement upload triggers the ingest hook");
   need("apps/backend/src/integrations/relay-payments/relay-fuel-ingest.cron.ts", /computeRelayIngestWindow/, "Relay tick uses the gap-aware window (E-20)");

@@ -1027,3 +1027,26 @@ stops. Until then the source stays the daily snapshot and every scorecard row an
 arithmetic says "daily snapshot miles". Guard 11999 now fails if the label ever disagrees with
 whether the table is there. If E-03's columns differ from those four, the switch stays off and
 says so — tell me the real names and it is a one-line change.
+
+## NOW-CC-2 item 3 — Fuel page read model, and E-22 actually fixed (DONE)
+
+Found while reading what I built: the E-22 matcher placed fuel-merchant bank lines on "the truck
+with a GPS fix closest in time to the row's DB insert time", never comparing with the station — its
+75 USMCA "high" matches were clock coincidences (board: FUEL-GPS-MATCH-BY-CLOCK-COINCIDENCE-2026100103).
+Fixed: bank lines are never placed on a truck; purchases with a station + pump time (Relay fills)
+get a two-signal verdict — the card's Truck # (resolved inside the company's own fleet, as the
+ingest does) vs the trucks GPS shows stopped within 500 m at pump time: match / held / proposal /
+unverifiable / no_candidate. Computed on read; the bank-line batch is out of the ingest hook.
+
+GET /api/v1/fuel/integrity-verdicts — per card row: purchase or not (shared predicate), fraud
+classification on read (finding / suspicion / none), rules matched, date-only refusals, why; per
+Relay fill: GPS verdict, candidate trucks with distance, why. Writes nothing. UI is Cursor's lane.
+
+Live, USMCA since 2026-07-01: Relay 106 match, 9 held, 3 unverifiable, 1 proposal. The held ones are
+real: e.g. 08-29 card T175 / T174 at the pump, 08-30 card T174 / T175 at the pump — drivers keying
+each other's truck. Card rows: 52 DEF charges (not purchases), 100 none, 25 suspicion, 0 findings.
+Guard 12023 (claim #23625). Tests rewritten — the old ones asserted the coincidence behaviour.
+
+E-28 linkage waits on CC-1 order 5 (migration).
+
+— CC-2

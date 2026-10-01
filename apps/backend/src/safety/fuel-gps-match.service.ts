@@ -9,112 +9,33 @@ type FuelTxn = {
   reference_ts: string;
 };
 
-function haversineMeters(aLat: number, aLng: number, bLat: number, bLng: number): number {
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const dLat = toRad(bLat - aLat);
-  const dLng = toRad(bLng - aLng);
-  const s1 = Math.sin(dLat / 2) ** 2;
-  const s2 = Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) * Math.sin(dLng / 2) ** 2;
-  return 6_371_000 * 2 * Math.atan2(Math.sqrt(s1 + s2), Math.sqrt(1 - (s1 + s2)));
-}
 
-async function findClosestLoadStopLocation(client: DbClient, operatingCompanyId: string, loadId: string): Promise<{ lat: number; lng: number } | null> {
-  const res = await client.query<{ lat: number; lng: number }>(
-    `
-      SELECT loc.latitude::float8 AS lat, loc.longitude::float8 AS lng
-      FROM mdata.load_stops s
-      JOIN mdata.loads l
-        ON l.id = s.load_id
-       AND l.operating_company_id = $1::uuid
-      JOIN mdata.locations loc
-        ON loc.id = s.location_id
-       AND loc.operating_company_id = l.operating_company_id
-      WHERE s.load_id = $2::uuid
-        AND l.soft_deleted_at IS NULL
-        AND s.soft_deleted_at IS NULL
-        AND loc.deactivated_at IS NULL
-        AND loc.latitude IS NOT NULL
-        AND loc.longitude IS NOT NULL
-      ORDER BY s.sequence_number
-      LIMIT 1
-    `,
-    [operatingCompanyId, loadId]
-  );
-  return res.rows[0] ?? null;
-}
 
+/**
+ * ROUND 306 E-22: this matcher used to pick "the company truck with a GPS fix closest in time to
+ * bt.created_at" — the DB insert time, never compared with the station — so every match was a
+ * clock coincidence. A bank line carries no station coordinates and no pump time, so it cannot be
+ * placed on a truck by GPS. It now records that honestly; the real two-signal verdict for purchases
+ * that DO carry a station and pump time is fuel/fuel-gps-verdict.service.ts.
+ */
 async function matchOneFuelTxn(client: DbClient, txn: FuelTxn) {
-  const candidate = await client.query<{
-    unit_id: string;
-    lat: number;
-    lng: number;
-    captured_at: string;
-    seconds_diff: number;
-  }>(
-    `
-      SELECT
-        v.unit_id::text AS unit_id,
-        v.lat::float8 AS lat,
-        v.lng::float8 AS lng,
-        v.captured_at::text AS captured_at,
-        ABS(EXTRACT(EPOCH FROM (v.captured_at - $2::timestamptz)))::float8 AS seconds_diff
-      FROM telematics.vehicle_locations v
-      WHERE v.operating_company_id = $1::uuid
-        AND v.captured_at BETWEEN $2::timestamptz - interval '10 minutes' AND $2::timestamptz + interval '10 minutes'
-      ORDER BY seconds_diff ASC
-      LIMIT 1
-    `,
-    [txn.operating_company_id, txn.reference_ts]
-  );
-
-  const row = candidate.rows[0];
-  if (!row) {
-    await client.query(
-      `
-        INSERT INTO safety.fuel_gps_matches (
-          operating_company_id, fuel_txn_id, vehicle_id, distance_m, confidence, review_flag, reason, matched_at, updated_at
-        )
-        VALUES ($1::uuid, $2::uuid, NULL, NULL, 'no_match', true, 'no_gps_within_10m', now(), now())
-        ON CONFLICT (operating_company_id, fuel_txn_id)
-        DO UPDATE SET
-          vehicle_id = NULL,
-          distance_m = NULL,
-          confidence = 'no_match',
-          review_flag = true,
-          reason = 'no_gps_within_10m',
-          matched_at = now(),
-          updated_at = now()
-      `,
-      [txn.operating_company_id, txn.id]
-    );
-    return;
-  }
-
-  let distanceM: number | null = null;
-  if (txn.matched_load_id) {
-    const stop = await findClosestLoadStopLocation(client, txn.operating_company_id, txn.matched_load_id);
-    if (stop) distanceM = haversineMeters(row.lat, row.lng, stop.lat, stop.lng);
-  }
-  const confidence = distanceM != null ? (distanceM <= 200 ? "high" : "medium") : row.seconds_diff <= 120 ? "high" : "medium";
-  const reviewFlag = confidence !== "high";
-
   await client.query(
     `
       INSERT INTO safety.fuel_gps_matches (
         operating_company_id, fuel_txn_id, vehicle_id, distance_m, confidence, review_flag, reason, matched_at, updated_at
       )
-      VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5, $6, $7, now(), now())
+      VALUES ($1::uuid, $2::uuid, NULL, NULL, 'no_match', true, 'bank_line_has_no_station_location_or_pump_time', now(), now())
       ON CONFLICT (operating_company_id, fuel_txn_id)
       DO UPDATE SET
-        vehicle_id = EXCLUDED.vehicle_id,
-        distance_m = EXCLUDED.distance_m,
-        confidence = EXCLUDED.confidence,
-        review_flag = EXCLUDED.review_flag,
-        reason = EXCLUDED.reason,
+        vehicle_id = NULL,
+        distance_m = NULL,
+        confidence = 'no_match',
+        review_flag = true,
+        reason = 'bank_line_has_no_station_location_or_pump_time',
         matched_at = now(),
         updated_at = now()
     `,
-    [txn.operating_company_id, txn.id, row.unit_id, distanceM, confidence, reviewFlag, confidence === "high" ? "ok" : "weak_proximity"]
+    [txn.operating_company_id, txn.id]
   );
 }
 
