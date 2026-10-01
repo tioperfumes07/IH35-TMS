@@ -1975,3 +1975,14 @@ export function setBankAccountCashGl(operatingCompanyId: string, bankAccountId: 
     body: { ledger_account_id: ledgerAccountId },
   });
 }
+
+/** B-1 §5 — unmatch from the original document (no recon session required). */
+export function unmatchBankTransaction(input: {
+  operating_company_id: string;
+  bank_transaction_id: string;
+}) {
+  return apiRequest<{ ok?: boolean; bank_transaction_id?: string }>(`/api/v1/bank-recon/unmatch`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
