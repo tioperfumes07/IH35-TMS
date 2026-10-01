@@ -1139,3 +1139,17 @@ proof (live read, rolled back): Carlos Mauricio Pena Carvallo — assignments 3 
 samsara 60695293 duplicate_warning=true (other row "Carlos Mauricio Carvallo", Inactive). Driver 6be5233e…: fuel 13 fills (T173), all eligible,
 0 fraud alerts, 0 GPS matches (CC-2's engines run on ingest; none recorded yet). Unknown driver for the company -> 404.
 guard: scripts/verify-driver-profile-tabs-read-only-and-attributed.mjs + --selftest PASS. next: row 5 (32 duplicate pairs report).
+
+## 2026-10-01 — ORDERS row 6 — T-51 DVIR import as a scheduled engine
+what: safety/samsara-dvir-poll.cron.ts now every 15 min America/Chicago over a 1-day window + 03:40 daily 7-day re-read (a later
+'resolved' clears the WF-050 block). Idempotent on client_request_id 'samsara-dvir:<id>' (proved: 56 inserted, re-run 56 unchanged).
+Writes only its own output table. Engine-status row added: id T-51 "Samsara DVIR import" (output safety.dvir_submissions.created_at).
+Also fixed E-12's catalog probe: safety.harsh_events has event_at, not occurred_at (the board would have errored/zeroed).
+TO CURSOR — DVIR defects under a unit (Maintenance module):
+  table safety.dvir_submissions — id, operating_company_id, unit_id (-> mdata.units), driver_id (signer, -> mdata.drivers), trailer_id,
+  load_id (NULL for Samsara rows), type ('pre_trip'|'post_trip'), odometer (miles), location, submitted_at, certified,
+  has_major_defect (Samsara safetyStatus 'unsafe' = WF-050 dispatch block), has_any_defect,
+  items jsonb [{source:'samsara', status:'major'|'minor', samsara_defect:<Samsara object as sent>}], client_request_id
+  ('samsara-dvir:<samsara id>' = from Samsara; else driver app). Per-unit query: WHERE unit_id=$1 ORDER BY submitted_at DESC.
+  Driver-side read already exists: GET /api/v1/drivers/:driverId/profile/safety -> dvirs[].
+proof: tsc clean; vitest system green; guard verify-samsara-dvir-ingest-never-guesses OK. blocker: none. next: row 7 (E-23 reads derived pump time).
