@@ -324,6 +324,15 @@ const FRESH_DB_PRODUCTION_DATA_ONLY = new Map([
       "the company, the accounts, nor the items — nothing to repair. The migration RAISEs on its own " +
       "precondition instead of no-opping, which kills the chain on every fresh build.",
   ],
+  [
+    "202614850000_pm_catalog_usmca.sql",
+    "Inserts USMCA's PM interval catalog rows into catalogs.pm_intervals with a hardcoded USMCA " +
+      "operating_company_id (5c854333-…) and no existence guard. No migration inserts USMCA into " +
+      "org.companies, so on a fresh database the insert violates pm_intervals_operating_company_id_fkey " +
+      "and kills the chain (CI 2026-10-01, build-typecheck-heavy). Pure data, no DDL; applied in " +
+      "production 2026-09-30T19:59:25Z, therefore uneditable. The follow-up 202614860000 keeps running " +
+      "on fresh databases: its UNIQUE constraint is schema, and its insert selects zero rows there.",
+  ],
 ]);
 
 function freshDbProductionDataOnlySkip(file) {
