@@ -1062,6 +1062,99 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
     return { customer: mapCustomerRow(row, canReadTaxId(authUser.role)) };
   });
 
+  /**
+   * ORDERS 2026-10-01 CUSTOMERS — locations with geocode-precision badge.
+   * Distinct stop places from this customer's loads (mdata.load_stops) + linked mdata.locations.
+   * Precision normalized to rooftop | approximate | locality (locality = not a stop).
+   */
+  app.get("/api/v1/mdata/customers/:id/locations", RL_READ, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = detailQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+    const resolvedOperatingCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
+      resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id)
+    );
+    if (!resolvedOperatingCompanyId) {
+      return reply.code(400).send({ error: "operating_company_id_required" });
+    }
+    return withCurrentUser(authUser.uuid, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [resolvedOperatingCompanyId]);
+      const owns = await client.query(
+        `SELECT 1 FROM mdata.get_customer_same_company($1::uuid, $2::uuid) LIMIT 1`,
+        [parsedParams.data.id, resolvedOperatingCompanyId]
+      );
+      if (owns.rows.length === 0) return reply.code(404).send({ error: "mdata_customer_not_found" });
+
+      const precisionSql = `
+        CASE
+          WHEN lower(coalesce(ls.geocode_precision, '')) = 'locality' THEN 'locality'
+          WHEN upper(coalesce(ls.geocode_precision, '')) = 'ROOFTOP'
+            OR lower(coalesce(ls.geocode_precision, '')) = 'rooftop' THEN 'rooftop'
+          WHEN upper(coalesce(ls.geocode_precision, '')) IN ('APPROXIMATE', 'GEOMETRIC_CENTER', 'RANGE_INTERPOLATED')
+            OR lower(coalesce(ls.geocode_precision, '')) IN ('approximate', 'range') THEN 'approximate'
+          WHEN ls.latitude IS NOT NULL AND ls.longitude IS NOT NULL THEN 'approximate'
+          ELSE 'locality'
+        END`;
+
+      const stopLocs = await client.query(
+        `SELECT
+            coalesce(nullif(trim(ls.address_line1), ''), nullif(trim(loc.address_line1), ''), '') AS address,
+            coalesce(nullif(trim(ls.city), ''), nullif(trim(loc.city), ''), '') AS city,
+            coalesce(nullif(trim(ls.state), ''), nullif(trim(loc.state), ''), '') AS state,
+            coalesce(nullif(trim(ls.postal_code), ''), nullif(trim(loc.postal_code), ''), '') AS postal_code,
+            ${precisionSql} AS geocode_precision,
+            count(*)::int AS stop_count,
+            count(DISTINCT ls.load_id)::int AS load_count,
+            max(ls.id::text) AS sample_stop_id,
+            max(ls.location_id::text) AS location_id
+           FROM mdata.load_stops ls
+           JOIN mdata.loads l ON l.id = ls.load_id
+           LEFT JOIN mdata.locations loc ON loc.id = ls.location_id
+          WHERE l.operating_company_id = $2::uuid
+            AND l.customer_id = $1::uuid
+            AND l.is_sample_data IS NOT TRUE
+            AND l.voided_at IS NULL
+          GROUP BY 1, 2, 3, 4, 5
+          ORDER BY load_count DESC, city ASC
+          LIMIT 200`,
+        [parsedParams.data.id, resolvedOperatingCompanyId]
+      );
+
+      const linked = await client.query(
+        `SELECT
+            loc.id::text AS location_id,
+            loc.location_name AS name,
+            loc.address_line1 AS address,
+            loc.city,
+            loc.state,
+            loc.postal_code,
+            CASE
+              WHEN loc.latitude IS NOT NULL AND loc.longitude IS NOT NULL
+                AND lower(coalesce(loc.geocoding_source, '')) LIKE '%rooftop%' THEN 'rooftop'
+              WHEN loc.latitude IS NOT NULL AND loc.longitude IS NOT NULL THEN 'approximate'
+              ELSE 'locality'
+            END AS geocode_precision,
+            loc.location_type
+           FROM mdata.locations loc
+          WHERE loc.operating_company_id = $2::uuid
+            AND loc.linked_customer_id = $1::uuid
+            AND loc.deactivated_at IS NULL
+          ORDER BY loc.location_name
+          LIMIT 100`,
+        [parsedParams.data.id, resolvedOperatingCompanyId]
+      );
+
+      return {
+        customer_id: parsedParams.data.id,
+        stop_locations: stopLocs.rows,
+        linked_locations: linked.rows,
+      };
+    });
+  });
+
   app.patch("/api/v1/mdata/customers/:id", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return reply;

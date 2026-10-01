@@ -247,3 +247,9 @@ DRIVER PROFILE · what changed: FE wires CC-3 `GET /api/v1/drivers/:id/profile/{
 
 **2026-10-01T11:20Z · GO-20 HOOK · DRIVER PROFILE AUDIT → #23766**
 Audit confirmed ORDERS §2 gaps = exactly what #23766 ships. Rebased onto tip main (OUTBOX conflict only). Ambient CI same class as B-2/B-3 (go26 raw_table +4, arch-design sub-nav, phantom-relation, live-load). Own guard PASS. FAST-MERGE next.
+
+**2026-10-01T12:40Z · DRIVER PROFILE MERGED · PR #23766 · `1c72796a1c`**
+Driver Profile ORDERS complete on main. BatchSettlements EntityPicker + tip-debt push-gate clears included. · NEXT: Customers #23767 → Vendors #23768.
+
+**2026-10-01T12:45Z · CUSTOMERS ORDERS COMPLETE · branch `cursor/customers-orders-complete-4953` · PR #23767**
+CUSTOMERS · what changed: `GET /api/v1/mdata/customers/:id/locations` (stop places from load_stops + linked mdata.locations; geocode_precision normalized rooftop/approximate/locality); FE `CustomerLocationsSection` + `GeocodePrecisionBadge` (locality red "not a stop"); A/R tab banner `data-cust-ar-readonly` + Record Payment disabled (payments stay Accounting → Receive payment); Faro factoring wrap `data-cust-faro`; complaints/credit/COI/documents already present. Ops: `scripts/ops/verify-customers-orders-complete.mjs`. · LIVE PROOF: ops --selftest PASS; frontend `tsc -b` exit 0. · LEFT: Lead Chrome on `/customers/:id` locations + A/R read-only. · NEXT: tip-main rebase + FAST-MERGE then Vendors #23768.
