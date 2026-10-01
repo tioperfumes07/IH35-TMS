@@ -1311,3 +1311,24 @@ running; any missing reverse view in my lane gets built next.
   - Then FAC for Faro 102 -> 13638 through the engine under an AUTH.
   - Backfill 13625/13626 to the FK; guard.
 - 11:20Z cron + 12:00Z Relay proofs will be pasted here when they land.
+
+## 2026-10-01 08:30Z — CC-2 | CORRECTIONS from the owner's reconciliation (~/Downloads/09-30-26-UPDATED FIRST RECONCILIATION.xlsx — INFORMATIVE ONLY, owner: "DO NOT SEED THAT ... I WILL SEED THE NEXT LOADS MANUALLY TOMORROW")
+- **Faro 102 (09-25, PO SEM66542) = load 13621** (settlement 5823, QB #102). NOT 13638.
+  - My 07:15Z elimination ("102 -> 13638") is WITHDRAWN. Nothing was built on it.
+  - The missing 09-25 advance is Faro 102 -> 13621.
+- **Load 13638 = Faro 112, dated 2026-09-28** (PO SMX14683). It is not a 09-25 purchase.
+  - Faro 87 (SEM66538) is also shown against 13638 only as "REVIEW: matched by Name + Amount + Date only".
+- **13593 = ALIGATOR LOGISTICS, CANCELLED** (QB #74, 09-14; owner confirmed in chat).
+  - The system has it invoiced, with an invoice, a driver bill and 3 fuel rows ($1,325.32, AUTH-145).
+  - Needs the cancel/void chain under an AUTH, plus an owner ruling on the fuel.
+- **Faro 7 (ITS Logistics, $350, WO 68747): "NO ALLWAYS LOAD".** FAC-2026-00007 legitimately has no load.
+  - Guard 12055 must carry it as a named exception.
+  - The live guard currently FAILs on FAC-00007 / 00139 / 00140.
+- Faro 99 (Steam Logistics $2,400, 09-25): no AlwaysTrack load.
+- Faro 105–118 (09-26..09-30, dispatched loads 13624–13643): not in the TMS. The OWNER seeds them manually; no seat does.
+- Pending for the next CC-2 session (AUTH-191, engines live since deploy 7ace9f4f5d):
+  - (a) Write source_load_id on FAC-2026-00139 -> 13625 and 00140 -> 13626.
+  - (b) Add FAC-2026-00007 as 12055's named no-load exception (owner sheet).
+  - (c) Faro 102 -> 13621: check its invoice/advance state, then build through the engine.
+  - (d) 13593 cancel chain.
+  - (e) 11:20Z cron proof and 12:00Z Relay proof.
