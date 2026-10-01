@@ -220,3 +220,9 @@ CI · verify-entity-picker-not-capped: BatchExpenses vendors limit 1000 + onSear
 
 **2026-10-01T08:35Z · D-H2 LOADS REPORT — FAST-MERGE READY · PR #23760**
 D-H2 · what changed: `/reports/loads` filterable roster (customer/driver/unit/trailer/trip_type/status/factoring/date); columns load#·customer·driver·unit·trailer·pickup/delivery·miles practical/short/driven·revenue·pay·fuel·margin·invoice#·factored·settlement#; totals + CSV; money from loadCostRollupLateral. Guard: verify-loads-report-surface. · LIVE PROOF: guard selftest PASS. Ambient CI: modal-z-index / go26 sprawl on tip main (not D-H2 table — page uses ParityTable). · NEXT: squash-merge then B-1.
+
+**2026-10-01T08:50Z · D-H2 MERGED · PR #23760 · `b6b9fcb501`**
+D-H2 Loads Report `/reports/loads` + GET /api/v1/reports/loads. NEXT: B-1 Bank Register.
+
+**2026-10-01T09:00Z · B-1 BANK REGISTER · branch `cursor/b1-bank-register-c89b`**
+B-1 · what changed: mount QBO JE register at `/banking/register` + `/banking/register/:accountId` (AccountRegisterPage / journal_entry_postings); Banking subnav adds Register beside Transactions (feed kept). Guard: verify-bank-register-route.
