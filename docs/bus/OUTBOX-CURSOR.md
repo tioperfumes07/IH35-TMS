@@ -274,3 +274,6 @@ B-4 · what changed: WriteCheckForm QBO chrome — Who did you pay · Add to Che
 
 **2026-10-01T13:40Z · B-5 RECLASSIFY/BATCH (REGISTER SET §23–§24) · branch `cursor/b5-reclassify-batch-4953` · PR #23765**
 B-5 · what changed: Topbar Create→Other Batch + Reclassify; Reclassify modal Change location (honest-disabled) + vendor/customer; BatchExpenses type strip. Ops: `scripts/ops/verify-b5-reclassify-batch.mjs`. · LIVE PROOF: ops --selftest PASS. · LEFT: Lead Chrome. · NEXT: tip-main rebase + FAST-MERGE; banking register set B-2..B-5 complete.
+
+**2026-10-01T13:50Z · BANKING REGISTER SET B-2..B-5 MERGED**
+B-2 Reconcile #23762 `40cd7a2eb2` · B-3 feed+match #23763 `d0fb82228f` · B-4 check #23764 `4d687296fb` · B-5 reclassify #23765 `4a92bd4a0c`. #23772 closed superseded. · LEFT: Lead Chrome on reconcile / banking feed / check creator / reclassify+batch.
