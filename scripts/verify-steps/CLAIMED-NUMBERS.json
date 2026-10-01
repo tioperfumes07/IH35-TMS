@@ -1,4 +1,9 @@
 {
+  "12047": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-fuel-lane-reverse-routing: linkage law section 6 for the fuel lane -- fuel purchases list by vendor, fraud alerts list by unit/driver/load/vendor, fuel purchases drill to their expense + JE and back, Relay fills list by unit/driver/unmatched."
+  },
   "2426": {
     "claimed_at": "2026-08-31",
     "claimed_by": "cursor",
