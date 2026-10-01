@@ -50,7 +50,12 @@ const listQuerySchema = companyQuerySchema.extend({
 const createBodySchema = z.object({
   factoring_company_vendor_id: z.string().uuid(),
   submission_batch_ref: z.string().trim().max(200).optional(),
-  invoice_ids: z.array(z.string().uuid()).min(1).max(500),
+  invoice_ids: z.array(z.string().uuid()).min(1).max(500).optional(),
+  // PRE-INVOICE PURCHASE (Lead 2026-10-01 06:50Z, migration 202615170800): the factor bought the load before the TMS
+  // may invoice it (owner rule: no invoice on an undelivered load). The advance anchors to the load and its face is the
+  // factor's purchase amount; the invoice issued at delivery links itself (trg_invoice_link_pre_invoice_advance).
+  load_id: z.string().uuid().optional(),
+  purchase_cents: z.coerce.number().int().positive().optional(),
   // FACT-RESERVE-01 STEP 3 — advance_rate_pct is deliberately NOT accepted here. Under the executed
   // Faro agreement it is an OUTPUT of (100 - reserve_pct - factor_fee_pct), never a caller-supplied
   // third number that could drift out of sync with the two real inputs below. A body that still
@@ -63,6 +68,12 @@ const createBodySchema = z.object({
   // customer_po_number. Optional so the interactive UI still submits without it; Faro feed scripts
   // ALWAYS pass it. Never map on amount+customer.
   expected_customer_po: z.string().trim().min(1).max(120).optional(),
+}).superRefine((b, ctx) => {
+  const byInvoice = Boolean(b.invoice_ids?.length);
+  const byLoad = Boolean(b.load_id);
+  if (byInvoice === byLoad) ctx.addIssue({ code: "custom", message: "send invoice_ids OR load_id (pre-invoice purchase), not both and not neither" });
+  if (byLoad && !b.purchase_cents) ctx.addIssue({ code: "custom", path: ["purchase_cents"], message: "a pre-invoice purchase needs the factor's purchase amount" });
+  if (byLoad && !b.expected_customer_po) ctx.addIssue({ code: "custom", path: ["expected_customer_po"], message: "a pre-invoice purchase must name the factor's PO (ROUND 172 match law)" });
 });
 
 /** FACT-PLEDGE-NET-CM — same net as ar-aging (payments + applied non-void credit memos), live not as-of. */
@@ -106,7 +117,9 @@ async function fetchAdvanceDetail(client: any, advanceId: string, operatingCompa
           FROM accounting.invoices i2
           WHERE i2.factoring_advance_id = fa.id
             AND i2.operating_company_id = fa.operating_company_id
-        )::int AS invoice_count
+        )::int AS invoice_count,
+        (SELECT l.load_number FROM mdata.loads l
+          WHERE l.id = fa.source_load_id AND l.operating_company_id = fa.operating_company_id) AS source_load_number
       FROM accounting.factoring_advances fa
       -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): the advance is scoped, the factoring-company
       -- vendor it names was not. This supplies the vendor NAME shown on the advance.
@@ -264,13 +277,15 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
       }
       if (q.load_id) {
         values.push(q.load_id);
+        // Load -> its advances: through the invoice it was submitted on, OR directly when the factor bought the
+        // load before it could be invoiced (source_load_id, migration 202615170800).
         where.push(
-          `EXISTS (
+          `(fa.source_load_id = $${values.length}::uuid OR EXISTS (
              SELECT 1 FROM accounting.invoices i
              WHERE i.factoring_advance_id = fa.id
                AND i.operating_company_id = fa.operating_company_id
                AND i.source_load_id = $${values.length}::uuid
-           )`
+           ))`
         );
       }
       values.push(q.limit);
@@ -431,6 +446,79 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
       );
       if (!vendorRes.rows[0]) return { code: 404 as const, error: "factoring_vendor_not_found" };
 
+      if (body.data.load_id) {
+        const loadRes = await client.query(
+          `
+            SELECT l.id::text, l.load_number, l.customer_wo_number, l.customer_po_number,
+                   COALESCE(c.factoring_eligible, c2.factoring_eligible) AS factoring_eligible,
+                   (SELECT count(*)::int FROM accounting.invoices i
+                     WHERE i.source_load_id = l.id AND i.operating_company_id = l.operating_company_id AND i.voided_at IS NULL) AS live_invoices,
+                   (SELECT count(*)::int FROM accounting.factoring_advances a
+                     WHERE a.source_load_id = l.id AND a.operating_company_id = l.operating_company_id AND a.voided_at IS NULL) AS open_advances
+              FROM mdata.loads l
+              LEFT JOIN mdata.customers c ON c.id = l.customer_id AND c.operating_company_id = l.operating_company_id
+              LEFT JOIN LATERAL (
+                SELECT * FROM mdata.get_customer_same_company(l.customer_id, l.operating_company_id) WHERE c.id IS NULL
+              ) c2 ON true
+             WHERE l.id = $1::uuid AND l.operating_company_id = $2::uuid AND l.soft_deleted_at IS NULL
+          `,
+          [body.data.load_id, query.data.operating_company_id]
+        );
+        const load = loadRes.rows[0] as
+          | { id: string; load_number: string; customer_wo_number: string | null; customer_po_number: string | null;
+              factoring_eligible: boolean | null; live_invoices: number; open_advances: number }
+          | undefined;
+        if (!load) return { code: 404 as const, error: "load_not_found" };
+        if (!load.factoring_eligible) return { code: 409 as const, error: "customer_not_factoring_eligible" };
+        // A live invoice means the invoice path applies (it carries the pledge base); a second open advance would
+        // pledge the same trip twice.
+        if (load.live_invoices > 0) return { code: 409 as const, error: "load_has_live_invoice_use_invoice_ids" };
+        if (load.open_advances > 0) return { code: 409 as const, error: "load_already_has_open_advance" };
+        const poWant = body.data.expected_customer_po!;
+        if ((load.customer_wo_number ?? "") !== poWant && (load.customer_po_number ?? "") !== poWant) {
+          return {
+            code: 409 as const,
+            error: "factoring_po_mismatch",
+            detail: { expected_customer_po: poWant, load_number: load.load_number, customer_wo_number: load.customer_wo_number, customer_po_number: load.customer_po_number },
+          };
+        }
+        const face = body.data.purchase_cents!;
+        const reserveAmount = Math.round((face * Number(body.data.reserve_pct)) / 100);
+        const feeAmount = Math.round((face * Number(body.data.factor_fee_pct)) / 100);
+        const advanceAmount = face - reserveAmount - feeAmount;
+        const advanceRatePctDerived = face > 0 ? Number(((advanceAmount / face) * 100).toFixed(2)) : 0;
+        const displayId = await nextFactoringDisplayId(client, query.data.operating_company_id, new Date());
+        const ins = await client.query(
+          `
+            INSERT INTO accounting.factoring_advances (
+              operating_company_id, factoring_company_vendor_id, display_id, status, submission_batch_ref,
+              invoice_total_cents, advance_rate_pct, advance_amount_cents, reserve_pct, reserve_amount_cents,
+              factor_fee_pct, factor_fee_cents, notes, memo, created_by_user_id, source_load_id
+            )
+            VALUES ($1,$2,$3,'submitted',$4,$5,$6,$7,$8,$9,$10,$11,$12,$12,$13,$14::uuid)
+            RETURNING id
+          `,
+          [
+            query.data.operating_company_id, body.data.factoring_company_vendor_id, displayId, body.data.submission_batch_ref ?? null,
+            face, advanceRatePctDerived, advanceAmount, body.data.reserve_pct, reserveAmount, body.data.factor_fee_pct, feeAmount,
+            body.data.notes ?? null, user.uuid, load.id,
+          ]
+        );
+        const advanceId = String(ins.rows[0]?.id ?? "");
+        if (!advanceId) return { code: 500 as const, error: "factoring_advance_create_failed" };
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "accounting.factoring_submitted",
+          { resource_type: "accounting.factoring_advances", resource_id: advanceId, operating_company_id: query.data.operating_company_id, display_id: displayId, pre_invoice_load_id: load.id, load_number: load.load_number, purchase_cents: face },
+          "info",
+          "P3-T11.20.5-FACTORING"
+        );
+        const detail = await fetchAdvanceDetail(client, advanceId, query.data.operating_company_id);
+        return { code: 201 as const, data: detail };
+      }
+      const invoiceIds = body.data.invoice_ids!;
+
       const invoiceRes = await client.query(
         `
           SELECT
@@ -458,9 +546,9 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
           WHERE i.operating_company_id = $1::uuid
             AND i.id = ANY($2::uuid[])
         `,
-        [query.data.operating_company_id, body.data.invoice_ids]
+        [query.data.operating_company_id, invoiceIds]
       );
-      if (invoiceRes.rows.length !== body.data.invoice_ids.length) return { code: 404 as const, error: "invoice_not_found" };
+      if (invoiceRes.rows.length !== invoiceIds.length) return { code: 404 as const, error: "invoice_not_found" };
       for (const row of invoiceRes.rows as Array<Record<string, unknown>>) {
         if (String(row.status) !== "sent") return { code: 409 as const, error: "invoice_not_sent" };
         if (String(row.factoring_status) !== "not_factored") return { code: 409 as const, error: "invoice_already_factored" };
@@ -486,7 +574,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
             WHERE i.operating_company_id = $1::uuid
               AND i.id = ANY($2::uuid[])
           `,
-          [query.data.operating_company_id, body.data.invoice_ids]
+          [query.data.operating_company_id, invoiceIds]
         );
         for (const row of poRes.rows as Array<{
           invoice_id: string;
@@ -623,7 +711,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
           resource_id: advanceId,
           operating_company_id: query.data.operating_company_id,
           display_id: displayId,
-          invoice_count: body.data.invoice_ids.length,
+          invoice_count: invoiceIds.length,
         },
         "info",
         "P3-T11.20.5-FACTORING"
