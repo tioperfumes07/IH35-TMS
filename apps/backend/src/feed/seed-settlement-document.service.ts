@@ -1045,9 +1045,10 @@ async function seedDriverSettlement(
   const settlement = await client.query<{ id: string }>(
     `INSERT INTO driver_finance.driver_settlements (
        operating_company_id, display_id, driver_id, period_start, period_end, status,
-       net_pay, source_document_ref, created_by_user_id, is_sample_data
+       net_pay, source_document_ref, created_by_user_id, is_sample_data, settlement_model
      )
-     VALUES ($1::uuid, $2, $3::uuid, $4::date, $5::date, 'approved', 0, $6, $7::uuid, $8)
+     -- ROUND 313: never NULL; a fed settlement document is load-bookended (same as ensure-settlement-from-fed-bills).
+     VALUES ($1::uuid, $2, $3::uuid, $4::date, $5::date, 'approved', 0, $6, $7::uuid, $8, 'load_bookended')
      RETURNING id::text`,
     [operatingCompanyId, `S-${plan.documentNumber}`, driverId, plan.startDate, plan.endDate, plan.documentNumber, actorUserId, isSampleData]
   );
