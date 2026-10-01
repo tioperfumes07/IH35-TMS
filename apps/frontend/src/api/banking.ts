@@ -1522,7 +1522,16 @@ export function clearReconciliationTransaction(
 export function completeReconciliationSession(
   sessionId: string,
   operatingCompanyId: string,
-  payload: { force_complete?: boolean; reason?: string } = {}
+  payload: {
+    force_complete?: boolean;
+    reason?: string;
+    service_charge_cents?: number;
+    service_charge_date?: string | null;
+    service_charge_account_id?: string | null;
+    interest_earned_cents?: number;
+    interest_earned_date?: string | null;
+    interest_earned_account_id?: string | null;
+  } = {}
 ) {
   return apiRequest<{ ok: true; variance_cents: number }>(
     `/api/v1/banking/reconciliation/${sessionId}/complete?${q(operatingCompanyId)}`,

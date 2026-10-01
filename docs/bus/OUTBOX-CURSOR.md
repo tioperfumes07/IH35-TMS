@@ -1,3 +1,7 @@
+
+**2026-10-01T15:45Z · R313 BANK-SURF-04/ECON-04 RECON SERVICE CHARGE/INTEREST ENGINE**
+Claim `202615141200` #23791. Author: migration + `recon-adjustments.service` (canonical JE poster) + complete body/FE payload + adjusted-balance SC/IE + guard `verify-recon-service-charge-interest-posts` + AUTH-195. Neon columns applied. Variance formula $5+$5 → $0 on Petty Cash. · LIVE session close runs after AUTH-195 merges (ops proof script). · NEXT: Factoring designs · Maintenance designs · Chrome pass.
+
 # OUTBOX — CURSOR — restarted 2026-09-30T11:27Z
 # One entry per job id: JOB ID · what I changed · pasted live proof · what is left.
 # Append below. Do not delete another seat's entries.

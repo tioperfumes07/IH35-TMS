@@ -655,6 +655,14 @@ prod post is a separate, intentional, owner-authorized action, not a repoint of 
 - #21408 — claim-reserve 11078 (MERGED) · #21412 — settlement triple-figure display fix (MERGED)
 - #21414 — MEMORY_BANK.md (MERGED) · #21416 — preview harness + doc 5780 tie-out 21/21 (MERGED)
 
+
+## Active Architectural Decisions — ROUND 313 recon service charge/interest (Cursor, 2026-10-01)
+
+- Finish reconcile posts bank fee + interest through `postReconciliationAdjustments` → `createJournalEntryOnClient` (source `bank_reconciliation`), not FE-local only.
+- Session columns (migration `202615141200`): `service_charge_*` + `interest_earned_*` cents/date/account/JE FK.
+- QBO math: `adjusted_book = beginning + clearedCredits − clearedDebits − serviceCharge + interestEarned`; variance must be 0 to close.
+- Live proof path: Petty Cash (0 txns) + $5 fee + $5 interest nets to $0; AUTH-195.
+
 ## Active Architectural Decisions — Banking ROUND 186 bulk-accept (Cursor, 2026-09-28)
 
 - **One accept handler.** Bulk matches MUST call `acceptMatchWithResolveDifference` (1:1) or

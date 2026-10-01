@@ -153,17 +153,9 @@ export function ReconciliationWorkspacePage() {
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
 
-  // ROUND 197.1 (owner-raised) — Service charge / Interest earned, each with its own date + GL
-  // account, matching the real QuickBooks Online reconcile flow (bank fee expense / interest
-  // income, entered as part of the reconcile, adjusting the book side of the difference before
-  // Finish is evaluated). Session-LOCAL only: ReconciliationSession carries no
-  // service_charge_cents/interest_earned_cents columns today, and CC-2 cannot author a migration
-  // to add them (verify-migration-lane-band.mjs hard-bars cc-2/*-prefixed branches from
-  // db/migrations/*.sql) — persisting these across a reload/reopen is real follow-up work for
-  // whichever seat owns migrations, flagged explicitly rather than silently limited. The
-  // difference calculation and the Finish gate below both already read from this local state, so
-  // the core requirement (an operator can enter these, and Finish stays disabled until the
-  // resulting difference is exactly 0.00) is real today, not deferred.
+  // ROUND 313 BANK-ECON-04 — Service charge / Interest earned persist on the session and post
+  // through the canonical JE poster on Finish (migration 202615141200). Local state is the
+  // working draft; complete sends cents/date/account so the server posts Dr/Cr and stamps JE FKs.
   const [serviceChargeInput, setServiceChargeInput] = useState<number | null>(null);
   const [serviceChargeDate, setServiceChargeDate] = useState("");
   const [serviceChargeAccountId, setServiceChargeAccountId] = useState<string | null>(null);
@@ -286,31 +278,23 @@ export function ReconciliationWorkspacePage() {
 
   const clearedCounts = useMemo(() => countCleared(localTransactions), [localTransactions]);
 
-  const summary = useMemo(() => {
+  const clearedSummary = useMemo(() => {
     const server = workspaceQuery.data?.summary;
     const statementBalance = Number(server?.statement_balance_cents ?? 0);
-    const sessionBeginning = Number(server?.beginning_balance_cents ?? 0);
     const depositCents =
       clearedCounts.depositCents || Number(server?.cleared_credits_cents ?? server?.matched_credits_cents ?? 0);
     const paymentCents =
       clearedCounts.paymentCents || Number(server?.cleared_debits_cents ?? server?.matched_debits_cents ?? 0);
-    // QBO §6: CLEARED = BEGINNING − PAYMENTS + DEPOSITS (± service charge / interest)
-    const beginning = sessionBeginning;
-    const clearedBalanceCents = beginning - paymentCents + depositCents - serviceChargeCents + interestEarnedCents;
     return {
       statementBalanceCents: statementBalance,
-      beginningCents: beginning,
       depositCents,
       paymentCents,
       paymentCount: clearedCounts.paymentCount,
       depositCount: clearedCounts.depositCount,
-      clearedBalanceCents,
       matchedCreditsCents: depositCents,
       matchedDebitsCents: paymentCents,
-      bookBalanceCents: clearedBalanceCents,
-      varianceCents: statementBalance - clearedBalanceCents,
     };
-  }, [workspaceQuery.data?.summary, clearedCounts, serviceChargeCents, interestEarnedCents]);
+  }, [workspaceQuery.data?.summary, clearedCounts]);
 
   const canComplete = auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Accountant";
   const isOwner = auth.user?.role === "Owner";
@@ -361,23 +345,23 @@ export function ReconciliationWorkspacePage() {
     statementBalanceInput,
   ]);
 
-  // Prefer server beginning; if zero, carry prior closed session statement ending (QBO).
-  const arithmetic = useMemo(() => {
-    const beginning =
-      summary.beginningCents !== 0 ? summary.beginningCents : Number(balanceHeader?.beginningCents ?? 0);
+  // Beginning = prior closed session statement ending (QBO). Never invent a beginning-balance column.
+  const summary = useMemo(() => {
+    const beginning = Number(balanceHeader?.beginningCents ?? 0);
     const clearedBalanceCents =
-      beginning - summary.paymentCents + summary.depositCents - serviceChargeCents + interestEarnedCents;
+      beginning - clearedSummary.paymentCents + clearedSummary.depositCents - serviceChargeCents + interestEarnedCents;
     return {
-      ...summary,
+      ...clearedSummary,
       beginningCents: beginning,
       clearedBalanceCents,
-      varianceCents: summary.statementBalanceCents - clearedBalanceCents,
+      bookBalanceCents: clearedBalanceCents,
+      varianceCents: clearedSummary.statementBalanceCents - clearedBalanceCents,
     };
-  }, [summary, balanceHeader?.beginningCents, serviceChargeCents, interestEarnedCents]);
+  }, [clearedSummary, balanceHeader?.beginningCents, serviceChargeCents, interestEarnedCents]);
 
   // Reconciliation is ordinary-complete only at exactly $0.00. Any non-zero difference needs an
   // Owner's explicit, reasoned override; never silently certify an under-$10 variance.
-  const needsForceComplete = arithmetic.varianceCents !== 0;
+  const needsForceComplete = summary.varianceCents !== 0;
 
   return (
     <div className="space-y-4">
@@ -434,8 +418,8 @@ export function ReconciliationWorkspacePage() {
                 {session?.period_end ? ` · Statement ending ${formatDateUS(session.period_end)}` : ""}
               </p>
               <p className="mt-1 text-xs text-[#6B7280]">
-                Beginning {money(arithmetic.beginningCents)} − {arithmetic.paymentCount} payments{" "}
-                {money(arithmetic.paymentCents)} + {arithmetic.depositCount} deposits {money(arithmetic.depositCents)}
+                Beginning {money(summary.beginningCents)} − {summary.paymentCount} payments{" "}
+                {money(summary.paymentCents)} + {summary.depositCount} deposits {money(summary.depositCents)}
                 {serviceChargeCents ? ` − service charge ${money(serviceChargeCents)}` : ""}
                 {interestEarnedCents ? ` + interest ${money(interestEarnedCents)}` : ""}
               </p>
@@ -443,28 +427,28 @@ export function ReconciliationWorkspacePage() {
             <div className="flex flex-wrap items-center gap-3 text-center text-xs">
               <div>
                 <p className="font-bold uppercase tracking-wide text-[#4B5563]">Statement ending</p>
-                <p className="mt-0.5 font-semibold tabular-nums text-[#0F1219]">{money(arithmetic.statementBalanceCents)}</p>
+                <p className="mt-0.5 font-semibold tabular-nums text-[#0F1219]">{money(summary.statementBalanceCents)}</p>
               </div>
               <span className="text-[#6B7280]">−</span>
               <div>
                 <p className="font-bold uppercase tracking-wide text-[#4B5563]">Cleared</p>
-                <p className="mt-0.5 font-semibold tabular-nums text-[#0F1219]">{money(arithmetic.clearedBalanceCents)}</p>
+                <p className="mt-0.5 font-semibold tabular-nums text-[#0F1219]">{money(summary.clearedBalanceCents)}</p>
               </div>
               <span className="text-[#6B7280]">=</span>
               <div>
                 <p className="font-bold uppercase tracking-wide text-[#4B5563]">Difference</p>
                 <p
                   className={`mt-0.5 font-semibold tabular-nums ${
-                    arithmetic.varianceCents === 0 ? "text-[#16A34A]" : "text-red-700"
+                    summary.varianceCents === 0 ? "text-[#16A34A]" : "text-red-700"
                   }`}
                   data-testid="recon-difference"
                 >
-                  {money(arithmetic.varianceCents)}
+                  {money(summary.varianceCents)}
                 </p>
               </div>
             </div>
           </div>
-          {arithmetic.varianceCents !== 0 ? (
+          {summary.varianceCents !== 0 ? (
             <p className="mt-2 text-xs text-red-700">
               Selected transactions do not match the statement yet. Finish stays disabled until Difference is $0.00
               (Owner force-complete only with a written reason).
@@ -941,18 +925,18 @@ export function ReconciliationWorkspacePage() {
             <div className="rounded-sm border border-gray-200 bg-white p-3">
               <p className="text-xs font-semibold text-gray-900">Variance summary</p>
               <div className="mt-2 space-y-1 text-xs">
-                <div className="flex justify-between"><span>Statement</span><span>{money(arithmetic.statementBalanceCents)}</span></div>
-                <div className="flex justify-between"><span>Cleared deposits</span><span>{money(arithmetic.depositCents)}</span></div>
-                <div className="flex justify-between"><span>Cleared payments</span><span>{money(arithmetic.paymentCents)}</span></div>
-                <div className="flex justify-between"><span>Cleared balance</span><span>{money(arithmetic.clearedBalanceCents)}</span></div>
+                <div className="flex justify-between"><span>Statement</span><span>{money(summary.statementBalanceCents)}</span></div>
+                <div className="flex justify-between"><span>Cleared deposits</span><span>{money(summary.depositCents)}</span></div>
+                <div className="flex justify-between"><span>Cleared payments</span><span>{money(summary.paymentCents)}</span></div>
+                <div className="flex justify-between"><span>Cleared balance</span><span>{money(summary.clearedBalanceCents)}</span></div>
                 {serviceChargeCents !== 0 ? (
                   <div className="flex justify-between"><span>Less: service charge</span><span>-{money(serviceChargeCents)}</span></div>
                 ) : null}
                 {interestEarnedCents !== 0 ? (
                   <div className="flex justify-between"><span>Plus: interest earned</span><span>+{money(interestEarnedCents)}</span></div>
                 ) : null}
-                <div className={`flex justify-between font-semibold ${varianceClass(arithmetic.varianceCents)}`}>
-                  <span>Difference</span><span>{money(arithmetic.varianceCents)}</span>
+                <div className={`flex justify-between font-semibold ${varianceClass(summary.varianceCents)}`}>
+                  <span>Difference</span><span>{money(summary.varianceCents)}</span>
                 </div>
               </div>
 
@@ -1031,6 +1015,12 @@ export function ReconciliationWorkspacePage() {
                   void completeReconciliationSession(sessionId, companyId, {
                     force_complete: needsForceComplete,
                     reason: needsForceComplete ? forceReason.trim() : undefined,
+                    service_charge_cents: serviceChargeCents,
+                    service_charge_date: serviceChargeCents ? serviceChargeDate || null : null,
+                    service_charge_account_id: serviceChargeCents ? serviceChargeAccountId : null,
+                    interest_earned_cents: interestEarnedCents,
+                    interest_earned_date: interestEarnedCents ? interestEarnedDate || null : null,
+                    interest_earned_account_id: interestEarnedCents ? interestEarnedAccountId : null,
                   })
                     .then(() => {
                       pushToast("Session marked reconciled", "success");
