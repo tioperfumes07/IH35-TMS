@@ -214,3 +214,6 @@ D-H2 · what changed: same as above + BatchExpensesPage ListErrorState spread fi
 
 **2026-10-01T08:25Z · D-H2 CI FIX · PR #23760 · `6c013d13bb`**
 CI · guard-integrity silent-list-caps: LoadsReport customer limit 50, BatchExpenses vendor/class 99, DashcamViewer clips 99. verify-no-silent-list-caps --selftest exit 0. · LEFT: go26 raw_table (+4 ambient on tip main) + phantom-relation (9 ambient) — not D-H2 files; re-run CI. · NEXT: merge #23760 → B-1.
+
+**2026-10-01T08:30Z · D-H2 CI FIX · PR #23760 · `f90054a052`**
+CI · verify-entity-picker-not-capped: BatchExpenses vendors limit 1000 + onSearch + CappedListNotice; ReclassifyTransactionsPage vendors limit 1000 (ambient). Both guards exit 0 locally. · LEFT: go26 + phantom-relation + required-live-load-guard ambient; re-run CI. · NEXT: merge #23760 → B-1.
