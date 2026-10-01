@@ -16,6 +16,8 @@ function posting(over: Partial<RawPosting>): RawPosting {
     payee: null,
     split_account: null,
     class_name: null,
+    reconcile_status: "",
+    attachment_count: 0,
     ...over,
   };
 }

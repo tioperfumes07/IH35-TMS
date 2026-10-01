@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["accounting"],"cols":["connectivity","qbo_chrome"],"leafRe":"^accounting\\.parity\\.account_register$","task":"B-1-ACCOUNT-REGISTER-PARITYTABLE","vertical":"column-wave"}
  * verify-account-register-page-uses-paritytable — qbo-parity (AccountRegisterPage surface)
  *
  * Money-adjacent ledger DISPLAY — both views of the account register (Register + Audit history)
@@ -68,8 +69,22 @@ function assertMigrated(src) {
   if (!src.includes("No transactions in this range.")) {
     errors.push(`${PAGE}: must keep the register emptyText`);
   }
-  if (!src.includes("Reconciliation not yet available")) {
-    errors.push(`${PAGE}: must keep the honest C/R reconciliation banner`);
+  // B-1 (2026-10-01): C/R is live blank/C/R from bank match + closed recon — banner retired.
+  // Keep the QBO ✓ column label "C/R" and the B-1 two-line / header markers.
+  if (!src.includes('label: "C/R"')) {
+    errors.push(`${PAGE}: must keep the C/R (✓) column label`);
+  }
+  if (!src.includes("data-b1-two-line") && !src.includes('data-b1-two-line="1"')) {
+    errors.push(`${PAGE}: B-1 two-line row marker missing (data-b1-two-line)`);
+  }
+  if (!src.includes("Bank balance") || !src.includes("Ending balance")) {
+    errors.push(`${PAGE}: B-1 header must show Bank balance and Ending balance`);
+  }
+  if (!src.includes("initialPageSize={100}")) {
+    errors.push(`${PAGE}: B-1 paging default must be 100 rows/page`);
+  }
+  if (!src.includes('renderExpanded')) {
+    errors.push(`${PAGE}: B-1 inline expand (Edit → original document) missing`);
   }
   if (!src.includes("Opening balance")) {
     errors.push(`${PAGE}: must keep the pinned opening-balance summary row`);
@@ -114,9 +129,9 @@ function selftest() {
     ];
     const registerQuery = { refetch() {} };
     <ListErrorState title="Couldn't load the register for this account and date range" status={0} onRetry={() => void registerQuery.refetch()} />
-    <div>Reconciliation not yet available</div>
+    <div data-b1-two-line="1">Bank balance Ending balance</div>
     <span>Opening balance</span>
-    <ParityTable storageKey="account-register" emptyText="No transactions in this range." />
+    <ParityTable storageKey="account-register" emptyText="No transactions in this range." initialPageSize={100} renderExpanded={() => null} />
     <ListErrorState title="Couldn't load audit history" status={0} onRetry={() => {}} />
     <ParityTable storageKey="account-register-audit" emptyText="No audit events for this account." />
   `;

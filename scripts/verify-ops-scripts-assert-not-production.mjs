@@ -32,16 +32,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-// DATABASE_URL occurs only inside source-analysis fixtures below. This guard
-// opens no database connection: its complete assertion is the filesystem scan.
-export const ALLOW_OFFLINE_SKIP = "STATIC source analysis only; no database phase is skipped";
-
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-ops-scripts-assert-not-production";
 const ASSERT_MODULE_BASENAME = "assert-not-production";
 
 // Static source-order scan only — never opens a DB. Declared so verify-no-silent-db-skip (03d)
 // does not treat a clean exit without DATABASE_URL as a silent money skip.
+// (Single export — duplicate ALLOW_OFFLINE_SKIP was a SyntaxError that blocked every scripts/ops touch.)
 export const ALLOW_OFFLINE_SKIP =
   "static textual-order assertNotProduction scan; no DATABASE_URL path by design";
 

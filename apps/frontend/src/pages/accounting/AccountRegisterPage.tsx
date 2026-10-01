@@ -1,6 +1,6 @@
 import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
@@ -313,15 +313,24 @@ export function AccountRegisterPage() {
   const normalLabel = report ? (report.account.normal_balance === "debit" ? "Dr" : "Cr") : "";
   const normal: "debit" | "credit" = report?.account.normal_balance ?? "debit";
 
-  // QBO register column grammar (approved design: docs/approved-screens/preview-register-qbo.html).
-  // Payment/Deposit derive from normal_balance; sort via sortValue on the account-correct side.
+  // B-1 / QBO register: two visual lines per row — DATE/REF/PAYEE/CLASS/PAYMENT/DEPOSIT/✓/📎/BALANCE
+  // over TYPE/ACCOUNT/LOCATION. Line-2 fields also stay as defaultHidden gear columns (guard + chooser).
+  // Payment/Deposit derive from normal_balance; running balance is "n/a" when not sorted by date.
+  const balanceInDateOrder = !sortKey || sortKey === "entry_date";
+  const line2 = (top: ReactNode, bottom: ReactNode) => (
+    <div className="flex flex-col gap-0.5 leading-tight" data-b1-two-line="1">
+      <div>{top}</div>
+      <div className="text-[11px] text-[#6B7280]">{bottom}</div>
+    </div>
+  );
   const columns: Array<ParityColumn<AccountRegisterRow>> = [
     {
       key: "entry_date",
       label: "Date",
       sortable: true,
+      allowWrap: true,
       cellClass: "whitespace-nowrap",
-      render: (r) => formatDateUS(r.entry_date),
+      render: (r) => line2(formatDateUS(r.entry_date), r.type || "—"),
     },
     // LV-REPORTS-BALANCE-SHEET-GL-JE-DRILL: every register row already carries a real
     // journal_entry_id (the row IS a posting on this account's own JE) — it just was never
@@ -331,19 +340,29 @@ export function AccountRegisterPage() {
       key: "reference",
       label: "Ref No.",
       sortable: true,
+      allowWrap: true,
       render: (r) =>
-        r.journal_entry_id ? (
-          <EntityLink
-            kind="journal_entry"
-            id={r.journal_entry_id}
-            label={r.reference?.trim() ? r.reference.trim() : "—"}
-          />
-        ) : (
-          r.reference ?? "—"
+        line2(
+          r.journal_entry_id ? (
+            <EntityLink
+              kind="journal_entry"
+              id={r.journal_entry_id}
+              label={r.reference?.trim() ? r.reference.trim() : "—"}
+            />
+          ) : (
+            r.reference ?? "—"
+          ),
+          r.split_account ?? "—"
         ),
     },
-    { key: "payee", label: "Payee", sortable: true, render: (r) => r.payee ?? "—" },
-    { key: "memo", label: "Memo", sortable: true, render: (r) => r.memo ?? r.description ?? "—" },
+    {
+      key: "payee",
+      label: "Payee",
+      sortable: true,
+      allowWrap: true,
+      render: (r) => line2(r.payee ?? "—", "—"),
+    },
+    { key: "memo", label: "Memo", sortable: true, defaultHidden: true, render: (r) => r.memo ?? r.description ?? "—" },
     { key: "class_name", label: "Class", sortable: true, render: (r) => r.class_name ?? "—" },
     {
       key: "payment",
@@ -370,19 +389,53 @@ export function AccountRegisterPage() {
       },
     },
     {
+      key: "cr",
+      label: "C/R",
+      sortable: true,
+      className: "text-center",
+      cellClass: "text-center tabular-nums",
+      sortValue: (r) => r.reconcile_status || "",
+      headerTitle: "✓ blank = unmatched · C = cleared (bank match) · R = reconciled (locked)",
+      render: (r) => {
+        const status = r.reconcile_status || "";
+        return (
+          <span
+            data-b1-reconcile-status={status || "blank"}
+            title={
+              status === "R"
+                ? "Reconciled — locked by a closed reconciliation"
+                : status === "C"
+                  ? "Cleared — matched to bank feed"
+                  : "Not matched"
+            }
+            className={status === "R" ? "font-semibold text-slate-800" : status === "C" ? "text-slate-700" : "text-gray-400"}
+          >
+            {status || "\u00a0"}
+          </span>
+        );
+      },
+    },
+    {
+      key: "attachment_count",
+      label: "📎",
+      sortable: true,
+      className: "text-center",
+      cellClass: "text-center tabular-nums",
+      sortValue: (r) => r.attachment_count ?? 0,
+      render: (r) => (r.attachment_count > 0 ? String(r.attachment_count) : ""),
+    },
+    {
       key: "running_balance_cents",
       label: "Balance",
       sortable: true,
       className: "text-right",
       cellClass: "text-right font-medium tabular-nums",
-      render: (r) => fmtCents(r.running_balance_cents),
+      render: (r) => (balanceInDateOrder ? fmtCents(r.running_balance_cents) : "n/a"),
     },
-    { key: "type", label: "Type", sortable: true, render: (r) => r.type },
-    { key: "split_account", label: "Account", sortable: true, render: (r) => r.split_account ?? "—" },
-    // Location + C/R are bank-register concepts; the GL posting model carries neither (verified) →
-    // honest "—", never fabricated. Kept as columns (hideable via the gear) to match the QBO grammar.
-    { key: "location", label: "Location", sortable: true, sortValue: () => "", render: () => "—" },
-    { key: "cr", label: "C/R", sortable: true, sortValue: () => "", render: () => "—" },
+    { key: "type", label: "Type", sortable: true, defaultHidden: true, render: (r) => r.type },
+    { key: "split_account", label: "Account", sortable: true, defaultHidden: true, render: (r) => r.split_account ?? "—" },
+    // Location is not on journal_entry_postings yet — honest "—", never fabricated.
+    { key: "location", label: "Location", sortable: true, defaultHidden: true, sortValue: () => "", render: () => "—" },
   ];
 
   // Audit-history view — display-only ledger audit stream (same shape as the former hand-rolled
@@ -479,10 +532,18 @@ export function AccountRegisterPage() {
   };
 
   const kpiStrip = report ? (
-    <div className="grid gap-2 md:grid-cols-4">
-      {kpiCard("Balance", `${fmtCents(report.closing_balance_cents)} ${normalLabel}`, `as of ${report.to_date}`)}
-      {kpiCard("Debits (period)", fmtCents(report.total_debit_cents), "in range")}
-      {kpiCard("Credits (period)", fmtCents(report.total_credit_cents), "in range")}
+    <div className="grid gap-2 md:grid-cols-4" data-b1-register-header="1">
+      {kpiCard(
+        "Bank balance",
+        report.bank_balance_cents != null ? fmtCents(report.bank_balance_cents) : "—",
+        "feed (bank connection)"
+      )}
+      {kpiCard("Ending balance", `${fmtCents(report.closing_balance_cents)} ${normalLabel}`, `book · as of ${report.to_date}`)}
+      {kpiCard(
+        "Reconciled through",
+        report.reconciled_through ? formatDateUS(report.reconciled_through) : "—",
+        "last closed statement"
+      )}
       {kpiCard("# Transactions", String(report.transaction_count), "in range")}
     </div>
   ) : undefined;
@@ -621,11 +682,39 @@ export function AccountRegisterPage() {
         />
       ) : view === "register" ? (
         <>
-        {/* C/R (cleared/reconciled) is a bank-reconciliation concept; the GL posting model carries no
-            cleared state and no posting→bank_transaction link exists (verified). Show an honest banner
-            instead of a fake checkmark — bank reconciliation surfaces it once that linkage is built. */}
-        <div className="mb-2 rounded-sm border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700">
-          Reconciliation not yet available — the C/R column reflects GL postings, which carry no cleared/reconciled state yet.
+        {/* B-1 — Bank transactions / Reconcile entry points beside the register (QBO header buttons). */}
+        <div className="mb-2 flex flex-wrap items-center gap-2" data-b1-register-actions="1">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() =>
+              navigate(
+                report?.bank_account_id
+                  ? `/banking/accounts/${report.bank_account_id}`
+                  : "/banking/transactions"
+              )
+            }
+          >
+            Bank transactions
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() =>
+              navigate(
+                report?.bank_account_id
+                  ? `/banking?tab=reconciliation&accountId=${encodeURIComponent(report.bank_account_id)}&start=1`
+                  : "/banking?tab=reconciliation"
+              )
+            }
+          >
+            Reconcile
+          </Button>
+          <span className="text-[11px] text-[#6B7280]">
+            ✓ = blank / C / R · Balance runs in date order only (shows n/a when sorted otherwise) · 100 rows/page
+          </span>
         </div>
         {/* Opening balance is a running summary, not a paginated row — kept pinned above the table
             (QBO shows it as the first register line; ParityTable's rows are page-sliced, so a summary
@@ -639,16 +728,73 @@ export function AccountRegisterPage() {
           rows={report?.rows ?? []}
           rowKey={(r) => r.posting_id}
           loading={registerQuery.isLoading}
-          onRowClick={(r) => navigate(sourceRoute(r.source_transaction_type, r.source_transaction_id))}
           emptyText="No transactions in this range."
           storageKey="account-register"
           pageSizeOptions={[50, 75, 100, 200, 300]}
-          initialPageSize={50}
+          initialPageSize={100}
           sortKey={sortKey}
           sortDirection={sortDirection}
           onSortChange={onSortChange}
           // ACCT-F3498: server-bound memo/ref search above — suppress ParityTable toolbar Search.
           suppressToolbarSearch
+          tableTestId="b1-account-register"
+          renderExpanded={(r) => (
+            <div className="space-y-2 px-2 py-2 text-xs" data-b1-inline-edit="1">
+              <p className="text-[#6B7280]">
+                Inline field edit posts through the original document engine (B-1). Use Edit to open the source
+                document; Cancel collapses this row.
+              </p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                <div>
+                  <span className="font-semibold text-[#4B5563]">DATE</span>
+                  <div>{formatDateUS(r.entry_date)}</div>
+                </div>
+                <div>
+                  <span className="font-semibold text-[#4B5563]">REF NO.</span>
+                  <div>{r.reference ?? "—"}</div>
+                </div>
+                <div>
+                  <span className="font-semibold text-[#4B5563]">PAYEE</span>
+                  <div>{r.payee ?? "—"}</div>
+                </div>
+                <div>
+                  <span className="font-semibold text-[#4B5563]">CLASS</span>
+                  <div>{r.class_name ?? "—"}</div>
+                </div>
+                <div>
+                  <span className="font-semibold text-[#4B5563]">TYPE</span>
+                  <div>{r.type}</div>
+                </div>
+                <div>
+                  <span className="font-semibold text-[#4B5563]">ACCOUNT</span>
+                  <div>{r.split_account ?? "—"}</div>
+                </div>
+                <div>
+                  <span className="font-semibold text-[#4B5563]">✓</span>
+                  <div data-b1-reconcile-status={r.reconcile_status || "blank"}>{r.reconcile_status || "blank"}</div>
+                </div>
+                <div>
+                  <span className="font-semibold text-[#4B5563]">📎</span>
+                  <div>{r.attachment_count}</div>
+                </div>
+                <div>
+                  <span className="font-semibold text-[#4B5563]">LOCATION</span>
+                  <div>—</div>
+                </div>
+              </div>
+              <div className="flex flex-wrap justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => navigate(sourceRoute(r.source_transaction_type, r.source_transaction_id))}
+                  data-testid="b1-register-edit-original"
+                >
+                  Edit
+                </Button>
+              </div>
+            </div>
+          )}
           toolbar={
             <>
               {/* UI CONTROL LAW — was 2 hand-rolled buttons at their own ad-hoc size (the same

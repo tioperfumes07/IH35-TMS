@@ -1,5 +1,7 @@
 import { apiRequest } from "./client";
 
+export type AccountRegisterReconcileStatus = "" | "C" | "R";
+
 export type AccountRegisterRow = {
   posting_id: string;
   journal_entry_id: string;
@@ -16,6 +18,10 @@ export type AccountRegisterRow = {
   description: string | null;
   split_account: string | null;
   class_name: string | null;
+  /** B-1 ✓ — blank / C / R */
+  reconcile_status: AccountRegisterReconcileStatus;
+  /** B-1 📎 count from docs.file_links on the source document */
+  attachment_count: number;
   debit_cents: number;
   credit_cents: number;
   running_balance_cents: number;
@@ -33,6 +39,11 @@ export type AccountRegisterReport = {
   to_date: string;
   opening_balance_cents: number;
   closing_balance_cents: number;
+  /** Feed-side balance when a banking.bank_accounts row maps to this GL; null otherwise. */
+  bank_balance_cents: number | null;
+  bank_account_id: string | null;
+  /** Last closed reconciliation period_end (YYYY-MM-DD), or null. */
+  reconciled_through: string | null;
   total_debit_cents: number;
   total_credit_cents: number;
   transaction_count: number;

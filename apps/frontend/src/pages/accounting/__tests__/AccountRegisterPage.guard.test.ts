@@ -23,8 +23,10 @@ describe("AccountRegisterPage CA-05 guard", () => {
     }
   });
 
-  it("wires row drill-through to the source transaction", () => {
-    expect(page).toMatch(/onRowClick=\{\(r\)\s*=>\s*navigate\(sourceRoute\(/);
+  it("wires Edit → original document via sourceRoute (B-1 inline expand)", () => {
+    expect(page).toContain("renderExpanded");
+    expect(page).toMatch(/navigate\(sourceRoute\(r\.source_transaction_type,\s*r\.source_transaction_id\)\)/);
+    expect(page).toContain('data-testid="b1-register-edit-original"');
   });
 
   it("every drill-through target route exists in the manifest", () => {
@@ -70,7 +72,12 @@ describe("AccountRegisterPage CA-05 guard", () => {
     expect(page).not.toMatch(/TODO|FIXME|coming soon|not implemented/i);
   });
 
-  it("shows an honest C/R reconciliation banner (not a fake checkmark)", () => {
-    expect(page).toContain("Reconciliation not yet available");
+  it("B-1: Bank vs Ending header, ✓ blank/C/R, page size 100, two-line rows", () => {
+    expect(page).toContain("Bank balance");
+    expect(page).toContain("Ending balance");
+    expect(page).toContain("initialPageSize={100}");
+    expect(page).toContain('data-b1-two-line="1"');
+    expect(page).toContain("reconcile_status");
+    expect(page).toContain('"n/a"');
   });
 });

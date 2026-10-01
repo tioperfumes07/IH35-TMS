@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * @matrix-built {"modules":["accounting"],"cols":["gl_je","reverse_link"],"leafRe":"^accounting\\.parity\\.account_register$","task":"B-1-ACCOUNT-REGISTER-REF-JE-ENTITYLINK","vertical":"column-wave"}
  * verify-account-register-ref-no-journal-entry-link.mjs
  *
  * LV-REPORTS-BALANCE-SHEET-GL-JE-DRILL — the owner P0 inbox item asks for accounting/banking/
@@ -53,8 +54,13 @@ if (!/source_transaction_id:\s*p\.source_transaction_id\s*\?\?\s*null/.test(svc)
 const pagePath = "apps/frontend/src/pages/accounting/AccountRegisterPage.tsx";
 const src = readFileSync(pagePath, "utf8");
 
-if (!/onRowClick=\{\(r\)\s*=>\s*navigate\(sourceRoute\(r\.source_transaction_type,\s*r\.source_transaction_id\)\)\}/.test(src)) {
-  failures.push(`${pagePath}: onRowClick no longer calls sourceRoute(..., r.source_transaction_id) — check it wasn't reverted to the now-human r.reference`);
+// B-1: drill-through moved from onRowClick to inline-expand Edit (renderExpanded) — still must
+// call sourceRoute with the raw UUID source_transaction_id, never the human reference.
+if (!/navigate\(sourceRoute\(r\.source_transaction_type,\s*r\.source_transaction_id\)\)/.test(src)) {
+  failures.push(`${pagePath}: sourceRoute(..., r.source_transaction_id) missing — check it wasn't reverted to the now-human r.reference`);
+}
+if (/navigate\(sourceRoute\([^)]*r\.reference/.test(src)) {
+  failures.push(`${pagePath}: sourceRoute must not receive r.reference (human display id)`);
 }
 
 // Isolate the "reference" column's own object literal (up to the next top-level `{ key:` sibling)
@@ -89,7 +95,7 @@ if (process.argv.includes("--selftest")) {
     [svcPath, "raw source id", "source_transaction_id: p.source_transaction_id ?? null", "source_transaction_id: null", "preserves source_transaction_id"],
     [svcPath, "bill human reference", "NULLIF(btrim(b.bill_number), '')", "NULL", "human reference no longer COALESCE bill_number"],
     [svcPath, "expense human fallback", "CASE WHEN p.source_transaction_type = 'expense' THEN 'Expense' END", "NULL", "expense Ref No. no longer falls back"],
-    [pagePath, "row source route", "navigate(sourceRoute(r.source_transaction_type, r.source_transaction_id))", "navigate(sourceRoute(r.source_transaction_type, r.reference))", "onRowClick no longer calls sourceRoute"],
+    [pagePath, "row source route", "navigate(sourceRoute(r.source_transaction_type, r.source_transaction_id))", "navigate(sourceRoute(r.source_transaction_type, r.reference))", "sourceRoute(..., r.source_transaction_id) missing"],
     [pagePath, "JE kind", 'kind="journal_entry"', 'kind="bill"', "reference column no longer renders an EntityLink"],
     [pagePath, "JE id binding", "id={r.journal_entry_id}", "id={r.source_transaction_id}", "EntityLink no longer binds"],
     [pagePath, "honest fallback", 'r.reference ?? "—"', 'r.reference ?? r.journal_entry_id', "honest plain-text fallback"],
