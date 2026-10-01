@@ -15,7 +15,7 @@
  *              Samsara address with no fence of ours).
  */
 import { withLuciaBypass } from "../../../auth/db.js";
-import { decryptSamsaraSecret } from "../../../lib/samsara-crypto.js";
+import { resolveSamsaraApiToken } from "../samsara-token.js";
 import { SamsaraClient, type SamsaraAddress } from "../samsara-client.js";
 import { getSamsaraConfigForCompany } from "../samsara.service.js";
 import { projectSamsaraAddress } from "./address-import.service.js";
@@ -153,10 +153,9 @@ export async function runGeofenceAddressLink(options: {
     let raw = options.addresses;
     if (!raw) {
       const config = await getSamsaraConfigForCompany(client, options.operatingCompanyId);
-      const encrypted = config?.encrypted_api_token ?? config?.api_token_encrypted;
-      if (!Buffer.isBuffer(encrypted) || encrypted.length === 0) throw new Error("samsara_not_configured");
+      if (!config) throw new Error("samsara_not_configured");
       raw = await new SamsaraClient({
-        apiToken: decryptSamsaraSecret(encrypted),
+        apiToken: resolveSamsaraApiToken(config as Record<string, unknown>),
         samsaraOrgId: config?.samsara_org_id ? String(config.samsara_org_id) : null,
       }).listAddresses();
     }
@@ -177,22 +176,7 @@ export async function runGeofenceAddressLink(options: {
     };
     if (!options.apply) return result;
 
-    for (const a of raw) {
-      const p = projectSamsaraAddress(a);
-      await client.query(
-        `INSERT INTO integrations.samsara_addresses (
-           operating_company_id, samsara_address_id, name, formatted_address, lat, lng,
-           geofence_json, tags, notes, raw_json, synced_at, updated_at
-         ) VALUES ($1::uuid,$2,$3,$4,$5,$6,$7::jsonb,$8::jsonb,$9,$10::jsonb,now(),now())
-         ON CONFLICT (operating_company_id, samsara_address_id) DO UPDATE SET
-           name=EXCLUDED.name, formatted_address=EXCLUDED.formatted_address, lat=EXCLUDED.lat, lng=EXCLUDED.lng,
-           geofence_json=EXCLUDED.geofence_json, tags=EXCLUDED.tags, notes=EXCLUDED.notes,
-           raw_json=EXCLUDED.raw_json, synced_at=now(), updated_at=now()`,
-        [options.operatingCompanyId, p.samsaraAddressId, p.name, p.formattedAddress, p.latitude, p.longitude,
-          JSON.stringify(p.geofenceJson), JSON.stringify(p.tags), p.notes, JSON.stringify(p.raw)]
-      );
-      result.writes += 1;
-    }
+    result.writes += await mirrorSamsaraAddresses(client as Db, options.operatingCompanyId, raw);
     for (const m of plan.matched) {
       const upd = await client.query(
         `UPDATE geo.geofences SET samsara_address_id = $3, updated_at = now(), updated_by_user_uuid = $4::uuid
@@ -210,6 +194,28 @@ export async function runGeofenceAddressLink(options: {
     ]);
     return result;
   });
+}
+
+/** Upsert Samsara's address list into integrations.samsara_addresses (the mirror). Returns rows written. */
+export async function mirrorSamsaraAddresses(client: Db, operatingCompanyId: string, raw: SamsaraAddress[]): Promise<number> {
+  let writes = 0;
+  for (const a of raw) {
+    const p = projectSamsaraAddress(a);
+    await client.query(
+      `INSERT INTO integrations.samsara_addresses (
+         operating_company_id, samsara_address_id, name, formatted_address, lat, lng,
+         geofence_json, tags, notes, raw_json, synced_at, updated_at
+       ) VALUES ($1::uuid,$2,$3,$4,$5,$6,$7::jsonb,$8::jsonb,$9,$10::jsonb,now(),now())
+       ON CONFLICT (operating_company_id, samsara_address_id) DO UPDATE SET
+         name=EXCLUDED.name, formatted_address=EXCLUDED.formatted_address, lat=EXCLUDED.lat, lng=EXCLUDED.lng,
+         geofence_json=EXCLUDED.geofence_json, tags=EXCLUDED.tags, notes=EXCLUDED.notes,
+         raw_json=EXCLUDED.raw_json, synced_at=now(), updated_at=now()`,
+      [operatingCompanyId, p.samsaraAddressId, p.name, p.formattedAddress, p.latitude, p.longitude,
+        JSON.stringify(p.geofenceJson), JSON.stringify(p.tags), p.notes, JSON.stringify(p.raw)]
+    );
+    writes += 1;
+  }
+  return writes;
 }
 
 /**

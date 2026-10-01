@@ -24,6 +24,7 @@ import { LaborTracker } from "../../components/maintenance/LaborTracker";
 import { AddPartsLinkDrawer } from "../../components/maintenance/AddPartsLinkDrawer";
 import { TasksTab } from "../../components/tasks/TasksTab";
 import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistoryTab";
+import { DocumentsTab } from "../../components/documents/DocumentsTab";
 import { CreateBillModal } from "./components/CreateBillModal";
 import { CreateExpenseModal } from "./components/CreateExpenseModal";
 import { listWorkOrderLinkedFinancials, type WorkOrderLinkedFinancials } from "../../api/accounting";
@@ -761,7 +762,7 @@ export function WorkOrderDetailPage() {
         ]}
       />
 
-      {/* ORDERS-2026-10-01 — three dates as first-class fields (not notes). Expected release pending CC-1 E-16. */}
+      {/* ORDERS-2026-10-01 — three dates as first-class columns (reported / in shop / expected release). */}
       <div
         className="grid grid-cols-3 gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-slate-800"
         data-testid="wo-three-dates"
@@ -780,9 +781,7 @@ export function WorkOrderDetailPage() {
         <div data-testid="wo-date-expected-release">
           <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">Expected release</div>
           <div className="tabular-nums">
-            {wo.expected_release_at
-              ? formatDateUS(String(wo.expected_release_at)) || "—"
-              : "pending CC-1"}
+            {wo.expected_release_at ? formatDateUS(String(wo.expected_release_at)) || "—" : "—"}
           </div>
         </div>
       </div>
@@ -1358,13 +1357,19 @@ export function WorkOrderDetailPage() {
 
       <section
         className="rounded-sm border border-gray-200 bg-white p-3"
-        data-testid="wo-documents-pending"
+        data-testid="wo-documents"
       >
         <h3 className="mb-1 text-xs font-semibold text-slate-900">Documents</h3>
-        <p className="text-xs text-slate-600">
-          Work-order document attachments pending CC-1 (file-link entity type does not yet admit work orders). Unit and
-          vendor documents stay reachable from those hubs.
-        </p>
+        {id && companyId ? (
+          <DocumentsTab
+            entityType="work_order"
+            entityId={id}
+            entityName={woNumber}
+            operatingCompanyId={companyId}
+          />
+        ) : (
+          <p className="text-xs text-slate-600">Select a work order to attach documents.</p>
+        )}
       </section>
 
       <section className="rounded-sm border border-gray-200 bg-white p-3">

@@ -1,5 +1,8 @@
 # ALL SEATS — OWNER SCOPE CHANGE, EFFECTIVE IMMEDIATELY
 
+> **SUPERSEDED 2026-10-01 by `docs/bus/2026-10-01-OWNER-LAW-MONEY-PAUSE-LIFTED-ALL-SEATS-BUILD-EVERYTHING.md`.** Owner 2026-10-01: "all coders are to build completely fully economics, financial, mechanical money, etc., full linkage etc." Every "money paused" line below is dead. Only two holds remain: no seeding, no handoffs.
+
+
 Owner, verbatim, 2026-09-30:
   "No body is supposed to be working on money only creating engines and visual changes and
    upgrades. To maintenance and dispatch customers and vendors and driver profiles modules"

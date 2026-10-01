@@ -1,5 +1,8 @@
 # PASTE — HARD WAKE · ROUND 303 · 2026-09-30 · OWNER SCOPE CHANGE
 
+> **SUPERSEDED 2026-10-01 by `docs/bus/2026-10-01-OWNER-LAW-MONEY-PAUSE-LIFTED-ALL-SEATS-BUILD-EVERYTHING.md`.** Owner 2026-10-01: "all coders are to build completely fully economics, financial, mechanical money, etc., full linkage etc." Every "money paused" line below is dead. Only two holds remain: no seeding, no handoffs.
+
+
 `git pull --ff-only origin main` FIRST. Then read your own NOW file. Idle after ACK is a defect.
 
 OWNER, VERBATIM, TODAY:
