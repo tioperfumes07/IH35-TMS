@@ -94,6 +94,8 @@ export type CreateFactoringPurchaseBody = {
   wire_fee_cents?: number;
   notes?: string | null;
   lines: Array<{ invoice_id: string; gross_cents?: number; escrow_reserve_cents?: number; cash_reserve_cents?: number; fee_cents?: number }>;
+  /** ROUND 321: Owner override reason for missing BOL / POD / rate confirmation (documents only, >= 10 chars). */
+  docs_override_reason?: string;
 };
 
 export type FactoringPurchaseDetail = {

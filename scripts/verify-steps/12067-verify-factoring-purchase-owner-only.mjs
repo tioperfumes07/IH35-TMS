@@ -60,7 +60,10 @@ function selftest() {
   // Owner override approval (2026-10-01): a send without docs needs a >= 10-char reason, stamped on the purchase + audited.
   const send = read("apps/backend/src/factoring/purchase-send.service.ts");
   if (!/if \(packet\.missing\.length && overrideReason\.length < 10\) \{/.test(send)) problems.push("send must refuse missing docs without an override reason");
-  if (!/docs_override_at = now\(\), docs_override_by_user_id = \$3::uuid, docs_override_reason = \$4/.test(send) || !/factoring_purchase_docs_override_approved/.test(send)) problems.push("override must be stamped on the purchase and audited");
+  if (!/docs_override_at = now\(\), docs_override_by_user_id = \$3::uuid, docs_override_reason = \$4/.test(send) || !/factoring\.purchase_docs_override/.test(send)) problems.push("override must be stamped on the purchase and audited");
+  // ROUND 321 item 3: the Feed Gate records missing docs as red, or -- with the Owner's reason -- as 'na' WITH the reason.
+  const cand = read("apps/backend/src/factoring/purchase-candidates.service.ts");
+  if (!/check_key: "purchase\.invoice_billing_docs"/.test(cand) || !/'purchase\.invoice_billing_docs', 'na'/.test(cand) || !/Owner override: \$\{reason\}/.test(cand)) problems.push("Feed Gate must record the docs override as na-with-reason (and red without it)");
 
   const match = read("apps/backend/src/accounting/bank-recon/match.service.ts");
   const gateCalls = match.match(/await assertOwnerMayMatchFactoringPurchase\(/g) ?? [];
