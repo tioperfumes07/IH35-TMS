@@ -57,6 +57,11 @@ function selftest() {
   const ps = read("apps/backend/src/factoring/purchase.service.ts");
   if ((ps.match(/await assertOwnerActor\(client, oci, input\.actorUserId, "/g) ?? []).length < 3) problems.push("purchase.service.ts: create/post/void must each re-check the Owner actor");
 
+  // Owner override approval (2026-10-01): a send without docs needs a >= 10-char reason, stamped on the purchase + audited.
+  const send = read("apps/backend/src/factoring/purchase-send.service.ts");
+  if (!/if \(packet\.missing\.length && overrideReason\.length < 10\) \{/.test(send)) problems.push("send must refuse missing docs without an override reason");
+  if (!/docs_override_at = now\(\), docs_override_by_user_id = \$3::uuid, docs_override_reason = \$4/.test(send) || !/factoring_purchase_docs_override_approved/.test(send)) problems.push("override must be stamped on the purchase and audited");
+
   const match = read("apps/backend/src/accounting/bank-recon/match.service.ts");
   const gateCalls = match.match(/await assertOwnerMayMatchFactoringPurchase\(/g) ?? [];
   if (gateCalls.length < 2) problems.push(`match.service.ts: both accept functions must call assertOwnerMayMatchFactoringPurchase (found ${gateCalls.length})`);

@@ -143,10 +143,14 @@ export type SendFactoringPurchaseResult = {
   linked_documents: number;
 };
 
-export function sendFactoringPurchase(companyId: string, purchaseId: string, toEmail?: string | null) {
+export function sendFactoringPurchase(companyId: string, purchaseId: string, toEmail?: string | null, docsOverrideReason?: string | null) {
+  const body: Record<string, string> = {};
+  if (toEmail) body.to_email = toEmail;
+  // Owner override approval: send although loads are missing BOL / POD / rate confirmation (reason >= 10 chars).
+  if (docsOverrideReason && docsOverrideReason.trim().length >= 10) body.docs_override_reason = docsOverrideReason.trim();
   return apiRequest<SendFactoringPurchaseResult>(`/api/v1/factoring/purchases/${encodeURIComponent(purchaseId)}/send?${q(companyId)}`, {
     method: "POST",
-    body: toEmail ? { to_email: toEmail } : {},
+    body,
   });
 }
 

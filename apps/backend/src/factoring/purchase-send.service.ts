@@ -34,12 +34,34 @@ const safeName = (s: string) => s.replace(/[^A-Za-z0-9._-]+/g, "_").slice(0, 120
 export async function sendPurchaseToFactor(
   app: FastifyInstance,
   req: FastifyRequest,
-  input: { operatingCompanyId: string; actorUserId: string; purchaseId: string; toEmail: string | null }
+  input: { operatingCompanyId: string; actorUserId: string; purchaseId: string; toEmail: string | null; docsOverrideReason?: string | null }
 ) {
   const oci = input.operatingCompanyId;
   const packet = await withCompanyScope(input.actorUserId, oci, (client) => loadPurchaseSendPacket(client, oci, input.purchaseId));
   const head = packet.head;
-  if (packet.missing.length) throw new PurchaseCandidateError("factoring_send_missing_docs", 409, packet.missing);
+  // Missing BOL / POD / rate confirmation blocks the send unless the Owner approves an override with a reason (the route
+  // already admits only the Owner). The approval is stamped on the purchase BEFORE anything is sent, and audited.
+  const overrideReason = (input.docsOverrideReason ?? "").trim();
+  if (packet.missing.length && overrideReason.length < 10) {
+    throw new PurchaseCandidateError("factoring_send_missing_docs", 409, packet.missing);
+  }
+  if (packet.missing.length) {
+    await withCompanyScope(input.actorUserId, oci, async (client) => {
+      await client.query(
+        `UPDATE accounting.factoring_purchases
+            SET docs_override_at = now(), docs_override_by_user_id = $3::uuid, docs_override_reason = $4, updated_by_user_id = $3::uuid
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+        [input.purchaseId, oci, input.actorUserId, overrideReason]
+      );
+      await appendCrudAudit(client, input.actorUserId, "accounting.factoring_purchase_docs_override_approved", {
+        resource_type: "accounting.factoring_purchases",
+        resource_id: input.purchaseId,
+        operating_company_id: oci,
+        reason: overrideReason,
+        missing: packet.missing,
+      }, "warning", "ROUND-315-FACTORING-PURCHASE");
+    });
+  }
   const to = (input.toEmail ?? (head.vendor_email as string | null) ?? "").trim();
   if (!to) {
     throw new PurchaseCandidateError("factoring_send_no_recipient", 409, {
