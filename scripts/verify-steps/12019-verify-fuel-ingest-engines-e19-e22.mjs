@@ -67,6 +67,10 @@ function staticWiring() {
   need("apps/backend/src/integrations/relay-payments/relay-fuel-ingest.cron.ts", /computeRelayIngestWindow/, "Relay tick uses the gap-aware window (E-20)");
   need("apps/backend/src/integrations/relay-payments/relay-fuel-ingest.cron.ts", /claimRelayTick/, "Relay tick claims a single runner (E-20)");
   need("apps/backend/src/integrations/relay-payments/relay-fuel-ingest.cron.ts", /integration_sync_log/, "Relay tick is visible in integration_sync_log (E-20)");
+  // ROUND 313: the detector's window is ingest time (created_at), not purchase date — imported statements land dated
+  // weeks back and were never evaluated (0 alerts ever). Backlog mode catches up through the same engine.
+  need("apps/backend/src/jobs/fuel-fraud-detector-worker.ts", /ft\.created_at >= now\(\) - interval '7 days'/, "detector window must include ingest time (created_at)");
+  need("apps/backend/src/jobs/fuel-fraud-detector-worker.ts", /\$2::boolean OR ft\.created_at/, "detector must offer the backlog catch-up");
   return problems;
 }
 

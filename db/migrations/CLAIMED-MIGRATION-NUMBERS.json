@@ -8,6 +8,21 @@
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00–11 / 12–23) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
+    "202615141200": {
+      "claimed_by": "cursor",
+      "claimed_at": "2026-10-01",
+      "purpose": "ROUND 313 BANK-SURF-04/ECON-04: banking.reconciliation_sessions additive columns service_charge_cents/interest_earned_cents + expense/income account + date + JE FKs so Finish posts bank fee + interest through the canonical poster (not FE-local only). CREATE-only ADD COLUMN IF NOT EXISTS."
+    },
+    "202615170400": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-10-01",
+      "purpose": "FEED GATE engine (owner law 2026-10-01: every feed -- settlement, loads, expenses, factoring -- is verified for full linkage, wiring, accounts, stamps before it is accepted; one settlement completes before the next opens): driver_finance.feed_intakes (one per feed: kind, subject id, status open/passed/blocked/closed, opened/closed stamps, who) + driver_finance.feed_intake_checks (one row per check: check_key, status pass/fail/na, missing, fix_link, measured_at) + trigger refusing a second open settlement intake while one is blocked. RLS forced, WORM on checks, void-not-delete."
+    },
+    "202615180900": {
+      "claimed_by": "claude-3",
+      "claimed_at": "2026-10-01",
+      "purpose": "ROUND 313 CC-3 item 5: canonical load-cancellation REVERSAL -- load_cancellations.status gains 'reversed' (+ reversed_at/by/reason); sync trigger clears mdata.loads.canceled_at/by when a cancellation is reversed instead of leaving the stamp. Root fix for 13625/13627/13638."
+    },
     "202615180600": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-01",

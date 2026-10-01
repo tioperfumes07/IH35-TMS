@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
+import { BankTieoutHeader } from "../../components/banking/BankTieoutHeader";
 
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/Combobox";
@@ -295,6 +296,7 @@ export function AccountRegisterPage() {
   const accounts = accountsQuery.data?.accounts ?? [];
   // Ledger ids already offered as Bank accounts (avoid duplicate options in the CoA group).
   const bankLedgerIds = useMemo(() => new Set(bankPickerRows.map((b) => String(b.ledger_account_id))), [bankPickerRows]);
+  const tieoutBankAccountId = useMemo(() => bankPickerRows.find((b) => String(b.ledger_account_id) === accountId)?.id ?? null, [bankPickerRows, accountId]);
   const coaPickerAccounts = useMemo(
     () => accounts.filter((a) => !bankLedgerIds.has(String(a.id))),
     [accounts, bankLedgerIds]
@@ -550,6 +552,8 @@ export function AccountRegisterPage() {
 
   return (
     <AccountingSubNavWrapper title="Account Register" subtitle="Running-balance ledger over the chart of accounts" kpiStrip={kpiStrip}>
+      {/* ROUND 313 BANK-TIEOUT-01: a bank account's GL register leads with its feed-vs-GL tie-out. */}
+      {tieoutBankAccountId ? <BankTieoutHeader companyId={companyId} bankAccountId={tieoutBankAccountId} /> : null}
       {/* Primary controls + on-demand filter (collapsed by default) */}
       <div className="mb-3 flex flex-wrap items-end gap-2">
         <div className="flex min-w-[16rem] flex-col gap-1 text-xs font-semibold text-gray-600">

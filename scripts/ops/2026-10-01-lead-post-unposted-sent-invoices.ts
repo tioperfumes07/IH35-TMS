@@ -9,13 +9,32 @@
  * latch-aware, idempotent per invoice) under the system actor, and stamps sent_at from updated_at on the rows the
  * poster accepted. Dry run rolls back; --apply commits with one audit row. Never hand-crafts a JE.
  */
+import { execFileSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
 import { postInvoiceGlIfEnabled } from "../../apps/backend/src/accounting/invoice-gl.service.js";
 
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const SYSTEM_ACTOR = "00000000-0000-4000-8000-000000000001";
 const APPLY = process.argv.includes("--apply");
+
+// ROUND 133 P0 — any scripts/ops/ financial writer must call verify-owner-authorization.
+const REQUIRED_AUTH_ID = process.env.OWNER_AUTH_ID;
+if (APPLY) {
+  if (!REQUIRED_AUTH_ID) {
+    console.error("OWNER_AUTH_ID required for --apply; refusing a production financial write without an OPEN authorization on main.");
+    process.exit(1);
+  }
+  try {
+    execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"), REQUIRED_AUTH_ID], { stdio: "inherit" });
+  } catch {
+    console.error(`${REQUIRED_AUTH_ID} rejected — see docs/bus/OWNER-AUTHORIZATIONS.md.`);
+    process.exit(1);
+  }
+}
 
 async function main() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL required");
