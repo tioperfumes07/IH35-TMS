@@ -466,6 +466,7 @@ import { initializeSamsaraHosPullCron } from "./cron/samsara-hos-pull.cron.js";
 import { initializeSamsaraPositionsCron } from "./cron/samsara-positions-cron.js";
 import { initializeReeferHoursPollCron } from "./cron/reefer-hours-poll.cron.js";
 import { initializeRealDrivenMilesSegmentsCron } from "./cron/real-driven-miles-segments.cron.js";
+import { initializeUnitStopEventsCron } from "./cron/unit-stop-events.cron.js";
 import { initializeGeofenceOdometerCapturesCron } from "./cron/geofence-odometer-captures.cron.js";
 import { initializeFuelGpsMatchCron } from "./cron/fuel-gps-match.cron.js";
 import { initializeDraftCrewStatusSelfHealCron } from "./cron/draft-crew-status-selfheal.cron.js";
@@ -1574,6 +1575,7 @@ async function main() {
 
     try {
       initializeRealDrivenMilesSegmentsCron(app);
+      initializeUnitStopEventsCron(app);
       app.log.info("[STARTUP] real-driven-miles-segments-cron initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] real-driven-miles-segments-cron failed");
