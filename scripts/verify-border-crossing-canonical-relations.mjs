@@ -50,19 +50,12 @@ export function assertGuard({ job, svc }) {
       errs.push(`${name}: phantom relation mdata.load_assignments (resolve unit->load via mdata.loads.assigned_unit_id)`);
   }
 
-  // ── detector job: must read the canonical positions table + its real columns ──
-  if (!/integrations\.samsara_vehicle_positions\b/.test(j))
-    errs.push(`${DETECTOR_JOB}: must read FROM integrations.samsara_vehicle_positions`);
-  for (const col of ["unit_uuid", "recorded_at"]) {
-    if (!new RegExp(`\\b${col}\\b`).test(j))
-      errs.push(`${DETECTOR_JOB}: missing canonical column ${col}`);
-  }
-  // phantom columns from the old query must be gone from the positions SELECT
-  for (const bad of ["occurred_at", "latitude", "longitude"]) {
-    if (new RegExp(`\\b${bad}\\b`).test(j))
-      errs.push(`${DETECTOR_JOB}: phantom column ${bad} still present (samsara_vehicle_positions has recorded_at/lat/lng)`);
-  }
-
+  // ── E-29 (2026-10-01): crossings are projected from the canonical fence events, never a second
+  //    position-based inside/outside decision ──
+  if (!/geo\.geofence_events/.test(s))
+    errs.push(`${DETECTOR_SVC}: must project crossings from geo.geofence_events`);
+  if (/BORDER_GEOFENCES|findGeofenceForPosition|haversine/i.test(s))
+    errs.push(`${DETECTOR_SVC}: a hard-coded border geofence / distance check is back (second inside decider)`);
   // ── detector service: must resolve the active load via the canonical unit->load column ──
   if (!/assigned_unit_id/.test(s))
     errs.push(`${DETECTOR_SVC}: must resolve the active load via mdata.loads.assigned_unit_id`);
@@ -74,16 +67,15 @@ export function assertGuard({ job, svc }) {
 }
 
 function selftest() {
-  const goodJob = `SELECT DISTINCT ON (unit_uuid) unit_uuid, operating_company_id, lat, lng, recorded_at::text
-    FROM integrations.samsara_vehicle_positions WHERE recorded_at >= now() ORDER BY unit_uuid, recorded_at DESC`;
-  const goodSvc = `SELECT l.id FROM mdata.loads l WHERE l.assigned_unit_id = $1::uuid AND l.soft_deleted_at IS NULL`;
+  const goodJob = `projectBorderCrossingsFromFenceEvents(client, USMCA_COMPANY_ID, since)`;
+  const goodSvc = `FROM geo.geofence_events ge ... SELECT l.id FROM mdata.loads l WHERE l.assigned_unit_id = $1::uuid`;
 
   const cases = [
     { n: "canonical job + svc → 0", in: { job: goodJob, svc: goodSvc }, want: 0 },
-    { n: "phantom samsara_positions in job → flag", in: { job: goodJob.replace("integrations.samsara_vehicle_positions", "integrations.samsara_positions"), svc: goodSvc }, min: 1 },
-    { n: "phantom load_assignments in svc → flag", in: { job: goodJob, svc: `JOIN mdata.load_assignments la ON la.load_uuid = l.uuid` }, min: 1 },
-    { n: "phantom column occurred_at in job → flag", in: { job: goodJob.replace("recorded_at::text", "occurred_at::text"), svc: goodSvc }, min: 1 },
-    { n: "phantom l.uuid in svc → flag", in: { job: goodJob, svc: `SELECT l.uuid FROM mdata.loads l WHERE l.assigned_unit_id = $1` }, min: 1 },
+    { n: "phantom samsara_positions in job → flag", in: { job: "FROM integrations.samsara_positions", svc: goodSvc }, min: 1 },
+    { n: "phantom load_assignments in svc → flag", in: { job: goodJob, svc: goodSvc + " JOIN mdata.load_assignments la" }, min: 1 },
+    { n: "hard-coded geofences in svc → flag", in: { job: goodJob, svc: goodSvc + " BORDER_GEOFENCES" }, min: 1 },
+    { n: "phantom l.uuid in svc → flag", in: { job: goodJob, svc: goodSvc + " SELECT l.uuid FROM mdata.loads l" }, min: 1 },
   ];
   let f = 0;
   for (const c of cases) {
@@ -105,4 +97,4 @@ for (const p of [jobPath, svcPath]) {
 }
 const errs = assertGuard({ job: fs.readFileSync(jobPath, "utf8"), svc: fs.readFileSync(svcPath, "utf8") });
 if (errs.length) { console.error(`[${LABEL}] FAILED — ${errs.length} issue(s):`); for (const e of errs) console.error(`  ✗ ${e}`); process.exit(1); }
-console.log(`[${LABEL}] OK — border-crossing detector reads integrations.samsara_vehicle_positions and resolves the active load via mdata.loads.assigned_unit_id.`);
+console.log(`[${LABEL}] OK — border crossings are projected from geo.geofence_events (no second inside decider) and the active load resolves via mdata.loads.assigned_unit_id.`);

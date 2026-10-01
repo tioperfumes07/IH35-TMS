@@ -1353,3 +1353,17 @@ retirement -> CC-3 removes the legacy writer; (4) owner word on the 85 "SAM-" Dr
 NEXT (no idle): registry additions for CC-3 engines, in order — E-31 readback poller (/fleet/routes/audit-logs/feed) + E-32 documents
 as soon as the first real route exists; E-29 retire the hard-coded border detector onto the canonical fences now that Laredo I/II and
 Camino Real are fenced.
+
+## 2026-10-01 — E-29 addition: hard-coded border detector RETIRED onto the canonical fence events
+what: dispatch.border_crossing_events is now projected from geo.geofence_events (the ONE detector) on the 18 international
+border_crossing fences (Bridges + Champlain / Derby Line / Houlton); the 14 state truck ports are ignored. The 5 hard-coded circles
+(one duplicated, up to ~30 km off the real bridges) and their positions poll are gone. A crossing is written ONLY on a real country change
+(last fix before entering vs first fix after leaving, within 6 h, from telematics.vehicle_locations); direction from the destination
+country; crossing point from the fence (Laredo I/II, Colombia, World Trade = laredo-iv, else other); load = the unit's one on-road load;
+idempotent per (vehicle, point, entered time). Reads the DB only, every 5 min over 2 days.
+proof (rolled back, 30 days): 1 international-fence visit on record — T177 at Rio Grande City Bridge POE 2026-09-26 13:44–13:49Z —
+TX before / TX after -> no_country_change (drove past the US-side POE; not a crossing). 0 USMCA fixes in Mexico in 30 days, so 0
+crossings is the true answer, not a gap. (First run counted it country_unknown: the old locations path wrote a state-less duplicate of the
+same fix; the lookup now uses only fixes that carry a location.)
+guards: verify-border-crossing-canonical-relations updated (projection from geo.geofence_events; hard-coded geofences/distance forbidden),
+verify-e29-fences-fire-and-status-switch-flag-off updated; vitest border 18/18 (old circle tests replaced).
