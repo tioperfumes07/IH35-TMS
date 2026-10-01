@@ -227,6 +227,7 @@ D-H2 Loads Report `/reports/loads` + GET /api/v1/reports/loads. NEXT: B-1 Bank R
 **2026-10-01T09:00Z · B-1 BANK REGISTER · branch `cursor/b1-bank-register-c89b`**
 B-1 · what changed: mount QBO JE register at `/banking/register` + `/banking/register/:accountId` (AccountRegisterPage / journal_entry_postings); Banking subnav adds Register beside Transactions (feed kept). Guard: verify-bank-register-route.
 
+<<<<<<< HEAD
 **2026-10-01T09:50Z · B-5 RECLASSIFY / BATCH · branch `cursor/b5-reclassify-batch-68be` · PR #23765**
 B-5 · what changed: Topbar + Create → Other adds Batch transactions + Reclassify transactions; Reclassify modal adds Change location (honest-disabled) + Change vendor/customer (vendor|customer kind + ReferenceSelect); BatchExpenses type strip Expenses/Checks · Bills link · Deposits/Settlements honesty. Ops: `scripts/ops/verify-b5-reclassify-batch.mjs`. Engines unchanged (`applyReclassify` / `createExpense`). · LIVE PROOF: `node scripts/ops/verify-b5-reclassify-batch.mjs --selftest` PASS; frontend `tsc -b` exit 0. · LEFT: Lead Chrome; merge.
 
@@ -247,3 +248,9 @@ DRIVER PROFILE · what changed: FE wires CC-3 `GET /api/v1/drivers/:id/profile/{
 
 **2026-10-01T11:20Z · GO-20 HOOK · DRIVER PROFILE AUDIT → #23766**
 Audit confirmed ORDERS §2 gaps = exactly what #23766 ships. Rebased onto tip main (OUTBOX conflict only). Ambient CI same class as B-2/B-3 (go26 raw_table +4, arch-design sub-nav, phantom-relation, live-load). Own guard PASS. FAST-MERGE next.
+
+**2026-10-01T12:40Z · DRIVER PROFILE MERGED · PR #23766 · `1c72796a1c`**
+Driver Profile ORDERS complete on main. BatchSettlements EntityPicker + tip-debt push-gate clears included. · NEXT: Customers #23767 → Vendors #23768.
+
+**2026-10-01T12:45Z · CUSTOMERS ORDERS COMPLETE · branch `cursor/customers-orders-complete-4953` · PR #23767**
+CUSTOMERS · what changed: `GET /api/v1/mdata/customers/:id/locations` (stop places from load_stops + linked mdata.locations; geocode_precision normalized rooftop/approximate/locality); FE `CustomerLocationsSection` + `GeocodePrecisionBadge` (locality red "not a stop"); A/R tab banner `data-cust-ar-readonly` + Record Payment disabled (payments stay Accounting → Receive payment); Faro factoring wrap `data-cust-faro`; complaints/credit/COI/documents already present. Ops: `scripts/ops/verify-customers-orders-complete.mjs`. · LIVE PROOF: ops --selftest PASS; frontend `tsc -b` exit 0. · LEFT: Lead Chrome on `/customers/:id` locations + A/R read-only. · NEXT: tip-main rebase + FAST-MERGE then Vendors #23768.

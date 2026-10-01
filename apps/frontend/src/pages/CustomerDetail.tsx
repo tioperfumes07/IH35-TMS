@@ -7,16 +7,17 @@ import { MoneyInput } from "../components/forms/MoneyInput";
 import { ParityTable } from "../components/parity/ParityTable";
 import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
 import { CustomerLateArrivalCard } from "../components/customers/CustomerLateArrivalCard";
+import { CustomerLocationsSection } from "../components/customers/CustomerLocationsSection";
 import { formatUsdCents } from "../lib/money";
 import { companyToday } from "../lib/businessDate";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { z } from "zod";
-import { listAllInvoices, listInvoices, type Invoice } from "../api/accounting";
+import { listInvoices, type Invoice } from "../api/accounting";
 import { listAllLoads, type DispatchLoadRow } from "../api/loads";
 import { getCustomerProfitability, type CustomerProfitabilityRow } from "../api/reports";
-import { listAllCustomerPayments, recordCustomerPayment, unapplyCustomerPaymentApplication, type CustomerPaymentListRow } from "../api/customers";
+import { listAllCustomerPayments, type CustomerPaymentListRow } from "../api/customers";
 import { listUsStates } from "../api/catalogs";
 import { ApiError, apiRequest } from "../api/client";
 import { listAllFmcsaLookups } from "../api/fmcsa";
@@ -92,7 +93,6 @@ import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/forms/shared/PageHeader";
 import { StatusBadge } from "../components/layout/StatusBadge";
 import { MissingRequiredChip } from "../components/compliance/MissingRequiredChip";
-import { SelectCombobox } from "../components/Combobox";
 import { scrubQboArchiveProjectionNotes } from "../lib/qboArchiveNotes";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { useCompanyContext } from "../contexts/CompanyContext";
@@ -490,15 +490,6 @@ export function CustomerDetailPage() {
     related_load_id: "",
   });
   const [voidReason, setVoidReason] = useState("");
-  const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
-  const [payDate, setPayDate] = useState(() => companyToday());
-  const [payAmount, setPayAmount] = useState<number | null>(null);
-  const [payMethod, setPayMethod] = useState("ach");
-  const [payRef, setPayRef] = useState("");
-  const [payMemo, setPayMemo] = useState("");
-  const [payAutoApply, setPayAutoApply] = useState(true);
-  const [payInvoiceInclude, setPayInvoiceInclude] = useState<Record<string, boolean>>({});
-  const [payInvoiceAmount, setPayInvoiceAmount] = useState<Record<string, string>>({});
 
   const detailQuery = useQuery({
     queryKey: ["customer-detail", id, selectedCompanyId ?? "none"],
@@ -567,11 +558,6 @@ export function CustomerDetailPage() {
         (res.invoices ?? []).slice(0, 10)
       ),
     enabled: Boolean(id && operatingCompanyId),
-  });
-  const paymentInvoicesQuery = useQuery({
-    queryKey: ["customer-open-invoices-payment", id, operatingCompanyId],
-    queryFn: () => listAllInvoices(operatingCompanyId!, { customer_id: id }).then((res) => res.invoices),
-    enabled: Boolean(id && operatingCompanyId && activeTab === "Billing & Receivables"),
   });
   const customerPaymentsQuery = useQuery({
     queryKey: ["customer-payments", id, operatingCompanyId],
@@ -668,7 +654,6 @@ export function CustomerDetailPage() {
   const canEditFreeTimeDetention = ["Owner", "Administrator", "Manager"].includes(user?.role ?? "");
   const canViewDocuments = ["Owner", "Administrator", "Manager", "Dispatcher", "Accountant"].includes(user?.role ?? "");
   const canVerifyFmcsa = user?.role === "Owner" || user?.role === "Administrator";
-  const canUnapplyCustomerPayment = user?.role === "Owner" || user?.role === "Administrator";
 
   const hydratedForm = useMemo(() => {
     if (!customer) return form;
@@ -1001,102 +986,12 @@ export function CustomerDetailPage() {
     onError: (error) => pushToast(error instanceof Error ? error.message : "Failed to deactivate lane", "error"),
   });
 
-  const openInvoicesForPayment = useMemo(
-    () =>
-      (paymentInvoicesQuery.data ?? [])
-        .filter((inv: Invoice) => inv.status !== "void" && inv.status !== "paid" && Number(inv.amount_open_cents ?? 0) > 0)
-        .sort((a: Invoice, b: Invoice) => a.issue_date.localeCompare(b.issue_date)),
-    [paymentInvoicesQuery.data]
-  );
-
-  const paymentCents = Math.round(Number(payAmount ?? 0) * 100) || 0; // M-1: dollar number → cents, byte-for-byte
-
-  const paymentApplicationBreakdown = useMemo(() => {
-    if (payAutoApply) {
-      let remaining = paymentCents;
-      const apps: Array<{ invoice_id: string; amount_cents: number }> = [];
-      for (const inv of openInvoicesForPayment) {
-        if (remaining <= 0) break;
-        const open = Number(inv.amount_open_cents ?? 0);
-        const apply = Math.min(open, remaining);
-        if (apply > 0) {
-          apps.push({ invoice_id: inv.id, amount_cents: apply });
-          remaining -= apply;
-        }
-      }
-      const appliedSum = paymentCents - remaining;
-      return { applications: apps, appliedSum, creditBalanceCents: remaining };
-    }
-    let total = 0;
-    const apps: Array<{ invoice_id: string; amount_cents: number }> = [];
-    for (const inv of openInvoicesForPayment) {
-      if (!payInvoiceInclude[inv.id]) continue;
-      const cents = Math.round(Number(payInvoiceAmount[inv.id] || 0) * 100);
-      if (cents > 0) {
-        apps.push({ invoice_id: inv.id, amount_cents: cents });
-        total += cents;
-      }
-    }
-    return { applications: apps, appliedSum: total, creditBalanceCents: Math.max(0, paymentCents - total) };
-  }, [payAutoApply, paymentCents, openInvoicesForPayment, payInvoiceInclude, payInvoiceAmount]);
-
-  const payManualInvalid = !payAutoApply && paymentApplicationBreakdown.appliedSum > paymentCents;
-
   const paymentsBackendPending =
     customerPaymentsQuery.isError &&
     customerPaymentsQuery.error instanceof ApiError &&
     (customerPaymentsQuery.error.status === 404 ||
       customerPaymentsQuery.error.status === 500 ||
       customerPaymentsQuery.error.status === 501);
-
-  const recordCustomerPaymentMutation = useMutation({
-    mutationFn: () =>
-      recordCustomerPayment(id, selectedCompanyId ?? "", {
-        date: payDate,
-        amount_cents: paymentCents,
-        method: payMethod,
-        reference: payRef.trim() || undefined,
-        memo: payMemo.trim() || undefined,
-        applications: paymentApplicationBreakdown.applications,
-        remaining_to_credit_balance_cents: paymentApplicationBreakdown.creditBalanceCents,
-      }),
-    onSuccess: () => {
-      const n = paymentApplicationBreakdown.applications.length;
-      pushToast(`Payment of ${formatCurrencyCents(paymentCents)} recorded, applied to ${n} invoice(s)`, "success");
-      void queryClient.invalidateQueries({ queryKey: ["customer-recent-invoices", id] });
-      void queryClient.invalidateQueries({ queryKey: ["customer-open-invoices-payment", id] });
-      void queryClient.invalidateQueries({ queryKey: ["customer-billing-summary", id] });
-      void queryClient.invalidateQueries({ queryKey: ["customer-payments", id] });
-      setRecordPaymentOpen(false);
-      setPayAmount(null);
-      setPayRef("");
-      setPayMemo("");
-      setPayDate(companyToday());
-    },
-    onError: (e) => pushToast(String((e as Error).message ?? "Failed"), "error"),
-  });
-
-  const unapplyCustomerPaymentMutation = useMutation({
-    // CUST-MONEY-F6105: "Unapply" is a single button per PAYMENT row, but the canonical route
-    // unapplies one payment_applications row at a time. A payment can carry more than one applied
-    // invoice, so unapplying the whole row means unapplying every still-applied application on it,
-    // sequentially (not Promise.all -- each DELETE mutates the same payment's amount_unapplied_cents,
-    // and concurrent writes to that row would race).
-    mutationFn: async (payment: CustomerPaymentListRow) => {
-      const applications = payment.applied_to_invoices ?? [];
-      for (const application of applications) {
-        await unapplyCustomerPaymentApplication(payment.id, application.application_id, selectedCompanyId ?? "");
-      }
-    },
-    onSuccess: () => {
-      pushToast("Payment unapplied", "success");
-      void queryClient.invalidateQueries({ queryKey: ["customer-payments", id] });
-      void queryClient.invalidateQueries({ queryKey: ["customer-recent-invoices", id] });
-      void queryClient.invalidateQueries({ queryKey: ["customer-open-invoices-payment", id] });
-      void queryClient.invalidateQueries({ queryKey: ["customer-billing-summary", id] });
-    },
-    onError: (e) => pushToast(String((e as Error).message ?? "Failed"), "error"),
-  });
 
   const qualityEvents = qualityEventsQuery.data ?? [];
   const billingSummary = billingSummaryQuery.data as CustomerBillingSummary | undefined;
@@ -1119,7 +1014,6 @@ export function CustomerDetailPage() {
 
   // Each list empty message renders only once its query settles, never mid-fetch.
   const contactsListState = useListState(contactsQuery, contacts.length === 0);
-  const openInvoicesListState = useListState(paymentInvoicesQuery, openInvoicesForPayment.length === 0);
   const customerPaymentsListState = useListState(customerPaymentsQuery, (customerPaymentsQuery.data?.rows ?? []).length === 0);
   const recentInvoicesListState = useListState(recentInvoicesQuery, recentInvoices.length === 0);
   const customerLanesListState = useListState(lanesQuery, customerLanes.length === 0);
@@ -1314,6 +1208,10 @@ export function CustomerDetailPage() {
       />
 
       {operatingCompanyId ? (
+        <CustomerLocationsSection companyId={operatingCompanyId} customerId={id} />
+      ) : null}
+
+      {operatingCompanyId ? (
         <>
           <DispatcherSafetyEventsReverseBlock
             operatingCompanyId={operatingCompanyId}
@@ -1332,10 +1230,12 @@ export function CustomerDetailPage() {
           <SafetyAlertsReverseSection operatingCompanyId={operatingCompanyId} subjectKind="customer" subjectId={id} />
           <CashForecastReverseSection operatingCompanyId={operatingCompanyId} filter={{ party_ref_kind: "customer", party_ref_id: id }} />
           <CustomerLoadTemplatesReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
-          <CustomerFactoringReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
-          <CustomerFactoringQueueReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
-          <CustomerFactoringRecourseReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
-          <CustomerFactoringSubmitQueueReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
+          <div data-testid="customer-faro-factoring-status" data-cust-faro="1">
+            <CustomerFactoringReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
+            <CustomerFactoringQueueReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
+            <CustomerFactoringRecourseReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
+            <CustomerFactoringSubmitQueueReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
+          </div>
         </>
       ) : (
         // CUST-01 C7: this whole block (dispatcher/safety events, complaints, ETA notifications,
@@ -2250,7 +2150,14 @@ export function CustomerDetailPage() {
       ) : null}
 
       {activeTab === "Billing & Receivables" ? (
-        <div className="space-y-3">
+        <div className="space-y-3" data-testid="customer-billing-ar-readonly" data-cust-ar-readonly="1">
+          <p className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-700">
+            Invoices and A/R on this customer profile are read only. Record payments from{" "}
+            <a href="/accounting/payments?create=1" className="font-semibold text-slate-800 underline">
+              Accounting → Receive payment
+            </a>
+            .
+          </p>
           {billingSummaryQuery.isError ? (
             <ListErrorBanner
               message={formatBillingSummaryError(billingSummaryQuery.error)}
@@ -2304,152 +2211,8 @@ export function CustomerDetailPage() {
               </DataPanel>
             </>
           ) : null}
-          <div className="md:col-span-3 rounded-sm border border-gray-200 bg-white">
-            <button
-              type="button"
-              className="flex w-full items-center justify-between px-3 py-2 text-left text-xs font-semibold text-gray-900 hover:bg-gray-50"
-              onClick={() => setRecordPaymentOpen((o: boolean) => !o)}
-            >
-              <span>Record Payment</span>
-              <span className="text-xs font-normal text-gray-500">{recordPaymentOpen ? "Hide" : "Show"}</span>
-            </button>
-            {recordPaymentOpen ? (
-              <div className="space-y-3 border-t border-gray-100 p-3 text-xs">
-                {paymentsBackendPending ? (
-                  <div className="rounded-sm border border-slate-200 bg-slate-50 p-2 text-slate-700">
-                    Backend pending — file <strong>P6-T11204</strong> for customer payment APIs.{" "}
-                    <button type="button" className="font-semibold text-slate-700 underline" onClick={() => void customerPaymentsQuery.refetch()}>
-                      Retry
-                    </button>
-                  </div>
-                ) : null}
-                <div className="grid gap-2 md:grid-cols-2">
-                  <label className="block">
-                    Payment date
-                    <DatePicker className="mt-0.5 w-full" value={payDate} onChange={setPayDate} />
-                  </label>
-                  <label className="block">
-                    Amount (USD)
-                    {/* M-1: dollars-mode QBO money entry; amount stays a DOLLAR number → cents byte-for-byte. */}
-                    <MoneyInput valueDollars={payAmount} onChangeDollars={setPayAmount} ariaLabel="Payment amount (USD)" className="mt-0.5 w-full" />
-                  </label>
-                  <label className="block">
-                    Method
-                    <SelectCombobox className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1" value={payMethod} onChange={(e) => setPayMethod(e.target.value)}>
-                      <option value="ach">ACH</option>
-                      <option value="check">Check</option>
-                      <option value="wire">Wire</option>
-                      <option value="credit_card">Credit Card</option>
-                      <option value="other">Other</option>
-                    </SelectCombobox>
-                  </label>
-                  <label className="block">
-                    Reference
-                    <input className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1" value={payRef} onChange={(e) => setPayRef(e.target.value)} />
-                  </label>
-                </div>
-                <label className="block">
-                  Memo
-                  <textarea className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1" rows={2} value={payMemo} onChange={(e) => setPayMemo(e.target.value)} />
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={payAutoApply}
-                    onChange={(e) => {
-                      const on = e.target.checked;
-                      if (!on) {
-                        let remaining = paymentCents;
-                        const snapInclude: Record<string, boolean> = {};
-                        const snapAmt: Record<string, string> = {};
-                        for (const inv of openInvoicesForPayment) {
-                          if (remaining <= 0) break;
-                          const openAmt = Number(inv.amount_open_cents ?? 0);
-                          const apply = Math.min(openAmt, remaining);
-                          if (apply > 0) {
-                            snapInclude[inv.id] = true;
-                            snapAmt[inv.id] = (apply / 100).toFixed(2);
-                            remaining -= apply;
-                          }
-                        }
-                        setPayInvoiceInclude(snapInclude);
-                        setPayInvoiceAmount(snapAmt);
-                      }
-                      setPayAutoApply(on);
-                    }}
-                  />
-                  Auto-match oldest open invoices first
-                </label>
-                <div className="rounded-sm border border-gray-100 bg-gray-50 p-2">
-                  <div className="font-semibold text-gray-800">Apply to invoices</div>
-                  <p className="mt-1 text-gray-600">
-                    Applying {formatCurrencyCents(paymentApplicationBreakdown.appliedSum)} of {formatCurrencyCents(paymentCents)} payment
-                    {paymentApplicationBreakdown.creditBalanceCents > 0 ? (
-                      <span className="text-slate-700"> · {formatCurrencyCents(paymentApplicationBreakdown.creditBalanceCents)} to customer credit</span>
-                    ) : null}
-                  </p>
-                  {payManualInvalid ? <p className="mt-1 text-red-600">Total applied cannot exceed payment amount.</p> : null}
-                  <div className="mt-2 max-h-48 space-y-1 overflow-y-auto">
-                    {/* CUST-MONEY-F6057A — a settled GET failure left paymentInvoicesQuery.data
-                        undefined, so openInvoicesForPayment (derived from `?? []`) was empty and
-                        `.isEmpty` was false (a settled ERROR, not empty) — neither branch here
-                        rendered anything: a fetch failure looked like a silent, unexplained blank
-                        list with no invoices to apply payment to and no way to retry. */}
-                    {openInvoicesListState.isError ? (
-                      <ListErrorState
-                        title="Couldn't load open invoices"
-                        status={0}
-                        message={paymentInvoicesQuery.error instanceof Error ? paymentInvoicesQuery.error.message : undefined}
-                        onRetry={() => void paymentInvoicesQuery.refetch()}
-                      />
-                    ) : null}
-                    {openInvoicesListState.isEmpty ? <p className="text-gray-500">No open invoices.</p> : null}
-                    {openInvoicesForPayment.map((inv: Invoice) => (
-                      <div key={inv.id} className="flex flex-wrap items-center gap-2 border-b border-gray-100 py-1">
-                        {!payAutoApply ? (
-                          <input
-                            type="checkbox"
-                            checked={Boolean(payInvoiceInclude[inv.id])}
-                            onChange={(e) => setPayInvoiceInclude((p) => ({ ...p, [inv.id]: e.target.checked }))}
-                          />
-                        ) : null}
-                        <EntityLinkOrTombstone kind="invoice" id={inv.id} name={inv.display_id} noun="Invoice" className="font-medium text-gray-800 hover:underline" />
-                        <span className="text-gray-600">Open {formatCurrencyCents(inv.amount_open_cents)}</span>
-                        {!payAutoApply ? (
-                          // M-1: dollars-mode; Math.round(payInvoiceAmount*100)=cents byte-for-byte (per-invoice apply).
-                          <MoneyInput
-                            valueDollars={payInvoiceAmount[inv.id] ? Number(payInvoiceAmount[inv.id]) : null}
-                            onChangeDollars={(d) => setPayInvoiceAmount((p) => ({ ...p, [inv.id]: d == null ? "" : String(d) }))}
-                            ariaLabel={`Apply to ${inv.display_id}`}
-                            className="w-24"
-                          />
-                        ) : (
-                          <span className="text-gray-700">
-                            {(() => {
-                              const row = paymentApplicationBreakdown.applications.find((a) => a.invoice_id === inv.id);
-                              return row ? formatCurrencyCents(row.amount_cents) : "—";
-                            })()}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    size="sm"
-                    disabled={paymentCents <= 0 || payManualInvalid || recordCustomerPaymentMutation.isPending}
-                    loading={recordCustomerPaymentMutation.isPending}
-                    onClick={() => void recordCustomerPaymentMutation.mutateAsync()}
-                  >
-                    Record payment
-                  </Button>
-                  <Button size="sm" variant="secondary" onClick={() => setRecordPaymentOpen(false)}>
-                    Close
-                  </Button>
-                </div>
-              </div>
-            ) : null}
+          <div className="md:col-span-3 rounded-sm border border-dashed border-gray-200 bg-white px-3 py-2 text-xs text-slate-600" data-testid="customer-record-payment-disabled">
+            Record Payment is disabled on the customer profile (ORDERS: invoices + A/R read only). Use Accounting → Receive payment.
           </div>
           <div className="md:col-span-3 rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-xs font-semibold text-gray-900">Payment history</div>
@@ -2480,17 +2243,6 @@ export function CustomerDetailPage() {
                 sortKey={paySortKey}
                 sortDirection={paySortDirection}
                 onSortChange={onPaySortChange}
-                rowActions={(p) =>
-                  canUnapplyCustomerPayment && (p.applied_to_invoices ?? []).length > 0 ? (
-                    <button
-                      type="button"
-                      className="text-red-700 underline"
-                      onClick={() => void unapplyCustomerPaymentMutation.mutateAsync(p)}
-                    >
-                      Unapply
-                    </button>
-                  ) : null
-                }
                 columns={[
                   {
                     key: "id",
