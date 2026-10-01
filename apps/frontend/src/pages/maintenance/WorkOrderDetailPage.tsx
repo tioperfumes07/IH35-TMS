@@ -4,10 +4,12 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   getMaintenanceWorkOrderPdfUrl,
+  getPartsAssignmentsPage,
   getWoCostContext,
   getWorkOrder,
   getWorkOrderPostingPreview,
   listSevereRepairEstimates,
+  type PartsAssignmentRow,
   type WorkOrderPostingPreviewLine,
 } from "../../api/maintenance";
 import { cancelWorkOrderConsole, createWoCancellationReason, listWoCancellationReasons, voidWorkOrderConsole } from "../../api/workOrdersConsole";
@@ -19,6 +21,7 @@ import { FlatFieldGrid } from "../../components/layout/FlatFieldGrid";
 import { SimpleCombobox as Combobox } from "../../components/Combobox";
 import { UploadZone } from "../../components/UploadZone";
 import { LaborTracker } from "../../components/maintenance/LaborTracker";
+import { AddPartsLinkDrawer } from "../../components/maintenance/AddPartsLinkDrawer";
 import { TasksTab } from "../../components/tasks/TasksTab";
 import { EntityAuditHistoryTab } from "../../components/audit/EntityAuditHistoryTab";
 import { CreateBillModal } from "./components/CreateBillModal";
@@ -114,6 +117,17 @@ const LINKED_BILL_COLUMNS: Array<ParityColumn<LinkedBillRow>> = [
     className: "text-right",
     render: (row) => money.format((row.amount_cents ?? 0) / 100),
   },
+  {
+    key: "journal_entry_id",
+    label: "Journal entry",
+    sortable: false,
+    render: (row) =>
+      row.journal_entry_id ? (
+        <EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_memo || "Journal entry"} />
+      ) : (
+        "—"
+      ),
+  },
 ];
 
 // The expense drill-through EntityLink is rendered directly inside
@@ -137,6 +151,152 @@ const LINKED_EXPENSE_COLUMNS: Array<ParityColumn<LinkedExpenseTableRow>> = [
     className: "text-right",
     render: (row) => money.format((row.total_amount_cents ?? 0) / 100),
   },
+  {
+    key: "journal_entry_id",
+    label: "Journal entry",
+    sortable: false,
+    render: (row) =>
+      row.journal_entry_id ? (
+        <EntityLink kind="journal_entry" id={row.journal_entry_id} label={row.journal_entry_memo || "Journal entry"} />
+      ) : (
+        "—"
+      ),
+  },
+];
+
+type LinkedBillPaymentRow = NonNullable<WorkOrderLinkedFinancials["bill_payments"]>[number];
+
+const LINKED_BILL_PAYMENT_COLUMNS: Array<ParityColumn<LinkedBillPaymentRow>> = [
+  {
+    key: "id",
+    label: "Bill payment",
+    sortable: true,
+    render: (row) => <EntityLink kind="bill_payment" id={row.id} label={`Payment · ${formatDateUS(row.payment_date) || row.id.slice(0, 8)}`} />,
+  },
+  {
+    key: "bill_id",
+    label: "Bill",
+    sortable: true,
+    render: (row) => (
+      <EntityLink kind="bill" id={row.bill_id} label={visibleDocumentLabel(row.bill_number, row.bill_id, "Record")} />
+    ),
+  },
+  { key: "payment_date", label: "Paid", sortable: true, render: (row) => formatDateUS(row.payment_date) || "—" },
+  {
+    key: "amount_cents",
+    label: "Amount",
+    sortable: true,
+    className: "text-right",
+    render: (row) => money.format((row.amount_cents ?? 0) / 100),
+  },
+  {
+    key: "journal_entry_id",
+    label: "Journal entry",
+    sortable: false,
+    render: (row) =>
+      row.journal_entry_id ? <EntityLink kind="journal_entry" id={row.journal_entry_id} label="Journal entry" /> : "—",
+  },
+];
+
+type LinkedInvoiceRow = NonNullable<WorkOrderLinkedFinancials["invoices"]>[number];
+type LinkedCustomerPaymentRow = NonNullable<WorkOrderLinkedFinancials["customer_payments"]>[number];
+
+const LINKED_INVOICE_COLUMNS: Array<ParityColumn<LinkedInvoiceRow>> = [
+  {
+    key: "id",
+    label: "Invoice",
+    sortable: true,
+    render: (row) => (
+      <EntityLink kind="invoice" id={row.id} label={visibleDocumentLabel(row.display_id, row.id, "Invoice")} />
+    ),
+  },
+  { key: "invoice_date", label: "Date", sortable: true, render: (row) => formatDateUS(row.invoice_date) || "—" },
+  {
+    key: "total_cents",
+    label: "Amount",
+    sortable: true,
+    className: "text-right",
+    render: (row) => money.format((row.total_cents ?? 0) / 100),
+  },
+  { key: "status", label: "Status", sortable: true, render: (row) => row.status || "—" },
+  {
+    key: "journal_entry_id",
+    label: "Journal entry",
+    sortable: false,
+    render: (row) =>
+      row.journal_entry_id ? <EntityLink kind="journal_entry" id={row.journal_entry_id} label="Journal entry" /> : "—",
+  },
+];
+
+const LINKED_CUSTOMER_PAYMENT_COLUMNS: Array<ParityColumn<LinkedCustomerPaymentRow>> = [
+  {
+    key: "id",
+    label: "Receive payment",
+    sortable: true,
+    render: (row) => (
+      <EntityLink
+        kind="payment"
+        id={row.id}
+        label={visibleDocumentLabel(row.display_id, row.id, "Payment")}
+      />
+    ),
+  },
+  {
+    key: "invoice_id",
+    label: "Invoice",
+    sortable: true,
+    render: (row) =>
+      row.invoice_id ? (
+        <EntityLink kind="invoice" id={row.invoice_id} label={visibleDocumentLabel(row.invoice_display_id, row.invoice_id, "Invoice")} />
+      ) : (
+        "—"
+      ),
+  },
+  { key: "payment_date", label: "Paid", sortable: true, render: (row) => formatDateUS(row.payment_date) || "—" },
+  {
+    key: "amount_cents",
+    label: "Amount",
+    sortable: true,
+    className: "text-right",
+    render: (row) => money.format((row.amount_cents ?? 0) / 100),
+  },
+  {
+    key: "journal_entry_id",
+    label: "Journal entry",
+    sortable: false,
+    render: (row) =>
+      row.journal_entry_id ? <EntityLink kind="journal_entry" id={row.journal_entry_id} label="Journal entry" /> : "—",
+  },
+];
+
+const WO_PARTS_LINK_COLUMNS: Array<ParityColumn<PartsAssignmentRow>> = [
+  {
+    key: "part_description",
+    label: "Part",
+    sortable: true,
+    render: (row) =>
+      row.parts_inventory_id ? (
+        <EntityLinkOrTombstone kind="inventory_part" id={row.parts_inventory_id} name={row.part_description} noun="Part" />
+      ) : (
+        row.part_description || "—"
+      ),
+  },
+  {
+    key: "vendor_id",
+    label: "Vendor",
+    sortable: true,
+    render: (row) => <EntityLinkOrTombstone kind="vendor" id={row.vendor_id} name={row.vendor_name} noun="Vendor" />,
+  },
+  { key: "qty_used", label: "Qty", sortable: true },
+  { key: "vendor_invoice_number", label: "Vendor invoice", sortable: true, render: (row) => row.vendor_invoice_number || "—" },
+  {
+    key: "vendor_invoice_amount",
+    label: "Amount",
+    sortable: true,
+    className: "text-right",
+    render: (row) => money.format(Number(row.vendor_invoice_amount ?? 0)),
+  },
+  { key: "created_at", label: "When", sortable: true, render: (row) => formatDateUS(row.created_at) || "—" },
 ];
 
 function pickInvoiceTotalCents(wo: Record<string, unknown>): number | null {
@@ -299,11 +459,13 @@ export function WorkOrderDetailPage() {
   const [reasonText, setReasonText] = useState("");
   const [createBillOpen, setCreateBillOpen] = useState(false);
   const [createExpenseOpen, setCreateExpenseOpen] = useState(false);
+  const [addPartsOpen, setAddPartsOpen] = useState(false);
   const actionGenerationRef = useRef(0);
   const invalidateWoScope = (scope: Pick<WorkOrderActionScope, "workOrderId" | "companyId">) => {
     void queryClient.invalidateQueries({ queryKey: ["maintenance", "work-order-detail", scope.workOrderId, scope.companyId] });
     void queryClient.invalidateQueries({ queryKey: ["maintenance", "work-order-posting-preview", scope.workOrderId, scope.companyId] });
     void queryClient.invalidateQueries({ queryKey: ["accounting", "wo-linked-financials", scope.workOrderId, scope.companyId] });
+    void queryClient.invalidateQueries({ queryKey: ["maintenance", "wo-parts-links", scope.workOrderId, scope.companyId] });
   };
   const invalidateWo = () => invalidateWoScope({ workOrderId: String(id), companyId });
   const woCancelReasonsQ = useQuery({
@@ -431,6 +593,12 @@ export function WorkOrderDetailPage() {
   const linkedFinancialsQ = useQuery({
     queryKey: ["accounting", "wo-linked-financials", id, companyId],
     queryFn: () => listWorkOrderLinkedFinancials(id!, companyId),
+    enabled: Boolean(id && companyId),
+    retry: false,
+  });
+  const partsLinksQ = useQuery({
+    queryKey: ["maintenance", "wo-parts-links", id, companyId],
+    queryFn: () => getPartsAssignmentsPage(companyId, { work_order_id: id!, limit: 50, offset: 0 }),
     enabled: Boolean(id && companyId),
     retry: false,
   });
@@ -592,6 +760,32 @@ export function WorkOrderDetailPage() {
           { label: woNumber },
         ]}
       />
+
+      {/* ORDERS-2026-10-01 — three dates as first-class fields (not notes). Expected release pending CC-1 E-16. */}
+      <div
+        className="grid grid-cols-3 gap-2 rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-slate-800"
+        data-testid="wo-three-dates"
+        data-c-maint-three-dates="true"
+      >
+        <div data-testid="wo-date-reported">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">Reported</div>
+          <div className="tabular-nums">{wo.opened_at ? formatDateUS(String(wo.opened_at)) || "—" : "—"}</div>
+        </div>
+        <div data-testid="wo-date-in-shop">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">In shop</div>
+          <div className="tabular-nums">
+            {wo.work_started_at ? formatDateUS(String(wo.work_started_at)) || "—" : "—"}
+          </div>
+        </div>
+        <div data-testid="wo-date-expected-release">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">Expected release</div>
+          <div className="tabular-nums">
+            {wo.expected_release_at
+              ? formatDateUS(String(wo.expected_release_at)) || "—"
+              : "pending CC-1"}
+          </div>
+        </div>
+      </div>
 
       {invoiceCents != null ? (
         <div
@@ -816,40 +1010,63 @@ export function WorkOrderDetailPage() {
             className="rounded-sm border border-gray-200 bg-white p-4 text-xs text-gray-700"
             data-testid="wo-detail-linkage-section"
           >
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Linkage (forward)</div>
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">Linkage (forward)</div>
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
               <div>
-                <div className="text-[11px] text-gray-500">Unit</div>
+                <div className="text-xs text-slate-500">Unit</div>
                 <p>
                   <EntityLinkOrTombstone kind="unit" id={wo.unit_id as string | null} name={wo.unit_number} noun="Unit" />
                 </p>
               </div>
               <div>
-                <div className="text-[11px] text-gray-500">Load</div>
+                <div className="text-xs text-slate-500">Load</div>
                 <p>
                   <EntityLinkOrTombstone kind="load" id={wo.load_id as string | null} name={wo.linked_load_number} noun="Load" />
                 </p>
               </div>
               <div>
-                <div className="text-[11px] text-gray-500">Roadside breakdown load</div>
+                <div className="text-xs text-slate-500">Roadside breakdown load</div>
                 <p>
                   <EntityLinkOrTombstone kind="load" id={wo.roadside_breakdown_load_id as string | null} name={wo.roadside_breakdown_load_number} noun="Load" />
                 </p>
               </div>
               <div>
-                <div className="text-[11px] text-gray-500">Driver</div>
+                <div className="text-xs text-slate-500">Driver</div>
                 <p>
                   <EntityLinkOrTombstone kind="driver" id={wo.driver_id as string | null} name={wo.driver_name} noun="Driver" />
                 </p>
               </div>
               <div>
-                <div className="text-[11px] text-gray-500">Vendor</div>
+                <div className="text-xs text-slate-500">Customer</div>
+                <p>
+                  <EntityLinkOrTombstone
+                    kind="customer"
+                    id={(wo.resolved_customer_id as string | null) ?? (wo.customer_id as string | null)}
+                    name={wo.resolved_customer_name as string | null | undefined}
+                    noun="Customer"
+                  />
+                </p>
+              </div>
+              <div>
+                <div className="text-xs text-slate-500">Trailer</div>
+                <p>
+                  <EntityLinkOrTombstone kind="trailer" id={wo.equipment_id as string | null} name={wo.equipment_number} noun="Trailer" />
+                </p>
+              </div>
+              <div>
+                <div className="text-xs text-slate-500">Vendor</div>
                 <p>
                   <EntityLinkOrTombstone kind="vendor" id={wo.resolved_vendor_id as string | null} name={wo.resolved_vendor_name} noun="Vendor" />
                 </p>
               </div>
               <div>
-                <div className="text-[11px] text-gray-500">Insurance claim</div>
+                <div className="text-xs text-slate-500">Service location</div>
+                <p className="text-xs text-slate-800">
+                  {[wo.service_location_type, wo.repair_location, wo.roadside_location].filter(Boolean).join(" · ") || "—"}
+                </p>
+              </div>
+              <div>
+                <div className="text-xs text-slate-500">Insurance claim</div>
                 <p>
                   <EntityLinkOrTombstone kind="claim" id={wo.insurance_claim_id as string | null} name={wo.insurance_claim_number} noun="Claim" />
                 </p>
@@ -1036,10 +1253,39 @@ export function WorkOrderDetailPage() {
 
       <section
         className="overflow-hidden rounded-sm border border-slate-200 bg-white"
+        data-testid="wo-parts-invoice-links"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2">
+          <div>
+            <div className="text-xs font-semibold text-slate-900">Parts invoices (linked both ways)</div>
+            <p className="text-xs text-slate-600">Parts invoices linked to this work order — vendor, unit, and inventory part both ways.</p>
+          </div>
+          <Button type="button" variant="secondary" onClick={() => setAddPartsOpen(true)}>
+            Link parts invoice
+          </Button>
+        </div>
+        <ParityTable
+          storageKey="wo-detail-parts-links"
+          tableTestId="wo-detail-parts-links-parity"
+          columns={WO_PARTS_LINK_COLUMNS}
+          rows={partsLinksQ.data?.rows ?? []}
+          rowKey={(row) => row.id}
+          loading={partsLinksQ.isLoading}
+          emptyText="No parts invoices linked to this work order yet."
+          initialPageSize={25}
+          pageSizeOptions={[10, 25, 50]}
+        />
+      </section>
+
+      <section
+        className="overflow-hidden rounded-sm border border-slate-200 bg-white"
         data-testid="wo-linked-financials"
       >
         <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
-          <div className="text-xs font-semibold text-slate-900">Linked Bills / Expenses</div>
+          <div className="text-xs font-semibold text-slate-900">
+            Linked bills · expenses · bill payments · invoices · receive payments · journal entries
+          </div>
+          <p className="text-xs text-slate-600">Reverse drill from this work order — click through both ways (Law §9).</p>
         </div>
         {linkedFinancialsQ.isLoading ? (
           <div className="border-t border-slate-100 px-3 py-2 text-xs text-slate-500">Loading linked bills &amp; expenses…</div>
@@ -1073,8 +1319,52 @@ export function WorkOrderDetailPage() {
               initialPageSize={25}
               pageSizeOptions={[10, 25, 50]}
             />
+            <ParityTable
+              storageKey="wo-detail-linked-bill-payments"
+              tableTestId="wo-detail-linked-bill-payments-parity"
+              columns={LINKED_BILL_PAYMENT_COLUMNS}
+              rows={linkedFinancialsQ.data?.bill_payments ?? []}
+              rowKey={(row) => row.id}
+              loading={linkedFinancialsQ.isLoading}
+              emptyText="No bill payments on linked bills yet."
+              initialPageSize={25}
+              pageSizeOptions={[10, 25, 50]}
+            />
+            <ParityTable
+              storageKey="wo-detail-linked-invoices"
+              tableTestId="wo-detail-linked-invoices-parity"
+              columns={LINKED_INVOICE_COLUMNS}
+              rows={linkedFinancialsQ.data?.invoices ?? []}
+              rowKey={(row) => row.id}
+              loading={linkedFinancialsQ.isLoading}
+              emptyText="No invoices on the linked load yet."
+              initialPageSize={25}
+              pageSizeOptions={[10, 25, 50]}
+            />
+            <ParityTable
+              storageKey="wo-detail-linked-customer-payments"
+              tableTestId="wo-detail-linked-customer-payments-parity"
+              columns={LINKED_CUSTOMER_PAYMENT_COLUMNS}
+              rows={linkedFinancialsQ.data?.customer_payments ?? []}
+              rowKey={(row) => row.id}
+              loading={linkedFinancialsQ.isLoading}
+              emptyText="No receive payments on linked invoices yet."
+              initialPageSize={25}
+              pageSizeOptions={[10, 25, 50]}
+            />
           </>
         ) : null}
+      </section>
+
+      <section
+        className="rounded-sm border border-gray-200 bg-white p-3"
+        data-testid="wo-documents-pending"
+      >
+        <h3 className="mb-1 text-xs font-semibold text-slate-900">Documents</h3>
+        <p className="text-xs text-slate-600">
+          Work-order document attachments pending CC-1 (file-link entity type does not yet admit work orders). Unit and
+          vendor documents stay reachable from those hubs.
+        </p>
       </section>
 
       <section className="rounded-sm border border-gray-200 bg-white p-3">
@@ -1103,6 +1393,17 @@ export function WorkOrderDetailPage() {
         onClose={() => setCreateExpenseOpen(false)}
         onCreated={() => invalidateWo()}
       />
+      {id && companyId ? (
+        <AddPartsLinkDrawer
+          open={addPartsOpen}
+          workOrderId={id}
+          operatingCompanyId={companyId}
+          onClose={() => {
+            setAddPartsOpen(false);
+            invalidateWo();
+          }}
+        />
+      ) : null}
       {editTarget ? (
         <CreateWorkOrderModal
           open={editing}

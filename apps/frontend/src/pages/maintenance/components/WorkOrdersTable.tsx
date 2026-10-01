@@ -84,6 +84,10 @@ function woSortValue(row: WorkOrder, key: string): string | number {
       return String(row.display_id ?? "");
     case "opened_at":
       return String(row.opened_at ?? "");
+    case "work_started_at":
+      return String(row.work_started_at ?? "");
+    case "expected_release_at":
+      return String(row.expected_release_at ?? "");
     case "total_actual_cost":
       return Number((row as Record<string, unknown>).total_actual_cost ?? 0);
     default:
@@ -215,12 +219,35 @@ export function WorkOrdersTable({
         cellClass: "text-right font-mono",
         render: (row) => money((row as Record<string, unknown>).total_actual_cost),
       },
+      // ORDERS-2026-10-01 MAINTENANCE — three dates as columns (not notes).
+      // Reported = opened_at; In shop = work_started_at; Expected release = pending CC-1 E-16 column.
       {
         key: "opened_at",
-        label: "Opened",
+        label: "Reported",
         sortable: true,
         sortValue: (row) => woSortValue(row, "opened_at"),
         render: (row) => (row.opened_at ? formatDateQboList(row.opened_at) || "—" : "—"),
+      },
+      {
+        key: "work_started_at",
+        label: "In shop",
+        sortable: true,
+        sortValue: (row) => woSortValue(row, "work_started_at"),
+        render: (row) => (row.work_started_at ? formatDateQboList(row.work_started_at) || "—" : "—"),
+      },
+      {
+        key: "expected_release_at",
+        label: "Expected release",
+        sortable: true,
+        sortValue: (row) => woSortValue(row, "expected_release_at"),
+        render: (row) =>
+          row.expected_release_at ? (
+            formatDateQboList(row.expected_release_at) || "—"
+          ) : (
+            <span className="text-slate-500" title="Expected release date column pending from accounting seat E-16">
+              pending CC-1
+            </span>
+          ),
       },
       { key: "timing", label: "Timing", sortable: false, render: (row) => renderDuration(row) },
     ],
