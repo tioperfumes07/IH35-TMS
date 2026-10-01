@@ -18,6 +18,7 @@ import {
   evaluateTransactionRules,
   insertFraudAlerts,
 } from "../integrations/fuel/fraud-detector/rules.service.js";
+import { loadHighConfidenceDerivedTimes } from "../fuel/fuel-time-derivation.service.js";
 import { classifyFraudMatches } from "../integrations/fuel/fraud-detector/signal-independence.js";
 import { fuelPurchaseIneligibleReason } from "../fuel/fuel-purchase-eligibility.js";
 
@@ -76,6 +77,7 @@ export async function processCompanyFuelFraudDetection(
     [operatingCompanyId]
   );
 
+  const derivedTimes = await loadHighConfidenceDerivedTimes(client, operatingCompanyId);
   let alertsCreated = 0;
   let criticalNotifications = 0;
   let findings = 0;
@@ -95,8 +97,13 @@ export async function processCompanyFuelFraudDetection(
       skippedNotPurchases += 1;
       continue;
     }
-    const dateOnly = fuelPurchaseIneligibleReason(eligibility, { requirePumpTime: true }) === "date_only_precision";
-    const verdict = classifyFraudMatches(await evaluateTransactionRules(client, txn), { dateOnly });
+    // A date-only row with a high-confidence derived pump time is evaluated at that time.
+    const derived = derivedTimes.get(String(txn.id));
+    const dateOnly = !derived && fuelPurchaseIneligibleReason(eligibility, { requirePumpTime: true }) === "date_only_precision";
+    const verdict = classifyFraudMatches(
+      await evaluateTransactionRules(client, derived ? { ...txn, transaction_at: derived } : txn),
+      { dateOnly }
+    );
     if (verdict.classification === "none") continue;
     if (verdict.classification === "finding") findings += 1;
     else suspicions += 1;
