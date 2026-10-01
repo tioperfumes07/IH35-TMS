@@ -5,7 +5,7 @@ import {
 } from "../../telematics/vehicle-locations.service.js";
 import { processArrivalDetectionsForGpsPoint } from "../../telematics/arrival-detection.service.js";
 import { processGeofenceDetectionsForGpsPoint } from "../../telematics/geofence-detector.service.js";
-import { SamsaraApiError, SamsaraClient } from "./samsara-client.js";
+import { parseCityState, SamsaraApiError, SamsaraClient } from "./samsara-client.js";
 import type { SamsaraVehicleStat } from "./samsara-client.js";
 import type { PgClient } from "./samsara.service.js";
 import { getSamsaraConfigForCompany } from "./samsara.service.js";
@@ -230,6 +230,10 @@ export async function syncSamsaraVehicleLocations(
       engine_state: deriveEngineState(location.engine_on, location.speed_mph),
       raw_samsara_event_id: `cron:locations:${location.id}:${location.captured_at}`,
       payload: location.raw,
+      // E-01: the odometer Samsara read at this exact fix (stats/feed gps decoration), or null.
+      odometer_mi: location.odometer_mi ?? null,
+      ...parseCityState(location.formatted_location ?? null),
+      formatted_location: location.formatted_location ?? null,
     });
     if (didInsert) {
       inserted += 1;

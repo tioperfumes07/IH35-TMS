@@ -49,12 +49,20 @@ export async function pollSamsaraPositions(app: FastifyInstance): Promise<void> 
         // owner_company_id) — the same operator-attribution rule used across the fleet reads (§4).
         `SELECT u.id::text AS unit_uuid,
                 COALESCE(u.currently_leased_to_company_id, u.owner_company_id)::text AS operating_company_id,
-                u.samsara_vehicle_id,
+                -- E-01 / T122: label with the mirror's live id first; mdata.units.samsara_vehicle_id is the fallback.
+                COALESCE(
+                  (SELECT sv.samsara_vehicle_id FROM integrations.samsara_vehicles sv
+                    WHERE sv.local_unit_id = u.id
+                      AND sv.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
+                    ORDER BY sv.last_seen_at DESC NULLS LAST LIMIT 1),
+                  u.samsara_vehicle_id) AS samsara_vehicle_id,
                 COALESCE(p.lat, 0) AS lat, COALESCE(p.lng, 0) AS lng, p.speed_mph,
                 p.captured_at
          FROM mdata.units u
          LEFT JOIN telematics.vehicle_latest_position p ON p.unit_id = u.id
-         WHERE u.deactivated_at IS NULL AND u.samsara_vehicle_id IS NOT NULL
+         WHERE u.deactivated_at IS NULL
+           AND (u.samsara_vehicle_id IS NOT NULL
+                OR EXISTS (SELECT 1 FROM integrations.samsara_vehicles sv WHERE sv.local_unit_id = u.id))
          LIMIT 200`
       );
       let mirrored = 0;
