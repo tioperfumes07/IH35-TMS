@@ -173,3 +173,37 @@ export async function computeDriverMilesInPeriod(
   }
   return out;
 }
+
+/**
+ * ROUND 305 B-47: the in-memory mirror of driverAtTimeSql, for engines that already hold a unit's
+ * assignment windows and must attribute many timestamps (stop segments, Relay fills) without one
+ * query per timestamp. Same predicate, same tiebreak — started_at <= ts < ended_at (open end =
+ * still assigned), latest started_at then latest created_at wins. Kept beside the SQL form so the
+ * attribution rule still has exactly one home.
+ */
+export type AssignmentWindow = { driverId: string; startedAt: Date; endedAt: Date | null; createdAt: Date };
+
+export function driverAtTimeFromWindows(windows: AssignmentWindow[], ts: Date): string | null {
+  let best: AssignmentWindow | null = null;
+  for (const w of windows) {
+    if (w.startedAt.getTime() > ts.getTime()) continue;
+    if (w.endedAt !== null && w.endedAt.getTime() <= ts.getTime()) continue;
+    if (
+      best === null ||
+      w.startedAt.getTime() > best.startedAt.getTime() ||
+      (w.startedAt.getTime() === best.startedAt.getTime() && w.createdAt.getTime() > best.createdAt.getTime())
+    ) {
+      best = w;
+    }
+  }
+  return best?.driverId ?? null;
+}
+
+/** One unit's assignment windows. $1 = operating_company_id, $2 = unit_id. Read-only. */
+export function unitAssignmentWindowsSql(): string {
+  return `
+    SELECT driver_id::text AS driver_id, started_at, ended_at, created_at
+      FROM telematics.vehicle_driver_assignments
+     WHERE operating_company_id = $1::uuid AND unit_id = $2::uuid
+     ORDER BY started_at ASC`;
+}
