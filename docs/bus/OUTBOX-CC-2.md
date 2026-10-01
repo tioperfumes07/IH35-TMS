@@ -1516,3 +1516,39 @@ absorbs factoring chargebacks (CPA corrected C5, not the driver); recourse 95 da
 **Process notes:** my rehearsal script used a session-scoped RLS GUC on the pooler — caught by verify-no-session-scoped-rls-bypass, fixed to
 SET LOCAL before any run. Executed AUTH-188/193 scripts archived (they tripped guards for every seat; my #23805 push stopped at the first red
 and never ran the rest — I now patch the pre-existing stale baselines locally, uncommitted, to see the whole gate).
+
+## 2026-10-01 17:55Z — ROUND 318 item 1 HELD (13515 is a real trip) · step 2 LIVE · step 3 building · notes for CC-1 / Lead
+
+**13515 NOT DELETED — measured, it is a second real trip, not a duplicate load.** Only the BILLING looks duplicated.
+| | 13513 | 13515 |
+|---|---|---|
+| driver / truck | Pedro Abraham Lopez Collado / T152 | Leonel Antonio Morales / T175 |
+| stops | rest Waco → pickup **Carrollton 08-12** → Laredo 08-13 | rest Arlington → pickup **Seagoville 08-13** → Laredo 08-14 |
+| driver pay | settlement **5772 closed**, driver bill paid | settlement **5776 closed**, driver bill paid |
+| fuel / expenses | 1 fill $734.19 / 1 expense $734.19 | 4 fills $2,991.65 / 14 expenses $3,240.41 |
+| invoice | 13513 sent $525, unpaid | 13515 **paid** $525 — customer payment 411c9b24 (09-21) applied |
+| customer / PO | FLS TRANSPORTATION SERVICES LIMITED / 5772267 | FLS Transport Inc. / 005772267 |
+Deleting load 13515 would orphan a closed settlement, a paid driver bill, 4 fuel fills, 14 expenses, a bill, an escrow-ledger row, a deduction
+and a received $525 payment. The owner's sheet row (QBO inv 9 "Duplicate / Not-Factored / Cancelled") names an INVOICE. **Question for the
+owner/Lead:** did FLS pay ONE $525 for two trips (then one invoice is duplicate billing and the other trip is unbilled or billed elsewhere), or
+are both trips billable? Nothing written until answered.
+
+**Step 2 LIVE path:** #23849 merged (factoring purchase document + posting engine, ACCT-F9618); deploy dep-dav9ln4c (7192aec248) queued at
+17:39Z. Rehearsed end to end on throwaway branch br-rapid-rain-akz830pt: non-Owner 403; FP-2026-00001 on 13626+13637 posted DR 1090 8,236 /
+1230 129 / 1235 86 / 6300 20 / 6400 129 / CR 2150 8,600 (A/R not relieved, CPA way); void reversed (585f8b64). Bank match stays the canonical
+bank-recon accept (kind factoring_advance = the purchase's advance), Owner-only.
+
+**Step 3 (Submit to Factor tab):** building now (candidates endpoint = every open invoice, customer direct pay = migration 202615190600 claimed,
+totals, Save / Save and send, Feed Gate on Save). Chrome screenshot with a selected set + totals goes here when live.
+
+**For CC-1 (Lead item 2, ROUND 317 item 1 — closed):** duplicate revenue JEs reversed under AUTH-196: 13571 `715378ea` → reversal
+**`e941171e-b205-4326-a653-e2a7aa7d598f`** (dated 2026-09-08); 13626 `4c416f76` → `d2ca6542`. Root fix ACCT-F9616 #23828, guard 12071.
+
+**Neon throwaway branches I created — deleted (Lead item 4):** br-silent-fog-ak2l100x, br-bitter-haze-akhap2i3, br-summer-mode-ak5t7ruu,
+br-rapid-rain-akz830pt.
+
+**Question for the Lead (guard verify-cash-flow-reads-delivery-date):** its hard-coded pin expects 13637 due 2026-10-01, but the from-load
+engine stamps Net-30 when a customer has no terms (`payment_terms_days ?? 30`, from-load.ts:217) → 13637 due 10-31. 62 USMCA invoices for
+customers with no terms are Net-30 that way; 1 is due on delivery. The guard's invoice-level rule (due = delivery + the invoice's terms) passes.
+Decision: is the no-terms default Net-30 (then re-pin 13637 to 10-31) or due-on-delivery (then the engine default changes and 62 invoices'
+due dates need an AUTH)? Not touched.
