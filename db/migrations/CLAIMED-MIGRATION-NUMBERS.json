@@ -1,4 +1,9 @@
 {
+  "202615230200": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "Lead SEC-F9625 (claude/fix-rls-uuid-cast-nullif-driver-samsara), renumbered from 202615210200 (collision with CC-1 202615210200_complete_delete_route): ALTER POLICY driver_samsara_accounts_entity_scope NULLIF-wrapped so an empty GUC fails closed."
+  },
   "202615230100": {
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-02",

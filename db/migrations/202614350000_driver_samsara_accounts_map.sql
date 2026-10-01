@@ -84,7 +84,7 @@ BEGIN
     USING (
       driver_id IN (
         SELECT id FROM mdata.drivers
-        WHERE operating_company_id = current_setting('app.operating_company_id', true)::uuid
+        WHERE operating_company_id = current_setting('app.operating_company_id', true)::uuid -- ALLOW_BARE_UUID_CAST: superseded live by 202615210200 ALTER POLICY (NULLIF-wrapped); this file is immutable (applied to prod), see migration-checksum-overrides.json
       )
     );
 

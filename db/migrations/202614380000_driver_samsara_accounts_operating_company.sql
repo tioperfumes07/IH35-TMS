@@ -87,10 +87,10 @@ BEGIN
     FOR ALL
     USING (
       identity.is_lucia_bypass()
-      OR operating_company_id = current_setting('app.operating_company_id', true)::uuid
+      OR operating_company_id = current_setting('app.operating_company_id', true)::uuid -- ALLOW_BARE_UUID_CAST: superseded live by 202615210200 ALTER POLICY (NULLIF-wrapped); this file is immutable (applied to prod), see migration-checksum-overrides.json
     )
     WITH CHECK (
       identity.is_lucia_bypass()
-      OR operating_company_id = current_setting('app.operating_company_id', true)::uuid
+      OR operating_company_id = current_setting('app.operating_company_id', true)::uuid -- ALLOW_BARE_UUID_CAST: superseded live by 202615210200 ALTER POLICY (NULLIF-wrapped); this file is immutable (applied to prod), see migration-checksum-overrides.json
     );
 END $$;

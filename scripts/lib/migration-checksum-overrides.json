@@ -426,8 +426,8 @@
   {
     "filename": "202614350000_driver_samsara_accounts_map.sql",
     "ledger_checksum": "f01e93ddb9de8f2f49d1e75a24e27a16bd2ea792be70de52ff93bcf229343d2b",
-    "disk_checksum": "df575372e549fe2a5c729d2167dc94f52d7c5d67086e5cebbcadfd1b02ceb568",
-    "reason": "GRANT to ih35_ci_readonly wrapped in IF EXISTS (pg_roles) so the migration replays on CI/verify databases that lack the role (security-audit-heavy: role \"ih35_ci_readonly\" does not exist). Prod already applied the original; the grant exists there and nothing is re-run.",
+    "disk_checksum": "20224e591b96df1d9fe9e39a38ca05bae6cd5b054247cc32beafde4f5adfdc20",
+    "reason": "GRANT to ih35_ci_readonly wrapped in IF EXISTS (pg_roles) so the migration replays on CI/verify databases that lack the role (security-audit-heavy: role \"ih35_ci_readonly\" does not exist). Prod already applied the original; the grant exists there and nothing is re-run. UPDATED (Lead, 2026-10-01): appended an ALLOW_BARE_UUID_CAST inline comment to the current_setting()::uuid cast on line 87 to satisfy verify-rls-uuid-cast-nullif; no DDL text changed, only a trailing SQL comment. Live policy fixed forward by 202615230200 (ALTER POLICY, NULLIF-wrapped).",
     "added_at": "2026-09-26",
     "added_in_pr": "claude/r186-creator-je-preview-paritytable"
   },
@@ -470,5 +470,13 @@
     "reason": "MIG-F9623 (Lead branch claude/feed-gate-deposit-billpay-2): COMMENT on banking.reconciliation_sessions.service_charge_cents guarded so a fresh-database replay passes (the column is created later by 202615141200). Applied on prod 2026-10-01 with the unguarded text; the guard is a no-op there. Override keeps every deploy's migrate step from refusing on the changed checksum.",
     "added_at": "2026-10-02",
     "added_in_pr": "CC-1-LEAD-BRANCH-3"
+  },
+  {
+    "filename": "202614380000_driver_samsara_accounts_operating_company.sql",
+    "ledger_checksum": "2e5dd28c4a7c480cc72d61824f36a8029f27dc47036317db86fd24a4202767c9",
+    "disk_checksum": "153ca425a8a38b4259d981a23c3d3c23c6642d0eb65ac6b1f0e1879e217e7981",
+    "reason": "Lead, 2026-10-01: appended ALLOW_BARE_UUID_CAST inline comments to the two current_setting()::uuid casts (USING + WITH CHECK, lines 90/94) to satisfy verify-rls-uuid-cast-nullif.mjs; no DDL text changed, only trailing SQL comments. The live policy itself (driver_samsara_accounts_entity_scope on mdata.driver_samsara_accounts) is fixed forward in the same PR by 202615230200_rls_uuid_cast_nullif_driver_samsara_accounts.sql (ALTER POLICY, NULLIF-wrapped) so a GUC set to the empty string fails closed instead of raising invalid-uuid-syntax.",
+    "added_at": "2026-10-01",
+    "added_in_pr": "lead/fix-rls-uuid-cast-nullif-driver-samsara"
   }
 ]
