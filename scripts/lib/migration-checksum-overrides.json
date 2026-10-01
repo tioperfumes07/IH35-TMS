@@ -454,5 +454,13 @@
     "reason": "File reconstructed in #23681 (MIGRATION-STAMPED-IN-PROD-NEVER-COMMITTED-2026100102): prod stamped it 2026-09-30T04:02:40Z but the original bytes were never committed. The reconstruction is the same single statement (ALTER TABLE telematics.vehicle_locations ALTER COLUMN engine_state DROP NOT NULL); prod measured 2026-10-01: engine_state is_nullable=YES. Only the bytes differ; without this entry db:migrate refused every deploy (pre_deploy_failed dep-dauv0rojo6nc73eo329g).",
     "added_at": "2026-10-01",
     "added_in_pr": "CC-2-MIGRATION-202614620000-CHECKSUM-OVERRIDE"
+  },
+  {
+    "filename": "202615171200_accounting_bank_deposits.sql",
+    "ledger_checksum": "421e0b6fcff87982f8f9bfda9bde536c",
+    "disk_checksum": "7462bb386071d43492ede8e96230e3d3c4b248e2a75f882a69bc668301f6b11a",
+    "reason": "Stamped on prod (32-hex ledger checksum: applied outside db:migrate) with bytes that differ from the committed file (#23770). Verified live 2026-10-01 before this entry: accounting.deposits and accounting.deposit_lines carry exactly the committed columns (0 extra, 0 missing), all 5 committed indexes, both policies, both WORM triggers, FORCE RLS on both. Same schema, different bytes; without this entry db:migrate refused every deploy (pre_deploy_failed dep-dav7j817lnhs73b8ftdg).",
+    "added_at": "2026-10-01",
+    "added_in_pr": "CC-2-MIGRATION-202615171200-CHECKSUM-OVERRIDE"
   }
 ]
