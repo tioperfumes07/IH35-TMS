@@ -153,7 +153,8 @@ function eventsComponent(
   component: ProfileComponent["component"],
   events: DamageEvent[],
   per100k: number | null,
-  milesDriven: number | null
+  milesDriven: number | null,
+  milesLabel: string
 ): ProfileComponent {
   if (events.length === 0) {
     return { component, status: "none", arithmetic: "0 events attributed in the period", basis: "nothing attributed to this driver", evidence: [] };
@@ -163,7 +164,7 @@ function eventsComponent(
     status: "observed",
     arithmetic:
       `${events.length} event(s)` +
-      (per100k !== null && milesDriven !== null ? ` / ${milesDriven} mi x 100,000 = ${per100k} per 100k mi` : "; per-100k withheld — no measured miles"),
+      (per100k !== null && milesDriven !== null ? ` / ${milesDriven} mi x 100,000 = ${per100k} per 100k mi (${milesLabel})` : "; per-100k withheld — no measured miles"),
     basis: "observed; no owner-set threshold, so no judgement is made here",
     evidence: events,
   };
@@ -203,6 +204,7 @@ export async function computeDriverIntegrityProfiles(
     const fd = findingsBy.get(driverId) ?? [];
     const cp = complaints.get(driverId) ?? [];
     const counted = cp.filter((c) => c.counted);
+    const milesLabel = sc?.miles_source_label ?? damageScore[0]?.miles_source_label ?? "daily snapshot miles";
 
     const components: ProfileComponent[] = [
       f
@@ -214,14 +216,15 @@ export async function computeDriverIntegrityProfiles(
             evidence: f.signals,
           }
         : { component: "fuel", status: "insufficient_data", arithmetic: "no fuel signal reached this driver", basis: "no fills, no stop-odometer miles, no Relay fills attributed", evidence: [] },
-      eventsComponent("damage", ev.filter((e) => e.source === "work_order_repair"), sc?.damage_wo_per_100k_miles ?? null, sc?.miles_driven ?? null),
+      eventsComponent("damage", ev.filter((e) => e.source === "work_order_repair"), sc?.damage_wo_per_100k_miles ?? null, sc?.miles_driven ?? null, milesLabel),
       eventsComponent(
         "accidents",
         ev.filter((e) => e.source === "work_order_accident" || e.source === "safety_accident" || e.source === "accident_report"),
         sc?.accident_wo_per_100k_miles ?? null,
-        sc?.miles_driven ?? null
+        sc?.miles_driven ?? null,
+        milesLabel
       ),
-      eventsComponent("tire_events", ev.filter((e) => e.source === "tire_event"), sc?.tire_event_per_100k_miles ?? null, sc?.miles_driven ?? null),
+      eventsComponent("tire_events", ev.filter((e) => e.source === "tire_event"), sc?.tire_event_per_100k_miles ?? null, sc?.miles_driven ?? null, milesLabel),
       fd.length === 0
         ? { component: "geofence_findings", status: "none", arithmetic: "0 geofence integrity findings attributed", basis: "nothing placed on this driver", evidence: [] }
         : {
