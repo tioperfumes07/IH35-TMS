@@ -3,6 +3,7 @@
  *
  * adjusted_bank = statement_ending + deposits_in_transit − outstanding_checks
  * adjusted_book = beginning_balance + cleared_credits − cleared_debits
+ *                 − service_charge + interest_earned   (BANK-ECON-04 / QBO Finish)
  * variance      = adjusted_bank − adjusted_book  (must be 0 to close)
  */
 
@@ -32,9 +33,15 @@ export function computeAdjustedBalanceSummary(args: {
   beginningBalanceCents: number;
   statementEndingCents: number;
   transactions: ReconTxnForAdjusted[];
+  /** BANK-ECON-04 — QBO Finish service charge (reduces book side before post). */
+  serviceChargeCents?: number;
+  /** BANK-ECON-04 — QBO Finish interest earned (increases book side before post). */
+  interestEarnedCents?: number;
 }): AdjustedBalanceSummary {
   const beginning = Number(args.beginningBalanceCents ?? 0);
   const statementEnding = Number(args.statementEndingCents ?? 0);
+  const serviceChargeCents = Math.max(0, Math.trunc(Number(args.serviceChargeCents ?? 0)));
+  const interestEarnedCents = Math.max(0, Math.trunc(Number(args.interestEarnedCents ?? 0)));
 
   let clearedCreditsCents = 0;
   let clearedDebitsCents = 0;
@@ -55,7 +62,8 @@ export function computeAdjustedBalanceSummary(args: {
   }
 
   const adjustedBankBalanceCents = statementEnding + depositsInTransitCents - outstandingChecksCents;
-  const adjustedBookBalanceCents = beginning + clearedCreditsCents - clearedDebitsCents;
+  const adjustedBookBalanceCents =
+    beginning + clearedCreditsCents - clearedDebitsCents - serviceChargeCents + interestEarnedCents;
   const varianceCents = adjustedBankBalanceCents - adjustedBookBalanceCents;
 
   return {

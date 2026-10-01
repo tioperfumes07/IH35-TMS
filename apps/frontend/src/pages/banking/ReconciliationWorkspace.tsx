@@ -153,17 +153,9 @@ export function ReconciliationWorkspacePage() {
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
 
-  // ROUND 197.1 (owner-raised) — Service charge / Interest earned, each with its own date + GL
-  // account, matching the real QuickBooks Online reconcile flow (bank fee expense / interest
-  // income, entered as part of the reconcile, adjusting the book side of the difference before
-  // Finish is evaluated). Session-LOCAL only: ReconciliationSession carries no
-  // service_charge_cents/interest_earned_cents columns today, and CC-2 cannot author a migration
-  // to add them (verify-migration-lane-band.mjs hard-bars cc-2/*-prefixed branches from
-  // db/migrations/*.sql) — persisting these across a reload/reopen is real follow-up work for
-  // whichever seat owns migrations, flagged explicitly rather than silently limited. The
-  // difference calculation and the Finish gate below both already read from this local state, so
-  // the core requirement (an operator can enter these, and Finish stays disabled until the
-  // resulting difference is exactly 0.00) is real today, not deferred.
+  // ROUND 313 BANK-ECON-04 — Service charge / Interest earned persist on the session and post
+  // through the canonical JE poster on Finish (migration 202615141200). Local state is the
+  // working draft; complete sends cents/date/account so the server posts Dr/Cr and stamps JE FKs.
   const [serviceChargeInput, setServiceChargeInput] = useState<number | null>(null);
   const [serviceChargeDate, setServiceChargeDate] = useState("");
   const [serviceChargeAccountId, setServiceChargeAccountId] = useState<string | null>(null);
@@ -1031,6 +1023,12 @@ export function ReconciliationWorkspacePage() {
                   void completeReconciliationSession(sessionId, companyId, {
                     force_complete: needsForceComplete,
                     reason: needsForceComplete ? forceReason.trim() : undefined,
+                    service_charge_cents: serviceChargeCents,
+                    service_charge_date: serviceChargeCents ? serviceChargeDate || null : null,
+                    service_charge_account_id: serviceChargeCents ? serviceChargeAccountId : null,
+                    interest_earned_cents: interestEarnedCents,
+                    interest_earned_date: interestEarnedCents ? interestEarnedDate || null : null,
+                    interest_earned_account_id: interestEarnedCents ? interestEarnedAccountId : null,
                   })
                     .then(() => {
                       pushToast("Session marked reconciled", "success");
