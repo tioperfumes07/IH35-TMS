@@ -1256,3 +1256,16 @@ running; any missing reverse view in my lane gets built next.
   - NEW GET /api/v1/fuel/relay-fills ?unit_id= / ?driver_id= / ?unmatched=true (100 of 119 USMCA Relay
     fills have no truck or driver matched and were reachable from no hub)
   - Screens follow.
+
+## 2026-10-01 06:25Z — CC-2 | ledger corrected at root; cron timing corrected
+- EXPENSE-LEDGER-ACCOUNT-DISAGREES-WITH-LINE (ACCT-F100111):
+  - 3 settlement-5781 documents posted $518.80 of reefer diesel to 5010 DEF while their lines said 5000.
+    These were the only 3 of 544 posted lines.
+  - Reissued under AUTH-189 (CONSUMED): 13523-27/28/29 -> 13523-30/31/32, each with load 13523's truck and driver.
+  - Root fix #23735: trigger refusing a posted line's account/amount edit (migration 202615170700); guard 12051.
+  - LIVE: verify-fuel-cost-posts-exactly-once PASS; 12051 544/544; 12039 539 JEs, 0 unposted; void-is-whole 0.
+- Also fixed at root in #23735: the engine-status probe for E-03 named unit_stop_events.stopped_at; the column is
+  started_at (verify-engine-catalog-probes-exist 22/22).
+- CORRECTION: the retry-held-expense-postings cron runs "20 */6" America/Chicago = 05:20/11:20/17:20/23:20 UTC.
+  - My earlier "06:20Z" was wrong.
+  - The first run on the fixed system actor is 11:20Z; the 11 fuel drafts post then.
