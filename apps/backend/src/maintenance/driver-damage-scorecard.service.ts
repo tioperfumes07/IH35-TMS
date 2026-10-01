@@ -188,14 +188,14 @@ export async function computeDriverDamageScorecard(
   periodStart: string,
   periodEnd: string
 ): Promise<DriverDamageScorecardRow[]> {
-  const [damageWo, accidentWo, tireEvents, safetyAccidents, accidentReports, milesByDriver] = await Promise.all([
-    aggregateWorkOrders(client, operatingCompanyId, periodStart, periodEnd, ["repair"]),
-    aggregateWorkOrders(client, operatingCompanyId, periodStart, periodEnd, ["accident"]),
-    aggregateTireEvents(client, operatingCompanyId, periodStart, periodEnd),
-    aggregateSafetyAccidents(client, operatingCompanyId, periodStart, periodEnd),
-    aggregateAccidentReports(client, operatingCompanyId, periodStart, periodEnd),
-    computeDriverMilesInPeriod(client, operatingCompanyId, periodStart, periodEnd),
-  ]);
+  // Sequential on one client: concurrent queries on a single pg client are deprecated and can
+  // interleave. Six reads; latency is not the constraint here, correctness is.
+  const damageWo = await aggregateWorkOrders(client, operatingCompanyId, periodStart, periodEnd, ["repair"]);
+  const accidentWo = await aggregateWorkOrders(client, operatingCompanyId, periodStart, periodEnd, ["accident"]);
+  const tireEvents = await aggregateTireEvents(client, operatingCompanyId, periodStart, periodEnd);
+  const safetyAccidents = await aggregateSafetyAccidents(client, operatingCompanyId, periodStart, periodEnd);
+  const accidentReports = await aggregateAccidentReports(client, operatingCompanyId, periodStart, periodEnd);
+  const milesByDriver = await computeDriverMilesInPeriod(client, operatingCompanyId, periodStart, periodEnd);
 
   const driverIds = new Set<string>([
     ...damageWo.keys(),

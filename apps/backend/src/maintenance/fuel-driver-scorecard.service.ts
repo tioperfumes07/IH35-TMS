@@ -171,11 +171,10 @@ export async function computeDriverFuelScorecard(
   periodStart: string,
   periodEnd: string
 ): Promise<DriverFuelScorecardRow[]> {
-  const [milesByDriver, fuelByDriver, fillsByDriver] = await Promise.all([
-    computeDriverMilesInPeriod(client, operatingCompanyId, periodStart, periodEnd),
-    computeDriverFuelInPeriod(client, operatingCompanyId, periodStart, periodEnd),
-    fetchDriverFillsInPeriod(client, operatingCompanyId, periodStart, periodEnd),
-  ]);
+  // Sequential on one client — concurrent queries on a single pg client are deprecated.
+  const milesByDriver = await computeDriverMilesInPeriod(client, operatingCompanyId, periodStart, periodEnd);
+  const fuelByDriver = await computeDriverFuelInPeriod(client, operatingCompanyId, periodStart, periodEnd);
+  const fillsByDriver = await fetchDriverFillsInPeriod(client, operatingCompanyId, periodStart, periodEnd);
 
   const driverIds = new Set<string>([...milesByDriver.keys(), ...fuelByDriver.keys()]);
 
