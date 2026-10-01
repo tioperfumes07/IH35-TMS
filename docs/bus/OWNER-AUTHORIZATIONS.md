@@ -6588,3 +6588,30 @@ audit: audit.audit_events source CC-3-AUTH-187 (1 row)
 
 OWNER/LEAD ORDER, verbatim, 2026-10-01 (in chat to CC-3; owner delegated "all to you"):
 > "APPROVED now, one script each (dry run counts, --apply, audit row): T122 id fix; delete the 176,960 odometer duplicates; apply the 30 fence links; merge the 5 clear driver pairs via merged_into_driver_id (never delete). BUILD the 5 Laredo bridge fences (border_crossing, 400 m, real coordinates)."
+## AUTH-188
+issued_at: 2026-10-01T05:10:15Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). accounting.expenses: exactly the 94 rows that carry a LIVE
+  journal_entry_id (journal entry not voided, not reversed) while posting_status = 'unposted' (5 fuel documents + 89
+  settlement-feed documents, $3,744.13, all created 2026-09-30). Columns written: posting_status -> 'posted', and
+  posted_at -> the journal entry's entry_date where posted_at is null. No amount, account, line or journal entry changes.
+action: npx tsx scripts/ops/2026-10-01-cc2-auth188-expense-je-posting-status.ts --apply. Dry run: targets 94 (5 fuel documents, 89 other), $3744.13.
+expires_at: 2026-10-02T05:10:15Z
+status: CONSUMED
+consumed_at: 2026-10-01T05:16:08Z
+consumed_by: CC-2
+row_counts: accounting.expenses 94 rows posting_status unposted -> posted (5 fuel documents, 89 other), $3,744.13; posted_at set from the journal entry's entry_date
+proof_query: SELECT count(*) FROM accounting.expenses WHERE journal_entry_id IS NOT NULL AND posting_status='unposted' -> 0 (was 94); 536 expenses carry a journal entry
+audit: audit.audit_events source CC-2-AUTH-188 (1 row)
+
+WHY: the expense void route reverses only posting_status = 'posted'; each of these 94 would void with its entry still on
+the books. Root fix in the same work: createExpenseFromFuelTransaction writes posting_status with the JE, and migration
+202615140700 adds CHECK (journal_entry_id IS NULL OR posting_status <> 'unposted'), validated once these are repaired.
+
+OWNER LAW, verbatim, 2026-10-01 (docs/bus/2026-10-01-OWNER-LAW-MONEY-PAUSE-LIFTED-ALL-SEATS-BUILD-EVERYTHING.md):
+> "fix all issues at root, we do not patch, nor defer, we fix permanently. instruct the coders the same."
+and the Lead's rule 3 in that file: "If the root cause is a prod data defect, write the ops script with dry-run +
+`--apply` + audit row, open an AUTH block, and run it — same session."
+Owner, in chat to CC-2, 2026-10-01: "you have full permissions and authoriztions".
+
+THIS AUTHORIZATION DOES NOT COVER: any expense whose journal entry is voided or reversed, any other entity, the 11 draft
+fuel documents awaiting posting, or any amount/account change.
