@@ -36,7 +36,8 @@ export type FuelPushSkipReason =
   | "no_samsara_vehicle"
   | "ambiguous_samsara_vehicle"
   | "no_location"
-  | "no_price";
+  | "no_price"
+  | "derived_time_not_high_confidence";
 
 export type FuelPushRow = {
   id: string;
@@ -49,6 +50,10 @@ export type FuelPushRow = {
   location_city: string | null;
   location_state: string | null;
   same_stamp_count: number;
+  /** ORDERS 2026-10-01 row 7: CC-2's derived pump time (fuel.fuel_transaction_derivations), when stored. */
+  derived_time?: string | Date | null;
+  derived_confidence?: "high" | "medium" | null;
+  derived_fuel_stop_label?: string | null;
 };
 
 export type FuelPushPlanItem =
@@ -64,8 +69,15 @@ export function planFuelPurchasePushes(
 ): FuelPushPlanItem[] {
   return rows.map((row): FuelPushPlanItem => {
     if (pushedIds.has(row.id)) return { fuel_transaction_id: row.id, action: "already_pushed" };
+    // A date-only row may still be pushed with CC-2's DERIVED pump time -- the start of the one stop the
+    // truck made inside a fuel-stop fence that day (confidence 'high' only: one fill, one stop). Never
+    // the import time, never a medium-confidence time shared by several fills.
     const gate = fuelPurchaseIneligibleReason(row, { requirePumpTime: true });
-    if (gate) return { fuel_transaction_id: row.id, action: "skip", reason: gate };
+    const useDerived = gate === "date_only_precision" && row.derived_time != null && row.derived_confidence === "high";
+    if (gate === "date_only_precision" && row.derived_time != null && row.derived_confidence !== "high") {
+      return { fuel_transaction_id: row.id, action: "skip", reason: "derived_time_not_high_confidence" };
+    }
+    if (gate && !useDerived) return { fuel_transaction_id: row.id, action: "skip", reason: gate };
     if (row.fuel_type === "reefer_diesel") return { fuel_transaction_id: row.id, action: "skip", reason: "reefer_fuel_not_vehicle_fuel" };
     if (!row.unit_id) return { fuel_transaction_id: row.id, action: "skip", reason: "no_unit" };
     const vehicleIds = samsaraVehicleIdsByUnit.get(row.unit_id) ?? [];
@@ -73,18 +85,22 @@ export function planFuelPurchasePushes(
     if (vehicleIds.length > 1) return { fuel_transaction_id: row.id, action: "skip", reason: "ambiguous_samsara_vehicle" };
     const city = row.location_city?.trim() ?? "";
     const state = row.location_state?.trim() ?? "";
-    if (!city || !state) return { fuel_transaction_id: row.id, action: "skip", reason: "no_location" };
+    // Location: the fill's own city/state, else (derived rows only) the fuel-stop fence the time came from.
+    const fenceLabel = useDerived ? row.derived_fuel_stop_label?.trim() ?? "" : "";
+    const location = city && state ? `${city}, ${state}` : fenceLabel;
+    if (!location) return { fuel_transaction_id: row.id, action: "skip", reason: "no_location" };
     const price = row.total_cost == null ? NaN : Number(row.total_cost);
     if (!Number.isFinite(price) || price <= 0) return { fuel_transaction_id: row.id, action: "skip", reason: "no_price" };
     const gallons = Number(row.gallons);
-    const at = row.transaction_at instanceof Date ? row.transaction_at : new Date(row.transaction_at);
+    const rawAt = useDerived ? row.derived_time! : row.transaction_at;
+    const at = rawAt instanceof Date ? rawAt : new Date(rawAt);
     return {
       fuel_transaction_id: row.id,
       action: "push",
       body: {
         transactionReference: row.id,
         transactionTime: at.toISOString(),
-        transactionLocation: `${city}, ${state}`,
+        transactionLocation: location,
         fuelQuantityLiters: (gallons * LITERS_PER_US_GALLON).toFixed(3),
         transactionPrice: { amount: price.toFixed(2), currency: "usd" },
         vehicleId: vehicleIds[0]!,
@@ -186,11 +202,18 @@ export async function runFuelPurchasePush(
   operatingCompanyId: string,
   opts: { apply: boolean; poster: FuelPurchasePoster | null }
 ): Promise<FuelPushRunResult> {
+  // CC-2's derivation side table lands with CC-1's migration -- feature-detected, never assumed.
+  const derivedReady = Boolean(
+    (await client.query(`SELECT to_regclass('fuel.fuel_transaction_derivations') IS NOT NULL AS ok`)).rows[0]?.ok
+  );
   const rowsRes = await client.query(
     `WITH f AS (${FUEL_ROWS_WITH_STAMP_COUNT_SQL})
      SELECT f.id::text AS id, f.unit_id::text AS unit_id, f.fuel_type, f.gallons, f.total_cost, f.transaction_at,
             f.voided_at, f.location_city, f.location_state, f.same_stamp_count
-       FROM f ORDER BY f.transaction_at, f.id`,
+            ${derivedReady ? ", d.transaction_at_derived AS derived_time, d.confidence AS derived_confidence, g.label AS derived_fuel_stop_label" : ""}
+       FROM f
+       ${derivedReady ? "LEFT JOIN fuel.fuel_transaction_derivations d ON d.fuel_transaction_id = f.id LEFT JOIN geo.geofences g ON g.id = d.geofence_id" : ""}
+      ORDER BY f.transaction_at, f.id`,
     [operatingCompanyId]
   );
   const rows = rowsRes.rows as FuelPushRow[];
