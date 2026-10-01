@@ -232,6 +232,23 @@ function OverviewTab({ data, onOpen, qboAvailable }: { data: SystemData; onOpen:
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <Card
+        title="Engine status"
+        pill={<Pill tone="neutral">E-41</Pill>}
+        sub="Every registry engine — last run, rows in 24 hours, last error, next run. Red when a producer wrote nothing in its window."
+        footer={
+          <Link
+            to="/system/engine-status"
+            className="text-xs font-semibold text-slate-800 underline"
+            data-testid="system-overview-engine-status-link"
+          >
+            Open Engine status
+          </Link>
+        }
+      >
+        <Row label="Board">Built vs producing — no chat required</Row>
+      </Card>
+
       {qboAvailable ? <Card
         title="QuickBooks Reconciliation"
         pill={<Pill tone="neutral">TMS ↔ QBO</Pill>}
