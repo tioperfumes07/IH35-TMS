@@ -231,6 +231,17 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
   );
   const multiSumCents = multiSelected.reduce((s, c) => s + Number(c.amount_cents ?? 0), 0);
   const multiExact = multiSelected.length >= 2 && bankAmountCents > 0 && multiSumCents === bankAmountCents;
+  // B-3 §19b — QBO arithmetic box: Bank / Selected / Difference (always visible).
+  const singleSelected = selectedId
+    ? candidates.find((c) => c.ledger_entry_id === selectedId)
+    : undefined;
+  const selectedAmountCents =
+    multiSelected.length >= 1
+      ? multiSumCents
+      : singleSelected
+        ? Number(singleSelected.amount_cents ?? 0)
+        : 0;
+  const differenceCents = bankAmountCents - selectedAmountCents;
 
   if (!bankTransactionId) return null;
 
@@ -256,10 +267,10 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
   };
 
   return (
-    <ParityDrawer open={open} title="Match transaction" onClose={onClose}>
-      <div data-testid="match-drawer">
+    <ParityDrawer open={open} title="Find other matches" onClose={onClose}>
+      <div data-testid="match-drawer" data-b3-find-other-matches="1">
         {bankTransactionId ? (
-          <p className="mb-1 text-[11px] text-slate-600">
+          <p className="mb-1 text-xs text-slate-600">
             Bank transaction:{" "}
             <EntityLink
               kind="bank_transaction"
@@ -268,12 +279,32 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
             />
           </p>
         ) : null}
+        {/* B-3 §19b — arithmetic always visible; Match only at Difference $0.00 (exact multi / exact single / write-off). */}
+        <div
+          className="mb-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2.5 py-2 text-xs text-[#0F1219]"
+          data-b3-match-arithmetic="1"
+          data-testid="match-drawer-arithmetic"
+        >
+          <div className="flex flex-wrap gap-x-4 gap-y-1 tabular-nums">
+            <span>
+              Bank transaction amount:{" "}
+              <strong>{formatMoneyCents(bankAmountCents)}</strong>
+            </span>
+            <span>
+              Selected amount: <strong>{formatMoneyCents(selectedAmountCents)}</strong>
+            </span>
+            <span className={differenceCents === 0 ? "text-[#027A48]" : "text-red-700"}>
+              Difference: <strong>{formatMoneyCents(Math.abs(differenceCents))}</strong>
+              {differenceCents !== 0 ? " (resolve below or select exact sum)" : ""}
+            </span>
+          </div>
+        </div>
         <p className="mb-1 text-xs font-medium text-[#1F2A44]" data-testid="match-window-header">
           {hasCustomFilters
             ? "Custom search"
             : windowHeaderLabel(win?.step, win?.from ?? "", win?.to ?? "")}
         </p>
-        <p className="mb-3 text-[11px] text-slate-500">
+        <p className="mb-3 text-xs text-slate-500">
           Exact-amount matches link and clear with no journal entry. A variance (partial) match requires a
           write-off / difference account below — that posts the balanced variance JE. Select 2+ exact
           documents whose amounts sum to the bank line for one-bank-line → many-documents. Bill

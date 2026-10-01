@@ -27,6 +27,7 @@ import { DriftAlertsPanel } from "./components/DriftAlertsPanel";
 import { getQboConnectionStatus } from "../../api/forensic";
 import { ManualJEModal } from "../accounting/ManualJEModal";
 import { BankingHomeAttentionStrip } from "./components/BankingHomeAttentionStrip";
+import { BankingHomeConnectionErrorStrip } from "./components/BankingHomeConnectionErrorStrip";
 import { BankingPlaidConnectionsPanel } from "./components/BankingPlaidConnectionsPanel";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
@@ -510,6 +511,20 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             onDriverEscrow={() => {
               setActiveTab("driver_escrow");
               navigate(BANKING_TAB_PATH.driver_escrow);
+            }}
+          />
+
+          {/* B-3 §16 — per-account feed connection errors; never silently stale. */}
+          <BankingHomeConnectionErrorStrip
+            accounts={plaidAccountsQuery.data?.accounts ?? []}
+            onFixNow={() => navigate(BANKING_TAB_PATH.plaid_connections)}
+            onDisconnect={() => navigate(BANKING_TAB_PATH.plaid_connections)}
+            onRequest={(row) => {
+              pushToast(
+                `Request sent for ${row.label} (${row.syncStatus}). An Owner can Fix now or Disconnect on Plaid Connections.`,
+                "info",
+              );
+              navigate(BANKING_TAB_PATH.plaid_connections);
             }}
           />
 

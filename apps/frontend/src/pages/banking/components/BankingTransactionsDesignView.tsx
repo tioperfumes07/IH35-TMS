@@ -101,7 +101,7 @@ type Props = {
 };
 
 type RowDetailDraft = {
-  mode: "match" | "categorize";
+  mode: "match" | "categorize" | "transfer" | "cc_payment";
   transactionType: string;
   fromTo: string;
   /** QBO Transfer: explicit From bank account id (inline picker). */
@@ -2094,7 +2094,13 @@ export function BankingTransactionsDesignView({
         className: REGISTER_COLUMN_HEADER_CLASS,
         render: (tx) => (
           <span className={`rounded-sm bg-gray-100 px-2 py-1 ${QBO_BANKING_ACTION_TEXT_CLASS}`}>
-            {getDraft(tx).mode === "match" ? QBO_BANKING_ACTIONS.match : QBO_BANKING_ACTIONS.add}
+            {getDraft(tx).mode === "match"
+              ? QBO_BANKING_ACTIONS.match
+              : getDraft(tx).mode === "transfer"
+                ? QBO_BANKING_ACTIONS.recordTransfer
+                : getDraft(tx).mode === "cc_payment"
+                  ? QBO_BANKING_ACTIONS.recordCcPayment
+                  : QBO_BANKING_ACTIONS.add}
           </span>
         ),
       },
@@ -2129,7 +2135,7 @@ export function BankingTransactionsDesignView({
                   onClick={() => setMatchDrawerTxId(tx.id)}
                   data-testid={`banking-suggested-match-${tx.id}`}
                 >
-                  Suggested
+                  1 match found
                 </button>
               ) : null}
               {/* BANK-UNDO-01 — QBO parity: row-level Undo on Categorized AND Excluded, releasing
@@ -2167,7 +2173,7 @@ export function BankingTransactionsDesignView({
                       setMatchDrawerTxId(tx.id);
                     }}
                   >
-                    Accept match (reconcile)
+                    {QBO_BANKING_ACTIONS.findOtherMatches}
                   </button>
                   <button
                     type="button"
@@ -2415,28 +2421,72 @@ export function BankingTransactionsDesignView({
               </ul>
             </div>
           ) : null}
-          <div className="mb-2 flex items-center gap-2">
+          <fieldset
+            className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1"
+            data-b3-expand-modes="1"
+            data-testid="banking-row-expand-modes"
+          >
+            <legend className="sr-only">Bank row action mode</legend>
+            {(
+              [
+                ["categorize", QBO_BANKING_ACTIONS.categorize],
+                ["match", QBO_BANKING_ACTIONS.match],
+                ["transfer", QBO_BANKING_ACTIONS.recordAsTransfer],
+                ["cc_payment", QBO_BANKING_ACTIONS.recordCcPayment],
+              ] as const
+            ).map(([modeId, label]) => (
+              <label
+                key={modeId}
+                className={`inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-sm border px-2 text-xs ${
+                  draft.mode === modeId
+                    ? "border-[#14314F] bg-[#14314F] text-white"
+                    : "border-[#E5E7EB] bg-white text-[#1F2A44]"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name={`b3-expand-mode-${tx.id}`}
+                  className="accent-[#14314F]"
+                  checked={draft.mode === modeId}
+                  data-testid={`banking-expand-mode-${modeId}`}
+                  onChange={() => {
+                    if (modeId === "match") {
+                      // DEFECT-7 — Match mode must setExpandedTxId + scroll matchPaneRef (verify-banking-designview-qbo-parity).
+                      setDraft(tx, { mode: "match" });
+                      setExpandedTxId(tx.id);
+                      requestAnimationFrame(() =>
+                        matchPaneRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }),
+                      );
+                      return;
+                    }
+                    setDraft(tx, {
+                      mode: modeId,
+                      transactionType:
+                        modeId === "transfer"
+                          ? "Transfer"
+                          : modeId === "cc_payment"
+                            ? "CC Payment"
+                            : tx.is_credit
+                              ? "Money in"
+                              : "Money out",
+                    });
+                    setExpandedTxId(tx.id);
+                    if (modeId === "transfer") setTransferModalTx(tx);
+                    if (modeId === "cc_payment") setCcPaymentModalTx(tx);
+                  }}
+                />
+                {label}
+              </label>
+            ))}
             <button
               type="button"
-              className={`rounded-sm px-2 py-1 text-xs ${draft.mode === "match" ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-700"}`}
-              onClick={() => {
-                setDraft(tx, { mode: "match" });
-                setExpandedTxId(tx.id);
-                requestAnimationFrame(() =>
-                  matchPaneRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
-                );
-              }}
+              className="ml-auto h-7 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#1F2A44] hover:bg-[#F7F8FA]"
+              data-testid="banking-find-other-matches"
+              onClick={() => setMatchDrawerTxId(tx.id)}
             >
-              {QBO_BANKING_ACTIONS.match}
+              {QBO_BANKING_ACTIONS.findOtherMatches}
             </button>
-            <button
-              type="button"
-              className={`rounded-sm px-2 py-1 ${QBO_BANKING_ACTION_TEXT_CLASS} ${draft.mode === "categorize" ? "bg-slate-100 text-slate-700" : "bg-gray-100 text-gray-700"}`}
-              onClick={() => setDraft(tx, { mode: "categorize" })}
-            >
-              {QBO_BANKING_ACTIONS.add}
-            </button>
-          </div>
+          </fieldset>
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
             <label className="text-xs text-gray-600">
               Transaction type
