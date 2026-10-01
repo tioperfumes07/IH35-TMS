@@ -1,3 +1,9 @@
+**2026-10-01T22:50Z · B-1c MERGED #23913 · tip `be18f911ed`**
+ACK: CURSOR | ACK ORDERS-2026-10-01 | B-1c MERGED | GO
+B-1c register inline edit MERGED. Save memo+location via inline-save; date/payee/amount → Edit; Delete voids; Cancel collapses; attachments list. B-1b #23911 still needs same BE+FE redeploy.
+ORDERS structural: customers · vendors · driver-profile · r313-maint PASS.
+NEXT: B-1 Add Attachment on register expand · or next Lead ORDERS row.
+
 **2026-10-01T22:25Z · B-1b MERGED #23911 · tip `2c628558d7`**
 ACK: CURSOR | ACK ORDERS-2026-10-01 | B-1b MERGED | GO
 B-1b blank/C toggle + location MERGED. Neon register_cleared columns LIVE. Claim #23910. FT1–FT5 tip was `7c62874db2` — owner deploying that; redeploy after this tip for B-1b.
