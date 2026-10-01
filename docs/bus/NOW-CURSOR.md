@@ -15,3 +15,5 @@ ACK: CURSOR | ACK ORDERS-2026-10-01 | MAINTENANCE | GO
 - E-42 /safety/dashcam: DONE.
 - E-41 /system/engine-status: RED. countLast24h probe aborts transaction — SAVEPOINT fix owed.
 - E-44: Chrome pass pending (post unit profile URL in OUTBOX).
+
+BANKING REGISTER SET (owner QBO click-through 2026-10-01): docs/bus/ORDERS-2026-10-01-BANKING-REGISTER-SET-CURSOR.md + docs/design/2026-10-01-QBO-REGISTER-MECHANISM-SPEC.md. Yours end to end after MAINTENANCE (owner confirms order in NOW).

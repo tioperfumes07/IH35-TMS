@@ -86,6 +86,9 @@ execFileSync("node", [path.join(ROOT, "scripts/verify-owner-authorization.mjs"),
 /** Children BEFORE parents. Order is the control; do not sort this list alphabetically. */
 const ORDER: Array<{ table: string; pred: string; opco: boolean }> = [
   // ---- leaf / line-level first
+  // 2026-10-01 (Lead, AUTH-181 re-run): a voided liability's own schedule rows block its delete
+  // (deduction_schedule_liability_id_fkey). A child of a voided parent goes first, like every other leaf.
+  { table: "driver_finance.deduction_schedule", pred: "liability_id IN (SELECT id FROM driver_finance.driver_liabilities WHERE voided_at IS NOT NULL AND operating_company_id = $1::uuid)", opco: false },
   { table: "driver_finance.settlement_lines", pred: "voided_at IS NOT NULL OR is_sample_data = true", opco: true },
   { table: "driver_finance.driver_liabilities", pred: "voided_at IS NOT NULL", opco: true },
   { table: "driver_finance.driver_bills", pred: "voided_at IS NOT NULL", opco: true },
@@ -100,6 +103,10 @@ const ORDER: Array<{ table: string; pred: string; opco: boolean }> = [
   { table: "accounting.expenses", pred: "voided_at IS NOT NULL OR is_sample_data = true", opco: true },
   { table: "fuel.fuel_transactions", pred: "voided_at IS NOT NULL", opco: true },
   { table: "accounting.invoices", pred: "voided_at IS NOT NULL OR is_sample_data = true", opco: true },
+  // Children of a voided advance first (all three are in the WORM trigger's detail-row arm, same as AUTH-177 did).
+  { table: "accounting.factoring_reserve_movements", pred: "factoring_advance_id IN (SELECT id FROM accounting.factoring_advances WHERE voided_at IS NOT NULL AND operating_company_id = $1::uuid)", opco: false },
+  { table: "accounting.factoring_default_interest_accruals", pred: "factoring_advance_id IN (SELECT id FROM accounting.factoring_advances WHERE voided_at IS NOT NULL AND operating_company_id = $1::uuid)", opco: false },
+  { table: "accounting.factoring_lifecycle_posting_keys", pred: "factoring_advance_id IN (SELECT id FROM accounting.factoring_advances WHERE voided_at IS NOT NULL AND operating_company_id = $1::uuid)", opco: false },
   { table: "accounting.factoring_advances", pred: "voided_at IS NOT NULL", opco: true },
   { table: "banking.bank_transactions", pred: "voided_at IS NOT NULL OR is_sample_data = true", opco: true },
   { table: "driver_finance.driver_settlements", pred: "voided_at IS NOT NULL OR is_sample_data = true", opco: true },
@@ -127,13 +134,17 @@ async function main() {
 
   if (APPLY) await assertIsIntendedProduction(client, { label: "scripts/ops/2026-09-30-lead-owner-purge-voided-and-sample-usmca.ts" });
   await client.query("BEGIN");
+  // The pooled production credential resolves to ih35_app, which holds no DELETE grant on these
+  // tables by design; an AUTH-gated purge is the one place the owner role is assumed, and it fails
+  // loudly if the credential cannot. NEONDB-OWNER-OK: owner-authorized purge, not a gate read.
+  await client.query("SET LOCAL ROLE neondb_owner");
   await client.query("SET LOCAL app.bypass_rls = 'lucia'");
   await client.query("SELECT set_config('app.purge_auth_id', $1, true)", [AUTH_ID]);
 
   const counts: Array<{ table: string; n: number }> = [];
   for (const step of ORDER) {
     const where = `(${step.pred})${step.opco ? " AND operating_company_id = $1::uuid" : ""}`;
-    const params = step.opco ? [USMCA] : [];
+    const params = step.opco || step.pred.includes("$1") ? [USMCA] : [];
     const before = await client.query<{ c: string }>(`SELECT count(*) AS c FROM ${step.table} WHERE ${where}`, params);
     const n = Number(before.rows[0].c);
     counts.push({ table: step.table, n });
@@ -161,15 +172,32 @@ async function main() {
     ]
   );
 
+  // Per-table SAVEPOINT (Lead, 2026-10-01): one refused table (WORM arm, FK from a live row) must
+  // never roll back the whole purge. Refusals are REPORTED by table with the exact error; the
+  // other tables still commit. A refusal is a finding for the owner, not a reason to widen anything.
   let deleted = 0;
+  const refused: Array<{ table: string; error: string }> = [];
   for (const step of ORDER) {
     const where = `(${step.pred})${step.opco ? " AND operating_company_id = $1::uuid" : ""}`;
-    const params = step.opco ? [USMCA] : [];
-    const res = await client.query(`DELETE FROM ${step.table} WHERE ${where}`, params);
-    deleted += res.rowCount ?? 0;
-    if ((res.rowCount ?? 0) > 0) console.log(`  deleted ${String(res.rowCount).padStart(6)} from ${step.table}`);
+    const params = step.opco || step.pred.includes("$1") ? [USMCA] : [];
+    await client.query("SAVEPOINT purge_step");
+    try {
+      const res = await client.query(`DELETE FROM ${step.table} WHERE ${where}`, params);
+      await client.query("RELEASE SAVEPOINT purge_step");
+      deleted += res.rowCount ?? 0;
+      if ((res.rowCount ?? 0) > 0) console.log(`  deleted ${String(res.rowCount).padStart(6)} from ${step.table}`);
+    } catch (e) {
+      await client.query("ROLLBACK TO SAVEPOINT purge_step");
+      const msg = (e as Error).message.replace(/\s+/g, " ").slice(0, 220);
+      refused.push({ table: step.table, error: msg });
+      console.log(`  REFUSED ${step.table}: ${msg}`);
+    }
   }
-  console.log(`  deleted TOTAL ${deleted}`);
+  console.log(`  deleted TOTAL ${deleted} · refused tables ${refused.length}`);
+  await client.query(
+    `SELECT audit.append_event($1, $2, $3::jsonb, NULL, $4)`,
+    ["owner_purge_voided_and_sample_result", "warning", JSON.stringify({ auth_id: AUTH_ID, deleted, refused, mode: APPLY ? "apply" : "dry-run" }), `OWNER-PURGE-${AUTH_ID}`]
+  );
 
   if (APPLY) {
     await client.query("COMMIT");
