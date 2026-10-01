@@ -1,7 +1,7 @@
 /** FEED GATE — Lead 2026-10-01. Every feed verified for linkage/wiring/stamps before it closes. */
 import { apiRequest } from "./client";
 
-export type FeedKind = "settlement" | "load" | "invoice" | "expense" | "bill";
+export type FeedKind = "settlement" | "load" | "invoice" | "expense" | "bill" | "fuel_import";
 export type FeedIntake = {
   id: string; feed_kind: FeedKind | string; subject_table: string; subject_id: string; driver_id: string | null;
   status: "open" | "passed" | "blocked" | "closed" | "voided"; opened_at: string; last_run_no: number; last_run_at: string | null;

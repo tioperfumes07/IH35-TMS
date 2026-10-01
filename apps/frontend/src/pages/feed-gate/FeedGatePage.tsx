@@ -93,7 +93,7 @@ export function FeedGatePage() {
   return (
     <div className="mx-auto max-w-6xl p-4" data-testid="feed-gate-page">
       <h1 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-700">Feed gate</h1>
-      <p className="mb-3 text-xs text-slate-600">Every feed — a settlement, a load — is verified for full linkage, wiring, accounts and date stamps before it is accepted. A settlement cannot close while a check is red, and the next settlement for the same driver cannot open until the previous one is closed. Approving a settlement runs this gate automatically.</p>
+      <p className="mb-3 text-xs text-slate-600">Every feed — a settlement, a load, an invoice, an expense, a bill, a fuel purchase — is verified for full linkage, wiring, accounts and date stamps before it is accepted. A settlement commits only when every check is green and the next settlement for the same driver cannot open until the previous one is closed; an invoice is sent and an expense is saved only through this gate. Red rows carry the link to the screen that fixes them.</p>
       {error ? <div className="mb-2 rounded border border-red-600 bg-red-50 p-2 text-xs text-red-800" role="alert">{error}</div> : null}
       <table className="w-full border-collapse">
         <thead><tr className="text-left text-xs text-slate-500"><th className="p-2">Feed</th><th className="p-2">Driver</th><th className="p-2">Status</th><th className="p-2">Red / total</th><th className="p-2">Last run</th><th className="p-2"></th></tr></thead>

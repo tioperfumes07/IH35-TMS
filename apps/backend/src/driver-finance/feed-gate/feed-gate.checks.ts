@@ -253,12 +253,45 @@ const BILL_CHECKS: FeedCheckDef[] = [
         FROM accounting.bills b WHERE b.operating_company_id = $1::uuid AND b.id = $2::uuid` },
 ];
 
+
+// ---- FUEL feed (one fuel.fuel_transactions row: Relay / Dreamline / Loves import or hand entry) ----
+const FUEL_CHECKS: FeedCheckDef[] = [
+  { key: "fuel.linked_unit_driver_vendor_load", group: "fuel", sql: `
+      SELECT 'fuel.fuel_transactions', f.id, 'Fuel ' || to_char(f.transaction_at, 'YYYY-MM-DD') || ' $' || round(coalesce(f.total_cost, 0), 2),
+             (f.unit_id IS NOT NULL AND u.id IS NOT NULL AND f.driver_id IS NOT NULL AND d.id IS NOT NULL AND f.vendor_id IS NOT NULL AND v.id IS NOT NULL AND (f.load_id IS NOT NULL OR f.load_required = false)),
+             concat_ws('; ', CASE WHEN f.unit_id IS NULL OR u.id IS NULL THEN 'no truck' END, CASE WHEN f.driver_id IS NULL OR d.id IS NULL THEN 'no driver' END,
+                             CASE WHEN f.vendor_id IS NULL OR v.id IS NULL THEN 'no fuel vendor' END, CASE WHEN f.load_id IS NULL AND coalesce(f.load_required, true) THEN 'no load (' || coalesce(f.load_exemption_reason, 'no exemption reason') || ')' END),
+             '/fuel/transactions/' || f.id::text, jsonb_build_object('unit', u.unit_number, 'driver', d.first_name || ' ' || d.last_name, 'vendor', v.vendor_name, 'load_id', f.load_id)
+        FROM fuel.fuel_transactions f LEFT JOIN mdata.units u ON u.id = f.unit_id LEFT JOIN mdata.drivers d ON d.id = f.driver_id LEFT JOIN mdata.vendors v ON v.id = f.vendor_id
+       WHERE f.operating_company_id = $1::uuid AND f.id = $2::uuid AND f.voided_at IS NULL` },
+  { key: "fuel.quantity_and_stamp", group: "stamps", sql: `
+      SELECT 'fuel.fuel_transactions', f.id, 'Fuel ' || to_char(f.transaction_at, 'YYYY-MM-DD') || ' $' || round(coalesce(f.total_cost, 0), 2),
+             (f.transaction_at IS NOT NULL AND coalesce(f.total_cost, 0) <> 0 AND coalesce(f.gallons, 0) > 0),
+             concat_ws('; ', CASE WHEN f.transaction_at IS NULL THEN 'no transaction time' END, CASE WHEN coalesce(f.total_cost, 0) = 0 THEN 'amount is zero' END, CASE WHEN coalesce(f.gallons, 0) <= 0 THEN 'zero gallons on a fuel purchase (non-fuel spend belongs to the overage/personal-spend path)' END),
+             '/fuel/transactions/' || f.id::text, jsonb_build_object('transaction_at', f.transaction_at, 'gallons', f.gallons, 'total_cost', f.total_cost, 'state', f.location_state)
+        FROM fuel.fuel_transactions f WHERE f.operating_company_id = $1::uuid AND f.id = $2::uuid AND f.voided_at IS NULL` },
+  { key: "fuel.expense_posted", group: "controls", sql: `
+      SELECT 'fuel.fuel_transactions', f.id, 'Fuel ' || to_char(f.transaction_at, 'YYYY-MM-DD') || ' $' || round(coalesce(f.total_cost, 0), 2),
+             EXISTS (SELECT 1 FROM accounting.expenses e WHERE e.source_fuel_transaction_id = f.id AND e.voided_at IS NULL AND e.posting_status = 'posted' AND e.journal_entry_id IS NOT NULL),
+             CASE WHEN NOT EXISTS (SELECT 1 FROM accounting.expenses e WHERE e.source_fuel_transaction_id = f.id AND e.voided_at IS NULL) THEN 'no expense document for this fuel purchase'
+                  WHEN NOT EXISTS (SELECT 1 FROM accounting.expenses e WHERE e.source_fuel_transaction_id = f.id AND e.voided_at IS NULL AND e.posting_status = 'posted') THEN 'fuel expense exists but is not posted' END,
+             '/fuel/transactions/' || f.id::text, (SELECT jsonb_build_object('expense', e.expense_number, 'posting_status', e.posting_status, 'journal_entry_id', e.journal_entry_id) FROM accounting.expenses e WHERE e.source_fuel_transaction_id = f.id AND e.voided_at IS NULL ORDER BY e.created_at DESC LIMIT 1)
+        FROM fuel.fuel_transactions f WHERE f.operating_company_id = $1::uuid AND f.id = $2::uuid AND f.voided_at IS NULL` },
+  { key: "fuel.card_assigned", group: "linkage", sql: `
+      SELECT 'fuel.fuel_transactions', f.id, 'Fuel ' || to_char(f.transaction_at, 'YYYY-MM-DD') || ' $' || round(coalesce(f.total_cost, 0), 2),
+             CASE WHEN f.fuel_card_id IS NULL THEN NULL ELSE EXISTS (SELECT 1 FROM fuel.fuel_card_assignments a WHERE a.fuel_card_id = f.fuel_card_id AND (a.unit_id = f.unit_id OR a.driver_id = f.driver_id)) END,
+             CASE WHEN f.fuel_card_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM fuel.fuel_card_assignments a WHERE a.fuel_card_id = f.fuel_card_id AND (a.unit_id = f.unit_id OR a.driver_id = f.driver_id)) THEN 'fuel card is not assigned to this truck or driver' END,
+             '/fuel/cards', jsonb_build_object('fuel_card_id', f.fuel_card_id)
+        FROM fuel.fuel_transactions f WHERE f.operating_company_id = $1::uuid AND f.id = $2::uuid AND f.voided_at IS NULL` },
+];
+
 export const FEED_CHECKS: Record<string, FeedCheckDef[]> = {
   settlement: SETTLEMENT_CHECKS,
   load: LOAD_CHECKS,
   invoice: INVOICE_CHECKS,
   expense: EXPENSE_CHECKS,
   bill: BILL_CHECKS,
+  fuel_import: FUEL_CHECKS,
 };
 
 export const FEED_SUBJECT_TABLE: Record<string, string> = {
@@ -267,4 +300,5 @@ export const FEED_SUBJECT_TABLE: Record<string, string> = {
   invoice: "accounting.invoices",
   expense: "accounting.expenses",
   bill: "accounting.bills",
+  fuel_import: "fuel.fuel_transactions",
 };
