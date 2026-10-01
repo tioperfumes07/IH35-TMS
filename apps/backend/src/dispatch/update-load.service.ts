@@ -40,6 +40,16 @@ import {
   type DriverBillMintOutcome,
 } from "./book-load.service.js";
 import { enqueueOverrideNotice } from "../outbox/enqueue-override-notice.js";
+import {
+  assertDriverBillAllowsPayOverride,
+  assertInvoiceAllowsRateOverride,
+  runOwnerLockOverridePropagation,
+  rerateLoadMilesFromStops,
+  type OwnerLockPropagationItem,
+  OwnerLockPropagationRefuseError,
+} from "./owner-lock-override-propagation.service.js";
+export { OwnerLockPropagationRefuseError };
+import { bindLoadToGeofences } from "./geofences/load-geofence-binding.service.js";
 
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -153,12 +163,13 @@ export type UpdateDispatchLoadInput = {
   stops?: UpdateLoadStopInput[];
 };
 
-/** Owner standing law — non-money fields only behind edit lock; money requires reversal (WORM). */
+/** D-H0 / ROUND 312 — Owner or Administrator may full-override a locked load with a reason. */
 export function canOwnerOverrideLoadEditLock(role: string | undefined): boolean {
-  return String(role ?? "") === "Owner";
+  const r = String(role ?? "");
+  return r === "Owner" || r === "Administrator";
 }
 
-/** Fields an Owner may PATCH while load_edit_locked — linkage / ops metadata only, never revenue/pay. */
+/** Fields an Owner may PATCH while load_edit_locked WITHOUT a long override_reason — linkage / ops metadata only. */
 export const OWNER_LOCK_OVERRIDE_ALLOWED_FIELD_KEYS = new Set<string>([
   "live_load_number",
   "notes",
@@ -188,7 +199,7 @@ export const OWNER_LOCK_OVERRIDE_ALLOWED_FIELD_KEYS = new Set<string>([
   "tour_id",
 ]);
 
-/** Money / assignment / rate fields — lock stands even for Owner until backing doc is reversed. */
+/** Money / assignment / rate fields — require D-H0 full override_reason (>=10) when locked. */
 export const LOAD_EDIT_LOCK_MONEY_FIELD_KEYS = new Set<string>([
   "customer_id",
   "assigned_unit_id",
@@ -211,7 +222,7 @@ export const LOAD_EDIT_LOCK_MONEY_FIELD_KEYS = new Set<string>([
   "load_trailer_equipment_id",
 ]);
 
-/** True when Owner patches only allowed non-money scalar fields (no charges/stops). */
+/** True when Owner/Admin patches only allowed non-money scalar fields (no charges/stops). */
 export function isOwnerNonMoneyLockOverridePatch(input: UpdateDispatchLoadInput): boolean {
   if (!canOwnerOverrideLoadEditLock(input.requestingUserRole)) return false;
   if (input.stops !== undefined) return false;
@@ -221,6 +232,54 @@ export function isOwnerNonMoneyLockOverridePatch(input: UpdateDispatchLoadInput)
   return keys.every(
     (k) => OWNER_LOCK_OVERRIDE_ALLOWED_FIELD_KEYS.has(k) && !LOAD_EDIT_LOCK_MONEY_FIELD_KEYS.has(k)
   );
+}
+
+/** D-H0 — Owner/Admin may bypass ANY load_edit_locked field when override_reason >= 10 chars. */
+export function isOwnerFullLockOverridePatch(input: UpdateDispatchLoadInput): boolean {
+  if (!canOwnerOverrideLoadEditLock(input.requestingUserRole)) return false;
+  if (isLiveLoadNumberOnlyPatch(input)) return false;
+  const reason = String(input.override_reason ?? "").trim();
+  if (reason.length < 10) return false;
+  const hasScalar = Object.keys(input.fields ?? {}).length > 0;
+  return hasScalar || input.stops !== undefined || input.charges !== undefined;
+}
+
+const PAY_INPUT_FIELD_KEYS = new Set<string>([
+  "assigned_primary_driver_id",
+  "assigned_secondary_driver_id",
+  "team_id",
+  "miles_practical",
+  "miles_shortest",
+  "miles_deadhead",
+]);
+
+function buildScalarDiff(
+  before: Record<string, unknown>,
+  fields: UpdateDispatchLoadFields
+): Record<string, { before: unknown; after: unknown }> {
+  const diff: Record<string, { before: unknown; after: unknown }> = {};
+  for (const key of Object.keys(fields) as (keyof UpdateDispatchLoadFields)[]) {
+    const column = SCALAR_COLUMNS[key];
+    if (!column) continue;
+    const after = fields[key] ?? null;
+    const beforeVal = before[column] ?? null;
+    if (JSON.stringify(beforeVal) !== JSON.stringify(after)) {
+      diff[String(key)] = { before: beforeVal, after };
+    }
+  }
+  return diff;
+}
+
+function payInputsChangedInPatch(fields: UpdateDispatchLoadFields, old: Record<string, unknown>): boolean {
+  for (const key of PAY_INPUT_FIELD_KEYS) {
+    if (!(key in fields)) continue;
+    const column = SCALAR_COLUMNS[key as keyof UpdateDispatchLoadFields];
+    if (!column) continue;
+    if (JSON.stringify(old[column] ?? null) !== JSON.stringify(fields[key as keyof UpdateDispatchLoadFields] ?? null)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /** @deprecated use isOwnerNonMoneyLockOverridePatch — kept for guard + live_load_number-only path */
@@ -318,7 +377,7 @@ function normalizeStopTimeWindow(raw: string | null | undefined): string {
 }
 
 // Detect the FIRST money/evidence lock on a load. Read-only — never writes accounting.*.
-async function detectLoadEditLock(
+export async function detectLoadEditLock(
   client: DbClient,
   operatingCompanyId: string,
   loadId: string
@@ -539,6 +598,9 @@ export type UpdateDispatchLoadResult = {
   stops: Record<string, unknown>[];
   /** DRV-BILL-SKIP-PATHS — null when the load carries no driver/team (mint/skip not applicable). */
   driver_bill_mint: DriverBillMintOutcome | null;
+  /** D-H0 — what the override propagation engine did (or why it refused). */
+  lock_override_propagation?: OwnerLockPropagationItem[] | null;
+  lock_override_applied?: boolean;
 };
 
 export async function updateDispatchLoad(
@@ -556,14 +618,52 @@ export async function updateDispatchLoad(
   if (!old) throw new LoadNotFoundError();
 
   const fields = input.fields ?? {};
+  let fullLockOverride = false;
+  let crossedLocks: LoadEditLock[] = [];
 
   // 2) Money/evidence lock — reject edits that desync revenue/pay behind posted documents.
   // LIVE-LOAD-NUMBER-NULL: live_load_number-only is linkage metadata (any role).
-  // Owner: non-money fields only (notes, refs, AT#) with audit; money/assignment/miles/charges/stops → WORM.
+  // D-H0: Owner/Admin + override_reason (>=10) may PATCH every field; propagation refuses paid/synced invoice & settled bill.
+  // Owner/Admin without reason: non-money scalars only (notes, refs, AT#, trip_type, tour).
   if (!isLiveLoadNumberOnlyPatch(input)) {
     const lock = await detectLoadEditLock(client, operatingCompanyId, loadId);
     if (lock) {
-      if (isOwnerNonMoneyLockOverridePatch(input)) {
+      if (isOwnerFullLockOverridePatch(input)) {
+        fullLockOverride = true;
+        crossedLocks = [lock];
+        const rateWillChange =
+          input.charges !== undefined &&
+          bookLoadRateTotalCents(input.charges) !== Number(old.rate_total_cents ?? 0);
+        if (rateWillChange) {
+          await assertInvoiceAllowsRateOverride(client, { loadId, operatingCompanyId });
+        }
+        if (payInputsChangedInPatch(fields, old)) {
+          await assertDriverBillAllowsPayOverride(client, {
+            loadId,
+            operatingCompanyId,
+            requestingUserUuid,
+          });
+        }
+        const beforeAfter = buildScalarDiff(old, fields);
+        await appendCrudAudit(
+          client,
+          requestingUserUuid,
+          "dispatch.load_edit_lock_overridden",
+          {
+            load_id: loadId,
+            operating_company_id: operatingCompanyId,
+            override_reason: String(input.override_reason ?? "").trim(),
+            role: input.requestingUserRole,
+            locks_crossed: crossedLocks,
+            before_after: beforeAfter,
+            charges_replaced: input.charges !== undefined,
+            stops_replaced: input.stops !== undefined,
+            field_keys: Object.keys(fields),
+          },
+          "warning",
+          "D-H0-OWNER-LOCK-OVERRIDE"
+        );
+      } else if (isOwnerNonMoneyLockOverridePatch(input)) {
         const overrideFields = Object.keys(input.fields ?? {});
         await appendCrudAudit(
           client,
@@ -836,11 +936,15 @@ export async function updateDispatchLoad(
 
   // 4) Stops replace (evidence-safe).
   let stopSummary: { updated: number; inserted: number; archived: number } | null = null;
+  let stopsGeocoded = false;
   if (input.stops) {
     stopSummary = await replaceStops(client, loadId, input.stops);
-    if (stopSummary.inserted > 0) {
-      await geocodeStopsWithClient(client, requestingUserUuid, operatingCompanyId, loadId);
-    }
+    // D-H0 / ROUND 312 — re-geocode on any stop replace (address edits update in place; insert-only was the hole).
+    await geocodeStopsWithClient(client, requestingUserUuid, operatingCompanyId, loadId);
+    stopsGeocoded = true;
+    // Re-rate practical/short from first→last geocoded stop (honest NULL when engine blank).
+    await rerateLoadMilesFromStops(client, { loadId, operatingCompanyId });
+    await bindLoadToGeofences(client, operatingCompanyId, loadId);
   }
 
   // 5) Re-read load + active stops.
@@ -934,11 +1038,40 @@ export async function updateDispatchLoad(
   // when a bill already exists, a fresh mint the instant pay inputs first become complete, or a
   // durable skipped_no_pay_rate audit when they still are not — never silence either way. This is the
   // Edit Load equivalent of the mdata-create / delivery-transition re-entry points (ACCT-F277).
-  const driverBillMint = await ensureDriverBillArtifactsForLoad(client, {
+  let driverBillMint = await ensureDriverBillArtifactsForLoad(client, {
     loadId,
     operatingCompanyId,
     actorUserId: requestingUserUuid,
   });
 
-  return { load: updatedLoadRes.rows[0] ?? old, stops: updatedStopsRes.rows, driver_bill_mint: driverBillMint };
+  let lockOverridePropagation: OwnerLockPropagationItem[] | null = null;
+  if (fullLockOverride) {
+    const tripTypeChanged =
+      "trip_type" in fields &&
+      String(fields.trip_type ?? "") !== String(old.trip_type ?? "");
+    const newTotal = Number(
+      (updatedLoadRes.rows[0] as { rate_total_cents?: unknown } | undefined)?.rate_total_cents ?? 0
+    );
+    const prop = await runOwnerLockOverridePropagation(client, {
+      loadId,
+      operatingCompanyId,
+      requestingUserUuid,
+      rateChanged,
+      newRateTotalCents: newTotal,
+      payInputsChanged: payInputsChangedInPatch(fields, old),
+      stopsChanged: Boolean(input.stops),
+      tripTypeChanged,
+      alreadyGeocoded: stopsGeocoded,
+    });
+    lockOverridePropagation = prop.items;
+    if (prop.driver_bill_mint) driverBillMint = prop.driver_bill_mint;
+  }
+
+  return {
+    load: updatedLoadRes.rows[0] ?? old,
+    stops: updatedStopsRes.rows,
+    driver_bill_mint: driverBillMint,
+    lock_override_propagation: lockOverridePropagation,
+    lock_override_applied: fullLockOverride,
+  };
 }
