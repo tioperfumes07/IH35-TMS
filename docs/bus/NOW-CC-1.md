@@ -12,3 +12,19 @@ Tier 1 constraint live, tri-state live. The shell denial was never the deploy pa
   InService with no GPS since 2024. REPORT per unit; the owner decides; then a guard.
 RULES sheet 3. No apps/frontend. Money pause = creating/moving transactions only.
 ACK: CC-1 | ACK R306 | E-14 | GO
+
+## ADDED 2026-10-01 (Lead) — after your 4 rows, in this order
+5 Complaints migration for CC-2's E-28 (CC-2 is chrome-only, cannot author): claim a number in
+  CLAIMED-MIGRATION-NUMBERS.json (fetch main FIRST), then: ops.complaints (or wherever E-28 put
+  it — read #23610, do not guess) + load_id FK -> mdata.loads, unit_id FK -> mdata.units, and
+  categories lateness / refused_dispatch / damage added to the existing CHECK or catalog. Both
+  FKs indexed. RLS unchanged. Hand CC-2 the number in OUTBOX-CC-1.md.
+6 Three coder TEST complaints live in USMCA (ids from CC-2's OUTBOX): prove each is_sample_data
+  or coder-authored, then void them under the standing owner order AUTH-177 (delete every voided
+  and sample record, USMCA) — if AUTH-177 is CONSUMED/expired, write the dry run + the 3 ids to
+  OUTBOX-CC-1.md and STOP; the Lead gets the owner's word. Never a real complaint.
+7 Fresh-database migrate fails on a pm_intervals foreign key (CC-2 report, main CI red):
+  reproduce on a scratch Neon branch, fix the ORDER or the FK (never drop the FK), gate, merge.
+8 CI readonly DB password rejected on main: you rotated ih35_ci_readonly 2026-09-28 22:03Z; the
+  GitHub Actions secret still carries the old one. Write the exact secret NAME to OUTBOX-CC-1.md;
+  the owner updates it (no seat holds secrets).
