@@ -85,6 +85,7 @@ const ALL_REVERSAL_NAMES = [...REVERSAL_ENGINES, ...REVERSAL_WRAPPERS];
 const EXEMPT_ROUTES = [
   { pattern: /\/catalogs\/.*cancellation-reasons/, reason: "catalog CRUD" },
   { pattern: /\/catalogs\/void-cancel-reasons/, reason: "catalog CRUD" },
+  { pattern: /\/fuel\/card-assignments\/:id\/void/, reason: "E-22 card -> truck registry (master data, no amount, no ledger); void-not-delete with reason" },
   { pattern: /\/catalogs\/payment-methods\/.*\/void/, reason: "catalog config void" },
   { pattern: /\/mdata\/vendors\/.*\/payment-methods\/.*\/void/, reason: "vendor payment method config" },
   { pattern: /\/driver-finance\/payment-methods\/.*\/void/, reason: "payment method catalog void" },

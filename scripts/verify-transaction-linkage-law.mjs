@@ -191,6 +191,7 @@ export const TABLE_REGISTRY = {
 
   // fuel.*
   "fuel.fraud_alerts": { status: "NOT_TRANSACTIONAL" },
+  "fuel.fuel_card_assignments": { status: "NOT_TRANSACTIONAL", reason: "E-22 registry: card -> truck (+ driver) over effective dates; master data, no amount" },
   "fuel.fuel_card_overage_events": { status: "NOT_TRANSACTIONAL" },
   "fuel.fuel_card_overage_policies": { status: "NOT_TRANSACTIONAL", reason: "config" },
   "fuel.fuel_planner_settings": { status: "NOT_TRANSACTIONAL", reason: "config" },
