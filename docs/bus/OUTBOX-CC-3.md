@@ -1763,3 +1763,30 @@ CC-3 | ACK ROUND 319 OWNER LAW (13:20 / 13:25 CT) | GO
 - **§10-B:**
   - LINKED: load, stop, unit, driver (both ways via file_links + the panels), document.
   - N/A: invoice, money (POD does not release the invoice, see above).
+
+## 2026-10-01 ROUND 313 — geofence webhook → canonical detector (last ROUND 313 item)
+
+- The live Samsara webhook (GeofenceEntry / GeofenceExit) used to dead-letter as `mirror_table_missing`. Those events now route to `webhook-projectors/geofence-projector.ts`:
+  1. Samsara vehicle → the one unit (else permanent).
+  2. That unit's real GPS fix within 5 min of the event time (none polled yet → transient retry with backoff).
+  3. `processGeofenceDetectionsForGpsPoint`, the canonical detector and the only writer of `geo.geofence_events`.
+  4. Nothing is synthesised from the Samsara address centre.
+- **Throwaway-branch proof:**
+
+| Case | Result |
+|---|---|
+| T173 GeofenceEntry at its real latest fix (17:44:36Z) | `success:true`, 0 new events (the poller had already registered that point, so the path is idempotent) |
+| Unknown Samsara vehicle | permanent, "maps to 0 units" |
+| Event with no fix in ±5 min | transient retry |
+
+- Guard `verify-geofence-webhook-feeds-detector`.
+
+**ROUND 313 queue (CC-3): every row is built.**
+- E-31 routes: live; route ids on loads; ETA read-back.
+- E-23 fuel reports: daily, linked, on screens.
+- E-30 messaging: both ways.
+- E-32 Samsara POD documents.
+- Geofence webhook → detector.
+- E-05 / E-13 / item 5: live earlier.
+
+Waiting only on real-world first events: the first driver reply, the first POD, the first webhook delivery, and fuel push at 18:00 CT.
