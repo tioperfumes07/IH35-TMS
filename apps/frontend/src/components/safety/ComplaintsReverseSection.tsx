@@ -9,10 +9,19 @@ import { Button } from "../Button";
 
 type Props = {
   operatingCompanyId: string;
-  filter: { customer_id: string } | { user_id: string };
+  // E-28 (owner order 2026-10-01): load -> complaints and unit -> complaints, the reverse half of
+  // the load/truck linkage added to the complaint create form.
+  filter: { customer_id: string } | { user_id: string } | { load_id: string } | { unit_id: string };
   contextLabel: string;
   "data-testid"?: string;
 };
+
+function entityIdFromFilter(filter: Props["filter"]): string {
+  if ("customer_id" in filter) return filter.customer_id;
+  if ("user_id" in filter) return filter.user_id;
+  if ("load_id" in filter) return filter.load_id;
+  return filter.unit_id;
+}
 
 export function ComplaintsReverseSection({
   operatingCompanyId,
@@ -22,7 +31,7 @@ export function ComplaintsReverseSection({
 }: Props) {
   const { user } = useAuth();
   const canView = user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Safety";
-  const entityId = "customer_id" in filter ? filter.customer_id : filter.user_id;
+  const entityId = entityIdFromFilter(filter);
   const pageSize = 25;
   const [page, setPage] = useState(1);
   useEffect(() => setPage(1), [operatingCompanyId, entityId]);

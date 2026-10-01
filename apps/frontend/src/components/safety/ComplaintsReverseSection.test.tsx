@@ -14,7 +14,7 @@ vi.mock("../../auth/useAuth", () => ({
   useAuth: () => ({ user: { role } }),
 }));
 
-function renderSection(filter: { customer_id: string } | { user_id: string }) {
+function renderSection(filter: { customer_id: string } | { user_id: string } | { load_id: string } | { unit_id: string }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
@@ -46,6 +46,18 @@ describe("ComplaintsReverseSection", () => {
     renderSection({ user_id: "user-1" });
     await screen.findByRole("link", { name: "Late delivery complaint" });
     expect(getComplaints).toHaveBeenCalledWith("usmca", { user_id: "user-1", limit: 25, offset: 0 });
+  });
+
+  it("uses the exact load filter (E-28 reverse link)", async () => {
+    renderSection({ load_id: "load-1" });
+    await screen.findByRole("link", { name: "Late delivery complaint" });
+    expect(getComplaints).toHaveBeenCalledWith("usmca", { load_id: "load-1", limit: 25, offset: 0 });
+  });
+
+  it("uses the exact unit filter (E-28 reverse link)", async () => {
+    renderSection({ unit_id: "unit-1" });
+    await screen.findByRole("link", { name: "Late delivery complaint" });
+    expect(getComplaints).toHaveBeenCalledWith("usmca", { unit_id: "unit-1", limit: 25, offset: 0 });
   });
 
   it("does not request or reveal complaints to an unauthorized role", () => {

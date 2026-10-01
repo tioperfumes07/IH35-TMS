@@ -176,7 +176,9 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
                 TRIM(CONCAT(rd.first_name, ' ', rd.last_name)) AS respondent_driver_name,
                 cc.customer_name AS complainant_customer_name,
                 TRIM(CONCAT(cu.first_name, ' ', cu.last_name)) AS complainant_user_name,
-                TRIM(CONCAT(ru.first_name, ' ', ru.last_name)) AS respondent_user_name
+                TRIM(CONCAT(ru.first_name, ' ', ru.last_name)) AS respondent_user_name,
+                cl.load_number AS complaint_load_number,
+                cun.unit_number AS complaint_unit_number
          FROM safety.complaints c
          LEFT JOIN mdata.drivers cd ON cd.id = c.complainant_driver_id AND (cd.operating_company_id = c.operating_company_id OR EXISTS (
            SELECT 1 FROM mdata.driver_company_authorizations complaint_complainant_driver_dca
@@ -195,6 +197,11 @@ export async function registerSafetyComplaintsRoutes(app: FastifyInstance) {
          LEFT JOIN mdata.customers cc ON cc.id = c.complainant_customer_id AND cc.operating_company_id = c.operating_company_id
          LEFT JOIN identity.users cu ON cu.id = c.complainant_user_id
          LEFT JOIN identity.users ru ON ru.id = c.respondent_user_id
+         -- E-28 (owner order 2026-10-01): resolve the load/truck this complaint is about, same
+         -- "join the name server-side" pattern as every identity column above (FAIL-CP1) — EntityLink
+         -- prints the raw uuid when given no label.
+         LEFT JOIN mdata.loads cl ON cl.id = c.load_id AND cl.operating_company_id = c.operating_company_id
+         LEFT JOIN mdata.units cun ON cun.id = c.unit_id
          WHERE c.operating_company_id = $1::uuid
          ${reverseFilter}
          ORDER BY c.filed_at DESC
