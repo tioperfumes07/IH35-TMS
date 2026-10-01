@@ -6652,7 +6652,12 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). fuel.fuel_transactions
   expense where the row has none (109 rows; expense truck = load's assigned truck in every case). NO GL leg.
 action: npx tsx scripts/ops/2026-10-01-cc2-auth190-reinstate-146-fuel-rows.ts --apply. Dry run: 146 rows, $91492.34, 109 trucks from their expense; --rehearse on production: 322 live rows / $174,619.42, 0 without a truck, 0 posted expenses on a voided fuel row.
 expires_at: 2026-10-02T06:30:28Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-01T06:58:00Z
+consumed_by: CC-2
+row_counts: fuel.fuel_transactions 146 rows reinstated ($91,492.34), 109 of them given the truck their expense names (= the load's truck)
+proof_query: live USMCA fuel rows (archived_at IS NULL) 322 / $174,619.42 = 176 / $83,127.08 + 146 / $91,492.34; 0 posted expenses on a voided fuel row; verify-fuel-transactions-per-load LIVE PASS on the re-stamped baseline
+audit: audit.audit_events source CC-2-AUTH-190 (1 row)
 
 LEAD RULING, verbatim, 2026-10-01 06:45Z (pasted by the owner to CC-2): "The VOID on the purchase rows is the error, not the
 expenses. RULED: REINSTATE the 146 fuel_transactions rows (clear voided_at / void_reason, stamp reinstated_at + reinstate_reason
