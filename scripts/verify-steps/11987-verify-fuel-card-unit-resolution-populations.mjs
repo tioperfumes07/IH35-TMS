@@ -140,6 +140,18 @@ async function run() {
   }
   const client = new pg.Client({ connectionString: url });
   await client.connect();
+  // CI's verify:pre-commit runs verify-steps against a fresh, empty database. Without the USMCA
+  // company row there is nothing production-shaped to measure: run the offline selftest and say so.
+  {
+    const probe = await client.query("SELECT 1 FROM org.companies WHERE id = $1::uuid", [USMCA]);
+    if (probe.rows.length === 0) {
+      await client.end();
+      const { spawnSync } = await import("node:child_process");
+      const r = spawnSync(process.execPath, [new URL(import.meta.url).pathname, "--selftest"], { stdio: "inherit" });
+      console.log(`DATABASE PHASE: USMCA company absent (fresh CI DB) — selftest only, NOT live proof`);
+      process.exit(r.status ?? 1);
+    }
+  }
   try {
     await client.query("BEGIN");
     await client.query("SET LOCAL ROLE neondb_owner");
