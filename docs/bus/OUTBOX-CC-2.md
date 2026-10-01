@@ -1131,3 +1131,35 @@ Rehearsed both migrations in a rolled-back transaction on production: idempotent
 same-company load accepted / cross-company refused, sourceless derived time refused, audit trigger on.
 AUTH-180: owner authorized voiding test items — 3 coder test complaints voided (#23646), AUTH CONSUMED.
 Live after the Lead's next deploy (db:migrate runs pre-deploy).
+
+## 2026-10-01 04:45Z — CC-2 | RELAY GALLONS PROOF | fraud detector ON (owner order)
+Owner, verbatim (chat, 2026-10-01 ~04:27Z): "you have full permissions and authoriztions, turn it on"
+— so I did not wait for the 12:00Z tick.
+- PULL: Render one-off job job-dauu3k97lnhs739vc4og on srv-d7rpem7avr4c73fhp4n0 (deployed engine,
+  keys stay in Render) ran runRelayFuelBackfill for TRANSP 91e0bf0a only, 2026-08-01..2026-10-01,
+  status succeeded. Idempotent upsert by transaction_id; the Relay ingest posts no GL (ROUND 43).
+- PROOF (Neon prod, bypass read, rolled back):
+  - 95 new TRANSP Relay transactions; relay_created_at min 2026-08-03T22:28:59Z, max 2026-10-01T03:31:34Z.
+  - 86 diesel lines, 7,597.40 gal, **0 zero-gallon diesel**. DEF 50 lines/303.98 gal, reefer 5/511.49, 0 zero-volume.
+  - 2 rows with no fuel line are $15.25 sender-fee items, not fuel.
+- FRAUD DETECTOR: ENABLE_FUEL_FRAUD_DETECTOR_WORKER=true set on the backend service. Redeployed the SAME
+  commit already live (fe1421c952 = origin/main), so no new code shipped: dep-dauu4rg473hc73cm6smg.
+  It runs on ingest only (Love's cron + statement upload), with E-19 eligibility and the E-21 two-signal
+  cap: one signal = warn, no critical page.
+- 12:00Z tick: TRANSP's last covered end is now 2026-10-01, so the daily tick resumes with its 3-day
+  overlap; no gap.
+- FINDING RELAY-SAME-FILL-IN-TWO-ENTITIES-2026100104 (my E-20 lane; measured, NOT fixed here):
+  - Every Relay row in both entities has linked_org "IH 35 TRANSPORTATION LLC" (one Relay org).
+  - 43 of the 95 new TRANSP rows carry the same transaction_id as a row already stored under USMCA,
+    so the same physical fill now exists in two entities.
+  - The Relay ingest posts no GL, so no money moved.
+  - Anything that sums Relay rows across entities double-counts those 43, including Owner sessions,
+    where RLS returns every company.
+  - 7 of 95 new rows unit-matched; all 7 are non-USMCA-owned units. 0 driver-matched.
+  - Needs a Lead ruling: one owning entity per Relay transaction_id (route by the matched truck's
+    entity), or USMCA-only ingest.
+  - I will build whichever is ruled, inside E-20.
+  - Also: backfill pulled 171 vs 95 unique (window filter re-upserts the same ids; harmless, inflates
+    the audit count).
+- ENGINE: runRelayFuelIngestTick extracted (cron + new runner dist/sync/run-relay-fuel-ingest-tick.js),
+  so the next on-demand pull uses the daily-tick path (claim + sync-log row), not the backfill.
