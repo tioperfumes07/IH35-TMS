@@ -262,3 +262,6 @@ VENDORS · what changed: Remove Record Bill Payment write UI/mutation from Vendo
 
 **2026-10-01T13:05Z · VENDORS MERGED · PR #23768 · `ad3d26e14c`**
 Vendors ORDERS complete on main. ORDERS module queue (Driver Profile · Customers · Vendors) code-shipped. C-64/C-65/C-67 already on main via #23592. · LEFT: Lead Chrome on `/drivers/:id/profile` · `/customers/:id` · `/vendors/:id`.
+
+**2026-10-01T13:10Z · B-2 RECONCILE (REGISTER SET §6/§8) · branch `cursor/b2-reconcile-4953` · PR #23762**
+B-2 · what changed: QBO reconcile arithmetic on workspace (STATEMENT ENDING − CLEARED = DIFFERENCE, orange until $0.00; BEGINNING − N payments + N deposits); Payments|Deposits|All tabs; DATE + CLEARED DATE + PAYMENT/DEPOSIT + ● clear toggle wired to existing `POST …/reconciliation/:sessionId/clear`; Save for later; shell strip Cleared payments/deposits live from workspace summary (no more "—"). API: `clearReconciliationTransaction` + summary fields on `ReconciliationWorkspacePayload`. No new GL math; no migration. Ops: `scripts/ops/verify-b2-reconcile-shell.mjs`. · LIVE PROOF: `node scripts/ops/verify-b2-reconcile-shell.mjs --selftest` PASS; frontend tsc exit 0. · LEFT: Lead Chrome on `/banking/reconciliation`; JE-line reconcilable rows. · NEXT: tip-main rebase + FAST-MERGE then B-3 feed+match #23763.

@@ -5,6 +5,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import {
+  clearReconciliationTransaction,
   completeReconciliationSession,
   getBankingTiles,
   getPlaidBankAccounts,
@@ -82,26 +83,6 @@ function priorReconciledSession(
   })[0] ?? null;
 }
 
-function computeSummary(transactions: PlaidBankTransaction[], statementBalanceCents: number) {
-  let matchedCredits = 0;
-  let matchedDebits = 0;
-  for (const tx of transactions) {
-    const isMatched = transactionIsMatched(tx);
-    if (!isMatched) continue;
-    const amountAbs = Math.abs(Number(tx.amount_cents ?? 0));
-    if (tx.is_credit) matchedCredits += amountAbs;
-    else matchedDebits += amountAbs;
-  }
-  const bookBalance = matchedCredits - matchedDebits;
-  const variance = Number(statementBalanceCents) - bookBalance;
-  return {
-    matchedCreditsCents: matchedCredits,
-    matchedDebitsCents: matchedDebits,
-    bookBalanceCents: bookBalance,
-    varianceCents: variance,
-  };
-}
-
 function transactionIsMatched(tx: PlaidBankTransaction) {
   if (typeof tx.is_matched === "boolean") return tx.is_matched;
   return Boolean(
@@ -112,6 +93,32 @@ function transactionIsMatched(tx: PlaidBankTransaction) {
       tx.matched_transfer_id ||
       tx.matched_journal_entry_id,
   );
+}
+
+/** B-2 / BANK-DOM-03 — cleared for this session (●), falling back to matched until any row is cleared. */
+function transactionIsCleared(tx: PlaidBankTransaction, anyExplicitCleared: boolean) {
+  if (anyExplicitCleared) return Boolean(tx.reconciliation_cleared);
+  return Boolean(tx.reconciliation_cleared) || transactionIsMatched(tx);
+}
+
+function countCleared(transactions: PlaidBankTransaction[]) {
+  const anyExplicit = transactions.some((t) => Boolean(t.reconciliation_cleared));
+  let paymentCount = 0;
+  let depositCount = 0;
+  let paymentCents = 0;
+  let depositCents = 0;
+  for (const tx of transactions) {
+    if (!transactionIsCleared(tx, anyExplicit)) continue;
+    const abs = Math.abs(Number(tx.amount_cents ?? 0));
+    if (tx.is_credit) {
+      depositCount += 1;
+      depositCents += abs;
+    } else {
+      paymentCount += 1;
+      paymentCents += abs;
+    }
+  }
+  return { paymentCount, depositCount, paymentCents, depositCents, anyExplicit };
 }
 
 function varianceClass(varianceCents: number) {
@@ -139,7 +146,10 @@ export function ReconciliationWorkspacePage() {
   const [statementBalanceInput, setStatementBalanceInput] = useState<number | null>(null);
   const [startLoading, setStartLoading] = useState(false);
   const [filterMode, setFilterMode] = useState<"all" | "matched" | "unmatched">("all");
+  /** B-2 QBO Reconcile tabs: Payments (money out) | Deposits (money in) | All. */
+  const [directionTab, setDirectionTab] = useState<"payments" | "deposits" | "all">("all");
   const [eventFilter, setEventFilter] = useState<"all" | "load" | "bill" | "settlement">("all");
+  const [clearingId, setClearingId] = useState<string | null>(null);
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
 
@@ -237,13 +247,15 @@ export function ReconciliationWorkspacePage() {
   }, [workspaceQuery.data]);
 
   const visibleTransactions = useMemo(() => {
-    const filtered =
+    let filtered =
       filterMode === "all"
         ? localTransactions
         : localTransactions.filter((tx) => {
             const matched = transactionIsMatched(tx);
             return filterMode === "matched" ? matched : !matched;
           });
+    if (directionTab === "payments") filtered = filtered.filter((tx) => !tx.is_credit);
+    else if (directionTab === "deposits") filtered = filtered.filter((tx) => tx.is_credit);
     const dir = txnSort.dir === "asc" ? 1 : -1;
     return [...filtered].sort((a, b) => {
       let va: string | number = a.transaction_date ?? "";
@@ -259,7 +271,7 @@ export function ReconciliationWorkspacePage() {
       if (va > vb) return 1 * dir;
       return 0;
     });
-  }, [filterMode, localTransactions, txnSort]);
+  }, [directionTab, filterMode, localTransactions, txnSort]);
 
   const toggleTxnSort = (key: "date" | "description" | "amount") =>
     setTxnSort((prev) => (prev.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "date" ? "desc" : "asc" }));
@@ -272,25 +284,36 @@ export function ReconciliationWorkspacePage() {
   const serviceChargeCents = serviceChargeInput != null ? Math.round(Number(serviceChargeInput) * 100) : 0;
   const interestEarnedCents = interestEarnedInput != null ? Math.round(Number(interestEarnedInput) * 100) : 0;
 
+  const clearedCounts = useMemo(() => countCleared(localTransactions), [localTransactions]);
+
   const summary = useMemo(() => {
-    const statementBalance = Number(workspaceQuery.data?.summary.statement_balance_cents ?? 0);
-    const base = computeSummary(localTransactions, statementBalance);
-    // Service charges reduce the bank's cash (an expense not yet in the matched-transaction set
-    // during an active session); interest earned increases it — standard reconcile adjustment,
-    // applied to the book side so the variance reflects both once entered.
-    const adjustedBookBalanceCents = base.bookBalanceCents - serviceChargeCents + interestEarnedCents;
+    const server = workspaceQuery.data?.summary;
+    const statementBalance = Number(server?.statement_balance_cents ?? 0);
+    const sessionBeginning = Number(server?.beginning_balance_cents ?? 0);
+    const depositCents =
+      clearedCounts.depositCents || Number(server?.cleared_credits_cents ?? server?.matched_credits_cents ?? 0);
+    const paymentCents =
+      clearedCounts.paymentCents || Number(server?.cleared_debits_cents ?? server?.matched_debits_cents ?? 0);
+    // QBO §6: CLEARED = BEGINNING − PAYMENTS + DEPOSITS (± service charge / interest)
+    const beginning = sessionBeginning;
+    const clearedBalanceCents = beginning - paymentCents + depositCents - serviceChargeCents + interestEarnedCents;
     return {
-      ...base,
-      adjustedBookBalanceCents,
-      varianceCents: statementBalance - adjustedBookBalanceCents,
+      statementBalanceCents: statementBalance,
+      beginningCents: beginning,
+      depositCents,
+      paymentCents,
+      paymentCount: clearedCounts.paymentCount,
+      depositCount: clearedCounts.depositCount,
+      clearedBalanceCents,
+      matchedCreditsCents: depositCents,
+      matchedDebitsCents: paymentCents,
+      bookBalanceCents: clearedBalanceCents,
+      varianceCents: statementBalance - clearedBalanceCents,
     };
-  }, [workspaceQuery.data?.summary.statement_balance_cents, localTransactions, serviceChargeCents, interestEarnedCents]);
+  }, [workspaceQuery.data?.summary, clearedCounts, serviceChargeCents, interestEarnedCents]);
 
   const canComplete = auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Accountant";
   const isOwner = auth.user?.role === "Owner";
-  // Reconciliation is ordinary-complete only at exactly $0.00. Any non-zero difference needs an
-  // Owner's explicit, reasoned override; never silently certify an under-$10 variance.
-  const needsForceComplete = summary.varianceCents !== 0;
   // A service charge / interest earned amount with no date or account is an incomplete entry —
   // it already moved the Difference, but there's nowhere real to post it. Block Finish until
   // both are filled, same as any other money line this app blocks on an incomplete wizard step.
@@ -338,6 +361,24 @@ export function ReconciliationWorkspacePage() {
     statementBalanceInput,
   ]);
 
+  // Prefer server beginning; if zero, carry prior closed session statement ending (QBO).
+  const arithmetic = useMemo(() => {
+    const beginning =
+      summary.beginningCents !== 0 ? summary.beginningCents : Number(balanceHeader?.beginningCents ?? 0);
+    const clearedBalanceCents =
+      beginning - summary.paymentCents + summary.depositCents - serviceChargeCents + interestEarnedCents;
+    return {
+      ...summary,
+      beginningCents: beginning,
+      clearedBalanceCents,
+      varianceCents: summary.statementBalanceCents - clearedBalanceCents,
+    };
+  }, [summary, balanceHeader?.beginningCents, serviceChargeCents, interestEarnedCents]);
+
+  // Reconciliation is ordinary-complete only at exactly $0.00. Any non-zero difference needs an
+  // Owner's explicit, reasoned override; never silently certify an under-$10 variance.
+  const needsForceComplete = arithmetic.varianceCents !== 0;
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -346,6 +387,17 @@ export function ReconciliationWorkspacePage() {
         subtitle={effectiveBankAccountId ? bankAccountLabel : ""}
         actions={
           <div className="flex items-center gap-2">
+            {sessionId ? (
+              <ActionButton
+                data-testid="recon-save-for-later"
+                onClick={() => {
+                  pushToast("Session saved — reopen from Reconciliation to continue", "success");
+                  navigate("/banking/reconciliation");
+                }}
+              >
+                Save for later
+              </ActionButton>
+            ) : null}
             <ActionButton
               onClick={() => setPrintDialogOpen(true)}
             >
@@ -369,7 +421,59 @@ export function ReconciliationWorkspacePage() {
         }
       />
 
-      {balanceHeader ? (
+      {sessionId && workspaceQuery.data ? (
+        <div
+          className="rounded-sm border border-[#E5E7EB] bg-white px-4 py-3"
+          data-testid="recon-qbo-arithmetic"
+          data-b2-reconcile-arithmetic="1"
+        >
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-[#4B5563]">
+                {bankAccountLabel}
+                {session?.period_end ? ` · Statement ending ${formatDateUS(session.period_end)}` : ""}
+              </p>
+              <p className="mt-1 text-xs text-[#6B7280]">
+                Beginning {money(arithmetic.beginningCents)} − {arithmetic.paymentCount} payments{" "}
+                {money(arithmetic.paymentCents)} + {arithmetic.depositCount} deposits {money(arithmetic.depositCents)}
+                {serviceChargeCents ? ` − service charge ${money(serviceChargeCents)}` : ""}
+                {interestEarnedCents ? ` + interest ${money(interestEarnedCents)}` : ""}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 text-center text-xs">
+              <div>
+                <p className="font-bold uppercase tracking-wide text-[#4B5563]">Statement ending</p>
+                <p className="mt-0.5 font-semibold tabular-nums text-[#0F1219]">{money(arithmetic.statementBalanceCents)}</p>
+              </div>
+              <span className="text-[#6B7280]">−</span>
+              <div>
+                <p className="font-bold uppercase tracking-wide text-[#4B5563]">Cleared</p>
+                <p className="mt-0.5 font-semibold tabular-nums text-[#0F1219]">{money(arithmetic.clearedBalanceCents)}</p>
+              </div>
+              <span className="text-[#6B7280]">=</span>
+              <div>
+                <p className="font-bold uppercase tracking-wide text-[#4B5563]">Difference</p>
+                <p
+                  className={`mt-0.5 font-semibold tabular-nums ${
+                    arithmetic.varianceCents === 0 ? "text-[#16A34A]" : "text-red-700"
+                  }`}
+                  data-testid="recon-difference"
+                >
+                  {money(arithmetic.varianceCents)}
+                </p>
+              </div>
+            </div>
+          </div>
+          {arithmetic.varianceCents !== 0 ? (
+            <p className="mt-2 text-xs text-red-700">
+              Selected transactions do not match the statement yet. Finish stays disabled until Difference is $0.00
+              (Owner force-complete only with a written reason).
+            </p>
+          ) : (
+            <p className="mt-2 text-xs text-[#16A34A]">Difference is $0.00 — Finish is enabled.</p>
+          )}
+        </div>
+      ) : balanceHeader ? (
         <div
           className="grid grid-cols-1 gap-3 rounded-sm border border-gray-200 bg-white px-4 py-3 sm:grid-cols-3"
           data-testid="recon-balance-header"
@@ -554,8 +658,32 @@ export function ReconciliationWorkspacePage() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-10">
           <div className="bg-white p-3 lg:col-span-4">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-xs font-semibold text-gray-900">Bank transactions</p>
-              <div className="flex items-center gap-2">
+              <p className="text-xs font-semibold text-gray-900">Statement lines</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <div
+                  className="inline-flex overflow-hidden rounded-sm border border-gray-300 text-xs"
+                  data-testid="recon-direction-tabs"
+                  data-b2-reconcile-tabs="1"
+                >
+                  {(
+                    [
+                      ["payments", "Payments"],
+                      ["deposits", "Deposits"],
+                      ["all", "All"],
+                    ] as const
+                  ).map(([id, label]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      className={`px-2 py-1 ${directionTab === id ? "bg-[#14314F] text-white" : "text-gray-700"} ${
+                        id !== "payments" ? "border-l border-gray-300" : ""
+                      }`}
+                      onClick={() => setDirectionTab(id)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
                 <div className="inline-flex overflow-hidden rounded-sm border border-gray-300 text-xs">
                   {(
                     [
@@ -580,15 +708,25 @@ export function ReconciliationWorkspacePage() {
                   onChange={(event) => setFilterMode(event.target.value as "all" | "matched" | "unmatched")}
                   className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 >
-                  <option value="all">All</option>
+                  <option value="all">All match states</option>
                   <option value="matched">Matched</option>
                   <option value="unmatched">Unmatched</option>
                 </SelectCombobox>
               </div>
             </div>
+            <div className="mb-1 grid grid-cols-[4.5rem_4.5rem_1fr_4.5rem_4.5rem_1.75rem] gap-1 border-b border-gray-200 px-2 pb-1 text-xs font-bold uppercase tracking-wide text-[#4B5563]">
+              <span>Date</span>
+              <span>Cleared</span>
+              <span>Payee / memo</span>
+              <span className="text-right">Payment</span>
+              <span className="text-right">Deposit</span>
+              <span className="text-center">●</span>
+            </div>
             <div className="max-h-[560px] space-y-1 overflow-auto">
               {visibleTransactions.map((tx) => {
                 const matched = transactionIsMatched(tx);
+                const cleared = transactionIsCleared(tx, clearedCounts.anyExplicit);
+                const abs = Math.abs(Number(tx.amount_cents ?? 0));
                 return (
                   <div
                     key={tx.id}
@@ -596,25 +734,73 @@ export function ReconciliationWorkspacePage() {
                       selectedTransactionId === tx.id ? "bg-slate-100" : "bg-white hover:bg-gray-50"
                     } border-b border-gray-100`}
                   >
-                    <button
-                      type="button"
-                      onClick={() => setSelectedTransactionId(tx.id)}
-                      className="block w-full text-left"
-                    >
-                      <span className="flex items-center justify-between text-xs text-gray-600">
-                        <span>{formatDateUS(tx.transaction_date)}</span>
-                        <span className={matched ? "text-slate-700" : "text-gray-500"}>{matched ? "Matched" : "Unmatched"}</span>
+                    <div className="grid grid-cols-[4.5rem_4.5rem_1fr_4.5rem_4.5rem_1.75rem] items-start gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTransactionId(tx.id)}
+                        className="text-left text-xs text-gray-600"
+                      >
+                        {formatDateUS(tx.transaction_date)}
+                      </button>
+                      <span className="text-xs text-gray-600">
+                        {tx.posted_date ? formatDateUS(tx.posted_date) : "—"}
                       </span>
-                      <span className="block truncate text-xs font-medium text-gray-900">{tx.description || "Bank transaction"}</span>
-                      <span className="block text-xs text-gray-700">{money(Number(tx.amount_cents))}</span>
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTransactionId(tx.id)}
+                        className="min-w-0 text-left"
+                      >
+                        <span className="block truncate text-xs font-medium text-gray-900">
+                          {tx.merchant_name || tx.description || "Bank transaction"}
+                        </span>
+                        <span className="block truncate text-xs text-gray-500">
+                          {matched ? "Matched" : "Unmatched"}
+                          {tx.description && tx.merchant_name ? ` · ${tx.description}` : ""}
+                        </span>
+                      </button>
+                      <span className="text-right text-xs tabular-nums text-gray-800">
+                        {!tx.is_credit ? money(abs) : ""}
+                      </span>
+                      <span className="text-right text-xs tabular-nums text-gray-800">
+                        {tx.is_credit ? money(abs) : ""}
+                      </span>
+                      <button
+                        type="button"
+                        title={cleared ? "Cleared — click to uncleared" : "Click to clear"}
+                        disabled={!sessionId || !companyId || clearingId === tx.id}
+                        data-testid={`recon-clear-${tx.id}`}
+                        className={`mx-auto mt-0.5 flex h-7 w-7 items-center justify-center rounded-full border text-xs ${
+                          cleared
+                            ? "border-[#14314F] bg-[#14314F] text-white"
+                            : "border-gray-400 bg-white text-transparent"
+                        }`}
+                        onClick={() => {
+                          if (!sessionId || !companyId) return;
+                          const next = !cleared;
+                          setClearingId(tx.id);
+                          void clearReconciliationTransaction(sessionId, companyId, {
+                            transaction_id: tx.id,
+                            cleared: next,
+                          })
+                            .then(() => {
+                              setLocalTransactions((prev) =>
+                                prev.map((row) =>
+                                  row.id === tx.id ? { ...row, reconciliation_cleared: next } : row,
+                                ),
+                              );
+                              void workspaceQuery.refetch();
+                            })
+                            .catch((error) =>
+                              pushToast(userFacingApiError(error, "Clear toggle failed"), "error"),
+                            )
+                            .finally(() => setClearingId(null));
+                        }}
+                      >
+                        ●
+                      </button>
+                    </div>
                     {matched ? (
                       <div className="mt-1 flex flex-wrap gap-2 text-xs">
-                        {/* BANK-F5744 — plaid/link.routes.ts already joins matched_load_number/
-                            matched_bill_number/matched_settlement_display_id/matched_expense_number
-                            alongside every matched_*_id (BANK-F5662/ACCT-F5153/EXPENSE column-wave
-                            comments on the type), but this render hardcoded entityLabel(null, ...),
-                            structurally discarding the human label it already had in hand. */}
                         {tx.matched_load_id ? (
                           <EntityLink
                             kind="load"
@@ -636,11 +822,6 @@ export function ReconciliationWorkspacePage() {
                             label={entityLabel(tx.matched_settlement_display_id ?? null, tx.matched_settlement_id, "Settlement")}
                           />
                         ) : null}
-                        {/* EXPENSE column-wave: bank-transaction-splits.service.ts (and the
-                            accounting-side bank-recon accept flow) genuinely stamp matched_expense_id;
-                            this workspace never rendered it, so an expense-matched transaction looked
-                            unmatched here even though ExpenseDetailPage.tsx already showed the reverse
-                            link correctly. */}
                         {tx.matched_expense_id ? (
                           <EntityLink
                             kind="expense"
@@ -760,18 +941,18 @@ export function ReconciliationWorkspacePage() {
             <div className="rounded-sm border border-gray-200 bg-white p-3">
               <p className="text-xs font-semibold text-gray-900">Variance summary</p>
               <div className="mt-2 space-y-1 text-xs">
-                <div className="flex justify-between"><span>Statement</span><span>{money(Number(workspaceQuery.data.summary.statement_balance_cents))}</span></div>
-                <div className="flex justify-between"><span>Matched deposits (cleared)</span><span>{money(summary.matchedCreditsCents)}</span></div>
-                <div className="flex justify-between"><span>Matched payments (cleared)</span><span>{money(summary.matchedDebitsCents)}</span></div>
-                <div className="flex justify-between"><span>Book balance (cleared only)</span><span>{money(summary.bookBalanceCents)}</span></div>
+                <div className="flex justify-between"><span>Statement</span><span>{money(arithmetic.statementBalanceCents)}</span></div>
+                <div className="flex justify-between"><span>Cleared deposits</span><span>{money(arithmetic.depositCents)}</span></div>
+                <div className="flex justify-between"><span>Cleared payments</span><span>{money(arithmetic.paymentCents)}</span></div>
+                <div className="flex justify-between"><span>Cleared balance</span><span>{money(arithmetic.clearedBalanceCents)}</span></div>
                 {serviceChargeCents !== 0 ? (
                   <div className="flex justify-between"><span>Less: service charge</span><span>-{money(serviceChargeCents)}</span></div>
                 ) : null}
                 {interestEarnedCents !== 0 ? (
                   <div className="flex justify-between"><span>Plus: interest earned</span><span>+{money(interestEarnedCents)}</span></div>
                 ) : null}
-                <div className={`flex justify-between font-semibold ${varianceClass(summary.varianceCents)}`}>
-                  <span>Difference</span><span>{money(summary.varianceCents)}</span>
+                <div className={`flex justify-between font-semibold ${varianceClass(arithmetic.varianceCents)}`}>
+                  <span>Difference</span><span>{money(arithmetic.varianceCents)}</span>
                 </div>
               </div>
 

@@ -108,6 +108,8 @@ export type PlaidBankTransaction = {
   matched_kinds?: string[];
   /** Server truth across every persisted match FK; false only when every relation is absent. */
   is_matched?: boolean;
+  /** BANK-DOM-03 / B-2 — operator-cleared for the open reconciliation session (● on QBO Reconcile). */
+  reconciliation_cleared?: boolean | null;
   notes: string | null;
   created_at: string;
   // Doc-18 GAP B: feed origin. 'manual' = hand-entered (date is editable); 'plaid'/'qbo_import'/'csv_import'
@@ -250,11 +252,21 @@ export type ReconciliationWorkspacePayload = {
   };
   summary: {
     statement_balance_cents: number;
+    /** QBO beginning (prior session statement ending). */
+    beginning_balance_cents?: number;
+    cleared_credits_cents?: number;
+    cleared_debits_cents?: number;
+    deposits_in_transit_cents?: number;
+    outstanding_checks_cents?: number;
+    adjusted_bank_balance_cents?: number;
+    adjusted_book_balance_cents?: number;
     matched_credits_cents: number;
     matched_debits_cents: number;
     book_balance_cents: number;
     variance_cents: number;
   };
+  cleared_transactions?: PlaidBankTransaction[];
+  uncleared_transactions?: PlaidBankTransaction[];
 };
 
 export type BankReconWorklistRow = {
@@ -1490,6 +1502,18 @@ export function unmatchReconciliationTransaction(
   payload: { transaction_id: string }
 ) {
   return apiRequest<{ ok: true }>(`/api/v1/banking/reconciliation/${sessionId}/unmatch?${q(operatingCompanyId)}`, {
+    method: "POST",
+    body: payload,
+  });
+}
+
+/** B-2 / BANK-DOM-03 — toggle ● cleared on a bank row for this open session (not Finish). */
+export function clearReconciliationTransaction(
+  sessionId: string,
+  operatingCompanyId: string,
+  payload: { transaction_id: string; cleared: boolean }
+) {
+  return apiRequest<{ ok: true }>(`/api/v1/banking/reconciliation/${sessionId}/clear?${q(operatingCompanyId)}`, {
     method: "POST",
     body: payload,
   });
