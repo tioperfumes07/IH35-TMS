@@ -1567,3 +1567,22 @@ guard: scripts/verify-driver-prompts-flag-off-idempotent.mjs + --selftest PASS; 
   - E-32 BOL/POD/DVIR into `docs.files`.
   - GeofenceEntry/Exit projection.
 - **Merged with I2 red (owner order):** #23795 went in while `verify-reconciler-exceptions` I2 = 14 > 13. The new exception is 13637 (delivery evidence, no invoice), CC-2 lane, owner invoices manually.
+
+## 2026-10-01 ROUND 315 addendum — I2 13 → 14 (13626, 13637): measured; not a dispatch defect
+
+The I2 detector was run live (`i2DeliveredLoadInvoiced.detect`, read-only). Both loads take the **departure-evidence branch**:
+- **13626:** final delivery stop `actual_departure_at` 2026-09-26 00:10:03Z, source `eld_geofence`. Stamped by the Lead under AUTH-179 from 126 GPS fixes at Walmart 6858.
+  - Its invoice was voided under AUTH-171 (CC-2), and it has no issued invoice now.
+  - It became an exception when AUTH-179 restored the real delivery stamp (02:58Z today).
+- **13637:** pickup 09-28 17:35–18:35Z, delivery arrival 2026-10-01 12:20Z, departure **15:04:53Z today**, source `eld_geofence`, written live by the fence detector. No invoice.
+
+**Verdict:** I2 is reporting the truth. Both loads are GPS-proven delivered and not invoiced. Status still reads `dispatched`, but I2 does not read status when delivery evidence exists.
+- Moving status to `delivered` would **not** clear I2.
+- Raising the ceiling is forbidden.
+- **The only honest green is an issued invoice on each load,** via the repair engine I2 names (`POST /api/v1/accounting/invoices/from-load`, or issue the draft). That writes a real AR document, so it is the owner's manual entry (owner: "I will seed them manually") or CC-2's lane (I2 owner_seat = CC-2). CC-3 writes no money.
+
+**The dispatch-side part, mine, is reported and not flipped:**
+- Status ≠ evidence on these loads (and every load the fence detector delivers) because the auto-status engine (E-29, `AUTO_STATUS_SWITCH_APPLY`) is OFF by owner decision.
+- The canonical delivered transition also creates driver-bill artifacts, so turning it on is an owner call.
+
+**Guard output now:** `✗ I2 invoice: 14 exception(s), ceiling 13`. It goes green the moment 13626 and 13637 carry an issued invoice.
