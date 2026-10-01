@@ -21,6 +21,7 @@ import {
 import { recomputeInvoiceTotals } from "./shared.js";
 import { finalActiveDeliveryDepartureAt, fireRevrecLatchOnInvoiceIssued } from "./revrec-delivery-posting/poster.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { assertSubjectMayCloseOnClient } from "../driver-finance/feed-gate/feed-gate.service.js";
 import { syncLoadStatusToBillingInClientTx } from "../dispatch/load-billing-lifecycle.service.js";
 
 /**
@@ -445,6 +446,13 @@ export async function sendDraftInvoice(
   }
 
   await recomputeInvoiceTotals(client, input.invoiceId);
+
+  // FEED GATE (owner law 2026-10-01): an invoice is sent only when its linkage is complete — customer, live
+  // line with income account, total = lines, and (when it has a load) the load's customer/driver/unit/trailer,
+  // trip type, geocoded + stamped stops, rate = invoice, factoring link. Runs now on this client; throws
+  // FeedGateError('feed_gate_blocked') with every red row, which rolls the send back.
+  await assertSubjectMayCloseOnClient(client as never, input.operatingCompanyId, "invoice", input.invoiceId, input.userId);
+
   await client.query(
     `
       UPDATE accounting.invoices
@@ -525,6 +533,12 @@ export async function sendDraftInvoice(
       "warning",
       "ACCT-F100-INVOICE-AR-GL"
     );
+  }
+  // OWNER LAW 2026-10-01: "an invoice created in the app, through a load or manually, must always post to all
+  // correct accounts." With the entity's posting flag ON, a poster failure now REFUSES the send (the transaction
+  // rolls back: no 'sent' invoice without its A/R journal entry). The audit row above still records the cause.
+  if (!invoiceGl.posted && invoiceGl.reason === "post_failed") {
+    throw new Error(`invoice_send_refused_gl_post_failed:${invoiceGl.code ?? "unknown"}:${invoiceGl.message ?? ""}`);
   }
 
   await appendCrudAudit(

@@ -35,6 +35,12 @@ async function subjectDriverId(client: DbClient, kind: string, companyId: string
     if (!r.rows[0]) throw new FeedGateError("feed_gate_subject_not_found", `load ${subjectId} not found in this company`);
     return r.rows[0].driver_id;
   }
+  if (kind === "invoice" || kind === "expense" || kind === "bill") {
+    const table = FEED_SUBJECT_TABLE[kind]!;
+    const r = await client.query<{ ok: boolean }>(`SELECT true AS ok FROM ${table} WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [subjectId, companyId]);
+    if (!r.rows[0]) throw new FeedGateError("feed_gate_subject_not_found", `${kind} ${subjectId} not found in this company`);
+    return null;
+  }
   throw new FeedGateError("feed_gate_kind_not_supported", `feed kind ${kind} has no check set yet`);
 }
 
@@ -171,7 +177,10 @@ export async function listIntakes(userId: string, companyId: string, limit = 100
     const r = await client.query<FeedIntakeRow & { subject_label: string | null; driver_name: string | null }>(
       `SELECT fi.*, d.first_name || ' ' || d.last_name AS driver_name,
               CASE fi.feed_kind WHEN 'settlement' THEN (SELECT 'Settlement ' || s.display_id FROM driver_finance.driver_settlements s WHERE s.id = fi.subject_id)
-                                WHEN 'load' THEN (SELECT 'Load ' || l.load_number FROM mdata.loads l WHERE l.id = fi.subject_id) END AS subject_label
+                                WHEN 'load' THEN (SELECT 'Load ' || l.load_number FROM mdata.loads l WHERE l.id = fi.subject_id)
+                                WHEN 'invoice' THEN (SELECT 'Invoice ' || i.display_id FROM accounting.invoices i WHERE i.id = fi.subject_id)
+                                WHEN 'expense' THEN (SELECT 'Expense ' || coalesce(e.expense_number, left(e.id::text, 8)) FROM accounting.expenses e WHERE e.id = fi.subject_id)
+                                WHEN 'bill' THEN (SELECT 'Bill ' || coalesce(b.display_id, b.bill_number, left(b.id::text, 8)) FROM accounting.bills b WHERE b.id = fi.subject_id) END AS subject_label
          FROM driver_finance.feed_intakes fi LEFT JOIN mdata.drivers d ON d.id = fi.driver_id
         WHERE fi.operating_company_id = $1::uuid AND fi.voided_at IS NULL ORDER BY fi.opened_at DESC LIMIT $2`, [companyId, limit]);
     return r.rows;

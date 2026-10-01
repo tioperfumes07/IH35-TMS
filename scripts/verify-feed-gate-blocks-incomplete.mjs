@@ -22,10 +22,20 @@ const REQUIRED_KEYS = [
   "load.customer_present", "load.driver_unit_trailer_assigned", "load.trip_type_present", "load.stops_geocoded", "load.stops_stamped",
   "invoice.exists_with_live_line", "invoice.rate_equals_invoice", "invoice.ar_je_posted", "invoice.sent_stamped", "invoice.factoring_linked",
   "driver_bill.exists_not_void", "costs.expenses_linked_and_posted", "fuel.matched_to_load_unit_driver",
+  "invoice.header_complete", "invoice.lines_carry_income_account", "invoice.has_live_line", "invoice.total_equals_lines",
+  "expense.header_complete", "expense.lines_carry_category", "expense.posted", "expense.linked_to_operations",
+  "bill.header_complete", "bill.lines_carry_account", "bill.ap_je_posted", "bill.linked_to_operations",
 ];
 
-export function check({ approval, migration, checks, routes }) {
+export function check({ approval, migration, checks, routes, send }) {
   const problems = [];
+  if (send !== undefined) {
+    const gateIdx = send.indexOf('assertSubjectMayCloseOnClient(client as never, input.operatingCompanyId, "invoice"');
+    const sentIdx = send.indexOf("SET status = 'sent'");
+    if (gateIdx < 0) problems.push("sendDraftInvoice no longer runs the feed gate before marking the invoice sent");
+    else if (sentIdx >= 0 && gateIdx > sentIdx) problems.push("sendDraftInvoice marks 'sent' BEFORE the feed gate runs");
+    if (!send.includes("invoice_send_refused_gl_post_failed")) problems.push("sendDraftInvoice no longer refuses the send when the A/R post fails (owner law: an invoice always posts)");
+  }
   const fnStart = approval.indexOf("export async function approveSettlement(");
   const fnEnd = approval.indexOf("export async function", fnStart + 10);
   const body = fnStart >= 0 ? approval.slice(fnStart, fnEnd < 0 ? undefined : fnEnd) : "";
@@ -49,6 +59,7 @@ function load() {
     migration: read("db/migrations/202615170400_feed_gate_intakes.sql"),
     checks: read("apps/backend/src/driver-finance/feed-gate/feed-gate.checks.ts"),
     routes: read("apps/backend/src/driver-finance/feed-gate/feed-gate.routes.ts"),
+    send: read("apps/backend/src/accounting/invoice-send.service.ts"),
   };
 }
 
@@ -60,6 +71,8 @@ function selftest() {
     ["worm trigger dropped", { ...base, migration: base.migration.replace(/trg_feed_intake_checks_worm/g, "x") }],
     ["check key dropped", { ...base, checks: base.checks.replace('key: "settlement.gross_equals_driver_bills"', 'key: "gone"') }],
     ["route without rate limit", { ...base, routes: base.routes.replace('app.get("/api/v1/feed-gate/intakes", RL,', 'app.get("/api/v1/feed-gate/intakes", {},') }],
+    ["send path gate removed", { ...base, send: base.send.replace('assertSubjectMayCloseOnClient(client as never, input.operatingCompanyId, "invoice"', 'noop("invoice"') }],
+    ["send path post failure tolerated", { ...base, send: base.send.replace("invoice_send_refused_gl_post_failed", "ignored") }],
   ];
   let bad = 0;
   for (const [name, input] of cases) { const p = check(input); if (p.length === 0) { console.error(`selftest FAIL: '${name}' not caught`); bad++; } }

@@ -44,6 +44,8 @@ const ROW_LIST_SHA256 = "5754cb5d38ee21d7fc6dc69ec73ea70912aa1eacc1c132248fb0b6d
 const ACCOUNTS = ["1000", "6830", "1100", "1210", "1220", "1230", "1235", "2150", "6400", "6300", "1090"];
 const REASON = "ROUND 315 owner decision (testing phase): factoring clean slate — seeded purchases removed; AUTH-193";
 
+// LEAD 2026-10-01 (post-run, gate root fix): every DELETE below carries an explicit operating_company_id predicate so
+// verify-no-unscoped-company-delete reads the scope; the executed AUTH-193 run selected the same USMCA-only rows via A/jeIds.
 const A = `SELECT id FROM accounting.factoring_advances WHERE operating_company_id = '${USMCA}'`;
 const J0 = `SELECT journal_entry_id je FROM accounting.factoring_lifecycle_posting_keys WHERE factoring_advance_id IN (${A})
   UNION SELECT journal_entry_id FROM accounting.factoring_reserve_movements WHERE factoring_advance_id IN (${A})
@@ -186,13 +188,14 @@ async function main() {
     await step("bank lines unmatched (kept)", `UPDATE banking.bank_transactions SET matched_factoring_advance_id = NULL WHERE matched_factoring_advance_id IN (${A})`);
     await step("transaction_source_links deleted", `DELETE FROM accounting.transaction_source_links
       WHERE journal_entry_posting_id::text IN (SELECT id::text FROM accounting.journal_entry_postings WHERE journal_entry_uuid = ANY($1::uuid[]))
-         OR linked_object_id::text IN (SELECT id::text FROM (${A}) x)`, [jeIds]);
-    await step("postings deleted", `DELETE FROM accounting.journal_entry_postings WHERE journal_entry_uuid = ANY($1::uuid[])`, [jeIds]);
-    await step("reserve movements deleted", `DELETE FROM accounting.factoring_reserve_movements WHERE factoring_advance_id IN (${A})`);
-    await step("interest accruals deleted", `DELETE FROM accounting.factoring_default_interest_accruals WHERE factoring_advance_id IN (${A})`);
-    await step("posting keys deleted", `DELETE FROM accounting.factoring_lifecycle_posting_keys WHERE factoring_advance_id IN (${A})`);
+         OR linked_object_id::text IN (SELECT id::text FROM (${A}) x)
+      AND operating_company_id = '${USMCA}'`, [jeIds]);
+    await step("postings deleted", `DELETE FROM accounting.journal_entry_postings WHERE journal_entry_uuid = ANY($1::uuid[]) AND operating_company_id = '${USMCA}'`, [jeIds]);
+    await step("reserve movements deleted", `DELETE FROM accounting.factoring_reserve_movements WHERE factoring_advance_id IN (${A}) AND operating_company_id = '${USMCA}'`);
+    await step("interest accruals deleted", `DELETE FROM accounting.factoring_default_interest_accruals WHERE factoring_advance_id IN (${A}) AND operating_company_id = '${USMCA}'`);
+    await step("posting keys deleted", `DELETE FROM accounting.factoring_lifecycle_posting_keys WHERE factoring_advance_id IN (${A}) AND operating_company_id = '${USMCA}'`);
     await step("journal entries void-stamped", `UPDATE accounting.journal_entries SET voided_at = COALESCE(voided_at, now()), voided_by_user_id = COALESCE(voided_by_user_id, $2::uuid), void_reason = COALESCE(void_reason, $3) WHERE id = ANY($1::uuid[])`, [jeIds, ACTOR, REASON]);
-    await step("journal entries deleted", `DELETE FROM accounting.journal_entries WHERE id = ANY($1::uuid[])`, [jeIds]);
+    await step("journal entries deleted", `DELETE FROM accounting.journal_entries WHERE id = ANY($1::uuid[]) AND operating_company_id = '${USMCA}'`, [jeIds]);
     await step("advances void-stamped", `UPDATE accounting.factoring_advances SET status = 'voided', voided_at = now(), voided_by_user_id = $2::uuid, void_reason = $3
       WHERE operating_company_id = $1::uuid AND voided_at IS NULL`, [USMCA, ACTOR, REASON]);
     await step("advances deleted", `DELETE FROM accounting.factoring_advances WHERE operating_company_id = $1::uuid`, [USMCA]);
