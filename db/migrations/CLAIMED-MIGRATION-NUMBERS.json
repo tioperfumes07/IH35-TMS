@@ -1327,5 +1327,10 @@
     "claimed_by": "cc-3",
     "claimed_at": "2026-10-01",
     "purpose": "E-09 retirement of dispatch.stop_arrivals: dispatch.detention_events.geofence_event_id uuid NULL REFERENCES geo.geofence_events(id) + index -- detention links to the canonical fence arrival event instead of the retiring stop_arrivals row (stop_arrival_id kept, nullable, history)."
+  },
+  "202615151000": {
+    "claimed_by": "cc-3",
+    "claimed_at": "2026-10-01",
+    "purpose": "Linkage: safety.dvir_submissions.trailer_equipment_id uuid NULL REFERENCES mdata.equipment(id) + index -- trailers live in mdata.equipment, but dvir_submissions.trailer_id can only reference mdata.units; Samsara DVIR trailerName links to whichever registry holds the trailer."
   }
 }
