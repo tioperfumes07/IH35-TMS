@@ -969,3 +969,18 @@ LIVE DRY RUN (rolled back, ledger 0 rows): USMCA 177 rows -> would_push 0 (date_
 USMCA has NO pushable purchase today: its diesel source carries a date, never a pump time. TRANSP Samsara config is_enabled=false -> never pushed.
 GUARD: scripts/verify-samsara-fuel-push-never-substitutes.mjs + --selftest PASS.
 REMAINING: owner flips SAMSARA_FUEL_PURCHASE_PUSH_APPLY on Render; first real push needs a fuel source with pump times.
+
+## 2026-10-01 — ROUND 304 T-49 — IFTA miles by jurisdiction (read) — BUILT
+ROUND: 304 · ROW: T-49 · STATUS: shipped (read-only engine + route + guard).
+SCOPE VERIFIED FIRST: GET /fleet/reports/ifta/vehicle?year=2026&month=August -> 200 on the USMCA token ("Read IFTA (US)" is ticked).
+Live fields: data.vehicleReports[].vehicle{id,name}, .jurisdictions[]{jurisdiction,totalMeters,taxableMeters}; data.troubleshooting.
+ENGINE: apps/backend/src/telematics/ifta-miles.service.ts (+SamsaraClient.listIftaVehicleReports). Period ending inside 72 h -> not_ready,
+never queried; Samsara 400 "still processing" -> not_ready. Vehicles linked to units via loadUnitIdBySamsaraVehicleId; tax-paid gallons
+only from T-45-gated rows with a location_state (state-less rows counted, never placed); reefer excluded; NO MPG computed.
+ROUTE: GET /api/v1/telematics/ifta-miles?operating_company_id&year&(month|quarter).
+LIVE PROOF (USMCA, Aug 2026): 21 Samsara vehicles, 38 jurisdictions, 107,896 mi (TX 39,714 mi / 2,554.354 gal from 21 rows);
+gallons coverage: 105 eligible rows, 73 WITHOUT a state -> tax-paid gallons are incomplete; Sep 2026 + Q3 -> not_ready (72 h window).
+Samsara troubleshooting: noPurchasesFound=true, unassignedFuelTypeVehicles=100 -> Samsara has no fuel purchases (T-48 feeds it once APPLY is on).
+FINDING (data, not changed): 6 USMCA-Samsara vehicles unlinked: T167/T169/T139/T162 exist in mdata.units but are owned by TRANSP with no
+lease to USMCA (entity scope correctly excludes them); KIA RIO + HONDA are non-fleet cars in the Samsara org.
+GUARD: scripts/verify-ifta-miles-never-guesses.mjs + --selftest PASS.
