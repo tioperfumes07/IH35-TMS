@@ -373,6 +373,55 @@ export function getDispatchLoadEditLock(id: string, operatingCompanyId: string) 
   }>(`/api/v1/dispatch/loads/${id}/edit-lock?${q.toString()}`);
 }
 
+/** D-H1 — full load history timeline + linked documents. */
+export type LoadHistoryLink = {
+  kind: string;
+  id: string;
+  label: string | null;
+};
+
+export type LoadHistoryRow = {
+  id: string;
+  occurred_at: string;
+  kind:
+    | "status_transition"
+    | "field_edit"
+    | "assignment"
+    | "stop_stamp"
+    | "lock_override"
+    | "audit"
+    | "linked_document"
+    | "gap";
+  summary: string;
+  field: string | null;
+  before_value: string | null;
+  after_value: string | null;
+  actor_user_id: string | null;
+  actor_label: string | null;
+  source: string | null;
+  links: LoadHistoryLink[];
+};
+
+export type LoadHistoryLinkedDocument = {
+  kind: "invoice" | "factoring_advance" | "settlement_line" | "expense" | "work_order";
+  id: string;
+  display_id: string | null;
+  status: string | null;
+  amount_cents: number | null;
+  occurred_at: string | null;
+};
+
+export function getDispatchLoadHistory(id: string, operatingCompanyId: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{
+    load_id: string;
+    load_number: string | null;
+    operating_company_id: string;
+    rows: LoadHistoryRow[];
+    linked_documents: LoadHistoryLinkedDocument[];
+  }>(`/api/v1/dispatch/loads/${id}/history?${q.toString()}`);
+}
+
 /**
  * LV-TXN-004 — map office/Kanban LoadStatus onto the dispatch transition enum so we can call the
  * money-aware endpoint. Statuses that have no dispatch equivalent (draft/planned/booked) stay on

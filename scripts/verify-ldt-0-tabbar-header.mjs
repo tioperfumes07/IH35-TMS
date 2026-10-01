@@ -5,7 +5,7 @@
  *
  * Asserts, on apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx:
  *   1. primary tab order is EXACTLY Overview·Stops·Costs·Driver Pay·Factoring·Settlement·Pre-Settlement·Audit
- *   2. the four non-cost tabs collapse under a `More ▾` group and that group is HIDDEN in the Accounting context
+ *   2. the non-cost tabs collapse under a `More ▾` group and that group is HIDDEN in the Accounting context
  *   3. the shared header carries the seven stats (rate·practical·short·real·revmi·driver·unit), each a drill-down pop-up
  *   4. Real driven is blank-with-reason — NEVER rendered as 0 (telematics odometer, not yet captured)
  *   5. every header stat opens a pop-up (modal) that closes on Escape
@@ -16,7 +16,7 @@ import fs from "node:fs";
 
 const FILE = "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx";
 const MAIN = ["Overview", "Stops", "Costs", "Driver Pay", "Factoring", "Settlement", "Pre-Settlement", "Audit"];
-const MORE = ["Documents", "Cargo Sensors", "Geofence Timeline", "Assignment History"];
+const MORE = ["Documents", "Cargo Sensors", "Geofence Timeline", "History", "Assignment History"];
 const STATS = ["rate", "practical", "short", "real", "revmi", "driver", "unit"];
 
 function audit(src) {

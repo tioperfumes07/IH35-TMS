@@ -21,6 +21,7 @@ import {
   detectLoadEditLock,
   type UpdateDispatchLoadFields,
 } from "./update-load.service.js";
+import { getLoadHistory } from "./load-history.service.js";
 import { DriverNotQualifiedError } from "./driver-qualification.service.js";
 import { distributeLoadInstructions } from "./load-distribution.service.js";
 import {
@@ -1782,6 +1783,24 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     });
     if (!result) return reply.code(404).send({ error: "load_not_found" });
     return reply.send(result);
+  });
+
+  // D-H1 — Load History (read-only timeline + linked documents).
+  app.get("/api/v1/dispatch/loads/:id/history", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    if (!["Owner", "Administrator", "Manager", "Dispatcher", "Accounting"].includes(authUser.role)) {
+      return reply.code(403).send({ error: "forbidden" });
+    }
+    const params = dispatchLoadIdParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+    if (!q.success) return sendValidationError(reply, q.error);
+    const history = await withCompanyScope(authUser.uuid, q.data.operating_company_id, (client) =>
+      getLoadHistory(client, { loadId: params.data.id, operatingCompanyId: q.data.operating_company_id })
+    );
+    if (!history) return reply.code(404).send({ error: "load_not_found" });
+    return reply.send(history);
   });
 
   // Block 06 (Inc 2) — FULL load edit. Money/evidence-guarded: a load behind an open settlement, an
