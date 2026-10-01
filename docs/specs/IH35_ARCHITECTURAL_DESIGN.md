@@ -311,7 +311,7 @@ BOA Balance · IBC Balance · Factoring Available · Escrow Total · MTD Inflow 
 ### Top action button
 **+ Plan Fuel Route**
 
-### Sub-nav tabs (8 — locked design)
+### Sub-nav tabs (9 — locked design; canonical source `FUEL_SUBNAV` in `FUEL_TABS_CONFIG.ts`)
 
 | Tab | What it shows | Phase |
 |-----|---------------|-------|
@@ -323,6 +323,7 @@ BOA Balance · IBC Balance · Factoring Available · Escrow Total · MTD Inflow 
 | **Compliance Tracker** | Drivers with fuel/HOS compliance issues | Phase 3 ✅ |
 | **Fuel by Unit/Driver/State (IFTA)** | Per-state miles + gallons + tax | Phase 3 ✅ |
 | **Settings** | Preferred fuel networks · Avoid states · HOS thresholds | Owner only |
+| **Integrity** | Per-transaction GPS verdict (E-22), fraud classification (E-21), and derived pump time/state (E-19/E-20), each with its "why" — read-only, computed on read | Phase 3 ✅ (ORDERS-2026-10-01) |
 
 ### KPI row — 5 cards
 MPG Fleet Avg · MTD Gallons · MTD Fuel Cost · IFTA Tax (Q-to-date) · Savings vs Plan (90d)
