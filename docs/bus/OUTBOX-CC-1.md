@@ -792,3 +792,86 @@ checked by name:
 need a real migration (two new nullable columns) plus a wizard field to capture "date in shop" at
 open and "expected release" as an editable estimate, before either can render as anything but a
 permanent "--".** Not derived, not guessed -- reported per the order's own instruction.
+
+## ROUND 305 — URGENT: live-fleet.ts / stop-odometer-capture.service.ts DO NOT EXIST ON MAIN
+Checked before building anything, per Verify Everything Never Guess: `git fetch origin main`
+(latest 8551bae2ef, 2026-10-01) then `git ls-tree -r origin/main` for both exact filenames --
+zero matches. GitHub code search across the whole repo for "live-fleet" -- zero matches on any
+source file. `gh pr list --state open` -- zero open PRs at all. `gh pr list --state closed
+--search fleet` -- no PR touches either file. The verify-step claim commit itself (#23581,
+2026-09-30T20:02, same evening) says explicitly: "REMAINING: author the live-fleet helper, the
+stop-odometer capture engine and guard 12001 on the feature branch" -- confirming neither existed
+when that commit landed, and nothing has landed since.
+**Not a guess, not a refusal to look harder -- four independent checks, zero matches, one of them
+your own commit message saying "REMAINING: author."** If these were pushed to a branch outside this
+repo/remote, or the merge is still local on the machine that wrote this queue, they have not
+reached `origin/main` and I cannot build against them. Flagging this now rather than silently
+rebuilding a shadow copy (which the queue itself forbids: "do not write a second fleet
+definition") or silently skipping A-46.
+
+## ROUND 305 A-45 — THE ROSTER, REPORTED (no writes, matches the order's own numbers exactly)
+Could not use the promised live-fleet.ts helper (does not exist -- see above), so this is measured
+directly against prod (br-fancy-credit-akjnd07a), bypass_rls, completeness discriminator confirmed
+(`current_user=neondb_owner, visible=196=n_live_tup` on mdata.units before scoping down).
+**Caught and fixed my own bug before reporting:** first pass joined on
+`telematics.vehicle_locations.created_at` (row-insert time) and got different numbers than the
+order's; `captured_at` is the real GPS-fix timestamp (`created_at` is DML time -- can reflect a late
+backfill of an old reading). Re-ran on `captured_at`. Result matches the order's own figures to the
+unit: **43 total, 15 reporting (<=24h), 24 dark, 1 sample (`DEVIN-A-210001`, `is_sample_data=true`),
+3 no_telemetry_ever (`SAM-c4530bd3`, `SAM-fa16e203`, `USMCA-001`)** -- scoped as `currently_leased_to_
+company_id = USMCA`, or `owner_company_id = USMCA` where no lease override is set.
+
+**Company linkage, read only from org.companies + mdata.units (TRANSPORTATION/TRUCKING frozen,
+nothing else of theirs read):** `mdata.units` has no `operating_company_id` -- entity scoping here is
+`owner_company_id` (who owns the asset) vs `currently_leased_to_company_id` (who runs it). All 43
+rows resolve correctly as asset-holder-owns / operating-carrier-leases: **owner_company_id is
+TRUCKING for 40 of 43, USMCA for 3** (`SAM-b7317a51`, `SAM-c4530bd3`, `SAM-fa16e203` -- USMCA owns
+these outright, no lease). The seven unit_numbers that LOOK like Transportation trucks by name
+(`Truck-02-Transportation`, `Truck-04 Transportation`, `Truck-103`, `-106`, `-112`, `-121`, `-130`)
+are **actually owner_company_id = TRUCKING, not TRANSPORTATION** -- the asset-ownership linkage
+itself is architecturally correct (TRUCKING is the asset_holder; TRANSPORTATION and USMCA are
+operating_carrier entities that lease from it). The "Transportation" in the name is a stale label
+from before these seven were moved into TRUCKING's pool, not a live mis-link -- naming this exactly
+so the owner isn't told to fix a link that already resolves correctly. Three OTHER units (`T122`,
+`T124`, `T156`) genuinely ARE owner_company_id = TRANSPORTATION, currently leased to USMCA -- those
+three are correctly cross-entity, not a defect.
+Last-GPS confirms the order's own dates to the day: the seven name-"Transportation" trucks last
+reported 2019-02-20 through 2022-05-29 (2.4K-2.8K days dark); T149 2024-08-04 (787d), T150 and T151
+both 2024-11-06 (693d); T120 2026-04-13 (170d); T122 2026-09-26 (4d, inside this week, not actually
+dark the way the others are).
+
+**THE POISON, named precisely:** of the 43, **21 carry `status='InService'`** -- but only 14 of
+those 21 are genuinely reporting GPS inside 24h. The other 7 InService rows are stale: `T120`
+(170d dark), `T122` (4d -- borderline, not the problem), `T147` (21d), `T149` (787d / 2.2 years),
+`T150` (693d), `T151` (693d), and `USMCA-001` (never had ANY telemetry, `samsara_vehicle_id` is
+NULL -- there is no device to even be dark). **An "average miles per unit" or PM-due projection
+filtered on `status='InService'` runs over 21 rows when only 14 are a real, moving truck -- a 1.5x
+inflation on top of the order's own 3x figure (43 vs 14) if computed over the full attached roster
+instead.** The other 22 dark/no-telemetry rows are already correctly marked `OutOfService` or
+`Transferred` (`T145`) -- status already tells the truth there; only these 7 lie.
+**Named, not changed.** The owner decides reclassification. No `status`, `owner_company_id`, or
+`currently_leased_to_company_id` write made.
+
+## ROUND 305 A-46 — STOP-ODOMETER ENGINE WIRING: BLOCKED, ENGINE NOT ON MAIN
+Cannot wire `apps/backend/src/telematics/stop-odometer-capture.service.ts` into PM due -- the file
+does not exist (see the top finding). I did not author a replacement: the order's own instruction
+("USE IT. Do not write a second fleet definition") reads as the same rule for this engine -- it is
+being built as one shared, measured implementation, not duplicated per seat. Measured where PM due
+currently reads from instead, so the wiring point is ready the moment the real file lands:
+`apps/backend/src/telematics/odometer-snapshot.cron.ts` is the once-daily 03:00 snapshot job the
+order describes (12 readings/day, one per unit) -- grep confirms PM-due logic
+(`maintenance-predictor.service.ts`) reads from the table that cron populates. Once stop-odometer-
+capture.service.ts exists, the wiring is: feed its per-stop odometer reads into the same table (or a
+new odometer source the predictor already unions), preserving the engine's own stated invariant
+(odometer READ or ABSENT, never interpolated; negative delta HELD) -- not relaxing it to backfill a
+gap. **Waiting on the real file. Will wire it the session it lands; not before.**
+
+## ROUND 305 A-47/A-48/A-49 — ALREADY SATISFIED, RE-VERIFIED LIVE, NO DRIFT
+These are A-41/A-42/A-43 under new numbers. Shipped in PR #23577 (merged). Re-checked both source
+files against the current `origin/main` tip (8551bae2ef) before writing this: `CreateWOSectionIdent
+ification.tsx:87` (`requireDriverAndLoad`) and `CreateWorkOrderModal.tsx:570-573` (the pre-save
+check) are byte-identical to what #23577 reported -- the defect is still live, Cursor has not yet
+picked it up (their current lane is the Banking boards, ROUND 304 C-64). `maintenance.work_orders`'
+column list is unchanged -- A-49's verdict stands: 1 of 3 (`opened_at` for "report date") exists by
+mapping, "date in shop" and "expected release" do not exist as columns. No new PR needed for these
+three; pointing back to #23577 rather than re-filing the same finding.
