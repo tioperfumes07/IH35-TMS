@@ -79,7 +79,11 @@ const candidatesQuery = companyQuery.extend({
 });
 const invoiceParams = z.object({ invoiceId: z.string().uuid() });
 const directPayBody = z.object({ reason: z.string().trim().min(3).max(500) });
-const sendBody = z.object({ to_email: z.string().trim().email().max(320).optional() });
+const sendBody = z.object({
+  to_email: z.string().trim().email().max(320).optional(),
+  // Owner override approval (2026-10-01): send although loads are missing BOL / POD / rate confirmation.
+  docs_override_reason: z.string().trim().min(10).max(1000).optional(),
+});
 
 type Reply = { code: (n: number) => { send: (b: unknown) => unknown } };
 
@@ -175,6 +179,7 @@ export async function registerFactoringPurchaseRoutes(app: FastifyInstance) {
         actorUserId: user.uuid,
         purchaseId: p.data.id,
         toEmail: b.data.to_email ?? null,
+        docsOverrideReason: b.data.docs_override_reason ?? null,
       });
     } catch (error) {
       if (sendPurchaseError(reply, error)) return;

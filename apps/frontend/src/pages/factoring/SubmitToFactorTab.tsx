@@ -67,11 +67,18 @@ export function loadDocsUploadPath(loadId: string) {
 }
 
 /** Selection totals — the same formula the purchase engine applies (purchase.service.ts). */
-export function computeSelectionTotals(rows: PurchaseCandidate[], wireFeeCents: number) {
+/** Faro's actual split for one invoice (from its purchase report). Absent = the expected split from the factor rates. */
+export type LineActuals = { escrow_reserve_cents: number; cash_reserve_cents: number; fee_cents: number };
+
+export function lineFigures(r: PurchaseCandidate, actuals?: LineActuals) {
+  return actuals ?? { escrow_reserve_cents: r.expected_escrow_reserve_cents, cash_reserve_cents: r.expected_cash_reserve_cents, fee_cents: r.expected_fee_cents };
+}
+
+export function computeSelectionTotals(rows: PurchaseCandidate[], wireFeeCents: number, actuals: Record<string, LineActuals> = {}) {
   const gross = rows.reduce((a, r) => a + r.open_cents, 0);
-  const escrow = rows.reduce((a, r) => a + r.expected_escrow_reserve_cents, 0);
-  const cash = rows.reduce((a, r) => a + r.expected_cash_reserve_cents, 0);
-  const fee = rows.reduce((a, r) => a + r.expected_fee_cents, 0);
+  const escrow = rows.reduce((a, r) => a + lineFigures(r, actuals[r.invoice_id]).escrow_reserve_cents, 0);
+  const cash = rows.reduce((a, r) => a + lineFigures(r, actuals[r.invoice_id]).cash_reserve_cents, 0);
+  const fee = rows.reduce((a, r) => a + lineFigures(r, actuals[r.invoice_id]).fee_cents, 0);
   const advance = gross - escrow - fee;
   const net = advance - cash - wireFeeCents;
   return { count: rows.length, gross, escrow, cash, fee, wire: wireFeeCents, advance, net };
@@ -122,6 +129,11 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
   const [reportRef, setReportRef] = useState("");
   const [wireFeeCents, setWireFeeCents] = useState<number | null>(0);
   const [sendTo, setSendTo] = useState("");
+  // Faro's actual escrow / cash reserve / fee per invoice (its purchase report): Faro holds ONE 1.5% Security Reserve per
+  // invoice, normally as Escrow Rsv and on some invoices as Cash Rsv instead (measured on all 89 Faro purchases).
+  const [lineActuals, setLineActuals] = useState<Record<string, LineActuals>>({});
+  // Owner override approval: send although selected loads are missing BOL / POD / rate confirmation.
+  const [docsOverrideReason, setDocsOverrideReason] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<SaveError | null>(null);
   const [created, setCreated] = useState<{ purchase: FactoringPurchaseDetail; sentTo: string | null; sendError: SaveError | null } | null>(null);
@@ -152,7 +164,8 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
   // Selection survives a filter change only for rows still listed (the totals are over what is actually sent).
   const byId = useMemo(() => new Map(rows.map((r) => [r.invoice_id, r])), [rows]);
   const selectedRows = useMemo(() => selected.map((id) => byId.get(id)).filter(Boolean) as PurchaseCandidate[], [selected, byId]);
-  const totals = computeSelectionTotals(selectedRows, wireFeeCents ?? 0);
+  const totals = computeSelectionTotals(selectedRows, wireFeeCents ?? 0, lineActuals);
+  const docsOverrideOk = docsOverrideReason.trim().length >= 10;
   const missingDocsRows = selectedRows.filter((r) => !r.docs_complete);
 
   const refresh = async () => {
@@ -174,7 +187,7 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
       setSaveError({ kind: "message", text: "Select the factoring company." });
       return;
     }
-    if (andSend && missingDocsRows.length) {
+    if (andSend && missingDocsRows.length && !docsOverrideOk) {
       setSaveError({
         kind: "missing_docs",
         rows: missingDocsRows.map((r) => ({ invoice_id: r.invoice_id, invoice_display_id: r.invoice_display_id, load_id: r.load_id, load_number: r.load_number, missing: r.missing_docs })),
@@ -197,7 +210,7 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
         wire_date: wireDate || null,
         faro_report_ref: reportRef.trim() || null,
         wire_fee_cents: wireFeeCents ?? 0,
-        lines: selectedRows.map((r) => ({ invoice_id: r.invoice_id })),
+        lines: selectedRows.map((r) => ({ invoice_id: r.invoice_id, ...lineFigures(r, lineActuals[r.invoice_id]) })),
       });
       let posted: FactoringPurchaseDetail;
       try {
@@ -222,7 +235,7 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
       let sendError: SaveError | null = null;
       if (andSend) {
         try {
-          const sent = await sendFactoringPurchase(companyId, posted.id, sendTo.trim() || null);
+          const sent = await sendFactoringPurchase(companyId, posted.id, sendTo.trim() || null, missingDocsRows.length ? docsOverrideReason : null);
           sentTo = sent.to;
         } catch (err) {
           sendError = toSaveError(err, "Send failed");
@@ -231,6 +244,8 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
       setCreated({ purchase: posted, sentTo, sendError });
       setSelected([]);
       setReportRef("");
+      setLineActuals({});
+      setDocsOverrideReason("");
       await refresh();
     } catch (err) {
       setSaveError(toSaveError(err, "Save failed"));
@@ -244,7 +259,7 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
     if (!created) return;
     setSaving(true);
     try {
-      const sent = await sendFactoringPurchase(companyId, created.purchase.id, sendTo.trim() || null);
+      const sent = await sendFactoringPurchase(companyId, created.purchase.id, sendTo.trim() || null, docsOverrideOk ? docsOverrideReason : null);
       setCreated({ ...created, sentTo: sent.to, sendError: null });
     } catch (err) {
       setCreated({ ...created, sendError: toSaveError(err, "Send failed") });
@@ -505,19 +520,97 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
           </div>
         </DataPanel>
 
+        {selectedRows.length ? (
+          <DataPanel title="Selected invoices — Faro actuals">
+            <div className="p-3 text-xs" data-testid="submit-factor-actuals">
+              <p className="mb-2 text-slate-600">
+                Faro holds one 1.5% Security Reserve per invoice — normally as escrow reserve, on some invoices as cash reserve instead. Enter
+                Faro's purchase-report figures here when they differ from the expected split.
+              </p>
+              <table className="w-full">
+                <thead>
+                  <tr>
+                    <th className="text-left uppercase" style={FIELD_LABEL_STYLE}>Invoice</th>
+                    <th className="text-right uppercase" style={FIELD_LABEL_STYLE}>Escrow reserve</th>
+                    <th className="text-right uppercase" style={FIELD_LABEL_STYLE}>Cash reserve</th>
+                    <th className="text-right uppercase" style={FIELD_LABEL_STYLE}>Fee</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedRows.map((r) => {
+                    const f = lineFigures(r, lineActuals[r.invoice_id]);
+                    const setF = (patch: Partial<LineActuals>) => setLineActuals((m) => ({ ...m, [r.invoice_id]: { ...f, ...patch } }));
+                    return (
+                      <tr key={r.invoice_id} data-testid={`submit-factor-actuals-row-${r.invoice_id}`}>
+                        <td>
+                          <EntityLink kind="invoice" id={r.invoice_id} label={r.invoice_display_id ?? "invoice"} />
+                        </td>
+                        <td className="py-1 text-right">
+                          <MoneyInput valueCents={f.escrow_reserve_cents} onChangeCents={(c) => setF({ escrow_reserve_cents: c ?? 0 })} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel={`Escrow reserve ${r.invoice_display_id ?? ""}`} />
+                        </td>
+                        <td className="py-1 text-right">
+                          <MoneyInput valueCents={f.cash_reserve_cents} onChangeCents={(c) => setF({ cash_reserve_cents: c ?? 0 })} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel={`Cash reserve ${r.invoice_display_id ?? ""}`} />
+                        </td>
+                        <td className="py-1 text-right">
+                          <MoneyInput valueCents={f.fee_cents} onChangeCents={(c) => setF({ fee_cents: c ?? 0 })} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel={`Fee ${r.invoice_display_id ?? ""}`} />
+                        </td>
+                        <td className="py-1 pl-2 text-right">
+                          <button
+                            type="button"
+                            className="rounded-sm border border-gray-300 px-2 py-0.5 text-xs text-slate-700"
+                            onClick={() => setF({ cash_reserve_cents: f.cash_reserve_cents + f.escrow_reserve_cents, escrow_reserve_cents: 0 })}
+                            disabled={f.escrow_reserve_cents === 0}
+                            data-testid={`submit-factor-reserve-to-cash-${r.invoice_id}`}
+                          >
+                            Reserve in cash
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </DataPanel>
+        ) : null}
+
+        {missingDocsRows.length ? (
+          <DataPanel title="Override approval — missing documents">
+            <div className="p-3 text-xs" data-testid="submit-factor-docs-override">
+              <p className="mb-2 text-slate-600">
+                {missingDocsRows.length} selected load(s) are missing BOL / POD / rate confirmation. The Owner may approve sending to the factor
+                anyway; the reason is stamped on the purchase and audited.
+              </p>
+              <label className="flex flex-col gap-1">
+                <span className="uppercase" style={FIELD_LABEL_STYLE}>Override reason (Owner)</span>
+                <input
+                  className={`${FORM_FIELD_CONTROL_SIZE_CLASS} rounded-sm border border-gray-300 px-2`}
+                  value={docsOverrideReason}
+                  maxLength={1000}
+                  disabled={!isOwner}
+                  placeholder="At least 10 characters — why these loads go without documents"
+                  onChange={(e) => setDocsOverrideReason(e.target.value)}
+                  data-testid="submit-factor-docs-override-reason"
+                />
+              </label>
+            </div>
+          </DataPanel>
+        ) : null}
+
         <DataPanel title="Selection totals">
           <dl className="grid grid-cols-2 gap-x-4 gap-y-1 p-3 text-xs" data-testid="submit-factor-totals">
             <dt className="text-slate-600">Invoices</dt>
             <dd className="text-right font-semibold" data-testid="submit-factor-total-count">{totals.count}</dd>
             <dt className="text-slate-600">Gross</dt>
             <dd className="text-right font-semibold" data-testid="submit-factor-total-gross">{formatUsdCents(totals.gross)}</dd>
-            <dt className="text-slate-600">Expected escrow reserve</dt>
+            <dt className="text-slate-600">Escrow reserve</dt>
             <dd className="text-right" data-testid="submit-factor-total-escrow">{formatUsdCents(totals.escrow)}</dd>
-            <dt className="text-slate-600">Expected fee</dt>
+            <dt className="text-slate-600">Factoring fee</dt>
             <dd className="text-right" data-testid="submit-factor-total-fee">{formatUsdCents(totals.fee)}</dd>
             <dt className="text-slate-600">Advance (gross − escrow − fee)</dt>
             <dd className="text-right font-semibold" data-testid="submit-factor-total-advance">{formatUsdCents(totals.advance)}</dd>
-            <dt className="text-slate-600">Expected cash reserve</dt>
+            <dt className="text-slate-600">Cash reserve</dt>
             <dd className="text-right" data-testid="submit-factor-total-cash">{formatUsdCents(totals.cash)}</dd>
             <dt className="text-slate-600">Wire fee</dt>
             <dd className="text-right" data-testid="submit-factor-total-wire">{formatUsdCents(totals.wire)}</dd>
@@ -528,7 +621,11 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
           </dl>
           <div className="flex items-center justify-between gap-2 border-t border-gray-200 px-3 py-2">
             <span className="text-xs text-slate-600">
-              {missingDocsRows.length ? `${missingDocsRows.length} selected invoice(s) missing docs — Save and send is blocked` : "Expected figures; Faro's report actuals post on the purchase."}
+              {missingDocsRows.length
+                ? docsOverrideOk
+                  ? `${missingDocsRows.length} invoice(s) missing docs — Owner override approved for Save and send`
+                  : `${missingDocsRows.length} selected invoice(s) missing docs — Save and send needs an override approval`
+                : "Expected split from the factor rates unless Faro's actuals are entered per invoice."}
             </span>
             <SaveDropdown
               storageKey="factoring-submit-to-factor"
