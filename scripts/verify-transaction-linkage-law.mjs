@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting","fuel","maintenance"],"cols":["connectivity","unit","driver","load"],"leafRe":"transaction.linkage.law","task":"TRANSACTION-LINKAGE-LAW-A30"} */
 /**
  * verify-transaction-linkage-law.mjs
  *

@@ -55,11 +55,15 @@ export function DriverProfilesIntegrityKpiStrip() {
           label="Integrity findings"
           number={q.isLoading ? "…" : String(totals.findings)}
           accent={totals.findings > 0 ? colors.crit.strong : colors.positive.strong}
+          disabled
+          disabledReason="Drill-down filter for findings not shipped yet"
         />
         <KpiCard
           label="Integrity suspicions"
           number={q.isLoading ? "…" : String(totals.suspicions)}
           accent={totals.suspicions > 0 ? colors.warn.strong : colors.info.strong}
+          disabled
+          disabledReason="Drill-down filter for suspicions not shipped yet"
         />
         <KpiCard
           label="Complaints"
@@ -71,6 +75,8 @@ export function DriverProfilesIntegrityKpiStrip() {
           label="Drivers with signal"
           number={q.isLoading ? "…" : String(totals.driversWithSignal)}
           accent={colors.drivers.strong}
+          disabled
+          disabledReason="Drivers-with-signal list filter not shipped yet"
         />
       </KpiStrip>
     </div>

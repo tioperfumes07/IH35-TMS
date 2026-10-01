@@ -454,7 +454,8 @@ export function MakeDepositPage() {
                       <td className="px-2 py-[7px]">
                         <input
                           className="h-7 w-full rounded-sm border border-[#E5E7EB] px-2"
-                          placeholder="uuid,uuid"
+                          placeholder="payment ids (comma)"
+                          aria-label="Customer payment ids"
                           value={row.payment_ids.join(",")}
                           onChange={(e) =>
                             setBatchRows((prev) =>
@@ -476,7 +477,8 @@ export function MakeDepositPage() {
                       <td className="px-2 py-[7px]">
                         <input
                           className="h-7 w-full rounded-sm border border-[#E5E7EB] px-2"
-                          placeholder="uuid,uuid"
+                          placeholder="advance ids (comma)"
+                          aria-label="Factoring advance ids"
                           value={row.factoring_advance_ids.join(",")}
                           onChange={(e) =>
                             setBatchRows((prev) =>
