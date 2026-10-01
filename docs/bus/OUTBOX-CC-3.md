@@ -1433,3 +1433,41 @@ guard: scripts/verify-driver-prompts-flag-off-idempotent.mjs + --selftest PASS; 
 - `GET /api/v1/units/:id/telematics` returns: load and driver now (shared loadAtTimeSql / driverAtTimeSql), latest position, odometer anchors, stops, fence crossings, faults, harsh events, DVIRs as tractor or trailer, fuel fills.
 - Read-only run on 13634 / T152: 2 arrivals, 94 fence crossings, 4 DVIRs, 5 fuel fills.
 - Migration 202615151000 adds `safety.dvir_submissions.trailer_equipment_id` (FK to mdata.equipment). The DVIR ingest links the single matching equipment row. Rolled back: 9 linked.
+
+## 2026-10-01 — 13625 / 13638: cancel-stamp root cause, GPS evidence, factoring gap; engine finishes on delivery fence exit
+
+**Owner, in chat, after the Lead's 06:50Z order:** "I ALREADY HAVE THOSE LOADS, BUT I WILL SEED THEM MANUALLY." **CC-3 wrote NO load data.** No AUTH opened, no status change, no stamps, `canceled_at` not cleared. Everything below is read-only evidence for the owner's manual entry.
+
+**Who set `canceled_at` (Lead asked: who / when / source)?** A script, not the UI.
+- Audit rows, all `dispatch.load.cancellation_requested`, source `P5-F4-CANCELLATIONS`, actor = the owner's user id (scripts run as it), reason OTHER, `pending_owner_approval:false`:
+  - 13625: `97f2fbd0`, 2026-09-28 10:09:51Z
+  - 13627: `a8c944ab`, 10:09:54Z
+  - 13638: `b9383cbf`, 10:09:57Z
+- That was the AUTH-093 cancellation. 12 minutes later, `scripts/ops/2026-09-28-reinstate-3-wrongly-voided-loads.mjs` (ROUND-155.26, audit `dispatch.load.cancellation_reversed` 10:21:48–50Z) put the status back.
+- The reinstatement did not reset everything: it left `dispatch.load_cancellations` at `approved` on all three. Trigger `trg_sync_cancel_metadata_to_loads` (migration 0281) had already copied `canceled_at`/`canceled_by` onto `mdata.loads`, and nothing cleared them.
+- **13627 has the same stale stamp.** It is a one-off script with no app path that reverses a cancel, so there is no code to fix.
+- Data clean-up (clear the stamps; mark the cancellation rows reversed) is held for the owner.
+
+**GPS evidence (telematics.vehicle_locations, the assigned unit):**
+- **13638, T176**
+  - Delivery, 980 New Durham Rd, Edison NJ: 22 fixes inside 300 m (20 stopped), **2026-09-28 14:24:57Z → 15:10:10Z**. The fence detector agrees: entered 14:24:57Z, exited 15:15:14Z.
+  - Pickup, 1901 Shea St, Laredo: T176 never came within 9.2 km of the pin. Its Laredo dwell was 09-25 19:44Z → 09-26 01:20Z at 27.6566, -99.6364, the same yard T148 used after its pickup. That evidence is not tight enough to stamp.
+- **13625, T148**
+  - Delivery, 555 Nestle Way, Breinigsville PA: **T148 never came closer than 348.6 km.** No unit was within 600 m of that address between 09-24 and 10-01.
+  - After pickup, T148 went Laredo → Natalia → Chambers Co. TX → St. Tammany LA (09-25 21:38Z → 09-29 03:20Z) → Nicholson MS.
+  - GPS does not show T148 delivering 13625. If it was delivered, another power unit outside our Samsara fleet or a relay did it.
+
+**Factoring (Lead step 3) — STOP, gap for CC-2:**
+- Advance **FAC-2026-00139** (`32e3b54b`): Faro invoice 103, purchased 2026-09-25, $6,250.00, net advance $6,062.50. Notes say `load:"13625"`, PO LGMX142. Status advanced; reinstated 09-30 12:18Z.
+- **No `accounting.invoices` row carries `factoring_advance_id` = this advance, and no invoice is sourced from 13625.** The advance → invoice → load chain is broken at the invoice.
+- **13638 has no advance and no invoice at all.** The owner says it was factored 09-25.
+- CC-3 created no money.
+
+**Engine (built):** `loadAtTimeSql` now treats a load as finished at the unit's first EXIT from the delivery stop's Samsara fence when TMS has no delivery stamp.
+- Before: T176 at 09-28 16:00Z → 13638 (an already-delivered load kept the truck and its deadhead).
+- After: → 13637.
+- Other units unchanged (T148 → 13635, T152 → 13634, T156 → 13629 now). About 100 ms per lookup.
+- Guard `verify-load-at-time-single-definition` asserts the fallback.
+- **Owner's reconciliation file (`09-30-26-UPDATED FIRST RECONCILIATION.xlsx`, informational only, NOT seeded):**
+  - **13638:** Faro inv **112** dated **2026-09-28** ($4,900, SMX14683), not 09-25; T176, flatbed FB-56713, delivered 09-28. This matches the GPS Edison dwell 09-28 14:24–15:10Z.
+  - **13625:** Faro inv 103 dated 09-25 ($6,250, LGMX142); T148, reefer 10222, AlwaysTrack delivery 09-28 Breinigsville PA. T148's GPS never reached PA, so the most likely explanation is a trailer 10222 relay or swap to a non-Samsara unit (not verified).
