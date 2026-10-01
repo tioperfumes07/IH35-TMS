@@ -107,4 +107,55 @@ export async function registerDashcamOnDemandRoutes(app: FastifyInstance) {
     });
     return { rows };
   });
+
+  /** E-42 — list all clips for the Dashcam viewer (unit filter optional). */
+  const listAllSchema = z.object({
+    operating_company_id: z.string().uuid(),
+    unit_id: z.string().uuid().optional(),
+    limit: z.coerce.number().int().min(1).max(200).default(50),
+  });
+
+  app.get("/api/v1/telematics/dashcam-clips", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    if (!canAccessDashcam(user.role)) return reply.code(403).send({ error: "forbidden" });
+    const query = listAllSchema.safeParse(req.query ?? {});
+    if (!query.success) return validationError(reply, query.error);
+    const q = query.data;
+
+    const rows = await withCompany(user.uuid, q.operating_company_id, async (client) => {
+      const conditions = ["c.operating_company_id = $1::uuid"];
+      const values: unknown[] = [q.operating_company_id];
+      if (q.unit_id) {
+        values.push(q.unit_id);
+        conditions.push(`c.unit_id = $${values.length}::uuid`);
+      }
+      values.push(q.limit);
+      const limitIdx = values.length;
+      const res = await client.query(
+        `
+          SELECT
+            c.id::text,
+            c.unit_id::text,
+            u.unit_number,
+            c.triggered_at::text,
+            c.duration_sec,
+            c.camera_facing,
+            c.samsara_clip_url,
+            c.samsara_clip_id,
+            c.trigger_kind,
+            c.linked_harsh_event_id::text,
+            c.retention_expires_at::text
+          FROM telematics.dashcam_clips c
+          LEFT JOIN mdata.units u ON u.id = c.unit_id
+          WHERE ${conditions.join(" AND ")}
+          ORDER BY c.triggered_at DESC, c.id DESC
+          LIMIT $${limitIdx}
+        `,
+        values
+      );
+      return res.rows;
+    });
+    return { rows };
+  });
 }

@@ -134,3 +134,6 @@ FAST-MERGE: money-pr-local-gate exit 0 → squash --admin (branch-policy). LEFT:
 
 **2026-10-01T02:50Z · E-41 ENGINE STATUS BOARD · branch `cursor/e41-engine-status-board-c89b`**
 E-41 · GET /api/v1/system/engine-status + catalog of registry engines + EngineStatusBoardPage at /system/engine-status (Owner); System overview card link; red when producer wrote 0 in window. Ops: verify-e41-engine-status-board. No seed. NEXT after merge: E-42 dashcam viewer.
+
+**2026-10-01T03:05Z · E-41 MERGED · PR #23615**
+FAST-MERGE squash --admin. NEXT: E-42 dashcam viewer.

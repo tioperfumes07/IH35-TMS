@@ -133,6 +133,9 @@ const BankAccountVisibilityPage = React.lazy(() => import("../pages/banking/Bank
 const CashGlSetupPage = React.lazy(() => import("../pages/banking/CashGlSetupPage").then((m) => ({ default: m.CashGlSetupPage })));
 import { SafetyLayout } from "../pages/safety/SafetyLayout";
 const EldAuditTrailViewer = React.lazy(() => import("../pages/safety/eld/EldAuditTrailViewer").then((m) => ({ default: m.EldAuditTrailViewer })));
+const DashcamViewerPage = React.lazy(() =>
+  import("../pages/safety/DashcamViewerPage").then((m) => ({ default: m.DashcamViewerPage })),
+);
 import {
   AccidentsIncidentsTab,
   CargoClaimsTab,
@@ -1954,6 +1957,7 @@ export const ROUTES = React.Children.toArray(
           <Route path="audit-425c" element={<Audit425cPage />} />
           <Route path="photo-comparison" element={<PhotoComparisonPage />} />
           <Route path="photo-comparison/:sessionUuid" element={<SessionDetailPage />} />
+          <Route path="dashcam" element={<DashcamViewerPage />} />
           <Route path="reports" element={<SafetyReportsPage />} />
           <Route path="driver-profiles/:driverId" element={<DriverSafetyProfileTab />} />
           {/* Block K (Driver Scheduler): canonical paths under /safety/* — see IH35_UNIFIED_BLUEPRINT_ADDITIONS.md §14 */}

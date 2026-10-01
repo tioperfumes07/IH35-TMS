@@ -185,6 +185,11 @@ export const SAFETY_ALIAS_TABS: { groupId: string; tab: SafetyTab }[] = [
     groupId: "incidents-claims",
     tab: { id: "photo-comparison", label: "Photo Comparison", route: "/safety/photo-comparison", badge: null },
   },
+  // E-42 Round 306 — Dashcam viewer (owner D-06). Alias so canonical SAFETY_GROUPS stays 28.
+  {
+    groupId: "incidents-claims",
+    tab: { id: "dashcam", label: "Dashcam", route: "/safety/dashcam", badge: "new", status: "Live" },
+  },
   {
     groupId: "compliance-monitoring",
     tab: { id: "audit-425c", label: "425C Audit Trail", route: "/safety/audit-425c", badge: null },
