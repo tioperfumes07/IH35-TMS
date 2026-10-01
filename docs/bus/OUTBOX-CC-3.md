@@ -984,3 +984,20 @@ Samsara troubleshooting: noPurchasesFound=true, unassignedFuelTypeVehicles=100 -
 FINDING (data, not changed): 6 USMCA-Samsara vehicles unlinked: T167/T169/T139/T162 exist in mdata.units but are owned by TRANSP with no
 lease to USMCA (entity scope correctly excludes them); KIA RIO + HONDA are non-fleet cars in the Samsara org.
 GUARD: scripts/verify-ifta-miles-never-guesses.mjs + --selftest PASS.
+
+## 2026-10-01 — ROUND 304 T-50 — Fuel & Energy efficiency (read) = integrity second signal — BUILT
+ROUND: 304 · ROW: T-50 · STATUS: shipped (read engine + route + guard).
+LIVE FIELDS (probed before coding, 200 on USMCA token): /fleet/reports/vehicles/fuel-energy -> data.vehicleReports[]
+{vehicle{id,name,energyType,externalIds}, efficiencyMpge, energyUsedKwh, fuelConsumedMl, distanceTraveledMeters,
+estCarbonEmissionsKg, estFuelEnergyCost{amount,currencyCode}, engineRunTimeDurationMs, engineIdleTimeDurationMs};
+/fleet/reports/drivers/fuel-energy -> data.driverReports[] same shape with driver{id,name}.
+ENGINE: SamsaraClient.listFuelEnergyReports + telematics/fuel-efficiency-signal.service.ts: per unit Samsara ECU burn vs our
+T-45-gated purchased gallons (reefer excluded); excess>0 = "purchases_exceed_ecu_burn" SUSPICION (no tank capacity on file ->
+no invented tolerance). Drivers linked mdata.drivers / samsara_drivers mirror, ambiguous -> null.
+ROUTE: GET /api/v1/telematics/fuel-efficiency-signal?operating_company_id&from&to.
+LIVE PROOF (USMCA Aug 2026): 21 vehicles -> consistent 9, purchases_exceed_ecu_burn 2, no_purchases_on_file 3, no_samsara_consumption 1, no_unit 6.
+T156 bought 859.4 gal vs ECU burn 678.4 (+180.9); T170 776.2 vs 621.2 (+155.0). 19 drivers, 15 linked.
+FINDING (cross-lane, NOT changed — integrity engine owner): safety.v_fuel_mpg_anomalies is NOT a fuel signal. Live viewdef selects
+FROM safety.dot_inspections, gallons/computed_mpg = NULL, anomaly_type from csa_points>50/<1. The integrity "fuel_anomaly" rule
+therefore has ZERO fuel signals today; this T-50 output is the only real one.
+GUARD: scripts/verify-fuel-efficiency-signal-never-invents.mjs + --selftest PASS.
