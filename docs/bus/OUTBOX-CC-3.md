@@ -1079,3 +1079,34 @@ LIVE PROOF (rolled back, 3 ticks, 15 live units): tick1 665 / tick2 93 / tick3 8
 846 transitions, 543 with load_id (e.g. T175 -> load 13636, T164 -> 13630), stop_id 0 (no live stop fence crossed in the window).
 GUARD: scripts/verify-one-geofence-inside-decider.mjs + --selftest PASS; vitest state-machine 26/26.
 NEXT: E-09.
+
+CC-3 | ACK ORDERS-2026-10-01 | E-08 | GO
+
+## 2026-10-01 — ORDERS row 1 — E-08 LANDED
+what: one inside/outside decider (processGeofenceDetectionsForGpsPoint -> geo.geofence_events); state machine reads it; transitions
+carry load_id/stop_id (stop by fence label `load-<id>-stop-<n>` or the stop's location_ref_id). · proof: #23626 merged, local gate only
+red = verify-fuel-transactions-per-load baseline drift (pre-existing); rolled-back 3 ticks: disagreement 89 -> 1, 543/846 transitions
+with load_id. · blocker: none. stop_id stays 0 until the Lead's E-25 mints load-stop fence labels (0 such labels live today). · next: E-09.
+
+## 2026-10-01 — ORDERS row 2 — E-09 arrival detection: RETIREMENT RULING DRAFT (for the Lead's signature)
+MEASURED LIVE:
+- dispatch.stop_arrivals: 0 rows ever (pg_stat n_tup_ins 3 = rolled-back proofs). It is NOT idle: idx_scan 12,564,745 — arrival-detection
+  runs on every position fix (both poll writers call detectArrivalsForIngestedPoint) and writes nothing.
+- The canonical path already produces arrivals: mdata.load_stops.actual_arrival_at stamped by processGeofenceDetectionsForGpsPoint on
+  an 'entered' event of a load-stop fence -> 4 rows source 'eld_geofence' (newest 2026-09-28 17:35Z); 216 manual; 25 NULL-source.
+- Load-stop fences (label `load-<id>-stop-<n>`) live: 0 -> the canonical path waits on the Lead's E-25 label minting, not on code.
+READERS OF dispatch.stop_arrivals (all read an empty table today):
+  dispatch/analytics/late-arrival.service.ts (E-25 late arrival) · dispatch/customer-notify.service.ts · dispatch/detention.service.ts ·
+  dispatch/detention-approval.service.ts · driver-manager/role-views/dm-home.service.ts · customers/relationship-score/scorer.service.ts ·
+  driver/arrival-prompts.routes.ts (driver "did you arrive?" prompt; the only writer-side UPDATE) · system/engine-status.catalog.ts.
+PROPOSED RULING (draft — NOT applied; CC-3 did not widen arrival-detection):
+1. ONE arrival fact = mdata.load_stops.actual_arrival_at / actual_departure_at, stamped only by processGeofenceDetectionsForGpsPoint
+   from geo.geofence_events (or manual). dispatch.stop_arrivals is RETIRED as a second arrival path (kept, not dropped; no deletes).
+2. Retire the per-fix 250 ft check: remove detectArrivalsForIngestedPoint from both poll writers in samsara-positions.service.ts
+   (saves ~1 index scan per fix; it has produced 0 rows).
+3. Re-point the 7 readers above to load_stops.actual_arrival_at/_departure_at (+ actual_arrival_source as evidence). Owner per reader:
+   dispatch/* + dm-home + scorer -> the seat that owns Dispatch analytics (Lead to assign); arrival-prompts -> CC-3 (fire the prompt from
+   the detector's 'entered' event on a load-stop fence instead of the 250 ft check).
+4. Guard: no INSERT INTO dispatch.stop_arrivals anywhere; no new reader of it.
+On signature, CC-3 executes 2 + the arrival-prompts part of 3 + the guard in one PR.
+next: E-05 (feature-detected re-point onto telematics.unit_stop_events).
