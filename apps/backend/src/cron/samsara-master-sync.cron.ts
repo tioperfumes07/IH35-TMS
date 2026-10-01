@@ -49,8 +49,14 @@ async function isSamsaraEnabledForTenant(client: DbClient, operatingCompanyId: s
 export function initializeSamsaraMasterSyncCron(app: FastifyInstance) {
   if (initialized) return;
   initialized = true;
-  if (process.env.ENABLE_SAMSARA_MASTER_SYNC_CRON === "false") {
-    app.log.info("Samsara master sync cron disabled via ENABLE_SAMSARA_MASTER_SYNC_CRON=false");
+  // ORDERS 2026-10-01 rule 2: this cron INSERTs/UPDATEs business records (mdata.drivers, mdata.units,
+  // mdata.equipment) from Samsara, so it ships flag-OFF; the Lead carries the switch to the owner.
+  // Measured 2026-10-01: assets_master 48/48 and trailers_master 48/48 runs failed in 24 h on
+  // units_vin_key / equipment_equipment_number_key duplicates plus "deadlock detected" (two instances
+  // racing the same rows). The read-only Samsara mirrors (integrations.samsara_*) and the manual import
+  // routes are unaffected.
+  if (process.env.ENABLE_SAMSARA_MASTER_SYNC_CRON !== "true") {
+    app.log.info("Samsara master sync cron not scheduled: ENABLE_SAMSARA_MASTER_SYNC_CRON is not true (writes business records)");
     return;
   }
 

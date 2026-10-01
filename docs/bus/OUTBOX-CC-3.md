@@ -1269,3 +1269,13 @@ FINDING (Samsara master sync — business records, reported): integration_sync_l
 unit_upsert_failed "units_vin_key" duplicates + "deadlock detected" (two instances), trailer_upsert_failed "equipment_equipment_number_key".
 It upserts mdata.units / equipment every 30 min — per ORDERS rule 2 a business-record writer should ship flag-OFF. Next CC-3 row.
 guard: scripts/verify-samsara-one-token-path-and-measured-shapes.mjs + --selftest PASS.
+
+## 2026-10-01 — Samsara master sync: business-record writer now opt-in (ORDERS rule 2)
+FOUND: cron/samsara-master-sync.cron.ts (default ON) INSERT/UPDATEs mdata.drivers, mdata.units, mdata.equipment from Samsara every hour
+on two instances. integration_sync_log, last 24 h: assets_master 48/48 failed (units_vin_key duplicates + "deadlock detected"),
+trailers_master 48/48 failed (equipment_equipment_number_key duplicates); drivers_master 48 runs writing mdata.drivers — the likely
+source of the 32 Samsara-id -> two-driver pairs (row 5 report).
+FIX: the cron schedules only with ENABLE_SAMSARA_MASTER_SYNC_CRON=true (was: on unless =false). Mirrors (integrations.samsara_*),
+positions, pairing and the manual import routes are untouched. LEAD -> OWNER: keep OFF until the 32 driver pairs and the VIN /
+equipment-number collisions are decided; then the sync needs a single-runner lock before it is switched back on.
+guard: scripts/verify-samsara-master-sync-flag-off.mjs + --selftest PASS; vitest cron 46/46.
