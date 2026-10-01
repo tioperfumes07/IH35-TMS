@@ -67,9 +67,8 @@
     "factoring.customer_factor_assignment",
     "factoring.factor",
     "factoring.letter_of_release",
-    "factoring.reserve_movement",
-    "fuel.fuel_card_assignments"
+    "factoring.reserve_movement"
   ],
-  "unprotected_count": 88,
+  "unprotected_count": 89,
   "measured_at": "2026-10-01"
 }
