@@ -789,3 +789,52 @@ driverAtTimeSql, report the other 70 as a coverage gap -- building on the alread
 guard 11971's own measurement).
 
 — CC-2
+
+## ROUND 305 B-46 — THE FUEL SIDE OF INTEGRITY HAS NO GALLONS, ANSWERED FROM THE API (DONE)
+
+Answered from raw_payload (what Relay's API actually sent us, verbatim — ground truth, not
+reasoning), live USMCA:
+
+Relay's response shape: `products` carries NO fuel/gallon data on any row (the only 2 of 119
+non-empty `products` line items are CAT Scales weigh-station fees, zero fuel_items on both --
+correctly non-fuel). `fuel_items` (a SEPARATE field Relay's own response includes) carries REAL
+volume data on 117 of 119 rows. Our own request (fetchAllRelayFuelTransactions) sends no
+field-selection param at all -- it isn't omitting anything; this is Relay's default response
+shape. Our ingest (upsertRelayFuelTransaction) already correctly parses and stores this into
+integrations.relay_fuel_transaction_lines.volume. The premise "products is where gallons live"
+does not hold against the real API response -- gallons live in fuel_items, Relay already sends
+it, and we already capture it.
+
+The 52 zero/null-gallon fuel.fuel_transactions rows are NOT Relay rows at all. Traced via
+source_row_hash: all 52 carry the literal prefix "alwaystrack-def:", written by
+scripts/feed/close-faro-day.mjs, which hardcodes gallons=0 for every DEF line item extracted
+from a Faro feed record (Faro's own DEF line carries only a dollar amount, no volume figure --
+a structurally separate, honest gap, unrelated to Relay). Confirmed exhaustively: every one of
+the OTHER 125 fuel.fuel_transactions rows has gallons > 0; every one of the 52
+"alwaystrack-def:"-hashed rows has gallons = 0 -- an exact, airtight complement.
+
+relay-fuel-canonical-bridge.ts's bridgeRelayFuelToCanonical() already computes real gallons
+from fuel_items correctly, but is dead code -- called from nowhere. A ROUND 43 owner ruling
+deliberately cut the Relay->fuel.fuel_transactions bridge after it manufactured 39 confirmed
+duplicate fuel rows against Dreamline's own statement. Relay's gallons are captured in our own
+DB and simply never promoted further, by design.
+
+Webhook: the original blueprint (IH35_MASTER_BLUEPRINT_v3_FULL.md) specifies Relay webhook
+ingestion as the intended method. What's built instead is a once-daily polling cron
+(relay-fuel-ingest.cron.ts) -- no webhook receiver route exists anywhere in the backend. This
+architecture divergence (poll instead of the spec'd webhook) is the code-confirmed cause of the
+multi-day lag. UNVERIFIED (cannot check from this repo): whether Relay's live API still offers
+a webhook registration option today -- that needs Relay's own current API docs/account, outside
+this codebase; not guessed at.
+
+Agrees with the Lead's own conclusion: Relay is not a timely source and should not be the basis
+of same-day fuel-theft detection. Shipped
+scripts/verify-steps/12003-verify-relay-fuel-gallons-root-cause.mjs (claim-reserved first, PR
+#23587), locking all of the above as hard invariants (not ratchets where the population shape
+itself is the point) so a future silent regression in either population's character is caught.
+
+NEXT: B-47 (build the fuel-integrity component so it refuses to flag a driver on a single
+signal, now that stop-odometer-capture.service.ts gives a real second, independent miles
+signal).
+
+— CC-2
