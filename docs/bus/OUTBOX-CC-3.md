@@ -799,3 +799,21 @@ actually run), or if arrival-detection.service.ts stops using the shared driverA
 LIVE PROOF: apps/backend npx tsc --noEmit exit 0. Guard --selftest and real-file run both PASS.
 Full chain proven live and pasted above. This is not a merge SHA claimed as proof -- the actual
 function was called, the actual row was built from actual production data, then rolled back.
+
+## CC-3 — ROUND 303 T-41 — CORRECTION: T-21 geofence mileage capture IS built, wired, and live-healthy right now
+
+T-41 as issued says "T-21, still NOT BUILT." Checked before building anything, per this session's
+own standing practice -- it is already built, merged (#23453), wired (initializeGeofenceOdometer
+CapturesCron, apps/backend/src/index.ts:1558), and actively running:
+
+  telematics.geofence_odometer_captures   711 rows total (up from 690 at T-21's own original
+                                           report -- growing), max created_at = 2026-10-01T01:20Z
+                                           (minutes old at the time of this check), 5 new rows in
+                                           the last hour alone.
+  odometer_source breakdown:              interpolated=615, absent=73 (honest gap, never
+                                           guessed), real_obd=23 -- the exact same honest
+                                           labelling shape T-21's original report described.
+
+Nothing built here -- the premise was stale, corrected with live evidence instead. 604 Love's
+geofences feeding the PM engine and the integrity engine (this item's own stated purpose) is
+already happening, today, live.
