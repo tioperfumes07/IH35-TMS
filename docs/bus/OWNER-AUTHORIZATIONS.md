@@ -6866,3 +6866,22 @@ Owner in chat to CC-2, 2026-10-01: "ALL CUSTOMERS WITH THE NAME BROKERS, LOGISIT
 BROKERS." Master data classification, not a business transaction (ROUND 319 item 3 untouched). NOT COVERED: names that only say
 transport / trucking / express / carrier (owner classifies those; list in OUTBOX-CC-2), any transaction, any other customer field.
 
+## AUTH-199
+issued_at: 2026-10-01T18:55:00Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80).
+  (1) accounting.journal_entries: reverse exactly JE cf78c2aa-f78c-497d-9062-4e4ba9eb3100
+      ("Bank reconciliation service charge · session 7a7d1da9…", $5.00 Dr 6300 / Cr 1005) through
+      reverseJournalEntryNoFlip (linked reversing JE; nothing deleted). Interest JE 2ef10657 stays.
+  (2) banking.reconciliation_sessions 7a7d1da9: null service_charge_journal_entry_id, then
+      postReconciliationAdjustments → createAndPostServiceChargeExpense (vendor=Petty Cash /
+      bank name, category=6300, paid-from=1005) → stamp service_charge_expense_id +
+      service_charge_journal_entry_id to the expense document's JE.
+  Root engine fix ships in the same change (recon-adjustments.service.ts); costs-guard no longer
+  exempts bank_reconciliation. One audit via existing JE/expense writers.
+action: OWNER_AUTH_ID=AUTH-199 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-01-cursor-auth199-reverse-sc-repost-expense.ts
+  Rehearse first: REHEARSAL=1 DATABASE_URL=<throwaway> npx tsx scripts/ops/2026-10-01-cursor-auth199-reverse-sc-repost-expense.ts
+expires_at: 2026-10-02T18:55:00Z
+status: OPEN
+derivation: docs/bus/ORDERS-2026-10-01-CURSOR.md Lead ruling 17:20Z + ORDERS-2026-10-01-ALL-SEATS-COMMON.md CURSOR #1.
+THIS AUTHORIZATION DOES NOT COVER: interest JE 2ef10657, any other JE, any amount other than the $5.00 SC reverse+repost, any QBO write-back.
+
