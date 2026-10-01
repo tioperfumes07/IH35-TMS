@@ -206,6 +206,7 @@ const VehicleProfilePage = React.lazy(() => import("../pages/fleet/VehicleProfil
 const FleetHomePage = React.lazy(() => import("../pages/fleet/FleetHomePage").then((m) => ({ default: m.FleetHomePage })));
 const TrailerProfilePage = React.lazy(() => import("../pages/fleet/TrailerProfilePage").then((m) => ({ default: m.TrailerProfilePage })));
 const TransfersInProgressPage = React.lazy(() => import("../pages/fleet/TransfersInProgressPage").then((m) => ({ default: m.TransfersInProgressPage })));
+const RosterIntegrityPage = React.lazy(() => import("../pages/fleet/RosterIntegrityPage").then((m) => ({ default: m.RosterIntegrityPage })));
 const ComplianceDashboardPage = React.lazy(() => import("../pages/compliance/ComplianceDashboardPage").then((m) => ({ default: m.ComplianceDashboardPage })));
 const PropertyTaxRenditionPage = React.lazy(() => import("../pages/compliance/PropertyTaxRenditionPage").then((m) => ({ default: m.PropertyTaxRenditionPage })));
 const Form2290Filings = React.lazy(() => import("../pages/compliance/Form2290Filings").then((m) => ({ default: m.Form2290Filings })));
@@ -5013,6 +5014,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <DriverHosDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fleet/roster-integrity"
+          element={
+            <ProtectedRoute>
+              <RosterIntegrityPage />
             </ProtectedRoute>
           }
         />
