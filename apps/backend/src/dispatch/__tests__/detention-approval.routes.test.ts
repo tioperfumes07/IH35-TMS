@@ -38,7 +38,7 @@ describe("GAP-19 detention approval gate", () => {
   it("records dwell evidence derived from stop timestamps with Samsara projection join", () => {
     expect(service).toContain("dispatch.detention_evidence");
     expect(service).toContain("derived_from_stop_timestamps");
-    expect(service).toContain("dispatch.stop_arrivals");
+    expect(service).toContain("STOP_ARRIVAL_EVENTS_SQL");
     expect(service).toContain("ls.actual_departure_at");
     expect(service).toContain("integrations.samsara_vehicles");
     expect(service).toContain("sv.local_unit_id = de.unit_id");

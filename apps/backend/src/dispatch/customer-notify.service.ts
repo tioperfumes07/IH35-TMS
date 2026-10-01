@@ -7,6 +7,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { sendEmail } from "../notifications/email.service.js";
 import { sendSms } from "../sms/sender.js";
+import { STOP_ARRIVAL_EVENTS_SQL } from "../telematics/stop-arrival-events.js";
 
 export type CustomerNotifyMilestone =
   "departed" | "arrived" | "near_arrival" | "delayed";
@@ -456,7 +457,7 @@ export async function processStopArrivalNotifications(
   }>(
     `
       SELECT l.id::text AS load_id, ls.id::text AS stop_id, ls.stop_type::text AS stop_type
-      FROM dispatch.stop_arrivals sa
+      FROM (${STOP_ARRIVAL_EVENTS_SQL}) sa
       JOIN mdata.load_stops ls ON ls.id = sa.stop_id
       JOIN mdata.loads l ON l.id = ls.load_id
                         AND l.operating_company_id = sa.operating_company_id

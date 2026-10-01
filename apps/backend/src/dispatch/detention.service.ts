@@ -15,6 +15,7 @@ import {
 } from "./detention.lib.js";
 import { dispatchAlertOrderBy, type DispatchAlertQuery } from "./dispatch-alert-query.js";
 import { isTerminalLoadStatus } from "./load-state-machine.js";
+import { STOP_ARRIVAL_EVENTS_SQL } from "../telematics/stop-arrival-events.js";
 
 async function withCompany<T>(userId: string, operatingCompanyId: string, fn: (client: PoolClient) => Promise<T>) {
   return withCurrentUser(userId, async (client) => {
@@ -39,7 +40,7 @@ export async function syncDetentionEventsFromStopArrivals(userId: string, operat
     const started = await client.query(
       `
         INSERT INTO dispatch.detention_events (
-          operating_company_id, load_id, stop_id, stop_arrival_id, unit_id, driver_id,
+          operating_company_id, load_id, stop_id, geofence_event_id, unit_id, driver_id,
           status, started_at, free_time_minutes, rate_per_hour_cents, notify_threshold_minutes
         )
         SELECT
@@ -60,7 +61,7 @@ export async function syncDetentionEventsFromStopArrivals(userId: string, operat
             COALESCE(ROUND(c.detention_rate_per_hour * 100)::int, ROUND(c2.detention_rate_per_hour * 100)::int, 0)
           ),
           $2::int
-        FROM dispatch.stop_arrivals sa
+        FROM (${STOP_ARRIVAL_EVENTS_SQL}) sa
         JOIN mdata.load_stops ls ON ls.id = sa.stop_id
         JOIN mdata.loads l ON l.id = ls.load_id
                           AND l.operating_company_id = sa.operating_company_id

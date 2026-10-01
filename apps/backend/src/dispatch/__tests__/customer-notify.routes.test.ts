@@ -48,7 +48,7 @@ describe("dispatch customer-notify routes (B21-D9)", () => {
     const src = readFileSync(servicePath, "utf8");
     expect(src).toContain("processStopArrivalNotifications");
     expect(src).toContain("processEtaUpdateNotifications");
-    expect(src).toContain("dispatch.stop_arrivals");
+    expect(src).toContain("STOP_ARRIVAL_EVENTS_SQL");
     expect(src).toContain("latest_eta_prediction");
     expect(src).toContain("syncCustomerNotifyFromEvents");
   });

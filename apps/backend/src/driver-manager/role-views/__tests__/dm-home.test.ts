@@ -26,8 +26,8 @@ function mockClient(tableRowMap: Record<string, MockRows>) {
         return { rows: [{ ok: false }] };
       }
 
-      if (sql.includes("dispatch.stop_arrivals") && sql.includes("late_count")) {
-        return { rows: tableRowMap["dispatch.stop_arrivals"] ?? [] };
+      if (sql.includes("geo.geofence_events") && sql.includes("late_count")) {
+        return { rows: tableRowMap["geo.geofence_events"] ?? [] };
       }
 
       if (sql.includes("mdata.drivers") && sql.includes("cdl_expires_at")) {
@@ -72,7 +72,7 @@ describe("getDriverManagerHomeData", () => {
           drug_test_due_date: null,
         },
       ],
-      "dispatch.stop_arrivals": [
+      "geo.geofence_events": [
         { driver_id: "d-1", driver_name: "Jane Doe", late_count: "2" },
         { driver_id: "d-2", driver_name: "John Smith", late_count: "1" },
       ],

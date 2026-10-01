@@ -1326,3 +1326,20 @@ can restore them on a word). FIX in this PR: one shared resolver (integrations/s
 used by the master sync, DVIR import, driver-profile Samsara tab, routes, messaging (every account of the driver), fuel efficiency and
 driven-miles HOS cross-check. Proof (rolled back): master sync drivers 34/34 resolved (was 31 + 3 false conflicts); DVIR 57/59 resolved.
 guard: scripts/verify-cc3-driver-resolution-uses-canonical-map.mjs + --selftest PASS.
+
+## 2026-10-01 — E-09: dispatch.stop_arrivals reader count = 0 (Lead: sign the retirement)
+what: shared arrival source telematics/stop-arrival-events.ts (STOP_ARRIVAL_EVENTS_SQL): first 'entered' geo.geofence_events row on a
+load-stop fence (label load-<id>-stop-<n>, E-25) mapped to its mdata.load_stops row; same columns the table had (id = fence event id);
+departed_at = next 'exited'; driver confirmation = append-only audit event 'dispatch.stop_arrival_confirmed' (fence events are immutable,
+same pattern as the existing 'dismissed').
+Readers repointed (8 — one more than the 7 listed: telematics/driver-day-summary.routes.ts): late-arrival analytics (2 sites), customer
+notify, detention sync, detention approval, DM home, customer relationship scorer, driver arrival prompts (list / confirm / dismiss),
+driver day summary. Engine-status E-09 output -> geo.geofence_events.
+Migration 202615150900 (cc-3 band, claimed #23692): dispatch.detention_events.geofence_event_id -> geo.geofence_events (stop_arrival_id
+kept, nullable, history; 0 rows either side). Applies on the next deploy.
+proof (rolled back): load 13624 stop 2 — detector wrote the 'entered' event, stamped load_stops.actual_arrival_at (eld_geofence), and
+STOP_ARRIVAL_EVENTS_SQL returned exactly that stop/load; migration column present. vitest dispatch/driver/dm/customers/telematics/system:
+843 pass (4 pre-existing load-id-reservation failures, not mine).
+REMAINING (Lead): sign the retirement; then CC-3 removes the legacy writer (arrival-detection per-fix call, 0 rows ever) and the table
+is kept read-only. Arrivals produce rows once E-25 mints load-stop fence labels (0 live today).
+guard: scripts/verify-no-reader-of-stop-arrivals.mjs + --selftest PASS.

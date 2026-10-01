@@ -76,7 +76,7 @@ describe("late-arrival analytics (GAP-30)", () => {
     expect(src).toContain('case "driver"');
     expect(src).toContain('case "customer"');
     expect(src).toContain('case "lane"');
-    expect(src).toContain("dispatch.stop_arrivals");
+    expect(src).toContain("STOP_ARRIVAL_EVENTS_SQL");
     expect(src).toContain("set_config('app.operating_company_id'");
   });
 

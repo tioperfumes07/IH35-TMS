@@ -8,6 +8,7 @@
 import { lateArrivalGraceMinutes } from "../../dispatch/late-arrivals.service.js";
 import { computeDriverScoreFromCounts } from "../../safety/driver-scoring.service.js";
 import { scanAllDrivers } from "../../safety/expiry-tracking/cert-monitor.service.js";
+import { STOP_ARRIVAL_EVENTS_SQL } from "../../telematics/stop-arrival-events.js";
 
 export type DriverManagerAttentionSeverity = "info" | "warning" | "error" | "critical";
 
@@ -136,7 +137,7 @@ async function loadLateArrivals7d(
   client: DbClient,
   ociId: string
 ): Promise<{ total: number; byDriver: DriverLateArrivalRow[] }> {
-  if (!(await tableExists(client, "dispatch.stop_arrivals"))) {
+  if (!(await tableExists(client, "geo.geofence_events"))) {
     return { total: 0, byDriver: [] };
   }
 
@@ -147,7 +148,7 @@ async function loadLateArrivals7d(
         sa.driver_id::text AS driver_id,
         trim(concat(coalesce(d.first_name, ''), ' ', coalesce(d.last_name, ''))) AS driver_name,
         count(*)::int AS late_count
-      FROM dispatch.stop_arrivals sa
+      FROM (${STOP_ARRIVAL_EVENTS_SQL}) sa
       JOIN mdata.load_stops ls ON ls.id = sa.stop_id
       JOIN mdata.loads l ON l.id = ls.load_id
       LEFT JOIN mdata.drivers d ON d.id = sa.driver_id
@@ -383,7 +384,7 @@ function buildAttentionItems(input: {
   if (input.lateArrivals > 0) {
     items.push({
       item_id: "late_arrivals_7d",
-      source: "stop_arrivals",
+      source: "geofence_events",
       severity: input.lateArrivals >= 5 ? "error" : "warning",
       severity_rank: severityRank(input.lateArrivals >= 5 ? "error" : "warning"),
       title: `${input.lateArrivals} late arrival${input.lateArrivals === 1 ? "" : "s"} (7d)`,

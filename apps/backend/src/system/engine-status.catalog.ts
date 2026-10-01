@@ -142,7 +142,8 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     expectedWindowHours: 6,
     shouldProduce: true,
     syncKinds: [],
-    output: { relation: "dispatch.stop_arrivals", tsColumn: "created_at", companyColumn: "operating_company_id" },
+    // E-09: arrivals are geo.geofence_events (load-stop fences); dispatch.stop_arrivals has no readers.
+    output: { relation: "geo.geofence_events", tsColumn: "created_at", companyColumn: "operating_company_id" },
     ownerSeat: "CC-3",
     kind: "engine",
   },
