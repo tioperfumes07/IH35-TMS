@@ -114,6 +114,29 @@ export async function nextPaymentDisplayId(client: Queryable, operatingCompanyId
   return `${prefix}${String(nextNumber).padStart(5, "0")}`;
 }
 
+/** ROUND 312 B-2 — QBO Make Deposit display series DEP-YYYY-NNNNN. */
+export const DEPOSIT_DISPLAY_ID_PATTERN = /^DEP-[0-9]{4}-[0-9]{5}$/;
+
+export async function nextDepositDisplayId(client: Queryable, operatingCompanyId: string, referenceDate: Date = new Date()) {
+  const year = toYear(referenceDate);
+  const prefix = `DEP-${year}-`;
+  await withDisplayLock(client, `accounting.deposit.display_id:${operatingCompanyId}`);
+  const res = await client.query<{ next_number: number }>(
+    `
+      SELECT COALESCE(
+        MAX(CASE WHEN display_id ~ ('^' || $2 || '[0-9]+$') THEN substr(display_id, length($2) + 1)::bigint END),
+        0
+      ) + 1 AS next_number
+      FROM accounting.deposits
+      WHERE operating_company_id = $1::uuid
+        AND display_id LIKE $2 || '%'
+    `,
+    [operatingCompanyId, prefix]
+  );
+  const nextNumber = Number(res.rows[0]?.next_number ?? 1);
+  return `${prefix}${String(nextNumber).padStart(5, "0")}`;
+}
+
 export async function nextCreditMemoDisplayId(client: Queryable, operatingCompanyId: string, referenceDate: Date = new Date()) {
   const year = toYear(referenceDate);
   const prefix = `CM-${year}-`;
