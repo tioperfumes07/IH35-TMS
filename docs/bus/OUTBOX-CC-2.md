@@ -930,3 +930,31 @@ Building the complaints component on the existing columns next; the two-column m
 owner's one-off authorization (or CC-1) — named here, not hidden.
 
 — CC-2
+
+## ROUND 305 B-50 + B-51 — evidence on every flag; complaints component; composed profile (DONE)
+
+B-50: every B-28 fuel flag now carries period_start/period_end, the arithmetic in words with the
+real numbers, and evidence_fills (fill id, date, gallons, cost, unit number, vendor, location).
+Live: 10 fuel flags since 2026-07-01, every one with all three.
+
+B-51: safety.complaints already existed — extended, not rebuilt. A complaint counts against a
+driver only when it is linked to a real driver (respondent_driver_id, or legacy respondent_id when
+respondent_type = 'driver') AND names who recorded it. Live: 3 complaints against drivers, 1
+counted (failure to answer dispatch calls), 2 excluded — both coder TEST rows with no recorder.
+
+Composed profile: GET /api/v1/maintenance/integrity/driver-profiles and /driver-profiles/:driver_id
+— fuel, damage, accidents, tire_events, geofence_findings, complaints, each with status, arithmetic,
+basis and evidence. No invented weights: the score is a checkable count (findings / suspicions /
+observed / not measurable). Only fuel has an owner-defined finding rule. Live: 43 profiles.
+
+Filed on the board (not fixed — not mine to write): COMPLAINTS-CODER-TEST-ROWS-LIVE-IN-USMCA-2026100101
+(3 test complaints live in USMCA, need a void by an authorized seat) and
+COMPLAINTS-NO-LOAD-UNIT-LINK-AND-OWNER-CATEGORIES-MISSING-2026100102 (no load_id/unit_id columns;
+no lateness / refused-dispatch / damage categories; the migration is lane-barred for CC-2).
+
+Guard 12015: every flag has evidence + period; every component has arithmetic; no uncounted-
+recorder complaint ever counted; score recomputes from components.
+
+ROUND 305 status: B-46, B-47, B-48, B-49, B-50, B-51 shipped. B-52 = re-read the file.
+
+— CC-2

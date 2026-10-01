@@ -8,6 +8,7 @@ import { computeDriverDamageScorecard } from "./driver-damage-scorecard.service.
 import { computeDriverFuelIntegrity } from "./fuel-integrity.service.js";
 import { listIntegrityFindingsAttribution } from "./integrity-findings-attribution.service.js";
 import { computeDamageEventAttribution } from "./damage-event-attribution.service.js";
+import { computeDriverIntegrityProfiles } from "./driver-integrity-profile.service.js";
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -197,8 +198,6 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
       return scorecards.flatMap((driver) =>
         driver.flags.map((flag) => ({
           driver_id: driver.driver_id,
-          period_start: periodStart,
-          period_end: periodEnd,
           ...flag,
         }))
       );
@@ -266,5 +265,34 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
     return withCompany(user.uuid, query.data.operating_company_id, (client) =>
       computeDamageEventAttribution(client, query.data.operating_company_id, periodStart, periodEnd)
     );
+  });
+
+  // ROUND 305 B-50/B-51 — the driver integrity profile: named components (fuel, damage, accidents,
+  // tire events, geofence findings, complaints), each with status, arithmetic and evidence; the
+  // score is a checkable count, never an invented weighted blend.
+  app.get("/api/v1/maintenance/integrity/driver-profiles", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const query = periodQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+    const { periodStart, periodEnd } = resolvePeriod(query.data);
+    const rows = await withCompany(user.uuid, query.data.operating_company_id, (client) =>
+      computeDriverIntegrityProfiles(client, query.data.operating_company_id, periodStart, periodEnd)
+    );
+    return { rows };
+  });
+  app.get("/api/v1/maintenance/integrity/driver-profiles/:driver_id", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = authed(req, reply);
+    if (!user) return;
+    const query = periodQuerySchema.safeParse(req.query ?? {});
+    const params = z.object({ driver_id: z.string().uuid() }).safeParse(req.params ?? {});
+    if (!query.success || !params.success) return reply.code(400).send({ error: "validation_error" });
+    const { periodStart, periodEnd } = resolvePeriod(query.data);
+    const rows = await withCompany(user.uuid, query.data.operating_company_id, (client) =>
+      computeDriverIntegrityProfiles(client, query.data.operating_company_id, periodStart, periodEnd)
+    );
+    const row = rows.find((r) => r.driver_id === params.data.driver_id);
+    if (!row) return reply.code(404).send({ error: "no_integrity_data_for_driver_in_period" });
+    return row;
   });
 }
