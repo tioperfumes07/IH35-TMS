@@ -80,6 +80,12 @@
       "reason": "[HOLD-FOR-JORGE — FINANCIAL CLUSTER] ACCT-ECON-05 additive backfill RETIRE mdata.qbo_vendors → accounting.qbo_vendors for residual masters (Δ≈36). Idempotent; never DROP retire table; flags stay OFF. Owner Neon-applies then GUARD re-proves lucia counts.",
       "block": "ACCT-ECON-05",
       "added_at": "2026-07-28"
+    },
+    {
+      "file": "202615160000_load_real_driven_miles.sql",
+      "reason": "[HOLD — LOCK, not data] Additive nullable columns on mdata.loads / mdata.load_stops (ORDER-2026-09-04 real driven miles). Prod pre-deploy failed twice (dep-dauvvvk1nsns73fvmip0 06:40Z, dep-dav02fm0tbcc73cvr90g 06:46Z) with 'canceling statement due to lock timeout' at this file: a 58-minute-old transaction (pgbouncer pid 24562, neondb_owner) holds AccessShareLock on mdata.loads, so ALTER TABLE can never take ACCESS EXCLUSIVE within lock_timeout 5s — and the failure blocked every seat's deploy. Registered HELD so pre-deploy SKIPS it. Code degrades safely (storageReady feature-detect: on-demand compute, cron no-op). Apply by hand in a quiet window after the long transaction is closed, then ledger-backfill. CI validates on a fresh DB regardless.",
+      "added_at": "2026-10-01",
+      "block": "ORDER-2026-09-04 three-mile CPM part A (CC-1)"
     }
   ],
   "_integrity_note": "Every entry appears EXACTLY ONCE (file is the key). applied_on_prod MUST agree with the pinned prod-ledger snapshot scripts/lib/prod-migration-ledger-checksums.json for any file inside its window (>= 202606010000). Enforced by scripts/verify-steps/1361-verify-held-registry-integrity.mjs. Repaired 2026-07-25: 119 entries collapsed to 110 (9 duplicates, 7 of them carrying contradictory applied_on_prod), and 79 entries that were already applied on prod were stamped. Before the repair, verify-schema-parity-from-prod (step 1437) derived held-unapplied columns from this file and therefore treated applied migrations as unapplied.",
