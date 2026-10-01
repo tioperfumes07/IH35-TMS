@@ -690,3 +690,105 @@ type shows.
 **NOT adjusted, per the order.** No JE reversed, no sides swapped, no balance corrected. This report
 names the exact mechanism and the exact date range (2026-08-29 to 2026-09-21) and source (DEFECT 3
 remediation JEs) for whoever owns fixing it next.
+
+## ROUND 303 A-40 — wo_type "tire" ROUTED BY source_type: ALREADY LIVE (no action)
+Verified on origin/main (apps/backend/src/maintenance/work-orders.routes.ts:944-961): the exact fix
+this item asks for shipped under ROUND 302 A-34 (same file, same ruling doc). `tireIsTier1Roadside`
+gates driver_id/load_id enforcement on source_type==="RS"; source_type "IS" (in-house yard tire
+swap) is never forced to carry a driver or load. `verify-transaction-linkage-law.mjs --static-only`
+confirms: "[OK] ... tire is correctly gated by source_type (RS required, IS never forced)." Nothing
+to build here -- A-40 was A-34 renumbered.
+
+## ROUND 303 A-41 — WORK ORDER WIZARD AUDIT: THE BACKEND FIX (A-40/A-34) NEVER REACHED THE FRONTEND
+Owner: "I TOLD YOU ABOUT THE ISSUES WITH THE WORK ORDER WIZARD, MANY MORE." Audited both files that
+gate Create-WO submission end to end before changing anything (LANE forbids me from editing
+apps/frontend -- Cursor owns screens -- so this is the report, handed to Cursor to fix):
+
+**THE DEFECT, confirmed live in two places, both stale from before A-34/A-40's ruling:**
+1. `apps/frontend/src/pages/maintenance/components/CreateWorkOrderModal.tsx:570-573` -- the modal's
+   own pre-save gate: `"Driver and unit required for non-PM operational types", ok: selectedType
+   === "pm" || (driver_id && unit_id)`. This demands a driver for EVERY non-pm wo_type -- repair,
+   tire, AND accident -- with **no source_type check at all**. Fails the whole submit with a toast
+   ("Complete required work-order fields before submit") if a Tier-2 (in-house, source_type IS)
+   tire WO has no driver picked.
+2. `apps/frontend/src/pages/maintenance/components/CreateWOSectionIdentification.tsx:87` -- `const
+   requireDriverAndLoad = type === "repair" || type === "tire" || type === "accident";` drives the
+   HTML `required` attribute on the driver_id (line 192) and load_id (line 217) hidden inputs, and
+   the field is labeled "Driver locked -- assigned to this trip" (line 189) even for a WO type that,
+   per the Lead's own ruling, may have no trip at all.
+
+**Why this is exactly A-40's own defect, one layer up:** the backend (work-orders.routes.ts:953-961)
+was fixed under A-34 to never force driver_id/load_id on a Tier-2 (source_type IS) tire WO -- but
+both frontend gates above still unconditionally require a driver for wo_type "tire" regardless of
+source_type. An operator opening a routine in-house yard tire change is blocked at the wizard
+before the request is ever sent, and the only way past the block is to invent a driver (and, if
+`requireLoad` also fires, a load) -- the identical "a writer compelled to supply one invents it, and
+an invented link looks correct forever" failure the ruling doc names, now happening in the UI layer
+instead of the database layer. Verified: `createWorkOrder()` (apps/frontend/src/api/maintenance.ts:
+681) posts to the same `/api/v1/maintenance/work-orders` route both gates were audited against --
+one request path, two independent stale requirement checks in front of it.
+
+**Other pre-save checks in CreateWorkOrderModal.tsx cross-checked against backend and found
+CORRECT, not lying:** vendor-required-for-external-location (matches work-orders.routes.ts:967-968
+`vendor_required_for_external_repairs`), external-vendor-fields-for-ES/AC/ET/RT/RS (matches
+work-orders.routes.ts:970-977 `external_vendor_fields_required`), Section A/B description
+requirements (match `sectionALineSchema`/`sectionBLineSchema` `.min(1)`). The vendor-invoice
+reconcile tie-out (parts/labor/other must sum to the entered invoice amounts) is a frontend-only
+business rule with no backend mirror -- not a lie, since it never claims to enforce a server rule,
+but worth naming: a legitimate off-by-a-cent vendor invoice blocks Create with no override path.
+
+**NOT fixed by me -- LANE: no apps/frontend this round.** Handing this exact finding, with both file
+paths and line numbers, to Cursor: the fix is the same one-line shape as A-34's backend fix --
+gate `requireDriverAndLoad`/the pre-save check on `sourceType === "RS"` when `wo_type === "tire"`,
+matching `tireIsTier1Roadside` exactly.
+
+## ROUND 303 A-42 — WORK ORDER LINKAGE, BOTH DIRECTIONS: HALF A LINK CONFIRMED (unit -> its WOs)
+Per docs/laws/TRANSACTION-LINKAGE-LAW.md §6, proved both directions live, not assumed:
+- **WO -> unit: RESOLVES.** `apps/frontend/src/pages/work-orders/WorkOrdersConsoleListPage.tsx:374`
+  renders an `EntityLink kind="unit"` on every row -- clicking a work order's unit takes you to that
+  unit.
+- **WO -> driver: RESOLVES.** `apps/frontend/src/pages/DriverDetail.tsx:1804`
+  (`DriverWorkOrdersReverseSection`) -- confirmed this IS the reverse (driver -> their work orders),
+  so driver<->WO is a full link both ways.
+- **Unit -> its work orders: DOES NOT RESOLVE.** Searched every Unit-Detail-scoped component
+  (`apps/frontend/src/pages/units/UnitDetail.tsx` and its imports: `UnitBrakesTab`, `UnitTiresTab`,
+  `UnitMaintenanceInspectionsReverseSection`, `UnitTireProgramReverseSection`,
+  `UnitSevereRepairsReverseSection`, `UnitPmSchedulesReverseSection`) -- none of them calls
+  `listWorkOrders`/`GET /api/v1/maintenance/work-orders`; each queries a DIFFERENT, narrower table
+  (tire layout, DOT inspections, severe-repair estimates, PM schedules). A grep for the real
+  work-orders list endpoint across every Unit-named frontend file returned zero matches. An operator
+  on a Unit's detail page cannot see the ordinary repair/PM/tire/accident work orders performed on
+  that unit anywhere -- only these four narrow slices. Per §6, this is HALF A LINK and counts as
+  unlinked: forward (WO carries unit_id, filterable) exists; reverse (the unit's own detail page
+  showing its work orders) does not exist as a UI surface at all.
+- **maintenance.road_service_tickets: same half-link.** `db/migrations/202606281020_road_service_
+  tickets.sql` confirms the table is live; a search for any Unit-scoped reverse section referencing
+  it in the frontend returned zero matches -- same pattern, same gap, not separately re-verified
+  beyond confirming the table and the absence of a reverse section.
+Named, not fixed -- LANE: no apps/frontend this round. Cursor owns adding the missing reverse
+section (same shape as the four that already exist on Unit Detail, pointed at `GET /api/v1/
+maintenance/work-orders?unit_id=...` instead of a narrower endpoint).
+
+## ROUND 303 A-43 — WORK ORDER COLUMNS THE OWNER NAMED: 1 OF 3 EXISTS
+Owner, verbatim: "all work orders must show and views report date, date in shop, and expected
+release." Read the live column list for `maintenance.work_orders` directly off prod
+(information_schema.columns, br-fancy-credit-akjnd07a) rather than derive it -- 76 real columns,
+checked by name:
+- **"report date"** -- no column literally named this. Closest genuine candidate: `opened_at`
+  (timestamptz, backend-populated via `wo_set_opened_at()` trigger, already serialized to the
+  frontend as `open_date`/`open_time` in the render-v5 header). Treating `opened_at` as the report
+  date is a reasonable mapping, not a guess dressed as fact -- flagging it as the mapping rather than
+  asserting a column exists that doesn't.
+- **"date in shop"** -- **DOES NOT EXIST.** No column named `date_in_shop`, `arrived_at`,
+  `shop_arrival_date`, or anything equivalent. `work_started_at` exists but records when work began,
+  not when the unit physically arrived in the shop -- a materially different fact (a unit can sit
+  queued in the shop lot for days before work starts). Saying so plainly, not deriving a substitute.
+- **"expected release"** -- **DOES NOT EXIST.** No column named `expected_release`,
+  `expected_completion`, `eta_release`, or similar. `closed_at` exists but is the ACTUAL close
+  timestamp, populated only once the WO is actually done -- it cannot serve as an "expected" forward
+  estimate, and treating it as one would silently show operators a null "expected release" for every
+  open WO instead of an honest projection.
+**Verdict: 1 of 3 exists (by reasonable mapping, not by exact name); 2 of 3 are missing entirely and
+need a real migration (two new nullable columns) plus a wizard field to capture "date in shop" at
+open and "expected release" as an editable estimate, before either can render as anything but a
+permanent "--".** Not derived, not guessed -- reported per the order's own instruction.
