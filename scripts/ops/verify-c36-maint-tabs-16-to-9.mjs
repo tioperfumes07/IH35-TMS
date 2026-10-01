@@ -28,7 +28,9 @@ const integrity = read("apps/frontend/src/pages/maintenance/IntegrityReportPage.
 const subnav = home.match(/const SUBNAV = \[([\s\S]*?)\] as const/);
 if (!subnav) fail("SUBNAV missing");
 const ids = [...subnav[1].matchAll(/id:\s*"([^"]+)"/g)].map((m) => m[1]);
-const expected = [
+// C-36 locked nine (never drop). R313 Cursor item 3 ADDS pm_due / faults / in_shop / cost_per_mile
+// (owner: every tab live) without resurrecting retired peers (Rule 07).
+const c36Nine = [
   "rm_status_board",
   "fleet_table",
   "active_wos",
@@ -39,10 +41,15 @@ const expected = [
   "integrity_report",
   "settings",
 ];
-if (ids.length !== 9 || ids.join() !== expected.join()) {
-  fail(`SUBNAV must be exactly 9 C-36 tabs in order; got [${ids.join(", ")}]`);
+const r313Add = ["pm_due", "faults", "in_shop", "cost_per_mile"];
+for (const id of c36Nine) {
+  if (!ids.includes(id)) fail(`C-36 tab missing from SUBNAV: ${id}`);
 }
-ok("SUBNAV is 9 tabs in owner order");
+for (const id of r313Add) {
+  if (!ids.includes(id)) fail(`R313 #3 tab missing from SUBNAV: ${id}`);
+}
+if (ids.length < 13) fail(`SUBNAV must keep C-36 nine + R313 four (13+); got ${ids.length} [${ids.join(", ")}]`);
+ok("SUBNAV keeps C-36 nine and adds R313 PM Due / Faults / In Shop / Cost/mi");
 
 if (!home.includes('label: "Home"')) fail('Home tab must label "Home"');
 ok("Home tab states Home");
@@ -70,10 +77,14 @@ ok("RMStatStrip dropped 4 kanban-duplicate tiles");
 if (!nav.includes('label: "Integrity Report"') || !nav.includes("/maintenance/integrity-report")) {
   fail("MAINTENANCE_DASHBOARD_TAB_LINKS missing Integrity Report");
 }
-if ((nav.match(/MAINTENANCE_DASHBOARD_TAB_LINKS[\s\S]*?\];/)?.[0].match(/path:/g) ?? []).length !== 9) {
-  fail("MAINTENANCE_DASHBOARD_TAB_LINKS must have 9 entries");
+if (!nav.includes('label: "PM Due"') || !nav.includes('label: "Faults"') || !nav.includes('label: "Cost/mi"')) {
+  fail("MAINTENANCE_DASHBOARD_TAB_LINKS missing R313 #3 PM Due / Faults / Cost/mi");
 }
-ok("nav config has 9 dashboard tabs including Integrity Report");
+const dashCount = (nav.match(/MAINTENANCE_DASHBOARD_TAB_LINKS[\s\S]*?\];/)?.[0].match(/path:/g) ?? []).length;
+if (dashCount < 13) {
+  fail(`MAINTENANCE_DASHBOARD_TAB_LINKS must have ≥13 entries (C-36 nine + R313 four); got ${dashCount}`);
+}
+ok("nav config has C-36 + R313 dashboard tabs including Integrity Report");
 
 if (!routes.includes('integrity_report: "/maintenance/integrity-report"')) fail("MAINTENANCE_TAB_PATH missing integrity_report");
 if (!routes.includes('return "driver_reports"')) fail("retired damage/in-transit/DVIR must remap to driver_reports");

@@ -34,15 +34,19 @@ export const MAINTENANCE_MASTER_DATA_LINKS: MaintenanceNavLink[] = [
   { label: "Fault Rules", path: "/maintenance/fault-rules" },
 ];
 
-/** Dashboard operational sub-tabs — C-36 owner canvas (9). */
+/** Dashboard operational sub-tabs — C-36 nine + R313 #3 (PM Due / Faults / In Shop / Cost/mi). */
 export const MAINTENANCE_DASHBOARD_TAB_LINKS: MaintenanceNavLink[] = [
   { label: "Home", path: "/maintenance/rm-status-board" },
   { label: "Fleet Table", path: "/maintenance/fleet-table" },
   { label: "Active WOs", path: "/maintenance/active-wos" },
+  { label: "PM Due", path: "/maintenance/pm-schedule" },
+  { label: "Faults", path: "/maintenance/fault-code-alerts" },
+  { label: "In Shop", path: "/maintenance/fleet-table?status=in-shop" },
   { label: "Service / Location", path: "/maintenance/service-location" },
   { label: "Driver Reports", path: "/maintenance/driver-reports" },
   { label: "Road Service", path: "/maintenance/road-service" },
   { label: "Parts Inventory", path: "/maintenance/parts-inventory" },
+  { label: "Cost/mi", path: "/reports/maintenance-cost-per-unit" },
   { label: "Integrity Report", path: "/maintenance/integrity-report" },
   { label: "Settings", path: "/maintenance/settings" },
 ];

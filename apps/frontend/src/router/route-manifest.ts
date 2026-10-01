@@ -158,6 +158,11 @@ export const MAINTENANCE_TAB_PATH: Record<string, string> = {
   road_service: "/maintenance/road-service",
   parts_inventory: "/maintenance/parts-inventory",
   integrity_report: "/maintenance/integrity-report",
+  // R313 Cursor item 3 — named surfaces on the primary subnav (paths were already live).
+  pm_due: "/maintenance/pm-schedule",
+  faults: "/maintenance/fault-code-alerts",
+  in_shop: "/maintenance/fleet-table",
+  cost_per_mile: "/reports/maintenance-cost-per-unit",
   // LV-MAINT-SUBNAV-ORPHAN-PATHS — retired from SUBNAV (C-36) but paths stay reachable.
   brake_wear: "/maintenance/brake-wear",
   tire_wear: "/maintenance/tire-wear",
@@ -183,6 +188,11 @@ export function maintenanceTabFromPath(pathname: string): string | null {
   // DVIR belongs to Safety; defects tagged DVIR surface under Driver Reports Kind=DVIR.
   if (norm === "/maintenance/dvir" || norm === "/maintenance/pre-flight-dvir") return "driver_reports";
   if (norm === "/maintenance/integrity-report") return "integrity_report";
+  // R313 #3 — primary surfaces that live outside MaintenanceHome tab panels.
+  if (norm === "/maintenance/pm-schedule") return "pm_due";
+  if (norm === "/maintenance/fault-code-alerts" || norm.startsWith("/maintenance/fault-code-alerts/")) return "faults";
+  if (norm === "/maintenance/defects" || norm.startsWith("/maintenance/defects/")) return "faults";
+  if (norm === "/reports/maintenance-cost-per-unit") return "cost_per_mile";
   for (const [id, routePath] of Object.entries(MAINTENANCE_TAB_PATH)) {
     if (routePath === norm) return id;
   }
