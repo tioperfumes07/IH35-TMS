@@ -194,6 +194,8 @@ export const TABLE_REGISTRY = {
   "fuel.fuel_card_overage_events": { status: "NOT_TRANSACTIONAL" },
   "fuel.fuel_card_overage_policies": { status: "NOT_TRANSACTIONAL", reason: "config" },
   "fuel.fuel_planner_settings": { status: "NOT_TRANSACTIONAL", reason: "config" },
+  // E-23 / 202615110000: on-read derived pump time + IFTA state; never writes fuel_transactions.
+  "fuel.fuel_transaction_derivations": { status: "NOT_TRANSACTIONAL", reason: "derived output side-table; source fuel_transactions stay TIER1" },
   "fuel.fuel_transactions": { status: TIER.TIER1, reason: "the purest TIER1 table -- always unit+driver+load" },
   "fuel.load_fuel_cost": { status: "OUT_OF_SCOPE", reason: "derived/aggregated rollup, not itself a transaction" },
   "fuel.loves_prices_daily": { status: "NOT_TRANSACTIONAL", reason: "reference price feed" },
