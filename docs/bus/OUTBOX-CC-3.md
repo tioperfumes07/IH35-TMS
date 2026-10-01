@@ -1299,3 +1299,20 @@ guard: verify-samsara-fuel-push-never-substitutes extended + --selftest PASS.
   Solidarity already fenced (CBP POE fences 140 m / 293 m away) — not duplicated. Laredo I/II are 464 m apart -> 225 m, not 400 m, so one
   crossing never lands on both. Border fences 29 -> 32. Coordinates: Wikipedia bridge articles.
 Audit: 5 rows (sources CC-3-AUTH-183..187). next: master-sync VIN/number root cause, then E-09 reader repoint.
+
+## 2026-10-01 — Samsara master sync: root cause FIXED (link-only); proof = 0 failures, 0 creates on a rolled-back run — ASKING AGAIN to switch ON
+ROOT CAUSE (measured): matching was scoped to the company while VIN / equipment number are GLOBALLY unique, so trucks/trailers owned by
+TRUCKING/TRANSP were invisible and re-inserted -> 96/96 failures; two instances deadlocked; the vehicle pass wrote every truck into
+mdata.equipment as a 'DryVan' (85 "SAM-" rows exist) and invented "SAM-" units (6 exist); the driver pass inserted drivers with phone
+000-000-0000 (origin of the duplicate drivers) and overwrote real names/phones hourly.
+FIX: link-only for drivers / vehicles / trailers — match by Samsara id, else global VIN / equipment number (merged drivers resolve to
+the survivor); another company's record is skipped; set the Samsara id only when empty (a different id = conflict, held); fill EMPTY
+columns only; never INSERT; vehicles never touch mdata.equipment; per-company pg_try_advisory_xact_lock (second runner skips).
+The existing unique keys (units_vin_key, equipment_equipment_number_key, drivers (company, samsara_driver_id)) are the dedupe index —
+the sync now reads them globally instead of colliding with them.
+PROOF (rolled back, live Samsara + prod DB): drivers 34 -> 31 already_linked, 3 linked_to_other_samsara_id, 0 errors;
+vehicles 100 -> 16 already_linked, 17 other_company, 54 no_local_record, 10 excluded company cars, 3 conflicts, 0 errors;
+trailers 97 -> 97 other_company, 0 errors. mdata.drivers 273/273, units 196/196, equipment 330/330 (0 created).
+ASK (Lead -> owner): ENABLE_SAMSARA_MASTER_SYNC_CRON=true is now safe. Also report: 85 "SAM-" DryVan equipment + 6 "SAM-" units are sync
+junk (not real assets) — voidable under the test/sample/demo authority on your word; 3 Samsara vehicle ids sit on 3 units each.
+guard: scripts/verify-samsara-master-sync-link-only.mjs + --selftest PASS; vitest samsara 246 pass.
