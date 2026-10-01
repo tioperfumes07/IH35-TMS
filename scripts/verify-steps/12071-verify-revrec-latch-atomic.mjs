@@ -25,11 +25,17 @@ function selftest() {
   if (!/WHERE is_active DO NOTHING\s*\n\s*RETURNING id/.test(src)) problems.push("latch-row INSERT must RETURNING id to detect a lost race");
   if (!/if \(!latch\.rows\[0\]\) throw new RevrecLatchAlreadyPostedError\(\);/.test(src)) problems.push("a lost race must throw inside the JE transaction");
   if (!/if \(err instanceof RevrecLatchAlreadyPostedError\) return \{ posted: false, reason: "already_posted" \};/.test(src)) problems.push("the poster must answer already_posted after the rollback");
+  // The latch-owned A/R is the invoice's posting: the send gate exempts exactly that code and nothing else.
+  const send = readFileSync(new URL("apps/backend/src/accounting/invoice-send.service.ts", ROOT), "utf8");
+  if (!/invoiceGl\.code === "INVOICE_REVREC_LATCH_OWNS_LOAD"/.test(send) || !/post_failed" && !latchOwnsAr\) \{\n    throw new Error\(`invoice_send_refused_gl_post_failed:/.test(send)) {
+    problems.push("invoice send must exempt only INVOICE_REVREC_LATCH_OWNS_LOAD (Event 2 posts that A/R) from the post_failed refusal");
+  }
+  if (!/await fireRevrecLatchOnInvoiceIssued\(/.test(send)) problems.push("invoice send must fire the revrec latch (Event 2 = the A/R)");
   if (problems.length) {
     console.error(`${LABEL} --selftest FAIL — ${problems.join("; ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS (5/5)`);
+  console.log(`${LABEL} --selftest PASS (7/7)`);
 }
 
 selftest();

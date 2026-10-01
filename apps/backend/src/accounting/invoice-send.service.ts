@@ -518,7 +518,13 @@ export async function sendDraftInvoice(
   const invoiceGl = await postInvoiceGlIfEnabled(client as never, input.operatingCompanyId, input.invoiceId, {
     userId: input.userId,
   });
-  if (!invoiceGl.posted && invoiceGl.reason === "post_failed") {
+  // INVOICE-SEND-LATCH-OWNS-AR (CC-2, 2026-10-01): when the load's DISP-01 two-event delivery latch already recognized
+  // its revenue (an active load_revenue_recognition_postings row), the invoice poster refuses on purpose
+  // (INVOICE_REVREC_LATCH_OWNS_LOAD) and the A/R posts as the latch's Event 2 (DR A/R / CR Unbilled) — fired by
+  // fireRevrecLatchOnInvoiceIssued above, on this same send. That is the invoice posting, not a failed post. Without
+  // this exemption #23827's refusal blocked EVERY send for a delivered, latch-recognized load (prod 13626 / 13637).
+  const latchOwnsAr = !invoiceGl.posted && invoiceGl.reason === "post_failed" && invoiceGl.code === "INVOICE_REVREC_LATCH_OWNS_LOAD";
+  if (!invoiceGl.posted && invoiceGl.reason === "post_failed" && !latchOwnsAr) {
     await appendCrudAudit(
       client,
       input.userId,
@@ -537,7 +543,7 @@ export async function sendDraftInvoice(
   // OWNER LAW 2026-10-01: "an invoice created in the app, through a load or manually, must always post to all
   // correct accounts." With the entity's posting flag ON, a poster failure now REFUSES the send (the transaction
   // rolls back: no 'sent' invoice without its A/R journal entry). The audit row above still records the cause.
-  if (!invoiceGl.posted && invoiceGl.reason === "post_failed") {
+  if (!invoiceGl.posted && invoiceGl.reason === "post_failed" && !latchOwnsAr) {
     throw new Error(`invoice_send_refused_gl_post_failed:${invoiceGl.code ?? "unknown"}:${invoiceGl.message ?? ""}`);
   }
 
