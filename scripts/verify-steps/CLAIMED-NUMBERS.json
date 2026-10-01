@@ -7533,6 +7533,11 @@
     "claimed_at": "2026-10-01",
     "purpose": "verify-fuel-gps-verdict-two-signal (ROUND 306 E-22 fix + Fuel page read model: GPS match by station location and pump time, two signals or held, never by clock coincidence)"
   },
+  "12027": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-fuel-time-derivation (ORDERS-2026-10-01 CC-2 rows 5-6: pump time + IFTA state derived from the truck's own fuel-stop dwell; never overwrites transaction_at)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
