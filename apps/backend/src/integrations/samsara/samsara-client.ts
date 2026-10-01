@@ -43,6 +43,20 @@ export type SamsaraFuelPurchaseBody = {
   iftaFuelType: "Diesel" | "Gasoline";
 };
 
+export type SamsaraIftaVehicleReport = {
+  samsara_vehicle_id: string;
+  vehicle_name: string | null;
+  jurisdictions: { jurisdiction: string; total_meters: number; taxable_meters: number }[];
+};
+
+export type SamsaraIftaPeriod = { year: number; month?: string; quarter?: "Q1" | "Q2" | "Q3" | "Q4" };
+
+export type SamsaraIftaVehicleReportResult = {
+  vehicles: SamsaraIftaVehicleReport[];
+  /** Samsara's own data.troubleshooting block, verbatim (e.g. noPurchasesFound). */
+  troubleshooting: Record<string, unknown> | null;
+};
+
 export type SamsaraHosDailyLog = {
   samsara_driver_id: string;
   start_time: string;
@@ -717,6 +731,55 @@ export class SamsaraClient {
     const data = (json.data ?? json) as Record<string, unknown>;
     const id = data.uuid ?? data.id;
     return { samsara_fuel_purchase_id: id == null ? null : String(id) };
+  }
+
+  /**
+   * ROUND 304 T-49 — GET /fleet/reports/ifta/vehicle (scope "Read IFTA (US)"; verified live 200 on
+   * the USMCA token 2026-10-01). Fields measured live: data.vehicleReports[].vehicle{id,name},
+   * .jurisdictions[]{jurisdiction,totalMeters,taxableMeters}; data.troubleshooting. A period Samsara
+   * is still processing comes back 400 "IFTA data may still be processing" -> SamsaraApiError.
+   */
+  async listIftaVehicleReports(period: SamsaraIftaPeriod): Promise<SamsaraIftaVehicleReportResult> {
+    const token = this._token();
+    if (!token) throw new SamsaraApiError("samsara_token_missing", null, null, false);
+    const vehicles: SamsaraIftaVehicleReport[] = [];
+    let troubleshooting: Record<string, unknown> | null = null;
+    let after: string | null = null;
+    for (let page = 0; page < 200; page += 1) {
+      const url = new URL(`${SAMSARA_API_BASE}/fleet/reports/ifta/vehicle`);
+      url.searchParams.set("year", String(period.year));
+      if (period.month) url.searchParams.set("month", period.month);
+      if (period.quarter) url.searchParams.set("quarter", period.quarter);
+      if (after) url.searchParams.set("after", after);
+      let res: Response;
+      try {
+        res = await withCircuitBreaker("samsara", () => samsaraFetch(url, { headers: bearerHeaders(token) }, 30_000));
+      } catch (error) {
+        throw new SamsaraApiError(`samsara_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
+      }
+      const json = await readJsonResponse(res);
+      if (!res.ok) throw new SamsaraApiError(`samsara_ifta_http_${res.status}`, res.status, json, res.status === 429 || res.status >= 500);
+      const data = (json.data ?? {}) as Record<string, unknown>;
+      if (data.troubleshooting && typeof data.troubleshooting === "object") troubleshooting = data.troubleshooting as Record<string, unknown>;
+      for (const raw of Array.isArray(data.vehicleReports) ? data.vehicleReports : []) {
+        const r = raw as Record<string, unknown>;
+        const v = (r.vehicle ?? {}) as Record<string, unknown>;
+        if (v.id == null) continue;
+        const jurisdictions = (Array.isArray(r.jurisdictions) ? r.jurisdictions : [])
+          .map((x) => x as Record<string, unknown>)
+          .filter((x) => typeof x.jurisdiction === "string" && Number.isFinite(Number(x.totalMeters)))
+          .map((x) => ({
+            jurisdiction: String(x.jurisdiction),
+            total_meters: Number(x.totalMeters),
+            taxable_meters: Number.isFinite(Number(x.taxableMeters)) ? Number(x.taxableMeters) : 0,
+          }));
+        vehicles.push({ samsara_vehicle_id: String(v.id), vehicle_name: typeof v.name === "string" ? v.name : null, jurisdictions });
+      }
+      const { hasNextPage, cursor } = parsePagination(json);
+      if (!hasNextPage || !cursor) break;
+      after = cursor;
+    }
+    return { vehicles, troubleshooting };
   }
 
   async listHosDailyLogs(startDate: string, endDate: string): Promise<SamsaraHosDailyLog[]> {

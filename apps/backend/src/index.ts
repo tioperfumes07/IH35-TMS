@@ -347,6 +347,7 @@ import { initializeOdometerSnapshotCron } from "./telematics/odometer-snapshot.c
 import { registerOdometerManualRoutes } from "./telematics/odometer-manual.routes.js";
 import { registerFaultCodeAlertsRoutes } from "./maintenance/fault-code-alerts.routes.js";
 import { registerDrivenMilesLegsRoutes } from "./telematics/driven-miles-legs.routes.js";
+import { registerIftaMilesRoutes } from "./telematics/ifta-miles.routes.js";
 import { registerFuelPurchasePushRoutes } from "./integrations/samsara/fuel-purchase-push.routes.js";
 import { initializeFuelPurchasePushCron } from "./integrations/samsara/fuel-purchase-push.cron.js";
 import { registerGeofenceAddressLinkRoutes } from "./integrations/samsara/geofences/geofence-address-link.routes.js";
@@ -1246,6 +1247,7 @@ async function main() {
   await registerOdometerManualRoutes(app);
   await registerFaultCodeAlertsRoutes(app);
   await registerDrivenMilesLegsRoutes(app);
+  await registerIftaMilesRoutes(app);
   await registerFuelPurchasePushRoutes(app);
   await registerGeofenceAddressLinkRoutes(app);
   await registerMaintenanceServiceTimelineRoutes(app);
