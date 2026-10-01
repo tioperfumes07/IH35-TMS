@@ -6847,7 +6847,11 @@ scope: ALL operating companies (owner: "in the app"). mdata.customers master dat
   entities 722 + 677; 0 direct shippers among them. Refuses above 2,100 rows or if any direct shipper would be overridden.
 action: npx tsx scripts/ops/2026-10-01-cc2-auth198-classify-broker-named-customers.ts --apply (after the deploy applies 202615190700).
 expires_at: 2026-10-02T17:49:47Z
-status: OPEN
+status: CONSUMED
+consumed_by: CC-2
+row_counts: 2,056 customers re-stamped Broker through trg_customer_broker_by_name (USMCA 657 incl. deactivated, 91e0bf0a 677, b49a737b 722); 0 direct shippers
+proof_query: verify-steps/12075 LIVE PASS — all 2056 broker-named customers are Broker (type + catalog id)
+audit: 4bf5bfe9-ec8b-46bf-84a6-43a5db8f84db (source CC-2-AUTH-198) + one audit.row_changes row per customer
 
 Owner in chat to CC-2, 2026-10-01: "ALL CUSTOMERS WITH THE NAME BROKERS, LOGISITCIS, OR FREIGHT, ETC MUST BE CATEGORIZED IN THE APP AS
 BROKERS." Master data classification, not a business transaction (ROUND 319 item 3 untouched). NOT COVERED: names that only say
