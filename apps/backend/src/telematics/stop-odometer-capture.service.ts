@@ -232,6 +232,7 @@ export function unitFixesSql(): string {
 export function geofenceForStopSql(): string {
   return `
     SELECT g.id::text AS geofence_id, g.label, g.location_kind,
+           COALESCE(g.enter_radius_m, g.radius_m)::float8 AS radius_m,
            (6371000 * 2 * asin(sqrt(
               power(sin(radians($2::numeric - g.center_lat) / 2), 2) +
               cos(radians(g.center_lat)) * cos(radians($2::numeric)) *
