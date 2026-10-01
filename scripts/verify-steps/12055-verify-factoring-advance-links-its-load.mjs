@@ -11,6 +11,9 @@ import pg from "pg";
 import { readFileSync } from "node:fs";
 
 const LABEL = "verify-factoring-advance-links-its-load";
+// Named exceptions — an advance on a real app invoice that has NO load, per the owner's reconciliation
+// (09-30-26-UPDATED FIRST RECONCILIATION.xlsx row 9: Faro 7, ITS Logistics $350, "NO ALLWAYS LOAD").
+const NO_LOAD_EXCEPTIONS = ["FAC-2026-00007"];
 const ROOT = new URL("../../", import.meta.url);
 const read = (p) => readFileSync(new URL(p, ROOT), "utf8");
 
@@ -56,18 +59,18 @@ try {
   }
   const r = (await client.query(`
     SELECT count(*)::int AS live,
-           count(*) FILTER (WHERE a.source_load_id IS NULL AND NOT EXISTS (
+           count(*) FILTER (WHERE a.display_id <> ALL($1::text[]) AND a.source_load_id IS NULL AND NOT EXISTS (
              SELECT 1 FROM accounting.invoices i WHERE i.factoring_advance_id = a.id AND i.source_load_id IS NOT NULL))::int AS no_load_path,
-           coalesce(json_agg(a.display_id) FILTER (WHERE a.source_load_id IS NULL AND NOT EXISTS (
+           coalesce(json_agg(a.display_id) FILTER (WHERE a.display_id <> ALL($1::text[]) AND a.source_load_id IS NULL AND NOT EXISTS (
              SELECT 1 FROM accounting.invoices i WHERE i.factoring_advance_id = a.id AND i.source_load_id IS NOT NULL)), '[]') AS ids,
            count(*) FILTER (WHERE a.source_load_id IS NOT NULL)::int AS direct
-      FROM accounting.factoring_advances a WHERE a.voided_at IS NULL`)).rows[0];
+      FROM accounting.factoring_advances a WHERE a.voided_at IS NULL`, [NO_LOAD_EXCEPTIONS])).rows[0];
   await client.query("ROLLBACK");
   if (r.no_load_path > 0) {
     console.error(`${LABEL}: FAIL — ${r.no_load_path} live advance(s) reach no load: ${JSON.stringify(r.ids).slice(0, 300)}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: LIVE PASS — ${r.live} live advances (positive control), every one reaches its load (${r.direct} directly, the rest through an invoice).`);
+  console.log(`${LABEL}: LIVE PASS — ${r.live} live advances (positive control), every one reaches its load (${r.direct} directly, the rest through an invoice) except the named no-load exception(s) ${NO_LOAD_EXCEPTIONS.join(", ")}.`);
 } finally {
   await client.end();
 }
