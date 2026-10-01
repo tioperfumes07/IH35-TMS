@@ -4409,6 +4409,22 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route
+          path="/factoring/advances/:id"
+          element={
+            <ProtectedRoute>
+              <FactoringDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/factoring/statements"
+          element={
+            <ProtectedRoute>
+              <FactorReconciliationPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/accounting/factor-reconciliation"
           element={
             <ProtectedRoute>

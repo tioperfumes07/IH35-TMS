@@ -131,6 +131,10 @@ export type FactoringAdvance = {
   recourse_reason: string | null;
   notes: string | null;
   invoice_count: number;
+  source_load_id?: string | null;
+  source_load_number?: string | null;
+  matched_bank_transaction_id?: string | null;
+  matched_bank_transaction_label?: string | null;
 };
 
 export type FactoringAdvanceDetail = FactoringAdvance & {

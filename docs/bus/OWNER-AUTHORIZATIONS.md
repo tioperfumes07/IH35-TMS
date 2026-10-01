@@ -6781,10 +6781,19 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). banking.reconciliation
   postReconciliationAdjustments → createJournalEntryOnClient. ROUND 313 BANK-SURF-04/ECON-04 live close at $0 difference.
 action: OWNER_AUTH_ID=AUTH-195 DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-01-cursor-r313-recon-service-charge-live-proof.ts
 expires_at: 2026-10-02T16:20:00Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-01T16:21:00Z
+consumed_by: Cursor
+row_counts: 1 reconciliation_sessions row reconciled at variance_cents=0; 2 posted JEs (SC + IE)
+proof_query: session 7a7d1da9-aa5b-4de7-b133-fe529dbde3c2 status=reconciled variance=0 SC=500 IE=500; JE cf78c2aa (SC) + 2ef10657 (IE)
 derivation: docs/bus/ORDERS-2026-10-01-ROUND-313-ALL-SEATS.md Cursor item 1 — "a real reconciliation_sessions row closed at
   zero difference on a USMCA account (statement balance, cleared lines, service charge/interest via canonical poster)".
 THIS AUTHORIZATION DOES NOT COVER: any other bank account, any amount other than $5.00+$5.00 netting to $0, any QBO write-back.
+
+EXECUTION, 2026-10-01T16:21:00Z: OWNER_AUTH_ID=AUTH-195 npx tsx scripts/ops/2026-10-01-cursor-r313-recon-service-charge-live-proof.ts
+— verify-owner-authorization confirmed AUTH-195 OPEN on origin/main at 55e746df65. COMMITTED Petty Cash session
+7a7d1da9 reconciled variance_cents=0; service_charge JE cf78c2aa-f78c-497d-9062-4e4ba9eb3100 posted; interest JE
+2ef10657-37c5-4dc5-adca-d88f565adc9c posted. No QBO write-back.
 
 ## AUTH-196
 issued_at: 2026-10-01T17:00:11Z

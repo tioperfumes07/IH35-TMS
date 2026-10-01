@@ -348,7 +348,9 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
     case "bank_account":
       return `/banking/accounts/${id}`;
     case "factoring_advance":
-      return `/accounting/factoring/${id}`;
+      // ROUND 313/319: canonical drawer is /factoring/advances/:id (load/invoice/bank wire both ways).
+      // /accounting/factoring/:id stays as a redirect alias.
+      return `/factoring/advances/${id}`;
     case "factoring_batch":
       // LINK-F5178 (2026-08-14): a real batch id (factoring.batch.id — the row shown by FactorAdmin's
       // "Batch History" table) drills to /factoring/batches/:id (BatchDetail.tsx's getBatchDetail),
