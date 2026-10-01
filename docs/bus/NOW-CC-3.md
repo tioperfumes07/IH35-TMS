@@ -1,32 +1,5 @@
-# CC-3 — ROUND 306 · ENGINE REGISTRY
-READ docs/engines/IH35-ENGINE-REGISTRY-2026-10-01.xlsx — sheet 2 SEAT SEQUENCES, your 16 rows, in order.
-Owner, verbatim: each coder builds 100%, no handoff, no delegation, sequential, additions only
-after that engine is DONE. Mileage/odometer/fuel first. Faults/alerts/harsh/dashcam LAST.
-1 E-01 position poll: odometer decoration on every fix; T122 stale id
-2 E-04 fence odometer capture: verified live; hand fence id to E-03
-3 E-05 real driven miles: re-point onto E-03 stops
-4 E-06 odometer snapshot: dedupe dry run -> owner AUTH -> unique index
-5 E-07 Samsara address import; link the 954 fences (0 linked today)
-6 E-08 ONE canonical geofence state path of the three; populate load_id on transitions
-7 E-09 arrival detection on the POLL path: dispatch.stop_arrivals has 0 rows EVER -- one real row
-8 E-23 Samsara fuel push 2x daily (hard gate: never gallons<=0 or a shared import stamp) + IFTA + efficiency readback
-9 E-29 DOT dwell / border / auto-status: verify each against its fences
-10 E-31 Samsara Routes push   11 E-32 Documents/Forms   12 E-30 driver messaging backend
-13 E-10 fault poller -- ONE token path: fall back to the same SAMSARA_API_TOKEN the position poller uses, not a second secret
-14 E-11 alerts   15 E-12 harsh+dashcam   16 E-13 webhook: leave unused
-RULES (sheet 3): America/Chicago permanent; odometer READ or ABSENT never interpolated; no hardcoded fleet -- read telematics/live-fleet.ts; sample rows excluded at the query; linkage both directions.
-MIGRATIONS APPLY ON DEPLOY (pre-deploy db:migrate). Merge the file, deploy, done. No owner step.
-ACK: CC-3 | ACK R306 | E-01 | GO
-
-## ADDED 2026-10-01 (Lead) — E-08 / E-09 ruling, read before touching either
-MEASURED by the Lead: zero `load-<id>-stop-<n>` geofences have ever existed in ANY company. The
-D-1 stamp path (telematics/geofence-detector.service.ts) therefore never fired. The Lead built
-E-25: precision-sized circular stop fences for every board-active load, a 15-min sync cron, replay
-of the unit's own GPS history for back-dated loads, stamps only from a >= 5 min dwell. ONE path.
-- E-09 "arrival detection on the poll path": dispatch.stop_arrivals (arrival-detection.service.ts,
-  250 ft, driver prompt) is the SECOND arrival path. Do NOT widen it or build on it. Your E-09 is
-  now: prove whether anything reads dispatch.stop_arrivals (grep + live), and if nothing does,
-  write the retirement ruling draft to OUTBOX-CC-3.md for the Lead to sign. No new rows.
-- E-08 "ONE canonical geofence state path": the canonical path is geo.geofence_events written by
-  processGeofenceDetectionsForGpsPoint. Populate load_id on those transitions by resolving the
-  fence label `load-<id>-stop-<n>` — never a second detector.
+# NOW — CC-3 (2026-10-01)
+READ, in order: docs/bus/ORDERS-2026-10-01-ALL-SEATS-COMMON.md then docs/bus/ORDERS-2026-10-01-CC-3.md.
+They carry your whole queue, every pending engine, the anticipated blockers and the answer to each.
+Codex is not a seat. Build fully; write no business data; owner seeds when engines are complete.
+ACK by appending to OUTBOX-CC-3.md: `CC-3 | ACK ORDERS-2026-10-01 | <first row> | GO`
