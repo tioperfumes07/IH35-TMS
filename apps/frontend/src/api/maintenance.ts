@@ -500,7 +500,7 @@ export function listIdleEventsNeedsReview(companyId: string, limit = 100) {
 export function confirmIdleEventManual(eventId: string, companyId: string) {
   return apiRequest<{ ok: true; event_id: string; idle_source: string }>(
     `/api/v1/maintenance/idle-events/${encodeURIComponent(eventId)}/confirm-manual`,
-    { method: "POST", body: JSON.stringify({ operating_company_id: companyId }) }
+    { method: "POST", body: { operating_company_id: companyId } }
   );
 }
 
