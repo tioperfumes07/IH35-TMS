@@ -8,6 +8,7 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { assertIsIntendedProduction } from "../lib/assert-not-production.mjs";
 import { postReconciliationAdjustments } from "../../apps/backend/src/banking/recon-adjustments.service.ts";
 import { computeAdjustedBalanceSummary } from "../../apps/backend/src/banking/adjusted-balance-rec.ts";
 
@@ -39,6 +40,9 @@ async function main() {
     ssl: { rejectUnauthorized: false },
   });
   await client.connect();
+  await assertIsIntendedProduction(client, {
+    label: "scripts/ops/2026-10-01-cursor-r313-recon-service-charge-live-proof.ts",
+  });
   await client.query("BEGIN");
   await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
   await client.query("SELECT set_config('app.operating_company_id',$1,true)", [USMCA]);
