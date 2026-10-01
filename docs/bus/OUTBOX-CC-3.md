@@ -1343,3 +1343,13 @@ STOP_ARRIVAL_EVENTS_SQL returned exactly that stop/load; migration column presen
 REMAINING (Lead): sign the retirement; then CC-3 removes the legacy writer (arrival-detection per-fix call, 0 rows ever) and the table
 is kept read-only. Arrivals produce rows once E-25 mints load-stop fence labels (0 live today).
 guard: scripts/verify-no-reader-of-stop-arrivals.mjs + --selftest PASS.
+
+## 2026-10-01 — CC-3 QUEUE STATUS after the Lead decisions (all APPROVED + BUILD rows done)
+DONE (merged): AUTH-183..187 applied + consumed (#23677, #23682); master sync link-only, 0 failures / 0 creates rolled back (#23690);
+canonical driver map in 8 engines (#23690); 3 bridge fences (#23677/AUTH-187); E-09 reader count 0 + migration 202615150900 (#23694).
+WAITING ON THE LEAD (not on another seat): (1) backend deploy -> then CC-3 posts live proof for fuel push (22 fills), routes (16 loads),
+messaging, after the flags go on; (2) switch ENABLE_SAMSARA_MASTER_SYNC_CRON on (root cause proven fixed); (3) sign the stop_arrivals
+retirement -> CC-3 removes the legacy writer; (4) owner word on the 85 "SAM-" DryVan + 6 "SAM-" unit sync junk rows (voidable).
+NEXT (no idle): registry additions for CC-3 engines, in order — E-31 readback poller (/fleet/routes/audit-logs/feed) + E-32 documents
+as soon as the first real route exists; E-29 retire the hard-coded border detector onto the canonical fences now that Laredo I/II and
+Camino Real are fenced.
