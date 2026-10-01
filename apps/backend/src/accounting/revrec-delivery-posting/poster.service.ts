@@ -619,105 +619,114 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
   if (prepared.gate === "missing_delivery_evidence") return { posted: false, reason: "missing_delivery_evidence" };
   if (prepared.gate === "zero_amount") return { posted: false, reason: "zero_amount" };
 
-  const created = await createJournalEntry(
-    {
-      operating_company_id: input.operating_company_id,
-      entry_date: prepared.entryDate,
-      memo: prepared.memo,
-      source: "auto",
-      // ACCT-F210 — the GL inherits the load's sample flag, exactly as the invoice and settlement
-      // paths already do. One source of truth: the load. Never derived from a memo string.
-      is_sample_data: prepared.isSampleData,
-      postings: prepared.postings,
-    },
-    { userId: input.actor_user_id, role: "system" },
-    {
-      afterInsertBeforeCommit: async (client, header) => {
-        if (prepared.event === "bill") {
-          if (prepared.invoiceId) {
+  // REVREC-ATOMIC-IDEMPOTENCY (CC-2, 2026-10-01): the JE, its source link, its idempotency row and its audit row now
+  // commit in ONE transaction (afterInsertBeforeCommit). Before, createJournalEntry committed the JE and a SECOND
+  // transaction (withLuciaBypass) wrote load_revenue_recognition_postings; when that second write failed (prod
+  // 2026-10-01 16:24Z: blocked behind an idle-in-transaction delivery latch on load 13626) the JE survived with no
+  // idempotency row, the next fire posted Event 1 again, and revenue was double-recognized (13626 $3,400, 13571
+  // $4,900 since 2026-09-24). Now a lost race on the unique (load, event) row throws inside the JE's own transaction,
+  // so the duplicate JE never commits and the poster answers already_posted.
+  let created: { id: string };
+  try {
+    created = await createJournalEntry(
+      {
+        operating_company_id: input.operating_company_id,
+        entry_date: prepared.entryDate,
+        memo: prepared.memo,
+        source: "auto",
+        // ACCT-F210 — the GL inherits the load's sample flag, exactly as the invoice and settlement
+        // paths already do. One source of truth: the load. Never derived from a memo string.
+        is_sample_data: prepared.isSampleData,
+        postings: prepared.postings,
+      },
+      { userId: input.actor_user_id, role: "system" },
+      {
+        afterInsertBeforeCommit: async (client, header) => {
+          if (prepared.event === "bill") {
+            if (prepared.invoiceId) {
+              await client.query(
+                `
+                  UPDATE accounting.journal_entry_postings
+                  SET source_transaction_type = 'invoice', source_transaction_id = $2
+                  WHERE journal_entry_uuid = $1::uuid
+                    AND line_sequence = 1
+                    AND source_transaction_type IS NULL
+                `,
+                [header.id, prepared.invoiceId]
+              );
+            }
             await client.query(
-              `
-                UPDATE accounting.journal_entry_postings
-                SET source_transaction_type = 'invoice', source_transaction_id = $2
+              `UPDATE accounting.journal_entry_postings
+                  SET source_transaction_type = 'load', source_transaction_id = $2
                 WHERE journal_entry_uuid = $1::uuid
-                  AND line_sequence = 1
-                  AND source_transaction_type IS NULL
-              `,
-              [header.id, prepared.invoiceId]
+                  AND source_transaction_type IS NULL`,
+              [header.id, input.load_id]
             );
           }
-          await client.query(
-            `UPDATE accounting.journal_entry_postings
-                SET source_transaction_type = 'load', source_transaction_id = $2
-              WHERE journal_entry_uuid = $1::uuid
-                AND source_transaction_type IS NULL`,
-            [header.id, input.load_id]
+          const latch = await client.query(
+            `
+              INSERT INTO accounting.load_revenue_recognition_postings (
+                operating_company_id, load_id, event, journal_entry_id, amount_cents, entry_date, memo,
+                status, created_by_user_id
+              )
+              VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6::date, $7, 'posted', $8::uuid)
+              ON CONFLICT (operating_company_id, load_id, event) WHERE is_active DO NOTHING
+              RETURNING id
+            `,
+            [
+              input.operating_company_id,
+              input.load_id,
+              prepared.event,
+              header.id,
+              prepared.amount,
+              prepared.entryDate,
+              prepared.memo,
+              input.actor_user_id,
+            ]
           );
-        }
-      },
-    }
-  );
-
-  await withLuciaBypass(async (client: DbClient) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
-      input.operating_company_id,
-    ]);
-    const postingRes = await client.query<{ id: string }>(
-      `
-        SELECT id::text
-        FROM accounting.journal_entry_postings
-        WHERE journal_entry_uuid = $1::uuid
-        ORDER BY line_sequence ASC NULLS LAST, created_at ASC
-        LIMIT 1
-      `,
-      [created.id]
+          if (!latch.rows[0]) throw new RevrecLatchAlreadyPostedError();
+          const postingRes = await client.query(
+            `
+              SELECT id::text
+              FROM accounting.journal_entry_postings
+              WHERE journal_entry_uuid = $1::uuid
+              ORDER BY line_sequence ASC NULLS LAST, created_at ASC
+              LIMIT 1
+            `,
+            [header.id]
+          );
+          const postingId = (postingRes.rows[0] as { id?: string } | undefined)?.id;
+          if (postingId) {
+            await writeTransactionSourceLink(client as never, {
+              operating_company_id: input.operating_company_id,
+              journal_entry_posting_id: postingId,
+              linked_object_type: "load",
+              linked_object_id: input.load_id,
+              relationship_role: prepared.event === "earn" ? "revrec_earn" : "revrec_bill",
+            });
+          }
+          await appendCrudAudit(
+            client as Parameters<typeof appendCrudAudit>[0],
+            input.actor_user_id,
+            prepared.event === "earn" ? "accounting.revrec.earn.posted" : "accounting.revrec.bill.posted",
+            {
+              resource_type: "mdata.loads",
+              resource_id: input.load_id,
+              operatingCompanyId: input.operating_company_id,
+              journalEntryId: header.id,
+              amount_cents: prepared.amount,
+              entry_date: prepared.entryDate,
+              event: prepared.event,
+            },
+            "warning"
+          );
+        },
+      }
     );
-    const postingId = postingRes.rows[0]?.id;
-    if (postingId) {
-      await writeTransactionSourceLink(client as never, {
-        operating_company_id: input.operating_company_id,
-        journal_entry_posting_id: postingId,
-        linked_object_type: "load",
-        linked_object_id: input.load_id,
-        relationship_role: prepared.event === "earn" ? "revrec_earn" : "revrec_bill",
-      });
-    }
-    await client.query(
-      `
-        INSERT INTO accounting.load_revenue_recognition_postings (
-          operating_company_id, load_id, event, journal_entry_id, amount_cents, entry_date, memo,
-          status, created_by_user_id
-        )
-        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6::date, $7, 'posted', $8::uuid)
-        ON CONFLICT (operating_company_id, load_id, event) WHERE is_active DO NOTHING
-      `,
-      [
-        input.operating_company_id,
-        input.load_id,
-        prepared.event,
-        created.id,
-        prepared.amount,
-        prepared.entryDate,
-        prepared.memo,
-        input.actor_user_id,
-      ]
-    );
-    await appendCrudAudit(
-      client as Parameters<typeof appendCrudAudit>[0],
-      input.actor_user_id,
-      prepared.event === "earn" ? "accounting.revrec.earn.posted" : "accounting.revrec.bill.posted",
-      {
-        resource_type: "mdata.loads",
-        resource_id: input.load_id,
-        operatingCompanyId: input.operating_company_id,
-        journalEntryId: created.id,
-        amount_cents: prepared.amount,
-        entry_date: prepared.entryDate,
-        event: prepared.event,
-      },
-      "warning"
-    );
-  });
+  } catch (err) {
+    if (err instanceof RevrecLatchAlreadyPostedError) return { posted: false, reason: "already_posted" };
+    throw err;
+  }
 
   return {
     posted: true,
@@ -725,6 +734,13 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
     event: prepared.event,
     memo: prepared.memo,
   };
+}
+
+/** Thrown inside the JE's own transaction when another fire already owns the (load, event) latch row — rolls the duplicate JE back. */
+export class RevrecLatchAlreadyPostedError extends Error {
+  constructor() {
+    super("revrec_latch_already_posted");
+  }
 }
 
 export type FireRevrecLatchOnInvoiceIssuedInput = {
