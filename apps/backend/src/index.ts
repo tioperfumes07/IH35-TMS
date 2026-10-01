@@ -326,6 +326,7 @@ import { registerMaintenanceSevereRepairEstimateRoutes } from "./maintenance/sev
 import { registerMaintenanceIntegrityRoutes } from "./maintenance/integrity.routes.js";
 import { registerFuelIntegrityVerdictRoutes } from "./fuel/fuel-integrity-verdicts.routes.js";
 import { registerFuelCardAssignmentRoutes } from "./fuel/fuel-card-assignments.routes.js";
+import { registerRelayFillRoutes } from "./fuel/relay-fills.routes.js";
 import { registerWoCostContextRoutes } from "./maintenance/wo-cost-context.routes.js";
 import { registerMaintenancePmScheduleRoutes } from "./maintenance/pm-schedule.routes.js";
 import { registerMaintenanceInspectionsRoutes } from "./maintenance/inspections.routes.js";
@@ -1245,6 +1246,7 @@ async function main() {
   await registerMaintenanceIntegrityRoutes(app);
   await registerFuelIntegrityVerdictRoutes(app);
   await registerFuelCardAssignmentRoutes(app);
+  await registerRelayFillRoutes(app);
   await registerWoCostContextRoutes(app);
   await registerMaintenancePmScheduleRoutes(app);
   await registerMaintenanceInspectionsRoutes(app);

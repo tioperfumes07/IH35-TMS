@@ -1243,3 +1243,16 @@ FORWARD, live USMCA (177 live fuel rows, 175 fuel expense documents):
   - The ruling needed is reinstate-without-repost or void the documents.
 REVERSE (unit / driver / load / trailer / vendor -> fuel, expenses, recoveries, alerts, Relay fills): code audit
 running; any missing reverse view in my lane gets built next.
+
+## 2026-10-01 06:35Z — CC-2 | OWNER RULING recorded + fuel-lane reverse routing
+- OWNER, verbatim: "THE LOADS BELON TO TRANSPORTATION BUT USNMCA ASSUMES AND KEEPS ALL EXPENSES."
+  - The R-160 loads' 24 fuel rows and their expenses stay in USMCA, linked to those trips.
+  - Recorded on board row FUEL-SOURCE-VOIDED-UNDER-LIVE-EXPENSE-2026100109.
+- Reverse routing built (backend, guard 12047):
+  - fuel purchases list ?vendor_id=
+  - fraud alerts list ?unit_id= / ?driver_id= / ?load_id= / ?vendor_id= (through the purchase)
+  - fuel purchases drill to their expense document + JE, and the expense detail links back to its purchase
+    and flags a voided one
+  - NEW GET /api/v1/fuel/relay-fills ?unit_id= / ?driver_id= / ?unmatched=true (100 of 119 USMCA Relay
+    fills have no truck or driver matched and were reachable from no hub)
+  - Screens follow.
