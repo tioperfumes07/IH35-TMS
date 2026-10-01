@@ -1,0 +1,6 @@
+{
+  "_note": "Registry E-17 recommendation: report first, owner decides, then guard. These three IH 35 Transportation-owned trucks were attached to USMCA (currently_leased_to_company_id) when the guard landed, 2026-10-01 — OWNER-PENDING decision (move to a TRK lease, re-own, or deactivate). They are reported, not failed. Remove an entry once the owner's decision is applied; never add one without an owner ruling.",
+  "frozen_owner_company_ids": ["91e0bf0a-133f-4ce8-a734-2586cfa66d96"],
+  "usmca_company_id": "5c854333-6ea5-4faa-af31-67cb272fef80",
+  "owner_pending_unit_numbers": ["T122", "T124", "T156"]
+}
