@@ -1,6 +1,6 @@
 #!/usr/bin/env -S npx tsx
 /**
- * AUTH-180 (Lead, 2026-10-01) -- re-void the HEADERS of four duplicate factoring advances whose
+ * AUTH-181 (Lead, 2026-10-01) -- re-void the HEADERS of four duplicate factoring advances whose
  * GL is already clean. Header-only; executeVoidCancel must find NOTHING live to reverse.
  *
  * MEASURED LIVE 2026-10-01 (USMCA):
@@ -23,7 +23,7 @@
  * header is already voided. No deletes, no JE beyond what the engine itself writes (expected none).
  *
  * Run (dry run, refused on prod by design):  DATABASE_URL=<branch> npx tsx <this>
- * Apply:  OWNER_AUTH_ID=AUTH-180 DATABASE_URL=<prod> npx tsx <this> --apply
+ * Apply:  OWNER_AUTH_ID=AUTH-181 DATABASE_URL=<prod> npx tsx <this> --apply
  */
 import { execFileSync } from "node:child_process";
 import path from "node:path";
@@ -34,7 +34,7 @@ import { assertNotProduction, assertIsIntendedProduction } from "../lib/assert-n
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const APPLY = process.argv.includes("--apply");
-const AUTH_ID = "AUTH-180";
+const AUTH_ID = "AUTH-181";
 const ACTOR_USER_ID = "e4117991-d2c0-406d-8cda-74e98d95bccd";
 
 const DUPES = [
@@ -56,7 +56,7 @@ async function main() {
   const client = new pg.Client({ connectionString: url });
   await client.connect();
   await (APPLY ? assertIsIntendedProduction : assertNotProduction)(client, {
-    label: "scripts/ops/2026-10-01-lead-auth180-revoid-4-duplicate-advance-headers.ts",
+    label: "scripts/ops/2026-10-01-lead-auth181-revoid-4-duplicate-advance-headers.ts",
   });
   try {
     await client.query("BEGIN");
