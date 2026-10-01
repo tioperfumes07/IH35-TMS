@@ -7628,6 +7628,21 @@
     "claimed_at": "2026-10-01",
     "purpose": "verify-no-frozen-entity-unit-on-usmca (registry E-17 recommendation): fails on any active unit owned by a frozen entity (IH 35 Transportation) attached to USMCA beyond the owner-pending baseline (T122, T124, T156)."
   },
+  "12073": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-lease-engine-owner-only-and-unit-derivation (ROUND 316): lease create/sign/close Owner-only (403 + audit); units.currently_leased_to_company_id derives from a live lease contract."
+  },
+  "12077": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-lease-bill-engine (ROUND 316): one vendor bill per lessor per month through the canonical bill engine, line per unit/trailer, class = unit, lease expense account, bill <-> lease FK both ways, Feed Gate."
+  },
+  "12081": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-legal-contract-linkage (ROUND 316): contract_instances real FKs + extended link types; matters customer/vendor/load; matter reserve posts a JE."
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
