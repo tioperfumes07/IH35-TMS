@@ -6397,9 +6397,15 @@ action: UPDATE safety.complaints SET voided_at = now(), voided_by = <owner user>
     e81cd567-92eb-412e-888a-241842ea181b  "CODEX P44 complaint type FK smoke"
   Script of record: scripts/ops/2026-10-01-cc2-auth180-void-3-test-complaints.ts (dry run first).
 expires_at: 2026-10-02T04:30:00Z
-status: OPEN
+status: CONSUMED 2026-10-01 — see the execution block at the end of this entry
 
 OWNER ORDER, verbatim, 2026-10-01 (CC-2 session, after the board row
 COMPLAINTS-CODER-TEST-ROWS-LIVE-IN-USMCA-2026100101 named the three ids):
   "you have mny authorization to void these test items, anyone can void a test and sample and demo
    itemn, not real transactions."
+
+EXECUTION (CC-2, 2026-10-01): dry run first (3/3 found, USMCA, live, test markers), then --apply
+after verify-owner-authorization OK (AUTH-180 OPEN on origin/main 319b20ae93). Result: 3 rows
+voided, rowCount asserted = 3, voided_by = owner user e4117991-d2c0-406d-8cda-74e98d95bccd,
+void_reason 'coder test fixture, not a real complaint (AUTH-180)'. Re-verified: USMCA live
+complaints 5 -> 2; nothing deleted.
