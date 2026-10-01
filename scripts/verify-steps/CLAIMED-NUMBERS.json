@@ -7518,6 +7518,11 @@
     "claimed_at": "2026-10-01",
     "purpose": "verify-integrity-findings-attribution-honest (ROUND 305 B-49: geofence integrity findings attributed only through the assignment window; every unplaceable finding carries a named gap reason)"
   },
+  "12015": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-driver-integrity-profile-evidence (ROUND 305 B-50/B-51: every integrity flag carries evidence + period; complaints is its own named component; composed profile shows arithmetic, no invented weights)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
