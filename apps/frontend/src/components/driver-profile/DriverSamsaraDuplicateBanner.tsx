@@ -47,18 +47,23 @@ export function DriverSamsaraDuplicateBanner({
         <p className="text-xs text-slate-500">No Samsara account mapped to this driver.</p>
       ) : (
         <ul className="mb-2 space-y-1 text-xs text-slate-700">
-          {samsara_accounts.map((a) => (
-            <li key={a.samsara_driver_id}>
-              {a.samsara_username || a.samsara_driver_id}
-              {a.last_login_at ? ` · last login ${formatDateTimeUS(a.last_login_at)}` : ""}
-              {a.is_active === false ? " · inactive" : ""}
-            </li>
-          ))}
+          {samsara_accounts.map((a) => {
+            const accountLabel = a.samsara_username?.trim()
+              ? a.samsara_username
+              : `Samsara account ${String(a.samsara_driver_id).slice(-6)}`;
+            return (
+              <li key={a.samsara_driver_id}>
+                {accountLabel}
+                {a.last_login_at ? ` · last login ${formatDateTimeUS(a.last_login_at)}` : ""}
+                {a.is_active === false ? " · inactive" : ""}
+              </li>
+            );
+          })}
         </ul>
       )}
       {duplicate_warning ? (
         <div
-          className="rounded-sm border border-amber-300 bg-amber-50 px-2 py-1.5 text-xs text-amber-950"
+          className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1.5 text-xs text-slate-700"
           data-testid="dp-samsara-duplicate-warning"
           role="status"
         >
@@ -66,12 +71,15 @@ export function DriverSamsaraDuplicateBanner({
           driver still carries one of these Samsara ids. Show only — do not merge or deactivate from this
           screen.
           <ul className="mt-1 list-disc pl-4">
-            {other_live_drivers_with_these_ids.map((o) => (
-              <li key={o.driver_id}>
-                <EntityLink kind="driver" id={o.driver_id} label={o.name?.trim() || o.driver_id} />
-                {o.status ? ` · ${o.status}` : ""} · Samsara {o.samsara_driver_id}
-              </li>
-            ))}
+            {other_live_drivers_with_these_ids.map((o) => {
+              const samsaraTail = String(o.samsara_driver_id).slice(-6);
+              return (
+                <li key={o.driver_id}>
+                  <EntityLink kind="driver" id={o.driver_id} label={o.name?.trim() || "Driver"} />
+                  {o.status ? ` · ${o.status}` : ""} · Samsara …{samsaraTail}
+                </li>
+              );
+            })}
           </ul>
         </div>
       ) : null}

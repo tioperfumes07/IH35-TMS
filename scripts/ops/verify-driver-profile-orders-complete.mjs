@@ -63,6 +63,13 @@ function main() {
   assertIncludes(samsara, 'data-dp-samsara="1"', SAMSARA);
   assertIncludes(samsara, "duplicate_warning", SAMSARA);
   assertIncludes(samsara, "Duplicate Samsara record warning", SAMSARA);
+  // §7 palette — warning banner must use slate tokens (never amber/emerald/yellow status paint).
+  assertIncludes(samsara, "border-slate-200", SAMSARA);
+  assertIncludes(samsara, "bg-slate-100", SAMSARA);
+  assertIncludes(samsara, "text-slate-700", SAMSARA);
+  if (/amber-|emerald-|yellow-|bg-green-|text-green-/.test(samsara)) {
+    throw new Error(`${SAMSARA}: off-palette §7 status class (use slate tokens only)`);
+  }
   assertIncludes(fuel, 'data-dp-fuel-verdicts="1"', FUEL);
   assertIncludes(fuel, "E-21", FUEL);
   assertIncludes(fuel, "E-22", FUEL);
