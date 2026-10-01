@@ -142,6 +142,8 @@ export type EntityKind =
   | "insurance_coverage_gaps"
   | "property_tax_unit"
   | "fault_drafts_unit"
+  | "fault_code_alerts_unit"
+  | "fault_code_alerts_driver"
   | "tire_program_equipment"
   | "driver_team_splits_filter"
   | "tire_program_unit"
@@ -530,6 +532,10 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/compliance/property-tax?unit_id=${id}`;
     case "fault_drafts_unit":
       return `/maintenance/fault-drafts?unit_id=${id}`;
+    case "fault_code_alerts_unit":
+      return `/maintenance/fault-code-alerts?unit_id=${id}`;
+    case "fault_code_alerts_driver":
+      return `/maintenance/fault-code-alerts?driver_id=${id}`;
     case "tire_program_equipment":
       return `/maintenance/tires?equipment_id=${id}`;
     case "driver_team_splits_filter":

@@ -122,3 +122,9 @@ C-64/C-65/C-67 shipped to PR: escrow Board+Ledger split (never-delete ParityTabl
 
 **2026-10-01T01:51Z · ROUND 304 MERGED · PR #23592 · `25803d65b2`**
 FAST-MERGE: money-pr-local-gate exit 0 → squash merge (no --admin). LEFT: Lead Chrome measure before DONE close.
+
+**2026-10-01T02:10Z · ACK ROUND 306 | E-40 | GO**
+Read NOW-CURSOR Round 306. Queue E-40→E-44 in order. Starting E-40 FAULTS view against live GET /api/v1/maintenance/fault-code-alerts. Lane: FE wiring only. No seed. Not merging #23597 (CI red). Branch `cursor/e40-faults-view-c89b`.
+
+**2026-10-01T02:20Z · E-40 FAULTS VIEW · branch `cursor/e40-faults-view-c89b`**
+E-40 · FaultCodeAlertsPage + listFaultCodeAlerts → GET /fault-code-alerts; routes /maintenance/fault-code-alerts + /:id (notification deep-link); nav Faults (module 14 / master 12); EntityLink fault_code_alerts_unit/driver; vehicle snapshot View fault history → E-40. Ops: verify-e40-faults-view. No seed. NEXT after merge: E-41 ENGINE STATUS BOARD.
