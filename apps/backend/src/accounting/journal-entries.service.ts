@@ -51,6 +51,8 @@ async function hasReversalLinkageColumns(client: QueryableClient): Promise<boole
 type CreatePostingInput = {
   account_id: string;
   class_id?: string | null;
+  /** BANK-F91052 — QBO Location (mdata.locations); nullable reporting dimension. */
+  location_id?: string | null;
   entity_uuid?: string | null;
   /** BANK-F5330 / P23 — discriminator for entity_uuid; migration 202612670000 CHECK-pairs them. */
   entity_type?: "customer" | "vendor" | "driver" | "unit" | null;
@@ -259,6 +261,7 @@ export async function createJournalEntryOnClient(
           line_sequence,
           account_id,
           class_id,
+          location_id,
           entity_uuid,
           entity_type,
           debit_or_credit,
@@ -270,7 +273,7 @@ export async function createJournalEntryOnClient(
           created_at,
           updated_at
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,now(),now())
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,now(),now())
         ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
           WHERE idempotency_key IS NOT NULL DO NOTHING
         RETURNING id::text
@@ -281,6 +284,7 @@ export async function createJournalEntryOnClient(
         lineSequence,
         posting.account_id,
         posting.class_id ?? null,
+        posting.location_id ?? null,
         posting.entity_uuid ?? null,
         // BANK-F5330 / P23 — must travel with entity_uuid: migration 202612670000's CHECK rejects
         // one set without the other.

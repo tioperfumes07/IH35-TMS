@@ -24,6 +24,7 @@ import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { listClassesForJe, listCoaAccountsForJe } from "../../api/accounting";
 import { listCustomers, listVendors } from "../../api/mdata";
+import { FuelStopLocationPicker } from "../../components/locations/FuelStopLocationPicker";
 import {
   applyReclassify, findReclassifyLines, getReclassifyAccounts, listReclassifyBatches, undoReclassifyBatch,
   type ReclassifyAccount, type ReclassifyBatchResult, type ReclassifyLine,
@@ -60,6 +61,7 @@ export function ReclassifyTransactionsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [toAccount, setToAccount] = useState("");
   const [toClass, setToClass] = useState("");
+  const [toLocation, setToLocation] = useState<string | null>(null);
   const [toEntityKind, setToEntityKind] = useState<"vendor" | "customer">("vendor");
   const [toVendor, setToVendor] = useState("");
   const [reason, setReason] = useState("");
@@ -87,12 +89,12 @@ export function ReclassifyTransactionsPage() {
   const applyMut = useMutation({
     mutationFn: () => applyReclassify({
       operating_company_id: companyId, posting_ids: Array.from(selected.keys()), reason,
-      to_account_id: toAccount || null, to_class_id: toClass || null,
+      to_account_id: toAccount || null, to_class_id: toClass || null, to_location_id: toLocation || null,
       to_entity_uuid: toVendor || null, to_entity_type: toVendor ? toEntityKind : null,
       filter_snapshot: applied ?? {},
     }),
     onSuccess: (res) => {
-      setLastResult(res); setModalOpen(false); setSelected(new Map()); setToAccount(""); setToClass(""); setToVendor(""); setToEntityKind("vendor"); setReason("");
+      setLastResult(res); setModalOpen(false); setSelected(new Map()); setToAccount(""); setToClass(""); setToLocation(null); setToVendor(""); setToEntityKind("vendor"); setReason("");
       void qc.invalidateQueries({ queryKey: ["reclassify-lines"] }); void qc.invalidateQueries({ queryKey: ["reclassify-accounts"] }); void qc.invalidateQueries({ queryKey: ["reclassify-batches"] });
     },
   });
@@ -303,7 +305,7 @@ export function ReclassifyTransactionsPage() {
                   <tr key={b.id} className="border-t border-gray-100">
                     <td className="p-2 whitespace-nowrap">{formatDateQboList(b.created_at)}</td>
                     <td className="p-2">{b.created_by_email ?? "—"}</td>
-                    <td className="p-2">{[b.to_account_name ? `→ ${formatAccountDisplayLabel({ account_name: b.to_account_name, account_number: b.to_account_number }, { showNumber: showAccountNumbers })}` : null, b.to_class_name ? `class → ${b.to_class_name}` : null, b.to_entity_uuid ? `${b.to_entity_type} → ${b.to_entity_uuid.slice(0, 8)}` : null].filter(Boolean).join(" · ")}</td>
+                    <td className="p-2">{[b.to_account_name ? `→ ${formatAccountDisplayLabel({ account_name: b.to_account_name, account_number: b.to_account_number }, { showNumber: showAccountNumbers })}` : null, b.to_class_name ? `class → ${b.to_class_name}` : null, b.to_location_name ? `location → ${b.to_location_name}` : null, b.to_entity_uuid ? `${b.to_entity_type} → ${b.to_entity_uuid.slice(0, 8)}` : null].filter(Boolean).join(" · ")}</td>
                     <td className="p-2 max-w-[18rem] truncate" title={b.reason}>{b.reason}</td>
                     <td className="p-2 text-right tabular-nums">{b.lines_applied}/{b.lines_requested}{b.lines_refused ? ` (${b.lines_refused} refused)` : ""}</td>
                     <td className="p-2 text-right tabular-nums">{formatCurrencyFromCents(b.amount_cents_moved)}</td>
@@ -348,10 +350,15 @@ export function ReclassifyTransactionsPage() {
             </label>
             <label className="mt-2 flex flex-col gap-1 text-xs font-semibold text-slate-600" data-b5-change-location="1">
               Change location to
-              <select disabled className="h-9 rounded border border-gray-200 bg-slate-50 px-2 text-xs text-slate-500" title="Location reclassify is not wired on postings yet — use class (unit) for fleet dimension.">
-                <option>Select… (not available yet)</option>
-              </select>
-              <span className="font-normal text-slate-500">Location is not a posting column today — use Class (unit) for fleet. Apply stays available for account / class / vendor-customer.</span>
+              <div data-testid="reclassify-to-location">
+                <FuelStopLocationPicker
+                  operatingCompanyId={companyId}
+                  value={toLocation}
+                  onChange={(id) => setToLocation(id)}
+                  placeholder="Select…"
+                  fuelStopOnly={false}
+                />
+              </div>
             </label>
             <div className="mt-2 flex flex-col gap-1 text-xs font-semibold text-slate-600" data-b5-change-vendor-customer="1">
               Change vendor/customer to
@@ -382,7 +389,7 @@ export function ReclassifyTransactionsPage() {
             {applyMut.error ? <div className="mt-2"><ListErrorState {...formatQueryErrorDetail(applyMut.error)} onRetry={() => applyMut.reset()} /></div> : null}
             <div className="mt-3 flex justify-end gap-2">
               <Button type="button" variant="tertiary" onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button type="button" loading={applyMut.isPending} disabled={reason.trim().length < 3 || (!toAccount && !toClass && !toVendor)} onClick={() => applyMut.mutate()} data-testid="reclassify-apply">Apply</Button>
+              <Button type="button" loading={applyMut.isPending} disabled={reason.trim().length < 3 || (!toAccount && !toClass && !toLocation && !toVendor)} onClick={() => applyMut.mutate()} data-testid="reclassify-apply">Apply</Button>
             </div>
           </div>
         </div>

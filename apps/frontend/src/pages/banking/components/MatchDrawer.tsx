@@ -20,6 +20,7 @@ import { coaAccountReferenceOption, vendorReferenceOption } from "../../../compo
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
+import { FuelStopLocationPicker } from "../../../components/locations/FuelStopLocationPicker";
 import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
 import { useListState } from "../../../components/list-state";
@@ -42,6 +43,7 @@ type ResolveDiffRow = {
   vendorId: string;
   glAccountId: string;
   unitId: string;
+  locationId: string;
   memo: string;
   amountCents: number;
 };
@@ -59,6 +61,7 @@ function blankResolveRow(bankDate: string): ResolveDiffRow {
     vendorId: "",
     glAccountId: "",
     unitId: "",
+    locationId: "",
     memo: "",
     amountCents: 0,
   };
@@ -541,14 +544,13 @@ export function MatchDrawer({
             <div className="space-y-2 rounded-sm border border-[#E5E7EB] bg-white p-2" data-testid="match-resolve-difference-grid">
               <p className="text-xs text-slate-500">
                 Add resolving line(s) so Selected + Resolved equals the bank amount. Lines persist as{" "}
-                <span className="font-medium">bank transaction splits</span> (payee, category, class/unit, memo,
-                amount). Location is not on the split engine yet — omitted honestly. Match / Commit only at
-                Difference $0.00.
+                <span className="font-medium">bank transaction splits</span> (payee, category, class/unit, location,
+                memo, amount). Match / Commit only at Difference $0.00.
               </p>
               {resolveRows.map((row, idx) => (
                 <div
                   key={row._key}
-                  className="grid gap-1 border-b border-[#E5E7EB] pb-2 last:border-b-0 md:grid-cols-6"
+                  className="grid gap-1 border-b border-[#E5E7EB] pb-2 last:border-b-0 md:grid-cols-7"
                   data-testid="match-resolve-difference-row"
                 >
                   <label className="text-section-header font-bold uppercase text-[#4B5563]">
@@ -611,6 +613,22 @@ export function MatchDrawer({
                           )
                         }
                         placeholder="Unit (class)"
+                      />
+                    </div>
+                  </label>
+                  <label className="text-section-header font-bold uppercase text-[#4B5563]" data-b3-resolve-location="1">
+                    Location
+                    <div className="mt-0.5" data-testid="match-resolve-location">
+                      <FuelStopLocationPicker
+                        operatingCompanyId={operatingCompanyId}
+                        value={row.locationId || null}
+                        onChange={(id) =>
+                          setResolveRows((rows) =>
+                            rows.map((r, i) => (i === idx ? { ...r, locationId: id ?? "" } : r))
+                          )
+                        }
+                        placeholder="Location"
+                        fuelStopOnly={false}
                       />
                     </div>
                   </label>
@@ -700,6 +718,7 @@ export function MatchDrawer({
                             gl_account_id: r.glAccountId || null,
                             vendor_id: r.vendorId || null,
                             unit_id: r.unitId || null,
+                            location_id: r.locationId || null,
                             memo: r.memo || null,
                           })),
                         });

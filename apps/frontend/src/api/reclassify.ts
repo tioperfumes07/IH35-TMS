@@ -26,6 +26,8 @@ export type ReclassifyLine = {
   account_name: string | null;
   class_id: string | null;
   class_name: string | null;
+  location_id: string | null;
+  location_name: string | null;
   entity_uuid: string | null;
   entity_type: string | null;
   entity_name: string | null;
@@ -55,6 +57,7 @@ export type ReclassifyBatchResult = { batch_id: string; lines_requested: number;
 export type ReclassifyBatch = {
   id: string; created_at: string; reason: string; status: "applied" | "undone"; lines_requested: number; lines_applied: number; lines_refused: number; amount_cents_moved: number;
   to_account_id: string | null; to_account_number: string | null; to_account_name: string | null; to_class_id: string | null; to_class_name: string | null;
+  to_location_id: string | null; to_location_name: string | null;
   to_entity_uuid: string | null; to_entity_type: string | null; undone_at: string | null; undo_reason: string | null; created_by_email: string | null;
 };
 
@@ -80,7 +83,7 @@ export function findReclassifyLines(
 
 export function applyReclassify(body: {
   operating_company_id: string; posting_ids: string[]; reason: string;
-  to_account_id?: string | null; to_class_id?: string | null; to_entity_uuid?: string | null; to_entity_type?: "customer" | "vendor" | "driver" | "unit" | null;
+  to_account_id?: string | null; to_class_id?: string | null; to_location_id?: string | null; to_entity_uuid?: string | null; to_entity_type?: "customer" | "vendor" | "driver" | "unit" | null;
   filter_snapshot?: Record<string, unknown>;
 }) {
   return apiRequest<ReclassifyBatchResult>("/api/v1/accounting/reclassify/apply", { method: "POST", body });

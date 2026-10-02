@@ -4,6 +4,7 @@ import { buildLineWhere, buildReclassPairs, classifySelection, controlAccountRea
 const base = {
   posting_id: "p1", journal_entry_id: "je1", entry_date: "2026-08-31", source_transaction_type: "expense", source_transaction_id: "e1", source_transaction_line_id: "el1",
   document_number: "EXP-1", account_id: "acc-fuel", account_number: "5000", account_name: "Fuel-Truck-Diesel", class_id: "cls-1", class_name: "T100",
+  location_id: null, location_name: null,
   entity_uuid: "ven-1", entity_type: "vendor", entity_name: "Dreamline", description: "Zelle payment to Dreamline", debit_or_credit: "debit" as const,
   amount_cents: 676778, net_amount_cents: 676778, already_reclassified_batch_id: null, je_status: "posted", memo: null,
 };
@@ -23,12 +24,12 @@ describe("Reclassify engine — pure rules (QBO spec §24)", () => {
     expect(refused.map((r) => [r.posting.posting_id, r.why])).toEqual([
       ["p2", "journal entry is voided"],
       ["p3", "already reclassified in batch b-old; undo that batch first"],
-      ["p4", "line already carries the requested account/class/entity"],
+      ["p4", "line already carries the requested account/class/location/entity"],
     ]);
   });
 
   it("builds a reverse+repost PAIR per line: old side flipped, new side on the target, amounts equal, source document carried on both", () => {
-    const lines = buildReclassPairs([base], { to_account_id: "acc-ap", to_class_id: null, to_entity_uuid: null, to_entity_type: null }, "batch-12345678");
+    const lines = buildReclassPairs([base], { to_account_id: "acc-ap", to_class_id: null, to_location_id: null, to_entity_uuid: null, to_entity_type: null }, "batch-12345678");
     expect(lines).toHaveLength(2);
     const [rev, post] = lines;
     expect(rev).toMatchObject({ account_id: "acc-fuel", debit_or_credit: "credit", amount_cents: 676778, class_id: "cls-1", entity_uuid: "ven-1", source_transaction_type: "expense", source_transaction_id: "e1" });
