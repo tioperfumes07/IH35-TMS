@@ -11,7 +11,8 @@ export function VendorPartsInventoryReverseSection({ operatingCompanyId, vendorI
     queryFn: () => listPartsInventory(operatingCompanyId, { vendor_id: vendorId }),
     enabled: Boolean(operatingCompanyId && vendorId),
   });
-  const rows = query.data ?? [];
+  // ROUND 297 audit (reverse): a voided purchase ("[VOID] " description, the parts catalog's own void marker) leaves.
+  const rows = (query.data ?? []).filter((r) => !String(r.part_description ?? "").startsWith("[VOID] "));
   return (
     <DataPanel title="Purchased Parts Inventory">
       {query.isError ? <ListErrorBanner message={userFacingApiError(query.error, "Couldn't load purchased inventory for this vendor")} onRetry={() => void query.refetch()} /> : null}

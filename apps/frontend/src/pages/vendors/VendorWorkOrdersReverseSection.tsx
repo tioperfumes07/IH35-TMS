@@ -19,7 +19,8 @@ export function VendorWorkOrdersReverseSection({ operatingCompanyId, vendorId }:
   });
 
   return (
-    <DataPanel title="Work Orders">
+    // ROUND 297 audit: the server's total_count (the list is one 50-row page), not the page's length.
+    <DataPanel title={query.data?.total_count ? `Work Orders · ${query.data.total_count}` : "Work Orders"}>
       {query.isError ? (
         <ListErrorBanner
           message={userFacingApiError(query.error, "Couldn't load vendor work orders")}

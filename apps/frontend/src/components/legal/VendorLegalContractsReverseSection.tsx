@@ -9,7 +9,8 @@ export function VendorLegalContractsReverseSection({ operatingCompanyId, vendorI
     enabled: Boolean(operatingCompanyId && vendorId),
     queryFn: () => legalContractsApi.list({ operating_company_id: operatingCompanyId, signer_type: "vendor", signer_entity_id: vendorId }),
   });
-  const rows = query.isError ? [] : (query.data?.contracts ?? []);
+  // ROUND 297 audit (reverse): a voided contract leaves this section and its count.
+  const rows = query.isError ? [] : (query.data?.contracts ?? []).filter((c) => !c.voided_at);
 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="vendor-legal-contracts-reverse">

@@ -14,12 +14,13 @@ export function VendorEquipmentLoansReverseSection({ operatingCompanyId, vendorI
     queryFn: () => listEquipmentLoans(operatingCompanyId, vendorId).then((r) => r.rows),
     enabled: Boolean(operatingCompanyId && vendorId),
   });
-  const loans = query.data ?? [];
+  // ROUND 297 audit (reverse): a voided loan leaves the section; the header carries the full count, not the first 5.
+  const loans = (query.data ?? []).filter((l) => String(l.status ?? "").toLowerCase() !== "voided");
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="vendor-equipment-loans-reverse">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-xs font-semibold text-slate-900">Equipment loans (CCG)</h2>
+        <h2 className="text-xs font-semibold text-slate-900">Equipment loans (CCG){loans.length ? ` · ${loans.length}` : ""}</h2>
         <EntityLink
           kind="equipment_loans_vendor"
           id={vendorId}

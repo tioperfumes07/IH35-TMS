@@ -26,6 +26,8 @@ export type FuelFraudAlertRow = {
   total_cost: number | null;
   recovery_event_id: string | null;
   recovery_status: string | null;
+  /** True when the fuel purchase behind the alert was voided / archived (round 297 audit). */
+  fuel_transaction_voided?: boolean;
 };
 
 export type FuelFraudAlertFilter =

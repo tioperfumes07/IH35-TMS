@@ -757,7 +757,9 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             ded.amount_cents::bigint AS deduction_amount_cents,
             ded.status AS deduction_status,
             ded.deduction_type AS deduction_type,
-            COALESCE(NULLIF(TRIM(ded.deduction_type), ''), 'Driver deduction') AS deduction_label
+            COALESCE(NULLIF(TRIM(ded.deduction_type), ''), 'Driver deduction') AS deduction_label,
+            -- ROUND 297 audit: the full tagged count (window runs before LIMIT); total_count used to be rows.length.
+            count(*) OVER ()::int AS full_count
           FROM banking.bank_transactions bt
           LEFT JOIN driver_finance.driver_settlement_deductions ded
             ON ded.id = bt.categorization_deduction_id
@@ -791,10 +793,11 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
           q.data.customer_id ?? null,
         ]
       );
-      return res.rows;
+      return res.rows as Array<Record<string, unknown> & { full_count?: number }>;
     });
 
-    return { rows, total_count: rows.length };
+    const totalCount = Number(rows[0]?.full_count ?? 0);
+    return { rows: rows.map(({ full_count: _full, ...r }) => r), total_count: totalCount };
   });
 
   app.post("/api/v1/banking/transactions/categorize-bulk", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {

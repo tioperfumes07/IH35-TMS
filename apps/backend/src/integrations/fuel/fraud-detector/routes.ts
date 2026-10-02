@@ -132,7 +132,9 @@ export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promis
             ft.driver_id::text AS driver_id,
             ft.load_id::text AS load_id,
             ft.vendor_id::text AS vendor_id,
-            ft.total_cost::float8 AS total_cost
+            ft.total_cost::float8 AS total_cost,
+            -- ROUND 297 audit (additive): reverse sections drop alerts whose purchase was voided / archived.
+            (ft.voided_at IS NOT NULL OR ft.archived_at IS NOT NULL) AS fuel_transaction_voided
           FROM fuel.fraud_alerts fa
           JOIN fuel.fuel_transactions ft ON ft.id = fa.fuel_transaction_uuid
           WHERE ${filters.join(" AND ")}
