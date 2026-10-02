@@ -96,6 +96,14 @@ function main() {
   assertIncludes(makeDeposit, 'data-b5-batch-deposits="1"', "MakeDepositPage");
   assertIncludes(makeDeposit, 'searchParams.get("batch") === "1"', "MakeDepositPage");
   assertIncludes(makeDeposit, "createBankDeposit", "MakeDepositPage");
+  // BANK-F91049 — ORDERS §B-5 / QBO deposit footer [Save and close ▾]
+  assertIncludes(makeDeposit, 'data-b5-deposit-save-close="1"', "MakeDepositPage");
+  assertIncludes(makeDeposit, 'data-testid="b5-deposit-save-close"', "MakeDepositPage");
+  assertIncludes(makeDeposit, "SaveDropdown", "MakeDepositPage");
+  assertIncludes(makeDeposit, 'primaryLabel="Save and close"', "MakeDepositPage");
+  assertIncludes(makeDeposit, "onSaveAndAddAnother", "MakeDepositPage");
+  assertIncludes(makeDeposit, 'save_and_add_another: "Save and new"', "MakeDepositPage");
+  assertIncludes(makeDeposit, 'navigate("/banking/deposits")', "MakeDepositPage");
 
   const batchSettlements = read("apps/frontend/src/pages/driver-finance/BatchSettlementsPage.tsx");
   assertIncludes(batchSettlements, 'data-b5-batch-settlements="1"', "BatchSettlementsPage");
