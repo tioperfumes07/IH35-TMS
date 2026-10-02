@@ -68,6 +68,9 @@ export async function bindLoadToGeofences(
     }
     const vertices = circlePolygon(stop.lat, stop.lng, radius);
     const label = loadStopFenceLabel(loadId, stop.sequence);
+    // Serialise binds of the same stop fence: two concurrent binds (auto_dispatch) each saw "no fence" and inserted
+    // one -- 24 stop labels carry two fences live. The lock is per company + label and released at commit.
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1 || ':' || $2))`, [operatingCompanyId, label]);
     const existing = await client.query<{ id: string; center_lat: string | null; center_lng: string | null; radius_m: number | null }>(
       `
         SELECT id::text, center_lat::text, center_lng::text, radius_m

@@ -90,6 +90,16 @@ export function checkFenceUsesStopsOwnCoordinate(binding) {
   return problems;
 }
 
+/** One transition per real entry: one evaluation per fence label, out-of-order fixes absorbed, binds serialised. */
+export function checkNoDuplicateTransitions(detector, binding) {
+  const problems = [];
+  if (!/SELECT DISTINCT ON \(g\.label\)/.test(detector)) problems.push(`${PATHS.detector}: evaluate each fence LABEL once (duplicated stop fences wrote 2 transitions)`);
+  if (!/occurred_at BETWEEN \$5::timestamptz - interval '5 minutes' AND \$5::timestamptz \+ interval '5 minutes'/.test(detector))
+    problems.push(`${PATHS.detector}: an out-of-order fix must not write the same transition twice`);
+  if (!/pg_advisory_xact_lock\(hashtext\(\$1 \|\| ':' \|\| \$2\)\)/.test(binding)) problems.push(`${PATHS.binding}: stop-fence binds must be serialised per company + label`);
+  return problems;
+}
+
 export function report(label, problems, selftest) {
   if (selftest) {
     const { name, run } = selftest;

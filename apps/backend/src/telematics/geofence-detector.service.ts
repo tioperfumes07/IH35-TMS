@@ -86,7 +86,7 @@ async function fetchContainmentRows(
 ): Promise<GeofenceContainmentRow[]> {
   const res = await client.query<GeofenceContainmentRow>(
     `
-      SELECT
+      SELECT DISTINCT ON (g.label)
         g.id::text AS geofence_id,
         g.vertices_json,
         (
@@ -102,6 +102,8 @@ async function fetchContainmentRows(
       FROM geo.geofences g
       WHERE g.operating_company_id = $1::uuid
         AND g.is_active = true
+      -- one evaluation per fence LABEL (oldest fence wins): a duplicated stop fence must not write two transitions
+      ORDER BY g.label, g.created_at, g.id
     `,
     [input.operating_company_id, input.unit_id, input.occurred_at]
   );
@@ -126,6 +128,17 @@ export async function processGeofenceDetectionsForGpsPoint(
     const isInside = pointInPolygon(input.latitude, input.longitude, normalizeVertices(row.vertices_json));
     const transition = computeGeofenceTransition(row.last_event_kind, isInside);
     if (!transition) continue;
+    // Samsara reports a location fix and a stats fix for the same second, and they can arrive out of order: the later
+    // (earlier-timestamped) one saw no prior event and wrote a second "entered". The same transition already recorded
+    // for this fence + unit within 5 minutes either side of this fix is that transition, not a new one.
+    const near = await client.query(
+      `SELECT 1 FROM geo.geofence_events
+        WHERE operating_company_id = $1::uuid AND geofence_id = $2::uuid AND unit_id = $3::uuid AND event_kind = $4
+          AND occurred_at BETWEEN $5::timestamptz - interval '5 minutes' AND $5::timestamptz + interval '5 minutes'
+        LIMIT 1`,
+      [input.operating_company_id, row.geofence_id, input.unit_id, transition, input.occurred_at]
+    );
+    if (near.rows.length > 0) continue;
     const inserted = await client.query(
       `
         INSERT INTO geo.geofence_events (
