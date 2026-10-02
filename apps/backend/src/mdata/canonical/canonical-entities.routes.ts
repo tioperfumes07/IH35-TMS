@@ -8,10 +8,7 @@ import { requireAuth } from "../../auth/session-middleware.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { withCompanyScope } from "../../accounting/shared.js";
 import { readCustomerProfile } from "./customer-profile.service.js";
-<<<<<<< HEAD
 import { readVendorProfile } from "./vendor-profile.service.js";
-=======
->>>>>>> origin/main
 import { mergeIntoCanonical, planCanonical, reverseCanonicalMerge, type CanonicalKind } from "./canonical-entities.service.js";
 
 const kindSchema = z.enum(["customers", "vendors"]);
@@ -31,7 +28,6 @@ export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
     return profile;
   });
 
-<<<<<<< HEAD
   // ROUND 326 item 2 — the vendor profile surface: nine blocks, each a value or a named empty reason.
   app.get("/api/v1/vendors/:id/profile", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
@@ -45,8 +41,6 @@ export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
     return profile;
   });
 
-=======
->>>>>>> origin/main
   app.get("/api/v1/mdata/canonical/:kind/plan", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
     const p = z.object({ kind: kindSchema }).safeParse(req.params ?? {});
