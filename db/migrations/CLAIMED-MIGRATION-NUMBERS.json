@@ -1426,6 +1426,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-10-02",
       "purpose": "ROUND 321 CC-1 lease-to-own buyout close: lease_contract buyout fields (bought_out_at, buyout_bill_id, buyout_fixed_asset link) + any posting linkage the close needs."
+    },
+    "202615210200": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-10-02",
+      "purpose": "ROUND 326 CC-1 complete delete route: _system.purge_authorized_rows (owner-listed rows per AUTH, no app grant) + audit.record_deletions (what + why per deleted row) + refuse_financial_row_delete arms (listed-row purge; cancelled-load revrec via SECURITY DEFINER accounting.delete_cancelled_load_revrec) + mdata.loads.source_entity_code (inbound entity resolution, reject unresolvable)."
     }
   },
   "202613590001": {
