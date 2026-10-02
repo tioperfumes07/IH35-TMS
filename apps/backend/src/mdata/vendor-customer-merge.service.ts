@@ -62,7 +62,7 @@ type QueryableClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
 };
 
-const VENDOR_REPOINT_COLUMNS: Array<{ table: string; column: string }> = [
+export const VENDOR_REPOINT_COLUMNS: Array<{ table: string; column: string }> = [
   { table: "mdata.customers", column: "factoring_company_vendor_id" },
   { table: "mdata.loads", column: "factoring_company_vendor_id" },
   { table: "mdata.locations", column: "linked_vendor_id" },
@@ -94,7 +94,7 @@ const VENDOR_REPOINT_COLUMNS: Array<{ table: string; column: string }> = [
   { table: "mdata.vendors", column: "merge_target_id" },
 ];
 
-const CUSTOMER_REPOINT_COLUMNS: Array<{ table: string; column: string }> = [
+export const CUSTOMER_REPOINT_COLUMNS: Array<{ table: string; column: string }> = [
   { table: "mdata.customer_contacts", column: "customer_uuid" },
   { table: "mdata.customer_lanes", column: "customer_id" },
   { table: "mdata.customer_quality_events", column: "customer_id" },
@@ -315,3 +315,7 @@ export async function mergeCustomers(
 
   return { survivor_id: input.survivorId, duplicate_id: input.duplicateId, entity: "customer", repointed, total_rows_repointed: totalRows };
 }
+
+/** ROUND 326: the verified columns the canonical engine adds to the live FK catalog (it reads pg_constraint itself). */
+export const CUSTOMER_LOOSE_REPOINT_COLUMNS = CUSTOMER_REPOINT_COLUMNS;
+export const VENDOR_LOOSE_REPOINT_COLUMNS = VENDOR_REPOINT_COLUMNS;

@@ -1,0 +1,60 @@
+/**
+ * ROUND 326 — canonical customers / vendors: plan (read), merge and reverse (Owner only, audited, reversible).
+ * One merge per call so every merge is its own transaction, audit row and alias.
+ */
+import type { FastifyInstance } from "fastify";
+import { z } from "zod";
+import { requireAuth } from "../../auth/session-middleware.js";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
+import { withCompanyScope } from "../../accounting/shared.js";
+import { mergeIntoCanonical, planCanonical, reverseCanonicalMerge, type CanonicalKind } from "./canonical-entities.service.js";
+
+const kindSchema = z.enum(["customers", "vendors"]);
+const toKind = (k: "customers" | "vendors"): CanonicalKind => (k === "customers" ? "customer" : "vendor");
+
+export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
+  app.get("/api/v1/mdata/canonical/:kind/plan", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
+    if (!requireAuth(req, reply)) return;
+    const p = z.object({ kind: kindSchema }).safeParse(req.params ?? {});
+    const qy = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+    if (!p.success || !qy.success) return reply.code(400).send({ error: "validation_error" });
+    await assertCompanyMembership(req.user!.uuid, qy.data.operating_company_id);
+    return withCompanyScope(req.user!.uuid, qy.data.operating_company_id, (client) => planCanonical(client, qy.data.operating_company_id, toKind(p.data.kind)));
+  });
+
+  app.post("/api/v1/mdata/canonical/:kind/merge", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    if (!requireAuth(req, reply)) return;
+    if (req.user!.role !== "Owner") return reply.code(403).send({ error: "owner_only" });
+    const p = z.object({ kind: kindSchema }).safeParse(req.params ?? {});
+    const b = z.object({ operating_company_id: z.string().uuid(), survivor_id: z.string().uuid(), duplicate_id: z.string().uuid(), reason: z.string().trim().min(5) }).safeParse(req.body ?? {});
+    if (!p.success || !b.success) return reply.code(400).send({ error: "validation_error" });
+    await assertCompanyMembership(req.user!.uuid, b.data.operating_company_id);
+    try {
+      return await withCompanyScope(req.user!.uuid, b.data.operating_company_id, (client) =>
+        mergeIntoCanonical(client, b.data.operating_company_id, toKind(p.data.kind), {
+          survivorId: b.data.survivor_id, duplicateId: b.data.duplicate_id, actorUserId: req.user!.uuid, authId: null, reason: b.data.reason,
+        }));
+    } catch (e) {
+      const m = String((e as Error).message);
+      if (m.startsWith("canonical_")) return reply.code(409).send({ error: m });
+      throw e;
+    }
+  });
+
+  app.post("/api/v1/mdata/canonical/:kind/aliases/:aliasId/reverse", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    if (!requireAuth(req, reply)) return;
+    if (req.user!.role !== "Owner") return reply.code(403).send({ error: "owner_only" });
+    const p = z.object({ kind: kindSchema, aliasId: z.string().uuid() }).safeParse(req.params ?? {});
+    const b = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.body ?? {});
+    if (!p.success || !b.success) return reply.code(400).send({ error: "validation_error" });
+    await assertCompanyMembership(req.user!.uuid, b.data.operating_company_id);
+    try {
+      return await withCompanyScope(req.user!.uuid, b.data.operating_company_id, (client) =>
+        reverseCanonicalMerge(client, b.data.operating_company_id, toKind(p.data.kind), p.data.aliasId, req.user!.uuid));
+    } catch (e) {
+      const m = String((e as Error).message);
+      if (m.startsWith("canonical_")) return reply.code(409).send({ error: m });
+      throw e;
+    }
+  });
+}
