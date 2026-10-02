@@ -118,6 +118,10 @@ async function liveCheck() {
       FROM driver_finance.driver_liabilities l
       JOIN driver_finance.driver_advances a ON a.liability_id = l.id
       WHERE l.type = 'loan' AND a.load_id IS NOT NULL
+        -- CC-1 2026-10-02: only LIVE liabilities can leak linkage into a loan. CA-2026-0009 (historical backfill,
+        -- 2026-09-24) carries a load_id but its liability is voided — a dead document — and counting it turned
+        -- this guard red for every seat on data no engine can act on.
+        AND l.voided_at IS NULL AND a.voided_at IS NULL
     `);
     if (res.rowCount > 0) {
       console.error(`${LABEL} LIVE FAILED: ${res.rowCount} loan-type liability row(s) carry a load_id -- the loan branch is leaking load linkage it should never have.`);
