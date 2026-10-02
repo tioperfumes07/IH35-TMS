@@ -1,3 +1,8 @@
+**2026-10-02T13:36Z · BANK-F91040 MERGED #24105 · tip `f026762c7b`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91040 MERGED FAST-MERGE | GO
+B-4 §14 empty/OD/trailer enricher on listBillsByVendor (loads.empty_miles + stop city/state + trailer equipment/history). money-pr-local-gate PASS → #24105 squash. Neon USMCA loads n=150 with_eq=150 with_empty=16. F91038 still Tier-A blocked.
+NEXT: next ORDERS leftover · Lead Chrome · FE tip deploy · F91038 blocked until vendor_credit poster · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T13:21Z · BANK-F91039 MERGED #24103 · tip `0cc6c3aaa3`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91039 MERGED FAST-MERGE | GO
 B-4 §14 driver-bill settlement chrome on Write Check (FE from existing bill list linkage). money-pr-local-gate PASS → #24103 squash. SEQUENCE live links=2 orphans=0. F91038 still Tier-A blocked.
