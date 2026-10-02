@@ -7,13 +7,29 @@ const LoadBankingLinkagePage = React.lazy(() =>
 );
 const LoadHistoryPage = React.lazy(() => import("../pages/dispatch/LoadHistoryPage"));
 import React from "react";
-import { Navigate, Route, useLocation, useParams } from "react-router-dom";
+import { Navigate, Route, useLocation, useParams, useSearchParams } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useAuth } from "../auth/useAuth";
 import { useCompanyContext } from "../contexts/CompanyContext";
+import { PartyListSwitch, type PartyKind } from "../components/boards/PartyBoard";
 import { Shell } from "../components/Shell";
 import { resolveListsDomainHubKey } from "../pages/lists/components/AllCatalogsMap";
 import { catalogKeyToCatalogName } from "../hooks/useCatalogQuery";
+/**
+ * ROUND 326.5 — /customers and /vendors open on the owner's board (Regular view). Master-detail is the existing
+ * page, reached by the toggle or by any selection / create / tab parameter in the URL.
+ */
+function PartyListRoute({ kind, children }: { kind: PartyKind; children: ReactNode }) {
+  const { selectedCompanyId } = useCompanyContext();
+  const [params, setParams] = useSearchParams();
+  const detailActive = params.get("view") === "detail" || ["customer", "vendor", "create", "tab", "listTab", "category"].some((k) => params.has(k));
+  const setDetail = (on: boolean) => setParams(on ? { view: "detail" } : {}, { replace: false });
+  return (
+    <PartyListSwitch kind={kind} operatingCompanyId={selectedCompanyId ?? null} detail={children} detailActive={detailActive}
+      setDetail={setDetail} onCreate={() => setParams({ view: "detail", create: "1" })} />
+  );
+}
+
 const CustomersPage = React.lazy(() => import("../pages/Customers").then((m) => ({ default: m.CustomersPage })));
 const CustomerDetailPage = React.lazy(() => import("../pages/CustomerDetail").then((m) => ({ default: m.CustomerDetailPage })));
 const CustomerStatementPage = React.lazy(() => import("../pages/reports/CounterpartyStatementPage").then((m) => ({ default: m.CustomerStatementPage })));
@@ -1170,7 +1186,7 @@ export const ROUTES = React.Children.toArray(
           path="/customers"
           element={
             <ProtectedRoute>
-              <CustomersPage />
+              <PartyListRoute kind="customers"><CustomersPage /></PartyListRoute>
             </ProtectedRoute>
           }
         />
@@ -1194,7 +1210,7 @@ export const ROUTES = React.Children.toArray(
           path="/vendors"
           element={
             <ProtectedRoute>
-              <VendorsPage />
+              <PartyListRoute kind="vendors"><VendorsPage /></PartyListRoute>
             </ProtectedRoute>
           }
         />
