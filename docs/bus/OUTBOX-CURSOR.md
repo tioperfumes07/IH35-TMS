@@ -1,3 +1,9 @@
+**2026-10-02T09:20Z · B-2 recon open-document MERGED #24057 · tip **
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91017 MERGED FAST-MERGE | GO
+Matched/JE recon rows open original document on click. money-pr-local-gate PASS.
+Session: F91014 grid #24051 · F91015 report #24053 · F91016 types #24055 · F91017 open #24057.
+NEXT: next ORDERS leftover · Lead Chrome · bank_transaction_splits HH 12–23 · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T09:15Z · B-2 Filter full doc-types MERGED #24055 · tip **
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91016 MERGED FAST-MERGE | GO
 Reconcile Filter Transaction type = full document-type list (type_label). money-pr-local-gate PASS.
