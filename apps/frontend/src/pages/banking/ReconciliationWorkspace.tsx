@@ -49,10 +49,14 @@ type ReconGridRow = {
   description: string | null;
   merchant_name: string | null;
   reconciliation_cleared: boolean;
-  type_label?: string;
+  /** ORDERS §6 grid: TYPE | REF NO. | ACCOUNT | PAYEE | MEMO */
+  type_label: string;
+  ref: string | null;
+  payee: string | null;
+  memo: string | null;
+  split_account: string | null;
   journal_entry_id?: string | null;
   posting_id?: string | null;
-  split_account?: string | null;
   // bank-only match fields (optional)
   matched_load_id?: string | null;
   matched_bill_id?: string | null;
@@ -68,6 +72,31 @@ type ReconGridRow = {
   matched_journal_entry_memo?: string | null;
 };
 
+/** Derive QBO-style TYPE for a bank-feed row from its live match FKs. */
+function bankTxTypeLabel(tx: PlaidBankTransaction): string {
+  if (tx.check_number) return "Check";
+  if (tx.matched_expense_id) return "Expense";
+  if (tx.matched_bill_id) return "Bill";
+  if (tx.matched_settlement_id) return "Settlement";
+  if (tx.matched_transfer_id) return "Transfer";
+  if (tx.matched_journal_entry_id) return "Journal";
+  if (tx.matched_load_id) return "Load";
+  return "Bank";
+}
+
+function bankTxRef(tx: PlaidBankTransaction): string | null {
+  return (
+    tx.check_number ||
+    tx.matched_expense_number ||
+    tx.matched_bill_number ||
+    tx.matched_settlement_display_id ||
+    tx.matched_load_number ||
+    tx.matched_transfer_label ||
+    tx.source_ref ||
+    null
+  );
+}
+
 function bankTxToGridRow(tx: PlaidBankTransaction): ReconGridRow {
   return {
     id: tx.id,
@@ -79,6 +108,11 @@ function bankTxToGridRow(tx: PlaidBankTransaction): ReconGridRow {
     description: tx.description ?? null,
     merchant_name: tx.merchant_name ?? null,
     reconciliation_cleared: Boolean(tx.reconciliation_cleared),
+    type_label: bankTxTypeLabel(tx),
+    ref: bankTxRef(tx),
+    payee: tx.merchant_name ?? null,
+    memo: tx.description ?? tx.notes ?? null,
+    split_account: tx.category ?? null,
     matched_load_id: tx.matched_load_id,
     matched_bill_id: tx.matched_bill_id,
     matched_settlement_id: tx.matched_settlement_id,
@@ -105,10 +139,13 @@ function glLineToGridRow(line: ReconciliationGlLine): ReconGridRow {
     description: line.memo ?? line.description,
     merchant_name: line.payee ?? line.type_label,
     reconciliation_cleared: line.register_cleared,
-    type_label: line.type_label,
+    type_label: line.type_label || "Journal",
+    ref: line.ref,
+    payee: line.payee,
+    memo: line.memo ?? line.description,
+    split_account: line.split_account,
     journal_entry_id: line.journal_entry_id,
     posting_id: line.posting_id,
-    split_account: line.split_account,
     matched_journal_entry_id: line.journal_entry_id,
     matched_journal_entry_memo: line.memo,
   };
@@ -368,11 +405,12 @@ export function ReconciliationWorkspacePage() {
       if (appliedDateFrom && String(tx.transaction_date ?? "") < appliedDateFrom) return false;
       if (appliedDateTo && String(tx.transaction_date ?? "") > appliedDateTo) return false;
       if (payeeQ) {
-        const payee = `${tx.merchant_name ?? ""} ${tx.description ?? ""}`.toLowerCase();
+        const payee = `${tx.payee ?? ""} ${tx.merchant_name ?? ""} ${tx.description ?? ""}`.toLowerCase();
         if (!payee.includes(payeeQ)) return false;
       }
       if (findQ) {
-        const hay = `${tx.merchant_name ?? ""} ${tx.description ?? ""} ${tx.type_label ?? ""} ${tx.split_account ?? ""}`.toLowerCase();
+        const hay =
+          `${tx.payee ?? ""} ${tx.memo ?? ""} ${tx.merchant_name ?? ""} ${tx.description ?? ""} ${tx.type_label ?? ""} ${tx.ref ?? ""} ${tx.split_account ?? ""}`.toLowerCase();
         if (!hay.includes(findQ)) return false;
       }
       if (amtCents != null && Number.isFinite(amtCents)) {
@@ -686,12 +724,17 @@ export function ReconciliationWorkspacePage() {
               .replace(/"/g, "&quot;");
           const rowsHtml = visibleTransactions
             .map((tx) => {
-              const matched = transactionIsMatched(tx);
+              const abs = Math.abs(Number(tx.amount_cents ?? 0));
               return `<tr>
                 <td>${esc(tx.transaction_date ? formatDateUS(tx.transaction_date) : "—")}</td>
-                <td>${esc(tx.description || "Bank transaction")}</td>
-                <td style="text-align:right">${esc(money(Number(tx.amount_cents ?? 0)))}</td>
-                <td>${esc(matched ? "Matched" : "Unmatched")}</td>
+                <td>${esc(tx.posted_date ? formatDateUS(tx.posted_date) : "—")}</td>
+                <td>${esc(tx.type_label || "—")}</td>
+                <td>${esc(tx.ref || "—")}</td>
+                <td>${esc(tx.split_account || "—")}</td>
+                <td>${esc(tx.payee || tx.merchant_name || "—")}</td>
+                <td>${esc(tx.memo || tx.description || "—")}</td>
+                <td style="text-align:right">${esc(!tx.is_credit ? money(abs) : "")}</td>
+                <td style="text-align:right">${esc(tx.is_credit ? money(abs) : "")}</td>
               </tr>`;
             })
             .join("");
@@ -724,12 +767,14 @@ export function ReconciliationWorkspacePage() {
               <table className="tabular-nums">
                 <thead>
                   <tr>
-                    <th>Date</th><th>Description</th>
-                    <th style="text-align:right">Amount</th><th>Status</th>
+                    <th>Date</th><th>Cleared date</th><th>Type</th><th>Ref no.</th>
+                    <th>Account</th><th>Payee</th><th>Memo</th>
+                    <th style="text-align:right">Payment</th>
+                    <th style="text-align:right">Deposit</th>
                   </tr>
                 </thead>
                 <tbody>
-                  ${rowsHtml || `<tr><td colspan="4">No rows</td></tr>`}
+                  ${rowsHtml || `<tr><td colspan="9">No rows</td></tr>`}
                 </tbody>
               </table>
             `,
@@ -1014,12 +1059,19 @@ export function ReconciliationWorkspacePage() {
                 </div>
               </div>
             </div>
-            <div className="mb-1 grid grid-cols-[4.5rem_4.5rem_1fr_4.5rem_4.5rem_1.75rem] gap-1 border-b border-gray-200 px-2 pb-1 text-xs font-bold uppercase tracking-wide text-[#4B5563]">
-              <span>Date</span>
-              <span>Cleared</span>
-              <span>Payee / memo</span>
-              <span className="text-right">Payment</span>
-              <span className="text-right">Deposit</span>
+            <div
+              data-b2-recon-grid="1"
+              className="mb-1 grid grid-cols-[4.25rem_4.25rem_3.25rem_3.5rem_4.5rem_minmax(4.5rem,1fr)_minmax(4.5rem,1fr)_4.25rem_4.25rem_1.75rem] gap-1 border-b border-gray-200 px-2 pb-1 text-section-header font-bold uppercase tracking-wide text-[#4B5563]"
+            >
+              <span className="text-center">Date</span>
+              <span className="text-center">Cleared date</span>
+              <span className="text-center">Type</span>
+              <span className="text-center">Ref no.</span>
+              <span className="text-center">Account</span>
+              <span className="text-center">Payee</span>
+              <span className="text-center">Memo</span>
+              <span className="text-center">Payment</span>
+              <span className="text-center">Deposit</span>
               <span className="text-center">●</span>
             </div>
             <div className="max-h-[560px] space-y-1 overflow-auto">
@@ -1034,38 +1086,52 @@ export function ReconciliationWorkspacePage() {
                       selectedTransactionId === tx.id ? "bg-slate-100" : "bg-white hover:bg-gray-50"
                     } border-b border-gray-100`}
                   >
-                    <div className="grid grid-cols-[4.5rem_4.5rem_1fr_4.5rem_4.5rem_1.75rem] items-start gap-1">
+                    <div className="grid grid-cols-[4.25rem_4.25rem_3.25rem_3.5rem_4.5rem_minmax(4.5rem,1fr)_minmax(4.5rem,1fr)_4.25rem_4.25rem_1.75rem] items-start gap-1">
                       <button
                         type="button"
                         onClick={() => setSelectedTransactionId(tx.id)}
-                        className="text-left text-xs text-gray-600"
+                        className="text-center text-xs text-gray-600"
                       >
                         {formatDateUS(tx.transaction_date)}
                       </button>
-                      <span className="text-xs text-gray-600">
+                      <span className="text-center text-xs text-gray-600">
                         {tx.posted_date ? formatDateUS(tx.posted_date) : "—"}
                       </span>
                       <button
                         type="button"
                         onClick={() => setSelectedTransactionId(tx.id)}
-                        className="min-w-0 text-left"
+                        className="truncate text-center text-xs text-gray-800"
+                        title={tx.type_label}
                       >
-                        <span className="block truncate text-xs font-medium text-gray-900">
-                          {tx.merchant_name || tx.description || (tx.row_kind === "gl_line" ? "Journal" : "Bank transaction")}
-                        </span>
-                        <span className="block truncate text-xs text-gray-500">
-                          {tx.row_kind === "gl_line"
-                            ? `${tx.type_label ?? "Journal"}${tx.split_account ? ` · ${tx.split_account}` : ""}`
-                            : matched
-                              ? "Matched"
-                              : "Unmatched"}
-                          {tx.row_kind === "bank" && tx.description && tx.merchant_name ? ` · ${tx.description}` : ""}
-                        </span>
+                        {tx.type_label}
                       </button>
-                      <span className="text-right text-xs tabular-nums text-gray-800">
+                      <span className="truncate text-center text-xs tabular-nums text-gray-800" title={tx.ref ?? undefined}>
+                        {tx.ref || "—"}
+                      </span>
+                      <span
+                        className="truncate text-center text-xs text-gray-800"
+                        title={tx.split_account ?? undefined}
+                      >
+                        {tx.split_account || "—"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTransactionId(tx.id)}
+                        className="min-w-0 truncate text-center text-xs font-medium text-gray-900"
+                        title={tx.payee || tx.merchant_name || undefined}
+                      >
+                        {tx.payee || tx.merchant_name || "—"}
+                      </button>
+                      <span
+                        className="min-w-0 truncate text-center text-xs text-gray-600"
+                        title={tx.memo || tx.description || undefined}
+                      >
+                        {tx.memo || tx.description || "—"}
+                      </span>
+                      <span className="text-center text-xs tabular-nums text-gray-800">
                         {!tx.is_credit ? money(abs) : ""}
                       </span>
-                      <span className="text-right text-xs tabular-nums text-gray-800">
+                      <span className="text-center text-xs tabular-nums text-gray-800">
                         {tx.is_credit ? money(abs) : ""}
                       </span>
                       <button

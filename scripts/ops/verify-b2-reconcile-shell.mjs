@@ -37,9 +37,17 @@ function main() {
   assertIncludes(workspace, '["payments", "Payments"]', WORKSPACE);
   assertIncludes(workspace, '["deposits", "Deposits"]', WORKSPACE);
   assertIncludes(workspace, '["all", "All"]', WORKSPACE);
-  assertIncludes(workspace, ">Cleared<", WORKSPACE);
+  assertIncludes(workspace, ">Cleared date<", WORKSPACE);
   assertIncludes(workspace, ">Payment<", WORKSPACE);
   assertIncludes(workspace, ">Deposit<", WORKSPACE);
+  assertIncludes(workspace, ">Type<", WORKSPACE);
+  assertIncludes(workspace, ">Ref no.<", WORKSPACE);
+  assertIncludes(workspace, ">Account<", WORKSPACE);
+  assertIncludes(workspace, ">Payee<", WORKSPACE);
+  assertIncludes(workspace, ">Memo<", WORKSPACE);
+  assertIncludes(workspace, 'data-b2-recon-grid="1"', WORKSPACE);
+  assertIncludes(workspace, "bankTxTypeLabel", WORKSPACE);
+  assertIncludes(workspace, "bankTxRef", WORKSPACE);
   assertIncludes(workspace, "Statement ending", WORKSPACE);
   assertIncludes(workspace, "Difference", WORKSPACE);
   assertIncludes(workspace, "text-red-700", WORKSPACE);
