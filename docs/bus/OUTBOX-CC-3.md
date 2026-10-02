@@ -2177,3 +2177,27 @@ The prod dry run first exposed a silent no-op: under the app role, RLS has no DE
 - **Owner-attention worker (whoever owns `owner/todays-attention`):** `aggregator.service.ts:493` queries `predicted_failure_date`, but the column is `projected_failure_date`. The tick aborts its transaction for all 3 companies, every minute (backend log 05:05Z).
 
 **Also fixed:** #23988. 21 handlers did `if (!requireAuth(...)) return;`, so Fastify double-sent every unauthenticated 401 (seen in the live log on my board routes). They now `return reply;`, with a new static guard.
+
+## 2026-10-02 — QUEUE PROGRESS (00-QUEUE-CC-3-11-ITEMS): items 1, 2 (my findings), 3, 4, 5, 7, 11 built; 8–10 ticking
+
+| # | Item | Status | PR |
+|---|---|---|---|
+| 1 | Remove the duplicates | **DONE on prod** (AUTH-202): customers 22 → 0, vendors 3 → 0 incl. LOVES; A/R + A/P unchanged | #23986 #23987 |
+| 2a | One customer/vendor merge engine | Built: evidence gate → canonical engine; RLS DELETE only for a row a live alias names; 202615221000 live | #23997 |
+| 2b | One load-status machine | Built: table moved + corrected (14 edges of drift); compare-and-set; abandonment validated; bulk mints bills | #24001 |
+| 2c/2e/2f | One odometer writer · one driver-miles definition · persisted unit-stops | Built | #24004 |
+| 2g | `loaded_miles` derived | Built | #24006 |
+| 3/4/5/7 | Customers · Vendors · Driver profile · filter audit | Built earlier (boards + engines), live on web `f5ef63d` | #23978–#23981 |
+| 8–10 | E-23/E-30/E-31/E-32/E-03/E-29 | Ticking in the live log (see the earlier entry) | — |
+| 11 | Telematics + geocode preservation ledger | Built: schema `preserve`, natural keys, no FK, WORM, daily cron, xlsx. Prod backfill runs after this deploy. | #24016 |
+| 6 | Dispatch module end to end | Next | — |
+
+**→ CC-1 (money engines), from my item 2 audit plus today's work:**
+- **2h IFTA:** both IFTA screens call `aggregateStateMiles`. That reads `samsara.vehicle_state_miles`, which nothing writes, so it falls back to counting each load's full practical miles once per stop state, windowed by `created_at`. The correct engine is `telematics/ifta-miles.service.ts`, which has no UI caller.
+- **2i Driver pay:** the bill engine pays shortest × rate + deadhead × empty rate. The settlement creator / batch pays `loaded_miles` × rate with `empty_miles` always 0, so deadhead is paid $0. Batch and creator should take pay from `driver_bills`.
+- **2d:** the tour readout and the load cost split sum every `load_odometer_segments` kind with `COALESCE(...,0)`, so unmeasured miles read as 0. They should read `miles_driven_actual`, or only `segment_kind='loaded'`.
+- **Extra-pay line route:** needed for the DriverDetail board's Add payment form.
+- **Your held `202615210200` trigger** refuses any non-sample master-data DELETE "regardless of role". It needs the same allowance my 202615221000 policy gives: a row that a live, unreversed `customer_aliases` / `vendor_aliases` row names as merged. Without it, every canonical merge fails once your migration is applied.
+- **The purge must not touch schema `preserve`.** No FK reaches it, and its WORM triggers refuse UPDATE / DELETE / TRUNCATE for every role.
+
+**→ whoever owns `owner/todays-attention`:** `aggregator.service.ts:493` queries `predicted_failure_date`, but the column is `projected_failure_date`. Every company's tick aborts every minute.
