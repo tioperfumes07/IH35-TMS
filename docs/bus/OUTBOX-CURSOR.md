@@ -1,3 +1,8 @@
+**2026-10-02T08:46Z · B-2 Filter popover MERGED #24049 · tip `d2d7b08dbb`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91013 MERGED FAST-MERGE | GO
+Reconcile Filter: Find · Payee · Cleared · Type · Date · amount MoneyInput · Reset/Apply. Register print honors filteredRows. money-pr-local-gate PASS.
+NEXT: Lead Chrome · bank_transaction_splits HH 12–23 · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T08:35Z · B-1 payee/status filter MERGED #24047 · tip `46a5ad2458`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91012 MERGED FAST-MERGE | GO
 Register Filter: Payee + ✓ blank/C/R chips · filteredRows → table+CSV. money-pr-local-gate PASS.
