@@ -329,6 +329,11 @@ export async function unmatchBankTransaction(input: {
             -- 'matched' with no matched_*_id pointers — a pre-existing orphaned-state gap, out of
             -- scope here) this one gets it right.
             review_state = 'for_review',
+            -- ROUND 326 queue item 14 (G-18): unmatching reverses the line's categorization JE (below), so the line
+            -- must go back to the categorization queue. Leaving it 'categorized' with no JE made the categorized-
+            -- backlog poster re-post it — reverse, re-post, reverse — the 6300 gross churn.
+            status = CASE WHEN prior.matched_journal_entry_id IS NOT NULL AND bt.status = 'categorized'
+                          THEN 'pending_categorization' ELSE bt.status END,
             updated_at = now()
         FROM prior
         WHERE bt.id = prior.id

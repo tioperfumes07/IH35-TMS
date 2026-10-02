@@ -1255,6 +1255,10 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
             -- ('for_review' is the correct "back in the queue" state; 'unmatched' is not a legal
             -- review_state per the CHECK constraint). Matches that sibling function's behavior.
             review_state = 'for_review',
+            -- ROUND 326 queue item 14 (G-18): same as unmatchBankTransaction — a reversed categorization sends the line
+            -- back to the categorization queue, never left 'categorized' for the backlog poster to re-post.
+            status = CASE WHEN prior.matched_journal_entry_id IS NOT NULL AND bt.status = 'categorized'
+                          THEN 'pending_categorization' ELSE bt.status END,
             updated_at = now()
           FROM prior
           WHERE bt.id = prior.id
