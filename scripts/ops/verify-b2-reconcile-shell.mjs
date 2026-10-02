@@ -66,6 +66,11 @@ function main() {
   assertIncludes(workspace, 'data-testid="recon-filter-payee"', WORKSPACE);
   assertIncludes(workspace, 'data-testid="recon-filter-cleared"', WORKSPACE);
   assertIncludes(workspace, 'data-testid="recon-filter-type"', WORKSPACE);
+  assertIncludes(workspace, 'data-b2-recon-filter-doc-types="1"', WORKSPACE);
+  assertIncludes(workspace, "RECON_TXN_TYPE_FILTERS", WORKSPACE);
+  assertIncludes(workspace, '"Expense"', WORKSPACE);
+  assertIncludes(workspace, '"Settlement"', WORKSPACE);
+  assertIncludes(workspace, "tx.type_label !== appliedTxnType", WORKSPACE);
   assertIncludes(workspace, 'data-testid="recon-filter-apply"', WORKSPACE);
   assertIncludes(workspace, 'data-testid="recon-filter-reset"', WORKSPACE);
   assertIncludes(workspace, "applyReconFilters", WORKSPACE);

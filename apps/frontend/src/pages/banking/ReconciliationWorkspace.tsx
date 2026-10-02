@@ -151,6 +151,27 @@ function glLineToGridRow(line: ReconciliationGlLine): ReconGridRow {
   };
 }
 
+/** B-2 ORDERS §6 Filter — Transaction type = full document-type list (not only bank/journal). */
+const RECON_TXN_TYPE_FILTERS = [
+  "all",
+  "Bank",
+  "Check",
+  "Expense",
+  "Bill",
+  "Bill Payment",
+  "Invoice",
+  "Invoice Payment",
+  "Settlement",
+  "Transfer",
+  "Deposit",
+  "Load",
+  "Journal",
+  "Cash Advance",
+  "Driver Advance",
+  "Bank Categorization",
+] as const;
+type ReconTxnTypeFilter = (typeof RECON_TXN_TYPE_FILTERS)[number];
+
 function candidateEntityKind(eventType: CandidateEvent["event_type"]) {
   switch (eventType) {
     case "load":
@@ -271,7 +292,7 @@ export function ReconciliationWorkspacePage() {
   const [draftFind, setDraftFind] = useState("");
   const [draftPayee, setDraftPayee] = useState("");
   const [draftCleared, setDraftCleared] = useState<"all" | "cleared" | "uncleared">("all");
-  const [draftTxnType, setDraftTxnType] = useState<"all" | "bank" | "journal">("all");
+  const [draftTxnType, setDraftTxnType] = useState<ReconTxnTypeFilter>("all");
   const [draftDateFrom, setDraftDateFrom] = useState("");
   const [draftDateTo, setDraftDateTo] = useState("");
   const [draftAmtMode, setDraftAmtMode] = useState<"any" | "eq" | "gt" | "lt">("any");
@@ -279,7 +300,7 @@ export function ReconciliationWorkspacePage() {
   const [appliedFind, setAppliedFind] = useState("");
   const [appliedPayee, setAppliedPayee] = useState("");
   const [appliedCleared, setAppliedCleared] = useState<"all" | "cleared" | "uncleared">("all");
-  const [appliedTxnType, setAppliedTxnType] = useState<"all" | "bank" | "journal">("all");
+  const [appliedTxnType, setAppliedTxnType] = useState<ReconTxnTypeFilter>("all");
   const [appliedDateFrom, setAppliedDateFrom] = useState("");
   const [appliedDateTo, setAppliedDateTo] = useState("");
   const [appliedAmtMode, setAppliedAmtMode] = useState<"any" | "eq" | "gt" | "lt">("any");
@@ -398,8 +419,7 @@ export function ReconciliationWorkspacePage() {
     const anyExplicit = localTransactions.some((t) => Boolean(t.reconciliation_cleared));
 
     filtered = filtered.filter((tx) => {
-      if (appliedTxnType === "bank" && tx.row_kind !== "bank") return false;
-      if (appliedTxnType === "journal" && tx.row_kind !== "gl_line") return false;
+      if (appliedTxnType !== "all" && tx.type_label !== appliedTxnType) return false;
       if (appliedCleared === "cleared" && !transactionIsCleared(tx, anyExplicit)) return false;
       if (appliedCleared === "uncleared" && transactionIsCleared(tx, anyExplicit)) return false;
       if (appliedDateFrom && String(tx.transaction_date ?? "") < appliedDateFrom) return false;
@@ -1052,13 +1072,16 @@ export function ReconciliationWorkspacePage() {
                         Transaction type
                         <SelectCombobox
                           value={draftTxnType}
-                          onChange={(e) => setDraftTxnType(e.target.value as "all" | "bank" | "journal")}
+                          onChange={(e) => setDraftTxnType(e.target.value as ReconTxnTypeFilter)}
                           className="h-7 rounded-sm border border-gray-300 px-2 font-normal normal-case tracking-normal text-[#0F1219]"
                           data-testid="recon-filter-type"
+                          data-b2-recon-filter-doc-types="1"
                         >
-                          <option value="all">All</option>
-                          <option value="bank">Bank feed</option>
-                          <option value="journal">Journal line</option>
+                          {RECON_TXN_TYPE_FILTERS.map((t) => (
+                            <option key={t} value={t}>
+                              {t === "all" ? "All" : t}
+                            </option>
+                          ))}
                         </SelectCombobox>
                       </label>
                       <div className="mb-2 grid grid-cols-2 gap-2">
