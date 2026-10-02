@@ -47,7 +47,7 @@ export function VendorProfileOverview(props: { operatingCompanyId: string; vendo
     queryKey: ["vendor-profile", props.operatingCompanyId, props.vendorId],
     queryFn: () => apiRequest<VendorProfile>(`/api/v1/vendors/${props.vendorId}/profile?operating_company_id=${props.operatingCompanyId}`),
   });
-  if (q.isLoading) return <div className="text-xs text-[#6B7280]">Loading profile…</div>;
+  if (q.isLoading) return <div className="text-xs text-[color:var(--ih-muted)]">Loading profile…</div>;
   if (q.isError || !q.data) return <ListErrorState status={0} message="Failed to load the vendor profile." onRetry={() => void q.refetch()} />;
   const p = q.data;
   const a = p.ap_aging.value;

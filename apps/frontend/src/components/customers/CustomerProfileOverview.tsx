@@ -43,7 +43,7 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
     queryFn: () =>
       apiRequest<CustomerProfile>(`/api/v1/customers/${props.customerId}/profile?operating_company_id=${props.operatingCompanyId}`),
   });
-  if (q.isLoading) return <div className="text-xs text-[#6B7280]">Loading profile…</div>;
+  if (q.isLoading) return <div className="text-xs text-[color:var(--ih-muted)]">Loading profile…</div>;
   if (q.isError || !q.data) return <ListErrorState status={0} message="Failed to load the customer profile." onRetry={() => void q.refetch()} />;
   const p = q.data;
   const a = p.ar_aging.value;
@@ -114,7 +114,7 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
                 ["61–90 days", a.d61_90_cents],
                 ["Over 90 days", a.d90_plus_cents],
               ] as const).map(([label, cents]) => (
-                <tr key={label} className="border-b border-[#E5E7EB]">
+                <tr key={label} className="border-b border-[color:var(--ih-rule)]">
                   <td className="py-1">{label}</td>
                   <td className="py-1 text-right">{formatUsdCents(cents)}</td>
                 </tr>
@@ -130,9 +130,9 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
         <Section title="Credit limit & exposure" testId="customer-profile-credit" reason={p.credit.empty_reason}>
           <table className={`w-full ${money}`}>
             <tbody>
-              <tr className="border-b border-[#E5E7EB]"><td className="py-1">Open AR</td><td className="py-1 text-right">{formatUsdCents(c.open_ar_cents)}</td></tr>
-              <tr className="border-b border-[#E5E7EB]"><td className="py-1">Open loads not yet invoiced</td><td className="py-1 text-right">{formatUsdCents(c.uninvoiced_open_load_cents)}</td></tr>
-              <tr className="border-b border-[#E5E7EB] font-semibold"><td className="py-1">Exposure</td><td className={`py-1 text-right ${c.over_limit ? "text-red-600" : ""}`}>{formatUsdCents(c.exposure_cents)}</td></tr>
+              <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Open AR</td><td className="py-1 text-right">{formatUsdCents(c.open_ar_cents)}</td></tr>
+              <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Open loads not yet invoiced</td><td className="py-1 text-right">{formatUsdCents(c.uninvoiced_open_load_cents)}</td></tr>
+              <tr className="border-b border-[color:var(--ih-rule)] font-semibold"><td className="py-1">Exposure</td><td className={`py-1 text-right ${c.over_limit ? "text-red-600" : ""}`}>{formatUsdCents(c.exposure_cents)}</td></tr>
               <tr><td className="py-1">Limit{c.credit_limit_source ? ` (${c.credit_limit_source})` : ""}</td><td className="py-1 text-right">{c.credit_limit_cents == null ? "Not set" : formatUsdCents(c.credit_limit_cents)}</td></tr>
             </tbody>
           </table>
@@ -141,19 +141,19 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
         <Section title="Factoring eligibility" testId="customer-profile-factoring" reason={p.factoring.empty_reason}>
           <table className={`w-full ${money}`}>
             <tbody>
-              <tr className="border-b border-[#E5E7EB]"><td className="py-1">Eligible</td><td className="py-1 text-right">{f.eligible ? "Yes" : "No"}</td></tr>
-              <tr className="border-b border-[#E5E7EB]">
+              <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Eligible</td><td className="py-1 text-right">{f.eligible ? "Yes" : "No"}</td></tr>
+              <tr className="border-b border-[color:var(--ih-rule)]">
                 <td className="py-1">Factor</td>
                 <td className="py-1 text-right">
                   {f.factoring_company_vendor_id ? (
-                    <button type="button" className="text-[#16A34A] underline" onClick={() => navigate(`/vendors/${f.factoring_company_vendor_id}`)}>
+                    <button type="button" className="text-[color:var(--ih-green)] underline" onClick={() => navigate(`/vendors/${f.factoring_company_vendor_id}`)}>
                       {f.factoring_company_name ?? "Factor"}
                     </button>
                   ) : "None assigned"}
                 </td>
               </tr>
-              <tr className="border-b border-[#E5E7EB]"><td className="py-1">Recourse</td><td className="py-1 text-right">{f.recourse_type ?? "Factor default"}</td></tr>
-              <tr className="border-b border-[#E5E7EB]"><td className="py-1">Purchased lines</td><td className="py-1 text-right">{f.purchased_line_count}</td></tr>
+              <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Recourse</td><td className="py-1 text-right">{f.recourse_type ?? "Factor default"}</td></tr>
+              <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Purchased lines</td><td className="py-1 text-right">{f.purchased_line_count}</td></tr>
               <tr><td className="py-1">Purchased gross</td><td className="py-1 text-right">{formatUsdCents(f.purchased_gross_cents)}</td></tr>
             </tbody>
           </table>

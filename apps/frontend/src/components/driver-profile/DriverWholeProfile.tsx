@@ -68,7 +68,7 @@ export function DriverWholeProfile(props: { operatingCompanyId: string; driverId
     queryKey: ["driver-whole-profile", props.operatingCompanyId, props.driverId],
     queryFn: () => apiRequest<DriverWholeProfileData>(`/api/v1/drivers/${props.driverId}/whole-profile?operating_company_id=${props.operatingCompanyId}`),
   });
-  if (q.isLoading) return <div className="text-xs text-[#6B7280]">Loading driver profile…</div>;
+  if (q.isLoading) return <div className="text-xs text-[color:var(--ih-muted)]">Loading driver profile…</div>;
   if (q.isError || !q.data) return <ListErrorState status={0} message="Failed to load the driver profile." onRetry={() => void q.refetch()} />;
   const p = q.data;
   const lastSettlement = p.settlements.value[0] ?? null;
@@ -263,8 +263,8 @@ export function DriverWholeProfile(props: { operatingCompanyId: string; driverId
 
       <ProfileSection title="Trucks & trailers" testId="driver-profile-equipment" reason={p.equipment.empty_reason}>
         <div className="grid gap-2 lg:grid-cols-2">
-          {p.equipment.value.units.length ? <ParityTable columns={unitCols} rows={p.equipment.value.units} rowKey={(r) => r.id} onRowClick={(r) => go("unit", r.unit_id)} {...tbl} /> : <p className="text-center text-[#6B7280]">No truck assignment recorded.</p>}
-          {p.equipment.value.trailers.length ? <ParityTable columns={trailerCols} rows={p.equipment.value.trailers} rowKey={(r) => `${r.source}:${r.id}`} onRowClick={(r) => go("trailer", r.id)} {...tbl} /> : <p className="text-center text-[#6B7280]">No trailer assigned or on a DVIR.</p>}
+          {p.equipment.value.units.length ? <ParityTable columns={unitCols} rows={p.equipment.value.units} rowKey={(r) => r.id} onRowClick={(r) => go("unit", r.unit_id)} {...tbl} /> : <p className="text-center text-[color:var(--ih-muted)]">No truck assignment recorded.</p>}
+          {p.equipment.value.trailers.length ? <ParityTable columns={trailerCols} rows={p.equipment.value.trailers} rowKey={(r) => `${r.source}:${r.id}`} onRowClick={(r) => go("trailer", r.id)} {...tbl} /> : <p className="text-center text-[color:var(--ih-muted)]">No trailer assigned or on a DVIR.</p>}
         </div>
       </ProfileSection>
 

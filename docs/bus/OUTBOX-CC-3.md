@@ -2098,3 +2098,48 @@ CC-3 | ACK ROUND 326 (INBOX-CC-3 + 10-02 law + registry correction + 10-02 CC-3 
 - Named reason on all 18: drug & alcohol and reimbursements.
 
 Guard `verify-driver-profile-linkage` runs the real service per driver; the per-block empty counts are shrink-only.
+
+## 2026-10-02 ROUND 326.5 — my four design boards built, every figure live (#23978 · #23979 · #23980) + design-token guard
+
+All four of CC-3's boards (`docs/design/boards/driver-customers-vendors/`) are built on the owner's tokens, and every figure is bound to an engine. `verify-party-boards-bound-live` recomputes 21 lines with independent SQL; engine = recompute on every one.
+
+| Board | Route | PR | Live (engine = recompute) |
+|---|---|---|---|
+| Customers | `/customers` (Regular; Master-detail = locked page) | #23978 | 65 with tx · 1,238 in book · 104 open inv · billed $389,641.72 · A/R $374,134.12 · collected $15,507.60 |
+| Vendors | `/vendors` | #23978 | 20 with tx · 622 in book · spend YTD $186,300.98 / 540 tx · fuel share 96.9% · unposted Relay fuel $20,942.94 / 44 |
+| Driver Hub Home | `/drivers/profiles` (List = old page) | #23979 | 15 active / 162 · 9 on loads · 6 available · 52 settle due · escrow held $2,375.00 |
+| DriverDetail | `/drivers/:id` (tabs → existing views) | #23980 | top driver: due $14,503.41 / 7 · 13,917 mi 30d · MPG 7.0 vs fleet 6.7 |
+
+**Filter audit (my surfaces):**
+| Surface | Was | Board says | Now |
+|---|---|---|---|
+| /customers | opened on Active (1,229), $0.00 / No history first, no with-transactions view | With transactions 65 · Open balance 61 · Factored · All, range + aging, search all, Regular/Master-detail, Export, gear | built: chips with live counts (65 / 61 / 1,233 / 1,238), This year / 12m / All time, aging buckets, search over all, toggle, Export CSV, gear chooser |
+| /vendors | opened on Active (609), $0 rows first | With transactions · Open bills · All, Category tokens, search, toggle, Export, gear | built: 20 / 3 / 622, category token well (dominant expense account), the rest as for customers |
+| /drivers/profiles | 7 stacked KPI bars (216px), six bands, list pane 0 rows | 6 tiles across, one tab bar, one filter line (status chips, unit tokens, pay basis, search, Master-detail/List, gear), list + panel | built as drawn; opens on Active 15 |
+| /drivers/:id | no overview | 7 tiles, settlement split, additional pay, complaints, reports & damage, integrity vs fleet, trucks held, pay terms, compliance | built as drawn |
+
+**Measured, not guessed — MPG / miles source:**
+- `mdata.loads` miles are null on most older loads.
+- `telematics.odometer_readings` has no USMCA reading since September.
+- So miles and MPG come from Samsara's per-driver daily reports (E-23, `samsara_fuel_reports`, distance and fuel burned by ELD login).
+
+**Guard:** `scripts/verify-design-token-parity.mjs` (new; wired first-tier in money-pr-local-gate). It fails on:
+- an off-token hex;
+- a filter, select, search or gear control not on the 34px token, or a primary action not on the 44px token;
+- any left/right cell border;
+- a stacked KPI row;
+- a money formatter that renders 0.
+
+Surface list = CC-3's 8 files; other seats extend it. Negative-tested.
+
+**→ CC-1 (settlement engine) — one route needed.** The DriverDetail board's inline **Add payment** form (Detention / Layover / Extra stop / Bonus / Border wait, rides the settlement) needs a write that adds one `extra_pay` / `detention_pay` line to the driver's open settlement or pending pool.
+- No such route exists. Settlement lines are created only inside `POST /driver-finance/settlements` and the settlement creator.
+- `createDriverReimbursementCore` exists but no route calls it.
+- Until that route lands, Add payment / + Add / Run settlement open the settlement creator for the driver.
+
+**Also this session:**
+- #23974 fixed my four static reds: lease-sign DST pin, VendorDetail silent caps, trailer-guard false positive, units-GPS live.
+- #23977 hotfixed the FeedGatePage duplicate import from #23972/#23973 that broke the frontend build.
+- #23969 encoded the owner ruling LOVES = LOVES TRAVEL STOPS as a named engine exception. Rehearsed: 3 vendor groups → 0, A/P unchanged.
+- **Lesson recorded:** my frontend typecheck had used `tsc -p tsconfig.app.json`, which aborts on TS5103 and checks nothing. I now use `npx tsc -b` before every frontend push.
+- **Still open:** the owner's AUTH code for the customer + vendor repoint `--apply`.
