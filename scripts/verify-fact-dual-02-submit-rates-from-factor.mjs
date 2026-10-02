@@ -35,8 +35,9 @@ export function run() {
     failures.push(`${FILE}: must NOT import or use parseVendorNotes (legacy vendor-notes rate path)`);
   }
 
-  if (!/activeFactor\.advance_rate/.test(src) || !/activeFactor\.reserve_rate/.test(src) || !/activeFactor\.fee_rate/.test(src)) {
-    failures.push(`${FILE}: must read advance_rate / reserve_rate / fee_rate from the active factoring.factor object`);
+  // ACCT-F10370: the advance is derived (gross − reserve − fee), never an input — reserve and fee come from the factor row.
+  if (!/activeFactor\.reserve_rate/.test(src) || !/activeFactor\.fee_rate/.test(src)) {
+    failures.push(`${FILE}: must read reserve_rate / fee_rate from the active factoring.factor object`);
   }
 
   if (!/factorsQuery\.data/.test(src)) {

@@ -37,6 +37,10 @@ const ALLOWED_ROLES = new Set([
   "ar_control",
   "factoring_recoursed_ar",
   "default_interest_expense",
+  // Lead ROUND 296 FINAL (2026-10-02): Faro's Cash Reserve report is its own register, GL 1235, role
+  // factor_cash_reserve_held (funding leg DR when Faro holds cash reserve). ROUND 332.1 §3 removed the CPA gate; the
+  // ruling is the authority.
+  "factor_cash_reserve_held",
 ]);
 
 // Expected (role -> direction) per lifecycle leg. Absence of a listed role, a wrong direction, or a

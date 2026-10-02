@@ -1739,3 +1739,19 @@ Next (CC-2 lane): period-close interest accrual DR 6830 / CR 2155 with approval 
     4. reason-coded credit memo (rate dispute) 250.00      2150 3750.00 | open Net 3750.00 | TIES
     lock after the write-down (3,750 still open)           still held by FP-2026-00001 — releases when the account closes
 - FOR CC-1 / CURSOR (ROUND 336 lanes): an edit path that tries an amount change on a factored invoice gets SQLSTATE 23514 with message prefix "factored_invoice_amount_locked:" — surface it verbatim; the read endpoint above lets the UI disable the amount fields up front.
+
+## Q-9 — red factoring/Faro guards re-measured on prod — 30 red → mine all green (2026-10-02)
+
+Re-ran all 167 factoring/Faro guards. 30 red. Disposition:
+- **Fixed — guard drifted behind a ruled change (20 guards, each live PASS + selftest PASS):** poster-secured-borrowing (1235 `factor_cash_reserve_held`, ROUND 296), advances-write-role-gated (retired writer 410 / Owner-only `voidPurchase`, #24015/#24166), void-enumerates-all-postings, pledge-nets-credit-memos (shared `INVOICE_PLEDGE_CENTS_SQL`), summary-dollars-unit, liability-reserve-column, batch-wizard-qbo-chrome, faro-tabs-real-data (B5 order, B7 shared reserves panel), vendor-merge-banner-deeplink (FIX-DVB135), surface (ROUND 24.6), submission-queue-routed + wave-b connectivity (/factoring/submit → /factoring/submit-invoice, #24002), advance-drawer-linkage (#23919), chargeback-invoice-customer-reverse (ACCT-F26015), fact-dual-02/03, submit-canonical-factor-rates (ACCT-F10370), tab-submit-factor-picker, invoice-detail-url-sort.
+- **Fixed — real defect:** the load Factoring tab linked to `/banking/factoring?load_id=` — a tab deleted in ROUND-20.8 B3 (#21962). Now links to `/factoring/payments-to-you?load_id=`, and PaymentsToYouPanel filters by the URL `load_id` (reverse link restored). `accounting.list` restored as a Required reverse_link leaf.
+- **Fixed — nested boxes in my banking files:** WriteCheckForm (3), DriverEscrowBoardSection (1), DriverEscrowLedgerSection (3), ReconciliationTabContent (5). The inner `rounded*` was dropped and the border kept (FactoringHome precedent).
+- **Honest, not defects:** faro-invoice-lines-load-linkage (exit 75, empty by purge); faro-repurchase-price-ties-to-statement (UNVERIFIED pending a Faro statement); usmca-book-equals-faro-and-alwaystrack (data state).
+- **OTHER LANES — please take:**
+  - CC-3: `verify-catalog-factory-coverage` — blocked_feature_flags, cash_flow_adjustment_reasons, driver_tags, lane_mileage, point_mileage are unregistered.
+  - Dispatch: `verify-factoring-package-metadata-failures-caught` — LoadDetailDrawer Email-package / Mark-uploaded `persistPackageMeta` needs a `.catch()`.
+  - CC-1: `verify-posting-prepaid-factoring-register-human-labels` — AbandonmentQueuePage is missing entityLabel. `verify-invoice-pipeline-proforma-to-factoring` — delivered_pending_docs must convert the proforma.
+  - Nested-box ratchet (`verify-no-nested-box`, which also turns `verify-factoring-nested-box-baseline` red): DriverSamsaraDuplicateBanner (1), PmCostPerMilePanel (2), ThreeMileCpmPanel (2), TruckLineBoard (1).
+  - `verify-surface-bar-modal-inventory`: driver-finance AddPayLineModal has no required.json leaf.
+- Noted: SubmitFactoringModal has no opener (`setSubmitOpen(true)` absent) — unreachable; the canonical writer is the Submit Invoice tab.
+- Also fixed: WriteCheckForm.test.tsx failed 3/3 on main (no Router/Toast/Company context) — now 3/3 green.

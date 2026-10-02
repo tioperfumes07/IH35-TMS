@@ -37,6 +37,10 @@ type Props = {
 export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, summaryDetailToggle }: Props) {
   const [searchParams] = useSearchParams();
   const purchaseIdFromUrl = searchParams.get("purchase_id")?.trim() ?? "";
+  // A load's Factoring tab deep-links here with ?load_id= (the reverse of the load link on every purchase line) — the
+  // purchases carrying that load, with their wire and bank match. Replaces the deleted Banking "Factoring (Faro)" tab
+  // (ROUND-20.8 B3, #21962), whose /banking/factoring?load_id= link had become a redirect that dropped the load.
+  const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
   const [selectedId, setSelectedId] = useState<string | null>(purchaseIdFromUrl || null);
 
   useEffect(() => {
@@ -44,12 +48,13 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
   }, [purchaseIdFromUrl]);
 
   const listQuery = useQuery({
-    queryKey: ["factoring", "purchases", "payments-to-you", companyId, dateFrom, dateTo],
+    queryKey: ["factoring", "purchases", "payments-to-you", companyId, dateFrom, dateTo, loadIdFromUrl],
     queryFn: () =>
       listFactoringPurchases(companyId, {
         status: "posted",
         from: dateFrom || undefined,
         to: dateTo || undefined,
+        load_id: loadIdFromUrl || undefined,
       }),
     enabled: Boolean(companyId),
   });

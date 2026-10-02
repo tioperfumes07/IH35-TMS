@@ -276,7 +276,7 @@ export function ReconciliationTabContent({
 
         {/* C-67 — QBO-shaped statement strip across the top. */}
         <div
-          className="mb-3 grid grid-cols-2 gap-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2 sm:grid-cols-5"
+          className="mb-3 grid grid-cols-2 gap-2 border border-[#E5E7EB] bg-[#F7F8FA] p-2 sm:grid-cols-5"
           data-c67-statement-strip="1"
           data-b2-reconcile-strip="1"
           data-testid="banking-recon-statement-strip"
@@ -327,7 +327,7 @@ export function ReconciliationTabContent({
         <div className="mb-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
           {/* Statement object — fields already on reconciliation_sessions; A-27 does not reinvent these. */}
           <div
-            className="rounded-sm border border-gray-200 bg-[#F7F8FA] p-3"
+            className="border border-gray-200 bg-[#F7F8FA] p-3"
             data-c53-statement-object="1"
             data-c67-statement-header="1"
           >
@@ -366,7 +366,7 @@ export function ReconciliationTabContent({
                 <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-[#4B5563]">
                   Ending balance
                 </span>
-                <div className="flex h-[34px] w-[120px] items-center justify-end rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs tabular-nums">
+                <div className="flex h-[34px] w-[120px] items-center justify-end border border-[#E5E7EB] bg-white px-2 text-xs tabular-nums">
                   {activeOpenSession ? money(statementBalanceCents) : "—"}
                 </div>
               </label>
@@ -382,7 +382,7 @@ export function ReconciliationTabContent({
 
           {/* MATCHED tri-state — never a checkbox. CC-1 merged onto banking.reconciliation_matches. */}
           <div
-            className="rounded-sm border border-dashed border-gray-300 bg-white p-3"
+            className="border border-dashed border-gray-300 bg-white p-3"
             data-c53-matched-tristate="1"
             data-c67-matched-column="1"
           >
@@ -418,7 +418,7 @@ export function ReconciliationTabContent({
         {/* SAVE+CLOSE start opener — required human-entered statement_balance_cents (A-27/A-35). */}
         {startOpen ? (
           <div
-            className="mb-3 rounded-sm border border-[#14314F]/30 bg-white p-3"
+            className="mb-3 border border-[#14314F]/30 bg-white p-3"
             data-c53-start-opener="1"
             data-testid="banking-recon-start-form"
           >

@@ -86,8 +86,10 @@ function walk(dir) {
 }
 
 // Match e.g. `reserve_balance || 0) / 100` or `mtd_advanced_total ?? 0)/100` etc.
+// The field must stand alone (not escrow_reserve_balance / cash_reserve_balance, which the factoring KPI engine emits in
+// CENTS — #24015 / #24166 — where dividing by 100 is correct).
 const divByHundred = (field) =>
-  new RegExp(`${field}[^\\n;]{0,40}[)\\s]/\\s*100\\b`);
+  new RegExp(`(?<![A-Za-z_])${field}\\b[^\\n;]{0,40}[)\\s]/\\s*100\\b`);
 
 for (const f of walk(FE_DIR)) {
   const src = read(f);

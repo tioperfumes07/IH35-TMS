@@ -32,8 +32,9 @@ const mountedRoute = (route, component) => new RegExp(
 
 const CHECKS = [
   // factoring
-  { name: "factoring submit route", file: MANIFEST, pattern: mountedRoute("/factoring/submit", "SubmissionQueue") },
-  { name: "factoring batches/new route", file: MANIFEST, pattern: mountedRoute("/factoring/batches/new", "BatchWizard") },
+  // OWNER LAW 2026-10-02 (#24002): one purchase engine — both old submit URLs stay mounted and land on the canonical tab.
+  { name: "factoring submit route", file: MANIFEST, pattern: /path="\/factoring\/submit"[\s\S]{0,200}<Navigate to="\/factoring\/submit-invoice" replace \/>/ },
+  { name: "factoring batches/new route", file: MANIFEST, pattern: /path="\/factoring\/batches\/new"[\s\S]{0,200}<Navigate to="\/factoring\/submit-invoice" replace \/>/ },
   { name: "factoring factors route", file: MANIFEST, pattern: mountedRoute("/factoring/factors", "FactorAdmin") },
   { name: "factoring reserves route", file: MANIFEST, pattern: mountedRoute("/factoring/reserves", "ReserveDashboard") },
   { name: "faro import route", file: MANIFEST, pattern: mountedRoute("/factoring/faro-import", "FaroImportPage") },

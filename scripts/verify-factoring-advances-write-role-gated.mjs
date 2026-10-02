@@ -50,8 +50,15 @@ function assertAll(src) {
     // PERMISSION WIRING 10.4: the sync requireVoidCancelExecutor(reply, role) call was superseded
     // by the async requireVoidCancelExecutorWired(reply, { role, client, ... }) across this file —
     // a role-floor-plus-future-permission-key tightening, not a regression.
-    if (!/requireVoidCancelExecutorWired\(reply, \{\s*\n\s*role: String\(user\.role \?\? ""\),/.test(window)) {
-      problems.push(`${label}: missing requireVoidCancelExecutorWired role gate`);
+    // OWNER LAW 2026-10-02 competing-engine audit (#24015 / #24166): this file's create is a RETIRED writer (410 via
+    // sendRetiredFactoringWriter before any work) and its void runs the ONE purchase engine (voidPurchase, Owner-only —
+    // stricter than the executor role floor). Either is a gate; an ungated write is still a failure.
+    const wide = src.slice(idx, idx + 2600); // the void handler's ruling comment precedes its engine call
+    const retired = /sendRetiredFactoringWriter\(reply,/.test(wide);
+    const ownerOnlyEngine = /voidPurchase\(client, \{/.test(wide);
+    const roleGate = /requireVoidCancelExecutorWired\(reply, \{\s*\n\s*role: String\(user\.role \?\? ""\),/.test(window);
+    if (!retired && !ownerOnlyEngine && !roleGate) {
+      problems.push(`${label}: no gate — needs requireVoidCancelExecutorWired, the retired-writer 410, or the Owner-only purchase engine`);
     }
   }
   return problems;
@@ -72,6 +79,12 @@ if (SELFTEST) {
   let planted = src;
   if (createIdx !== -1 && gateStart !== -1 && gateEnd > gateStart) {
     planted = src.slice(0, gateStart) + "const allowedCreate = true;\n" + src.slice(gateEnd);
+    // The create route is also a retired writer now (410 first) — strip that gate from the create handler too, so the
+    // plant leaves it truly ungated.
+    const retiredAt = planted.indexOf("sendRetiredFactoringWriter(reply,", createIdx);
+    if (retiredAt !== -1 && retiredAt - createIdx < 2600) {
+      planted = planted.slice(0, retiredAt) + "void (reply," + planted.slice(retiredAt + "sendRetiredFactoringWriter(reply,".length);
+    }
   }
   if (planted === src) {
     console.error(`${LABEL} SELFTEST SETUP FAILED: mutation target not found (guard text drifted from real code)`);

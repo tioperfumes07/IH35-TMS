@@ -42,9 +42,8 @@ function checkPage(src) {
   if (!src.includes("listFactors")) {
     return "must load canonical factor rates via listFactors";
   }
-  if (!/activeFactor\.advance_rate/.test(src)) {
-    return "must default advance rate from activeFactor.advance_rate";
-  }
+  // ACCT-F10370 (FACT-RESERVE-01 step 3): the advance is DERIVED (gross − reserve − fee), never a caller input — the modal
+  // no longer reads or submits an advance rate. Reserve and fee still default from the active factor row.
   if (!/activeFactor\.reserve_rate/.test(src)) {
     return "must default reserve rate from activeFactor.reserve_rate";
   }

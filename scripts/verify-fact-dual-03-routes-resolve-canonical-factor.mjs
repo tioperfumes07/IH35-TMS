@@ -32,7 +32,12 @@ export function collectFailures(src = source) {
   requireText(identityMapper, "active_factor_profile_id: activeFactor?.profile_id ?? null", "response mapper must expose the canonical profile id");
   const callCount = (src.match(/resolveActiveFactor\(client, companyId\)/g) ?? []).length;
   if (callCount !== 2) failures.push(`summary/settings routes must each resolve selected-company identity (expected 2 calls, found ${callCount})`);
-  requireText(src, "withCanonicalFactorIdentity(summary.row ?? fallback, summary.activeFactor)", "summary response must carry canonical profile identity");
+  // ROUND 326.2 item 4 (#24021-era ACCT-F9329): the summary's reserve_balance comes from the ONE book-reserve engine, so
+  // the row is spread with that override before the canonical identity is applied — identity must still wrap it.
+  if (!/withCanonicalFactorIdentity\(\{ \.\.\.\(summary\.row \?\? fallback\)[^}]*\}, summary\.activeFactor\)/.test(src)
+      && !src.includes("withCanonicalFactorIdentity(summary.row ?? fallback, summary.activeFactor)")) {
+    failures.push("summary response must carry canonical profile identity");
+  }
   requireText(src, "const current = withCanonicalFactorIdentity(", "settings response must carry canonical profile identity");
   return failures;
 }
@@ -49,7 +54,7 @@ function selftest() {
     ["profile_id: identity.factorProfileId ?? null", "profile_id: identity.vendorId"],
     ["active_factor_profile_id: activeFactor?.profile_id ?? null", "active_factor_profile_id: activeFactor?.id ?? null"],
     ["const activeFactor = await resolveActiveFactor(client, companyId);", "const activeFactor = null;"],
-    ["withCanonicalFactorIdentity(summary.row ?? fallback, summary.activeFactor)", "summary.row ?? fallback"],
+    ["return withCanonicalFactorIdentity({ ...(summary.row ?? fallback), reserve_balance: reserve.total / 100 }, summary.activeFactor);", "return { ...(summary.row ?? fallback), reserve_balance: reserve.total / 100 };"],
     ["const current = withCanonicalFactorIdentity(", "const current = Object.assign("],
   ];
   let rejected = 0;

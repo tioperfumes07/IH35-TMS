@@ -44,18 +44,20 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-faro-tabs-real-data";
 const HOME = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
 
-// The doc's own exact 15-item order.
+// The primary Faro-parity strip, in order. ROUND 315 / Lead B5 (2026-10-01): Account Summary and Request Debtor / Credit
+// Check moved under Internal Tools (never deleted, Rule 07); Escrow Account (shown as "Security Reserve") and Cash Reserve
+// were added after Reserve — Faro's two reserve reports (Lead ROUND 296 FINAL). Fifteen items, Faro's real-portal order.
 const REQUIRED_NAV_ORDER = [
   "submit_invoice",
-  "request_debtor_credit_check",
   "funds_due",
   "payments_to_you",
   "debtor_receipts",
   "purchase_report",
-  "account_summary",
   "fees_paid",
   "aging",
   "reserve",
+  "escrow_account",
+  "cash_reserve",
   "chargebacks_overpayments",
   "loan_save",
   "unapplied_cash",
@@ -64,6 +66,8 @@ const REQUIRED_NAV_ORDER = [
 ];
 
 const INTERNAL_TOOLS_IDS = [
+  "account_summary",
+  "request_debtor_credit_check",
   "reserve_tracker",
   "recourse_pipeline",
   "chargebacks_fees",
@@ -298,37 +302,33 @@ export function checkChargebacksOverpaymentsReal(src) {
 // through the generic honest-stub block. Now real: Total Reserve bound to the same
 // summary.reserve_balance every other tab uses, plus a real reserve-movement history table
 // (getReserveBalanceHistory, the same ledger ReserveTracker.tsx already proves correct).
-export function checkReserveReal(src) {
+const PANEL = "apps/frontend/src/components/factoring/FactoringReservesSharedPanel.tsx";
+export function checkReserveReal(src, panelSrc = fs.readFileSync(path.join(ROOT, PANEL), "utf8")) {
   const failures = [];
   const stubMatch = src.match(/tab === "request_debtor_credit_check"[\s\S]*?data-testid=\{`factoring-stub-\$\{tab\}`\}/);
   if (stubMatch && /tab === "reserve"\s*\|\|/.test(stubMatch[0])) {
     failures.push(`${HOME}: Reserve is still routed through the generic honest-stub block — must have its own real section (FAC-09a).`);
   }
-  const marker = 'tab === "reserve" ?';
-  const idx = src.indexOf(marker);
-  if (idx === -1) {
-    failures.push(`${HOME}: could not find a dedicated Reserve ("tab === \"reserve\" ?") block.`);
+  // ROUND 315 / Lead B7: the Reserve tab mounts the SAME shared panel Banking Home uses (one reserve engine). The real
+  // bindings (KPI-engine totals, getReserveBalanceHistory, running_balance_cents) live in that panel.
+  const m = src.match(/tab === "reserve"(?: && companyId)? \?/);
+  if (!m) {
+    failures.push(`${HOME}: could not find a dedicated Reserve ("tab === \"reserve\"") block.`);
     return failures;
   }
-  const section = src.slice(idx, idx + 4000);
-  // getReserveBalanceHistory is the query hook's own queryFn, defined once near the other
-  // useQuery() calls (not inline in the JSX section itself) — checked against the whole file,
-  // same as any other imported-function-usage check; the rest are checked in-section since they
-  // ARE rendered inline in this tab's own JSX.
-  if (!/getReserveBalanceHistory/.test(src)) {
-    failures.push(`${HOME}: Reserve missing real binding — reserve movement history bound to the real getReserveBalanceHistory ledger.`);
-  }
-  const requiredRealBindings = [
-    { pattern: /FactoringReservesSharedPanel|engineReserve\b/, label: "Total Reserve bound to the factoring KPI engine (shared reserves panel)" },
-    { pattern: /running_balance_cents/, label: "movement table renders the real running_balance_cents" },
-  ];
-  for (const { pattern, label } of requiredRealBindings) {
-    if (!pattern.test(section)) {
-      failures.push(`${HOME}: Reserve missing real binding — ${label}.`);
-    }
-  }
+  const section = src.slice(m.index, m.index + 1200);
   if (!section.includes("factoring-reserve-report")) {
     failures.push(`${HOME}: Reserve missing required data-testid="factoring-reserve-report".`);
+  }
+  if (!/<FactoringReservesSharedPanel\b/.test(section)) {
+    failures.push(`${HOME}: Reserve must mount the shared FactoringReservesSharedPanel (Lead B7) — no second reserve view.`);
+  }
+  const panel = panelSrc;
+  for (const [re, label] of [
+    [/getReserveBalanceHistory\(/, "reserve movement history bound to the real getReserveBalanceHistory ledger"],
+    [/running_balance_cents/, "movement table renders the real running_balance_cents"],
+  ]) {
+    if (!re.test(panel)) failures.push(`FactoringReservesSharedPanel.tsx: Reserve missing real binding — ${label}.`);
   }
   return failures;
 }
@@ -508,20 +508,16 @@ const reserveHistoryQuery = useQuery({
 });
   `;
   const reserveBlock = `
-      {tab === "reserve" ? (
+      {tab === "reserve" && companyId ? (
         <div data-testid="factoring-reserve-report">
-          <span>{fmtCurrency(engineReserve.total / 100)}</span>
-          <ParityTable
-            columns={[
-              { key: "created_at", label: "Date" },
-              { key: "reason", label: "Note" },
-              { key: "signed_amount_cents", label: "Amount" },
-              { key: "running_balance_cents", label: "Balance", render: (row) => fmtCurrency(row.running_balance_cents / 100) },
-            ]}
-            rows={reserveHistoryQuery.data?.movements ?? []}
-          />
+          <FactoringReservesSharedPanel companyId={companyId} host="factoring" />
         </div>
       ) : null}
+  `;
+  // Lead B7: the bindings live in the shared panel — a fixture of it for the plants below.
+  const panelFixture = `
+const historyQuery = useQuery({ queryFn: () => getReserveBalanceHistory(activeFactorId!, companyId, { limit: 50 }) });
+const cols = [{ key: "running_balance_cents", label: "Balance", render: (row) => formatUsdCents(row.running_balance_cents) }];
   `;
   const goodSrc = `
 const SUBNAV = [
@@ -582,10 +578,11 @@ ${accountSummaryBlock}
     'tab === "payments_to_you" ? (',
     'tab === "payments_to_you" ||\n      tab === "reserve" ? (',
   );
-  const badReserveFakeBinding = goodSrc.replace(
-    "queryFn: () => getReserveBalanceHistory(factorId, companyId, { limit: 100 }),",
-    "queryFn: () => Promise.resolve({ movements: [] }),",
+  const badReservePanelFakeBinding = panelFixture.replace(
+    "queryFn: () => getReserveBalanceHistory(activeFactorId!, companyId, { limit: 50 })",
+    "queryFn: () => Promise.resolve({ movements: [] })",
   );
+  const badReserveSecondView = goodSrc.replace("<FactoringReservesSharedPanel companyId={companyId} host=\"factoring\" />", "<OwnReserveTable />");
 
   const badFundsDueStillStub = goodSrc.replace(
     'tab === "payments_to_you" ? (',
@@ -597,7 +594,7 @@ ${accountSummaryBlock}
   );
 
   const checks = [
-    ["clean source passes", checkNavOrder(goodSrc).length === 0 && checkInternalToolsPreserved(goodSrc).length === 0 && checkAgingReal(goodSrc).length === 0 && checkAccountSummaryReal(goodSrc).length === 0 && checkFeesPaidReal(goodSrc).length === 0 && checkPurchaseReportReal(goodSrc).length === 0 && checkReserveReal(goodSrc).length === 0 && checkChargebacksOverpaymentsReal(goodSrc).length === 0 && checkFundsDueReal(goodSrc).length === 0],
+    ["clean source passes", checkNavOrder(goodSrc).length === 0 && checkInternalToolsPreserved(goodSrc).length === 0 && checkAgingReal(goodSrc).length === 0 && checkAccountSummaryReal(goodSrc).length === 0 && checkFeesPaidReal(goodSrc).length === 0 && checkPurchaseReportReal(goodSrc).length === 0 && checkReserveReal(goodSrc, panelFixture).length === 0 && checkChargebacksOverpaymentsReal(goodSrc).length === 0 && checkFundsDueReal(goodSrc).length === 0],
     ["wrong nav order fails", checkNavOrder(badWrongOrder).length > 0],
     ["deleted internal tab fails", checkInternalToolsPreserved(badDeletedInternal).length > 0],
     ["missing aging column fails", checkAgingReal(badAgingMissingColumn).length > 0],
@@ -610,8 +607,9 @@ ${accountSummaryBlock}
     ["purchase report fake binding fails", checkPurchaseReportReal(badPurchaseReportFakeBinding).length > 0],
     ["chargebacks & overpayments still stub fails", checkChargebacksOverpaymentsReal(badChargebacksOverpaymentsStillStub).length > 0],
     ["chargebacks & overpayments fake binding fails", checkChargebacksOverpaymentsReal(badChargebacksOverpaymentsFakeBinding).length > 0],
-    ["reserve still stub fails", checkReserveReal(badReserveStillStub).length > 0],
-    ["reserve fake binding fails", checkReserveReal(badReserveFakeBinding).length > 0],
+    ["reserve still stub fails", checkReserveReal(badReserveStillStub, panelFixture).length > 0],
+    ["reserve fake binding (panel) fails", checkReserveReal(goodSrc, badReservePanelFakeBinding).length > 0],
+    ["reserve second view fails", checkReserveReal(badReserveSecondView, panelFixture).length > 0],
     ["funds due still stub fails", checkFundsDueReal(badFundsDueStillStub).length > 0],
     ["funds due missing fetch fails", checkFundsDueReal(badFundsDueMissingFetch).length > 0],
   ];

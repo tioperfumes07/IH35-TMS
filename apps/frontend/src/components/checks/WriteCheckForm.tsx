@@ -1252,12 +1252,12 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
               </label>
             </div>
             {isBillPayment ? (
-              <div className="mb-2 rounded border border-blue-200 bg-blue-50 px-2 py-1.5 text-xs text-blue-800">
+              <div className="mb-2 border border-blue-200 bg-blue-50 px-2 py-1.5 text-xs text-blue-800">
                 This check will be saved as a Bill Payment (Check) — the category/item lines below are not used.
               </div>
             ) : null}
             {billsToPay.length > 0 ? (
-              <div className="mb-2 rounded border border-gray-200">
+              <div className="mb-2 border border-gray-200">
                 <ParityTable<VendorBill>
                   columns={billsToPayColumns}
                   rows={filteredBillsToPay}
@@ -1379,7 +1379,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
             ) : openBillsNotQueued.length === 0 ? (
               <div className="text-xs text-gray-400">No open bills match this Bill No.</div>
             ) : (
-              <div className="max-h-40 overflow-y-auto rounded border border-gray-100">
+              <div className="max-h-40 overflow-y-auto border border-gray-100">
                 {openBillsNotQueued.length > 0 ? (
                   <div className="flex justify-end border-b border-gray-100 px-2 py-1">
                     <button

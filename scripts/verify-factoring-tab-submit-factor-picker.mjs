@@ -33,8 +33,10 @@ function assertSrc(src) {
   // landed — still 1,006), past the old 900-char window. Widened with margin rather than
   // compressing the JSX to fit an arbitrary budget — this guard's job is the real binding (a
   // Combobox, not a bare <select>, wired to a submit action), not source compactness.
+  // OWNER LAW 2026-10-02 (#24002, one purchase engine): the tab's old "Confirm Submit" (a retired batch writer) became
+  // "Open Submit to Factor", a link to the canonical Submit Invoice tab. The block ends at whichever is present.
   const submitBlock = code.match(
-    /data-testid="factoring-tab-submit-factor-picker"[\s\S]{0,1400}?Confirm Submit/,
+    /data-testid="factoring-tab-submit-factor-picker"[\s\S]{0,1400}?(?:Confirm Submit|Open Submit to Factor)/,
   )?.[0];
   if (!submitBlock) problems.push("could not locate submit-factor picker block");
   else if (/<select[\s>]/.test(submitBlock)) problems.push("submit-factor picker still uses bare <select>");

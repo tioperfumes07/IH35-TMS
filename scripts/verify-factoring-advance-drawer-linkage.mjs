@@ -33,8 +33,14 @@ export function check(s) {
   if (!/kind="load"/.test(s.detail) || !/source_load_id/.test(s.detail)) f.push(`${P.detail}: load EntityLink both ways required`);
   if (!/kind="invoice"/.test(s.detail)) f.push(`${P.detail}: invoice EntityLink required`);
   if (!/kind="vendor"/.test(s.detail)) f.push(`${P.detail}: factor vendor EntityLink required`);
-  if (!/kind="bank_transaction"/.test(s.detail) || !/matched_bank_transaction_id/.test(s.detail)) {
-    f.push(`${P.detail}: bank wire EntityLink required`);
+  // BANK-F31517-B1F (#23919) moved the wire link into OnlineBankingMatchBanner (the shared banner that also matches /
+  // unmatches): the drawer passes matched_bank_transaction_id and the banner renders EntityLink kind="bank_transaction".
+  const banner = readFileSync(resolve(ROOT, "apps/frontend/src/components/accounting/OnlineBankingMatchBanner.tsx"), "utf8");
+  const directLink = /kind="bank_transaction"/.test(s.detail) && /matched_bank_transaction_id/.test(s.detail);
+  const viaBanner = /<OnlineBankingMatchBanner[\s\S]{0,200}bankTransactionId=\{detail\.matched_bank_transaction_id\}/.test(s.detail)
+    && /kind="bank_transaction"/.test(banner);
+  if (!directLink && !viaBanner) {
+    f.push(`${P.detail}: bank wire EntityLink required (directly or through OnlineBankingMatchBanner)`);
   }
   if (!/matched_factoring_advance_id/.test(s.be)) f.push(`${P.be}: detail query must read matched bank wire`);
   if (!/source_load_number/.test(s.be)) f.push(`${P.be}: detail query must return source_load_number`);

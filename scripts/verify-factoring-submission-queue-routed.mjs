@@ -30,22 +30,21 @@ export function check({ manifest, home, queue, routeManifest }) {
   if (!manifest) {
     f.push(`${MANIFEST}: missing`);
   } else {
-    if (!/pages\/factoring\/SubmissionQueue/.test(manifest)) {
-      f.push(`${MANIFEST}: must import SubmissionQueue from pages/factoring/SubmissionQueue`);
+    // OWNER LAW 2026-10-02 competing-engine audit (#24002): ONE purchase engine. The batch queue is retired as a writer;
+    // /factoring/submit stays a live URL (Rule 07 — old links keep working) and lands on the canonical Submit Invoice tab.
+    if (!/path=["']\/factoring\/submit["'][\s\S]{0,200}<Navigate to="\/factoring\/submit-invoice" replace \/>/.test(manifest)) {
+      f.push(`${MANIFEST}: /factoring/submit must stay mounted and redirect to the canonical /factoring/submit-invoice tab`);
     }
-    if (!/path=["']\/factoring\/submit["']/.test(manifest)) {
-      f.push(`${MANIFEST}: must mount route path="/factoring/submit"`);
-    }
-    if (!/<SubmissionQueue\s*\/>/.test(manifest) && !/<SubmissionQueue\s*>/.test(manifest)) {
-      f.push(`${MANIFEST}: /factoring/submit route must render <SubmissionQueue />`);
+    if (!/path=["']\/factoring\/submit-invoice["']/.test(manifest)) {
+      f.push(`${MANIFEST}: the canonical /factoring/submit-invoice route is missing`);
     }
   }
 
   if (!home) {
     f.push(`${HOME}: missing`);
   } else {
-    if (!/to=["']\/factoring\/submit["']/.test(home) && !/href=["']\/factoring\/submit["']/.test(home)) {
-      f.push(`${HOME}: must deep-link to /factoring/submit (Link/NavLink)`);
+    if (!/to=\{?["'`]\/factoring\/submit(-invoice)?["'`]\}?/.test(home) && !/FACTORING_TAB_PATH\.submit_invoice/.test(home)) {
+      f.push(`${HOME}: must deep-link to the Submit Invoice tab (/factoring/submit-invoice)`);
     }
     if (!/factoring-submit-to-factor-link/.test(home)) {
       f.push(`${HOME}: must expose data-testid="factoring-submit-to-factor-link"`);
@@ -88,15 +87,18 @@ export function run() {
 
 if (process.argv.includes("--selftest")) {
   const goodManifest = `
-    const SubmissionQueue = React.lazy(() => import("../pages/factoring/SubmissionQueue"));
-    <Route path="/factoring/submit" element={<ProtectedRoute><SubmissionQueue /></ProtectedRoute>} />
+    <Route path="/factoring/submit-invoice" element={<ProtectedRoute><FactoringHomePage /></ProtectedRoute>} />
+    <Route
+      path="/factoring/submit"
+      element={<Navigate to="/factoring/submit-invoice" replace />}
+    />
   `;
   const goodHome = `
     const SUBNAV = [
       { id: "reserve_tracker", label: "Reserve Tracker" },
       { id: "recourse_pipeline", label: "Recourse Pipeline" },
     ] as const;
-    <Link to="/factoring/submit" data-testid="factoring-submit-to-factor-link">Submit to Factor</Link>
+    <Link to={FACTORING_TAB_PATH.submit_invoice} data-testid="factoring-submit-to-factor-link">Submit to Factor</Link>
   `;
   const goodRouteManifest = `{ path: "/factoring/submit", label: "Submit to Factor", module: "factoring" },`;
   const bad = check({

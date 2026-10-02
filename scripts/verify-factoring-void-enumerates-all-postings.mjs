@@ -53,7 +53,14 @@ function analyze(posterSrc, repairSrc) {
     const nextExportFn = posterSrc.indexOf("\nexport async function ", implIdx + 1);
     const boundaries = [nextFn, nextExportFn].filter((n) => n !== -1);
     const end = boundaries.length > 0 ? Math.min(...boundaries) : undefined;
-    const block = posterSrc.slice(implIdx, end);
+    let block = posterSrc.slice(implIdx, end);
+    // The impl now runs inside the caller's transaction: it delegates to reverseFactoringAdvanceEventInClientTx (so a
+    // purchase void reverses atomically with its stamp). Follow the delegation and audit the body that does the work.
+    if (/return reverseFactoringAdvanceEventInClientTx\(client, input\)/.test(block)) {
+      const txIdx = posterSrc.indexOf("export async function reverseFactoringAdvanceEventInClientTx");
+      const txEnd = posterSrc.indexOf("\nexport async function ", txIdx + 1);
+      if (txIdx !== -1) block = posterSrc.slice(txIdx, txEnd === -1 ? undefined : txEnd);
+    }
 
     if (!/findAllLifecyclePostingKeyJes/.test(block)) {
       failures.push(`${POSTER_FILE}: reverseFactoringAdvanceEventImpl must call findAllLifecyclePostingKeyJes (enumerate every linked leg), not a single hardcoded lookup`);

@@ -183,7 +183,7 @@ export function DriverEscrowBoardSection({ operatingCompanyId, driverEscrowBalan
                 <Settings2 className="h-4 w-4" />
               </button>
               {gearOpen ? (
-                <div className="absolute right-0 z-20 mt-1 w-52 rounded-sm border border-[#E5E7EB] bg-white p-2 shadow-sm">
+                <div className="absolute right-0 z-20 mt-1 w-52 border border-[#E5E7EB] bg-white p-2 shadow-sm">
                   <p className="mb-1 text-xs font-bold uppercase text-[#4B5563]">Columns</p>
                   {(Object.keys(COLUMN_LABELS) as ColumnId[]).map((id) => (
                     <label key={id} className="flex items-center gap-2 py-0.5 text-xs text-[#0F1219]">
