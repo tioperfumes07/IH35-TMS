@@ -175,17 +175,75 @@ function Section({
       </div>
       {children}
       {subtotalCents != null ? (
+        // QBO presentation: a subtotal sits on a ruled line, right-aligned, in lining figures, with
+        // the label left and the amount in a fixed 120px money column so every section's amount
+        // stacks on the same decimal point down the drawer. Centred grey text did not read as a
+        // total and could not be scanned against the AlwaysTrack statement.
         <div
-          className={`text-center text-xs font-semibold ${
-            tied === null ? "text-[#6B7280]" : tied ? "text-[#16A34A]" : "text-red-600"
-          }`}
+          className="mt-1 flex items-baseline justify-between gap-2 border-t border-[#E5E7EB] pt-1"
           data-testid={`sc-section-subtotal-${title.replace(/\s+/g, "-").toLowerCase()}`}
         >
-          Subtotal {formatUsdCents(subtotalCents)}
-          {pdfCents != null ? ` · PDF ${formatUsdCents(pdfCents)}` : ""}
+          <span className="text-section-header font-semibold uppercase tracking-wide text-[#4B5563]">
+            Subtotal
+          </span>
+          <span className="flex items-baseline gap-2">
+            {pdfCents != null ? (
+              <span className="text-xs text-[#6B7280]">
+                PDF{" "}
+                <span className="inline-block w-[120px] text-right tabular-nums">
+                  {formatUsdCents(pdfCents)}
+                </span>
+              </span>
+            ) : null}
+            <span
+              className={`inline-block w-[120px] text-right text-xs font-bold tabular-nums ${
+                tied === null ? "text-[#0F1219]" : tied ? "text-[#16A34A]" : "text-red-600"
+              }`}
+            >
+              {formatUsdCents(subtotalCents)}
+            </span>
+          </span>
         </div>
       ) : null}
     </section>
+  );
+}
+
+/**
+ * One line of the bottom summary. QBO shape: label left, amount right in a fixed 120px column with
+ * tabular (lining) figures so decimals stack; `strong` for a carried total, `double` for the closing
+ * net. `tied` colours a figure green when it agrees with the AlwaysTrack PDF and red when it does
+ * not — never a bare number the owner has to compare by eye. A null amount renders an em dash,
+ * never a fabricated $0.00 (C-37).
+ */
+function TotalRow({
+  label,
+  cents,
+  strong = false,
+  double = false,
+  tied,
+}: {
+  label: string;
+  cents: number | null | undefined;
+  strong?: boolean;
+  double?: boolean;
+  tied?: boolean;
+}) {
+  const colour = tied === undefined ? "text-[#0F1219]" : tied ? "text-[#16A34A]" : "text-red-600";
+  return (
+    <div
+      className={`flex items-baseline justify-between gap-2 py-0.5 ${
+        double ? "mt-1 border-t-2 border-double border-[#0F1219] pt-1" : strong ? "mt-1 border-t border-[#E5E7EB] pt-1" : ""
+      }`}
+      data-testid={`sc-total-${label.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`}
+    >
+      <span className={`text-xs ${strong ? "font-bold uppercase tracking-wide text-[#0F1219]" : "text-[#4B5563]"}`}>
+        {label}
+      </span>
+      <span className={`inline-block w-[120px] text-right text-xs tabular-nums ${strong ? "font-bold" : ""} ${colour}`}>
+        {cents == null ? "—" : formatUsdCents(cents)}
+      </span>
+    </div>
   );
 }
 
@@ -409,6 +467,19 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
         Math.round(Number(f.discount_cents || 0));
     return s + (a > 0 ? a : 0);
   }, 0);
+  /**
+   * OWNER DEFECT, 2026-10-02, measured live in Chrome on the Settlement Creator:
+   * "I AM NOT GETTING THE TOTALS FOR EACH, FOR INVOICE TOTALS, DRIVER PAYMENT TOTALS, EXPENSES,
+   *  FUEL, ETC ... SO I CAN MATCH TOTALS HERE TO TOTALS IN THE ALWAYS SETTLEMENT BEFORE I POST."
+   *
+   * The Loads section was the only money section rendered with NO subtotalCents at all, so the
+   * invoice/line-haul total — the first number he checks against the AlwaysTrack settlement — was
+   * never shown anywhere in the Creator. Every other section had one; this one was simply missed.
+   */
+  const loadsSubtotal = loads.reduce(
+    (s, l) => s + Math.max(0, Number(l.line_haul_rate_cents ?? 0)) + Math.max(0, Number(l.empty_rate_cents ?? 0)),
+    0
+  );
   const compExpSubtotal = companyExpenses.reduce((s, e) => s + (e.amount_cents > 0 ? e.amount_cents : 0), 0);
   const companySubtotal = fuelSubtotal + compExpSubtotal;
   const drvReimbSubtotal = drvReimbursements.reduce((s, e) => s + (e.amount_cents > 0 ? e.amount_cents : 0), 0);
@@ -609,7 +680,7 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               Company Settlement
             </h2>
 
-            <Section title="Loads" onAdd={addLoadRow}>
+            <Section title="Loads" subtotalCents={loadsSubtotal} onAdd={addLoadRow}>
               {loads.map((load, idx) => (
                 <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
                   <Field label="Load No.">
@@ -1445,6 +1516,70 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
             </Section>
           </div>
         </div>
+
+        {/*
+          OWNER ORDER, 2026-10-02: "ALL TOTALS SHOULD BE SHOWN IN THE CREATOR AT THE BOTTOM SO I CAN
+          VERIFY TOTALS WITH THE ALWAYS SETTLEMENT AND POST" / "I AM NOT GETTING THE TOTALS FOR EACH,
+          FOR INVOICE TOTALS, DRIVER PAYMENT TOTALS, EXPENSES, FUEL, ETC."
+
+          Before this, every total was a small grey line buried inside its own section box, scattered
+          down two scrolling columns. Checking a settlement against the AlwaysTrack statement meant
+          scrolling and reading nine different places. This is ONE QBO-style summary at the bottom:
+          label left, amount in a fixed 120px right-aligned lining-figure column so every decimal
+          point stacks, company side and driver side separated, and the driver net on a double rule
+          the way QuickBooks closes a statement. It computes nothing new — every figure is the SAME
+          value its section shows, so the summary can never disagree with the section above it.
+        */}
+        <section
+          className="space-y-2 rounded-sm border border-[#E5E7EB] bg-white p-2"
+          data-testid="sc-settlement-totals"
+        >
+          <h3 className="text-center text-section-header font-bold uppercase tracking-wide text-[#4B5563]">
+            Settlement totals · check against AlwaysTrack before posting
+          </h3>
+          <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
+            <div>
+              <TotalRow label="Invoice / line haul" cents={loadsSubtotal} />
+              <TotalRow label="Fuel purchases" cents={fuelSubtotal} />
+              <TotalRow label="Company expenses" cents={compExpSubtotal} />
+              <TotalRow label="Company total" cents={companySubtotal} strong />
+              {pdfCompanyExpenses != null ? (
+                <TotalRow
+                  label="AlwaysTrack PDF · company"
+                  cents={pdfCompanyExpenses}
+                  tied={Math.round(companySubtotal) === Math.round(pdfCompanyExpenses)}
+                />
+              ) : null}
+            </div>
+            <div>
+              <TotalRow label="Driver reimbursements" cents={drvReimbSubtotal} />
+              <TotalRow label="Additional pay" cents={addPaySubtotal} />
+              <TotalRow label="Deductions" cents={dedSubtotal + adminFeeCents} />
+              <TotalRow label="Cash advances" cents={advSubtotal} />
+              <TotalRow label="Escrow" cents={escrowNet} />
+              <TotalRow
+                label="Driver net pay"
+                cents={preview?.driver_net_cents ?? null}
+                strong
+                double
+                tied={
+                  pdfDriverNet != null && preview?.driver_net_cents != null
+                    ? Math.round(preview.driver_net_cents) === Math.round(pdfDriverNet)
+                    : undefined
+                }
+              />
+              {pdfDriverNet != null ? (
+                <TotalRow label="AlwaysTrack PDF · driver net" cents={pdfDriverNet} />
+              ) : null}
+            </div>
+          </div>
+          {preview?.driver_net_cents == null ? (
+            <p className="text-center text-xs text-[#6B7280]">
+              Driver net is computed by the engine — press Preview JE to fill it. Everything above is
+              live as you type.
+            </p>
+          ) : null}
+        </section>
 
         {/* JE preview */}
         {preview ? (
