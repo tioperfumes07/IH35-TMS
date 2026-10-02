@@ -2431,3 +2431,38 @@ stop fences (deactivated under AUTH-203), not by double firing: the breach detec
 (overlap proof row 12).
 
 Deploys: backend dep-db01gp1srm7s73do20ag building @21f09a4 (triggered; autoDeploy off); web auto. Ids in the next entry.
+
+## 2026-10-02 — ROUND 330.7 (cites 10-02-2026-ALL-CODERS-ROUND-332.1-THE-STANDARD-AND-THE-LINKAGE-LAW.md)
+
+**1. #24231 deploy:** backend dep-db01gp1srm7s73do20ag LIVE @21f09a4 (20:50:41Z). #24237 + #24239 + #24254 went live in
+dep-db02igjncjis7387sk00 @0a7efef (22:02:59Z), still served by dep-db02k8qdails73979kvg @48a411e (22:13:31Z).
+
+**2. Overlap proof, batch A — #24254.** The 13 "clean" engines, each REAL scheduled callback (node-cron intercepted, wrapper
+and all) fired twice at once on fork br-empty-hall-akm7qs85, then once more. 11 did one run's work. TWO DID NOT, both
+fixed, both found by the test (my #24219 headers called them clean):
+- **Odometer snapshot — the whole daily snapshot failed on prod 10-01 and 10-02** (both instances, 23505 on the second
+  unique key the single-arbiter ON CONFLICT did not cover). Those two days are lost (latest-position source).
+- **Unit stop events — 1,144 surplus copies on prod** (123 stops stored 1,267 times; a stop in progress at the window edge
+  got a new clipped start every tick). Writer fixed (old +8/tick on the fork, fixed +0).
+  **CLEANUP NEEDS OWNER AUTH:** `scripts/ops/2026-10-02-cc3-dedupe-unit-stop-events.mts` (keep earliest start per stop,
+  delete copies; no FK/trigger; WORM preservation ledger keeps the observations). Prod dry run: 1,144.
+Table: docs/engine-verification/2026-10-02-CC3-OVERLAP-PROOF-BATCH-A-13-ENGINES.md.
+
+**3. Overlap proof, batch B — #24263 (d472df5).** My lane's 20 previously unswept scheduled engines, classified by code
+read, then proven on the same fork (node-cron + setInterval intercepted, real callbacks two at once). 9 defects fixed as
+ONE guarded sweep (ROUND 332.1 §8):
+- chat confirmation escalation: per-process attempt ledger (2× pushes) — and its spine event had NEVER written (untyped
+  events.log_event resolved with source = NULL, swallowed). Now a DB ledger under a per-message lock: 0 -> 1 -> 1.
+- border crossing projector, auto-status, reefer, fence ±5-min check, HOS clocks, active driver set: xact locks; fork:
+  each pair did exactly one run's work.
+- reefer + layover: savepoint per tenant/company (one aborted txn used to fail everyone after it).
+- deadhead + lane profitability: no idle outer transaction holding a pool slot.
+- 7 lane jobs now through wrapBackgroundJobTick; all 20 headed (SWEPT 44).
+Generalized guard: verify-no-session-advisory-locks (2,027 files, 0 calls), wired. Seven clean engines had no new input
+on the fork — UNVERIFIED under fresh work, duplicate keys 0. Table:
+docs/engine-verification/2026-10-02-CC3-OVERLAP-PROOF-BATCH-B-UNSWEPT-ENGINES.md. Fork br-empty-hall-akm7qs85 deleted.
+Backend deploy dep-db0344e0tbcc738025r0 building @d472df5.
+
+**Boarded:** reports.deadhead_cache key (unit_id, week_starting) has no operating_company_id — a shared unit's row is
+overwritten by whichever entity runs last; needs a migration (my band) — next.
+**For the owner:** AUTH for the unit-stop cleanup (1,144 surplus rows, dry run above).
