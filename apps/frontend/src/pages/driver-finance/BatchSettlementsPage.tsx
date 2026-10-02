@@ -209,7 +209,7 @@ export function BatchSettlementsPage() {
   ];
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-[#F7F8FA]" data-page="batch-settlements">
+    <div className="flex min-h-0 flex-1 flex-col bg-[#F7F8FA]" data-page="batch-settlements" data-b5-batch-settlements="1">
       <NavyPageSubNav items={navItems} />
       <div className="mx-auto w-full max-w-[1400px] space-y-4 p-4">
         <div className="flex flex-wrap items-end justify-between gap-2">

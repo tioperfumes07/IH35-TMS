@@ -5,7 +5,7 @@
  */
 import { useMemo, useRef, useState, type ClipboardEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -73,6 +73,10 @@ export function MakeDepositPage() {
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
   const today = todayChicago();
+  const [searchParams] = useSearchParams();
+  // B-5 §23 type-strip deep-link: /banking/deposits?batch=1 opens the batch grid (createBankDeposit engine).
+  const openBatchFromQuery =
+    searchParams.get("batch") === "1" || searchParams.get("mode") === "batch";
 
   const [bankAccountId, setBankAccountId] = useState("");
   const [depositDate, setDepositDate] = useState(today);
@@ -82,7 +86,7 @@ export function MakeDepositPage() {
   const [cashBackAccountId, setCashBackAccountId] = useState("");
   const [voidReason, setVoidReason] = useState("");
   const [voidTargetId, setVoidTargetId] = useState<string | null>(null);
-  const [mode, setMode] = useState<"single" | "batch">("single");
+  const [mode, setMode] = useState<"single" | "batch">(openBatchFromQuery ? "batch" : "single");
   const [batchRows, setBatchRows] = useState<BatchRow[]>(() => [newBatchRow(today), newBatchRow(today)]);
   const pasteRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -374,7 +378,7 @@ export function MakeDepositPage() {
             </Button>
           </section>
         ) : (
-          <section className="space-y-3 rounded-sm border border-[#E5E7EB] bg-white p-3" data-section="make-deposit-batch">
+          <section className="space-y-3 rounded-sm border border-[#E5E7EB] bg-white p-3" data-section="make-deposit-batch" data-b5-batch-deposits="1">
             <p className=" text-[#6B7280]">
               §23 batch grid: paste date/memo rows, fill bank + receipt ids, Save all — each row posts through the same Make Deposit engine.
             </p>

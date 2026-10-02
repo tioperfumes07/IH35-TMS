@@ -62,6 +62,23 @@ function main() {
   assertIncludes(batch, "createExpense", BATCH);
   assertIncludes(batch, "parsePastedRows", BATCH);
   assertIncludes(batch, "fillDown", BATCH);
+  // B-5 §23 — type strip hops to live deposit + settlement batch engines (never "not wired" stub).
+  assertIncludes(batch, 'data-b5-batch-type-deposits="1"', BATCH);
+  assertIncludes(batch, "/banking/deposits?batch=1", BATCH);
+  assertIncludes(batch, 'data-b5-batch-type-settlements="1"', BATCH);
+  assertIncludes(batch, "/driver-finance/settlements/batch", BATCH);
+  if (/not wired yet|not in this grid yet/i.test(batch)) {
+    throw new Error(`${BATCH}: still claims deposit/settlement batch unwired`);
+  }
+
+  const makeDeposit = read("apps/frontend/src/pages/banking/MakeDepositPage.tsx");
+  assertIncludes(makeDeposit, 'data-b5-batch-deposits="1"', "MakeDepositPage");
+  assertIncludes(makeDeposit, 'searchParams.get("batch") === "1"', "MakeDepositPage");
+  assertIncludes(makeDeposit, "createBankDeposit", "MakeDepositPage");
+
+  const batchSettlements = read("apps/frontend/src/pages/driver-finance/BatchSettlementsPage.tsx");
+  assertIncludes(batchSettlements, 'data-b5-batch-settlements="1"', "BatchSettlementsPage");
+  assertIncludes(batchSettlements, "postBatchSettlements", "BatchSettlementsPage");
 
   assertIncludes(api, "applyReclassify", API);
   assertIncludes(api, 'to_entity_type?: "customer" | "vendor"', API);
