@@ -52,6 +52,14 @@ function main() {
   assertIncludes(match, "bankTransactionDate", MATCH);
   assertIncludes(match, "±90 days", MATCH);
   assertIncludes(match, "Reset to ±90 days", MATCH);
+  // B-3 §19 — Suggested + Record type chips (QBO Find Other Matches).
+  assertIncludes(match, 'data-b3-suggested-record-type-chips="1"', MATCH);
+  assertIncludes(match, 'data-testid="match-chip-suggested"', MATCH);
+  assertIncludes(match, 'data-testid="match-chip-record-all"', MATCH);
+  assertIncludes(match, "match-chip-record-${chip.kind}", MATCH);
+  assertIncludes(match, "RECORD_TYPE_CHIPS", MATCH);
+  assertIncludes(match, "suggestedOnly", MATCH);
+  assertIncludes(match, "kinds: recordKind ? [recordKind] : undefined", MATCH);
 
   assertIncludes(feed, "bankTransactionDate=", FEED);
 
