@@ -1602,3 +1602,15 @@ UI-F9641 (4994ffa840) renders a real $0.00 on PartyBoard; live guard verify-desi
 
 ### Owner-visible
 - Settlements now post (P0 #24197) and can be undone whole (#24202). Both deployed.
+
+## ROUND 330.6 — 2026-10-02 (CC-1) — every item gate exit 0, squash-merged, backend deployed via Render API; proofs on Neon fork br-proud-glade-akwc6rbb (production never written)
+| PR | Finding | Item |
+|---|---|---|
+| #24234 | UI-F9641 (Lead) + UI-F9827 | Ruling 2 — real $0.00 renders $0.00; verify-design-token-parity check 5 asserted the defect, repointed (DriverHub + DriverOverview boards fixed the same way) |
+| #24241 | ACCT-F9829 | Ruling 1 — predecessor / successor link (migration 202615270100). Found on the fork: re-posting was IMPOSSIBLE (spine unique per driver bill forever, 23505) and the re-post bill reused the spent load number. Now: P-0017 reversed -> P-9017 re-posts the same loads, bills BILL-2026-00029/00030 (bill_number 13612/13617), reversed bills keep 13612/13617; links both ways, header shows "Replaces (reversed)" / "Replaced by" |
+| #24243 | ACCT-F9831 | Faro orphan — deferred constraint trigger (migration 202615280100): a faro_daily_imports header can never be left without live lines (5 scenarios proven on the fork). **The 2 orphan rows are already gone on prod** (faro_daily_imports 0 rows, n_tup_del 2) — no owner script needed; CC-1 deleted nothing |
+| #24244 | ACCT-F9833 | Cash-advance reverse — it THREW on every liability (status 'reversed' vs the voided_at check) and left the repayment deduction pending; now voids both. Also fixed verify-cash-advance-close-time-three-way-routing (red for every seat on a voided historical row) |
+| #24247 | BANK-F9835 | Bank-categorized advance — dedupe key written after the money moved (double-book on retry) and USMCA could not post at all (no load / bank / reference reached the core); keyed at creation, resumable, fork: 1 advance / 1 deduction / 1 JE after re-run + simulated crash |
+| #24251 | ACCT-F9837 | CC-3 handoff — FIN-20 A/P aging as-of excludes voided / draft bills; manual cash forecast names its company on list / edit / deactivate |
+
+Next: ROUND 300 settlement-posting stamps + the 8 orphans; then engine-audit re-run (my lane) under the database-guard standard.
