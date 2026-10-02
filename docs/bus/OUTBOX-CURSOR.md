@@ -1,3 +1,8 @@
+**2026-10-02T11:45Z · BANK-F91033 B-4 Amount to Credit MERGED #24090 + §7 slate #24091 · tip `6f56ab7b3b`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91033 MERGED FAST-MERGE | GO
+Outstanding Transactions: live Amount to Apply / Amount to Credit; Payment unclamped; Save blocked while credit > 0; §7 slate hint. money-pr-local-gate PASS → #24090 + #24091 squash-admin.
+NEXT: author BANK_TX_SPLIT USMCA overrides (CLAIM 202615221200) at HH 12–23 · Lead Chrome · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T11:28Z · BANK-F91032 B-4 Find Bill No. MERGED #24088 · tip `4610e26741`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91032 MERGED FAST-MERGE | GO
 Outstanding Transactions: Find Bill No. filter on WriteCheckForm (ORDERS §B-4 / QBO §10). money-pr-local-gate PASS → #24088 squash-admin.
