@@ -152,6 +152,7 @@ export const TABLE_REGISTRY = {
   "accounting.lease_classification": { status: "NOT_TRANSACTIONAL", reason: "classification config" },
   "accounting.lease_contract": { status: "NEEDS_JOIN_PATH", reason: "unit lease is TIER2, property/office lease is TIER3 -- ambiguous by table alone, needs the asset-type join" },
   "accounting.lease_schedule_period": { status: "NEEDS_JOIN_PATH", tier: TIER.TIER2 },
+  "accounting.lease_lessee_schedule_period": { status: "NEEDS_JOIN_PATH", tier: TIER.TIER2 }, // ROUND 321 CC-1: ASC 842 lessee schedule; unit/trailer via lease_asset_line
   "accounting.line_category_load_required": { status: "NOT_TRANSACTIONAL", reason: "THE existing DB-native TIER1 declaration for expense_lines/fuel_transactions (migration 0093) -- read directly by classifyExpenseLineCategory(), not itself a transaction" },
   "accounting.load_revenue_recognition_postings": { status: "OUT_OF_SCOPE", reason: "revenue recognition, AR side" },
   "accounting.ob_register_audit_events": { status: "NOT_TRANSACTIONAL", reason: "audit log" },
