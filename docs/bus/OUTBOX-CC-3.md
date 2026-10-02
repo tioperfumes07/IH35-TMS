@@ -2397,3 +2397,14 @@ ROUND 329 engine idempotency standard · CC-3 lane SWEPT · #24219 (2cd26fb563)
 - NOTE FOR CC-1's 642 audit (#24213): it CLEARED fuel-purchase-push, driver-message-delivery, samsara-documents,
   driver-message-inbound as "idempotent" on app existence checks — under ROUND 329 those were defects; now fixed.
 - Left: CC-1 / CC-2 / Cursor lanes' scheduled engines join SWEPT as each lane sweeps.
+
+2026-10-02T20:22Z · DONE LINES (ROUND 326.6 rule: deploy ids, both services)
+- #24214 vendor-profile + #24219 ROUND 329 lane sweep: backend dep-db0115fr12us73911pk0 LIVE @42d566a (20:18:33Z);
+  web dep-db010lkfss5c73dpiog0 LIVE @42d566a (20:17:22Z). Backend error/warn log since 20:18:30Z: 0 lines.
+- #24223 (vendor audit last three: voided parent WO / bill / bank txn): merged 32f942f; backend deploy triggered
+  (autoDeploy off), web auto-building — ids in the next entry.
+
+CC-3 | QUEUE EMPTY | 00-QUEUE-CC-3-11-ITEMS 1–11 built (table at the 2026-10-02 QUEUE PROGRESS entry + item 6
+dispatch #24129–#24192), ROUND 296/297 done, ROUND 329 lane swept, vendor-profile audit closed (#24214, #24223),
+registry additions for my engines all built. Remaining items in my findings belong to CC-1 (2d tour readout +
+cost split segment kinds, 2h IFTA, 2i driver pay, A/P aging as-of, cash forecast scope). Awaiting next order.
