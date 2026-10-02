@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91040 MERGED #24105 tip `f026762c7b` · §14 empty/OD/trailer enricher · F91038 Tier-A blocked
-ACK: CURSOR | ACK GO-20 HOOK | F91040 MERGED | GO
+NOW: BANK-F91041 MERGED #24107 tip `eed3710134` · Write Check More after Save · F91038 Tier-A blocked
+ACK: CURSOR | ACK GO-20 HOOK | F91041 MERGED | GO
