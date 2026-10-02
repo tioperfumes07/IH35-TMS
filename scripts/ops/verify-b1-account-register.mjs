@@ -85,6 +85,14 @@ function main() {
   if (!/View register/.test(coa) || !/row\.statement === ["']P&L["']/.test(coa)) {
     throw new Error(`${COA}: P&L rows must keep Run report AND always expose View register (ORDERS §B-1)`);
   }
+  // BANK-F91046 — ORDERS §B-1 / QBO §11 Action [View register ▾]
+  assertIncludes(coa, 'data-b1-coa-view-register-menu="1"', COA);
+  assertIncludes(coa, 'data-testid="b1-coa-view-register-menu"', COA);
+  assertIncludes(coa, "MoreActionsMenu", COA);
+  assertIncludes(coa, 'label: "Edit"', COA);
+  assertIncludes(coa, 'label: "Make inactive"', COA);
+  assertIncludes(coa, 'label: "Run report"', COA);
+  assertIncludes(coa, 'aria-label="Account actions"', COA);
   // BANK-F91028 — per-row Make inactive (ORDERS §B-1 CoA actions)
   assertIncludes(coa, 'data-testid="b1-coa-make-inactive"', COA);
   assertIncludes(coa, "Make inactive", COA);

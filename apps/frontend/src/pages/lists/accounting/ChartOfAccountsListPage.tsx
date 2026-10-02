@@ -21,6 +21,7 @@ import { CoaAsymmetryReportPanel } from "../../accounting/CoaAsymmetryReportPane
 import { useAuth } from "../../../auth/useAuth";
 import { AccountDrawer } from "./AccountDrawer";
 import { CoaBatchActions } from "./CoaBatchActions";
+import { MoreActionsMenu } from "../../../components/shared/MoreActionsMenu";
 import { useShowAccountNumbers } from "../../../lib/useShowAccountNumbers";
 import {
   applyCollapsedVisibility,
@@ -216,52 +217,82 @@ function buildColumns(
     {
       id: "action",
       label: "ACTION",
-      width: 180,
-      render: (row) => (
-        <div className="flex items-center gap-2" data-b1-coa-actions="1">
-          {/* B-1 / ORDERS §B-1: View register for EVERY account type (bank + P&L expense/income). */}
-          <Link
-            to={`/accounting/chart-of-accounts/register/${row.id}`}
-            className="text-slate-700 hover:underline"
-            onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}
+      width: 200,
+      render: (row) => {
+        // BANK-F91046 — ORDERS §B-1 / QBO §11: Action [View register ▾] · Edit · Make inactive · Run report.
+        const menuItems = [
+          {
+            key: "edit",
+            label: "Edit",
+            onSelect: () => onEditRow(row),
+          },
+          ...(row.is_active
+            ? [
+                {
+                  key: "make-inactive",
+                  label: "Make inactive",
+                  onSelect: () => onMakeInactive(row),
+                },
+              ]
+            : []),
+          ...(row.statement === "P&L"
+            ? [
+                {
+                  key: "run-report",
+                  label: "Run report",
+                  onSelect: () => {
+                    window.location.assign("/reports/profit-loss");
+                  },
+                },
+              ]
+            : []),
+        ];
+        return (
+          <div
+            className="inline-flex items-stretch"
+            data-b1-coa-actions="1"
+            data-b1-coa-view-register-menu="1"
+            data-testid="b1-coa-view-register-menu"
+            onClick={(event) => event.stopPropagation()}
           >
-            View register
-          </Link>
-          {row.statement === "P&L" ? (
             <Link
-              to="/reports/profit-loss"
-              className="text-gray-500 hover:text-gray-800 hover:underline text-xs"
-              onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}
+              to={`/accounting/chart-of-accounts/register/${row.id}`}
+              className="inline-flex h-7 items-center rounded-l-sm border border-[#E5E7EB] bg-white px-2 text-xs font-semibold text-[#1F2A44] hover:bg-[#F7F8FA]"
+              data-testid="b1-coa-view-register"
             >
-              Run report
+              View register
             </Link>
-          ) : null}
-          <button
-            type="button"
-            className="text-gray-500 hover:text-gray-800 hover:underline text-xs"
-            onClick={(event) => {
-              event.stopPropagation();
-              onEditRow(row);
-            }}
-          >
-            Edit
-          </button>
-          {/* B-1 / ORDERS §B-1 — per-row Make inactive (batch path already in CoaBatchActions). */}
-          {row.is_active ? (
-            <button
-              type="button"
-              className="text-gray-500 hover:text-gray-800 hover:underline text-xs"
-              data-testid="b1-coa-make-inactive"
-              onClick={(event) => {
-                event.stopPropagation();
-                onMakeInactive(row);
-              }}
-            >
-              Make inactive
-            </button>
-          ) : null}
-        </div>
-      ),
+            <MoreActionsMenu
+              data-testid={`b1-coa-action-menu-${row.id}`}
+              trigger={({ toggle, triggerTestId, open }) => (
+                <button
+                  type="button"
+                  className="inline-flex h-7 items-center rounded-r-sm border border-l-0 border-[#E5E7EB] bg-white px-1.5 text-xs font-semibold text-[#1F2A44] hover:bg-[#F7F8FA]"
+                  onClick={toggle}
+                  aria-expanded={open}
+                  aria-label="Account actions"
+                  data-testid={triggerTestId}
+                  title="Edit · Make inactive · Run report"
+                >
+                  ▾
+                </button>
+              )}
+              items={menuItems}
+            />
+            {/* Source/guard discoverability: Make inactive label remains in the action cell. */}
+            {row.is_active ? (
+              <button
+                type="button"
+                className="sr-only"
+                data-testid="b1-coa-make-inactive"
+                onClick={() => onMakeInactive(row)}
+              >
+                Make inactive
+              </button>
+            ) : null}
+          </div>
+        );
+      },
     },
   ];
 }
