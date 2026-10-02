@@ -2,6 +2,7 @@ import { SelectCombobox } from "../../Combobox";
 import { MoneyInput } from "../MoneyInput";
 import { ParityTable } from "../../parity/ParityTable";
 import { ReferenceSelect } from "../../parity/ReferenceSelect";
+import { QBO_MONEY_CELL_CLASS, formatUsdTable } from "../../../lib/money";
 
 export type CategoryLine = {
   id: string;
@@ -301,8 +302,11 @@ export function CostBreakdownBox({
                 },
                 {
                   key: "total",
+                  kind: "money",
+                  minWidth: 120,
+                  cellClass: QBO_MONEY_CELL_CLASS,
                   label: col.total,
-                  render: (line) => `$${Number(line.amount || 0).toFixed(2)}`,
+                  render: (line) => formatUsdTable(line.amount),
                 },
                 {
                   key: "remove",
@@ -331,7 +335,7 @@ export function CostBreakdownBox({
               >
                 + Create category line
               </button>
-              <span className="text-xs font-semibold">Subtotal A: ${subtotalA.toFixed(2)}</span>
+              <span className="text-xs font-semibold">Subtotal A: {formatUsdTable(subtotalA)}</span>
             </div>
           </div>
         </div>
@@ -449,7 +453,7 @@ export function CostBreakdownBox({
                     className="text-xs"
                     ariaLabel={`${col.cost} (item)`}
                   />
-                  <div className="px-2 py-1 text-xs font-semibold tabular-nums text-gray-900">${Number(line.amount || 0).toFixed(2)}</div>
+                  <div className="px-2 py-1 text-xs font-semibold tabular-nums text-gray-900">{formatUsdTable(line.amount)}</div>
                   <button
                     disabled={readOnly}
                     type="button"
@@ -713,7 +717,7 @@ export function CostBreakdownBox({
                           className="text-xs"
                           ariaLabel="Sub-row cost"
                         />
-                          <div className="px-2 py-1 text-xs tabular-nums text-gray-900">${Number(row.amount || 0).toFixed(2)}</div>
+                          <div className="px-2 py-1 text-xs tabular-nums text-gray-900">{formatUsdTable(row.amount)}</div>
                         <button
                           disabled={readOnly}
                           type="button"
@@ -804,7 +808,7 @@ export function CostBreakdownBox({
               >
                 + Create item line
               </button>
-              <span className="text-xs font-semibold">Subtotal B: ${subtotalB.toFixed(2)}</span>
+              <span className="text-xs font-semibold">Subtotal B: {formatUsdTable(subtotalB)}</span>
             </div>
           </div>
         </div>

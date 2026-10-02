@@ -5,6 +5,7 @@ import { useToast } from "../../../components/Toast";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
+import { formatUsdTable } from "../../../lib/money";
 
 type Props = {
   open: boolean;
@@ -124,10 +125,10 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
           </div>
           <div>Type: {String(liability.type ?? "—")}</div>
           <div>Source: {String(liability.source_description ?? "—")}</div>
-          <div>Original: ${Number(liability.original_amount ?? 0).toFixed(2)}</div>
-          <div>Paid: ${Number(liability.paid_to_date ?? 0).toFixed(2)}</div>
-          <div>Balance: ${Number(liability.current_balance ?? 0).toFixed(2)}</div>
-          <div>Scheduled deduction: ${Number(liability.scheduled_deduction ?? 0).toFixed(2)}</div>
+          <div>Original: {formatUsdTable(liability.original_amount as number | string | null)}</div>
+          <div>Paid: {formatUsdTable(liability.paid_to_date as number | string | null)}</div>
+          <div>Balance: {formatUsdTable(liability.current_balance as number | string | null)}</div>
+          <div>Scheduled deduction: {formatUsdTable(liability.scheduled_deduction as number | string | null)}</div>
           <div>
             Caused by:{" "}
             {originId && originKind ? (
@@ -161,7 +162,7 @@ export function LiabilityDetailDrawer({ open, operatingCompanyId, liability, onC
                   label={entityLabel(null, row.settlement_id ? String(row.settlement_id) : null, "Settlement")}
                 />{" "}
                 ·
-                ${Number(row.amount ?? 0).toFixed(2)}
+                {formatUsdTable(row.amount as number | string | null)}
               </div>
             ))}
             {settlementHistory.length === 0 ? <div className="text-gray-500">No settlement deductions yet.</div> : null}

@@ -94,10 +94,11 @@ export function collectFailures({
     [EARNINGS_PATH, earnings],
     [DEADHEAD_PATH, deadhead],
   ]) {
-    if (!/toLocaleString\("en-US",\s*\{\s*minimumFractionDigits:\s*1,\s*maximumFractionDigits:\s*1\s*\}\)/.test(src)) {
+    // ROUND 296 5 — formatting goes through lib/money (formatQuantityTable(…, 1) / formatUsdRateTable — 4 decimals).
+    if (!/formatQuantityTable\(line\.miles,\s*1\)/.test(src) && !/toLocaleString\("en-US",\s*\{\s*minimumFractionDigits:\s*1,\s*maximumFractionDigits:\s*1\s*\}\)/.test(src)) {
       failures.push(`${path} does not format miles to 1 decimal with thousands separator`);
     }
-    if (!/\$\$\{line\.rate\.toFixed\(4\)\}/.test(src) && !/`\$\$\{line\.rate\.toFixed\(4\)\}`/.test(src) && !/\$\{line\.rate\.toFixed\(4\)\}/.test(src)) {
+    if (!/formatUsdRateTable\(line\.rate\)/.test(src) && !/\$\$\{line\.rate\.toFixed\(4\)\}/.test(src) && !/`\$\$\{line\.rate\.toFixed\(4\)\}`/.test(src) && !/\$\{line\.rate\.toFixed\(4\)\}/.test(src)) {
       failures.push(`${path} does not format rate to 4 decimals as a dollar amount`);
     }
   }
@@ -152,7 +153,7 @@ if (process.argv.includes("--selftest")) {
     ],
     [
       "EarningsSection drops the 4-decimal rate formatter",
-      { earnings: earnings.replace("<>${line.rate.toFixed(4)}</>", "<>{line.rate}</>") },
+      { earnings: earnings.replace("<>{formatUsdRateTable(line.rate)}</>", "<>{line.rate}</>") },
     ],
   ];
   const escaped = [];

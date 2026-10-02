@@ -19,6 +19,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { mmmDd } from "../../../lib/formatDate";
 import type { CompanySettlementFuelRow } from "../../../api/accounting";
+import { QBO_MONEY_CELL_CLASS, formatQuantityTable, formatUsdCentsTable, formatUsdRateTable } from "../../../lib/money";
 
 const DASH = "—";
 
@@ -49,7 +50,7 @@ const COLUMNS: Array<ParityColumn<CompanySettlementFuelRow & { id: string }>> = 
     render: (row) => [row.vendor, row.location].filter(Boolean).join(" · ") || DASH,
   },
   {
-    key: "transaction_date",
+    key: "transaction_date", minWidth: 132,
     label: "Date",
     sortable: true,
     sortValue: (row) => row.transaction_date ?? "",
@@ -71,25 +72,31 @@ const COLUMNS: Array<ParityColumn<CompanySettlementFuelRow & { id: string }>> = 
     // LAW §8 "zero is a claim" — a source row with no captured gallons renders "—", never 0.0.
     render: (row) =>
       row.gallons != null ? (
-        <>{row.gallons.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 3 })}</>
+        <>{formatQuantityTable(row.gallons, 3, 1)}</>
       ) : (
         <span title="no gallons captured on this purchase">{DASH}</span>
       ),
   },
   {
     key: "price_per_gallon",
+    kind: "money",
+    minWidth: 120,
+    cellClass: QBO_MONEY_CELL_CLASS,
     label: "Rate",
     render: (row) =>
       row.price_per_gallon != null ? (
-        <>${row.price_per_gallon.toFixed(4)}</>
+        <>{formatUsdRateTable(row.price_per_gallon)}</>
       ) : (
         <span title="no price/gallon captured on this purchase">{DASH}</span>
       ),
   },
   {
     key: "amount_cents",
+    kind: "money",
+    minWidth: 120,
+    cellClass: QBO_MONEY_CELL_CLASS,
     label: "Amount",
-    render: (row) => <>${(row.amount_cents / 100).toFixed(2)}</>,
+    render: (row) => <>{formatUsdCentsTable(row.amount_cents)}</>,
   },
   {
     key: "invoice_number",
@@ -123,7 +130,7 @@ export function FuelPurchasesSection({ rows }: Props) {
         hidePager
       />
       <div className="mt-1 px-2.5 py-1 text-xs font-semibold">
-        Subtotal: ${(subtotalCents / 100).toFixed(2)} · Gallons: {totalGallons.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+        Subtotal: {formatUsdCentsTable(subtotalCents)} · Gallons: {formatQuantityTable(totalGallons, 1)}
       </div>
     </section>
   );

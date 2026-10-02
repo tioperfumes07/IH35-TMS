@@ -8,6 +8,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
 import { useUrlSort } from "../../../hooks/useUrlSort";
+import { QBO_MONEY_CELL_CLASS, formatUsdTable } from "../../../lib/money";
 
 type Props = {
   rows: SettlementListRow[];
@@ -119,25 +120,25 @@ export function SettlementsTable({
         sortValue: row => row.source_document_ref ?? "", render: row => row.source_document_ref ?? "—",
       },
       {
-        key: "period_start", label: "Period Begin", sortable: true,
+        key: "period_start", minWidth: 132, label: "Period Begin", sortable: true,
         sortValue: row => row.period_start ?? null, render: row => formatDateUS(row.period_start),
       },
       {
-        key: "period_end", label: "Period End", sortable: true,
+        key: "period_end", minWidth: 132, label: "Period End", sortable: true,
         sortValue: row => row.period_end ?? null, render: row => formatDateUS(row.period_end),
       },
       {
         // SETL-DATES (owner 2026-09-07): a settlement must always show when it opened and when it
         // closed. trip_started_at is stamped when the first load is dispatched (open); trip_closed_at
         // when the payrun closes it. An open settlement has no close date yet, so show a dash.
-        key: "trip_started_at",
+        key: "trip_started_at", minWidth: 132,
         label: "Date started",
         sortable: true,
         sortValue: (row) => row.trip_started_at ?? null,
         render: (row) => (row.trip_started_at ? formatDateUS(row.trip_started_at) : <span className="text-gray-500">—</span>),
       },
       {
-        key: "trip_closed_at",
+        key: "trip_closed_at", minWidth: 132,
         label: "Date ended",
         sortable: true,
         sortValue: (row) => row.trip_closed_at ?? null,
@@ -145,25 +146,33 @@ export function SettlementsTable({
       },
       {
         key: "gross",
+        kind: "money",
+        minWidth: 120,
+        cellClass: QBO_MONEY_CELL_CLASS,
         label: "Gross",
         sortable: true,
         sortValue: (row) => Number(row.gross_pay ?? 0),
-        render: (row) => `$${Number(row.gross_pay ?? 0).toFixed(2)}`,
+        render: (row) => formatUsdTable(row.gross_pay),
       },
       {
         key: "deductions",
+        kind: "money",
+        minWidth: 120,
+        cellClass: QBO_MONEY_CELL_CLASS,
         label: "Deductions",
         sortable: true,
         sortValue: (row) => Number(row.deductions_total ?? 0),
-        render: (row) => `$${Number(row.deductions_total ?? 0).toFixed(2)}`,
+        render: (row) => formatUsdTable(row.deductions_total),
       },
       {
         key: "net_pay",
+        kind: "money",
+        minWidth: 120,
         label: "Net Pay",
         sortable: true,
         sortValue: (row) => Number(row.net_pay ?? 0),
-        cellClass: "font-semibold text-slate-700",
-        render: (row) => `$${Number(row.net_pay ?? 0).toFixed(2)}`,
+        cellClass: `${QBO_MONEY_CELL_CLASS} font-semibold text-slate-700`,
+        render: (row) => formatUsdTable(row.net_pay),
       },
       {
         key: "status",
@@ -186,7 +195,7 @@ export function SettlementsTable({
         render: (row) =>
           typeof row.live_debt_flag === "number" && row.live_debt_flag > 0 ? (
             <span className="flex flex-wrap items-center gap-1">
-              <span className="font-semibold text-red-700">${row.live_debt_flag.toFixed(2)}</span>
+              <span className="font-semibold text-red-700">{formatUsdTable(row.live_debt_flag)}</span>
               {/* LINK-F5187: the dollar total above is a sum over real driver_finance.driver_liabilities
                   rows (liability_ids) — link each one instead of leaving the total as dead text. */}
               {(row.liability_ids ?? []).map((id, idx) => (

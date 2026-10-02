@@ -1,3 +1,5 @@
+import { formatUsdTable } from "../../../lib/money";
+
 type Props = {
   totalActiveDebt: number | string;
   pendingAckCount: number;
@@ -25,10 +27,10 @@ export function DebtBanner({
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="text-xs font-semibold text-red-700">
-            ⚠ Driver has {isRefreshing ? "Refreshing..." : `$${Number(totalActiveDebt).toFixed(2)}`} in active debt
+            ⚠ Driver has {isRefreshing ? "Refreshing..." : formatUsdTable(totalActiveDebt)} in active debt
           </div>
           <div className="text-xs text-red-700">
-            {pendingAckCount} pending liability acknowledgments · pending ack total ${pendingAckTotal.toFixed(2)} · this period proposes ${proposedDeductions.toFixed(2)} deductions
+            {pendingAckCount} pending liability acknowledgments · pending ack total {formatUsdTable(pendingAckTotal)} · this period proposes {formatUsdTable(proposedDeductions)} deductions
           </div>
           <div className="mt-1 flex gap-3 text-xs">
             <button type="button" onClick={onOpenBreakdown} className="text-red-800 underline">View liability breakdown →</button>
@@ -37,7 +39,7 @@ export function DebtBanner({
           </div>
         </div>
         <div className="text-xs font-bold text-red-700">
-          TOTAL ACTIVE DEBT {isRefreshing ? "Refreshing..." : `$${Number(totalActiveDebt).toFixed(2)}`}
+          TOTAL ACTIVE DEBT {isRefreshing ? "Refreshing..." : formatUsdTable(totalActiveDebt)}
         </div>
       </div>
     </div>

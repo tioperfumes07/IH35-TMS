@@ -160,7 +160,7 @@ describe("CostBreakdownBox", () => {
         onSectionBChange={vi.fn()}
       />
     );
-    expect(screen.getByText("Subtotal A: $1500.00")).toBeInTheDocument();
+    expect(screen.getByText("Subtotal A: $1,500.00")).toBeInTheDocument();
   });
 
   it("computes subtotal B from max(line amount, parts/labor subrows sum)", () => {

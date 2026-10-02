@@ -3,10 +3,12 @@
  *
  * Rows arrive as props (parent page owns the queries and error state); this component
  * performs no posting/mutation. Columns Display ID / Driver / Type / Source / Original $ /
- * Paid $ / Balance $ / Schedule / Status / Action, amount formatting ($ + toFixed(2)),
+ * Paid $ / Balance $ / Schedule / Status / Action, amount formatting (lib/money TableMoneyCell — accounting parentheses, em dash for missing),
  * pills, and the View Detail / Send Ack Request handlers preserved 1:1.
  */
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { TableMoneyCell } from "../../../components/table/TableMoneyCell";
+import { QBO_MONEY_CELL_CLASS } from "../../../lib/money";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
@@ -41,7 +43,7 @@ export function LiabilitiesTable({ rows, onOpenDetail, onSendAck }: Props) {
       // (views.liabilities_active_with_context, ORDER BY created_at DESC in liabilities.routes.ts)
       // but never rendered it -- no date column existed anywhere on this list, the only date
       // signal available (this view carries no separate "incurred" timestamp).
-      key: "created_at",
+      key: "created_at", minWidth: 132,
       label: "Date",
       sortable: true,
       render: (row) => formatDateUS(row.created_at),
@@ -92,23 +94,34 @@ export function LiabilitiesTable({ rows, onOpenDetail, onSendAck }: Props) {
     {
       key: "original_amount",
       label: "Original $",
-      render: (row) => <>${Number(row.original_amount ?? 0).toFixed(2)}</>,
+      kind: "money",
+      minWidth: 120,
+      cellClass: QBO_MONEY_CELL_CLASS,
+      render: (row) => <TableMoneyCell dollars={row.original_amount as number | string | null | undefined} />,
     },
     {
       key: "paid_to_date",
       label: "Paid $",
-      render: (row) => <>${Number(row.paid_to_date ?? 0).toFixed(2)}</>,
+      kind: "money",
+      minWidth: 120,
+      cellClass: QBO_MONEY_CELL_CLASS,
+      render: (row) => <TableMoneyCell dollars={row.paid_to_date as number | string | null | undefined} />,
     },
     {
       key: "current_balance",
       label: "Balance $",
-      cellClass: "font-semibold",
-      render: (row) => <>${Number(row.current_balance ?? 0).toFixed(2)}</>,
+      cellClass: `${QBO_MONEY_CELL_CLASS} font-semibold`,
+      kind: "money",
+      minWidth: 120,
+      render: (row) => <TableMoneyCell dollars={row.current_balance as number | string | null | undefined} />,
     },
     {
       key: "scheduled_deduction",
       label: "Schedule",
-      render: (row) => <>${Number(row.scheduled_deduction ?? 0).toFixed(2)}</>,
+      kind: "money",
+      minWidth: 120,
+      cellClass: QBO_MONEY_CELL_CLASS,
+      render: (row) => <TableMoneyCell dollars={row.scheduled_deduction as number | string | null | undefined} />,
     },
     {
       key: "display_status",
