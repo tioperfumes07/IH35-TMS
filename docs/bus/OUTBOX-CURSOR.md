@@ -1,3 +1,8 @@
+**2026-10-02T09:25Z · B-2 CLEARED DATE MERGED #24059 · tip **
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91018 MERGED FAST-MERGE | GO
+CLEARED DATE = statement period_end when cleared. money-pr-local-gate PASS.
+Session B-2: F91014–F91018 all FAST-MERGED. NEXT: HH 12–23 bank_transaction_splits · Lead Chrome · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T09:20Z · B-2 recon open-document MERGED #24057 · tip **
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91017 MERGED FAST-MERGE | GO
 Matched/JE recon rows open original document on click. money-pr-local-gate PASS.
