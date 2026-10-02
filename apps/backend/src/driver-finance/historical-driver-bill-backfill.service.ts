@@ -178,6 +178,33 @@ export async function createHistoricalDriverBill(
     return { outcome: "already_exists", driver_bill_id: prior.id, bill_number: prior.bill_number };
   }
 
+  // ROUND 326 audit A5 — ONE DRIVER BILL PER LOAD (per driver on a team load). A live bill on this load for a DIFFERENT
+  // driver means the load is already billed (book-load mints it at assignment); a backfill for another driver would
+  // be a second bill for the same load. Allowed only when the two drivers are the load's team pair.
+  const otherDriver = await client.query<{ bill_number: string; driver_id: string; team_driver_id: string | null }>(
+    `SELECT db.bill_number, db.driver_id::text, db.team_driver_id::text
+       FROM driver_finance.driver_bills db
+      WHERE db.operating_company_id = $1 AND db.load_id = $2 AND db.driver_id <> $3 AND db.voided_at IS NULL
+        AND db.team_driver_id IS DISTINCT FROM $3
+        AND NOT EXISTS (
+          SELECT 1 FROM mdata.loads l
+           WHERE l.id = db.load_id
+             AND $3 IN (l.assigned_primary_driver_id, l.assigned_secondary_driver_id)
+             AND db.driver_id IN (l.assigned_primary_driver_id, l.assigned_secondary_driver_id)
+             AND l.assigned_secondary_driver_id IS NOT NULL
+        )
+      LIMIT 1`,
+    [input.operating_company_id, input.load_id, input.driver_id],
+  );
+  if (otherDriver.rows[0]) {
+    return {
+      outcome: "refused",
+      reason:
+        `load ${input.load_number} is already billed to another driver (bill ${otherDriver.rows[0].bill_number}). ` +
+        `One driver bill per load: reassign or void that bill first; a backfill never mints a second one.`,
+    };
+  }
+
   // ---- 3. WRITE THE DOCUMENT --------------------------------------------------------------
   const billNumber = driverBillNumberFromLoadNumber(input.load_number);
   const notes =
