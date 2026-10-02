@@ -318,6 +318,11 @@ type BillRow = {
   linked_pickup_date?: string | null;
   linked_delivery_date?: string | null;
   linked_loaded_miles?: number | null;
+  /** BANK-F91040 — ORDERS §B-4 §14 driver-bill settlement chrome (empty / OD / trailer). */
+  linked_empty_miles?: number | null;
+  linked_origin?: string | null;
+  linked_destination?: string | null;
+  linked_trailer_number?: string | null;
 };
 
 type BillPaymentRow = {
@@ -1051,6 +1056,11 @@ export async function listBillsByVendor(
                load_link.delivery_date AS linked_delivery_date,
                load_link.miles_practical AS linked_loaded_miles,
                load_link.unit_number AS linked_unit_number,
+               -- BANK-F91040 — §14 empty / origin→destination / trailer (Write Check driver chrome).
+               load_link.empty_miles AS linked_empty_miles,
+               load_link.origin_label AS linked_origin,
+               load_link.destination_label AS linked_destination,
+               load_link.trailer_number AS linked_trailer_number,
                settlement_link.settlement_id AS linked_settlement_id,
                settlement_link.settlement_display_id AS linked_settlement_display_id
         FROM accounting.bills b
@@ -1065,21 +1075,40 @@ export async function listBillsByVendor(
         LEFT JOIN LATERAL (
           SELECT bl.load_id, l.load_number, pickup.scheduled_arrival_at AS pickup_date,
                  delivery.actual_arrival_at AS delivery_date, l.miles_practical,
-                 u.unit_number
+                 u.unit_number,
+                 l.empty_miles,
+                 NULLIF(TRIM(CONCAT_WS(', ', NULLIF(TRIM(pickup.city), ''), NULLIF(TRIM(pickup.state), ''))), '') AS origin_label,
+                 NULLIF(TRIM(CONCAT_WS(', ', NULLIF(TRIM(delivery.city), ''), NULLIF(TRIM(delivery.state), ''))), '') AS destination_label,
+                 COALESCE(eq_direct.equipment_number, tr_hist.equipment_number) AS trailer_number
           FROM accounting.bill_lines bl
           JOIN mdata.loads l ON l.id = bl.load_id AND l.operating_company_id = b.operating_company_id
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
+          LEFT JOIN mdata.equipment eq_direct
+            ON eq_direct.id = l.load_trailer_equipment_id
+           AND COALESCE(eq_direct.currently_leased_to_company_id, eq_direct.owner_company_id) = l.operating_company_id
+          -- DISPATCH-PRIMARY-TRAILER-REVERSE — assignment-history trailer when FK blank.
+          LEFT JOIN LATERAL (
+            SELECT eq.equipment_number
+            FROM dispatch.load_assignment_history lah
+            JOIN mdata.equipment eq ON eq.id = lah.new_trailer_id
+                                   AND COALESCE(eq.currently_leased_to_company_id, eq.owner_company_id) = l.operating_company_id
+            WHERE lah.load_id = l.id
+              AND lah.operating_company_id = l.operating_company_id
+              AND lah.new_trailer_id IS NOT NULL
+            ORDER BY lah.assigned_at DESC, lah.created_at DESC
+            LIMIT 1
+          ) tr_hist ON true
           -- mdata.loads has no pickup_date/delivery_date columns (those live only on
           -- analytics.load_fact, a derived profitability table that can lag or be unpopulated for a
           -- new load) -- same LATERAL-to-load_stops pattern already established in
           -- load-costs-board.routes.ts (pu_date/del_date), reused here for consistency.
           LEFT JOIN LATERAL (
-            SELECT scheduled_arrival_at FROM mdata.load_stops
+            SELECT scheduled_arrival_at, city, state FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type::text = 'pickup' AND soft_deleted_at IS NULL
             ORDER BY sequence_number ASC LIMIT 1
           ) pickup ON true
           LEFT JOIN LATERAL (
-            SELECT actual_arrival_at FROM mdata.load_stops
+            SELECT actual_arrival_at, city, state FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type::text = 'delivery' AND soft_deleted_at IS NULL
             ORDER BY sequence_number DESC LIMIT 1
           ) delivery ON true

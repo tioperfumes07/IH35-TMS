@@ -97,6 +97,18 @@ function main() {
   assertIncludes(form, "linked_settlement_display_id", FORM);
   assertIncludes(form, "linked_empty_miles", FORM);
   assertIncludes(form, "linked_trailer_number", FORM);
+  // BANK-F91040 — BE listBillsByVendor projects empty / OD / trailer (not FE "—" stubs alone)
+  const billsService = read("apps/backend/src/accounting/bills.service.ts");
+  assertIncludes(billsService, "linked_empty_miles", "bills.service.ts");
+  assertIncludes(billsService, "linked_origin", "bills.service.ts");
+  assertIncludes(billsService, "linked_destination", "bills.service.ts");
+  assertIncludes(billsService, "linked_trailer_number", "bills.service.ts");
+  assertIncludes(billsService, "empty_miles AS linked_empty_miles", "bills.service.ts");
+  assertIncludes(billsService, "origin_label AS linked_origin", "bills.service.ts");
+  assertIncludes(billsService, "destination_label AS linked_destination", "bills.service.ts");
+  assertIncludes(billsService, "trailer_number AS linked_trailer_number", "bills.service.ts");
+  assertIncludes(billsService, "load_trailer_equipment_id", "bills.service.ts");
+  assertIncludes(billsService, "dispatch.load_assignment_history", "bills.service.ts");
   assertIncludes(form, 'data-b4-restore-draft="1"', FORM);
   assertIncludes(form, "You have a draft saved. Restore draft", FORM);
   assertIncludes(form, "checkDraftStorageKey", FORM);
