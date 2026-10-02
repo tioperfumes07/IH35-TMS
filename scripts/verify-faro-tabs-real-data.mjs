@@ -166,7 +166,8 @@ export function checkAccountSummaryReal(src) {
   const section = src.slice(idx, idx + 8000);
   const requiredRealBindings = [
     { pattern: /summary\?\.outstanding_liability_balance/, label: "Ending AR Balance bound to summary.outstanding_liability_balance" },
-    { pattern: /summary\?\.reserve_balance/, label: "Reserve Balance bound to summary.reserve_balance" },
+    // ROUND 326.2 item 4: the book reserve is the factoring KPI engine (GL 1230 + 1235), not views.factoring_summary.
+    { pattern: /engineReserve\b/, label: "Reserve Balance bound to the factoring KPI engine (engineReserve)" },
     { pattern: /latestMonth\?\.factor_fee_total/, label: "Fees Paid total bound to feesQuery monthly_summary factor_fee_total" },
     { pattern: /latestMonth\?\.chargeback_total/, label: "Other Adjustments bound to feesQuery monthly_summary chargeback_total" },
   ];
@@ -318,7 +319,7 @@ export function checkReserveReal(src) {
     failures.push(`${HOME}: Reserve missing real binding — reserve movement history bound to the real getReserveBalanceHistory ledger.`);
   }
   const requiredRealBindings = [
-    { pattern: /summary\?\.reserve_balance/, label: "Total Reserve bound to summary.reserve_balance" },
+    { pattern: /FactoringReservesSharedPanel|engineReserve\b/, label: "Total Reserve bound to the factoring KPI engine (shared reserves panel)" },
     { pattern: /running_balance_cents/, label: "movement table renders the real running_balance_cents" },
   ];
   for (const { pattern, label } of requiredRealBindings) {
@@ -471,7 +472,7 @@ const fundsDueRows = fundsDueQuery.data?.invoices ?? [];
       {tab === "account_summary" ? (
         <div data-testid="factoring-account-summary">
           <span data-testid="factoring-account-summary-ending-balance">{fmtCurrency(summary?.outstanding_liability_balance)}</span>
-          <span data-testid="factoring-account-summary-reserve-balance">{fmtCurrency(summary?.reserve_balance)}</span>
+          <span data-testid="factoring-account-summary-reserve-balance">{fmtCurrency(engineReserve.total / 100)}</span>
           <span data-testid="factoring-account-summary-fees-total">{fmtCurrency(latestMonth?.factor_fee_total)}</span>
           <span data-testid="factoring-account-summary-adjustments">{fmtCurrency(latestMonth?.chargeback_total)}</span>
         </div>
@@ -509,7 +510,7 @@ const reserveHistoryQuery = useQuery({
   const reserveBlock = `
       {tab === "reserve" ? (
         <div data-testid="factoring-reserve-report">
-          <span>{fmtCurrency(summary?.reserve_balance)}</span>
+          <span>{fmtCurrency(engineReserve.total / 100)}</span>
           <ParityTable
             columns={[
               { key: "created_at", label: "Date" },
@@ -549,7 +550,7 @@ ${accountSummaryBlock}
     'tab === "payments_to_you" ||\n      tab === "account_summary" ? (',
   );
   const badAccountSummaryFakeBinding = goodSrc.replace(
-    'data-testid="factoring-account-summary-reserve-balance">{fmtCurrency(summary?.reserve_balance)}</span>',
+    'data-testid="factoring-account-summary-reserve-balance">{fmtCurrency(engineReserve.total / 100)}</span>',
     'data-testid="factoring-account-summary-reserve-balance">{fmtCurrency(9999)}</span>',
   );
   const badFeesPaidStillStub = goodSrc.replace(

@@ -58,8 +58,11 @@ const FACTOR_COLUMNS: Array<ParityColumn<Factor>> = [
   {
     // LIABILITY column-wave: factors.admin previously showed only contract-term percentages —
     // never the outstanding $ reserve/liability balance Faro currently holds per factor.
+    // ROUND 326.2 item 4: this is the FACTOR's side (factoring.reserve_movement, fed by the Faro report import),
+    // not the book reserve. The book reserve is the factoring KPI engine (GL 1230 + 1235) shown on Factoring
+    // and Banking; the two reconcile like a bank statement against the book.
     key: "reserve_balance_cents",
-    label: "Reserve Balance",
+    label: "Reserve per Faro report",
     sortable: true,
     sortValue: (factor) => factor.reserve_balance_cents ?? 0,
     render: (factor) =>

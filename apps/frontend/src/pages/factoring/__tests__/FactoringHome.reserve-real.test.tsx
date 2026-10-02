@@ -4,16 +4,15 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import * as factoringApi from "../../../api/factoring";
 import * as dataInfraApi from "../../../api/data-infra";
+import * as factoringKpisApi from "../../../api/factoring-kpis";
 import * as mdataApi from "../../../api/mdata";
 import { FactoringHomePage } from "../FactoringHome";
 import { ToastProvider } from "../../../components/Toast";
 
 /**
- * OWNER MEGA-REPORT 2026-09-09: "Reserve" (item 10 of the real 15-item nav, per
- * 09-08-2026-Cursor-FAC09a-CORRECTED-FROM-REAL-SCREENSHOTS.md) was a stub. Now real: Total
- * Reserve bound to the same summary.reserve_balance every other tab uses, plus a real
- * reserve-movement history table (getReserveBalanceHistory). Escrow/Cash split stays an honest
- * "—" -- this schema has no type split on reserve_balance.
+ * OWNER MEGA-REPORT 2026-09-09: "Reserve" (item 10 of the real 15-item nav) was a stub. ROUND 315 B7 mounted
+ * the shared reserves panel; ROUND 326.2 item 4 binds its Escrow / Cash / Total to the factoring KPI engine
+ * (GL 1230 / 1235 balances — the same figures Banking shows), plus the real reserve-movement history table.
  */
 
 const companyId = "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071";
@@ -53,13 +52,21 @@ function stubCommonApis() {
 }
 
 describe("FactoringHomePage Reserve tab (real, owner mega-report 2026-09-09)", () => {
-  it("renders real Total Reserve and a real reserve movement history table, honest Escrow/Cash split", async () => {
+  it("renders escrow / cash / total reserve from the factoring KPI engine and the real movement history", async () => {
     stubCommonApis();
     vi.spyOn(factoringApi, "getFactoringSummary").mockResolvedValue({
       active_factor_name: "Faro Factoring",
       active_factor_id: "factor-1",
-      reserve_balance: 2276.11,
       recourse_days: 95,
+    } as never);
+    vi.spyOn(factoringKpisApi, "getFactoringKpis").mockResolvedValue({
+      range: { from: "2026-01-01", to: "2026-10-02" },
+      kpis: [
+        { key: "escrow_reserve_balance", label: "Escrow reserve balance", unit: "cents", value: 5100, source: "s", gl_account: "1230", row_count: 1, empty_reason: null },
+        { key: "cash_reserve_balance", label: "Cash reserve balance", unit: "cents", value: 7800, source: "s", gl_account: "1235", row_count: 1, empty_reason: null },
+        { key: "fees_accrued", label: "Factoring fees accrued", unit: "cents", value: 12900, source: "s", gl_account: "6400", row_count: 1, empty_reason: null },
+        { key: "purchased_volume", label: "Purchased volume", unit: "cents", value: 860000, source: "s", gl_account: "2150", row_count: 1, empty_reason: null },
+      ],
     } as never);
     vi.spyOn(factoringApi, "getReserveBalanceHistory").mockResolvedValue({
       movements: [
@@ -84,22 +91,31 @@ describe("FactoringHomePage Reserve tab (real, owner mega-report 2026-09-09)", (
     wrap(<FactoringHomePage initialTab="reserve" />);
 
     await screen.findByText("Reserve held on invoice 393702");
-    expect(screen.getAllByText("$2,276.11").length).toBeGreaterThanOrEqual(1);
-    // Honest, not fabricated: no Escrow/Cash split exists in this schema.
-    expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(2);
+    expect((await screen.findByTestId("factoring-reserves-shared-kpi-escrow")).textContent).toContain("$51.00");
+    expect(screen.getByTestId("factoring-reserves-shared-kpi-cash").textContent).toContain("$78.00");
+    expect(screen.getByTestId("factoring-reserves-shared-kpi-total").textContent).toContain("$129.00");
   });
 
-  it("without an active factor, shows an honest 'no factor' message instead of an empty crash", async () => {
+  it("without an active factor, says the reserve ledger has nothing to scope to", async () => {
     stubCommonApis();
     vi.spyOn(factoringApi, "getFactoringSummary").mockResolvedValue({
       active_factor_name: null,
       active_factor_id: null,
-      reserve_balance: 0,
       recourse_days: 95,
     } as never);
+    vi.spyOn(factoringKpisApi, "getFactoringKpis").mockResolvedValue({ range: { from: "2026-01-01", to: "2026-10-02" }, kpis: [] } as never);
     wrap(<FactoringHomePage initialTab="reserve" />);
 
     await screen.findByTestId("factoring-reserve-report");
-    expect(screen.getByText(/No active factor configured/i)).toBeTruthy();
+    expect(await screen.findByText(/No active factor — reserve ledger has nothing to scope to/i)).toBeTruthy();
+  });
+
+  it("shows Unavailable, never $0, when the engine fails", async () => {
+    stubCommonApis();
+    vi.spyOn(factoringApi, "getFactoringSummary").mockResolvedValue({ active_factor_name: null, active_factor_id: null, recourse_days: 95 } as never);
+    vi.spyOn(factoringKpisApi, "getFactoringKpis").mockRejectedValue(new Error("boom"));
+    wrap(<FactoringHomePage initialTab="reserve" />);
+    await screen.findByTestId("factoring-reserve-report");
+    await vi.waitFor(() => expect(screen.getByTestId("factoring-reserves-shared-kpi-total").textContent).toContain("Unavailable"));
   });
 });

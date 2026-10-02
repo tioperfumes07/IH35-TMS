@@ -6,6 +6,12 @@ import { withCompanyScope } from "../shared.js";
 
 const companyId = "11111111-1111-4111-8111-111111111111";
 
+// ROUND 326.2 item 4 — factoring reserves held = the factoring KPI engine's book reserve (GL 1230 + 1235).
+const bookReserve = vi.fn(async () => ({ escrow: 1000, cash: 234, total: 1234 }));
+vi.mock("../../factoring/factoring-kpi.service.js", () => ({
+  factoringBookReserveCents: (...args: unknown[]) => bookReserve(...(args as [])),
+}));
+
 vi.mock("../shared.js", async () => {
   const actual = await vi.importActual<typeof import("../shared.js")>("../shared.js");
   return {
@@ -27,7 +33,7 @@ vi.mock("../shared.js", async () => {
             return { rows: [{ internal_total: "0" }] };
           }
           if (sql.includes("FROM views.factoring_summary")) {
-            return { rows: [{ reserve_balance: "12.34", mtd_advanced_total: "56.78", chargeback_balance: "9.01" }] };
+            return { rows: [{ mtd_advanced_total: "56.78", chargeback_balance: "9.01" }] };
           }
           if (sql.includes("COUNT(*)") && sql.includes("bank_transactions") && sql.includes("plaid_category")) {
             return { rows: [{ c: "3" }] };
@@ -76,6 +82,7 @@ describe("cash-flow-overview.routes", () => {
     expect(body.current_state.payroll_balance_cents).toBe(10000);
     expect(body.current_state.dip_balance_cents).toBe(5000);
     expect(body.current_state.factoring_reserves_held_cents).toBe(1234);
+    expect(bookReserve).toHaveBeenCalledWith(expect.anything(), companyId, "2026-05-01");
     expect(body.current_state.uncategorized_transactions_count).toBe(3);
     expect(body.next_30_days.net_projected_change_cents).toBe(900000 - 400000 - 250000);
     expect(body.historical.last_30_days_avg_daily_inflow_cents).toBe(1000);
