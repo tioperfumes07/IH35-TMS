@@ -592,6 +592,17 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-faro-reserve-by-customer-ties-to-gl.mjs",
     ],
   ],
+  // Lead ROUND 297 — one purchase-rate resolver (assignment -> company Faro agreement -> none + reason); one base.
+  [
+    "verify-one-purchase-rate-resolver",
+    [
+      "apps/backend/src/factoring/purchase-candidates.service.ts",
+      "apps/backend/src/factoring/purchase.service.ts",
+      "apps/backend/src/factoring/factor.service.ts",
+      "apps/frontend/src/pages/factoring/FactoringCashFlowPanel.tsx",
+      "scripts/verify-one-purchase-rate-resolver.mjs",
+    ],
+  ],
   // ROUND 326.2 items 3-4 — banking / factoring surfaces: every table tabular-nums, and Banking's
   // factoring reserve reads the factoring KPI engine (one reserve engine, no duplicate math).
   [

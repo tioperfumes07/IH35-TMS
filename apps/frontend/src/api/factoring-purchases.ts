@@ -30,9 +30,14 @@ export type PurchaseCandidate = {
   reserve_rate: number;
   fee_rate: number;
   cash_reserve_rate: number;
-  expected_escrow_reserve_cents: number;
-  expected_cash_reserve_cents: number;
-  expected_fee_cents: number;
+  /** Lead ROUND 297 — the one base every amount on the row is computed on: the open amount Faro would purchase. */
+  base_cents: number;
+  rate_source: "customer_assignment" | "company_agreement" | "none";
+  rate_reason: string | null;
+  /** null (never 0) when no factor agreement applies — rate_reason says why. */
+  expected_escrow_reserve_cents: number | null;
+  expected_cash_reserve_cents: number | null;
+  expected_fee_cents: number | null;
   has_bol: boolean;
   has_pod: boolean;
   has_rate_confirmation: boolean;

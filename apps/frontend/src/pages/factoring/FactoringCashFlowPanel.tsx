@@ -87,21 +87,31 @@ export function FactoringCashFlowPanel({ companyId, dateFrom, dateTo }: Props) {
   const projected = useMemo(() => {
     const rows = candidatesQuery.data?.candidates ?? [];
     if (rows.length === 0) return null;
+    // Lead ROUND 297 — ONE base: every amount on the projected row is computed on the OPEN amount Faro would purchase
+    // (base_cents), so the row reconciles to itself (reserve = rate x open). Invoices with no factor agreement are
+    // counted and named on the row, never folded in at a silent $0.00.
     let gross = 0;
     let escrow = 0;
     let cash = 0;
     let fee = 0;
+    let unpriced = 0;
     for (const r of rows) {
-      gross += Number(r.open_cents ?? r.total_cents ?? 0);
+      if (r.expected_escrow_reserve_cents == null) {
+        unpriced += 1;
+        continue;
+      }
+      gross += Number(r.base_cents ?? 0);
       escrow += Number(r.expected_escrow_reserve_cents ?? 0);
       cash += Number(r.expected_cash_reserve_cents ?? 0);
       fee += Number(r.expected_fee_cents ?? 0);
     }
     const net = gross - escrow - cash - fee;
     return {
-      day: "Projected (open invoices)",
+      day: unpriced
+        ? `Projected (open amount) — ${unpriced} invoice(s) with no factor agreement excluded`
+        : "Projected (open amount)",
       wire_count: 0,
-      invoice_count: rows.length,
+      invoice_count: rows.length - unpriced,
       gross_cents: gross,
       escrow_reserve_cents: escrow,
       cash_reserve_cents: cash,

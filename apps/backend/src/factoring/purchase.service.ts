@@ -18,7 +18,7 @@ import {
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { stampDocumentVoided } from "../accounting/void-document-stamp.service.js";
 import { checkFactoringPurchaseOwner, type FactoringPurchaseAction } from "./owner-only-purchase.js";
-import { getFactorForCustomer } from "./factor.service.js";
+import { resolvePurchaseRate } from "./factor.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 
 type DbClient = {
@@ -108,16 +108,19 @@ export async function createPurchaseDraft(client: DbClient, input: CreatePurchas
 
   // Expected split from the customer's factor assignment (reserve_rate / fee_rate); Faro's actuals override per line.
   const asOf = input.purchaseDate || companyBusinessDate();
-  const rateByCustomer = new Map<string, { reserve: number; cash: number; fee: number }>();
+  const rateByCustomer = new Map<string, Awaited<ReturnType<typeof resolvePurchaseRate>>>();
   const lines = [] as Array<Required<PurchaseLineInput> & { customer_id: string; load_id: string | null; settlement_id: string | null }>;
   for (const l of input.lines) {
     const r = byId.get(l.invoice_id)!;
     const customerId = String(r.customer_id);
     if (!rateByCustomer.has(customerId)) {
-      const f = await getFactorForCustomer(oci, customerId, asOf, { client: client as never });
-      rateByCustomer.set(customerId, { reserve: Number(f?.reserve_rate ?? 0), cash: Number(f?.cash_reserve_rate ?? 0), fee: Number(f?.fee_rate ?? 0) });
+      rateByCustomer.set(customerId, await resolvePurchaseRate(client as never, oci, customerId, asOf));
     }
     const rate = rateByCustomer.get(customerId)!;
+    // Lead ROUND 297: never price a purchase line at a silent 0% — with no agreement, Faro's actuals must be entered.
+    if (rate.source === "none" && (l.escrow_reserve_cents == null || l.fee_cents == null)) {
+      throw new FactoringPurchaseError("purchase_line_no_factor_agreement", 409, { invoice_id: l.invoice_id, reason: rate.reason });
+    }
     const gross = nonneg(l.gross_cents ?? Number(r.pledge_cents ?? 0), "purchase_line_gross_invalid");
     if (gross <= 0) throw new FactoringPurchaseError("purchase_line_zero_open", 409, { invoice_id: l.invoice_id });
     lines.push({
@@ -233,7 +236,8 @@ export async function postPurchase(client: DbClient, input: { operatingCompanyId
       `Factoring purchase ${p.display_id}`, input.actorUserId]
   )).rows[0]!;
   for (const l of lines) {
-    const f = await getFactorForCustomer(oci, l.customer_id, purchaseDate, { client: client as never });
+    const rate = await resolvePurchaseRate(client as never, oci, l.customer_id, purchaseDate);
+    const f = rate.factor_id ? { id: rate.factor_id } : null;
     await client.query(
       `UPDATE accounting.invoices SET factoring_advance_id = $2::uuid, factoring_status = 'submitted', factor_profile_id = COALESCE($4::uuid, factor_profile_id),
               updated_at = now(), updated_by_user_id = $3::uuid
