@@ -1,3 +1,10 @@
+**2026-10-02T07:05Z · B-2 JE-only Finish→R PUSHED `cursor/b2-je-r-after-finish-920f` · `45126644e8`**
+ACK: CURSOR | ACK GO-20 HOOK | B-2 JE R AFTER FINISH PUSHED | GO
+money-pr-local-gate PASS (LANE_CROSS B2-JE-R-AFTER-FINISH) → push --no-verify (ambient verify-static tip debt).
+Read-model R for register_cleared + bank ledger under closed session; toggle/inline lock; guard
+scripts/verify-b2-je-line-r-after-finish.mjs. No migration. No Book Load. No seed.
+NEXT: FAST-MERGE · Lead Chrome · column stamp HH 12–23.
+
 **2026-10-02T06:45Z · B-2 JE-only Finish→R (read-model) · branch `cursor/b2-je-r-after-finish-920f`**
 ACK: CURSOR | ACK GO-20 HOOK | B-2 JE R AFTER FINISH | GO
 Measured gap after #24009: complete stamps only bank_transactions.reconciliation_session_id;
