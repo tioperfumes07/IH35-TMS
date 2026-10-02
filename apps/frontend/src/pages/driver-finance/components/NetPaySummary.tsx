@@ -1,3 +1,5 @@
+import { formatUsdTable } from "../../../lib/money";
+
 type Props = {
   earnings: number;
   // 25-task #12 — deadhead pay is its OWN row, labeled "Empty Miles", never folded into
@@ -23,11 +25,11 @@ export function NetPaySummary({ earnings, deadheadPay, extraPay, reimbursements,
         <div className="border-t border-gray-200 pt-1" />
         <Row label="Gross Pay" value={gross} />
         <Row label="Less: Deductions" value={-deductions} />
-        <div className="text-[11px] text-gray-500">(Pending-ack deductions ${pendingAckDeductions.toFixed(2)} not yet applied)</div>
+        <div className="text-[11px] text-gray-500">(Pending-ack deductions {formatUsdTable(pendingAckDeductions)} not yet applied)</div>
         <div className="border-t border-gray-200 pt-1" />
         <div className="flex items-center justify-between font-bold text-slate-700">
           <span>NET PAY</span>
-          <span>${net.toFixed(2)}</span>
+          <span>{formatUsdTable(net)}</span>
         </div>
       </div>
     </div>
@@ -38,7 +40,7 @@ function Row({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex items-center justify-between">
       <span>{label}</span>
-      <span>${Number(value).toFixed(2)}</span>
+      <span>{formatUsdTable(value)}</span>
     </div>
   );
 }

@@ -26,6 +26,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { SettlementRefCell } from "../../../components/shared/SettlementRefCell";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { mmmDd } from "../../../lib/formatDate";
+import { QBO_MONEY_CELL_CLASS, formatUsdTable, formatUsdRateTable, formatQuantityTable } from "../../../lib/money";
 
 type Line = {
   id: string;
@@ -82,7 +83,7 @@ function buildColumns(operatingCompanyId?: string): Array<ParityColumn<Line>> {
       ),
   },
   {
-    key: "line_date",
+    key: "line_date", minWidth: 132,
     label: "Date",
     sortable: true,
     sortValue: (line) => line.line_date ?? "",
@@ -115,25 +116,31 @@ function buildColumns(operatingCompanyId?: string): Array<ParityColumn<Line>> {
     label: "Empty mi",
     render: (line) =>
       line.miles != null ? (
-        <>{line.miles.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</>
+        <>{formatQuantityTable(line.miles, 1)}</>
       ) : (
         <span title="no telematics miles for this leg">—</span>
       ),
   },
   {
     key: "rate",
+    kind: "money",
+    minWidth: 120,
+    cellClass: QBO_MONEY_CELL_CLASS,
     label: "Rate",
     render: (line) =>
       line.rate != null ? (
-        <>${line.rate.toFixed(4)}</>
+        <>{formatUsdRateTable(line.rate)}</>
       ) : (
         <span title="no telematics miles for this leg">—</span>
       ),
   },
   {
     key: "amount",
+    kind: "money",
+    minWidth: 120,
+    cellClass: QBO_MONEY_CELL_CLASS,
     label: "Amount",
-    render: (line) => <>${Number(line.amount).toFixed(2)}</>,
+    render: (line) => <>{formatUsdTable(line.amount)}</>,
   },
   {
     key: "source_driver_bill_id",
@@ -168,7 +175,7 @@ export function DeadheadPaySection({ lines, isOpen: _isOpen, operatingCompanyId 
         embedded
         hidePager
       />
-      <div className="mt-1 px-2.5 py-1 text-xs font-semibold">Subtotal: ${subtotal.toFixed(2)} · Miles: {totalMiles.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</div>
+      <div className="mt-1 px-2.5 py-1 text-xs font-semibold">Subtotal: {formatUsdTable(subtotal)} · Miles: {formatQuantityTable(totalMiles, 1)}</div>
     </section>
   );
 }

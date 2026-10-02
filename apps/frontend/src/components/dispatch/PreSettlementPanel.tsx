@@ -7,6 +7,7 @@ import { Button } from "../Button";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatUsdTable } from "../../lib/money";
 
 type Props = {
   driverId: string;
@@ -30,7 +31,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
     mutationFn: ({ settlementId }: { settlementId: string }) =>
       settleAndPay(settlementId, operatingCompanyId),
     onSuccess: (data) => {
-      const net = typeof data.net_pay === "number" ? `$${Number(data.net_pay).toFixed(2)}` : "";
+      const net = typeof data.net_pay === "number" ? formatUsdTable(data.net_pay) : "";
       pushToast(`Settlement approved${net ? ` — net ${net}` : ""}`, "success");
       void queryClient.invalidateQueries({ queryKey: ["driver-finance", "settlements"] });
       void queryClient.invalidateQueries({ queryKey: ["pre-settlements-open"] });
@@ -175,7 +176,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
               {earningLines.map((l) => (
                 <div key={l.id} className="flex items-center justify-between rounded-sm bg-gray-50 px-2 py-1 text-xs">
                   <span className="text-gray-700">{l.description}</span>
-                  <span className="font-semibold text-gray-900">${Number(l.amount).toFixed(2)}</span>
+                  <span className="font-semibold text-gray-900">{formatUsdTable(l.amount)}</span>
                 </div>
               ))}
             </>
@@ -188,7 +189,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
               {deductionLines.map((l) => (
                 <div key={l.id} className="flex items-center justify-between rounded-sm bg-gray-50 px-2 py-1 text-xs">
                   <span className="text-gray-700">{l.description}</span>
-                  <span className="font-semibold text-red-600">−${Number(l.amount).toFixed(2)}</span>
+                  <span className="font-semibold text-red-600">−{formatUsdTable(l.amount)}</span>
                 </div>
               ))}
             </>
@@ -201,7 +202,7 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
               {reimbLines.map((l) => (
                 <div key={l.id} className="flex items-center justify-between rounded-sm bg-gray-50 px-2 py-1 text-xs">
                   <span className="text-gray-700">{l.description}</span>
-                  <span className="font-semibold text-emerald-600">+${Number(l.amount).toFixed(2)}</span>
+                  <span className="font-semibold text-emerald-600">+{formatUsdTable(l.amount)}</span>
                 </div>
               ))}
             </>
@@ -215,25 +216,25 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
       <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs">
         <div className="flex justify-between py-0.5">
           <span className="text-gray-600">Gross pay</span>
-          <span className="font-semibold text-gray-900">${Number(settlement.gross_pay).toFixed(2)}</span>
+          <span className="font-semibold text-gray-900">{formatUsdTable(settlement.gross_pay)}</span>
         </div>
         <div className="flex justify-between py-0.5">
           <span className="text-gray-600">Deductions</span>
           <span className="font-semibold text-red-600">
-            −${Number(settlement.deductions_total).toFixed(2)}
+            −{formatUsdTable(settlement.deductions_total)}
           </span>
         </div>
         {Number(settlement.reimbursements_total) > 0 ? (
           <div className="flex justify-between py-0.5">
             <span className="text-gray-600">Reimbursements</span>
             <span className="font-semibold text-emerald-600">
-              +${Number(settlement.reimbursements_total).toFixed(2)}
+              +{formatUsdTable(settlement.reimbursements_total)}
             </span>
           </div>
         ) : null}
         <div className="mt-1.5 flex justify-between border-t border-gray-200 pt-1.5">
           <span className="font-semibold text-gray-900">Net pay</span>
-          <span className="font-bold text-emerald-700">${Number(settlement.net_pay).toFixed(2)}</span>
+          <span className="font-bold text-emerald-700">{formatUsdTable(settlement.net_pay)}</span>
         </div>
       </div>
 

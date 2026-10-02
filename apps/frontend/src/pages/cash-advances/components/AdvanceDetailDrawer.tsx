@@ -8,6 +8,7 @@ import { printLetterHtml } from "../../../lib/openPrintableDocument";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { DocumentsTab } from "../../../components/documents/DocumentsTab";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
+import { formatUsdTable } from "../../../lib/money";
 
 type Props = {
   open: boolean;
@@ -74,7 +75,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
               .replace(/>/g, "&gt;")
               .replace(/"/g, "&quot;");
           const id = esc(advance.display_id ?? advance.id ?? "—");
-          const amount = Number(advance.amount ?? 0).toFixed(2);
+          const amount = esc(formatUsdTable(advance.amount as number | string | null));
           const purpose = esc(advance.purpose ?? "—");
           const method = esc(advance.disbursement_method ?? "—");
           const driver = esc(
@@ -93,7 +94,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
                 <tbody>
                   <tr><th>Advance</th><td>${id}</td></tr>
                   <tr><th>Driver</th><td>${driver}</td></tr>
-                  <tr><th>Amount</th><td>$${amount}</td></tr>
+                  <tr><th>Amount</th><td>${amount}</td></tr>
                   <tr><th>Purpose</th><td>${purpose}</td></tr>
                   <tr><th>Method</th><td>${method}</td></tr>
                   <tr><th>Status</th><td>${esc(status)}</td></tr>
@@ -123,7 +124,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
         ) : null}
         <div className="space-y-1 rounded-sm border border-gray-200 bg-gray-50 p-2">
           <div>ID: {String(advance.display_id ?? "—")}</div>
-          <div>Amount: ${Number(advance.amount ?? 0).toFixed(2)}</div>
+          <div>Amount: {formatUsdTable(advance.amount as number | string | null)}</div>
           <div>Purpose: {String(advance.purpose ?? "—")}</div>
           <div>Method: {String(advance.disbursement_method ?? "—")}</div>
           <div>Status: {status}</div>
@@ -144,7 +145,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
             />
           </div>
           <div>Recipient: {String(advance.recipient_name ?? "Driver")}</div>
-          <div>Outstanding: ${Number(advance.outstanding_balance ?? 0).toFixed(2)}</div>
+          <div>Outstanding: {formatUsdTable(advance.outstanding_balance as number | string | null)}</div>
           <div>
             Liability ID:{" "}
             {advance.liability_id ? (
@@ -224,7 +225,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
           {schedule.length === 0 ? <div className="text-gray-500">No schedule rows.</div> : null}
           {schedule.map((row) => (
             <div key={String(row.id)} className="rounded-sm border border-gray-100 px-2 py-1">
-              {String(row.cadence ?? "weekly")} · ${Number(row.amount_per_period ?? 0).toFixed(2)} · periods {Number(row.total_periods ?? 0)}
+              {String(row.cadence ?? "weekly")} · {formatUsdTable(row.amount_per_period as number | string | null)} · periods {Number(row.total_periods ?? 0)}
             </div>
           ))}
         </div>
@@ -246,7 +247,7 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
                 id={row.settlement_id ? String(row.settlement_id) : null}
                 label={entityLabel(null, row.settlement_id ? String(row.settlement_id) : null, "Settlement")}
               /> ·
-              ${Number(row.amount ?? 0).toFixed(2)}
+              {formatUsdTable(row.amount as number | string | null)}
             </div>
           ))}
         </div>

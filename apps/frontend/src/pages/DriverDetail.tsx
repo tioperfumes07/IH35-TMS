@@ -92,6 +92,7 @@ import { PwaEngagementView } from "./drivers/operations/PwaEngagementView";
 import { DocumentsVaultView } from "./drivers/operations/DocumentsVaultView";
 import { useListState } from "../components/list-state";
 import { createOnboardingSession } from "../api/onboarding";
+import { QBO_MONEY_CELL_CLASS, formatUsdTable } from "../lib/money";
 
 const tabs = [
   "Profile",
@@ -716,10 +717,13 @@ export function DriverDetailPage() {
       },
       {
         key: "amount",
+        kind: "money",
+        minWidth: 120,
+        cellClass: QBO_MONEY_CELL_CLASS,
         label: "Amount",
         sortable: true,
         sortValue: (item) => Number(item.amount),
-        render: (item) => <span className={item.was_corrected ? "line-through" : ""}>${Number(item.amount).toFixed(2)}</span>,
+        render: (item) => <span className={item.was_corrected ? "line-through" : ""}>{formatUsdTable(item.amount)}</span>,
       },
       {
         key: "change_reason",
@@ -756,7 +760,7 @@ export function DriverDetailPage() {
         ),
       },
       {
-        key: "created_at",
+        key: "created_at", minWidth: 132,
         label: "Changed at",
         sortable: true,
         sortValue: (item) => new Date(item.created_at).getTime(),
@@ -1604,7 +1608,7 @@ export function DriverDetailPage() {
                           {line.line_item_name} ({line.line_item_code})
                         </div>
                         <div className="text-xs font-semibold text-gray-700">
-                          {line.amount ? `$${Number(line.amount).toFixed(2)}` : "No rate set"}
+                          {line.amount ? formatUsdTable(line.amount) : "No rate set"}
                         </div>
                       </div>
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -2301,7 +2305,7 @@ export function DriverDetailPage() {
           <div className="text-xs text-gray-700">
             Currently:{" "}
             {selectedRateFromCard?.amount
-              ? `$${Number(selectedRateFromCard.amount).toFixed(2)} (since ${formatDate(selectedRateFromCard.effective_from)})`
+              ? `${formatUsdTable(selectedRateFromCard.amount)} (since ${formatDate(selectedRateFromCard.effective_from)})`
               : "No current rate"}
           </div>
           <div className="flex flex-col gap-1">

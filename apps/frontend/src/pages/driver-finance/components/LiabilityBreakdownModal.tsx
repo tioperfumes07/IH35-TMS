@@ -2,6 +2,7 @@ import { Modal } from "../../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
+import { QBO_MONEY_CELL_CLASS, formatUsdTable } from "../../../lib/money";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -26,7 +27,7 @@ type Props = {
 };
 
 // Display-only migration to shared ParityTable grammar — amounts render exactly as before
-// (`$` + toFixed(2)); totals footer + pending-ack note preserved 1:1 outside the table.
+// (lib/money formatUsdTable — accounting parentheses, em dash for missing); totals footer + pending-ack note preserved 1:1 outside the table.
 const COLUMNS: Array<ParityColumn<Liability>> = [
   {
     // LIABILITY column-wave: settlements had the REVERSE direction (liability→settlement) wired
@@ -41,21 +42,30 @@ const COLUMNS: Array<ParityColumn<Liability>> = [
   { key: "source_description", label: "Source", sortable: true },
   {
     key: "original",
+    kind: "money",
+    minWidth: 120,
+    cellClass: QBO_MONEY_CELL_CLASS,
     label: "Original",
     sortable: true,
-    render: (item) => `$${item.original.toFixed(2)}`,
+    render: (item) => formatUsdTable(item.original),
   },
   {
     key: "paid",
+    kind: "money",
+    minWidth: 120,
+    cellClass: QBO_MONEY_CELL_CLASS,
     label: "Paid",
     sortable: true,
-    render: (item) => `$${item.paid.toFixed(2)}`,
+    render: (item) => formatUsdTable(item.paid),
   },
   {
     key: "balance",
+    kind: "money",
+    minWidth: 120,
+    cellClass: QBO_MONEY_CELL_CLASS,
     label: "Balance",
     sortable: true,
-    render: (item) => `$${item.balance.toFixed(2)}`,
+    render: (item) => formatUsdTable(item.balance),
   },
   { key: "schedule", label: "Schedule", sortable: true },
 ];
@@ -90,8 +100,8 @@ export function LiabilityBreakdownModal({
         emptyText="No liabilities."
       />
       <div className="mt-2 rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs">
-        <div>TOTAL ACTIVE: <span className="font-semibold">${total.toFixed(2)}</span></div>
-        <div>EXCLUDING PENDING ACK: <span className="font-semibold">${excludingPending.toFixed(2)}</span></div>
+        <div>TOTAL ACTIVE: <span className="font-semibold">{formatUsdTable(total)}</span></div>
+        <div>EXCLUDING PENDING ACK: <span className="font-semibold">{formatUsdTable(excludingPending)}</span></div>
       </div>
       <div className="mt-2 text-[11px] text-gray-500">
         Settlement detail uses live recompute authority and excludes pending-ack liabilities from active debt display.

@@ -112,6 +112,43 @@ export function formatNumberTable(
   return new Intl.NumberFormat("en-US", { maximumFractionDigits: maxFractionDigits }).format(n);
 }
 
+/**
+ * Unit rates (per mile, per gallon) from DOLLARS — "$0.6500": fixed fraction digits (default 4), thousands
+ * separators, accounting parentheses for negatives, missing → "—", never "-$0.0000".
+ */
+export function formatUsdRateTable(
+  dollars: number | string | null | undefined,
+  fractionDigits = 4,
+): string {
+  if (isMissingDisplayValue(dollars)) return TABLE_MISSING;
+  const n = parseDisplayNumber(dollars as number | string);
+  if (n == null) return TABLE_MISSING;
+  const fmt = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  });
+  if (Object.is(n, -0) || Math.abs(n) < 0.5 / 10 ** fractionDigits) return fmt.format(0);
+  return n < 0 ? `(${fmt.format(Math.abs(n))})` : fmt.format(n);
+}
+
+/** Decimal quantity (miles to one place, gallons) — "1,347.2"; missing → "—". Non-money. `minFractionDigits`
+ *  defaults to `fractionDigits` (fixed decimals); pass a smaller floor for e.g. gallons "115.0" / "4.725". */
+export function formatQuantityTable(
+  value: number | string | null | undefined,
+  fractionDigits = 1,
+  minFractionDigits = fractionDigits,
+): string {
+  if (isMissingDisplayValue(value)) return TABLE_MISSING;
+  const n = parseDisplayNumber(value as number | string);
+  if (n == null) return TABLE_MISSING;
+  return new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: minFractionDigits,
+    maximumFractionDigits: fractionDigits,
+  }).format(Object.is(n, -0) ? 0 : n);
+}
+
 /** Money from integer CENTS → QBO "$1,234.56". The app stores money as integer cents, so this is the
  *  common one. Null/undefined/NaN → "$0.00". Negatives render "-$1,234.56" (never "-$0.00"). */
 export function formatUsdCents(cents: number | string | null | undefined): string {

@@ -8,6 +8,7 @@ import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
 import { MoneyProofTrailPanel } from "../accounting/MoneyProofTrailPanel";
+import { formatQuantityTable, formatUsdCentsTable, formatUsdRateTable } from "../../lib/money";
 
 /**
  * LDT-3 (owner item, 2026-09-05, deadline 06:00Z) — Load → Driver Pay tab.
@@ -54,10 +55,10 @@ const DASH = "—";
 const MILE_KIND_LABEL: Record<MileageLine["kind"], string> = { loaded: "Loaded miles", empty: "Empty miles" };
 
 function fmtMiles(v: number | null): string {
-  return v == null ? DASH : v.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  return v == null ? DASH : formatQuantityTable(v, 1);
 }
 function fmtRate(cents: number | null): string {
-  return cents == null ? DASH : `$${(cents / 100).toFixed(4)}`;
+  return cents == null ? DASH : formatUsdRateTable(cents / 100);
 }
 function pillClass(status: string): string {
   if (status === "approved") return "ldt-pill ok";
@@ -164,7 +165,7 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
               <span className="ldt-m">{fmtMiles(line.miles)}</span>
               <span className="ldt-m">{line.miles == null ? <span title="no telematics miles for this leg">{DASH}</span> : fmtRate(line.rate_cents_per_mile)}</span>
               <span className="ldt-m">{line.amount_cents == null ? DASH : money(line.amount_cents)}</span>
-              <span className="ldt-k ldt-muted">{line.kind === "loaded" ? "loaded_pay_cents" : "deadhead_pay_cents"} {line.amount_cents ?? DASH}{line.rate_cents_per_mile != null ? ` · rate ${(line.rate_cents_per_mile / 100).toFixed(2)}` : ""}</span>
+              <span className="ldt-k ldt-muted">{line.kind === "loaded" ? "loaded_pay_cents" : "deadhead_pay_cents"} {line.amount_cents ?? DASH}{line.rate_cents_per_mile != null ? ` · rate ${formatUsdCentsTable(line.rate_cents_per_mile)}` : ""}</span>
             </div>
           ))}
           {accessorials.map((a) => (
@@ -250,15 +251,15 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
             <div className="ldt-rows ldt-rows-post">
               <div className="ldt-row head"><span>Account</span><span>Debit</span><span>Credit</span></div>
               {posting_preview.debit.map((d) => (
-                <div className="ldt-row" key={`d-${d.account_id}`}><span>{acct(d)}</span><span className="ldt-m">{(d.amount_cents / 100).toFixed(2)}</span><span /></div>
+                <div className="ldt-row" key={`d-${d.account_id}`}><span>{acct(d)}</span><span className="ldt-m">{formatUsdCentsTable(d.amount_cents)}</span><span /></div>
               ))}
               {posting_preview.credit.map((c) => (
-                <div className="ldt-row" key={`c-${c.account_id}`}><span>{acct(c)}</span><span /><span className="ldt-m">{(c.amount_cents / 100).toFixed(2)}</span></div>
+                <div className="ldt-row" key={`c-${c.account_id}`}><span>{acct(c)}</span><span /><span className="ldt-m">{formatUsdCentsTable(c.amount_cents)}</span></div>
               ))}
               <div className="ldt-row tot" data-testid="driver-pay-posting-totals">
                 <span>Totals · {totalDebit === totalCredit ? "in balance" : "OUT OF BALANCE"}</span>
-                <span className="ldt-m">{(totalDebit / 100).toFixed(2)}</span>
-                <span className="ldt-m">{(totalCredit / 100).toFixed(2)}</span>
+                <span className="ldt-m">{formatUsdCentsTable(totalDebit)}</span>
+                <span className="ldt-m">{formatUsdCentsTable(totalCredit)}</span>
               </div>
             </div>
           ) : (

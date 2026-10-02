@@ -6,6 +6,8 @@ import {
   formatUsdCentsTable,
   formatUsdTable,
   formatNumberTable,
+  formatQuantityTable,
+  formatUsdRateTable,
   isNegativeMoneyCents,
   TABLE_MISSING,
 } from "./money";
@@ -53,5 +55,21 @@ describe("money (QBO format)", () => {
     expect(formatUsdCentsTable(-125000)).not.toContain("-$");
     expect(isNegativeMoneyCents(-100)).toBe(true);
     expect(isNegativeMoneyCents(null)).toBe(false);
+  });
+
+  it("ROUND 296 5 — unit rates: fixed 4 decimals, accounting parentheses, em dash, never -$0.0000", () => {
+    expect(formatUsdRateTable(0.65)).toBe("$0.6500");
+    expect(formatUsdRateTable(6.68)).toBe("$6.6800");
+    expect(formatUsdRateTable(-0.5)).toBe("($0.5000)");
+    expect(formatUsdRateTable(-0.00001)).toBe("$0.0000");
+    expect(formatUsdRateTable(null)).toBe(TABLE_MISSING);
+  });
+
+  it("ROUND 296 5 — quantities: thousands separators, fixed or floored decimals, em dash", () => {
+    expect(formatQuantityTable(1347.2, 1)).toBe("1,347.2");
+    expect(formatQuantityTable(115, 3, 1)).toBe("115.0");
+    expect(formatQuantityTable(4.725, 3, 1)).toBe("4.725");
+    expect(formatQuantityTable(-0, 1)).toBe("0.0");
+    expect(formatQuantityTable(undefined)).toBe(TABLE_MISSING);
   });
 });
