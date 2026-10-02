@@ -878,9 +878,9 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
       const hideOn = await isBankAccountHideEnabled(client, companyId);
-      const banks = await client.query<{ id: string; account_name: string; ledger_account_id: string | null; ledger_account_name: string | null; ledger_account_number: string | null }>(
+      const banks = await client.query<{ id: string; account_name: string; ledger_account_id: string | null; ledger_account_name: string | null; ledger_account_number: string | null; account_class: string | null }>(
         `SELECT ba.id::text, ba.account_name,
-                ba.ledger_account_id::text,
+                ba.ledger_account_id::text, ba.account_class,
                 a.account_name AS ledger_account_name, a.account_number AS ledger_account_number
            FROM banking.bank_accounts ba
            LEFT JOIN catalogs.accounts a ON a.id = ba.ledger_account_id AND a.operating_company_id = ba.operating_company_id

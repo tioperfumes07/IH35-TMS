@@ -36,6 +36,10 @@ export async function upsertCheckStockSettings(
     bank_account_id: string;
     next_check_number: string | null;
     check_type?: "voucher" | "standard";
+    /** ROUND 326 queue item 15: print position + company-address toggle, now writable (were SELECT-only). */
+    offset_x_mm?: number;
+    offset_y_mm?: number;
+    print_company_address?: boolean;
     actor_user_id: string;
   }
 ): Promise<CheckStockSettings> {
@@ -60,21 +64,25 @@ export async function upsertCheckStockSettings(
     throw new CheckStockError("BANK_ACCOUNT_NOT_DEPOSITORY", "Check stock is only for depository (checking) bank accounts.");
   }
 
-  const checkType = input.check_type ?? "voucher";
+  // ROUND 326 queue item 15: an omitted check_type / offset / toggle KEEPS the stored value (the print page used to
+  // overwrite the saved style with 'voucher' on every save of the starting number).
   const res = await client.query<CheckStockSettings>(
     `INSERT INTO banking.check_stock_settings
-       (bank_account_id, operating_company_id, next_check_number, check_type, updated_at, updated_by_user_id)
-     VALUES ($1::uuid, $2::uuid, $3::bigint, $4, now(), $5::uuid)
+       (bank_account_id, operating_company_id, next_check_number, check_type, offset_x_mm, offset_y_mm, print_company_address, updated_at, updated_by_user_id)
+     VALUES ($1::uuid, $2::uuid, $3::bigint, COALESCE($4, 'voucher'), COALESCE($6::numeric, 0), COALESCE($7::numeric, 0), COALESCE($8::boolean, true), now(), $5::uuid)
      ON CONFLICT (bank_account_id) DO UPDATE SET
        next_check_number = EXCLUDED.next_check_number,
-       check_type = EXCLUDED.check_type,
+       check_type = COALESCE($4, banking.check_stock_settings.check_type),
+       offset_x_mm = COALESCE($6::numeric, banking.check_stock_settings.offset_x_mm),
+       offset_y_mm = COALESCE($7::numeric, banking.check_stock_settings.offset_y_mm),
+       print_company_address = COALESCE($8::boolean, banking.check_stock_settings.print_company_address),
        updated_at = now(),
        updated_by_user_id = EXCLUDED.updated_by_user_id,
        operating_company_id = EXCLUDED.operating_company_id
      RETURNING bank_account_id::text, operating_company_id::text,
                next_check_number::text AS next_check_number, check_type,
                offset_x_mm::text, offset_y_mm::text, print_company_address`,
-    [input.bank_account_id, input.operating_company_id, input.next_check_number, checkType, input.actor_user_id]
+    [input.bank_account_id, input.operating_company_id, input.next_check_number, input.check_type ?? null, input.actor_user_id, input.offset_x_mm ?? null, input.offset_y_mm ?? null, input.print_company_address ?? null]
   );
   return res.rows[0];
 }

@@ -85,6 +85,9 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "Load costs", path: "/accounting/load-costs", section: "expenses" },
   { label: "Expenses", path: "/accounting/expenses", section: "expenses" },
   { label: "Receipts", path: "/accounting/receipts", section: "expenses" },
+  // ROUND 326 queue item 15: the check creator was only reachable from + New / a list link.
+  { label: "Checks", path: "/accounting/checks", section: "expenses" },
+  { label: "Print checks", path: "/accounting/checks/print", section: "expenses" },
 
   // Bill payment ▾
   { label: "Bill payment", path: "/accounting/bill-payments", section: "billpay" },

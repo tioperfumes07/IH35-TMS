@@ -23,6 +23,9 @@ import { upsertCheckStockSettings, getCheckStockSettings, advanceCheckStockAfter
 import { resolveDriverVendorLink, DriverVendorMissingError } from "../driver-vendor-link.service.js";
 import { applyVendorBillPaymentBatch, type VendorBillPaymentBatchInput } from "../vendor-bill-payments.routes.js";
 import { withLuciaBypass } from "../../auth/db.js";
+import { PostingEngineError } from "../posting-engine.service.js";
+import { wrapPdfDocument } from "../../render/pdf-template.js";
+import { renderCheckBody } from "../../render/check.template.js";
 
 function accountingRoles(role: string) {
   return ["Owner", "Administrator", "Accountant"].includes(role);
@@ -151,6 +154,8 @@ export async function registerCheckRoutes(app: FastifyInstance) {
         return reply.code(201).send(result);
       } catch (err) {
         if (err instanceof CreateCheckConflictError) return reply.code(409).send({ error: err.code });
+        // ROUND 326 queue item 15: a closed period is a named refusal, never a 500.
+        if (err instanceof PostingEngineError && err.code === "PERIOD_LOCKED") return reply.code(409).send({ error: err.code, message: err.message });
         if (err instanceof CheckPayeeError || err instanceof CheckAccountError) {
           const status = CHECK_ACCOUNT_ERROR_HTTP[err.code] ?? 400;
           return reply.code(status).send({ error: err.code, message: err.message });
@@ -283,6 +288,9 @@ export async function registerCheckRoutes(app: FastifyInstance) {
       .union([z.string().trim().regex(/^\d+$/), z.null()])
       .refine((v) => v === null || BigInt(v) > 0n, "next_check_number must be a positive integer"),
     check_type: z.enum(["voucher", "standard"]).optional(),
+    offset_x_mm: z.number().min(-25).max(25).optional(),
+    offset_y_mm: z.number().min(-25).max(25).optional(),
+    print_company_address: z.boolean().optional(),
   });
 
   app.put(
@@ -304,6 +312,9 @@ export async function registerCheckRoutes(app: FastifyInstance) {
             bank_account_id: body.bank_account_id,
             next_check_number: body.next_check_number,
             check_type: body.check_type,
+            offset_x_mm: body.offset_x_mm,
+            offset_y_mm: body.offset_y_mm,
+            print_company_address: body.print_company_address,
             actor_user_id: user.uuid,
           });
         });
@@ -489,6 +500,74 @@ export async function registerCheckRoutes(app: FastifyInstance) {
 
       if ("error" in result) return reply.code(result.code).send({ error: result.error });
       return reply.code(result.code).send(result.data);
+    }
+  );
+
+  /** remit_to_address is jsonb (address object or a plain string); the check prints its text parts in order. */
+  const formatRemitToAddress = (v: unknown): string | null => {
+    if (v == null) return null;
+    if (typeof v === "string") return v.trim() || null;
+    if (typeof v === "object") {
+      const o = v as Record<string, unknown>;
+      const line2 = [o.city, o.state, o.postal_code ?? o.zip].filter((x) => typeof x === "string" && x.trim()).join(" ");
+      const parts = [o.line1 ?? o.address_line1 ?? o.street, o.line2 ?? o.address_line2, line2].filter((x) => typeof x === "string" && x.trim()) as string[];
+      return parts.length ? parts.join("\n") : null;
+    }
+    return null;
+  };
+
+  // ROUND 326 queue item 15 (G-16) — the printable check face (backend-rendered HTML, ?print=1 opens the print
+  // dialog), positioned by the bank account's check stock settings. Same route class as invoice / bill-payment letters.
+  app.get(
+    "/api/v1/checks/:id.html",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+      const user = currentAuthUser(req, reply);
+      if (!user) return;
+      if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+      const params = z.object({ id: z.string().uuid() }).safeParse(req.params);
+      if (!params.success) return validationError(reply, params.error);
+      const parsed = companyQuerySchema.safeParse(req.query ?? {});
+      if (!parsed.success) return validationError(reply, parsed.error);
+      const q = parsed.data;
+      const row = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
+        const r = await client.query(
+          `SELECT e.check_number, e.transaction_date::text AS transaction_date, e.total_amount_cents, e.memo, e.remit_to_address,
+                  COALESCE(NULLIF(e.print_on_check_name, ''), v.vendor_name, NULLIF(concat_ws(' ', d.first_name, d.last_name), ''), c.customer_name, '') AS payee_name,
+                  COALESCE(NULLIF(ba.display_name, ''), NULLIF(ba.account_name, ''), ba.institution_name) AS bank_name,
+                  co.legal_name, concat_ws(', ', co.address_line1, co.city, co.state, co.postal_code) AS company_address,
+                  COALESCE(cs.check_type, 'voucher') AS check_type, COALESCE(cs.offset_x_mm, 0)::float AS offset_x_mm,
+                  COALESCE(cs.offset_y_mm, 0)::float AS offset_y_mm, COALESCE(cs.print_company_address, true) AS print_company_address
+             FROM accounting.expenses e
+             JOIN banking.bank_accounts ba ON ba.ledger_account_id = e.payment_account_uuid AND ba.operating_company_id = e.operating_company_id
+             LEFT JOIN banking.check_stock_settings cs ON cs.bank_account_id = ba.id
+             LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid
+             LEFT JOIN mdata.drivers d ON d.id = e.driver_uuid
+             LEFT JOIN mdata.customers c ON c.id = e.payee_customer_uuid
+             JOIN org.companies co ON co.id = e.operating_company_id
+            WHERE e.id = $1::uuid AND e.operating_company_id = $2::uuid AND e.payment_type = 'check'
+            LIMIT 1`,
+          [params.data.id, q.operating_company_id]
+        );
+        return (r.rows[0] as Record<string, string | number | boolean | null> | undefined) ?? null;
+      });
+      if (!row) return reply.code(404).type("text/plain").send("check_not_found");
+      const body = renderCheckBody({
+        checkNumber: row.check_number == null ? null : String(row.check_number),
+        date: String(row.transaction_date ?? "").slice(0, 10),
+        payeeName: String(row.payee_name ?? ""),
+        payeeAddress: formatRemitToAddress(row.remit_to_address),
+        amountCents: Number(row.total_amount_cents ?? 0),
+        memo: row.memo == null ? null : String(row.memo),
+        companyName: String(row.legal_name ?? ""),
+        companyAddress: row.company_address == null ? null : String(row.company_address),
+        bankName: row.bank_name == null ? null : String(row.bank_name),
+        checkType: row.check_type === "standard" ? "standard" : "voucher",
+        offsetXmm: Number(row.offset_x_mm ?? 0),
+        offsetYmm: Number(row.offset_y_mm ?? 0),
+        printCompanyAddress: row.print_company_address !== false,
+      });
+      return reply.code(200).type("text/html; charset=utf-8").send(wrapPdfDocument({ title: `Check ${row.check_number ?? ""}`, body }));
     }
   );
 
@@ -751,6 +830,7 @@ export async function registerCheckRoutes(app: FastifyInstance) {
         return reply.code(201).send(result);
       } catch (err) {
         if (err instanceof CreateCheckConflictError) return reply.code(409).send({ error: err.code });
+        if (err instanceof PostingEngineError && err.code === "PERIOD_LOCKED") return reply.code(409).send({ error: err.code, message: err.message });
         if (err instanceof CheckVoidError || err instanceof CheckPayeeError || err instanceof CheckAccountError) {
           const status = "code" in err && CHECK_ACCOUNT_ERROR_HTTP[err.code] ? CHECK_ACCOUNT_ERROR_HTTP[err.code] : err instanceof CheckVoidError ? 409 : 400;
           return reply.code(status).send({ error: err.code, message: err.message });

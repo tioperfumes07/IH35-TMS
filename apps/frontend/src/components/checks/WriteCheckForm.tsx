@@ -741,6 +741,14 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
   // required (the underlying engine has never supported print-later) and the category/item lines are
   // not sent at all -- the bills ARE the lines. amount_cents on every queued bill must be positive and
   // never exceed its own remaining balance (partial payment allowed, over-payment is not).
+  const checkLinesReady =
+    Boolean(payeeId) &&
+    Boolean(bankAccountId) &&
+    Boolean(checkDate) &&
+    lines.length > 0 &&
+    lines.every((l) => (l.kind === "category" ? Boolean(l.categoryMapId) : Boolean(l.itemId)) && (lineAmountCents(l) ?? 0) > 0) &&
+    totalCents > 0 &&
+    !saving;
   const canSave = isBillPayment
     ? Boolean(payeeId) &&
       Boolean(bankAccountId) &&
@@ -753,14 +761,10 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
       }) &&
       billPaymentTotalCents > 0 &&
       !saving
-    : Boolean(payeeId) &&
-      Boolean(bankAccountId) &&
-      Boolean(checkDate) &&
-      (printLater || checkNumber.trim().length > 0) &&
-      lines.length > 0 &&
-      lines.every((l) => (l.kind === "category" ? Boolean(l.categoryMapId) : Boolean(l.itemId)) && (lineAmountCents(l) ?? 0) > 0) &&
-      totalCents > 0 &&
-      !saving;
+    : checkLinesReady && (printLater || checkNumber.trim().length > 0);
+  // ROUND 326 queue item 15: "Print check" forces print_later (the number is assigned when the check is printed), so it
+  // must not wait for a typed check number the way Save does.
+  const canPrintCheck = !isBillPayment && checkLinesReady;
 
   function clearPersistedDraft() {
     try {
@@ -1169,8 +1173,9 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
             >
               <option value="">Select bank account…</option>
               {bankAccounts.map((a) => (
-                <option key={a.id} value={a.id}>
+                <option key={a.id} value={a.id} disabled={Boolean(a.account_class) && a.account_class !== "depository"}>
                   {a.account_name}
+                  {a.account_class && a.account_class !== "depository" ? " — not a checking account" : ""}
                 </option>
               ))}
             </select>
@@ -1318,7 +1323,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
               offered for a Bill Payment (Check) -- print_later has no meaning there (step 5). Actual
               PDF rendering/confirm-printed is step 9's own scope, not invented here. */}
           {!isBillPayment ? (
-            <Button variant="tertiary" onClick={() => void handleSave("close", true)} disabled={!canSave}>
+            <Button variant="tertiary" onClick={() => void handleSave("close", true)} disabled={!canPrintCheck}>
               Print check
             </Button>
           ) : null}

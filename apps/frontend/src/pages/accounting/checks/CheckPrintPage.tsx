@@ -1,6 +1,6 @@
 // R-190 — Print Checks queue (QBO parity). Owner types the starting check number (never guessed),
 // selects need_to_print checks, assigns numbers via assignPrintBatch, then confirms or reprints.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
@@ -19,6 +19,7 @@ import {
   type PrintQueueRow,
 } from "../../../api/checks";
 import { getCashGlMapping } from "../../../api/banking";
+import { openPrintableDocument } from "../../../lib/openPrintableDocument";
 
 function formatMoneyCents(cents: number): string {
   return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
@@ -63,6 +64,12 @@ export function CheckPrintPage() {
   });
 
   const stockNext = stockQuery.data?.settings?.next_check_number ?? null;
+  // ROUND 326 queue item 15: show the bank account's SAVED check style (this page used to start at 'voucher' and
+  // overwrite the stored style on every save).
+  const savedCheckType = stockQuery.data?.settings?.check_type ?? null;
+  useEffect(() => {
+    if (savedCheckType === "voucher" || savedCheckType === "standard") setCheckType(savedCheckType);
+  }, [savedCheckType]);
   const rows = queueQuery.data?.rows ?? [];
 
   const saveStockMutation = useMutation({
@@ -217,8 +224,9 @@ export function CheckPrintPage() {
               >
                 <option value="">Select bank account…</option>
                 {depositoryBanks.map((a) => (
-                  <option key={a.id} value={a.id}>
+                  <option key={a.id} value={a.id} disabled={Boolean(a.account_class) && a.account_class !== "depository"}>
                     {a.account_name}
+                    {a.account_class && a.account_class !== "depository" ? " — not a checking account" : ""}
                   </option>
                 ))}
               </select>
@@ -297,6 +305,18 @@ export function CheckPrintPage() {
               <div className="mb-2 text-xs font-semibold uppercase text-gray-600">Confirm print</div>
               <div className="mb-3 text-xs text-gray-700">
                 Assigned: {lastAssignments.map((a) => `#${a.check_number}`).join(", ")}
+              </div>
+              {/* ROUND 326 queue item 15: the printable check face for each assigned check. */}
+              <div className="mb-3 flex flex-wrap gap-2" data-testid="check-print-faces">
+                {lastAssignments.map((a) => (
+                  <Button
+                    key={a.check_id}
+                    variant="secondary"
+                    onClick={() => openPrintableDocument(`/api/v1/checks/${a.check_id}.html?operating_company_id=${encodeURIComponent(companyId)}`)}
+                  >
+                    Print #{a.check_number}
+                  </Button>
+                ))}
               </div>
               <div className="flex flex-wrap items-end gap-2">
                 <Button variant="primary" disabled={busy} onClick={() => void handleConfirm(true)}>
