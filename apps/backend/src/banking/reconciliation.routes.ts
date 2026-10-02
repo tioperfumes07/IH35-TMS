@@ -20,7 +20,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { computePayloadHashFromTxn, enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
-import { insertCsvStatementBankTransaction } from "./transaction-ingestion.js";
+import { insertCsvStatementBankTransaction, statementRowIdentityText } from "./transaction-ingestion.js";
 import { applyBankingRulesForTransaction } from "./banking-rules.engine.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { emitBankingSpineEvent } from "./banking-spine-emit.js";
@@ -1627,7 +1627,11 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     }
 
     let added = 0;
+    let alreadyImported = 0;
     const errors: Array<{ line: number; reason: string }> = [];
+    // BANK-F9341 — ordinal of each row among identical rows in THIS file, so a re-upload adds nothing while two genuine
+    // identical transactions in one statement both land (transaction-ingestion.ts#insertCsvStatementBankTransaction).
+    const seen = new Map<string, number>();
 
     await withCompanyScope(user.uuid, accountContext.operating_company_id, async (client) => {
       for (let i = 1; i < lines.length; i += 1) {
@@ -1640,7 +1644,12 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           errors.push({ line: i + 1, reason: "invalid_date_description_or_amount" });
           continue;
         }
+        // Same identity the insert's live-row count uses (statementRowIdentityText), so ordinals line up with it.
+        const identityKey = `${rawDate}|${Math.abs(cents)}|${cents > 0}|${statementRowIdentityText(rawDesc)}`;
+        const occurrence = (seen.get(identityKey) ?? 0) + 1;
+        seen.set(identityKey, occurrence);
         const inserted = await insertCsvStatementBankTransaction(client, {
+          occurrence,
           bank_account_id: body.data.bank_account_id,
           operating_company_id: accountContext.operating_company_id,
           transaction_date: rawDate,
@@ -1659,6 +1668,8 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         if (insRow?.id) {
           await applyBankingRulesForTransaction(client as PoolClient, insRow.id, accountContext.operating_company_id);
           added += 1;
+        } else {
+          alreadyImported += 1;
         }
       }
 
@@ -1670,6 +1681,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           source: "manual_upload",
           bank_account_id: body.data.bank_account_id,
           added_count: added,
+          already_imported_count: alreadyImported,
           error_count: errors.length,
         },
         "info",
@@ -1677,6 +1689,6 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       );
     });
 
-    return { added, errors };
+    return { added, already_imported: alreadyImported, errors };
   });
 }
