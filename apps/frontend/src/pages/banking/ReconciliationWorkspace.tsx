@@ -238,7 +238,7 @@ export function ReconciliationWorkspacePage() {
   const [draftDateFrom, setDraftDateFrom] = useState("");
   const [draftDateTo, setDraftDateTo] = useState("");
   const [draftAmtMode, setDraftAmtMode] = useState<"any" | "eq" | "gt" | "lt">("any");
-  const [draftAmtDollars, setDraftAmtDollars] = useState("");
+  const [draftAmtDollars, setDraftAmtDollars] = useState<number | null>(null);
   const [appliedFind, setAppliedFind] = useState("");
   const [appliedPayee, setAppliedPayee] = useState("");
   const [appliedCleared, setAppliedCleared] = useState<"all" | "cleared" | "uncleared">("all");
@@ -246,7 +246,7 @@ export function ReconciliationWorkspacePage() {
   const [appliedDateFrom, setAppliedDateFrom] = useState("");
   const [appliedDateTo, setAppliedDateTo] = useState("");
   const [appliedAmtMode, setAppliedAmtMode] = useState<"any" | "eq" | "gt" | "lt">("any");
-  const [appliedAmtDollars, setAppliedAmtDollars] = useState("");
+  const [appliedAmtDollars, setAppliedAmtDollars] = useState<number | null>(null);
   const [clearingId, setClearingId] = useState<string | null>(null);
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
@@ -355,7 +355,7 @@ export function ReconciliationWorkspacePage() {
     const findQ = appliedFind.trim().toLowerCase();
     const payeeQ = appliedPayee.trim().toLowerCase();
     const amtCents =
-      appliedAmtMode !== "any" && appliedAmtDollars.trim() !== ""
+      appliedAmtMode !== "any" && appliedAmtDollars != null && Number.isFinite(appliedAmtDollars)
         ? Math.round(Number(appliedAmtDollars) * 100)
         : null;
     const anyExplicit = localTransactions.some((t) => Boolean(t.reconciliation_cleared));
@@ -434,7 +434,7 @@ export function ReconciliationWorkspacePage() {
     setDraftDateFrom("");
     setDraftDateTo("");
     setDraftAmtMode("any");
-    setDraftAmtDollars("");
+    setDraftAmtDollars(null);
     setAppliedFind("");
     setAppliedPayee("");
     setAppliedCleared("all");
@@ -442,7 +442,7 @@ export function ReconciliationWorkspacePage() {
     setAppliedDateFrom("");
     setAppliedDateTo("");
     setAppliedAmtMode("any");
-    setAppliedAmtDollars("");
+    setAppliedAmtDollars(null);
   };
 
   const reconFilterActiveCount = useMemo(() => {
@@ -452,7 +452,7 @@ export function ReconciliationWorkspacePage() {
     if (appliedCleared !== "all") n += 1;
     if (appliedTxnType !== "all") n += 1;
     if (appliedDateFrom || appliedDateTo) n += 1;
-    if (appliedAmtMode !== "any" && appliedAmtDollars.trim()) n += 1;
+    if (appliedAmtMode !== "any" && appliedAmtDollars != null) n += 1;
     return n;
   }, [appliedFind, appliedPayee, appliedCleared, appliedTxnType, appliedDateFrom, appliedDateTo, appliedAmtMode, appliedAmtDollars]);
 
@@ -975,14 +975,17 @@ export function ReconciliationWorkspacePage() {
                         </label>
                         <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
                           $
-                          <input
-                            value={draftAmtDollars}
-                            onChange={(e) => setDraftAmtDollars(e.target.value.replace(/[^0-9.]/g, ""))}
+                          <MoneyInput
+                            valueDollars={draftAmtDollars}
+                            onChangeDollars={setDraftAmtDollars}
                             disabled={draftAmtMode === "any"}
-                            className="h-7 rounded-sm border border-gray-300 px-2 font-normal normal-case tracking-normal text-[#0F1219] disabled:bg-gray-100"
+                            className="h-7"
                             placeholder="0.00"
-                            data-testid="recon-filter-amt"
+                            ariaLabel="Filter amount dollars"
                           />
+                          <span className="sr-only" data-testid="recon-filter-amt">
+                            amount filter
+                          </span>
                         </label>
                       </div>
                       <div className="flex justify-between gap-2">
