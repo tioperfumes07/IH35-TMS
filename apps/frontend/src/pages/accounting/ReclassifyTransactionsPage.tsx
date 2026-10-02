@@ -112,7 +112,7 @@ export function ReclassifyTransactionsPage() {
   const lines = linesQ.data?.lines ?? [];
   const pageAllSelected = lines.length > 0 && lines.every((l) => selected.has(l.posting_id));
   const selectedSum = Array.from(selected.values()).reduce((s, l) => s + l.net_amount_cents, 0);
-  const activeAccount: ReclassifyAccount | undefined = accountsQ.data?.accounts.find((a) => a.account_id === applied?.accountId);
+  const activeAccount: ReclassifyAccount | undefined = accountsQ.data?.accounts?.find((a) => a.account_id === applied?.accountId);
 
   const runFind = () => { setApplied({ from: fromDate, to: toDate, accountId, sourceType, classId, search }); setOffset(0); setSelected(new Map()); };
   const toggle = (l: ReclassifyLine) => setSelected((prev) => { const n = new Map(prev); if (n.has(l.posting_id)) n.delete(l.posting_id); else n.set(l.posting_id, l); return n; });
@@ -121,7 +121,7 @@ export function ReclassifyTransactionsPage() {
   const chips: Array<{ label: string; clear: () => void }> = [];
   if (applied?.accountId) chips.push({ label: `Account: ${activeAccount ? `${activeAccount.account_code} ${activeAccount.account_name}` : "selected"}`, clear: () => { setAccountId(null); setApplied({ ...applied, accountId: null }); setSelected(new Map()); } });
   if (applied?.sourceType) chips.push({ label: `Type: ${applied.sourceType}`, clear: () => { setSourceType(""); setApplied({ ...applied, sourceType: "" }); } });
-  if (applied?.classId) chips.push({ label: `Class: ${classesQ.data?.classes.find((c) => c.id === applied.classId)?.class_name ?? applied.classId}`, clear: () => { setClassId(""); setApplied({ ...applied, classId: "" }); } });
+  if (applied?.classId) chips.push({ label: `Class: ${classesQ.data?.classes?.find((c) => c.id === applied.classId)?.class_name ?? applied.classId}`, clear: () => { setClassId(""); setApplied({ ...applied, classId: "" }); } });
   if (applied?.search) chips.push({ label: `Search: ${applied.search}`, clear: () => { setSearch(""); setApplied({ ...applied, search: "" }); } });
 
   return (

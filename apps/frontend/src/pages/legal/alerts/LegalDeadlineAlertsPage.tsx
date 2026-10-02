@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { legalMattersApi, type LegalDeadlineAlert } from "../../api/legal-matters";
-import { PageHeader } from "../../components/layout/PageHeader";
-import { useCompanyContext } from "../../contexts/CompanyContext";
+import { legalMattersApi, type LegalDeadlineAlert } from "../../../api/legal-matters";
+import { PageHeader } from "../../../components/layout/PageHeader";
+import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
-import { ListErrorState } from "../../components/ListErrorState";
-import { userFacingApiError } from "../../lib/api-error-message";
-import { formatDateTimeUS } from "../../lib/formatDate";
-import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
+import { ListErrorState } from "../../../components/ListErrorState";
+import { userFacingApiError } from "../../../lib/api-error-message";
+import { formatDateTimeUS } from "../../../lib/formatDate";
+import { DrillKpiCard } from "../../../components/layout/DrillKpiCard";
 
 const SEV: Record<string, string> = {
   critical: "bg-slate-800 text-white",

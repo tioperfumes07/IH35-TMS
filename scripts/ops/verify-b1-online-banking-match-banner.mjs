@@ -39,9 +39,14 @@ function main() {
     "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
     "apps/frontend/src/pages/accounting/checks/CheckDetailPage.tsx",
     "apps/frontend/src/pages/banking/DepositDetailPage.tsx",
+    "apps/frontend/src/pages/driver-finance/SettlementDetailPage.tsx",
   ]) {
     assertIncludes(read(file), "OnlineBankingMatchBanner", file);
   }
+
+  const settlementsRoute = read("apps/backend/src/driver-finance/settlements.routes.ts");
+  assertIncludes(settlementsRoute, "matched_settlement_id = $1::uuid", "settlements.routes.ts");
+  assertIncludes(settlementsRoute, "matched_bank_transaction_id: matchedBank?.matched_bank_transaction_id ?? null", "settlements.routes.ts");
 
   const checksRoute = read("apps/backend/src/accounting/checks/checks.routes.ts");
   assertIncludes(checksRoute, "matched_expense_id = e.id", "checks.routes.ts");

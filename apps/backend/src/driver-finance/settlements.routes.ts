@@ -831,12 +831,35 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
           `,
         [params.data.id, companyId]
       );
+      // B-1 §5 — register Edit → settlement original: OnlineBankingMatchBanner when a bank
+      // line carries matched_settlement_id. Read-only reverse hop; Unmatch uses existing
+      // POST /bank-recon/unmatch (clears matched_settlement_id). Never invents a match.
+      const matchedBankRes = await client.query(
+        `
+          SELECT
+            bt.id::text AS matched_bank_transaction_id,
+            bt.transaction_date::text AS matched_bank_transaction_date,
+            bt.description AS matched_bank_transaction_description,
+            bt.amount_cents::text AS matched_bank_transaction_amount_cents
+          FROM banking.bank_transactions bt
+          WHERE bt.operating_company_id = $2::uuid
+            AND bt.matched_settlement_id = $1::uuid
+          ORDER BY bt.transaction_date DESC, bt.created_at DESC
+          LIMIT 1
+        `,
+        [params.data.id, companyId]
+      );
+      const matchedBank = matchedBankRes.rows[0] ?? null;
       return {
         ...row,
         lines: linesRes.rows,
         debt_summary: debt,
         linked_bills: linkedBillsRes.rows,
         historical_attributions: await readHistoricalSettlementAttributions(client, companyId, params.data.id),
+        matched_bank_transaction_id: matchedBank?.matched_bank_transaction_id ?? null,
+        matched_bank_transaction_date: matchedBank?.matched_bank_transaction_date ?? null,
+        matched_bank_transaction_description: matchedBank?.matched_bank_transaction_description ?? null,
+        matched_bank_transaction_amount_cents: matchedBank?.matched_bank_transaction_amount_cents ?? null,
       };
     });
     if (detail && "unavailable" in detail) return reply.code(501).send({ error: "driver_finance_schema_not_available" });
