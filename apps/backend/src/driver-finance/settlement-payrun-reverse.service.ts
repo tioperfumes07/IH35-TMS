@@ -32,9 +32,9 @@ import { withCurrentUser } from "../auth/db.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
-import { signedEscrowLedgerAmountCents } from "./escrow-ledger-sign.js";
-import { recordEscrowPostingOnly } from "../accounting/escrow/service.js";
 import { loadPayRunRecoveryReversal } from "./settlement-payrun-recovery.service.js";
+import { unwindPayRunSubledgersInClientTx } from "./settlement-payrun-subledger-unwind.service.js";
+import { reverseSettlementForVoid } from "./void-document-callees.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -124,6 +124,33 @@ export async function reverseSettlementPayRunInClientTx(
   }
   const originalJeId = run.journal_entry_id;
 
+  // ROUND 300 (CC-1, proven on a Neon fork) — ONE settlement reverser. A settlement posted through the per-load A/P
+  // chain (bills, non-cash applications, net-pay bill payments) carries a driver_settlement_gl_runs spine whose
+  // application JE (or first bill JE) is this pay-run's journal_entry_id. Reversing only that JE here reported
+  // "reversed" while the bills, the bill payments and their JEs stayed posted ($3,335.32 left on the fork, settlement
+  // still 'closed'). Such a settlement is undone by the canonical document reverser (voidDocument('settlement') ->
+  // reverseSettlementForVoid), which voids every bill payment and bill, reverses the application JE, unwinds the
+  // pay-run sub-ledgers and flips the settlement — this route delegates to it rather than half-reverse.
+  const chainRun = await client.query<{ id: string }>(
+    `SELECT r.id::text FROM driver_finance.driver_settlement_gl_runs r
+      WHERE r.operating_company_id = $1::uuid AND r.settlement_id = $2::uuid AND r.status = 'posted'
+        AND (r.deduction_journal_entry_id = $3::uuid
+             OR EXISTS (SELECT 1 FROM driver_finance.driver_settlement_gl_bills b WHERE b.run_id = r.id AND b.bill_journal_entry_id = $3::uuid))
+      LIMIT 1`,
+    [opco, settlementId, originalJeId]
+  );
+  if (chainRun.rows[0]) {
+    const voided = await reverseSettlementForVoid(client as never, { operatingCompanyId: opco, settlementId, reason, actor });
+    return {
+      result: "reversed",
+      settlement_id: settlementId,
+      run_id: run.id,
+      reversal_journal_entry_id: voided.reversalJournalEntryId,
+      advances_restored: voided.payrunUnwind?.advances_restored ?? 0,
+      escrow_reversed_cents: voided.payrunUnwind?.escrow_reversed_cents ?? 0,
+    };
+  }
+
   const settRes = await client.query<{ driver_id: string; display_id: string | null }>(
     `SELECT driver_id::text, display_id
        FROM driver_finance.driver_settlements
@@ -192,122 +219,12 @@ export async function reverseSettlementPayRunInClientTx(
     );
   }
 
-  // ── (3) Un-recover advances the close cleared through THIS settlement (recovered_in_settlement_id).
-  //        Full-recovery only ever sets recovered_in_settlement_id (partial recoveries keep it NULL and
-  //        only move outstanding_balance) — so this inverse is exact for every row we can attribute.
-  //        Relative adjustments (+ amount / − amount) keep cross-settlement liability history correct. ─
-  for (const adv of recoveries) {
-    await client.query(
-      `UPDATE driver_finance.driver_advances
-          SET recovered_in_settlement_id = NULL,
-              status = 'active',
-              outstanding_balance = outstanding_balance + $3::numeric,
-              updated_at = now()
-        WHERE id = $1::uuid AND operating_company_id = $2::uuid
-          AND (recovered_in_settlement_id = $4::uuid OR recovered_in_settlement_id IS NULL)`,
-      [adv.id, opco, (adv.recovered_cents / 100).toFixed(2), settlementId]
-    );
-    if (adv.liability_id) {
-      await client.query(
-        `UPDATE driver_finance.driver_liabilities
-            SET current_balance = current_balance + $3::numeric,
-                paid_to_date = GREATEST(0, paid_to_date - $3::numeric),
-                status = 'active',
-                updated_at = now()
-          WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-        [adv.liability_id, opco, (adv.recovered_cents / 100).toFixed(2)]
-      );
-    }
-  }
-
-  // ── (4) Reverse the escrow contribution. The GL escrow-liability credit is already reversed by the
-  //        JE reversal (2); this inverts the SUB-LEDGERS the close also wrote: the GL-linked
-  //        accounting.escrow_accounts balance (via recordEscrowPostingOnly 'release', which the migration
-  //        0234 trigger applies as a negative delta) and the pay-run cap summary
-  //        driver_finance.escrow_balances + escrow_ledger. Amount = the deposit(s) this settlement posted. ─
-  const escRes = await client.query<{ total: string }>(
-    `SELECT COALESCE(SUM(amount_cents), 0)::bigint AS total
-       FROM accounting.escrow_postings
-      WHERE operating_company_id = $1::uuid
-        AND source_type = 'driver_settlement'
-        AND source_id = $2::uuid
-        AND posting_type = 'deposit'
-        AND linked_journal_entry_id = $3::uuid`,
-    [opco, settlementId, originalJeId]
+  // ── (3)–(6) Advances, escrow, disbursement stamp, pay-run run: the shared sub-ledger unwind. ───────────────
+  const { escrow_reversed_cents: escrowCents } = await unwindPayRunSubledgersInClientTx(
+    client,
+    { operatingCompanyId: opco, settlementId, driverId: settlement.driver_id, runId: run.id, label, reason, originalJeId, reversalJeId, recoveries },
+    actor
   );
-  const escrowCents = Number(escRes.rows[0]?.total ?? 0);
-  if (escrowCents > 0) {
-    // GL-linked escrow balance: a 'release' posting applies −escrowCents via the DB trigger, linked to
-    // the reversing JE for a both-way audit trail. Mirrors closeSettlementPayRun's recordEscrowPostingOnly
-    // 'deposit' one-for-one.
-    await recordEscrowPostingOnly(client as never, {
-      operating_company_id: opco,
-      driver_id: settlement.driver_id,
-      posting_type: "release",
-      amount_cents: escrowCents,
-      source_type: "driver_settlement",
-      source_id: settlementId,
-      note: `${label} — escrow contribution reversal: ${reason}`,
-      posted_by_user_id: actor.userId,
-      linked_journal_entry_id: reversalJeId,
-    });
-    // Pay-run cap summary + detailed ledger: undo the 'hold' the close appended (running balance falls
-    // back by escrowCents). total_held is reduced (the hold is being unwound, not paid out).
-    const balRes = await client.query<{ id: string; current_balance_cents: number }>(
-      `UPDATE driver_finance.escrow_balances
-          SET total_held_cents = GREATEST(0, total_held_cents - $3),
-              current_balance_cents = current_balance_cents - $3,
-              last_updated_at = now()
-        WHERE operating_company_id = $1::uuid AND driver_id = $2::uuid
-        RETURNING id::text, current_balance_cents`,
-      [opco, settlement.driver_id, escrowCents]
-    );
-    const balanceRow = balRes.rows[0];
-    if (balanceRow) {
-      await client.query(
-        `INSERT INTO driver_finance.escrow_ledger
-           (operating_company_id, driver_id, escrow_balance_id, settlement_id, transaction_type, amount_cents, running_balance_cents, description)
-         VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, 'release', $5, $6, $7)`,
-        [
-          opco,
-          settlement.driver_id,
-          balanceRow.id,
-          settlementId,
-          // ESCROW-LEDGER-SIGN-01: undoing a hold reads as a 'release' to the driver (positive) --
-          // already correct by construction here, routed through the shared helper for consistency.
-          signedEscrowLedgerAmountCents("release", escrowCents),
-          balanceRow.current_balance_cents,
-          `${label} — escrow contribution reversal: ${reason}`,
-        ]
-      );
-    }
-  }
-
-  // ── (5) Clear the records-only disbursement + the posted_at stamp (the settlement is no longer posted). ─
-  await client.query(
-    `UPDATE driver_finance.driver_settlements
-        SET payment_method = NULL,
-            payment_bank_reference = NULL,
-            paid_via_bank_txn_id = NULL,
-            posted_at = NULL,
-            posted_by_user_id = NULL,
-            updated_at = now()
-      WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-    [settlementId, opco]
-  );
-
-  // ── (6) Void the run (status CHECK admits only 'posted'/'void'; reuse 'void' = reversed here). The
-  //        reversal metadata lives in the immutable CRUD audit below. ────────────────────────────────
-  const voided = await client.query<{ id: string }>(
-    `UPDATE driver_finance.payrun_gl_runs
-        SET status = 'void'
-      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status = 'posted'
-      RETURNING id::text`,
-    [run.id, opco]
-  );
-  if (!voided.rows[0]?.id) {
-    throw new SettlementPayRunReversalError("RUN_STATE_TRANSITION_FAILED", `Pay-run run ${run.id} could not transition posted -> void`);
-  }
 
   await appendCrudAudit(
     client as never,
