@@ -7,12 +7,26 @@ import { z } from "zod";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { withCompanyScope } from "../../accounting/shared.js";
+import { readCustomerProfile } from "./customer-profile.service.js";
 import { mergeIntoCanonical, planCanonical, reverseCanonicalMerge, type CanonicalKind } from "./canonical-entities.service.js";
 
 const kindSchema = z.enum(["customers", "vendors"]);
 const toKind = (k: "customers" | "vendors"): CanonicalKind => (k === "customers" ? "customer" : "vendor");
 
 export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
+  // ROUND 326 item 1B — the customer profile surface: eight blocks, each a value or a named empty reason.
+  app.get("/api/v1/customers/:id/profile", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    if (!requireAuth(req, reply)) return;
+    const p = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
+    const qy = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+    if (!p.success || !qy.success) return reply.code(400).send({ error: "validation_error" });
+    await assertCompanyMembership(req.user!.uuid, qy.data.operating_company_id);
+    const profile = await withCompanyScope(req.user!.uuid, qy.data.operating_company_id, (client) =>
+      readCustomerProfile(client, qy.data.operating_company_id, p.data.id));
+    if (!profile) return reply.code(404).send({ error: "customer_not_found" });
+    return profile;
+  });
+
   app.get("/api/v1/mdata/canonical/:kind/plan", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
     const p = z.object({ kind: kindSchema }).safeParse(req.params ?? {});
