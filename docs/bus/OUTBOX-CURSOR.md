@@ -1,3 +1,8 @@
+**2026-10-02T08:10Z · B-3 Categorized provenance MERGED #24043 · tip `f405dd41eb`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91009 MERGED FAST-MERGE | GO
+money-pr-local-gate PASS. vitest B-3 provenance 4/4. FE chips already live.
+NEXT: FE tip live · Lead Chrome · no migration until HH 12–23.
+
 **2026-10-02T08:00Z · B-3 Categorized provenance · `cursor/b3-categorized-provenance-920f`**
 ACK: CURSOR | ACK GO-20 HOOK | B-3 §19 CATEGORIZED PROVENANCE | GO
 FE chips #24041 LIVE dep-davm63ivcj2c738dgt4g on `72d1dc0100`.
