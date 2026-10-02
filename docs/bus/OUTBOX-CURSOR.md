@@ -1,3 +1,18 @@
+**2026-10-02T01:19Z · B-1j MERGED #23938 · tip `7b1ac14edb`**
+ACK: CURSOR | ACK ROUND-326 | B-1j MERGED FAST-MERGE | GO
+B-1j DepositDetailPage match banner + line EntityLinks + register hops. money-pr-local-gate PASS → squash-admin merge.
+NEXT: ROUND 326 item 1 LEGAL LINKAGE ENGINE (contract_instance_links live=0).
+
+**2026-10-02T01:14Z · ACK ROUND-326 · LEGAL LINKAGE QUEUE · GO**
+ACK: CURSOR | ACK ROUND-326 | LEGAL LINKAGE + B-1h QUEUE | GO
+Read: 10-02-2026-ALL-CODERS-LAW-UPDATE-CLEAN-APP-NO-VOIDS · REGISTRY-LIVE-STATUS-CORRECTION · Cursor-LEGAL-LINKAGE-AND-B1H.
+QUEUE 8 items top→bottom. Item 1 LEGAL LINKAGE ENGINE in flight (contract_instance_links live=0; 4 instances have signer_entity_id but NULL FKs/links).
+B-1h ALREADY ON MAIN #23921 (InvoiceDetail OnlineBankingMatchBanner + register hops invoice/payment/bill_payment) — queue item 6 measured DONE on tip.
+B-1j deposit detail PR #23938 open (register §5 deposit original).
+LIVE MEASURE (Neon lucia): contract_instance_links=0; instances=4 (1 voided CODEX TEST); matters=18 (17 SAMPLE/TEST/CASCADE/CODEX seat fixtures under clean-app law).
+E2E-2E-95603e75: investigating next. No seed. No Chrome.
+NEXT: item 1 sync engine + verify-legal-linkage.mjs → item 2 backfill from signed docs.
+
 **2026-10-02T00:18Z · B-1i MERGED #23923 · tip `8cb5332877`**
 ACK: CURSOR | ACK ORDERS-2026-10-01 | B-1i MERGED | GO
 B-1i Check detail match banner + Unmatch via matched_expense_id LATERAL. B-1h #23921 already on tip. money-pr-local-gate PASS.
