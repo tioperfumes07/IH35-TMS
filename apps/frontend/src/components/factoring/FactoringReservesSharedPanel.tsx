@@ -70,10 +70,13 @@ export function FactoringReservesSharedPanel({ companyId, host }: Props) {
     if (!kpis) return null;
     const pick = (key: string) => kpis.find((k) => k.key === key);
     const escrow = cents(pick("escrow_reserve_balance")?.value);
-    const cash = cents(pick("cash_reserve_balance")?.value);
-    return { escrow, cash, total: escrow + cash, fee: cents(pick("fees_accrued")?.value), count: pick("purchased_volume")?.row_count ?? 0 };
+    // One Faro Security Reserve (202615220800): a merged cash reserve comes back null — an em dash, never $0.00.
+    const cashRaw = pick("cash_reserve_balance")?.value;
+    const cash = cashRaw == null ? null : cents(cashRaw);
+    return { escrow, cash, total: escrow + (cash ?? 0), fee: cents(pick("fees_accrued")?.value), count: pick("purchased_volume")?.row_count ?? 0 };
   }, [kpiQuery.data?.kpis]);
-  const engineMoney = (v: number | undefined) => (kpiQuery.isError ? "Unavailable" : v == null ? "…" : formatUsdCents(v));
+  const engineMoney = (v: number | null | undefined) =>
+    kpiQuery.isError ? "Unavailable" : v === undefined ? "…" : v === null ? "—" : formatUsdCents(v);
 
   // summary.outstanding_liability_balance is dollars.
   const outstandingLiabilityCents = Math.round(
@@ -227,8 +230,8 @@ export function FactoringReservesSharedPanel({ companyId, host }: Props) {
         </div>
 
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid={`${rootTestId}-kpi-strip`}>
-          <Kpi label="Escrow reserve" value={engineMoney(engine?.escrow)} testId={`${rootTestId}-kpi-escrow`} />
-          <Kpi label="Cash reserve" value={engineMoney(engine?.cash)} testId={`${rootTestId}-kpi-cash`} />
+          <Kpi label={engine && engine.cash === null ? "Faro reserve" : "Escrow reserve"} value={engineMoney(engine?.escrow)} testId={`${rootTestId}-kpi-escrow`} />
+          <Kpi label="Cash reserve" value={engine ? engineMoney(engine.cash) : engineMoney(undefined)} testId={`${rootTestId}-kpi-cash`} />
           <Kpi label="Total reserve" value={engineMoney(engine?.total)} testId={`${rootTestId}-kpi-total`} />
           <Kpi
             label="CCG loans outstanding"
