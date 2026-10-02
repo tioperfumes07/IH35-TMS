@@ -37,9 +37,14 @@ function main() {
     "apps/frontend/src/pages/banking/TransfersListPage.tsx",
     "apps/frontend/src/pages/accounting/BillDetailPage.tsx",
     "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
+    "apps/frontend/src/pages/accounting/checks/CheckDetailPage.tsx",
   ]) {
     assertIncludes(read(file), "OnlineBankingMatchBanner", file);
   }
+
+  const checksRoute = read("apps/backend/src/accounting/checks/checks.routes.ts");
+  assertIncludes(checksRoute, "matched_expense_id = e.id", "checks.routes.ts");
+  assertIncludes(checksRoute, "matched_bank_transaction_id", "checks.routes.ts");
 
   const recon = read("apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts");
   assertIncludes(recon, 'app.post("/api/v1/bank-recon/unmatch"', "recon-worklist.routes.ts");

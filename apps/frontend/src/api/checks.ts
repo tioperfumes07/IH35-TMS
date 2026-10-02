@@ -131,6 +131,11 @@ export type CheckDetail = CheckListRow & {
   journal_entry_id: string | null;
   void_reason: string | null;
   voided_by_user_id: string | null;
+  /** B-1 §5 — bank feed hop via matched_expense_id (check IS an expense). */
+  matched_bank_transaction_id?: string | null;
+  matched_bank_transaction_date?: string | null;
+  matched_bank_transaction_description?: string | null;
+  matched_bank_transaction_amount_cents?: string | number | null;
 };
 
 export type CheckDetailLine = {

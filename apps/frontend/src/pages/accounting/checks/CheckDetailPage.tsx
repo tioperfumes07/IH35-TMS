@@ -10,6 +10,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useToast } from "../../../components/Toast";
 import { VoidReasonModal } from "../../../components/accounting/VoidReasonModal";
 import { VoidedBanner } from "../../../components/accounting/VoidedBanner";
+import { OnlineBankingMatchBanner } from "../../../components/accounting/OnlineBankingMatchBanner";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { formatDateUS } from "../../../lib/formatDate";
 import { getCheck, voidCheckApi, unvoidCheckApi, type CheckDetailLine } from "../../../api/checks";
@@ -131,6 +132,16 @@ export function CheckDetailPage() {
     >
       <div className="flex flex-col gap-4 p-4">
         <VoidedBanner voidedAt={check.voided_at} voidReason={check.void_reason} voidedByUserId={check.voided_by_user_id} documentLabel="Check" />
+        {check.matched_bank_transaction_id ? (
+          <OnlineBankingMatchBanner
+            companyId={companyId}
+            bankTransactionId={check.matched_bank_transaction_id}
+            txnDate={check.matched_bank_transaction_date}
+            description={check.matched_bank_transaction_description}
+            amountCents={check.matched_bank_transaction_amount_cents}
+            invalidateKeys={[["checks", "detail", companyId, id]]}
+          />
+        ) : null}
 
         <div className="grid grid-cols-4 gap-4 rounded border border-gray-200 p-3 text-xs">
           <div>
