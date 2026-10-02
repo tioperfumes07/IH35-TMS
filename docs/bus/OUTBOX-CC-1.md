@@ -1553,3 +1553,52 @@ GitHub Actions still billing-locked. Owner: "find solution — other methods" ->
 
 **Also merged:** #24000 items 2-5 (single settlement poster; DB test still not run here), #24134 M2 (one PM-due evaluator; migration 202615230100 applied).
 **Next:** ROUND 296 5 (lib/money in the listed driver-finance files), 6 (factoring chargebacks never to a driver), ROUND 297 driver-profile tab-by-tab linkage audit. ROUND 297 "CURSOR" order (fuel match engine) is Cursor's lane — not taken.
+
+## ROUND 296 / 297 / 300 / 301 — 2026-10-02 (CC-1)
+
+### Merged (each: money gate exit 0, squash-merged; backend deployed via Render API after each)
+| PR | Finding | What |
+|---|---|---|
+| #24174 | ACCT-F9799 | ROUND 296 item 5 — 15 driver-finance surfaces format money through lib/money (guard 12217) |
+| #24181 | ACCT-F9801 | item 18 slice 1 — Settlement Creator previews AND posts through the close engine (one calculator; refuses when engine NET ≠ AlwaysTrack TOTAL DUE) (guard 12221) |
+| #24183 | ACCT-F9803 | driver-profile audit defect 1 — driver / trailer Bills panel listed ALL 93 company bills with Pay buttons (D1 real 14, D2 real 12) (guard 12225) |
+| #24187 | LINK-F9640 + ACCT-F9805 | Lead commit 4f7d1589b2 (money-engine linkage register) pushed; main red fixed: factoring_repurchase_due_events unclassified |
+| #24194 | ACCT-F9807 | ROUND 301 P0 #007–#011 — 13 money-writer UPDATEs name operating_company_id (incl. recurring.worker, which runs under withLuciaBypass — RLS OFF, so this one was real) (guard 12237) |
+| #24197 | ACCT-F9809 | **P0: every settlement close through the per-load A/P chain failed** — the bill numbered as its load (13619) was refused by BILL_DISPLAY_ID_PATTERN. Fork-proven before/after |
+| #24202 | ACCT-F9811 + ACCT-F9813 | **ROUND 300 driver_settlement — one reverser.** Canonical void now undoes a chain-posted settlement whole; settlement-payrun-reverse delegates; main red fixed again (factoring_interest_accrual_* unclassified) (guard 12241) |
+
+### ROUND 300 — driver_settlement (Neon fork br-proud-glade-akwc6rbb from br-fancy-credit-akjnd07a; production untouched)
+Answer to "which one runs": BOTH existed and NEITHER undid today's poster. voidDocument('settlement') threw `settlement_deduction_reconciliation_failed`; settlement-payrun-reverse returned "reversed" after netting only the application JE (4 of 5 JEs live, bills 'paid', settlement 'closed', residual 333,532c). **Ruling taken: FOLD, not register** — canonical engine is the one reverser; settlement-payrun-reverse is a delegate.
+AFTER (#24202 code on the fork):
+- P-0017 → voidDocument('settlement'): settlement **cancelled / voided / reversed**; 4 originals each with linked reversal; **GL net 0 (0 accounts, 0c)**; payrun run void. Engine: `reverseSettlementForVoid → reverseSettlementBillPaymentInClientTx → unwindPayRunSubledgersInClientTx`.
+- P-0016 (deductions 4,000c, escrow 5,000c, reimbursement 1,525c) → pay-run route, delegated: settlement cancelled/voided/reversed; 5 originals reversed incl. application JE 1bb7d0af→5092ac50; **GL net 0**; escrow deposit 5,000 + release 5,000; bills 13614/13609 void.
+Legacy shapes stay refused by name (5787 SOURCE_POSTING_LINK_MISSING, 5780 NO_LOAD_BILLS); 5786 (single JE) nets to 0 via pay-run reverse but its row stays 'closed'.
+**NEEDS LEAD RULING:** a reversed chain settlement cannot re-post under the same load numbers (bill display_id never reused). Owner CLEAN APP (delete) vs NetSuite linked reversal — which applies to re-posting a settlement?
+Other 8 ROUND 300 entries (deduction, recurring_template, lease, prepaid ×2, fixed asset ×2, period_close) and the settlement-posting stamps + 8 orphans: NOT STARTED yet — in progress next.
+
+### ROUND 301 — independent audit (SHA 6b273ef29441, one tree)
+Mine vs Lead: population 642 vs ~632 (+10, tree grew) · writers 337 vs 333 · money writers 10 vs 11–13 (the 11th is a COMMENT in settlement-contract-terms:4) · **A-SPINE 0 vs 1** (Lead's 1 = that comment) · B-ATOMIC 84 (72 take a client = caller tx) vs ~96 · C-SCOPE 97 files when company_id/tenant_id count (exact match) · F-RETRY 37 vs ~33 · **G-SILENT 0 truly empty** vs 1 · I-HEADER 163/327 vs ~162/~328 · wired 620 (strict, index/autoload reachable) exact match · orphans 9 (5 imported by repo-root operator scripts) vs 12.
+P0 verdicts: **#001 CLEARED** (writes no JE; the hit is a comment) · **#002 #003 #004 CLEARED** (withCurrentUser wraps every write) · **#005 #006 CLEARED** (caller's transaction: weekly-close → withCompany → withCurrentUser; load-event callers in withCurrentUser / withCompanyScope) · #007–#011 hardened in #24194 (scope by inheritance; recurring.worker under RLS bypass made it real).
+Full per-engine table (all 642 rows, nine answers + verdict): writer review running (4 reviewers × ~84 writers); will publish when every row has a verdict — not before.
+
+### ROUND 297 — driver-profile tab-by-tab linkage audit (prod read-only; D1 3e138476, D2 45fac397)
+- overview — rows: D1 0 (0), D2 2 (2) · stamps: display_id/created_by/updated_by · drill: defect (DQF rows unlinked) · reverse: n/a · ties: Missing 0 vs 12 required types
+- settlements — rows: 4 (8) / 4 (7) · stamps: status, created, voided · drill: ok · reverse: defect (→ /drivers/:id) · ties: D1 YTD $16,349.52 vs closed-only $14,503.41 (open draft P-0005 counted)
+- cash-advances — rows: D3 4 (4) · stamps: created/updated · drill: ok · reverse: defect · ties: escrow D2 $375.00 vs GL 2100-00-026 $250.00
+- deductions — rows: 10 (10) / 7 (7) · stamps: created/display_id · drill: defect · reverse: defect · ties: D2 $70.00 vs deductions_total $325.00 (all 67 rows still 'pending', 45 applied)
+- loads — rows: 17 (18) / 15 (16) (1 soft-deleted each, correct) · drill: ok · reverse: defect · ties: 17 vs 17
+- fuel — rows: 34 (34) / 38 (38) · drill: defect · reverse: defect · ties: D1 verdicts $4,774.83 vs SUM $11,170.46; list silently capped at 50
+- maintenance — rows: 7 (7) · drill: ok · reverse: defect · ties: 7 vs 7
+- safety — rows: DVIR 11 (11) · drill: defect · reverse: defect · ties: 2 internal fines vs 2
+- documents — rows: 30 (30) / 33 (33) · drill: defect (Manager sees, cannot open) · reverse: ok · ties: 30/33 vs 30/33
+- legal — rows: **Bills 93 (14) / 93 (12) — FIXED #24183** · drill: ok · reverse: defect (BillDetailPage) · ties: $64,457.23 vs $13,357.15
+- communications — rows: 0 (0; 29/32 in pwa.driver_notifications) · drill: defect · ties: 0 vs 0
+- reports — rows: 0 (shell, no query) · ties: n/a
+- activity — rows: 0/1 (0/1) · drill: ok · reverse: defect · ties: misses 285/306 payload.driver_id events
+Next fixes in order: settlements YTD drafts (12229), deductions flip on close (12233), escrow vs GL, fuel caps, reverse links to /drivers/:id/profile.
+
+### Lead commit NOT pushed — conflict
+UI-F9641 (4994ffa840) renders a real $0.00 on PartyBoard; live guard verify-design-token-parity requires "money() must render — for missing / zero". Not weakened. **Lead ruling needed:** is a real $0.00 balance "—" or "$0.00"?
+
+### Owner-visible
+- Settlements now post (P0 #24197) and can be undone whole (#24202). Both deployed.
