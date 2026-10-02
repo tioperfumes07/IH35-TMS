@@ -1,3 +1,8 @@
+**2026-10-02T15:00Z · BANK-F91049 MERGED #24123 · tip `d7a93771f6`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91049 MERGED FAST-MERGE | GO
+B-5 Make Deposit Save and close ▾ (Save and new). money-pr-local-gate PASS → #24123 squash. Session: F91045–F91049. F91038 still Tier-A blocked.
+NEXT: next ORDERS leftover · Lead Chrome · FE tip deploy · F91038 blocked until vendor_credit poster · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T14:55Z · BANK-F91048 MERGED #24121 · tip `3364993676`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91048 MERGED FAST-MERGE | GO
 B-5 Reclassify left PERIOD BALANCES From/To. money-pr-local-gate PASS → #24121 squash. Session: F91045–F91048. F91038 still Tier-A blocked.
