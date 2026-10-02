@@ -8,7 +8,7 @@
  *  - sortable columns
  *  - density toggle: Regular / Compact / Ultra compact
  *  - gear popover: column show/hide checklist + density + "Save as default"
- *  - advanced pager: First/Prev + numbered pages + "Page [input] of N" + Next/Last
+ *  - advanced pager: First/Prev + numbered pages + "Go to page [input] of N" + Next/Last
  *    + configurable per-page selector + "N–M of TOTAL"
  *  - optional select-all + per-row checkboxes → batch-actions bar
  *  - optional row 3-dots action menu
@@ -1957,15 +1957,15 @@ export function ParityTable<T>({
           >
             »
           </button>
-          <span className="ml-1 flex items-center gap-1">
-            Page
+          <span className="ml-1 flex items-center gap-1" data-parity-goto-page="1">
+            Go to page
             <input
               className="h-6 w-12 rounded-sm border border-gray-300 px-1 text-center"
               value={pageInput}
               placeholder={String(safePage)}
-              // ARIA-COMBOBOX-NO-NAME: the "Page"/"of N" text around this input is plain sibling
+              // ARIA-COMBOBOX-NO-NAME: the "Go to page"/"of N" text around this input is plain sibling
               // text, not linked via htmlFor/aria-labelledby — this backs 33+ list pages app-wide.
-              aria-label="Jump to page"
+              aria-label="Go to page"
               onChange={(e) => setPageInput(e.target.value.replace(/[^0-9]/g, ""))}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
