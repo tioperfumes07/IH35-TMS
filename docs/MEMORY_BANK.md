@@ -129,6 +129,26 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 - **Routes:** `POST .../matters/:id/reserve|legal-fee|recovery`. Guard `scripts/verify-legal-linkage.mjs`
   fails if money leaves the bill/invoice engines. No feed, no Chrome, no fixtures.
 
+### Active Architectural Decisions — B-2 JE-line reconcilable rows (Cursor, 2026-10-02)
+
+- **Law:** ORDERS-2026-10-01 B-2 / QBO REGISTER SPEC §6 — "Journal rows can be cleared too; the
+  reconcile works on GL lines against this account, not only on transactions."
+- **Engine:** `apps/backend/src/banking/reconcilable-gl-lines.ts`
+  - Workspace GET loads `journal_entry_postings` on `bank_accounts.ledger_account_id` for the session
+    period (status ≠ voided, not sample), excluding postings already represented by a live
+    `bank_transactions` row (`matched_journal_entry_id` or `bank_categorization` source).
+  - Debit on bank GL = deposit (is_credit); credit = payment — same sign as bank-tieout GL_ONLY.
+  - Clear via `POST …/reconciliation/:sessionId/clear` with `posting_id` →
+    `toggleAccountRegisterCleared` (register_cleared one-writer; reconciliation.routes never SETs
+    register_cleared).
+  - Arithmetic: `foldGlLinesIntoSummary` adds JE clears into cleared totals without re-running the
+    bank-side anyCleared/match-fallback normalizer (a JE clear must not flip matched bank rows).
+- **R stamp:** JE-only lines stay C via `register_cleared` until a CREATE-only
+  `reconciliation_session_id` on postings lands in Cursor HH 12–23. Bank-feed matched rows still
+  become R on Finish as before.
+- **Guard:** `scripts/ops/verify-b2-je-line-reconcilable.mjs`. Unit:
+  `apps/backend/src/banking/__tests__/reconcilable-gl-lines.test.ts`.
+
 ## Active Architectural Decisions — R224 gate loosenings fenced (Cursor, ROUND 240, 2026-09-29)
 - Owner accepted Check Creator mount (#23117) + AUTH-126 chain (#23118). Ordered: file what was
   loosened, shrink-only ratchet both sets.

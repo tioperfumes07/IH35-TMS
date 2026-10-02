@@ -15,6 +15,7 @@ import {
   startReconciliationSession,
   unmatchReconciliationTransaction,
   type PlaidBankTransaction,
+  type ReconciliationGlLine,
   type ReconciliationSession,
 } from "../../api/banking";
 import { useAuth } from "../../auth/useAuth";
@@ -36,6 +37,82 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { userFacingApiError } from "../../lib/api-error-message";
 
 type CandidateEvent = { id: string; event_date: string; event_type: "load" | "bill" | "settlement"; display_label: string };
+
+/** Unified reconcile grid row — bank feed OR JE line on the bank GL (B-2 LEFT). */
+type ReconGridRow = {
+  id: string;
+  row_kind: "bank" | "gl_line";
+  transaction_date: string;
+  posted_date: string | null;
+  amount_cents: number;
+  is_credit: boolean;
+  description: string | null;
+  merchant_name: string | null;
+  reconciliation_cleared: boolean;
+  type_label?: string;
+  journal_entry_id?: string | null;
+  posting_id?: string | null;
+  split_account?: string | null;
+  // bank-only match fields (optional)
+  matched_load_id?: string | null;
+  matched_bill_id?: string | null;
+  matched_settlement_id?: string | null;
+  matched_expense_id?: string | null;
+  matched_transfer_id?: string | null;
+  matched_journal_entry_id?: string | null;
+  matched_load_number?: string | null;
+  matched_bill_number?: string | null;
+  matched_settlement_display_id?: string | null;
+  matched_expense_number?: string | null;
+  matched_transfer_label?: string | null;
+  matched_journal_entry_memo?: string | null;
+};
+
+function bankTxToGridRow(tx: PlaidBankTransaction): ReconGridRow {
+  return {
+    id: tx.id,
+    row_kind: "bank",
+    transaction_date: tx.transaction_date,
+    posted_date: tx.posted_date ?? null,
+    amount_cents: Number(tx.amount_cents ?? 0),
+    is_credit: Boolean(tx.is_credit),
+    description: tx.description ?? null,
+    merchant_name: tx.merchant_name ?? null,
+    reconciliation_cleared: Boolean(tx.reconciliation_cleared),
+    matched_load_id: tx.matched_load_id,
+    matched_bill_id: tx.matched_bill_id,
+    matched_settlement_id: tx.matched_settlement_id,
+    matched_expense_id: tx.matched_expense_id,
+    matched_transfer_id: tx.matched_transfer_id,
+    matched_journal_entry_id: tx.matched_journal_entry_id,
+    matched_load_number: tx.matched_load_number,
+    matched_bill_number: tx.matched_bill_number,
+    matched_settlement_display_id: tx.matched_settlement_display_id,
+    matched_expense_number: tx.matched_expense_number,
+    matched_transfer_label: tx.matched_transfer_label,
+    matched_journal_entry_memo: tx.matched_journal_entry_memo,
+  };
+}
+
+function glLineToGridRow(line: ReconciliationGlLine): ReconGridRow {
+  return {
+    id: `gl:${line.posting_id}`,
+    row_kind: "gl_line",
+    transaction_date: line.entry_date,
+    posted_date: null,
+    amount_cents: line.amount_cents,
+    is_credit: line.is_credit,
+    description: line.memo ?? line.description,
+    merchant_name: line.payee ?? line.type_label,
+    reconciliation_cleared: line.register_cleared,
+    type_label: line.type_label,
+    journal_entry_id: line.journal_entry_id,
+    posting_id: line.posting_id,
+    split_account: line.split_account,
+    matched_journal_entry_id: line.journal_entry_id,
+    matched_journal_entry_memo: line.memo,
+  };
+}
 
 function candidateEntityKind(eventType: CandidateEvent["event_type"]) {
   switch (eventType) {
@@ -83,8 +160,8 @@ function priorReconciledSession(
   })[0] ?? null;
 }
 
-function transactionIsMatched(tx: PlaidBankTransaction) {
-  if (typeof tx.is_matched === "boolean") return tx.is_matched;
+function transactionIsMatched(tx: ReconGridRow) {
+  if (tx.row_kind === "gl_line") return true; // JE line is already a book row
   return Boolean(
     tx.matched_load_id ||
       tx.matched_bill_id ||
@@ -96,13 +173,16 @@ function transactionIsMatched(tx: PlaidBankTransaction) {
 }
 
 /** B-2 / BANK-DOM-03 — cleared for this session (●), falling back to matched until any row is cleared. */
-function transactionIsCleared(tx: PlaidBankTransaction, anyExplicitCleared: boolean) {
+function transactionIsCleared(tx: ReconGridRow, anyExplicitCleared: boolean) {
+  if (tx.row_kind === "gl_line") return Boolean(tx.reconciliation_cleared);
   if (anyExplicitCleared) return Boolean(tx.reconciliation_cleared);
   return Boolean(tx.reconciliation_cleared) || transactionIsMatched(tx);
 }
 
-function countCleared(transactions: PlaidBankTransaction[]) {
-  const anyExplicit = transactions.some((t) => Boolean(t.reconciliation_cleared));
+function countCleared(transactions: ReconGridRow[]) {
+  // Only bank-feed explicit clears flip the match-fallback gate — a JE register_cleared
+  // must not make matched-but-uncleared bank rows look uncleared (same as foldGlLinesIntoSummary).
+  const anyExplicit = transactions.some((t) => t.row_kind === "bank" && Boolean(t.reconciliation_cleared));
   let paymentCount = 0;
   let depositCount = 0;
   let paymentCents = 0;
@@ -175,7 +255,7 @@ export function ReconciliationWorkspacePage() {
   );
   const [completing, setCompleting] = useState(false);
   const [forceReason, setForceReason] = useState("");
-  const [localTransactions, setLocalTransactions] = useState<PlaidBankTransaction[]>([]);
+  const [localTransactions, setLocalTransactions] = useState<ReconGridRow[]>([]);
   const [txnSort, setTxnSort] = useState<{ key: "date" | "description" | "amount"; dir: "asc" | "desc" }>({
     key: "date",
     dir: "desc",
@@ -222,7 +302,12 @@ export function ReconciliationWorkspacePage() {
   useEffect(() => {
     const matched = workspaceQuery.data?.matched_transactions ?? [];
     const unmatched = workspaceQuery.data?.unmatched_transactions ?? [];
-    setLocalTransactions([...matched, ...unmatched]);
+    const glLines = workspaceQuery.data?.gl_lines ?? [];
+    setLocalTransactions([
+      ...matched.map(bankTxToGridRow),
+      ...unmatched.map(bankTxToGridRow),
+      ...glLines.map(glLineToGridRow),
+    ]);
     setSelectedTransactionId(null);
     setSelectedCandidateId(null);
   }, [workspaceQuery.data]);
@@ -735,11 +820,15 @@ export function ReconciliationWorkspacePage() {
                         className="min-w-0 text-left"
                       >
                         <span className="block truncate text-xs font-medium text-gray-900">
-                          {tx.merchant_name || tx.description || "Bank transaction"}
+                          {tx.merchant_name || tx.description || (tx.row_kind === "gl_line" ? "Journal" : "Bank transaction")}
                         </span>
                         <span className="block truncate text-xs text-gray-500">
-                          {matched ? "Matched" : "Unmatched"}
-                          {tx.description && tx.merchant_name ? ` · ${tx.description}` : ""}
+                          {tx.row_kind === "gl_line"
+                            ? `${tx.type_label ?? "Journal"}${tx.split_account ? ` · ${tx.split_account}` : ""}`
+                            : matched
+                              ? "Matched"
+                              : "Unmatched"}
+                          {tx.row_kind === "bank" && tx.description && tx.merchant_name ? ` · ${tx.description}` : ""}
                         </span>
                       </button>
                       <span className="text-right text-xs tabular-nums text-gray-800">
@@ -762,10 +851,11 @@ export function ReconciliationWorkspacePage() {
                           if (!sessionId || !companyId) return;
                           const next = !cleared;
                           setClearingId(tx.id);
-                          void clearReconciliationTransaction(sessionId, companyId, {
-                            transaction_id: tx.id,
-                            cleared: next,
-                          })
+                          const payload =
+                            tx.row_kind === "gl_line" && tx.posting_id
+                              ? { posting_id: tx.posting_id, cleared: next }
+                              : { transaction_id: tx.id, cleared: next };
+                          void clearReconciliationTransaction(sessionId, companyId, payload)
                             .then(() => {
                               setLocalTransactions((prev) =>
                                 prev.map((row) =>
@@ -785,38 +875,45 @@ export function ReconciliationWorkspacePage() {
                     </div>
                     {matched ? (
                       <div className="mt-1 flex flex-wrap gap-2 text-xs">
-                        {tx.matched_load_id ? (
+                        {tx.row_kind === "gl_line" && tx.journal_entry_id ? (
+                          <EntityLink
+                            kind="journal_entry"
+                            id={tx.journal_entry_id}
+                            label={entityLabel(tx.matched_journal_entry_memo, tx.journal_entry_id, "Journal entry")}
+                          />
+                        ) : null}
+                        {tx.row_kind === "bank" && tx.matched_load_id ? (
                           <EntityLink
                             kind="load"
                             id={tx.matched_load_id}
                             label={entityLabel(tx.matched_load_number ?? null, tx.matched_load_id, "Load")}
                           />
                         ) : null}
-                        {tx.matched_bill_id ? (
+                        {tx.row_kind === "bank" && tx.matched_bill_id ? (
                           <EntityLink
                             kind="bill"
                             id={tx.matched_bill_id}
                             label={visibleDocumentLabel(tx.matched_bill_number ?? null, tx.matched_bill_id, "Bill")}
                           />
                         ) : null}
-                        {tx.matched_settlement_id ? (
+                        {tx.row_kind === "bank" && tx.matched_settlement_id ? (
                           <EntityLink
                             kind="settlement"
                             id={tx.matched_settlement_id}
                             label={entityLabel(tx.matched_settlement_display_id ?? null, tx.matched_settlement_id, "Settlement")}
                           />
                         ) : null}
-                        {tx.matched_expense_id ? (
+                        {tx.row_kind === "bank" && tx.matched_expense_id ? (
                           <EntityLink
                             kind="expense"
                             id={tx.matched_expense_id}
                             label={visibleDocumentLabel(tx.matched_expense_number ?? null, tx.matched_expense_id, "Expense")}
                           />
                         ) : null}
-                        {tx.matched_transfer_id ? (
+                        {tx.row_kind === "bank" && tx.matched_transfer_id ? (
                           <EntityLink kind="transfer" id={tx.matched_transfer_id} label={entityLabel(tx.matched_transfer_label, tx.matched_transfer_id, "Transfer")} />
                         ) : null}
-                        {tx.matched_journal_entry_id ? (
+                        {tx.row_kind === "bank" && tx.matched_journal_entry_id ? (
                           <EntityLink kind="journal_entry" id={tx.matched_journal_entry_id} label={entityLabel(tx.matched_journal_entry_memo, tx.matched_journal_entry_id, "Journal entry")} />
                         ) : null}
                       </div>
@@ -865,9 +962,9 @@ export function ReconciliationWorkspacePage() {
             </div>
             <div className="mt-3 flex items-center gap-2">
               <ActionButton
-                disabled={!selectedTransaction || !selectedCandidateId}
+                disabled={!selectedTransaction || selectedTransaction.row_kind !== "bank" || !selectedCandidateId}
                 onClick={() => {
-                  if (!selectedTransaction || !selectedCandidateId || !sessionId || !companyId) return;
+                  if (!selectedTransaction || selectedTransaction.row_kind !== "bank" || !selectedCandidateId || !sessionId || !companyId) return;
                   const [matchedEventType, matchedEventId] = selectedCandidateId.split(":");
                   void matchReconciliationTransaction(sessionId, companyId, {
                     transaction_id: selectedTransaction.id,
@@ -898,9 +995,9 @@ export function ReconciliationWorkspacePage() {
                 Match selected
               </ActionButton>
               <ActionButton
-                disabled={!selectedTransaction}
+                disabled={!selectedTransaction || selectedTransaction.row_kind !== "bank"}
                 onClick={() => {
-                  if (!selectedTransaction || !sessionId || !companyId) return;
+                  if (!selectedTransaction || selectedTransaction.row_kind !== "bank" || !sessionId || !companyId) return;
                   void unmatchReconciliationTransaction(sessionId, companyId, { transaction_id: selectedTransaction.id })
                     .then(() => {
                       setLocalTransactions((prev) =>
