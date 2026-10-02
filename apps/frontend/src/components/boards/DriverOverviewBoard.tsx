@@ -4,7 +4,9 @@
  * haul / additional / deductions), additional payments, complaints, reports & damage on the left; integrity against
  * the fleet, trucks he has held, pay terms and compliance on the right. GET /api/v1/mdata/boards/drivers/:id/overview.
  */
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { AddPayLineModal } from "../driver-finance/AddPayLineModal";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError, apiRequest } from "../../api/client";
 import { formatDateUS } from "../../lib/formatDate";
@@ -58,6 +60,7 @@ const kindTone = (k: string) => (/detention|layover|wait|late|damage/i.test(k) ?
 const fmtIntegrity = (i: Integrity, v: number | null) => (v == null ? "—" : i.money ? usd(v) : `${v}${i.unit ?? ""}`);
 
 export function DriverOverviewBoard(props: { operatingCompanyId: string; driverId: string }) {
+  const [addPayOpen, setAddPayOpen] = useState(false);
   const navigate = useNavigate();
   const q = useQuery({
     queryKey: ["driver-overview", props.operatingCompanyId, props.driverId],
@@ -97,7 +100,8 @@ export function DriverOverviewBoard(props: { operatingCompanyId: string; driverI
           </div>
           <div className="pb-head-actions">
             <button type="button" className="dd-btn" onClick={() => navigate(`/drivers/${o.driver.id}?tab=profile`)}>Edit</button>
-            <button type="button" className="dd-btn" onClick={runSettlement}>Add payment</button>
+            {/* ROUND 288.3 item 3: Add payment adds ONE extra-pay line through the pay-line engine (no longer the creator). */}
+            <button type="button" className="dd-btn" onClick={() => setAddPayOpen(true)} data-testid="driver-add-payment">Add payment</button>
             <button type="button" className="dd-btn dd-btn--primary" onClick={runSettlement}>Run settlement</button>
           </div>
         </div>
@@ -358,6 +362,7 @@ export function DriverOverviewBoard(props: { operatingCompanyId: string; driverI
           </div>
         </div>
       </div>
+      <AddPayLineModal open={addPayOpen} onClose={() => setAddPayOpen(false)} operatingCompanyId={props.operatingCompanyId} driverId={props.driverId} driverName={o.driver.name} />
     </div>
   );
 }
