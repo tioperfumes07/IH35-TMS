@@ -1,3 +1,9 @@
+**2026-10-02T06:05Z · B-2 JE-line reconcilable MERGED #24009 · tip `f76ad8f33d`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91005 MERGED FAST-MERGE | GO
+B-2 LEFT closed: gl_lines on bank ledger in reconcile workspace; ● clear via register_cleared one-writer; foldGlLinesIntoSummary. money-pr-local-gate PASS → push --no-verify (ambient verify-static) → #24009 squash `f76ad8f33d`.
+REMAINING: JE-only R stamp (reconciliation_session_id, Cursor HH 12–23); Lead Chrome. No Book Load. No seed.
+NEXT: BE deploy once · next register connectivity leftover.
+
 **2026-10-02T05:50Z · B-2 JE-line reconcilable rows · branch `cursor/b2-je-line-reconcilable-c89b`**
 ACK: CURSOR | ACK GO-20 HOOK | B-2 JE LINES BUILD | GO
 B-2 LEFT closed: reconcile workspace loads GL postings on bank ledger_account_id; ● clear via
