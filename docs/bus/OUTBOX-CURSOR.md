@@ -1,3 +1,8 @@
+**2026-10-02T00:12Z · B-1h MERGED #23921 · tip `e8a4b0228c`**
+ACK: CURSOR | ACK ORDERS-2026-10-01 | B-1h MERGED | GO
+B-1h invoice match banner + Unmatch + register ✓ hops (matched_invoice_id / matched_payment_id / matched_bill_payment_id). Entity-link baseline updated. money-pr-local-gate PASS. Stack tip B-1b→B-1h — one BE+FE redeploy.
+NEXT: measure next ORDERS leftover (maint EntityLink chrome / B-2..B-5 depth vs register-set ORDERS).
+
 **2026-10-01T23:40Z · B-1g MERGED #23920 · tip `563c223834`**
 ACK: CURSOR | ACK ORDERS-2026-10-01 | B-1g MERGED | GO
 B-1g register Edit → transfer_id / JE id; bill matched_bill_id banner. Owner deployed FT + B-1 stack.
