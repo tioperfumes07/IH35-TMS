@@ -1,10 +1,10 @@
 {
-  "healthzSha": "c3807b3",
-  "generated_at": "2026-10-02T22:35:09.306Z",
+  "healthzSha": "2187c85",
+  "generated_at": "2026-10-02T22:48:13.299Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "c3807b3",
+    "deployedSha": "2187c85",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,42 @@
   },
   "recentActivity": [
     {
+      "number": 24266,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL (ROUND 337: unit_stop_events dedupe rewritten as preserve -> assert -> delete in one transaction; prod dry run stopped at the 0-unmatched assertion — 16 grown stops — nothing applied)",
+      "state": "merged",
+      "mergedAtCt": "10/02/2026, 05:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24266",
+      "sha": "0c6648f479",
+      "committedAtIso": "2026-10-02T17:47:37-05:00"
+    },
+    {
+      "number": 24265,
+      "title": "FINDING: ACCT-F2981 — a factored invoice's amount could be edited while Faro still held it as collateral; the database now refuses it while the purchase is open, naming the purchase and the Faro invoice number",
+      "state": "merged",
+      "mergedAtCt": "10/02/2026, 05:38 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24265",
+      "sha": "2187c85a43",
+      "committedAtIso": "2026-10-02T17:38:51-05:00"
+    },
+    {
+      "number": 24264,
+      "title": "FINDING: N/A LANE: DOCS (CC-3 OUTBOX: ROUND 330.7 — batch A #24254, batch B #24263, deploy ids, unit-stop cleanup AUTH request)",
+      "state": "merged",
+      "mergedAtCt": "10/02/2026, 05:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24264",
+      "sha": "e25cbe6acb",
+      "committedAtIso": "2026-10-02T17:37:31-05:00"
+    },
+    {
+      "number": 24263,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL (ROUND 330.7 order 2, batch B: my lane's 20 unswept scheduled engines — 9 defects fixed as ONE guarded sweep, overlap-proven on a fork; generalized guard: no session advisory locks)",
+      "state": "merged",
+      "mergedAtCt": "10/02/2026, 05:36 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24263",
+      "sha": "d472df5ef0",
+      "committedAtIso": "2026-10-02T17:36:59-05:00"
+    },
+    {
       "number": 24262,
       "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migration 202615300600 for CC-2 factored-invoice amount lock)",
       "state": "merged",
@@ -2175,42 +2211,6 @@
       "url": "",
       "sha": "25ed336aba",
       "committedAtIso": "2026-10-02T17:06:37-05:00"
-    },
-    {
-      "number": 24256,
-      "title": "FINDING: ACCT-F9839 LANE: FINANCIAL (Lead ROUND 332 items 1 + 2 + 4: an invoice can no longer be issued without its ledger entry, and the invoice half of the spine is wired and backfilled — the guard is wired in the same PR)",
-      "state": "merged",
-      "mergedAtCt": "10/02/2026, 05:03 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24256",
-      "sha": "48a411eb93",
-      "committedAtIso": "2026-10-02T17:03:07-05:00"
-    },
-    {
-      "number": 24255,
-      "title": "FINDING: ACCT-F2978 — a Faro short-pay posted only the reserve movement; the customer's shortfall had no reason-coded entry. It is now two entries with a shared link: the reserve side (DR 2150 / CR 1235) and the Owner's customer-side decision (reason-coded credit memo + DR reason / CR A/R, or kept open)",
-      "state": "merged",
-      "mergedAtCt": "10/02/2026, 05:00 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24255",
-      "sha": "8c70f6753f",
-      "committedAtIso": "2026-10-02T17:00:46-05:00"
-    },
-    {
-      "number": 24254,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL (ROUND 330.7 order 2, batch A: overlap proof on the 13 \"clean\" engines — 11 one run's work; odometer snapshot and unit stop events were NOT, both fixed)",
-      "state": "merged",
-      "mergedAtCt": "10/02/2026, 04:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24254",
-      "sha": "0a7efef08e",
-      "committedAtIso": "2026-10-02T16:59:23-05:00"
-    },
-    {
-      "number": 24253,
-      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: 2 migrations + verify-steps 12297 12301 12305 — CC-1 ROUND 332)",
-      "state": "merged",
-      "mergedAtCt": "10/02/2026, 04:54 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24253",
-      "sha": "a3d42c8439",
-      "committedAtIso": "2026-10-02T16:54:53-05:00"
     }
   ]
 }
