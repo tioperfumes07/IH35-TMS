@@ -129,7 +129,9 @@ function runChecks() {
   // ROUND 180 complete wires — admin fee 7200, empty rate, accessorials, additional_pay, deductions post.
   assert(/admin_fee_cents/.test(service) && /createSettlementDeduction/.test(service) && /7200/.test(service),
     "Post must createSettlementDeduction admin fee → 7200 (other_recovery)", failures);
-  assert(/empty_rate_cents/.test(service) && /empty_miles/.test(service),
+  // ROUND 288.3 item 2: the empty rate resolves through the one deadhead rule (settlement-creator-empty-pay.ts →
+  // deadhead-rule.ts); the service reads empty_miles and prices them with creatorEmptyPayCents.
+  assert((/empty_rate_cents/.test(service) || /creatorEmptyPayCents\(/.test(service)) && /empty_miles/.test(service),
     "Preview/post mileage must use empty_miles × empty_rate_cents", failures);
   assert(/additional_pay/.test(service) && /detention_pay|extra_pay/.test(service),
     "Post must write additional_pay as detention_pay/extra_pay settlement_lines", failures);

@@ -159,7 +159,24 @@ export type SettlementCreatorJeLine = {
   section: "fuel" | "expense" | "mileage" | "accessorial" | "advance" | "escrow" | "deduction" | "reimbursement" | "invoice" | "factoring" | "admin_fee" | "other";
 };
 
+/** ROUND 326 item 18 — the close engine's figures for this settlement (the ONE calculator Post writes with). */
+export type SettlementCreatorCloseTotals = {
+  gross_cents: number;
+  /** reimbursements + detention pay */
+  additions_cents: number;
+  reimbursements_cents: number;
+  detention_pay_cents: number;
+  deductions_cents: number;
+  escrow_cents: number;
+  advances_cents: number;
+  chargebacks_cents: number;
+  net_cents: number;
+  je_preview: Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number; description: string }>;
+};
+
 export type SettlementCreatorPreview = {
+  /** Present when the preview ran through the posting engine (previewSettlementCreatorThroughClose). */
+  close_totals?: SettlementCreatorCloseTotals | null;
   je_lines: SettlementCreatorJeLine[];
   debit_total_cents: number;
   credit_total_cents: number;
@@ -188,4 +205,5 @@ export type SettlementCreatorPostResult = {
   /** Faro submitted advance ids (filled by route after commit — never inside the Creator tx). */
   factoring_advance_ids?: string[];
   preview: SettlementCreatorPreview;
+  close_totals?: SettlementCreatorCloseTotals | null;
 };

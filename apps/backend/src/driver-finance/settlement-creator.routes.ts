@@ -9,7 +9,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { withCurrentUser } from "../auth/db.js";
 import {
-  previewSettlementCreator,
+  previewSettlementCreatorThroughClose,
   postSettlementCreatorInClientTx,
   SettlementCreatorError,
 } from "./settlement-creator.service.js";
@@ -194,7 +194,7 @@ export async function registerSettlementCreatorRoutes(app: FastifyInstance): Pro
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
         draft.operating_company_id,
       ]);
-      return previewSettlementCreator(client, draft);
+      return previewSettlementCreatorThroughClose(client, user.uuid, draft);
     });
     return reply.code(200).send({ preview });
   });

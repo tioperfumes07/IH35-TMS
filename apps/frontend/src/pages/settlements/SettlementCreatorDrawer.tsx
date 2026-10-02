@@ -12,7 +12,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
-import { formatUsdCents } from "../../lib/money";
+import { formatUsdCents, formatUsdCentsTable } from "../../lib/money";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useAccountingItemsQuery } from "../../hooks/useAccountingItemsQuery";
 import { FuelStopLocationPicker } from "../../components/locations/FuelStopLocationPicker";
@@ -241,7 +241,7 @@ function TotalRow({
         {label}
       </span>
       <span className={`inline-block w-[120px] text-right text-xs tabular-nums ${strong ? "font-bold" : ""} ${colour}`}>
-        {cents == null ? "—" : formatUsdCents(cents)}
+        {formatUsdCentsTable(cents)}
       </span>
     </div>
   );
@@ -1573,6 +1573,36 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
               ) : null}
             </div>
           </div>
+          {/*
+            ROUND 326 item 18 — the QuickBooks subtotal chain from the POSTING engine: the preview writes this
+            settlement inside a rolled-back savepoint and asks the close engine (the one calculator Post uses) for
+            its figures. Deductions, escrow and advances read as negatives. The NET here is the number Post writes;
+            Post refuses when it differs from the AlwaysTrack TOTAL DUE.
+          */}
+          {preview?.close_totals ? (
+            <div className="border-t border-[#E5E7EB] pt-2" data-testid="sc-posting-engine-totals">
+              <h4 className="text-center text-section-header font-bold uppercase tracking-wide text-[#4B5563]">
+                Posting engine · what Post writes
+              </h4>
+              <div className="mx-auto max-w-md">
+                <TotalRow label="Gross pay" cents={preview.close_totals.gross_cents} />
+                <TotalRow label="Additions" cents={preview.close_totals.additions_cents} />
+                <TotalRow label="Deductions" cents={-preview.close_totals.deductions_cents} />
+                <TotalRow label="Escrow" cents={-preview.close_totals.escrow_cents} />
+                <TotalRow label="Advances" cents={-preview.close_totals.advances_cents} />
+                {preview.close_totals.chargebacks_cents ? (
+                  <TotalRow label="Chargebacks" cents={-preview.close_totals.chargebacks_cents} />
+                ) : null}
+                <TotalRow
+                  label="Net pay"
+                  cents={preview.close_totals.net_cents}
+                  strong
+                  double
+                  tied={pdfDriverNet != null ? preview.close_totals.net_cents === Math.round(pdfDriverNet) : undefined}
+                />
+              </div>
+            </div>
+          ) : null}
           {preview?.driver_net_cents == null ? (
             <p className="text-center text-xs text-[#6B7280]">
               Driver net is computed by the engine — press Preview JE to fill it. Everything above is

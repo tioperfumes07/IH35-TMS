@@ -15,7 +15,8 @@ import {
   reverseDriverAdvanceInClientTx,
 } from "../cash-advances/cash-advance-create.js";
 import type { TripType, DbClient } from "../dispatch/presettlement-link.service.js";
-import { createBareSettlementForDocument } from "./settlement-load-reassignment.service.js";
+import { createBareSettlementForDocument, recomputeSettlementHeader } from "./settlement-load-reassignment.service.js";
+import { closeSettlementPayRun, SettlementPayRunError, type SettlementPayRunResult } from "./settlement-payrun-close.service.js";
 import {
   isAlwaysTrackSettlementNumber,
   isPresettlementPSeries,
@@ -25,7 +26,6 @@ import { postSourceTransactionInClientTx } from "../accounting/posting-engine.se
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/poster.service.js";
 import { nextExpenseDisplayId } from "../accounting/display-id.js";
-import { createHistoricalEscrowHold } from "./historical-escrow-backfill.service.js";
 import { creatorEmptyPayCents, creatorEmptyRateCents } from "./settlement-creator-empty-pay.js";
 import { EscrowResolverError, resolveDriverEscrowLiabilityAccount } from "./escrow-resolver.service.js";
 import { createSettlementDeduction } from "./deductions.service.js";
@@ -39,6 +39,7 @@ import {
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { assertSubjectMayCloseOnClient } from "./feed-gate/feed-gate.service.js";
 import type {
+  SettlementCreatorCloseTotals,
   SettlementCreatorDraft,
   SettlementCreatorJeLine,
   SettlementCreatorLoadBlock,
@@ -176,6 +177,21 @@ async function voidPriorCreatorSettlementForEdit(
 ): Promise<void> {
   const reason = `Settlement Creator Edit = void and repost (${settlementLabel})`;
   const businessDate = companyBusinessDate();
+
+  // ROUND 326 item 18 — a settlement the close engine posted (per-load A/P chain: bills, non-cash applications, net
+  // pay bill payment) is not undone by the void cascade below, which reverses the retired bill-payment poster only.
+  // Refuse by name rather than leave the chain's bills and payments standing under a cancelled settlement.
+  const postedRun = await client.query<{ id: string }>(
+    `SELECT id::text FROM driver_finance.payrun_gl_runs
+      WHERE operating_company_id = $1::uuid AND settlement_id = $2::uuid AND status = 'posted' LIMIT 1`,
+    [opco, settlementId],
+  );
+  if (postedRun.rows[0]) {
+    throw new SettlementCreatorError(
+      "settlement_posted_through_close",
+      `Settlement ${settlementLabel} is posted (per-load A/P bills and payments, pay run ${postedRun.rows[0].id}). Undo that post first; Edit cannot replace a posted settlement.`,
+    );
+  }
 
   const audit = await client.query<{ payload: PriorCreatorPostPayload }>(
     `
@@ -800,9 +816,12 @@ export async function postSettlementCreatorInClientTx(
   client: DbClient,
   actorUserId: string,
   draft: SettlementCreatorDraft,
+  opts: { dryRun?: boolean } = {},
 ): Promise<SettlementCreatorPostResult> {
   const preview = await previewSettlementCreator(client, draft);
-  if (!preview.can_post) {
+  // A dry run (previewSettlementCreatorThroughClose) writes the settlement inside a savepoint the caller rolls
+  // back, so the posting engine can compute the totals the owner checks — it never refuses on the preview.
+  if (!preview.can_post && !opts.dryRun) {
     throw new SettlementCreatorError("preview_blocked", preview.blockers.join(" · ") || "Post blocked");
   }
 
@@ -817,6 +836,9 @@ export async function postSettlementCreatorInClientTx(
   const isSampleData = driverSampleRes.rows[0]?.is_sample_data ?? false;
 
   const typedNo = (draft.settlement_no ?? "").trim();
+  // A P-series pre-settlement shell stays open (nothing posts); an AlwaysTrack settlement posts through the close
+  // engine — the ONE settlement calculator and poster (per-load A/P chain).
+  const postsThroughClose = !(typedNo && isPresettlementPSeries(typedNo));
   let settlementId: string;
   let displayId: string;
   let sourceDocumentRef: string | null = null;
@@ -1303,15 +1325,24 @@ export async function postSettlementCreatorInClientTx(
         `Escrow "${e.description || "hold"}" needs a load number so it links to the tour.`,
       );
     }
-    await createHistoricalEscrowHold(client as never, {
-      source: "historical_backfill",
-      operating_company_id: draft.operating_company_id,
-      driver_id: draft.driver_id,
-      load_id: loadId,
-      description: e.description || `Settlement ${draft.settlement_no} escrow`,
-      amount_cents: e.amount_cents,
-      actor_user_id: actorUserId,
-    });
+    // ROUND 326 item 18 — escrow is a settlement line (escrow_contribution) the close engine reads, posts to the
+    // driver's 2100-00-0NN escrow account and records in the escrow ledger ONCE. Writing the ledger hold here as
+    // well (the former createHistoricalEscrowHold call) would hold the same $25 twice.
+    await client.query(
+      `
+        INSERT INTO driver_finance.settlement_lines (
+          settlement_id, operating_company_id, line_type, description, amount, load_id, is_active, is_sample_data
+        )
+        VALUES ($1::uuid, $2::uuid, 'escrow_contribution', $3, $4, $5::uuid, true, false)
+      `,
+      [
+        settlementId,
+        draft.operating_company_id,
+        e.description || `Settlement ${draft.settlement_no} escrow`,
+        dollarsFromCents(e.amount_cents),
+        loadId,
+      ],
+    );
   }
 
   // Additional pay → settlement_lines (detention_pay / extra_pay). Never reimbursement.
@@ -1495,6 +1526,8 @@ export async function postSettlementCreatorInClientTx(
       );
     }
 
+    // Invoices do not change driver pay; a dry run (rolled back) never mints or sends one.
+    if (opts.dryRun) continue;
     let built;
     try {
       built = await buildInvoiceFromLoad(client, {
@@ -1542,6 +1575,52 @@ export async function postSettlementCreatorInClientTx(
     }
   }
 
+  // ROUND 326 item 18 (owner: "the totals he verifies must come from the same code path the post writes — do not
+  // create a second calculator"). The settlement just written is computed by the close engine — the one
+  // settlement calculator and poster — on this same transaction. Its NET is the figure checked against the
+  // AlwaysTrack TOTAL DUE; a difference refuses the post and names every term, never a silent second number.
+  let closeTotals: SettlementCreatorCloseTotals | null = null;
+  if (postsThroughClose) {
+    await recomputeSettlementHeader(client as never, settlementId, draft.operating_company_id);
+    const closeInput = { operatingCompanyId: draft.operating_company_id, settlementId, onlyAdvanceIds: advanceIds };
+    const closeActor = { userId: actorUserId };
+    let closePreview: SettlementPayRunResult;
+    try {
+      closePreview = await closeSettlementPayRun({ ...closeInput, previewOnly: true }, closeActor, { client: client as never });
+    } catch (err) {
+      if (err instanceof SettlementPayRunError) {
+        throw new SettlementCreatorError(`close_${err.code.toLowerCase()}`, `The posting engine refuses this settlement: ${err.message}`);
+      }
+      throw err;
+    }
+    closeTotals = toCreatorCloseTotals(closePreview);
+    if (opts.dryRun) {
+      return dryRunResult(settlementId, displayId, sourceDocumentRef, preview, closeTotals);
+    }
+    const draftNet = Math.round(Number(draft.pdf_driver_net_cents));
+    if (closeTotals.net_cents !== draftNet || closeTotals.net_cents !== preview.driver_net_cents) {
+      throw new SettlementCreatorError(
+        "totals_differ_from_posting_engine",
+        `Posting engine NET ${dollarsFromCents(closeTotals.net_cents)} ≠ AlwaysTrack TOTAL DUE ${dollarsFromCents(draftNet)} ` +
+          `(gross ${dollarsFromCents(closeTotals.gross_cents)} · additions ${dollarsFromCents(closeTotals.additions_cents)} · ` +
+          `deductions ${dollarsFromCents(closeTotals.deductions_cents)} · escrow ${dollarsFromCents(closeTotals.escrow_cents)} · ` +
+          `advances ${dollarsFromCents(closeTotals.advances_cents)} · chargebacks ${dollarsFromCents(closeTotals.chargebacks_cents)}). Nothing posted.`,
+      );
+    }
+    let closed: SettlementPayRunResult;
+    try {
+      closed = await closeSettlementPayRun(closeInput, closeActor, { client: client as never });
+    } catch (err) {
+      if (err instanceof SettlementPayRunError) {
+        throw new SettlementCreatorError(`close_${err.code.toLowerCase()}`, `The posting engine refused the post: ${err.message}`);
+      }
+      throw err;
+    }
+    if (closed.journal_entry_id) journalEntryIds.push(closed.journal_entry_id);
+  } else if (opts.dryRun) {
+    return dryRunResult(settlementId, displayId, sourceDocumentRef, preview, null);
+  }
+
   await appendCrudAudit(
     client as never,
     actorUserId,
@@ -1559,6 +1638,7 @@ export async function postSettlementCreatorInClientTx(
       invoice_ids: invoiceIds,
       company_expenses_cents: preview.company_expenses_cents,
       driver_net_cents: preview.driver_net_cents,
+      close_totals: closeTotals,
     },
     "info",
     AUDIT_TAG,
@@ -1584,8 +1664,86 @@ export async function postSettlementCreatorInClientTx(
     journal_entry_ids: journalEntryIds,
     invoice_ids: invoiceIds,
     preview,
+    close_totals: closeTotals,
     feed_gate: { intake_id: gate.intake.id, status: gate.intake.status, checks_total: gate.intake.checks_total, checks_failed: gate.intake.checks_failed },
   };
+}
+
+/** The close engine's breakdown as the QuickBooks subtotal chain the creator shows (all positive magnitudes). */
+function toCreatorCloseTotals(r: SettlementPayRunResult): SettlementCreatorCloseTotals {
+  const b = r.breakdown;
+  return {
+    gross_cents: b.gross_cents,
+    additions_cents: b.reimbursements_cents + b.detention_pay_cents,
+    reimbursements_cents: b.reimbursements_cents,
+    detention_pay_cents: b.detention_pay_cents,
+    deductions_cents: b.deductions_cents,
+    escrow_cents: b.escrow_contribution_cents,
+    advances_cents: b.advance_recoveries_cents,
+    chargebacks_cents: b.chargebacks_cents,
+    net_cents: b.net_cents,
+    je_preview: r.je_preview,
+  };
+}
+
+function dryRunResult(
+  settlementId: string,
+  displayId: string,
+  sourceDocumentRef: string | null,
+  preview: SettlementCreatorPreview,
+  closeTotals: SettlementCreatorCloseTotals | null,
+): SettlementCreatorPostResult {
+  return {
+    settlement_id: settlementId,
+    source_document_ref: sourceDocumentRef ?? displayId,
+    display_id: displayId,
+    load_ids: [],
+    expense_ids: [],
+    fuel_transaction_ids: [],
+    advance_ids: [],
+    journal_entry_ids: [],
+    invoice_ids: [],
+    preview,
+    close_totals: closeTotals,
+  };
+}
+
+/**
+ * ROUND 326 item 18 — the creator's preview, with its totals computed by the POSTING engine. Writes the settlement
+ * exactly as Post would (same function, dryRun) inside a savepoint, asks the close engine for the breakdown, then
+ * rolls the savepoint back: nothing persists, and the numbers the owner checks against AlwaysTrack are the numbers
+ * Post writes. A refusal by either path comes back as a named blocker.
+ */
+export async function previewSettlementCreatorThroughClose(
+  client: DbClient,
+  actorUserId: string,
+  draft: SettlementCreatorDraft,
+): Promise<SettlementCreatorPreview> {
+  const preview = await previewSettlementCreator(client, draft);
+  await client.query("SAVEPOINT settlement_creator_dry_run");
+  let closeTotals: SettlementCreatorCloseTotals | null = null;
+  let refusal: string | null = null;
+  try {
+    const dry = await postSettlementCreatorInClientTx(client, actorUserId, draft, { dryRun: true });
+    closeTotals = dry.close_totals ?? null;
+  } catch (err) {
+    refusal = err instanceof Error ? err.message : String(err);
+  } finally {
+    await client.query("ROLLBACK TO SAVEPOINT settlement_creator_dry_run");
+    await client.query("RELEASE SAVEPOINT settlement_creator_dry_run");
+  }
+  const blockers = [...preview.blockers];
+  if (refusal) blockers.push(`Posting engine: ${refusal}`);
+  if (closeTotals) {
+    const pdfNet = Math.round(Number(draft.pdf_driver_net_cents));
+    if (closeTotals.net_cents !== pdfNet) {
+      blockers.push(`Posting engine NET ${dollarsFromCents(closeTotals.net_cents)} ≠ AlwaysTrack TOTAL DUE ${dollarsFromCents(pdfNet)}.`);
+    }
+    if (closeTotals.net_cents !== preview.driver_net_cents) {
+      blockers.push(`Posting engine NET ${dollarsFromCents(closeTotals.net_cents)} ≠ the creator's sections ${dollarsFromCents(preview.driver_net_cents)}.`);
+    }
+  }
+  return { ...preview, close_totals: closeTotals, blockers, can_post: preview.can_post && blockers.length === preview.blockers.length };
 }
 
 export class SettlementCreatorError extends Error {

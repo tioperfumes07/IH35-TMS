@@ -521,6 +521,13 @@ export async function closeSettlementPayRun(
     /** Force PREVIEW (compute only, write nothing) even when the posting flag is ON. */
     previewOnly?: boolean;
     /**
+     * ROUND 326 item 18 (CC-1) — recover ONLY these advances at this close. The Settlement Creator posts one
+     * AlwaysTrack settlement and applies exactly the advances that document lists (the ones it just booked);
+     * an older outstanding advance stays on the driver for the settlement that actually recovers it.
+     * Unset = every recoverable advance (unchanged behavior for every other caller).
+     */
+    onlyAdvanceIds?: string[] | null;
+    /**
      * SET-05 — explicit floor override for THIS close only. Required (with a non-empty reason)
      * to close when post-withholding net would breach the resolved floor. Never silently caps.
      */
@@ -655,7 +662,10 @@ export async function closeSettlementPayRun(
     const deductionsCents = Array.from(deductionsByRole.values()).reduce((s, v) => s + v, 0);
     const chargebacksCents = await loadChargebacksCents(client, opco, settlementId);
 
-    const recoverable = await loadRecoverableAdvances(client, opco, settlement.driver_id);
+    const onlyAdvanceIds = input.onlyAdvanceIds ? new Set(input.onlyAdvanceIds) : null;
+    const recoverable = (await loadRecoverableAdvances(client, opco, settlement.driver_id)).filter(
+      (a) => onlyAdvanceIds == null || onlyAdvanceIds.has(a.id)
+    );
     const advanceRecoveriesCents = recoverable.reduce((s, a) => s + a.amount_cents, 0);
 
     // GO-22 B7 — blocking, non-deferrable decision, but ONLY when the caller opts in via
