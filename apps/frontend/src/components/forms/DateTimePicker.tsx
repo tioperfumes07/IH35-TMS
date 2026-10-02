@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Calendar } from "lucide-react";
 import {
   formatDateTimeLocalUS,
@@ -124,9 +125,67 @@ export function DateTimePicker({
     }
   }, [value]);
 
+  /**
+   * OWNER DEFECT, 2026-10-02: "they do not appear ... you cannot read month".
+   *
+   * TWO ROOT CAUSES, both fixed here rather than patched at the call sites.
+   *
+   * 1. THE POPOVER WAS CLIPPED INSIDE MODALS. It rendered `absolute` inside the field wrapper, so
+   *    any ancestor with `overflow-hidden` / `overflow-y-auto` — which every modal and drawer in
+   *    this app has — cut it off or hid it entirely, and any ancestor stacking context beat its
+   *    z-50. It now renders in a PORTAL on document.body with `fixed` placement measured from the
+   *    trigger, so no ancestor overflow or stacking context can reach it. It flips above the field
+   *    when there is not enough room below, and clamps to the viewport so it is never off-screen.
+   * 2. THE MONTH WAS UNREADABLE. The popover was w-56 (224px); after 16px padding, two 32px arrows
+   *    and a 64px year box, the month <select> had roughly 50px at text-[11px] — "September"
+   *    truncated to a few characters. The popover is now w-72 with a real minimum width on the
+   *    month and QBO-legible type.
+   *
+   * Because the popover is portalled it is no longer a DOM descendant of `ref`, so outside-click
+   * detection MUST test the popover node too — otherwise the first click inside the calendar
+   * closes it. That is what `popoverRef` is for.
+   */
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  const placePopover = useCallback(() => {
+    const anchor = ref.current;
+    if (!anchor) return;
+    const r = anchor.getBoundingClientRect();
+    const PANEL_W = 288; // w-72 — wide enough for the full month name beside the year
+    const PANEL_H = popoverRef.current?.offsetHeight ?? 320;
+    const GAP = 4;
+    const roomBelow = window.innerHeight - r.bottom;
+    const top =
+      roomBelow < PANEL_H + GAP && r.top > PANEL_H + GAP
+        ? Math.max(GAP, r.top - PANEL_H - GAP) // flip above
+        : Math.min(r.bottom + GAP, Math.max(GAP, window.innerHeight - PANEL_H - GAP));
+    const left = Math.min(Math.max(GAP, r.left), Math.max(GAP, window.innerWidth - PANEL_W - GAP));
+    setPopoverPos({ top, left, width: PANEL_W });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setPopoverPos(null);
+      return;
+    }
+    placePopover();
+    // Keep it pinned to the field while a modal body scrolls or the window resizes. Capture phase
+    // so scrolling inside any ancestor container is seen, not just the document.
+    window.addEventListener("scroll", placePopover, true);
+    window.addEventListener("resize", placePopover);
+    return () => {
+      window.removeEventListener("scroll", placePopover, true);
+      window.removeEventListener("resize", placePopover);
+    };
+  }, [open, placePopover]);
+
   useEffect(() => {
     function onDoc(e: PointerEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      const inField = ref.current?.contains(t) ?? false;
+      const inPopover = popoverRef.current?.contains(t) ?? false;
+      if (!inField && !inPopover) setOpen(false);
     }
     // Escape closes ONLY this popover — stopPropagation so parent wizard modals stay open (Defect 6b).
     function onKey(e: KeyboardEvent) {
@@ -372,7 +431,8 @@ export function DateTimePicker({
               Clear
             </button>
           ) : null}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
