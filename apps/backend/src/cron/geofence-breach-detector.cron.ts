@@ -201,6 +201,9 @@ export async function runGeofenceBreachDetectionTick(
         continue;
       }
 
+      // F-RETRY (ROUND 301): a double tick / concurrent worker can race past the SELECT dedup
+      // above. Re-assert the business key in the INSERT itself via WHERE NOT EXISTS so a retry
+      // does not write a second breach row (surrogate id would not protect anything).
       const inserted = await client.query<{ id: string }>(
         `
           INSERT INTO safety.geofence_breach_events (
@@ -213,7 +216,7 @@ export async function runGeofenceBreachDetectionTick(
             position_lat,
             position_lng
           )
-          VALUES (
+          SELECT
             $1::uuid,
             $2::uuid,
             $3::uuid,
@@ -222,6 +225,17 @@ export async function runGeofenceBreachDetectionTick(
             $6::timestamptz,
             $7::numeric,
             $8::numeric
+          WHERE NOT EXISTS (
+            SELECT 1
+            FROM safety.geofence_breach_events e
+            WHERE e.operating_company_id = $1::uuid
+              AND e.vehicle_id = $2::uuid
+              AND e.event_type = $5
+              AND e.event_at >= ($6::timestamptz - interval '5 minutes')
+              AND (
+                e.geofence_id = $3::uuid
+                OR ($4::uuid IS NOT NULL AND e.customer_id = $4::uuid)
+              )
           )
           RETURNING id::text
         `,
@@ -238,7 +252,10 @@ export async function runGeofenceBreachDetectionTick(
       );
 
       const eventId = inserted.rows[0]?.id;
-      if (!eventId) continue;
+      if (!eventId) {
+        dedupSkipped += 1;
+        continue;
+      }
       eventsInserted += 1;
 
       await client.query(

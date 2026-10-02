@@ -579,6 +579,15 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-fuel-posts-only-on-bank-match.mjs",
     ],
   ],
+  // ROUND 301 Cursor independent engine audit — safety reminders cron under withLuciaBypass must never
+  // UPDATE/INSERT compliance_reminders without an operating_company_id predicate (USMCA only; TRANSP/TRK frozen).
+  [
+    "verify-safety-reminders-cron-usmca-scoped",
+    [
+      "apps/backend/src/safety/reminders.cron.ts",
+      "scripts/verify-safety-reminders-cron-usmca-scoped.mjs",
+    ],
+  ],
   // ROUND 288.2 — one match writer + one unmatch writer; fuel match must write JE same txn.
   [
     "verify-one-bank-match-writer-writes-je",

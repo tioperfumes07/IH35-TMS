@@ -331,6 +331,24 @@ Measured (Neon `br-fancy-credit-akjnd07a`, bypass_rls=lucia, tip `6d18a73826`):
   Seed stamps `miles_shortest` so driver bill can mint. Faro `submitted_at` stamped from Date sent
   (funding JE still at actual Faro funding). Owner Chrome Post still required for R180 §17 DONE.
 
+
+## Active Architectural Decisions — Engine audit 632 (Cursor, 2026-10-02)
+
+Independent re-run of the competing-engine census (same population + nine checks as the
+10-02 workbook METHOD sheets; `.js` stripped on import resolution). Tip measured **642**
+engines (vs owner approx 632). Full rows: `artifacts/engine-audit-632/` + report
+`docs/bus/2026-10-02-CURSOR-INDEPENDENT-ENGINE-AUDIT-642.md`.
+
+- **P0 FIXED:** `safety/reminders.cron.ts` was an unscoped UPDATE under `withLuciaBypass`
+  (frozen TRANSP/TRK reachable). Now USMCA-only. Guard
+  `verify-safety-reminders-cron-usmca-scoped`.
+- **CLEARED:** `idempotency-cleanup.cron.ts` global TTL DELETE is by design (HTTP cache keys).
+- **F-RETRY:** 47 word-match candidates → 18 CONFIRMED live-scheduler / 29 CLEARED FP.
+  `geofence-breach-detector.cron.ts` got `INSERT … WHERE NOT EXISTS` on the business key.
+- **bank_transaction:** fork proof `br-bitter-sunset-ak409eug` txid `14894119` — unmatch +
+  reversing JE same txn when a JE exists. Live census still **98 matched / 0 JE** (half-write
+  stamp class). Unmatch of JE-less match clears the flag with nothing to reverse.
+
 ## Known Quirks & Blockers
 
 ### ROUND 202 — bank-feed orphan-match false red (Cursor, 2026-09-28)

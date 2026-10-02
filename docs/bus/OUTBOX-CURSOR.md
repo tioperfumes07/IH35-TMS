@@ -1,3 +1,12 @@
+
+## 2026-10-02T19:19Z · ROUND 301 ENGINE AUDIT 642 (Cursor independent)
+
+COUNTS: pop=642 writers=348 RO=294 money=11 wired=623 orphan=11 test-only=8 test-covered=355 no-header-writers=165 F-RETRY=47 (CONFIRMED live-sched=18 CLEARED FP=29). Diff vs owner approx: +10 engines, +15 writers, writers-no-header 0.
+P0: reminders.cron CONFIRMED→FIXED (USMCA scope) · idempotency-cleanup CLEARED (TTL cache by design).
+F-RETRY biggest named CLEARED: qbo/push, factor.service, cash-advance-owner-approval, lease-asc842 (word-match). geofence-breach CONFIRMED→FIXED WHERE NOT EXISTS.
+bank_tx fork proof txid=14894119 (unmatch+reversing JE same txn). Live 98 matched/0 JE = half-write class.
+Fuel+one-writer guards PASS on tip. Report: docs/bus/2026-10-02-CURSOR-INDEPENDENT-ENGINE-AUDIT-642.md + artifacts/engine-audit-632/*. NO prod money writes.
+
 **2026-10-02T16:33Z · ROUND 297 MERGED #24164 · tip `45eae4072c` · MEASURED $20,942.94**
 ACK: CURSOR | ACK ROUND 297 DONE | GO
 PR https://github.com/tioperfumes07/IH35-TMS/pull/24164 squash `45eae4072c16e37407a34a2677c7387396fd68d9`. money-pr-local-gate PASS → push → FAST-MERGE.

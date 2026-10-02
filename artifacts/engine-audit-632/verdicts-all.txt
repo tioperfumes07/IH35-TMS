@@ -1,0 +1,642 @@
+1	accounting/account-balances.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+2	accounting/account-register.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+3	accounting/allocations.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+4	accounting/amortization-posting/amortization-posting.service.ts	WIRED	W=YES	M=YES	A=ok	B=FLAG	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: B-ATOMIC: money multi-table write without txn boundary
+5	accounting/ap-aging.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+6	accounting/ap-import/qbo-ap-import-preview.service.ts	TEST-ONLY	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=TEST-ONLY	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1)
+7	accounting/ar-aging.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+8	accounting/auto-invoice-on-bol.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+9	accounting/balance-sheet.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+10	accounting/bank-deposits.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (2)
+11	accounting/bank-recon/bank-match-fuel-post.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+12	accounting/bank-recon/match.service.ts	WIRED	W=YES	M=YES	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+13	accounting/bank-recon/recon-worklist.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1)
+14	accounting/bill-gl-draft.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+15	accounting/bill-gl.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+16	accounting/bill-payment-gl.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+17	accounting/bills.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+18	accounting/bills/recurring/generator.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1); F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+19	accounting/bills/recurring/template.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (2)
+20	accounting/break-even.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+21	accounting/broker-advances.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (4)
+22	accounting/bulk-void.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (2)
+23	accounting/cascade-void-engine.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+24	accounting/cash-basis/period-close-snapshot.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+25	accounting/cash-basis/read-policy.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+26	accounting/cash-basis/snapshot.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+27	accounting/cash-flow.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+28	accounting/checks/check-account-rules.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+29	accounting/checks/check-create.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1)
+30	accounting/checks/check-payee.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+31	accounting/checks/check-print-batch.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (8)
+32	accounting/checks/check-stock.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+33	accounting/checks/check-void.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+34	accounting/coa-asymmetry-report.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+35	accounting/coa-roles/resolver.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+36	accounting/collections.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (2)
+37	accounting/company-settlement-close-manual.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1)
+38	accounting/company-settlement-close.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+39	accounting/company-settlement-document.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+40	accounting/company-settlement-open.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+41	accounting/company-settlement-report.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+42	accounting/comparison-report.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+43	accounting/consolidated-statements.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+44	accounting/cost-center-class-variance.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+45	accounting/counterparty-statements.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+46	accounting/customer-activity.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+47	accounting/date-ranges.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+48	accounting/driver-subaccount-backfill.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+49	accounting/driver-subaccount-provision.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+50	accounting/driver-vendor-link.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+51	accounting/expense-category-map/resolver.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+52	accounting/expense-duplicate.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+53	accounting/expense-parse-backfill.service.ts	ORPHAN	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=ORPHAN	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; H-ORPHAN
+54	accounting/factor-reconciliation/recon.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+55	accounting/factoring-fees-posting/poster.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+56	accounting/factoring-posting/default-interest.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+57	accounting/factoring-posting/poster.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+58	accounting/factoring-posting/reserve-tracker.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+59	accounting/fin20-aging.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+60	accounting/finance-hub-amortization-posting/loan-payment-posting.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+61	accounting/finance-hub.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+62	accounting/fuel-posting/maybe-post-from-fuel-transaction.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+63	accounting/fuel-posting/poster.service.ts	WIRED	W=YES	M=YES	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+64	accounting/fuel-posting/reflush-unposted-fuel-gl.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+65	accounting/insurance-claim-recovery-posting/poster.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+66	accounting/invoice-date-recompute.service.ts	ORPHAN	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=ORPHAN	I=ok	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS; H-ORPHAN
+67	accounting/invoice-disputes.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+68	accounting/invoice-gl.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+69	accounting/invoice-send.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+70	accounting/invoices.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+71	accounting/journal-entries.service.ts	WIRED	W=YES	M=YES	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+72	accounting/journal-entry-qbo-push.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=FLAG	H=WIRED	I=FLAG	DEFECT: G-SILENT: empty catch
+73	accounting/lease-asc842/lease-posting.service.ts	WIRED	W=YES	M=YES	A=ok	B=FLAG	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: B-ATOMIC: money multi-table write without txn boundary
+74	accounting/lease-asc842/lease.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+75	accounting/load-lookup.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+76	accounting/maintenance-posting/poster.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1); F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+77	accounting/maintenance-shop.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+78	accounting/month-close.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+79	accounting/opening-balance-import/opening-balance-import.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+80	accounting/opening-balance-import/qbo-ob-2026-03-31-live-pull.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+81	accounting/opening-balance-register/opening-balance-register.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1)
+82	accounting/owned-asset-disposal.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+83	accounting/owned-unit-fixed-asset-register.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+84	accounting/parts-inventory-posting/poster.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+85	accounting/payments/apply.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+86	accounting/payments/bank-invoice-backlink.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+87	accounting/period-close-retained-earnings.service.ts	WIRED	W=YES	M=YES	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+88	accounting/posted-while-tour-open-report.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+89	accounting/posting-engine.service.ts	WIRED	W=YES	M=YES	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+90	accounting/profit-loss.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+91	accounting/proforma-convert.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+92	accounting/proof-trail.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+93	accounting/property-tax-posting/poster.service.ts	TEST-ONLY	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=TEST-ONLY	I=ok	OK (TEST-ONLY)
+94	accounting/pse-mirror.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+95	accounting/reclassify/reclassify.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (8)
+96	accounting/recon/recon-cron.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+97	accounting/recon/recon-engine.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1); F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+98	accounting/recurring.worker.ts	WIRED	W=YES	M=YES	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+99	accounting/reinstate-document.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1)
+100	accounting/related-party-loan-posting/interest-accrual.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+101	accounting/related-party-loan-posting/poster.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+102	accounting/related-party-loan-posting/schedule.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+103	accounting/revenue-leakage.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+104	accounting/revrec-delivery-posting/poster.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (2)
+105	accounting/role-home/accounting-home.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+106	accounting/role-home/pending-approvals-gl.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+107	accounting/safety-fine-posting/poster.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+108	accounting/settlement-posting/bucket-ledger.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (2)
+109	accounting/settlement-posting/recover-from-driver.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+110	accounting/settlement-posting/settlement-bill-payment-posting.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (6)
+111	accounting/settlement-posting/settlement-posting.service.ts	WIRED	W=YES	M=YES	A=ok	B=FLAG	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: B-ATOMIC: money multi-table write without txn boundary
+112	accounting/statement-export-pdf.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+113	accounting/statement-export-xlsx.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+114	accounting/statement-export.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+115	accounting/subledger-gl-control-rec.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+116	accounting/tour-close-posting.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+117	accounting/tour-open-gate.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+118	accounting/trial-balance.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+119	accounting/void-document-stamp.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+120	accounting/void-document.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+121	accounting/void-tree.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+122	accounting/void.service.ts	WIRED	W=YES	M=YES	A=ok	B=FLAG	C=FLAG	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: B-ATOMIC: money multi-table write without txn boundary; C-SCOPE: unscoped money UPDATE/DELETE (1)
+123	accounting/warranty-posting/poster.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+124	admin/admin-jobs.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (4)
+125	admin/health-deep.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+126	admin/launch-readiness.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+127	audit/audit-chain-verify.cron.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+128	audit/audit-chain-verify.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+129	audit/audit.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+130	audit/driver-events.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+131	banking/bank-driver-advance.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+132	banking/bank-driver-expense-deduction.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+133	banking/bank-feed-gl-posting.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+134	banking/bank-ledger-repoint-remediation.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+135	banking/bank-orphan-backfill.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+136	banking/bank-tieout.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+137	banking/bank-tieout.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+138	banking/bank-transaction-splits.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+139	banking/banking-kpi.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+140	banking/banking-rules.engine.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (3)
+141	banking/drift-alerts.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (3); F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+142	banking/integrity/account-company-audit.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+143	banking/recon-adjustments.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+144	banking/recon.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+145	banking/transfers.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+146	bills/bill-line-account-resolution.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+147	border-crossing/cbp-wait-times-refresh.job.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+148	border-crossing/cbp-wait-times.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+149	border-crossing/emanifest-pdf-renderer.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+150	cash-advances/driver-hub-requests.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+151	cash-flow/cash-flow.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=FLAG	G=FLAG	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS; G-SILENT: empty catch
+152	catalogs/account-merge.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1)
+153	chat/chat.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (2)
+154	compliance/compliance-aggregate.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+155	compliance/compliance-reminder.job.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+156	compliance/filings-aggregate.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+157	compliance/missing-required.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+158	compliance/property-tax/property-tax-pdf-renderer.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+159	compliance/property-tax/property-tax.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+160	cron/audit-chain-verify.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+161	cron/bank-drift-alerts.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+162	cron/cash-flow-projection-snapshot.cron.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+163	cron/cash-flow-rolling-ledger-notify.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+164	cron/chat-confirmation-escalation.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+165	cron/collections-sync.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+166	cron/daily-task-alerts.cron.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+167	cron/depreciation-autopost.cron.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+168	cron/draft-crew-status-selfheal.cron.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+169	cron/driver-leave-advance-reminder.cron.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+170	cron/driver-leave-balance-rollover.cron.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+171	cron/driver-leave-pending-escalation.cron.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+172	cron/error-digest.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+173	cron/event-spine-heartbeat.cron.ts	ORPHAN	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=FLAG	H=ORPHAN	I=ok	DEFECT: G-SILENT: empty catch; H-ORPHAN
+174	cron/evidence-presence-reconcile.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+175	cron/factoring-default-interest-accrual.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+176	cron/fuel-gps-match.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+177	cron/geofence-auto-delivery.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+178	cron/geofence-breach-detector.cron.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+179	cron/geofence-odometer-captures.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+180	cron/insurance-monthly-report.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+181	cron/ledger-integrity.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+182	cron/load-stop-geofence-sync.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+183	cron/loves-card-import.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+184	cron/model-lifecycle-monitor.cron.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+185	cron/qbo-cdc-poll.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+186	cron/qbo-inbound-sync.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+187	cron/qbo-remote-count-collector.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+188	cron/real-driven-miles-segments.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+189	cron/recon.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+190	cron/reconciliation-worker.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+191	cron/recurring-templates.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+192	cron/reefer-hours-poll.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+193	cron/retry-held-expense-postings.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+194	cron/samsara-documents.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+195	cron/samsara-driver-replies.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+196	cron/samsara-fuel-reports.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+197	cron/samsara-hos-pull.cron.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+198	cron/samsara-master-sync.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+199	cron/samsara-remote-count-collector.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+200	cron/samsara-webhook-projection.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+201	cron/telematics-preservation.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+202	cron/unit-stop-events.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+203	customers/relationship-score/scorer.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+204	daily-tasks/daily-tasks.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (4)
+205	data-infra/data-infra.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (3)
+206	dispatch/analytics/booking-gap.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+207	dispatch/analytics/late-arrival.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+208	dispatch/arch-tabs.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+209	dispatch/assignments/quicksave.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+210	dispatch/auth-gates/gate-registry.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+211	dispatch/bol-generator.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+212	dispatch/book-load.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (3)
+213	dispatch/cancellation-reversal.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+214	dispatch/cancellation.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+215	dispatch/customer-notify.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+216	dispatch/deadhead/chain-deadhead.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+217	dispatch/deadhead/optimizer.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+218	dispatch/detention-approval.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+219	dispatch/detention.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+220	dispatch/dispatch-refinements.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1)
+221	dispatch/driver-availability.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+222	dispatch/driver-optimizer.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+223	dispatch/driver-pwa/tour-close.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+224	dispatch/driver-qualification.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+225	dispatch/equipment-transfer/dual-confirm.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1)
+226	dispatch/equipment-transfer/request.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+227	dispatch/geofence-auto-delivery.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+228	dispatch/geofences/load-geofence-binding.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+229	dispatch/google-reference-miles.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1)
+230	dispatch/lane-mileage.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+231	dispatch/late-arrivals.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+232	dispatch/layovers/detection.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+233	dispatch/load-billing-lifecycle.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+234	dispatch/load-distribution.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+235	dispatch/load-history.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+236	dispatch/load-id-reservation.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+237	dispatch/load-profitability.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+238	dispatch/load-status-signal/tri-signal.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+239	dispatch/load-transition.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+240	dispatch/loads/multi-stop/extra-rate.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+241	dispatch/mileage/mileage.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+242	dispatch/ocr-processor.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+243	dispatch/owner-lock-override-propagation.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+244	dispatch/pdf-generator.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+245	dispatch/planner.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1); F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+246	dispatch/presettlement-link.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (5)
+247	dispatch/quick-assign.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+248	dispatch/ratecon-extract.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+249	dispatch/stop-stamp.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (2)
+250	dispatch/trailer-interchange.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (4)
+251	dispatch/trip-pairing-board.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+252	dispatch/update-load.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (2)
+253	dispatch/validation/pre-dispatch-validator.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=FLAG	H=WIRED	I=FLAG	DEFECT: G-SILENT: empty catch
+254	dispatcher-board/role-views/dispatcher.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+255	documents/attachments.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (2)
+256	documents/chain-of-custody.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+257	driver-finance/abandonment.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (2)
+258	driver-finance/auto-pay.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+259	driver-finance/batch-settlements.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+260	driver-finance/cash-advance-owner-approval.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=FLAG	H=WIRED	I=FLAG	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS; G-SILENT: empty catch
+261	driver-finance/cash-advance-requests.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1); F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+262	driver-finance/deductions.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+263	driver-finance/detention-pay-posting.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+264	driver-finance/driver-payment-methods.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+265	driver-finance/driver-reimbursement.service.ts	TEST-ONLY	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=TEST-ONLY	I=ok	OK (TEST-ONLY)
+266	driver-finance/edit-settlement-deduction.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1)
+267	driver-finance/escrow-deduction-pending.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (4)
+268	driver-finance/escrow-forfeit.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+269	driver-finance/escrow-resolver.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+270	driver-finance/escrow-separation.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+271	driver-finance/escrow-target.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+272	driver-finance/feed-gate/feed-gate.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+273	driver-finance/historical-driver-bill-backfill.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+274	driver-finance/historical-escrow-backfill.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+275	driver-finance/historical-feed-day.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+276	driver-finance/inbox-reporting.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+277	driver-finance/negative-settlement-liability.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+278	driver-finance/payment-methods-catalog.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+279	driver-finance/retype-settlement-deduction.service.ts	ORPHAN	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=ORPHAN	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1); H-ORPHAN
+280	driver-finance/settlement-ap-chain.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1)
+281	driver-finance/settlement-continuation.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+282	driver-finance/settlement-contract-terms.service.ts	WIRED	W=YES	M=YES	A=FLAG	B=FLAG	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: A-SPINE: JE write without transaction_source_links; B-ATOMIC: money multi-table write without txn boundary
+283	driver-finance/settlement-creator.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (2)
+284	driver-finance/settlement-deduction-cap.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1)
+285	driver-finance/settlement-deduction-void.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (3); F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+286	driver-finance/settlement-dispute.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (3)
+287	driver-finance/settlement-disputes-p6.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+288	driver-finance/settlement-document.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+289	driver-finance/settlement-historical-attribution.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+290	driver-finance/settlement-line-categorize.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+291	driver-finance/settlement-lines-materialize.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=FLAG	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (4); G-SILENT: empty catch
+292	driver-finance/settlement-load-reassignment.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1)
+293	driver-finance/settlement-pay-line.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+294	driver-finance/settlement-payment.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+295	driver-finance/settlement-payrun-claim.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+296	driver-finance/settlement-payrun-close.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+297	driver-finance/settlement-payrun-recovery.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+298	driver-finance/settlement-payrun-reverse.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+299	driver-finance/settlement-pdf-renderer.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+300	driver-finance/settlement-source-document-ref.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+301	driver-finance/settlements-load-bookended.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (4)
+302	driver-finance/settlements.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+303	driver-finance/void-document-callees.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1)
+304	driver-finance/void-open-driver-bill.service.ts	ORPHAN	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=ORPHAN	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (2); H-ORPHAN
+305	driver-manager/role-views/dm-home.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+306	driver-profile/driver-profile-tabs.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+307	drivers/communications.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+308	drivers/document-alerts.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+309	drivers/document-alerts.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+310	drivers/messages.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+311	drivers/retention/scorer.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+312	email/queue.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+313	expense-attribution/attribute.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+314	factoring/auto-submit-on-delivery.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1)
+315	factoring/bank-match.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (2)
+316	factoring/batch.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (2)
+317	factoring/factor.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (3); F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+318	factoring/factoring-kpi.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+319	factoring/packet-assemble.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+320	factoring/purchase-candidates.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+321	factoring/purchase-send.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+322	factoring/purchase.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (7)
+323	factoring/repurchase-due.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+324	factoring/reserve-by-customer.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+325	factoring/reserve.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+326	factoring/submission-queue.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+327	feed/document-expense-ingestion.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+328	feed/ensure-settlement-from-fed-bills.service.ts	ORPHAN	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=ORPHAN	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (2); H-ORPHAN
+329	feed/feed-day-preflight.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+330	feed/seed-settlement-document.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (2)
+331	finance/amortization/amortization.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+332	finance/calculator/calculator.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+333	finance/loan-wizard/preview.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+334	finance/scenarios/scenarios.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (2)
+335	fleet/roster-integrity.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+336	fleet/roster-integrity.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+337	fuel/fuel-card-assignments.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+338	fuel/fuel-card-overage-contract.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+339	fuel/fuel-card-overage-posting.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+340	fuel/fuel-card-overage.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+341	fuel/fuel-expense-document.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+342	fuel/fuel-fraud-recovery.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+343	fuel/fuel-geofence-recommendation.engine.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+344	fuel/fuel-gps-verdict.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+345	fuel/fuel-integrity-verdicts.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+346	fuel/fuel-time-derivation.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+347	home/factoring-balance-invoice-linkage.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+348	home/revenue-gl-linkage.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+349	home/scenario-certify.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+350	home/scenario-certify.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+351	home/scenario-probe.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+352	home/scenario-tracker.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+353	identity/notification-prefs.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+354	identity/user-preferences.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+355	insurance/coi-pdf-renderer.service.ts	TEST-ONLY	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=TEST-ONLY	I=FLAG	OK (TEST-ONLY)
+356	insurance/coi.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1)
+357	insurance/coverage-gap.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+358	insurance/dispersal.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+359	insurance/late-fee.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1); F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+360	insurance/payment-reminder.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1); F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+361	insurance/policy-bill-schedule.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+362	insurance/policy-cancel.service.ts	TEST-ONLY	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=TEST-ONLY	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (2)
+363	insurance/policy-create-atomic.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+364	insurance/policy-unit-fleet.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+365	insurance/refund-obligation.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1)
+366	integrations/edi/setup.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+367	integrations/fmcsa/fmcsa-customer-verify-chain.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+368	integrations/fmcsa/safer.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+369	integrations/fuel/fraud-detector/alerter.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+370	integrations/fuel/fraud-detector/rules.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+371	integrations/plaid/daily-refresh.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+372	integrations/plaid/plaid.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (7)
+373	integrations/qbo/forensic-audit.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+374	integrations/qbo/forensic-import.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (14)
+375	integrations/qbo/forensic-report.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+376	integrations/qbo/mirror-integrity.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+377	integrations/qbo/qbo-cdc.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+378	integrations/qbo/qbo-oauth.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1)
+379	integrations/qbo/qbo-reconcile-read.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+380	integrations/qbo/qbo-sync.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (2)
+381	integrations/qbo/qbo-vendor-linkage.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (2)
+382	integrations/qbo/reconciliation-report.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+383	integrations/qbo/sync-inbound.worker.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (5)
+384	integrations/qbo/sync-outbound.worker.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+385	integrations/relay-payments/relay-deposit-classifier.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+386	integrations/relay-payments/relay-deposit-stage1-transfer.service.ts	ORPHAN	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=ORPHAN	I=ok	DEFECT: H-ORPHAN
+387	integrations/relay-payments/relay-fuel-driver-rematch.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1)
+388	integrations/relay-payments/relay-fuel-ingest.cron.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1); F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+389	integrations/relay-payments/relay-fuel-ingest.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1)
+390	integrations/relay-payments/relay-fuel-load-rematch.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1)
+391	integrations/relay-payments/relay-wallet-balance-control.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+392	integrations/relay-payments/relay-wallet-bank-feed.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (2)
+393	integrations/samsara/active-driver-set/query.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+394	integrations/samsara/active-driver-set/recompute.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+395	integrations/samsara/active-hos-driver-roster.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+396	integrations/samsara/auto-status-switch/detector.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1)
+397	integrations/samsara/border-crossings/customs-time.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+398	integrations/samsara/border-crossings/detector.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1)
+399	integrations/samsara/cap-12-tire-tread/measurement.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+400	integrations/samsara/cap-12-tire-tread/projection.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+401	integrations/samsara/cap-14-cargo-sensors/incident.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+402	integrations/samsara/cap-14-cargo-sensors/ingester.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+403	integrations/samsara/cap-14-cargo-sensors/threshold.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+404	integrations/samsara/config-bootstrap.service.ts	ORPHAN	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=ORPHAN	I=FLAG	DEFECT: H-ORPHAN
+405	integrations/samsara/documents/samsara-documents.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+406	integrations/samsara/driver-import.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+407	integrations/samsara/driver-mapping/resolver.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+408	integrations/samsara/engine-faults/fault-handler.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (3)
+409	integrations/samsara/fault-code-processor.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1)
+410	integrations/samsara/fault-poll.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+411	integrations/samsara/fuel-purchase-push.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+412	integrations/samsara/fuel-purchase-push.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+413	integrations/samsara/geofences/address-import.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+414	integrations/samsara/geofences/arrival-prompt.service.ts	TEST-ONLY	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=TEST-ONLY	I=ok	OK (TEST-ONLY)
+415	integrations/samsara/geofences/fence-push.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1)
+416	integrations/samsara/geofences/geofence-address-link.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+417	integrations/samsara/geofences/geofence-odometer-capture.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+418	integrations/samsara/geofences/real-driven-miles.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+419	integrations/samsara/geofences/reconciliation.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1)
+420	integrations/samsara/geofences/state-machine/transitions.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=FLAG	H=WIRED	I=FLAG	DEFECT: G-SILENT: empty catch
+421	integrations/samsara/hos-driver-map-preview.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1)
+422	integrations/samsara/ingestion-tenants.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+423	integrations/samsara/messaging/driver-message-delivery.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+424	integrations/samsara/messaging/driver-message-inbound.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+425	integrations/samsara/messaging/driver-prompts.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+426	integrations/samsara/messaging/driver-prompts.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+427	integrations/samsara/positions/live-position.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+428	integrations/samsara/projection.service.ts	TEST-ONLY	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=TEST-ONLY	I=FLAG	OK (TEST-ONLY)
+429	integrations/samsara/routes-integration.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+430	integrations/samsara/routes-push.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+431	integrations/samsara/samsara-driver-login.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+432	integrations/samsara/samsara-hire-date.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+433	integrations/samsara/samsara-hos-clocks-pull.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+434	integrations/samsara/samsara-hos-pull.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+435	integrations/samsara/samsara-master-sync.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (3)
+436	integrations/samsara/samsara-positions.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+437	integrations/samsara/samsara-stats-probe.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+438	integrations/samsara/samsara.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=FLAG	H=WIRED	I=FLAG	DEFECT: G-SILENT: empty catch
+439	integrations/samsara/vehicle-driver-pairing/pairing.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+440	integrations/samsara/vehicle-import.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+441	integrations/samsara/webhook-projection.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1)
+442	integrity/anomaly-detector.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+443	integrity/driver-metrics.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+444	invoices/invoice-line-revenue-resolution.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+445	leases/lease-bill-engine.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+446	leases/lease-bill.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+447	leases/lease-buyout.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (4); F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+448	leases/lease-engine.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+449	leases/lessee-posting.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (2); F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+450	legal/attorney-review.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (3)
+451	legal/contract-linkage.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+452	legal/contract-type-templates.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+453	legal/contracts.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=FLAG	H=WIRED	I=FLAG	DEFECT: G-SILENT: empty catch
+454	legal/draft-preview.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+455	legal/lease-to-own.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+456	legal/legal-deadline-alerts.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+457	legal/legal-linkage-backfill.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+458	legal/legal-money.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+459	legal/matters-reminder.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+460	legal/matters.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1)
+461	legal/pdf-renderer.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+462	legal/signed-finance-handoff.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+463	legal/signed-links.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+464	legal/template-library-provision.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+465	legal/template-library.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+466	legal/templates.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+467	legal/truck-lease.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+468	maint/wo-ap-posting.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (2)
+469	maintenance/damage-event-attribution.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+470	maintenance/driver-damage-scorecard.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+471	maintenance/driver-integrity-profile.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+472	maintenance/fuel-driver-scorecard.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+473	maintenance/fuel-integrity.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+474	maintenance/integrity-findings-attribution.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+475	maintenance/pm-auto-engine.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+476	maintenance/pm-auto-engine.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (3)
+477	maintenance/pm-cost-per-mile.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+478	maintenance/pm-due-engine.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+479	maintenance/pre-flight/dvir-routing.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+480	maintenance/pre-flight/dvir-severity.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+481	maintenance/service-timeline.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+482	maintenance/severe-repair-estimate.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+483	maintenance/work-orders.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+484	master-data/customers/free-time-detention.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+485	master-data/drivers/operations-depth/accident-history.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+486	master-data/drivers/operations-depth/communications-log.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+487	master-data/drivers/operations-depth/debt-history.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+488	master-data/drivers/operations-depth/documents-vault.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+489	master-data/drivers/operations-depth/escrow-history.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+490	master-data/drivers/operations-depth/fuel-history.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+491	master-data/drivers/operations-depth/maintenance-assignments.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+492	master-data/drivers/operations-depth/payroll-history.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+493	master-data/drivers/operations-depth/permit-history.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+494	master-data/drivers/operations-depth/pwa-engagement.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+495	master-data/drivers/operations-depth/safety-events.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+496	master-data/drivers/operations-depth/settlement-history.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+497	mdata/canonical/canonical-entities.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+498	mdata/canonical/customer-profile.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+499	mdata/canonical/driver-hub.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+500	mdata/canonical/driver-overview.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+501	mdata/canonical/driver-profile.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+502	mdata/canonical/party-board.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+503	mdata/canonical/variant-candidates.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+504	mdata/canonical/vendor-profile.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+505	mdata/driver-active-30d.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+506	mdata/driver-aggregate.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+507	mdata/driver-app-access.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1)
+508	mdata/driver-inactivity-preview.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+509	mdata/driver-profile-pdf-renderer.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+510	mdata/driver-reference-fk.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+511	mdata/driver-roster-duplicate.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+512	mdata/driver-team.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (2)
+513	mdata/equipment-aggregate.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+514	mdata/equipment-transfer.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1)
+515	mdata/trailer-profile-pdf-renderer.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+516	mdata/unit-aggregate.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+517	mdata/unit-finance-linkage.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+518	mdata/unit-financial.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+519	mdata/units-unified-list.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+520	mdata/vehicle-profile-pdf-renderer.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+521	mdata/vendor-customer-merge.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+522	mdata/yard-location.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+523	middleware/idempotency-cleanup.cron.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1)
+524	notifications/email.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=FLAG	H=WIRED	I=FLAG	DEFECT: G-SILENT: empty catch
+525	notifications/notification.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+526	notifications/sms-bridge.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+527	ocr/ocr.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+528	owner/todays-attention/aggregator.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+529	payroll/settlement-shadow.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+530	program/module-completion-live.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+531	program/module-matrix.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=FLAG	H=WIRED	I=ok	DEFECT: G-SILENT: empty catch
+532	program/module-matrix.worker.ts	ORPHAN	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=ORPHAN	I=ok	DEFECT: H-ORPHAN
+533	program/program-board.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=FLAG	H=WIRED	I=ok	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS; G-SILENT: empty catch
+534	program/program-tracker.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=FLAG	H=WIRED	I=ok	DEFECT: G-SILENT: empty catch
+535	qbo/bill-payment-mapper.service.ts	TEST-ONLY	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=TEST-ONLY	I=FLAG	OK (TEST-ONLY)
+536	qbo/master-data-sync.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+537	qbo/master-data-sync.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (2)
+538	qbo/push.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+539	qbo/tms-account-push-chain.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+540	qbo/tms-bill-push-chain.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+541	qbo/tms-customer-push-chain.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+542	qbo/tms-invoice-push-chain.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+543	qbo/tms-item-push-chain.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+544	qbo/tms-vendor-push-chain.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+545	reconciler/reconciler.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+546	reconciliation/alert-routing.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+547	reconciliation/ledger-integrity-detectors.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (2); F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+548	reconciliation/reconciliation-worker.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1)
+549	reports/deadhead-refresh.job.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+550	reports/deadhead.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+551	reports/form-425c/exhibits/exhibits-builder.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+552	reports/ifta/fuel-aggregator.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+553	reports/ifta/mileage-aggregator.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+554	reports/ifta/quarterly-preparer.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=FLAG	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; G-SILENT: empty catch
+555	reports/lane-profitability-refresh.job.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+556	reports/lane-profitability.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+557	reports/loads-report.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+558	reports/per-truck-cpm/cpm-calculator.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+559	reports/scheduled/runner.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+560	reports/scheduled/subscription.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+561	reports/three-mile-cpm.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+562	safety-officer/role-views/safety-home.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+563	safety/accident-liabilities.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (2)
+564	safety/anomaly/detector.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+565	safety/anomaly/notification.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+566	safety/anomaly/rule-engine.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1)
+567	safety/company-violations.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+568	safety/damage-continuity/continuity.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+569	safety/damage-continuity/insurance-link.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+570	safety/damage-reports/photo-evidence.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+571	safety/driver-scheduler.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+572	safety/driver-scoring.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+573	safety/driver-scoring/scoring.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+574	safety/drug-alcohol/program.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+575	safety/drug-alcohol/random-pool.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+576	safety/dvir-submit.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1)
+577	safety/eld-audit-trail/eld-audit-pdf-renderer.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+578	safety/eld-audit-trail/viewer.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+579	safety/events/notification.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+580	safety/expiry-tracking/alerter.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+581	safety/expiry-tracking/cert-monitor.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+582	safety/fuel-gps-match.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+583	safety/geofence-breach-detector.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+584	safety/harsh-events-ingestion.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+585	safety/harsh-events-poll.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+586	safety/incidents/full-report.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+587	safety/integrity-alert-engine.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+588	safety/integrity-alert-engine.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1)
+589	safety/photo-comparison/diff-engine.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+590	safety/photo-comparison/session.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+591	safety/reminders.cron.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+592	safety/safety.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+593	safety/samsara-dvir-ingest.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+594	safety/samsara-dvir-poll.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+595	search/universal/indexer.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+596	search/universal/query.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+597	services/push-notification.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1)
+598	settlements/approval.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+599	settlements/trip-link.engine.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+600	shipper-portal/load-milestone.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+601	system/transaction-health.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+602	tasks/task-alarm.job.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+603	tax-documents/box1-aggregation.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+604	telematics/auto-geofence.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+605	telematics/auto-status.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+606	telematics/dashcam-auto-link.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+607	telematics/dashcam.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+608	telematics/dispatch-live-eta.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+609	telematics/dot-dwell-detector.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+610	telematics/driven-miles-legs.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+611	telematics/driver-day-summary.service.ts	ORPHAN	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=ORPHAN	I=FLAG	DEFECT: H-ORPHAN
+612	telematics/dtc-auto-work-order.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+613	telematics/dtc-classifier.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+614	telematics/fleet-location-hos.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+615	telematics/fuel-efficiency-signal.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+616	telematics/fuel-stop-planner.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+617	telematics/geofence-detector.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary
+618	telematics/geofence-events-backfill.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+619	telematics/heatmap.service.ts	ORPHAN	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=ORPHAN	I=FLAG	DEFECT: H-ORPHAN
+620	telematics/hos-clocks.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+621	telematics/hos-tracker.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+622	telematics/ifta-filing.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+623	telematics/ifta-miles.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+624	telematics/load-progress.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+625	telematics/load-real-driven-miles.cron.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+626	telematics/load-real-driven-miles.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=FLAG	G=ok	H=WIRED	I=FLAG	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1); F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+627	telematics/load-stop-geofence-sync.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=FLAG	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (1); F-RETRY: scheduled writer without ON CONFLICT/idempotency/WHERE NOT EXISTS
+628	telematics/maintenance-predictor.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+629	telematics/odometer-manual-upsert.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+630	telematics/odometer-snapshot.cron.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+631	telematics/preservation.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=ok	F=ok	G=ok	H=WIRED	I=ok	DEFECT: D-ATOMIC: multi-table write without txn boundary
+632	telematics/samsara-fuel-reports.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+633	telematics/stop-geocode-fallback.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=FLAG	F=ok	G=ok	H=WIRED	I=ok	DEFECT: E-SCOPE: unscoped UPDATE/DELETE (1)
+634	telematics/stop-odometer-capture.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+635	telematics/stops-geocode-backfill.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=FLAG	E=FLAG	F=ok	G=ok	H=WIRED	I=FLAG	DEFECT: D-ATOMIC: multi-table write without txn boundary; E-SCOPE: unscoped UPDATE/DELETE (4)
+636	telematics/telematics-linkage.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+637	telematics/unit-stops.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=ok	OK
+638	telematics/vehicle-driver-lookup.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+639	telematics/vehicle-locations.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+640	work-orders/validation.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+641	work-orders/wo-number.service.ts	WIRED	W=YES	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
+642	work-orders/wo-pdf-renderer.service.ts	WIRED	W=NO	M=NO	A=ok	B=ok	C=ok	D=ok	E=ok	F=ok	G=ok	H=WIRED	I=FLAG	OK (I-HEADER only)
