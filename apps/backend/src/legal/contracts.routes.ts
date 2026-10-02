@@ -140,6 +140,27 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
     return result;
   });
 
+  // ROUND 326 item 2 — backfill from source fields only; stamp UNLINKED_REASON when no subject (never invent).
+  app.post("/api/v1/legal/linkage/backfill-from-sources", { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    if (!requireWriteRole(reply, String(authUser.role ?? ""))) return;
+    if (!["Owner", "Administrator"].includes(String(authUser.role ?? ""))) {
+      return reply.code(403).send({ error: "forbidden_owner_or_admin" });
+    }
+    const parsedBody = operatingCompanyQuerySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const { backfillLegalLinkageFromSources } = await import("./legal-linkage-backfill.service.js");
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
+      await setOperatingCompany(client, parsedBody.data.operating_company_id);
+      return backfillLegalLinkageFromSources(client, {
+        operatingCompanyId: parsedBody.data.operating_company_id,
+        actorUserId: authUser.uuid,
+      });
+    });
+    return result;
+  });
+
   // On-demand DRAFT PDF of a SAVED instance — lets the owner view/download the contract as a PDF
   // BEFORE e-signing (the signed PDF is only generated at sign-time). READ-ONLY: renders from the
   // instance's stored content/variables with EMPTY signature fields + a "DRAFT — NOT EXECUTED"
