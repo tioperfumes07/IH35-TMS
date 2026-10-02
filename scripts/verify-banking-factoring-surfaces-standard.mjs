@@ -3,7 +3,7 @@
 //   (1) every <table> on a banking / factoring surface (and the shared ParityTable / LedgerKpiPanel they render through)
 //       carries tabular-nums, so every money column aligns its digits (font-variant-numeric inherits from the table);
 //   (2) reserves read ONE engine: Banking's factoring reserve comes from the factoring KPI engine (getFactoringKpis —
-//       GL 1230 + 1235), never a second sum over the advance-linkage view (reserve_balance);
+//       escrow + cash reserve roles), never a second sum over the advance-linkage view (reserve_balance);
 //   (3) no factoring surface shows the book reserve from views.factoring_summary (summary?.reserve_balance /
 //       summaryQuery.data?.reserve_balance) — FactoringHome and the shared reserves panel read the same engine.
 // Static, <1s. --selftest plants each violation and proves it fails.

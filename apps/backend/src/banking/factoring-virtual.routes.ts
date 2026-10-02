@@ -57,7 +57,7 @@ export async function registerBankingFactoringVirtualRoutes(app: FastifyInstance
             f.factor_vendor_id::text AS id,
             COALESCE(v.vendor_name, 'Factoring') AS display_name,
             -- ROUND 326.2 item 3: no reserve_balance here. Banking's factoring reserve reads the factoring
-            -- KPI engine (GL 1230 + 1235, GET /api/v1/factoring/kpis) — one reserve engine, not a second sum.
+            -- KPI engine (escrow + cash reserve roles, GET /api/v1/factoring/kpis) — one reserve engine, not a second sum.
             (SUM(f.outstanding_liability_signed_cents)::numeric / 100)::numeric AS chargeback_balance,
             -- FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: honest replacement
             -- name for chargeback_balance above (both compute outstanding_liability_signed_cents,

@@ -506,7 +506,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
             <MoneyRow
               label="Reserve %"
               value={factoringAdvance ? `${factoringAdvance.reserve_pct}%` : "—"}
-              sub="Factoring Reserves 1230"
+              sub="Faro Escrow Reserve (escrow role)"
             />
             <MoneyRow
               label="Fee %"

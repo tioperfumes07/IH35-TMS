@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { formatUsd } from "../../../lib/money";
 
 type Props = {
-  /** Escrow + cash reserve from the factoring KPI engine (GL 1230 + 1235); null while loading / on error. */
+  /** Escrow + cash reserve from the factoring KPI engine (escrow + cash reserve roles); null while loading / on error. */
   reserve: number | null;
   outstandingLiability: number;
   lastAdvanceAt: string | null;

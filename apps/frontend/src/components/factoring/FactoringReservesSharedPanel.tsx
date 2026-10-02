@@ -1,7 +1,7 @@
 /**
  * ROUND 315 / Lead B7 — Reserves / deductions (CCG) render identically in Factoring and Banking.
  * One panel, one ledger source. ROUND 326.2 item 4: escrow / cash / total reserve and fees are the factoring
- * KPI engine's GL figures (GET /api/v1/factoring/kpis — 1230 / 1235 balances, 6400 accrued), the SAME numbers
+ * KPI engine's GL figures (GET /api/v1/factoring/kpis — escrow / cash reserve role balances, 6400 accrued), the SAME numbers
  * Banking shows; nothing here re-sums purchases or reads views.factoring_summary.reserve_balance. Plus the
  * reserve-balance history and banking.equipment_loans. Categorize / transfer / apply deep-link to the same
  * Banking actions so numbers close from either module. Never a second engine.
@@ -237,7 +237,7 @@ export function FactoringReservesSharedPanel({ companyId, host }: Props) {
           />
         </div>
         <p className="mt-2 text-xs text-[#6B7280]" data-testid={`${rootTestId}-footnote`}>
-          Escrow / cash reserve = GL 1230 / 1235 balances from the factoring KPI engine (the same figures Banking
+          Escrow / cash reserve = the Faro Escrow Reserve / Faro Cash Reserve GL balances from the factoring KPI engine (the same figures Banking
           shows). CCG = equipment loans (same loan API in both modules). Outstanding liability{" "}
           {summaryQuery.isError ? "Unavailable" : formatUsdCents(outstandingLiabilityCents)} · {engine?.count ?? "…"} posted
           purchases this year · fees accrued {engineMoney(engine?.fee)}.

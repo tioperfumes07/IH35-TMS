@@ -508,6 +508,18 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-factoring-posting-legs-match-header",
     ["apps/backend/src/accounting/factoring-posting/poster.service.ts", "apps/backend/src/factoring/faro-csv-import.ts"],
   ],
+  // Owner ruling 2026-10-02 — each Faro reserve role is bound to its Faro bank account's GL (escrow -> Faro Escrow
+  // Reserve, cash -> Faro Cash Reserve); 1230 Factoring Reserves has nothing to do with them.
+  [
+    "verify-factor-reserve-roles-match-faro-bank-accounts",
+    [
+      "db/migrations/202615220600_factor_escrow_reserve_role_to_1236.sql",
+      "apps/backend/src/accounting/factoring-posting/",
+      "apps/backend/src/factoring/",
+      "apps/backend/src/accounting/coa-roles/",
+      "scripts/verify-factor-reserve-roles-match-faro-bank-accounts.mjs",
+    ],
+  ],
   // ROUND 326.2 items 3-4 — banking / factoring surfaces: every table tabular-nums, and Banking's
   // factoring reserve reads the factoring KPI engine (one reserve engine, no duplicate math).
   [

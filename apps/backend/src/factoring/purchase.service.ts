@@ -8,7 +8,7 @@
 // posted stamp is atomic (and free of the ACCT-F5651 cross-connection lock cycle).
 //   advance (purchase price) = gross - escrow reserve - fee        (Faro: "Purchase Price = Net - Fee - Reserve")
 //   net to IH35 (the wire)   = advance - cash reserve - wire fee
-//   funding JE: DR 1090 net + DR 1230 escrow + DR 1235 cash reserve + DR 6400 fee + DR 6300 wire fee / CR 2150 gross
+//   funding JE: DR 1090 net + DR escrow (factor_reserve_held, Faro Escrow Reserve 1236) + DR cash reserve (factor_cash_reserve_held, 1235) + DR 6400 fee + DR 6300 wire fee / CR 2150 gross
 import { nextFactoringDisplayId, nextFactoringPurchaseDisplayId } from "../accounting/display-id.js";
 import { INVOICE_PLEDGE_CENTS_SQL } from "../accounting/shared.js";
 import {

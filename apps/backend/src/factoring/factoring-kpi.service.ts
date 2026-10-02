@@ -4,7 +4,7 @@
 // those rows (getFactoringKpiDrill). A KPI with no data says so and why (empty_reason).
 //
 // Linkage (LINKAGE LAW §10-B): purchase -> lines -> invoice (A/R) / load / customer / settlement; advance -> funding JE ->
-// postings on 1090 / 1230 / 1235 / 6400 / 6300 / 2150; matched bank deposit (banking.bank_transactions
+// postings on 1090 / escrow (factor_reserve_held) / cash reserve (factor_cash_reserve_held) / 6400 / 6300 / 2150; matched bank deposit (banking.bank_transactions
 // .matched_factoring_advance_id). Reverse path: every drill row carries the ids its screen links to.
 // The guard scripts/verify-factoring-banking-kpis-tie-to-ledger.mjs recomputes every value independently and fails on drift.
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
@@ -76,7 +76,7 @@ function postingsSql(mode: "balance" | "activity") {
 const SIGNED = `CASE WHEN jp.debit_or_credit = 'debit' THEN jp.amount_cents ELSE -jp.amount_cents END`;
 
 /**
- * The book reserve — escrow (factor_reserve_held, 1230) + cash reserve (factor_cash_reserve_held, 1235) GL balances
+ * The book reserve — escrow (factor_reserve_held -> Faro Escrow Reserve) + cash reserve (factor_cash_reserve_held -> Faro Cash Reserve) GL balances
  * as of a date. The ONE reserve figure: the KPI engine, GET /factoring/summary.reserve_balance and the cash-flow
  * overview all read it, so Factoring, Banking and Reports can never show different reserves (ROUND 326.2 item 4).
  */

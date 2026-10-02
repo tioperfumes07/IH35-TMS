@@ -796,8 +796,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
     }
     return { escrow, cash, fee, wire, net, count: (purchasesQuery.data?.purchases ?? []).length };
   }, [purchasesQuery.data?.purchases]);
-  // ROUND 326.2 item 4 — held reserve balances are the factoring KPI engine's GL balances (1230 escrow,
-  // 1235 cash), the same figures Banking and the shared reserves panel show. purchaseEscrowTotals above only
+  // ROUND 326.2 item 4 — held reserve balances are the factoring KPI engine's GL balances (escrow role = Faro Escrow Reserve,
+  // cash role = Faro Cash Reserve), the same figures Banking and the shared reserves panel show. purchaseEscrowTotals above only
   // totals the purchase register's own rows (footers); it is never presented as a held balance.
   const factoringKpiQuery = useQuery({
     queryKey: ["factoring", "kpis", companyId, null, null],
@@ -1452,7 +1452,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
 
       {/* Loan / Save — reuses recourseQuery showing each factoring advance as a loan (advance
           amount = principal borrowed) with the reserve as the savings holdback. Also shows the
-          total reserve balance from the factoring KPI engine (GL 1230 + 1235). */}
+          total reserve balance from the factoring KPI engine (escrow + cash reserve roles). */}
       {tab === "loan_save" ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-loan-save">
           <div className="mb-2 text-xs font-medium text-gray-900">Loan / Save</div>
@@ -2942,7 +2942,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   const faroFees = filtered.reduce((s, r) => s + Number(r.fee_total_cents ?? 0), 0);
                   const faroChargebacks = filtered.reduce((s, r) => s + Number(r.chargeback_total_cents ?? 0), 0);
                   const summaryAdvance = summary?.mtd_advanced_total ? Math.round(summary.mtd_advanced_total * 100) : 0;
-                  // App side of the reconciliation = the factoring KPI engine's GL reserve (1230 + 1235).
+                  // App side of the reconciliation = the factoring KPI engine's GL reserve (escrow + cash reserve roles).
                   const summaryReserve = engineReserve?.total ?? 0;
                   const advanceDiff = faroAdvance - summaryAdvance;
                   const reserveDiff = faroReserve - summaryReserve;

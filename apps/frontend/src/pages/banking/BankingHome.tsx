@@ -219,7 +219,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     );
   }, [factoringVirtualQuery.data?.companies]);
   // ROUND 326.2 item 3 — reserves read the SAME engine as Factoring: escrow + cash reserve are the
-  // factoring KPI engine's GL balances (1230 + 1235), not a second sum over the advance-linkage view.
+  // factoring KPI engine's GL balances (escrow + cash reserve roles), not a second sum over the advance-linkage view.
   const factoringKpiQuery = useQuery({
     queryKey: ["factoring", "kpis", companyId, null, null],
     queryFn: () => getFactoringKpis(companyId),
@@ -615,7 +615,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                     label="Factoring reserve"
                     value={factoringKpiQuery.isError ? "Unavailable" : factoringReserve == null ? "…" : money.format(factoringReserve)}
                     tone={factoringKpiQuery.isError ? "bad" : "good"}
-                    sub="escrow + cash reserve · GL 1230 + 1235"
+                    sub="Faro escrow + cash reserve"
                     onClick={() => navigate("/factoring/reserve-tracker")}
                     data-testid="banking-kpi-factoring-reserve"
                   />
