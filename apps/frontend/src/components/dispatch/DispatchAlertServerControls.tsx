@@ -28,11 +28,11 @@ export function DispatchAlertServerControls({
     <div className="flex flex-wrap items-end gap-2 rounded-sm border bg-white p-3" data-testid="dispatch-alert-server-controls">
       <label className="flex min-w-40 flex-col gap-1 text-xs font-medium text-slate-700">
         From
-        <DatePicker value={staged.draft.from} onChange={(from) => staged.setDraft((current) => ({ ...current, from }))} />
+        <DatePicker box="filter" value={staged.draft.from} onChange={(from) => staged.setDraft((current) => ({ ...current, from }))} />
       </label>
       <label className="flex min-w-40 flex-col gap-1 text-xs font-medium text-slate-700">
         To
-        <DatePicker value={staged.draft.to} onChange={(to) => staged.setDraft((current) => ({ ...current, to }))} />
+        <DatePicker box="filter" value={staged.draft.to} onChange={(to) => staged.setDraft((current) => ({ ...current, to }))} />
       </label>
       <Button type="button" size="sm" disabled={invalid} onClick={staged.apply}>Apply</Button>
       <Button type="button" size="sm" variant="secondary" onClick={staged.cancel}>Cancel</Button>

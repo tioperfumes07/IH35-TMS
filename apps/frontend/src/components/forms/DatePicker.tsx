@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Calendar } from "lucide-react";
 import { formatDateUS, parseDateUS, DATE_PLACEHOLDER_US } from "../../lib/formatDate";
+import "../../design/ih35-design-tokens.css";
 
 // Shared QuickBooks-style date field. Value is "YYYY-MM-DD".
 // MOD-02/03 (GO-MECH-0901): typed MM/DD/YYYY + month/year jump + Escape closes
@@ -17,6 +18,12 @@ type Props = {
   min?: string;
   "aria-label"?: string;
   "data-testid"?: string;
+  /**
+   * OWNER DESIGN LAW 2026-10-02 rule 3: ONE date box width — 132px, never full-width, never sized by its container.
+   * "filter" = a filter-bar date (34px tall), "field" = a date being edited in a form (40px tall). When set, any width
+   * or height in className is ignored. Opt-in so screens move to the board sizes surface by surface.
+   */
+  box?: "filter" | "field";
 };
 
 const DOW = ["S", "M", "T", "W", "T", "F", "S"];
@@ -93,9 +100,15 @@ export function DatePicker({
   min,
   "aria-label": ariaLabel,
   "data-testid": dataTestId,
+  box,
 }: Props) {
   const isOutOfRange = (iso: string) => Boolean((max && iso > max) || (min && iso < min));
-  const { shell, buttonHeight } = partitionDatePickerClassName(className);
+  const partitioned = partitionDatePickerClassName(className);
+  const { buttonHeight } = partitioned;
+  // Board box: the width is the date token, not the container's (w-* / flex-* layout tokens are dropped).
+  const shell = box
+    ? partitioned.shell.split(/\s+/).filter((t) => !/^(w-|min-w-|max-w-|flex-1|grow|basis-)/.test(t)).join(" ")
+    : partitioned.shell;
   const [open, setOpen] = useState(false);
   const [dateDraft, setDateDraft] = useState("");
   const [editingDate, setEditingDate] = useState(false);
@@ -182,14 +195,30 @@ export function DatePicker({
 
   const dateInputValue = editingDate ? dateDraft : value ? formatDateUS(value) : "";
   const years = yearRange(viewY, min, max);
-  const heightClass = buttonHeight || "h-9";
+  const heightClass = box ? "" : buttonHeight || "h-9";
+  const boxStyle = box
+    ? {
+        height: box === "field" ? "var(--ih-h-field)" : "var(--ih-h-control)",
+        borderColor: "var(--ih-border-control)",
+        borderRadius: "var(--ih-radius)",
+        fontSize: "var(--ih-fs-body)",
+        fontVariantNumeric: "tabular-nums" as const,
+      }
+    : undefined;
 
   return (
-    <div className={`relative ${shell}`.trim()} ref={ref} data-testid={dataTestId}>
+    <div
+      className={`relative ${shell}`.trim()}
+      ref={ref}
+      data-testid={dataTestId}
+      data-date-box={box}
+      style={box ? { width: "var(--ih-w-date)", flex: "none" } : undefined}
+    >
       <div
         className={`flex ${heightClass} w-full items-center gap-1 rounded-sm border border-gray-300 px-2 text-left text-xs ${
           disabled ? "cursor-not-allowed bg-gray-50 text-gray-400" : "bg-white"
         }`}
+        style={boxStyle}
       >
         <input
           id={id}

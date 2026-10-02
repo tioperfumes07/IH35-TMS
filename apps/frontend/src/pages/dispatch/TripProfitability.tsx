@@ -191,7 +191,7 @@ export function TripProfitability() {
           <label htmlFor="trip-profit-from" className="text-xs">
             From
           </label>
-          <DatePicker
+          <DatePicker box="filter"
             id="trip-profit-from"
             className="ml-2"
             value={period.start}
@@ -202,7 +202,7 @@ export function TripProfitability() {
           <label htmlFor="trip-profit-to" className="text-xs">
             To
           </label>
-          <DatePicker
+          <DatePicker box="filter"
             id="trip-profit-to"
             className="ml-2"
             value={period.end}

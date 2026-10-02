@@ -275,7 +275,7 @@ export function BookLoadStopsSection({
                         <>
                           <Field
                             label={`Appointment date${required ? " *" : ""}`}
-                            input={<DatePicker data-testid={`stop-date-${index}`} value={d} onChange={(next) => combine(next, t)} className={CELL} />}
+                            input={<DatePicker box="field" data-testid={`stop-date-${index}`} value={d} onChange={(next) => combine(next, t)} className={CELL} />}
                           />
                           <Field label="Time" input={<TimePicker id={`stop-time-${index}`} value={t} onChange={(tv) => combine(d, tv)} className={CELL} ariaLabel="Stop time" />} />
                           {fieldState.error ? (

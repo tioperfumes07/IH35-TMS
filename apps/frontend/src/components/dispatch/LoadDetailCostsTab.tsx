@@ -365,7 +365,7 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
               </span>
             </div>
             <div className="ldt-fields">
-              <div className="ldt-fld"><label>Date</label><DatePicker data-testid="load-cost-field-date" className="ldt-inp" value={row.date} onChange={(value) => update(row.id, { date: value })} /></div>
+              <div className="ldt-fld"><label>Date</label><DatePicker box="field" data-testid="load-cost-field-date" className="ldt-inp" value={row.date} onChange={(value) => update(row.id, { date: value })} /></div>
               <div className="ldt-fld"><label>{row.kind === "advance" ? "From (broker)" : row.kind === "fuel_advance" ? "To (driver)" : "Vendor"}</label>
                 {row.kind === "advance" ? <div className="ldt-inp ro">{load.customer_name ?? "Broker"}</div>
                   : row.kind === "fuel_advance" ? <div className="ldt-inp ro">{load.assigned_primary_driver_name ?? "Driver"}</div>

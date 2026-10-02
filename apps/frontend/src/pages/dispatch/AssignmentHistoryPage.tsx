@@ -168,7 +168,7 @@ render: (row) => {
             From
           </label>
           {/* Layout-only className — DatePicker owns the single border (no box-in-box). */}
-          <DatePicker
+          <DatePicker box="filter"
             id="assignment-history-from"
             value={draft.from}
             onChange={(next) => setDraft((d) => ({ ...d, from: next }))}
@@ -180,7 +180,7 @@ render: (row) => {
           <label htmlFor="assignment-history-to" className="text-xs font-semibold text-gray-600">
             To
           </label>
-          <DatePicker
+          <DatePicker box="filter"
             id="assignment-history-to"
             value={draft.to}
             onChange={(next) => setDraft((d) => ({ ...d, to: next }))}

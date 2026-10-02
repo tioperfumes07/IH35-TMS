@@ -117,11 +117,11 @@ export function LoadAuditTab({ load, operatingCompanyId }: Props) {
         <div className="ldt-actions">
           <div className="ldt-fld">
             <label>Range from</label>
-            <DatePicker value={fromDate} onChange={setFromDate} data-testid="load-audit-from" />
+            <DatePicker box="filter" value={fromDate} onChange={setFromDate} data-testid="load-audit-from" />
           </div>
           <div className="ldt-fld">
             <label>to</label>
-            <DatePicker value={toDate} onChange={setToDate} data-testid="load-audit-to" />
+            <DatePicker box="filter" value={toDate} onChange={setToDate} data-testid="load-audit-to" />
           </div>
           <div className="ldt-fld">
             <label>Type</label>

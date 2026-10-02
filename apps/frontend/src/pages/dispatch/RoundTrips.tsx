@@ -598,13 +598,13 @@ export function RoundTrips({
         {viewToggle}
         {boardView === "timeline" ? (
           <span className="inline-flex items-center gap-1">
-            <DatePicker
+            <DatePicker box="filter"
               data-testid="round-trips-range-from"
               value={range.from}
               onChange={(from) => setRange((r) => ({ ...r, from }))}
               className="w-36"
             />
-            <DatePicker
+            <DatePicker box="filter"
               data-testid="round-trips-range-to"
               value={range.to}
               onChange={(to) => setRange((r) => ({ ...r, to }))}
