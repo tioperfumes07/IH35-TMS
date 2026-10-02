@@ -379,6 +379,11 @@ export async function getApAgingVendorBills(input: {
               WHERE b.operating_company_id = $1::uuid
                 AND b.bill_date <= $3::date
                 AND (b.revoked_at IS NULL OR b.revoked_at::date > $3::date)
+                -- CC-3 handoff (CC-1, 2026-10-02): a bill voided by status / voided_at (not only revoked_at — 4 prod
+                -- bills carry voided_at from an out-of-band write) is not owed as of any date after its void; drafts
+                -- are never owed. Same predicate set as ap-aging.service.ts.
+                AND (b.voided_at IS NULL OR b.voided_at::date > $3::date)
+                AND b.status NOT IN ('void', 'voided', 'draft')
                 AND COALESCE(NULLIF(TRIM(b.vendor_uuid), ''), b.vendor_id, 'unknown') = $2::text
             )
             SELECT

@@ -75,7 +75,11 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
     await assertCompanyMembership(user.uuid, q.data.operating_company_id);
     const rows = await withOperatingCompanyScope(user.uuid, q.data.operating_company_id, async (client) => {
       const values: unknown[] = [];
-      const filters = ["deactivated_at IS NULL"];
+      // CC-3 handoff (CC-1): every forecast read / write names its company — LAW 4, RLS is not a backstop for an Owner
+      // (Owner sessions see every company).
+      const values0 = [q.data.operating_company_id];
+      values.push(...values0);
+      const filters = ["deactivated_at IS NULL", "operating_company_id = $1::uuid"];
       if (q.data.from) { values.push(q.data.from); filters.push(`entry_date >= $${values.length}`); }
       if (q.data.to) { values.push(q.data.to); filters.push(`entry_date <= $${values.length}`); }
       if (q.data.entry_id) { values.push(q.data.entry_id); filters.push(`id = $${values.length}::uuid`); }
@@ -269,10 +273,11 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
       }
       values.push(user.uuid); sets.push(`updated_by_user_id = $${values.length}`);
       sets.push("updated_at = now()");
+      values.push(b.data.operating_company_id);
       values.push(p.data.id);
       const res = await client.query(
         `UPDATE forecast.cash_entries SET ${sets.join(", ")}
-          WHERE id = $${values.length} AND deactivated_at IS NULL RETURNING *`,
+          WHERE id = $${values.length} AND operating_company_id = $${values.length - 1}::uuid AND deactivated_at IS NULL RETURNING *`,
         values
       );
       const row = res.rows[0] ?? null;
@@ -300,8 +305,8 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
     const deleted = await withOperatingCompanyScope(user.uuid, q.data.operating_company_id, async (client) => {
       const res = await client.query(
         `UPDATE forecast.cash_entries SET deactivated_at = now(), updated_by_user_id = $2::uuid
-          WHERE id = $1 AND deactivated_at IS NULL RETURNING id`,
-        [p.data.id, user.uuid]
+          WHERE id = $1 AND operating_company_id = $3::uuid AND deactivated_at IS NULL RETURNING id`,
+        [p.data.id, user.uuid, q.data.operating_company_id]
       );
       const row = res.rows[0] ?? null;
       if (row) {
