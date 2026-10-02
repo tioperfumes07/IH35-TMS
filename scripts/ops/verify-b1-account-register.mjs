@@ -47,6 +47,8 @@ function main() {
   assertIncludes(page, "Reconcile", PAGE);
   assertIncludes(page, "/banking/transfers?transfer_id=", PAGE);
   assertIncludes(page, "/accounting/journal-entries/${journalEntryId}", PAGE);
+  assertIncludes(page, 't === "bank_deposit"', PAGE);
+  assertIncludes(page, "/banking/deposits/${reference}", PAGE);
 
   const inlinePanel = read("apps/frontend/src/pages/accounting/RegisterInlineEditPanel.tsx");
   assertIncludes(inlinePanel, 'data-testid="b1-register-edit-original"', "RegisterInlineEditPanel");
@@ -72,6 +74,8 @@ function main() {
   assertIncludes(service, "matched_invoice_id::text = p.source_transaction_id", SERVICE);
   assertIncludes(service, "matched_payment_id::text = p.source_transaction_id", SERVICE);
   assertIncludes(service, "matched_bill_payment_id::text = p.source_transaction_id", SERVICE);
+  assertIncludes(service, "bank_deposit: \"Deposit\"", SERVICE);
+  assertIncludes(service, "source_transaction_type = 'bank_deposit'", SERVICE);
 
   assertIncludes(api, "reconcile_status", API);
   assertIncludes(api, "bank_balance_cents", API);
