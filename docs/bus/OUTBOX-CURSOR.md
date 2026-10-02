@@ -1,3 +1,9 @@
+**2026-10-02T09:15Z · B-2 Filter full doc-types MERGED #24055 · tip **
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91016 MERGED FAST-MERGE | GO
+Reconcile Filter Transaction type = full document-type list (type_label). money-pr-local-gate PASS.
+Also this session: BANK-F91014 grid #24051 · BANK-F91015 report #24053.
+NEXT: next ORDERS leftover · Lead Chrome · bank_transaction_splits HH 12–23 · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T09:10Z · B-2 recon report reopen MERGED #24053 · tip `1bd2b7407d`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91015 MERGED FAST-MERGE | GO
 Completed session → read-only report (Beginning · Cleared payments/deposits · Ending · Uncleared). Clear/Finish locked. View report: on shell. money-pr-local-gate PASS.
