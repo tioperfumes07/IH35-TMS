@@ -52,6 +52,13 @@ function main() {
   assertIncludes(match, "bankTransactionDate", MATCH);
   assertIncludes(match, "±90 days", MATCH);
   assertIncludes(match, "Reset to ±90 days", MATCH);
+  // B-3 §19c — If needed, resolve the difference (bank_transaction_splits mini-grid).
+  assertIncludes(match, 'data-b3-resolve-difference="1"', MATCH);
+  assertIncludes(match, "If needed, resolve the difference", MATCH);
+  assertIncludes(match, 'data-testid="match-resolve-difference-grid"', MATCH);
+  assertIncludes(match, "saveBankTransactionSplitDraft", MATCH);
+  assertIncludes(match, "commitBankTransactionSplit", MATCH);
+  assertIncludes(match, "Resolved amount:", MATCH);
   // B-3 §19 — Suggested + Record type chips (QBO Find Other Matches).
   assertIncludes(match, 'data-b3-suggested-record-type-chips="1"', MATCH);
   assertIncludes(match, 'data-testid="match-chip-suggested"', MATCH);
