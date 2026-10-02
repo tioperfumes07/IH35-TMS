@@ -6950,6 +6950,10 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). mdata.customers + mdat
 action: DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-02-cc3-canonical-customers.mts --apply --auth AUTH-202 && DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-02-cc3-canonical-vendors.mts --apply --auth AUTH-202
   Dry-run first (default, no --apply).
 expires_at: 2026-10-03T23:00:00Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-02T05:00:00Z
+consumed_by: CC-3
+row_counts: customers 22 duplicate groups merged (22 rows repointed, 22 duplicate rows deleted, 22 aliases with snapshot + repoint log); vendors 3 groups merged incl. LOVES <- LOVES TRAVEL STOPS (16 rows repointed, 3 duplicate rows deleted, 3 aliases). mdata.customers 1,238 -> 1,216; mdata.vendors 622 -> 619.
+proof_query: USMCA duplicate normalized-name groups customers 0 / vendors 0; open A/R 37,413,412c / 110 invoices before = after; open A/P 56,635c / 93 bills before = after; one LOVES row (5a529e97). Reversible per alias via reverseCanonicalMerge.
 THIS AUTHORIZATION DOES NOT COVER: any company other than USMCA; mdata.qbo_customers / mdata.qbo_vendors; any money posting or
 JE; merging any pair that does not normalize equal other than the owner-named LOVES exception.
