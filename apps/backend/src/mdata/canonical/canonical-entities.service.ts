@@ -202,7 +202,10 @@ export async function mergeIntoCanonical(
      VALUES ($1::uuid, $2::uuid, $3, $4, $5::uuid, $6::jsonb, $7::jsonb, $8::uuid, $9) RETURNING id::text`,
     [oc, input.survivorId, d.name, d.key, input.duplicateId, JSON.stringify(d.snapshot), JSON.stringify(log), input.actorUserId, input.authId]
   );
-  await client.query(`DELETE FROM ${q(cfg.table)} WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [input.duplicateId, oc]);
+  // The delete must remove exactly the duplicate. Under the app role, RLS has no DELETE policy on master data and the
+  // statement silently affects 0 rows — a merge that "succeeds" while leaving the duplicate in place. Refuse instead.
+  const del = await client.query(`DELETE FROM ${q(cfg.table)} WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [input.duplicateId, oc]);
+  if (del.rowCount !== 1) throw new Error(`canonical_delete_blocked: ${cfg.table} ${input.duplicateId} delete affected ${del.rowCount ?? 0} rows (RLS / role)`);
   const moved = log.reduce((n, e) => n + e.keys.length, 0);
   await appendCrudAudit(client as never, input.actorUserId, `mdata.${kind}.canonical_merged`, {
     resource_type: cfg.table, resource_id: input.duplicateId, operating_company_id: oc, survivor_id: input.survivorId,
