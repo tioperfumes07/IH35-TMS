@@ -6957,3 +6957,19 @@ row_counts: customers 22 duplicate groups merged (22 rows repointed, 22 duplicat
 proof_query: USMCA duplicate normalized-name groups customers 0 / vendors 0; open A/R 37,413,412c / 110 invoices before = after; open A/P 56,635c / 93 bills before = after; one LOVES row (5a529e97). Reversible per alias via reverseCanonicalMerge.
 THIS AUTHORIZATION DOES NOT COVER: any company other than USMCA; mdata.qbo_customers / mdata.qbo_vendors; any money posting or
 JE; merging any pair that does not normalize equal other than the owner-named LOVES exception.
+
+## AUTH-203
+issued_at: 2026-10-02T23:00:00Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). geo.geofences — deactivate the duplicated load-stop geofences.
+  Owner, in CC-3 chat 2026-10-02, verbatim: "The stop fences: approve it. 22 duplicate load-stop geofences, keeping the
+  oldest, deactivate not delete, reversible, and duplicates corrupt every stop, dwell and mileage figure downstream."
+  Action (scripts/ops/2026-10-02-cc3-dedupe-stop-fences.mts, #24192): per (company, label 'load-<id>-stop-<seq>') with
+  more than one ACTIVE fence, keep the OLDEST; set is_active = false on each newer duplicate. No delete; no
+  geo.geofence_events row touched; reversible (is_active = true). Asserts deactivated == planned; audit event written.
+  Dry run on prod (read-only): 22 duplicated labels -> 22 fences to deactivate; 62 events recorded on them stay as written.
+action: DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-02-cc3-dedupe-stop-fences.mts --apply --auth AUTH-203
+  Dry-run first (default, no --apply).
+expires_at: 2026-10-04T23:00:00Z
+status: OPEN
+THIS AUTHORIZATION DOES NOT COVER: any company other than USMCA; deleting any geofence or geofence event; any fence
+that is not a duplicated load-stop label; any money posting or JE.
