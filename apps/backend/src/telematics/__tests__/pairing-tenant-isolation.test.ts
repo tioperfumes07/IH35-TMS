@@ -43,8 +43,9 @@ describe("vehicle-driver pairing tenant isolation", () => {
     expect(driverLookup?.sql).toContain("webhook_pairing_driver_dca.is_authorized = true");
     expect(driverLookup?.sql).toContain("webhook_pairing_driver_dca.deactivated_at IS NULL");
     expect(driverLookup?.params[0]).toBe("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-    expect(calls.some((entry) => entry.sql.includes("pg_advisory_lock"))).toBe(true);
-    expect(calls.some((entry) => entry.sql.includes("pg_advisory_unlock"))).toBe(true);
+    // ROUND 330.1: transaction-scoped lock (Postgres releases it); no session lock / unlock.
+    expect(calls.some((entry) => entry.sql.includes("pg_advisory_xact_lock"))).toBe(true);
+    expect(calls.some((entry) => entry.sql.includes("pg_advisory_unlock"))).toBe(false);
     const insert = calls.find((entry) => entry.sql.includes("INSERT INTO telematics.vehicle_driver_assignments"));
     expect(insert?.sql).toContain("RETURNING id::text");
 

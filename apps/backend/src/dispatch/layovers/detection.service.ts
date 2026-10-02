@@ -54,8 +54,12 @@ export type LayoverDetectionResult = {
 
 export async function detectLayovers(client: PoolClient, operatingCompanyId: string): Promise<LayoverDetectionResult> {
   const lockKey = `dispatch.layover_detector:${operatingCompanyId}`;
-  await client.query(`SELECT pg_advisory_lock(hashtextextended($1::text, 0))`, [lockKey]);
-  try {
+  // ROUND 330.1: TRANSACTION-scoped (released by Postgres at commit / rollback). The session lock it replaces was
+  // unlocked in a finally on the caller's transaction — after a failed SQL statement that transaction is aborted, the
+  // unlock cannot run, and the lock stays on the pgbouncer server connection: the next blocking pg_advisory_lock on
+  // another connection waits forever (fork-proven, CC-3 #24237). Callers run inside withLuciaBypass (one transaction).
+  await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))`, [lockKey]);
+  {
   // CANONICAL SOURCES (§4, prod-verified 2026-07-27):
   //   driver     -> mdata.loads.assigned_primary_driver_id   (populated)
   //   delivered  -> the LAST stop_type='delivery' stop's actual_departure_at on mdata.load_stops
@@ -162,8 +166,6 @@ export async function detectLayovers(client: PoolClient, operatingCompanyId: str
     inserted++;
   }
     return { inserted, resolvable_deliveries: resolvableDeliveries };
-  } finally {
-    await client.query(`SELECT pg_advisory_unlock(hashtextextended($1::text, 0))`, [lockKey]);
   }
 }
 
