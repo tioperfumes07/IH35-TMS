@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { MDATA_STATUS_TRANSITIONS, fromMdataStatus, isReverseTransition } from "../dispatch/load-state-machine.js";
 import { latchOnDeliveryEvidence } from "../dispatch/delivery-evidence-latch.js";
 // ACCT-F166 — the settlement half of a delivery, wired here so the mdata fallback path is
 // money-complete; see the call site below for why the FE can reach this route at all.
@@ -376,28 +377,7 @@ function statusToFlagCode(status: z.infer<typeof loadStatusSchema>): string {
   return "GRAY";
 }
 
-const allowedStatusTransitions: Record<z.infer<typeof loadStatusSchema>, z.infer<typeof loadStatusSchema>[]> = {
-  draft: ["booked", "planned", "unassigned", "cancelled"],
-  booked: ["planned", "unassigned", "assigned", "assigned_not_dispatched", "driver_no_show", "cancelled"],
-  planned: ["unassigned", "assigned", "assigned_not_dispatched", "driver_no_show", "cancelled"],
-  unassigned: ["booked", "planned", "assigned", "assigned_not_dispatched", "cancelled"],
-  assigned: ["assigned_not_dispatched", "dispatched", "driver_no_show", "cancelled"],
-  assigned_not_dispatched: ["dispatched", "driver_no_show", "cancelled"],
-  dispatched: ["at_pickup", "driver_no_show", "driver_walkoff", "cancelled"],
-  at_pickup: ["in_transit", "driver_walkoff", "cancelled"],
-  in_transit: ["at_delivery", "abandoned", "driver_walkoff", "cancelled"],
-  at_delivery: ["delivered", "delivered_pending_docs", "cancelled"],
-  delivered: ["delivered_pending_docs", "completed_docs_received", "invoiced", "cancelled"],
-  delivered_pending_docs: ["completed_docs_received", "invoiced", "cancelled"],
-  completed_docs_received: ["invoiced", "closed"],
-  invoiced: ["paid", "closed"],
-  paid: ["closed"],
-  closed: [],
-  cancelled: [],
-  abandoned: [],
-  driver_walkoff: [],
-  driver_no_show: [],
-};
+// The full-enum transition table lives in dispatch/load-state-machine.ts (MDATA_STATUS_TRANSITIONS) — one module, one machine.
 
 export async function registerLoadRoutes(app: FastifyInstance) {
   // E20/loads.routes.ts rewire (Lead ruling 2026-09-23 — "IT SHOULD NOT SKIP THE DRIVER BILLS,
@@ -1135,16 +1115,22 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         `SELECT id, status, operating_company_id FROM mdata.loads
          WHERE id = $1 AND soft_deleted_at IS NULL
            AND operating_company_id = $2::uuid
-         LIMIT 1`,
+         LIMIT 1
+         FOR UPDATE`,
         [parsedParams.data.id, scopedCompanyId]
       );
       const current = currentRes.rows[0] ?? null;
       if (!current) return { error: "mdata_load_not_found" as const };
       if (current.status === newStatus) return { ok: true as const, no_change: true, status: current.status };
 
-      const allowed = allowedStatusTransitions[current.status] ?? [];
+      const allowed = MDATA_STATUS_TRANSITIONS[current.status] ?? [];
       if (!allowed.includes(newStatus)) {
         return { error: "invalid_status_transition" as const, from_status: current.status, to_status: newStatus };
+      }
+      // A backward move needs a reason on the record (owner ruling 2026-09-12); this route carries none, so reverse
+      // moves go through PATCH /api/v1/dispatch/loads/:id/transition, which requires and audits it.
+      if (fromMdataStatus(current.status) !== fromMdataStatus(newStatus) && isReverseTransition(current.status, fromMdataStatus(newStatus))) {
+        return { error: "reversal_requires_dispatch_transition" as const, from_status: current.status, to_status: newStatus };
       }
 
       if (newStatus === "cancelled" && !cancellationReasonCode) {
@@ -1215,15 +1201,17 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           SET status = $2
           WHERE id = $1
             AND operating_company_id = $3::uuid
+            AND status::text = $4
           RETURNING
             id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
             assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
             dispatcher_user_id, notes, created_at, updated_at, soft_deleted_at, deleted_by_user_id
         `,
-        [parsedParams.data.id, newStatus, scopedCompanyId]
+        [parsedParams.data.id, newStatus, scopedCompanyId, current.status]
       );
       const row = updateRes.rows[0] ?? null;
-      if (!row) return { error: "mdata_load_not_found" as const };
+      // Compare-and-set (CC-3 queue 2b): the status moved under us (GPS, driver app, another user) — refuse, never overwrite.
+      if (!row) return { error: "status_changed" as const, from_status: current.status, to_status: newStatus };
 
       // CLS-DISP-WIRE-07 — dual-path kill: this route used to flip status with zero stop evidence.
       // Same stamp as dispatch transition + bulk set_status (never overwrite driver departure).
@@ -1377,6 +1365,14 @@ export async function registerLoadRoutes(app: FastifyInstance) {
 
     if ("error" in result) {
       if (result.error === "mdata_load_not_found") return reply.code(404).send({ error: "mdata_load_not_found" });
+      if (result.error === "reversal_requires_dispatch_transition") {
+        return reply.code(400).send({ error: "reversal_reason_required", from_status: result.from_status, to_status: result.to_status,
+          message: "Moving a load back a step needs a reason — use the dispatch board's move-back action." });
+      }
+      if (result.error === "status_changed") {
+        return reply.code(409).send({ error: "status_changed", from_status: result.from_status, to_status: result.to_status,
+          message: "This load's status changed while you were moving it (GPS, driver app or another user). Refresh and try again." });
+      }
       if (result.error === "invalid_status_transition") {
         return reply.code(400).send({
           error: "invalid_status_transition",

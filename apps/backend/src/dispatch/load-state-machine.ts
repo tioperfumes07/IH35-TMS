@@ -125,6 +125,39 @@ export function validateLoadStatusTransition(
   return { ok: true };
 }
 
+/**
+ * CC-3 queue 2b (2026-10-02) — the FULL mdata.load_status_enum transition table, owned here so ONE module holds every
+ * transition rule. It is the canonical dispatch machine above, expressed over the full enum, plus the two things the
+ * dispatch machine does not model: same-bucket granular steps (booked -> planned, dispatched -> at_pickup, ...) and the
+ * billing tail (delivered* -> invoiced -> paid -> closed, driven by load-billing-lifecycle.service.ts).
+ * It used to live in mdata/loads.routes.ts and had drifted 14 edges from the dispatch machine (no reverse edges,
+ * no draft -> assigned_not_dispatched, no dispatched -> in_transit, booked/planned -> driver_no_show allowed);
+ * verify-load-status-machines-agree.mjs recomputes the agreement and fails on any drift.
+ */
+export const MDATA_STATUS_TRANSITIONS: Readonly<Record<string, readonly string[]>> = {
+  draft: ["booked", "planned", "unassigned", "cancelled", "assigned_not_dispatched"],
+  booked: ["planned", "unassigned", "assigned", "assigned_not_dispatched", "cancelled"],
+  planned: ["unassigned", "assigned", "assigned_not_dispatched", "cancelled"],
+  unassigned: ["booked", "planned", "assigned", "assigned_not_dispatched", "cancelled"],
+  assigned: ["assigned_not_dispatched", "dispatched", "driver_no_show", "cancelled", "draft"],
+  assigned_not_dispatched: ["dispatched", "driver_no_show", "cancelled", "draft"],
+  dispatched: ["at_pickup", "driver_no_show", "driver_walkoff", "cancelled", "assigned_not_dispatched", "in_transit"],
+  at_pickup: ["in_transit", "driver_walkoff", "cancelled", "assigned_not_dispatched", "driver_no_show"],
+  in_transit: ["at_delivery", "abandoned", "driver_walkoff", "cancelled", "dispatched", "delivered_pending_docs"],
+  at_delivery: ["delivered", "delivered_pending_docs", "cancelled", "dispatched", "abandoned", "driver_walkoff"],
+  delivered: ["delivered_pending_docs", "completed_docs_received", "invoiced", "cancelled"],
+  delivered_pending_docs: ["completed_docs_received", "invoiced", "cancelled"],
+  completed_docs_received: ["invoiced", "closed"],
+  invoiced: ["paid", "closed"],
+  paid: ["closed"],
+  closed: [],
+  cancelled: [],
+  abandoned: [],
+  driver_walkoff: [],
+  driver_no_show: [],
+};
+
+
 /** true when a load can no longer transition forward (cancelled / completed / abandoned / walkoff / no-show). */
 export function isTerminalLoadStatus(currentMdataStatus: string): boolean {
   return allowedTransitions[fromMdataStatus(currentMdataStatus)].length === 0;

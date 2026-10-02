@@ -44,7 +44,8 @@ const LABEL = "verify-load-status-single-state-machine";
 
 /** The pieces that together ARE the state machine. Any second definition is a fork. */
 const SM_DEFINITIONS = [
-  { name: "allowedTransitions", re: /(?:^|\n)\s*(?:export\s+)?const\s+allowedTransitions\s*[:=]/g },
+  { name: "allowedTransitions", re: /(?:^|\n)\s*(?:export\s+)?const\s+allowed\w*Transitions\s*[:=]/g },
+  { name: "MDATA_STATUS_TRANSITIONS", re: /(?:^|\n)\s*(?:export\s+)?const\s+MDATA_STATUS_TRANSITIONS\s*[:=]/g },
   { name: "dispatchStatusSchema", re: /(?:^|\n)\s*(?:export\s+)?const\s+dispatchStatusSchema\s*=/g },
   { name: "fromMdataStatus", re: /(?:^|\n)\s*(?:export\s+)?function\s+fromMdataStatus\s*\(/g },
   { name: "toMdataStatus", re: /(?:^|\n)\s*(?:export\s+)?function\s+toMdataStatus\s*\(/g },

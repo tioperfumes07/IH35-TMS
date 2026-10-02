@@ -19,7 +19,7 @@ import { latchOnDeliveryEvidence } from "./delivery-evidence-latch.js";
 // ACCT-F166 — settlement half of a delivery; see the call site for why this route needs it.
 import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bookended.service.js";
 import { cancelLoadInClientTx } from "./cancellation.service.js";
-import { assertClosedLoadHasPricedDriverBill } from "./book-load.service.js";
+import { assertClosedLoadHasPricedDriverBill, ensureDriverBillArtifactsForLoad } from "./book-load.service.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 
 // Transitions that fire escrow-proposal + settlement side-effects on the per-load endpoint
@@ -172,9 +172,10 @@ async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promi
             updated_at = now()
         WHERE id = $1::uuid
           AND operating_company_id = $2::uuid
+          AND status::text = $4
         RETURNING *
       `,
-      [id, operatingCompanyId, mdataStatus]
+      [id, operatingCompanyId, mdataStatus, String(oldRow.status)]
     );
     if (updateRes.rows.length === 0) {
       return { ok: false, code: "E_UPDATE_FAILED", message: "Load status update failed" };
@@ -183,6 +184,11 @@ async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promi
     // (same as PATCH /dispatch/loads/:id/transition). COALESCE(now()) when client omits delivered_at.
     if (loadStatusRequiresDeliveryDepartureStamp(mdataStatus)) {
       await stampFinalActiveDeliveryDeparture(client, operatingCompanyId, id, statusPayload.delivered_at ?? null);
+    }
+    // CC-3 queue 2b: parity with the per-load paths — delivery is the idempotent driver-bill backstop (a Book-created
+    // bill is a no-op; a load created elsewhere is minted now, or a durable skip is recorded — never silent $0 pay).
+    if (loadStatusRequiresDeliveryDepartureStamp(mdataStatus)) {
+      await ensureDriverBillArtifactsForLoad(client as never, { loadId: id, operatingCompanyId, actorUserId });
     }
     // LV-BULK-DELIVER-NOLATCH (live-proven on prod 2026-08-07) — this route had the STAMP half of
     // WIRE-07 and not the LATCH half. It accepts the delivery statuses (PER_LOAD_ONLY_TRANSITIONS
