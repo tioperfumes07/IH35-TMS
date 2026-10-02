@@ -1379,6 +1379,13 @@ Full coder instructions: `claude/2026-09-13-ABSORPTION-INGEST-AND-DISPUTE-WINDOW
 3. Ship Needs delivery authorization FE queue (this PR) → FE deploy → Owner clicks Authorize when a rolling load needs early factoring auth.
 4. No baseline raises to clear tip ENV reds.
 
+## Active Architectural Decisions — ROUND 342 tenant_id → OCI + Class D code keys (Cursor, 2026-10-02)
+
+- **Trap:** `factoring.v_factor_reserve_balance` OUTPUT field renames with CC-1 (`tenant_id`→`operating_company_id`). Blank ≡ zero. Live readers already use KPI GL engine; mappers/types must accept OCI first (`companyIdFromRow`).
+- **Class D (3 codes first):** `uq_mdata_{customers,vendors,locations}_company_{customer,vendor,location}_code` UNIQUE(operating_company_id, code); drop global `*_code_key`. Mig `202615312200`. Collisions measured 0.
+- **Driver identity_user_id:** WAITING OWNER RULING — can one person be a driver in two carriers?
+- **Cross-entity rule (Cursor↔CC-3):** source_entity_code mismatch OR child/parent OCI mismatch — same rule, both guards.
+
 ## Active Architectural Decisions — Banking ORDERS B-4 Check creator (Cursor, 2026-10-02)
 
 - **Class (BANK-F91035 #24095):** `WriteCheckForm` → `class_id` on existing `accounting.expenses.class_id` (202613380001). No migration.

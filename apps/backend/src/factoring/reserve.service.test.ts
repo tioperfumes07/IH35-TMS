@@ -104,15 +104,16 @@ describe("factoring reserve service", () => {
     expect(result).toMatchObject({ posted: false, overage_cents: 0, movement: null });
   });
 
-  it("enforces tenant-scoped reserve movement listing", async () => {
+  it("enforces company-scoped reserve movement listing", async () => {
     const query = vi.fn(async (sql: string, values?: unknown[]) => {
       if (sql.includes("FROM factoring.reserve_movement")) {
-        expect(sql).toContain("AND tenant_id = $2::uuid");
+        expect(sql).toContain("AND COALESCE(operating_company_id, tenant_id) = $2::uuid");
         expect(values).toEqual([batchId, tenantId]);
         return {
           rows: [
             {
               id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+              operating_company_id: tenantId,
               tenant_id: tenantId,
               batch_id: batchId,
               factor_id: null,
@@ -129,7 +130,7 @@ describe("factoring reserve service", () => {
 
     const rows = await listReserveMovementsForBatch(batchId, tenantId, { client: { query } });
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ tenant_id: tenantId, batch_id: batchId });
+    expect(rows[0]).toMatchObject({ operating_company_id: tenantId, tenant_id: tenantId, batch_id: batchId });
   });
 
   afterEach(() => {
@@ -147,7 +148,7 @@ describe("factoring reserve service", () => {
     ];
     const query = vi.fn(async () => ({ rows: [] }));
     const rows = await getFactorReserveBalances(tenantId, { client: { query } });
-    expect(rows).toEqual([{ tenant_id: tenantId, factor_id: factorId, balance_cents: 12900, last_movement_at: "2026-09-01", movement_count: 2 }]);
+    expect(rows).toEqual([{ operating_company_id: tenantId, tenant_id: tenantId, factor_id: factorId, balance_cents: 12900, last_movement_at: "2026-09-01", movement_count: 2 }]);
     expect(query.mock.calls.some(([sql]) => String(sql).includes("reserve_movement"))).toBe(false);
   });
 

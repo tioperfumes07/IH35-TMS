@@ -14,6 +14,9 @@ function toNumber(value: unknown): number {
 
 export type ReserveMovementRow = {
   id: string;
+  /** ROUND 342 — canonical. Prefer this over tenant_id (retired by CC-1 rename). */
+  operating_company_id: string;
+  /** @deprecated ROUND 342 — alias of operating_company_id until FE callers finish cutover. */
   tenant_id: string;
   batch_id: string | null;
   factor_id: string | null;
@@ -24,6 +27,9 @@ export type ReserveMovementRow = {
 };
 
 export type FactorReserveBalanceRow = {
+  /** ROUND 342 — canonical. v_factor_reserve_balance OUTPUT renames tenant_id→operating_company_id with CC-1. */
+  operating_company_id: string;
+  /** @deprecated ROUND 342 — alias of operating_company_id until FE callers finish cutover. */
   tenant_id: string;
   factor_id: string;
   balance_cents: number;
@@ -68,10 +74,18 @@ export class ReserveMovementError extends Error {
   }
 }
 
+/** ROUND 342 trap: after CC-1 renames the view/base column, row.tenant_id is undefined — blank ≡ zero. */
+function companyIdFromRow(row: Record<string, unknown>): string {
+  const oci = row.operating_company_id ?? row.tenant_id;
+  return String(oci ?? "");
+}
+
 function mapReserveMovementRow(row: Record<string, unknown>): ReserveMovementRow {
+  const companyId = companyIdFromRow(row);
   return {
     id: String(row.id),
-    tenant_id: String(row.tenant_id),
+    operating_company_id: companyId,
+    tenant_id: companyId,
     batch_id: row.batch_id ? String(row.batch_id) : null,
     factor_id: row.factor_id ? String(row.factor_id) : null,
     direction: String(row.direction) as ReserveMovementDirection,
@@ -82,8 +96,10 @@ function mapReserveMovementRow(row: Record<string, unknown>): ReserveMovementRow
 }
 
 function mapFactorReserveBalanceRow(row: Record<string, unknown>): FactorReserveBalanceRow {
+  const companyId = companyIdFromRow(row);
   return {
-    tenant_id: String(row.tenant_id),
+    operating_company_id: companyId,
+    tenant_id: companyId,
     factor_id: String(row.factor_id),
     balance_cents: toNumber(row.balance_cents),
     last_movement_at: row.last_movement_at ? String(row.last_movement_at) : null,
@@ -154,10 +170,10 @@ export async function autoPostOverageOnSettle(
 ): Promise<{ overage_cents: number; posted: boolean; movement: ReserveMovementRow | null }> {
   const batchRes = await deps.client.query<Record<string, unknown>>(
     `
-      SELECT id::text, tenant_id::text, expected_advance_cents::bigint, factor_id::text
+      SELECT id::text, COALESCE(operating_company_id, tenant_id)::text AS operating_company_id, expected_advance_cents::bigint, factor_id::text
       FROM factoring.batch
       WHERE id = $1::uuid
-        AND tenant_id = $2::uuid
+        AND COALESCE(operating_company_id, tenant_id) = $2::uuid
       LIMIT 1
     `,
     [batchId, tenantId]
@@ -190,7 +206,7 @@ export async function listReserveMovementsForBatch(
       SELECT *
       FROM factoring.reserve_movement
       WHERE batch_id = $1::uuid
-        AND tenant_id = $2::uuid
+        AND COALESCE(operating_company_id, tenant_id) = $2::uuid
       ORDER BY created_at ASC, id ASC
     `,
     [batchId, tenantId]
@@ -214,6 +230,7 @@ export async function getFactorReserveBalances(
   const book = await factoringBookReserveCents(client, tenantId, companyBusinessDate());
   const postings = await factoringReservePostings(client, tenantId);
   return [{
+    operating_company_id: tenantId,
     tenant_id: tenantId,
     factor_id: factorId,
     balance_cents: book.total,
@@ -238,6 +255,7 @@ export async function getReserveBalanceHistory(
     running += p.signed_cents;
     return {
       id: p.id,
+      operating_company_id: tenantId,
       tenant_id: tenantId,
       batch_id: null,
       factor_id: factorId,
