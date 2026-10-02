@@ -73,6 +73,24 @@ const SURFACES = [
     must: [/f\.original_filename ILIKE \$/, /f\.uploader_user_id = \$\$\{values\.length\}::uuid/, /COALESCE\(f\.document_date, f\.created_at::date\) >= /, /f\.expiration_date <= CURRENT_DATE \+ /, /NOT EXISTS \(SELECT 1 FROM docs\.file_links fl WHERE fl\.file_id = f\.id/, /library_total: response\.library_total/],
     mustNot: [],
   },
+  {
+    name: "Samsara driver mapping (page)",
+    file: "apps/frontend/src/pages/samsara-driver-mapping/SamsaraDriverMappingPage.tsx",
+    must: [/<UniversalListToolbar[\s\S]{0,500}resultCount=\{profilesQuery\.data\?\.total \?\? rows\.length\}/, /hideToolbar \/>/, /data-testid="profiles-prev-page"/],
+    mustNot: [/onChange=\{\(e\) => \{\s*setSearch\(e\.target\.value\)/],
+  },
+  {
+    name: "Samsara driver mapping (route)",
+    file: "apps/backend/src/integrations/samsara/driver-mapping/driver-mapping.routes.ts",
+    must: [/total: Number\(totalRes\.rows\[0\]\?\.n \?\? 0\)/, /scope_total: Number\(scopeRes\.rows\[0\]\?\.n \?\? 0\)/],
+    mustNot: [],
+  },
+  {
+    name: "Drivers roster",
+    file: "apps/frontend/src/pages/Drivers.tsx",
+    must: [/listAllDrivers\(\{[\s\S]{0,200}status: "All",/],
+    mustNot: [/\[search,\s*setSearch\]/],
+  },
 ];
 
 export function audit(read) {
