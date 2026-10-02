@@ -559,6 +559,7 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-party-boards-bound-live",
     [
       "apps/backend/src/mdata/canonical/party-board.service.ts",
+      "apps/backend/src/mdata/canonical/driver-hub.service.ts",
       "apps/frontend/src/components/boards/",
       "apps/frontend/src/routes/manifest.tsx",
       "scripts/lib/print-party-boards.ts",

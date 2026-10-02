@@ -11,6 +11,7 @@ import { readCustomerProfile } from "./customer-profile.service.js";
 import { readVendorProfile } from "./vendor-profile.service.js";
 import { readDriverProfile } from "./driver-profile.service.js";
 import { readCustomerBoard, readVendorBoard } from "./party-board.service.js";
+import { readDriverHub, readDriverHubPanel } from "./driver-hub.service.js";
 import { mergeIntoCanonical, planCanonical, reverseCanonicalMerge, type CanonicalKind } from "./canonical-entities.service.js";
 
 const kindSchema = z.enum(["customers", "vendors"]);
@@ -28,6 +29,25 @@ export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
       readCustomerProfile(client, qy.data.operating_company_id, p.data.id));
     if (!profile) return reply.code(404).send({ error: "customer_not_found" });
     return profile;
+  });
+
+  // ROUND 326.5 — Driver Hub Home board: tiles, chips, list sorted by settlement due, and the selected driver's panel.
+  app.get("/api/v1/mdata/boards/drivers", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    if (!requireAuth(req, reply)) return;
+    const qy = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+    if (!qy.success) return reply.code(400).send({ error: "validation_error" });
+    await assertCompanyMembership(req.user!.uuid, qy.data.operating_company_id);
+    return withCompanyScope(req.user!.uuid, qy.data.operating_company_id, (client) => readDriverHub(client, qy.data.operating_company_id));
+  });
+  app.get("/api/v1/mdata/boards/drivers/:id", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
+    if (!requireAuth(req, reply)) return;
+    const p = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
+    const qy = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+    if (!p.success || !qy.success) return reply.code(400).send({ error: "validation_error" });
+    await assertCompanyMembership(req.user!.uuid, qy.data.operating_company_id);
+    const panel = await withCompanyScope(req.user!.uuid, qy.data.operating_company_id, (client) => readDriverHubPanel(client, qy.data.operating_company_id, p.data.id));
+    if (!panel) return reply.code(404).send({ error: "driver_not_found" });
+    return panel;
   });
 
   // ROUND 326.5 — the Customers / Vendors list boards: tiles, chip counts, rows and footers, all computed live.

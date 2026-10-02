@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * ROUND 326.5 — the Customers / Vendors list boards (owner design law: identical to
+ * ROUND 326.5 — the Customers / Vendors list boards and Driver Hub Home (Main.dc.html) (owner design law: identical to
  * docs/design/boards/driver-customers-vendors/{Customers,Vendors}.dc.html, every figure bound live).
  *   static -- /customers and /vendors open on the board (PartyListRoute); every board control exists (6 tiles,
  *             chips, range/aging or category tokens, search over all, Regular / Master-detail, Export, gear);
@@ -18,6 +18,7 @@ const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const ui = readFileSync("apps/frontend/src/components/boards/PartyBoard.tsx", "utf8");
 const manifest = readFileSync("apps/frontend/src/routes/manifest.tsx", "utf8");
 const css = readFileSync("apps/frontend/src/components/boards/party-board.css", "utf8");
+const hubUi = readFileSync("apps/frontend/src/components/boards/DriverHubBoard.tsx", "utf8");
 const fails = [];
 for (const k of ["customers", "vendors"]) if (!new RegExp(`<PartyListRoute kind="${k}">`).test(manifest)) fails.push(`/${k} must open on the board (PartyListRoute)`);
 for (const label of ["With transactions", "In the book", "Open invoices", "Billed", "A/R open", "Collected", "Spend YTD", "Fuel share", "Open bills", "Unposted fuel",
@@ -27,6 +28,13 @@ for (const label of ["With transactions", "In the book", "Open invoices", "Bille
 for (const snapshot of ["381,916.72", "366,409.12", "15,507.60", "185,914.44", "20,942.94", "177,911.29", "1,249", "99.2%"]) {
   if (ui.includes(snapshot)) fails.push(`hardcoded board figure "${snapshot}" ships — bind it to the engine`);
 }
+if (!/<DriverHubRoute \/>/.test(manifest)) fails.push("/drivers/profiles must open on the Driver Hub board (DriverHubRoute)");
+for (const label of ["Driver Hub Home", "Refresh", "+ Create Driver", "On loads", "Available", "On leave", "Settle due", "Escrow held", "Cash advance requests",
+  "Pay rate templates", "Driver disputes", "Probation", "Unit…", "All pay bases", "Search name, phone, CDL…", "Master-detail", "List", "Choose columns",
+  "Sorted by settlement due", "Open full profile →", "Settlement due", "Advances open", "Miles, 30 days", "Integrity", "Recent activity", "Linked"]) {
+  if (!hubUi.includes(label)) fails.push(`driver hub control/label missing: "${label}"`);
+}
+for (const snapshot of ["19 / 130", "$1,842.60", "Angel Sosa", "9,150", "$2,375.00"]) if (hubUi.includes(snapshot)) fails.push(`hardcoded driver-hub board figure "${snapshot}" ships`);
 if (!/className="ih-table"/.test(ui)) fails.push("board table must use ih-table (rules for rows, never for columns)");
 if (/border-(left|right)\s*:/.test(css)) fails.push("party-board.css declares a column border");
 if (!/cents \? usd\(cents\) : "—"/.test(ui)) fails.push("missing money must render — (never $0.00)");
@@ -60,6 +68,17 @@ try {
   eq("vendors transactions", v.transactions, ve.t);
   eq("unposted Relay fuel (cents)", v.unposted_fuel_cents, rf.s);
   eq("unposted Relay fuel (count)", v.unposted_fuel_count, rf.n);
+  const dh = (await c.query(`SELECT count(*) FILTER (WHERE status::text = 'Active')::int a, count(*)::int t FROM mdata.drivers WHERE operating_company_id = $1 AND merged_into_driver_id IS NULL`, [USMCA])).rows[0];
+  const sd = (await c.query(`SELECT count(*)::int n FROM driver_finance.driver_settlements s JOIN mdata.drivers d ON d.id = s.driver_id AND d.merged_into_driver_id IS NULL
+     WHERE s.operating_company_id = $1 AND s.voided_at IS NULL AND s.reversed_at IS NULL AND coalesce(s.is_presettlement, false) = false
+       AND s.payment_state = 'unpaid' AND s.paid_at IS NULL AND coalesce(s.is_sample_data, false) = false`, [USMCA])).rows[0];
+  const eh = (await c.query(`SELECT coalesce(sum(balance_cents),0)::bigint s FROM accounting.escrow_accounts WHERE operating_company_id = $1 AND holder_type = 'driver'`, [USMCA])).rows[0];
+  const dk = engine.drivers.kpis;
+  eq("drivers active", dk.active, dh.a);
+  eq("drivers total", dk.total, dh.t);
+  eq("drivers settle due", dk.settle_due, sd.n);
+  eq("drivers escrow held (cents)", dk.escrow_held_cents, eh.s);
+  eq("drivers available = active - on loads", dk.available, dk.active - dk.on_loads);
   await c.query("ROLLBACK");
 } finally { await c.end(); }
 if (fails.length) { console.error("verify-party-boards-bound-live: FAIL\n  " + fails.join("\n  ")); process.exit(1); }

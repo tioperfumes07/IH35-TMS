@@ -44,3 +44,38 @@
 .pb-menu label { display: flex; align-items: center; gap: 6px; font-size: var(--ih-fs-body); color: var(--ih-ink); padding: 3px 0; white-space: nowrap; }
 .pb-switch { display: flex; justify-content: flex-end; gap: 8px; padding: 8px var(--ih-gutter) 0; }
 @media (max-width: 900px) { .pb-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* Driver Hub Home (Main.dc.html) */
+.pb-head-actions { display: flex; gap: 8px; }
+.pb-refresh { font: inherit; font-size: var(--ih-fs-body); padding: 8px 14px; min-height: var(--ih-h-action); border: 1px solid var(--ih-border-control); background: var(--ih-card); color: var(--ih-navy-ink); border-radius: var(--ih-radius); cursor: pointer; }
+.pb-kpi-btn { font: inherit; text-align: left; cursor: pointer; }
+.pb-tabs { background: var(--ih-card); border-bottom: 1px solid var(--ih-border); padding: 0 var(--ih-gutter); display: flex; gap: 2px; flex-wrap: wrap; }
+.pb-tab { font-size: var(--ih-fs-body); padding: var(--ih-pad-tab); color: var(--ih-muted); text-decoration: none; border-bottom: var(--ih-tab-active-rule) solid transparent; }
+.pb-tab[aria-current="page"] { font-weight: 600; color: var(--ih-ink); border-bottom-color: var(--ih-navy); }
+.pb-md { flex-grow: 1; min-height: 0; padding: 14px var(--ih-gutter) 20px; display: grid; grid-template-columns: 1fr 1.25fr; gap: var(--ih-gap-card); }
+.pb-md > .pb-card { min-width: 0; display: flex; flex-direction: column; }
+.pb-md .ih-table td, .pb-md .ih-table th { padding: var(--ih-pad-cell-tight); }
+.pb-md-head { padding: 9px 14px; border-bottom: 1px solid var(--ih-rule); display: flex; justify-content: space-between; align-items: baseline; }
+.pb-sub-sm { font-size: var(--ih-fs-sub); color: var(--ih-muted); }
+.pb-row-sel { background: var(--ih-link-chip) !important; }
+.pb-panel-head { padding: 12px 16px; border-bottom: 1px solid var(--ih-rule); display: flex; justify-content: space-between; align-items: flex-start; }
+.pb-panel-name { font-size: 16px; font-weight: 700; }
+.pb-panel-meta { font-size: 12px; color: var(--ih-muted); margin-top: 1px; }
+.pb-panel-meta b { font-weight: 600; color: var(--ih-navy-ink); }
+.pb-link { font-size: var(--ih-fs-sub); font-weight: 600; text-decoration: none; color: var(--ih-navy); }
+.pb-panel-body { padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; }
+.pb-figs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--ih-gap-tile); }
+.pb-fig { font-size: var(--ih-fs-figure); font-weight: 700; font-variant-numeric: tabular-nums; }
+.pb-integrity { border: 1px solid var(--ih-navy-ink); border-radius: var(--ih-radius); padding: 6px 9px; margin: -6px -9px; }
+.pb-integrity .ih-hd, .pb-integrity .pb-fig { color: var(--ih-navy-ink); }
+.pb-integrity--flag { border-color: var(--ih-red-border); }
+.pb-integrity--flag .ih-hd, .pb-integrity--flag .pb-fig { color: var(--ih-red); }
+.pb-tiny { font-size: var(--ih-fs-pill); color: var(--ih-muted); }
+.pb-section { border-top: 1px solid var(--ih-rule); padding-top: 10px; }
+.pb-badge { font-size: var(--ih-fs-badge); font-weight: 700; letter-spacing: var(--ih-ls-badge); text-transform: uppercase; color: var(--ih-card); border-radius: var(--ih-radius-chip); padding: 2px 5px; background: var(--ih-navy-ink); }
+.pb-badge--Fuel { background: var(--ih-slate); }
+.pb-badge--Settle { background: var(--ih-slate-2); }
+.pb-badge--Escrow { background: var(--ih-amber-border); }
+.pb-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pb-linkchip { font-size: var(--ih-fs-sub); color: var(--ih-navy-ink); background: var(--ih-link-chip); border: 1px solid var(--ih-chip-border); border-radius: var(--ih-radius-chip); padding: 4px 8px; text-decoration: none; }
+@media (max-width: 1000px) { .pb-md { grid-template-columns: 1fr; } .pb-figs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

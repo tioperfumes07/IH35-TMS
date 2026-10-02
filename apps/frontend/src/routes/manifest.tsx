@@ -12,9 +12,20 @@ import type { ReactNode } from "react";
 import { useAuth } from "../auth/useAuth";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { PartyListSwitch, type PartyKind } from "../components/boards/PartyBoard";
+import { DriverHubBoard } from "../components/boards/DriverHubBoard";
 import { Shell } from "../components/Shell";
 import { resolveListsDomainHubKey } from "../pages/lists/components/AllCatalogsMap";
 import { catalogKeyToCatalogName } from "../hooks/useCatalogQuery";
+/** ROUND 326.5 — /drivers/profiles opens on the Driver Hub Home board; "List" (?view=list) is the existing page. */
+function DriverHubRoute() {
+  const { selectedCompanyId } = useCompanyContext();
+  const [params, setParams] = useSearchParams();
+  if (!selectedCompanyId || params.get("view") === "list" || params.has("create") || params.has("driver")) {
+    return <DriversSubtabRoute subnav="profiles" />;
+  }
+  return <DriverHubBoard operatingCompanyId={selectedCompanyId} onList={() => setParams({ view: "list" })} />;
+}
+
 /**
  * ROUND 326.5 — /customers and /vendors open on the owner's board (Regular view). Master-detail is the existing
  * page, reached by the toggle or by any selection / create / tab parameter in the URL.
@@ -1090,7 +1101,7 @@ export const ROUTES = React.Children.toArray(
           path="/drivers/profiles"
           element={
             <ProtectedRoute>
-              <DriversSubtabRoute subnav="profiles" />
+              <DriverHubRoute />
             </ProtectedRoute>
           }
         />
