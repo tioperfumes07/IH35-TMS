@@ -188,11 +188,18 @@ export async function postSettlementApChainInClientTx(client: pg.PoolClient, inp
       [opco, vendorId, b.loadNumber]
     );
     if (dup.rows.length) throw new SettlementApChainError("LOAD_BILL_ALREADY_EXISTS", `An A/P bill numbered ${b.loadNumber} already exists for this driver — a load is billed once`, { load_number: b.loadNumber });
+    // Lead ROUND 330.6 ruling 1: a reversed settlement's bill keeps its number forever. A re-post bills the same load
+    // (bill_number = the load number, the reference the owner reads) under a FRESH display number, never the spent one.
+    const spent = await client.query(
+      `SELECT 1 FROM accounting.bills WHERE operating_company_id = $1::uuid AND display_id = $2 LIMIT 1`,
+      [opco, b.loadNumber]
+    );
     const bill = await createBillInClientTx(client, {
       operatingCompanyId: opco,
       vendorId,
       driverId: input.driverId,
       billNumber: b.loadNumber,
+      autoDisplayId: spent.rows.length > 0,
       billDate: input.billDate,
       amountCents: total,
       memo: `${input.label} — driver pay, load ${b.loadNumber}`,

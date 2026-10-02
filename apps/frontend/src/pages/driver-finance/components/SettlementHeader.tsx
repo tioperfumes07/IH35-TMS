@@ -15,6 +15,9 @@ type Props = {
    *  A null `number` means the payload genuinely did not carry one — it is NOT a licence to print a uuid
    *  by default (SETTLEMENT-DETAIL-SHOWS-RAW-UUID). */
   loadIds: { id: string; number: string | null }[];
+  /** Lead ROUND 330.6: the reversed settlement this one replaces, and the settlement that replaced this one. */
+  predecessor?: { id: string; label: string | null } | null;
+  successor?: { id: string; label: string | null } | null;
   onRefresh: () => void;
 };
 
@@ -28,6 +31,8 @@ export function SettlementHeader({
   status,
   computedAt,
   loadIds,
+  predecessor,
+  successor,
   onRefresh,
 }: Props) {
   return (
@@ -46,6 +51,22 @@ export function SettlementHeader({
             ) : (
               settlementDisplayId
             )}
+          </div>
+        </div>
+      ) : null}
+      {predecessor ? (
+        <div data-testid="settlement-header-predecessor">
+          <div className="text-[11px] uppercase text-gray-500">Replaces (reversed)</div>
+          <div className="text-xs font-semibold">
+            <EntityLink kind="settlement" id={predecessor.id} label={entityLabel(predecessor.label, predecessor.id, "Settlement")} />
+          </div>
+        </div>
+      ) : null}
+      {successor ? (
+        <div data-testid="settlement-header-successor">
+          <div className="text-[11px] uppercase text-gray-500">Replaced by</div>
+          <div className="text-xs font-semibold">
+            <EntityLink kind="settlement" id={successor.id} label={entityLabel(successor.label, successor.id, "Settlement")} />
           </div>
         </div>
       ) : null}

@@ -1252,6 +1252,36 @@ export async function closeSettlementPayRun(
       [settlementId, opco, actor.userId]
     );
 
+    // Lead ROUND 330.6 ruling 1: a settlement re-posted against loads of a REVERSED settlement links to it both ways
+    // (predecessor / successor). The reversed settlement's bill numbers are never reused — the chain refuses a live
+    // duplicate and the reversed bills keep theirs — so the link is how the screen explains two bills for one load.
+    const predecessor = await client.query<{ id: string }>(
+      `SELECT p.id::text
+         FROM driver_finance.driver_settlements p
+        WHERE p.operating_company_id = $1::uuid AND p.driver_id = $3::uuid AND p.id <> $2::uuid
+          AND p.status = 'cancelled' AND p.reversed_at IS NOT NULL AND p.successor_settlement_id IS NULL
+          AND EXISTS (
+            SELECT 1 FROM driver_finance.driver_settlement_gl_bills pb
+             JOIN driver_finance.driver_settlement_gl_bills nb ON nb.load_id = pb.load_id AND nb.settlement_id = $2::uuid
+            WHERE pb.settlement_id = p.id
+          )
+        ORDER BY p.reversed_at DESC
+        LIMIT 1`,
+      [opco, settlementId, settlement.driver_id]
+    );
+    if (predecessor.rows[0]) {
+      await client.query(
+        `UPDATE driver_finance.driver_settlements SET predecessor_settlement_id = $3::uuid, updated_at = now()
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid AND predecessor_settlement_id IS NULL`,
+        [settlementId, opco, predecessor.rows[0].id]
+      );
+      await client.query(
+        `UPDATE driver_finance.driver_settlements SET successor_settlement_id = $3::uuid, updated_at = now()
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid AND successor_settlement_id IS NULL`,
+        [predecessor.rows[0].id, opco, settlementId]
+      );
+    }
+
     // ROUND 297 driver-profile audit (CC-1): the deductions this close just COLLECTED (applied to the load bills as
     // non-cash bill payments in the chain above) are no longer owed — they read 'applied' with nothing remaining.
     // Before, apply-time only stamped applied_to_settlement_id, so every collected deduction read 'pending' at its full
