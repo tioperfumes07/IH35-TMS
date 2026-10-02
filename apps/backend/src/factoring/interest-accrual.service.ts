@@ -257,9 +257,11 @@ export async function listInterestAccrualRuns(client: DbClient, oci: string) {
 }
 
 /**
- * Open Net Amount of Purchased Accounts vs the 2150 balance — the one-line subledger-to-GL proof (Correction 2). Every
- * posted, live purchase line counts until a repurchase / Faro collection relieves 2150; the relief posters (next block)
- * extend "open" with their own document, so the two sides move together.
+ * Open Net Amount of Purchased Accounts vs the 2150 balance — the one-line subledger-to-GL proof (Correction 2).
+ * A purchased account's open Net is what the customer still owes on it: the invoice's open balance (total − paid − credit
+ * memos applied), capped at the purchased gross. So every relief moves both sides together — a collection (paid), a
+ * short-pay written down (credit memo, ROUND 335 §6) — and a short-pay left open while 2150 was already relieved from the
+ * reserve shows as a break: the guard reporting an incoherent position, never a term to add.
  */
 export async function advanceLiabilityTiesToOpenNet(client: DbClient, oci: string) {
   const res = await client.query<{ gl_cents: string; open_net_cents: string }>(
@@ -275,9 +277,14 @@ export async function advanceLiabilityTiesToOpenNet(client: DbClient, oci: strin
            WHERE je.operating_company_id = $1::uuid
         ), 0)::text AS gl_cents,
         COALESCE((
-          SELECT sum(l.gross_cents)
+          SELECT sum(LEAST(l.gross_cents, GREATEST(i.total_cents - COALESCE(i.amount_paid_cents, 0) - COALESCE(cma.applied, 0), 0)))
             FROM accounting.factoring_purchase_lines l
             JOIN accounting.factoring_purchases p ON p.id = l.purchase_id
+            JOIN accounting.invoices i ON i.id = l.invoice_id
+            LEFT JOIN LATERAL (
+              SELECT sum(a.applied_cents) AS applied FROM accounting.credit_memo_applications a
+               WHERE a.invoice_id = l.invoice_id AND a.operating_company_id = l.operating_company_id AND a.voided_at IS NULL
+            ) cma ON TRUE
            WHERE l.operating_company_id = $1::uuid AND l.voided_at IS NULL AND p.status = 'posted' AND p.voided_at IS NULL
         ), 0)::text AS open_net_cents
     `,

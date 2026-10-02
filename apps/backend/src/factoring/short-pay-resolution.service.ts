@@ -8,7 +8,9 @@
 //   written_down  a reason-coded credit memo applied to the invoice (the A/R subledger, so the aging moves) + its GL entry
 //                 DR <reason account> / CR A/R (1100) on that customer, both legs linked on the spine to the SAME Faro entry
 //                 and invoice as the reserve entry (the shared link) and to the credit memo
-//   kept_open     the shortfall stays open on the customer (disputed) — no entry; it may be written down later
+//   kept_open     ONLY while the Owner actively disputes it (a dispute note is required) — no entry; written down later.
+//                 ROUND 335: write-down is the default; reason CODE selects the account (users never pick one): never
+//                 earned -> revenue contra 4910-4980; earned but uncollectible -> 6920 Bad Debt only via "bad_debt".
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
 import { writeTransactionSourceLink } from "../accounting/accounting-spine-emit.js";
@@ -74,6 +76,10 @@ export async function resolveFaroShortPay(
 
   if (input.resolution === "kept_open") {
     if (e.short_pay_resolution === "kept_open") throw new ShortPayResolutionError("short_pay_already_kept_open");
+    // ROUND 335 §2: keep-open is a NAMED exception while the Owner actively disputes this shortfall — never a resting state.
+    // While it is open, 2150 (already relieved from the reserve) and the invoice's open balance disagree, and the
+    // 2150 = open Net guard reports it until the shortfall is written down.
+    if ((input.note ?? "").trim().length < 10) throw new ShortPayResolutionError("short_pay_keep_open_needs_dispute_note");
     await client.query(
       `UPDATE accounting.faro_reserve_entries
           SET short_pay_resolution = 'kept_open', short_pay_resolved_by_user_id = $2::uuid, short_pay_resolved_at = now(),
