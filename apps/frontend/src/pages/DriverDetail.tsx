@@ -203,6 +203,10 @@ export function DriverDetailPage() {
     if (t === "settlements" || t === "earnings") {
       setActiveTab("Earnings & Debt");
     }
+    // ROUND 326.5 — the DriverDetail board's tab strip deep-links here.
+    if (t === "profile") setActiveTab("Profile");
+    if (t === "loads") setActiveTab("Load History");
+    if (t === "documents") setActiveTab("Documents");
     // LAW OF THE LAND §9 (2026-07-22): ?tab=operations&op=<slug> deep-links straight into an
     // Operations sub-view (e.g. escrow-history) — same pattern as the settlements/earnings alias above.
     if (t === "operations") {

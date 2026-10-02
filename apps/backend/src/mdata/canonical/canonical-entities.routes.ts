@@ -12,6 +12,7 @@ import { readVendorProfile } from "./vendor-profile.service.js";
 import { readDriverProfile } from "./driver-profile.service.js";
 import { readCustomerBoard, readVendorBoard } from "./party-board.service.js";
 import { readDriverHub, readDriverHubPanel } from "./driver-hub.service.js";
+import { readDriverOverview } from "./driver-overview.service.js";
 import { mergeIntoCanonical, planCanonical, reverseCanonicalMerge, type CanonicalKind } from "./canonical-entities.service.js";
 
 const kindSchema = z.enum(["customers", "vendors"]);
@@ -38,6 +39,16 @@ export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
     if (!qy.success) return reply.code(400).send({ error: "validation_error" });
     await assertCompanyMembership(req.user!.uuid, qy.data.operating_company_id);
     return withCompanyScope(req.user!.uuid, qy.data.operating_company_id, (client) => readDriverHub(client, qy.data.operating_company_id));
+  });
+  app.get("/api/v1/mdata/boards/drivers/:id/overview", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    if (!requireAuth(req, reply)) return;
+    const p = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
+    const qy = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+    if (!p.success || !qy.success) return reply.code(400).send({ error: "validation_error" });
+    await assertCompanyMembership(req.user!.uuid, qy.data.operating_company_id);
+    const overview = await withCompanyScope(req.user!.uuid, qy.data.operating_company_id, (client) => readDriverOverview(client, qy.data.operating_company_id, p.data.id));
+    if (!overview) return reply.code(404).send({ error: "driver_not_found" });
+    return overview;
   });
   app.get("/api/v1/mdata/boards/drivers/:id", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
