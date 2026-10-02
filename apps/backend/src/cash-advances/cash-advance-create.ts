@@ -6,6 +6,7 @@
 // #19618 — postBillPaymentGlIfEnabled) for the linked_bill_id branch. Both were verified before
 // this exemption; neither was assumed — GO-23 C6, 2026-09-02.
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { voidSettlementDeduction } from "../driver-finance/settlement-deduction-void.service.js";
 import { nextCashAdvanceDisplayId } from "./display-id.js";
 
 type PgishClient = {
@@ -718,7 +719,10 @@ export async function reverseDriverAdvanceInClientTx(
         UPDATE driver_finance.driver_liabilities
         SET current_balance = 0,
             paid_to_date = original_amount,
-            status = 'reversed',
+            -- ROUND 301 (CC-1, proven on a Neon fork): driver_liabilities_status_matches_voided_at requires status
+            -- 'voided' whenever voided_at is set; 'reversed' here made EVERY advance reverse with a liability throw
+            -- 23514 and roll back (the route and the load-cancellation cascade alike).
+            status = 'voided',
             voided_at = COALESCE(voided_at, now()),
             void_reason = COALESCE(void_reason, $2),
             voided_by_user_id = COALESCE(voided_by_user_id, $3::uuid)
@@ -736,6 +740,32 @@ export async function reverseDriverAdvanceInClientTx(
       `,
       [input.liabilityId, input.reason]
     );
+  }
+  // ROUND 301 audit (CC-1): the advance's settlement-recovery deduction is voided with it. Both approval paths
+  // (cash-advance-requests.service + cash-advance-owner-approval.service) mint a cash_advance_repayment deduction whose
+  // reason starts "Cash advance <display_id> (" — reversing the advance left it pending, so the driver's next settlement
+  // still withheld the money for an advance that no longer exists. Voided through the owner-locked engine
+  // (voidSettlementDeduction: pending -> void, nothing collected; never a refund of anything already applied).
+  const adv = await client.query(
+    `SELECT display_id, driver_id::text AS driver_id FROM driver_finance.driver_advances WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+    [input.advanceId, companyId]
+  );
+  const advRow = adv.rows[0] as { display_id: string | null; driver_id: string } | undefined;
+  if (advRow?.display_id) {
+    const repayments = await client.query(
+      `SELECT id::text AS id FROM driver_finance.driver_settlement_deductions
+        WHERE operating_company_id = $1::uuid AND driver_id = $2::uuid AND deduction_type = 'cash_advance_repayment'
+          AND voided_at IS NULL AND left(reason, length($3) + 2) = $3 || ' ('`,
+      [companyId, advRow.driver_id, `Cash advance ${advRow.display_id}`]
+    );
+    for (const r of repayments.rows as Array<{ id: string }>) {
+      await voidSettlementDeduction(client as never, {
+        operating_company_id: companyId,
+        deduction_id: r.id,
+        reason: `Cash advance ${advRow.display_id} reversed: ${input.reason}`,
+        actor_user_id: actorUserUuid,
+      });
+    }
   }
   if (input.linkedBillPaymentId) {
     await client.query(
