@@ -205,7 +205,7 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
         />
       ) : null}
 
-      <ParityTable
+      <ParityTable appearance="board"
         storageKey="dispatch-accessorial-editor"
         tableTestId="accessorial-editor-table"
         columns={columns}

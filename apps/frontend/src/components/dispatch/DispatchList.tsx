@@ -135,7 +135,7 @@ export function DispatchList({
 
       {/* DISP-F3600: ParityTable owns Search+Range+gear on archived DispatchList desktop grid. */}
       <div className="hidden md:block">
-        <ParityTable<DispatchLoadRow>
+        <ParityTable<DispatchLoadRow> appearance="board"
           rows={effectiveLoads}
           pageSize={limit}
           hidePager

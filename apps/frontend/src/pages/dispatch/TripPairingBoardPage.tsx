@@ -488,7 +488,7 @@ export function TripPairingBoardPage() {
               <span className="rounded-sm border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700">{tours.length}</span>
               <span className="text-[11px] text-slate-500">— multi-leg tours stack under the unit; SB return = settlement closes</span>
             </div>
-            <ParityTable<TripPairingUnitRow>
+            <ParityTable<TripPairingUnitRow> appearance="board"
               columns={tripPairingColumns}
               rows={tours}
               rowKey={(t) => t.unit_id}

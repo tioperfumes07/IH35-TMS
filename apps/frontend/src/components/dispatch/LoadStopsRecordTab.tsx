@@ -372,7 +372,7 @@ export function LoadStopsRecordTab({ loadId, operatingCompanyId, onEditStops }: 
           No stops found.
         </div>
       ) : (
-        <div data-testid="stops-record-table"><ParityTable rows={stops} columns={stopColumns} rowKey={(stop) => stop.stop_id} onRowClick={setOpenStop} rowTestId={() => "stops-record-row"} storageKey="load-stops-record" minWidthPx={900} suppressToolbarSearch suppressToolbarRange initialPageSize={25} /></div>
+        <div data-testid="stops-record-table"><ParityTable appearance="board" rows={stops} columns={stopColumns} rowKey={(stop) => stop.stop_id} onRowClick={setOpenStop} rowTestId={() => "stops-record-row"} storageKey="load-stops-record" minWidthPx={900} suppressToolbarSearch suppressToolbarRange initialPageSize={25} /></div>
       )}
 
       {geocodeMutation.isError ? (

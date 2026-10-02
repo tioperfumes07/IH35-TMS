@@ -74,7 +74,7 @@ export function LoadRealDrivenMilesSection({ operatingCompanyId, loadId }: Props
                 Truck <EntityLink kind="unit" id={query.data.unit.id} label={query.data.unit.unit_number ?? "Unit"} />
               </div>
             ) : null}
-            <ParityTable
+            <ParityTable appearance="board"
               embedded
               rows={query.data?.legs ?? []}
               columns={LEG_COLUMNS}

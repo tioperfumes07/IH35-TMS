@@ -91,7 +91,7 @@ export function OwnerOverrideLogPage() {
           onRetry={() => void logQ.refetch()}
         />
       ) : (
-        <ParityTable<Row>
+        <ParityTable<Row> appearance="board"
           columns={columns}
           rows={rows}
           rowKey={(row) => row.id}

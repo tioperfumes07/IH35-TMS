@@ -288,7 +288,7 @@ export function LdtDocumentsTab({ loadId, operatingCompanyId, loadNumber, canEdi
         ) : rows.length === 0 ? (
           <div className="ldt-muted" style={{ padding: "12px 10px" }}>No documents yet. Upload a load doc above.</div>
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             rows={rows}
             columns={docColumns}
             rowKey={(row) => row.id}

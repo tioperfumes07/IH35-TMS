@@ -32,6 +32,7 @@ import { colors, spacing, typography, MIN_HIT_TARGET_CLASS, TOOLBAR_ICON_SIZE_CL
 import { QBO_SURFACE, QBO_SURFACE_CLASS, QBO_TOOLBAR_ICON_SLOT } from "../../design/qbo-parity";
 import { Button } from "../Button";
 import { Printer as PrintIcon, Settings as GearIcon } from "lucide-react";
+import "../../design/ih35-design-tokens.css";
 import { UniversalListToolbar, applyUniversalListFilters, type UniversalRange } from "../table/UniversalListToolbar";
 import { QBO_MONEY_CELL_CLASS } from "../../design/qbo-parity";
 import { TABLE_MISSING } from "../../lib/money";
@@ -139,6 +140,13 @@ export type ParityTableProps<T> = {
 
   /** Filter toolbar slot (search + dropdowns), rendered above the table per the universal-list standard. */
   filterBar?: ReactNode;
+  /**
+   * OWNER DESIGN LAW 2026-10-02 (docs/design/00-OWNER-DESIGN-LAW-READ-BEFORE-ANY-SCREEN.md): "board" renders the
+   * boards' table -- head var(--ih-thead), zebra var(--ih-zebra), row rules var(--ih-rule), 12.5px body, 10px/600
+   * uppercase muted column labels, left-aligned text (numbers stay right). Opt-in: surfaces move one by one; the
+   * default keeps every other table exactly as it is.
+   */
+  appearance?: "default" | "board";
   /**
    * When true, hide UniversalListToolbar TableSearch (page owns server-side search in filterBar).
    * Prevents competing client search over a single page of server results (LV-WORK-ORDERS-CONSOLE-DUPLICATE-SEARCH).
@@ -592,6 +600,7 @@ export function ParityTable<T>({
   selectedKeys: controlledSelectedKeys,
   onSelectionChange,
   filterBar,
+  appearance = "default",
   suppressToolbarSearch = false,
   suppressToolbarRange = false,
   exportFilename,
@@ -905,6 +914,10 @@ export function ParityTable<T>({
   const offset = (safePage - 1) * pageSize;
   const pageRows = sortedRows.slice(offset, offset + pageSize);
   const d = DENSITY[density];
+  // OWNER DESIGN LAW 2026-10-02 — the boards' table palette (appearance="board"); default = the existing tokens.
+  const board = appearance === "board";
+  const BOARD_RULE = "var(--ih-rule)";
+  const BOARD_LABEL = { fontSize: 10, fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase" as const, textAlign: "left" as const };
   // VC-LIST-02 — when "All" renders a large set, let the browser skip offscreen row paint/layout.
   const virtualizeRows = pageRows.length > LARGE_RENDER_ROW_THRESHOLD;
 
@@ -1278,8 +1291,8 @@ export function ParityTable<T>({
         data-c04-row="true"
         style={{
           height: d.rowH,
-          borderTopColor: QBO_SURFACE.divider,
-          ...(selected.has(id) ? { backgroundColor: QBO_SURFACE.rowSelected } : {}),
+          borderTopColor: board ? BOARD_RULE : QBO_SURFACE.divider,
+          ...(selected.has(id) ? { backgroundColor: board ? "var(--ih-row-selected)" : QBO_SURFACE.rowSelected } : {}),
           ...(virtualizeRows ? { contentVisibility: "auto", containIntrinsicSize: `${d.rowH}px` } : {}),
         }}
         onClick={onRowClick ? (event) => {
@@ -1335,6 +1348,8 @@ export function ParityTable<T>({
               : isEvenRow
                 ? QBO_SURFACE.rowStripe
                 : undefined;
+          // board: the boards' zebra / selection tokens (group tints still win per cell).
+          const resolvedCellBg = board && cellBg === QBO_SURFACE.rowStripe ? "var(--ih-zebra)" : board && cellBg === QBO_SURFACE.rowSelected ? "var(--ih-row-selected)" : cellBg;
           return (
           <td
             key={String(column.key)}
@@ -1359,7 +1374,7 @@ export function ParityTable<T>({
               // (COMPLETE-OUTLINE LAW, untouched) — the owner's ruling is about the BODY.
               // C-18: tableBodyRule is the locked #D8DEE6 divider (QBO_SURFACE.divider).
               borderBottom: `1px solid ${colors.tableBodyRule}`,
-              ...(cellBg ? { backgroundColor: cellBg } : {}),
+              ...(resolvedCellBg ? { backgroundColor: resolvedCellBg } : {}),
               ...(String(column.key) in stickyLeftPx
                 ? {
                     position: "sticky" as const,
@@ -1368,7 +1383,7 @@ export function ParityTable<T>({
                     // A sticky body cell needs its OWN opaque background (it renders over rows
                     // scrolling past underneath it) — fall back to white when no zebra/group/
                     // selection tint applies, same as every other cell would show as its row bg.
-                    backgroundColor: cellBg ?? "#FFFFFF",
+                    backgroundColor: resolvedCellBg ?? (board ? "var(--ih-card)" : "#FFFFFF"),
                   }
                 : {}),
             }}
@@ -1402,8 +1417,8 @@ export function ParityTable<T>({
 
   // Per-instance header re-theme (see headerBg/headerInk prop doc) -- falls back to the shared
   // token unchanged when the caller passes neither, so every existing consumer is byte-identical.
-  const resolvedHeaderBg = headerBg ?? colors.tableHeaderBg;
-  const resolvedHeaderInk = headerInk ?? colors.tableHeaderText;
+  const resolvedHeaderBg = headerBg ?? (board ? "var(--ih-thead)" : colors.tableHeaderBg);
+  const resolvedHeaderInk = headerInk ?? (board ? "var(--ih-muted)" : colors.tableHeaderText);
 
   return (
     <div className={shellClass} style={frameColor ? { borderColor: frameColor } : undefined} data-testid={tableTestId}>
@@ -1588,8 +1603,9 @@ export function ParityTable<T>({
           ROUND 326.2 item 3 — tabular-nums on the table root: font-variant-numeric inherits, so every
           money / number cell aligns its digits even when its column key escapes PARITY_NUMERIC_KEY. */}
       <table
-        className={`w-full ${columnLayout === "auto" ? "table-auto" : "table-fixed"} text-center tabular-nums`}
-        style={{ fontSize: d.font, ...(minWidthPx ? { minWidth: minWidthPx } : {}) }}
+        className={`w-full ${columnLayout === "auto" ? "table-auto" : "table-fixed"} ${board ? "text-left" : "text-center"} tabular-nums`}
+        style={{ fontSize: d.font, ...(board ? { fontSize: 12.5, fontFamily: "var(--ih-font)", color: "var(--ih-ink)" } : {}), ...(minWidthPx ? { minWidth: minWidthPx } : {}) }}
+        data-table-appearance={appearance}
       >
         <thead
           className={stickyHeader ? "sticky top-0 z-10" : ""}
@@ -1601,7 +1617,7 @@ export function ParityTable<T>({
               {renderExpanded || selectable ? (
                 <th
                   colSpan={(renderExpanded ? 1 : 0) + (selectable ? 1 : 0)}
-                  style={{ backgroundColor: colors.tableGroupBandBg, borderBottom: `1px solid ${colors.tableColumnRule}` }}
+                  style={{ backgroundColor: colors.tableGroupBandBg, borderBottom: `1px solid ${colors.tableColumnRule}`, ...(board ? { backgroundColor: "var(--ih-thead)", borderBottom: `1px solid ${BOARD_RULE}` } : {}) }}
                 />
               ) : null}
               {(() => {
@@ -1638,6 +1654,7 @@ export function ParityTable<T>({
                       backgroundColor: colors.tableGroupBandBg,
                       color: colors.mutedText,
                       borderBottom: `1px solid ${colors.tableColumnRule}`,
+                      ...(board ? { backgroundColor: "var(--ih-thead)", color: "var(--ih-muted)", borderBottom: `1px solid ${BOARD_RULE}`, fontWeight: 600, letterSpacing: "0.09em" } : {}),
                     }}
                   >
                     {cell.label}
@@ -1647,7 +1664,7 @@ export function ParityTable<T>({
               {rowActions ? (
                 <th
                   className="w-10 px-2"
-                  style={{ backgroundColor: colors.tableGroupBandBg, borderBottom: `1px solid ${colors.tableColumnRule}` }}
+                  style={{ backgroundColor: colors.tableGroupBandBg, borderBottom: `1px solid ${colors.tableColumnRule}`, ...(board ? { backgroundColor: "var(--ih-thead)", borderBottom: `1px solid ${BOARD_RULE}` } : {}) }}
                 />
               ) : null}
             </tr>
@@ -1732,6 +1749,8 @@ export function ParityTable<T>({
                     // horizontal rules only (top + bottom). No borderLeft/borderRight anywhere.
                     borderTop: `1px solid ${colors.tableColumnRule}`,
                     borderBottom: `1px solid ${colors.tableColumnRule}`,
+                    // board: the boards' column label (.hd) and rules -- overrides the defaults above.
+                    ...(board ? { ...BOARD_LABEL, fontWeight: headerWeight ?? BOARD_LABEL.fontWeight, borderTop: `1px solid ${BOARD_RULE}`, borderBottom: `1px solid ${BOARD_RULE}` } : {}),
                     ...(w ? (columnLayout === "auto" ? { minWidth: w } : { width: w }) : {}),
                     ...(dragOverKey === key ? { outlineColor: colors.navy } : {}),
                     ...(key in stickyLeftPx
@@ -1857,7 +1876,7 @@ export function ParityTable<T>({
               className="border-t-2 border-slate-700 font-semibold"
               // Same shade as the group-band row (colors.tableGroupBandBg, --grp-bg) — a totals
               // row reads as its own "band" of the same visual language, not a plain data row.
-              style={{ backgroundColor: colors.tableGroupBandBg }}
+              style={{ backgroundColor: colors.tableGroupBandBg, ...(board ? { backgroundColor: "var(--ih-thead)", borderTop: "2px solid var(--ih-border)" } : {}) }}
             >
               {renderExpanded ? <td className="w-8 px-2" /> : null}
               {selectable ? <td className="w-8 px-2" /> : null}

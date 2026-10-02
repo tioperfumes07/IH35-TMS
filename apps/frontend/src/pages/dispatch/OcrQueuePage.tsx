@@ -240,7 +240,7 @@ export function OcrQueuePage() {
           onRetry={() => void queueQ.refetch()}
         />
       ) : (
-      <ParityTable<OcrRow>
+      <ParityTable<OcrRow> appearance="board"
         columns={columns}
         rows={items}
         rowKey={(item) => item.id}

@@ -235,7 +235,7 @@ render: (row) => {
           onRetry={() => void historyQ.refetch()}
         />
       ) : (
-        <ParityTable<AssignmentHistoryRow>
+        <ParityTable<AssignmentHistoryRow> appearance="board"
           columns={columns}
           rows={rows}
           rowKey={(row) => row.id}
