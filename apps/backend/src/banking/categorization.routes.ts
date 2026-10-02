@@ -285,7 +285,18 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
         `
           SELECT
             bt.*,
-            vc.vendor_category AS _vendor_category_suggestion
+            vc.vendor_category AS _vendor_category_suggestion,
+            -- Owner ruling 2026-10-02: two identical same-day lines are ordinary in a real bank feed — never removed,
+            -- merged or scripted. Surface both with a "possible duplicate" badge; the owner resolves it at match time.
+            -- Identity = the statement-upload identity (BANK-F9341): date, |amount|, direction, printed description.
+            EXISTS (
+              SELECT 1 FROM banking.bank_transactions d
+               WHERE d.bank_account_id = bt.bank_account_id AND d.id <> bt.id AND d.voided_at IS NULL
+                 AND d.transaction_date = bt.transaction_date
+                 AND abs(d.amount_cents) = abs(bt.amount_cents)
+                 AND d.is_credit = bt.is_credit
+                 AND lower(regexp_replace(btrim(d.description), '\\s+', ' ', 'g')) = lower(regexp_replace(btrim(bt.description), '\\s+', ' ', 'g'))
+            ) AS possible_duplicate
           FROM banking.bank_transactions bt
           LEFT JOIN LATERAL (
             SELECT v.vendor_category
