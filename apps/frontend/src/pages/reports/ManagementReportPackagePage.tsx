@@ -145,12 +145,12 @@ function PLSection({ companyId, fromDate, toDate, basis, searchQuery }: { compan
                     line.account_name
                   )}
                 </td>
-                <td className="py-0.5 text-right text-slate-800">{money(line.amount)}</td>
+                <td className="py-0.5 text-right text-slate-800 tabular-nums">{money(line.amount)}</td>
               </tr>
             ))}
             <tr className="font-semibold border-t border-slate-200">
               <td colSpan={2} className="py-0.5 pl-2 text-right text-slate-700">Total {title}</td>
-              <td className="py-0.5 text-right">{money(total)}</td>
+              <td className="py-0.5 text-right tabular-nums">{money(total)}</td>
             </tr>
           </tbody>
         </table></div>
@@ -264,12 +264,12 @@ function ARAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
               <td className="py-0.5 text-slate-800">
                 <ManagementCustomerCell customerId={row.customer_id} customerName={row.customer_name} />
               </td>
-              <td className="py-0.5 text-right">{money(row.current_cents)}</td>
-              <td className="py-0.5 text-right">{money(row.bucket_1_30_cents)}</td>
-              <td className="py-0.5 text-right">{money(row.bucket_31_60_cents)}</td>
-              <td className="py-0.5 text-right">{money(row.bucket_61_90_cents)}</td>
-              <td className="py-0.5 text-right">{money(row.bucket_91_plus_cents)}</td>
-              <td className="py-0.5 text-right font-semibold">{money(row.total_open_cents)}</td>
+              <td className="py-0.5 text-right tabular-nums">{money(row.current_cents)}</td>
+              <td className="py-0.5 text-right tabular-nums">{money(row.bucket_1_30_cents)}</td>
+              <td className="py-0.5 text-right tabular-nums">{money(row.bucket_31_60_cents)}</td>
+              <td className="py-0.5 text-right tabular-nums">{money(row.bucket_61_90_cents)}</td>
+              <td className="py-0.5 text-right tabular-nums">{money(row.bucket_91_plus_cents)}</td>
+              <td className="py-0.5 text-right font-semibold tabular-nums">{money(row.total_open_cents)}</td>
             </tr>
           ))}
         </tbody>
@@ -313,12 +313,12 @@ function APAgingSection({ companyId, asOfDate, searchQuery }: { companyId: strin
               <td className="py-0.5 text-slate-800">
                 <ManagementVendorCell vendorId={row.vendor_id} vendorName={row.vendor_name} />
               </td>
-              <td className="py-0.5 text-right">{money(row.current_cents)}</td>
-              <td className="py-0.5 text-right">{money(row.bucket_1_30_cents)}</td>
-              <td className="py-0.5 text-right">{money(row.bucket_31_60_cents)}</td>
-              <td className="py-0.5 text-right">{money(row.bucket_61_90_cents)}</td>
-              <td className="py-0.5 text-right">{money(row.bucket_91_plus_cents)}</td>
-              <td className="py-0.5 text-right font-semibold">{money(row.total_open_cents)}</td>
+              <td className="py-0.5 text-right tabular-nums">{money(row.current_cents)}</td>
+              <td className="py-0.5 text-right tabular-nums">{money(row.bucket_1_30_cents)}</td>
+              <td className="py-0.5 text-right tabular-nums">{money(row.bucket_31_60_cents)}</td>
+              <td className="py-0.5 text-right tabular-nums">{money(row.bucket_61_90_cents)}</td>
+              <td className="py-0.5 text-right tabular-nums">{money(row.bucket_91_plus_cents)}</td>
+              <td className="py-0.5 text-right font-semibold tabular-nums">{money(row.total_open_cents)}</td>
             </tr>
           ))}
         </tbody>
@@ -359,7 +359,7 @@ function CustomerSummarySection({ companyId, fromDate, toDate, searchQuery }: { 
               <td className="py-0.5 text-slate-800">
                 <ManagementCustomerCell customerId={row.customer_id} customerName={row.customer_name} />
               </td>
-              <td className="py-0.5 text-right">{money(row.revenue_cents)}</td>
+              <td className="py-0.5 text-right tabular-nums">{money(row.revenue_cents)}</td>
               <td className="py-0.5 text-right">{row.load_count}</td>
             </tr>
           ))}
@@ -401,7 +401,7 @@ function VendorExpenseSummarySection({ companyId, fromDate, toDate, searchQuery 
               <td className="py-0.5 text-slate-800">
                 <ManagementVendorCell vendorId={row.vendor_id} vendorName={row.vendor_name} />
               </td>
-              <td className="py-0.5 text-right">{money(row.total_open_cents)}</td>
+              <td className="py-0.5 text-right tabular-nums">{money(row.total_open_cents)}</td>
               <td className="py-0.5 text-right">{row.open_bill_count}</td>
             </tr>
           ))}

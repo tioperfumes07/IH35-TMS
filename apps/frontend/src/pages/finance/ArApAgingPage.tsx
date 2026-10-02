@@ -370,7 +370,7 @@ export function ArApAgingPage() {
               (r) => `<tr>
           <td>${esc(r.customer_name)}</td>
           <td style="text-align:right">${esc(r.open_invoice_count)}</td>
-          ${BUCKET_COLS.map((c) => `<td style="text-align:right">${esc(fmtCents(r[c.key]))}</td>`).join("")}
+          ${BUCKET_COLS.map((c) => `<td className="text-right tabular-nums" style="text-align:right">${esc(fmtCents(r[c.key]))}</td>`).join("")}
         </tr>`,
             )
             .join("")
@@ -379,7 +379,7 @@ export function ArApAgingPage() {
               (r) => `<tr>
           <td>${esc(r.vendor_name)}</td>
           <td style="text-align:right">${esc(r.open_bill_count)}</td>
-          ${BUCKET_COLS.map((c) => `<td style="text-align:right">${esc(fmtCents(r[c.key]))}</td>`).join("")}
+          ${BUCKET_COLS.map((c) => `<td className="text-right tabular-nums" style="text-align:right">${esc(fmtCents(r[c.key]))}</td>`).join("")}
         </tr>`,
             )
             .join("");
@@ -387,7 +387,7 @@ export function ArApAgingPage() {
       ? `<tr>
           <th>${esc("TOTAL")}</th>
           <th></th>
-          ${BUCKET_COLS.map((c) => `<th style="text-align:right">${esc(fmtCents(totals[c.key]))}</th>`).join("")}
+          ${BUCKET_COLS.map((c) => `<th className="text-right tabular-nums" style="text-align:right">${esc(fmtCents(totals[c.key]))}</th>`).join("")}
         </tr>`
       : "";
     printLetterHtml({
@@ -399,7 +399,7 @@ export function ArApAgingPage() {
           <tbody>
             ${BUCKET_COLS.map(
               (c) =>
-                `<tr><th>${esc(c.label)}</th><td>${esc(fmtCents(totals?.[c.key] ?? 0))}</td></tr>`,
+                `<tr><th>${esc(c.label)}</th><td className="text-right tabular-nums">${esc(fmtCents(totals?.[c.key] ?? 0))}</td></tr>`,
             ).join("")}
           </tbody>
         </table>

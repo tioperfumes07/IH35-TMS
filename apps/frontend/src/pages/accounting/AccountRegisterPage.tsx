@@ -636,9 +636,9 @@ export function AccountRegisterPage() {
           <td>${esc(r.reference ?? "—")}</td>
           <td>${esc(r.payee ?? "—")}</td>
           <td>${esc(r.memo ?? r.description ?? "—")}</td>
-          <td style="text-align:right">${esc(increase ? fmtCents(increase) : "")}</td>
-          <td style="text-align:right">${esc(decrease ? fmtCents(decrease) : "")}</td>
-          <td style="text-align:right">${esc(fmtCents(r.running_balance_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(increase ? fmtCents(increase) : "")}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(decrease ? fmtCents(decrease) : "")}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(fmtCents(r.running_balance_cents))}</td>
         </tr>`;
       })
       .join("");
@@ -649,10 +649,10 @@ export function AccountRegisterPage() {
         <div class="meta">${esc(acctLabel)} · ${esc(fromDate)} → ${esc(toDate)} · printed ${esc(new Date().toLocaleString())}</div>
         <table>
           <tbody>
-            <tr><th>Opening balance</th><td>${esc(fmtCents(report.opening_balance_cents))}</td></tr>
-            <tr><th>Closing balance</th><td>${esc(fmtCents(report.closing_balance_cents))}</td></tr>
-            <tr><th>Debits (period)</th><td>${esc(fmtCents(report.total_debit_cents))}</td></tr>
-            <tr><th>Credits (period)</th><td>${esc(fmtCents(report.total_credit_cents))}</td></tr>
+            <tr><th>Opening balance</th><td className="text-right tabular-nums">${esc(fmtCents(report.opening_balance_cents))}</td></tr>
+            <tr><th>Closing balance</th><td className="text-right tabular-nums">${esc(fmtCents(report.closing_balance_cents))}</td></tr>
+            <tr><th>Debits (period)</th><td className="text-right tabular-nums">${esc(fmtCents(report.total_debit_cents))}</td></tr>
+            <tr><th>Credits (period)</th><td className="text-right tabular-nums">${esc(fmtCents(report.total_credit_cents))}</td></tr>
           </tbody>
         </table>
         <h1 style="margin-top:20px">Transactions</h1>

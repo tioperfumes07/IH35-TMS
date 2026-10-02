@@ -250,11 +250,11 @@ export function CustomerProfitabilityPage() {
         (r) => `<tr>
           <td>${esc(customerDisplayLabel(r))}</td>
           <td style="text-align:right">${esc(r.load_count)}</td>
-          <td style="text-align:right">${esc(money(r.revenue_cents))}</td>
-          <td style="text-align:right">${esc(money(r.direct_cost_cents))}</td>
-          <td style="text-align:right">${esc(money(r.gross_margin_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.revenue_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.direct_cost_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.gross_margin_cents))}</td>
           <td style="text-align:right">${esc(`${(Number(r.gross_margin_pct) || 0).toFixed(1)}%`)}</td>
-          <td style="text-align:right">${esc(money(r.ar_aging_balance_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.ar_aging_balance_cents))}</td>
           <td style="text-align:right">${esc(r.days_since_last_load ?? "—")}</td>
           <td>${esc((r.flags ?? []).map((f) => formatCustomerProfitabilityFlagLabel(f)).join(", ") || "—")}</td>
         </tr>`,
@@ -270,9 +270,9 @@ export function CustomerProfitabilityPage() {
         <table>
           <tbody>
             <tr><th>Customers</th><td>${esc(t.customer_count)}</td></tr>
-            <tr><th>Revenue</th><td>${esc(money(t.revenue_cents))}</td></tr>
-            <tr><th>Direct cost</th><td>${esc(money(t.direct_cost_cents))}</td></tr>
-            <tr><th>Gross margin</th><td>${esc(money(t.gross_margin_cents))}</td></tr>
+            <tr><th>Revenue</th><td className="text-right tabular-nums">${esc(money(t.revenue_cents))}</td></tr>
+            <tr><th>Direct cost</th><td className="text-right tabular-nums">${esc(money(t.direct_cost_cents))}</td></tr>
+            <tr><th>Gross margin</th><td className="text-right tabular-nums">${esc(money(t.gross_margin_cents))}</td></tr>
             <tr><th>Gross margin %</th><td>${esc(`${(Number(t.gross_margin_pct) || 0).toFixed(1)}%`)}</td></tr>
           </tbody>
         </table>

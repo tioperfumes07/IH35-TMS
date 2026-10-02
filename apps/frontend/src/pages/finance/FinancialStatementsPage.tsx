@@ -345,7 +345,7 @@ export function FinancialStatementsPage() {
             ${showCodes ? `<td>${esc(line.account_code || "—")}</td>` : ""}
             <td>${esc(line.account_name || "—")}</td>
             <td>${esc(formatAccountTypeLabel(line.account_type))}</td>
-            <td style="text-align:right">${esc(money(line.amount))}</td>
+            <td className="text-right tabular-nums" style="text-align:right">${esc(money(line.amount))}</td>
           </tr>`,
           )
           .join("");
@@ -356,7 +356,7 @@ export function FinancialStatementsPage() {
           <thead><tr>${showCodes ? "<th>Account #</th>" : ""}<th>Account</th><th>Type</th><th style="text-align:right">Amount</th></tr></thead>
           <tbody>
             ${rows || `<tr><td colspan="${showCodes ? 4 : 3}">No rows</td></tr>`}
-            <tr><th colspan="${colSpan}">Total</th><td style="text-align:right">${esc(money(total))}</td></tr>
+            <tr><th colspan="${colSpan}">Total</th><td className="text-right tabular-nums" style="text-align:right">${esc(money(total))}</td></tr>
           </tbody>
         </table>`;
       };
@@ -369,9 +369,9 @@ export function FinancialStatementsPage() {
         )} · printed ${esc(printed)}</div>
         <table>
           <tbody>
-            <tr><th>Revenue total</th><td>${esc(money(data.revenue.total))}</td></tr>
-            <tr><th>Gross profit</th><td>${esc(money(data.gross_profit))}</td></tr>
-            <tr><th>Net income</th><td>${esc(money(data.net_income))}</td></tr>
+            <tr><th>Revenue total</th><td className="text-right tabular-nums">${esc(money(data.revenue.total))}</td></tr>
+            <tr><th>Gross profit</th><td className="text-right tabular-nums">${esc(money(data.gross_profit))}</td></tr>
+            <tr><th>Net income</th><td className="text-right tabular-nums">${esc(money(data.net_income))}</td></tr>
           </tbody>
         </table>
         ${sectionHtml("Revenue", plRevenue, data.revenue.total)}
@@ -391,7 +391,7 @@ export function FinancialStatementsPage() {
             (line) => `<tr>
             ${showCodes ? `<td>${esc(line.account_code || "—")}</td>` : ""}
             <td>${esc(line.account_name || "—")}</td>
-            <td style="text-align:right">${esc(money(line.amount))}</td>
+            <td className="text-right tabular-nums" style="text-align:right">${esc(money(line.amount))}</td>
           </tr>`,
           )
           .join("");
@@ -402,7 +402,7 @@ export function FinancialStatementsPage() {
           <thead><tr>${showCodes ? "<th>Account #</th>" : ""}<th>Account</th><th style="text-align:right">Amount</th></tr></thead>
           <tbody>
             ${rows || `<tr><td colspan="${showCodes ? 3 : 2}">No rows</td></tr>`}
-            <tr><th colspan="${colSpan}">Total</th><td style="text-align:right">${esc(money(total))}</td></tr>
+            <tr><th colspan="${colSpan}">Total</th><td className="text-right tabular-nums" style="text-align:right">${esc(money(total))}</td></tr>
           </tbody>
         </table>`;
       };
@@ -413,8 +413,8 @@ export function FinancialStatementsPage() {
         <div class="meta">As of ${esc(formatDateUS(appliedAsOf))} · ${esc(basisLabel)} · printed ${esc(printed)}</div>
         <table>
           <tbody>
-            <tr><th>Total assets</th><td>${esc(money(data.assets.total))}</td></tr>
-            <tr><th>Total liabilities &amp; equity</th><td>${esc(money(data.total_liabilities_and_equity))}</td></tr>
+            <tr><th>Total assets</th><td className="text-right tabular-nums">${esc(money(data.assets.total))}</td></tr>
+            <tr><th>Total liabilities &amp; equity</th><td className="text-right tabular-nums">${esc(money(data.total_liabilities_and_equity))}</td></tr>
             <tr><th>Status</th><td>${esc(data.balanced ? "Balanced" : "Out of balance")}</td></tr>
           </tbody>
         </table>
@@ -423,7 +423,7 @@ export function FinancialStatementsPage() {
         ${sectionHtml("Equity", bsEquity, data.equity.total)}
         <table>
           <tbody>
-            <tr><th>Current year earnings</th><td>${esc(money(data.equity.current_year_earnings))}</td></tr>
+            <tr><th>Current year earnings</th><td className="text-right tabular-nums">${esc(money(data.equity.current_year_earnings))}</td></tr>
           </tbody>
         </table>
       `,
@@ -439,9 +439,9 @@ export function FinancialStatementsPage() {
           ${showCodes ? `<td>${esc(row.account_code || "—")}</td>` : ""}
           <td>${esc(row.account_name || "—")}</td>
           <td>${esc(formatAccountTypeLabel(row.account_type))}</td>
-          <td style="text-align:right">${esc(money(row.total_debits))}</td>
-          <td style="text-align:right">${esc(money(row.total_credits))}</td>
-          <td style="text-align:right">${esc(money(row.net_balance))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(row.total_debits))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(row.total_credits))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(row.net_balance))}</td>
         </tr>`,
       )
       .join("");
@@ -455,8 +455,8 @@ export function FinancialStatementsPage() {
         )} · printed ${esc(printed)}</div>
         <table>
           <tbody>
-            <tr><th>Total debits</th><td>${esc(money(s?.grand_total_debits ?? 0))}</td></tr>
-            <tr><th>Total credits</th><td>${esc(money(s?.grand_total_credits ?? 0))}</td></tr>
+            <tr><th>Total debits</th><td className="text-right tabular-nums">${esc(money(s?.grand_total_debits ?? 0))}</td></tr>
+            <tr><th>Total credits</th><td className="text-right tabular-nums">${esc(money(s?.grand_total_credits ?? 0))}</td></tr>
             <tr><th>Status</th><td>${esc(s?.balanced ? "Balanced" : "Out of balance")}</td></tr>
           </tbody>
         </table>

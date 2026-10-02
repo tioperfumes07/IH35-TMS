@@ -145,11 +145,11 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
                 <td className="ih-num" data-testid="dispatch-wizard-accessorials">{formatDash(row.accessorials)}</td>
                 <td className="ih-num" data-testid="dispatch-wizard-detention">{formatDash(row.detention)}</td>
                 <td className="ih-num" data-testid="dispatch-wizard-layover">{formatDash(row.layover)}</td>
-                <td className="ih-num" title={row.hasRollup ? undefined : "no costs linked to this load yet"}>
+                <td className="ih-num text-right tabular-nums" title={row.hasRollup ? undefined : "no costs linked to this load yet"}>
                   {row.hasRollup ? formatMoney(row.costSoFar) : <span className="ih-empty">—</span>}
                 </td>
-                <td className="ih-num">{row.hasRollup ? formatMoney(row.driverPay) : <span className="ih-empty">—</span>}</td>
-                <td className="ih-num dpo-strong">{row.hasRollup ? formatMoney(row.margin) : <span className="ih-empty">—</span>}</td>
+                <td className="ih-num text-right tabular-nums">{row.hasRollup ? formatMoney(row.driverPay) : <span className="ih-empty">—</span>}</td>
+                <td className="ih-num dpo-strong text-right tabular-nums">{row.hasRollup ? formatMoney(row.margin) : <span className="ih-empty">—</span>}</td>
               </tr>
             ))}
           </tbody>

@@ -141,9 +141,9 @@ export function TrialBalancePage() {
           ${showCodes ? `<td>${esc(row.account_code || "—")}</td>` : ""}
           <td>${esc(row.account_name || "—")}</td>
           <td>${esc(formatAccountTypeLabel(row.account_type))}</td>
-          <td style="text-align:right">${esc(money(row.total_debits))}</td>
-          <td style="text-align:right">${esc(money(row.total_credits))}</td>
-          <td style="text-align:right">${esc(money(row.net_balance))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(row.total_debits))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(row.total_credits))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(row.net_balance))}</td>
         </tr>`,
       )
       .join("");
@@ -157,8 +157,8 @@ export function TrialBalancePage() {
         )} · printed ${esc(mmmDdTime(new Date()))}</div>
         <table>
           <tbody>
-            <tr><th>Total debits</th><td>${esc(money(s?.grand_total_debits ?? 0))}</td></tr>
-            <tr><th>Total credits</th><td>${esc(money(s?.grand_total_credits ?? 0))}</td></tr>
+            <tr><th>Total debits</th><td className="text-right tabular-nums">${esc(money(s?.grand_total_debits ?? 0))}</td></tr>
+            <tr><th>Total credits</th><td className="text-right tabular-nums">${esc(money(s?.grand_total_credits ?? 0))}</td></tr>
             <tr><th>Status</th><td>${esc(s?.balanced ? "Balanced" : "Out of balance")}</td></tr>
           </tbody>
         </table>
@@ -344,9 +344,9 @@ export function TrialBalancePage() {
                     )}
                   </td>
                   <td className="px-3 py-2">{formatAccountTypeLabel(row.account_type)}</td>
-                  <td className="px-3 py-2 text-right">{money(row.total_debits)}</td>
-                  <td className="px-3 py-2 text-right">{money(row.total_credits)}</td>
-                  <td className={`px-3 py-2 text-right ${row.net_balance < 0 ? "text-rose-700" : "text-slate-900"}`}>{money(row.net_balance)}</td>
+                  <td className="px-3 py-2 text-right tabular-nums">{money(row.total_debits)}</td>
+                  <td className="px-3 py-2 text-right tabular-nums">{money(row.total_credits)}</td>
+                  <td className={`px-3 py-2 text-right ${row.net_balance < 0 ? "text-rose-700" : "text-slate-900"} tabular-nums`}>{money(row.net_balance)}</td>
                 </tr>
               );
             })}
