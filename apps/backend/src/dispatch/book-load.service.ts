@@ -664,6 +664,18 @@ async function resolveDriverBasePayCents(
       deadheadCents = Math.round(resolvedEmptyRate * milesDeadhead);
       milesDeadheadUsed = milesDeadhead;
       rateEmptyPerMileCentsUsed = resolvedEmptyRate;
+    } else if (actorUserId) {
+      // Queue item 7 (G-10): real empty miles with no per-mile rate anywhere (flat per-load card, no empty rate)
+      // used to pay $0.00 silently. No rate is invented — the gap is recorded by name so the card gets its
+      // empty rate, instead of a $0 Empty Miles line that looks like a computed figure.
+      await appendCrudAudit(
+        client as Parameters<typeof appendCrudAudit>[0],
+        actorUserId,
+        "driver_finance.driver_bill.deadhead_unpriced_no_empty_rate",
+        { load_id: load.id ?? null, driver_id: driverId, operating_company_id: operatingCompanyId, miles_deadhead: milesDeadhead, basis_type: rate?.basis_type ?? null },
+        "warning",
+        "ROUND-326-G10"
+      );
     }
   }
 
