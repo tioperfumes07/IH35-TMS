@@ -1957,3 +1957,32 @@ CC-3 | WRAP 2026-10-01 | DONE: see the table below | LIVE PROOF: see the list be
 - Rows start pushing as soon as fuel arrives with a pump time, or CC-2's derivation reaches high confidence on a row.
 
 **Other first events, still 0 (engines live, nothing has happened yet):** `chat.messages` 0 (no message sent yet; owner: later), Samsara POD `docs.files` 0, `samsara_webhook_events` 0. `load_odometer_segments` is 49; the 10-day catch-up first runs at 02:41 CT.
+
+CC-3 | QUEUE EMPTY | all 16 SEAT-SEQUENCE rows built and merged (proof in the entries above) | starting registry ADDITIONS for own engines
+
+**Registry additions for CC-3's engines:**
+- **Already built:** E-01 odometer decoration (#23618); E-04 fence id → E-03 (#23620); E-05 legs on E-03 stops (#23633, #23794); E-07 push our fences (#23706); E-08 load_id on transitions (#23626, #23734); E-09 → E-31 routes (#23845); E-23 IFTA filing export (#23711); E-30 templated prompts (#23715); E-31 → documents (#23863).
+- **Not CC-3's:** E-32 → invoice on BOL (CC-2's release rule, by ruling). E-11 Faults view and E-12 dashcam viewer were registry-assigned to Cursor.
+- **Remaining:** **E-29** (this entry) → **E-10** DTC → maintenance catalog.
+
+## 2026-10-02 E-29 addition — border crossing ↔ customs record, both ways
+
+- **Migration 202615191100** (claim #23926): `dispatch.border_crossing_events.unit_border_crossing_id` → `mdata.unit_border_crossings`. That is the declared crossing from the border wizard: manifest, ACE e-manifest status, customs broker + status, port, bond.
+- **`linkCrossingsToCustomsRecords`** runs after every detector pass. **Unique matches only:**
+  - match on same load (or the same truck when the event has no load) + same direction + within 24 hours of the declared/planned date;
+  - 0 or 2+ candidates stay unlinked;
+  - one event per declaration.
+- **Reverse links:**
+  - `/loads/:id/telematics` border crossings carry the customs record id, manifest, e-manifest status, broker status and the truck's CTPAT status. The load panel shows these columns.
+  - `/api/v1/border-crossing/history` (declarations) carries the detected crossing: `detected_entered_at`, `detected_exited_at`, `detected_crossing_point`.
+- **Throwaway-branch proof** (`br-plain-glitter-akwa9as6`, deleted after):
+  - 13639, one crossing + one declaration → linked (manifest PROOF-13639, detected 09-25 18:00Z on the declaration).
+  - 13634, one crossing + two declarations → unlinked (ambiguous).
+  - Re-run linked 0.
+  - The 5 existing live crossings belong to IH 35 Transportation (`91e0…`), the frozen entity, and correctly never match USMCA declarations.
+- **Live today:** USMCA has 0 detected crossings and 0 declarations. Links appear when the first USMCA truck crosses with a wizard declaration.
+- **Guard:** `verify-border-crossing-customs-link`.
+- **§10-B:**
+  - LINKED: load, unit (with CTPAT status), driver, customs broker (vendor, via the declaration), the declaration ↔ the detected event both ways.
+  - N/A: money (a crossing posts nothing).
+- **Merge blocked by an ambient red, not CC-3's:** `verify-bank-match-suggest-is-read-only` LIVE FAIL, "bank_transactions count changed: 938 → 951" (USMCA `banking.bank_transactions` grew; that is the banking lane's feed, `scripts/verify-bank-match-suggest-is-read-only.mjs` baseline). CC-3 does not patch that baseline and does not `--admin`. **Lead: please `--admin` merge this PR.** This diff touches no banking path; its own guards and the migration guards are green.

@@ -69,6 +69,7 @@ Touched scripts/-lane files, one per queue item, each its own PR:
 - `scripts/verify-samsara-documents-engine.mjs` (ROUND 313 E-32: Samsara POD photos into docs.files, linked).
 - `scripts/verify-geofence-webhook-feeds-detector.mjs` (ROUND 313: GeofenceEntry/Exit webhooks -> canonical detector).
 - `scripts/verify-fault-driver-attribution-sourced.mjs` (ROUND 321 d: fault/harsh driver-at-time with load fallback + attribution_source).
+- `scripts/verify-border-crossing-customs-link.mjs` (E-29 addition: detected crossing <-> declared customs record).
 - `scripts/verify-load-cancellation-reversal-canonical.mjs` (ROUND 313: one canonical undo of a wrong cancellation).
 - `scripts/ops/2026-10-01-cc3-reverse-false-cancellations.mts` (AUTH-192).
 - `scripts/verify-driver-prompts-flag-off-idempotent.mjs` (E-30 addition).

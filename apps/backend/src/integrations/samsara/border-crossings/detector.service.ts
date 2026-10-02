@@ -63,6 +63,8 @@ export type CrossingProjection = {
   visits: number;
   written: number;
   skipped: Record<"still_inside" | "no_country_change" | "country_unknown" | "already_recorded", number>;
+  /** E-29 addition: detected crossings newly linked to their declared customs record this run. */
+  linked_to_customs?: number;
 };
 
 export async function projectBorderCrossingsFromFenceEvents(client: Db, operatingCompanyId: string, sinceIso: string): Promise<CrossingProjection> {
@@ -127,5 +129,37 @@ export async function projectBorderCrossingsFromFenceEvents(client: Db, operatin
     );
     out.written += 1;
   }
+  out.linked_to_customs = await linkCrossingsToCustomsRecords(client, operatingCompanyId);
   return out;
+}
+
+/**
+ * E-29 addition: connect each detected crossing to the crossing the office DECLARED in the border wizard
+ * (mdata.unit_border_crossings -- manifest, ACE e-manifest, broker, port, bond). Unique matches only, never a guess:
+ *   same load + same direction, declared/planned date within 24 hours of the fence entry; or, when the event has no
+ *   load, same truck + direction + window. An event with 0 or 2+ candidates stays unlinked.
+ */
+export async function linkCrossingsToCustomsRecords(client: Db, operatingCompanyId: string): Promise<number> {
+  const r = await client.query<{ n: number }>(
+    `WITH cand AS (
+       SELECT e.uuid AS event_id, d.id AS declared_id,
+              count(*) OVER (PARTITION BY e.uuid) AS n_for_event,
+              count(*) OVER (PARTITION BY d.id) AS n_for_declared
+         FROM dispatch.border_crossing_events e
+         JOIN mdata.unit_border_crossings d
+           ON d.operating_company_id = e.operating_company_id
+          AND d.direction = e.direction
+          AND (CASE WHEN e.load_uuid IS NOT NULL THEN d.load_id = e.load_uuid ELSE d.unit_id::text = e.vehicle_id::text END)
+          AND abs(extract(epoch FROM COALESCE(d.crossing_date, d.planned_crossing_date) - e.entered_geofence_at)) <= 86400
+        WHERE e.operating_company_id = $1::uuid AND e.unit_border_crossing_id IS NULL
+     ), upd AS (
+       UPDATE dispatch.border_crossing_events e SET unit_border_crossing_id = c.declared_id
+         FROM cand c
+        WHERE e.uuid = c.event_id AND c.n_for_event = 1 AND c.n_for_declared = 1
+          AND NOT EXISTS (SELECT 1 FROM dispatch.border_crossing_events x WHERE x.unit_border_crossing_id = c.declared_id)
+       RETURNING 1)
+     SELECT count(*)::int AS n FROM upd`,
+    [operatingCompanyId]
+  );
+  return r.rows[0]?.n ?? 0;
 }

@@ -53,7 +53,11 @@ export async function registerBorderCrossingHistoryRoutes(app: FastifyInstance) 
                  ubc.customs_broker_status, ubc.wizard_completed_at,
                  ubc.unit_id::text, ubc.driver_id::text, ubc.load_id::text, ubc.customs_broker_id::text,
                  u.unit_number, d.first_name || ' ' || d.last_name AS driver_name,
-                 l.load_number, v.vendor_name AS customs_broker_name
+                 l.load_number, v.vendor_name AS customs_broker_name,
+                 -- E-29 addition: the crossing the GPS detector actually saw for this declaration (reverse link)
+                 (SELECT e.entered_geofence_at FROM dispatch.border_crossing_events e WHERE e.unit_border_crossing_id = ubc.id LIMIT 1) AS detected_entered_at,
+                 (SELECT e.exited_geofence_at FROM dispatch.border_crossing_events e WHERE e.unit_border_crossing_id = ubc.id LIMIT 1) AS detected_exited_at,
+                 (SELECT e.crossing_point FROM dispatch.border_crossing_events e WHERE e.unit_border_crossing_id = ubc.id LIMIT 1) AS detected_crossing_point
           FROM mdata.unit_border_crossings ubc
           LEFT JOIN mdata.units u ON u.id = ubc.unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ubc.operating_company_id
