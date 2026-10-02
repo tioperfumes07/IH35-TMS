@@ -6999,3 +6999,24 @@ row_counts: safety.geofence_breach_events 6 twins acknowledged (6 planned = 6 ap
 proof_query: re-run of the dry run after apply -> twin_breaches 0, duplicate_fire_findings 0.
 THIS AUTHORIZATION DOES NOT COVER: any company other than USMCA; deleting any breach event, finding, fence or geofence
 event; any breach or finding not on a fence deactivated under AUTH-203; any money posting or JE.
+
+## AUTH-205
+issued_at: 2026-10-02T23:55:00Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). telematics.unit_stop_events — remove the clipped copies of
+  each physical stop, AFTER every live row is preserved on the full observation grain, in ONE transaction.
+  Owner's standing authorization for telematics, as recorded by the Lead in ROUND 337 ("AUTH: record against the owner's
+  standing authorization — non-financial telematics, 0 FK dependents ... preservation verified INSIDE the deleting
+  transaction rather than from a snapshot") and ROUND 340 (choice (b): preserve key fixed first — migration 202615301000,
+  live on prod in dep-db040d9srm7s73e0r25g).
+  Action (scripts/ops/2026-10-02-cc3-dedupe-unit-stop-events.mts), ONE transaction, populations derived inside it:
+  (1) copy every live row not in preserve.unit_stop_events (the preservation engine's own step SQL, no window);
+  (2) ASSERT 0 live rows unmatched on (company_code, unit_number, started_at, ended_at) — else ROLLBACK, nothing deleted;
+  (3) DELETE the copies, keeping row_number() OVER (PARTITION BY operating_company_id, unit_id, ended_at ORDER BY
+  started_at) = 1. No FK and no trigger references the table. Fork rehearsal br-small-violet-akg8vfpm: 411 preserved,
+  0 unmatched, 1,144 deleted, 1,942 -> 798.
+action: DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-02-cc3-dedupe-unit-stop-events.mts --apply --auth AUTH-205
+  Dry-run first (default, no --apply).
+expires_at: 2026-10-04T23:55:00Z
+status: OPEN
+THIS AUTHORIZATION DOES NOT COVER: any company other than USMCA; any row of preserve.* other than INSERTs by the
+preservation step; any table other than telematics.unit_stop_events; any money posting or JE.
