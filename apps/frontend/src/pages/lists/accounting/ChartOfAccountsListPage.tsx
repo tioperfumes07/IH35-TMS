@@ -187,24 +187,24 @@ function buildColumns(
       label: "ACTION",
       width: 180,
       render: (row) => (
-        <div className="flex items-center gap-2">
-          {row.defaultAction === "view_register" ? (
-            <Link
-              to={`/accounting/chart-of-accounts/register/${row.id}`}
-              className="text-slate-700 hover:underline"
-              onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}
-            >
-              View register
-            </Link>
-          ) : (
+        <div className="flex items-center gap-2" data-b1-coa-actions="1">
+          {/* B-1 / ORDERS §B-1: View register for EVERY account type (bank + P&L expense/income). */}
+          <Link
+            to={`/accounting/chart-of-accounts/register/${row.id}`}
+            className="text-slate-700 hover:underline"
+            onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}
+          >
+            View register
+          </Link>
+          {row.statement === "P&L" ? (
             <Link
               to="/reports/profit-loss"
-              className="text-slate-700 hover:underline"
+              className="text-gray-500 hover:text-gray-800 hover:underline text-xs"
               onClick={(event: { stopPropagation(): void }) => event.stopPropagation()}
             >
               Run report
             </Link>
-          )}
+          ) : null}
           <button
             type="button"
             className="text-gray-500 hover:text-gray-800 hover:underline text-xs"
