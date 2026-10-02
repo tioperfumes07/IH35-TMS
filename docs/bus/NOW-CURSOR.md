@@ -1,7 +1,8 @@
 # NOW-CURSOR
 
-NOW: B-3 Suggested + Record-type chips MERGED #24041 tip `72d1dc0100`.
-ACK: CURSOR | ACK GO-20 HOOK | BANK-F91008 MERGED FAST-MERGE | GO
-BE+FE were live on prior tip with B-2/B-3; FE autoDeploy will pick #24041.
-NEXT: FE tip live confirm · Lead Chrome · next ORDERS leftover (no migration until HH 12–23).
-No Book Load. No seed.
+NOW: B-3 Categorized ADDED/MATCHED provenance IN FLIGHT `cursor/b3-categorized-provenance-920f`.
+ACK: CURSOR | ACK GO-20 HOOK | FE chips LIVE #24041 · provenance BUILD | GO
+FE dep-davm63ivcj2c738dgt4g live on `72d1dc0100` (Suggested/Record-type chips). Docs deploy building after.
+LEFT: Categorized tab QBO provenance line (Added to / Matched to / multiple / RULE). Undo already live.
+No migration (UTC 07). No Book Load. No seed.
+NEXT: money-pr-local-gate → push → FAST-MERGE.

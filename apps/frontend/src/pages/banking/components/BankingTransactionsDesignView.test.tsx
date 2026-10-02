@@ -4,8 +4,80 @@ import { useState, type ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as bankingApi from "../../../api/banking";
+import type { PlaidBankTransaction } from "../../../api/banking";
 import { ToastProvider } from "../../../components/Toast";
-import { BankingTransactionsDesignView, spentReceived } from "./BankingTransactionsDesignView";
+import {
+  BankingTransactionsDesignView,
+  categorizedProvenanceText,
+  categorizedRuleLabel,
+  spentReceived,
+} from "./BankingTransactionsDesignView";
+
+function provenanceTx(overrides: Partial<PlaidBankTransaction>): PlaidBankTransaction {
+  return {
+    id: "tx-1",
+    transaction_date: "2026-09-05",
+    posted_date: "2026-09-05",
+    amount_cents: 5000,
+    description: "SHELL OIL",
+    merchant_name: "SHELL",
+    plaid_category: [],
+    pending: false,
+    is_credit: false,
+    matched_load_id: null,
+    matched_bill_id: null,
+    matched_settlement_id: null,
+    notes: null,
+    created_at: "2026-09-05T12:00:00Z",
+    ...overrides,
+  };
+}
+
+describe("B-3 §19 categorizedProvenanceText", () => {
+  it("returns Added to: Expense <date> for categorize path", () => {
+    expect(
+      categorizedProvenanceText(
+        provenanceTx({
+          status: "categorized",
+          review_state: "categorized",
+          categorized_at: "2026-09-05",
+          matched_expense_id: "exp-1",
+          matched_expense_number: "E-9",
+        })
+      )
+    ).toBe("Added to: Expense 09/05/2026");
+  });
+
+  it("returns Matched to: Expense for match path", () => {
+    expect(
+      categorizedProvenanceText(
+        provenanceTx({
+          review_state: "matched",
+          matched_expense_id: "exp-1",
+          matched_expense_number: "E-9",
+        })
+      )
+    ).toBe("Matched to: Expense");
+  });
+
+  it("returns Matched to: multiple transactions for two document families", () => {
+    expect(
+      categorizedProvenanceText(
+        provenanceTx({
+          review_state: "matched",
+          matched_expense_id: "exp-1",
+          matched_bill_id: "bill-1",
+          matched_bill_number: "B-1",
+        })
+      )
+    ).toBe("Matched to: multiple transactions");
+  });
+
+  it("returns RULE when suggested_source names a rule", () => {
+    expect(categorizedRuleLabel(provenanceTx({ suggested_source: "banking_rules:fuel" }))).toBe("RULE");
+    expect(categorizedRuleLabel(provenanceTx({ suggested_source: null }))).toBeNull();
+  });
+});
 
 // BANK-TOOLBAR-ONE: column visibility now persists via ParityTable's own storageKey
 // ("banking-transactions", same convention as ParityTable.test.tsx/ParityTable.footer.test.tsx) —

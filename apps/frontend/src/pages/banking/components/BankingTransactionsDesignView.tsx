@@ -413,6 +413,97 @@ function isUndoEligible(tx: PlaidBankTransaction) {
   return looksExcludedTx(tx) || looksCategorizedTx(tx);
 }
 
+type CategorizedMatchDoc = { kind: string; label: string };
+
+/**
+ * B-3 §19 / QBO Categorized tab — ADDED OR MATCHED provenance line.
+ * "Added to: Expense <date>" when categorize created/posted the doc;
+ * "Matched to: …" when linked to an existing document;
+ * "Matched to: multiple transactions" when 2+ document FKs;
+ * "-Split-" reserved when matched_kinds signals a split (split table HELD).
+ */
+export function categorizedProvenanceText(tx: PlaidBankTransaction): string | null {
+  if (looksExcludedTx(tx)) return null;
+  if (!looksCategorizedTx(tx)) return null;
+
+  const docs: CategorizedMatchDoc[] = [];
+  if (tx.matched_expense_id) {
+    docs.push({
+      kind: "Expense",
+      label: visibleDocumentLabel(tx.matched_expense_number, tx.matched_expense_id, "Expense"),
+    });
+  }
+  if (tx.matched_bill_id) {
+    docs.push({
+      kind: "Bill",
+      label: visibleDocumentLabel(tx.matched_bill_number, tx.matched_bill_id, "Bill"),
+    });
+  }
+  if (tx.matched_settlement_id) {
+    docs.push({
+      kind: "Settlement",
+      label: entityLabel(tx.matched_settlement_display_id ?? null, tx.matched_settlement_id, "Settlement"),
+    });
+  }
+  if (tx.matched_transfer_id) {
+    docs.push({
+      kind: "Transfer",
+      label: entityLabel(tx.matched_transfer_label, tx.matched_transfer_id, "Transfer"),
+    });
+  }
+  if (tx.matched_load_id) {
+    docs.push({
+      kind: "Load",
+      label: entityLabel(tx.matched_load_number ?? null, tx.matched_load_id, "Load"),
+    });
+  }
+  // JE alone after categorize is still "Added"; JE + another doc counts toward multi.
+  if (tx.matched_journal_entry_id && docs.length === 0) {
+    docs.push({
+      kind: "Journal entry",
+      label: entityLabel(tx.matched_journal_entry_memo ?? null, tx.matched_journal_entry_id, "Journal entry"),
+    });
+  } else if (tx.matched_journal_entry_id && docs.length >= 1) {
+    // expense+JE is one economic add (categorize→GL), not "multiple transactions"
+  }
+
+  const kinds = (tx.matched_kinds ?? []).map((k) => String(k).toLowerCase()).filter(Boolean);
+  if (kinds.includes("split") || String(tx.matched_kind ?? "").toLowerCase() === "split") {
+    return "-Split-";
+  }
+
+  const dateLabel = formatBankTransactionDate(tx.categorized_at ?? tx.transaction_date);
+  const review = String(tx.review_state ?? "").toLowerCase();
+  const isAdded =
+    review === "categorized" ||
+    (tx.status === "categorized" && review !== "matched" && review !== "transfer");
+
+  if (docs.length >= 2) {
+    // Distinct document families (expense+bill, etc.) — not expense+its JE.
+    const families = new Set(docs.map((d) => d.kind));
+    if (families.size >= 2) return "Matched to: multiple transactions";
+  }
+
+  if (docs.length === 0) {
+    return isAdded ? `Added to: Category ${dateLabel}` : "Matched to: Category";
+  }
+
+  const primary = docs[0]!;
+  if (review === "matched" || (!isAdded && hasPersistedMatch(tx))) {
+    return `Matched to: ${primary.kind}`;
+  }
+  return `Added to: ${primary.kind} ${dateLabel}`;
+}
+
+/** RULE chip for Categorized tab when a banking rule / suggestion source drove the row. */
+export function categorizedRuleLabel(tx: PlaidBankTransaction): string | null {
+  const src = String(tx.suggested_source ?? "").trim();
+  if (!src) return null;
+  if (/rule/i.test(src)) return "RULE";
+  if (/auto/i.test(src)) return "RULE";
+  return null;
+}
+
 type ViewSettings = {
   showCheckNo: boolean;
   showPayee: boolean;
@@ -1654,6 +1745,29 @@ export function BankingTransactionsDesignView({
                   {tx.suggested_account_number ? ` (${tx.suggested_account_number})` : ""}
                 </p>
               ) : null}
+              {/* B-3 §19 — Categorized tab ADDED OR MATCHED provenance + RULE (QBO). */}
+              {(() => {
+                const provenance = categorizedProvenanceText(tx);
+                const rule = categorizedRuleLabel(tx);
+                if (!provenance && !rule) return null;
+                return (
+                  <p
+                    className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-[#1F2A44]"
+                    data-testid="bank-txn-categorized-provenance"
+                    data-b3-categorized-provenance="1"
+                  >
+                    {provenance ? <span>{provenance}</span> : null}
+                    {rule ? (
+                      <span
+                        className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#4B5563]"
+                        data-testid="bank-txn-categorized-rule"
+                      >
+                        {rule}
+                      </span>
+                    ) : null}
+                  </p>
+                );
+              })()}
               {!isRelayWalletAccount &&
                 (tx.categorization_unit_id ||
                   tx.categorization_driver_id ||
