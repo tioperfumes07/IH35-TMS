@@ -18,11 +18,11 @@ export function needsLibraryRevision(row: { content_html_en: string; content_htm
  * flow) and version+1 is inserted active. A copy the owner / counsel edited (English body differs) is never touched.
  * Instances keep pinning the template_id they were drafted from.
  */
-async function reviseIfLibraryChanged(
+export async function reviseIfLibraryChanged(
   client: QueryableClient,
   operatingCompanyId: string,
   actorUserId: string,
-  def: (typeof CONTRACT_TYPE_TEMPLATES)[string],
+  def: { code: string; nameEn: string; nameEs: string; category: string; htmlEn: string; htmlEs: string; schema: Record<string, unknown> },
   existing: { id: string; version: number }
 ): Promise<{ id: string; version: number; seeded: boolean } | null> {
   const row = (await client.query(

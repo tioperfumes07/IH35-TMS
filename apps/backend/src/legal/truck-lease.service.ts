@@ -11,6 +11,7 @@ import {
   TRUCK_LEASE_VARIABLE_SCHEMA,
 } from "./templates/truck-lease.template.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { reviseIfLibraryChanged } from "./contract-type-templates.service.js";
 
 type QueryableClient = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 
@@ -34,7 +35,13 @@ export async function ensureTruckLeaseTemplate(
     [operatingCompanyId, TRUCK_LEASE_TEMPLATE_CODE],
   );
   if (existing.rows[0]) {
-    return { id: existing.rows[0].id, version: existing.rows[0].version, seeded: false };
+    // An unedited copy whose library design changed (the Spanish print design) moves to the next version.
+    const revised = await reviseIfLibraryChanged(client, operatingCompanyId, actorUserId, {
+      code: TRUCK_LEASE_TEMPLATE_CODE, nameEn: TRUCK_LEASE_DISPLAY_NAME_EN, nameEs: TRUCK_LEASE_DISPLAY_NAME_ES,
+      category: TRUCK_LEASE_CATEGORY, htmlEn: TRUCK_LEASE_CONTENT_HTML_EN, htmlEs: TRUCK_LEASE_CONTENT_HTML_ES,
+      schema: TRUCK_LEASE_VARIABLE_SCHEMA,
+    }, { id: existing.rows[0].id, version: existing.rows[0].version });
+    return revised ?? { id: existing.rows[0].id, version: existing.rows[0].version, seeded: false };
   }
 
   const ins = await client.query(

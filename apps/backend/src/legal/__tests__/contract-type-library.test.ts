@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CONTRACT_TYPE_TEMPLATES, deriveTrailerLease } from "../templates/contract-type-library.js";
-import { TRUCK_LEASE_CONTENT_HTML_EN } from "../templates/truck-lease.template.js";
+import { TRUCK_LEASE_CONTENT_HTML_EN, TRUCK_LEASE_CONTENT_HTML_ES } from "../templates/truck-lease.template.js";
 import { needsLibraryRevision } from "../contract-type-templates.service.js";
 
 describe("contract type print designs", () => {
@@ -31,8 +31,22 @@ describe("contract type print designs", () => {
     expect(tokens(htmlEs)).toEqual(tokens(htmlEn));
     expect(htmlEs.match(/<h2>/g)?.length).toBe(htmlEn.match(/<h2>/g)?.length);
   });
-  it("every contract type prints its own Spanish design (never the English copy)", () => {
-    for (const t of Object.values(CONTRACT_TYPE_TEMPLATES)) expect(t.htmlEs, t.code).not.toBe(t.htmlEn);
+  it("every lease / services design prints a real Spanish version binding the same data", () => {
+    // lease_to_own is exempt by recorded decision: its English is verbatim from the owner's approved prototype and
+    // its Spanish is a future reviewed version (lease-to-own.template.ts header) — not machine-drafted here.
+    const designs: Array<[string, string, string]> = [
+      ["truck_lease", TRUCK_LEASE_CONTENT_HTML_EN, TRUCK_LEASE_CONTENT_HTML_ES],
+      ...Object.values(CONTRACT_TYPE_TEMPLATES).map((t) => [t.code, t.htmlEn, t.htmlEs] as [string, string, string]),
+    ];
+    const tokens = (h: string) => [...new Set(h.match(/\{\{[^}]+\}\}/g) ?? [])].sort();
+    const visible = (h: string) => h.replace(/<style[\s\S]*?<\/style>/, "").replace(/<[^>]*>|\{\{[^}]*\}\}/g, " ");
+    for (const [code, en, es] of designs) {
+      expect(es, code).not.toBe(en);
+      expect(es, code).toMatch(/<html lang="es">/);
+      expect(tokens(es), code).toEqual(tokens(en));
+      expect(es.match(/<h2>/g)?.length, code).toBe(en.match(/<h2>/g)?.length);
+      expect(visible(es), code).not.toMatch(/\b(Parties|Governing Law|Entire Agreement|Lessor|Lessee|Signature|Truck|Trailer)\b/);
+    }
   });
   it("revises only unedited library copies whose design changed", () => {
     const def = { htmlEn: "EN", htmlEs: "ES" };

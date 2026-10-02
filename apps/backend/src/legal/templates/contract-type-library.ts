@@ -37,6 +37,8 @@ export function deriveTrailerLease(truckHtml: string, lang: "en" | "es"): string
         ]
       : [
           [/Contrato de Arrendamiento de Camión Comercial/g, "Contrato de Arrendamiento de Remolque Comercial"],
+          [/vehículos automotores comerciales/g, "remolques comerciales"],
+          [/\bUnidad\b/g, "Remolque"],
           [/\bvehículos\b/g, "remolques"],
           [/\bvehículo\b/g, "remolque"],
           [/\bVehículos\b/g, "Remolques"],
