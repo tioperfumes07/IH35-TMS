@@ -449,7 +449,22 @@ export function BankTxCategorizationPage() {
                 key: "description",
                 label: "Description",
                 cellClass: "max-w-[200px] truncate text-gray-800",
-                render: (tx) => txDescription(tx),
+                // Owner ruling 2026-10-02: identical same-day lines are flagged, never removed — the owner decides at match time.
+                render: (tx) =>
+                  tx.possible_duplicate === true ? (
+                    <span className="inline-flex items-center gap-1">
+                      <span
+                        className="rounded-sm border border-slate-200 bg-slate-100 px-1 font-semibold text-slate-700"
+                        title="Another line on this account has the same date, amount, direction and description. Both are kept — decide when you match."
+                        data-testid={`bank-tx-possible-duplicate-${String(tx.id ?? "")}`}
+                      >
+                        Possible duplicate
+                      </span>
+                      {txDescription(tx)}
+                    </span>
+                  ) : (
+                    txDescription(tx)
+                  ),
               },
               {
                 key: "amount",

@@ -690,6 +690,15 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-faro-cash-reserve-presents-as-payable.mjs",
     ],
   ],
+  // Owner ruling 2026-10-02 — identical same-day bank lines are flagged "possible duplicate", never removed.
+  [
+    "verify-bank-possible-duplicates-flagged-never-removed",
+    [
+      "apps/backend/src/banking/categorization.routes.ts",
+      "apps/frontend/src/pages/banking/BankTxCategorizationPage.tsx",
+      "scripts/verify-bank-possible-duplicates-flagged-never-removed.mjs",
+    ],
+  ],
   // ROUND 326.2 items 3-4 — banking / factoring surfaces: every table tabular-nums, and Banking's
   // factoring reserve reads the factoring KPI engine (one reserve engine, no duplicate math).
   [
