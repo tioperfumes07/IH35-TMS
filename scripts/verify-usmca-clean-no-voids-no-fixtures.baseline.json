@@ -1,0 +1,14 @@
+{
+  "note": "ROUND 326 (CC-1). Shrink-only: lower each count as the complete delete engine runs; never raise one.",
+  "measured_at": "2026-10-02",
+  "counts": {
+    "sample_rows": 6,
+    "test_identifiers": 2,
+    "voided_invoices": 1,
+    "voided_expenses": 3,
+    "voided_journal_entries": 0,
+    "voided_settlements": 0,
+    "inactive_revrec_postings": 0,
+    "cancelled_load_shells": 14
+  }
+}

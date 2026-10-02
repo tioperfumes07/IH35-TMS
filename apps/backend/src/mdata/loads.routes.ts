@@ -41,6 +41,7 @@ import {
   assertUnitNotActiveOnAnotherLoad,
 } from "../dispatch/unit-active-load-guard.js";
 import type { PoolClient } from "pg";
+import { settleRevrecOnCancel } from "../accounting/revrec-delivery-posting/poster.service.js";
 
 const loadStatusSchema = z.enum([
   "draft",
@@ -1313,6 +1314,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       );
 
       if (row.status === "cancelled") {
+        // ROUND 326: this board path can cancel a delivered load (Event 1 already posted) — its revenue goes with it.
+        await settleRevrecOnCancel(client as never, current.operating_company_id, row.id, authUser.uuid, `Load cancelled from the dispatch board${cancellationNotes ? `: ${String(cancellationNotes).trim().slice(0, 200)}` : ""}`);
         // OWNER DECISION 4: write the canonical cancellation record through the SAME single writer the
         // dispatch cancel route uses, so this path can never again flip a status without one.
         let cancellationRecordId: string | null = null;

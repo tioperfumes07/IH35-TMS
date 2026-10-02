@@ -8,6 +8,7 @@ import { auditVoid, isVoidEnforcementEnabled, pgDateColumnToIsoDay, postVoidReve
 import { executeVoidCancel } from "../governance/void-cancel-executors.js";
 import { reverseDriverAdvanceInClientTx } from "../cash-advances/cash-advance-create.js";
 import { cascadeVoidChildren } from "../accounting/cascade-void-engine.service.js";
+import { settleRevrecOnCancel } from "../accounting/revrec-delivery-posting/poster.service.js";
 
 function isOwner(role: string) {
   return role === "Owner";
@@ -242,6 +243,8 @@ export async function cancelLoadInClientTx(
           [input.load_id, input.operating_company_id]
         );
         if (!cancelledLoad.rows[0]?.id) throw new Error("E_CANCELLATION_LOAD_WRITE_FAILED");
+        // ROUND 326: a cancelled load carries no recognized revenue — deleted, not reversed (owner law 2026-10-02).
+        await settleRevrecOnCancel(client as never, input.operating_company_id, input.load_id, userId, `Load cancelled: ${input.cancellation_notes.trim().slice(0, 200)}`);
       }
 
       // WIRE-10 / VOID-CANCEL-NOT-VOID (owner-verified live 2026-09-01, Devin-A void-10 walk,
@@ -910,6 +913,8 @@ export async function approveCancellation(
         [cancellation.load_id, input.operating_company_id]
       );
       if (!cancelledLoad.rows[0]?.id) throw new Error("E_CANCELLATION_LOAD_WRITE_FAILED");
+      // ROUND 326: approval completes the cancel — the load's recognized revenue is deleted with it.
+      await settleRevrecOnCancel(client as never, input.operating_company_id, String(cancellation.load_id), userId, "Load cancellation approved");
       await appendCrudAudit(
         client,
         userId,

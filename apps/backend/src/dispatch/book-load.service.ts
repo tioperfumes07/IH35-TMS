@@ -34,6 +34,7 @@ import { geocodeStopsBackfill } from "../telematics/stops-geocode-backfill.servi
 import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.js";
 import { computeAndPersistGoogleReferenceMilesForLoad } from "./google-reference-miles.service.js";
 import { ACTIVE_UNIT_STATUSES, assertUnitNotActiveOnAnotherLoad } from "./unit-active-load-guard.js";
+import { resolveInboundLoadEntity, type InboundSource } from "./inbound-load-entity.js";
 
 // FEED PARITY (docs/manuals/04-RULING-FEED-PARITY-THE-VERIFIED-SIDE-EFFECT-LIST.md, 2026-09-22).
 // Minimal client shape (same pattern as presettlement-link.service.ts's DbClient) so
@@ -244,6 +245,8 @@ export type BookLoadInput = {
   assigned_primary_driver_id?: string;
   historical_import_driver_id?: string;
   historical_import_reason?: string;
+  /** ROUND 326: the source of an imported load and the company it names (resolveInboundLoadEntity). */
+  inbound_source?: InboundSource | null;
   assigned_secondary_driver_id?: string;
   team_id?: string;
   // WIZ-43 (owner ruling 2026-09-04): cash & fuel advance are no longer captured at booking (they move to
@@ -1584,6 +1587,12 @@ export async function createLoadWithFullSideEffects(
     }
 
     const historicalImportDriverId = input.historical_import_driver_id?.trim() || null;
+    // ROUND 326: an imported load books only under the company its source names (never a default / session company).
+    if (historicalImportDriverId || input.inbound_source) {
+      const code = (await client.query<{ code: string | null }>(`SELECT code FROM org.companies WHERE id = $1::uuid`, [input.operating_company_id])).rows[0]?.code ?? null;
+      const decision = resolveInboundLoadEntity({ targetCompanyCode: code, isImport: true, source: input.inbound_source ?? null });
+      if (!decision.ok) return { kind: "error", status: 422, payload: { error: decision.error, message: decision.message } };
+    }
     let historicalDriverAttestation: Record<string, unknown> | null = null;
     if (historicalImportDriverId) {
       if (input.requestingUserRole !== "Owner") {

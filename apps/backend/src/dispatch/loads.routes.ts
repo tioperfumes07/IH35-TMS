@@ -307,6 +307,12 @@ const createDispatchLoadBodySchema = z.object({
   // driver is supplied by UUID with an attributed reason and validated again inside bookLoad().
   historical_import_driver_id: z.string().uuid().optional(),
   historical_import_reason: z.string().trim().min(10).max(1000).optional(),
+  // ROUND 326: an imported load names its source company; book-load rejects a missing / mismatched one.
+  inbound_source: z.object({
+    system: z.enum(["alwaystrack", "faro", "csv", "manual_import"]),
+    company_code: z.enum(["TRANSP", "TRK", "USMCA"]).nullable().optional(),
+    reference: z.string().trim().max(200).nullable().optional(),
+  }).nullable().optional(),
   assigned_secondary_driver_id: z.string().uuid().optional(),
   team_id: z.string().uuid().optional(),
   temp_fahrenheit: z.number().int().optional(),
