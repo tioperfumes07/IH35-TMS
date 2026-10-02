@@ -51,6 +51,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { BankingNewMenu } from "./components/BankingNewMenu";
 import { LinkSuggestionsPanel } from "./components/LinkSuggestionsPanel";
 import { MoneyKpiTile } from "../../components/money/MoneyKpiTile";
+import { BankingKpiPanel } from "../../components/banking/BankingKpiPanel";
 import { NotApplicable } from "../../components/money/NotApplicable";
 import { WhereTheMoneyIsRail, type MoneyRailRow } from "./components/WhereTheMoneyIsRail";
 import { NeedsCategorizingQueue, type NeedsCategorizingRow } from "./components/NeedsCategorizingQueue";
@@ -489,6 +490,8 @@ export function BankingHomePage({ initialTab }: Props = {}) {
 
       {activeTab === "accounts" ? (
         <>
+          {/* ROUND 326.2 item 2 — banking KPIs from the bank feed + GL, each drilling to its rows. */}
+          {companyId ? <BankingKpiPanel companyId={companyId} /> : null}
           {/* C-65 — fixed side-dock; never in-flow (no layout shift). */}
           <BankingHomeAttentionStrip
             facts={{

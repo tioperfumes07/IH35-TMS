@@ -502,13 +502,15 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-factoring-posting-legs-match-header",
     ["apps/backend/src/accounting/factoring-posting/poster.service.ts", "apps/backend/src/factoring/faro-csv-import.ts"],
   ],
-  // ROUND 326.2 item 1 — every factoring KPI the engine serves is recomputed from the ledger with
+  // ROUND 326.2 items 1-2 — every factoring and banking KPI the engine serves is recomputed from the ledger with
   // independent SQL; any cent of drift, or a tile whose row_count != its drilldown rows, fails.
   [
     "verify-factoring-banking-kpis-tie-to-ledger",
     [
       "apps/backend/src/factoring/factoring-kpi",
+      "apps/backend/src/banking/banking-kpi",
       "scripts/lib/print-factoring-kpis.ts",
+      "scripts/lib/print-banking-kpis.ts",
       "scripts/verify-factoring-banking-kpis-tie-to-ledger.mjs",
     ],
   ],
