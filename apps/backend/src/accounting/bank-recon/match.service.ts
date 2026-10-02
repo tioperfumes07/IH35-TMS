@@ -1406,30 +1406,12 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
       // sweep poster can resolve the real bank's ledger account and move the payment's GL out of its
       // holding account (Undeposited Funds / cash_clearing) into the account bank reconciliation
       // actually reconciles. Best-effort: a genuinely ineligible payment (voided, QBO-origin, already
-      // posted straight to this bank, or the matched bank has no ledger_account_id) is a normal,
+      // posted straight to this bank) is a normal,
       // expected skip — never fails the match itself. Any OTHER error still surfaces (fail loud, not
       // silent) since it would mean real money moved with no GL trail.
-      try {
-        await postSourceTransactionInClientTx(
-          client,
-          {
-            operating_company_id: input.operating_company_id,
-            source_transaction_type: "customer_payment_deposit",
-            source_transaction_id: input.ledger_entry_id,
-          },
-          { userId: input.actor_user_uuid }
-        );
-      } catch (sweepError) {
-        const skippable: string[] = [
-          "DEPOSIT_ALREADY_AT_BANK",
-          "PAYMENT_NOT_POSTING_ELIGIBLE",
-          "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED",
-          "DEPOSIT_BANK_LEDGER_ACCOUNT_MISSING",
-        ];
-        if (!(sweepError instanceof PostingEngineError) || !skippable.includes(sweepError.code)) {
-          throw sweepError;
-        }
-      }
+      // ROUND 326 queue item 12: one sweep helper, strict skip list (a missing bank / clearing mapping is no longer a
+      // silent skip — it would leave the receipt in 1090 with the money already at the bank).
+      await sweepMatchedReceiptToBank(client, input.operating_company_id, "customer_payment_deposit", input.ledger_entry_id, input.actor_user_uuid);
     } else if (input.ledger_entry_kind === "bill_payment") {
       // BANK-F26053 — same THREE-DATES-COVERAGE-GAP stamp as the payment branch above.
       await client.query(
@@ -1456,29 +1438,9 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
       // UPDATE above, MATCHED_ID_COLUMN_MAP) is the reverse pointer the sweep resolves the covering
       // bank transaction from — no new column, no migration. Best-effort, same skip contract as the
       // customer_payment_deposit sweep: a genuinely ineligible advance (voided, QBO-origin, already
-      // posted straight to this bank, or no cash_clearing mapping) is a normal, expected skip; any
+      // posted straight to this bank) is a normal, expected skip; any
       // OTHER error still surfaces, since it would mean real money moved with no GL trail.
-      try {
-        await postSourceTransactionInClientTx(
-          client,
-          {
-            operating_company_id: input.operating_company_id,
-            source_transaction_type: "factoring_advance_deposit",
-            source_transaction_id: input.ledger_entry_id,
-          },
-          { userId: input.actor_user_uuid }
-        );
-      } catch (sweepError) {
-        const skippable: string[] = [
-          "DEPOSIT_ALREADY_AT_BANK",
-          "PAYMENT_NOT_POSTING_ELIGIBLE",
-          "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED",
-          "ACCOUNT_MAPPING_MISSING",
-        ];
-        if (!(sweepError instanceof PostingEngineError) || !skippable.includes(sweepError.code)) {
-          throw sweepError;
-        }
-      }
+      await sweepMatchedReceiptToBank(client, input.operating_company_id, "factoring_advance_deposit", input.ledger_entry_id, input.actor_user_uuid);
     }
 
     const cashBasisRevenueCents = computeCashBasisRevenueFromActualCashHit({
@@ -1506,6 +1468,35 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
  * Must go through storeMatch + appendCrudAudit here (same primitives as
  * acceptMatchWithResolveDifference) so verify-no-match-persisted-outside-accept-handler stays green.
  */
+/**
+ * ROUND 326 queue item 12 (G-06) — THE deposit sweep for a matched receipt: moves a customer payment / factoring advance
+ * out of its holding account (1090 Undeposited Funds / cash_clearing) into the matched bank's ledger account, on the
+ * caller's transaction. Skips ONLY a receipt that genuinely needs no sweep (already at the bank, ineligible / voided,
+ * QBO-origin under parallel books). A missing bank ledger account or clearing mapping is NOT skipped any more: the
+ * money is at the bank, and skipping left it in 1090 with no GL trail — the match refuses by name instead.
+ */
+export const DEPOSIT_SWEEP_SKIPPABLE = ["DEPOSIT_ALREADY_AT_BANK", "PAYMENT_NOT_POSTING_ELIGIBLE", "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED"] as const;
+
+async function sweepMatchedReceiptToBank(
+  client: Parameters<typeof postSourceTransactionInClientTx>[0],
+  operatingCompanyId: string,
+  sourceType: "customer_payment_deposit" | "factoring_advance_deposit",
+  ledgerEntryId: string,
+  actorUserUuid: string
+): Promise<void> {
+  try {
+    await postSourceTransactionInClientTx(
+      client,
+      { operating_company_id: operatingCompanyId, source_transaction_type: sourceType, source_transaction_id: ledgerEntryId },
+      { userId: actorUserUuid }
+    );
+  } catch (sweepError) {
+    if (!(sweepError instanceof PostingEngineError) || !(DEPOSIT_SWEEP_SKIPPABLE as readonly string[]).includes(sweepError.code)) {
+      throw sweepError;
+    }
+  }
+}
+
 export async function acceptExactMultiDocumentMatch(input: {
   operating_company_id: string;
   bank_transaction_id: string;
@@ -1596,6 +1587,25 @@ export async function acceptExactMultiDocumentMatch(input: {
         "BANK-RECON-ACCEPT-HANDLER"
       );
       matchIds.push(reconciliationMatchId);
+    }
+
+    // ROUND 326 queue item 12 (G-06): a batch wire matched to several receipts moves EVERY receipt out of 1090 — before
+    // this, the multi-match stored the matches and cleared the bank line but posted no sweep, so each advance's funding
+    // debit (and each payment) stayed in Undeposited Funds forever. Payments get the same bank stamp the 1:1 accept
+    // writes; advances are found by their own reconciliation match row (the sweep's second lookup).
+    for (const entry of input.entries) {
+      if (entry.ledger_entry_kind === "payment") {
+        await client.query(
+          `UPDATE accounting.payments
+              SET source_bank_transaction_id = COALESCE(source_bank_transaction_id, $1::uuid),
+                  cleared_date = COALESCE(cleared_date, $4::date)
+            WHERE id = $2::uuid AND operating_company_id = $3::uuid`,
+          [input.bank_transaction_id, entry.ledger_entry_id, input.operating_company_id, txn.transaction_date.slice(0, 10)]
+        );
+        await sweepMatchedReceiptToBank(client, input.operating_company_id, "customer_payment_deposit", entry.ledger_entry_id, input.actor_user_uuid);
+      } else if (entry.ledger_entry_kind === "factoring_advance") {
+        await sweepMatchedReceiptToBank(client, input.operating_company_id, "factoring_advance_deposit", entry.ledger_entry_id, input.actor_user_uuid);
+      }
     }
 
     // Stamp the first entry's clear-column (multi-doc has one bank line → one denormalized FK).

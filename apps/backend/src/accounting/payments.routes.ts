@@ -466,10 +466,11 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
         );
         if (!acct.rows[0]) return { code: 400 as const, error: "deposited_to_account_not_found" };
       } else {
-        depositedToAccountId =
-          (await resolveRoleAccountOptional(client, query.data.operating_company_id, "undeposited_funds")) ??
-          (await resolveRoleAccountOptional(client, query.data.operating_company_id, "cash_clearing"));
-        if (!depositedToAccountId) return { code: 400 as const, error: "deposited_to_account_required" };
+        // ROUND 326 queue item 12 (G-06) + owner ruling 2026-10-02 ("no holding accounts — every payment on a real
+        // account, default Bank of America, editable like QuickBooks"): a payment with no deposit account picked lands
+        // on the operating bank, never in 1090 Undeposited Funds, where it waited for a sweep that often never came.
+        depositedToAccountId = await resolveRoleAccountOptional(client, query.data.operating_company_id, "operating_bank");
+        if (!depositedToAccountId) return { code: 400 as const, error: "operating_bank_unmapped" };
       }
 
       const displayId = await resolvePaymentDisplayId(
