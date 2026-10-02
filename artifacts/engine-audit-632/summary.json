@@ -1,0 +1,47 @@
+{
+  "measured_at": "2026-10-02T19:18:04.329Z",
+  "tip_sha": "6b273ef29441f915ca1f94edfa62facd1d3b211d",
+  "population": 642,
+  "by_type": {
+    ".service": 564,
+    ".worker": 4,
+    ".cron": 66,
+    ".engine": 3,
+    ".job": 5
+  },
+  "writers": 348,
+  "read_only": 294,
+  "money_writers": 11,
+  "wired": 623,
+  "orphan": 11,
+  "test_only": 8,
+  "test_covered": 355,
+  "writers_no_header": 165,
+  "f_retry_candidates": 47,
+  "flags": {
+    "A_SPINE": 1,
+    "B_ATOMIC": 5,
+    "C_SCOPE": 1,
+    "D_ATOMIC": 120,
+    "E_SCOPE": 106,
+    "F_RETRY": 47,
+    "G_SILENT": 14,
+    "I_HEADER": 327
+  },
+  "diff_vs_owner_approx": {
+    "population": 10,
+    "writers": 15,
+    "read_only": -5,
+    "money_writers": 11,
+    "wired": 3,
+    "orphan": -1,
+    "test_only": 0,
+    "test_covered": 29,
+    "writers_no_header": 0,
+    "f_retry_candidates": 10
+  },
+  "f_retry_scheduler": {
+    "CONFIRMED": 18,
+    "CLEARED": 29
+  }
+}

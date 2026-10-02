@@ -6,6 +6,12 @@ import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 
 let initialized = false;
 
+// OWNER LAW: USMCA only. TRANSPORTATION (91e0bf0a) and TRUCKING (b49a737b) are FROZEN.
+// This cron runs under withLuciaBypass (RLS OFF). Without an operating_company_id predicate
+// the resolve-stale statement would touch every open reminder in every company on every tick
+// (engine-audit E-SCOPE / frozen-entity violation, ROUND 301 Cursor independent audit).
+const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
+
 const REFRESH_SQL = `
   WITH candidates AS (
     SELECT
@@ -22,6 +28,7 @@ const REFRESH_SQL = `
       END::int AS days_to_expiry
     FROM safety.driver_qualification_files q
     WHERE q.voided_at IS NULL
+      AND q.operating_company_id = $1::uuid
       AND (q.status IN ('missing', 'expired') OR q.expiry_date IS NOT NULL)
 
     UNION ALL
@@ -36,6 +43,7 @@ const REFRESH_SQL = `
       (m.expiry_date - CURRENT_DATE)::int AS days_to_expiry
     FROM safety.medical_cards m
     WHERE m.voided_at IS NULL
+      AND m.operating_company_id = $1::uuid
 
     UNION ALL
 
@@ -49,6 +57,7 @@ const REFRESH_SQL = `
       (b.expiry_date - CURRENT_DATE)::int AS days_to_expiry
     FROM safety.background_checks b
     WHERE b.voided_at IS NULL
+      AND b.operating_company_id = $1::uuid
       AND b.expiry_date IS NOT NULL
 
     UNION ALL
@@ -63,6 +72,7 @@ const REFRESH_SQL = `
       (t.expiry_date - CURRENT_DATE)::int AS days_to_expiry
     FROM safety.training_records t
     WHERE t.voided_at IS NULL
+      AND t.operating_company_id = $1::uuid
       AND t.expiry_date IS NOT NULL
   ),
   filtered AS (
@@ -114,43 +124,24 @@ const REFRESH_SQL = `
 export async function refreshSafetyReminders() {
   const refreshStartedAt = new Date().toISOString();
   await withLuciaBypass(async (client) => {
-    const companyRes = await client.query<{ operating_company_id: string }>(
-      `
-        WITH companies AS (
-          SELECT DISTINCT operating_company_id::text AS operating_company_id
-          FROM safety.driver_qualification_files
-          WHERE voided_at IS NULL
-          UNION
-          SELECT DISTINCT operating_company_id::text AS operating_company_id
-          FROM safety.medical_cards
-          WHERE voided_at IS NULL
-          UNION
-          SELECT DISTINCT operating_company_id::text AS operating_company_id
-          FROM safety.background_checks
-          WHERE voided_at IS NULL
-          UNION
-          SELECT DISTINCT operating_company_id::text AS operating_company_id
-          FROM safety.training_records
-          WHERE voided_at IS NULL
-        )
-        SELECT operating_company_id
-        FROM companies
-      `
-    );
-    for (const row of companyRes.rows) {
-      assertTenantContext(String(row.operating_company_id ?? ""), "safety.reminders_cron");
-    }
+    assertTenantContext(USMCA_COMPANY_ID, "safety.reminders_cron");
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
+      USMCA_COMPANY_ID,
+    ]);
 
-    await client.query(REFRESH_SQL);
+    await client.query(REFRESH_SQL, [USMCA_COMPANY_ID]);
+    // Resolve only USMCA open reminders that this tick did not refresh.
+    // Never touch TRANSPORTATION / TRUCKING (frozen) — they are out of the $1 predicate.
     await client.query(
       `
         UPDATE safety.compliance_reminders
         SET status = 'resolved',
             updated_at = now()
-        WHERE status = 'open'
+        WHERE operating_company_id = $2::uuid
+          AND status = 'open'
           AND last_detected_at < $1::timestamptz
       `,
-      [refreshStartedAt]
+      [refreshStartedAt, USMCA_COMPANY_ID]
     );
   });
 }
