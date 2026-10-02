@@ -229,6 +229,24 @@ export function ReconciliationWorkspacePage() {
   /** B-2 QBO Reconcile tabs: Payments (money out) | Deposits (money in) | All. */
   const [directionTab, setDirectionTab] = useState<"payments" | "deposits" | "all">("all");
   const [eventFilter, setEventFilter] = useState<"all" | "load" | "bill" | "settlement">("all");
+  /** B-2 ORDERS §6 — Filter popover (Find / Cleared / Type / Payee / Date / amount). Draft → Apply. */
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [draftFind, setDraftFind] = useState("");
+  const [draftPayee, setDraftPayee] = useState("");
+  const [draftCleared, setDraftCleared] = useState<"all" | "cleared" | "uncleared">("all");
+  const [draftTxnType, setDraftTxnType] = useState<"all" | "bank" | "journal">("all");
+  const [draftDateFrom, setDraftDateFrom] = useState("");
+  const [draftDateTo, setDraftDateTo] = useState("");
+  const [draftAmtMode, setDraftAmtMode] = useState<"any" | "eq" | "gt" | "lt">("any");
+  const [draftAmtDollars, setDraftAmtDollars] = useState<number | null>(null);
+  const [appliedFind, setAppliedFind] = useState("");
+  const [appliedPayee, setAppliedPayee] = useState("");
+  const [appliedCleared, setAppliedCleared] = useState<"all" | "cleared" | "uncleared">("all");
+  const [appliedTxnType, setAppliedTxnType] = useState<"all" | "bank" | "journal">("all");
+  const [appliedDateFrom, setAppliedDateFrom] = useState("");
+  const [appliedDateTo, setAppliedDateTo] = useState("");
+  const [appliedAmtMode, setAppliedAmtMode] = useState<"any" | "eq" | "gt" | "lt">("any");
+  const [appliedAmtDollars, setAppliedAmtDollars] = useState<number | null>(null);
   const [clearingId, setClearingId] = useState<string | null>(null);
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
@@ -333,6 +351,39 @@ export function ReconciliationWorkspacePage() {
           });
     if (directionTab === "payments") filtered = filtered.filter((tx) => !tx.is_credit);
     else if (directionTab === "deposits") filtered = filtered.filter((tx) => tx.is_credit);
+
+    const findQ = appliedFind.trim().toLowerCase();
+    const payeeQ = appliedPayee.trim().toLowerCase();
+    const amtCents =
+      appliedAmtMode !== "any" && appliedAmtDollars != null && Number.isFinite(appliedAmtDollars)
+        ? Math.round(Number(appliedAmtDollars) * 100)
+        : null;
+    const anyExplicit = localTransactions.some((t) => Boolean(t.reconciliation_cleared));
+
+    filtered = filtered.filter((tx) => {
+      if (appliedTxnType === "bank" && tx.row_kind !== "bank") return false;
+      if (appliedTxnType === "journal" && tx.row_kind !== "gl_line") return false;
+      if (appliedCleared === "cleared" && !transactionIsCleared(tx, anyExplicit)) return false;
+      if (appliedCleared === "uncleared" && transactionIsCleared(tx, anyExplicit)) return false;
+      if (appliedDateFrom && String(tx.transaction_date ?? "") < appliedDateFrom) return false;
+      if (appliedDateTo && String(tx.transaction_date ?? "") > appliedDateTo) return false;
+      if (payeeQ) {
+        const payee = `${tx.merchant_name ?? ""} ${tx.description ?? ""}`.toLowerCase();
+        if (!payee.includes(payeeQ)) return false;
+      }
+      if (findQ) {
+        const hay = `${tx.merchant_name ?? ""} ${tx.description ?? ""} ${tx.type_label ?? ""} ${tx.split_account ?? ""}`.toLowerCase();
+        if (!hay.includes(findQ)) return false;
+      }
+      if (amtCents != null && Number.isFinite(amtCents)) {
+        const abs = Math.abs(Number(tx.amount_cents ?? 0));
+        if (appliedAmtMode === "eq" && abs !== amtCents) return false;
+        if (appliedAmtMode === "gt" && !(abs > amtCents)) return false;
+        if (appliedAmtMode === "lt" && !(abs < amtCents)) return false;
+      }
+      return true;
+    });
+
     const dir = txnSort.dir === "asc" ? 1 : -1;
     return [...filtered].sort((a, b) => {
       let va: string | number = a.transaction_date ?? "";
@@ -348,7 +399,62 @@ export function ReconciliationWorkspacePage() {
       if (va > vb) return 1 * dir;
       return 0;
     });
-  }, [directionTab, filterMode, localTransactions, txnSort]);
+  }, [
+    directionTab,
+    filterMode,
+    localTransactions,
+    txnSort,
+    appliedFind,
+    appliedPayee,
+    appliedCleared,
+    appliedTxnType,
+    appliedDateFrom,
+    appliedDateTo,
+    appliedAmtMode,
+    appliedAmtDollars,
+  ]);
+
+  const applyReconFilters = () => {
+    setAppliedFind(draftFind);
+    setAppliedPayee(draftPayee);
+    setAppliedCleared(draftCleared);
+    setAppliedTxnType(draftTxnType);
+    setAppliedDateFrom(draftDateFrom);
+    setAppliedDateTo(draftDateTo);
+    setAppliedAmtMode(draftAmtMode);
+    setAppliedAmtDollars(draftAmtDollars);
+    setFilterOpen(false);
+  };
+
+  const resetReconFilters = () => {
+    setDraftFind("");
+    setDraftPayee("");
+    setDraftCleared("all");
+    setDraftTxnType("all");
+    setDraftDateFrom("");
+    setDraftDateTo("");
+    setDraftAmtMode("any");
+    setDraftAmtDollars(null);
+    setAppliedFind("");
+    setAppliedPayee("");
+    setAppliedCleared("all");
+    setAppliedTxnType("all");
+    setAppliedDateFrom("");
+    setAppliedDateTo("");
+    setAppliedAmtMode("any");
+    setAppliedAmtDollars(null);
+  };
+
+  const reconFilterActiveCount = useMemo(() => {
+    let n = 0;
+    if (appliedFind.trim()) n += 1;
+    if (appliedPayee.trim()) n += 1;
+    if (appliedCleared !== "all") n += 1;
+    if (appliedTxnType !== "all") n += 1;
+    if (appliedDateFrom || appliedDateTo) n += 1;
+    if (appliedAmtMode !== "any" && appliedAmtDollars != null) n += 1;
+    return n;
+  }, [appliedFind, appliedPayee, appliedCleared, appliedTxnType, appliedDateFrom, appliedDateTo, appliedAmtMode, appliedAmtDollars]);
 
   const toggleTxnSort = (key: "date" | "description" | "amount") =>
     setTxnSort((prev) => (prev.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "date" ? "desc" : "asc" }));
@@ -781,6 +887,131 @@ export function ReconciliationWorkspacePage() {
                   <option value="matched">Matched</option>
                   <option value="unmatched">Unmatched</option>
                 </SelectCombobox>
+                <div className="relative" data-b2-recon-filter="1">
+                  <button
+                    type="button"
+                    className="h-7 rounded-sm border border-gray-300 bg-white px-2 text-xs text-[#1F2A44] hover:bg-[#F7F8FA]"
+                    data-testid="recon-filter-open"
+                    onClick={() => setFilterOpen((o) => !o)}
+                  >
+                    Filter{reconFilterActiveCount ? ` (${reconFilterActiveCount})` : ""}
+                  </button>
+                  {filterOpen ? (
+                    <div
+                      className="absolute right-0 top-8 z-30 w-80 rounded-sm border border-[#E5E7EB] bg-white p-3 shadow-lg"
+                      data-testid="recon-filter-popover"
+                      data-b2-recon-filter-popover="1"
+                    >
+                      <label className="mb-2 flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
+                        Find (memo, ref, payee)
+                        <input
+                          value={draftFind}
+                          onChange={(e) => setDraftFind(e.target.value)}
+                          className="h-7 rounded-sm border border-gray-300 px-2 font-normal normal-case tracking-normal text-[#0F1219]"
+                          placeholder="memo, description, ref…"
+                          data-testid="recon-filter-find"
+                        />
+                      </label>
+                      <label className="mb-2 flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
+                        Payee
+                        <input
+                          value={draftPayee}
+                          onChange={(e) => setDraftPayee(e.target.value)}
+                          className="h-7 rounded-sm border border-gray-300 px-2 font-normal normal-case tracking-normal text-[#0F1219]"
+                          placeholder="merchant / payee"
+                          data-testid="recon-filter-payee"
+                        />
+                      </label>
+                      <label className="mb-2 flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
+                        Cleared status
+                        <SelectCombobox
+                          value={draftCleared}
+                          onChange={(e) => setDraftCleared(e.target.value as "all" | "cleared" | "uncleared")}
+                          className="h-7 rounded-sm border border-gray-300 px-2 font-normal normal-case tracking-normal text-[#0F1219]"
+                          data-testid="recon-filter-cleared"
+                        >
+                          <option value="all">All</option>
+                          <option value="cleared">Cleared</option>
+                          <option value="uncleared">Uncleared</option>
+                        </SelectCombobox>
+                      </label>
+                      <label className="mb-2 flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
+                        Transaction type
+                        <SelectCombobox
+                          value={draftTxnType}
+                          onChange={(e) => setDraftTxnType(e.target.value as "all" | "bank" | "journal")}
+                          className="h-7 rounded-sm border border-gray-300 px-2 font-normal normal-case tracking-normal text-[#0F1219]"
+                          data-testid="recon-filter-type"
+                        >
+                          <option value="all">All</option>
+                          <option value="bank">Bank feed</option>
+                          <option value="journal">Journal line</option>
+                        </SelectCombobox>
+                      </label>
+                      <div className="mb-2 grid grid-cols-2 gap-2">
+                        <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
+                          Date from
+                          <DatePicker value={draftDateFrom} onChange={setDraftDateFrom} />
+                        </label>
+                        <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
+                          Date to
+                          <DatePicker value={draftDateTo} onChange={setDraftDateTo} />
+                        </label>
+                      </div>
+                      <div className="mb-3 grid grid-cols-[7rem_1fr] gap-2">
+                        <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
+                          Amount
+                          <SelectCombobox
+                            value={draftAmtMode}
+                            onChange={(e) => setDraftAmtMode(e.target.value as "any" | "eq" | "gt" | "lt")}
+                            className="h-7 rounded-sm border border-gray-300 px-2 font-normal normal-case tracking-normal text-[#0F1219]"
+                            data-testid="recon-filter-amt-mode"
+                          >
+                            <option value="any">Any</option>
+                            <option value="eq">= $amt</option>
+                            <option value="gt">&gt; $amt</option>
+                            <option value="lt">&lt; $amt</option>
+                          </SelectCombobox>
+                        </label>
+                        <label className="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-[#4B5563]">
+                          $
+                          <MoneyInput
+                            valueDollars={draftAmtDollars}
+                            onChangeDollars={setDraftAmtDollars}
+                            disabled={draftAmtMode === "any"}
+                            className="h-7"
+                            placeholder="0.00"
+                            ariaLabel="Filter amount dollars"
+                          />
+                          <span className="sr-only" data-testid="recon-filter-amt">
+                            amount filter
+                          </span>
+                        </label>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <button
+                          type="button"
+                          className="text-xs font-medium text-gray-500 underline"
+                          data-testid="recon-filter-reset"
+                          onClick={() => {
+                            resetReconFilters();
+                            setFilterOpen(false);
+                          }}
+                        >
+                          Reset
+                        </button>
+                        <button
+                          type="button"
+                          className="h-7 rounded-sm border border-[#14314F] bg-[#14314F] px-3 text-xs text-white"
+                          data-testid="recon-filter-apply"
+                          onClick={applyReconFilters}
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </div>
             <div className="mb-1 grid grid-cols-[4.5rem_4.5rem_1fr_4.5rem_4.5rem_1.75rem] gap-1 border-b border-gray-200 px-2 pb-1 text-xs font-bold uppercase tracking-wide text-[#4B5563]">
