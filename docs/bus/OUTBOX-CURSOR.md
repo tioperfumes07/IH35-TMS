@@ -1,3 +1,8 @@
+**2026-10-02T00:18Z · B-1i MERGED #23923 · tip `8cb5332877`**
+ACK: CURSOR | ACK ORDERS-2026-10-01 | B-1i MERGED | GO
+B-1i Check detail match banner + Unmatch via matched_expense_id LATERAL. B-1h #23921 already on tip. money-pr-local-gate PASS.
+NEXT: deposit original banner (if DepositDetail) · or next measured ORDERS leftover.
+
 **2026-10-02T00:12Z · B-1h MERGED #23921 · tip `e8a4b0228c`**
 ACK: CURSOR | ACK ORDERS-2026-10-01 | B-1h MERGED | GO
 B-1h invoice match banner + Unmatch + register ✓ hops (matched_invoice_id / matched_payment_id / matched_bill_payment_id). Entity-link baseline updated. money-pr-local-gate PASS. Stack tip B-1b→B-1h — one BE+FE redeploy.
