@@ -1576,6 +1576,21 @@
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-02",
       "purpose": "ROUND 340 step 3: telematics.unit_stop_events live keys — (operating_company_id, unit_id, started_at) replaces unit_stop_events_unit_start_unique (unit_id, started_at); ADD (operating_company_id, unit_id, ended_at). CREATE UNIQUE INDEX CONCURRENTLY, IH35_MIGRATION_NO_TRANSACTION, after the dedupe."
+    },
+    "202615310100": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-02",
+      "purpose": "Lead ROUND 339 order 1 — nothing posts to a deactivated / non-postable account: journal_entry_postings guard + roles / item-default companions (reactivate 5010, repoint expense_default before arming)"
+    },
+    "202615310200": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-02",
+      "purpose": "Lead ROUND 339 order 2 — one role, one account, one normal balance: split driver_payroll_clearing, UNIQUE (operating_company_id, role) WHERE is_active, no two active roles on one account"
+    },
+    "202615310300": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-02",
+      "purpose": "Lead ROUND 339 order 4 — declare unroled posted accounts (fuel_card_payable_dreamline 2510, fuel_wallet_relay 1295, escrow / reimbursement parents)"
     }
   },
   "202613590001": {
