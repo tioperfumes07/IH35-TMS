@@ -326,7 +326,7 @@ export function AccountRegisterPage() {
     if (!report) return;
     const nb = report.account.normal_balance;
     const header = ["Date", "Type", "Ref", "Payee", "Memo", "Account", "Class", "Increase", "Decrease", "Running balance"];
-    const lines = report.rows.map((r) => {
+    const lines = filteredRows.map((r) => {
       const increase = nb === "debit" ? r.debit_cents : r.credit_cents;
       const decrease = nb === "debit" ? r.credit_cents : r.debit_cents;
       return [
