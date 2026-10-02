@@ -197,10 +197,18 @@ async function persistLedgerFinding(
         detected_at, reconciliation_run_id, resource_scope, local_value, remote_value,
         drift_metric_abs, drift_metric_pct, threshold_snapshot, first_seen_at, last_seen_at
       )
-      VALUES (
+      SELECT
         $1::uuid, 'ledger', 'ledger_integrity', $2, $3, 'open',
         now(), $4::uuid, $5::jsonb, $6::jsonb, NULL,
         NULL, NULL, $7::jsonb, now(), now()
+      WHERE NOT EXISTS (
+        SELECT 1
+          FROM _system.reconciliation_findings f
+         WHERE f.operating_company_id = $1::uuid
+           AND f.integration = 'ledger'
+           AND f.finding_type = $2
+           AND f.status = 'open'
+           AND f.resource_scope = $5::jsonb
       )
     `,
     [

@@ -588,6 +588,18 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-safety-reminders-cron-usmca-scoped.mjs",
     ],
   ],
+  // ROUND 301 follow-up — CONFIRMED F-RETRY scheduled writers: business-key idempotency on double tick.
+  [
+    "verify-f-retry-scheduled-writers-idempotent",
+    [
+      "apps/backend/src/banking/drift-alerts.service.ts",
+      "apps/backend/src/cron/depreciation-autopost.cron.ts",
+      "apps/backend/src/compliance/compliance-reminder.job.ts",
+      "apps/backend/src/reconciliation/ledger-integrity-detectors.service.ts",
+      "apps/backend/src/cron/samsara-hos-pull.cron.ts",
+      "scripts/verify-f-retry-scheduled-writers-idempotent.mjs",
+    ],
+  ],
   // ROUND 288.2 — one match writer + one unmatch writer; fuel match must write JE same txn.
   [
     "verify-one-bank-match-writer-writes-je",

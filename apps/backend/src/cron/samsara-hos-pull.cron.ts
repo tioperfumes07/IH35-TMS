@@ -117,6 +117,23 @@ export function initializeSamsaraHosPullCron(app: FastifyInstance) {
             // inserted/mapped/unmapped/error to prove the HOS clocks are real (or pinpoint why they're not).
             try {
               await runScoped(operatingCompanyId, async (c) => {
+                // F-RETRY: two backend instances both fire :15 — claim like relay (30 min window)
+                // so a double tick does not INSERT two sync_log rows and re-pull HOS twice.
+                await c.query(
+                  `SELECT pg_advisory_xact_lock(hashtext('samsara_hos_pull:' || $1))`,
+                  [operatingCompanyId]
+                );
+                const recent = await c.query<{ id: string }>(
+                  `SELECT id::text FROM integrations.integration_sync_log
+                    WHERE operating_company_id = $1::uuid
+                      AND integration = 'samsara'
+                      AND sync_kind = 'samsara_hos_pull'
+                      AND started_at > now() - interval '45 minutes'
+                    LIMIT 1`,
+                  [operatingCompanyId]
+                );
+                if (recent.rows.length > 0) return;
+
                 const stats = await syncSamsaraHosLogs(c, operatingCompanyId);
                 await c.query(
                   `INSERT INTO integrations.integration_sync_log

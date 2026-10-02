@@ -19,7 +19,10 @@ const SYSTEM_ACTOR_ID = SYSTEM_ACTOR_USER_ID;
 let initialized = false;
 
 type DbClient = {
-  query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
+  query: <T = Record<string, unknown>>(
+    sql: string,
+    values?: unknown[]
+  ) => Promise<{ rows: T[]; rowCount?: number | null }>;
 };
 
 type DepreciationAutopostOutcome = "posted" | "nothing_to_post" | "skipped_flag_off" | "error";
@@ -94,8 +97,10 @@ export async function insertDepreciationAutopostRun(
     error_code?: string | null;
     error_message?: string | null;
   }
-): Promise<void> {
-  await client.query(
+): Promise<"inserted" | "skipped_duplicate"> {
+  // F-RETRY: business key = (operating_company_id, run_date, asset_id). postDepreciation itself
+  // is period-idempotent; the run log must not duplicate on a double monthly tick.
+  const ins = await client.query(
     `
       INSERT INTO accounting.depreciation_autopost_runs (
         operating_company_id,
@@ -107,7 +112,14 @@ export async function insertDepreciationAutopostRun(
         error_code,
         error_message
       )
-      VALUES ($1::uuid, $2::date, $3::uuid, $4, $5, $6, $7, $8)
+      SELECT $1::uuid, $2::date, $3::uuid, $4, $5, $6, $7, $8
+      WHERE NOT EXISTS (
+        SELECT 1
+          FROM accounting.depreciation_autopost_runs r
+         WHERE r.operating_company_id = $1::uuid
+           AND r.run_date = $2::date
+           AND r.asset_id = $3::uuid
+      )
     `,
     [
       args.operating_company_id,
@@ -120,6 +132,7 @@ export async function insertDepreciationAutopostRun(
       args.error_message ?? null,
     ]
   );
+  return (ins.rowCount ?? 0) > 0 ? "inserted" : "skipped_duplicate";
 }
 
 export async function runDepreciationAutopostCronTick(deps?: {
@@ -150,6 +163,33 @@ export async function runDepreciationAutopostCronTick(deps?: {
 
     for (const assetId of assetIds) {
       summary.assets_seen += 1;
+
+      // Claim (company, run_date, asset) under advisory lock BEFORE posting. postDepreciation is
+      // period-idempotent, but without a claim two monthly ticks still race two run-log rows.
+      const claimed = await withLuciaBypassImpl(async (client) => {
+        await client.query(
+          `SELECT pg_advisory_xact_lock(hashtext('depr_autopost:' || $1 || ':' || $2 || ':' || $3))`,
+          [operatingCompanyId, runDate, assetId]
+        );
+        const existing = await client.query<{ id: string }>(
+          `SELECT id::text FROM accounting.depreciation_autopost_runs
+            WHERE operating_company_id = $1::uuid AND run_date = $2::date AND asset_id = $3::uuid
+            LIMIT 1`,
+          [operatingCompanyId, runDate, assetId]
+        );
+        if (existing.rows.length > 0) return false;
+        await insertDepreciationAutopostRun(client, {
+          operating_company_id: operatingCompanyId,
+          run_date: runDate,
+          asset_id: assetId,
+          outcome: "error",
+          error_code: "CLAIM_IN_PROGRESS",
+          error_message: "depreciation_autopost_claim",
+        });
+        return true;
+      });
+      if (!claimed) continue;
+
       let outcome: DepreciationAutopostOutcome;
       let periodCount = 0;
       let totalPostedCents = 0;
@@ -171,18 +211,31 @@ export async function runDepreciationAutopostCronTick(deps?: {
         }
       }
 
-      await withLuciaBypassImpl(async (client) =>
-        insertDepreciationAutopostRun(client, {
-          operating_company_id: operatingCompanyId,
-          run_date: runDate,
-          asset_id: assetId,
-          outcome,
-          period_count: periodCount,
-          total_posted_cents: totalPostedCents,
-          error_code: errorCode,
-          error_message: errorMessage,
-        })
-      );
+      await withLuciaBypassImpl(async (client) => {
+        await client.query(
+          `
+            UPDATE accounting.depreciation_autopost_runs
+               SET outcome = $4,
+                   period_count = $5,
+                   total_posted_cents = $6,
+                   error_code = $7,
+                   error_message = $8
+             WHERE operating_company_id = $1::uuid
+               AND run_date = $2::date
+               AND asset_id = $3::uuid
+          `,
+          [
+            operatingCompanyId,
+            runDate,
+            assetId,
+            outcome,
+            periodCount,
+            totalPostedCents,
+            errorCode,
+            errorMessage,
+          ]
+        );
+      });
       summary[outcome] += 1;
     }
   }
