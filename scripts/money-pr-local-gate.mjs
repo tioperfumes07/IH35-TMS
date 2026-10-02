@@ -528,6 +528,27 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-factoring-banking-kpis-tie-to-ledger.mjs",
     ],
   ],
+  // ROUND 326 items 1-2 — canonical customers / vendors: duplicate normalized-name groups shrink-only per company,
+  // the engine discovers every reference at run time, both profile surfaces return every block, and no open
+  // invoice / bill resolves to a missing same-company customer / vendor.
+  [
+    "verify-canonical-customers",
+    [
+      "apps/backend/src/mdata/canonical/",
+      "apps/frontend/src/components/customers/CustomerProfileOverview.tsx",
+      "apps/frontend/src/pages/CustomerDetail.tsx",
+      "scripts/verify-canonical-customers",
+    ],
+  ],
+  [
+    "verify-canonical-vendors",
+    [
+      "apps/backend/src/mdata/canonical/",
+      "apps/frontend/src/components/vendors/VendorProfileOverview.tsx",
+      "apps/frontend/src/pages/VendorDetail.tsx",
+      "scripts/verify-canonical-vendors",
+    ],
+  ],
   // ROUND 166 JOB 1(e) (P0) — the permanent alarm: fails when no USMCA unit has a fresh telematics
   // position during operating hours. USMCA's Samsara feed was off for weeks with zero stamps
   // accumulating and nobody noticed; this is the gate that catches the next silent death.

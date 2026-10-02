@@ -25,11 +25,26 @@ const CFG = {
 
 export const normalizedKeySql = (col: string) => `upper(regexp_replace(${col}, '[^A-Za-z0-9]', '', 'g'))`;
 
-export type RepointTarget = { table: string; column: string; pk: string[] };
+export type RepointTarget = { table: string; column: string; pk: string[]; isUuid: boolean };
 export type RepointLogEntry = { table: string; column: string; keys: Record<string, unknown>[]; removed_on_conflict: Record<string, unknown>[] };
 
+/** Targets are read once per connection + kind (the catalog cannot change inside one merge run). */
+const targetCache = new WeakMap<object, Map<CanonicalKind, Promise<RepointTarget[]>>>();
+
 /** Every column that references the entity id: live FKs + the verified loose columns; with each table's PK. */
-export async function repointTargets(client: Db, kind: CanonicalKind): Promise<RepointTarget[]> {
+export function repointTargets(client: Db, kind: CanonicalKind): Promise<RepointTarget[]> {
+  let byKind = targetCache.get(client);
+  if (!byKind) targetCache.set(client, (byKind = new Map()));
+  let hit = byKind.get(kind);
+  if (!hit) {
+    hit = readRepointTargets(client, kind);
+    hit.catch(() => byKind!.delete(kind));
+    byKind.set(kind, hit);
+  }
+  return hit;
+}
+
+async function readRepointTargets(client: Db, kind: CanonicalKind): Promise<RepointTarget[]> {
   const cfg = CFG[kind];
   const fk = await client.query<{ t: string; c: string }>(
     `SELECT DISTINCT n.nspname || '.' || cl.relname AS t, a.attname AS c
@@ -40,25 +55,44 @@ export async function repointTargets(client: Db, kind: CanonicalKind): Promise<R
       WHERE k.contype = 'f' AND k.confrelid = $1::regclass AND fa.attname = 'id' AND cl.relkind = 'r'`,
     [cfg.regclass]
   );
+  // Loose (non-FK) id columns, discovered by name at run time (customer_id / customer_uuid / *_vendor_id ...):
+  // a hand list went stale (bills.vendor_id, bill_payments.vendor_id, lease_contract.lessor_vendor_id ... were
+  // missing). Only rows whose value EQUALS the duplicate's uuid move, so a name match can never touch another
+  // entity. QBO mirror tables (qbo_*) are never written; the alias table is the engine's own.
+  const loose = await client.query<{ t: string; c: string }>(
+    `SELECT c.table_schema || '.' || c.table_name AS t, c.column_name AS c
+       FROM information_schema.columns c
+       JOIN pg_class cl ON cl.relname = c.table_name
+       JOIN pg_namespace n ON n.oid = cl.relnamespace AND n.nspname = c.table_schema
+      WHERE cl.relkind = 'r' AND c.data_type IN ('uuid', 'text', 'character varying')
+        AND c.column_name ~ $1 AND c.column_name !~ 'qbo' AND c.table_name !~ '^qbo_'
+        AND c.table_schema NOT IN ('pg_catalog', 'information_schema', 'audit')
+        AND c.table_schema || '.' || c.table_name <> $2`,
+    [kind === "customer" ? "(^|_)customer_(id|uuid)$" : "(^|_)vendor_(id|uuid)$", cfg.aliasTable]
+  );
   const all = new Map<string, { table: string; column: string }>();
   for (const r of fk.rows) all.set(`${r.t}.${r.c}`, { table: r.t, column: r.c });
+  for (const r of loose.rows) all.set(`${r.t}.${r.c}`, { table: r.t, column: r.c });
   for (const l of cfg.loose) all.set(`${l.table}.${l.column}`, l);
   const out: RepointTarget[] = [];
   for (const t of all.values()) {
-    const exists = await client.query<{ ok: boolean }>(
-      `SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema || '.' || table_name = $1 AND column_name = $2) AS ok`,
+    const col = await client.query<{ data_type: string }>(
+      `SELECT data_type FROM information_schema.columns WHERE table_schema || '.' || table_name = $1 AND column_name = $2`,
       [t.table, t.column]
     );
-    if (!exists.rows[0]?.ok) continue;
+    if (!col.rows[0]) continue;
     const pk = await client.query<{ a: string }>(
       `SELECT a.attname AS a FROM pg_index i JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
         WHERE i.indrelid = $1::regclass AND i.indisprimary ORDER BY a.attnum`,
       [t.table]
     );
-    out.push({ ...t, pk: pk.rows.map((r) => r.a) });
+    out.push({ ...t, pk: pk.rows.map((r) => r.a), isUuid: col.rows[0].data_type === "uuid" });
   }
   return out.sort((a, b) => `${a.table}.${a.column}`.localeCompare(`${b.table}.${b.column}`));
 }
+
+/** Native-type equality so the column's index is used (a ::text cast forces a full scan per target). */
+const matchSql = (t: RepointTarget, param: string) => (t.isUuid ? `${q(t.column)} = ${param}::uuid` : `${q(t.column)} = ${param}`);
 
 const q = (ident: string) => ident.split(".").map((p) => `"${p.replace(/"/g, '""')}"`).join(".");
 
@@ -121,15 +155,15 @@ export async function mergeIntoCanonical(
 
   const log: RepointLogEntry[] = [];
   for (const t of await repointTargets(client, kind)) {
-    const keyExpr = t.pk.length ? `jsonb_build_object(${t.pk.map((c) => `'${c}', ${q(c)}`).join(", ")})` : `jsonb_build_object('ctid', ctid::text)`;
+    const keyExpr = t.pk.length ? `jsonb_build_object(${t.pk.map((c) => `'${c}', ${q(c)}`).join(", ")})` : `to_jsonb(x)` /* no PK: the whole row is the key */;
     const entry: RepointLogEntry = { table: t.table, column: t.column, keys: [], removed_on_conflict: [] };
     const candidates = await client.query<{ k: Record<string, unknown>; row: Record<string, unknown> }>(
-      `SELECT ${keyExpr} AS k, to_jsonb(x) AS row FROM ${q(t.table)} x WHERE ${q(t.column)}::text = $1`, [input.duplicateId]
+      `SELECT ${keyExpr} AS k, to_jsonb(x) AS row FROM ${q(t.table)} x WHERE ${matchSql(t, "$1")}`, [input.duplicateId]
     );
     for (const c of candidates.rows) {
       await client.query("SAVEPOINT canonical_repoint");
       try {
-        await client.query(`UPDATE ${q(t.table)} x SET ${q(t.column)} = $1 WHERE to_jsonb(x) @> $2::jsonb AND ${q(t.column)}::text = $3`,
+        await client.query(`UPDATE ${q(t.table)} x SET ${q(t.column)} = $1 WHERE ${matchSql(t, "$3")} AND to_jsonb(x) @> $2::jsonb`,
           [input.survivorId, JSON.stringify(c.k), input.duplicateId]);
         await client.query("RELEASE SAVEPOINT canonical_repoint");
         entry.keys.push(c.k);
@@ -137,7 +171,7 @@ export async function mergeIntoCanonical(
         await client.query("ROLLBACK TO SAVEPOINT canonical_repoint");
         if (String((e as { code?: string }).code) !== "23505") throw e;
         // the survivor already holds this unique key (derived row): keep the survivor's, log + remove the duplicate's
-        await client.query(`DELETE FROM ${q(t.table)} x WHERE to_jsonb(x) @> $1::jsonb AND ${q(t.column)}::text = $2`, [JSON.stringify(c.k), input.duplicateId]);
+        await client.query(`DELETE FROM ${q(t.table)} x WHERE ${matchSql(t, "$2")} AND to_jsonb(x) @> $1::jsonb`, [JSON.stringify(c.k), input.duplicateId]);
         entry.removed_on_conflict.push(c.row);
       }
     }
@@ -189,6 +223,8 @@ export async function reverseCanonicalMerge(client: Db, oc: string, kind: Canoni
 export async function openBalanceCents(client: Db, kind: CanonicalKind, ids: string[]): Promise<number> {
   const r = kind === "customer"
     ? await client.query<{ c: string }>(`SELECT COALESCE(sum(amount_open_cents), 0)::text AS c FROM accounting.invoices WHERE customer_id::text = ANY($1::text[]) AND voided_at IS NULL`, [ids])
-    : await client.query<{ c: string }>(`SELECT COALESCE(sum(balance_cents), 0)::text AS c FROM accounting.bills WHERE (vendor_uuid::text = ANY($1::text[]) OR mdata_vendor_id::text = ANY($1::text[])) AND voided_at IS NULL`, [ids]);
+    : await client.query<{ c: string }>(`SELECT COALESCE(sum(amount_cents - COALESCE(paid_cents, 0)), 0)::text AS c FROM accounting.bills
+        WHERE (vendor_uuid = ANY($1::text[]) OR mdata_vendor_id::text = ANY($1::text[]) OR vendor_id = ANY($1::text[]))
+          AND voided_at IS NULL AND status <> 'void'`, [ids]);
   return Number(r.rows[0]?.c ?? 0);
 }

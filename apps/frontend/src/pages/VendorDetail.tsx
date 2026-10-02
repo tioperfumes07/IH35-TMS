@@ -64,6 +64,7 @@ import { VendorMergesReverseSection } from "../components/vendors/VendorMergesRe
 import { FuelTransactionsReverseSection } from "../components/fuel/FuelTransactionsReverseSection";
 import { FuelFraudAlertsReverseSection } from "../components/fuel/FuelFraudAlertsReverseSection";
 import { LinkedBankTransactionsPanel } from "../components/banking/LinkedBankTransactionsPanel";
+import { VendorProfileOverview } from "../components/vendors/VendorProfileOverview";
 
 type SaferEntityStatus = {
   id: string;
@@ -541,6 +542,9 @@ export function VendorDetailPage() {
           Verify SAFER
         </Button>
       </div>
+
+      {/* ROUND 326 item 2: AP aging, open bills, 1099, insurance + authority, WOs, fuel, lanes, terms, history. */}
+      {companyId && id ? <VendorProfileOverview operatingCompanyId={companyId} vendorId={id} /> : null}
 
       {/* CUST-01 C9: raw buttons replaced with the shared SecondaryNavTabs -- matches
           CustomerDetail's tab strip exactly (same component, same ?tab=<slug> contract above). */}
