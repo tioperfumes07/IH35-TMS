@@ -22,6 +22,19 @@ const SURFACES = [
     must: [/result = applyUniversalListFilters\(result, toolbarSearch, toolbarRange\);/, /return processedRows\.slice\(start, start \+ pagination\.pageSize\);/, /\{pageRows\.map\(\(row\) => \{/, /resultCount=\{processedRows\.length\}/],
     mustNot: [/\{processedRows\.map\(\(row\) => \{/],
   },
+  // Full-load catalogs (route has no LIMIT; filter columns operating_company_id + is_active are indexed): ONE search =
+  // the house toolbar over every row; one Show selector; no "Show inactive" double filter; no page-level search box.
+  ...[
+    ["Load Cancellation Reasons", "apps/frontend/src/pages/lists/dispatch/LoadCancellationReasonsListPage.tsx", /<DataTable\b/],
+    ["Load Exception Reasons", "apps/frontend/src/pages/lists/dispatch/LoadExceptionReasonsListPage.tsx", /<ParityTable\b/],
+    ["Driver Termination Reasons", "apps/frontend/src/pages/lists/drivers/TerminationReasonsListPage.tsx", /<DataTable\b/],
+    ["Void / Cancel Reasons", "apps/frontend/src/pages/lists/accounting/VoidCancelReasonsListPage.tsx", /<DataTable\b/],
+  ].map(([name, file, table]) => ({
+    name,
+    file,
+    must: [table, /allRows\.filter\(\(row\) => status === "all" \|\| \(status === "active" \? row\.is_active : !row\.is_active\)\)/],
+    mustNot: [/<CatalogListSearchInput\b/, /showInactive/, /suppressToolbarSearch/, /Total rows:/],
+  })),
 ];
 
 export function audit(read) {
@@ -40,6 +53,7 @@ if (fails.length) { console.error(`verify-filter-surfaces-full-set: FAIL\n  ${fa
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["CoA back to one page", (f) => f.endsWith("ChartOfAccountsListPage.tsx") ? read(f).replace("rows={filteredRows}", "rows={pageRows}") : read(f)],
+    ["catalog page search comes back", (f) => f.endsWith("TerminationReasonsListPage.tsx") ? read(f) + "\n<CatalogListSearchInput value={x} />" : read(f)],
     ["ListView renders unpaged", (f) => f.endsWith("ListView.tsx") ? read(f).replace("{pageRows.map((row) => {", "{processedRows.map((row) => {") : read(f)],
   ];
   for (const [name, r] of mutations) if (audit(r).length === 0) { console.error(`selftest FAIL: ${name}`); process.exit(1); }

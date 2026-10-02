@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { CatalogListSearchInput } from "../../../components/lists/CatalogListSearchInput";
 import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQueryOptions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../../api/client";
@@ -118,9 +117,7 @@ export function LoadCancellationReasonsListPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
-  const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("active");
-  const [showInactive, setShowInactive] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
   const [activeRow, setActiveRow] = useState<LoadCancellationReason | null>(null);
   const [conflictError, setConflictError] = useState<string | null>(null);
@@ -177,19 +174,14 @@ export function LoadCancellationReasonsListPage() {
   });
 
   const allRows = listQuery.data?.reasons ?? [];
-  const rows = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return allRows.filter((row) => {
-      if (status === "active" && !row.is_active) return false;
-      if (status === "inactive" && row.is_active) return false;
-      if (!showInactive && !row.is_active) return false;
-      if (!term) return true;
-      return (
-        row.reason_code.toLowerCase().includes(term) ||
-        row.display_name.toLowerCase().includes(term)
-      );
-    });
-  }, [allRows, search, status, showInactive]);
+  // Round 296 filter law: the whole catalog is loaded (catalogs.load_cancellation_reasons, active + inactive); the
+  // Show selector narrows by is_active and the house toolbar (DataTable's UniversalListToolbar) is the ONE search,
+  // over every row, with "N of M". The old page search + "Show inactive" checkbox double-filtered: choosing
+  // Show = Inactive rendered nothing until the checkbox was also ticked.
+  const rows = useMemo(
+    () => allRows.filter((row) => status === "all" || (status === "active" ? row.is_active : !row.is_active)),
+    [allRows, status],
+  );
 
   const isSaving = createMutation.isPending || updateMutation.isPending || deactivateMutation.isPending;
   const breadcrumb = useMemo(() => ["Lists & Catalogs", "Dispatch", "Load Cancellation Reasons"], []);
@@ -245,11 +237,7 @@ export function LoadCancellationReasonsListPage() {
         dispatch reporting and analytics.
       </div>
 
-      <div className="grid gap-2 rounded-sm border border-slate-200 bg-white p-3 md:grid-cols-[1fr_180px]">
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          Search
-          <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search code or display name" className="h-9 rounded-sm border border-gray-300 px-2 text-xs" />
-        </label>
+      <div className="flex items-end gap-2 rounded-sm border border-slate-200 bg-white p-3">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Show
           <SelectCombobox
@@ -264,15 +252,6 @@ export function LoadCancellationReasonsListPage() {
         </label>
       </div>
 
-      <label className="flex items-center gap-1 text-xs text-gray-600">
-        <input
-          type="checkbox"
-          checked={showInactive}
-          onChange={(e) => setShowInactive(e.target.checked)}
-          className="h-3.5 w-3.5 rounded-sm border-gray-300"
-        />
-        Show inactive
-      </label>
 
       {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search/Status filters above
           feed `rows`; row-click → edit modal preserved exactly. */}
@@ -294,7 +273,6 @@ export function LoadCancellationReasonsListPage() {
         }
       />
 
-      <div className="text-xs text-slate-500">Total rows: {rows.length}</div>
 
       <LoadCancellationReasonModal
         open={modalMode !== null}

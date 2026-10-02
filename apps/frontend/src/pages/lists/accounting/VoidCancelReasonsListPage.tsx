@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { CatalogListSearchInput } from "../../../components/lists/CatalogListSearchInput";
 import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQueryOptions";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -64,7 +63,6 @@ export function VoidCancelReasonsListPage() {
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("active");
   const [modalMode, setModalMode] = useState<"create" | "edit" | null>(null);
   const [activeRow, setActiveRow] = useState<VoidCancelReason | null>(null);
@@ -123,15 +121,12 @@ export function VoidCancelReasonsListPage() {
   });
 
   const allRows = listQuery.data?.reasons ?? [];
-  const rows = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return allRows.filter((row) => {
-      if (status === "active" && !row.is_active) return false;
-      if (status === "inactive" && row.is_active) return false;
-      if (!term) return true;
-      return row.reason_code.toLowerCase().includes(term) || row.reason_label.toLowerCase().includes(term);
-    });
-  }, [allRows, search, status]);
+  // Round 296 filter law: the whole catalog is loaded; Show narrows by is_active and the house toolbar (DataTable's
+  // UniversalListToolbar) is the ONE search, over every row, with "N of M".
+  const rows = useMemo(
+    () => allRows.filter((row) => status === "all" || (status === "active" ? row.is_active : !row.is_active)),
+    [allRows, status],
+  );
 
   const isSaving = createMutation.isPending || updateMutation.isPending || deactivateMutation.isPending;
   const breadcrumb = useMemo(() => ["Lists & Catalogs", "Accounting", "Void/Cancel Reasons"], []);
@@ -169,11 +164,7 @@ export function VoidCancelReasonsListPage() {
         settlements, work-order voids). Per entity. A reason marked "Note Required" forces a note when chosen.
       </div>
 
-      <div className="grid gap-2 rounded-sm border border-slate-200 bg-white p-3 md:grid-cols-[1fr_180px]">
-        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-          Search
-          <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search code or label" className="h-9 rounded-sm border border-gray-300 px-2 text-xs" />
-        </label>
+      <div className="flex items-end gap-2 rounded-sm border border-slate-200 bg-white p-3">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Show
           <SelectCombobox
@@ -206,7 +197,6 @@ export function VoidCancelReasonsListPage() {
         }
       />
 
-      <div className="text-xs text-slate-500">Total rows: {rows.length}</div>
 
       <VoidCancelReasonModal
         open={modalMode !== null}
