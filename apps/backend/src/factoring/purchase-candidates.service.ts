@@ -13,7 +13,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { INVOICE_PLEDGE_CENTS_SQL } from "../accounting/shared.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { assertSubjectMayCloseOnClient, FeedGateError, type FeedCheckRow } from "../driver-finance/feed-gate/feed-gate.service.js";
-import { getFactorForCustomer } from "./factor.service.js";
+import { resolvePurchaseRate, type PurchaseRateSource } from "./factor.service.js";
 import { loadHasApprovedPodSql, loadHasFileCategorySql } from "./submission-queue.service.js";
 
 type DbClient = {
@@ -53,9 +53,15 @@ export type PurchaseCandidate = {
   reserve_rate: number;
   fee_rate: number;
   cash_reserve_rate: number;
-  expected_escrow_reserve_cents: number;
-  expected_cash_reserve_cents: number;
-  expected_fee_cents: number;
+  /** Lead ROUND 297 — ONE base for every amount on the row: the open amount Faro would purchase. */
+  base_cents: number;
+  /** Where the rate came from: the customer's assignment, the company's Faro agreement, or none (with the reason). */
+  rate_source: PurchaseRateSource;
+  rate_reason: string | null;
+  /** null (never 0) when no rate applies — rate_reason says why. */
+  expected_escrow_reserve_cents: number | null;
+  expected_cash_reserve_cents: number | null;
+  expected_fee_cents: number | null;
   has_bol: boolean;
   has_pod: boolean;
   has_rate_confirmation: boolean;
@@ -180,14 +186,13 @@ export async function listPurchaseCandidates(client: DbClient, oci: string, filt
   // tab's default purchase date). The factor carries no cash-reserve rate, so the expected cash reserve is 0 —
   // Faro's actual cash reserve, when it holds one, is entered from the purchase report.
   const asOf = companyBusinessDate();
-  const rates = new Map<string, { id: string | null; name: string | null; reserve: number; cash: number; fee: number }>();
+  const rates = new Map<string, Awaited<ReturnType<typeof resolvePurchaseRate>>>();
   const candidates: PurchaseCandidate[] = [];
   for (const row of rows) {
     const customerId = row.customer_id ? String(row.customer_id) : null;
     let rate = customerId ? rates.get(customerId) : undefined;
     if (customerId && !rate) {
-      const f = await getFactorForCustomer(oci, customerId, asOf, { client: client as never });
-      rate = { id: f?.id ?? null, name: f?.name ?? null, reserve: num(f?.reserve_rate), cash: num(f?.cash_reserve_rate), fee: num(f?.fee_rate) };
+      rate = await resolvePurchaseRate(client as never, oci, customerId, asOf);
       rates.set(customerId, rate);
     }
     const open = num(row.open_cents);
@@ -219,14 +224,17 @@ export async function listPurchaseCandidates(client: DbClient, oci: string, filt
       settlement_status: str(row.settlement_status),
       pickup_at: str(row.pickup_at),
       delivery_at: str(row.delivery_at),
-      factor_id: rate?.id ?? null,
-      factor_name: rate?.name ?? null,
+      factor_id: rate?.factor_id ?? null,
+      factor_name: rate?.factor_name ?? null,
       reserve_rate: rate?.reserve ?? 0,
       fee_rate: rate?.fee ?? 0,
       cash_reserve_rate: rate?.cash ?? 0,
-      expected_escrow_reserve_cents: Math.round(open * (rate?.reserve ?? 0)),
-      expected_cash_reserve_cents: Math.round(open * (rate?.cash ?? 0)),
-      expected_fee_cents: Math.round(open * (rate?.fee ?? 0)),
+      base_cents: open,
+      rate_source: rate?.source ?? "none",
+      rate_reason: rate ? rate.reason : "Invoice has no customer — no factor agreement can apply",
+      expected_escrow_reserve_cents: rate && rate.source !== "none" ? Math.round(open * rate.reserve) : null,
+      expected_cash_reserve_cents: rate && rate.source !== "none" ? Math.round(open * rate.cash) : null,
+      expected_fee_cents: rate && rate.source !== "none" ? Math.round(open * rate.fee) : null,
       has_bol: hasBol,
       has_pod: hasPod,
       has_rate_confirmation: hasRc,

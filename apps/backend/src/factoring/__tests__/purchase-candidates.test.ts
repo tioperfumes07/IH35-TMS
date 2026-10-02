@@ -50,6 +50,8 @@ vi.mock("../../dispatch/load-billing-lifecycle.service.js", () => ({ syncLoadsFo
 vi.mock("../purchase-send.service.js", () => ({ sendPurchaseToFactor: vi.fn(async () => ({ sent: true })) }));
 vi.mock("../factor.service.js", () => ({
   getFactorForCustomer: vi.fn(async () => ({ id: "factor-1", name: "Faro", reserve_rate: "0.015", fee_rate: "0.015" })),
+  // Lead ROUND 297: the one purchase-rate resolver (customer assignment -> company Faro agreement -> none).
+  resolvePurchaseRate: vi.fn(async () => ({ factor_id: "factor-1", factor_name: "Faro", reserve: 0.015, cash: 0, fee: 0.015, source: "customer_assignment", reason: null })),
 }));
 const gateMock = vi.fn();
 vi.mock("../../driver-finance/feed-gate/feed-gate.service.js", async () => {

@@ -32,6 +32,9 @@ const candidate = (over: Partial<PurchaseCandidate> = {}): PurchaseCandidate => 
   reserve_rate: 0.015,
   fee_rate: 0.015,
   cash_reserve_rate: 0,
+  base_cents: 500000,
+  rate_source: "customer_assignment",
+  rate_reason: null,
   expected_escrow_reserve_cents: 7500,
   expected_cash_reserve_cents: 0,
   expected_fee_cents: 7500,
@@ -78,7 +81,7 @@ function wrap(ui: React.ReactElement) {
 
 describe("SubmitToFactorTab", () => {
   it("totals: advance = gross - escrow - fee; net = advance - cash reserve - wire fee", () => {
-    const t = computeSelectionTotals([candidate(), candidate({ invoice_id: "x", open_cents: 300000, expected_escrow_reserve_cents: 4500, expected_fee_cents: 4500, expected_cash_reserve_cents: 3000 })], 2000);
+    const t = computeSelectionTotals([candidate(), candidate({ invoice_id: "x", open_cents: 300000, base_cents: 300000, expected_escrow_reserve_cents: 4500, expected_fee_cents: 4500, expected_cash_reserve_cents: 3000 })], 2000);
     expect(t).toEqual({ count: 2, gross: 800000, escrow: 12000, cash: 3000, fee: 12000, wire: 2000, advance: 776000, net: 771000 });
   });
 

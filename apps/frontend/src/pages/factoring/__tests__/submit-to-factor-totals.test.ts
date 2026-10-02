@@ -5,6 +5,7 @@ const row = (id: string, open: number) =>
   ({
     invoice_id: id,
     open_cents: open,
+    base_cents: open,
     expected_escrow_reserve_cents: Math.round(open * 0.015),
     expected_cash_reserve_cents: 0,
     expected_fee_cents: Math.round(open * 0.015),

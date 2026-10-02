@@ -874,3 +874,49 @@ export async function listFactorBatchHistoryForCustomer(
   );
   return res.rows.map(mapBatchHistoryRow);
 }
+
+export type PurchaseRateSource = "customer_assignment" | "company_agreement" | "none";
+export type ResolvedPurchaseRate = {
+  factor_id: string | null;
+  factor_name: string | null;
+  reserve: number;
+  cash: number;
+  fee: number;
+  source: PurchaseRateSource;
+  /** Named reason when no rate applies — the screen says it, never a silent $0.00. */
+  reason: string | null;
+};
+
+/**
+ * Lead ROUND 297 — THE one purchase-rate resolver (the projection on Factoring and the purchase engine both price with it).
+ * 1. the customer's effective factor assignment; 2. otherwise the company's active Faro agreement — the agreement covers
+ * every invoice Faro purchases from this company, so a customer missing its own assignment is priced by the agreement,
+ * never at 0%; 3. otherwise no rate, with the reason named.
+ */
+export async function resolvePurchaseRate(
+  client: Queryable,
+  tenantId: string,
+  customerId: string,
+  asOfDate: string
+): Promise<ResolvedPurchaseRate> {
+  const f = await getFactorForCustomer(tenantId, customerId, asOfDate, { client });
+  if (f) {
+    return { factor_id: f.id, factor_name: f.name, reserve: Number(f.reserve_rate ?? 0), cash: Number(f.cash_reserve_rate ?? 0), fee: Number(f.fee_rate ?? 0), source: "customer_assignment", reason: null };
+  }
+  const agreement = (await client.query<Record<string, unknown>>(
+    `SELECT fac.id::text AS id, fac.name, fac.reserve_rate, fac.cash_reserve_rate, fac.fee_rate
+       FROM factoring.canonical_factor_agreements a
+       JOIN factoring.factor fac ON fac.id = a.factor_profile_id
+      WHERE a.tenant_id = $1::uuid AND a.voided_at IS NULL AND fac.voided_at IS NULL AND fac.active IS TRUE
+        AND a.effective_from <= $2::date AND (a.effective_to IS NULL OR a.effective_to > $2::date)
+      ORDER BY a.effective_from DESC LIMIT 1`,
+    [tenantId, asOfDate]
+  )).rows[0];
+  if (agreement) {
+    return {
+      factor_id: String(agreement.id), factor_name: String(agreement.name ?? ""), reserve: Number(agreement.reserve_rate ?? 0),
+      cash: Number(agreement.cash_reserve_rate ?? 0), fee: Number(agreement.fee_rate ?? 0), source: "company_agreement", reason: null,
+    };
+  }
+  return { factor_id: null, factor_name: null, reserve: 0, cash: 0, fee: 0, source: "none", reason: "No factor agreement covers this customer on this date" };
+}

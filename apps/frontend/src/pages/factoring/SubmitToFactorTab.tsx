@@ -71,11 +71,21 @@ export function loadDocsUploadPath(loadId: string) {
 export type LineActuals = { escrow_reserve_cents: number; cash_reserve_cents: number; fee_cents: number };
 
 export function lineFigures(r: PurchaseCandidate, actuals?: LineActuals) {
-  return actuals ?? { escrow_reserve_cents: r.expected_escrow_reserve_cents, cash_reserve_cents: r.expected_cash_reserve_cents, fee_cents: r.expected_fee_cents };
+  return actuals ?? { escrow_reserve_cents: r.expected_escrow_reserve_cents ?? 0, cash_reserve_cents: r.expected_cash_reserve_cents ?? 0, fee_cents: r.expected_fee_cents ?? 0 };
+}
+
+/** Lead ROUND 297: an amount with no factor agreement behind it says so — never a silent $0.00. */
+function expectedCell(r: PurchaseCandidate, cents: number | null) {
+  if (cents != null) return formatUsdCents(cents);
+  return (
+    <span className="text-slate-700" title={r.rate_reason ?? "No factor agreement"}>
+      — no factor agreement
+    </span>
+  );
 }
 
 export function computeSelectionTotals(rows: PurchaseCandidate[], wireFeeCents: number, actuals: Record<string, LineActuals> = {}) {
-  const gross = rows.reduce((a, r) => a + r.open_cents, 0);
+  const gross = rows.reduce((a, r) => a + r.base_cents, 0);
   const escrow = rows.reduce((a, r) => a + lineFigures(r, actuals[r.invoice_id]).escrow_reserve_cents, 0);
   const cash = rows.reduce((a, r) => a + lineFigures(r, actuals[r.invoice_id]).cash_reserve_cents, 0);
   const fee = rows.reduce((a, r) => a + lineFigures(r, actuals[r.invoice_id]).fee_cents, 0);
@@ -345,11 +355,11 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
       label: "Escrow reserve",
       sortable: true,
       kind: "money",
-      headerTitle: "Expected from the customer's factor assignment reserve rate",
-      render: (r) => formatUsdCents(r.expected_escrow_reserve_cents),
+      headerTitle: "Expected on the Open amount: the customer's factor assignment, else the company's Faro agreement",
+      render: (r) => expectedCell(r, r.expected_escrow_reserve_cents),
     },
-    { key: "expected_cash_reserve_cents", label: "Cash reserve", sortable: true, kind: "money", render: (r) => formatUsdCents(r.expected_cash_reserve_cents) },
-    { key: "expected_fee_cents", label: "Fee", sortable: true, kind: "money", render: (r) => formatUsdCents(r.expected_fee_cents) },
+    { key: "expected_cash_reserve_cents", label: "Cash reserve", sortable: true, kind: "money", render: (r) => expectedCell(r, r.expected_cash_reserve_cents) },
+    { key: "expected_fee_cents", label: "Fee", sortable: true, kind: "money", render: (r) => expectedCell(r, r.expected_fee_cents) },
     {
       key: "docs_complete",
       label: "Docs",
