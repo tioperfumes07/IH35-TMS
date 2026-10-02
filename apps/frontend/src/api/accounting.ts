@@ -91,6 +91,11 @@ export type Invoice = {
   linked_pickup_date?: string | null;
   linked_delivery_date?: string | null;
   linked_loaded_miles?: number | null;
+  /** B-1 §5 — bank hop when banking.bank_transactions.matched_invoice_id is stamped. */
+  matched_bank_transaction_id?: string | null;
+  matched_bank_transaction_date?: string | null;
+  matched_bank_transaction_description?: string | null;
+  matched_bank_transaction_amount_cents?: number | string | null;
   payment_applications?: Array<{
     id: string;
     payment_id: string;

@@ -69,6 +69,9 @@ function main() {
   assertIncludes(service, "categorization_location", SERVICE);
   assertIncludes(service, "saveAccountRegisterInline", SERVICE);
   assertIncludes(service, "open_original_document", SERVICE);
+  assertIncludes(service, "matched_invoice_id::text = p.source_transaction_id", SERVICE);
+  assertIncludes(service, "matched_payment_id::text = p.source_transaction_id", SERVICE);
+  assertIncludes(service, "matched_bill_payment_id::text = p.source_transaction_id", SERVICE);
 
   assertIncludes(api, "reconcile_status", API);
   assertIncludes(api, "bank_balance_cents", API);

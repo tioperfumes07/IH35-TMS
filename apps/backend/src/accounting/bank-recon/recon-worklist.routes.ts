@@ -149,7 +149,7 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
   // used to be reachable ONLY through reconciliation.routes.ts's session-scoped endpoint, so a bare
   // MatchDrawer confirm had no direct undo without first standing up a session for that period.
   // B-1 §5 (BANK-F31517): original-document OnlineBankingMatchBanner Unmatch posts here —
-  // Expense / Bill Payment / Payment / Journal entry / Transfer / Factoring advance / Bill.
+  // Expense / Bill Payment / Payment / Journal entry / Transfer / Factoring advance / Bill / Invoice.
   // register Edit → original document → Unmatch clears ✓ without a recon session.
   app.post("/api/v1/bank-recon/unmatch", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);

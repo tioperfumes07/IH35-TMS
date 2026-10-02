@@ -11,6 +11,7 @@ import { Button } from "../../components/Button";
 import { openCanonicalDocument, openPrintableDocument } from "../../lib/openPrintableDocument";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
+import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBankingMatchBanner";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
@@ -309,6 +310,16 @@ export function InvoiceDetailPage() {
   return (
     <AccountingSubNavWrapper>
       <VoidedBanner voidedAt={invoice.voided_at} voidReason={invoice.void_reason} voidedByUserId={invoice.voided_by_user_id} documentLabel="Invoice" />
+      {invoice.matched_bank_transaction_id && selectedCompanyId ? (
+        <OnlineBankingMatchBanner
+          companyId={selectedCompanyId}
+          bankTransactionId={invoice.matched_bank_transaction_id}
+          txnDate={invoice.matched_bank_transaction_date}
+          description={invoice.matched_bank_transaction_description}
+          amountCents={invoice.matched_bank_transaction_amount_cents}
+          invalidateKeys={[["accounting", "invoice", selectedCompanyId, id]]}
+        />
+      ) : null}
       <PageHeader
         title={entityLabel(invoice.display_id, invoice.id, "Invoice")}
         backHref="/accounting/invoices"
