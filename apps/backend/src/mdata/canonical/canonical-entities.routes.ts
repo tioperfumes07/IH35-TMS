@@ -21,7 +21,7 @@ const toKind = (k: "customers" | "vendors"): CanonicalKind => (k === "customers"
 export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
   // ROUND 326 item 1B — the customer profile surface: eight blocks, each a value or a named empty reason.
   app.get("/api/v1/customers/:id/profile", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const p = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
     const qy = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
     if (!p.success || !qy.success) return reply.code(400).send({ error: "validation_error" });
@@ -34,14 +34,14 @@ export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
 
   // ROUND 326.5 — Driver Hub Home board: tiles, chips, list sorted by settlement due, and the selected driver's panel.
   app.get("/api/v1/mdata/boards/drivers", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const qy = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
     if (!qy.success) return reply.code(400).send({ error: "validation_error" });
     await assertCompanyMembership(req.user!.uuid, qy.data.operating_company_id);
     return withCompanyScope(req.user!.uuid, qy.data.operating_company_id, (client) => readDriverHub(client, qy.data.operating_company_id));
   });
   app.get("/api/v1/mdata/boards/drivers/:id/overview", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const p = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
     const qy = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
     if (!p.success || !qy.success) return reply.code(400).send({ error: "validation_error" });
@@ -51,7 +51,7 @@ export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
     return overview;
   });
   app.get("/api/v1/mdata/boards/drivers/:id", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const p = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
     const qy = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
     if (!p.success || !qy.success) return reply.code(400).send({ error: "validation_error" });
@@ -63,7 +63,7 @@ export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
 
   // ROUND 326.5 — the Customers / Vendors list boards: tiles, chip counts, rows and footers, all computed live.
   app.get("/api/v1/mdata/boards/:kind", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const p = z.object({ kind: kindSchema }).safeParse(req.params ?? {});
     const qy = z.object({ operating_company_id: z.string().uuid(), range: z.enum(["ytd", "12m", "all"]).default("ytd") }).safeParse(req.query ?? {});
     if (!p.success || !qy.success) return reply.code(400).send({ error: "validation_error" });
@@ -76,7 +76,7 @@ export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
 
   // ROUND 326 item 3 — the whole driver in one read: seventeen blocks, each a value or a named empty reason.
   app.get("/api/v1/drivers/:id/whole-profile", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const p = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
     const qy = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
     if (!p.success || !qy.success) return reply.code(400).send({ error: "validation_error" });
@@ -89,7 +89,7 @@ export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
 
   // ROUND 326 item 2 — the vendor profile surface: nine blocks, each a value or a named empty reason.
   app.get("/api/v1/vendors/:id/profile", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const p = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
     const qy = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
     if (!p.success || !qy.success) return reply.code(400).send({ error: "validation_error" });
@@ -101,7 +101,7 @@ export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
   });
 
   app.get("/api/v1/mdata/canonical/:kind/plan", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const p = z.object({ kind: kindSchema }).safeParse(req.params ?? {});
     const qy = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
     if (!p.success || !qy.success) return reply.code(400).send({ error: "validation_error" });
@@ -110,7 +110,7 @@ export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
   });
 
   app.post("/api/v1/mdata/canonical/:kind/merge", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     if (req.user!.role !== "Owner") return reply.code(403).send({ error: "owner_only" });
     const p = z.object({ kind: kindSchema }).safeParse(req.params ?? {});
     const b = z.object({ operating_company_id: z.string().uuid(), survivor_id: z.string().uuid(), duplicate_id: z.string().uuid(), reason: z.string().trim().min(5) }).safeParse(req.body ?? {});
@@ -129,7 +129,7 @@ export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
   });
 
   app.post("/api/v1/mdata/canonical/:kind/aliases/:aliasId/reverse", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     if (req.user!.role !== "Owner") return reply.code(403).send({ error: "owner_only" });
     const p = z.object({ kind: kindSchema, aliasId: z.string().uuid() }).safeParse(req.params ?? {});
     const b = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.body ?? {});

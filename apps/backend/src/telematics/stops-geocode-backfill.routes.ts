@@ -7,7 +7,7 @@ const bodySchema = z.object({ operating_company_id: z.string().uuid() });
 
 export async function registerStopsGeocodeBackfillRoutes(app: FastifyInstance) {
   app.post("/api/v1/telematics/stops/geocode-backfill", { config: { rateLimit: { max: 2, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const user = req.user;
     if (!user) return;
     if (user.role !== "Owner" && user.role !== "Administrator") return reply.code(403).send({ error: "admin_required" });

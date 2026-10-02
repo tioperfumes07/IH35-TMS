@@ -230,7 +230,7 @@ const idParams = z.object({ id: z.string().uuid() });
 
 export async function registerRosterIntegrityRoutes(app: FastifyInstance) {
   app.get("/api/v1/fleet/roster-integrity", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const user = req.user;
     if (!user) return;
     const q = companyQuery.safeParse(req.query ?? {});
@@ -257,7 +257,7 @@ export async function registerRosterIntegrityRoutes(app: FastifyInstance) {
   });
 
   app.post("/api/v1/fleet/roster-integrity/run", { config: { rateLimit: { max: 6, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const user = req.user;
     if (!user) return;
     const q = companyQuery.safeParse(req.query ?? {});
@@ -270,7 +270,7 @@ export async function registerRosterIntegrityRoutes(app: FastifyInstance) {
   });
 
   app.post("/api/v1/fleet/roster-integrity/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const user = req.user;
     if (!user) return;
     const p = idParams.safeParse(req.params ?? {});
