@@ -1,3 +1,10 @@
+**2026-10-02T08:00Z · B-3 Categorized provenance · `cursor/b3-categorized-provenance-920f`**
+ACK: CURSOR | ACK GO-20 HOOK | B-3 §19 CATEGORIZED PROVENANCE | GO
+FE chips #24041 LIVE dep-davm63ivcj2c738dgt4g on `72d1dc0100`.
+Build: categorizedProvenanceText + RULE chip on feed description column; guard+unit tests.
+No migration (UTC 07 / split table HELD). No Book Load. No seed.
+NEXT: money-pr-local-gate → push → FAST-MERGE · Lead Chrome.
+
 **2026-10-02T07:50Z · B-3 Suggested/Record-type chips MERGED #24041 · tip `72d1dc0100`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91008 MERGED FAST-MERGE | GO
 FE MatchDrawer Suggested + Record type chips. money-pr-local-gate PASS. vitest 12/12.

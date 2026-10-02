@@ -62,6 +62,14 @@ function main() {
   assertIncludes(match, "kinds: recordKind ? [recordKind] : undefined", MATCH);
 
   assertIncludes(feed, "bankTransactionDate=", FEED);
+  // B-3 §19 — Categorized tab ADDED OR MATCHED provenance + RULE + Undo (Undo already wired).
+  assertIncludes(feed, "categorizedProvenanceText", FEED);
+  assertIncludes(feed, 'data-b3-categorized-provenance="1"', FEED);
+  assertIncludes(feed, "Added to:", FEED);
+  assertIncludes(feed, "Matched to:", FEED);
+  assertIncludes(feed, "Matched to: multiple transactions", FEED);
+  assertIncludes(feed, "categorizedRuleLabel", FEED);
+  assertIncludes(feed, "isUndoEligible", FEED);
 
   assertIncludes(feed, 'data-b3-expand-modes="1"', FEED);
   assertIncludes(feed, "banking-expand-mode-${modeId}", FEED);
