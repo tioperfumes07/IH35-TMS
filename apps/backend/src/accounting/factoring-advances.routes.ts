@@ -1,3 +1,5 @@
+import { FactoringPurchaseError, voidPurchase } from "../factoring/purchase.service.js";
+import { BANKING_MATCH_OR_CATEGORIZE, LEGACY_FACTORING_WRITERS_RETIRED, sendRetiredFactoringWriter } from "../factoring/retired-factoring-writers.js";
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
@@ -423,6 +425,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/factoring-advances", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (LEGACY_FACTORING_WRITERS_RETIRED) return sendRetiredFactoringWriter(reply, "POST /api/v1/accounting/factoring-advances (legacy create)");
     // ACCT-F5578: this route (and 4 siblings below) had no role gate -- currentAuthUser only requires
     // a session. Reusing the file's own void/cancel executor role set (Owner/Administrator/Accountant,
     // Jorge-locked 2026-06-29) since creating/advancing/holding/releasing a factoring advance is the
@@ -754,6 +757,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/factoring-advances/:id/advance", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (LEGACY_FACTORING_WRITERS_RETIRED) return sendRetiredFactoringWriter(reply, "POST /api/v1/accounting/factoring-advances/:id/advance (Mark Advanced)");
     // ACCT-F5578: see the create route above for why this reuses the void/cancel executor role set.
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
@@ -968,6 +972,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/factoring-advances/:id/release", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (LEGACY_FACTORING_WRITERS_RETIRED) return sendRetiredFactoringWriter(reply, "POST /api/v1/accounting/factoring-advances/:id/release", BANKING_MATCH_OR_CATEGORIZE);
     // ACCT-F5578: see the create route above for why this reuses the void/cancel executor role set.
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
@@ -1219,6 +1224,32 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
     const body = voidBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
+    // OWNER LAW 2026-10-02 competing-engine audit: a void runs through the ONE purchase engine (voidPurchase: Owner-only,
+    // refuses a bank-matched purchase, reverses the funding JE, stamps the void, unlinks the invoices). This route used to
+    // reverse on its own with no Owner gate and no bank-match refusal. An advance with no purchase has no live writer left.
+    if (LEGACY_FACTORING_WRITERS_RETIRED) {
+      const purchase = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+        ((await client.query(
+          `SELECT id::text FROM accounting.factoring_purchases
+            WHERE factoring_advance_id = $1::uuid AND operating_company_id = $2::uuid AND status = 'posted' LIMIT 1`,
+          [params.data.id, query.data.operating_company_id]
+        )).rows[0] as { id: string } | undefined) ?? null
+      );
+      if (!purchase) return sendRetiredFactoringWriter(reply, "POST /api/v1/accounting/factoring-advances/:id/void (advance with no purchase)");
+      try {
+        return await withCompanyScope(user.uuid, query.data.operating_company_id, (client) =>
+          voidPurchase(client, {
+            operatingCompanyId: query.data.operating_company_id,
+            actorUserId: user.uuid,
+            purchaseId: purchase.id,
+            reason: body.data.reason ?? "Factoring purchase voided",
+          })
+        );
+      } catch (error) {
+        if (error instanceof FactoringPurchaseError) return reply.code(error.statusCode).send({ error: error.code });
+        throw error;
+      }
+    }
 
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       // PERMISSION WIRING 10.4: no factoring.* permission seeded — role floor until catalog grows

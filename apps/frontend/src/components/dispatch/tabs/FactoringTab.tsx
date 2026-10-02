@@ -12,6 +12,7 @@
  */
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { FACTORING_TAB_PATH } from "../../../router/route-manifest";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLoad } from "../../../api/loads";
 import {
@@ -283,7 +284,6 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
 
   const step = deriveStep(load?.status ?? "", hasPod, linkedInvoice?.factoring_status);
   const stepIndex = STEP_ORDER.indexOf(step);
-  const isFactorIdSet = selectedFactorId !== "";
 
   // specific docs for packet chips — from the SHARED READ (packetDocuments)
   const rateConfFile = packetDocuments.rateCon;
@@ -355,30 +355,8 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
     onError: (err) => pushToast(userFacingApiError(err, "Failed"), "error"),
   });
 
-  const submitMutation = useMutation({
-    mutationFn: async () => {
-      if (!linkedInvoice || !selectedFactorId) throw new Error("Invoice or factor missing");
-      // Reuse existing factoring batch create + submit (Block-24/25 poster untouched)
-      const batch = await apiRequest<{ id: string }>("/api/v1/factoring/batches", {
-        method: "POST",
-        body: { operating_company_id: operatingCompanyId, invoice_ids: [linkedInvoice.id] },
-      });
-      await apiRequest(
-        `/api/v1/factoring/batches/${encodeURIComponent(batch.id)}/submit?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,
-        { method: "POST", body: {} },
-      );
-    },
-    onSuccess: () => {
-      pushToast("Invoice submitted to FARO batch", "success");
-      setSubmitOpen(false);
-      void queryClient.invalidateQueries({ queryKey: ["factoring-tab"] });
-      void queryClient.invalidateQueries({ queryKey: ["factoring"] });
-      void queryClient.invalidateQueries({ queryKey: ["accounting", "factoring-advances"] });
-      onPacketUpdated?.();
-    },
-    onError: (err) => pushToast(userFacingApiError(err, "Submission failed"), "error"),
-  });
-
+  // OWNER LAW 2026-10-02 competing-engine audit: the drawer used to create + submit a factoring BATCH (a second purchase
+  // engine that also locked the invoice out of the canonical one). Submitting now opens the ONE purchase engine.
   // ── loading guard ──────────────────────────────────────────────────────────
 
   if (loadQ.isLoading) {
@@ -646,14 +624,13 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
                   ) : null}
                 </div>
                 <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    disabled={!hasPod || !isFactorIdSet || submitMutation.isPending}
-                    loading={submitMutation.isPending}
-                    onClick={() => submitMutation.mutate()}
+                  <Link
+                    to={FACTORING_TAB_PATH.submit_invoice}
+                    className="inline-flex h-7 items-center rounded-sm border border-slate-700 px-2 text-xs font-medium"
+                    data-testid="factoring-tab-open-submit-to-factor"
                   >
-                    Confirm Submit
-                  </Button>
+                    Open Submit to Factor
+                  </Link>
                   <Button size="sm" variant="secondary" onClick={() => setSubmitOpen(false)}>
                     Cancel
                   </Button>

@@ -1,3 +1,4 @@
+import { LEGACY_FACTORING_WRITERS_RETIRED, sendRetiredFactoringWriter } from "./retired-factoring-writers.js";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
@@ -47,6 +48,9 @@ export async function registerFaroCsvImportRoutes(app: FastifyInstance) {
         };
       }
 
+      // Commit is retired: it created Faro fundings, chargebacks and reserve movements outside the purchase engine.
+      // The preview above stays — Faro's report is read, compared, never posted.
+      if (LEGACY_FACTORING_WRITERS_RETIRED) return sendRetiredFactoringWriter(reply, "POST /api/v1/factoring/import/faro (commit)");
       const result = await commitFaroCsvImport({
         userId: user.uuid,
         operatingCompanyId: body.data.operating_company_id,

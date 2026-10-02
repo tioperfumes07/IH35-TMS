@@ -940,7 +940,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               a single "Related" disclosure instead of four buttons of equal visual weight.
             */}
             <Link
-              to="/factoring/submit"
+              to={FACTORING_TAB_PATH.submit_invoice}
               className="inline-flex items-center rounded-sm border border-slate-300 bg-slate-800 px-2.5 py-2 text-xs font-medium text-white hover:bg-slate-700"
               data-testid="factoring-submit-to-factor-link"
             >

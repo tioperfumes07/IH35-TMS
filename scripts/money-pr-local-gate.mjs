@@ -522,6 +522,21 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-factor-reserve-roles-match-faro-bank-accounts.mjs",
     ],
   ],
+  // OWNER LAW 2026-10-02 competing-engine audit — one factoring purchase engine; legacy create / Mark Advanced /
+  // release / batch submit / Faro CSV commit retired at their call sites; void delegates to voidPurchase.
+  [
+    "verify-one-factoring-purchase-engine",
+    [
+      "apps/backend/src/factoring/",
+      "apps/backend/src/accounting/factoring-advances.routes.ts",
+      "apps/backend/src/accounting/factoring-posting/",
+      "apps/frontend/src/pages/factoring/",
+      "apps/frontend/src/pages/accounting/Factoring",
+      "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx",
+      "apps/frontend/src/routes/manifest.tsx",
+      "scripts/verify-one-factoring-purchase-engine.mjs",
+    ],
+  ],
   // ROUND 326.2 items 3-4 — banking / factoring surfaces: every table tabular-nums, and Banking's
   // factoring reserve reads the factoring KPI engine (one reserve engine, no duplicate math).
   [

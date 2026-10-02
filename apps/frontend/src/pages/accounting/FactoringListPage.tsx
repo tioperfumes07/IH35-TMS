@@ -30,6 +30,7 @@ const STATUS_OPTIONS: Array<{ value: "all" | "active" | FactoringAdvance["status
 ];
 
 import { formatUsdCents } from "../../lib/money";
+import { FACTORING_TAB_PATH } from "../../router/route-manifest";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -134,7 +135,7 @@ export function FactoringListPage() {
 
   if (query.isError) {
     return (
-      <AccountingSubNavWrapper title="Factoring" subtitle="Track factoring submissions, reserves, and releases" actions={<Button onClick={() => setSubmitOpen(true)}>+ Submit New Batch</Button>}>
+      <AccountingSubNavWrapper title="Factoring" subtitle="Track factoring submissions, reserves, and releases" actions={<Button onClick={() => navigate(FACTORING_TAB_PATH.submit_invoice)}>+ Submit to Factor</Button>}>
         <ListErrorState
           title="Couldn't load factoring advances"
           status={0}
@@ -200,7 +201,7 @@ export function FactoringListPage() {
   );
 
   return (
-    <AccountingSubNavWrapper title="Factoring" subtitle="Track factoring submissions, reserves, and releases" actions={<Button onClick={() => setSubmitOpen(true)}>+ Submit New Batch</Button>}>
+    <AccountingSubNavWrapper title="Factoring" subtitle="Track factoring submissions, reserves, and releases" actions={<Button onClick={() => navigate(FACTORING_TAB_PATH.submit_invoice)}>+ Submit to Factor</Button>}>
 
       {filterBar}
 

@@ -1,3 +1,4 @@
+import { LEGACY_FACTORING_WRITERS_RETIRED, sendRetiredFactoringWriter } from "./retired-factoring-writers.js";
 import type { FastifyInstance } from "fastify";
 import { requireFactoringPurchaseOwner } from "./owner-only-purchase.js";
 import { currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
@@ -78,6 +79,7 @@ export async function registerFactoringBatchRoutes(app: FastifyInstance) {
   app.post("/api/v1/factoring/batches/:id/submit", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (LEGACY_FACTORING_WRITERS_RETIRED) return sendRetiredFactoringWriter(reply, "POST /api/v1/factoring/batches/:id/submit (batch engine)");
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
 
     const params = factoringBatchIdParamsSchema.safeParse(req.params ?? {});
