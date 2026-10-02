@@ -9929,5 +9929,20 @@
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-02",
     "purpose": "CC-3 handoff — A/P aging as-of excludes voided bills; cash forecast names its company (CC-1)."
+  },
+  "12297": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "Lead ROUND 332 — an invoice may not be issued without its ledger entry and spine link (CC-1)."
+  },
+  "12301": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "Lead ROUND 332 — load status 'invoiced' and the invoice are created in one transaction (CC-1)."
+  },
+  "12305": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "Lead ROUND 332 — purge route: refuse_financial_row_delete resolves functions with to_regprocedure (CC-1)."
   }
 }
