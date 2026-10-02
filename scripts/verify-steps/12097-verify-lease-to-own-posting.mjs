@@ -13,7 +13,7 @@ import { requireLiveDbOrExit } from "../lib/require-live-db.mjs";
 const LABEL = "verify-lease-to-own-posting";
 const ROOT = new URL("../../", import.meta.url);
 const read = (p) => readFileSync(new URL(p, ROOT), "utf8");
-const F = { post: "apps/backend/src/leases/lessee-posting.service.ts", eng: "apps/backend/src/leases/lease-engine.service.ts", bill: "apps/backend/src/leases/lease-bill-engine.service.ts" };
+const F = { post: "apps/backend/src/leases/lessee-posting.service.ts", eng: "apps/backend/src/leases/lease-engine.service.ts", bill: "apps/backend/src/leases/lease-bill-engine.service.ts", buy: "apps/backend/src/leases/lease-buyout.service.ts", routes: "apps/backend/src/leases/lease.routes.ts" };
 
 export function staticProblems(s) {
   const p = [];
@@ -24,6 +24,12 @@ export function staticProblems(s) {
   if ((s.post.match(/if \(!\(await lesseeSchemaReady\(client\)\)\)/g) ?? []).length < 3) p.push("every lessee entry point must fail closed before migration 202615210000 is applied");
   if (!/const capAccount = await capitalizedBillAccount\(client, opco, c\.id\)/.test(s.bill)) p.push("the bill engine must bill a capitalized contract against lease_liability");
   if ((s.bill.match(/await postLesseePeriodsForBill\(opco, actorUserId, plan, /g) ?? []).length !== 2) p.push("the period JE must post after a created AND an already-existing bill (heal)");
+  // buyout close (migration 202615210100)
+  if (!/app\.post\("\/api\/v1\/leases\/:id\/buyout"[\s\S]{0,700}refuseNonOwner\(client as DbClient, user, "buyout"/.test(s.routes)) p.push("buyout route must be Owner-only (refuseNonOwner)");
+  if (!/leaseBillKey: `BUYOUT:\$\{leaseId\}`/.test(s.buy) || !/lease_bill_key = \$2 AND voided_at IS NULL LIMIT 1`,\s*\[opco, `BUYOUT:\$\{leaseId\}`\]/.test(s.buy)) p.push("buyout bill must be created once, by key BUYOUT:<lease>");
+  if (!/legPair\(a\.rou_net, planned\.assetAccounts\[i\], rou,/.test(s.buy) || !/legPair\(a\.rou_gross - a\.rou_net, accum, rou,/.test(s.buy)) p.push("buyout must reclassify the ROU asset (gross) to the owned asset account + close accumulated amortization");
+  if (!/lease_buyout_unposted_periods/.test(s.buy)) p.push("buyout must refuse while periods up to the buyout month are unposted");
+  if (!/SET owner_company_id = \$2::uuid, currently_leased_to_company_id = NULL/.test(s.buy)) p.push("buyout must transfer title to the lessee");
   return p;
 }
 
@@ -38,6 +44,8 @@ const plants = [
   ["second transaction", { ...src, post: src.post + "\nawait createJournalEntry(x);" }],
   ["no heal", { ...src, bill: src.bill.replace("await postLesseePeriodsForBill(opco, actorUserId, plan, exists.id, out);", "") }],
   ["no lock", { ...src, post: src.post.replace("FOR UPDATE OF s", "") }],
+  ["buyout not owner-gated", { ...src, routes: src.routes.replace('user, "buyout"', 'user, "x"') }],
+  ["no title transfer", { ...src, buy: src.buy.replaceAll("SET owner_company_id = $2::uuid, currently_leased_to_company_id = NULL", "SET updated_at = now()") }],
 ];
 for (const [name, planted] of plants) {
   if (!staticProblems(planted).length) {

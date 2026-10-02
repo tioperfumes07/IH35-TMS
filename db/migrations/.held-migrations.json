@@ -86,6 +86,12 @@
       "reason": "[HOLD — CC-1 ROUND 321] lease-to-own ASC 842 lessee: lease_contract purchase option / classification columns, accounting.lease_lessee_schedule_period (WORM + FORCE RLS), 4 COA roles. Additive, idempotent. Lead validates on a Neon branch, then applies on prod and ledgers it.",
       "block": "ROUND-321-LEASE-TO-OWN",
       "added_at": "2026-10-02"
+    },
+    {
+      "file": "202615210100_lease_to_own_buyout_close.sql",
+      "reason": "[HOLD — CC-1 ROUND 321] lease-to-own buyout close: lease_contract bought_out_at / buyout_bill_id / buyout_je_id, fixed_assets.equipment_id. Additive, idempotent. Lead validates on a Neon branch, then applies on prod and ledgers it (after 202615210000).",
+      "block": "ROUND-321-LEASE-TO-OWN",
+      "added_at": "2026-10-02"
     }
   ],
   "_integrity_note": "Every entry appears EXACTLY ONCE (file is the key). applied_on_prod MUST agree with the pinned prod-ledger snapshot scripts/lib/prod-migration-ledger-checksums.json for any file inside its window (>= 202606010000). Enforced by scripts/verify-steps/1361-verify-held-registry-integrity.mjs. Repaired 2026-07-25: 119 entries collapsed to 110 (9 duplicates, 7 of them carrying contradictory applied_on_prod), and 79 entries that were already applied on prod were stamped. Before the repair, verify-schema-parity-from-prod (step 1437) derived held-unapplied columns from this file and therefore treated applied migrations as unapplied.",

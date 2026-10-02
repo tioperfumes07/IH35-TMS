@@ -316,7 +316,20 @@ export async function getLease(client: DbClient, opco: string, leaseId: string) 
       ORDER BY b.lease_period_start DESC NULLS LAST, b.bill_date DESC`,
     [leaseId, opco]
   )).rows;
-  return { lease: head, assets, bills };
+  // ROUND 321: the ASC 842 lessee schedule (lease-to-own), each period with its bill and JE (both ways).
+  const schedule = (await lesseeSchemaReady(client))
+    ? (await client.query(
+        `SELECT s.id::text, s.lease_asset_line_id::text, s.period_no, s.period_start::text, s.payment_cents, s.interest_cents, s.principal_cents,
+                s.liability_open_cents, s.liability_close_cents, s.rou_amortization_cents, s.rou_close_cents, s.lease_cost_cents,
+                s.bill_id::text, b.display_id AS bill_display_id, s.accretion_je_id::text, s.posted_at::text
+           FROM accounting.lease_lessee_schedule_period s
+           LEFT JOIN accounting.bills b ON b.id = s.bill_id
+          WHERE s.lease_contract_id = $1::uuid AND s.operating_company_id = $2::uuid AND s.voided_at IS NULL
+          ORDER BY s.lease_asset_line_id, s.period_no`,
+        [leaseId, opco]
+      )).rows
+    : [];
+  return { lease: head, assets, bills, schedule };
 }
 
 /** Reverse: a unit / trailer profile's leases, their monthly amount, bills and payments. */

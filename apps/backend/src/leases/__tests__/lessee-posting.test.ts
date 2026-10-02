@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { allocateByShare, leaseTermMonths, legPair } from "../lessee-posting.service.js";
 import { validateAgreement, type CreateLeaseAgreementInput } from "../lease-engine.service.js";
+import { buyoutSplit } from "../lease-buyout.service.js";
 
 describe("ROUND 321 lease-to-own posting helpers", () => {
   it("term months run from the commencement month through the end month, inclusive", () => {
@@ -34,5 +35,11 @@ describe("ROUND 321 lease-to-own posting helpers", () => {
     expect(validateAgreement({ ...base, discount_rate_bps: 800, purchase_option_kind: "fmv" }, "b")).toEqual([]);
     // truck / trailer leases are unchanged (no rate / option required)
     expect(validateAgreement({ ...base, lease_type: "truck_lease" }, "b")).toEqual([]);
+  });
+
+  it("buyout: the carried liability is settled, a price above it is capitalized, a price below it is refused", () => {
+    expect(buyoutSplit(1_000_000, 1_000_000)).toEqual({ settle: 1_000_000, capitalize: 0 }); // finance, fixed price at term end
+    expect(buyoutSplit(2_500_000, 0)).toEqual({ settle: 0, capitalize: 2_500_000 }); // operating, FMV purchase
+    expect(() => buyoutSplit(100, 500)).toThrow(/below the lease liability/);
   });
 });

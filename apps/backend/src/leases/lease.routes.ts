@@ -16,6 +16,8 @@ import {
   signLease,
 } from "./lease-engine.service.js";
 import { currentPeriodStartCT, generateLeaseBills } from "./lease-bill-engine.service.js";
+import { buyOutLeaseToOwn } from "./lease-buyout.service.js";
+import { LesseePostingError } from "./lessee-posting.service.js";
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 const READ_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
@@ -49,11 +51,13 @@ const createBody = company.extend({
 });
 const signBody = company.extend({ signed_at: z.string().min(10), contract_instance_id: z.string().uuid().nullable().optional() });
 const closeBody = company.extend({ closed_on: date, reason: z.string().trim().min(3).max(500) });
+const buyoutBody = company.extend({ buyout_date: date, price_cents: z.number().int().min(0).nullable().optional() });
 const generateBody = company.extend({ period_start: z.string().regex(/^\d{4}-\d{2}-01$/).optional(), lease_id: z.string().uuid().optional() });
 const assetQuery = company.extend({ unit_id: z.string().uuid().optional(), equipment_id: z.string().uuid().optional() });
 
 function sendErr(reply: FastifyReply, e: unknown) {
   if (e instanceof LeaseEngineError) return reply.code(e.status).send({ error: e.code, message: e.message });
+  if (e instanceof LesseePostingError) return reply.code(e.status).send({ error: e.code, message: e.message });
   throw e;
 }
 
@@ -169,6 +173,23 @@ export async function registerLeaseRoutes(app: FastifyInstance) {
         await closeLease(client as DbClient, b.data.operating_company_id, user.uuid, p.data.id, b.data.closed_on, b.data.reason);
       });
       return { closed: p.data.id };
+    } catch (e) { return sendErr(reply, e); }
+  });
+
+  // ROUND 321: lease-to-own buyout close — Owner-only (same gate as create / sign / close): purchase bill to the lessor,
+  // ROU -> owned fixed asset, title to the lessee, fixed-asset register, lease closed.
+  app.post("/api/v1/leases/:id/buyout", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const p = idParam.safeParse(req.params ?? {});
+    const b = buyoutBody.safeParse(req.body ?? {});
+    if (!p.success || !b.success) return reply.code(400).send({ error: "validation_error" });
+    const user = await authed(req, reply, b.data.operating_company_id);
+    if (!user) return;
+    try {
+      await withCurrentUser(user.uuid, async (client) => {
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [b.data.operating_company_id]);
+        await refuseNonOwner(client as DbClient, user, "buyout", b.data.operating_company_id);
+      });
+      return await buyOutLeaseToOwn(b.data.operating_company_id, user.uuid, p.data.id, { buyout_date: b.data.buyout_date, price_cents: b.data.price_cents ?? null });
     } catch (e) { return sendErr(reply, e); }
   });
 
