@@ -80,6 +80,10 @@ function main() {
   if (!/View register/.test(coa) || !/row\.statement === ["']P&L["']/.test(coa)) {
     throw new Error(`${COA}: P&L rows must keep Run report AND always expose View register (ORDERS §B-1)`);
   }
+  // BANK-F91028 — per-row Make inactive (ORDERS §B-1 CoA actions)
+  assertIncludes(coa, 'data-testid="b1-coa-make-inactive"', COA);
+  assertIncludes(coa, "Make inactive", COA);
+  assertIncludes(coa, "deactivateCatalogAccount", COA);
 
   const inlinePanel = read("apps/frontend/src/pages/accounting/RegisterInlineEditPanel.tsx");
   assertIncludes(inlinePanel, 'data-testid="b1-register-edit-original"', "RegisterInlineEditPanel");
