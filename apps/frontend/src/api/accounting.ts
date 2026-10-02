@@ -347,6 +347,11 @@ export type VendorBill = {
   linked_pickup_date?: string | null;
   linked_delivery_date?: string | null;
   linked_loaded_miles?: number | null;
+  /** BANK-F91039 / ORDERS §B-4 §14 — driver-bill settlement chrome. */
+  linked_empty_miles?: number | null;
+  linked_origin?: string | null;
+  linked_destination?: string | null;
+  linked_trailer_number?: string | null;
   /** B-1 §5 — bank hop when banking.bank_transactions.matched_bill_id is stamped. */
   matched_bank_transaction_id?: string | null;
   matched_bank_transaction_date?: string | null;

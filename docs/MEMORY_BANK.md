@@ -1317,10 +1317,10 @@ Full coder instructions: `claude/2026-09-13-ABSORPTION-INGEST-AND-DISPUTE-WINDOW
 - **Class (BANK-F91035 #24095):** `WriteCheckForm` → `class_id` on existing `accounting.expenses.class_id` (202613380001). No migration.
 - **Settlement No + Location (BANK-F91037 #24098):** CLAIM `202615221300` → migration adds `expenses.settlement_no text` + `location_id uuid FK mdata.locations`. `createCheck` INSERT + routes zod + FE header (FuelStopLocationPicker `fuelStopOnly=false`). Neon applied; tip deploy both services LIVE (`dep-davqd7lg1s2s73bgc61g` BE / `dep-davqd7unfi0s738546l0` FE; healthz `b4b8aa2`).
 - **Amount to Credit chrome (BANK-F91033 #24090):** live Apply/Credit math; Save blocked while credit > 0. Honest — do **not** invent overpay GL.
+- **Driver bill = settlement chrome (BANK-F91039):** when payee is driver and bills are queued, WriteCheckForm shows ORDERS §B-4 §14 fields from `listBillsByVendor` load_link (NB-Load, Settlement No, Truck/Trailer, WO, PU/DEL dates, empty/loaded miles, origin→destination, paid-to-date / open balance). Seeds Settlement No header from `linked_settlement_display_id`. Backend adds empty_miles / origin / destination / trailer_number on the same LATERAL — no new tables, no invented GL.
 
 ## Next Immediate Milestones — Banking ORDERS B-4 (Cursor, 2026-10-02)
 
 1. **BANK-F91038 Amount to Credit → vendor credit on Save (Tier A).** `applyVendorBillPaymentBatch` allows `amount_cents > sum(apps)` but bank cache uses full `amount_cents` while JE posts only apps — overpay without a poster = TB hole. `createVendorCredit` is subledger-only (no `vendor_credit` in posting-engine source types). Need existing poster path or owner-named GL treatment before unblocking Save. Mirror AR overpay→credit_memo if one exists; never invent JE math.
-2. **B-4 §14 driver-bill settlement chrome** (NB-Load / Truck / miles / OD) when bill-payment payee is a driver — fields already on driver bills / load links.
-3. Lead Chrome on Write Check (Class + Settlement No + Location) at deployed tip.
-4. clean-app APPLY AUTH (owner) — seats do not DELETE USMCA rows without AUTH.
+2. Lead Chrome on Write Check (Class + Settlement No + Location + §14 driver chrome) at deployed tip.
+3. clean-app APPLY AUTH (owner) — seats do not DELETE USMCA rows without AUTH.

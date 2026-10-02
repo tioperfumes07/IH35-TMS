@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91037 LIVE · backend dep-davqd7lg1s2s73bgc61g · frontend dep-davqd7unfi0s738546l0 · healthz `b4b8aa2` · Neon settlement_no+location_id.
-ACK: CURSOR | ACK GO-20 HOOK | F91037 DEPLOYED BOTH SERVICES | GO
+NOW: BANK-F91039 B-4 §14 driver-bill settlement chrome authoring · SEQUENCE live links=2 orphans=0 · F91038 Tier-A blocked
+ACK: CURSOR | ACK GO-20 HOOK | F91039 IN FLIGHT | GO

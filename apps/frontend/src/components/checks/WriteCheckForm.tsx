@@ -548,6 +548,13 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
   function addBillToPay(bill: VendorBill) {
     const remaining = bill.balance_cents ?? bill.amount_cents - bill.paid_cents;
     setBillToPayAmounts((prev) => ({ ...prev, [bill.id]: Math.max(remaining, 0) }));
+    // BANK-F91039 — driver-bill / settlement: seed Settlement No from AlwaysTrack source_document_ref when empty.
+    if (payeeKind === "driver") {
+      const settlementRef = (bill.linked_settlement_display_id ?? "").trim();
+      if (settlementRef) {
+        setSettlementNo((prev) => (prev.trim() ? prev : settlementRef));
+      }
+    }
   }
   /** B-4 §9 — Add all open bills for this payee into Outstanding Transactions (respects Find Bill No.). */
   function addAllOpenBillsToPay() {
@@ -1243,6 +1250,82 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                   enableColumnResize={false}
                   enableColumnReorder={false}
                 />
+                {/* BANK-F91039 — ORDERS §B-4 §14 driver bill = settlement chrome (read-only linkage from bill → load). */}
+                {payeeKind === "driver"
+                  ? billsToPay.map((b) => {
+                      const openBal = Math.max(b.balance_cents ?? b.amount_cents - b.paid_cents, 0);
+                      const truckTrailer = [b.linked_unit_number, b.linked_trailer_number].filter(Boolean).join(" / ") || "—";
+                      const emptyMiles =
+                        b.linked_empty_miles != null && Number.isFinite(Number(b.linked_empty_miles))
+                          ? String(Number(b.linked_empty_miles))
+                          : "—";
+                      const loadedMiles =
+                        b.linked_loaded_miles != null && Number.isFinite(Number(b.linked_loaded_miles))
+                          ? String(Number(b.linked_loaded_miles))
+                          : "—";
+                      return (
+                        <div
+                          key={`driver-settlement-${b.id}`}
+                          className="border-t border-gray-100 px-2 py-2 text-xs text-gray-700"
+                          data-b4-driver-settlement-chrome="1"
+                          data-testid="b4-driver-settlement-chrome"
+                        >
+                          <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+                            <span className="font-semibold text-gray-800">Driver bill / settlement</span>
+                            <span className="flex flex-wrap items-center gap-2">
+                              {b.paid_cents > 0 ? (
+                                <span
+                                  className="rounded-sm border border-gray-300 bg-gray-50 px-1.5 py-0.5 text-xs font-semibold uppercase text-gray-600"
+                                  data-b4-driver-payments-made="1"
+                                >
+                                  Paid to date ({formatMoneyCents(b.paid_cents)})
+                                </span>
+                              ) : null}
+                              <span data-b4-driver-open-balance="1">Open balance: {formatMoneyCents(openBal)}</span>
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-x-3 gap-y-1 sm:grid-cols-3 md:grid-cols-4">
+                            <div>
+                              <div className="text-xs font-semibold uppercase text-gray-600">NB-Load Number</div>
+                              <div>{b.linked_load_number ?? "—"}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs font-semibold uppercase text-gray-600">Settlement No</div>
+                              <div>{b.linked_settlement_display_id ?? "—"}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs font-semibold uppercase text-gray-600">Truck / Trailer</div>
+                              <div>{truckTrailer}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs font-semibold uppercase text-gray-600">Work Order</div>
+                              <div>{b.linked_work_order_display_id ?? "—"}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs font-semibold uppercase text-gray-600">Pick Up</div>
+                              <div>{b.linked_pickup_date ? formatDateUS(b.linked_pickup_date) : "—"}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs font-semibold uppercase text-gray-600">Delivery</div>
+                              <div>{b.linked_delivery_date ? formatDateUS(b.linked_delivery_date) : "—"}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs font-semibold uppercase text-gray-600">Empty / Loaded miles</div>
+                              <div>
+                                {emptyMiles} / {loadedMiles}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-xs font-semibold uppercase text-gray-600">Origin → Destination</div>
+                              <div>
+                                {b.linked_origin ?? "—"} → {b.linked_destination ?? "—"}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  : null}
                 <div
                   className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 px-2 py-1.5 text-xs text-gray-700"
                   data-b4-amount-to-apply="1"
