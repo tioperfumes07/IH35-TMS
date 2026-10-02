@@ -12,7 +12,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 // FLEET-VISIBILITY-F4583-SAMPLE-DATA-GAP (continued): same shared exclusion already required on the
 // Fleet roster/KPI (mdata/fleet-visibility.ts) — a fixture unit must not inflate this dashboard's
 // total/active-units and DOT OOS tiles.
-import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visibility.js";
+import { excludeDemoPhantomSql, excludeSampleDataSql, fleetRosterSql } from "../mdata/fleet-visibility.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -150,10 +150,8 @@ export async function registerMaintenanceDashboardKpisRoutes(app: FastifyInstanc
                 COUNT(*)::int AS total_units,
                 COUNT(*) FILTER (WHERE status = 'InService')::int AS active_units
               FROM mdata.units
-              WHERE (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)
-                AND deactivated_at IS NULL
-                AND ${excludeDemoPhantomSql("unit_number")}
-                AND ${excludeSampleDataSql()}
+              -- ROUND 326 queue item 17 / M3: the one fleet roster (operating entity, power units only).
+              WHERE ${fleetRosterSql("", "$1")}
             `,
             [companyId]
           );

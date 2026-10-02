@@ -126,6 +126,8 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         in_shop_units: number;
         out_of_service_units: number;
         avg_age_years: number | null;
+        /** ROUND 326 queue item 17 / M3: units in scope with no vehicle type — outside the fleet roster until set. */
+        unclassified_units?: number;
       }>(`/api/v1/maintenance/fleet-table/kpis?operating_company_id=${encodeURIComponent(operatingCompanyId)}`),
     enabled: Boolean(operatingCompanyId),
   });
@@ -402,6 +404,13 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
           </button>
         ))}
       </div>
+
+      {!kpisQuery.isError && (kpis as { unclassified_units?: number }).unclassified_units ? (
+        <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700" data-testid="maint-fleet-unclassified-notice">
+          {(kpis as { unclassified_units?: number }).unclassified_units} unit(s) have no vehicle type, so they are not counted in the fleet,
+          cost per mile or fleet baselines. Set Tractor / Straight Truck / Box Truck (or Pickup / Other) on each unit.
+        </div>
+      ) : null}
 
       {/* Clickable KPIs — status filters only (D29). Class chips moved into the filter toolbar (D30). */}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-5" data-testid="maint-fleet-status-kpis">

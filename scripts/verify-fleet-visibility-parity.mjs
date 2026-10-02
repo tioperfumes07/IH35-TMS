@@ -120,13 +120,22 @@ function analyse(files) {
   if (dash != null) {
     const kpiStart = dash.indexOf("FROM mdata.units");
     const kpiQuery = dash.slice(kpiStart, dash.indexOf("`", kpiStart));
-    if (!/excludeDemoPhantomSql\(\s*["']unit_number["']\s*\)/.test(kpiQuery)) {
+    // ROUND 326 queue item 17 / M3: fleetRosterSql applies both exclusions itself (checked on the helper below).
+    const kpiViaRoster = /fleetRosterSql\(/.test(kpiQuery);
+    if (kpiViaRoster) {
+      const helperSrc = files[HELPER] ?? "";
+      const base = helperSrc.slice(helperSrc.indexOf("function fleetRosterBaseSql"));
+      if (!/excludeSampleDataSql\(/.test(base) || !/excludeDemoPhantomSql\(/.test(base)) {
+        problems.push(`${HELPER}: fleetRosterBaseSql must apply excludeSampleDataSql and excludeDemoPhantomSql`);
+      }
+    }
+    if (!kpiViaRoster && !/excludeDemoPhantomSql\(\s*["']unit_number["']\s*\)/.test(kpiQuery)) {
       problems.push(
         `${DASHBOARD} queries mdata.units for the fleet KPI without applying ` +
           `excludeDemoPhantomSql("unit_number") — the KPI would count rows the Fleet roster hides.`
       );
     }
-    if (!SAMPLE_CALL_RE.test(kpiQuery)) {
+    if (!kpiViaRoster && !SAMPLE_CALL_RE.test(kpiQuery)) {
       problems.push(
         `${DASHBOARD} fleet-table/kpis query does not apply excludeSampleDataSql() — is_sample_data ` +
           `units would inflate the live Fleet KPI tiles (FLEET-VISIBILITY-F4583).`

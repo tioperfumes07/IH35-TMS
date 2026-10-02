@@ -25,6 +25,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { fetchOdometerAnchors, realDrivenMiles, type OdometerAnchor } from "../telematics/odometer-anchor.js";
+import { fleetRosterSql } from "../mdata/fleet-visibility.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -85,9 +86,7 @@ export async function computePmCostPerMile(
   const units = await client.query<{ id: string; unit_number: string }>(
     `SELECT u.id::text, u.unit_number
        FROM mdata.units u
-      WHERE COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
-        AND u.deactivated_at IS NULL
-        AND COALESCE(u.is_sample_data, false) = false
+      WHERE ${fleetRosterSql("u", "$1")}
         AND ($2::uuid IS NULL OR u.id = $2::uuid)
       ORDER BY u.unit_number`,
     [operatingCompanyId, unitId ?? null]
