@@ -9849,5 +9849,30 @@
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-02",
     "purpose": "ROUND 297 driver-profile audit — deductions applied by a closed settlement stop reading pending (CC-1)."
+  },
+  "12237": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 301 P0 #011 — every UPDATE in the settlement contract-terms engine names its company (CC-1)."
+  },
+  "12241": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 300 — driver_settlement document reverse: one engine, proven on a Neon fork (CC-1)."
+  },
+  "12245": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 300 — driver_settlement_deduction row reverses with its GL (CC-1)."
+  },
+  "12249": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 300 — settlement-posting carries the load/unit/trailer/customer/vendor/invoice/item stamps (CC-1)."
+  },
+  "12253": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 300 — no orphan writer: each of the 8 is deleted or wired (CC-1)."
   }
 }
