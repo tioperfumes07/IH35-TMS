@@ -606,6 +606,18 @@ const LIVE_DOMAIN_GUARDS = [
   ],
   // Lead ROUND 296/297 — money in a table cell is right-aligned with tabular figures (QBO_MONEY_CELL_CLASS), app-wide.
   ["verify-money-table-cells-aligned", ["apps/frontend/src/", "scripts/verify-money-table-cells-aligned.mjs"]],
+  // Lead ROUND 296 / 297 — day 95 asks the owner; no nightly accrual, no auto-recourse, no money on decide.
+  [
+    "verify-day95-asks-never-recourses",
+    [
+      "apps/backend/src/cron/factoring-default-interest-accrual.cron.ts",
+      "apps/backend/src/accounting/factoring-posting/default-interest.service.ts",
+      "apps/backend/src/factoring/repurchase-due.service.ts",
+      "apps/backend/src/factoring/repurchase-due.routes.ts",
+      "db/migrations/202615220700_factoring_repurchase_due_events.sql",
+      "scripts/verify-day95-asks-never-recourses.mjs",
+    ],
+  ],
   // ROUND 326.2 items 3-4 — banking / factoring surfaces: every table tabular-nums, and Banking's
   // factoring reserve reads the factoring KPI engine (one reserve engine, no duplicate math).
   [

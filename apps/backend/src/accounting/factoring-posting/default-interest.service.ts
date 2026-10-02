@@ -35,6 +35,13 @@ type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };
 
+// Lead ROUND 296 / 297 + owner (2026-10-02): "WHEN RECOURSE TIME ARRIVES IT MUST ASK, NOT RECOURSE AUTOMATICALLY."
+// Day 95 is an obligation event in the owner's decision queue (factoring/repurchase-due.service.ts), never a posting;
+// default interest accrues at period close with approval (DR 6830 / CR 2155), not nightly. Both motions below are
+// retired — they return without selecting or posting. Guard: scripts/verify-day95-asks-never-recourses.mjs.
+export const DAY95_AUTO_RECOURSE_RETIRED: boolean = true;
+export const NIGHTLY_INTEREST_ACCRUAL_RETIRED: boolean = true;
+
 // A well-formed system UUID for cron-originated postings/audits (same identity the other accounting/driver
 // crons use). Overridable via SYSTEM_ACTOR_USER_ID.
 const SYSTEM_ACTOR_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-4000-8000-000000000001";
@@ -248,13 +255,14 @@ export async function ensureDefaultInterestAccruedThroughDate(input: {
   return { flag_off: false, accruals_posted: posted };
 }
 
-export type AccrualTickSummary = { flag_off: boolean; advances_scanned: number; accruals_posted: number };
+export type AccrualTickSummary = { flag_off: boolean; advances_scanned: number; accruals_posted: number; retired?: boolean };
 
 export async function accrueDefaultInterestForCompany(input: {
   operating_company_id: string;
   as_of_date_iso?: string;
   actor_user_id?: string;
 }): Promise<AccrualTickSummary> {
+  if (NIGHTLY_INTEREST_ACCRUAL_RETIRED) return { flag_off: false, advances_scanned: 0, accruals_posted: 0, retired: true };
   const asOf = ymd(input.as_of_date_iso ?? companyBusinessDate());
   const actorUserId = input.actor_user_id ?? SYSTEM_ACTOR_ID;
 
@@ -281,13 +289,14 @@ export async function accrueDefaultInterestForCompany(input: {
   return { flag_off: false, advances_scanned: advances.length, accruals_posted: accrualsPosted };
 }
 
-export type RecourseTickSummary = { flag_off: boolean; advances_scanned: number; recoursed: number };
+export type RecourseTickSummary = { flag_off: boolean; advances_scanned: number; recoursed: number; retired?: boolean };
 
 export async function triggerDay95RecourseForCompany(input: {
   operating_company_id: string;
   as_of_date_iso?: string;
   actor_user_id?: string;
 }): Promise<RecourseTickSummary> {
+  if (DAY95_AUTO_RECOURSE_RETIRED) return { flag_off: false, advances_scanned: 0, recoursed: 0, retired: true };
   const asOf = ymd(input.as_of_date_iso ?? companyBusinessDate());
   const actorUserId = input.actor_user_id ?? SYSTEM_ACTOR_ID;
 

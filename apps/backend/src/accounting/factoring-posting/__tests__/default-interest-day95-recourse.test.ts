@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { triggerDay95RecourseForCompany } from "../default-interest.service.js";
+import { accrueDefaultInterestForCompany, triggerDay95RecourseForCompany } from "../default-interest.service.js";
 
 // Day-95 auto-recourse orchestration: catch interest, then fire chargeback with EXACT linked amounts
 // (no guessed Net / accrual-ledger amounts). Status flip lives inside chargeback txn; orchestration
@@ -89,61 +89,24 @@ function installDefaults(opts: { flagOn?: boolean; candidate?: boolean } = {}) {
   });
 }
 
-describe("Faro factoring — day-95 auto-recourse", () => {
-  it("fires chargeback with exact linked liability + A/R; audit only (no outer status flip)", async () => {
+// Lead ROUND 296 / 297 + owner (2026-10-02): "WHEN RECOURSE TIME ARRIVES IT MUST ASK, NOT RECOURSE AUTOMATICALLY."
+// Day 95 is an owner decision-queue event (factoring/repurchase-due.service.ts); the auto-recourse and the nightly
+// accrual are retired. With the flag ON and a day-95 candidate present, neither selects nor posts.
+describe("Faro factoring — day-95 asks, never recourses", () => {
+  it("flag ON + a day-95 candidate ⇒ no selection, no chargeback, no audit", async () => {
     installDefaults();
-    const res = await triggerDay95RecourseForCompany({
-      operating_company_id: OPCO,
-      as_of_date_iso: "2026-04-06",
-    });
-
-    expect(res).toMatchObject({ flag_off: false, recoursed: 1 });
-    expect(mockLoadExact).toHaveBeenCalledWith(OPCO, "fac-1");
-    expect(mockChargeback).toHaveBeenCalledTimes(1);
-    expect(mockChargeback.mock.calls[0][0]).toMatchObject({
-      operating_company_id: OPCO,
-      factoring_advance_id: "fac-1",
-      chargeback_amount_cents: 520000,
-      default_interest_cents: 0,
-      recoursed_ar_cents: 500000,
-      charged_back_at_iso: "2026-04-06",
-    });
-
-    const statusFlip = mockQuery.mock.calls.find(
-      (c) =>
-        typeof c[0] === "string" &&
-        c[0].includes("UPDATE accounting.factoring_advances") &&
-        c[0].includes("recourse_returned")
-    );
-    expect(statusFlip).toBeFalsy();
-    expect(mockAppendCrudAudit).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.anything(),
-      "accounting.factoring_recourse_auto_day95",
-      expect.objectContaining({ outstanding_liability_cents: 520000, net_recoursed_ar_cents: 500000 }),
-      "warning",
-      "FACTORING-DAY95-RECOURSE"
-    );
+    const res = await triggerDay95RecourseForCompany({ operating_company_id: OPCO, as_of_date_iso: "2026-04-06" });
+    expect(res).toMatchObject({ recoursed: 0, advances_scanned: 0, retired: true });
+    expect(mockChargeback).not.toHaveBeenCalled();
+    expect(mockLoadExact).not.toHaveBeenCalled();
+    expect(mockAppendCrudAudit).not.toHaveBeenCalled();
+    expect(mockQuery).not.toHaveBeenCalled();
   });
 
-  it("skips when exact linked amounts are zero/missing (fail closed — no guessed Net)", async () => {
+  it("nightly default-interest accrual is retired (period close accrues, with approval)", async () => {
     installDefaults();
-    mockLoadExact.mockResolvedValue({ liability_cents: 0, recoursed_ar_cents: 500000 });
-    const res = await triggerDay95RecourseForCompany({
-      operating_company_id: OPCO,
-      as_of_date_iso: "2026-04-06",
-    });
-    expect(res.recoursed).toBe(0);
-    expect(mockChargeback).not.toHaveBeenCalled();
-  });
-
-  it("FLAG OFF ⇒ no selection / no chargeback", async () => {
-    installDefaults({ flagOn: false });
-    const res = await triggerDay95RecourseForCompany({
-      operating_company_id: OPCO,
-      as_of_date_iso: "2026-04-06",
-    });
-    expect(res).toMatchObject({ flag_off: true, advances_scanned: 0, recoursed: 0 });
-    expect(mockChargeback).not.toHaveBeenCalled();
+    const res = await accrueDefaultInterestForCompany({ operating_company_id: OPCO, as_of_date_iso: "2026-04-06" });
+    expect(res).toMatchObject({ accruals_posted: 0, retired: true });
+    expect(mockQuery).not.toHaveBeenCalled();
   });
 });
