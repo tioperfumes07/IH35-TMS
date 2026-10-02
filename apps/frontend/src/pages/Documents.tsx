@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getDownloadUrl, listFileCategories, listFiles, type DocsFile } from "../api/docs";
 import { listUsers } from "../api/identity";
@@ -17,6 +17,8 @@ import { formatDateUS } from "../lib/formatDate";
 import { entityLabel } from "../lib/entity-label";
 import { entityLabel as formatEntityLabel } from "../lib/entity-label";
 import { DatePicker } from "../components/forms/DatePicker";
+import { UniversalListToolbar } from "../components/table/UniversalListToolbar";
+import type { FileEntityType } from "../api/docs";
 
 const ENTITY_TYPE_OPTIONS = [
   { value: "all", label: "All" },
@@ -75,8 +77,24 @@ export function DocumentsPage() {
     enabled: isOwnerOrAdmin,
   });
 
+  // Round 296 filter law: this library pages server-side (route max 200), so EVERY filter runs on the server over the
+  // whole library -- it used to filter one page in the browser and show that page's count. "N of M" = the filtered
+  // total of the library total. Any filter change returns to page 1.
+  const filters = {
+    category: categoryFilter ?? undefined,
+    entity_type:
+      entityTypeFilter && entityTypeFilter !== "all" && entityTypeFilter !== "standalone"
+        ? (entityTypeFilter as FileEntityType)
+        : undefined,
+    standalone: entityTypeFilter === "standalone" ? true : undefined,
+    uploader_user_id: uploaderFilter ?? undefined,
+    q: search.trim() || undefined,
+    date_from: dateFrom || undefined,
+    date_to: dateTo || undefined,
+    expires_within_days: expiringDays && expiringDays !== "none" ? Number(expiringDays) : undefined,
+  };
   const filesQuery = useQuery({
-    queryKey: ["all-documents-page", selectedCompanyId, showDeleted, page],
+    queryKey: ["all-documents-page", selectedCompanyId, showDeleted, page, filters],
     queryFn: () => {
       if (!selectedCompanyId) throw new Error("Operating company is required to list documents");
       return listFiles({
@@ -84,41 +102,19 @@ export function DocumentsPage() {
         include_deleted: showDeleted && isOwner,
         limit: PAGE_SIZE,
         offset: (page - 1) * PAGE_SIZE,
+        ...filters,
       });
     },
     enabled: isOwnerOrAdmin && Boolean(selectedCompanyId),
   });
   const files = filesQuery.data?.files ?? [];
   const totalFiles = filesQuery.data?.total ?? 0;
+  const libraryTotal = filesQuery.data?.library_total ?? totalFiles;
   const totalPages = Math.max(1, Math.ceil(totalFiles / PAGE_SIZE));
-
-  const filteredFiles = useMemo(() => {
-    const now = new Date();
-    return [...files]
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .filter((file) => {
-        if (categoryFilter && file.category_id !== categoryFilter) return false;
-        if (entityTypeFilter && entityTypeFilter !== "all") {
-          if (entityTypeFilter === "standalone") {
-            if (file.links && file.links.length > 0) return false;
-          } else if (!file.links?.some((link) => link.entity_type === entityTypeFilter)) {
-            return false;
-          }
-        }
-        if (uploaderFilter && file.uploader_user_id !== uploaderFilter) return false;
-        if (search.trim() && !file.original_filename.toLowerCase().includes(search.trim().toLowerCase())) return false;
-        const compareDate = (file.document_date ?? file.created_at).slice(0, 10);
-        if (dateFrom && compareDate < dateFrom) return false;
-        if (dateTo && compareDate > dateTo) return false;
-        if (expiringDays && expiringDays !== "none") {
-          if (!file.expiration_date) return false;
-          const threshold = new Date(now);
-          threshold.setDate(threshold.getDate() + Number(expiringDays));
-          if (new Date(file.expiration_date) > threshold) return false;
-        }
-        return true;
-      });
-  }, [files, categoryFilter, entityTypeFilter, uploaderFilter, search, dateFrom, dateTo, expiringDays]);
+  const resetPage = <T,>(set: (value: T) => void) => (value: T) => {
+    set(value);
+    setPage(1);
+  };
 
   if (!isOwnerOrAdmin) {
     return <div className="rounded-sm border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">Only Owner/Administrator can access company-wide documents.</div>;
@@ -156,7 +152,7 @@ export function DocumentsPage() {
           <Combobox
             options={(categoriesQuery.data ?? []).map((category) => ({ value: category.id, label: category.label, sublabel: category.code }))}
             value={categoryFilter}
-            onChange={(value) => setCategoryFilter(value)}
+            onChange={resetPage(setCategoryFilter)}
             allowClear
             placeholder="All categories"
           />
@@ -166,7 +162,7 @@ export function DocumentsPage() {
           <Combobox
             options={ENTITY_TYPE_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
             value={entityTypeFilter}
-            onChange={(value) => setEntityTypeFilter(value ?? "all")}
+            onChange={(value) => resetPage(setEntityTypeFilter)(value ?? "all")}
           />
         </div>
         <div className="space-y-1">
@@ -178,7 +174,7 @@ export function DocumentsPage() {
               sublabel: entry.role,
             }))}
             value={uploaderFilter}
-            onChange={(value) => setUploaderFilter(value)}
+            onChange={resetPage(setUploaderFilter)}
             allowClear
             placeholder="All uploaders"
           />
@@ -193,35 +189,16 @@ export function DocumentsPage() {
               { value: "90", label: "90 days" },
             ]}
             value={expiringDays}
-            onChange={(value) => setExpiringDays(value ?? "none")}
+            onChange={(value) => resetPage(setExpiringDays)(value ?? "none")}
           />
         </div>
         <div className="space-y-1">
           <label className="text-xs font-semibold text-gray-600">Date From</label>
-          <DatePicker
-            value={dateFrom}
-            onChange={setDateFrom}
-            className="h-9 w-full"
-          />
+          <DatePicker box="filter" value={dateFrom} onChange={resetPage(setDateFrom)} />
         </div>
         <div className="space-y-1">
           <label className="text-xs font-semibold text-gray-600">Date To</label>
-          <DatePicker
-            value={dateTo}
-            onChange={setDateTo}
-            className="h-9 w-full"
-          />
-        </div>
-        <div className="space-y-1 md:col-span-2">
-          <label className="text-xs font-semibold text-gray-600">Filename Search</label>
-          <input
-            type="text"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search filename"
-            aria-label="Search filename"
-            className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
-          />
+          <DatePicker box="filter" value={dateTo} onChange={resetPage(setDateTo)} />
         </div>
         {isOwner ? (
           <label className="flex items-center gap-2 text-xs text-gray-600 md:col-span-4">
@@ -238,8 +215,22 @@ export function DocumentsPage() {
         ) : null}
       </div>
 
+      {/* House toolbar for a server-paged list: search drives the server `q`; N of M = filtered of library. */}
+      <UniversalListToolbar
+        search={search}
+        onSearchChange={resetPage(setSearch)}
+        columns={[]}
+        range={null}
+        onRangeApply={() => undefined}
+        hideRange
+        resultCount={totalFiles}
+        totalCount={libraryTotal}
+        searchPlaceholder="Search filename"
+      />
+
       <DataTable
-        rows={filteredFiles}
+        rows={files}
+        hideToolbar
         rowKey={(row) => row.id}
         loading={filesQuery.isLoading}
         errorState={dataTableErrorState(filesQuery.error, () => void filesQuery.refetch())}

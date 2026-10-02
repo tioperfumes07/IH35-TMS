@@ -133,6 +133,14 @@ const listQuerySchema = z.object({
   category: optionalQueryString().pipe(z.string().uuid().optional()),
   include_deleted: z.coerce.boolean().optional(),
   include_incomplete: z.coerce.boolean().optional(),
+  // Round 296 filter law: the All Documents library pages server-side, so every filter it offers runs HERE over the
+  // whole library (it used to filter one 200-row page in the browser and count that page as the total).
+  q: optionalQueryString().pipe(z.string().max(200).optional()),
+  uploader_user_id: optionalQueryString().pipe(z.string().uuid().optional()),
+  date_from: optionalQueryString().pipe(z.string().date().optional()),
+  date_to: optionalQueryString().pipe(z.string().date().optional()),
+  expires_within_days: z.coerce.number().int().min(0).max(3650).optional(),
+  standalone: z.enum(["true", "false"]).optional(),
 });
 
 const updateFileBodySchema = z
@@ -595,6 +603,31 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
         values.push(query.category);
         filters.push(`f.category_id = $${values.length}`);
       }
+      if (query.q) {
+        // Filename contains, case-insensitive; LIKE wildcards in the user's text are matched literally.
+        values.push(`%${query.q.replace(/[\\%_]/g, (m) => `\\${m}`)}%`);
+        filters.push(`f.original_filename ILIKE $${values.length}`);
+      }
+      if (query.uploader_user_id) {
+        values.push(query.uploader_user_id);
+        filters.push(`f.uploader_user_id = $${values.length}::uuid`);
+      }
+      // The library's date is the document's own date, else the day it was uploaded.
+      if (query.date_from) {
+        values.push(query.date_from);
+        filters.push(`COALESCE(f.document_date, f.created_at::date) >= $${values.length}::date`);
+      }
+      if (query.date_to) {
+        values.push(query.date_to);
+        filters.push(`COALESCE(f.document_date, f.created_at::date) <= $${values.length}::date`);
+      }
+      if (query.expires_within_days !== undefined) {
+        values.push(query.expires_within_days);
+        filters.push(`f.expiration_date IS NOT NULL AND f.expiration_date <= CURRENT_DATE + $${values.length}::int`);
+      }
+      if (query.standalone === "true") {
+        filters.push(`NOT EXISTS (SELECT 1 FROM docs.file_links fl WHERE fl.file_id = f.id AND fl.deleted_at IS NULL)`);
+      }
       if (!query.include_deleted || user.role !== "Owner") {
         filters.push("f.deleted_at IS NULL");
       }
@@ -610,6 +643,20 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
       const limitIdx = values.length - 1;
       const offsetIdx = values.length;
       const countRes = await client.query(`SELECT count(*)::int AS total FROM docs.files f ${whereClause}`, values.slice(0, values.length - 2));
+      // "N of M": M is the library in scope (company, deleted, incomplete) before any user filter.
+      const libraryValues: unknown[] = [operatingCompanyId];
+      const libraryFilters = ["f.operating_company_id = $1::uuid"];
+      if (!query.include_deleted || user.role !== "Owner") libraryFilters.push("f.deleted_at IS NULL");
+      if (!query.include_incomplete) {
+        libraryFilters.push("f.upload_completed_at IS NOT NULL");
+      } else if (!["Owner", "Administrator"].includes(user.role)) {
+        libraryValues.push(user.uuid);
+        libraryFilters.push(`(f.upload_completed_at IS NOT NULL OR f.uploader_user_id = $${libraryValues.length})`);
+      }
+      const libraryRes = await client.query(
+        `SELECT count(*)::int AS total FROM docs.files f WHERE ${libraryFilters.join(" AND ")}`,
+        libraryValues
+      );
       const res = await client.query(
         `
           SELECT
@@ -645,12 +692,14 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
       return {
         files: res.rows,
         total: Number(countRes.rows[0]?.total ?? 0),
+        library_total: Number(libraryRes.rows[0]?.total ?? 0),
       };
     });
 
     return {
       files: response.files,
       total: response.total,
+      library_total: response.library_total,
       limit: query.limit,
       offset: query.offset,
     };

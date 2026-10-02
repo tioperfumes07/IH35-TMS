@@ -59,6 +59,20 @@ const SURFACES = [
     must: [/fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: status \}\)/, /<ParityTable\b/],
     mustNot: [/<CatalogListSearchInput\b/, /showInactive/, /suppressToolbarSearch/, /limit: 200,\s*offset: 0/],
   },
+  // Server-paged (route max 200): every filter runs on the server; the house toolbar's search drives `q`; "N of M" =
+  // filtered total of library total; the table's own per-page toolbar is hidden (it could only see one page).
+  {
+    name: "All Documents (page)",
+    file: "apps/frontend/src/pages/Documents.tsx",
+    must: [/offset: \(page - 1\) \* PAGE_SIZE,\s*\.\.\.filters,/, /<UniversalListToolbar[\s\S]{0,400}resultCount=\{totalFiles\}\s*totalCount=\{libraryTotal\}/, /<DataTable\s+rows=\{files\}\s+hideToolbar/],
+    mustNot: [/filteredFiles/, /original_filename\.toLowerCase\(\)\.includes/],
+  },
+  {
+    name: "All Documents (route)",
+    file: "apps/backend/src/docs/files.routes.ts",
+    must: [/f\.original_filename ILIKE \$/, /f\.uploader_user_id = \$\$\{values\.length\}::uuid/, /COALESCE\(f\.document_date, f\.created_at::date\) >= /, /f\.expiration_date <= CURRENT_DATE \+ /, /NOT EXISTS \(SELECT 1 FROM docs\.file_links fl WHERE fl\.file_id = f\.id/, /library_total: response\.library_total/],
+    mustNot: [],
+  },
 ];
 
 export function audit(read) {
@@ -78,6 +92,7 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["CoA back to one page", (f) => f.endsWith("ChartOfAccountsListPage.tsx") ? read(f).replace("rows={filteredRows}", "rows={pageRows}") : read(f)],
     ["catalog page search comes back", (f) => f.endsWith("TerminationReasonsListPage.tsx") ? read(f) + "\n<CatalogListSearchInput value={x} />" : read(f)],
+    ["Documents filters one page again", (f) => f.endsWith("Documents.tsx") ? read(f).replace("...filters,", "") : read(f)],
     ["ListView renders unpaged", (f) => f.endsWith("ListView.tsx") ? read(f).replace("{pageRows.map((row) => {", "{processedRows.map((row) => {") : read(f)],
   ];
   for (const [name, r] of mutations) if (audit(r).length === 0) { console.error(`selftest FAIL: ${name}`); process.exit(1); }

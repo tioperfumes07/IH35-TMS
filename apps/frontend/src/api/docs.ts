@@ -190,6 +190,12 @@ export function listFiles(filters: { operating_company_id: string } & Partial<{
   include_incomplete: boolean;
   limit: number;
   offset: number;
+  q: string;
+  uploader_user_id: string;
+  date_from: string;
+  date_to: string;
+  expires_within_days: number;
+  standalone: boolean;
 }>) {
   const clean = (value: string | undefined) => {
     if (!value) return undefined;
@@ -211,8 +217,16 @@ export function listFiles(filters: { operating_company_id: string } & Partial<{
   if (filters.include_incomplete !== undefined) query.set("include_incomplete", String(filters.include_incomplete));
   if (filters.limit !== undefined) query.set("limit", String(filters.limit));
   if (filters.offset !== undefined) query.set("offset", String(filters.offset));
+  const q = clean(filters.q);
+  if (q) query.set("q", q);
+  const uploader = clean(filters.uploader_user_id);
+  if (uploader) query.set("uploader_user_id", uploader);
+  if (clean(filters.date_from)) query.set("date_from", filters.date_from!);
+  if (clean(filters.date_to)) query.set("date_to", filters.date_to!);
+  if (filters.expires_within_days !== undefined) query.set("expires_within_days", String(filters.expires_within_days));
+  if (filters.standalone) query.set("standalone", "true");
   const qs = query.toString();
-  return apiRequest<{ files: DocsFile[]; total: number; limit: number; offset: number }>(`/api/v1/docs/files${qs ? `?${qs}` : ""}`);
+  return apiRequest<{ files: DocsFile[]; total: number; library_total?: number; limit: number; offset: number }>(`/api/v1/docs/files${qs ? `?${qs}` : ""}`);
 }
 
 /** Exhaust a stable scoped document population for surfaces that present complete histories. */
