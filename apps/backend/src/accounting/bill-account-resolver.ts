@@ -8,6 +8,8 @@
 //
 // Resolution order (Jorge's CHAIN-03 fork decision — grounded in QBO/NetSuite, integrity over convenience):
 //   1. bill_line explicit account override → honor it (QBO allows a per-line account).
+//   1b. line names a catalog item → the item's own default expense account (ROUND 326 queue item 11, G-08: the
+//      resolver ignored item_id, so an itemized line with no category fell to uncategorized / 9000).
 //   2. line has a category → expense_category_account_map (the B1 map).
 //   3. line has NO category → uncategorized_expense role (QBO-25) — QBO's "Uncategorized Expense" behavior.
 //   4. line has a category but it's NOT in the map → FAIL LOUD (CATEGORY_MAPPING_MISSING). Never bucket.
@@ -33,10 +35,13 @@ export type BillLineForResolution = {
   // accounting.bill_lines.category_kind / category_code (0220) — the B1 map keys.
   category_kind?: string | null;
   category_code?: string | null;
+  // accounting.bill_lines.item_id — the catalog item the line names (its default_expense_account_id).
+  item_id?: string | null;
 };
 
 export type BillLineDebitMethod =
   | "bill_line_explicit_account"
+  | "catalog_item_account"
   | "expense_category_map"
   | "uncategorized_expense_role";
 
@@ -50,6 +55,7 @@ export type BillLineAccountErrorCode =
   | "CATEGORY_INCOMPLETE"
   | "CATEGORY_KIND_INVALID"
   | "CATEGORY_MAPPING_MISSING"
+  | "ITEM_ACCOUNT_MISSING"
   | "UNCATEGORIZED_UNRESOLVED";
 
 export class BillLineAccountError extends Error {
@@ -91,6 +97,21 @@ export async function resolveBillLineDebitAccount(
   const explicit = line.explicit_account_id?.trim() || null;
   if (explicit) {
     return { account_id: await assertActiveAccount(client, operatingCompanyId, explicit), method: "bill_line_explicit_account", category_label: "Per-line account override" };
+  }
+
+  // Tier 1b — the line names a catalog item: the item's own default expense account (company-scoped, by id).
+  // An item with no account is a catalog defect named here — never parked in uncategorized.
+  const itemId = line.item_id?.trim() || null;
+  if (itemId) {
+    const item = (await client.query<{ account_id: string | null; item_name: string }>(
+      `SELECT default_expense_account_id::text AS account_id, item_name FROM catalogs.items
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
+      [itemId, operatingCompanyId],
+    )).rows[0];
+    if (!item?.account_id) {
+      throw new BillLineAccountError("ITEM_ACCOUNT_MISSING", `Catalog item ${itemId}${item ? ` ("${item.item_name}")` : ""} has no default expense account in this company — set the item's account; the line is never parked in uncategorized.`);
+    }
+    return { account_id: await assertActiveAccount(client, operatingCompanyId, item.account_id), method: "catalog_item_account", category_label: `Item: ${item.item_name}` };
   }
 
   const kind = line.category_kind?.trim() || null;

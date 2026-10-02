@@ -27,6 +27,8 @@ type DbClient = {
 export type BillDraftLineSpec = {
   category_kind?: ExpenseCategoryMapKind | null;
   category_code?: string | null;
+  /** The catalog item the line names — resolved to the item's own expense account (same resolver as the poster). */
+  item_id?: string | null;
   amount_cents: number;
   description?: string | null;
 };
@@ -39,6 +41,7 @@ export type BillDraftSpec = {
 
 export type DraftResolutionMethod =
   | "bill_line_explicit_account"
+  | "catalog_item_account"
   | "expense_category_map"
   | "uncategorized_expense_role"
   | "ap_control_role";
@@ -218,6 +221,7 @@ export async function computeBillGlDraft(
     const resolved = await resolveBillLineDebitAccount(client, operatingCompanyId, {
       category_kind: line.category_kind ?? null,
       category_code: line.category_code ?? null,
+      item_id: line.item_id ?? null,
     });
     const ref = await accountRef(client, resolved.account_id, operatingCompanyId);
 
