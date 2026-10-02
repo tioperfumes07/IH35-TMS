@@ -129,6 +129,13 @@ function main() {
   assertIncludes(form, "VoidReasonModal", FORM);
   assertIncludes(form, 'label: "Delete"', FORM);
   assertIncludes(form, "Save and close", FORM);
+  // BANK-F91045 — ORDERS §B-4 / QBO §9–§13 [Save] [Save and close ▾] (Save and new / Save and print)
+  assertIncludes(form, 'data-b4-save-and-close="1"', FORM);
+  assertIncludes(form, 'data-testid="b4-save-and-close"', FORM);
+  assertIncludes(form, 'data-testid="b4-save-and-close-menu"', FORM);
+  assertIncludes(form, 'label: "Save and new"', FORM);
+  assertIncludes(form, 'label: "Save and print"', FORM);
+  assertIncludes(form, 'aria-label="Save and close options"', FORM);
   assertIncludes(form, "payCheckBills", FORM);
   assertIncludes(form, "createCheck", FORM);
 

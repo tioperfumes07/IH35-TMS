@@ -1707,12 +1707,49 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
           <Button variant="tertiary" onClick={() => void handleSave("keep_open")} disabled={!canSave}>
             {saving ? "Saving…" : "Save"}
           </Button>
-          <Button variant="tertiary" onClick={() => void handleSave("new")} disabled={!canSave}>
-            Save and new
-          </Button>
-          <Button variant="primary" onClick={() => void handleSave("close")} disabled={!canSave}>
-            Save and close
-          </Button>
+          {/* BANK-F91045 — ORDERS §B-4 / QBO §9–§13: [Save] [Save and close ▾] with Save and new / Save and print. */}
+          <div className="inline-flex items-stretch" data-b4-save-and-close="1" data-testid="b4-save-and-close">
+            <Button
+              variant="primary"
+              className="rounded-r-none"
+              onClick={() => void handleSave("close")}
+              disabled={!canSave}
+              data-testid="b4-save-and-close-primary"
+            >
+              Save and close
+            </Button>
+            <MoreActionsMenu
+              data-testid="b4-save-and-close-menu"
+              trigger={({ toggle, triggerTestId, open }) => (
+                <button
+                  type="button"
+                  className="inline-flex h-7 items-center rounded-l-none rounded-r-sm border border-l-0 border-[#14314F] bg-[#14314F] px-2 text-xs font-semibold text-white hover:bg-[#1a3d63] disabled:opacity-50"
+                  onClick={toggle}
+                  disabled={!canSave}
+                  aria-expanded={open}
+                  aria-label="Save and close options"
+                  data-testid={triggerTestId}
+                  title="Save and new · Save and print"
+                >
+                  ▾
+                </button>
+              )}
+              items={[
+                {
+                  key: "save-and-new",
+                  label: "Save and new",
+                  disabled: !canSave,
+                  onSelect: () => void handleSave("new"),
+                },
+                {
+                  key: "save-and-print",
+                  label: "Save and print",
+                  disabled: !canPrintCheck,
+                  onSelect: () => void handleSave("close", true),
+                },
+              ]}
+            />
+          </div>
         </div>
       </div>
       <VoidReasonModal
