@@ -473,7 +473,31 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
   const [billFindQuery, setBillFindQuery] = useState("");
   const billsToPay = openBills.filter((b) => b.id in billToPayAmounts);
   const isBillPayment = billsToPay.length > 0;
-  const billPaymentTotalCents = useMemo(() => Object.values(billToPayAmounts).reduce((sum, c) => sum + c, 0), [billToPayAmounts]);
+  /** ORDERS §B-4 / QBO §10 — Amount to Apply = payments capped to each bill's open balance. */
+  const billPaymentApplyCents = useMemo(
+    () =>
+      billsToPay.reduce((sum, b) => {
+        const remaining = Math.max(b.balance_cents ?? b.amount_cents - b.paid_cents, 0);
+        const payment = billToPayAmounts[b.id] ?? 0;
+        return sum + Math.min(Math.max(payment, 0), remaining);
+      }, 0),
+    [billsToPay, billToPayAmounts]
+  );
+  /**
+   * BANK-F91033 — Amount to Credit = typed Payment above open balance (QBO overpayment → vendor credit).
+   * Live chrome only until pay-bills posts the credit; Save stays disabled while credit > 0.
+   */
+  const billPaymentCreditCents = useMemo(
+    () =>
+      billsToPay.reduce((sum, b) => {
+        const remaining = Math.max(b.balance_cents ?? b.amount_cents - b.paid_cents, 0);
+        const payment = billToPayAmounts[b.id] ?? 0;
+        return sum + Math.max(0, payment - remaining);
+      }, 0),
+    [billsToPay, billToPayAmounts]
+  );
+  /** Header / Total = Apply + Credit (full check amount the operator typed). */
+  const billPaymentTotalCents = billPaymentApplyCents + billPaymentCreditCents;
 
   function billMatchesFind(bill: VendorBill, query: string): boolean {
     const q = query.trim().toLowerCase();
@@ -559,11 +583,10 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
       sortable: false,
       className: "w-28",
       render: (b) => {
-        const remaining = b.balance_cents ?? b.amount_cents - b.paid_cents;
         return (
           <MoneyInput
             valueCents={billToPayAmounts[b.id] ?? 0}
-            onChangeCents={(cents) => setBillToPayAmount(b.id, Math.min(cents ?? 0, remaining))}
+            onChangeCents={(cents) => setBillToPayAmount(b.id, Math.max(cents ?? 0, 0))}
           />
         );
       },
@@ -774,8 +797,9 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
 
   // R-172 step 5 -- once a bill is added, this IS a Bill Payment (Check): a real check number is
   // required (the underlying engine has never supported print-later) and the category/item lines are
-  // not sent at all -- the bills ARE the lines. amount_cents on every queued bill must be positive and
-  // never exceed its own remaining balance (partial payment allowed, over-payment is not).
+  // not sent at all -- the bills ARE the lines. amount_cents on every queued bill must be positive.
+  // BANK-F91033 — Payment may be typed above open balance (Amount to Credit lights up) but Save stays
+  // off until credit is $0 — pay-bills still rejects overpayment (no silent vendor-credit invent).
   const checkLinesReady =
     Boolean(payeeId) &&
     Boolean(bankAccountId) &&
@@ -794,7 +818,8 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
         const remaining = b.balance_cents ?? b.amount_cents - b.paid_cents;
         return amt > 0 && amt <= remaining;
       }) &&
-      billPaymentTotalCents > 0 &&
+      billPaymentApplyCents > 0 &&
+      billPaymentCreditCents === 0 &&
       !saving
     : checkLinesReady && (printLater || checkNumber.trim().length > 0);
   // ROUND 326 queue item 15: "Print check" forces print_later (the number is assigned when the check is printed), so it
@@ -1178,9 +1203,11 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                   data-b4-amount-to-apply="1"
                 >
                   <span>
-                    Amount to Apply: <strong>{formatMoneyCents(billPaymentTotalCents)}</strong>
+                    Amount to Apply: <strong>{formatMoneyCents(billPaymentApplyCents)}</strong>
                   </span>
-                  <span>Amount to Credit: <strong>$0.00</strong></span>
+                  <span data-b4-amount-to-credit="1" data-testid="b4-amount-to-credit">
+                    Amount to Credit: <strong>{formatMoneyCents(billPaymentCreditCents)}</strong>
+                  </span>
                   <button
                     type="button"
                     className="font-semibold text-blue-700 hover:underline"
@@ -1191,6 +1218,12 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                     Clear Payment
                   </button>
                 </div>
+                {billPaymentCreditCents > 0 ? (
+                  <div className="border-t border-amber-100 bg-amber-50 px-2 py-1.5 text-xs text-amber-900" data-b4-credit-hint="1">
+                    Payment exceeds open balance by {formatMoneyCents(billPaymentCreditCents)}. Reduce Payment to the open
+                    balance — overpayment credit is not posted on Save yet.
+                  </div>
+                ) : null}
               </div>
             ) : null}
             {openBillsQuery.isLoading ? (
