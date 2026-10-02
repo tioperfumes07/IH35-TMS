@@ -1611,6 +1611,11 @@
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-02",
       "purpose": "ROUND 342 Phase 4 — drop the three duplicate tenant_id RLS policies (factoring.customer_factor_assignment / factor / letter_of_release); permissive policies OR together, so a row was visible if EITHER scope column matched. operating_company_id is canonical."
+    },
+    "202615312200": {
+      "claimed_by": "CURSOR",
+      "claimed_at": "2026-10-02",
+      "purpose": "ROUND 342 Class D — company-scope unique codes: mdata.customers(customer_code), mdata.vendors(vendor_code), mdata.locations(location_code) → UNIQUE(operating_company_id, code); drop global *_code_key indexes."
     }
   },
   "202613590001": {
