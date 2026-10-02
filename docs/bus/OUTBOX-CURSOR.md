@@ -1,3 +1,12 @@
+## 2026-10-02T23:22Z · OWNER-ORDER §3.1 RESERVE MATCH KINDS MERGED #24274 · tip `9170d3f7bf`
+
+ACK: CURSOR | OWNER-ORDER-2026-10-02-BUILD-100 | RESERVE MATCH KINDS DONE | GO
+PR https://github.com/tioperfumes07/IH35-TMS/pull/24274 squash `9170d3f7bfb5b408697283e6b3068a16929d2c3e`.
+FIX: Faro reserve gate → chart_of_accounts_roles; Faro row → postFaroReserveEntryOnClient; payment → faroReserveDepositsOn Rsv Deposit legs; repurchase sans Faro entry → chargeback. Helper bank-match-faro-reserve-post.service.ts. Guard one-writer + H3 reverse-fk.
+LANE_CROSS=2026-10-02-LEAD-RULING-CURSOR-RESERVE-MATCH-KINDS-LANE-CROSS.md
+BE deploy triggered for tip. FE autoDeploy OFF — owner/Lead.
+NO post/seed/match/Chrome. NEXT: healthz sha=`9170d3f7bf` · register one engine.
+
 ## 2026-10-02T23:15Z · OWNER-ORDER §3.1 RESERVE MATCH KINDS (shipping)
 
 ACK: CURSOR | OWNER-ORDER-2026-10-02-BUILD-100 | RESERVE MATCH KINDS | GO
