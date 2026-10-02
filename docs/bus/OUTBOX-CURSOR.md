@@ -1,3 +1,8 @@
+**2026-10-02T09:10Z · B-2 recon report reopen MERGED #24053 · tip `1bd2b7407d`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91015 MERGED FAST-MERGE | GO
+Completed session → read-only report (Beginning · Cleared payments/deposits · Ending · Uncleared). Clear/Finish locked. View report: on shell. money-pr-local-gate PASS.
+NEXT: next ORDERS leftover · Lead Chrome · bank_transaction_splits HH 12–23 · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T09:03Z · B-2 ORDERS grid columns MERGED #24051 · tip `6bdfc94d84`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91014 MERGED FAST-MERGE | GO
 Reconcile LEFT grid: DATE|CLEARED DATE|TYPE|REF NO.|ACCOUNT|PAYEE|MEMO|PAYMENT|DEPOSIT|●. bankTxTypeLabel/bankTxRef. Print + Filter Find honor columns. money-pr-local-gate PASS.
