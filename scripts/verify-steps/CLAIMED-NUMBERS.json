@@ -1,4 +1,14 @@
 {
+  "12101": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "verify-single-settlement-poster: ROUND 326 queue item 2 — Close posts the per-load A/P chain, retired bill-payment-post route answers 410, no clearing account, non-cash applications never post cash."
+  },
+  "12105": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "verify-driver-escrow-2100-default-line: ROUND 326 queue item 6 — Settlement Creator starts with a $25 driver escrow line (X removes it, own subtotal); escrow resolves the driver's own 2100-00-0NN liability, never the shared default / 2400."
+  },
   "12097": {
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-02",
