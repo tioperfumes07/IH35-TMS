@@ -1,5 +1,13 @@
 import crypto from "node:crypto";
-import { applyContractLinkage, mergeLinks, signerLinks } from "./contract-linkage.service.js";
+import {
+  applyContractLinkage,
+  mergeLinks,
+  signerLinks,
+  syncContractInstanceLinkage,
+  syncAllContractInstanceLinkageForCompany,
+  listContractLinkageOrphans,
+  listMatterLinkageOrphans,
+} from "./contract-linkage.service.js";
 import { z } from "zod";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { withLuciaBypass } from "../auth/db.js";
@@ -888,6 +896,14 @@ export async function completePublicSigning(
         signedFileName: pdf.filename,
         actorUserId: token.created_by_user_id ? String(token.created_by_user_id) : null,
       });
+      // ROUND 326: also stamp typed FKs + contract_instance_links from signer (create-time path may have been pre-316).
+      if (token.created_by_user_id) {
+        await syncContractInstanceLinkage(client as never, {
+          operatingCompanyId: String(token.operating_company_id),
+          contractInstanceId: String(token.contract_instance_id),
+          actorUserId: String(token.created_by_user_id),
+        });
+      }
       await applySignedFinanceHandoff(client, {
         operatingCompanyId: String(token.operating_company_id),
         contractInstanceId: String(token.contract_instance_id),
@@ -914,8 +930,20 @@ export async function completePublicSigning(
 
 export async function getContractInstanceDetail(
   client: QueryableClient,
-  args: { operatingCompanyId: string; contractInstanceId: string }
+  args: { operatingCompanyId: string; contractInstanceId: string; actorUserId?: string | null }
 ) {
+  // ROUND 326: repair missing contract_instance_links from signer/FKs before returning detail.
+  if (args.actorUserId) {
+    try {
+      await syncContractInstanceLinkage(client as never, {
+        operatingCompanyId: args.operatingCompanyId,
+        contractInstanceId: args.contractInstanceId,
+        actorUserId: args.actorUserId,
+      });
+    } catch {
+      /* best-effort — detail still returns */
+    }
+  }
   const instanceRes = await client.query(
     `
       SELECT ci.*, ct.display_name_en, ct.display_name_es
@@ -951,8 +979,37 @@ export async function getContractInstanceDetail(
     `,
     [args.operatingCompanyId, args.contractInstanceId]
   );
-  return { ...instance, signatures: signatures.rows, audit_log: audit.rows };
+  const links = await client.query(
+    `
+      SELECT id::text, link_type, target_schema, target_table, target_id::text, is_active, notes, created_at
+        FROM legal.contract_instance_links
+       WHERE operating_company_id = $1::uuid
+         AND contract_instance_id = $2::uuid
+         AND is_active
+       ORDER BY link_type, created_at
+    `,
+    [args.operatingCompanyId, args.contractInstanceId]
+  );
+  return { ...instance, signatures: signatures.rows, audit_log: audit.rows, links: links.rows };
 }
+
+/** ROUND 326 — company-wide linkage sync + orphan report (engine only; no invented subjects). */
+export async function syncCompanyContractLinkage(
+  client: QueryableClient,
+  args: { operatingCompanyId: string; actorUserId: string }
+) {
+  const sync = await syncAllContractInstanceLinkageForCompany(client as never, args);
+  const matterOrphans = await listMatterLinkageOrphans(client as never, args.operatingCompanyId);
+  return {
+    ...sync,
+    contract_orphans: sync.orphans,
+    matter_orphans: matterOrphans,
+    contract_orphan_count: sync.orphans.length,
+    matter_orphan_count: matterOrphans.length,
+  };
+}
+
+export { listContractLinkageOrphans, listMatterLinkageOrphans };
 
 // Loads everything the PDF renderer needs for an existing instance: the instance metadata plus the
 // template's content_html_en/es (which getContractInstanceDetail does NOT return — content lives on

@@ -1,3 +1,11 @@
+**2026-10-02T01:27Z · ROUND 326 item 1 LEGAL LINKAGE ENGINE · branch `cursor/r326-legal-linkage-engine-c89b`**
+ACK: CURSOR | ACK ROUND-326 | LEGAL LINKAGE ENGINE | GO
+Built: syncContractInstanceLinkage + POST /legal/contracts/sync-linkage; detail auto-sync + returns links; matter create requires subject FK or UNLINKED_REASON; guard scripts/verify-legal-linkage.mjs (Lead-named). B-1h already on main #23921.
+LIVE: links=0 contract_orphans=2 matter_orphans=13 (engine ships; item-2 backfill from signed docs next — no invented links).
+E2E-2E-95603e75: 0 bank_transactions rows matching description/merchant — not in bank feed under that string; still hunting recon surfaces.
+GUARD: verify-legal-linkage --selftest PASS; contract-linkage vitest 6/6.
+NEXT: FAST-MERGE → item 2 LEGAL BACKFILL from signed source documents.
+
 **2026-10-02T01:19Z · B-1j MERGED #23938 · tip `7b1ac14edb`**
 ACK: CURSOR | ACK ROUND-326 | B-1j MERGED FAST-MERGE | GO
 B-1j DepositDetailPage match banner + line EntityLinks + register hops. money-pr-local-gate PASS → squash-admin merge.

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { generatePresignedDownloadUrl, getR2BucketName, isR2Configured } from "../storage/r2-client.js";
+import { matterHasSubjectFk, parseMatterUnlinkedReason } from "./contract-linkage.service.js";
 
 export type QueryableClient = {
   query: (query: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
@@ -564,6 +565,22 @@ export async function createMatter(
   await assertMatterPartyInCompany(client, "mdata.customers", input.customer_id, args.operatingCompanyId);
   await assertMatterPartyInCompany(client, "mdata.vendors", input.vendor_id, args.operatingCompanyId);
   await assertMatterPartyInCompany(client, "mdata.loads", input.load_id, args.operatingCompanyId);
+  // ROUND 326: every matter must link a subject OR carry a named UNLINKED_REASON (no orphan matters).
+  const provisional = {
+    customer_id: input.customer_id,
+    vendor_id: input.vendor_id,
+    load_id: input.load_id,
+    related_driver_id: input.related_driver_id,
+    related_user_id: input.related_user_id,
+    unit_id: input.unit_id,
+    equipment_id: input.equipment_id,
+    insurance_claim_id: input.insurance_claim_id,
+    insurance_lawsuit_id: input.insurance_lawsuit_id,
+    incident_id: input.incident_id,
+  };
+  if (!matterHasSubjectFk(provisional) && !parseMatterUnlinkedReason(input.internal_notes ?? null)) {
+    throw new Error("legal_matter_requires_subject_or_unlinked_reason");
+  }
   const ins = await client.query(
     `
       INSERT INTO legal.matters (

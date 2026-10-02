@@ -10,6 +10,7 @@ import {
   getContractInstanceForRender,
   listContractInstances,
   sendContractSigningLink,
+  syncCompanyContractLinkage,
 } from "./contracts.service.js";
 import { renderSignedContractPdf } from "./pdf-renderer.service.js";
 import {
@@ -115,10 +116,28 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
       return getContractInstanceDetail(client, {
         operatingCompanyId: parsedQuery.data.operating_company_id,
         contractInstanceId: parsedParams.data.id,
+        actorUserId: authUser.uuid,
       });
     });
     if (!detail) return reply.code(404).send({ error: "legal_contract_instance_not_found" });
     return detail;
+  });
+
+  // ROUND 326 — linkage sync engine: stamp FKs + contract_instance_links from existing signer/FKs (no invented subjects).
+  app.post("/api/v1/legal/contracts/sync-linkage", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    if (!requireWriteRole(reply, String(authUser.role ?? ""))) return;
+    const parsedBody = operatingCompanyQuerySchema.safeParse(req.body ?? {});
+    if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
+      await setOperatingCompany(client, parsedBody.data.operating_company_id);
+      return syncCompanyContractLinkage(client, {
+        operatingCompanyId: parsedBody.data.operating_company_id,
+        actorUserId: authUser.uuid,
+      });
+    });
+    return result;
   });
 
   // On-demand DRAFT PDF of a SAVED instance — lets the owner view/download the contract as a PDF
