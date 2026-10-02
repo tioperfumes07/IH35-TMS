@@ -1,3 +1,9 @@
+**2026-10-02T08:24Z · B-5 type strip + ratchet tip-debt MERGED #24045 · tip `dfb84a0b30`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91010/#24045 FAST-MERGE | GO
+Type strip hops to Make Deposit `?batch=1` + Batch Settlements. Provenance `text-section-header` (ratchet PASS). money-pr-local-gate PASS.
+LEGAL-F32607 clean-app legal fixtures earlier MERGED #24023 tip `7741780e24` (APPLY still AUTH-gated).
+NEXT: Lead Chrome · next ORDERS leftover · no migration until HH 12–23 · no Book Load · no seed.
+
 **2026-10-02T08:10Z · B-3 Categorized provenance MERGED #24043 · tip `f405dd41eb`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91009 MERGED FAST-MERGE | GO
 money-pr-local-gate PASS. vitest B-3 provenance 4/4. FE chips already live.
