@@ -1441,6 +1441,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-10-02",
       "purpose": "ROUND 326 CC-3 queue item 11: preserve schema — telematics + geocode preservation engine (natural keys only, no FK to anything purgeable; positions, geofences + events, stop events, odometer captures/segments/readings, samsara addresses, route stop progress, DVIR, HOS snapshots)."
+    },
+    "202615221000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-10-02",
+      "purpose": "CC-3 queue 2a: canonical merge delete path — RLS DELETE policy on mdata.customers / mdata.vendors for ih35_app scoped to a row named by a live (unreversed) customer_aliases / vendor_aliases row in the same company; nothing else deletable."
     }
   },
   "202613590001": {
