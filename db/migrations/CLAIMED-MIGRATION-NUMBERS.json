@@ -1446,6 +1446,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-10-02",
       "purpose": "CC-3 queue 2a: canonical merge delete path — RLS DELETE policy on mdata.customers / mdata.vendors for ih35_app scoped to a row named by a live (unreversed) customer_aliases / vendor_aliases row in the same company; nothing else deletable."
+    },
+    "202615221200": {
+      "claimed_by": "cursor",
+      "claimed_at": "2026-10-02",
+      "purpose": "Rule 50 USMCA: enable BANK_TX_SPLIT_ENABLED + BANK_TX_SPLIT_GL_POSTING_ENABLED overrides (table live; overrides missing)."
     }
   },
   "202613590001": {
