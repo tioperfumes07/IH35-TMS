@@ -117,6 +117,17 @@ function main() {
   assertIncludes(form, 'data-b4-make-recurring="1"', FORM);
   assertIncludes(form, "Make recurring", FORM);
   assertIncludes(form, "Print later", FORM);
+  // BANK-F91041 — ORDERS §B-4 More(Void / Delete=void / Transaction journal / Audit history)
+  assertIncludes(form, 'data-b4-check-more="1"', FORM);
+  assertIncludes(form, 'data-testid="b4-check-more"', FORM);
+  assertIncludes(form, "MoreActionsMenu", FORM);
+  assertIncludes(form, "Transaction journal", FORM);
+  assertIncludes(form, "Audit history", FORM);
+  assertIncludes(form, "lastSavedCheckId", FORM);
+  assertIncludes(form, "lastSavedJournalEntryId", FORM);
+  assertIncludes(form, "voidCheckApi", FORM);
+  assertIncludes(form, "VoidReasonModal", FORM);
+  assertIncludes(form, 'label: "Delete"', FORM);
   assertIncludes(form, "Save and close", FORM);
   assertIncludes(form, "payCheckBills", FORM);
   assertIncludes(form, "createCheck", FORM);
