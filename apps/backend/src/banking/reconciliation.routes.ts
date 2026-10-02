@@ -1061,7 +1061,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     const session = await loadSession(user.uuid, params.data.sessionId, query.data.operating_company_id);
     if (!session) return reply.code(404).send({ error: "session_not_found" });
 
-    const inSession = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+    const updated = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const txCheck = await client.query<{ id: string }>(
         `
           SELECT id
@@ -1089,11 +1089,12 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         [body.data.matched_event_id, query.data.operating_company_id]
       );
       if (!eventExists.rows[0]) return "event_not_found" as const;
+
       return true;
     });
 
-    if (inSession === "event_not_found") return reply.code(404).send({ error: "matched_event_not_found" });
-    if (!inSession) return reply.code(404).send({ error: "transaction_not_in_session_period" });
+    if (updated === "event_not_found") return reply.code(404).send({ error: "matched_event_not_found" });
+    if (!updated) return reply.code(404).send({ error: "transaction_not_in_session_period" });
 
     // Settlement only — thin proxy to the canonical Match engine (never stamps matched_* here).
     try {
