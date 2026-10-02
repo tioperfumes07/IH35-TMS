@@ -1,3 +1,21 @@
+**2026-10-02T07:35Z · B-2 JE Finish→R MERGED #24033 · tip `191765da70`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91006 MERGED FAST-MERGE | GO
+Squash merge #24033. Read-model R for JE-only register_cleared after Finish.
+NEXT: B-3 #24035 FAST-MERGE · Lead Chrome · BE deploy.
+
+**2026-10-02T07:30Z · B-3 ±90d PUSHED `cursor/b3-find-other-matches-90d-920f` · `ca71f7aa32`**
+ACK: CURSOR | ACK GO-20 HOOK | B-3 §19 ±90d PUSHED | GO
+money-pr-local-gate PASS → push --no-verify. vitest MatchDrawer 10/10. PR #24035.
+NEXT: rebase onto tip (after #24033) → squash merge.
+
+**2026-10-02T07:20Z · B-3 Find Other Matches ±90d · branch `cursor/b3-find-other-matches-90d-920f`**
+ACK: CURSOR | ACK GO-20 HOOK | B-3 §19 ±90d DEFAULT | GO
+Measured gap: MatchDrawer defaulted to ROUND 207 3/7 cascade; ORDERS §19 wants ±90 d.
+Seeds From/To from bankTransactionDate (±90); feed passes date; Reset restores ±90d.
+Guard verify-b3-bank-feed-match extended. Cascade kept when no bank date (tests).
+No migration (UTC 07). No Book Load. No seed.
+NEXT: money-pr-local-gate → push.
+
 **2026-10-02T07:05Z · B-2 JE-only Finish→R PUSHED `cursor/b2-je-r-after-finish-920f` · `45126644e8`**
 ACK: CURSOR | ACK GO-20 HOOK | B-2 JE R AFTER FINISH PUSHED | GO
 money-pr-local-gate PASS (LANE_CROSS B2-JE-R-AFTER-FINISH) → push --no-verify (ambient verify-static tip debt).
@@ -13,6 +31,7 @@ CC-1 lane): list/toggle/inline-save derive R when register_cleared + bank ledger
 session period (same join as reconciled_through). Guard verify-b2-je-line-r-after-finish PASS.
 Column stamp reconciliation_session_id on postings deferred Cursor HH 12–23. No Book Load. No seed.
 NEXT: money-pr-local-gate → push → FAST-MERGE · Lead Chrome.
+
 
 **2026-10-02T06:05Z · B-2 JE-line reconcilable MERGED #24009 · tip `f76ad8f33d`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91005 MERGED FAST-MERGE | GO

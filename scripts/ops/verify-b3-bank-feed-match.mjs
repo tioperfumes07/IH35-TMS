@@ -47,6 +47,13 @@ function main() {
   assertIncludes(match, "Selected amount:", MATCH);
   assertIncludes(match, "Difference:", MATCH);
   assertIncludes(match, "text-red-700", MATCH);
+  // B-3 §19 — Find Other Matches default date range is bank date ±90 days (ORDERS 2026-10-01).
+  assertIncludes(match, "matchWindowPlusMinus90", MATCH);
+  assertIncludes(match, "bankTransactionDate", MATCH);
+  assertIncludes(match, "±90 days", MATCH);
+  assertIncludes(match, "Reset to ±90 days", MATCH);
+
+  assertIncludes(feed, "bankTransactionDate=", FEED);
 
   assertIncludes(feed, 'data-b3-expand-modes="1"', FEED);
   assertIncludes(feed, "banking-expand-mode-${modeId}", FEED);

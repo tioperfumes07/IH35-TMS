@@ -42,6 +42,8 @@ type Props = {
   open: boolean;
   bankTransactionId: string | null;
   bankTransactionLabel?: string | null;
+  /** ISO date (YYYY-MM-DD) of the bank line — ORDERS §19 Find Other Matches default ±90 d. */
+  bankTransactionDate?: string | null;
   operatingCompanyId: string;
   onClose: () => void;
   // HELD banking-categorize wiring: lets a host page (e.g. BankingTransactionsDesignView's row Action
@@ -90,6 +92,22 @@ function formatWindowDay(iso: string) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 }
 
+/** ORDERS §19 / QBO Find Other Matches — default date window is bank date ±90 days. */
+export function matchWindowPlusMinus90(isoDate: string): { from: string; to: string } | null {
+  const day = isoDate.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
+  const base = new Date(`${day}T00:00:00Z`);
+  if (Number.isNaN(base.getTime())) return null;
+  const from = new Date(base);
+  from.setUTCDate(from.getUTCDate() - 90);
+  const to = new Date(base);
+  to.setUTCDate(to.getUTCDate() + 90);
+  return {
+    from: from.toISOString().slice(0, 10),
+    to: to.toISOString().slice(0, 10),
+  };
+}
+
 function windowHeaderLabel(step: 1 | 2 | "custom" | undefined, from: string, to: string) {
   if (!from || !to) return "Match window";
   const range = `${formatWindowDay(from)} – ${formatWindowDay(to)}`;
@@ -98,11 +116,19 @@ function windowHeaderLabel(step: 1 | 2 | "custom" | undefined, from: string, to:
   return `Custom search (${range})`;
 }
 
-export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, operatingCompanyId, onClose, onAccepted }: Props) {
+export function MatchDrawer({
+  open,
+  bankTransactionId,
+  bankTransactionLabel,
+  bankTransactionDate,
+  operatingCompanyId,
+  onClose,
+  onAccepted,
+}: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
-  /** undefined = default cascade; 2 = user clicked Search 7 days */
+  /** undefined = default cascade; 2 = user clicked Search 7 days (only when no bank date ±90d seed). */
   const [windowStep, setWindowStep] = useState<1 | 2 | undefined>(undefined);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -114,19 +140,40 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
   const [writeOffAccountId, setWriteOffAccountId] = useState("");
   const { pushToast } = useToast();
 
+  const seedPlusMinus90 = () => {
+    const win90 = bankTransactionDate ? matchWindowPlusMinus90(bankTransactionDate) : null;
+    if (win90) {
+      setDateFrom(win90.from);
+      setDateTo(win90.to);
+      setWindowStep(undefined);
+      return true;
+    }
+    setDateFrom("");
+    setDateTo("");
+    return false;
+  };
+
   useEffect(() => {
     if (!open) return;
     setWindowStep(undefined);
-    setDateFrom("");
-    setDateTo("");
     setSearchQ("");
     setDraftQ("");
     setSelectedId(null);
     setSelectedIds(new Set());
     setWriteOffAccountId("");
-  }, [open, bankTransactionId]);
+    // B-3 §19 — Find Other Matches default date range is ±90 d from the bank line (not 3/7 cascade).
+    if (!seedPlusMinus90()) {
+      setDateFrom("");
+      setDateTo("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- seed only on open / bank row change
+  }, [open, bankTransactionId, bankTransactionDate]);
 
   const hasCustomFilters = Boolean(dateFrom || dateTo || searchQ.trim());
+  const expectedNinety = bankTransactionDate ? matchWindowPlusMinus90(bankTransactionDate) : null;
+  const usingNinetyDayDefault = Boolean(
+    expectedNinety && dateFrom === expectedNinety.from && dateTo === expectedNinety.to && !searchQ.trim()
+  );
 
   const candidatesQuery = useQuery({
     queryKey: [
@@ -251,8 +298,10 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
   const showSearch7Days =
     !hasCustomFilters && win?.step === 1 && candidates.length > 0 && windowStep !== 2;
   const showWidenBanner = Boolean(win?.auto_widened) && !hasCustomFilters;
+  // B-3 §19 — ±90d default always shows From/To; cascade still reveals them when step-2 empties.
   const showFromTo =
     hasCustomFilters ||
+    usingNinetyDayDefault ||
     (win?.step === 2 && candidates.length === 0) ||
     (windowStep === 2 && candidates.length === 0);
 
@@ -300,9 +349,11 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
           </div>
         </div>
         <p className="mb-1 text-xs font-medium text-[#1F2A44]" data-testid="match-window-header">
-          {hasCustomFilters
-            ? "Custom search"
-            : windowHeaderLabel(win?.step, win?.from ?? "", win?.to ?? "")}
+          {usingNinetyDayDefault
+            ? `±90 days (${formatWindowDay(dateFrom)} – ${formatWindowDay(dateTo)})`
+            : hasCustomFilters
+              ? "Custom search"
+              : windowHeaderLabel(win?.step, win?.from ?? "", win?.to ?? "")}
         </p>
         <p className="mb-3 text-xs text-slate-500">
           Exact-amount matches link and clear with no journal entry. A variance (partial) match requires a
@@ -440,13 +491,15 @@ export function MatchDrawer({ open, bankTransactionId, bankTransactionLabel, ope
               data-testid="match-window-reset"
               onClick={() => {
                 setWindowStep(undefined);
-                setDateFrom("");
-                setDateTo("");
                 setSearchQ("");
                 setDraftQ("");
+                if (!seedPlusMinus90()) {
+                  setDateFrom("");
+                  setDateTo("");
+                }
               }}
             >
-              Reset to 3 days
+              {bankTransactionDate ? "Reset to ±90 days" : "Reset to 3 days"}
             </button>
           ) : null}
         </div>
