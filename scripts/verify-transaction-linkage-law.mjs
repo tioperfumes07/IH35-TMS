@@ -134,6 +134,7 @@ export const TABLE_REGISTRY = {
   // its unit/load linkage is reached through each line's invoice/load, never carried on the purchase itself.
   "accounting.factoring_purchases": { status: "OUT_OF_SCOPE", reason: "factoring/AR financing (purchase document, 1:1 with factoring_advances)" },
   "accounting.factoring_purchase_lines": { status: "OUT_OF_SCOPE", reason: "factoring/AR financing (one line per invoice; load reached via the invoice)" },
+  "accounting.factoring_repurchase_due_events": { status: "OUT_OF_SCOPE", reason: "factoring/AR financing (day-95 repurchase decision per purchase line; invoice / customer / purchase carried, load reached via the invoice; no GL of its own)" },
   "accounting.factoring_default_interest_accruals": { status: "OUT_OF_SCOPE" },
   "accounting.factoring_lifecycle_posting_keys": { status: "OUT_OF_SCOPE" },
   "accounting.factoring_reserve_movements": { status: "OUT_OF_SCOPE" },
