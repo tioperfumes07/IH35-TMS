@@ -126,6 +126,12 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 
 ### Active Architectural Decisions — Fuel match JE same-txn + DatePicker portal (Cursor, ROUND 297 / 296, 2026-10-02)
 
+- **Feed retired as a fuel GL writer (2026-10-02, OWNER-ORDER §4):**
+  `feed/seed-settlement-document.service.ts` `postGlForSeededDocument` must NOT call
+  `postFuelExpenseFromEvent` / `createExpenseFromFuelTransaction`. Feed inserts
+  `fuel.fuel_transactions` only (composition / cost attribution). GL posts solely when Banking
+  matches the card line via `postFuelFillOnBankMatch`. Guard
+  `verify-fuel-posts-only-on-bank-match` asserts the feed has no poster calls (no lane allowlist).
 - **Measured gap:** `/vendors` PartyBoard KPI — `integrations.relay_fuel_transactions` where
   `posted_to_gl IS NOT TRUE` = **44 txs / $20,942.94 / since 2026-08-03** (Neon USMCA, bypass_rls=lucia).
 - **Engine (merged #24158):** CC-2 #24027 = no post at import. Match writer

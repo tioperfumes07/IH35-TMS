@@ -1,3 +1,12 @@
+## 2026-10-02T22:35Z · OWNER-ORDER §4 FEED FUEL — RETIRE DIRECT GL POST (bank-match only)
+
+ACK: CURSOR | OWNER-ORDER-2026-10-02-BUILD-100 | FEED FUEL RETIRE | GO
+BASE tip `c3807b3482`. Branch `cursor/feed-fuel-posts-only-on-bank-match-c0b7`.
+FIX: `seed-settlement-document.service.ts` `postGlForSeededDocument` no longer calls `postFuelExpenseFromEvent` / `createExpenseFromFuelTransaction`. Feed still inserts `fuel.fuel_transactions` (composition). GL only via `postFuelFillOnBankMatch` → `postFuelExpenseOnClient` inside `acceptMatchWithResolveDifference` (already on tip #24158/#24164).
+GUARD: `verify-fuel-posts-only-on-bank-match` — dropped REPORTED_OTHER_LANE feed allowlist; asserts feed must not call those posters. `--selftest` PASS 4/4; live PASS. `verify-one-bank-match-writer-writes-je --selftest` PASS.
+Files Modified: seed-settlement-document.{service,routes}.ts · verify-fuel-posts-only-on-bank-match.mjs · NOW-CURSOR · OUTBOX · MEMORY_BANK.
+NO post/seed/match/Chrome. NEXT: money-pr-local-gate → PR Cursor- → FAST-MERGE → next §4 survivors (session /match · obligation-reconcile · unmatch clear columns).
+
 ## 2026-10-02T21:41Z · BANK-F91052 B-5 Change location MERGED #24246 · tip `2315bd0cc7`
 
 ACK: CURSOR | ACK BANK-F91052 B-5 DONE | GO

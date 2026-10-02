@@ -5,9 +5,9 @@
  * is the wiring; it is never invoked from this session. It is the ONLY place that opens the
  * transaction seedSettlementDocument runs inside, and the only place that calls
  * postGlForSeededDocument — always AFTER that transaction has committed, per the two-phase
- * contract documented at the top of seed-settlement-document.service.ts (postLoadRevenueLatch,
- * postFuelExpenseFromEvent, and CC-3's postLoadBookendedSettlementGlAfterClose each open their own
- * connection and would read pre-commit nothing if called from inside withCurrentUser's callback).
+ * contract documented at the top of seed-settlement-document.service.ts (postLoadRevenueLatch
+ * and CC-3's postLoadBookendedSettlementGlAfterClose each open their own connection; fuel GL is
+ * bank-match only and is never called from this route).
  *
  * The truth JSON is read HERE, server-side, by document_number — never accepted as a request body
  * blob. "Never a re-parsed PDF, never a retyped figure" extends to the transport layer too: the
