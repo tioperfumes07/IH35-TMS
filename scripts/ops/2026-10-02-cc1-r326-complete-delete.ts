@@ -7,8 +7,10 @@
  *   --scope=transportation21  the 21 IH 35 TRANSPORTATION loads booked under USMCA (docs/bus/10-02-2026-CC-1-…):
  *                             the loads, their revrec latch rows + JEs (+ reversals), their invoices.
  *   --scope=usmca-clean       is_sample_data = true rows, E2E / demo / test identifiers, voided documents, cancelled
- *                             load shells, settlement docref 5819 (named by the owner order). Docrefs 5817 / 5818 are
- *                             EXCLUDED by name (unidentified, not void — they stay for the owner).
+ *                             load shells, settlement docref 5819 (named by the owner order), legal seat-fixture
+ *                             matters/instances (SAMPLE/TEST/CASCADE/CODEX/CC3-VERIFY patterns — Cursor ROUND 326
+ *                             clean-app leftover). Docrefs 5817 / 5818 are EXCLUDED by name (unidentified, not void
+ *                             — they stay for the owner).
  *
  * HOW (no hand-typed child list — the live FK graph decides): starting from the roots, every row that references a
  * collected row through a foreign key is collected too, recursively (pg_constraint, single-column FKs). The plan
@@ -51,6 +53,9 @@ const OWNED = new Set([
   "accounting.invoice_lines", "accounting.invoice_disputes", "accounting.journal_entry_postings", "accounting.transaction_source_links",
   "accounting.load_revenue_recognition_postings", "accounting.revenue_contracts", "accounting.ar_collection_tasks",
   "docs.file_links", "driver_finance.presettlement_link_suggestions", "driver_finance.historical_settlement_attribution_items",
+  // Legal seat-fixture cascade (clean-app): events/deadlines/docs/links die with the matter/instance.
+  "legal.matter_events", "legal.matter_deadlines", "legal.matter_documents", "legal.contract_instance_links",
+  "legal.contract_audit_log", "legal.signatures",
 ]);
 // A document's postings reference it by text id (source_transaction_type + source_transaction_id) with no FK — the
 // 2026-09-30 purge deleted 1,091 expenses and their invoices but left 2,035 JEs behind (A/P overstated $2,976.63).
@@ -106,6 +111,43 @@ async function roots(c: Q, plan: Plan, why: Map<string, string>) {
     add(plan, "mdata.loads", await ids(c, `SELECT id::text AS id FROM mdata.loads WHERE operating_company_id = $1::uuid AND (status::text = 'cancelled' OR load_number ~* $2)`, [USMCA, TEST_ID]), why, "cancelled load shell / test identifier");
     add(plan, "mdata.customers", await ids(c, `SELECT id::text AS id FROM mdata.customers WHERE operating_company_id = $1::uuid AND customer_name ~* $2`, [USMCA, TEST_ID]), why, "test identifier");
     add(plan, "driver_finance.driver_settlements", await ids(c, `SELECT id::text AS id FROM driver_finance.driver_settlements WHERE operating_company_id = $1::uuid AND source_document_ref = '5819'`, [USMCA]), why, "settlement docref 5819 (owner order: cancelled, no PDF)");
+    // Cursor ROUND 326 clean-app leftover: legal seat fixtures (SAMPLE/TEST/CASCADE/CODEX/CC3 verify)
+    // named in OUTBOX as pending delete — never feed, never void; complete-delete only.
+    const LEGAL_FIXTURE = String.raw`(sample|test|cascade|codex|cc3-|e2e|fixture|verify-2026|meter3|scen01|go0031|usmca-wire)`;
+    add(
+      plan,
+      "legal.matters",
+      await ids(
+        c,
+        `SELECT id::text AS id FROM legal.matters
+          WHERE operating_company_id = $1::uuid
+            AND (
+              matter_number ~* $2
+              OR coalesce(description, '') ~* $2
+              OR coalesce(internal_notes, '') ILIKE '%pending clean-app delete%'
+            )`,
+        [USMCA, LEGAL_FIXTURE]
+      ),
+      why,
+      "legal seat-fixture matter (clean-app: no SAMPLE/TEST/CASCADE/CODEX in USMCA)"
+    );
+    add(
+      plan,
+      "legal.contract_instances",
+      await ids(
+        c,
+        `SELECT id::text AS id FROM legal.contract_instances
+          WHERE operating_company_id = $1::uuid
+            AND (
+              voided_at IS NOT NULL
+              OR coalesce(signer_name, '') ~* $2
+              OR coalesce(template_code, '') ~* $2
+            )`,
+        [USMCA, LEGAL_FIXTURE]
+      ),
+      why,
+      "legal seat-fixture / voided contract instance (clean-app)"
+    );
     // A cancelled load's revenue goes with it.
     const loads = [...(plan.get("mdata.loads") ?? [])];
     add(plan, "accounting.journal_entries", await ids(c, `SELECT journal_entry_id::text AS id FROM accounting.load_revenue_recognition_postings WHERE operating_company_id = $1::uuid AND load_id = ANY($2::uuid[])`, [USMCA, loads]), why, "revenue JE of a deleted load");
