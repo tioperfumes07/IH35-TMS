@@ -248,6 +248,8 @@ export async function rerateLoadMilesFromStops(
       UPDATE mdata.loads
          SET miles_practical = $3::numeric,
              miles_shortest = $4::numeric,
+             -- CC-3 2g: loaded_miles is derived — same rule as loadedMilesFor (shortest > 0, else practical).
+             loaded_miles = CASE WHEN coalesce($4::numeric, 0) > 0 THEN $4::numeric ELSE $3::numeric END,
              updated_at = now()
        WHERE id = $1::uuid
          AND operating_company_id = $2::uuid
