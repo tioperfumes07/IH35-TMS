@@ -1752,14 +1752,14 @@ export function BankingTransactionsDesignView({
                 if (!provenance && !rule) return null;
                 return (
                   <p
-                    className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-[#1F2A44]"
+                    className="mt-0.5 flex flex-wrap items-center gap-1.5 text-section-header text-[#1F2A44]"
                     data-testid="bank-txn-categorized-provenance"
                     data-b3-categorized-provenance="1"
                   >
                     {provenance ? <span>{provenance}</span> : null}
                     {rule ? (
                       <span
-                        className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#4B5563]"
+                        className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-1.5 py-0.5 text-section-header font-semibold uppercase tracking-wide text-[#4B5563]"
                         data-testid="bank-txn-categorized-rule"
                       >
                         {rule}
