@@ -35,6 +35,7 @@ import { autoCreateGeofencesForLoad } from "../telematics/auto-geofence.service.
 import { computeAndPersistGoogleReferenceMilesForLoad } from "./google-reference-miles.service.js";
 import { ACTIVE_UNIT_STATUSES, assertUnitNotActiveOnAnotherLoad } from "./unit-active-load-guard.js";
 import { resolveInboundLoadEntity, type InboundSource } from "./inbound-load-entity.js";
+import { deadheadPayCents, deadheadRateCents } from "../driver-finance/deadhead-rule.js";
 
 // FEED PARITY (docs/manuals/04-RULING-FEED-PARITY-THE-VERIFIED-SIDE-EFFECT-LIST.md, 2026-09-22).
 // Minimal client shape (same pattern as presettlement-link.service.ts's DbClient) so
@@ -667,13 +668,13 @@ async function resolveDriverBasePayCents(
   let rateEmptyPerMileCentsUsed: number | null = null;
   const milesDeadhead = Number(load.miles_deadhead ?? Number.NaN);
   if (Number.isFinite(milesDeadhead) && milesDeadhead > 0) {
+    // ROUND 288.3 item 2: the one deadhead rule (driver-finance/deadhead-rule.ts) — the same function the Settlement
+    // Creator and batch pay use. A GO-21-B5 override is the load's one rate for both legs.
     const resolvedEmptyRate = hasValidOverride
       ? perLoadRateDollars * 100
-      : rate && rate.rate_empty_per_mile_cents != null && Number(rate.rate_empty_per_mile_cents) > 0
-        ? Number(rate.rate_empty_per_mile_cents)
-        : Number(rate?.rate_per_mile_cents ?? 0);
+      : deadheadRateCents({ emptyRateCents: rate?.rate_empty_per_mile_cents == null ? null : Number(rate.rate_empty_per_mile_cents), loadedRateCents: rate?.rate_per_mile_cents == null ? null : Number(rate.rate_per_mile_cents) }) ?? 0;
     if (Number.isFinite(resolvedEmptyRate) && resolvedEmptyRate > 0) {
-      deadheadCents = Math.round(resolvedEmptyRate * milesDeadhead);
+      deadheadCents = deadheadPayCents(milesDeadhead, resolvedEmptyRate);
       milesDeadheadUsed = milesDeadhead;
       rateEmptyPerMileCentsUsed = resolvedEmptyRate;
     } else if (actorUserId) {

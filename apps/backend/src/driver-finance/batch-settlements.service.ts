@@ -51,6 +51,12 @@ export type Set01EligibleLoad = {
   empty_miles: number | null;
   rate_total_cents: number | null;
   driver_pay_rate_per_mile: number | null;
+  /** ROUND 288.3 item 2: the load's live driver bill — the ONE pay computation (loaded + deadhead) the settlement uses. */
+  bill_loaded_pay_cents: number | null;
+  bill_rate_per_mile_cents: number | null;
+  bill_miles_basis: number | null;
+  bill_miles_deadhead: number | null;
+  bill_rate_empty_per_mile_cents: number | null;
   presettlement_link_id: string | null;
   already_on_closed_settlement: boolean;
 };
@@ -98,6 +104,11 @@ async function listSet01LoadsInTx(
     empty_miles: string | null;
     rate_total_cents: string | null;
     driver_pay_rate_per_mile: string | null;
+    bill_loaded_pay_cents: string | null;
+    bill_rate_per_mile_cents: string | null;
+    bill_miles_basis: string | null;
+    bill_miles_deadhead: string | null;
+    bill_rate_empty_per_mile_cents: string | null;
     presettlement_link_id: string | null;
     already_on_closed_settlement: boolean;
   }>(
@@ -141,6 +152,11 @@ async function listSet01LoadsInTx(
         l.empty_miles::text AS empty_miles,
         l.rate_total_cents::text AS rate_total_cents,
         l.driver_pay_rate_per_mile::text AS driver_pay_rate_per_mile,
+        db.loaded_pay_cents::text AS bill_loaded_pay_cents,
+        db.rate_per_mile_cents::text AS bill_rate_per_mile_cents,
+        db.miles_basis::text AS bill_miles_basis,
+        db.miles_deadhead::text AS bill_miles_deadhead,
+        db.rate_empty_per_mile_cents::text AS bill_rate_empty_per_mile_cents,
         l.presettlement_link_id::text AS presettlement_link_id,
         EXISTS (
           SELECT 1
@@ -156,6 +172,14 @@ async function listSet01LoadsInTx(
       FROM mdata.loads l
       LEFT JOIN mdata.customers c ON c.id = l.customer_id
       LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+      LEFT JOIN LATERAL (
+        SELECT b.loaded_pay_cents, b.rate_per_mile_cents, b.miles_basis, b.miles_deadhead, b.rate_empty_per_mile_cents
+          FROM driver_finance.driver_bills b
+         WHERE b.load_id = l.id AND b.operating_company_id = l.operating_company_id
+           AND b.driver_id = $2::uuid AND b.voided_at IS NULL
+         ORDER BY b.created_at
+         LIMIT 1
+      ) db ON true
       WHERE l.operating_company_id = $1::uuid
         AND l.soft_deleted_at IS NULL
         AND COALESCE(l.is_sample_data, false) IS NOT TRUE
@@ -205,20 +229,31 @@ async function listSet01LoadsInTx(
     empty_miles: r.empty_miles != null ? Number(r.empty_miles) : null,
     rate_total_cents: r.rate_total_cents != null ? Number(r.rate_total_cents) : null,
     driver_pay_rate_per_mile: r.driver_pay_rate_per_mile != null ? Number(r.driver_pay_rate_per_mile) : null,
+    bill_loaded_pay_cents: r.bill_loaded_pay_cents != null ? Number(r.bill_loaded_pay_cents) : null,
+    bill_rate_per_mile_cents: r.bill_rate_per_mile_cents != null ? Number(r.bill_rate_per_mile_cents) : null,
+    bill_miles_basis: r.bill_miles_basis != null ? Number(r.bill_miles_basis) : null,
+    bill_miles_deadhead: r.bill_miles_deadhead != null ? Number(r.bill_miles_deadhead) : null,
+    bill_rate_empty_per_mile_cents: r.bill_rate_empty_per_mile_cents != null ? Number(r.bill_rate_empty_per_mile_cents) : null,
     presettlement_link_id: r.presettlement_link_id,
     already_on_closed_settlement: Boolean(r.already_on_closed_settlement),
   }));
 }
 
-function toLoadBlock(load: Set01EligibleLoad): SettlementCreatorLoadBlock {
+export function toLoadBlock(load: Set01EligibleLoad): SettlementCreatorLoadBlock {
   const delivered = Boolean(load.delivery_date) && !["dispatched", "booked", "planned", "assigned", "in_transit", "at_pickup"].includes(load.status);
   const trip =
     load.trip_type === "NB" || load.trip_type === "TR" || load.trip_type === "SB" || load.trip_type === "LOCAL"
       ? load.trip_type
       : "NB";
-  const miles = load.loaded_miles ?? load.miles_practical;
-  const ratePerMileCents =
-    load.driver_pay_rate_per_mile != null ? Math.round(Number(load.driver_pay_rate_per_mile) * 100) : null;
+  // ROUND 288.3 item 2: the settlement pays what the load's driver bill computed — loaded pay, loaded rate and miles,
+  // deadhead miles and rate (book-load + the one deadhead rule). Batch pay used to send the load's CUSTOMER total as
+  // the line-haul amount and never paid deadhead (empty rate null). No bill -> the load's own miles / rate, and the
+  // creator applies the same deadhead rule.
+  const hasBill = load.bill_loaded_pay_cents != null;
+  const miles = hasBill && load.bill_miles_basis != null ? load.bill_miles_basis : load.loaded_miles ?? load.miles_practical;
+  const ratePerMileCents = hasBill && load.bill_rate_per_mile_cents != null
+    ? load.bill_rate_per_mile_cents
+    : load.driver_pay_rate_per_mile != null ? Math.round(Number(load.driver_pay_rate_per_mile) * 100) : null;
   return {
     load_number: load.load_number,
     customer_name: load.customer_name,
@@ -229,11 +264,11 @@ function toLoadBlock(load: Set01EligibleLoad): SettlementCreatorLoadBlock {
     delivery_city: load.delivery_city,
     line_haul_miles: miles,
     line_haul_rate_cents: ratePerMileCents,
-    line_haul_amount_cents: load.rate_total_cents,
+    line_haul_amount_cents: hasBill ? load.bill_loaded_pay_cents : null,
     factoring: "faro_usmca",
-    loaded_miles: load.loaded_miles ?? miles,
-    empty_miles: load.empty_miles ?? 0,
-    empty_rate_cents: null,
+    loaded_miles: miles,
+    empty_miles: hasBill ? load.bill_miles_deadhead ?? 0 : load.empty_miles ?? 0,
+    empty_rate_cents: hasBill ? load.bill_rate_empty_per_mile_cents : null,
     trip_type: trip,
     not_yet_delivered: !delivered,
   };

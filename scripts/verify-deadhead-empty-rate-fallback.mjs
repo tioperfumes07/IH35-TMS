@@ -27,9 +27,11 @@ export function problems(src) {
   if ((creator.match(/creatorEmptyPayCents\(load\)/g) ?? []).length < 2) p.push("the creator's preview AND commit must both compute empty pay through creatorEmptyPayCents(load)");
   if (!/creatorEmptyRateCents\(load\)/.test(creator)) p.push("the creator's Empty Miles line must use creatorEmptyRateCents(load)");
   const pay = strip(src.pay);
-  if (!/const loaded = Number\(load\.line_haul_rate_cents/.test(pay) || !/own > 0\) return own/.test(pay)) p.push("creatorEmptyRateCents must use the typed empty rate, else fall back to the loaded per-mile rate");
+  if (!/deadheadRateCents\(\{ emptyRateCents: load\.empty_rate_cents, loadedRateCents: load\.line_haul_rate_cents \}\)/.test(pay)) p.push("creatorEmptyRateCents must use the one deadhead rule (typed empty rate, else the loaded per-mile rate)");
   const book = strip(src.book);
-  if (!/rate_empty_per_mile_cents\) > 0[\s\S]{0,120}: Number\(rate\?\.rate_per_mile_cents \?\? 0\)/.test(book)) p.push("book-load must fall back to the card's loaded rate when no empty rate is configured");
+  // ROUND 288.3 item 2: the fallback lives in the ONE deadhead rule (driver-finance/deadhead-rule.ts) that book-load,
+  // the creator and batch pay all call.
+  if (!/deadheadRateCents\(\{ emptyRateCents: rate\?\.rate_empty_per_mile_cents[\s\S]{0,200}loadedRateCents: rate\?\.rate_per_mile_cents/.test(book)) p.push("book-load must price deadhead through the one deadhead rule (deadheadRateCents: empty rate, else the loaded rate)");
   if (!/driver_bill\.deadhead_unpriced_no_empty_rate/.test(book)) p.push("book-load must record real empty miles that have no rate (deadhead_unpriced_no_empty_rate), never a silent $0");
   return p;
 }
@@ -46,7 +48,7 @@ if (isMain) {
     if (own.length) { console.error(`${LABEL} --selftest FAIL on the real tree — ${own.join("; ")}`); process.exit(1); }
     const plants = [
       ["direct multiply back", { ...src, creator: src.creator.replace("const empty = creatorEmptyPayCents(load);", "const empty = Math.round(Number(load.empty_miles || 0) * Number(load.empty_rate_cents || 0));") }],
-      ["no loaded fallback", { ...src, pay: src.pay.replace("const loaded = Number(load.line_haul_rate_cents ?? 0);", "const loaded = 0;") }],
+      ["no loaded fallback", { ...src, pay: src.pay.replace("loadedRateCents: load.line_haul_rate_cents", "loadedRateCents: null") }],
       ["silent $0 in book-load", { ...src, book: src.book.replace("driver_bill.deadhead_unpriced_no_empty_rate", "x") }],
     ];
     for (const [name, planted] of plants) {

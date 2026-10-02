@@ -6,6 +6,8 @@
  * duplicate, never a hardcoded figure. A load with no per-mile rate at all (flat line-haul amount) has no rate
  * to borrow: empty pay stays unpriced (null) rather than invented.
  */
+import { deadheadPayCents, deadheadRateCents } from "./deadhead-rule.js";
+
 type EmptyPayLoad = {
   empty_miles?: number | null;
   empty_rate_cents?: number | null;
@@ -14,15 +16,11 @@ type EmptyPayLoad = {
 
 /** The per-mile rate empty miles are paid at, or null when the load carries no per-mile rate at all. */
 export function creatorEmptyRateCents(load: EmptyPayLoad): number | null {
-  const own = Number(load.empty_rate_cents ?? 0);
-  if (Number.isFinite(own) && own > 0) return own;
-  const loaded = Number(load.line_haul_rate_cents ?? 0);
-  return Number.isFinite(loaded) && loaded > 0 ? loaded : null;
+  // ROUND 288.3 item 2: the one deadhead rule (deadhead-rule.ts), shared with the driver bill and batch pay.
+  return deadheadRateCents({ emptyRateCents: load.empty_rate_cents, loadedRateCents: load.line_haul_rate_cents });
 }
 
 /** Empty-mile pay in cents: miles × the resolved empty rate; 0 when there are no empty miles or no rate. */
 export function creatorEmptyPayCents(load: EmptyPayLoad): number {
-  const miles = Number(load.empty_miles ?? 0);
-  const rate = creatorEmptyRateCents(load);
-  return Number.isFinite(miles) && miles > 0 && rate != null ? Math.round(miles * rate) : 0;
+  return deadheadPayCents(load.empty_miles, creatorEmptyRateCents(load));
 }
