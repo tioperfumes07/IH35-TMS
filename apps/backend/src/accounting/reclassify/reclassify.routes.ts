@@ -53,6 +53,7 @@ export async function registerAccountingReclassifyRoutes(app: FastifyInstance) {
       reason: z.string().trim().min(3).max(1000),
       to_account_id: z.string().uuid().nullable().optional(),
       to_class_id: z.string().uuid().nullable().optional(),
+      to_location_id: z.string().uuid().nullable().optional(),
       to_entity_uuid: z.string().uuid().nullable().optional(),
       to_entity_type: z.enum(["customer", "vendor", "driver", "unit"]).nullable().optional(),
       filter_snapshot: z.record(z.string(), z.unknown()).optional(),

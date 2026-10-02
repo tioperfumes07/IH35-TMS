@@ -56,6 +56,8 @@ export type ReclassifyLineRow = {
   is_bank_ledger?: boolean;
   class_id: string | null;
   class_name: string | null;
+  location_id: string | null;
+  location_name: string | null;
   entity_uuid: string | null;
   entity_type: string | null;
   entity_name: string | null;
@@ -115,6 +117,7 @@ const LINE_SELECT = `
                a.account_number, a.account_name, a.account_type, a.account_subtype, a.system_purpose,
                EXISTS (SELECT 1 FROM banking.bank_accounts ba WHERE ba.ledger_account_id = p.account_id) AS is_bank_ledger,
                p.class_id::text AS class_id, c.class_name,
+               p.location_id::text AS location_id, loc.location_name,
                p.entity_uuid::text AS entity_uuid, p.entity_type,
                CASE p.entity_type
                  WHEN 'vendor' THEN (SELECT v.vendor_name FROM mdata.vendors v WHERE v.id = p.entity_uuid)
@@ -132,7 +135,8 @@ const LINE_SELECT = `
           FROM accounting.journal_entry_postings p
           JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
           LEFT JOIN catalogs.accounts a ON a.id = p.account_id AND a.operating_company_id = p.operating_company_id
-          LEFT JOIN catalogs.classes c ON c.id = p.class_id AND c.operating_company_id = p.operating_company_id`;
+          LEFT JOIN catalogs.classes c ON c.id = p.class_id AND c.operating_company_id = p.operating_company_id
+          LEFT JOIN mdata.locations loc ON loc.id = p.location_id AND loc.operating_company_id = p.operating_company_id`;
 
 function numberize(r: ReclassifyLineRow): ReclassifyLineRow {
   return { ...r, amount_cents: Number(r.amount_cents), net_amount_cents: Number(r.net_amount_cents) };
@@ -176,6 +180,7 @@ export type ApplyReclassifyInput = {
   reason: string;
   to_account_id?: string | null;
   to_class_id?: string | null;
+  to_location_id?: string | null;
   to_entity_uuid?: string | null;
   to_entity_type?: "customer" | "vendor" | "driver" | "unit" | null;
   filter_snapshot?: Record<string, unknown>;
@@ -226,7 +231,7 @@ export function controlAccountReason(acc: { account_type: string | null; account
 /** Pure: which selected lines are eligible and why the others are not. Unit-tested without a DB. */
 export function classifySelection(
   postings: SelectedPosting[],
-  target: { to_account_id?: string | null; to_class_id?: string | null; to_entity_uuid?: string | null },
+  target: { to_account_id?: string | null; to_class_id?: string | null; to_location_id?: string | null; to_entity_uuid?: string | null },
 ): { eligible: SelectedPosting[]; refused: Array<{ posting: SelectedPosting; why: string }> } {
   const eligible: SelectedPosting[] = [];
   const refused: Array<{ posting: SelectedPosting; why: string }> = [];
@@ -238,8 +243,9 @@ export function classifySelection(
     const noChange =
       (!target.to_account_id || target.to_account_id === p.account_id) &&
       (!target.to_class_id || target.to_class_id === p.class_id) &&
+      (!target.to_location_id || target.to_location_id === p.location_id) &&
       (!target.to_entity_uuid || target.to_entity_uuid === p.entity_uuid);
-    if (noChange) { refused.push({ posting: p, why: "line already carries the requested account/class/entity" }); continue; }
+    if (noChange) { refused.push({ posting: p, why: "line already carries the requested account/class/location/entity" }); continue; }
     eligible.push(p);
   }
   return { eligible, refused };
@@ -248,20 +254,21 @@ export function classifySelection(
 /** Pure: the reclass JE lines for one document — a reverse+repost PAIR per selected posting. */
 export function buildReclassPairs(
   eligible: SelectedPosting[],
-  target: { to_account_id?: string | null; to_class_id?: string | null; to_entity_uuid?: string | null; to_entity_type?: string | null },
+  target: { to_account_id?: string | null; to_class_id?: string | null; to_location_id?: string | null; to_entity_uuid?: string | null; to_entity_type?: string | null },
   batchId: string,
 ) {
   return eligible.flatMap((p) => {
     const flip: "debit" | "credit" = p.debit_or_credit === "debit" ? "credit" : "debit";
-    const what = [target.to_account_id ? "account" : null, target.to_class_id ? "class" : null, target.to_entity_uuid ? "entity" : null].filter(Boolean).join("/");
+    const what = [target.to_account_id ? "account" : null, target.to_class_id ? "class" : null, target.to_location_id ? "location" : null, target.to_entity_uuid ? "entity" : null].filter(Boolean).join("/");
     const desc = `Reclass ${batchId.slice(0, 8)} (${what}) · ${p.description ?? ""}`.trim();
     const base = { amount_cents: p.amount_cents, description: desc, source_transaction_type: p.source_transaction_type, source_transaction_id: p.source_transaction_id };
     return [
-      { ...base, account_id: p.account_id, class_id: p.class_id, entity_uuid: p.entity_uuid, entity_type: p.entity_type, debit_or_credit: flip },
+      { ...base, account_id: p.account_id, class_id: p.class_id, location_id: p.location_id, entity_uuid: p.entity_uuid, entity_type: p.entity_type, debit_or_credit: flip },
       {
         ...base,
         account_id: target.to_account_id ?? p.account_id,
         class_id: target.to_class_id ?? p.class_id,
+        location_id: target.to_location_id ?? p.location_id,
         entity_uuid: target.to_entity_uuid ?? p.entity_uuid,
         entity_type: target.to_entity_uuid ? (target.to_entity_type ?? null) : p.entity_type,
         debit_or_credit: p.debit_or_credit,
@@ -293,7 +300,7 @@ export async function rewriteDocumentLine(
   client: DbClient,
   companyId: string,
   p: SelectedPosting,
-  target: { account_id: string | null; class_id: string | null; entity_uuid: string | null; entity_type: string | null },
+  target: { account_id: string | null; class_id: string | null; location_id: string | null; entity_uuid: string | null; entity_type: string | null },
 ): Promise<{ updated: boolean; note: string | null }> {
   const type = p.source_transaction_type;
   if (!type || !p.source_transaction_id) return { updated: false, note: "hand-keyed journal entry: no source document to rewrite (ledger moved by the reclass JE)" };
@@ -322,6 +329,9 @@ export async function rewriteDocumentLine(
     }
     if (target.class_id) {
       await client.query(`UPDATE accounting.expenses SET class_id = $3::uuid, updated_at = now() WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [p.source_transaction_id, companyId, target.class_id]);
+    }
+    if (target.location_id) {
+      await client.query(`UPDATE accounting.expenses SET location_id = $3::uuid, updated_at = now() WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [p.source_transaction_id, companyId, target.location_id]);
     }
     return { updated: notes.length === 0, note: notes.length ? notes.join("; ") : null };
   }
@@ -371,19 +381,19 @@ export async function rewriteDocumentLine(
 const INSERT_LINE = `
   INSERT INTO accounting.reclassify_batch_lines
     (batch_id, operating_company_id, posting_id, journal_entry_id, source_transaction_type, source_transaction_id, source_transaction_line_id,
-     from_account_id, from_class_id, from_entity_uuid, from_entity_type, to_account_id, to_class_id, to_entity_uuid, to_entity_type,
+     from_account_id, from_class_id, from_location_id, from_entity_uuid, from_entity_type, to_account_id, to_class_id, to_location_id, to_entity_uuid, to_entity_type,
      debit_or_credit, amount_cents, result, refusal_reason, reclass_journal_entry_id, document_updated, document_update_note)
-  VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5, $6, $7, $8::uuid, $9::uuid, $10::uuid, $11, $12::uuid, $13::uuid, $14::uuid, $15, $16, $17, $18, $19, $20::uuid, $21, $22)`;
+  VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5, $6, $7, $8::uuid, $9::uuid, $10::uuid, $11::uuid, $12, $13::uuid, $14::uuid, $15::uuid, $16::uuid, $17, $18, $19, $20, $21, $22::uuid, $23, $24)`;
 
 export async function applyReclassify(input: ApplyReclassifyInput, actor: { userId: string; role: string }): Promise<ReclassifyBatchResult> {
   const reason = input.reason.trim();
   if (reason.length < 3) throw new Error("reclassify_reason_required");
-  if (!input.to_account_id && !input.to_class_id && !input.to_entity_uuid) throw new Error("reclassify_changes_nothing");
+  if (!input.to_account_id && !input.to_class_id && !input.to_location_id && !input.to_entity_uuid) throw new Error("reclassify_changes_nothing");
   if (!!input.to_entity_uuid !== !!input.to_entity_type) throw new Error("reclassify_entity_pair_incomplete");
   const postingIds = Array.from(new Set(input.posting_ids));
   if (postingIds.length === 0) throw new Error("reclassify_no_lines_selected");
   if (postingIds.length > 500) throw new Error("reclassify_too_many_lines_max_500");
-  const target = { to_account_id: input.to_account_id ?? null, to_class_id: input.to_class_id ?? null, to_entity_uuid: input.to_entity_uuid ?? null, to_entity_type: input.to_entity_type ?? null };
+  const target = { to_account_id: input.to_account_id ?? null, to_class_id: input.to_class_id ?? null, to_location_id: input.to_location_id ?? null, to_entity_uuid: input.to_entity_uuid ?? null, to_entity_type: input.to_entity_type ?? null };
 
   return withCurrentUser(actor.userId, async (client) => {
     const companyId = input.operating_company_id;
@@ -402,12 +412,16 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
       const cls = await client.query<{ ok: boolean }>(`SELECT (deactivated_at IS NULL) AS ok FROM catalogs.classes WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [target.to_class_id, companyId]);
       if (!cls.rows[0]?.ok) throw new Error("reclassify_target_class_not_found");
     }
+    if (target.to_location_id) {
+      const loc = await client.query<{ ok: boolean }>(`SELECT (deactivated_at IS NULL) AS ok FROM mdata.locations WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [target.to_location_id, companyId]);
+      if (!loc.rows[0]?.ok) throw new Error("reclassify_target_location_not_found");
+    }
 
     const batchRes = await client.query<{ id: string }>(
       `INSERT INTO accounting.reclassify_batches
-         (operating_company_id, created_by_user_id, reason, filter_snapshot, to_account_id, to_class_id, to_entity_uuid, to_entity_type, lines_requested)
-       VALUES ($1::uuid, $2::uuid, $3, $4::jsonb, $5::uuid, $6::uuid, $7::uuid, $8, $9) RETURNING id::text`,
-      [companyId, actor.userId, reason, JSON.stringify(input.filter_snapshot ?? {}), target.to_account_id, target.to_class_id, target.to_entity_uuid, target.to_entity_type, postingIds.length],
+         (operating_company_id, created_by_user_id, reason, filter_snapshot, to_account_id, to_class_id, to_location_id, to_entity_uuid, to_entity_type, lines_requested)
+       VALUES ($1::uuid, $2::uuid, $3, $4::jsonb, $5::uuid, $6::uuid, $7::uuid, $8::uuid, $9, $10) RETURNING id::text`,
+      [companyId, actor.userId, reason, JSON.stringify(input.filter_snapshot ?? {}), target.to_account_id, target.to_class_id, target.to_location_id, target.to_entity_uuid, target.to_entity_type, postingIds.length],
     );
     const batchId = batchRes.rows[0]!.id;
     const result: ReclassifyBatchResult = { batch_id: batchId, lines_requested: postingIds.length, lines_applied: 0, lines_refused: 0, amount_cents_moved: 0, documents: [] };
@@ -416,7 +430,8 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
       result.lines_refused += 1;
       await client.query(INSERT_LINE, [
         batchId, companyId, p.posting_id, p.journal_entry_id, p.source_transaction_type, p.source_transaction_id, p.source_transaction_line_id,
-        p.account_id, p.class_id, p.entity_uuid, p.entity_type, target.to_account_id ?? p.account_id, target.to_class_id ?? p.class_id, target.to_entity_uuid ?? p.entity_uuid, target.to_entity_uuid ? target.to_entity_type : p.entity_type,
+        p.account_id, p.class_id, p.location_id, p.entity_uuid, p.entity_type,
+        target.to_account_id ?? p.account_id, target.to_class_id ?? p.class_id, target.to_location_id ?? p.location_id, target.to_entity_uuid ?? p.entity_uuid, target.to_entity_uuid ? target.to_entity_type : p.entity_type,
         p.debit_or_credit, p.amount_cents, "refused", why, null, false, null,
       ]);
       result.documents.push({ source_transaction_type: p.source_transaction_type, source_transaction_id: p.source_transaction_id, document_number: p.document_number, reclass_journal_entry_id: null, lines_applied: 0, lines_refused: 1, document_updated: false, document_update_note: null, refusal_reason: why });
@@ -454,7 +469,7 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
           const handKeyed = !p.source_transaction_type || !p.source_transaction_id;
           const rw = handKeyed
             ? { updated: true, note: null }
-            : await rewriteDocumentLine(client as DbClient, companyId, p, { account_id: target.to_account_id, class_id: target.to_class_id, entity_uuid: target.to_entity_uuid, entity_type: target.to_entity_type });
+            : await rewriteDocumentLine(client as DbClient, companyId, p, { account_id: target.to_account_id, class_id: target.to_class_id, location_id: target.to_location_id, entity_uuid: target.to_entity_uuid, entity_type: target.to_entity_type });
           if (!rw.updated) throw new ReclassifyDocumentNotRewritableError(rw.note ?? "document line could not be rewritten");
           rewrites.set(p.posting_id, rw);
         }
@@ -478,7 +493,8 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
           if (!rw.updated) { docUpdated = false; if (rw.note) notes.push(rw.note); }
           await client.query(INSERT_LINE, [
             batchId, companyId, p.posting_id, p.journal_entry_id, p.source_transaction_type, p.source_transaction_id, p.source_transaction_line_id,
-            p.account_id, p.class_id, p.entity_uuid, p.entity_type, target.to_account_id ?? p.account_id, target.to_class_id ?? p.class_id, target.to_entity_uuid ?? p.entity_uuid, target.to_entity_uuid ? target.to_entity_type : p.entity_type,
+            p.account_id, p.class_id, p.location_id, p.entity_uuid, p.entity_type,
+            target.to_account_id ?? p.account_id, target.to_class_id ?? p.class_id, target.to_location_id ?? p.location_id, target.to_entity_uuid ?? p.entity_uuid, target.to_entity_uuid ? target.to_entity_type : p.entity_type,
             p.debit_or_credit, p.amount_cents, "applied", null, jeId, rw.updated, rw.note,
           ]);
           result.lines_applied += 1;
@@ -524,8 +540,8 @@ export async function undoReclassifyBatch(input: { operating_company_id: string;
       await client.query(`UPDATE accounting.reclassify_batch_lines SET undo_journal_entry_id = $2::uuid WHERE batch_id = $1::uuid AND reclass_journal_entry_id = $3::uuid`, [input.batch_id, undoId, row.je]);
       reversed += 1;
     }
-    const lines = await client.query<{ source_transaction_type: string | null; source_transaction_id: string | null; source_transaction_line_id: string | null; from_account_id: string; from_class_id: string | null; from_entity_uuid: string | null; document_updated: boolean }>(
-      `SELECT source_transaction_type, source_transaction_id, source_transaction_line_id, from_account_id::text, from_class_id::text, from_entity_uuid::text, document_updated
+    const lines = await client.query<{ source_transaction_type: string | null; source_transaction_id: string | null; source_transaction_line_id: string | null; from_account_id: string; from_class_id: string | null; from_location_id: string | null; from_entity_uuid: string | null; document_updated: boolean }>(
+      `SELECT source_transaction_type, source_transaction_id, source_transaction_line_id, from_account_id::text, from_class_id::text, from_location_id::text, from_entity_uuid::text, document_updated
          FROM accounting.reclassify_batch_lines WHERE batch_id = $1::uuid AND result = 'applied'`,
       [input.batch_id],
     );
@@ -533,7 +549,7 @@ export async function undoReclassifyBatch(input: { operating_company_id: string;
       if (!l.document_updated) continue;
       if (l.source_transaction_type === "expense" && l.source_transaction_id) {
         if (l.source_transaction_line_id) await client.query(`UPDATE accounting.expense_lines SET expense_account_uuid = $2::uuid WHERE id = $1::uuid`, [l.source_transaction_line_id, l.from_account_id]);
-        await client.query(`UPDATE accounting.expenses SET class_id = $2::uuid, vendor_uuid = coalesce($3::uuid, vendor_uuid), updated_at = now() WHERE id = $1::uuid`, [l.source_transaction_id, l.from_class_id, l.from_entity_uuid]);
+        await client.query(`UPDATE accounting.expenses SET class_id = $2::uuid, location_id = $4::uuid, vendor_uuid = coalesce($3::uuid, vendor_uuid), updated_at = now() WHERE id = $1::uuid`, [l.source_transaction_id, l.from_class_id, l.from_entity_uuid, l.from_location_id]);
       } else if (l.source_transaction_type === "bill" && l.source_transaction_line_id) {
         await client.query(`UPDATE accounting.bill_lines SET account_id = $2::uuid WHERE id = $1::uuid`, [l.source_transaction_line_id, l.from_account_id]);
       } else if (l.source_transaction_type === "invoice" && l.source_transaction_id) {
@@ -568,11 +584,13 @@ export async function listReclassifyBatches(userId: string, operatingCompanyId: 
     const res = await client.query<Record<string, unknown>>(
       `SELECT b.id::text, b.created_at::text, b.reason, b.status, b.lines_requested, b.lines_applied, b.lines_refused, b.amount_cents_moved::bigint AS amount_cents_moved,
               b.to_account_id::text, a.account_number AS to_account_number, a.account_name AS to_account_name,
-              b.to_class_id::text, c.class_name AS to_class_name, b.to_entity_uuid::text, b.to_entity_type,
+              b.to_class_id::text, c.class_name AS to_class_name, b.to_location_id::text, loc.location_name AS to_location_name,
+              b.to_entity_uuid::text, b.to_entity_type,
               b.undone_at::text, b.undo_reason, u.email AS created_by_email
          FROM accounting.reclassify_batches b
          LEFT JOIN catalogs.accounts a ON a.id = b.to_account_id
          LEFT JOIN catalogs.classes c ON c.id = b.to_class_id
+         LEFT JOIN mdata.locations loc ON loc.id = b.to_location_id
          LEFT JOIN identity.users u ON u.id = b.created_by_user_id
         WHERE b.operating_company_id = $1::uuid
         ORDER BY b.created_at DESC LIMIT $2`,

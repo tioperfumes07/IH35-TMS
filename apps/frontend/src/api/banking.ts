@@ -808,6 +808,7 @@ export type BankTransactionSplitLine = {
   customer_id?: string | null;
   driver_id?: string | null;
   unit_id?: string | null;
+  location_id?: string | null;
   trailer_id?: string | null;
   load_id?: string | null;
   item_id?: string | null;

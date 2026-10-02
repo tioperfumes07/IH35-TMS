@@ -114,6 +114,8 @@ export type SplitLineInput = {
   customer_id?: string | null;
   driver_id?: string | null;
   unit_id?: string | null;
+  /** BANK-F91050 — QBO Location (mdata.locations) on resolve-difference / split lines. */
+  location_id?: string | null;
   trailer_id?: string | null;
   load_id?: string | null;
   item_id?: string | null;
@@ -141,7 +143,7 @@ type Client = {
 const SPLIT_LINE_SELECT_COLUMNS = `
   id::text, bank_transaction_id::text, line_no, amount_cents::bigint, category_kind,
   gl_account_id::text, vendor_id::text, customer_id::text, driver_id::text, unit_id::text,
-  trailer_id::text, load_id::text, item_id::text, memo, recover_from_driver,
+  location_id::text, trailer_id::text, load_id::text, item_id::text, memo, recover_from_driver,
   recover_deduction_type, posting_status, posting_reason,
   result_driver_advance_id::text, result_deduction_id::text, result_bill_id::text, result_journal_entry_id::text
 `;
@@ -330,9 +332,9 @@ export async function saveSplitDraft(
         `
           INSERT INTO banking.bank_transaction_splits (
             operating_company_id, bank_transaction_id, line_no, amount_cents, category_kind, gl_account_id,
-            vendor_id, customer_id, driver_id, unit_id, trailer_id, load_id, item_id, memo,
+            vendor_id, customer_id, driver_id, unit_id, location_id, trailer_id, load_id, item_id, memo,
             recover_from_driver, recover_deduction_type, created_by_user_id, updated_by_user_id
-          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$17)
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18)
         `,
         [
           companyId,
@@ -345,6 +347,7 @@ export async function saveSplitDraft(
           l.customer_id ?? null,
           l.driver_id ?? null,
           l.unit_id ?? null,
+          l.location_id ?? null,
           l.trailer_id ?? null,
           l.load_id ?? null,
           l.item_id ?? null,

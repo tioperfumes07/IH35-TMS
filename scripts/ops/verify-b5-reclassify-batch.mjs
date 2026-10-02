@@ -54,6 +54,12 @@ function main() {
   assertIncludes(reclassify, "Change class to", RECLASSIFY);
   assertIncludes(reclassify, 'data-b5-change-location="1"', RECLASSIFY);
   assertIncludes(reclassify, "Change location to", RECLASSIFY);
+  assertIncludes(reclassify, "FuelStopLocationPicker", RECLASSIFY);
+  assertIncludes(reclassify, "to_location_id", RECLASSIFY);
+  assertIncludes(reclassify, 'data-testid="reclassify-to-location"', RECLASSIFY);
+  if (/not available yet|Location is not a posting column/i.test(reclassify)) {
+    throw new Error(`${RECLASSIFY}: Change location still stubbed`);
+  }
   assertIncludes(reclassify, 'data-b5-change-vendor-customer="1"', RECLASSIFY);
   assertIncludes(reclassify, "Change vendor/customer to", RECLASSIFY);
   assertIncludes(reclassify, "toEntityKind", RECLASSIFY);
