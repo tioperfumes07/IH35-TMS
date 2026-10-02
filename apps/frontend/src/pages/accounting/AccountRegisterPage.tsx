@@ -105,7 +105,21 @@ function sourceRoute(
   return "/accounting/journal-entries";
 }
 
-const TRANSACTION_TYPES = ["Invoice", "Invoice Payment", "Bill", "Bill Payment", "Expense", "Journal Entry", "Settlement", "Transfer"];
+const TRANSACTION_TYPES = [
+  "Invoice",
+  "Invoice Payment",
+  "Bill",
+  "Bill Payment",
+  "Expense",
+  "Journal Entry",
+  "Settlement",
+  "Transfer",
+  "Deposit",
+  "Bank Categorization",
+  "Cash Advance",
+  "Driver Advance",
+  "Factoring Advance",
+];
 // Map the display label back to the stored source_transaction_type the backend filters on.
 const TYPE_TO_SOURCE: Record<string, string> = {
   Invoice: "invoice",
@@ -113,8 +127,14 @@ const TYPE_TO_SOURCE: Record<string, string> = {
   Bill: "bill",
   "Bill Payment": "bill_payment",
   Expense: "expense",
+  "Journal Entry": "journal_entry",
   Settlement: "settlement",
   Transfer: "transfer",
+  Deposit: "bank_deposit",
+  "Bank Categorization": "bank_categorization",
+  "Cash Advance": "cash_advance",
+  "Driver Advance": "driver_advance",
+  "Factoring Advance": "factoring_advance",
 };
 
 function applyPreset(preset: string): { from: string; to: string } | null {
