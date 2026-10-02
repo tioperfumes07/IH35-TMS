@@ -1,9 +1,4 @@
 {
-  "202615231000": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-10-02",
-    "purpose": "CC-3 round 296 item 3: indexes backing the 18 filter surfaces' filter columns found unindexed live (catalogs.accounts deactivated_at; catalogs.tire_positions + 5 safety catalogs is_active; mdata.customers customer_type+status; docs.files document_date + original_filename trigram; integrations.samsara_drivers local_driver_id). Additive CREATE INDEX IF NOT EXISTS only."
-  },
   "202615230200": {
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-02",
@@ -1561,6 +1556,16 @@
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-02",
       "purpose": "ROUND 336 rule 7: a factored invoice's amount is not editable while its Faro purchase is open — BEFORE UPDATE trigger on accounting.invoices (and invoice lines) refusing amount changes, naming the purchase and the Faro invoice number; non-amount fields stay editable."
+    },
+    "202615300900": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-02",
+      "purpose": "ROUND 337: reports.deadhead_cache unique key (unit_id, week_starting) -> (operating_company_id, unit_id, week_starting); a shared unit (owned by one entity, leased to another) had one entity overwrite the other. Additive unique index first, old index dropped after."
+    },
+    "202615231000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-10-02",
+      "purpose": "CC-3 round 296 item 3: indexes backing the 18 filter surfaces' filter columns found unindexed live (catalogs.accounts deactivated_at; catalogs.tire_positions + 5 safety catalogs is_active; mdata.customers customer_type+status; docs.files document_date + original_filename trigram; integrations.samsara_drivers local_driver_id). Additive CREATE INDEX IF NOT EXISTS only."
     }
   },
   "202613590001": {
