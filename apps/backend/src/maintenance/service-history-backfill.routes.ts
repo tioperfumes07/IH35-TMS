@@ -197,8 +197,9 @@ export async function registerServiceHistoryBackfillRoutes(app: FastifyInstance)
             // no mileage-based due date in this schema, and this route never invents one.
             const nextDue = schedule.interval_kind === "miles" ? body.odometer_miles + schedule.interval_value : null;
             await client.query(
-              `UPDATE maintenance.pm_schedules SET last_service_odometer = $1, next_due_odometer = $2 WHERE id = $3::uuid`,
-              [body.odometer_miles, nextDue, schedule.id]
+              // ROUND 326 audit M2: the service date is the PM's last-service date (days-interval PMs are judged by it).
+              `UPDATE maintenance.pm_schedules SET last_service_odometer = $1, next_due_odometer = $2, last_service_date = $4::date WHERE id = $3::uuid`,
+              [body.odometer_miles, nextDue, schedule.id, body.service_date]
             );
             pmScheduleUpdated = true;
           }
