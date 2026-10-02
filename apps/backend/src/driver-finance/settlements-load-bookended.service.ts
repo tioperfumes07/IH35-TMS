@@ -8,7 +8,8 @@ import { applyPendingDeductionsToSettlementWithNetFloor } from "./settlement-ded
 import { applyAutoDeductionsToSettlement } from "../settlements/auto-deductions/apply.js";
 import { computeSettlementContractTerms, SETTLEMENT_CONTRACT_TERMS_FLAG } from "./settlement-contract-terms.service.js";
 import { appendSettlementLineFromDriverBillIfMissing, appendEscrowContributionLineIfMissing, fetchTeamDriversForLoad } from "./settlement-engine.js";
-import { materializeSettlementLines, backfillExistingSettlementLineAccounts } from "./settlement-lines-materialize.service.js";
+import { materializeSettlementLines } from "./settlement-lines-materialize.service.js";
+import { categorizeSettlementLines } from "./settlement-line-categorize.service.js";
 import { fromMdataStatus } from "../dispatch/load-state-machine.js";
 import {
   settlementEarningsSumSql,
@@ -707,7 +708,9 @@ async function closeLoadBookendedSettlementForDriver(
   // that existed BEFORE this settlement's own materializer ever ran (a re-close of an already-
   // materialized settlement, or a line created by a different writer entirely) — UPDATE-only, never
   // creates a line, never changes a dollar amount or approval_status.
-  await backfillExistingSettlementLineAccounts(client, {
+  // Queue item 10 (G-05): the one categorizer — accounts (backfillExistingSettlementLineAccounts, unchanged rules),
+  // category and catalog item on every line, whichever writer made it.
+  await categorizeSettlementLines(client, {
     settlementId,
     operatingCompanyId: opts.operatingCompanyId,
   });

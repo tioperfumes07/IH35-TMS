@@ -62,6 +62,7 @@ import {
   dollarsToCents,
 } from "../accounting/settlement-posting/settlement-bill-payment.math.js";
 import { isCoaRole, resolveRoleAccountOptional, resolveReimbursementExpenseAccount } from "../accounting/coa-roles/resolver.service.js";
+import { categorizeSettlementLines } from "./settlement-line-categorize.service.js";
 
 /**
  * The escrow cap rendered for human-readable ledger text. DERIVED from ESCROW_CAP_CENTS — never a
@@ -507,6 +508,9 @@ export async function closeSettlementPayRun(
   // further down for why the side effects must be deferred at all.
   const execute = async (client: DbClient) => {
     const settlement = await loadSettlement(client, opco, settlementId);
+    // Queue item 10 (G-05): every line carries its account, category and catalog item before the close reads them.
+    // A preview writes nothing (categorizing changes no amount, so the preview's numbers are the same).
+    if (input.previewOnly !== true) await categorizeSettlementLines(client as never, { settlementId, operatingCompanyId: opco });
     if (settlement.locked_at == null && !POSTABLE_STATUSES.has(settlement.status)) {
       throw new SettlementPayRunError(
         "SETTLEMENT_NOT_POSTABLE",

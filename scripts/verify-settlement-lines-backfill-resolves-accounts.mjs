@@ -31,8 +31,15 @@ const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 function read(rel) {
   return readFileSync(rel, "utf8");
 }
+function readCategorizer() {
+  try {
+    return read("apps/backend/src/driver-finance/settlement-line-categorize.service.ts");
+  } catch {
+    return "";
+  }
+}
 
-export function verifyStatic(materializeSrc, closeSrc) {
+export function verifyStatic(materializeSrc, closeSrc, categorizeSrc = readCategorizer()) {
   const f = [];
 
   if (!/export async function backfillExistingSettlementLineAccounts/.test(materializeSrc)) {
@@ -60,8 +67,14 @@ export function verifyStatic(materializeSrc, closeSrc) {
     f.push("backfillExistingSettlementLineAccounts must never write approval_status — a backfilled account does not retroactively approve a line");
   }
 
-  if (!/backfillExistingSettlementLineAccounts\(client,\s*\{[\s\S]{0,80}settlementId/.test(closeSrc)) {
-    f.push("settlements-load-bookended.service.ts's close path must call backfillExistingSettlementLineAccounts (the unconditional sweep)");
+  // ROUND 326 queue item 10: the close may run the sweep through categorizeSettlementLines, whose first step IS
+  // backfillExistingSettlementLineAccounts (checked against the categorizer's own source below).
+  const direct = /backfillExistingSettlementLineAccounts\(client,\s*\{[\s\S]{0,80}settlementId/.test(closeSrc);
+  const viaCategorizer =
+    /categorizeSettlementLines\(client,\s*\{[\s\S]{0,80}settlementId/.test(closeSrc) &&
+    /const accounts = await backfillExistingSettlementLineAccounts\(client, input\)/.test(categorizeSrc);
+  if (!direct && !viaCategorizer) {
+    f.push("settlements-load-bookended.service.ts's close path must call backfillExistingSettlementLineAccounts (the unconditional sweep), directly or through categorizeSettlementLines");
   }
   if (!/materializeSettlementLines\(client,\s*\{[\s\S]{0,80}settlementId/.test(closeSrc)) {
     f.push("settlements-load-bookended.service.ts's close path must still call materializeSettlementLines (unchanged)");
@@ -163,7 +176,7 @@ if (process.argv.includes("--selftest")) {
       'const postingAccountId = "guessed";'
     ), closeSrc],
     [materializeSrc.replaceAll("deductionSkippedNoSource", "skippedButNotCounted"), closeSrc],
-    [materializeSrc, closeSrc.replace(/await backfillExistingSettlementLineAccounts\(client,\s*\{[^}]*\}\s*\);?/, "")],
+    [materializeSrc, closeSrc.replace(/await backfillExistingSettlementLineAccounts\(client,\s*\{[^}]*\}\s*\);?/, "").replace(/await categorizeSettlementLines\(client,\s*\{[^}]*\}\s*\);?/, "")],
   ];
   for (const [m, c] of mutations) {
     if (m === materializeSrc && c === closeSrc) fail("a selftest mutation did not change any source — the check is stale");
