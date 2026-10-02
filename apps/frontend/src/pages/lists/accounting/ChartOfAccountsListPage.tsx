@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { chartOfAccountsCatalogClient } from "../../../api/catalogs-accounting";
 import type { AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import type { CatalogAccount } from "../../../api/catalog-accounts";
-import { fetchAccountBalances, fetchAccountTypeCatalog } from "../../../api/coa-list";
+import { fetchAccountBalances, fetchAccountTypeCatalog, deactivateCatalogAccount } from "../../../api/coa-list";
 import { getPlaidBankAccounts } from "../../../api/banking";
 import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ListView } from "../../../components/lists/ListView";
 import type { ActiveFilter, ListViewColumn, ListViewFilter, SortConfig } from "../../../components/lists/ListView/types";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { ConfirmModal } from "../../../components/shared/ConfirmModal";
+import { useToast } from "../../../components/Toast";
+import { userFacingApiError } from "../../../lib/api-error-message";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { companyToday } from "../../../lib/businessDate";
 import { ChartOfAccountsSyncPanel } from "../../accounting/ChartOfAccountsSyncPanel";
@@ -101,6 +104,7 @@ function buildColumns(
   collapsedParentIds: Set<string>,
   onToggleCollapse: (parentId: string) => void,
   onEditRow: (row: CoaListRow) => void,
+  onMakeInactive: (row: CoaListRow) => void,
   showAccountNumbers: boolean
 ): ListViewColumn<CoaListRow>[] {
   return [
@@ -215,6 +219,20 @@ function buildColumns(
           >
             Edit
           </button>
+          {/* B-1 / ORDERS §B-1 — per-row Make inactive (batch path already in CoaBatchActions). */}
+          {row.is_active ? (
+            <button
+              type="button"
+              className="text-gray-500 hover:text-gray-800 hover:underline text-xs"
+              data-testid="b1-coa-make-inactive"
+              onClick={(event) => {
+                event.stopPropagation();
+                onMakeInactive(row);
+              }}
+            >
+              Make inactive
+            </button>
+          ) : null}
         </div>
       ),
     },
@@ -224,6 +242,8 @@ function buildColumns(
 export function ChartOfAccountsListPage() {
   const { selectedCompanyId } = useCompanyContext();
   const { user } = useAuth();
+  const { pushToast } = useToast();
+  const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
   const showCoaAsymmetry =
     user?.role === "Owner" || user?.role === "Administrator";
@@ -237,6 +257,8 @@ export function ChartOfAccountsListPage() {
   const [drawerMode, setDrawerMode] = useState<"create" | "edit">("create");
   const [drawerAccount, setDrawerAccount] = useState<CatalogAccount | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [makeInactiveRow, setMakeInactiveRow] = useState<CoaListRow | null>(null);
+  const [makeInactiveBusy, setMakeInactiveBusy] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   // QBO-SYNC-1 (orphan-triage F1): drift-only filter, driven by ChartOfAccountsSyncPanel's own
   // "Drift" toggle (previously wired to nothing — see the retired standalone ChartOfAccounts.tsx
@@ -354,6 +376,7 @@ export function ChartOfAccountsListPage() {
           setDrawerAccount(catalogRowToCatalogAccount(raw));
           setDrawerOpen(true);
         },
+        (coaRow) => setMakeInactiveRow(coaRow),
         showAccountNumbers
       ),
     [collapsedParentIds, catalogQuery.data, showAccountNumbers]
@@ -504,6 +527,40 @@ export function ChartOfAccountsListPage() {
         onClose={() => setDrawerOpen(false)}
         onSaved={() => {
           refetchAll();
+        }}
+      />
+
+      <ConfirmModal
+        open={Boolean(makeInactiveRow)}
+        title="Make account inactive"
+        message={
+          makeInactiveRow
+            ? `Make ${makeInactiveRow.name} inactive? Archived accounts are never deleted.`
+            : ""
+        }
+        confirmLabel="Make inactive"
+        onClose={() => {
+          if (!makeInactiveBusy) setMakeInactiveRow(null);
+        }}
+        onConfirm={async () => {
+          if (!makeInactiveRow || !companyId) return;
+          setMakeInactiveBusy(true);
+          try {
+            try {
+              await chartOfAccountsCatalogClient.deactivate(makeInactiveRow.id, companyId);
+            } catch {
+              await deactivateCatalogAccount(makeInactiveRow.id);
+            }
+            pushToast("Account made inactive", "success");
+            setMakeInactiveRow(null);
+            void queryClient.invalidateQueries({ queryKey: ["coa-list", "catalog", companyId] });
+            refetchAll();
+          } catch (err) {
+            pushToast(userFacingApiError(err, "Could not make account inactive"), "error");
+            throw err;
+          } finally {
+            setMakeInactiveBusy(false);
+          }
         }}
       />
     </div>
