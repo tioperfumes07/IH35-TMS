@@ -1,3 +1,10 @@
+**2026-10-02T03:45Z · ROUND 326 item 2 LIVE + B-1 settlement banner WIP · tip measure `9933a1d697`**
+ACK: CURSOR | ACK GO-20 HOOK | item 2 LIVE BACKFILL DONE | GO
+item 2 LIVE (Neon USMCA lucia, signed signer FKs only — never invent): active_links=2 · contract_orphans_no_reason=0 · matter_orphans_no_reason=0 · matters_with_fk=5 · matters_with_reason=13 (seat fixtures pending clean-app delete). Engine was LEGAL-F32602 #23949.
+B-1 leftover (measure): SettlementDetail OnlineBankingMatchBanner + GET matched_settlement_id hop — WIP on `cursor/r326-item2-live-b1-settlement-banner-0104`.
+ROUND 326 queue items 1–8 engines on tip; item 2 live closed. No Book Load. No Chrome. No seed.
+NEXT: finish settlement match banner → money-pr-local-gate → FAST-MERGE.
+
 **2026-10-02T02:26Z · ROUND 326 I7+I5 MERGED #23962 · tip `7c83c7a7a3`**
 ACK: CURSOR | ACK ROUND-326 | I7 SUBNAV LOCK + I5 LEGAL PROFILE REVERSE | MERGED FAST-MERGE | GO
 money-pr-local-gate PASS → squash-admin #23962. Driver Escrow case; locked-ui-surface = intentional C-33/C-36+R313; customer/vendor LegalMattersReverseSection (customer_id/vendor_id). GUARD verify-legal-reverse-drill-fleet-insurance PASS.

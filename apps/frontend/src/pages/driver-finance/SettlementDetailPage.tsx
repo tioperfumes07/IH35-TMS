@@ -31,6 +31,7 @@ import { formatQueryErrorDetail } from "../../lib/tableError";
 import { openCanonicalDocument, openPrintableDocument } from "../../lib/openPrintableDocument";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
+import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBankingMatchBanner";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -571,6 +572,9 @@ export function SettlementDetailPage() {
     );
   }
 
+  const matchedBankTransactionId =
+    typeof settlement.matched_bank_transaction_id === "string" ? settlement.matched_bank_transaction_id : null;
+
   return (
     <div className="space-y-3">
       <BackButton label="Driver Settlements" fallbackTo="/driver-finance/settlements" />
@@ -580,6 +584,28 @@ export function SettlementDetailPage() {
           { label: "Settlement Detail" },
         ]}
       />
+      {matchedBankTransactionId && companyId ? (
+        <OnlineBankingMatchBanner
+          companyId={companyId}
+          bankTransactionId={matchedBankTransactionId}
+          txnDate={
+            typeof settlement.matched_bank_transaction_date === "string"
+              ? settlement.matched_bank_transaction_date
+              : null
+          }
+          description={
+            typeof settlement.matched_bank_transaction_description === "string"
+              ? settlement.matched_bank_transaction_description
+              : null
+          }
+          amountCents={
+            settlement.matched_bank_transaction_amount_cents != null
+              ? (settlement.matched_bank_transaction_amount_cents as string | number)
+              : null
+          }
+          invalidateKeys={[["driver-finance", "settlement-detail", settlementId, companyId]]}
+        />
+      ) : null}
       <PageHeader
         title={settlementDisplayId ? `Settlement ${settlementDisplayId}` : "Settlement Detail"}
         subtitle="Debt-alert invariant enforced"
