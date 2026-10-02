@@ -25,6 +25,26 @@ const CFG = {
 
 export const normalizedKeySql = (col: string) => `upper(regexp_replace(${col}, '[^A-Za-z0-9]', '', 'g'))`;
 
+/**
+ * Named OWNER exceptions: names that do not normalize equal but the owner ruled are ONE real party. Each maps a
+ * normalized key onto the group key it joins. Never a looser normalizer -- only pairs the owner named.
+ */
+export const OWNER_SAME_PARTY_EXCEPTIONS: Record<CanonicalKind, Array<{ key: string; joins: string; ruling: string }>> = {
+  customer: [],
+  vendor: [
+    // docs/bus/00-OWNER-DECISION-2026-10-02-LOVES-IS-ONE-VENDOR.md -- owner: "YES THEY ARE."
+    { key: "LOVESTRAVELSTOPS", joins: "LOVES", ruling: "00-OWNER-DECISION-2026-10-02-LOVES-IS-ONE-VENDOR" },
+  ],
+};
+
+/** The grouping key: the normalized name, with the owner's named exceptions folded onto the key they join. */
+export const groupKeySql = (kind: CanonicalKind, col: string) => {
+  const ex = OWNER_SAME_PARTY_EXCEPTIONS[kind];
+  const norm = normalizedKeySql(col);
+  if (!ex.length) return norm;
+  return `CASE ${norm} ${ex.map((e) => `WHEN '${e.key.replace(/'/g, "''")}' THEN '${e.joins.replace(/'/g, "''")}'`).join(" ")} ELSE ${norm} END`;
+};
+
 export type RepointTarget = { table: string; column: string; pk: string[]; isUuid: boolean };
 export type RepointLogEntry = { table: string; column: string; keys: Record<string, unknown>[]; removed_on_conflict: Record<string, unknown>[] };
 
@@ -104,7 +124,7 @@ export async function planCanonical(client: Db, oc: string, kind: CanonicalKind)
   const cfg = CFG[kind];
   const targets = await repointTargets(client, kind);
   const members = await client.query<{ key: string; id: string; name: string; active: boolean; filled: number; created_at: string }>(
-    `WITH k AS (SELECT ${normalizedKeySql(`e.${cfg.name}`)} AS key, e.* FROM ${q(cfg.table)} e WHERE e.operating_company_id = $1::uuid)
+    `WITH k AS (SELECT ${groupKeySql(kind, `e.${cfg.name}`)} AS key, e.* FROM ${q(cfg.table)} e WHERE e.operating_company_id = $1::uuid)
      SELECT k.key, k.id::text, k.${cfg.name} AS name, (k.deactivated_at IS NULL) AS active,
             (SELECT count(*)::int FROM jsonb_each(to_jsonb(k)) j WHERE j.value <> 'null'::jsonb AND j.value <> '""'::jsonb) AS filled,
             k.created_at::text
@@ -144,7 +164,7 @@ export async function mergeIntoCanonical(
   const cfg = CFG[kind];
   if (input.survivorId === input.duplicateId) throw new Error("canonical_survivor_equals_duplicate");
   const rows = await client.query<{ id: string; key: string; name: string; snapshot: Record<string, unknown> }>(
-    `SELECT e.id::text, ${normalizedKeySql(`e.${cfg.name}`)} AS key, e.${cfg.name} AS name, to_jsonb(e) AS snapshot
+    `SELECT e.id::text, ${groupKeySql(kind, `e.${cfg.name}`)} AS key, e.${cfg.name} AS name, to_jsonb(e) AS snapshot
        FROM ${q(cfg.table)} e WHERE e.id = ANY($1::uuid[]) AND e.operating_company_id = $2::uuid FOR UPDATE`,
     [[input.survivorId, input.duplicateId], oc]
   );
