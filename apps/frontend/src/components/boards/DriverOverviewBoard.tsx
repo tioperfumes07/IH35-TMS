@@ -14,6 +14,7 @@ import { ListErrorState } from "../ListErrorState";
 import { EntityLink, resolveEntityRoute } from "../shared/EntityLink";
 import "../../design/ih35-design-tokens.css";
 import "./party-board.css";
+import { formatUsdCentsTable } from "../../lib/money";
 
 type Integrity = { key: string; label: string; his: number | null; fleet: number | null; worse: "higher" | "lower"; unit?: string; money?: boolean };
 type Overview = {
@@ -35,7 +36,9 @@ type Overview = {
 };
 
 const usd = (c: number) => `${c < 0 ? "-" : ""}$${(Math.abs(c) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const money = (c: number | null | undefined) => (c ? usd(c) : "—");
+// Owner design law 7 + lib/money C-35/C-37 (Lead ruling ROUND 330.6): MISSING renders "—", a real measured zero renders
+// "$0.00". The old ternary falsy-tested a number and turned every real $0.00 into "unknown".
+const money = (c: number | null | undefined) => formatUsdCentsTable(c);
 const int = (n: number) => n.toLocaleString("en-US");
 const day = (d: string | null | undefined) => (d ? formatDateUS(d) : "—");
 const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("");

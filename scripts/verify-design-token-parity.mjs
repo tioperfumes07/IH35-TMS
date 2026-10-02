@@ -54,10 +54,14 @@ for (const sel of [".pb-kpis", ".dd-kpis"]) {
   if (!/grid-template-columns:\s*repeat\(\s*\d+/.test(rule(sel))) fails.push(`party-board.css ${sel}: KPI row must be a grid of tiles across`);
   if (/flex-direction:\s*column/.test(rule(sel))) fails.push(`party-board.css ${sel}: KPI row must not stack`);
 }
-// 5. missing renders —
+// 5. missing renders —, a real zero renders $0.00 (lib/money C-35/C-37; Lead ruling ROUND 330.6). This check used to
+// REQUIRE `c ? usd(c) : "—"`, which falsy-tests a number and renders every measured $0.00 as "—" (unknown) — the
+// guard asserted the defect. It now requires the canonical table formatter and fails the falsy form.
 for (const f of ["apps/frontend/src/components/boards/PartyBoard.tsx", "apps/frontend/src/components/boards/DriverHubBoard.tsx", "apps/frontend/src/components/boards/DriverOverviewBoard.tsx"]) {
   const src = readFileSync(f, "utf8");
-  if (!/const money = \(c(ents)?: number \| null \| undefined\) => \(c(ents)? \? usd\(c(ents)?\) : "—"\)/.test(src)) fails.push(`${f}: money() must render — for missing / zero`);
+  if (!/const money = \(c(ents)?: number \| null \| undefined\) => formatUsdCentsTable\(c(ents)?\)/.test(src)) fails.push(`${f}: money() must be formatUsdCentsTable — "—" for missing, "$0.00" for a real zero`);
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  if (/\? usd\(c(ents)?\) : "—"/.test(code)) fails.push(`${f}: money() falsy-tests a number — a real $0.00 would render "—"`);
 }
 if (fails.length) { console.error("verify-design-token-parity: FAIL\n  " + fails.join("\n  ")); process.exit(1); }
 console.log(`verify-design-token-parity: OK — ${SURFACES.length} surfaces on the owner's tokens; controls 34 / fields 40 / actions 44 / date 132 / money 120; no column borders; KPI rows across`);
