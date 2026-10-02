@@ -16,9 +16,15 @@ for (const f of files) {
   for (const m of src.matchAll(/`([^`]*UPDATE mdata\.loads[^`]*)`/g)) {
     const sql = m[1];
     const setPart = (sql.match(/\bSET\b([\s\S]*?)(\bWHERE\b|$)/i) ?? [])[1] ?? "";
-    if (!/(^|[\s,])status\s*=/.test(setPart)) continue;
+    // A dynamic SET (`SET ${parts.join(", ")}`) writes status when the same file pushes it in with add("status", ...).
+    // Scoped to the 200 lines before the template (the handler that builds it), not the whole file.
+    const before = src.slice(0, m.index).split("\n").slice(-200).join("\n");
+    const dynamicStatus = /\$\{/.test(setPart) && /\badd\(\s*["']status["']/.test(before);
+    if (!dynamicStatus && !/(^|[\s,])status\s*=/.test(setPart)) continue;
     const where = (sql.match(/\bWHERE\b([\s\S]*)/i) ?? [])[1] ?? "";
     if (/\b(l\.)?status(::text)?\s*(=|IN\b|<>|!=)/i.test(where)) continue;
+    // ...and its compare-and-set is the interpolated predicate built beside it (`${statusCas}` = AND status::text = ...).
+    if (dynamicStatus && /\$\{statusCas\}/.test(where) && /statusCas\s*=[^;]*status(::text)?\s*=/.test(src)) continue;
     const line = src.slice(0, m.index).split("\n").length;
     offenders.push(`${f}:${line}`);
   }

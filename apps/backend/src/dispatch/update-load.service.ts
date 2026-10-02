@@ -610,9 +610,11 @@ export async function updateDispatchLoad(
 ): Promise<UpdateDispatchLoadResult> {
   const { loadId, operatingCompanyId, requestingUserUuid } = input;
 
-  // 1) Existing load (entity-scoped, not soft-deleted).
+  // 1) Existing load (entity-scoped, not soft-deleted). FOR UPDATE: every decision below (the draft advance, the
+  // money locks, the unit double-dispatch check) is taken from this row, so it must not move under us — the
+  // /transition engine, bulk, the driver app and the Samsara detector all lock the same row before writing status.
   const existing = await client.query<Record<string, unknown>>(
-    `SELECT * FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL LIMIT 1`,
+    `SELECT * FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL LIMIT 1 FOR UPDATE`,
     [loadId, operatingCompanyId]
   );
   const old = existing.rows[0];
@@ -930,9 +932,11 @@ export async function updateDispatchLoad(
     add("updated_by_user_id", requestingUserUuid);
     setParts.push(`updated_at = now()`);
     values.push(loadId, operatingCompanyId);
+    // Compare-and-set: the draft advance lands only while the load is still the draft we read.
+    const statusCas = willAdvanceFromDraft ? ` AND status::text = 'draft'` : "";
     const updatedLoad = await client.query<{ id: string }>(
       `UPDATE mdata.loads SET ${setParts.join(", ")}
-        WHERE id = $${values.length - 1}::uuid AND operating_company_id = $${values.length}::uuid AND soft_deleted_at IS NULL
+        WHERE id = $${values.length - 1}::uuid AND operating_company_id = $${values.length}::uuid AND soft_deleted_at IS NULL${statusCas}
         RETURNING id::text`,
       values
     );
