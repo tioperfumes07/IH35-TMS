@@ -44,7 +44,7 @@
 // its own natural key (matching the house convention in historical-driver-bill-backfill.service.ts
 // and fuel-expense-document.service.ts) so a crash mid-document and a clean re-run never double-post.
 // The GL posters called by postGlForSeededDocument are each idempotent on their own terms too
-// (postFuelExpenseFromEvent returns "already_posted"; postLoadBookendedSettlementGlAfterClose's
+// (postLoadBookendedSettlementGlAfterClose's
 // underlying closeSettlementPayRun claims via driver_finance.payrun_gl_runs) — running phase 2
 // twice on the same document is safe, never a double-post.
 //
@@ -66,9 +66,6 @@ import { createHistoricalDriverBill } from "../driver-finance/historical-driver-
 // forbids (it skips the "Driver Net-Pay Clearing" payment-method resolution CC-3's wrapper does).
 import { postLoadBookendedSettlementGlAfterClose } from "../driver-finance/settlement-payrun-close.service.js";
 import { postLoadRevenueLatch } from "../accounting/revrec-delivery-posting/poster.service.js";
-import { postFuelExpenseFromEvent } from "../accounting/fuel-posting/poster.service.js";
-import { createExpenseFromFuelTransaction } from "../fuel/fuel-expense-document.service.js";
-import { withLuciaBypass } from "../auth/db.js";
 import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { postFactoringAdvanceEvent } from "../accounting/factoring-posting/poster.service.js";
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
@@ -912,10 +909,9 @@ function sanitizeFuelLocation(raw: string | null | undefined): { city: string | 
 // 'def'/'reefer_diesel' — see verify-alwaystrack-parity.mjs's own fuel_type='diesel' filter,
 // which this table must match or dimension 3 (fuel $/rows) cannot tie).
 //
-// GL for this row does NOT happen here. postFuelExpenseFromEvent opens its own connection
-// internally (it takes no client param) — calling it before this function's transaction commits
-// would have it read via a separate connection and see nothing (the row isn't durable yet under
-// READ COMMITTED). It is called post-commit instead — see postGlForSeededDocument below.
+// OWNER LAW 2026-10-02 — fuel cards are bank accounts. This inserts the fuel.fuel_transactions
+// row (composition / cost attribution) only. GL posts when Banking matches the card line via
+// postFuelFillOnBankMatch → postFuelExpenseOnClient. Never call postFuelExpenseFromEvent here.
 async function seedFuel(
   client: QueryableClient,
   operatingCompanyId: string,
@@ -1129,11 +1125,10 @@ export type GlPostingReport = {
 
 /**
  * PHASE 2 — call this AFTER the caller has committed the transaction that ran
- * `seedSettlementDocument`. Posts the three GL legs that manage their own connection (revrec
- * two-event latch, fuel expense, settlement close) — the AP leg of expenses already posted
- * in-transaction, in phase 1. Never throws; every poster refusal is collected in `errors` and
- * returned, since a partial GL post on an already-committed document set is a report to act on,
- * not a reason to crash the caller.
+ * `seedSettlementDocument`. Posts the GL legs that manage their own connection (revrec
+ * two-event latch, settlement close) — the AP leg of expenses already posted in-transaction,
+ * in phase 1. Fuel GL is NOT posted here (owner 2026-10-02: posts only on bank match).
+ * Never throws; every poster refusal is collected in `errors` and returned.
  */
 export async function postGlForSeededDocument(
   result: SeedSettlementDocumentResult,
@@ -1179,39 +1174,11 @@ export async function postGlForSeededDocument(
     report.revrecEvent2[loadNumber] = Boolean(event2?.posted);
   }
 
+  // OWNER LAW 2026-10-02 — fuel never posts from the feed. Rows were inserted in seedFuel;
+  // Banking match (postFuelFillOnBankMatch) is the only writer. Report false so callers see
+  // "not posted yet" instead of a fake already_posted.
   for (const fuel of result.fuelTransactions) {
-    const posted = await postFuelExpenseFromEvent({
-      operating_company_id: operatingCompanyId,
-      actor_user_id: actorUserId,
-      fuel_event_id: fuel.fuelTransactionId,
-      fuel_kind: "diesel",
-      posted_at: fuel.postedAt,
-      amount_cents: fuel.amountCents,
-      posting_path: "company_direct",
-    }).catch((err) => {
-      report.errors.push(`fuel posting ${fuel.fuelTransactionId}: ${(err as Error)?.message}`);
-      return null;
-    });
-    report.fuelPosted[fuel.fuelTransactionId] = posted?.result === "posted" || posted?.result === "already_posted";
-
-    // ROUND 290.1 — the bridge is mandatory, not optional. postFuelExpenseFromEvent (above)
-    // posts the JE directly from the fuel event with no accounting.expenses document behind
-    // it — the exact "fuel posts with nothing to void" defect fuel-expense-document.service.ts
-    // exists to close. createExpenseFromFuelTransaction ADOPTS the journal entry
-    // postFuelExpenseFromEvent just posted (via its own idempotent source_fuel_transaction_id
-    // check) rather than posting a second one — no new GL math, no double-posting.
-    await withLuciaBypass(async (client) => {
-      const doc = await createExpenseFromFuelTransaction(client, {
-        operating_company_id: operatingCompanyId,
-        fuel_transaction_id: fuel.fuelTransactionId,
-        requesting_user_uuid: actorUserId,
-      });
-      if (doc.outcome === "refused") {
-        report.errors.push(`fuel expense document ${fuel.fuelTransactionId}: ${doc.reason}`);
-      }
-    }).catch((err) => {
-      report.errors.push(`fuel expense document ${fuel.fuelTransactionId}: ${(err as Error)?.message}`);
-    });
+    report.fuelPosted[fuel.fuelTransactionId] = false;
   }
 
   if (result.settlementId) {
@@ -1235,7 +1202,7 @@ export async function postGlForSeededDocument(
 
 // GL — existing posters only, full list (no new GL math anywhere in this file):
 //   postLoadRevenueLatch                    apps/backend/src/accounting/revrec-delivery-posting/poster.service.ts
-//   postFuelExpenseFromEvent                apps/backend/src/accounting/fuel-posting/poster.service.ts
 //   postSourceTransactionInClientTx         apps/backend/src/accounting/posting-engine.service.ts (in-transaction, phase 1)
+//   fuel GL                                 ONLY via bank-match postFuelFillOnBankMatch (not this file)
 //   postLoadBookendedSettlementGlAfterClose apps/backend/src/driver-finance/settlement-payrun-close.service.ts (CC-3, ROUND 137 item 1 — see import comment)
 //   postFactoringAdvanceEvent               apps/backend/src/accounting/factoring-posting/poster.service.ts (step 7, not yet wired — see above)

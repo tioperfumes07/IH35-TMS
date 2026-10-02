@@ -18,9 +18,9 @@ const MAYBE = "apps/backend/src/accounting/fuel-posting/maybe-post-from-fuel-tra
 const POSTER = "apps/backend/src/accounting/fuel-posting/poster.service.ts";
 const MATCH = "apps/backend/src/accounting/bank-recon/match.service.ts";
 const FILLS = "apps/backend/src/fuel/relay-fills.routes.ts";
-// Known caller in another seat's lane (the feed / settlement-document seeding path, Cursor's lane per the Lead's lane
-// correction). Reported on the bus 2026-10-02; listed by name so any OTHER new caller still fails.
-const REPORTED_OTHER_LANE = new Set(["apps/backend/src/feed/seed-settlement-document.service.ts"]);
+const FEED = "apps/backend/src/feed/seed-settlement-document.service.ts";
+// Allowlist = poster + gated import path + bank-match engine only. Feed retired 2026-10-02
+// (owner: fuel posts only on bank match). No REPORTED_OTHER_LANE exemption.
 
 export function check(files) {
   const problems = [];
@@ -38,9 +38,16 @@ export function check(files) {
   if (!/matched_journal_entry_id = \$5::uuid/.test(matchSrc) && !/matched_journal_entry_id = \$\{/.test(matchSrc) && !/fuelJournalEntryId/.test(matchSrc)) {
     problems.push(`${MATCH}: fuel match must stamp matched_journal_entry_id in the same transaction as review_state='matched'`);
   }
+  const feedSrc = files[FEED] ?? "";
+  if (/\bpostFuelExpense(FromEvent|OnClient)\(/.test(feedSrc)) {
+    problems.push(`${FEED}: feed must not post fuel GL — bank match only`);
+  }
+  if (/\bcreateExpenseFromFuelTransaction\(/.test(feedSrc)) {
+    problems.push(`${FEED}: feed must not mint fuel expense documents — bank match only`);
+  }
   for (const [f, src] of Object.entries(files)) {
     if (!f.startsWith("apps/backend/src/") || /\.test\.ts$|__tests__/.test(f)) continue;
-    if (f === POSTER || f === MAYBE || f === MATCH || f === "apps/backend/src/accounting/bank-recon/bank-match-fuel-post.service.ts" || REPORTED_OTHER_LANE.has(f)) continue;
+    if (f === POSTER || f === MAYBE || f === MATCH || f === "apps/backend/src/accounting/bank-recon/bank-match-fuel-post.service.ts") continue;
     if (/\bpostFuelExpense(FromEvent|OnClient)\(/.test(src)) problems.push(`${f}: posts fuel expense outside the bank match`);
     if (/SET\s+posted_to_gl\s*=\s*true/i.test(src)) problems.push(`${f}: sets relay posted_to_gl by hand`);
   }
