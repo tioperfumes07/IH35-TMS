@@ -53,6 +53,12 @@ const SURFACES = [
     must: [/listAllCustomers\(\{[\s\S]{0,160}customer_type: "broker"/, /<DataTable\b/],
     mustNot: [/<CatalogListSearchInput\b/, /showInactive/, /search: search/],
   },
+  {
+    name: "Safety catalogs (8 lists, one generic page)",
+    file: "apps/frontend/src/pages/lists/safety/SafetyGenericCatalogListPage.tsx",
+    must: [/fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: status \}\)/, /<ParityTable\b/],
+    mustNot: [/<CatalogListSearchInput\b/, /showInactive/, /suppressToolbarSearch/, /limit: 200,\s*offset: 0/],
+  },
 ];
 
 export function audit(read) {
