@@ -143,9 +143,11 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
     register_cleared).
   - Arithmetic: `foldGlLinesIntoSummary` adds JE clears into cleared totals without re-running the
     bank-side anyCleared/match-fallback normalizer (a JE clear must not flip matched bank rows).
-- **R stamp:** JE-only lines stay C via `register_cleared` until a CREATE-only
-  `reconciliation_session_id` on postings lands in Cursor HH 12–23. Bank-feed matched rows still
-  become R on Finish as before.
+- **R stamp (BANK-F91006, no migration):** JE-only `register_cleared` becomes **R** when a closed
+  `banking.reconciliation_sessions` covers the JE entry date for the bank whose
+  `ledger_account_id` = the posting account (read-model EXISTS in account-register.service).
+  Optional column stamp `reconciliation_session_id` on postings remains HH 12–23 polish only —
+  Finish→R already works without it. Bank-feed matched rows still become R on Finish as before.
 - **Guard:** `scripts/ops/verify-b2-je-line-reconcilable.mjs`. Unit:
   `apps/backend/src/banking/__tests__/reconcilable-gl-lines.test.ts`.
 

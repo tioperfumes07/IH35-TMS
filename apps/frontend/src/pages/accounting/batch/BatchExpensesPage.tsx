@@ -143,12 +143,24 @@ export function BatchExpensesPage() {
         <button type="button" className="h-7 rounded-sm border border-[#14314F] bg-[#14314F] px-2 text-white" data-b5-batch-type-expenses="1">
           Expenses / Checks
         </button>
-        <a href="/accounting/bills/vendor?create=1" className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-[#1F2A44] hover:bg-[#F7F8FA]">
+        <a href="/accounting/bills/vendor?create=1" className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-[#1F2A44] hover:bg-[#F7F8FA]" data-b5-batch-type-bills="1">
           Bills (Create Multiple Bills)
         </a>
-        <span className="text-slate-500" title="Deposit and settlement batch grids are not wired yet — use the single creators.">
-          Deposits · Settlements — use single creators (not in this grid yet)
-        </span>
+        {/* B-5 §23 — deposit + settlement batch grids already exist on their engines; type strip must hop, never claim unwired. */}
+        <Link
+          to="/banking/deposits?batch=1"
+          className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-[#1F2A44] hover:bg-[#F7F8FA]"
+          data-b5-batch-type-deposits="1"
+        >
+          Deposits (Make Deposit batch)
+        </Link>
+        <Link
+          to="/driver-finance/settlements/batch"
+          className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-[#1F2A44] hover:bg-[#F7F8FA]"
+          data-b5-batch-type-settlements="1"
+        >
+          Settlements (batch grid)
+        </Link>
       </div>
       <div className="mb-2 flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-white p-2 text-xs" data-testid="batch-expenses-toolbar" data-b5-batch-transactions="1">
         <textarea ref={pasteRef} onPaste={onPaste} placeholder="Paste rows from a spreadsheet here: Date | Payee | Paid from | Method | Ref no. | Amount | Category | Class | Load | Memo" className="h-9 min-w-[28rem] flex-1 rounded border border-dashed border-gray-400 px-2 py-1 text-xs" data-testid="batch-expenses-paste" />
