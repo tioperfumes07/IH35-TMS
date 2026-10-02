@@ -1,4 +1,14 @@
 {
+  "12097": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "verify-lease-to-own-posting: ROUND 321 lessee commencement (Dr ROU / Cr liability), monthly bill Dr liability, period accretion + ROU amortization (finance: interest + amortization expense; operating: straight-line lease expense), buyout close settles liability and moves ROU to an owned fixed asset; live: every ROU lease balances."
+  },
+  "12093": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "verify-lease-to-own-schedule: ROUND 321 classification (FMV buyout -> operating, fixed price -> finance), PV / interest / principal schedule ties to zero, schedule table WORM + FORCE RLS + classified in TABLE_REGISTRY."
+  },
   "12089": {
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-01",
