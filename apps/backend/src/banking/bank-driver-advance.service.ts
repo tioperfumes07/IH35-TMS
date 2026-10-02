@@ -91,6 +91,12 @@ type DecisionOk = {
   amountCents: number;
   postingDate: string;
   creditAccountId: string | null;
+  /** The bank account the money left from (the bank transaction's own account). */
+  fromBankAccountId: string | null;
+  /** The bank line's own reference (check number / source ref), else the bank transaction id — the instrument. */
+  bankReference: string;
+  /** ROUND 301 — a previous run created the advance (dedupe key stamped at creation) but stopped before finishing. */
+  resume?: { advanceId: string; liabilityId: string; stage: "disburse" | "deduction" };
 };
 type Decision = { ok: false; reason: BankDriverAdvanceSkipReason; message?: string } | DecisionOk;
 
@@ -115,16 +121,30 @@ async function decide(input: MaybePostBankDriverAdvanceInput): Promise<Decision>
     // double-book the driver receivable + double-deduct pay. Phase 3 below stamps
     // driver_finance.driver_advances.linked_bank_txn_id on the advance it creates the FIRST time this
     // bank txn is posted — reuse that EXISTING column as the dedupe key (no new table/column needed).
+    // ROUND 301 audit (CC-1): the key is now stamped in the SAME transaction that creates the advance (it used to be
+    // written third, after the disbursement JE had committed — a failure in between left a posted advance with no
+    // key, and a retry booked it twice). A run that stopped part-way RESUMES instead of re-booking: an advance still
+    // 'approved' is disbursed; a disbursed advance with no recovery deduction gets one; anything else is already done.
     const existingRes = await client.query(
       `
-        SELECT id FROM driver_finance.driver_advances
-        WHERE linked_bank_txn_id = $1::uuid
-          AND operating_company_id = $2::uuid
+        SELECT a.id::text AS id, a.liability_id::text AS liability_id, a.disbursement_status::text AS status,
+               EXISTS (SELECT 1 FROM driver_finance.driver_settlement_deductions d
+                        WHERE d.operating_company_id = a.operating_company_id AND d.source_bank_transaction_id = $1::uuid
+                          AND d.voided_at IS NULL) AS has_deduction
+        FROM driver_finance.driver_advances a
+        WHERE a.linked_bank_txn_id = $1::uuid
+          AND a.operating_company_id = $2::uuid
         LIMIT 1
       `,
       [input.bankTransactionId, input.companyId]
     );
-    if (existingRes.rows[0]) return { ok: false, reason: "already_posted" };
+    const existing = existingRes.rows[0] as { id: string; liability_id: string | null; status: string; has_deduction: boolean } | undefined;
+    let resume: DecisionOk["resume"];
+    if (existing) {
+      if (existing.status === "approved") resume = { advanceId: existing.id, liabilityId: existing.liability_id ?? "", stage: "disburse" };
+      else if (existing.status === "disbursed" && !existing.has_deduction) resume = { advanceId: existing.id, liabilityId: existing.liability_id ?? "", stage: "deduction" };
+      else return { ok: false, reason: "already_posted" };
+    }
 
     // FAIL-CLOSED: authoritative driver-advance receivable account = the one the driver_advance posting
     // path debits (B1 category map). If it isn't designated we refuse to post.
@@ -151,6 +171,8 @@ async function decide(input: MaybePostBankDriverAdvanceInput): Promise<Decision>
           bt.amount_cents::bigint AS amount_cents,
           bt.transaction_date::text AS transaction_date,
           bt.is_credit AS is_credit,
+          bt.bank_account_id::text AS bank_account_id,
+          COALESCE(NULLIF(bt.check_number, ''), NULLIF(bt.source_ref, ''), bt.id::text) AS bank_reference,
           ba.ledger_account_id::text AS bank_ledger_account_id,
           ba.hidden_at AS bank_account_hidden_at
         FROM banking.bank_transactions bt
@@ -168,6 +190,8 @@ async function decide(input: MaybePostBankDriverAdvanceInput): Promise<Decision>
           amount_cents: string | number;
           transaction_date: string;
           is_credit: boolean;
+          bank_account_id: string | null;
+          bank_reference: string;
           bank_ledger_account_id: string | null;
           bank_account_hidden_at: string | null;
         }
@@ -192,6 +216,9 @@ async function decide(input: MaybePostBankDriverAdvanceInput): Promise<Decision>
       amountCents,
       postingDate: txn.transaction_date,
       creditAccountId: txn.bank_ledger_account_id ?? null,
+      fromBankAccountId: txn.bank_account_id ?? null,
+      bankReference: txn.bank_reference,
+      resume,
     };
   });
 }
@@ -224,15 +251,26 @@ export async function maybePostBankDriverAdvanceForCategorization(
   const cadence = input.recovery?.cadence ?? "weekly";
   const amountDollars = decision.amountCents / 100;
 
-  const created = await withCompanyScope(input.actorUserUuid, input.companyId, (client) =>
-    createEmployeeLoanCore(client, input.actorUserUuid, input.companyId, {
+  const created = decision.resume
+    ? { ok: true as const, advanceId: decision.resume.advanceId, liabilityId: decision.resume.liabilityId }
+    : await withCompanyScope(input.actorUserUuid, input.companyId, async (client) => {
+    const made = await createEmployeeLoanCore(client, input.actorUserUuid, input.companyId, {
       driver_id: input.driverId as string,
       amount: amountDollars,
       purpose: "other",
       disbursement_method: "direct_bank_transfer",
+      // ROUND 301 (CC-1, fork): the tagged load goes onto the advance itself. USMCA routes every advance as a load
+      // expense (resolveEconomicRouting), which requires a load — without it every USMCA bank-categorized advance
+      // failed with load_id_required_for_load_expense.
+      load_id: input.loadId ?? null,
+      // ROUND 301 (fork): the advance names the bank account the money left from — the core refuses a
+      // direct_bank_transfer advance with no payment account (cash_advance_orphan_no_payment_account).
+      from_bank_account_id: decision.fromBankAccountId,
       recipient_info: {
         recipient_type: "driver",
         recipient_name: input.memo ?? null,
+        // ROUND 301 (fork): the instrument a direct_bank_transfer requires is the bank line itself.
+        bank_reference: decision.bankReference,
         notes: `Bank-categorized driver advance (bank_txn ${input.bankTransactionId})`,
       },
       repayment_schedule: {
@@ -240,8 +278,20 @@ export async function maybePostBankDriverAdvanceForCategorization(
         total_periods: totalPeriods,
         cadence,
       },
-    })
-  );
+    });
+    // The dedupe key commits WITH the advance (ROUND 301) — never after the money moved.
+    if (made.ok) {
+      await client.query(
+        `
+          UPDATE driver_finance.driver_advances
+          SET linked_bank_txn_id = $1::uuid, updated_at = now()
+          WHERE id = $2::uuid AND operating_company_id = $3::uuid
+        `,
+        [input.bankTransactionId, made.advanceId, input.companyId]
+      );
+    }
+    return made;
+  });
   if (!created.ok) {
     return { posted: false, reason: "disburse_failed", message: `${created.error}${created.message ? `: ${created.message}` : ""}` };
   }
@@ -249,27 +299,21 @@ export async function maybePostBankDriverAdvanceForCategorization(
   // Phase 2 — post the balanced JE via the EXISTING driver_advance source type: DEBIT driver-advance
   // receivable, CREDIT the source bank account (falls back to the company cash-like account when the bank
   // account has no linked COA register).
-  const disb = await disburseDriverAdvanceCore(input.actorUserUuid, input.actorRole, input.companyId, {
-    advance_id: created.advanceId,
-    posting_date: decision.postingDate,
-    credit_account_id: decision.creditAccountId,
-  });
-  if (!disb.ok) {
-    if (disb.error === "owner_admin_only") return { posted: false, reason: "authorization_required" };
-    return { posted: false, reason: "disburse_failed", message: `${disb.error}${disb.message ? `: ${disb.message}` : ""}` };
+  let journalEntryId = "";
+  if (!decision.resume || decision.resume.stage === "disburse") {
+    const disb = await disburseDriverAdvanceCore(input.actorUserUuid, input.actorRole, input.companyId, {
+      advance_id: created.advanceId,
+      posting_date: decision.postingDate,
+      credit_account_id: decision.creditAccountId,
+    });
+    if (!disb.ok) {
+      if (disb.error === "owner_admin_only") return { posted: false, reason: "authorization_required" };
+      return { posted: false, reason: "disburse_failed", message: `${disb.error}${disb.message ? `: ${disb.message}` : ""}` };
+    }
+    journalEntryId = disb.posting?.journal_entry_id ?? "";
   }
 
-  // Phase 3 — attach the source bank transaction to the advance (audit lineage; no financial effect).
-  await withCompanyScope(input.actorUserUuid, input.companyId, async (client) => {
-    await client.query(
-      `
-        UPDATE driver_finance.driver_advances
-        SET linked_bank_txn_id = $1::uuid, updated_at = now()
-        WHERE id = $2::uuid AND operating_company_id = $3::uuid
-      `,
-      [input.bankTransactionId, created.advanceId, input.companyId]
-    );
-  });
+  // (Phase 3 — the bank-transaction link — now commits with the advance in Phase 1.)
 
   // Phase 4 — BANKING-GL-COMPLETION: recover this advance from the driver's next settlement. Every other
   // advance-issuance path (bank-transaction-splits.service.ts's driver cash-advance branch, the B5
@@ -304,7 +348,7 @@ export async function maybePostBankDriverAdvanceForCategorization(
     posted: true,
     advance_id: created.advanceId,
     liability_id: created.liabilityId,
-    journal_entry_id: disb.posting?.journal_entry_id ?? "",
+    journal_entry_id: journalEntryId,
     driver_advance_account_id: decision.driverAdvanceAccountId,
     amount_cents: decision.amountCents,
     deduction_id: deductionId,
