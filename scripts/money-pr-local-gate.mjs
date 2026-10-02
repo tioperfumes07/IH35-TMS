@@ -542,6 +542,18 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-canonical-customers",
     ],
   ],
+  // ROUND 326 item 3 — every active USMCA driver's whole profile returns all 17 blocks (value or named reason);
+  // per-block empty counts are shrink-only (linkage only grows).
+  [
+    "verify-driver-profile-linkage",
+    [
+      "apps/backend/src/mdata/canonical/driver-profile.service.ts",
+      "apps/frontend/src/components/driver-profile/DriverWholeProfile.tsx",
+      "apps/frontend/src/pages/DriverDetail.tsx",
+      "scripts/lib/print-driver-profiles.ts",
+      "scripts/verify-driver-profile-linkage",
+    ],
+  ],
   [
     "verify-canonical-vendors",
     [

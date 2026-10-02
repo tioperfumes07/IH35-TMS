@@ -2066,3 +2066,35 @@ CC-3 | ACK ROUND 326 (INBOX-CC-3 + 10-02 law + registry correction + 10-02 CC-3 
 - It refuses unless A/R is unchanged to the cent. Expected: 22 merged, 0 duplicate groups left in USMCA.
 
 **Next (item 1 part B):** customer profile surface + redesign (AR aging, credit limit / exposure, open loads, payment history, factoring eligibility, documents, contacts, rate history).
+
+## 2026-10-02 ROUND 326 items 1B · 2 · 3 — customer, vendor and driver profiles built; one hotfix (my fault)
+
+**Item 1B — customer profile (#23948, `8921a63`).** `GET /api/v1/customers/:id/profile` returns 8 blocks, each a value or a named reason: AR aging · credit limit + exposure (open AR + un-invoiced open loads) · open loads · payment history (days-to-pay) · factoring eligibility · documents · contacts · rate history. Live USMCA read (Refrigerx): AR $58,360.00 (13 invoices, $16,650.00 overdue), exposure $67,260.00, 37 documents, 15 rated loads. 0 of 1,238 USMCA customers have a credit limit set; that block names it.
+
+**Item 2 — canonical vendors + vendor profile (#23954, `fde1947`).**
+- Migration 202615201100 `mdata.vendor_aliases`. `mdata.qbo_vendors` is never written.
+- Engine fixes for both kinds:
+  - Loose id columns are discovered at run time. The hand list missed `bills.vendor_id`, `bill_payments.vendor_id`, `lease_contract.lessor_vendor_id` and about 12 more.
+  - The A/P proof read a non-existent `bills.balance_cents`; fixed.
+  - Tables without a primary key could never match; fixed.
+  - Matching now uses native types.
+- Vendor profile: 9 blocks (AP aging · open bills · 1099 · insurance + authority · WOs · fuel · lanes · terms · history).
+- Rehearsed on a throwaway branch, since deleted:
+  - Customers: 22 groups → 0, A/R $374,134.12 across 110 invoices unchanged.
+  - Vendors: 2 groups → 0, A/P $566.35 across 93 bills unchanged.
+  - Merge then reverse restored exactly.
+- **OWNER — AUTH code still needed** for the USMCA repoint `--apply` (customers + vendors).
+- "LOVES" vs "LOVES TRAVEL STOPS" do not normalize equal. The engine won't guess.
+
+**HOTFIX #23959 (`fc7acf8`) — my defect.** #23954 squash-merged git conflict markers into `canonical-entities.routes.ts`. The backend stopped compiling, and Render builds fde1947, e371ae3 (CC-1 #23955) and bfda280 (CC-2 #23956) failed; prod stayed on the last good deploy. The markers are removed, and the new guard `verify-no-merge-conflict-markers` runs first in money-pr-local-gate. Redeploy triggered.
+
+**Item 3 — driver profile (this PR).** `GET /api/v1/drivers/:id/whole-profile` returns 17 blocks: pay basis · settlements + lines · advances · escrow · deductions · reimbursements · fuel · trucks + trailers · loads · safety · drug & alcohol · medical card · CDL · insurance · documents · HOS · Samsara. Sources:
+- Escrow reads the GL-tied `accounting.escrow_accounts` / `escrow_postings`; `escrow_ledger` is empty.
+- Drug & alcohol unions the 3 tables the dispatch gate reads.
+- HOS uses the certified Samsara clocks first.
+
+**Done line — all 18 active USMCA drivers return a value or a named reason on every block (0 malformed).**
+- Value on (of 18): Samsara 18 · pay 17 · documents 17 · settlements 16 · escrow 16 · loads 16 · equipment 15 · HOS 15 · deductions 14 · fuel 14 · CDL 13 · insurance 10 · advances 7 · safety 1 · medical 1.
+- Named reason on all 18: drug & alcohol and reimbursements.
+
+Guard `verify-driver-profile-linkage` runs the real service per driver; the per-block empty counts are shrink-only.

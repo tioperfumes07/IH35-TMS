@@ -68,6 +68,7 @@ import { PageHeader } from "../components/forms/shared/PageHeader";
 import { FlatFieldGrid } from "../components/layout/FlatFieldGrid";
 import { Modal } from "../components/Modal";
 import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
+import { DriverWholeProfile } from "../components/driver-profile/DriverWholeProfile";
 import { StatusBadge } from "../components/StatusBadge";
 import { MissingRequiredChip } from "../components/compliance/MissingRequiredChip";
 import { useToast } from "../components/Toast";
@@ -972,6 +973,13 @@ export function DriverDetailPage() {
         onTabChange={(nextTab) => setActiveTab(nextTab as DriverTab)}
         itemIds={visibleTabs}
       />
+
+      {/* ROUND 326 item 3: the whole driver in one read — pay, settlements + lines, advances, escrow, deductions,
+          reimbursements, fuel, trucks + trailers, loads, safety, drug & alcohol, medical, CDL, insurance, documents,
+          HOS, Samsara. Every block shows a value or a named reason. */}
+      {activeTab === "Profile" && driver.operating_company_id ? (
+        <DriverWholeProfile operatingCompanyId={String(driver.operating_company_id)} driverId={driver.id} />
+      ) : null}
 
       {activeTab === "Equipment Assignments" && driver.operating_company_id ? (
         <UnitDriverHistoryStrip operatingCompanyId={driver.operating_company_id} driverId={driver.id} />
