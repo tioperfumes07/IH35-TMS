@@ -9,6 +9,7 @@ import { useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ApiError, apiRequest } from "../../api/client";
+import { VariantDuplicatesPanel, useVariantCandidates, variantPairsFor } from "./VariantDuplicatesPanel";
 import { formatDateUS } from "../../lib/formatDate";
 import { ListErrorState } from "../ListErrorState";
 import "../../design/ih35-design-tokens.css";
@@ -160,6 +161,9 @@ export function PartyBoard(props: { kind: PartyKind; operatingCompanyId: string;
   });
   const data = q.data;
   const term = search.trim().toLowerCase();
+  // ROUND 297: possible duplicates (variants) across customers + vendors + Faro debtors, counted live for the chip.
+  const variants = useVariantCandidates(props.operatingCompanyId);
+  const variantCount = variants.data ? variantPairsFor(variants.data.pairs, props.kind).length : null;
 
   if (q.isError) {
     const status = q.error instanceof ApiError ? q.error.status : 0;
@@ -303,6 +307,10 @@ export function PartyBoard(props: { kind: PartyKind; operatingCompanyId: string;
             {c.label} {int(c.n)}
           </button>
         ))}
+        <button type="button" className="pb-chip" aria-pressed={chip === "duplicates" && !term} data-testid="party-board-duplicates-chip"
+          onClick={() => { setChip("duplicates"); setSearch(""); }}>
+          Possible duplicates {variantCount == null ? "…" : int(variantCount)}
+        </button>
         <span className="pb-sep" />
         {isCustomers ? (
           <>
@@ -338,8 +346,14 @@ export function PartyBoard(props: { kind: PartyKind; operatingCompanyId: string;
       </div>
 
       <div className="pb-body" style={{ position: "relative" }}>
-        {q.isLoading ? <div className="pb-muted">Loading {props.kind}…</div> : table}
-        {note}
+        {chip === "duplicates" && !term ? (
+          <VariantDuplicatesPanel board={props.kind} operatingCompanyId={props.operatingCompanyId} />
+        ) : (
+          <>
+            {q.isLoading ? <div className="pb-muted">Loading {props.kind}…</div> : table}
+            {note}
+          </>
+        )}
       </div>
     </div>
   );
