@@ -554,6 +554,17 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-driver-profile-linkage",
     ],
   ],
+  // ROUND 326.5 — Customers / Vendors list boards: every tile and chip ties to an independent recompute.
+  [
+    "verify-party-boards-bound-live",
+    [
+      "apps/backend/src/mdata/canonical/party-board.service.ts",
+      "apps/frontend/src/components/boards/",
+      "apps/frontend/src/routes/manifest.tsx",
+      "scripts/lib/print-party-boards.ts",
+      "scripts/verify-party-boards-bound-live.mjs",
+    ],
+  ],
   [
     "verify-canonical-vendors",
     [

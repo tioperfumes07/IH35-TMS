@@ -10,6 +10,7 @@ import { withCompanyScope } from "../../accounting/shared.js";
 import { readCustomerProfile } from "./customer-profile.service.js";
 import { readVendorProfile } from "./vendor-profile.service.js";
 import { readDriverProfile } from "./driver-profile.service.js";
+import { readCustomerBoard, readVendorBoard } from "./party-board.service.js";
 import { mergeIntoCanonical, planCanonical, reverseCanonicalMerge, type CanonicalKind } from "./canonical-entities.service.js";
 
 const kindSchema = z.enum(["customers", "vendors"]);
@@ -27,6 +28,19 @@ export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
       readCustomerProfile(client, qy.data.operating_company_id, p.data.id));
     if (!profile) return reply.code(404).send({ error: "customer_not_found" });
     return profile;
+  });
+
+  // ROUND 326.5 — the Customers / Vendors list boards: tiles, chip counts, rows and footers, all computed live.
+  app.get("/api/v1/mdata/boards/:kind", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    if (!requireAuth(req, reply)) return;
+    const p = z.object({ kind: kindSchema }).safeParse(req.params ?? {});
+    const qy = z.object({ operating_company_id: z.string().uuid(), range: z.enum(["ytd", "12m", "all"]).default("ytd") }).safeParse(req.query ?? {});
+    if (!p.success || !qy.success) return reply.code(400).send({ error: "validation_error" });
+    await assertCompanyMembership(req.user!.uuid, qy.data.operating_company_id);
+    return withCompanyScope<unknown>(req.user!.uuid, qy.data.operating_company_id, (client) =>
+      p.data.kind === "customers"
+        ? readCustomerBoard(client, qy.data.operating_company_id, qy.data.range)
+        : readVendorBoard(client, qy.data.operating_company_id, qy.data.range));
   });
 
   // ROUND 326 item 3 — the whole driver in one read: seventeen blocks, each a value or a named empty reason.
