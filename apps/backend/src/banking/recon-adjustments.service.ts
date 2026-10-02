@@ -43,55 +43,37 @@ function requirePositiveCents(n: number, label: string) {
 async function resolveBankVendorId(
   client: QueryableClient,
   operatingCompanyId: string,
-  bankLedgerAccountId: string,
+  _bankLedgerAccountId: string,
   bankAccountId: string | null | undefined
 ): Promise<string | null> {
-  // Prefer an exact vendor match on the bank account's display / account name (QBO payee = bank).
-  if (bankAccountId) {
-    const ba = await client.query<{ payee: string | null }>(
-      `SELECT COALESCE(NULLIF(TRIM(display_name), ''), NULLIF(TRIM(account_name), ''), NULLIF(TRIM(institution_name), '')) AS payee
-         FROM banking.bank_accounts
-        WHERE id = $1::uuid AND operating_company_id = $2::uuid
-        LIMIT 1`,
-      [bankAccountId, operatingCompanyId]
-    );
-    const payee = ba.rows[0]?.payee ?? null;
-    if (payee) {
-      const v = await client.query<{ id: string }>(
-        `SELECT id::text AS id
-           FROM mdata.vendors
-          WHERE operating_company_id = $1::uuid
-            AND deactivated_at IS NULL
-            AND COALESCE(is_sample_data, false) IS NOT TRUE
-            AND lower(vendor_name) = lower($2)
-          LIMIT 1`,
-        [operatingCompanyId, payee]
-      );
-      if (v.rows[0]?.id) return v.rows[0].id;
-    }
-  }
-
-  const acct = await client.query<{ account_name: string | null }>(
-    `SELECT account_name
-       FROM catalogs.accounts
+  // ROUND 297 (owner): the payee of a bank service charge is the BANK -- the institution that holds the account. A
+  // ledger account's own name is never a payee: reconciling GL 1005 "Petty Cash" made the vendor "Petty Cash" the
+  // payee of a $5.00 charge, and a cash account entered the vendor namespace. No institution -> no vendor (the expense
+  // still posts to the fee account, paid from the bank GL); never a guess.
+  if (!bankAccountId) return null;
+  const ba = await client.query<{ institution: string | null }>(
+    `SELECT NULLIF(TRIM(institution_name), '') AS institution
+       FROM banking.bank_accounts
       WHERE id = $1::uuid AND operating_company_id = $2::uuid
       LIMIT 1`,
-    [bankLedgerAccountId, operatingCompanyId]
+    [bankAccountId, operatingCompanyId]
   );
-  const accountName = acct.rows[0]?.account_name?.trim() || null;
-  if (!accountName) return null;
-
-  const byAcct = await client.query<{ id: string }>(
-    `SELECT id::text AS id
-       FROM mdata.vendors
-      WHERE operating_company_id = $1::uuid
-        AND deactivated_at IS NULL
-        AND COALESCE(is_sample_data, false) IS NOT TRUE
-        AND lower(vendor_name) = lower($2)
+  const institution = ba.rows[0]?.institution ?? null;
+  if (!institution) return null;
+  const v = await client.query<{ id: string }>(
+    `SELECT v.id::text AS id
+       FROM mdata.vendors v
+      WHERE v.operating_company_id = $1::uuid
+        AND v.deactivated_at IS NULL
+        AND COALESCE(v.is_sample_data, false) IS NOT TRUE
+        AND lower(v.vendor_name) = lower($2)
+        -- a vendor named like one of the company's own ledger accounts is an account, not a payee
+        AND NOT EXISTS (SELECT 1 FROM catalogs.accounts a
+                         WHERE a.operating_company_id = v.operating_company_id AND lower(a.account_name) = lower(v.vendor_name))
       LIMIT 1`,
-    [operatingCompanyId, accountName]
+    [operatingCompanyId, institution]
   );
-  return byAcct.rows[0]?.id ?? null;
+  return v.rows[0]?.id ?? null;
 }
 
 /**
