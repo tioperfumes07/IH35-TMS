@@ -41,33 +41,19 @@ const BACKEND_SRC = path.join(ROOT, "apps", "backend", "src");
 // somehow regresses the debt shape without this list (and this comment) being updated to match.
 const KNOWN_AUTOMATCH_DEBT = [];
 
-// The three (and only three) reviewed writers of the five target columns, found by a full-repo
-// search before this guard was written (see header). A write here is allowed ONLY because it was
-// read in full and is NOT a fuzzy-match guess:
+// The reviewed writers of the five target columns (full-repo search before this guard was written;
+// updated 2026-10-02 OWNER LAW competing-engine audit — Cursor lane bank-match writer):
 //   - recon-worklist.service.ts only ever clears them to NULL (unmatching, not deciding a match).
 //   - bank-invoice-backlink.service.ts derives matched_invoice_id deterministically from
 //     accounting.payments.source_bank_transaction_id, a fact a human already established when
 //     recording that payment — not a scored candidate.
-//   - reconciliation.routes.ts's POST /api/v1/banking/reconciliation/:sessionId/match is a real,
-//     authenticated (currentAuthUser), role-gated (canReconcile) human-action route: it records
-//     matched_by_user_uuid + match_state='user_matched' (never 'auto_matched') on the sibling
-//     banking.reconciliation_matches row in the SAME handler, plus appendCrudAudit — the
-//     accountability trail Owner Law B requires, just under this table's own column name rather
-//     than the literal string "categorized_by_user_id".
-//   - link-suggestions-actions.routes.ts's POST /api/v1/banking/link-suggestions/accept (LINK-4 PR
-//     2, the human decision UI) is the same shape as reconciliation.routes.ts's /match above: real
-//     requireAuth + role-gated (canDecide/LINK_SUGGESTION_ROLES) route, one column set per an
-//     explicit obligation_type switch (never a scored/fuzzy guess — obligation_id + type both come
-//     from the request body, validated to exist first via OBLIGATION_EXISTENCE_SQL), writes
-//     categorized_by_user_id + categorized_at + review_state='matched' in the same statement, plus
-//     a mirrored user_matched upsert into banking.reconciliation_matches and an appendCrudAudit —
-//     the identical accountability trail. Its /undo route only ever clears these columns to NULL
-//     (same as recon-worklist.service.ts, exempt from this audit for the same reason).
+//   - reconciliation.routes.ts + link-suggestions-actions.routes.ts + obligation-reconcile.routes.ts
+//     NO LONGER stamp matched_* on accept — they proxy acceptReconMatch →
+//     acceptMatchWithResolveDifference (match.service.ts stamps via dynamic column whitelist).
+//     Removed from this allowlist once their bound UPDATE writers were retired.
 const TARGET_COLUMN_WRITE_ALLOWLIST = new Set([
   "apps/backend/src/accounting/bank-recon/recon-worklist.service.ts",
   "apps/backend/src/accounting/payments/bank-invoice-backlink.service.ts",
-  "apps/backend/src/banking/reconciliation.routes.ts",
-  "apps/backend/src/banking/link-suggestions-actions.routes.ts",
 ]);
 
 const TARGET_COLUMNS = ["matched_expense_id", "matched_bill_id", "matched_load_id", "matched_settlement_id", "matched_invoice_id"];

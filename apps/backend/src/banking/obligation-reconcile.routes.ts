@@ -8,6 +8,8 @@ import { suggestionConfidence } from "./obligation-reconcile.logic.js";
 import { appendFactoringSuggestions } from "./recon.service.js";
 import { FactoringBankMatchError, applyMatch } from "../factoring/bank-match.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { acceptReconMatch } from "../accounting/bank-recon/recon-worklist.service.js";
+import type { LedgerEntryKind } from "../accounting/bank-recon/match.service.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -34,6 +36,14 @@ const reconcileBodySchema = z.object({
   obligation_type: z.enum(["load", "settlement", "fuel", "work_order", "ar_invoice", "bill", "expense", "factoring_batch"]),
   obligation_id: z.string().uuid(),
 });
+
+/** Only kinds the canonical Match engine (PERSISTABLE_MATCH_KINDS) can accept via this route. */
+const CANONICAL_LEDGER_KIND: Partial<
+  Record<z.infer<typeof reconcileBodySchema>["obligation_type"], LedgerEntryKind>
+> = {
+  expense: "expense",
+  settlement: "settlement",
+};
 
 const bulkBodySchema = z.object({
   bank_transaction_ids: z.array(z.string().uuid()).min(1).max(200),
@@ -510,25 +520,29 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
     if (!companyHeader.success) return sendValidationError(reply, companyHeader.error);
     const companyId = companyHeader.data.operating_company_id;
 
-    let ok: boolean | "transaction_mismatch" | "obligation_not_found";
-    try {
-      ok = await withCompanyScope(user.uuid, companyId, async (client) => {
-        await client.query("BEGIN");
-        try {
-          const lockRes = await client.query<{ id: string }>(
-          `
-            SELECT id FROM banking.bank_transactions
-            WHERE id = $1::uuid AND operating_company_id = $2::uuid
-            FOR UPDATE
-          `,
-          [body.data.bank_transaction_id, companyId]
-        );
-          if (!lockRes.rows[0]) {
-            await client.query("ROLLBACK");
-            return false;
-          }
+    // OWNER LAW 2026-10-02 COMPETING-ENGINE — bank-match accept is ONLY acceptReconMatch
+    // (→ acceptMatchWithResolveDifference). factoring_batch keeps applyMatch (factoring engine).
+    // load/bill/fuel/work_order/ar_invoice are not persistable here — refuse; do not stamp
+    // matched_* or linked_entity as a second accept writer.
+    if (body.data.obligation_type === "factoring_batch") {
+      let ok: boolean | "transaction_mismatch";
+      try {
+        ok = await withCompanyScope(user.uuid, companyId, async (client) => {
+          await client.query("BEGIN");
+          try {
+            const lockRes = await client.query<{ id: string }>(
+              `
+                SELECT id FROM banking.bank_transactions
+                WHERE id = $1::uuid AND operating_company_id = $2::uuid
+                FOR UPDATE
+              `,
+              [body.data.bank_transaction_id, companyId]
+            );
+            if (!lockRes.rows[0]) {
+              await client.query("ROLLBACK");
+              return false;
+            }
 
-          if (body.data.obligation_type === "factoring_batch") {
             const applied = await applyMatch(body.data.obligation_id, companyId, { client });
             if (applied.bank_txn_id !== body.data.bank_transaction_id) {
               await client.query("ROLLBACK");
@@ -551,102 +565,87 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
             );
             await client.query("COMMIT");
             return true;
+          } catch (e) {
+            await client.query("ROLLBACK");
+            throw e;
           }
-
-          // ACCT-F5573: the obligation_id was previously written straight onto the bank transaction
-          // with no check that it exists or belongs to this company. Every downstream JOIN on
-          // matched_load_id/matched_bill_id/matched_settlement_id is itself company-scoped (verified:
-          // plaid/link.routes.ts, qbo-sync.service.ts), so a bogus/foreign id can't leak another
-          // tenant's data through those reads -- but it silently marks a REAL bank transaction as
-          // "matched" against nothing, permanently hiding a genuinely-unreconciled transaction from
-          // the /unmatched-transactions queue (which filters on matched_*/reconciled_obligation_id
-          // being NULL). Reject before writing instead of trusting the caller.
-          const existenceSql = OBLIGATION_EXISTENCE_SQL[body.data.obligation_type];
-          if (existenceSql) {
-            const existsRes = await client.query(existenceSql, [body.data.obligation_id, companyId]);
-            if (!existsRes.rows[0]) {
-              await client.query("ROLLBACK");
-              return "obligation_not_found" as const;
-            }
-          }
-
-          let loadId: string | null = null;
-          let billId: string | null = null;
-          let settlementId: string | null = null;
-          let linkedId: string | null = null;
-          let categoryKind: string | null = null;
-
-          if (body.data.obligation_type === "load") loadId = body.data.obligation_id;
-          if (body.data.obligation_type === "bill") billId = body.data.obligation_id;
-          if (body.data.obligation_type === "settlement") settlementId = body.data.obligation_id;
-          if (
-            body.data.obligation_type === "fuel" ||
-            body.data.obligation_type === "work_order" ||
-            body.data.obligation_type === "ar_invoice" ||
-            body.data.obligation_type === "expense"
-          ) {
-            // No dedicated matched_*_id column for these — carry them on the generic linked_entity_id +
-            // category_kind pair (Accept marks the txn reconciled; it never posts a JE here).
-            linkedId = body.data.obligation_id;
-            categoryKind = body.data.obligation_type === "ar_invoice" ? "invoice" : body.data.obligation_type;
-          }
-
-          await client.query(
-          `
-            UPDATE banking.bank_transactions
-            SET
-              reconciled_obligation_type = $2::text,
-              reconciled_obligation_id = $3::uuid,
-              matched_load_id = COALESCE($4::uuid, matched_load_id),
-              matched_bill_id = COALESCE($5::uuid, matched_bill_id),
-              matched_settlement_id = COALESCE($6::uuid, matched_settlement_id),
-              linked_entity_id = COALESCE($7::uuid, linked_entity_id),
-              category_kind = COALESCE($8::text, category_kind),
-              updated_at = now()
-            WHERE id = $1::uuid
-          `,
-          [
-            body.data.bank_transaction_id,
-            body.data.obligation_type,
-            body.data.obligation_id,
-            loadId,
-            billId,
-            settlementId,
-            linkedId,
-            categoryKind,
-          ]
-        );
-
-          await appendCrudAudit(
-          client,
-          user.uuid,
-          "banking.obligation_reconcile.applied",
-          {
-            resource_type: "banking.bank_transactions",
-            resource_id: body.data.bank_transaction_id,
-            obligation_type: body.data.obligation_type,
-            obligation_id: body.data.obligation_id,
-          },
-          "info",
-          "P7-BLOCK-K-RECON"
-        );
-          await client.query("COMMIT");
-          return true;
-        } catch (e) {
-          await client.query("ROLLBACK");
-          throw e;
+        });
+      } catch (error) {
+        if (error instanceof FactoringBankMatchError) {
+          return reply.code(error.statusCode).send({ error: error.code });
         }
-      });
-    } catch (error) {
-      if (error instanceof FactoringBankMatchError) {
-        return reply.code(error.statusCode).send({ error: error.code });
+        throw error;
       }
-      throw error;
+
+      if (ok === "transaction_mismatch") return reply.code(409).send({ error: "suggestion_transaction_mismatch" });
+      if (!ok) return reply.code(404).send({ error: "transaction_not_found" });
+      return { ok: true };
     }
 
-    if (ok === "transaction_mismatch") return reply.code(409).send({ error: "suggestion_transaction_mismatch" });
-    if (ok === "obligation_not_found") return reply.code(404).send({ error: "obligation_not_found" });
-    if (!ok) return reply.code(404).send({ error: "transaction_not_found" });
+    const ledgerKind = CANONICAL_LEDGER_KIND[body.data.obligation_type];
+    if (!ledgerKind) {
+      return reply.code(409).send({
+        error: "use_match_drawer_for_kind",
+        detail: body.data.obligation_type,
+      });
+    }
+
+    const existenceSql = OBLIGATION_EXISTENCE_SQL[body.data.obligation_type];
+    if (existenceSql) {
+      const exists = await withCompanyScope(user.uuid, companyId, async (client) => {
+        return client.query(existenceSql, [body.data.obligation_id, companyId]);
+      });
+      if (!exists.rows[0]) return reply.code(404).send({ error: "obligation_not_found" });
+    }
+
+    const txExists = await withCompanyScope(user.uuid, companyId, async (client) => {
+      const lockRes = await client.query<{ id: string }>(
+        `
+          SELECT id FROM banking.bank_transactions
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid
+          LIMIT 1
+        `,
+        [body.data.bank_transaction_id, companyId]
+      );
+      return Boolean(lockRes.rows[0]);
+    });
+    if (!txExists) return reply.code(404).send({ error: "transaction_not_found" });
+
+    try {
+      await acceptReconMatch({
+        operating_company_id: companyId,
+        bank_transaction_id: body.data.bank_transaction_id,
+        actor_user_uuid: user.uuid,
+        ledger_entry_kind: ledgerKind,
+        ledger_entry_id: body.data.obligation_id,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (/already_matched/i.test(msg)) return reply.code(409).send({ error: "bank_transaction_already_matched" });
+      if (/not_found|expense_not_posted/i.test(msg)) return reply.code(404).send({ error: "obligation_not_found", detail: msg });
+      if (/match_kind_not_acceptable|variance_account_id_required/i.test(msg)) {
+        return reply.code(409).send({ error: "match_engine_rejected", detail: msg });
+      }
+      throw err;
+    }
+
+    await withCompanyScope(user.uuid, companyId, async (client) => {
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "banking.obligation_reconcile.applied",
+        {
+          resource_type: "banking.bank_transactions",
+          resource_id: body.data.bank_transaction_id,
+          obligation_type: body.data.obligation_type,
+          obligation_id: body.data.obligation_id,
+          via: "acceptReconMatch",
+        },
+        "info",
+        "P7-BLOCK-K-RECON"
+      );
+    });
+
     return { ok: true };
   });
 

@@ -29,6 +29,7 @@ import { assertBankAccountUsable, bankTransactionHiddenFilterSql, isBankAccountH
 import { computeAdjustedBalanceSummary } from "./adjusted-balance-rec.js";
 import { postReconciliationAdjustments } from "./recon-adjustments.service.js";
 import { ageUnclearedTransactions, type ReconcilingItemClass } from "./reconciling-item-aging.js";
+import { acceptReconMatch } from "../accounting/bank-recon/recon-worklist.service.js";
 
 const startBodySchema = z.object({
   bank_account_id: z.string().uuid(),
@@ -1045,10 +1046,22 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     const body = matchBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
 
+    // OWNER LAW 2026-10-02 COMPETING-ENGINE — one accept writer:
+    // acceptReconMatch → acceptMatchWithResolveDifference. load/bill are not
+    // PERSISTABLE_MATCH_KINDS (bill = view-only orphan without bill_payment JE;
+    // load has no matched_* stamp path in the canonical engine). Refuse here —
+    // do not invent a second stamp path for them.
+    if (body.data.matched_event_type === "load" || body.data.matched_event_type === "bill") {
+      return reply.code(409).send({
+        error: "use_match_drawer_for_kind",
+        detail: body.data.matched_event_type,
+      });
+    }
+
     const session = await loadSession(user.uuid, params.data.sessionId, query.data.operating_company_id);
     if (!session) return reply.code(404).send({ error: "session_not_found" });
 
-    const updated = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+    const inSession = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const txCheck = await client.query<{ id: string }>(
         `
           SELECT id
@@ -1070,60 +1083,38 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       );
       if (!txCheck.rows[0]) return false;
 
-      // ACCT-F5574: verify matched_event_id exists and belongs to this company BEFORE writing it
-      // onto the transaction -- previously trusted outright, silently marking a real transaction
-      // "matched" against a bogus/foreign id.
+      // ACCT-F5574: verify matched_event_id exists and belongs to this company BEFORE accept.
       const eventExists = await client.query(
         MATCHED_EVENT_EXISTENCE_SQL[body.data.matched_event_type],
         [body.data.matched_event_id, query.data.operating_company_id]
       );
       if (!eventExists.rows[0]) return "event_not_found" as const;
+      return true;
+    });
 
-      let loadId: string | null = null;
-      let billId: string | null = null;
-      let settlementId: string | null = null;
-      if (body.data.matched_event_type === "load") loadId = body.data.matched_event_id;
-      if (body.data.matched_event_type === "bill") billId = body.data.matched_event_id;
-      if (body.data.matched_event_type === "settlement") settlementId = body.data.matched_event_id;
+    if (inSession === "event_not_found") return reply.code(404).send({ error: "matched_event_not_found" });
+    if (!inSession) return reply.code(404).send({ error: "transaction_not_in_session_period" });
 
-      await client.query(
-        `
-          UPDATE banking.bank_transactions
-          SET
-            matched_load_id = $2,
-            matched_bill_id = $3,
-            matched_settlement_id = $4,
-            updated_at = now()
-          WHERE id = $1
-        `,
-        [body.data.transaction_id, loadId, billId, settlementId]
-      );
+    // Settlement only — thin proxy to the canonical Match engine (never stamps matched_* here).
+    try {
+      await acceptReconMatch({
+        operating_company_id: query.data.operating_company_id,
+        bank_transaction_id: body.data.transaction_id,
+        actor_user_uuid: user.uuid,
+        ledger_entry_kind: "settlement",
+        ledger_entry_id: body.data.matched_event_id,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (/already_matched/i.test(msg)) return reply.code(409).send({ error: "bank_transaction_already_matched" });
+      if (/not_found/i.test(msg)) return reply.code(404).send({ error: "matched_event_not_found" });
+      if (/match_kind_not_acceptable|variance_account_id_required/i.test(msg)) {
+        return reply.code(409).send({ error: "match_engine_rejected", detail: msg });
+      }
+      throw err;
+    }
 
-      // LINKAGE-INTEGRITY-LAW — a match is a record, not a bare pointer. Mirrors the OTHER
-      // subsystem's own accept flow (accounting/bank-recon/match.service.ts), which already writes
-      // banking.reconciliation_matches for its 5 kinds; this route's own 3 kinds (load/bill/
-      // settlement) previously wrote ONLY the bare bank_transactions column with no matches-record
-      // at all (migration 202613350001 widened the kind CHECK to accept them).
-      await client.query(
-        `
-          INSERT INTO banking.reconciliation_matches (
-            operating_company_id, bank_transaction_id, ledger_entry_kind, ledger_entry_id,
-            match_score, match_state, matched_at, matched_by_user_uuid
-          )
-          VALUES ($1::uuid, $2::uuid, $3::text, $4::uuid, 1, 'user_matched', now(), $5::uuid)
-          ON CONFLICT (bank_transaction_id, ledger_entry_kind, ledger_entry_id)
-          DO UPDATE SET
-            match_score = 1,
-            match_state = 'user_matched',
-            matched_at = now(),
-            matched_by_user_uuid = EXCLUDED.matched_by_user_uuid,
-            voided_at = NULL,
-            void_reason = NULL,
-            voided_by_user_id = NULL
-        `,
-        [query.data.operating_company_id, body.data.transaction_id, body.data.matched_event_type, body.data.matched_event_id, user.uuid]
-      );
-
+    await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       await appendCrudAudit(
         client,
         user.uuid,
@@ -1134,15 +1125,13 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           session_id: session.id,
           matched_event_type: body.data.matched_event_type,
           matched_event_id: body.data.matched_event_id,
+          via: "acceptReconMatch",
         },
         "info",
         "P5-T2-RECON"
       );
-      return true;
     });
 
-    if (updated === "event_not_found") return reply.code(404).send({ error: "matched_event_not_found" });
-    if (!updated) return reply.code(404).send({ error: "transaction_not_in_session_period" });
     return { ok: true };
   });
 
