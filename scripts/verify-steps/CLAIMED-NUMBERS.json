@@ -9905,6 +9905,12 @@
     "purpose": "verify-b5-change-location-wired — B-5 Change location picker + reclassify to_location_id + JEP location_id",
     "pr": null
   },
+  "12306": {
+    "claimed_by": "CURSOR",
+    "claimed_at": "2026-10-02",
+    "purpose": "BANK-F91038 — bill-payment overpay creates vendor_credit + A/P cash JE + spine (verify-bill-payment-overpay-creates-vendor-credit).",
+    "pr": null
+  },
   "12277": {
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-02",
