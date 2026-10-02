@@ -2,6 +2,7 @@ import type { Customer } from "../../api/mdata";
 import { Modal } from "../Modal";
 import { ListErrorState } from "../ListErrorState";
 import { formatUsdCents } from "../../lib/money";
+import { FactoringPurchaseLinksPanel } from "../factoring/FactoringPurchaseLinksPanel";
 
 type Props = {
   open: boolean;
@@ -62,6 +63,11 @@ export function CustomerDrillModal({ open, customer, openBalanceCents = 0, overd
           </div>
         </div>
         )}
+        {/* LINKAGE LAW §10-B reverse drill: the factoring purchases (= Faro wires) carrying this customer's invoices. */}
+        <div className="border-t border-gray-100 pt-3" data-testid="customer-drill-factoring-purchases">
+          <p className="mb-1 text-xs font-semibold text-gray-600">Factoring purchases</p>
+          <FactoringPurchaseLinksPanel companyId={customer.operating_company_id} filter={{ customer_id: customer.id }} emptyText="No invoice of this customer has been sold to the factor." />
+        </div>
         <p className="text-xs text-gray-500">FMCSA: {customer.fmcsa_authority_status_at_verification ?? "Not verified"}</p>
       </div>
     </Modal>

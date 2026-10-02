@@ -119,6 +119,12 @@ export type FactoringPurchaseListRow = {
   voided_at: string | null;
   bank_transaction_id: string | null;
   factoring_company_name: string | null;
+  /** Reverse-drill share: the filtered invoice / load / customer's OWN lines on this wire (null when unfiltered). */
+  line_count?: number | null;
+  line_gross_cents?: number | string | null;
+  line_escrow_reserve_cents?: number | string | null;
+  line_cash_reserve_cents?: number | string | null;
+  line_fee_cents?: number | string | null;
 };
 
 export type FactoringPurchaseLine = {
