@@ -542,9 +542,9 @@ export async function postFuelExpenseOnClient(client: DbClient, input: FuelPosti
       UPDATE accounting.posting_batches
       SET batch_status = 'posted',
           updated_at = now()
-      WHERE id = $1::uuid
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
     `,
-    [postingBatchId]
+    [postingBatchId, input.operating_company_id]
   );
 
   return {
