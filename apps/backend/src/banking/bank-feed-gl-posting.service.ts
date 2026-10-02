@@ -49,7 +49,7 @@ import {
   resolveAccountForCategory,
   ExpenseCategoryMapResolutionError,
 } from "../accounting/expense-category-map/resolver.service.js";
-import { postSourceTransaction } from "../accounting/posting-engine.service.js";
+import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { isBankAccountHideEnabled } from "./bank-account-visibility.js";
 
 export const BANK_FEED_GL_POSTING_FLAG_KEY = "BANK_FEED_GL_POSTING_ENABLED";
@@ -60,6 +60,7 @@ export type BankFeedGlSkipReason =
   | "not_categorized"
   | "already_posted"
   | "already_matched_to_bill"
+  | "already_matched_to_document"
   | "bill_backed"
   | "is_transfer"
   | "no_account"
@@ -105,8 +106,10 @@ type Decision = { ok: false; reason: BankFeedGlSkipReason; message?: string } | 
  * transaction + its bank-account cash-GL bridge + the chosen account's validity, applies the three
  * double-post interlocks, and derives direction from the is_credit flag. Never writes.
  */
-async function decide(input: MaybePostBankCategorizationInput): Promise<Decision> {
-  return withCompanyScope(input.actorUserUuid, input.companyId, async (client): Promise<Decision> => {
+type PgClient = Parameters<Parameters<typeof withCompanyScope>[2]>[0];
+
+async function decideOnClient(client: PgClient, input: MaybePostBankCategorizationInput): Promise<Decision> {
+  {
     const flagOn = await isEnabled(client, BANK_FEED_GL_POSTING_FLAG_KEY, {
       operating_company_id: input.companyId,
       user_uuid: input.actorUserUuid,
@@ -127,6 +130,9 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
           lb.status::text                              AS linked_bill_status,
           bt.matched_bill_id::text                     AS matched_bill_id,
           bt.matched_journal_entry_id::text            AS matched_journal_entry_id,
+          COALESCE(bt.matched_expense_id, bt.matched_fuel_transaction_id, bt.matched_relay_fuel_transaction_id,
+                   bt.matched_invoice_id, bt.matched_payment_id, bt.matched_bill_payment_id, bt.matched_settlement_id,
+                   bt.matched_factoring_advance_id, bt.matched_advance_id)::text AS matched_document_id,
           bt.transfer_kind::text                       AS transfer_kind,
           bt.destination_bank_account_id::text         AS destination_bank_account_id,
           bt.matched_transfer_id::text                 AS matched_transfer_id,
@@ -178,6 +184,7 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
           linked_bill_status: string | null;
           matched_bill_id: string | null;
           matched_journal_entry_id: string | null;
+          matched_document_id: string | null;
           transfer_kind: string | null;
           destination_bank_account_id: string | null;
           matched_transfer_id: string | null;
@@ -203,6 +210,10 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
 
     // Interlock 2 — matched to a bill (CHAIN-03/04 sourced it; Match, not Categorize).
     if (txn.matched_bill_id) return { ok: false, reason: "already_matched_to_bill" };
+    // OWNER LAW 2026-10-02 competing-engine audit: a line already MATCHED to the document that created it (expense,
+    // fuel purchase, Relay fill, invoice, payment, bill payment, settlement, factoring advance, cash advance) is booked by
+    // that match — categorizing it too would post the same money twice.
+    if (txn.matched_document_id) return { ok: false, reason: "already_matched_to_document" };
 
     // Interlock 2b — BILL-BACKED categorization (ACCT-F5672). bulkPostTransactionsAsBills and the
     // insurance dispersal/policy paths stamp category='bill' + linked_entity_id=<accounting.bills.id>
@@ -308,7 +319,7 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
       bankLedgerAccountId: txn.bank_ledger_account_id,
       amountCents,
     };
-  });
+  }
 }
 
 /**
@@ -319,72 +330,64 @@ async function decide(input: MaybePostBankCategorizationInput): Promise<Decision
  * every other case it is a NO-OP returning a structured reason (the tag itself is unaffected).
  */
 export async function maybePostBankCategorizationToGl(input: MaybePostBankCategorizationInput): Promise<BankFeedGlResult> {
-  const decision = await decide(input);
+  // One transaction: decide, post and stamp together (OWNER LAW 2026-10-02 — a bank line's JE is written in the same DB
+  // transaction as the categorization/match that causes it). Callers that already hold the categorize transaction call
+  // postBankCategorizationOnClient directly.
+  return withCompanyScope(input.actorUserUuid, input.companyId, (client) => postBankCategorizationOnClient(client, input));
+}
+
+/**
+ * The bank-line -> GL poster, on the CALLER's client (same transaction as the categorization). A skip (flag off, ceded,
+ * already matched, ...) returns { posted:false, reason }; a posting failure THROWS so the caller's transaction — and
+ * with it the categorization — rolls back. A categorized line can never be left committed without its entry.
+ */
+export async function postBankCategorizationOnClient(client: PgClient, input: MaybePostBankCategorizationInput): Promise<BankFeedGlResult> {
+  const decision = await decideOnClient(client, input);
   if (!decision.ok) return { posted: false, reason: decision.reason, message: decision.message };
 
-  // Post via the single canonical writer. The engine re-reads the row inside its own tx, derives the same
-  // direction, enforces the closed-period gate + assertBalanced + idempotency (posting_batches unique key).
-  let posted;
-  try {
-    // BANK-F05 — a categorization that has been reversed must RE-post, not silently return the
-    // original batch.
-    //
-    // The revision is the number of journal entries for THIS source that have already been reversed.
-    // That count is the only discriminator that is stable across a double-submit: it rises when
-    // someone reverses, never when someone posts. Counting posting_batches instead would increment on
-    // the repost itself, so a retried request would mint a SECOND corrected entry — a double-post.
-    // reverseJournalEntryNoFlip stamps reversed_by_je_id on the original JE, which is what makes this
-    // countable (it does not touch posting_batches at all — only postVoidReversal does).
-    const reversedCountRows = await withCompanyScope(input.actorUserUuid, input.companyId, async (client) => {
-      const r = await client.query(
-        `SELECT COUNT(DISTINCT je.id)::text AS n
-           FROM accounting.journal_entries je
-           JOIN accounting.journal_entry_postings p ON p.journal_entry_uuid = je.id
-                                                   AND p.operating_company_id = je.operating_company_id
-          WHERE je.operating_company_id = $1::uuid
-            AND p.source_transaction_type = 'bank_categorization'
-            AND p.source_transaction_id::text = $2
-            AND je.reversed_by_je_id IS NOT NULL`,
-        [input.companyId, input.bankTransactionId]
-      );
-      return r.rows as Array<{ n: string }>;
-    });
-    const reversedCount = Number(reversedCountRows[0]?.n ?? 0);
+  // BANK-F05 — a categorization that has been reversed must RE-post, not silently return the original batch. The
+  // revision is the number of journal entries for THIS source already reversed: stable across a double-submit (it
+  // rises when someone reverses, never when someone posts).
+  const reversedCountRows = await client.query(
+    `SELECT COUNT(DISTINCT je.id)::text AS n
+       FROM accounting.journal_entries je
+       JOIN accounting.journal_entry_postings p ON p.journal_entry_uuid = je.id
+                                               AND p.operating_company_id = je.operating_company_id
+      WHERE je.operating_company_id = $1::uuid
+        AND p.source_transaction_type = 'bank_categorization'
+        AND p.source_transaction_id::text = $2
+        AND je.reversed_by_je_id IS NOT NULL`,
+    [input.companyId, input.bankTransactionId]
+  );
+  const reversedCount = Number((reversedCountRows.rows[0] as { n?: string } | undefined)?.n ?? 0);
 
-    posted = await postSourceTransaction(
-      {
-        operating_company_id: input.companyId,
-        source_transaction_type: "bank_categorization",
-        source_transaction_id: input.bankTransactionId,
-        ...(reversedCount > 0
-          ? { posting_purpose: "repost" as const, repost_revision: reversedCount }
-          : { posting_purpose: "initial_post" as const }),
-      },
-      { userId: input.actorUserUuid }
-    );
-  } catch (err) {
-    return { posted: false, reason: "post_failed", message: String((err as Error)?.message ?? err) };
-  }
+  const posted = await postSourceTransactionInClientTx(
+    client as never,
+    {
+      operating_company_id: input.companyId,
+      source_transaction_type: "bank_categorization",
+      source_transaction_id: input.bankTransactionId,
+      ...(reversedCount > 0
+        ? { posting_purpose: "repost" as const, repost_revision: reversedCount }
+        : { posting_purpose: "initial_post" as const }),
+    },
+    { userId: input.actorUserUuid }
+  );
 
-  // Durable back-pointer + idempotency stamp (atomic, company-scoped). Guard on the null back-pointer so a
-  // race can only stamp once. NOTE: review_state='matched' (a valid CHECK value) — the block spec's
-  // 'cleared' is NOT in the review_state CHECK constraint; 'matched' is the closest valid analog (the line
-  // is now linked to a journal entry). Flagged as a spec/schema drift in the PR body.
-  await withCompanyScope(input.actorUserUuid, input.companyId, async (client) => {
-    await client.query(
-      `
-        UPDATE banking.bank_transactions
-        SET matched_journal_entry_id = $1::uuid,
-            review_state = 'matched',
-            reviewed_at = now(),
-            updated_at = now()
-        WHERE id = $2::uuid
-          AND operating_company_id = $3::uuid
-          AND matched_journal_entry_id IS NULL
-      `,
-      [posted.journal_entry_id, input.bankTransactionId, input.companyId]
-    );
-  });
+  // Durable back-pointer, same transaction. review_state='matched' (the line is now linked to its journal entry).
+  await client.query(
+    `
+      UPDATE banking.bank_transactions
+      SET matched_journal_entry_id = $1::uuid,
+          review_state = 'matched',
+          reviewed_at = now(),
+          updated_at = now()
+      WHERE id = $2::uuid
+        AND operating_company_id = $3::uuid
+        AND matched_journal_entry_id IS NULL
+    `,
+    [posted.journal_entry_id, input.bankTransactionId, input.companyId]
+  );
 
   return {
     posted: true,
