@@ -2466,3 +2466,34 @@ Backend deploy dep-db0344e0tbcc738025r0 building @d472df5.
 **Boarded:** reports.deadhead_cache key (unit_id, week_starting) has no operating_company_id — a shared unit's row is
 overwritten by whichever entity runs last; needs a migration (my band) — next.
 **For the owner:** AUTH for the unit-stop cleanup (1,144 surplus rows, dry run above).
+
+## 2026-10-02 — ROUND 337 · unit_stop_events dedupe — STOPPED AT YOUR ASSERTION, nothing applied
+
+Your correction was right: I claimed the preservation copy covered every row without measuring. The script is now your
+one-transaction order (preserve with the engine's own PRESERVE_STEPS SQL, no window -> assert -> delete). Prod DRY RUN
+(rolled back), ~23:00Z:
+| measure | value |
+|---|---|
+| live rows | 1,935 |
+| preserve rows before | 1,547 |
+| live rows unmatched on (company_code, unit_number, started_at, ended_at) — before | **404** (your number) |
+| inserted into preserve by step 1 | **388** |
+| unmatched after step 1 | **16** -> assertion FAILED -> ROLLBACK, as you ordered |
+| of the 1,144 rows the delete would remove, unmatched | **0** |
+
+**Why 16 cannot be preserved:** preserve.unit_stop_events is keyed (company_code, unit_number, started_at) and is
+append-only. These 16 are stops still in progress when the 08:10Z snapshot ran — preserved then at their earlier end; the
+live row has since GROWN (same start, later ended_at). The ledger holds the stop at its first extent and has no slot for
+the later one. None of the 16 is a deletion target — all 16 are the kept (true-start) rows and stay live.
+**DECISION FOR YOU:** (a) proceed — every row the delete removes is preserved exactly on the 4-column key (0 of 1,144
+unmatched); or (b) first fix the ledger key so a grown stop is a new observation (migration: preserve PK + ended_at), then
+re-run with a 0 assertion. I recommend (b) as the permanent fix and (a) for the delete; I wait for your word on which.
+
+**Step 4 as written would break the writer.** The table has TWO natural keys and both move: a CLIPPED stop keeps its
+ended_at and changes started_at (the bug); an IN-PROGRESS stop keeps its started_at and grows ended_at every tick (today
+handled by ON CONFLICT (unit_id, started_at) DO UPDATE). ON CONFLICT (operating_company_id, unit_id, ended_at) as the only
+arbiter makes every in-progress stop's next tick raise 23505 on (unit_id, started_at) — the exact failure that killed the
+odometer snapshot two days running (#24254). Proposal: keep BOTH unique keys; the writer takes an xact lock per unit,
+UPDATEs the row matching either key (started_at = LEAST, ended_at = GREATEST), else INSERTs. Unique index
+(operating_company_id, unit_id, ended_at) created only after the delete (it cannot be built over the 1,144 copies),
+in my band, claim inside registry.claimed.
