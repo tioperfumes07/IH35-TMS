@@ -61,8 +61,9 @@ function audit() {
   if (!/--color-divider:\s*#D8DEE6/.test(css)) f.push(`${FILES.indexCss}: --color-divider must be #D8DEE6 (C-18)`);
 
   const filter = read(FILES.filterTokens);
-  if (!/FILTER_CONTROL_SIZE_CLASS\s*=\s*"[^"]*h-10[^"]*"/.test(filter)) {
-    f.push(`${FILES.filterTokens}: FILTER_CONTROL_SIZE_CLASS must be h-10 (D52)`);
+  // OWNER DESIGN LAW 2026-10-02 rule 2: every filter control is 34px (h-8.5) — supersedes D52's h-10.
+  if (!/FILTER_CONTROL_SIZE_CLASS\s*=\s*"[^"]*\bh-8\.5\b[^"]*"/.test(filter)) {
+    f.push(`${FILES.filterTokens}: FILTER_CONTROL_SIZE_CLASS must be 34px h-8.5 (owner design law 2026-10-02)`);
   }
 
   const parity = read(FILES.parity);
