@@ -1496,6 +1496,11 @@
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-02",
       "purpose": "Lead ROUND 296 approval (FARO-LIFECYCLE-APPROVED-THREE-CORRECTIONS): accounting.factoring_interest_accrual_runs — the month-end Faro Default Interest accrual (DR 6830 / CR 2155) proposed by one user and approved by a second (maker != checker) before it posts; lines per open Purchased Account. RLS + WORM refuse-delete + audit."
+    },
+    "202615250600": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-02",
+      "purpose": "Lead 2026-10-02 FARO-REPORTS-ARE-THE-BANK-FEED: accounting.faro_reserve_entries — one document row per Faro Escrow / Cash Reserve report line (the event the reserve posters stamp), factoring_purchase_lines.faro_invoice_number (Faro's Inv, the deterministic link), intercompany receivable role -> 8000. RLS + WORM + audit."
     }
   },
   "202613590001": {
