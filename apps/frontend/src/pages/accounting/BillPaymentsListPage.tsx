@@ -68,7 +68,8 @@ export function BillPaymentsListPage() {
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
 
-  const [vendorId, setVendorId] = useState("");
+  // ROUND 297 audit (drill): a vendor's A/P tab lands here on THAT vendor (?vendor_id=).
+  const [vendorId, setVendorId] = useState(() => searchParams.get("vendor_id") ?? "");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   // HIDE-VOIDED-01 — default hide revoked bill payments; uncheck to include voided paper.

@@ -186,12 +186,13 @@ export function VendorDetailPage() {
 
   const billsQuery = useQuery({
     queryKey: ["vendor-ap-bills", companyId, id],
-    queryFn: () => listVendorBills(companyId, { vendor_id: id, include_balance: true, limit: 200 }),
+    // ROUND 297 audit (reverse): a voided / revoked bill leaves this tab -- live bills only.
+    queryFn: () => listVendorBills(companyId, { vendor_id: id, include_balance: true, status: "active", limit: 200 }),
     enabled: Boolean(companyId) && Boolean(id) && activeTab === "A/P",
   });
   const vendorExpensesQuery = useQuery({
     queryKey: ["vendor-expenses", companyId, id],
-    queryFn: () => listExpenses(companyId, { vendor_uuid: id, limit: 200 }).then((res) => res.rows),
+    queryFn: () => listExpenses(companyId, { vendor_uuid: id, status: "active", limit: 200 }).then((res) => res.rows),
     enabled: Boolean(companyId) && Boolean(id) && activeTab === "A/P",
   });
   const vendorCreditsQuery = useQuery({
@@ -947,7 +948,8 @@ export function VendorDetailPage() {
             data-vend-ap-readonly="1"
           >
             Bills and A/P on this vendor profile are read only. Record bill payments from{" "}
-            <Link to="/accounting/pay-bills" className="font-semibold text-slate-800 underline">
+            {/* ROUND 297 audit (drill): /accounting/pay-bills was never a route; pay THIS vendor's bills. */}
+            <Link to={`/accounting/bill-payments?vendor_id=${encodeURIComponent(id)}`} className="font-semibold text-slate-800 underline">
               Accounting → Pay bills
             </Link>
             .

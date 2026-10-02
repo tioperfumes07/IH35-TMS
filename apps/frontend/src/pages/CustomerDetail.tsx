@@ -537,7 +537,8 @@ export function CustomerDetailPage() {
   const recentInvoicesQuery = useQuery({
     queryKey: ["customer-recent-invoices", id, operatingCompanyId],
     queryFn: () =>
-      listInvoices(operatingCompanyId!, { customer_id: id }).then((res) =>
+      // ROUND 297 audit (reverse): a voided invoice must leave this list -- live invoices only.
+      listInvoices(operatingCompanyId!, { customer_id: id, status: "active" }).then((res) =>
         (res.invoices ?? []).slice(0, 10)
       ),
     enabled: Boolean(id && operatingCompanyId),
@@ -1985,11 +1986,19 @@ export function CustomerDetailPage() {
               <button
                 type="button"
                 className="text-xs font-semibold text-slate-700 underline"
-                onClick={() => navigate("/reports/customer-profitability")}
+                onClick={() =>
+                  navigate(
+                    `/reports/customer-profitability?customer_id=${encodeURIComponent(id)}&period_start=${pnlRange.start}&period_end=${pnlRange.end}`
+                  )
+                }
               >
                 Open full report
               </button>
             </div>
+            {/* ROUND 297 audit (ties): name the basis -- this is booked load revenue, Billing is invoiced revenue. */}
+            <p className="mb-2 text-xs text-gray-500" data-testid="customer-pnl-basis">
+              Revenue here is booked load revenue (load rates, cancelled loads excluded) — Billing &amp; Receivables shows invoiced amounts; a load not yet invoiced appears here first.
+            </p>
             {customerPnlQuery.isError ? (
               <ListErrorBanner
                 message={(customerPnlQuery.error as Error)?.message ?? "Failed to load profitability."}
@@ -2317,7 +2326,15 @@ export function CustomerDetailPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Open invoices</span>
-                  <span className="font-medium text-gray-900">{Number(aging?.open_invoice_count ?? 0)}</span>
+                  {/* ROUND 297 audit (drill): the count is the aging open set -- its drill lands on exactly that set. */}
+                  <button
+                    type="button"
+                    className="font-medium text-gray-900 underline"
+                    data-testid="customer-billing-open-invoices-drill"
+                    onClick={() => navigate(`/accounting/invoices?customer_id=${encodeURIComponent(id)}&has_balance=true`)}
+                  >
+                    {Number(aging?.open_invoice_count ?? 0)}
+                  </button>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Last payment</span>
@@ -2332,7 +2349,7 @@ export function CustomerDetailPage() {
               <button
                 type="button"
                 className="text-xs font-semibold text-slate-700 underline"
-                onClick={() => navigate(`/accounting/invoices?customer_id=${encodeURIComponent(id)}`)}
+                onClick={() => navigate(`/accounting/invoices?customer_id=${encodeURIComponent(id)}&status=active`)}
               >
                 View all
               </button>

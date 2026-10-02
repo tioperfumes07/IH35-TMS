@@ -94,7 +94,16 @@ export function CustomerProfitabilityPage() {
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
   const emptyFilters = { ...currentQuarterRange(), minRevDollars: "1000" };
-  const [applied, setApplied] = useState(emptyFilters);
+  // ROUND 297 audit (drill): a customer's P&L tab lands here on ITS customer and ITS period
+  // (?customer_id=&period_start=&period_end=), with no minimum-revenue cut that could hide it.
+  const deepCustomerId = searchParams.get("customer_id") ?? "";
+  const deepStart = searchParams.get("period_start");
+  const deepEnd = searchParams.get("period_end");
+  const [applied, setApplied] = useState(() =>
+    deepCustomerId || deepStart || deepEnd
+      ? { start: deepStart ?? emptyFilters.start, end: deepEnd ?? emptyFilters.end, minRevDollars: deepCustomerId ? "0" : emptyFilters.minRevDollars }
+      : emptyFilters
+  );
   const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
   const [reportSearch, setReportSearch] = useState("");
   const appliedMinCents = useMemo(() => {
@@ -119,9 +128,10 @@ export function CustomerProfitabilityPage() {
 
   const filtered = useMemo(() => {
     const q = reportSearch.toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) => String(r.customer_name ?? "").toLowerCase().includes(q));
-  }, [rows, reportSearch]);
+    const scoped = deepCustomerId ? rows.filter((r) => r.customer_id === deepCustomerId) : rows;
+    if (!q) return scoped;
+    return scoped.filter((r) => String(r.customer_name ?? "").toLowerCase().includes(q));
+  }, [rows, reportSearch, deepCustomerId]);
 
   const profitabilityColumns = useMemo<ParityColumn<CustomerProfitabilityRow>[]>(
     () => [
