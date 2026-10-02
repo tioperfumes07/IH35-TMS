@@ -75,26 +75,32 @@ File: `artifacts/engine-audit-632/f-retry-scheduler-verdicts.csv`
 | `accounting/recon/recon-engine.service.ts` | no live scheduler |
 | `integrations/samsara/routes-integration.service.ts` | has ON CONFLICT / idempotency → not even F-RETRY |
 
-### CONFIRMED (18) — live double-tick possible
+### CONFIRMED (18) — follow-up closed 2026-10-02
 
-Including: `cron/geofence-breach-detector.cron.ts` (**FIXED this PR**:
-`INSERT … SELECT … WHERE NOT EXISTS` on business key),
-`accounting/bills/recurring/generator.service.ts`,
-`driver-finance/cash-advance-requests.service.ts` (via expiry cron — expire UPDATE is
-naturally idempotent on status),
-`integrations/relay-payments/relay-fuel-ingest.cron.ts`,
-`cron/depreciation-autopost.cron.ts`, `insurance/late-fee.service.ts`,
-`insurance/payment-reminder.service.ts`, `compliance/compliance-reminder.job.ts`,
-`banking/drift-alerts.service.ts`, `cash-flow/cash-flow.service.ts`,
-`telematics/load-real-driven-miles.service.ts`, `telematics/load-stop-geofence-sync.service.ts`,
-`reconciliation/ledger-integrity-detectors.service.ts`,
-`cron/draft-crew-status-selfheal.cron.ts`, `cron/model-lifecycle-monitor.cron.ts`,
-`cron/samsara-hos-pull.cron.ts`, `tasks/task-alarm.job.ts`,
-`audit/audit-chain-verify.cron.service.ts`,
-`accounting/fuel-posting/maybe-post-from-fuel-transaction.service.ts`.
+| file | final |
+|---|---|
+| `cron/geofence-breach-detector.cron.ts` | **FIXED** (#24201) WHERE NOT EXISTS |
+| `banking/drift-alerts.service.ts` | **FIXED** ON CONFLICT `uq_drift_open_per_account_kind` |
+| `cron/depreciation-autopost.cron.ts` | **FIXED** advisory claim + WHERE NOT EXISTS (company,run_date,asset) |
+| `compliance/compliance-reminder.job.ts` | **FIXED** WHERE NOT EXISTS day business key before notify |
+| `reconciliation/ledger-integrity-detectors.service.ts` | **FIXED** INSERT…SELECT WHERE NOT EXISTS open scope |
+| `cron/samsara-hos-pull.cron.ts` | **FIXED** advisory + 45min claim (relay pattern) |
+| `accounting/bills/recurring/generator.service.ts` | **CLEARED** FOR UPDATE + CAS on `next_generation_date` |
+| `driver-finance/cash-advance-requests.service.ts` | **CLEARED** expire UPDATE status-gated |
+| `integrations/relay-payments/relay-fuel-ingest.cron.ts` | **CLEARED** already advisory + 30min claim |
+| `insurance/late-fee.service.ts` | **CLEARED** FOR UPDATE + status NOT IN paid/late_fee_applied |
+| `insurance/payment-reminder.service.ts` | **CLEARED** UPDATE scheduled→reminded |
+| `cash-flow/cash-flow.service.ts` | **CLEARED** cron reads; INSERTs are owner routes |
+| `telematics/load-real-driven-miles.service.ts` | **CLEARED** deterministic UPDATE |
+| `telematics/load-stop-geofence-sync.service.ts` | **CLEARED** stamp only when `actual_arrival_at IS NULL` |
+| `cron/draft-crew-status-selfheal.cron.ts` | **CLEARED** UPDATE draft→assigned |
+| `cron/model-lifecycle-monitor.cron.ts` | **CLEARED** zero writes |
+| `tasks/task-alarm.job.ts` | **CLEARED** SKIP LOCKED + `alarm_notified_at` |
+| `audit/audit-chain-verify.cron.service.ts` | **CLEARED** zero writes |
+| `accounting/fuel-posting/maybe-post-from-fuel-transaction.service.ts` | **CLEARED** retired early-return |
 
-Remaining CONFIRMED without a code fix in this PR stay **DEFECT (F-RETRY)** on the verdict
-line until each gets ON CONFLICT / WHERE NOT EXISTS on the **business** key.
+Census file updated: `artifacts/engine-audit-632/f-retry-scheduler-verdicts.csv` — **0 CONFIRMED remaining**, 5 FIXED (this follow-up) + geofence prior + 42 CLEARED.
+Guard: `scripts/verify-f-retry-scheduled-writers-idempotent.mjs`.
 
 ## Still-open money paths (measured on tip)
 

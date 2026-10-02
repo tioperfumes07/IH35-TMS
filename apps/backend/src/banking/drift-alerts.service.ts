@@ -73,13 +73,27 @@ async function openOrRefreshAlert(
     return "unchanged";
   }
 
-  await client.query(
+  // F-RETRY: unique uq_drift_open_per_account_kind — double cron tick must not open a second
+  // open alert for the same (company, bank_account, drift_kind). ON CONFLICT on that partial
+  // unique refreshes balances instead of failing or duplicating.
+  const ins = await client.query<{ id: string }>(
     `
       INSERT INTO banking.reconciliation_drift_alerts (
         operating_company_id, bank_account_id, reconciliation_session_id, as_of_date, drift_kind,
         bank_balance_cents, book_balance_cents, drift_cents, tolerance_cents, severity
       )
       VALUES ($1::uuid, $2::uuid, $3::uuid, $4::date, $5, $6, $7, $8, $9, $10)
+      ON CONFLICT (operating_company_id, bank_account_id, drift_kind)
+        WHERE resolved_at IS NULL AND voided_at IS NULL
+      DO UPDATE SET
+        bank_balance_cents = EXCLUDED.bank_balance_cents,
+        book_balance_cents = EXCLUDED.book_balance_cents,
+        drift_cents = EXCLUDED.drift_cents,
+        reconciliation_session_id = COALESCE(EXCLUDED.reconciliation_session_id, banking.reconciliation_drift_alerts.reconciliation_session_id),
+        as_of_date = EXCLUDED.as_of_date,
+        severity = EXCLUDED.severity,
+        updated_at = now()
+      RETURNING id::text
     `,
     [
       input.operating_company_id,
@@ -94,7 +108,7 @@ async function openOrRefreshAlert(
       severityFor(input.drift_cents, input.tolerance_cents),
     ]
   );
-  return "opened";
+  return ins.rows[0]?.id ? "opened" : "unchanged";
 }
 
 // Auto-close: the condition cleared on its own (drift back within tolerance, feed resynced).

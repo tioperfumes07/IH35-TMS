@@ -71,6 +71,44 @@ export async function runComplianceReminderTick(operatingCompanyId: string) {
           const severity =
             cred.days_until_expiration !== null && cred.days_until_expiration <= 7 ? "high" : "medium";
           for (const userId of userIds) {
+            // F-RETRY: business key = (company, rule, entity, expiration_date, channel, recipient, day).
+            // Double daily tick must not spam in-app notifications or notification_log.
+            const logIns = await client.query(
+              `
+                INSERT INTO compliance.notification_log (
+                  operating_company_id, rule_id, credential_type, entity_type, entity_id,
+                  expiration_date, days_until_expiration, channel, recipient, status
+                )
+                SELECT $1::uuid, $2::uuid, $3, $4, $5::uuid, $6::date, $7, $8, $9, $10
+                WHERE NOT EXISTS (
+                  SELECT 1
+                    FROM compliance.notification_log n
+                   WHERE n.operating_company_id = $1::uuid
+                     AND n.rule_id = $2::uuid
+                     AND n.entity_type = $4
+                     AND n.entity_id = $5::uuid
+                     AND n.expiration_date IS NOT DISTINCT FROM $6::date
+                     AND n.channel = $8
+                     AND n.recipient = $9
+                     AND (n.sent_at AT TIME ZONE 'America/Chicago')::date
+                         = (now() AT TIME ZONE 'America/Chicago')::date
+                )
+                RETURNING id
+              `,
+              [
+                operatingCompanyId,
+                rule.id,
+                cred.type,
+                cred.owner_type,
+                cred.owner_id,
+                cred.expiration_date,
+                cred.days_until_expiration,
+                "in_app",
+                userId,
+                "sent",
+              ]
+            );
+            if ((logIns.rowCount ?? 0) === 0) continue;
             await createNotification(
               {
                 operating_company_id: operatingCompanyId,
@@ -85,26 +123,6 @@ export async function runComplianceReminderTick(operatingCompanyId: string) {
                 source_block: "compliance_reminder",
               },
               client
-            );
-            await client.query(
-              `
-                INSERT INTO compliance.notification_log (
-                  operating_company_id, rule_id, credential_type, entity_type, entity_id,
-                  expiration_date, days_until_expiration, channel, recipient, status
-                ) VALUES ($1::uuid, $2::uuid, $3, $4, $5::uuid, $6::date, $7, $8, $9, $10)
-              `,
-              [
-                operatingCompanyId,
-                rule.id,
-                cred.type,
-                cred.owner_type,
-                cred.owner_id,
-                cred.expiration_date,
-                cred.days_until_expiration,
-                "in_app",
-                userId,
-                "sent",
-              ]
             );
           }
         }

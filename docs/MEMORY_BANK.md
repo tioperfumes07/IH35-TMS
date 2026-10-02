@@ -112,6 +112,18 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 
 ## Active Architectural Decisions
 
+### Active Architectural Decisions — F-RETRY scheduled-writer idempotency (Cursor, ROUND 301 follow-up, 2026-10-02)
+
+- Independent census: 642 engines; F-RETRY word-match 47 → scheduler **18 CONFIRMED / 29 CLEARED**.
+- P0 reminders USMCA scope + geofence WHERE NOT EXISTS merged #24201.
+- Follow-up closed the remaining 17: **5 code FIXED** (drift ON CONFLICT open unique; depreciation
+  advisory claim + WHERE NOT EXISTS; compliance day business key; ledger findings WHERE NOT EXISTS;
+  samsara HOS 45min claim) + **12 CLEARED** (naturally idempotent UPDATE / read-only / already claimed /
+  retired fuel import poster / FOR UPDATE CAS).
+- Guard: `scripts/verify-f-retry-scheduled-writers-idempotent.mjs` (wired money-pr-local-gate).
+- Idempotency key = **business** key, never surrogate id. CSV:
+  `artifacts/engine-audit-632/f-retry-scheduler-verdicts.csv` (0 CONFIRMED left).
+
 ### Active Architectural Decisions — Fuel match JE same-txn + DatePicker portal (Cursor, ROUND 297 / 296, 2026-10-02)
 
 - **Measured gap:** `/vendors` PartyBoard KPI — `integrations.relay_fuel_transactions` where
