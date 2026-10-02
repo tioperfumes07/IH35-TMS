@@ -22,6 +22,22 @@ const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const CRON_NAME = "integrations.samsara_routes_push";
 let initialized = false;
 
+/** One routes-push tick (exported so the overlap proof drives the exact production path). */
+export async function runSamsaraRoutesPushTick() {
+  assertTenantContext(USMCA_COMPANY_ID, CRON_NAME);
+  return withLuciaBypass(async (client) => {
+    // membership-scope-exempt: internally-scoped single entity
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [USMCA_COMPANY_ID]);
+    // ROUND 329: body-hash read -> Samsara route push -> ledger INSERT is read-then-write; the DB lock makes
+    // one tick push, an overlapping replica skips.
+    if (!(await tryXactSingleFlight(client, `samsara.routes_push:${USMCA_COMPANY_ID}`))) return { skipped: "locked" as const, results: [] };
+    const push = await pushAllChangedRoutes(client as never, USMCA_COMPANY_ID);
+    // E-31 read-back on the same tick: state / ETA / actuals per stop for every routed load
+    const readBack = await readBackSamsaraRoutes(client as never, USMCA_COMPANY_ID, await samsaraRouteApiFor(client as never, USMCA_COMPANY_ID));
+    return { ...push, read_back: readBack };
+  });
+}
+
 export function initializeSamsaraRoutesPushCron(app: FastifyInstance) {
   if (initialized) return;
   initialized = true;
@@ -33,18 +49,7 @@ export function initializeSamsaraRoutesPushCron(app: FastifyInstance) {
     "*/15 * * * *",
     async () => {
       try {
-        assertTenantContext(USMCA_COMPANY_ID, CRON_NAME);
-        const summary = await withLuciaBypass(async (client) => {
-          // membership-scope-exempt: internally-scoped single entity
-          await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [USMCA_COMPANY_ID]);
-          // ROUND 329: body-hash read -> Samsara route push -> ledger INSERT is read-then-write; the DB lock makes
-          // one tick push, an overlapping replica skips.
-          if (!(await tryXactSingleFlight(client, `samsara.routes_push:${USMCA_COMPANY_ID}`))) return { skipped: "locked" as const, results: [] };
-          const push = await pushAllChangedRoutes(client as never, USMCA_COMPANY_ID);
-          // E-31 read-back on the same tick: state / ETA / actuals per stop for every routed load
-          const readBack = await readBackSamsaraRoutes(client as never, USMCA_COMPANY_ID, await samsaraRouteApiFor(client as never, USMCA_COMPANY_ID));
-          return { ...push, read_back: readBack };
-        });
+        const summary = await runSamsaraRoutesPushTick();
         app.log.info({ ...summary, results: summary.results.length }, `${CRON_NAME} tick`);
       } catch (error) {
         app.log.error({ err: error }, `[${CRON_NAME}] tick failed`);
