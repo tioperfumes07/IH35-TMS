@@ -32,6 +32,12 @@ export interface PaginationConfig {
   total: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
+  /**
+   * Round 296 filter law: when true the caller passes EVERY row; ListView applies the house toolbar (search + typed
+   * range) and sort over the full set FIRST, then slices the page. "N of M" and `total` are then the filtered count,
+   * never one page's count — a search on page 1 finds a row on page 3.
+   */
+  clientSide?: boolean;
 }
 
 export interface SortConfig {
