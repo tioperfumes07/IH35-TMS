@@ -190,24 +190,9 @@ export function BankingObligationReconcilePage() {
           >
             Mark reviewed
           </ActionButton>
-          <ActionButton
-            disabled={bulkMutation.isPending}
-            onClick={() => bulkMutation.mutate({ bank_transaction_ids: selectedList, action: "categorize_fuel" })}
-          >
-            Categorize as Fuel
-          </ActionButton>
-          <ActionButton
-            disabled={bulkMutation.isPending}
-            onClick={() => bulkMutation.mutate({ bank_transaction_ids: selectedList, action: "categorize_insurance" })}
-          >
-            Categorize as Insurance
-          </ActionButton>
-          <ActionButton
-            disabled={bulkMutation.isPending}
-            onClick={() => bulkMutation.mutate({ bank_transaction_ids: selectedList, action: "categorize_transfer" })}
-          >
-            Categorize as Transfer
-          </ActionButton>
+          {/* OWNER LAW 2026-10-02 competing-engine audit: "Categorize as Fuel / Insurance / Transfer" only wrote a text label
+              — no account, no journal entry. Categorizing is done on Banking → Transactions, where the account is chosen
+              and the entry posts in the same transaction. */}
           <ActionButton
             disabled={selectedRows.length === 0}
             onClick={() =>
