@@ -22,3 +22,9 @@
 .dpo-retry { font: inherit; color: var(--ih-red); text-decoration: underline; background: none; border: 0; padding: 0; cursor: pointer; }
 .dpo .ih-table th { text-align: left; white-space: nowrap; }
 .dpo .ih-table td { white-space: nowrap; }
+.dpo-sort { font: inherit; font-size: var(--ih-fs-label); background: none; border: 0; padding: 0; cursor: pointer; white-space: nowrap; }
+.ih-num > .dpo-sort { text-align: right; }
+.dpo-sticky { position: sticky; left: 0; background: var(--ih-card); z-index: 1; }
+.ih-table thead .dpo-sticky { background: var(--ih-thead); }
+.ih-table tbody tr:nth-child(even) .dpo-sticky { background: var(--ih-zebra); }
+.dpo-strong { font-weight: 600; }

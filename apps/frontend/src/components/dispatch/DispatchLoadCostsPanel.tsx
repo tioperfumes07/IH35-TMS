@@ -4,7 +4,8 @@ import { Link } from "react-router-dom";
 import { listAllLoads } from "../../api/loads";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
-import { colors, typography } from "../../design/tokens";
+import "../../design/ih35-design-tokens.css";
+import "../../pages/dispatch/dispatch-board.css";
 import { useLoadCostRollups } from "../../hooks/useLoadCostRollups";
 
 type SortKey = "load" | "unit" | "line_haul" | "revenue" | "costs" | "driver" | "margin";
@@ -81,124 +82,79 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
     }
   };
 
+  // OWNER DESIGN LAW 2026-10-02: one board table — lines for rows, never columns; ih-hd sortable headers; money
+  // right-aligned tabular; "—" for anything never recorded (never $0.00).
   const headerBtn = (key: SortKey, label: string) => (
     <button
       type="button"
-      className="w-full text-center font-bold uppercase tracking-wide"
-      style={{ fontSize: typography.sectionSubhead, color: colors.tableHeaderText }}
+      className="ih-hd dpo-sort"
+      aria-sort={sortKey === key ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
       onClick={() => clickSort(key)}
     >
       {label}
+      {sortKey === key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}
     </button>
   );
 
   return (
-    <section
-      className="overflow-hidden rounded border border-[#E5E7EB] bg-white"
-      data-testid="dispatch-load-costs-panel"
-    >
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E5E7EB] px-3 py-[7px]">
-        <h2
-          className="font-bold uppercase tracking-wide"
-          style={{ fontSize: typography.sectionSubhead, color: colors.columnHeader }}
-        >
-          Approximate load costs
-        </h2>
-        <Link
-          className="font-semibold text-[#16A34A] underline-offset-2 hover:underline"
-          style={{ fontSize: typography.bodyTextSmall }}
-          to="/accounting/load-costs"
-        >
-          Open load costs
-        </Link>
-      </div>
-      <p className="border-b border-[#E5E7EB] px-3 py-[7px] text-[#6B7280]" style={{ fontSize: typography.bodyTextSmall }}>
-        Wizard charges (line haul / FSC / accessorials / detention / layover) plus costs and driver pay so far. Approximate margin — not settlement.
-      </p>
-      {query.isError ? (
-        <p className="px-3 py-[7px] text-[#6B7280]" style={{ fontSize: typography.bodyTextSmall }}>
-          Could not read load costs. Retry from Load costs if this stays empty.
-        </p>
-      ) : null}
-      {query.isLoading ? (
-        <p className="px-3 py-[7px] text-[#6B7280]" style={{ fontSize: typography.bodyTextSmall }}>
-          Loading approximate costs…
-        </p>
-      ) : null}
-      {!query.isLoading && !query.isError && rows.length === 0 ? (
-        <p className="px-3 py-[7px] text-[#6B7280]" style={{ fontSize: typography.bodyTextSmall }}>
-          No loads in motion.
-        </p>
-      ) : null}
-      {!query.isLoading && !query.isError && rows.length > 0 ? (
-        <div className="overflow-x-auto">
-          <div className="min-w-[980px]">
-            <div
-              className="grid grid-cols-[1fr_0.7fr_0.9fr_0.9fr_0.9fr_0.9fr_0.9fr_0.9fr_1fr_1fr] border-b"
-              style={{ backgroundColor: colors.tableHeaderBg, borderColor: colors.tableColumnRule }}
-            >
-              <div className="px-[7px] py-[7px] sticky left-0" style={{ backgroundColor: colors.tableHeaderBg }}>{headerBtn("load", "Load")}</div>
-              <div className="border-l px-[7px] py-[7px]" style={{ borderColor: colors.tableColumnRule }}>{headerBtn("unit", "Truck")}</div>
-              <div className="border-l px-[7px] py-[7px]" style={{ borderColor: colors.tableColumnRule }}>{headerBtn("line_haul", "Line haul")}</div>
-              <div className="border-l px-[7px] py-[7px] text-center font-bold uppercase tracking-wide" style={{ fontSize: typography.sectionSubhead, color: colors.tableHeaderText, borderColor: colors.tableColumnRule }}>FSC</div>
-              <div className="border-l px-[7px] py-[7px] text-center font-bold uppercase tracking-wide" style={{ fontSize: typography.sectionSubhead, color: colors.tableHeaderText, borderColor: colors.tableColumnRule }}>Accessorials</div>
-              <div className="border-l px-[7px] py-[7px] text-center font-bold uppercase tracking-wide" style={{ fontSize: typography.sectionSubhead, color: colors.tableHeaderText, borderColor: colors.tableColumnRule }}>Detention</div>
-              <div className="border-l px-[7px] py-[7px] text-center font-bold uppercase tracking-wide" style={{ fontSize: typography.sectionSubhead, color: colors.tableHeaderText, borderColor: colors.tableColumnRule }}>Layover</div>
-              <div className="border-l px-[7px] py-[7px]" style={{ borderColor: colors.tableColumnRule }}>{headerBtn("costs", "Costs so far")}</div>
-              <div className="border-l px-[7px] py-[7px]" style={{ borderColor: colors.tableColumnRule }}>{headerBtn("driver", "Driver pay so far")}</div>
-              <div className="border-l px-[7px] py-[7px]" style={{ borderColor: colors.tableColumnRule }}>{headerBtn("margin", "Approximate margin")}</div>
-            </div>
-            {rows.map((row, i) => (
-              <div
-                key={row.load.id}
-                className="grid grid-cols-[1fr_0.7fr_0.9fr_0.9fr_0.9fr_0.9fr_0.9fr_0.9fr_1fr_1fr] border-b last:border-b-0"
-                style={{ borderColor: colors.tableColumnRule, backgroundColor: i % 2 === 1 ? colors.tableRowStripe : undefined }}
-                data-testid="dispatch-load-costs-row"
-              >
-                <div
-                  className="px-[7px] py-[7px] sticky left-0"
-                  style={{ fontSize: typography.bodyTextSmall, color: "#0F1219", backgroundColor: i % 2 === 1 ? colors.tableRowStripe : "#fff" }}
-                >
-                  <EntityLink kind="load" id={row.load.id} label={entityLabel(row.load.load_number, row.load.id, "Load")} />
-                  <Link
-                    className="ml-2 text-[#16A34A] underline-offset-2 hover:underline"
-                    to={`/dispatch/loads/${encodeURIComponent(row.load.id)}?tab=Costs`}
-                  >
-                    Costs
-                  </Link>
-                </div>
-                <div className="border-l px-[7px] py-[7px] text-center whitespace-nowrap" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219", borderColor: colors.tableColumnRule }}>
-                  {row.load.assigned_unit_number ?? "Unassigned"}
-                </div>
-                <div className="border-l px-[7px] py-[7px] text-center tabular-nums" data-testid="dispatch-wizard-line-haul" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219", borderColor: colors.tableColumnRule }}>
-                  {formatDash(row.lineHaul)}
-                </div>
-                <div className="border-l px-[7px] py-[7px] text-center tabular-nums" data-testid="dispatch-wizard-fsc" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219", borderColor: colors.tableColumnRule }}>
-                  {formatDash(row.fuelSurcharge)}
-                </div>
-                <div className="border-l px-[7px] py-[7px] text-center tabular-nums" data-testid="dispatch-wizard-accessorials" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219", borderColor: colors.tableColumnRule }}>
-                  {formatDash(row.accessorials)}
-                </div>
-                <div className="border-l px-[7px] py-[7px] text-center tabular-nums" data-testid="dispatch-wizard-detention" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219", borderColor: colors.tableColumnRule }}>
-                  {formatDash(row.detention)}
-                </div>
-                <div className="border-l px-[7px] py-[7px] text-center tabular-nums" data-testid="dispatch-wizard-layover" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219", borderColor: colors.tableColumnRule }}>
-                  {formatDash(row.layover)}
-                </div>
-                <div className="border-l px-[7px] py-[7px] text-center tabular-nums" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219", borderColor: colors.tableColumnRule }}>
-                  {row.hasRollup ? formatMoney(row.costSoFar) : "no costs linked"}
-                </div>
-                <div className="border-l px-[7px] py-[7px] text-center tabular-nums" style={{ fontSize: typography.bodyTextSmall, color: "#0F1219", borderColor: colors.tableColumnRule }}>
-                  {row.hasRollup ? formatMoney(row.driverPay) : "—"}
-                </div>
-                <div className="border-l px-[7px] py-[7px] text-center tabular-nums font-semibold" style={{ fontSize: typography.bodyTextSmall, color: "#16A34A", borderColor: colors.tableColumnRule }}>
-                  {row.hasRollup ? formatMoney(row.margin) : "—"}
-                </div>
-              </div>
-            ))}
+    <section className="ih-card dpo dpo-card" data-testid="dispatch-load-costs-panel">
+      <div className="ih-card-header dpo-card-head">
+        <div>
+          <div className="dpo-card-title">Approximate load costs</div>
+          <div className="dpo-card-sub">
+            Wizard charges (line haul / FSC / accessorials / detention / layover) plus costs and driver pay so far. Approximate margin — not settlement.
           </div>
         </div>
-      ) : null}
+        <Link className="dpo-link" to="/accounting/load-costs">Open load costs →</Link>
+      </div>
+      {query.isError ? (
+        <div className="dpo-state dpo-state--error">
+          Could not read load costs.{" "}
+          <button type="button" className="dpo-retry" onClick={() => void query.refetch()}>Retry</button>
+        </div>
+      ) : query.isLoading ? (
+        <div className="dpo-state">Loading approximate costs…</div>
+      ) : rows.length === 0 ? (
+        <div className="dpo-state">No loads in motion.</div>
+      ) : (
+        <table className="ih-table">
+          <thead>
+            <tr>
+              <th className="dpo-sticky">{headerBtn("load", "Load")}</th>
+              <th>{headerBtn("unit", "Truck")}</th>
+              <th className="ih-num">{headerBtn("line_haul", "Line haul")}</th>
+              <th className="ih-hd ih-num">FSC</th>
+              <th className="ih-hd ih-num">Accessorials</th>
+              <th className="ih-hd ih-num">Detention</th>
+              <th className="ih-hd ih-num">Layover</th>
+              <th className="ih-num">{headerBtn("costs", "Costs so far")}</th>
+              <th className="ih-num">{headerBtn("driver", "Driver pay so far")}</th>
+              <th className="ih-num">{headerBtn("margin", "Approximate margin")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.load.id} data-testid="dispatch-load-costs-row">
+                <td className="dpo-sticky">
+                  <EntityLink kind="load" id={row.load.id} label={entityLabel(row.load.load_number, row.load.id, "Load")} />{" "}
+                  <Link className="dpo-link" to={`/dispatch/loads/${encodeURIComponent(row.load.id)}?tab=Costs`}>Costs</Link>
+                </td>
+                <td>{row.load.assigned_unit_number ?? "Unassigned"}</td>
+                <td className="ih-num" data-testid="dispatch-wizard-line-haul">{formatDash(row.lineHaul)}</td>
+                <td className="ih-num" data-testid="dispatch-wizard-fsc">{formatDash(row.fuelSurcharge)}</td>
+                <td className="ih-num" data-testid="dispatch-wizard-accessorials">{formatDash(row.accessorials)}</td>
+                <td className="ih-num" data-testid="dispatch-wizard-detention">{formatDash(row.detention)}</td>
+                <td className="ih-num" data-testid="dispatch-wizard-layover">{formatDash(row.layover)}</td>
+                <td className="ih-num" title={row.hasRollup ? undefined : "no costs linked to this load yet"}>
+                  {row.hasRollup ? formatMoney(row.costSoFar) : <span className="ih-empty">—</span>}
+                </td>
+                <td className="ih-num">{row.hasRollup ? formatMoney(row.driverPay) : <span className="ih-empty">—</span>}</td>
+                <td className="ih-num dpo-strong">{row.hasRollup ? formatMoney(row.margin) : <span className="ih-empty">—</span>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </section>
   );
 }
