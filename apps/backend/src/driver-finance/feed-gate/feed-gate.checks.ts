@@ -285,6 +285,75 @@ const FUEL_CHECKS: FeedCheckDef[] = [
         FROM fuel.fuel_transactions f WHERE f.operating_company_id = $1::uuid AND f.id = $2::uuid AND f.voided_at IS NULL` },
 ];
 
+
+// ---- DEPOSIT feed (QBO Make Deposit: receipts out of Undeposited Funds into the bank) ----
+const DEPOSIT_CHECKS: FeedCheckDef[] = [
+  { key: "deposit.header_complete", group: "controls", sql: `
+      SELECT 'accounting.deposits', d.id, 'Deposit ' || coalesce(d.display_id, left(d.id::text, 8)),
+             (d.deposit_date IS NOT NULL AND d.bank_account_id IS NOT NULL AND ba.id IS NOT NULL AND ba.deactivated_at IS NULL AND d.bank_ledger_account_id IS NOT NULL AND d.undeposited_funds_account_id IS NOT NULL AND coalesce(d.amount_deposited_cents, 0) > 0),
+             concat_ws('; ', CASE WHEN d.deposit_date IS NULL THEN 'no deposit date' END, CASE WHEN d.bank_account_id IS NULL OR ba.id IS NULL THEN 'no bank account' END, CASE WHEN ba.deactivated_at IS NOT NULL THEN 'bank account deactivated' END,
+                             CASE WHEN d.bank_ledger_account_id IS NULL THEN 'bank account has no ledger account' END, CASE WHEN d.undeposited_funds_account_id IS NULL THEN 'no Undeposited Funds account' END, CASE WHEN coalesce(d.amount_deposited_cents, 0) <= 0 THEN 'amount deposited is zero' END),
+             '/accounting/bank-deposits/' || d.id::text, jsonb_build_object('bank', ba.account_name, 'date', d.deposit_date, 'amount_cents', d.amount_deposited_cents)
+        FROM accounting.deposits d LEFT JOIN banking.bank_accounts ba ON ba.id = d.bank_account_id WHERE d.operating_company_id = $1::uuid AND d.id = $2::uuid AND d.voided_at IS NULL` },
+  { key: "deposit.lines_carry_receipts", group: "linkage", sql: `
+      SELECT 'accounting.deposit_lines', dl.id, 'Line ' || coalesce(dl.line_type, '?') || ' ' || dl.amount_cents || 'c',
+             ((dl.source_payment_id IS NOT NULL AND p.id IS NOT NULL AND p.voided_at IS NULL) OR (dl.source_factoring_advance_id IS NOT NULL AND fa.id IS NOT NULL AND fa.voided_at IS NULL) OR dl.line_type = 'cash_back'),
+             CASE WHEN dl.source_payment_id IS NULL AND dl.source_factoring_advance_id IS NULL AND dl.line_type <> 'cash_back' THEN 'deposit line has no receipt (customer payment or factoring advance)'
+                  WHEN dl.source_payment_id IS NOT NULL AND (p.id IS NULL OR p.voided_at IS NOT NULL) THEN 'linked customer payment is missing or voided'
+                  WHEN dl.source_factoring_advance_id IS NOT NULL AND (fa.id IS NULL OR fa.voided_at IS NOT NULL) THEN 'linked factoring advance is missing or voided' END,
+             '/accounting/bank-deposits/' || dl.deposit_id::text, jsonb_build_object('payment', p.display_id, 'advance', fa.display_id, 'cents', dl.amount_cents)
+        FROM accounting.deposit_lines dl LEFT JOIN accounting.payments p ON p.id = dl.source_payment_id LEFT JOIN accounting.factoring_advances fa ON fa.id = dl.source_factoring_advance_id
+       WHERE dl.operating_company_id = $1::uuid AND dl.deposit_id = $2::uuid` },
+  { key: "deposit.total_equals_lines", group: "controls", sql: `
+      SELECT 'accounting.deposits', d.id, 'Deposit ' || coalesce(d.display_id, left(d.id::text, 8)),
+             d.total_receipts_cents = coalesce((SELECT sum(dl.amount_cents) FROM accounting.deposit_lines dl WHERE dl.deposit_id = d.id AND coalesce(dl.line_type, '') <> 'cash_back'), 0)
+             AND d.amount_deposited_cents = d.total_receipts_cents - coalesce(d.cash_back_cents, 0),
+             CASE WHEN d.total_receipts_cents <> coalesce((SELECT sum(dl.amount_cents) FROM accounting.deposit_lines dl WHERE dl.deposit_id = d.id AND coalesce(dl.line_type, '') <> 'cash_back'), 0) THEN 'receipts total ≠ Σ lines'
+                  WHEN d.amount_deposited_cents <> d.total_receipts_cents - coalesce(d.cash_back_cents, 0) THEN 'amount deposited ≠ receipts − cash back' END,
+             '/accounting/bank-deposits/' || d.id::text, jsonb_build_object('receipts', d.total_receipts_cents, 'cash_back', d.cash_back_cents, 'deposited', d.amount_deposited_cents)
+        FROM accounting.deposits d WHERE d.operating_company_id = $1::uuid AND d.id = $2::uuid AND d.voided_at IS NULL` },
+  { key: "deposit.je_posted", group: "controls", sql: `
+      SELECT 'accounting.deposits', d.id, 'Deposit ' || coalesce(d.display_id, left(d.id::text, 8)),
+             (d.posting_status = 'posted' AND d.journal_entry_id IS NOT NULL AND EXISTS (SELECT 1 FROM accounting.journal_entries je WHERE je.id = d.journal_entry_id AND je.status = 'posted')),
+             CASE WHEN d.posting_status <> 'posted' OR d.journal_entry_id IS NULL THEN 'deposit not posted (' || coalesce(d.posting_status, 'null') || ')' END,
+             '/accounting/bank-deposits/' || d.id::text, jsonb_build_object('posting_status', d.posting_status, 'journal_entry_id', d.journal_entry_id, 'posted_at', d.posted_at)
+        FROM accounting.deposits d WHERE d.operating_company_id = $1::uuid AND d.id = $2::uuid AND d.voided_at IS NULL` },
+  { key: "deposit.bank_line_matched", group: "linkage", sql: `
+      SELECT 'accounting.deposits', d.id, 'Deposit ' || coalesce(d.display_id, left(d.id::text, 8)),
+             CASE WHEN d.posting_status = 'posted' AND d.deposit_date < current_date - 3 THEN EXISTS (SELECT 1 FROM banking.bank_transactions bt WHERE bt.operating_company_id = d.operating_company_id AND bt.voided_at IS NULL AND bt.matched_journal_entry_id = d.journal_entry_id) ELSE NULL END,
+             CASE WHEN d.posting_status = 'posted' AND d.deposit_date < current_date - 3 AND NOT EXISTS (SELECT 1 FROM banking.bank_transactions bt WHERE bt.operating_company_id = d.operating_company_id AND bt.voided_at IS NULL AND bt.matched_journal_entry_id = d.journal_entry_id) THEN 'no bank feed line matched to this deposit (3+ days old)' END,
+             '/banking', jsonb_build_object('deposit_date', d.deposit_date)
+        FROM accounting.deposits d WHERE d.operating_company_id = $1::uuid AND d.id = $2::uuid AND d.voided_at IS NULL` },
+];
+
+// ---- BILL PAYMENT feed ----
+const BILL_PAYMENT_CHECKS: FeedCheckDef[] = [
+  { key: "bill_payment.header_complete", group: "costs", sql: `
+      SELECT 'accounting.bill_payments', bp.id, 'Bill payment ' || coalesce(bp.reference_number, bp.check_number, left(bp.id::text, 8)) || ' ' || bp.amount_cents || 'c',
+             (bp.bill_id IS NOT NULL AND b.id IS NOT NULL AND b.voided_at IS NULL AND bp.vendor_id IS NOT NULL AND v.id IS NOT NULL AND bp.payment_date IS NOT NULL AND coalesce(bp.amount_cents, 0) > 0 AND (bp.from_bank_account_id IS NOT NULL OR bp.cc_account_id IS NOT NULL OR bp.settlement_deduction_noncash = true)),
+             concat_ws('; ', CASE WHEN bp.bill_id IS NULL OR b.id IS NULL THEN 'no bill' END, CASE WHEN b.voided_at IS NOT NULL THEN 'bill is voided' END, CASE WHEN bp.vendor_id IS NULL OR v.id IS NULL THEN 'no vendor' END, CASE WHEN bp.payment_date IS NULL THEN 'no payment date' END,
+                             CASE WHEN coalesce(bp.amount_cents, 0) <= 0 THEN 'amount is zero' END, CASE WHEN bp.from_bank_account_id IS NULL AND bp.cc_account_id IS NULL AND coalesce(bp.settlement_deduction_noncash, false) = false THEN 'no paid-from bank / credit card account' END),
+             '/accounting/bills/' || coalesce(bp.bill_id::text, ''), jsonb_build_object('vendor', v.vendor_name, 'bill', coalesce(b.display_id, b.bill_number), 'date', bp.payment_date, 'cents', bp.amount_cents, 'method', bp.payment_method)
+        FROM accounting.bill_payments bp LEFT JOIN accounting.bills b ON b.id = bp.bill_id LEFT JOIN mdata.vendors v ON v.id::text = bp.vendor_id WHERE bp.operating_company_id = $1::uuid AND bp.id = $2::uuid AND bp.voided_at IS NULL` },
+  { key: "bill_payment.vendor_matches_bill", group: "linkage", sql: `
+      SELECT 'accounting.bill_payments', bp.id, 'Bill payment ' || coalesce(bp.reference_number, bp.check_number, left(bp.id::text, 8)), bp.vendor_id = coalesce(b.mdata_vendor_id::text, b.vendor_id),
+             CASE WHEN bp.vendor_id IS DISTINCT FROM coalesce(b.mdata_vendor_id::text, b.vendor_id) THEN 'payment vendor ≠ bill vendor' END,
+             '/accounting/bills/' || bp.bill_id::text, jsonb_build_object('payment_vendor', bp.vendor_id, 'bill_vendor', coalesce(b.mdata_vendor_id::text, b.vendor_id))
+        FROM accounting.bill_payments bp JOIN accounting.bills b ON b.id = bp.bill_id WHERE bp.operating_company_id = $1::uuid AND bp.id = $2::uuid AND bp.voided_at IS NULL` },
+  { key: "bill_payment.je_posted", group: "controls", sql: `
+      SELECT 'accounting.bill_payments', bp.id, 'Bill payment ' || coalesce(bp.reference_number, bp.check_number, left(bp.id::text, 8)),
+             EXISTS (SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid WHERE p.source_transaction_type = 'bill_payment' AND p.source_transaction_id = bp.id::text AND je.status = 'posted'),
+             CASE WHEN NOT EXISTS (SELECT 1 FROM accounting.journal_entry_postings p JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid WHERE p.source_transaction_type = 'bill_payment' AND p.source_transaction_id = bp.id::text AND je.status = 'posted') THEN 'no posted journal entry (DR A/P / CR bank) for this payment' END,
+             '/accounting/bills/' || coalesce(bp.bill_id::text, ''), jsonb_build_object('status', bp.status)
+        FROM accounting.bill_payments bp WHERE bp.operating_company_id = $1::uuid AND bp.id = $2::uuid AND bp.voided_at IS NULL` },
+  { key: "bill_payment.bank_line_matched", group: "linkage", sql: `
+      SELECT 'accounting.bill_payments', bp.id, 'Bill payment ' || coalesce(bp.reference_number, bp.check_number, left(bp.id::text, 8)),
+             CASE WHEN bp.from_bank_account_id IS NOT NULL AND bp.payment_date < current_date - 3 THEN (bp.source_bank_transaction_id IS NOT NULL OR EXISTS (SELECT 1 FROM banking.bank_transactions bt WHERE bt.operating_company_id = bp.operating_company_id AND bt.voided_at IS NULL AND bt.matched_bill_payment_id = bp.id)) ELSE NULL END,
+             CASE WHEN bp.from_bank_account_id IS NOT NULL AND bp.payment_date < current_date - 3 AND bp.source_bank_transaction_id IS NULL AND NOT EXISTS (SELECT 1 FROM banking.bank_transactions bt WHERE bt.operating_company_id = bp.operating_company_id AND bt.voided_at IS NULL AND bt.matched_bill_payment_id = bp.id) THEN 'no bank feed line matched to this payment (3+ days old)' END,
+             '/banking', jsonb_build_object('payment_date', bp.payment_date, 'cleared_date', bp.cleared_date)
+        FROM accounting.bill_payments bp WHERE bp.operating_company_id = $1::uuid AND bp.id = $2::uuid AND bp.voided_at IS NULL` },
+];
+
 export const FEED_CHECKS: Record<string, FeedCheckDef[]> = {
   settlement: SETTLEMENT_CHECKS,
   load: LOAD_CHECKS,
@@ -292,6 +361,8 @@ export const FEED_CHECKS: Record<string, FeedCheckDef[]> = {
   expense: EXPENSE_CHECKS,
   bill: BILL_CHECKS,
   fuel_import: FUEL_CHECKS,
+  deposit: DEPOSIT_CHECKS,
+  bill_payment: BILL_PAYMENT_CHECKS,
 };
 
 export const FEED_SUBJECT_TABLE: Record<string, string> = {
@@ -301,4 +372,6 @@ export const FEED_SUBJECT_TABLE: Record<string, string> = {
   expense: "accounting.expenses",
   bill: "accounting.bills",
   fuel_import: "fuel.fuel_transactions",
+  deposit: "accounting.deposits",
+  bill_payment: "accounting.bill_payments",
 };

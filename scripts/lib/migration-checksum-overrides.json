@@ -462,5 +462,13 @@
     "reason": "Stamped on prod (32-hex ledger checksum: applied outside db:migrate) with bytes that differ from the committed file (#23770). Verified live 2026-10-01 before this entry: accounting.deposits and accounting.deposit_lines carry exactly the committed columns (0 extra, 0 missing), all 5 committed indexes, both policies, both WORM triggers, FORCE RLS on both. Same schema, different bytes; without this entry db:migrate refused every deploy (pre_deploy_failed dep-dav7j817lnhs73b8ftdg).",
     "added_at": "2026-10-01",
     "added_in_pr": "CC-2-MIGRATION-202615171200-CHECKSUM-OVERRIDE"
+  },
+  {
+    "filename": "202610011900_recon_service_charge_expense_fk.sql",
+    "ledger_checksum": "f6a97ef55695e688b16117843217f49121c9dae1fcf8616127c7d54e901bb42c",
+    "disk_checksum": "6e61ec446771d7ea2820139d4f4f1f65536589d5e5f55656a1beabce1d7fcad0",
+    "reason": "MIG-F9623 (Lead branch claude/feed-gate-deposit-billpay-2): COMMENT on banking.reconciliation_sessions.service_charge_cents guarded so a fresh-database replay passes (the column is created later by 202615141200). Applied on prod 2026-10-01 with the unguarded text; the guard is a no-op there. Override keeps every deploy's migrate step from refusing on the changed checksum.",
+    "added_at": "2026-10-02",
+    "added_in_pr": "CC-1-LEAD-BRANCH-3"
   }
 ]

@@ -2,6 +2,7 @@
  * ROUND 312 B-2 — Bank Deposits (QBO Make Deposit) routes.
  * Autoloaded via accounting/index.ts matchFilter *.routes.ts.
  */
+import { openAndRunIntake } from "../driver-finance/feed-gate/feed-gate.service.js";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
@@ -104,7 +105,14 @@ async function bankDepositsRoutes(app: FastifyInstance) {
         cashBackCents: body.data.cash_back_cents,
         cashBackAccountId: body.data.cash_back_account_id,
       });
-      return reply.code(201).send({ deposit: created });
+      // FEED GATE (owner law 2026-10-01): record the deposit's linkage evidence (bank account, receipts per line,
+      // totals, posted JE, bank-line match) and hand it back so the creator / batch grid shows the red rows.
+      let feed_gate: { intake_id: string; status: string; checks_failed: number; checks_total: number } | null = null;
+      try {
+        const run = await openAndRunIntake(user.uuid, body.data.operating_company_id, "deposit", created.id);
+        feed_gate = { intake_id: run.intake.id, status: run.intake.status, checks_failed: run.intake.checks_failed, checks_total: run.intake.checks_total };
+      } catch { feed_gate = null; }
+      return reply.code(201).send({ deposit: created, feed_gate });
     } catch (err) {
       return depositError(reply, err);
     }

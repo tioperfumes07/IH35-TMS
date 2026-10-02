@@ -1,3 +1,4 @@
+import { openAndRunIntake } from "../driver-finance/feed-gate/feed-gate.service.js";
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import fp from "fastify-plugin";
@@ -402,7 +403,16 @@ export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
         applyVendorBillPaymentBatch(client, query.data.operating_company_id, params.data.id, user.uuid, body.data)
       );
       if ("error" in result) return reply.code(result.code).send({ error: result.error });
-      return reply.code(result.code).send(result.data);
+      // FEED GATE (owner law 2026-10-01): one intake per bill payment created (bill, vendor match, paid-from account,
+      // posted JE, bank-line match); returned so the Pay Bills screen shows the red rows per payment.
+      const feed_gate: Array<{ bill_payment_id: string; intake_id: string; status: string; checks_failed: number; checks_total: number }> = [];
+      for (const id of result.data.bill_payment_ids ?? []) {
+        try {
+          const run = await openAndRunIntake(user.uuid, query.data.operating_company_id, "bill_payment", id);
+          feed_gate.push({ bill_payment_id: id, intake_id: run.intake.id, status: run.intake.status, checks_failed: run.intake.checks_failed, checks_total: run.intake.checks_total });
+        } catch { /* evidence only; the payment itself already committed through the canonical engine */ }
+      }
+      return reply.code(result.code).send({ ...result.data, feed_gate });
     } catch (error) {
       const message = String((error as Error)?.message ?? "bill_payment_failed");
       if (message === "bank_account_not_found_for_payment") return reply.code(409).send({ error: message });

@@ -132,6 +132,24 @@
       ]
     },
     {
+      "id": "cards",
+      "tab": "Fuel cards",
+      "sub": "Fuel card registry (E-22): card -> truck assignments, both ways",
+      "route_hint": "/fuel/cards",
+      "surface_kind": "page",
+      "surface_path": "pages/fuel/cards/FuelCardsPage.tsx",
+      "required": [
+        "unit",
+        "driver",
+        "vendor",
+        "connectivity",
+        "reverse_link"
+      ],
+      "owned_surface_paths": [
+        "components/fuel/AssignFuelCardDrawer.tsx"
+      ]
+    },
+    {
       "id": "home",
       "tab": "Home",
       "sub": "Fuel home",

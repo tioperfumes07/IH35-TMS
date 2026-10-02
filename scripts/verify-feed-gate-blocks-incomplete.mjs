@@ -26,6 +26,8 @@ const REQUIRED_KEYS = [
   "expense.header_complete", "expense.lines_carry_category", "expense.posted", "expense.linked_to_operations",
   "bill.header_complete", "bill.lines_carry_account", "bill.ap_je_posted", "bill.linked_to_operations",
   "fuel.linked_unit_driver_vendor_load", "fuel.quantity_and_stamp", "fuel.expense_posted", "fuel.card_assigned",
+  "deposit.header_complete", "deposit.lines_carry_receipts", "deposit.total_equals_lines", "deposit.je_posted", "deposit.bank_line_matched",
+  "bill_payment.header_complete", "bill_payment.vendor_matches_bill", "bill_payment.je_posted", "bill_payment.bank_line_matched",
 ];
 
 export function check({ approval, migration, checks, routes, send, expenses, creator }) {

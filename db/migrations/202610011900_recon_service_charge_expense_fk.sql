@@ -25,8 +25,14 @@ BEGIN
 
   COMMENT ON COLUMN banking.reconciliation_sessions.service_charge_expense_id IS
     'BANK-ECON-04 root fix: service charge is an accounting.expenses document (vendor=bank, paid-from=bank GL); JE FK stays on service_charge_journal_entry_id via the expense poster.';
-  COMMENT ON COLUMN banking.reconciliation_sessions.service_charge_cents IS
-    'BANK-ECON-04: bank fee entered on Finish; posted as expense document (Dr fee / Cr bank) via expense engine — never a handwritten cost JE.';
+  -- service_charge_cents is owned by 202615141200 (sorts AFTER this file on a fresh database): comment it only when it exists.
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+     WHERE table_schema = 'banking' AND table_name = 'reconciliation_sessions' AND column_name = 'service_charge_cents'
+  ) THEN
+    COMMENT ON COLUMN banking.reconciliation_sessions.service_charge_cents IS
+      'BANK-ECON-04: bank fee entered on Finish; posted as expense document (Dr fee / Cr bank) via expense engine — never a handwritten cost JE.';
+  END IF;
 END $$;
 
 COMMIT;

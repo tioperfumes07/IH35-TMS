@@ -1,5 +1,6 @@
 import { ChevronDown } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "../Button";
 
 export type SaveDropdownPersistedAction =
@@ -106,6 +107,12 @@ export function SaveDropdown({
   const menuId = useId();
   const [menuOpen, setMenuOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLUListElement>(null);
+  // ROOT FIX 2026-10-01 (owner: "Save and send" missing on Factoring -> Submit Invoice): the menu was absolutely
+  // positioned INSIDE the host, so any overflow-hidden ancestor (DataPanel, drawers, table footers) clipped every
+  // entry after the first. The menu now renders through a portal at viewport-fixed coordinates taken from the
+  // control's rect, so no ancestor can clip it; it flips above the control when there is no room below.
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number; up: boolean } | null>(null);
 
   const actionList: ActionEntry[] = useMemo(() => {
     const entries: ActionEntry[] = [{ key: "save", label: primaryLabel, menuLabel: menuLabels?.save, run: onSave }];
@@ -155,11 +162,31 @@ export function SaveDropdown({
   useEffect(() => {
     if (!menuOpen) return;
     const onDoc = (event: MouseEvent) => {
-      if (!wrapRef.current?.contains(event.target as Node)) setMenuOpen(false);
+      const target = event.target as Node;
+      if (wrapRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setMenuOpen(false);
     };
+    const onViewport = () => setMenuOpen(false);
     document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
+    window.addEventListener("resize", onViewport);
+    window.addEventListener("scroll", onViewport, true);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      window.removeEventListener("resize", onViewport);
+      window.removeEventListener("scroll", onViewport, true);
+    };
   }, [menuOpen]);
+
+  useLayoutEffect(() => {
+    if (!menuOpen || !wrapRef.current) {
+      setMenuPos(null);
+      return;
+    }
+    const rect = wrapRef.current.getBoundingClientRect();
+    const estimatedHeight = 8 + 32 * Math.max(1, actionList.length);
+    const up = rect.bottom + 4 + estimatedHeight > window.innerHeight && rect.top - 4 - estimatedHeight > 0;
+    setMenuPos({ top: up ? rect.top - 4 : rect.bottom + 4, right: Math.max(0, window.innerWidth - rect.right), up });
+  }, [menuOpen, actionList.length]);
 
   const runPrimary = async () => {
     const match = actionList.find((a) => a.key === primaryKey && !a.disabled) ?? actionList.find((a) => !a.disabled);
@@ -204,11 +231,15 @@ export function SaveDropdown({
       >
         <ChevronDown className="h-4 w-4" />
       </button>
-      {menuOpen ? (
+      {menuOpen && menuPos
+        ? createPortal(
         <ul
           id={menuId}
+          ref={menuRef}
           role="menu"
-          className="absolute right-0 top-full z-50 mt-1 min-w-[220px] rounded-sm border border-gray-200 bg-white py-1 text-left text-xs shadow-lg"
+          data-testid="save-dropdown-menu"
+          style={{ position: "fixed", top: menuPos.top, right: menuPos.right, transform: menuPos.up ? "translateY(-100%)" : undefined }}
+          className="z-[1000] min-w-[220px] rounded-sm border border-gray-200 bg-white py-1 text-left text-xs shadow-lg"
         >
           {actionList.map((item) => (
             <li key={item.key} role="none">
@@ -226,8 +257,10 @@ export function SaveDropdown({
               </button>
             </li>
           ))}
-        </ul>
-      ) : null}
+        </ul>,
+        document.body,
+      )
+        : null}
     </div>
   );
 }
