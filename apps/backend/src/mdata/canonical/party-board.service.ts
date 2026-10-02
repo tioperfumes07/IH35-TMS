@@ -25,6 +25,11 @@ export async function readCustomerBoard(client: Q, oc: string, range: BoardRange
       `WITH inv AS (
          SELECT customer_id, count(*)::int AS invoices, sum(total_cents) AS billed, sum(amount_open_cents) AS open,
                 count(*) FILTER (WHERE coalesce(amount_paid_cents, 0) > 0)::int AS paid_invoices, max(issue_date) AS last_invoice,
+                -- ROUND 297: "Factored" = an invoice actually SOLD to the factor (factoring status or a live purchase
+                -- line), never the eligibility flag (1,187 USMCA customers copied from TRANSP all carry it; 0 are factored).
+                count(*) FILTER (WHERE coalesce(factoring_status, 'not_factored') <> 'not_factored'
+                                    OR EXISTS (SELECT 1 FROM accounting.factoring_purchase_lines pl
+                                                WHERE pl.invoice_id = accounting.invoices.id AND pl.voided_at IS NULL))::int AS factored_invoices,
                 sum(amount_open_cents) FILTER (WHERE due_date IS NULL OR due_date >= current_date) AS a_current,
                 sum(amount_open_cents) FILTER (WHERE current_date - due_date BETWEEN 1 AND 30) AS a_1_30,
                 sum(amount_open_cents) FILTER (WHERE current_date - due_date BETWEEN 31 AND 60) AS a_31_60,
@@ -37,6 +42,7 @@ export async function readCustomerBoard(client: Q, oc: string, range: BoardRange
               fv.vendor_name AS factor_name,
               coalesce(inv.invoices, 0) AS invoices, coalesce(inv.billed, 0) AS billed_cents, coalesce(inv.open, 0) AS open_cents,
               coalesce(inv.billed, 0) - coalesce(inv.open, 0) AS collected_cents, coalesce(inv.paid_invoices, 0) AS paid_invoices,
+              coalesce(inv.factored_invoices, 0) AS factored_invoices,
               inv.last_invoice, inv.a_current, inv.a_1_30, inv.a_31_60, inv.a_61_90, inv.a_90
          FROM mdata.customers c
          LEFT JOIN inv ON inv.customer_id = c.id
@@ -47,7 +53,7 @@ export async function readCustomerBoard(client: Q, oc: string, range: BoardRange
     )
   ).rows.map((r) => ({
     id: r.id, name: r.name, status: r.deactivated_at ? "inactive" : (r.status ?? "active"),
-    factored: r.factoring_eligible ? (r.factor_name ?? "Eligible") : null,
+    factored: n(r.factored_invoices) > 0 ? (r.factor_name ?? "Factored") : null,
     invoices: n(r.invoices), billed_cents: n(r.billed_cents), collected_cents: n(r.collected_cents), open_cents: n(r.open_cents),
     paid_invoices: n(r.paid_invoices), last_invoice: r.last_invoice ?? null,
     aging: { current: n(r.a_current), d1_30: n(r.a_1_30), d31_60: n(r.a_31_60), d61_90: n(r.a_61_90), d90_plus: n(r.a_90) },
