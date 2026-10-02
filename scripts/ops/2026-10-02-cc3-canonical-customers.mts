@@ -30,4 +30,4 @@ await run("canonical_customers", async (c: any, { authId }: { authId: string | n
     ar_group_cents_before: arGroupBefore, ar_group_cents_after: arGroupAfter, ar_company_before: arCompanyBefore, ar_company_after: arCompanyAfter,
     duplicate_groups_left: left, aliases: merges.map((m) => m.alias_id),
   };
-});
+}, { asTableOwner: true }); // AUTH-202 names the DELETE of the merged duplicate; RLS has no DELETE policy for the app role.
