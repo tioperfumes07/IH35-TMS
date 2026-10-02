@@ -54,11 +54,13 @@ export function assertDetectorSerialization(serviceTs) {
   if (!/const lockKey = `dispatch\.layover_detector:\$\{operatingCompanyId\}`/.test(serviceTs)) {
     errors.push("layover detector must derive an exact per-company advisory lock key");
   }
-  if (!/pg_advisory_lock\(hashtextextended\(\$1::text, 0\)\)/.test(serviceTs)) {
-    errors.push("layover detector must acquire the per-company session lock");
+  // ROUND 330.1: the per-company lock is TRANSACTION-scoped — a session lock released in a finally leaks once the
+  // caller's transaction aborts (behind pgbouncer the lock stays on the server connection; fork-proven, CC-3 #24237).
+  if (!/pg_advisory_xact_lock\(hashtextextended\(\$1::text, 0\)\)/.test(serviceTs)) {
+    errors.push("layover detector must acquire the per-company TRANSACTION advisory lock (pg_advisory_xact_lock)");
   }
-  if (!/finally\s*\{[\s\S]*?pg_advisory_unlock\(hashtextextended\(\$1::text, 0\)\)/.test(serviceTs)) {
-    errors.push("layover detector must release the session lock in finally");
+  if (/pg_advisory_lock\(|pg_advisory_unlock\(/.test(serviceTs)) {
+    errors.push("layover detector must not take or release a SESSION advisory lock (leaks on an aborted transaction)");
   }
   if (!/WHERE driver_uuid = \$1 AND previous_load_uuid = \$2 LIMIT 1/.test(serviceTs)) {
     errors.push("layover dedupe must retain canonical driver+previous-load identity");
@@ -150,8 +152,8 @@ function selftest() {
 
   const serializedDetector = `
     const lockKey = \`dispatch.layover_detector:\${operatingCompanyId}\`;
-    await client.query(\`SELECT pg_advisory_lock(hashtextextended($1::text, 0))\`, [lockKey]);
-    try {
+    await client.query(\`SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))\`, [lockKey]);
+    {
       SELECT 1 FROM dispatch.driver_layovers
       WHERE driver_uuid = $1 AND previous_load_uuid = $2 LIMIT 1
       const created = await client.query<{ uuid: string }>(
@@ -161,14 +163,12 @@ function selftest() {
         throw new LayoverDetectionUnavailableError("driver_layovers insert returned no identity");
       }
       inserted++;
-    } finally {
-      await client.query(\`SELECT pg_advisory_unlock(hashtextextended($1::text, 0))\`, [lockKey]);
     }
   `;
   const serializationMutations = [
-    serializedDetector.replace("pg_advisory_lock", "pg_advisory_lock_missing"),
-    serializedDetector.replace("finally", "if (true)"),
-    serializedDetector.replace("pg_advisory_unlock", "pg_advisory_unlock_missing"),
+    serializedDetector.replace("pg_advisory_xact_lock", "pg_advisory_xact_lock_missing"),
+    serializedDetector.replace("pg_advisory_xact_lock", "pg_advisory_lock"),
+    serializedDetector.replace("inserted++;\n    }", "inserted++;\n    } finally { pg_advisory_unlock(1) }"),
     serializedDetector.replace("previous_load_uuid = $2", "previous_load_uuid IS NOT NULL"),
     serializedDetector.replace("RETURNING uuid::text", "RETURNING driver_uuid::text"),
     serializedDetector.replace("if (!created.rows[0]?.uuid)", "if (false)"),

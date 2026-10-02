@@ -225,8 +225,11 @@ export async function processVehicleDriverPairingWebhookEvent(
   if (!ids) return;
 
   const lockKey = `${event.operating_company_id}:${ids.unit_id}`;
-  await client.query(`SELECT pg_advisory_lock(hashtextextended($1, 0))`, [lockKey]);
-  try {
+  // ROUND 330.1: TRANSACTION-scoped (released at commit / rollback) — the session lock + finally-unlock leaked on an
+  // aborted transaction behind pgbouncer (fork-proven, CC-3 #24237). Only caller: the webhook projection tick's
+  // transaction (vehicle-projector.ts).
+  await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [lockKey]);
+  {
     // An exact webhook replay is already projected even when its assignment has since been closed.
     const replay = await client.query<{ id: string }>(
       `SELECT id::text
@@ -283,8 +286,6 @@ export async function processVehicleDriverPairingWebhookEvent(
       );
       if (!inserted.rows[0]?.id) throw new Error("vehicle_driver_assignment_insert_not_persisted");
     }
-  } finally {
-    await client.query(`SELECT pg_advisory_unlock(hashtextextended($1, 0))`, [lockKey]);
   }
 }
 

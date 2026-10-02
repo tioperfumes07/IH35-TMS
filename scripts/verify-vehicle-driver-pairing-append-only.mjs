@@ -26,8 +26,9 @@ export function auditService(service) {
   const required = [
     ["UPDATE telematics.vehicle_driver_assignments", "ended_at close path"],
     ["ON CONFLICT (raw_event_id) DO NOTHING", "idempotent insert"],
-    ["pg_advisory_lock(hashtextextended($1, 0))", "company+unit lifecycle lock"],
-    ["pg_advisory_unlock(hashtextextended($1, 0))", "lifecycle lock release"],
+    // ROUND 330.1: transaction-scoped — Postgres releases it; a session lock + finally-unlock leaked on an aborted
+    // transaction behind pgbouncer (fork-proven, CC-3 #24237).
+    ["pg_advisory_xact_lock(hashtextextended($1, 0))", "company+unit lifecycle lock (transaction-scoped)"],
     ["WHERE raw_event_id = $1::uuid", "exact-event replay check"],
     ["vehicle_driver_assignment_close_lost_race", "checked close identity"],
     ["vehicle_driver_assignment_insert_not_persisted", "checked insert identity"],
@@ -37,13 +38,16 @@ export function auditService(service) {
   }
   if ((service.match(/RETURNING id::text/g) ?? []).length < 2) problems.push("Both pairing writes must return identity");
   if (service.includes("DELETE FROM telematics.vehicle_driver_assignments")) problems.push("Delete path is not allowed");
+  if (/pg_advisory_lock\(|pg_advisory_unlock\(/.test(service)) problems.push("Session advisory lock is not allowed (leaks on an aborted transaction); use pg_advisory_xact_lock");
   return problems;
 }
 
 const service = fs.readFileSync(servicePath, "utf8");
 if (process.argv.includes("--selftest")) {
-  const planted = service.replace("pg_advisory_lock(hashtextextended($1, 0))", "pg_sleep(0)");
+  const planted = service.replace("pg_advisory_xact_lock(hashtextextended($1, 0))", "pg_sleep(0)");
   if (!auditService(planted).some((problem) => problem.includes("lifecycle lock"))) throw new Error("selftest failed to catch missing lifecycle lock");
+  const session = service.replace("pg_advisory_xact_lock(hashtextextended($1, 0))", "pg_advisory_lock(hashtextextended($1, 0))");
+  if (!auditService(session).some((problem) => problem.includes("Session advisory lock"))) throw new Error("selftest failed to catch a session lock");
   console.log("verify-vehicle-driver-pairing-append-only: selftest PASS — missing lifecycle lock planted and detected");
 } else {
   const problems = auditService(service);
