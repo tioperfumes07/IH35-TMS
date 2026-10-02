@@ -53,6 +53,12 @@ function main() {
   assertIncludes(page, "r.location?.trim() || \"—\"", PAGE);
   assertIncludes(page, 't === "factoring_advance"', PAGE);
   assertIncludes(page, "/factoring/advances/${reference}", PAGE);
+  // B-1 ORDERS filter chip set: status / type / date / payee (date = period From/To already)
+  assertIncludes(page, 'data-b1-filter-payee="1"', PAGE);
+  assertIncludes(page, 'data-b1-filter-status="1"', PAGE);
+  assertIncludes(page, "payeeFilter", PAGE);
+  assertIncludes(page, "statusFilter", PAGE);
+  assertIncludes(page, "filteredRows", PAGE);
   assertIncludes(coa, 'data-b1-coa-actions="1"', COA);
   if (!/View register/.test(coa) || !/row\.statement === ["']P&L["']/.test(coa)) {
     throw new Error(`${COA}: P&L rows must keep Run report AND always expose View register (ORDERS §B-1)`);

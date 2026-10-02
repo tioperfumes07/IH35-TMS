@@ -189,6 +189,9 @@ export function AccountRegisterPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [typeLabel, setTypeLabel] = useState("");
+  // B-1 ORDERS filter chips: status (✓ blank/C/R) + payee — client-side on the period report.
+  const [payeeFilter, setPayeeFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"" | "blank" | "C" | "R">("");
   // B-1c — controlled expand so Cancel can collapse the inline edit panel.
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
   // ROUND 83 RULING 1 (owner, verbatim: "I DO NOT LIKE TO SEE THE ACCOUNT NUMBERS SHOWING
@@ -290,6 +293,8 @@ export function AccountRegisterPage() {
   const resetFilters = () => {
     setSearch("");
     setTypeLabel("");
+    setPayeeFilter("");
+    setStatusFilter("");
     setFilterOpen(false);
   };
 
@@ -297,14 +302,31 @@ export function AccountRegisterPage() {
     const chips: Array<{ key: string; label: string; clear: () => void }> = [];
     if (typeLabel) chips.push({ key: "type", label: `Type: ${typeLabel}`, clear: () => setTypeLabel("") });
     if (search.trim()) chips.push({ key: "search", label: `Search: ${search.trim()}`, clear: () => setSearch("") });
+    if (payeeFilter.trim()) chips.push({ key: "payee", label: `Payee: ${payeeFilter.trim()}`, clear: () => setPayeeFilter("") });
+    if (statusFilter === "blank") chips.push({ key: "status", label: "✓: blank", clear: () => setStatusFilter("") });
+    else if (statusFilter === "C" || statusFilter === "R") {
+      chips.push({ key: "status", label: `✓: ${statusFilter}`, clear: () => setStatusFilter("") });
+    }
     return chips;
-  }, [typeLabel, search]);
+  }, [typeLabel, search, payeeFilter, statusFilter]);
+
+  const filteredRows = useMemo(() => {
+    const rows = report?.rows ?? [];
+    const payeeQ = payeeFilter.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (payeeQ && !(r.payee ?? "").toLowerCase().includes(payeeQ)) return false;
+      if (statusFilter === "blank" && (r.reconcile_status === "C" || r.reconcile_status === "R")) return false;
+      if (statusFilter === "C" && r.reconcile_status !== "C") return false;
+      if (statusFilter === "R" && r.reconcile_status !== "R") return false;
+      return true;
+    });
+  }, [report?.rows, payeeFilter, statusFilter]);
 
   const exportCsv = () => {
     if (!report) return;
     const nb = report.account.normal_balance;
     const header = ["Date", "Type", "Ref", "Payee", "Memo", "Account", "Class", "Increase", "Decrease", "Running balance"];
-    const lines = report.rows.map((r) => {
+    const lines = filteredRows.map((r) => {
       const increase = nb === "debit" ? r.debit_cents : r.credit_cents;
       const decrease = nb === "debit" ? r.credit_cents : r.debit_cents;
       return [
@@ -694,6 +716,30 @@ export function AccountRegisterPage() {
                 Search memo / reference
                 <input value={search} onChange={(e) => setSearch(e.target.value)} className={inputCls} placeholder="memo, description, or ref" />
               </label>
+              <label className="mb-2 flex flex-col gap-1 text-xs font-semibold text-gray-600" data-b1-filter-payee="1">
+                Payee
+                <input
+                  value={payeeFilter}
+                  onChange={(e) => setPayeeFilter(e.target.value)}
+                  className={inputCls}
+                  placeholder="vendor, customer, driver…"
+                  data-testid="b1-register-filter-payee"
+                />
+              </label>
+              <label className="mb-2 flex flex-col gap-1 text-xs font-semibold text-gray-600" data-b1-filter-status="1">
+                ✓ status
+                <SelectCombobox
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter((e.target.value || "") as "" | "blank" | "C" | "R")}
+                  className={inputCls}
+                  data-testid="b1-register-filter-status"
+                >
+                  <option value="">All</option>
+                  <option value="blank">Blank</option>
+                  <option value="C">C (cleared)</option>
+                  <option value="R">R (reconciled)</option>
+                </SelectCombobox>
+              </label>
               {/* ROUND 83 RULING 1 (owner, verbatim: "IN FILTERS ADD OPTION TO SHOW") — same
                   global toggle as Chart of Accounts, exposed locally too. */}
               <label
@@ -811,7 +857,7 @@ export function AccountRegisterPage() {
         </div>
         <ParityTable
           columns={columns}
-          rows={report?.rows ?? []}
+          rows={filteredRows}
           rowKey={(r) => r.posting_id}
           loading={registerQuery.isLoading}
           emptyText="No transactions in this range."
