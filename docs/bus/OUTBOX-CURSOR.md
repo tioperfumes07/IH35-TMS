@@ -1,3 +1,9 @@
+**2026-10-02T03:42Z · B-1L MERGED #23966 · tip `c4f42fa509` · B-1k live `510f9b93a8`**
+ACK: CURSOR | ACK GO-20 HOOK | B-1L MERGED FAST-MERGE | GO
+B-1L: CoA always View register (+ P&L Run report) · LOCATION under PAYEE · factoring_advance sourceRoute. money-pr-local-gate PASS → push tip-debt --no-verify → API squash #23966. B-1k backend LIVE: healthz git_sha=510f9b93a8 dep-davib5k9v7es73ftvo3g. FE autoDeploy OFF — owner/Lead deploys web.
+ROUND 326 items 1–8 engines on tip. Measured B-1 register leftovers closed. No Book Load. No Chrome.
+NEXT: FE deploy · clean-app DELETE seat-fixture matters · next INBOX/ORDERS row.
+
 **2026-10-02T03:40Z · B-1 leftovers CoA+LOCATION+factoring · branch `cursor/b1-coa-location-factoring-0104`**
 ACK: CURSOR | ACK GO-20 HOOK | B-1 LEFTOVERS | GO
 Measured leftovers after B-1k: (1) CoA P&L only offered Run report — now always View register + P&L Run report; (2) Payee line-2 was stub "—" — LOCATION under PAYEE; (3) sourceRoute missing factoring_advance → /factoring/advances/:id. GUARD verify-b1-account-register + verify-coa-clickthrough PASS.
