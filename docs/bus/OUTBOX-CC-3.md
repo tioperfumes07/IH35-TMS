@@ -2208,3 +2208,32 @@ The prod dry run first exposed a silent no-op: under the app role, RLS has no DE
 - **Live check:** `verify-preserve-ledger` lag is 0 / 0 / 0. RLS scoping is correct: USMCA sees its own 677k positions.
 - **Owner's Excel:** `npx tsx scripts/ops/preserve-export-xlsx.mts --company USMCA --out-dir <folder>` writes three workbooks: positions (≈44 MB), HOS (≈46 MB) and everything else.
 - **#24019:** every load-status writer is now compare-and-set (GPS auto-status, cancellation, bulk paid were the last three). New guard `verify-load-status-writers-cas` is at 0.
+
+## 2026-10-02 — ROUND 288.4 — item 2 of 2 (Excel) DONE · item 6 (dispatch) in progress
+
+EXCEL (item 11 files) — export bug found and fixed first (#24131 252ae198): the keyset cursor carried HOS polled_at
+as a JS Date (ms); 570,085 of 570,950 HOS rows carry microseconds, so the cursor re-read pages and the HOS file grew past
+54 MB with duplicates and never finished. Cursor now exact text cast to the PK type; every table's written count must
+equal the ledger count(*) or the export throws. Exported READ-ONLY from PROD (fresher than the test copy), counts matched:
+  ~/Downloads/IH35-preserved-USMCA-positions-2026-10-02.xlsx   43,968,525 bytes  (vehicle_positions 677,934)
+  ~/Downloads/IH35-preserved-USMCA-hos-2026-10-02.xlsx         46,060,460 bytes  (hos_snapshots 571,865)
+  ~/Downloads/IH35-preserved-USMCA-telematics-2026-10-02.xlsx   2,381,837 bytes  (geofences 994 · events 1,085 ·
+      stops 1,547 · odometer 52,499 · segments 194 · addresses 255 · route progress 14 · DVIR 65)
+  unzip -t clean on all three. Test branch br-frosty-meadow-akuiw3qa DELETED after the files landed.
+
+ITEM 6 — dispatch blocks closed this round:
+- #24129 0a628e43 (deploy dep-davsckqjnfac73d0157g LIVE) — last two status writers outside compare-and-set: Edit Load
+  locks the row + CAS on its draft advance; general PATCH /mdata/loads/:id refuses status (409) — one machine.
+  GUARD verify-load-status-writers-cas (now reads dynamic SETs; negative-proven on main's two files).
+  LINKAGE: load status -> /mdata/loads/:id/status or /dispatch transition (machine) -> audit status_changed ->
+  delivery hooks (driver bill mint = A/P, invoice = A/R). Reverse: load audit tab shows every status move.
+- #24132 79699c94 (deploy dep-davsj049v7es7391oktg) — ONE arrival detector: retired the 250 ft per-fix detector
+  (wrote dispatch.stop_arrivals, read by nothing; 8 rows kept, nothing deleted). Fence stamp now counts arrivals on
+  both poll paths and prompts the driver. GUARDS (5, re-anchored on scripts/lib/one-arrival-detector.mjs, mutation
+  selftests): verify-arrival-detection-runs-on-poll-path · -wired-on-poll-path · verify-arrival-haversine-uses-locked-
+  radius · verify-arrival-stop-coordinate-source · verify-arrival-detection-tenant-scope; verify-no-reader-of-stop-
+  arrivals writer exemption removed.
+  LINKAGE: stop fence load-<id>-stop-<seq> (stop's own lat/lng) -> geo.geofence_events (unit, driver) -> load_stops
+  actual_arrival/departure -> load -> first-pickup proforma invoice (A/R) -> DOT dwell -> driver prompt (audit
+  confirmed/dismissed). Reverse: load stop -> its fence -> its events -> unit + driver.
+Gate exit 0 on every PR. Next: dispatch screens design parity + filter audit vs docs/design/boards.
