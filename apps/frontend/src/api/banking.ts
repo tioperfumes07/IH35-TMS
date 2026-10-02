@@ -1980,6 +1980,8 @@ export type CashGlBankAccount = {
   ledger_account_id: string | null;
   ledger_account_name: string | null;
   ledger_account_number: string | null;
+  /** ROUND 326 queue item 15: 'depository' accounts write checks; credit / other are shown but not selectable. */
+  account_class?: string | null;
 };
 export type CashGlCoaAccount = { id: string; account_number: string; account_name: string };
 
