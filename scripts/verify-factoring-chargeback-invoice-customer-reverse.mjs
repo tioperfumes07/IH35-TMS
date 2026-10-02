@@ -16,7 +16,9 @@ const FILES = {
 };
 const checks = [
   ["route", /chargebacks-fees[\s\S]{0,2800}inv\.invoice_id,[\s\S]{0,100}inv\.invoice_display_id,[\s\S]{0,100}inv\.customer_id,[\s\S]{0,100}inv\.customer_name/, "route projects invoice/customer identity"],
-  ["route", /i\.id::text AS invoice_id,[\s\S]{0,100}i\.display_id AS invoice_display_id,[\s\S]{0,100}i\.customer_id::text AS customer_id,[\s\S]{0,100}c\.customer_name/, "lateral producer resolves human identities"],
+  // ACCT-F26015 (owner, 2026-09-07) kept customer_id as uuid (the ::text cast 500'd the customer filter) and documents why
+  // inline — so the projection is `i.customer_id,` with a comment between it and the invoice identity.
+  ["route", /i\.id::text AS invoice_id,[\s\S]{0,100}i\.display_id AS invoice_display_id,[\s\S]{0,900}i\.customer_id(?:::text AS customer_id)?,[\s\S]{0,100}c\.customer_name/, "lateral producer resolves human identities"],
   ["route", /LEFT JOIN mdata\.customers c[\s\S]{0,100}c\.operating_company_id = i\.operating_company_id/, "customer label join is company scoped"],
   ["route", /i\.factoring_advance_id = cf\.factoring_advance_id[\s\S]{0,100}i\.operating_company_id = cf\.operating_company_id/, "invoice producer binds advance and company"],
   ["api", /FactoringChargebackFeeRow[\s\S]{0,500}invoice_id: string \| null;[\s\S]{0,120}invoice_display_id: string \| null;/, "API types invoice identity"],

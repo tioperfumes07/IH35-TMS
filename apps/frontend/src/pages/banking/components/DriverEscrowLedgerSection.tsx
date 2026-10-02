@@ -385,11 +385,11 @@ export function DriverEscrowLedgerSection({ operatingCompanyId, driverEscrowBala
 
       <div className="rounded-sm border border-[#E5E7EB] bg-white p-3">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
+          <div className="border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
             <p className={BANKING_CONTROL_LABEL_CLASS}>Escrow virtual account balance (current, unfiltered)</p>
             <p className="mt-1 text-page-title font-semibold text-[#0F1219]">${Number(driverEscrowBalance ?? 0).toFixed(2)}</p>
           </div>
-          <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2" data-testid="banking-escrow-filtered-total">
+          <div className="border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2" data-testid="banking-escrow-filtered-total">
             <p className={BANKING_CONTROL_LABEL_CLASS}>{isFiltered ? "Filtered postings total" : "All postings total"}</p>
             <p className="mt-1 text-page-title font-semibold text-[#0F1219]">
               ${filteredTotal.toFixed(2)} <span className="text-xs font-normal text-[#6B7280]">across {filteredCount} posting(s)</span>
@@ -430,7 +430,7 @@ export function DriverEscrowLedgerSection({ operatingCompanyId, driverEscrowBala
                 Presets ▾
               </BankingControlBox>
               {showPresets ? (
-                <div className="absolute left-0 z-20 mt-1 w-48 rounded-sm border border-[#E5E7EB] bg-white p-2 shadow-sm">
+                <div className="absolute left-0 z-20 mt-1 w-48 border border-[#E5E7EB] bg-white p-2 shadow-sm">
                   <div className="flex flex-wrap gap-1">
                     {DATE_PRESETS.map((p) => (
                       <BankingControlBox

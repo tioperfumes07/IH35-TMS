@@ -34,10 +34,14 @@ const ACCT_API = "apps/frontend/src/api/accounting.ts";
 const BANK_API = "apps/frontend/src/api/banking.ts";
 const LIST_PAGE = "apps/frontend/src/pages/accounting/FactoringListPage.tsx";
 const BANKING_HOME = "apps/frontend/src/pages/banking/BankingHome.tsx";
+// ROUND-20.8 B3 (#21962) deleted Banking's duplicate "Factoring (Faro)" tab; /banking/factoring redirects to /banking and
+// drops ?load_id=. The load-side reverse now lands on the purchase view (lines, wire, matched bank deposit), filtered to
+// the load: Payments to You.
+const PAYMENTS_PANEL = "apps/frontend/src/pages/factoring/PaymentsToYouPanel.tsx";
 const FACTORING_TAB = "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx";
 const SELF = "scripts/verify-load-factoring-advance-banking-reverse-section.mjs";
 const REQUIRED = "docs/specs/scoreboard/modules/factoring.required.json";
-const FILES = [ACCT_ROUTES, BANK_ROUTES, ACCT_API, BANK_API, LIST_PAGE, BANKING_HOME, FACTORING_TAB, SELF, REQUIRED];
+const FILES = [ACCT_ROUTES, BANK_ROUTES, ACCT_API, BANK_API, LIST_PAGE, BANKING_HOME, FACTORING_TAB, SELF, REQUIRED, PAYMENTS_PANEL];
 const LABEL = "verify-load-factoring-advance-banking-reverse-section";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -108,27 +112,18 @@ export function assertLoadFactoringReverse(sources) {
   if (!/kind="load"/.test(listPage) || !/dataTestId="factoring-filter-load"/.test(listPage) || !/allowCreate=\{false\}/.test(listPage)) {
     problems.push(`${LIST_PAGE}: must render Load EntityPicker allowCreate={false} dataTestId=factoring-filter-load`);
   }
-  if (!/deepLinkLoadId\s*=\s*searchParams\.get\("load_id"\)/.test(bankingHome)) {
-    problems.push(`${BANKING_HOME}: must read load_id from URL search params`);
+  const paymentsPanel = src[PAYMENTS_PANEL];
+  if (!/loadIdFromUrl\s*=\s*searchParams\.get\("load_id"\)/.test(paymentsPanel)) {
+    problems.push(`${PAYMENTS_PANEL}: must read load_id from URL search params (the load-side reverse)`);
   }
-  if (!/getFactoringVirtualTimeline\(companyId,\s*deepLinkLoadId\s*\?\?\s*undefined\)/.test(bankingHome)) {
-    problems.push(`${BANKING_HOME}: must forward deepLinkLoadId to getFactoringVirtualTimeline`);
-  }
-  if (!/setSearchParams/.test(bankingHome) || !/params\.set\("load_id"/.test(bankingHome)) {
-    problems.push(`${BANKING_HOME}: must write load_id via setSearchParams (visible reverse filter)`);
-  }
-  if (
-    !/kind="load"/.test(bankingHome) ||
-    !/dataTestId="banking-factoring-filter-load"/.test(bankingHome) ||
-    !/allowCreate=\{false\}/.test(bankingHome)
-  ) {
-    problems.push(`${BANKING_HOME}: must render Load EntityPicker allowCreate={false} dataTestId=banking-factoring-filter-load`);
+  if (!/load_id:\s*loadIdFromUrl \|\| undefined/.test(paymentsPanel)) {
+    problems.push(`${PAYMENTS_PANEL}: must forward load_id to listFactoringPurchases`);
   }
   if (!/kind="factoring_advance"[\s\S]{0,120}id=\{linkedInvoice\.factoring_advance_id\}/.test(factoringTab)) {
     problems.push(`${FACTORING_TAB}: must EntityLink kind=factoring_advance to the load's own advance batch`);
   }
-  if (!/\/banking\/factoring\?load_id=\$\{encodeURIComponent\(loadId\)\}/.test(factoringTab)) {
-    problems.push(`${FACTORING_TAB}: must link to /banking/factoring filtered to this load`);
+  if (!/\/factoring\/payments-to-you\?load_id=\$\{encodeURIComponent\(loadId\)\}/.test(factoringTab)) {
+    problems.push(`${FACTORING_TAB}: must link to the purchase view (/factoring/payments-to-you) filtered to this load`);
   }
   return problems;
 }
@@ -219,9 +214,13 @@ function selftest() {
         id={linkedInvoice.factoring_advance_id}
         label="View Advance Batch →"
       />
-      <Link to={\`/banking/factoring?load_id=\${encodeURIComponent(loadId)}\`}>
-        View in Banking (Faro) →
+      <Link to={\`/factoring/payments-to-you?load_id=\${encodeURIComponent(loadId)}\`}>
+        View purchase & bank wire →
       </Link>
+    `,
+    [PAYMENTS_PANEL]: `
+      const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
+      listFactoringPurchases(companyId, { status: "posted", load_id: loadIdFromUrl || undefined });
     `,
     [SELF]: `/** @matrix-built {"modules":["factoring"],"cols":["reverse_link"],"leaves":["accounting.list","banking.entry"],"task":"FACT-F5842-ACCOUNTING-BANKING-REVERSE-EXACT-LEAVES"} */`,
     [REQUIRED]: `{"leaves":[{"id":"accounting.list","required":["reverse_link"]},{"id":"banking.entry","required":["reverse_link"]}]}`,
@@ -245,16 +244,8 @@ function selftest() {
     { ...good, [LIST_PAGE]: good[LIST_PAGE].replace("load_id: deepLinkLoadId ?? undefined,", "") },
     { ...good, [LIST_PAGE]: good[LIST_PAGE].replace(/setSearchParams/g, "setUrlParams") },
     { ...good, [LIST_PAGE]: good[LIST_PAGE].replace('dataTestId="factoring-filter-load"', "") },
-    { ...good, [BANKING_HOME]: good[BANKING_HOME].replace('deepLinkLoadId = searchParams.get("load_id")', 'deepLinkLoadId = null') },
-    {
-      ...good,
-      [BANKING_HOME]: good[BANKING_HOME].replace(
-        "getFactoringVirtualTimeline(companyId, deepLinkLoadId ?? undefined)",
-        "getFactoringVirtualTimeline(companyId)"
-      ),
-    },
-    { ...good, [BANKING_HOME]: good[BANKING_HOME].replace(/setSearchParams/g, "setUrlParams") },
-    { ...good, [BANKING_HOME]: good[BANKING_HOME].replace('dataTestId="banking-factoring-filter-load"', "") },
+    { ...good, [PAYMENTS_PANEL]: good[PAYMENTS_PANEL].replace('loadIdFromUrl = searchParams.get("load_id")', 'loadIdFromUrl = ""') },
+    { ...good, [PAYMENTS_PANEL]: good[PAYMENTS_PANEL].replace("load_id: loadIdFromUrl || undefined", "") },
     { ...good, [FACTORING_TAB]: good[FACTORING_TAB].replace('kind="factoring_advance"', 'kind="factoring_batch"') },
     {
       ...good,
@@ -263,7 +254,7 @@ function selftest() {
         "id={linkedInvoice.id}"
       ),
     },
-    { ...good, [FACTORING_TAB]: good[FACTORING_TAB].replace("/banking/factoring?load_id=", "/banking/factoring") },
+    { ...good, [FACTORING_TAB]: good[FACTORING_TAB].replace("/factoring/payments-to-you?load_id=", "/factoring/payments-to-you") },
     { ...good, [SELF]: good[SELF].replace('"leaves":["accounting.list","banking.entry"]', '"leafRe":".*"') },
     { ...good, [REQUIRED]: good[REQUIRED].replace('{"id":"accounting.list","required":["reverse_link"]}', '{"id":"accounting.list","required":["load"]}') },
     { ...good, [REQUIRED]: good[REQUIRED].replace('{"id":"banking.entry","required":["reverse_link"]}', '{"id":"banking.entry","required":["load"]}') },

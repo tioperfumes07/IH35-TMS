@@ -39,9 +39,11 @@ const LABEL = "verify-factoring-liability-reserve-column";
 
 const CHECKS = [
   {
-    name: "factors.admin: listFactors() joins the real reserve-balance ledger",
+    // OWNER LAW 2026-10-02 competing-engine audit (#24015, Lead ROUND 297): the factor list's reserve comes from the ONE
+    // reserve engine (factoring-kpi.service factoringBookReserveCents, tied to GL 1230 + 1235) — no second ledger read.
+    name: "factors.admin: listFactors() reads the reserve from the one reserve engine",
     file: "apps/backend/src/factoring/factor.service.ts",
-    pattern: /LEFT JOIN factoring\.v_factor_reserve_balance rb/,
+    pattern: /factoringBookReserveCents\(/,
   },
   {
     name: "factors.admin: FactorAdmin.tsx renders the reserve balance column",
@@ -77,7 +79,7 @@ export function checkAll(readFile) {
 
 if (process.argv.includes("--selftest")) {
   const GOOD_FIXTURES = {
-    "apps/backend/src/factoring/factor.service.ts": "LEFT JOIN factoring.v_factor_reserve_balance rb ON true",
+    "apps/backend/src/factoring/factor.service.ts": "const reserve = await factoringBookReserveCents(client, oci, asOf);",
     "apps/frontend/src/pages/factoring/FactorAdmin.tsx": "factor.reserve_balance_cents",
     "apps/backend/src/data-infra/data-infra.service.ts": "AS outstanding_balance_cents",
     "apps/frontend/src/pages/factoring/FactoringHome.tsx": "row.outstanding_balance_cents",

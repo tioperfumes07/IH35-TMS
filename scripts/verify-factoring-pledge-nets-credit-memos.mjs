@@ -16,7 +16,15 @@ const fail = (msg) => {
 };
 
 if (!src.includes("INVOICE_PLEDGE_CENTS_SQL")) fail("missing INVOICE_PLEDGE_CENTS_SQL");
-if (!src.includes("credit_memo_applications")) fail("factoring routes must join credit_memo_applications");
+// FACT-DELIVERED-AUTO moved INVOICE_PLEDGE_CENTS_SQL into accounting/shared.js (one definition); the routes import it.
+// The credit-memo netting must live in that one definition.
+const shared = readFileSync(join(root, "apps/backend/src/accounting/shared.ts"), "utf8");
+const pledgeDef = shared.slice(shared.indexOf("export const INVOICE_PLEDGE_CENTS_SQL"));
+const nettingSrc = src.includes("credit_memo_applications") ? src : pledgeDef.slice(0, pledgeDef.indexOf("`;") + 2);
+if (!/INVOICE_PLEDGE_CENTS_SQL[^\n]*from "\.\/shared\.js"/.test(src) && !src.includes("credit_memo_applications")) {
+  fail("factoring routes must use the shared INVOICE_PLEDGE_CENTS_SQL (or join credit_memo_applications themselves)");
+}
+if (!nettingSrc.includes("credit_memo_applications")) fail("the pledge definition must net credit_memo_applications");
 if (!src.includes("FACT-PLEDGE-NET-CM")) fail("missing FACT-PLEDGE-NET-CM marker");
 if (!src.includes("pledge_cents")) fail("missing pledge_cents");
 
@@ -42,8 +50,12 @@ if (/invoiceRes\.rows\.reduce\(\s*\(sum[^)]*total_cents/.test(src)) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const planted = src.replace("credit_memo_applications", "NOPE_APPLICATIONS");
+  // Plant: strip the netting from the one pledge definition; the netting check must then fail.
+  const planted = pledgeDef.replace(/credit_memo_applications/g, "NOPE_APPLICATIONS");
   if (planted.includes("credit_memo_applications")) fail("selftest plant did not remove join");
+  const plantedNetting = planted.slice(0, planted.indexOf("`;") + 2);
+  if (plantedNetting.includes("credit_memo_applications")) fail("selftest: a pledge definition without netting was not caught");
+  console.log("selftest PASS: a pledge definition without credit-memo netting is caught");
 }
 
 console.log("PASS: factoring pledge nets credit memos");

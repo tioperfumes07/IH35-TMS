@@ -1035,8 +1035,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             // ROUND 315 step 3 (owner, 2026-10-01): "Submit Invoice" is now the Submit to Factor tab
             // INSIDE this module (SubmitToFactorTab, rendered below at FACTORING_TAB_PATH.submit_invoice)
             // -- every open invoice, expected reserves/fee, docs, customer direct pay, totals, and
-            // Save / Save and send through the purchase engine. The older /factoring/submit queue
-            // page stays reachable (Rule 07) for its EntityLink deep links.
+            // Save / Save and send through the purchase engine. The older /factoring/submit URL stays mounted (Rule 07)
+            // and redirects here — the batch queue is retired as a writer (one purchase engine, #24002).
             to: FACTORING_TAB_PATH[item.id],
           })),
           {
@@ -2776,7 +2776,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <div className="text-xs font-medium text-gray-900">Statement history</div>
-              {/* NEW-25: Summary (monthly totals, the historical default) vs Detail (the same
+              {/* NEW-25: Summary (monthly totals, the long-standing default) vs Detail (the same
                   line-item chargeback/fee history the Chargebacks & Fees tab renders). */}
               <div className="inline-flex overflow-hidden border border-gray-300" data-testid="factoring-statements-view-toggle">
                 <button

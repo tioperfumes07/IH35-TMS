@@ -36,7 +36,8 @@ const CHECKS = [
   {
     name: "factoring.modal.deactivate_factor_confirm: real Modal",
     file: "apps/frontend/src/components/factoring/DeactivateFactorConfirmModal.tsx",
-    pattern: /<Modal open=\{open\} onClose=\{onClose\} title="Deactivate active factor"/,
+    // The close handler may be a local wrapper (dismiss also clears the modal's state) — it is still the real Modal.
+    pattern: /<Modal open=\{open\} onClose=\{\w+\} title="Deactivate active factor"/,
   },
   {
     name: "factoring.modal.reserve_dashboard_add_factor: real Modal variant=drawer",

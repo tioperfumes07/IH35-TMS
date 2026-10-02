@@ -444,12 +444,15 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
                   data-testid="factoring-tab-view-advance-batch"
                   className="text-xs font-medium text-slate-700 hover:underline"
                 />
+                {/* Banking's duplicate "Factoring (Faro)" tab was deleted (ROUND-20.8 B3, #21962) and /banking/factoring now
+                    redirects without the load. The load's factoring money lives on the purchase: its lines, its wire and
+                    the bank deposit it was matched to — Payments to You, filtered to this load. */}
                 <Link
-                  to={`/banking/factoring?load_id=${encodeURIComponent(loadId)}`}
+                  to={`/factoring/payments-to-you?load_id=${encodeURIComponent(loadId)}`}
                   data-testid="factoring-tab-view-banking-entry"
                   className="text-xs font-medium text-slate-700 hover:underline"
                 >
-                  View in Banking (Faro) →
+                  View purchase & bank wire →
                 </Link>
               </>
             ) : null}

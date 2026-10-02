@@ -36,7 +36,9 @@ import fs from "node:fs";
 
 const HOME = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
 const LABEL = "verify-factoring-surface";
-const MAX_TABS = 6;
+// ROUND 24.6 (owner): 15 Faro-parity tabs + the Internal Tools dropdown. The order and members are locked by
+// verify-faro-tabs-real-data; this bounds the visible strip so nothing grows it unseen.
+const MAX_TABS = 16;
 const SUMMARY_START_MARKER = 'data-testid="factoring-account-summary"';
 const SUMMARY_END_MARKER = '{tab === "purchase_report"';
 
@@ -64,7 +66,26 @@ function countTopLevelNavItems(src) {
     // used INSIDE a `children:` array, one level deeper) — so a top-level spread here is itself
     // the regression, independent of what the literal count comes out to.
     else if (bracketDepth === 1 && braceDepth === 0 && ch === "." && src[i + 1] === "." && src[i + 2] === ".") {
-      return { count: -1, error: "top-level nav items must be explicit literals, not a top-level \"...\" spread (can silently exceed 6 at runtime)" };
+      // ROUND 24.6 (owner, 2026-09-14) REVERTED ROUND 21.0 item 1: "A tab he cannot see is a tab he does not have." Every
+      // SUBNAV id renders as its own top-level tab (the Faro-parity strip, order locked by verify-faro-tabs-real-data) plus
+      // one Internal Tools dropdown. The ONE allowed top-level spread is `...SUBNAV.map(`, counted as SUBNAV's literal
+      // entries; any other runtime spread is still the regression (it can grow the strip unseen).
+      if (src.startsWith("...SUBNAV.map(", i)) {
+        const subStart = src.indexOf("const SUBNAV = [");
+        const subEnd = src.indexOf("] as const;", subStart);
+        if (subStart < 0 || subEnd < 0) return { count: -1, error: "could not read the SUBNAV literal the strip spreads" };
+        count += (src.slice(subStart, subEnd).match(/\{\s*id:\s*"/g) ?? []).length;
+        i += "...SUBNAV.map(".length - 1;
+        // skip to the end of this map(...) expression at the same depth
+        let depth = 1;
+        for (i += 1; i < src.length && depth > 0; i += 1) {
+          if (src[i] === "(") depth += 1;
+          else if (src[i] === ")") depth -= 1;
+        }
+        i -= 1;
+        continue;
+      }
+      return { count: -1, error: "top-level nav items must be SUBNAV (spread once) + explicit literals — no other top-level \"...\" spread" };
     }
   }
   if (bracketDepth !== 0) return { count: -1, error: "could not find the closing ] of the items array (unbalanced brackets)" };
@@ -155,23 +176,19 @@ if (process.argv.includes("--selftest")) {
 
   const mutations = [];
 
-  // 1. Tab count: add a 7th top-level item.
+  // 1. Tab count (ROUND 24.6): one more top-level item beyond the 15 Faro tabs + Internal Tools must fail.
   mutations.push([
-    "adds a 7th top-level tab",
+    "adds a 17th top-level tab",
     base.home.replace(
-      'items={[\n          { label: "Submit", to: "/factoring/submit" },',
-      'items={[\n          { label: "Submit", to: "/factoring/submit" },\n          { label: "Extra", to: "/factoring/extra" },'
+      "          {\n            label: \"Internal Tools\",",
+      "          { label: \"Extra\", to: \"/factoring/extra\" },\n          {\n            label: \"Internal Tools\","
     ),
   ]);
 
-  // 1b. Tab count: a top-level "..." spread (the exact shape of the pre-fix 16-tab code) must
-  //     fail even though a literal-`{` count of it alone would look small.
+  // 1b. A second top-level runtime spread (anything but SUBNAV) must fail.
   mutations.push([
-    "top-level nav reintroduces a spread",
-    base.home.replace(
-      'items={[\n          { label: "Submit", to: "/factoring/submit" },',
-      'items={[\n          ...SUBNAV.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] })),\n          { label: "Submit", to: "/factoring/submit" },'
-    ),
+    "top-level nav adds another spread",
+    base.home.replace("          ...SUBNAV.map((item) => ({", "          ...EXTRA_TABS.map((x) => x),\n          ...SUBNAV.map((item) => ({"),
   ]);
 
   // 2. A bare dash with no title= (simulate a future cell forgetting the canonical NotApplicable
@@ -224,4 +241,4 @@ if (failures.length) {
   failures.forEach((e) => console.error(`  - ${e}`));
   process.exit(1);
 }
-console.log(`${LABEL}: PASS — Factoring top-level nav <= 6, Account Summary's dashes all carry a title, no dev-facing schema commentary in rendered copy`);
+console.log(`${LABEL}: PASS — Factoring top-level nav = 15 Faro tabs + Internal Tools (ROUND 24.6), Account Summary's dashes all carry a title, no dev-facing schema commentary in rendered copy`);

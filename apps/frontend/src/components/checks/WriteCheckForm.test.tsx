@@ -1,11 +1,15 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import * as checksApi from "../../api/checks";
 import * as accountingApi from "../../api/accounting";
 import * as bankingApi from "../../api/banking";
+import { ToastProvider } from "../Toast";
 import { WriteCheckForm } from "./WriteCheckForm";
+
+vi.mock("../../contexts/CompanyContext", () => ({ useCompanyContext: () => ({ selectedCompanyId: "co-1" }) }));
 
 // ReferenceSelect/DriverPickerWithCreate carry their own deep query/combobox machinery (server
 // search, inline create) -- out of scope for this form's own unit test, and already covered by
@@ -65,9 +69,13 @@ function renderForm(onSaved = vi.fn()) {
   return {
     onSaved,
     ...render(
-      <QueryClientProvider client={qc}>
-        <WriteCheckForm open operatingCompanyId="co-1" onClose={vi.fn()} onSaved={onSaved} />
-      </QueryClientProvider>
+      <MemoryRouter>
+        <QueryClientProvider client={qc}>
+          <ToastProvider>
+            <WriteCheckForm open operatingCompanyId="co-1" onClose={vi.fn()} onSaved={onSaved} />
+          </ToastProvider>
+        </QueryClientProvider>
+      </MemoryRouter>
     ),
   };
 }
