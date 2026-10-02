@@ -84,6 +84,8 @@ const STEPS = [
   // actually write to a database (content-checked), not just sit under db/migrations/ or
   // scripts/ops/.
   ["verify-data-write-path-detection-is-content-based", "scripts/verify-data-write-path-detection-is-content-based.mjs"],
+  // 2026-10-02 — #23954 squash-merged conflict markers into a backend route file; every deploy after it failed.
+  ["verify-no-merge-conflict-markers", "scripts/verify-no-merge-conflict-markers.mjs"],
   ["verify-no-money-theater", "scripts/verify-no-money-theater.mjs"],
   ["verify-no-capability-regression", "scripts/verify-no-capability-regression.mjs"],
   // Rule 26 — block parallel scoreboard-hotfile PRs before push (SKIP-PASS without gh token).
