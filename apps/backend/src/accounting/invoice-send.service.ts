@@ -546,6 +546,17 @@ export async function sendDraftInvoice(
   if (!invoiceGl.posted && invoiceGl.reason === "post_failed" && !latchOwnsAr) {
     throw new Error(`invoice_send_refused_gl_post_failed:${invoiceGl.code ?? "unknown"}:${invoiceGl.message ?? ""}`);
   }
+  // Lead ROUND 332 item 1: issuing the document IS the posting event (QuickBooks / NetSuite have no send-without-post).
+  // A disabled poster used to return { posted: false, reason: "posting_disabled" } and the send stamped 'sent' anyway
+  // — an invoice billed to a customer that the ledger never heard of. The flag may gate the poster's rollout, but then
+  // it gates ISSUANCE for that entity too. The only { posted: false } a send accepts is the delivery latch having
+  // posted this load's A/R already (revrec_latch_already_posted_ar / INVOICE_REVREC_LATCH_OWNS_LOAD).
+  if (!invoiceGl.posted && invoiceGl.reason === "posting_disabled") {
+    throw new Error("invoice_send_refused_posting_disabled: the invoice A/R poster is off for this entity, so the invoice cannot be issued");
+  }
+  if (!invoiceGl.posted && invoiceGl.reason !== "revrec_latch_already_posted_ar" && !latchOwnsAr) {
+    throw new Error(`invoice_send_refused_not_posted:${invoiceGl.reason}`);
+  }
 
   await appendCrudAudit(
     client,
