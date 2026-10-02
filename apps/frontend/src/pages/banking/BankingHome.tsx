@@ -250,6 +250,19 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     () => sortedBankTiles.filter((t) => String(t.tile_kind) === "real"),
     [sortedBankTiles],
   );
+  /**
+   * The accounts "Cash on hand" actually sums: the cash-bearing classes. Credit cards are excluded
+   * on purpose — a card balance is a liability. Kept beside realBankTiles so the sub-label can state
+   * the real denominator instead of implying every account is in the figure.
+   */
+  const cashBankTiles = useMemo(
+    () =>
+      realBankTiles.filter((t) => {
+        const cls = String((t as { account_class?: unknown }).account_class ?? "").toLowerCase();
+        return cls !== "credit_card" && cls !== "credit";
+      }),
+    [realBankTiles],
+  );
   // ROUND-20.8 B7 — "Recon accts" used to read the count of currently-OPEN reconciliation sessions,
   // not accounts that have ever actually been reconciled — a live 0 there read as neutral gray next
   // to a healthy figure. The honest metric: of the real bank accounts this company has, how many
@@ -590,11 +603,29 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                     onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}
                     data-testid="banking-kpi-recon-accounts"
                   />
+                  {/*
+                    OWNER DEFECT, 2026-10-02, measured live on /banking.
+                    The tile read "Cash on hand -$20,573.72" with the sub-label "8 real bank
+                    account(s)". The FIGURE is right and the LABEL was false: total_cash is
+                    sumAuthoritativeDepositoryCashCents() — the DEPOSITORY/cash accounts only — which
+                    on that screen was USMCA FREIGHT $12,152.73 + Relay Fuel Wallet -$32,726.45 =
+                    -$20,573.72. The Dreamline Diesel Card at -$140,226.34 is excluded because it is
+                    a credit card, and excluding a card from "cash on hand" is CORRECT accounting: a
+                    card balance is a liability, not cash. But claiming the number covers all 8
+                    accounts made a correct figure look unreconcilable against the account list right
+                    below it. Say what it actually counts.
+
+                    It is also the BANK FEED figure, while "Cash position" above it is the BOOK/GL
+                    figure. Those two legitimately differ by exactly the reconciliation gap
+                    ($140,241.38 on USMCA FREIGHT the day this was measured: book $152,394.11 vs feed
+                    $12,152.73). Nothing on the screen said so, so the owner saw three cash numbers
+                    and no stated relationship between them. Both tiles now name their basis.
+                  */}
                   <MoneyKpiTile
-                    label="Cash on hand"
+                    label="Cash on hand (bank feed)"
                     value={formatUsd(cashPosting)}
                     tone="neutral"
-                    sub={`${realBankTiles.length} real bank account(s)`}
+                    sub={`${cashBankTiles.length} of ${realBankTiles.length} account(s) — cash only; credit cards are a liability, not cash`}
                     onClick={() => navigate(BANKING_TAB_PATH.bank_accounts)}
                     data-testid="banking-kpi-cash-on-hand"
                   />
@@ -615,7 +646,11 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                     label="Factoring reserve"
                     value={factoringKpiQuery.isError ? "Unavailable" : factoringReserve == null ? "…" : money.format(factoringReserve)}
                     tone={factoringKpiQuery.isError ? "bad" : "good"}
-                    sub="Faro escrow + cash reserve"
+                    // VOCABULARY LAW: the factor's holdback is the contract's SECURITY RESERVE, an
+                    // asset. "Escrow" means DRIVER escrow only — a 2100-series liability with no Faro
+                    // role. "Escrow Reserve" is Faro's own label on its statement, carried for
+                    // tie-out, never a GL or UI name. See the 2026-10-02 vocabulary ruling.
+                    sub="Security reserve + cash reserve (Faro)"
                     onClick={() => navigate("/factoring/reserve-tracker")}
                     data-testid="banking-kpi-factoring-reserve"
                   />

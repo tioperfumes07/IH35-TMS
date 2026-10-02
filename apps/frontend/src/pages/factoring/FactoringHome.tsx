@@ -91,7 +91,13 @@ const SUBNAV = [
   { id: "fees_paid", label: "Fees Paid" },
   { id: "aging", label: "Aging" },
   { id: "reserve", label: "Reserve" },
-  { id: "escrow_account", label: "Escrow Account" },
+  // VOCABULARY LAW 2026-10-02 — the factor's holdback is the contract's SECURITY RESERVE, an ASSET.
+  // "Escrow" means DRIVER escrow only: a 2100-series current liability that has nothing to do with
+  // Faro. The owner's CPA answers say it in his own words — "escrow is a current liability",
+  // "factoring is an asset", "driver escrow has nothing to do with faro". "Escrow Reserve" is FARO'S
+  // label on its own statement and is carried only for tie-out, never as a tab, column or GL name.
+  // The route id is left alone so existing links keep working; only what the owner reads changes.
+  { id: "escrow_account", label: "Security Reserve" },
   { id: "cash_reserve", label: "Cash Reserve" },
   { id: "chargebacks_overpayments", label: "Chargebacks & Overpayments" },
   { id: "loan_save", label: "Loan / Save" },
@@ -877,7 +883,22 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
 
   // ROUND 21.0 item 5a (real KPI thresholds, CC-2 ROUND 20.8 Part A tokens — DrillKpiCard's
   // existing valueTone, never a new palette): the recourse agreement's real window is 96 days.
-  const FACTORING_RECOURSE_LIMIT_DAYS = 96;
+  /**
+   * CONTRACT, not a guess. Faro Factoring Agreement, definitions carried in ~/Desktop/CPA ANSWERS.docx:
+   *   "Repurchase Deadline: 95 calendar days from the Purchase Date" —
+   *   "The date by which Seller shall cause a Purchased Account to become a Repurchased Account."
+   * It was hard-coded here as 96, a number that appears NOWHERE in the agreement, and the screen
+   * therefore read "Recourse days 95 · Recourse limit: 96d" — two different deadlines, one of them
+   * invented, on the owner's own factoring dashboard.
+   *
+   * It is also not a "recourse" date. Day 95 is OUR obligation to repurchase, not the day Faro takes
+   * money out of our reserve — the contract contains no day-95 reserve deduction at all. The rest of
+   * the contract clock, for anything built on this: Repurchase Term 30 calendar days, Grace Period 5,
+   * Default Interest 0.067% per day compounded daily from day 36, Security Reserve 1.5% of Net Amount.
+   * Faro may accelerate the Deadline on an uncured default after 5 business days' written notice, so
+   * this is the DEFAULT deadline and never a constant to post against.
+   */
+  const FACTORING_RECOURSE_LIMIT_DAYS = 95;
   const FACTORING_RECOURSE_WARN_MARGIN_DAYS = 6;
   const recourseDaysRaw = summaryQuery.isError ? null : Number(summary?.recourse_days ?? 95);
   const recourseDaysTone: "default" | "critical" | "warning" =
@@ -1070,10 +1091,10 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                 at or past it. */}
             <DrillKpiCard
               testId="factoring-kpi-recourse-days"
-              label="Recourse days"
+              label="Repurchase deadline"
               value={summaryQuery.isError ? null : recourseDaysRaw}
               valueTone={recourseDaysTone}
-              hint={`Recourse limit: ${FACTORING_RECOURSE_LIMIT_DAYS}d`}
+              hint={`Contract: ${FACTORING_RECOURSE_LIMIT_DAYS} calendar days from the Purchase Date`}
               to={FACTORING_TAB_PATH.recourse_pipeline}
             />
             <DrillKpiCard
@@ -1702,7 +1723,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
       {tab === "escrow_account" ? (
         <div className="space-y-3" data-testid="factoring-escrow-account">
           <div className="rounded-sm border border-gray-200 bg-white p-3">
-            <div className="mb-2 text-xs font-medium text-gray-900">Escrow Account</div>
+            <div className="mb-2 text-xs font-medium text-gray-900">Security Reserve (Faro statement: "Escrow Reserve")</div>
             <div className="mb-2 text-xs text-gray-600">
               Escrow reserve rate{" "}
               <span className="font-semibold text-gray-900" data-testid="factoring-escrow-rate-pct">
