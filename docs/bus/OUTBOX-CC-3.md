@@ -2374,3 +2374,26 @@ finding ids resolved:
 header template + guard land with it.
 NOTE: the ORDER line (#24166 spine fix -> repurchase-time accrual -> possible-duplicate badge -> Faro bank-feed block) is
 CC-2's lane; relayed in #24210.
+
+ROUND 297 vendor-profile tab audit · CLOSED (my lane) · #24214 (12a34b87cf)
+- Voided rows leave: fraud alerts on voided/archived purchases, voided legal contracts, voided equipment loans,
+  '[VOID] ' parts purchases.
+- Drills keep the vendor: Open Fraud Alerts carries vendor scope (list reads vendor/unit/driver/load + "all" status
+  chip); LegalMattersListPage honours ?vendor_id / ?customer_id with a visible scope chip.
+- Counts from the server: banking by-linkage total_count = count(*) OVER () (was rows.length, capped 50); fuel and
+  work-order section headers read the server total; equipment loans show their count.
+- FOR CC-1 (money lane, not touched): (1) A/P aging "as of" does not exclude voided bills by status; (2) cash
+  forecast route has no operating_company_id predicate (RLS not a backstop for Owner — LAW 4).
+
+ROUND 329 engine idempotency standard · CC-3 lane SWEPT · #24219 (2cd26fb563)
+- Template docs/specs/ENGINE-HEADER-TEMPLATE.md; helper lib/single-flight.ts (transaction advisory lock — pgbouncer
+  transaction pooling makes session locks unsafe).
+- 23 lane crons traced write-by-write. 11 already database-guarded (header only). 12 fixed:
+  fault-code-processor (REAL BUG: same-day re-run opened a 2nd draft WO, overwrote auto_wo_id, re-notified -> now a
+  same-statement claim), document-alerts (notified_at claim before send), samsara-documents (ON CONFLICT r2_key),
+  webhook-projection / fuel-purchase-push / routes-push / cbp / remote-count (advisory locks), driver direct thread,
+  driver message delivery, location fence (advisory locks).
+- Guard verify-scheduled-engine-idempotency-header (23 swept, never shrinks) wired into money-pr-local-gate.
+- NOTE FOR CC-1's 642 audit (#24213): it CLEARED fuel-purchase-push, driver-message-delivery, samsara-documents,
+  driver-message-inbound as "idempotent" on app existence checks — under ROUND 329 those were defects; now fixed.
+- Left: CC-1 / CC-2 / Cursor lanes' scheduled engines join SWEPT as each lane sweeps.
