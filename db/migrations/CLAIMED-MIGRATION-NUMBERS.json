@@ -1536,6 +1536,16 @@
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-02",
       "purpose": "Owner ruling 2026-10-02 (short-pay = two entries with a shared link): faro_reserve_entries short-pay resolution columns (reason account, customer-side JE, keep-open) + 6920 Bad Debt Expense (USMCA, role bad_debt_expense)."
+    },
+    "202615290100": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-02",
+      "purpose": "Lead ROUND 332 item 2 — backfill invoice/source_transaction spine links for postings that carry the invoice as their source"
+    },
+    "202615290200": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-02",
+      "purpose": "Lead ROUND 332 item 6 — package the ROUND 331 purge route (br-late-grass-akgve11z) with the to_regprocedure hardening"
     }
   },
   "202613590001": {
