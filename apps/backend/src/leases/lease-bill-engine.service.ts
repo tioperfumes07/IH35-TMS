@@ -17,6 +17,7 @@ import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.ser
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { SYSTEM_ACTOR_USER_ID } from "../lib/system-actor.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
+import { capitalizedBillAccount, postLesseePeriod } from "./lessee-posting.service.js";
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
@@ -134,6 +135,9 @@ export async function planLeaseBills(client: DbClient, opco: string, periodStart
         ORDER BY label`,
       [c.id, periodStart, c.commencement]
     );
+    // ROUND 321: a capitalized lease-to-own (ASC 842 lessee) bills against the lease liability — the payment reduces it.
+    // An unbound lease_liability role leaves the account empty so the gate refuses the bill by name ("no account").
+    const capAccount = await capitalizedBillAccount(client, opco, c.id).catch(() => "");
     const lines: LeaseBillLinePlan[] = [];
     for (const a of assets.rows) {
       const classId = await ensureAssetClass(client, opco, { unitId: a.unit_id, equipmentId: a.equipment_id, label: a.label }, actorUserId);
@@ -145,7 +149,7 @@ export async function planLeaseBills(client: DbClient, opco: string, periodStart
         asset_label: a.label,
         amount_cents: escalatedAmount(Number(a.monthly), c.commencement, periodStart, c.escalation_pct_bps, c.escalation_every_months),
         class_id: classId,
-        account_id: c.expense_account_id ?? roleAccount ?? null,
+        account_id: capAccount === "" ? null : (capAccount ?? c.expense_account_id ?? roleAccount ?? null),
       });
     }
     plans.push(...groupIntoBills({ id: c.id, display: c.display, vendor_id: c.vendor_id, billing_mode: c.billing_mode }, periodStart, lines));
@@ -154,6 +158,24 @@ export async function planLeaseBills(client: DbClient, opco: string, periodStart
 }
 
 export type LeaseBillRunResult = { period_start: string; created: Array<{ key: string; bill_id: string; amount_cents: number }>; skipped_existing: string[]; refused: Array<{ key: string; reason: string }> };
+
+/**
+ * ROUND 321: after a capitalized lease-to-own bill exists, post each line's ASC 842 period JE (interest accretion + ROU
+ * amortization) and link the schedule row to the bill + JE. Idempotent per period; a failure is reported as refused
+ * (the bill stands, the next run heals the period) and never silently swallowed.
+ */
+async function postLesseePeriodsForBill(opco: string, actorUserId: string, plan: LeaseBillPlan, billId: string, out: LeaseBillRunResult) {
+  for (const line of plan.lines) {
+    try {
+      await withCurrentUser(actorUserId, async (client) => {
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
+        await postLesseePeriod(client as DbClient, opco, actorUserId, { leaseAssetLineId: line.lease_asset_line_id, periodStart: plan.period_start, billId });
+      });
+    } catch (e) {
+      out.refused.push({ key: `${plan.key}:asc842`, reason: `ASC 842 period JE not posted for ${line.asset_label}: ${(e as Error).message}` });
+    }
+  }
+}
 
 /** Generates the month's lease bills for one entity. Idempotent per key. */
 export async function generateLeaseBills(opco: string, periodStart: string, actorUserId: string, leaseId?: string): Promise<LeaseBillRunResult> {
@@ -166,11 +188,15 @@ export async function generateLeaseBills(opco: string, periodStart: string, acto
     const exists = await withCurrentUser(actorUserId, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
       return (await (client as DbClient).query(
-        `SELECT 1 FROM accounting.bills WHERE operating_company_id = $1::uuid AND lease_bill_key = $2 AND voided_at IS NULL AND revoked_at IS NULL`,
+        `SELECT id::text FROM accounting.bills WHERE operating_company_id = $1::uuid AND lease_bill_key = $2 AND voided_at IS NULL AND revoked_at IS NULL LIMIT 1`,
         [opco, plan.key]
-      )).rows.length > 0;
+      )).rows[0] as { id: string } | undefined;
     });
-    if (exists) { out.skipped_existing.push(plan.key); continue; }
+    if (exists) {
+      out.skipped_existing.push(plan.key);
+      await postLesseePeriodsForBill(opco, actorUserId, plan, exists.id, out);
+      continue;
+    }
     const gate = gateLeaseBill(plan);
     if (!gate.ok) { out.refused.push({ key: plan.key, reason: gate.reason }); continue; }
     const total = plan.lines.reduce((s, l) => s + l.amount_cents, 0);
@@ -204,6 +230,7 @@ export async function generateLeaseBills(opco: string, periodStart: string, acto
       actorUserId
     );
     out.created.push({ key: plan.key, bill_id: String((bill as { id?: string }).id), amount_cents: total });
+    await postLesseePeriodsForBill(opco, actorUserId, plan, String((bill as { id?: string }).id), out);
   }
   await withCurrentUser(actorUserId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
