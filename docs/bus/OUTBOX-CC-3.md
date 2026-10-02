@@ -2143,3 +2143,37 @@ Surface list = CC-3's 8 files; other seats extend it. Negative-tested.
 - #23969 encoded the owner ruling LOVES = LOVES TRAVEL STOPS as a named engine exception. Rehearsed: 3 vendor groups → 0, A/P unchanged.
 - **Lesson recorded:** my frontend typecheck had used `tsc -p tsconfig.app.json`, which aborts on TS5103 and checks nothing. I now use `npx tsc -b` before every frontend push.
 - **Still open:** the owner's AUTH code for the customer + vendor repoint `--apply`.
+
+## 2026-10-02 — QUEUE ITEM 1 DONE ON PROD + ITEM 2 COMPETING-ENGINE AUDIT (findings added to my queue)
+
+**Item 1 DONE (AUTH-202, #23987).** USMCA duplicate groups: customers 22 → 0 and vendors 3 → 0 (includes LOVES ← LOVES TRAVEL STOPS). A/R 37,413,412c / 110 invoices and A/P 56,635c / 93 bills are unchanged to the cent. 22 + 3 aliases were written, so every merge is reversible. Baselines are shrunk to 0.
+
+The prod dry run first exposed a silent no-op: under the app role, RLS has no DELETE policy, so the engine's duplicate DELETE affected 0 rows. The engine now refuses unless exactly one row is deleted (#23986).
+
+**Items 8–10, live tick proof (Render backend log + prod counts, 2026-10-02):**
+- **E-03:** unit_stop_events 868, last written 04:52Z.
+- **E-23:** fuel reports 737 rows, last read 04:39Z. Fuel push: 646 runs, 0 pushed — purchases carry date-only stamps, as reported earlier.
+- **E-30:** `integrations.samsara_driver_replies tick` every 5 min, `fetched 0`. No driver message has been sent; the owner said not yet.
+- **E-31:** route progress read at 05:00Z, 14 stops, 0 arrivals so far.
+- **E-32:** `integrations.samsara_documents tick` hourly at :17, `documents 0`. No Samsara form has been submitted in the 7-day window.
+- **E-29:** `dispatch.border_crossing_detector tick complete`, every minute.
+
+**Item 2 — competing engines (code read; file:line in the audit). Added to my queue as 2a–2i:**
+
+| # | Pair | Live path | Correct | Fix | Owner |
+|---|---|---|---|---|---|
+| 2a | Old pairwise merge `vendor-customer-merge.service.ts` vs canonical engine | Factoring `DuplicateVendorsBanner` → POST `/{customers,vendors}/:id/merge` → old engine. The flag-then-merge flow likely 404s: the pair query excludes rows already `is_duplicate`. | canonical | Repoint `/merge` to `mergeIntoCanonical`; flip `verify-vendor-customer-merge` (it currently *requires* the old engine). | CC-3 |
+| 2b | Load status: canonical transition vs PATCH `/mdata/loads/:id/status` (second state machine), bulk set-status, abandonment (no state check), draft→assigned ×3 | Both | `load-transition` (operational), `load-billing-lifecycle` (post-delivery) | Repoint; add compare-and-set to the canonical UPDATE; widen `verify-load-status-single-state-machine` to `/allowed\w*Transitions/`. | CC-3 (dispatch) |
+| 2c | `odometer_readings` writers: snapshot cron, manual route, service-history backfill | Backfill uses a plain INSERT, so it gets a 23505 against the day-unique index | Manual upsert | Shared `upsertManualOdometer()`; extend `verify-odometer-ledger-has-one-writer`. | CC-3 |
+| 2d | Real driven miles: `loads.miles_driven_actual` vs `load_odometer_segments` | Tour readout and cost split sum all segment kinds with `COALESCE(...,0)` (unmeasured reads as 0) | `miles_driven_actual` / loaded segments | Repoint readers; guard against unfiltered segment sums. | CC-3 telematics + CC-1 readers |
+| 2e | Driver miles 30d: hub (`miles_driven_actual` ?? `loaded_miles`) vs overview (Samsara) vs profile tabs (stop events) | All three | One helper (Samsara driver distance) | Shared helper | CC-3 |
+| 2f | `unit-stops` GET computes on read vs persisted `unit_stop_events` | Both | Persisted | Repoint route | CC-3 |
+| 2g | `loaded_miles` written only at booking; later shortest / practical edits never update it | Stale | Recompute where shortest / practical are written | Guard | CC-3 (dispatch) |
+| 2h | **IFTA:** both UI screens use `aggregateStateMiles` → empty `samsara.vehicle_state_miles` → fallback that counts each load's full practical miles once per stop state, windowed by `created_at` | Wrong engine live | `telematics/ifta-miles.service.ts` (Samsara GPS, 72h window), which has no UI caller | Repoint | **CC-1** (tax / money) |
+| 2i | **Driver pay:** bill engine (shortest × rate + deadhead × empty) vs settlement creator / batch (`loaded_miles` × rate, `empty_miles` always 0, so deadhead is paid $0) | Both | Bill engine (owner miles spec 09-02) | Batch / creator take pay from `driver_bills` | **CC-1** (money) |
+
+**→ Board, other lanes:**
+- **CC-1:** 2h and 2i, plus the extra-pay line route.
+- **Owner-attention worker (whoever owns `owner/todays-attention`):** `aggregator.service.ts:493` queries `predicted_failure_date`, but the column is `projected_failure_date`. The tick aborts its transaction for all 3 companies, every minute (backend log 05:05Z).
+
+**Also fixed:** #23988. 21 handlers did `if (!requireAuth(...)) return;`, so Fastify double-sent every unauthenticated 401 (seen in the live log on my board routes). They now `return reply;`, with a new static guard.
