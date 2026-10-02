@@ -65,6 +65,8 @@ function walkListPages(dir, out = []) {
 
 function hasSearchChrome(source) {
   return (
+    // Round 296: the house table's own UniversalListToolbar IS the search (one search per list), unless hidden.
+    (/<(DataTable|ParityTable|ListView)\b/.test(source) && !/\bhideToolbar\b|\bsuppressToolbarSearch\b/.test(source)) ||
     /\bsetSearch\b/.test(source) ||
     /placeholder=["']Search/i.test(source) ||
     (/\bsearch\b/.test(source) && /onChange=/.test(source) && /input/i.test(source))

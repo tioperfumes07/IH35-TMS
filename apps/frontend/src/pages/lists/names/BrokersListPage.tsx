@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CatalogListSearchInput } from "../../../components/lists/CatalogListSearchInput";
+import { SelectCombobox } from "../../../components/Combobox";
 import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQueryOptions";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -23,25 +23,25 @@ export function BrokersListPage() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
-  const [showInactive, setShowInactive] = useState(false);
+  const [status, setStatus] = useState<"active" | "inactive" | "all">("active");
 
   const query = useQuery({
-    queryKey: ["names", "brokers", companyId, search, showInactive],
+    // Round 296: every broker of the chosen status (customer_type + status narrow server-side; listAllCustomers reads
+    // every page to the total), then the house toolbar (DataTable's UniversalListToolbar) is the one search with
+    // "N of M". The page search + "Show inactive" checkbox are gone (two searches, double status filter).
+    queryKey: ["names", "brokers", companyId, status],
     queryFn: () =>
       listAllCustomers({
         operating_company_id: companyId,
         customer_type: "broker",
-        search: search || undefined,
-        ...(showInactive ? {} : { status: "active" }),
+        ...(status === "all" ? {} : { status }),
       }),
     enabled: Boolean(companyId),
     ...catalogListSearchQueryOptions,
   });
 
-  const allRows = query.data?.customers ?? [];
-  const rows = showInactive ? allRows : allRows.filter((r) => r.status === "active");
+  const rows = query.data?.customers ?? [];
 
   // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-TABLE-ALIGNMENT — text centers, numeric right).
   const columns = [
@@ -74,19 +74,20 @@ export function BrokersListPage() {
         separate master. This is a filtered directory; create or edit a broker from its customer record.
       </div>
 
-      <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by name, code, MC# or DOT#" className="h-9 w-full rounded-sm border border-gray-300 px-2 text-xs" />
+      <div className="flex items-end gap-2 rounded-sm border border-gray-200 bg-white p-3">
+        <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+          Show
+          <SelectCombobox
+            value={status}
+            onChange={(event) => setStatus(event.target.value as "active" | "inactive" | "all")}
+            className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="all">All</option>
+          </SelectCombobox>
+        </label>
       </div>
-
-      <label className="flex items-center gap-1 text-xs text-gray-600">
-        <input
-          type="checkbox"
-          checked={showInactive}
-          onChange={(e) => setShowInactive(e.target.checked)}
-          className="h-3.5 w-3.5 rounded-sm border-gray-300"
-        />
-        Show inactive
-      </label>
 
       {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search filter above feeds
           `rows`; row-click → customer record preserved exactly. */}
@@ -104,7 +105,6 @@ export function BrokersListPage() {
         }
       />
 
-      <div className="text-xs text-slate-500">Total brokers: {rows.length}</div>
 
       {createOpen ? (
         <ParityDrawer open title="New broker" onClose={() => setCreateOpen(false)} onBack={() => setCreateOpen(false)}>

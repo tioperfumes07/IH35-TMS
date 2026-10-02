@@ -176,8 +176,14 @@ export function auditOverCap(feSources) {
  * URL for auditOverCap to resolve. Compare that shared page's requested limit directly with the shared
  * backend schema instead. This is the exact shape that made every maintenance catalog route return 400.
  */
-export function auditMaintenanceCatalogCap(frontendSource, backendSource) {
-  const requested = frontendSource.match(/client\.list\(\{[\s\S]*?\blimit:\s*(\d+)/)?.[1];
+const HELPER_PATH = "apps/frontend/src/lib/fetchAllCatalogPages.ts";
+export function auditMaintenanceCatalogCap(frontendSource, backendSource, helperSource = readFileSync(join(ROOT, HELPER_PATH), "utf8")) {
+  // Round 296: the page may read every page through lib/fetchAllCatalogPages (default pageSize literal) instead of one
+  // capped client.list call -- then the requested limit is that helper's page size.
+  const helperPageSize = /fetchAllCatalogPages\(client\.list/.test(frontendSource)
+    ? helperSource.match(/\bpageSize = (\d+)/)?.[1]
+    : undefined;
+  const requested = helperPageSize ?? frontendSource.match(/client\.list\(\{[\s\S]*?\blimit:\s*(\d+)/)?.[1];
   const max = backendSource.match(/\blimit:\s*z\.coerce\.number\(\)[^,;\n]*?\.max\((\d+)\)/)?.[1];
   if (!requested || !max) {
     return [
@@ -259,11 +265,13 @@ function selftest() {
   const maintenanceBackendPath = join(ROOT, "apps/backend/src/catalogs/maintenance/shared.ts");
   const maintenanceGood = readFileSync(maintenanceFrontendPath, "utf8");
   const maintenanceBackend = readFileSync(maintenanceBackendPath, "utf8");
-  const maintenanceBad = maintenanceGood.replace(/\blimit:\s*200\b/, "limit: 500");
-  if (maintenanceBad === maintenanceGood) {
+  // The page reads every page through lib/fetchAllCatalogPages: the over-cap mutation is on that helper's page size.
+  const helperGood = readFileSync(join(ROOT, HELPER_PATH), "utf8");
+  const helperBad = helperGood.replace(/\bpageSize = 200\b/, "pageSize = 500");
+  if (helperBad === helperGood) {
     failures.push("case7 FAIL — maintenance over-cap mutation was inert");
   }
-  if (auditMaintenanceCatalogCap(maintenanceBad, maintenanceBackend).length === 0) {
+  if (auditMaintenanceCatalogCap(maintenanceGood, maintenanceBackend, helperBad).length === 0) {
     failures.push("case8 FAIL — maintenance request above the backend max was NOT caught");
   }
   if (auditMaintenanceCatalogCap(maintenanceGood, maintenanceBackend).length !== 0) {

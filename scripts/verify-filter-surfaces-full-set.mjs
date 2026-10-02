@@ -35,6 +35,24 @@ const SURFACES = [
     must: [table, /allRows\.filter\(\(row\) => status === "all" \|\| \(status === "active" \? row\.is_active : !row\.is_active\)\)/],
     mustNot: [/<CatalogListSearchInput\b/, /showInactive/, /suppressToolbarSearch/, /Total rows:/],
   })),
+  // Capped routes (limit max 200): the page reads EVERY page through lib/fetchAllCatalogPages; status narrows
+  // server-side on the indexed is_active; the house toolbar is the one search.
+  ...[
+    ["Fleet catalogs", "apps/frontend/src/pages/lists/fleet/FleetCatalogListPage.tsx"],
+    ["Fuel catalogs", "apps/frontend/src/pages/lists/fuel/FuelCatalogListPage.tsx"],
+    ["Maintenance catalogs", "apps/frontend/src/pages/lists/maintenance/MaintenanceCatalogListPage.tsx"],
+  ].map(([name, file]) => ({
+    name,
+    file,
+    must: [/fetchAllCatalogPages\(client\.list, \{ operating_company_id: companyId, is_active: status \}\)/, /<DataTable\b/],
+    mustNot: [/<CatalogListSearchInput\b/, /showInactive/, /limit: 200, offset: 0/],
+  })),
+  {
+    name: "Brokers",
+    file: "apps/frontend/src/pages/lists/names/BrokersListPage.tsx",
+    must: [/listAllCustomers\(\{[\s\S]{0,160}customer_type: "broker"/, /<DataTable\b/],
+    mustNot: [/<CatalogListSearchInput\b/, /showInactive/, /search: search/],
+  },
 ];
 
 export function audit(read) {
