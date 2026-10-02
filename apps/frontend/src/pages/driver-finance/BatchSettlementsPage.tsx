@@ -5,9 +5,10 @@
  */
 import { useRef, useState, type ClipboardEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
+import { SaveDropdown } from "../../components/forms/SaveDropdown";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { EntityPicker } from "../../components/EntityPicker";
@@ -83,6 +84,7 @@ function newBatchRow(today: string): BatchRow {
 
 export function BatchSettlementsPage() {
   const { selectedCompanyId } = useCompanyContext();
+  const navigate = useNavigate();
   const companyId = selectedCompanyId ?? "";
   const today = todayChicago();
   const [rows, setRows] = useState<BatchRow[]>(() => [newBatchRow(today), newBatchRow(today)]);
@@ -262,9 +264,28 @@ export function BatchSettlementsPage() {
             >
               Duplicate last
             </Button>
-            <Button type="button" variant="primary" disabled={saveMut.isPending || !companyId} onClick={() => saveMut.mutate()}>
-              {saveMut.isPending ? "Saving…" : "Save all"}
-            </Button>
+            <div data-b5-batch-settlements-save="1" data-testid="b5-batch-settlements-save">
+              <SaveDropdown
+                storageKey="batch-settlements"
+                primaryLabel="Save all"
+                disabled={saveMut.isPending || !companyId}
+                loading={saveMut.isPending}
+                onSave={() => saveMut.mutate()}
+                onSaveAndClose={async () => {
+                  await saveMut.mutateAsync();
+                  navigate("/driver-finance/settlements");
+                }}
+                onSaveAndAddAnother={async () => {
+                  await saveMut.mutateAsync();
+                  setRows((prev) => [...prev.filter((r) => r.status === "saved"), newBatchRow(today)]);
+                }}
+                menuLabels={{
+                  save: "Save all",
+                  save_and_close: "Save and close",
+                  save_and_add_another: "Save and new",
+                }}
+              />
+            </div>
             {saveMut.data && (
               <span className="text-xs text-[#6B7280]">
                 Saved {saveMut.data.saved} · Failed {saveMut.data.failed}
