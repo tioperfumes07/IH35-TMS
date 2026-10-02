@@ -13,6 +13,7 @@ import { ListErrorState } from "../ListErrorState";
 import { resolveEntityRoute, type EntityKind } from "../shared/EntityLink";
 import "../../design/ih35-design-tokens.css";
 import "./party-board.css";
+import { formatUsdCentsTable } from "../../lib/money";
 
 type HubRow = { id: string; name: string; status: string; phone: string | null; cdl: string | null; unit: string | null; basis: string | null; due_cents: number; due_count: number; on_load: boolean };
 type Hub = {
@@ -30,7 +31,9 @@ type Panel = {
 };
 
 const usd = (c: number) => `${c < 0 ? "-" : ""}$${(Math.abs(c) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const money = (c: number | null | undefined) => (c ? usd(c) : "—");
+// Owner design law 7 + lib/money C-35/C-37 (Lead ruling ROUND 330.6): MISSING renders "—", a real measured zero renders
+// "$0.00". The old ternary falsy-tested a number and turned every real $0.00 into "unknown".
+const money = (c: number | null | undefined) => formatUsdCentsTable(c);
 const int = (n: number) => n.toLocaleString("en-US");
 
 export const DRIVER_HUB_TABS: Array<{ label: string; to: string }> = [
