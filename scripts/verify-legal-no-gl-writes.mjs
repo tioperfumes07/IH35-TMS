@@ -2,12 +2,14 @@
 /**
  * verify-legal-no-gl-writes.mjs — LEGAL-CONTRACT-CREATOR-01 scope guard.
  *
- * The legal module records contract TERMS only; it must NEVER post to the GL / accounting ledger.
- * (Lease payments posting, if ever wanted, is a separate Tier-1 money block with its own flag + GUARD
- * sign-off.) This BLOCKS any GL/posting write or import from apps/backend/src/legal/**.
+ * ROUND 326 supersedes the absolute "Legal never posts money" Option B rule for *matter economic
+ * wiring*: reserve / fee / retainer / recovery / judgment MUST post through the existing
+ * bill (AP/expense) and invoice (AR) engines in legal-money.service.ts. That is NOT handwritten
+ * GL math — it is the sanctioned engine path.
  *
- * Real static assert (no DB): scans legal/*.ts (excluding tests), strips comments, fails on any
- * forbidden GL/posting reference. Exit 1 on violation.
+ * This guard still BLOCKS raw GL writes and posting-engine imports from apps/backend/src/legal/**
+ * (no INSERT into journal_entries, no postToGl, no expense_lines SQL). Calling createBill /
+ * createExpandedInvoice / voidBill is the allowed path (those live under accounting/, not here).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -17,8 +19,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 const LEGAL_DIR = path.join(ROOT, "apps", "backend", "src", "legal");
 
-// GL/posting writes the legal module must never make. (Reads of nothing here — there are no legitimate
-// accounting writes from legal/*.) Patterns chosen to match the real posting surface, not prose.
+// GL/posting writes the legal module must never make *inline*. Engines under accounting/* are OK.
 const FORBIDDEN = [
   /\baccounting\.(journal_entries|journal_entry_postings|bill_lines|payments|bill_payments)\b/i,
   /INSERT\s+INTO\s+accounting\./i,
@@ -26,6 +27,8 @@ const FORBIDDEN = [
   /\bexpense_lines\b/i,
   /\bBILL_GL_POSTING_ENABLED\b/i,
   /from\s+["']\.\.\/accounting\/.*post/i,
+  /\bcreateJournalEntryOnClient\b/,
+  /\bcreateJournalEntry\b/,
 ];
 
 function stripComments(s) {
@@ -53,12 +56,12 @@ function main() {
     });
   }
   if (violations.length === 0) {
-    console.log(`[legal-no-gl] PASS — no GL/posting writes in legal/** (${files.length} files scanned).`);
+    console.log(`[legal-no-gl] PASS — no handwritten GL writes in legal/** (${files.length} files scanned; bill/invoice engines OK).`);
     process.exit(0);
   }
   console.error("\nLEGAL NO-GL GUARD FAILED");
   console.error("=".repeat(60));
-  console.error("apps/backend/src/legal/** must not write to the GL/accounting ledger:");
+  console.error("apps/backend/src/legal/** must not hand-write the GL (use createBill / createExpandedInvoice):");
   for (const v of violations) console.error(`  ${v.file}:${v.line}\n     ${v.text}`);
   console.error("=".repeat(60));
   process.exit(1);

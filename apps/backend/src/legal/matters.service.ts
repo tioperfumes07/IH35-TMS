@@ -1156,75 +1156,14 @@ export async function appendDeadlineReminderSent(client: QueryableClient, deadli
   );
 }
 
-// ROUND 316 (§10-B): a matter's financial_reserve_cents POSTS. The owner picks the two accounts (legal expense +
-// accrued legal liability) in the "Post reserve" action; the entry books only the CHANGE since the last posted
-// reserve (increase: Dr expense / Cr liability; release: Dr liability / Cr expense), through the shared JE service,
-// sourced to the matter, tagged with the matter's vendor / customer. The matter keeps the latest JE + amount.
-export const matterReserveSchema = z.object({
-  expense_account_id: z.string().uuid(),
-  liability_account_id: z.string().uuid(),
-  entry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  reserve_cents: z.number().int().nonnegative().optional(),
-});
-
-/** Pure: the reserve change to post. */
-export function reserveDelta(targetCents: number, postedCents: number | null): number {
-  return targetCents - (postedCents ?? 0);
-}
-
-export async function postMatterReserve(
-  client: QueryableClient,
-  args: { operatingCompanyId: string; actor: { userId: string; role: string }; matterId: string; body: z.infer<typeof matterReserveSchema> }
-) {
-  const input = matterReserveSchema.parse(args.body);
-  if (!["Owner", "Administrator", "Accountant"].includes(args.actor.role)) throw new Error("legal_matter_reserve_forbidden");
-  if (input.expense_account_id === input.liability_account_id) throw new Error("legal_matter_reserve_accounts_must_differ");
-  await setOperatingCompany(client, args.operatingCompanyId);
-  const m = (await client.query(
-    `SELECT id::text, matter_number, financial_reserve_cents, reserve_posted_cents, vendor_id::text, customer_id::text
-       FROM legal.matters WHERE id = $1::uuid AND operating_company_id = $2::uuid FOR UPDATE`,
-    [args.matterId, args.operatingCompanyId]
-  )).rows[0] as { id: string; matter_number: string; financial_reserve_cents: number | null; reserve_posted_cents: number | null; vendor_id: string | null; customer_id: string | null } | undefined;
-  if (!m) throw new Error("legal_matter_not_found");
-  for (const acct of [input.expense_account_id, input.liability_account_id]) {
-    const ok = await client.query(`SELECT 1 FROM catalogs.accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [acct, args.operatingCompanyId]);
-    if (!ok.rows.length) throw new Error("legal_matter_reserve_account_not_in_company");
-  }
-  const target = input.reserve_cents ?? Number(m.financial_reserve_cents ?? 0);
-  const delta = reserveDelta(target, m.reserve_posted_cents == null ? null : Number(m.reserve_posted_cents));
-  if (delta === 0) return { posted: false, reason: "reserve already posted at this amount", reserve_cents: target };
-  const amount = Math.abs(delta);
-  const entity = m.vendor_id ? { entity_uuid: m.vendor_id, entity_type: "vendor" as const } : m.customer_id ? { entity_uuid: m.customer_id, entity_type: "customer" as const } : {};
-  const { createJournalEntryOnClient } = await import("../accounting/journal-entries.service.js");
-  const je = await createJournalEntryOnClient(
-    client as never,
-    {
-      operating_company_id: args.operatingCompanyId,
-      entry_date: input.entry_date,
-      memo: `Legal reserve ${delta > 0 ? "increase" : "release"} — matter ${m.matter_number}`,
-      source: "auto",
-      source_transaction_type: "legal_matter_reserve",
-      source_transaction_id: m.id,
-      postings: [
-        { account_id: delta > 0 ? input.expense_account_id : input.liability_account_id, debit_or_credit: "debit", amount_cents: amount, description: `Matter ${m.matter_number} reserve`, ...entity },
-        { account_id: delta > 0 ? input.liability_account_id : input.expense_account_id, debit_or_credit: "credit", amount_cents: amount, description: `Matter ${m.matter_number} reserve`, ...entity },
-      ],
-    },
-    args.actor
-  );
-  await client.query(
-    `UPDATE legal.matters SET reserve_journal_entry_id = $3::uuid, reserve_posted_cents = $4, reserve_posted_at = now(), updated_by_user_id = $5::uuid, updated_at = now()
-      WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-    [m.id, args.operatingCompanyId, je.id, target, args.actor.userId]
-  );
-  await appendMatterEvent(client, {
-    operatingCompanyId: args.operatingCompanyId,
-    matterId: m.id,
-    eventType: "reserve_posted",
-    eventBody: { journal_entry_id: je.id, reserve_cents: target, delta_cents: delta },
-    createdByUserId: args.actor.userId,
-  });
-  await appendCrudAudit(client, args.actor.userId, "legal.matter.reserve_posted",
-    { matter_id: m.id, journal_entry_id: je.id, reserve_cents: target, delta_cents: delta, operating_company_id: args.operatingCompanyId }, "info", "ROUND-316-LEGAL");
-  return { posted: true, journal_entry_id: je.id, reserve_cents: target, delta_cents: delta };
-}
+// ROUND 326 item 3 — reserve / fee / recovery money lives in legal-money.service.ts (bill + invoice
+// engines). Re-export so existing imports from matters.service keep resolving.
+export {
+  matterReserveSchema,
+  reserveDelta,
+  postMatterReserve,
+  matterLegalFeeSchema,
+  postMatterLegalFee,
+  matterRecoverySchema,
+  postMatterRecovery,
+} from "./legal-money.service.js";

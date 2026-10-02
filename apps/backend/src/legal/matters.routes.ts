@@ -6,6 +6,10 @@ import { withCurrentUser } from "../auth/db.js";
 import {
   matterReserveSchema,
   postMatterReserve,
+  matterLegalFeeSchema,
+  postMatterLegalFee,
+  matterRecoverySchema,
+  postMatterRecovery,
   addMatterDeadlineRow,
   addMatterDocumentRow,
   addMatterEventRow,
@@ -268,7 +272,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
     return result;
   });
 
-  // ROUND 316: post (or adjust) the matter's reserve as a journal entry — Owner / Administrator / Accountant.
+  // ROUND 326: reserve posts through createBill / voidBill (expense+AP engines) — not handwritten JE.
   app.post("/api/v1/legal/matters/:id/reserve", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return reply;
@@ -280,18 +284,81 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
     const body = matterReserveSchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
     try {
-      return await withCompanyScope(authUser.uuid, q.data.operating_company_id, async (client) =>
-        postMatterReserve(client, {
-          operatingCompanyId: q.data.operating_company_id,
-          actor: { userId: authUser.uuid, role: String(authUser.role ?? "") },
-          matterId: p.data.id,
-          body: body.data,
-        })
-      );
+      return await postMatterReserve({
+        operatingCompanyId: q.data.operating_company_id,
+        actor: { userId: authUser.uuid, role: String(authUser.role ?? "") },
+        matterId: p.data.id,
+        body: body.data,
+      });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "error";
       if (msg === "legal_matter_not_found") return reply.code(404).send({ error: msg });
-      if (msg.startsWith("legal_matter_reserve") || msg.startsWith("journal_entry") || msg.includes("period")) return reply.code(422).send({ error: msg });
+      if (
+        msg.startsWith("legal_matter_reserve") ||
+        msg.startsWith("legal_matter_fee") ||
+        msg.startsWith("bill_") ||
+        msg.startsWith("journal_entry") ||
+        msg.includes("period") ||
+        msg.includes("forbidden_void")
+      ) {
+        return reply.code(422).send({ error: msg });
+      }
+      throw e;
+    }
+  });
+
+  // ROUND 326: legal fee / retainer → createBill (AP), stamped legal_matter_id.
+  app.post("/api/v1/legal/matters/:id/legal-fee", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    if (!["Owner", "Administrator", "Accountant"].includes(String(authUser.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    const p = matterIdParamsSchema.safeParse(req.params ?? {});
+    if (!p.success) return sendValidationError(reply, p.error);
+    const q = operatingCompanyQuerySchema.safeParse(req.query ?? {});
+    if (!q.success) return sendValidationError(reply, q.error);
+    const body = matterLegalFeeSchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+    try {
+      return await postMatterLegalFee({
+        operatingCompanyId: q.data.operating_company_id,
+        actor: { userId: authUser.uuid, role: String(authUser.role ?? "") },
+        matterId: p.data.id,
+        body: body.data,
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "error";
+      if (msg === "legal_matter_not_found") return reply.code(404).send({ error: msg });
+      if (msg.startsWith("legal_matter_fee") || msg.startsWith("bill_") || msg.includes("period")) {
+        return reply.code(422).send({ error: msg });
+      }
+      throw e;
+    }
+  });
+
+  // ROUND 326: recovery / judgment / settlement-in → createExpandedInvoice (AR).
+  app.post("/api/v1/legal/matters/:id/recovery", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    if (!["Owner", "Administrator", "Accountant"].includes(String(authUser.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    const p = matterIdParamsSchema.safeParse(req.params ?? {});
+    if (!p.success) return sendValidationError(reply, p.error);
+    const q = operatingCompanyQuerySchema.safeParse(req.query ?? {});
+    if (!q.success) return sendValidationError(reply, q.error);
+    const body = matterRecoverySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+    try {
+      return await postMatterRecovery({
+        operatingCompanyId: q.data.operating_company_id,
+        actor: { userId: authUser.uuid, role: String(authUser.role ?? "") },
+        matterId: p.data.id,
+        body: body.data,
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "error";
+      if (msg === "legal_matter_not_found") return reply.code(404).send({ error: msg });
+      if (msg.startsWith("legal_matter_recovery") || msg === "customer_not_found") {
+        return reply.code(422).send({ error: msg });
+      }
       throw e;
     }
   });

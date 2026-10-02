@@ -88,10 +88,55 @@ export const legalMattersApi = {
     );
   },
 
-  /** ROUND 316: post (or adjust) the matter's reserve as a journal entry — owner picks the two accounts. */
+  /** ROUND 326: reserve posts via createBill/voidBill (AP/expense engines), not handwritten JE. */
   postReserve(operatingCompanyId: string, id: string, body: { expense_account_id: string; liability_account_id: string; entry_date: string; reserve_cents?: number }) {
-    return apiRequest<{ posted: boolean; journal_entry_id?: string; reserve_cents: number; delta_cents?: number; reason?: string }>(
-      withCompany(`/api/v1/legal/matters/${encodeURIComponent(id)}/reserve`, operatingCompanyId),
+    return apiRequest<{
+      posted: boolean;
+      engine?: "bill";
+      bill_id?: string | null;
+      created_bill_ids?: string[];
+      voided_bill_ids?: string[];
+      journal_entry_id?: string | null;
+      reserve_cents: number;
+      delta_cents?: number;
+      reason?: string;
+    }>(withCompany(`/api/v1/legal/matters/${encodeURIComponent(id)}/reserve`, operatingCompanyId), { method: "POST", body });
+  },
+  /** ROUND 326: legal fee / retainer → createBill stamped to the matter. */
+  postLegalFee(
+    operatingCompanyId: string,
+    id: string,
+    body: {
+      kind: "legal_fee" | "retainer";
+      expense_account_id: string;
+      amount_cents: number;
+      bill_date: string;
+      due_date?: string;
+      vendor_id?: string;
+      memo?: string;
+      bill_number?: string;
+    }
+  ) {
+    return apiRequest<{ posted: boolean; engine: "bill"; bill_id: string; kind: string; amount_cents: number }>(
+      withCompany(`/api/v1/legal/matters/${encodeURIComponent(id)}/legal-fee`, operatingCompanyId),
+      { method: "POST", body }
+    );
+  },
+  /** ROUND 326: recovery / judgment / settlement-in → createExpandedInvoice (AR). */
+  postRecovery(
+    operatingCompanyId: string,
+    id: string,
+    body: {
+      kind: "insurance_recovery" | "judgment" | "settlement";
+      amount_cents: number;
+      issue_date?: string;
+      due_date?: string;
+      customer_id?: string;
+      notes?: string;
+    }
+  ) {
+    return apiRequest<{ posted: boolean; engine: "invoice"; invoice_id: string; display_id: string; kind: string; amount_cents: number }>(
+      withCompany(`/api/v1/legal/matters/${encodeURIComponent(id)}/recovery`, operatingCompanyId),
       { method: "POST", body }
     );
   },
