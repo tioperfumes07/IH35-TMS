@@ -75,6 +75,9 @@ function main() {
   assertIncludes(workspace, "data-b2-recon-row-open", WORKSPACE);
   assertIncludes(workspace, "/accounting/expenses/", WORKSPACE);
   assertIncludes(workspace, "/dispatch/loads/", WORKSPACE);
+  assertIncludes(workspace, "reconClearedDateLabel", WORKSPACE);
+  assertIncludes(workspace, 'data-b2-recon-cleared-date="1"', WORKSPACE);
+  assertIncludes(workspace, "statementEnd", WORKSPACE);
   assertIncludes(workspace, 'data-testid="recon-filter-apply"', WORKSPACE);
   assertIncludes(workspace, 'data-testid="recon-filter-reset"', WORKSPACE);
   assertIncludes(workspace, "applyReconFilters", WORKSPACE);

@@ -172,6 +172,18 @@ const RECON_TXN_TYPE_FILTERS = [
 ] as const;
 type ReconTxnTypeFilter = (typeof RECON_TXN_TYPE_FILTERS)[number];
 
+/** ORDERS §6 CLEARED DATE — cleared rows show statement ending date; uncleared show —. */
+function reconClearedDateLabel(
+  tx: ReconGridRow,
+  cleared: boolean,
+  statementEnd: string | null | undefined,
+): string {
+  if (!cleared) return "—";
+  if (statementEnd) return formatDateUS(statementEnd);
+  if (tx.posted_date) return formatDateUS(tx.posted_date);
+  return "—";
+}
+
 function candidateEntityKind(eventType: CandidateEvent["event_type"]) {
   switch (eventType) {
     case "load":
@@ -829,7 +841,14 @@ export function ReconciliationWorkspacePage() {
               const abs = Math.abs(Number(tx.amount_cents ?? 0));
               return `<tr>
                 <td>${esc(tx.transaction_date ? formatDateUS(tx.transaction_date) : "—")}</td>
-                <td>${esc(tx.posted_date ? formatDateUS(tx.posted_date) : "—")}</td>
+                <td>${esc(
+                  (() => {
+                    const anyExplicit = localTransactions.some((t) => Boolean(t.reconciliation_cleared));
+                    const clr = transactionIsCleared(tx, anyExplicit);
+                    const statementEnd = session ? session.period_end : null;
+                    return reconClearedDateLabel(tx, clr, statementEnd);
+                  })(),
+                )}</td>
                 <td>${esc(tx.type_label || "—")}</td>
                 <td>${esc(tx.ref || "—")}</td>
                 <td>${esc(tx.split_account || "—")}</td>
@@ -1205,8 +1224,11 @@ export function ReconciliationWorkspacePage() {
                       >
                         {formatDateUS(tx.transaction_date)}
                       </button>
-                      <span className="text-center text-xs text-gray-600">
-                        {tx.posted_date ? formatDateUS(tx.posted_date) : "—"}
+                      <span className="text-center text-xs text-gray-600" data-b2-recon-cleared-date="1">
+                        {(() => {
+                          const statementEnd = session ? session.period_end : null;
+                          return reconClearedDateLabel(tx, cleared, statementEnd);
+                        })()}
                       </span>
                       <button
                         type="button"
