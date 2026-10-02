@@ -606,10 +606,6 @@
       "reason": "Shipper portal auth — auth/session management, not spine-auditable"
     },
     {
-      "file": "apps/backend/src/telematics/arrival-detection.service.ts",
-      "reason": "Arrival detection — telematics pipeline, spine via auto-status-switch"
-    },
-    {
       "file": "apps/backend/src/telematics/auto-status.service.ts",
       "reason": "Auto status switch — spine emit handled in cap-4 auto-status-switch pipeline"
     },

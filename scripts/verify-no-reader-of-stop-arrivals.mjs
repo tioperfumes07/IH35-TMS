@@ -2,8 +2,8 @@
 /**
  * E-09 — GUARD. dispatch.stop_arrivals is being retired (Lead decision 2026-10-01). Reader count must stay 0:
  * no backend file may SELECT/JOIN dispatch.stop_arrivals; arrivals come from STOP_ARRIVAL_EVENTS_SQL
- * (geo.geofence_events on load-stop fences). Only the legacy writer (telematics/arrival-detection.service.ts)
- * may still name the table until the Lead signs its retirement.
+ * (geo.geofence_events on load-stop fences). The legacy 250 ft writer (telematics/arrival-detection.service.ts) is
+ * retired (CC-3 queue 6, 2026-10-02): no backend file may name the table at all — reader or writer.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, resolve, relative } from "node:path";
@@ -11,7 +11,6 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "..", "..");
 const SRC = resolve(ROOT, "apps/backend/src");
-const WRITER = "apps/backend/src/telematics/arrival-detection.service.ts";
 const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
 
 function walk(dir, out = []) {
@@ -26,7 +25,6 @@ function walk(dir, out = []) {
 export function check(files) {
   const readers = [];
   for (const [path, raw] of Object.entries(files)) {
-    if (path === WRITER) continue;
     if (/dispatch\.stop_arrivals|"dispatch",\s*"stop_arrivals"/.test(stripComments(raw))) readers.push(path);
   }
   return readers.map((r) => `${r} still reads dispatch.stop_arrivals -- use STOP_ARRIVAL_EVENTS_SQL.`);

@@ -28,11 +28,25 @@ export type GpsPointInput = {
 export type GeofenceDetectionResult = {
   checked_geofences: number;
   transitions_written: number;
+  /** Load stops this point stamped actual_arrival_at on — THE arrival count (one detector; zero forever = dead engine). */
+  stop_arrivals_stamped: number;
 };
+
+/** Push sent to the driver when their load stop's fence stamps an arrival ("Arrived at stop?" — the prompt inbox reads
+ *  the same fence event through STOP_ARRIVAL_EVENTS_SQL). */
+export type ArrivalDriverNotifier = (input: {
+  operatingCompanyId: string;
+  driverId: string;
+  title: string;
+  body: string;
+  tag: string;
+  data: Record<string, string>;
+}) => Promise<unknown>;
 
 export type GeofenceDetectionOptions = {
   /** Historical replay must only rebuild immutable fence evidence. */
   suppressOperationalSideEffects?: boolean;
+  notifyDriver?: ArrivalDriverNotifier;
 };
 
 export function computeGeofenceTransition(
@@ -101,12 +115,13 @@ export async function processGeofenceDetectionsForGpsPoint(
 ): Promise<GeofenceDetectionResult> {
   const rows = await fetchContainmentRows(client, input);
   if (rows.length === 0) {
-    return { checked_geofences: 0, transitions_written: 0 };
+    return { checked_geofences: 0, transitions_written: 0, stop_arrivals_stamped: 0 };
   }
 
   const resolvedDriverId = input.driver_id ?? (await resolveDriverIdForUnit(client, input.operating_company_id, input.unit_id));
 
   let transitionsWritten = 0;
+  let stopArrivalsStamped = 0;
   for (const row of rows) {
     const isInside = pointInPolygon(input.latitude, input.longitude, normalizeVertices(row.vertices_json));
     const transition = computeGeofenceTransition(row.last_event_kind, isInside);
@@ -202,6 +217,19 @@ export async function processGeofenceDetectionsForGpsPoint(
       [row.geofence_id, input.operating_company_id, input.unit_id, input.occurred_at, source]
     );
     const stamped = stopStamp.rows[0];
+    if (transition === "entered" && stamped?.stop_id) {
+      stopArrivalsStamped += 1;
+      if (resolvedDriverId && options.notifyDriver) {
+        await options.notifyDriver({
+          operatingCompanyId: input.operating_company_id,
+          driverId: resolvedDriverId,
+          title: "Arrived at stop?",
+          body: "You appear to be at your next stop. Confirm arrival.",
+          tag: `arrival-${stamped.stop_id}`,
+          data: { kind: "arrival_prompt", stop_id: stamped.stop_id, unit_id: input.unit_id },
+        });
+      }
+    }
     if (stamped?.load_id && stamped.stop_id && stamped.booked_by_user_id) {
       await mintProformaInvoiceOnFirstPickup(client, {
         operatingCompanyId: input.operating_company_id,
@@ -223,5 +251,6 @@ export async function processGeofenceDetectionsForGpsPoint(
   return {
     checked_geofences: rows.length,
     transitions_written: transitionsWritten,
+    stop_arrivals_stamped: stopArrivalsStamped,
   };
 }

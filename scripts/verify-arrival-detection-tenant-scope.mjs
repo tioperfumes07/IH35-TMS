@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import { setsTenantGuc, TENANT_GUC_HINT } from "./lib/tenant-guc-match.mjs";
+import { PATHS, checkFenceStampContract } from "./lib/one-arrival-detector.mjs";
 
 function mustInclude(content, needle, description) {
   if (!content.includes(needle)) {
@@ -8,14 +9,10 @@ function mustInclude(content, needle, description) {
   }
 }
 
-const servicePath = "apps/backend/src/telematics/arrival-detection.service.ts";
-if (!fs.existsSync(servicePath)) {
-  throw new Error(`Missing arrival detection service: ${servicePath}`);
-}
-const service = fs.readFileSync(servicePath, "utf8");
-mustInclude(service, "l.operating_company_id = $1::uuid", "load tenant filter");
-mustInclude(service, "WHERE operating_company_id = $1::uuid", "arrival tenant filter");
-mustInclude(service, "operating_company_id,", "arrival write tenant column");
+// Re-anchored 2026-10-02 (CC-3 queue 6 — ONE arrival detector): the arrival writer is the geofence detector's stop stamp.
+const detector = fs.readFileSync(PATHS.detector, "utf8");
+const stampProblems = checkFenceStampContract(detector);
+if (stampProblems.length) throw new Error(stampProblems.join("\n"));
 
 const routesPath = "apps/backend/src/driver/arrival-prompts.routes.ts";
 if (!fs.existsSync(routesPath)) {
@@ -33,6 +30,9 @@ mustInclude(routes, "dispatch.stop_arrival_dismissed", "durable arrival dismissa
 mustInclude(routes, "pg_advisory_xact_lock", "serialized arrival dismissal lifecycle");
 mustInclude(routes, "already_dismissed", "idempotent arrival dismissal replay");
 mustInclude(routes, "AND a.driver_id = $3::uuid", "dismiss prompt driver ownership predicate");
+// Confirm AND dismiss both serialize by prompt id under the caller's own driver_id.
+const ownsBoth = (src) => src.split("AND a.driver_id = $3::uuid").length - 1 >= 2;
+if (!ownsBoth(routes)) throw new Error("Both confirm and dismiss must carry the driver ownership predicate (AND a.driver_id = $3::uuid)");
 mustInclude(routes, "AND a.confirmed_at IS NULL", "dismiss prompt pending lifecycle predicate");
 mustInclude(routes, "if (!dismissed) return reply.code(404)", "honest missing-prompt dismissal response");
 mustInclude(routes, "FROM mdata.loads l", "confirm stop canonical load join");
@@ -46,7 +46,7 @@ if ((routes.match(/dismissed\.payload->>'resource_id'/g) ?? []).length < 1) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ["drop ownership", routes.replace("AND a.driver_id = $3::uuid", "")],
+    ["drop ownership", routes.replace("AND a.driver_id = $3::uuid", "")], // one of the two (confirm + dismiss) is enough to fail
     ["drop pending lifecycle", routes.replaceAll("AND a.confirmed_at IS NULL", "")],
     ["drop durable list exclusion", routes.replace("dismissed.payload->>'resource_id'", "dismissed.payload->>'missing_id'")],
     ["restore false success", routes.replace("if (!dismissed) return reply.code(404)", "if (!dismissed) return { ok: true }")],
@@ -56,10 +56,17 @@ if (process.argv.includes("--selftest")) {
     ["drop confirm lost-write check", routes.replace('if (!arrivalStop.rows[0]?.id) throw new Error("arrival_stop_not_found")', "")],
     ["hide confirm integrity error", routes.replace('reply.code(409).send({ error: "arrival_stop_not_found" })', "reply.code(200).send({ ok: true })")],
   ];
+  for (const [name, mutated] of [
+    ["drop fence tenant", detector.replace("g.operating_company_id = $2::uuid", "true")],
+    ["overwrite evidence", detector.replace("AND ls.actual_arrival_at IS NULL", "")],
+  ]) {
+    if (checkFenceStampContract(mutated).length === 0) throw new Error(`Selftest mutation survived: ${name}`);
+  }
   for (const [name, mutated] of mutations) {
     let caught = false;
     try {
       mustInclude(mutated, "AND a.driver_id = $3::uuid", "dismiss prompt driver ownership predicate");
+      if (!ownsBoth(mutated)) throw new Error("ownership dropped on one path");
       mustInclude(mutated, "AND a.confirmed_at IS NULL", "dismiss prompt pending lifecycle predicate");
       mustInclude(mutated, "dismissed.payload->>'resource_id'", "durable list exclusion");
       mustInclude(mutated, "if (!dismissed) return reply.code(404)", "honest false-success rejection");

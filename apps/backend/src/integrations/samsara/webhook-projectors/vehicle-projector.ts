@@ -1,5 +1,4 @@
 import type { DbClient, ProjectionResult, SamsaraWebhookEvent } from "../webhook-projection.types.js";
-import { processArrivalDetectionsForGpsPoint } from "../../../telematics/arrival-detection.service.js";
 import { processDtcAutoWorkOrderEvent } from "../../../telematics/dtc-auto-work-order.service.js";
 import { processAutoStatusSuggestionForVehicleEvent } from "../../../telematics/auto-status.service.js";
 import { processDashcamAutoLinkFromWebhook } from "../../../telematics/dashcam-auto-link.service.js";
@@ -210,15 +209,8 @@ export async function projectVehicleEvent(client: DbClient, event: SamsaraWebhoo
       longitude: location.longitude,
       occurred_at: location.occurred_at,
       source: "samsara_gps",
-    });
-
-    await processArrivalDetectionsForGpsPoint(client, {
-      operating_company_id: event.operating_company_id,
-      unit_id: localUnitId,
-      latitude: location.latitude,
-      longitude: location.longitude,
-      occurred_at: location.occurred_at,
     }, {
+      // One arrival detector: the stop's fence 'entered' stamps the arrival and prompts the driver.
       notifyDriver: notifyDriverWebPush,
     });
 

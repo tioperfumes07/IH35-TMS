@@ -89,9 +89,6 @@
     "shipper-portal/portal-api.routes.ts": {
       "count": 1
     },
-    "telematics/arrival-detection.service.ts": {
-      "count": 1
-    },
     "telematics/fleet-location-hos.service.ts": {
       "count": 1
     },
