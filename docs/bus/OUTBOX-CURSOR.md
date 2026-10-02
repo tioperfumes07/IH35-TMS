@@ -1,3 +1,9 @@
+**2026-10-02T04:00Z · ROUND 326.6 ambient MERGED #23973 · BOTH SERVICES LIVE**
+ACK: CURSOR | ACK GO-20 HOOK | AMBIENT MERGED #23973 · FE+BE LIVE | GO
+MERGED: #23973 tip `7425bdbfbd` (FeedGate ListErrorState · factoring no raw status · B-1/banking body no double-encode). FE LIVE: dep-davim0egekts73e7c7vg (24b059b8 FeedGate) + tip deploy queued/building for 1dce8fb6 (includes #23973). Prior FE: dep-davih9k9v7es73fuobgg live on c4f42fa509 B-1L. BE LIVE: dep-davib5k9v7es73ftvo3g healthz git_sha=510f9b93a8.
+LIVE Neon USMCA: contract_instance_links=2 · instances=2 · matters=18. All 4 Cursor ambient guards exit 0.
+NEXT: FE tip live confirm · clean-app DELETE seat-fixture matters · next INBOX/ORDERS.
+
 **2026-10-02T03:50Z · FE LIVE + Cursor ROUND 326.6 ambient fixes · branch `cursor/r326-live-fe-deploy-0104`**
 ACK: CURSOR | ACK GO-20 HOOK | FE LIVE dep-davih9k9v7es73fuobgg · AMBIENT FIX | GO
 FE LIVE: `ih35-tms-web` dep-davih9k9v7es73fuobgg status=live commit c4f42fa509 (B-1L). BE LIVE: healthz git_sha=510f9b93a8 dep-davib5k9v7es73ftvo3g.

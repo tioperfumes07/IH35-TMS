@@ -1,7 +1,6 @@
 # NOW-CURSOR
 
-NOW: Cursor ambient static fixes (ROUND 326.6) — in flight on `cursor/r326-live-fe-deploy-0104` · FE LIVE `dep-davih9k9v7es73fuobgg` on B-1L `c4f42fa509` · BE LIVE `510f9b93a8` `dep-davib5k9v7es73ftvo3g`.
-ACK: CURSOR | ACK GO-20 HOOK | FE LIVE + AMBIENT FIX | GO
-Fixed: FeedGate ListErrorState · SubmitToFactorTab no raw status · account-register/banking unmatch no double-encode. All 4 Cursor ambient guards exit 0.
-ROUND 326 items 1–8 engines on tip. Item 2 LIVE. B-1k+B-1L code live on FE. Clean-app ON. No seed. No Chrome. No Book Load.
-NEXT: money-pr-local-gate → push → FAST-MERGE → FE redeploy for ambient fix.
+NOW: ROUND 326.6 Cursor ambient MERGED #23973 tip includes `7425bdbfbd` · FE LIVE dep-davim0egekts73e7c7vg (24b059b8) + tip deploy in flight · BE LIVE dep-davib5k9v7es73ftvo3g `510f9b93a8`.
+ACK: CURSOR | ACK GO-20 HOOK | AMBIENT MERGED + BOTH SERVICES LIVE | GO
+Cursor ambient guards all exit 0. B-1k+B-1L on FE. Legal live: links=2 · instances=2 · matters=18. Clean-app ON. No seed. No Chrome. No Book Load.
+NEXT: confirm FE tip deploy live · clean-app DELETE seat-fixture matters · measure next ORDERS/INBOX row.

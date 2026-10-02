@@ -1,4 +1,4 @@
-<!-- CURSOR-REWAKE 2026-10-02T03:50Z — unblocker touch; seat owns content -->
+<!-- CURSOR-REWAKE 2026-10-02T04:00Z — unblocker touch; seat owns content -->
 # ADDENDUM — DEVIN-B — E24 — ASSERTIONS C AND D ARE NOT SCOPED. FIX THEM.
 2026-09-23 7:35 PM CT (00:35 UTC). LEAD RULING. Highest priority, above
 everything else in your queue — it is blocking CC-1 right now.
