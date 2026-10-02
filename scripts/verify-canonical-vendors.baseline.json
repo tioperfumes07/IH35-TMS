@@ -1,10 +1,11 @@
 {
-  "measured_at": "2026-10-02T01:50Z",
+  "measured_at": "2026-10-02T05:05Z",
   "source": "prod br-fancy-credit-akjnd07a, READ ONLY, within-company groups of upper(regexp_replace(vendor_name,'[^A-Za-z0-9]','','g')) > 1",
   "duplicate_groups": {
-    "5c854333-6ea5-4faa-af31-67cb272fef80": 2,
+    "5c854333-6ea5-4faa-af31-67cb272fef80": 0,
     "b49a737b-6cf0-43bb-8758-a6c8ff8a2c4e": 16,
     "91e0bf0a-133f-4ce8-a734-2586cfa66d96": 3
   },
-  "open_bills_without_vendor": 0
+  "open_bills_without_vendor": 0,
+  "note": "USMCA shrunk to 0 after the AUTH-202 canonical merge (applied 2026-10-02); other companies unchanged (frozen, out of scope)."
 }
