@@ -38,6 +38,18 @@ function main() {
   assertIncludes(form, 'label: "Payment"', FORM);
   assertIncludes(form, 'data-b4-amount-to-apply="1"', FORM);
   assertIncludes(form, "Amount to Apply:", FORM);
+  // BANK-F91033 — Amount to Credit is live (typed Payment above open balance); Save blocked while credit > 0
+  assertIncludes(form, 'data-b4-amount-to-credit="1"', FORM);
+  assertIncludes(form, "Amount to Credit:", FORM);
+  assertIncludes(form, "billPaymentCreditCents", FORM);
+  assertIncludes(form, "billPaymentApplyCents", FORM);
+  assertIncludes(form, "formatMoneyCents(billPaymentCreditCents)", FORM);
+  assertIncludes(form, "formatMoneyCents(billPaymentApplyCents)", FORM);
+  assertIncludes(form, 'data-testid="b4-amount-to-credit"', FORM);
+  assertIncludes(form, "billPaymentCreditCents === 0", FORM);
+  if (form.includes("Amount to Credit: <strong>$0.00</strong>")) {
+    throw new Error(`${FORM}: Amount to Credit must not be a hardcoded $0.00 stub`);
+  }
   // BANK-F91029 — Clear Payment is a real button; Add all + Open on open-bill cards (ORDERS §B-4 / spec §9–§10)
   assertIncludes(form, 'data-b4-clear-payment="1"', FORM);
   assertIncludes(form, "Clear Payment", FORM);
