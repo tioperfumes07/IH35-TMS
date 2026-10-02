@@ -9,7 +9,7 @@ import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { companyToday } from "../../lib/businessDate";
+import { companyToday, companyWallClockToIso } from "../../lib/businessDate";
 import { formatDateUS, formatDateTimeUS } from "../../lib/formatDate";
 import { formatUsdCentsTable } from "../../lib/money";
 import { formatQueryErrorDetail } from "../../lib/tableError";
@@ -71,7 +71,7 @@ export function AccountingLeaseDetailPage() {
   const query = useQuery({ queryKey: ["leases", "detail", companyId, id], queryFn: () => leasesApi.get(companyId, id), enabled: Boolean(companyId && id) });
   const refresh = () => void qc.invalidateQueries({ queryKey: ["leases"] });
   const sign = useMutation({
-    mutationFn: () => leasesApi.sign(companyId, id, `${signedAt}T12:00:00-05:00`),
+    mutationFn: () => leasesApi.sign(companyId, id, companyWallClockToIso(`${signedAt}T12:00`)),
     onSuccess: (r) => {
       const refused = r.bills.flatMap((b) => b.refused);
       const created = r.bills.reduce((s, b) => s + b.created.length, 0);

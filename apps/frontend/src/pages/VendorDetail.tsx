@@ -66,6 +66,7 @@ import { FuelTransactionsReverseSection } from "../components/fuel/FuelTransacti
 import { FuelFraudAlertsReverseSection } from "../components/fuel/FuelFraudAlertsReverseSection";
 import { LinkedBankTransactionsPanel } from "../components/banking/LinkedBankTransactionsPanel";
 import { VendorProfileOverview } from "../components/vendors/VendorProfileOverview";
+import { CappedListNotice } from "../components/CappedListNotice";
 
 type SaferEntityStatus = {
   id: string;
@@ -1030,6 +1031,7 @@ export function VendorDetailPage() {
               ]}
             />
           ) : null}
+          <CappedListNotice shown={(billsQuery.data?.rows ?? []).length} limit={200} />
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-xs font-semibold text-gray-900">Expenses</div>
             {vendorExpensesQuery.isError ? <ListErrorBanner message="Could not load expenses." onRetry={() => void vendorExpensesQuery.refetch()} /> : null}
@@ -1072,6 +1074,7 @@ export function VendorDetailPage() {
                 ]}
               />
             ) : null}
+            <CappedListNotice shown={(vendorExpensesQuery.data ?? []).length} limit={200} />
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
