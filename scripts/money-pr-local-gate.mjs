@@ -105,6 +105,7 @@ const STEPS = [
   ["verify-dispatch-tables-board-appearance", "scripts/verify-dispatch-tables-board-appearance.mjs"],
   ["verify-scheduled-engine-idempotency-header", "scripts/verify-scheduled-engine-idempotency-header.mjs"],
   ["verify-unit-stop-events-no-clipped-starts", "scripts/verify-unit-stop-events-no-clipped-starts.mjs"],
+  ["verify-no-session-advisory-locks", "scripts/verify-no-session-advisory-locks.mjs"],
   ["verify-filter-surfaces-full-set", "scripts/verify-filter-surfaces-full-set.mjs"],
   ["verify-variant-duplicate-candidates", "scripts/verify-variant-duplicate-candidates.mjs"],
   ["verify-recon-payee-never-ledger-account", "scripts/verify-recon-payee-never-ledger-account.mjs"],

@@ -1,4 +1,12 @@
 /**
+ * ENGINE: vehicle-driver pairing
+ * SCHEDULE: 0 * * * * America/Chicago
+ * WRITES: telematics.vehicle_driver_assignments, pairing overlap flags
+ * IDEMPOTENCY: UNIQUE(operating_company_id, samsara_assignment_id) ON CONFLICT; SAME-STATEMENT WHERE ended_at IS NULL on closes; ADVISORY LOCK per (company, unit) on the webhook path
+ * OVERLAP: the twin inserts and closes nothing new
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
+/**
  * GAP-59 / CAP-9 — Hourly Samsara vehicle-driver pairing sync worker.
  */
 import type { FastifyInstance } from "fastify";

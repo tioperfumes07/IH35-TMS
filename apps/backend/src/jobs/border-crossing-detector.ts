@@ -1,4 +1,12 @@
 /**
+ * ENGINE: border crossing projector (E-29)
+ * SCHEDULE: every 5 min (setInterval)
+ * WRITES: dispatch.border_crossing_events, customs link
+ * IDEMPOTENCY: ADVISORY LOCK pg_advisory_xact_lock per company around the projection (no unique key on the table)
+ * OVERLAP: the twin waits, then its fresh read finds every crossing the first wrote
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
+/**
  * Border-crossing projector (ROUND 306 E-29 addition). Projects dispatch.border_crossing_events from the
  * canonical geofence events (projectBorderCrossingsFromFenceEvents) every 5 minutes over the last 2 days;
  * idempotent. Reads the database only -- no Samsara call, no second inside/outside decision.
@@ -6,6 +14,7 @@
  */
 import type { FastifyInstance } from "fastify";
 import { withLuciaBypass } from "../auth/db.js";
+import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { USMCA_COMPANY_ID } from "../org/companies.routes.js";
 import { projectBorderCrossingsFromFenceEvents } from "../integrations/samsara/border-crossings/detector.service.js";
 
@@ -30,13 +39,8 @@ async function tick(app: FastifyInstance) {
 
 export function initializeBorderCrossingDetectorWorker(app: FastifyInstance) {
   const ms = intervalMs();
-  const run = async () => {
-    try {
-      await tick(app);
-    } catch (err) {
-      app.log.error({ err }, `[${WORKER_NAME}] tick failed`);
-    }
-  };
+  // ROUND 330.7: through the shared wrapper (run recorded, failure logged + Sentry) so the single-fire lease reaches it.
+  const run = () => wrapBackgroundJobTick(WORKER_NAME, () => tick(app), app.log);
   void run();
   timer = setInterval(() => { void run(); }, ms);
   app.log.info({ intervalMs: ms }, `[${WORKER_NAME}] started (projects from geo.geofence_events)`);

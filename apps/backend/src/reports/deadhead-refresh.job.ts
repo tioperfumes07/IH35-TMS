@@ -1,3 +1,11 @@
+/**
+ * ENGINE: deadhead refresh
+ * SCHEDULE: 0 3 * * 1 America/Chicago
+ * WRITES: deadhead weekly rows
+ * IDEMPOTENCY: UNIQUE(unit_id, week_starting) ON CONFLICT DO UPDATE (uq_deadhead_unit_week)
+ * OVERLAP: the twin upserts the same rows
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
@@ -29,13 +37,15 @@ export function initializeDeadheadRefreshCron(app: FastifyInstance) {
       await wrapBackgroundJobTick(
         "reports.deadhead_refresh_cron",
         async () => {
-          await withLuciaBypass(async (client) => {
-            const companies = await client.query<{ id: string }>(`SELECT id::text FROM org.companies WHERE is_active = true`);
-            for (const company of companies.rows) {
-              assertTenantContext(company.id, "reports.deadhead_refresh_cron");
-              await runDeadheadRefreshTick(company.id);
-            }
-          });
+          // ROUND 330.7: read the company list, RELEASE that connection, then run each company. Holding the outer
+          // transaction open while each company borrowed a SECOND pooled connection meant two concurrent ticks (both
+          // instances) needed four of the five pool slots. On the fork the pair completed alone but HUNG on the pool when other
+          // engines in the same process held connections — the idle outer transaction is pure pool pressure.
+          const companies = await withLuciaBypass((client) => client.query<{ id: string }>(`SELECT id::text FROM org.companies WHERE is_active = true`));
+          for (const company of companies.rows) {
+            assertTenantContext(company.id, "reports.deadhead_refresh_cron");
+            await runDeadheadRefreshTick(company.id);
+          }
         },
         app.log
       );

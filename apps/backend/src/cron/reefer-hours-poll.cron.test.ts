@@ -56,6 +56,7 @@ describe("maintenance.reefer_hours_poll_cron", () => {
   it("ingests reefer hours with tenant context for enabled Samsara tenants", async () => {
     const TENANT = "11111111-1111-1111-1111-111111111111";
     clientQueryMock.mockImplementation(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("pg_try_advisory_xact_lock")) return { rows: [{ locked: true }] };
       if (sql.includes("FROM org.companies")) return { rows: [{ operating_company_id: TENANT }] };
       if (sql.includes("SELECT EXISTS")) return { rows: [{ is_enabled: true }] };
       if (sql.includes("set_config('app.operating_company_id'")) {
@@ -77,6 +78,7 @@ describe("maintenance.reefer_hours_poll_cron", () => {
   it("skips tenants without Samsara enabled", async () => {
     const TENANT = "22222222-2222-2222-2222-222222222222";
     clientQueryMock.mockImplementation(async (sql: string) => {
+      if (sql.includes("pg_try_advisory_xact_lock")) return { rows: [{ locked: true }] };
       if (sql.includes("FROM org.companies")) return { rows: [{ operating_company_id: TENANT }] };
       if (sql.includes("SELECT EXISTS")) return { rows: [{ is_enabled: false }] };
       return { rows: [] };

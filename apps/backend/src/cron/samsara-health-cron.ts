@@ -1,3 +1,11 @@
+/**
+ * ENGINE: Samsara health check
+ * SCHEDULE: 0 * * * * America/Chicago
+ * WRITES: integrations.samsara_config last_health_* columns, audit
+ * IDEMPOTENCY: DETERMINISTIC OVERWRITE of the health columns (last writer wins with the same probe result)
+ * OVERLAP: the twin writes the same health state
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";

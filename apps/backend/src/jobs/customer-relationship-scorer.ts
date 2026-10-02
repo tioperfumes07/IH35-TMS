@@ -1,4 +1,12 @@
 /**
+ * ENGINE: customer relationship scorer
+ * SCHEDULE: every 6 h (setInterval)
+ * WRITES: customer relationship scores
+ * IDEMPOTENCY: UNIQUE(customer_uuid) ON CONFLICT DO UPDATE (primary key)
+ * OVERLAP: the twin upserts the same score
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
+/**
  * GAP-72 — Customer relationship health scorer worker.
  *
  * Recomputes customer relationship scores every 6 hours.
@@ -6,6 +14,7 @@
 import type { FastifyInstance } from "fastify";
 import { withLuciaBypass } from "../auth/db.js";
 import { computeRelationshipScore, upsertRelationshipScore } from "../customers/relationship-score/scorer.service.js";
+import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 
 const WORKER_NAME = "customers.relationship_score_worker";
 const DEFAULT_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
@@ -84,14 +93,12 @@ export async function runCustomerRelationshipScorerTick(): Promise<{
 export function initializeCustomerRelationshipScorerWorker(app: FastifyInstance) {
   const ms = intervalMs();
 
-  const run = async () => {
-    try {
+  // ROUND 330.7: through the shared wrapper (run recorded, failure logged + Sentry) so the single-fire lease reaches it.
+  const run = () =>
+    wrapBackgroundJobTick(WORKER_NAME, async () => {
       const result = await runCustomerRelationshipScorerTick();
       app.log.info(result, `[${WORKER_NAME}] tick complete`);
-    } catch (err) {
-      app.log.error({ err }, `[${WORKER_NAME}] tick failed`);
-    }
-  };
+    }, app.log);
 
   void run();
   timer = setInterval(() => {

@@ -68,6 +68,11 @@ export type CrossingProjection = {
 };
 
 export async function projectBorderCrossingsFromFenceEvents(client: Db, operatingCompanyId: string, sinceIso: string): Promise<CrossingProjection> {
+  // ROUND 330.7: dispatch.border_crossing_events has no unique key, and the "already projected?" check below is a
+  // SELECT then a plain INSERT — two instances projecting the same visit both inserted it (and a duplicate crossing
+  // never links to its customs record: n_for_event must be 1). One projection per company at a time; the twin waits,
+  // then its fresh SELECT sees the rows the first committed.
+  await client.query(`SELECT pg_advisory_xact_lock(hashtext($1::text))`, [`dispatch.border_crossing_projection:${operatingCompanyId}`]);
   const visits = await client.query<{
     entered_id: string; unit_id: string; driver_id: string | null; label: string; geofence_id: string;
     entered_at: string; exited_at: string | null;

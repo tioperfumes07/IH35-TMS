@@ -131,6 +131,11 @@ export async function processGeofenceDetectionsForGpsPoint(
     // Samsara reports a location fix and a stats fix for the same second, and they can arrive out of order: the later
     // (earlier-timestamped) one saw no prior event and wrote a second "entered". The same transition already recorded
     // for this fence + unit within 5 minutes either side of this fix is that transition, not a new one.
+    // ROUND 330.7: that window check is a read before the insert, and only the exact-timestamp key is enforced — two
+    // instances handling the location fix and the stats fix at once both missed each other's uncommitted "entered".
+    // A transaction lock per (fence, unit) makes the second wait and then see the first's row. Fences are walked in a
+    // fixed order (label, created_at, id), so two callers never take these locks in opposite orders for one unit.
+    await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))`, [`geo.fence_transition:${row.geofence_id}:${input.unit_id}`]);
     const near = await client.query(
       `SELECT 1 FROM geo.geofence_events
         WHERE operating_company_id = $1::uuid AND geofence_id = $2::uuid AND unit_id = $3::uuid AND event_kind = $4

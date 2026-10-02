@@ -1,4 +1,12 @@
 /**
+ * ENGINE: auto status switch
+ * SCHEDULE: *\/5 * * * * America/Chicago
+ * WRITES: auto_status_position_snapshots, dispatch.intransit_issues, auto_status_switch_events, mdata.loads status (apply flag)
+ * IDEMPOTENCY: ADVISORY LOCK pg_try_advisory_xact_lock('dispatch.auto_status_switch') for the tick; load status SAME-STATEMENT WHERE status = expected after FOR UPDATE
+ * OVERLAP: the twin fails the lock and skips
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
+/**
  * GAP-56 / CAP-4 — Auto status switch worker.
  * Runs every 5 minutes over active loads with live GPS.
  */
@@ -7,6 +15,7 @@ import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { tryXactSingleFlight } from "../lib/single-flight.js";
 import {
   listActiveLoadsForAutoStatus,
   processDriftForLoad,
@@ -39,6 +48,9 @@ export async function runAutoStatusSwitchTick(): Promise<AutoStatusSwitchTickSum
   };
 
   await withLuciaBypass(async (client) => {
+    // ROUND 330.7: case-B in-transit issues are a read-then-insert with no unique key, and position snapshots are a
+    // plain insert per tick — the twin instance doubled both. One tick at a time; the twin skips.
+    if (!(await tryXactSingleFlight(client, "dispatch.auto_status_switch"))) return;
     const companies = await client.query<{ id: string }>(
       `
         SELECT id::text AS id

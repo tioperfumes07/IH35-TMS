@@ -1,3 +1,11 @@
+/**
+ * ENGINE: Samsara cache warmer
+ * SCHEDULE: *\/5 and *\/15 * * * * America/Chicago
+ * WRITES: process memory only (no database write)
+ * IDEMPOTENCY: DETERMINISTIC OVERWRITE of an in-process cache; nothing is written to the database
+ * OVERLAP: each process warms its own memory
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { wrapBackgroundJobTick } from "../../../lib/background-jobs.js";
