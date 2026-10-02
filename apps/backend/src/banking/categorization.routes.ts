@@ -1226,6 +1226,16 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             AND bt.status = 'categorized'
             AND bt.matched_journal_entry_id IS NULL
             AND bt.voided_at IS NULL
+            -- ROUND 326 queue item 14 (G-18): the backlog is lines NEVER posted. A line whose categorization JE was
+            -- reversed (undo / unmatch) is not backlog — re-posting it is the reverse/re-post churn.
+            AND NOT EXISTS (
+              SELECT 1 FROM accounting.journal_entry_postings p
+                JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
+               WHERE p.operating_company_id = bt.operating_company_id
+                 AND p.source_transaction_type = 'bank_categorization'
+                 AND p.source_transaction_id::text = bt.id::text
+                 AND je.reversed_by_je_id IS NOT NULL
+            )
           ORDER BY bt.transaction_date ASC, bt.created_at ASC
           LIMIT $2
         `,
