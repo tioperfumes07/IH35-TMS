@@ -118,7 +118,9 @@ export function collectProblems(root = ROOT) {
       }
       const code = stripComments(src);
       if (INCLUDE_TRAILERS_ALLOW.has(rel)) continue;
-      if (/include:\s*["']trailers["']/.test(code) && /Combobox|Autocomplete|select|Picker/.test(code)) {
+      // A picker is a <select> element or a Combobox / Autocomplete / *Picker component. A bare "select" also matched
+      // identifiers such as selectedUnitId, which flagged roster lists (FleetHomePage) that are not pickers at all.
+      if (/include:\s*["']trailers["']/.test(code) && /Combobox|Autocomplete|<select\b|Picker\b/.test(code)) {
         problems.push(`${rel}: picker must not use listUnits(include:trailers) — EntityPicker kind=trailer`);
       }
     }
