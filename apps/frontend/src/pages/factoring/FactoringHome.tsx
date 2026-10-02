@@ -807,13 +807,14 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
   const engineReserve = useMemo(() => {
     const kpis = factoringKpiQuery.data?.kpis;
     if (!kpis) return null;
-    const v = (key: string) => Number(kpis.find((k) => k.key === key)?.value ?? 0);
-    const escrow = v("escrow_reserve_balance");
-    const cash = v("cash_reserve_balance");
-    return { escrow, cash, total: escrow + cash };
+    const raw = (key: string) => kpis.find((k) => k.key === key)?.value ?? null;
+    const escrow = Number(raw("escrow_reserve_balance") ?? 0);
+    // One Faro Security Reserve (202615220800): a merged cash reserve comes back null — shown as an em dash, never $0.00.
+    const cash = raw("cash_reserve_balance");
+    return { escrow, cash: cash == null ? null : Number(cash), total: escrow + Number(cash ?? 0) };
   }, [factoringKpiQuery.data?.kpis]);
   const engineHeld = (key: "escrow" | "cash" | "total") =>
-    factoringKpiQuery.isError ? "Unavailable" : engineReserve ? fmtCents(engineReserve[key]) : null;
+    factoringKpiQuery.isError ? "Unavailable" : engineReserve ? (engineReserve[key] == null ? "—" : fmtCents(engineReserve[key])) : null;
   // B7: reserve movement history lives in FactoringReservesSharedPanel (shared with Banking).
   const faroImportsQuery = useQuery({
     queryKey: ["data-infra", "faro-imports", companyId],

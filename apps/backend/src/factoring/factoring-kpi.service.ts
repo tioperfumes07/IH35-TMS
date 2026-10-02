@@ -44,7 +44,7 @@ export type FactoringKpiKey = (typeof FACTORING_KPI_KEYS)[number];
 
 const num = (v: unknown) => (v == null ? 0 : Number(v));
 
-type Accounts = Record<"escrow" | "cash" | "fee" | "interest", { id: string | null; label: string }>;
+type Accounts = Record<"escrow" | "cash" | "fee" | "interest", { id: string | null; label: string; merged?: boolean }>;
 
 async function factoringAccounts(client: DbClient, oci: string): Promise<Accounts> {
   const pick = async (role: Parameters<typeof resolveRoleAccountOptional>[2]) => {
@@ -53,9 +53,14 @@ async function factoringAccounts(client: DbClient, oci: string): Promise<Account
     const r = await client.query<{ n: string; name: string }>(`SELECT account_number AS n, account_name AS name FROM catalogs.accounts WHERE id = $1::uuid`, [id]);
     return { id, label: `${r.rows[0]?.n ?? "?"} ${r.rows[0]?.name ?? ""}`.trim() };
   };
+  const escrow = await pick("factor_reserve_held");
+  let cash: { id: string | null; label: string; merged?: boolean } = await pick("factor_cash_reserve_held");
+  // Owner-approved Faro lifecycle (202615220800): ONE Faro Security Reserve. When the cash-reserve role resolves to the same
+  // account as the reserve role, Faro's "Cash Rsv" is a column of that one reserve, not a second balance — count it once.
+  if (cash.id && cash.id === escrow.id) cash = { id: null, label: `merged into ${escrow.label}`, merged: true };
   return {
-    escrow: await pick("factor_reserve_held"),
-    cash: await pick("factor_cash_reserve_held"),
+    escrow,
+    cash,
     fee: await pick("factor_fee_expense"),
     interest: await pick("default_interest_expense"),
   };
@@ -137,12 +142,16 @@ export async function computeFactoringKpis(client: DbClient, oci: string, range:
     source: "factoring_purchases advance_cents / gross_cents vs factoring.factor.advance_rate", gl_account: null, row_count: vol.n, empty_reason: noPurchases });
 
   for (const [key, label, a] of [
-    ["escrow_reserve_balance", "Escrow reserve balance", acc.escrow],
+    ["escrow_reserve_balance", acc.cash.merged ? "Faro reserve balance" : "Escrow reserve balance", acc.escrow],
     ["cash_reserve_balance", "Cash reserve balance", acc.cash],
   ] as const) {
     const r = a.id ? (await client.query<{ n: number; v: string }>(`SELECT count(*)::int n, COALESCE(sum(${SIGNED}),0)::bigint v ${postingsSql("balance")}`, [...base, a.id])).rows[0]! : { n: 0, v: "0" };
-    out.push({ key, label, unit: "cents", value: num(r.v), source: "accounting.journal_entry_postings (posted, as of range end)", gl_account: a.label,
-      row_count: r.n, empty_reason: !a.id ? `${a.label} — bind the CoA role` : r.n === 0 ? "No posting on this account yet." : null });
+    const merged = "merged" in a && a.merged;
+    out.push({ key, label, unit: "cents", value: a.id ? num(r.v) : null, source: "accounting.journal_entry_postings (posted, as of range end)", gl_account: a.label,
+      row_count: r.n,
+      empty_reason: merged
+        ? `One Faro Security Reserve — Faro's Cash Rsv is a column of the reserve above (${a.label.replace("merged into ", "")}), not a second balance.`
+        : !a.id ? `${a.label} — bind the CoA role` : r.n === 0 ? "No posting on this account yet." : null });
   }
 
   for (const [key, label, a] of [

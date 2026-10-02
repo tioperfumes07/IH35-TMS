@@ -53,6 +53,10 @@ export const COA_ROLE_VALUES = [
   // R-187 G4 — Faro "Cash Rsv": its own reserve pool (owner ruling: GL 1235), never factor_reserve_held.
   // DELIBERATELY absent from ROLE_FALLBACKS — unbound opcos fail closed when Cash Rsv>0, same as wire.
   "factor_cash_reserve_held",
+  // Owner-approved Faro lifecycle (202615220800): accrued default interest is its own liability (2155), never 2150; the
+  // contract's Transaction Fees (Schedule Fee) are their own expense (6405, under 6400). Fail closed when unbound.
+  "factor_default_interest_payable",
+  "factor_transaction_fee",
   // Business-Property Allocation (TX personal-property tax) — per-opco (TRANSP/TRK) mappings in
   // accounting.chart_of_accounts_roles, migration 202607080310_property_tax_accrual_posting.sql.
   // ACCRUAL Dr property_tax_expense / Cr property_tax_payable; PAYMENT Dr property_tax_payable / Cr cash.

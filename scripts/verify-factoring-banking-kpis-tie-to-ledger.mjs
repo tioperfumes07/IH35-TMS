@@ -58,7 +58,9 @@ try {
     return extra ? Number(r.raw) : Number(r.s);
   };
   ref.escrow_reserve_balance = await glSum("factor_reserve_held", "balance");
-  ref.cash_reserve_balance = await glSum("factor_cash_reserve_held", "balance");
+  // One Faro Security Reserve: when both reserve roles resolve to one account, the cash figure is merged into it (null).
+  ref.cash_reserve_balance =
+    (await roleAcct("factor_cash_reserve_held")) === (await roleAcct("factor_reserve_held")) ? 0 : await glSum("factor_cash_reserve_held", "balance");
   ref.fees_accrued = await glSum("factor_fee_expense", "activity");
   ref.default_interest_accrued = await glSum("default_interest_expense", "activity");
   ref.reserve_releases = await glSum("factor_reserve_held", "activity", `AND p.debit_or_credit = 'credit' AND p.source_transaction_type = 'factoring_reserve_release'`);
