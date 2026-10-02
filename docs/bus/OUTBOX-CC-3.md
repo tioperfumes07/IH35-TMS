@@ -2036,3 +2036,33 @@ CC-3 | ACK ROUND 326 (INBOX-CC-3 + 10-02 law + registry correction + 10-02 CC-3 
 - This is Samsara account configuration, owner side.
 
 **Not done by CC-3: nothing was fed, nothing was verified in Chrome.**
+
+## 2026-10-02 ROUND 326 item 1 (CUSTOMERS), part A — canonical-customer engine built. Repoint write waits for the owner's AUTH code.
+
+**Measured, correcting the order's count:**
+- "1,203 duplicate groups / 1,708 extra rows" spans **all three companies**. Each entity keeps its own customer list by design, so cross-company copies are not duplicates.
+- **Within USMCA: 22 groups, 22 extra rows**, all formatting variants (e.g. "BIEWER LOGISTICS,LLC" / "Biewer Logistics, LLC").
+- In 19 groups neither row has activity. In 3 (Sunteck, Tennessee Steel Haulers, TTS) one row carries 1 load + 1 invoice.
+- The other two companies, both frozen: b49a… 34 groups, IH 35 Transportation 61.
+
+**Engine (`mdata/canonical/canonical-entities.service.ts`, shared by customers and vendors):**
+- **Key:** normalized name within ONE company.
+- **Survivor:** most referencing rows, then active, then most complete, then oldest.
+- **Repoint targets:** read from the live FK catalog at run time (42 targets for customers), plus the verified loose columns. The old hand list missed live FKs (`accounting.expenses.payee_customer_uuid`, `factoring_purchase_lines`, `invoice_disputes`, the bank transaction columns, …).
+- **Merge:** repoint → alias (old name + full snapshot of the row + exact per-row repoint log) → **DELETE the duplicate** (law 2026-10-02: no shells) → audit row. A unique-key collision on a derived row is snapshotted into the log and removed.
+- **Reverse:** recreates the row with the same id and moves exactly the logged rows back.
+- **Migration 202615201000:** `mdata.customer_aliases` (FORCED RLS).
+- **Routes (Owner only):** plan / merge / reverse under `/api/v1/mdata/canonical/:kind/…`.
+
+**Throwaway-branch proof** (`br-bold-star-akvosjg8`, forked from prod, deleted):
+- Plan: 22 groups, 42 targets.
+- Merging all 22: open A/R for the group **$7,200.00 → $7,200.00**; company-wide **$374,134.12 / 110 invoices → $374,134.12 / 110**; duplicate groups **22 → 0**; 22 aliases.
+- Reversing one merge restored the row (same id) and its 2 rows; the group count went back to 1.
+
+**Guard:** `verify-canonical-customers` (static: FK catalog, alias + snapshot, delete, reverse; live: per-company duplicate groups ≤ baseline, shrink-only, `measured_at` 2026-10-02T01:30Z). Live run: 22 / 34 / 61, OK.
+
+**OWNER — AUTH CODE REQUESTED for the USMCA repoint write** (the order: "request the owner's AUTH code before the repoint write"):
+- Script `scripts/ops/2026-10-02-cc3-canonical-customers.mts`: dry run, then `--apply --auth AUTH-NNN`.
+- It refuses unless A/R is unchanged to the cent. Expected: 22 merged, 0 duplicate groups left in USMCA.
+
+**Next (item 1 part B):** customer profile surface + redesign (AR aging, credit limit / exposure, open loads, payment history, factoring eligibility, documents, contacts, rate history).

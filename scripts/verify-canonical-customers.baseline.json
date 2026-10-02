@@ -1,0 +1,9 @@
+{
+  "measured_at": "2026-10-02T01:30:00Z",
+  "note": "Duplicate normalized-name customer groups WITHIN each company (cross-company copies are separate entities by design, not duplicates). Shrink-only. USMCA reaches 0 when the owner's AUTH runs scripts/ops/2026-10-02-cc3-canonical-customers.mts --apply. The other two companies are frozen entities (USMCA only).",
+  "duplicate_groups": {
+    "5c854333-6ea5-4faa-af31-67cb272fef80": 22,
+    "b49a737b-6cf0-43bb-8758-a6c8ff8a2c4e": 34,
+    "91e0bf0a-133f-4ce8-a734-2586cfa66d96": 61
+  }
+}
