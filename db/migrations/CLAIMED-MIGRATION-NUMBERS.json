@@ -1,4 +1,9 @@
 {
+  "202615230100": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 audit M2: maintenance.pm_schedules.last_service_date — the auto PM engine evaluates days-based PMs through evaluatePmDue (it had no last-service date, so a days PM never auto-created a WO). Additive, nullable."
+  },
   "_band": {
     "claude": "HH 00–11 (morning)",
     "cursor": "HH 12–23 (afternoon)",
@@ -1451,14 +1456,12 @@
       "claimed_by": "cursor",
       "claimed_at": "2026-10-02",
       "purpose": "Rule 50 USMCA: enable BANK_TX_SPLIT_ENABLED + BANK_TX_SPLIT_GL_POSTING_ENABLED overrides (table live; overrides missing)."
-    }
-,
+    },
     "202615221300": {
       "claimed_by": "cursor",
       "claimed_at": "2026-10-02",
       "purpose": "B-4 check creator: accounting.expenses.settlement_no (text) + location_id (uuid FK mdata.locations) for ORDERS Location + Settlement No header fields."
-    }
-,
+    },
     "202615221400": {
       "claimed_by": "cursor",
       "claimed_at": "2026-10-02",
