@@ -69,8 +69,12 @@ export function commitFaroReserveReport(companyId: string, register: FaroRegiste
   );
 }
 
+export type FaroPostResult =
+  | { entry_id: string; journal_entry_id: string; paired_entry_id?: string }
+  | { entry_id: string; status: "interest_accrual_awaiting_approval"; interest_run_id: string; interest_due_cents: number };
+
 export function postFaroReserveEntry(companyId: string, entryId: string) {
-  return apiRequest<{ entry_id: string; journal_entry_id: string; paired_entry_id?: string }>(
+  return apiRequest<FaroPostResult>(
     `/api/v1/factoring/faro-reserve-entries/${entryId}/post`,
     { method: "POST", body: { operating_company_id: companyId } }
   );

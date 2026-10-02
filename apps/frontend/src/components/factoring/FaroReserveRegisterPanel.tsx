@@ -29,7 +29,7 @@ import { formatUsdCents } from "../../lib/money";
 const KIND_LABEL: Record<FaroEntryKind, string> = {
   escrow_held: "Escrow reserve held",
   escrow_to_cash: "Transfer escrow to cash",
-  schedule_fee: "Schedule fee",
+  schedule_fee: "Schedule fee (default interest)",
   short_pay: "Short-pay to reserve",
   rsv_deposit: "Rsv deposit",
   client_payable: "Client payable",
@@ -152,7 +152,14 @@ export function FaroReserveRegisterPanel({
               data-testid={`faro-entry-post-${e.id}`}
               onClick={() =>
                 void run(e.id, async () => {
-                  await postFaroReserveEntry(companyId, e.id);
+                  const r = await postFaroReserveEntry(companyId, e.id);
+                  if ("status" in r) {
+                    // Faro's Schedule Fee is the Default Interest: interest through its date is proposed first and a
+                    // second person approves it (Month close), then this line posts.
+                    setMessage(
+                      `Default interest of ${formatUsdCents(r.interest_due_cents)} through ${formatDateUS(e.entry_date)} proposed — a second person approves it on Month close, then post this line again.`
+                    );
+                  }
                   await refresh();
                 })
               }

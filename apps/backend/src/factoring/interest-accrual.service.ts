@@ -1,8 +1,12 @@
 // Lead ROUND 296 approval (00-LEAD-APPROVAL-2026-10-02-FARO-LIFECYCLE-APPROVED-THREE-CORRECTIONS.md): Faro Default Interest
 // is computed daily, shown on screen, and posted ONCE at month-end close, WITH APPROVAL — never by a job at night.
 //
-//   contract: 0.067% per day, compounded daily, on the unpaid Net Amount, from day 36 after the Purchase Date
-//             (30-day Repurchase Term + 5-day Grace) — contract-config.ts, the one source of the numbers
+//   contract: 0.067% per day, compounded daily, from day 36 after the Purchase Date (30-day Repurchase Term + 5-day
+//             Grace) — contract-config.ts, the one source of the numbers. BASE = Net Amount less the Factoring Fee: measured
+//             on Faro's own Cash Reserve report, where every "Schedule Fee" (Faro's charge of this interest at collection)
+//             equals 0.067%/day compounded on ~98.3% of Net for exactly the days past day 35 (11 of 11 rows).
+//   events:   an account collected or repurchased before month end accrues at THAT moment (owner ruling 2026-10-02) —
+//             an event run, same maker <> checker path, same account pair; month end then skips it.
 //   entry:    DR 6830 Default Interest (default_interest_expense) / CR 2155 Accrued Factoring Interest
 //             (factor_default_interest_payable). Never 2150: 2150 always equals the Net Amount of open Purchased Accounts.
 //
@@ -71,7 +75,7 @@ export async function computeInterestAccrualLines(client: DbClient, oci: string,
     `
       SELECT p.id::text AS purchase_id, p.display_id AS purchase_display_id, l.id::text AS purchase_line_id,
              l.invoice_id::text, i.display_id AS invoice_display_id, l.customer_id::text, c.customer_name,
-             p.purchase_date::text, l.gross_cents::text AS net_cents,
+             p.purchase_date::text, (l.gross_cents - l.fee_cents)::text AS net_cents,
              GREATEST(($2::date - p.purchase_date) - $3::int, 0) AS days_charged,
              COALESCE((
                SELECT sum(rl.accrual_cents) FROM accounting.factoring_interest_accrual_run_lines rl
@@ -89,6 +93,13 @@ export async function computeInterestAccrualLines(client: DbClient, oci: string,
          AND NOT EXISTS (
            SELECT 1 FROM accounting.factoring_repurchase_due_events e
             WHERE e.purchase_line_id = l.id AND e.state = 'marked_collected' AND e.decided_at::date <= $2::date
+         )
+         -- Collected on or before the period end (Faro's Transfer Escrow to Cash is printed on the collection date): its
+         -- interest accrues at that event (event run), not at month end.
+         AND NOT EXISTS (
+           SELECT 1 FROM accounting.faro_reserve_entries fe
+            WHERE fe.operating_company_id = l.operating_company_id AND fe.faro_invoice_number = l.faro_invoice_number
+              AND fe.entry_kind = 'escrow_to_cash' AND fe.entry_date <= $2::date
          )
          AND ($2::date - p.purchase_date) > $3::int
        ORDER BY p.purchase_date, i.display_id
@@ -128,7 +139,7 @@ export async function proposeInterestAccrual(
   if (preview.lines.length === 0) throw new InterestAccrualError("interest_accrual_nothing_to_accrue");
   const live = await client.query(
     `SELECT 1 FROM accounting.factoring_interest_accrual_runs
-      WHERE operating_company_id = $1::uuid AND period_end = $2::date AND state IN ('proposed', 'posted')`,
+      WHERE operating_company_id = $1::uuid AND period_end = $2::date AND state IN ('proposed', 'posted') AND run_kind = 'period_close'`,
     [input.operating_company_id, preview.period_end]
   );
   if (live.rows.length) throw new InterestAccrualError("interest_accrual_run_exists_for_period");
@@ -233,8 +244,11 @@ export async function listInterestAccrualRuns(client: DbClient, oci: string) {
   const res = await client.query<Record<string, unknown>>(
     `SELECT r.id::text, r.period_start::text, r.period_end::text, r.state, r.line_count, r.total_cents::text,
             r.proposed_by_user_id::text, r.proposed_at::text, r.decided_by_user_id::text, r.decided_at::text,
-            r.decision_note, r.journal_entry_id::text
+            r.decision_note, r.journal_entry_id::text, r.run_kind, r.event_purchase_line_id::text,
+            ev.invoice_id::text AS event_invoice_id, ei.display_id AS event_invoice_display_id, ev.faro_invoice_number AS event_faro_invoice_number
        FROM accounting.factoring_interest_accrual_runs r
+       LEFT JOIN accounting.factoring_purchase_lines ev ON ev.id = r.event_purchase_line_id
+       LEFT JOIN accounting.invoices ei ON ei.id = ev.invoice_id
       WHERE r.operating_company_id = $1::uuid
       ORDER BY r.period_end DESC, r.proposed_at DESC`,
     [oci]
@@ -272,4 +286,72 @@ export async function advanceLiabilityTiesToOpenNet(client: DbClient, oci: strin
   const gl = Number(res.rows[0]?.gl_cents ?? 0);
   const open = Number(res.rows[0]?.open_net_cents ?? 0);
   return { gl_2150_cents: gl, open_net_cents: open, ties: gl === open };
+}
+
+/** Days charged (past day 35) for a purchase made on `purchaseDate`, through `through`. */
+function daysCharged(purchaseDate: string, through: string): number {
+  const ms = Date.parse(`${through}T00:00:00Z`) - Date.parse(`${purchaseDate.slice(0, 10)}T00:00:00Z`);
+  return Math.max(Math.round(ms / 86_400_000) - FACTORING_INTEREST_ACCRUAL_AFTER_DAY, 0);
+}
+
+/**
+ * Interest position of ONE Purchased Account through `through`: contract interest to date, what posted runs (period-close
+ * or event) already accrued for it, and whether an event run for that date is waiting for approval.
+ */
+export async function interestPositionThrough(client: DbClient, oci: string, purchaseLineId: string, through: string) {
+  const r = await client.query<Record<string, string | null>>(
+    `SELECT l.id::text AS purchase_line_id, l.purchase_id::text, l.invoice_id::text, l.customer_id::text, p.purchase_date::text,
+            (l.gross_cents - l.fee_cents)::text AS net_cents,
+            COALESCE((SELECT sum(rl.accrual_cents) FROM accounting.factoring_interest_accrual_run_lines rl
+                        JOIN accounting.factoring_interest_accrual_runs r ON r.id = rl.run_id
+                       WHERE rl.purchase_line_id = l.id AND r.state = 'posted' AND r.period_end <= $3::date), 0)::text AS accrued_cents,
+            (SELECT r.id::text FROM accounting.factoring_interest_accrual_runs r
+              WHERE r.event_purchase_line_id = l.id AND r.period_end = $3::date AND r.state = 'proposed' AND r.run_kind = 'event') AS pending_run_id
+       FROM accounting.factoring_purchase_lines l
+       JOIN accounting.factoring_purchases p ON p.id = l.purchase_id AND p.status = 'posted' AND p.voided_at IS NULL
+      WHERE l.id = $2::uuid AND l.operating_company_id = $1::uuid AND l.voided_at IS NULL`,
+    [oci, purchaseLineId, through]
+  );
+  const row = r.rows[0];
+  if (!row) throw new InterestAccrualError("interest_event_purchase_line_not_posted");
+  const net = Number(row.net_cents);
+  const days = daysCharged(row.purchase_date!, through);
+  const cumulative = compoundedInterestCents(net, days);
+  const accrued = Number(row.accrued_cents);
+  return {
+    purchase_line_id: row.purchase_line_id!, purchase_id: row.purchase_id!, invoice_id: row.invoice_id!, customer_id: row.customer_id,
+    purchase_date: row.purchase_date!, net_cents: net, days_charged: days, cumulative_interest_cents: cumulative,
+    accrued_cents: accrued, due_cents: Math.max(cumulative - accrued, 0), pending_run_id: row.pending_run_id ?? null,
+  };
+}
+
+/**
+ * Maker, at the event (collection / repurchase): propose the one-account accrual through `eventDate`. Posts nothing — a
+ * DIFFERENT user approves it with decideInterestAccrual, exactly like the month-end run. Returns null when nothing is due.
+ */
+export async function proposeEventInterestAccrual(
+  client: DbClient,
+  input: { operating_company_id: string; purchase_line_id: string; event_date: string; actor_user_id: string }
+): Promise<{ run_id: string; accrual_cents: number; pending: boolean } | null> {
+  const pos = await interestPositionThrough(client, input.operating_company_id, input.purchase_line_id, input.event_date);
+  if (pos.pending_run_id) return { run_id: pos.pending_run_id, accrual_cents: pos.due_cents, pending: true };
+  if (pos.due_cents <= 0) return null;
+  const run = await client.query<{ id: string }>(
+    `INSERT INTO accounting.factoring_interest_accrual_runs
+       (operating_company_id, period_start, period_end, line_count, total_cents, proposed_by_user_id, run_kind, event_purchase_line_id)
+     VALUES ($1::uuid, $2::date, $2::date, 1, $3, $4::uuid, 'event', $5::uuid) RETURNING id::text`,
+    [input.operating_company_id, input.event_date, pos.due_cents, input.actor_user_id, input.purchase_line_id]
+  );
+  const runId = run.rows[0]!.id;
+  await client.query(
+    `INSERT INTO accounting.factoring_interest_accrual_run_lines
+       (operating_company_id, run_id, purchase_id, purchase_line_id, invoice_id, customer_id, purchase_date,
+        net_cents, days_charged, cumulative_interest_cents, previously_accrued_cents, accrual_cents)
+     VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid, $6::uuid, $7::date, $8, $9, $10, $11, $12)`,
+    [
+      input.operating_company_id, runId, pos.purchase_id, pos.purchase_line_id, pos.invoice_id, pos.customer_id, pos.purchase_date,
+      pos.net_cents, pos.days_charged, pos.cumulative_interest_cents, pos.accrued_cents, pos.due_cents,
+    ]
+  );
+  return { run_id: runId, accrual_cents: pos.due_cents, pending: true };
 }

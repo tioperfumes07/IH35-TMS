@@ -38,6 +38,11 @@ export type InterestAccrualRun = {
   decided_at: string | null;
   decision_note: string | null;
   journal_entry_id: string | null;
+  run_kind?: "period_close" | "event";
+  event_purchase_line_id?: string | null;
+  event_invoice_id?: string | null;
+  event_invoice_display_id?: string | null;
+  event_faro_invoice_number?: string | null;
 };
 
 const q = (o: Record<string, string>) => new URLSearchParams(o).toString();

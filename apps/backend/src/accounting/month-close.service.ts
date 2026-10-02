@@ -60,6 +60,7 @@ export type MonthCloseStatus = {
     due_cents: number;
     line_count: number;
     run_state: string | null;
+    pending_event_runs: number;
   };
   // Lead 2026-10-02: a negative Faro Cash Reserve presents as Due to Faro (2156) at period end — reclassed before lock.
   faro_cash_reserve: {
@@ -287,13 +288,21 @@ async function loadChecklist(client: Client, input: { operatingCompanyId: string
   const interestLines = await computeInterestAccrualLines(client, input.operatingCompanyId, input.periodEnd);
   const interestRunRes = await client.query<{ state: string }>(
     `SELECT state FROM accounting.factoring_interest_accrual_runs
-      WHERE operating_company_id = $1::uuid AND period_end = $2::date AND state IN ('proposed', 'posted')
+      WHERE operating_company_id = $1::uuid AND period_end = $2::date AND state IN ('proposed', 'posted') AND run_kind = 'period_close'
       ORDER BY proposed_at DESC LIMIT 1`,
     [input.operatingCompanyId, input.periodEnd]
   );
   const interestRunState = interestRunRes.rows[0]?.state ?? null;
+  // Owner ruling 2026-10-02: an event accrual (collection / repurchase) awaiting its second approver leaves 2155 short.
+  const pendingEventRes = await client.query<{ n: number }>(
+    `SELECT count(*)::int AS n FROM accounting.factoring_interest_accrual_runs
+      WHERE operating_company_id = $1::uuid AND run_kind = 'event' AND state = 'proposed' AND period_end <= $2::date`,
+    [input.operatingCompanyId, input.periodEnd]
+  );
+  const pendingEventRuns = Number(pendingEventRes.rows[0]?.n ?? 0);
   const factoringInterest = {
-    complete: interestRunState === "posted" || interestLines.length === 0,
+    complete: (interestRunState === "posted" || interestLines.length === 0) && pendingEventRuns === 0,
+    pending_event_runs: pendingEventRuns,
     due_cents: interestLines.reduce((sum, line) => sum + line.accrual_cents, 0),
     line_count: interestLines.length,
     run_state: interestRunState,

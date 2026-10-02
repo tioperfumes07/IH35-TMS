@@ -78,13 +78,36 @@ describe("Faro reserve posters — post what the line says", () => {
     }),
   });
 
-  it("schedule fee: DR 6405 transaction fee / CR 1235, stamped to the entry + customer", async () => {
-    const c = client(entry({}));
+  it("schedule fee with interest not yet accrued: proposes the event accrual (maker) and posts nothing", async () => {
+    const c = client(entry({ entry_date: "2026-09-18" }), (sql) =>
+      sql.includes("AS pending_run_id")
+        ? [{ purchase_line_id: "l-1", purchase_id: "p-1", invoice_id: "inv-1", customer_id: "cust-1", purchase_date: "2026-08-13", net_cents: "34475", accrued_cents: "0", pending_run_id: null }]
+        : sql.includes("INSERT INTO accounting.factoring_interest_accrual_runs")
+          ? [{ id: "run-1" }]
+          : null
+    );
+    const r = await postFaroReserveEntryOnClient(c, { operating_company_id: OPCO, entry_id: "e-1", actor_user_id: "u", actor_role: "Owner" });
+    expect(r).toMatchObject({ status: "interest_accrual_awaiting_approval", interest_run_id: "run-1", interest_due_cents: 23 });
+    expect(mockCreateJe).not.toHaveBeenCalled();
+  });
+
+  it("schedule fee once interest is accrued: DR 2155 accrued + DR 6830 true-up / CR 1235 Faro's amount — never 6405", async () => {
+    const c = client(entry({ amount_cents: "-23", entry_date: "2026-09-18" }), (sql) =>
+      sql.includes("AS pending_run_id")
+        ? [{ purchase_line_id: "l-1", purchase_id: "p-1", invoice_id: "inv-1", customer_id: "cust-1", purchase_date: "2026-08-13", net_cents: "34475", accrued_cents: "23", pending_run_id: null }]
+        : sql.includes("COALESCE(sum(rl.accrual_cents), 0)::text AS c")
+          ? [{ c: "20" }]
+          : null
+    );
     await postFaroReserveEntryOnClient(c, { operating_company_id: OPCO, entry_id: "e-1", actor_user_id: "u", actor_role: "Owner" });
     const je = mockCreateJe.mock.calls[0]![1];
-    expect(je.postings[0]).toMatchObject({ account_id: "acct:factor_transaction_fee", debit_or_credit: "debit", amount_cents: 23, source_transaction_type: "faro_reserve_entry", source_transaction_id: "e-1", entity_type: "customer", entity_uuid: "cust-1" });
-    expect(je.postings[1]).toMatchObject({ account_id: "acct:factor_cash_reserve_held", debit_or_credit: "credit", amount_cents: 23 });
-    expect(c.query.mock.calls.some((x) => String(x[0]).includes("review_state = 'matched'"))).toBe(true);
+    expect(je.postings.map((p: { account_id: string; debit_or_credit: string; amount_cents: number }) => `${p.debit_or_credit}:${p.account_id}:${p.amount_cents}`)).toEqual([
+      "debit:acct:factor_default_interest_payable:20",
+      "debit:acct:default_interest_expense:3",
+      "credit:acct:factor_cash_reserve_held:23",
+    ]);
+    expect(je.postings.some((p: { account_id: string }) => p.account_id === "acct:factor_transaction_fee")).toBe(false);
+    expect(je.postings[0]).toMatchObject({ source_transaction_type: "faro_reserve_entry", source_transaction_id: "e-1", entity_type: "customer", entity_uuid: "cust-1" });
   });
 
   it("short-pay: DR 2150 / CR 1235 — never A/R, which stays open on the customer", async () => {
