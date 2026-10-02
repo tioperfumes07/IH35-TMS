@@ -1516,6 +1516,11 @@
       "claimed_by": "Cursor",
       "claimed_at": "2026-10-02",
       "purpose": "BANK-F91052 B-5 Change location: accounting.journal_entry_postings.location_id + reclassify_batches.to_location_id + reclassify_batch_lines from/to_location_id (mdata.locations). Additive."
+    },
+    "202615270100": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-02",
+      "purpose": "Lead ROUND 330.6 ruling 1 — driver_settlements predecessor / successor link (a re-posted settlement names the reversed one; never reuses its bill numbers)"
     }
   },
   "202613590001": {
