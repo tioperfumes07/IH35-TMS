@@ -97,7 +97,22 @@ export type SettlementCreatorJeLine = {
   section: string;
 };
 
+/** ROUND 326 item 18 — the posting engine's figures (the close engine Post writes with). */
+export type SettlementCreatorCloseTotals = {
+  gross_cents: number;
+  additions_cents: number;
+  reimbursements_cents: number;
+  detention_pay_cents: number;
+  deductions_cents: number;
+  escrow_cents: number;
+  advances_cents: number;
+  chargebacks_cents: number;
+  net_cents: number;
+  je_preview: Array<{ account_id: string; debit_or_credit: "debit" | "credit"; amount_cents: number; description: string }>;
+};
+
 export type SettlementCreatorPreview = {
+  close_totals?: SettlementCreatorCloseTotals | null;
   je_lines: SettlementCreatorJeLine[];
   debit_total_cents: number;
   credit_total_cents: number;
