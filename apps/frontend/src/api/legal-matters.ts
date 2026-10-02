@@ -185,12 +185,35 @@ export const legalMattersApi = {
     return apiRequest<Record<string, unknown>>(withCompany("/api/v1/legal/matters/reports/summary", operatingCompanyId));
   },
 
+  /** ROUND 326 item 4 — deadline + signature/attorney expiry alerts for the Legal dashboard. */
+  deadlineAlerts(operatingCompanyId: string, horizonDays = 90) {
+    return apiRequest<{
+      alerts: LegalDeadlineAlert[];
+      summary: { total: number; critical: number; warning: number; info: number; overdue: number };
+    }>(withCompany("/api/v1/legal/deadline-alerts", operatingCompanyId, { horizon_days: String(horizonDays) }));
+  },
+
   documentDownloadUrl(operatingCompanyId: string, matterId: string, documentId: string) {
     return withCompany(
       `/api/v1/legal/matters/${encodeURIComponent(matterId)}/documents/${encodeURIComponent(documentId)}/download`,
       operatingCompanyId
     );
   },
+};
+
+export type LegalDeadlineAlert = {
+  alert_id: string;
+  kind: "matter_deadline" | "statute_of_limitations" | "signature_expiry" | "attorney_review_expiry";
+  severity: "critical" | "warning" | "info";
+  title: string;
+  subtitle: string;
+  due_at: string;
+  days_until: number;
+  operating_company_id: string;
+  matter_id: string | null;
+  matter_number: string | null;
+  contract_instance_id: string | null;
+  href: string;
 };
 
 export async function uploadMatterDocument(
