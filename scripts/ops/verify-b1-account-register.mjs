@@ -93,6 +93,12 @@ function main() {
   assertIncludes(coa, 'label: "Make inactive"', COA);
   assertIncludes(coa, 'label: "Run report"', COA);
   assertIncludes(coa, 'aria-label="Account actions"', COA);
+  // BANK-F91047 — ORDERS §B-1 / QBO §11 [New account ▾]
+  assertIncludes(coa, 'data-b1-coa-new-account="1"', COA);
+  assertIncludes(coa, 'data-testid="b1-coa-new-account"', COA);
+  assertIncludes(coa, "New account", COA);
+  assertIncludes(coa, 'label: "Run report"', COA);
+  assertIncludes(coa, 'aria-label="New account options"', COA);
   // BANK-F91028 — per-row Make inactive (ORDERS §B-1 CoA actions)
   assertIncludes(coa, 'data-testid="b1-coa-make-inactive"', COA);
   assertIncludes(coa, "Make inactive", COA);

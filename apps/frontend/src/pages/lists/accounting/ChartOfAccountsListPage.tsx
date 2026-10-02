@@ -478,15 +478,57 @@ export function ChartOfAccountsListPage() {
         title="Chart of Accounts"
         countBadge={filteredRows.length}
         actions={
-          <Button
-            onClick={() => {
-              setDrawerMode("create");
-              setDrawerAccount(null);
-              setDrawerOpen(true);
-            }}
+          <div
+            className="inline-flex items-stretch"
+            data-b1-coa-new-account="1"
+            data-testid="b1-coa-new-account"
           >
-            + Create
-          </Button>
+            <Button
+              className="rounded-r-none"
+              data-testid="b1-coa-new-account-primary"
+              onClick={() => {
+                setDrawerMode("create");
+                setDrawerAccount(null);
+                setDrawerOpen(true);
+              }}
+            >
+              New account
+            </Button>
+            <MoreActionsMenu
+              data-testid="b1-coa-new-account-menu"
+              trigger={({ toggle, triggerTestId, open }) => (
+                <button
+                  type="button"
+                  className="inline-flex h-7 items-center rounded-l-none rounded-r-sm border border-l-0 border-[#1f2a44] bg-[#1f2a44] px-2 text-xs font-semibold text-white hover:bg-[#0f1729]"
+                  onClick={toggle}
+                  aria-expanded={open}
+                  aria-label="New account options"
+                  data-testid={triggerTestId}
+                  title="New account · Run report"
+                >
+                  ▾
+                </button>
+              )}
+              items={[
+                {
+                  key: "new-account",
+                  label: "New account",
+                  onSelect: () => {
+                    setDrawerMode("create");
+                    setDrawerAccount(null);
+                    setDrawerOpen(true);
+                  },
+                },
+                {
+                  key: "run-report",
+                  label: "Run report",
+                  onSelect: () => {
+                    window.location.assign("/reports/profit-loss");
+                  },
+                },
+              ]}
+            />
+          </div>
         }
       />
 
