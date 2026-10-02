@@ -140,6 +140,12 @@ function emptyMoney(): MoneyDraft {
   return { description: "", amount_cents: 0, load_number: "" };
 }
 
+const DEFAULT_ESCROW_HOLD_CENTS = 2_500;
+
+function defaultEscrowLine(): MoneyDraft {
+  return { description: "Driver escrow", amount_cents: DEFAULT_ESCROW_HOLD_CENTS, load_number: "", escrow_type: "hold" };
+}
+
 function Section({
   title,
   subtotalCents,
@@ -228,7 +234,9 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
   const [additionalPay, setAdditionalPay] = useState<MoneyDraft[]>([]);
   const [deductions, setDeductions] = useState<MoneyDraft[]>([]);
   const [advances, setAdvances] = useState<MoneyDraft[]>([]);
-  const [escrow, setEscrow] = useState<MoneyDraft[]>([]);
+  // Queue item 6 (2026-10-02): every settlement starts with the $25 driver escrow hold (2100-00-0NN, owed to
+  // the driver — never Faro / factoring / reserves). The X removes it; + Add puts another back.
+  const [escrow, setEscrow] = useState<MoneyDraft[]>(() => [defaultEscrowLine()]);
   const [adminFeeCents, setAdminFeeCents] = useState(0);
   const [pdfCompanyExpenses, setPdfCompanyExpenses] = useState(0);
   const [pdfDriverNet, setPdfDriverNet] = useState(0);
@@ -1353,9 +1361,9 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
             <Section
               title="Escrow"
               subtotalCents={escrowNet}
-              onAdd={() => setEscrow([...escrow, { ...emptyMoney(), escrow_type: "hold" }])}
+              onAdd={() => setEscrow([...escrow, escrow.length ? { ...emptyMoney(), escrow_type: "hold" } : defaultEscrowLine()])}
             >
-              <p className="text-center text-xs text-[#6B7280]">Hold +, release/forfeit − · existing escrow engine</p>
+              <p className="text-center text-xs text-[#6B7280]">Driver escrow · 2100-00-0NN · hold +, release/forfeit −</p>
               {escrow.map((row, idx) => (
                 <div key={idx} className={`${fieldGridClass} border-t border-[#E5E7EB] pt-2`}>
                   <Field label="Type">
@@ -1397,15 +1405,27 @@ export function SettlementCreatorDrawer({ open, onClose, allowPost = false }: Se
                     />
                   </Field>
                   <Field label="Load No.">
-                    <input
-                      className={inputClass}
-                      value={row.load_number ?? ""}
-                      onChange={(e) => {
-                        const next = [...escrow];
-                        next[idx] = { ...row, load_number: e.target.value };
-                        setEscrow(next);
-                      }}
-                    />
+                    <div className="flex items-center gap-1">
+                      <input
+                        className={inputClass}
+                        value={row.load_number ?? ""}
+                        placeholder="First load"
+                        onChange={(e) => {
+                          const next = [...escrow];
+                          next[idx] = { ...row, load_number: e.target.value };
+                          setEscrow(next);
+                        }}
+                      />
+                      <button
+                        type="button"
+                        aria-label="Remove escrow line"
+                        data-testid={`sc-escrow-remove-${idx}`}
+                        className="px-1 text-xs font-bold text-[#6B7280] hover:text-[#B91C1C]"
+                        onClick={() => setEscrow(escrow.filter((_, i) => i !== idx))}
+                      >
+                        ×
+                      </button>
+                    </div>
                   </Field>
                 </div>
               ))}

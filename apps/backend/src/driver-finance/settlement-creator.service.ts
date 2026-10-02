@@ -26,6 +26,7 @@ import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.ser
 import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/poster.service.js";
 import { nextExpenseDisplayId } from "../accounting/display-id.js";
 import { createHistoricalEscrowHold } from "./historical-escrow-backfill.service.js";
+import { EscrowResolverError, resolveDriverEscrowLiabilityAccount } from "./escrow-resolver.service.js";
 import { createSettlementDeduction } from "./deductions.service.js";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
 import { sendDraftInvoice } from "../accounting/invoice-send.service.js";
@@ -666,12 +667,29 @@ export async function previewSettlementCreator(
     });
   }
   let escrowCents = 0;
+  // Queue item 6 (2026-10-02): driver escrow is a liability owed to THIS driver, on the driver's own
+  // 2100-00-0NN sub-account — the same account the close engine posts (resolveDriverEscrowLiabilityAccount).
+  // Never the shared escrow default / 2400, never Faro, never a reserve. Unbound -> a blocker by name.
+  let driverEscrow: { id: string; account_number: string | null; account_name: string } | null | undefined;
   for (const e of draft.escrow ?? []) {
     if (e.amount_cents <= 0) continue;
     escrowCents += e.amount_cents;
-    const liab =
-      (await accountByRole(client, draft.operating_company_id, "escrow_liability_default")) ??
-      (await accountByNumber(client, draft.operating_company_id, "2400"));
+    if (driverEscrow === undefined) {
+      driverEscrow = null;
+      if (draft.driver_id) {
+        try {
+          const r = await resolveDriverEscrowLiabilityAccount(client as never, draft.operating_company_id, draft.driver_id);
+          driverEscrow = (await client.query<{ id: string; account_number: string | null; account_name: string }>(
+            `SELECT id::text, account_number, account_name FROM catalogs.accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+            [r.accountId, draft.operating_company_id],
+          )).rows[0] ?? null;
+        } catch (err) {
+          if (!(err instanceof EscrowResolverError)) throw err;
+          blockers.push(`Driver escrow: ${err.message}. Provision the driver's 2100-00-0NN escrow sub-account.`);
+        }
+      }
+    }
+    const liab = driverEscrow;
     // ROUND 157-B fix: the comment this replaced ("Balancing Dr comes from settlement net —
     // shown as reduction below") was wrong -- driverNetCents below is a control-total figure,
     // never its own JE leg, so an escrow credit with no debit left every settlement with escrow
@@ -696,7 +714,7 @@ export async function previewSettlementCreator(
     push({
       load_number: e.load_number ?? null,
       account_number: liab?.account_number ?? null,
-      account_name: liab?.account_name ?? "Driver escrow liability",
+      account_name: liab?.account_name ?? "Driver escrow (2100-00-0NN) — not provisioned",
       debit_cents: 0,
       credit_cents: e.amount_cents,
       memo: e.description || "Escrow hold",
@@ -1276,7 +1294,9 @@ export async function postSettlementCreatorInClientTx(
   // Escrow holds from the PDF → createHistoricalEscrowHold (sign from transaction_type; existing engine).
   for (const e of draft.escrow ?? []) {
     if (e.amount_cents <= 0) continue;
-    const loadId = await resolveLoadIdByNumber(e.load_number);
+    // Owner rule 2026-10-02: every settlement item belongs to a load. The default $25 escrow line carries no
+    // load number — it belongs to the settlement's first load.
+    const loadId = await resolveLoadIdByNumber(e.load_number?.trim() || draft.loads?.[0]?.load_number);
     if (!loadId) {
       throw new SettlementCreatorError(
         "escrow_load_required",
