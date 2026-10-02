@@ -162,3 +162,15 @@ export async function computeIftaMiles(
     samsara_troubleshooting: report.troubleshooting,
   };
 }
+
+/** The one Samsara IFTA report fetcher for a company (shared by the IFTA screens, the miles route and the filing export). */
+export function samsaraIftaReportFetcher(client: unknown, operatingCompanyId: string) {
+  return async (p: SamsaraIftaPeriod): Promise<SamsaraIftaVehicleReportResult> => {
+    const { getSamsaraConfigForCompany } = await import("../integrations/samsara/samsara.service.js");
+    const { SamsaraClient } = await import("../integrations/samsara/samsara-client.js");
+    const { resolveSamsaraApiToken } = await import("../integrations/samsara/samsara-token.js");
+    const config = await getSamsaraConfigForCompany(client as never, operatingCompanyId);
+    if (!config) throw new Error("samsara_not_configured");
+    return new SamsaraClient({ apiToken: resolveSamsaraApiToken(config as Record<string, unknown>), samsaraOrgId: null }).listIftaVehicleReports(p);
+  };
+}

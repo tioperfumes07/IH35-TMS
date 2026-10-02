@@ -6,7 +6,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { buildIftaCsvContent, buildIftaCsvObjectKey } from "./ifta-csv-generator.js";
 import { aggregateStateGallons } from "./ifta-state-gallons-aggregator.js";
-import { aggregateStateMiles, quarterWindow } from "./ifta-state-miles-aggregator.js";
+import { aggregateStateMiles, IftaMilesNotReadyError, quarterWindow } from "./ifta-state-miles-aggregator.js";
 import { calculateStateTaxes } from "./ifta-tax-calculator.js";
 import { generatePresignedDownloadUrl, isR2Configured, putObjectBytes } from "../storage/r2-client.js";
 
@@ -126,7 +126,14 @@ export async function registerIftaQuarterlyPreparerRoutes(app: FastifyInstance) 
       }
 
       const window = quarterWindow(Number(prep.quarter), Number(prep.year));
-      const rows = await aggregateStateMiles(client, query.data.operating_company_id, window);
+      // ROUND 288.3 item 1: GPS-apportioned miles only; Samsara not ready -> a named refusal, never a load-based estimate.
+      let rows: Awaited<ReturnType<typeof aggregateStateMiles>>;
+      try {
+        rows = await aggregateStateMiles(client, query.data.operating_company_id, window);
+      } catch (err) {
+        if (err instanceof IftaMilesNotReadyError) return { code: 409 as const, error: "ifta_gps_miles_not_ready" as const };
+        throw err;
+      }
 
       await client.query(`DELETE FROM ifta.state_miles_by_quarter WHERE preparation_id = $1::uuid`, [params.data.id]);
       for (const row of rows) {
