@@ -16,6 +16,8 @@ export type CoaListRow = {
   detail_type: string;
   qb_balance: string;
   bank_balance: string;
+  /** B-1 / ORDERS — true when this CoA row is matched to a live bank feed (Plaid). */
+  feed_connected: boolean;
   status: string;
   is_active: boolean;
   statement: string;
@@ -94,6 +96,8 @@ export function buildCoaListRows(
     const balance = balanceByCode.get(row.code);
     const childIds = childrenByParent.get(row.id) ?? [];
 
+    const bankBalance = resolveBankBalance(row.display_name, accountType, plaidAccounts);
+
     return {
       id: row.id,
       number: row.code || "—",
@@ -102,7 +106,8 @@ export function buildCoaListRows(
       acct_type: accountType,
       detail_type: detailType,
       qb_balance: formatCurrencyFromCents(balance?.closing_balance_cents),
-      bank_balance: resolveBankBalance(row.display_name, accountType, plaidAccounts),
+      bank_balance: bankBalance,
+      feed_connected: bankBalance !== "—",
       status: row.is_active ? "Active" : "Inactive",
       is_active: row.is_active,
       statement,

@@ -55,4 +55,48 @@ describe("coa-list-utils", () => {
     expect(ordered.map((row) => row.id)).toEqual(["parent", "child"]);
     expect(ordered[1]?.depth).toBe(1);
   });
+
+  // BANK-F91030 — feed_connected when Plaid name matches a bank/asset CoA row
+  it("marks feed_connected when Plaid bank balance resolves", () => {
+    const rows = buildCoaListRows(
+      [
+        {
+          id: "wf",
+          code: "1010",
+          display_name: "WF - General Operating 6103",
+          description: null,
+          metadata: { account_type: "Bank" },
+          is_active: true,
+          sort_order: 1,
+          created_at: "",
+          updated_at: "",
+        },
+        {
+          id: "exp",
+          code: "6100",
+          display_name: "Fuel",
+          description: null,
+          metadata: { account_type: "Expense" },
+          is_active: true,
+          sort_order: 2,
+          created_at: "",
+          updated_at: "",
+        },
+      ],
+      [],
+      [],
+      [
+        {
+          id: "plaid-1",
+          account_name: "WF - General Operating 6103",
+          current_balance_cents: -19081,
+        } as never,
+      ]
+    );
+    const bank = rows.find((r) => r.id === "wf");
+    const expense = rows.find((r) => r.id === "exp");
+    expect(bank?.feed_connected).toBe(true);
+    expect(bank?.bank_balance).not.toBe("—");
+    expect(expense?.feed_connected).toBe(false);
+  });
 });

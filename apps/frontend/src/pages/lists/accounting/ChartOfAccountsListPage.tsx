@@ -147,8 +147,24 @@ function buildColumns(
     {
       id: "acct_type",
       label: "ACCOUNT TYPE",
-      width: 140,
+      width: 160,
       sortType: "text",
+      // B-1 / ORDERS + QBO §11 — Type (+feed badge): bank-feed chip + BAL when connected.
+      render: (row) => (
+        <span className="inline-flex items-center gap-1" data-b1-coa-type="1">
+          <span className="truncate">{row.acct_type}</span>
+          {row.feed_connected ? (
+            <span
+              className="inline-flex shrink-0 items-center gap-0.5 rounded-sm bg-slate-100 px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700"
+              data-b1-coa-feed-badge="1"
+              data-testid="b1-coa-feed-badge"
+              title="Connected bank feed"
+            >
+              Feed · BAL
+            </span>
+          ) : null}
+        </span>
+      ),
     },
     {
       id: "detail_type",

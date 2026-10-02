@@ -84,6 +84,15 @@ function main() {
   assertIncludes(coa, 'data-testid="b1-coa-make-inactive"', COA);
   assertIncludes(coa, "Make inactive", COA);
   assertIncludes(coa, "deactivateCatalogAccount", COA);
+  // BANK-F91030 — Type (+feed badge) when bank feed connected (ORDERS §B-1 / QBO §11)
+  assertIncludes(coa, 'data-b1-coa-type="1"', COA);
+  assertIncludes(coa, 'data-b1-coa-feed-badge="1"', COA);
+  assertIncludes(coa, "Feed · BAL", COA);
+  assertIncludes(coa, "row.feed_connected", COA);
+
+  const coaUtils = read("apps/frontend/src/pages/lists/accounting/coa-list-utils.ts");
+  assertIncludes(coaUtils, "feed_connected", "coa-list-utils.ts");
+  assertIncludes(coaUtils, "feed_connected: bankBalance !== \"—\"", "coa-list-utils.ts");
 
   const inlinePanel = read("apps/frontend/src/pages/accounting/RegisterInlineEditPanel.tsx");
   assertIncludes(inlinePanel, 'data-testid="b1-register-edit-original"', "RegisterInlineEditPanel");
