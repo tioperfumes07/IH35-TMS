@@ -1,4 +1,4 @@
 # NOW-CURSOR
-NOW: FEED FUEL GL RETIRED (bank-match only) · branch `cursor/feed-fuel-posts-only-on-bank-match-c0b7` · tip base `c3807b3482`
+NOW: UNMATCH CLEAR COLUMNS shipping · branch `cursor/unmatch-clear-columns-c0b7` · tip base `4e1f672c16` (#24268 feed fuel MERGED)
 ACK: CURSOR | ACK OWNER-ORDER-2026-10-02-BUILD-100 | GO
-NEXT: ship feed-fuel PR → competing bank-match survivors (session /match, obligation-reconcile, unmatch clear columns)
+NEXT: ship unmatch clear + matchCreatedJe → trigger BE deploy for #24268 + this PR

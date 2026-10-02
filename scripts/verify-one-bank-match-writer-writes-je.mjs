@@ -74,6 +74,19 @@ export function check(files) {
   if (!/reverseJournalEntryNoFlip/.test(unmatch)) {
     problems.push(`${UNMATCH}: unmatch must reverse the JE (never flag-flip alone)`);
   }
+  // OWNER-ORDER 2026-10-02 §4 — unmatch must clear these three (were half-released).
+  for (const col of ["matched_invoice_id", "matched_advance_id", "categorization_gl_account_id"]) {
+    if (!new RegExp(`${col}\\s*=\\s*NULL`, "i").test(unmatch)) {
+      problems.push(`${UNMATCH}: unmatch must clear ${col} (OWNER-ORDER §4 half-release)`);
+    }
+  }
+  // Reverse only match-created JEs (fuel/relay/factoring), never a JE that was merely the match target.
+  if (!/prev_fuel_transaction_id|matched_fuel_transaction_id/.test(unmatch)) {
+    problems.push(`${UNMATCH}: unmatch must snapshot fuel match ids before deciding JE reverse`);
+  }
+  if (!/matchCreatedJe/.test(unmatch)) {
+    problems.push(`${UNMATCH}: unmatch must gate JE reverse on matchCreatedJe (fuel/relay/factoring only)`);
+  }
 
   const session = files[SESSION_RECON] ?? "";
   if (session) {

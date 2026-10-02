@@ -301,12 +301,17 @@ export async function unmatchBankTransaction(input: {
       prev_settlement_id: string | null;
       prev_payment_id: string | null;
       prev_bill_payment_id: string | null;
+      prev_fuel_transaction_id: string | null;
+      prev_relay_fuel_transaction_id: string | null;
+      prev_factoring_advance_id: string | null;
     }>(
       `
         WITH prior AS (
           SELECT id, matched_expense_id, matched_transfer_id, matched_journal_entry_id,
                  matched_load_id, matched_bill_id, matched_settlement_id,
-                 matched_payment_id, matched_bill_payment_id
+                 matched_payment_id, matched_bill_payment_id,
+                 matched_fuel_transaction_id, matched_relay_fuel_transaction_id,
+                 matched_factoring_advance_id
           FROM banking.bank_transactions
           WHERE id = $1::uuid AND operating_company_id = $2::uuid
             AND voided_at IS NULL
@@ -323,15 +328,20 @@ export async function unmatchBankTransaction(input: {
             matched_factoring_advance_id = NULL,
             matched_fuel_transaction_id = NULL,
             matched_relay_fuel_transaction_id = NULL,
+            -- OWNER-ORDER 2026-10-02 §4 — these three were left set on unmatch (half-release).
+            matched_invoice_id = NULL,
+            matched_advance_id = NULL,
+            categorization_gl_account_id = NULL,
             -- 'unmatched' is not a legal review_state (CHECK: for_review|categorized|excluded|matched|
             -- transfer) — 'for_review' is the correct "back in the queue" state, and unlike the
             -- session-scoped unmatch (reconciliation.routes.ts, which leaves review_state untouched at
             -- 'matched' with no matched_*_id pointers — a pre-existing orphaned-state gap, out of
             -- scope here) this one gets it right.
             review_state = 'for_review',
-            -- ROUND 326 queue item 14 (G-18): unmatching reverses the line's categorization JE (below), so the line
-            -- must go back to the categorization queue. Leaving it 'categorized' with no JE made the categorized-
-            -- backlog poster re-post it — reverse, re-post, reverse — the 6300 gross churn.
+            -- ROUND 326 queue item 14 (G-18): when unmatch reverses a match-created JE (fuel/relay/
+            -- recourse below), the line goes back to the categorization queue. Leaving it
+            -- 'categorized' with no JE made the categorized-backlog poster re-post it — reverse,
+            -- re-post, reverse — the 6300 gross churn.
             status = CASE WHEN prior.matched_journal_entry_id IS NOT NULL AND bt.status = 'categorized'
                           THEN 'pending_categorization' ELSE bt.status END,
             updated_at = now()
@@ -346,14 +356,23 @@ export async function unmatchBankTransaction(input: {
           prior.matched_bill_id::text AS prev_bill_id,
           prior.matched_settlement_id::text AS prev_settlement_id,
           prior.matched_payment_id::text AS prev_payment_id,
-          prior.matched_bill_payment_id::text AS prev_bill_payment_id
+          prior.matched_bill_payment_id::text AS prev_bill_payment_id,
+          prior.matched_fuel_transaction_id::text AS prev_fuel_transaction_id,
+          prior.matched_relay_fuel_transaction_id::text AS prev_relay_fuel_transaction_id,
+          prior.matched_factoring_advance_id::text AS prev_factoring_advance_id
       `,
       [input.bank_transaction_id, input.operating_company_id]
     );
     const row = res.rows[0];
     if (!row) throw new Error("bank_transaction_not_found");
 
-    if (row.prev_journal_entry_id) {
+    // OWNER-ORDER 2026-10-02 §4 — reverse ONLY JEs this match writer created (fuel/relay fill post
+    // or factoring chargeback on 1230). Do NOT reverse a JE that was merely matched as the ledger
+    // target (kind=je) or that categorize wrote — those use undo-categorization / void of the JE.
+    const matchCreatedJe = Boolean(
+      row.prev_fuel_transaction_id || row.prev_relay_fuel_transaction_id || row.prev_factoring_advance_id
+    );
+    if (row.prev_journal_entry_id && matchCreatedJe) {
       await reverseJournalEntryNoFlip(client, {
         operatingCompanyId: input.operating_company_id,
         journalEntryId: row.prev_journal_entry_id,
