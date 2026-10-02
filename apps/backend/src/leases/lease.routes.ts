@@ -32,6 +32,10 @@ const createBody = company.extend({
   deposit_cents: z.number().int().nonnegative().nullable().optional(),
   escalation_pct_bps: z.number().int().nonnegative().nullable().optional(),
   escalation_every_months: z.number().int().positive().nullable().optional(),
+  // ROUND 321 lease-to-own (ASC 842 lessee): required for lease_to_own by validateAgreement.
+  discount_rate_bps: z.number().int().min(0).max(10000).nullable().optional(),
+  purchase_option_kind: z.enum(["none", "fmv", "fixed"]).nullable().optional(),
+  purchase_option_price_cents: z.number().int().min(0).nullable().optional(),
   election: z.enum(["operating", "sales_type"]).optional(),
   expense_account_id: z.string().uuid().nullable().optional(),
   display_id: z.string().trim().max(60).nullable().optional(),

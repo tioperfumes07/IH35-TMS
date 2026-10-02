@@ -13,6 +13,7 @@
  * bill_lines.lease_asset_line_id (lease-bill-engine.service.ts).
  */
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { capitalizeLeaseToOwnOnSign, lesseeSchemaReady, LesseePostingError } from "./lessee-posting.service.js";
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }> };
 
@@ -42,6 +43,10 @@ export type CreateLeaseAgreementInput = {
   expense_account_id?: string | null;
   display_id?: string | null;
   contract_instance_id?: string | null;
+  /** ROUND 321 lease-to-own (ASC 842 lessee): discount rate + purchase option (FMV -> operating, fixed -> finance). */
+  discount_rate_bps?: number | null;
+  purchase_option_kind?: "none" | "fmv" | "fixed" | null;
+  purchase_option_price_cents?: number | null;
   assets: LeaseAssetInput[];
 };
 
@@ -56,6 +61,11 @@ export function validateAgreement(input: CreateLeaseAgreementInput, lesseeCompan
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.commencement_date) || !/^\d{4}-\d{2}-\d{2}$/.test(input.end_date)) p.push("commencement and end dates are required");
   else if (input.end_date < input.commencement_date) p.push("end date is before the commencement date");
   if (!input.assets?.length) p.push("select at least one unit or trailer");
+  if (input.lease_type === "lease_to_own") {
+    if (!(Number.isInteger(input.discount_rate_bps) && (input.discount_rate_bps as number) >= 0)) p.push("lease-to-own needs a discount rate (the contract rate, else the borrowing rate)");
+    if (!["none", "fmv", "fixed"].includes(String(input.purchase_option_kind))) p.push("lease-to-own needs a purchase option: none, fair market value, or a fixed price");
+    if (input.purchase_option_kind === "fixed" && !(Number.isInteger(input.purchase_option_price_cents) && (input.purchase_option_price_cents as number) >= 0)) p.push("a fixed purchase option needs its price");
+  }
   const seen = new Set<string>();
   for (const [i, a] of (input.assets ?? []).entries()) {
     const kinds = [a.unit_id, a.equipment_id].filter(Boolean).length;
@@ -130,18 +140,28 @@ export async function createLeaseAgreement(client: DbClient, opco: string, actor
        (operating_company_id, lessor_operating_company_id, lessor_vendor_id, lessee_name, lessee_operating_company_id, display_id,
         lease_type, billing_mode, election, commencement_date, end_date, payment_amount_cents, payment_frequency, number_of_periods,
         total_lease_payments_cents, deposit_cents, escalation_pct_bps, escalation_every_months, expense_account_id,
-        contract_instance_id, unit_count_basis, status, is_active, created_by_user_id)
+        contract_instance_id, unit_count_basis, status, is_active, created_by_user_id, discount_rate_bps)
      VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $1::uuid, $5, $6, $7, $8, $9::date, $10::date, $11, 'monthly', $12,
-             $13, $14, $15, $16, $17::uuid, $18::uuid, $19, 'draft', true, $20::uuid)
+             $13, $14, $15, $16, $17::uuid, $18::uuid, $19, 'draft', true, $20::uuid, $21)
      RETURNING id::text`,
     [
       opco, input.lessor_operating_company_id, input.lessor_vendor_id, lessee.rows[0]?.name ?? "Lessee", input.display_id ?? null,
       input.lease_type, input.billing_mode, input.election ?? "operating", input.commencement_date, input.end_date, monthly, periods,
       monthly * periods, input.deposit_cents ?? null, input.escalation_pct_bps ?? null, input.escalation_every_months ?? null,
       input.expense_account_id ?? null, input.contract_instance_id ?? null, input.assets.length, actorUserId,
+      input.discount_rate_bps ?? null,
     ]
   );
   const id = res.rows[0].id;
+  if (input.lease_type === "lease_to_own") {
+    if (!(await lesseeSchemaReady(client))) {
+      throw new LeaseEngineError("lease_to_own_asc842_not_applied", "Lease-to-own accounting (migration 202615210000) is not applied on this database yet — ask the Lead to apply it.", 409);
+    }
+    await client.query(
+      `UPDATE accounting.lease_contract SET purchase_option_kind = $3, purchase_option_price_cents = $4 WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [id, opco, input.purchase_option_kind, input.purchase_option_kind === "fixed" ? input.purchase_option_price_cents : null]
+    );
+  }
   await client.query(
     `INSERT INTO accounting.lease_classification (operating_company_id, lease_contract_id, election, determined_by_user_id, determined_at, created_by_user_id)
      VALUES ($1::uuid, $2::uuid, $3, $4::uuid, now(), $4::uuid)`,
@@ -162,8 +182,8 @@ export async function createLeaseAgreement(client: DbClient, opco: string, actor
 
 /** Sign (backdating allowed): draft -> active, stamps signer, links the legal contract, derives leased-to. */
 export async function signLease(client: DbClient, opco: string, actorUserId: string, leaseId: string, signedAt: string, contractInstanceId?: string | null) {
-  const l = await client.query<{ status: string; lessee: string | null }>(
-    `SELECT status, lessee_operating_company_id::text AS lessee FROM accounting.lease_contract
+  const l = await client.query<{ status: string; lessee: string | null; lease_type: string | null }>(
+    `SELECT status, lessee_operating_company_id::text AS lessee, lease_type FROM accounting.lease_contract
       WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL FOR UPDATE`,
     [leaseId, opco]
   );
@@ -184,6 +204,16 @@ export async function signLease(client: DbClient, opco: string, actorUserId: str
     );
   }
   await deriveLeasedTo(client, opco, leaseId, row.lessee);
+  // ROUND 321: a lease-to-own is capitalized at signing (ASC 842 lessee) — same transaction, refuses rather than
+  // signing an uncapitalized lease-to-own.
+  if (row.lease_type === "lease_to_own") {
+    try {
+      await capitalizeLeaseToOwnOnSign(client, opco, actorUserId, leaseId);
+    } catch (e) {
+      if (e instanceof LesseePostingError) throw new LeaseEngineError(e.code, e.message, e.status);
+      throw e;
+    }
+  }
   await appendCrudAudit(client as never, actorUserId, "lease.signed",
     { resource_type: "accounting.lease_contract", resource_id: leaseId, operating_company_id: opco, signed_at: signedAt, contract_instance_id: contractInstanceId ?? null },
     "info", "ROUND-316-LEASE");
