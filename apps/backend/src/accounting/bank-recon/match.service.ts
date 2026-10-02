@@ -20,9 +20,14 @@ import { hasJournalEntryTypeColumn, resolveJournalEntryTypeId } from "../journal
 // Cr the payment's original holding account) right here, reusing the shared idempotent/period-gated poster.
 import { ensureOpenPeriod, postSourceTransactionInClientTx, PostingEngineError } from "../posting-engine.service.js";
 import {
+  loadExactLinkedChargebackAmountsOnClient,
+  postFactoringChargebackEvent,
+} from "../factoring-posting/poster.service.js";
+import {
   SQL_BILL_IS_SETTLEMENT_BORN,
   SQL_BILL_PAYMENT_IS_CASH_SETTLEMENT_BORN,
 } from "./settlement-born-candidates.js";
+import { postFuelFillOnBankMatch } from "./bank-match-fuel-post.service.js";
 
 /**
  * ROUND 157-C / 156 MASTER SPEC — THIS FILE OWNS THE BANKING MATCH SURFACE.
@@ -1319,6 +1324,19 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
       is_credit: txn.is_credit,
     });
 
+    // ROUND 288.2 / ACCT-F9335 — fuel fill posts HERE (same transaction as the match). Import posts nothing.
+    // Stamp matched_journal_entry_id with the fuel JE so unmatch reverses through the one void engine.
+    let fuelJournalEntryId: string | null = null;
+    if (input.ledger_entry_kind === "fuel_transaction" || input.ledger_entry_kind === "relay_fuel") {
+      const fuelPost = await postFuelFillOnBankMatch(client, {
+        operating_company_id: input.operating_company_id,
+        actor_user_uuid: input.actor_user_uuid,
+        kind: input.ledger_entry_kind,
+        fill_id: input.ledger_entry_id,
+      });
+      fuelJournalEntryId = fuelPost.journal_entry_id;
+    }
+
     // Clear the bank line: mark it 'matched' + stamp the denormalized matched_<kind>_id so the
     // worklist and the Accounting Bills/Expenses lists show status without re-deriving from
     // banking.reconciliation_matches. Column name comes from a fixed whitelist (never user input).
@@ -1330,19 +1348,41 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
       // ACCT-F5647 — belt-and-suspenders alongside the row lock above: WHERE review_state <> 'matched',
       // with the zero-row result surfaced as the same already-matched error the earlier read-based
       // check already returns, matching payments.routes.ts's own ACCT-F5636 pattern.
-      const cleared = await client.query(
-        `UPDATE banking.bank_transactions
-            SET review_state = 'matched',
-                reviewed_at = now(),
-                categorized_by_user_id = $4::uuid,
-                categorized_at = now(),
-                updated_at = now(),
-                ${matchedColumn} = $3::uuid
-          WHERE id = $1::uuid
-            AND operating_company_id = $2::uuid
-            AND review_state <> 'matched'`,
-        [input.bank_transaction_id, input.operating_company_id, input.ledger_entry_id, input.actor_user_uuid]
-      );
+      // Fuel/relay: also stamp matched_journal_entry_id in the SAME statement as review_state='matched'.
+      const cleared = fuelJournalEntryId
+        ? await client.query(
+            `UPDATE banking.bank_transactions
+                SET review_state = 'matched',
+                    reviewed_at = now(),
+                    categorized_by_user_id = $4::uuid,
+                    categorized_at = now(),
+                    updated_at = now(),
+                    ${matchedColumn} = $3::uuid,
+                    matched_journal_entry_id = $5::uuid
+              WHERE id = $1::uuid
+                AND operating_company_id = $2::uuid
+                AND review_state <> 'matched'`,
+            [
+              input.bank_transaction_id,
+              input.operating_company_id,
+              input.ledger_entry_id,
+              input.actor_user_uuid,
+              fuelJournalEntryId,
+            ]
+          )
+        : await client.query(
+            `UPDATE banking.bank_transactions
+                SET review_state = 'matched',
+                    reviewed_at = now(),
+                    categorized_by_user_id = $4::uuid,
+                    categorized_at = now(),
+                    updated_at = now(),
+                    ${matchedColumn} = $3::uuid
+              WHERE id = $1::uuid
+                AND operating_company_id = $2::uuid
+                AND review_state <> 'matched'`,
+            [input.bank_transaction_id, input.operating_company_id, input.ledger_entry_id, input.actor_user_uuid]
+          );
       if (cleared.rowCount === 0) {
         throw new Error("bank_transaction_already_matched");
       }
@@ -1431,16 +1471,65 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
         ]
       );
     } else if (input.ledger_entry_kind === "factoring_advance") {
-      // ROUND 261 (GO-CLOSE-188 DEFECT A, factoring side) — same deposit-sweep the "payment" branch
-      // above runs for customer payments, extended to factoring advances: cash_clearing (Undeposited
-      // Funds) is a HOLDING account here too, and nothing ever swept a matched advance's balance out
-      // of it into the real bank register. matched_factoring_advance_id (set by the generic match
-      // UPDATE above, MATCHED_ID_COLUMN_MAP) is the reverse pointer the sweep resolves the covering
-      // bank transaction from — no new column, no migration. Best-effort, same skip contract as the
-      // customer_payment_deposit sweep: a genuinely ineligible advance (voided, QBO-origin, already
-      // posted straight to this bank) is a normal, expected skip; any
-      // OTHER error still surfaces, since it would mean real money moved with no GL trail.
-      await sweepMatchedReceiptToBank(client, input.operating_company_id, "factoring_advance_deposit", input.ledger_entry_id, input.actor_user_uuid);
+      // ROUND 296 / 288.2 — Faro day-95 REPURCHASE (full-recourse chargeback) arrives as a bank line
+      // on the Faro Escrow/Security Reserve register (GL 1230 / role factor_reserve_held). Matching
+      // that line to the advance runs CC-2's chargeback/recourse poster (postFactoringChargebackEvent)
+      // — never a deposit sweep. Cash Rsv (GL 1235) is a separate pool — not this gate.
+      // Ordinary funding wires still sweep Undeposited Funds → bank.
+      const reserveBank = await client.query<{ is_reserve: boolean }>(
+        `
+          SELECT EXISTS (
+            SELECT 1
+              FROM banking.bank_accounts ba
+              JOIN catalogs.accounts a ON a.id = ba.ledger_account_id
+             WHERE ba.id = $1::uuid
+               AND ba.operating_company_id = $2::uuid
+               AND (
+                 a.account_number = '1230'
+                 OR EXISTS (
+                   SELECT 1 FROM catalogs.account_role_bindings arb
+                    WHERE arb.operating_company_id = $2::uuid
+                      AND arb.account_id = a.id
+                      AND arb.role_key = 'factor_reserve_held'
+                      AND arb.voided_at IS NULL
+                 )
+               )
+          ) AS is_reserve
+        `,
+        [txn.bank_account_id, input.operating_company_id]
+      );
+      if (reserveBank.rows[0]?.is_reserve) {
+        // Same open match client — match + recourse JE commit together or neither does.
+        const amounts = await loadExactLinkedChargebackAmountsOnClient(
+          client,
+          input.operating_company_id,
+          input.ledger_entry_id
+        );
+        const cb = await postFactoringChargebackEvent({
+          operating_company_id: input.operating_company_id,
+          factoring_advance_id: input.ledger_entry_id,
+          actor_user_id: input.actor_user_uuid,
+          chargeback_amount_cents: amounts.liability_cents,
+          default_interest_cents: 0,
+          recoursed_ar_cents: amounts.recoursed_ar_cents,
+          client,
+        });
+        if (!cb.posted) {
+          throw new Error(`factoring_recourse_post_failed:${cb.reason ?? "unknown"}`);
+        }
+        if (cb.journal_entry_id) {
+          await client.query(
+            `UPDATE banking.bank_transactions
+                SET matched_journal_entry_id = COALESCE(matched_journal_entry_id, $3::uuid),
+                    updated_at = now()
+              WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+            [input.bank_transaction_id, input.operating_company_id, cb.journal_entry_id]
+          );
+        }
+      } else {
+        // ROUND 261 (GO-CLOSE-188 DEFECT A, factoring side) — deposit-sweep for funding wires.
+        await sweepMatchedReceiptToBank(client, input.operating_company_id, "factoring_advance_deposit", input.ledger_entry_id, input.actor_user_uuid);
+      }
     }
 
     const cashBasisRevenueCents = computeCashBasisRevenueFromActualCashHit({
@@ -1452,7 +1541,7 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
     return {
       variance_cents: varianceCents,
       difference_posted: varianceCents !== 0,
-      journal_entry_id: journalEntryId,
+      journal_entry_id: fuelJournalEntryId ?? journalEntryId,
       cash_basis_revenue_cents: cashBasisRevenueCents,
     };
   });
@@ -1526,6 +1615,12 @@ export async function acceptExactMultiDocumentMatch(input: {
     for (const entry of input.entries) {
       if (!PERSISTABLE_MATCH_KINDS.has(entry.ledger_entry_kind)) {
         throw new Error(`match_kind_not_acceptable:${entry.ledger_entry_kind}`);
+      }
+    }
+
+    for (const entry of input.entries) {
+      if (entry.ledger_entry_kind === "fuel_transaction" || entry.ledger_entry_kind === "relay_fuel") {
+        throw new Error("multi_match_fuel_not_supported:match_fuel_fills_one_at_a_time");
       }
     }
 

@@ -1,3 +1,20 @@
+**2026-10-02T15:40Z · ROUND 296 CURSOR — Cash Rsv approved + match engine + calendars**
+ACK: CURSOR | ACK ROUND 296 | GO
+1/4 Cash Rsv+Dispatch+Sch Fee — ALREADY ON TIP (`parseFaroCsv` + `verify-faro-deduction-capture`); face−escrow−cash_rsv−discount−fees−dispatch−sch_fee=net. Discount=FACTORING FEE; Sch Fee+Wire=TRANSACTION FEES (separate). 1230 Escrow/Security ≠ 1235 Cash Rsv; 1236 retires. CC-2 owns restore-1235 migration claim #24142.
+2/4 Fuel match → `postFuelFillOnBankMatch` → `postFuelExpenseOnClient` same txn + JE stamp.
+3/4 Survivor match=`acceptMatchWithResolveDifference`; unmatch=`unmatchBankTransaction`. DELETED: session recon inline unmatch; accounting recon rejectReconMatch-as-unmatch. GUARD=`verify-one-bank-match-writer-writes-je`. GL 1230 repurchase → `postFactoringChargebackEvent({client})`.
+4/4 DateTimePicker.test 15/15 PASS (UI-F9637 portal). QBO presets today/this week/month/quarter/year/custom on UniversalListToolbar + RunnerFilters + Legal alerts + DrugAlcohol/Training. ManualJE+BookLoad credit → `formatUsdCents`. Legal Due col 132px + due_at range. CustomerDetail/Amortization/Loan already DatePicker; MonthClose is type=month.
+NO post/seed/match live. NEXT: money-pr-local-gate → PR → FAST-MERGE.
+
+**2026-10-02T15:20Z · ROUND 288.2 MATCH ENGINE (fuel+one-writer+recourse) SHIPPING**
+ACK: CURSOR | ACK GO-20 HOOK | R288.2 MATCH ENGINE | GO
+1/3 fuel match → `postFuelFillOnBankMatch` → `postFuelExpenseOnClient` same txn + JE stamp.
+2/3 survivor match=`acceptMatchWithResolveDifference`; survivor unmatch=`unmatchBankTransaction`.
+   DELETED: banking/reconciliation.routes session inline unmatch UPDATE; accounting/reconciliation.routes rejectReconMatch-as-unmatch; prior silent accept stampers stay deleted (#23994).
+   GUARD: `verify-one-bank-match-writer-writes-je` (+ fuel posts-only-on-bank-match).
+3/3 GL 1230 / factor_reserve_held → `postFactoringChargebackEvent({client})` same txn.
+NO post/seed/Chrome/auto-match. NEXT: money-pr-local-gate → PR → FAST-MERGE → tip deploy SHA.
+
 **2026-10-02T15:00Z · BANK-F91049 MERGED #24123 · tip `d7a93771f6`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91049 MERGED FAST-MERGE | GO
 B-5 Make Deposit Save and close ▾ (Save and new). money-pr-local-gate PASS → #24123 squash. Session: F91045–F91049. F91038 still Tier-A blocked.

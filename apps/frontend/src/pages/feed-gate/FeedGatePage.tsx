@@ -11,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
 import { closeFeedIntake, getFeedIntake, listFeedIntakes, runFeedGate, type FeedCheck, type FeedIntake, type FeedKind } from "../../api/feedGate";
+import { formatDateTimeUS } from "../../lib/formatDate";
 
 const STATUS_CLS: Record<string, string> = {
   passed: "bg-slate-800 text-white", closed: "bg-slate-600 text-white", blocked: "bg-red-600 text-white", open: "bg-slate-200 text-slate-800", voided: "bg-slate-100 text-slate-500",
@@ -130,7 +131,7 @@ export function FeedGatePage() {
               <td className="p-2 text-xs">{i.driver_name ?? "—"}</td>
               <td className="p-2"><Badge status={i.status} /></td>
               <td className="p-2 text-xs">{i.checks_failed} / {i.checks_total}</td>
-              <td className="p-2 text-xs">{i.last_run_at ? new Date(i.last_run_at).toLocaleString() : "—"}</td>
+              <td className="p-2 text-xs">{i.last_run_at ? formatDateTimeUS(i.last_run_at) : "—"}</td>
               <td className="p-2"><button type="button" className="h-7 rounded-sm border border-slate-700 px-2 text-xs" disabled={rerun.isPending || i.status === "closed"} onClick={() => rerun.mutate(i)}>Run again</button></td>
             </tr>
           ))}

@@ -85,6 +85,7 @@ import {
 } from "../../../components/dispatch/accessorial-editor-lib";
 import { SelectCombobox } from "../../../components/Combobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { formatUsdCents } from "../../../lib/money";
 import { NumberInput } from "../../../components/forms/NumberInput";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { CappedListNotice } from "../../../components/CappedListNotice";
@@ -1963,8 +1964,8 @@ export function BookLoadModalV4({
             <div className="mx-3 mt-2 rounded-sm border-2 border-slate-300 bg-slate-50 px-3 py-2 text-xs">
               <p className="font-semibold text-slate-700">Credit limit reached</p>
               <p className="mt-0.5 text-slate-600">
-                Open exposure: ${(creditLimitBlock.exposure_cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })} &mdash;{" "}
-                Limit: ${(creditLimitBlock.limit_cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                Open exposure: {formatUsdCents(creditLimitBlock.exposure_cents)} &mdash;{" "}
+                Limit: {formatUsdCents(creditLimitBlock.limit_cents)}
                 {creditLimitBlock.credit_limit_source === "factor" ? " (Factor-set — FARO)" : ""}
               </p>
               {canOverrideCreditLimit ? (

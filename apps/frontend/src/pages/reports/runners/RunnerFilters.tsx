@@ -5,6 +5,10 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { EntityPicker } from "../../../components/EntityPicker";
 import { SelectCombobox } from "../../../components/Combobox";
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
+import {
+  applyUniversalDatePreset,
+  QBO_DATE_PRESETS,
+} from "../../../components/table/UniversalListToolbar";
 
 type Props = {
   filters: RunnerFilter[];
@@ -103,10 +107,38 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
               return (
                 <div key={filter.key} className="md:col-span-2 xl:col-span-2">
                   <FilterLabel filter={filter} />
-                  <div className="flex items-center gap-2">
-                    <DatePicker className="" value={String(draft.from ?? "")} onChange={(next) => staged.setDraft({ ...draft, from: next })} />
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <select
+                      className="h-[34px] rounded-sm border border-slate-300 px-2 text-xs"
+                      value={String(draft.date_preset ?? "custom")}
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        const bounds = applyUniversalDatePreset(next);
+                        staged.setDraft({
+                          ...draft,
+                          date_preset: next,
+                          ...(bounds ? { from: bounds.from, to: bounds.to } : {}),
+                        });
+                      }}
+                      data-testid="runner-date-preset"
+                    >
+                      {QBO_DATE_PRESETS.map((p) => (
+                        <option key={p.value} value={p.value}>
+                          {p.label}
+                        </option>
+                      ))}
+                    </select>
+                    <DatePicker
+                      className=""
+                      value={String(draft.from ?? "")}
+                      onChange={(next) => staged.setDraft({ ...draft, from: next, date_preset: "custom" })}
+                    />
                     <span className="text-slate-500">to</span>
-                    <DatePicker className="" value={String(draft.to ?? "")} onChange={(next) => staged.setDraft({ ...draft, to: next })} />
+                    <DatePicker
+                      className=""
+                      value={String(draft.to ?? "")}
+                      onChange={(next) => staged.setDraft({ ...draft, to: next, date_preset: "custom" })}
+                    />
                   </div>
                 </div>
               );

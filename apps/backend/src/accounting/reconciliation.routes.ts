@@ -6,7 +6,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import {
   acceptReconMatch,
   getReconWorklist,
-  rejectReconMatch,
+  unmatchBankTransaction,
 } from "./bank-recon/recon-worklist.service.js";
 import type { LedgerEntryKind } from "./bank-recon/match.service.js";
 
@@ -27,8 +27,6 @@ const matchBodySchema = z.object({
 const unmatchBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   bank_transaction_id: z.string().uuid(),
-  ledger_entry_kind: z.enum(["payment", "bill_payment", "transfer", "je"]),
-  ledger_entry_id: z.string().uuid(),
 });
 
 function canReconcile(role: string) {
@@ -87,6 +85,7 @@ export async function registerAccountingReconciliationRoutes(app: FastifyInstanc
     }
   });
 
+  // ROUND 288.2 — ONE unmatch writer. Formerly rejectReconMatch only (suggestion reject, no JE reverse).
   app.patch("/api/v1/accounting/reconciliation/unmatch", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
@@ -94,12 +93,10 @@ export async function registerAccountingReconciliationRoutes(app: FastifyInstanc
     const body = unmatchBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
     await assertCompanyMembership(user.uuid, body.data.operating_company_id);
-    await rejectReconMatch({
+    await unmatchBankTransaction({
       operating_company_id: body.data.operating_company_id,
       bank_transaction_id: body.data.bank_transaction_id,
       actor_user_uuid: user.uuid,
-      ledger_entry_kind: asLedgerKind(body.data.ledger_entry_kind),
-      ledger_entry_id: body.data.ledger_entry_id,
     });
     return { ok: true };
   });

@@ -2301,6 +2301,18 @@ async function linkedOutstandingRecoursedArCents(
   return Number(res.rows[0]?.outstanding ?? 0);
 }
 
+/** Same-txn amount read for bank-match recourse (caller owns the open client). */
+export async function loadExactLinkedChargebackAmountsOnClient(
+  client: DbClient,
+  operatingCompanyId: string,
+  factoringAdvanceId: string
+): Promise<{ liability_cents: number; recoursed_ar_cents: number }> {
+  return {
+    liability_cents: await linkedOutstandingLiabilityCents(client, operatingCompanyId, factoringAdvanceId),
+    recoursed_ar_cents: await linkedOutstandingRecoursedArCents(client, operatingCompanyId, factoringAdvanceId),
+  };
+}
+
 /** Exported for day-95 orchestration — same exact-linked amounts the chargeback poster validates. */
 export async function loadExactLinkedChargebackAmounts(
   operatingCompanyId: string,
@@ -2310,10 +2322,7 @@ export async function loadExactLinkedChargebackAmounts(
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
       operatingCompanyId,
     ]);
-    return {
-      liability_cents: await linkedOutstandingLiabilityCents(client, operatingCompanyId, factoringAdvanceId),
-      recoursed_ar_cents: await linkedOutstandingRecoursedArCents(client, operatingCompanyId, factoringAdvanceId),
-    };
+    return loadExactLinkedChargebackAmountsOnClient(client, operatingCompanyId, factoringAdvanceId);
   });
 }
 
@@ -2335,6 +2344,11 @@ export type PostFactoringChargebackInput = {
   default_interest_cents: number;
   /** Must equal exact linked outstanding invoice A/R — required; no default. */
   recoursed_ar_cents: number;
+  /**
+   * ROUND 288.2 — when set (bank-match accept), runs on the caller's open txn so match + recourse
+   * JE commit together. No nested withCurrentUser. Caller owns post-commit side-effect enqueue.
+   */
+  client?: DbClient;
 };
 
 /**
@@ -2366,7 +2380,7 @@ async function postFactoringChargebackEventImpl(input: PostFactoringChargebackIn
 
   const sideEffectJes: Array<{ je: CreateJournalEntryInput; id: string }> = [];
 
-  const outcome = await withCurrentUser(input.actor_user_id, async (client) => {
+  const run = async (client: DbClient) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
       input.operating_company_id,
     ]);
@@ -2740,7 +2754,12 @@ async function postFactoringChargebackEventImpl(input: PostFactoringChargebackIn
     );
 
     return { kind: "posted" as const, journal_entry_id: returnCreated.id };
-  });
+  };
+
+  // ROUND 288.2 — bank-match passes its open client so match + recourse JE are one transaction.
+  const outcome = input.client
+    ? await run(input.client)
+    : await withCurrentUser(input.actor_user_id, run);
 
   if (outcome.kind === "flag_off") return FLAG_OFF;
   if (outcome.kind === "advance_not_found") return { posted: false, reason: "advance_not_found" };
@@ -2759,8 +2778,11 @@ async function postFactoringChargebackEventImpl(input: PostFactoringChargebackIn
     return { posted: false, reason: "already_posted", journal_entry_id: outcome.journal_entry_id };
   }
 
-  for (const item of sideEffectJes) {
-    await enqueueJournalEntrySideEffects(item.je, item.id, input.actor_user_id);
+  // When caller owns the txn (bank-match), side effects enqueue after the outer commit — skip here.
+  if (!input.client) {
+    for (const item of sideEffectJes) {
+      await enqueueJournalEntrySideEffects(item.je, item.id, input.actor_user_id);
+    }
   }
   return { posted: true, journal_entry_id: outcome.journal_entry_id };
 }

@@ -12,6 +12,7 @@ import { DatePicker } from "../../../components/forms/DatePicker";
 import { useToast } from "../../../components/Toast";
 import { JournalEntryTypePicker } from "../../../components/accounting/JournalEntryTypePicker";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { formatUsdCents } from "../../../lib/money";
 
 // BANK-F5330 / P23-BANKING-RAW-UUID-BACKEND-GAPS — migration 202612670000 added entity_type as the
 // discriminator beside journal_entry_postings.entity_uuid. Same 4 kinds the exemption in
@@ -270,7 +271,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
               + Create line
             </button>
             <div className={balanced ? "rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-slate-700" : "rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-red-700"}>
-              Debits ${(totalDebitCents / 100).toFixed(2)} / Credits ${(totalCreditCents / 100).toFixed(2)}{" "}
+              Debits {formatUsdCents(totalDebitCents)} / Credits {formatUsdCents(totalCreditCents)}{" "}
               {balanced ? "Balanced ✓" : "Not balanced"}
             </div>
             <div className="flex gap-2">
@@ -289,8 +290,8 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
             </div>
             <div className="rounded-sm border border-gray-200 p-2 text-xs">
               <div><span className="font-semibold">Lines:</span> {lines.length}</div>
-              <div><span className="font-semibold">Debits:</span> ${(totalDebitCents / 100).toFixed(2)}</div>
-              <div><span className="font-semibold">Credits:</span> ${(totalCreditCents / 100).toFixed(2)}</div>
+              <div><span className="font-semibold">Debits:</span> {formatUsdCents(totalDebitCents)}</div>
+              <div><span className="font-semibold">Credits:</span> {formatUsdCents(totalCreditCents)}</div>
             </div>
             <label className="block">
               Journal date
