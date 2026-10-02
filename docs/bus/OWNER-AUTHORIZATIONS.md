@@ -6931,3 +6931,25 @@ row_counts: payment 411c9b24 re-applied to inv 13513 (app 102b9ea8); inv 13515 v
 proof_query: inv ca5c386d status=paid amount_paid=52500; inv f59a3468 status=void voided_at set; je 2c730468 reversed_by=814a8991; load 44eae7f5 status=cancelled.
 derivation: Lead REPLY 14:55 CT FACTORING-TAKEOVER B.9 + owner confirmed 13513/13515 same load keep 13513; CC-2 WRAP HELD facts absorbed into void-not-delete shape.
 THIS AUTHORIZATION DOES NOT COVER: DELETE FROM any table; voiding 13513; touching any other load; QBO write-back.
+
+## AUTH-202
+issued_at: 2026-10-02T04:50:00Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). mdata.customers + mdata.vendors canonical merge (00-QUEUE-CC-3-11-ITEMS item 1).
+  Owner, in CC-3 chat 2026-10-02, verbatim: "you have it my authorization you have all authorizations and permissions."
+  Queue item 1 (owner's first priority, before the purge): remove the duplicates — 22 duplicate customer groups and the
+  duplicate vendor groups (incl. owner ruling LOVES = LOVES TRAVEL STOPS, 00-OWNER-DECISION-2026-10-02).
+  Action, through the canonical engine (apps/backend/src/mdata/canonical/canonical-entities.service.ts) only:
+    (1) per duplicate group: repoint every reference (live FKs + run-time-discovered customer_(id|uuid) / vendor_(id|uuid)
+        columns; never qbo_* mirrors) to the survivor (most references, then active, then most complete, then oldest);
+    (2) write the alias row (old name + full snapshot + exact repoint log) — reversible via reverseCanonicalMerge;
+    (3) DELETE the duplicate customer / vendor row (owner law 2026-10-02: no cancelled shells);
+    (4) refuse and roll back unless open A/R (customers) and open A/P (vendors) are unchanged to the cent, group and
+        company-wide.
+  Rehearsed: br-empty-lake-akqooohs (customers 22 -> 0, A/R 37,413,412c / 110 invoices unchanged) and br-icy-wave-akhfbayb
+  (vendors 3 -> 0 incl. LOVES, 16 rows repointed, A/P 56,635c / 93 bills unchanged); both branches deleted.
+action: DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-02-cc3-canonical-customers.mts --apply --auth AUTH-202 && DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-02-cc3-canonical-vendors.mts --apply --auth AUTH-202
+  Dry-run first (default, no --apply).
+expires_at: 2026-10-03T23:00:00Z
+status: OPEN
+THIS AUTHORIZATION DOES NOT COVER: any company other than USMCA; mdata.qbo_customers / mdata.qbo_vendors; any money posting or
+JE; merging any pair that does not normalize equal other than the owner-named LOVES exception.
