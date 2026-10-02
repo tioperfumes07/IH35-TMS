@@ -17,7 +17,8 @@ const TABLES: Array<[string, string[]]> = [
   ["vehicle_positions", ["company_code", "unit_number", "captured_at", "observation_id"]],
   ["geofences", ["company_code", "fence_key"]],
   ["geofence_events", ["company_code", "unit_number", "fence_key", "event_kind", "occurred_at"]],
-  ["unit_stop_events", ["company_code", "unit_number", "started_at"]],
+  // ROUND 340: a grown stop is a second row with the same start (migration 202615301000) — page on the ledger's own id
+  ["unit_stop_events", ["company_code", "unit_number", "started_at", "id"]],
   ["odometer_readings", ["company_code", "unit_number", "read_at", "source"]],
   ["load_odometer_segments", ["company_code", "load_number", "segment_kind", "started_at"]],
   ["samsara_addresses", ["company_code", "samsara_address_id"]],
