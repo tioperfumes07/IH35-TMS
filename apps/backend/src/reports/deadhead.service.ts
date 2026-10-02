@@ -193,11 +193,15 @@ function summarizeDeadheadLoads(
 
   for (const row of rows) {
     const deadhead = resolveDeadheadToPickup(row, previousDelivery, row.pickup_city ?? null);
-    deadheadMiles += deadhead.miles;
-    loadedMiles += resolveLoadedMiles(row);
+    // ROUND 337: pg returns numeric columns as STRINGS — `+=` concatenated them ("0" + "1540.5114" = "01540.5114") and the
+    // INTEGER insert refused the whole refresh. Coerce, then round to whole miles (the cache columns are INTEGER).
+    deadheadMiles += Number(deadhead.miles) || 0;
+    loadedMiles += Number(resolveLoadedMiles(row)) || 0;
     previousDelivery = row.delivery_city ?? null;
   }
 
+  loadedMiles = Math.round(loadedMiles);
+  deadheadMiles = Math.round(deadheadMiles);
   const totalMiles = loadedMiles + deadheadMiles;
 
   return {
@@ -438,8 +442,8 @@ export async function refreshDeadheadCache(client: PoolClient, operatingCompanyI
           total_miles, loaded_miles, deadhead_miles, deadhead_pct, load_count,
           fleet_avg_deadhead_pct, rank_in_fleet, computed_at
         ) VALUES ${insertPlaceholders.join(", ")}
-        ON CONFLICT (unit_id, week_starting) DO UPDATE SET
-          operating_company_id = EXCLUDED.operating_company_id,
+        -- ROUND 337: the key carries the company (migration 202615300900) — a shared unit has one row per entity.
+        ON CONFLICT (operating_company_id, unit_id, week_starting) DO UPDATE SET
           total_miles = EXCLUDED.total_miles,
           loaded_miles = EXCLUDED.loaded_miles,
           deadhead_miles = EXCLUDED.deadhead_miles,
