@@ -112,7 +112,24 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 
 ## Active Architectural Decisions
 
-### Active Architectural Decisions — R224 gate loosenings fenced (Cursor, ROUND 240, 2026-09-29)
+### Active Architectural Decisions — Legal economic wiring via bill/invoice engines (Cursor, ROUND 326 item 3, 2026-10-02)
+
+- **Law:** Lead 10-02 Cursor LEGAL queue item 3 — settlement/claim/judgment/legal fee/retainer/insurance
+  recovery post through **existing expense/bill and invoice engines**, double-sided and reversible. No
+  handwritten JE, no new GL math. Supersedes ROUND 316 `createJournalEntryOnClient` reserve path and the
+  absolute Option B "legal never posts money" read of `verify-legal-no-gl-writes` (raw GL still forbidden;
+  calling `createBill` / `voidBill` / `createExpandedInvoice` is the sanctioned path).
+- **Engine:** `apps/backend/src/legal/legal-money.service.ts`
+  - Reserve increase → `createBill` + `legalMatterId` (memo mark `LEGAL-RESERVE:<matterId>`)
+  - Reserve release → `voidBill` LIFO on those bills
+  - Fee / retainer → `createBill`
+  - Recovery / judgment / settlement-in → `createExpandedInvoice` (AR); invoices lack `legal_matter_id`
+    column — linkage via `matter_events` + `LEGAL-MATTER:` notes until a CREATE-only migration lands in
+    Cursor's migration window (12–23 UTC).
+- **Routes:** `POST .../matters/:id/reserve|legal-fee|recovery`. Guard `scripts/verify-legal-linkage.mjs`
+  fails if money leaves the bill/invoice engines. No feed, no Chrome, no fixtures.
+
+## Active Architectural Decisions — R224 gate loosenings fenced (Cursor, ROUND 240, 2026-09-29)
 - Owner accepted Check Creator mount (#23117) + AUTH-126 chain (#23118). Ordered: file what was
   loosened, shrink-only ratchet both sets.
 - Filing: `claude/09-29-2026-CURSOR-GATE-LOOSENINGS-R224.md`

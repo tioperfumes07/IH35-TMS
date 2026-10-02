@@ -4,7 +4,7 @@
  * FAILS IF:
  *  - sync/apply linkage engine is unwired (contracts create/sign/detail/sync-linkage route)
  *  - matter create no longer requires subject FK or UNLINKED_REASON
- *  - legal money (matter reserve) posts outside the shared JE engine
+ *  - legal money posts outside the bill (AP/expense) or invoice (AR) engines
  * Optional live (DATABASE_URL): reports orphan counts (use --fail-live to fail on orphans).
  */
 export const ALLOW_OFFLINE_SKIP =
@@ -23,6 +23,8 @@ const P = {
   contracts: "apps/backend/src/legal/contracts.service.ts",
   routes: "apps/backend/src/legal/contracts.routes.ts",
   matters: "apps/backend/src/legal/matters.service.ts",
+  matterRoutes: "apps/backend/src/legal/matters.routes.ts",
+  money: "apps/backend/src/legal/legal-money.service.ts",
   moneyGuard: "scripts/verify-legal-no-gl-writes.mjs",
 };
 
@@ -58,16 +60,53 @@ export function check(s) {
   }
   if (!/matterHasSubjectFk\(provisional\)/.test(s.matters)) p.push(`${P.matters}: matterHasSubjectFk gate missing`);
 
-  // Money: matter reserve must stay on shared JE service (existing ROUND 316 + no handwritten GL).
-  if (!/createJournalEntryOnClient\(/.test(s.matters) || !/source_transaction_type: "legal_matter_reserve"/.test(s.matters)) {
-    p.push(`${P.matters}: matter reserve must post via createJournalEntryOnClient sourced to legal_matter_reserve`);
+  // ROUND 326 item 3 — money must go through bill + invoice engines (no handwritten JE in legal).
+  if (!existsSync(resolve(ROOT, P.money))) {
+    p.push(`${P.money}: legal-money.service missing (economic wiring)`);
+  } else {
+    if (!/from ["']\.\.\/accounting\/bills\.service\.js["']/.test(s.money) && !/from ["']\.\.\/accounting\/bills\.service["']/.test(s.money)) {
+      p.push(`${P.money}: must import createBill/voidBill from bills.service`);
+    }
+    if (!/createBill\(/.test(s.money)) p.push(`${P.money}: reserve/fee must call createBill`);
+    if (!/voidBill\(/.test(s.money)) p.push(`${P.money}: reserve release must call voidBill`);
+    if (!/createExpandedInvoice\(/.test(s.money)) p.push(`${P.money}: recovery/judgment must call createExpandedInvoice`);
+    if (!/legalMatterId:/.test(s.money)) p.push(`${P.money}: bills must stamp legalMatterId`);
+    if (/createJournalEntryOnClient\(/.test(s.money) || /source_transaction_type:\s*["']legal_matter_reserve["']/.test(s.money)) {
+      p.push(`${P.money}: handwritten / direct JE reserve path is forbidden — use bill engine`);
+    }
+    if (!/export async function postMatterLegalFee/.test(s.money)) p.push(`${P.money}: postMatterLegalFee missing`);
+    if (!/export async function postMatterRecovery/.test(s.money)) p.push(`${P.money}: postMatterRecovery missing`);
+  }
+  if (!/\/api\/v1\/legal\/matters\/:id\/legal-fee/.test(s.matterRoutes)) {
+    p.push(`${P.matterRoutes}: POST legal-fee route missing`);
+  }
+  if (!/\/api\/v1\/legal\/matters\/:id\/recovery/.test(s.matterRoutes)) {
+    p.push(`${P.matterRoutes}: POST recovery route missing`);
+  }
+  if (!/postMatterLegalFee\(/.test(s.matterRoutes) || !/postMatterRecovery\(/.test(s.matterRoutes)) {
+    p.push(`${P.matterRoutes}: fee/recovery handlers not wired`);
+  }
+  if (/createJournalEntryOnClient\(/.test(s.matters)) {
+    p.push(`${P.matters}: must not call createJournalEntryOnClient — money is in legal-money.service via bill/invoice`);
+  }
+  if (!/from ["']\.\/legal-money\.service\.js["']/.test(s.matters) && !/legal-money\.service/.test(s.matters)) {
+    p.push(`${P.matters}: must re-export money helpers from legal-money.service`);
   }
   if (!existsSync(resolve(ROOT, P.moneyGuard))) p.push(`${P.moneyGuard}: legal no-GL guard missing`);
 
   return p;
 }
 
-const real = Object.fromEntries(Object.entries(P).filter(([, v]) => v.endsWith(".ts")).map(([k, v]) => [k, read(v)]));
+const real = Object.fromEntries(
+  Object.entries(P)
+    .filter(([, v]) => v.endsWith(".ts") || v.endsWith(".mjs"))
+    .filter(([, v]) => existsSync(resolve(ROOT, v)))
+    .map(([k, v]) => [k, read(v)])
+);
+// Always load money + matterRoutes when present for check().
+for (const k of ["money", "matterRoutes"]) {
+  if (!real[k] && existsSync(resolve(ROOT, P[k]))) real[k] = read(P[k]);
+}
 
 if (process.argv.includes("--selftest")) {
   let ok = true;
@@ -92,10 +131,9 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(
-  `${LABEL}: OK — sync engine + sync-linkage route + matter subject/UNLINKED_REASON gate + reserve via JE engine`
+  `${LABEL}: OK — sync engine + backfill + matter subject gate + legal money via bill/invoice engines`
 );
 
-// Optional live orphan count (never writes).
 async function liveOrphans() {
   const url = process.env.DATABASE_URL?.trim();
   if (!url) return;
@@ -130,14 +168,18 @@ async function liveOrphans() {
           AND position('UNLINKED_REASON:' in coalesce(m.internal_notes,'')) = 0`,
       [USMCA]
     );
+    const moneyBills = await client.query(
+      `SELECT count(*)::int AS n FROM accounting.bills
+        WHERE operating_company_id = $1::uuid AND legal_matter_id IS NOT NULL
+          AND voided_at IS NULL AND revoked_at IS NULL`,
+      [USMCA]
+    );
     await client.query("ROLLBACK");
     const cOrphans = Number(contractOrphans.rows[0]?.n ?? 0);
     const mOrphans = Number(matterOrphans.rows[0]?.n ?? 0);
     console.log(
-      `${LABEL} LIVE: links=${links.rows[0]?.n} contract_orphans=${cOrphans} matter_orphans=${mOrphans}`
+      `${LABEL} LIVE: links=${links.rows[0]?.n} contract_orphans=${cOrphans} matter_orphans=${mOrphans} matter_bills=${moneyBills.rows[0]?.n}`
     );
-    // Live orphan FAIL is informational until item-2 backfill lands — still print. Engine PR must
-    // not invent links; orphans remain until sync+backfill. Only fail live when --fail-live.
     if (process.argv.includes("--fail-live") && (cOrphans > 0 || mOrphans > 0)) {
       console.error(`${LABEL} LIVE FAIL: orphans remain (run sync-linkage + item-2 backfill)`);
       process.exit(1);
