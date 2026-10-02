@@ -42,7 +42,11 @@ export const PAYMENT_DISPLAY_ID_PATTERN = /^PMT-[0-9]{4}-[0-9]{5}$/;
  * shape nextBillDisplayId itself generates, as defense in depth rather than a DB-constraint
  * mirror: a manual override that does not match the series' own shape is still a real mistake to
  * catch, even though nothing downstream would currently refuse it. */
-export const BILL_DISPLAY_ID_PATTERN = /^BILL-[0-9]{4}-[0-9]{5}$/;
+// ROUND 300 (CC-1, proven on a Neon fork): the owner ruled driver pay is A/P PER LOAD with each bill "numbered
+// EXACTLY as the load" — settlement-ap-chain passes the load number (e.g. 13619) as the bill number, and this pattern
+// refused it (InvalidDisplayIdShapeError), so EVERY settlement close through the per-load A/P chain failed. The
+// plain-digit load-number shape is the same alternative invoices accept (INVOICE_DISPLAY_ID_PATTERN, GO-10 REV-B L3).
+export const BILL_DISPLAY_ID_PATTERN = /^(BILL-[0-9]{4}-[0-9]{5}|[0-9]{1,12})$/;
 
 function assertDisplayIdShape(value: string, pattern: RegExp, docType: string): string {
   if (!pattern.test(value)) {

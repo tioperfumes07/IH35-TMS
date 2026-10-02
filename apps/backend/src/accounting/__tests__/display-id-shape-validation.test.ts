@@ -58,9 +58,14 @@ describe("display-id shape validation — SET-25", () => {
     );
   });
 
-  it("resolveBillDisplayId: a manual value not matching BILL-YYYY-NNNNN throws the typed error", async () => {
+  it("resolveBillDisplayId: BILL-YYYY-NNNNN or a load number (owner 10-02: driver bills numbered exactly as the load); anything else throws", async () => {
     const client = makeClient();
-    await expect(resolveBillDisplayId(client as never, OPCO, new Date("2026-09-04"), "13508")).rejects.toBeInstanceOf(
+    // ROUND 300 — the per-load A/P chain numbers each driver bill as its load; this shape used to throw and broke every close.
+    await expect(resolveBillDisplayId(client as never, OPCO, new Date("2026-09-04"), "13508")).resolves.toBe("13508");
+    await expect(resolveBillDisplayId(client as never, OPCO, new Date("2026-09-04"), "PMT-2026-00001")).rejects.toBeInstanceOf(
+      InvalidDisplayIdShapeError
+    );
+    await expect(resolveBillDisplayId(client as never, OPCO, new Date("2026-09-04"), "13508-A")).rejects.toBeInstanceOf(
       InvalidDisplayIdShapeError
     );
     await expect(resolveBillDisplayId(client as never, OPCO, new Date("2026-09-04"), "BILL-2026-00001")).resolves.toBe(
