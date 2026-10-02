@@ -1,6 +1,6 @@
 **2026-10-02T13:05Z · BANK-F91039 B-4 §14 driver-bill settlement chrome · tip pending**
 ACK: CURSOR | ACK GO-20 HOOK | SEQUENCE LIVE + F91039 AUTHORING | GO
-ROUND 326 SEQUENCE live (bypass_rls=lucia): contract_instance_links=2 · contract_orphans=0 · matter_orphans=0 · G-15 note on bus · verify-legal-linkage LIVE OK. Neon MCP without bypass RLS falsely reads 0 (ih35_app). F91038 still Tier-A blocked (no vendor_credit poster). Built §14 chrome: driver payee + queued bills → NB-Load / Settlement / Truck·Trailer / WO / PU·DEL / empty·loaded miles / origin→destination + paid-to-date badge; listBillsByVendor load_link extended; guard verify-b4-check-creator PASS.
+ROUND 326 SEQUENCE live (bypass_rls=lucia): contract_instance_links=2 · contract_orphans=0 · matter_orphans=0 · G-15 note on bus · verify-legal-linkage LIVE OK. Neon MCP without bypass RLS falsely reads 0 (ih35_app). F91038 still Tier-A blocked (no vendor_credit poster). Built §14 FE chrome from existing bill list linkage (no bills.service.ts lane cross); empty/OD/trailer show — until enricher.
 NEXT: money-pr-local-gate → push → FAST-MERGE · FE+BE deploy tip · Lead Chrome · F91038 blocked until poster · clean-app APPLY AUTH · no Book Load · no seed.
 
 **2026-10-02T12:46Z · BANK-F91037 DEPLOYED BOTH · tip `b4b8aa2202` · healthz `b4b8aa2`**
