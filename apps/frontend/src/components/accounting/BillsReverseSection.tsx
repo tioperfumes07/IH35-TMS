@@ -61,7 +61,7 @@ export function BillsReverseSection({
   const [payTarget, setPayTarget] = useState<VendorBill | null>(null);
   const billsQ = useQuery({
     queryKey: ["accounting", "bills", "reverse", operatingCompanyId, filter],
-    queryFn: () => listBills(operatingCompanyId, { ...filter, limit: BILLS_REVERSE_LIST_LIMIT }),
+    queryFn: () => listBills(operatingCompanyId, { ...filter, status: "active", limit: BILLS_REVERSE_LIST_LIMIT }),
     enabled: Boolean(operatingCompanyId) && Boolean(filterValue),
   });
   const rows = billsQ.data?.rows ?? [];

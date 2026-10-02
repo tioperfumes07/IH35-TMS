@@ -218,6 +218,9 @@ type ListBillsOptions = {
   unitId?: string;
   /** ACCT-F5037 — load→bill reverse via EXISTS on accounting.bill_lines.load_id. */
   loadId?: string;
+  /** ROUND 297 — driver / trailer profile reverse lists (accounting.bills.driver_id / trailer_id). */
+  driverId?: string;
+  trailerId?: string;
   /** SORT LAW (COL-04) — allowlisted column key from BillsPage; unknown → bill_date. */
   sort?: string;
   dir?: "asc" | "desc";
@@ -1015,6 +1018,14 @@ export async function listBillsByVendor(
       values.push(options.unitId);
       where.push(`b.unit_id = $${values.length}::uuid`);
     }
+    if (options.driverId) {
+      values.push(options.driverId);
+      where.push(`b.driver_id = $${values.length}::uuid`);
+    }
+    if (options.trailerId) {
+      values.push(options.trailerId);
+      where.push(`b.trailer_id = $${values.length}::uuid`);
+    }
     if (options.loadId) {
       values.push(options.loadId);
       where.push(
@@ -1195,6 +1206,14 @@ function buildAllBillsWhereClause(
   if (options.unitId) {
     values.push(options.unitId);
     where.push(`b.unit_id = $${values.length}::uuid`);
+  }
+  if (options.driverId) {
+    values.push(options.driverId);
+    where.push(`b.driver_id = $${values.length}::uuid`);
+  }
+  if (options.trailerId) {
+    values.push(options.trailerId);
+    where.push(`b.trailer_id = $${values.length}::uuid`);
   }
   if (options.loadId) {
     values.push(options.loadId);

@@ -85,6 +85,10 @@ const listBillsQuerySchema = companyQuerySchema.extend({
   unit_id: z.string().uuid().optional(),
   // ACCT-F5037 — load→bill reverse via accounting.bill_lines.load_id (header has no load_id).
   load_id: z.string().uuid().optional(),
+  // ROUND 297 driver-profile audit — driver / trailer profile Bills panels sent these and the schema dropped them,
+  // so a driver's Bills panel listed every bill in the company (with Pay buttons).
+  driver_id: z.string().uuid().optional(),
+  trailer_id: z.string().uuid().optional(),
   // SORT LAW (COL-04) — allowlisted column → SQL ORDER BY (see BILL_LIST_SORT_SQL).
   sort: z.string().trim().max(64).optional(),
   dir: z.enum(["asc", "desc"]).optional(),
@@ -279,6 +283,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       legalMatterId: query.data.legal_matter_id,
       unitId: query.data.unit_id,
       loadId: query.data.load_id,
+      driverId: query.data.driver_id,
+      trailerId: query.data.trailer_id,
       sort: query.data.sort,
       dir: query.data.dir,
     };
@@ -327,6 +333,8 @@ export async function registerBillsRoutes(app: FastifyInstance) {
       legalMatterId: query.data.legal_matter_id,
       unitId: query.data.unit_id,
       loadId: query.data.load_id,
+      driverId: query.data.driver_id,
+      trailerId: query.data.trailer_id,
       sort: query.data.sort,
       dir: query.data.dir,
     };
