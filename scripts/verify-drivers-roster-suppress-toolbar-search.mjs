@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 /**
- * DRV-F3504 — Drivers roster keeps server-bound name search (listDrivers);
- * ParityTable must pass suppressToolbarSearch so toolbar Search does not compete.
+ * DRV-F3504 — Drivers roster has ONE search, never two competing ones.
+ * Re-anchored 2026-10-02 to the round 296 filter law (the filename stays: registered verify-step 3504). The roster
+ * loads the WHOLE company once through the complete reader (listAllDrivers, every status); the status chips count that
+ * roster; the ONE search is the house toolbar (ParityTable's UniversalListToolbar) over it, with "N of M". The old
+ * shape -- a page box re-querying the server per keystroke + suppressToolbarSearch -- skewed the chip counts while
+ * typing and did nothing on the Profiles tab.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -17,9 +21,14 @@ function assert(cond, msg) {
 export function check(source) {
   const src = source ?? fs.readFileSync(path.join(ROOT, PAGE), "utf8");
   assert(src.includes("ParityTable"), "Drivers.tsx: must use ParityTable");
-  assert(/\[search,\s*setSearch\]/.test(src), "Drivers.tsx: must keep server-bound search state");
-  assert(/listAllDrivers\(\{[\s\S]*?operating_company_id: selectedCompanyId,[\s\S]*?status: "All",[\s\S]*?search,/.test(src), "Drivers.tsx: must pass selected-company search to complete listAllDrivers reader");
-  assert(/suppressToolbarSearch/.test(src), "Drivers.tsx: must pass suppressToolbarSearch");
+  assert(
+    /listAllDrivers\(\{[\s\S]*?operating_company_id: selectedCompanyId,[\s\S]*?status: "All",/.test(src),
+    "Drivers.tsx: must read the complete selected-company roster through listAllDrivers"
+  );
+  assert(!/\[search,\s*setSearch\]/.test(src), "Drivers.tsx: a second, page-level search state is back");
+  const roster = src.match(/<ParityTable\s+rows=\{driversRowsFiltered\}[\s\S]*?\/>/)?.[0] ?? "";
+  assert(roster.length > 0, "Drivers.tsx: roster ParityTable not found");
+  assert(!/suppressToolbarSearch/.test(roster), "Drivers.tsx: the roster must not suppress the house toolbar search");
 }
 
 function selftest() {
@@ -28,8 +37,8 @@ function selftest() {
   const mutations = [
     ["complete-reader", /listAllDrivers\(/, "listDrivers("],
     ["company-scope", /operating_company_id: selectedCompanyId,/, "operating_company_id: undefined,"],
-    ["server-search", /\n\s*search,\n/, "\n"],
-    ["duplicate-toolbar", /\n\s*\/\/ DRV-F3504:[^\n]*\n\s*suppressToolbarSearch\n/, "\n"],
+    ["second-search", /(export function \w+\([^)]*\) \{\n)/, '$1  const [search, setSearch] = useState("");\n'],
+    ["suppressed-toolbar", /emptyText="No drivers found\."/, 'emptyText="No drivers found."\n                  suppressToolbarSearch'],
   ];
   for (const [name, pattern, replacement] of mutations) {
     const bad = good.replace(pattern, replacement);
@@ -38,24 +47,16 @@ function selftest() {
     try { check(bad); } catch { failed = true; }
     assert(failed, `selftest: expected FAIL for ${name}`);
   }
-  console.log("verify-drivers-roster-suppress-toolbar-search --selftest PASS — 4 mutations detected");
+  console.log(`verify-drivers-roster-suppress-toolbar-search --selftest PASS — ${mutations.length} mutations detected`);
 }
 
-if (process.argv.includes("--selftest")) {
-  try {
-    selftest();
-  } catch (e) {
-    console.error(`verify-drivers-roster-suppress-toolbar-search FAIL — ${e.message}`);
-    process.exit(1);
-  }
-} else {
-  try {
+try {
+  if (process.argv.includes("--selftest")) selftest();
+  else {
     check();
-    console.log(
-      "verify-drivers-roster-suppress-toolbar-search PASS — Drivers roster suppresses toolbar search",
-    );
-  } catch (e) {
-    console.error(`verify-drivers-roster-suppress-toolbar-search FAIL — ${e.message}`);
-    process.exit(1);
+    console.log("verify-drivers-roster-suppress-toolbar-search PASS — one search: the house toolbar over the complete roster");
   }
+} catch (e) {
+  console.error(`verify-drivers-roster-suppress-toolbar-search FAIL — ${e.message}`);
+  process.exit(1);
 }

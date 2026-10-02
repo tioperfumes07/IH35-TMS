@@ -225,7 +225,6 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
-  const [search, setSearch] = useState("");
   const driverListStatus = useMemo(() => parseDriverListStatus(searchParams), [searchParams]);
   const activeTab = useMemo(() => parseDriversHomeView(searchParams), [searchParams]);
   const subnavTab = useMemo(() => {
@@ -281,13 +280,15 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
     // DRIVERPROFILE-1: the roster MUST be scoped to the selected company — an unscoped
     // /mdata/drivers read returns 0 (entity-scoped table), which emptied the roster despite 83
     // real drivers. Re-scopes when the user switches company; gated until a company is selected.
-    queryKey: ["drivers", { companyId: selectedCompanyId, search, listScope: "all-statuses" }],
+    // Round 296: the WHOLE roster once (listAllDrivers reads every page); the status chips count it and the house
+    // toolbar (ParityTable's UniversalListToolbar) is the one search with "N of M". The old box re-queried the server
+    // on every keystroke, skewed the chip counts while typing, and did nothing on the Profiles tab.
+    queryKey: ["drivers", { companyId: selectedCompanyId, listScope: "all-statuses" }],
     enabled: Boolean(selectedCompanyId),
     queryFn: () =>
       listAllDrivers({
         operating_company_id: selectedCompanyId,
         status: "All",
-        search,
         // Admin roster management view -- must still show deactivated/merged rows so an owner can
         // find, reactivate, or audit them. Every picker/dropdown must NOT set this (default false).
         include_deactivated: true,
@@ -674,15 +675,6 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                 ]}
               />
             ) : null}
-            {subnavTab === "drivers" || subnavTab === "profiles" ? (
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search by name"
-                aria-label="Search drivers by name"
-                className="h-7 w-full max-w-xs rounded-sm border border-gray-300 px-2 text-xs"
-              />
-            ) : null}
           </>
         ) : null}
       </div>
@@ -775,7 +767,6 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   onRowClick={(row) => navigate(`/drivers/${row.id}`)}
                   columns={driversRosterColumns}
                   emptyText="No drivers found."
-                  suppressToolbarSearch
                 />
               )}
             </>

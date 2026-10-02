@@ -145,12 +145,23 @@ export async function registerSamsaraDriverMappingRoutes(app: FastifyInstance) {
           params.push(seen_since);
           conditions.push(`sd.last_seen_at >= $${params.length}::timestamptz`);
         }
+        // Round 296 "N of M": M = the status scope before the search; N = with the search.
+        const scopeConditions = [...conditions];
+        const scopeParams = [...params];
         if (q) {
           params.push(`%${q.toLowerCase()}%`);
           conditions.push(
             `(lower(coalesce(sd.raw_payload->>'name','') || ' ' || coalesce(sd.raw_payload->>'firstName','') || ' ' || coalesce(sd.raw_payload->>'lastName','')) LIKE $${params.length} OR lower(sd.samsara_driver_id) LIKE $${params.length})`
           );
         }
+        const totalRes = (await client.query(
+          `SELECT count(*)::int AS n FROM integrations.samsara_drivers sd WHERE ${conditions.join(" AND ")}`,
+          params
+        )) as { rows: Array<{ n: number }> };
+        const scopeRes = (await client.query(
+          `SELECT count(*)::int AS n FROM integrations.samsara_drivers sd WHERE ${scopeConditions.join(" AND ")}`,
+          scopeParams
+        )) as { rows: Array<{ n: number }> };
         params.push(limit);
         const limitParam = params.length;
         params.push(cursor);
@@ -229,6 +240,8 @@ export async function registerSamsaraDriverMappingRoutes(app: FastifyInstance) {
             };
           }),
           next_cursor: rows.rows.length === limit ? cursor + limit : null,
+          total: Number(totalRes.rows[0]?.n ?? 0),
+          scope_total: Number(scopeRes.rows[0]?.n ?? 0),
         };
       });
 
@@ -285,6 +298,9 @@ export async function registerSamsaraDriverMappingRoutes(app: FastifyInstance) {
         const params: unknown[] = [operating_company_id];
         if (filter === "active") conditions.push(`deactivated_at IS NULL`);
         if (filter === "past") conditions.push(`deactivated_at IS NOT NULL`);
+        // Round 296 "N of M": M = the status scope before the search; N = with the search.
+        const scopeConditions = [...conditions];
+        const scopeParams = [...params];
         if (q) {
           params.push(`%${q.toLowerCase()}%`);
           conditions.push(`lower(vendor_name) LIKE $${params.length}`);

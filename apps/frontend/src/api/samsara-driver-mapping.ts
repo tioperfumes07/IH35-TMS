@@ -36,6 +36,10 @@ export type ProfilesResponse = {
   status: "ok";
   profiles: SamsaraProfile[];
   next_cursor: number | null;
+  /** Rows matching status + search (round 296 "N"). */
+  total?: number;
+  /** Rows in the status scope before the search (round 296 "M"). */
+  scope_total?: number;
 };
 
 export type ProfilesQuery = {

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { UniversalListToolbar } from "../../components/table/UniversalListToolbar";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Combobox, type ComboboxOption } from "../../components/Combobox";
 import { DataPanel } from "../../components/layout/DataPanel";
@@ -250,17 +251,25 @@ export function SamsaraDriverMappingPage() {
               {tab.text}
             </button>
           ))}
-          <input
-            type="text"
-            className="ml-auto rounded-sm border border-gray-300 px-2 py-1 text-xs"
-            placeholder="Search name or Samsara ID"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setCursor(0);
-            }}
-            data-testid="profiles-search"
-          />
+          {/* Round 296: the house toolbar is the one search -- debounced, run by the server over every profile in the
+              status scope; "N of M" = matching of that scope. The table's own per-page toolbar is hidden. */}
+          <div className="ml-auto" data-testid="profiles-search">
+            <UniversalListToolbar
+              search={search}
+              onSearchChange={(value) => {
+                setSearch(value);
+                setCursor(0);
+                setSelected(new Set());
+              }}
+              columns={[]}
+              range={null}
+              onRangeApply={() => undefined}
+              hideRange
+              resultCount={profilesQuery.data?.total ?? rows.length}
+              totalCount={profilesQuery.data?.scope_total ?? rows.length}
+              searchPlaceholder="Search name or Samsara ID"
+            />
+          </div>
         </div>
         {selected.size > 0 ? (
           <div className="flex items-center gap-2 border-b border-gray-200 bg-slate-50 px-3 py-2">
@@ -318,19 +327,41 @@ export function SamsaraDriverMappingPage() {
               />
               <span className="text-xs text-gray-500">Select all on this page ({rows.length})</span>
             </div>
-            <DataTable columns={columns} rows={rows} rowKey={(row) => row.samsara_driver_id} />
+            <DataTable columns={columns} rows={rows} rowKey={(row) => row.samsara_driver_id} hideToolbar />
           </>
         ) : null}
-        {profilesQuery.data?.next_cursor != null ? (
-          <div className="border-t border-gray-200 px-3 py-2">
-            <button
-              type="button"
-              className="text-xs font-semibold text-slate-700 underline"
-              onClick={() => setCursor(profilesQuery.data!.next_cursor!)}
-              data-testid="profiles-load-more"
-            >
-              Load more
-            </button>
+        {/* Real paging (was "Load more", which REPLACED the rows with the next page). */}
+        {cursor > 0 || profilesQuery.data?.next_cursor != null ? (
+          <div className="flex items-center justify-between border-t border-gray-200 px-3 py-2 text-xs text-slate-600">
+            <span>
+              {rows.length > 0 ? `${cursor + 1}–${cursor + rows.length}` : "0"} of {profilesQuery.data?.total ?? rows.length}
+            </span>
+            <span className="flex gap-2">
+              <button
+                type="button"
+                className="font-semibold text-slate-700 underline disabled:opacity-40"
+                disabled={cursor === 0}
+                onClick={() => {
+                  setCursor(Math.max(0, cursor - PAGE_SIZE));
+                  setSelected(new Set());
+                }}
+                data-testid="profiles-prev-page"
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                className="font-semibold text-slate-700 underline disabled:opacity-40"
+                disabled={profilesQuery.data?.next_cursor == null}
+                onClick={() => {
+                  setCursor(profilesQuery.data!.next_cursor!);
+                  setSelected(new Set());
+                }}
+                data-testid="profiles-load-more"
+              >
+                Next
+              </button>
+            </span>
           </div>
         ) : null}
       </DataPanel>
