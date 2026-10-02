@@ -29,7 +29,10 @@ if (process.argv.includes("--selftest")) {
 const url = process.env.DATABASE_URL;
 if (!url) { console.error(`${LABEL}: FAIL — DATABASE_URL not set (live guard fails closed).`); process.exit(1); }
 
-const engine = JSON.parse(execFileSync("npx", ["tsx", path.join(ROOT, "scripts/lib/print-factoring-kpis.ts"), USMCA, FROM, TO], { cwd: ROOT, env: process.env, encoding: "utf8", maxBuffer: 1 << 24 }));
+const print = (script) => JSON.parse(execFileSync("npx", ["tsx", path.join(ROOT, script), USMCA, FROM, TO], { cwd: ROOT, env: process.env, encoding: "utf8", maxBuffer: 1 << 24 }));
+const engine = print("scripts/lib/print-factoring-kpis.ts");
+const bankEngine = print("scripts/lib/print-banking-kpis.ts");
+const bref = {};
 
 const c = new pg.Client({ connectionString: url, statement_timeout: 60000 });
 await c.connect();
@@ -63,17 +66,50 @@ try {
   const d = await one(`SELECT avg(fp.purchase_date - i.issue_date)::numeric(10,2)::text d FROM accounting.factoring_purchases fp JOIN accounting.factoring_purchase_lines l ON l.purchase_id = fp.id AND l.voided_at IS NULL JOIN accounting.invoices i ON i.id = l.invoice_id WHERE fp.operating_company_id = '${USMCA}' AND fp.status = 'posted' AND fp.purchase_date BETWEEN '${FROM}' AND '${TO}' AND i.issue_date IS NOT NULL`);
   ref.days_to_fund = d.d != null ? Number(d.d) : 0;
   ref.unfunded_aging = Number((await one(`SELECT COALESCE(sum(fp.net_to_company_cents),0)::bigint s FROM accounting.factoring_purchases fp WHERE fp.operating_company_id = '${USMCA}' AND fp.status = 'posted' AND fp.purchase_date BETWEEN '${FROM}' AND '${TO}' AND NOT EXISTS (SELECT 1 FROM banking.bank_transactions b WHERE fp.factoring_advance_id IS NOT NULL AND b.matched_factoring_advance_id = fp.factoring_advance_id)`)).s);
+
+  // ---- banking (item 2): own predicates, written out longhand ----
+  const live = `t.operating_company_id = '${USMCA}' AND t.voided_at IS NULL AND t.merged_into_bank_transaction_id IS NULL
+    AND COALESCE(t.is_sample_data, false) = false AND t.transaction_date BETWEEN '${FROM}' AND '${TO}' AND COALESCE(t.review_state, '') <> 'excluded'`;
+  const bookOf = (ledger) => `(SELECT COALESCE(sum(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END),0)
+      FROM accounting.journal_entry_postings p JOIN accounting.journal_entries j ON j.id = p.journal_entry_uuid
+     WHERE j.status = 'posted' AND j.operating_company_id = '${USMCA}' AND p.account_id = ${ledger} AND j.entry_date <= '${TO}')`;
+  const acctWhere = `a.operating_company_id = '${USMCA}' AND a.is_active = true AND a.hidden_at IS NULL`;
+  bref.cash_position = Number((await one(`SELECT COALESCE(sum(${bookOf("a.ledger_account_id")}),0)::bigint s FROM banking.bank_accounts a
+    JOIN catalogs.accounts ca ON ca.id = a.ledger_account_id WHERE ${acctWhere} AND ca.account_type = 'Asset'`)).s);
+  const t = await one(`SELECT count(*)::int n,
+      COALESCE(sum(abs(amount_cents)) FILTER (WHERE reconciliation_cleared IS NOT TRUE),0)::bigint unclr,
+      COALESCE(sum(abs(amount_cents)) FILTER (WHERE review_state = 'for_review' AND is_credit),0)::bigint uin,
+      COALESCE(sum(abs(amount_cents)) FILTER (WHERE review_state = 'for_review' AND NOT is_credit),0)::bigint uout,
+      count(*) FILTER (WHERE review_state IN ('matched','categorized','transfer'))::int res,
+      COALESCE(sum(abs(amount_cents)) FILTER (WHERE NOT is_credit AND (matched_fuel_transaction_id IS NOT NULL OR matched_relay_fuel_transaction_id IS NOT NULL)),0)::bigint fuel,
+      COALESCE(sum(abs(amount_cents)) FILTER (WHERE NOT is_credit AND matched_settlement_id IS NOT NULL),0)::bigint st
+    FROM banking.bank_transactions t WHERE ${live}`);
+  bref.cleared_vs_uncleared = Number(t.unclr);
+  bref.unmatched_inflow = Number(t.uin);
+  bref.unmatched_outflow = Number(t.uout);
+  bref.match_rate = t.n > 0 ? Number(((t.res / t.n) * 100).toFixed(2)) : 0;
+  bref.fuel_drafts = Number(t.fuel);
+  bref.settlement_drafts = Number(t.st);
+  bref.reconciliation_gap = Number((await one(`SELECT COALESCE(sum(abs(a.current_balance_cents - ${bookOf("a.ledger_account_id")})),0)::bigint s
+    FROM banking.bank_accounts a JOIN catalogs.accounts ca ON ca.id = a.ledger_account_id WHERE ${acctWhere} AND a.plaid_account_id IS NOT NULL`)).s);
+  const w = await one(`SELECT COALESCE(sum(fp.net_to_company_cents),0)::bigint e,
+      COALESCE(sum((SELECT sum(abs(b.amount_cents)) FROM banking.bank_transactions b WHERE fp.factoring_advance_id IS NOT NULL
+        AND b.matched_factoring_advance_id = fp.factoring_advance_id AND b.voided_at IS NULL AND b.merged_into_bank_transaction_id IS NULL)),0)::bigint r
+    FROM accounting.factoring_purchases fp WHERE fp.operating_company_id = '${USMCA}' AND fp.status = 'posted' AND fp.purchase_date BETWEEN '${FROM}' AND '${TO}'`);
+  bref.factoring_wires_vs_expected = Number(w.r) - Number(w.e);
   await c.query("ROLLBACK");
 } finally {
   await c.end();
 }
 
 const problems = [];
-for (const k of engine) {
-  if (Number(k.value ?? 0) !== Number(ref[k.key] ?? 0)) problems.push(`${k.key}: engine ${k.value} != ledger ${ref[k.key]}`);
-  if (k.row_count !== k.drill_count) problems.push(`${k.key}: row_count ${k.row_count} != drill rows ${k.drill_count}`);
+for (const [domain, eng, r] of [["factoring", engine, ref], ["banking", bankEngine, bref]]) {
+  for (const k of eng) {
+    if (Number(k.value ?? 0) !== Number(r[k.key] ?? 0)) problems.push(`${domain}.${k.key}: engine ${k.value} != ledger ${r[k.key]}`);
+    if (k.row_count !== k.drill_count) problems.push(`${domain}.${k.key}: row_count ${k.row_count} != drill rows ${k.drill_count}`);
+  }
+  const missing = Object.keys(r).filter((key) => !eng.some((k) => k.key === key));
+  if (missing.length) problems.push(`${domain} engine lacks KPI(s): ${missing.join(", ")}`);
 }
-const missing = Object.keys(ref).filter((key) => !engine.some((k) => k.key === key));
-if (missing.length) problems.push(`engine lacks KPI(s): ${missing.join(", ")}`);
 if (problems.length) { console.error(`${LABEL}: FAIL — ${problems.join("; ")}`); process.exit(1); }
-console.log(`${LABEL}: PASS — ${engine.length} factoring KPIs tie to the ledger to the cent (${FROM}..${TO}); every row count equals its drill`);
+console.log(`${LABEL}: PASS — ${engine.length} factoring + ${bankEngine.length} banking KPIs tie to the ledger and bank feed to the cent (${FROM}..${TO}); every row count equals its drill`);
