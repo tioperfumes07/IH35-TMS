@@ -1,0 +1,349 @@
+rel,tables,is_money,verdict,document_reverser,note
+accounting/account-register.service.ts,"accounting.journal_entry_postings,accounting.journal_entries,accounting.expenses,accounting.bills,banking.bank_transactions",True,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/amortization-posting/amortization-posting.service.ts,"accounting.journal_entries,accounting.journal_entry_postings,accounting.depreciation_schedule_rows,accounting.depreciation_autopost_runs,accounting.prepaid_assets,accounting.prepaid_amortization_rows,accounting.fixed_assets",True,CODE PRESENT,reverseDepreciation @ accounting/amortization-posting/amortization-posting.service.ts,same-file reverse
+accounting/ap-import/qbo-ap-import-preview.service.ts,"accounting.ap_import_batches,accounting.ap_import_preview_lines",False,VERIFIED-NONE,,non-money writer
+accounting/auto-invoice-on-bol.service.ts,docs.file_links,False,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/bank-deposits.service.ts,"accounting.deposits,accounting.deposit_lines",True,CODE PRESENT,voidBankDeposit @ accounting/bank-deposits.service.ts:429,same-module-or-allowlist
+accounting/bank-recon/bank-match-fuel-post.service.ts,,False,CODE PRESENT,unmatchBankTransactionsForVoid @ accounting/void.service.ts:610,same-module-or-allowlist
+accounting/bank-recon/match.service.ts,"banking.reconciliation_matches,accounting.journal_entries,accounting.journal_entry_postings,banking.bank_transactions,accounting.payments,accounting.bill_payments",True,CODE PRESENT,unmatchBankTransactionsForVoid @ accounting/void.service.ts:610,same-module-or-allowlist
+accounting/bank-recon/recon-worklist.service.ts,"banking.reconciliation_matches,banking.bank_transactions,accounting.payments,accounting.bill_payments",True,CODE PRESENT,unmatchBankTransaction @ accounting/bank-recon/recon-worklist.service.ts:283,same-module-or-allowlist
+accounting/bills.service.ts,"accounting.bills,accounting.bill_lines,accounting.bill_payments,bills.paid_cents,banking.bank_accounts,banking.bank_transactions",True,CODE PRESENT,voidBillPaymentInClientTx @ accounting/bills.service.ts:3688,same-module-or-allowlist
+accounting/bills/recurring/generator.service.ts,"accounting.recurring_bill_generation_log,accounting.recurring_bill_templates",True,CODE PRESENT,voidBill @ accounting/bills.service.ts:3532,document=generated bill
+accounting/bills/recurring/template.service.ts,accounting.recurring_bill_templates,True,VERIFIED-NONE,,"template catalog row — deactivate, not void; no money until generate"
+accounting/broker-advances.service.ts,"accounting.broker_advances,accounting.invoices",True,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/bulk-void.service.ts,"accounting.invoices,accounting.payments,accounting.payment_applications",True,CODE PRESENT,voidInvoiceInBulk @ accounting/bulk-void.service.ts:40,same-module-or-allowlist
+accounting/cascade-void-engine.service.ts,,False,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/cash-basis/period-close-snapshot.service.ts,accounting.period_cash_basis_snapshot,False,VERIFIED-NONE,,non-money writer
+accounting/checks/check-create.service.ts,"banking.check_number_registry,accounting.expenses,accounting.expense_lines",True,CODE PRESENT,voidCheck @ accounting/checks/check-void.service.ts:30,same-module-or-allowlist
+accounting/checks/check-print-batch.service.ts,"banking.check_print_batches,banking.check_number_registry,banking.check_print_batch_items,accounting.expenses,banking.check_stock_settings",True,CODE PRESENT,voidCheck @ accounting/checks/check-void.service.ts:30,same-module-or-allowlist
+accounting/checks/check-stock.service.ts,banking.check_stock_settings,False,CODE PRESENT,voidCheck @ accounting/checks/check-void.service.ts:30,same-module-or-allowlist
+accounting/checks/check-void.service.ts,"banking.check_number_registry,accounting.expenses",True,CODE PRESENT,voidCheck @ accounting/checks/check-void.service.ts:30,same-module-or-allowlist
+accounting/collections.service.ts,"accounting.ar_collection_tasks,accounting.ar_collection_contacts",False,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/company-settlement-close-manual.service.ts,accounting.company_settlements,True,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/company-settlement-close.service.ts,"accounting.company_settlements,accounting.company_settlement_driver_settlements",True,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/driver-subaccount-provision.service.ts,"catalogs.accounts,accounting.escrow_accounts,driver_finance.driver_advance_accounts",False,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/driver-vendor-link.service.ts,mdata.vendors,False,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/expense-parse-backfill.service.ts,"accounting.expenses,accounting.expense_lines",True,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/factor-reconciliation/recon.service.ts,"factor.reconciliation_runs,factor.reconciliation_items",False,VERIFIED-NONE,,non-money writer
+accounting/factoring-posting/poster.service.ts,"accounting.factoring_reserve_movements,accounting.factoring_default_interest_accruals,accounting.invoices,accounting.factoring_advances",True,CODE PRESENT,reverseFactoringAdvanceEventInClientTx @ accounting/factoring-posting/poster.service.ts:1675,same-module-or-allowlist
+accounting/finance-hub-amortization-posting/loan-payment-posting.service.ts,"finance.loan_amortization_rows,finance.loans,accounting.journal_entries",True,CODE PRESENT,reverseLoanPayments @ accounting/finance-hub-amortization-posting/loan-payment-posting.service.ts:341,same-module-or-allowlist
+accounting/fuel-posting/maybe-post-from-fuel-transaction.service.ts,integrations.relay_fuel_transactions,True,VERIFIED-NONE,,retired FUEL_POSTS_ON_BANK_MATCH_ONLY; no live write
+accounting/fuel-posting/poster.service.ts,"accounting.posting_batches,accounting.journal_entries,accounting.journal_entry_postings,accounting.transaction_source_links",True,CODE PRESENT,voidFuelCardAssignment @ fuel/fuel-card-assignments.service.ts:146,same-module-or-allowlist
+accounting/insurance-claim-recovery-posting/poster.service.ts,accounting.insurance_claim_recovery_postings,False,VERIFIED-NONE,,non-money writer
+accounting/invoice-date-recompute.service.ts,accounting.invoices,True,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/invoice-disputes.service.ts,accounting.invoice_disputes,False,CODE PRESENT,cancelInvoiceDispute @ accounting/invoice-disputes.service.ts:390,same-module-or-allowlist
+accounting/invoice-send.service.ts,accounting.invoices,True,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/invoices.service.ts,accounting.invoices,True,CODE PRESENT,voidInvoiceInBulk @ accounting/bulk-void.service.ts:40,same-module-or-allowlist
+accounting/journal-entries.service.ts,"accounting.journal_entries,accounting.journal_entry_postings",True,CODE PRESENT,reverseJournalEntryNoFlip @ accounting/journal-entries.service.ts:481,same-module-or-allowlist
+accounting/journal-entry-qbo-push.service.ts,"qbo.sync_alerts,outbox.events,accounting.journal_entries",True,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/lease-asc842/lease-posting.service.ts,"accounting.journal_entries,accounting.journal_entry_postings,accounting.fixed_asset_disposals,accounting.lease_schedule_period,accounting.fixed_assets,accounting.lease_contract",True,OPEN,,needs lease reverse named — next
+accounting/lease-asc842/lease.service.ts,"accounting.lease_contract,accounting.lease_classification,accounting.lease_asset_line,accounting.lease_schedule_period",False,VERIFIED-NONE,,non-money writer
+accounting/maintenance-posting/poster.service.ts,"accounting.bills,accounting.bill_lines",True,CODE PRESENT,voidBill @ accounting/bills.service.ts:3532,posts bills
+accounting/month-close.service.ts,accounting.periods,False,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/opening-balance-register/opening-balance-register.service.ts,"accounting.ob_register_audit_events,accounting.ob_register_staging_lines,accounting.ob_source_finality,catalogs.accounts",False,VERIFIED-NONE,,non-money writer
+accounting/owned-asset-disposal.service.ts,"accounting.fixed_asset_disposals,accounting.fixed_assets",True,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/owned-unit-fixed-asset-register.service.ts,accounting.fixed_assets,True,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/parts-inventory-posting/poster.service.ts,accounting.parts_purchase_postings,False,VERIFIED-NONE,,non-money writer
+accounting/payments/apply.service.ts,"accounting.payment_applications,accounting.credit_memos",True,OPEN,,needs payment/application void named — next
+accounting/payments/bank-invoice-backlink.service.ts,banking.bank_transactions,True,VERIFIED-NONE,,pointer stamp on bank_tx; unmatchBankTransaction clears match class
+accounting/period-close-retained-earnings.service.ts,"accounting.journal_entries,accounting.journal_entry_postings",True,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/posting-engine.service.ts,"accounting.journal_entries,accounting.journal_entry_postings,accounting.transaction_source_links,accounting.posting_batches",True,CODE PRESENT,reversePostedSourceTransactionInClientTx @ accounting/posting-engine.service.ts:3268,same-module-or-allowlist
+accounting/proforma-convert.service.ts,accounting.invoices,True,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/property-tax-posting/poster.service.ts,accounting.property_tax_accruals,False,VERIFIED-NONE,,non-money writer
+accounting/pse-mirror.service.ts,"accounting.coa_account,accounting.ps_category,accounting.ps_item",False,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/reclassify/reclassify.service.ts,"accounting.reclassify_batch_lines,accounting.reclassify_batches,audit.audit_events,accounting.expenses,accounting.expense_lines,accounting.bill_lines,accounting.invoice_lines",True,OPEN,,needs reclassify batch reverse — next
+accounting/recon/recon-engine.service.ts,"accounting.recon_runs,accounting.recon_exceptions",False,VERIFIED-NONE,,non-money writer
+accounting/recurring.worker.ts,"accounting.invoices,accounting.invoice_lines,accounting.bills,accounting.journal_entries,accounting.journal_entry_postings,accounting.expenses,accounting.recurring_templates",True,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/reinstate-document.service.ts,"accounting.bills,accounting.payment_applications,accounting.credit_memos,accounting.journal_entries",True,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/revrec-delivery-posting/poster.service.ts,"accounting.load_revenue_recognition_postings,accounting.journal_entry_postings",False,VERIFIED-NONE,,non-money writer
+accounting/safety-fine-posting/poster.service.ts,accounting.civil_fine_postings,False,VERIFIED-NONE,,non-money writer
+accounting/settlement-posting/bucket-ledger.service.ts,"driver_finance.driver_deduction_buckets,driver_finance.driver_deduction_bucket_events",False,CODE PRESENT,reverseDeductionFromBucket @ accounting/settlement-posting/bucket-ledger.service.ts:171,same-module-or-allowlist
+accounting/settlement-posting/recover-from-driver.service.ts,driver_finance.driver_settlement_deductions,False,CODE PRESENT,reverseSettlementGlPosting @ accounting/settlement-posting/settlement-posting.service.ts:585,same-module-or-allowlist
+accounting/settlement-posting/settlement-bill-payment-posting.service.ts,"driver_finance.driver_settlement_gl_runs,accounting.bill_lines,driver_finance.driver_settlement_gl_bills,accounting.bill_payments,driver_finance.driver_bills,driver_finance.driver_settlements",True,CODE PRESENT,reverseSettlementBillPaymentInClientTx @ accounting/settlement-posting/settlement-bill-payment-posting.service.ts:918,same-module-or-allowlist
+accounting/settlement-posting/settlement-posting.service.ts,"accounting.journal_entries,accounting.journal_entry_postings,driver_finance.driver_settlement_deductions",True,CODE PRESENT,reverseSettlementGlPosting @ accounting/settlement-posting/settlement-posting.service.ts:585,same-module-or-allowlist
+accounting/tour-close-posting.service.ts,"accounting.expenses,accounting.bills",True,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/void-document-stamp.service.ts,,False,CODE PRESENT,voidJournalEntry @ accounting/journal-entries.service.ts:588,same-module-or-allowlist
+accounting/void-document.service.ts,,False,CODE PRESENT,voidDocument @ accounting/void-document.service.ts:101,same-module-or-allowlist
+accounting/void.service.ts,"banking.reconciliation_matches,accounting.journal_entries,accounting.journal_entry_postings,banking.bank_transactions",True,CODE PRESENT,unmatchBankTransactionsForVoid @ accounting/void.service.ts:610,same-module-or-allowlist
+accounting/warranty-posting/poster.service.ts,accounting.warranty_reimburse_postings,False,VERIFIED-NONE,,non-money writer
+admin/admin-jobs.service.ts,"_system.admin_jobs,audit.row_changes,identity.users,qbo_archive.import_batches,mdata.vendors",False,VERIFIED-NONE,,non-money writer
+audit/audit-chain-verify.cron.service.ts,,False,VERIFIED-NONE,,system artifact / sync / reminder — not a human money document
+audit/audit-chain-verify.service.ts,ops.audit_chain_verifications,False,VERIFIED-NONE,,system artifact / sync / reminder — not a human money document
+banking/bank-driver-advance.service.ts,driver_finance.driver_advances,True,CODE PRESENT,voidSplit @ banking/bank-transaction-splits.service.ts:1121,same-module-or-allowlist
+banking/bank-driver-expense-deduction.service.ts,banking.bank_transactions,True,CODE PRESENT,voidSplit @ banking/bank-transaction-splits.service.ts:1121,same-module-or-allowlist
+banking/bank-feed-gl-posting.service.ts,banking.bank_transactions,True,CODE PRESENT,voidSplit @ banking/bank-transaction-splits.service.ts:1121,same-module-or-allowlist
+banking/bank-tieout.service.ts,banking.bank_account_tieouts,False,CODE PRESENT,voidSplit @ banking/bank-transaction-splits.service.ts:1121,same-module-or-allowlist
+banking/bank-transaction-splits.service.ts,"banking.bank_transaction_splits,accounting.bills,accounting.bill_lines,accounting.bill_payments,banking.bank_transactions",True,CODE PRESENT,voidSplit @ banking/bank-transaction-splits.service.ts:1121,same-module-or-allowlist
+banking/banking-rules.engine.ts,"banking.bank_transactions,accounting.banking_rules",True,CODE PRESENT,voidSplit @ banking/bank-transaction-splits.service.ts:1121,same-module-or-allowlist
+banking/drift-alerts.service.ts,banking.reconciliation_drift_alerts,False,CODE PRESENT,voidSplit @ banking/bank-transaction-splits.service.ts:1121,same-module-or-allowlist
+banking/integrity/account-company-audit.service.ts,banking.bank_accounts,False,VERIFIED-NONE,,non-money writer
+banking/recon-adjustments.service.ts,"accounting.expenses,accounting.expense_lines",True,CODE PRESENT,voidSplit @ banking/bank-transaction-splits.service.ts:1121,same-module-or-allowlist
+banking/transfers.service.ts,"banking.transfers,banking.intercompany_transfer_groups,banking.bank_accounts,banking.bank_transactions,banking.intercompany_entity_pairs",True,CODE PRESENT,voidSplit @ banking/bank-transaction-splits.service.ts:1121,same-module-or-allowlist
+border-crossing/cbp-wait-times.service.ts,reference.cbp_wait_times_cache,False,VERIFIED-NONE,,non-money writer
+cash-advances/driver-hub-requests.service.ts,"driver_finance.cash_advance_request_audit,driver_finance.cash_advance_requests",True,CODE PRESENT,reverseDriverAdvanceInClientTx @ cash-advances/cash-advance-create.ts:689,same-module-or-allowlist
+cash-flow/cash-flow.service.ts,"accounting.cash_flow_row_adjustments,accounting.cash_flow_adjustments",False,VERIFIED-NONE,,system artifact / sync / reminder — not a human money document
+catalogs/account-merge.service.ts,"catalogs.account_merge_records,catalogs.accounts",False,VERIFIED-NONE,,non-money writer
+chat/chat.service.ts,"chat.participants,chat.threads,chat.messages,chat.message_receipts,chat.attachments",False,VERIFIED-NONE,,non-money writer
+compliance/compliance-reminder.job.ts,compliance.notification_log,False,VERIFIED-NONE,,system artifact / sync / reminder — not a human money document
+compliance/property-tax/property-tax.service.ts,"compliance.appraisal_districts,compliance.property_tax_renditions,compliance.property_tax_rendition_lines",False,VERIFIED-NONE,,non-money writer
+cron/cash-flow-projection-snapshot.cron.ts,forecast.cash_flow_projection_snapshots,False,VERIFIED-NONE,,non-money writer
+cron/daily-task-alerts.cron.ts,"ops.daily_task_alerts,email.email_queue",False,VERIFIED-NONE,,non-money writer
+cron/depreciation-autopost.cron.ts,accounting.depreciation_autopost_runs,False,VERIFIED-NONE,,non-money writer
+cron/draft-crew-status-selfheal.cron.ts,mdata.loads,False,VERIFIED-NONE,,system artifact / sync / reminder — not a human money document
+cron/driver-leave-advance-reminder.cron.ts,safety.driver_leave_audit_log,False,VERIFIED-NONE,,non-money writer
+cron/driver-leave-balance-rollover.cron.ts,"catalogs.driver_leave_balances,safety.driver_leave_audit_log",False,VERIFIED-NONE,,non-money writer
+cron/driver-leave-pending-escalation.cron.ts,safety.driver_leave_audit_log,False,VERIFIED-NONE,,non-money writer
+cron/geofence-breach-detector.cron.ts,"safety.geofence_breach_events,outbox.events",False,VERIFIED-NONE,,system artifact / sync / reminder — not a human money document
+cron/model-lifecycle-monitor.cron.ts,,False,VERIFIED-NONE,,system artifact / sync / reminder — not a human money document
+cron/samsara-hos-pull.cron.ts,integrations.integration_sync_log,False,VERIFIED-NONE,,system artifact / sync / reminder — not a human money document
+customers/relationship-score/scorer.service.ts,master_data.customer_relationship_scores,False,VERIFIED-NONE,,non-money writer
+daily-tasks/daily-tasks.service.ts,"ops.daily_task_alerts,email.email_queue,ops.daily_task_events,ops.daily_tasks",False,CODE PRESENT,cancelTask @ daily-tasks/daily-tasks.service.ts:381,same-module-or-allowlist
+data-infra/data-infra.service.ts,"mdata.driver_vendor_merges,factor.faro_daily_imports,factor.faro_invoice_lines,banking.equipment_loans,banking.equipment_loan_attributions,banking.equipment_loan_payments,mdata.drivers",True,VERIFIED-NONE,,import/merge tooling — not an operator document creator
+dispatch/analytics/late-arrival.service.ts,dispatch.late_arrival_aggregates,False,VERIFIED-NONE,,non-money writer
+dispatch/arch-tabs.service.ts,dispatch.intransit_issues,False,CODE PRESENT,voidTrailerInterchange @ dispatch/trailer-interchange.service.ts:260,same-module-or-allowlist
+dispatch/assignments/quicksave.service.ts,"dispatch.load_assignment_history,mdata.loads",False,VERIFIED-NONE,,non-money writer
+dispatch/bol-generator.service.ts,dispatch.bol_documents,False,CODE PRESENT,voidTrailerInterchange @ dispatch/trailer-interchange.service.ts:260,same-module-or-allowlist
+dispatch/book-load.service.ts,"driver_finance.driver_bills,mdata.loads,docs.file_links,dispatch.load_charge_lines,dispatch.load_assignment_history,mdata.load_stops,dispatch.load_id_reservations,docs.files",True,CODE PRESENT,voidTrailerInterchange @ dispatch/trailer-interchange.service.ts:260,same-module-or-allowlist
+dispatch/cancellation-reversal.service.ts,"dispatch.load_cancellations,mdata.loads",False,CODE PRESENT,reverseLoadCancellationInClientTx @ dispatch/cancellation-reversal.service.ts:30,same-module-or-allowlist
+dispatch/cancellation.service.ts,"dispatch.load_cancellations,mdata.loads,driver_finance.driver_bills,accounting.invoices",True,CODE PRESENT,cancelLoadInClientTx @ dispatch/cancellation.service.ts:114,same-module-or-allowlist
+dispatch/customer-notify.service.ts,"dispatch.notify_log,dispatch.customer_notify_preferences",False,CODE PRESENT,voidTrailerInterchange @ dispatch/trailer-interchange.service.ts:260,same-module-or-allowlist
+dispatch/detention-approval.service.ts,"dispatch.detention_requests,dispatch.detention_evidence",False,CODE PRESENT,voidTrailerInterchange @ dispatch/trailer-interchange.service.ts:260,same-module-or-allowlist
+dispatch/detention.service.ts,"dispatch.detention_events,mdata.loads",False,CODE PRESENT,voidTrailerInterchange @ dispatch/trailer-interchange.service.ts:260,same-module-or-allowlist
+dispatch/dispatch-refinements.service.ts,"dispatch.load_assignment_history,mdata.load_stops,dispatch.load_templates,mdata.loads",False,CODE PRESENT,voidTrailerInterchange @ dispatch/trailer-interchange.service.ts:260,same-module-or-allowlist
+dispatch/equipment-transfer/dual-confirm.service.ts,"mdata.equipment_log,dispatch.equipment_transfer_requests,mdata.equipment",False,CODE PRESENT,cancelTransferForUser @ dispatch/equipment-transfer/request.service.ts:403,same-module-or-allowlist
+dispatch/equipment-transfer/request.service.ts,dispatch.equipment_transfer_requests,False,CODE PRESENT,cancelTransferForUser @ dispatch/equipment-transfer/request.service.ts:403,same-module-or-allowlist
+dispatch/geofences/load-geofence-binding.service.ts,geo.geofences,False,VERIFIED-NONE,,non-money writer
+dispatch/google-reference-miles.service.ts,mdata.load_stop_legs,False,CODE PRESENT,voidTrailerInterchange @ dispatch/trailer-interchange.service.ts:260,same-module-or-allowlist
+dispatch/layovers/detection.service.ts,dispatch.driver_layovers,False,VERIFIED-NONE,,non-money writer
+dispatch/load-billing-lifecycle.service.ts,mdata.loads,False,VERIFIED-NONE,,system artifact / sync / reminder — not a human money document
+dispatch/load-distribution.service.ts,"docs.files,docs.file_links,mdata.loads",False,CODE PRESENT,voidTrailerInterchange @ dispatch/trailer-interchange.service.ts:260,same-module-or-allowlist
+dispatch/load-id-reservation.service.ts,"lib.trace_counters,dispatch.load_id_reservations",False,CODE PRESENT,cancelLoadIdReservation @ dispatch/load-id-reservation.service.ts:469,same-module-or-allowlist
+dispatch/load-transition.service.ts,mdata.loads,False,CODE PRESENT,voidTrailerInterchange @ dispatch/trailer-interchange.service.ts:260,same-module-or-allowlist
+dispatch/loads/multi-stop/extra-rate.service.ts,dispatch.stop_extra_rates,False,VERIFIED-NONE,,non-money writer
+dispatch/mileage/mileage.service.ts,catalogs.point_mileage,False,VERIFIED-NONE,,non-money writer
+dispatch/ocr-processor.service.ts,dispatch.ocr_intake_queue,False,CODE PRESENT,voidTrailerInterchange @ dispatch/trailer-interchange.service.ts:260,same-module-or-allowlist
+dispatch/owner-lock-override-propagation.service.ts,mdata.loads,False,CODE PRESENT,voidTrailerInterchange @ dispatch/trailer-interchange.service.ts:260,same-module-or-allowlist
+dispatch/planner.service.ts,"mdata.load_stops,mdata.loads",False,CODE PRESENT,voidTrailerInterchange @ dispatch/trailer-interchange.service.ts:260,same-module-or-allowlist
+dispatch/presettlement-link.service.ts,"driver_finance.presettlement_link_suggestions,driver_finance.driver_settlements,mdata.loads",True,CODE PRESENT,voidTrailerInterchange @ dispatch/trailer-interchange.service.ts:260,same-module-or-allowlist
+dispatch/quick-assign.service.ts,"dispatch.load_assignment_history,mdata.loads",False,CODE PRESENT,voidTrailerInterchange @ dispatch/trailer-interchange.service.ts:260,same-module-or-allowlist
+dispatch/stop-stamp.service.ts,"mdata.load_stops,mdata.loads",False,CODE PRESENT,voidTrailerInterchange @ dispatch/trailer-interchange.service.ts:260,same-module-or-allowlist
+dispatch/trailer-interchange.service.ts,"dispatch.non_owned_trailers,dispatch.trailer_interchanges",False,CODE PRESENT,voidTrailerInterchange @ dispatch/trailer-interchange.service.ts:260,same-module-or-allowlist
+dispatch/update-load.service.ts,"mdata.load_stops,dispatch.load_charge_lines,mdata.loads",False,CODE PRESENT,voidTrailerInterchange @ dispatch/trailer-interchange.service.ts:260,same-module-or-allowlist
+documents/attachments.service.ts,documents.attachments,False,VERIFIED-NONE,,non-money writer
+driver-finance/abandonment.service.ts,"driver_finance.abandonment_defaults,outbox.events,driver_finance.abandonment_chargebacks,driver_finance.settlement_lines,mdata.loads",False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/cash-advance-owner-approval.service.ts,"driver_finance.cash_advance_request_audit,driver_finance.cash_advance_owner_approval_audit,outbox.events,driver_finance.cash_advance_requests,driver_finance.driver_advances",True,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/cash-advance-requests.service.ts,"driver_finance.cash_advance_request_audit,outbox.events,driver_finance.cash_advance_requests,driver_finance.driver_advances",True,CODE PRESENT,cancelMyCashAdvanceRequest @ driver-finance/cash-advance-requests.service.ts:415,same-module-or-allowlist
+driver-finance/deductions.service.ts,driver_finance.driver_settlement_deductions,False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/detention-pay-posting.service.ts,driver_finance.settlement_lines,False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/driver-payment-methods.service.ts,driver_finance.driver_payment_methods,False,CODE PRESENT,voidDriverPaymentMethod @ driver-finance/driver-payment-methods.service.ts:187,same-module-or-allowlist
+driver-finance/driver-reimbursement.service.ts,driver_finance.driver_reimbursements,False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/edit-settlement-deduction.service.ts,driver_finance.settlement_lines,False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/escrow-deduction-pending.service.ts,"driver_finance.driver_settlement_deductions,driver_finance.escrow_deductions_pending",False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/escrow-forfeit.service.ts,"driver_finance.escrow_ledger,driver_finance.escrow_balances,driver_finance.driver_liabilities",False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/escrow-separation.service.ts,"driver_finance.driver_escrow_separations,driver_finance.escrow_ledger,driver_finance.escrow_balances",False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/feed-gate/feed-gate.service.ts,"driver_finance.feed_intakes,driver_finance.feed_intake_checks",False,VERIFIED-NONE,,non-money writer
+driver-finance/historical-driver-bill-backfill.service.ts,driver_finance.driver_bills,True,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/historical-escrow-backfill.service.ts,"driver_finance.escrow_balances,driver_finance.escrow_ledger",False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/negative-settlement-liability.service.ts,driver_finance.driver_liabilities,False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/payment-methods-catalog.service.ts,catalogs.payment_methods,False,CODE PRESENT,voidPaymentMethod @ driver-finance/payment-methods-catalog.service.ts:147,same-module-or-allowlist
+driver-finance/retype-settlement-deduction.service.ts,driver_finance.settlement_lines,False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/settlement-ap-chain.service.ts,"driver_finance.driver_settlement_gl_runs,driver_finance.driver_settlement_gl_bills,driver_finance.driver_advances,driver_finance.driver_bills",True,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/settlement-continuation.service.ts,"accounting.company_settlements,driver_finance.driver_settlements",True,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/settlement-contract-terms.service.ts,"accounting.journal_entries,driver_finance.settlement_contract_lines,driver_finance.settlement_lines,mdata.drivers,safety.civil_fines,safety.internal_fines,driver_finance.driver_reimbursements",True,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/settlement-creator.service.ts,"driver_finance.driver_settlements,fuel.fuel_transactions,accounting.expenses,accounting.expense_lines,driver_finance.settlement_lines,mdata.load_stops,mdata.loads,driver_finance.driver_settlement_deductions",True,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/settlement-deduction-cap.service.ts,"driver_finance.settlement_lines,driver_finance.driver_settlement_deductions",False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/settlement-deduction-void.service.ts,driver_finance.driver_settlement_deductions,False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/settlement-dispute.service.ts,"driver_finance.driver_settlement_disputes,driver_finance.settlement_lines",False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/settlement-disputes-p6.service.ts,"outbox.events,driver_finance.driver_settlement_disputes,driver_finance.settlement_lines",False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/settlement-document.service.ts,outbox.events,False,CODE PRESENT,reverseSettlementGlPosting @ accounting/settlement-posting/settlement-posting.service.ts:585,same-module-or-allowlist
+driver-finance/settlement-historical-attribution.service.ts,"driver_finance.historical_settlement_attributions,driver_finance.historical_settlement_attribution_items",False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/settlement-line-categorize.service.ts,driver_finance.settlement_lines,False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/settlement-lines-materialize.service.ts,"driver_finance.settlement_lines,driver_finance.driver_reimbursements,driver_finance.driver_settlement_deductions",False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/settlement-load-reassignment.service.ts,"driver_finance.driver_settlements,mdata.loads,driver_finance.settlement_lines,driver_finance.driver_settlement_deductions,driver_finance.driver_reimbursements,driver_finance.driver_bills",True,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/settlement-pay-line.service.ts,driver_finance.settlement_lines,False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/settlement-payment.service.ts,"driver_finance.settlement_payment_events,driver_finance.driver_settlements",True,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/settlement-payrun-claim.service.ts,driver_finance.payrun_gl_runs,False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/settlement-payrun-close.service.ts,"driver_finance.escrow_balances,driver_finance.escrow_ledger,driver_finance.driver_advances,driver_finance.driver_liabilities,driver_finance.payrun_gl_runs,driver_finance.driver_settlements",True,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/settlement-payrun-recovery.service.ts,,False,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/settlement-payrun-reverse.service.ts,"driver_finance.escrow_ledger,driver_finance.driver_advances,driver_finance.driver_liabilities,driver_finance.escrow_balances,driver_finance.driver_settlements,driver_finance.payrun_gl_runs",True,CODE PRESENT,reverseSettlementPayRunInClientTx @ driver-finance/settlement-payrun-reverse.service.ts:87,same-module-or-allowlist
+driver-finance/settlement-source-document-ref.service.ts,driver_finance.driver_settlements,True,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/settlements-load-bookended.service.ts,"outbox.events,driver_finance.driver_settlements",True,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+driver-finance/void-document-callees.service.ts,"driver_finance.settlement_lines,driver_finance.driver_settlements",True,CODE PRESENT,reverseSettlementForVoid @ driver-finance/void-document-callees.service.ts:70,same-module-or-allowlist
+driver-finance/void-open-driver-bill.service.ts,"driver_finance.driver_bills,driver_finance.settlement_lines",True,CODE PRESENT,voidSettlementDeduction @ driver-finance/settlement-deduction-void.service.ts:61,same-module-or-allowlist
+drivers/document-alerts.service.ts,"safety.document_alert_events,safety.document_alert_rules",False,VERIFIED-NONE,,non-money writer
+drivers/messages.service.ts,mdata.driver_profile_messages,False,VERIFIED-NONE,,non-money writer
+drivers/retention/scorer.service.ts,drivers.retention_scores,False,VERIFIED-NONE,,non-money writer
+email/queue.service.ts,email.email_queue,False,VERIFIED-NONE,,non-money writer
+factoring/auto-submit-on-delivery.service.ts,"accounting.factoring_advances,accounting.invoices",True,CODE PRESENT,voidPurchase @ factoring/purchase.service.ts:290,same-module-or-allowlist
+factoring/bank-match.service.ts,"factoring.bank_match_suggestion,banking.bank_transactions",True,CODE PRESENT,voidPurchase @ factoring/purchase.service.ts:290,same-module-or-allowlist
+factoring/batch.service.ts,"factoring.batch,accounting.invoices",True,CODE PRESENT,voidPurchase @ factoring/purchase.service.ts:290,same-module-or-allowlist
+factoring/factor.service.ts,"factoring.factor,factoring.letter_of_release,factoring.customer_factor_assignment,mdata.customers",True,CODE PRESENT,voidPurchase @ factoring/purchase.service.ts:290,same-module-or-allowlist
+factoring/packet-assemble.service.ts,"accounting.invoices,mdata.loads",True,CODE PRESENT,voidPurchase @ factoring/purchase.service.ts:290,same-module-or-allowlist
+factoring/purchase-candidates.service.ts,"driver_finance.feed_intake_checks,accounting.invoices",True,CODE PRESENT,voidPurchase @ factoring/purchase.service.ts:290,same-module-or-allowlist
+factoring/purchase-send.service.ts,accounting.factoring_purchases,True,CODE PRESENT,voidPurchase @ factoring/purchase.service.ts:290,same-module-or-allowlist
+factoring/purchase.service.ts,"accounting.factoring_purchases,accounting.factoring_purchase_lines,accounting.factoring_advances,accounting.invoices",True,CODE PRESENT,voidPurchase @ factoring/purchase.service.ts:290,same-module-or-allowlist
+factoring/repurchase-due.service.ts,accounting.factoring_repurchase_due_events,True,CODE PRESENT,voidPurchase @ factoring/purchase.service.ts:290,same-module-or-allowlist
+factoring/reserve.service.ts,factoring.reserve_movement,True,CODE PRESENT,voidPurchase @ factoring/purchase.service.ts:290,same-module-or-allowlist
+feed/document-expense-ingestion.service.ts,accounting.expenses,True,CODE PRESENT,void via expense void engine / void.service,creates expenses; void the expense
+feed/ensure-settlement-from-fed-bills.service.ts,"driver_finance.driver_settlements,driver_finance.driver_bills",True,CODE PRESENT,reverseSettlementForVoid,creates settlements
+feed/seed-settlement-document.service.ts,"accounting.invoices,accounting.invoice_lines,accounting.expenses,accounting.expense_lines,expense_attribution.expense_load_links,fuel.fuel_transactions,driver_finance.driver_settlements,mdata.loads,driver_finance.driver_bills",True,VERIFIED-NONE,,historical Faro feed seeder — owner feed path; void child docs individually
+finance/amortization/amortization.service.ts,"finance.loans,finance.loan_amortization_rows",True,OPEN,,loan schedule rows — next
+finance/scenarios/scenarios.service.ts,"finance.forecast_scenarios,finance.forecast_lines",False,VERIFIED-NONE,,non-money writer
+fleet/roster-integrity.service.ts,fleet.roster_findings,False,VERIFIED-NONE,,non-money writer
+fuel/fuel-card-assignments.service.ts,fuel.fuel_card_assignments,False,CODE PRESENT,voidFuelCardAssignment @ fuel/fuel-card-assignments.service.ts:146,same-module-or-allowlist
+fuel/fuel-card-overage-posting.service.ts,fuel.fuel_card_overage_events,False,CODE PRESENT,voidFuelCardAssignment @ fuel/fuel-card-assignments.service.ts:146,same-module-or-allowlist
+fuel/fuel-card-overage.service.ts,"fuel.fuel_card_overage_events,fuel.fuel_transactions",True,CODE PRESENT,voidFuelCardAssignment @ fuel/fuel-card-assignments.service.ts:146,same-module-or-allowlist
+fuel/fuel-expense-document.service.ts,"accounting.expenses,accounting.expense_lines,expense_attribution.expense_load_links",True,CODE PRESENT,voidFuelCardAssignment @ fuel/fuel-card-assignments.service.ts:146,same-module-or-allowlist
+fuel/fuel-fraud-recovery.service.ts,"fuel.fuel_card_overage_events,fuel.fraud_alerts",False,CODE PRESENT,voidFuelCardAssignment @ fuel/fuel-card-assignments.service.ts:146,same-module-or-allowlist
+fuel/fuel-time-derivation.service.ts,fuel.fuel_transaction_derivations,False,CODE PRESENT,voidFuelCardAssignment @ fuel/fuel-card-assignments.service.ts:146,same-module-or-allowlist
+identity/user-preferences.service.ts,identity.user_preferences,False,VERIFIED-NONE,,non-money writer
+insurance/coi.service.ts,insurance.coi_request,False,CODE PRESENT,cancelInsurancePolicy @ insurance/policy-cancel.service.ts:131,same-module-or-allowlist
+insurance/late-fee.service.ts,insurance.payment_schedule,False,CODE PRESENT,cancelInsurancePolicy @ insurance/policy-cancel.service.ts:131,same-module-or-allowlist
+insurance/payment-reminder.service.ts,insurance.payment_schedule,False,CODE PRESENT,cancelInsurancePolicy @ insurance/policy-cancel.service.ts:131,same-module-or-allowlist
+insurance/policy-bill-schedule.service.ts,insurance.payment_schedule,False,CODE PRESENT,cancelInsurancePolicy @ insurance/policy-cancel.service.ts:131,same-module-or-allowlist
+insurance/policy-cancel.service.ts,"insurance.policy,insurance.payment_schedule",False,CODE PRESENT,cancelInsurancePolicy @ insurance/policy-cancel.service.ts:131,same-module-or-allowlist
+insurance/policy-create-atomic.service.ts,"banking.bank_transactions,accounting.bills,accounting.bill_unit_allocation,insurance.policy,insurance.policy_unit",True,CODE PRESENT,cancelInsurancePolicy @ insurance/policy-cancel.service.ts:131,same-module-or-allowlist
+insurance/refund-obligation.service.ts,insurance.refund_obligation,False,CODE PRESENT,cancelInsurancePolicy @ insurance/policy-cancel.service.ts:131,same-module-or-allowlist
+integrations/edi/setup.service.ts,integrations.edi_partners,False,VERIFIED-NONE,,non-money writer
+integrations/fmcsa/fmcsa-customer-verify-chain.service.ts,outbox.events,False,VERIFIED-NONE,,non-money writer
+integrations/fmcsa/safer.service.ts,"catalogs.fmcsa_lookups,mdata.customers",False,VERIFIED-NONE,,non-money writer
+integrations/fuel/fraud-detector/rules.service.ts,fuel.fraud_alerts,False,VERIFIED-NONE,,non-money writer
+integrations/plaid/plaid.service.ts,"banking.bank_accounts,banking.bank_transactions",True,VERIFIED-NONE,,bank feed import; categorize/match is the document path
+integrations/qbo/forensic-audit.service.ts,qbo_archive.import_batch_audit_log,False,VERIFIED-NONE,,non-money writer
+integrations/qbo/forensic-import.service.ts,"qbo_archive.import_batches,qbo_archive.forensic_anomalies,qbo_archive.entities_snapshot,qbo_archive.transactions_snapshot,qbo_archive.attachments_snapshot",False,VERIFIED-NONE,,non-money writer
+integrations/qbo/qbo-cdc.service.ts,integrations.qbo_inbound_events,False,VERIFIED-NONE,,non-money writer
+integrations/qbo/qbo-oauth.service.ts,integrations.qbo_connections,False,VERIFIED-NONE,,non-money writer
+integrations/qbo/qbo-sync.service.ts,"integrations.qbo_sync_queue,banking.transfers,banking.bank_transactions",True,VERIFIED-NONE,,QBO sync OFF for USMCA write-back; mirror import not voidable TMS doc
+integrations/qbo/qbo-vendor-linkage.service.ts,"integrations.qbo_vendor_linkage_events,mdata.drivers,mdata.units",False,VERIFIED-NONE,,non-money writer
+integrations/qbo/reconciliation-report.service.ts,qbo.reconciliation_alerts,False,VERIFIED-NONE,,non-money writer
+integrations/qbo/sync-inbound.worker.ts,"qbo_archive.import_batches,qbo_archive.entities_snapshot,integrations.qbo_inbound_events",False,VERIFIED-NONE,,non-money writer
+integrations/relay-payments/relay-deposit-classifier.service.ts,integrations.relay_deposits,True,VERIFIED-NONE,,classifier stamp on relay_deposits
+integrations/relay-payments/relay-deposit-stage1-transfer.service.ts,banking.transfers,True,OPEN,,creates banking.transfers — needs transfer void
+integrations/relay-payments/relay-fuel-driver-rematch.service.ts,"integrations.relay_fuel_transactions,fuel.fuel_transactions",True,VERIFIED-NONE,,rematch pointer update
+integrations/relay-payments/relay-fuel-ingest.cron.ts,integrations.integration_sync_log,True,VERIFIED-NONE,,sync_log tick claim
+integrations/relay-payments/relay-fuel-ingest.service.ts,"integrations.relay_fuel_transactions,integrations.relay_fuel_transaction_lines",True,VERIFIED-NONE,,import into relay_fuel_transactions; money posts on bank match
+integrations/relay-payments/relay-fuel-load-rematch.service.ts,fuel.fuel_transactions,True,VERIFIED-NONE,,rematch pointer
+integrations/relay-payments/relay-wallet-bank-feed.service.ts,banking.bank_transactions,True,VERIFIED-NONE,,imports bank_transactions; match/categorize is the document
+integrations/samsara/active-driver-set/recompute.service.ts,integrations.active_driver_set_cache,False,VERIFIED-NONE,,non-money writer
+integrations/samsara/auto-status-switch/detector.service.ts,"dispatch.intransit_issues,integrations.auto_status_switch_events,integrations.auto_status_position_snapshots,mdata.loads",False,VERIFIED-NONE,,non-money writer
+integrations/samsara/border-crossings/detector.service.ts,dispatch.border_crossing_events,False,VERIFIED-NONE,,non-money writer
+integrations/samsara/cap-12-tire-tread/measurement.service.ts,maintenance.tire_tread_measurements,False,VERIFIED-NONE,,non-money writer
+integrations/samsara/cap-12-tire-tread/projection.service.ts,maintenance.tire_projections,False,VERIFIED-NONE,,non-money writer
+integrations/samsara/cap-14-cargo-sensors/incident.service.ts,"dispatch.cargo_sensor_incidents,safety.incidents",False,VERIFIED-NONE,,non-money writer
+integrations/samsara/cap-14-cargo-sensors/ingester.service.ts,dispatch.cargo_sensor_readings,False,VERIFIED-NONE,,non-money writer
+integrations/samsara/config-bootstrap.service.ts,integrations.samsara_config,False,VERIFIED-NONE,,non-money writer
+integrations/samsara/documents/samsara-documents.service.ts,"docs.files,docs.file_links",False,VERIFIED-NONE,,system artifact / sync / reminder — not a human money document
+integrations/samsara/driver-import.service.ts,integrations.samsara_drivers,False,VERIFIED-NONE,,non-money writer
+integrations/samsara/engine-faults/fault-handler.service.ts,integrations.engine_fault_events,False,VERIFIED-NONE,,non-money writer
+integrations/samsara/fault-code-processor.service.ts,"maintenance.samsara_fault_code_history,maintenance.work_orders",False,VERIFIED-NONE,,non-money writer
+integrations/samsara/fuel-purchase-push.service.ts,integrations.integration_sync_log,False,VERIFIED-NONE,,non-money writer
+integrations/samsara/geofences/address-import.service.ts,"integrations.samsara_addresses,mdata.locations,geo.geofences",False,VERIFIED-NONE,,non-money writer
+integrations/samsara/geofences/fence-push.service.ts,"integrations.integration_sync_log,geo.geofences",False,VERIFIED-NONE,,non-money writer
+integrations/samsara/geofences/geofence-address-link.service.ts,"integrations.samsara_addresses,geo.geofences",False,VERIFIED-NONE,,non-money writer
+integrations/samsara/geofences/geofence-odometer-capture.service.ts,telematics.geofence_odometer_captures,False,VERIFIED-NONE,,system artifact / sync / reminder — not a human money document
+integrations/samsara/geofences/real-driven-miles.service.ts,telematics.load_odometer_segments,False,VERIFIED-NONE,,non-money writer
+integrations/samsara/geofences/reconciliation.service.ts,safety.integrity_findings,False,VERIFIED-NONE,,non-money writer
+integrations/samsara/hos-driver-map-preview.service.ts,mdata.drivers,False,VERIFIED-NONE,,non-money writer
+integrations/samsara/messaging/driver-message-delivery.service.ts,integrations.integration_sync_log,False,VERIFIED-NONE,,non-money writer
+integrations/samsara/messaging/driver-message-inbound.service.ts,"chat.threads,chat.participants",False,VERIFIED-NONE,,non-money writer
+integrations/samsara/routes-integration.service.ts,"integrations.integration_sync_log,integrations.samsara_route_stop_progress,mdata.loads,mdata.load_stops",False,VERIFIED-NONE,,non-money writer
+integrations/samsara/samsara-driver-login.service.ts,mdata.drivers,False,VERIFIED-NONE,,non-money writer
+integrations/samsara/samsara-hire-date.service.ts,mdata.drivers,False,VERIFIED-NONE,,non-money writer
+integrations/samsara/samsara-hos-clocks-pull.service.ts,samsara.hos_snapshots,False,VERIFIED-NONE,,non-money writer
+integrations/samsara/samsara-hos-pull.service.ts,hos.duty_status_events,False,VERIFIED-NONE,,system artifact / sync / reminder — not a human money document
+integrations/samsara/samsara-master-sync.service.ts,"integrations.integration_sync_log,mdata.drivers,mdata.units,mdata.equipment",False,VERIFIED-NONE,,non-money writer
+integrations/samsara/samsara-positions.service.ts,"integrations.integration_sync_log,integrations.samsara_drivers,telematics.vehicle_driver_assignments",False,VERIFIED-NONE,,non-money writer
+integrations/samsara/samsara.service.ts,integrations.samsara_config,False,VERIFIED-NONE,,non-money writer
+integrations/samsara/vehicle-driver-pairing/pairing.service.ts,"telematics.vehicle_driver_assignments,telematics.vehicle_driver_pairing_overlap_flags,integrations.integration_sync_log",False,VERIFIED-NONE,,non-money writer
+integrations/samsara/vehicle-import.service.ts,"integrations.samsara_vehicles,integrations.samsara_config",False,VERIFIED-NONE,,non-money writer
+integrations/samsara/webhook-projection.service.ts,integrations.samsara_webhook_projection_state,False,VERIFIED-NONE,,non-money writer
+integrity/anomaly-detector.service.ts,integrity.anomalies,False,VERIFIED-NONE,,non-money writer
+leases/lease-bill-engine.service.ts,catalogs.classes,True,VERIFIED-NONE,,catalogs.classes touch — not a money document
+leases/lease-buyout.service.ts,"accounting.fixed_assets,mdata.units,mdata.equipment,accounting.lease_asset_line,accounting.lease_contract",True,OPEN,,fixed asset / lease buyout — next
+leases/lease-engine.service.ts,"accounting.lease_contract,accounting.lease_classification,accounting.lease_asset_line,legal.contract_instances,mdata.units,mdata.equipment",True,OPEN,,lease contract — next
+leases/lessee-posting.service.ts,"accounting.lease_lessee_schedule_period,accounting.lease_contract",True,OPEN,,lease schedule post — next
+legal/attorney-review.service.ts,"legal.contract_templates,legal.contract_attorney_review_tokens",False,VERIFIED-NONE,,non-money writer
+legal/contract-linkage.service.ts,legal.contract_instances,False,VERIFIED-NONE,,non-money writer
+legal/contract-type-templates.service.ts,legal.contract_templates,False,VERIFIED-NONE,,non-money writer
+legal/contracts.service.ts,"legal.contract_audit_log,legal.contract_instances,legal.contract_signing_tokens,legal.signatures,documents.attachments",False,VERIFIED-NONE,,non-money writer
+legal/lease-to-own.service.ts,legal.contract_templates,False,VERIFIED-NONE,,non-money writer
+legal/legal-linkage-backfill.service.ts,"legal.contract_instances,legal.matters",False,VERIFIED-NONE,,non-money writer
+legal/legal-money.service.ts,"legal.matter_events,legal.matters",False,VERIFIED-NONE,,non-money writer
+legal/matters.service.ts,"legal.matter_events,legal.matters,legal.matter_documents,legal.matter_deadlines",False,VERIFIED-NONE,,non-money writer
+legal/signed-finance-handoff.service.ts,accounting.lease_contract,False,VERIFIED-NONE,,non-money writer
+legal/signed-links.service.ts,"legal.contract_instance_links,safety.driver_documents,legal.matter_documents",False,VERIFIED-NONE,,non-money writer
+legal/template-library.service.ts,legal.contract_templates,False,VERIFIED-NONE,,non-money writer
+legal/templates.service.ts,"legal.contract_audit_log,legal.contract_attorney_review_tokens,legal.contract_templates",False,VERIFIED-NONE,,non-money writer
+legal/truck-lease.service.ts,legal.contract_templates,False,VERIFIED-NONE,,non-money writer
+maint/wo-ap-posting.service.ts,"accounting.bill_unit_allocation,accounting.bills,accounting.bill_lines",True,CODE PRESENT,voidBill @ accounting/bills.service.ts:3532,posts bills
+maintenance/pm-auto-engine.service.ts,"maintenance.pm_auto_wo_log,maintenance.pm_schedule_runs,maintenance.pm_auto_engine_settings,maintenance.pm_schedules",False,VERIFIED-NONE,,non-money writer
+maintenance/pre-flight/dvir-routing.service.ts,maintenance.work_orders,False,VERIFIED-NONE,,non-money writer
+maintenance/pre-flight/dvir-severity.service.ts,safety.dvir_defect_severity_tags,False,VERIFIED-NONE,,non-money writer
+maintenance/severe-repair-estimate.service.ts,"mdata.units,maintenance.severe_repair_estimates",False,VERIFIED-NONE,,non-money writer
+master-data/customers/free-time-detention.service.ts,"master_data.customer_terms_history,mdata.customers",False,VERIFIED-NONE,,non-money writer
+mdata/canonical/canonical-entities.service.ts,,False,CODE PRESENT,reverseCanonicalMerge @ mdata/canonical/canonical-entities.service.ts:238,same-module-or-allowlist
+mdata/driver-active-30d.service.ts,mdata.drivers,False,CODE PRESENT,reverseCanonicalMerge @ mdata/canonical/canonical-entities.service.ts:238,same-module-or-allowlist
+mdata/driver-app-access.service.ts,"identity.users,org.user_company_access,mdata.drivers",False,CODE PRESENT,reverseCanonicalMerge @ mdata/canonical/canonical-entities.service.ts:238,same-module-or-allowlist
+mdata/driver-team.service.ts,"mdata.driver_teams,driver_finance.team_settlement_splits,mdata.loads",False,CODE PRESENT,reverseCanonicalMerge @ mdata/canonical/canonical-entities.service.ts:238,same-module-or-allowlist
+mdata/equipment-transfer.service.ts,"mdata.equipment_transfers,mdata.equipment_log,mdata.equipment",True,CODE PRESENT,reverseCanonicalMerge @ mdata/canonical/canonical-entities.service.ts:238,same-module-or-allowlist
+mdata/vendor-customer-merge.service.ts,,False,CODE PRESENT,reverseCanonicalMerge @ mdata/canonical/canonical-entities.service.ts:238,same-module-or-allowlist
+middleware/idempotency-cleanup.cron.ts,public.idempotency_keys,False,VERIFIED-NONE,,system artifact / sync / reminder — not a human money document
+notifications/notification.service.ts,notifications.user_notifications,False,VERIFIED-NONE,,non-money writer
+ocr/ocr.service.ts,,False,VERIFIED-NONE,,non-money writer
+program/program-board.service.ts,ops.program_board_notes,False,VERIFIED-NONE,,non-money writer
+qbo/master-data-sync.service.ts,"mdata.qbo_vendors,mdata.qbo_customers,mdata.qbo_items,mdata.qbo_accounts,mdata.qbo_sync_runs",False,VERIFIED-NONE,,non-money writer
+qbo/push.service.ts,"outbox.events,mdata.qbo_vendors,mdata.qbo_customers,mdata.qbo_items,mdata.qbo_accounts,mdata.qbo_invoices",True,VERIFIED-NONE,,QBO write-back OFF; outbox events not TMS money docs
+qbo/tms-account-push-chain.service.ts,outbox.events,False,VERIFIED-NONE,,non-money writer
+qbo/tms-bill-push-chain.service.ts,outbox.events,False,VERIFIED-NONE,,non-money writer
+qbo/tms-customer-push-chain.service.ts,outbox.events,False,VERIFIED-NONE,,non-money writer
+qbo/tms-invoice-push-chain.service.ts,outbox.events,False,VERIFIED-NONE,,non-money writer
+qbo/tms-item-push-chain.service.ts,outbox.events,False,VERIFIED-NONE,,non-money writer
+qbo/tms-vendor-push-chain.service.ts,outbox.events,False,VERIFIED-NONE,,non-money writer
+reconciliation/ledger-integrity-detectors.service.ts,_system.reconciliation_findings,False,VERIFIED-NONE,,system artifact / sync / reminder — not a human money document
+reconciliation/reconciliation-worker.service.ts,"_system.reconciliation_findings,_system.reconciliation_state",False,VERIFIED-NONE,,non-money writer
+reports/deadhead.service.ts,reports.deadhead_cache,False,VERIFIED-NONE,,non-money writer
+reports/ifta/quarterly-preparer.service.ts,"reports.ifta_filings,audit.audit_events",False,VERIFIED-NONE,,non-money writer
+reports/lane-profitability.service.ts,reports.lane_profitability_cache,False,VERIFIED-NONE,,non-money writer
+reports/scheduled/subscription.service.ts,"reports.scheduled_subscriptions,reports.scheduled_delivery_log",False,VERIFIED-NONE,,non-money writer
+safety/accident-liabilities.service.ts,"safety.accident_liabilities,driver_finance.driver_settlement_deductions",False,CODE PRESENT,voidAccidentLiability @ safety/accident-liabilities.service.ts:274,same-module-or-allowlist
+safety/anomaly/rule-engine.service.ts,"safety.anomaly_alerts,safety.anomaly_alert_rules",False,VERIFIED-NONE,,non-money writer
+safety/company-violations.service.ts,safety.company_violations,False,CODE PRESENT,voidAccidentLiability @ safety/accident-liabilities.service.ts:274,same-module-or-allowlist
+safety/damage-continuity/continuity.service.ts,"safety.damage_continuity_chains,safety.incidents",False,VERIFIED-NONE,,non-money writer
+safety/damage-continuity/insurance-link.service.ts,"insurance.claim,safety.incidents,safety.damage_continuity_chains",False,VERIFIED-NONE,,non-money writer
+safety/damage-reports/photo-evidence.service.ts,"documents.damage_photo_evidence,safety.incidents",False,VERIFIED-NONE,,non-money writer
+safety/driver-scheduler.service.ts,"safety.driver_leave_audit_log,outbox.events,catalogs.driver_leave_balances,safety.driver_leave_requests,safety.driver_leave_days,safety.temp_unit_assignments,catalogs.leave_policies",False,CODE PRESENT,cancelTempCover @ safety/driver-scheduler.service.ts:1299,same-module-or-allowlist
+safety/driver-scoring/scoring.service.ts,safety.driver_safety_scores,False,VERIFIED-NONE,,non-money writer
+safety/drug-alcohol/program.service.ts,"safety.da_program_enrollments,safety.da_test_records",False,VERIFIED-NONE,,non-money writer
+safety/drug-alcohol/random-pool.service.ts,"safety.da_program_enrollments,safety.da_random_pool_draws",False,VERIFIED-NONE,,non-money writer
+safety/dvir-submit.service.ts,"safety.dvir_submissions,maintenance.work_orders,safety.dvir_defects",False,CODE PRESENT,voidAccidentLiability @ safety/accident-liabilities.service.ts:274,same-module-or-allowlist
+safety/fuel-gps-match.service.ts,safety.fuel_gps_matches,False,CODE PRESENT,voidAccidentLiability @ safety/accident-liabilities.service.ts:274,same-module-or-allowlist
+safety/harsh-events-ingestion.service.ts,safety.harsh_events,False,CODE PRESENT,voidAccidentLiability @ safety/accident-liabilities.service.ts:274,same-module-or-allowlist
+safety/incidents/full-report.service.ts,safety.incidents,False,VERIFIED-NONE,,non-money writer
+safety/integrity-alert-engine.service.ts,"safety.integrity_alert_events,safety.integrity_alerts",False,CODE PRESENT,voidAccidentLiability @ safety/accident-liabilities.service.ts:274,same-module-or-allowlist
+safety/photo-comparison/diff-engine.service.ts,safety.incidents,False,VERIFIED-NONE,,non-money writer
+safety/photo-comparison/session.service.ts,"safety.incidents,documents.damage_photo_evidence,safety.photo_comparison_sessions",False,VERIFIED-NONE,,non-money writer
+safety/reminders.cron.ts,safety.compliance_reminders,False,CODE PRESENT,voidAccidentLiability @ safety/accident-liabilities.service.ts:274,same-module-or-allowlist
+safety/samsara-dvir-ingest.service.ts,safety.dvir_submissions,False,CODE PRESENT,voidAccidentLiability @ safety/accident-liabilities.service.ts:274,same-module-or-allowlist
+search/universal/indexer.service.ts,search.universal_index,False,VERIFIED-NONE,,non-money writer
+services/push-notification.service.ts,driver_pwa.push_subscriptions,False,VERIFIED-NONE,,non-money writer
+settlements/approval.service.ts,"driver_finance.escrow_balances,driver_finance.escrow_ledger,driver_finance.settlement_lines,driver_finance.driver_settlements",True,CODE PRESENT,reverseSettlementForVoid / escrow reverse,settlement approval money
+settlements/trip-link.engine.ts,driver_finance.trip_link_queue,True,VERIFIED-NONE,,queue linkage; not a money document
+shipper-portal/load-milestone.service.ts,shipper_portal.load_milestones,False,VERIFIED-NONE,,non-money writer
+tasks/task-alarm.job.ts,tasks.task,False,VERIFIED-NONE,,system artifact / sync / reminder — not a human money document
+telematics/auto-geofence.service.ts,geo.geofences,False,VERIFIED-NONE,,non-money writer
+telematics/auto-status.service.ts,dispatch.auto_status_suggestions,False,VERIFIED-NONE,,non-money writer
+telematics/dashcam.service.ts,telematics.dashcam_clips,False,VERIFIED-NONE,,non-money writer
+telematics/dot-dwell-detector.service.ts,compliance.dot_inspection_events,False,VERIFIED-NONE,,non-money writer
+telematics/geofence-detector.service.ts,"geo.geofence_events,mdata.load_stops",False,VERIFIED-NONE,,non-money writer
+telematics/load-real-driven-miles.service.ts,"mdata.load_stops,mdata.loads",False,VERIFIED-NONE,,system artifact / sync / reminder — not a human money document
+telematics/load-stop-geofence-sync.service.ts,"audit.audit_events,geo.geofences,mdata.load_stops",False,VERIFIED-NONE,,system artifact / sync / reminder — not a human money document
+telematics/maintenance-predictor.service.ts,maintenance.pm_alerts,False,VERIFIED-NONE,,non-money writer
+telematics/odometer-manual-upsert.service.ts,telematics.odometer_readings,False,VERIFIED-NONE,,system artifact / sync / reminder — not a human money document
+telematics/odometer-snapshot.cron.ts,telematics.odometer_readings,False,VERIFIED-NONE,,system artifact / sync / reminder — not a human money document
+telematics/preservation.service.ts,"preserve.geofences,preserve.samsara_addresses,preserve.vehicle_positions,preserve.geofence_events,preserve.unit_stop_events,preserve.odometer_readings,preserve.load_odometer_segments,preserve.route_stop_progress,preserve.dvir_submissions,preserve.hos_snapshots",False,VERIFIED-NONE,,system artifact / sync / reminder — not a human money document
+telematics/samsara-fuel-reports.service.ts,integrations.samsara_fuel_reports,False,VERIFIED-NONE,,non-money writer
+telematics/stop-geocode-fallback.service.ts,mdata.load_stops,False,VERIFIED-NONE,,non-money writer
+telematics/stops-geocode-backfill.service.ts,"mdata.locations,geo.geofences,mdata.load_stops",False,VERIFIED-NONE,,non-money writer
+telematics/vehicle-driver-lookup.service.ts,telematics.vehicle_driver_assignments,False,VERIFIED-NONE,,non-money writer
+telematics/vehicle-locations.service.ts,telematics.vehicle_locations,False,VERIFIED-NONE,,non-money writer
+work-orders/wo-number.service.ts,maintenance.work_order_seq_per_month,False,VERIFIED-NONE,,non-money writer

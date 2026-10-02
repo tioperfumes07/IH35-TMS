@@ -37,3 +37,9 @@ incrementally — write each class the hour it is proven.
 **Remaining:** ~340 writer rows after this seed. Continue in batches of 20; money writers first.
 
 NO production writes. Harness voids only on Neon forks deleted after.
+
+
+## Bulk map progress 2026-10-02T20:20Z
+
+Strict auto-map + human pass 1: CODE PRESENT 164 · VERIFIED-NONE 176 · OPEN 8.
+Artifacts: `2026-10-02-CHECK7-WRITERS-DRAFT.csv`, `2026-10-02-CHECK7-OPEN-WRITERS.md`.
