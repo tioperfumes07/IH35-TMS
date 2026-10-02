@@ -32,6 +32,7 @@ export const SWEPT = [
   "apps/backend/src/integrations/samsara/messaging/driver-prompts.cron.ts",
   "apps/backend/src/integrations/samsara/routes-push.cron.ts",
   "apps/backend/src/safety/samsara-dvir-poll.cron.ts",
+  "apps/backend/src/safety/harsh-events-poll.cron.ts",
   "apps/backend/src/telematics/odometer-snapshot.cron.ts",
 ];
 

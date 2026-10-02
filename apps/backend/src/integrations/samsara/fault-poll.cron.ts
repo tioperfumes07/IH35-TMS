@@ -28,6 +28,7 @@ import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { createHash } from "node:crypto";
 import { withLuciaBypass } from "../../auth/db.js";
+import { wrapBackgroundJobTick } from "../../lib/background-jobs.js";
 import { assertTenantContext } from "../../cron/_helpers/tenant-context-guard.js";
 import { processVehicleFaultCodeWebhookEvent } from "./fault-code-processor.service.js";
 import type { SamsaraWebhookEvent } from "./webhook-projection.types.js";
@@ -176,12 +177,8 @@ export function initializeSamsaraFaultPollCron(app: FastifyInstance) {
   cron.schedule(
     "0 3 * * *",
     async () => {
-      try {
-        await runSamsaraFaultPollCronTick();
-      } catch (error) {
-        app.log.error({ err: error }, "[SAMSARA_FAULT_POLL_CRON] tick failed");
-        throw error;
-      }
+      // ROUND 330.1: through the shared wrapper (run recorded; failure logged, sent to Sentry, then re-thrown).
+      await wrapBackgroundJobTick("integrations.samsara_fault_poll", runSamsaraFaultPollCronTick, app.log, { rethrow: true });
     },
     {
       maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
