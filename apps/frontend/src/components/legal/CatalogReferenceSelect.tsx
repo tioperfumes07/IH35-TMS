@@ -81,7 +81,7 @@ export function CatalogReferenceSelect({ kind, operatingCompanyId, value, onChan
         onOptionCreated={(opt) => { void q.refetch(); pick(opt.value, opt.label); }}
       />
       {!debouncedSearch ? (
-        <CappedListNotice shown={q.data?.options.length ?? 0} limit={PAGE_LIMIT} total={q.data?.total ?? null} hint={kind === "vendor" ? "Type to search every vendor." : "Type to search every customer."} />
+        <CappedListNotice shown={q.data?.options?.length ?? 0} limit={PAGE_LIMIT} total={q.data?.total ?? null} hint={kind === "vendor" ? "Type to search every vendor." : "Type to search every customer."} />
       ) : null}
     </div>
   );

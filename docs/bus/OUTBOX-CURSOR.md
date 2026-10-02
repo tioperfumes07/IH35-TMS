@@ -1,3 +1,10 @@
+**2026-10-02T04:05Z · B-1k settlement banner + optional-chain tip fixes · branch `cursor/r326-item2-live-b1-settlement-banner-0104`**
+ACK: CURSOR | ACK GO-20 HOOK | B-1k BANNER + OPTIONAL-CHAIN | GO
+B-1k: settlements.routes GET matched_bank_* via matched_settlement_id; SettlementDetail OnlineBankingMatchBanner; verify-b1-online-banking-match-banner asserts settlement. LANE_CROSS Lead ruling on file.
+Tip fix (Cursor-owned): LedgerKpiPanel · ReclassifyTransactionsPage · MaintKpiDashboardPage · CatalogReferenceSelect — `.data?.X?.member` (verify-no-partial-optional-chain exit 0).
+item 2 LIVE already closed (links=2 · orphans_no_reason=0). No Book Load. No Chrome. No seed.
+NEXT: money-pr-local-gate (DATABASE_URL + LANE_CROSS) → push → FAST-MERGE.
+
 **2026-10-02T03:45Z · ROUND 326 item 2 LIVE + B-1 settlement banner WIP · tip measure `9933a1d697`**
 ACK: CURSOR | ACK GO-20 HOOK | item 2 LIVE BACKFILL DONE | GO
 item 2 LIVE (Neon USMCA lucia, signed signer FKs only — never invent): active_links=2 · contract_orphans_no_reason=0 · matter_orphans_no_reason=0 · matters_with_fk=5 · matters_with_reason=13 (seat fixtures pending clean-app delete). Engine was LEGAL-F32602 #23949.

@@ -246,7 +246,7 @@ export function MaintKpiDashboardPage() {
           />
         ) : idleReviewQ.isPending ? (
           <p className="text-xs text-gray-500">Loading…</p>
-        ) : (idleReviewQ.data?.rows.length ?? 0) === 0 ? (
+        ) : (idleReviewQ.data?.rows?.length ?? 0) === 0 ? (
           <p className="text-xs text-gray-600" data-testid="idle-events-needs-review-empty">No idle events waiting for review.</p>
         ) : (
           <div className="overflow-x-auto bg-white">

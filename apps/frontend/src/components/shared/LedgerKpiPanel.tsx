@@ -86,8 +86,8 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
     queryFn: () => fetchDrill(companyId, drillKey as K, from, to),
     enabled: Boolean(companyId && drillKey),
   });
-  const drillKpi = kpis.data?.kpis.find((k) => k.key === drillKey) ?? null;
-  const cols = drill.data?.rows.length ? Object.keys(drill.data.rows[0]!).filter((c) => !HIDDEN.has(c)) : [];
+  const drillKpi = kpis.data?.kpis?.find((k) => k.key === drillKey) ?? null;
+  const cols = drill.data?.rows?.length ? Object.keys(drill.data.rows[0]!).filter((c) => !HIDDEN.has(c)) : [];
 
   if (kpis.isError) {
     return (
