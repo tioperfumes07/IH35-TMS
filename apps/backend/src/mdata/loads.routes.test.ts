@@ -217,6 +217,26 @@ describe("mdata loads routes", () => {
     expect(sql).toContain("ORDER BY lah.assigned_at DESC, lah.created_at DESC");
   });
 
+  it("PATCH /api/v1/mdata/loads/:id refuses a status change — status moves only through the status route (queue 6)", async () => {
+    const loadId = "22222222-2222-4222-8222-222222222222";
+    const companyId = "11111111-1111-4111-8111-111111111111";
+    queryMock.mockImplementation(async (sql: string) => {
+      if (sql.includes("FROM org.companies")) return { rows: [{ "?column?": 1 }], rowCount: 1 };
+      if (sql.includes("UPDATE mdata.loads")) throw new Error("the general edit must not write status");
+      return { rows: [] };
+    });
+
+    const app = await buildApp("Dispatcher");
+    const response = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/mdata/loads/${loadId}?operating_company_id=${companyId}`,
+      payload: { status: "delivered" },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json().error).toBe("status_changes_use_the_status_route");
+  });
+
   it("PATCH /api/v1/mdata/loads/:id/status blocks non-Owner cancel when reason requires owner approval", async () => {
     const loadId = "22222222-2222-4222-8222-222222222222";
     const companyId = "11111111-1111-4111-8111-111111111111";

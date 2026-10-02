@@ -1652,6 +1652,15 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     if (b.assigned_primary_driver_id && b.team_id) {
       return reply.code(400).send({ error: "solo_or_team_assignment_required_not_both" });
     }
+    // CC-3 queue 6: status is never a free field. It moves only through PATCH /mdata/loads/:id/status (the
+    // MDATA_STATUS_TRANSITIONS machine, compare-and-set) or POST /dispatch/loads/:id/transition — this generic
+    // edit wrote any enum value with no transition check, no lock and none of the delivery / billing hooks.
+    if ("status" in b) {
+      return reply.code(409).send({
+        error: "status_changes_use_the_status_route",
+        message: "Change a load's status through PATCH /api/v1/mdata/loads/:id/status (or the dispatch transition), not the general edit.",
+      });
+    }
 
     const setParts: string[] = [];
     const values: unknown[] = [];
@@ -1662,7 +1671,6 @@ export async function registerLoadRoutes(app: FastifyInstance) {
 
     if ("dispatch_flag_color_id" in b) add("dispatch_flag_color_id", b.dispatch_flag_color_id);
     if ("customer_id" in b) add("customer_id", b.customer_id);
-    if ("status" in b) add("status", b.status);
     if ("rate_total_cents" in b) add("rate_total_cents", b.rate_total_cents);
     if ("currency_code" in b) add("currency_code", b.currency_code);
     if ("assigned_unit_id" in b) add("assigned_unit_id", b.assigned_unit_id ?? null);
@@ -1749,7 +1757,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         // the EFFECTIVE post-patch unit/status (fields not in this patch keep their old value) and
         // reject if that would leave the unit active on some OTHER load too.
         const effectiveUnitId = "assigned_unit_id" in b ? (b.assigned_unit_id ?? null) : oldRow.assigned_unit_id;
-        const effectiveStatus = "status" in b ? b.status : oldRow.status;
+        const effectiveStatus = oldRow.status;
         if (effectiveUnitId && (ACTIVE_UNIT_STATUSES as readonly string[]).includes(String(effectiveStatus))) {
           await assertUnitNotActiveOnAnotherLoad(client, {
             operating_company_id: scopedCompanyId,

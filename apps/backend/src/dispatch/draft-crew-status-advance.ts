@@ -45,11 +45,12 @@ export async function advanceDraftStatusIfCrewed(
   if (load.status !== "draft") return false;
   if (!load.assigned_primary_driver_id && !load.team_id) return false;
 
-  await client.query(
+  const advanced = await client.query(
     `UPDATE mdata.loads
         SET status = 'assigned_not_dispatched'::mdata.load_status_enum, updated_at = now()
       WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status = 'draft'`,
     [loadId, operatingCompanyId]
   );
-  return true;
+  // Compare-and-set lost (another writer moved the load off draft in between): report what really happened.
+  return (advanced.rowCount ?? 0) === 1;
 }
