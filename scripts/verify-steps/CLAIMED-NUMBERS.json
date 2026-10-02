@@ -9950,5 +9950,30 @@
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-02",
     "purpose": "Lead ROUND 332 — purge route: refuse_financial_row_delete resolves functions with to_regprocedure (CC-1)."
+  },
+  "12309": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "Lead ROUND 339 order 1 — no posting, active role or item default on a deactivated / non-postable account (CC-1)."
+  },
+  "12313": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "Lead ROUND 339 order 2 — one active role per account and per (company, role) (CC-1)."
+  },
+  "12317": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "Lead ROUND 339 order 3 — every posting writer links the spine in the same transaction (CC-1)."
+  },
+  "12321": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "Lead ROUND 339 order 4 — every posted account resolves through a role (CC-1)."
+  },
+  "12325": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "Lead ROUND 339 order 5 — no engine writes to 9000 Ask My Accountant (CC-1)."
   }
 }
