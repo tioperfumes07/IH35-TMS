@@ -1,4 +1,12 @@
 /**
+ * ENGINE: Samsara harsh-events poll (fallback to the webhook path)
+ * SCHEDULE: 0 3 * * * America/Chicago, through wrapBackgroundJobTick
+ * WRITES: safety.harsh_events, one audit row per run
+ * IDEMPOTENCY: UNIQUE(operating_company_id, raw_samsara_id) ON CONFLICT DO NOTHING (harsh_events_per_tenant_unique)
+ * OVERLAP: a twin tick inserts 0 rows (each Samsara event id is already present)
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
+/**
  * ROUND 301 T-30 — harsh-driving-event and dashcam-clip POLL FALLBACK.
  *
  * FINDING (T-28, this session): integrations.samsara_webhook_events has 0 rows ever, AND 0
@@ -32,6 +40,7 @@ import { resolveSamsaraApiToken } from "../integrations/samsara/samsara-token.js
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
+import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { processHarshEventsFromVehiclePayload } from "./harsh-events-ingestion.service.js";
 import { SamsaraApiError, SamsaraClient } from "../integrations/samsara/samsara-client.js";
@@ -262,12 +271,8 @@ export function initializeHarshEventsPollCron(app: FastifyInstance) {
   cron.schedule(
     "0 3 * * *",
     async () => {
-      try {
-        await runHarshEventsPollCronTick();
-      } catch (error) {
-        app.log.error({ err: error }, "[HARSH_EVENTS_POLL_CRON] tick failed");
-        throw error;
-      }
+      // ROUND 330.1: through the shared wrapper (run recorded; failure logged, sent to Sentry, then re-thrown).
+      await wrapBackgroundJobTick("safety.harsh_events_poll", runHarshEventsPollCronTick, app.log, { rethrow: true });
     },
     {
       maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }

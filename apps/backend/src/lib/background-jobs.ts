@@ -45,7 +45,11 @@ export async function wrapBackgroundJobTick(
   jobName: string,
   fn: () => Promise<void>,
   log?: { error?: (obj: unknown, msg?: string) => void },
-  opts?: { onError?: (error: unknown) => void }
+  /**
+   * rethrow (ROUND 330.1): after recording + logging the failure, throw it on — for engines whose policy is "never
+   * swallowed" (fault-poll, samsara-dvir-poll, harsh-events-poll), so they can route through this wrapper too.
+   */
+  opts?: { onError?: (error: unknown) => void; rethrow?: boolean }
 ): Promise<void> {
   try {
     await fn();
@@ -57,5 +61,6 @@ export async function wrapBackgroundJobTick(
     if (process.env.SENTRY_DSN?.trim()) {
       Sentry.captureException(error, { tags: { job_name: jobName } });
     }
+    if (opts?.rethrow) throw error;
   }
 }

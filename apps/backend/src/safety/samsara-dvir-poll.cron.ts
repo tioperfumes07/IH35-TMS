@@ -20,6 +20,7 @@ import { resolveSamsaraApiToken } from "../integrations/samsara/samsara-token.js
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
+import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { SamsaraClient } from "../integrations/samsara/samsara-client.js";
 import type { PgClient } from "../integrations/samsara/samsara.service.js";
@@ -101,22 +102,16 @@ export function initializeSamsaraDvirPollCron(app: FastifyInstance) {
     return;
   }
 
-  const schedule = (expr: string, lookbackDays: number) =>
+  const schedule = (expr: string, lookbackDays: number, jobName: string) =>
     cron.schedule(
       expr,
-      async () => {
-        try {
-          await runSamsaraDvirPollCronTick(new Date(), lookbackDays);
-        } catch (error) {
-          app.log.error({ err: error }, "[SAMSARA_DVIR_POLL_CRON] tick failed");
-          throw error;
-        }
-      },
+      // ROUND 330.1: through the shared wrapper (run recorded; failure logged, sent to Sentry, then re-thrown).
+      async () => wrapBackgroundJobTick(jobName, () => runSamsaraDvirPollCronTick(new Date(), lookbackDays), app.log, { rethrow: true }),
       {
         maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
     );
-  schedule("*/15 * * * *", DVIR_POLL_LOOKBACK_DAYS);
-  schedule("40 3 * * *", DVIR_DAILY_REREAD_DAYS);
+  schedule("*/15 * * * *", DVIR_POLL_LOOKBACK_DAYS, "safety.samsara_dvir_poll");
+  schedule("40 3 * * *", DVIR_DAILY_REREAD_DAYS, "safety.samsara_dvir_poll_daily_reread");
 
   app.log.info("Samsara DVIR poll cron scheduled (every 15 min, 1-day window; 03:40 daily 7-day re-read; America/Chicago)");
 }
