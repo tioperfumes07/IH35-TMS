@@ -52,6 +52,7 @@ import { BankingNewMenu } from "./components/BankingNewMenu";
 import { LinkSuggestionsPanel } from "./components/LinkSuggestionsPanel";
 import { MoneyKpiTile } from "../../components/money/MoneyKpiTile";
 import { BankingKpiPanel } from "../../components/banking/BankingKpiPanel";
+import { getFactoringKpis } from "../../api/factoring-kpis";
 import { NotApplicable } from "../../components/money/NotApplicable";
 import { WhereTheMoneyIsRail, type MoneyRailRow } from "./components/WhereTheMoneyIsRail";
 import { NeedsCategorizingQueue, type NeedsCategorizingRow } from "./components/NeedsCategorizingQueue";
@@ -208,17 +209,28 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     const companies = factoringVirtualQuery.data?.companies ?? [];
     return companies.reduce(
       (acc, row) => ({
-        reserve: acc.reserve + Number(row.reserve_balance ?? 0),
         // FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: row.chargeback_balance
         // is actually Advance + Reserve still owed to the factor (outstanding_liability_signed_cents),
         // not a real chargeback/recourse figure — prefer outstanding_liability_balance.
         outstandingLiability: acc.outstandingLiability + Number(row.outstanding_liability_balance ?? 0),
         lastAdvanceAt: row.last_advance_at && (!acc.lastAdvanceAt || row.last_advance_at > acc.lastAdvanceAt) ? row.last_advance_at : acc.lastAdvanceAt,
       }),
-      { reserve: 0, outstandingLiability: 0, lastAdvanceAt: null as string | null },
+      { outstandingLiability: 0, lastAdvanceAt: null as string | null },
     );
   }, [factoringVirtualQuery.data?.companies]);
-  const factoringReserve = factoringVirtualSummary.reserve;
+  // ROUND 326.2 item 3 — reserves read the SAME engine as Factoring: escrow + cash reserve are the
+  // factoring KPI engine's GL balances (1230 + 1235), not a second sum over the advance-linkage view.
+  const factoringKpiQuery = useQuery({
+    queryKey: ["factoring", "kpis", companyId, null, null],
+    queryFn: () => getFactoringKpis(companyId),
+    enabled: Boolean(companyId),
+  });
+  const factoringReserve = useMemo(() => {
+    const kpis = factoringKpiQuery.data?.kpis;
+    if (!kpis) return null;
+    const cents = (key: string) => Number(kpis.find((k) => k.key === key)?.value ?? 0);
+    return (cents("escrow_reserve_balance") + cents("cash_reserve_balance")) / 100;
+  }, [factoringKpiQuery.data?.kpis]);
   const factoringOutstandingLiability = factoringVirtualSummary.outstandingLiability;
   const escrowFeed = Number(kpiQuery.data?.driver_escrow ?? 0);
   const sortedBankTiles = useMemo(
@@ -230,7 +242,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             String(tile.tile_kind) === "virtual" &&
             (tile.tag === "Factoring" || tile.display_name.toLowerCase().includes("factoring"));
           if (!isFactoringVirtual) return tile;
-          return { ...tile, current_balance: factoringReserve };
+          return factoringReserve == null ? tile : { ...tile, current_balance: factoringReserve };
         }),
     [tiles, factoringReserve],
   );
@@ -601,9 +613,9 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                   />
                   <MoneyKpiTile
                     label="Factoring reserve"
-                    value={money.format(factoringReserve)}
-                    tone="good"
-                    sub="held by Faro · virtual ledger"
+                    value={factoringKpiQuery.isError ? "Unavailable" : factoringReserve == null ? "…" : money.format(factoringReserve)}
+                    tone={factoringKpiQuery.isError ? "bad" : "good"}
+                    sub="escrow + cash reserve · GL 1230 + 1235"
                     onClick={() => navigate("/factoring/reserve-tracker")}
                     data-testid="banking-kpi-factoring-reserve"
                   />
@@ -936,7 +948,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <div className="space-y-1 px-3 py-2 text-xs">
                 <Link to="/factoring/reserve-tracker" className="flex justify-between hover:underline">
                   <span>Reserves held</span>
-                  <span>{money.format(factoringReserve)}</span>
+                  <span className="tabular-nums">{factoringReserve == null ? "—" : money.format(factoringReserve)}</span>
                 </Link>
                 <div className="flex justify-between">
                   <span>Advances funded MTD</span>

@@ -205,7 +205,7 @@ export function DriverEscrowBoardSection({ operatingCompanyId, driverEscrowBalan
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs" data-testid="driver-escrow-board-table">
+            <table className="w-full border-collapse text-xs tabular-nums" data-testid="driver-escrow-board-table">
               <thead>
                 <tr className="border-b border-[#E5E7EB] bg-[#F7F8FA] text-center text-xs font-bold uppercase tracking-wide text-[#4B5563]">
                   {colOn("driver") ? <th className="px-2 py-1.5 text-left font-bold">Driver</th> : null}

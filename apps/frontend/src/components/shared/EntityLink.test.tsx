@@ -14,7 +14,7 @@ describe("resolveEntityRoute", () => {
     expect(resolveEntityRoute("driver", "id1")).toBe("/drivers/id1");
     expect(resolveEntityRoute("trailer", "id1")).toBe("/fleet/trailers/id1");
     expect(resolveEntityRoute("bank_account", "id1")).toBe("/banking/accounts/id1");
-    expect(resolveEntityRoute("factoring_advance", "id1")).toBe("/accounting/factoring/id1");
+    expect(resolveEntityRoute("factoring_advance", "id1")).toBe("/factoring/advances/id1");
     expect(resolveEntityRoute("bill", "id1")).toBe("/accounting/bills/id1");
     expect(resolveEntityRoute("matter", "id1")).toBe("/legal/matters/id1");
     expect(resolveEntityRoute("insurance_policy", "id1")).toBe("/safety/insurance/policies/id1");

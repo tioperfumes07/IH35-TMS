@@ -2,7 +2,8 @@ import { Link } from "react-router-dom";
 import { formatUsd } from "../../../lib/money";
 
 type Props = {
-  reserve: number;
+  /** Escrow + cash reserve from the factoring KPI engine (GL 1230 + 1235); null while loading / on error. */
+  reserve: number | null;
   outstandingLiability: number;
   lastAdvanceAt: string | null;
 };
@@ -28,7 +29,7 @@ export function FactoringSummaryCard({ reserve, outstandingLiability, lastAdvanc
       </div>
       <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
         <dt className="text-[#6B7280]">Reserves held</dt>
-        <dd className="text-right font-medium tabular-nums text-[#0F1219]">{formatUsd(reserve)}</dd>
+        <dd className="text-right font-medium tabular-nums text-[#0F1219]">{reserve == null ? "—" : formatUsd(reserve)}</dd>
         <dt className="text-[#6B7280]">Advances funded MTD</dt>
         <dd
           className="text-right text-[#6B7280]"

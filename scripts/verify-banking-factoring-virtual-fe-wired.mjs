@@ -1,7 +1,9 @@
 #!/usr/bin/env node
-// verify-banking-factoring-virtual-fe-wired (0441-mod8) — locks FE wiring so Banking Home reads
-// reserve/outstanding-liability balances from GET /api/v1/banking/factoring-virtual,
-// not the stale views.banking_account_tiles / dashboard KPI proxy that showed $0.
+// verify-banking-factoring-virtual-fe-wired (0441-mod8) — locks FE wiring so Banking Home reads the
+// outstanding-liability balance from GET /api/v1/banking/factoring-virtual, not the stale
+// views.banking_account_tiles / dashboard KPI proxy that showed $0.
+// ROUND 326.2 item 3: the RESERVE no longer comes from factoring-virtual — Banking reads the factoring KPI
+// engine (getFactoringKpis, GL 1230 + 1235) so Factoring and Banking share one reserve engine.
 //
 // Self-test: node scripts/verify-banking-factoring-virtual-fe-wired.mjs --selftest
 import fs from "node:fs";
@@ -19,15 +21,19 @@ export function check({ bankingApi, bankingHome }) {
     f.push(`${BANKING_API}: must export getFactoringVirtual calling /api/v1/banking/factoring-virtual`);
   if (!/export\s+function\s+getFactoringVirtual/.test(bankingApi))
     f.push(`${BANKING_API}: must export getFactoringVirtual`);
-  if (!/reserve_balance/.test(bankingApi) || !/outstanding_liability_balance/.test(bankingApi))
-    f.push(`${BANKING_API}: FactoringVirtualCompany must include reserve_balance and outstanding_liability_balance`);
+  if (!/outstanding_liability_balance/.test(bankingApi))
+    f.push(`${BANKING_API}: FactoringVirtualCompany must include outstanding_liability_balance`);
+  if (/^\s*reserve_balance\s*:/m.test(bankingApi))
+    f.push(`${BANKING_API}: FactoringVirtualCompany must NOT carry reserve_balance (second reserve engine)`);
 
   if (!/getFactoringVirtual/.test(bankingHome))
     f.push(`${BANKING_HOME}: must import and call getFactoringVirtual`);
   if (!/factoringVirtualQuery/.test(bankingHome))
     f.push(`${BANKING_HOME}: must use a factoringVirtualQuery (react-query) for the virtual bank panel`);
-  if (!/factoringVirtualSummary\.reserve/.test(bankingHome))
-    f.push(`${BANKING_HOME}: factoringReserve must come from factoringVirtualSummary.reserve (not kpiQuery.data?.factoring_reserve)`);
+  if (!/getFactoringKpis/.test(bankingHome) || !/"escrow_reserve_balance"/.test(bankingHome) || !/"cash_reserve_balance"/.test(bankingHome))
+    f.push(`${BANKING_HOME}: factoringReserve must come from the factoring KPI engine (escrow + cash reserve)`);
+  if (/factoringVirtualSummary\.reserve\b|row\.reserve_balance/.test(bankingHome))
+    f.push(`${BANKING_HOME}: must NOT sum reserve from factoring-virtual (second reserve engine)`);
   if (/factoringReserve\s*=\s*Number\(\s*kpiQuery\.data\?\.factoring_reserve/.test(bankingHome))
     f.push(`${BANKING_HOME}: must NOT derive factoringReserve from kpiQuery.data?.factoring_reserve (stale tile view proxy)`);
   if (!/factoringVirtualSummary\.outstandingLiability/.test(bankingHome))
@@ -61,19 +67,20 @@ export function run() {
 
 if (process.argv.includes("--selftest")) {
   const goodApi = `
-    export type FactoringVirtualCompany = { reserve_balance: number; chargeback_balance: number; outstanding_liability_balance: number; };
+    export type FactoringVirtualCompany = { chargeback_balance: number; outstanding_liability_balance: number; };
     export function getFactoringVirtual(companyId: string) {
       return apiRequest<{ companies: FactoringVirtualCompany[] }>(\`/api/v1/banking/factoring-virtual?\${q(companyId)}\`);
     }
   `;
   const goodHome = `
     import { getFactoringVirtual } from "../../api/banking";
+    import { getFactoringKpis } from "../../api/factoring-kpis";
     const factoringVirtualQuery = useQuery({ queryFn: () => getFactoringVirtual(companyId) });
     const factoringVirtualSummary = useMemo(() => ({
-      reserve: row.reserve_balance,
       outstandingLiability: row.outstanding_liability_balance,
     }), []);
-    const factoringReserve = factoringVirtualSummary.reserve;
+    const factoringKpiQuery = useQuery({ queryFn: () => getFactoringKpis(companyId) });
+    const factoringReserve = cents("escrow_reserve_balance") + cents("cash_reserve_balance");
     const factoringOutstandingLiability = factoringVirtualSummary.outstandingLiability;
     <span>Outstanding liability</span><span>{money.format(factoringOutstandingLiability)}</span>
   `;
@@ -100,6 +107,10 @@ if (process.argv.includes("--selftest")) {
           .replaceAll("outstandingLiability", "chargeback")
           .replace("row.outstanding_liability_balance", "row.chargeback_balance"),
       }).some((x) => x.includes("must not relabel")),
+    ],
+    [
+      "second reserve engine (factoring-virtual reserve sum) caught",
+      check({ bankingApi: goodApi, bankingHome: goodHome + "\n const r = factoringVirtualSummary.reserve;" }).some((x) => x.includes("second reserve engine")),
     ],
     [
       "missing honest API field caught",

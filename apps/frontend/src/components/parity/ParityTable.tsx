@@ -1584,9 +1584,11 @@ export function ParityTable<T>({
           one place that flips every header/column that doesn't declare its own alignment. A column
           with an explicit text-right/text-left in its own className (money columns, etc.) still
           wins on its own <td>/<th> — direct declarations beat inheritance regardless of source
-          order, so deliberately right-aligned numeric columns are unaffected. */}
+          order, so deliberately right-aligned numeric columns are unaffected.
+          ROUND 326.2 item 3 — tabular-nums on the table root: font-variant-numeric inherits, so every
+          money / number cell aligns its digits even when its column key escapes PARITY_NUMERIC_KEY. */}
       <table
-        className={`w-full ${columnLayout === "auto" ? "table-auto" : "table-fixed"} text-center`}
+        className={`w-full ${columnLayout === "auto" ? "table-auto" : "table-fixed"} text-center tabular-nums`}
         style={{ fontSize: d.font, ...(minWidthPx ? { minWidth: minWidthPx } : {}) }}
       >
         <thead

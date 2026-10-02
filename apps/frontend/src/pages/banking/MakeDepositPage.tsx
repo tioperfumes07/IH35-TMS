@@ -281,7 +281,7 @@ export function MakeDepositPage() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
+              <table className="w-full border-collapse tabular-nums">
                 <thead>
                   <tr className="border-b border-[#E5E7EB] text-column-header font-bold uppercase text-[#4B5563]">
                     <th className="px-2 py-[7px] text-center">☐</th>
@@ -418,7 +418,7 @@ export function MakeDepositPage() {
               </Button>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
+              <table className="w-full border-collapse tabular-nums">
                 <thead>
                   <tr className="border-b border-[#E5E7EB] text-column-header font-bold uppercase text-[#4B5563]">
                     <th className="px-2 py-[7px] text-center">Date</th>
@@ -516,7 +516,7 @@ export function MakeDepositPage() {
 
         <section className="space-y-2 rounded-sm border border-[#E5E7EB] bg-white p-3" data-section="deposits-list">
           <h2 className=" font-bold uppercase text-[#4B5563]">Recent deposits</h2>
-          <table className="w-full border-collapse">
+          <table className="w-full border-collapse tabular-nums">
             <thead>
               <tr className="border-b border-[#E5E7EB] text-column-header font-bold uppercase text-[#4B5563]">
                 <th className="px-2 py-[7px] text-center">Deposit</th>

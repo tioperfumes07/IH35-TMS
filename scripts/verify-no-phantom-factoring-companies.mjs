@@ -50,11 +50,13 @@ export function check({ sources, virtualRoute, factoringRoute, summaryMigration,
   if (!/code\(503\)/.test(virtualRoute) || !virtualRoute.includes("202607600000_factoring_balance_invoice_linkage.sql")) {
     failures.push(`${VIRTUAL_ROUTE}: missing linkage-view 503 with prerequisite migration name`);
   }
-  if (
-    !virtualRoute.includes("reserve_receivable_signed_cents") ||
-    !virtualRoute.includes("outstanding_liability_signed_cents")
-  ) {
-    failures.push(`${VIRTUAL_ROUTE}: must aggregate signed reserve and liability cents from the linkage view`);
+  if (!virtualRoute.includes("outstanding_liability_signed_cents")) {
+    failures.push(`${VIRTUAL_ROUTE}: must aggregate signed liability cents from the linkage view`);
+  }
+  // ROUND 326.2 item 3 — one reserve engine: the reserve is the factoring KPI engine's GL balance
+  // (GET /api/v1/factoring/kpis), so the banking virtual route must not re-sum it from the view.
+  if (/SUM\(\s*f\.reserve_receivable_signed_cents/.test(virtualRoute)) {
+    failures.push(`${VIRTUAL_ROUTE}: must not re-sum the reserve (second reserve engine) — read the factoring KPI engine`);
   }
   if (!factoringRoute.includes("factoring.canonical_factor_agreements") || !factoringRoute.includes("voided_at = now()")) {
     failures.push(`${FACTORING_ROUTE}: deactivate must archive the canonical agreement`);
@@ -96,7 +98,7 @@ if (process.argv.includes("--selftest")) {
   const good = {
     sources: [["apps/backend/src/example.ts", "SELECT views.factoring_balance_invoice_linkage"]],
     virtualRoute:
-      "to_regclass('views.factoring_balance_invoice_linkage') code(503) 202607600000_factoring_balance_invoice_linkage.sql reserve_receivable_signed_cents outstanding_liability_signed_cents",
+      "to_regclass('views.factoring_balance_invoice_linkage') code(503) 202607600000_factoring_balance_invoice_linkage.sql outstanding_liability_signed_cents",
     factoringRoute: "factoring.canonical_factor_agreements voided_at = now()",
     summaryMigration:
       "WITH (security_invoker = true) FROM views.factoring_balance_invoice_linkage COUNT(*)::int AS active_factor_count (fc.active_factor_count <= 1) AS single_factor_invariant_ok",

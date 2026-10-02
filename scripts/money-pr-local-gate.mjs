@@ -502,6 +502,20 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-factoring-posting-legs-match-header",
     ["apps/backend/src/accounting/factoring-posting/poster.service.ts", "apps/backend/src/factoring/faro-csv-import.ts"],
   ],
+  // ROUND 326.2 items 3-4 — banking / factoring surfaces: every table tabular-nums, and Banking's
+  // factoring reserve reads the factoring KPI engine (one reserve engine, no duplicate math).
+  [
+    "verify-banking-factoring-surfaces-standard",
+    [
+      "apps/frontend/src/pages/banking/",
+      "apps/frontend/src/pages/factoring/",
+      "apps/frontend/src/components/banking/",
+      "apps/frontend/src/components/factoring/",
+      "apps/frontend/src/components/parity/ParityTable.tsx",
+      "apps/frontend/src/components/shared/LedgerKpiPanel.tsx",
+      "scripts/verify-banking-factoring-surfaces-standard.mjs",
+    ],
+  ],
   // ROUND 326.2 items 1-2 — every factoring and banking KPI the engine serves is recomputed from the ledger with
   // independent SQL; any cent of drift, or a tile whose row_count != its drilldown rows, fails.
   [
