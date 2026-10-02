@@ -1,214 +1,4 @@
 {
-  "12201": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 288.3/296 — IFTA miles from the GPS apportionment engine only (CC-1)."
-  },
-  "12205": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 288.3/296 — one deadhead rule for driver bill, settlement creator and batch pay (CC-1)."
-  },
-  "12209": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 288.3/296 — driver page Add payment adds one extra-pay line through the pay-line engine (CC-1)."
-  },
-  "12213": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 296 6 — factoring chargebacks never route to a driver (CC-1)."
-  },
-  "12217": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 296 5 — driver-finance money cells use lib/money (CC-1)."
-  },
-  "12161": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 queue item 22 — zero-reset engine guard (CC-1)."
-  },
-  "12165": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 queue item 20 — maintenance module engines guard (CC-1)."
-  },
-  "12169": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 queue item 21 — cash flow module guard (CC-1)."
-  },
-  "12173": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 audit A2 — one settlement calculator guard (CC-1)."
-  },
-  "12177": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 audit A3 — settlement creator posts through the close engine guard (CC-1)."
-  },
-  "12181": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 audit A4 — no hardcoded account fallback guard (CC-1)."
-  },
-  "12185": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 audit A5 — one driver bill per load guard (CC-1)."
-  },
-  "12189": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 audit M1 — single work-order creator guard (CC-1)."
-  },
-  "12193": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 audit M2 — one PM-due evaluator guard (CC-1)."
-  },
-  "12197": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 audit C1 — cash position single source guard (CC-1)."
-  },
-  "12129": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 queue item 12 — 1090 undeposited-funds clearing guard (CC-1)."
-  },
-  "12133": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 queue item 13 — 2510 Dreamline card payable payment side guard (CC-1)."
-  },
-  "12137": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 queue item 14 — 6300 bank service charge churn guard (CC-1)."
-  },
-  "12141": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 queue item 15 — check creator commissioning guard (CC-1)."
-  },
-  "12145": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 queue item 16 — reclassify line rewrite no half-write guard (CC-1)."
-  },
-  "12149": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 queue item 17 / M3 — one fleet roster definition guard (CC-1)."
-  },
-  "12153": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 queue item 18 — settlement creator totals chain guard (CC-1)."
-  },
-  "12157": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 queue item 23 — table-and-stamp snapshot guard (CC-1)."
-  },
-  "12109": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "verify-deadhead-empty-rate-fallback: ROUND 326 queue item 7 — empty-mile pay uses the empty rate, else the loaded per-mile rate (owner MILES SPEC); never a silent $0 on real empty miles."
-  },
-  "12113": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 queue item 8 — item catalog + mapping engine guard (CC-1)."
-  },
-  "12117": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 queue item 9 — document-expense ingestion engine guard (CC-1)."
-  },
-  "12121": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 queue item 10 — settlement-line categorization engine guard (CC-1)."
-  },
-  "12125": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 queue item 11 — 9000 Ask My Accountant path guard (CC-1)."
-  },
-  "12101": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "verify-single-settlement-poster: ROUND 326 queue item 2 — Close posts the per-load A/P chain, retired bill-payment-post route answers 410, no clearing account, non-cash applications never post cash."
-  },
-  "12105": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "verify-driver-escrow-2100-default-line: ROUND 326 queue item 6 — Settlement Creator starts with a $25 driver escrow line (X removes it, own subtotal); escrow resolves the driver's own 2100-00-0NN liability, never the shared default / 2400."
-  },
-  "12097": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "verify-lease-to-own-posting: ROUND 321 lessee commencement (Dr ROU / Cr liability), monthly bill Dr liability, period accretion + ROU amortization (finance: interest + amortization expense; operating: straight-line lease expense), buyout close settles liability and moves ROU to an owned fixed asset; live: every ROU lease balances."
-  },
-  "12093": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "verify-lease-to-own-schedule: ROUND 321 classification (FMV buyout -> operating, fixed price -> finance), PV / interest / principal schedule ties to zero, schedule table WORM + FORCE RLS + classified in TABLE_REGISTRY."
-  },
-  "12089": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-01",
-    "purpose": "verify-one-event1-je-per-load: ROUND 321 EVENT1-IDEMPOTENCY -- live, fail-closed: at most one live revenue JE per (load, event), each owned by an active latch row; static: the poster retires stale (reversed) active latch rows before the unique insert, inside the JE transaction."
-  },
-  "12079": {
-    "claimed_by": "CC-2",
-    "claimed_at": "2026-10-01",
-    "purpose": "verify-auto-invoice-on-bol-or-pod: ROUND 321 item 6 -- a signed BOL or POD releases the invoice; one shared billing-evidence code list used by the existence check, the awaiting queue and the upload trigger."
-  },
-  "12075": {
-    "claimed_by": "CC-2",
-    "claimed_at": "2026-10-01",
-    "purpose": "verify-broker-named-customers-are-brokers: owner law 2026-10-01 -- every active customer whose name matches the broker pattern carries customer_type broker + the company's BROKER customer_type_id; trigger present."
-  },
-  "12071": {
-    "claimed_by": "CC-2",
-    "claimed_at": "2026-10-01",
-    "purpose": "verify-revrec-latch-atomic: the revenue JE and its load_revenue_recognition_postings row commit in one transaction; live: 0 unreversed Revrec JEs without a latch row (double recognition)."
-  },
-  "12067": {
-    "claimed_by": "CC-2",
-    "claimed_at": "2026-10-01",
-    "purpose": "verify-factoring-purchase-owner-only: ROUND 315 owner-only law -- every factoring purchase create/submit/advance/close/bank-match path calls the Owner gate (403 + audit), auto-submit never creates a purchase; live: no refusal-bypass purchase rows."
-  },
-  "12059": {
-    "claimed_by": "CC-2",
-    "claimed_at": "2026-10-01",
-    "purpose": "verify-driver-complaints-chargeback-chain: E-28 complaints carry stop/driver_caused/source; a chargeback exists only for a driver-caused, approved complaint and links its deduction both ways."
-  },
-  "12063": {
-    "claimed_by": "CC-2",
-    "claimed_at": "2026-10-01",
-    "purpose": "verify-faro-statement-tieout: every imported Faro statement line is matched to an advance or a bank line, or named unmatched with the difference; no plug rows."
-  },
-  "12055": {
-    "claimed_by": "CC-2",
-    "claimed_at": "2026-10-01",
-    "purpose": "verify-factoring-advance-links-its-load: every live factoring advance reaches its load (source_load_id or linked invoice); the pre-invoice create path and the invoice auto-link trigger exist."
-  },
-  "12051": {
-    "claimed_by": "CC-2",
-    "claimed_at": "2026-10-01",
-    "purpose": "verify-posted-expense-line-matches-its-ledger: every posted expense line account equals the account its journal entry leg posted; the immutability trigger exists."
-  },
-  "12047": {
-    "claimed_by": "CC-2",
-    "claimed_at": "2026-10-01",
-    "purpose": "verify-fuel-lane-reverse-routing: linkage law section 6 for the fuel lane -- fuel purchases list by vendor, fraud alerts list by unit/driver/load/vendor, fuel purchases drill to their expense + JE and back, Relay fills list by unit/driver/unmatched."
-  },
   "2426": {
     "claimed_at": "2026-08-31",
     "claimed_by": "cursor",
@@ -7788,35 +7578,80 @@
     "claimed_at": "2026-10-01",
     "purpose": "verify-load-real-driven-miles (ORDER-2026-09-04 three-mile CPM): load/leg real driven miles come only from odometer anchors (never practical/short), are NULL with a reason never zero, and every CPM/MPG figure states its mileage basis."
   },
+  "12047": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-fuel-lane-reverse-routing: linkage law section 6 for the fuel lane -- fuel purchases list by vendor, fraud alerts list by unit/driver/load/vendor, fuel purchases drill to their expense + JE and back, Relay fills list by unit/driver/unmatched."
+  },
+  "12051": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-posted-expense-line-matches-its-ledger: every posted expense line account equals the account its journal entry leg posted; the immutability trigger exists."
+  },
+  "12055": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-factoring-advance-links-its-load: every live factoring advance reaches its load (source_load_id or linked invoice); the pre-invoice create path and the invoice auto-link trigger exist."
+  },
   "12057": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-01",
     "purpose": "verify-settlement-model-never-null (ROUND 313 CC-1 #3): every driver_settlements writer stamps settlement_model; DB refuses NULL."
+  },
+  "12059": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-driver-complaints-chargeback-chain: E-28 complaints carry stop/driver_caused/source; a chargeback exists only for a driver-caused, approved complaint and links its deduction both ways."
   },
   "12061": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-01",
     "purpose": "verify-fleet-roster-integrity (ROUND 313 CC-1 #1 E-17): roster engine reconciles units/Samsara/insurance/IFTA-IRP/lease into fleet.roster_findings, void-not-delete, screen + board probe wired."
   },
+  "12063": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-faro-statement-tieout: every imported Faro statement line is matched to an advance or a bank line, or named unmatched with the difference; no plug rows."
+  },
   "12065": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-01",
     "purpose": "verify-bank-tieout-live (ROUND 313 CC-1 #2 BANK-TIEOUT-01): every live bank account's feed balance ties to its ledger_account_id GL balance or the difference is explained line by line."
+  },
+  "12067": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-factoring-purchase-owner-only: ROUND 315 owner-only law -- every factoring purchase create/submit/advance/close/bank-match path calls the Owner gate (403 + audit), auto-submit never creates a purchase; live: no refusal-bypass purchase rows."
   },
   "12069": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-01",
     "purpose": "verify-no-frozen-entity-unit-on-usmca (registry E-17 recommendation): fails on any active unit owned by a frozen entity (IH 35 Transportation) attached to USMCA beyond the owner-pending baseline (T122, T124, T156)."
   },
+  "12071": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-revrec-latch-atomic: the revenue JE and its load_revenue_recognition_postings row commit in one transaction; live: 0 unreversed Revrec JEs without a latch row (double recognition)."
+  },
   "12073": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-01",
     "purpose": "verify-lease-engine-owner-only-and-unit-derivation (ROUND 316): lease create/sign/close Owner-only (403 + audit); units.currently_leased_to_company_id derives from a live lease contract."
   },
+  "12075": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-broker-named-customers-are-brokers: owner law 2026-10-01 -- every active customer whose name matches the broker pattern carries customer_type broker + the company's BROKER customer_type_id; trigger present."
+  },
   "12077": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-01",
     "purpose": "verify-lease-bill-engine (ROUND 316): one vendor bill per lessor per month through the canonical bill engine, line per unit/trailer, class = unit, lease expense account, bill <-> lease FK both ways, Feed Gate."
+  },
+  "12079": {
+    "claimed_by": "CC-2",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-auto-invoice-on-bol-or-pod: ROUND 321 item 6 -- a signed BOL or POD releases the invoice; one shared billing-evidence code list used by the existence check, the awaiting queue and the upload trigger."
   },
   "12081": {
     "claimed_by": "claude",
@@ -7827,6 +7662,241 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-01",
     "purpose": "verify-no-double-encoded-api-body (ROUND 316 systemic sweep): apiRequest already JSON.stringifies options.body; a caller passing body: JSON.stringify(...) sends a JSON string, the server parses it to a string and every zod object schema 400s."
+  },
+  "12089": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-01",
+    "purpose": "verify-one-event1-je-per-load: ROUND 321 EVENT1-IDEMPOTENCY -- live, fail-closed: at most one live revenue JE per (load, event), each owned by an active latch row; static: the poster retires stale (reversed) active latch rows before the unique insert, inside the JE transaction."
+  },
+  "12093": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "verify-lease-to-own-schedule: ROUND 321 classification (FMV buyout -> operating, fixed price -> finance), PV / interest / principal schedule ties to zero, schedule table WORM + FORCE RLS + classified in TABLE_REGISTRY."
+  },
+  "12097": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "verify-lease-to-own-posting: ROUND 321 lessee commencement (Dr ROU / Cr liability), monthly bill Dr liability, period accretion + ROU amortization (finance: interest + amortization expense; operating: straight-line lease expense), buyout close settles liability and moves ROU to an owned fixed asset; live: every ROU lease balances."
+  },
+  "12101": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "verify-single-settlement-poster: ROUND 326 queue item 2 — Close posts the per-load A/P chain, retired bill-payment-post route answers 410, no clearing account, non-cash applications never post cash."
+  },
+  "12105": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "verify-driver-escrow-2100-default-line: ROUND 326 queue item 6 — Settlement Creator starts with a $25 driver escrow line (X removes it, own subtotal); escrow resolves the driver's own 2100-00-0NN liability, never the shared default / 2400."
+  },
+  "12109": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "verify-deadhead-empty-rate-fallback: ROUND 326 queue item 7 — empty-mile pay uses the empty rate, else the loaded per-mile rate (owner MILES SPEC); never a silent $0 on real empty miles."
+  },
+  "12113": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 8 — item catalog + mapping engine guard (CC-1)."
+  },
+  "12117": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 9 — document-expense ingestion engine guard (CC-1)."
+  },
+  "12121": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 10 — settlement-line categorization engine guard (CC-1)."
+  },
+  "12125": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 11 — 9000 Ask My Accountant path guard (CC-1)."
+  },
+  "12129": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 12 — 1090 undeposited-funds clearing guard (CC-1)."
+  },
+  "12133": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 13 — 2510 Dreamline card payable payment side guard (CC-1)."
+  },
+  "12137": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 14 — 6300 bank service charge churn guard (CC-1)."
+  },
+  "12141": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 15 — check creator commissioning guard (CC-1)."
+  },
+  "12145": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 16 — reclassify line rewrite no half-write guard (CC-1)."
+  },
+  "12149": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 17 / M3 — one fleet roster definition guard (CC-1)."
+  },
+  "12153": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 18 — settlement creator totals chain guard (CC-1)."
+  },
+  "12157": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 23 — table-and-stamp snapshot guard (CC-1)."
+  },
+  "12161": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 22 — zero-reset engine guard (CC-1)."
+  },
+  "12165": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 20 — maintenance module engines guard (CC-1)."
+  },
+  "12169": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 21 — cash flow module guard (CC-1)."
+  },
+  "12173": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 audit A2 — one settlement calculator guard (CC-1)."
+  },
+  "12177": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 audit A3 — settlement creator posts through the close engine guard (CC-1)."
+  },
+  "12181": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 audit A4 — no hardcoded account fallback guard (CC-1)."
+  },
+  "12185": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 audit A5 — one driver bill per load guard (CC-1)."
+  },
+  "12189": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 audit M1 — single work-order creator guard (CC-1)."
+  },
+  "12193": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 audit M2 — one PM-due evaluator guard (CC-1)."
+  },
+  "12197": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 audit C1 — cash position single source guard (CC-1)."
+  },
+  "12201": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 288.3/296 — IFTA miles from the GPS apportionment engine only (CC-1)."
+  },
+  "12205": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 288.3/296 — one deadhead rule for driver bill, settlement creator and batch pay (CC-1)."
+  },
+  "12209": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 288.3/296 — driver page Add payment adds one extra-pay line through the pay-line engine (CC-1)."
+  },
+  "12213": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 296 6 — factoring chargebacks never route to a driver (CC-1)."
+  },
+  "12217": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 296 5 — driver-finance money cells use lib/money (CC-1)."
+  },
+  "12221": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 item 18 — the Settlement Creator posts through the close engine; its totals are the close engine's (CC-1)."
+  },
+  "12225": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 297 driver-profile audit — the driver Bills panel lists only that driver's bills (CC-1)."
+  },
+  "12229": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 297 driver-profile audit — settlement YTD / lifetime totals exclude open drafts (CC-1)."
+  },
+  "12233": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 297 driver-profile audit — deductions applied by a closed settlement stop reading pending (CC-1)."
+  },
+  "12237": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 301 P0 #011 — every UPDATE in the settlement contract-terms engine names its company (CC-1)."
+  },
+  "12241": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 300 — driver_settlement document reverse: one engine, proven on a Neon fork (CC-1)."
+  },
+  "12245": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 300 — driver_settlement_deduction row reverses with its GL (CC-1)."
+  },
+  "12249": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 300 — settlement-posting carries the load/unit/trailer/customer/vendor/invoice/item stamps (CC-1)."
+  },
+  "12253": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 300 — no orphan writer: each of the 8 is deleted or wired (CC-1)."
+  },
+  "12257": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 301 — five posters commit the JE and their idempotency latch in one transaction (CC-1)."
+  },
+  "12261": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 300 — schedule reversal never flips the original JE to voided (reports count it once) (CC-1)."
+  },
+  "12265": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 300 — re-posting a reversed schedule row books a fresh JE, never re-links the voided one (CC-1)."
+  },
+  "12269": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 300 — multi-JE void writes reversed_by_je_id once per original (CC-1)."
+  },
+  "12273": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 300 — period reopen reverses the closing retained-earnings JE (CC-1)."
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -9829,50 +9899,5 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
-  },
-  "12221": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 item 18 — the Settlement Creator posts through the close engine; its totals are the close engine's (CC-1)."
-  },
-  "12225": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 297 driver-profile audit — the driver Bills panel lists only that driver's bills (CC-1)."
-  },
-  "12229": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 297 driver-profile audit — settlement YTD / lifetime totals exclude open drafts (CC-1)."
-  },
-  "12233": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 297 driver-profile audit — deductions applied by a closed settlement stop reading pending (CC-1)."
-  },
-  "12237": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 301 P0 #011 — every UPDATE in the settlement contract-terms engine names its company (CC-1)."
-  },
-  "12241": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 300 — driver_settlement document reverse: one engine, proven on a Neon fork (CC-1)."
-  },
-  "12245": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 300 — driver_settlement_deduction row reverses with its GL (CC-1)."
-  },
-  "12249": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 300 — settlement-posting carries the load/unit/trailer/customer/vendor/invoice/item stamps (CC-1)."
-  },
-  "12253": {
-    "claimed_by": "CC-1",
-    "claimed_at": "2026-10-02",
-    "purpose": "ROUND 300 — no orphan writer: each of the 8 is deleted or wired (CC-1)."
   }
 }
