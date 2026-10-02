@@ -38,7 +38,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { expandSha, ancestorCheck, fetchHealthzVersionSync } from "./lib/live-verified-stamps.mjs";
+import {
+  expandSha,
+  ancestorCheck,
+  ancestorCheckerFor,
+  ensureResolvable,
+  fetchHealthzVersionSync,
+} from "./lib/live-verified-stamps.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const REGISTRY = path.join(ROOT, "docs/specs/DERIVED-ARTIFACTS.json");
@@ -210,8 +216,12 @@ function main() {
   let liveSha;
   try { liveSha = fetchHealthzVersionSync(); }
   catch (e) { console.error(`${LABEL} FAIL — cannot read live healthz: ${e.message}`); process.exit(1); }
-  if (!expandSha(ROOT, liveSha)) { try { execSync("git fetch -q origin", { cwd: ROOT, stdio: "ignore" }); } catch {} }
-  const liveFull = expandSha(ROOT, liveSha) || liveSha;
+  // Fetch the ONE missing object, bounded — never a blind unbounded `git fetch origin`, which on a
+  // network-mounted clone did not return for >10 minutes and ran on every push (measured 2026-10-02).
+  const liveFull = ensureResolvable(ROOT, liveSha) || liveSha;
+  // One `git rev-list` for the whole ancestor set instead of git spawns per artifact; identical
+  // tri-state semantics, so an unresolvable stamp still fails closed as "unknown".
+  const isAncestorOfLive = ancestorCheckerFor(ROOT, liveFull);
 
   const read = (rel) => {
     const p = path.join(ROOT, rel);
@@ -228,7 +238,7 @@ function main() {
 
   const { problems, warnings, stats } = analyse({
     artifacts: cfg.artifacts, liveSha: liveFull, nowMs: Date.now(), read,
-    ancestorOf: (a, b) => ancestorCheck(ROOT, a, b),
+    ancestorOf: (a, b) => (b === liveFull ? isAncestorOfLive(a) : ancestorCheck(ROOT, a, b)),
   });
 
   console.log(`${LABEL}: live=${liveSha} checked=${stats.checked} fresh=${stats.fresh} stale=${stats.stale}`);

@@ -57,6 +57,90 @@ export function ancestorCheck(root, maybeAncestor, descendant) {
   }
 }
 
+/**
+ * Make an unresolvable commit resolvable, cheaply and with a hard time bound.
+ *
+ * WHY THIS EXISTS — measured 2026-10-02, and it is the cause of "the pushes are taking too long".
+ * A fresh worktree does not carry the SHA the live backend reports from /healthz, because that
+ * commit was fetched into a different worktree's object store or landed after this clone's last
+ * fetch. The previous recovery was a blind `execSync("git fetch -q origin")` with NO timeout. Over a
+ * network-mounted repository that fetch walks every ref and does not come back for many minutes, and
+ * it runs on EVERY seat's EVERY push, before a single guard has reported. Measured on the same
+ * worktree and the same clone:
+ *
+ *   blind `git fetch origin`                        > 10 minutes, never observed to finish
+ *   `git fetch --no-tags origin <the one sha>`         9.9 seconds
+ *
+ * So fetch the one object actually needed, bounded, and only fall back to the broad fetch — also
+ * bounded — if the targeted one fails. A guard that costs ten minutes gets switched off, and a
+ * switched-off guard protects nothing; this keeps the protection and returns the time.
+ *
+ * @returns {string} the full SHA once resolvable, or "" if it could not be resolved.
+ */
+export function ensureResolvable(root, sha, { timeoutMs = 45000 } = {}) {
+  const already = expandSha(root, sha);
+  if (already) return already;
+  if (!/^[0-9a-f]{7,40}$/i.test(String(sha || ""))) return "";
+  try {
+    execSync(`git fetch -q --no-tags origin ${sha}`, {
+      cwd: root,
+      stdio: "ignore",
+      timeout: timeoutMs,
+    });
+  } catch {
+    try {
+      execSync("git fetch -q --no-tags origin", { cwd: root, stdio: "ignore", timeout: timeoutMs });
+    } catch {
+      /* offline, or the remote does not serve that object — caller gets "" and fails closed */
+    }
+  }
+  return expandSha(root, sha);
+}
+
+/**
+ * Tri-state ancestry for MANY candidates against ONE descendant, in a single git process.
+ *
+ * WHY: every caller of ancestorCheck in this repo compares N claims against the same live SHA, so
+ * the per-claim call spawned 3 git processes each — ~450 for the 151 prod_verified claims. The set of
+ * a commit's ancestors is one `git rev-list`, measured at 0.3s for 25,569 commits on this clone.
+ *
+ * The semantics are IDENTICAL to ancestorCheck, including the two that matter:
+ *   - a commit IS an ancestor of itself (rev-list emits the tip), matching `merge-base --is-ancestor`
+ *   - an unresolvable candidate returns "unknown", NEVER "no" — fail closed, never guess
+ *
+ * @returns {(candidate: string) => "yes"|"no"|"unknown"}
+ */
+export function ancestorCheckerFor(root, descendant) {
+  const tip = expandSha(root, descendant);
+  if (!tip) return () => "unknown";
+  let ancestors;
+  try {
+    ancestors = new Set(
+      execSync(`git rev-list ${tip}`, {
+        cwd: root,
+        encoding: "utf8",
+        maxBuffer: 256 * 1024 * 1024,
+        stdio: ["ignore", "pipe", "ignore"],
+      })
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean)
+    );
+  } catch {
+    // rev-list itself failed (corrupt or partial object store) — do not guess for anyone.
+    return () => "unknown";
+  }
+  const memo = new Map();
+  return (candidate) => {
+    const key = String(candidate || "");
+    if (memo.has(key)) return memo.get(key);
+    const full = expandSha(root, key);
+    const verdict = !full ? "unknown" : ancestors.has(full) ? "yes" : "no";
+    memo.set(key, verdict);
+    return verdict;
+  };
+}
+
 /** @deprecated Prefer ancestorCheck — boolean false conflates "not ancestor" with "cannot determine". */
 export function isAncestor(root, maybeAncestor, descendant) {
   return ancestorCheck(root, maybeAncestor, descendant) === "yes";

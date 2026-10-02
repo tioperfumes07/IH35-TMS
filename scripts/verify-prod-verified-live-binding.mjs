@@ -33,8 +33,9 @@ import { execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  expandSha,
   ancestorCheck,
+  ancestorCheckerFor,
+  ensureResolvable,
   fetchHealthzVersionSync,
 } from "./lib/live-verified-stamps.mjs";
 
@@ -306,17 +307,16 @@ function main() {
     console.error(`${LABEL} FAIL — cannot read live healthz: ${e.message}`);
     process.exit(1);
   }
-  const resolvable = (ref) => Boolean(expandSha(ROOT, ref));
-  if (!resolvable(healthzSha)) {
-    try {
-      execSync("git fetch -q origin", { cwd: ROOT, stdio: "ignore" });
-    } catch {
-      /* offline */
-    }
-  }
-  const full = expandSha(ROOT, healthzSha) || healthzSha;
+  // The live SHA is routinely absent from a fresh worktree. Fetch THAT OBJECT, bounded — not every
+  // ref. The blind unbounded `git fetch origin` this replaces did not return for >10 minutes on a
+  // network-mounted clone and ran ahead of every guard on every seat's push (measured 2026-10-02).
+  const full = ensureResolvable(ROOT, healthzSha) || healthzSha;
+  // One `git rev-list` instead of ~3 git spawns per claim. Same tri-state semantics: an unresolvable
+  // candidate is "unknown" and fails closed; it is never silently downgraded to "no".
+  const isAncestorOfLive = ancestorCheckerFor(ROOT, full);
   /** @returns {"yes"|"no"|"unknown"} */
-  const ancestorOf = (a, b) => ancestorCheck(ROOT, a, b);
+  const ancestorOf = (a, b) =>
+    b === full ? isAncestorOfLive(a) : ancestorCheck(ROOT, a, b);
 
   const { problems, warnings, stats } = analyse({
     claims,
