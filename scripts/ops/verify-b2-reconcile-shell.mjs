@@ -48,6 +48,13 @@ function main() {
   assertIncludes(workspace, 'data-b2-recon-grid="1"', WORKSPACE);
   assertIncludes(workspace, "bankTxTypeLabel", WORKSPACE);
   assertIncludes(workspace, "bankTxRef", WORKSPACE);
+  // B-2 ORDERS §6 — completed session reopen = read-only report (beginning/cleared/ending/uncleared)
+  assertIncludes(workspace, 'data-b2-recon-report="1"', WORKSPACE);
+  assertIncludes(workspace, 'data-testid="recon-completed-report"', WORKSPACE);
+  assertIncludes(workspace, 'data-testid="recon-report-uncleared"', WORKSPACE);
+  assertIncludes(workspace, "isReportMode", WORKSPACE);
+  assertIncludes(workspace, 'status === "reconciled"', WORKSPACE);
+  assertIncludes(workspace, "Uncleared as of", WORKSPACE);
   assertIncludes(workspace, "Statement ending", WORKSPACE);
   assertIncludes(workspace, "Difference", WORKSPACE);
   assertIncludes(workspace, "text-red-700", WORKSPACE);
@@ -70,6 +77,8 @@ function main() {
   assertIncludes(shell, "Cleared deposits", SHELL);
   assertIncludes(shell, "getReconciliationWorkspace", SHELL);
   assertIncludes(shell, "cleared_debits_cents", SHELL);
+  assertIncludes(shell, 'data-b2-recon-view-report="1"', SHELL);
+  assertIncludes(shell, "View report:", SHELL);
   assertIncludes(shell, "cleared_credits_cents", SHELL);
 
   assertIncludes(api, "clearReconciliationTransaction", API);

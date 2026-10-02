@@ -537,12 +537,20 @@ export function ReconciliationWorkspacePage() {
   // (BankReconciliationPage accept/reject). No new scoring/GL — session period + account only.
   const session = workspaceQuery.data?.session;
   const bankAccountLabel = workspaceQuery.data?.bank_account_label || "Bank account";
+  /** ORDERS §6 — completed session reopen is a read-only report (beginning / cleared / ending / uncleared). */
+  const isReportMode = session?.status === "reconciled";
+  const unclearedReportRows = useMemo(() => {
+    if (!isReportMode) return [] as ReconGridRow[];
+    const anyExplicit = localTransactions.some((t) => Boolean(t.reconciliation_cleared));
+    return localTransactions.filter((tx) => !transactionIsCleared(tx, anyExplicit));
+  }, [isReportMode, localTransactions]);
   const canOpenAutoMatchSuggestions = Boolean(
     sessionId &&
       companyId &&
       session?.bank_account_id &&
       session?.period_start &&
-      session?.period_end
+      session?.period_end &&
+      !isReportMode
   );
 
   const balanceHeader = useMemo(() => {
@@ -596,11 +604,15 @@ export function ReconciliationWorkspacePage() {
     <div className="space-y-4">
       <PageHeader
         backHref="/banking"
-        title="Reconciliation Workspace"
-        subtitle={effectiveBankAccountId ? bankAccountLabel : ""}
+        title={isReportMode ? "Reconciliation report" : "Reconciliation Workspace"}
+        subtitle={
+          effectiveBankAccountId
+            ? `${bankAccountLabel}${isReportMode && session?.reconciled_at ? ` · Reconciled ${formatReconciledDate(session.reconciled_at)}` : ""}`
+            : ""
+        }
         actions={
           <div className="flex items-center gap-2">
-            {sessionId ? (
+            {sessionId && !isReportMode ? (
               <ActionButton
                 data-testid="recon-save-for-later"
                 onClick={() => {
@@ -616,24 +628,80 @@ export function ReconciliationWorkspacePage() {
             >
               Print
             </ActionButton>
-            <ActionButton
-              disabled={!canOpenAutoMatchSuggestions}
-              onClick={() => {
-                if (!session?.bank_account_id || !session.period_start || !session.period_end) return;
-                const qs = new URLSearchParams({
-                  account_id: session.bank_account_id,
-                  period_start: session.period_start,
-                  period_end: session.period_end,
-                });
-                navigate(`/banking/reconciliation?${qs.toString()}`);
-              }}
-            >
-              Auto-Match Suggestions
-            </ActionButton>
+            {!isReportMode ? (
+              <ActionButton
+                disabled={!canOpenAutoMatchSuggestions}
+                onClick={() => {
+                  if (!session?.bank_account_id || !session.period_start || !session.period_end) return;
+                  const qs = new URLSearchParams({
+                    account_id: session.bank_account_id,
+                    period_start: session.period_start,
+                    period_end: session.period_end,
+                  });
+                  navigate(`/banking/reconciliation?${qs.toString()}`);
+                }}
+              >
+                Auto-Match Suggestions
+              </ActionButton>
+            ) : null}
           </div>
         }
       />
 
+      {sessionId && workspaceQuery.data && isReportMode ? (
+        <div
+          className="rounded-sm border border-[#E5E7EB] bg-white px-4 py-3"
+          data-testid="recon-completed-report"
+          data-b2-recon-report="1"
+        >
+          <p className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">
+            Reconciliation report
+          </p>
+          <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+            <div className="text-center">
+              <p className="font-bold uppercase tracking-wide text-[#4B5563]">Beginning</p>
+              <p className="mt-0.5 font-semibold tabular-nums text-[#0F1219]">{money(summary.beginningCents)}</p>
+            </div>
+            <div className="text-center">
+              <p className="font-bold uppercase tracking-wide text-[#4B5563]">Cleared payments</p>
+              <p className="mt-0.5 font-semibold tabular-nums text-[#0F1219]">
+                {summary.paymentCount} · {money(summary.paymentCents)}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="font-bold uppercase tracking-wide text-[#4B5563]">Cleared deposits</p>
+              <p className="mt-0.5 font-semibold tabular-nums text-[#0F1219]">
+                {summary.depositCount} · {money(summary.depositCents)}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="font-bold uppercase tracking-wide text-[#4B5563]">Ending</p>
+              <p className="mt-0.5 font-semibold tabular-nums text-[#0F1219]">{money(summary.statementBalanceCents)}</p>
+            </div>
+          </div>
+          <p className="mt-2 text-center text-xs text-[#6B7280]">
+            Uncleared as of {session?.period_end ? formatDateUS(session.period_end) : "—"}:{" "}
+            <span className="font-semibold tabular-nums text-[#0F1219]">{unclearedReportRows.length}</span>
+          </p>
+          {unclearedReportRows.length > 0 ? (
+            <ul className="mt-2 max-h-40 space-y-1 overflow-auto border-t border-gray-100 pt-2" data-testid="recon-report-uncleared">
+              {unclearedReportRows.map((tx) => {
+                const abs = Math.abs(Number(tx.amount_cents ?? 0));
+                return (
+                  <li key={tx.id} className="flex justify-between gap-2 text-xs text-gray-700">
+                    <span className="min-w-0 truncate">
+                      {formatDateUS(tx.transaction_date)} · {tx.type_label} · {tx.payee || tx.merchant_name || "—"}
+                    </span>
+                    <span className="shrink-0 tabular-nums">{money(abs)}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="mt-2 text-xs text-[#16A34A]">No uncleared items as of statement date.</p>
+          )}
+        </div>
+      ) : null}
       {sessionId && workspaceQuery.data ? (
         <div
           className="rounded-sm border border-[#E5E7EB] bg-white px-4 py-3"
@@ -1137,15 +1205,15 @@ export function ReconciliationWorkspacePage() {
                       <button
                         type="button"
                         title={cleared ? "Cleared — click to uncleared" : "Click to clear"}
-                        disabled={!sessionId || !companyId || clearingId === tx.id}
+                        disabled={!sessionId || !companyId || clearingId === tx.id || isReportMode}
                         data-testid={`recon-clear-${tx.id}`}
                         className={`mx-auto mt-0.5 flex h-7 w-7 items-center justify-center rounded-full border text-xs ${
                           cleared
                             ? "border-[#14314F] bg-[#14314F] text-white"
                             : "border-gray-400 bg-white text-transparent"
-                        }`}
+                        } ${isReportMode ? "cursor-default opacity-80" : ""}`}
                         onClick={() => {
-                          if (!sessionId || !companyId) return;
+                          if (isReportMode || !sessionId || !companyId) return;
                           const next = !cleared;
                           setClearingId(tx.id);
                           const payload =
@@ -1397,6 +1465,7 @@ export function ReconciliationWorkspacePage() {
               ) : null}
               <ActionButton
                 disabled={
+                  isReportMode ||
                   !canComplete ||
                   completing ||
                   serviceChargeIncomplete ||
@@ -1404,7 +1473,7 @@ export function ReconciliationWorkspacePage() {
                   (needsForceComplete && (!isOwner || !forceReason.trim()))
                 }
                 onClick={() => {
-                  if (!sessionId || !companyId) return;
+                  if (isReportMode || !sessionId || !companyId) return;
                   setCompleting(true);
                   void completeReconciliationSession(sessionId, companyId, {
                     force_complete: needsForceComplete,
@@ -1425,8 +1494,13 @@ export function ReconciliationWorkspacePage() {
                     .finally(() => setCompleting(false));
                 }}
               >
-                {completing ? "Saving..." : "Mark Reconciled"}
+                {completing ? "Saving..." : isReportMode ? "Already reconciled" : "Mark Reconciled"}
               </ActionButton>
+              {isReportMode ? (
+                <p className="mt-1 text-xs text-[#6B7280]" data-testid="recon-report-readonly-note">
+                  This session is closed. Clear toggles and Finish are locked — print or return to Banking.
+                </p>
+              ) : null}
             </div>
             <StatementUpload
               bankAccountId={effectiveBankAccountId}

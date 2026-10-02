@@ -155,6 +155,10 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   Bank rows derive TYPE/REF from match FKs + `check_number` (`bankTxTypeLabel` / `bankTxRef`);
   GL rows use `type_label` / `ref` / `split_account` / `payee` / `memo` from the JE read model.
   Filter Find searches those columns; Print list uses the same set. Marker `data-b2-recon-grid="1"`.
+- **Report reopen (BANK-F91015):** completed `session.status === "reconciled"` opens read-only
+  report (`data-b2-recon-report`) — Beginning · Cleared payments · Cleared deposits · Ending ·
+  Uncleared as of statement date. Clear / Finish / Save for later locked; shell lists
+  "View report:" (`data-b2-recon-view-report`).
 
 ## Active Architectural Decisions — R224 gate loosenings fenced (Cursor, ROUND 240, 2026-09-29)
 - Owner accepted Check Creator mount (#23117) + AUTH-126 chain (#23118). Ordered: file what was
