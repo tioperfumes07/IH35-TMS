@@ -821,9 +821,9 @@ export async function postVoidReversal(
           UPDATE accounting.journal_entry_postings
              SET reversed_by_line_id = $2::uuid,
                  updated_at = now()
-           WHERE id = $1::uuid
+           WHERE id = $1::uuid AND operating_company_id = $3::uuid
         `,
-        [line.original_line_id, reversalPostingId]
+        [line.original_line_id, reversalPostingId, params.operatingCompanyId]
       );
     }
   }

@@ -2838,9 +2838,9 @@ async function executePostingOnClient(client: DbClient, ctx: PostingExecCtx): Pr
       UPDATE accounting.posting_batches
       SET batch_status = 'in_progress',
           updated_at = now()
-      WHERE id = $1::uuid
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
     `,
-    [postingBatchId]
+    [postingBatchId, input.operating_company_id]
   );
 
   // ACCT-F212 — the JE inherits the SOURCE DOCUMENT's sample flag, so subledger and ledger agree.
@@ -2872,9 +2872,9 @@ async function executePostingOnClient(client: DbClient, ctx: PostingExecCtx): Pr
       UPDATE accounting.posting_batches
       SET batch_status = 'posted',
           updated_at = now()
-      WHERE id = $1::uuid
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
     `,
-    [postingBatchId]
+    [postingBatchId, input.operating_company_id]
   );
 
   return {
@@ -3181,9 +3181,9 @@ async function executeSourceReversalOnClient(
         UPDATE accounting.journal_entry_postings
         SET reversed_by_line_id = $2::uuid,
             updated_at = now()
-        WHERE id = $1::uuid
+        WHERE id = $1::uuid AND operating_company_id = $3::uuid
       `,
-      [row.id, reversalLineId]
+      [row.id, reversalLineId, input.operating_company_id]
     );
     await client.query(
       `
@@ -3239,12 +3239,14 @@ async function executeSourceReversalOnClient(
     [original.journal_entry_id, reversalJeId, input.operating_company_id]
   );
 
-  await client.query(`UPDATE accounting.posting_batches SET batch_status = 'reversed', updated_at = now() WHERE id = $1::uuid`, [
-      original.posting_batch_id,
-  ]);
-  await client.query(`UPDATE accounting.posting_batches SET batch_status = 'posted', updated_at = now() WHERE id = $1::uuid`, [
-    reversalBatchId,
-  ]);
+  await client.query(
+    `UPDATE accounting.posting_batches SET batch_status = 'reversed', updated_at = now() WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [original.posting_batch_id, input.operating_company_id]
+  );
+  await client.query(
+    `UPDATE accounting.posting_batches SET batch_status = 'posted', updated_at = now() WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [reversalBatchId, input.operating_company_id]
+  );
   return {
     result: "reversed",
     posting_batch_id: reversalBatchId,

@@ -179,6 +179,7 @@ async function recordContractLine(
 /** Update a provenance row's created settlement_line_id / deduction_id after the downstream write. */
 async function backlinkContractLine(
   client: DbClient,
+  operatingCompanyId: string,
   contractLineId: string,
   patch: { settlementLineId?: string | null; deductionId?: string | null }
 ): Promise<void> {
@@ -187,9 +188,9 @@ async function backlinkContractLine(
       UPDATE driver_finance.settlement_contract_lines
       SET settlement_line_id = COALESCE($2::uuid, settlement_line_id),
           deduction_id = COALESCE($3::uuid, deduction_id)
-      WHERE id = $1::uuid
+      WHERE id = $1::uuid AND operating_company_id = $4::uuid
     `,
-    [contractLineId, patch.settlementLineId ?? null, patch.deductionId ?? null]
+    [contractLineId, patch.settlementLineId ?? null, patch.deductionId ?? null, operatingCompanyId]
   );
 }
 
@@ -307,7 +308,7 @@ export async function computeSettlementMpgBonus(
     [input.settlementId, `MPG fuel-efficiency bonus (${mpg.toFixed(2)} mpg)`, dollars]
   );
   const settlementLineId = lineRes.rows[0]?.id ? String(lineRes.rows[0].id) : "";
-  await backlinkContractLine(client, contractLineId, { settlementLineId });
+  await backlinkContractLine(client, input.operatingCompanyId, contractLineId, { settlementLineId });
 
   return { applied: true, mpg, miles, gallons, bonusCents: input.config.mpgBonusCents, settlementLineId };
 }
@@ -380,7 +381,7 @@ export async function computeReferralBonuses(
       [input.settlementId, `Referral bonus — ${referredName}`, dollars]
     );
     const settlementLineId = lineRes.rows[0]?.id ? String(lineRes.rows[0].id) : "";
-    await backlinkContractLine(client, contractLineId, { settlementLineId });
+    await backlinkContractLine(client, input.operatingCompanyId, contractLineId, { settlementLineId });
 
     // Idempotency stamp: pay this referral exactly once.
     await client.query(
@@ -388,9 +389,9 @@ export async function computeReferralBonuses(
         UPDATE mdata.drivers
         SET referral_reward_paid_at = now(),
             referral_reward_settlement_id = $2::uuid
-        WHERE id = $1::uuid AND referral_reward_paid_at IS NULL
+        WHERE id = $1::uuid AND operating_company_id = $3::uuid AND referral_reward_paid_at IS NULL
       `,
-      [referredId, input.settlementId]
+      [referredId, input.settlementId, input.operatingCompanyId]
     );
 
     result.appliedCount += 1;
@@ -461,7 +462,7 @@ export async function computeLateDeliveryPassthrough(
       loadId,
       createdByUserId: input.actorUserId,
     });
-    await backlinkContractLine(client, contractLineId, { deductionId: deduction.id });
+    await backlinkContractLine(client, input.operatingCompanyId, contractLineId, { deductionId: deduction.id });
 
     result.appliedCount += 1;
     result.appliedCents += amountCents;
@@ -543,16 +544,16 @@ export async function computeDriverFinePassthrough(
       loadId,
       createdByUserId: input.actorUserId,
     });
-    await backlinkContractLine(client, contractLineId, { deductionId: deduction.id });
+    await backlinkContractLine(client, input.operatingCompanyId, contractLineId, { deductionId: deduction.id });
 
     // Reverse link + idempotency: a fine that already produced a deduction is never charged again.
     await client.query(
       `
         UPDATE safety.civil_fines
         SET driver_settlement_deduction_id = $2::uuid, updated_at = now()
-        WHERE id = $1::uuid AND driver_settlement_deduction_id IS NULL
+        WHERE id = $1::uuid AND operating_company_id = $3::uuid AND driver_settlement_deduction_id IS NULL
       `,
-      [fineId, deduction.id]
+      [fineId, deduction.id, input.operatingCompanyId]
     );
 
     result.appliedCount += 1;
@@ -617,7 +618,7 @@ export async function computeDriverFinePassthrough(
       loadId,
       createdByUserId: input.actorUserId,
     });
-    await backlinkContractLine(client, contractLineId, { deductionId: deduction.id });
+    await backlinkContractLine(client, input.operatingCompanyId, contractLineId, { deductionId: deduction.id });
 
     // Reverse link + idempotency: converting the internal fine into a driver liability (the settlement
     // deduction) stamps driver_liability_id and flips status so it can never be charged again. NOTE:
@@ -626,9 +627,9 @@ export async function computeDriverFinePassthrough(
       `
         UPDATE safety.internal_fines
         SET status = 'converted_to_liability', driver_liability_id = $2::uuid
-        WHERE id = $1::uuid AND driver_liability_id IS NULL
+        WHERE id = $1::uuid AND operating_company_id = $3::uuid AND driver_liability_id IS NULL
       `,
-      [fineId, deduction.id]
+      [fineId, deduction.id, input.operatingCompanyId]
     );
 
     result.appliedCount += 1;
@@ -698,15 +699,15 @@ export async function computeSettlementReimbursements(
       [input.settlementId, `Reimbursement — ${r.reimbursement_type ?? "expense"}${r.reason ? `: ${r.reason}` : ""}`.slice(0, 500), dollars]
     );
     const settlementLineId = lineRes.rows[0]?.id ? String(lineRes.rows[0].id) : "";
-    await backlinkContractLine(client, contractLineId, { settlementLineId });
+    await backlinkContractLine(client, input.operatingCompanyId, contractLineId, { settlementLineId });
 
     await client.query(
       `
         UPDATE driver_finance.driver_reimbursements
         SET status = 'settled', applied_to_settlement_id = $2::uuid, settlement_line_id = $3::uuid, updated_at = now()
-        WHERE id = $1::uuid AND applied_to_settlement_id IS NULL
+        WHERE id = $1::uuid AND operating_company_id = $4::uuid AND applied_to_settlement_id IS NULL
       `,
-      [reimbId, input.settlementId, settlementLineId || null]
+      [reimbId, input.settlementId, settlementLineId || null, input.operatingCompanyId]
     );
 
     result.appliedCount += 1;

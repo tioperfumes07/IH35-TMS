@@ -512,9 +512,9 @@ async function processOneTemplate(client: PoolClient, tmplId: string): Promise<E
           next_run_at = $2::timestamptz,
           run_count = run_count + 1,
           updated_at = now()
-      WHERE id = $1::uuid
+      WHERE id = $1::uuid AND operating_company_id = $3::uuid
     `,
-    [tmplId, nextIso]
+    [tmplId, nextIso, String(tmpl.operating_company_id)]
   );
 
   return {
