@@ -150,6 +150,11 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   Finish→R already works without it. Bank-feed matched rows still become R on Finish as before.
 - **Guard:** `scripts/ops/verify-b2-je-line-reconcilable.mjs`. Unit:
   `apps/backend/src/banking/__tests__/reconcilable-gl-lines.test.ts`.
+- **Grid columns (BANK-F91014):** LEFT reconcile grid is ORDERS §6
+  `DATE | CLEARED DATE | TYPE | REF NO. | ACCOUNT | PAYEE | MEMO | PAYMENT | DEPOSIT | ●`.
+  Bank rows derive TYPE/REF from match FKs + `check_number` (`bankTxTypeLabel` / `bankTxRef`);
+  GL rows use `type_label` / `ref` / `split_account` / `payee` / `memo` from the JE read model.
+  Filter Find searches those columns; Print list uses the same set. Marker `data-b2-recon-grid="1"`.
 
 ## Active Architectural Decisions — R224 gate loosenings fenced (Cursor, ROUND 240, 2026-09-29)
 - Owner accepted Check Creator mount (#23117) + AUTH-126 chain (#23118). Ordered: file what was
