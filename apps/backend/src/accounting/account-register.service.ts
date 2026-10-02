@@ -247,6 +247,16 @@ export async function getAccountRegister(
            AND ex_chk.operating_company_id = p.operating_company_id
            AND ex_chk.payment_type = 'check'
       )`;
+  } else if (input.type === "expense") {
+    // B-1 / BANK-F91027 — Expense filter must not include Checks (payment_type='check').
+    params.push(input.type);
+    where += ` AND p.source_transaction_type = $${params.length}
+      AND NOT EXISTS (
+        SELECT 1 FROM accounting.expenses ex_non_chk
+         WHERE ex_non_chk.id::text = p.source_transaction_id
+           AND ex_non_chk.operating_company_id = p.operating_company_id
+           AND ex_non_chk.payment_type = 'check'
+      )`;
   } else if (input.type) {
     params.push(input.type);
     // Journal Entry rows often have NULL source_transaction_type (manual JE).

@@ -119,6 +119,9 @@ function main() {
   assertIncludes(service, "input.type === \"check\"", SERVICE);
   assertIncludes(service, "ex.payment_type", SERVICE);
   assertIncludes(service, 'payment_type = \'check\'', SERVICE);
+  // BANK-F91027 — Expense filter excludes Checks
+  assertIncludes(service, 'input.type === "expense"', SERVICE);
+  assertIncludes(service, "ex_non_chk", SERVICE);
 
   assertIncludes(api, "reconcile_status", API);
   assertIncludes(api, "bank_balance_cents", API);
