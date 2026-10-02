@@ -14,7 +14,11 @@ needs `settlement_no` + `location_id` on `accounting.expenses` (checks).
 Cursor may claim and later author exactly:
 
 - claim entry `202615221300` in `db/migrations/CLAIMED-MIGRATION-NUMBERS.json`
-- follow-up (after claim on main): `db/migrations/202615221300_*.sql` + FE wiring
+- `db/migrations/202615221300_expense_settlement_no_location_id.sql`
+- BE createCheck / checks.routes + FE WriteCheckForm Settlement No / Location wiring
+  (`apps/backend/src/accounting/checks/**`, `apps/frontend/src/api/checks.ts`,
+  `apps/frontend/src/components/checks/WriteCheckForm.tsx`,
+  `scripts/ops/verify-b4-check-creator.mjs`)
 
 USMCA only. No QBO write-back. No other migration numbers in the claim PR.
 

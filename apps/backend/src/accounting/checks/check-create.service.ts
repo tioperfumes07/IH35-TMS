@@ -59,6 +59,10 @@ export type CreateCheckInput = {
   insurance_claim_id?: string | null;
   legal_matter_id?: string | null;
   class_id?: string | null;
+  /** B-4 / CLAIM 202615221300 — QBO Settlement No (AlwaysTrack digits or free text). */
+  settlement_no?: string | null;
+  /** B-4 / CLAIM 202615221300 — QBO Location (mdata.locations). */
+  location_id?: string | null;
   recover_from_driver?: boolean;
   // R-172 step 2 -- QBO Write Check Tags field.
   tags?: string[] | null;
@@ -189,15 +193,15 @@ export async function createCheck(
          vendor_uuid, driver_uuid, payee_customer_uuid, payee_kind, payment_type, check_number,
          print_status, print_on_check_name, remit_to_address, tags,
          unit_id, trailer_id, load_id, linked_work_order_uuid, insurance_claim_id, legal_matter_id,
-         class_id, recover_from_driver, status, posting_status, created_by_user_id, updated_by_user_id,
-         is_sample_data
+         class_id, settlement_no, location_id, recover_from_driver, status, posting_status,
+         created_by_user_id, updated_by_user_id, is_sample_data
        ) VALUES (
          $1::uuid, $2::date, $3::uuid, $4, $5,
          $6::uuid, $7::uuid, $8::uuid, $9, 'check', $10,
          $11, $12, $13::jsonb, $14::text[],
          $15::uuid, $16::uuid, $17::uuid, $18::uuid, $19::uuid, $20::uuid,
-         $21::uuid, $22, 'draft', 'unposted', $23::uuid, $23::uuid,
-         $24
+         $21::uuid, $22, $23::uuid, $24, 'draft', 'unposted',
+         $25::uuid, $25::uuid, $26
        ) RETURNING id::text`,
       [
         operating_company_id,
@@ -224,6 +228,8 @@ export async function createCheck(
         input.insurance_claim_id ?? null,
         input.legal_matter_id ?? null,
         input.class_id ?? null,
+        (input.settlement_no ?? "").trim() || null,
+        input.location_id ?? null,
         input.recover_from_driver ?? false,
         actorUserId,
         input.is_sample_data === true,

@@ -45,6 +45,10 @@ export type CreateCheckInput = {
   insurance_claim_id?: string | null;
   legal_matter_id?: string | null;
   class_id?: string | null;
+  /** B-4 — QBO Settlement No (AlwaysTrack digits / free text). */
+  settlement_no?: string | null;
+  /** B-4 — QBO Location (mdata.locations id). */
+  location_id?: string | null;
   recover_from_driver?: boolean;
   tags?: string[];
   attachment_draft_id?: string | null;

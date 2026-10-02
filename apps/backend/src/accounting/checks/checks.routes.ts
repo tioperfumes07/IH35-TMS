@@ -94,6 +94,9 @@ const createCheckBodySchema = z.object({
   insurance_claim_id: z.string().uuid().optional().nullable(),
   legal_matter_id: z.string().uuid().optional().nullable(),
   class_id: z.string().uuid().optional().nullable(),
+  // B-4 / CLAIM 202615221300 — QBO Settlement No + Location on the check header.
+  settlement_no: z.string().trim().max(40).optional().nullable(),
+  location_id: z.string().uuid().optional().nullable(),
   recover_from_driver: z.boolean().optional(),
   // R-172 step 2 -- QBO Write Check's Tags field; additive accounting.expenses.tags column.
   tags: z.array(z.string().trim().min(1).max(60)).max(20).optional(),
