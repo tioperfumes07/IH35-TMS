@@ -2,7 +2,7 @@
  * ENGINE: deadhead refresh
  * SCHEDULE: 0 3 * * 1 America/Chicago
  * WRITES: deadhead weekly rows
- * IDEMPOTENCY: UNIQUE(unit_id, week_starting) ON CONFLICT DO UPDATE (uq_deadhead_unit_week)
+ * IDEMPOTENCY: UNIQUE(operating_company_id, unit_id, week_starting) ON CONFLICT DO UPDATE (uq_deadhead_company_unit_week, migration 202615300900)
  * OVERLAP: the twin upserts the same rows
  * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
  */
