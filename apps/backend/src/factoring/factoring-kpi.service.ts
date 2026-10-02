@@ -89,6 +89,33 @@ export async function factoringBookReserveCents(client: DbClient, oci: string, a
   return { escrow, cash, total: escrow + cash };
 }
 
+/** The factor whose agreement is active for this company (factoring.factor.id), or null. */
+export async function activeFactorId(client: DbClient, oci: string): Promise<string | null> {
+  return (await client.query<{ id: string }>(
+    `SELECT f.id::text AS id FROM factoring.canonical_factor_agreements a JOIN factoring.factor f ON f.id = a.factor_profile_id
+      WHERE a.tenant_id = $1::uuid AND a.voided_at IS NULL AND f.voided_at IS NULL ORDER BY a.effective_from DESC LIMIT 1`, [oci])).rows[0]?.id ?? null;
+}
+
+/**
+ * Every posted GL line on the two Faro reserve accounts (escrow role + cash reserve role), oldest first, signed so a
+ * debit ADDS to the reserve. The single source for reserve history, last movement and release forecast — the retired
+ * factoring.reserve_movement ledger (no live writer since the Faro CSV commit was retired) is never read again.
+ */
+export async function factoringReservePostings(client: DbClient, oci: string) {
+  const acc = await factoringAccounts(client, oci);
+  const ids = [acc.escrow.id, acc.cash.id].filter((x): x is string => Boolean(x));
+  if (!ids.length) return [];
+  return (await client.query<{ id: string; entry_date: string; memo: string | null; signed_cents: string; pool: "escrow" | "cash" }>(
+    `SELECT jp.id::text AS id, je.entry_date::text AS entry_date, left(je.memo, 200) AS memo, ${SIGNED}::bigint AS signed_cents,
+            CASE WHEN jp.account_id = $2::uuid THEN 'escrow' ELSE 'cash' END AS pool
+       FROM accounting.journal_entry_postings jp
+       JOIN accounting.journal_entries je ON je.id = jp.journal_entry_uuid AND je.status = 'posted'
+      WHERE je.operating_company_id = $1::uuid AND jp.account_id = ANY($3::uuid[])
+      ORDER BY je.entry_date, jp.id`,
+    [oci, acc.escrow.id, ids]
+  )).rows.map((r) => ({ ...r, signed_cents: Number(r.signed_cents) }));
+}
+
 export async function computeFactoringKpis(client: DbClient, oci: string, range: KpiRange): Promise<FactoringKpi[]> {
   const acc = await factoringAccounts(client, oci);
   const base = [oci, range.from, range.to];

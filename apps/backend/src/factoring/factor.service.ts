@@ -1,3 +1,5 @@
+import { activeFactorId, factoringBookReserveCents } from "./factoring-kpi.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
 };
@@ -178,23 +180,24 @@ export async function listFactors(
         f.notes,
         f.created_at::text,
         f.updated_at::text,
-        -- LIABILITY column-wave: factors.admin previously showed only contract-term percentages,
-        -- never the outstanding dollar reserve/liability balance Faro currently holds per factor
-        -- — reused the same real, live, correctly-cents-suffixed view reserves.dashboard already
-        -- uses (factoring.v_factor_reserve_balance), not the broken to_jsonb(fa) view family
-        -- FACT-PHANTOM-01 diagnosed and is queued (HOLD-FOR-JORGE) to fix separately.
-        COALESCE(rb.balance_cents, 0)::bigint AS reserve_balance_cents
+        NULL::bigint AS reserve_balance_cents
       FROM factoring.factor f
-      LEFT JOIN factoring.v_factor_reserve_balance rb
-        ON rb.factor_id = f.id
-       AND rb.tenant_id = f.tenant_id
       WHERE ${filters.join(" AND ")}
       ORDER BY f.active DESC, f.name ASC
     `,
     values
   );
 
-  return res.rows.map(mapFactorRow);
+  // OWNER LAW 2026-10-02 competing-engine audit: the reserve on the factor list is the factoring KPI engine's book reserve
+  // (Faro Escrow + Cash Reserve GL), on the active factor's row — never factoring.v_factor_reserve_balance (no live writer).
+  const rows = res.rows.map(mapFactorRow);
+  const engineClient = deps.client as unknown as Parameters<typeof activeFactorId>[0];
+  const activeId = await activeFactorId(engineClient, tenantId);
+  if (activeId) {
+    const book = await factoringBookReserveCents(engineClient, tenantId, companyBusinessDate());
+    for (const r of rows) if (r.id === activeId) r.reserve_balance_cents = book.total;
+  }
+  return rows;
 }
 
 export async function getFactorForCustomer(
