@@ -1566,6 +1566,16 @@
       "claimed_by": "claude",
       "claimed_at": "2026-10-02",
       "purpose": "CC-3 round 296 item 3: indexes backing the 18 filter surfaces' filter columns found unindexed live (catalogs.accounts deactivated_at; catalogs.tire_positions + 5 safety catalogs is_active; mdata.customers customer_type+status; docs.files document_date + original_filename trigram; integrations.samsara_drivers local_driver_id). Additive CREATE INDEX IF NOT EXISTS only."
+    },
+    "202615301000": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-02",
+      "purpose": "ROUND 340 step 1: preserve.unit_stop_events — surrogate id primary key + UNIQUE (company_code, unit_number, started_at, ended_at), the full observation grain (the old PK (company_code, unit_number, started_at) had no slot for a stop that grew). Nothing deleted."
+    },
+    "202615301100": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-02",
+      "purpose": "ROUND 340 step 3: telematics.unit_stop_events live keys — (operating_company_id, unit_id, started_at) replaces unit_stop_events_unit_start_unique (unit_id, started_at); ADD (operating_company_id, unit_id, ended_at). CREATE UNIQUE INDEX CONCURRENTLY, IH35_MIGRATION_NO_TRANSACTION, after the dedupe."
     }
   },
   "202613590001": {
