@@ -1471,6 +1471,11 @@
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-02",
       "purpose": "Lead ruling 2026-10-02 FACTORING-RECOURSE-RESERVE-ONE-SOURCE: accounting.factoring_recourse_events — the day-95 recourse EVENT record (invoice, customer, advance, purchase, factor, day-95 date, face, reserve at date, state expected->deducted->recovered/written_off). Registers the event, posts nothing; RLS + WORM refuse-delete + audit."
+    },
+    "202615220800": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-02",
+      "purpose": "Owner-approved Faro lifecycle 2026-10-02: ONE Faro Security Reserve = 1230 Factoring Reserves (factor_reserve_held + factor_cash_reserve_held both -> 1230; 1235/1236 retired when posting-free; Faro reserve bank account on 1230); new 2155 Factoring Default Interest Payable (role factor_default_interest_payable) and Factoring Transaction Fees (role factor_transaction_fee). Config only, no balances touched."
     }
   },
   "202613590001": {
