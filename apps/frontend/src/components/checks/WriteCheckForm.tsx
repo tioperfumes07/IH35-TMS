@@ -29,6 +29,7 @@ import { MoneyInput } from "../forms/MoneyInput";
 import { Button } from "../Button";
 import { listExpenseCategoryMappings, listVendorBills, type ExpenseCategoryMapRow, type VendorBill } from "../../api/accounting";
 import { classesCatalogClient } from "../../api/catalogs-accounting";
+import { FuelStopLocationPicker } from "../locations/FuelStopLocationPicker";
 import { formatDateUS } from "../../lib/formatDate";
 import { getCashGlMapping, getBankingTiles, type CashGlBankAccount } from "../../api/banking";
 import { listVendors, listCustomers } from "../../api/mdata";
@@ -81,6 +82,10 @@ type PersistedCheckDraft = {
   tagsText: string;
   /** BANK-F91035 — QBO Class (accounting.expenses.class_id), optional. */
   classId: string | null;
+  /** BANK-F91037 — QBO Settlement No (accounting.expenses.settlement_no). */
+  settlementNo: string;
+  /** BANK-F91037 — QBO Location (accounting.expenses.location_id). */
+  locationId: string | null;
   savedAt: string;
 };
 
@@ -275,6 +280,9 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
   const [tagsText, setTagsText] = useState<string>("");
   /** BANK-F91035 — QBO Class header (class_id already on createCheck / expenses). */
   const [classId, setClassId] = useState<string | null>(null);
+  /** BANK-F91037 — Settlement No + Location (CLAIM 202615221300). */
+  const [settlementNo, setSettlementNo] = useState("");
+  const [locationId, setLocationId] = useState<string | null>(null);
   // R-172 step 2 -- auto-filled from the payee, then editable; the operator's edit wins on save
   // (edited flag tracked so a payee switch doesn't clobber a manual edit the operator just made).
   const [remitToAddress, setRemitToAddress] = useState<CheckRemitToAddress>(EMPTY_ADDRESS);
@@ -867,6 +875,8 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
     setMemo("");
     setTagsText("");
     setClassId(null);
+    setSettlementNo("");
+    setLocationId(null);
     setRemitToAddress(EMPTY_ADDRESS);
     setAddressEdited(false);
     setLines([newDraftLine()]);
@@ -905,7 +915,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
   // Persist a lightweight header draft while the form is open (never lines — avoid stale GL maps).
   useEffect(() => {
     if (!open || !operatingCompanyId || !draftHydrated || restoreDraftOffer) return;
-    if (!payeeId && !bankAccountId && !memo.trim() && !checkNumber.trim() && !classId) return;
+    if (!payeeId && !bankAccountId && !memo.trim() && !checkNumber.trim() && !classId && !settlementNo.trim() && !locationId) return;
     const payload: PersistedCheckDraft = {
       payeeKind,
       payeeId,
@@ -916,6 +926,8 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
       memo,
       tagsText,
       classId,
+      settlementNo,
+      locationId,
       savedAt: new Date().toISOString(),
     };
     try {
@@ -937,6 +949,8 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
     memo,
     tagsText,
     classId,
+    settlementNo,
+    locationId,
   ]);
 
   // R-172 step 6 -- footer buttons (spec §6): Save keeps the drawer open on the same check; Save and
@@ -1031,6 +1045,8 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
         memo: memo.trim() || null,
         tags,
         class_id: classId,
+        settlement_no: settlementNo.trim() || null,
+        location_id: locationId,
         // Only send the address when the operator actually edited it -- otherwise the server saves
         // the payee's freshly-resolved address itself, avoiding a stale client copy overwriting it.
         remit_to_address: addressEdited ? remitToAddress : null,
@@ -1067,6 +1083,8 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                   setMemo(d.memo ?? "");
                   setTagsText(d.tagsText ?? "");
                   setClassId(d.classId ?? null);
+                  setSettlementNo(d.settlementNo ?? "");
+                  setLocationId(d.locationId ?? null);
                   setRestoreDraftOffer(null);
                 }}
               >
@@ -1363,6 +1381,34 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                 Print later
               </label>
             ) : null}
+          </label>
+        </div>
+
+        {/* BANK-F91037 — Settlement No + Location (CLAIM 202615221300 / ORDERS §B-4). */}
+        <div className="grid grid-cols-2 gap-3">
+          <label className="text-xs font-semibold text-gray-700" data-b4-check-settlement-no="1">
+            Settlement No.
+            <input
+              className="mt-1 h-9 w-full rounded border border-gray-300 px-2 text-xs"
+              value={settlementNo}
+              onChange={(e) => setSettlementNo(e.target.value)}
+              placeholder="AlwaysTrack / settlement #"
+              maxLength={40}
+              data-testid="b4-check-settlement-no"
+            />
+          </label>
+          <label className="text-xs font-semibold text-gray-700" data-b4-check-location="1">
+            Location
+            <div className="mt-1" data-testid="b4-check-location">
+              <FuelStopLocationPicker
+                operatingCompanyId={operatingCompanyId}
+                value={locationId}
+                fuelStopOnly={false}
+                placeholder="Search location…"
+                dataTestId="b4-check-location-picker"
+                onChange={(id) => setLocationId(id)}
+              />
+            </div>
           </label>
         </div>
 

@@ -75,6 +75,16 @@ function main() {
   assertIncludes(form, "class_id: classId", FORM);
   assertIncludes(form, "classesCatalogClient", FORM);
   assertIncludes(form, 'createKind="class"', FORM);
+  // BANK-F91037 — Settlement No + Location (CLAIM 202615221300)
+  assertIncludes(form, 'data-b4-check-settlement-no="1"', FORM);
+  assertIncludes(form, 'data-testid="b4-check-settlement-no"', FORM);
+  assertIncludes(form, "Settlement No.", FORM);
+  assertIncludes(form, "settlement_no: settlementNo.trim() || null", FORM);
+  assertIncludes(form, 'data-b4-check-location="1"', FORM);
+  assertIncludes(form, 'data-testid="b4-check-location"', FORM);
+  assertIncludes(form, "FuelStopLocationPicker", FORM);
+  assertIncludes(form, "location_id: locationId", FORM);
+  assertIncludes(form, "fuelStopOnly={false}", FORM);
   assertIncludes(form, 'data-b4-restore-draft="1"', FORM);
   assertIncludes(form, "You have a draft saved. Restore draft", FORM);
   assertIncludes(form, "checkDraftStorageKey", FORM);
