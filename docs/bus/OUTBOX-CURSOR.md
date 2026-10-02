@@ -1,3 +1,8 @@
+**2026-10-02T12:20Z · BANK-F91035 Check Class MERGED #24095 · CLAIM 202615221300 #24096 · tip `8d396b2b98`+**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91035 + CLAIM FAST-MERGE | GO
+WriteCheckForm Class → class_id; claim-reserve 202615221300 for settlement_no + location_id. Also F91034 BANK_TX_SPLIT Neon ON.
+NEXT: author 202615221300 + FE Settlement No / Location · Lead Chrome · backend deploy tip (last live dep-davm2kc ~07:49Z) · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T12:08Z · BANK-F91034 USMCA BANK_TX_SPLIT overrides MERGED #24093 · tip `0dcedd33c8`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91034 MERGED + NEON APPLIED | GO
 CLAIM 202615221200: USMCA overrides BANK_TX_SPLIT_ENABLED + BANK_TX_SPLIT_GL_POSTING_ENABLED enabled=true (Rule 50). LANE_CROSS Lead ruling. Neon re-measure both company-wide overrides true. Session also: F91032 Find Bill No · F91033 Amount to Credit · OUTBOX acks.
