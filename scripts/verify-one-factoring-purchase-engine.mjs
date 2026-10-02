@@ -50,6 +50,9 @@ export function check(files) {
     ['"/api/v1/accounting/factoring-advances", ', "INSERT INTO accounting.factoring_advances"],
     ['"/api/v1/accounting/factoring-advances/:id/advance"', "postFactoringAdvanceEvent("],
     ['"/api/v1/accounting/factoring-advances/:id/release"', "postFactoringReleaseEvent("],
+    // Lead ROUND 296: Reserve Held / Recourse Return are read-through displays, never writers.
+    ['"/api/v1/accounting/factoring-advances/:id/reserve-held"', "postFactoringCustomerPaymentEvent("],
+    ['"/api/v1/accounting/factoring-advances/:id/recourse-return"', "postFactoringChargebackEvent("],
   ]) {
     const r = gatedBefore(adv, route, call);
     if (!r.ok) problems.push(`factoring-advances.routes.ts: ${r.why}`);

@@ -80,6 +80,12 @@ function postingsSql(mode: "balance" | "activity") {
 }
 const SIGNED = `CASE WHEN jp.debit_or_credit = 'debit' THEN jp.amount_cents ELSE -jp.amount_cents END`;
 
+/** The Faro reserve GL accounts (Escrow report 1230 + Cash report 1235), distinct, bound ones only. */
+export async function factoringReserveAccountIds(client: DbClient, oci: string): Promise<string[]> {
+  const acc = await factoringAccounts(client, oci);
+  return [...new Set([acc.escrow.id, acc.cash.id].filter((x): x is string => Boolean(x)))];
+}
+
 /**
  * The book reserve — escrow (factor_reserve_held -> Faro Escrow Reserve) + cash reserve (factor_cash_reserve_held -> Faro Cash Reserve) GL balances
  * as of a date. The ONE reserve figure: the KPI engine, GET /factoring/summary.reserve_balance and the cash-flow

@@ -17,7 +17,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-factor-reserve-card-uses-paritytable";
 const PAGE = "apps/frontend/src/pages/accounting/FactorReserveCard.tsx";
 
-const REQUIRED_LABELS = ["Customer", "Current reserve", "Accrued", "Released"];
+// Lead ROUND 296 §3: the per-customer Faro reserve columns (a row per customer; never a card, never removed).
+const REQUIRED_LABELS = ["Customer", "Invoices purchased", "Face", "Advanced", "Held", "Released", "Recourse", "Reserve now"];
 
 function assertMigrated(src) {
   const errors = [];
@@ -49,11 +50,14 @@ function assertMigrated(src) {
   }
   if (
     !/function money\(/.test(src) ||
-    !src.includes("money(row.reserve_balance_cents)") ||
-    !src.includes("money(row.reserve_accrued_cents)") ||
-    !src.includes("money(row.reserve_released_cents)")
+    !src.includes("money(row.held_cents)") ||
+    !src.includes("money(row.released_cents)") ||
+    !src.includes("money(row.reserve_now_cents)")
   ) {
-    errors.push(`${PAGE}: must keep the money() cents formatter on Current reserve/Accrued/Released cells`);
+    errors.push(`${PAGE}: must keep the money() cents formatter on Held/Released/Reserve now cells`);
+  }
+  if (!src.includes("getReserveByCustomer")) {
+    errors.push(`${PAGE}: must read the one-query per-customer reserve (getReserveByCustomer), never a second reserve calculation`);
   }
   if (!src.includes("ListErrorState")) {
     errors.push(`${PAGE}: must keep ListErrorState on the balances query error surface`);
@@ -66,11 +70,16 @@ function selftest() {
     import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
     import { ListErrorState } from "../../components/ListErrorState";
     function money(cents) { return String(cents); }
+    const query = useQuery({ queryFn: () => getReserveByCustomer(id) });
     const columns = [
       { key: "customer_name", label: "Customer" },
-      { key: "reserve_balance_cents", label: "Current reserve", render: (row) => money(row.reserve_balance_cents) },
-      { key: "reserve_accrued_cents", label: "Accrued", render: (row) => money(row.reserve_accrued_cents) },
-      { key: "reserve_released_cents", label: "Released", render: (row) => money(row.reserve_released_cents) },
+      { key: "invoices_purchased", label: "Invoices purchased" },
+      { key: "face_cents", label: "Face" },
+      { key: "advanced_cents", label: "Advanced" },
+      { key: "held_cents", label: "Held", render: (row) => money(row.held_cents) },
+      { key: "released_cents", label: "Released", render: (row) => money(row.released_cents) },
+      { key: "recourse_cents", label: "Recourse" },
+      { key: "reserve_now_cents", label: "Reserve now", render: (row) => money(row.reserve_now_cents) },
     ];
     <ListErrorState title="Couldn't load reserve balances" />
     <ParityTable

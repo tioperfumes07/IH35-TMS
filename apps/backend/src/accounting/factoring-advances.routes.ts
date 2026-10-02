@@ -870,6 +870,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/factoring-advances/:id/reserve-held", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (LEGACY_FACTORING_WRITERS_RETIRED) return sendRetiredFactoringWriter(reply, "POST /api/v1/accounting/factoring-advances/:id/reserve-held", BANKING_MATCH_OR_CATEGORIZE);
     // ACCT-F5578: see the create route above for why this reuses the void/cancel executor role set.
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
@@ -1113,6 +1114,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
   app.post("/api/v1/accounting/factoring-advances/:id/recourse-return", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (LEGACY_FACTORING_WRITERS_RETIRED) return sendRetiredFactoringWriter(reply, "POST /api/v1/accounting/factoring-advances/:id/recourse-return", BANKING_MATCH_OR_CATEGORIZE);
     // ACCT-F5578: see the create route above for why this reuses the void/cancel executor role set.
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
