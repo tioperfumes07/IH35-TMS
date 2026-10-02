@@ -139,6 +139,14 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   (`matchCreatedJe`) — never reverse a JE that was merely the match target (kind=je) or that
   categorize wrote. Void twin `BANK_TX_UNMATCH_RESET_SQL` also clears invoice + advance.
   Guard: `verify-one-bank-match-writer-writes-je` asserts the three clears + `matchCreatedJe`.
+  BE live `dep-db03ebn9nhgc738fn50g` @ `79c793171e` (healthz proven).
+- **Reserve-account match kinds (2026-10-02, OWNER-ORDER §3.1 / CC-2 handoff):**
+  Helper `bank-match-faro-reserve-post.service.ts`. Reserve bank gate =
+  `accounting.chart_of_accounts_roles` (`factor_reserve_held` + `factor_cash_reserve_held`), never
+  `catalogs.account_role_bindings`. Faro report bank line → `postFaroReserveEntryOnClient` in the
+  match txn (match row rewritten to `je` + that JE). Payment match → `faroReserveDepositsOn` +
+  DR 1235 / CR due-from-affiliate per unposted Rsv Deposit. Repurchase on reserve with no Faro
+  entry → still `postFactoringChargebackEvent`. Guard one-writer asserts Faro posters + CoA roles.
 - **Measured gap:** `/vendors` PartyBoard KPI — `integrations.relay_fuel_transactions` where
   `posted_to_gl IS NOT TRUE` = **44 txs / $20,942.94 / since 2026-08-03** (Neon USMCA, bypass_rls=lucia).
 - **Engine (merged #24158):** CC-2 #24027 = no post at import. Match writer

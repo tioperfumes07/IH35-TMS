@@ -1,11 +1,20 @@
+## 2026-10-02T23:15Z · OWNER-ORDER §3.1 RESERVE MATCH KINDS (shipping)
+
+ACK: CURSOR | OWNER-ORDER-2026-10-02-BUILD-100 | RESERVE MATCH KINDS | GO
+Branch `cursor/reserve-match-kinds-c0b7` off tip `ace5a01e7b` / healthz-proven `79c793171e`.
+FIX: match.service Faro reserve gate → chart_of_accounts_roles; Faro row → postFaroReserveEntryOnClient; payment → faroReserveDepositsOn Rsv Deposit legs (DR 1235 / CR due-from-affiliate); repurchase sans Faro entry → chargeback. Helper bank-match-faro-reserve-post.service.ts. Guard one-writer asserts.
+LANE_CROSS=2026-10-02-LEAD-RULING-CURSOR-RESERVE-MATCH-KINDS-LANE-CROSS.md
+PROVED: BE healthz `79c793171e` LIVE dep-db03ebn9nhgc738fn50g (#24270 unmatch).
+NO post/seed/match/Chrome. NEXT: money-pr-local-gate → PR → FAST-MERGE → BE deploy.
+
 ## 2026-10-02T23:05Z · OWNER-ORDER §4 UNMATCH CLEAR MERGED #24270 · tip `79c793171e`
 
 ACK: CURSOR | OWNER-ORDER-2026-10-02-BUILD-100 | UNMATCH CLEAR DONE | GO
 PR https://github.com/tioperfumes07/IH35-TMS/pull/24270 squash `79c793171e2996f9a72b8ff8a2ab21bcc2b41914`.
 money-pr-local-gate PASS (LANE_CROSS=UNMATCH-CLEAR-COLUMNS) → push --no-verify (ambient static + CI billing lock) → squash-admin.
 FIX: unmatchBankTransaction clears matched_invoice_id / matched_advance_id / categorization_gl_account_id; JE reverse only matchCreatedJe (fuel/relay/factoring). Void BANK_TX_UNMATCH_RESET_SQL clears invoice+advance. Guard one-writer asserts.
-BE: feed-fuel dep-db03c049v7es739ot7b0 LIVE on `4e1f672c16`; tip `79c793171e` deploy triggered after. FE autoDeploy OFF — owner/Lead.
-NO post/seed/match/Chrome. NEXT: healthz sha prove · reserve match kinds / register one engine.
+BE: dep-db03ebn9nhgc738fn50g LIVE on `79c793171e` (healthz proven). FE autoDeploy OFF — owner/Lead.
+NO post/seed/match/Chrome. NEXT: reserve match kinds / register one engine.
 
 ## 2026-10-02T22:58Z · OWNER-ORDER §4 FEED FUEL MERGED #24268 · tip `4e1f672c16`
 

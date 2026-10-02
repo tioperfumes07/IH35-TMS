@@ -28,6 +28,12 @@ import {
   SQL_BILL_PAYMENT_IS_CASH_SETTLEMENT_BORN,
 } from "./settlement-born-candidates.js";
 import { postFuelFillOnBankMatch } from "./bank-match-fuel-post.service.js";
+import {
+  isFaroReserveBankAccount,
+  loadFaroReserveEntryForBankTxn,
+  postFaroReserveRowOnBankMatch,
+  postFaroRsvDepositsOnPaymentMatch,
+} from "./bank-match-faro-reserve-post.service.js";
 
 /**
  * ROUND 157-C / 156 MASTER SPEC — THIS FILE OWNS THE BANKING MATCH SURFACE.
@@ -1270,11 +1276,47 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
       if (status !== "posted") throw new Error("expense_not_posted");
     }
 
-    const ledgerAmountAbs = await loadLedgerAmountCents(client, input.operating_company_id, input.ledger_entry_kind, input.ledger_entry_id);
+    // OWNER-ORDER §3.1 / CC-2 handoff — Faro reserve ROW on this bank line posts through
+    // postFaroReserveEntryOnClient BEFORE storeMatch so the match row points at the JE the
+    // poster stamped (purchase funding JE for escrow_held; new JE for other kinds).
+    // rsv_deposit refuses here and posts with the payment match via faroReserveDepositsOn.
+    let faroReserveJournalEntryId: string | null = null;
+    let faroPosterClearedBank = false;
+    let matchKind: LedgerEntryKind = input.ledger_entry_kind;
+    let matchLedgerEntryId = input.ledger_entry_id;
+    const faroEntry = await loadFaroReserveEntryForBankTxn(
+      client,
+      input.operating_company_id,
+      input.bank_transaction_id
+    );
+    if (faroEntry && faroEntry.entry_kind !== "rsv_deposit" && !faroEntry.journal_entry_id) {
+      const faroPost = await postFaroReserveRowOnBankMatch(client, {
+        operating_company_id: input.operating_company_id,
+        entry_id: faroEntry.id,
+        actor_user_id: input.actor_user_uuid,
+      });
+      faroReserveJournalEntryId = faroPost.journal_entry_id;
+      faroPosterClearedBank = faroPost.poster_cleared_bank;
+      matchKind = "je";
+      matchLedgerEntryId = faroReserveJournalEntryId;
+      // escrow_held: if the operator picked a JE, it must be the purchase funding JE.
+      if (
+        input.ledger_entry_kind === "je" &&
+        input.ledger_entry_id !== faroReserveJournalEntryId
+      ) {
+        throw new Error(
+          `faro_reserve_je_mismatch:entry=${faroEntry.id}:expected=${faroReserveJournalEntryId}:got=${input.ledger_entry_id}`
+        );
+      }
+    }
+
+    const ledgerAmountAbs = faroReserveJournalEntryId
+      ? Math.abs(Number(txn.amount_cents ?? 0))
+      : await loadLedgerAmountCents(client, input.operating_company_id, matchKind, matchLedgerEntryId);
     const txnAmountAbs = Math.abs(Number(txn.amount_cents ?? 0));
     const varianceCents = txnAmountAbs - ledgerAmountAbs;
     const toleranceCents = toleranceForAmount(txn.amount_cents);
-    const similarity = memoSimilarity(`${txn.merchant_name ?? ""} ${txn.description ?? ""}`, input.ledger_entry_kind);
+    const similarity = memoSimilarity(`${txn.merchant_name ?? ""} ${txn.description ?? ""}`, matchKind);
     const score = computeMatchScore({
       amountGapCents: Math.abs(varianceCents),
       toleranceCents,
@@ -1286,8 +1328,8 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
     const reconciliationMatchId = await storeMatch(client, {
       operating_company_id: input.operating_company_id,
       bank_transaction_id: input.bank_transaction_id,
-      ledger_entry_kind: input.ledger_entry_kind,
-      ledger_entry_id: input.ledger_entry_id,
+      ledger_entry_kind: matchKind,
+      ledger_entry_id: matchLedgerEntryId,
       match_score: score,
       match_state: "user_matched",
       actor_user_uuid: input.actor_user_uuid,
@@ -1306,8 +1348,8 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
       {
         reconciliation_match_id: reconciliationMatchId,
         bank_transaction_id: input.bank_transaction_id,
-        ledger_entry_kind: input.ledger_entry_kind,
-        ledger_entry_id: input.ledger_entry_id,
+        ledger_entry_kind: matchKind,
+        ledger_entry_id: matchLedgerEntryId,
       },
       "info",
       "BANK-RECON-ACCEPT-HANDLER"
@@ -1327,12 +1369,12 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
     // ROUND 288.2 / ACCT-F9335 — fuel fill posts HERE (same transaction as the match). Import posts nothing.
     // Stamp matched_journal_entry_id with the fuel JE so unmatch reverses through the one void engine.
     let fuelJournalEntryId: string | null = null;
-    if (input.ledger_entry_kind === "fuel_transaction" || input.ledger_entry_kind === "relay_fuel") {
+    if (matchKind === "fuel_transaction" || matchKind === "relay_fuel") {
       const fuelPost = await postFuelFillOnBankMatch(client, {
         operating_company_id: input.operating_company_id,
         actor_user_uuid: input.actor_user_uuid,
-        kind: input.ledger_entry_kind,
-        fill_id: input.ledger_entry_id,
+        kind: matchKind,
+        fill_id: matchLedgerEntryId,
       });
       fuelJournalEntryId = fuelPost.journal_entry_id;
     }
@@ -1343,13 +1385,15 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
     // Kinds without a matched_* column still get the match + audit above; they do NOT flip
     // review_state here — verify-matched-state-requires-matched-id forbids a
     // review_state='matched' write with no matched_*_id in the same statement.
-    const matchedColumn = MATCHED_COLUMN_BY_KIND[input.ledger_entry_kind];
-    if (matchedColumn) {
+    // Faro poster already stamped review_state + matched_journal_entry_id — do not re-clear.
+    const matchedColumn = MATCHED_COLUMN_BY_KIND[matchKind];
+    if (matchedColumn && !faroPosterClearedBank) {
       // ACCT-F5647 — belt-and-suspenders alongside the row lock above: WHERE review_state <> 'matched',
       // with the zero-row result surfaced as the same already-matched error the earlier read-based
       // check already returns, matching payments.routes.ts's own ACCT-F5636 pattern.
       // Fuel/relay: also stamp matched_journal_entry_id in the SAME statement as review_state='matched'.
-      const cleared = fuelJournalEntryId
+      const matchJeStamp = fuelJournalEntryId ?? faroReserveJournalEntryId;
+      const cleared = matchJeStamp
         ? await client.query(
             `UPDATE banking.bank_transactions
                 SET review_state = 'matched',
@@ -1365,9 +1409,9 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
             [
               input.bank_transaction_id,
               input.operating_company_id,
-              input.ledger_entry_id,
+              matchLedgerEntryId,
               input.actor_user_uuid,
-              fuelJournalEntryId,
+              matchJeStamp,
             ]
           )
         : await client.query(
@@ -1381,11 +1425,20 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
               WHERE id = $1::uuid
                 AND operating_company_id = $2::uuid
                 AND review_state <> 'matched'`,
-            [input.bank_transaction_id, input.operating_company_id, input.ledger_entry_id, input.actor_user_uuid]
+            [input.bank_transaction_id, input.operating_company_id, matchLedgerEntryId, input.actor_user_uuid]
           );
       if (cleared.rowCount === 0) {
         throw new Error("bank_transaction_already_matched");
       }
+    } else if (faroPosterClearedBank) {
+      await client.query(
+        `UPDATE banking.bank_transactions
+            SET categorized_by_user_id = COALESCE(categorized_by_user_id, $3::uuid),
+                categorized_at = COALESCE(categorized_at, now()),
+                updated_at = now()
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+        [input.bank_transaction_id, input.operating_company_id, input.actor_user_uuid]
+      );
     }
 
     // WAVE-H3 (LINK-007/008): reverse stamp money → bank. Forward-only matched_* left payments /
@@ -1399,7 +1452,7 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
     // already cleared via one of those direct-creation paths keeps its own timestamp; only a
     // payment created BEFORE its bank transaction cleared (the ordinary case) gets stamped here,
     // using the bank's own transaction_date — never re-dating payment_date (issued) itself.
-    if (input.ledger_entry_kind === "payment") {
+    if (matchKind === "payment") {
       await client.query(
         `UPDATE accounting.payments
             SET source_bank_transaction_id = COALESCE(source_bank_transaction_id, $1::uuid),
@@ -1408,7 +1461,7 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
             AND operating_company_id = $3::uuid`,
         [
           input.bank_transaction_id,
-          input.ledger_entry_id,
+          matchLedgerEntryId,
           input.operating_company_id,
           txn.transaction_date.slice(0, 10),
         ]
@@ -1433,12 +1486,12 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
           WHERE payment_id = $1::uuid
             AND operating_company_id = $2::uuid
             AND invoice_id IS NOT NULL`,
-        [input.ledger_entry_id, input.operating_company_id]
+        [matchLedgerEntryId, input.operating_company_id]
       );
       await backlinkBankTransactionToInvoice(
         client,
         input.operating_company_id,
-        input.ledger_entry_id,
+        matchLedgerEntryId,
         invoiceRes.rows.map((r) => r.invoice_id)
       );
 
@@ -1451,8 +1504,16 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
       // silent) since it would mean real money moved with no GL trail.
       // ROUND 326 queue item 12: one sweep helper, strict skip list (a missing bank / clearing mapping is no longer a
       // silent skip — it would leave the receipt in 1090 with the money already at the bank).
-      await sweepMatchedReceiptToBank(client, input.operating_company_id, "customer_payment_deposit", input.ledger_entry_id, input.actor_user_uuid);
-    } else if (input.ledger_entry_kind === "bill_payment") {
+      await sweepMatchedReceiptToBank(client, input.operating_company_id, "customer_payment_deposit", matchLedgerEntryId, input.actor_user_uuid);
+      // OWNER-ORDER §3.1 — Rsv Deposits Faro held back on this payment date post with the match
+      // (CC-2 faroReserveDepositsOn; DR 1235 / CR due-from-affiliate).
+      await postFaroRsvDepositsOnPaymentMatch(client, {
+        operating_company_id: input.operating_company_id,
+        payment_date: txn.transaction_date.slice(0, 10),
+        actor_user_id: input.actor_user_uuid,
+        matched_payment_id: matchLedgerEntryId,
+      });
+    } else if (matchKind === "bill_payment") {
       // BANK-F26053 — same THREE-DATES-COVERAGE-GAP stamp as the payment branch above.
       await client.query(
         `UPDATE accounting.bill_payments
@@ -1464,50 +1525,35 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
             AND operating_company_id = $3::uuid`,
         [
           input.bank_transaction_id,
-          input.ledger_entry_id,
+          matchLedgerEntryId,
           input.operating_company_id,
           txn.bank_account_id,
           txn.transaction_date.slice(0, 10),
         ]
       );
-    } else if (input.ledger_entry_kind === "factoring_advance") {
-      // ROUND 296 / 288.2 — Faro day-95 REPURCHASE (full-recourse chargeback) arrives as a bank line
-      // on the Faro Escrow/Security Reserve register (GL 1230 / role factor_reserve_held). Matching
-      // that line to the advance runs CC-2's chargeback/recourse poster (postFactoringChargebackEvent)
-      // — never a deposit sweep. Cash Rsv (GL 1235) is a separate pool — not this gate.
-      // Ordinary funding wires still sweep Undeposited Funds → bank.
-      const reserveBank = await client.query<{ is_reserve: boolean }>(
-        `
-          SELECT EXISTS (
-            SELECT 1
-              FROM banking.bank_accounts ba
-              JOIN catalogs.accounts a ON a.id = ba.ledger_account_id
-             WHERE ba.id = $1::uuid
-               AND ba.operating_company_id = $2::uuid
-               AND (
-                 a.account_number = '1230'
-                 OR EXISTS (
-                   SELECT 1 FROM catalogs.account_role_bindings arb
-                    WHERE arb.operating_company_id = $2::uuid
-                      AND arb.account_id = a.id
-                      AND arb.role_key = 'factor_reserve_held'
-                      AND arb.voided_at IS NULL
-                 )
-               )
-          ) AS is_reserve
-        `,
-        [txn.bank_account_id, input.operating_company_id]
+    } else if (matchKind === "factoring_advance") {
+      // OWNER-ORDER §3.1 — reserve register by accounting.chart_of_accounts_roles
+      // (factor_reserve_held / factor_cash_reserve_held), never catalogs.account_role_bindings.
+      //   · Faro report row on this bank line → already posted above via postFaroReserveEntryOnClient
+      //   · Repurchase movement (no Faro entry) → postFactoringChargebackEvent
+      //   · Ordinary funding wire on operating bank → deposit sweep
+      const reserveBank = await isFaroReserveBankAccount(
+        client,
+        input.operating_company_id,
+        txn.bank_account_id
       );
-      if (reserveBank.rows[0]?.is_reserve) {
+      if (reserveBank && faroReserveJournalEntryId) {
+        // Faro reserve row already posted in this transaction — do not also chargeback.
+      } else if (reserveBank) {
         // Same open match client — match + recourse JE commit together or neither does.
         const amounts = await loadExactLinkedChargebackAmountsOnClient(
           client,
           input.operating_company_id,
-          input.ledger_entry_id
+          matchLedgerEntryId
         );
         const cb = await postFactoringChargebackEvent({
           operating_company_id: input.operating_company_id,
-          factoring_advance_id: input.ledger_entry_id,
+          factoring_advance_id: matchLedgerEntryId,
           actor_user_id: input.actor_user_uuid,
           chargeback_amount_cents: amounts.liability_cents,
           default_interest_cents: 0,
@@ -1528,7 +1574,7 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
         }
       } else {
         // ROUND 261 (GO-CLOSE-188 DEFECT A, factoring side) — deposit-sweep for funding wires.
-        await sweepMatchedReceiptToBank(client, input.operating_company_id, "factoring_advance_deposit", input.ledger_entry_id, input.actor_user_uuid);
+        await sweepMatchedReceiptToBank(client, input.operating_company_id, "factoring_advance_deposit", matchLedgerEntryId, input.actor_user_uuid);
       }
     }
 
@@ -1541,7 +1587,7 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
     return {
       variance_cents: varianceCents,
       difference_posted: varianceCents !== 0,
-      journal_entry_id: fuelJournalEntryId ?? journalEntryId,
+      journal_entry_id: fuelJournalEntryId ?? faroReserveJournalEntryId ?? journalEntryId,
       cash_basis_revenue_cents: cashBasisRevenueCents,
     };
   });
