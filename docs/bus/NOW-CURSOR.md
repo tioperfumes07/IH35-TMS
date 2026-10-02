@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91041 MERGED #24107 tip `eed3710134` · Write Check More after Save · F91038 Tier-A blocked
-ACK: CURSOR | ACK GO-20 HOOK | F91041 MERGED | GO
+NOW: BANK-F91042 MERGED #24109 tip `3d1c63532c` · B-5 Account no. column · F91038 Tier-A blocked
+ACK: CURSOR | ACK GO-20 HOOK | F91042 MERGED | GO
