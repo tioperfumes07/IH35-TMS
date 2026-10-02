@@ -5,6 +5,7 @@ import { insertRetainedEarningsClosingJournalIfNeeded } from "./period-close-ret
 import { writePeriodCashBasisSnapshotAtClose } from "./cash-basis/period-close-snapshot.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { computeInterestAccrualLines } from "../factoring/interest-accrual.service.js";
+import { cashReserveReclassStatus } from "../factoring/cash-reserve-reclass.service.js";
 
 // ACCT-F5656 — AF-7 money-control gate. `POST /api/v1/accounting/periods/:id/close`
 // (p7-wave2.routes.ts) already refuses to close/lock a period or post the retained-earnings JE
@@ -59,6 +60,12 @@ export type MonthCloseStatus = {
     due_cents: number;
     line_count: number;
     run_state: string | null;
+  };
+  // Lead 2026-10-02: a negative Faro Cash Reserve presents as Due to Faro (2156) at period end — reclassed before lock.
+  faro_cash_reserve: {
+    complete: boolean;
+    deficit_cents: number;
+    state: string;
   };
   can_lock: boolean;
 };
@@ -291,9 +298,11 @@ async function loadChecklist(client: Client, input: { operatingCompanyId: string
     line_count: interestLines.length,
     run_state: interestRunState,
   };
+  const reclass = await cashReserveReclassStatus(client, input.operatingCompanyId, input.periodEnd);
+  const faroCashReserve = { complete: reclass.complete, deficit_cents: reclass.deficit_cents, state: reclass.state };
   const periodOpen = period?.status === "open";
   const canLock =
-    periodOpen && bankReconComplete && arComplete && apComplete && fuelTaxComplete && factoringInterest.complete;
+    periodOpen && bankReconComplete && arComplete && apComplete && fuelTaxComplete && factoringInterest.complete && faroCashReserve.complete;
 
   return {
     period,
@@ -305,6 +314,7 @@ async function loadChecklist(client: Client, input: { operatingCompanyId: string
     iftaDueThisMonth,
     adjustingCount,
     factoringInterest,
+    faroCashReserve,
     canLock,
     acknowledgments,
   };
@@ -351,6 +361,7 @@ export async function getMonthCloseStatus(input: { userId: string; operatingComp
         count: checklist.adjustingCount,
       },
       factoring_interest: checklist.factoringInterest,
+      faro_cash_reserve: checklist.faroCashReserve,
       can_lock: checklist.canLock,
     };
   });

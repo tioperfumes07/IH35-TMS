@@ -306,6 +306,7 @@ import { registerReserveByCustomerRoutes } from "./factoring/reserve-by-customer
 import { registerRepurchaseDueRoutes } from "./factoring/repurchase-due.routes.js";
 import { registerInterestAccrualRoutes } from "./factoring/interest-accrual.routes.js";
 import { registerFaroReserveEntryRoutes } from "./factoring/faro-reserve-entries.routes.js";
+import { registerCashReserveReclassRoutes } from "./factoring/cash-reserve-reclass.routes.js";
 import { registerBankingKpiRoutes } from "./banking/banking-kpi.routes.js";
 import { registerFactorRoutes } from "./factoring/factor.routes.js";
 import { registerReserveRoutes } from "./factoring/reserve.routes.js";
@@ -1242,6 +1243,7 @@ async function main() {
   await registerRepurchaseDueRoutes(app);
   await registerInterestAccrualRoutes(app);
   await registerFaroReserveEntryRoutes(app);
+  await registerCashReserveReclassRoutes(app);
   await registerBankingKpiRoutes(app);
   await registerFactorRoutes(app);
   await registerReserveRoutes(app);
