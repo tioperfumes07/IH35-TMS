@@ -38,7 +38,12 @@ export async function loadTelematicsLinks(client: Db, oc: string, loadId: string
     fence_transitions: await q(`SELECT t.id::text, g.label, g.location_kind, t.from_state, t.to_state, t.transitioned_at, t.stop_id::text
                                   FROM geo.geofence_state_transitions t JOIN geo.geofences g ON g.id = t.geofence_id
                                  WHERE t.operating_company_id = $1::uuid AND t.load_id = $2::uuid ORDER BY t.transitioned_at`),
-    border_crossings: await q(`SELECT b.uuid::text AS id, b.crossing_point, b.direction, b.entered_geofence_at, b.exited_geofence_at, b.driver_uuid::text AS driver_id, ${DL("b.driver_uuid")}
+    border_crossings: await q(`SELECT b.uuid::text AS id, b.crossing_point, b.direction, b.entered_geofence_at, b.exited_geofence_at, b.driver_uuid::text AS driver_id,
+                                      b.unit_border_crossing_id::text AS customs_record_id,
+                                      (SELECT ubc.manifest_number FROM mdata.unit_border_crossings ubc WHERE ubc.id = b.unit_border_crossing_id) AS manifest_number,
+                                      (SELECT ubc.emanifest_status FROM mdata.unit_border_crossings ubc WHERE ubc.id = b.unit_border_crossing_id) AS emanifest_status,
+                                      (SELECT ubc.customs_broker_status FROM mdata.unit_border_crossings ubc WHERE ubc.id = b.unit_border_crossing_id) AS customs_broker_status,
+                                      (SELECT u.ctpat_status FROM mdata.units u WHERE u.id = b.vehicle_id) AS unit_ctpat_status, ${DL("b.driver_uuid")}
                                  FROM dispatch.border_crossing_events b WHERE b.operating_company_id = $1::uuid AND b.load_uuid = $2::uuid ORDER BY b.entered_geofence_at`),
     dvirs: await q(`SELECT d.id::text, d.type, d.submitted_at, d.has_major_defect, d.has_any_defect, d.unit_id::text, d.driver_id::text, ${UN("d.unit_id")}, ${DL("d.driver_id")}
                       FROM safety.dvir_submissions d WHERE d.operating_company_id = $1::uuid AND d.load_id = $2::uuid ORDER BY d.submitted_at`),
