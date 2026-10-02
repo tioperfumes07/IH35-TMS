@@ -1,3 +1,13 @@
+/**
+ * ENGINE: canonical geofence detector — turns a GPS fix into fence enter / exit events, stamps load-stop arrival / departure, mints the first-pickup proforma, prompts the driver, runs DOT dwell
+ * SCHEDULE: on demand — webhook-projectors/vehicle-projector.ts + geofence-projector.ts (every minute), samsara-positions.service.ts (cron/samsara-positions-cron.ts *\/5 * * * *), load-stop-geofence-sync.service.ts, geofence-events-backfill.service.ts
+ * WRITES: geo.geofence_events, mdata.load_stops (actual_arrival_* / actual_departure_*), the non-posting proforma via accounting/proforma-mint-on-first-pickup.ts, compliance.dot_inspection_events; external: driver web push
+ * IDEMPOTENCY: ADVISORY LOCK geo.fence_transition:<fence>:<unit> + UNIQUE(operating_company_id, geofence_id, unit_id, event_kind, occurred_at, source) ON CONFLICT (uq_geo_geofence_events_dedupe, migration 0220); stop stamps SAME-STATEMENT WHERE actual_arrival_at / actual_departure_at IS NULL
+ * OVERLAP: the second caller waits on the fence+unit lock, then sees the first's event inside the 5-minute window and skips; side effects run only for a newly inserted event
+ * REVERSE: NOT-A-DOCUMENT — immutable fence evidence; stop stamps are first-write-only
+ * NEVER: must never overwrite an existing stop arrival / departure stamp, and must not fire side effects on a historical replay (suppressOperationalSideEffects)
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { processDotDwellForGeofenceEvent } from "./dot-dwell-detector.service.js";
 import { mintProformaInvoiceOnFirstPickup } from "../accounting/proforma-mint-on-first-pickup.js";
 import { normalizeVertices, pointInPolygon } from "./geofence.js";

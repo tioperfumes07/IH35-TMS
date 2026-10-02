@@ -1,3 +1,13 @@
+/**
+ * ENGINE: DS-5 Samsara driver import — runs the link-only driver master sync, and seeds the integrations.samsara_drivers mirror from mdata.drivers.samsara_driver_id when the mirror is empty
+ * SCHEDULE: daily ~04:00 CT (setTimeout to 10:00 UTC; first run 120 s after boot) via integrations/samsara/daily-sync-job.ts
+ * WRITES: integrations.samsara_drivers; via syncSamsaraDriversMaster: mdata.drivers (fill-empty email / phone), integrations.integration_sync_log
+ * IDEMPOTENCY: UNIQUE(operating_company_id, samsara_driver_id) ON CONFLICT DO UPDATE (migration 0137) on the mirror; master sync ADVISORY LOCK samsara_master_sync:drivers:<company>
+ * OVERLAP: the twin's master sync fails the try-lock and skips; mirror seeding upserts the same rows (last_seen_at refreshed)
+ * REVERSE: NOT-A-DOCUMENT — Samsara mirror rows and fill-empty contact fields
+ * NEVER: must never create an mdata.drivers row or overwrite a non-empty driver name, phone or email
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { fetchTier3FiveMinutes } from "./cache/tier3-5min.js";
 import { syncSamsaraDriversMaster } from "./samsara-master-sync.service.js";
 import type { PgClient } from "./samsara.service.js";

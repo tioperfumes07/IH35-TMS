@@ -1,3 +1,13 @@
+/**
+ * ENGINE: Samsara vehicle fault codes — records fault-code history per (event, code), alerts on each new code, and opens a draft auto work order when the rule says so
+ * SCHEDULE: on demand — integrations/samsara/webhook-projectors/vehicle-projector.ts; and 0 3 * * * America/Chicago via integrations/samsara/fault-poll.cron.ts
+ * WRITES: maintenance.samsara_fault_code_history, maintenance.work_orders (draft, origin fault_auto), notifications.user_notifications
+ * IDEMPOTENCY: UNIQUE(raw_event_id, fault_code) ON CONFLICT DO NOTHING (uq_fault_history_event, migration 0310); auto-WO claim SAME-STATEMENT WHERE auto_wo_id IS NULL AND auto_wo_created_at IS NULL; cross-event dedupe NONE — read-then-write (DEFECT): hasRecentUnresolvedFault is a separate SELECT
+ * OVERLAP: a replayed event records no history and opens no second work order; two DIFFERENT events for the same unit and code at once can both open a draft work order
+ * REVERSE: work order -> governance/void-cancel-executors.ts:executeWorkOrder; fault history is NOT-A-DOCUMENT (telemetry)
+ * NEVER: must never open a work order unless the rule has auto_create_wo and the severity is high or critical
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { emitPredictiveAutoWoNotifications, emitFaultCodeNotifications } from "../../notifications/notification.service.js";
 import { driverAtTimeSql } from "../../maintenance/driver-attribution.js";
 import type { SamsaraWebhookEvent } from "./webhook-projection.types.js";

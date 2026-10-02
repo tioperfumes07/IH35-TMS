@@ -1,3 +1,13 @@
+/**
+ * ENGINE: dispatch refinements — manual load reassign, replace a load's stops, create load templates; the rest is read-only
+ * SCHEDULE: on demand — POST /api/v1/loads/:loadId/reassign, POST /api/v1/loads/:loadId/stops, POST /api/v1/load-templates (dispatch/dispatch-refinements.routes.ts)
+ * WRITES: mdata.loads, mdata.load_stops, dispatch.load_assignment_history, dispatch.load_templates, driver bills + pre-settlement links (reassign), geo.geofences, outbox.events, audit.audit_events
+ * IDEMPOTENCY: NONE — each reassign, stop replace or template create is a user action that appends new history/stop/template rows; the load row is serialized by SELECT ... FOR UPDATE
+ * OVERLAP: the second reassign or stop replace waits on the load row lock, then applies its own change; two template creates insert two templates
+ * REVERSE: NOT-A-DOCUMENT — reassign is undone by manualReassignLoad back, stops by a new replace; none — DEFECT: a load template has no retire path
+ * NEVER: must never hard-delete a load stop; replaced stops are soft-deleted (soft_deleted_at)
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -429,7 +439,6 @@ export async function replaceLoadStopsRefined(
               latitude, longitude, signature_required, photo_required,
               time_window_type, pickup_time_type_id
             )
-            RETURNING id::text AS id
             VALUES (
               $1,$2,$3::mdata.stop_type_enum,
               $4,$5,$6,$7,$8,
@@ -439,6 +448,7 @@ export async function replaceLoadStopsRefined(
               CASE WHEN $10 IS NOT NULL THEN 'appointment'::mdata.time_window_type_enum ELSE 'first_come_first_serve'::mdata.time_window_type_enum END,
               $17
             )
+            RETURNING id::text AS id -- ROUND 337: was placed before VALUES (invalid SQL; every add-stop failed)
           `,
           [
             loadId,

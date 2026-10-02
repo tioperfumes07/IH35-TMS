@@ -1,3 +1,13 @@
+/**
+ * ENGINE: Samsara positions + stats poll — ingests vehicle GPS fixes, runs geofence detection on each new fix, and pairs the current driver to the unit
+ * SCHEDULE: *\/5 * * * * America/Chicago via cron/samsara-positions-cron.ts (syncSamsaraVehicleLocations, syncSamsaraVehicleStats)
+ * WRITES: telematics.vehicle_locations (ingestVehicleLocationEvent), geo.geofence_events + mdata.load_stops stamps (processGeofenceDetectionsForGpsPoint), integrations.samsara_drivers, telematics.vehicle_driver_assignments, integrations.integration_sync_log
+ * IDEMPOTENCY: UNIQUE(operating_company_id, raw_samsara_event_id) ON CONFLICT DO NOTHING (vehicle_locations_tenant_event_unique, migration 0233); UNIQUE(operating_company_id, samsara_assignment_id) ON CONFLICT DO NOTHING (uq_vehicle_driver_assignments_samsara_id); UNIQUE(operating_company_id, samsara_driver_id) ON CONFLICT DO UPDATE
+ * OVERLAP: the twin inserts no second fix (so runs no second fence detection) and no second assignment; only the sync-log row is duplicated
+ * REVERSE: NOT-A-DOCUMENT — GPS telemetry and driver / vehicle pairing
+ * NEVER: must never ingest a fix for a Samsara vehicle not mapped to a unit of the company, and never fabricate a position or odometer
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { resolveSamsaraApiToken } from "./samsara-token.js";
 import {
   deriveEngineState,

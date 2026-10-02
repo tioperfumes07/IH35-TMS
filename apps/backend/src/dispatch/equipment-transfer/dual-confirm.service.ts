@@ -1,3 +1,13 @@
+/**
+ * ENGINE: equipment transfer dual confirm — outbound then inbound driver confirmation; inbound moves the equipment to the receiving driver
+ * SCHEDULE: on demand — POST /api/v1/dispatch/equipment-transfers/:uuid/confirm-outbound | confirm-inbound (dispatch/equipment-transfer/routes.ts)
+ * WRITES: dispatch.equipment_transfer_requests, mdata.equipment (assigned_driver_id), mdata.equipment_log, outbox.events, audit.audit_events
+ * IDEMPOTENCY: SAME-STATEMENT WHERE status = 'pending_outbound' (outbound) / status = 'outbound_confirmed' (inbound), after SELECT ... FOR UPDATE
+ * OVERLAP: the second confirm waits on the request row lock, matches 0 rows and returns invalid_status
+ * REVERSE: dispatch/equipment-transfer/request.service.ts:cancelTransfer before completion; NOT-A-DOCUMENT after — a physical hand-off, reversed by a new initiateTransfer back
+ * NEVER: must never mark a transfer completed without moving mdata.equipment.assigned_driver_id in the same transaction
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { enqueueEquipmentTransferNotify } from "./notify.js";

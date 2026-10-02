@@ -1,3 +1,13 @@
+/**
+ * ENGINE: driver retention risk score — weighted 0-100 score and tier from extracted features, stored as a snapshot row
+ * SCHEDULE: 0 4 * * 1 America/Chicago via jobs/driver-retention-scorer-worker.ts (upsertRetentionScore); drivers/retention/routes.ts GETs only compute, never write
+ * WRITES: drivers.retention_scores
+ * IDEMPOTENCY: NONE — append-only snapshot; a plain INSERT with no ON CONFLICT, and computed_at is a fresh JS timestamp so UNIQUE(driver_uuid, computed_at) never collides (DEFECT: an overlapping or re-run tick writes a second snapshot)
+ * OVERLAP: two ticks each insert one row per driver (duplicate snapshots seconds apart)
+ * REVERSE: NOT-A-DOCUMENT — derived analytics snapshot (readers take the latest per driver)
+ * NEVER: must never write to mdata.drivers or any pay / settlement table — it scores, it never acts
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { PoolClient } from "pg";
 import { extractRetentionFeatures, RETENTION_FEATURE_KEYS, type RetentionFeatures } from "./feature-extractor.js";
 

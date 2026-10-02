@@ -5,6 +5,8 @@
  * IDEMPOTENCY: ADVISORY LOCK pg_try_advisory_xact_lock(GEOFENCE_CRON_LOCK_KEY) single-flight per tick (transaction-scoped); breach insert gated WHERE NOT EXISTS in the 5-minute window
  * OVERLAP: a second replica fails the lock and skips the tick
  * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ * REVERSE: NOT-A-DOCUMENT — a telemetry breach log; rows are acknowledged (safety/geofence-breach.routes.ts), never reversed
+ * NEVER: must never insert a breach row without the same-statement WHERE NOT EXISTS 5-minute guard, and never writes load or stop status
  */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";

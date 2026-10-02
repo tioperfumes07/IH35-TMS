@@ -1,3 +1,13 @@
+/**
+ * ENGINE: driver / permit document-expiry alerts — upserts one alert event per (rule, document, days-out) and notifies once; plus rule edits and acknowledgements
+ * SCHEDULE: 35 7 * * * America/Chicago via drivers/document-alerts.cron.ts; on demand — drivers/document-alerts.routes.ts (PATCH rule, POST acknowledge, POST evaluate)
+ * WRITES: safety.document_alert_events, safety.document_alert_rules, notifications.user_notifications (createNotification), outbox.events (driver.document_expiry_email)
+ * IDEMPOTENCY: UNIQUE(operating_company_id, rule_id, subject_key, days_until_expiry) ON CONFLICT (uq_document_alert_events_dedup, migration 0350); notification claim SAME-STATEMENT WHERE notified_at IS NULL; email UNIQUE(dedupe_key) ON CONFLICT (ux_outbox_events_dedupe_key)
+ * OVERLAP: the second evaluation upserts the same events, claims 0 notifications and sends nothing
+ * REVERSE: NOT-A-DOCUMENT — derived alert rows (closed by drivers/document-alerts.service.ts:acknowledgeDocumentAlertEvent); a sent notification or email cannot be recalled
+ * NEVER: must never edit the underlying driver or permit document, and never notify twice for one alert event
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 
 export const DOCUMENT_ALERT_ENGINE_VERSION = "a24-9-v1";

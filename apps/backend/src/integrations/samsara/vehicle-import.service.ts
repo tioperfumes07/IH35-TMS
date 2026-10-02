@@ -1,3 +1,13 @@
+/**
+ * ENGINE: DS-4 Samsara vehicle import — links Samsara vehicles to mdata.units (master sync), seeds the samsara_vehicles mirror from mdata.equipment when empty, stamps config health
+ * SCHEDULE: on demand — integrations/samsara/daily-sync-job.ts (setTimeout ~10:00 UTC daily, first run 120s after boot)
+ * WRITES: mdata.units + integrations.integration_sync_log (via samsara-master-sync.service.ts:syncSamsaraVehiclesMaster), integrations.samsara_vehicles, integrations.samsara_config; external: Samsara list vehicles (read)
+ * IDEMPOTENCY: UNIQUE(operating_company_id, samsara_vehicle_id) ON CONFLICT (samsara_vehicles UNIQUE, migration 0137); master sync under ADVISORY LOCK samsara_master_sync:vehicles:<company>
+ * OVERLAP: the second master sync fails pg_try_advisory_xact_lock and skips; fallback upserts converge on the same mirror rows
+ * REVERSE: NOT-A-DOCUMENT — a master-data link / mirror refresh; the next sync re-derives it
+ * NEVER: must never create mdata.units or mdata.equipment rows and never overwrite a unit's set samsara_vehicle_id — link-only
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { fetchTier3FiveMinutes } from "./cache/tier3-5min.js";
 import { syncSamsaraVehiclesMaster } from "./samsara-master-sync.service.js";
 import type { PgClient } from "./samsara.service.js";
@@ -33,7 +43,10 @@ export async function importSamsaraVehicles(client: PgClient, operatingCompanyId
     }
   }
   await client.query(
-    `UPDATE integrations.samsara_config SET last_health_check_at = now(), last_health_status = 'green' WHERE operating_company_id = $1::uuid`,
+    // ROUND 337: 'ok', not 'green' — samsara_config_last_health_status_check allows ok / auth_failed / rate_limited /
+    // transient_error / not_configured; 'green' failed the CHECK and rolled back the whole daily sync on both instances
+    // (prod log 2026-10-02 23:13Z, every run).
+    `UPDATE integrations.samsara_config SET last_health_check_at = now(), last_health_status = 'ok' WHERE operating_company_id = $1::uuid`,
     [operatingCompanyId]
   );
   return { imported, master_sync: stats };

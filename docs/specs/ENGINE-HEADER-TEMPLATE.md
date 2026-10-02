@@ -20,6 +20,23 @@ again while a previous run is still going whenever a run outlasts its interval. 
  */
 ```
 
+## Writers that are not scheduled (on-demand services) — same block, two more lines (ROUND 337)
+
+Every engine that WRITES carries the block, scheduled or not, plus the two lines the 642-engine audit's check 9 reads
+(a leading comment naming what it writes, how a write is reversed, and what it must never do):
+
+```ts
+/**
+ * ENGINE: <one line>
+ * SCHEDULE: <interval>, or "on demand — <who calls it>"
+ * WRITES: <schema.table> — one line each
+ * IDEMPOTENCY: <one of the four forms below>, or "NONE — <why: a user action that must create a new row each time>"
+ * OVERLAP: <two concurrent calls>
+ * REVERSE: <the function that undoes a write (file:fn)>, or "NOT-A-DOCUMENT — <what it is>"
+ * NEVER: <what this engine must never write or do>
+ */
+```
+
 ## The four accepted IDEMPOTENCY forms (database-level only)
 
 | form | write it to | evidence the header must name |

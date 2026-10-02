@@ -1,3 +1,13 @@
+/**
+ * ENGINE: lane profitability cache — recomputes per-lane revenue / cost / margin for a period and refreshes the monthly lane matview
+ * SCHEDULE: on demand — reports/lane-profitability-refresh.job.ts (0 2 * * * America/Chicago, last 12 months) and the lane-profitability GET in reports/lane-profitability.routes.ts when the cache is stale or empty
+ * WRITES: reports.lane_profitability_cache (DELETE period + INSERT), reports.lane_metrics_monthly (REFRESH MATERIALIZED VIEW via reports.refresh_lane_metrics_monthly())
+ * IDEMPOTENCY: UNIQUE(operating_company_id, origin_city, origin_state, destination_city, destination_state, period_start, period_end) ON CONFLICT (uq_lane_profit_company_lane_period, migration 0311)
+ * OVERLAP: both DELETE then upsert the same period; the second waits on the first's row locks and its ON CONFLICT rewrites the same values
+ * REVERSE: NOT-A-DOCUMENT — a derived report cache
+ * NEVER: must never write load, invoice or GL rows — it writes only the cache and the matview refresh
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { PoolClient } from "pg";
 import { logger } from "../observability/structured-logger.js";
 

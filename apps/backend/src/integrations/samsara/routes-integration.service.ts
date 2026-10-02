@@ -1,3 +1,13 @@
+/**
+ * ENGINE: Samsara Routes (E-31) — pushes each dispatched load as a Samsara route when its body hash changed, reads stop progress back, and stamps stop arrival / departure from route webhooks
+ * SCHEDULE: *\/15 * * * * via integrations/samsara/routes-push.cron.ts (only when SAMSARA_ROUTES_PUSH_ENABLED=true); on demand — routes-integration.routes.ts (POST .../routes/:load_id/push) and webhook-projection.service.ts (projectRouteStopEvent)
+ * WRITES: external Samsara route POST / PATCH (upsertRoute), integrations.integration_sync_log (route_push ledger), mdata.loads.samsara_route_id, integrations.samsara_route_stop_progress, mdata.load_stops (actual times + status)
+ * IDEMPOTENCY: ADVISORY LOCK samsara.routes_push:<company> (tryXactSingleFlight, cron caller only); push-now route NONE — read-then-write (DEFECT): lastPushedHash SELECT, then push, then ledger INSERT; route id SAME-STATEMENT WHERE IS DISTINCT FROM; stop progress UNIQUE(load_id, stop_id) ON CONFLICT (PK, migration 202615181000); stop times SAME-STATEMENT COALESCE
+ * OVERLAP: an overlapping cron replica skips on the lock; a push-now concurrent with the cron can push the same route twice and write two ledger rows
+ * REVERSE: none — DEFECT: a route pushed to Samsara cannot be deleted or cancelled (samsara-client.ts has no route delete call)
+ * NEVER: must never push when SAMSARA_ROUTES_PUSH_ENABLED is not true, and never push a stop without its own coordinates
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { canonicalDispatchWorkStatusClause } from "../../dispatch/canonical-active-load-set.js";
 import { stopFenceTimeSql } from "../../telematics/stop-arrival-events.js";
 import { resolveSamsaraApiToken } from "./samsara-token.js";

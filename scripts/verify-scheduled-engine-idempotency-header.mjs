@@ -56,6 +56,67 @@ export const SWEPT = [
   "apps/backend/src/telematics/odometer-snapshot.cron.ts",
 ];
 
+// ROUND 337 — on-demand WRITERS in the CC-3 lane (the 642-engine audit's header-defect rows): the 7-line block, incl.
+// REVERSE: and NEVER:. An on-demand writer may state IDEMPOTENCY "NONE — <why>" (a user action that must create a new
+// row each time); a scheduled engine may not.
+export const WRITERS = [
+  "apps/backend/src/border-crossing/cbp-wait-times.service.ts",
+  "apps/backend/src/cron/draft-crew-status-selfheal.cron.ts",
+  "apps/backend/src/cron/geofence-breach-detector.cron.ts",
+  "apps/backend/src/cron/samsara-hos-pull.cron.ts",
+  "apps/backend/src/customers/relationship-score/scorer.service.ts",
+  "apps/backend/src/dispatch/analytics/late-arrival.service.ts",
+  "apps/backend/src/dispatch/arch-tabs.service.ts",
+  "apps/backend/src/dispatch/assignments/quicksave.service.ts",
+  "apps/backend/src/dispatch/bol-generator.service.ts",
+  "apps/backend/src/dispatch/book-load.service.ts",
+  "apps/backend/src/dispatch/cancellation.service.ts",
+  "apps/backend/src/dispatch/customer-notify.service.ts",
+  "apps/backend/src/dispatch/detention-approval.service.ts",
+  "apps/backend/src/dispatch/detention.service.ts",
+  "apps/backend/src/dispatch/dispatch-refinements.service.ts",
+  "apps/backend/src/dispatch/equipment-transfer/dual-confirm.service.ts",
+  "apps/backend/src/dispatch/equipment-transfer/request.service.ts",
+  "apps/backend/src/dispatch/load-distribution.service.ts",
+  "apps/backend/src/dispatch/loads/multi-stop/extra-rate.service.ts",
+  "apps/backend/src/dispatch/ocr-processor.service.ts",
+  "apps/backend/src/dispatch/planner.service.ts",
+  "apps/backend/src/dispatch/quick-assign.service.ts",
+  "apps/backend/src/drivers/document-alerts.service.ts",
+  "apps/backend/src/drivers/messages.service.ts",
+  "apps/backend/src/drivers/retention/scorer.service.ts",
+  "apps/backend/src/integrations/samsara/cap-14-cargo-sensors/incident.service.ts",
+  "apps/backend/src/integrations/samsara/config-bootstrap.service.ts",
+  "apps/backend/src/integrations/samsara/driver-import.service.ts",
+  "apps/backend/src/integrations/samsara/engine-faults/fault-handler.service.ts",
+  "apps/backend/src/integrations/samsara/fault-code-processor.service.ts",
+  "apps/backend/src/integrations/samsara/geofences/address-import.service.ts",
+  "apps/backend/src/integrations/samsara/geofences/geofence-odometer-capture.service.ts",
+  "apps/backend/src/integrations/samsara/geofences/real-driven-miles.service.ts",
+  "apps/backend/src/integrations/samsara/routes-integration.service.ts",
+  "apps/backend/src/integrations/samsara/samsara-driver-login.service.ts",
+  "apps/backend/src/integrations/samsara/samsara-master-sync.service.ts",
+  "apps/backend/src/integrations/samsara/samsara-positions.service.ts",
+  "apps/backend/src/integrations/samsara/samsara.service.ts",
+  "apps/backend/src/integrations/samsara/vehicle-import.service.ts",
+  "apps/backend/src/integrations/samsara/webhook-projection.service.ts",
+  "apps/backend/src/mdata/driver-team.service.ts",
+  "apps/backend/src/mdata/equipment-transfer.service.ts",
+  "apps/backend/src/reports/deadhead.service.ts",
+  "apps/backend/src/reports/lane-profitability.service.ts",
+  "apps/backend/src/safety/harsh-events-ingestion.service.ts",
+  "apps/backend/src/telematics/auto-geofence.service.ts",
+  "apps/backend/src/telematics/auto-status.service.ts",
+  "apps/backend/src/telematics/dashcam.service.ts",
+  "apps/backend/src/telematics/dot-dwell-detector.service.ts",
+  "apps/backend/src/telematics/geofence-detector.service.ts",
+  "apps/backend/src/telematics/load-real-driven-miles.service.ts",
+  "apps/backend/src/telematics/maintenance-predictor.service.ts",
+  "apps/backend/src/telematics/stops-geocode-backfill.service.ts",
+  "apps/backend/src/telematics/vehicle-driver-lookup.service.ts",
+  "apps/backend/src/telematics/vehicle-locations.service.ts",
+];
+
 const FORMS = /IDEMPOTENCY:[^\n]*\b(UNIQUE\([^)]*\)\s*ON CONFLICT|SAME-STATEMENT WHERE|ADVISORY LOCK|DETERMINISTIC OVERWRITE)/;
 
 export function audit(read) {
@@ -67,6 +128,14 @@ export function audit(read) {
     for (const key of ["ENGINE:", "SCHEDULE:", "WRITES:", "IDEMPOTENCY:", "OVERLAP:"]) if (!head.includes(key)) f.push(`${file}: header lacks ${key}`);
     if (!FORMS.test(head)) f.push(`${file}: IDEMPOTENCY names no database-level form (UNIQUE(..) ON CONFLICT / SAME-STATEMENT WHERE / ADVISORY LOCK / DETERMINISTIC OVERWRITE)`);
     if (/IDEMPOTENCY:[^\n]*\b(checks first|skips if|already done|in-memory)/i.test(head)) f.push(`${file}: application-level check named as idempotency`);
+  }
+  for (const file of WRITERS) {
+    const src = read(file);
+    if (src == null) { f.push(`${file}: missing (swept writers never leave the list)`); continue; }
+    const head = src.slice(0, 4000);
+    for (const key of ["ENGINE:", "SCHEDULE:", "WRITES:", "IDEMPOTENCY:", "OVERLAP:", "REVERSE:", "NEVER:"]) if (!head.includes(key)) f.push(`${file}: header lacks ${key}`);
+    if (!FORMS.test(head) && !/IDEMPOTENCY:\s*NONE\s+—/.test(head)) f.push(`${file}: IDEMPOTENCY names neither a database-level form nor "NONE — <why>"`);
+    if (!/^\s*\/\*\*?\s*\n\s*\*\s*ENGINE:/.test(src.replace(/^#!.*\n/, ""))) f.push(`${file}: the header block is not the file's first comment`);
   }
   return f;
 }
@@ -80,10 +149,12 @@ if (process.argv.includes("--selftest")) {
     ["app-level", good.replace("SAME-STATEMENT WHERE status = 'draft'", "checks first, skips if already done")],
     ["no header", "export const x = 1;"],
   ];
+  const savedWriters = WRITERS.splice(0); // the selftest exercises the scheduled-engine rules on a planted file only
   SWEPT.push("x.ts");
   for (const [n, src] of cases) if (audit((p) => (p === "x.ts" ? src : read(p))).length === 0) { console.error(`selftest FAIL: ${n}`); process.exit(1); }
   if (audit((p) => (p === "x.ts" ? good : read(p))).length) { console.error("selftest FAIL: good header flagged"); process.exit(1); }
   SWEPT.pop();
+  WRITERS.push(...savedWriters);
   console.log("verify-scheduled-engine-idempotency-header selftest 3/3");
 }
-console.log(`verify-scheduled-engine-idempotency-header: OK — ${SWEPT.length} swept engine(s) declare database-level idempotency`);
+console.log(`verify-scheduled-engine-idempotency-header: OK — ${SWEPT.length} swept engine(s) declare database-level idempotency; ${WRITERS.length} on-demand writer(s) carry the 7-line block`);

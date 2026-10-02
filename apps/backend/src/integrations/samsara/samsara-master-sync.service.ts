@@ -1,3 +1,13 @@
+/**
+ * ENGINE: Samsara master sync (link-only) — matches Samsara drivers / vehicles / trailers to existing records and fills EMPTY columns only, logging outcomes
+ * SCHEDULE: 30 * * * * via cron/samsara-master-sync.cron.ts; on demand — samsara-master-sync.routes.ts, outbox/handlers/samsara-master-data-push.handler.ts, driver-import.service.ts, vehicle-import.service.ts
+ * WRITES: mdata.drivers (fill-empty email / phone), mdata.units, mdata.equipment (samsara_vehicle_id + VIN / make / model / year / plate fill-empty), integrations.integration_sync_log
+ * IDEMPOTENCY: ADVISORY LOCK pg_try_advisory_xact_lock(hashtext('samsara_master_sync:<kind>:<company>')); the updates are fill-empty COALESCE (DETERMINISTIC OVERWRITE)
+ * OVERLAP: the second runner fails the try-lock and returns skipped_another_runner_holds_lock
+ * REVERSE: NOT-A-DOCUMENT — fill-empty master-data link (only empty columns are ever set)
+ * NEVER: must never create a driver, unit or equipment row, never touch another company's record, and never overwrite a real (non-empty) value or a different Samsara id
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { resolveSamsaraApiToken } from "./samsara-token.js";
 import { SamsaraClient } from "./samsara-client.js";
 import type { PgClient } from "./samsara.service.js";

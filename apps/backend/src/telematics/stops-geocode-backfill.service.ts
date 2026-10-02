@@ -1,3 +1,13 @@
+/**
+ * ENGINE: stop geocode backfill — geocodes load stops with no coordinates, links or creates the mdata.locations row, creates the stop's custom geofence
+ * SCHEDULE: on demand — POST /api/v1/telematics/stops/geocode-backfill (stops-geocode-backfill.routes.ts) and dispatch/book-load.service.ts (post-book)
+ * WRITES: mdata.load_stops (lat / lng, geocode_*, location_id), mdata.locations, geo.geofences; external: geocode provider (geocodeAddressWithEvidence)
+ * IDEMPOTENCY: ADVISORY LOCK <company>|<normalized address> (location) and geo.location_fence|<company>|<location> + SAME-STATEMENT WHERE NOT EXISTS an active fence for that location
+ * OVERLAP: the second caller waits on the lock, then finds the location / fence and inserts nothing; stop updates rewrite the same values
+ * REVERSE: NOT-A-DOCUMENT — geocode enrichment; a fence is retired through telematics/geofences.routes.ts PATCH /api/v1/telematics/geofences/:id
+ * NEVER: must never accept 0,0 coordinates and never create a location or fence from a locality-only geocode
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 import { squareVerticesFromCenter } from "./auto-geofence.service.js";

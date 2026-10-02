@@ -1,3 +1,13 @@
+/**
+ * ENGINE: dispatch arch tabs — read-only at-risk/in-transit/history lists, plus office create and resolve of in-transit issues
+ * SCHEDULE: on demand — POST /api/v1/dispatch/intransit-issues/office and POST /api/v1/dispatch/intransit-issues/:id/resolve (dispatch/arch-tabs.routes.ts)
+ * WRITES: dispatch.intransit_issues
+ * IDEMPOTENCY: NONE — creating an in-transit issue is a user action that must insert a new row each time; resolve is SAME-STATEMENT WHERE i.status IN ('open','acknowledged')
+ * OVERLAP: two creates insert two issues; two resolves — the second matches 0 rows and returns issue_not_found_or_already_resolved
+ * REVERSE: dispatch/arch-tabs.service.ts:resolveIntransitIssue (closes a created issue); NOT-A-DOCUMENT — an operational in-transit ticket, no reopen path
+ * NEVER: must never create an issue for another company's load or for a driver/unit not assigned to that load
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 import { DISPATCH_ALERT_ACTIVE_STATUSES_SQL } from "./dispatch-alert-statuses.js";

@@ -1,3 +1,13 @@
+/**
+ * ENGINE: quick-assign / quicksave — seats a driver (and unit / trailer) on a load after unit, qualification, HOS and drug gates, and completes quicksave drafts
+ * SCHEDULE: on demand — dispatch/quicksave.routes.ts (quickAssignLoad, completeQuicksaveDraft)
+ * WRITES: mdata.loads, dispatch.load_assignment_history, audit event (appendCrudAudit), events.event_log (emitDispatchSpineEvent), outbox.events (load.assigned_to_driver), driver_finance.* via the shared presettlement-link and driver-bill helpers
+ * IDEMPOTENCY: NONE — read-then-write (DEFECT): unit-not-active-on-another-load is a separate SELECT (dispatch/unit-active-load-guard.ts) before the UPDATE; each assign appends a new history row by design; the load row is FOR UPDATE locked
+ * OVERLAP: two assigns of the SAME load serialize on the row lock (both commit, two history rows, last wins); two assigns of DIFFERENT loads onto one unit can both pass the active-unit check (double dispatch)
+ * REVERSE: NOT-A-DOCUMENT — crew assignment; re-run dispatch/quick-assign.service.ts:quickAssignLoad with the prior crew (history, audit and outbox rows are append-only)
+ * NEVER: must never write a trailer (mdata.equipment) id into assigned_secondary_driver_id, and never seat an OOS or dispatch-blocked unit without Owner acknowledgement
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";

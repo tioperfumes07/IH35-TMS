@@ -1,3 +1,13 @@
+/**
+ * ENGINE: customer relationship scorer — computes per-customer health subscores from loads/stops/invoices and upserts one score row per customer
+ * SCHEDULE: on demand — jobs/customer-relationship-scorer.ts (setInterval, default every 6 h) calls computeRelationshipScore + upsertRelationshipScore
+ * WRITES: master_data.customer_relationship_scores
+ * IDEMPOTENCY: UNIQUE(customer_uuid) ON CONFLICT DO UPDATE — primary key of master_data.customer_relationship_scores (migration 202606080221)
+ * OVERLAP: two concurrent runs upsert the same customer row; the later write wins with an identical recomputed score
+ * REVERSE: NOT-A-DOCUMENT — a derived score cache, overwritten on every recompute
+ * NEVER: must never write mdata.customers or any money table; it only reads source data and writes the score cache
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { PoolClient } from "pg";
 import { STOP_ARRIVAL_EVENTS_SQL } from "../../telematics/stop-arrival-events.js";
 

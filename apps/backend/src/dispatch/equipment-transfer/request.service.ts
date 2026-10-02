@@ -1,3 +1,13 @@
+/**
+ * ENGINE: equipment transfer request — opens and cancels driver-to-driver trailer/chassis transfer requests
+ * SCHEDULE: on demand — POST /api/v1/dispatch/equipment-transfers/initiate and /:uuid/cancel (dispatch/equipment-transfer/routes.ts)
+ * WRITES: dispatch.equipment_transfer_requests, outbox.events, audit.audit_events
+ * IDEMPOTENCY: ADVISORY LOCK hashtextextended(operating_company_id || ':' || equipment_uuid) around the active-transfer check and INSERT; cancel SAME-STATEMENT WHERE status IN ('pending_outbound','outbound_confirmed','inbound_confirmed')
+ * OVERLAP: the second initiate waits on the lock, sees the active request and throws transfer_already_active
+ * REVERSE: dispatch/equipment-transfer/request.service.ts:cancelTransfer
+ * NEVER: must never open a second active transfer for the same equipment in the same company
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { withCurrentUser } from "../../auth/db.js";
 import { enqueueEquipmentTransferNotify } from "./notify.js";

@@ -1,3 +1,13 @@
+/**
+ * ENGINE: inline quicksave reassign — swaps a load's unit, trailer or primary driver and logs the change
+ * SCHEDULE: on demand — PATCH /api/v1/dispatch/loads/:uuid/assign-unit | assign-trailer | assign-driver (dispatch/assignments/quicksave.routes.ts)
+ * WRITES: mdata.loads (assigned_unit_id / assigned_primary_driver_id, draft status advance, tour_id), dispatch.load_assignment_history, driver_finance.driver_bills + settlement lines and pre-settlement links (driver path), audit.audit_events
+ * IDEMPOTENCY: NONE — each reassignment is a user action that appends a new dispatch.load_assignment_history row; the load row is serialized by SELECT ... FOR UPDATE
+ * OVERLAP: the second call waits on the load row lock, then applies its own assignment and appends its own history row (last writer wins)
+ * REVERSE: NOT-A-DOCUMENT — an assignment change; undone by calling the same reassign function with the prior id kept in the history row
+ * NEVER: must never write a trailer id into mdata.loads.assigned_secondary_driver_id (that is the co-driver column)
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.js";
 import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../../audit/crud-audit.js";

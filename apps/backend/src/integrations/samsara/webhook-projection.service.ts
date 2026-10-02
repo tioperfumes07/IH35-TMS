@@ -1,3 +1,13 @@
+/**
+ * ENGINE: Samsara webhook projector — drains integrations.samsara_webhook_events per tenant into the driver / vehicle / HOS / geofence / route-stop projectors and records projection state
+ * SCHEDULE: on demand — cron/samsara-webhook-projection.cron.ts (*\/1 * * * * America/Chicago)
+ * WRITES: integrations.samsara_webhook_projection_state, audit.append_event; the projectors write integrations.samsara_drivers / samsara_vehicles, hos.duty_status_events, telematics.*, geo.geofence_events, safety.harsh_events, mdata.load_stops / loads
+ * IDEMPOTENCY: ADVISORY LOCK samsara.webhook_projection:<company> (lib/single-flight.ts tryXactSingleFlight); state row UNIQUE(webhook_event_id) ON CONFLICT DO NOTHING (migration 0203)
+ * OVERLAP: the second tick fails the try-lock and returns processed 0
+ * REVERSE: NOT-A-DOCUMENT — a projection queue; the state row records each raw event's outcome
+ * NEVER: must never project an event whose signature_valid is false, and never retry a permanent failure
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { assertTenantContext } from "../../cron/_helpers/tenant-context-guard.js";
 import { projectDriverEvent } from "./webhook-projectors/driver-projector.js";
 import { projectHosEvent } from "./webhook-projectors/hos-projector.js";

@@ -1,3 +1,13 @@
+/**
+ * ENGINE: load distribution — renders the driver and customer instruction PDFs, stores them, links them to the load, and notifies driver and customer
+ * SCHEDULE: on demand — POST /api/v1/dispatch/loads/:id/distribute-instructions (dispatch/loads.routes.ts) and the dispatch.load.dispatched outbox handler (outbox/handlers/dispatch-load-dispatched.handler.ts)
+ * WRITES: docs.files, docs.file_links, mdata.loads (driver_instructions_file_id), pwa.driver_notifications, outbox.events (twilio.whatsapp.send), audit.audit_events; external R2 put, sendEmail after commit
+ * IDEMPOTENCY: NONE — each run is a distribution that must produce a fresh packet; DEFECT: the WhatsApp and email sends carry no send key or advisory lock
+ * OVERLAP: two concurrent runs store two packets and send the driver and customer two messages each
+ * REVERSE: NOT-A-DOCUMENT — generated instruction PDFs and outbound messages; a sent message cannot be recalled
+ * NEVER: must never claim a WhatsApp channel the company has not configured, and must never send email before the transaction commits
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";

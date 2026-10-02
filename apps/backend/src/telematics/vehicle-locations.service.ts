@@ -1,3 +1,13 @@
+/**
+ * ENGINE: vehicle locations — inserts one telematics.vehicle_locations GPS row per Samsara fix
+ * SCHEDULE: on demand — integrations/samsara/webhook-projectors/vehicle-projector.ts (webhook projection) and integrations/samsara/samsara-positions.service.ts (cron/samsara-positions-cron.ts *\/5 * * * *)
+ * WRITES: telematics.vehicle_locations
+ * IDEMPOTENCY: UNIQUE(operating_company_id, raw_samsara_event_id) ON CONFLICT (vehicle_locations_tenant_event_unique, migration 0233)
+ * OVERLAP: the second insert of the same fix does nothing (with no Samsara id the key is a hash of the payload)
+ * REVERSE: NOT-A-DOCUMENT — immutable GPS breadcrumb
+ * NEVER: must never update or delete an existing location row — insert-only
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { createHash } from "node:crypto";
 
 type DbClient = {

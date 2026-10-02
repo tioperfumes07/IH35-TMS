@@ -1,3 +1,13 @@
+/**
+ * ENGINE: per-stop extra charges (lumper, detention, extra-stop fee, fuel surcharge, accessorial) on a load stop, added and deactivated from dispatcher input
+ * SCHEDULE: on demand — dispatch/loads/multi-stop/extra-rate.routes.ts (POST / DELETE /api/v1/dispatch/loads/:load_uuid/stops/:stop_uuid/extra-rates)
+ * WRITES: dispatch.stop_extra_rates
+ * IDEMPOTENCY: NONE — each add is a dispatcher action that must create a new charge row; softDelete is SAME-STATEMENT WHERE is_active = true
+ * OVERLAP: two concurrent adds insert two charge rows; two concurrent softDeletes: one flips is_active, the other matches nothing and returns null
+ * REVERSE: dispatch/loads/multi-stop/extra-rate.service.ts:softDelete
+ * NEVER: must never hard-DELETE a rate row, and never insert a rate for a stop that is not on a live load of the same operating company
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 export type StopExtraRateType =
   | "extra_stop_fee"
   | "lumper"

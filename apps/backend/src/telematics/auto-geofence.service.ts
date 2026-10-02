@@ -1,3 +1,13 @@
+/**
+ * ENGINE: auto geofence on book — creates a customer_site square fence per load stop that has no fence yet and queues the Samsara create
+ * SCHEDULE: on demand — dispatch/book-load.service.ts (fire-and-forget after a booked load commits)
+ * WRITES: geo.geofences, outbox.events (samsara.create_geofence), audit (appendCrudAudit); external: geocode provider via stop-geocode-fallback.service.ts:geocodeAddress
+ * IDEMPOTENCY: NONE — read-then-write (DEFECT): findExistingGeofence SELECT, then a plain INSERT with no unique key; only the outbox row is keyed (dedupe_key samsara.create_geofence:<id>)
+ * OVERLAP: two calls for one load both miss each other and insert twin fences, each with its own Samsara push; the concurrent post-book geocodeStopsBackfill can add a second, 'custom' fence for the same stop
+ * REVERSE: telematics/geofences.routes.ts:PATCH /api/v1/telematics/geofences/:id handler (is_active = false)
+ * NEVER: must never create a fence without real coordinates (a geocode miss is audited and skipped)
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { TMS_AUTO_GEOFENCE_SIDE_METERS } from "../integrations/samsara/geofences/wf-051-radius.js";

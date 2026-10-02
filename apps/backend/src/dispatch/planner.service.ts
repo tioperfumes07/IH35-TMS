@@ -1,3 +1,13 @@
+/**
+ * ENGINE: dispatch planner reschedule — moves a load's first-pickup time and optionally re-crews its primary driver after HOS, qualification and same-week conflict checks
+ * SCHEDULE: on demand — dispatch/planner.routes.ts (reschedulePlannerLoad)
+ * WRITES: mdata.load_stops (scheduled_arrival_at), mdata.loads (assigned_primary_driver_id; status via advanceDraftStatusIfCrewed), driver_finance.* via linkLoadToPresettlementAfterAssignmentInClientTx and ensureDriverBillArtifactsForLoad (driver_bills + audit)
+ * IDEMPOTENCY: NONE — read-then-write (DEFECT): the driver's same-week conflict is decided by a separate SELECT of peer loads before the UPDATE; only the moved load is FOR UPDATE locked
+ * OVERLAP: two reschedules of the SAME load serialize on its row lock; two reschedules of DIFFERENT loads onto the same driver and time can both pass the conflict check and both commit
+ * REVERSE: NOT-A-DOCUMENT — schedule / driver field overwrite; re-run dispatch/planner.service.ts:reschedulePlannerLoad with the prior values (driver-bill / presettlement rows minted on a re-crew are not undone by it)
+ * NEVER: must never seat a driver in HOS violation or one that fails assertDriverQualifiedForLoad, and never write GL or settlement money directly
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 import { getCurrentClocks, getCurrentClocksForDrivers } from "../telematics/hos-clocks.service.js";

@@ -1,3 +1,13 @@
+/**
+ * ENGINE: DOT dwell detector — on a fence exit at a DOT inspection station, records an inspection visit when the dwell met the threshold
+ * SCHEDULE: on demand — telematics/geofence-detector.service.ts:processGeofenceDetectionsForGpsPoint (each newly written transition)
+ * WRITES: compliance.dot_inspection_events
+ * IDEMPOTENCY: UNIQUE(operating_company_id, station_geofence_id, unit_id, arrived_at, departed_at) ON CONFLICT (uq_dot_inspection_events_dedupe, migration 0229)
+ * OVERLAP: the second insert of the same visit does nothing
+ * REVERSE: NOT-A-DOCUMENT — an inspection-visit record; follow_up_state (open / reviewed / citation / clean) is its review path
+ * NEVER: must never record a visit for a fence that is not an active dot_inspection_station, or below the dwell threshold
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };

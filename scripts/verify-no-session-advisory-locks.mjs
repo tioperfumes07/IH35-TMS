@@ -15,10 +15,17 @@ import path from "node:path";
 const ROOT = "apps/backend/src";
 const SESSION_LOCK = /\bpg_(?:try_)?advisory_lock(?:_shared)?\s*\(|\bpg_advisory_unlock(?:_shared|_all)?\s*\(/;
 
+// Comments are stripped (line numbers kept) before matching — a comment that NAMES the forbidden call is not a call
+// (ROUND 340: a guard reading raw text scores what is commented out).
+export function stripComments(src) {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "))
+    .replace(/(^|[^:"'`\\])\/\/[^\n]*/g, (m, p1) => p1 + " ".repeat(m.length - p1.length));
+}
 export function scan(files) {
   const hits = [];
-  for (const [file, src] of files) {
-    src.split("\n").forEach((line, i) => { if (SESSION_LOCK.test(line)) hits.push(`${file}:${i + 1}: ${line.trim().slice(0, 120)}`); });
+  for (const [file, raw] of files) {
+    stripComments(raw).split("\n").forEach((line, i) => { if (SESSION_LOCK.test(line)) hits.push(`${file}:${i + 1}: ${raw.split("\n")[i].trim().slice(0, 120)}`); });
   }
   return hits;
 }
@@ -34,10 +41,10 @@ function walk(dir, out = []) {
 
 if (process.argv.includes("--selftest")) {
   const bad = [["a.ts", "await c.query(`SELECT pg_try_advisory_lock(hashtext($1))`)"], ["b.ts", "pg_advisory_unlock(1)"], ["c.ts", "pg_advisory_lock(42)"]];
-  const good = [["d.ts", "SELECT pg_advisory_xact_lock(1); SELECT pg_try_advisory_xact_lock(2)"]];
+  const good = [["d.ts", "SELECT pg_advisory_xact_lock(1); SELECT pg_try_advisory_xact_lock(2)"], ["e.ts", "// the old pg_advisory_lock(k) leaked\n/* pg_advisory_unlock(k) in a finally */ const x = 1;"]];
   if (scan(bad).length !== 3) { console.error("selftest FAIL: a session lock escaped"); process.exit(1); }
   if (scan(good).length !== 0) { console.error("selftest FAIL: a transaction lock was flagged"); process.exit(1); }
-  console.log("verify-no-session-advisory-locks selftest 4/4");
+  console.log("verify-no-session-advisory-locks selftest 5/5");
 }
 const files = walk(ROOT).map((f) => [f, readFileSync(f, "utf8")]);
 const hits = scan(files);

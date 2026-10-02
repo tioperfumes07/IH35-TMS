@@ -1,3 +1,13 @@
+/**
+ * ENGINE: cargo-sensor excursion incidents — opens / extends / closes one open incident per (sensor, breach kind) from reefer readings vs customer / load thresholds; resolve; file a cargo claim
+ * SCHEDULE: *\/5 * * * * America/Chicago via jobs/cap-14-cargo-sensor-worker.ts (processCargoSensorIncidents); on demand — cap-14-cargo-sensors/routes.ts (POST /api/v1/dispatch/cargo-incidents/:id/resolve, /file-claim)
+ * WRITES: dispatch.cargo_sensor_incidents, safety.incidents (cargo_claim), audit event (audit.append_event)
+ * IDEMPOTENCY: UNIQUE(operating_company_id, sensor_id, breach_kind) WHERE ended_at IS NULL AND voided_at IS NULL ON CONFLICT (uq_cargo_incident_open_per_sensor_kind, migration 202613390002) — NOT idempotent across ticks (DEFECT: each tick re-reads 24 h of readings with no watermark); resolve / claim SAME-STATEMENT WHERE resolved_at IS NULL / claim_incident_id IS NULL
+ * OVERLAP: a twin or later tick re-counts reading_count on the open incident and re-opens an already-closed excursion as a NEW row; two file-claim calls create one safety.incidents row
+ * REVERSE: NOT-A-DOCUMENT — derived excursion rows (closed by incident.service.ts:resolveCargoIncident); a filed claim is voided via governance/void-cancel-executors.ts:executeSafetyIncident
+ * NEVER: must never open an incident from the default cold-chain threshold (customer / load thresholds only), and never put a damage amount on the claim (filed at 0)
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { DbClient } from "./db-client.type.js";
 import { evaluateCargoThreshold, resolveCargoThresholds } from "./threshold.service.js";
 
