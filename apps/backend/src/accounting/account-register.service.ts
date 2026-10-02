@@ -22,6 +22,8 @@ const SOURCE_TYPE_LABELS: Record<string, string> = {
   expense: "Expense",
   bank_deposit: "Deposit",
   bank_categorization: "Bank Categorization",
+  journal_entry: "Journal Entry",
+  factoring_advance: "Factoring Advance",
 };
 
 export type RawPosting = {
@@ -223,7 +225,12 @@ export async function getAccountRegister(
       AND COALESCE(je.is_sample_data, false) = false`;
   if (input.type) {
     params.push(input.type);
-    where += ` AND p.source_transaction_type = $${params.length}`;
+    // Journal Entry rows often have NULL source_transaction_type (manual JE).
+    if (input.type === "journal_entry") {
+      where += ` AND (p.source_transaction_type IS NULL OR p.source_transaction_type = $${params.length})`;
+    } else {
+      where += ` AND p.source_transaction_type = $${params.length}`;
+    }
   }
   if (input.search && input.search.trim()) {
     params.push(`%${input.search.trim()}%`);

@@ -35,6 +35,11 @@ function main() {
   assertIncludes(page, "Ending balance", PAGE);
   assertIncludes(page, "Reconciled through", PAGE);
   assertIncludes(page, "initialPageSize={100}", PAGE);
+  // B-1 ORDERS filter — full document-type list mapped to source_transaction_type (Journal Entry was missing)
+  assertIncludes(page, '"Journal Entry": "journal_entry"', PAGE);
+  assertIncludes(page, 'Deposit: "bank_deposit"', PAGE);
+  assertIncludes(page, '"Factoring Advance": "factoring_advance"', PAGE);
+  assertIncludes(page, "Bank Categorization", PAGE);
   assertIncludes(page, "renderExpanded", PAGE);
   assertIncludes(page, "toggleAccountRegisterCleared", PAGE);
   assertIncludes(page, 'data-testid="b1-reconcile-toggle"', PAGE);
@@ -95,6 +100,9 @@ function main() {
   assertIncludes(service, "matched_bill_payment_id::text = p.source_transaction_id", SERVICE);
   assertIncludes(service, "bank_deposit: \"Deposit\"", SERVICE);
   assertIncludes(service, "source_transaction_type = 'bank_deposit'", SERVICE);
+  assertIncludes(service, 'journal_entry: "Journal Entry"', SERVICE);
+  assertIncludes(service, 'input.type === "journal_entry"', SERVICE);
+  assertIncludes(service, "factoring_advance: \"Factoring Advance\"", SERVICE);
 
   assertIncludes(api, "reconcile_status", API);
   assertIncludes(api, "bank_balance_cents", API);
