@@ -194,22 +194,6 @@ async function insertFaultHistory(
     raw_payload: Record<string, unknown>;
   }
 ): Promise<{ id: string; inserted: boolean }> {
-  if (input.raw_event_id) {
-    const existing = await client.query<{ id: string }>(
-      `
-        SELECT id::text
-        FROM maintenance.samsara_fault_code_history
-        WHERE raw_event_id = $1::uuid
-          AND fault_code = $2
-        LIMIT 1
-      `,
-      [input.raw_event_id, input.fault_code]
-    );
-    if (existing.rows[0]) {
-      return { id: existing.rows[0].id, inserted: false };
-    }
-  }
-
   const res = await client.query<{ id: string }>(
     `
       INSERT INTO maintenance.samsara_fault_code_history (
@@ -217,6 +201,7 @@ async function insertFaultHistory(
         raw_event_id, occurred_at, raw_payload
       )
       VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6::uuid, $7::timestamptz, $8::jsonb)
+      ON CONFLICT (raw_event_id, fault_code) WHERE raw_event_id IS NOT NULL DO NOTHING
       RETURNING id::text
     `,
     [
@@ -230,7 +215,13 @@ async function insertFaultHistory(
       JSON.stringify(input.raw_payload),
     ]
   );
-  return { id: res.rows[0]?.id ?? "", inserted: Boolean(res.rows[0]) };
+  if (res.rows[0]) return { id: res.rows[0].id, inserted: true };
+  // ROUND 329: the unique index uq_fault_history_event decided (ON CONFLICT above) — this event was recorded already.
+  const existing = await client.query<{ id: string }>(
+    `SELECT id::text FROM maintenance.samsara_fault_code_history WHERE raw_event_id = $1::uuid AND fault_code = $2 LIMIT 1`,
+    [input.raw_event_id, input.fault_code]
+  );
+  return { id: existing.rows[0]?.id ?? "", inserted: false };
 }
 
 async function createDraftWorkOrder(
@@ -375,6 +366,16 @@ export async function processVehicleFaultCodeWebhookEvent(
     // open a work order. The new row is excluded; an older unresolved one within 24 h still de-duplicates.
     const recentDup = await hasRecentUnresolvedFault(client, event.operating_company_id, localUnitId, fault.code, history.id);
     if (recentDup) continue;
+
+    // ROUND 329: claim the history row's auto work order in ONE statement before creating it. A re-run (the fault
+    // event id is fixed per vehicle per day) used to find its own history row, skip it as "not a duplicate", open a
+    // second draft work order, overwrite auto_wo_id and notify again. Same transaction: a failed create releases it.
+    const claim = await client.query<{ id: string }>(
+      `UPDATE maintenance.samsara_fault_code_history SET auto_wo_created_at = now()
+        WHERE id = $1::uuid AND auto_wo_id IS NULL AND auto_wo_created_at IS NULL RETURNING id::text`,
+      [history.id]
+    );
+    if (!claim.rows[0]) continue;
 
     const woId = await createDraftWorkOrder(client, {
       operating_company_id: event.operating_company_id,

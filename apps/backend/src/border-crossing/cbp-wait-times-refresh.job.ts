@@ -1,7 +1,16 @@
+/**
+ * ENGINE: CBP border wait-times refresh
+ * SCHEDULE: *\/5 * * * *
+ * WRITES: reference.cbp_wait_times_cache (one snapshot per port per tick)
+ * IDEMPOTENCY: ADVISORY LOCK pg_try_advisory_xact_lock('border_crossing.cbp_wait_times_refresh') for the tick (lib/single-flight.ts)
+ * OVERLAP: an overlapping replica fails the lock and skips; no twin snapshot
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { tryXactSingleFlight } from "../lib/single-flight.js";
 import { refreshAllActivePortWaitTimes } from "./cbp-wait-times.service.js";
 
 let initialized = false;
@@ -19,6 +28,9 @@ function isBusinessHoursCst(now = new Date()): boolean {
 export async function runCbpWaitTimesRefreshTick() {
   if (!isBusinessHoursCst()) return;
   await withLuciaBypass(async (client) => {
+    // ROUND 329: each tick appends one snapshot per port (no business key); the DB lock keeps an overlapping replica
+    // from appending a twin snapshot.
+    if (!(await tryXactSingleFlight(client, "border_crossing.cbp_wait_times_refresh"))) return;
     await refreshAllActivePortWaitTimes(client);
   });
 }

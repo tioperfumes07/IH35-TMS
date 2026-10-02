@@ -1,4 +1,12 @@
 /**
+ * ENGINE: daily odometer snapshot
+ * SCHEDULE: 0 3 * * *
+ * WRITES: telematics.odometer_readings
+ * IDEMPOTENCY: UNIQUE(operating_company_id, unit_id, reading day, source) ON CONFLICT (odometer_readings_oci_unit_date_source_key)
+ * OVERLAP: second run inserts 0 readings
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
+/**
  * ROUND 297.1 J-1 — daily odometer snapshot, one row per unit, written from
  * telematics.vehicle_latest_position -- NOT a new Samsara call. The odometer already arrives with
  * every position poll (see samsara-client.ts's obdOdometerMeters stat); a second pull would pay

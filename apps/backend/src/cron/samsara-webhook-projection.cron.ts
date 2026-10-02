@@ -1,3 +1,11 @@
+/**
+ * ENGINE: Samsara webhook projection
+ * SCHEDULE: *\/1 * * * *
+ * WRITES: integrations samsara projection_state + every projector table
+ * IDEMPOTENCY: ADVISORY LOCK pg_try_advisory_xact_lock per tenant (webhook-projection.service.ts); UNIQUE(webhook_event_id) ON CONFLICT on projection state
+ * OVERLAP: an overlapping tick fails the tenant lock and projects nothing
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";

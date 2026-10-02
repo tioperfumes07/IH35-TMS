@@ -1,3 +1,11 @@
+/**
+ * ENGINE: geofence breach detector
+ * SCHEDULE: *\/1 * * * *
+ * WRITES: safety.geofence_breach_events, outbox.events
+ * IDEMPOTENCY: ADVISORY LOCK pg_try_advisory_lock(GEOFENCE_CRON_LOCK_KEY) single-flight per tick; breach insert gated WHERE NOT EXISTS in the 5-minute window
+ * OVERLAP: a second replica fails the lock and skips the tick
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";

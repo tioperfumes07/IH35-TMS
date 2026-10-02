@@ -74,12 +74,16 @@ export async function ingestSamsaraDocuments(
         `INSERT INTO docs.files (operating_company_id, original_filename, mime_type, size_bytes, sha256_hash, r2_key,
             upload_completed_at, category_id, document_date, description, uploader_user_id, dispatch_load_id)
          VALUES ($1::uuid, $2, $3, $4, $5, $6, now(), $7::uuid, $8::date, $9, $10::uuid, $11::uuid)
+         ON CONFLICT (r2_key) DO NOTHING
          RETURNING id::text`,
         [oc, `${typeName} ${docId}-${i + 1}.${mime.includes("png") ? "png" : "jpg"}`, mime, bytes.length,
          createHash("sha256").update(bytes).digest("hex"), r2Key, pod.rows[0]?.id ?? null, when ? when.slice(0, 10) : null,
          `Samsara ${typeName} (document ${docId}, photo ${i + 1} of ${urls.length})`, SYSTEM_ACTOR_ID, stop?.load_id ?? null]
       );
-      const fileId = file.rows[0]!.id;
+      // ROUND 329: the unique r2_key decides (ON CONFLICT above), not the existence read — an overlapping tick that
+      // stored this photo first leaves no row here, and the same-bytes R2 put was an idempotent overwrite.
+      if (!file.rows[0]) { out.already_stored += 1; continue; }
+      const fileId = file.rows[0].id;
       const links: Array<[string, string | null]> = [["load", stop?.load_id ?? null], ["load_stop", stop?.stop_id ?? null], ["unit", unitId], ["driver", driverId]];
       for (const [type, id] of links) {
         if (!id) continue;

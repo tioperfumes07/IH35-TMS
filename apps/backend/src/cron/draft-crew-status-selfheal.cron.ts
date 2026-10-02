@@ -1,3 +1,11 @@
+/**
+ * ENGINE: draft-crew status self-heal — advances a crewed load stuck in 'draft' to 'assigned_not_dispatched'.
+ * SCHEDULE: hourly :35 America/Chicago (node-cron).
+ * WRITES: mdata.loads (status) · audit.audit_events (one per load actually advanced).
+ * IDEMPOTENCY: SAME-STATEMENT WHERE status = 'draft' (UPDATE mdata.loads ... AND status = 'draft' RETURNING id, :91-94);
+ *   the audit row is written only when that UPDATE returned a row.
+ * OVERLAP: a second run waits on the row lock, re-checks the WHERE, matches 0 rows, writes no audit row.
+ */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";

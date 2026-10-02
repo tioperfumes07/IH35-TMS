@@ -1,4 +1,12 @@
 /**
+ * ENGINE: Samsara driver prompts (arrival / fuel stop)
+ * SCHEDULE: *\/15 * * * *
+ * WRITES: chat.messages, external Samsara driver message, integration_sync_log
+ * IDEMPOTENCY: UNIQUE(thread_id, client_key) ON CONFLICT on the prompt (client_key prompt:<kind>:<event>); ADVISORY LOCK per message on delivery (driver-message-delivery.service.ts)
+ * OVERLAP: second run posts 0 prompts and delivers nothing twice
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
+/**
  * ROUND 306 E-30 addition — every 15 min (America/Chicago): templated prompts for fence entries of the last
  * 30 minutes (idempotent per fence event), then each new prompt is delivered to Samsara after commit.
  * Not scheduled unless DRIVER_PROMPTS_ENABLED=true. USMCA only (standing rule 1).

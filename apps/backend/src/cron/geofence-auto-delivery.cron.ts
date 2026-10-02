@@ -1,4 +1,12 @@
 /**
+ * ENGINE: geofence auto-delivery (load status on final-stop arrival)
+ * SCHEDULE: 11,26,41,56 * * * *
+ * WRITES: mdata.loads.status + transition side effects (dispatch/load-transition.service.ts)
+ * IDEMPOTENCY: SAME-STATEMENT WHERE status::text = $expected after SELECT ... FOR UPDATE (load-transition.service.ts)
+ * OVERLAP: second run's UPDATE matches 0 rows and returns status_changed; no side effects repeat
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
+/**
  * ROUND 315 — auto-status, geofence-evidence path (dispatch/geofence-auto-delivery.service.ts).
  * Every 15 min America/Chicago (offset :11/:26/:41/:56, after the stop writer's :07 tick). One transaction PER
  * LOAD so each delivery's after-commit work (revenue latch + invoice) runs on its own commit and one refusal

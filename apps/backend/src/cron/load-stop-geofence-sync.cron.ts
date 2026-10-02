@@ -1,4 +1,12 @@
 /**
+ * ENGINE: load-stop geofence sync (fence binding + arrival replay + stop stamp)
+ * SCHEDULE: 4,19,34,49 * * * *
+ * WRITES: geo.geofences, geo.geofence_events, mdata.load_stops actual_arrival_at / geocode, mdata.locations
+ * IDEMPOTENCY: ADVISORY LOCK per (load, stop) on fence binding (load-geofence-binding.service.ts) and per location on location + location-fence create (stops-geocode-backfill.service.ts); UNIQUE(operating_company_id, geofence_id, unit_id, event_kind, occurred_at, source) ON CONFLICT on event replay; SAME-STATEMENT WHERE actual_arrival_at IS NULL on the stop stamp; geocode columns are a DETERMINISTIC OVERWRITE
+ * OVERLAP: second run binds no twin fence, replays 0 new events, stamps 0 stops (proven ROUND 329 on a throwaway branch: run 1 stamped 1, run 2 stamped 0)
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
+/**
  * E-25 (Lead, 2026-10-01) — load-stop geofence sync + retro arrival stamping, scheduled.
  * Every 15 min America/Chicago (RULES R-01), USMCA only, offset from the position poll and the
  * E-03 stop capture so the three never contend. Idempotent: fences are keyed by label, events by

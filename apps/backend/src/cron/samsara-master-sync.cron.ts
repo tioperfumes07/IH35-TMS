@@ -1,3 +1,11 @@
+/**
+ * ENGINE: Samsara master sync (drivers / units / equipment fill-empty)
+ * SCHEDULE: 30 * * * *
+ * WRITES: mdata.drivers, mdata.units, mdata.equipment
+ * IDEMPOTENCY: ADVISORY LOCK pg_try_advisory_xact_lock per company; updates are fill-empty COALESCE (DETERMINISTIC OVERWRITE)
+ * OVERLAP: second replica fails the lock and skips
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";

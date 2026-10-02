@@ -1,4 +1,12 @@
 /**
+ * ENGINE: telematics preservation
+ * SCHEDULE: 10 3 * * *
+ * WRITES: ten telematics preserve tables
+ * IDEMPOTENCY: UNIQUE(primary key) ON CONFLICT DO NOTHING on every target (preservation.service.ts)
+ * OVERLAP: second run inserts 0 rows
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
+/**
  * CC-3 queue item 11 — daily copy of every newly observed telematics / geocode fact into the append-only `preserve`
  * ledger (telematics/preservation.service.ts). Runs for every company in one statement per table (company_code is on
  * every preserved row), so it is not tenant-scoped by design: it reads every company's rows under the bypass and writes

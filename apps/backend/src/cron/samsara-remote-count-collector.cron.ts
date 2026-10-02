@@ -1,9 +1,18 @@
+/**
+ * ENGINE: Samsara remote count + driver mirror collector
+ * SCHEDULE: 5 *\/12 * * *
+ * WRITES: samsara remote counts (one sample per tick), samsara driver mirror, mdata.drivers status
+ * IDEMPOTENCY: ADVISORY LOCK pg_try_advisory_xact_lock(CRON_NAME) for the tick; UNIQUE(operating_company_id) ON CONFLICT on the summary; UNIQUE(operating_company_id, samsara_driver_id) ON CONFLICT on the mirror; driver status SAME-STATEMENT WHERE
+ * OVERLAP: an overlapping replica fails the lock and appends no twin sample
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { randomUUID } from "node:crypto";
 import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { tryXactSingleFlight } from "../lib/single-flight.js";
 import { collectSamsaraRemoteCounts } from "../integrations/samsara/remote-count-collector.js";
 import { collectSamsaraDriverMirror } from "../integrations/samsara/driver-mirror-collector.js";
 
@@ -75,6 +84,9 @@ async function isSamsaraEnabledForTenant(client: DbClient, operatingCompanyId: s
  */
 export async function runSamsaraRemoteCountCollectorTick(app: FastifyInstance): Promise<void> {
   await withLuciaBypass(async (client) => {
+    // ROUND 329: each tick appends one sample (key carries polled_at = now()); the DB lock keeps an overlapping replica
+    // from appending a twin sample.
+    if (!(await tryXactSingleFlight(client, CRON_NAME))) return;
     const activeTenantIds = await listActiveTenantIds(client);
     if (activeTenantIds.length === 0) {
       await appendCronAuditEvent(client, "cron_no_active_tenants", "info", {

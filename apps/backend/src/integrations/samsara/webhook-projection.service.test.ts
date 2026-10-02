@@ -7,6 +7,7 @@ function createMockClient(events: Array<Record<string, unknown>>, opts?: { throw
   const calls: QueryCall[] = [];
   const query = vi.fn(async (sql: string, values?: unknown[]) => {
     calls.push({ sql, values });
+    if (sql.includes("pg_try_advisory_xact_lock")) return { rows: [{ locked: true }] };
     if (sql.includes("FROM integrations.samsara_webhook_events")) {
       return { rows: events };
     }

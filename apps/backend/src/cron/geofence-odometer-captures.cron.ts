@@ -1,3 +1,11 @@
+/**
+ * ENGINE: geofence odometer captures
+ * SCHEDULE: *\/10 * * * *
+ * WRITES: telematics geofence odometer captures
+ * IDEMPOTENCY: UNIQUE(geofence_event_id) ON CONFLICT DO NOTHING (geofence-odometer-capture.service.ts)
+ * OVERLAP: second run inserts 0 rows
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
