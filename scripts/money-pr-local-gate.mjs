@@ -625,6 +625,18 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-day95-asks-never-recourses.mjs",
     ],
   ],
+  // Lead ROUND 296 Correction 2 — Faro interest posts once at close with approval (DR 6830 / CR 2155); 2150 = open Net.
+  [
+    "verify-factoring-interest-at-close-2150-ties",
+    [
+      "apps/backend/src/factoring/interest-accrual.service.ts",
+      "apps/backend/src/accounting/month-close.service.ts",
+      "apps/backend/src/factoring/purchase.service.ts",
+      "apps/backend/src/cron/",
+      "db/migrations/202615240600_factoring_interest_accrual_runs.sql",
+      "scripts/verify-factoring-interest-at-close-2150-ties.mjs",
+    ],
+  ],
   // ROUND 326.2 items 3-4 — banking / factoring surfaces: every table tabular-nums, and Banking's
   // factoring reserve reads the factoring KPI engine (one reserve engine, no duplicate math).
   [

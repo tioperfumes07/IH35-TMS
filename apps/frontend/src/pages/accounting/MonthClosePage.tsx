@@ -8,6 +8,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatUsdCents } from "../../lib/money";
+import { FactoringInterestAccrualPanel } from "./FactoringInterestAccrualPanel";
 
 function currentPeriodIso() {
   const now = new Date();
@@ -124,6 +126,24 @@ export function MonthClosePage() {
             : `IFTA ${status.fuel_tax.quarter_label} return not yet filed — required before quarter-end close.`,
         href: "/reports/ifta-preparer",
       },
+      ...(status.factoring_interest
+        ? [
+            {
+              id: "factoring_interest",
+              label: "Faro default interest accrued",
+              complete: status.factoring_interest.complete,
+              detail:
+                status.factoring_interest.line_count === 0
+                  ? "No factored invoice is past day 35 — no default interest due."
+                  : status.factoring_interest.run_state === "posted"
+                    ? "Month-end accrual approved and posted (DR 6830 / CR 2155)."
+                    : status.factoring_interest.run_state === "proposed"
+                      ? `${formatUsdCents(status.factoring_interest.due_cents)} proposed — awaiting a second person's approval below.`
+                      : `${formatUsdCents(status.factoring_interest.due_cents)} due on ${status.factoring_interest.line_count} invoice(s) — propose the accrual below.`,
+              href: "/factoring",
+            },
+          ]
+        : []),
       {
         id: "adjusting_entries",
         label: "Adjusting entries reviewed",
@@ -214,6 +234,8 @@ export function MonthClosePage() {
           emptyText="No checklist items."
         />
       )}
+
+      {companyId ? <FactoringInterestAccrualPanel companyId={companyId} period={period} /> : null}
 
       <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white px-3 py-3">
         <div className="text-xs text-gray-700">

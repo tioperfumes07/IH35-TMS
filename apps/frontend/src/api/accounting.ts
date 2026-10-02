@@ -2651,6 +2651,12 @@ export type MonthCloseStatus = {
   adjusting_entries: {
     count: number;
   };
+  factoring_interest?: {
+    complete: boolean;
+    due_cents: number;
+    line_count: number;
+    run_state: string | null;
+  };
   can_lock: boolean;
 };
 
