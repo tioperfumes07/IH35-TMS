@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { formatUsd } from "../../../lib/money";
 import type { FuelActiveRoute } from "../../../api/fuelPlanner";
 
 type Props = {
@@ -19,19 +20,19 @@ export function TripPlanSummaryBanner({ route }: Props) {
           miles/gallons cells above, and only ever divide when gallons is a real positive number. */}
       <Cell label="Avg recommended $">
         {route && route.recommended_total_cost != null && Number(route.recommended_total_fuel_gallons) > 0
-          ? `$${(Number(route.recommended_total_cost) / Number(route.recommended_total_fuel_gallons)).toFixed(2)}`
+          ? formatUsd((Number(route.recommended_total_cost) / Number(route.recommended_total_fuel_gallons)))
           : "—"}
       </Cell>
       <Cell label="Avg pump price">
         {route && route.station_avg_baseline_cost != null && Number(route.recommended_total_fuel_gallons) > 0
-          ? `$${(Number(route.station_avg_baseline_cost) / Number(route.recommended_total_fuel_gallons)).toFixed(2)}`
+          ? formatUsd((Number(route.station_avg_baseline_cost) / Number(route.recommended_total_fuel_gallons)))
           : "—"}
       </Cell>
       <Cell label="Trip fuel cost">
-        {route && route.recommended_total_cost != null ? `$${Number(route.recommended_total_cost).toFixed(2)}` : "—"}
+        {route && route.recommended_total_cost != null ? formatUsd(Number(route.recommended_total_cost)) : "—"}
       </Cell>
       <Cell label="Savings vs avg" className="text-green-700 font-semibold">
-        {route && route.savings_estimate != null ? `$${Number(route.savings_estimate).toFixed(2)}` : "—"}
+        {route && route.savings_estimate != null ? formatUsd(Number(route.savings_estimate)) : "—"}
       </Cell>
     </div>
   );

@@ -19,6 +19,7 @@
  * Enforced by scripts/verify-no-orphaned-form-owners.mjs.
  */
 import { useFieldArray, Controller, type Control, type UseFormRegister, type UseFormWatch } from "react-hook-form";
+import { formatUsd } from "../../../lib/money";
 import { Button } from "../../../components/Button";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import type { CreateWOFormValues } from "./CreateWorkOrderModal";
@@ -90,9 +91,9 @@ export function CreateWOSectionCostBreakdown({ control, register, watch }: Props
         </Button>
       </div>
       <div className="mt-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs">
-        Parts Subtotal: <span className="font-semibold">${totals.parts.toFixed(2)}</span> · Labor Subtotal:{" "}
-        <span className="font-semibold">${totals.labor.toFixed(2)}</span> · Estimated Total:{" "}
-        <span className="font-semibold">${totals.total.toFixed(2)}</span>
+        Parts Subtotal: <span className="font-semibold">{formatUsd(totals.parts)}</span> · Labor Subtotal:{" "}
+        <span className="font-semibold">{formatUsd(totals.labor)}</span> · Estimated Total:{" "}
+        <span className="font-semibold">{formatUsd(totals.total)}</span>
       </div>
       <div className="mt-2 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">
         On save: work order and accounting artifacts are created according to payment timing.
