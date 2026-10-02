@@ -2006,3 +2006,33 @@ CC-3 | QUEUE EMPTY | all 16 SEAT-SEQUENCE rows built and merged (proof in the en
   - N/A: money (a draft WO posts nothing; the bill comes later through the WO engine).
 
 **Registry additions for CC-3's engines: all built.** E-11 Faults view and E-12 dashcam viewer were registry-assigned to Cursor.
+
+CC-3 | ACK ROUND 326 (INBOX-CC-3 + 10-02 law + registry correction + 10-02 CC-3 queue) | item 1 CUSTOMERS | GO
+
+## 2026-10-02 01:13Z — ROUND 326 carried items, measured live on prod (read-only). Queue is NOT empty; working item 1.
+
+| Row | Table the engine actually writes | Live count | Status |
+|---|---|---|---|
+| E-03 | `telematics.unit_stop_events` | **721** (299 with load) | producing |
+| E-23 | `integrations.samsara_fuel_reports` (the registry said "no table") | **727** rows, last read 00:53:27Z | producing |
+| E-23 push | `integration_sync_log` sync_kind `fuel_purchase_push` | **646** evaluated at 23:00:15Z, **0 pushed** (526 date-only stamps, 120 non-motor-fuel) | engine runs; nothing qualifies, because fuel imports carry no pump time |
+| E-30 | **`chat.messages`**, the ONE chat store (`mdata.driver_profile_messages` is not this engine's table) | **0** messages, 0 sends | flag on; no message sent yet (owner: later) |
+| E-31 | `mdata.loads.samsara_route_id` / `integrations.samsara_route_stop_progress` / route_push | **7** routed, **14** stop-progress rows, **7** pushes ok | producing; read-back IS built (#23845/#23847) |
+| E-32 | **`docs.files`** (`r2_key samsara/documents/…`) | **0** | built (#23863); Samsara shows **0** documents submitted |
+| E-09 | `STOP_ARRIVAL_EVENTS_SQL` (fence events; `dispatch.stop_arrivals` is being retired) | **41** arrivals | rate explained below |
+| E-13 | `integrations.samsara_webhook_events` | **0** | see below |
+| E-29 | `dispatch.border_crossing_events` | **0 USMCA** (5 total, all IH 35 Transportation) | no USMCA truck has crossed a bridge fence |
+
+**Item 5 (13625 / 13627 / 13638 false canceled_at):** DONE and live since 10-01 15:57Z (AUTH-192 consumed).
+- All three: canceled_at NULL, cancellation rows `reversed`, status `dispatched`.
+- Done through the canonical service (`cancellation-reversal.service.ts`), not a direct UPDATE.
+- Audit `63568bde` / `b7930f81` / `524fcff0`.
+
+**E-09 rate:** only **35 of 382** USMCA load stops have a load-stop fence (E-25 mints fences only for loads in its window). Arrivals are bounded by fence coverage, not by the detector. Root next step: the E-25 fence-minting window (Lead row) reaching every live stop.
+
+**E-13:** Render request logs since 2026-09-25 show **zero POSTs from Samsara** to `/api/v1/integrations/samsara/webhook`. The only two requests are CC-3's own curl tests (10-01 15:37Z).
+- Samsara holds the webhook (id 1839499484286657, GeofenceEntry/Exit) but has never delivered an event.
+- Our receiver is fixed (#23796, #23867). The cause is on Samsara's side: which addresses/events trigger this webhook.
+- This is Samsara account configuration, owner side.
+
+**Not done by CC-3: nothing was fed, nothing was verified in Chrome.**
