@@ -1438,3 +1438,21 @@ ACK: CC-1 | ACK ROUND-326 | ITEM 1 TRANSPORTATION COMPLETE DELETE | GO
 1. CC-1 ships a migration adding a NARROW purge arm: a row may be deleted only when (AUTH id open) AND (that exact row is listed for that AUTH in a new _system.purge_authorized_rows) — no blanket unlock — plus a runtime arm for the cancel path (only the revrec latch JEs of the load being cancelled, in the cancel transaction). Lead: validate on a Neon branch + apply (CC-1: db:migrate denied, Neon write 401).
 2. Lead: open an AUTH row in OWNER-AUTHORIZATIONS.md for the 21-load complete delete + USMCA clean sweep (owner order 2026-10-02) — CC-1's ops script refuses without it.
 3. The APPLY run needs the prod write credential (neondb_owner) — CC-1 runs it if the Lead provides it, else the Lead runs CC-1's script (dry-run output posted first).
+
+## 2026-10-02 — ROUND 326 ITEM 1 — CODE MERGED (#23953 7782a4f38a); APPLY WAITS ON 3 THINGS
+**Built:** (1) every cancel path deletes the load's recognized revenue in the same transaction — cancellation.service.ts canonical cancel + approval, mdata/loads.routes.ts board PATCH → settleRevrecOnCancel → accounting.delete_cancelled_load_revrec (no reversal pair; audit row per deleted row; closed period refuses). (2) book-load (the one load-create path) rejects an imported load whose source company is missing (inbound_load_entity_unresolved) or differs from the booking company (inbound_load_entity_mismatch); Faro "Company" IH = TRANSP. (3) complete-delete engine scripts/ops/2026-10-02-cc1-r326-complete-delete.ts (dry-run default; APPLY = AUTH + intended-production + listed WORM rows + audit + leaves-first + DR = CR assertion, one transaction). (4) guards verify-no-cross-entity-loads + verify-usmca-clean-no-voids-no-fixtures — live PASS on the measured baseline, fail closed.
+**URGENT — LEAD: apply HELD migration 202615210200** (after a Neon-branch rehearsal). Until it is applied, cancelling a load that has recognized revenue is REFUSED by name ("E_CANCEL_REVREC_SETTLE_REQUIRES_MIGRATION_202615210200") — no more silent revenue leak, but the owner cannot cancel such a load until it lands.
+**LEAD: open an AUTH** for the 21-load complete delete (+ the usmca-clean sweep when decided).
+**OWNER DECISION NEEDED (the engine refuses APPLY until each is decided — the pre-state measured only the 6 cancelled loads; the 15 ACTIVE loads carry real, paid money):**
+| Record type on the 15 active TRANSPORTATION loads | Rows | Amount |
+|---|---|---|
+| expenses (live) | 38 | $18,538.25 |
+| driver bills (live) | 13 | $8,261.98 |
+| settlement lines (live) in **11 CLOSED settlements** (drivers paid) | 45 | $8,948.41 |
+| vendor bills (live, **paid**) | 5 | $3,342.24 |
+| driver advances | 2 | $691.99 |
+| + escrow ledger 13, settlement deduction 1, settlement GL bills 11, fuel tank events 45, odometer segments 15, downtime events 25; fuel transactions 31 + docs.files 42 would only be unlinked (SET NULL) | | |
+Option A — delete them too (the ledger loses cash USMCA really paid; the bank will not reconcile). Option B — move them with the loads to IH 35 TRANSPORTATION (the money follows the company that ran the load). CC-1 recommends B; it needs a move engine, not a delete. Settlements 5817 / 5818 untouched either way.
+**usmca-clean dry-run:** invoices 1, expenses 3, JEs 37 (+74 lines, net 0), settlements 1 (docref 5819 — prod shows it status closed / not voided, the order says cancelled; confirm), customers 1, drivers 6 (sample), loads 14 (cancelled + test), revrec 24 … and 244 blocker references (mostly the 6 sample drivers' records) — decide with the same rule. USMCA ledger now: DR = CR = $2,178,029.25, 0 unbalanced JEs.
+**Not in this order but measured:** 2,877 USMCA JEs sit in reversal pairs (edit = reverse + re-post history). The law calls a pair a void by another name; deleting them is a large ledger rewrite. CC-1 does not touch them without an explicit order.
+**Next (queue item 2):** settlement row settlement_model fix (blocks CC-3).
