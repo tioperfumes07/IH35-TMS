@@ -15,6 +15,8 @@ import {
 } from "../telematics/maintenance-predictor.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { createWorkOrderWithLines } from "./two-section-service.js";
+import { evaluatePmDue, type MaintPmScheduleDueInput } from "../maint/pm-due.shared.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const SYSTEM_ACTOR_USER_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-4000-8000-000000000001";
 
@@ -30,6 +32,8 @@ export type PmAutoEngineScheduleRow = {
   interval_value: number;
   last_service_odometer: number | null;
   next_due_odometer: number | null;
+  /** ROUND 326 M2 (migration 202615230100) — null until a PM completion / backfill stamps it. */
+  last_service_date?: string | null;
 };
 
 export type PmAutoEngineEvaluation = "due" | "near_due" | "current";
@@ -194,13 +198,54 @@ async function createPmAutoWorkOrder(
   return createdWorkOrder.id;
 }
 
+/** ROUND 326 audit M2: a pm_schedules row in the ONE evaluator's input shape (maint/pm-due.shared.ts evaluatePmDue). */
+export function pmScheduleDueInput(s: Pick<PmAutoEngineScheduleRow, "interval_kind" | "interval_value" | "last_service_odometer" | "next_due_odometer" | "last_service_date">): MaintPmScheduleDueInput {
+  return {
+    interval_miles: s.interval_kind === "miles" ? Number(s.interval_value) : null,
+    interval_days: s.interval_kind === "days" ? Number(s.interval_value) : null,
+    last_done_miles: s.last_service_odometer == null ? null : Number(s.last_service_odometer),
+    last_done_date: s.last_service_date ?? null,
+    next_due_miles: s.next_due_odometer == null ? null : Number(s.next_due_odometer),
+    next_due_date: null,
+  };
+}
+
+/**
+ * ROUND 326 audit M2 — a completed PM work order ADVANCES its schedule. Nothing did: once the auto PM work order
+ * closed, the schedule still read due and the engine minted another. Stamps last_service_date (the company business
+ * date), last_service_odometer (the unit's current reading when known) and, for a miles PM, next_due_odometer.
+ * Only work orders the PM engine created (origin 'pm_schedule', description "[pm_auto] schedule <id>").
+ */
+export async function advancePmScheduleOnWorkOrderComplete(client: DbClient, operatingCompanyId: string, workOrderId: string): Promise<boolean> {
+  const wo = (await client.query<{ unit_id: string; description: string | null; origin: string | null }>(
+    `SELECT unit_id::text, description, origin FROM maintenance.work_orders WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    [workOrderId, operatingCompanyId]
+  )).rows[0];
+  const m = wo?.description?.match(/\[pm_auto\] schedule ([0-9a-f-]{36})/i);
+  if (!wo || wo.origin !== "pm_schedule" || !m) return false;
+  const { byUnit } = await loadPmOdometers(client, operatingCompanyId, [wo.unit_id]);
+  const odo = byUnit.get(wo.unit_id)?.odometer;
+  const res = await client.query(
+    `UPDATE maintenance.pm_schedules
+        SET last_service_date = $3::date,
+            last_service_odometer = COALESCE($4::int, last_service_odometer),
+            next_due_odometer = CASE WHEN interval_kind = 'miles' AND $4::int IS NOT NULL THEN $4::int + interval_value ELSE next_due_odometer END
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND unit_id = $5::uuid`,
+    [m[1], operatingCompanyId, companyBusinessDate(), odo == null ? null : Math.round(odo), wo.unit_id]
+  );
+  return (res as { rowCount?: number }).rowCount !== 0;
+}
+
 /** ORDERS 2026-10-01 rule 2: creating a work order touches a business record -- flag-OFF by default. */
 export const PM_AUTO_ENGINE_CREATE_WORK_ORDERS_FLAG = "PM_AUTO_ENGINE_CREATE_WORK_ORDERS";
 
 /** last_service_odometer NULL or <= 1 with no next_due_odometer is ABSENT, never a guessed baseline. */
-export function pmScheduleBaselineAbsentReason(schedule: Pick<PmAutoEngineScheduleRow, "interval_kind" | "last_service_odometer" | "next_due_odometer">): string | null {
+export function pmScheduleBaselineAbsentReason(schedule: Pick<PmAutoEngineScheduleRow, "interval_kind" | "last_service_odometer" | "next_due_odometer" | "last_service_date">): string | null {
+  if (schedule.interval_kind === "days") {
+    return schedule.last_service_date ? null : "days-interval schedule with no last_service_date on file -- awaiting a completed PM / service-history backfill, never guessed";
+  }
   if (schedule.interval_kind !== "miles") {
-    return `${schedule.interval_kind}-interval schedule: maintenance.pm_schedules carries no last-service date, so it cannot be evaluated`;
+    return `${schedule.interval_kind}-interval schedule: no engine-hour source, so it cannot be evaluated`;
   }
   if (schedule.next_due_odometer != null) return null;
   if (schedule.last_service_odometer != null && Number(schedule.last_service_odometer) > 1) return null;
@@ -218,7 +263,8 @@ async function listActiveSchedules(client: DbClient, operatingCompanyId: string)
         ps.interval_kind::text AS interval_kind,
         ps.interval_value,
         ps.last_service_odometer,
-        ps.next_due_odometer
+        ps.next_due_odometer,
+        ps.last_service_date::text AS last_service_date
       FROM maintenance.pm_schedules ps
       JOIN mdata.units u
         ON u.id = ps.unit_id
@@ -290,6 +336,32 @@ export async function runPmAutoEngineForTenant(
 
   try {
     for (const schedule of schedules) {
+      // ROUND 326 audit M2: a days-interval PM is judged by the ONE evaluator the UI uses (evaluatePmDue) — by date, no
+      // odometer needed. Before, the engine was miles-only and a days PM never auto-created a work order.
+      if (schedule.interval_kind === "days") {
+        const baseline = pmScheduleBaselineAbsentReason(schedule);
+        if (baseline) {
+          await appendPmAutoLog(client, { run_id: runId, operating_company_id: operatingCompanyId, pm_schedule_id: schedule.id, unit_id: schedule.unit_id, action: "skipped_no_baseline", detail: { label: schedule.label, reason: baseline } });
+          skippedNoBaseline += 1;
+          continue;
+        }
+        const due = evaluatePmDue(pmScheduleDueInput(schedule), null);
+        if (!due.is_due) continue;
+        if (await hasOpenPmWorkOrder(client, { operating_company_id: operatingCompanyId, unit_id: schedule.unit_id, pm_schedule_id: schedule.id })) {
+          await appendPmAutoLog(client, { run_id: runId, operating_company_id: operatingCompanyId, pm_schedule_id: schedule.id, unit_id: schedule.unit_id, action: "skipped_open_wo", detail: { next_due_date: due.next_due_date } });
+          continue;
+        }
+        if (!createWorkOrders) {
+          await appendPmAutoLog(client, { run_id: runId, operating_company_id: operatingCompanyId, pm_schedule_id: schedule.id, unit_id: schedule.unit_id, action: "due_wo_flag_off", detail: { next_due_date: due.next_due_date, flag: PM_AUTO_ENGINE_CREATE_WORK_ORDERS_FLAG } });
+          continue;
+        }
+        const dayWo = await createPmAutoWorkOrder(client, { operating_company_id: operatingCompanyId, unit_id: schedule.unit_id, schedule, current_odometer: Math.round(odometerByUnit.get(schedule.unit_id)?.odometer ?? 0), occurred_at: occurredAt });
+        if (dayWo) {
+          workOrdersCreated += 1;
+          await appendPmAutoLog(client, { run_id: runId, operating_company_id: operatingCompanyId, pm_schedule_id: schedule.id, unit_id: schedule.unit_id, action: "wo_created", work_order_id: dayWo, detail: { next_due_date: due.next_due_date } });
+        }
+        continue;
+      }
       const reading = odometerByUnit.get(schedule.unit_id) ?? null;
       if (reading == null) {
         await appendPmAutoLog(client, {

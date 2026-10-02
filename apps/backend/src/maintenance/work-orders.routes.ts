@@ -20,6 +20,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { assertWorkOrderCostFinancialLink } from "./work-order-financial-link.js";
 import { driverAtTimeSql } from "./driver-attribution.js";
+import { advancePmScheduleOnWorkOrderComplete } from "./pm-auto-engine.service.js";
 
 const workOrderStatusSchema = z.enum(["open", "in_progress", "waiting_parts", "complete", "cancelled"]);
 const workOrderTypeSchema = z.enum(["pm", "repair", "tire", "accident"]);
@@ -1684,6 +1685,8 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         `,
         [params.data.id, current.status, parsed.data.new_status, user.uuid, parsed.data.cancellation_reason ?? null]
       );
+      // ROUND 326 audit M2: a completed PM work order advances its PM schedule (else the engine re-mints it).
+      if (parsed.data.new_status === "complete") await advancePmScheduleOnWorkOrderComplete(client as never, companyId, params.data.id);
       await appendCrudAudit(
         client,
         user.uuid,
@@ -1784,6 +1787,8 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
         `,
         [params.data.id, current.status, parsed.data.new_status, user.uuid, parsed.data.cancellation_reason ?? null]
       );
+      // ROUND 326 audit M2: a completed PM work order advances its PM schedule (else the engine re-mints it).
+      if (parsed.data.new_status === "complete") await advancePmScheduleOnWorkOrderComplete(client as never, companyId, params.data.id);
       await appendCrudAudit(
         client,
         user.uuid,
