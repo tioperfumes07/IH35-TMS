@@ -29,7 +29,7 @@ const MAX_ROWS = 1_000_000;
 
 const c = new pg.Client({ connectionString: process.env.DATABASE_URL });
 await c.connect();
-await c.query("BEGIN READ ONLY");
+await c.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY"); // one snapshot: the per-table count check compares like with like
 await c.query("SELECT set_config('app.bypass_rls','lucia',true)");
 const summary: Record<string, number> = {};
 const files: string[] = [];
@@ -45,7 +45,12 @@ files.push(file);
 const wb = new ExcelJS.stream.xlsx.WorkbookWriter({ filename: file, useStyles: true });
 const sheet = (name: string) => wb.addWorksheet(name, { views: [{ state: "frozen", ySplit: 1 }] });
 for (const [table, pk] of TABLES.filter(([t]) => tables.includes(t))) {
-  const cols = (await c.query(`SELECT column_name FROM information_schema.columns WHERE table_schema = 'preserve' AND table_name = $1 ORDER BY ordinal_position`, [table])).rows.map((r) => String(r.column_name)).filter((k) => !DROP.has(k));
+  const colRows = (await c.query(`SELECT column_name, udt_name FROM information_schema.columns WHERE table_schema = 'preserve' AND table_name = $1 ORDER BY ordinal_position`, [table])).rows;
+  const cols = colRows.map((r) => String(r.column_name)).filter((k) => !DROP.has(k));
+  // The keyset cursor travels as exact TEXT cast back to the column's own type: a JS Date keeps only milliseconds, and
+  // HOS polled_at carries microseconds, so a Date cursor never passed its own page and re-wrote the same rows forever.
+  const pkType = new Map(colRows.map((r) => [String(r.column_name), String(r.udt_name)]));
+  const keyCols = pk.map((k, i) => `${k}::text AS "__k${i}"`).join(", ");
   let part = 1, inSheet = 0, total = 0;
   let ws = sheet(table);
   const header = (s: ExcelJS.Worksheet) => { const h = s.addRow(cols); h.font = { bold: true }; h.commit(); };
@@ -55,8 +60,8 @@ for (const [table, pk] of TABLES.filter(([t]) => tables.includes(t))) {
     const params: unknown[] = [];
     const where: string[] = [];
     if (company) { params.push(company); where.push(`company_code = $${params.length}`); }
-    if (last) { const ph = last.map((v) => { params.push(v); return `$${params.length}`; }); where.push(`(${pk.join(", ")}) > (${ph.join(", ")})`); }
-    const rows = (await c.query(`SELECT * FROM preserve.${table} ${where.length ? `WHERE ${where.join(" AND ")}` : ""} ORDER BY ${pk.join(", ")} LIMIT 5000`, params)).rows;
+    if (last) { const ph = last.map((v, i) => { params.push(v); return `$${params.length}::${pkType.get(pk[i])}`; }); where.push(`(${pk.join(", ")}) > (${ph.join(", ")})`); }
+    const rows = (await c.query(`SELECT *, ${keyCols} FROM preserve.${table} ${where.length ? `WHERE ${where.join(" AND ")}` : ""} ORDER BY ${pk.join(", ")} LIMIT 5000`, params)).rows;
     if (!rows.length) break;
     for (const r of rows) {
       if (inSheet >= MAX_ROWS) { ws.commit(); part++; inSheet = 0; ws = sheet(`${table} (${part})`); header(ws); }
@@ -64,10 +69,13 @@ for (const [table, pk] of TABLES.filter(([t]) => tables.includes(t))) {
       inSheet++; total++;
     }
     const tail = rows[rows.length - 1];
-    last = pk.map((k) => tail[k]);
+    last = pk.map((_, i) => tail[`__k${i}`]);
   }
   ws.commit();
   summary[table] = total;
+  // Proof, not hope: the workbook must hold exactly the ledger's rows — no page lost, none written twice.
+  const expected = Number((await c.query(`SELECT count(*)::bigint AS n FROM preserve.${table}${company ? " WHERE company_code = $1" : ""}`, company ? [company] : [])).rows[0].n);
+  if (expected !== total) throw new Error(`preserve-export: ${table} wrote ${total} rows but the ledger holds ${expected}`);
 }
 await wb.commit();
 }
