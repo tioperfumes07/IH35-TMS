@@ -19,6 +19,7 @@ const ui = readFileSync("apps/frontend/src/components/boards/PartyBoard.tsx", "u
 const manifest = readFileSync("apps/frontend/src/routes/manifest.tsx", "utf8");
 const css = readFileSync("apps/frontend/src/components/boards/party-board.css", "utf8");
 const hubUi = readFileSync("apps/frontend/src/components/boards/DriverHubBoard.tsx", "utf8");
+const ddUi = readFileSync("apps/frontend/src/components/boards/DriverOverviewBoard.tsx", "utf8");
 const fails = [];
 for (const k of ["customers", "vendors"]) if (!new RegExp(`<PartyListRoute kind="${k}">`).test(manifest)) fails.push(`/${k} must open on the board (PartyListRoute)`);
 for (const label of ["With transactions", "In the book", "Open invoices", "Billed", "A/R open", "Collected", "Spend YTD", "Fuel share", "Open bills", "Unposted fuel",
@@ -35,6 +36,18 @@ for (const label of ["Driver Hub Home", "Refresh", "+ Create Driver", "On loads"
   if (!hubUi.includes(label)) fails.push(`driver hub control/label missing: "${label}"`);
 }
 for (const snapshot of ["19 / 130", "$1,842.60", "Angel Sosa", "9,150", "$2,375.00"]) if (hubUi.includes(snapshot)) fails.push(`hardcoded driver-hub board figure "${snapshot}" ships`);
+if (!/<DriverDetailRoute \/>/.test(manifest)) fails.push("/drivers/:id must open on the DriverDetail board (DriverDetailRoute)");
+for (const label of ["Edit", "Add payment", "Run settlement", "Overview", "Additional payments", "Cash advances", "Pay & escrow", "Reports & damage", "Complaints",
+  "Safety & accidents", "Driver disputes", "Settlement due", "Additional pay", "Escrow held", "Miles, 30 days", "MPG, 30 days", "Integrity", "Line haul", "Deductions",
+  "Net pay", "it rides the settlement, it never becomes a separate cheque", "+ Log complaint", "Reports &amp; damage he filed", "Trucks he has held", "Pay terms", "Compliance",
+  "CDL expiration", "Medical card", "Annual MVR review", "Drug screen, last", "Hours violations, 90 days"]) {
+  if (!ddUi.includes(label)) fails.push(`driver detail control/label missing: "${label}"`);
+}
+const ddSvc = readFileSync("apps/backend/src/mdata/canonical/driver-overview.service.ts", "utf8");
+for (const label of ["MPG against fleet", "Gallons per 100 mi", "Fills with no load link", "Fuel anomaly flags", "Complaints per 100k mi", "Damage $ per 100k mi", "Accidents per 100k mi"]) {
+  if (!ddSvc.includes(label)) fails.push(`driver detail integrity row missing: "${label}"`);
+}
+for (const snapshot of ["Angel Sosa", "$1,842.60", "S-2026-5819", "$1,140.00", "9,150", "fleet 6.4"]) if (ddUi.includes(snapshot)) fails.push(`hardcoded DriverDetail board figure "${snapshot}" ships`);
 if (!/className="ih-table"/.test(ui)) fails.push("board table must use ih-table (rules for rows, never for columns)");
 if (/border-(left|right)\s*:/.test(css)) fails.push("party-board.css declares a column border");
 if (!/cents \? usd\(cents\) : "—"/.test(ui)) fails.push("missing money must render — (never $0.00)");
@@ -79,6 +92,17 @@ try {
   eq("drivers settle due", dk.settle_due, sd.n);
   eq("drivers escrow held (cents)", dk.escrow_held_cents, eh.s);
   eq("drivers available = active - on loads", dk.available, dk.active - dk.on_loads);
+  if (engine.overview) {
+    const ov = engine.overview, D = ov.driver_id;
+    const due = (await c.query(`SELECT coalesce(sum(net_pay),0) v, count(*)::int n FROM driver_finance.driver_settlements WHERE operating_company_id = $1 AND driver_id = $2
+       AND voided_at IS NULL AND reversed_at IS NULL AND coalesce(is_presettlement, false) = false AND payment_state = 'unpaid' AND paid_at IS NULL`, [USMCA, D])).rows[0];
+    const mi = (await c.query(`SELECT coalesce(sum(distance_mi),0) mi, coalesce(sum(fuel_burned_gal),0) g FROM integrations.samsara_fuel_reports
+       WHERE subject_kind = 'driver' AND driver_id = $1 AND report_date >= (now() - interval '30 days')::date AND report_date <= now()::date`, [D])).rows[0];
+    eq("overview settlement due (cents)", ov.tiles.settlement_due_cents, Math.round(Number(due.v) * 100));
+    eq("overview settlements due (count)", ov.tiles.settlements_due, due.n);
+    eq("overview miles 30d (Samsara driver)", ov.tiles.miles_30d, Math.round(Number(mi.mi)));
+    eq("overview mpg 30d", ov.tiles.mpg_30d ?? 0, Number(mi.g) > 0 ? Math.round((Number(mi.mi) / Number(mi.g)) * 10) / 10 : 0);
+  }
   await c.query("ROLLBACK");
 } finally { await c.end(); }
 if (fails.length) { console.error("verify-party-boards-bound-live: FAIL\n  " + fails.join("\n  ")); process.exit(1); }

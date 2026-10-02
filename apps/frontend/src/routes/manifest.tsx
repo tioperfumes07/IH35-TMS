@@ -13,9 +13,19 @@ import { useAuth } from "../auth/useAuth";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { PartyListSwitch, type PartyKind } from "../components/boards/PartyBoard";
 import { DriverHubBoard } from "../components/boards/DriverHubBoard";
+import { DriverOverviewBoard } from "../components/boards/DriverOverviewBoard";
 import { Shell } from "../components/Shell";
 import { resolveListsDomainHubKey } from "../pages/lists/components/AllCatalogsMap";
 import { catalogKeyToCatalogName } from "../hooks/useCatalogQuery";
+/** ROUND 326.5 — /drivers/:id opens on the DriverDetail board (Overview); any ?tab= opens the existing tab it names. */
+function DriverDetailRoute() {
+  const { selectedCompanyId } = useCompanyContext();
+  const { id } = useParams();
+  const [params] = useSearchParams();
+  if (!selectedCompanyId || !id || params.has("tab")) return <DriverDetailPage />;
+  return <DriverOverviewBoard operatingCompanyId={selectedCompanyId} driverId={id} />;
+}
+
 /** ROUND 326.5 — /drivers/profiles opens on the Driver Hub Home board; "List" (?view=list) is the existing page. */
 function DriverHubRoute() {
   const { selectedCompanyId } = useCompanyContext();
@@ -5050,7 +5060,7 @@ export const ROUTES = React.Children.toArray(
           path="/drivers/:id"
           element={
             <ProtectedRoute>
-              <DriverDetailPage />
+              <DriverDetailRoute />
             </ProtectedRoute>
           }
         />
