@@ -1,4 +1,12 @@
 /**
+ * ENGINE: Samsara fault-code poll
+ * SCHEDULE: 0 3 * * *
+ * WRITES: maintenance.samsara_fault_code_history, maintenance.work_orders (auto draft), notifications
+ * IDEMPOTENCY: UNIQUE(raw_event_id, fault_code) ON CONFLICT on history; auto work order claimed by SAME-STATEMENT WHERE auto_wo_id IS NULL AND auto_wo_created_at IS NULL
+ * OVERLAP: second run records no history and opens no second work order
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
+/**
  * ROUND 297.1 J-3 — Samsara fault code poller.
  *
  * FINDING (measured live before writing this): the only fault path in this repo is

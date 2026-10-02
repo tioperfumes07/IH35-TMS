@@ -1,3 +1,12 @@
+/**
+ * ENGINE: load real-driven miles — per-stop leg miles and per-load total from odometer captures.
+ * SCHEDULE: hourly :25 America/Chicago (node-cron).
+ * WRITES: mdata.load_stops (leg_miles_driven_actual*) · mdata.loads (miles_driven_actual*) — UPDATE only, no INSERT
+ *   (load-real-driven-miles.service.ts:251, :258).
+ * IDEMPOTENCY: DETERMINISTIC OVERWRITE — each UPDATE sets a computed column to a pure function of the captures; no
+ *   history or recalculation-log row is inserted.
+ * OVERLAP: two runs write the same values; nothing accumulates.
+ */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";

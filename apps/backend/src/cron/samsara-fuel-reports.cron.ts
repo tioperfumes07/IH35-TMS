@@ -1,4 +1,12 @@
 /**
+ * ENGINE: Samsara fuel reports pull
+ * SCHEDULE: 20 5 * * *
+ * WRITES: telematics samsara fuel reports
+ * IDEMPOTENCY: UNIQUE(operating_company_id, subject_kind, samsara_subject_id, report_date) ON CONFLICT DO UPDATE
+ * OVERLAP: second run rewrites the same rows
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
+/**
  * ROUND 313 E-23 — keep Samsara Fuel & Energy daily (integrations.samsara_fuel_reports). 05:20 America/Chicago:
  * yesterday + today (Samsara settles a day late). First run on an empty table catches up 30 days. Read-only
  * against Samsara; writes only its own report rows.

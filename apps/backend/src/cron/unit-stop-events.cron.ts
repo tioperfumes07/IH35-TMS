@@ -1,4 +1,12 @@
 /**
+ * ENGINE: unit stop events
+ * SCHEDULE: 7,22,37,52 * * * *
+ * WRITES: telematics unit stop events
+ * IDEMPOTENCY: UNIQUE(unit_id, started_at) ON CONFLICT DO UPDATE
+ * OVERLAP: second run rewrites the same rows
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
+/**
  * ROUND 306 E-03 — stop-odometer capture, scheduled.
  * Every 15 min America/Chicago (RULES R-01), USMCA, after the position poll has had time to land.
  * Idempotent: the writer upserts on (unit_id, started_at). Cost discipline (RULES R-06): one pass

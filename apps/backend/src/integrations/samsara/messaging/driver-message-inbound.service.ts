@@ -47,6 +47,9 @@ async function loadForDriverAt(client: Db, oc: string, driverId: string, atIso: 
 }
 
 export async function getOrCreateDriverDirectThread(client: Db, oc: string, driverId: string): Promise<string> {
+  // ROUND 329: chat.threads has no unique key for a driver's direct thread, so the find-or-create is serialized by a
+  // transaction advisory lock per (company, driver) — an overlapping tick waits, then finds the thread this one made.
+  await client.query(`SELECT pg_advisory_xact_lock(hashtext($1::text))`, [`chat.driver_direct:${oc}:${driverId}`]);
   const existing = await client.query<{ id: string }>(
     `SELECT t.id::text FROM chat.threads t JOIN chat.participants p ON p.thread_id = t.id
       WHERE t.operating_company_id = $1::uuid AND t.kind = 'driver_direct' AND p.party_type = 'driver' AND p.driver_id = $2::uuid

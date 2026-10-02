@@ -1,3 +1,11 @@
+/**
+ * ENGINE: Samsara HOS pull
+ * SCHEDULE: 15 * * * *
+ * WRITES: hos.duty_status_events, integration_sync_log (one run row)
+ * IDEMPOTENCY: UNIQUE(operating_company_id, driver_id, duty_status, started_at, source) ON CONFLICT plus ADVISORY LOCK pg_advisory_xact_lock per company
+ * OVERLAP: second run waits on the lock, then inserts 0 events
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { FastifyInstance } from "fastify";
 import type { PoolClient } from "pg";
 import cron from "node-cron";

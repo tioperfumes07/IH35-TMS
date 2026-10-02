@@ -1,4 +1,12 @@
 /**
+ * ENGINE: Samsara DVIR poll
+ * SCHEDULE: *\/15 * * * * (poll) + 40 3 * * * (daily re-read)
+ * WRITES: safety DVIR rows
+ * IDEMPOTENCY: UNIQUE(operating_company_id, client_request_id) ON CONFLICT DO UPDATE WHERE IS DISTINCT FROM
+ * OVERLAP: second run rewrites 0 rows
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
+/**
  * ROUND 304 T-51 / ORDERS 2026-10-01 row 6 — Samsara DVIR import as a scheduled engine.
  * Every 15 min (America/Chicago) over the last 1 day, plus 03:40 daily over the last 7 days so a DVIR
  * Samsara later marks 'resolved' is re-read and its WF-050 major-defect flag cleared. Idempotent on

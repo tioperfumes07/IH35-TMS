@@ -147,6 +147,9 @@ export async function geocodeStopsWithClient(client: DbClient, actorId: string, 
       WHERE id=$1::uuid RETURNING id::text`, [stop.stop_id, locationId, outcome.latitude, outcome.longitude, outcome.source, outcome.confidence, outcome.precision]);
     if (!updated.rows[0]) return;
     geocoded += 1; locations += 1; rooftop += 1;
+    // ROUND 329: geo.geofences has no unique key on location_ref_id, and findOrCreateLocation's lock is only taken for
+    // a NEW location — lock the location itself so the NOT EXISTS below cannot race a twin fence in.
+    await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [`geo.location_fence|${companyId}|${locationId}`]);
     const inserted = await client.query<{ id: string }>(`
       INSERT INTO geo.geofences
         (operating_company_id,label,location_kind,location_ref_id,vertices_json,is_active,source,

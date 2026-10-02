@@ -41,6 +41,9 @@ export async function deliverChatMessageToSamsara(client: Db, messageId: string,
   // Office texts and the E-30 system driver prompts (arrival / fuel stop) are delivered; nothing else.
   const deliverable = m && (m.sender_party_type === "office" || m.sender_party_type === "system") && (m.msg_type === "text" || m.msg_type === "confirmation_request");
   if (!m || !deliverable || !m.body?.trim()) return { ...base, outcome: "not_office_text" };
+  // ROUND 329: the sent-ledger read below is read-then-write around an external Samsara send; a transaction advisory
+  // lock per message makes a second caller wait, then see this one's 'sent' row.
+  await client.query(`SELECT pg_advisory_xact_lock(hashtext($1::text))`, [`samsara.driver_message_delivery:${messageId}`]);
   const prior = await client.query(
     `SELECT 1 FROM integrations.integration_sync_log
       WHERE operating_company_id = $1::uuid AND integration = 'samsara' AND sync_kind = $2

@@ -1,4 +1,12 @@
 /**
+ * ENGINE: Samsara documents (POD photo) mirror
+ * SCHEDULE: 17 * * * *
+ * WRITES: docs.files, docs.file_links, R2 objects
+ * IDEMPOTENCY: UNIQUE(r2_key) ON CONFLICT DO NOTHING; UNIQUE(file_id, entity_type, entity_id) ON CONFLICT on links; R2 put of the same bytes is a DETERMINISTIC OVERWRITE
+ * OVERLAP: second run inserts 0 files and 0 links
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
+/**
  * ROUND 313 E-32 — hourly: Samsara driver documents (Proof of Delivery photos) of the last 7 days into docs.files,
  * linked to load / stop / unit / driver (integrations/samsara/documents/samsara-documents.service.ts). Idempotent
  * per document photo. Needs R2 configured (the store every document upload uses); otherwise it reports and stops.

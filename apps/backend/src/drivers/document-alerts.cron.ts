@@ -1,3 +1,11 @@
+/**
+ * ENGINE: driver document expiry alerts
+ * SCHEDULE: 35 7 * * *
+ * WRITES: safety.document_alert_events, notifications.user_notifications, outbox.events
+ * IDEMPOTENCY: UNIQUE(operating_company_id, rule_id, subject_key, days_until_expiry) ON CONFLICT on events; notification claimed by SAME-STATEMENT WHERE notified_at IS NULL before sending; email outbox UNIQUE(dedupe_key)
+ * OVERLAP: second run claims 0 events and sends nothing
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";

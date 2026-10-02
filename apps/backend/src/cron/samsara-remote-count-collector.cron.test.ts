@@ -65,6 +65,7 @@ describe("samsara.remote_count_collector cron", () => {
   it("throws when tenant context is empty", async () => {
     const { initializeSamsaraRemoteCountCollectorCron } = await import("./samsara-remote-count-collector.cron.js");
     clientQueryMock.mockImplementation(async (sql: string) => {
+      if (sql.includes("pg_try_advisory_xact_lock")) return { rows: [{ locked: true }] };
       if (sql.includes("FROM org.companies")) return { rows: [{ operating_company_id: "" }] };
       return { rows: [] };
     });
@@ -76,6 +77,7 @@ describe("samsara.remote_count_collector cron", () => {
   it("runs collector for enabled tenants and skips disabled tenants", async () => {
     const { initializeSamsaraRemoteCountCollectorCron } = await import("./samsara-remote-count-collector.cron.js");
     clientQueryMock.mockImplementation(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("pg_try_advisory_xact_lock")) return { rows: [{ locked: true }] };
       if (sql.includes("FROM org.companies")) {
         return {
           rows: [

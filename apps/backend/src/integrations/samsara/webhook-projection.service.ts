@@ -4,6 +4,7 @@ import { projectHosEvent } from "./webhook-projectors/hos-projector.js";
 import { projectVehicleEvent } from "./webhook-projectors/vehicle-projector.js";
 import { projectGeofenceEvent } from "./webhook-projectors/geofence-projector.js";
 import { projectRouteStopEvent } from "./routes-integration.service.js";
+import { tryXactSingleFlight } from "../../lib/single-flight.js";
 import type {
   DbClient,
   ProjectionErrorClass,
@@ -394,6 +395,9 @@ export async function projectSamsaraWebhookEventsForTenant(
   options: ProjectionWorkerOptions = {}
 ): Promise<{ processed: number }> {
   assertTenantContext(operatingCompanyId, "samsara.webhook_projection_cron");
+  // ROUND 329: the pending-event claim is an unlocked SELECT then a status UPDATE with no compare — two overlapping
+  // ticks would both run every projector on the same event. The DB lock lets one projection run per tenant.
+  if (!(await tryXactSingleFlight(client, `samsara.webhook_projection:${operatingCompanyId}`))) return { processed: 0 };
   const batchSize = resolveBatchSize(options.batchSize);
   const maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
   const retryBackoffMinutes = options.retryBackoffMinutes ?? DEFAULT_RETRY_BACKOFF_MINUTES;

@@ -1,4 +1,12 @@
 /**
+ * ENGINE: Samsara fuel-purchase push
+ * SCHEDULE: 0 6,18 * * *
+ * WRITES: external Samsara fuel purchase POST, integration_sync_log
+ * IDEMPOTENCY: ADVISORY LOCK pg_try_advisory_xact_lock per company around ledger read, POST and ledger write
+ * OVERLAP: an overlapping tick fails the lock and posts nothing
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
+/**
  * ROUND 304 T-48 — twice-daily Samsara fuel-purchase push (06:00 and 18:00 America/Chicago).
  *
  * Writes to Samsara only when SAMSARA_FUEL_PURCHASE_PUSH_APPLY=true. Otherwise every tick is a dry
@@ -12,6 +20,7 @@ import { resolveSamsaraApiToken } from "./samsara-token.js";
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../../auth/db.js";
+import { tryXactSingleFlight } from "../../lib/single-flight.js";
 import { assertTenantContext } from "../../cron/_helpers/tenant-context-guard.js";
 import { runFuelPurchasePush } from "./fuel-purchase-push.service.js";
 import { SamsaraClient } from "./samsara-client.js";
@@ -25,6 +34,9 @@ export function fuelPurchasePushApplyEnabled(): boolean {
 }
 
 async function pushForCompany(client: PgClient, operatingCompanyId: string): Promise<void> {
+  // ROUND 329: the ever-pushed ledger read (:143) -> Samsara POST -> sync-log INSERT is read-then-write; two replicas /
+  // overlapping ticks would both POST the same purchase. One tick per company holds the DB lock; the other skips.
+  if (!(await tryXactSingleFlight(client, `samsara.fuel_purchase_push:${operatingCompanyId}`))) return;
   const cfg = await getSamsaraConfigForCompany(client, operatingCompanyId);
   if (!cfg || !Boolean(cfg.is_enabled)) return;
   const apply = fuelPurchasePushApplyEnabled();

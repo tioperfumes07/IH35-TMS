@@ -540,14 +540,7 @@ export async function dispatchDocumentAlertNotifications(
     );
   }
 
-  await client.query(
-    `
-      UPDATE safety.document_alert_events
-      SET notified_at = now(), updated_at = now()
-      WHERE id = $2::uuid AND operating_company_id = $1::uuid
-    `,
-    [operatingCompanyId, eventId]
-  );
+  // notified_at is claimed by the caller (evaluateDocumentAlertsForTenant) before this runs.
 }
 
 export async function evaluateDocumentAlertsForTenant(
@@ -567,15 +560,19 @@ export async function evaluateDocumentAlertsForTenant(
       const { inserted, eventId } = await upsertDocumentAlertEvent(client, operatingCompanyId, rule, candidate);
       if (inserted) eventsUpserted += 1;
       if (eventId && (rule.notify_email || rule.notify_in_app)) {
-        const notifyRes = await client.query<{ notified_at: string | null }>(
+        // ROUND 329: claim the notification in ONE statement (compare-and-set on notified_at IS NULL) before sending —
+        // the old SELECT-then-notify-then-stamp let two overlapping ticks both notify every user. Same transaction:
+        // a failed send rolls the claim back.
+        const claimRes = await client.query<{ id: string }>(
           `
-            SELECT notified_at::text
-            FROM safety.document_alert_events
-            WHERE id = $2::uuid AND operating_company_id = $1::uuid
+            UPDATE safety.document_alert_events
+            SET notified_at = now(), updated_at = now()
+            WHERE id = $2::uuid AND operating_company_id = $1::uuid AND notified_at IS NULL
+            RETURNING id::text
           `,
           [operatingCompanyId, eventId]
         );
-        if (!notifyRes.rows[0]?.notified_at) {
+        if (claimRes.rows[0]?.id) {
           await dispatchDocumentAlertNotifications(client, operatingCompanyId, rule, eventId, candidate);
           notificationsSent += 1;
         }
