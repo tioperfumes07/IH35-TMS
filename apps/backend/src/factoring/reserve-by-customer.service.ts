@@ -11,9 +11,9 @@
 //
 // A reserve movement that is not stamped to an invoice (a Faro reserve deposit or a pool payout) cannot belong to a
 // customer, so it is its own row — "Not stamped to an invoice" — never dropped and never spread: the column total stays
-// the GL balance. THE STAMP IS THE FIX: every reserve leg is stamped source 'faro_reserve_entry' = the Faro report line it
-// posts (faro-reserve-entries.service.ts), whose Faro invoice number reaches our invoice through the purchase line; the
-// entry's kind maps to the source types below.
+// the GL balance. THE SPINE IS THE LINK (owner ruling 2026-10-02): every reserve leg's invoice is its
+// accounting.transaction_source_links row (linked_object_type 'invoice'), written by the poster in the same transaction;
+// the leg's kind comes from the Faro report line it posts (source 'faro_reserve_entry').
 import { factoringReserveAccountIds } from "./factoring-kpi.service.js";
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
@@ -57,10 +57,11 @@ function reserveSql(level: "customer" | "invoice") {
      WHERE p.operating_company_id = $1::uuid AND p.status = 'posted' AND l.voided_at IS NULL AND p.purchase_date <= $2::date
   ),
   moves AS (
-    -- A reserve leg's document is the Faro report line it posts (source 'faro_reserve_entry'); the line's Faro invoice
-    -- number reaches our invoice through the purchase line. Legs stamped straight to an invoice (source 'invoice') keep it.
-    -- (journal_entry_postings.entity_type is CHECK-limited to customer/vendor/driver/unit — never 'invoice'.)
-    SELECT COALESCE(fl.invoice_id, CASE WHEN jp.source_transaction_type = 'invoice' THEN jp.source_transaction_id::uuid END) AS invoice_id,
+    -- Owner ruling 2026-10-02: a reserve leg's invoice is read off the SPINE (accounting.transaction_source_links,
+    -- linked_object_type = 'invoice'), never off a tag on the posting. Its kind comes from the Faro report line it posts.
+    SELECT (SELECT tsl.linked_object_id::uuid FROM accounting.transaction_source_links tsl
+             WHERE tsl.journal_entry_posting_id = jp.id AND tsl.linked_object_type = 'invoice'
+             ORDER BY tsl.created_at LIMIT 1) AS invoice_id,
            CASE WHEN jp.debit_or_credit = 'debit' THEN jp.amount_cents ELSE -jp.amount_cents END AS signed,
            CASE fe.entry_kind
              WHEN 'escrow_to_cash' THEN '${FARO_RESERVE_SOURCE.escrowToCash}'
@@ -75,10 +76,9 @@ function reserveSql(level: "customer" | "invoice") {
       LEFT JOIN accounting.faro_reserve_entries fe
              ON jp.source_transaction_type = 'faro_reserve_entry' AND fe.id::text = jp.source_transaction_id::text
             AND fe.operating_company_id = je.operating_company_id
-      LEFT JOIN accounting.factoring_purchase_lines fl
-             ON fl.operating_company_id = fe.operating_company_id AND fl.faro_invoice_number = fe.faro_invoice_number AND fl.voided_at IS NULL
      WHERE je.operating_company_id = $1::uuid AND jp.account_id = ANY($3::uuid[]) AND je.entry_date <= $2::date
        AND jp.source_transaction_type IS DISTINCT FROM 'factoring_advance'
+       AND jp.source_transaction_type IS DISTINCT FROM 'faro_cash_reserve_reclass'
   ),
   inv AS (
     SELECT COALESCE(li.invoice_id, mv.invoice_id) AS invoice_id,
@@ -120,7 +120,9 @@ async function reserveGlBalanceCents(client: DbClient, oci: string, asOf: string
     `SELECT COALESCE(sum(CASE WHEN jp.debit_or_credit = 'debit' THEN jp.amount_cents ELSE -jp.amount_cents END), 0)::bigint AS v
        FROM accounting.journal_entry_postings jp
        JOIN accounting.journal_entries je ON je.id = jp.journal_entry_uuid AND je.status = 'posted'
-      WHERE je.operating_company_id = $1::uuid AND jp.account_id = ANY($3::uuid[]) AND je.entry_date <= $2::date`,
+      WHERE je.operating_company_id = $1::uuid AND jp.account_id = ANY($3::uuid[]) AND je.entry_date <= $2::date
+        -- The period-end Due-to-Faro reclass is presentation, not reserve money: excluded on both sides of the tie.
+        AND jp.source_transaction_type IS DISTINCT FROM 'faro_cash_reserve_reclass'`,
     [oci, asOf, ids])).rows[0]?.v);
 }
 
