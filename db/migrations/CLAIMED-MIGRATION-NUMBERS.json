@@ -1521,6 +1521,11 @@
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-02",
       "purpose": "Lead ROUND 330.6 ruling 1 — driver_settlements predecessor / successor link (a re-posted settlement names the reversed one; never reuses its bill numbers)"
+    },
+    "202615270600": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-02",
+      "purpose": "Owner ruling 2026-10-02 (CC2-ACCEPTED-PLUS-FOUR-RULINGS): event-time Faro default-interest accrual — factoring_interest_accrual_runs.run_kind ('period_close'|'event') + event_purchase_line_id; one live period-close run per period, one live event run per (purchase line, date); same maker/checker path and account pair."
     }
   },
   "202613590001": {
