@@ -133,29 +133,18 @@ export async function registerSettlementPostingRoutes(app: FastifyInstance) {
     return retiredSettlementPost(reply, settlementId);
   });
 
-  // SET-04 — canonical Bill+BillPayment forward poster (blueprint §3). Role-gated; SETTLEMENT_GL_POSTING_ENABLED
-  // is enforced inside postSettlementBillPayment (OFF => skipped_flag_off, zero writes). Reuses the existing
-  // poster only — no new GL math.
+  // ROUND 326 queue item 2 (CC-1) — RETIRED. The per-load Bill + BillPayment shape this route posted is now what the
+  // Close button posts (closeSettlementPayRun → settlement-ap-chain.service.ts, one transaction, with the pay-run's
+  // floor / loan-decision / signed-document checks). Two reachable settlement posters is the competing-engine
+  // defect (docs/bus/00-OWNER-LAW-2026-10-02-BUILD-ONLY-COMPETING-ENGINE-AUDIT.md); this one is left unreachable.
+  // Guard: scripts/verify-single-settlement-poster.mjs.
   app.post("/api/v1/accounting/settlement-posting/bill-payment-post", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
-    if (!query.success) return validationError(reply, query.error);
-    await assertCompanyMembership(user.uuid, query.data.operating_company_id);
-    const body = billPaymentPostBody.safeParse(req.body ?? {});
-    if (!body.success) return validationError(reply, body.error);
-    try {
-      const result = await postSettlementBillPayment(
-        {
-          operatingCompanyId: query.data.operating_company_id,
-          settlementId: body.data.settlement_id,
-        },
-        { userId: user.uuid }
-      );
-      return reply.code(result.result === "posted" ? 201 : 200).send(result);
-    } catch (error) {
-      return mapBillPaymentRouteError(reply, error);
-    }
+    return reply.code(410).send({
+      error: "settlement_bill_payment_post_retired",
+      message: "Settlements post when they are closed: POST /api/v1/driver-finance/settlements/:id/payrun-close posts the per-load A/P bills and bill payments.",
+    });
   });
 
   // ACCT-F5648 — retired (SET-01 companion retirement). See retiredSettlementReverse above.

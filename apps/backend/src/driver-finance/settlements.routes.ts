@@ -22,6 +22,7 @@ import { loadIdsForSettlement } from "../accounting/tour-open-gate.service.js";
 import { postHeldDocumentsForClosedTour } from "../accounting/tour-close-posting.service.js";
 import { reverseSettlementForVoid, SettlementVoidBlockedError } from "./void-document-callees.service.js";
 import { syncSettlementLoadsToBilling } from "../dispatch/load-billing-lifecycle.service.js";
+import { addSettlementPayLineInClientTx, PAY_LINE_KINDS, SettlementPayLineError } from "./settlement-pay-line.service.js";
 import {
   settlementEarningsSumSql,
   settlementDeductionsSumSql,
@@ -1234,6 +1235,42 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     if ("conflict" in result) return reply.code(412).send({ error: "etag_conflict", expected_etag: result.expectedEtag });
     reply.header("ETag", `"${result.expectedEtag}"`);
     return result.row;
+  });
+
+  // ROUND 326 (CC-1, CC-3 request) — add one detention / layover / bonus / stop-pay / other line to an OPEN
+  // settlement, tied to its load (named, or the settlement's load covering the date). Posts at close.
+  app.post("/api/v1/driver-finance/settlements/:id/pay-lines", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = requireSettlementWriteRole(req, reply);
+    if (!user) return;
+    const params = idParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const body = z.object({
+      operating_company_id: z.string().uuid(),
+      kind: z.enum(PAY_LINE_KINDS),
+      amount_cents: z.number().int().positive(),
+      description: z.string().trim().max(500).nullable().optional(),
+      transaction_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      load_id: z.string().uuid().nullable().optional(),
+    }).safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+    try {
+      const result = await withCompany(user.uuid, body.data.operating_company_id, (client) =>
+        addSettlementPayLineInClientTx(client as never, {
+          operatingCompanyId: body.data.operating_company_id,
+          settlementId: params.data.id,
+          kind: body.data.kind,
+          amountCents: body.data.amount_cents,
+          description: body.data.description ?? null,
+          transactionDate: body.data.transaction_date,
+          loadId: body.data.load_id ?? null,
+          actorUserId: user.uuid,
+        })
+      );
+      return reply.code(201).send(result);
+    } catch (e) {
+      if (e instanceof SettlementPayLineError) return reply.code(e.status).send({ error: e.code, message: e.message });
+      throw e;
+    }
   });
 
   app.patch("/api/v1/driver-finance/settlements/:id/finalize", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {

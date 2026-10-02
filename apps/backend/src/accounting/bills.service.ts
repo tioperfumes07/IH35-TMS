@@ -3,6 +3,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { resolveBillDisplayId } from "./display-id.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
+import type pg from "pg";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { enqueueTmsBillPushRequested } from "../qbo/tms-bill-push-chain.service.js";
@@ -151,6 +152,13 @@ type PayBillInput = {
   checkNumber?: string;
   referenceNumber?: string;
   memo?: string;
+  /**
+   * ROUND 326 (CC-1): a NON-CASH settlement application (advance / deduction / escrow / chargeback applied
+   * against a per-load driver bill). The row is inserted already flagged settlement_deduction_noncash = true,
+   * moves no bank balance, and posts NO cash GL leg here — the settlement close's own application JE owns its
+   * GL (Dr A/P / Cr the target account). Never set together with fromBankAccountId.
+   */
+  settlementDeductionNoncash?: boolean;
 };
 
 type ListVendorBalancesOptions = {
@@ -2399,7 +2407,8 @@ export async function resolveLineCategoryForLoadRequirement(
   return categoryRow.rows[0]?.line_category ?? null;
 }
 
-export async function createBill(input: CreateBillInput, userId: string) {
+/** ROUND 326 (CC-1): the createBill input checks, shared by createBill and createBillInClientTx. */
+function validateCreateBillInput(input: CreateBillInput) {
   if (input.recoverFromDriver && !input.driverId) throw new Error("bill_recovery_requires_driver");
   if (input.recoverFromDriver && !input.recoverDeductionType?.trim()) {
     throw new Error("bill_recovery_requires_deduction_type");
@@ -2433,201 +2442,242 @@ export async function createBill(input: CreateBillInput, userId: string) {
     throw new Error("bill_lines_required");
   }
 
-  const bill = await withCurrentUser(userId, async (client) => {
+}
+
+/** The bill row + lines + spine event, on the CALLER's client (one transaction with the caller). */
+async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillInput, userId: string) {
+  const linesProvided = input.lines !== undefined;
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
-    const claimCol = await client.query(
-      `SELECT 1 FROM information_schema.columns
-        WHERE table_schema='accounting' AND table_name='bills' AND column_name='insurance_claim_id'`
-    );
-    const hasInsuranceClaimId = (claimCol.rowCount ?? 0) > 0;
-    const insuranceClaimId = hasInsuranceClaimId ? (input.insuranceClaimId ?? null) : null;
-    const classCol = await client.query(
-      `SELECT 1 FROM information_schema.columns
-        WHERE table_schema='accounting' AND table_name='bills' AND column_name='class_id'`
-    );
-    const hasClassId = (classCol.rowCount ?? 0) > 0;
-    const classId = hasClassId ? (input.classId ?? null) : null;
-    const vendorCols = await resolveBillVendorWriteColumns(client, input.operatingCompanyId, input.vendorId);
+  const claimCol = await client.query(
+    `SELECT 1 FROM information_schema.columns
+      WHERE table_schema='accounting' AND table_name='bills' AND column_name='insurance_claim_id'`
+  );
+  const hasInsuranceClaimId = (claimCol.rowCount ?? 0) > 0;
+  const insuranceClaimId = hasInsuranceClaimId ? (input.insuranceClaimId ?? null) : null;
+  const classCol = await client.query(
+    `SELECT 1 FROM information_schema.columns
+      WHERE table_schema='accounting' AND table_name='bills' AND column_name='class_id'`
+  );
+  const hasClassId = (classCol.rowCount ?? 0) > 0;
+  const classId = hasClassId ? (input.classId ?? null) : null;
+  const vendorCols = await resolveBillVendorWriteColumns(client, input.operatingCompanyId, input.vendorId);
 
-    // LV-AP-DUP — DUPLICATE VENDOR-INVOICE CONTROL (live-proven: two identical $743.21 bills 10.3 s
-    // apart, BOTH posted, leaving $1,486.42 of expense and A/P for one $743.21 invoice).
-    //
-    // This is NOT the double-submit race and a disabled button would not have stopped it -- the two
-    // submissions were ten seconds apart. It is a missing detection RULE. It is also NOT the same
-    // defect as ACCT-F180: idempotency protects a RETRY of one request, whereas this is two
-    // deliberate requests with different keys, so neither fix subsumes the other.
-    //
-    // ENTITY-SCOPED, deliberately: bill_number is per-entity, so the predicate MUST include
-    // operating_company_id or a legitimate USMCA bill would collide with an unrelated TRANSP one.
-    // Vendor identity is matched across all three columns because a bill may carry any of them
-    // (mdata_vendor_id uuid, or vendor_uuid / vendor_id which are TEXT on prod).
-    //
-    // WARN, DO NOT HARD-BLOCK (QBO/McLeod behaviour): carriers legitimately reuse invoice numbers
-    // across vendors, and a hard block would make a real bill unenterable. Voided bills never
-    // collide -- a voided duplicate is precisely what a re-entry is meant to replace.
-    const billNumber = input.billNumber?.trim();
-    if (billNumber) {
-      const dup = await client.query<{ id: string }>(
-        `
-          SELECT b.id::text AS id
-            FROM accounting.bills b
-           WHERE b.operating_company_id = $1::uuid
-             -- ACCT-F202: BOTH columns, because a bill can be voided two different ways. voidBill()
-             -- writes revoked_at (never voided_at), so the original voided_at IS NULL test alone matched
-             -- every properly-voided bill and kept blocking re-entry of its number -- the exact
-             -- behaviour the comment above promises it will not do. voided_at is checked too because
-             -- 4 bills on prod carry it from an out-of-band write no code path produces.
-             AND b.revoked_at IS NULL
-             AND b.voided_at IS NULL
-             AND b.bill_number = $2::text
-             AND (
-                   ($3::uuid IS NOT NULL AND b.mdata_vendor_id = $3::uuid)
-                OR ($4::text IS NOT NULL AND b.vendor_uuid = $4::text)
-                OR ($5::text IS NOT NULL AND b.vendor_id = $5::text)
-             )
-           LIMIT 1
-        `,
-        [
-          input.operatingCompanyId,
-          billNumber,
-          vendorCols.mdataVendorId ?? null,
-          vendorCols.vendorUuidText ?? null,
-          vendorCols.vendorIdText ?? null,
-        ]
-      );
-      const existingId = dup.rows[0]?.id;
-      if (existingId) {
-        const override = input.duplicateOverrideReason?.trim();
-        if (!override) throw new DuplicateBillNumberError(existingId, billNumber);
-        // The override is an internal-control decision, so it is recorded with who/when/why. A
-        // control that can be bypassed without a trace is not a control.
-        await appendCrudAudit(
-          client,
-          userId,
-          "accounting.bill_duplicate_number_override",
-          {
-            resource_type: "accounting.bills",
-            resource_id: existingId,
-            operating_company_id: input.operatingCompanyId,
-            bill_number: billNumber,
-            duplicate_of_bill_id: existingId,
-            override_reason: override,
-          },
-          "warning",
-          "LV-AP-DUP"
-        );
-      }
-    }
-
-    const res = await client.query<BillRow>(
-      hasInsuranceClaimId && hasClassId
-        ? `
-        INSERT INTO accounting.bills (
-          operating_company_id,
-          vendor_id,
-          vendor_uuid,
-          mdata_vendor_id,
-          bill_number,
-          bill_date,
-          due_date,
-          amount_cents,
-          total_amount,
-          paid_cents,
-          paid_amount,
-          status,
-          memo,
-          coa_account_id,
-          linked_work_order_uuid,
-          unit_id,
-          insurance_claim_id,
-          class_id,
-          created_by_user_id,
-          created_at,
-          updated_at
-        )
-        VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$15,$16,$12,now(),now())
-        RETURNING *
+  // LV-AP-DUP — DUPLICATE VENDOR-INVOICE CONTROL (live-proven: two identical $743.21 bills 10.3 s
+  // apart, BOTH posted, leaving $1,486.42 of expense and A/P for one $743.21 invoice).
+  //
+  // This is NOT the double-submit race and a disabled button would not have stopped it -- the two
+  // submissions were ten seconds apart. It is a missing detection RULE. It is also NOT the same
+  // defect as ACCT-F180: idempotency protects a RETRY of one request, whereas this is two
+  // deliberate requests with different keys, so neither fix subsumes the other.
+  //
+  // ENTITY-SCOPED, deliberately: bill_number is per-entity, so the predicate MUST include
+  // operating_company_id or a legitimate USMCA bill would collide with an unrelated TRANSP one.
+  // Vendor identity is matched across all three columns because a bill may carry any of them
+  // (mdata_vendor_id uuid, or vendor_uuid / vendor_id which are TEXT on prod).
+  //
+  // WARN, DO NOT HARD-BLOCK (QBO/McLeod behaviour): carriers legitimately reuse invoice numbers
+  // across vendors, and a hard block would make a real bill unenterable. Voided bills never
+  // collide -- a voided duplicate is precisely what a re-entry is meant to replace.
+  const billNumber = input.billNumber?.trim();
+  if (billNumber) {
+    const dup = await client.query<{ id: string }>(
       `
-        : hasInsuranceClaimId
-        ? `
-        INSERT INTO accounting.bills (
-          operating_company_id,
-          vendor_id,
-          vendor_uuid,
-          mdata_vendor_id,
-          bill_number,
-          bill_date,
-          due_date,
-          amount_cents,
-          total_amount,
-          paid_cents,
-          paid_amount,
-          status,
-          memo,
-          coa_account_id,
-          linked_work_order_uuid,
-          unit_id,
-          insurance_claim_id,
-          created_by_user_id,
-          created_at,
-          updated_at
-        )
-        VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$15,$12,now(),now())
-        RETURNING *
-      `
-        : hasClassId
-          ? `
-        INSERT INTO accounting.bills (
-          operating_company_id,
-          vendor_id,
-          vendor_uuid,
-          mdata_vendor_id,
-          bill_number,
-          bill_date,
-          due_date,
-          amount_cents,
-          total_amount,
-          paid_cents,
-          paid_amount,
-          status,
-          memo,
-          coa_account_id,
-          linked_work_order_uuid,
-          unit_id,
-          class_id,
-          created_by_user_id,
-          created_at,
-          updated_at
-        )
-        VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$15,$12,now(),now())
-        RETURNING *
-      `
-        : `
-        INSERT INTO accounting.bills (
-          operating_company_id,
-          vendor_id,
-          vendor_uuid,
-          mdata_vendor_id,
-          bill_number,
-          bill_date,
-          due_date,
-          amount_cents,
-          total_amount,
-          paid_cents,
-          paid_amount,
-          status,
-          memo,
-          coa_account_id,
-          linked_work_order_uuid,
-          unit_id,
-          created_by_user_id,
-          created_at,
-          updated_at
-        )
-        VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$12,now(),now())
-        RETURNING *
+        SELECT b.id::text AS id
+          FROM accounting.bills b
+         WHERE b.operating_company_id = $1::uuid
+           -- ACCT-F202: BOTH columns, because a bill can be voided two different ways. voidBill()
+           -- writes revoked_at (never voided_at), so the original voided_at IS NULL test alone matched
+           -- every properly-voided bill and kept blocking re-entry of its number -- the exact
+           -- behaviour the comment above promises it will not do. voided_at is checked too because
+           -- 4 bills on prod carry it from an out-of-band write no code path produces.
+           AND b.revoked_at IS NULL
+           AND b.voided_at IS NULL
+           AND b.bill_number = $2::text
+           AND (
+                 ($3::uuid IS NOT NULL AND b.mdata_vendor_id = $3::uuid)
+              OR ($4::text IS NOT NULL AND b.vendor_uuid = $4::text)
+              OR ($5::text IS NOT NULL AND b.vendor_id = $5::text)
+           )
+         LIMIT 1
       `,
-      hasInsuranceClaimId && hasClassId
+      [
+        input.operatingCompanyId,
+        billNumber,
+        vendorCols.mdataVendorId ?? null,
+        vendorCols.vendorUuidText ?? null,
+        vendorCols.vendorIdText ?? null,
+      ]
+    );
+    const existingId = dup.rows[0]?.id;
+    if (existingId) {
+      const override = input.duplicateOverrideReason?.trim();
+      if (!override) throw new DuplicateBillNumberError(existingId, billNumber);
+      // The override is an internal-control decision, so it is recorded with who/when/why. A
+      // control that can be bypassed without a trace is not a control.
+      await appendCrudAudit(
+        client,
+        userId,
+        "accounting.bill_duplicate_number_override",
+        {
+          resource_type: "accounting.bills",
+          resource_id: existingId,
+          operating_company_id: input.operatingCompanyId,
+          bill_number: billNumber,
+          duplicate_of_bill_id: existingId,
+          override_reason: override,
+        },
+        "warning",
+        "LV-AP-DUP"
+      );
+    }
+  }
+
+  const res = await client.query<BillRow>(
+    hasInsuranceClaimId && hasClassId
+      ? `
+      INSERT INTO accounting.bills (
+        operating_company_id,
+        vendor_id,
+        vendor_uuid,
+        mdata_vendor_id,
+        bill_number,
+        bill_date,
+        due_date,
+        amount_cents,
+        total_amount,
+        paid_cents,
+        paid_amount,
+        status,
+        memo,
+        coa_account_id,
+        linked_work_order_uuid,
+        unit_id,
+        insurance_claim_id,
+        class_id,
+        created_by_user_id,
+        created_at,
+        updated_at
+      )
+      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$15,$16,$12,now(),now())
+      RETURNING *
+    `
+      : hasInsuranceClaimId
+      ? `
+      INSERT INTO accounting.bills (
+        operating_company_id,
+        vendor_id,
+        vendor_uuid,
+        mdata_vendor_id,
+        bill_number,
+        bill_date,
+        due_date,
+        amount_cents,
+        total_amount,
+        paid_cents,
+        paid_amount,
+        status,
+        memo,
+        coa_account_id,
+        linked_work_order_uuid,
+        unit_id,
+        insurance_claim_id,
+        created_by_user_id,
+        created_at,
+        updated_at
+      )
+      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$15,$12,now(),now())
+      RETURNING *
+    `
+      : hasClassId
+        ? `
+      INSERT INTO accounting.bills (
+        operating_company_id,
+        vendor_id,
+        vendor_uuid,
+        mdata_vendor_id,
+        bill_number,
+        bill_date,
+        due_date,
+        amount_cents,
+        total_amount,
+        paid_cents,
+        paid_amount,
+        status,
+        memo,
+        coa_account_id,
+        linked_work_order_uuid,
+        unit_id,
+        class_id,
+        created_by_user_id,
+        created_at,
+        updated_at
+      )
+      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$15,$12,now(),now())
+      RETURNING *
+    `
+      : `
+      INSERT INTO accounting.bills (
+        operating_company_id,
+        vendor_id,
+        vendor_uuid,
+        mdata_vendor_id,
+        bill_number,
+        bill_date,
+        due_date,
+        amount_cents,
+        total_amount,
+        paid_cents,
+        paid_amount,
+        status,
+        memo,
+        coa_account_id,
+        linked_work_order_uuid,
+        unit_id,
+        created_by_user_id,
+        created_at,
+        updated_at
+      )
+      VALUES ($1,$2::text,$3::text,$4::uuid,$5,$6,$7,$8,$9,0,0,'unpaid',$10,$11,$13,$14,$12,now(),now())
+      RETURNING *
+    `,
+    hasInsuranceClaimId && hasClassId
+      ? [
+          input.operatingCompanyId,
+          vendorCols.vendorIdText,
+          vendorCols.vendorUuidText,
+          vendorCols.mdataVendorId,
+          input.billNumber ?? null,
+          input.billDate,
+          input.dueDate ?? null,
+          input.amountCents,
+          input.amountCents / 100,
+          input.memo ?? null,
+          input.coaAccountId ?? null,
+          userId,
+          input.workOrderId ?? null,
+          input.unitId ?? null,
+          insuranceClaimId,
+          classId,
+        ]
+      : hasInsuranceClaimId
+      ? [
+          input.operatingCompanyId,
+          vendorCols.vendorIdText,
+          vendorCols.vendorUuidText,
+          vendorCols.mdataVendorId,
+          input.billNumber ?? null,
+          input.billDate,
+          input.dueDate ?? null,
+          input.amountCents,
+          input.amountCents / 100,
+          input.memo ?? null,
+          input.coaAccountId ?? null,
+          userId,
+          input.workOrderId ?? null,
+          input.unitId ?? null,
+          insuranceClaimId,
+        ]
+      : hasClassId
         ? [
             input.operatingCompanyId,
             vendorCols.vendorIdText,
@@ -2643,413 +2693,392 @@ export async function createBill(input: CreateBillInput, userId: string) {
             userId,
             input.workOrderId ?? null,
             input.unitId ?? null,
-            insuranceClaimId,
             classId,
           ]
-        : hasInsuranceClaimId
-        ? [
-            input.operatingCompanyId,
-            vendorCols.vendorIdText,
-            vendorCols.vendorUuidText,
-            vendorCols.mdataVendorId,
-            input.billNumber ?? null,
-            input.billDate,
-            input.dueDate ?? null,
-            input.amountCents,
-            input.amountCents / 100,
-            input.memo ?? null,
-            input.coaAccountId ?? null,
-            userId,
-            input.workOrderId ?? null,
-            input.unitId ?? null,
-            insuranceClaimId,
-          ]
-        : hasClassId
-          ? [
-              input.operatingCompanyId,
-              vendorCols.vendorIdText,
-              vendorCols.vendorUuidText,
-              vendorCols.mdataVendorId,
-              input.billNumber ?? null,
-              input.billDate,
-              input.dueDate ?? null,
-              input.amountCents,
-              input.amountCents / 100,
-              input.memo ?? null,
-              input.coaAccountId ?? null,
-              userId,
-              input.workOrderId ?? null,
-              input.unitId ?? null,
-              classId,
-            ]
-        : [
-            input.operatingCompanyId,
-            vendorCols.vendorIdText,
-            vendorCols.vendorUuidText,
-            vendorCols.mdataVendorId,
-            input.billNumber ?? null,
-            input.billDate,
-            input.dueDate ?? null,
-            input.amountCents,
-            input.amountCents / 100,
-            input.memo ?? null,
-            input.coaAccountId ?? null,
-            userId,
-            input.workOrderId ?? null,
-            input.unitId ?? null,
-          ]
+      : [
+          input.operatingCompanyId,
+          vendorCols.vendorIdText,
+          vendorCols.vendorUuidText,
+          vendorCols.mdataVendorId,
+          input.billNumber ?? null,
+          input.billDate,
+          input.dueDate ?? null,
+          input.amountCents,
+          input.amountCents / 100,
+          input.memo ?? null,
+          input.coaAccountId ?? null,
+          userId,
+          input.workOrderId ?? null,
+          input.unitId ?? null,
+        ]
+  );
+  if ((res.rowCount ?? 0) === 0 || !res.rows[0]) throw new Error("bill_insert_failed");
+
+  // ACCT-F186 — stamp the human-readable id. Bills were the ONLY money document without one:
+  // TMS-native bills 13 of 13 had display_id NULL on prod, while TMS-native invoices carry one
+  // 6 of 6 and payments 2 of 2. A bill is what you argue about with a vendor, attach to an
+  // approval, cite in a dispute and hand an auditor; without this it can only be cited by raw
+  // UUID, which is exactly what the app URL falls back to.
+  //
+  // Done as an UPDATE in THIS transaction rather than as an INSERT column, deliberately: there
+  // are FOUR INSERT variants above (insurance_claim_id x class_id), and the lockstep
+  // column/values/placeholder pattern is a documented landmine here — one UPDATE is one place to
+  // be right instead of four places to drift. Same client, so it is atomic with the insert.
+  //
+  // TMS-native ONLY. QBO-cloned bills keep their QBO identity and their NULL display_id is
+  // expected state under parallel books, not a gap — stamping them would invent an identifier
+  // for a document this system did not issue.
+  const insertedId = String((res.rows[0] as { id?: string }).id ?? "");
+
+  // FAIL-F2 / ACCT-F262 — record that a bill is TEST data. `accounting.bills.is_sample_data` exists,
+  // defaults false, and NOTHING wrote it, so every bill the app created was indistinguishable from
+  // real money — and the GL inherited it, because posting-engine reads the source row's flag
+  // (ACCT-F212). An untagged bill produces an untagged journal entry.
+  //
+  // The proof is in the data operators typed. Bill `SAMPLE-CASCADE-1633` — the word SAMPLE is in its
+  // BILL NUMBER — was stored 2026-08-08 21:37 with is_sample_data=false, and its posting JE
+  // `bc094647` is false too. When someone puts SAMPLE in the only field that will accept it, the
+  // structured flag is missing, not declined.
+  //
+  // UPDATE-in-transaction, following ACCT-F186 immediately below and for the identical reason: there
+  // are FOUR INSERT variants above and the lockstep column/values/placeholder pattern is a documented
+  // landmine here. One UPDATE is one place to be right instead of four places to drift. Same client,
+  // so it commits or rolls back with the insert.
+  //
+  // Only an explicit `true` writes. Omitting it leaves the column at its false default, so no
+  // existing caller changes behaviour and nothing is retroactively re-classified.
+  if (insertedId && input.isSampleData === true) {
+    await client.query(
+      `
+        UPDATE accounting.bills
+           SET is_sample_data = true
+         WHERE id = $1::uuid
+           AND operating_company_id = $2::uuid
+      `,
+      [insertedId, input.operatingCompanyId]
     );
-    if ((res.rowCount ?? 0) === 0 || !res.rows[0]) throw new Error("bill_insert_failed");
+  }
 
-    // ACCT-F186 — stamp the human-readable id. Bills were the ONLY money document without one:
-    // TMS-native bills 13 of 13 had display_id NULL on prod, while TMS-native invoices carry one
-    // 6 of 6 and payments 2 of 2. A bill is what you argue about with a vendor, attach to an
-    // approval, cite in a dispute and hand an auditor; without this it can only be cited by raw
-    // UUID, which is exactly what the app URL falls back to.
-    //
-    // Done as an UPDATE in THIS transaction rather than as an INSERT column, deliberately: there
-    // are FOUR INSERT variants above (insurance_claim_id x class_id), and the lockstep
-    // column/values/placeholder pattern is a documented landmine here — one UPDATE is one place to
-    // be right instead of four places to drift. Same client, so it is atomic with the insert.
-    //
-    // TMS-native ONLY. QBO-cloned bills keep their QBO identity and their NULL display_id is
-    // expected state under parallel books, not a gap — stamping them would invent an identifier
-    // for a document this system did not issue.
-    const insertedId = String((res.rows[0] as { id?: string }).id ?? "");
+  // GO-18 — stamp driver_id/trailer_id when present (UPDATE-after-INSERT; avoid exploding the
+  // already-4-way header INSERT). Column-gated the same way legal_matter_id is below, so a DB that
+  // predates migration 202613360001 still creates the bill successfully (columns just stay unset).
+  if (insertedId && (input.driverId || input.trailerId || input.recoverFromDriver || input.recoverDeductionType)) {
+    const colsRes = await client.query<{ column_name: string }>(
+      `SELECT column_name FROM information_schema.columns
+        WHERE table_schema='accounting' AND table_name='bills'
+          AND column_name IN ('driver_id','trailer_id','recover_from_driver','recover_deduction_type')`
+    );
+    const presentCols = new Set(colsRes.rows.map((r) => r.column_name));
+    const setClauses: string[] = [];
+    const values: unknown[] = [insertedId, input.operatingCompanyId];
+    if (input.driverId && presentCols.has("driver_id")) {
+      values.push(input.driverId);
+      setClauses.push(`driver_id = $${values.length}::uuid`);
+    }
+    if (input.trailerId && presentCols.has("trailer_id")) {
+      values.push(input.trailerId);
+      setClauses.push(`trailer_id = $${values.length}::uuid`);
+    }
+    if (presentCols.has("recover_from_driver")) {
+      values.push(input.recoverFromDriver ?? false);
+      setClauses.push(`recover_from_driver = $${values.length}::boolean`);
+    }
+    if (presentCols.has("recover_deduction_type")) {
+      values.push(input.recoverFromDriver ? input.recoverDeductionType?.trim() ?? null : null);
+      setClauses.push(`recover_deduction_type = $${values.length}::text`);
+    }
+    if (setClauses.length > 0) {
+      await client.query(
+        `UPDATE accounting.bills SET ${setClauses.join(", ")} WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+        values
+      );
+    }
+  }
 
-    // FAIL-F2 / ACCT-F262 — record that a bill is TEST data. `accounting.bills.is_sample_data` exists,
-    // defaults false, and NOTHING wrote it, so every bill the app created was indistinguishable from
-    // real money — and the GL inherited it, because posting-engine reads the source row's flag
-    // (ACCT-F212). An untagged bill produces an untagged journal entry.
-    //
-    // The proof is in the data operators typed. Bill `SAMPLE-CASCADE-1633` — the word SAMPLE is in its
-    // BILL NUMBER — was stored 2026-08-08 21:37 with is_sample_data=false, and its posting JE
-    // `bc094647` is false too. When someone puts SAMPLE in the only field that will accept it, the
-    // structured flag is missing, not declined.
-    //
-    // UPDATE-in-transaction, following ACCT-F186 immediately below and for the identical reason: there
-    // are FOUR INSERT variants above and the lockstep column/values/placeholder pattern is a documented
-    // landmine here. One UPDATE is one place to be right instead of four places to drift. Same client,
-    // so it commits or rolls back with the insert.
-    //
-    // Only an explicit `true` writes. Omitting it leaves the column at its false default, so no
-    // existing caller changes behaviour and nothing is retroactively re-classified.
-    if (insertedId && input.isSampleData === true) {
+  // ACCT-F5042 — stamp legal_matter_id when present (UPDATE-after-INSERT; avoid 4-way INSERT explosion).
+  if (insertedId && input.legalMatterId) {
+    const legalCol = await client.query(
+      `SELECT 1 FROM information_schema.columns
+        WHERE table_schema='accounting' AND table_name='bills' AND column_name='legal_matter_id'`
+    );
+    if ((legalCol.rowCount ?? 0) > 0) {
       await client.query(
         `
           UPDATE accounting.bills
-             SET is_sample_data = true
+             SET legal_matter_id = $3::uuid
            WHERE id = $1::uuid
              AND operating_company_id = $2::uuid
         `,
-        [insertedId, input.operatingCompanyId]
+        [insertedId, input.operatingCompanyId, input.legalMatterId]
       );
     }
+  }
 
-    // GO-18 — stamp driver_id/trailer_id when present (UPDATE-after-INSERT; avoid exploding the
-    // already-4-way header INSERT). Column-gated the same way legal_matter_id is below, so a DB that
-    // predates migration 202613360001 still creates the bill successfully (columns just stay unset).
-    if (insertedId && (input.driverId || input.trailerId || input.recoverFromDriver || input.recoverDeductionType)) {
-      const colsRes = await client.query<{ column_name: string }>(
-        `SELECT column_name FROM information_schema.columns
-          WHERE table_schema='accounting' AND table_name='bills'
-            AND column_name IN ('driver_id','trailer_id','recover_from_driver','recover_deduction_type')`
-      );
-      const presentCols = new Set(colsRes.rows.map((r) => r.column_name));
-      const setClauses: string[] = [];
-      const values: unknown[] = [insertedId, input.operatingCompanyId];
-      if (input.driverId && presentCols.has("driver_id")) {
-        values.push(input.driverId);
-        setClauses.push(`driver_id = $${values.length}::uuid`);
-      }
-      if (input.trailerId && presentCols.has("trailer_id")) {
-        values.push(input.trailerId);
-        setClauses.push(`trailer_id = $${values.length}::uuid`);
-      }
-      if (presentCols.has("recover_from_driver")) {
-        values.push(input.recoverFromDriver ?? false);
-        setClauses.push(`recover_from_driver = $${values.length}::boolean`);
-      }
-      if (presentCols.has("recover_deduction_type")) {
-        values.push(input.recoverFromDriver ? input.recoverDeductionType?.trim() ?? null : null);
-        setClauses.push(`recover_deduction_type = $${values.length}::text`);
-      }
-      if (setClauses.length > 0) {
-        await client.query(
-          `UPDATE accounting.bills SET ${setClauses.join(", ")} WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-          values
-        );
-      }
-    }
+  if (insertedId && (input.leasePeriodStart || input.leaseContractId || input.leaseBillKey)) {
+    await client.query(
+      `UPDATE accounting.bills SET lease_period_start = $3::date, lease_contract_id = $4::uuid, lease_bill_key = $5
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+      [insertedId, input.operatingCompanyId, input.leasePeriodStart ?? null, input.leaseContractId ?? null, input.leaseBillKey ?? null]
+    );
+  }
 
-    // ACCT-F5042 — stamp legal_matter_id when present (UPDATE-after-INSERT; avoid 4-way INSERT explosion).
-    if (insertedId && input.legalMatterId) {
-      const legalCol = await client.query(
-        `SELECT 1 FROM information_schema.columns
-          WHERE table_schema='accounting' AND table_name='bills' AND column_name='legal_matter_id'`
-      );
-      if ((legalCol.rowCount ?? 0) > 0) {
-        await client.query(
+  if (insertedId) {
+    const billDisplayId = await resolveBillDisplayId(
+      client,
+      input.operatingCompanyId,
+      new Date(input.billDate),
+      billNumber
+    );
+    const stamped = await client.query<BillRow>(
+      `
+        UPDATE accounting.bills
+           SET display_id = $3::text
+         WHERE id = $1::uuid
+           AND operating_company_id = $2::uuid
+           AND display_id IS NULL
+           AND qbo_bill_id IS NULL
+        RETURNING *
+      `,
+      [insertedId, input.operatingCompanyId, billDisplayId]
+    );
+    if (stamped.rows[0]) res.rows[0] = stamped.rows[0];
+  }
+
+  const created = normalizeBill(res.rows[0]);
+
+  if (linesProvided && input.lines) {
+    let seq = 0;
+    for (const line of input.lines) {
+      seq += 1;
+      const accountId = line.accountId?.trim() || null;
+      if (accountId) {
+        // Entity-scope the GL account — never accept a cross-company catalogs.accounts id.
+        const acct = await client.query<{ id: string }>(
           `
-            UPDATE accounting.bills
-               SET legal_matter_id = $3::uuid
-             WHERE id = $1::uuid
-               AND operating_company_id = $2::uuid
+            SELECT id::text
+            FROM catalogs.accounts
+            WHERE id = $1::uuid
+              AND operating_company_id = $2::uuid
+            LIMIT 1
           `,
-          [insertedId, input.operatingCompanyId, input.legalMatterId]
+          [accountId, input.operatingCompanyId]
         );
+        if (!acct.rows[0]) throw new Error("bill_line_account_not_in_company");
       }
-    }
+      const amountDollars = line.amountCents / 100;
+      const section = line.section === "A" || line.section === "B" ? line.section : "A";
 
-    if (insertedId && (input.leasePeriodStart || input.leaseContractId || input.leaseBillKey)) {
-      await client.query(
-        `UPDATE accounting.bills SET lease_period_start = $3::date, lease_contract_id = $4::uuid, lease_bill_key = $5
-          WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-        [insertedId, input.operatingCompanyId, input.leasePeriodStart ?? null, input.leaseContractId ?? null, input.leaseBillKey ?? null]
-      );
-    }
+      // GO-18 — paired with load_id + load_exemption_reason in the SAME insert, same reason
+      // expenses.routes.ts pairs them: writing line_category alone would turn a
+      // silently-succeeding no-load bill line into a raw trigger exception with no escape hatch.
+      const lineCategory = await resolveLineCategoryForLoadRequirement(client, line.expenseCategoryUuid);
 
-    if (insertedId) {
-      const billDisplayId = await resolveBillDisplayId(
-        client,
-        input.operatingCompanyId,
-        new Date(input.billDate),
-        billNumber
-      );
-      const stamped = await client.query<BillRow>(
-        `
-          UPDATE accounting.bills
-             SET display_id = $3::text
-           WHERE id = $1::uuid
-             AND operating_company_id = $2::uuid
-             AND display_id IS NULL
-             AND qbo_bill_id IS NULL
-          RETURNING *
-        `,
-        [insertedId, input.operatingCompanyId, billDisplayId]
-      );
-      if (stamped.rows[0]) res.rows[0] = stamped.rows[0];
-    }
-
-    const created = normalizeBill(res.rows[0]);
-
-    if (linesProvided && input.lines) {
-      let seq = 0;
-      for (const line of input.lines) {
-        seq += 1;
-        const accountId = line.accountId?.trim() || null;
-        if (accountId) {
-          // Entity-scope the GL account — never accept a cross-company catalogs.accounts id.
-          const acct = await client.query<{ id: string }>(
-            `
-              SELECT id::text
-              FROM catalogs.accounts
-              WHERE id = $1::uuid
-                AND operating_company_id = $2::uuid
-              LIMIT 1
-            `,
-            [accountId, input.operatingCompanyId]
-          );
-          if (!acct.rows[0]) throw new Error("bill_line_account_not_in_company");
+      // Round 92/94 item lines remainder — accounting.bill_lines.item_id/quantity/rate_cents/
+      // unit_of_measure (migration 202614271200). bill_lines_item_qty_rate_amount_check demands
+      // all four set or all four null, and round(quantity * rate_cents) = round(amount * 100) —
+      // fail closed here with a named error instead of letting a mismatch surface as a raw
+      // Postgres constraint violation.
+      const itemFields = [line.itemId, line.quantity, line.rateCents, line.unitOfMeasure];
+      const itemFieldsSetCount = itemFields.filter((v) => v !== undefined && v !== null).length;
+      let itemId: string | null = null;
+      let quantity: number | null = null;
+      let rateCents: number | null = null;
+      let unitOfMeasure: string | null = null;
+      if (itemFieldsSetCount > 0) {
+        if (itemFieldsSetCount < 4) throw new Error("bill_line_item_qty_rate_incomplete");
+        itemId = String(line.itemId);
+        quantity = Number(line.quantity);
+        rateCents = Number(line.rateCents);
+        unitOfMeasure = String(line.unitOfMeasure);
+        if (!(quantity > 0)) throw new Error("bill_line_quantity_invalid");
+        if (Math.round(quantity * rateCents) !== Math.round(amountDollars * 100)) {
+          throw new Error("bill_line_item_qty_rate_amount_mismatch");
         }
-        const amountDollars = line.amountCents / 100;
-        const section = line.section === "A" || line.section === "B" ? line.section : "A";
-
-        // GO-18 — paired with load_id + load_exemption_reason in the SAME insert, same reason
-        // expenses.routes.ts pairs them: writing line_category alone would turn a
-        // silently-succeeding no-load bill line into a raw trigger exception with no escape hatch.
-        const lineCategory = await resolveLineCategoryForLoadRequirement(client, line.expenseCategoryUuid);
-
-        // Round 92/94 item lines remainder — accounting.bill_lines.item_id/quantity/rate_cents/
-        // unit_of_measure (migration 202614271200). bill_lines_item_qty_rate_amount_check demands
-        // all four set or all four null, and round(quantity * rate_cents) = round(amount * 100) —
-        // fail closed here with a named error instead of letting a mismatch surface as a raw
-        // Postgres constraint violation.
-        const itemFields = [line.itemId, line.quantity, line.rateCents, line.unitOfMeasure];
-        const itemFieldsSetCount = itemFields.filter((v) => v !== undefined && v !== null).length;
-        let itemId: string | null = null;
-        let quantity: number | null = null;
-        let rateCents: number | null = null;
-        let unitOfMeasure: string | null = null;
-        if (itemFieldsSetCount > 0) {
-          if (itemFieldsSetCount < 4) throw new Error("bill_line_item_qty_rate_incomplete");
-          itemId = String(line.itemId);
-          quantity = Number(line.quantity);
-          rateCents = Number(line.rateCents);
-          unitOfMeasure = String(line.unitOfMeasure);
-          if (!(quantity > 0)) throw new Error("bill_line_quantity_invalid");
-          if (Math.round(quantity * rateCents) !== Math.round(amountDollars * 100)) {
-            throw new Error("bill_line_item_qty_rate_amount_mismatch");
-          }
-          // Entity-scope the item — same discipline as accountId above (never accept a
-          // cross-company catalogs.items id).
-          const item = await client.query<{ id: string }>(
-            `
-              SELECT id::text
-              FROM catalogs.items
-              WHERE id = $1::uuid
-                AND operating_company_id = $2::uuid
-              LIMIT 1
-            `,
-            [itemId, input.operatingCompanyId]
-          );
-          if (!item.rows[0]) throw new Error("bill_line_item_not_in_company");
-        }
-
-        // ROUND 316 — a per-line Class is entity-scoped like accountId / itemId (never a cross-company class).
-        const lineClassId = line.classId?.trim() || null;
-        if (lineClassId) {
-          const cls = await client.query<{ id: string }>(
-            `SELECT id::text FROM catalogs.classes WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
-            [lineClassId, input.operatingCompanyId]
-          );
-          if (!cls.rows[0]) throw new Error("bill_line_class_not_in_company");
-        }
-
-        await client.query(
+        // Entity-scope the item — same discipline as accountId above (never accept a
+        // cross-company catalogs.items id).
+        const item = await client.query<{ id: string }>(
           `
-            INSERT INTO accounting.bill_lines (
-              bill_id,
-              line_sequence,
-              amount,
-              description,
-              section,
-              expense_category_uuid,
-              service_item_uuid,
-              category_kind,
-              category_code,
-              account_id,
-              load_id,
-              line_category,
-              load_exemption_reason,
-              item_id,
-              quantity,
-              rate_cents,
-              unit_of_measure,
-              class_id,
-              unit_id,
-              equipment_id,
-              lease_contract_id,
-              lease_asset_line_id,
-              operating_company_id
-            )
-            VALUES (
-              $1::uuid, $2, $3, $4, $5,
-              $6::uuid, $7::uuid, $8, $9, $10::uuid, $11::uuid, $12, $13,
-              $14::uuid, $15, $16, $17,
-              $18::uuid, $19::uuid, $20::uuid, $21::uuid, $22::uuid, $23::uuid
-            )
+            SELECT id::text
+            FROM catalogs.items
+            WHERE id = $1::uuid
+              AND operating_company_id = $2::uuid
+            LIMIT 1
           `,
-          [
-            created.id,
-            seq,
-            amountDollars,
-            line.description ?? null,
-            section,
-            // ACCT-F194: NEVER fall back to accountId here. This column is
-            // expense_category_uuid and must hold a catalogs.expense_categories id; accountId is a
-            // catalogs.accounts id. The old `?? accountId` wrote a GL ACCOUNT into the CATEGORY
-            // column whenever a caller supplied no category, and the poster resolves categories via
-            // expense_category_account_map KEYED ON A CATEGORY UUID — so an account id there
-            // resolves to nothing and the expense is SILENTLY UNCATEGORIZED. Nothing errored.
-            //
-            // Measured on prod: 4 of the 15 populated rows were account ids, and THREE were written
-            // on 2026-08-07 — the board card had it as a single legacy row from 07-22. NULL is the
-            // honest value for "no category supplied"; inventing one from an account is what made
-            // the defect invisible.
-            line.expenseCategoryUuid ?? null,
-            line.serviceItemUuid ?? null,
-            line.categoryKind ?? null,
-            line.categoryCode ?? null,
-            accountId,
-            line.loadId ?? null,
-            lineCategory,
-            line.loadExemptionReason ?? null,
-            itemId,
-            quantity,
-            rateCents,
-            unitOfMeasure,
-            lineClassId,
-            line.unitId ?? null,
-            line.equipmentId ?? null,
-            line.leaseContractId ?? null,
-            line.leaseAssetLineId ?? null,
-            input.operatingCompanyId,
-          ]
+          [itemId, input.operatingCompanyId]
         );
+        if (!item.rows[0]) throw new Error("bill_line_item_not_in_company");
       }
-    } else if (input.coaAccountId) {
-      // LV-BILL-HEADER-ONLY-UNPOSTABLE / P1-BILL-GL (2026-08-16) — a caller that omits `lines` but
-      // supplies `coaAccountId` (its only way to say "post the whole amount to this one account")
-      // previously left `accounting.bill_lines` completely empty, so the GL poster — which reads
-      // `bill_lines`, never `coaAccountId` — could never resolve the bill. Synthesize the single
-      // line the caller's intent already implied, entity-scoped exactly like the multi-line path.
-      const acct = await client.query<{ id: string }>(
-        `
-          SELECT id::text
-          FROM catalogs.accounts
-          WHERE id = $1::uuid
-            AND operating_company_id = $2::uuid
-          LIMIT 1
-        `,
-        [input.coaAccountId, input.operatingCompanyId]
-      );
-      if (!acct.rows[0]) throw new Error("bill_line_account_not_in_company");
-      // ACCT-F5452: load_id is named explicitly, not omitted. This header-only path (caller supplied
-      // coaAccountId, no per-line lines[]) has no per-line loadId to draw from — CreateBillInput has
-      // no BILL-level loadId either, only CreateBillLineInput's per-line one used by the lines[]
-      // branch above — so NULL here is the honest value for "this synthesized line carries no load
-      // association," not a silently-dropped column. Naming it lets a report tell "never wired" from
-      // "wired, no load" for this bill-creation path.
+
+      // ROUND 316 — a per-line Class is entity-scoped like accountId / itemId (never a cross-company class).
+      const lineClassId = line.classId?.trim() || null;
+      if (lineClassId) {
+        const cls = await client.query<{ id: string }>(
+          `SELECT id::text FROM catalogs.classes WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
+          [lineClassId, input.operatingCompanyId]
+        );
+        if (!cls.rows[0]) throw new Error("bill_line_class_not_in_company");
+      }
+
       await client.query(
         `
           INSERT INTO accounting.bill_lines (
-            bill_id, line_sequence, amount, description, section, account_id, load_id
+            bill_id,
+            line_sequence,
+            amount,
+            description,
+            section,
+            expense_category_uuid,
+            service_item_uuid,
+            category_kind,
+            category_code,
+            account_id,
+            load_id,
+            line_category,
+            load_exemption_reason,
+            item_id,
+            quantity,
+            rate_cents,
+            unit_of_measure,
+            class_id,
+            unit_id,
+            equipment_id,
+            lease_contract_id,
+            lease_asset_line_id,
+            operating_company_id
           )
-          VALUES ($1::uuid, 1, $2, $3, 'A', $4::uuid, NULL)
+          VALUES (
+            $1::uuid, $2, $3, $4, $5,
+            $6::uuid, $7::uuid, $8, $9, $10::uuid, $11::uuid, $12, $13,
+            $14::uuid, $15, $16, $17,
+            $18::uuid, $19::uuid, $20::uuid, $21::uuid, $22::uuid, $23::uuid
+          )
         `,
-        [created.id, input.amountCents / 100, input.memo ?? null, input.coaAccountId]
+        [
+          created.id,
+          seq,
+          amountDollars,
+          line.description ?? null,
+          section,
+          // ACCT-F194: NEVER fall back to accountId here. This column is
+          // expense_category_uuid and must hold a catalogs.expense_categories id; accountId is a
+          // catalogs.accounts id. The old `?? accountId` wrote a GL ACCOUNT into the CATEGORY
+          // column whenever a caller supplied no category, and the poster resolves categories via
+          // expense_category_account_map KEYED ON A CATEGORY UUID — so an account id there
+          // resolves to nothing and the expense is SILENTLY UNCATEGORIZED. Nothing errored.
+          //
+          // Measured on prod: 4 of the 15 populated rows were account ids, and THREE were written
+          // on 2026-08-07 — the board card had it as a single legacy row from 07-22. NULL is the
+          // honest value for "no category supplied"; inventing one from an account is what made
+          // the defect invisible.
+          line.expenseCategoryUuid ?? null,
+          line.serviceItemUuid ?? null,
+          line.categoryKind ?? null,
+          line.categoryCode ?? null,
+          accountId,
+          line.loadId ?? null,
+          lineCategory,
+          line.loadExemptionReason ?? null,
+          itemId,
+          quantity,
+          rateCents,
+          unitOfMeasure,
+          lineClassId,
+          line.unitId ?? null,
+          line.equipmentId ?? null,
+          line.leaseContractId ?? null,
+          line.leaseAssetLineId ?? null,
+          input.operatingCompanyId,
+        ]
       );
     }
-
-    // Option B inc 2: link create-time draft attachments (vendor invoice scans) to the real bill id,
-    // atomically inside this same transaction so they can't be orphaned.
-    await reassignDraftAttachments(client, {
-      operatingCompanyId: input.operatingCompanyId,
-      entityType: "bill",
-      draftId: input.attachmentDraftId,
-      newId: created.id,
-    });
-    await appendCrudAudit(
-      client,
-      userId,
-      "accounting.bill.created",
-      {
-        resource_type: "accounting.bills",
-        resource_id: created.id,
-        operating_company_id: input.operatingCompanyId,
-        vendor_id: input.vendorId,
-        amount_cents: input.amountCents,
-        bill_line_count: linesProvided ? input.lines!.length : 0,
-      },
-      "info",
-      "P5-D2-BILL-PAYMENT"
+  } else if (input.coaAccountId) {
+    // LV-BILL-HEADER-ONLY-UNPOSTABLE / P1-BILL-GL (2026-08-16) — a caller that omits `lines` but
+    // supplies `coaAccountId` (its only way to say "post the whole amount to this one account")
+    // previously left `accounting.bill_lines` completely empty, so the GL poster — which reads
+    // `bill_lines`, never `coaAccountId` — could never resolve the bill. Synthesize the single
+    // line the caller's intent already implied, entity-scoped exactly like the multi-line path.
+    const acct = await client.query<{ id: string }>(
+      `
+        SELECT id::text
+        FROM catalogs.accounts
+        WHERE id = $1::uuid
+          AND operating_company_id = $2::uuid
+        LIMIT 1
+      `,
+      [input.coaAccountId, input.operatingCompanyId]
     );
-    // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: this used to fire in the ROUTE
-    // handler, in a SEPARATE withCompanyScope transaction opened AFTER this one had already
-    // committed, with a bare .catch(warn) — a real emit failure was silently swallowed (the bill
-    // exists, the audit trail doesn't). Moved into the bill's own creation transaction, awaited,
-    // so the write and its spine event can never diverge. The route handler no longer emits this.
-    await emitAccountingSpineEvent(client, {
-      operating_company_id: input.operatingCompanyId,
-      actor_user_id: userId,
-      event_type: "bill.created",
-      entity_id: created.id,
-      entity_type: "bill",
-      source_table: "accounting.bills",
-    });
-    return created;
+    if (!acct.rows[0]) throw new Error("bill_line_account_not_in_company");
+    // ACCT-F5452: load_id is named explicitly, not omitted. This header-only path (caller supplied
+    // coaAccountId, no per-line lines[]) has no per-line loadId to draw from — CreateBillInput has
+    // no BILL-level loadId either, only CreateBillLineInput's per-line one used by the lines[]
+    // branch above — so NULL here is the honest value for "this synthesized line carries no load
+    // association," not a silently-dropped column. Naming it lets a report tell "never wired" from
+    // "wired, no load" for this bill-creation path.
+    await client.query(
+      `
+        INSERT INTO accounting.bill_lines (
+          bill_id, line_sequence, amount, description, section, account_id, load_id
+        )
+        VALUES ($1::uuid, 1, $2, $3, 'A', $4::uuid, NULL)
+      `,
+      [created.id, input.amountCents / 100, input.memo ?? null, input.coaAccountId]
+    );
+  }
+
+  // Option B inc 2: link create-time draft attachments (vendor invoice scans) to the real bill id,
+  // atomically inside this same transaction so they can't be orphaned.
+  await reassignDraftAttachments(client, {
+    operatingCompanyId: input.operatingCompanyId,
+    entityType: "bill",
+    draftId: input.attachmentDraftId,
+    newId: created.id,
   });
+  await appendCrudAudit(
+    client,
+    userId,
+    "accounting.bill.created",
+    {
+      resource_type: "accounting.bills",
+      resource_id: created.id,
+      operating_company_id: input.operatingCompanyId,
+      vendor_id: input.vendorId,
+      amount_cents: input.amountCents,
+      bill_line_count: linesProvided ? input.lines!.length : 0,
+    },
+    "info",
+    "P5-D2-BILL-PAYMENT"
+  );
+  // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: this used to fire in the ROUTE
+  // handler, in a SEPARATE withCompanyScope transaction opened AFTER this one had already
+  // committed, with a bare .catch(warn) — a real emit failure was silently swallowed (the bill
+  // exists, the audit trail doesn't). Moved into the bill's own creation transaction, awaited,
+  // so the write and its spine event can never diverge. The route handler no longer emits this.
+  await emitAccountingSpineEvent(client, {
+    operating_company_id: input.operatingCompanyId,
+    actor_user_id: userId,
+    event_type: "bill.created",
+    entity_id: created.id,
+    entity_type: "bill",
+    source_table: "accounting.bills",
+  });
+  return created;
+}
+
+/**
+ * ROUND 326 (CC-1) — createBill on the caller's transaction (the single settlement close writes every per-load A/P
+ * bill, its JE and its bill payments atomically). Same checks and row writes as createBill; the caller posts the GL
+ * (postSourceTransactionInClientTx) — this variant never auto-posts in a second transaction.
+ */
+export async function createBillInClientTx(client: pg.PoolClient, input: CreateBillInput, userId: string) {
+  validateCreateBillInput(input);
+  const bill = await createBillRowInClientTx(client, input, userId);
+  await enqueueTmsBillPushRequested(client, { operating_company_id: input.operatingCompanyId, bill_id: bill.id, operation: "create" });
+  return bill;
+}
+
+export async function createBill(input: CreateBillInput, userId: string) {
+  validateCreateBillInput(input);
+  const bill = await withCurrentUser(userId, (client) => createBillRowInClientTx(client, input, userId));
 
   await enqueueSyncJob(
     input.operatingCompanyId,
@@ -3099,33 +3128,17 @@ export async function createBill(input: CreateBillInput, userId: string) {
   return { ...bill, gl_posting: glPosting };
 }
 
-export async function payBill(input: PayBillInput, userId: string) {
-  if (input.amountCents <= 0) throw new Error("bill_payment_amount_must_be_positive");
-  if (input.paymentMethod === "check" && !input.checkNumber?.trim()) {
-    throw new Error("check_number_required");
-  }
-
-  // P1-BILLPAY-GL: resolve BILL_PAYMENT_GL_POSTING_ENABLED for the entity. When ON, the payment records
-  // its balanced DR ap_control / CR bank JE ATOMICALLY in the same transaction as the bank-cache decrement.
-  // When OFF (the current prod default for every entity), the payment + bank decrement still happen exactly
-  // as before — NO regression to bill-paying — but the GL leg is skipped and surfaced honestly as
-  // gl_posting:"blocked_flag_off" (no silent success, matching P1-BILL-GL / no-silent-noop-posting). Flag
-  // flips per entity are the owner's, after the entity's ap_control + bank-GL-account prerequisites are met.
-  const glPostingEnabled = await isBillPaymentGlPostingEnabled(input.operatingCompanyId, userId);
-
-  // PETTY_CASH_CHECK_TRANSFER (owner request 2026-09-06): when a check is generated and the feature
-  // flag is ON for this entity, the check amount posts a transfer FROM the source bank account TO the
-  // entity's petty cash account using the existing transfer machinery (insertTransferInClient). The
-  // transfer handles BOTH balance legs (source −, petty cash +), so the normal source-bank decrement
-  // below is SKIPPED when a petty cash transfer fires — avoiding a double-decrement. When the flag is
-  // OFF (default) or no petty cash account exists, check payments work exactly as before.
-  const pettyCashTransferEnabled = await withCurrentUser(userId, async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
-    return isEnabled(client, "PETTY_CASH_CHECK_TRANSFER_ENABLED", { operating_company_id: input.operatingCompanyId, user_uuid: userId });
-  });
-  let pettyCashTransferId: string | null = null;
-
-  const payment = await withCurrentUser(userId, async (client) => {
+/**
+ * ROUND 326 (CC-1) — the bill payment row, bank decrement and (flag ON) its GL leg, on the CALLER's client. Shared by
+ * payBill and payBillInClientTx so the single settlement close pays every per-load bill in its own transaction.
+ */
+async function payBillRowInClientTx(
+  client: pg.PoolClient,
+  input: PayBillInput,
+  userId: string,
+  flags: { glPostingEnabled: boolean; pettyCashTransferEnabled: boolean },
+  state: { pettyCashTransferId: string | null }
+) {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
     const billRes = await client.query<BillRow>(
       `
@@ -3174,9 +3187,10 @@ export async function payBill(input: PayBillInput, userId: string) {
           created_by_user_id,
           created_at,
           updated_at,
+          settlement_deduction_noncash,
           is_sample_data
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'posted',$12,now(),now(),
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'posted',$12,now(),now(),$13,
           -- ACCT-F265 — a bill payment INHERITS its bill's sample flag rather than asking the caller.
           -- accounting.bill_payments.is_sample_data exists on 6,551 rows and no writer set it, so paying
           -- a SAMPLE bill produced a REAL payment and (via posting-engine, which reads the source row)
@@ -3202,6 +3216,7 @@ export async function payBill(input: PayBillInput, userId: string) {
         input.referenceNumber ?? null,
         input.memo ?? null,
         userId,
+        input.settlementDeductionNoncash === true,
       ]
     );
     if ((paymentRes.rowCount ?? 0) === 0 || !paymentRes.rows[0]) {
@@ -3235,7 +3250,7 @@ export async function payBill(input: PayBillInput, userId: string) {
       // check payment, create a transfer (source → petty cash) instead of just decrementing the source.
       // The transfer handles BOTH legs (source −, petty cash +), so we skip the direct decrement.
       let pettyCashAccountId: string | null = null;
-      if (pettyCashTransferEnabled && input.paymentMethod === "check") {
+      if (flags.pettyCashTransferEnabled && input.paymentMethod === "check") {
         const pcRes = await client.query<{ id: string }>(
           `SELECT id FROM banking.bank_accounts WHERE operating_company_id = $1::uuid AND is_petty_cash = true AND is_active = true AND deactivated_at IS NULL LIMIT 1`,
           [input.operatingCompanyId]
@@ -3262,7 +3277,7 @@ export async function payBill(input: PayBillInput, userId: string) {
           referenceNumber: input.checkNumber,
         };
         const transferRow = await insertTransferInClient(client, transferInput, userId);
-        pettyCashTransferId = transferRow.id;
+        state.pettyCashTransferId = transferRow.id;
       } else {
         // No petty cash transfer — normal path: decrement the source bank account directly.
         await updateBankBalance(client, input.operatingCompanyId, input.fromBankAccountId, -Math.abs(input.amountCents));
@@ -3297,9 +3312,10 @@ export async function payBill(input: PayBillInput, userId: string) {
     // insert + bill update + bank decrement together — bank and GL can never diverge. Idempotent (one
     // batch per bill_payment). When OFF, the payment + bank decrement above stand as-is (no regression)
     // and no JE is written.
-    // Outer `if (glPostingEnabled)` is required by verify-bill-payment-posts-gl (flag-OFF must still pay).
-    if (glPostingEnabled) {
-      if (!isQboBill) {
+    // Outer `if (flags.glPostingEnabled)` is required by verify-bill-payment-posts-gl (flag-OFF must still pay).
+    if (flags.glPostingEnabled) {
+      // ROUND 326: a non-cash settlement application's GL is the settlement close's application JE, never a cash leg.
+      if (!isQboBill && input.settlementDeductionNoncash !== true) {
         await postSourceTransactionInClientTx(
           client,
           {
@@ -3330,11 +3346,52 @@ export async function payBill(input: PayBillInput, userId: string) {
       amount_cents: Number(paymentRes.rows[0].amount_cents ?? Math.round(Number(paymentRes.rows[0].amount ?? 0) * 100)),
       gl_posting: isQboBill
         ? ({ posted: false, reason: "qbo_parallel_books" } as const)
-        : glPostingEnabled
+        : flags.glPostingEnabled
           ? ({ posted: true } as const)
           : ({ posted: false, reason: "blocked_flag_off" } as const),
     };
+}
+
+/** ROUND 326 (CC-1) — payBill on the caller's transaction (same checks, same writes; flags resolved first). */
+export async function payBillInClientTx(client: pg.PoolClient, input: PayBillInput, userId: string) {
+  if (input.amountCents <= 0) throw new Error("bill_payment_amount_must_be_positive");
+  if (input.paymentMethod === "check" && !input.checkNumber?.trim()) throw new Error("check_number_required");
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
+  const glPostingEnabled = await isBillPaymentGlPostingEnabled(input.operatingCompanyId, userId);
+  const pettyCashTransferEnabled = await isEnabled(client, "PETTY_CASH_CHECK_TRANSFER_ENABLED", { operating_company_id: input.operatingCompanyId, user_uuid: userId });
+  const state = { pettyCashTransferId: null as string | null };
+  const payment = await payBillRowInClientTx(client, input, userId, { glPostingEnabled, pettyCashTransferEnabled }, state);
+  await enqueueTmsBillPushRequested(client, { operating_company_id: input.operatingCompanyId, bill_id: input.billId, operation: "update" });
+  return { ...payment, petty_cash_transfer_id: state.pettyCashTransferId };
+}
+
+export async function payBill(input: PayBillInput, userId: string) {
+  if (input.amountCents <= 0) throw new Error("bill_payment_amount_must_be_positive");
+  if (input.paymentMethod === "check" && !input.checkNumber?.trim()) {
+    throw new Error("check_number_required");
+  }
+
+  // P1-BILLPAY-GL: resolve BILL_PAYMENT_GL_POSTING_ENABLED for the entity. When ON, the payment records
+  // its balanced DR ap_control / CR bank JE ATOMICALLY in the same transaction as the bank-cache decrement.
+  // When OFF (the current prod default for every entity), the payment + bank decrement still happen exactly
+  // as before — NO regression to bill-paying — but the GL leg is skipped and surfaced honestly as
+  // gl_posting:"blocked_flag_off" (no silent success, matching P1-BILL-GL / no-silent-noop-posting). Flag
+  // flips per entity are the owner's, after the entity's ap_control + bank-GL-account prerequisites are met.
+  const glPostingEnabled = await isBillPaymentGlPostingEnabled(input.operatingCompanyId, userId);
+
+  // PETTY_CASH_CHECK_TRANSFER (owner request 2026-09-06): when a check is generated and the feature
+  // flag is ON for this entity, the check amount posts a transfer FROM the source bank account TO the
+  // entity's petty cash account using the existing transfer machinery (insertTransferInClient). The
+  // transfer handles BOTH balance legs (source −, petty cash +), so the normal source-bank decrement
+  // below is SKIPPED when a petty cash transfer fires — avoiding a double-decrement. When the flag is
+  // OFF (default) or no petty cash account exists, check payments work exactly as before.
+  const pettyCashTransferEnabled = await withCurrentUser(userId, async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
+    return isEnabled(client, "PETTY_CASH_CHECK_TRANSFER_ENABLED", { operating_company_id: input.operatingCompanyId, user_uuid: userId });
   });
+  const state = { pettyCashTransferId: null as string | null };
+
+  const payment = await withCurrentUser(userId, (client) => payBillRowInClientTx(client, input, userId, { glPostingEnabled, pettyCashTransferEnabled }, state));
 
   await enqueueSyncJob(
     input.operatingCompanyId,
@@ -3358,7 +3415,7 @@ export async function payBill(input: PayBillInput, userId: string) {
     });
   });
 
-  return { ...payment, petty_cash_transfer_id: pettyCashTransferId };
+  return { ...payment, petty_cash_transfer_id: state.pettyCashTransferId };
 }
 
 // BANK-TXN-LINKED-BILL-VOID-NO-CASCADE (ACCT-F5673) — a bill created FROM a bank transaction

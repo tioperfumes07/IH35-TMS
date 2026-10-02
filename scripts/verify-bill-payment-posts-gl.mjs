@@ -40,7 +40,15 @@ function payBillBody(src) {
   if (start < 0) return "";
   const rest = src.slice(start + 8);
   const next = rest.search(/\nexport\s+(async\s+)?function\s/);
-  return next < 0 ? rest : rest.slice(0, next);
+  const own = next < 0 ? rest : rest.slice(0, next);
+  // ROUND 326 (CC-1): payBill delegates its transactional body to payBillRowInClientTx (shared with
+  // payBillInClientTx); the gate + atomic post live there, so the contract is checked across both.
+  if (!/payBillRowInClientTx\(/.test(own)) return own;
+  const rs = src.search(/\nasync\s+function\s+payBillRowInClientTx\s*\(/);
+  if (rs < 0) return own;
+  const rrest = src.slice(rs + 1);
+  const rnext = rrest.slice(1).search(/\n(?:export\s+)?(?:async\s+)?function\s/);
+  return own + "\n" + (rnext < 0 ? rrest : rrest.slice(0, rnext + 1));
 }
 
 /**
@@ -146,7 +154,7 @@ export function check() {
     }
     // The JE must be conditional on the flag — an UNCONDITIONAL post would 409/error every payment on the
     // OFF entities (GUARD 2026-07-11: BILL_PAYMENT_GL_POSTING is OFF for all entities in prod).
-    if (/postSourceTransactionInClientTx/.test(body) && !/if\s*\(\s*glPostingEnabled\s*(?:&&[^)]*)?\)/.test(body)) {
+    if (/postSourceTransactionInClientTx/.test(body) && !/if\s*\(\s*(?:flags\.)?glPostingEnabled\s*(?:&&[^)]*)?\)/.test(body)) {
       failures.push(`${w.label}: must gate the JE post behind if(glPostingEnabled) so flag-OFF entities keep paying bills (no company-wide outage)`);
     }
   }
