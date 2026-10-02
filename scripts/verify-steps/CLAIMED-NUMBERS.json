@@ -9975,5 +9975,11 @@
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-02",
     "purpose": "Lead ROUND 339 order 5 — no engine writes to 9000 Ask My Accountant (CC-1)."
+  },
+  "12326": {
+    "claimed_by": "CURSOR",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 342 — verify-r342-entity-code-company-scoped + verify-r342-factor-reserve-oci-field (tenant_id→OCI trap on v_factor_reserve_balance)",
+    "pr": null
   }
 }
