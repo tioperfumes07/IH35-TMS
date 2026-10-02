@@ -241,6 +241,8 @@ export async function getSplitLinesByLinkage(
         JOIN banking.bank_transactions bt ON bt.id = s.bank_transaction_id AND bt.operating_company_id = s.operating_company_id
         WHERE s.operating_company_id = $1::uuid
           AND s.voided_at IS NULL
+          -- ROUND 297 vendor audit: a split of a voided bank transaction is not live (matches by-linkage's bt.voided_at).
+          AND bt.voided_at IS NULL
           AND (
             ($2::uuid IS NOT NULL AND s.driver_id = $2::uuid)
             OR ($3::uuid IS NOT NULL AND s.unit_id = $3::uuid)

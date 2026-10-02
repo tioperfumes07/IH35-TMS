@@ -80,7 +80,7 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
         `SELECT COUNT(*)::text AS total_count
            FROM maintenance.parts_invoice_links pil
            INNER JOIN maintenance.work_orders wo ON wo.id = pil.work_order_id AND wo.operating_company_id = pil.operating_company_id
-          WHERE ${filters.join(" AND ")} AND pil.voided_at IS NULL`,
+          WHERE ${filters.join(" AND ")} AND pil.voided_at IS NULL AND wo.voided_at IS NULL`,
         values,
       );
       const res = await client.query(
@@ -114,6 +114,8 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
                                                            AND pi.operating_company_id = pil.operating_company_id
           WHERE ${filters.join(" AND ")}
             AND pil.voided_at IS NULL
+            -- ROUND 297 vendor audit: a part on a voided work order is not a live invoice line (count above matches).
+            AND wo.voided_at IS NULL
           ORDER BY pil.created_at DESC
           LIMIT $${values.length + 1}
           OFFSET $${values.length + 2}
