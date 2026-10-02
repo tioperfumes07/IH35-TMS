@@ -1219,7 +1219,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                   </button>
                 </div>
                 {billPaymentCreditCents > 0 ? (
-                  <div className="border-t border-amber-100 bg-amber-50 px-2 py-1.5 text-xs text-amber-900" data-b4-credit-hint="1">
+                  <div className="border-t border-slate-200 bg-slate-100 px-2 py-1.5 text-xs text-slate-700" data-b4-credit-hint="1">
                     Payment exceeds open balance by {formatMoneyCents(billPaymentCreditCents)}. Reduce Payment to the open
                     balance — overpayment credit is not posted on Save yet.
                   </div>
