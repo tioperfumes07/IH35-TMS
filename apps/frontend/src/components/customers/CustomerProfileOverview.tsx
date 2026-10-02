@@ -6,12 +6,12 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import type { ReactNode } from "react";
 import { apiRequest } from "../../api/client";
 import { formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { ListErrorState } from "../ListErrorState";
+import { ProfileKpi, ProfileSection } from "../profile/ProfileBlocks";
 
 type Block<T> = { value: T; empty_reason: string | null };
 type OpenLoad = { id: string; load_number: string; status: string; rate_total_cents: number; origin: string | null; destination: string | null; invoiced: boolean };
@@ -33,28 +33,8 @@ export type CustomerProfile = {
 };
 
 const money = "tabular-nums";
-
-function Section(props: { title: string; testId: string; reason: string | null; children?: ReactNode }) {
-  return (
-    <section data-testid={props.testId} className="rounded-sm border border-[#E5E7EB] bg-white">
-      <h3 className="border-b border-[#E5E7EB] px-3 py-1.5 text-center text-section-header font-bold uppercase text-[#4B5563]">{props.title}</h3>
-      <div className="p-2 text-xs text-[#0F1219]">
-        {props.reason ? <p data-testid={`${props.testId}-empty`} className="text-center text-[#6B7280]">{props.reason}</p> : null}
-        {props.children}
-      </div>
-    </section>
-  );
-}
-
-function Kpi(props: { label: string; value: string; tone?: "red" | "green" }) {
-  const tone = props.tone === "red" ? "text-red-600" : props.tone === "green" ? "text-[#16A34A]" : "text-[#0F1219]";
-  return (
-    <div className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-center">
-      <div className="text-section-header font-bold uppercase text-[#4B5563]">{props.label}</div>
-      <div className={`text-page-title font-semibold ${money} ${tone}`}>{props.value}</div>
-    </div>
-  );
-}
+const Section = ProfileSection;
+const Kpi = ProfileKpi;
 
 export function CustomerProfileOverview(props: { operatingCompanyId: string; customerId: string }) {
   const navigate = useNavigate();
