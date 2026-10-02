@@ -512,9 +512,21 @@ export async function registerCheckRoutes(app: FastifyInstance) {
                   e.vendor_uuid::text AS vendor_uuid, e.driver_uuid::text AS driver_uuid,
                   e.payee_customer_uuid::text AS payee_customer_uuid, e.unit_id::text AS unit_id,
                   e.trailer_id::text AS trailer_id, e.load_id::text AS load_id, e.status, e.voided_at, e.posting_status,
-                  e.journal_entry_id::text AS journal_entry_id, e.void_reason, e.voided_by_user_id::text AS voided_by_user_id
+                  e.journal_entry_id::text AS journal_entry_id, e.void_reason, e.voided_by_user_id::text AS voided_by_user_id,
+                  bt.id::text AS matched_bank_transaction_id,
+                  bt.transaction_date AS matched_bank_transaction_date,
+                  COALESCE(NULLIF(bt.merchant_name, ''), NULLIF(bt.description, '')) AS matched_bank_transaction_description,
+                  bt.amount_cents::text AS matched_bank_transaction_amount_cents
              FROM accounting.expenses e
              JOIN banking.bank_accounts ba ON ba.ledger_account_id = e.payment_account_uuid
+             LEFT JOIN LATERAL (
+               SELECT id, transaction_date, merchant_name, description, amount_cents
+                 FROM banking.bank_transactions
+                WHERE operating_company_id = e.operating_company_id
+                  AND matched_expense_id = e.id
+                ORDER BY transaction_date DESC, created_at DESC
+                LIMIT 1
+             ) bt ON TRUE
             WHERE e.id = $1::uuid AND e.operating_company_id = $2::uuid AND e.payment_type = 'check'
             LIMIT 1`,
           [params.data.id, q.operating_company_id]
