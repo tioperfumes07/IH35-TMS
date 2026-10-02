@@ -316,12 +316,14 @@ export function DateTimePicker({
       {!valueDate && !editingDate && !open ? (
         <span className="sr-only">{placeholder || DATETIME_PLACEHOLDER_US}</span>
       ) : null}
-      {open && (
+      {open && popoverPos && createPortal(
         <div
+          ref={popoverRef}
           role="dialog"
           aria-label="Choose date and time"
           data-date-picker-popover="open"
-          className="absolute z-50 mt-1 w-56 rounded-sm border border-gray-300 bg-white p-2 shadow-lg"
+          className="fixed z-[1000] rounded-sm border border-gray-300 bg-white p-2 shadow-lg"
+          style={{ top: popoverPos.top, left: popoverPos.left, width: popoverPos.width }}
           onKeyDown={(e) => {
             if (e.key === "Escape") {
               e.preventDefault();
