@@ -1,3 +1,13 @@
+**2026-10-02T11:21Z · BANK-F91031 CoA Description + F91030 feed chip text-xs MERGED #24086 · tip `515bef0b64`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91031 MERGED FAST-MERGE | GO
+DESCRIPTION column from catalog description; savedViewsKey coa-list-v2; F91030 `text-[10px]` → `text-xs` (UI ratchet). Also #24085 Type Feed · BAL. money-pr-local-gate PASS → squash-admin.
+NEXT: BANK-F91032 B-4 Find Bill No. · Lead Chrome · bank_transaction_splits USMCA flag HH 12–23 · clean-app APPLY AUTH · no Book Load · no seed.
+
+**2026-10-02T11:15Z · BANK-F91030 CoA Type feed badge MERGED #24085 · tip `14b15e8759`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91030 MERGED FAST-MERGE | GO
+ACCOUNT TYPE shows Feed · BAL when Plaid balance resolves (ORDERS Type +feed badge). money-pr-local-gate PASS → #24085 squash-admin.
+NEXT: BANK-F91031 Description · Lead Chrome · BANK_TX_SPLIT HH 12–23 · no Book Load · no seed.
+
 **2026-10-02T11:10Z · BANK-F91029 B-4 Clear Payment + Add all + Open MERGED #24083 · tip `bb596e6d17`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91029 MERGED FAST-MERGE | GO
 WriteCheckForm: Clear Payment button clears billToPayAmounts; Add all queues remaining open bills; Open → /accounting/bills/:id. money-pr-local-gate PASS → #24083 squash-admin.
