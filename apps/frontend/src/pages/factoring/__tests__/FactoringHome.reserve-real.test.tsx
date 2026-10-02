@@ -12,7 +12,7 @@ import { ToastProvider } from "../../../components/Toast";
 /**
  * OWNER MEGA-REPORT 2026-09-09: "Reserve" (item 10 of the real 15-item nav) was a stub. ROUND 315 B7 mounted
  * the shared reserves panel; ROUND 326.2 item 4 binds its Escrow / Cash / Total to the factoring KPI engine
- * (GL 1230 / 1235 balances — the same figures Banking shows), plus the real reserve-movement history table.
+ * (Faro Escrow / Cash Reserve role balances — the same figures Banking shows), plus the real reserve-movement history table.
  */
 
 const companyId = "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071";
@@ -62,7 +62,7 @@ describe("FactoringHomePage Reserve tab (real, owner mega-report 2026-09-09)", (
     vi.spyOn(factoringKpisApi, "getFactoringKpis").mockResolvedValue({
       range: { from: "2026-01-01", to: "2026-10-02" },
       kpis: [
-        { key: "escrow_reserve_balance", label: "Escrow reserve balance", unit: "cents", value: 5100, source: "s", gl_account: "1230", row_count: 1, empty_reason: null },
+        { key: "escrow_reserve_balance", label: "Escrow reserve balance", unit: "cents", value: 5100, source: "s", gl_account: "1236", row_count: 1, empty_reason: null },
         { key: "cash_reserve_balance", label: "Cash reserve balance", unit: "cents", value: 7800, source: "s", gl_account: "1235", row_count: 1, empty_reason: null },
         { key: "fees_accrued", label: "Factoring fees accrued", unit: "cents", value: 12900, source: "s", gl_account: "6400", row_count: 1, empty_reason: null },
         { key: "purchased_volume", label: "Purchased volume", unit: "cents", value: 860000, source: "s", gl_account: "2150", row_count: 1, empty_reason: null },

@@ -143,7 +143,7 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
         );
 
       const factorRow = factorRes.rows[0] ?? {};
-      // ROUND 326.2 item 4 — the factoring KPI engine's book reserve (GL 1230 + 1235), not views.factoring_summary.
+      // ROUND 326.2 item 4 — the factoring KPI engine's book reserve (escrow + cash reserve roles), not views.factoring_summary.
       const factoringReservesCents = (await factoringBookReserveCents(client, companyId, asOf)).total;
       const factoringAdvancesMtdCents = Math.round(num(factorRow.mtd_advanced_total) * 100);
       const chargebacksOpenCents = Math.round(num(factorRow.chargeback_balance) * 100);

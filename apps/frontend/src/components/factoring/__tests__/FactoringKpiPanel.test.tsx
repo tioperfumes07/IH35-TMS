@@ -22,7 +22,7 @@ describe("FactoringKpiPanel (ledger KPI engine)", () => {
       kpis: [
         { key: "purchased_volume", label: "Purchased volume", unit: "cents", value: 860000, source: "s", gl_account: "2150", row_count: 1, empty_reason: null },
         { key: "advance_rate", label: "Advance rate realised", unit: "percent", value: 97.91, compare_value: 97, compare_label: "Contracted", source: "s", gl_account: null, row_count: 1, empty_reason: null },
-        { key: "reserve_releases", label: "Reserve releases", unit: "cents", value: 0, source: "s", gl_account: "1230", row_count: 0, empty_reason: "Faro has released no reserve in this range." },
+        { key: "reserve_releases", label: "Reserve releases", unit: "cents", value: 0, source: "s", gl_account: "1236", row_count: 0, empty_reason: "Faro has released no reserve in this range." },
       ],
     });
     wrap(<FactoringKpiPanel companyId="co" />);

@@ -3,7 +3,7 @@
 // outstanding-liability balance from GET /api/v1/banking/factoring-virtual, not the stale
 // views.banking_account_tiles / dashboard KPI proxy that showed $0.
 // ROUND 326.2 item 3: the RESERVE no longer comes from factoring-virtual — Banking reads the factoring KPI
-// engine (getFactoringKpis, GL 1230 + 1235) so Factoring and Banking share one reserve engine.
+// engine (getFactoringKpis, escrow + cash reserve roles) so Factoring and Banking share one reserve engine.
 //
 // Self-test: node scripts/verify-banking-factoring-virtual-fe-wired.mjs --selftest
 import fs from "node:fs";

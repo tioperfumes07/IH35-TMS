@@ -150,7 +150,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
       mtd_advances_count: 0,
       mtd_advanced_total: 0,
     };
-    // ROUND 326.2 item 4 — reserve_balance (dollars) is the factoring KPI engine's book reserve (GL 1230 + 1235),
+    // ROUND 326.2 item 4 — reserve_balance (dollars) is the factoring KPI engine's book reserve (escrow + cash reserve roles),
     // never views.factoring_summary's own reserve math: every reader of this endpoint shows the one engine's figure.
     const reserve = await withCompanyScope(user.uuid, companyId, (client) =>
       factoringBookReserveCents(client, companyId, companyBusinessDate())
