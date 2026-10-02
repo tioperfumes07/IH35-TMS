@@ -1311,3 +1311,16 @@ Full coder instructions: `claude/2026-09-13-ABSORPTION-INGEST-AND-DISPUTE-WINDOW
 2. Owner Chrome 13615 BOL→invoice→Faro.
 3. Ship Needs delivery authorization FE queue (this PR) → FE deploy → Owner clicks Authorize when a rolling load needs early factoring auth.
 4. No baseline raises to clear tip ENV reds.
+
+## Active Architectural Decisions — Banking ORDERS B-4 Check creator (Cursor, 2026-10-02)
+
+- **Class (BANK-F91035 #24095):** `WriteCheckForm` → `class_id` on existing `accounting.expenses.class_id` (202613380001). No migration.
+- **Settlement No + Location (BANK-F91037 #24098):** CLAIM `202615221300` → migration adds `expenses.settlement_no text` + `location_id uuid FK mdata.locations`. `createCheck` INSERT + routes zod + FE header (FuelStopLocationPicker `fuelStopOnly=false`). Neon applied; tip deploy both services LIVE (`dep-davqd7lg1s2s73bgc61g` BE / `dep-davqd7unfi0s738546l0` FE; healthz `b4b8aa2`).
+- **Amount to Credit chrome (BANK-F91033 #24090):** live Apply/Credit math; Save blocked while credit > 0. Honest — do **not** invent overpay GL.
+
+## Next Immediate Milestones — Banking ORDERS B-4 (Cursor, 2026-10-02)
+
+1. **BANK-F91038 Amount to Credit → vendor credit on Save (Tier A).** `applyVendorBillPaymentBatch` allows `amount_cents > sum(apps)` but bank cache uses full `amount_cents` while JE posts only apps — overpay without a poster = TB hole. `createVendorCredit` is subledger-only (no `vendor_credit` in posting-engine source types). Need existing poster path or owner-named GL treatment before unblocking Save. Mirror AR overpay→credit_memo if one exists; never invent JE math.
+2. **B-4 §14 driver-bill settlement chrome** (NB-Load / Truck / miles / OD) when bill-payment payee is a driver — fields already on driver bills / load links.
+3. Lead Chrome on Write Check (Class + Settlement No + Location) at deployed tip.
+4. clean-app APPLY AUTH (owner) — seats do not DELETE USMCA rows without AUTH.
