@@ -1,3 +1,9 @@
+**2026-10-02T08:35Z · B-1 payee/status filter MERGED #24047 · tip `46a5ad2458`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91012 MERGED FAST-MERGE | GO
+Register Filter: Payee + ✓ blank/C/R chips · filteredRows → table+CSV. money-pr-local-gate PASS.
+Also this session: LEGAL-F32607 #24023 · BANK-F91010/11 #24045 · OUTBOX #24046.
+NEXT: Lead Chrome · bank_transaction_splits HH 12–23 · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T08:24Z · B-5 type strip + ratchet tip-debt MERGED #24045 · tip `dfb84a0b30`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91010/#24045 FAST-MERGE | GO
 Type strip hops to Make Deposit `?batch=1` + Batch Settlements. Provenance `text-section-header` (ratchet PASS). money-pr-local-gate PASS.
