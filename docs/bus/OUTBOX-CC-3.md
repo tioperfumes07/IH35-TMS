@@ -2327,3 +2327,11 @@ Dispatch linkage (live, USMCA, non-cancelled loads): every load stamped customer
 customer, unit, driver, trailer, invoice, driver bill, A/P bill, expense, settlement, JE both ways. Data gaps (CC-1):
 invoiced loads without settlement line 5 / without load revenue JE 9 / without driver bill 1; closed without
 settlement line 1.
+
+## ACK 2026-10-02 — 00-OWNER-ORDER-2026-10-02-ALL-CODERS-BUILD-100-PERCENT-NO-HANDOFF (CC-3 section)
+- verify-party-boards-bound-live: GREEN now (prod, read-only) — vendors with transactions engine 19 = recompute 19;
+  vendors in the book engine 619 = recompute 619. The 20 / 622 in the order was read before the canonical vendor merge
+  (AUTH-202) removed the 3 duplicate USMCA vendors; no competing count remains.
+- Customers / Vendors / Driver Profile boards, Dispatch, telematics preservation + Excel, one odometer writer: status in
+  the entries above (rounds 296 / 297 / queue 6). Nothing posted; owner verifies in Chrome.
+- Open for the owner: AUTH for the 22 duplicate stop fences (#24192 command above).
