@@ -1,3 +1,8 @@
+**2026-10-02T09:03Z · B-2 ORDERS grid columns MERGED #24051 · tip `6bdfc94d84`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91014 MERGED FAST-MERGE | GO
+Reconcile LEFT grid: DATE|CLEARED DATE|TYPE|REF NO.|ACCOUNT|PAYEE|MEMO|PAYMENT|DEPOSIT|●. bankTxTypeLabel/bankTxRef. Print + Filter Find honor columns. money-pr-local-gate PASS.
+NEXT: B-2 completed-session report reopen · Lead Chrome · bank_transaction_splits HH 12–23 · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T08:46Z · B-2 Filter popover MERGED #24049 · tip `d2d7b08dbb`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91013 MERGED FAST-MERGE | GO
 Reconcile Filter: Find · Payee · Cleared · Type · Date · amount MoneyInput · Reset/Apply. Register print honors filteredRows. money-pr-local-gate PASS.
