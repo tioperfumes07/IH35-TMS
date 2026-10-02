@@ -183,6 +183,20 @@ function candidateEntityKind(eventType: CandidateEvent["event_type"]) {
   }
 }
 
+/** ORDERS §6 — row click opens the matched/JE document; unmatched bank rows stay select-for-match. */
+function reconDocumentHref(tx: ReconGridRow): string | null {
+  if (tx.row_kind === "gl_line" && tx.journal_entry_id) {
+    return `/accounting/journal-entries/${tx.journal_entry_id}`;
+  }
+  if (tx.matched_expense_id) return `/accounting/expenses/${tx.matched_expense_id}`;
+  if (tx.matched_bill_id) return `/accounting/bills/${tx.matched_bill_id}`;
+  if (tx.matched_settlement_id) return `/driver-finance/settlements?settlement_id=${tx.matched_settlement_id}`;
+  if (tx.matched_transfer_id) return `/banking/transfers?transfer_id=${tx.matched_transfer_id}`;
+  if (tx.matched_load_id) return `/dispatch/loads/${tx.matched_load_id}`;
+  if (tx.matched_journal_entry_id) return `/accounting/journal-entries/${tx.matched_journal_entry_id}`;
+  return null;
+}
+
 import { formatUsdCents } from "../../lib/money";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
@@ -1170,17 +1184,23 @@ export function ReconciliationWorkspacePage() {
                 const matched = transactionIsMatched(tx);
                 const cleared = transactionIsCleared(tx, clearedCounts.anyExplicit);
                 const abs = Math.abs(Number(tx.amount_cents ?? 0));
+                const docHref = reconDocumentHref(tx);
+                const selectOrOpen = () => {
+                  setSelectedTransactionId(tx.id);
+                  if (docHref) navigate(docHref);
+                };
                 return (
                   <div
                     key={tx.id}
                     className={`w-full px-2 py-2 text-left ${
                       selectedTransactionId === tx.id ? "bg-slate-100" : "bg-white hover:bg-gray-50"
                     } border-b border-gray-100`}
+                    data-b2-recon-row-open={docHref ? "1" : "0"}
                   >
                     <div className="grid grid-cols-[4.25rem_4.25rem_3.25rem_3.5rem_4.5rem_minmax(4.5rem,1fr)_minmax(4.5rem,1fr)_4.25rem_4.25rem_1.75rem] items-start gap-1">
                       <button
                         type="button"
-                        onClick={() => setSelectedTransactionId(tx.id)}
+                        onClick={selectOrOpen}
                         className="text-center text-xs text-gray-600"
                       >
                         {formatDateUS(tx.transaction_date)}
@@ -1190,15 +1210,21 @@ export function ReconciliationWorkspacePage() {
                       </span>
                       <button
                         type="button"
-                        onClick={() => setSelectedTransactionId(tx.id)}
-                        className="truncate text-center text-xs text-gray-800"
-                        title={tx.type_label}
+                        onClick={selectOrOpen}
+                        className={`truncate text-center text-xs text-gray-800 ${docHref ? "underline decoration-dotted" : ""}`}
+                        title={docHref ? `Open ${tx.type_label}` : tx.type_label}
+                        data-testid={docHref ? `recon-open-doc-${tx.id}` : undefined}
                       >
                         {tx.type_label}
                       </button>
-                      <span className="truncate text-center text-xs tabular-nums text-gray-800" title={tx.ref ?? undefined}>
+                      <button
+                        type="button"
+                        onClick={selectOrOpen}
+                        className={`truncate text-center text-xs tabular-nums text-gray-800 ${docHref ? "underline decoration-dotted" : ""}`}
+                        title={tx.ref ?? undefined}
+                      >
                         {tx.ref || "—"}
-                      </span>
+                      </button>
                       <span
                         className="truncate text-center text-xs text-gray-800"
                         title={tx.split_account ?? undefined}
@@ -1207,7 +1233,7 @@ export function ReconciliationWorkspacePage() {
                       </span>
                       <button
                         type="button"
-                        onClick={() => setSelectedTransactionId(tx.id)}
+                        onClick={selectOrOpen}
                         className="min-w-0 truncate text-center text-xs font-medium text-gray-900"
                         title={tx.payee || tx.merchant_name || undefined}
                       >
