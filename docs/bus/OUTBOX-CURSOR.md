@@ -535,3 +535,9 @@ Driver profile Overview+Loads now consume GET /drivers/:id/profile/stops-miles (
 
 **2026-10-01T12:25Z · MAINT WO THREE-DATES — E-16 LIVE, DROP pending CC-1**
 WorkOrderDetailModal expected release showed "pending CC-1" after E-16 column landed. Fixed to "—"; guard asserts expected_release_at + migration, forbids pending marker. · NEXT: Lead Chrome.
+
+
+**2026-10-02T05:23Z · BANK-F91002 competing-engine MERGED #23994**
+ACK: CURSOR | COMPETING-ENGINE BANK-MATCH ONE WRITER MERGED #23994 tip `60b370deab` | GO
+MERGED: #23994 — link-suggestions + recon /match + obligation-reconcile → acceptReconMatch; load/bill refuse; three one-writer guards; verify-no-automatch allowlist shrink. money-pr-local-gate PASS (LANE_CROSS). LIVE Neon not required (engines-only law).
+NEXT: continue Cursor queue / ORDERS leftovers (engines only — no Chrome/seed).
