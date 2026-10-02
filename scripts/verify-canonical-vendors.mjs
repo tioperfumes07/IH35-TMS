@@ -18,6 +18,8 @@ if (!/INSERT INTO \$\{q\(cfg\.aliasTable\)\}/.test(svc) || !/snapshot/.test(svc)
 if (!/DELETE FROM \$\{q\(cfg\.table\)\} WHERE id = \$1::uuid/.test(svc)) fails.push("engine must delete the merged duplicate (no cancelled shells)");
 if (!/export async function reverseCanonicalMerge/.test(svc)) fails.push("merges must be reversible");
 if (!/vendor_\(id\|uuid\)\$/.test(svc)) fails.push("engine must discover loose vendor_id / vendor_uuid columns at run time (no stale hand list)");
+if (!/key: "LOVESTRAVELSTOPS", joins: "LOVES"/.test(svc)) fails.push("owner exception LOVES = LOVES TRAVEL STOPS (00-OWNER-DECISION-2026-10-02) must be in OWNER_SAME_PARTY_EXCEPTIONS");
+if (!/groupKeySql\(kind,/.test(svc)) fails.push("plan and merge must group by groupKeySql (normalized name + named owner exceptions)");
 if (!/table_name !~ '\^qbo_'/.test(svc)) fails.push("engine must never write a qbo_* mirror table (mdata.qbo_vendors is not canonical)");
 const prof = readFileSync("apps/backend/src/mdata/canonical/vendor-profile.service.ts", "utf8");
 const ui = readFileSync("apps/frontend/src/components/vendors/VendorProfileOverview.tsx", "utf8");
