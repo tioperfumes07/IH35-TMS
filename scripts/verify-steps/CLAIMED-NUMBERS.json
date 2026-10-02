@@ -1,4 +1,29 @@
 {
+  "12201": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 288.3/296 — IFTA miles from the GPS apportionment engine only (CC-1)."
+  },
+  "12205": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 288.3/296 — one deadhead rule for driver bill, settlement creator and batch pay (CC-1)."
+  },
+  "12209": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 288.3/296 — driver page Add payment adds one extra-pay line through the pay-line engine (CC-1)."
+  },
+  "12213": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 296 6 — factoring chargebacks never route to a driver (CC-1)."
+  },
+  "12217": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 296 5 — driver-finance money cells use lib/money (CC-1)."
+  },
   "12161": {
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-02",
