@@ -57,6 +57,10 @@ export const COA_ROLE_VALUES = [
   // contract's Transaction Fees (Schedule Fee) are their own expense (6405, under 6400). Fail closed when unbound.
   "factor_default_interest_payable",
   "factor_transaction_fee",
+  // Lead 2026-10-02 (FARO-REPORTS-ARE-THE-BANK-FEED): Faro Client Payable "USMCA Reserve to IH 35 Reserve" is a
+  // due-from-affiliate receivable (USMCA 8000 Inter-company - IH35 Transportation), never income or cost. Migration
+  // 202615250600. Fail closed when unbound.
+  "intercompany_receivable_ih35_transportation",
   // Business-Property Allocation (TX personal-property tax) — per-opco (TRANSP/TRK) mappings in
   // accounting.chart_of_accounts_roles, migration 202607080310_property_tax_accrual_posting.sql.
   // ACCRUAL Dr property_tax_expense / Cr property_tax_payable; PAYMENT Dr property_tax_payable / Cr cash.

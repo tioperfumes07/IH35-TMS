@@ -142,6 +142,8 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
   // Faro's actual escrow / cash reserve / fee per invoice (its purchase report): Faro holds ONE 1.5% Security Reserve per
   // invoice, normally as Escrow Rsv and on some invoices as Cash Rsv instead (measured on all 89 Faro purchases).
   const [lineActuals, setLineActuals] = useState<Record<string, LineActuals>>({});
+  // Faro's own invoice number (Inv on its reports: 001, 002, ...) — every Faro reserve entry resolves through it.
+  const [faroNumbers, setFaroNumbers] = useState<Record<string, string>>({});
   // Owner override approval: send although selected loads are missing BOL / POD / rate confirmation.
   const [docsOverrideReason, setDocsOverrideReason] = useState("");
   const [saving, setSaving] = useState(false);
@@ -222,7 +224,11 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
         wire_date: wireDate || null,
         faro_report_ref: reportRef.trim() || null,
         wire_fee_cents: wireFeeCents ?? 0,
-        lines: selectedRows.map((r) => ({ invoice_id: r.invoice_id, ...lineFigures(r, lineActuals[r.invoice_id]) })),
+        lines: selectedRows.map((r) => ({
+          invoice_id: r.invoice_id,
+          ...lineFigures(r, lineActuals[r.invoice_id]),
+          ...(faroNumbers[r.invoice_id]?.trim() ? { faro_invoice_number: faroNumbers[r.invoice_id]!.trim() } : {}),
+        })),
         ...(missingDocsRows.length && docsOverrideOk ? { docs_override_reason: docsOverrideReason.trim() } : {}),
       });
       let posted: FactoringPurchaseDetail;
@@ -258,6 +264,7 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
       setSelected([]);
       setReportRef("");
       setLineActuals({});
+      setFaroNumbers({});
       setDocsOverrideReason("");
       await refresh();
     } catch (err) {
@@ -544,6 +551,7 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
                 <thead>
                   <tr>
                     <th className="text-left uppercase" style={FIELD_LABEL_STYLE}>Invoice</th>
+                    <th className="text-left uppercase" style={FIELD_LABEL_STYLE}>Faro Inv #</th>
                     <th className="text-right uppercase" style={FIELD_LABEL_STYLE}>Escrow reserve</th>
                     <th className="text-right uppercase" style={FIELD_LABEL_STYLE}>Cash reserve</th>
                     <th className="text-right uppercase" style={FIELD_LABEL_STYLE}>Fee</th>
@@ -558,6 +566,17 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
                       <tr key={r.invoice_id} data-testid={`submit-factor-actuals-row-${r.invoice_id}`}>
                         <td>
                           <EntityLink kind="invoice" id={r.invoice_id} label={r.invoice_display_id ?? "invoice"} />
+                        </td>
+                        <td className="py-1">
+                          <input
+                            value={faroNumbers[r.invoice_id] ?? ""}
+                            onChange={(e) => setFaroNumbers((m) => ({ ...m, [r.invoice_id]: e.target.value.replace(/[^0-9]/g, "").slice(0, 6) }))}
+                            inputMode="numeric"
+                            placeholder="001"
+                            className={`${FORM_FIELD_CONTROL_SIZE_CLASS} w-[104px] tabular-nums`}
+                            aria-label={`Faro invoice number ${r.invoice_display_id ?? ""}`}
+                            data-testid={`submit-factor-faro-inv-${r.invoice_id}`}
+                          />
                         </td>
                         <td className="py-1 text-right">
                           <MoneyInput valueCents={f.escrow_reserve_cents} onChangeCents={(c) => setF({ escrow_reserve_cents: c ?? 0 })} className={FORM_FIELD_CONTROL_SIZE_CLASS} ariaLabel={`Escrow reserve ${r.invoice_display_id ?? ""}`} />

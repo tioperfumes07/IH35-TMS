@@ -37,6 +37,8 @@ export type PurchaseLineInput = {
   escrow_reserve_cents?: number;
   cash_reserve_cents?: number;
   fee_cents?: number;
+  /** Faro's own invoice number (Inv on Faro's reports, 001, 002, ...) — the link every Faro reserve entry resolves through. */
+  faro_invoice_number?: string | null;
 };
 
 export type CreatePurchaseInput = {
@@ -129,6 +131,7 @@ export async function createPurchaseDraft(client: DbClient, input: CreatePurchas
       escrow_reserve_cents: nonneg(l.escrow_reserve_cents ?? Math.round(gross * rate.reserve), "purchase_line_escrow_invalid"),
       cash_reserve_cents: nonneg(l.cash_reserve_cents ?? Math.round(gross * rate.cash), "purchase_line_cash_reserve_invalid"),
       fee_cents: nonneg(l.fee_cents ?? Math.round(gross * rate.fee), "purchase_line_fee_invalid"),
+      faro_invoice_number: l.faro_invoice_number?.trim() || null,
       customer_id: customerId,
       load_id: (r.load_id as string | null) ?? null,
       settlement_id: (r.settlement_id as string | null) ?? null,
@@ -176,11 +179,11 @@ export async function createPurchaseDraft(client: DbClient, input: CreatePurchas
       `
         INSERT INTO accounting.factoring_purchase_lines (
           operating_company_id, purchase_id, line_no, invoice_id, customer_id, load_id, settlement_id,
-          gross_cents, escrow_reserve_cents, cash_reserve_cents, fee_cents, created_by_user_id
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+          gross_cents, escrow_reserve_cents, cash_reserve_cents, fee_cents, created_by_user_id, faro_invoice_number
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
       `,
       [oci, purchaseId, n, l.invoice_id, l.customer_id, l.load_id, l.settlement_id, l.gross_cents, l.escrow_reserve_cents,
-        l.cash_reserve_cents, l.fee_cents, input.actorUserId]
+        l.cash_reserve_cents, l.fee_cents, input.actorUserId, l.faro_invoice_number]
     );
   }
   await appendCrudAudit(client as never, input.actorUserId, "accounting.factoring_purchase_created", {
@@ -428,4 +431,34 @@ async function unlinkInvoicesFromAdvance(client: DbClient, advanceId: string, ac
       WHERE factoring_advance_id = $1::uuid`,
     [advanceId, actorUserId]
   );
+}
+
+/**
+ * Record Faro's invoice number on a purchase line once (NULL -> value; the DB trigger refuses any other change on a posted
+ * line). Owner only, like every purchase action. It is identity, not money: no posting moves.
+ */
+export async function setPurchaseLineFaroInvoiceNumber(
+  client: DbClient,
+  input: { operatingCompanyId: string; actorUserId: string; purchaseLineId: string; faroInvoiceNumber: string }
+) {
+  const value = input.faroInvoiceNumber.trim();
+  if (!/^\d{1,6}$/.test(value)) throw new FactoringPurchaseError("faro_invoice_number_invalid", 400);
+  const line = (await client.query<{ purchase_id: string }>(
+    `SELECT purchase_id::text FROM accounting.factoring_purchase_lines
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL`,
+    [input.purchaseLineId, input.operatingCompanyId]
+  )).rows[0];
+  if (!line) throw new FactoringPurchaseError("purchase_line_not_found", 404);
+  await assertOwnerActor(client, input.operatingCompanyId, input.actorUserId, "advance", line.purchase_id);
+  const upd = await client.query(
+    `UPDATE accounting.factoring_purchase_lines SET faro_invoice_number = $3
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid AND faro_invoice_number IS NULL`,
+    [input.purchaseLineId, input.operatingCompanyId, value]
+  );
+  if (!upd.rowCount) throw new FactoringPurchaseError("faro_invoice_number_already_set", 409);
+  await appendCrudAudit(client as never, input.actorUserId, "factoring.purchase_line_faro_invoice_number", {
+    resource_type: "accounting.factoring_purchase_lines", resource_id: input.purchaseLineId, operating_company_id: input.operatingCompanyId,
+    faro_invoice_number: value,
+  }, "info", "FARO-RESERVE-ENTRIES");
+  return { purchase_line_id: input.purchaseLineId, faro_invoice_number: value };
 }
