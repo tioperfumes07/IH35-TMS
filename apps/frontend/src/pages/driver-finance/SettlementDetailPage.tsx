@@ -740,6 +740,8 @@ export function SettlementDetailPage() {
         status={String(settlement.status ?? "-")}
         computedAt={debt.computedAt}
         loadIds={settlementLoadIds}
+        predecessor={settlement.predecessor_settlement_id ? { id: String(settlement.predecessor_settlement_id), label: (settlement.predecessor_settlement_label as string | null) ?? null } : null}
+        successor={settlement.successor_settlement_id ? { id: String(settlement.successor_settlement_id), label: (settlement.successor_settlement_label as string | null) ?? null } : null}
         onRefresh={() => void debt.refresh()}
       />
       {/* LAW-5-CROSS-SCREEN (2026-09-24): this grid used to always read readout.company_settlement

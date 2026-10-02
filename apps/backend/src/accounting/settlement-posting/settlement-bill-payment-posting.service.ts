@@ -1265,6 +1265,13 @@ export async function reverseSettlementBillPaymentInClientTx(
       [run.id, actor.userId, input.reason]
     );
     if (!transitioned.rows[0]?.id) throw new Error("settlement_reversal_state_transition_failed");
+    // Lead ROUND 330.6: the reversed run's spine rows stay (audit trail) but are superseded, so a re-post of the same
+    // driver bills can write its own live spine rows (uq_driver_settlement_gl_bills_live_driver_bill).
+    await client.query(
+      `UPDATE driver_finance.driver_settlement_gl_bills SET superseded_at = now()
+        WHERE run_id = $1::uuid AND operating_company_id = $2::uuid AND superseded_at IS NULL`,
+      [run.id, opco]
+    );
 
     // ROUND 300 — a chain-posted settlement: unwind the pay-run sub-ledgers (advance recoveries, escrow, disbursement
     // stamp, the payrun_gl_runs claim) the close wrote, linked to the reversal of the pay-run's own journal entry.

@@ -77,6 +77,12 @@ type CreateBillInput = {
   operatingCompanyId: string;
   vendorId: string;
   billNumber?: string;
+  /**
+   * Lead ROUND 330.6 ruling 1 — a document number is spent forever. When true the bill keeps billNumber as its
+   * bill_number (the vendor / load reference) but takes a fresh BILL-YYYY-NNNNN display_id instead of reusing
+   * billNumber as the display number (used when a re-posted settlement bills a load whose number a reversed bill holds).
+   */
+  autoDisplayId?: boolean;
   billDate: string;
   dueDate?: string;
   amountCents: number;
@@ -2846,7 +2852,7 @@ async function createBillRowInClientTx(client: pg.PoolClient, input: CreateBillI
       client,
       input.operatingCompanyId,
       new Date(input.billDate),
-      billNumber
+      input.autoDisplayId ? null : billNumber
     );
     const stamped = await client.query<BillRow>(
       `

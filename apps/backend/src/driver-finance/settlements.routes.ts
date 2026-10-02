@@ -643,9 +643,16 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             s.reversal_reason,
             s.voided_at,
             s.void_reason,
-            s.voided_by_user_id
+            s.voided_by_user_id,
+            -- Lead ROUND 330.6 ruling 1: a re-posted settlement names the reversed one it replaces, and back.
+            s.predecessor_settlement_id,
+            COALESCE(pred.source_document_ref, pred.display_id) AS predecessor_settlement_label,
+            s.successor_settlement_id,
+            COALESCE(succ.source_document_ref, succ.display_id) AS successor_settlement_label
           FROM views.driver_settlement_with_debt v
           JOIN driver_finance.driver_settlements s ON s.id = v.id
+          LEFT JOIN driver_finance.driver_settlements pred ON pred.id = s.predecessor_settlement_id AND pred.operating_company_id = s.operating_company_id
+          LEFT JOIN driver_finance.driver_settlements succ ON succ.id = s.successor_settlement_id AND succ.operating_company_id = s.operating_company_id
           WHERE v.id = $1 AND s.operating_company_id = $2::uuid
           LIMIT 1
         `,
