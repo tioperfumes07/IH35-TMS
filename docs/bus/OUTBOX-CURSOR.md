@@ -1,3 +1,10 @@
+**2026-10-02T16:33Z · ROUND 297 MERGED #24164 · tip `45eae4072c` · MEASURED $20,942.94**
+ACK: CURSOR | ACK ROUND 297 DONE | GO
+PR https://github.com/tioperfumes07/IH35-TMS/pull/24164 squash `45eae4072c16e37407a34a2677c7387396fd68d9`. money-pr-local-gate PASS → push → FAST-MERGE.
+MEASURED: 44 Relay fills / **$20,942.94** / since 2026-08-03 unposted (`integrations.relay_fuel_transactions.posted_to_gl IS NOT TRUE`).
+Engine ON TIP (#24158+#24164): match → postFuelFillOnBankMatch → postFuelExpenseOnClient SAME txn. Survivors match=`acceptMatchWithResolveDifference` / unmatch=`unmatchBankTransaction`. GUARD verify-one-bank-match-writer-writes-je + verify-fuel-posts-only-on-bank-match. DatePicker portal sibling of UI-F9637 (vitest 19/19).
+NO live match. NEXT: FE tip deploy · owner-auth Chrome match of the 44 to clear $20,942.94 · next ORDERS leftover.
+
 **2026-10-02T16:22Z · ROUND 297 — FUEL MATCH ENGINE MEASURED $20,942.94 · DatePicker portal**
 ACK: CURSOR | ACK ROUND 297 | GO
 MEASURED (Neon bypass_rls=lucia, USMCA, same SQL as PartyBoard /vendors): integrations.relay_fuel_transactions posted_to_gl IS NOT TRUE → **44 txs / $20,942.94 / since 2026-08-03**. Engine that clears it is ON TIP from #24158 (`a9d5446a14`): match → `postFuelFillOnBankMatch` → `postFuelExpenseOnClient` SAME txn + JE stamp. Survivors match=`acceptMatchWithResolveDifference` / unmatch=`unmatchBankTransaction`. GUARD verify-one-bank-match-writer-writes-je + verify-fuel-posts-only-on-bank-match PASS. DateTimePicker.test 15/15 + DatePicker.test PASS after portal sibling fix (DatePicker was still `absolute`/w-56 — same modal clip owner fixed on DateTimePicker d47a908929).
