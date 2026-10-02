@@ -6,6 +6,7 @@ import { DatePicker } from "../components/forms/DatePicker";
 import { MoneyInput } from "../components/forms/MoneyInput";
 import { ParityTable } from "../components/parity/ParityTable";
 import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
+import { CustomerProfileOverview } from "../components/customers/CustomerProfileOverview";
 import { CustomerLateArrivalCard } from "../components/customers/CustomerLateArrivalCard";
 import { CustomerLocationsSection } from "../components/customers/CustomerLocationsSection";
 import { formatUsdCents } from "../lib/money";
@@ -286,14 +287,6 @@ function CustomerFinancialOverviewSection(props: {
     revenue: r.total_cents / 100,
   }));
 
-  const agingLabels: Record<string, string> = {
-    current: "Current",
-    "1_30": "1–30",
-    "31_60": "31–60",
-    "61_90": "61–90",
-    "90_plus": "90+",
-  };
-
   return (
     <div className="grid gap-3 lg:grid-cols-2">
       <DataPanel title="Revenue (last 12 months)">
@@ -311,17 +304,6 @@ function CustomerFinancialOverviewSection(props: {
             </ResponsiveContainer>
           </div>
         )}
-      </DataPanel>
-      <DataPanel title="AR aging (open invoices)">
-        <div className="space-y-1 text-xs">
-          {props.summary.ar_aging_buckets.length === 0 ? <p className="text-xs text-gray-500">No open AR.</p> : null}
-          {props.summary.ar_aging_buckets.map((b) => (
-            <div key={b.bucket} className="flex justify-between">
-              <span>{agingLabels[b.bucket] ?? b.bucket}</span>
-              <span>{formatUsdCents(b.open_cents)}</span>
-            </div>
-          ))}
-        </div>
       </DataPanel>
       <DataPanel title="Recent loads">
         <div className="max-h-56 space-y-1 overflow-auto text-xs">
@@ -1244,6 +1226,8 @@ export function CustomerDetailPage() {
         <p className="text-xs text-red-600">Select an operating company to view linked records.</p>
       )}
 
+      {/* ROUND 326 1B: AR aging, credit/exposure, open loads, payments, factoring, rate history, contacts, documents. */}
+      {id && operatingCompanyId ? <CustomerProfileOverview operatingCompanyId={operatingCompanyId} customerId={id} /> : null}
       <CustomerFinancialOverviewSection summary={financialSummaryQuery.data} loading={financialSummaryQuery.isLoading} error={financialSummaryQuery.isError} onRetry={() => void financialSummaryQuery.refetch()} />
 
       {activeTab === "Profile" ? (
