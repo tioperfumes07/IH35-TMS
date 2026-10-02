@@ -28,6 +28,7 @@ import { DatePicker } from "../forms/DatePicker";
 import { MoneyInput } from "../forms/MoneyInput";
 import { Button } from "../Button";
 import { listExpenseCategoryMappings, listVendorBills, type ExpenseCategoryMapRow, type VendorBill } from "../../api/accounting";
+import { classesCatalogClient } from "../../api/catalogs-accounting";
 import { formatDateUS } from "../../lib/formatDate";
 import { getCashGlMapping, getBankingTiles, type CashGlBankAccount } from "../../api/banking";
 import { listVendors, listCustomers } from "../../api/mdata";
@@ -78,6 +79,8 @@ type PersistedCheckDraft = {
   printLater: boolean;
   memo: string;
   tagsText: string;
+  /** BANK-F91035 — QBO Class (accounting.expenses.class_id), optional. */
+  classId: string | null;
   savedAt: string;
 };
 
@@ -270,6 +273,8 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
   const [checkNumber, setCheckNumber] = useState<string>("");
   const [memo, setMemo] = useState<string>("");
   const [tagsText, setTagsText] = useState<string>("");
+  /** BANK-F91035 — QBO Class header (class_id already on createCheck / expenses). */
+  const [classId, setClassId] = useState<string | null>(null);
   // R-172 step 2 -- auto-filled from the payee, then editable; the operator's edit wins on save
   // (edited flag tracked so a payee switch doesn't clobber a manual edit the operator just made).
   const [remitToAddress, setRemitToAddress] = useState<CheckRemitToAddress>(EMPTY_ADDRESS);
@@ -429,6 +434,23 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
     enabled: open && Boolean(operatingCompanyId),
   });
   const selectedBankBalance = bankTilesQuery.data?.tiles?.find((t) => t.id === bankAccountId)?.current_balance ?? null;
+
+  // BANK-F91035 — Class options (same catalog path as VendorBillForm / RecordExpenseForm).
+  const classesQuery = useQuery({
+    queryKey: ["checks", "classes", operatingCompanyId],
+    queryFn: () => classesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
+    enabled: open && Boolean(operatingCompanyId),
+    staleTime: 60_000,
+  });
+  const classOptions = useMemo(
+    () =>
+      (classesQuery.data?.rows ?? []).map((row) => ({
+        value: row.id,
+        label: row.display_name || row.code,
+        type: row.code,
+      })),
+    [classesQuery.data?.rows]
+  );
 
   // R-172 step 2 -- payee mailing address auto-fill, read-only preview (never invented client-side).
   const payeePreviewQuery = useQuery({
@@ -844,6 +866,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
     setCheckNumber("");
     setMemo("");
     setTagsText("");
+    setClassId(null);
     setRemitToAddress(EMPTY_ADDRESS);
     setAddressEdited(false);
     setLines([newDraftLine()]);
@@ -882,7 +905,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
   // Persist a lightweight header draft while the form is open (never lines — avoid stale GL maps).
   useEffect(() => {
     if (!open || !operatingCompanyId || !draftHydrated || restoreDraftOffer) return;
-    if (!payeeId && !bankAccountId && !memo.trim() && !checkNumber.trim()) return;
+    if (!payeeId && !bankAccountId && !memo.trim() && !checkNumber.trim() && !classId) return;
     const payload: PersistedCheckDraft = {
       payeeKind,
       payeeId,
@@ -892,6 +915,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
       printLater,
       memo,
       tagsText,
+      classId,
       savedAt: new Date().toISOString(),
     };
     try {
@@ -912,6 +936,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
     printLater,
     memo,
     tagsText,
+    classId,
   ]);
 
   // R-172 step 6 -- footer buttons (spec §6): Save keeps the drawer open on the same check; Save and
@@ -1005,6 +1030,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
         check_number: effectivePrintLater ? null : checkNumber.trim(),
         memo: memo.trim() || null,
         tags,
+        class_id: classId,
         // Only send the address when the operator actually edited it -- otherwise the server saves
         // the payee's freshly-resolved address itself, avoiding a stale client copy overwriting it.
         remit_to_address: addressEdited ? remitToAddress : null,
@@ -1040,6 +1066,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                   setPrintLater(Boolean(d.printLater));
                   setMemo(d.memo ?? "");
                   setTagsText(d.tagsText ?? "");
+                  setClassId(d.classId ?? null);
                   setRestoreDraftOffer(null);
                 }}
               >
@@ -1338,6 +1365,22 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
             ) : null}
           </label>
         </div>
+
+        {/* BANK-F91035 — Class (ORDERS §B-4 / QBO check header; class_id already on createCheck). */}
+        <label className="text-xs font-semibold text-gray-700" data-b4-check-class="1">
+          Class
+          <div className="mt-1" data-testid="b4-check-class">
+            <ReferenceSelect
+              value={classId}
+              onChange={(next) => setClassId(next)}
+              options={classOptions}
+              createKind="class"
+              operatingCompanyId={operatingCompanyId}
+              placeholder="Select class…"
+              disabled={!operatingCompanyId}
+            />
+          </div>
+        </label>
 
         <div className="grid grid-cols-2 gap-3">
           <label className="text-xs font-semibold text-gray-700">
