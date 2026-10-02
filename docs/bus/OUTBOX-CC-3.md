@@ -2335,3 +2335,12 @@ settlement line 1.
 - Customers / Vendors / Driver Profile boards, Dispatch, telematics preservation + Excel, one odometer writer: status in
   the entries above (rounds 296 / 297 / queue 6). Nothing posted; owner verifies in Chrome.
 - Open for the owner: AUTH for the 22 duplicate stop fences (#24192 command above).
+
+## 2026-10-02 — Cursor engine audit 642: CC-3 lane F-RETRY verdicts read on tip — CLEARED, no code change
+- telematics/load-real-driven-miles.service.ts — pure recompute: UPDATE load_stops / loads SET computed miles; a second
+  tick writes identical values. Idempotent.
+- telematics/load-stop-geofence-sync.service.ts — retire UPDATE guarded by is_active = true; stamp UPDATE is
+  compare-and-set on actual_arrival_at IS NULL with RETURNING; its audit INSERT runs only when the stamp landed.
+  A second tick does nothing.
+- cron/draft-crew-status-selfheal.cron.ts — UPDATE ... WHERE status = 'draft' (compare-and-set). Idempotent.
+Also open for the owner: AUTH for #24200 (acknowledge 6 twin breach alerts, resolve 6 duplicate_fire findings).
