@@ -10,7 +10,7 @@ describe("dtc auto work order tenant isolation", () => {
         if (sql.includes("FROM maintenance.work_orders w")) return { rows: [] };
         if (sql.includes("FROM telematics.vehicle_driver_assignments")) return { rows: [] };
         if (sql.includes("FROM maintenance.next_wo_display_id")) return { rows: [{ display_id: "WO-123", sequence: 123 }] };
-        if (sql.includes("INSERT INTO maintenance.work_orders")) return { rows: [] };
+        if (sql.includes("INSERT INTO maintenance.work_orders")) return { rows: [{ id: "wo-1", display_id: "WO-1" }] };
         return { rows: [] };
       }),
     };

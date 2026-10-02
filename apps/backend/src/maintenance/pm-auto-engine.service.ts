@@ -14,6 +14,9 @@ import {
   shouldTriggerPmAlert,
 } from "../telematics/maintenance-predictor.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { createWorkOrderWithLines } from "./two-section-service.js";
+
+const SYSTEM_ACTOR_USER_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-4000-8000-000000000001";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -163,59 +166,29 @@ async function createPmAutoWorkOrder(
 ): Promise<string | null> {
   if (!(await relationExists(client, "maintenance.work_orders"))) return null;
 
-  const display = await client.query<{ display_id: string; sequence: number }>(
-    `
-      SELECT display_id, sequence
-      FROM maintenance.next_wo_display_id($1::uuid, 'PM', COALESCE($2::date, CURRENT_DATE), $3::uuid)
-    `,
-    [input.unit_id, input.occurred_at, input.operating_company_id]
-  );
-  const displayId = display.rows[0]?.display_id ?? null;
-  const sequence = Number(display.rows[0]?.sequence ?? 0) || null;
   const description = `[pm_auto] schedule ${input.schedule.id}: ${input.schedule.label} due at ${input.current_odometer} mi`;
-
-  const woRes = await client.query<{ id: string }>(
-    `
-      INSERT INTO maintenance.work_orders (
-        operating_company_id,
-        wo_type,
-        source_type,
-        status,
-        unit_id,
-        opened_at,
-        repair_location,
-        description,
-        display_id,
-        unit_sequence,
-        origin,
-        wo_title
-      )
-      VALUES (
-        $1::uuid,
-        'pm',
-        'IS',
-        'open',
-        $2::uuid,
-        $3::timestamptz,
-        'in_house',
-        $4,
-        $5,
-        $6,
-        'pm_schedule',
-        $7
-      )
-      RETURNING id::text
-    `,
-    [
-      input.operating_company_id,
-      input.unit_id,
-      input.occurred_at,
+  // ROUND 326 audit M1: one work-order creator (display id, status history, audit) — createWorkOrderWithLines.
+  const created = await createWorkOrderWithLines(
+    client as never,
+    SYSTEM_ACTOR_USER_ID,
+    {
+      operating_company_id: input.operating_company_id,
+      wo_type: "pm",
+      source_type: "IS",
+      display_type: "PM",
+      unit_id: input.unit_id,
+      service_date: input.occurred_at,
+      repair_location: "in_house",
+      bucket: "in_house",
       description,
-      displayId,
-      sequence,
-      `PM Auto — ${input.schedule.label}`,
-    ]
+      payment_timing: "in_house",
+      origin: "pm_schedule",
+      wo_title: `PM Auto — ${input.schedule.label}`,
+    },
+    [],
+    []
   );
+  const woRes = { rows: [{ id: created.woUuid }] };
   const createdWorkOrder = woRes.rows[0];
   if (!createdWorkOrder?.id) throw new Error("pm_auto_work_order_insert_returned_no_row");
   return createdWorkOrder.id;

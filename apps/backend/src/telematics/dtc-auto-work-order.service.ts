@@ -1,5 +1,8 @@
 import { getDriverForVehicleAtTime } from "./vehicle-driver-lookup.service.js";
 import { classifyDtcCode } from "./dtc-classifier.service.js";
+import { createWorkOrderWithLines } from "../maintenance/two-section-service.js";
+
+const SYSTEM_ACTOR_USER_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-4000-8000-000000000001";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -34,40 +37,25 @@ export async function processDtcAutoWorkOrderEvent(client: DbClient, input: DtcE
 
   const driverId = await getDriverForVehicleAtTime(client as never, input.operating_company_id, input.unit_id, input.occurred_at);
 
-  const display = await client.query<{ display_id: string; sequence: number }>(
-    `
-      SELECT display_id, sequence
-      FROM maintenance.next_wo_display_id($1::uuid, $2, COALESCE($3::date, CURRENT_DATE), $4::uuid)
-    `,
-    [input.unit_id, "IS", input.occurred_at, input.operating_company_id]
-  );
-  const displayId = display.rows[0]?.display_id ?? null;
-  const sequence = Number(display.rows[0]?.sequence ?? 0) || null;
-
-  await client.query(
-    `
-      INSERT INTO maintenance.work_orders (
-        operating_company_id, wo_type, source_type, status, unit_id, driver_id, load_id, opened_at,
-        repair_location, vendor_id, external_vendor_invoice_number, description,
-        external_vendor_id, external_vendor_wo_number,
-        display_id, unit_sequence, estimated_cost_cents, total_actual_cost, bucket
-      )
-      VALUES (
-        $1::uuid,'repair','IS','open',$2::uuid,$3::uuid,NULL,$4::timestamptz,
-        'in_house',NULL,NULL,$5,
-        NULL,NULL,
-        $6,$7,NULL,NULL,'in_house'
-      )
-    `,
-    [
-      input.operating_company_id,
-      input.unit_id,
-      driverId,
-      input.occurred_at,
-      `[samsara_dtc_auto] ${input.dtc_code.toUpperCase()}: ${input.description ?? "Engine diagnostic fault detected"}`,
-      displayId,
-      sequence,
-    ]
+  // ROUND 326 audit M1: one work-order creator (display id, status history, audit) — createWorkOrderWithLines.
+  await createWorkOrderWithLines(
+    client as never,
+    SYSTEM_ACTOR_USER_ID,
+    {
+      operating_company_id: input.operating_company_id,
+      wo_type: "repair",
+      source_type: "IS",
+      unit_id: input.unit_id,
+      driver_id: driverId,
+      service_date: input.occurred_at,
+      repair_location: "in_house",
+      bucket: "in_house",
+      description: `[samsara_dtc_auto] ${input.dtc_code.toUpperCase()}: ${input.description ?? "Engine diagnostic fault detected"}`,
+      payment_timing: "in_house",
+      origin: "samsara_dtc_auto",
+    },
+    [],
+    []
   );
 
   return true;
