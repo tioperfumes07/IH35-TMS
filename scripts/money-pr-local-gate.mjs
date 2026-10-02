@@ -86,6 +86,10 @@ const STEPS = [
   ["verify-data-write-path-detection-is-content-based", "scripts/verify-data-write-path-detection-is-content-based.mjs"],
   // 2026-10-02 — #23954 squash-merged conflict markers into a backend route file; every deploy after it failed.
   ["verify-no-merge-conflict-markers", "scripts/verify-no-merge-conflict-markers.mjs"],
+  // THE LINKAGE LAW, ENFORCED. Every path that writes a journal entry or posting must be declared with
+  // the stamps it carries and the engine that reverses it. A new, undeclared money writer fails the
+  // push; a lost linkage stamp fails the push. Replaces writing a 359th one-off linkage guard.
+  ["verify-money-engine-linkage", "scripts/verify-money-engine-linkage.mjs"],
   // 2026-10-02 — handlers returning undefined after requireAuth sent the 401 double-sent every unauthenticated reply.
   ["verify-requireauth-returns-reply", "scripts/verify-requireauth-returns-reply.mjs"],
   // CC-3 2b — the full-enum load-status table and the canonical dispatch machine must agree on every cross-bucket edge.
