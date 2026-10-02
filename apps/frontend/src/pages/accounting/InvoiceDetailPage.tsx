@@ -1,4 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
+import { FactoringPurchaseLinksPanel } from "../../components/factoring/FactoringPurchaseLinksPanel";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -621,9 +622,9 @@ export function InvoiceDetailPage() {
         )}
       </DataPanel>
 
-      {invoice.factoring_advance_id ? (
-        <DataPanel title="Factoring">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+      <DataPanel title="Factoring">
+        {invoice.factoring_advance_id ? (
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs">
             <div className="text-gray-700">
               This invoice is part of <EntityLink kind="factoring_advance" id={invoice.factoring_advance_id ?? undefined} label={entityLabel(invoice.factoring_display_id, invoice.factoring_advance_id, "Factoring batch")} />.
               {invoice.factoring_status ? (
@@ -634,8 +635,10 @@ export function InvoiceDetailPage() {
               View batch
             </Button>
           </div>
-        </DataPanel>
-      ) : null}
+        ) : null}
+        {/* LINKAGE LAW §10-B reverse drill: the factoring purchase(s) (= Faro wire) this invoice sits on. */}
+        <FactoringPurchaseLinksPanel companyId={selectedCompanyId} filter={{ invoice_id: id }} emptyText="This invoice has not been sold to the factor." />
+      </DataPanel>
 
       <DataPanel title={`Lines (${lineCount})`}>
         <div className="mb-2 flex items-center justify-between">

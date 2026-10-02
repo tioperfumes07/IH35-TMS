@@ -382,18 +382,32 @@ export async function listPurchases(
   if (f.from) add((n) => `p.purchase_date >= $${n}::date`, f.from);
   if (f.to) add((n) => `p.purchase_date <= $${n}::date`, f.to);
   if (f.bank_transaction_id) add((n) => `EXISTS (SELECT 1 FROM banking.bank_transactions b WHERE b.id = $${n}::uuid AND b.matched_factoring_advance_id = p.factoring_advance_id)`, f.bank_transaction_id);
+  // Reverse drill (LINKAGE LAW 10-B): from an invoice / load / customer / settlement back to its purchase(s). The same
+  // filter also scopes the LINE share returned below, so an invoice or load screen shows ITS OWN figures on the wire
+  // (gross / escrow / cash reserve / fee of its lines), not only the whole wire's totals.
+  const lineScope: string[] = ["l.purchase_id = p.id", "l.voided_at IS NULL"];
   for (const k of ["invoice_id", "load_id", "customer_id", "settlement_id"] as const) {
-    if (f[k]) add((n) => `EXISTS (SELECT 1 FROM accounting.factoring_purchase_lines x WHERE x.purchase_id = p.id AND x.${k} = $${n}::uuid)`, f[k]);
+    if (f[k]) {
+      add((n) => `EXISTS (SELECT 1 FROM accounting.factoring_purchase_lines x WHERE x.purchase_id = p.id AND x.${k} = $${n}::uuid)`, f[k]);
+      lineScope.push(`l.${k} = $${values.length}::uuid`);
+    }
   }
+  const scoped = lineScope.length > 2;
   const rows = (await client.query(
     `
       SELECT p.id, p.display_id, p.status, p.purchase_date, p.wire_date, p.faro_report_ref, p.invoice_count, p.gross_cents,
              p.escrow_reserve_cents, p.cash_reserve_cents, p.fee_cents, p.wire_fee_cents, p.advance_cents, p.net_to_company_cents,
              p.factoring_advance_id, p.journal_entry_id, p.posted_at, p.voided_at,
              (SELECT b.id FROM banking.bank_transactions b WHERE p.factoring_advance_id IS NOT NULL AND b.matched_factoring_advance_id = p.factoring_advance_id LIMIT 1) AS bank_transaction_id,
-             v.vendor_name AS factoring_company_name
+             v.vendor_name AS factoring_company_name,
+             ${scoped ? "share.line_count, share.line_gross_cents, share.line_escrow_reserve_cents, share.line_cash_reserve_cents, share.line_fee_cents" : "NULL::int AS line_count, NULL::bigint AS line_gross_cents, NULL::bigint AS line_escrow_reserve_cents, NULL::bigint AS line_cash_reserve_cents, NULL::bigint AS line_fee_cents"}
         FROM accounting.factoring_purchases p
         JOIN mdata.vendors v ON v.id = p.factoring_company_vendor_id
+        ${scoped ? `LEFT JOIN LATERAL (
+          SELECT count(*)::int AS line_count, COALESCE(sum(l.gross_cents),0)::bigint AS line_gross_cents,
+                 COALESCE(sum(l.escrow_reserve_cents),0)::bigint AS line_escrow_reserve_cents,
+                 COALESCE(sum(l.cash_reserve_cents),0)::bigint AS line_cash_reserve_cents, COALESCE(sum(l.fee_cents),0)::bigint AS line_fee_cents
+            FROM accounting.factoring_purchase_lines l WHERE ${lineScope.join(" AND ")}) share ON true` : ""}
        WHERE ${where.join(" AND ")}
        ORDER BY p.purchase_date DESC, p.display_id DESC
        LIMIT 500

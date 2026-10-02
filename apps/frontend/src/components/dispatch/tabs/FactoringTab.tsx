@@ -28,6 +28,7 @@ import { Combobox } from "../../Combobox";
 import { useToast } from "../../Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { EntityLink } from "../../shared/EntityLink";
+import { FactoringPurchaseLinksPanel } from "../../factoring/FactoringPurchaseLinksPanel";
 import { EntityLinkOrTombstone } from "../../shared/EntityLinkOrTombstone";
 import { QueryErrorNote } from "./QueryErrorNote";
 import { formatMoneyCents } from "../constants";
@@ -399,6 +400,11 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
             <EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name ?? null} noun="Customer" />
           </div>
         ) : null}
+        {/* LINKAGE LAW §10-B reverse drill: the factoring purchase(s) (= Faro wire) this load's invoice sits on. */}
+        <div data-testid="factoring-tab-purchases">
+          <div className="mb-1 font-semibold text-slate-700">Factoring purchases</div>
+          <FactoringPurchaseLinksPanel companyId={operatingCompanyId} filter={{ load_id: loadId }} emptyText="This load's invoice has not been sold to the factor." />
+        </div>
 
         {/* ── Step bar (LDT-4) ─────────────────────────────────────────────── */}
         {/* LDT-4 DESIGN (owner 2026-09-06 04:2xZ, render § Factoring): the stages are ONE segmented bar across the card —
