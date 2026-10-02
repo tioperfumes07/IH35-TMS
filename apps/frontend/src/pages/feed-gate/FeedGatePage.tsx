@@ -11,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
 import { closeFeedIntake, getFeedIntake, listFeedIntakes, runFeedGate, type FeedCheck, type FeedIntake, type FeedKind } from "../../api/feedGate";
+import { ListErrorState } from "../../components/shared/ListErrorState";
 
 const STATUS_CLS: Record<string, string> = {
   passed: "bg-slate-800 text-white", closed: "bg-slate-600 text-white", blocked: "bg-red-600 text-white", open: "bg-slate-200 text-slate-800", voided: "bg-slate-100 text-slate-500",
@@ -55,6 +56,18 @@ export function FeedGateIntakePage() {
   const intake = detail.data?.intake;
   const checks = detail.data?.checks ?? [];
   const groups = GROUP_ORDER.filter((g) => checks.some((c) => c.check_group === g)).concat(Array.from(new Set(checks.map((c) => c.check_group))).filter((g) => !GROUP_ORDER.includes(g)));
+  if (detail.isError) {
+    return (
+      <div className="mx-auto max-w-6xl p-4" data-testid="feed-gate-intake-page">
+        <ListErrorState
+          title="Could not load feed gate intake"
+          status={0}
+          message={(detail.error as Error)?.message}
+          onRetry={() => void detail.refetch()}
+        />
+      </div>
+    );
+  }
   return (
     <div className="mx-auto max-w-6xl p-4" data-testid="feed-gate-intake-page">
       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -92,6 +105,18 @@ export function FeedGatePage() {
     onError: (e: unknown) => setError(e instanceof Error ? e.message : String(e)),
   });
   const rows = list.data?.intakes ?? [];
+  if (list.isError) {
+    return (
+      <div className="mx-auto max-w-6xl p-4" data-testid="feed-gate-page">
+        <ListErrorState
+          title="Could not load feed gate"
+          status={0}
+          message={(list.error as Error)?.message}
+          onRetry={() => void list.refetch()}
+        />
+      </div>
+    );
+  }
   return (
     <div className="mx-auto max-w-6xl p-4" data-testid="feed-gate-page">
       <h1 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-700">Feed gate</h1>

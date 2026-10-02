@@ -87,7 +87,7 @@ export function toggleAccountRegisterCleared(input: {
     register_cleared: boolean;
   }>(`/api/v1/accounting/account-register/toggle-cleared`, {
     method: "POST",
-    body: JSON.stringify(input),
+    body: input,
   });
 }
 
@@ -103,7 +103,7 @@ export function saveAccountRegisterInline(input: {
     `/api/v1/accounting/account-register/inline-save`,
     {
       method: "POST",
-      body: JSON.stringify(input),
+      body: input,
     }
   );
 }

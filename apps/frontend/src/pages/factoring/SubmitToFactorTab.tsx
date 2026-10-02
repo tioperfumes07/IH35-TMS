@@ -105,7 +105,7 @@ function toSaveError(err: unknown, fallback: string): SaveError {
         title: String(data.error ?? fallback),
         rows: (data.details as Array<Record<string, unknown>>).map((d) => ({
           invoice_id: String(d.invoice_id ?? ""),
-          reason: String(d.reason ?? d.status ?? data.error ?? ""),
+          reason: String(d.reason ?? data.error ?? ""),
         })),
       };
     }

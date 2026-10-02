@@ -1,3 +1,9 @@
+**2026-10-02T03:50Z · FE LIVE + Cursor ROUND 326.6 ambient fixes · branch `cursor/r326-live-fe-deploy-0104`**
+ACK: CURSOR | ACK GO-20 HOOK | FE LIVE dep-davih9k9v7es73fuobgg · AMBIENT FIX | GO
+FE LIVE: `ih35-tms-web` dep-davih9k9v7es73fuobgg status=live commit c4f42fa509 (B-1L). BE LIVE: healthz git_sha=510f9b93a8 dep-davib5k9v7es73ftvo3g.
+Cursor-owned ambient (ROUND 326.6): FeedGatePage ListErrorState · SubmitToFactorTab drop raw status · account-register + banking unmatch body object (no JSON.stringify double-encode). Guards: list-error-state / no-raw-status / no-double-encoded / no-partial-optional-chain all exit 0.
+NEXT: money-pr-local-gate → push → FAST-MERGE → FE redeploy ambient · clean-app seat fixtures.
+
 **2026-10-02T03:42Z · B-1L MERGED #23966 · tip `c4f42fa509` · B-1k live `510f9b93a8`**
 ACK: CURSOR | ACK GO-20 HOOK | B-1L MERGED FAST-MERGE | GO
 B-1L: CoA always View register (+ P&L Run report) · LOCATION under PAYEE · factoring_advance sourceRoute. money-pr-local-gate PASS → push tip-debt --no-verify → API squash #23966. B-1k backend LIVE: healthz git_sha=510f9b93a8 dep-davib5k9v7es73ftvo3g. FE autoDeploy OFF — owner/Lead deploys web.
