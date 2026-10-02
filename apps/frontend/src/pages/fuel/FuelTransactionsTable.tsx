@@ -1,4 +1,5 @@
 import { useToast } from "../../components/Toast";
+import { formatUsdCentsTable } from "../../lib/money";
 import { useBulkPermission } from "../../hooks/useBulkPermission";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -42,8 +43,9 @@ type Props = {
   operatingCompanyId?: string;
 };
 
-function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((cents || 0) / 100);
+// QBO money (lib/money). A missing amount is "—", never "$0.00".
+function money(cents: number | null | undefined) {
+  return formatUsdCentsTable(cents);
 }
 
 function csvEscape(value: string): string {

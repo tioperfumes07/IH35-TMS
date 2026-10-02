@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react";
+import { formatUsd, formatUsdTable } from "../../../lib/money";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { forfeitEscrow, listEscrowRecords, type EscrowRecordRow } from "../../../api/driverFinance";
@@ -165,9 +166,9 @@ export function EscrowRecordTab() {
           />
         ),
       },
-      { key: "current_balance", label: "Current Balance", sortable: true, render: (row) => `$${row.current_balance.toFixed(2)}` },
-      { key: "pre_clause_total", label: "Pre-clause", sortable: true, render: (row) => `$${row.pre_clause_total.toFixed(2)}` },
-      { key: "post_clause_total", label: "Post-clause", sortable: true, render: (row) => `$${row.post_clause_total.toFixed(2)}` },
+      { key: "current_balance", label: "Current Balance", sortable: true, render: (row) => formatUsdTable(row.current_balance) },
+      { key: "pre_clause_total", label: "Pre-clause", sortable: true, render: (row) => formatUsdTable(row.pre_clause_total) },
+      { key: "post_clause_total", label: "Post-clause", sortable: true, render: (row) => formatUsdTable(row.post_clause_total) },
       {
         key: "has_signed_clause",
         label: "Signed clause",
@@ -319,7 +320,7 @@ export function EscrowRecordTab() {
         <div className="mt-2 space-y-1 text-[11px]">
           {attempts.map((entry) => (
             <div key={entry.id} className={entry.status === "blocked" ? "text-red-700" : "text-slate-700"}>
-              {entry.created_at.slice(0, 16).replace("T", " ")} - <EntityLink kind="driver" id={entry.driver_id} label={entityLabel(entry.driver_name, entry.driver_id, "Driver")} /> - ${entry.amount.toFixed(2)} - {entry.reason} (
+              {entry.created_at.slice(0, 16).replace("T", " ")} - <EntityLink kind="driver" id={entry.driver_id} label={entityLabel(entry.driver_name, entry.driver_id, "Driver")} /> - {formatUsd(entry.amount)} - {entry.reason} (
               {entry.status})
               {/* LIABILITY column-wave: linked_liability_id already flows end-to-end
                   (escrow-forfeit.service.ts writes it → timelineToAttempts reads it into

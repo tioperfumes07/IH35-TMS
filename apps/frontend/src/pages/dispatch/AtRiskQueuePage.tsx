@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { formatUsdCentsTable } from "../../lib/money";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { listAtRiskOrLateDispatchLoads, type DispatchAlertLoadRow } from "../../api/dispatch";
@@ -24,8 +25,9 @@ function num(v: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+// QBO money (lib/money): "$1,234.56", accounting parentheses for negatives.
 function moneyCents(v: unknown): string {
-  return (num(v) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return formatUsdCentsTable(num(v));
 }
 
 function fmtWhen(iso: string | null | undefined): string {
