@@ -1476,6 +1476,11 @@
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-02",
       "purpose": "Owner-approved Faro lifecycle 2026-10-02: ONE Faro Security Reserve = 1230 Factoring Reserves (factor_reserve_held + factor_cash_reserve_held both -> 1230; 1235/1236 retired when posting-free; Faro reserve bank account on 1230); new 2155 Factoring Default Interest Payable (role factor_default_interest_payable) and Factoring Transaction Fees (role factor_transaction_fee). Config only, no balances touched."
+    },
+    "202615230600": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-02",
+      "purpose": "Lead ROUND 296 FINAL: 1230 = Faro Escrow report (restricted, per invoice), 1235 = Faro Cash report (on deposit, releasable) — restore factor_cash_reserve_held -> 1235 and the Faro Cash Reserve register (202615220800 merged them). 1236 stays retired. Config only."
     }
   },
   "202613590001": {
