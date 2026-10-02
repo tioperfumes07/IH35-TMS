@@ -233,7 +233,21 @@ export function LoadsReportPage() {
             "—"
           ),
       },
-      { key: "settlement_number", label: "Settlement", sortable: true, render: (row) => row.settlement_number ?? "—" },
+      {
+        key: "settlement_number",
+        label: "Settlement",
+        sortable: true,
+        render: (row) =>
+          row.settlement_id ? (
+            <EntityLink
+              kind="settlement"
+              id={row.settlement_id}
+              label={entityLabel(row.settlement_number, row.settlement_id, "Settlement")}
+            />
+          ) : (
+            row.settlement_number ?? "—"
+          ),
+      },
     ],
     []
   );

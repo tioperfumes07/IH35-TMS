@@ -1271,6 +1271,7 @@ export type LoadsReportRow = {
   factoring_display: string | null;
   factoring_status: string | null;
   settlement_number: string | null;
+  settlement_id: string | null;
 };
 
 export type LoadsReportResponse = {

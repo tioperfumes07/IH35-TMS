@@ -53,6 +53,16 @@ export function assertLoadsReportSurface(srcs) {
   if (!/exportFilename="loads-report.csv"/.test(srcs.page)) {
     fails.push("LoadsReportPage must export CSV via ParityTable exportFilename");
   }
+  // D-H2 — Settlement column drills to the settlement (EntityLink), not plain text.
+  if (!/kind="settlement"/.test(srcs.page) || !/settlement_id/.test(srcs.page)) {
+    fails.push("LoadsReportPage Settlement column must EntityLink via settlement_id");
+  }
+  if (!/lc_settlement_id/.test(srcs.rollup)) {
+    fails.push("load-cost-rollup.sql.ts must expose lc_settlement_id");
+  }
+  if (!/settlement_id: row.lc_settlement_id/.test(srcs.service)) {
+    fails.push("loads-report.service.ts must map lc_settlement_id");
+  }
   if (!/\/reports\/loads/.test(srcs.manifest)) {
     fails.push("manifest must route /reports/loads");
   }
