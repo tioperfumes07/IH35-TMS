@@ -37,9 +37,8 @@ const ALLOWED_ROLES = new Set([
   "ar_control",
   "factoring_recoursed_ar",
   "default_interest_expense",
-  // Lead ROUND 296 FINAL (2026-10-02): Faro's Cash Reserve report is its own register, GL 1235, role
-  // factor_cash_reserve_held (funding leg DR when Faro holds cash reserve). ROUND 332.1 §3 removed the CPA gate; the
-  // ruling is the authority.
+  // Owner ruling GL 1235 — Faro's Cash Rsv is its own reserve pool (ACCT-F20260926G4C, #22838, 2026-09-25: the poster
+  // gained this funding DR leg and the 1235 account + role binding). Reaffirmed Lead ROUND 296 FINAL / #24199.
   "factor_cash_reserve_held",
 ]);
 
@@ -155,11 +154,16 @@ function analyzePoster(source, docSource, configFlipFound) {
   }
 
   // 5. role allowlist across the whole poster
-  const roleLiteralRe = /resolveRoleAccount\([^)]*?"([^"]+)"\s*\)/g;
-  let rm;
-  while ((rm = roleLiteralRe.exec(source)) !== null) {
-    if (!ALLOWED_ROLES.has(rm[1])) {
-      failures.push(`role "${rm[1]}" is not in the secured-borrowing allowlist — add it to ALLOWED_ROLES with CPA review, never as a bare literal`);
+  // Two ways a role reaches a posting: a direct resolveRoleAccount("role") call, or a leg literal
+  // `{ role: "x", debit_or_credit: ... }` resolved later from a variable. ROUND 341: the second path was unscanned, so a
+  // new role added through a legs array escaped the allowlist. Both are checked.
+  const roleLiteralRes = [/resolveRoleAccount\([^)]*?"([^"]+)"\s*\)/g, /\brole:\s*"([^"]+)",\s*debit_or_credit\b/g];
+  for (const roleLiteralRe of roleLiteralRes) {
+    let rm;
+    while ((rm = roleLiteralRe.exec(source)) !== null) {
+      if (!ALLOWED_ROLES.has(rm[1])) {
+        failures.push(`role "${rm[1]}" is not in the secured-borrowing allowlist — add it to ALLOWED_ROLES with the ruling that admits it, never as a bare literal`);
+      }
     }
   }
 
@@ -201,7 +205,15 @@ export async function postFactoringReleaseEvent() {}
 export async function postFactoringChargebackEvent() {}
 `;
   const failures = analyzePoster(badFunding, "PENDING_OWNER_CONFIRMATION", false);
-  return failures.some((f) => /funding: role "ar_control" must NEVER appear/.test(f));
+  if (!failures.some((f) => /funding: role "ar_control" must NEVER appear/.test(f))) return false;
+  // ROUND 341: an un-ruled role must be caught on BOTH paths (direct resolve and leg literal).
+  for (const plant of [
+    'const x = await resolveRoleAccount(client, id, "unruled_role_x");',
+    'legs.push({ role: "unruled_role_x", debit_or_credit: "debit", amount_cents: 1 });',
+  ]) {
+    if (!analyzePoster(badFunding + plant, "PENDING_OWNER_CONFIRMATION", false).some((f) => /role "unruled_role_x" is not in the secured-borrowing allowlist/.test(f))) return false;
+  }
+  return true;
 }
 
 if (process.argv.includes("--self-test")) {

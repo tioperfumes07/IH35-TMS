@@ -50,7 +50,7 @@ function assertAll(src) {
     // PERMISSION WIRING 10.4: the sync requireVoidCancelExecutor(reply, role) call was superseded
     // by the async requireVoidCancelExecutorWired(reply, { role, client, ... }) across this file —
     // a role-floor-plus-future-permission-key tightening, not a regression.
-    // OWNER LAW 2026-10-02 competing-engine audit (#24015 / #24166): this file's create is a RETIRED writer (410 via
+    // OWNER LAW 2026-10-02 competing-engine audit (ACCT-F9331, #24002): this file's create is a RETIRED writer (410 via
     // sendRetiredFactoringWriter before any work) and its void runs the ONE purchase engine (voidPurchase, Owner-only —
     // stricter than the executor role floor). Either is a gate; an ungated write is still a failure.
     const wide = src.slice(idx, idx + 2600); // the void handler's ruling comment precedes its engine call

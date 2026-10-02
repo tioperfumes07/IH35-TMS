@@ -16,7 +16,7 @@ const fail = (msg) => {
 };
 
 if (!src.includes("INVOICE_PLEDGE_CENTS_SQL")) fail("missing INVOICE_PLEDGE_CENTS_SQL");
-// FACT-DELIVERED-AUTO moved INVOICE_PLEDGE_CENTS_SQL into accounting/shared.js (one definition); the routes import it.
+// FACT-DELIVERED-AUTO (ACCT-F26060, #21575) moved INVOICE_PLEDGE_CENTS_SQL into accounting/shared.js (one definition); the routes import it.
 // The credit-memo netting must live in that one definition.
 const shared = readFileSync(join(root, "apps/backend/src/accounting/shared.ts"), "utf8");
 const pledgeDef = shared.slice(shared.indexOf("export const INVOICE_PLEDGE_CENTS_SQL"));

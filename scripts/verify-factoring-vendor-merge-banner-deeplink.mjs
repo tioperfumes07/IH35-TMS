@@ -42,7 +42,7 @@ const HOME_FILE = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
 export function check({ bannerText, homeText }) {
   const failures = [];
 
-  // FIX-DVB135 (Round 27.1 step 5.7) superseded the QBO-id deep-link: 0 of 618 USMCA vendors carry a qbo_vendor_id
+  // FIX-DVB135 (Round 27.1 step 5.7, ACCT-F20260921 #22136) superseded the QBO-id deep-link: 0 of 618 USMCA vendors carry a qbo_vendor_id
   // (USMCA never syncs QBO), so a QBO-keyed "Merge these" could never render. Each pair now merges directly on THIS
   // TMS's own vendor ids through the generic vendor-merge primitive, as a deliberate two-click confirm naming the
   // survivor — never an automatic pick, never a QBO id (the VENDOR-MERGE-QBO-ID-MISMATCH class stays closed).
