@@ -1035,3 +1035,19 @@ export function getDriverEscrow(driverId: string, operatingCompanyId: string) {
     `/api/v1/driver-finance/drivers/${encodeURIComponent(driverId)}/escrow?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
   );
 }
+
+/**
+ * ROUND 326 (CC-1, CC-3 request) — add one detention / layover / bonus / stop-pay / other line to a driver's OPEN
+ * settlement. The line belongs to a load: the one named, else the settlement's load whose dates cover the date.
+ * It posts when the settlement closes (on that load's A/P bill).
+ */
+export type SettlementPayLineKind = "detention" | "layover" | "bonus" | "stop_pay" | "other";
+export function addSettlementPayLine(
+  settlementId: string,
+  payload: { operating_company_id: string; kind: SettlementPayLineKind; amount_cents: number; transaction_date: string; description?: string | null; load_id?: string | null }
+) {
+  return apiRequest<{ settlement_line_id: string; line_type: "detention_pay" | "extra_pay"; load_id: string; load_number: string; amount_cents: number }>(
+    `/api/v1/driver-finance/settlements/${settlementId}/pay-lines`,
+    { method: "POST", body: payload }
+  );
+}

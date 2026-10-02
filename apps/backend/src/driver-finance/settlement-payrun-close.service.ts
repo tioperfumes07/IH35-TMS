@@ -39,6 +39,8 @@ import { isEnabled } from "../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { signedEscrowLedgerAmountCents } from "./escrow-ledger-sign.js";
 import { createJournalEntry, enqueueJournalEntrySideEffects, type CreateJournalEntryInput } from "../accounting/journal-entries.service.js";
+import { postSettlementApChainInClientTx, resolvePayoutBankAccountId, SettlementApChainError, type ApChainApplication, type ApChainPayItem } from "./settlement-ap-chain.service.js";
+import { SETTLEMENT_EARNINGS_LINE_TYPES } from "./settlement-line-buckets.js";
 import { recordEscrowPostingOnly } from "../accounting/escrow/service.js";
 import {
   DEFAULT_ESCROW_PER_SETTLEMENT_CONTRIBUTION_CENTS,
@@ -95,6 +97,20 @@ export type PayRunCloseErrorCode =
   | "NET_PAY_NEGATIVE"
   | "NET_PAY_FLOOR_BREACH"
   | "NET_PAY_DOCUMENT_MISMATCH"
+  // ROUND 326 single settlement poster (per-load A/P chain) — refusals by name, never a plug.
+  | "PAYOUT_BANK_MISSING"
+  | "PAY_ITEMS_DO_NOT_TIE"
+  | "DRIVER_ADVANCE_ACCOUNT_MISSING"
+  | "DRIVER_VENDOR_MISSING"
+  | "AP_ACCOUNT_MISSING"
+  | "NO_LOAD_BILLS"
+  | "PAY_ITEM_HAS_NO_LOAD"
+  | "PAY_ITEM_LOAD_NOT_ON_SETTLEMENT"
+  | "GROSS_DOES_NOT_TIE_TO_LOAD_BILLS"
+  | "SETTLEMENT_ALREADY_POSTED"
+  | "LOAD_BILL_ALREADY_EXISTS"
+  | "APPLICATIONS_EXCEED_BILLS"
+  | "NET_DOES_NOT_TIE"
   | "UNBALANCED_ENTRY"
   | "SETTLEMENT_ALREADY_POSTED_BY_OTHER_POSTER"
   | "OUTSTANDING_LOAN_DECISION_REQUIRED"
@@ -364,6 +380,56 @@ async function loadDetentionPayCents(client: DbClient, operatingCompanyId: strin
     [operatingCompanyId, settlementId]
   );
   return dollarsToCents(res.rows[0]?.total ?? 0);
+}
+
+/**
+ * ROUND 326 (CC-1) — the settlement's pay as ROWS, each with its load and date, so the single poster bills every
+ * load for exactly what the header sums: the earnings bucket (earnings / extra pay / deadhead / team splits →
+ * driver pay), reimbursements (per-type account, the same rows loadReimbursementsByType sums) and detention pay.
+ */
+async function loadSettlementPayItems(
+  client: DbClient,
+  operatingCompanyId: string,
+  settlementId: string,
+  accounts: { driverPay: string; detention: string | null; reimbursementByType: (t: string | null) => Promise<string | null> }
+): Promise<ApChainPayItem[]> {
+  const items: ApChainPayItem[] = [];
+  const earn = await client.query<{ amount: string; line_type: string; load_id: string | null; d: string | null; description: string | null }>(
+    `SELECT sl.amount::text, sl.line_type, COALESCE(sl.load_id, db.load_id)::text AS load_id, sl.created_at::date::text AS d, sl.description
+       FROM driver_finance.settlement_lines sl
+       JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+       LEFT JOIN driver_finance.driver_bills db ON db.id = sl.source_driver_bill_id
+      WHERE sl.settlement_id = $2::uuid AND ds.operating_company_id = $1::uuid AND sl.is_active = true
+        AND sl.line_type = ANY($3::text[])`,
+    [operatingCompanyId, settlementId, [...SETTLEMENT_EARNINGS_LINE_TYPES]]
+  );
+  for (const r of earn.rows) items.push({ kind: "pay", cents: dollarsToCents(r.amount), accountId: accounts.driverPay, loadId: r.load_id, date: r.d, description: r.description || r.line_type.replace(/_/g, " ") });
+  const reimb = await client.query<{ amount: string; reimbursement_type: string | null; load_id: string | null; d: string | null }>(
+    `SELECT ABS(sl.amount)::text AS amount, dr.reimbursement_type, COALESCE(sl.load_id, dr.load_id)::text AS load_id,
+            COALESCE(dr.posting_date, sl.created_at::date)::text AS d
+       FROM driver_finance.settlement_lines sl
+       JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+       LEFT JOIN driver_finance.driver_reimbursements dr ON dr.id::text = sl.source_reference_id::text AND sl.source_table = 'driver_finance.driver_reimbursements'
+      WHERE sl.settlement_id = $2::uuid AND ds.operating_company_id = $1::uuid AND sl.line_type = 'reimbursement' AND sl.is_active = true`,
+    [operatingCompanyId, settlementId]
+  );
+  for (const r of reimb.rows) {
+    const acct = await accounts.reimbursementByType(r.reimbursement_type);
+    if (!acct) throw new SettlementPayRunError("REIMBURSEMENT_EXPENSE_ACCOUNT_MISSING", `No active reimbursement expense account resolved for type '${r.reimbursement_type ?? "unknown"}'`);
+    items.push({ kind: "reimbursement", cents: dollarsToCents(r.amount), accountId: acct, loadId: r.load_id, date: r.d, description: `${r.reimbursement_type ?? "driver"} reimbursement` });
+  }
+  const det = await client.query<{ amount: string; load_id: string | null; d: string | null }>(
+    `SELECT ABS(sl.amount)::text AS amount, sl.load_id::text, sl.created_at::date::text AS d
+       FROM driver_finance.settlement_lines sl
+       JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+      WHERE sl.settlement_id = $2::uuid AND ds.operating_company_id = $1::uuid AND sl.line_type = 'detention_pay' AND sl.is_active = true`,
+    [operatingCompanyId, settlementId]
+  );
+  for (const r of det.rows) {
+    if (!accounts.detention) throw new SettlementPayRunError("DETENTION_PAY_EXPENSE_ACCOUNT_MISSING", "No active 'detention_pay_expense' CoA role designation for settlement detention pay");
+    items.push({ kind: "detention_pay", cents: dollarsToCents(r.amount), accountId: accounts.detention, loadId: r.load_id, date: r.d, description: "detention pay" });
+  }
+  return items;
 }
 
 /** Un-recovered outstanding advances for the driver (recovered_in_settlement_id IS NULL). Read-only + FOR UPDATE. */
@@ -858,24 +924,24 @@ export async function closeSettlementPayRun(
     }
 
     // ── Net cash disbursement leg (chosen payment method's gl_account_id). Records-only downstream. ────
+    // ROUND 326 (owner 2026-10-02): net pay is a bill payment from a REAL bank — the payment method's bank, else the
+    // operating bank (Bank of America). Never a holding / clearing account; no method chosen is not a refusal.
     let paymentMethod: { id: string; name: string; glAccountId: string } | null = null;
+    if (input.paymentMethodId) paymentMethod = await resolvePaymentMethod(client, opco, input.paymentMethodId);
+    let payoutBankAccountId: string | null = null;
     if (netCents > 0) {
-      if (!input.paymentMethodId) {
-        throw new SettlementPayRunError(
-          "PAYMENT_METHOD_INVALID",
-          `Settlement ${settlement.display_id ?? settlementId} has net pay ${netCents}c but no payment method chosen for disbursement`
-        );
+      try {
+        payoutBankAccountId = await resolvePayoutBankAccountId(client as never, opco, paymentMethod?.glAccountId ?? null);
+      } catch (e) {
+        throw new SettlementPayRunError("PAYOUT_BANK_MISSING", (e as Error).message);
       }
-      paymentMethod = await resolvePaymentMethod(client, opco, input.paymentMethodId);
+      const bankGl = (await client.query<{ gl: string }>(`SELECT ledger_account_id::text AS gl FROM banking.bank_accounts WHERE id = $1::uuid`, [payoutBankAccountId])).rows[0]?.gl;
       legs.push({
-        account_id: paymentMethod.glAccountId,
+        account_id: bankGl ?? paymentMethod?.glAccountId ?? "",
         debit_or_credit: "credit",
         amount_cents: netCents,
-        description: `${label} — net driver pay via ${paymentMethod.name}`,
+        description: `${label} — net driver pay (bill payment from the bank)`,
       });
-    } else if (input.paymentMethodId) {
-      // No cash to disburse (fully absorbed by deductions/recoveries) but a method was chosen → validate it.
-      paymentMethod = await resolvePaymentMethod(client, opco, input.paymentMethodId);
     }
 
     // Assert the preview balances (debits == credits) up front — mirrors createJournalEntry's guard.
@@ -1079,25 +1145,81 @@ export async function closeSettlementPayRun(
     // exact non-atomic-second-connection class elsewhere in this codebase: post on THIS connection via
     // `client` + `suppressSideEffects`, then explicitly run the JE's QBO sync-job/push side effects AFTER
     // this transaction commits (mirroring factoring-posting/poster.service.ts's own funding-path pattern).
-    const jeInput: CreateJournalEntryInput = {
-      operating_company_id: opco,
-      entry_date: settlement.period_end,
-      memo: `${label} — pay-run close (net ${netCents}c)`,
-      source: "auto",
-      source_transaction_type: "driver_settlement",
-      source_transaction_id: input.settlementId,
-      postings: legs.map((l) => ({ account_id: l.account_id, debit_or_credit: l.debit_or_credit, amount_cents: l.amount_cents, description: l.description })),
-    };
-    const je = await createJournalEntry(
-      jeInput,
-      { userId: actor.userId, role: "system" },
-      { client, suppressSideEffects: true }
-    );
-
-    // Stamp the posted JE id onto the pay-run GL-run anchor (the anchor was claimed above; this records the
-    // canonical journal_entry_id it corresponds to, one run -> one JE).
+    // ROUND 326 queue items 2–5 (CC-1, owner rulings 2026-10-02) — the pay-run posts as the per-load A/P chain, on
+    // THIS transaction: one A/P bill per load numbered as the load (driver as vendor), advances applied to their own
+    // load's bill, deductions / chargebacks / escrow applied as non-cash bill payments with one application JE, net
+    // pay as a bill payment from the bank. The former single clearing JE (Cr 2170 Driver Net-Pay Clearing) is retired
+    // — unreachable — per the competing-engine order (docs/bus/00-OWNER-LAW-2026-10-02-BUILD-ONLY-COMPETING-ENGINE-AUDIT.md).
+    const reimbAccountCache = new Map<string | null, string | null>();
+    const payItems = await loadSettlementPayItems(client, opco, settlementId, {
+      driverPay: driverPayAccount,
+      detention: await resolvePayRunRoleAccount(client, opco, "detention_pay_expense"),
+      reimbursementByType: async (t) => {
+        if (!reimbAccountCache.has(t)) reimbAccountCache.set(t, await resolveReimbursementExpenseAccount(client, opco, t));
+        return reimbAccountCache.get(t) ?? null;
+      },
+    });
+    const sumKind = (k: ApChainPayItem["kind"]) => payItems.filter((i) => i.kind === k).reduce((acc, i) => acc + i.cents, 0);
+    if (sumKind("reimbursement") !== reimbursementsCents || sumKind("detention_pay") !== detentionPayCents) {
+      throw new SettlementPayRunError("PAY_ITEMS_DO_NOT_TIE", `${label}: reimbursement / detention lines do not tie to the pay-run figures`, {
+        reimbursements_lines_cents: sumKind("reimbursement"), reimbursements_cents: reimbursementsCents,
+        detention_lines_cents: sumKind("detention_pay"), detention_cents: detentionPayCents,
+      });
+    }
+    const applications: ApChainApplication[] = [];
+    if (recoverySnapshots.length) {
+      const own = (await client.query<{ coa: string | null }>(
+        `SELECT coa_account_id::text AS coa FROM driver_finance.driver_advance_accounts WHERE operating_company_id = $1::uuid AND driver_id = $2::uuid AND is_active LIMIT 1`,
+        [opco, settlement.driver_id]
+      )).rows[0]?.coa ?? null;
+      if (!own) throw new SettlementPayRunError("DRIVER_ADVANCE_ACCOUNT_MISSING", `Driver ${settlement.driver_id} has no Cash-Advance account (driver_advance_accounts) to apply the advance against`);
+      const links = await client.query<{ id: string; load_id: string | null }>(
+        `SELECT a.id::text, COALESCE(a.load_id, db.load_id)::text AS load_id FROM driver_finance.driver_advances a
+           LEFT JOIN driver_finance.driver_bills db ON db.id = a.linked_driver_bill_id
+          WHERE a.id = ANY($1::uuid[]) AND a.operating_company_id = $2::uuid`,
+        [recoverySnapshots.map((r) => r.id), opco]
+      );
+      const loadOf = new Map(links.rows.map((r) => [r.id, r.load_id]));
+      for (const r of recoverySnapshots) applications.push({ kind: "advance", cents: r.recovered_cents, accountId: own, advanceId: r.id, preferredLoadId: loadOf.get(r.id) ?? null, description: "cash advance applied" });
+    }
+    for (const [roleKey, cents] of deductionsByRole) {
+      const acct = await resolvePayRunRoleAccount(client, opco, roleKey);
+      if (!acct) throw new SettlementPayRunError("DEDUCTION_RECOVERY_ACCOUNT_MISSING", `No active '${roleKey}' CoA role designation for a settlement deduction bucket`, { role_key: roleKey });
+      applications.push({ kind: "deduction", cents, accountId: acct, description: `${roleKey.replace(/_/g, " ")}` });
+    }
+    if (chargebacksCents > 0) {
+      const cbAcct = await resolvePayRunRoleAccount(client, opco, "abandonment_chargeback_recovery");
+      if (!cbAcct) throw new SettlementPayRunError("CHARGEBACK_RECOVERY_ACCOUNT_MISSING", "No active 'abandonment_chargeback_recovery' CoA role designation for settlement chargebacks");
+      applications.push({ kind: "chargeback", cents: chargebacksCents, accountId: cbAcct, description: "abandonment chargeback" });
+    }
+    if (escrowContributionCents > 0) {
+      const escrow = await resolveDriverEscrowLiabilityAccount(client, opco, settlement.driver_id);
+      applications.push({ kind: "escrow", cents: escrowContributionCents, accountId: escrow.accountId, description: `escrow contribution (capped @ ${ESCROW_CAP_LABEL})` });
+    }
+    let chain: Awaited<ReturnType<typeof postSettlementApChainInClientTx>>;
+    try {
+      chain = await postSettlementApChainInClientTx(client as never, {
+        operatingCompanyId: opco,
+        settlementId,
+        driverId: settlement.driver_id,
+        label,
+        billDate: settlement.period_end,
+        actorUserId: actor.userId,
+        driverPayAccountId: driverPayAccount,
+        grossCents,
+        payItems,
+        applications,
+        netCents,
+        payoutBankAccountId,
+        paymentReference: input.paymentReference ?? null,
+      });
+    } catch (e) {
+      if (e instanceof SettlementApChainError) throw new SettlementPayRunError(e.code as PayRunCloseErrorCode, e.message, e.details);
+      throw e;
+    }
+    const je = { id: chain.application_journal_entry_id ?? chain.bills.find((b) => b.bill_journal_entry_id)?.bill_journal_entry_id ?? "" };
     await client.query(
-      `UPDATE driver_finance.payrun_gl_runs SET journal_entry_id = $3::uuid
+      `UPDATE driver_finance.payrun_gl_runs SET journal_entry_id = NULLIF($3, '')::uuid
         WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
       [payrunRunId, opco, je.id]
     );
@@ -1227,8 +1349,7 @@ export async function closeSettlementPayRun(
       je_preview: legs,
       disbursement: { recorded: disbursementRecorded, payment_method_id: paymentMethod?.id ?? null, payment_method_name: paymentMethod?.name ?? null },
       trip_close_stamp,
-      __freshJeInput: jeInput,
-      __freshJeId: je.id,
+      ap_chain: chain,
     };
   };
   const scopedResult = transaction ? await execute(transaction.client) : await scoped(actor, opco, execute);

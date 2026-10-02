@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 /**
- * SET-04 — canonical Bill+BillPayment settlement poster must have a mounted forward HTTP route.
+ * SET-04 — the canonical per-load Bill + BillPayment settlement poster must have a mounted forward HTTP route.
  *
- * FAIL if no production *.routes.ts registers a forward handler that calls postSettlementBillPayment.
- * PASS when a role-gated POST route invokes postSettlementBillPayment and the engine remains
- * SETTLEMENT_GL_POSTING_ENABLED-gated (OFF => skipped_flag_off).
+ * ROUND 326 (CC-1, competing-engine order 2026-10-02): the per-load A/P chain is now what the Close button runs —
+ * POST /api/v1/driver-finance/settlements/:id/payrun-close → closeSettlementPayRun → postSettlementApChainInClientTx
+ * (settlement-ap-chain.service.ts). The former standalone /settlement-posting/bill-payment-post route is retired
+ * (410; verify-single-settlement-poster). This guard keeps its original intent — the canonical poster is mounted,
+ * role-gated and SETTLEMENT_GL_POSTING_ENABLED-gated — re-anchored to where that poster now lives.
  *
  * Prove: fails on pre-fix main; passes on this fix.
  * --selftest mutates the real routes source (write + restore).
@@ -17,35 +19,29 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-canonical-settlement-poster-mounted";
-const ROUTES = path.join(
-  ROOT,
-  "apps/backend/src/accounting/settlement-posting/settlement-posting.routes.ts"
-);
-const ENGINE = path.join(
-  ROOT,
-  "apps/backend/src/accounting/settlement-posting/settlement-bill-payment-posting.service.ts"
-);
-const FORWARD_PATH = "/api/v1/accounting/settlement-posting/bill-payment-post";
+const ROUTES = path.join(ROOT, "apps/backend/src/driver-finance/settlement-payrun-close.routes.ts");
+const ENGINE = path.join(ROOT, "apps/backend/src/driver-finance/settlement-payrun-close.service.ts");
+const FORWARD_PATH = "/api/v1/driver-finance/settlements/:id/payrun-close";
 
 export function analyzeRoutesSource(src) {
   const failures = [];
   const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 
-  if (!/\bpostSettlementBillPayment\b/.test(code)) {
-    failures.push(`${path.relative(ROOT, ROUTES)}: must import and call postSettlementBillPayment`);
+  if (!/\bcloseSettlementPayRun\b/.test(code)) {
+    failures.push(`${path.relative(ROOT, ROUTES)}: must import and call closeSettlementPayRun`);
   }
   if (!code.includes(FORWARD_PATH)) {
     failures.push(`${path.relative(ROOT, ROUTES)}: must register forward POST ${FORWARD_PATH}`);
   }
   const postMatch = code.match(
-    /app\.post\s*\(\s*["']\/api\/v1\/accounting\/settlement-posting\/bill-payment-post["']/
+    /app\.post\s*\(\s*["']\/api\/v1\/driver-finance\/settlements\/:id\/payrun-close["']/
   );
   if (!postMatch) {
     failures.push(`${path.relative(ROOT, ROUTES)}: ${FORWARD_PATH} must be an app.post forward handler`);
   } else {
     const window = code.slice(postMatch.index, postMatch.index + 2000);
-    if (!/postSettlementBillPayment\s*\(/.test(window)) {
-      failures.push(`${path.relative(ROOT, ROUTES)}: ${FORWARD_PATH} handler must call postSettlementBillPayment(`);
+    if (!/closeSettlementPayRun\s*\(/.test(window)) {
+      failures.push(`${path.relative(ROOT, ROUTES)}: ${FORWARD_PATH} handler must call closeSettlementPayRun(`);
     }
     if (!/ensureFinanceUser|requireAuth|financeRoles|AUTHORITY_ROLES/.test(window)) {
       failures.push(`${path.relative(ROOT, ROUTES)}: ${FORWARD_PATH} must be role/auth gated`);
@@ -57,10 +53,11 @@ export function analyzeRoutesSource(src) {
 export function analyzeEngineSource(src) {
   const failures = [];
   const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  if (!/SETTLEMENT_GL_POSTING_FLAG_KEY/.test(code) || !/skipped_flag_off/.test(code)) {
-    failures.push(
-      `${path.relative(ROOT, ENGINE)}: postSettlementBillPayment must remain SETTLEMENT_GL_POSTING_ENABLED-gated (skipped_flag_off)`
-    );
+  if (!/SETTLEMENT_GL_POSTING_FLAG_KEY/.test(code) || !/if \(!flagOn\)/.test(code)) {
+    failures.push(`${path.relative(ROOT, ENGINE)}: closeSettlementPayRun must remain SETTLEMENT_GL_POSTING_ENABLED-gated (flag OFF -> preview only)`);
+  }
+  if (!/await postSettlementApChainInClientTx\(/.test(code)) {
+    failures.push(`${path.relative(ROOT, ENGINE)}: closeSettlementPayRun must post the per-load A/P chain (postSettlementApChainInClientTx)`);
   }
   return failures;
 }
@@ -89,7 +86,7 @@ function selftest() {
 
   const original = fs.readFileSync(ROUTES, "utf8");
   const planted = original.replace(
-    /app\.post\(\s*"\/api\/v1\/accounting\/settlement-posting\/bill-payment-post"[\s\S]*?\n\s*\}\);/,
+    /app\.post\(\s*"\/api\/v1\/driver-finance\/settlements\/:id\/payrun-close"[\s\S]*?\n\s*\}\);/,
     `// SET-04 forward route removed (planted defect for selftest)`
   );
   if (planted === original) {
@@ -129,6 +126,6 @@ if (isMain) {
     process.exit(1);
   }
   console.log(
-    `[${LABEL}] PASS — postSettlementBillPayment forward route mounted at ${FORWARD_PATH} (flag-gated in engine)`
+    `[${LABEL}] PASS — the per-load A/P settlement poster is mounted at ${FORWARD_PATH} (closeSettlementPayRun → postSettlementApChainInClientTx, flag-gated)`
   );
 }
