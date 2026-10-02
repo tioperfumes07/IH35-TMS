@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { CatalogListSearchInput } from "../../../components/lists/CatalogListSearchInput";
 import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQueryOptions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../../api/client";
@@ -74,12 +73,10 @@ export function TerminationReasonsListPage() {
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("active");
   const [modalOpen, setModalOpen] = useState(false);
   const [activeRow, setActiveRow] = useState<DriverTerminationReason | null>(null);
   const [conflictError, setConflictError] = useState<string | null>(null);
-  const [showInactive, setShowInactive] = useState(false);
 
   // LST-F5214 — Lists hub ?create=1 must open create modal (org-wide catalog; no opco gate).
   useCreateQueryParam({
@@ -135,16 +132,13 @@ export function TerminationReasonsListPage() {
   });
 
   const allRows = listQuery.data?.reasons ?? [];
-  const rows = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return allRows.filter((row) => {
-      if (status === "active" && !row.is_active) return false;
-      if (status === "inactive" && row.is_active) return false;
-      if (!showInactive && !row.is_active) return false;
-      if (!term) return true;
-      return row.code.toLowerCase().includes(term) || row.label.toLowerCase().includes(term);
-    });
-  }, [allRows, search, status, showInactive]);
+  // Round 296 filter law: the whole catalog is loaded; the Show selector narrows by is_active and the house toolbar
+  // (the table's UniversalListToolbar) is the ONE search, over every row, with "N of M". The old page search +
+  // "Show inactive" checkbox double-filtered: Show = Inactive rendered nothing until the checkbox was also ticked.
+  const rows = useMemo(
+    () => allRows.filter((row) => status === "all" || (status === "active" ? row.is_active : !row.is_active)),
+    [allRows, status],
+  );
 
   const isSaving = createMutation.isPending || updateMutation.isPending || deactivateMutation.isPending;
 
@@ -181,24 +175,13 @@ export function TerminationReasonsListPage() {
         returning-driver detection surfaces the warning. Editable by Owners.
       </div>
 
-      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
-        <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by code or label" className="h-9 rounded-sm border border-gray-300 px-2 text-xs md:col-span-2" />
+      <div className="flex items-end gap-2 rounded-sm border border-gray-200 bg-white p-3">
         <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
           <option value="all">All</option>
         </SelectCombobox>
       </div>
-
-      <label className="flex items-center gap-1 text-xs text-gray-600">
-        <input
-          type="checkbox"
-          checked={showInactive}
-          onChange={(e) => setShowInactive(e.target.checked)}
-          className="h-3.5 w-3.5 rounded-sm border-gray-300"
-        />
-        Show inactive
-      </label>
 
       {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search/Status filters above
           feed `rows`; row-click → edit modal preserved exactly. */}
@@ -219,8 +202,6 @@ export function TerminationReasonsListPage() {
             : undefined
         }
       />
-
-      <div className="text-xs text-slate-500">Total rows: {rows.length}</div>
 
       <TerminationReasonModal
         open={modalOpen}
