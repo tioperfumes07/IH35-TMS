@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { colors, spacing } from "../../design/tokens";
+import "../../design/ih35-design-tokens.css";
+import "./board-kpi.css";
 
 /**
  * C8 — the shared KPI/stat card. Two rules live here so no call site can forget either one.
@@ -63,6 +65,12 @@ export type DrillKpiCardProps = KpiDrillTarget & {
    * `accent` above still wins if a call site passes both.
    */
   tone?: "in-shop" | "oos";
+  /**
+   * OWNER DESIGN LAW 2026-10-02 rule 6: "board" = the boards' tile -- white card, 78px, left-aligned 21px/600 figure,
+   * ih-hd label (docs/design/00-OWNER-DESIGN-LAW-READ-BEFORE-ANY-SCREEN.md). Opt-in, so surfaces move to the board
+   * system one by one; the default keeps the 2026-09-04 tile for every surface not yet moved.
+   */
+  variant?: "legacy" | "board";
 };
 
 /** §7-locked tones already in use on the R&M status board. Red stays reserved; amber is warning. */
@@ -92,8 +100,25 @@ export function DrillKpiCard({
   onClick,
   unavailable,
   tone,
+  variant = "legacy",
 }: DrillKpiCardProps) {
   const resolvedAccent = accent ?? (tone ? KPI_TONE_ACCENT[tone] : undefined);
+  if (variant === "board") {
+    return (
+      <BoardKpiTile
+        label={label}
+        value={value}
+        hint={hint}
+        accent={resolvedAccent}
+        valueTone={valueTone}
+        active={active}
+        testId={testId}
+        to={to}
+        onClick={onClick}
+        unavailable={unavailable}
+      />
+    );
+  }
   const compact = size === "sm";
   const shell = [
     // CENTER-EVERYTHING + KPI-TILE-SIZE LAW (owner ruling 2026-09-04, ORCH-measured): centered,
@@ -189,6 +214,56 @@ export function DrillKpiCard({
       data-kpi-drill="action"
       data-testid={testId}
     >
+      {body}
+    </button>
+  );
+}
+
+/** The boards' tile (variant="board"): same drill / honesty rules, the owner's board system. */
+function BoardKpiTile(props: {
+  label: string;
+  value: string | number | null | undefined;
+  hint?: ReactNode;
+  accent?: string;
+  valueTone: NonNullable<DrillKpiCardProps["valueTone"]>;
+  active: boolean;
+  testId?: string;
+  to?: string;
+  onClick?: () => void;
+  unavailable?: string;
+}) {
+  const displayValue = props.unavailable ? KPI_NO_VALUE : formatKpiValue(props.value);
+  const emptyWithoutReason = !props.unavailable && displayValue === KPI_NO_VALUE;
+  const reason = props.unavailable ?? (emptyWithoutReason ? (typeof props.hint === "string" ? props.hint : "No data") : null);
+  const cls = `ih-kpi board-kpi${props.valueTone !== "default" ? ` board-kpi--${props.valueTone}` : ""}`;
+  const style = props.accent ? { borderLeft: `3px solid ${props.accent}` } : undefined;
+  const body = (
+    <>
+      <div className="ih-hd">{props.label}</div>
+      <div className="ih-kpi__value">{displayValue}</div>
+      {reason ? (
+        <div className="board-kpi-hint" data-kpi-empty-reason="true" title={reason}>{reason}</div>
+      ) : props.hint ? (
+        <div className="board-kpi-hint">{props.hint}</div>
+      ) : null}
+    </>
+  );
+  if (props.unavailable) {
+    return (
+      <div className={cls} style={style} aria-disabled="true" aria-label={`${props.label} — ${props.unavailable}`} title={props.unavailable} data-kpi-unavailable="true" data-testid={props.testId}>
+        {body}
+      </div>
+    );
+  }
+  if (props.to) {
+    return (
+      <Link to={props.to} className={cls} style={style} aria-label={`${props.label} — view records`} data-kpi-drill="to" data-testid={props.testId}>
+        {body}
+      </Link>
+    );
+  }
+  return (
+    <button type="button" onClick={props.onClick} className={cls} style={style} aria-label={`${props.label} — view records`} aria-pressed={props.active} data-kpi-drill="action" data-testid={props.testId}>
       {body}
     </button>
   );

@@ -33,6 +33,26 @@ export function audit(tsx, css) {
   return fails;
 }
 
+// Every OTHER dispatch KPI tile: DrillKpiCard variant="board" (78px, left-aligned) -- never the 2026-09-04 tile.
+import { execFileSync } from "node:child_process";
+const KPI_CSS = "apps/frontend/src/components/layout/board-kpi.css";
+const CARD = "apps/frontend/src/components/layout/DrillKpiCard.tsx";
+export function auditDispatchTiles(files, kpiCss, card) {
+  const f = [];
+  for (const [file, src] of Object.entries(files)) {
+    for (const m of src.matchAll(/<DrillKpiCard\b[\s\S]*?\/>/g)) if (!/variant="board"/.test(m[0])) f.push(`${file}: DrillKpiCard without variant="board"`);
+  }
+  if (!/\.board-kpi \{[^}]*text-align: left;[^}]*min-height: 78px/.test(kpiCss)) f.push(`${KPI_CSS}: board tile must be left-aligned, 78px`);
+  if (!/className="ih-kpi__value"/.test(card) || !/function BoardKpiTile\(/.test(card)) f.push(`${CARD}: board variant must render the ih-kpi tile`);
+  return f;
+}
+const dispatchFiles = execFileSync("git", ["grep", "-l", "<DrillKpiCard", "--", ":(glob)apps/frontend/src/pages/dispatch/**/*.tsx", ":(glob)apps/frontend/src/components/dispatch/**/*.tsx", ":!*.test.tsx"], { encoding: "utf8" }).trim().split("\n").filter(Boolean);
+const tileFails = auditDispatchTiles(Object.fromEntries(dispatchFiles.map((f) => [f, fs.readFileSync(f, "utf8")])), fs.readFileSync(KPI_CSS, "utf8"), fs.readFileSync(CARD, "utf8"));
+if (tileFails.length) {
+  console.error(`[verify-dispatch-kpi-centered-light] FAILED\n${tileFails.map((f) => ` - ${f}`).join("\n")}`);
+  process.exit(1);
+}
+
 const tsx = fs.readFileSync(TSX, "utf8");
 const css = fs.readFileSync(CSS, "utf8");
 const failures = audit(tsx, css);
@@ -49,6 +69,14 @@ if (process.argv.includes("--selftest")) {
     ["216px bars", tsx, css.replace("min-height: 78px", "min-height: 216px")],
     ["drop tokens css", tsx.replace('import "../../design/ih35-design-tokens.css";', ""), css],
   ];
+  const tp = "apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx";
+  const kc = fs.readFileSync(KPI_CSS, "utf8");
+  if (auditDispatchTiles({ [tp]: fs.readFileSync(tp, "utf8").replaceAll('variant="board" ', "") }, kc, fs.readFileSync(CARD, "utf8")).length === 0) {
+    console.error("[verify-dispatch-kpi-centered-light] selftest FAILED — legacy tile on Trip Pairing survived"); process.exit(1);
+  }
+  if (auditDispatchTiles({}, kc.replace("text-align: left; ", ""), fs.readFileSync(CARD, "utf8")).length === 0) {
+    console.error("[verify-dispatch-kpi-centered-light] selftest FAILED — centred board tile survived"); process.exit(1);
+  }
   for (const [name, t, c] of mutations) {
     if (audit(t, c).length === 0) {
       console.error(`[verify-dispatch-kpi-centered-light] selftest FAILED — mutation survived: ${name}`);
