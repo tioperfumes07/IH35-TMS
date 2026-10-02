@@ -409,6 +409,9 @@ export async function getAccountRegister(
               OR (p.source_transaction_type = 'bill_payment' AND bt.matched_bill_payment_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'settlement' AND bt.matched_settlement_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'transfer' AND bt.matched_transfer_id::text = p.source_transaction_id)
+              -- B-1 / BANK-F91025 — Faro wire + cash/driver advance matches must light ✓=C on the register.
+              OR (p.source_transaction_type = 'factoring_advance' AND bt.matched_factoring_advance_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type IN ('cash_advance', 'driver_advance') AND bt.matched_advance_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'bank_categorization' AND bt.id::text = p.source_transaction_id)
             )
        ) match_info ON true
@@ -608,6 +611,9 @@ export async function toggleAccountRegisterCleared(
               OR (p.source_transaction_type = 'bill_payment' AND bt.matched_bill_payment_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'settlement' AND bt.matched_settlement_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'transfer' AND bt.matched_transfer_id::text = p.source_transaction_id)
+              -- B-1 / BANK-F91025 — Faro wire + cash/driver advance matches must light ✓=C on the register.
+              OR (p.source_transaction_type = 'factoring_advance' AND bt.matched_factoring_advance_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type IN ('cash_advance', 'driver_advance') AND bt.matched_advance_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'bank_categorization' AND bt.id::text = p.source_transaction_id)
             )
        ) match_info ON true
@@ -755,6 +761,9 @@ export async function saveAccountRegisterInline(
               OR (p.source_transaction_type = 'bill_payment' AND bt.matched_bill_payment_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'settlement' AND bt.matched_settlement_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'transfer' AND bt.matched_transfer_id::text = p.source_transaction_id)
+              -- B-1 / BANK-F91025 — Faro wire + cash/driver advance matches must light ✓=C on the register.
+              OR (p.source_transaction_type = 'factoring_advance' AND bt.matched_factoring_advance_id::text = p.source_transaction_id)
+              OR (p.source_transaction_type IN ('cash_advance', 'driver_advance') AND bt.matched_advance_id::text = p.source_transaction_id)
               OR (p.source_transaction_type = 'bank_categorization' AND bt.id::text = p.source_transaction_id)
             )
        ) match_info ON true
