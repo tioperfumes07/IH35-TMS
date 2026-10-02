@@ -15,6 +15,14 @@ vi.mock("../../../components/documents/DocumentsTab", () => ({
   },
 }));
 
+const matchBannerProps = vi.fn();
+vi.mock("../../../components/accounting/OnlineBankingMatchBanner", () => ({
+  OnlineBankingMatchBanner: (props: Record<string, unknown>) => {
+    matchBannerProps(props);
+    return <div data-testid="b1-online-banking-match-banner" />;
+  },
+}));
+
 const ADVANCE = {
   id: "ad000000-0000-4000-8000-000000000001",
   display_id: "CA-2026-0007",
@@ -69,5 +77,50 @@ describe("AdvanceDetailDrawer — C6/B8 DocumentsTab wiring", () => {
     );
     expect(screen.queryByText("Cash Advance Detail")).not.toBeInTheDocument();
     expect(screen.queryByTestId("documents-tab-stub")).not.toBeInTheDocument();
+  });
+
+  it("BANK-F91026 — shows online banking match banner when linked_bank_txn_id is set", () => {
+    matchBannerProps.mockClear();
+    const bankTxnId = "bt000000-0000-4000-8000-000000000099";
+    render(
+      <MemoryRouter>
+        <ToastProvider>
+          <AdvanceDetailDrawer
+            open
+            operatingCompanyId="0c000000-0000-4000-8000-000000000001"
+            advance={{ ...ADVANCE, linked_bank_txn_id: bankTxnId, disbursed_at: "2026-10-01T15:00:00Z" }}
+            onClose={() => {}}
+            onUpdated={() => {}}
+            onMarkDisbursed={() => {}}
+          />
+        </ToastProvider>
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId("b1-online-banking-match-banner")).toBeInTheDocument();
+    expect(matchBannerProps).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bankTransactionId: bankTxnId,
+        amountCents: 40000,
+      })
+    );
+  });
+
+  it("BANK-F91026 — no match banner when linked_bank_txn_id is absent", () => {
+    matchBannerProps.mockClear();
+    render(
+      <MemoryRouter>
+        <ToastProvider>
+          <AdvanceDetailDrawer
+            open
+            operatingCompanyId="0c000000-0000-4000-8000-000000000001"
+            advance={ADVANCE}
+            onClose={() => {}}
+            onUpdated={() => {}}
+            onMarkDisbursed={() => {}}
+          />
+        </ToastProvider>
+      </MemoryRouter>
+    );
+    expect(screen.queryByTestId("b1-online-banking-match-banner")).not.toBeInTheDocument();
   });
 });

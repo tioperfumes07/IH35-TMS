@@ -2,6 +2,7 @@ import { reverseCashAdvance } from "../../../api/cashAdvances";
 import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { OnlineBankingMatchBanner } from "../../../components/accounting/OnlineBankingMatchBanner";
 import { entityLabel } from "../../../lib/entity-label";
 import { printLetterHtml } from "../../../lib/openPrintableDocument";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -109,6 +110,17 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
 
   return (
     <ParityDrawer open title="Cash Advance Detail" onClose={onClose} size="regular" footer={footer}>
+        {/* B-1 §5 / BANK-F91026 — online banking match banner when linked_bank_txn_id is set (match → ✓=C). */}
+        {advance.linked_bank_txn_id ? (
+          <OnlineBankingMatchBanner
+            companyId={operatingCompanyId}
+            bankTransactionId={String(advance.linked_bank_txn_id)}
+            txnDate={advance.disbursed_at ? String(advance.disbursed_at).slice(0, 10) : null}
+            description={advance.display_id ? String(advance.display_id) : null}
+            amountCents={Math.round(Number(advance.amount ?? 0) * 100)}
+            invalidateKeys={[["cash-advances", operatingCompanyId], ["cash-advance", operatingCompanyId, String(advance.id)]]}
+          />
+        ) : null}
         <div className="space-y-1 rounded-sm border border-gray-200 bg-gray-50 p-2">
           <div>ID: {String(advance.display_id ?? "—")}</div>
           <div>Amount: ${Number(advance.amount ?? 0).toFixed(2)}</div>
