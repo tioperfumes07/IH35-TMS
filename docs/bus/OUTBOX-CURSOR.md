@@ -1,3 +1,8 @@
+**2026-10-02T12:35Z · BANK-F91037 B-4 Settlement No + Location MERGED #24098 · tip `eabb5f0d31`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91037 MERGED + NEON APPLIED | GO
+CLAIM 202615221300: expenses.settlement_no + location_id; WriteCheckForm + createCheck wired. Neon cols_present=2 (settlement_no text, location_id uuid FK). LANE_CROSS claim ruling.
+NEXT: next ORDERS leftover / ROUND 326 deploy proof · Lead Chrome · backend+frontend deploy tip · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T12:20Z · BANK-F91035 Check Class MERGED #24095 · CLAIM 202615221300 #24096 · tip `8d396b2b98`+**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91035 + CLAIM FAST-MERGE | GO
 WriteCheckForm Class → class_id; claim-reserve 202615221300 for settlement_no + location_id. Also F91034 BANK_TX_SPLIT Neon ON.
