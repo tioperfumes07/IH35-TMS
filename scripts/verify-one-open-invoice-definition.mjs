@@ -20,6 +20,9 @@ export function audit({ board, candidates, fe }) {
   const cand = candidates.match(/WHERE i\.operating_company_id = \$1::uuid[\s\S]*?ORDER BY i\.issue_date/)?.[0] ?? "";
   if (!/AND i\.amount_open_cents > 0/.test(cand)) f.push(`${CANDIDATES}: a purchase candidate must have a balance above $0`);
   if (!/invoices issued \(open and paid\)/.test(fe)) f.push(`${BOARD_FE}: the all-invoices figure must say it includes paid invoices`);
+  // "Factored" = an invoice actually sold to the factor -- never the eligibility flag (1,213 "Factored" of 0 factored).
+  if (!/factored: n\(r\.factored_invoices\) > 0 \?/.test(board) || /factored: r\.factoring_eligible/.test(board))
+    f.push(`${BOARD}: "Factored" must come from invoices actually factored, not factoring_eligible`);
   return f;
 }
 
@@ -32,6 +35,7 @@ if (process.argv.includes("--selftest")) {
     ["candidate by status only", { ...src, candidates: src.candidates.replace("       AND i.amount_open_cents > 0\n", "") }],
     ["tile counts paid", { ...src, board: src.board.replace("AND amount_open_cents > 0 AND issue_date", "AND issue_date") }],
     ["unnamed live count", { ...src, fe: src.fe.replace("invoices issued (open and paid)", "live invoices") }],
+    ["eligibility labelled factored", { ...src, board: src.board.replace('factored: n(r.factored_invoices) > 0 ? (r.factor_name ?? "Factored") : null', 'factored: r.factoring_eligible ? (r.factor_name ?? "Eligible") : null') }],
   ];
   for (const [n, s] of m) if (audit(s).length === 0) { console.error(`selftest FAIL: ${n}`); process.exit(1); }
   console.log(`verify-one-open-invoice-definition selftest ${m.length}/${m.length} caught`);
