@@ -39,6 +39,8 @@ export interface LoadCostColumnFields {
   driverName: string | null;
   unitNumber: string | null;
   settlementNumber: string | null;
+  /** BANK-F91023 — rollup settlement UUID for EntityLink (null = plain text fallback). */
+  settlementId: string | null;
   revenueCents: number | null;
   costsCents: number | null;
   driverPayCents: number | null;
@@ -156,7 +158,14 @@ export function buildLoadCostColumns<R>(
       sortable: true,
       cellClass: "whitespace-nowrap",
       sortValue: (row) => adapt(row).settlementNumber ?? "",
-      render: (row) => adapt(row).settlementNumber || DASH,
+      render: (row) => {
+        const f = adapt(row);
+        return f.settlementId ? (
+          <EntityLink kind="settlement" id={f.settlementId} label={f.settlementNumber ?? "Settlement"} />
+        ) : (
+          f.settlementNumber || DASH
+        );
+      },
     },
     moneyCol("revenue", "Revenue", (f) => f.revenueCents, { defaultHidden: true }),
     moneyCol("costs", "Costs", (f) => f.costsCents, { defaultHidden: true }),

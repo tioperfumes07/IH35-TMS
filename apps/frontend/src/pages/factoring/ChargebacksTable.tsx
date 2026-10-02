@@ -118,6 +118,7 @@ export function ChargebacksTable({ rows, fmtCurrency, fmtDate, filterBar }: Prop
         driverName: row.lc_driver_name,
         unitNumber: row.lc_unit_number,
         settlementNumber: row.lc_settlement_number,
+        settlementId: row.lc_settlement_id ?? null,
         revenueCents: centsFromWire(row.lc_revenue_cents),
         costsCents: centsFromWire(row.lc_costs_cents),
         driverPayCents: centsFromWire(row.lc_driver_pay_cents),
