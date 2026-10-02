@@ -50,6 +50,13 @@ function main() {
   if (!/<button[\s\S]*data-b4-clear-payment="1"[\s\S]*Clear Payment[\s\S]*<\/button>/.test(form)) {
     throw new Error(`${FORM}: Clear Payment must be a <button>, not a dead span`);
   }
+  // BANK-F91032 — Find Bill No. filters Outstanding Transactions / Add to Check (ORDERS §B-4 / QBO §10)
+  assertIncludes(form, 'data-b4-find-bill-no="1"', FORM);
+  assertIncludes(form, "Find Bill No.", FORM);
+  assertIncludes(form, "billFindQuery", FORM);
+  assertIncludes(form, "billMatchesFind", FORM);
+  assertIncludes(form, "openBillsNotQueued", FORM);
+  assertIncludes(form, 'data-testid="b4-find-bill-no"', FORM);
   assertIncludes(form, 'data-b4-restore-draft="1"', FORM);
   assertIncludes(form, "You have a draft saved. Restore draft", FORM);
   assertIncludes(form, "checkDraftStorageKey", FORM);

@@ -469,19 +469,37 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
   });
   const openBills: VendorBill[] = openBillsQuery.data?.rows ?? [];
   const [billToPayAmounts, setBillToPayAmounts] = useState<Record<string, number>>({});
+  // BANK-F91032 — QBO §10 Find Bill No. on Outstanding Transactions / Add to Check (client filter).
+  const [billFindQuery, setBillFindQuery] = useState("");
   const billsToPay = openBills.filter((b) => b.id in billToPayAmounts);
   const isBillPayment = billsToPay.length > 0;
   const billPaymentTotalCents = useMemo(() => Object.values(billToPayAmounts).reduce((sum, c) => sum + c, 0), [billToPayAmounts]);
+
+  function billMatchesFind(bill: VendorBill, query: string): boolean {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    const hay = [bill.display_id, bill.bill_number].filter(Boolean).join(" ").toLowerCase();
+    return hay.includes(q);
+  }
+
+  const filteredBillsToPay = useMemo(
+    () => billsToPay.filter((b) => billMatchesFind(b, billFindQuery)),
+    [billsToPay, billFindQuery]
+  );
+  const openBillsNotQueued = useMemo(
+    () => openBills.filter((b) => !(b.id in billToPayAmounts) && billMatchesFind(b, billFindQuery)),
+    [openBills, billToPayAmounts, billFindQuery]
+  );
 
   function addBillToPay(bill: VendorBill) {
     const remaining = bill.balance_cents ?? bill.amount_cents - bill.paid_cents;
     setBillToPayAmounts((prev) => ({ ...prev, [bill.id]: Math.max(remaining, 0) }));
   }
-  /** B-4 §9 — Add all open bills for this payee into Outstanding Transactions. */
+  /** B-4 §9 — Add all open bills for this payee into Outstanding Transactions (respects Find Bill No.). */
   function addAllOpenBillsToPay() {
     setBillToPayAmounts((prev) => {
       const next = { ...prev };
-      for (const bill of openBills) {
+      for (const bill of openBillsNotQueued) {
         if (bill.id in next) continue;
         const remaining = bill.balance_cents ?? bill.amount_cents - bill.paid_cents;
         next[bill.id] = Math.max(remaining, 0);
@@ -566,6 +584,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
   // A payee switch clears any bills queued for the PREVIOUS payee -- they belong to a different vendor.
   useEffect(() => {
     setBillToPayAmounts({});
+    setBillFindQuery("");
   }, [vendorIdForBills]);
 
   const totalCents = useMemo(() => lines.reduce((sum, l) => sum + (lineAmountCents(l) ?? 0), 0), [lines]);
@@ -1120,8 +1139,22 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
             lines, not something layered on top of them. */}
         {vendorIdForBills ? (
           <div className="rounded border border-gray-200 p-3" data-b4-add-to-check="1">
-            <div className="mb-2 text-xs font-semibold text-gray-700">
-              {isBillPayment ? "Outstanding Transactions" : "Add to Check"}
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="text-xs font-semibold text-gray-700">
+                {isBillPayment ? "Outstanding Transactions" : "Add to Check"}
+              </div>
+              <label className="flex items-center gap-1 text-xs font-semibold text-gray-600" data-b4-find-bill-no="1">
+                Find Bill No.
+                <input
+                  type="search"
+                  className="h-7 w-36 rounded border border-gray-300 px-2 text-xs font-normal"
+                  value={billFindQuery}
+                  onChange={(e) => setBillFindQuery(e.target.value)}
+                  placeholder="Bill #"
+                  data-testid="b4-find-bill-no"
+                  aria-label="Find Bill No."
+                />
+              </label>
             </div>
             {isBillPayment ? (
               <div className="mb-2 rounded border border-blue-200 bg-blue-50 px-2 py-1.5 text-xs text-blue-800">
@@ -1132,10 +1165,10 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
               <div className="mb-2 rounded border border-gray-200">
                 <ParityTable<VendorBill>
                   columns={billsToPayColumns}
-                  rows={billsToPay}
+                  rows={filteredBillsToPay}
                   rowKey={(b) => b.id}
-                  emptyText="No bills queued."
-                  pageSize={billsToPay.length || 1}
+                  emptyText={billFindQuery.trim() ? "No queued bills match this Bill No." : "No bills queued."}
+                  pageSize={filteredBillsToPay.length || 1}
                   hidePager
                   enableColumnResize={false}
                   enableColumnReorder={false}
@@ -1164,9 +1197,11 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
               <div className="text-xs text-gray-400">Loading open bills…</div>
             ) : openBills.filter((b) => !(b.id in billToPayAmounts)).length === 0 ? (
               <div className="text-xs text-gray-400">{billsToPay.length > 0 ? "No other open bills." : "No open bills for this payee."}</div>
+            ) : openBillsNotQueued.length === 0 ? (
+              <div className="text-xs text-gray-400">No open bills match this Bill No.</div>
             ) : (
               <div className="max-h-40 overflow-y-auto rounded border border-gray-100">
-                {openBills.filter((b) => !(b.id in billToPayAmounts)).length > 0 ? (
+                {openBillsNotQueued.length > 0 ? (
                   <div className="flex justify-end border-b border-gray-100 px-2 py-1">
                     <button
                       type="button"
@@ -1179,9 +1214,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                     </button>
                   </div>
                 ) : null}
-                {openBills
-                  .filter((b) => !(b.id in billToPayAmounts))
-                  .map((b) => {
+                {openBillsNotQueued.map((b) => {
                     const remaining = b.balance_cents ?? b.amount_cents - b.paid_cents;
                     return (
                       <div key={b.id} className="flex items-center justify-between border-t border-gray-100 px-2 py-1 text-xs first:border-t-0">
