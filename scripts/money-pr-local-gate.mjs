@@ -90,6 +90,8 @@ const STEPS = [
   ["verify-requireauth-returns-reply", "scripts/verify-requireauth-returns-reply.mjs"],
   // CC-3 2b — the full-enum load-status table and the canonical dispatch machine must agree on every cross-bucket edge.
   ["verify-load-status-machines-agree", "scripts/verify-load-status-machines-agree.mjs"],
+  // CC-3 2g — loaded_miles is derived (shortest > 0, else practical); every miles writer recomputes it.
+  ["verify-loaded-miles-derived", "scripts/verify-loaded-miles-derived.mjs"],
   // ROUND 326.5 owner design law — boards built on the tokens: no off-token hex, 34/40/44/132/120 sizes, no column borders, KPI rows across.
   ["verify-design-token-parity", "scripts/verify-design-token-parity.mjs"],
   ["verify-no-money-theater", "scripts/verify-no-money-theater.mjs"],

@@ -48,6 +48,18 @@ type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unk
 //  - historical_backfill: a load that already ran and is being recorded after the fact. A gate
 //    cannot retroactively fail a drug test that has already passed. The gate is still EVALUATED,
 //    its outcome is RECORDED, and creation proceeds. Never skipped, never silently passed.
+
+/**
+ * The ONE rule for mdata.loads.loaded_miles (owner miles spec 2026-09-02, two-line rule): typed shortest miles when
+ * present, else practical. Every writer of miles_shortest / miles_practical recomputes it with this (CC-3 queue 2g —
+ * it used to be written only at booking, so a later miles edit left it stale for break-even, scoring, batch pay).
+ */
+export function loadedMilesFor(shortest: unknown, practical: unknown): number | null {
+  const s = shortest == null ? 0 : Number(shortest);
+  if (Number.isFinite(s) && s > 0) return s;
+  return practical == null ? null : Number(practical);
+}
+
 export type LoadCreateSource = "live_feed" | "historical_backfill";
 
 /**
@@ -2679,7 +2691,7 @@ export async function createLoadWithFullSideEffects(
         input.is_sample_data ?? false,
         // P0 2026-09-03: short miles have no trustworthy source (catalog short_miles is NULL).
         // Loaded miles for pay = typed shortest when present, else practical (loaded line of the two-line rule).
-        Number(input.miles_shortest ?? 0) > 0 ? input.miles_shortest : input.miles_practical ?? null,
+        loadedMilesFor(input.miles_shortest, input.miles_practical),
         loadTrailerEquipmentId,
         // ACCT-F9508-DISPATCH-LOAD-COMMODITY-CREATE-SILENT-NOOP: input.commodity/input.weight_lbs
         // were declared on this interface and accepted by the create schema but never read here —

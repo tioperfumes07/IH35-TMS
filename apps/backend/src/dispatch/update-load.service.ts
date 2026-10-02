@@ -38,6 +38,7 @@ import {
   canOwnerOverrideQualification,
   ensureDriverBillArtifactsForLoad,
   type DriverBillMintOutcome,
+  loadedMilesFor,
 } from "./book-load.service.js";
 import { enqueueOverrideNotice } from "../outbox/enqueue-override-notice.js";
 import {
@@ -821,6 +822,12 @@ export async function updateDispatchLoad(
     const column = SCALAR_COLUMNS[key];
     if (!column) continue;
     add(column, fields[key] ?? null, COLUMN_CAST[column] ?? "");
+  }
+  // CC-3 queue 2g: loaded_miles is derived (shortest > 0, else practical) — recompute whenever either input changes.
+  if ("miles_shortest" in fields || "miles_practical" in fields) {
+    const effShortest = "miles_shortest" in fields ? fields.miles_shortest : old.miles_shortest;
+    const effPractical = "miles_practical" in fields ? fields.miles_practical : old.miles_practical;
+    add("loaded_miles", loadedMilesFor(effShortest, effPractical));
   }
   // Charges -> rate_total_cents (single source of truth; there is no separate charge table).
   let rateChanged = false;
