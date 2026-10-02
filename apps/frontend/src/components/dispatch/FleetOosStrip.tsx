@@ -289,7 +289,7 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
         <div className="px-3 py-2 text-xs text-slate-700">All units in service.</div>
       ) : (
         <div className="px-3 py-2" data-testid="dispatch-fleet-oos-table-wrap">
-          <ParityTable<OosUnitRow>
+          <ParityTable<OosUnitRow> appearance="board"
             columns={oosColumns}
             rows={rows}
             rowKey={(row) => row.unitId}

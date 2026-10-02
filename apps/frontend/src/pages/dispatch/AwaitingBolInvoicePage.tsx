@@ -94,7 +94,7 @@ export function AwaitingBolInvoicePage() {
           onRetry={() => void queueQ.refetch()}
         />
       ) : (
-        <ParityTable<AwaitingBolInvoiceRow>
+        <ParityTable<AwaitingBolInvoiceRow> appearance="board"
           columns={columns}
           rows={rows}
           rowKey={(row) => row.load_id}

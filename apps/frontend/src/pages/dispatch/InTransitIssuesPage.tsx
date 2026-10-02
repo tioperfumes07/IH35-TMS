@@ -317,7 +317,7 @@ export function InTransitIssuesPage() {
           onRetry={() => void issuesQ.refetch()}
         />
       ) : (
-        <ParityTable<DispatchIntransitIssueRow>
+        <ParityTable<DispatchIntransitIssueRow> appearance="board"
         columns={columns}
         rows={issues}
         rowKey={(issue) => issue.id}

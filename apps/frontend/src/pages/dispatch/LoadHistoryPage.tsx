@@ -221,7 +221,7 @@ export default function LoadHistoryPage() {
 
       <section className="rounded-sm border border-slate-200 bg-white p-3" data-testid="load-history-linked-docs">
         <h2 className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-600">Linked documents</h2>
-        <ParityTable
+        <ParityTable appearance="board"
           columns={docColumns}
           rows={historyQuery.data?.linked_documents ?? []}
           rowKey={(r) => `${r.kind}:${r.id}`}
@@ -233,7 +233,7 @@ export default function LoadHistoryPage() {
 
       <section className="rounded-sm border border-slate-200 bg-white p-3" data-testid="load-history-timeline">
         <h2 className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-600">Timeline</h2>
-        <ParityTable
+        <ParityTable appearance="board"
           columns={timelineColumns}
           rows={historyQuery.data?.rows ?? []}
           rowKey={(r) => r.id}

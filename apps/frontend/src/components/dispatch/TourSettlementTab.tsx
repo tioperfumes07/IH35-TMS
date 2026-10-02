@@ -113,7 +113,7 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
       <div className="ldt-card" data-testid="driver-settlement-card">
         <div className="ldt-ch"><span>Driver settlement {t.is_open ? "(on close)" : ""}</span><span className="ldt-open">{bills.length} bill{bills.length === 1 ? "" : "s"}</span></div>
         <div className="ldt-rows">
-          <ParityTable rows={bills} rowKey={b => b.id} tableTestId="settlement-driver-bills" emptyText="No driver bill on this tour yet." columns={[
+          <ParityTable rows={bills} rowKey={b => b.id} appearance="board" tableTestId="settlement-driver-bills" emptyText="No driver bill on this tour yet." columns={[
             { key: "load", label: "Load Number", sortable: true, sortValue: b => b.load_number ?? "", render: b => <EntityLink kind="load" id={b.load_id} label={b.load_number ?? "Load"} /> },
             { key: "basis", label: "Miles basis", sortable: true, sortValue: b => b.miles_basis_type ?? "", render: b => b.miles_basis_type ?? DASH },
             { key: "loaded_miles", label: "Loaded miles", sortable: true, sortValue: b => b.miles_basis ?? -Infinity, render: b => miles(b.miles_basis) },
@@ -170,7 +170,7 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
     <div className="ldt-card" data-testid="settlement-customer-charges">
       <div className="ldt-ch"><span>Customer charges</span><span className="ldt-open">{liveLegs.length} load{liveLegs.length === 1 ? "" : "s"}</span></div>
       <div className="ldt-rows">
-        <ParityTable rows={liveLegs} rowKey={l => l.load_id} tableTestId="settlement-customer-charges-table" emptyText="No loads on this tour yet." columns={[
+        <ParityTable appearance="board" rows={liveLegs} rowKey={l => l.load_id} tableTestId="settlement-customer-charges-table" emptyText="No loads on this tour yet." columns={[
           { key: "load", label: "Load Number", sortable: true, sortValue: l => l.load_number ?? "", render: l => <EntityLink kind="load" id={l.load_id} label={l.load_number ?? "Load"} /> },
           { key: "lane", label: "Lane", sortable: true, sortValue: l => l.lane, render: l => <span className="ldt-sub">{l.lane || DASH}</span> },
           { key: "desc", label: "Description", sortable: false, render: () => "Line haul" },
@@ -189,7 +189,7 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
     <div className="ldt-card" data-testid="settlement-fuel-expenses">
       <div className="ldt-ch"><span>Fuel &amp; expenses</span><span className="ldt-open">{r.costs.length} entr{r.costs.length === 1 ? "y" : "ies"}</span></div>
       <div className="ldt-rows">
-        <ParityTable rows={r.costs} rowKey={c => `${c.kind}:${c.id}`} tableTestId="settlement-fuel-expenses-table" emptyText="No fuel or expenses recorded on this tour." columns={[
+        <ParityTable appearance="board" rows={r.costs} rowKey={c => `${c.kind}:${c.id}`} tableTestId="settlement-fuel-expenses-table" emptyText="No fuel or expenses recorded on this tour." columns={[
           { key: "date", label: "Date", sortable: true, sortValue: c => c.date ?? "", render: c => fmtDate(c.date) ?? DASH },
           { key: "kind", label: "Kind", sortable: true, sortValue: c => isFuel(c) ? "Fuel" : "Expense", render: c => isFuel(c) ? "Fuel" : "Expense" },
           { key: "vendor", label: "Vendor", sortable: true, sortValue: c => c.vendor_name ?? "", render: c => c.vendor_name ?? DASH },

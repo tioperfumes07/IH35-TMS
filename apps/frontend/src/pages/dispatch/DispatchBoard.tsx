@@ -1667,7 +1667,7 @@ export function DispatchBoard({
             : listRows;
           const anyLoading = loading || unitsWithoutLoadQuery.isLoading || inShopUnitsQuery.isLoading;
           return (
-            <ParityTable
+            <ParityTable appearance="board"
               columns={parityColumns}
               columnGroups={boardColumnGroups}
               stickyLeftCount={4}
@@ -1794,7 +1794,7 @@ export function DispatchBoard({
       gearButtonTestId: string,
       emptyText: string,
     ) => (
-      <ParityTable
+      <ParityTable appearance="board"
         columns={parityColumns}
         columnGroups={boardColumnGroups}
         stickyLeftCount={4}
@@ -2053,7 +2053,7 @@ export function DispatchBoard({
       sort: SectionSort,
       emptyMessage: string,
     ) => (
-      <ParityTable<BoardLoad>
+      <ParityTable<BoardLoad> appearance="board"
         columns={columns}
         rows={rows}
         rowKey={(load) => load.id}

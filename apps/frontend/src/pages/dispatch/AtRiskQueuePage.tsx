@@ -225,7 +225,7 @@ export function AtRiskQueuePage() {
           onRetry={() => void loadsQ.refetch()}
         />
       ) : (
-        <ParityTable<AtRiskRow>
+        <ParityTable<AtRiskRow> appearance="board"
           columns={columns}
           rows={loads}
           rowKey={(load) => load.id}

@@ -227,7 +227,7 @@ export function PodReviewPage() {
             onRetry={() => void podsQuery.refetch()}
           />
         ) : (
-          <ParityTable<PodDocumentSummary>
+          <ParityTable<PodDocumentSummary> appearance="board"
           columns={columns}
           rows={documents}
           rowKey={(doc) => doc.id}

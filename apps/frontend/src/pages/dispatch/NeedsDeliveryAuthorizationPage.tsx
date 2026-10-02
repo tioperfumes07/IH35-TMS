@@ -159,7 +159,7 @@ export function NeedsDeliveryAuthorizationPage() {
           onRetry={() => void queueQ.refetch()}
         />
       ) : (
-        <ParityTable<NeedsDeliveryAuthorizationRow>
+        <ParityTable<NeedsDeliveryAuthorizationRow> appearance="board"
           columns={columns}
           rows={rows}
           rowKey={(row) => row.load_id}

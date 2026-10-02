@@ -150,7 +150,7 @@ export function BorderCrossingHistory() {
           onRetry={() => void refetch()}
         />
       ) : (
-      <ParityTable<CrossingEvent>
+      <ParityTable<CrossingEvent> appearance="board"
         columns={columns}
         rows={events}
         rowKey={(ev) => ev.uuid}

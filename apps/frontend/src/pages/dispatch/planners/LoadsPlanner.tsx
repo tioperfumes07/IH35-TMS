@@ -195,7 +195,7 @@ export function LoadsPlanner() {
           ];
           return (
             <div data-testid="dispatch-loads-planner-list">
-              <ParityTable<LoadListRow>
+              <ParityTable<LoadListRow> appearance="board"
                 columns={columns}
                 rows={listRows}
                 rowKey={(row) => row.id}

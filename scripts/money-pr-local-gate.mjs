@@ -102,6 +102,7 @@ const STEPS = [
   ["verify-design-token-parity", "scripts/verify-design-token-parity.mjs"],
   ["verify-dispatch-date-boxes", "scripts/verify-dispatch-date-boxes.mjs"],
   ["verify-dispatch-missing-is-em-dash", "scripts/verify-dispatch-missing-is-em-dash.mjs"],
+  ["verify-dispatch-tables-board-appearance", "scripts/verify-dispatch-tables-board-appearance.mjs"],
   ["verify-filter-surfaces-full-set", "scripts/verify-filter-surfaces-full-set.mjs"],
   ["verify-variant-duplicate-candidates", "scripts/verify-variant-duplicate-candidates.mjs"],
   ["verify-recon-payee-never-ledger-account", "scripts/verify-recon-payee-never-ledger-account.mjs"],

@@ -452,7 +452,7 @@ export function FactoringQueuePage() {
           onRetry={() => void queueQ.refetch()}
         />
       ) : (
-      <ParityTable<FactoringQueueRow>
+      <ParityTable<FactoringQueueRow> appearance="board"
         columns={columns}
         rows={filtered}
         rowKey={(row) => row.load_id}

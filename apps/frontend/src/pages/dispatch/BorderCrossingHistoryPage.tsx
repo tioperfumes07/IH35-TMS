@@ -151,7 +151,7 @@ export function BorderCrossingHistoryPage() {
             </button>
           </div>
         ) : (
-        <ParityTable<CrossingRow>
+        <ParityTable<CrossingRow> appearance="board"
           columns={columns}
           rows={rows}
           rowKey={(row) => row.id}

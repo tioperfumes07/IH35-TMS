@@ -80,7 +80,7 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
 
     {/* Per-leg readout — the same numbers the Costs footer and Settlement tab show */}
     <div className="ldt-card" data-testid="tour-legs">
-      <ParityTable rows={r.legs} rowKey={l => l.load_id} rowTestId={() => "tour-leg"}
+      <ParityTable rows={r.legs} rowKey={l => l.load_id} rowTestId={() => "tour-leg"} appearance="board"
         onRowClick={l => setPopup({ title: `Leg ${l.trip_type ?? ""} · load ${l.load_number}`, body: <LegPop leg={l} cur={currencyCode} /> })}
         columns={[
           { key: "type", label: "Leg", sortable: true, sortValue: l => l.trip_type ?? "", render: l => l.trip_type ?? DASH },
