@@ -1,4 +1,44 @@
 {
+  "12129": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 12 — 1090 undeposited-funds clearing guard (CC-1)."
+  },
+  "12133": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 13 — 2510 Dreamline card payable payment side guard (CC-1)."
+  },
+  "12137": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 14 — 6300 bank service charge churn guard (CC-1)."
+  },
+  "12141": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 15 — check creator commissioning guard (CC-1)."
+  },
+  "12145": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 16 — reclassify line rewrite no half-write guard (CC-1)."
+  },
+  "12149": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 17 / M3 — one fleet roster definition guard (CC-1)."
+  },
+  "12153": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 18 — settlement creator totals chain guard (CC-1)."
+  },
+  "12157": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 23 — table-and-stamp snapshot guard (CC-1)."
+  },
   "12109": {
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-02",
