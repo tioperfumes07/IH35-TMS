@@ -55,6 +55,7 @@ export function ReclassifyTransactionsPage() {
   const [search, setSearch] = useState("");
   const [applied, setApplied] = useState<{ from: string; to: string; accountId: string | null; sourceType: string; classId: string; search: string } | null>(null);
   const [offset, setOffset] = useState(0);
+  const [gotoPageDraft, setGotoPageDraft] = useState("1");
   const [selected, setSelected] = useState<Map<string, ReclassifyLine>>(new Map());
   const [modalOpen, setModalOpen] = useState(false);
   const [toAccount, setToAccount] = useState("");
@@ -114,7 +115,7 @@ export function ReclassifyTransactionsPage() {
   const selectedSum = Array.from(selected.values()).reduce((s, l) => s + l.net_amount_cents, 0);
   const activeAccount: ReclassifyAccount | undefined = accountsQ.data?.accounts?.find((a) => a.account_id === applied?.accountId);
 
-  const runFind = () => { setApplied({ from: fromDate, to: toDate, accountId, sourceType, classId, search }); setOffset(0); setSelected(new Map()); };
+  const runFind = () => { setApplied({ from: fromDate, to: toDate, accountId, sourceType, classId, search }); setOffset(0); setGotoPageDraft("1"); setSelected(new Map()); };
   const toggle = (l: ReclassifyLine) => setSelected((prev) => { const n = new Map(prev); if (n.has(l.posting_id)) n.delete(l.posting_id); else n.set(l.posting_id, l); return n; });
   const togglePage = () => setSelected((prev) => { const n = new Map(prev); if (pageAllSelected) lines.forEach((l) => n.delete(l.posting_id)); else lines.forEach((l) => n.set(l.posting_id, l)); return n; });
 
@@ -239,11 +240,31 @@ export function ReclassifyTransactionsPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="mt-1 flex items-center justify-between text-xs text-slate-600">
+              <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600" data-b5-goto-page="1" data-testid="reclassify-pager">
                 <span>{linesQ.data ? `${Math.min(offset + 1, linesQ.data.total_lines)}–${Math.min(offset + PAGE, linesQ.data.total_lines)} of ${linesQ.data.total_lines}` : ""}</span>
-                <span className="flex gap-1">
-                  <Button type="button" size="sm" variant="tertiary" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - PAGE))}>Previous</Button>
-                  <Button type="button" size="sm" variant="tertiary" disabled={!linesQ.data || offset + PAGE >= linesQ.data.total_lines} onClick={() => setOffset(offset + PAGE)}>Next</Button>
+                <span className="flex flex-wrap items-center gap-1">
+                  <Button type="button" size="sm" variant="tertiary" disabled={offset === 0} onClick={() => { const next = Math.max(0, offset - PAGE); setOffset(next); setGotoPageDraft(String(Math.floor(next / PAGE) + 1)); }}>Previous</Button>
+                  <label className="inline-flex items-center gap-1 font-semibold text-slate-600">
+                    Go to page
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      className="h-7 w-12 rounded-sm border border-[#E5E7EB] px-1 text-center text-xs tabular-nums"
+                      value={gotoPageDraft}
+                      onChange={(e) => setGotoPageDraft(e.target.value.replace(/[^\d]/g, ""))}
+                      onKeyDown={(e) => {
+                        if (e.key !== "Enter" || !linesQ.data) return;
+                        const totalPages = Math.max(1, Math.ceil(linesQ.data.total_lines / PAGE));
+                        const page = Math.min(totalPages, Math.max(1, Number(gotoPageDraft) || 1));
+                        setGotoPageDraft(String(page));
+                        setOffset((page - 1) * PAGE);
+                      }}
+                      aria-label="Go to page"
+                      data-testid="reclassify-goto-page"
+                    />
+                    of {linesQ.data ? Math.max(1, Math.ceil(linesQ.data.total_lines / PAGE)) : "—"}
+                  </label>
+                  <Button type="button" size="sm" variant="tertiary" disabled={!linesQ.data || offset + PAGE >= linesQ.data.total_lines} onClick={() => { const next = offset + PAGE; setOffset(next); setGotoPageDraft(String(Math.floor(next / PAGE) + 1)); }}>Next</Button>
                 </span>
               </div>
             </>
