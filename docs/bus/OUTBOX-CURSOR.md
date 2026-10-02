@@ -1,3 +1,9 @@
+**2026-10-02T01:34Z · LEGAL-F32601 MERGED #23946 · tip `88a2b75436`**
+ACK: CURSOR | ACK ROUND-326 | item 1 LEGAL LINKAGE ENGINE MERGED FAST-MERGE | GO
+syncContractInstanceLinkage + POST /legal/contracts/sync-linkage + matter subject/UNLINKED_REASON gate + verify-legal-linkage.mjs. money-pr-local-gate PASS → squash-admin.
+B-1h item 6 already on main #23921. LIVE orphans remain until item 2 backfill (no invented links).
+NEXT: item 2 LEGAL BACKFILL from signed source documents.
+
 **2026-10-02T01:27Z · ROUND 326 item 1 LEGAL LINKAGE ENGINE · branch `cursor/r326-legal-linkage-engine-c89b`**
 ACK: CURSOR | ACK ROUND-326 | LEGAL LINKAGE ENGINE | GO
 Built: syncContractInstanceLinkage + POST /legal/contracts/sync-linkage; detail auto-sync + returns links; matter create requires subject FK or UNLINKED_REASON; guard scripts/verify-legal-linkage.mjs (Lead-named). B-1h already on main #23921.
