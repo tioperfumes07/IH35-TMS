@@ -1250,6 +1250,7 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
     category_kind: string | null;
     category_code: string | null;
     class_id: string | null;
+    item_id: string | null;
   }>(
     `
       SELECT
@@ -1260,7 +1261,8 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
         bl.account_id::text,
         bl.category_kind,
         bl.category_code,
-        bl.class_id::text
+        bl.class_id::text,
+        bl.item_id::text AS item_id
       FROM accounting.bill_lines bl
       WHERE bl.bill_id::uuid = $1::uuid
         AND bl.voided_at IS NULL
@@ -1288,6 +1290,7 @@ async function buildBillLines(client: DbClient, operatingCompanyId: string, sour
         explicit_account_id: row.account_id,
         category_kind: row.category_kind,
         category_code: row.category_code,
+        item_id: row.item_id,
       });
     } catch (err) {
       if (err instanceof BillLineAccountError) {
