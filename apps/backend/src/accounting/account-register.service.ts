@@ -50,6 +50,11 @@ export type RawPosting = {
   attachment_count: number;
   /** Location label when bank categorization carried one; honest null otherwise. */
   location: string | null;
+  /**
+   * B-1 ORDERS — when source is expense, accounting.expenses.payment_type (expense|check|cash|credit_card).
+   * Check documents are expenses with payment_type='check'; Edit must hop to /accounting/checks/:id.
+   */
+  expense_payment_type: string | null;
 };
 
 export type AccountRegisterRow = {
@@ -73,6 +78,8 @@ export type AccountRegisterRow = {
   cleared_by_bank_match: boolean;
   attachment_count: number;
   location: string | null;
+  /** B-1 — expense.payment_type when source is expense; null otherwise. Drives Check Edit hop. */
+  expense_payment_type: string | null;
   // QBO labels the amount columns Increase/Decrease by account normal-balance; debit/credit are the raw
   // ledger sides. The frontend renders Increase/Decrease from these + normal_balance.
   debit_cents: number;
@@ -125,6 +132,15 @@ export function buildRegisterRows(
     totalDebit += debit;
     totalCredit += credit;
     running += normal === "debit" ? debit - credit : credit - debit;
+    // B-1 ORDERS: a Check is an expense with payment_type='check' — surface TYPE as Check (not Expense).
+    const paymentType = p.expense_payment_type ?? null;
+    const isCheck =
+      p.source_transaction_type === "expense" && (paymentType ?? "").toLowerCase() === "check";
+    const typeLabel = isCheck
+      ? "Check"
+      : p.source_transaction_type
+        ? SOURCE_TYPE_LABELS[p.source_transaction_type] ?? p.source_transaction_type
+        : "Journal Entry";
     return {
       posting_id: p.posting_id,
       // LV-REPORTS-BALANCE-SHEET-GL-JE-DRILL (ACCT-F5425): AccountRegisterPage.tsx's "Ref No."
@@ -133,9 +149,7 @@ export function buildRegisterRows(
       // -> register -> JE drill regresses back to dead plain text.
       journal_entry_id: p.journal_entry_id,
       entry_date: p.entry_date,
-      type: p.source_transaction_type
-        ? SOURCE_TYPE_LABELS[p.source_transaction_type] ?? p.source_transaction_type
-        : "Journal Entry",
+      type: typeLabel,
       source_transaction_type: p.source_transaction_type ?? null,
       source_transaction_id: p.source_transaction_id ?? null,
       // ACCT-REGISTER-REF-IS-SOURCE-UUID: Ref No. is a human document id from already-joined
@@ -151,6 +165,7 @@ export function buildRegisterRows(
       cleared_by_bank_match: Boolean(p.cleared_by_bank_match),
       attachment_count: Number(p.attachment_count) || 0,
       location: p.location ?? null,
+      expense_payment_type: paymentType,
       debit_cents: debit,
       credit_cents: credit,
       running_balance_cents: running,
@@ -223,7 +238,16 @@ export async function getAccountRegister(
   let where = `p.operating_company_id = $1::uuid AND p.account_id = $2::uuid
       AND je.entry_date >= $3::date AND je.entry_date <= $4::date AND je.status <> 'voided'
       AND COALESCE(je.is_sample_data, false) = false`;
-  if (input.type) {
+  if (input.type === "check") {
+    // B-1 ORDERS — Check = expense with payment_type='check' (same expense row / JE).
+    where += ` AND p.source_transaction_type = 'expense'
+      AND EXISTS (
+        SELECT 1 FROM accounting.expenses ex_chk
+         WHERE ex_chk.id::text = p.source_transaction_id
+           AND ex_chk.operating_company_id = p.operating_company_id
+           AND ex_chk.payment_type = 'check'
+      )`;
+  } else if (input.type) {
     params.push(input.type);
     // Journal Entry rows often have NULL source_transaction_type (manual JE).
     if (input.type === "journal_entry") {
@@ -253,11 +277,13 @@ export async function getAccountRegister(
       location: string | null;
       register_cleared: boolean | null;
       match_status: string | null;
+      expense_payment_type: string | null;
     }
   >(
     `SELECT p.id::text AS posting_id, je.id::text AS journal_entry_id, je.entry_date::text AS entry_date,
             je.memo, p.description, p.debit_or_credit, p.amount_cents::bigint AS amount_cents,
             p.source_transaction_type, p.source_transaction_id,
+            CASE WHEN p.source_transaction_type = 'expense' THEN ex.payment_type ELSE NULL END AS expense_payment_type,
             cls.class_name,
             COALESCE(p.register_cleared, false) AS register_cleared,
             COALESCE(match_info.match_status, '') AS match_status,
@@ -451,6 +477,7 @@ export async function getAccountRegister(
     cleared_by_bank_match: Boolean(r.cleared_by_bank_match),
     attachment_count: Number(r.attachment_count) || 0,
     location: r.location ?? null,
+    expense_payment_type: r.expense_payment_type ?? null,
   }));
 
   const { rows, total_debit_cents, total_credit_cents, closing_balance_cents } = buildRegisterRows(

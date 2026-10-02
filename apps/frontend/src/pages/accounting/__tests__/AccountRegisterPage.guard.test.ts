@@ -27,8 +27,15 @@ describe("AccountRegisterPage CA-05 guard", () => {
   it("wires Edit → original document via sourceRoute (B-1 inline expand)", () => {
     expect(page).toContain("renderExpanded");
     expect(page).toContain("RegisterInlineEditPanel");
-    expect(page).toMatch(/navigate\(sourceRoute\(r\.source_transaction_type,\s*r\.source_transaction_id\)\)/);
+    expect(page).toMatch(/navigate\(\s*sourceRoute\(/);
+    expect(page).toContain("r.expense_payment_type");
     expect(page).toContain("expandOnRowClick");
+  });
+
+  it("B-1 advance + Check Edit hops (ORDERS register connectivity)", () => {
+    expect(page).toContain("/cash-advances?advance_id=");
+    expect(page).toContain("/accounting/checks/");
+    expect(page).toContain('Check: "check"');
   });
 
   it("B-1c inline panel has Save / Cancel / Delete / attachments", () => {

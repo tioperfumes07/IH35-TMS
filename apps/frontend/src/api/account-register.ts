@@ -26,6 +26,8 @@ export type AccountRegisterRow = {
   attachment_count: number;
   /** Bank categorization location when present; otherwise null. */
   location: string | null;
+  /** B-1 — expense.payment_type when source is expense (drives Check Edit hop). */
+  expense_payment_type: string | null;
   debit_cents: number;
   credit_cents: number;
   running_balance_cents: number;

@@ -58,6 +58,13 @@ function main() {
   assertIncludes(page, "r.location?.trim() || \"—\"", PAGE);
   assertIncludes(page, 't === "factoring_advance"', PAGE);
   assertIncludes(page, "/factoring/advances/${reference}", PAGE);
+  // B-1 leftovers: cash/driver advance Edit hop + Check (expense payment_type) Edit hop
+  assertIncludes(page, 't === "cash_advance" || t === "driver_advance"', PAGE);
+  assertIncludes(page, "/cash-advances?advance_id=${reference}", PAGE);
+  assertIncludes(page, 'Check: "check"', PAGE);
+  assertIncludes(page, '(expensePaymentType ?? "").toLowerCase() === "check"', PAGE);
+  assertIncludes(page, "/accounting/checks/${reference}", PAGE);
+  assertIncludes(page, "r.expense_payment_type", PAGE);
   // B-1 ORDERS filter chip set: status / type / date / payee (date = period From/To already)
   assertIncludes(page, 'data-b1-filter-payee="1"', PAGE);
   assertIncludes(page, 'data-b1-filter-status="1"', PAGE);
@@ -103,10 +110,15 @@ function main() {
   assertIncludes(service, 'journal_entry: "Journal Entry"', SERVICE);
   assertIncludes(service, 'input.type === "journal_entry"', SERVICE);
   assertIncludes(service, "factoring_advance: \"Factoring Advance\"", SERVICE);
+  assertIncludes(service, "expense_payment_type", SERVICE);
+  assertIncludes(service, "input.type === \"check\"", SERVICE);
+  assertIncludes(service, "ex.payment_type", SERVICE);
+  assertIncludes(service, 'payment_type = \'check\'', SERVICE);
 
   assertIncludes(api, "reconcile_status", API);
   assertIncludes(api, "bank_balance_cents", API);
   assertIncludes(api, "attachment_count", API);
+  assertIncludes(api, "expense_payment_type", API);
   assertIncludes(api, "toggleAccountRegisterCleared", API);
   assertIncludes(api, "toggle-cleared", API);
   assertIncludes(api, "saveAccountRegisterInline", API);
