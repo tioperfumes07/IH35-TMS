@@ -90,6 +90,9 @@ function sourceRoute(
   if (t === "expense") return "/accounting/expenses/list";
   if (t === "bank_deposit" && reference) return `/banking/deposits/${reference}`;
   if (t === "bank_deposit") return "/banking/deposits";
+  // B-1 — factoring advance original (EntityLink kind factoring_advance → /factoring/advances/:id).
+  if (t === "factoring_advance" && reference) return `/factoring/advances/${reference}`;
+  if (t === "factoring_advance") return "/factoring/advances";
   if (t === "settlement" && reference) return `/driver-finance/settlements?settlement_id=${reference}`;
   if (t === "settlement") return "/driver-finance/settlements";
   // Law §9 transfer reverse: banking transfers list (QBO Transfer / fund move).
@@ -408,7 +411,8 @@ export function AccountRegisterPage() {
       label: "Payee",
       sortable: true,
       allowWrap: true,
-      render: (r) => line2(r.payee ?? "—", "—"),
+      // B-1 / QBO §B-1: LOCATION under PAYEE on line 2 (honest "—" when absent).
+      render: (r) => line2(r.payee ?? "—", r.location?.trim() || "—"),
     },
     { key: "memo", label: "Memo", sortable: true, defaultHidden: true, render: (r) => r.memo ?? r.description ?? "—" },
     { key: "class_name", label: "Class", sortable: true, render: (r) => r.class_name ?? "—" },

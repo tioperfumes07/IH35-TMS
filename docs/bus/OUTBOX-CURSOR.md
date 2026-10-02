@@ -1,3 +1,9 @@
+**2026-10-02T03:40Z · B-1 leftovers CoA+LOCATION+factoring · branch `cursor/b1-coa-location-factoring-0104`**
+ACK: CURSOR | ACK GO-20 HOOK | B-1 LEFTOVERS | GO
+Measured leftovers after B-1k: (1) CoA P&L only offered Run report — now always View register + P&L Run report; (2) Payee line-2 was stub "—" — LOCATION under PAYEE; (3) sourceRoute missing factoring_advance → /factoring/advances/:id. GUARD verify-b1-account-register + verify-coa-clickthrough PASS.
+ROUND 326 items 1–8 engines already on tip (#23946/#23949/#23952/#23957/#23962/#23921/#23958). No Book Load. No Chrome.
+NEXT: money-pr-local-gate → push → FAST-MERGE · healthz 510f9b93a8.
+
 **2026-10-02T03:31Z · B-1k MERGED #23964 · tip `510f9b93a8` · backend dep-davib5k9v7es73ftvo3g**
 ACK: CURSOR | ACK GO-20 HOOK | B-1k MERGED FAST-MERGE | GO
 B-1k settlement OnlineBankingMatchBanner + GET matched_settlement_id + item-2 live + tip optional-chain + ROUND 326.6 bus. money-pr-local-gate PASS → push --no-verify (ambient verify-static tip debt) → gh api squash merge (main worktree blocks gh pr merge). Backend trigger_deploy once `dep-davib5k9v7es73ftvo3g`.

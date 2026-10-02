@@ -49,6 +49,14 @@ function main() {
   assertIncludes(page, "/accounting/journal-entries/${journalEntryId}", PAGE);
   assertIncludes(page, 't === "bank_deposit"', PAGE);
   assertIncludes(page, "/banking/deposits/${reference}", PAGE);
+  // B-1 leftovers: LOCATION under PAYEE · factoring_advance Edit hop · CoA View register for P&L
+  assertIncludes(page, "r.location?.trim() || \"—\"", PAGE);
+  assertIncludes(page, 't === "factoring_advance"', PAGE);
+  assertIncludes(page, "/factoring/advances/${reference}", PAGE);
+  assertIncludes(coa, 'data-b1-coa-actions="1"', COA);
+  if (!/View register/.test(coa) || !/row\.statement === ["']P&L["']/.test(coa)) {
+    throw new Error(`${COA}: P&L rows must keep Run report AND always expose View register (ORDERS §B-1)`);
+  }
 
   const inlinePanel = read("apps/frontend/src/pages/accounting/RegisterInlineEditPanel.tsx");
   assertIncludes(inlinePanel, 'data-testid="b1-register-edit-original"', "RegisterInlineEditPanel");
