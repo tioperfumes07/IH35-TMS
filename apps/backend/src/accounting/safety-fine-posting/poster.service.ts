@@ -260,6 +260,9 @@ export async function postCompanyPaidCivilFine(input: PostCompanyPaidFineInput):
 
   // THE SHARED POSTER. No new GL math, no new balancing logic — createJournalEntry asserts
   // debits === credits > 0 and writes the ledger + source-links spine + audit.
+  // ROUND 301 audit (CC-1): the JE and its posting row — this poster's idempotency latch — commit in ONE transaction
+  // (afterInsertBeforeCommit). Before, the JE committed on its own and the latch row in a second transaction; a failure
+  // between them left a posted JE with no latch and a retry posted it again.
   const created = await createJournalEntry(
     {
       operating_company_id: input.operating_company_id,
@@ -270,12 +273,11 @@ export async function postCompanyPaidCivilFine(input: PostCompanyPaidFineInput):
       source_transaction_id: input.fine_id,
       postings: prepared.postings,
     },
-    { userId: input.actor_user_id, role: "system" }
-  );
-
+    { userId: input.actor_user_id, role: "system" },
+    {
+      afterInsertBeforeCommit: async (client, header) => {
   // Total-Connectivity: fine -> JE (and JE -> fine via ix_civil_fine_postings_je). ON CONFLICT DO
   // NOTHING against the partial-unique latch so a concurrent double-post can never create a second row.
-  await withLuciaBypass(async (client: DbClient) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     await client.query(
       `
@@ -289,7 +291,7 @@ export async function postCompanyPaidCivilFine(input: PostCompanyPaidFineInput):
       [
         input.operating_company_id,
         input.fine_id,
-        created.id,
+        header.id,
         prepared.amount,
         prepared.entryDate,
         prepared.memo,
@@ -304,14 +306,16 @@ export async function postCompanyPaidCivilFine(input: PostCompanyPaidFineInput):
         resource_type: "safety.civil_fines",
         resource_id: input.fine_id,
         operatingCompanyId: input.operating_company_id,
-        journalEntryId: created.id,
+        journalEntryId: header.id,
         amount_cents: prepared.amount,
         entry_date: prepared.entryDate,
         treatment: "company_paid",
       },
       "warning"
     );
-  });
+  },
+    }
+  );
 
   return { posted: true, journal_entry_id: created.id, memo: prepared.memo };
 }

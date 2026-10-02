@@ -146,6 +146,9 @@ export async function postWarrantyReimbursement(
     };
   }
 
+  // ROUND 301 audit (CC-1): the JE and its posting row — the idempotency latch read above — commit in ONE transaction
+  // (afterInsertBeforeCommit). Before, the JE committed on its own and the latch row in a second transaction; a failure
+  // between them left a posted JE with no latch, and a retry posted the reimbursement twice.
   const created = await createJournalEntry(
     {
       operating_company_id: input.operating_company_id,
@@ -156,46 +159,40 @@ export async function postWarrantyReimbursement(
       source_transaction_id: input.claim_id,
       postings: prepared.postings,
     },
-    { userId: input.actor_user_id, role: "system" }
-  );
-
-  await withLuciaBypass(async (client: DbClient) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
-      input.operating_company_id,
-    ]);
-    await client.query(
-      `
-        INSERT INTO accounting.warranty_reimburse_postings (
-          operating_company_id, warranty_claim_id, expense_je_id,
-          amount_cents, entry_date, memo, status, created_by_user_id
-        )
-        VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5::date, $6, 'posted', $7::uuid)
-        ON CONFLICT (operating_company_id, warranty_claim_id) WHERE is_active DO NOTHING
-      `,
-      [
-        input.operating_company_id,
-        input.claim_id,
-        created.id,
-        prepared.amount,
-        prepared.entryDate,
-        prepared.memo,
-        input.actor_user_id,
-      ]
-    );
-    await appendCrudAudit(
-      client as Parameters<typeof appendCrudAudit>[0],
-      input.actor_user_id,
-      "accounting.warranty_reimbursement.posted",
-      {
-        resource_type: "maintenance.warranty_claims",
-        resource_id: input.claim_id,
-        operatingCompanyId: input.operating_company_id,
-        journalEntryId: created.id,
-        amount_cents: prepared.amount,
+    { userId: input.actor_user_id, role: "system" },
+    {
+      afterInsertBeforeCommit: async (client, header) => {
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+        const latch = await client.query<{ id: string }>(
+          `
+            INSERT INTO accounting.warranty_reimburse_postings (
+              operating_company_id, warranty_claim_id, expense_je_id,
+              amount_cents, entry_date, memo, status, created_by_user_id
+            )
+            VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5::date, $6, 'posted', $7::uuid)
+            ON CONFLICT (operating_company_id, warranty_claim_id) WHERE is_active DO NOTHING
+            RETURNING id::text
+          `,
+          [input.operating_company_id, input.claim_id, header.id, prepared.amount, prepared.entryDate, prepared.memo, input.actor_user_id]
+        );
+        // A concurrent post already holds the latch: roll this JE back rather than post the claim twice.
+        if (!latch.rows[0]) throw new Error("warranty_reimbursement_already_posted");
+        await appendCrudAudit(
+          client as Parameters<typeof appendCrudAudit>[0],
+          input.actor_user_id,
+          "accounting.warranty_reimbursement.posted",
+          {
+            resource_type: "maintenance.warranty_claims",
+            resource_id: input.claim_id,
+            operatingCompanyId: input.operating_company_id,
+            journalEntryId: header.id,
+            amount_cents: prepared.amount,
+          },
+          "warning"
+        );
       },
-      "warning"
-    );
-  });
+    }
+  );
 
   return { posted: true, journal_entry_id: created.id, memo: prepared.memo };
 }

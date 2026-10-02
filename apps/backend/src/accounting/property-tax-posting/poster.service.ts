@@ -161,6 +161,9 @@ export async function postPropertyTaxAccrual(input: PostPropertyTaxAccrualInput)
   if (prepared.gate === "zero_amount") return { posted: false, reason: "zero_amount" };
   if (prepared.gate === "already_posted") return { posted: false, reason: "already_posted" };
 
+  // ROUND 301 audit (CC-1): the JE and its posting row — this poster's idempotency latch — commit in ONE transaction
+  // (afterInsertBeforeCommit). Before, the JE committed on its own and the latch row in a second transaction; a failure
+  // between them left a posted JE with no latch and a retry posted it again.
   const created = await createJournalEntry(
     {
       operating_company_id: input.operating_company_id,
@@ -171,11 +174,10 @@ export async function postPropertyTaxAccrual(input: PostPropertyTaxAccrualInput)
       source_transaction_id: input.rendition_id,
       postings: prepared.postings,
     },
-    { userId: input.actor_user_id, role: "system" }
-  );
-
+    { userId: input.actor_user_id, role: "system" },
+    {
+      afterInsertBeforeCommit: async (client, header) => {
   // Ledger + connectivity: accrual → JE → rendition. ON CONFLICT no-ops a retry (unique on rendition).
-  await withLuciaBypass(async (client: DbClient) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
     await client.query(
       `
@@ -193,7 +195,7 @@ export async function postPropertyTaxAccrual(input: PostPropertyTaxAccrualInput)
         prepared.taxYear,
         prepared.entryDate,
         prepared.amount,
-        created.id,
+        header.id,
         prepared.memo,
         input.actor_user_id,
       ]
@@ -201,11 +203,13 @@ export async function postPropertyTaxAccrual(input: PostPropertyTaxAccrualInput)
     await appendCrudAudit(client as Parameters<typeof appendCrudAudit>[0], input.actor_user_id, "accounting.property_tax_accrual.posted", {
       renditionId: input.rendition_id,
       operatingCompanyId: input.operating_company_id,
-      journalEntryId: created.id,
+      journalEntryId: header.id,
       tax_amount_cents: prepared.amount,
       tax_year: prepared.taxYear,
     });
-  });
+  },
+    }
+  );
 
   return { posted: true, journal_entry_id: created.id, memo: prepared.memo };
 }
@@ -276,28 +280,29 @@ export async function postPropertyTaxPayment(input: PostPropertyTaxPaymentInput)
       source_transaction_id: input.rendition_id,
       postings: prepared.postings,
     },
-    { userId: input.actor_user_id, role: "system" }
+    { userId: input.actor_user_id, role: "system" },
+    {
+      // ROUND 301 audit (CC-1): the payment JE and the accrual's 'paid' stamp (this poster's latch) commit together.
+      afterInsertBeforeCommit: async (client, header) => {
+        if (!prepared.hasAccrual) return;
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+        await client.query(
+          `
+            UPDATE accounting.property_tax_accruals
+            SET payment_je_id = $3::uuid, payment_date = $4::date, status = 'paid', updated_at = now()
+            WHERE operating_company_id = $1::uuid AND rendition_id = $2::uuid AND is_active
+          `,
+          [input.operating_company_id, input.rendition_id, header.id, prepared.entryDate]
+        );
+        await appendCrudAudit(client as Parameters<typeof appendCrudAudit>[0], input.actor_user_id, "accounting.property_tax_payment.posted", {
+          renditionId: input.rendition_id,
+          operatingCompanyId: input.operating_company_id,
+          journalEntryId: header.id,
+          payment_date: prepared.entryDate,
+        });
+      },
+    }
   );
-
-  if (prepared.hasAccrual) {
-    await withLuciaBypass(async (client: DbClient) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-      await client.query(
-        `
-          UPDATE accounting.property_tax_accruals
-          SET payment_je_id = $3::uuid, payment_date = $4::date, status = 'paid', updated_at = now()
-          WHERE operating_company_id = $1::uuid AND rendition_id = $2::uuid AND is_active
-        `,
-        [input.operating_company_id, input.rendition_id, created.id, prepared.entryDate]
-      );
-      await appendCrudAudit(client as Parameters<typeof appendCrudAudit>[0], input.actor_user_id, "accounting.property_tax_payment.posted", {
-        renditionId: input.rendition_id,
-        operatingCompanyId: input.operating_company_id,
-        journalEntryId: created.id,
-        payment_date: prepared.entryDate,
-      });
-    });
-  }
 
   return { posted: true, journal_entry_id: created.id, memo: prepared.memo };
 }

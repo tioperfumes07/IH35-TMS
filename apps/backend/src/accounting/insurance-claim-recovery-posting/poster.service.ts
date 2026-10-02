@@ -211,6 +211,9 @@ export async function postInsuranceClaimRecovery(
     return { posted: false, reason: "already_posted", amount_cents: prepared.already };
   }
 
+  // ROUND 301 audit (CC-1): the JE and its posting row — this poster's idempotency latch — commit in ONE transaction
+  // (afterInsertBeforeCommit). Before, the JE committed on its own and the latch row in a second transaction; a failure
+  // between them left a posted JE with no latch and a retry posted it again.
   const created = await createJournalEntry(
     {
       operating_company_id: input.operating_company_id,
@@ -221,10 +224,9 @@ export async function postInsuranceClaimRecovery(
       source_transaction_id: input.claim_id,
       postings: prepared.postings,
     },
-    { userId: input.actor_user_id, role: "system" }
-  );
-
-  await withLuciaBypass(async (client: DbClient) => {
+    { userId: input.actor_user_id, role: "system" },
+    {
+      afterInsertBeforeCommit: async (client, header) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
       input.operating_company_id,
     ]);
@@ -239,7 +241,7 @@ export async function postInsuranceClaimRecovery(
       [
         input.operating_company_id,
         input.claim_id,
-        created.id,
+        header.id,
         prepared.amount,
         prepared.entryDate,
         prepared.memo,
@@ -254,12 +256,14 @@ export async function postInsuranceClaimRecovery(
         resource_type: "insurance.claim",
         resource_id: input.claim_id,
         operatingCompanyId: input.operating_company_id,
-        journalEntryId: created.id,
+        journalEntryId: header.id,
         amount_cents: prepared.amount,
       },
       "warning"
     );
-  });
+  },
+    }
+  );
 
   return {
     posted: true,

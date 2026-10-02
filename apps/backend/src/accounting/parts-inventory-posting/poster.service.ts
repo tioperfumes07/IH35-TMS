@@ -15,11 +15,11 @@
 // fails closed until the owner designates. Option B (perpetual inventory_asset) remains a
 // separate owner decision (DESIGN-mod13) and is NOT implemented here.
 
-import { withLuciaBypass } from "../../auth/db.js";
+import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
-import { createBill } from "../bills.service.js";
-import { createJournalEntry } from "../journal-entries.service.js";
-import { postSourceTransaction, PostingEngineError } from "../posting-engine.service.js";
+import { createBillInClientTx } from "../bills.service.js";
+import { createJournalEntryOnClient } from "../journal-entries.service.js";
+import { postSourceTransactionInClientTx, PostingEngineError } from "../posting-engine.service.js";
 import { resolveRoleAccount } from "../coa-roles/resolver.service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 
@@ -208,35 +208,39 @@ export async function postPartsInventoryPurchase(
   let billId: string | undefined;
   let journalEntryId: string | null = null;
 
+  // ROUND 301 audit (CC-1): the bill (or cash JE), its GL posting and the parts_purchase_postings latch row commit in ONE
+  // transaction. Before, createBill / postSourceTransaction / createJournalEntry each committed on their own and the
+  // latch (the "already_posted" read above) was written in a separate transaction afterwards — a failure in between left
+  // a posted bill or JE with no latch, and a retry posted the purchase again.
   try {
-    if (prepared.vendorId) {
-      // Vendor path — A/P bill + CHAIN-03 bill poster (reuse; no new GL math).
-      const bill = await createBill(
-        {
-          operatingCompanyId: input.operating_company_id,
-          vendorId: prepared.vendorId,
-          billNumber: prepared.vendorInvoice ?? undefined,
-          billDate: prepared.entryDate,
-          amountCents: prepared.amountCents,
-          memo: prepared.memo,
-          lines: [
-            {
-              amountCents: prepared.amountCents,
-              description: prepared.memo,
-              accountId: prepared.expenseAccountId,
-            },
-          ],
-        },
-        input.actor_user_id
-      );
-      billId = bill.id;
-
-      const gl = bill.gl_posting;
-      if (gl && gl.posted === true) {
-        journalEntryId = gl.result.journal_entry_id ?? null;
-      } else {
-        // PARTS flag is ON — ensure the bill posts even when BILL_GL_POSTING_ENABLED is still OFF.
-        const posting = await postSourceTransaction(
+    const done = await withCurrentUser(input.actor_user_id, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+      let bId: string | undefined;
+      let jeId: string | null = null;
+      if (prepared.vendorId) {
+        // Vendor path — A/P bill + CHAIN-03 bill poster (reuse; no new GL math), on this transaction.
+        const bill = await createBillInClientTx(
+          client,
+          {
+            operatingCompanyId: input.operating_company_id,
+            vendorId: prepared.vendorId,
+            billNumber: prepared.vendorInvoice ?? undefined,
+            billDate: prepared.entryDate,
+            amountCents: prepared.amountCents,
+            memo: prepared.memo,
+            lines: [
+              {
+                amountCents: prepared.amountCents,
+                description: prepared.memo,
+                accountId: prepared.expenseAccountId,
+              },
+            ],
+          },
+          input.actor_user_id
+        );
+        bId = bill.id;
+        const posting = await postSourceTransactionInClientTx(
+          client as never,
           {
             operating_company_id: input.operating_company_id,
             source_transaction_type: "bill",
@@ -244,35 +248,83 @@ export async function postPartsInventoryPurchase(
           },
           { userId: input.actor_user_id }
         );
-        journalEntryId = posting.journal_entry_id ?? null;
+        jeId = posting.journal_entry_id ?? null;
+      } else {
+        // Cash purchase — no vendor → no A/P; Dr expense / Cr cash via the shared JE poster, on this transaction.
+        const cashAccountId = await resolveRoleAccount(client as never, input.operating_company_id, "cash_clearing");
+        const created = await createJournalEntryOnClient(
+          client as never,
+          {
+            operating_company_id: input.operating_company_id,
+            entry_date: prepared.entryDate,
+            memo: prepared.memo,
+            source: "auto",
+            source_transaction_type: input.parts_purchase_id ? "parts_purchase" : "parts_inventory",
+            source_transaction_id: input.parts_purchase_id ?? input.parts_inventory_id,
+            postings: buildCashPartsPurchasePostings(prepared.expenseAccountId, cashAccountId, prepared.amountCents, prepared.memo),
+          },
+          { userId: input.actor_user_id, role: "system" }
+        );
+        jeId = created.id;
       }
-    } else {
-      // Cash purchase — no vendor → no A/P; Dr expense / Cr cash via shared JE poster.
-      const cashAccountId = await withLuciaBypass(async (client: DbClient) => {
+
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
           input.operating_company_id,
         ]);
-        return resolveRoleAccount(client, input.operating_company_id, "cash_clearing");
-      });
-      const created = await createJournalEntry(
-        {
-          operating_company_id: input.operating_company_id,
-          entry_date: prepared.entryDate,
-          memo: prepared.memo,
-          source: "auto",
-          source_transaction_type: input.parts_purchase_id ? "parts_purchase" : "parts_inventory",
-          source_transaction_id: input.parts_purchase_id ?? input.parts_inventory_id,
-          postings: buildCashPartsPurchasePostings(
-            prepared.expenseAccountId,
-            cashAccountId,
+        await client.query(
+          input.parts_purchase_id
+            ? `
+            INSERT INTO accounting.parts_purchase_postings (
+              operating_company_id, parts_inventory_id, parts_purchase_id, bill_id, expense_je_id,
+              amount_cents, entry_date, memo, status, created_by_user_id
+            )
+            VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid, $6, $7::date, $8, 'posted', $9::uuid)
+            ON CONFLICT (operating_company_id, parts_purchase_id) WHERE is_active AND parts_purchase_id IS NOT NULL DO NOTHING
+          `
+            : // Legacy no-parts_purchase_id shape: the "already_posted" read above is this path's only
+              // dedup gate — the stock-row-keyed unique index this used to rely on
+              // (uq_parts_purchase_postings_parts_active) was dropped in
+              // 202612560000_inv_purchase_ledger_sor_stock_upsert.sql in favor of the
+              // parts_purchase_id-keyed index above. Dead in practice: every current caller
+              // (parts-inventory.routes.ts) always passes parts_purchase_id.
+              `
+            INSERT INTO accounting.parts_purchase_postings (
+              operating_company_id, parts_inventory_id, bill_id, expense_je_id,
+              amount_cents, entry_date, memo, status, created_by_user_id
+            )
+            VALUES ($1::uuid, $2::uuid, $4::uuid, $5::uuid, $6, $7::date, $8, 'posted', $9::uuid)
+          `,
+          [
+            input.operating_company_id,
+            input.parts_inventory_id,
+            input.parts_purchase_id ?? null,
+            bId ?? null,
+            jeId,
             prepared.amountCents,
-            prepared.memo
-          ),
-        },
-        { userId: input.actor_user_id, role: "system" }
-      );
-      journalEntryId = created.id;
-    }
+            prepared.entryDate,
+            prepared.memo,
+            input.actor_user_id,
+          ]
+        );
+        await appendCrudAudit(
+          client as Parameters<typeof appendCrudAudit>[0],
+          input.actor_user_id,
+          "accounting.parts_purchase.posted",
+          {
+            resource_type: "maintenance.parts_inventory",
+            resource_id: input.parts_inventory_id,
+            operatingCompanyId: input.operating_company_id,
+            billId: bId ?? null,
+            journalEntryId: jeId,
+            amount_cents: prepared.amountCents,
+            treatment: prepared.vendorId ? "ap_bill" : "cash",
+          },
+          "warning"
+        );
+      return { bId, jeId };
+    });
+    billId = done.bId;
+    journalEntryId = done.jeId;
   } catch (err) {
     if (err instanceof PostingEngineError) {
       return {
@@ -285,62 +337,6 @@ export async function postPartsInventoryPurchase(
     }
     throw err;
   }
-
-  await withLuciaBypass(async (client: DbClient) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [
-      input.operating_company_id,
-    ]);
-    await client.query(
-      input.parts_purchase_id
-        ? `
-        INSERT INTO accounting.parts_purchase_postings (
-          operating_company_id, parts_inventory_id, parts_purchase_id, bill_id, expense_je_id,
-          amount_cents, entry_date, memo, status, created_by_user_id
-        )
-        VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid, $6, $7::date, $8, 'posted', $9::uuid)
-        ON CONFLICT (operating_company_id, parts_purchase_id) WHERE is_active AND parts_purchase_id IS NOT NULL DO NOTHING
-      `
-        : // Legacy no-parts_purchase_id shape: the "already_posted" read above is this path's only
-          // dedup gate — the stock-row-keyed unique index this used to rely on
-          // (uq_parts_purchase_postings_parts_active) was dropped in
-          // 202612560000_inv_purchase_ledger_sor_stock_upsert.sql in favor of the
-          // parts_purchase_id-keyed index above. Dead in practice: every current caller
-          // (parts-inventory.routes.ts) always passes parts_purchase_id.
-          `
-        INSERT INTO accounting.parts_purchase_postings (
-          operating_company_id, parts_inventory_id, bill_id, expense_je_id,
-          amount_cents, entry_date, memo, status, created_by_user_id
-        )
-        VALUES ($1::uuid, $2::uuid, $4::uuid, $5::uuid, $6, $7::date, $8, 'posted', $9::uuid)
-      `,
-      [
-        input.operating_company_id,
-        input.parts_inventory_id,
-        input.parts_purchase_id ?? null,
-        billId ?? null,
-        journalEntryId,
-        prepared.amountCents,
-        prepared.entryDate,
-        prepared.memo,
-        input.actor_user_id,
-      ]
-    );
-    await appendCrudAudit(
-      client as Parameters<typeof appendCrudAudit>[0],
-      input.actor_user_id,
-      "accounting.parts_purchase.posted",
-      {
-        resource_type: "maintenance.parts_inventory",
-        resource_id: input.parts_inventory_id,
-        operatingCompanyId: input.operating_company_id,
-        billId: billId ?? null,
-        journalEntryId,
-        amount_cents: prepared.amountCents,
-        treatment: prepared.vendorId ? "ap_bill" : "cash",
-      },
-      "warning"
-    );
-  });
 
   return {
     posted: true,
