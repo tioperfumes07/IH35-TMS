@@ -7,7 +7,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 // KPI must exclude demo/phantom + is_sample_data fixture rows, same shared definition as the Fleet
 // roster/KPI (mdata/fleet-visibility.ts) — otherwise a fixture unit silently inflates operating-hour
 // and downtime denominators (MTBF reads artificially healthier than the real fleet).
-import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visibility.js";
+import { excludeDemoPhantomSql, excludeSampleDataSql, fleetRosterSql } from "../mdata/fleet-visibility.js";
 import { computePmCostPerMile } from "./pm-cost-per-mile.service.js";
 
 const kpiQuerySchema = z.object({
@@ -451,12 +451,10 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
 
 async function countActiveUnits(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> }, companyId: string) {
   const res = await client.query(
+    // ROUND 326 queue item 17 / M3: the one fleet roster (operating entity, power units only).
     `SELECT COUNT(*)::int AS c
        FROM mdata.units
-      WHERE (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)
-        AND deactivated_at IS NULL
-        AND ${excludeDemoPhantomSql("unit_number")}
-        AND ${excludeSampleDataSql()}`,
+      WHERE ${fleetRosterSql("", "$1")}`,
     [companyId]
   );
   return Number(res.rows[0]?.c ?? 1);

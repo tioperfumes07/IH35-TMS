@@ -54,3 +54,41 @@ export function excludeDemoPhantomSql(col: string): string {
 export function excludeSampleDataSql(col = "is_sample_data"): string {
   return `${col} IS NOT TRUE`;
 }
+
+/** ROUND 326 queue item 17 / M3: the power-unit vehicle types that make up "the fleet" (NULL = unclassified, never a truck). */
+export const FLEET_ROSTER_TRUCK_TYPES = ["Tractor", "Straight Truck", "Box Truck"] as const;
+
+/**
+ * ROUND 326 queue item 17 / audit M3 — THE ONE FLEET ROSTER. "The fleet is 16 trucks, not 43 rows; 7 belong to
+ * TRANSPORTATION." Fleet counts and cost-per-mile baselines each rolled their own predicate: most scoped
+ * (owner OR leased-to), so the owning entity (TRK owns every unit since LST-F24) counted every truck the operating
+ * carrier runs, and none filtered vehicle type, so pickups / cars / unclassified rows counted as trucks.
+ *
+ * The roster: the unit's OPERATING entity (leased-to, else owner) is this company; active; not sample / demo;
+ * not sold or disposed; a power unit by vehicle_type. Status (in service / in shop / out of service) is a column on
+ * top of the roster, never a filter of it, so in-shop and OOS trucks stay in every denominator. A unit with no
+ * vehicle_type is NOT in the roster — fleetRosterUnclassifiedSql counts those so a board can say why.
+ *
+ * @param alias table alias for mdata.units ("u" -> u.col; "" -> bare columns). Caller-controlled, never user input.
+ * @param companyParam the bind placeholder holding the company id, e.g. "$1".
+ */
+export function fleetRosterSql(alias: string, companyParam: string): string {
+  return `(${fleetRosterBaseSql(alias, companyParam)} AND ${alias ? `${alias}.` : ""}vehicle_type IN (${FLEET_ROSTER_TRUCK_TYPES.map((t) => `'${t}'`).join(", ")}))`;
+}
+
+/** Same scope as fleetRosterSql, but the units still missing a vehicle_type (excluded from the roster until classified). */
+export function fleetRosterUnclassifiedSql(alias: string, companyParam: string): string {
+  return `(${fleetRosterBaseSql(alias, companyParam)} AND ${alias ? `${alias}.` : ""}vehicle_type IS NULL)`;
+}
+
+function fleetRosterBaseSql(alias: string, companyParam: string): string {
+  const c = (col: string) => (alias ? `${alias}.${col}` : col);
+  return [
+    `COALESCE(${c("currently_leased_to_company_id")}, ${c("owner_company_id")}) = ${companyParam}::uuid`,
+    `${c("deactivated_at")} IS NULL`,
+    excludeSampleDataSql(c("is_sample_data")),
+    excludeDemoPhantomSql(c("unit_number")),
+    `${c("sold_date")} IS NULL`,
+    `${c("disposed_date")} IS NULL`,
+  ].join(" AND ");
+}

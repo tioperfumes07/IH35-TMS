@@ -8,7 +8,7 @@ import { avgAgeYears } from "./fleet-age.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 // FLEET-KPI-PARITY: the fleet KPI must count exactly the rows the Fleet roster shows. Same helper the
 // roster uses (mdata/units-unified-list.service.ts) — never a second inline copy of the pattern.
-import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visibility.js";
+import { excludeDemoPhantomSql, excludeSampleDataSql, fleetRosterSql, fleetRosterUnclassifiedSql } from "../mdata/fleet-visibility.js";
 import { openWorkOrderPredicateSql } from "./in-shop-condition.js";
 
 const companyQuerySchema = z.object({
@@ -382,12 +382,12 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
             COALESCE(
               array_agg(year) FILTER (WHERE year IS NOT NULL AND year > 0),
               ARRAY[]::int[]
-            )::int[] AS model_years
+            )::int[] AS model_years,
+            -- ROUND 326 queue item 17 / M3: units in scope still missing a vehicle_type (outside the roster until classified).
+            (SELECT COUNT(*)::int FROM mdata.units uu WHERE ${fleetRosterUnclassifiedSql("uu", "$1")}) AS unclassified_units
           FROM mdata.units
-          WHERE (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)
-            AND deactivated_at IS NULL
-            AND ${excludeDemoPhantomSql("unit_number")}
-            AND ${excludeSampleDataSql()}
+          -- ROUND 326 queue item 17 / M3: the one fleet roster (operating entity, power units only).
+          WHERE ${fleetRosterSql("", "$1")}
         `,
         [companyId]
       );

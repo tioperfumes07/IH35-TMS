@@ -31,7 +31,10 @@ function scopeFailures(sources) {
       const block = m[0];
       const hasOwner = /\bowner_company_id\s*=\s*\$1/.test(block);
       const hasLeased = /\bcurrently_leased_to_company_id\s*=\s*\$1/.test(block);
-      if (!hasOwner || !hasLeased) failures.push(`${file}: mdata.units read must scope owner OR current lessee: ${block.slice(0, 220)}`);
+      // ROUND 326 queue item 17 / M3: the one fleet roster (fleetRosterSql — operating entity = leased-to, else owner)
+      // supersedes the owner-OR-lessee pattern for fleet counts; it can never count a unit for its owning entity only.
+      const viaRoster = /fleetRoster(?:Unclassified)?Sql\(/.test(block);
+      if (!viaRoster && (!hasOwner || !hasLeased)) failures.push(`${file}: mdata.units read must scope owner OR current lessee: ${block.slice(0, 220)}`);
     }
   }
   return failures;

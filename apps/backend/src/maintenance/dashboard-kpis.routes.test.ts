@@ -79,7 +79,9 @@ describe("maintenance dashboard kpis routes (AUDIT-FIX-9)", () => {
     expect(typeof body.open_wos).toBe("number");
     expect(body.pm_due).toBe(0);
     const fleetSql = seenSql.find((sql) => sql.includes("AS total_units"));
-    expect(fleetSql).toContain("owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid");
+    // ROUND 326 queue item 17 / M3: the one fleet roster — the unit's operating entity, power units only.
+    expect(fleetSql).toContain("COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid");
+    expect(fleetSql).toContain("vehicle_type IN ('Tractor', 'Straight Truck', 'Box Truck')");
   });
 
   it("degrades to zeroed payload when work_orders table is missing", async () => {
