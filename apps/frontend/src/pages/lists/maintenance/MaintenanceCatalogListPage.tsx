@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CatalogListSearchInput } from "../../../components/lists/CatalogListSearchInput";
+import { fetchAllCatalogPages } from "../../../lib/fetchAllCatalogPages";
 import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQueryOptions";
 import { useQuery } from "@tanstack/react-query";
 import type { MaintenanceCatalogRow } from "../../../api/catalogs-maintenance";
@@ -32,12 +32,10 @@ function statusPillClass(isActive: boolean) {
 export function MaintenanceCatalogListPage({ client, displayName, breadcrumbPath }: Props) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"true" | "false" | "all">("true");
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedRow, setSelectedRow] = useState<MaintenanceCatalogRow | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [showInactive, setShowInactive] = useState(false);
 
   // LST-F5214 — Lists hub ?create=1 must open create modal (accounting catalog parity).
   useCreateQueryParam({
@@ -50,14 +48,16 @@ export function MaintenanceCatalogListPage({ client, displayName, breadcrumbPath
   });
 
   const query = useQuery({
-    queryKey: ["catalogs", "maintenance", displayName, companyId, search, status],
-    queryFn: () => client.list({ operating_company_id: companyId, search: search || undefined, is_active: status, limit: 200, offset: 0 }),
+    // Round 296: every row of the catalog (status narrows server-side on the indexed is_active), then the house toolbar
+    // (DataTable's UniversalListToolbar) is the one search over all of it with "N of M" -- no 200-row cap.
+    queryKey: ["catalogs", "maintenance", displayName, companyId, status],
+    queryFn: () => fetchAllCatalogPages(client.list, { operating_company_id: companyId, is_active: status }),
     enabled: Boolean(companyId),
     ...catalogListSearchQueryOptions,
   });
 
   const allRows = query.data?.rows ?? [];
-  const rows = showInactive ? allRows : allRows.filter((r) => r.is_active !== false);
+  const rows = allRows;
   const total = query.data?.total ?? 0;
 
   // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-TABLE-ALIGNMENT — text centers, numeric right).
@@ -88,24 +88,13 @@ export function MaintenanceCatalogListPage({ client, displayName, breadcrumbPath
           </Button>
         }
       />
-      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
-        <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by code or display name" className="h-9 rounded-sm border border-gray-300 px-2 text-xs md:col-span-2" />
+      <div className="flex items-end gap-2 rounded-sm border border-gray-200 bg-white p-3">
         <SelectCombobox value={status} onChange={(event) => setStatus(event.target.value as "true" | "false" | "all")} className="h-9 rounded-sm border border-gray-300 px-2 text-xs">
           <option value="true">Active</option>
           <option value="false">Inactive</option>
           <option value="all">All</option>
         </SelectCombobox>
       </div>
-
-      <label className="flex items-center gap-1 text-xs text-gray-600">
-        <input
-          type="checkbox"
-          checked={showInactive}
-          onChange={(e) => setShowInactive(e.target.checked)}
-          className="h-3.5 w-3.5 rounded-sm border-gray-300"
-        />
-        Show inactive
-      </label>
 
       {/* TBL-STANDARD: shared DataTable (universal alignment + page-size + sort). Search/Status filters above
           feed `rows`; row-click → edit modal preserved exactly. */}

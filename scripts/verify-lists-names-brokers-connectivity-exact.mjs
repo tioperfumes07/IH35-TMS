@@ -30,7 +30,7 @@ export function audit(s = {}) {
   }
   if (!src.manifest.includes('path="/lists/names/brokers"') || !src.manifest.includes("<BrokersListPage />")) failures.push("Brokers route missing");
   if (!src.hub.includes('name: "Brokers"') || !src.hub.includes('catalogKey: "brokers"')) failures.push("Names hub Broker tile missing");
-  for (const token of ["selectedCompanyId", "operating_company_id: companyId", 'customer_type: "broker"', 'status: "active"', 'kind="customer"', "+ Create broker", 'fixedCustomerType="broker"', "void query.refetch()"])
+  for (const token of ["selectedCompanyId", "operating_company_id: companyId", 'customer_type: "broker"', '("active")', 'kind="customer"', "+ Create broker", 'fixedCustomerType="broker"', "void query.refetch()"])
     if (!src.page.includes(token)) failures.push(`Brokers list/create chain missing ${token}`);
   for (const token of ["fixedCustomerType", "emptyCustomerProfileValues()", "customer_type: fixedCustomerType", "createCustomer(profileValuesToCreatePayload(values, operatingCompanyId))", 'invalidateQueries({ queryKey: ["customers"] })'])
     if (!src.drawer.includes(token)) failures.push(`canonical customer drawer missing ${token}`);

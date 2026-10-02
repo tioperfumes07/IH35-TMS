@@ -13,16 +13,19 @@ function verify(source) {
     ["canonical exhaustive scanner call", /listAllCustomers\(\{/],
     ["company scope", /operating_company_id:\s*companyId/],
     ["broker discriminator", /customer_type:\s*"broker"/],
-    ["active lifecycle scope", /status:\s*"active"/],
-    ["server search preserved", /search:\s*search \|\| undefined/],
+    // Re-anchored round 296 (owner filter law: ONE search = the house toolbar over the full roster, "N of M").
+    ["active lifecycle scope (default)", /useState<"active" \| "inactive" \| "all">\("active"\)/],
+    ["status narrows server-side", /\.\.\.\(status === "all" \? \{\} : \{ status \}\)/],
+    ["house toolbar is the one search", /<DataTable\b(?![^>]*hideToolbar)/],
     ["forward customer drill", /<EntityLink kind="customer" id=\{row\.id\}/],
     ["reverse route preserved", /navigate\(`\/customers\/\$\{row\.id\}`\)/],
     ["creator round-trip", /fixedCustomerType="broker"[\s\S]*onCreated=\{\(\) => \{[\s\S]*query\.refetch\(\)/],
     ["read failure visible and retryable", /Failed to load brokers\.[\s\S]*query\.refetch\(\)/],
-    ["honest total uses exhausted rows", /Total brokers:\s*\{rows\.length\}/],
+    ["honest N of M uses exhausted rows", /const rows = query\.data\?\.customers \?\? \[\];/],
   ];
   const failures = checks.filter(([, pattern]) => !pattern.test(source)).map(([label]) => label);
   if (/\blistCustomers\(\{/.test(source)) failures.push("bounded listCustomers call remains");
+  if (/<CatalogListSearchInput\b/.test(source)) failures.push("a second page-level search box is back");
   return failures;
 }
 
@@ -38,8 +41,8 @@ if (process.argv.includes("--selftest")) {
     ["bounded scanner", source.replace("listAllCustomers({", "listCustomers({")],
     ["cross-company", source.replace("operating_company_id: companyId", "operating_company_id: undefined")],
     ["wrong type", source.replace('customer_type: "broker"', 'customer_type: "customer"')],
-    ["inactive leak", source.replace('status: "active"', 'status: "all"')],
-    ["search disconnected", source.replace("search: search || undefined", "search: undefined")],
+    ["inactive leak", source.replace('useState<"active" | "inactive" | "all">("active")', 'useState<"active" | "inactive" | "all">("all")')],
+    ["second search box", source + "\n<CatalogListSearchInput value={x} />"],
     ["dead forward link", source.replace('kind="customer"', 'kind="vendor"')],
     ["hidden read failure", source.replace("Failed to load brokers.", "")],
   ];
