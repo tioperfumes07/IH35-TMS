@@ -1,3 +1,8 @@
+**2026-10-02T07:40Z · B-2 #24033 + B-3 #24035 BOTH FAST-MERGED**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91006+#24033 · BANK-F91007+#24035 | GO
+tip `b8af667f19` (B-3) includes `191765da70` (B-2). money-pr-local-gate had PASS on both.
+NEXT: BE deploy srv-d7rpem7avr4c73fhp4n0 once · healthz git_sha · FE deploy · Lead Chrome.
+
 **2026-10-02T07:35Z · B-2 JE Finish→R MERGED #24033 · tip `191765da70`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91006 MERGED FAST-MERGE | GO
 Squash merge #24033. Read-model R for JE-only register_cleared after Finish.
