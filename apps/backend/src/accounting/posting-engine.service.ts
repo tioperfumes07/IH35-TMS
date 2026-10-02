@@ -71,6 +71,11 @@ export const POSTING_SOURCE_TYPES = [
   // ROUND 312 B-2 — QBO Make Deposit: one JE for a basket of UF receipts (Dr bank / Cr UF + optional cash-back).
   // sourceId = accounting.deposits.id. Distinct from per-payment customer_payment_deposit match sweeps.
   "bank_deposit",
+  // BANK-F91038 — bill-payment Amount to Credit (overpay). sourceId = accounting.vendor_credits.id.
+  // ONLY when vendor_credits.source_bill_payment_id is set (cash left a bank on a bill payment).
+  // Lines reuse bill_payment accounts exactly: Dr ap_control / Cr the payment's bank ledger —
+  // no new GL math. Manual vendor credits (source_bill_payment_id NULL) stay subledger-only.
+  "vendor_credit",
 ] as const;
 
 export type PostingSourceType = (typeof POSTING_SOURCE_TYPES)[number];
@@ -198,7 +203,8 @@ export type PostingErrorCode =
   | "POSTING_BATCH_SETTLED_WITHOUT_LINES"
   | "POSTING_BATCH_RECLAIM_HAS_LINES"
   | "DEPOSIT_ALREADY_AT_BANK"
-  | "DEPOSIT_BANK_LEDGER_ACCOUNT_MISSING";
+  | "DEPOSIT_BANK_LEDGER_ACCOUNT_MISSING"
+  | "VENDOR_CREDIT_NO_CASH_ORIGIN";
 
 export class PostingEngineError extends Error {
   code: PostingErrorCode;
@@ -2069,6 +2075,138 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
   };
 }
 
+/**
+ * BANK-F91038 — cash-backed vendor credit from bill-payment overpay.
+ * Same accounts as buildBillPaymentLines (Dr A/P / Cr bank). Refuses when
+ * source_bill_payment_id is NULL so manual vendor credits stay subledger-only.
+ */
+async function buildVendorCreditOverpayLines(
+  client: DbClient,
+  operatingCompanyId: string,
+  sourceId: string
+): Promise<PostingDraft> {
+  const creditRes = await client.query<{
+    id: string;
+    display_id: string | null;
+    issue_date: string;
+    amount_cents: number;
+    source_bill_payment_id: string | null;
+    voided_at: string | null;
+    status: string;
+  }>(
+    `
+      SELECT
+        id::text,
+        display_id,
+        issue_date::text,
+        amount_cents::bigint AS amount_cents,
+        source_bill_payment_id::text,
+        voided_at::text,
+        status::text
+      FROM accounting.vendor_credits
+      WHERE operating_company_id = $1::uuid
+        AND id::text = $2
+      LIMIT 1
+      FOR UPDATE
+    `,
+    [operatingCompanyId, sourceId]
+  );
+  const credit = creditRes.rows[0];
+  if (!credit) throw new PostingEngineError("SOURCE_NOT_FOUND", "Vendor credit not found");
+  if (credit.voided_at || credit.status === "voided") {
+    throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided vendor credit is not posting-eligible");
+  }
+  if (!credit.source_bill_payment_id) {
+    throw new PostingEngineError(
+      "VENDOR_CREDIT_NO_CASH_ORIGIN",
+      "Manual vendor credits are subledger-only — refusing GL post without source_bill_payment_id (BANK-F91038 overpay path only)"
+    );
+  }
+
+  const paymentRes = await client.query<{
+    from_bank_account_id: string | null;
+    cc_account_id: string | null;
+    payment_date: string;
+    revoked_at: string | null;
+  }>(
+    `
+      SELECT
+        from_bank_account_id::text,
+        cc_account_id::text,
+        payment_date::text,
+        revoked_at::text
+      FROM accounting.bill_payments
+      WHERE operating_company_id = $1::uuid
+        AND id::text = $2
+      LIMIT 1
+    `,
+    [operatingCompanyId, credit.source_bill_payment_id]
+  );
+  const payment = paymentRes.rows[0];
+  if (!payment) {
+    throw new PostingEngineError("SOURCE_NOT_FOUND", "Vendor credit source bill payment not found");
+  }
+  if (payment.revoked_at) {
+    throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Source bill payment is voided");
+  }
+
+  const apAccountId = await resolveApAccountForCompany(client, operatingCompanyId);
+  if (!apAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AP account mapping is missing");
+
+  let cashAccountId: string | null;
+  let creditRole: "bank" | "cc" | "operating_bank";
+  if (payment.from_bank_account_id) {
+    cashAccountId = await resolveBankLedgerAccountId(client, operatingCompanyId, payment.from_bank_account_id);
+    if (!cashAccountId) {
+      throw new PostingEngineError(
+        "ACCOUNT_MAPPING_MISSING",
+        `Bank ledger account mapping is missing for from_bank_account_id ${payment.from_bank_account_id}`
+      );
+    }
+    creditRole = "bank";
+  } else if (payment.cc_account_id) {
+    cashAccountId = payment.cc_account_id;
+    creditRole = "cc";
+  } else {
+    cashAccountId = await resolveDisbursementCashAccountForCompany(client, operatingCompanyId);
+    if (!cashAccountId) {
+      throw new PostingEngineError(
+        "ACCOUNT_MAPPING_MISSING",
+        `operating_bank is not bound for operating_company_id=${operatingCompanyId}`
+      );
+    }
+    creditRole = "operating_bank";
+  }
+
+  const amount = Number(credit.amount_cents ?? 0);
+  if (amount <= 0) {
+    throw new PostingEngineError("UNBALANCED_ENTRY", "Vendor credit amount_cents must be positive");
+  }
+  const label = credit.display_id ? `Vendor credit ${credit.display_id}` : "Vendor credit";
+  return {
+    postingDate: credit.issue_date || payment.payment_date,
+    memo: `${label} posting (bill-payment overpay)`,
+    lines: [
+      {
+        account_id: apAccountId,
+        debit_or_credit: "debit",
+        amount_cents: amount,
+        description: `${label} AP`,
+        source_transaction_line_id: null,
+        relationship_role: "source_transaction",
+      },
+      {
+        account_id: cashAccountId,
+        debit_or_credit: "credit",
+        amount_cents: amount,
+        description: `${label} ${creditRole === "cc" ? "CC liability" : "cash"}`,
+        source_transaction_line_id: null,
+        relationship_role: "source_transaction",
+      },
+    ],
+  };
+}
+
 // Cash advance posting (modeled on buildBillPaymentLines):
 //   DEBIT  the cash_advance mapped account (B1 expense_category_account_map, resolved by
 //          category + operating_company_id — never hardcoded).
@@ -2641,6 +2779,7 @@ async function buildPostingDraft(
   if (sourceType === "factoring_advance_deposit") return buildFactoringAdvanceDepositSweepLines(client, operatingCompanyId, sourceId);
   if (sourceType === "bank_deposit") return buildBankDepositLines(client, operatingCompanyId, sourceId);
   if (sourceType === "bill_payment") return buildBillPaymentLines(client, operatingCompanyId, sourceId);
+  if (sourceType === "vendor_credit") return buildVendorCreditOverpayLines(client, operatingCompanyId, sourceId);
   if (sourceType === "cash_advance") return buildCashAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
   if (sourceType === "driver_advance") return buildDriverAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
   if (sourceType === "bank_categorization") return buildBankCategorizationLines(client, operatingCompanyId, sourceId);

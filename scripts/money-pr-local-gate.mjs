@@ -303,6 +303,7 @@ const STEPS = [
   ["verify-dispatch-overview-derived-actions", "scripts/verify-dispatch-overview-derived-actions.mjs"],
   ["verify-driver-profile-dqf-kpi-actions", "scripts/verify-driver-profile-dqf-kpi-actions.mjs"],
   ["verify-bill-payment-print-letter-html", "scripts/verify-bill-payment-print-letter-html.mjs"],
+  ["verify-bill-payment-overpay-creates-vendor-credit", "scripts/verify-bill-payment-overpay-creates-vendor-credit.mjs"],
   ["verify-account-register-ref-no-journal-entry-link", "scripts/verify-account-register-ref-no-journal-entry-link.mjs"],
   ["verify-money-detail-page-uses-ispending", "scripts/verify-money-detail-page-uses-ispending.mjs"],
   ["verify-lists-accounting-picker-law-honest", "scripts/verify-lists-accounting-picker-law-honest.mjs"],
@@ -464,6 +465,17 @@ const GUARD_303 = [
 const DATA_WRITE_PATHS = ["db/migrations/", "scripts/ops/"];
 const ONE_SHOT_WRITER_RE = /^scripts\/run-[^/]+-once\.m?[jt]s$/;
 const LIVE_DOMAIN_GUARDS = [
+  [
+    "verify-bill-payment-overpay-creates-vendor-credit",
+    [
+      "apps/backend/src/accounting/vendor-bill-payments.routes.ts",
+      "apps/backend/src/accounting/checks/checks.routes.ts",
+      "apps/backend/src/accounting/posting-engine.service.ts",
+      "apps/frontend/src/components/checks/WriteCheckForm.tsx",
+      "db/migrations/202615292200_vendor_credits_source_bill_payment_id.sql",
+    ],
+  ],
+
   // RECLASSIFY (Lead 2026-10-01, QBO spec §24) — every applied reclassify line is carried by a RECLASSIFICATION JE pair; WORM on postings.
   ["verify-reclassify-batches-are-whole", ["apps/backend/src/accounting/reclassify/", "apps/backend/src/accounting/journal-entries.service.ts"]],
   ["verify-feed-gate-blocks-incomplete", ["apps/backend/src/driver-finance/feed-gate/", "apps/backend/src/settlements/approval.service.ts", "db/migrations/202615170400_feed_gate_intakes.sql"]],

@@ -204,6 +204,8 @@ export type PayCheckBillsInput = {
   check_date: string;
   check_number: string;
   memo?: string | null;
+  /** BANK-F91038 — check face amount; when > sum(applications), excess becomes vendor credit. */
+  amount_cents?: number;
   applications: Array<{ bill_id: string; amount_cents: number }>;
 };
 

@@ -845,8 +845,8 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
   // R-172 step 5 -- once a bill is added, this IS a Bill Payment (Check): a real check number is
   // required (the underlying engine has never supported print-later) and the category/item lines are
   // not sent at all -- the bills ARE the lines. amount_cents on every queued bill must be positive.
-  // BANK-F91033 — Payment may be typed above open balance (Amount to Credit lights up) but Save stays
-  // off until credit is $0 — pay-bills still rejects overpayment (no silent vendor-credit invent).
+  // BANK-F91038 — Payment may exceed open balance (Amount to Credit). Save is enabled; the engine
+  // creates a vendor credit for the excess and posts Dr A/P / Cr cash (same accounts as bill_payment).
   const checkLinesReady =
     Boolean(payeeId) &&
     Boolean(bankAccountId) &&
@@ -866,7 +866,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
         return amt > 0 && amt <= remaining;
       }) &&
       billPaymentApplyCents > 0 &&
-      billPaymentCreditCents === 0 &&
+      billPaymentTotalCents > 0 &&
       !saving
     : checkLinesReady && (printLater || checkNumber.trim().length > 0);
   // ROUND 326 queue item 15: "Print check" forces print_later (the number is assigned when the check is printed), so it
@@ -993,6 +993,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
           check_date: checkDate,
           check_number: checkNumber.trim(),
           memo: memo.trim() || null,
+          amount_cents: billPaymentTotalCents,
           applications: billsToPay.map((b) => ({ bill_id: b.id, amount_cents: billToPayAmounts[b.id] ?? 0 })),
         });
         savedId = result.payment_batch_id;
@@ -1365,8 +1366,8 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                 </div>
                 {billPaymentCreditCents > 0 ? (
                   <div className="border-t border-slate-200 bg-slate-100 px-2 py-1.5 text-xs text-slate-700" data-b4-credit-hint="1">
-                    Payment exceeds open balance by {formatMoneyCents(billPaymentCreditCents)}. Reduce Payment to the open
-                    balance — overpayment credit is not posted on Save yet.
+                    Payment exceeds open balance by {formatMoneyCents(billPaymentCreditCents)}. On Save the excess becomes a
+                    vendor credit (Dr A/P / Cr bank — same accounts as the bill payment).
                   </div>
                 ) : null}
               </div>

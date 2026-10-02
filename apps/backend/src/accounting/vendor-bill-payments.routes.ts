@@ -11,6 +11,7 @@ import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { getAppliedVendorCreditsCents, getAppliedBillPaymentApplicationsCents } from "./bills.service.js";
 import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { isBillPaymentGlPostingEnabled } from "./bill-payment-gl.service.js";
+import { resolveVendorCreditDisplayId } from "./display-id.js";
 
 const vendorIdParamsSchema = z.object({
   id: z.string().trim().min(1),
@@ -53,7 +54,16 @@ export type VendorBillPaymentBatchInput = {
 };
 
 export type VendorBillPaymentBatchResult =
-  | { code: 201; data: { payment_batch_id: string; bill_payment_ids: string[] } }
+  | {
+      code: 201;
+      data: {
+        payment_batch_id: string;
+        bill_payment_ids: string[];
+        vendor_credit_id?: string | null;
+        vendor_credit_display_id?: string | null;
+        overpay_cents?: number;
+      };
+    }
   | { code: 400 | 404 | 409 | 500; error: string };
 
 type QueryClient = { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[]; rowCount?: number }> };
@@ -279,6 +289,84 @@ export async function applyVendorBillPaymentBatch(
     await updateBankBalance(client, operatingCompanyId, body.bank_account_id, -Math.abs(body.amount_cents));
   }
 
+  // BANK-F91038 — Amount to Credit: cash left the bank above applied bills → vendor credit +
+  // Dr A/P / Cr cash JE (same accounts as bill_payment) + spine in the same posting txn.
+  // Mirrors AR customer_payment overpay → credit_memo subledger; GL is the cash/AP pair only —
+  // no new GL math. Manual vendor credits (no source_bill_payment_id) stay subledger-only.
+  const overpayCents = body.amount_cents - sumApplied;
+  let vendorCreditId: string | null = null;
+  let vendorCreditDisplayId: string | null = null;
+  if (overpayCents > 0) {
+    if (!body.bank_account_id) {
+      return { code: 400, error: "bank_account_required_for_overpayment_credit" };
+    }
+    if (paymentIds.length === 0) {
+      return { code: 400, error: "overpayment_requires_at_least_one_application" };
+    }
+    const sourceBillPaymentId = paymentIds[0]!;
+    const displayId = await resolveVendorCreditDisplayId(
+      client as never,
+      operatingCompanyId,
+      new Date(`${body.paid_at}T00:00:00.000Z`)
+    );
+    const creditIns = await client.query(
+      `
+        INSERT INTO accounting.vendor_credits (
+          operating_company_id,
+          vendor_id,
+          display_id,
+          status,
+          issue_date,
+          amount_cents,
+          notes,
+          created_by_user_id,
+          source_bill_payment_id
+        ) VALUES (
+          $1::uuid, $2, $3, 'open', $4::date, $5,
+          $6, $7::uuid, $8::uuid
+        )
+        RETURNING id::text, display_id
+      `,
+      [
+        operatingCompanyId,
+        vendorId,
+        displayId,
+        body.paid_at,
+        overpayCents,
+        `Auto-created from bill-payment overpay on batch ${batchId} (source bill_payment ${sourceBillPaymentId})`,
+        actorUserId,
+        sourceBillPaymentId,
+      ]
+    );
+    vendorCreditId = (creditIns.rows[0]?.id as string | undefined) ?? null;
+    vendorCreditDisplayId = (creditIns.rows[0]?.display_id as string | undefined) ?? null;
+    if (!vendorCreditId) return { code: 500, error: "vendor_credit_create_failed" };
+
+    if (glPostingEnabled) {
+      await postSourceTransactionInClientTx(
+        client as never,
+        {
+          operating_company_id: operatingCompanyId,
+          source_transaction_type: "vendor_credit",
+          source_transaction_id: vendorCreditId,
+          posting_purpose: "initial_post",
+        },
+        { userId: actorUserId }
+      );
+    }
+
+    await appendCrudAudit(client as never, actorUserId, "accounting.vendor_credits.created.from_bill_payment_overpay", {
+      resource_type: "accounting.vendor_credits",
+      resource_id: vendorCreditId,
+      display_id: vendorCreditDisplayId,
+      operating_company_id: operatingCompanyId,
+      vendor_id: vendorId,
+      amount_cents: overpayCents,
+      source_bill_payment_id: sourceBillPaymentId,
+      payment_batch_id: batchId,
+    });
+  }
+
   await appendCrudAudit(client as never, actorUserId, "accounting.vendor_bill_payment_batch.created.p6_t11204", {
     resource_type: "accounting.bill_payments",
     resource_id: batchId,
@@ -286,9 +374,20 @@ export async function applyVendorBillPaymentBatch(
     vendor_id: vendorId,
     payment_ids: paymentIds,
     applications: body.applications.length,
+    overpay_cents: overpayCents,
+    vendor_credit_id: vendorCreditId,
   });
 
-  return { code: 201, data: { payment_batch_id: batchId, bill_payment_ids: paymentIds } };
+  return {
+    code: 201,
+    data: {
+      payment_batch_id: batchId,
+      bill_payment_ids: paymentIds,
+      vendor_credit_id: vendorCreditId,
+      vendor_credit_display_id: vendorCreditDisplayId,
+      overpay_cents: overpayCents,
+    },
+  };
 }
 
 export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {

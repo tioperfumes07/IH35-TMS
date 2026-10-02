@@ -425,6 +425,8 @@ export async function registerCheckRoutes(app: FastifyInstance) {
     check_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "check_date must be YYYY-MM-DD"),
     check_number: z.string().trim().min(1).max(21),
     memo: z.string().trim().max(2000).optional().nullable(),
+    // BANK-F91038 — optional; when set must be >= sum(applications). Excess = Amount to Credit → vendor credit.
+    amount_cents: z.number().int().positive().optional(),
     applications: z
       .array(z.object({ bill_id: z.string().uuid(), amount_cents: z.number().int().positive() }))
       .min(1),
@@ -459,7 +461,11 @@ export async function registerCheckRoutes(app: FastifyInstance) {
         }
       }
 
-      const totalCents = body.applications.reduce((sum, a) => sum + a.amount_cents, 0);
+      const appliedCents = body.applications.reduce((sum, a) => sum + a.amount_cents, 0);
+      const totalCents = body.amount_cents ?? appliedCents;
+      if (totalCents < appliedCents) {
+        return reply.code(400).send({ error: "amount_cents_below_applications" });
+      }
 
       const result = await withCompanyScope(user.uuid, body.operating_company_id, async (client) => {
         try {
