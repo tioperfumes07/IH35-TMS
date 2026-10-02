@@ -38,13 +38,13 @@ export function PlannerRangeToolbar() {
       </button>
       {isCustom ? (
         <div className="flex items-center gap-1" data-testid="planner-range-custom-pickers">
-          <DatePicker
+          <DatePicker box="filter"
             value={range.start}
             onChange={(value) => setRange({ ...range, start: value })}
             aria-label="Custom range start"
           />
           <span className="text-gray-500">to</span>
-          <DatePicker
+          <DatePicker box="filter"
             value={range.end}
             onChange={(value) => setRange({ ...range, end: value })}
             aria-label="Custom range end"

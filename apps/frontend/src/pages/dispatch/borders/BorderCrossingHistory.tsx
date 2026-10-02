@@ -115,7 +115,7 @@ export function BorderCrossingHistory() {
           <label htmlFor="border-crossing-from" className="block text-xs font-medium text-gray-700 mb-1">
             From
           </label>
-          <DatePicker
+          <DatePicker box="filter"
             id="border-crossing-from"
             value={staged.draft.from}
             onChange={(next) => staged.setDraft({ ...staged.draft, from: next })}
@@ -126,7 +126,7 @@ export function BorderCrossingHistory() {
           <label htmlFor="border-crossing-to" className="block text-xs font-medium text-gray-700 mb-1">
             To
           </label>
-          <DatePicker
+          <DatePicker box="filter"
             id="border-crossing-to"
             value={staged.draft.to}
             onChange={(next) => staged.setDraft({ ...staged.draft, to: next })}

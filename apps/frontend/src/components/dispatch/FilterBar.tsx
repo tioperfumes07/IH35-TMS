@@ -249,11 +249,11 @@ export function FilterBar({
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-600">Date From</label>
-            <DatePicker value={draft.dateFrom} onChange={(next) => staged.setDraft({ ...draft, dateFrom: next })} className="w-full" />
+            <DatePicker box="filter" value={draft.dateFrom} onChange={(next) => staged.setDraft({ ...draft, dateFrom: next })} className="w-full" />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-600">Date To</label>
-            <DatePicker value={draft.dateTo} onChange={(next) => staged.setDraft({ ...draft, dateTo: next })} className="w-full" />
+            <DatePicker box="filter" value={draft.dateTo} onChange={(next) => staged.setDraft({ ...draft, dateTo: next })} className="w-full" />
           </div>
         </div>
 

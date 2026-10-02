@@ -96,6 +96,7 @@ const STEPS = [
   ["verify-load-status-writers-cas", "scripts/verify-load-status-writers-cas.mjs"],
   // ROUND 326.5 owner design law — boards built on the tokens: no off-token hex, 34/40/44/132/120 sizes, no column borders, KPI rows across.
   ["verify-design-token-parity", "scripts/verify-design-token-parity.mjs"],
+  ["verify-dispatch-date-boxes", "scripts/verify-dispatch-date-boxes.mjs"],
   ["verify-no-money-theater", "scripts/verify-no-money-theater.mjs"],
   ["verify-no-capability-regression", "scripts/verify-no-capability-regression.mjs"],
   // Rule 26 — block parallel scoreboard-hotfile PRs before push (SKIP-PASS without gh token).
