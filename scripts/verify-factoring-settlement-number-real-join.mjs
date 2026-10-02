@@ -42,15 +42,14 @@ function read(rel) {
 /** Exported for --selftest. */
 export function checkSettlementJoin(src) {
   const failures = [];
-  // Extract the settlement_number subquery specifically (bounded by its own AS alias) so a
-  // legitimate, unrelated use of settled_in_settlement_id elsewhere in the file (there isn't
-  // one today, but this keeps the check scoped) can never trip this guard.
-  const match = src.match(/SELECT ds\.display_id[\s\S]{0,600}?AS settlement_number,/);
-  if (!match) {
-    failures.push(`${ROLLUP}: could not find the settlement_number subquery.`);
+  // Settlement number comes from AlwaysTrack source_document_ref (Rule 03) via settlement_lines.
+  // Also require settlement_id (BANK-F91021) so surfaces can EntityLink.
+  const numberMatch = src.match(/SELECT ds\.source_document_ref[\s\S]{0,600}?AS settlement_number,/);
+  if (!numberMatch) {
+    failures.push(`${ROLLUP}: could not find the settlement_number subquery (source_document_ref).`);
     return failures;
   }
-  const subquery = match[0];
+  const subquery = numberMatch[0];
   if (!/driver_finance\.settlement_lines\s+\w+\s+ON\s+\w+\.source_driver_bill_id\s*=\s*\w+\.id/.test(subquery)) {
     failures.push(
       `${ROLLUP}: settlement_number must join through driver_finance.settlement_lines.source_driver_bill_id ` +
@@ -64,6 +63,9 @@ export function checkSettlementJoin(src) {
         `that column is populated 0/many times company-wide (live-verified), so this always resolves ` +
         `NULL and is exactly the NEW-23 regression.`,
     );
+  }
+  if (!/AS settlement_id,/.test(src) || !/lc_settlement_id/.test(src)) {
+    failures.push(`${ROLLUP}: must expose settlement_id / lc_settlement_id for EntityLink drills.`);
   }
   return failures;
 }
@@ -82,33 +84,46 @@ export function run() {
 if (process.argv.includes("--selftest")) {
   const goodSrc = `
     (
-      SELECT ds.display_id
+      SELECT ds.id::text
       FROM driver_finance.driver_bills db2
       JOIN driver_finance.settlement_lines sl2 ON sl2.source_driver_bill_id = db2.id
       JOIN driver_finance.driver_settlements ds ON ds.id = sl2.settlement_id
       WHERE db2.load_id = l.id
-        AND db2.operating_company_id = l.operating_company_id
-        AND db2.status <> 'void'
-      ORDER BY db2.created_at DESC
+      LIMIT 1
+    ) AS settlement_id,
+    (
+      SELECT ds.source_document_ref
+      FROM driver_finance.driver_bills db2
+      JOIN driver_finance.settlement_lines sl2 ON sl2.source_driver_bill_id = db2.id
+      JOIN driver_finance.driver_settlements ds ON ds.id = sl2.settlement_id
+      WHERE db2.load_id = l.id
       LIMIT 1
     ) AS settlement_number,
+    lcr.settlement_id AS lc_settlement_id,
   `;
   const badOldColumn = `
     (
-      SELECT ds.display_id
+      SELECT ds.source_document_ref
       FROM driver_finance.driver_bills db2
       JOIN driver_finance.driver_settlements ds ON ds.id = db2.settled_in_settlement_id
       WHERE db2.load_id = l.id
-        AND db2.operating_company_id = l.operating_company_id
         AND db2.settled_in_settlement_id IS NOT NULL
-      ORDER BY db2.created_at DESC
       LIMIT 1
     ) AS settlement_number,
+    AS settlement_id,
+    lc_settlement_id
   `;
-  const badMissingSettlementLinesJoin = goodSrc.replace(
-    "JOIN driver_finance.settlement_lines sl2 ON sl2.source_driver_bill_id = db2.id\n      ",
-    "",
-  );
+  const badMissingSettlementLinesJoin = `
+    (
+      SELECT ds.source_document_ref
+      FROM driver_finance.driver_bills db2
+      JOIN driver_finance.driver_settlements ds ON ds.id = sl2.settlement_id
+      WHERE db2.load_id = l.id
+      LIMIT 1
+    ) AS settlement_number,
+    AS settlement_id,
+    lc_settlement_id
+  `;
 
   const checks = [
     ["clean rollup passes", checkSettlementJoin(goodSrc).length === 0],
