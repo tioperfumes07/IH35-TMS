@@ -176,6 +176,14 @@ export const COA_ROLE_VALUES = [
   // an undesignated company/type never fails to post, per the owner's own "never fails" instruction.
   "toll_scale_expense",
   "other_operating_expense",
+  // ROUND 321 (CC-1) lease-to-own, ASC 842 LESSEE (migration 202615210000): commencement Dr rou_asset / Cr lease_liability;
+  // each bill Dr lease_liability; period accretion Cr lease_liability (finance: Dr lease_interest_expense; operating: Dr
+  // rent_expense) and ROU amortization Cr accumulated_rou_amortization. DELIBERATELY absent from ROLE_FALLBACKS — the owner
+  // designates them on the CoaRoles page; the lessee engine refuses with the missing role named until then.
+  "rou_asset",
+  "lease_liability",
+  "accumulated_rou_amortization",
+  "lease_interest_expense",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

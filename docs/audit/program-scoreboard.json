@@ -1,10 +1,10 @@
 {
-  "healthzSha": "19e6e62",
-  "generated_at": "2026-10-02T00:44:47.781Z",
+  "healthzSha": "5eb52a7",
+  "generated_at": "2026-10-02T00:51:24.988Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "19e6e62",
+    "deployedSha": "5eb52a7",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 23933,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL -- E-10 addition: fault code proposes its catalog task + labor (owner rules, exact or whole-SPN), Samsara component description on every fault; auto work order de-dup root fix",
+      "state": "merged",
+      "mergedAtCt": "10/01/2026, 07:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23933",
+      "sha": "5eb52a70e8",
+      "committedAtIso": "2026-10-01T19:47:27-05:00"
+    },
+    {
       "number": 23932,
       "title": "FINDING: N/A LANE: DOCS (OUTBOX CC-2: bus checked, no new order; purchase reverse drill on invoice/load/customer shipped #23931)",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23924",
       "sha": "58244ce553",
       "committedAtIso": "2026-10-01T19:19:23-05:00"
-    },
-    {
-      "number": 23923,
-      "title": "FINDING: BANK-F31517-B1I",
-      "state": "merged",
-      "mergedAtCt": "10/01/2026, 07:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23923",
-      "sha": "8cb5332877",
-      "committedAtIso": "2026-10-01T19:18:51-05:00"
     }
   ]
 }

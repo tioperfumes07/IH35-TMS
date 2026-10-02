@@ -67,6 +67,10 @@ const ROLE_LABELS: Record<CoaRole, string> = {
   company_fuel_advance_expense: "Company fuel-advance expense",
   operating_bank: "Operating bank (default disbursement source)",
   bank_fee_recovery: "Bank fee recovery (driver wire/ACH fee recoup)",
+  rou_asset: "Right-of-use asset (ASC 842 lessee)",
+  lease_liability: "Lease liability (ASC 842 lessee)",
+  accumulated_rou_amortization: "Accumulated ROU amortization",
+  lease_interest_expense: "Lease interest expense (finance lease)",
 };
 
 export function CoaRolesPage() {
