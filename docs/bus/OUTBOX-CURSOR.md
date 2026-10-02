@@ -1,3 +1,8 @@
+**2026-10-02T09:53Z · BANK-F91021 D-H2 Settlement EntityLink MERGED #24067 · tip `74f2f97564`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91021 MERGED FAST-MERGE | GO
+Loads Report Settlement column EntityLinks via lc_settlement_id from loadCostRollup. Also this session: BANK-F91019 #24062 · BANK-F91020 #24064 · CLAIM 202615221200 #24066.
+NEXT: author BANK_TX_SPLIT USMCA overrides at HH 12–23 · Lead Chrome · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T09:45Z · BANK-F91020 §19c resolve-diff MERGED #24064 · tip `d35e83486d`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91020 MERGED FAST-MERGE | GO
 B-3 MatchDrawer "If needed, resolve the difference" mini-grid → bank_transaction_splits save+commit; arithmetic Resolved amount; variance Match seeds writeOff from first category. money-pr-local-gate PASS → #24064 squash-admin.
