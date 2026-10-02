@@ -10,7 +10,13 @@ import path from "node:path";
 const src = fs.readFileSync(path.join(process.cwd(), "apps/backend/src/accounting/cash-forecast.routes.ts"), "utf8");
 // The opening-cash SUM(current_balance_cents) on banking.bank_accounts must exclude
 // credit account types before the query string closes.
-if (!/SUM\(current_balance_cents\)[\s\S]{0,800}NOT ILIKE\s*'%credit%'/i.test(src)) {
+// ROUND 326 audit C1: the forecast may take opening cash from the ONE authoritative depository total
+// (sumAuthoritativeDepositoryCashCents), which restricts to account_class = 'depository' — credit is excluded there.
+const wallet = fs.readFileSync(path.join(process.cwd(), "apps/backend/src/banking/internal-wallet-balance.ts"), "utf8");
+const viaAuthoritative =
+  /const openingBalance = await sumAuthoritativeDepositoryCashCents\(/.test(src) &&
+  (wallet.match(/account_class = 'depository'/g) ?? []).length >= 2;
+if (!viaAuthoritative && !/SUM\(current_balance_cents\)[\s\S]{0,800}NOT ILIKE\s*'%credit%'/i.test(src)) {
   console.error("verify-cash-forecast-opening-excludes-credit FAIL: opening-cash SUM(current_balance_cents) must exclude credit account_type (NOT ILIKE '%credit%').");
   process.exit(1);
 }

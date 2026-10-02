@@ -7,6 +7,7 @@ import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking
 import { lastDeliveryStopLateralSql, proformaRemainingCentsSql } from "../cash-flow/cash-flow.service.js";
 import { projectedCashDateSql } from "../cash-flow/projected-cash-date.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { sumAuthoritativeDepositoryCashCents } from "../banking/internal-wallet-balance.js";
 
 const forecastQuerySchema = companyQuerySchema.extend({
   weeks: z.coerce.number().int().min(1).max(26).optional().default(13),
@@ -164,21 +165,14 @@ export async function registerCashForecastRoutes(app: FastifyInstance) {
       // BANK-ACCOUNT-HIDE: opening cash excludes accounts hidden for THIS entity (flag OFF by default —
       // see docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
       const hideOnForecast = await isBankAccountHideEnabled(client, query.data.operating_company_id);
-      const cashRes = await client.query(
-        `
-          SELECT COALESCE(SUM(current_balance_cents), 0)::int AS total_cents
-          FROM banking.bank_accounts
-          WHERE operating_company_id = $1::uuid
-            AND is_active = true
-            -- Opening CASH = depository balances only. Credit cards / lines of credit
-            -- carry debt (negative balances) and are liabilities, not cash on hand —
-            -- including them wrongly dragged opening cash to -$5.5M (CASH-ANOMALY).
-            AND COALESCE(account_type, '') NOT ILIKE '%credit%'
-            ${bankAccountHiddenFilterSql(hideOnForecast, "banking.bank_accounts")}
-        `,
-        [query.data.operating_company_id]
-      );
-      const openingBalance = Number(cashRes.rows[0]?.total_cents ?? 0);
+      // ROUND 326 audit C1 — ONE cash position: opening cash is the same authoritative depository total the cash-flow
+      // board and the Banking KPI read (sumAuthoritativeDepositoryCashCents: Plaid current balances + non-Plaid wallet
+      // ledger derivation, account_class = 'depository'). This route used to re-sum current_balance_cents with its own
+      // account_type text filter — a third number for the same cash.
+      const openingBalance = await sumAuthoritativeDepositoryCashCents(client as never, query.data.operating_company_id, {
+        hideFilterOnBankAccounts: bankAccountHiddenFilterSql(hideOnForecast, "banking.bank_accounts"),
+        hideFilterOnBaAlias: bankAccountHiddenFilterSql(hideOnForecast, "ba"),
+      });
 
       // Open A/R only. Proforma is not legally owed (ACCT-F223 / aging) — it is projected income
       // bucketed on dispatch delivery date into expected_inflows.other.
