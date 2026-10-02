@@ -751,6 +751,41 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
   };
 }
 
+/**
+ * ROUND 326 (CC-1) — CANCEL SETTLES REVENUE RECOGNITION (owner law 2026-10-02, complete delete route). Before this, every
+ * cancel path flipped mdata.loads.status to 'cancelled' and left the load's Event 1 / Event 2 JEs posted (prod: 6
+ * cancelled IH 35 TRANSPORTATION loads, 2 live revenue JEs each). Called by every cancel writer in the same
+ * transaction, right after the status flip: the load's revrec latch rows, their JEs (+ any reversals) and lines are
+ * deleted through the SECURITY DEFINER accounting.delete_cancelled_load_revrec (migration 202615210200) — no reversal
+ * pair is left, each deleted row is recorded in audit.record_deletions, a closed period refuses. A load with no revenue
+ * recognized cancels unchanged; a load WITH revenue refuses by name until the migration is applied (never a silent leak).
+ */
+export async function settleRevrecOnCancel(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> },
+  operatingCompanyId: string,
+  loadId: string,
+  actorUserId: string,
+  reason: string
+): Promise<{ deleted_journal_entries: number }> {
+  const has = await client.query(
+    `SELECT 1 FROM accounting.load_revenue_recognition_postings WHERE operating_company_id = $1::uuid AND load_id = $2::uuid LIMIT 1`,
+    [operatingCompanyId, loadId]
+  );
+  if (!has.rows.length) return { deleted_journal_entries: 0 };
+  const fn = await client.query(`SELECT to_regprocedure('accounting.delete_cancelled_load_revrec(uuid,uuid,uuid,text)') IS NOT NULL AS ok`);
+  if (!fn.rows[0]?.ok) {
+    throw new Error("E_CANCEL_REVREC_SETTLE_REQUIRES_MIGRATION_202615210200: this load has recognized revenue; cancelling it must delete that revenue, and the delete route is not applied on this database yet");
+  }
+  const r = await client.query(
+    `SELECT accounting.delete_cancelled_load_revrec($1::uuid, $2::uuid, $3::uuid, $4) AS n`,
+    [operatingCompanyId, loadId, actorUserId, reason]
+  );
+  const n = Number(r.rows[0]?.n ?? 0);
+  await appendCrudAudit(client as Parameters<typeof appendCrudAudit>[0], actorUserId, "accounting.revrec.deleted_on_cancel",
+    { resource_type: "mdata.loads", resource_id: loadId, operatingCompanyId, deleted_journal_entries: n, reason }, "warning");
+  return { deleted_journal_entries: n };
+}
+
 /** Thrown inside the JE's own transaction when another fire already owns the (load, event) latch row — rolls the duplicate JE back. */
 export class RevrecLatchAlreadyPostedError extends Error {
   constructor() {

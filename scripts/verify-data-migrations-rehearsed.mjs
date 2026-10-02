@@ -53,9 +53,18 @@ export function stripSqlComments(sql) {
     .replace(/\/\*[\s\S]*?\*\//g, "");
 }
 
+/**
+ * ROUND 326 (CC-1): DML inside a CREATE [OR REPLACE] FUNCTION / PROCEDURE body does not run when the migration runs —
+ * it runs when the function is later CALLED — so it is not a data migration. A DO $$ … $$ block DOES run at migration
+ * time and stays in. Only the dollar-quoted body that follows a CREATE FUNCTION / PROCEDURE header is removed.
+ */
+export function stripFunctionBodies(sql) {
+  return sql.replace(/(CREATE\s+(?:OR\s+REPLACE\s+)?(?:FUNCTION|PROCEDURE)\b[\s\S]*?\bAS\s+)(\$[A-Za-z_]*\$)[\s\S]*?\2/gi, "$1''");
+}
+
 /** True when the migration changes EXISTING rows, i.e. its behaviour depends on real data. */
 export function mutatesExistingRows(sql) {
-  const s = stripSqlComments(sql);
+  const s = stripFunctionBodies(stripSqlComments(sql));
   if (/\bUPDATE\s+[a-z_]+\.[a-z_]+/i.test(s)) return true;
   if (/\bDELETE\s+FROM\s+[a-z_]+\.[a-z_]+/i.test(s)) return true;
   // INSERT ... SELECT reads existing rows; a plain INSERT ... VALUES of seed data does not.
@@ -149,6 +158,9 @@ function selftest() {
   t("failure names the offending file", analyse([UPD], "x").problems[0].includes("a.sql"));
   // Mutation arm: the detector must be capable of returning false, or every arm above is meaningless.
   t("mutation: a non-DML migration is not flagged", mutatesExistingRows(DDL.sql) === false);
+  t("mutation: DML inside a CREATE FUNCTION body is not flagged", mutatesExistingRows("CREATE OR REPLACE FUNCTION a.f() RETURNS void LANGUAGE plpgsql AS $fn$ BEGIN DELETE FROM a.t WHERE x = 1; UPDATE a.t SET y = 2; END $fn$;") === false);
+  t("mutation: DML inside a DO block IS flagged", mutatesExistingRows("DO $$ BEGIN UPDATE a.t SET y = 2; END $$;") === true);
+  t("mutation: DML after a function body is still flagged", mutatesExistingRows("CREATE FUNCTION a.f() RETURNS void AS $$ SELECT 1 $$ LANGUAGE sql; DELETE FROM a.t WHERE x = 1;") === true);
   return bad;
 }
 

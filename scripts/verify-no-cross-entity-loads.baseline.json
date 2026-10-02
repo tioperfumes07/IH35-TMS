@@ -1,0 +1,48 @@
+{
+  "note": "ROUND 326 (CC-1). Shrink-only. Remove entries as the owner-ordered complete delete runs; never add.",
+  "measured_at": "2026-10-02",
+  "transportation_loads_under_usmca": {
+    "measured_at": "2026-10-02",
+    "source": "docs/bus/10-02-2026-CC-1-TRANSPORTATION-REVREC-LEAK-ENGINE.md (owner Faro reconciliation, Company = IH)",
+    "load_numbers": [
+      "13485",
+      "13487",
+      "13493",
+      "13494",
+      "13496",
+      "13500",
+      "13498",
+      "13502",
+      "13503",
+      "13504",
+      "13505",
+      "13506",
+      "13507",
+      "13509",
+      "13517",
+      "13522",
+      "13525",
+      "13530",
+      "13531",
+      "13533",
+      "13539"
+    ]
+  },
+  "cancelled_with_live_revrec": {
+    "measured_at": "2026-10-02",
+    "source": "prod read-only: cancelled loads with an active latch row on a standing JE",
+    "load_numbers": [
+      "13481",
+      "13482",
+      "13485",
+      "13487",
+      "13489",
+      "13493",
+      "13494",
+      "13495",
+      "13496",
+      "13500",
+      "13501"
+    ]
+  }
+}
