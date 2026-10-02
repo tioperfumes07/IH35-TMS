@@ -1,3 +1,8 @@
+**2026-10-02T11:28Z · BANK-F91032 B-4 Find Bill No. MERGED #24088 · tip `4610e26741`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91032 MERGED FAST-MERGE | GO
+Outstanding Transactions: Find Bill No. filter on WriteCheckForm (ORDERS §B-4 / QBO §10). money-pr-local-gate PASS → #24088 squash-admin.
+NEXT: next ORDERS leftover · Lead Chrome · bank_transaction_splits USMCA flag HH 12–23 · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T11:21Z · BANK-F91031 CoA Description + F91030 feed chip text-xs MERGED #24086 · tip `515bef0b64`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91031 MERGED FAST-MERGE | GO
 DESCRIPTION column from catalog description; savedViewsKey coa-list-v2; F91030 `text-[10px]` → `text-xs` (UI ratchet). Also #24085 Type Feed · BAL. money-pr-local-gate PASS → squash-admin.
