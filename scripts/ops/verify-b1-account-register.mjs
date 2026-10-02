@@ -59,6 +59,11 @@ function main() {
   assertIncludes(page, "payeeFilter", PAGE);
   assertIncludes(page, "statusFilter", PAGE);
   assertIncludes(page, "filteredRows", PAGE);
+  assertIncludes(page, "printList", PAGE);
+  // Print must honor the same payee/status filter as the on-screen table (BANK-F91012 follow-on).
+  if (!/const rowsHtml = filteredRows/.test(page)) {
+    throw new Error(`${PAGE}: printList must map filteredRows (not report.rows)`);
+  }
   assertIncludes(coa, 'data-b1-coa-actions="1"', COA);
   if (!/View register/.test(coa) || !/row\.statement === ["']P&L["']/.test(coa)) {
     throw new Error(`${COA}: P&L rows must keep Run report AND always expose View register (ORDERS §B-1)`);

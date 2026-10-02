@@ -44,6 +44,18 @@ function main() {
   assertIncludes(workspace, "Difference", WORKSPACE);
   assertIncludes(workspace, "text-red-700", WORKSPACE);
   assertIncludes(workspace, "posted_date", WORKSPACE);
+  // B-2 ORDERS §6 — Filter popover: Find / Cleared / Type / Payee / Date / amount · Reset / Apply
+  assertIncludes(workspace, 'data-b2-recon-filter="1"', WORKSPACE);
+  assertIncludes(workspace, 'data-b2-recon-filter-popover="1"', WORKSPACE);
+  assertIncludes(workspace, 'data-testid="recon-filter-find"', WORKSPACE);
+  assertIncludes(workspace, 'data-testid="recon-filter-payee"', WORKSPACE);
+  assertIncludes(workspace, 'data-testid="recon-filter-cleared"', WORKSPACE);
+  assertIncludes(workspace, 'data-testid="recon-filter-type"', WORKSPACE);
+  assertIncludes(workspace, 'data-testid="recon-filter-apply"', WORKSPACE);
+  assertIncludes(workspace, 'data-testid="recon-filter-reset"', WORKSPACE);
+  assertIncludes(workspace, "applyReconFilters", WORKSPACE);
+  assertIncludes(workspace, "resetReconFilters", WORKSPACE);
+  assertIncludes(workspace, "appliedAmtMode", WORKSPACE);
 
   assertIncludes(shell, 'data-b2-reconcile-strip="1"', SHELL);
   assertIncludes(shell, "Cleared payments", SHELL);

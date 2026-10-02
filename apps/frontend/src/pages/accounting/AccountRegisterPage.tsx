@@ -593,7 +593,7 @@ export function AccountRegisterPage() {
         { showNumber: showAccountNumbers }
       ) || accountId;
     const nb = acct.normal_balance;
-    const rowsHtml = report.rows
+    const rowsHtml = filteredRows
       .map((r) => {
         const increase = nb === "debit" ? r.debit_cents : r.credit_cents;
         const decrease = nb === "debit" ? r.credit_cents : r.debit_cents;
