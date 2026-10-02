@@ -1,4 +1,54 @@
 {
+  "12161": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 22 — zero-reset engine guard (CC-1)."
+  },
+  "12165": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 20 — maintenance module engines guard (CC-1)."
+  },
+  "12169": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 21 — cash flow module guard (CC-1)."
+  },
+  "12173": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 audit A2 — one settlement calculator guard (CC-1)."
+  },
+  "12177": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 audit A3 — settlement creator posts through the close engine guard (CC-1)."
+  },
+  "12181": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 audit A4 — no hardcoded account fallback guard (CC-1)."
+  },
+  "12185": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 audit A5 — one driver bill per load guard (CC-1)."
+  },
+  "12189": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 audit M1 — single work-order creator guard (CC-1)."
+  },
+  "12193": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 audit M2 — one PM-due evaluator guard (CC-1)."
+  },
+  "12197": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 audit C1 — cash position single source guard (CC-1)."
+  },
   "12129": {
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-02",
