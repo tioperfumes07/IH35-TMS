@@ -280,6 +280,14 @@ async function loadSelectedPostings(client: DbClient, companyId: string, posting
   return res.rows.map((r) => numberize(r) as SelectedPosting);
 }
 
+/** A document whose line cannot follow the ledger: the reclass is refused for that document, nothing moves. */
+export class ReclassifyDocumentNotRewritableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ReclassifyDocumentNotRewritableError";
+  }
+}
+
 /** Rewrite the source document line so document and ledger agree. Returns a note when it cannot. */
 export async function rewriteDocumentLine(
   client: DbClient,
@@ -436,6 +444,20 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
 
       await client.query("SAVEPOINT reclass_doc");
       try {
+        // ROUND 326 queue item 16 — NO HALF-WRITE. The document line is rewritten FIRST; if any selected line of this
+        // document cannot be rewritten (no 1:1 line, a subledger dimension, a document type without a line rewrite),
+        // the whole document rolls back and is refused by name — the ledger never moves without its document. Before,
+        // the reclass JE posted first and a failed rewrite was only a note ("ledger moved, line unchanged").
+        // A hand-keyed journal entry has no separate document: the reclass JE itself is the record.
+        const rewrites = new Map<string, { updated: boolean; note: string | null }>();
+        for (const p of eligible) {
+          const handKeyed = !p.source_transaction_type || !p.source_transaction_id;
+          const rw = handKeyed
+            ? { updated: true, note: null }
+            : await rewriteDocumentLine(client as DbClient, companyId, p, { account_id: target.to_account_id, class_id: target.to_class_id, entity_uuid: target.to_entity_uuid, entity_type: target.to_entity_type });
+          if (!rw.updated) throw new ReclassifyDocumentNotRewritableError(rw.note ?? "document line could not be rewritten");
+          rewrites.set(p.posting_id, rw);
+        }
         const je = await createJournalEntryOnClient(
           client as never,
           {
@@ -452,7 +474,7 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
         let docUpdated = true;
         const notes: string[] = [];
         for (const p of eligible) {
-          const rw = await rewriteDocumentLine(client as DbClient, companyId, p, { account_id: target.to_account_id, class_id: target.to_class_id, entity_uuid: target.to_entity_uuid, entity_type: target.to_entity_type });
+          const rw = rewrites.get(p.posting_id)!;
           if (!rw.updated) { docUpdated = false; if (rw.note) notes.push(rw.note); }
           await client.query(INSERT_LINE, [
             batchId, companyId, p.posting_id, p.journal_entry_id, p.source_transaction_type, p.source_transaction_id, p.source_transaction_line_id,
@@ -474,7 +496,9 @@ export async function applyReclassify(input: ApplyReclassifyInput, actor: { user
         await client.query("RELEASE SAVEPOINT reclass_doc");
         const why = error instanceof PostingEngineError && error.code === "PERIOD_LOCKED"
           ? `period closed for ${entryDate}: reopen the period or post a dated adjusting entry`
-          : error instanceof Error ? error.message : String(error);
+          : error instanceof ReclassifyDocumentNotRewritableError
+            ? `not reclassified — the document cannot follow the ledger (${error.message}); nothing was moved`
+            : error instanceof Error ? error.message : String(error);
         for (const p of eligible) await recordRefusal(p, why);
       }
     }
