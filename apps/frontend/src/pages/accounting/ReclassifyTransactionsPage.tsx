@@ -203,13 +203,24 @@ export function ReclassifyTransactionsPage() {
               </div>
               {linesQ.error ? <ListErrorState {...formatQueryErrorDetail(linesQ.error)} onRetry={() => void linesQ.refetch()} /> : null}
               <div className="mt-1 overflow-x-auto rounded border border-gray-200 bg-white">
-                <table className="w-full text-xs" data-testid="reclassify-grid">
+                <table className="w-full text-xs" data-testid="reclassify-grid" data-b5-account-no-col="1">
                   <thead className="bg-slate-50 text-left uppercase tracking-wide text-gray-600">
-                    <tr><th className="p-2 w-6"></th><th className="p-2">Date</th><th className="p-2">Type</th><th className="p-2">Num</th><th className="p-2">Name</th><th className="p-2">Memo / description</th><th className="p-2">Account</th><th className="p-2">Class</th><th className="p-2 text-right">Net amount</th></tr>
+                    <tr>
+                      <th className="p-2 w-6"></th>
+                      <th className="p-2">Date</th>
+                      <th className="p-2">Type</th>
+                      <th className="p-2">Num</th>
+                      <th className="p-2">Name</th>
+                      <th className="p-2">Memo / description</th>
+                      <th className="p-2" data-testid="reclassify-col-account-no">Account no.</th>
+                      <th className="p-2">Account</th>
+                      <th className="p-2">Class</th>
+                      <th className="p-2 text-right">Net amount</th>
+                    </tr>
                   </thead>
                   <tbody>
-                    {linesQ.isLoading ? <tr><td colSpan={10} className="p-3 text-slate-600">Finding…</td></tr> : null}
-                    {!linesQ.isLoading && lines.length === 0 ? <tr><td colSpan={10} className="p-3 text-slate-600">No posted GL lines match these filters.</td></tr> : null}
+                    {linesQ.isLoading ? <tr><td colSpan={11} className="p-3 text-slate-600">Finding…</td></tr> : null}
+                    {!linesQ.isLoading && lines.length === 0 ? <tr><td colSpan={11} className="p-3 text-slate-600">No posted GL lines match these filters.</td></tr> : null}
                     {lines.map((l) => (
                       <tr key={l.posting_id} className={`border-t border-gray-100 ${selected.has(l.posting_id) ? "bg-slate-100" : ""}`} data-testid={`reclassify-line-${l.posting_id}`}>
                         <td className="p-2"><input type="checkbox" checked={selected.has(l.posting_id)} onChange={() => toggle(l)} aria-label="Select line" /></td>
@@ -218,8 +229,9 @@ export function ReclassifyTransactionsPage() {
                         <td className="p-2">{l.source_transaction_id ? <EntityLink kind={docKind(l.source_transaction_type)} id={l.source_transaction_type && docKind(l.source_transaction_type) !== "journal_entry" ? l.source_transaction_id : l.journal_entry_id} label={l.document_number ?? l.source_transaction_id.slice(0, 8)} /> : <EntityLink kind="journal_entry" id={l.journal_entry_id} label="JE" />}</td>
                         <td className="p-2">{l.entity_uuid && l.entity_type === "vendor" ? <EntityLink kind="vendor" id={l.entity_uuid} label={l.entity_name ?? l.entity_uuid} /> : l.entity_name ?? "—"}</td>
                         <td className="p-2 max-w-[22rem] truncate" title={l.description ?? ""}>{l.description ?? "—"}</td>
-                        {/* showAccountNumbers gate — one Account column, number only when the toggle is on */}
-                        <td className="p-2"><EntityLink kind="account" id={l.account_id} label={formatAccountDisplayLabel({ account_name: l.account_name, account_number: l.account_number }, { showNumber: showAccountNumbers })} /></td>
+                        {/* BANK-F91042 — ORDERS §B-5 ACCOUNT NO. column; value gated by Show account numbers (house law). */}
+                        <td className="p-2 whitespace-nowrap tabular-nums" data-b5-account-no="1">{showAccountNumbers ? ((l.account_number ?? "").trim() || "—") : "—"}</td>
+                        <td className="p-2"><EntityLink kind="account" id={l.account_id} label={formatAccountDisplayLabel({ account_name: l.account_name, account_number: l.account_number }, { showNumber: false })} /></td>
                         <td className="p-2">{l.class_name ?? "—"}</td>
                         <td className="p-2 text-right tabular-nums">{formatCurrencyFromCents(l.net_amount_cents)}</td>
                       </tr>

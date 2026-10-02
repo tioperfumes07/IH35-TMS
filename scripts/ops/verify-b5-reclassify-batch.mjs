@@ -54,6 +54,16 @@ function main() {
   assertIncludes(reclassify, 'createKind="customer"', RECLASSIFY);
   assertIncludes(reclassify, "Find transactions", RECLASSIFY);
   assertIncludes(reclassify, "undoReclassifyBatch", RECLASSIFY);
+  // BANK-F91042 — ORDERS §B-5 grid ACCOUNT NO. separate from ACCOUNT
+  assertIncludes(reclassify, 'data-b5-account-no-col="1"', RECLASSIFY);
+  assertIncludes(reclassify, 'data-testid="reclassify-col-account-no"', RECLASSIFY);
+  assertIncludes(reclassify, "Account no.", RECLASSIFY);
+  assertIncludes(reclassify, 'data-b5-account-no="1"', RECLASSIFY);
+  assertIncludes(reclassify, "showNumber: false", RECLASSIFY);
+  // House law: Account no. cell gated by showAccountNumbers (verify-account-number-hidden-by-default)
+  if (!/data-b5-account-no="1">\{showAccountNumbers \?/.test(reclassify) && !/showAccountNumbers \? \(\(l\.account_number/.test(reclassify)) {
+    throw new Error(`${RECLASSIFY}: Account no. cell must gate on showAccountNumbers`);
+  }
 
   assertIncludes(batch, 'data-b5-batch-transactions="1"', BATCH);
   assertIncludes(batch, 'data-b5-batch-type="1"', BATCH);
