@@ -49,6 +49,9 @@ export function checkStatic(src, cronSources) {
   if (!/run_kind, event_purchase_line_id\)\s*VALUES \(\$1::uuid, \$2::date, \$2::date, 1, \$3, \$4::uuid, 'event', \$5::uuid\)/.test(src.engine)) {
     fails.push(`${F.engine}: the event-time accrual (owner ruling 2026-10-02) is gone or no longer a maker <> checker run`);
   }
+  if (!/sum\(LEAST\(l\.gross_cents, GREATEST\(i\.total_cents - COALESCE\(i\.amount_paid_cents, 0\) - COALESCE\(cma\.applied, 0\), 0\)\)\)/.test(src.engine)) {
+    fails.push(`${F.engine}: open Net must be the invoice's open balance (total − paid − credit memos), capped at purchased gross — the same definition this guard uses`);
+  }
   if (!/fuelTaxComplete && factoringInterest\.complete/.test(src.close)) {
     fails.push(`${F.close}: month close can lock while Faro interest is due and unposted`);
   }
@@ -77,6 +80,7 @@ if (process.argv.includes("--selftest")) {
     ["maker can approve", { engine: good.engine.replace('throw new InterestAccrualError("interest_accrual_maker_cannot_approve")', "void 0") }],
     ["migration check dropped", { migration: good.migration.replace("decided_by_user_id IS NULL OR decided_by_user_id <> proposed_by_user_id", "true") }],
     ["close ignores interest", { close: good.close.replace("fuelTaxComplete && factoringInterest.complete", "fuelTaxComplete") }],
+    ["open Net back to gross", { engine: good.engine.replace("sum(LEAST(l.gross_cents, GREATEST(i.total_cents - COALESCE(i.amount_paid_cents, 0) - COALESCE(cma.applied, 0), 0)))", "sum(l.gross_cents)") }],
     ["close ignores pending event runs", { close: good.close.replace("&& pendingEventRuns === 0", "") }],
   ];
   if (checkStatic(good, []).length) { console.error(`${LABEL} --selftest FAIL: tree not clean: ${checkStatic(good, []).join("; ")}`); process.exit(1); }
@@ -112,8 +116,15 @@ try {
          AND r.operating_company_id = je.operating_company_id AND r.is_active
        GROUP BY 1),
     sub AS (
-      SELECT l.operating_company_id oci, sum(l.gross_cents) cents
-        FROM accounting.factoring_purchase_lines l JOIN accounting.factoring_purchases p ON p.id = l.purchase_id
+      -- Open Net of a purchased account = what the customer still owes on the invoice (total − paid − credit memos applied),
+      -- capped at the purchased gross — the same definition as advanceLiabilityTiesToOpenNet (asserted statically below).
+      SELECT l.operating_company_id oci,
+             sum(LEAST(l.gross_cents, GREATEST(i.total_cents - COALESCE(i.amount_paid_cents, 0) - COALESCE(cma.applied, 0), 0))) cents
+        FROM accounting.factoring_purchase_lines l
+        JOIN accounting.factoring_purchases p ON p.id = l.purchase_id
+        JOIN accounting.invoices i ON i.id = l.invoice_id
+        LEFT JOIN LATERAL (SELECT sum(a.applied_cents) AS applied FROM accounting.credit_memo_applications a
+                            WHERE a.invoice_id = l.invoice_id AND a.operating_company_id = l.operating_company_id AND a.voided_at IS NULL) cma ON TRUE
        WHERE l.voided_at IS NULL AND p.status = 'posted' AND p.voided_at IS NULL
        GROUP BY 1)
     SELECT COALESCE(gl.oci, sub.oci)::text oci, COALESCE(gl.cents, 0)::bigint gl, COALESCE(sub.cents, 0)::bigint open_net,
@@ -132,7 +143,7 @@ try {
     for (const r of drift) console.error(`  company ${r.oci}: 2150 ${r.gl} vs open Net ${r.open_net} (cents)`);
     process.exit(1);
   }
-  console.log(`${LABEL}: PASS — static 6/6; live: ${res.rows.length} company(ies) with 2150 or open purchases, every one ties; positive control: ${bound} active 2150 role binding(s)`);
+  console.log(`${LABEL}: PASS — static 7/7; live: ${res.rows.length} company(ies) with 2150 or open purchases, every one ties; positive control: ${bound} active 2150 role binding(s)`);
 } catch (err) {
   console.error(`${LABEL}: FAIL — live check could not run: ${err.message}`);
   process.exit(1);

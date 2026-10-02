@@ -1712,3 +1712,16 @@ Next (CC-2 lane): period-close interest accrual DR 6830 / CR 2155 with approval 
   #24222 Faro entries: banking.bank_accounts/bank_transactions (FKs), invoices + customers + factoring_purchases (spine via purchase-line Faro Inv), journal_entries (journal_entry_id + spine 'faro_reserve_entry'), users. Loads N/A — reached via the invoice.
   #24235 reclass: journal_entries (two FKs; spine added in THIS PR), catalogs.accounts via roles (1235/2156), users. Customer/invoice/load N/A — pool-level presentation.
   #24245 event runs: purchase line -> invoice/customer (FK), JE spine 'invoice'. #24255 short-pay: invoice + customer + credit memo + Faro entry on the spine, both entries. #24203/#24249 banking: bank_accounts (identity scope) — no JE, N/A for the rest.
+
+## 2026-10-02 22:30Z — ROUND 335 §6 DONE: 2150 = open factored Net re-run through a short-pay on a fork (THIS PR) · #24259 live
+- #24259 1941465f9f (spine completeness) — backend dep-db02q57avr4c73du4mbg live, web live at 1941465f9f; verify-factoring-writers-write-the-spine PASS on prod.
+- FINDING while re-running: the guard's open Net was "purchased gross of every live line" — a short-pay could never tie under it, written down or not. Corrected (not a term): open Net of a purchased account = the invoice's open balance (total − paid − credit memos applied), capped at the purchased gross; engine (advanceLiabilityTiesToOpenNet) and guard use the same expression, asserted statically.
+- Fork br-twilight-fog-akxb8ofd (deleted), invoice 010 (4,000.00), Faro Inv 012:
+    before (prod copy)                            2150        0 | open Net        0 | TIES
+    1. purchase posted                            2150  4000.00 | open Net  4000.00 | TIES
+    2. short-pay reserve side DR 2150 / CR 1235   2150  3750.00 | open Net  4000.00 | BREAKS (unresolved)
+    3a. kept open (dispute)                       2150  3750.00 | open Net  4000.00 | BREAKS — the named exception, as ruled
+    3b. written down (rate dispute, credit memo)  2150  3750.00 | open Net  3750.00 | TIES — credit memo moved open Net by exactly 250.00
+  (The customer's 3,750 to Faro is not in the run: the collection poster is unbuilt; it moves both sides by 3,750.)
+- §2 applied: keep-open now REQUIRES a dispute note (what is being disputed) — a named exception, never a resting state; write-down is the default.
+- Item 9 re-measured on prod (all 167 factoring/Faro guards, exit codes): 30 red, not 9. Triage next, in my lane.

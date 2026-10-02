@@ -51,6 +51,7 @@ function postHint(e: FaroReserveEntry): string | null {
 /** Owner ruling 2026-10-02 — the customer side of a short-pay: write it down to a reason, or keep it open (Owner only). */
 function ShortPayCustomerSide({ e, companyId, isOwner, onDone }: { e: FaroReserveEntry; companyId: string; isOwner: boolean; onDone: () => Promise<void> }) {
   const [reason, setReason] = useState("");
+  const [disputeNote, setDisputeNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const label = SHORT_PAY_REASON_OPTIONS.find((o) => o.value === e.short_pay_reason)?.label ?? e.short_pay_reason ?? "";
@@ -68,7 +69,7 @@ function ShortPayCustomerSide({ e, companyId, isOwner, onDone }: { e: FaroReserv
     );
   }
   if (!isOwner) return <span className="text-slate-600">{e.short_pay_resolution === "kept_open" ? "Kept open on the customer" : "Open on the customer — Owner decides"}</span>;
-  const act = (body: { resolution: "written_down" | "kept_open"; reason?: string }) => {
+  const act = (body: { resolution: "written_down" | "kept_open"; reason?: string; note?: string }) => {
     setBusy(true);
     setErr(null);
     void resolveFaroShortPay(companyId, e.id, body)
@@ -97,9 +98,24 @@ function ShortPayCustomerSide({ e, companyId, isOwner, onDone }: { e: FaroReserv
         Write down
       </button>
       {e.short_pay_resolution !== "kept_open" ? (
-        <button type="button" className={ACTION} disabled={busy} onClick={() => act({ resolution: "kept_open" })}>
-          Keep open
-        </button>
+        <>
+          {/* ROUND 335: keep-open only while actively disputing this shortfall — say what is disputed. */}
+          <input
+            value={disputeNote}
+            onChange={(ev) => setDisputeNote(ev.target.value)}
+            placeholder="What you are disputing"
+            className="h-[34px] w-[180px] rounded-sm border border-gray-300 px-1 text-xs"
+            aria-label="Dispute note"
+          />
+          <button
+            type="button"
+            className={ACTION}
+            disabled={busy || disputeNote.trim().length < 10}
+            onClick={() => act({ resolution: "kept_open", note: disputeNote.trim() })}
+          >
+            Keep open (disputing)
+          </button>
+        </>
       ) : null}
       {err ? <span className="text-red-700">{err}</span> : null}
     </span>

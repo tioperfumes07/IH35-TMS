@@ -58,15 +58,16 @@ describe("owner ruling 2026-10-02 — short-pay customer side", () => {
 
   it("keep open posts nothing", async () => {
     const c = client();
-    const r = await resolveFaroShortPay(c, { ...base, resolution: "kept_open" });
+    await expect(resolveFaroShortPay(c, { ...base, resolution: "kept_open" })).rejects.toThrow("short_pay_keep_open_needs_dispute_note");
+    const r = await resolveFaroShortPay(c, { ...base, resolution: "kept_open", note: "Disputing with CTS: POD shows on-time delivery" });
     expect(r).toEqual({ entry_id: "e-1", resolution: "kept_open" });
     expect(mockCreateJe).not.toHaveBeenCalled();
     expect(c.query.mock.calls.some((x) => String(x[0]).includes("INSERT INTO accounting.credit_memos"))).toBe(false);
   });
 
   it("refuses: not the Owner, not a short-pay, already written down, no reason, more than the invoice still owes", async () => {
-    await expect(resolveFaroShortPay(client(), { ...base, actor_role: "Accountant", resolution: "kept_open" })).rejects.toThrow("short_pay_resolution_owner_only");
-    await expect(resolveFaroShortPay(client({ kind: "schedule_fee" }), { ...base, resolution: "kept_open" })).rejects.toThrow("faro_entry_is_not_a_short_pay");
+    await expect(resolveFaroShortPay(client(), { ...base, actor_role: "Accountant", resolution: "kept_open", note: "disputing it now" })).rejects.toThrow("short_pay_resolution_owner_only");
+    await expect(resolveFaroShortPay(client({ kind: "schedule_fee" }), { ...base, resolution: "kept_open", note: "disputing it now" })).rejects.toThrow("faro_entry_is_not_a_short_pay");
     await expect(resolveFaroShortPay(client({ resolution: "written_down" }), { ...base, resolution: "written_down", reason: "bad_debt" })).rejects.toThrow("short_pay_already_written_down");
     await expect(resolveFaroShortPay(client(), { ...base, resolution: "written_down" })).rejects.toThrow("short_pay_reason_required");
     await expect(resolveFaroShortPay(client({ paid: "390000" }), { ...base, resolution: "written_down", reason: "bad_debt" })).rejects.toThrow("short_pay_exceeds_invoice_open_balance");
