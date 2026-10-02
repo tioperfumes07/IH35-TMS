@@ -21,6 +21,7 @@
 // unique DB constraint isn't possible without adding new columns; a real backfill is a low-
 // concurrency, manual, single-owner action, so an application-level pre-check (inside the same
 // transaction, so no TOCTOU window against ITSELF) is sufficient here.
+import { upsertManualOdometerReading } from "../telematics/odometer-manual-upsert.service.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -183,25 +184,12 @@ export async function registerServiceHistoryBackfillRoutes(app: FastifyInstance)
             [workOrderId, description, body.total_cost_cents / 100]
           );
 
-          // KNOWN INTERACTION (not yet live, flagged for whoever finishes it): CC-3's ROUND 297.1
-          // odometer ledger work (docs/bus/2026-09-30-LEAD-RULING-CC3-R297-ODOMETER-LEDGER-LANE-
-          // CROSS.md) adds a new UNIQUE index on (operating_company_id, unit_id, read_at::date,
-          // source) to this table. Once that lands, backfilling TWO different pm_codes for the
-          // SAME unit on the SAME service_date in two separate requests would violate it on the
-          // second insert (both are source='manual' on the same day) -- a real owner workflow
-          // (servicing PM-A and BRK together) that this route does not yet guard against. Not
-          // fixed here: the constraint does not exist yet, so there is nothing to guard against
-          // today; whoever reviews that migration should know this route is a second writer to
-          // the same uniqueness key.
-          const odoRes = await client.query<{ id: string }>(
-            `
-              INSERT INTO telematics.odometer_readings
-                (id, operating_company_id, unit_id, read_at, odometer_miles, source, recorded_by_user_id, confidence, created_at, updated_at)
-              VALUES (gen_random_uuid(), $1::uuid, $2::uuid, $3::date, $4, 'manual', $5, 'entered', now(), now())
-              RETURNING id
-            `,
-            [body.operating_company_id, body.unit_id, body.service_date, body.odometer_miles, user.uuid]
-          );
+          // CC-3 queue 2c: the one manual odometer writer (day-unique upsert) — a second PM backfilled for the same unit
+          // on the same service date updates that day's reading instead of failing on the day-unique index.
+          const odoRes = { rows: [{ id: await upsertManualOdometerReading(client as never, {
+            operatingCompanyId: body.operating_company_id, unitId: body.unit_id, readAt: body.service_date,
+            odometerMiles: body.odometer_miles, recordedByUserId: user.uuid,
+          }) }] };
 
           let pmScheduleUpdated = false;
           if (schedule) {

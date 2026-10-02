@@ -10,6 +10,8 @@
  *   3. odometer-snapshot.cron.ts skips a unit with a NULL odometer instead of recording an
  *      honest gap row.
  *   4. odometer-manual.routes.ts (the manual write route) sets source='samsara'.
+ *   6. (CC-3 2c) any file other than the snapshot cron and odometer-manual-upsert.service.ts INSERTs into
+ *      telematics.odometer_readings (a plain INSERT collides with the day-unique index).
  *   5. a second fault processor appears anywhere outside fault-code-processor.service.ts (a
  *      second INSERT INTO maintenance.samsara_fault_code_history).
  */
@@ -19,7 +21,9 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "..", "..");
 const SNAPSHOT_CRON = resolve(ROOT, "apps/backend/src/telematics/odometer-snapshot.cron.ts");
-const MANUAL_ROUTES = resolve(ROOT, "apps/backend/src/telematics/odometer-manual.routes.ts");
+// CC-3 2c: the one manual writer is the shared upsert both the manual route and the service-history backfill call.
+const MANUAL_ROUTES = resolve(ROOT, "apps/backend/src/telematics/odometer-manual-upsert.service.ts");
+const ODOMETER_WRITERS = ["apps/backend/src/telematics/odometer-snapshot.cron.ts", "apps/backend/src/telematics/odometer-manual-upsert.service.ts"];
 const FAULT_PROCESSOR = "apps/backend/src/integrations/samsara/fault-code-processor.service.ts";
 
 function walk(dir, out = []) {
@@ -117,6 +121,15 @@ export function checkManualRouteNeverSetsSamsara(source) {
   return problems;
 }
 
+export function checkOnlyTwoOdometerWriters(files) {
+  const extra = files.filter((f) => !ODOMETER_WRITERS.some((w) => f.endsWith(w))).filter((f) => {
+    try { return /INSERT INTO telematics\.odometer_readings/.test(readFileSync(f, "utf8")); } catch { return false; }
+  });
+  return extra.length
+    ? [`odometer_readings has a third writer: ${extra.map((f) => f.replace(ROOT + "/", "")).join(", ")} -- call upsertManualOdometerReading() (telematics/odometer-manual-upsert.service.ts) instead.`]
+    : [];
+}
+
 export function checkExactlyOneFaultProcessor(files) {
   const problems = [];
   const writers = files.filter((f) => {
@@ -168,6 +181,7 @@ export function run() {
 
   const allTsFiles = walk(resolve(ROOT, "apps/backend/src"));
   problems.push(...checkExactlyOneFaultProcessor(allTsFiles));
+  problems.push(...checkOnlyTwoOdometerWriters(allTsFiles));
 
   return {
     ok: problems.length === 0,

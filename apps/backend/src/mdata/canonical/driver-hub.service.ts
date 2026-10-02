@@ -10,6 +10,8 @@
  *  pay basis    = active driver_finance.driver_pay_rates row
  */
 
+import { driverSamsaraSql } from "../../telematics/driver-miles.sql.js";
+
 type Q = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 const n = (v: unknown) => Number(v ?? 0);
 const cents = (dollars: unknown) => Math.round(Number(dollars ?? 0) * 100);
@@ -75,12 +77,11 @@ export async function readDriverHubPanel(client: Q, oc: string, driverId: string
   const due = await one(`SELECT coalesce(sum(s.net_pay), 0) AS v FROM driver_finance.driver_settlements s WHERE s.operating_company_id = $1 AND s.driver_id = $2 AND ${DUE_SQL}`);
   const escrow = await one(`SELECT coalesce(sum(balance_cents), 0) AS v, count(*)::int AS n FROM accounting.escrow_accounts WHERE operating_company_id = $1 AND holder_type = 'driver' AND holder_id = $2`);
   const adv = await one(`SELECT coalesce(sum(outstanding_balance), 0) AS v FROM driver_finance.driver_advances WHERE operating_company_id = $1 AND driver_id = $2 AND voided_at IS NULL`);
+  // CC-3 2e: the one driver-miles definition (Samsara per-driver distance) — never a planned-miles fallback.
   const miles = await one(
-    `SELECT coalesce(sum(coalesce(l.miles_driven_actual, l.loaded_miles)), 0) AS v, count(*)::int AS n FROM mdata.loads l
-      WHERE l.operating_company_id = $1 AND (l.assigned_primary_driver_id = $2 OR l.assigned_secondary_driver_id = $2)
-        AND l.voided_at IS NULL AND l.soft_deleted_at IS NULL AND l.canceled_at IS NULL
-        AND EXISTS (SELECT 1 FROM mdata.load_stops s WHERE s.load_id = l.id AND s.soft_deleted_at IS NULL
-                     AND coalesce(s.actual_arrival_at, s.scheduled_arrival_at) >= now() - interval '30 days')`);
+    `SELECT ${driverSamsaraSql("distance_mi", "$2::uuid", "now() - interval '30 days'", "now()")} AS v,
+            (SELECT count(*)::int FROM integrations.samsara_fuel_reports fr WHERE fr.subject_kind = 'driver' AND fr.driver_id = $2::uuid
+              AND fr.report_date >= (now() - interval '30 days')::date) AS n WHERE $1::uuid IS NOT NULL`);
   const integrity = await one(`SELECT count(*)::int AS n FROM safety.integrity_alerts WHERE operating_company_id = $1 AND subject_driver_id = $2 AND created_at >= now() - interval '90 days'`);
   const activity = (await client.query(
     `SELECT * FROM (

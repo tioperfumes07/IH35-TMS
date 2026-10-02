@@ -79,3 +79,57 @@ export async function computeUnitStops(
     },
   };
 }
+
+/**
+ * CC-3 queue 2f (2026-10-02) — the read path for GET /api/v1/telematics/unit-stops: the PERSISTED stop ledger
+ * (telematics.unit_stop_events, written by unit-stop-events.writer.ts on its cron and enriched with the E-05 odometer
+ * catch-up), not a fresh recompute from raw positions — one source for every reader. Same response shape as
+ * computeUnitStops; fence captures are still read per stop.
+ */
+export async function readPersistedUnitStops(
+  client: Db,
+  input: { operatingCompanyId: string; unitId: string; fromIso: string; toIso: string; geofenceId?: string }
+) {
+  const res = await client.query(
+    `SELECT started_at, ended_at, dwell_minutes, sample_count, lat, lng, city, state, odometer_mi, odometer_read_at,
+            odometer_age_minutes, odometer_note, miles_since_previous_stop, miles_note, geofence_id::text AS geofence_id,
+            geofence_label, geofence_kind, metres_from_fence_centre, driver_id_at_time::text AS driver_id
+       FROM telematics.unit_stop_events
+      WHERE operating_company_id = $1::uuid AND unit_id = $2::uuid AND started_at >= $3::timestamptz AND started_at < $4::timestamptz
+        AND ($5::uuid IS NULL OR geofence_id = $5::uuid)
+      ORDER BY started_at`,
+    [input.operatingCompanyId, input.unitId, input.fromIso, input.toIso, input.geofenceId ?? null]
+  );
+  const stops = [];
+  for (const r of res.rows) {
+    const startedAt = new Date(String(r.started_at));
+    const endedAt = r.ended_at == null ? null : new Date(String(r.ended_at));
+    const fence = r.geofence_id
+      ? {
+          geofence_id: String(r.geofence_id), label: (r.geofence_label as string | null) ?? null, location_kind: (r.geofence_kind as string | null) ?? null,
+          metres_from_centre: r.metres_from_fence_centre == null ? null : Math.round(Number(r.metres_from_fence_centre)),
+          captures: await loadFenceCapturesForStop(client as never, {
+            operatingCompanyId: input.operatingCompanyId, unitId: input.unitId, geofenceId: String(r.geofence_id), startedAt, endedAt: endedAt ?? startedAt,
+          }),
+        }
+      : null;
+    stops.push({
+      unitId: input.unitId, startedAt, endedAt, dwellMinutes: r.dwell_minutes == null ? null : Number(r.dwell_minutes),
+      sampleCount: r.sample_count == null ? null : Number(r.sample_count), lat: r.lat == null ? null : Number(r.lat), lng: r.lng == null ? null : Number(r.lng),
+      city: (r.city as string | null) ?? null, state: (r.state as string | null) ?? null, odometerMi: r.odometer_mi == null ? null : Number(r.odometer_mi),
+      odometerReadAt: r.odometer_read_at ?? null, odometerAgeMinutes: r.odometer_age_minutes == null ? null : Number(r.odometer_age_minutes),
+      odometerNote: (r.odometer_note as string | null) ?? null, milesSincePreviousStop: r.miles_since_previous_stop == null ? null : Number(r.miles_since_previous_stop),
+      milesNote: (r.miles_note as string | null) ?? "", driver_id: (r.driver_id as string | null) ?? null, fence,
+    });
+  }
+  return {
+    unit_id: input.unitId, source: "unit_stop_events" as const,
+    window: { from: input.fromIso, to: input.toIso },
+    stops,
+    counts: {
+      stops: stops.length,
+      in_fence: stops.filter((x) => x.fence).length,
+      with_fence_capture: stops.filter((x) => x.fence && (x.fence.captures.entered || x.fence.captures.exited)).length,
+    },
+  };
+}
