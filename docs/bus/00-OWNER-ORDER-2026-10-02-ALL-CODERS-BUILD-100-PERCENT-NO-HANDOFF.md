@@ -44,11 +44,12 @@ Summary, Purchase Report). Approved by the owner 2026-10-02 with the Lead's thre
 Banking or on Faro's statement. Secured borrowing: the invoice stays in our A/R the whole time — A/R never leaves.**
 
 **Accounts (one each, permanent):**
-- **1230 Factoring Reserves** = THE Faro Security Reserve (role `factor_reserve_held`). Our ASSET (CPA: "the reserve is OUR
-  asset"). 1236 (yesterday's duplicate, from a failed name search) is retired into 1230. 1235 is merged into 1230: Faro's
-  "Escrow Rsv" and "Cash Rsv" are TWO COLUMNS of ONE reserve (Faro's Account Summary has one "Escrow Reserve" balance
-  line), carried as `faro_bucket = escrow | cash` on each reserve row for line-by-line tie-out — never a second GL
-  account. "Escrow Reserve" is Faro's label only; it has nothing to do with driver escrow.
+- **Faro's reserve = two registers, one per Faro report (Lead ROUND 296 FINAL):** **1230 Factoring Reserves** = Faro's
+  ESCROW report (restricted, held per invoice; role `factor_reserve_held`). **1235 Faro Cash Reserve** = Faro's CASH report
+  (on deposit, releasable; role `factor_cash_reserve_held`). Each role and its Banking register sit on the same account
+  (migrations 202615220800 + 202615230600). 1236 (yesterday's duplicate from a failed name search) is retired —
+  deactivated, never deleted. No `faro_bucket`. "Escrow Reserve" is Faro's label only; it has nothing to do with driver
+  escrow. The reserve is OUR asset (CPA).
 - **2150 Factoring Advance** = the Net Amount of open Purchased Accounts. Nothing else is ever credited to it, so it
   always reconciles to Faro's open purchased accounts.
 - **2155 Factoring Default Interest Payable (new)** — accrued default interest, separate from 2150.
@@ -61,25 +62,36 @@ Banking or on Faro's statement. Secured borrowing: the invoice stays in our A/R 
 1. **Purchase** — DR bank (net wire) + DR 1230 (1.5% Security Reserve) + DR 6400 (Discount/Factoring Fee) + DR wire fee
    / CR 2150 (Net Amount). Example ties: Net 10,000 = bank 9,630 + reserve 150 + fee 200 + wire 20.
 2. **Customer pays Faro** (Faro remittance, matched) — DR 2150 / CR A/R. Invoice becomes a Repurchased Account.
-3. **Faro reserve rows** (Faro's Escrow + Cash reserve reports are the feed of the 1230 register; each row matched):
-   Escrow Reserve Held (in the purchase entry) · Transfer Escrow to Cash (bucket move inside 1230 — no GL change, tie-out
-   only) · Schedule Fee DR transaction-fee / CR 1230 · customer short-pay to reserve DR the customer's deduction on its
-   A/R / CR 1230 · Rsv Deposit (we fund it) DR 1230 / CR the bank we paid from · Client Payable (Faro pays out) DR the
-   receiving bank — or intercompany due-from when paid to "IH 35 Reserve" (TRANSPORTATION), never income — / CR 1230.
+3. **Faro reserve rows** (Faro's Escrow report feeds the 1230 register, its Cash report the 1235 register; each row is
+   matched there): Escrow Reserve Held (in the purchase entry, DR 1230) · Transfer Escrow to Cash DR 1235 / CR 1230 (one
+   paired transfer) · **Schedule Fee** (charged against CASH at collection, never escrow, never at purchase) DR 6405
+   Factoring Transaction Fees / CR 1235 · **Short-pay** ("Balance 4000 :: Paid 3750 :: 250 to Rsv": the customer did NOT
+   pay in full) DR an A/R short-pay variance on that customer's invoice with a reason code / CR 1235 — never absorbed into
+   a reserve movement · **Rsv Deposit** funding IH 35's negative reserve ("ajuste reserva negativa ih35", "Pago a IH35")
+   DR due-from-affiliate (TRANSPORTATION) / CR the bank we paid from — USMCA side only, TRANSPORTATION stays frozen,
+   never income or expense · **Client Payable** (Faro pays out) DR the receiving bank, or due-from-affiliate when paid to
+   "IH 35 Reserve" / CR 1235.
    A negative reserve presents as a **payable to Faro**, never a negative asset. Our "Available for Release" = Faro's.
 4. **Days 1–35** — no cost (30-day Repurchase Term + 5-day Grace).
 5. **Day 36+ default interest (0.067%/day, compounded)** — computed and shown daily, NOT posted nightly. Accrued once at
-   month-end close (approved): DR 6830 / CR 2155, trued up to Faro's statement. The nightly accrual job stops posting.
-6. **Day 95 (or Faro's acceleration)** — a "repurchase due" EVENT (invoice, customer, purchase date, deadline,
-   Repurchase Price = Net + unpaid Transaction Fees + Default Interest − credits). Alert only. Posts nothing.
+   month-end close through the period-close engine with approval: DR 6830 / CR 2155, trued up to Faro's statement. The
+   nightly accrual job stops posting, and whatever it posted is REVERSED through the one void engine — never deleted.
+   Guard: 2150 always equals the Net Amount of OPEN Purchased Accounts, one query.
+6. **Day 95 (or Faro's acceleration)** — OUR repurchase deadline, never a Faro deduction. A "repurchase due" obligation
+   EVENT (invoice, customer, purchase date, deadline, Repurchase Price = Net + unpaid Transaction Fees + Default Interest −
+   credits). Posts nothing. It is a row in the owner's decision queue — EXTEND / CONFIRM / MARK COLLECTED — with NO
+   default action on timeout. Owner: "WHEN RECOURSE TIME ARRIVES IT MUST ASK, NOT RECOURSE AUTOMATICALLY."
 7. **Repurchase actually paid** (we wire Faro / Faro takes it from the reserve / netted on a later funding — the movement
    is matched to the event): DR 2150 (Net) + DR 2155 (accrued interest) + DR expense for any new fee / CR bank (or 1230,
    or the netting line); and DR 1220 / CR A/R (the customer now owes us directly). Event → repurchased.
 8. **Afterwards** — customer pays us: DR bank / CR 1220. Never collected: owner-approved write-off DR bad debt / CR 1220.
 
-**Screens:** Reserve Held, Recourse Return, the per-customer reserve (a table, rows not cards: customer · invoices
-purchased · face · advanced · held · released · applied · reserve now — column total ties to 1230) and the advance
-page all read the 1230 register and the events through ONE query, the same one Banking's register uses. Guard fails if a
+**Screens:** Reserve Held and Recourse Return STAY as read-through displays of the GL accounts (they stop being writers).
+The per-customer reserve STAYS — a table, a row per customer, never a card (gear column chooser, 120px money, 132px
+dates, em dash for missing): customer · invoices purchased · face · advanced · held · released · recourse · reserve now,
+every row drilling to the invoice and to the bank line, column total tying to 1230. Known because every Faro line is
+STAMPED to its invoice and debtor — the stamp is the fix, never removing the number. All of it reads the 1230/1235
+registers and the events through ONE query, the same one Banking's register uses. Guard fails if a
 factoring screen can print a reserve number Banking cannot reproduce.
 
 **Seats:** CC-2 builds the accounts/roles migration, the repurchase-due event, the factoring-side posters each match

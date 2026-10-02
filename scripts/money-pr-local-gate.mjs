@@ -522,6 +522,7 @@ const LIVE_DOMAIN_GUARDS = [
     [
       "db/migrations/202615220600_factor_escrow_reserve_role_to_1236.sql",
       "db/migrations/202615220800_faro_one_reserve_1230_interest_payable_transaction_fees.sql",
+      "db/migrations/202615230600_faro_restore_cash_reserve_1235.sql",
       "apps/backend/src/accounting/factoring-posting/",
       "apps/backend/src/factoring/",
       "apps/backend/src/accounting/coa-roles/",
