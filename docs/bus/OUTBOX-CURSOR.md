@@ -1,3 +1,8 @@
+**2026-10-02T11:10Z · BANK-F91029 B-4 Clear Payment + Add all + Open MERGED #24083 · tip `bb596e6d17`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91029 MERGED FAST-MERGE | GO
+WriteCheckForm: Clear Payment button clears billToPayAmounts; Add all queues remaining open bills; Open → /accounting/bills/:id. money-pr-local-gate PASS → #24083 squash-admin.
+NEXT: BANK-F91030 CoA Type feed badge · Lead Chrome · bank_transaction_splits USMCA flag HH 12–23 · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T10:49Z · BANK-F91028 CoA per-row Make inactive MERGED #24081 · tip `a6b86dd331`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91028 MERGED FAST-MERGE | GO
 CoA ACTION: Make inactive on active rows → ConfirmModal → deactivate. Session F91024–F91028 register connectivity stack. money-pr-local-gate PASS → #24081 squash-admin.
