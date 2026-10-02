@@ -2408,3 +2408,26 @@ CC-3 | QUEUE EMPTY | 00-QUEUE-CC-3-11-ITEMS 1–11 built (table at the 2026-10-0
 dispatch #24129–#24192), ROUND 296/297 done, ROUND 329 lane swept, vendor-profile audit closed (#24214, #24223),
 registry additions for my engines all built. Remaining items in my findings belong to CC-1 (2d tour readout +
 cost split segment kinds, 2h IFTA, 2i driver pay, A/P aging as-of, cash forecast scope). Awaiting next order.
+
+## 2026-10-02 — ROUND 330.1
+
+**1. Overlap fork test — DONE, #24230 (80b806f).** Fork br-rough-night-ak507ejk off br-fancy-credit-akjnd07a (pooled
+endpoint, as prod), deleted after. Each engine driven from TWO CONCURRENT app sessions through its real entry point;
+all outbound calls through a counting fetch stub. 12/12 produced exactly one run's effect — table with before/after
+counts: docs/engine-verification/2026-10-02-CC3-OVERLAP-PROOF-12-ENGINES.md. Highlights: fault WOs 0 -> 1 (B opened
+none; re-run +0); document alerts 104 notifications = 13 events x 8 users, re-run +0, 0 duplicate groups; fuel push
+1 POST; delivery 1 send; location fence inserted [0, 1]; breach detector twin skipped on the lock.
+**Correction:** #24219 said 12 engines fixed — 11 were changed; the breach detector already held a lock (header only).
+
+**2. Wrapper adoption — DONE, #24231 (21f09a4).** fault-poll, samsara-dvir-poll (two job names) and harsh-events-poll
+now call wrapBackgroundJobTick(..., { rethrow: true }). The Lead's lease change (_system.background_job_leases,
+verify-scheduled-engine-single-fire.mjs, SINGLE-FIRE-ROOT-CAUSE.md) is NOT on main or in any open PR at 20:47Z, so I
+added only opts.rethrow (the name given, default unchanged); the three inherit the lease when it lands.
+harsh-events-poll: header + SWEPT (24); its key is harsh_events_per_tenant_unique ON CONFLICT DO NOTHING.
+
+**3. #24200 re-measured — 0 / 0.** Prod dry run 20:46Z (read-only, rolled back): twin_breaches 0,
+duplicate_fire_findings 0 — nothing has returned since AUTH-204. The breach twins were produced by the 22 duplicate
+stop fences (deactivated under AUTH-203), not by double firing: the breach detector holds a single-flight lock
+(overlap proof row 12).
+
+Deploys: backend dep-db01gp1srm7s73do20ag building @21f09a4 (triggered; autoDeploy off); web auto. Ids in the next entry.
