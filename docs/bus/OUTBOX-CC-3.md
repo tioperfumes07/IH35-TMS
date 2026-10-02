@@ -2344,3 +2344,33 @@ settlement line 1.
   A second tick does nothing.
 - cron/draft-crew-status-selfheal.cron.ts — UPDATE ... WHERE status = 'draft' (compare-and-set). Idempotent.
 Also open for the owner: AUTH for #24200 (acknowledge 6 twin breach alerts, resolve 6 duplicate_fire findings).
+
+## 2026-10-02 — ROUND 329
+### 1. #24200 — APPLIED under AUTH-204 (approved in writing; recorded #24207, consumed #24208)
+before: twin breach alerts 6 (unacknowledged), duplicate_fire findings 6 (open) · after: 0 / 0 (dry-run re-run).
+audit event cc3.stop_fence_twins 2026-10-02T19:47:03Z. breach ids acknowledged:
+  fbe6be60-7c09-4d70-bfb5-385906f05676 fe0a9036-0204-40b1-b4a6-8e7b8c3591a6 1385d404-4039-488b-bae9-3b61b6f42701
+  0e89f386-5451-4079-9a4a-73e6278f1b33 4b4bf36e-3468-4f0d-9b02-308656468f2c c30d5d10-299e-4c10-834c-318c5cf453cf
+finding ids resolved:
+  cc9907d8-0bcc-401e-b61b-edf6b16fc477 f8887610-dc63-435a-b4ed-e72ff646f7db 46fdb829-d330-4dc5-926d-cdb21add0f0f
+  1ef5feec-3f22-4a26-aacd-8d9782b43f1d a389c168-44e0-4f1d-a213-ae5cb11b5e63 f1c2d8fc-3dc2-4000-bf18-d1fe62772a2d
+
+### 2. The three flags, re-measured at file:line (tip 2026-10-02) under OVERLAP, not only sequential re-runs
+- telematics/load-real-driven-miles.service.ts:251 + :258 — the ONLY writes are two UPDATEs of computed columns
+  (leg_miles_driven_actual / miles_driven_actual) to deterministic values; no INSERT anywhere in the file (no history /
+  recalculation-log table). FALSE POSITIVE CONFIRMED.
+- telematics/load-stop-geofence-sync.service.ts:223-229 — NOT select-then-insert: the stamp is ONE statement,
+  `UPDATE mdata.load_stops ... WHERE id = $1 AND actual_arrival_at IS NULL RETURNING id`; the audit INSERT (:236) runs
+  only when that returned a row (:232). The SELECT at :203 only nominates candidates; the guard lives in the database
+  (row lock + same-statement WHERE, re-evaluated after the lock wait under READ COMMITTED). PROVEN under true overlap on
+  throwaway br-delicate-sunset-ak15k5d7 (deleted): two connections ran the engine's statement verbatim on stop
+  ce0e8060-...: run 1 rows 1 (holds the lock), run 2 blocked, run 1 committed, run 2 rows 0 -> exactly one arrival
+  (10:00:00Z, eld_geofence). FALSE POSITIVE — code unchanged (owner: do not change clean engines).
+- cron/draft-crew-status-selfheal.cron.ts:91-94 — `UPDATE mdata.loads SET status = 'assigned_not_dispatched' WHERE id =
+  $1 AND operating_company_id = $2 AND status = 'draft' RETURNING id`; the audit only when a row returned (:96). The guard
+  is in the WHERE of the same UPDATE. FALSE POSITIVE CONFIRMED.
+
+### 3. Standard (DB-level idempotency for every scheduled engine) — sweep of my lane's 23 scheduled engines in progress;
+header template + guard land with it.
+NOTE: the ORDER line (#24166 spine fix -> repurchase-time accrual -> possible-duplicate badge -> Faro bank-feed block) is
+CC-2's lane; relayed in #24210.
