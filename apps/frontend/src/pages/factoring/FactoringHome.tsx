@@ -57,6 +57,7 @@ import { FactoringProfilePanel } from "./FactoringProfilePanel";
 import { SubmitToFactorTab } from "./SubmitToFactorTab";
 import { PaymentsToYouPanel } from "./PaymentsToYouPanel";
 import { FactoringCashFlowPanel } from "./FactoringCashFlowPanel";
+import { FactoringKpiPanel } from "../../components/factoring/FactoringKpiPanel";
 import { FactoringReservesSharedPanel } from "../../components/factoring/FactoringReservesSharedPanel";
 import { ChargebacksTable, type ChargebackFeeRow } from "./ChargebacksTable";
 import { RecoursePipelineTable } from "./RecoursePipelineTable";
@@ -1092,6 +1093,9 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           )}
         </div>
       </div>
+
+      {/* ROUND 326.2 item 1 — Factoring KPI engine (ledger-computed, every tile drills to its rows). */}
+      {companyId ? <FactoringKpiPanel companyId={companyId} from={dateFromFromUrl || undefined} to={dateToFromUrl || undefined} /> : null}
 
       {/* ROUND 315 / Lead B6 — Home cash-flow: TOTAL PER DAY from posted purchases + projected candidates. */}
       <FactoringCashFlowPanel
