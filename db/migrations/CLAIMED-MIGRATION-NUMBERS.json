@@ -1575,7 +1575,7 @@
     "202615301100": {
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-02",
-      "purpose": "ROUND 340 step 3: telematics.unit_stop_events live keys — (operating_company_id, unit_id, started_at) replaces unit_stop_events_unit_start_unique (unit_id, started_at); ADD (operating_company_id, unit_id, ended_at). CREATE UNIQUE INDEX CONCURRENTLY, IH35_MIGRATION_NO_TRANSACTION, after the dedupe."
+      "purpose": "ROUND 340 step 3 (split: the runner runs an IH35_MIGRATION_NO_TRANSACTION file as ONE statement): CREATE UNIQUE INDEX CONCURRENTLY uq_unit_stop_events_company_unit_start (operating_company_id, unit_id, started_at)."
     },
     "202615310100": {
       "claimed_by": "CC-1",
@@ -1591,6 +1591,21 @@
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-02",
       "purpose": "Lead ROUND 339 order 4 — declare unroled posted accounts (fuel_card_payable_dreamline 2510, fuel_wallet_relay 1295, escrow / reimbursement parents)"
+    },
+    "202615301059": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-02",
+      "purpose": "ROUND 340 step 3 (split: the runner runs an IH35_MIGRATION_NO_TRANSACTION file as ONE statement): refuse (transactional DO block) while telematics.unit_stop_events still holds copies on (operating_company_id, unit_id, ended_at) — runs before the concurrent builds, so none can leave an INVALID index."
+    },
+    "202615301101": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-02",
+      "purpose": "ROUND 340 step 3 (split: the runner runs an IH35_MIGRATION_NO_TRANSACTION file as ONE statement): CREATE UNIQUE INDEX CONCURRENTLY uq_unit_stop_events_company_unit_end (operating_company_id, unit_id, ended_at)."
+    },
+    "202615301102": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-02",
+      "purpose": "ROUND 340 step 3 (split: the runner runs an IH35_MIGRATION_NO_TRANSACTION file as ONE statement): ALTER TABLE telematics.unit_stop_events DROP CONSTRAINT IF EXISTS unit_stop_events_unit_start_unique (unit_id, started_at) — replaced by 202615301100."
     }
   },
   "202613590001": {
