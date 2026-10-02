@@ -20,7 +20,7 @@ type DbClient = {
 
 export type TwoSectionHeader = {
   operating_company_id: string;
-  wo_type: "pm" | "repair" | "tire" | "accident";
+  wo_type: "pm" | "repair" | "tire" | "accident" | "engine_diagnostic";
   source_type: "IS" | "ES" | "AC" | "ET" | "RT" | "IT" | "RS";
   status?: "open" | "in_progress" | "waiting_parts" | "complete" | "cancelled";
   unit_id: string;
@@ -72,6 +72,13 @@ export type TwoSectionHeader = {
   wo_priority?: "routine" | "urgent" | "immediate" | null;
   // W-FIX-8: render-v5 §A Close date/time → existing maintenance.work_orders.closed_at (no migration).
   closed_at?: string | null;
+  // ROUND 326 audit M1 — the automatic creators (PM engine, DTC, engine-fault) create through THIS function: their
+  // origin, title and fault code are persisted post-insert (the lockstep INSERT stays untouched).
+  origin?: string | null;
+  wo_title?: string | null;
+  /** The WO display-id type code when it differs from source_type (the PM engine numbers its work orders as PM). */
+  display_type?: string | null;
+  fault_code?: string | null;
   // E-16 (migration 202615120000): owner's three dates -- real columns, never notes.
   reported_at?: string | null;
   in_shop_at?: string | null;
@@ -204,7 +211,7 @@ export async function createWorkOrderWithLines(
 ) {
   const displayIdRes = await client.query<{ display_id: string; sequence: number }>(
     `SELECT display_id, sequence FROM maintenance.next_wo_display_id($1, $2, COALESCE($3::date, CURRENT_DATE), $4)`,
-    [header.unit_id, header.source_type, header.service_date ?? null, header.operating_company_id]
+    [header.unit_id, header.display_type ?? header.source_type, header.service_date ?? null, header.operating_company_id]
   );
   const display = displayIdRes.rows[0];
   const classHint = await deriveClassHint(client, header.unit_id, header.driver_id, header.operating_company_id);
@@ -336,6 +343,15 @@ export async function createWorkOrderWithLines(
         header.closed_at ?? null,
         wo.id,
       ]
+    );
+  }
+
+  if (header.origin != null || header.wo_title != null || header.fault_code != null) {
+    await client.query(
+      `UPDATE maintenance.work_orders
+         SET origin = COALESCE($1, origin), wo_title = COALESCE($2, wo_title), fault_code = COALESCE($3, fault_code), updated_at = now()
+       WHERE id = $4`,
+      [header.origin ?? null, header.wo_title ?? null, header.fault_code ?? null, wo.id]
     );
   }
 

@@ -4,6 +4,9 @@ import {
   formatFaultCode,
   type FaultSeverity,
 } from "../../integrations/samsara/engine-faults/severe-fault-catalog.js";
+import { createWorkOrderWithLines } from "../two-section-service.js";
+
+const SYSTEM_ACTOR_USER_ID = process.env.SYSTEM_ACTOR_USER_ID ?? "00000000-0000-4000-8000-000000000001";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -45,47 +48,34 @@ export async function autoCreateWorkOrderFromEngineFault(
     input.occurred_at
   );
 
-  const display = await client.query<{ display_id: string; sequence: number }>(
-    `
-      SELECT display_id, sequence
-      FROM maintenance.next_wo_display_id($1::uuid, $2, COALESCE($3::date, CURRENT_DATE), $4::uuid)
-    `,
-    [input.unit_id, "IS", input.occurred_at, input.operating_company_id]
-  );
-  const displayId = display.rows[0]?.display_id ?? null;
-  const sequence = Number(display.rows[0]?.sequence ?? 0) || null;
-
   const description = `[engine_fault_auto] ${faultDescription(input.spn_code, input.fmi_code)}`;
   const woTitle = `Engine diagnostic: ${faultCode}`;
   const woPriority = input.severity === "critical" ? "immediate" : "urgent";
 
-  const woRes = await client.query<{ id: string }>(
-    `
-      INSERT INTO maintenance.work_orders (
-        operating_company_id, wo_type, source_type, status, unit_id, driver_id, opened_at,
-        repair_location, description, wo_title, wo_priority, display_id, unit_sequence,
-        origin, fault_code, bucket
-      )
-      VALUES (
-        $1::uuid, 'engine_diagnostic', 'IS', 'open', $2::uuid, $3::uuid, $4::timestamptz,
-        'in_house', $5, $6, $7, $8, $9,
-        'fault_auto', $10, 'in_house'
-      )
-      RETURNING id::text
-    `,
-    [
-      input.operating_company_id,
-      input.unit_id,
-      driverId,
-      input.occurred_at,
+  // ROUND 326 audit M1: one work-order creator (display id, status history, audit) — createWorkOrderWithLines.
+  const created = await createWorkOrderWithLines(
+    client as never,
+    SYSTEM_ACTOR_USER_ID,
+    {
+      operating_company_id: input.operating_company_id,
+      wo_type: "engine_diagnostic",
+      source_type: "IS",
+      unit_id: input.unit_id,
+      driver_id: driverId,
+      service_date: input.occurred_at,
+      repair_location: "in_house",
+      bucket: "in_house",
       description,
-      woTitle,
-      woPriority,
-      displayId,
-      sequence,
-      faultCode,
-    ]
+      payment_timing: "in_house",
+      wo_priority: woPriority,
+      origin: "fault_auto",
+      wo_title: woTitle,
+      fault_code: faultCode,
+    },
+    [],
+    []
   );
+  const woRes = { rows: [{ id: created.woUuid }] };
 
   const woId = woRes.rows[0]?.id ?? null;
   if (!woId) return null;

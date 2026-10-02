@@ -16,7 +16,7 @@ const checks = [
   ["idempotent insert", routesTs.includes("handleEngineFaultEvent") || readFileSync("apps/backend/src/integrations/samsara/engine-faults/fault-handler.service.ts", "utf8").includes("ON CONFLICT (samsara_event_id) DO NOTHING")],
   ["catalog locks SPN 110", catalogTs.includes("spn: 110")],
   ["catalog locks SPN 974", catalogTs.includes("spn: 974")],
-  ["auto WO type engine_diagnostic", autoWoTs.includes("'engine_diagnostic'")],
+  ["auto WO type engine_diagnostic", autoWoTs.includes("'engine_diagnostic'") || autoWoTs.includes('wo_type: "engine_diagnostic"')],
   ["auto WO severity column update", autoWoTs.includes("SET severity")],
   ["migration table", migrationSql.includes("integrations.engine_fault_events")],
   ["migration RLS", migrationSql.includes("identity.is_lucia_bypass()")],
