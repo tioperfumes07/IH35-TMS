@@ -2237,3 +2237,78 @@ ITEM 6 — dispatch blocks closed this round:
   actual_arrival/departure -> load -> first-pickup proforma invoice (A/R) -> DOT dwell -> driver prompt (audit
   confirmed/dismissed). Reverse: load stop -> its fence -> its events -> unit + driver.
 Gate exit 0 on every PR. Next: dispatch screens design parity + filter audit vs docs/design/boards.
+
+## 2026-10-02 — ROUNDS 296 + 297 — CC-3 report
+
+### Round 296 item 2 (Excel) — DONE earlier today (#24131)
+~/Downloads/IH35-preserved-USMCA-positions-2026-10-02.xlsx 43,968,525 B · ~/Downloads/IH35-preserved-USMCA-hos-2026-10-02.xlsx
+46,060,460 B · ~/Downloads/IH35-preserved-USMCA-telematics-2026-10-02.xlsx 2,381,837 B. Exported read-only from PROD, every
+table's row count asserted equal to the ledger. Test branch br-frosty-meadow-akuiw3qa deleted after.
+
+### Round 296 item 3 — 18 filter surfaces: DONE (8 PRs) + index migration
+| PR | surfaces | defect closed |
+|---|---|---|
+| #24146 | Chart of Accounts | toolbar searched one 50-row page; ListView clientSide pagination |
+| #24148 | Load Cancellation / Load Exception / Driver Termination / Void-Cancel reasons | 2 searches + Show-inactive double filter (Show=Inactive rendered nothing) |
+| #24149 | Fleet / Fuel / Maintenance catalogs (30) + Brokers | 200-row cap -> fetchAllCatalogPages; 2 searches |
+| #24151 | 8 safety catalogs + Locations | complaint_types ~296 / dot_violation_types ~213 cut at 200; Locations raw keystroke search |
+| #24153 | All Documents | every filter ran on one 200-row page client-side -> server-side q/uploader/dates/expiring/standalone + library_total |
+| #24155 | Samsara driver mapping + Drivers roster | raw keystroke search, "Load more" replaced rows, chip counts skewed while typing |
+| #24163 | migration 202615231000 | 10 indexes behind unindexed filter columns (throwaway: 529 ms, idempotent, trigram used) |
+Guard: verify-filter-surfaces-full-set (16 contracts). Every surface: house toolbar, "N of M", full-set or server filtering.
+
+### Round 296 item 4 — QBO money format: DONE (#24144) — AtRiskQueue, FuelTransactionsTable, TripPlanSummaryBanner,
+CreateWOSectionCostBreakdown, EscrowRecordTab (driver escrow display only; nothing factoring).
+
+### Round 296 item 1 / round 297 item 6 (dispatch) — this session
+#24129 status writers CAS · #24132 ONE arrival detector · #24137/#24139 Dispatch Overview on the board system ·
+#24140 load-costs panel table · #24141 132px date boxes (verify-dispatch-date-boxes).
+
+### Round 297 — variant duplicates, money held to the cent
+- #24168 engine: variants across customers + vendors + Faro debtors (normalise, token-set, prefix, acronym,
+  concatenation, phonetic; frequency-weighted). Live: USMCA 231 mergeable + 40 cross-module pairs; TRANSP 216 + 21;
+  TRK 201 + 36. Every pair the owner named is proposed. Owner-only merge with evidence owner_approved_variant; the
+  engine asserts docs / total / open per pair AND company open A/R (A/P) unchanged or throws.
+  Throwaway rehearsal: tamper +1c/invoice -> refused; S E Mares -> Semares: 14 invoices, $68,600.00, USMCA open A/R
+  $374,134.12 before = after. NOTHING merged on prod — the owner approves each pair on the board.
+- #24169 "Possible duplicates N" chip + panel on the Customers / Vendors boards (Review merge -> Save / Close).
+- #24170 Petty Cash: the recon service-charge resolver took the GL account's NAME as payee (GL 1005 "Petty Cash" ->
+  vendor "Petty Cash", EXP-2026-00001, $5.00, 2026-10-01). Now institution only; account-named vendors refused.
+  OWNER: that one $5.00 expense and the USMCA "Petty Cash" vendor row remain — the real payee is not in the data (a
+  cash box has no bank); not guessed. TRANSP/TRK "Petty Cash" rows are QBO mirror (QBO vendor 1066 / 166).
+- #24173 one open-invoice definition: 110 = issued (open + paid), 104 = balance > $0, 105 = Factoring by STATUS —
+  the gap is invoice 13525 ($0.00, status 'sent'). Factoring candidates now require balance > $0 (104).
+  CC-1 / OWNER: invoice 13525 is a $0.00 invoice in status 'sent' — money lane, not edited.
+- #24175 "Factored" = actually sold to the factor: 1,213 -> 0 (USMCA has 0 factoring purchases; 1,187 customers are
+  a copy of TRANSP's whole book, source COPY_FROM_TRANSP_2026-08-30, all eligibility-flagged; 1,137 have no invoice).
+  OWNER: which of the 1,187 copied records are USMCA customers is your call — none deleted.
+- #24177 (dispatch, found while proving #24132 live): one stop entry wrote 4 "entered" events — 24 stop-fence labels
+  duplicated by an unserialised auto_dispatch bind (48 fences, 44 active) + out-of-order Samsara fixes. Binder now
+  locks per label; detector evaluates a label once and absorbs out-of-order fixes. OWNER: the 20 surplus ACTIVE
+  duplicate stop fences on prod need a data write (deactivate the newer of each pair) — not done without an open AUTH.
+
+### Round 297 — CUSTOMERS / VENDORS tab-by-tab linkage audit (live, read-only, USMCA)
+Sample: customer "Semares Forwarding Services" (11 invoices); vendor "Jorge Luis Infante Corona" (most bills: 14,
+a driver paid per load). Canonical = the entity's own table, same filter. Tab sources traced to their handlers.
+customers/Profile — rows: 1 (canonical 1) · stamps: company ✓ · drill: ok (statement) · reverse: n/a · ties: header 12-mo $53,900.00 / 11 inv vs invoices $53,900.00 / 11 ✓
+customers/Contacts — rows: 0 (canonical 0) · stamps: contact -> customer only (table has no company column) · drill: none · reverse: ok (deactivated hidden) · ties: n/a
+customers/Billing & Receivables — rows: aging 11 open (canonical 11) · stamps: invoice->load 11/11, invoice->JE 10/11 (13621 unposted), GL postings carrying the customer 0/10 · drill: DEFECT — "View all" lists ALL invoices, the tile counted OPEN · reverse: DEFECT — Recent Invoices has no status filter (a voided invoice stays listed) · ties: $53,900.00 open vs GL 1100 via its invoices $49,000.00 — gap $4,900.00 = invoice 13621 (sent, never posted)
+customers/Quality & History — rows: 0 (canonical 0) · stamps: event -> load / invoice FKs ✓ · drill: ok · reverse: ok (voided hidden) · ties: $0.00 vs $0.00
+customers/Lanes & Pricing — rows: 0 (canonical 0) · stamps: lane -> customer only · drill: none · reverse: ok · ties: n/a
+customers/Documents — rows: 34 (canonical live links 34) · stamps: file_links entity ✓ · drill: none · reverse: ok (deleted hidden) · ties: n/a
+customers/COI — rows: 0 (canonical 0) · stamps: customer_id ✓ · drill: external only · reverse: DEFECT — no status filter (expired / void COIs stay) · ties: n/a
+customers/Contracts — rows: 0 (canonical 0) · stamps: customer_id ✓ · drill: none · reverse: ok (superseded hidden) · ties: n/a
+customers/Portal Users — rows: 0 (canonical 0) · stamps: customer_id ✓ · drill: none · reverse: n/a · ties: n/a
+customers/Tasks — rows: 0 (canonical 0) · stamps: task_link target ✓ · drill: none · reverse: UNVERIFIED (route's voided-link filter not traced) · ties: n/a
+customers/Loads — rows: 13 (canonical 13, 1 cancelled) · stamps: load->invoice 11/12 live (1 load uninvoiced), driver / unit / trailer links ✓ · drill: ok (/dispatch/loads/:id) · reverse: ok · ties: live load rates $58,800.00 vs invoiced $53,900.00 (gap = the uninvoiced load)
+customers/Per-Customer P&L — rows: 12 loads (canonical 12 live, not cancelled) · stamps: aggregate · drill: DEFECT — "full report" passes no customer and no period · reverse: ok (cancelled excluded) · ties: DEFECT — revenue $58,800.00 is booked load rate, Billing $53,900.00 is invoiced; the basis is not named on the tab
+customers/Audit History — rows: 47 (canonical 47) · stamps: entity / resource id ✓ · drill: none · reverse: n/a (append-only) · ties: n/a
+vendors/Profile — rows: 1 (canonical 1) · stamps: company ✓ · drill: ok (driver) · reverse: n/a · ties: ~20 sub-sections not individually traced this round
+vendors/A/P — rows: bills 14 (canonical 14), payments 21 (canonical 21) · stamps: bill -> vendor in 3 columns (redundant), bill -> load 14/14, GL postings carrying the vendor 0/14 · drill: DEFECT — "Pay bills" opens without the vendor filter · reverse: DEFECT — no status filter on bills / expenses (voided stay listed) · ties: bills $13,357.15 = payments $13,357.15 ✓; GL A/P $0.00 — the bill credit posts to 2170 Driver Net-Pay Clearing, not A/P (CC-1 lane, 2170 order)
+vendors/Documents — rows: 0 (canonical 0) · stamps: file_links ✓ · drill: none · reverse: ok · ties: n/a
+vendors/Audit History — rows: 1 (canonical 1) · stamps: ✓ · drill: none · reverse: n/a · ties: n/a
+vendors/Tasks — rows: 0 (canonical 0) · stamps: ✓ · drill: none · reverse: UNVERIFIED · ties: n/a
+vendors/W-9 / 1099 — rows: 0 tax-form docs (canonical 0) · stamps: file_links ✓ · drill: none · reverse: ok · ties: n/a
+Cross-cutting (both modules, CC-1 posting lane): journal_entry_postings.entity_uuid is NULL on every invoice and bill
+posting sampled — A/R and A/P by party are reconstructable only through the document join, never from the GL row.
+Next in my lane: the Billing / COI / P&L / A/P drill + reverse defects above.
