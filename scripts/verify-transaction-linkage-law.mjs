@@ -133,6 +133,7 @@ export const TABLE_REGISTRY = {
   // ROUND 315 step 2 (CC-2, migration 202615180800): the factoring purchase document — AR financing like its 1:1 advance;
   // its unit/load linkage is reached through each line's invoice/load, never carried on the purchase itself.
   "accounting.factoring_purchases": { status: "OUT_OF_SCOPE", reason: "factoring/AR financing (purchase document, 1:1 with factoring_advances)" },
+  "accounting.faro_reserve_entries": { status: "OUT_OF_SCOPE", reason: "factoring/AR financing (one line of Faro's Escrow / Cash Reserve report; reaches invoice / customer / purchase through the purchase line's Faro invoice number; posts only through its own stamped JE)" },
   "accounting.factoring_purchase_lines": { status: "OUT_OF_SCOPE", reason: "factoring/AR financing (one line per invoice; load reached via the invoice)" },
   "accounting.factoring_interest_accrual_runs": { status: "OUT_OF_SCOPE", reason: "factoring/AR financing (month-end Faro default-interest accrual run, maker/checker; its JE carries the spine) — #24199" },
   "accounting.factoring_interest_accrual_run_lines": { status: "OUT_OF_SCOPE", reason: "factoring/AR financing (one accrual line per purchased invoice; purchase / invoice / customer carried, load via the invoice) — #24199" },

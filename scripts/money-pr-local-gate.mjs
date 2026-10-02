@@ -668,6 +668,16 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-csv-statement-upload-idempotent.mjs",
     ],
   ],
+  // Lead 2026-10-02 FARO-REPORTS-ARE-THE-BANK-FEED — the Faro reserve registers post only what each report line says.
+  [
+    "verify-faro-reserve-registers",
+    [
+      "apps/backend/src/factoring/faro-reserve-entries.service.ts",
+      "apps/backend/src/factoring/faro-reserve-entries.routes.ts",
+      "db/migrations/202615250600_faro_reserve_entries.sql",
+      "scripts/verify-faro-reserve-registers.mjs",
+    ],
+  ],
   // ROUND 326.2 items 3-4 — banking / factoring surfaces: every table tabular-nums, and Banking's
   // factoring reserve reads the factoring KPI engine (one reserve engine, no duplicate math).
   [

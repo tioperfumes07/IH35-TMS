@@ -84,6 +84,8 @@ function postingEntityKind(type: string | null | undefined): EntityKind | null {
       return "work_order";
     case "factoring_advance":
       return "factoring_advance";
+    case "faro_reserve_entry":
+      return "faro_reserve_entry";
     case "bank_transaction":
     case "bank_categorization":
       return "bank_transaction";

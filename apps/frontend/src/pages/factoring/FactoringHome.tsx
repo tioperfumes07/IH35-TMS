@@ -61,6 +61,7 @@ import { FactoringCashFlowPanel } from "./FactoringCashFlowPanel";
 import { FactoringKpiPanel } from "../../components/factoring/FactoringKpiPanel";
 import { getFactoringKpis } from "../../api/factoring-kpis";
 import { FactoringReservesSharedPanel } from "../../components/factoring/FactoringReservesSharedPanel";
+import { FaroReserveRegisterPanel } from "../../components/factoring/FaroReserveRegisterPanel";
 import { ChargebacksTable, type ChargebackFeeRow } from "./ChargebacksTable";
 import { RecoursePipelineTable } from "./RecoursePipelineTable";
 import { ReserveTracker } from "./ReserveTracker";
@@ -1833,6 +1834,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               />
             )}
           </div>
+          {companyId ? <FaroReserveRegisterPanel companyId={companyId} register="escrow" isOwner={user?.role === "Owner"} canPost={["Owner", "Administrator", "Accountant"].includes(String(user?.role ?? ""))} /> : null}
         </div>
       ) : null}
 
@@ -1946,6 +1948,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               />
             )}
           </div>
+          {companyId ? <FaroReserveRegisterPanel companyId={companyId} register="cash" isOwner={user?.role === "Owner"} canPost={["Owner", "Administrator", "Accountant"].includes(String(user?.role ?? ""))} /> : null}
         </div>
       ) : null}
 

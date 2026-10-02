@@ -11,8 +11,9 @@
 //
 // A reserve movement that is not stamped to an invoice (a Faro reserve deposit or a pool payout) cannot belong to a
 // customer, so it is its own row — "Not stamped to an invoice" — never dropped and never spread: the column total stays
-// the GL balance. THE STAMP IS THE FIX: the reserve posters stamp entity_type = 'invoice', entity_uuid = invoice id on every
-// reserve leg they write, with the source types below.
+// the GL balance. THE STAMP IS THE FIX: every reserve leg is stamped source 'faro_reserve_entry' = the Faro report line it
+// posts (faro-reserve-entries.service.ts), whose Faro invoice number reaches our invoice through the purchase line; the
+// entry's kind maps to the source types below.
 import { factoringReserveAccountIds } from "./factoring-kpi.service.js";
 
 type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
@@ -56,11 +57,26 @@ function reserveSql(level: "customer" | "invoice") {
      WHERE p.operating_company_id = $1::uuid AND p.status = 'posted' AND l.voided_at IS NULL AND p.purchase_date <= $2::date
   ),
   moves AS (
-    SELECT CASE WHEN jp.entity_type = 'invoice' THEN jp.entity_uuid END AS invoice_id,
+    -- A reserve leg's document is the Faro report line it posts (source 'faro_reserve_entry'); the line's Faro invoice
+    -- number reaches our invoice through the purchase line. Legs stamped straight to an invoice (source 'invoice') keep it.
+    -- (journal_entry_postings.entity_type is CHECK-limited to customer/vendor/driver/unit — never 'invoice'.)
+    SELECT COALESCE(fl.invoice_id, CASE WHEN jp.source_transaction_type = 'invoice' THEN jp.source_transaction_id::uuid END) AS invoice_id,
            CASE WHEN jp.debit_or_credit = 'debit' THEN jp.amount_cents ELSE -jp.amount_cents END AS signed,
-           jp.source_transaction_type AS src
+           CASE fe.entry_kind
+             WHEN 'escrow_to_cash' THEN '${FARO_RESERVE_SOURCE.escrowToCash}'
+             WHEN 'schedule_fee' THEN '${FARO_RESERVE_SOURCE.scheduleFee}'
+             WHEN 'short_pay' THEN '${FARO_RESERVE_SOURCE.shortPay}'
+             WHEN 'rsv_deposit' THEN '${FARO_RESERVE_SOURCE.deposit}'
+             WHEN 'client_payable' THEN '${FARO_RESERVE_SOURCE.clientPayable}'
+             ELSE jp.source_transaction_type
+           END AS src
       FROM accounting.journal_entry_postings jp
       JOIN accounting.journal_entries je ON je.id = jp.journal_entry_uuid AND je.status = 'posted'
+      LEFT JOIN accounting.faro_reserve_entries fe
+             ON jp.source_transaction_type = 'faro_reserve_entry' AND fe.id::text = jp.source_transaction_id::text
+            AND fe.operating_company_id = je.operating_company_id
+      LEFT JOIN accounting.factoring_purchase_lines fl
+             ON fl.operating_company_id = fe.operating_company_id AND fl.faro_invoice_number = fe.faro_invoice_number AND fl.voided_at IS NULL
      WHERE je.operating_company_id = $1::uuid AND jp.account_id = ANY($3::uuid[]) AND je.entry_date <= $2::date
        AND jp.source_transaction_type IS DISTINCT FROM 'factoring_advance'
   ),

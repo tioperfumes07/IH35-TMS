@@ -33,6 +33,8 @@ export type EntityKind =
   | "factoring_advance"
   /** ROUND 315 FT1 — accounting.factoring_purchases (= one Faro wire document). */
   | "factoring_purchase"
+  /** Lead 2026-10-02 — one line of Faro's Escrow / Cash Reserve report (accounting.faro_reserve_entries). */
+  | "faro_reserve_entry"
   | "factoring_batch"
   | "payment"
   | "bill_payment"
@@ -357,6 +359,9 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/factoring/advances/${id}`;
     case "factoring_purchase":
       return `/factoring/payments-to-you?purchase_id=${encodeURIComponent(id)}`;
+    case "faro_reserve_entry":
+      // The register panel moves an entry on the cash register to /factoring/cash-reserve itself.
+      return `/factoring/escrow-account?faro_entry=${encodeURIComponent(id)}`;
     case "factoring_batch":
       // LINK-F5178 (2026-08-14): a real batch id (factoring.batch.id — the row shown by FactorAdmin's
       // "Batch History" table) drills to /factoring/batches/:id (BatchDetail.tsx's getBatchDetail),

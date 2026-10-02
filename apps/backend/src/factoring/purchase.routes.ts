@@ -34,6 +34,7 @@ import {
   listPurchases,
   postPurchase,
   voidPurchase,
+  setPurchaseLineFaroInvoiceNumber,
 } from "./purchase.service.js";
 
 const companyQuery = z.object({ operating_company_id: z.string().uuid() });
@@ -67,6 +68,7 @@ const createBody = z.object({
         escrow_reserve_cents: cents.optional(),
         cash_reserve_cents: cents.optional(),
         fee_cents: cents.optional(),
+        faro_invoice_number: z.string().trim().regex(/^\d{1,6}$/).nullable().optional(),
       })
     )
     .min(1)
@@ -259,6 +261,31 @@ export async function registerFactoringPurchaseRoutes(app: FastifyInstance) {
         actorUserId: user.uuid,
       });
       return result.detail;
+    } catch (error) {
+      if (sendPurchaseError(reply, error)) return;
+      throw error;
+    }
+  });
+
+  // Faro's own invoice number on a purchase line (001, 002, ...) — recorded once; every Faro reserve entry resolves through it.
+  app.post("/api/v1/factoring/purchase-lines/:id/faro-invoice-number", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const p = idParams.safeParse(req.params ?? {});
+    if (!p.success) return validationError(reply, p.error);
+    const q = companyQuery.safeParse(req.query ?? {});
+    if (!q.success) return validationError(reply, q.error);
+    const b = z.object({ faro_invoice_number: z.string().trim().regex(/^\d{1,6}$/) }).safeParse(req.body ?? {});
+    if (!b.success) return validationError(reply, b.error);
+    try {
+      return await withCompanyScope(user.uuid, q.data.operating_company_id, (client) =>
+        setPurchaseLineFaroInvoiceNumber(client, {
+          operatingCompanyId: q.data.operating_company_id,
+          actorUserId: user.uuid,
+          purchaseLineId: p.data.id,
+          faroInvoiceNumber: b.data.faro_invoice_number,
+        })
+      );
     } catch (error) {
       if (sendPurchaseError(reply, error)) return;
       throw error;

@@ -98,7 +98,15 @@ export type CreateFactoringPurchaseBody = {
   faro_report_ref?: string | null;
   wire_fee_cents?: number;
   notes?: string | null;
-  lines: Array<{ invoice_id: string; gross_cents?: number; escrow_reserve_cents?: number; cash_reserve_cents?: number; fee_cents?: number }>;
+  lines: Array<{
+    invoice_id: string;
+    gross_cents?: number;
+    escrow_reserve_cents?: number;
+    cash_reserve_cents?: number;
+    fee_cents?: number;
+    /** Faro's own invoice number (Inv on Faro's reports). */
+    faro_invoice_number?: string;
+  }>;
   /** ROUND 321: Owner override reason for missing BOL / POD / rate confirmation (documents only, >= 10 chars). */
   docs_override_reason?: string;
 };
@@ -149,6 +157,7 @@ export type FactoringPurchaseLine = {
   escrow_reserve_cents: number | string;
   cash_reserve_cents: number | string;
   fee_cents: number | string;
+  faro_invoice_number?: string | null;
 };
 
 export type FactoringPurchaseDetail = FactoringPurchaseListRow & {
@@ -225,3 +234,11 @@ export function sendFactoringPurchase(companyId: string, purchaseId: string, toE
 /** Feed Gate red row as returned in a 409 feed_gate_blocked from POST /factoring/purchases. */
 export type FeedGateRed = { check_key: string; check_group: string; subject_label: string | null; missing: string | null; fix_link: string | null };
 export type FeedGateBlocked = { invoice_id: string; passed: boolean; intake_id: string | null; error: string | null; reds: FeedGateRed[] };
+
+/** Record Faro's invoice number on a purchase line once (Owner). */
+export function setPurchaseLineFaroInvoiceNumber(companyId: string, purchaseLineId: string, faroInvoiceNumber: string) {
+  return apiRequest<{ purchase_line_id: string; faro_invoice_number: string }>(
+    `/api/v1/factoring/purchase-lines/${purchaseLineId}/faro-invoice-number?${new URLSearchParams({ operating_company_id: companyId })}`,
+    { method: "POST", body: { faro_invoice_number: faroInvoiceNumber } }
+  );
+}
