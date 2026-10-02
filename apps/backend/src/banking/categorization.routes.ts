@@ -32,6 +32,7 @@ import {
 } from "./closed-session-immutability.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
+import { resolveBankAccountTransferTarget } from "./bank-account-transfer-routing.js";
 
 const transactionIdParamsSchema = z.object({
   id: z.string().uuid(),
@@ -341,6 +342,34 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     const companyId = query.data.operating_company_id;
+
+    // ROUND 326 queue item 13 (G-07): an account that is ANOTHER bank account's ledger account (the Dreamline card's
+    // 2510) is a transfer between bank accounts — the card payment side — never an expense categorization. Hand it to
+    // the transfer engine (one transfer, one JE, the card's counterpart line paired when unambiguous).
+    if (body.data.gl_account_id) {
+      const target = await withCompanyScope(user.uuid, companyId, (client) =>
+        resolveBankAccountTransferTarget(client as never, companyId, params.data.id, body.data.gl_account_id!)
+      );
+      if (target) {
+        try {
+          const link = await markBankFeedLineAsTransfer({
+            operatingCompanyId: companyId,
+            bankTransactionId: params.data.id,
+            destinationBankAccountId: target.destinationBankAccountId,
+            transferKind: target.transferKind,
+            pairedTransactionId: target.pairedTransactionId,
+            userId: user.uuid,
+          });
+          return { ok: true, routed_to_transfer: true, transfer_id: link.transfer_id, minted: link.minted, changed: link.changed, paired_transaction_id: target.pairedTransactionId };
+        } catch (error) {
+          const message = String((error as Error)?.message ?? "transfer_link_failed");
+          if (["bank_txn_not_found", "transfer_account_not_accessible", "transfer_amount_must_be_positive", "self_transfer_not_allowed", "transfer_link_failed"].includes(message)) {
+            return reply.code(409).send({ error: message });
+          }
+          throw error;
+        }
+      }
+    }
 
     const result = await withCompanyScope(user.uuid, companyId, async (client) => {
       const txnRes = await client.query(
