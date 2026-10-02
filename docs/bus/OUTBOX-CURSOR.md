@@ -1,3 +1,12 @@
+**2026-10-02T06:45Z · B-2 JE-only Finish→R (read-model) · branch `cursor/b2-je-r-after-finish-920f`**
+ACK: CURSOR | ACK GO-20 HOOK | B-2 JE R AFTER FINISH | GO
+Measured gap after #24009: complete stamps only bank_transactions.reconciliation_session_id;
+account-register CASE left JE register_cleared at C forever. Closed without migration (UTC 06 =
+CC-1 lane): list/toggle/inline-save derive R when register_cleared + bank ledger under closed
+session period (same join as reconciled_through). Guard verify-b2-je-line-r-after-finish PASS.
+Column stamp reconciliation_session_id on postings deferred Cursor HH 12–23. No Book Load. No seed.
+NEXT: money-pr-local-gate → push → FAST-MERGE · Lead Chrome.
+
 **2026-10-02T06:05Z · B-2 JE-line reconcilable MERGED #24009 · tip `f76ad8f33d`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91005 MERGED FAST-MERGE | GO
 B-2 LEFT closed: gl_lines on bank ledger in reconcile workspace; ● clear via register_cleared one-writer; foldGlLinesIntoSummary. money-pr-local-gate PASS → push --no-verify (ambient verify-static) → #24009 squash `f76ad8f33d`.

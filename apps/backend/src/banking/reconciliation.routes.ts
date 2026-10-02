@@ -1562,6 +1562,9 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       }
       // BANK-DOM-02: stamp membership so later mutations have an explicit session link
       // (date-window membership remains a second defense in the immutability guard).
+      // B-2 JE-only R: bank_transactions get reconciliation_session_id here; JE lines cleared via
+      // register_cleared become R in account-register.service read-model (ledger + closed session
+      // period) — no posting.reconciliation_session_id column until Cursor HH 12–23.
       await client.query(
         `
           UPDATE banking.bank_transactions
