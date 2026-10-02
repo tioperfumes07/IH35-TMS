@@ -1436,6 +1436,11 @@
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-02",
       "purpose": "Owner instruction 2026-10-02 (\"you do it\"): rebind the USMCA factor_reserve_held CoA role from 1230 Factoring Reserves to 1236 Faro Escrow Reserve -- the GL account the Faro Escrow Reserve bank account already uses. One guarded UPDATE, idempotent, no balances touched."
+    },
+    "202615220900": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-10-02",
+      "purpose": "ROUND 326 CC-3 queue item 11: preserve schema — telematics + geocode preservation engine (natural keys only, no FK to anything purgeable; positions, geofences + events, stop events, odometer captures/segments/readings, samsara addresses, route stop progress, DVIR, HOS snapshots)."
     }
   },
   "202613590001": {
