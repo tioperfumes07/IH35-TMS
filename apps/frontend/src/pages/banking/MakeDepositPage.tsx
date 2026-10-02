@@ -5,11 +5,12 @@
  */
 import { useMemo, useRef, useState, type ClipboardEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
+import { SaveDropdown } from "../../components/forms/SaveDropdown";
 import { ReferenceSelect, type ReferenceOption } from "../../components/parity/ReferenceSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -71,6 +72,7 @@ function todayChicago(): string {
 export function MakeDepositPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const today = todayChicago();
   const [searchParams] = useSearchParams();
@@ -369,13 +371,25 @@ export function MakeDepositPage() {
               </p>
             ) : null}
 
-            <Button
-              type="button"
-              disabled={!bankAccountId || selectedReceipts.length === 0 || createMut.isPending || (cashBackCents > 0 && !cashBackAccountId)}
-              onClick={() => createMut.mutate()}
-            >
-              {createMut.isPending ? "Saving…" : "Save and close"}
-            </Button>
+            <div data-b5-deposit-save-close="1" data-testid="b5-deposit-save-close">
+              <SaveDropdown
+                storageKey="make-deposit"
+                primaryLabel="Save and close"
+                disabled={!bankAccountId || selectedReceipts.length === 0 || createMut.isPending || (cashBackCents > 0 && !cashBackAccountId)}
+                loading={createMut.isPending}
+                onSave={() => createMut.mutate()}
+                onSaveAndClose={async () => {
+                  await createMut.mutateAsync();
+                  navigate("/banking/deposits");
+                }}
+                onSaveAndAddAnother={() => createMut.mutate()}
+                menuLabels={{
+                  save: "Save",
+                  save_and_close: "Save and close",
+                  save_and_add_another: "Save and new",
+                }}
+              />
+            </div>
           </section>
         ) : (
           <section className="space-y-3 rounded-sm border border-[#E5E7EB] bg-white p-3" data-section="make-deposit-batch" data-b5-batch-deposits="1">
