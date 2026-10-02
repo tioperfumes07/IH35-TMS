@@ -9,6 +9,7 @@ import {
   prepareFiling,
   updateFilingOverrides,
 } from "./quarterly-preparer.service.js";
+import { IftaMilesNotReadyError } from "../../ifta/ifta-state-miles-aggregator.js";
 
 const quarterSchema = z.string().regex(/^\d{4}-Q[1-4]$/i);
 
@@ -48,10 +49,16 @@ export async function registerReportsIftaRoutes(app: FastifyInstance) {
     const body = prepareBodySchema.safeParse(req.body ?? {});
     if (!body.success) return validationError(reply, body.error);
 
-    const row = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
-      prepareFiling(client, query.data.operating_company_id, body.data.quarter.toUpperCase(), user.uuid)
-    );
-    return reply.code(201).send(row);
+    // ROUND 288.3 item 1: miles are GPS-apportioned only; Samsara not ready -> a named refusal, never a load estimate.
+    try {
+      const row = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+        prepareFiling(client, query.data.operating_company_id, body.data.quarter.toUpperCase(), user.uuid)
+      );
+      return reply.code(201).send(row);
+    } catch (err) {
+      if (err instanceof IftaMilesNotReadyError) return reply.code(409).send({ error: "ifta_gps_miles_not_ready", reason: err.reason });
+      throw err;
+    }
   });
 
   app.get("/api/v1/reports/ifta/draft/:uuid", async (req, reply) => {

@@ -7,6 +7,10 @@ import { registerReportsIftaRoutes } from "../routes.js";
 const companyId = "44444444-4444-4444-8444-444444444444";
 const filingUuid = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";
 
+vi.mock("../../../telematics/ifta-miles.service.js", () => ({
+  samsaraIftaReportFetcher: () => async () => ({ vehicles: [] }),
+  computeIftaMiles: async () => ({ status: "ok", linked_unit_miles: [{ jurisdiction: "TX", total_miles: 12450, taxable_miles: 12450 }, { jurisdiction: "OK", total_miles: 3200, taxable_miles: 3200 }] }),
+}));
 vi.mock("../../shared.js", async () => {
   const actual = await vi.importActual<typeof import("../../shared.js")>("../../shared.js");
   return {

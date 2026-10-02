@@ -1,3 +1,5 @@
+import { computeIftaMiles, samsaraIftaReportFetcher } from "../telematics/ifta-miles.service.js";
+import type { SamsaraIftaPeriod, SamsaraIftaVehicleReportResult } from "../integrations/samsara/samsara-client.js";
 export type QuarterWindow = {
   quarter: number;
   year: number;
@@ -27,57 +29,37 @@ export function quarterWindow(quarter: number, year: number): QuarterWindow {
   };
 }
 
+/** The GPS engine is waiting on Samsara (72-hour processing window / report still processing) — no fallback, ever. */
+export class IftaMilesNotReadyError extends Error {
+  constructor(public reason: string) {
+    super(`ifta_gps_miles_not_ready:${reason}`);
+    this.name = "IftaMilesNotReadyError";
+  }
+}
+
+/**
+ * ROUND 288.3 item 1 / ROUND 296 3 — IFTA MILES COME FROM THE GPS APPORTIONMENT ENGINE ONLY. Both IFTA screens (the
+ * quarterly preparer and the IFTA report) used to sum each load's FULL miles once in EVERY state it stopped in (the
+ * load_stops fallback) — an overstated per-state fuel-tax liability. The miles now come from computeIftaMiles
+ * (telematics/ifta-miles.service.ts): Samsara's per-vehicle jurisdiction meters for THIS company's linked units, so
+ * the per-state miles of a truck add up to that truck's total miles. Not ready -> IftaMilesNotReadyError, never a
+ * load-based estimate.
+ */
 export async function aggregateStateMiles(
   client: Queryable,
   operatingCompanyId: string,
-  window: QuarterWindow
+  window: QuarterWindow,
+  opts: { fetchReport?: (p: SamsaraIftaPeriod) => Promise<SamsaraIftaVehicleReportResult> } = {}
 ): Promise<StateMilesRow[]> {
-  const samsaraRes = await client.query<{ state: string; miles: string }>(
-    `
-      SELECT
-        UPPER(TRIM(state)) AS state,
-        COALESCE(SUM(miles), 0)::numeric(12, 3) AS miles
-      FROM samsara.vehicle_state_miles
-      WHERE operating_company_id = $1::uuid
-        AND period_start >= $2::date
-        AND period_end < $3::date
-        AND state IS NOT NULL
-        AND TRIM(state) <> ''
-      GROUP BY UPPER(TRIM(state))
-      ORDER BY UPPER(TRIM(state))
-    `,
-    [operatingCompanyId, window.startDate, window.endDateExclusive]
-  );
-
-  if (samsaraRes.rows.length > 0) {
-    return samsaraRes.rows.map((row) => ({
-      state: String(row.state),
-      miles: Number(row.miles ?? 0),
-      source: "samsara",
-    }));
-  }
-
-  const fallbackRes = await client.query<{ state: string; miles: string }>(
-    `
-      SELECT
-        UPPER(COALESCE(NULLIF(TRIM(ls.state), ''), 'UNKNOWN')) AS state,
-        COALESCE(SUM(COALESCE(l.miles_practical, l.miles_shortest, 0)), 0)::numeric(12, 3) AS miles
-      FROM mdata.load_stops ls
-      JOIN mdata.loads l ON l.id = ls.load_id
-      WHERE l.operating_company_id = $1::uuid
-        AND l.soft_deleted_at IS NULL
-        AND l.created_at >= $2::date
-        AND l.created_at < $3::date
-        AND ls.state IS NOT NULL
-      GROUP BY UPPER(COALESCE(NULLIF(TRIM(ls.state), ''), 'UNKNOWN'))
-      ORDER BY UPPER(COALESCE(NULLIF(TRIM(ls.state), ''), 'UNKNOWN'))
-    `,
-    [operatingCompanyId, window.startDate, window.endDateExclusive]
-  );
-
-  return fallbackRes.rows.map((row) => ({
-    state: String(row.state),
-    miles: Number(row.miles ?? 0),
-    source: "load_stops_fallback",
-  }));
+  const fetchReport = opts.fetchReport ?? samsaraIftaReportFetcher(client, operatingCompanyId);
+  const r = await computeIftaMiles(client as never, {
+    operatingCompanyId,
+    period: { year: window.year, quarter: window.quarter as 1 | 2 | 3 | 4 },
+    fetchReport,
+  });
+  if (r.status !== "ok") throw new IftaMilesNotReadyError(r.reason);
+  return r.linked_unit_miles
+    .filter((j) => j.total_miles > 0)
+    .map((j) => ({ state: j.jurisdiction.toUpperCase(), miles: Math.round(j.total_miles * 1000) / 1000, source: "samsara_gps_apportioned" }))
+    .sort((x, y) => x.state.localeCompare(y.state));
 }

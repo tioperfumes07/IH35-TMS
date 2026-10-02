@@ -1,4 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+vi.mock("../telematics/ifta-miles.service.js", () => ({
+  samsaraIftaReportFetcher: () => async () => ({ vehicles: [] }),
+  computeIftaMiles: async () => ({ status: "ok", linked_unit_miles: [{ jurisdiction: "TX", total_miles: 100, taxable_miles: 100 }] }),
+}));
 import { quarterWindow } from "./ifta-state-miles-aggregator.js";
 
 describe("ifta-state-miles-aggregator", () => {
@@ -21,8 +25,9 @@ describe("ifta-state-miles-aggregator", () => {
     };
     const { aggregateStateMiles } = await import("./ifta-state-miles-aggregator.js");
     const rows = await aggregateStateMiles(client, "00000000-0000-4000-8000-000000000001", quarterWindow(2, 2026));
-    expect(rows).toEqual([{ state: "TX", miles: 100, source: "samsara" }]);
-    expect(calls[0]).toContain("ORDER BY UPPER(TRIM(state))");
+    // ROUND 288.3 item 1: GPS-apportioned miles from computeIftaMiles; no SQL over load stops.
+    expect(rows).toEqual([{ state: "TX", miles: 100, source: "samsara_gps_apportioned" }]);
+    expect(calls.some((c) => /load_stops/.test(c))).toBe(false);
   });
 });
 
