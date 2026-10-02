@@ -64,7 +64,12 @@ export async function registerRelayFillRoutes(app: FastifyInstance) {
       const rows = await client.query(
         `SELECT r.id::text, r.transaction_id, r.relay_created_at::text, r.merchant_name, r.location_name,
                 r.location_city, r.location_state, r.location_latitude::float8 AS lat, r.location_longitude::float8 AS lng,
-                r.total_amount_paid_cents::bigint AS total_amount_paid_cents, r.posted_to_gl,
+                r.total_amount_paid_cents::bigint AS total_amount_paid_cents,
+                -- OWNER LAW 2026-10-02: derived from a journal entry existing, never the hand-set staging flag. A fill
+                -- is booked when its card bank line is matched in Banking and that match carries a journal entry.
+                EXISTS (SELECT 1 FROM banking.bank_transactions bt
+                         WHERE bt.matched_relay_fuel_transaction_id = r.id AND bt.operating_company_id = r.operating_company_id
+                           AND bt.voided_at IS NULL AND bt.matched_journal_entry_id IS NOT NULL) AS posted_to_gl,
                 r.matched_unit_id::text AS unit_id, u.unit_number,
                 r.matched_driver_id::text AS driver_id,
                 NULLIF(trim(concat_ws(' ', dr.first_name, dr.last_name)), '') AS driver_name,

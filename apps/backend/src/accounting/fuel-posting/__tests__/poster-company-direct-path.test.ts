@@ -62,7 +62,8 @@ describe("fuel-posting poster.service company-direct path", () => {
     expect(mockResolveAccountForCategory).toHaveBeenCalledWith(
       "11111111-1111-4111-8111-111111111111",
       "fuel",
-      "def"
+      "def",
+      expect.anything()
     );
 
     const postingLineCalls = mockQuery.mock.calls.filter(([sql]) =>

@@ -321,7 +321,12 @@ async function resolveExistingPostedResult(
   };
 }
 
-export async function postFuelExpenseFromEvent(input: FuelPostingInput): Promise<FuelPostingResult> {
+/**
+ * The fuel-expense poster on the CALLER's client (OWNER RULING 2026-10-02: fuel cards are bank accounts; a fill posts
+ * when its card bank line is MATCHED in Banking, and the entry is written in the same transaction as that match). The
+ * bank-match engine calls this inside its transaction; idempotent by the fuel event's posting key.
+ */
+export async function postFuelExpenseOnClient(client: DbClient, input: FuelPostingInput): Promise<FuelPostingResult> {
   const fuelKind = normalizeFuelKind(input.fuel_kind);
   const postingDate = input.posted_at.slice(0, 10);
   if (!postingDate) throw new Error("posted_at is required for fuel posting");
@@ -331,227 +336,231 @@ export async function postFuelExpenseFromEvent(input: FuelPostingInput): Promise
   }
 
   const idempotencyKey = buildFuelIdempotencyKey(input);
-  const expense = await resolveAccountForCategory(input.operating_company_id, "fuel", fuelKind);
+  const expense = await resolveAccountForCategory(input.operating_company_id, "fuel", fuelKind, client as never);
 
-  return withLuciaBypass(async (client) => {
-    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
-    const existing = await resolveExistingPostedResult(client, input.operating_company_id, idempotencyKey);
-    if (existing) return existing;
-    await ensureOpenPeriod(client, input.operating_company_id, postingDate);
+  const existing = await resolveExistingPostedResult(client, input.operating_company_id, idempotencyKey);
+  if (existing) return existing;
+  await ensureOpenPeriod(client, input.operating_company_id, postingDate);
 
-    let creditAccountId = "";
-    let creditResolutionSource = "";
-    if (input.posting_path === "driver_advance") {
-      creditAccountId = await resolveFuelAdvanceLiabilityAccount(client, input.operating_company_id);
-      creditResolutionSource = "driver_advance_liability_account";
-    } else {
-      const companyDirect = await resolveCompanyDirectCreditAccount(client, input.operating_company_id, input.company_direct_credit ?? "cash");
-      creditAccountId = companyDirect.account_id;
-      creditResolutionSource = companyDirect.source;
-    }
+  let creditAccountId = "";
+  let creditResolutionSource = "";
+  if (input.posting_path === "driver_advance") {
+    creditAccountId = await resolveFuelAdvanceLiabilityAccount(client, input.operating_company_id);
+    creditResolutionSource = "driver_advance_liability_account";
+  } else {
+    const companyDirect = await resolveCompanyDirectCreditAccount(client, input.operating_company_id, input.company_direct_credit ?? "cash");
+    creditAccountId = companyDirect.account_id;
+    creditResolutionSource = companyDirect.source;
+  }
 
-    const classResolution = await resolveFuelPostingClassId(client, input.operating_company_id, input.unit_id, input.trailer_id);
+  const classResolution = await resolveFuelPostingClassId(client, input.operating_company_id, input.unit_id, input.trailer_id);
 
-    const accountResolutionTrace: Array<Record<string, unknown>> = [
-      {
-        fuel_event_id: input.fuel_event_id,
-        fuel_kind: fuelKind,
-        fuel_expense_account_id: expense.account_id,
-        fuel_expense_resolution: "expense_category_map",
-        credit_account_id: creditAccountId,
-        credit_resolution: creditResolutionSource,
-        posting_path: input.posting_path,
-        ifta_state: input.ifta_state ?? null,
-        ifta_gallons: input.ifta_gallons ?? null,
-        class_id: classResolution.class_id,
-        class_resolution: classResolution.source,
-      },
-    ];
+  const accountResolutionTrace: Array<Record<string, unknown>> = [
+    {
+      fuel_event_id: input.fuel_event_id,
+      fuel_kind: fuelKind,
+      fuel_expense_account_id: expense.account_id,
+      fuel_expense_resolution: "expense_category_map",
+      credit_account_id: creditAccountId,
+      credit_resolution: creditResolutionSource,
+      posting_path: input.posting_path,
+      ifta_state: input.ifta_state ?? null,
+      ifta_gallons: input.ifta_gallons ?? null,
+      class_id: classResolution.class_id,
+      class_resolution: classResolution.source,
+    },
+  ];
 
-    const postingTemplateId = await resolvePostingTemplateId(
-      client,
-      FUEL_EVENT_TEMPLATE_CODE,
-      input.operating_company_id
-    );
-    const batchInsert = await client.query<{ id: string }>(
+  const postingTemplateId = await resolvePostingTemplateId(
+    client,
+    FUEL_EVENT_TEMPLATE_CODE,
+    input.operating_company_id
+  );
+  const batchInsert = await client.query<{ id: string }>(
+    `
+      INSERT INTO accounting.posting_batches (
+        operating_company_id,
+        batch_status,
+        source_transaction_type,
+        source_transaction_id,
+        idempotency_key,
+        created_by_user_id,
+        posting_template_id,
+        source_template_code,
+        created_at,
+        updated_at
+      )
+      VALUES ($1::uuid, 'in_progress', 'fuel_event', $2, $3, $4::uuid, $5::uuid, $6, now(), now())
+      RETURNING id::text
+    `,
+    [input.operating_company_id, input.fuel_event_id, idempotencyKey, input.actor_user_id, postingTemplateId, FUEL_EVENT_TEMPLATE_CODE]
+  );
+  const postingBatchId = batchInsert.rows[0]?.id;
+  if (!postingBatchId) throw new Error("fuel_posting_batch_create_failed");
+
+  // E14.2 — never default to "Fuel event <uuid>" (bare_uuid_only vs verify-je-memo-is-human-readable).
+  // Prefer caller memo when it already carries a human id; else a short kind+path label (no UUID).
+  const callerMemo = input.memo?.trim() || "";
+  const memo =
+    callerMemo && !/^[0-9a-f-]{36}$/i.test(callerMemo) && !/Fuel (?:event|txn) [0-9a-f-]{36}/i.test(callerMemo)
+      ? callerMemo.slice(0, 200)
+      : `Fuel ${input.posting_path.replace(/_/g, " ")} (${fuelKind})`.slice(0, 200);
+  const fuelTypeColPresent = await hasJournalEntryTypeColumn(client);
+  const fuelTypeId = fuelTypeColPresent
+    ? await resolveJournalEntryTypeId(client, { source: "auto", memo })
+    : null;
+  const journalInsert = fuelTypeColPresent
+    ? await client.query<{ id: string }>(
+        `
+      INSERT INTO accounting.journal_entries (
+        operating_company_id,
+        entry_date,
+        memo,
+        status,
+        source,
+        journal_entry_type_id,
+        created_by_user_id,
+        qbo_sync_pending,
+        created_at,
+        updated_at,
+        -- ACCT-F353 stage 2 — fuel.fuel_transactions/fuel_events carry no is_sample_data; explicit
+        -- false, matching ACCT-F212's policy (posting-engine.service.ts) rather than guessing.
+        is_sample_data
+      )
+      VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, $5::uuid, true, now(), now(), false)
+      RETURNING id::text
+    `,
+        [input.operating_company_id, postingDate, memo, fuelTypeId, input.actor_user_id]
+      )
+    : await client.query<{ id: string }>(
+        `
+      INSERT INTO accounting.journal_entries (
+        operating_company_id,
+        entry_date,
+        memo,
+        status,
+        source,
+        created_by_user_id,
+        qbo_sync_pending,
+        created_at,
+        updated_at,
+        is_sample_data
+      )
+      VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, now(), now(), false)
+      RETURNING id::text
+    `,
+        [input.operating_company_id, postingDate, memo, input.actor_user_id]
+      );
+  const journalEntryId = journalInsert.rows[0]?.id;
+  if (!journalEntryId) throw new Error("fuel_journal_entry_create_failed");
+
+  const postingIds: string[] = [];
+  const lineValues: Array<{
+    account_id: string;
+    debit_or_credit: "debit" | "credit";
+    amount_cents: number;
+    description: string;
+  }> = [
+    {
+      account_id: expense.account_id,
+      debit_or_credit: "debit",
+      amount_cents: amountCents,
+      description: `${memo} · fuel expense`.slice(0, 200),
+    },
+    {
+      account_id: creditAccountId,
+      debit_or_credit: "credit",
+      amount_cents: amountCents,
+      description: (
+        input.posting_path === "driver_advance"
+          ? `${memo} · driver advance liability`
+          : `${memo} · company direct`
+      ).slice(0, 200),
+    },
+  ];
+
+  let sequence = 1;
+  for (const line of lineValues) {
+    const postingInsert = await client.query<{ id: string }>(
       `
-        INSERT INTO accounting.posting_batches (
+        INSERT INTO accounting.journal_entry_postings (
           operating_company_id,
-          batch_status,
+          journal_entry_uuid,
+          line_sequence,
+          account_id,
+          debit_or_credit,
+          amount_cents,
+          description,
           source_transaction_type,
           source_transaction_id,
+          source_transaction_line_id,
+          posting_batch_id,
           idempotency_key,
-          created_by_user_id,
-          posting_template_id,
-          source_template_code,
+          class_id,
           created_at,
           updated_at
         )
-        VALUES ($1::uuid, 'in_progress', 'fuel_event', $2, $3, $4::uuid, $5::uuid, $6, now(), now())
+        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, 'fuel_event', $8, NULL, $9::uuid, $10, $11::uuid, now(), now())
         RETURNING id::text
       `,
-      [input.operating_company_id, input.fuel_event_id, idempotencyKey, input.actor_user_id, postingTemplateId, FUEL_EVENT_TEMPLATE_CODE]
+      [
+        input.operating_company_id,
+        journalEntryId,
+        sequence,
+        line.account_id,
+        line.debit_or_credit,
+        line.amount_cents,
+        line.description,
+        input.fuel_event_id,
+        postingBatchId,
+        idempotencyKey,
+        classResolution.class_id,
+      ]
     );
-    const postingBatchId = batchInsert.rows[0]?.id;
-    if (!postingBatchId) throw new Error("fuel_posting_batch_create_failed");
-
-    // E14.2 — never default to "Fuel event <uuid>" (bare_uuid_only vs verify-je-memo-is-human-readable).
-    // Prefer caller memo when it already carries a human id; else a short kind+path label (no UUID).
-    const callerMemo = input.memo?.trim() || "";
-    const memo =
-      callerMemo && !/^[0-9a-f-]{36}$/i.test(callerMemo) && !/Fuel (?:event|txn) [0-9a-f-]{36}/i.test(callerMemo)
-        ? callerMemo.slice(0, 200)
-        : `Fuel ${input.posting_path.replace(/_/g, " ")} (${fuelKind})`.slice(0, 200);
-    const fuelTypeColPresent = await hasJournalEntryTypeColumn(client);
-    const fuelTypeId = fuelTypeColPresent
-      ? await resolveJournalEntryTypeId(client, { source: "auto", memo })
-      : null;
-    const journalInsert = fuelTypeColPresent
-      ? await client.query<{ id: string }>(
-          `
-        INSERT INTO accounting.journal_entries (
-          operating_company_id,
-          entry_date,
-          memo,
-          status,
-          source,
-          journal_entry_type_id,
-          created_by_user_id,
-          qbo_sync_pending,
-          created_at,
-          updated_at,
-          -- ACCT-F353 stage 2 — fuel.fuel_transactions/fuel_events carry no is_sample_data; explicit
-          -- false, matching ACCT-F212's policy (posting-engine.service.ts) rather than guessing.
-          is_sample_data
-        )
-        VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, $5::uuid, true, now(), now(), false)
-        RETURNING id::text
-      `,
-          [input.operating_company_id, postingDate, memo, fuelTypeId, input.actor_user_id]
-        )
-      : await client.query<{ id: string }>(
-          `
-        INSERT INTO accounting.journal_entries (
-          operating_company_id,
-          entry_date,
-          memo,
-          status,
-          source,
-          created_by_user_id,
-          qbo_sync_pending,
-          created_at,
-          updated_at,
-          is_sample_data
-        )
-        VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, now(), now(), false)
-        RETURNING id::text
-      `,
-          [input.operating_company_id, postingDate, memo, input.actor_user_id]
-        );
-    const journalEntryId = journalInsert.rows[0]?.id;
-    if (!journalEntryId) throw new Error("fuel_journal_entry_create_failed");
-
-    const postingIds: string[] = [];
-    const lineValues: Array<{
-      account_id: string;
-      debit_or_credit: "debit" | "credit";
-      amount_cents: number;
-      description: string;
-    }> = [
-      {
-        account_id: expense.account_id,
-        debit_or_credit: "debit",
-        amount_cents: amountCents,
-        description: `${memo} · fuel expense`.slice(0, 200),
-      },
-      {
-        account_id: creditAccountId,
-        debit_or_credit: "credit",
-        amount_cents: amountCents,
-        description: (
-          input.posting_path === "driver_advance"
-            ? `${memo} · driver advance liability`
-            : `${memo} · company direct`
-        ).slice(0, 200),
-      },
-    ];
-
-    let sequence = 1;
-    for (const line of lineValues) {
-      const postingInsert = await client.query<{ id: string }>(
-        `
-          INSERT INTO accounting.journal_entry_postings (
-            operating_company_id,
-            journal_entry_uuid,
-            line_sequence,
-            account_id,
-            debit_or_credit,
-            amount_cents,
-            description,
-            source_transaction_type,
-            source_transaction_id,
-            source_transaction_line_id,
-            posting_batch_id,
-            idempotency_key,
-            class_id,
-            created_at,
-            updated_at
-          )
-          VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, 'fuel_event', $8, NULL, $9::uuid, $10, $11::uuid, now(), now())
-          RETURNING id::text
-        `,
-        [
-          input.operating_company_id,
-          journalEntryId,
-          sequence,
-          line.account_id,
-          line.debit_or_credit,
-          line.amount_cents,
-          line.description,
-          input.fuel_event_id,
-          postingBatchId,
-          idempotencyKey,
-          classResolution.class_id,
-        ]
-      );
-      const postingId = postingInsert.rows[0]?.id;
-      if (!postingId) throw new Error("fuel_posting_line_create_failed");
-      postingIds.push(postingId);
-
-      await client.query(
-        `
-          INSERT INTO accounting.transaction_source_links (
-            operating_company_id,
-            journal_entry_posting_id,
-            linked_object_type,
-            linked_object_id,
-            relationship_role
-          )
-          VALUES ($1::uuid, $2::uuid, 'fuel_event', $3, $4)
-        `,
-        [input.operating_company_id, postingId, input.fuel_event_id, line.debit_or_credit === "debit" ? "fuel_expense" : "fuel_offset"]
-      );
-      sequence += 1;
-    }
+    const postingId = postingInsert.rows[0]?.id;
+    if (!postingId) throw new Error("fuel_posting_line_create_failed");
+    postingIds.push(postingId);
 
     await client.query(
       `
-        UPDATE accounting.posting_batches
-        SET batch_status = 'posted',
-            updated_at = now()
-        WHERE id = $1::uuid
+        INSERT INTO accounting.transaction_source_links (
+          operating_company_id,
+          journal_entry_posting_id,
+          linked_object_type,
+          linked_object_id,
+          relationship_role
+        )
+        VALUES ($1::uuid, $2::uuid, 'fuel_event', $3, $4)
       `,
-      [postingBatchId]
+      [input.operating_company_id, postingId, input.fuel_event_id, line.debit_or_credit === "debit" ? "fuel_expense" : "fuel_offset"]
     );
+    sequence += 1;
+  }
 
-    return {
-      result: "posted",
-      posting_batch_id: postingBatchId,
-      journal_entry_id: journalEntryId,
-      journal_entry_posting_ids: postingIds,
-      idempotency_key: idempotencyKey,
-      account_resolution_trace: accountResolutionTrace,
-    };
+  await client.query(
+    `
+      UPDATE accounting.posting_batches
+      SET batch_status = 'posted',
+          updated_at = now()
+      WHERE id = $1::uuid
+    `,
+    [postingBatchId]
+  );
+
+  return {
+    result: "posted",
+    posting_batch_id: postingBatchId,
+    journal_entry_id: journalEntryId,
+    journal_entry_posting_ids: postingIds,
+    idempotency_key: idempotencyKey,
+    account_resolution_trace: accountResolutionTrace,
+  };
+}
+
+export async function postFuelExpenseFromEvent(input: FuelPostingInput): Promise<FuelPostingResult> {
+  return withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+    return postFuelExpenseOnClient(client as never, input);
   });
 }
 
