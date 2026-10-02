@@ -1511,6 +1511,11 @@
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-02",
       "purpose": "Lead 2026-10-02 (TWO-RESERVE-POOLS-ARE-REAL): a negative Faro Cash Reserve is a liability, never a negative asset — 2156 Due to Faro (role factor_cash_reserve_deficit_payable, USMCA) + accounting.faro_cash_reserve_reclasses (period-end reclass DR 1235 / CR 2156, reversed the next day). RLS + WORM + audit."
+    },
+    "202615262000": {
+      "claimed_by": "Cursor",
+      "claimed_at": "2026-10-02",
+      "purpose": "BANK-F91052 B-5 Change location: accounting.journal_entry_postings.location_id + reclassify_batches.to_location_id + reclassify_batch_lines from/to_location_id (mdata.locations). Additive."
     }
   },
   "202613590001": {

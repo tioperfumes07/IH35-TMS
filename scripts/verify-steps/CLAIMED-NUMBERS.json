@@ -9899,5 +9899,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
+  },
+  "12270": {
+    "claimed_by": "Cursor",
+    "purpose": "verify-b5-change-location-wired — B-5 Change location picker + reclassify to_location_id + JEP location_id",
+    "pr": null
   }
 }
