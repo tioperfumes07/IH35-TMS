@@ -57,8 +57,9 @@ export function DuplicateVendorsBanner({ companyId }: DuplicateVendorsBannerProp
   }, [companyId, storageKey]);
 
   const scanQuery = useQuery({
-    queryKey: ["factoring", "scan-duplicate-vendors", companyId],
-    queryFn: () => scanDuplicateVendors(companyId),
+    queryKey: ["factoring", "scan-duplicate-vendors", companyId, "factoring"],
+    // Lead ROUND 297: only factoring-company vendors — the header says "factoring vendors", so the scan must mean it.
+    queryFn: () => scanDuplicateVendors(companyId, undefined, "factoring"),
     enabled: Boolean(companyId) && !dismissed,
     staleTime: 60_000,
   });

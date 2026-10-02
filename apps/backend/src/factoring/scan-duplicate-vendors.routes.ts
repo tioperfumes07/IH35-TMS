@@ -7,7 +7,18 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
   driver_id: z.string().uuid().optional(),
+  // Lead ROUND 297: on the Factoring page the banner asks only about FACTORING vendors (a vendor tied to a Faro agreement,
+  // used on a purchase / advance, or named Faro/factor) — it used to pair every vendor (60 driver pairs) under a
+  // "factoring vendors" header.
+  scope: z.enum(["all", "factoring"]).default("all"),
 });
+
+/** A vendor that is a factoring company: tied to a factor agreement, used on a purchase / advance, or named so. */
+const FACTORING_VENDOR = (alias: string) => `(
+  EXISTS (SELECT 1 FROM factoring.canonical_factor_agreements fa_ WHERE fa_.factor_vendor_id = ${alias}.id AND fa_.voided_at IS NULL)
+  OR EXISTS (SELECT 1 FROM accounting.factoring_purchases fp_ WHERE fp_.factoring_company_vendor_id = ${alias}.id)
+  OR EXISTS (SELECT 1 FROM accounting.factoring_advances fv_ WHERE fv_.factoring_company_vendor_id = ${alias}.id)
+  OR ${alias}.vendor_name ~* '\\m(faro|factor|factoring)\\M')`;
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -68,6 +79,7 @@ export async function registerScanDuplicateVendorRoutes(app: FastifyInstance) {
             AND b.deactivated_at IS NULL
             AND a.is_sample_data IS NOT TRUE
             AND b.is_sample_data IS NOT TRUE
+            ${parsed.data.scope === "factoring" ? `AND ${FACTORING_VENDOR("a")} AND ${FACTORING_VENDOR("b")}` : ""}
           ORDER BY similarity DESC
           -- ROUND 25.1 (owner findings sweep, 2026-09-14): was LIMIT 25 -- USMCA alone has 60 real
           -- pairs above the 0.55 threshold today, so this cap silently hid 35 of them (58%) behind
