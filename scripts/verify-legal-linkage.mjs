@@ -42,6 +42,16 @@ export function check(s) {
 
   if (!/\/api\/v1\/legal\/contracts\/sync-linkage/.test(s.routes)) p.push(`${P.routes}: POST sync-linkage route missing`);
   if (!/syncCompanyContractLinkage/.test(s.routes)) p.push(`${P.routes}: sync route not wired`);
+  if (!/\/api\/v1\/legal\/linkage\/backfill-from-sources/.test(s.routes)) {
+    p.push(`${P.routes}: POST linkage/backfill-from-sources route missing (item 2)`);
+  }
+  if (!existsSync(resolve(ROOT, "apps/backend/src/legal/legal-linkage-backfill.service.ts"))) {
+    p.push("apps/backend/src/legal/legal-linkage-backfill.service.ts: item 2 backfill service missing");
+  } else {
+    const bf = read("apps/backend/src/legal/legal-linkage-backfill.service.ts");
+    if (!/backfillLegalLinkageFromSources/.test(bf)) p.push("backfill service missing export");
+    if (!/Never invents/.test(bf) && !/never invent/i.test(bf)) p.push("backfill must state never-invent law");
+  }
 
   if (!/legal_matter_requires_subject_or_unlinked_reason/.test(s.matters)) {
     p.push(`${P.matters}: create no longer requires subject or UNLINKED_REASON`);
