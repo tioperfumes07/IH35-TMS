@@ -2312,3 +2312,18 @@ vendors/W-9 / 1099 — rows: 0 tax-form docs (canonical 0) · stamps: file_links
 Cross-cutting (both modules, CC-1 posting lane): journal_entry_postings.entity_uuid is NULL on every invoice and bill
 posting sampled — A/R and A/P by party are reconstructable only through the document join, never from the GL row.
 Next in my lane: the Billing / COI / P&L / A/P drill + reverse defects above.
+
+## 2026-10-02 (pm) — queue 6 dispatch, design-law batch
+- #24182 KPI tiles: DrillKpiCard opt-in variant="board" (78px, left-aligned 21px figure); Trip Pairing + load Costs tab.
+- #24184 owner design law rule 2 app-wide: FILTER_CONTROL_SIZE_CLASS (+ QBO twin) 40px -> 34px (h-8.5); supersedes D52.
+- #24186 missing renders "—" on all 137 dispatch files (verify-dispatch-missing-is-em-dash).
+- #24190 all 39 dispatch tables on ParityTable appearance="board" (owner tokens, 12.5px body, 10px uppercase labels,
+  left text; default tables untouched) — verify-dispatch-tables-board-appearance.
+- #24188 closed: the Lead fixed the same main red (factoring_repurchase_due_events registry row) first.
+- #24192 ops script for the duplicated stop fences. OWNER — needs an AUTH to apply (USMCA, deactivate 22 newer
+  duplicate load-stop geofences, keep the oldest per label; 62 events stay on the records they were written to):
+    OWNER_AUTH: DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-02-cc3-dedupe-stop-fences.mts --apply --auth AUTH-NNN
+Dispatch linkage (live, USMCA, non-cancelled loads): every load stamped customer / unit / driver; load detail links
+customer, unit, driver, trailer, invoice, driver bill, A/P bill, expense, settlement, JE both ways. Data gaps (CC-1):
+invoiced loads without settlement line 5 / without load revenue JE 9 / without driver bill 1; closed without
+settlement line 1.
