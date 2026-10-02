@@ -1,5 +1,3 @@
 # NOW-CURSOR
-
-NOW: BANK-F91018 CLEARED DATE MERGED #24059 tip `3b26fb7082` · OUTBOX #24060 tip `3389f3cf6a` · session B-2 stack F91014 grid · F91015 report · F91016 types · F91017 open · F91018 cleared-date.
-ACK: CURSOR | ACK GO-20 HOOK | B-2 ORDERS DEPTH FAST-MERGE | GO
-No Book Load. No Chrome. No seed. NEXT: bank_transaction_splits migration HH 12–23 · clean-app APPLY AUTH · Lead Chrome.
+NOW: BANK-F91019 type filter MERGED #24062 tip `d061487191` · B-2 stack F91014–F91018 closed · next ORDERS leftover (no migration until HH 12–23).
+ACK: CURSOR | ACK GO-20 HOOK | B-1 TYPE FILTER FAST-MERGE | GO
