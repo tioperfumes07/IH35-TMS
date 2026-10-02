@@ -17,11 +17,15 @@ try {
   const t = Date.now();
   const preserved = await preserveTelematics(c as never, { sinceDays });
   await c.query("COMMIT");
+  // The preserve tables are FORCED-RLS: read the totals under the bypass too, or every count reads 0.
+  await c.query("BEGIN READ ONLY");
+  await c.query("SELECT set_config('app.bypass_rls','lucia',true)");
   const totals = (await c.query(`SELECT 'vehicle_positions' t, count(*)::int n FROM preserve.vehicle_positions UNION ALL SELECT 'geofences', count(*) FROM preserve.geofences
     UNION ALL SELECT 'geofence_events', count(*) FROM preserve.geofence_events UNION ALL SELECT 'unit_stop_events', count(*) FROM preserve.unit_stop_events
     UNION ALL SELECT 'odometer_readings', count(*) FROM preserve.odometer_readings UNION ALL SELECT 'load_odometer_segments', count(*) FROM preserve.load_odometer_segments
     UNION ALL SELECT 'samsara_addresses', count(*) FROM preserve.samsara_addresses UNION ALL SELECT 'route_stop_progress', count(*) FROM preserve.route_stop_progress
     UNION ALL SELECT 'dvir_submissions', count(*) FROM preserve.dvir_submissions UNION ALL SELECT 'hos_snapshots', count(*) FROM preserve.hos_snapshots`)).rows;
+  await c.query("ROLLBACK");
   console.log(JSON.stringify({ since_days: sinceDays, seconds: Math.round((Date.now() - t) / 1000), newly_preserved: preserved, preserved_totals: totals }));
 } catch (e) {
   await c.query("ROLLBACK").catch(() => {});

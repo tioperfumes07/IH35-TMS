@@ -2201,3 +2201,10 @@ The prod dry run first exposed a silent no-op: under the app role, RLS has no DE
 - **The purge must not touch schema `preserve`.** No FK reaches it, and its WORM triggers refuse UPDATE / DELETE / TRUNCATE for every role.
 
 **→ whoever owns `owner/todays-attention`:** `aggregator.service.ts:493` queries `predicted_failure_date`, but the column is `projected_failure_date`. Every company's tick aborts every minute.
+
+## 2026-10-02 — ITEM 11 LIVE ON PROD: the preservation ledger is filled (#24016)
+- **Backfill** (`scripts/ops/preserve-telematics.mts`, which writes only schema `preserve`): positions 806,989 · HOS snapshots 714,595 · geofences 994 · geofence events 1,081 · stop events 921 · odometer readings 52,511 · load odometer segments 50 · Samsara addresses 255 · route stop progress 14 · DVIR 65.
+- **Ongoing:** the daily cron re-covers 3 days, and incremental runs add only new rows.
+- **Live check:** `verify-preserve-ledger` lag is 0 / 0 / 0. RLS scoping is correct: USMCA sees its own 677k positions.
+- **Owner's Excel:** `npx tsx scripts/ops/preserve-export-xlsx.mts --company USMCA --out-dir <folder>` writes three workbooks: positions (≈44 MB), HOS (≈46 MB) and everything else.
+- **#24019:** every load-status writer is now compare-and-set (GPS auto-status, cancellation, bulk paid were the last three). New guard `verify-load-status-writers-cas` is at 0.
