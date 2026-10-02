@@ -1501,6 +1501,11 @@
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-02",
       "purpose": "Lead 2026-10-02 FARO-REPORTS-ARE-THE-BANK-FEED: accounting.faro_reserve_entries — one document row per Faro Escrow / Cash Reserve report line (the event the reserve posters stamp), factoring_purchase_lines.faro_invoice_number (Faro's Inv, the deterministic link), intercompany receivable role -> 8000. RLS + WORM + audit."
+    },
+    "202615260100": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-02",
+      "purpose": "ROUND 300 — multi-JE void: one reversing JE may be linked from every original it reverses (drop uq_je_reversed_by_je_id, keep a plain index)"
     }
   },
   "202613590001": {
