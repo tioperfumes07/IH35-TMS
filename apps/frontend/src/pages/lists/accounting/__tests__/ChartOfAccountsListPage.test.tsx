@@ -116,6 +116,7 @@ describe("ChartOfAccountsListPage", () => {
     // asserted here since the default render correctly omits it.
     expect(screen.getByText("ACCOUNT TYPE")).toBeInTheDocument();
     expect(screen.getByText("DETAIL TYPE")).toBeInTheDocument();
+    expect(screen.getByText("DESCRIPTION")).toBeInTheDocument();
     expect(screen.getByText("BOOK BALANCE")).toBeInTheDocument();
     expect(screen.getByText("BANK BALANCE")).toBeInTheDocument();
     expect(screen.getByText("$1,250.00")).toBeInTheDocument();

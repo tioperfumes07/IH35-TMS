@@ -99,4 +99,38 @@ describe("coa-list-utils", () => {
     expect(bank?.bank_balance).not.toBe("—");
     expect(expense?.feed_connected).toBe(false);
   });
+
+  it("maps catalog description onto CoA Description column", () => {
+    const rows = buildCoaListRows(
+      [
+        {
+          id: "wf",
+          code: "1010",
+          display_name: "WF Operating",
+          description: "Wells Fargo operating checking",
+          metadata: { account_type: "Bank" },
+          is_active: true,
+          sort_order: 1,
+          created_at: "",
+          updated_at: "",
+        },
+        {
+          id: "blank",
+          code: "9999",
+          display_name: "Empty notes",
+          description: "  ",
+          metadata: { account_type: "Expense" },
+          is_active: true,
+          sort_order: 2,
+          created_at: "",
+          updated_at: "",
+        },
+      ],
+      [],
+      [],
+      []
+    );
+    expect(rows.find((r) => r.id === "wf")?.description).toBe("Wells Fargo operating checking");
+    expect(rows.find((r) => r.id === "blank")?.description).toBe("—");
+  });
 });

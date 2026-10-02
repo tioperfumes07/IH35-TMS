@@ -12,6 +12,8 @@ export type CoaListRow = {
   number: string;
   name: string;
   details: string;
+  /** B-1 / ORDERS — catalog description (QBO Description column). */
+  description: string;
   acct_type: string;
   detail_type: string;
   qb_balance: string;
@@ -103,6 +105,7 @@ export function buildCoaListRows(
       number: row.code || "—",
       name: row.display_name,
       details: `Type: ${accountType}${detailType !== "—" ? ` · ${detailType}` : ""}`,
+      description: (row.description ?? "").trim() || "—",
       acct_type: accountType,
       detail_type: detailType,
       qb_balance: formatCurrencyFromCents(balance?.closing_balance_cents),

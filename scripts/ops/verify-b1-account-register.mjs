@@ -93,6 +93,12 @@ function main() {
   const coaUtils = read("apps/frontend/src/pages/lists/accounting/coa-list-utils.ts");
   assertIncludes(coaUtils, "feed_connected", "coa-list-utils.ts");
   assertIncludes(coaUtils, "feed_connected: bankBalance !== \"—\"", "coa-list-utils.ts");
+  // BANK-F91031 — Description column from catalog (ORDERS §B-1 / QBO §11)
+  assertIncludes(coa, 'id: "description"', COA);
+  assertIncludes(coa, 'label: "DESCRIPTION"', COA);
+  assertIncludes(coa, 'data-b1-coa-description="1"', COA);
+  assertIncludes(coa, 'savedViewsKey="coa-list-v2"', COA);
+  assertIncludes(coaUtils, "description: (row.description ?? \"\").trim() || \"—\"", "coa-list-utils.ts");
 
   const inlinePanel = read("apps/frontend/src/pages/accounting/RegisterInlineEditPanel.tsx");
   assertIncludes(inlinePanel, 'data-testid="b1-register-edit-original"', "RegisterInlineEditPanel");
