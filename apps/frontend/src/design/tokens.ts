@@ -193,15 +193,16 @@ export const spacing = {
   // D52 (2026-09-30): QuickBooks filter/control sizes — was h-9 (36px); live bare inputs measured
   // 131×33 with border:0. House toolbar filter is now h-10 (40px) + min-width. Border chrome stays
   // on the Combobox / TableSearch shell (those already paint a 1px edge).
-  filterControlHeight: 40,
+  filterControlHeight: 34,
 } as const;
 
 /** FILTER LAW — the literal Tailwind class pairing every filter-row control (search box, combobox
  * trigger, range popover fields) must share. A plain string constant (not a computed style) so
  * Tailwind's static class scanner still finds it; the underlying number is `spacing.filterControlHeight`. */
-// D52 (2026-09-30): was h-9 (36px). QuickBooks filter controls are taller; house is h-10 (40px) +
-// min-width. Border chrome stays on the Combobox / TableSearch shell (already paints a 1px edge).
-export const FILTER_CONTROL_SIZE_CLASS = "h-10 min-w-[10rem] text-xs";
+// OWNER DESIGN LAW 2026-10-02 rule 2 (docs/design/00-OWNER-DESIGN-LAW-READ-BEFORE-ANY-SCREEN.md): "ONE CONTROL
+// HEIGHT — 34px for every filter, select and search box in the app. 40px for a field being edited in a form."
+// Supersedes D52 (2026-09-30, h-10 / 40px). h-8.5 = 34px. Border chrome stays on the Combobox / TableSearch shell.
+export const FILTER_CONTROL_SIZE_CLASS = "h-8.5 min-w-[10rem] text-xs";
 
 /** FORM FIELD LAW — a SEPARATE, deliberately shorter scale for a dense data-entry FORM (Book Load
  * and any future wizard), where `Combobox`/`ReferenceSelect`/`EntityPicker` sit on the same grid

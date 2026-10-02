@@ -77,11 +77,11 @@ export function qboHeaderFontPx(rowFontPx: number, panelHeaderPx = 11): number {
 }
 
 /**
- * D52 — multi-select / filter control at QuickBooks sizes.
- * Live measured bare input was 131×33 with border 0px. House filter is h-10 (40px) + real border + min-width.
+ * D52 — multi-select / filter control at QuickBooks sizes, at the OWNER DESIGN LAW 2026-10-02 height: every filter
+ * control is 34px (h-8.5) — supersedes D52's h-10 (40px). Real border + min-width unchanged.
  */
 export const QBO_FILTER_CONTROL_SIZE_CLASS =
-  "h-10 min-w-[10rem] text-xs border border-[#E5E7EB] bg-white rounded-sm";
+  "h-8.5 min-w-[10rem] text-xs border border-[#E5E7EB] bg-white rounded-sm";
 
 /** D53 — Print + Export sit right of the pager, beside the gear (QuickBooks toolbar position). */
 export const QBO_TOOLBAR_ICON_SLOT = "parity-qbo-toolbar-icons";
