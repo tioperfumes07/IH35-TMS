@@ -233,14 +233,10 @@ const MaintenanceReportsPage = React.lazy(() => import("../pages/maintenance/rep
 const Compliance425CPage = React.lazy(() => import("../pages/maintenance/compliance/Compliance425CPage").then((m) => ({ default: m.Compliance425CPage })));
 const CashAdvancesHomePage = React.lazy(() => import("../pages/cash-advances/CashAdvancesHome").then((m) => ({ default: m.CashAdvancesHomePage })));
 const FactoringHomePage = React.lazy(() => import("../pages/factoring/FactoringHome").then((m) => ({ default: m.FactoringHomePage })));
-const BatchWizard = React.lazy(() => import("../pages/factoring/BatchWizard").then((m) => ({ default: m.BatchWizard })));
 const BatchDetail = React.lazy(() => import("../pages/factoring/BatchDetail").then((m) => ({ default: m.BatchDetail })));
 const FactorAdmin = React.lazy(() => import("../pages/factoring/FactorAdmin").then((m) => ({ default: m.FactorAdmin })));
 const ReserveDashboard = React.lazy(() => import("../pages/factoring/ReserveDashboard").then((m) => ({ default: m.ReserveDashboard })));
 const FaroImportPage = React.lazy(() => import("../pages/factoring/FaroImportPage").then((m) => ({ default: m.FaroImportPage })));
-const SubmissionQueue = React.lazy(() =>
-  import("../pages/factoring/SubmissionQueue").then((m) => ({ default: m.SubmissionQueue }))
-);
 const VehicleProfilePage = React.lazy(() => import("../pages/fleet/VehicleProfilePage").then((m) => ({ default: m.VehicleProfilePage })));
 const FleetHomePage = React.lazy(() => import("../pages/fleet/FleetHomePage").then((m) => ({ default: m.FleetHomePage })));
 const TrailerProfilePage = React.lazy(() => import("../pages/fleet/TrailerProfilePage").then((m) => ({ default: m.TrailerProfilePage })));
@@ -2708,19 +2704,13 @@ export const ROUTES = React.Children.toArray(
         />
         <Route
           path="/factoring/submit"
-          element={
-            <ProtectedRoute>
-              <SubmissionQueue />
-            </ProtectedRoute>
-          }
+          // OWNER LAW 2026-10-02 competing-engine audit: one purchase engine — the batch queue is retired.
+          element={<Navigate to="/factoring/submit-invoice" replace />}
         />
         <Route
           path="/factoring/batches/new"
-          element={
-            <ProtectedRoute>
-              <BatchWizard />
-            </ProtectedRoute>
-          }
+          // OWNER LAW 2026-10-02 competing-engine audit: one purchase engine — the batch wizard is retired.
+          element={<Navigate to="/factoring/submit-invoice" replace />}
         />
         <Route
           path="/factoring/batches/:id"

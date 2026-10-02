@@ -120,9 +120,11 @@ export function FactoringDetailPage() {
   });
 
   const detail = query.data;
-  const showAdvance = detail?.status === "submitted";
+  // OWNER LAW 2026-10-02 competing-engine audit: "Mark Advanced" (the purchase engine posts the funding) and
+  // "Release Reserve" (a release is a bank line on the Faro reserve account, posted by Banking) are retired writers.
+  const showAdvance = false;
   const showReserveHeld = detail?.status === "advanced";
-  const showRelease = detail?.status === "reserve_held" || detail?.status === "collected";
+  const showRelease = false;
   const showRecourse = detail?.status !== "released" && detail?.status !== "voided";
   const showVoid = detail?.status === "submitted" || detail?.status === "advanced";
 

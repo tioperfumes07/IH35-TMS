@@ -270,38 +270,17 @@ describe("factoring batch routes", () => {
     });
   });
 
-  it("POST submit transitions draft -> submitted", async () => {
+  // OWNER LAW 2026-10-02 competing-engine audit: the batch engine is retired — one factoring purchase engine
+  // (factoring/purchase.service.ts). The submit route stays mounted and names the engine to use.
+  it("POST submit is retired: 410 naming the purchase engine, never a submitted batch", async () => {
     const app = await buildApp();
     const response = await app.inject({
       method: "POST",
       url: `/api/v1/factoring/batches/${batchId}/submit?operating_company_id=${batchTenant}`,
     });
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({
-      id: batchId,
-      status: "submitted",
-    });
-  });
-
-  // BANK-F9513-FACTORING-SUBMIT-NULL-FACTOR
-  it("POST submit rejects a draft with no resolved factor_id", async () => {
-    const app = await buildApp();
-    const response = await app.inject({
-      method: "POST",
-      url: `/api/v1/factoring/batches/eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee/submit?operating_company_id=${batchTenant}`,
-    });
-    expect(response.statusCode).toBe(409);
-    expect(response.json()).toMatchObject({ error: "batch_factor_id_missing" });
-  });
-
-  it("tenant isolation returns not found", async () => {
-    const app = await buildApp();
-    const response = await app.inject({
-      method: "POST",
-      url: `/api/v1/factoring/batches/99999999-9999-4999-8999-999999999999/submit?operating_company_id=${batchTenant}`,
-    });
-    expect(response.statusCode).toBe(404);
-    expect(response.json()).toMatchObject({ error: "batch_not_found" });
+    expect(response.statusCode).toBe(410);
+    expect(response.json()).toMatchObject({ error: "factoring_writer_retired" });
+    expect(String(response.json().use)).toContain("/api/v1/factoring/purchases");
   });
 });
 

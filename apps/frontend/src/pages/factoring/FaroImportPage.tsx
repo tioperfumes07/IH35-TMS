@@ -181,12 +181,9 @@ export function FaroImportPage() {
           >
             Preview
           </Button>
-          <Button
-            disabled={!selectedCompanyId || !csvText || mutation.isPending}
-            onClick={() => mutation.mutate(false)}
-          >
-            Commit import
-          </Button>
+          {/* OWNER LAW 2026-10-02 competing-engine audit: committing created Faro fundings, chargebacks and reserve
+              movements outside the purchase engine. Faro's report is previewed and compared, never posted. */}
+          <span className="text-xs text-slate-600">Preview only — purchases are created on Factoring → Submit to Factor.</span>
         </div>
       </div>
 
