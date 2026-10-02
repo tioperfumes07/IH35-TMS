@@ -37,6 +37,7 @@ export type LoadsReportRow = {
   factoring_display: string | null;
   factoring_status: string | null;
   settlement_number: string | null;
+  settlement_id: string | null;
 };
 
 export type LoadsReportTotals = {
@@ -306,6 +307,7 @@ export async function getLoadsReport(client: PoolClient, query: LoadsReportQuery
     factoring_display: row.factoring_display,
     factoring_status: row.factoring_status,
     settlement_number: row.lc_settlement_number,
+    settlement_id: row.lc_settlement_id ?? null,
   }));
 
   const totals = rows.reduce(
