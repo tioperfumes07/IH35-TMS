@@ -249,12 +249,12 @@ export function DispatchList({
             {
               key: "pickup",
               label: "Pickup",
-              render: (load) => load.first_pickup_city ?? "-",
+              render: (load) => load.first_pickup_city ?? "—",
             },
             {
               key: "delivery",
               label: "Delivery",
-              render: (load) => load.first_delivery_city ?? "-",
+              render: (load) => load.first_delivery_city ?? "—",
             },
             {
               key: "unit",
@@ -425,7 +425,7 @@ export function DispatchList({
                 </span>
               </div>
               <div className="mt-1 text-xs text-gray-500">
-                {load.first_pickup_city ?? "-"} {"->"} {load.first_delivery_city ?? "-"}
+                {load.first_pickup_city ?? "—"} {"→"} {load.first_delivery_city ?? "—"}
               </div>
               <div className="mt-2 flex min-w-0 items-center justify-between text-xs">
                 <span title={load.assigned_primary_driver_name ?? undefined} className="single-line-name">

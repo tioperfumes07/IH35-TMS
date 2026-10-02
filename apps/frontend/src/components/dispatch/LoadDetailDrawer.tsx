@@ -1254,7 +1254,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                   <div className="space-y-2 rounded-sm border border-gray-200 p-3">
                     <div>
                       <div className="text-xs text-gray-600">Notes</div>
-                      <div className="mt-1 text-xs text-gray-800">{packageState.visibleNotes || "-"}</div>
+                      <div className="mt-1 text-xs text-gray-800">{packageState.visibleNotes || "—"}</div>
                     </div>
                     <div className="flex items-center justify-between gap-2 border-t border-gray-100 pt-2">
                       <div>
