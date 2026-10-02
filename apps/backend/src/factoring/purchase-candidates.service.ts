@@ -136,6 +136,9 @@ export function buildCandidateQuery(oci: string, f: CandidateFilters): { sql: st
        AND i.voided_at IS NULL
        AND COALESCE(i.is_sample_data, false) = false
        AND i.status::text IN ('sent', 'partial')
+       -- ROUND 297: ONE definition of an open invoice (Customers tile, Factoring): live, not void, balance above $0.
+       -- Status alone let invoice 13525 ($0.00, status 'sent') count as a candidate -- 105 here vs 104 on Customers.
+       AND i.amount_open_cents > 0
        AND COALESCE(i.factoring_status, 'not_factored') = 'not_factored'
        AND i.factoring_direct_pay_at IS NULL
        AND NOT EXISTS (SELECT 1 FROM accounting.factoring_purchase_lines pl WHERE pl.invoice_id = i.id AND pl.voided_at IS NULL)

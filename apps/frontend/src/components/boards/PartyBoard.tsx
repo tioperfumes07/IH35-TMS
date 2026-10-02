@@ -184,6 +184,7 @@ export function PartyBoard(props: { kind: PartyKind; operatingCompanyId: string;
     tiles = [
       { label: "With transactions", value: int(b.kpis.with_transactions), tone: "navy" },
       { label: "In the book", value: int(b.kpis.in_the_book) },
+      // ROUND 297: "open" = live, not void, balance above $0 -- the same definition Factoring's candidates use.
       { label: "Open invoices", value: int(b.kpis.open_invoices) },
       { label: "Billed", value: money(b.kpis.billed_cents) },
       { label: "A/R open", value: money(b.kpis.ar_open_cents), tone: "red" },
@@ -220,7 +221,7 @@ export function PartyBoard(props: { kind: PartyKind; operatingCompanyId: string;
         <div className="pb-note" data-testid="party-board-note">
           <div className="pb-note-t">This screen surfaces something you should see</div>
           <div className="pb-note-b">
-            {int(b.kpis.invoices)} live invoices, <strong>{usd(b.kpis.billed_cents)} billed</strong> — and only{" "}
+            {int(b.kpis.invoices)} invoices issued (open and paid), <strong>{usd(b.kpis.billed_cents)} billed</strong> — and only{" "}
             <strong>{int(b.kpis.invoices_with_payment)} invoice{b.kpis.invoices_with_payment === 1 ? "" : "s"} carry any payment at all</strong>, {money(b.kpis.collected_cents)} in total.
             Cash that has not been applied to an invoice does not relieve A/R here, so the {usd(b.kpis.ar_open_cents)} open balance includes
             anything already paid but not applied. Computed live from your invoices.
