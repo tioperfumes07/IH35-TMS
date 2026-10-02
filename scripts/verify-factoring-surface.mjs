@@ -66,7 +66,7 @@ function countTopLevelNavItems(src) {
     // used INSIDE a `children:` array, one level deeper) — so a top-level spread here is itself
     // the regression, independent of what the literal count comes out to.
     else if (bracketDepth === 1 && braceDepth === 0 && ch === "." && src[i + 1] === "." && src[i + 2] === ".") {
-      // ROUND 24.6 (owner, 2026-09-14) REVERTED ROUND 21.0 item 1: "A tab he cannot see is a tab he does not have." Every
+      // ROUND 24.6 (owner, 2026-09-14, #22082) REVERTED ROUND 21.0 item 1: "A tab he cannot see is a tab he does not have." Every
       // SUBNAV id renders as its own top-level tab (the Faro-parity strip, order locked by verify-faro-tabs-real-data) plus
       // one Internal Tools dropdown. The ONE allowed top-level spread is `...SUBNAV.map(`, counted as SUBNAV's literal
       // entries; any other runtime spread is still the regression (it can grow the strip unseen).

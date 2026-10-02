@@ -44,9 +44,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-faro-tabs-real-data";
 const HOME = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
 
-// The primary Faro-parity strip, in order. ROUND 315 / Lead B5 (2026-10-01): Account Summary and Request Debtor / Credit
+// The primary Faro-parity strip, in order. ROUND 315 B4–B5 (ACCT-F31504, #23900): Account Summary and Request Debtor / Credit
 // Check moved under Internal Tools (never deleted, Rule 07); Escrow Account (shown as "Security Reserve") and Cash Reserve
-// were added after Reserve — Faro's two reserve reports (Lead ROUND 296 FINAL). Fifteen items, Faro's real-portal order.
+// were added after Reserve (ACCT-F31512, #23907) — Faro's two reserve reports (GL 1235 own pool, #22838). Fifteen items, Faro's real-portal order.
 const REQUIRED_NAV_ORDER = [
   "submit_invoice",
   "funds_due",
@@ -309,7 +309,7 @@ export function checkReserveReal(src, panelSrc = fs.readFileSync(path.join(ROOT,
   if (stubMatch && /tab === "reserve"\s*\|\|/.test(stubMatch[0])) {
     failures.push(`${HOME}: Reserve is still routed through the generic honest-stub block — must have its own real section (FAC-09a).`);
   }
-  // ROUND 315 / Lead B7: the Reserve tab mounts the SAME shared panel Banking Home uses (one reserve engine). The real
+  // ROUND 315 (ACCT-F31507, #23902): the Reserve tab mounts the SAME shared panel Banking Home uses (one reserve engine). The real
   // bindings (KPI-engine totals, getReserveBalanceHistory, running_balance_cents) live in that panel.
   const m = src.match(/tab === "reserve"(?: && companyId)? \?/);
   if (!m) {

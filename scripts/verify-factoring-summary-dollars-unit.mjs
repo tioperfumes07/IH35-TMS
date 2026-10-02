@@ -86,10 +86,35 @@ function walk(dir) {
 }
 
 // Match e.g. `reserve_balance || 0) / 100` or `mtd_advanced_total ?? 0)/100` etc.
-// The field must stand alone (not escrow_reserve_balance / cash_reserve_balance, which the factoring KPI engine emits in
-// CENTS — #24015 / #24166 — where dividing by 100 is correct).
+// The field must stand alone (not escrow_reserve_balance / cash_reserve_balance: the factoring KPI engine emits those
+// with unit "cents" — factoring-kpi.service.ts, consumed by BankingHome since ACCT-F9328 #23951 — so /100 is correct).
 const divByHundred = (field) =>
   new RegExp(`(?<![A-Za-z_])${field}\\b[^\\n;]{0,40}[)\\s]/\\s*100\\b`);
+
+// --selftest (ROUND 341): the regression must FAIL and the clean shapes must PASS — both directions.
+if (process.argv.includes("--selftest")) {
+  const mustFail = [
+    "const r = (summary.reserve_balance || 0) / 100;",
+    "fmt((row.mtd_advanced_total ?? 0)/100)",
+    "const c = (data.chargeback_balance) / 100;",
+  ];
+  const mustPass = [
+    'return (cents("escrow_reserve_balance") + cents("cash_reserve_balance")) / 100;',
+    "fmtCurrency(summary.reserve_balance)",
+    "const x = summary.mtd_advanced_total;",
+  ];
+  const hit = (src) => SUMMARY_FIELDS.some((field) => divByHundred(field).test(src));
+  const escaped = mustFail.filter((src) => !hit(src));
+  const flagged = mustPass.filter((src) => hit(src));
+  if (escaped.length || flagged.length) {
+    console.error("verify-factoring-summary-dollars-unit SELFTEST FAIL");
+    for (const e of escaped) console.error(`  planted regression escaped: ${e}`);
+    for (const f of flagged) console.error(`  clean shape flagged: ${f}`);
+    process.exit(1);
+  }
+  console.log(`verify-factoring-summary-dollars-unit SELFTEST PASS — ${mustFail.length} plants caught, ${mustPass.length} clean shapes pass`);
+  process.exit(0);
+}
 
 for (const f of walk(FE_DIR)) {
   const src = read(f);

@@ -59,7 +59,7 @@ function findNonSortableDataColumns(source) {
     const block = source.slice(start, end);
     if (EXEMPT.has(key)) continue;
     if (!/label\s*:/.test(block)) continue;
-    // A menu action ({ key, label, onSelect } — e.g. VOID-BUTTON-01's VoidActionMenu primary) is not a table column.
+    // A menu action ({ key, label, onSelect } — e.g. VOID-BUTTON-01's VoidActionMenu primary, #22497) is not a table column.
     if (/onSelect\s*:/.test(block)) continue;
     if (!/sortable\s*:\s*true/.test(block)) offenders.push(key);
   }

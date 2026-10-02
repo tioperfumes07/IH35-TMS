@@ -1755,3 +1755,45 @@ Re-ran all 167 factoring/Faro guards. 30 red. Disposition:
   - `verify-surface-bar-modal-inventory`: driver-finance AddPayLineModal has no required.json leaf.
 - Noted: SubmitFactoringModal has no opener (`setSubmitOpen(true)` absent) — unreachable; the canonical writer is the Submit Invoice tab.
 - Also fixed: WriteCheckForm.test.tsx failed 3/3 on main (no Router/Toast/Company context) — now 3/3 green.
+
+## ROUND 341 item 1 — the twenty-guard ledger (#24273), proven both ways on the REAL source
+
+Method: fresh worktree at origin/main d85d8923b1. For each guard: run it clean, PLANT the regression into the real source
+file, run it, RESTORE the file, run it again; then its own selftest. Harness: scratchpad `ledger-harness.mjs`. Every
+ruling was resolved to the commit that changed the code (`git log -S` on origin/main), not to my own comments.
+
+**Two plants ESCAPED on the first run — real holes, both fixed in this PR:**
+- `chargeback-invoice-customer-reverse`: my `{0,900}` widening let the SQL rationale comment ("i.customer_id, no cast")
+  satisfy the regex after the projection itself was deleted. Now SQL `--` comments are stripped and the gap is
+  whitespace-only (`\s{0,200}`); a selftest plant comments the projection out and must fail.
+- `poster-secured-borrowing`: the allowlist scanned only `resolveRoleAccount("role")`; a role added as a leg literal
+  `{ role: "x", debit_or_credit }` escaped (pre-existing hole, found by this plant). Both paths are now scanned; the
+  self-test plants an un-ruled role on each path.
+**Four of my comment citations were WRONG and are corrected:** dual-03 (said "#24021-era", is #23956), role-gated (said
+#24015/#24166, is #24002), summary-dollars-unit (said #24015/#24166, is #23951), batch-wizard (cited nothing, is #16385).
+**summary-dollars-unit had NO selftest** (my earlier "self=0" was the live run ignoring the flag) — it now has one.
+
+| # | guard | BEFORE asserted | NOW asserts | ruling (commit that changed the code) | plant on real source → clean / planted / restored / selftest |
+|---|---|---|---|---|---|
+| 1 | fact-dual-02-submit-rates-from-factor | modal reads advance_rate + reserve_rate + fee_rate from activeFactor | reserve_rate + fee_rate from activeFactor (advance is derived) | ACCT-F10370 FACT-RESERVE-01 step 3, d327e46f27 (advance_rate_pct no longer a caller input) | reserve rate not read from factor → 0/1/0/0 |
+| 2 | fact-dual-03-routes-resolve-canonical-factor | summary = `withCanonicalFactorIdentity(summary.row ?? fallback, …)` | same, or the row spread with the book-reserve override inside the identity wrap | ACCT-F9329 ROUND 326.2 item 4, #23956 (one book-reserve engine) | identity wrap removed → 0/1/0/0 |
+| 3 | factoring-advance-drawer-linkage | drawer renders EntityLink kind="bank_transaction" itself | directly OR via OnlineBankingMatchBanner fed matched_bank_transaction_id | BANK-F31517-B1F, #23919 | matched wire not passed → 0/1/0/0 |
+| 4 | factoring-advances-write-role-gated | all 6 write routes call requireVoidCancelExecutorWired | each route has a gate: that, OR the retired-writer 410, OR Owner-only voidPurchase | ACCT-F9331 one purchase engine, #24002 | all three gates stripped → 0/1/0/0 |
+| 5 | factoring-batch-wizard-qbo-chrome | `<Modal … onClose={onClose} title="Deactivate active factor"` | `onClose={\w+}` (local wrapper allowed; still the real Modal) | BANK-F6691 ConfirmModal fire-and-forget class, #16385 | Modal → div → 0/1/0/0 |
+| 6 | factoring-chargeback-invoice-customer-reverse | lateral projects `i.customer_id::text AS customer_id` | `i.customer_id` (uuid), SQL comments stripped, whitespace-only gap | ACCT-F26015, #21169 (text = uuid 500 on the customer filter) | projection deleted → 0/1/0/0 (ESCAPED before fix) |
+| 7 | factoring-invoice-detail-url-sort | every `{key,label}` block is a sortable column | menu actions (`onSelect:`) are not columns; data columns still need sortable | VOID-BUTTON-01, #22497 | Description loses sortable → 0/1/0/0 |
+| 8 | factoring-liability-reserve-column | listFactors joins factoring.v_factor_reserve_balance | listFactors calls factoringBookReserveCents( | ACCT-F9332 reserve readers → one engine, #24015 | second ledger call → 0/1/0/0 |
+| 9 | factoring-pledge-nets-credit-memos | routes file itself joins credit_memo_applications | the ONE shared INVOICE_PLEDGE_CENTS_SQL nets credit memos and routes import it | ACCT-F26060 FACT-DELIVERED-AUTO, #21575 | netting removed from the shared def → 0/1/0/0 |
+| 10 | factoring-poster-secured-borrowing | 7-role allowlist (resolveRoleAccount literals only) | + factor_cash_reserve_held; leg-literal roles scanned too | ACCT-F20260926G4C owner ruling GL 1235 own pool, #22838 | un-ruled role → 0/1/0/0 (ESCAPED before fix) |
+| 11 | factoring-submission-queue-routed | /factoring/submit renders `<SubmissionQueue />` | /factoring/submit stays mounted and redirects to /factoring/submit-invoice | ACCT-F9331 one purchase engine (batch queue retired), #24002 | SubmissionQueue remounted → 0/1/0/0 |
+| 12 | factoring-submit-canonical-factor-rates | modal defaults advance rate from activeFactor.advance_rate | reserve + fee from activeFactor; no advance input | ACCT-F10370, d327e46f27 | reserve hardcoded → 0/1/0/0 |
+| 13 | factoring-summary-dollars-unit | no `reserve_balance … /100` anywhere (substring) | same, but the field must stand alone (escrow_/cash_reserve_balance are cents) | ACCT-F9328 ROUND 326.2 item 3, #23951; KPI engine `unit: "cents"` (factoring-kpi.service.ts:155) | bare reserve_balance/100 → 0/1/0/0 (selftest NEW) |
+| 14 | factoring-surface | top nav ≤ 6, no top-level spread | ≤ 16: 15 Faro tabs (one `...SUBNAV.map(`) + Internal Tools; any other spread fails | ROUND 24.6 revert of the 16→6 consolidation, #22082 | 17th tab → 0/1/0/0 |
+| 15 | factoring-tab-submit-factor-picker | block ends at "Confirm Submit" | ends at "Confirm Submit" or "Open Submit to Factor"; still Combobox+allowAddNew, never bare select | ACCT-F9331, #24002 (tab's batch writer retired to a link) | Combobox → select → 0/1/0/0 |
+| 16 | factoring-vendor-merge-banner-deeplink | merge_from/to_vendor_id = from/to_qbo_vendor_id; "unsynced" fallback | survivor/duplicate = TMS vendor ids; no qbo_vendor_id; two-click keep-from/keep-to | FIX-DVB135 Round 27.1 step 5.7, ACCT-F20260921 #22136 (0/618 USMCA vendors have a QBO id) | QBO id back in the merge → 0/1/0/0 |
+| 17 | factoring-void-enumerates-all-postings | the impl body itself enumerates all lifecycle JEs | follows the impl's delegation to reverseFactoringAdvanceEventInClientTx and audits that body | ROUND 119 item 1 ACCT-F2026092319, #22425 | funding-only lookup → 0/1/0/0 |
+| 18 | faro-tabs-real-data | 15-item order incl. account_summary + request_debtor_credit_check; Reserve tab binds history inline | B5 order (those two under Internal Tools; escrow_account + cash_reserve after Reserve); Reserve mounts the shared panel which binds the ledger | ACCT-F31504 #23900 (B4–B5), ACCT-F31512 #23907, ACCT-F31507 #23902 | second reserve view → 0/1/0/0 |
+| 19 | load-factoring-advance-banking-reverse-section | load tab links /banking/factoring?load_id=; BankingHome filters by load | load tab links /factoring/payments-to-you?load_id=; PaymentsToYouPanel filters by it | BANK-F30080 ROUND-20.8 B3 deleted that Banking tab, #21962 — the CODE was the defect here and was fixed in #24273 | load filter dropped → 0/1/0/0 |
+| 20 | wave-b-factoring-banking-drivers-connectivity | /factoring/submit → SubmissionQueue; /factoring/batches/new → BatchWizard | both redirect to /factoring/submit-invoice | ACCT-F9331, #24002 | BatchWizard remounted → 0/1/0/0 |
+
+No row is unsourced, so no guard goes back red. Row 19 is the one where the code, not the guard, was wrong.

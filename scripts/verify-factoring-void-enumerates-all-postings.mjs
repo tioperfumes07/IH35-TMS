@@ -54,7 +54,7 @@ function analyze(posterSrc, repairSrc) {
     const boundaries = [nextFn, nextExportFn].filter((n) => n !== -1);
     const end = boundaries.length > 0 ? Math.min(...boundaries) : undefined;
     let block = posterSrc.slice(implIdx, end);
-    // The impl now runs inside the caller's transaction: it delegates to reverseFactoringAdvanceEventInClientTx (so a
+    // ROUND 119 item 1 (ACCT-F2026092319, #22425): the impl now runs inside the caller's transaction: it delegates to reverseFactoringAdvanceEventInClientTx (so a
     // purchase void reverses atomically with its stamp). Follow the delegation and audit the body that does the work.
     if (/return reverseFactoringAdvanceEventInClientTx\(client, input\)/.test(block)) {
       const txIdx = posterSrc.indexOf("export async function reverseFactoringAdvanceEventInClientTx");

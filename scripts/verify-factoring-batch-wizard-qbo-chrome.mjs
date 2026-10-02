@@ -36,7 +36,8 @@ const CHECKS = [
   {
     name: "factoring.modal.deactivate_factor_confirm: real Modal",
     file: "apps/frontend/src/components/factoring/DeactivateFactorConfirmModal.tsx",
-    // The close handler may be a local wrapper (dismiss also clears the modal's state) — it is still the real Modal.
+    // BANK-F6691 (#16385, ConfirmModal fire-and-forget class): the close handler became a local wrapper that also clears the
+    // modal's state — it is still the real Modal.
     pattern: /<Modal open=\{open\} onClose=\{\w+\} title="Deactivate active factor"/,
   },
   {

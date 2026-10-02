@@ -32,7 +32,7 @@ export function collectFailures(src = source) {
   requireText(identityMapper, "active_factor_profile_id: activeFactor?.profile_id ?? null", "response mapper must expose the canonical profile id");
   const callCount = (src.match(/resolveActiveFactor\(client, companyId\)/g) ?? []).length;
   if (callCount !== 2) failures.push(`summary/settings routes must each resolve selected-company identity (expected 2 calls, found ${callCount})`);
-  // ROUND 326.2 item 4 (#24021-era ACCT-F9329): the summary's reserve_balance comes from the ONE book-reserve engine, so
+  // ROUND 326.2 item 4 (ACCT-F9329, #23956): the summary's reserve_balance comes from the ONE book-reserve engine, so
   // the row is spread with that override before the canonical identity is applied — identity must still wrap it.
   if (!/withCanonicalFactorIdentity\(\{ \.\.\.\(summary\.row \?\? fallback\)[^}]*\}, summary\.activeFactor\)/.test(src)
       && !src.includes("withCanonicalFactorIdentity(summary.row ?? fallback, summary.activeFactor)")) {

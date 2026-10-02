@@ -39,7 +39,7 @@ const LABEL = "verify-factoring-liability-reserve-column";
 
 const CHECKS = [
   {
-    // OWNER LAW 2026-10-02 competing-engine audit (#24015, Lead ROUND 297): the factor list's reserve comes from the ONE
+    // OWNER LAW 2026-10-02 competing-engine audit (ACCT-F9332, #24015): the factor list's reserve comes from the ONE
     // reserve engine (factoring-kpi.service factoringBookReserveCents, tied to GL 1230 + 1235) — no second ledger read.
     name: "factors.admin: listFactors() reads the reserve from the one reserve engine",
     file: "apps/backend/src/factoring/factor.service.ts",
