@@ -21,6 +21,7 @@ const F = {
   svc: "apps/backend/src/factoring/faro-reserve-entries.service.ts",
   routes: "apps/backend/src/factoring/faro-reserve-entries.routes.ts",
   reader: "apps/backend/src/factoring/reserve-by-customer.service.ts",
+  shortpay: "apps/backend/src/factoring/short-pay-resolution.service.ts",
 };
 
 export function check(src) {
@@ -43,6 +44,13 @@ export function check(src) {
   if (!/FROM accounting\.transaction_source_links tsl\s+WHERE tsl\.journal_entry_posting_id = jp\.id AND tsl\.linked_object_type = 'invoice'/.test(src.reader)) {
     fails.push(`${F.reader}: the per-customer reserve must read each leg's invoice off the spine`);
   }
+  // Owner ruling 2026-10-02 — short-pay customer side: Owner only; the subledger (credit memo applied to the invoice) and the
+  // GL (DR reason / CR A/R) move together; linked on the spine to the same Faro entry as the reserve entry.
+  const sp = src.shortpay;
+  if (!/if \(input\.actor_role !== "Owner"\) throw new ShortPayResolutionError\("short_pay_resolution_owner_only"\)/.test(sp)) fails.push(`${F.shortpay}: the write-down is not Owner-only`);
+  if (!/INSERT INTO accounting\.credit_memo_applications/.test(sp)) fails.push(`${F.shortpay}: the write-down no longer moves the A/R subledger (credit memo application)`);
+  if (!/resolveRoleAccount\(client as never, oci, "ar_control"\)/.test(sp) || !/debit_or_credit: "credit", amount_cents: amount, description: jeMemo/.test(sp)) fails.push(`${F.shortpay}: the write-down must credit A/R (ar_control)`);
+  if (!/await writeFactoringSpineLinks\(client, oci, je\.id, "faro_short_pay_write_down"\)/.test(sp)) fails.push(`${F.shortpay}: the write-down lost its shared spine link`);
   if (/role\("factor_transaction_fee"\)/.test(s)) fails.push(`${F.svc}: a Faro poster expenses to 6405 — Faro's Schedule Fee is the Default Interest already accrued in 2155`);
   if (/role\("ar_control"\)|"ar_control"/.test(s)) fails.push(`${F.svc}: a Faro poster resolves ar_control — A/R never left under secured borrowing`);
   if (!/user\.role !== "Owner"\) return reply\.code\(403\)\.send\(\{ error: "faro_reserve_import_owner_only" \}\)/.test(src.routes)) {
@@ -63,6 +71,8 @@ if (process.argv.includes("--selftest")) {
     ["swap accepted", { svc: g.svc.replace('"inv_po_swapped"', '"ok"') }],
     ["spine write dropped", { svc: g.svc.replace("await writeFactoringSpineLinks(client, oci, je.id,", "void (client, oci, je.id,") }],
     ["reader off the spine", { reader: g.reader.replace("FROM accounting.transaction_source_links tsl", "FROM accounting.journal_entry_postings tsl") }],
+    ["write-down open to all", { shortpay: g.shortpay.replace('if (input.actor_role !== "Owner") throw new ShortPayResolutionError("short_pay_resolution_owner_only");', "") }],
+    ["write-down skips subledger", { shortpay: g.shortpay.replace("INSERT INTO accounting.credit_memo_applications", "INSERT INTO accounting.nothing") }],
     ["import open to all", { routes: g.routes.replace('user.role !== "Owner") return reply.code(403).send({ error: "faro_reserve_import_owner_only" })', "false) return") }],
   ];
   if (check(g).length) { console.error(`${LABEL} --selftest FAIL: tree not clean: ${check(g).join("; ")}`); process.exit(1); }
@@ -114,7 +124,7 @@ try {
     console.error(`${LABEL}: LIVE FAIL — ${bad.length} entr(ies) off their register or posted without a stamped register leg: ${bad.slice(0, 5).map((r) => `${r.id} ${r.entry_kind}`).join(", ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: PASS — static 13/13; live: ${n} Faro entr(ies), all on their register and stamped; positive control 2/2 register roles bound`);
+  console.log(`${LABEL}: PASS — static 17/17; live: ${n} Faro entr(ies), all on their register and stamped; positive control 2/2 register roles bound`);
 } catch (err) {
   console.error(`${LABEL}: FAIL — live check could not run: ${err.message}`);
   process.exit(1);

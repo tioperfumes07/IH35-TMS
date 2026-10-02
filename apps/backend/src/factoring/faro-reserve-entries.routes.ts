@@ -17,6 +17,7 @@ import {
   previewFaroReserveImport,
 } from "./faro-reserve-entries.service.js";
 import { InterestAccrualError } from "./interest-accrual.service.js";
+import { SHORT_PAY_REASONS, ShortPayResolutionError, resolveFaroShortPay, type ShortPayReason } from "./short-pay-resolution.service.js";
 
 const POSTERS = new Set(["Owner", "Administrator", "Accountant"]);
 const register = z.enum(["escrow", "cash"]);
@@ -31,6 +32,9 @@ const postBody = z.object({ operating_company_id: z.string().uuid() });
 const idParams = z.object({ id: z.string().uuid() });
 
 function sendError(reply: FastifyReply, err: unknown) {
+  if (err instanceof ShortPayResolutionError) {
+    return reply.code(err.code === "short_pay_resolution_owner_only" ? 403 : err.code === "faro_entry_not_found" ? 404 : 409).send({ error: err.code });
+  }
   if (err instanceof InterestAccrualError) return reply.code(409).send({ error: err.code });
   if (err instanceof FaroReserveError) {
     return reply.code(err.code === "faro_entry_not_found" ? 404 : err.code.startsWith("faro_report_") ? 400 : 409).send({ error: err.code });
@@ -38,7 +42,41 @@ function sendError(reply: FastifyReply, err: unknown) {
   throw err;
 }
 
+const shortPayBody = z.object({
+  operating_company_id: z.string().uuid(),
+  resolution: z.enum(["written_down", "kept_open"]),
+  reason: z.enum(Object.keys(SHORT_PAY_REASONS) as [ShortPayReason, ...ShortPayReason[]]).nullish(),
+  note: z.string().trim().max(500).nullish(),
+});
+
 export async function registerFaroReserveEntryRoutes(app: FastifyInstance) {
+  // Owner ruling 2026-10-02 — the customer side of a Faro short-pay: write it down to a reason (credit memo + DR reason /
+  // CR A/R, shared spine link with the reserve entry) or keep it open on the customer. Owner only.
+  app.post("/api/v1/factoring/faro-reserve-entries/:id/short-pay-resolution", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (user.role !== "Owner") return reply.code(403).send({ error: "short_pay_resolution_owner_only" });
+    const p = idParams.safeParse(req.params ?? {});
+    if (!p.success) return validationError(reply, p.error);
+    const b = shortPayBody.safeParse(req.body ?? {});
+    if (!b.success) return validationError(reply, b.error);
+    try {
+      return await withCompanyScope(user.uuid, b.data.operating_company_id, (c) =>
+        resolveFaroShortPay(c, {
+          operating_company_id: b.data.operating_company_id,
+          entry_id: p.data.id,
+          resolution: b.data.resolution,
+          reason: b.data.reason ?? null,
+          note: b.data.note ?? null,
+          actor_user_id: user.uuid,
+          actor_role: String(user.role ?? ""),
+        })
+      );
+    } catch (err) {
+      return sendError(reply, err);
+    }
+  });
+
   app.post("/api/v1/factoring/faro-reserve-report/preview", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
