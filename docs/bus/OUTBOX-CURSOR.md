@@ -1,3 +1,8 @@
+**2026-10-02T12:08Z · BANK-F91034 USMCA BANK_TX_SPLIT overrides MERGED #24093 · tip `0dcedd33c8`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91034 MERGED + NEON APPLIED | GO
+CLAIM 202615221200: USMCA overrides BANK_TX_SPLIT_ENABLED + BANK_TX_SPLIT_GL_POSTING_ENABLED enabled=true (Rule 50). LANE_CROSS Lead ruling. Neon re-measure both company-wide overrides true. Session also: F91032 Find Bill No · F91033 Amount to Credit · OUTBOX acks.
+NEXT: next ORDERS leftover (Settlement No / Location on check need schema) · Lead Chrome · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T11:45Z · BANK-F91033 B-4 Amount to Credit MERGED #24090 + §7 slate #24091 · tip `6f56ab7b3b`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91033 MERGED FAST-MERGE | GO
 Outstanding Transactions: live Amount to Apply / Amount to Credit; Payment unclamped; Save blocked while credit > 0; §7 slate hint. money-pr-local-gate PASS → #24090 + #24091 squash-admin.
