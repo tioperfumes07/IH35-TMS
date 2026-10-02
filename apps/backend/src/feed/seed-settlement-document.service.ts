@@ -73,6 +73,7 @@ import { postSourceTransactionInClientTx } from "../accounting/posting-engine.se
 import { postFactoringAdvanceEvent } from "../accounting/factoring-posting/poster.service.js";
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { resolveSettlementPdfItem, SettlementPdfItemError } from "../catalogs/settlement-pdf-item-map.js";
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────
 // TYPES — truth-JSON shape (data/alwaystrack/settlements-truth-2026-09-13.json), verbatim field
@@ -730,98 +731,24 @@ async function seedDriverBill(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────
-// ROUND 165 order 1 — item/account resolution for expense lines. Every alias below was matched
-// against the LIVE catalogs.items rows for USMCA (queried directly, not guessed) — see the
-// account mapping table in docs/bus's ROUND 165 order for the account side of this; the item_name
-// strings here are the exact live names that resolve to those accounts. Ordered so a more
-// specific keyword (e.g. "washout") is tried before a more general one that could also match
-// (e.g. "reefer" alone would otherwise catch "reefer washout" and misfile it as reefer fuel).
-// Each entry's `reimb` name is used only for a line whose isReimbursementSurvivor is true (the
-// rare case where a reimbursement-marked line is the ONLY representation of that cost — see
-// dedupeCompanyExpenses); when no dedicated reimbursement item exists for a category, `reimb` is
-// omitted and such a line REFUSES rather than posting to the regular cost item under a guess.
+// ROUND 326 queue item 8 (G-09) — item/account resolution for expense lines goes through the ONE canonical map
+// (catalogs/settlement-pdf-item-map.ts: PDF category -> item id, Lead-ruled, read BY ID). The ROUND 165 keyword
+// aliases that lived here guessed items by word ("\btoll\b" never matched "Tolls", so Mexico tolls fell to the USA
+// toll item; reimbursement lines were switched to a guessed sibling) — removed. A reimbursement line prints its
+// own category ("Driver Reimbursement-TPE-Scale Expense"), so the map books it to its own item directly.
 // ─────────────────────────────────────────────────────────────────────────────────────────────
-type ExpenseItemAlias = {
-  test: (haystack: string) => boolean;
-  regular: string | ((haystack: string) => string);
-  reimb?: string;
-};
-const EXPENSE_ITEM_ALIASES: ExpenseItemAlias[] = [
-  { test: (h) => /\bscale\b/.test(h), regular: "OTR-Scale Expense", reimb: "Driver Reimbursement-Scale Expense" },
-  {
-    test: (h) => /\bwash\s*out\b/.test(h),
-    regular: "Reefer-Trailer Washout Expense",
-  },
-  {
-    test: (h) => /\btoll\b/.test(h),
-    regular: (h) => (/\bmex(ico)?\b/.test(h) ? "Highway Toll Expense-Mexico" : "Highway Toll Expense-USA"),
-    reimb: "Driver Reimbursement-TPE-Toll Expense",
-  },
-  { test: (h) => /\bpark(ing)?\b/.test(h), regular: "OTR-Parking Expense" },
-  { test: (h) => /\blumper\b/.test(h), regular: "Warehouse Lumper Expense", reimb: "Driver Reimbursement Warehouse-Lumper Fee" },
-  {
-    test: (h) => /\btires?\b/.test(h) && /\b(trailer|reefer|flatbed)\b/.test(h),
-    regular: "Road Service-Trailer Tire Expense",
-  },
-  { test: (h) => /\btires?\b/.test(h), regular: "Road Service-Truck Tire Expense" },
-  {
-    test: (h) => /\b(repair|mechanic)\b/.test(h) && /\b(trailer|reefer|flatbed)\b/.test(h),
-    regular: "IH 35-Internal-Trailer Repair & Maintenance",
-  },
-  { test: (h) => /\b(repair|mechanic)\b/.test(h), regular: "Road Service-Truck Repair Expense" },
-  { test: (h) => /\btools?\b/.test(h), regular: "OTR-Maintenance-Tools", reimb: "Driver Reimbursement-OTR-Maintenance, Oils, Additives" },
-  {
-    test: (h) => /\b(oil|additives?|antifreeze)\b/.test(h),
-    regular: "OTR-Additives, Oil, Antifreeze",
-    reimb: "Driver Reimbursement-OTR-Maintenance, Oils, Additives",
-  },
-  { test: (h) => /\bdef\b/.test(h), regular: "Fuel-DEF-Diesel Exhaust Fluid", reimb: "Driver Reimbursement-Fuel Def" },
-  { test: (h) => /\breefer\b/.test(h), regular: "Fuel-Reefer-Diesel" },
-];
-
-/**
- * ROUND 165 order 1 — resolve item_name -> {item_id, expense_account_uuid}, USMCA-scoped first,
- * then global (operating_company_id IS NULL). No keyword matches, or the matched item has no
- * default_expense_account_id: REFUSE — never falls back to a default account. Matches against
- * `description` first (genuine cost lines print real text like "SCALE"/"TOLL"/"WASHOUT" — Lead's
- * own cited examples), falling back to `raw` for the rare surviving reimbursement line whose
- * description is the corrupted literal "Drv".
- */
 async function resolveExpenseItem(
   client: QueryableClient,
   operatingCompanyId: string,
   line: SeedPlanLoad["expenseLines"][number]
 ): Promise<{ itemId: string; expenseAccountId: string; itemName: string }> {
-  const haystack = `${line.description} ${line.raw}`.toLowerCase();
-  const alias = EXPENSE_ITEM_ALIASES.find((a) => a.test(haystack));
-  if (!alias) {
-    throw new ResolveOrThrowError(
-      `resolveExpenseItem: no item alias matches expense description "${line.description}" (${line.amountCents}c) — refusing rather than posting to a default; add a real alias or resolve by hand`
-    );
+  try {
+    const r = await resolveSettlementPdfItem(client as never, operatingCompanyId, line);
+    return { itemId: r.itemId, expenseAccountId: r.expenseAccountId, itemName: r.itemName };
+  } catch (err) {
+    if (err instanceof SettlementPdfItemError) throw new ResolveOrThrowError(`resolveExpenseItem: ${err.message}`);
+    throw err;
   }
-  const regularName = typeof alias.regular === "function" ? alias.regular(haystack) : alias.regular;
-  const itemName = line.isReimbursementSurvivor ? alias.reimb ?? regularName : regularName;
-  if (line.isReimbursementSurvivor && !alias.reimb) {
-    throw new ResolveOrThrowError(
-      `resolveExpenseItem: "${line.description}" is a reimbursement-only line (no genuine sibling on the document) but its alias category has no dedicated reimbursement item — refusing rather than booking it as a regular cost under a guess`
-    );
-  }
-
-  const res = await client.query<{ id: string; expense_account_id: string | null }>(
-    `SELECT id::text, default_expense_account_id::text AS expense_account_id
-       FROM catalogs.items
-      WHERE item_name = $2 AND (operating_company_id = $1::uuid OR operating_company_id IS NULL)
-      ORDER BY (operating_company_id = $1::uuid) DESC
-      LIMIT 1`,
-    [operatingCompanyId, itemName]
-  );
-  const row = res.rows[0];
-  if (!row || !row.expense_account_id) {
-    throw new ResolveOrThrowError(
-      `resolveExpenseItem: catalogs.items "${itemName}" not found or has no default_expense_account_id for company ${operatingCompanyId} — refusing rather than posting to a default`
-    );
-  }
-  return { itemId: row.id, expenseAccountId: row.expense_account_id, itemName };
 }
 
 // STEP 4 — accounting.expenses + expense_lines + expense_attribution.expense_load_links. ONE
