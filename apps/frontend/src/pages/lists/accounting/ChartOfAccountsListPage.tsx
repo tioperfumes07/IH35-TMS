@@ -410,11 +410,6 @@ export function ChartOfAccountsListPage() {
     return rows;
   }, [activeFilters, baseRows, collapsedParentIds, driftAccountIds, driftOnly, sortDir, sortKey, statusFilter]);
 
-  const pageRows = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filteredRows.slice(start, start + pageSize);
-  }, [filteredRows, page, pageSize]);
-
   const columns = useMemo(
     () =>
       buildColumns(
@@ -450,7 +445,10 @@ export function ChartOfAccountsListPage() {
     },
   };
 
+  // Round 296: ListView gets every account (fetchAllCatalogRows reads all pages) and runs the house toolbar over the
+  // full chart before paging — search finds any account, "N of M" counts the whole chart.
   const pagination = {
+    clientSide: true,
     page,
     pageSize,
     total: filteredRows.length,
@@ -552,7 +550,7 @@ export function ChartOfAccountsListPage() {
         ) : (
           <ListView
             columns={columns}
-            rows={pageRows}
+            rows={filteredRows}
             rowKey={(row) => row.id}
             pagination={pagination}
             sort={sort}

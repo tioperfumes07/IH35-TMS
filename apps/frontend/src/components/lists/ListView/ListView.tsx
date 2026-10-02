@@ -130,10 +130,22 @@ export function ListView<T>({
     return result;
   }, [rows, filterRows, toolbarSearch, toolbarRange, sortRows, columns]);
 
-  const pageRowKeys = useMemo(() => processedRows.map((r) => rowKey(r)), [processedRows, rowKey]);
+  // clientSide: filter + sort the full set, THEN page it (see PaginationConfig.clientSide).
+  const clientSide = pagination.clientSide === true;
+  const effectivePagination = useMemo(
+    () => (clientSide ? { ...pagination, total: processedRows.length } : pagination),
+    [clientSide, pagination, processedRows.length]
+  );
+  const pageRows = useMemo(() => {
+    if (!clientSide) return processedRows;
+    const start = (pagination.page - 1) * pagination.pageSize;
+    return processedRows.slice(start, start + pagination.pageSize);
+  }, [clientSide, processedRows, pagination.page, pagination.pageSize]);
+
+  const pageRowKeys = useMemo(() => pageRows.map((r) => rowKey(r)), [pageRows, rowKey]);
 
   const { selected, selectAllPages, toggleRow, togglePage, selectAcrossPages, clearSelection, isSelected, selectedCount } =
-    useListSelection(pagination.total);
+    useListSelection(effectivePagination.total);
 
   const allPageSelected = pageRowKeys.length > 0 && pageRowKeys.every((k) => isSelected(k));
 
@@ -189,10 +201,16 @@ export function ListView<T>({
       <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-gray-200 bg-white flex-wrap">
         <UniversalListToolbar
           search={toolbarSearch}
-          onSearchChange={toolbarSearchChange => setToolbarSearch(toolbarSearchChange)}
+          onSearchChange={(toolbarSearchChange) => {
+            setToolbarSearch(toolbarSearchChange);
+            if (clientSide) pagination.onPageChange(1);
+          }}
           columns={columns.map((column) => ({ key: column.id, label: column.label }))}
           range={toolbarRange}
-          onRangeApply={setToolbarRange}
+          onRangeApply={(next) => {
+            setToolbarRange(next);
+            if (clientSide) pagination.onPageChange(1);
+          }}
           resultCount={processedRows.length}
           totalCount={rows.length}
         />
@@ -239,7 +257,7 @@ export function ListView<T>({
           <BatchActionsBar
             selectedCount={selectedCount}
             selectAllPages={selectAllPages}
-            totalRows={pagination.total}
+            totalRows={effectivePagination.total}
             onSelectAcrossPages={selectAcrossPages}
             onClearSelection={clearSelection}
           >
@@ -270,7 +288,7 @@ export function ListView<T>({
             pinnedIds={pinnedIds}
           />
           <tbody>
-            {processedRows.map((row) => {
+            {pageRows.map((row) => {
               const key = rowKey(row);
               return (
                 <ListViewRow
@@ -309,7 +327,7 @@ export function ListView<T>({
             selectedRows={selectedRows}
             selectAllPages={selectAllPages}
             showTotals={showTotals}
-            pagination={pagination}
+            pagination={effectivePagination}
             density={density}
           />
         </table>
