@@ -56,7 +56,12 @@ const src = readFileSync(pagePath, "utf8");
 
 // B-1: drill-through moved from onRowClick to inline-expand Edit (renderExpanded) — still must
 // call sourceRoute with the raw UUID source_transaction_id, never the human reference.
-if (!/navigate\(sourceRoute\(r\.source_transaction_type,\s*r\.source_transaction_id(?:,\s*r\.journal_entry_id)?\)\)/.test(src)) {
+// BANK-F91024: optional 4th arg expense_payment_type (Check hop) + multiline call + trailing comma.
+if (
+  !/navigate\(\s*sourceRoute\(\s*r\.source_transaction_type\s*,\s*r\.source_transaction_id(?:\s*,\s*r\.journal_entry_id)?(?:\s*,\s*r\.expense_payment_type)?\s*,?\s*\)/.test(
+    src,
+  )
+) {
   failures.push(`${pagePath}: sourceRoute(..., r.source_transaction_id) missing — check it wasn't reverted to the now-human r.reference`);
 }
 if (/navigate\(sourceRoute\([^)]*r\.reference/.test(src)) {

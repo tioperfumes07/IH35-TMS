@@ -20,6 +20,7 @@ function posting(over: Partial<RawPosting>): RawPosting {
     cleared_by_bank_match: false,
     attachment_count: 0,
     location: null,
+    expense_payment_type: null,
     ...over,
   };
 }
@@ -68,6 +69,28 @@ describe("account register — running-balance math", () => {
     expect(rows[0].reference).toBe("INV-1");
     expect(rows[1].type).toBe("Journal Entry");
     expect(rows[2].type).toBe("Bill Payment");
+  });
+
+  it("B-1 — expense with payment_type=check surfaces TYPE Check and carries payment_type", () => {
+    const uuid = "8c199b5f-0000-4000-8000-000000000099";
+    const { rows } = buildRegisterRows(0, "debit", [
+      posting({
+        source_transaction_type: "expense",
+        source_transaction_id: uuid,
+        reference: "CHK-4033",
+        expense_payment_type: "check",
+      }),
+      posting({
+        source_transaction_type: "expense",
+        source_transaction_id: uuid,
+        reference: "EXP-1",
+        expense_payment_type: "expense",
+      }),
+    ]);
+    expect(rows[0].type).toBe("Check");
+    expect(rows[0].expense_payment_type).toBe("check");
+    expect(rows[1].type).toBe("Expense");
+    expect(rows[1].expense_payment_type).toBe("expense");
   });
 
   it("never copies a UUID source_transaction_id into Ref No.", () => {

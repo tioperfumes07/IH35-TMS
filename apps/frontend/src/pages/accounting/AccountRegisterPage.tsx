@@ -78,6 +78,7 @@ function sourceRoute(
   type: string | null,
   sourceTransactionId: string | null,
   journalEntryId?: string | null,
+  expensePaymentType?: string | null,
 ): string {
   const t = (type ?? "").toLowerCase();
   const reference = sourceTransactionId;
@@ -86,6 +87,10 @@ function sourceRoute(
   if (t === "bill" && reference) return `/accounting/bills/${reference}`;
   if (t === "bill_payment" && reference) return `/accounting/bill-payments/${reference}`;
   if (t === "bill_payment") return "/accounting/bill-payments";
+  // B-1 ORDERS — Check is an expense with payment_type='check'; hop to the check face, not Expense.
+  if (t === "expense" && reference && (expensePaymentType ?? "").toLowerCase() === "check") {
+    return `/accounting/checks/${reference}`;
+  }
   if (t === "expense" && reference) return `/accounting/expenses/${reference}`;
   if (t === "expense") return "/accounting/expenses/list";
   if (t === "bank_deposit" && reference) return `/banking/deposits/${reference}`;
@@ -93,6 +98,11 @@ function sourceRoute(
   // B-1 — factoring advance original (EntityLink kind factoring_advance → /factoring/advances/:id).
   if (t === "factoring_advance" && reference) return `/factoring/advances/${reference}`;
   if (t === "factoring_advance") return "/factoring/advances";
+  // B-1 — cash / driver advance → cash-advances surface (EntityLink kind cash_advance).
+  if ((t === "cash_advance" || t === "driver_advance") && reference) {
+    return `/cash-advances?advance_id=${reference}`;
+  }
+  if (t === "cash_advance" || t === "driver_advance") return "/cash-advances";
   if (t === "settlement" && reference) return `/driver-finance/settlements?settlement_id=${reference}`;
   if (t === "settlement") return "/driver-finance/settlements";
   // Law §9 transfer reverse: banking transfers list (QBO Transfer / fund move).
@@ -111,6 +121,7 @@ const TRANSACTION_TYPES = [
   "Bill",
   "Bill Payment",
   "Expense",
+  "Check",
   "Journal Entry",
   "Settlement",
   "Transfer",
@@ -127,6 +138,8 @@ const TYPE_TO_SOURCE: Record<string, string> = {
   Bill: "bill",
   "Bill Payment": "bill_payment",
   Expense: "expense",
+  // B-1 ORDERS — Check filter → BE expense + payment_type='check' (not a separate JE source type).
+  Check: "check",
   "Journal Entry": "journal_entry",
   Settlement: "settlement",
   Transfer: "transfer",
@@ -898,7 +911,16 @@ export function AccountRegisterPage() {
             <RegisterInlineEditPanel
               row={r}
               companyId={companyId}
-              onEditOriginal={() => navigate(sourceRoute(r.source_transaction_type, r.source_transaction_id, r.journal_entry_id))}
+              onEditOriginal={() =>
+                navigate(
+                  sourceRoute(
+                    r.source_transaction_type,
+                    r.source_transaction_id,
+                    r.journal_entry_id,
+                    r.expense_payment_type,
+                  ),
+                )
+              }
               onCancel={() => setExpandedKeys((keys) => keys.filter((k) => k !== r.posting_id))}
               onVoided={() => setExpandedKeys((keys) => keys.filter((k) => k !== r.posting_id))}
             />
