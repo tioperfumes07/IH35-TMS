@@ -802,7 +802,7 @@ export function listVendorBills(
   operatingCompanyId: string,
   params: {
     vendor_id: string;
-    status?: BillStatus | "unpaid";
+    status?: BillStatus | "unpaid" | "active";
     include_balance?: boolean;
     has_balance?: boolean;
     date_from?: string;

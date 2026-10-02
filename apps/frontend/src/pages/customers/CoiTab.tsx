@@ -74,7 +74,8 @@ export function CoiTab({ customerId, customerName, operatingCompanyId, variant }
       listInsuranceCoiRequests({
         operating_company_id: operatingCompanyId!,
         customer_id: customerId,
-        status: !isFullPage && statusFilter ? statusFilter : undefined,
+        // ROUND 297 audit (reverse): the status selector applies on the customer tab too (it was ignored there).
+        status: statusFilter || undefined,
       }).then((result) => result.requests),
     enabled: Boolean(operatingCompanyId),
   });
