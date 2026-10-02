@@ -130,7 +130,7 @@ export function DepositDetailPage() {
 
             <section className="rounded-sm border border-[#E5E7EB] bg-white p-3">
               <h2 className="mb-2 font-bold uppercase text-[#4B5563]">Lines</h2>
-              <table className="w-full border-collapse text-xs">
+              <table className="w-full border-collapse text-xs tabular-nums">
                 <thead>
                   <tr className="border-b border-[#E5E7EB] text-center font-bold uppercase text-[#4B5563]">
                     <th className="px-2 py-[7px]">Type</th>

@@ -530,7 +530,7 @@ export function SubmitToFactorTab({ companyId, isOwner }: Props) {
                 Faro holds one 1.5% Security Reserve per invoice — normally as escrow reserve, on some invoices as cash reserve instead. Enter
                 Faro's purchase-report figures here when they differ from the expected split.
               </p>
-              <table className="w-full">
+              <table className="w-full tabular-nums">
                 <thead>
                   <tr>
                     <th className="text-left uppercase" style={FIELD_LABEL_STYLE}>Invoice</th>

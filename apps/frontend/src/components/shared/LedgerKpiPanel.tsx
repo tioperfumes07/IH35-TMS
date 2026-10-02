@@ -135,7 +135,7 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
             {drill.isLoading ? <p>Loading rows…</p> : null}
             {drill.data && !drill.data.rows.length ? <p className="text-slate-600">{drillKpi?.empty_reason ?? "No rows."}</p> : null}
             {cols.length ? (
-              <table className="w-full">
+              <table className="w-full tabular-nums">
                 <thead>
                   <tr>{cols.map((c) => <th key={c} className="text-left font-semibold text-slate-600">{c.replace(/_cents$/, "").replaceAll("_", " ")}</th>)}</tr>
                 </thead>

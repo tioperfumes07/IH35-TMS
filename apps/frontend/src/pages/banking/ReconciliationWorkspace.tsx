@@ -514,7 +514,7 @@ export function ReconciliationWorkspacePage() {
               )} → ${esc(session?.period_end ? formatDateUS(session.period_end) : "—")} · ${esc(
                 orientation,
               )} · printed ${esc(new Date().toLocaleString())}</div>
-              <table>
+              <table className="tabular-nums">
                 <tbody>
                   <tr><th>Beginning balance</th><td>${esc(
                     balanceHeader ? money(balanceHeader.beginningCents) : "—",
@@ -530,7 +530,7 @@ export function ReconciliationWorkspacePage() {
                 </tbody>
               </table>
               <h1 style="margin-top:20px">Transactions (${esc(visibleTransactions.length)})</h1>
-              <table>
+              <table className="tabular-nums">
                 <thead>
                   <tr>
                     <th>Date</th><th>Description</th>

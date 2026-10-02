@@ -215,7 +215,7 @@ export function BankingPlaidConnectionsPanel({
                         <div
                           className={
                             reconnectHighlightItemId === itemId
-                              ? "rounded-md p-0.5 ring-2 ring-slate-400 ring-offset-1"
+                              ? "rounded-sm p-0.5 ring-2 ring-slate-400 ring-offset-1"
                               : ""
                           }
                         >

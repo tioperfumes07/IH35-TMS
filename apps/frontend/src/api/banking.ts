@@ -480,7 +480,6 @@ export function resolveDriftAlert(alertId: string, companyId: string, note: stri
 export type FactoringVirtualCompany = {
   id: string;
   display_name: string;
-  reserve_balance: number;
   chargeback_balance: number;
   // FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: honest name for
   // chargeback_balance above (both are outstanding_liability_signed_cents, not a real

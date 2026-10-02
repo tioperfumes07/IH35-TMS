@@ -3933,7 +3933,7 @@ export function BankingTransactionsDesignView({
               <div class="meta">${esc(selectedAccount?.account_name ?? "All accounts")} · tab ${esc(
                 activeReviewTab,
               )} · ${esc(orientation)} · printed ${esc(new Date().toLocaleString())}</div>
-              <table>
+              <table className="tabular-nums">
                 <thead>
                   <tr>
                     <th>Date</th><th>Description</th>
@@ -3969,7 +3969,7 @@ export function BankingTransactionsDesignView({
           aria-modal="true"
           aria-label="Bulk categorize transactions"
         >
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-md bg-white p-4 shadow-xl">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-sm border border-[#E5E7EB] bg-white p-4 shadow-xl">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-xs font-semibold text-gray-900">
                 Categorize {bulkSelection.selectedIds.size} transaction(s)

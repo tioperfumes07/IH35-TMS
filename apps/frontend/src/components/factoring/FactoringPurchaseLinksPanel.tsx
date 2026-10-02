@@ -49,7 +49,7 @@ export function FactoringPurchaseLinksPanel({ companyId, filter, emptyText = "No
     );
   }
   return (
-    <table className="w-full text-xs" data-testid="factoring-purchase-links">
+    <table className="w-full text-xs tabular-nums" data-testid="factoring-purchase-links">
       <thead>
         <tr className="text-slate-600">
           <th className="text-left font-semibold">Purchase</th>
