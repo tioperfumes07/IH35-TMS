@@ -1510,3 +1510,20 @@ GitHub Actions is locked by a billing issue (every job: "account is locked due t
 
 **Live proof (deploys):** backend dep-davkfbegekts73edt78g live @ e058de8 (items 6-9) · frontend dep-davkf8o473hc73f7rh3g live @ e058de8 · item 10 backend dep-davkirnavr4c73cddobg building @ 8137481.
 **Next:** item 11 (9000 path), 12 (1090), 13 (2510 payment side), 14 (6300), then 15-23 and the audit additions.
+
+## ROUND 326 — queue items 11-17, 19, 23 (CC-1, 2026-10-02 ~07:05Z)
+GitHub Actions still billing-locked; merges on local money-pr-local-gate exit 0 + --admin. Backend deployed after each merge (Render API); frontend auto-deploys.
+
+- **11 — 9000 path (G-08)** #24013 71ba3fb. The one bill-line resolver ignored bill_lines.item_id, so itemized lines with no category parked in uncategorized. New tier: catalog item -> its expense account; item without an account refuses by name. Guard verify-bill-line-item-account (12125).
+- **12 — 1090 clearing (G-06)** #24018 e723eeb. Batch-wire multi-match now sweeps every receipt out of 1090 (it posted nothing; only the first advance had the bank pointer); sweep config gaps refuse instead of skipping; payments with no deposit account default to the operating bank. Guard verify-1090-clearing (12129). Next: reserve releases have no 1090 exit; bank-feed categorization can double-count a receipt held in 1090.
+- **13 — 2510 payment side (G-07)** #24020 57f7786. Categorizing a bank line to another bank account's ledger (the Dreamline card's 2510) is now a bank-to-bank transfer through the existing transfer engine, card counterpart line paired. TRANSFER_GL_POSTING_ENABLED is on (read-only check). Guard verify-card-payment-side (12133).
+- **14 — 6300 churn (G-18)** #24026 867ebd0. Automatic loop stopped: unmatch reversed the categorization JE but left the line 'categorized', and the backlog poster re-posted it. Guard verify-6300-no-churn (12137). Left: Undo+recategorize still writes reversal pairs (owner: delete — needs held 202615210200); variance write-offs not reversed on unmatch.
+- **15 — check creator (G-16)** #24024 526d75f. Printable check face (/api/v1/checks/:id.html), offsets writable, saved style kept, PERIOD_LOCKED 409, Checks + Print checks in the sub-nav, Print check no longer waits for a number. Guard verify-check-creator-commissioned (12141). Owner: set starting number + account class per checking account.
+- **16 — reclassify half-write** #24028 328e0c2. Document line rewritten first; a document that cannot follow the ledger is refused whole, nothing moved. Guard verify-reclassify-no-half-write (12145).
+- **17 / M3 — one fleet roster** #24029 1d02f40. fleetRosterSql (operating entity, power units, active) in pm-cost-per-mile, MTBF denominator, dashboard tile, fleet-table/kpis (+ unclassified count, notice on the Fleet table). Guard verify-one-fleet-roster (12149). **OWNER ACTION: read-only count — active units IH 35 Transportation 15 / USMCA 16, ALL vehicle_type NULL; the roster reads 0 until vehicle types are set on the real trucks.**
+- **19 — verify three things** — all held by verify-no-cross-entity-loads (static + live): every cancel writer settles revrec; book-load resolves an imported load's entity; no cross-entity loads. A load WITH recognized revenue refuses cancel by name until held 202615210200 is applied.
+- **23 — table-and-stamp snapshot** #24030 cac474f. scripts/ops/table-stamp-snapshot.mjs (read-only). Workbook on the owner's Desktop: TABLE-AND-STAMP-SNAPSHOT-2026-10-02.xlsx — 263 tables, 23 stamp columns null across a non-empty table (origin test first: e.g. bill_lines 155,392 rows are QBO clones).
+- **22 — zero-reset engine — CORRECTION: NOT BUILT.** My earlier status called it built and tested on a throwaway branch; no such code exists in any branch or the OUTBOX. Building it next (build only, never run).
+
+**Deploys:** backend redeployed after every merge; latest dep-davlbt8u01pc73f7eb40 @ 1d02f40 (item 17).
+**Still open for Lead/owner:** db:migrate on localhost:54329 for the #24000 DB tests (items 2-5); apply held 202615210000/0100/0200; Lead map item ids for driver pay items (Loaded / Empty Miles).
