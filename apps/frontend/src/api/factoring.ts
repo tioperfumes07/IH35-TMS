@@ -593,11 +593,12 @@ export type DuplicateVendorPair = {
 };
 
 /** GET /api/v1/factoring/scan-duplicate-vendors — fuzzy name pairs for merge review. */
-export function scanDuplicateVendors(companyId: string, driverId?: string) {
+export function scanDuplicateVendors(companyId: string, driverId?: string, scope: "all" | "factoring" = "all") {
   return apiRequest<{ pairs: DuplicateVendorPair[] }>(
     `/api/v1/factoring/scan-duplicate-vendors?${query({
       operating_company_id: companyId,
       driver_id: driverId,
+      scope,
     })}`
   );
 }

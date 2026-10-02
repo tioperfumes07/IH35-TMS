@@ -49,6 +49,13 @@ describe("DuplicateVendorsBanner — merge action", () => {
   // FIX-DVB135 (Round 27.1 step 5.7): the old QBO-id-gated deep link never rendered for USMCA —
   // 0 of 618 vendors carry a qbo_vendor_id (USMCA never pushes to/from QBO). "Merge these" must
   // render and work using the TMS's own vendor ids alone, with neither side synced to QBO.
+  it("Lead ROUND 297: scans FACTORING vendors only (the header says factoring vendors), never every driver vendor", async () => {
+    const scan = vi.spyOn(factoringApi, "scanDuplicateVendors").mockResolvedValue({ pairs: [] });
+    renderBanner();
+    await vi.waitFor(() => expect(scan).toHaveBeenCalled());
+    expect(scan.mock.calls[0]?.[2]).toBe("factoring");
+  });
+
   it("renders 'Merge these' for a pair with no qbo_vendor_id on either side", async () => {
     vi.spyOn(factoringApi, "scanDuplicateVendors").mockResolvedValue({ pairs: [PAIR] });
 
