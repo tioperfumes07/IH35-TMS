@@ -6970,6 +6970,12 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). geo.geofences — deac
 action: DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-02-cc3-dedupe-stop-fences.mts --apply --auth AUTH-203
   Dry-run first (default, no --apply).
 expires_at: 2026-10-04T23:00:00Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-02T23:10:00Z
+consumed_by: CC-3
+row_counts: geo.geofences 22 duplicate load-stop fences set is_active = false (22 planned = 22 deactivated); 0 deleted;
+  62 geofence_events on them untouched; audit event cc3.dedupe_stop_fences written.
+proof_query: USMCA load-stop labels with more than one ACTIVE fence: 22 before -> 0 after. Reversible: is_active = true on
+  the 22 ids in the audit event.
 THIS AUTHORIZATION DOES NOT COVER: any company other than USMCA; deleting any geofence or geofence event; any fence
 that is not a duplicated load-stop label; any money posting or JE.
