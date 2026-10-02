@@ -674,6 +674,8 @@ const LIVE_DOMAIN_GUARDS = [
     [
       "apps/backend/src/factoring/faro-reserve-entries.service.ts",
       "apps/backend/src/factoring/faro-reserve-entries.routes.ts",
+      "apps/backend/src/factoring/reserve-by-customer.service.ts",
+      "apps/backend/src/factoring/factoring-spine-links.ts",
       "db/migrations/202615250600_faro_reserve_entries.sql",
       "scripts/verify-faro-reserve-registers.mjs",
     ],

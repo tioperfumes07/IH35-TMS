@@ -22,6 +22,7 @@
 import { createHash } from "node:crypto";
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
+import { writeFactoringSpineLinks } from "./factoring-spine-links.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
@@ -450,6 +451,8 @@ export async function postFaroReserveEntryOnClient(
     },
     { userId: input.actor_user_id, role: input.actor_role }
   );
+  // Owner ruling 2026-10-02: every leg is linked on the spine (transaction_source_links) to its Faro entry and its invoice.
+  await writeFactoringSpineLinks(client, oci, je.id, `faro_${entry.entry_kind}`);
   await stampPosted(client, oci, entry, je.id, input.actor_user_id);
   if (pair) await stampPosted(client, oci, pair, je.id, input.actor_user_id);
   return { entry_id: entry.id, journal_entry_id: je.id, ...(pair ? { paired_entry_id: pair.id } : {}) };

@@ -16,6 +16,7 @@ import {
 } from "../accounting/factoring-posting/contract-config.js";
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
+import { writeFactoringSpineLinks } from "./factoring-spine-links.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
@@ -217,6 +218,8 @@ export async function decideInterestAccrual(
     { operating_company_id: input.operating_company_id, entry_date: run.period_end, memo, source: "auto", postings },
     { userId: input.actor_user_id, role: input.actor_role }
   );
+  // Owner ruling 2026-10-02: each leg is linked to its invoice on the spine (transaction_source_links).
+  await writeFactoringSpineLinks(client, input.operating_company_id, je.id, "factoring_default_interest");
   await client.query(
     `UPDATE accounting.factoring_interest_accrual_runs
         SET state = 'posted', decided_by_user_id = $3::uuid, decided_at = now(), decision_note = $4, journal_entry_id = $5::uuid
