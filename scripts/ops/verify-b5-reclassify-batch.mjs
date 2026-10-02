@@ -64,6 +64,11 @@ function main() {
   if (!/data-b5-account-no="1">\{showAccountNumbers \?/.test(reclassify) && !/showAccountNumbers \? \(\(l\.account_number/.test(reclassify)) {
     throw new Error(`${RECLASSIFY}: Account no. cell must gate on showAccountNumbers`);
   }
+  // BANK-F91043 — Go to page N of M on find results (ParityTable register chrome parity)
+  assertIncludes(reclassify, 'data-b5-goto-page="1"', RECLASSIFY);
+  assertIncludes(reclassify, "Go to page", RECLASSIFY);
+  assertIncludes(reclassify, 'data-testid="reclassify-goto-page"', RECLASSIFY);
+  assertIncludes(reclassify, "gotoPageDraft", RECLASSIFY);
 
   assertIncludes(batch, 'data-b5-batch-transactions="1"', BATCH);
   assertIncludes(batch, 'data-b5-batch-type="1"', BATCH);
