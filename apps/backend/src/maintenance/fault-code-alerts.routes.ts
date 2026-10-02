@@ -19,6 +19,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { driverAtTimeWithLoadFallbackSql } from "./driver-attribution.js";
+import { faultDescriptionSql, faultProposalJoinSql } from "./fault-catalog-proposal.js";
 
 const querySchema = z
   .object({
@@ -70,6 +71,9 @@ export async function registerFaultCodeAlertsRoutes(app: FastifyInstance) {
             -- CLS-JOIN-ENTITY-UNSCOPED: units carry owner/leased, never operating_company_id directly.
             u.unit_number,
             h.fault_code,
+            ${faultDescriptionSql("h")} AS fault_description,
+            fault_proposal.proposed_service_task_id, fault_proposal.proposed_service_task_name,
+            fault_proposal.proposed_labor_code_id, fault_proposal.proposed_labor_code_name,
             h.source,
             h.severity,
             h.occurred_at::text,
@@ -85,6 +89,7 @@ export async function registerFaultCodeAlertsRoutes(app: FastifyInstance) {
           LEFT JOIN maintenance.work_orders wo ON wo.id = h.auto_wo_id
                                                AND wo.operating_company_id = h.operating_company_id
           ${driverAtTimeWithLoadFallbackSql("h.unit_id", "h.occurred_at")}
+          ${faultProposalJoinSql("h")}
           LEFT JOIN mdata.drivers d ON d.id = driver_at_time.driver_id
           WHERE ${conditions.join(" AND ")}
           ${driverFilterIdx ? `AND driver_at_time.driver_id = $${driverFilterIdx}::uuid` : ""}

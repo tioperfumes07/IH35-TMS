@@ -39,6 +39,9 @@ const createRuleSchema = companyQuerySchema.extend({
   suggested_shop_id: z.string().uuid().nullable().optional(),
   suggested_priority: z.enum(["routine", "urgent", "immediate"]).nullable().optional(),
   estimated_repair_hours: z.number().nullable().optional(),
+  // E-10 addition: the catalog items this fault code proposes (company-scoped catalogs).
+  service_task_id: z.string().uuid().nullable().optional(),
+  labor_code_id: z.string().uuid().nullable().optional(),
 });
 
 const patchRuleSchema = createRuleSchema.partial().extend({
@@ -83,9 +86,12 @@ export async function registerFaultRulesRoutes(app: FastifyInstance) {
         `
           INSERT INTO maintenance.fault_code_severity_rules (
             operating_company_id, fault_code, source, description, severity,
-            auto_create_wo, suggested_shop_id, suggested_priority, estimated_repair_hours
+            auto_create_wo, suggested_shop_id, suggested_priority, estimated_repair_hours,
+            service_task_id, labor_code_id
           )
-          VALUES ($1::uuid, $2, $3, $4, $5, $6, $7::uuid, $8, $9)
+          SELECT $1::uuid, $2, $3, $4, $5, $6, $7::uuid, $8, $9,
+                 (SELECT st.id FROM catalogs.maintenance_service_tasks st WHERE st.id = $10::uuid AND st.operating_company_id = $1::uuid),
+                 (SELECT lc.id FROM catalogs.maintenance_labor_codes lc WHERE lc.id = $11::uuid AND lc.operating_company_id = $1::uuid)
           RETURNING *
         `,
         [
@@ -98,6 +104,8 @@ export async function registerFaultRulesRoutes(app: FastifyInstance) {
           b.suggested_shop_id ?? null,
           b.suggested_priority ?? null,
           b.estimated_repair_hours ?? null,
+          b.service_task_id ?? null,
+          b.labor_code_id ?? null,
         ]
       );
       const created = res.rows[0] as { id?: string } | undefined;
@@ -135,7 +143,9 @@ export async function registerFaultRulesRoutes(app: FastifyInstance) {
             auto_create_wo = COALESCE($7, auto_create_wo),
             suggested_shop_id = COALESCE($8::uuid, suggested_shop_id),
             suggested_priority = COALESCE($9, suggested_priority),
-            estimated_repair_hours = COALESCE($10, estimated_repair_hours)
+            estimated_repair_hours = COALESCE($10, estimated_repair_hours),
+            service_task_id = COALESCE((SELECT st.id FROM catalogs.maintenance_service_tasks st WHERE st.id = $11::uuid AND st.operating_company_id = $2::uuid), service_task_id),
+            labor_code_id = COALESCE((SELECT lc.id FROM catalogs.maintenance_labor_codes lc WHERE lc.id = $12::uuid AND lc.operating_company_id = $2::uuid), labor_code_id)
           WHERE id = $1::uuid
             AND operating_company_id = $2::uuid
             AND active = true
@@ -152,6 +162,8 @@ export async function registerFaultRulesRoutes(app: FastifyInstance) {
           b.suggested_shop_id ?? null,
           b.suggested_priority ?? null,
           b.estimated_repair_hours ?? null,
+          b.service_task_id ?? null,
+          b.labor_code_id ?? null,
         ]
       );
       return res.rows[0] ?? null;
