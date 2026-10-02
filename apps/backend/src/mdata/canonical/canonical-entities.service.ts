@@ -159,7 +159,11 @@ export async function planCanonical(client: Db, oc: string, kind: CanonicalKind)
 /** Merge one duplicate into its canonical survivor (same company, same normalized name -- refused otherwise). */
 export async function mergeIntoCanonical(
   client: Db, oc: string, kind: CanonicalKind,
-  input: { survivorId: string; duplicateId: string; actorUserId: string; authId: string | null; reason: string }
+  input: {
+    survivorId: string; duplicateId: string; actorUserId: string; authId: string | null; reason: string;
+    /** Evidence the caller already verified (assertConfirmedDuplicate) for a pair whose names do not normalize equal. */
+    evidence?: "identical_tax_id" | "identical_legal_name_and_registered_address";
+  }
 ) {
   const cfg = CFG[kind];
   if (input.survivorId === input.duplicateId) throw new Error("canonical_survivor_equals_duplicate");
@@ -171,7 +175,7 @@ export async function mergeIntoCanonical(
   const s = rows.rows.find((r) => r.id === input.survivorId);
   const d = rows.rows.find((r) => r.id === input.duplicateId);
   if (!s || !d) throw new Error("canonical_rows_not_found_in_company");
-  if (s.key !== d.key || !s.key) throw new Error("canonical_names_do_not_normalize_equal");
+  if ((s.key !== d.key || !s.key) && input.evidence !== "identical_tax_id") throw new Error("canonical_names_do_not_normalize_equal");
 
   const log: RepointLogEntry[] = [];
   for (const t of await repointTargets(client, kind)) {
@@ -209,7 +213,7 @@ export async function mergeIntoCanonical(
   const moved = log.reduce((n, e) => n + e.keys.length, 0);
   await appendCrudAudit(client as never, input.actorUserId, `mdata.${kind}.canonical_merged`, {
     resource_type: cfg.table, resource_id: input.duplicateId, operating_company_id: oc, survivor_id: input.survivorId,
-    alias_id: alias.rows[0]!.id, alias_name: d.name, rows_repointed: moved, auth_id: input.authId, reason: input.reason,
+    alias_id: alias.rows[0]!.id, alias_name: d.name, rows_repointed: moved, auth_id: input.authId, reason: input.reason, evidence: input.evidence ?? "normalized_name",
   }, "info", "ROUND-326-CANONICAL");
   return { alias_id: alias.rows[0]!.id, survivor_id: input.survivorId, duplicate_id: input.duplicateId, rows_repointed: moved, tables: log.length };
 }

@@ -132,9 +132,10 @@ export type MergeResult = {
   total_rows_repointed: number;
 };
 
-type DuplicateEvidence = "identical_tax_id" | "identical_legal_name_and_registered_address";
+export type DuplicateEvidence = "identical_tax_id" | "identical_legal_name_and_registered_address";
 
-async function assertConfirmedDuplicate(
+/** Evidence gate for a merge whose names do not normalize equal (identical tax ID, or legal name + registered address). */
+export async function assertConfirmedDuplicate(
   client: QueryableClient,
   entity: "vendor" | "customer",
   survivorId: string,
@@ -212,109 +213,7 @@ async function repointColumns(
   return log;
 }
 
-/**
- * Merges a confirmed-duplicate mdata.vendors row into its survivor: repoints every real FK found
- * live (see VENDOR_REPOINT_COLUMNS), then flags the duplicate row (is_duplicate=true,
- * merge_target_id=survivorId) — the SAME two columns reclassify.routes.ts's existing
- * flag-duplicate endpoint already writes, reused here rather than reinvented. NEVER hard-deletes
- * the duplicate row — quarantine only, per standing law.
- */
-export async function mergeVendors(
-  client: QueryableClient,
-  input: { survivorId: string; duplicateId: string; actorUserId: string; reason: string; operatingCompanyId: string }
-): Promise<MergeResult> {
-  if (input.survivorId === input.duplicateId) {
-    throw new Error("merge_survivor_equals_duplicate");
-  }
-  const evidence = await assertConfirmedDuplicate(
-    client, "vendor", input.survivorId, input.duplicateId, input.operatingCompanyId
-  );
-  const repointed = await repointColumns(client, VENDOR_REPOINT_COLUMNS, input.survivorId, input.duplicateId);
 
-  const flagRes = await client.query(
-    `UPDATE mdata.vendors
-     SET is_duplicate = true, merge_target_id = $1,
-         deactivated_at = COALESCE(deactivated_at, now()), updated_at = now()
-     WHERE id = $2
-     RETURNING id`,
-    [input.survivorId, input.duplicateId]
-  );
-  if (!flagRes.rows.length) throw new Error("vendor_merge_duplicate_not_found");
-
-  const totalRows = repointed.reduce((s, r) => s + r.rows_repointed, 0);
-
-  await appendCrudAudit(client, input.actorUserId, "mdata.vendor.merged", {
-    resource_type: "mdata.vendors",
-    resource_id: input.duplicateId,
-    operating_company_id: input.operatingCompanyId,
-    survivor_id: input.survivorId,
-    reason: input.reason,
-    duplicate_evidence: evidence,
-    repointed,
-    total_rows_repointed: totalRows,
-  }, "info", "ROUND-16.21-VENDOR-CUSTOMER-MERGE");
-
-  await client.query(
-    `INSERT INTO mdata.entity_reclassification_log
-       (operating_company_id, entity_table, entity_id, action, reason, actor_user_id)
-     VALUES ($1::uuid, 'mdata.vendors', $2, 'merge', $3, $4)`,
-    [input.operatingCompanyId, input.duplicateId, `merged into ${input.survivorId} (${evidence}): ${input.reason}`, input.actorUserId]
-  );
-
-  return { survivor_id: input.survivorId, duplicate_id: input.duplicateId, entity: "vendor", repointed, total_rows_repointed: totalRows };
-}
-
-/**
- * Merges a confirmed-duplicate mdata.customers row into its survivor. Same shape as mergeVendors —
- * built for symmetry and real testability (this guard's selftest exercises both), even though
- * ROUND 16.21's live measurement found 0 confirmed customer duplicates to actually run this
- * against (email-based grouping produced false positives across genuinely distinct legal entities
- * — see docs/bus/OUTBOX-CC-1.md for the full reviewed-not-merged list).
- */
-export async function mergeCustomers(
-  client: QueryableClient,
-  input: { survivorId: string; duplicateId: string; actorUserId: string; reason: string; operatingCompanyId: string }
-): Promise<MergeResult> {
-  if (input.survivorId === input.duplicateId) {
-    throw new Error("merge_survivor_equals_duplicate");
-  }
-  const evidence = await assertConfirmedDuplicate(
-    client, "customer", input.survivorId, input.duplicateId, input.operatingCompanyId
-  );
-  const repointed = await repointColumns(client, CUSTOMER_REPOINT_COLUMNS, input.survivorId, input.duplicateId);
-
-  const flagRes = await client.query(
-    `UPDATE mdata.customers
-     SET is_duplicate = true, merge_target_id = $1,
-         deactivated_at = COALESCE(deactivated_at, now()), updated_at = now()
-     WHERE id = $2
-     RETURNING id`,
-    [input.survivorId, input.duplicateId]
-  );
-  if (!flagRes.rows.length) throw new Error("customer_merge_duplicate_not_found");
-
-  const totalRows = repointed.reduce((s, r) => s + r.rows_repointed, 0);
-
-  await appendCrudAudit(client, input.actorUserId, "mdata.customer.merged", {
-    resource_type: "mdata.customers",
-    resource_id: input.duplicateId,
-    operating_company_id: input.operatingCompanyId,
-    survivor_id: input.survivorId,
-    reason: input.reason,
-    duplicate_evidence: evidence,
-    repointed,
-    total_rows_repointed: totalRows,
-  }, "info", "ROUND-16.21-VENDOR-CUSTOMER-MERGE");
-
-  await client.query(
-    `INSERT INTO mdata.entity_reclassification_log
-       (operating_company_id, entity_table, entity_id, action, reason, actor_user_id)
-     VALUES ($1::uuid, 'mdata.customers', $2, 'merge', $3, $4)`,
-    [input.operatingCompanyId, input.duplicateId, `merged into ${input.survivorId} (${evidence}): ${input.reason}`, input.actorUserId]
-  );
-
-  return { survivor_id: input.survivorId, duplicate_id: input.duplicateId, entity: "customer", repointed, total_rows_repointed: totalRows };
-}
 
 /** ROUND 326: the verified columns the canonical engine adds to the live FK catalog (it reads pg_constraint itself). */
 export const CUSTOMER_LOOSE_REPOINT_COLUMNS = CUSTOMER_REPOINT_COLUMNS;

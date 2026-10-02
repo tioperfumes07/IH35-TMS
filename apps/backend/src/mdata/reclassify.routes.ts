@@ -5,7 +5,8 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
-import { mergeCustomers, mergeVendors } from "./vendor-customer-merge.service.js";
+import { assertConfirmedDuplicate } from "./vendor-customer-merge.service.js";
+import { mergeIntoCanonical } from "./canonical/canonical-entities.service.js";
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
@@ -69,16 +70,16 @@ export async function registerReclassifyRoutes(app: FastifyInstance) {
       try {
         const result = await withCurrentUser(user.uuid, async (client) => {
           await assertCompanyMembership(client, user.uuid, body.data.operating_company_id);
-          const input = {
-            survivorId: body.data.merge_target_id,
-            duplicateId: params.data.id,
-            actorUserId: user.uuid,
-            reason: body.data.reason,
-            operatingCompanyId: body.data.operating_company_id,
-          };
-          return entity === "customers"
-            ? mergeCustomers(client, input)
-            : mergeVendors(client, input);
+          // 2026-10-02 (CC-3 queue 2a): one merge engine. The evidence gate stays (identical tax ID, or identical legal
+          // name + registered address); the merge itself is the canonical engine — every live FK + discovered loose
+          // column repointed, alias + snapshot + repoint log kept (reversible), duplicate deleted (no shell rows).
+          const kind = entity === "customers" ? "customer" : "vendor";
+          const evidence = await assertConfirmedDuplicate(client, kind, body.data.merge_target_id, params.data.id, body.data.operating_company_id);
+          await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [body.data.operating_company_id]);
+          return mergeIntoCanonical(client, body.data.operating_company_id, kind, {
+            survivorId: body.data.merge_target_id, duplicateId: params.data.id, actorUserId: user.uuid,
+            authId: null, reason: body.data.reason, evidence,
+          });
         });
         return reply.send({ merge: result });
       } catch (error) {
@@ -86,6 +87,7 @@ export async function registerReclassifyRoutes(app: FastifyInstance) {
         if (message.endsWith("_merge_pair_not_found_same_company")) {
           return reply.code(404).send({ error: message });
         }
+        if (message.startsWith("canonical_")) return reply.code(409).send({ error: message });
         if (message.endsWith("_merge_unconfirmed_duplicate")) {
           return reply.code(409).send({
             error: message,

@@ -6,7 +6,12 @@
  * SOME MIGHT BE DUPLICATES OR EVEN TRIPLICATED, ETC, AND MERGE AND CREATE ONE SINGLE VENDOR OF
  * THOSE THAT ARE DUPLICATED OR MORE."
  *
- * Static check: apps/backend/src/mdata/vendor-customer-merge.service.ts exports real mergeVendors
+ * 2026-10-02 (CC-3 queue 2a): ONE merge engine. The /merge route keeps this file's evidence gate
+ * (assertConfirmedDuplicate) and merges through the canonical engine (mdata/canonical/canonical-entities.service.ts):
+ * every reference repointed, alias + snapshot kept (reversible), duplicate DELETED (owner law: no shell rows). The old
+ * pairwise mergeVendors / mergeCustomers (hand list, deactivated shell) are gone and must not return.
+ *
+ * (history) Static check: apps/backend/src/mdata/vendor-customer-merge.service.ts exports real mergeVendors
  * / mergeCustomers functions that (1) repoint every live-verified FK column before (2) flagging
  * the duplicate row via is_duplicate/merge_target_id — never a bare flag with no repoint (the
  * pre-existing bug: reclassify.routes.ts's flag-duplicate endpoints only ever set the flag), and
@@ -35,26 +40,23 @@ function load(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
+const CANONICAL_FILE = "apps/backend/src/mdata/canonical/canonical-entities.service.ts";
 const REQUIRED_MARKERS = [
-  ["export async function mergeVendors", "mergeVendors is not exported — no real vendor merge function exists"],
-  ["export async function mergeCustomers", "mergeCustomers is not exported — no real customer merge function exists"],
-  ["await repointColumns(client, VENDOR_REPOINT_COLUMNS, input.survivorId, input.duplicateId);", "mergeVendors does not repoint FKs — would regress to a bare flag with no real merge"],
-  ["await repointColumns(client, CUSTOMER_REPOINT_COLUMNS, input.survivorId, input.duplicateId);", "mergeCustomers does not repoint FKs — would regress to a bare flag with no real merge"],
-  ["SET is_duplicate = true, merge_target_id = $1,", "merge does not flag the duplicate row (is_duplicate/merge_target_id)"],
-  ["deactivated_at = COALESCE(deactivated_at, now())", "merged duplicate remains selectable — deactivated_at is required"],
-  ["assertConfirmedDuplicate", "merge has no evidence gate"],
+  ["export async function assertConfirmedDuplicate", "the evidence gate is not exported for the merge route"],
   ["identical_legal_name_and_registered_address", "name+registered-address evidence is not enforced"],
   ["identical_tax_id", "tax-id evidence is not enforced"],
   ["if (row.identical_tax_id ||", "tax-id evidence result is not required before merge"],
   ["decrypt(row.source_tax_id_encrypted)", "encrypted customer tax IDs are not compared by plaintext"],
   ["if (row.identical_name_address)", "legal-name+registered-address result is not required before merge"],
 ];
-
-const FORBIDDEN_MARKERS = [[/\bDELETE\s+FROM\b/i, "the merge service must never hard-delete a duplicate row — quarantine only, per standing law"]];
-
+const FORBIDDEN_MARKERS = [
+  [/\bDELETE\s+FROM\b/i, "the evidence/registry file never deletes — only the canonical engine removes a merged duplicate"],
+  [/export async function merge(Vendors|Customers)\b/, "the old pairwise merge engine is back — merges go through mergeIntoCanonical only"],
+  [/SET is_duplicate = true/, "a merge must not leave a flagged shell row (owner law 2026-10-02) — the canonical engine deletes the duplicate"],
+];
 export function check({
   service = load(SERVICE_FILE), routes = load(ROUTES_FILE),
-  customerRoutes = load(CUSTOMER_ROUTES_FILE), vendorRoutes = load(VENDOR_ROUTES_FILE),
+  customerRoutes = load(CUSTOMER_ROUTES_FILE), vendorRoutes = load(VENDOR_ROUTES_FILE), canonical = load(CANONICAL_FILE),
 } = {}) {
   const f = [];
   for (const [marker, msg] of REQUIRED_MARKERS) {
@@ -65,41 +67,29 @@ export function check({
   }
   for (const marker of [
     "/api/v1/${entity}/:id/merge",
-    "mergeCustomers(client, input)",
-    "mergeVendors(client, input)",
+    "await assertConfirmedDuplicate(client, kind,",
+    "mergeIntoCanonical(client, body.data.operating_company_id, kind,",
     "Merge requires identical tax ID or identical legal name and registered address.",
   ]) {
-    if (!routes.includes(marker)) f.push(`${ROUTES_FILE}: missing audited merge route contract: ${marker}`);
+    if (!routes.includes(marker)) f.push(`${ROUTES_FILE}: missing merge route contract: ${marker}`);
   }
+  if (/mergeCustomers\(|mergeVendors\(/.test(routes)) f.push(`${ROUTES_FILE}: still calls the old pairwise merge engine`);
+  const gateIdx = routes.indexOf("await assertConfirmedDuplicate(client, kind,"), mergeIdx = routes.indexOf("mergeIntoCanonical(client, body.data.operating_company_id, kind,");
+  if (gateIdx === -1 || mergeIdx === -1 || gateIdx > mergeIdx) f.push(`${ROUTES_FILE}: the evidence gate must run BEFORE the canonical merge`);
+  if (!canonical.includes("canonical_delete_blocked")) f.push(`${CANONICAL_FILE}: a duplicate DELETE that removes != 1 row must refuse (canonical_delete_blocked)`);
+  if (!canonical.includes('input.evidence !== "identical_tax_id"')) f.push(`${CANONICAL_FILE}: only verified tax-id evidence may admit a pair whose names do not normalize equal`);
   if (!customerRoutes.includes("tax_id_encrypted") || !customerRoutes.includes('return "tax_id"')) {
     f.push(`${CUSTOMER_ROUTES_FILE}: customer creation/update does not reject an existing active tax ID`);
   }
   if (!vendorRoutes.includes("vendorTaxIdConflictExists") || !vendorRoutes.includes("mdata_vendor_tax_id_conflict")) {
     f.push(`${VENDOR_ROUTES_FILE}: vendor creation/update does not reject an existing active tax ID`);
   }
-  // Ordering: the repoint call must run BEFORE the flag UPDATE in BOTH functions (so a crash
-  // mid-merge never leaves a flagged-but-not-repointed duplicate).
-  const vendorFnIdx = service.indexOf("export async function mergeVendors");
-  const vendorFnBody = service.slice(vendorFnIdx, vendorFnIdx + 2000);
-  const vendorRepointIdx = vendorFnBody.indexOf("await repointColumns(client, VENDOR_REPOINT_COLUMNS");
-  const vendorFlagIdx = vendorFnBody.indexOf("SET is_duplicate = true");
-  if (vendorRepointIdx === -1 || vendorFlagIdx === -1 || vendorRepointIdx > vendorFlagIdx) {
-    f.push(`${SERVICE_FILE}: mergeVendors must repoint FKs BEFORE flagging the duplicate (atomic order)`);
-  }
-  const customerFnIdx = service.indexOf("export async function mergeCustomers");
-  const customerFnBody = service.slice(customerFnIdx, customerFnIdx + 2000);
-  const customerRepointIdx = customerFnBody.indexOf("await repointColumns(client, CUSTOMER_REPOINT_COLUMNS");
-  const customerFlagIdx = customerFnBody.indexOf("SET is_duplicate = true");
-  if (customerRepointIdx === -1 || customerFlagIdx === -1 || customerRepointIdx > customerFlagIdx) {
-    f.push(`${SERVICE_FILE}: mergeCustomers must repoint FKs BEFORE flagging the duplicate (atomic order)`);
-  }
   return f;
 }
-
 function selftest() {
   const good = {
     service: load(SERVICE_FILE), routes: load(ROUTES_FILE),
-    customerRoutes: load(CUSTOMER_ROUTES_FILE), vendorRoutes: load(VENDOR_ROUTES_FILE),
+    customerRoutes: load(CUSTOMER_ROUTES_FILE), vendorRoutes: load(VENDOR_ROUTES_FILE), canonical: load(CANONICAL_FILE),
   };
   if (check(good).length) {
     console.error(`${LABEL} SELFTEST FAIL — good fixtures rejected: ${check(good).join(" | ")}`);
@@ -108,57 +98,17 @@ function selftest() {
 
   let n = 0;
   const plants = [
-    { name: "mergeVendors export removed", mutate: () => ({ ...good, service: good.service.replace("export async function mergeVendors", "async function mergeVendors") }) },
-    { name: "mergeCustomers export removed", mutate: () => ({ ...good, service: good.service.replace("export async function mergeCustomers", "async function mergeCustomers") }) },
-    {
-      name: "vendor FK repoint call dropped (regresses to a bare flag)",
-      mutate: () => ({ ...good, service: good.service.replace("await repointColumns(client, VENDOR_REPOINT_COLUMNS, input.survivorId, input.duplicateId);", "// stripped") }),
-    },
-    {
-      name: "customer FK repoint call dropped (regresses to a bare flag)",
-      mutate: () => ({ ...good, service: good.service.replace("await repointColumns(client, CUSTOMER_REPOINT_COLUMNS, input.survivorId, input.duplicateId);", "// stripped") }),
-    },
-    {
-      name: "duplicate-row flag write dropped",
-      mutate: () => ({ ...good, service: good.service.replaceAll("SET is_duplicate = true, merge_target_id = $1,", "SET updated_at = now(),") }),
-    },
-    {
-      name: "a hard DELETE is introduced (violates never-hard-delete law)",
-      mutate: () => ({ ...good, service: good.service.replace("export async function mergeVendors", "// DELETE FROM mdata.vendors WHERE 1=0;\nexport async function mergeVendors") }),
-    },
-    {
-      name: "mergeVendors flags BEFORE repointing (unsafe ordering)",
-      mutate: () => ({
-        ...good,
-        service: good.service.replace(
-          '  const repointed = await repointColumns(client, VENDOR_REPOINT_COLUMNS, input.survivorId, input.duplicateId);\n\n  const flagRes = await client.query(',
-          '  const flagRes = await client.query('
-        ).replace(
-          '  if (!flagRes.rows.length) throw new Error("vendor_merge_duplicate_not_found");\n\n  const totalRows',
-          '  if (!flagRes.rows.length) throw new Error("vendor_merge_duplicate_not_found");\n  const repointed = await repointColumns(client, VENDOR_REPOINT_COLUMNS, input.survivorId, input.duplicateId);\n\n  const totalRows'
-        ),
-      }),
-    },
-    {
-      name: "duplicate evidence gate removed",
-      mutate: () => ({ ...good, service: good.service.replace("if (row.identical_tax_id || (", "if (true || (") }),
-    },
-    {
-      name: "merge route removed",
-      mutate: () => ({ ...good, routes: good.routes.replace("/api/v1/${entity}/:id/merge", "/api/v1/${entity}/:id/no-merge") }),
-    },
-    {
-      name: "merged row remains active",
-      mutate: () => ({ ...good, service: good.service.replaceAll("deactivated_at = COALESCE(deactivated_at, now())", "deactivated_at = deactivated_at") }),
-    },
-    {
-      name: "customer tax recurrence guard removed",
-      mutate: () => ({ ...good, customerRoutes: good.customerRoutes.replace('return "tax_id"', 'return null') }),
-    },
-    {
-      name: "vendor tax recurrence guard removed",
-      mutate: () => ({ ...good, vendorRoutes: good.vendorRoutes.replaceAll("mdata_vendor_tax_id_conflict", "mdata_vendor_tax_id_allowed") }),
-    },
+    { name: "old mergeVendors engine returns", mutate: () => ({ ...good, service: good.service + "\nexport async function mergeVendors() {}\n" }) },
+    { name: "route calls the old engine", mutate: () => ({ ...good, routes: good.routes.replace("mergeIntoCanonical(client, body.data.operating_company_id, kind,", "mergeVendors(client, kind,") }) },
+    { name: "shell flag write returns", mutate: () => ({ ...good, service: good.service + "\n// UPDATE mdata.vendors SET is_duplicate = true\n" }) },
+    { name: "a hard DELETE appears in the evidence file", mutate: () => ({ ...good, service: good.service + "\n// DELETE FROM mdata.vendors WHERE 1=0;\n" }) },
+    { name: "duplicate evidence gate removed", mutate: () => ({ ...good, service: good.service.replace("if (row.identical_tax_id || (", "if (true || (") }) },
+    { name: "merge route removed", mutate: () => ({ ...good, routes: good.routes.replace("/api/v1/${entity}/:id/merge", "/api/v1/${entity}/:id/no-merge") }) },
+    { name: "evidence gate skipped by the route", mutate: () => ({ ...good, routes: good.routes.replace("await assertConfirmedDuplicate(client, kind,", "await Promise.resolve(client, kind,") }) },
+    { name: "engine no longer refuses a no-op delete", mutate: () => ({ ...good, canonical: good.canonical.replaceAll("canonical_delete_blocked", "canonical_delete_ignored") }) },
+    { name: "engine admits any name pair", mutate: () => ({ ...good, canonical: good.canonical.replace('input.evidence !== "identical_tax_id"', "false") }) },
+    { name: "customer tax recurrence guard removed", mutate: () => ({ ...good, customerRoutes: good.customerRoutes.replace('return "tax_id"', 'return null') }) },
+    { name: "vendor tax recurrence guard removed", mutate: () => ({ ...good, vendorRoutes: good.vendorRoutes.replaceAll("mdata_vendor_tax_id_conflict", "mdata_vendor_tax_id_allowed") }) },
   ];
   for (const plant of plants) {
     n++;
@@ -180,7 +130,7 @@ if (process.argv.includes("--selftest")) {
     for (const e of findings) console.error("  ✗ " + e);
     process.exit(1);
   }
-  console.log(`${LABEL}: static OK — real, audited, repoint-then-flag, never-hard-delete merge functions exist for both vendors and customers`);
+  console.log(`${LABEL}: static OK — one merge engine: evidence gate then the canonical engine (repoint all, alias + snapshot, duplicate deleted, reversible); old pairwise engine absent`);
 
   if (!process.env.DATABASE_URL && !process.env.DATABASE_DIRECT_URL) {
     console.error("verify-vendor-customer-merge: FAIL — DATABASE_URL not set or the database is unreachable. A live money guard that cannot connect is a FAIL, never a pass (ROUND 29.9-B).");

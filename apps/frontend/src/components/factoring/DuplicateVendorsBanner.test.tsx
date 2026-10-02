@@ -57,7 +57,7 @@ describe("DuplicateVendorsBanner — merge action", () => {
     expect(await screen.findByTestId("factoring-duplicate-vendors-banner-merge-pair-link")).toBeTruthy();
   });
 
-  it("clicking 'Merge these' then a survivor name flags-then-merges using the TMS's own vendor ids, never QBO ids", async () => {
+  it("clicking 'Merge these' then a survivor name merges in ONE step (canonical engine) using the TMS's own vendor ids, never QBO ids", async () => {
     vi.spyOn(factoringApi, "scanDuplicateVendors").mockResolvedValue({ pairs: [PAIR] });
     const flagSpy = vi.spyOn(factoringApi, "flagVendorDuplicate").mockResolvedValue({ id: PAIR.to_vendor_id, is_duplicate: true, merge_target_id: PAIR.from_vendor_id });
     const mergeSpy = vi.spyOn(factoringApi, "mergeVendor").mockResolvedValue({ merge: { ok: true } });
@@ -69,13 +69,8 @@ describe("DuplicateVendorsBanner — merge action", () => {
 
     await waitFor(() => expect(mergeSpy).toHaveBeenCalled());
 
-    expect(flagSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        survivorVendorId: PAIR.from_vendor_id,
-        duplicateVendorId: PAIR.to_vendor_id,
-        companyId: COMPANY_ID,
-      })
-    );
+    // No flag step: flagging first marked the duplicate is_duplicate, which the merge evidence gate then refused.
+    expect(flagSpy).not.toHaveBeenCalled();
     expect(mergeSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         survivorVendorId: PAIR.from_vendor_id,
@@ -87,8 +82,7 @@ describe("DuplicateVendorsBanner — merge action", () => {
 
   it("keeping the 'to' name merges the 'from' vendor into it (survivor is whichever name was clicked)", async () => {
     vi.spyOn(factoringApi, "scanDuplicateVendors").mockResolvedValue({ pairs: [PAIR] });
-    const flagSpy = vi.spyOn(factoringApi, "flagVendorDuplicate").mockResolvedValue({ id: PAIR.from_vendor_id, is_duplicate: true, merge_target_id: PAIR.to_vendor_id });
-    vi.spyOn(factoringApi, "mergeVendor").mockResolvedValue({ merge: { ok: true } });
+    const mergeSpy = vi.spyOn(factoringApi, "mergeVendor").mockResolvedValue({ merge: { ok: true } });
 
     renderBanner();
 
@@ -96,7 +90,7 @@ describe("DuplicateVendorsBanner — merge action", () => {
     fireEvent.click(await screen.findByTestId("factoring-duplicate-vendors-banner-merge-keep-to"));
 
     await waitFor(() =>
-      expect(flagSpy).toHaveBeenCalledWith(
+      expect(mergeSpy).toHaveBeenCalledWith(
         expect.objectContaining({ survivorVendorId: PAIR.to_vendor_id, duplicateVendorId: PAIR.from_vendor_id })
       )
     );

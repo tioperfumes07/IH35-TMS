@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { flagVendorDuplicate, mergeVendor, scanDuplicateVendors } from "../../api/factoring";
+import { mergeVendor, scanDuplicateVendors } from "../../api/factoring";
 import { FACTORING_TAB_PATH } from "../../router/route-manifest";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
@@ -26,12 +26,8 @@ export function DuplicateVendorsBanner({ companyId }: DuplicateVendorsBannerProp
   const mergeMutation = useMutation({
     mutationFn: async (input: { survivorVendorId: string; duplicateVendorId: string; survivorName: string }) => {
       const reason = `Duplicate factoring vendor merge — "${input.survivorName}" kept, confirmed via Factoring duplicate-vendor scan`;
-      await flagVendorDuplicate({
-        duplicateVendorId: input.duplicateVendorId,
-        survivorVendorId: input.survivorVendorId,
-        reason,
-        companyId,
-      });
+      // One step: the merge route gates on evidence and merges through the canonical engine (the duplicate is deleted,
+      // an alias keeps it reversible). Flagging first marked the row is_duplicate, which the gate then refused.
       return mergeVendor({ duplicateVendorId: input.duplicateVendorId, survivorVendorId: input.survivorVendorId, reason, companyId });
     },
     onSuccess: () => {
