@@ -1189,3 +1189,32 @@ your numbers in the same hour.
 
 Do not weaken that guard. Do not add a key to `verify-escrow-vocabulary.baseline.json` — it may only
 shrink. Do not touch 1235 "Faro Cash Reserve".
+
+---
+
+## FRONT OF QUEUE — PUSH AND MERGE THREE LEAD BRANCHES, THEN REHEARSE ACCT-F9633
+
+**OWNER, THIS HOUR: "Have any coder resolve the issue."**
+Full order: `docs/bus/00-LEAD-ORDER-2026-10-02-CC1-PUSH-AND-MERGE-THREE-LEAD-BRANCHES.md`
+
+My session has no git push credentials and a read-only GitHub token — measured:
+`git push` → `fatal: could not read Username for 'https://github.com'`; GitHub API POST refs → `403
+Resource not accessible by integration`. Fetch works, push does not. **Your shell has what mine
+does not.** The commits are written and gate-measured in the shared object store. Push them; do not
+re-author them.
+
+1. `claude/bus-f9634-cc1-rehearse-order` tip `34caeda586` — **push this first.** PUSH-F9635 is the fix
+   for the slow pushes: a blind unbounded `git fetch origin` inside two guards, >10 min vs 9.9s
+   targeted, plus ~1,110 git spawns collapsed into one `git rev-list`. 108 gate phases pass, whole
+   gate inside 115s. BUS-F9634 lands your 25-item queue on main — `origin/main`'s INBOX-CC-1.md is
+   **1176 lines shorter** than the working-tree copy, which is why you never saw the queue.
+2. `claude/fix-rls-uuid-cast-nullif-driver-samsara` and `claude/feed-gate-deposit-billpay-2` — older,
+   still unmerged. Same FAST-MERGE treatment.
+3. ACCT-F9633: cherry-pick `0c911dde5a` onto `cc-1/acct-f9633-one-factor-reserve-holdback`. Blocked
+   only by `verify-data-migrations-rehearsed`, which is correct — the migration UPDATEs live rows and
+   DELETEs a chart-of-accounts row. Fork `br-fancy-credit-akjnd07a`, apply the full pending chain on
+   real rows, amend the real `REHEARSED:` line, then FAST-MERGE. Neon after the merge, never before.
+
+The last gate failure on branch 1 is `verify-transaction-linkage-law: DATABASE_URL not set` — my
+session has none, yours does. Run it where it can connect. **Do not add ALLOW_OFFLINE_SKIP, do not
+fake a URL, do not skip it.** No `--no-verify`. No baseline additions.
