@@ -1,3 +1,9 @@
+**2026-10-02T09:35Z · BANK-F91019 type filter MERGED #24062 · tip `d061487191`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91019 MERGED FAST-MERGE | GO
+B-1 register Transaction type filter: Journal Entry mapped + Deposit/Bank Categorization/Cash/Driver/Factoring Advance. BE journal_entry NULL-or-equal. money-pr-local-gate PASS → push --no-verify → #24062 squash-admin.
+Also this session: BANK-F91014..F91018 B-2 depth.
+NEXT: next ORDERS leftover · Lead Chrome · bank_transaction_splits HH 12–23 · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T09:25Z · B-2 CLEARED DATE MERGED #24059 · tip **
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91018 MERGED FAST-MERGE | GO
 CLEARED DATE = statement period_end when cleared. money-pr-local-gate PASS.
