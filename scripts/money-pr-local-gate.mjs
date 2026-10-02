@@ -646,6 +646,15 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-factoring-interest-at-close-2150-ties.mjs",
     ],
   ],
+  // BANK-F9341 — a bank-statement upload is idempotent (re-upload adds nothing; genuine identical rows still land).
+  [
+    "verify-csv-statement-upload-idempotent",
+    [
+      "apps/backend/src/banking/transaction-ingestion.ts",
+      "apps/backend/src/banking/reconciliation.routes.ts",
+      "scripts/verify-csv-statement-upload-idempotent.mjs",
+    ],
+  ],
   // ROUND 326.2 items 3-4 — banking / factoring surfaces: every table tabular-nums, and Banking's
   // factoring reserve reads the factoring KPI engine (one reserve engine, no duplicate math).
   [
