@@ -3,7 +3,7 @@ import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
-import { computeUnitStops } from "./unit-stops.service.js";
+import { readPersistedUnitStops } from "./unit-stops.service.js";
 
 const query = z.object({
   operating_company_id: z.string().uuid(),
@@ -30,7 +30,8 @@ export async function registerUnitStopsRoutes(app: FastifyInstance) {
     const from = q.data.from ?? new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
     return withCurrentUser(user.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id',$1::text,true)`, [q.data.operating_company_id]);
-      return computeUnitStops(client as never, {
+      // CC-3 2f: read the persisted stop ledger (one source for every reader), not a fresh recompute.
+      return readPersistedUnitStops(client as never, {
         operatingCompanyId: q.data.operating_company_id,
         unitId: q.data.unit_id,
         geofenceId: q.data.geofence_id,

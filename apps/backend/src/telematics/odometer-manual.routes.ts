@@ -10,6 +10,7 @@
  * refused unless the caller explicitly passes allow_rollback=true with a reason, which is recorded
  * in the audit event for the override to be traceable.
  */
+import { upsertManualOdometerReading } from "./odometer-manual-upsert.service.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
@@ -91,23 +92,10 @@ export async function registerOdometerManualRoutes(app: FastifyInstance) {
       }
 
       const readAt = b.read_at ?? new Date().toISOString();
-      const inserted = await client.query<{ id: string }>(
-        `
-          INSERT INTO telematics.odometer_readings (
-            operating_company_id, unit_id, read_at, odometer_miles, source, confidence, recorded_by_user_id
-          )
-          VALUES ($1::uuid, $2::uuid, $3::timestamptz, $4, 'manual', 'entered', $5::uuid)
-          ON CONFLICT (operating_company_id, unit_id, telematics.odometer_reading_day(read_at), source)
-            WHERE read_at >= '2026-09-30T00:00:00Z'::timestamptz
-          DO UPDATE
-          SET odometer_miles = EXCLUDED.odometer_miles,
-              read_at = EXCLUDED.read_at,
-              recorded_by_user_id = EXCLUDED.recorded_by_user_id,
-              updated_at = now()
-          RETURNING id::text
-        `,
-        [b.operating_company_id, b.unit_id, readAt, b.odometer_miles, user.uuid]
-      );
+      const insertedId = await upsertManualOdometerReading(client as never, {
+        operatingCompanyId: b.operating_company_id, unitId: b.unit_id, readAt, odometerMiles: b.odometer_miles, recordedByUserId: user.uuid,
+      });
+      const inserted = { rows: [{ id: insertedId }] };
 
       await appendCrudAudit(client, user.uuid, "telematics.odometer_reading.manual_entered", {
         operating_company_id: b.operating_company_id,
