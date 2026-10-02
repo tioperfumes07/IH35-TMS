@@ -1,3 +1,8 @@
+**2026-10-02T10:06Z · BANK-F91023 Factoring Load-Costs Settlement EntityLink MERGED #24071 · tip **
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91023 MERGED FAST-MERGE | GO
+Shared FAC-08 loadCostColumnManifest Settlement/Tour EntityLinks via settlementId (Recourse + Chargebacks). Session stack: F91019–F91023 · CLAIM 202615221200.
+NEXT: author BANK_TX_SPLIT USMCA overrides at HH 12–23 · Lead Chrome · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T10:01Z · BANK-F91022 Factoring Settlement EntityLink + guard MERGED #24069 · tip `dfb78b5e1e`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91022 MERGED FAST-MERGE | GO
 Factoring Invoice Status Settlement # EntityLinks via lc_settlement_id; verify-factoring-settlement-number-real-join updated for source_document_ref (F91021 break). Also this session: F91019–F91021 · CLAIM 202615221200.
