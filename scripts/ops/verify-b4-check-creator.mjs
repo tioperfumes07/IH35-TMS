@@ -69,6 +69,12 @@ function main() {
   assertIncludes(form, "billMatchesFind", FORM);
   assertIncludes(form, "openBillsNotQueued", FORM);
   assertIncludes(form, 'data-testid="b4-find-bill-no"', FORM);
+  // BANK-F91035 — Class header wired to createCheck class_id (ORDERS §B-4 / QBO check chrome)
+  assertIncludes(form, 'data-b4-check-class="1"', FORM);
+  assertIncludes(form, 'data-testid="b4-check-class"', FORM);
+  assertIncludes(form, "class_id: classId", FORM);
+  assertIncludes(form, "classesCatalogClient", FORM);
+  assertIncludes(form, 'createKind="class"', FORM);
   assertIncludes(form, 'data-b4-restore-draft="1"', FORM);
   assertIncludes(form, "You have a draft saved. Restore draft", FORM);
   assertIncludes(form, "checkDraftStorageKey", FORM);
