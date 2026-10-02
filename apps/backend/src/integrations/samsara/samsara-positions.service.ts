@@ -3,7 +3,6 @@ import {
   deriveEngineState,
   ingestVehicleLocationEvent,
 } from "../../telematics/vehicle-locations.service.js";
-import { processArrivalDetectionsForGpsPoint } from "../../telematics/arrival-detection.service.js";
 import { processGeofenceDetectionsForGpsPoint } from "../../telematics/geofence-detector.service.js";
 import { parseCityState, SamsaraApiError, SamsaraClient } from "./samsara-client.js";
 import type { SamsaraVehicleStat } from "./samsara-client.js";
@@ -105,61 +104,11 @@ export async function loadUnitIdBySamsaraVehicleId(
 
 
 /**
- * T-01 (Lead, 2026-09-30) — ARRIVAL DETECTION ON THE POLLING PATH.
- *
- * MEASURED LIVE before writing this, on br-fancy-credit-akjnd07a:
- *   dispatch.stop_arrivals                     0 rows, EVER
- *   integrations.samsara_webhook_events        0 rows, EVER
- *   telematics.vehicle_locations         828,445 rows, newest seconds old
- *   all 16 open loads status='dispatched', newest status write 2026-09-28
- *
- * processArrivalDetectionsForGpsPoint had EXACTLY ONE caller: the Samsara webhook projector
- * (integrations/samsara/webhook-projectors/vehicle-projector.ts). That projector runs only on
- * webhook events, and this account has never delivered one. So the engine that advances a load
- * through its stops has never executed against a single GPS point, while the CRON path -- the one
- * that actually feeds this system, hundreds of thousands of points -- ingested every one of them
- * and called only the GEOFENCE detector beside it.
- *
- * That is why every truck on the Truck Line sits on "Dispatched": nothing has written a stop
- * arrival, so nothing advances the load. The board was honest; the engine was never wired.
- *
- * Both cron ingest paths now call arrival detection on every position they persist, immediately
- * after the geofence detector that has always run there, with the SAME inputs.
- *
- * WHY THIS IS SAFE TO CALL PER POINT:
- *   - It only runs on `didInsert` -- ingestVehicleLocationEvent is ON CONFLICT DO NOTHING against
- *     (operating_company_id, raw_samsara_event_id), so a replayed point is a no-op and detection
- *     cannot double-fire for it.
- *   - The service is itself idempotent per stop: shouldTriggerArrival() consults the last arrival
- *     for that (stop, unit) and refuses to re-trigger.
- *   - It returns {checked_stops: 0} immediately when the unit has no remaining stops, which is the
- *     common case, so the cost on an unassigned truck is one indexed query.
- *
- * ISOLATED ON PURPOSE: a failure here must never take position ingest down with it. Positions are
- * the live map and the dispatch board; arrivals are a derived signal. The error is LOGGED with its
- * ids and counted, never swallowed -- silence is what let this stay invisible.
+ * ONE ARRIVAL DETECTOR (CC-3 queue 6, E-09 retirement). A load-stop arrival is the geofence detector's 'entered' event on
+ * the stop's bound fence (bindLoadToGeofences), stamped on mdata.load_stops.actual_arrival_at in the same transaction.
+ * The second, 250 ft per-fix detector (telematics/arrival-detection.service.ts -> dispatch.stop_arrivals) is retired:
+ * nothing read its rows. arrivals_triggered counts the stops the fence detector stamped on this run.
  */
-async function detectArrivalsForIngestedPoint(
-  client: Parameters<typeof processArrivalDetectionsForGpsPoint>[0],
-  input: { operating_company_id: string; unit_id: string; latitude: number; longitude: number; occurred_at: string },
-  errors: string[]
-): Promise<number> {
-  try {
-    const res = await processArrivalDetectionsForGpsPoint(client, {
-      operating_company_id: input.operating_company_id,
-      unit_id: input.unit_id,
-      latitude: input.latitude,
-      longitude: input.longitude,
-      occurred_at: input.occurred_at,
-    });
-    return res.arrivals_triggered;
-  } catch (error) {
-    errors.push(
-      `arrival_detection_failed:unit=${input.unit_id}:${String((error as Error)?.message ?? error).slice(0, 200)}`
-    );
-    return 0;
-  }
-}
 
 export async function syncSamsaraVehicleLocations(
   client: PgClient,
@@ -228,7 +177,7 @@ export async function syncSamsaraVehicleLocations(
     });
     if (didInsert) {
       inserted += 1;
-      await processGeofenceDetectionsForGpsPoint(client as never, {
+      const fence = await processGeofenceDetectionsForGpsPoint(client as never, {
         operating_company_id: operatingCompanyId,
         unit_id: unitId,
         latitude: location.latitude,
@@ -236,18 +185,7 @@ export async function syncSamsaraVehicleLocations(
         occurred_at: location.captured_at,
         source: "samsara_gps",
       });
-      // T-01 — see detectArrivalsForIngestedPoint above. This is the call that has never run.
-      arrivalsTriggered += await detectArrivalsForIngestedPoint(
-        client as never,
-        {
-          operating_company_id: operatingCompanyId,
-          unit_id: unitId,
-          latitude: location.latitude,
-          longitude: location.longitude,
-          occurred_at: location.captured_at,
-        },
-        errors
-      );
+      arrivalsTriggered += fence.stop_arrivals_stamped;
     }
   }
 
@@ -491,7 +429,7 @@ export async function syncSamsaraVehicleStats(
       });
       if (didInsert) {
         positionsInserted += 1;
-        await processGeofenceDetectionsForGpsPoint(client as never, {
+        const fence = await processGeofenceDetectionsForGpsPoint(client as never, {
           operating_company_id: operatingCompanyId,
           unit_id: unitId,
           latitude: stat.latitude,
@@ -499,18 +437,7 @@ export async function syncSamsaraVehicleStats(
           occurred_at: stat.captured_at,
           source: "samsara_gps",
         });
-        // T-01 — see detectArrivalsForIngestedPoint above. This is the call that has never run.
-        statsArrivalsTriggered += await detectArrivalsForIngestedPoint(
-          client as never,
-          {
-            operating_company_id: operatingCompanyId,
-            unit_id: unitId,
-            latitude: stat.latitude,
-            longitude: stat.longitude,
-            occurred_at: stat.captured_at,
-          },
-          errors
-        );
+        statsArrivalsTriggered += fence.stop_arrivals_stamped;
       }
     }
 

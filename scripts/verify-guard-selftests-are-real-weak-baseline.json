@@ -68,7 +68,6 @@
     "verify-applied-migrations-immutable.mjs",
     "verify-ar-aging-contract.mjs",
     "verify-ar-aging-proforma-exclusion.mjs",
-    "verify-arrival-haversine-uses-locked-radius.mjs",
     "verify-asset-registry.mjs",
     "verify-attachment-draft-reconcile.mjs",
     "verify-audit-chain-cron-registered.mjs",
