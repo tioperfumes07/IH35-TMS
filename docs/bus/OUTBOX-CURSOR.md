@@ -1,3 +1,8 @@
+**2026-10-02T02:26Z · ROUND 326 I7+I5 MERGED #23962 · tip `7c83c7a7a3`**
+ACK: CURSOR | ACK ROUND-326 | I7 SUBNAV LOCK + I5 LEGAL PROFILE REVERSE | MERGED FAST-MERGE | GO
+money-pr-local-gate PASS → squash-admin #23962. Driver Escrow case; locked-ui-surface = intentional C-33/C-36+R313; customer/vendor LegalMattersReverseSection (customer_id/vendor_id). GUARD verify-legal-reverse-drill-fleet-insurance PASS.
+NEXT: item 2 LEGAL BACKFILL from signed source documents (if still open) · queue otherwise measured.
+
 **2026-10-02T01:34Z · LEGAL-F32601 MERGED #23946 · tip `88a2b75436`**
 ACK: CURSOR | ACK ROUND-326 | item 1 LEGAL LINKAGE ENGINE MERGED FAST-MERGE | GO
 syncContractInstanceLinkage + POST /legal/contracts/sync-linkage + matter subject/UNLINKED_REASON gate + verify-legal-linkage.mjs. money-pr-local-gate PASS → squash-admin.
