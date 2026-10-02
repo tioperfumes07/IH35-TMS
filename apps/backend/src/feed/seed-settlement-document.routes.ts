@@ -30,6 +30,7 @@ import {
   type TruthDriverDoc,
   type QueryableClient,
 } from "./seed-settlement-document.service.js";
+import { ingestDocumentExpenses } from "./document-expense-ingestion.service.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
 const TRUTH_JSON_PATH = path.join(ROOT, "data/alwaystrack/settlements-truth-2026-09-13.json");
@@ -149,5 +150,39 @@ export function registerSeedSettlementDocumentRoutes(app: FastifyInstance) {
     });
 
     return reply.code(200).send({ seed: seedResult, gl: glReport, billing_sync: billingSync });
+  });
+
+  /**
+   * ROUND 326 queue item 9 (G-01) — POST /api/v1/feed/settlement-document/expenses — ingest ONLY the expense lines
+   * of one signed settlement document onto its existing loads (document-expense-ingestion.service.ts). Owner-run:
+   * idempotent per line, refuses by name per line, dry_run plans without writing. Never touches the bank.
+   */
+  app.post("/api/v1/feed/settlement-document/expenses", WRITE_RL, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentUser(req, reply);
+    if (!user) return;
+    if (!AUTHORITY_ROLES.has(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
+    const parsed = runSeedDocumentBodySchema.extend({ dry_run: z.boolean().default(true) }).safeParse(req.body ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+    const b = parsed.data;
+    await assertCompanyMembership(user.uuid, b.operating_company_id);
+    let companyDoc: TruthCompanyDoc;
+    try {
+      ({ companyDoc } = findDocumentPair(b.document_number));
+    } catch (err) {
+      if (err instanceof TruthDocumentNotFoundError) {
+        return reply.code(err.status).send({ error: "truth_document_not_found", document_number: b.document_number });
+      }
+      throw err;
+    }
+    const result = await withCurrentUser(user.uuid, async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [b.operating_company_id]);
+      return ingestDocumentExpenses(client as unknown as QueryableClient, {
+        operatingCompanyId: b.operating_company_id,
+        actorUserId: user.uuid,
+        doc: companyDoc,
+        dryRun: b.dry_run,
+      });
+    });
+    return reply.code(200).send(result);
   });
 }
