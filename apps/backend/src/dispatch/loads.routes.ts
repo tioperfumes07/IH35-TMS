@@ -1962,6 +1962,14 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
     if ("error" in result) {
       if (result.error === "not_found") return reply.code(404).send({ error: "dispatch_load_not_found" });
+      if (result.error === "status_changed") {
+        return reply.code(409).send({
+          error: "status_changed",
+          from_status: result.from,
+          to_status: result.to,
+          message: "This load's status changed while you were moving it (GPS, driver app or another user). Refresh and try again.",
+        });
+      }
       if (result.error === "reefer_lumper_confirmation_required") {
         return reply.code(409).send({
           error: "reefer_lumper_confirmation_required",

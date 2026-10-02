@@ -70,6 +70,9 @@ export async function registerLoadAbandonmentRoutes(app: FastifyInstance) {
       const msg = String((error as Error)?.message ?? "unknown_error");
       if (msg.includes("load_not_found")) return reply.code(404).send({ error: "load_not_found" });
       if (msg.includes("driver_not_assigned_to_load")) return reply.code(400).send({ error: "driver_not_assigned_to_load" });
+      if (msg.includes("abandonment_invalid_transition_from_")) {
+        return reply.code(409).send({ error: "invalid_transition", message: "Only a load in transit can be marked abandoned.", detail: msg });
+      }
       throw error;
     }
   });

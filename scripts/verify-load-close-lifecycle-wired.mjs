@@ -25,7 +25,8 @@ const ROOT = path.resolve(__dirname, "..");
 const SERVICE = path.join(ROOT, "apps/backend/src/dispatch/load-billing-lifecycle.service.ts");
 const LATCH = path.join(ROOT, "apps/backend/src/dispatch/delivery-evidence-latch.ts");
 const ADVANCE = path.join(ROOT, "apps/backend/src/accounting/factoring-advances.routes.ts");
-const LOADS_ROUTES = path.join(ROOT, "apps/backend/src/mdata/loads.routes.ts");
+// CC-3 2b: the full-enum table moved to the one state-machine module.
+const LOADS_ROUTES = path.join(ROOT, "apps/backend/src/dispatch/load-state-machine.ts");
 
 const BILLING_TAIL_ORDER = [
   "delivered",
@@ -45,7 +46,8 @@ function read(p) {
 }
 
 export function parseAllowedTransitions(src) {
-  const start = src.indexOf("allowedStatusTransitions");
+  let start = src.indexOf("MDATA_STATUS_TRANSITIONS");
+  if (start < 0) start = src.indexOf("allowedStatusTransitions");
   if (start < 0) return {};
   const brace = src.indexOf("{", start);
   const end = src.indexOf("};", brace);

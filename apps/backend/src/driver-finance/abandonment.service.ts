@@ -4,6 +4,7 @@
 // is itself a settlement-scoped LINE item — the settlement HEADER posts the one aggregate balanced
 // JE at finalize via settlement-payrun-close.service.ts's closeSettlementPayRun (createJournalEntry) -- CORRECTED 2026-09-02: postSettlementToGl was RETIRED (SET-01, 2026-07-26), never live in prod (verified 2026-09-02, C6).
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { validateLoadStatusTransition } from "../dispatch/load-state-machine.js";
 import { resolveSettlementMinNet } from "./settlement-deduction-cap.service.js";
 import { forfeitDriverEscrowOnClient } from "./escrow-forfeit.service.js";
 
@@ -187,23 +188,29 @@ export async function recordLoadAbandonmentChargeback(
   const defaults = await loadAbandonmentDefaults(client, input.operatingCompanyId);
 
   const loadRes = await client.query<{
+    status: string;
     rate_total_cents: string | number | null;
     assigned_primary_driver_id: string | null;
     assigned_secondary_driver_id: string | null;
     team_id: string | null;
   }>(
     `
-      SELECT rate_total_cents, assigned_primary_driver_id, assigned_secondary_driver_id, team_id
+      SELECT status::text AS status, rate_total_cents, assigned_primary_driver_id, assigned_secondary_driver_id, team_id
       FROM mdata.loads
       WHERE id = $1
         AND operating_company_id = $2::uuid
         AND soft_deleted_at IS NULL
       LIMIT 1
+      FOR UPDATE
     `,
     [input.loadId, input.operatingCompanyId]
   );
   const load = loadRes.rows[0];
   if (!load) throw new Error("load_not_found");
+  // CC-3 queue 2b: abandonment goes through the one state machine — only a load on the road (in transit) can be
+  // abandoned; a delivered / invoiced / cancelled load is refused instead of being flipped.
+  const edge = validateLoadStatusTransition(load.status, "abandoned");
+  if (!edge.ok) throw new Error(`abandonment_invalid_transition_from_${edge.from}`);
 
   let matchesDriver =
     load.assigned_primary_driver_id === input.driverId || load.assigned_secondary_driver_id === input.driverId;
@@ -243,8 +250,9 @@ export async function recordLoadAbandonmentChargeback(
       WHERE id = $1
         AND operating_company_id = $2::uuid
         AND soft_deleted_at IS NULL
+        AND status::text = $3
     `,
-    [input.loadId, input.operatingCompanyId]
+    [input.loadId, input.operatingCompanyId, load.status]
   );
 
   const insertRes = await client.query<Record<string, unknown>>(

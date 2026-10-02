@@ -50,6 +50,7 @@ export async function transitionDispatchLoadInClientTx(client: TransitionClient,
         AND operating_company_id = $2::uuid
         AND soft_deleted_at IS NULL
       LIMIT 1
+      FOR UPDATE
     `,
     [loadId, operatingCompanyId]
   );
@@ -90,15 +91,19 @@ export async function transitionDispatchLoadInClientTx(client: TransitionClient,
       return { error: "reefer_lumper_confirmation_required" as const };
     }
   }
+  // Compare-and-set (CC-3 queue 2b): the row is locked above and the UPDATE only lands while the status is still the
+  // one this transition validated — a concurrent writer (GPS auto-status, driver PWA stamp, bulk) can never be
+  // overwritten by a stale decision.
   const transitionUpdate = await client.query<{ id: string }>(
     `UPDATE mdata.loads
      SET status = $2
      WHERE id = $1
        AND operating_company_id = $3::uuid
+       AND status::text = $4
      RETURNING id`,
-    [loadId, mdataStatus, operatingCompanyId]
+    [loadId, mdataStatus, operatingCompanyId, current.status]
   );
-  if (!transitionUpdate.rows[0]?.id) return { error: "not_found" as const };
+  if (!transitionUpdate.rows[0]?.id) return { error: "status_changed" as const, from: currentStatus, to: targetStatus };
 
   // ZONE 1 REVERSE audit — record the undo with its reason so it is exactly as traceable as any
   // forward transition (the row-mutation trigger already captures who/when; this names WHY and
