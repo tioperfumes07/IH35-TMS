@@ -562,10 +562,22 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-fuel-posts-only-on-bank-match",
     [
       "apps/backend/src/accounting/fuel-posting/",
+      "apps/backend/src/accounting/bank-recon/",
       "apps/backend/src/fuel/",
       "apps/backend/src/integrations/relay-payments/",
       "apps/backend/src/feed/",
       "scripts/verify-fuel-posts-only-on-bank-match.mjs",
+    ],
+  ],
+  // ROUND 288.2 — one match writer + one unmatch writer; fuel match must write JE same txn.
+  [
+    "verify-one-bank-match-writer-writes-je",
+    [
+      "apps/backend/src/accounting/bank-recon/",
+      "apps/backend/src/banking/link-suggestions-actions.routes.ts",
+      "apps/backend/src/banking/reconciliation.routes.ts",
+      "apps/backend/src/banking/obligation-reconcile.routes.ts",
+      "scripts/verify-one-bank-match-writer-writes-je.mjs",
     ],
   ],
   // ROUND 326.2 items 3-4 — banking / factoring surfaces: every table tabular-nums, and Banking's

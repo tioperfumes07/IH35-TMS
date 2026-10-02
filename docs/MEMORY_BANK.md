@@ -1325,3 +1325,18 @@ Full coder instructions: `claude/2026-09-13-ABSORPTION-INGEST-AND-DISPUTE-WINDOW
 1. **BANK-F91038 Amount to Credit → vendor credit on Save (Tier A).** `applyVendorBillPaymentBatch` allows `amount_cents > sum(apps)` but bank cache uses full `amount_cents` while JE posts only apps — overpay without a poster = TB hole. `createVendorCredit` is subledger-only (no `vendor_credit` in posting-engine source types). Need existing poster path or owner-named GL treatment before unblocking Save. Mirror AR overpay→credit_memo if one exists; never invent JE math.
 2. Lead Chrome on Write Check (Class + Settlement No + Location + §14 driver chrome) at deployed tip.
 3. clean-app APPLY AUTH (owner) — seats do not DELETE USMCA rows without AUTH.
+
+## Active Architectural Decisions — ROUND 288.2 bank match fuel + recourse (Cursor, 2026-10-02)
+
+- **Survivor match writer:** `acceptMatchWithResolveDifference` (via `acceptReconMatch` proxies only).
+- **Survivor unmatch writer:** `unmatchBankTransaction` (void cascades use `unmatchBankTransactionById`).
+- **Fuel:** match of `fuel_transaction` / `relay_fuel` calls `postFuelFillOnBankMatch` → CC-2 `postFuelExpenseOnClient` on the **same** match client; stamps `matched_journal_entry_id` in the same UPDATE as `review_state='matched'`. Null unit/load = engine defect (throw). Multi-fuel refuse.
+- **Recourse:** bank line on GL 1230 / `factor_reserve_held` matched to `factoring_advance` calls `postFactoringChargebackEvent({ client })` same txn (no nested `withCurrentUser`).
+- **Guard:** `verify-one-bank-match-writer-writes-je.mjs` (money-pr-local-gate). Deleted silent writers: session recon inline unmatch UPDATE; accounting recon `rejectReconMatch`-as-unmatch; prior accept stampers (#23994).
+
+## Active Architectural Decisions — ROUND 296 Cash Rsv + match + calendars (Cursor, 2026-10-02)
+
+- **1230 vs 1235 (owner retract):** Escrow/Security Reserve = 1230; Cash Reserve = 1235 (releasable). 1236 retires into 1230. Cash Rsv posts through existing factoring poster only.
+- **Faro identity:** face − escrow − cash_rsv − discount − fees − dispatch − sch_fee = net_advance. Discount = factoring fee; Sch Fee + Wire = transaction fees (never one bucket). Sch Fee at collection against cash.
+- **Match survivors:** acceptMatchWithResolveDifference / unmatchBankTransaction; fuel JE same txn; 1230 repurchase → postFactoringChargebackEvent({client}).
+- **Calendars:** DateTimePicker portal fix (UI-F9637) verified 15/15 vitest; QBO presets include today/this_week; Legal alerts due_at range + 132px Due.

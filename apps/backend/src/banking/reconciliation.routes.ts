@@ -17,7 +17,6 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type { PoolClient } from "pg";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
-import { reverseJournalEntryNoFlip } from "../accounting/journal-entries.service.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { computePayloadHashFromTxn, enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
@@ -29,7 +28,7 @@ import { assertBankAccountUsable, bankTransactionHiddenFilterSql, isBankAccountH
 import { computeAdjustedBalanceSummary } from "./adjusted-balance-rec.js";
 import { postReconciliationAdjustments } from "./recon-adjustments.service.js";
 import { ageUnclearedTransactions, type ReconcilingItemClass } from "./reconciling-item-aging.js";
-import { acceptReconMatch } from "../accounting/bank-recon/recon-worklist.service.js";
+import { acceptReconMatch, unmatchBankTransaction } from "../accounting/bank-recon/recon-worklist.service.js";
 import {
   AccountRegisterToggleError,
   clearReconcilableGlLine,
@@ -1209,67 +1208,19 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     const session = await loadSession(user.uuid, params.data.sessionId, query.data.operating_company_id);
     if (!session) return reply.code(404).send({ error: "session_not_found" });
 
-    const updated = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      // BANK-RECON-UNMATCH-CLEARS-ONLY-THREE-OF-SIX-MATCH-KINDS — this UPDATE used to clear only
-      // matched_load_id/matched_bill_id/matched_settlement_id (the 3 kinds THIS route's own /match
-      // handler writes). matched_expense_id/matched_transfer_id/matched_journal_entry_id are written
-      // by a SEPARATE subsystem (accounting/bank-recon/match.service.ts's accept flow, denormalized
-      // per MATCHED_COLUMN_BY_KIND onto this same bank_transactions row) — Unmatch silently left those
-      // 3 kinds still matched with a 200 {ok:true} response. Extended to clear all 6 the frontend
-      // (ReconciliationWorkspace.tsx) actually renders as matched. A CTE captures the PRE-clear values
-      // of the 3 other-subsystem kinds so they can be recorded, not just silently unlinked — never
-      // voiding/reversing the underlying expense/transfer/JE record itself (those stay valid GL
-      // entries; only THIS transaction's link to them is cleared, same semantics load/bill/settlement
-      // already had).
-      const res = await client.query<{
-        id: string;
-        prev_expense_id: string | null;
-        prev_transfer_id: string | null;
-        prev_journal_entry_id: string | null;
-        prev_load_id: string | null;
-        prev_bill_id: string | null;
-        prev_settlement_id: string | null;
-      }>(
+    // ROUND 288.2 item 2 — ONE unmatch writer. Session scope is a gate only; the silent inline
+    // UPDATE+reverse that lived here is deleted. Survivor: unmatchBankTransaction (reverses JE).
+    const inSession = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+      const res = await client.query<{ id: string }>(
         `
-          WITH prior AS (
-            SELECT id, matched_expense_id, matched_transfer_id, matched_journal_entry_id,
-                   matched_load_id, matched_bill_id, matched_settlement_id
+          SELECT id::text
             FROM banking.bank_transactions
-            WHERE id = $1
-              AND bank_account_id = $2
-              AND operating_company_id = $3::uuid
-              AND transaction_date BETWEEN $4 AND $5
-              AND voided_at IS NULL
-          )
-          UPDATE banking.bank_transactions bt
-          SET
-            matched_load_id = NULL,
-            matched_bill_id = NULL,
-            matched_settlement_id = NULL,
-            matched_expense_id = NULL,
-            matched_transfer_id = NULL,
-            matched_journal_entry_id = NULL,
-            -- ACC-20 — this route never touched review_state at all: every matched_*_id pointer
-            -- was cleared but the row stayed 'matched', an orphaned state (matched but nothing is
-            -- matched) that recon-worklist.service.ts's own unmatchBankTransaction already avoids
-            -- ('for_review' is the correct "back in the queue" state; 'unmatched' is not a legal
-            -- review_state per the CHECK constraint). Matches that sibling function's behavior.
-            review_state = 'for_review',
-            -- ROUND 326 queue item 14 (G-18): same as unmatchBankTransaction — a reversed categorization sends the line
-            -- back to the categorization queue, never left 'categorized' for the backlog poster to re-post.
-            status = CASE WHEN prior.matched_journal_entry_id IS NOT NULL AND bt.status = 'categorized'
-                          THEN 'pending_categorization' ELSE bt.status END,
-            updated_at = now()
-          FROM prior
-          WHERE bt.id = prior.id
-          RETURNING
-            bt.id,
-            prior.matched_expense_id::text AS prev_expense_id,
-            prior.matched_transfer_id::text AS prev_transfer_id,
-            prior.matched_journal_entry_id::text AS prev_journal_entry_id,
-            prior.matched_load_id::text AS prev_load_id,
-            prior.matched_bill_id::text AS prev_bill_id,
-            prior.matched_settlement_id::text AS prev_settlement_id
+           WHERE id = $1::uuid
+             AND bank_account_id = $2::uuid
+             AND operating_company_id = $3::uuid
+             AND transaction_date BETWEEN $4 AND $5
+             AND voided_at IS NULL
+           LIMIT 1
         `,
         [
           body.data.transaction_id,
@@ -1279,55 +1230,17 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           session.period_end,
         ]
       );
-      const row = res.rows[0];
-      if (!row) return false;
+      return Boolean(res.rows[0]);
+    });
+    if (!inSession) return reply.code(404).send({ error: "transaction_not_in_session_period" });
 
-      // banking.reconciliation_matches is the audit-of-record for every matched kind (LINKAGE-
-      // INTEGRITY-LAW: a match is a record, not a bare pointer). Mark each previously-matched kind
-      // 'rejected' there too, mirroring recon-worklist.service.ts's rejectReconMatch, so a future
-      // match-suggestion pass doesn't just re-surface the same pairing with no memory of this unmatch.
-      // load/bill/settlement (this route's OWN /match handler's kinds, migration 202613350001 widened
-      // the kind CHECK to accept them) are included here for the same reason expense/transfer/je
-      // already were — no kind should be releasable without leaving a voided/rejected trail.
-      const rejectedKinds: Array<{ kind: "expense" | "transfer" | "je" | "load" | "bill" | "settlement"; id: string }> = [];
-      if (row.prev_expense_id) rejectedKinds.push({ kind: "expense", id: row.prev_expense_id });
-      if (row.prev_transfer_id) rejectedKinds.push({ kind: "transfer", id: row.prev_transfer_id });
-      if (row.prev_journal_entry_id) rejectedKinds.push({ kind: "je", id: row.prev_journal_entry_id });
-      if (row.prev_load_id) rejectedKinds.push({ kind: "load", id: row.prev_load_id });
-      if (row.prev_bill_id) rejectedKinds.push({ kind: "bill", id: row.prev_bill_id });
-      if (row.prev_settlement_id) rejectedKinds.push({ kind: "settlement", id: row.prev_settlement_id });
+    await unmatchBankTransaction({
+      operating_company_id: query.data.operating_company_id,
+      bank_transaction_id: body.data.transaction_id,
+      actor_user_uuid: user.uuid,
+    });
 
-      // BANK-F9998 F6 — unmatch used to only null matched_journal_entry_id on the bank row; the JE
-      // itself stayed posted forever, orphaned. Rule 4 (VOID = reversal) applies here exactly like
-      // any other void: reverse the JE through the shared service before releasing the link.
-      if (row.prev_journal_entry_id) {
-        await reverseJournalEntryNoFlip(client, {
-          operatingCompanyId: query.data.operating_company_id,
-          journalEntryId: row.prev_journal_entry_id,
-          reason: "bank_transaction_unmatched",
-          actorUserId: user.uuid,
-        });
-      }
-
-      for (const { kind, id } of rejectedKinds) {
-        await client.query(
-          `
-            INSERT INTO banking.reconciliation_matches (
-              operating_company_id, bank_transaction_id, ledger_entry_kind, ledger_entry_id,
-              match_score, match_state, matched_at, matched_by_user_uuid
-            )
-            VALUES ($1::uuid, $2::uuid, $3::text, $4::uuid, 0, 'rejected', now(), $5::uuid)
-            ON CONFLICT (bank_transaction_id, ledger_entry_kind, ledger_entry_id)
-            DO UPDATE SET
-              match_score = 0,
-              match_state = 'rejected',
-              matched_at = now(),
-              matched_by_user_uuid = EXCLUDED.matched_by_user_uuid
-          `,
-          [query.data.operating_company_id, body.data.transaction_id, kind, id, user.uuid]
-        );
-      }
-
+    await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       await appendCrudAudit(
         client,
         user.uuid,
@@ -1336,15 +1249,13 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           resource_type: "banking.bank_transactions",
           resource_id: body.data.transaction_id,
           session_id: session.id,
-          rejected_ledger_kinds: rejectedKinds.map((r) => r.kind),
+          via: "unmatchBankTransaction",
         },
         "info",
         "P5-T2-RECON"
       );
-      return true;
     });
 
-    if (!updated) return reply.code(404).send({ error: "transaction_not_in_session_period" });
     return { ok: true };
   });
 

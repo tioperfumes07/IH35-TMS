@@ -30,9 +30,17 @@ export function check(files) {
   const firstPost = maybe.indexOf("postFuelExpenseFromEvent(", i);
   if (i < 0 || gate < 0 || (firstPost >= 0 && gate > firstPost)) problems.push(`${MAYBE}: the import-time fuel poster can post`);
   if (!/export async function postFuelExpenseOnClient\(/.test(files[POSTER] ?? "")) problems.push(`${POSTER}: postFuelExpenseOnClient (the bank-match hook) is missing`);
+  // ROUND 288.2 — match engine MUST call the bank-match hook (CC-2 #24027 FOR CURSOR).
+  const matchSrc = files[MATCH] ?? "";
+  if (!/postFuelFillOnBankMatch|postFuelExpenseOnClient/.test(matchSrc)) {
+    problems.push(`${MATCH}: must call postFuelFillOnBankMatch / postFuelExpenseOnClient inside the match (fuel flags alone book nothing)`);
+  }
+  if (!/matched_journal_entry_id = \$5::uuid/.test(matchSrc) && !/matched_journal_entry_id = \$\{/.test(matchSrc) && !/fuelJournalEntryId/.test(matchSrc)) {
+    problems.push(`${MATCH}: fuel match must stamp matched_journal_entry_id in the same transaction as review_state='matched'`);
+  }
   for (const [f, src] of Object.entries(files)) {
     if (!f.startsWith("apps/backend/src/") || /\.test\.ts$|__tests__/.test(f)) continue;
-    if (f === POSTER || f === MAYBE || f === MATCH || REPORTED_OTHER_LANE.has(f)) continue;
+    if (f === POSTER || f === MAYBE || f === MATCH || f === "apps/backend/src/accounting/bank-recon/bank-match-fuel-post.service.ts" || REPORTED_OTHER_LANE.has(f)) continue;
     if (/\bpostFuelExpense(FromEvent|OnClient)\(/.test(src)) problems.push(`${f}: posts fuel expense outside the bank match`);
     if (/SET\s+posted_to_gl\s*=\s*true/i.test(src)) problems.push(`${f}: sets relay posted_to_gl by hand`);
   }

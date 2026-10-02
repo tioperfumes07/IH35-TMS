@@ -124,6 +124,10 @@ const EXEMPT_ROUTES = [
   { pattern: /\/accounting\/vendor-credits\/.*\/void/, reason: "vendor credit void — reverses applications, no direct GL" },
   // Dispute cancellation — workflow state, not a money document void
   { pattern: /\/accounting\/invoice-disputes\/.*\/cancel/, reason: "dispute cancellation — workflow state, not money" },
+  // ROUND 288.2 — recon session void is status-only (open session → voided). No JE. Previously
+  // masked because reverseJournalEntryNoFlip lived in the same file for the (now-deleted) silent
+  // session unmatch writer; unmatch now proxies unmatchBankTransaction in recon-worklist.service.
+  { pattern: /\/banking\/reconciliation\/:sessionId\/void/, reason: "reconciliation session status void — no GL; money unmatch is unmatchBankTransaction" },
 ];
 
 function fail(msg) {

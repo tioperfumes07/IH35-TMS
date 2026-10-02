@@ -7,11 +7,23 @@ import { TableSearch } from "./TableSearch";
 import { FILTER_CONTROL_SIZE_CLASS, TOOLBAR_ICON_SIZE_CLASS } from "../../design/tokens";
 import { Button } from "../Button";
 
-/** QBO-style date range presets — same set as Account Register (This Month / Last Month / …). */
+/** QBO-style date range presets — today / this week / this month / this quarter / this year / custom. */
 export function applyUniversalDatePreset(preset: string): { from: string; to: string } | null {
   const today = companyToday();
-  const [y, m] = today.split("-").map(Number);
+  const [y, m, d] = today.split("-").map(Number);
   switch (preset) {
+    case "today":
+      return { from: today, to: today };
+    case "this_week": {
+      // Company-local week Mon–Sun containing today (QBO-style week bounds).
+      const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay(); // 0=Sun
+      const mondayOffset = dow === 0 ? -6 : 1 - dow;
+      const mon = new Date(Date.UTC(y, m - 1, d + mondayOffset));
+      const sun = new Date(Date.UTC(y, m - 1, d + mondayOffset + 6));
+      const iso = (dt: Date) =>
+        `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;
+      return { from: iso(mon), to: iso(sun) };
+    }
     case "this_month": {
       const b = monthBoundsIso(today);
       return { from: b.start, to: b.end };
@@ -38,12 +50,12 @@ export function applyUniversalDatePreset(preset: string): { from: string; to: st
   }
 }
 
-const QBO_DATE_PRESETS: Array<{ value: string; label: string }> = [
+export const QBO_DATE_PRESETS: Array<{ value: string; label: string }> = [
+  { value: "today", label: "Today" },
+  { value: "this_week", label: "This Week" },
   { value: "this_month", label: "This Month" },
-  { value: "last_month", label: "Last Month" },
   { value: "this_quarter", label: "This Quarter" },
   { value: "this_year", label: "This Year" },
-  { value: "ytd", label: "Year to date" },
   { value: "custom", label: "Custom" },
 ];
 

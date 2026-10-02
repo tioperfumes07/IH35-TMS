@@ -9,6 +9,7 @@ import { DatePicker } from "../forms/DatePicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { companyToday } from "../../lib/businessDate";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { formatUsdCents } from "../../lib/money";
 import { JournalEntryTypePicker } from "./JournalEntryTypePicker";
 
 type Props = {
@@ -317,7 +318,7 @@ export function ManualJEModal({ open, operatingCompanyId, onClose, onSaved, pref
                   : "rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-red-700"
               }
             >
-              Debits ${(totalDebitCents / 100).toFixed(2)} / Credits ${(totalCreditCents / 100).toFixed(2)}{" "}
+              Debits {formatUsdCents(totalDebitCents)} / Credits {formatUsdCents(totalCreditCents)}{" "}
               {balanced ? "Balanced ✓" : "Not balanced"}
             </div>
             <div className="flex gap-2">
