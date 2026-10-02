@@ -448,6 +448,16 @@ async function main() {
     if (!ready) throw new Error("migration 202615210200 is not applied — the listed-row purge arm does not exist");
     const masterBefore = SCOPE === "zero-reset" ? await masterCounts(client) : null;
     if (SCOPE === "zero-reset") {
+      // HARD ASSERTION (CC-3 preservation ledger, ROUND 296 6c / 288.3 5): nothing the zero-reset deletes, unlinks or
+      // resets may live in a preserved table — preserve.* (806,989 positions / 714,595 HOS), master data, identity,
+      // catalogs, audit. Checked against the FINAL plan right before the first write; any hit throws and rolls back.
+      const touched = [...order, ...RESETS.map((r) => r.table)];
+      const hits = touched.filter((t) => t.split(".")[0] === "preserve" || isMasterOrPreserve(t));
+      if (hits.length) throw new Error(`ZERO-RESET REFUSED: the plan would touch preserved table(s) ${[...new Set(hits)].join(", ")} — rolled back`);
+      const presRows = Number((await client.query<{ n: string }>(`SELECT count(*)::text AS n FROM information_schema.tables WHERE table_schema = 'preserve' AND table_type = 'BASE TABLE'`)).rows[0]?.n);
+      if (!presRows) throw new Error("ZERO-RESET REFUSED: the preservation ledger (preserve.*) does not exist — run the preservation engine first");
+    }
+    if (SCOPE === "zero-reset") {
       // Bank lines kept, unlinked from the deleted documents, back in the categorization queue.
       for (const r of RESETS) {
         if (r.kind === "bank") {
@@ -504,6 +514,7 @@ async function main() {
       const pk = await pkOf(client, t);
       const rows = [...(plan.get(t) ?? [])];
       if (!pk || !rows.length) continue;
+      if (SCOPE === "zero-reset" && (t.split(".")[0] === "preserve" || isMasterOrPreserve(t))) throw new Error(`ZERO-RESET REFUSED: DELETE on preserved table ${t} — rolled back`);
       const r = await client.query(`DELETE FROM ${t} WHERE ${pk}::text = ANY($1::text[])`, [rows]);
       counts[t] = r.rowCount ?? 0;
     }

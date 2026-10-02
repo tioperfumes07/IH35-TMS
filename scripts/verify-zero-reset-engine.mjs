@@ -23,6 +23,7 @@ export function problems(s) {
   if (!/if \(isMasterOrPreserve\(fk\.child\) \|\| !fk\.nullable\) \{\s*\n\s*report\.push\(`BLOCKER/.test(s)) p.push("a master / preserve table (or a non-nullable link) reached by the FK graph must be a BLOCKER");
   if (!/delete order is TOPOLOGICAL over the FK graph/.test(s) || !/!edges\.some\(\(e\) => e\.parent === t && left\.has\(e\.child\)\)/.test(s)) p.push("the zero-reset must delete in topological order (children before parents)");
   if (!/Every bank line of the company goes back to the queue/.test(s) || !/column_name LIKE 'matched/.test(s)) p.push("every bank line must return to the queue with all matched_* pointers cleared (most carry no FK)");
+  if (!/ZERO-RESET REFUSED: the plan would touch preserved table/.test(s) || !/ZERO-RESET REFUSED: DELETE on preserved table/.test(s)) p.push("the preserved-table refusal must be an ASSERTION in the engine (plan check before the first write + per-DELETE check), not a report line");
   if (!/kind: "rows"/.test(s) || !/DELETE FROM \$\{r\.table\} WHERE \$\{r\.col\}::text = ANY/.test(s)) p.push("a child with no single-column primary key must be deleted by its foreign key");
   if (!/masterAfter\[t\] !== n\) throw new Error\(`ZERO-RESET PROOF FAILED: master table/.test(s)) p.push("master-data counts must be proven unchanged after the delete");
   if (!/BLOCKER preservation engine has not recorded preserve\./.test(s)) p.push("the zero-reset must refuse until the preservation engine has recorded its rows");
@@ -32,18 +33,29 @@ export function problems(s) {
   return p;
 }
 
+// ROUND 288.3 item 4 / 296 6b: the held delete-route migration keeps CC-3's narrow merged-duplicate allowance, so the
+// canonical customer / vendor merge is never re-broken when it applies.
+export function migrationProblems(m) {
+  const p = [];
+  if (!/a\.merged_customer_id = \(v_row ->> 'id'\)::uuid[\s\S]{0,200}a\.reversed_at IS NULL\) THEN\s*\n\s*RETURN OLD;/.test(m)) p.push("202615210200 must allow deleting a merged customer duplicate (live customer alias)");
+  if (!/a\.merged_vendor_id = \(v_row ->> 'id'\)::uuid[\s\S]{0,200}a\.reversed_at IS NULL\) THEN\s*\n\s*RETURN OLD;/.test(m)) p.push("202615210200 must allow deleting a merged vendor duplicate (live vendor alias)");
+  return p;
+}
+const MIGRATION = "db/migrations/202615210200_complete_delete_route_and_inbound_entity.sql";
+
 export function run() {
-  return problems(readFileSync(path.join(ROOT, FILE), "utf8"));
+  return [...problems(readFileSync(path.join(ROOT, FILE), "utf8")), ...migrationProblems(readFileSync(path.join(ROOT, MIGRATION), "utf8"))];
 }
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
   const src = readFileSync(path.join(ROOT, FILE), "utf8");
-  const own = problems(src);
+  const own = [...problems(src), ...migrationProblems(readFileSync(path.join(ROOT, MIGRATION), "utf8"))];
   if (process.argv.includes("--selftest")) {
     if (own.length) { console.error(`${LABEL} --selftest FAIL on the real tree — ${own.join("; ")}`); process.exit(1); }
     const plants = [
       ["preserved deleted", src.replace("if (isMasterOrPreserve(fk.child) || !fk.nullable) {", "if (false) {")],
+      ["assertion removed", src.replace("ZERO-RESET REFUSED: DELETE on preserved table", "note")],
       ["depth order", src.replace("!edges.some((e) => e.parent === t && left.has(e.child))", "true")],
       ["no master proof", src.replace("masterAfter[t] !== n) throw", "false) throw")],
       ["bank deleted", src.replace('RESET_TABLES = new Set(["banking.bank_transactions"])', "RESET_TABLES = new Set<string>([])")],

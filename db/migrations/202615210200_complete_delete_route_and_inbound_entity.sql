@@ -79,6 +79,24 @@ BEGIN
   v_table   := TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME;
   v_row     := to_jsonb(OLD);
 
+  -- ARM M (ROUND 288.3 / 296 — CC-3's canonical merge, migration 202615221000): a customer / vendor DUPLICATE that the
+  -- canonical merge engine merged (a live, same-company alias names it) may be deleted — the same narrow allowance
+  -- CC-3's RLS policy grants. Nothing else in master data is deletable here.
+  IF v_table = 'mdata.customers' AND EXISTS (
+       SELECT 1 FROM mdata.customer_aliases a
+        WHERE a.merged_customer_id = (v_row ->> 'id')::uuid
+          AND a.operating_company_id = (v_row ->> 'operating_company_id')::uuid
+          AND a.reversed_at IS NULL) THEN
+    RETURN OLD;
+  END IF;
+  IF v_table = 'mdata.vendors' AND EXISTS (
+       SELECT 1 FROM mdata.vendor_aliases a
+        WHERE a.merged_vendor_id = (v_row ->> 'id')::uuid
+          AND a.operating_company_id = (v_row ->> 'operating_company_id')::uuid
+          AND a.reversed_at IS NULL) THEN
+    RETURN OLD;
+  END IF;
+
   -- ARM C (ROUND 326) — cancelled-load revrec, runtime: only inside accounting.delete_cancelled_load_revrec (it runs
   -- as the function owner and sets app.revrec_cancel_load_id), only for that load's revrec JEs and their reversals.
   v_load := NULLIF(current_setting('app.revrec_cancel_load_id', true), '');
