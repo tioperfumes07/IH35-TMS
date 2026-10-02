@@ -502,6 +502,16 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-factoring-posting-legs-match-header",
     ["apps/backend/src/accounting/factoring-posting/poster.service.ts", "apps/backend/src/factoring/faro-csv-import.ts"],
   ],
+  // ROUND 326.2 item 1 — every factoring KPI the engine serves is recomputed from the ledger with
+  // independent SQL; any cent of drift, or a tile whose row_count != its drilldown rows, fails.
+  [
+    "verify-factoring-banking-kpis-tie-to-ledger",
+    [
+      "apps/backend/src/factoring/factoring-kpi",
+      "scripts/lib/print-factoring-kpis.ts",
+      "scripts/verify-factoring-banking-kpis-tie-to-ledger.mjs",
+    ],
+  ],
   // ROUND 166 JOB 1(e) (P0) — the permanent alarm: fails when no USMCA unit has a fresh telematics
   // position during operating hours. USMCA's Samsara feed was off for weeks with zero stamps
   // accumulating and nobody noticed; this is the gate that catches the next silent death.
