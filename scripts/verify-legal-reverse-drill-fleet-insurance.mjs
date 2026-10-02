@@ -11,7 +11,9 @@
  *     origin/main but no guard asserted it, so a future edit could silently drop the
  *     mount and nothing would fail red. Same class of gap the other three sides already
  *     had a guard for.)
+ *  3b. ROUND 326 item 5 — CustomerDetail + VendorDetail mount customer_id / vendor_id filters.
  *  4. legalMattersApi.list accepts unit_id + insurance_claim_id + related_driver_id
+ *     (+ customer_id / vendor_id)
  *  5. Backend listMatters filters those columns
  *  6. Owner/Administrator gate present on the shared reverse section
  *
@@ -34,6 +36,8 @@ const FILES = {
   claims: "apps/frontend/src/pages/insurance/ClaimsTab.tsx",
   lawsuits: "apps/frontend/src/pages/insurance/LawsuitsTab.tsx",
   driver: "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
+  customer: "apps/frontend/src/pages/CustomerDetail.tsx",
+  vendor: "apps/frontend/src/pages/VendorDetail.tsx",
   section: "apps/frontend/src/components/legal/LegalMattersReverseSection.tsx",
   api: "apps/frontend/src/api/legal-matters.ts",
   routes: "apps/backend/src/legal/matters.routes.ts",
@@ -84,6 +88,26 @@ export function check(texts) {
     }
   }
 
+  if (!texts.customer) f.push(`${FILES.customer}: missing`);
+  else {
+    if (!/LegalMattersReverseSection/.test(texts.customer)) {
+      f.push(`${FILES.customer}: must mount LegalMattersReverseSection`);
+    }
+    if (!/customer_id/.test(texts.customer) || !/customer-profile-legal-matters/.test(texts.customer)) {
+      f.push(`${FILES.customer}: must filter legal matters by customer_id (profile reverse)`);
+    }
+  }
+
+  if (!texts.vendor) f.push(`${FILES.vendor}: missing`);
+  else {
+    if (!/LegalMattersReverseSection/.test(texts.vendor)) {
+      f.push(`${FILES.vendor}: must mount LegalMattersReverseSection`);
+    }
+    if (!/vendor_id/.test(texts.vendor) || !/vendor-profile-legal-matters/.test(texts.vendor)) {
+      f.push(`${FILES.vendor}: must filter legal matters by vendor_id (profile reverse)`);
+    }
+  }
+
   if (!texts.section) f.push(`${FILES.section}: missing`);
   else {
     if (!/Owner/.test(texts.section) || !/Administrator/.test(texts.section)) {
@@ -98,6 +122,9 @@ export function check(texts) {
     if (!/query\.isError[\s\S]{0,420}title="Couldn't load linked legal matters"[\s\S]{0,420}query\.refetch\(\)/.test(texts.section)) {
       f.push(`${FILES.section}: failed reverse GET must expose exact retry`);
     }
+    if (!/customer_id/.test(texts.section) || !/vendor_id/.test(texts.section)) {
+      f.push(`${FILES.section}: Filter must accept customer_id and vendor_id`);
+    }
   }
 
   if (!texts.api) f.push(`${FILES.api}: missing`);
@@ -107,6 +134,9 @@ export function check(texts) {
     }
     if (!/related_driver_id/.test(texts.api)) {
       f.push(`${FILES.api}: list() must accept related_driver_id`);
+    }
+    if (!/customer_id/.test(texts.api) || !/vendor_id/.test(texts.api)) {
+      f.push(`${FILES.api}: list() must accept customer_id and vendor_id`);
     }
   }
 
@@ -121,6 +151,12 @@ export function check(texts) {
     if (!/related_driver_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(texts.routes)) {
       f.push(`${FILES.routes}: listQuerySchema must accept related_driver_id`);
     }
+    if (!/customer_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(texts.routes)) {
+      f.push(`${FILES.routes}: listQuerySchema must accept customer_id`);
+    }
+    if (!/vendor_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(texts.routes)) {
+      f.push(`${FILES.routes}: listQuerySchema must accept vendor_id`);
+    }
   }
 
   if (!texts.service) f.push(`${FILES.service}: missing`);
@@ -133,6 +169,12 @@ export function check(texts) {
     }
     if (!/m\.related_driver_id\s*=/.test(texts.service)) {
       f.push(`${FILES.service}: listMatters must filter m.related_driver_id`);
+    }
+    if (!/m\.customer_id\s*=/.test(texts.service)) {
+      f.push(`${FILES.service}: listMatters must filter m.customer_id`);
+    }
+    if (!/m\.vendor_id\s*=/.test(texts.service)) {
+      f.push(`${FILES.service}: listMatters must filter m.vendor_id`);
     }
   }
 
@@ -152,6 +194,8 @@ export function run() {
     claims: read(FILES.claims),
     lawsuits: read(FILES.lawsuits),
     driver: read(FILES.driver),
+    customer: read(FILES.customer),
+    vendor: read(FILES.vendor),
     section: read(FILES.section),
     api: read(FILES.api),
     routes: read(FILES.routes),
@@ -175,16 +219,20 @@ function selftest() {
     claims: `LegalMattersReverseSection\ninsurance_claim_id`,
     lawsuits: `LegalMattersReverseSection\ninsurance_lawsuit_id`,
     driver: `import { LegalMattersReverseSection } from "...";\nfilter={{ related_driver_id: id }}`,
-    section: `Owner Administrator legalMattersApi.list\nquery.isError title="Couldn't load linked legal matters" onRetry={() => void query.refetch()}\n<EntityLinkOrTombstone kind="matter" id={id} data-testid="legal-matters-reverse-matter-link" />`,
-    api: `unit_id insurance_claim_id related_driver_id`,
-    routes: `unit_id: z.string().uuid().optional(),\ninsurance_claim_id: z.string().uuid().optional(),\nrelated_driver_id: z.string().uuid().optional(),`,
-    service: `m.unit_id = $n\nm.insurance_claim_id = $n\nm.related_driver_id = $n`,
+    customer: `LegalMattersReverseSection\nfilter={{ customer_id: id }}\ndata-testid="customer-profile-legal-matters"`,
+    vendor: `LegalMattersReverseSection\nfilter={{ vendor_id: vendor.id }}\ndata-testid="vendor-profile-legal-matters"`,
+    section: `Owner Administrator legalMattersApi.list customer_id vendor_id\nquery.isError title="Couldn't load linked legal matters" onRetry={() => void query.refetch()}\n<EntityLinkOrTombstone kind="matter" id={id} data-testid="legal-matters-reverse-matter-link" />`,
+    api: `unit_id insurance_claim_id related_driver_id customer_id vendor_id`,
+    routes: `unit_id: z.string().uuid().optional(),\ninsurance_claim_id: z.string().uuid().optional(),\nrelated_driver_id: z.string().uuid().optional(),\ncustomer_id: z.string().uuid().optional(),\nvendor_id: z.string().uuid().optional(),`,
+    service: `m.unit_id = $n\nm.insurance_claim_id = $n\nm.related_driver_id = $n\nm.customer_id = $n\nm.vendor_id = $n`,
   };
   const bad = {
     vehicle: "export function VehicleProfilePage(){return null}",
     claims: "export function ClaimsTab(){return null}",
     lawsuits: "export function LawsuitsTab(){return null}",
     driver: "export function DriverProfilePage(){return null}",
+    customer: "export function CustomerDetail(){return null}",
+    vendor: "export function VendorDetail(){return null}",
     section: "export function X(){return null}",
     api: "list() {}",
     routes: "const listQuerySchema = z.object({})",

@@ -47,6 +47,10 @@ export const legalMattersApi = {
       insurance_claim_id?: string;
       /** Filter legal.matters.insurance_lawsuit_id (lawsuit reverse drill-through). */
       insurance_lawsuit_id?: string;
+      /** Filter legal.matters.customer_id (customer profile reverse). */
+      customer_id?: string;
+      /** Filter legal.matters.vendor_id (vendor profile reverse). */
+      vendor_id?: string;
     } = {}
   ) {
     const params: Record<string, string> = {};
@@ -58,6 +62,8 @@ export const legalMattersApi = {
     if (filters.equipment_id) params.equipment_id = filters.equipment_id;
     if (filters.insurance_claim_id) params.insurance_claim_id = filters.insurance_claim_id;
     if (filters.insurance_lawsuit_id) params.insurance_lawsuit_id = filters.insurance_lawsuit_id;
+    if (filters.customer_id) params.customer_id = filters.customer_id;
+    if (filters.vendor_id) params.vendor_id = filters.vendor_id;
     // CLS-SILENT-CAP — the endpoint now returns total/limit/offset alongside the rows. Passing the
     // page through and surfacing `total` is what turns a silent truncation into an honest
     // "showing N of M": before this, row 501 simply vanished with nothing able to say so.

@@ -78,6 +78,7 @@ import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { TasksTab } from "../components/tasks/TasksTab";
 import { EntityAuditHistoryTab } from "../components/audit/EntityAuditHistoryTab";
 import { CustomerContractsTab } from "../components/customers/CustomerContractsTab";
+import { LegalMattersReverseSection } from "../components/legal/LegalMattersReverseSection";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { LinkedBankTransactionsPanel } from "../components/banking/LinkedBankTransactionsPanel";
 import { CustomerNotifyReverseSection } from "../components/dispatch/CustomerNotifyReverseSection";
@@ -1228,6 +1229,14 @@ export function CustomerDetailPage() {
 
       {/* ROUND 326 1B: AR aging, credit/exposure, open loads, payments, factoring, rate history, contacts, documents. */}
       {id && operatingCompanyId ? <CustomerProfileOverview operatingCompanyId={operatingCompanyId} customerId={id} /> : null}
+      {id && operatingCompanyId ? (
+        <LegalMattersReverseSection
+          operatingCompanyId={operatingCompanyId}
+          filter={{ customer_id: id }}
+          contextLabel="this customer"
+          data-testid="customer-profile-legal-matters"
+        />
+      ) : null}
       <CustomerFinancialOverviewSection summary={financialSummaryQuery.data} loading={financialSummaryQuery.isLoading} error={financialSummaryQuery.isError} onRetry={() => void financialSummaryQuery.refetch()} />
 
       {activeTab === "Profile" ? (
