@@ -602,6 +602,16 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-party-boards-bound-live.mjs",
     ],
   ],
+  // CC-3 item 11 — the telematics + geocode preservation ledger: natural keys, no FK, WORM, engine + cron, not lagging.
+  [
+    "verify-preserve-ledger",
+    [
+      "db/migrations/202615220900_preserve_telematics_geocode.sql",
+      "apps/backend/src/telematics/preservation.service.ts",
+      "apps/backend/src/cron/telematics-preservation.cron.ts",
+      "scripts/verify-preserve-ledger.mjs",
+    ],
+  ],
   [
     "verify-canonical-vendors",
     [

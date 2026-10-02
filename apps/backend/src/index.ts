@@ -490,6 +490,7 @@ import { initializeGeofenceAutoDeliveryCron } from "./cron/geofence-auto-deliver
 import { initializeSamsaraFuelReportsCron } from "./cron/samsara-fuel-reports.cron.js";
 import { initializeSamsaraDriverRepliesCron } from "./cron/samsara-driver-replies.cron.js";
 import { initializeSamsaraDocumentsCron } from "./cron/samsara-documents.cron.js";
+import { initializeTelematicsPreservationCron } from "./cron/telematics-preservation.cron.js";
 import { initializeLoadStopGeofenceSyncCron } from "./cron/load-stop-geofence-sync.cron.js";
 import { initializeGeofenceOdometerCapturesCron } from "./cron/geofence-odometer-captures.cron.js";
 import { initializeFuelGpsMatchCron } from "./cron/fuel-gps-match.cron.js";
@@ -1618,6 +1619,7 @@ async function main() {
       initializeSamsaraFuelReportsCron(app);
       initializeSamsaraDriverRepliesCron(app);
       initializeSamsaraDocumentsCron(app);
+      initializeTelematicsPreservationCron(app);
       initializeLoadStopGeofenceSyncCron(app);
       app.log.info("[STARTUP] real-driven-miles-segments-cron initialized");
     } catch (error) {
