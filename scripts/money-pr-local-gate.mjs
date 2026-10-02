@@ -678,6 +678,16 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-faro-reserve-registers.mjs",
     ],
   ],
+  // Lead 2026-10-02 — a negative Faro Cash Reserve presents as Due to Faro (2156) at period end.
+  [
+    "verify-faro-cash-reserve-presents-as-payable",
+    [
+      "apps/backend/src/factoring/cash-reserve-reclass.service.ts",
+      "apps/backend/src/accounting/month-close.service.ts",
+      "db/migrations/202615260600_faro_cash_reserve_reclass.sql",
+      "scripts/verify-faro-cash-reserve-presents-as-payable.mjs",
+    ],
+  ],
   // ROUND 326.2 items 3-4 — banking / factoring surfaces: every table tabular-nums, and Banking's
   // factoring reserve reads the factoring KPI engine (one reserve engine, no duplicate math).
   [

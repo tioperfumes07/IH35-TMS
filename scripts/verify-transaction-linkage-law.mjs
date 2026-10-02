@@ -134,6 +134,7 @@ export const TABLE_REGISTRY = {
   // its unit/load linkage is reached through each line's invoice/load, never carried on the purchase itself.
   "accounting.factoring_purchases": { status: "OUT_OF_SCOPE", reason: "factoring/AR financing (purchase document, 1:1 with factoring_advances)" },
   "accounting.faro_reserve_entries": { status: "OUT_OF_SCOPE", reason: "factoring/AR financing (one line of Faro's Escrow / Cash Reserve report; reaches invoice / customer / purchase through the purchase line's Faro invoice number; posts only through its own stamped JE)" },
+  "accounting.faro_cash_reserve_reclasses": { status: "NOT_TRANSACTIONAL", reason: "period-end presentation reclass record (Faro Cash Reserve deficit -> 2156 Due to Faro); its two stamped JEs carry the money" },
   "accounting.factoring_purchase_lines": { status: "OUT_OF_SCOPE", reason: "factoring/AR financing (one line per invoice; load reached via the invoice)" },
   "accounting.factoring_interest_accrual_runs": { status: "OUT_OF_SCOPE", reason: "factoring/AR financing (month-end Faro default-interest accrual run, maker/checker; its JE carries the spine) — #24199" },
   "accounting.factoring_interest_accrual_run_lines": { status: "OUT_OF_SCOPE", reason: "factoring/AR financing (one accrual line per purchased invoice; purchase / invoice / customer carried, load via the invoice) — #24199" },

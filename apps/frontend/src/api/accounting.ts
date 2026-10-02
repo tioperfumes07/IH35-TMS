@@ -2657,6 +2657,11 @@ export type MonthCloseStatus = {
     line_count: number;
     run_state: string | null;
   };
+  faro_cash_reserve?: {
+    complete: boolean;
+    deficit_cents: number;
+    state: string;
+  };
   can_lock: boolean;
 };
 

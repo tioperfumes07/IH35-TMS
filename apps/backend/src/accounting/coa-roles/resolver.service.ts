@@ -61,6 +61,9 @@ export const COA_ROLE_VALUES = [
   // due-from-affiliate receivable (USMCA 8000 Inter-company - IH35 Transportation), never income or cost. Migration
   // 202615250600. Fail closed when unbound.
   "intercompany_receivable_ih35_transportation",
+  // Lead 2026-10-02: a negative Faro Cash Reserve presents as a payable to Faro (USMCA 2156), reclassed at period end.
+  // Migration 202615260600. Fail closed when unbound.
+  "factor_cash_reserve_deficit_payable",
   // Business-Property Allocation (TX personal-property tax) — per-opco (TRANSP/TRK) mappings in
   // accounting.chart_of_accounts_roles, migration 202607080310_property_tax_accrual_posting.sql.
   // ACCRUAL Dr property_tax_expense / Cr property_tax_payable; PAYMENT Dr property_tax_payable / Cr cash.

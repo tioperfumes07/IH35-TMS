@@ -10,6 +10,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatUsdCents } from "../../lib/money";
 import { FactoringInterestAccrualPanel } from "./FactoringInterestAccrualPanel";
+import { FaroCashReserveReclassPanel } from "./FaroCashReserveReclassPanel";
 
 function currentPeriodIso() {
   const now = new Date();
@@ -144,6 +145,24 @@ export function MonthClosePage() {
             },
           ]
         : []),
+      ...(status.faro_cash_reserve
+        ? [
+            {
+              id: "faro_cash_reserve",
+              label: "Faro Cash Reserve deficit presented as Due to Faro",
+              complete: status.faro_cash_reserve.complete,
+              detail:
+                status.faro_cash_reserve.state === "no_deficit"
+                  ? "The Faro Cash Reserve is not negative at period end."
+                  : status.faro_cash_reserve.state === "reclassed"
+                    ? `${formatUsdCents(status.faro_cash_reserve.deficit_cents)} reclassed to 2156 Due to Faro (reversed the next day).`
+                    : status.faro_cash_reserve.state === "stale"
+                      ? "The reclass no longer matches the deficit — void its two entries and reclass again below."
+                      : `${formatUsdCents(status.faro_cash_reserve.deficit_cents)} credit balance on 1235 — reclass it below.`,
+              href: "/factoring/cash-reserve",
+            },
+          ]
+        : []),
       {
         id: "adjusting_entries",
         label: "Adjusting entries reviewed",
@@ -236,6 +255,7 @@ export function MonthClosePage() {
       )}
 
       {companyId ? <FactoringInterestAccrualPanel companyId={companyId} period={period} /> : null}
+      {companyId ? <FaroCashReserveReclassPanel companyId={companyId} period={period} /> : null}
 
       <div className="flex items-center justify-between rounded-sm border border-gray-200 bg-white px-3 py-3">
         <div className="text-xs text-gray-700">
