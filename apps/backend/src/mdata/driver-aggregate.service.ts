@@ -397,6 +397,9 @@ export async function buildDriverAggregate(
           -- Canonical stores DOLLARS (numeric gross_pay/deductions_total/net_pay); this API contract
           -- is CENTS, so each amount converts via ROUND(x * 100). Void semantics map to the canonical
           -- domain: status <> 'cancelled' AND reversed_at IS NULL (payroll used status <> 'void').
+          -- ROUND 297 driver-profile audit (CC-1): YTD / lifetime / the four weeks are SETTLED pay only — an open
+          -- settlement or a P-series pre-settlement draft is not money paid (D1 YTD read $16,349.52 with draft P-0005
+          -- $1,846.11 inside; closed-only is $14,503.41). Drafts show on the Settlements list, never in these totals.
           WITH ytd AS (
             SELECT
               COALESCE(SUM(ROUND(gross_pay * 100)), 0)::bigint AS ytd_gross,
@@ -406,7 +409,8 @@ export async function buildDriverAggregate(
             WHERE driver_id = $1::uuid
               AND operating_company_id = $2::uuid
               AND period_end >= date_trunc('year', CURRENT_DATE)::date
-              AND status <> 'cancelled'
+              AND status NOT IN ('cancelled', 'open')
+              AND COALESCE(is_presettlement, false) = false
               AND reversed_at IS NULL
           ),
           lifetime AS (
@@ -414,13 +418,14 @@ export async function buildDriverAggregate(
             FROM driver_finance.driver_settlements
             WHERE driver_id = $1::uuid
               AND operating_company_id = $2::uuid
-              AND status <> 'cancelled'
+              AND status NOT IN ('cancelled', 'open')
+              AND COALESCE(is_presettlement, false) = false
               AND reversed_at IS NULL
           ),
           weeks AS (
             SELECT
               id::text AS settlement_id,
-              source_document_ref AS settlement_display_id,
+              COALESCE(source_document_ref, display_id) AS settlement_display_id,
               period_start::text AS period_start,
               period_end::text AS week_ending,
               ROUND(gross_pay * 100)::bigint AS gross,
@@ -428,7 +433,8 @@ export async function buildDriverAggregate(
             FROM driver_finance.driver_settlements
             WHERE driver_id = $1::uuid
               AND operating_company_id = $2::uuid
-              AND status <> 'cancelled'
+              AND status NOT IN ('cancelled', 'open')
+              AND COALESCE(is_presettlement, false) = false
               AND reversed_at IS NULL
             ORDER BY period_end DESC
             LIMIT 4
