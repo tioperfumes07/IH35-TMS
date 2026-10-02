@@ -2,8 +2,8 @@
  * ENGINE: daily odometer snapshot
  * SCHEDULE: 0 3 * * *
  * WRITES: telematics.odometer_readings
- * IDEMPOTENCY: UNIQUE(operating_company_id, unit_id, reading day, source) ON CONFLICT (odometer_readings_oci_unit_date_source_key)
- * OVERLAP: second run inserts 0 readings
+ * IDEMPOTENCY: ADVISORY LOCK pg_try_advisory_xact_lock('telematics.odometer_snapshot') for the tick; UNIQUE(operating_company_id, unit_id, reading day, source) + UNIQUE(unit_id, read_at, source) ON CONFLICT DO NOTHING (every unique index arbitrates)
+ * OVERLAP: the twin tick fails the lock and skips; a rerun inserts 0 (ROUND 330.7 overlap proof — the single-arbiter form failed the whole tick with 23505 on the second key, 10-01 and 10-02 on prod)
  * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
  */
 /**
@@ -29,6 +29,7 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
+import { tryXactSingleFlight } from "../lib/single-flight.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 
@@ -80,9 +81,11 @@ async function snapshotOdometersForTenant(
           operating_company_id, unit_id, read_at, odometer_miles, source, confidence
         )
         VALUES ($1::uuid, $2::uuid, $3::timestamptz, $4, 'samsara', $5)
-        ON CONFLICT (operating_company_id, unit_id, telematics.odometer_reading_day(read_at), source)
-          WHERE read_at >= '2026-09-30T00:00:00Z'::timestamptz
-        DO NOTHING
+        -- ROUND 330.7: no conflict target — BOTH unique keys arbitrate (the per-day key
+        -- odometer_readings_oci_unit_date_source_key and the per-instant key odometer_readings_unit_id_read_at_source_key).
+        -- With only the per-day key named, a concurrent twin insert of the same reading tripped the per-instant key,
+        -- raised 23505 and rolled back every unit's snapshot (prod 2026-10-01 and 2026-10-02 08:00Z, both instances).
+        ON CONFLICT DO NOTHING
         RETURNING id
       `,
       [operatingCompanyId, row.unit_id, row.captured_at, isGap ? null : odometerMi, isGap ? "suggested" : "measured"]
@@ -109,6 +112,8 @@ async function snapshotOdometersForTenant(
 
 export async function runOdometerSnapshotCronTick(): Promise<void> {
   await withLuciaBypass(async (client) => {
+    // ROUND 330.7: one snapshot pass per slot across both instances.
+    if (!(await tryXactSingleFlight(client, "telematics.odometer_snapshot"))) return;
     const companyIds = await listActiveCompanyIds(client as DbClient);
     for (const operatingCompanyId of companyIds) {
       assertTenantContext(operatingCompanyId, "telematics.odometer_snapshot_cron");

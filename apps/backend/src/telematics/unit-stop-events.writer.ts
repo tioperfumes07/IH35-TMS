@@ -103,9 +103,15 @@ export async function writeUnitStopEvents(
       }) as PositionFix),
       ...(odometerHistoryByUnit?.get(unit.unitId) ?? []).filter((f) => f.capturedAt >= from && f.capturedAt <= now),
     ];
+    // ROUND 330.7: a stop already in progress when the window opens is CLIPPED — detectStops starts it at the window's
+    // first fix, a little later on every tick as the window slides, so the (unit_id, started_at) key never matched and
+    // each tick inserted the same physical stop again (prod 2026-10-02: 1,258 rows for 122 stops). Its true start lies
+    // before the window; an earlier tick (or the 10-day catch-up) wrote it with that start. Skip it here. Miles are
+    // computed before the filter, so the next stop keeps its miles_since_previous_stop.
+    const firstFixAt = fixes[0]?.capturedAt.getTime();
     const stops: StopWithMiles[] = milesBetweenStops(
       detectStops(unit.unitId, fixes).map((s) => attachNearestOdometer(s, odoCandidates))
-    );
+    ).filter((s) => s.startedAt.getTime() !== firstFixAt);
     summary.stopsDetected += stops.length;
 
     for (const s of stops) {
