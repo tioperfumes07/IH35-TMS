@@ -702,6 +702,11 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-bank-possible-duplicates-flagged-never-removed.mjs",
     ],
   ],
+  // ROUND 332.1 §4c — every CC-2 factoring money writer writes its spine link in the same transaction.
+  [
+    "verify-factoring-writers-write-the-spine",
+    ["apps/backend/src/factoring/", "scripts/verify-factoring-writers-write-the-spine.mjs"],
+  ],
   // ROUND 326.2 items 3-4 — banking / factoring surfaces: every table tabular-nums, and Banking's
   // factoring reserve reads the factoring KPI engine (one reserve engine, no duplicate math).
   [

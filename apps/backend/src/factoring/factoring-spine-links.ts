@@ -54,3 +54,35 @@ export async function writeFactoringSpineLinks(client: DbClient, oci: string, jo
   }
   return links;
 }
+
+/**
+ * ROUND 332.1 §4c — link EVERY leg of a journal entry to one document (and, optionally, to the invoices it carries), on the
+ * same transaction as the entry. Used where the whole entry belongs to one document: the purchase funding entry (purchase +
+ * each purchased invoice) and the period-end Due-to-Faro reclass (the reclass row).
+ */
+export async function writeDocumentSpineLinks(
+  client: DbClient,
+  oci: string,
+  journalEntryId: string,
+  doc: { type: string; id: string; role: string },
+  invoiceIds: string[] = []
+) {
+  const legs = await client.query<{ id: string }>(
+    `SELECT id::text FROM accounting.journal_entry_postings WHERE journal_entry_uuid = $1::uuid AND operating_company_id = $2::uuid`,
+    [journalEntryId, oci]
+  );
+  let links = 0;
+  for (const leg of legs.rows) {
+    await writeTransactionSourceLink(client as never, {
+      operating_company_id: oci, journal_entry_posting_id: leg.id, linked_object_type: doc.type, linked_object_id: doc.id, relationship_role: doc.role,
+    });
+    links += 1;
+    for (const invoiceId of invoiceIds) {
+      await writeTransactionSourceLink(client as never, {
+        operating_company_id: oci, journal_entry_posting_id: leg.id, linked_object_type: "invoice", linked_object_id: invoiceId, relationship_role: doc.role,
+      });
+      links += 1;
+    }
+  }
+  return links;
+}
