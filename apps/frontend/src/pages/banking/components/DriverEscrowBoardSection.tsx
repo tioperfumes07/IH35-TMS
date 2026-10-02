@@ -312,7 +312,7 @@ export function DriverEscrowBoardSection({ operatingCompanyId, driverEscrowBalan
               <tfoot>
                 <tr className="border-t border-[#E5E7EB] bg-[#F7F8FA] text-xs font-semibold">
                   {colOn("driver") ? <td className="px-2 py-2 text-left">Totals</td> : null}
-                  {colOn("unit") ? <td /> : null}
+                  {colOn("unit") ? <td className="text-right tabular-nums" /> : null}
                   {colOn("held") ? (
                     <td className="px-2 py-2 text-right tabular-nums" data-testid="escrow-footer-held">
                       {formatUsd(heldTotal)}

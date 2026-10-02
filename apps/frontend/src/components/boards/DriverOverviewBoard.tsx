@@ -151,10 +151,10 @@ export function DriverOverviewBoard(props: { operatingCompanyId: string; driverI
                         <td className="ih-num pb-muted">{s.status === "closed" ? day(s.closed_at) : s.status}</td>
                         <td className="ih-num">{int(s.loads)}</td>
                         <td className="ih-num">{s.miles ? int(s.miles) : <span className="ih-empty">—</span>}</td>
-                        <td className="ih-num">{money(s.line_haul_cents)}</td>
-                        <td className="ih-num">{s.additional_cents ? usd(s.additional_cents) : <span className="ih-empty">—</span>}</td>
-                        <td className="ih-num">{money(s.deductions_cents)}</td>
-                        <td className="ih-num pb-strong">{money(s.net_cents)}</td>
+                        <td className="ih-num text-right tabular-nums">{money(s.line_haul_cents)}</td>
+                        <td className="ih-num text-right tabular-nums">{s.additional_cents ? usd(s.additional_cents) : <span className="ih-empty">—</span>}</td>
+                        <td className="ih-num text-right tabular-nums">{money(s.deductions_cents)}</td>
+                        <td className="ih-num pb-strong text-right tabular-nums">{money(s.net_cents)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -163,10 +163,10 @@ export function DriverOverviewBoard(props: { operatingCompanyId: string; driverI
                       <td colSpan={2}>{int(o.settlements.length)} settlements</td>
                       <td className="ih-num">{int(sum("loads"))}</td>
                       <td className="ih-num">{int(sum("miles"))}</td>
-                      <td className="ih-num">{money(sum("line_haul_cents"))}</td>
-                      <td className="ih-num">{money(sum("additional_cents"))}</td>
-                      <td className="ih-num">{money(sum("deductions_cents"))}</td>
-                      <td className="ih-num">{money(sum("net_cents"))}</td>
+                      <td className="ih-num text-right tabular-nums">{money(sum("line_haul_cents"))}</td>
+                      <td className="ih-num text-right tabular-nums">{money(sum("additional_cents"))}</td>
+                      <td className="ih-num text-right tabular-nums">{money(sum("deductions_cents"))}</td>
+                      <td className="ih-num text-right tabular-nums">{money(sum("net_cents"))}</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -203,14 +203,14 @@ export function DriverOverviewBoard(props: { operatingCompanyId: string; driverI
                         <td>{p.load_id ? <button type="button" className="pb-name" onClick={() => go("load", p.load_id)}>{p.load_number}</button> : "—"}</td>
                         <td><button type="button" className="pb-name" onClick={() => go("settlement", p.settlement_id)}>{p.settlement ?? "—"}</button></td>
                         <td className="pb-muted2">{p.approved_by ?? "—"}</td>
-                        <td className="ih-num pb-strong">{usd(p.amount_cents)}</td>
+                        <td className="ih-num pb-strong text-right tabular-nums">{usd(p.amount_cents)}</td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot>
                     <tr className="pb-foot">
                       <td colSpan={6}>{int(o.additional.length)} payments, last 90 days</td>
-                      <td className="ih-num">{money(t.additional_pay_cents)}</td>
+                      <td className="ih-num text-right tabular-nums">{money(t.additional_pay_cents)}</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -247,14 +247,14 @@ export function DriverOverviewBoard(props: { operatingCompanyId: string; driverI
                         <td>{c.load_id ? <button type="button" className="pb-name" onClick={() => go("load", c.load_id)}>{c.load_number}</button> : "—"}</td>
                         <td className="pb-muted2">{c.raised_by ?? "—"}</td>
                         <td className="pb-muted2">{c.outcome ?? "—"}</td>
-                        <td className={`ih-num${c.cost_cents ? " dd-red" : ""}`}>{money(c.cost_cents)}</td>
+                        <td className={`ih-num${c.cost_cents ? " dd-red" : ""} text-right tabular-nums`}>{money(c.cost_cents)}</td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot>
                     <tr className="pb-foot">
                       <td colSpan={6}>{int(o.complaints.length)} complaints, 90 days · fleet average {t.fleet_complaints_avg_90d}</td>
-                      <td className="ih-num">{money(o.complaints.reduce((s, c) => s + (c.cost_cents ?? 0), 0))}</td>
+                      <td className="ih-num text-right tabular-nums">{money(o.complaints.reduce((s, c) => s + (c.cost_cents ?? 0), 0))}</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -283,7 +283,7 @@ export function DriverOverviewBoard(props: { operatingCompanyId: string; driverI
                         <td className="pb-muted2">{r.what ?? "—"}</td>
                         <td className="ih-num pb-muted">{day(r.at)}</td>
                         <td className="pb-muted2">{r.outcome ?? "—"}</td>
-                        <td className="ih-num">{money(r.cost_cents)}</td>
+                        <td className="ih-num text-right tabular-nums">{money(r.cost_cents)}</td>
                       </tr>
                     ))}
                   </tbody>

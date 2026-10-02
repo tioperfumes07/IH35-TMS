@@ -108,7 +108,7 @@ function DriverPanel({ operatingCompanyId, driverId }: { operatingCompanyId: str
                     <td className="pb-sub-sm" style={{ width: 84 }}>{formatDateUS(a.at)}</td>
                     <td style={{ width: 70 }}><span className={`pb-badge pb-badge--${a.kind}`}>{a.kind}</span></td>
                     <td className="pb-muted2">{a.what}</td>
-                    <td className="ih-num pb-strong" style={{ width: 96 }}>{money(a.cents)}</td>
+                    <td className="ih-num pb-strong text-right tabular-nums" style={{ width: 96 }}>{money(a.cents)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -255,7 +255,7 @@ export function DriverHubBoard(props: { operatingCompanyId: string; onList: () =
                     <td><button type="button" className="pb-name" onClick={() => setSelected(r.id)}>{r.name}</button></td>
                     {show("unit") ? <td className="pb-strong">{r.unit ?? <span className="ih-empty">—</span>}</td> : null}
                     {show("basis") ? <td className="pb-sub-sm">{r.basis ?? "—"}</td> : null}
-                    {show("due") ? <td className="ih-num pb-strong">{money(r.due_cents)}</td> : null}
+                    {show("due") ? <td className="ih-num pb-strong text-right tabular-nums">{money(r.due_cents)}</td> : null}
                   </tr>
                 ))}
                 {h && rows.length === 0 ? <tr><td colSpan={4} className="pb-muted">No driver matches this filter.</td></tr> : null}

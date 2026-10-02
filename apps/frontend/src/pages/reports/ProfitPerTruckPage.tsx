@@ -260,10 +260,10 @@ export function ProfitPerTruckPage() {
           <td>${esc(r.primary_driver_name || "—")}</td>
           <td style="text-align:right">${esc(r.load_count)}</td>
           <td style="text-align:right">${esc(r.miles_driven)}</td>
-          <td style="text-align:right">${esc(money(r.revenue_cents))}</td>
-          <td style="text-align:right">${esc(money(r.net_profit_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.revenue_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.net_profit_cents))}</td>
           <td style="text-align:right">${esc(pct(r.margin_pct))}</td>
-          <td style="text-align:right">${esc(money(r.profit_per_mile_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.profit_per_mile_cents))}</td>
           <td>${esc((r.flags ?? []).map((f) => formatProfitPerTruckFlagLabel(f)).join(", ") || "—")}</td>
         </tr>`,
       )
@@ -278,13 +278,13 @@ export function ProfitPerTruckPage() {
         <table>
           <tbody>
             <tr><th>Trucks</th><td>${esc(totals.truck_count)}</td></tr>
-            <tr><th>Revenue</th><td>${esc(money(totals.revenue_cents))}</td></tr>
-            <tr><th>Driver pay</th><td>${esc(money(totals.driver_pay_cents))}</td></tr>
-            <tr><th>Fuel</th><td>${esc(money(totals.fuel_cost_cents))}</td></tr>
-            <tr><th>Maintenance</th><td>${esc(money(totals.maintenance_cost_cents))}</td></tr>
-            <tr><th>Depreciation</th><td>${esc(money(totals.depreciation_cents))}</td></tr>
-            <tr><th>Other direct</th><td>${esc(money(totals.other_direct_cost_cents))}</td></tr>
-            <tr><th>Net profit</th><td>${esc(money(totals.net_profit_cents))}</td></tr>
+            <tr><th>Revenue</th><td className="text-right tabular-nums">${esc(money(totals.revenue_cents))}</td></tr>
+            <tr><th>Driver pay</th><td className="text-right tabular-nums">${esc(money(totals.driver_pay_cents))}</td></tr>
+            <tr><th>Fuel</th><td className="text-right tabular-nums">${esc(money(totals.fuel_cost_cents))}</td></tr>
+            <tr><th>Maintenance</th><td className="text-right tabular-nums">${esc(money(totals.maintenance_cost_cents))}</td></tr>
+            <tr><th>Depreciation</th><td className="text-right tabular-nums">${esc(money(totals.depreciation_cents))}</td></tr>
+            <tr><th>Other direct</th><td className="text-right tabular-nums">${esc(money(totals.other_direct_cost_cents))}</td></tr>
+            <tr><th>Net profit</th><td className="text-right tabular-nums">${esc(money(totals.net_profit_cents))}</td></tr>
           </tbody>
         </table>
         <h1 style="margin-top:16px">By truck</h1>

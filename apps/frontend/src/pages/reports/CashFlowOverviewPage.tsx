@@ -165,7 +165,7 @@ export function CashFlowOverviewPage() {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
     const row = (label: string, cents: number) =>
-      `<tr><th>${esc(label)}</th><td style="text-align:right">${esc(money(cents))}</td></tr>`;
+      `<tr><th>${esc(label)}</th><td className="text-right tabular-nums" style="text-align:right">${esc(money(cents))}</td></tr>`;
     printLetterHtml({
       title: `Cash flow overview ${appliedFilters.asOfDate}`,
       bodyHtml: `

@@ -604,6 +604,8 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-one-purchase-rate-resolver.mjs",
     ],
   ],
+  // Lead ROUND 296/297 — money in a table cell is right-aligned with tabular figures (QBO_MONEY_CELL_CLASS), app-wide.
+  ["verify-money-table-cells-aligned", ["apps/frontend/src/", "scripts/verify-money-table-cells-aligned.mjs"]],
   // ROUND 326.2 items 3-4 — banking / factoring surfaces: every table tabular-nums, and Banking's
   // factoring reserve reads the factoring KPI engine (one reserve engine, no duplicate math).
   [

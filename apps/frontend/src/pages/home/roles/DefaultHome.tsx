@@ -195,12 +195,12 @@ export function DefaultHome({ auth }: Props) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
     const kpiHtml = kpiItems
-      .map((item) => `<tr><th>${esc(item.label)}</th><td>${esc(item.number)}</td><td>${esc(item.meta)}</td></tr>`)
+      .map((item) => `<tr><th>${esc(item.label)}</th><td style="text-align:right;font-variant-numeric:tabular-nums">${esc(item.number)}</td><td>${esc(item.meta)}</td></tr>`)
       .join("");
     const fleetHtml = fleetRows
       .map(
         (row) =>
-          `<tr><td>${esc(row.leftLabel)}</td><td>${esc(row.leftValue)}</td><td>${esc(row.rightLabel)}</td><td>${esc(row.rightValue)}</td></tr>`,
+          `<tr><td>${esc(row.leftLabel)}</td><td style="text-align:right;font-variant-numeric:tabular-nums">${esc(row.leftValue)}</td><td>${esc(row.rightLabel)}</td><td style="text-align:right;font-variant-numeric:tabular-nums">${esc(row.rightValue)}</td></tr>`,
       )
       .join("");
     printLetterHtml({
@@ -221,16 +221,16 @@ export function DefaultHome({ auth }: Props) {
         <h1 style="margin-top:16px">Operations</h1>
         <table>
           <tbody>
-            <tr><th>Open loads</th><td>${esc(ol ? `${ol.total} loads` : "—")}</td></tr>
-            <tr><th>Drivers on duty</th><td>${esc(dd ? `${dd.active} / ${dd.total_drivers}` : "—")}</td></tr>
-            <tr><th>Open work orders</th><td>${esc(wo ? `${wo.open} WOs` : "—")}</td></tr>
-            <tr><th>Cash position</th><td>${esc(cp ? formatUsdFromCents(cp.balance_cents) : "—")}</td></tr>
-            <tr><th>Factoring balance</th><td>${esc(
+            <tr><th>Open loads</th><td style="text-align:right;font-variant-numeric:tabular-nums">${esc(ol ? `${ol.total} loads` : "—")}</td></tr>
+            <tr><th>Drivers on duty</th><td style="text-align:right;font-variant-numeric:tabular-nums">${esc(dd ? `${dd.active} / ${dd.total_drivers}` : "—")}</td></tr>
+            <tr><th>Open work orders</th><td style="text-align:right;font-variant-numeric:tabular-nums">${esc(wo ? `${wo.open} WOs` : "—")}</td></tr>
+            <tr><th>Cash position</th><td style="text-align:right;font-variant-numeric:tabular-nums">${esc(cp ? formatUsdFromCents(cp.balance_cents) : "—")}</td></tr>
+            <tr><th>Factoring balance</th><td style="text-align:right;font-variant-numeric:tabular-nums">${esc(
               !fb || fb.status === "unverifiable" || fb.status === "accounting_exception" || fb.outstanding_cents == null
                 ? "—"
                 : formatUsdFromCents(fb.outstanding_cents),
             )}</td></tr>
-            <tr><th>Revenue (${esc(kpiRange)})</th><td>${esc(
+            <tr><th>Revenue (${esc(kpiRange)})</th><td style="text-align:right;font-variant-numeric:tabular-nums">${esc(
               tr == null || tr.status === "unverifiable" || tr.revenue_cents == null
                 ? "—"
                 : formatUsdFromCents(tr.revenue_cents),

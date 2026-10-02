@@ -121,7 +121,7 @@ export function BalanceSheetPage() {
           (line) => `<tr>
             ${showCodes ? `<td>${esc(line.account_code || "—")}</td>` : ""}
             <td>${esc(line.account_name || "—")}</td>
-            <td style="text-align:right">${esc(money(line.amount))}</td>
+            <td className="text-right tabular-nums" style="text-align:right">${esc(money(line.amount))}</td>
           </tr>`,
         )
         .join("");
@@ -132,7 +132,7 @@ export function BalanceSheetPage() {
           <thead><tr>${showCodes ? "<th>Account #</th>" : ""}<th>Account</th><th style="text-align:right">Amount</th></tr></thead>
           <tbody>
             ${rows || `<tr><td colspan="${showCodes ? 3 : 2}">No rows</td></tr>`}
-            <tr><th colspan="${colSpan}">Total</th><td style="text-align:right">${esc(money(total))}</td></tr>
+            <tr><th colspan="${colSpan}">Total</th><td className="text-right tabular-nums" style="text-align:right">${esc(money(total))}</td></tr>
           </tbody>
         </table>`;
     };
@@ -145,8 +145,8 @@ export function BalanceSheetPage() {
         )} · printed ${esc(mmmDdTime(new Date()))}</div>
         <table>
           <tbody>
-            <tr><th>Total assets</th><td>${esc(money(data.assets.total))}</td></tr>
-            <tr><th>Total liabilities &amp; equity</th><td>${esc(money(data.total_liabilities_and_equity))}</td></tr>
+            <tr><th>Total assets</th><td className="text-right tabular-nums">${esc(money(data.assets.total))}</td></tr>
+            <tr><th>Total liabilities &amp; equity</th><td className="text-right tabular-nums">${esc(money(data.total_liabilities_and_equity))}</td></tr>
           </tbody>
         </table>
         ${sectionHtml("Assets", assets, data.assets.total)}
@@ -297,7 +297,7 @@ export function BalanceSheetPage() {
                           line.account_name || "—"
                         )}
                       </td>
-                      <td className="px-3 py-2 text-right">{money(line.amount)}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">{money(line.amount)}</td>
                     </tr>
                   ))
                 )}
@@ -305,7 +305,7 @@ export function BalanceSheetPage() {
                   <td colSpan={showCodes ? 2 : 1} className="px-3 py-2 text-right">
                     Total assets
                   </td>
-                  <td className="px-3 py-2 text-right">{money(query.data.assets.total)}</td>
+                  <td className="px-3 py-2 text-right tabular-nums">{money(query.data.assets.total)}</td>
                 </tr>
               </tbody>
             </table>
@@ -342,7 +342,7 @@ export function BalanceSheetPage() {
                             line.account_name || "—"
                           )}
                         </td>
-                        <td className="px-3 py-2 text-right">{money(line.amount)}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">{money(line.amount)}</td>
                       </tr>
                     ))
                   )}
@@ -350,7 +350,7 @@ export function BalanceSheetPage() {
                     <td colSpan={showCodes ? 2 : 1} className="px-3 py-2 text-right">
                       Total liabilities
                     </td>
-                    <td className="px-3 py-2 text-right">{money(query.data.liabilities.total)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{money(query.data.liabilities.total)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -386,7 +386,7 @@ export function BalanceSheetPage() {
                             line.account_name || "—"
                           )}
                         </td>
-                        <td className="px-3 py-2 text-right">{money(line.amount)}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">{money(line.amount)}</td>
                       </tr>
                     ))
                   )}
@@ -394,20 +394,20 @@ export function BalanceSheetPage() {
                     <tr className="border-b border-gray-100">
                       {showCodes ? <td className="px-3 py-2 font-medium text-gray-900">{cashBasisAdjustment?.account_code ?? "CASH_BASIS_ADJ"}</td> : null}
                       <td className="px-3 py-2">{cashBasisAdjustment?.account_name ?? "Cash Basis Adjustment"}</td>
-                      <td className="px-3 py-2 text-right">{money(cashBasisAdjustment?.amount ?? 0)}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">{money(cashBasisAdjustment?.amount ?? 0)}</td>
                     </tr>
                   ) : null}
                   <tr className="bg-slate-50 font-semibold">
                     <td colSpan={showCodes ? 2 : 1} className="px-3 py-2 text-right">
                       Current year earnings
                     </td>
-                    <td className="px-3 py-2 text-right">{money(query.data.equity.current_year_earnings)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{money(query.data.equity.current_year_earnings)}</td>
                   </tr>
                   <tr className="bg-slate-50 font-semibold">
                     <td colSpan={showCodes ? 2 : 1} className="px-3 py-2 text-right">
                       Total equity
                     </td>
-                    <td className="px-3 py-2 text-right">{money(query.data.equity.total)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{money(query.data.equity.total)}</td>
                   </tr>
                 </tbody>
               </table>

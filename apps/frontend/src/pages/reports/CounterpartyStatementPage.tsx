@@ -276,7 +276,7 @@ export function CounterpartyStatementView({
                 <td className="px-3 py-2" colSpan={6}>
                   Opening balance ({mmmDd(query.data.from_date)})
                 </td>
-                <td className="px-3 py-2 text-right">{money(query.data.opening_balance_cents)}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{money(query.data.opening_balance_cents)}</td>
               </tr>
               {query.data.lines.length === 0 ? (
                 <tr>
@@ -291,9 +291,9 @@ export function CounterpartyStatementView({
                     <td className="px-3 py-2">{typeLabel(line.type)}</td>
                     <td className="px-3 py-2">{line.reference || "—"}</td>
                     <td className="px-3 py-2">{line.description}</td>
-                    <td className="px-3 py-2 text-right">{line.debit_cents > 0 ? money(line.debit_cents) : "—"}</td>
-                    <td className="px-3 py-2 text-right">{line.credit_cents > 0 ? money(line.credit_cents) : "—"}</td>
-                    <td className="px-3 py-2 text-right">{money(line.running_balance_cents)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{line.debit_cents > 0 ? money(line.debit_cents) : "—"}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{line.credit_cents > 0 ? money(line.credit_cents) : "—"}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{money(line.running_balance_cents)}</td>
                   </tr>
                 ))
               )}
@@ -301,7 +301,7 @@ export function CounterpartyStatementView({
                 <td className="px-3 py-2" colSpan={6}>
                   Closing balance ({mmmDd(query.data.to_date)})
                 </td>
-                <td className="px-3 py-2 text-right">{money(query.data.closing_balance_cents)}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{money(query.data.closing_balance_cents)}</td>
               </tr>
             </tbody>
           </table>

@@ -286,12 +286,12 @@ export function AccountsPayableAgingPage() {
         (v) => `<tr>
           <td>${esc(v.vendor_name)}</td>
           <td>${esc(v.display_group)}</td>
-          <td style="text-align:right">${esc(money(v.current))}</td>
-          <td style="text-align:right">${esc(money(v.d1_30))}</td>
-          <td style="text-align:right">${esc(money(v.d31_60))}</td>
-          <td style="text-align:right">${esc(money(v.d61_90))}</td>
-          <td style="text-align:right">${esc(money(v.d90_plus))}</td>
-          <td style="text-align:right">${esc(money(v.total_outstanding))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(v.current))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(v.d1_30))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(v.d31_60))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(v.d61_90))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(v.d90_plus))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(v.total_outstanding))}</td>
         </tr>`,
       )
       .join("");
@@ -314,12 +314,12 @@ export function AccountsPayableAgingPage() {
             ${rowsHtml || `<tr><td colspan="8">No open A/P</td></tr>`}
             <tr>
               <th colspan="2">TOTAL</th>
-              <td style="text-align:right">${esc(money(tot.current))}</td>
-              <td style="text-align:right">${esc(money(tot.d1_30))}</td>
-              <td style="text-align:right">${esc(money(tot.d31_60))}</td>
-              <td style="text-align:right">${esc(money(tot.d61_90))}</td>
-              <td style="text-align:right">${esc(money(tot.d90_plus))}</td>
-              <td style="text-align:right">${esc(money(tot.total_outstanding))}</td>
+              <td className="text-right tabular-nums" style="text-align:right">${esc(money(tot.current))}</td>
+              <td className="text-right tabular-nums" style="text-align:right">${esc(money(tot.d1_30))}</td>
+              <td className="text-right tabular-nums" style="text-align:right">${esc(money(tot.d31_60))}</td>
+              <td className="text-right tabular-nums" style="text-align:right">${esc(money(tot.d61_90))}</td>
+              <td className="text-right tabular-nums" style="text-align:right">${esc(money(tot.d90_plus))}</td>
+              <td className="text-right tabular-nums" style="text-align:right">${esc(money(tot.total_outstanding))}</td>
             </tr>
           </tbody>
         </table>

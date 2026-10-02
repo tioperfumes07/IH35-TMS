@@ -113,7 +113,7 @@ export function ProfitLossPage() {
             ${showCodes ? `<td>${esc(line.account_code || "—")}</td>` : ""}
             <td>${esc(line.account_name || "—")}</td>
             <td>${esc(formatAccountTypeLabel(line.account_type))}</td>
-            <td style="text-align:right">${esc(money(line.amount))}</td>
+            <td className="text-right tabular-nums" style="text-align:right">${esc(money(line.amount))}</td>
           </tr>`,
         )
         .join("");
@@ -124,7 +124,7 @@ export function ProfitLossPage() {
           <thead><tr>${showCodes ? "<th>Account #</th>" : ""}<th>Account</th><th>Type</th><th style="text-align:right">Amount</th></tr></thead>
           <tbody>
             ${rows || `<tr><td colspan="${showCodes ? 4 : 3}">No rows</td></tr>`}
-            <tr><th colspan="${colSpan}">Total</th><td style="text-align:right">${esc(money(total))}</td></tr>
+            <tr><th colspan="${colSpan}">Total</th><td className="text-right tabular-nums" style="text-align:right">${esc(money(total))}</td></tr>
           </tbody>
         </table>`;
     };
@@ -137,9 +137,9 @@ export function ProfitLossPage() {
         )} · printed ${esc(mmmDdTime(new Date()))}</div>
         <table>
           <tbody>
-            <tr><th>Revenue total</th><td>${esc(money(data.revenue.total))}</td></tr>
-            <tr><th>Gross profit</th><td>${esc(money(data.gross_profit))}</td></tr>
-            <tr><th>Net income</th><td>${esc(money(data.net_income))}</td></tr>
+            <tr><th>Revenue total</th><td className="text-right tabular-nums">${esc(money(data.revenue.total))}</td></tr>
+            <tr><th>Gross profit</th><td className="text-right tabular-nums">${esc(money(data.gross_profit))}</td></tr>
+            <tr><th>Net income</th><td className="text-right tabular-nums">${esc(money(data.net_income))}</td></tr>
           </tbody>
         </table>
         ${sectionHtml("Revenue", revenueLines, data.revenue.total)}
@@ -302,7 +302,7 @@ export function ProfitLossPage() {
                           )}
                         </td>
                         <td className="px-3 py-2">{formatAccountTypeLabel(line.account_type)}</td>
-                        <td className="px-3 py-2 text-right">{money(line.amount)}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">{money(line.amount)}</td>
                       </tr>
                     ))
                   )}
@@ -310,7 +310,7 @@ export function ProfitLossPage() {
                     <td colSpan={showCodes ? 3 : 2} className="px-3 py-2 text-right">
                       Section total
                     </td>
-                    <td className="px-3 py-2 text-right">{money(section.total)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{money(section.total)}</td>
                   </tr>
                 </tbody>
               </table>

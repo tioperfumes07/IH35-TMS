@@ -116,12 +116,12 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
               ] as const).map(([label, cents]) => (
                 <tr key={label} className="border-b border-[color:var(--ih-rule)]">
                   <td className="py-1">{label}</td>
-                  <td className="py-1 text-right">{formatUsdCents(cents)}</td>
+                  <td className="py-1 text-right tabular-nums">{formatUsdCents(cents)}</td>
                 </tr>
               ))}
               <tr className="font-semibold">
                 <td className="py-1">Total open ({a.open_invoice_count} invoices)</td>
-                <td className="py-1 text-right">{formatUsdCents(a.total_open_cents)}</td>
+                <td className="py-1 text-right tabular-nums">{formatUsdCents(a.total_open_cents)}</td>
               </tr>
             </tbody>
           </table>
@@ -130,10 +130,10 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
         <Section title="Credit limit & exposure" testId="customer-profile-credit" reason={p.credit.empty_reason}>
           <table className={`w-full ${money}`}>
             <tbody>
-              <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Open AR</td><td className="py-1 text-right">{formatUsdCents(c.open_ar_cents)}</td></tr>
-              <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Open loads not yet invoiced</td><td className="py-1 text-right">{formatUsdCents(c.uninvoiced_open_load_cents)}</td></tr>
-              <tr className="border-b border-[color:var(--ih-rule)] font-semibold"><td className="py-1">Exposure</td><td className={`py-1 text-right ${c.over_limit ? "text-red-600" : ""}`}>{formatUsdCents(c.exposure_cents)}</td></tr>
-              <tr><td className="py-1">Limit{c.credit_limit_source ? ` (${c.credit_limit_source})` : ""}</td><td className="py-1 text-right">{c.credit_limit_cents == null ? "Not set" : formatUsdCents(c.credit_limit_cents)}</td></tr>
+              <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Open AR</td><td className="py-1 text-right tabular-nums">{formatUsdCents(c.open_ar_cents)}</td></tr>
+              <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Open loads not yet invoiced</td><td className="py-1 text-right tabular-nums">{formatUsdCents(c.uninvoiced_open_load_cents)}</td></tr>
+              <tr className="border-b border-[color:var(--ih-rule)] font-semibold"><td className="py-1">Exposure</td><td className={`py-1 text-right ${c.over_limit ? "text-red-600" : ""} tabular-nums`}>{formatUsdCents(c.exposure_cents)}</td></tr>
+              <tr><td className="py-1">Limit{c.credit_limit_source ? ` (${c.credit_limit_source})` : ""}</td><td className="py-1 text-right tabular-nums">{c.credit_limit_cents == null ? "Not set" : formatUsdCents(c.credit_limit_cents)}</td></tr>
             </tbody>
           </table>
         </Section>
@@ -154,7 +154,7 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
               </tr>
               <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Recourse</td><td className="py-1 text-right">{f.recourse_type ?? "Factor default"}</td></tr>
               <tr className="border-b border-[color:var(--ih-rule)]"><td className="py-1">Purchased lines</td><td className="py-1 text-right">{f.purchased_line_count}</td></tr>
-              <tr><td className="py-1">Purchased gross</td><td className="py-1 text-right">{formatUsdCents(f.purchased_gross_cents)}</td></tr>
+              <tr><td className="py-1">Purchased gross</td><td className="py-1 text-right tabular-nums">{formatUsdCents(f.purchased_gross_cents)}</td></tr>
             </tbody>
           </table>
         </Section>

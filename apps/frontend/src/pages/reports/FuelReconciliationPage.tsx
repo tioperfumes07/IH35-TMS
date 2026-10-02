@@ -122,9 +122,9 @@ export function FuelReconciliationPage() {
       .map(
         (r) => `<tr>
           <td>${esc(r.unit_number)}</td>
-          <td style="text-align:right">${esc(money(r.card_amount_cents))}</td>
-          <td style="text-align:right">${esc(money(r.wo_amount_cents))}</td>
-          <td style="text-align:right">${esc(money(r.delta_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.card_amount_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.wo_amount_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.delta_cents))}</td>
           <td style="text-align:right">${esc(`${(Number(r.matched_pct) || 0).toFixed(1)}%`)}</td>
           <td>${esc((r.flags ?? []).map((f) => FLAG_META[f]?.label ?? f).join(", ") || "—")}</td>
         </tr>`,
@@ -139,9 +139,9 @@ export function FuelReconciliationPage() {
         )}</div>
         <table>
           <tbody>
-            <tr><th>Card total</th><td>${esc(money(t.card_amount_cents))}</td></tr>
-            <tr><th>WO total</th><td>${esc(money(t.wo_amount_cents))}</td></tr>
-            <tr><th>Delta</th><td>${esc(money(t.delta_cents))}</td></tr>
+            <tr><th>Card total</th><td className="text-right tabular-nums">${esc(money(t.card_amount_cents))}</td></tr>
+            <tr><th>WO total</th><td className="text-right tabular-nums">${esc(money(t.wo_amount_cents))}</td></tr>
+            <tr><th>Delta</th><td className="text-right tabular-nums">${esc(money(t.delta_cents))}</td></tr>
             <tr><th>Match rate</th><td>${esc(`${(Number(t.match_rate_pct) || 0).toFixed(1)}%`)}</td></tr>
             <tr><th>Unmatched count</th><td>${esc(t.unmatched_count)}</td></tr>
           </tbody>

@@ -854,8 +854,8 @@ export function ReconciliationWorkspacePage() {
                 <td>${esc(tx.split_account || "—")}</td>
                 <td>${esc(tx.payee || tx.merchant_name || "—")}</td>
                 <td>${esc(tx.memo || tx.description || "—")}</td>
-                <td style="text-align:right">${esc(!tx.is_credit ? money(abs) : "")}</td>
-                <td style="text-align:right">${esc(tx.is_credit ? money(abs) : "")}</td>
+                <td className="text-right tabular-nums" style="text-align:right">${esc(!tx.is_credit ? money(abs) : "")}</td>
+                <td className="text-right tabular-nums" style="text-align:right">${esc(tx.is_credit ? money(abs) : "")}</td>
               </tr>`;
             })
             .join("");
@@ -871,17 +871,17 @@ export function ReconciliationWorkspacePage() {
               )} · printed ${esc(new Date().toLocaleString())}</div>
               <table className="tabular-nums">
                 <tbody>
-                  <tr><th>Beginning balance</th><td>${esc(
+                  <tr><th>Beginning balance</th><td className="text-right tabular-nums">${esc(
                     balanceHeader ? money(balanceHeader.beginningCents) : "—",
                   )}</td></tr>
-                  <tr><th>Ending balance</th><td>${esc(
+                  <tr><th>Ending balance</th><td className="text-right tabular-nums">${esc(
                     balanceHeader?.endingCents != null ? money(balanceHeader.endingCents) : "—",
                   )}</td></tr>
                   <tr><th>Last reconciled</th><td>${esc(
                     balanceHeader ? formatReconciledDate(balanceHeader.lastReconciledAt) : "—",
                   )}</td></tr>
-                  <tr><th>Book (matched)</th><td>${esc(money(summary.bookBalanceCents))}</td></tr>
-                  <tr><th>Variance</th><td>${esc(money(summary.varianceCents))}</td></tr>
+                  <tr><th>Book (matched)</th><td className="text-right tabular-nums">${esc(money(summary.bookBalanceCents))}</td></tr>
+                  <tr><th>Variance</th><td className="text-right tabular-nums">${esc(money(summary.varianceCents))}</td></tr>
                 </tbody>
               </table>
               <h1 style="margin-top:20px">Transactions (${esc(visibleTransactions.length)})</h1>

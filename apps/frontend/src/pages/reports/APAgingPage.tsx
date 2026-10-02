@@ -136,11 +136,11 @@ export function APAgingPage() {
       .map(
         (r) => `<tr>
           <td>${esc(r.vendor_name)}</td>
-          <td style="text-align:right">${esc(money(r.total_open_cents))}</td>
-          <td style="text-align:right">${esc(money(r.bucket_0_30_cents))}</td>
-          <td style="text-align:right">${esc(money(r.bucket_31_60_cents))}</td>
-          <td style="text-align:right">${esc(money(r.bucket_61_90_cents))}</td>
-          <td style="text-align:right">${esc(money(r.bucket_91_plus_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.total_open_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.bucket_0_30_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.bucket_31_60_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.bucket_61_90_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.bucket_91_plus_cents))}</td>
           <td>${esc(r.last_payment_date ? mmmDd(r.last_payment_date) : "—")}</td>
         </tr>`,
       )
@@ -152,10 +152,10 @@ export function APAgingPage() {
         <div class="meta">As of ${esc(mmmDd(appliedFilters.asOfDate))} · Accrual · printed ${esc(mmmDdTime(new Date()))}</div>
         <table>
           <tbody>
-            <tr><th>Total open</th><td>${esc(money(kpis.total))}</td></tr>
-            <tr><th>0-30</th><td>${esc(money(kpis.day0_30))}</td></tr>
-            <tr><th>31-60</th><td>${esc(money(kpis.day31_60))}</td></tr>
-            <tr><th>61+</th><td>${esc(money(kpis.day61p))}</td></tr>
+            <tr><th>Total open</th><td className="text-right tabular-nums">${esc(money(kpis.total))}</td></tr>
+            <tr><th>0-30</th><td className="text-right tabular-nums">${esc(money(kpis.day0_30))}</td></tr>
+            <tr><th>31-60</th><td className="text-right tabular-nums">${esc(money(kpis.day31_60))}</td></tr>
+            <tr><th>61+</th><td className="text-right tabular-nums">${esc(money(kpis.day61p))}</td></tr>
           </tbody>
         </table>
         <h1 style="margin-top:20px">By vendor</h1>

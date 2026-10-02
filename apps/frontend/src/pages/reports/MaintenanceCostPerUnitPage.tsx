@@ -194,19 +194,19 @@ export function MaintenanceCostPerUnitPage() {
     const totals = data.totals;
     const catRows = Object.entries(data.by_category ?? {})
       .filter(([, cents]) => Number(cents) > 0)
-      .map(([category, cents]) => `<tr><td>${esc(category)}</td><td style="text-align:right">${esc(money(Number(cents)))}</td></tr>`)
+      .map(([category, cents]) => `<tr><td>${esc(category)}</td><td className="text-right tabular-nums" style="text-align:right">${esc(money(Number(cents)))}</td></tr>`)
       .join("");
     const rowsHtml = filtered
       .map(
         (r) => `<tr>
           <td>${esc(r.unit_number)}</td>
           <td style="text-align:right">${esc(r.wo_count)}</td>
-          <td style="text-align:right">${esc(money(r.parts_cents))}</td>
-          <td style="text-align:right">${esc(money(r.labor_cents))}</td>
-          <td style="text-align:right">${esc(money(r.outsourced_cents))}</td>
-          <td style="text-align:right">${esc(money(r.total_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.parts_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.labor_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.outsourced_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.total_cents))}</td>
           <td style="text-align:right">${esc(r.miles_driven ?? "—")}</td>
-          <td style="text-align:right">${esc(r.cost_per_mile_cents === null ? "—" : money(r.cost_per_mile_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(r.cost_per_mile_cents === null ? "—" : money(r.cost_per_mile_cents))}</td>
           <td>${esc((r.flags ?? []).map((f) => FLAG_META[f]?.label ?? formatMaintCostFlagLabel(f)).join(", ") || "—")}</td>
         </tr>`,
       )
@@ -222,10 +222,10 @@ export function MaintenanceCostPerUnitPage() {
           <tbody>
             <tr><th>Trucks</th><td>${esc(totals.truck_count)}</td></tr>
             <tr><th>WO count</th><td>${esc(totals.wo_count)}</td></tr>
-            <tr><th>Parts</th><td>${esc(money(totals.total_parts_cents))}</td></tr>
-            <tr><th>Labor</th><td>${esc(money(totals.total_labor_cents))}</td></tr>
-            <tr><th>Outsourced</th><td>${esc(money(totals.total_outsourced_cents))}</td></tr>
-            <tr><th>Grand total</th><td>${esc(money(totals.grand_total_cents))}</td></tr>
+            <tr><th>Parts</th><td className="text-right tabular-nums">${esc(money(totals.total_parts_cents))}</td></tr>
+            <tr><th>Labor</th><td className="text-right tabular-nums">${esc(money(totals.total_labor_cents))}</td></tr>
+            <tr><th>Outsourced</th><td className="text-right tabular-nums">${esc(money(totals.total_outsourced_cents))}</td></tr>
+            <tr><th>Grand total</th><td className="text-right tabular-nums">${esc(money(totals.grand_total_cents))}</td></tr>
           </tbody>
         </table>
         <h1 style="margin-top:16px">By category</h1>

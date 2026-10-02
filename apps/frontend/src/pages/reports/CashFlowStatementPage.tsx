@@ -104,7 +104,7 @@ export function CashFlowStatementPage() {
           (line) => `<tr>
             <td>${esc(formatCashFlowCompoundLabel(line.label) || line.label)}</td>
             <td>${esc(formatAccountTypeLabel(line.account_type))}</td>
-            <td style="text-align:right">${esc(money(line.amount))}</td>
+            <td className="text-right tabular-nums" style="text-align:right">${esc(money(line.amount))}</td>
           </tr>`,
         )
         .join("");
@@ -114,7 +114,7 @@ export function CashFlowStatementPage() {
           <thead><tr><th>Line</th><th>Type</th><th style="text-align:right">Amount</th></tr></thead>
           <tbody>
             ${rows || `<tr><td colspan="3">No rows</td></tr>`}
-            <tr><th colspan="2">Total</th><td style="text-align:right">${esc(money(total))}</td></tr>
+            <tr><th colspan="2">Total</th><td className="text-right tabular-nums" style="text-align:right">${esc(money(total))}</td></tr>
           </tbody>
         </table>`;
     };
@@ -129,9 +129,9 @@ export function CashFlowStatementPage() {
         )}</div>
         <table>
           <tbody>
-            <tr><th>Net cash change</th><td>${esc(money(data.net_cash_change))}</td></tr>
-            <tr><th>Cash at start</th><td>${esc(money(data.cash_at_start))}</td></tr>
-            <tr><th>Cash at end</th><td>${esc(money(data.cash_at_end))}</td></tr>
+            <tr><th>Net cash change</th><td className="text-right tabular-nums">${esc(money(data.net_cash_change))}</td></tr>
+            <tr><th>Cash at start</th><td className="text-right tabular-nums">${esc(money(data.cash_at_start))}</td></tr>
+            <tr><th>Cash at end</th><td className="text-right tabular-nums">${esc(money(data.cash_at_end))}</td></tr>
             <tr><th>Reconciliation</th><td>${esc(
               !data.reconciled
                 ? "Needs review"
@@ -343,7 +343,7 @@ export function CashFlowStatementPage() {
                         <td className="px-3 py-2">{formatAccountTypeLabel(line.account_type)}</td>
                         <td className="px-3 py-2">{humanizeEnumLabel(line.account_subtype) || "—"}</td>
                         <td className="px-3 py-2 font-medium text-gray-900">{formatCashFlowCompoundLabel(line.label)}</td>
-                        <td className="px-3 py-2 text-right">{money(line.amount)}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">{money(line.amount)}</td>
                       </tr>
                     ))
                   )}
@@ -351,7 +351,7 @@ export function CashFlowStatementPage() {
                     <td colSpan={3} className="px-3 py-2 text-right">
                       Section total
                     </td>
-                    <td className="px-3 py-2 text-right">{money(section.total)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{money(section.total)}</td>
                   </tr>
                 </tbody>
               </table>

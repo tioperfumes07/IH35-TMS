@@ -143,7 +143,7 @@ export function SettlementSummaryPage() {
     const t = data.totals;
     const dedRows = Object.entries(data.by_deduction_type ?? {})
       .filter(([, cents]) => Number(cents) > 0)
-      .map(([name, cents]) => `<tr><td>${esc(name)}</td><td style="text-align:right">${esc(money(Number(cents)))}</td></tr>`)
+      .map(([name, cents]) => `<tr><td>${esc(name)}</td><td className="text-right tabular-nums" style="text-align:right">${esc(money(Number(cents)))}</td></tr>`)
       .join("");
     const rowsHtml = filteredDrivers
       .map(
@@ -151,11 +151,11 @@ export function SettlementSummaryPage() {
           <td>${esc(r.driver_name)}</td>
           <td style="text-align:right">${esc(r.load_count)}</td>
           <td style="text-align:right">${esc(r.settlement_count)}</td>
-          <td style="text-align:right">${esc(money(r.gross_pay_cents))}</td>
-          <td style="text-align:right">${esc(money(r.deduction_cents))}</td>
-          <td style="text-align:right">${esc(money(r.chargeback_cents))}</td>
-          <td style="text-align:right">${esc(money(r.net_pay_cents))}</td>
-          <td style="text-align:right">${esc(money(r.avg_per_load_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.gross_pay_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.deduction_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.chargeback_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.net_pay_cents))}</td>
+          <td className="text-right tabular-nums" style="text-align:right">${esc(money(r.avg_per_load_cents))}</td>
         </tr>`,
       )
       .join("");
@@ -170,10 +170,10 @@ export function SettlementSummaryPage() {
           <tbody>
             <tr><th>Drivers</th><td>${esc(t.driver_count)}</td></tr>
             <tr><th>Settlements</th><td>${esc(t.settlement_count)}</td></tr>
-            <tr><th>Gross pay</th><td>${esc(money(t.gross_pay_cents))}</td></tr>
-            <tr><th>Deductions</th><td>${esc(money(t.deduction_total_cents))}</td></tr>
-            <tr><th>Chargebacks</th><td>${esc(money(t.chargeback_total_cents))}</td></tr>
-            <tr><th>Net pay</th><td>${esc(money(t.net_pay_cents))}</td></tr>
+            <tr><th>Gross pay</th><td className="text-right tabular-nums">${esc(money(t.gross_pay_cents))}</td></tr>
+            <tr><th>Deductions</th><td className="text-right tabular-nums">${esc(money(t.deduction_total_cents))}</td></tr>
+            <tr><th>Chargebacks</th><td className="text-right tabular-nums">${esc(money(t.chargeback_total_cents))}</td></tr>
+            <tr><th>Net pay</th><td className="text-right tabular-nums">${esc(money(t.net_pay_cents))}</td></tr>
           </tbody>
         </table>
         <h1 style="margin-top:16px">By deduction type</h1>

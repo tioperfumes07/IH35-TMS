@@ -199,7 +199,7 @@ export function ExpenseDetailPage() {
                               line.expense_account_uuid,
                             )
                           : "—",
-                      )}</td><td>${esc(line.description || "—")}</td><td style="text-align:right">${esc(
+                      )}</td><td>${esc(line.description || "—")}</td><td className="text-right tabular-nums" style="text-align:right">${esc(
                         money(line.amount_cents),
                       )}</td></tr>`,
                   )
@@ -214,7 +214,7 @@ export function ExpenseDetailPage() {
                         <tr><th>Expense #</th><td>${esc(expense.expense_number ?? displayId)}</td></tr>
                         <tr><th>Date</th><td>${esc(formatDateUS(expense.transaction_date))}</td></tr>
                         <tr><th>Vendor</th><td>${esc(vendorLabel)}</td></tr>
-                        <tr><th>Amount</th><td>${esc(money(expense.total_amount_cents))}</td></tr>
+                        <tr><th>Amount</th><td className="text-right tabular-nums">${esc(money(expense.total_amount_cents))}</td></tr>
                         <tr><th>Payment account</th><td>${esc(payAcct)}</td></tr>
                         <tr><th>Memo</th><td>${esc(expense.memo ?? "—")}</td></tr>
                         <tr><th>Status</th><td>${esc(expense.status)}</td></tr>

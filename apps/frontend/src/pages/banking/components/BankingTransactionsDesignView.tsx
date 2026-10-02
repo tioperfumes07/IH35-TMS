@@ -4034,8 +4034,8 @@ export function BankingTransactionsDesignView({
               return `<tr>
                 <td>${esc(formatBankTransactionDate(tx.transaction_date))}</td>
                 <td>${esc(transactionLabel(tx))}</td>
-                <td style="text-align:right">${esc(spent > 0 ? formatUsdCents(spent) : "")}</td>
-                <td style="text-align:right">${esc(received > 0 ? formatUsdCents(received) : "")}</td>
+                <td className="text-right tabular-nums" style="text-align:right">${esc(spent > 0 ? formatUsdCents(spent) : "")}</td>
+                <td className="text-right tabular-nums" style="text-align:right">${esc(received > 0 ? formatUsdCents(received) : "")}</td>
               </tr>`;
             })
             .join("");
