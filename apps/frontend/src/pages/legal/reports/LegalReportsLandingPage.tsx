@@ -99,11 +99,11 @@ export function LegalReportsLandingPage() {
             }
             to="/legal/matters"
           />
-          <Card label="Deadlines (30d)" value={countOrNull(s.deadlines_next_30_days)} to="/legal/matters" />
+          <Card label="Deadlines (30d)" value={countOrNull(s.deadlines_next_30_days)} to="/legal/alerts" />
           <Card
             label="SOL within 90d"
             value={countOrNull(s.statute_limitations_approaching_90d)}
-            to="/legal/matters"
+            to="/legal/alerts"
           />
         </div>
       )}

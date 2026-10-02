@@ -30,6 +30,7 @@ import {
   updateMatter,
 } from "./matters.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { listLegalDeadlineAlerts, summarizeLegalDeadlineAlerts } from "./legal-deadline-alerts.service.js";
 
 const operatingCompanyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -102,6 +103,23 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
       legalMattersReportsSummary(client, parsed.data.operating_company_id)
     );
     return summary;
+  });
+
+  // ROUND 326 item 4 — deadline + expiry alerts for the Legal dashboard (not silent email-only).
+  app.get("/api/v1/legal/deadline-alerts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_READ_ROLES)) return;
+    const parsed = operatingCompanyQuerySchema.extend({
+      horizon_days: z.coerce.number().int().min(1).max(365).optional(),
+    }).safeParse(req.query ?? {});
+    if (!parsed.success) return sendValidationError(reply, parsed.error);
+    return withCompanyScope(authUser.uuid, parsed.data.operating_company_id, async (client) => {
+      const alerts = await listLegalDeadlineAlerts(client, parsed.data.operating_company_id, {
+        horizonDays: parsed.data.horizon_days ?? 90,
+      });
+      return { alerts, summary: summarizeLegalDeadlineAlerts(alerts) };
+    });
   });
 
   app.get(

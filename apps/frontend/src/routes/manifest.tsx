@@ -509,6 +509,7 @@ const LegalMattersListPage = React.lazy(() => import("../pages/legal/matters/Leg
 const LegalMatterNewPage = React.lazy(() => import("../pages/legal/matters/LegalMatterNewPage").then((m) => ({ default: m.LegalMatterNewPage })));
 const LegalMatterDetailPage = React.lazy(() => import("../pages/legal/matters/LegalMatterDetailPage").then((m) => ({ default: m.LegalMatterDetailPage })));
 const LegalReportsLandingPage = React.lazy(() => import("../pages/legal/reports/LegalReportsLandingPage").then((m) => ({ default: m.LegalReportsLandingPage })));
+const LegalDeadlineAlertsPage = React.lazy(() => import("../pages/legal/alerts/LegalDeadlineAlertsPage").then((m) => ({ default: m.LegalDeadlineAlertsPage })));
 const DriverSchedulerGridPage = React.lazy(() => import("../pages/safety/driver-scheduler/DriverSchedulerGridPage").then((m) => ({ default: m.DriverSchedulerGridPage })));
 const DriverSchedulerRequestInboxPage = React.lazy(() => import("../pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage").then((m) => ({ default: m.DriverSchedulerRequestInboxPage })));
 const DriverSchedulerRequestDetailPage = React.lazy(() => import("../pages/safety/driver-scheduler/DriverSchedulerRequestDetailPage").then((m) => ({ default: m.DriverSchedulerRequestDetailPage })));
@@ -4110,6 +4111,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <LegalReportsLandingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/legal/alerts"
+          element={
+            <ProtectedRoute>
+              <LegalDeadlineAlertsPage />
             </ProtectedRoute>
           }
         />
