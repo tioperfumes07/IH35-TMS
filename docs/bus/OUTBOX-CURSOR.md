@@ -1,3 +1,9 @@
+**2026-10-02T07:50Z · B-3 Suggested/Record-type chips MERGED #24041 · tip `72d1dc0100`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91008 MERGED FAST-MERGE | GO
+FE MatchDrawer Suggested + Record type chips. money-pr-local-gate PASS. vitest 12/12.
+Prior BE dep-davlrvnavr4c73ci1us0 + FE dep-davlrr1h83ns73c5qeb0 live; FE autoDeploy picks tip.
+NEXT: Lead Chrome · next leftover (no migration until HH 12–23).
+
 **2026-10-02T07:45Z · B-3 Suggested + Record-type chips · `cursor/b3-suggested-record-type-chips-920f`**
 ACK: CURSOR | ACK GO-20 HOOK | B-3 §19 CHIPS | GO
 BE LIVE dep-davlrvnavr4c73ci1us0 · healthz git_sha=`7808b190cb` (B-2+B-3 ancestors).
