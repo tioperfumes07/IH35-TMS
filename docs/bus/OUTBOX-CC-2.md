@@ -1725,3 +1725,17 @@ Next (CC-2 lane): period-close interest accrual DR 6830 / CR 2155 with approval 
   (The customer's 3,750 to Faro is not in the run: the collection poster is unbuilt; it moves both sides by 3,750.)
 - §2 applied: keep-open now REQUIRES a dispute note (what is being disputed) — a named exception, never a resting state; write-down is the default.
 - Item 9 re-measured on prod (all 167 factoring/Faro guards, exit codes): 30 red, not 9. Triage next, in my lane.
+
+## 2026-10-02 22:40Z — ROUND 336 CC-2 lane (rule 7) — THIS PR · #24261 merged (ROUND 335 open-Net)
+- Rule 7 in the DATABASE (migration 202615300600): triggers on accounting.invoices (subtotal / tax / total) and accounting.invoice_lines (insert / delete / amount update) refuse any amount change while the invoice is on a live line of a posted, unvoided Faro purchase and still has an open balance. The refusal names the invoice, the purchase and the Faro invoice number and points at the ROUND 335 reason-coded credit memo. Non-amount fields stay editable. Read endpoint for Cursor's edit UI: GET /api/v1/factoring/invoices/:id/amount-lock (amount_locked, held_by, editable fields, reduce_with).
+- Fork br-divine-night-akwg59am (deleted), invoice 010 (4,000.00), Faro Inv 012 — the 2150 guard against an edit attempt and a credit memo:
+    unfactored: total edit                                 ALLOWED
+    1. purchase posted                                     2150 4000.00 | open Net 4000.00 | TIES
+    edit total 4,000 -> 3,000                              REFUSED  "invoice 010 is collateral on purchase FP-2026-00001 (Faro Inv 012) ... reduce it with a reason-coded credit memo"
+    edit a line amount / delete a line                     REFUSED  (same message)
+    edit customer_notes / internal_notes / payment_terms_label  ALLOWED
+    2. after the refused edits                             2150 4000.00 | open Net 4000.00 | TIES
+    3. short-pay reserve side DR 2150 / CR 1235            2150 3750.00 | open Net 4000.00 | BREAKS (unresolved)
+    4. reason-coded credit memo (rate dispute) 250.00      2150 3750.00 | open Net 3750.00 | TIES
+    lock after the write-down (3,750 still open)           still held by FP-2026-00001 — releases when the account closes
+- FOR CC-1 / CURSOR (ROUND 336 lanes): an edit path that tries an amount change on a factored invoice gets SQLSTATE 23514 with message prefix "factored_invoice_amount_locked:" — surface it verbatim; the read endpoint above lets the UI disable the amount fields up front.

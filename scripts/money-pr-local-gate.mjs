@@ -720,6 +720,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-factoring-writers-write-the-spine",
     ["apps/backend/src/factoring/", "scripts/verify-factoring-writers-write-the-spine.mjs"],
   ],
+  // ROUND 336 rule 7 — a factored invoice's amount is locked in the DB while its Faro purchase is open.
+  [
+    "verify-factored-invoice-amount-locked",
+    ["db/migrations/202615300600_factored_invoice_amount_lock.sql", "apps/backend/src/factoring/factored-invoice-lock.routes.ts", "scripts/verify-factored-invoice-amount-locked.mjs"],
+  ],
   // ROUND 326.2 items 3-4 — banking / factoring surfaces: every table tabular-nums, and Banking's
   // factoring reserve reads the factoring KPI engine (one reserve engine, no duplicate math).
   [
