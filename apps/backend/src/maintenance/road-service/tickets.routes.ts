@@ -117,7 +117,9 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
             u.unit_number AS unit_display_id,
             d.first_name || ' ' || d.last_name AS driver_name,
             w.display_id AS work_order_display_id,
-            b.bill_number AS bill_number
+            b.bill_number AS bill_number,
+            -- ROUND 297 vendor audit: a voided bill is named as voided, never shown as the ticket's live bill.
+            (b.voided_at IS NOT NULL) AS bill_voided
           FROM maintenance.road_service_tickets t
           -- Entity-scope BOTH joins. mdata.units carries owner_company_id +
           -- currently_leased_to_company_id (NOT operating_company_id) — the documented §4 landmine.

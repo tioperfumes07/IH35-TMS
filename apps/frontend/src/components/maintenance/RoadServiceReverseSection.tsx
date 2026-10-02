@@ -52,7 +52,10 @@ export function RoadServiceReverseSection({
               <EntityLinkOrTombstone kind="work_order" id={ticket.wo_id} name={ticket.work_order_display_id} noun="Work order" />
             ) : null}
             {ticket.bill_id ? (
-              <EntityLinkOrTombstone kind="bill" id={ticket.bill_id} name={ticket.bill_number} noun="Bill" />
+              <>
+                <EntityLinkOrTombstone kind="bill" id={ticket.bill_id} name={ticket.bill_number} noun="Bill" />
+                {ticket.bill_voided ? <span className="text-gray-500"> (voided)</span> : null}
+              </>
             ) : null}
           </div>
         </div>
