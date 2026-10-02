@@ -54,6 +54,8 @@ export type ReverseSettlementForVoidResult = {
   reversalJournalEntryId: string | null;
   glReversalResult: SettlementBillPaymentReversalResult["result"];
   bankTransactionUnmatched: boolean;
+  /** ROUND 300 — the pay-run sub-ledger unwind, when the settlement was posted through the per-load A/P chain. */
+  payrunUnwind?: { run_id: string; advances_restored: number; escrow_reversed_cents: number } | null;
 };
 
 /**
@@ -173,6 +175,7 @@ export async function reverseSettlementForVoid(
   return {
     voidedAt: flipped.rows[0]!.updated_at,
     reversalJournalEntryId,
+    payrunUnwind: reversal.payrun_unwind ?? null,
     glReversalResult: reversal.result,
     bankTransactionUnmatched,
   };

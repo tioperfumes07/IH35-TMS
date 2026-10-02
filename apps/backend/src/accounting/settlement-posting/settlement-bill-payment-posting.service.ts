@@ -51,6 +51,8 @@ import {
   planDriverEscrowSubAccount,
 } from "../driver-subaccount-provision.service.js";
 import { EscrowResolverError, resolveDriverEscrowLiabilityAccount } from "../../driver-finance/escrow-resolver.service.js";
+import { unwindPayRunSubledgersInClientTx } from "../../driver-finance/settlement-payrun-subledger-unwind.service.js";
+import { loadPayRunRecoveryReversal } from "../../driver-finance/settlement-payrun-recovery.service.js";
 import {
   SETTLEMENT_GL_POSTING_FLAG_KEY,
   SettlementBillPaymentError,
@@ -892,6 +894,8 @@ export type SettlementBillPaymentReversalResult = {
   result: "reversed" | "nothing_to_reverse";
   settlement_id: string;
   run_id: string | null;
+  /** ROUND 300 — present when the settlement was posted through the per-load A/P chain (pay-run sub-ledgers unwound). */
+  payrun_unwind?: { run_id: string; advances_restored: number; escrow_reversed_cents: number } | null;
 };
 
 /**
@@ -953,6 +957,26 @@ export async function reverseSettlementBillPaymentInClientTx(
       );
     }
 
+    // ROUND 300 (CC-1, proven on a Neon fork) — the per-load A/P chain (closeSettlementPayRun ->
+    // postSettlementApChainInClientTx) writes this same spine AND a posted payrun_gl_runs claim whose journal_entry_id
+    // is the application JE (or the first bill JE when nothing was applied). Its application JE carries advances,
+    // deductions, chargebacks and escrow together, and the close wrote pay-run sub-ledgers (advance recoveries,
+    // escrow) this engine must unwind too. Detected structurally, never by guess.
+    const payrunRes = await client.query<{ id: string; journal_entry_id: string | null }>(
+      `SELECT id::text, journal_entry_id::text FROM driver_finance.payrun_gl_runs
+        WHERE operating_company_id = $1::uuid AND settlement_id = $2::uuid AND status = 'posted' LIMIT 1 FOR UPDATE`,
+      [opco, settlementId]
+    );
+    const payrunRow = payrunRes.rows[0] ?? null;
+    const chainPayrun =
+      payrunRow?.journal_entry_id &&
+      (payrunRow.journal_entry_id === run.deduction_journal_entry_id || glBills.some((b) => b.bill_journal_entry_id === payrunRow.journal_entry_id))
+        ? { id: payrunRow.id, journalEntryId: payrunRow.journal_entry_id }
+        : null;
+    const chainRecoveries = chainPayrun
+      ? await loadPayRunRecoveryReversal(client as never, { operatingCompanyId: opco, settlementId, journalEntryId: chainPayrun.journalEntryId })
+      : [];
+
     const originalJeIds: string[] = [];
     const reversalJeIds: string[] = [];
 
@@ -990,12 +1014,25 @@ export async function reverseSettlementBillPaymentInClientTx(
         reversalJeIds.push(paymentReversal.reversal_journal_entry_id);
       }
 
-      if (gb.deduction_bill_payment_id) {
+      // Every NON-CASH settlement application on this bill (advance, deduction, chargeback, escrow — the chain writes
+      // one per application per bill; the retired poster wrote one, deduction_bill_payment_id). They carry no GL of
+      // their own (the application / deduction JE, reversed below, is their GL). Only settlement_deduction_noncash
+      // rows: a real cash payment someone recorded against the bill is never voided silently here.
+      const noncash = await client.query<{ id: string }>(
+        `SELECT id::text FROM accounting.bill_payments
+          WHERE operating_company_id = $1::uuid AND bill_id = $2::uuid AND revoked_at IS NULL
+            AND settlement_deduction_noncash = true
+          ORDER BY created_at, id`,
+        [opco, gb.accounting_bill_id]
+      );
+      const noncashIds = new Set(noncash.rows.map((x) => x.id));
+      if (gb.deduction_bill_payment_id) noncashIds.add(gb.deduction_bill_payment_id);
+      for (const paymentId of noncashIds) {
         await voidBillPaymentInClientTx(
           client,
           {
             operatingCompanyId: opco,
-            paymentId: gb.deduction_bill_payment_id,
+            paymentId,
             reason: input.reason,
             userId: actor.userId,
             reversePostedGl: false,
@@ -1101,15 +1138,21 @@ export async function reverseSettlementBillPaymentInClientTx(
       ]
     );
     const deductionReconciliation = deductionProof.rows[0];
+    // The chain's application JE credits deductions AND advances, chargebacks and escrow; it must reverse in full
+    // (original credits = reversal debits). The retired poster's deduction JE carried deductions only.
+    const deductionGlTies = chainPayrun
+      ? Number(deductionReconciliation?.original_gl_cents ?? -1) === Number(deductionReconciliation?.reversal_gl_cents ?? -2) &&
+        Number(deductionReconciliation?.original_gl_cents ?? 0) >= restoredDeductions.total_amount_cents
+      : Number(deductionReconciliation?.original_gl_cents ?? -1) === restoredDeductions.total_amount_cents &&
+        Number(deductionReconciliation?.reversal_gl_cents ?? -1) === restoredDeductions.total_amount_cents;
     if (
+      !deductionGlTies ||
       Number(deductionReconciliation?.restored_count ?? -1) !== restoredDeductions.deduction_count ||
       Number(deductionReconciliation?.restored_amount_cents ?? -1) !== restoredDeductions.total_amount_cents ||
       Number(deductionReconciliation?.invalid_state_count ?? -1) !== 0 ||
       Number(deductionReconciliation?.bucket_reversal_count ?? -1) !== restoredDeductions.bucketed_count ||
       Number(deductionReconciliation?.bucket_reversal_amount_cents ?? -1) !==
-        restoredDeductions.bucketed_amount_cents ||
-      Number(deductionReconciliation?.original_gl_cents ?? -1) !== restoredDeductions.total_amount_cents ||
-      Number(deductionReconciliation?.reversal_gl_cents ?? -1) !== restoredDeductions.total_amount_cents
+        restoredDeductions.bucketed_amount_cents
     ) {
       throw new Error("settlement_deduction_reconciliation_failed");
     }
@@ -1222,6 +1265,39 @@ export async function reverseSettlementBillPaymentInClientTx(
       [run.id, actor.userId, input.reason]
     );
     if (!transitioned.rows[0]?.id) throw new Error("settlement_reversal_state_transition_failed");
+
+    // ROUND 300 — a chain-posted settlement: unwind the pay-run sub-ledgers (advance recoveries, escrow, disbursement
+    // stamp, the payrun_gl_runs claim) the close wrote, linked to the reversal of the pay-run's own journal entry.
+    let payrunUnwind: SettlementBillPaymentReversalResult["payrun_unwind"] = null;
+    if (chainPayrun) {
+      const rev = await client.query<{ reversed_by_je_id: string | null }>(
+        `SELECT reversed_by_je_id::text FROM accounting.journal_entries WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+        [chainPayrun.journalEntryId, opco]
+      );
+      const payrunReversalJeId = rev.rows[0]?.reversed_by_je_id ?? null;
+      if (!payrunReversalJeId) throw new Error("settlement_payrun_journal_not_reversed");
+      const driverRes = await client.query<{ driver_id: string; display_id: string | null }>(
+        `SELECT driver_id::text, display_id FROM driver_finance.driver_settlements WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+        [settlementId, opco]
+      );
+      const unwound = await unwindPayRunSubledgersInClientTx(
+        client as never,
+        {
+          operatingCompanyId: opco,
+          settlementId,
+          driverId: driverRes.rows[0]!.driver_id,
+          runId: chainPayrun.id,
+          label: `Settlement ${driverRes.rows[0]?.display_id ?? settlementId}`,
+          reason: input.reason,
+          originalJeId: chainPayrun.journalEntryId,
+          reversalJeId: payrunReversalJeId,
+          recoveries: chainRecoveries,
+        },
+        actor
+      );
+      payrunUnwind = { run_id: chainPayrun.id, ...unwound };
+    }
+
     await appendCrudAudit(
       client as never,
       actor.userId,
@@ -1245,10 +1321,11 @@ export async function reverseSettlementBillPaymentInClientTx(
           restored_deduction_count: restoredDeductions.deduction_count,
           restored_deduction_amount_cents: restoredDeductions.total_amount_cents,
         },
+        payrun_unwind: payrunUnwind,
       },
       "warning",
       "SETTLEMENT-BILL-PAYMENT"
     );
 
-    return { result: "reversed", settlement_id: settlementId, run_id: run.id };
+    return { result: "reversed", settlement_id: settlementId, run_id: run.id, payrun_unwind: payrunUnwind };
 }

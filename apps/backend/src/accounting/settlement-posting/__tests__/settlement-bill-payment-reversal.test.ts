@@ -200,7 +200,7 @@ describe("settlement Bill+BillPayment reversal orchestration", () => {
       { userId: USER }
     );
 
-    expect(result).toEqual({ result: "reversed", settlement_id: SETTLEMENT, run_id: RUN });
+    expect(result).toEqual({ result: "reversed", settlement_id: SETTLEMENT, run_id: RUN, payrun_unwind: null });
     expect(mocks.voidPayment).toHaveBeenCalledTimes(2);
     expect(mocks.voidPayment.mock.calls.every((call) => call[0] === client)).toBe(true);
     expect(mocks.voidPayment).toHaveBeenNthCalledWith(
