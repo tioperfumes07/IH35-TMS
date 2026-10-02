@@ -16,7 +16,8 @@
  * Fails if:
  *   1. a second accept route still stamps matched_*_id = $N or review_state='matched' itself;
  *   2. match.service fuel/relay path lacks postFuelFillOnBankMatch + matched_journal_entry_id stamp;
- *   3. match.service reserve/recourse path lacks postFactoringChargebackEvent with client=;
+ *   3. match.service reserve/recourse path lacks postFactoringChargebackEvent with client=,
+ *      or lacks Faro reserve posters (postFaroReserve* / chart_of_accounts_roles);
  *   4. a human unmatch route clears matches without calling unmatchBankTransaction;
  *   5. reconciliation.routes session unmatch still has an inline matched_*_id = NULL UPDATE.
  */
@@ -61,8 +62,36 @@ export function check(files) {
   ) {
     problems.push(`${MATCH}: reserve/recourse match must call postFactoringChargebackEvent with client (same txn)`);
   }
-  if (!/is_reserve|account_number = '1230'|factor_reserve_held/.test(match)) {
-    problems.push(`${MATCH}: missing GL 1230 / factor_reserve_held reserve-bank gate for recourse`);
+  if (!/isFaroReserveBankAccount|factor_reserve_held|factor_cash_reserve_held/.test(match)) {
+    problems.push(`${MATCH}: missing Faro reserve-bank gate (factor_reserve_held / factor_cash_reserve_held)`);
+  }
+  // OWNER-ORDER §3.1 / CC-2 handoff — never JOIN catalogs.account_role_bindings for reserve roles.
+  if (/FROM\s+catalogs\.account_role_bindings[\s\S]{0,200}factor_reserve_held|JOIN\s+catalogs\.account_role_bindings[\s\S]{0,200}factor_reserve_held/i.test(match)) {
+    problems.push(`${MATCH}: reserve roles must use accounting.chart_of_accounts_roles, not catalogs.account_role_bindings`);
+  }
+  if (!/isFaroReserveBankAccount|chart_of_accounts_roles/.test(match)) {
+    problems.push(`${MATCH}: must call isFaroReserveBankAccount (chart_of_accounts_roles)`);
+  }
+  if (!/postFaroReserveRowOnBankMatch|postFaroReserveEntryOnClient/.test(match)) {
+    problems.push(`${MATCH}: Faro reserve row match must call postFaroReserveRowOnBankMatch / postFaroReserveEntryOnClient`);
+  }
+  if (!/postFaroRsvDepositsOnPaymentMatch|faroReserveDepositsOn/.test(match)) {
+    problems.push(`${MATCH}: payment match must call postFaroRsvDepositsOnPaymentMatch / faroReserveDepositsOn`);
+  }
+  const faroHelper = "apps/backend/src/accounting/bank-recon/bank-match-faro-reserve-post.service.ts";
+  const faroSrc = files[faroHelper] ?? (fs.existsSync(path.join(ROOT, faroHelper)) ? fs.readFileSync(path.join(ROOT, faroHelper), "utf8") : "");
+  if (!faroSrc) {
+    problems.push(`${faroHelper}: missing — the bank-match Faro reserve poster`);
+  } else {
+    if (!/chart_of_accounts_roles/.test(faroSrc)) {
+      problems.push(`${faroHelper}: must resolve reserve banks via accounting.chart_of_accounts_roles`);
+    }
+    if (!/postFaroReserveEntryOnClient/.test(faroSrc)) {
+      problems.push(`${faroHelper}: must call postFaroReserveEntryOnClient`);
+    }
+    if (!/faroReserveDepositsOn/.test(faroSrc)) {
+      problems.push(`${faroHelper}: must call faroReserveDepositsOn for payment Rsv Deposit legs`);
+    }
   }
   if (!fs.existsSync(path.join(ROOT, FUEL_POST)) && !files[FUEL_POST]) {
     problems.push(`${FUEL_POST}: missing — the bank-match fuel poster`);

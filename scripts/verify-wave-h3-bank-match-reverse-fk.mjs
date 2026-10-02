@@ -40,7 +40,10 @@ export function staticChecks(sources = {}) {
   ) {
     problems.push("acceptMatch must reverse-stamp bill_payments.source_bank_transaction_id + from_bank_account_id");
   }
-  if (!/ledger_entry_kind === "payment"/.test(svc) || !/ledger_entry_kind === "bill_payment"/.test(svc)) {
+  // matchKind is the Faro-reserve rewrite of ledger_entry_kind (OWNER-ORDER §3.1); either gate is fine.
+  const paymentGate = /(?:ledger_entry_kind|matchKind)\s*===\s*"payment"/.test(svc);
+  const billPayGate = /(?:ledger_entry_kind|matchKind)\s*===\s*"bill_payment"/.test(svc);
+  if (!paymentGate || !billPayGate) {
     problems.push("reverse stamps must be gated on payment / bill_payment kinds");
   }
   if (!/UPDATE accounting\.payments/.test(test) || !/UPDATE accounting\.bill_payments/.test(test)) {
@@ -56,7 +59,10 @@ function selftest() {
   const goodSvc = read(SERVICE);
   const goodTest = read(TEST);
   if (staticChecks({ service: goodSvc, test: goodTest }).length) fail("selftest: clean must PASS");
-  const bad = goodSvc.replace(/UPDATE accounting\.payments[\s\S]*?operating_company_id = \$3::uuid`/, "/* removed */");
+  const bad = goodSvc.replace(
+    /UPDATE accounting\.payments[\s\S]{0,200}source_bank_transaction_id\s*=\s*COALESCE/g,
+    "UPDATE accounting.payments /* stripped coalesce */"
+  );
   if (!staticChecks({ service: bad, test: goodTest }).length) fail("selftest: missing payment reverse must FAIL");
   console.log(`${LABEL} selftest PASS`);
 }
