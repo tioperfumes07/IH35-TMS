@@ -26,6 +26,7 @@ import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.ser
 import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/poster.service.js";
 import { nextExpenseDisplayId } from "../accounting/display-id.js";
 import { createHistoricalEscrowHold } from "./historical-escrow-backfill.service.js";
+import { creatorEmptyPayCents, creatorEmptyRateCents } from "./settlement-creator-empty-pay.js";
 import { EscrowResolverError, resolveDriverEscrowLiabilityAccount } from "./escrow-resolver.service.js";
 import { createSettlementDeduction } from "./deductions.service.js";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";
@@ -479,9 +480,8 @@ export async function previewSettlementCreator(
   let mileagePayCents = 0;
   for (const load of draft.loads ?? []) {
     const loaded = Math.round(Number(load.loaded_miles || 0) * Number(load.line_haul_rate_cents || 0));
-    // Empty miles × empty_rate (AT driver PDF). When rate absent, empty contributes $0 —
-    // operator types empty pay as Additional pay.
-    const empty = Math.round(Number(load.empty_miles || 0) * Number(load.empty_rate_cents || 0));
+    // Empty miles × the empty rate, else the loaded per-mile rate (queue item 7, owner MILES SPEC).
+    const empty = creatorEmptyPayCents(load);
     const pay = loaded + empty;
     if (pay <= 0) continue;
     mileagePayCents += pay;
@@ -1454,15 +1454,18 @@ export async function postSettlementCreatorInClientTx(
     // preview (mileage pay section above), never a settlement_lines row a driver's settlement
     // screen can display or a quantity a mileage audit can check. Zero amount when rate/miles
     // absent (matches the "empty contributes $0" comment on the JE side), never invented.
-    const hasEmptyMileage = load.empty_rate_cents != null && load.empty_miles != null;
+    // Queue item 7: the empty rate falls back to the loaded per-mile rate (creatorEmptyRateCents) — a missing or
+    // 0 empty rate no longer writes a $0.00 Empty Miles line for real empty miles.
+    const emptyRateCents = creatorEmptyRateCents(load);
+    const hasEmptyMileage = emptyRateCents != null && Number(load.empty_miles ?? 0) > 0;
     if (hasEmptyMileage) {
       const emptyItem = await itemByName(client, draft.operating_company_id, "Driver Pay-CDL-Empty Miles");
       // Same all-four-or-none rule as the loaded-miles line above: without a resolved item_id the
       // check constraint requires quantity/rate_cents/unit_of_measure to ALSO be NULL, not a
       // partial set.
       const hasEmptyItem = Boolean(emptyItem);
-      const emptyCents = Math.round(Number(load.empty_rate_cents) * Number(load.empty_miles));
-      const emptyDesc = `Load ${load.load_number} — Empty Miles ${Number(load.empty_miles).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} @ $${(Number(load.empty_rate_cents) / 100).toFixed(2)}`;
+      const emptyCents = creatorEmptyPayCents(load);
+      const emptyDesc = `Load ${load.load_number} — Empty Miles ${Number(load.empty_miles).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} @ $${(emptyRateCents / 100).toFixed(2)}`;
       await client.query(
         `
           INSERT INTO driver_finance.settlement_lines (
@@ -1485,7 +1488,7 @@ export async function postSettlementCreatorInClientTx(
           dollarsFromCents(Math.max(0, emptyCents)),
           loadId,
           hasEmptyItem ? Number(load.empty_miles) : null,
-          hasEmptyItem ? Number(load.empty_rate_cents) : null,
+          hasEmptyItem ? emptyRateCents : null,
           hasEmptyItem ? "mi" : null,
           hasEmptyItem ? emptyItem!.id : null,
         ],
