@@ -38,6 +38,7 @@ type DbClient = { query: <T = Record<string, unknown>>(sql: string, values?: unk
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { standingLatchJePredicate } from "./revrec-delivery-posting/poster.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
 
 export const INVOICE_AR_GL_POSTING_FLAG_KEY = "INVOICE_AR_GL_POSTING_ENABLED";
 
@@ -191,6 +192,27 @@ export async function postInvoiceGlIfEnabled(
       },
       { userId: actor.userId }
     );
+    // Lead ROUND 332 item 2: the invoice's postings are declared on the spine (linked_object_type 'invoice',
+    // relationship_role 'source_transaction') in THIS transaction — explicitly here, idempotently (ON CONFLICT DO
+    // NOTHING), so the invoice poster states its own linkage instead of relying on the engine's internal insert.
+    const jeId = (result as { journal_entry_id?: string | null }).journal_entry_id ?? null;
+    if (jeId) {
+      const postings = await client.query<{ id: string }>(
+        `SELECT id::text FROM accounting.journal_entry_postings
+          WHERE journal_entry_uuid = $1::uuid AND operating_company_id = $2::uuid
+            AND source_transaction_type = 'invoice' AND source_transaction_id = $3`,
+        [jeId, operatingCompanyId, invoiceId]
+      );
+      for (const p of postings.rows) {
+        await writeTransactionSourceLink(client as never, {
+          operating_company_id: operatingCompanyId,
+          journal_entry_posting_id: p.id,
+          linked_object_type: "invoice",
+          linked_object_id: invoiceId,
+          relationship_role: "source_transaction",
+        });
+      }
+    }
     return { posted: true, result };
   } catch (err) {
     if (err instanceof PostingEngineError) {

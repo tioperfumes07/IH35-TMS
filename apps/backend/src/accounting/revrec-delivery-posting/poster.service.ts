@@ -719,6 +719,18 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
               linked_object_id: input.load_id,
               relationship_role: prepared.event === "earn" ? "revrec_earn" : "revrec_bill",
             });
+            // Lead ROUND 332 item 2 (CC-1): Event 2's A/R line IS the invoice's A/R, and it is tagged with the invoice
+            // above — declare that on the spine too, or the invoice's linkage is invisible (prod: 100 of 110 USMCA
+            // invoices had their A/R posted here with only load / manual_entry links; invoice/source_transaction was 8).
+            if (prepared.event === "bill" && prepared.invoiceId) {
+              await writeTransactionSourceLink(client as never, {
+                operating_company_id: input.operating_company_id,
+                journal_entry_posting_id: postingId,
+                linked_object_type: "invoice",
+                linked_object_id: prepared.invoiceId,
+                relationship_role: "source_transaction",
+              });
+            }
           }
           await appendCrudAudit(
             client as Parameters<typeof appendCrudAudit>[0],
