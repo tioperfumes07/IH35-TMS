@@ -275,3 +275,38 @@ describe("MatchDrawer — ROUND 207 date cascade UI", () => {
     expect(screen.getByTestId("match-date-to")).toBeInTheDocument();
   });
 });
+
+describe("MatchDrawer — B-3 §19 ±90 day default", () => {
+  beforeEach(() => {
+    vi.mocked(bankingApi.getMatchCandidates).mockReset();
+  });
+
+  it("seeds From/To to bank date ±90 days and labels the header", async () => {
+    vi.mocked(bankingApi.getMatchCandidates).mockResolvedValue({
+      candidates: [candidate({ amount_gap_cents: 0 })],
+      match_candidates_count: 1,
+      window: { step: "custom", from: "2026-06-07", to: "2026-12-04", auto_widened: false },
+      bank_amount_cents: 10000,
+    });
+    render(
+      wrap(
+        <MatchDrawer
+          open
+          bankTransactionId={bankTxnId}
+          bankTransactionDate="2026-09-05"
+          operatingCompanyId={companyId}
+          onClose={vi.fn()}
+        />
+      )
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId("match-window-header")).toHaveTextContent(/±90 days/);
+    });
+    expect(screen.getByTestId("match-from-to")).toBeInTheDocument();
+    expect(bankingApi.getMatchCandidates).toHaveBeenCalledWith(
+      bankTxnId,
+      companyId,
+      expect.objectContaining({ dateFrom: "2026-06-07", dateTo: "2026-12-04" })
+    );
+  });
+});

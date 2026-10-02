@@ -3956,6 +3956,10 @@ export function BankingTransactionsDesignView({
           const sourceTransaction = scopedRows.find((tx) => tx.id === matchDrawerTxId);
           return sourceTransaction ? transactionLabel(sourceTransaction) : null;
         })()}
+        bankTransactionDate={(() => {
+          const sourceTransaction = scopedRows.find((tx) => tx.id === matchDrawerTxId);
+          return sourceTransaction?.transaction_date?.slice(0, 10) ?? null;
+        })()}
         operatingCompanyId={companyId}
         onClose={() => setMatchDrawerTxId(null)}
         onAccepted={() => onDataChanged()}
