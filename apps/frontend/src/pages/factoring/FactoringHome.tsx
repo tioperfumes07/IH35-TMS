@@ -58,6 +58,7 @@ import { SubmitToFactorTab } from "./SubmitToFactorTab";
 import { PaymentsToYouPanel } from "./PaymentsToYouPanel";
 import { FactoringCashFlowPanel } from "./FactoringCashFlowPanel";
 import { FactoringKpiPanel } from "../../components/factoring/FactoringKpiPanel";
+import { getFactoringKpis } from "../../api/factoring-kpis";
 import { FactoringReservesSharedPanel } from "../../components/factoring/FactoringReservesSharedPanel";
 import { ChargebacksTable, type ChargebackFeeRow } from "./ChargebacksTable";
 import { RecoursePipelineTable } from "./RecoursePipelineTable";
@@ -449,12 +450,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
     setMergeFromVendorName(searchParams.get("merge_from_vendor_name")?.trim() ?? "");
     setMergeToVendorName(searchParams.get("merge_to_vendor_name")?.trim() ?? "");
     setTab("vendor_merges");
-    const next = new URLSearchParams(searchParams);
-    next.delete("merge_from_vendor_id");
-    next.delete("merge_from_vendor_name");
-    next.delete("merge_to_vendor_id");
-    next.delete("merge_to_vendor_name");
-    setSearchParams(next, { replace: true });
+    // The merge_* params stay in the URL (FAC-09a, #21440): RouteContentBoundary keys its <Suspense> on
+    // pathname + search, so deleting them here re-keys it, remounts this page and drops the prefill.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- searchParams/setSearchParams/state
     // setters are intentionally excluded: searchParams is a fresh object every render (would
     // fire every render if included) and the setters are referentially stable.
@@ -799,8 +796,24 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
     }
     return { escrow, cash, fee, wire, net, count: (purchasesQuery.data?.purchases ?? []).length };
   }, [purchasesQuery.data?.purchases]);
-  // ROUND 315 / Lead B5: Escrow/Cash split from purchase lines (ledger-backed document), not fabricated.
-  // Combined reserve_balance (dollars) still shown as Total Reserve from views.factoring_summary.
+  // ROUND 326.2 item 4 — held reserve balances are the factoring KPI engine's GL balances (1230 escrow,
+  // 1235 cash), the same figures Banking and the shared reserves panel show. purchaseEscrowTotals above only
+  // totals the purchase register's own rows (footers); it is never presented as a held balance.
+  const factoringKpiQuery = useQuery({
+    queryKey: ["factoring", "kpis", companyId, null, null],
+    queryFn: () => getFactoringKpis(companyId),
+    enabled: Boolean(companyId),
+  });
+  const engineReserve = useMemo(() => {
+    const kpis = factoringKpiQuery.data?.kpis;
+    if (!kpis) return null;
+    const v = (key: string) => Number(kpis.find((k) => k.key === key)?.value ?? 0);
+    const escrow = v("escrow_reserve_balance");
+    const cash = v("cash_reserve_balance");
+    return { escrow, cash, total: escrow + cash };
+  }, [factoringKpiQuery.data?.kpis]);
+  const engineHeld = (key: "escrow" | "cash" | "total") =>
+    factoringKpiQuery.isError ? "Unavailable" : engineReserve ? fmtCents(engineReserve[key]) : null;
   // B7: reserve movement history lives in FactoringReservesSharedPanel (shared with Banking).
   const faroImportsQuery = useQuery({
     queryKey: ["data-infra", "faro-imports", companyId],
@@ -1024,7 +1037,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             <DrillKpiCard
               testId="factoring-kpi-reserve-balance"
               label="Reserve balance"
-              value={summaryQuery.isError ? "—" : fmtCurrency(summary?.reserve_balance)}
+              value={engineHeld("total")}
               to={FACTORING_TAB_PATH.reserve_tracker}
             />
             {/* FACTORING-CHARGEBACK-BALANCE-IS-ACTUALLY-OUTSTANDING-LIABILITY: this is Advance +
@@ -1439,7 +1452,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
 
       {/* Loan / Save — reuses recourseQuery showing each factoring advance as a loan (advance
           amount = principal borrowed) with the reserve as the savings holdback. Also shows the
-          total reserve balance from summaryQuery. No new backend endpoint needed. */}
+          total reserve balance from the factoring KPI engine (GL 1230 + 1235). */}
       {tab === "loan_save" ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid="factoring-loan-save">
           <div className="mb-2 text-xs font-medium text-gray-900">Loan / Save</div>
@@ -1451,7 +1464,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
             </div>
             <div className="bg-gray-50 p-2">
               <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Total Reserve (Savings)</div>
-              <div className="text-xs font-medium text-gray-900">{fmtCurrency(summary?.reserve_balance)}</div>
+              <div className="text-xs font-medium tabular-nums text-gray-900">{engineHeld("total") ?? "…"}</div>
             </div>
             <div className="bg-gray-50 p-2">
               <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Active Advances</div>
@@ -1696,7 +1709,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               <DrillKpiCard
                 testId="factoring-escrow-kpi-escrow"
                 label="Escrow held"
-                value={purchasesQuery.isError ? null : fmtCents(purchaseEscrowTotals.escrow)}
+                value={engineHeld("escrow")}
                 to={FACTORING_TAB_PATH.payments_to_you}
               />
               <DrillKpiCard
@@ -1809,7 +1822,7 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
               <DrillKpiCard
                 testId="factoring-cash-reserve-kpi-held"
                 label="Cash reserve held"
-                value={purchasesQuery.isError ? null : fmtCents(purchaseEscrowTotals.cash)}
+                value={engineHeld("cash")}
                 to={FACTORING_TAB_PATH.payments_to_you}
               />
               <DrillKpiCard
@@ -2022,9 +2035,9 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                     <div className="flex items-center justify-between border-b border-gray-100 py-1">
                       <span className="text-xs text-gray-600">Reserve Balance (combined)</span>
                       {summaryMoneyOrDash({
-                        isLoading: summaryQuery.isLoading,
-                        isError: summaryQuery.isError,
-                        value: summary?.reserve_balance,
+                        isLoading: factoringKpiQuery.isLoading,
+                        isError: factoringKpiQuery.isError,
+                        value: engineReserve ? engineReserve.total / 100 : undefined,
                         testId: "factoring-account-summary-reserve-balance",
                       })}
                     </div>
@@ -2929,7 +2942,8 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
                   const faroFees = filtered.reduce((s, r) => s + Number(r.fee_total_cents ?? 0), 0);
                   const faroChargebacks = filtered.reduce((s, r) => s + Number(r.chargeback_total_cents ?? 0), 0);
                   const summaryAdvance = summary?.mtd_advanced_total ? Math.round(summary.mtd_advanced_total * 100) : 0;
-                  const summaryReserve = summary?.reserve_balance ? Math.round(summary.reserve_balance * 100) : 0;
+                  // App side of the reconciliation = the factoring KPI engine's GL reserve (1230 + 1235).
+                  const summaryReserve = engineReserve?.total ?? 0;
                   const advanceDiff = faroAdvance - summaryAdvance;
                   const reserveDiff = faroReserve - summaryReserve;
                   return (

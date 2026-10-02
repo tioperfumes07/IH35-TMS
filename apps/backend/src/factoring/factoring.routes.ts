@@ -1,3 +1,5 @@
+import { companyBusinessDate } from "../lib/company-business-date.js";
+import { factoringBookReserveCents } from "./factoring-kpi.service.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -148,7 +150,12 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
       mtd_advances_count: 0,
       mtd_advanced_total: 0,
     };
-    return withCanonicalFactorIdentity(summary.row ?? fallback, summary.activeFactor);
+    // ROUND 326.2 item 4 — reserve_balance (dollars) is the factoring KPI engine's book reserve (GL 1230 + 1235),
+    // never views.factoring_summary's own reserve math: every reader of this endpoint shows the one engine's figure.
+    const reserve = await withCompanyScope(user.uuid, companyId, (client) =>
+      factoringBookReserveCents(client, companyId, companyBusinessDate())
+    );
+    return withCanonicalFactorIdentity({ ...(summary.row ?? fallback), reserve_balance: reserve.total / 100 }, summary.activeFactor);
   }
   );
 

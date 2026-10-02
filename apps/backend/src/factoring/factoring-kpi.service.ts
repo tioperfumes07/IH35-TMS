@@ -75,6 +75,20 @@ function postingsSql(mode: "balance" | "activity") {
 }
 const SIGNED = `CASE WHEN jp.debit_or_credit = 'debit' THEN jp.amount_cents ELSE -jp.amount_cents END`;
 
+/**
+ * The book reserve — escrow (factor_reserve_held, 1230) + cash reserve (factor_cash_reserve_held, 1235) GL balances
+ * as of a date. The ONE reserve figure: the KPI engine, GET /factoring/summary.reserve_balance and the cash-flow
+ * overview all read it, so Factoring, Banking and Reports can never show different reserves (ROUND 326.2 item 4).
+ */
+export async function factoringBookReserveCents(client: DbClient, oci: string, asOf: string) {
+  const acc = await factoringAccounts(client, oci);
+  const bal = async (id: string | null) =>
+    id ? num((await client.query<{ v: string }>(`SELECT COALESCE(sum(${SIGNED}),0)::bigint v ${postingsSql("balance")}`, [oci, asOf, asOf, id])).rows[0]?.v) : 0;
+  const escrow = await bal(acc.escrow.id);
+  const cash = await bal(acc.cash.id);
+  return { escrow, cash, total: escrow + cash };
+}
+
 export async function computeFactoringKpis(client: DbClient, oci: string, range: KpiRange): Promise<FactoringKpi[]> {
   const acc = await factoringAccounts(client, oci);
   const base = [oci, range.from, range.to];

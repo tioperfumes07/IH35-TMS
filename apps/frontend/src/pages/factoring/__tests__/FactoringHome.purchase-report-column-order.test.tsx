@@ -71,11 +71,13 @@ describe("FactoringHomePage Purchase Report column order", () => {
 
     wrap(<FactoringHomePage initialTab="purchase_report" />);
 
-    await screen.findByTestId("factoring-purchase-report");
-    const headers = [...document.querySelectorAll("thead th")].map((el) => el.textContent?.trim() ?? "");
+    const report = await screen.findByTestId("factoring-purchase-report");
+    // Scope to the purchase report's own table — the page renders other tables whose headers also say "Purchase".
+    const headers = [...report.querySelectorAll("thead th")].map((el) => el.textContent?.trim() ?? "");
     const idx = (label: string) => headers.findIndex((h) => h.includes(label));
 
     expect(idx("Purchase")).toBeGreaterThanOrEqual(0);
+    expect(headers.filter((h) => h === "Purchase").length).toBe(1);
     expect(idx("Net Adv")).toBeGreaterThan(idx("Purchase"));
     expect(idx("Cash Rsv")).toBeGreaterThan(idx("Net Adv"));
     expect(idx("Fees")).toBeGreaterThan(idx("Cash Rsv"));

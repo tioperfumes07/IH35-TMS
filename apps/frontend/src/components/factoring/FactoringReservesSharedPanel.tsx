@@ -1,8 +1,10 @@
 /**
  * ROUND 315 / Lead B7 — Reserves / deductions (CCG) render identically in Factoring and Banking.
- * One panel, one ledger source: posted factoring_purchases (escrow/cash) + reserve-balance history
- * + banking.equipment_loans. Categorize / transfer / apply deep-link to the same Banking actions
- * so numbers close from either module. Never a second engine.
+ * One panel, one ledger source. ROUND 326.2 item 4: escrow / cash / total reserve and fees are the factoring
+ * KPI engine's GL figures (GET /api/v1/factoring/kpis — 1230 / 1235 balances, 6400 accrued), the SAME numbers
+ * Banking shows; nothing here re-sums purchases or reads views.factoring_summary.reserve_balance. Plus the
+ * reserve-balance history and banking.equipment_loans. Categorize / transfer / apply deep-link to the same
+ * Banking actions so numbers close from either module. Never a second engine.
  */
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
@@ -12,7 +14,7 @@ import {
   getReserveBalanceHistory,
   type FactoringReserveBalanceHistoryEntry,
 } from "../../api/factoring";
-import { listFactoringPurchases } from "../../api/factoring-purchases";
+import { getFactoringKpis } from "../../api/factoring-kpis";
 import { listEquipmentLoans, type EquipmentLoanRow } from "../../api/data-infra";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
@@ -42,9 +44,10 @@ export function FactoringReservesSharedPanel({ companyId, host }: Props) {
     enabled: Boolean(companyId),
   });
 
-  const purchasesQuery = useQuery({
-    queryKey: ["factoring", "purchases", "posted", companyId, "reserves-shared"],
-    queryFn: () => listFactoringPurchases(companyId, { status: "posted" }),
+  // Same query key as FactoringKpiPanel / BankingHome — one fetch, one engine.
+  const kpiQuery = useQuery({
+    queryKey: ["factoring", "kpis", companyId, null, null],
+    queryFn: () => getFactoringKpis(companyId),
     enabled: Boolean(companyId),
   });
 
@@ -62,22 +65,17 @@ export function FactoringReservesSharedPanel({ companyId, host }: Props) {
     enabled: Boolean(companyId),
   });
 
-  const purchaseTotals = useMemo(() => {
-    let escrow = 0;
-    let cash = 0;
-    let fee = 0;
-    let net = 0;
-    for (const p of purchasesQuery.data?.purchases ?? []) {
-      escrow += cents(p.escrow_reserve_cents);
-      cash += cents(p.cash_reserve_cents);
-      fee += cents(p.fee_cents);
-      net += cents(p.net_to_company_cents);
-    }
-    return { escrow, cash, fee, net, count: (purchasesQuery.data?.purchases ?? []).length };
-  }, [purchasesQuery.data?.purchases]);
+  const engine = useMemo(() => {
+    const kpis = kpiQuery.data?.kpis;
+    if (!kpis) return null;
+    const pick = (key: string) => kpis.find((k) => k.key === key);
+    const escrow = cents(pick("escrow_reserve_balance")?.value);
+    const cash = cents(pick("cash_reserve_balance")?.value);
+    return { escrow, cash, total: escrow + cash, fee: cents(pick("fees_accrued")?.value), count: pick("purchased_volume")?.row_count ?? 0 };
+  }, [kpiQuery.data?.kpis]);
+  const engineMoney = (v: number | undefined) => (kpiQuery.isError ? "Unavailable" : v == null ? "…" : formatUsdCents(v));
 
-  const reserveBalanceCents = Math.round(Number(summaryQuery.data?.reserve_balance ?? 0) * 100);
-  // summary.outstanding_liability_balance is dollars (same as reserve_balance).
+  // summary.outstanding_liability_balance is dollars.
   const outstandingLiabilityCents = Math.round(
     Number(summaryQuery.data?.outstanding_liability_balance ?? 0) * 100
   );
@@ -229,13 +227,9 @@ export function FactoringReservesSharedPanel({ companyId, host }: Props) {
         </div>
 
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid={`${rootTestId}-kpi-strip`}>
-          <Kpi label="Escrow reserve" value={formatUsdCents(purchaseTotals.escrow)} testId={`${rootTestId}-kpi-escrow`} />
-          <Kpi label="Cash reserve" value={formatUsdCents(purchaseTotals.cash)} testId={`${rootTestId}-kpi-cash`} />
-          <Kpi
-            label="Total reserve"
-            value={summaryQuery.isError ? "—" : formatUsdCents(reserveBalanceCents)}
-            testId={`${rootTestId}-kpi-total`}
-          />
+          <Kpi label="Escrow reserve" value={engineMoney(engine?.escrow)} testId={`${rootTestId}-kpi-escrow`} />
+          <Kpi label="Cash reserve" value={engineMoney(engine?.cash)} testId={`${rootTestId}-kpi-cash`} />
+          <Kpi label="Total reserve" value={engineMoney(engine?.total)} testId={`${rootTestId}-kpi-total`} />
           <Kpi
             label="CCG loans outstanding"
             value={loansQuery.isError ? "—" : formatUsdCents(loanOutstandingCents)}
@@ -243,10 +237,10 @@ export function FactoringReservesSharedPanel({ companyId, host }: Props) {
           />
         </div>
         <p className="mt-2 text-xs text-[#6B7280]" data-testid={`${rootTestId}-footnote`}>
-          Escrow/Cash from posted purchases (ledger). Total reserve from factoring summary. CCG =
-          equipment loans (same loan API in both modules). Outstanding liability{" "}
-          {formatUsdCents(outstandingLiabilityCents)} · {purchaseTotals.count} wires · fees{" "}
-          {formatUsdCents(purchaseTotals.fee)}.
+          Escrow / cash reserve = GL 1230 / 1235 balances from the factoring KPI engine (the same figures Banking
+          shows). CCG = equipment loans (same loan API in both modules). Outstanding liability{" "}
+          {summaryQuery.isError ? "Unavailable" : formatUsdCents(outstandingLiabilityCents)} · {engine?.count ?? "…"} posted
+          purchases this year · fees accrued {engineMoney(engine?.fee)}.
         </p>
       </div>
 

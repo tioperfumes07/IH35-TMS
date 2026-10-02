@@ -1,3 +1,4 @@
+import { factoringBookReserveCents } from "../factoring/factoring-kpi.service.js";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
@@ -132,7 +133,6 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
         .query(
           `
             SELECT
-              COALESCE(reserve_balance, 0)::text AS reserve_balance,
               COALESCE(mtd_advanced_total, 0)::text AS mtd_advanced_total,
               COALESCE(chargeback_balance, 0)::text AS chargeback_balance
             FROM views.factoring_summary
@@ -143,7 +143,8 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
         );
 
       const factorRow = factorRes.rows[0] ?? {};
-      const factoringReservesCents = Math.round(num(factorRow.reserve_balance) * 100);
+      // ROUND 326.2 item 4 — the factoring KPI engine's book reserve (GL 1230 + 1235), not views.factoring_summary.
+      const factoringReservesCents = (await factoringBookReserveCents(client, companyId, asOf)).total;
       const factoringAdvancesMtdCents = Math.round(num(factorRow.mtd_advanced_total) * 100);
       const chargebacksOpenCents = Math.round(num(factorRow.chargeback_balance) * 100);
 
