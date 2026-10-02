@@ -10,7 +10,8 @@ const BOARD = "apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx";
 
 function check(panel, board) {
   const errors = [];
-  if (!/type SortKey = "load" \| "unit" \| "revenue"/.test(panel)) {
+  // Stale since the wizard columns landed (SortKey gained "line_haul"); the contract is only that "unit" is a sort key.
+  if (!/type SortKey = [^;]*"unit"/.test(panel)) {
     errors.push("DispatchLoadCostsPanel SortKey must include unit");
   }
   if (!/headerBtn\("unit", "Truck"\)/.test(panel)) {
