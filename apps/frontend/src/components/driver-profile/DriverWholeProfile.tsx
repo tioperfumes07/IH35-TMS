@@ -69,7 +69,7 @@ export function DriverWholeProfile(props: { operatingCompanyId: string; driverId
     queryFn: () => apiRequest<DriverWholeProfileData>(`/api/v1/drivers/${props.driverId}/whole-profile?operating_company_id=${props.operatingCompanyId}`),
   });
   if (q.isLoading) return <div className="text-xs text-[#6B7280]">Loading driver profile…</div>;
-  if (q.isError || !q.data) return <ListErrorState message="Failed to load the driver profile." onRetry={() => void q.refetch()} />;
+  if (q.isError || !q.data) return <ListErrorState status={0} message="Failed to load the driver profile." onRetry={() => void q.refetch()} />;
   const p = q.data;
   const lastSettlement = p.settlements.value[0] ?? null;
   const tbl = { density: "compact" as const, suppressToolbarRange: true };
