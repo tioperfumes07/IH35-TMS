@@ -887,10 +887,10 @@ export function AccountRegisterPage() {
             <>
               {/* UI CONTROL LAW — was 2 hand-rolled buttons at their own ad-hoc size (the same
                   shape fixed in ParityTable's own Export/gear). Now the real Button primitive. */}
-              <Button type="button" variant="tertiary" size="sm" onClick={exportCsv} disabled={!report || report.rows.length === 0} title="Export to Excel">
+              <Button type="button" variant="tertiary" size="sm" onClick={exportCsv} disabled={!report || filteredRows.length === 0} title="Export to Excel">
                 Export to Excel
               </Button>
-              <Button type="button" variant="tertiary" size="sm" onClick={printList} disabled={!report || report.rows.length === 0} title="Print list">
+              <Button type="button" variant="tertiary" size="sm" onClick={printList} disabled={!report || filteredRows.length === 0} title="Print list">
                 Print list
               </Button>
             </>
