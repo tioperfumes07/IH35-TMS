@@ -52,6 +52,16 @@ export function audit(src) {
       failures.push(`${FILES.manifest}: LOAD_COST_COLUMN_IDS missing "${id}"`);
     }
   }
+  // BANK-F91023 — Settlement/Tour drills via EntityLink when settlementId is present.
+  if (!/settlementId: string \| null/.test(src.manifest)) {
+    failures.push(`${FILES.manifest}: LoadCostColumnFields must include settlementId`);
+  }
+  if (!/kind="settlement"/.test(src.manifest) || !/f\.settlementId/.test(src.manifest)) {
+    failures.push(`${FILES.manifest}: Settlement/Tour column must EntityLink when settlementId is set`);
+  }
+  if (!/settlementId:/.test(src.recourse) || !/settlementId:/.test(src.chargebacks)) {
+    failures.push("Recourse + Chargebacks adapters must pass settlementId into buildLoadCostColumns");
+  }
 
   // 2. Both registers import and call the shared builder.
   for (const key of ["recourse", "chargebacks"]) {
