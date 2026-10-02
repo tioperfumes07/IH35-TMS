@@ -155,7 +155,7 @@ function buildColumns(
           <span className="truncate">{row.acct_type}</span>
           {row.feed_connected ? (
             <span
-              className="inline-flex shrink-0 items-center gap-0.5 rounded-sm bg-slate-100 px-1 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700"
+              className="inline-flex shrink-0 items-center gap-0.5 rounded-sm bg-slate-100 px-1 py-0.5 text-xs font-semibold uppercase tracking-wide text-slate-700"
               data-b1-coa-feed-badge="1"
               data-testid="b1-coa-feed-badge"
               title="Connected bank feed"
@@ -171,6 +171,17 @@ function buildColumns(
       label: "DETAIL TYPE",
       width: 180,
       sortType: "text",
+    },
+    {
+      id: "description",
+      label: "DESCRIPTION",
+      width: 220,
+      sortType: "text",
+      render: (row) => (
+        <span className="block truncate" data-b1-coa-description="1" title={row.description}>
+          {row.description}
+        </span>
+      ),
     },
     {
       id: "details",
@@ -477,7 +488,7 @@ export function ChartOfAccountsListPage() {
               setActiveFilters(filters);
               setPage(1);
             }}
-            savedViewsKey="coa-list-v1"
+            savedViewsKey="coa-list-v2"
             density="cozy"
             badgeSlot={(row) => (
               <>
