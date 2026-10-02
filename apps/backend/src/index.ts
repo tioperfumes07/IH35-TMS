@@ -303,6 +303,7 @@ import { registerFactoringBatchRoutes } from "./factoring/batch.routes.js";
 import { registerFactoringPurchaseRoutes } from "./factoring/purchase.routes.js";
 import { registerFactoringKpiRoutes } from "./factoring/factoring-kpi.routes.js";
 import { registerReserveByCustomerRoutes } from "./factoring/reserve-by-customer.routes.js";
+import { registerRepurchaseDueRoutes } from "./factoring/repurchase-due.routes.js";
 import { registerBankingKpiRoutes } from "./banking/banking-kpi.routes.js";
 import { registerFactorRoutes } from "./factoring/factor.routes.js";
 import { registerReserveRoutes } from "./factoring/reserve.routes.js";
@@ -1236,6 +1237,7 @@ async function main() {
   await registerFactoringPurchaseRoutes(app);
   await registerFactoringKpiRoutes(app);
   await registerReserveByCustomerRoutes(app);
+  await registerRepurchaseDueRoutes(app);
   await registerBankingKpiRoutes(app);
   await registerFactorRoutes(app);
   await registerReserveRoutes(app);

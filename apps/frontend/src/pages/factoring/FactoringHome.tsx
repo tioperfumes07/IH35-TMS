@@ -55,6 +55,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { factorToProfileForm, profileFormToFactorPatch, rateToPctString, resolveActiveFactorFromSummary, type FactorProfileForm } from "../../lib/factorProfile";
 import { FactoringProfilePanel } from "./FactoringProfilePanel";
 import { SubmitToFactorTab } from "./SubmitToFactorTab";
+import { RepurchaseDuePanel } from "./RepurchaseDuePanel";
 import { PaymentsToYouPanel } from "./PaymentsToYouPanel";
 import { FactoringCashFlowPanel } from "./FactoringCashFlowPanel";
 import { FactoringKpiPanel } from "../../components/factoring/FactoringKpiPanel";
@@ -1281,6 +1282,9 @@ export function FactoringHomePage({ initialTab = "submit_invoice" }: FactoringHo
           real portal shows the same "nothing due" once everything submitted has funded), never
           fabricated. The moment a real submission is awaiting advance this table populates
           automatically -- no further wiring required. */}
+      {/* Lead ROUND 296 / 297 — day 95 asks the owner (EXTEND / CONFIRM REPURCHASE / MARK COLLECTED); renders only
+          when a repurchase deadline is waiting, on every tab, so it is never missed. */}
+      {companyId ? <RepurchaseDuePanel companyId={companyId} isOwner={user?.role === "Owner"} /> : null}
       {tab === "submit_invoice" ? <SubmitToFactorTab companyId={companyId} isOwner={user?.role === "Owner"} /> : null}
 
       {tab === "funds_due" ? (

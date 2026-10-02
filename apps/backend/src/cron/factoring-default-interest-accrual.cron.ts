@@ -3,16 +3,14 @@ import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
-import {
-  accrueDefaultInterestForCompany,
-  triggerDay95RecourseForCompany,
-} from "../accounting/factoring-posting/default-interest.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
+import { registerRepurchaseDueEvents } from "../factoring/repurchase-due.service.js";
 
-// FACTORING (Faro) daily default-interest accrual + day-95 auto-recourse cron. FINANCIAL / §1.4: every post
-// is gated behind FACTORING_GL_POSTING_ENABLED (default OFF, TRANSP only) inside the engine — so with the
-// flag OFF this cron runs but posts NOTHING (pure no-op). Runs once daily, early, in Central time. Order:
-// ACCRUE first (bring every outstanding advance's compounding interest current), THEN recourse (so a day-95
-// recourse reads a fully-accrued liability). Both motions are idempotent per (advance, day) / per advance.
+// FACTORING (Faro) daily day-95 cron — ALERT ONLY. Lead ROUND 296 / 297 + owner (2026-10-02): "WHEN RECOURSE TIME
+// ARRIVES IT MUST ASK, NOT RECOURSE AUTOMATICALLY." Each morning it registers, per company, every purchased account
+// open on its Repurchase Deadline as an event in the owner's decision queue (and re-asks extensions whose date has
+// come). It posts NOTHING: no default-interest accrual (that is a period-close entry, with approval) and no
+// chargeback. Guard: scripts/verify-day95-asks-never-recourses.mjs.
 
 let initialized = false;
 const CRON_NAME = "accounting.factoring_default_interest_cron";
@@ -38,26 +36,27 @@ export async function listActiveOperatingCompanyIds(client: DbClient): Promise<s
 
 export async function runFactoringDefaultInterestCronTick(deps?: {
   withLuciaBypassImpl?: typeof withLuciaBypass;
-  accrueImpl?: typeof accrueDefaultInterestForCompany;
-  recourseImpl?: typeof triggerDay95RecourseForCompany;
+  registerImpl?: typeof registerRepurchaseDueEvents;
   asOfDateIso?: string;
 }) {
   const withLuciaBypassImpl = deps?.withLuciaBypassImpl ?? withLuciaBypass;
-  const accrueImpl = deps?.accrueImpl ?? accrueDefaultInterestForCompany;
-  const recourseImpl = deps?.recourseImpl ?? triggerDay95RecourseForCompany;
+  const registerImpl = deps?.registerImpl ?? registerRepurchaseDueEvents;
+  const asOf = deps?.asOfDateIso ?? companyBusinessDate();
 
   const companyIds = await withLuciaBypassImpl(async (client) => listActiveOperatingCompanyIds(client));
 
-  let accrualsPosted = 0;
-  let recoursed = 0;
+  let registered = 0;
+  let reasked = 0;
   for (const operatingCompanyId of companyIds) {
     assertTenantContext(operatingCompanyId, CRON_NAME);
-    const accrual = await accrueImpl({ operating_company_id: operatingCompanyId, as_of_date_iso: deps?.asOfDateIso });
-    accrualsPosted += accrual.accruals_posted;
-    const recourse = await recourseImpl({ operating_company_id: operatingCompanyId, as_of_date_iso: deps?.asOfDateIso });
-    recoursed += recourse.recoursed;
+    const r = await withLuciaBypassImpl(async (client) => {
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+      return registerImpl(client, operatingCompanyId, asOf);
+    });
+    registered += r.registered;
+    reasked += r.reasked;
   }
-  return { company_count: companyIds.length, accruals_posted: accrualsPosted, recoursed };
+  return { company_count: companyIds.length, repurchase_due_registered: registered, repurchase_due_reasked: reasked };
 }
 
 export function initializeFactoringDefaultInterestCron(app: FastifyInstance) {
@@ -76,8 +75,8 @@ export function initializeFactoringDefaultInterestCron(app: FastifyInstance) {
         CRON_NAME,
         async () => {
           const summary = await runFactoringDefaultInterestCronTick();
-          if (summary.accruals_posted > 0 || summary.recoursed > 0) {
-            app.log.info(summary, "factoring default-interest cron posted accruals / recourses");
+          if (summary.repurchase_due_registered > 0 || summary.repurchase_due_reasked > 0) {
+            app.log.info(summary, "factoring day-95 cron registered repurchase-due events for the owner");
           }
         },
         app.log
@@ -87,5 +86,5 @@ export function initializeFactoringDefaultInterestCron(app: FastifyInstance) {
       maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: CRON_TZ }
   );
 
-  app.log.info("Factoring default-interest cron scheduled (daily 05:30 America/Chicago)");
+  app.log.info("Factoring day-95 repurchase-due cron scheduled (daily 05:30 America/Chicago, alert only)");
 }

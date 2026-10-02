@@ -47,7 +47,7 @@ export type AttentionLog = {
 };
 
 export const ATTENTION_SOURCE_STATS_ITEM_ID = "__attention_source_stats__";
-export const ATTENTION_SOURCE_COUNT = 10;
+export const ATTENTION_SOURCE_COUNT = 11; // = ATTENTION_SOURCE_KEYS.length (asserted below)
 
 export interface AttentionComputeResult {
   items: AttentionItem[];
@@ -377,6 +377,52 @@ async function sourceDamageLiabilities(
   }
 }
 
+// ─── Source: Faro day-95 repurchase deadlines awaiting the Owner ──────────────
+// Lead ROUND 296 / 297: day 95 ASKS — EXTEND / CONFIRM REPURCHASE / MARK COLLECTED, no default action.
+
+async function sourceRepurchaseDue(
+  client: DbClient,
+  ociId: string,
+  log?: AttentionLog
+): Promise<AttentionItem[]> {
+  const source = "factoring_repurchase_due";
+  const table = "accounting.factoring_repurchase_due_events";
+  try {
+    if (!(await tableExists(client, table))) {
+      warnSkipped(log, source, "table_missing", table);
+      return [];
+    }
+    const res = await client.query(
+      `
+        SELECT COUNT(*)::text AS c, COALESCE(SUM(gross_cents), 0)::text AS cents
+        FROM accounting.factoring_repurchase_due_events
+        WHERE operating_company_id = $1::uuid
+          AND state = 'awaiting_owner'
+      `,
+      [ociId]
+    );
+    const count = num(res.rows[0]?.c);
+    if (count === 0) return [];
+    return [
+      {
+        item_id: `factoring_repurchase_due:${ociId}`,
+        source,
+        score: 85,
+        title: `${count} factored invoice${count === 1 ? "" : "s"} at the 95-day repurchase deadline`,
+        body: "Faro's repurchase deadline has arrived. Extend, confirm the repurchase, or mark collected — nothing posts until you decide.",
+        action_url: "/factoring",
+        action_label: "Decide",
+        severity: "error",
+        extra: { count, gross_cents: num(res.rows[0]?.cents) },
+      },
+    ];
+  } catch (err) {
+    warnSkipped(log, source, "query_failed", table);
+    log?.warn({ source, table, err }, "[owner-attention] source query failed");
+    return [];
+  }
+}
+
 // ─── Source: Pending Owner detention approvals ────────────────────────────────
 
 async function sourceDetentionApprovals(
@@ -521,8 +567,9 @@ async function sourceAtRiskUnits(
 
 const ATTENTION_SOURCE_KEYS = [
   "form_425c_deadline", "fuel_fraud", "bank_drift", "eng_fault_wo", "cargo_sensor",
-  "period_close_warnings", "damage_liability", "detention_approval", "cooling_customers", "at_risk_units",
+  "period_close_warnings", "damage_liability", "factoring_repurchase_due", "detention_approval", "cooling_customers", "at_risk_units",
 ] as const;
+if (ATTENTION_SOURCE_KEYS.length !== ATTENTION_SOURCE_COUNT) throw new Error("ATTENTION_SOURCE_COUNT must equal ATTENTION_SOURCE_KEYS.length");
 
 export async function computeTodaysAttention(
   client: DbClient,
@@ -540,7 +587,7 @@ export async function computeTodaysAttention(
   };
   const sourceFns = [
     source425CDeadline, sourceFuelFraudAlerts, sourceBankDrift, sourceEngFaultWOs,
-    sourceCargoSensorIncidents, sourcePeriodCloseAttention, sourceDamageLiabilities,
+    sourceCargoSensorIncidents, sourcePeriodCloseAttention, sourceDamageLiabilities, sourceRepurchaseDue,
     sourceDetentionApprovals, sourceCoolingCustomers, sourceAtRiskUnits,
   ];
   const results = await Promise.allSettled(sourceFns.map((fn) => fn(client, operatingCompanyId, trackedLog)));
