@@ -1,3 +1,11 @@
+/**
+ * ENGINE: fleet roster integrity
+ * SCHEDULE: 40 2 * * * America/Chicago
+ * WRITES: fleet roster findings
+ * IDEMPOTENCY: UNIQUE(operating_company_id, finding_key) ON CONFLICT (partial roster_findings_one_open_per_key); resolve SAME-STATEMENT WHERE resolved_at IS NULL
+ * OVERLAP: the twin opens and resolves nothing new
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";

@@ -1,3 +1,11 @@
+/**
+ * ENGINE: Samsara positions / stats / pairing / HOS poll
+ * SCHEDULE: *\/5 * * * * America/Chicago
+ * WRITES: telematics.vehicle_locations, geo.geofence_events, mdata.load_stops stamps, dot inspection events, samsara drivers, vehicle_driver_assignments, hos.duty_status_events, samsara.hos_snapshots
+ * IDEMPOTENCY: UNIQUE(operating_company_id, raw_samsara_event_id) ON CONFLICT on locations; ADVISORY LOCK per (fence, unit) + exact-key ON CONFLICT on fence events; SAME-STATEMENT WHERE actual_arrival_at IS NULL on stop stamps; ADVISORY LOCK on the HOS pull and HOS clocks
+ * OVERLAP: the twin inserts no second location, fence event, stamp, HOS event or snapshot
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { FastifyInstance } from "fastify";
 import type { PoolClient } from "pg";
 import cron from "node-cron";

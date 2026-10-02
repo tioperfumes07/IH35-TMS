@@ -5,6 +5,7 @@
 import { SamsaraClient } from "./samsara-client.js";
 import { getSamsaraConfigForCompany, type PgClient } from "./samsara.service.js";
 import { listActiveHosDriverRoster } from "./active-hos-driver-roster.service.js";
+import { tryXactSingleFlight } from "../../lib/single-flight.js";
 
 export type HosClocksPullResult = {
   active_drivers: number;
@@ -15,6 +16,11 @@ export type HosClocksPullResult = {
 };
 
 export async function syncSamsaraHosClocks(client: PgClient, operatingCompanyId: string): Promise<HosClocksPullResult> {
+  // ROUND 330.7: samsara.hos_snapshots is an append-only time series with no key — the twin instance's tick appended a
+  // second snapshot per driver. One clocks pull per company at a time; the twin skips.
+  if (!(await tryXactSingleFlight(client as never, `samsara.hos_clocks:${operatingCompanyId}`))) {
+    return { active_drivers: 0, mapped: 0, written: 0, errors: 0, error: null };
+  }
   // Active board drivers = OPEN vehicle assignment, resolved to Samsara id via the board-proven key (same set the
   // logs pull uses). Carry the unit so the snapshot can record vehicle_uuid.
   const rows = await listActiveHosDriverRoster(client, operatingCompanyId);

@@ -1,3 +1,11 @@
+/**
+ * ENGINE: real-driven-miles segments (E-05 legs)
+ * SCHEDULE: *\/15 * * * * America/Chicago
+ * WRITES: telematics.load_odometer_segments
+ * IDEMPOTENCY: UNIQUE(operating_company_id, load_id, unit_id, segment_kind, started_at) ON CONFLICT DO UPDATE (uq_load_odometer_segments)
+ * OVERLAP: the twin upserts the same rows to the same values
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";

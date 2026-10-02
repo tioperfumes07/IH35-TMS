@@ -1,9 +1,18 @@
+/**
+ * ENGINE: reefer hours poll
+ * SCHEDULE: *\/15 * * * * America/Chicago
+ * WRITES: maintenance.reefer_specs, maintenance.reefer_hours_log, audit
+ * IDEMPOTENCY: ADVISORY LOCK pg_try_advisory_xact_lock(CRON_NAME) for the tick; reefer_specs backstopped by UNIQUE(equipment, active); savepoint per tenant
+ * OVERLAP: the twin fails the lock and skips
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { ingestReeferHoursFromSamsaraForCompany } from "../maintenance/reefer-hours.routes.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
+import { tryXactSingleFlight } from "../lib/single-flight.js";
 
 // Block F — 15-minute poller that pulls reefer engine hours from Samsara for every
 // active tenant. The ingest itself (ingestReeferHoursFromSamsaraForCompany) already
@@ -74,6 +83,9 @@ export function initializeReeferHoursPollCron(app: FastifyInstance) {
         async () => {
           await withLuciaBypass(async (client) => {
             const dbClient = client as unknown as DbClient;
+            // ROUND 330.7: reefer_hours_log dedupe is a read of the latest reading then a plain insert (no unique key) —
+            // the twin tick wrote every reading twice. One tick at a time; the twin skips.
+            if (!(await tryXactSingleFlight(dbClient as never, CRON_NAME))) return;
             const activeTenantIds = await listActiveTenantIds(dbClient);
             if (activeTenantIds.length === 0) {
               await appendCronAuditEvent(dbClient, "cron_no_active_tenants", "info", { cron_name: CRON_NAME });
@@ -102,8 +114,12 @@ export function initializeReeferHoursPollCron(app: FastifyInstance) {
                 continue;
               }
 
+              // ROUND 330.7: a savepoint per tenant — the whole tick is one transaction, and without it a DB error left the
+              // transaction aborted, the failure audit below could not be written, and every tenant's work rolled back.
+              await dbClient.query("SAVEPOINT reefer_tenant");
               try {
                 const stats = await ingestReeferHoursFromSamsaraForCompany(dbClient, operatingCompanyId);
+                await dbClient.query("RELEASE SAVEPOINT reefer_tenant");
                 await appendCronAuditEvent(dbClient, "cron_reefer_hours_ingested", "info", {
                   cron_name: CRON_NAME,
                   operating_company_id: operatingCompanyId,
@@ -115,6 +131,7 @@ export function initializeReeferHoursPollCron(app: FastifyInstance) {
                   "Reefer hours poll cron tick complete"
                 );
               } catch (error) {
+                await dbClient.query("ROLLBACK TO SAVEPOINT reefer_tenant");
                 await appendCronAuditEvent(dbClient, "cron_reefer_hours_ingest_failed", "warning", {
                   cron_name: CRON_NAME,
                   operating_company_id: operatingCompanyId,

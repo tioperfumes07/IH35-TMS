@@ -1,4 +1,12 @@
 /**
+ * ENGINE: booking gap aggregator
+ * SCHEDULE: every 6 h (setInterval)
+ * WRITES: nothing (read-only pre-warm)
+ * IDEMPOTENCY: DETERMINISTIC OVERWRITE — read-only, writes no row
+ * OVERLAP: nothing to duplicate
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
+/**
  * GAP-29 — Booking gap aggregator worker (every 6h).
  * Pre-warms the analytics query for the current week so the report loads fast.
  */
@@ -6,6 +14,7 @@ import type { FastifyInstance } from "fastify";
 import { withLuciaBypass } from "../auth/db.js";
 import { aggregateForPeriod } from "../dispatch/analytics/booking-gap.service.js";
 import { addBusinessDateDays, companyBusinessDate } from "../lib/company-business-date.js";
+import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 
 const WORKER_NAME = "dispatch.booking_gap_aggregator";
 const DEFAULT_INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -45,13 +54,8 @@ async function tick(app: FastifyInstance) {
 export function initializeBookingGapAggregatorWorker(app: FastifyInstance) {
   const ms = intervalMs();
 
-  const run = async () => {
-    try {
-      await tick(app);
-    } catch (err) {
-      app.log.error({ err }, `[${WORKER_NAME}] tick failed`);
-    }
-  };
+  // ROUND 330.7: through the shared wrapper (run recorded, failure logged + Sentry) so the single-fire lease reaches it.
+  const run = () => wrapBackgroundJobTick(WORKER_NAME, () => tick(app), app.log);
 
   void run();
   timer = setInterval(() => {

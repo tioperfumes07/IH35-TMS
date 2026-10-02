@@ -1,4 +1,12 @@
 /**
+ * ENGINE: geofence state watcher
+ * SCHEDULE: every 5 min (setInterval)
+ * WRITES: geo geofence vehicle state + transitions, geo.geofence_events (backfill), load_odometer_segments
+ * IDEMPOTENCY: UNIQUE(operating_company_id, geofence_id, unit_id) ON CONFLICT + row lock FOR UPDATE on the state; ADVISORY LOCK per (fence, unit) on event writes
+ * OVERLAP: the twin re-reads the state and changes nothing
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
+/**
  * GAP-39 — Geofence state watcher (every 5min).
  *
  * GAP-39 rebuild (2026-09-05): USMCA-only (TRANSPORTATION/TRUCKING frozen — owner law, never
@@ -14,6 +22,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { USMCA_COMPANY_ID } from "../org/companies.routes.js";
 import { fetchActiveGeofences, processGpsBatch } from "../integrations/samsara/geofences/state-machine/transitions.service.js";
 import { backfillGeofenceEventsFromPositions } from "../telematics/geofence-events-backfill.service.js";
+import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 
 const WORKER_NAME = "integrations.geofence_state_watcher";
 const DEFAULT_INTERVAL_MS = 5 * 60 * 1000;
@@ -124,13 +133,8 @@ async function tick(app: FastifyInstance) {
 
 export function initializeGeofenceStateWatcher(app: FastifyInstance) {
   const ms = intervalMs();
-  const run = async () => {
-    try {
-      await tick(app);
-    } catch (err) {
-      app.log.error({ err }, `[${WORKER_NAME}] tick failed`);
-    }
-  };
+  // ROUND 330.7: through the shared wrapper (run recorded, failure logged + Sentry) so the single-fire lease reaches it.
+  const run = () => wrapBackgroundJobTick(WORKER_NAME, () => tick(app), app.log);
   void run();
   timer = setInterval(() => void run(), ms);
   app.log.info({ intervalMs: ms }, `[${WORKER_NAME}] started`);

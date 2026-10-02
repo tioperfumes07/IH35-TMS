@@ -1,3 +1,11 @@
+/**
+ * ENGINE: chat confirmation escalation
+ * SCHEDULE: every minute (escalation-config)
+ * WRITES: events.event_log (one escalation event per attempt), driver web push
+ * IDEMPOTENCY: ADVISORY LOCK per message; attempts counted in events.event_log (the DB is the ledger); the event is written before the push
+ * OVERLAP: the twin re-reads the attempt the first wrote and sends nothing
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 // NOTIF-A (A3) — escalation-until-ack for per-load dispatch confirmations.
 // Finds confirmation_request messages that are stale AND have NO confirmation_ack (a read receipt is
 // NOT an ack — carried for logging, never excludes) and re-fires the driver web push on the escalating
@@ -17,22 +25,17 @@ import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import {
   CHAT_ESCALATION_CONFIG,
   selectEscalations,
-  type EscalationCandidate,
 } from "../chat/escalation-config.js";
 
 const CRON_NAME = "chat.confirmation_escalation";
 
 let initialized = false;
 
-// In-memory attempt ledger: message_id → { attempts, lastEscalatedAt }. Bounded retries with no
-// migration. Pruned opportunistically for messages no longer surfacing as pending.
-type AttemptState = { attempts: number; lastEscalatedAt: Date | null };
-const attemptLedger = new Map<string, AttemptState>();
-
-/** Exposed for tests — resets the in-memory attempt ledger. */
-export function __resetEscalationLedgerForTests(): void {
-  attemptLedger.clear();
-}
+// ROUND 330.7: the attempt ledger is the DATABASE — the chat.confirmation_escalated rows in events.event_log, read and
+// written under a per-message transaction advisory lock. The in-memory Map it replaces lived once per process, so on a
+// two-instance service every attempt fired twice (2 x maxAttempts pushes) and wrote two spine events.
+/** Kept for test compatibility; there is no in-memory state any more. */
+export function __resetEscalationLedgerForTests(): void {}
 
 type PendingRow = {
   message_id: string;
@@ -81,13 +84,63 @@ async function loadPendingConfirmations(): Promise<PendingRow[]> {
   });
 }
 
-/** Re-fire the driver web push + append the spine event for one escalation attempt. */
-async function escalateOne(row: PendingRow, attemptNumber: number): Promise<void> {
+/**
+ * Claim attempt N for one confirmation, in ONE transaction under a per-message advisory lock: re-read the attempts already
+ * recorded in events.event_log, re-run the selector on them, and write attempt N's spine event as the claim. Returns
+ * the attempt number when this caller won the claim, null when the confirmation is not due (or a twin claimed it).
+ */
+async function claimEscalation(row: PendingRow, now: Date): Promise<number | null> {
+  if (!row.driver_id) return null;
+  assertTenantContext(row.operating_company_id, CRON_NAME);
+  const subjectType: "load" | "driver" = row.load_id ? "load" : "driver";
+  const subjectId = row.load_id ?? row.driver_id;
+  return withLuciaBypass(async (client) => {
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [row.operating_company_id]);
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1::text))`, [`chat.confirmation_escalation:${row.message_id}`]);
+    const prior = await client.query<{ attempts: string; last_at: string | null }>(
+      `SELECT count(*)::text AS attempts, max(occurred_at)::text AS last_at
+         FROM events.event_log
+        WHERE operating_company_id = $1::uuid AND event_type = 'chat.confirmation_escalated' AND payload->>'message_id' = $2`,
+      [row.operating_company_id, row.message_id],
+    );
+    const attempts = Number(prior.rows[0]?.attempts ?? 0);
+    const lastAt = prior.rows[0]?.last_at ? new Date(prior.rows[0].last_at) : null;
+    const due = selectEscalations(
+      [{ messageId: row.message_id, serverTs: new Date(row.server_ts), acked: false, hasReadReceipt: Boolean(row.has_read_receipt), attempts, lastEscalatedAt: lastAt }],
+      now,
+      CHAT_ESCALATION_CONFIG,
+    );
+    if (due.length === 0) return null;
+    const attemptNumber = attempts + 1;
+    await client.query(
+      // Typed + explicit source: the untyped 8-argument call resolved with source = NULL and failed NOT NULL — the old
+      // code swallowed that, so no escalation spine event was ever written (prod: 0 rows, ever).
+      `SELECT events.log_event($1::uuid, $2::text, $3::text, $4::uuid, $5::text, $6::uuid, $7::jsonb, $8::timestamptz, 'chat_confirmation_escalation') AS log_event`,
+      [
+        row.operating_company_id,
+        "chat.confirmation_escalated",
+        "system",
+        subjectId,
+        subjectType,
+        subjectId,
+        JSON.stringify({
+          thread_id: row.thread_id,
+          message_id: row.message_id,
+          escalation_attempt: attemptNumber,
+          max_attempts: CHAT_ESCALATION_CONFIG.maxAttempts,
+          has_read_receipt: row.has_read_receipt,
+        }),
+        now.toISOString(),
+      ],
+    );
+    return attemptNumber;
+  });
+}
+
+/** Re-fire the driver web push for one claimed escalation attempt (after the claim committed). */
+async function pushEscalation(row: PendingRow, attemptNumber: number): Promise<void> {
   if (!row.driver_id) return;
   const label = row.load_ref_cache ? String(row.load_ref_cache) : String(row.load_id ?? "").slice(0, 8);
-  const threadTag = `chat-confirm-${row.thread_id}`;
-
-  // Re-fire the (enhanced, requireInteraction) web push — reuse the existing dispatcher.
   await dispatchDriverWebPush({
     operatingCompanyId: row.operating_company_id,
     driverId: row.driver_id,
@@ -95,7 +148,7 @@ async function escalateOne(row: PendingRow, attemptNumber: number): Promise<void
     body: label
       ? `Load ${label}: a dispatch confirmation is still waiting on you.`
       : "A dispatch confirmation is still waiting on you.",
-    tag: threadTag,
+    tag: `chat-confirm-${row.thread_id}`,
     data: {
       kind: "chat_confirmation",
       thread_id: row.thread_id,
@@ -104,76 +157,16 @@ async function escalateOne(row: PendingRow, attemptNumber: number): Promise<void
       escalation_attempt: String(attemptNumber),
     },
   });
-
-  // Append ONE spine event per attempt (subject 'load'/'driver'; system actor → attributed to subject).
-  // Wrapped defensively: a permission gap on schema events must not kill the loud-alert escalation.
-  const subjectType: "load" | "driver" = row.load_id ? "load" : "driver";
-  const subjectId = row.load_id ?? row.driver_id;
-  // Validate the per-row tenant id before we set it as DB context + write the spine event. The
-  // cross-tenant sweep runs under lucia-bypass, so each row carries its own operating_company_id;
-  // a null/malformed value would corrupt the event's tenant scope. Fail loud (guard = B-017).
-  assertTenantContext(row.operating_company_id, CRON_NAME);
-  try {
-    await withLuciaBypass(async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [row.operating_company_id]);
-      await client.query(
-        `SELECT events.log_event($1, $2, $3, $4, $5, $6, $7::jsonb, $8) AS log_event`,
-        [
-          row.operating_company_id,
-          "chat.confirmation_escalated",
-          "system",
-          subjectId,
-          subjectType,
-          subjectId,
-          JSON.stringify({
-            thread_id: row.thread_id,
-            message_id: row.message_id,
-            escalation_attempt: attemptNumber,
-            max_attempts: CHAT_ESCALATION_CONFIG.maxAttempts,
-            has_read_receipt: row.has_read_receipt,
-          }),
-          new Date().toISOString(),
-        ],
-      );
-    });
-  } catch (err) {
-    console.warn("[chat-confirmation-escalation] events.log_event append failed (non-fatal)", err);
-  }
 }
 
-/** One tick: select escalatable confirmations, re-fire, and advance the in-memory attempt ledger. */
+/** One tick: every pending confirmation is claimed (or not) in the database, then the winners are pushed. */
 export async function runChatConfirmationEscalationTick(now: Date = new Date()): Promise<number> {
   const rows = await loadPendingConfirmations();
-  const seen = new Set<string>();
-
-  const candidates: EscalationCandidate[] = rows.map((r) => {
-    seen.add(r.message_id);
-    const state = attemptLedger.get(r.message_id) ?? { attempts: 0, lastEscalatedAt: null };
-    return {
-      messageId: r.message_id,
-      serverTs: new Date(r.server_ts),
-      acked: false, // the SQL already excludes acked rows; kept explicit for the selector contract.
-      hasReadReceipt: Boolean(r.has_read_receipt),
-      attempts: state.attempts,
-      lastEscalatedAt: state.lastEscalatedAt,
-    };
-  });
-
-  // Prune ledger entries for confirmations that are no longer pending (acked or gone).
-  for (const key of [...attemptLedger.keys()]) {
-    if (!seen.has(key)) attemptLedger.delete(key);
-  }
-
-  const toEscalate = selectEscalations(candidates, now, CHAT_ESCALATION_CONFIG);
-  const rowById = new Map(rows.map((r) => [r.message_id, r]));
-
   let fired = 0;
-  for (const c of toEscalate) {
-    const row = rowById.get(c.messageId);
-    if (!row) continue;
-    const attemptNumber = c.attempts + 1;
-    await escalateOne(row, attemptNumber);
-    attemptLedger.set(c.messageId, { attempts: attemptNumber, lastEscalatedAt: now });
+  for (const row of rows) {
+    const attemptNumber = await claimEscalation(row, now);
+    if (attemptNumber == null) continue;
+    await pushEscalation(row, attemptNumber);
     fired += 1;
   }
   return fired;

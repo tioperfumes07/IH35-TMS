@@ -1,9 +1,18 @@
 /**
+ * ENGINE: layover detector
+ * SCHEDULE: every 6 h (setInterval)
+ * WRITES: dispatch.driver_layovers
+ * IDEMPOTENCY: ADVISORY LOCK pg_advisory_xact_lock per company; savepoint per company
+ * OVERLAP: the twin waits, then finds every layover the first wrote
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
+/**
  * GAP-28 — Layover detection worker (every 6h).
  */
 import type { FastifyInstance } from "fastify";
 import { withLuciaBypass } from "../auth/db.js";
 import { detectLayovers } from "../dispatch/layovers/detection.service.js";
+import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 
 const WORKER_NAME = "dispatch.layover_detector";
 const DEFAULT_INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -34,11 +43,16 @@ async function tick(app: FastifyInstance) {
     let resolvable = 0;
     const failures: Array<{ company_id: string; error: string }> = [];
     for (const { id } of companies.rows) {
+      // ROUND 330.7: a savepoint per company — one company's SQL error used to leave the shared transaction aborted, so
+      // every later company failed too ("current transaction is aborted").
+      await client.query("SAVEPOINT layover_company");
       try {
         const r = await detectLayovers(client, id);
+        await client.query("RELEASE SAVEPOINT layover_company");
         count += r.inserted;
         resolvable += r.resolvable_deliveries;
       } catch (err) {
+        await client.query("ROLLBACK TO SAVEPOINT layover_company");
         failures.push({ company_id: id, error: err instanceof Error ? err.message : String(err) });
       }
     }
@@ -74,10 +88,8 @@ async function tick(app: FastifyInstance) {
 
 export function initializeLayoverDetectorWorker(app: FastifyInstance) {
   const ms = intervalMs();
-  const run = async () => {
-    try { await tick(app); }
-    catch (err) { app.log.error({ err }, `[${WORKER_NAME}] tick failed`); }
-  };
+  // ROUND 330.7: through the shared wrapper (run recorded, failure logged + Sentry) so the single-fire lease reaches it.
+  const run = () => wrapBackgroundJobTick(WORKER_NAME, () => tick(app), app.log);
   void run();
   timer = setInterval(() => { void run(); }, ms);
   app.log.info({ intervalMs: ms }, `[${WORKER_NAME}] started`);

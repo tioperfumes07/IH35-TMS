@@ -1,3 +1,11 @@
+/**
+ * ENGINE: Google reference miles expiry
+ * SCHEDULE: 40 6 * * * America/Chicago
+ * WRITES: mdata.loads google reference columns
+ * IDEMPOTENCY: SAME-STATEMENT WHERE google_reference_fetched_at < now() - 30 days
+ * OVERLAP: the twin matches 0 rows
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";

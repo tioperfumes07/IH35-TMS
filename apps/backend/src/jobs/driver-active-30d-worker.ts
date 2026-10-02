@@ -1,4 +1,12 @@
 /**
+ * ENGINE: driver active-30-day rule
+ * SCHEDULE: 15 5 * * *
+ * WRITES: mdata.drivers status
+ * IDEMPOTENCY: SAME-STATEMENT WHERE (status IS DISTINCT FROM 'Inactive' ... / status = 'Inactive' ...)
+ * OVERLAP: the twin matches 0 rows
+ * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
+/**
  * Daily worker — apply owner 30-day active-driver roster rule per operating company.
  * Migration 202612451400 does the one-shot; this keeps the roster honest going forward.
  */
@@ -7,6 +15,7 @@ import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { applyDriverActive30dRule } from "../mdata/driver-active-30d.service.js";
+import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 
 const WORKER_NAME = "mdata.driver_active_30d";
 const DEFAULT_INTERVAL = "15 5 * * *"; // 05:15 America/Chicago-ish UTC morning
@@ -52,11 +61,8 @@ export function initializeDriverActive30dWorker(app: FastifyInstance): void {
 
   const schedule = process.env.DRIVER_ACTIVE_30D_CRON ?? DEFAULT_INTERVAL;
 
-  cron.schedule(schedule, () => {
-    tick(app).catch((err) => {
-      app.log.error({ err }, `[${WORKER_NAME}] unhandled tick error`);
-    });
-  }, { maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, });
+  // ROUND 330.7: through the shared wrapper (run recorded, failure logged + Sentry) so the single-fire lease reaches it.
+  cron.schedule(schedule, () => wrapBackgroundJobTick(WORKER_NAME, () => tick(app), app.log), { maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, });
 
   app.log.info(`[STARTUP] ${WORKER_NAME} initialized (schedule="${schedule}")`);
 }
