@@ -6991,6 +6991,11 @@ scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). Follow-up to AUTH-203 
 action: DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-02-cc3-stop-fence-twins.mts --apply --auth AUTH-204
   Dry-run first (default, no --apply): twin_breaches 6, duplicate_fire_findings 6.
 expires_at: 2026-10-04T23:00:00Z
-status: OPEN
+status: CONSUMED
+consumed_at: 2026-10-02T23:40:00Z
+consumed_by: CC-3
+row_counts: safety.geofence_breach_events 6 twins acknowledged (6 planned = 6 applied, 0 deleted); safety.integrity_findings
+  6 duplicate_fire resolved with the fix note (6 planned = 6 applied); audit event cc3.stop_fence_twins written.
+proof_query: re-run of the dry run after apply -> twin_breaches 0, duplicate_fire_findings 0.
 THIS AUTHORIZATION DOES NOT COVER: any company other than USMCA; deleting any breach event, finding, fence or geofence
 event; any breach or finding not on a fence deactivated under AUTH-203; any money posting or JE.
