@@ -98,6 +98,7 @@ const STEPS = [
   ["verify-design-token-parity", "scripts/verify-design-token-parity.mjs"],
   ["verify-dispatch-date-boxes", "scripts/verify-dispatch-date-boxes.mjs"],
   ["verify-filter-surfaces-full-set", "scripts/verify-filter-surfaces-full-set.mjs"],
+  ["verify-variant-duplicate-candidates", "scripts/verify-variant-duplicate-candidates.mjs"],
   ["verify-no-money-theater", "scripts/verify-no-money-theater.mjs"],
   ["verify-no-capability-regression", "scripts/verify-no-capability-regression.mjs"],
   // Rule 26 — block parallel scoreboard-hotfile PRs before push (SKIP-PASS without gh token).

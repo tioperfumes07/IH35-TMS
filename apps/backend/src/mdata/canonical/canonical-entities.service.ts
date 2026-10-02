@@ -162,7 +162,7 @@ export async function mergeIntoCanonical(
   input: {
     survivorId: string; duplicateId: string; actorUserId: string; authId: string | null; reason: string;
     /** Evidence the caller already verified (assertConfirmedDuplicate) for a pair whose names do not normalize equal. */
-    evidence?: "identical_tax_id" | "identical_legal_name_and_registered_address";
+    evidence?: "identical_tax_id" | "identical_legal_name_and_registered_address" | "owner_approved_variant";
   }
 ) {
   const cfg = CFG[kind];
@@ -175,7 +175,14 @@ export async function mergeIntoCanonical(
   const s = rows.rows.find((r) => r.id === input.survivorId);
   const d = rows.rows.find((r) => r.id === input.duplicateId);
   if (!s || !d) throw new Error("canonical_rows_not_found_in_company");
-  if ((s.key !== d.key || !s.key) && input.evidence !== "identical_tax_id") throw new Error("canonical_names_do_not_normalize_equal");
+  // ROUND 297: a name VARIANT ("S E Mares ..." / "Semares ...") never normalises equal -- it merges only on the owner's
+  // own approval of that exact pair (owner-only route), never on a score.
+  if ((s.key !== d.key || !s.key) && input.evidence !== "identical_tax_id" && input.evidence !== "owner_approved_variant") {
+    throw new Error("canonical_names_do_not_normalize_equal");
+  }
+  // Money is asserted IN the engine: every document of both parties lands on the survivor, to the cent.
+  const before = await partyMoney(client, kind, [input.survivorId, input.duplicateId]);
+  const companyBefore = await companyOpenCents(client, kind, oc);
 
   const log: RepointLogEntry[] = [];
   for (const t of await repointTargets(client, kind)) {
@@ -210,10 +217,19 @@ export async function mergeIntoCanonical(
   // statement silently affects 0 rows — a merge that "succeeds" while leaving the duplicate in place. Refuse instead.
   const del = await client.query(`DELETE FROM ${q(cfg.table)} WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [input.duplicateId, oc]);
   if (del.rowCount !== 1) throw new Error(`canonical_delete_blocked: ${cfg.table} ${input.duplicateId} delete affected ${del.rowCount ?? 0} rows (RLS / role)`);
+  const after = await partyMoney(client, kind, [input.survivorId]);
+  const companyAfter = await companyOpenCents(client, kind, oc);
+  if (after.count !== before.count || after.total !== before.total || after.open !== before.open || companyAfter !== companyBefore) {
+    throw new Error(
+      `canonical_money_changed: ${kind} docs ${before.count}->${after.count}, total ${before.total}->${after.total}c, ` +
+        `open ${before.open}->${after.open}c, company open ${companyBefore}->${companyAfter}c`
+    );
+  }
   const moved = log.reduce((n, e) => n + e.keys.length, 0);
   await appendCrudAudit(client as never, input.actorUserId, `mdata.${kind}.canonical_merged`, {
     resource_type: cfg.table, resource_id: input.duplicateId, operating_company_id: oc, survivor_id: input.survivorId,
     alias_id: alias.rows[0]!.id, alias_name: d.name, rows_repointed: moved, auth_id: input.authId, reason: input.reason, evidence: input.evidence ?? "normalized_name",
+    money_unchanged: { docs: after.count, total_cents: after.total, open_cents: after.open, company_open_cents: companyAfter },
   }, "info", "ROUND-326-CANONICAL");
   return { alias_id: alias.rows[0]!.id, survivor_id: input.survivorId, duplicate_id: input.duplicateId, rows_repointed: moved, tables: log.length };
 }
@@ -244,6 +260,31 @@ export async function reverseCanonicalMerge(client: Db, oc: string, kind: Canoni
     resource_type: cfg.table, resource_id: a.merged, operating_company_id: oc, alias_id: aliasId, rows_restored: restored,
   }, "warning", "ROUND-326-CANONICAL");
   return { restored_id: a.merged, rows_restored: restored };
+}
+
+/** Documents of a party set: invoices (customer) / bills (vendor) -- count, total and open, to the cent. */
+async function partyMoney(client: Db, kind: CanonicalKind, ids: string[]): Promise<{ count: number; total: number; open: number }> {
+  const r = kind === "customer"
+    ? await client.query<{ n: string; t: string; o: string }>(
+        `SELECT count(*)::text AS n, COALESCE(sum(total_cents), 0)::text AS t, COALESCE(sum(amount_open_cents), 0)::text AS o
+           FROM accounting.invoices WHERE customer_id::text = ANY($1::text[]) AND voided_at IS NULL`, [ids])
+    : await client.query<{ n: string; t: string; o: string }>(
+        `SELECT count(*)::text AS n, COALESCE(sum(amount_cents), 0)::text AS t,
+                COALESCE(sum(amount_cents - COALESCE(paid_cents, 0)) FILTER (WHERE status <> 'void'), 0)::text AS o
+           FROM accounting.bills
+          WHERE (vendor_uuid = ANY($1::text[]) OR mdata_vendor_id::text = ANY($1::text[]) OR vendor_id = ANY($1::text[]))
+            AND voided_at IS NULL AND revoked_at IS NULL`, [ids]);
+  const row = r.rows[0];
+  return { count: Number(row?.n ?? 0), total: Number(row?.t ?? 0), open: Number(row?.o ?? 0) };
+}
+
+/** The company's whole open A/R (customers) or A/P (vendors) -- a merge may never move it. */
+async function companyOpenCents(client: Db, kind: CanonicalKind, oc: string): Promise<number> {
+  const r = kind === "customer"
+    ? await client.query<{ c: string }>(`SELECT COALESCE(sum(amount_open_cents), 0)::text AS c FROM accounting.invoices WHERE operating_company_id = $1::uuid AND voided_at IS NULL`, [oc])
+    : await client.query<{ c: string }>(`SELECT COALESCE(sum(amount_cents - COALESCE(paid_cents, 0)), 0)::text AS c FROM accounting.bills
+        WHERE operating_company_id = $1::uuid AND voided_at IS NULL AND revoked_at IS NULL AND status <> 'void'`, [oc]);
+  return Number(r.rows[0]?.c ?? 0);
 }
 
 /** Money proof for a merge set: open AR (customers) / open AP (vendors) summed over the ids, to the cent. */
