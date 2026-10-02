@@ -1,4 +1,29 @@
 {
+  "12109": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "verify-deadhead-empty-rate-fallback: ROUND 326 queue item 7 — empty-mile pay uses the empty rate, else the loaded per-mile rate (owner MILES SPEC); never a silent $0 on real empty miles."
+  },
+  "12113": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 8 — item catalog + mapping engine guard (CC-1)."
+  },
+  "12117": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 9 — document-expense ingestion engine guard (CC-1)."
+  },
+  "12121": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 10 — settlement-line categorization engine guard (CC-1)."
+  },
+  "12125": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 queue item 11 — 9000 Ask My Accountant path guard (CC-1)."
+  },
   "12101": {
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-02",
