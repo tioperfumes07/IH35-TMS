@@ -23,7 +23,7 @@
 //
 // IDEMPOTENT per (asset, period): the row.posted flag + the deterministic idempotency_key on
 // journal_entry_postings (uq_jep_company_idempotency_line) make a period-run safely re-runnable with
-// NO double-post. Void/reversal reuses the shared void path (postVoidReversal), never DELETE.
+// NO double-post. Reversal is the canonical linked reversal (reverseJournalEntryNoFlip — original never flipped), never DELETE.
 //
 // FLAG GATE: AMORTIZATION_GL_POSTING_ENABLED (default OFF) -> NO-OP, zero JEs / financial rows.
 
@@ -31,7 +31,7 @@ import { withCurrentUser } from "../../auth/db.js";
 import { isEnabled } from "../../lib/feature-flags/service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { emitAccountingSpineEvent, writeTransactionSourceLink } from "../accounting-spine-emit.js";
-import { postVoidReversal } from "../void.service.js";
+import { reverseJournalEntryNoFlip } from "../journal-entries.service.js";
 import { computeDepreciationSchedule } from "../fixed-assets.math.js";
 import {
   AMORTIZATION_GL_POSTING_FLAG_KEY,
@@ -117,6 +117,40 @@ export async function findExistingPostedJe(client: DbClient, operatingCompanyId:
     [operatingCompanyId, idempotencyKey]
   );
   return res.rows[0]?.journal_entry_uuid ?? null;
+}
+
+/**
+ * ROUND 300 (CC-1, proven on a Neon fork) — the posting ATTEMPT for a deterministic key. A row reversed by
+ * reverseSchedule keeps its original JE (never flipped, never deleted) and that JE's lines keep the base idempotency
+ * key. findExistingPostedJe found that reversed JE, so a re-post re-linked the row to it, reported "posted" and booked
+ * nothing (a second reverse then said nothing_to_reverse — the row was stuck). A live (not reversed, not voided) JE
+ * under the base key or a later attempt key is the existing post; otherwise the next attempt key is returned
+ * (<base>, then <base>:r1, <base>:r2 …) so the fresh lines never collide with the reversed ones on
+ * uq_jep_company_idempotency_line.
+ */
+export async function resolvePostingAttempt(
+  client: DbClient,
+  operatingCompanyId: string,
+  baseKey: string
+): Promise<{ existingJeId: string | null; idempotencyKey: string }> {
+  const res = await client.query<{ idempotency_key: string; journal_entry_uuid: string; dead: boolean }>(
+    `
+      SELECT DISTINCT p.idempotency_key, p.journal_entry_uuid::text AS journal_entry_uuid,
+             (j.reversed_by_je_id IS NOT NULL OR j.status = 'voided') AS dead
+        FROM accounting.journal_entry_postings p
+        JOIN accounting.journal_entries j ON j.id = p.journal_entry_uuid AND j.operating_company_id = p.operating_company_id
+       WHERE p.operating_company_id = $1::uuid
+         AND (p.idempotency_key = $2 OR left(p.idempotency_key, length($2) + 2) = $2 || ':r')
+    `,
+    [operatingCompanyId, baseKey]
+  );
+  const live = res.rows.find((r) => !r.dead);
+  if (live) return { existingJeId: live.journal_entry_uuid, idempotencyKey: live.idempotency_key };
+  const used = new Set(res.rows.map((r) => r.idempotency_key));
+  if (!used.has(baseKey)) return { existingJeId: null, idempotencyKey: baseKey };
+  let n = 1;
+  while (used.has(`${baseKey}:r${n}`)) n += 1;
+  return { existingJeId: null, idempotencyKey: `${baseKey}:r${n}` };
 }
 
 /**
@@ -282,8 +316,9 @@ export async function postPrepaidPurchase(
     );
   }
 
-  const idempotencyKey = buildPrepaidPurchaseIdempotencyKey(input.operatingCompanyId, input.assetId);
-  const existing = await findExistingPostedJe(client, input.operatingCompanyId, idempotencyKey);
+  const attempt = await resolvePostingAttempt(client, input.operatingCompanyId, buildPrepaidPurchaseIdempotencyKey(input.operatingCompanyId, input.assetId));
+  const idempotencyKey = attempt.idempotencyKey;
+  const existing = attempt.existingJeId;
   if (existing) {
     return {
       result: "already_posted",
@@ -434,10 +469,12 @@ export async function postPrepaidAmortization(
     const postedPeriods: PostedPeriod[] = [];
     for (const row of dueRows.rows) {
       const amountCents = Number(row.amount_cents);
-      const idempotencyKey = buildPrepaidAmortizationIdempotencyKey(input.operatingCompanyId, input.assetId, row.period_number);
+      const attempt = await resolvePostingAttempt(client, input.operatingCompanyId, buildPrepaidAmortizationIdempotencyKey(input.operatingCompanyId, input.assetId, row.period_number));
+      const idempotencyKey = attempt.idempotencyKey;
 
-      // Drift-heal: a JE already exists for this key (row.posted got out of sync) -> link the row, skip re-post.
-      let journalEntryId = await findExistingPostedJe(client, input.operatingCompanyId, idempotencyKey);
+      // Drift-heal: a LIVE JE already exists for this key (row.posted got out of sync) -> link the row, skip re-post.
+      // A reversed JE is not a post (ROUND 300): resolvePostingAttempt hands back a fresh attempt key instead.
+      let journalEntryId = attempt.existingJeId;
       if (!journalEntryId) {
         await assertOpenPeriod(client, input.operatingCompanyId, row.period_date);
         const lines: LineToPost[] = [
@@ -671,11 +708,11 @@ export async function postDepreciation(
     for (const row of dueRows.rows) {
       const amountCents = Number(row.depreciation_amount_cents);
       // Idempotency + JE live on the TITLE-HOLDER books (FLT-04).
-      const idempotencyKey = buildDepreciationIdempotencyKey(booksCompanyId, input.assetId, row.period_number);
-
       // Switch RLS GUC to owner books for JE spine writes, then restore asset-home GUC for schedule latch.
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [booksCompanyId]);
-      let journalEntryId = await findExistingPostedJe(client, booksCompanyId, idempotencyKey);
+      const attempt = await resolvePostingAttempt(client, booksCompanyId, buildDepreciationIdempotencyKey(booksCompanyId, input.assetId, row.period_number));
+      const idempotencyKey = attempt.idempotencyKey;
+      let journalEntryId = attempt.existingJeId;
       if (!journalEntryId) {
         await assertOpenPeriod(client, booksCompanyId, row.period_date);
         const lines: LineToPost[] = [
@@ -869,34 +906,32 @@ async function reverseSchedule(
       // postDepreciation's own forward-switch), then restore the asset-home GUC before touching the
       // asset-home-scoped schedule-row table below.
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [booksCompanyId]);
-      const header = await client.query<{ entry_date: string; status: string }>(
-        `SELECT entry_date::text, status FROM accounting.journal_entries WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
+      const header = await client.query<{ entry_date: string; status: string; reversed_by_je_id: string | null }>(
+        `SELECT entry_date::text, status, reversed_by_je_id::text FROM accounting.journal_entries WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
         [jeId, booksCompanyId]
       );
       const je = header.rows[0];
-      if (!je || je.status === "voided") {
+      if (!je || je.status === "voided" || je.reversed_by_je_id) {
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
         continue; // already reversed — skip (no double-reverse)
       }
 
-      const reversal = await postVoidReversal(
-        client as never,
-        {
-          operatingCompanyId: booksCompanyId,
-          entityType: "journal_entry",
-          entityId: jeId,
-          originalDate: je.entry_date,
-          memo: `Void reversal of ${kind} posting (asset ${input.assetId} period ${row.period_number}): ${input.reason}`,
-        },
-        { userId: actor.userId }
-      );
-
-      await client.query(
-        `UPDATE accounting.journal_entries
-            SET status = 'voided', voided_at = now(), voided_by_user_id = $3::uuid, void_reason = $4, qbo_sync_pending = true, updated_at = now()
-          WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-        [jeId, booksCompanyId, actor.userId, input.reason]
-      );
+      // ROUND 300 (CC-1, proven on a Neon fork): the canonical linked reversal — a SEPARATE reversing entry linked
+      // both ways (reversed_by_je_id / reverses_je_id), the original NEVER flipped (NetSuite parity). This used to
+      // post the reversal AND flip the original to status='voided'; the trial balance / P&L / balance sheet skip
+      // voided JEs, so they dropped the original and still counted the reversal — the amount came off twice
+      // (fork: Truck Depreciation −450,000c, Accumulated Depreciation +450,000c after reversing 5 periods).
+      const rev = await reverseJournalEntryNoFlip(client as never, {
+        operatingCompanyId: booksCompanyId,
+        journalEntryId: jeId,
+        reason: `${kind} reversal (asset ${input.assetId} period ${row.period_number}): ${input.reason}`,
+        actorUserId: actor.userId,
+        currentBusinessDate: companyBusinessDate(),
+      });
+      const reversal = { reversal_journal_entry_id: rev.reversal?.reversal_journal_entry_id ?? null };
+      if (!reversal.reversal_journal_entry_id) {
+        throw new AmortizationPostingError("REVERSAL_MISSING", `${kind} period ${row.period_number}: JE ${jeId} produced no reversing entry`);
+      }
 
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
 

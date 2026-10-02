@@ -59,6 +59,7 @@ export function buildDepreciationIdempotencyKey(
 }
 
 export type AmortizationPostingErrorCode =
+  | "REVERSAL_MISSING"
   | "ASSET_NOT_FOUND"
   | "ASSET_NOT_POSTABLE"
   | "ACCOUNT_MISSING"
