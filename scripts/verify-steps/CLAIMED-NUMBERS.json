@@ -9829,5 +9829,25 @@
     "claimed_by": "claude",
     "claimed_at": "2026-09-06",
     "purpose": "STALE -- collided with another session's verify-settlement-detail-reference claim, same cause as 10517 above. Renumbered to 10537-verify-invoice-due-date-from-terms.mjs."
+  },
+  "12221": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 326 item 18 — the Settlement Creator posts through the close engine; its totals are the close engine's (CC-1)."
+  },
+  "12225": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 297 driver-profile audit — the driver Bills panel lists only that driver's bills (CC-1)."
+  },
+  "12229": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 297 driver-profile audit — settlement YTD / lifetime totals exclude open drafts (CC-1)."
+  },
+  "12233": {
+    "claimed_by": "CC-1",
+    "claimed_at": "2026-10-02",
+    "purpose": "ROUND 297 driver-profile audit — deductions applied by a closed settlement stop reading pending (CC-1)."
   }
 }
