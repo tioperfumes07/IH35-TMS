@@ -131,7 +131,18 @@ export function ReclassifyTransactionsPage() {
         {/* LEFT PANE — chart of accounts with period activity */}
         <aside className="w-72 shrink-0 overflow-y-auto rounded border border-gray-200 bg-white" data-testid="reclassify-account-tree" data-b5-period-balances="1">
           <div className="border-b border-gray-200 p-2">
-            <div className="text-xs font-bold uppercase tracking-wide text-gray-600">Accounts · {formatDateQboList(fromDate)} – {formatDateQboList(toDate)}</div>
+            <div className="text-xs font-bold uppercase tracking-wide text-gray-600">Accounts · period balances</div>
+            {/* BANK-F91048 — ORDERS §B-5 left pane PERIOD BALANCES (From/To); same state as right filters. */}
+            <div className="mt-2 grid grid-cols-2 gap-1" data-b5-period-from-to="1" data-testid="reclassify-period-from-to">
+              <label className="flex flex-col gap-0.5 text-xs font-semibold text-slate-600">
+                From
+                <DatePicker value={fromDate} onChange={setFromDate} className="h-8" data-testid="reclassify-period-from" />
+              </label>
+              <label className="flex flex-col gap-0.5 text-xs font-semibold text-slate-600">
+                To
+                <DatePicker value={toDate} onChange={setToDate} className="h-8" data-testid="reclassify-period-to" />
+              </label>
+            </div>
             <input value={accountFilter} onChange={(e) => setAccountFilter(e.target.value)} placeholder="Filter accounts" className="mt-1 h-8 w-full rounded border border-gray-300 px-2 text-xs" data-testid="reclassify-account-filter" />
             <label className="mt-1 flex items-center gap-1 text-xs text-slate-600"><input type="checkbox" checked={showAccountNumbers} onChange={(e) => setShowAccountNumbers(e.target.checked)} /> Show account numbers</label>
           </div>
