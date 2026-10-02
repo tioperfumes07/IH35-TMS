@@ -1,3 +1,8 @@
+**2026-10-02T10:49Z · BANK-F91028 CoA per-row Make inactive MERGED #24081 · tip `a6b86dd331`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91028 MERGED FAST-MERGE | GO
+CoA ACTION: Make inactive on active rows → ConfirmModal → deactivate. Session F91024–F91028 register connectivity stack. money-pr-local-gate PASS → #24081 squash-admin.
+NEXT: next ORDERS leftover · Lead Chrome · bank_transaction_splits USMCA flag HH 12–23 · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T10:44Z · BANK-F91027 B-1 Expense filter excludes Checks MERGED #24079 · tip `e8ab398205`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91027 MERGED FAST-MERGE | GO
 Expense type filter NOT EXISTS payment_type=check. Also this session: F91024 Edit hops · F91025 ✓ advance match · F91026 cash advance banner. money-pr-local-gate PASS → #24079 squash-admin.
