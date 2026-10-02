@@ -1,70 +1,78 @@
+// Lead ROUND 296 §3 / owner "they are not cards" — the per-customer Faro reserve is a TABLE, a row per customer (gear
+// column chooser via ParityTable, money right-aligned tabular-nums, em dash for missing). One server query
+// (GET /api/v1/factoring/reserves/by-customer) computes every column from the posted purchase lines and the reserve
+// movements stamped to each invoice, and reports whether the column total ties to the GL balance of 1230 (Faro Escrow
+// report) + 1235 (Faro Cash report). Each customer row drills to its invoices; each invoice links to the invoice.
+// Read-only — no mutation lives here; money moves only through the Banking match.
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { listFactoringReserveBalances, type FactorReserveBalance } from "../../api/accounting";
+import { getReserveByCustomer, getReserveByInvoice, type ReserveByCustomerRow, type ReserveByInvoiceRow } from "../../api/factoring-reserves";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { titleize } from "../../lib/titleize";
+import { Modal } from "../../components/Modal";
 
 import { formatUsdCents } from "../../lib/money";
 
-// GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
-// local currency formatter (same shape lib/money.ts already covers).
-function money(cents: number) {
-  return formatUsdCents(cents);
+// GLB-05 -- delegates to the canonical formatter.
+function money(cents: number | null | undefined) {
+  return cents == null ? "—" : formatUsdCents(cents);
 }
 
-// Display-only ParityTable migration: column order (Customer / Current reserve / Accrued /
-// Released), the money() cents formatter, and the read-only cells are preserved 1:1 from the
-// former hand-rolled table markup. No mutation lives in this table.
-const columns: Array<ParityColumn<FactorReserveBalance>> = [
+const columns: Array<ParityColumn<ReserveByCustomerRow>> = [
   {
     key: "customer_name",
     label: "Customer",
     sortable: true,
-    sortValue: (row) => entityLabel(row.customer_name, row.customer_id, "Customer"),
-    render: (row) => (
-      <EntityLink
-        kind="customer"
-        id={row.customer_id}
-        label={entityLabel(row.customer_name, row.customer_id, "Customer")}
-      />
-    ),
+    sortValue: (row) => row.customer_name,
+    render: (row) =>
+      row.customer_id ? (
+        <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
+      ) : (
+        <span className="text-slate-600">{row.customer_name}</span>
+      ),
   },
+  { key: "invoices_purchased", label: "Invoices purchased", kind: "number", sortable: true, render: (row) => String(row.invoices_purchased) },
+  { key: "face_cents", label: "Face", kind: "money", sortable: true, render: (row) => money(row.face_cents) },
+  { key: "advanced_cents", label: "Advanced", kind: "money", sortable: true, render: (row) => money(row.advanced_cents) },
+  { key: "held_cents", label: "Held", kind: "money", sortable: true, render: (row) => money(row.held_cents) },
+  { key: "released_cents", label: "Released", kind: "money", sortable: true, render: (row) => money(row.released_cents) },
+  { key: "fees_cents", label: "Fees & short-pays", kind: "money", sortable: true, render: (row) => money(row.fees_cents) },
+  { key: "recourse_cents", label: "Recourse", kind: "money", sortable: true, render: (row) => money(row.recourse_cents) },
+  { key: "reserve_now_cents", label: "Reserve now", kind: "money", sortable: true, render: (row) => money(row.reserve_now_cents) },
+];
+
+const invoiceColumns: Array<ParityColumn<ReserveByInvoiceRow>> = [
   {
-    key: "reserve_balance_cents",
-    label: "Current reserve",
+    key: "invoice_display_id",
+    label: "Invoice",
     sortable: true,
-    render: (row) => money(row.reserve_balance_cents),
+    render: (row) =>
+      row.invoice_id ? <EntityLink kind="invoice" id={row.invoice_id} label={row.invoice_display_id ?? "Invoice"} /> : "Not stamped to an invoice",
   },
-  {
-    key: "reserve_accrued_cents",
-    label: "Accrued",
-    sortable: true,
-    render: (row) => money(row.reserve_accrued_cents),
-  },
-  {
-    key: "reserve_released_cents",
-    label: "Released",
-    sortable: true,
-    render: (row) => money(row.reserve_released_cents),
-  },
+  ...(columns.slice(2) as unknown as Array<ParityColumn<ReserveByInvoiceRow>>),
 ];
 
 export function FactorReserveCard({ operatingCompanyId }: { operatingCompanyId: string }) {
+  const [drill, setDrill] = useState<ReserveByCustomerRow | null>(null);
   const query = useQuery({
-    queryKey: ["accounting", "factoring-reserve-balances", operatingCompanyId],
-    queryFn: () => listFactoringReserveBalances(operatingCompanyId),
+    queryKey: ["factoring", "reserves", "by-customer", operatingCompanyId],
+    queryFn: () => getReserveByCustomer(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
+  });
+  const invoices = useQuery({
+    queryKey: ["factoring", "reserves", "by-invoice", operatingCompanyId, drill?.customer_id ?? null],
+    queryFn: () => getReserveByInvoice(operatingCompanyId, drill?.customer_id ?? null),
+    enabled: Boolean(operatingCompanyId && drill),
   });
 
   const rows = query.data?.rows ?? [];
-  const events = query.data?.recent_events ?? [];
 
   return (
-    <div className="grid gap-3 md:grid-cols-2">
-      <DataPanel title="Reserve balances by customer">
+    <div className="grid gap-3">
+      <DataPanel title="Reserve by customer">
         {query.isError ? (
           <ListErrorState
             title="Couldn't load reserve balances"
@@ -73,43 +81,41 @@ export function FactorReserveCard({ operatingCompanyId }: { operatingCompanyId: 
             onRetry={() => void query.refetch()}
           />
         ) : (
-          <ParityTable<FactorReserveBalance>
+          <ParityTable<ReserveByCustomerRow>
             columns={columns}
             rows={rows}
-            rowKey={(row) => row.customer_id}
+            rowKey={(row) => row.customer_id ?? "unstamped"}
+            onRowClick={(row) => setDrill(row)}
             loading={query.isLoading}
-            emptyText="No reserve balances yet."
+            emptyText={query.data?.empty_reason ?? "No reserve balances yet."}
             storageKey="accounting-factor-reserve-balances"
             tableTestId="factor-reserve-balances-table"
           />
         )}
+        {query.data ? (
+          <p className="mt-2 text-xs tabular-nums text-slate-700" data-testid="factor-reserve-tie-out">
+            Reserve now {money(query.data.total_reserve_now_cents)} · GL 1230 + 1235 {money(query.data.gl_balance_cents)} ·{" "}
+            {query.data.ties_to_gl ? "ties to the cent" : "DOES NOT TIE — a reserve movement is missing its invoice stamp"}
+          </p>
+        ) : null}
       </DataPanel>
-
-      <DataPanel title="Latest reserve events">
-        <div className="space-y-2">
-          {events.length === 0 ? <div className="text-xs text-gray-500">No reserve events yet.</div> : null}
-          {events.map((event) => (
-            <div key={`${event.factoring_advance_id}-${event.occurred_at}`} className="rounded-sm border border-gray-200 p-2 text-xs">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-semibold text-gray-900">
-                  <EntityLink kind="factoring_advance" id={event.factoring_advance_id} label={entityLabel(event.display_id, event.factoring_advance_id, "Advance")} />{" "}
-                  ·{" "}
-                  <EntityLink
-                    kind="customer"
-                    id={event.customer_id}
-                    label={entityLabel(event.customer_name, event.customer_id, "Customer")}
-                  />
-                </span>
-                <span className="text-gray-500">{new Date(event.occurred_at).toLocaleString()}</span>
-              </div>
-              <div className="mt-1 text-gray-700">
-                Status: {titleize(event.status)} | Reserve: {money(event.reserve_amount_cents)} | Release: {money(event.release_amount_cents)} | Fee:{" "}
-                {money(event.factor_fee_cents)}
-              </div>
-            </div>
-          ))}
-        </div>
-      </DataPanel>
+      {drill ? (
+        <Modal open onClose={() => setDrill(null)} title={`Reserve — ${drill.customer_name}`}>
+          {invoices.isError ? (
+            <ListErrorState title="Couldn't load the invoices" status={0} onRetry={() => void invoices.refetch()} />
+          ) : (
+            <ParityTable<ReserveByInvoiceRow>
+              columns={invoiceColumns}
+              rows={invoices.data?.rows ?? []}
+              rowKey={(row) => row.invoice_id ?? "unstamped"}
+              loading={invoices.isLoading}
+              emptyText="No invoices."
+              storageKey="accounting-factor-reserve-by-invoice"
+              tableTestId="factor-reserve-by-invoice-table"
+            />
+          )}
+        </Modal>
+      ) : null}
     </div>
   );
 }

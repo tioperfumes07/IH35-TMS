@@ -123,9 +123,11 @@ export function FactoringDetailPage() {
   // OWNER LAW 2026-10-02 competing-engine audit: "Mark Advanced" (the purchase engine posts the funding) and
   // "Release Reserve" (a release is a bank line on the Faro reserve account, posted by Banking) are retired writers.
   const showAdvance = false;
-  const showReserveHeld = detail?.status === "advanced";
+  // Lead ROUND 296: "Reserve Held" and "Recourse Return" STAY as read-through displays (the reserve-by-customer table
+  // below, the same GL registers Banking shows) and stop being writers — money moves only through the Banking match.
+  const showReserveHeld = false;
   const showRelease = false;
-  const showRecourse = detail?.status !== "released" && detail?.status !== "voided";
+  const showRecourse = false;
   const showVoid = detail?.status === "submitted" || detail?.status === "advanced";
 
   const totals = useMemo(() => {

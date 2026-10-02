@@ -580,6 +580,16 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-one-bank-match-writer-writes-je.mjs",
     ],
   ],
+  // Lead ROUND 296 §3 — the per-customer Faro reserve ties to GL 1230 + 1235 to the cent, drill included.
+  [
+    "verify-faro-reserve-by-customer-ties-to-gl",
+    [
+      "apps/backend/src/factoring/reserve-by-customer",
+      "apps/backend/src/factoring/factoring-kpi.service.ts",
+      "scripts/lib/print-reserve-by-customer.ts",
+      "scripts/verify-faro-reserve-by-customer-ties-to-gl.mjs",
+    ],
+  ],
   // ROUND 326.2 items 3-4 — banking / factoring surfaces: every table tabular-nums, and Banking's
   // factoring reserve reads the factoring KPI engine (one reserve engine, no duplicate math).
   [
