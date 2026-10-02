@@ -1,6 +1,8 @@
 # NOW-CURSOR
 
-NOW: B-2 JE Finish→R MERGED #24033 tip `191765da70` · B-3 ±90d rebased tip-ready for #24035.
-ACK: CURSOR | ACK GO-20 HOOK | B-2 MERGED · B-3 REBASED | GO
-MatchDrawer ±90d on `cursor/b3-find-other-matches-90d-920f`. No Book Load. No seed. No Chrome.
-NEXT: squash #24035 · Lead Chrome · BE deploy for B-2.
+NOW: B-3 Suggested + Record-type chips IN FLIGHT `cursor/b3-suggested-record-type-chips-920f`.
+ACK: CURSOR | ACK GO-20 HOOK | BE+FE LIVE tip `7808b190cb` | GO
+BE dep-davlrvnavr4c73ci1us0 live · healthz git_sha=`7808b190cbf429461e679b3374be864418738d47` (B-2 `191765da70` + B-3 `b8af667f19` ancestors).
+FE dep-davlrr1h83ns73c5qeb0 live on same tip (autoDeploy yes).
+NEXT: land chips · money-pr-local-gate · FAST-MERGE · Lead Chrome.
+No Book Load. No seed. No Chrome seat verify.

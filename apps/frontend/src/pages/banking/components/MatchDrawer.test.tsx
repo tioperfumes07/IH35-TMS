@@ -310,3 +310,50 @@ describe("MatchDrawer — B-3 §19 ±90 day default", () => {
     );
   });
 });
+
+describe("MatchDrawer — B-3 §19 Suggested + Record type chips", () => {
+  beforeEach(() => {
+    vi.mocked(bankingApi.getMatchCandidates).mockReset();
+  });
+
+  it("filters to auto_match when Suggested is pressed", async () => {
+    vi.mocked(bankingApi.getMatchCandidates).mockResolvedValue({
+      candidates: [
+        candidate({ ledger_entry_id: "sug-1", auto_match: true, memo: "Suggested fuel" }),
+        candidate({ ledger_entry_id: "oth-1", auto_match: false, memo: "Other expense" }),
+      ],
+      match_candidates_count: 2,
+      bank_amount_cents: 15000,
+    });
+    render(wrap(<MatchDrawer open bankTransactionId={bankTxnId} operatingCompanyId={companyId} onClose={vi.fn()} />));
+    expect(await screen.findByTestId("match-drawer-filter-chips")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getAllByTestId("match-candidate-row")).toHaveLength(2);
+    });
+
+    await userEvent.click(screen.getByTestId("match-chip-suggested"));
+    await waitFor(() => {
+      expect(screen.getAllByTestId("match-candidate-row")).toHaveLength(1);
+    });
+    expect(screen.getAllByText("Suggested fuel").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Other expense")).not.toBeInTheDocument();
+  });
+
+  it("passes kinds when a Record type chip is pressed", async () => {
+    vi.mocked(bankingApi.getMatchCandidates).mockResolvedValue({
+      candidates: [candidate({ ledger_entry_kind: "payment", amount_gap_cents: 0 })],
+      match_candidates_count: 1,
+      bank_amount_cents: 15000,
+    });
+    render(wrap(<MatchDrawer open bankTransactionId={bankTxnId} operatingCompanyId={companyId} onClose={vi.fn()} />));
+    await screen.findByTestId("match-chip-record-payment");
+    await userEvent.click(screen.getByTestId("match-chip-record-payment"));
+    await waitFor(() => {
+      expect(bankingApi.getMatchCandidates).toHaveBeenCalledWith(
+        bankTxnId,
+        companyId,
+        expect.objectContaining({ kinds: ["payment"] })
+      );
+    });
+  });
+});

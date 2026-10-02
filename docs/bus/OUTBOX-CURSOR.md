@@ -1,3 +1,12 @@
+**2026-10-02T07:45Z · B-3 Suggested + Record-type chips · `cursor/b3-suggested-record-type-chips-920f`**
+ACK: CURSOR | ACK GO-20 HOOK | B-3 §19 CHIPS | GO
+BE LIVE dep-davlrvnavr4c73ci1us0 · healthz git_sha=`7808b190cb` (B-2+B-3 ancestors).
+FE LIVE dep-davlrr1h83ns73c5qeb0 same tip.
+LEFT closed: MatchDrawer Suggested chip (auto_match) + Record type chips → kinds filter (API already had kinds).
+Guard verify-b3-bank-feed-match extended. vitest MatchDrawer 12/12.
+No migration (UTC 07). No Book Load. No seed.
+NEXT: money-pr-local-gate → push → FAST-MERGE · Lead Chrome.
+
 **2026-10-02T07:40Z · B-2 #24033 + B-3 #24035 BOTH FAST-MERGED**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91006+#24033 · BANK-F91007+#24035 | GO
 tip `b8af667f19` (B-3) includes `191765da70` (B-2). money-pr-local-gate had PASS on both.

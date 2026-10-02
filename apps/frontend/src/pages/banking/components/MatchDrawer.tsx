@@ -61,6 +61,24 @@ const KIND_LABELS: Record<BankMatchCandidateKind, string> = {
   expense: "Expense",
 };
 
+/** ORDERS §19 Find Other Matches — Record type chips (QBO Show). */
+const RECORD_TYPE_CHIPS: ReadonlyArray<{ kind: BankMatchCandidateKind; label: string }> = [
+  { kind: "payment", label: "Payment" },
+  { kind: "bill_payment", label: "Bill Payment" },
+  { kind: "expense", label: "Expense" },
+  { kind: "transfer", label: "Transfer" },
+  { kind: "je", label: "Journal Entry" },
+  { kind: "bill", label: "Bill" },
+];
+
+function chipClassName(selected: boolean) {
+  return `h-7 rounded-sm border px-2 text-xs ${
+    selected
+      ? "border-[#14314F] bg-[#14314F] text-white"
+      : "border-[#E5E7EB] bg-white text-[#1F2A44]"
+  }`;
+}
+
 const KIND_ENTITY: Record<BankMatchCandidateKind, EntityKind> = {
   payment: "payment",
   bill_payment: "bill_payment",
@@ -138,6 +156,10 @@ export function MatchDrawer({
   const [categorizeGlAccountId, setCategorizeGlAccountId] = useState("");
   /** ROUND 206 Resolve — write-off / difference CoA for non-zero variance accept. */
   const [writeOffAccountId, setWriteOffAccountId] = useState("");
+  /** ORDERS §19 — Suggested chip (auto_match / high-confidence only). */
+  const [suggestedOnly, setSuggestedOnly] = useState(false);
+  /** ORDERS §19 — Record type chip; null = all types. */
+  const [recordKind, setRecordKind] = useState<BankMatchCandidateKind | null>(null);
   const { pushToast } = useToast();
 
   const seedPlusMinus90 = () => {
@@ -161,6 +183,8 @@ export function MatchDrawer({
     setSelectedId(null);
     setSelectedIds(new Set());
     setWriteOffAccountId("");
+    setSuggestedOnly(false);
+    setRecordKind(null);
     // B-3 §19 — Find Other Matches default date range is ±90 d from the bank line (not 3/7 cascade).
     if (!seedPlusMinus90()) {
       setDateFrom("");
@@ -185,6 +209,7 @@ export function MatchDrawer({
       dateFrom,
       dateTo,
       searchQ,
+      recordKind ?? "all",
     ],
     queryFn: () =>
       getMatchCandidates(String(bankTransactionId), operatingCompanyId, {
@@ -192,6 +217,7 @@ export function MatchDrawer({
         q: searchQ || undefined,
         dateFrom: dateFrom || undefined,
         dateTo: dateTo || undefined,
+        kinds: recordKind ? [recordKind] : undefined,
       }),
     enabled: open && Boolean(operatingCompanyId && bankTransactionId),
   });
@@ -270,7 +296,12 @@ export function MatchDrawer({
 
   const listState = useListState(candidatesQuery, (candidatesQuery.data?.candidates ?? []).length === 0);
 
-  const candidates: BankMatchCandidate[] = candidatesQuery.data?.candidates ?? [];
+  const candidates: BankMatchCandidate[] = useMemo(() => {
+    const raw = candidatesQuery.data?.candidates ?? [];
+    // ORDERS §19 Suggested chip — high-confidence / auto_match only (client filter on ranked list).
+    if (!suggestedOnly) return raw;
+    return raw.filter((c) => c.auto_match === true);
+  }, [candidatesQuery.data?.candidates, suggestedOnly]);
   const bankAmountCents = Number(candidatesQuery.data?.bank_amount_cents ?? 0);
   const multiSelected = useMemo(
     () => candidates.filter((c) => selectedIds.has(c.ledger_entry_id) && c.ledger_entry_kind !== "bill"),
@@ -454,6 +485,49 @@ export function MatchDrawer({
           </p>
         ) : null}
 
+        {/* B-3 §19 — chips Suggested / by Record type (QBO Find Other Matches). */}
+        <div
+          className="mb-3 flex flex-wrap items-center gap-1"
+          data-testid="match-drawer-filter-chips"
+          data-b3-suggested-record-type-chips="1"
+          role="group"
+          aria-label="Suggested and record type filters"
+        >
+          <button
+            type="button"
+            data-testid="match-chip-suggested"
+            aria-pressed={suggestedOnly}
+            className={chipClassName(suggestedOnly)}
+            onClick={() => setSuggestedOnly((v) => !v)}
+          >
+            Suggested
+          </button>
+          <button
+            type="button"
+            data-testid="match-chip-record-all"
+            aria-pressed={recordKind === null}
+            className={chipClassName(recordKind === null)}
+            onClick={() => setRecordKind(null)}
+          >
+            All types
+          </button>
+          {RECORD_TYPE_CHIPS.map((chip) => {
+            const selected = recordKind === chip.kind;
+            return (
+              <button
+                key={chip.kind}
+                type="button"
+                data-testid={`match-chip-record-${chip.kind}`}
+                aria-pressed={selected}
+                className={chipClassName(selected)}
+                onClick={() => setRecordKind(selected ? null : chip.kind)}
+              >
+                {chip.label}
+              </button>
+            );
+          })}
+        </div>
+
         <div className="mb-3 flex flex-wrap items-center gap-2" data-testid="match-window-controls">
           <input
             type="search"
@@ -493,6 +567,8 @@ export function MatchDrawer({
                 setWindowStep(undefined);
                 setSearchQ("");
                 setDraftQ("");
+                setSuggestedOnly(false);
+                setRecordKind(null);
                 if (!seedPlusMinus90()) {
                   setDateFrom("");
                   setDateTo("");
