@@ -28,7 +28,36 @@ export type FaroReserveEntry = {
   customer_name: string | null;
   purchase_id: string | null;
   purchase_display_id: string | null;
+  short_pay_resolution?: "written_down" | "kept_open" | null;
+  short_pay_reason?: string | null;
+  short_pay_credit_memo_id?: string | null;
+  short_pay_resolution_journal_entry_id?: string | null;
 };
+
+/** Owner ruling 2026-10-02 — short-pay reasons (same keys as the server's SHORT_PAY_REASONS). */
+export const SHORT_PAY_REASON_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "billing_error", label: "Our billing error (billing adjustment)" },
+  { value: "rate_dispute", label: "Rate or accessorial dispute" },
+  { value: "service_failure", label: "Service failure / late delivery" },
+  { value: "paperwork", label: "Missing or invalid paperwork" },
+  { value: "osd", label: "OS&D deducted from freight" },
+  { value: "detention_denied", label: "Detention / layover denied" },
+  { value: "penalty", label: "Penalty / fine assessed by customer (customer claim)" },
+  { value: "agreed_concession", label: "Agreed concession / quick-pay discount" },
+  { value: "unknown", label: "Unknown / backup not received" },
+  { value: "bad_debt", label: "Bad debt" },
+];
+
+export function resolveFaroShortPay(
+  companyId: string,
+  entryId: string,
+  body: { resolution: "written_down" | "kept_open"; reason?: string; note?: string }
+) {
+  return apiRequest<{ entry_id: string; resolution: string; credit_memo_id?: string; journal_entry_id?: string }>(
+    `/api/v1/factoring/faro-reserve-entries/${entryId}/short-pay-resolution`,
+    { method: "POST", body: { operating_company_id: companyId, ...body } }
+  );
+}
 
 export type FaroImportRejected = { line: number; faro_entry_id: string | null; reason: string; detail?: string };
 export type FaroImportPreview = {

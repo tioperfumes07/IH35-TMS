@@ -13,6 +13,8 @@ import {
   listFaroReserveEntries,
   postFaroReserveEntry,
   previewFaroReserveReport,
+  resolveFaroShortPay,
+  SHORT_PAY_REASON_OPTIONS,
   type FaroEntryKind,
   type FaroImportPreview,
   type FaroRegister,
@@ -44,6 +46,64 @@ function postHint(e: FaroReserveEntry): string | null {
   if (e.entry_kind === "client_payable" && e.counterparty !== "ih35_transportation") return "Posts as a transfer to our bank";
   if (e.faro_invoice_number && !e.invoice_id) return `No purchase line carries Faro Inv ${e.faro_invoice_number}`;
   return null;
+}
+
+/** Owner ruling 2026-10-02 — the customer side of a short-pay: write it down to a reason, or keep it open (Owner only). */
+function ShortPayCustomerSide({ e, companyId, isOwner, onDone }: { e: FaroReserveEntry; companyId: string; isOwner: boolean; onDone: () => Promise<void> }) {
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const label = SHORT_PAY_REASON_OPTIONS.find((o) => o.value === e.short_pay_reason)?.label ?? e.short_pay_reason ?? "";
+  if (e.short_pay_resolution === "written_down") {
+    return (
+      <span className="text-slate-700">
+        Written down — {label}
+        {e.short_pay_resolution_journal_entry_id ? (
+          <>
+            {" · "}
+            <EntityLink kind="journal_entry" id={e.short_pay_resolution_journal_entry_id} label="Entry" />
+          </>
+        ) : null}
+      </span>
+    );
+  }
+  if (!isOwner) return <span className="text-slate-600">{e.short_pay_resolution === "kept_open" ? "Kept open on the customer" : "Open on the customer — Owner decides"}</span>;
+  const act = (body: { resolution: "written_down" | "kept_open"; reason?: string }) => {
+    setBusy(true);
+    setErr(null);
+    void resolveFaroShortPay(companyId, e.id, body)
+      .then(onDone)
+      .catch((x: Error) => setErr(x.message))
+      .finally(() => setBusy(false));
+  };
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1">
+      {e.short_pay_resolution === "kept_open" ? <span className="text-slate-600">Kept open ·</span> : null}
+      <select
+        value={reason}
+        onChange={(ev) => setReason(ev.target.value)}
+        className="h-[34px] rounded-sm border border-gray-300 px-1 text-xs"
+        aria-label="Short-pay reason"
+        data-testid={`faro-short-pay-reason-${e.id}`}
+      >
+        <option value="">Reason…</option>
+        {SHORT_PAY_REASON_OPTIONS.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <button type="button" className={ACTION} disabled={!reason || busy} onClick={() => act({ resolution: "written_down", reason })}>
+        Write down
+      </button>
+      {e.short_pay_resolution !== "kept_open" ? (
+        <button type="button" className={ACTION} disabled={busy} onClick={() => act({ resolution: "kept_open" })}>
+          Keep open
+        </button>
+      ) : null}
+      {err ? <span className="text-red-700">{err}</span> : null}
+    </span>
+  );
 }
 
 export function FaroReserveRegisterPanel({
@@ -137,6 +197,16 @@ export function FaroReserveRegisterPanel({
       { key: "amount_cents", label: "Amount", kind: "money", sortable: true, render: (e) => formatUsdCents(e.amount_cents) },
       { key: "running_balance_cents", label: "Faro balance", kind: "money", sortable: true, render: (e) => (e.running_balance_cents == null ? "—" : formatUsdCents(e.running_balance_cents)) },
       {
+        key: "short_pay_resolution",
+        label: "Customer side",
+        render: (e) =>
+          e.entry_kind === "short_pay" ? (
+            <ShortPayCustomerSide e={e} companyId={companyId} isOwner={isOwner} onDone={refresh} />
+          ) : (
+            "—"
+          ),
+      },
+      {
         key: "journal_entry_id",
         label: "Posting",
         render: (e) =>
@@ -171,7 +241,7 @@ export function FaroReserveRegisterPanel({
           ),
       },
     ],
-    [busy, canPost, companyId]
+    [busy, canPost, companyId, isOwner]
   );
 
   const rows = entries.data?.rows ?? [];

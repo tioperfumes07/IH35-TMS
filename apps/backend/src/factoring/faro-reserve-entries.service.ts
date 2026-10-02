@@ -508,7 +508,8 @@ export async function listFaroReserveEntries(client: DbClient, oci: string, bank
   const r = await client.query<Record<string, unknown>>(
     `SELECT e.id::text, e.register, e.entry_kind, e.faro_entry_id, e.entry_date::text, e.amount_cents::text, e.running_balance_cents::text,
             e.faro_invoice_number, e.po_ref, e.debtor_name, e.pmt_ref, e.note, e.counterparty, e.bank_transaction_id::text,
-            e.journal_entry_id::text, e.posted_at::text, l.invoice_id::text, i.display_id AS invoice_display_id, l.customer_id::text,
+            e.journal_entry_id::text, e.posted_at::text, e.short_pay_resolution, e.short_pay_reason, e.short_pay_credit_memo_id::text,
+            e.short_pay_resolution_journal_entry_id::text, l.invoice_id::text, i.display_id AS invoice_display_id, l.customer_id::text,
             c.customer_name, l.purchase_id::text, p.display_id AS purchase_display_id
        FROM accounting.faro_reserve_entries e
        LEFT JOIN accounting.factoring_purchase_lines l
