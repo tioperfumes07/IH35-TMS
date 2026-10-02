@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { ApiError, apiRequest } from "../../api/client";
 import { VariantDuplicatesPanel, useVariantCandidates, variantPairsFor } from "./VariantDuplicatesPanel";
 import { formatDateUS } from "../../lib/formatDate";
+import { formatNumberTable, formatUsdCentsTable } from "../../lib/money";
 import { ListErrorState } from "../ListErrorState";
 import "../../design/ih35-design-tokens.css";
 import "./party-board.css";
@@ -38,10 +39,22 @@ type VendorBoard = {
   rows: VendorRow[];
 };
 
-const usd = (cents: number) => `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const int = (n: number) => n.toLocaleString("en-US");
-/** Missing renders as — (owner design law 7): never $0.00 for "no money", never 0 for "no data". */
-const money = (cents: number | null | undefined) => (cents ? usd(cents) : "—");
+/**
+ * ONE FORMATTER, 2026-10-02. These were four hand-rolled locals — `toLocaleString`, a local int, a
+ * local money — in a file that renders the DEFAULT customer and vendor list. `lib/money.ts` is the
+ * single source of truth and its own header forbids exactly this: "do NOT hand-roll toFixed(2),
+ * toLocaleString, or per-file Intl.NumberFormat money variants". Two surfaces formatting money two
+ * ways is how the same customer reads differently depending on which toggle you are on.
+ *
+ * It also carried a real defect. `money = (cents) => (cents ? usd(cents) : "—")` is falsy-testing a
+ * NUMBER, so a true **$0.00 rendered as an em dash** — a customer who has genuinely collected zero
+ * read as "no data". C-37 is the opposite rule: missing renders as —, and a real zero renders as
+ * $0.00, because hiding a measured zero is as dishonest as fabricating one. `formatUsdCentsTable`
+ * draws that line correctly (null/undefined/"" -> —, 0 -> $0.00, negatives in accounting form).
+ */
+const usd = (cents: number | null | undefined) => formatUsdCentsTable(cents);
+const int = (n: number) => formatNumberTable(n);
+const money = (cents: number | null | undefined) => formatUsdCentsTable(cents);
 const day = (d: string | null) => (d ? formatDateUS(d) : "—");
 
 type Col<R> = { key: string; label: string; num?: boolean; width?: number; sort: (r: R) => string | number; cell: (r: R) => ReactNode; foot?: ReactNode };
@@ -339,7 +352,7 @@ export function PartyBoard(props: { kind: PartyKind; operatingCompanyId: string;
         <input id={`pb-search-${props.kind}`} type="search" className="pb-search" value={search} onChange={(e) => setSearch(e.target.value)}
           placeholder={`Search all ${int(all)} — hidden is not missing`} />
         <button type="button" className="pb-chip" aria-pressed>Regular</button>
-        <button type="button" className="pb-chip" aria-pressed={false} onClick={props.onMasterDetail}>Master-detail</button>
+        <button type="button" className="pb-chip" aria-pressed={false} onClick={props.onMasterDetail} title="The full governed column set — A/R ageing, factoring fees and interest, reserve held, finance cost, days-to-pay, credit limit — plus the column chooser.">All columns</button>
         <button type="button" className="pb-chip" aria-pressed={false} onClick={() => exportRef.current()}>Export</button>
         <span style={{ position: "relative" }}>
           <button type="button" className="pb-gear" aria-label="Choose columns" title="Choose columns" aria-expanded={gearOpen} onClick={() => setGearOpen((v) => !v)}><GearIcon /></button>
@@ -368,7 +381,7 @@ export function PartyListSwitch(props: { kind: PartyKind; operatingCompanyId: st
         {props.operatingCompanyId ? (
           <div className="pb-switch">
             <button type="button" className="pb-chip" aria-pressed={false} onClick={() => props.setDetail(false)}>Regular</button>
-            <button type="button" className="pb-chip" aria-pressed>Master-detail</button>
+            <button type="button" className="pb-chip" aria-pressed>All columns</button>
           </div>
         ) : null}
         {props.detail}
