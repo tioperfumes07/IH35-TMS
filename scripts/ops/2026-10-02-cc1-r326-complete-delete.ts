@@ -17,6 +17,7 @@
  * records every row in audit.record_deletions (what + why), deletes leaves first in ONE transaction, then proves:
  * the roots are gone and DR = CR with 0 unbalanced JEs. Any refusal rolls the whole thing back.
  *
+ * ALLOW_BANK_EFFECT=1 (APPLY only, with the AUTH naming it) permits a delete that moves a bank GL balance.
  * RUN:  DRY (default, read-only, no AUTH):  DATABASE_URL=<read-only ok> npx tsx scripts/ops/2026-10-02-cc1-r326-complete-delete.ts --scope=transportation21
  *       APPLY: OWNER_AUTH_ID=AUTH-NNN APPLY=1 DATABASE_URL=<prod neondb_owner> npx tsx … --scope=…
  * The engine feeds no data: it only deletes what the owner ordered deleted.
@@ -31,6 +32,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
 const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const APPLY = process.env.APPLY === "1";
 const AUTH_ID = (process.env.OWNER_AUTH_ID ?? "").trim();
+// A delete that moves a bank GL balance is refused unless the AUTH explicitly covers it (e.g. the $1.00 test-expense chain
+// whose re-reversed reversal left the bank GL $1.00 short of the real bank).
+const ALLOW_BANK_EFFECT = process.env.ALLOW_BANK_EFFECT === "1";
 const SCOPE = (process.argv.find((a) => a.startsWith("--scope=")) ?? "").slice("--scope=".length);
 const TRANSPORTATION_21 = ["13485", "13487", "13493", "13494", "13496", "13500", "13498", "13502", "13503", "13504", "13505", "13506", "13507", "13509", "13517", "13522", "13525", "13530", "13531", "13533", "13539"];
 const KEEP_DOCREFS = ["5817", "5818"];
@@ -48,6 +52,14 @@ const OWNED = new Set([
   "accounting.load_revenue_recognition_postings", "accounting.revenue_contracts", "accounting.ar_collection_tasks",
   "docs.file_links", "driver_finance.presettlement_link_suggestions", "driver_finance.historical_settlement_attribution_items",
 ]);
+// A document's postings reference it by text id (source_transaction_type + source_transaction_id) with no FK — the
+// 2026-09-30 purge deleted 1,091 expenses and their invoices but left 2,035 JEs behind (A/P overstated $2,976.63).
+// Deleting a document ALWAYS takes the JEs that post for it.
+const DOC_SOURCE: Record<string, string[]> = {
+  "accounting.expenses": ["expense"], "accounting.invoices": ["invoice"], "accounting.bills": ["bill"],
+  "accounting.bill_payments": ["bill_payment"], "accounting.payments": ["payment", "customer_payment"],
+  "driver_finance.driver_settlements": ["driver_settlement"], "mdata.loads": ["load"], "accounting.factoring_advances": ["factoring_advance"],
+};
 const WORM = new Set(["accounting.journal_entries", "accounting.journal_entry_postings", "accounting.invoices", "accounting.invoice_lines"]);
 
 type Q = { query: <T = Record<string, unknown>>(sql: string, v?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }> };
@@ -102,7 +114,18 @@ async function roots(c: Q, plan: Plan, why: Map<string, string>) {
     for (const k of keep) plan.get("driver_finance.driver_settlements")?.delete(k);
     return;
   }
-  throw new Error("--scope=transportation21 | --scope=usmca-clean is required");
+  if (SCOPE === "orphan-postings") {
+    // JEs that post for a document that no longer exists (the ledger must never carry a line without its document).
+    for (const [table, types] of Object.entries(DOC_SOURCE)) {
+      add(plan, "accounting.journal_entries", await ids(c,
+        `SELECT DISTINCT p.journal_entry_uuid::text AS id FROM accounting.journal_entry_postings p
+          WHERE p.operating_company_id = $1::uuid AND p.source_transaction_type = ANY($2::text[])
+            AND NOT EXISTS (SELECT 1 FROM ${table} d WHERE d.id::text = p.source_transaction_id::text)`, [USMCA, types]),
+        why, `JE posting for a ${table} row that no longer exists (orphan)`);
+    }
+    return;
+  }
+  throw new Error("--scope=transportation21 | --scope=usmca-clean | --scope=orphan-postings is required");
 }
 
 async function fkGraph(c: Q): Promise<Fk[]> {
@@ -140,6 +163,8 @@ async function expand(c: Q, plan: Plan, why: Map<string, string>, report: string
     for (const fk of fks) {
       const parentIds = plan.get(fk.parent);
       if (!parentIds?.size || NEVER_RECURSE.has(fk.child)) continue;
+      // JE <-> JE reversal links are handled by the reversal-partner step below (both halves always go together).
+      if (fk.child === "accounting.journal_entries" && fk.parent === "accounting.journal_entries") continue;
       const parentPk = await pkOf(c, fk.parent);
       if (!parentPk) continue;
       const vals = fk.parentCol === parentPk ? [...parentIds]
@@ -183,6 +208,11 @@ async function expand(c: Q, plan: Plan, why: Map<string, string>, report: string
 /** References with no foreign key (polymorphic text ids): document links and JE source links to a deleted record. */
 async function polymorphic(c: Q, plan: Plan, why: Map<string, string>): Promise<number> {
   let n = 0;
+  for (const [table, types] of Object.entries(DOC_SOURCE)) {
+    const docs = [...(plan.get(table) ?? [])];
+    if (!docs.length) continue;
+    n += add(plan, "accounting.journal_entries", await ids(c, `SELECT DISTINCT journal_entry_uuid::text AS id FROM accounting.journal_entry_postings WHERE source_transaction_type = ANY($1::text[]) AND source_transaction_id::text = ANY($2::text[])`, [types, docs]), why, `JE posting for a deleted ${table}`);
+  }
   const targets: Array<[string, string[]]> = [["load", [...(plan.get("mdata.loads") ?? [])]], ["invoice", [...(plan.get("accounting.invoices") ?? [])]]];
   for (const [kind, list] of targets) {
     if (!list.length) continue;
@@ -227,6 +257,21 @@ async function main() {
     for (const r of report) console.log(`  ! ${r}`);
     console.log(`LEDGER (USMCA) before: DR ${ledgerBefore.dr} CR ${ledgerBefore.cr} unbalanced JEs ${ledgerBefore.unb}; removed by plan: DR ${removed.dr} CR ${removed.cr} (must be equal)`);
     if (removed.dr !== removed.cr) throw new Error("PLAN REFUSED: the JEs in scope do not net to zero — the ledger would not balance");
+    const effect = (await client.query<{ acct: string; bank: boolean; net: string }>(
+      `SELECT a.account_number || ' ' || a.account_name AS acct,
+              (a.account_type ILIKE 'bank%' OR EXISTS (SELECT 1 FROM accounting.chart_of_accounts_roles r WHERE r.account_id = a.id AND r.role = 'operating_bank')) AS bank,
+              sum(CASE WHEN p.debit_or_credit::text = 'debit' THEN p.amount_cents ELSE -p.amount_cents END)::text AS net
+         FROM accounting.journal_entry_postings p JOIN catalogs.accounts a ON a.id = p.account_id
+        WHERE p.journal_entry_uuid::text = ANY($1::text[])
+        GROUP BY 1, 2 HAVING sum(CASE WHEN p.debit_or_credit::text = 'debit' THEN p.amount_cents ELSE -p.amount_cents END) <> 0
+        ORDER BY abs(sum(CASE WHEN p.debit_or_credit::text = 'debit' THEN p.amount_cents ELSE -p.amount_cents END)) DESC`, [planJes])).rows;
+    console.log("BALANCE EFFECT of the delete (net DR removed per account; every other account nets 0):");
+    for (const e of effect) console.log(`  ${e.acct.padEnd(50)} ${e.net}${e.bank ? "  <- BANK" : ""}`);
+    for (const e of effect.filter((x) => x.bank && !ALLOW_BANK_EFFECT)) {
+      const msg = `BLOCKER bank account ${e.acct} would change by ${e.net} cents — a deletion that moves a bank balance needs ALLOW_BANK_EFFECT=1 under an AUTH that names it`;
+      report.push(msg);
+      console.log(`  ! ${msg}`);
+    }
     if (report.some((r) => r.startsWith("UNHANDLED") || r.startsWith("BLOCKER"))) {
       if (APPLY) throw new Error("PLAN REFUSED: independent records reference the deleted set — each needs a decision before APPLY");
     }
