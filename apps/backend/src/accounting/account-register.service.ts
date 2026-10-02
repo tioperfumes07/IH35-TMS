@@ -254,8 +254,24 @@ export async function getAccountRegister(
             cls.class_name,
             COALESCE(p.register_cleared, false) AS register_cleared,
             COALESCE(match_info.match_status, '') AS match_status,
+            -- B-2 Finish→R (no migration): JE-only register_cleared on a bank ledger becomes R
+            -- when a closed reconciliation_session covers the entry date for that bank
+            -- (same ledger join as reconciled_through). Bank-match R still wins first.
             CASE
               WHEN COALESCE(match_info.match_status, '') = 'R' THEN 'R'
+              WHEN COALESCE(p.register_cleared, false)
+                   AND EXISTS (
+                     SELECT 1
+                       FROM banking.bank_accounts ba
+                       JOIN banking.reconciliation_sessions rs
+                         ON rs.bank_account_id = ba.id
+                        AND rs.operating_company_id = ba.operating_company_id
+                        AND rs.status = 'reconciled'
+                      WHERE ba.operating_company_id = p.operating_company_id
+                        AND ba.ledger_account_id = p.account_id
+                        AND ba.deactivated_at IS NULL
+                        AND je.entry_date BETWEEN rs.period_start AND rs.period_end
+                   ) THEN 'R'
               WHEN COALESCE(match_info.match_status, '') = 'C' OR COALESCE(p.register_cleared, false) THEN 'C'
               ELSE ''
             END AS reconcile_status,
@@ -336,7 +352,8 @@ export async function getAccountRegister(
            JOIN catalogs.accounts sa ON sa.id = d.account_id AND sa.operating_company_id = p.operating_company_id
        ) sp ON true
        -- B-1 ✓ column: blank / C / R from bank-feed match + closed reconciliation session + register_cleared.
-       -- R when the matched bank row's reconciliation_session is status=reconciled;
+       -- R when the matched bank row's reconciliation_session is status=reconciled
+       --   OR (JE-only) register_cleared on bank ledger under a closed session period (B-2 Finish→R);
        -- C when matched to a bank row otherwise OR posting.register_cleared; blank when neither.
        LEFT JOIN LATERAL (
          SELECT CASE
@@ -517,10 +534,23 @@ export async function toggleAccountRegisterCleared(
     posting_id: string;
     register_cleared: boolean;
     match_status: string | null;
+    je_session_reconciled: boolean;
   }>(
     `SELECT p.id::text AS posting_id,
             COALESCE(p.register_cleared, false) AS register_cleared,
-            COALESCE(match_info.match_status, '') AS match_status
+            COALESCE(match_info.match_status, '') AS match_status,
+            EXISTS (
+              SELECT 1
+                FROM banking.bank_accounts ba
+                JOIN banking.reconciliation_sessions rs
+                  ON rs.bank_account_id = ba.id
+                 AND rs.operating_company_id = ba.operating_company_id
+                 AND rs.status = 'reconciled'
+               WHERE ba.operating_company_id = p.operating_company_id
+                 AND ba.ledger_account_id = p.account_id
+                 AND ba.deactivated_at IS NULL
+                 AND je.entry_date BETWEEN rs.period_start AND rs.period_end
+            ) AS je_session_reconciled
        FROM accounting.journal_entry_postings p
        JOIN accounting.journal_entries je
          ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
@@ -557,7 +587,10 @@ export async function toggleAccountRegisterCleared(
 
   const matchRaw = String(row.match_status ?? "");
   const matchStatus: "" | "C" | "R" = matchRaw === "R" || matchRaw === "C" ? matchRaw : "";
-  if (matchStatus === "R") throw new AccountRegisterToggleError("reconcile_status_locked", 409);
+  const jeSessionReconciled = Boolean(row.je_session_reconciled);
+  // JE-only R after Finish: register_cleared under a closed bank-ledger session is locked like bank-match R.
+  const derivedJeR = Boolean(row.register_cleared) && jeSessionReconciled;
+  if (matchStatus === "R" || derivedJeR) throw new AccountRegisterToggleError("reconcile_status_locked", 409);
   if (!input.cleared && matchStatus === "C") throw new AccountRegisterToggleError("unmatch_bank_first", 409);
 
   try {
@@ -579,7 +612,12 @@ export async function toggleAccountRegisterCleared(
   }
 
   const registerCleared = input.cleared;
-  const reconcileStatus: "" | "C" | "R" = matchStatus === "C" || registerCleared ? "C" : "";
+  const reconcileStatus: "" | "C" | "R" =
+    registerCleared && jeSessionReconciled
+      ? "R"
+      : matchStatus === "C" || registerCleared
+        ? "C"
+        : "";
   return {
     posting_id: row.posting_id,
     reconcile_status: reconcileStatus,
@@ -634,6 +672,8 @@ export async function saveAccountRegisterInline(
     match_status: string | null;
     bank_txn_id: string | null;
     location_label: string | null;
+    register_cleared: boolean;
+    je_session_reconciled: boolean;
   }>(
     `SELECT p.id::text AS posting_id,
             je.id::text AS journal_entry_id,
@@ -642,7 +682,20 @@ export async function saveAccountRegisterInline(
             je.memo AS je_memo,
             COALESCE(match_info.match_status, '') AS match_status,
             match_info.bank_txn_id,
-            match_info.location_label
+            match_info.location_label,
+            COALESCE(p.register_cleared, false) AS register_cleared,
+            EXISTS (
+              SELECT 1
+                FROM banking.bank_accounts ba
+                JOIN banking.reconciliation_sessions rs
+                  ON rs.bank_account_id = ba.id
+                 AND rs.operating_company_id = ba.operating_company_id
+                 AND rs.status = 'reconciled'
+               WHERE ba.operating_company_id = p.operating_company_id
+                 AND ba.ledger_account_id = p.account_id
+                 AND ba.deactivated_at IS NULL
+                 AND je.entry_date BETWEEN rs.period_start AND rs.period_end
+            ) AS je_session_reconciled
        FROM accounting.journal_entry_postings p
        JOIN accounting.journal_entries je
          ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
@@ -680,7 +733,8 @@ export async function saveAccountRegisterInline(
   if (!row) throw new AccountRegisterInlineSaveError("posting_not_found", 404);
 
   const matchRaw = String(row.match_status ?? "");
-  if (matchRaw === "R") throw new AccountRegisterInlineSaveError("reconcile_status_locked", 409);
+  const derivedJeR = Boolean(row.register_cleared) && Boolean(row.je_session_reconciled);
+  if (matchRaw === "R" || derivedJeR) throw new AccountRegisterInlineSaveError("reconcile_status_locked", 409);
 
   const memoProvided = input.memo !== undefined;
   const locationProvided = input.location !== undefined;
