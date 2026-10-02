@@ -8,6 +8,7 @@
 // unreclassed or the reclass no longer matches the deficit (void its two entries and post again).
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
+import { writeDocumentSpineLinks } from "./factoring-spine-links.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
@@ -127,6 +128,9 @@ export async function postCashReserveReclass(
     },
     actor
   );
+  // ROUND 332.1 §4c — both entries traverse back to the reclass on the spine, in this transaction.
+  await writeDocumentSpineLinks(client, oci, je.id, { type: RECLASS_SOURCE, id, role: "faro_cash_reserve_reclass" });
+  await writeDocumentSpineLinks(client, oci, reversal.id, { type: RECLASS_SOURCE, id, role: "faro_cash_reserve_reclass_reversal" });
   await client.query(
     `UPDATE accounting.faro_cash_reserve_reclasses SET journal_entry_id = $2::uuid, reversal_journal_entry_id = $3::uuid WHERE id = $1::uuid`,
     [id, je.id, reversal.id]

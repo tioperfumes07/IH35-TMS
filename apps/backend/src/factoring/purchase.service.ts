@@ -19,6 +19,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { stampDocumentVoided } from "../accounting/void-document-stamp.service.js";
 import { checkFactoringPurchaseOwner, type FactoringPurchaseAction } from "./owner-only-purchase.js";
 import { resolvePurchaseRate } from "./factor.service.js";
+import { writeDocumentSpineLinks } from "./factoring-spine-links.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 
 type DbClient = {
@@ -282,6 +283,14 @@ export async function postPurchase(client: DbClient, input: { operatingCompanyId
       WHERE id = $1::uuid`,
     [input.purchaseId, adv.id, posted.journal_entry_id, input.actorUserId]
   );
+  // ROUND 332.1 §4c — the funding entry is traversable to its purchase and to every invoice it funded, on the spine,
+  // in this transaction (the advance link alone left the invoice half missing).
+  const fundedInvoices = (await client.query<{ invoice_id: string }>(
+    `SELECT DISTINCT invoice_id::text FROM accounting.factoring_purchase_lines WHERE purchase_id = $1::uuid AND voided_at IS NULL`,
+    [input.purchaseId]
+  )).rows.map((r) => r.invoice_id);
+  await writeDocumentSpineLinks(client, oci, posted.journal_entry_id,
+    { type: "factoring_purchase", id: input.purchaseId, role: "factoring_purchase_funding" }, fundedInvoices);
   await appendCrudAudit(client as never, input.actorUserId, "accounting.factoring_purchase_posted", {
     resource_type: "accounting.factoring_purchases", resource_id: input.purchaseId, operating_company_id: oci,
     display_id: p.display_id, factoring_advance_id: adv.id, journal_entry_id: posted.journal_entry_id,
