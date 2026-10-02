@@ -8,6 +8,8 @@ import crypto from "node:crypto";
 import { insertRetainedEarningsClosingJournalIfNeeded } from "./period-close-retained-earnings.service.js";
 import { writePeriodCashBasisSnapshotAtClose } from "./cash-basis/period-close-snapshot.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { reverseJournalEntryNoFlip } from "./journal-entries.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const financeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
 const periodCloseRoles = new Set(["Owner", "Administrator", "Accountant"]);
@@ -349,6 +351,10 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
           user_uuid: user.uuid,
         });
         if (!reopenEnabled) throw new Error("period_reopen_disabled");
+        const prior: { rows: Array<{ retained_earnings_entry_id: string | null }> } = await client.query(
+          `SELECT retained_earnings_entry_id::text FROM accounting.periods WHERE id = $1 AND operating_company_id = $2::uuid FOR UPDATE`,
+          [params.data.id, body.data.operating_company_id]
+        );
         await client.query(
           `
             UPDATE accounting.periods
@@ -356,12 +362,38 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
                 closed_at = NULL,
                 closed_by_user_id = NULL,
                 locks_txn_dates_le = NULL,
+                retained_earnings_entry_id = NULL,
                 updated_at = now()
             WHERE id = $1 AND operating_company_id = $2::uuid
           `,
           [params.data.id, body.data.operating_company_id]
         );
-        await appendCrudAudit(client, user.uuid, "accounting.period_reopened", { period_id: params.data.id, reason: body.data.reason }, "warning", "P7-W2-ACC");
+        // ROUND 300 (CC-1, proven on a Neon fork): a reopened period's closing entry is undone with it. Reopen used to
+        // leave the retained-earnings closing JE posted and linked, so the year's P&L stayed swept while the period was
+        // open again, and a re-close returned that stale JE even after the P&L changed. The canonical linked reversal
+        // (original never flipped) runs in this same transaction, AFTER the lock is lifted so it may post into the
+        // period; insertRetainedEarningsClosingJournalIfNeeded already treats a reversed closing JE as absent, so the
+        // next close computes a fresh one from the current P&L.
+        let closingReversalJeId: string | null = null;
+        const reJeId = prior.rows[0]?.retained_earnings_entry_id ?? null;
+        if (reJeId) {
+          const reJe: { rows: Array<{ reversed_by_je_id: string | null }> } = await client.query(
+            `SELECT reversed_by_je_id::text FROM accounting.journal_entries WHERE id = $1::uuid AND operating_company_id = $2::uuid FOR UPDATE`,
+            [reJeId, body.data.operating_company_id]
+          );
+          if (reJe.rows[0] && !reJe.rows[0].reversed_by_je_id) {
+            const rev = await reverseJournalEntryNoFlip(client as never, {
+              operatingCompanyId: body.data.operating_company_id,
+              journalEntryId: reJeId,
+              reason: `Period reopened: ${body.data.reason}`,
+              actorUserId: user.uuid,
+              currentBusinessDate: companyBusinessDate(),
+            });
+            closingReversalJeId = rev.reversal?.reversal_journal_entry_id ?? null;
+            if (!closingReversalJeId) throw new Error("period_reopen_closing_reversal_missing");
+          }
+        }
+        await appendCrudAudit(client, user.uuid, "accounting.period_reopened", { period_id: params.data.id, reason: body.data.reason, retained_earnings_entry_id: reJeId, closing_reversal_journal_entry_id: closingReversalJeId }, "warning", "P7-W2-ACC");
       });
     } catch (err) {
       const msg = String((err as Error)?.message ?? err ?? "");
