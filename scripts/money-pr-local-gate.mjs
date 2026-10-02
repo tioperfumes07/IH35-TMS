@@ -541,6 +541,16 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-one-factoring-purchase-engine.mjs",
     ],
   ],
+  // OWNER LAW 2026-10-02 competing-engine audit (banking) — a bank line's journal entry is written in the same
+  // transaction as its categorization; the poster keeps the matched-document interlock.
+  [
+    "verify-bank-line-posts-in-same-transaction",
+    [
+      "apps/backend/src/banking/bank-feed-gl-posting.service.ts",
+      "apps/backend/src/banking/categorization.routes.ts",
+      "scripts/verify-bank-line-posts-in-same-transaction.mjs",
+    ],
+  ],
   // ROUND 326.2 items 3-4 — banking / factoring surfaces: every table tabular-nums, and Banking's
   // factoring reserve reads the factoring KPI engine (one reserve engine, no duplicate math).
   [

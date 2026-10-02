@@ -9,7 +9,7 @@ import { pendingCategorizationPredicate } from "./pending-categorization.js";
 import { bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
 import { maybePostBankDriverAdvanceForCategorization } from "./bank-driver-advance.service.js";
 import { maybeCreateBankCategorizationDriverDeduction } from "./bank-driver-expense-deduction.service.js";
-import { maybePostBankCategorizationToGl } from "./bank-feed-gl-posting.service.js";
+import { maybePostBankCategorizationToGl, postBankCategorizationOnClient } from "./bank-feed-gl-posting.service.js";
 import { markBankFeedLineAsTransfer } from "./transfers.service.js";
 import {
   BULK_TXN_MAX,
@@ -218,6 +218,9 @@ function pendingStatusesSql(): string {
   return pendingCategorizationPredicate("bt");
 }
 
+/** A bank-feed GL post failed inside the categorize transaction — the whole categorization rolls back. */
+class BankFeedPostFailed extends Error {}
+
 export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
   app.get("/api/v1/banking/transactions/uncategorized", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -371,7 +374,12 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       }
     }
 
-    const result = await withCompanyScope(user.uuid, companyId, async (client) => {
+    // OWNER LAW 2026-10-02 competing-engine audit: the categorization and its journal entry commit together. The GL post
+    // runs on THIS transaction's client; if it fails the categorization rolls back and the caller gets a named 409.
+    let bankFeedGl: Awaited<ReturnType<typeof postBankCategorizationOnClient>> | undefined;
+    let result;
+    try {
+    result = await withCompanyScope(user.uuid, companyId, async (client) => {
       const txnRes = await client.query(
         `
           SELECT id, status
@@ -501,8 +509,24 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
         "P6-T11204-BANK-TX"
       );
 
+      try {
+        bankFeedGl = await postBankCategorizationOnClient(client, {
+          companyId,
+          actorUserUuid: String(user.uuid),
+          bankTransactionId: params.data.id,
+        });
+      } catch (e) {
+        throw new BankFeedPostFailed(String((e as Error)?.message ?? e));
+      }
+
       return { code: 200 as const, data: { ok: true } };
     });
+    } catch (e) {
+      if (e instanceof BankFeedPostFailed) {
+        return reply.code(409).send({ error: "bank_feed_gl_post_failed", message: e.message });
+      }
+      throw e;
+    }
 
     if ("error" in result) return reply.code(result.code).send({ error: result.error });
     await withCompanyScope(user.uuid, companyId, (client) =>
@@ -572,23 +596,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       }
     }
 
-    // CHAIN-05 (BLOCK-03) [HOLD] — the GENERAL case: post a direction-aware balanced JE for ANY categorized
-    // line. Runs AFTER the BLOCK-6 driver-advance call (§7 ordering); its cede predicate (driver tagged +
-    // the driver-advance account) returns driver_advance_branch so it NEVER re-posts a row BLOCK-6 owns.
-    // Behind BANK_FEED_GL_POSTING_ENABLED (OFF): with the flag off this returns { posted:false,
-    // reason:"flag_off" } and posts nothing — the tag committed above is untouched.
-    let bankFeedGl: Awaited<ReturnType<typeof maybePostBankCategorizationToGl>> | undefined;
-    try {
-      bankFeedGl = await maybePostBankCategorizationToGl({
-        companyId,
-        actorUserUuid: String(user.uuid),
-        bankTransactionId: params.data.id,
-      });
-    } catch (e) {
-      // Surface, never silently swallow (the tag is committed; the financial post is best-effort).
-      bankFeedGl = { posted: false, reason: "post_failed", message: String((e as Error)?.message ?? e) };
-    }
-
+    // CHAIN-05 — the GENERAL case is posted INSIDE the categorize transaction above (postBankCategorizationOnClient).
     return {
       ...result.data,
       ...(driverAdvance ? { driver_advance: driverAdvance } : {}),
@@ -800,8 +808,12 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       let categorized = 0;
       const categorizedIds: string[] = [];
       const errors: Array<{ transaction_id: string; error: string }> = [];
+      const bankFeedGl: Array<{ bank_transaction_id: string; posted: boolean; reason?: string; message?: string }> = [];
 
       for (const id of body.data.transaction_ids) {
+        // OWNER LAW 2026-10-02 competing-engine audit: each row's categorization and its journal entry commit together.
+        // A SAVEPOINT per row keeps one failed post from aborting the whole batch — that row rolls back, the rest commit.
+        await client.query("SAVEPOINT bulk_categorize_row");
         try {
           try {
             await assertBankTxnNotInReconciledSession(client, id, body.data.operating_company_id);
@@ -835,10 +847,9 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
           );
           if (!res.rows[0]) {
             errors.push({ transaction_id: id, error: "not_pending_or_missing" });
+            await client.query("RELEASE SAVEPOINT bulk_categorize_row");
             continue;
           }
-          categorized += 1;
-          categorizedIds.push(id);
           await enqueueAccountingOutbox(
             client,
             body.data.operating_company_id,
@@ -853,7 +864,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
           );
           // CRUD/spine audit parity with the single-row categorize route above (#2585 review follow-up):
           // same event class + source tag per affected ID, with bulk:true so the trail distinguishes the
-          // path. GL posting runs after this company-scope txn commits (see maybePostBankCategorizationToGl below).
+          // path. GL posting runs on this transaction, per-row savepoint (postBankCategorizationOnClient).
           await appendCrudAudit(
             client,
             user.uuid,
@@ -868,12 +879,22 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
             "info",
             "P6-T11204-BANK-TX"
           );
+          const posting = await postBankCategorizationOnClient(client, {
+            companyId: body.data.operating_company_id,
+            actorUserUuid: String(user.uuid),
+            bankTransactionId: id,
+          });
+          await client.query("RELEASE SAVEPOINT bulk_categorize_row");
+          categorized += 1;
+          categorizedIds.push(id);
+          bankFeedGl.push({ bank_transaction_id: id, ...posting });
         } catch (e) {
+          await client.query("ROLLBACK TO SAVEPOINT bulk_categorize_row");
           errors.push({ transaction_id: id, error: String((e as Error)?.message ?? "update_failed") });
         }
       }
 
-      return { categorized_count: categorized, categorizedIds, errors };
+      return { categorized_count: categorized, categorizedIds, errors, bankFeedGl };
     });
 
     // Spine-event parity with the single-row route: one transaction.categorized per affected ID.
@@ -897,34 +918,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
       );
     }
 
-    // CHAIN-05 parity: the bulk endpoint reaches the same terminal "categorized" state as the
-    // single-row route above, so it must invoke the same existing flag-gated poster for every row it
-    // actually categorized. The poster owns all financial checks (flag, bank cash-GL bridge,
-    // cross-entity/postable account validation, transfer/bill interlocks, balance, idempotency) and
-    // stamps matched_journal_entry_id only when it posts. Run after the categorization/audit writes
-    // commit, because the poster opens its own transaction and must re-read the persisted row.
-    const bankFeedGl: Array<{ bank_transaction_id: string; posted: boolean; reason?: string; message?: string }> = [];
-    for (const id of result.categorizedIds) {
-      try {
-        const posting = await maybePostBankCategorizationToGl({
-          companyId: body.data.operating_company_id,
-          actorUserUuid: String(user.uuid),
-          bankTransactionId: id,
-        });
-        bankFeedGl.push({ bank_transaction_id: id, ...posting });
-      } catch (error) {
-        // Match the single-row route's transparent outcome: categorization remains committed and the
-        // caller receives the exact posting failure rather than a fake success.
-        bankFeedGl.push({
-          bank_transaction_id: id,
-          posted: false,
-          reason: "post_failed",
-          message: String((error as Error)?.message ?? error),
-        });
-      }
-    }
-
-    return { categorized_count: result.categorized_count, errors: result.errors, bank_feed_gl: bankFeedGl };
+    return { categorized_count: result.categorized_count, errors: result.errors, bank_feed_gl: result.bankFeedGl };
   });
 
   app.post("/api/v1/banking/transactions/:id/transfer", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
@@ -1165,38 +1159,36 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     try {
-      // Subledger categorize commits first; CHAIN-05 poster runs after (own txn), same as categorize-bulk.
-      const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
-        bulkCategorizeTransactions(client, {
+      // OWNER LAW 2026-10-02 competing-engine audit: the batch's categorizations and their journal entries commit together
+      // in ONE transaction — a failed post rolls the whole batch back (409 bank_feed_gl_post_failed), never a categorized
+      // line without its entry.
+      const bankFeedGl: Array<{ bank_transaction_id: string; posted: boolean; reason?: string; message?: string }> = [];
+      const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+        const r = await bulkCategorizeTransactions(client, {
           operatingCompanyId: query.data.operating_company_id,
           txnIds: body.data.txn_ids,
           psCategory: body.data.ps_category,
           psItem: body.data.ps_item,
           qboAccountId: body.data.qbo_account_id,
-        })
-      );
-
-      const bankFeedGl: Array<{ bank_transaction_id: string; posted: boolean; reason?: string; message?: string }> = [];
-      for (const id of result.categorizedIds) {
-        try {
-          const posting = await maybePostBankCategorizationToGl({
-            companyId: query.data.operating_company_id,
-            actorUserUuid: String(user.uuid),
-            bankTransactionId: id,
-          });
-          bankFeedGl.push({ bank_transaction_id: id, ...posting });
-        } catch (error) {
-          bankFeedGl.push({
-            bank_transaction_id: id,
-            posted: false,
-            reason: "post_failed",
-            message: String((error as Error)?.message ?? error),
-          });
+        });
+        for (const id of r.categorizedIds) {
+          try {
+            const posting = await postBankCategorizationOnClient(client, {
+              companyId: query.data.operating_company_id,
+              actorUserUuid: String(user.uuid),
+              bankTransactionId: id,
+            });
+            bankFeedGl.push({ bank_transaction_id: id, ...posting });
+          } catch (e) {
+            throw new BankFeedPostFailed(`${id}: ${String((e as Error)?.message ?? e)}`);
+          }
         }
-      }
+        return r;
+      });
 
       return { ok: true, updated_count: result.updated_count, bank_feed_gl: bankFeedGl };
     } catch (error) {
+      if (error instanceof BankFeedPostFailed) return reply.code(409).send({ error: "bank_feed_gl_post_failed", message: error.message });
       const message = String((error as Error)?.message ?? "bulk_categorize_failed");
       const mapped = mapBulkError(reply, message, error);
       if (mapped) return mapped;
