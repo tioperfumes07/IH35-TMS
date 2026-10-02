@@ -5,6 +5,8 @@
  * IDEMPOTENCY: SAME-STATEMENT WHERE status = 'draft' (UPDATE mdata.loads ... AND status = 'draft' RETURNING id, :91-94);
  *   the audit row is written only when that UPDATE returned a row.
  * OVERLAP: a second run waits on the row lock, re-checks the WHERE, matches 0 rows, writes no audit row.
+ * REVERSE: NOT-A-DOCUMENT — a load status correction (draft to assigned_not_dispatched); the load itself is reversed by dispatch/cancellation.service.ts:cancelLoad
+ * NEVER: must never advance a load that is not 'draft' or has no crew, live driver bill or proforma invoice, and never writes a money table
  */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";

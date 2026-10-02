@@ -1,3 +1,13 @@
+/**
+ * ENGINE: real driven miles — materializes deadhead / loaded / empty-home odometer legs per load from E-03 stop events (fence-bounded fallback until that table exists)
+ * SCHEDULE: *\/15 * * * * America/Chicago via cron/real-driven-miles-segments.cron.ts; on demand — dispatch/driver-pwa/tour-close.service.ts, telematics/geofence-events-backfill.service.ts
+ * WRITES: telematics.load_odometer_segments
+ * IDEMPOTENCY: UNIQUE(operating_company_id, load_id, unit_id, segment_kind, started_at) ON CONFLICT DO UPDATE (uq_load_odometer_segments, migration 202613761200)
+ * OVERLAP: the twin upserts the same legs to the same values
+ * REVERSE: NOT-A-DOCUMENT — derived odometer segments (recomputed each run)
+ * NEVER: must never interpolate a missing odometer, and never add stop-to-stop legs to a load that already carries fence-bounded legs
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { stopFenceTimeSql } from "../../../telematics/stop-arrival-events.js";
 
 type QueryClient = {

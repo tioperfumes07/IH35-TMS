@@ -1,3 +1,13 @@
+/**
+ * ENGINE: customer milestone notify — sends arrival/ETA milestone emails and SMS to customers and logs each delivery; also stores per-customer notify preferences
+ * SCHEDULE: on demand — POST /api/v1/dispatch/customer-notify/sync and PUT /api/v1/dispatch/customer-notify/preferences/:customerId (dispatch/customer-notify.routes.ts)
+ * WRITES: dispatch.notify_log, dispatch.customer_notify_preferences, audit.audit_events; external sendEmail and sendSms
+ * IDEMPOTENCY: UNIQUE(operating_company_id, load_id, milestone_type, channel, stop_id) ON CONFLICT DO NOTHING — uq_notify_log_dedupe (migration 0355) claimed before the send; preferences UNIQUE(operating_company_id, customer_id) customer_notify_preferences_customer_unique
+ * OVERLAP: the second sync blocks on the first's pending claim row, then inserts nothing and does not send
+ * REVERSE: NOT-A-DOCUMENT — an outbound customer message and its delivery log; a sent message cannot be recalled
+ * NEVER: must never call the email/SMS provider before the uq_notify_log_dedupe pending claim is won
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

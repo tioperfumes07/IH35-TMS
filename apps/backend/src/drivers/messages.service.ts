@@ -1,3 +1,13 @@
+/**
+ * ENGINE: driver profile messages — driver PWA replies, read receipts, and delivery hand-off of office messages (in-app stamp, or SMS / email via outbox)
+ * SCHEDULE: on demand — drivers/messages.routes.ts (POST /api/v1/driver/messages, PATCH .../read) and mdata/driver-messages.routes.ts (POST /api/v1/mdata/drivers/:id/messages)
+ * WRITES: mdata.driver_profile_messages, outbox.events (driver.profile_message.deliver)
+ * IDEMPOTENCY: NONE — every reply is a user action that must create a new message row; delivery UNIQUE(dedupe_key) ON CONFLICT (ux_outbox_events_dedupe_key, key driver-profile-message-delivery:<id>); read receipt SAME-STATEMENT COALESCE(read_at, now())
+ * OVERLAP: two replies insert two messages; two deliveries of one message enqueue one outbox event; two read marks keep the first read_at / read_by
+ * REVERSE: NOT-A-DOCUMENT — a message (once delivered it cannot be unsent)
+ * NEVER: must never read or write a driver outside the acting company or its active driver_company_authorizations, and never send SMS / email inline (outbox only)
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 
 type Queryable = {

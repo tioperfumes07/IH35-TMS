@@ -1,3 +1,13 @@
+/**
+ * ENGINE: Samsara engine-fault webhook — records each fault event, and for severe SPNs opens (or reuses) an engine-diagnostic work order and notifies maintenance
+ * SCHEDULE: on demand — integrations/samsara/engine-faults/routes.ts (POST /api/integrations/samsara/engine-faults/webhook)
+ * WRITES: integrations.engine_fault_events, audit event (audit.append_event), maintenance.work_orders (via createWorkOrderWithLines), notifications.user_notifications, outbox.events
+ * IDEMPOTENCY: UNIQUE(samsara_event_id) ON CONFLICT DO NOTHING (column UNIQUE, migration 202606080216) gates the event; the auto work order is NONE — read-then-write (DEFECT): its 24 h open-WO dedupe is a separate SELECT in maintenance/work-orders/auto-create-from-fault.ts
+ * OVERLAP: a replayed event inserts nothing and returns duplicate; two DIFFERENT events for the same unit and fault at once can both open a work order
+ * REVERSE: work order -> governance/void-cancel-executors.ts:executeWorkOrder; fault events are NOT-A-DOCUMENT (telemetry)
+ * NEVER: must never open a work order for a non-severe fault, or for a vehicle not mapped to a unit of the company
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { autoCreateWorkOrderFromEngineFault } from "../../../maintenance/work-orders/auto-create-from-fault.js";
 import { notifyEngineFaultWorkOrder } from "../../../notifications/fault-notifications.js";
 import {

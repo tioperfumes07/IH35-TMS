@@ -1,3 +1,13 @@
+/**
+ * ENGINE: equipment dual-confirm transfer — initiates, acks, confirms, rejects and expires driver-to-driver transfers; confirm reassigns mdata.equipment and logs it
+ * SCHEDULE: on demand — mdata/equipment-transfer.routes.ts (POST /api/v1/equipment/:id/initiate-transfer, /api/v1/equipment-transfers/:id/confirm|reject, /api/v1/driver-pwa/transfers/:id/*)
+ * WRITES: mdata.equipment_transfers, mdata.equipment (assigned_driver_id), mdata.equipment_log, audit (appendCrudAudit)
+ * IDEMPOTENCY: SAME-STATEMENT WHERE status = 'pending_to_confirm' (confirm / reject / expire; acks add AND COALESCE(notes,'') = prior notes); initiate is NONE — a user action creating a new transfer, serialized by SELECT ... FOR UPDATE on the equipment row
+ * OVERLAP: two confirms: the second waits on FOR UPDATE then throws E_TRANSFER_NOT_PENDING; two acks: the second fails the notes compare-and-set; two initiates: the second waits on the equipment lock then hits E_EQUIPMENT_TRANSFER_PENDING
+ * REVERSE: equipment-transfer.service.ts:rejectTransfer (pending only); none — DEFECT: a confirmed transfer has no undo, only a new transfer back
+ * NEVER: must never reassign equipment not owned by or leased to the acting company, and never confirm an expired or half-acknowledged transfer
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";

@@ -1,3 +1,13 @@
+/**
+ * ENGINE: PM predictor — opens a maintenance.pm_alerts row when an odometer reading comes within lookahead of a PM schedule's due miles, and notifies company users
+ * SCHEDULE: on demand — integrations/samsara/webhook-projectors/vehicle-projector.ts (webhook projection) and maintenance/pm-auto-engine.service.ts (pm-auto-engine.cron.ts 30 3 * * *)
+ * WRITES: maintenance.pm_alerts, notifications.user_notifications (createNotification)
+ * IDEMPOTENCY: UNIQUE(operating_company_id, unit_id, pm_schedule_id) ON CONFLICT — partial, WHERE state = 'open' (uq_pm_alerts_open_per_schedule, migration 0223)
+ * OVERLAP: the second insert does nothing and sends no notification (fan-out only on a RETURNING row)
+ * REVERSE: NOT-A-DOCUMENT — an alert; closed through PATCH /api/v1/maintenance/pm-alerts/:id/ack (maintenance/pm-alerts.routes.ts)
+ * NEVER: must never alert on a sample / test unit (is_sample_data) and never open a work order itself
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import {
   createNotification,
   listCompanyNotifyUserIds,

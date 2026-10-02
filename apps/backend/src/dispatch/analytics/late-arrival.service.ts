@@ -1,3 +1,13 @@
+/**
+ * ENGINE: late-arrival analytics — rolls stop arrival vs appointment into per-driver per-day aggregates; the rest of the file is read-only reporting
+ * SCHEDULE: on demand — jobs/late-arrival-aggregator-worker.ts (setInterval, default every 6 h) calls runLateArrivalAggregatorTick
+ * WRITES: dispatch.late_arrival_aggregates
+ * IDEMPOTENCY: UNIQUE(operating_company_id, driver_id, bucket_date) ON CONFLICT DO UPDATE — uq_late_arrival_driver_day (migration 202613390003)
+ * OVERLAP: two concurrent ticks upsert the same driver/day rows with the same computed values
+ * REVERSE: NOT-A-DOCUMENT — a derived analytics aggregate, recomputed every tick
+ * NEVER: must never write load or stop timestamps; it only reads arrivals and writes the aggregate table
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { setScopedCompanyContext } from "../../_helpers/scoped-company-context.js";
 import type { PoolClient } from "pg";
 import { withCurrentUser } from "../../auth/db.js";

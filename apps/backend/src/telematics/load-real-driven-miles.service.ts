@@ -1,3 +1,13 @@
+/**
+ * ENGINE: load real-driven miles — computes per-stop leg miles and per-load total from odometer anchors and writes them onto the stop and load
+ * SCHEDULE: on demand — telematics/load-real-driven-miles.cron.ts (25 * * * *, runLoadRealDrivenMilesCronTick); GET /api/v1/loads/:id/real-driven-miles computes without writing
+ * WRITES: mdata.load_stops (leg_miles_driven_actual*), mdata.loads (miles_driven_actual*) — UPDATE only
+ * IDEMPOTENCY: DETERMINISTIC OVERWRITE — each UPDATE sets a computed column to a pure function of the odometer captures; no history row
+ * OVERLAP: two runs write the same values; nothing accumulates
+ * REVERSE: NOT-A-DOCUMENT — computed columns re-derived every run
+ * NEVER: must never write billed (miles_practical) or paid (miles_shortest / miles_deadhead) miles — only the driven-actual columns
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";

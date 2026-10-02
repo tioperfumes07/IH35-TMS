@@ -1,3 +1,13 @@
+/**
+ * ENGINE: load cancellation — records the cancellation, flips the load to cancelled and voids its money artifacts through the shared void executors
+ * SCHEDULE: on demand — POST /api/v1/dispatch/loads/:id/cancel and /api/v1/dispatch/load-cancellations/:id/approve (dispatch/cancellation.routes.ts), bulk cancel (dispatch/loads-bulk.routes.ts), writeLoadCancellationRecord from mdata/loads.routes.ts
+ * WRITES: dispatch.load_cancellations, mdata.loads (status), accounting.invoices (void + TONU invoice when its flag is on), driver_finance.driver_bills, settlements/expenses/fuel/vendor bills via governance/void-cancel-executors.ts, driver advances, revrec settle, reversing JEs (postVoidReversal), audit.audit_events, dispatch spine event
+ * IDEMPOTENCY: UNIQUE(load_id) ON CONFLICT DO UPDATE on dispatch.load_cancellations (migration 0101); load flip SAME-STATEMENT WHERE status::text = <status read under FOR UPDATE>; approve SAME-STATEMENT WHERE status = 'requested'
+ * OVERLAP: the second cancel waits on the load row lock, upserts the same cancellation row and finds the money artifacts already void
+ * REVERSE: dispatch/cancellation-reversal.service.ts:reverseLoadCancellationInClientTx
+ * NEVER: must never cancel without a reason of at least 20 characters, and never leave a live invoice or driver bill on a cancelled load
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";

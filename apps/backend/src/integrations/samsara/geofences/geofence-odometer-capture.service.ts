@@ -1,3 +1,13 @@
+/**
+ * ENGINE: geofence odometer captures — one row per geo.geofence_events crossing with the unit's OBD odometer read within 120 s, else ABSENT
+ * SCHEDULE: *\/10 * * * * via cron/geofence-odometer-captures.cron.ts
+ * WRITES: telematics.geofence_odometer_captures
+ * IDEMPOTENCY: UNIQUE(geofence_event_id) ON CONFLICT DO NOTHING (column UNIQUE, migration 202614740000)
+ * OVERLAP: the second run inserts 0 rows
+ * REVERSE: NOT-A-DOCUMENT — immutable telemetry derived from a fence event
+ * NEVER: must never write a computed or interpolated odometer — a crossing with no real read is stored absent with NULL
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 type QueryClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };

@@ -1,3 +1,13 @@
+/**
+ * ENGINE: CBP border wait-time cache — fetches the public CBP wait-times feed and appends snapshot rows to the reference cache
+ * SCHEDULE: on demand — border-crossing/cbp-wait-times-refresh.job.ts (refreshAllActivePortWaitTimes) and GET /api/v1/border-crossing/wait-times (border-crossing-wizard.routes.ts, getCachedCbpWaitTimes on a cache miss)
+ * WRITES: reference.cbp_wait_times_cache (own withLuciaBypass connection); external GET https://bwt.cbp.gov/api/waittimes (read only)
+ * IDEMPOTENCY: NONE — read-then-write (DEFECT): getCachedCbpWaitTimes SELECTs the 5-minute cache, then INSERTs on a miss; only the cron path is serialized, by its caller's ADVISORY LOCK 'border_crossing.cbp_wait_times_refresh'
+ * OVERLAP: two concurrent cache-miss GETs both fetch CBP and each append a twin snapshot set (readers take the newest); a second cron replica fails the caller's lock and skips
+ * REVERSE: NOT-A-DOCUMENT — a disposable, non-tenant reference cache of public CBP wait times
+ * NEVER: must never write tenant-scoped data or send anything to CBP; the cache INSERT must never run on the caller's tenant client (RLS requires the lucia bypass)
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { randomUUID } from "node:crypto";
 import type pg from "pg";
 import { withLuciaBypass } from "../auth/db.js";

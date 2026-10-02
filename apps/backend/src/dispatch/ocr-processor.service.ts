@@ -1,3 +1,13 @@
+/**
+ * ENGINE: OCR intake queue — stores forwarded rate-con PDFs in R2, extracts fields (filename heuristic + customer fuzzy match), and marks an intake converted once its load exists
+ * SCHEDULE: on demand — dispatch/ocr-intake.routes.ts (email webhook, /reprocess, /finalize); processing runs via setImmediate after insert (scheduleOcrIntakeProcessing)
+ * WRITES: dispatch.ocr_intake_queue, audit event (appendCrudAudit -> audit.append_event); external R2 object put (dispatch/ocr/<company>/<uuid>.pdf)
+ * IDEMPOTENCY: NONE — each forwarded email creates a new intake row (no message-id key); processing is SAME-STATEMENT WHERE status IN ('pending_ocr','failed'); finalize is SAME-STATEMENT WHERE status = 'ready_review' AND converted_load_id IS NULL
+ * OVERLAP: two processors of one item: one claims it, the other returns the row unchanged; two finalizes serialize on FOR UPDATE and the second gets ok/already_converted; two identical webhooks create two rows and two R2 objects
+ * REVERSE: none — DEFECT: no function rejects or voids an intake row or undoes a conversion, and the R2 PDF is never removed
+ * NEVER: must never create a load itself (the canonical load writer does), and never mark an intake converted without a persisted load of the same company
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { randomUUID } from "node:crypto";
 import type { PoolClient } from "pg";

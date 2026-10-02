@@ -1,3 +1,13 @@
+/**
+ * ENGINE: detention approval — turns closed detention events into review requests; approve bridges the charge, builds the invoice, stores evidence and emails the customer
+ * SCHEDULE: on demand — GET /api/v1/dispatch/detention/requests (+ /kpis) and PATCH /api/v1/dispatch/detention/requests/:id/approve | reject (dispatch/detention-approval.routes.ts)
+ * WRITES: dispatch.detention_requests, dispatch.detention_evidence, mdata.loads + dispatch.detention_events (via bridgeDetentionToBillingInClientTx), accounting.invoices (buildInvoiceFromLoad), audit.audit_events; external sendEmail
+ * IDEMPOTENCY: requests UNIQUE(detention_event_id) ON CONFLICT DO NOTHING — uq_detention_requests_event; approve/reject SAME-STATEMENT WHERE status = 'pending_review' after FOR UPDATE; notify SAME-STATEMENT WHERE customer_notified_at IS NULL
+ * OVERLAP: approve vs approve/reject — the second waits on the request row lock, sees status changed and returns not_pending before any money side effect
+ * REVERSE: governance/void-cancel-executors.ts:executeVoidCancel (voids the invoice); none — DEFECT: the rate_total_cents bridge and the invoiced request cannot be undone
+ * NEVER: must never bill, invoice or notify for a request that is not pending_review
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { PoolClient } from "pg";
 import { buildInvoiceFromLoad } from "../accounting/from-load.js";

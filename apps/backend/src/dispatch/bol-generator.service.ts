@@ -1,3 +1,13 @@
+/**
+ * ENGINE: BOL generator — renders a load's bill of lading PDF, stores it in R2 and records a bol_documents row
+ * SCHEDULE: on demand — POST /api/v1/dispatch/loads/:loadId/bol/generate (dispatch/pod.routes.ts)
+ * WRITES: dispatch.bol_documents, audit.audit_events; external R2 putObjectBytes (deleteObjectBytes on failure)
+ * IDEMPOTENCY: NONE — each generate is a user action that renders and stores a new BOL version (random R2 key)
+ * OVERLAP: two calls store two PDFs and two bol_documents rows
+ * REVERSE: NOT-A-DOCUMENT — a regenerable PDF render of the load; a new generate supersedes it
+ * NEVER: must never leave an R2 object without its dispatch.bol_documents row (the object is deleted if the insert fails)
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";

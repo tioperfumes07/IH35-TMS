@@ -1,3 +1,13 @@
+/**
+ * ENGINE: dashcam clips — requests on-demand Samsara clips, resolves clip URLs, inserts telematics.dashcam_clips rows
+ * SCHEDULE: on demand — telematics/dashcam-on-demand.routes.ts (POST /api/v1/dashcam/request-clip) and telematics/dashcam-auto-link.service.ts (webhook projection)
+ * WRITES: telematics.dashcam_clips; external: Samsara POST /fleet/dashcam/clips (requestSamsaraOnDemandClip), Samsara clip-URL read
+ * IDEMPOTENCY: NONE — plain INSERT: UNIQUE(operating_company_id, samsara_clip_id) (dashcam_clips_tenant_clip_unique, migration 0232) raises 23505 on a replay instead of ON CONFLICT, and the Samsara POST has no advisory lock or send key (DEFECT)
+ * OVERLAP: two on-demand requests each POST a clip request to Samsara and insert two rows; a replayed auto-link clip id throws 23505
+ * REVERSE: NOT-A-DOCUMENT — a pointer to Samsara video evidence; a Samsara clip request cannot be recalled
+ * NEVER: must never log or return the decrypted Samsara API token
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { decryptSamsaraSecret } from "../lib/samsara-crypto.js";
 import { SamsaraClient, type DashcamFacing } from "../integrations/samsara/samsara-client.js";
 
@@ -95,6 +105,8 @@ export async function insertDashcamClip(client: DbClient, input: DashcamInsertIn
         samsara_clip_url, samsara_clip_id, trigger_kind, linked_harsh_event_id, retention_expires_at
       )
       VALUES ($1::uuid,$2::uuid,$3::timestamptz,$4::int,$5,$6,$7,$8,$9::uuid,$10::timestamptz)
+      -- ROUND 337: a replayed clip used to throw 23505 on dashcam_clips_tenant_clip_unique; it now returns the row it is
+      ON CONFLICT (operating_company_id, samsara_clip_id) DO UPDATE SET samsara_clip_url = EXCLUDED.samsara_clip_url
       RETURNING id::text
     `,
     [

@@ -1,3 +1,13 @@
+/**
+ * ENGINE: Samsara address import — mirrors Samsara addresses and projects each into an mdata.locations row and, when geometry exists, a geo.geofences fence
+ * SCHEDULE: on demand — scripts/ops/import-samsara-addresses.ts (dry-run unless apply + SAMSARA_GEOFENCE_IMPORT_APPLY_APPROVED); no caller in src
+ * WRITES: integrations.samsara_addresses, mdata.locations, geo.geofences; external Samsara listAddresses (read only)
+ * IDEMPOTENCY: ADVISORY LOCK hashtextextended('<company>:samsara-address:<id>') per address; UNIQUE(operating_company_id, samsara_address_id) ON CONFLICT (uq_samsara_addresses_company_address); UNIQUE(operating_company_id, external_source, external_ref) ON CONFLICT (geo_geofences_external_uq)
+ * OVERLAP: the twin waits on the per-address lock, then upserts the same mirror and fence rows; an address with no geometry leaves no fence to find, so a second run inserts another mdata.locations row (DEFECT)
+ * REVERSE: NOT-A-DOCUMENT — Samsara mirror plus master-data location / fence rows
+ * NEVER: must never draw a fence from guessed geometry, and never write anything in dry-run mode
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { withLuciaBypass } from "../../../auth/db.js";
 import { decryptSamsaraSecret } from "../../../lib/samsara-crypto.js";
 import { SamsaraClient, type SamsaraAddress } from "../samsara-client.js";

@@ -1,3 +1,13 @@
+/**
+ * ENGINE: driver teams — creates / re-splits / deactivates mdata.driver_teams, assigns a team to a load, computes per-load team pay splits
+ * SCHEDULE: on demand — mdata/driver-team-split.routes.ts (/api/v1/driver-teams*, GET /api/v1/loads/:id/team-settlement-split) and settlements/team-splits/team-splits.routes.ts
+ * WRITES: mdata.driver_teams, mdata.loads (team_id), driver_finance.team_settlement_splits, audit (appendCrudAudit)
+ * IDEMPOTENCY: NONE — read-then-write (DEFECT): the posted-split, in-progress-load and solo-assignment checks are separate SELECTs; splits upsert on UNIQUE(load_id, driver_id) ON CONFLICT with no applied_to_settlement_id predicate
+ * OVERLAP: two re-splits: the second closes the already-closed row and fails on uniq_driver_in_active_team_*; two split computes converge on the same values; a settlement applied between the check and the upsert is overwritten
+ * REVERSE: driver-team.service.ts:deactivateTeam for a team; none — DEFECT: no function un-assigns a team from a load (assignTeamToLoad)
+ * NEVER: must never change a split row already applied to a settlement, and never put a team on a solo-assigned load
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertDriverQualifiedForLoad } from "../dispatch/driver-qualification.service.js";

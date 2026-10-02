@@ -1,3 +1,13 @@
+/**
+ * ENGINE: vehicle-driver pairing — opens / closes telematics.vehicle_driver_assignments from Samsara log-on / log-off / assign webhooks; answers who drove a unit at a time
+ * SCHEDULE: on demand — integrations/samsara/webhook-projectors/vehicle-projector.ts (webhook projection, every minute)
+ * WRITES: telematics.vehicle_driver_assignments
+ * IDEMPOTENCY: ADVISORY LOCK <company>:<unit> (pg_advisory_xact_lock) + UNIQUE(raw_event_id) ON CONFLICT (uq_vehicle_driver_assignments_event, migration 0221); close is SAME-STATEMENT WHERE ended_at IS NULL
+ * OVERLAP: the second waits on the per-unit lock, then finds the replay by raw_event_id or the already-updated open row
+ * REVERSE: NOT-A-DOCUMENT — pairing history; a later unassign event closes the open row
+ * NEVER: must never close an assignment with an event older than its start, and never pair a driver not authorized for the company
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };

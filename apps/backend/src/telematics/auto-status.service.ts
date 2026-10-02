@@ -1,3 +1,13 @@
+/**
+ * ENGINE: auto status suggestion — turns a GPS / engine fix plus the unit's last fence event into a suggested load-status change
+ * SCHEDULE: on demand — integrations/samsara/webhook-projectors/vehicle-projector.ts (webhook projection cron, every minute)
+ * WRITES: dispatch.auto_status_suggestions
+ * IDEMPOTENCY: NONE — read-then-write (DEFECT): a SELECT for the same suggestion in the last 30 minutes, then a separate INSERT
+ * OVERLAP: serialized only by the caller's per-tenant projection lock (webhook-projection.service.ts); outside it two calls insert duplicate suggestions
+ * REVERSE: NOT-A-DOCUMENT — an advisory suggestion; the driver's answer is a separate row (driver/status-suggestions.routes.ts)
+ * NEVER: must never change mdata.loads.status itself — it only suggests
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
 };

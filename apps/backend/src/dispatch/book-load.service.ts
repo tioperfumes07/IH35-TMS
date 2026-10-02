@@ -1,3 +1,13 @@
+/**
+ * ENGINE: Book Load — creates the load with its stops, charges, assignment, driver bill, pre-settlement link, geofences and dispatch events
+ * SCHEDULE: on demand — POST /api/v1/dispatch/loads (dispatch/loads.routes.ts), POST /api/v1/mdata/loads (mdata/loads.routes.ts), EDI 204 (inbound-204.handler.ts), seed/csv-seed-import.ts, feed/seed-settlement-document.service.ts, driver-finance/settlement-creator-seed-loads.ts
+ * WRITES: mdata.loads, mdata.load_stops, dispatch.load_charge_lines, dispatch.load_assignment_history, dispatch.load_id_reservations, lib.trace_counters, docs.files, docs.file_links, driver_finance.driver_bills, driver_finance.settlement_lines, driver_finance.driver_settlements + presettlement_link_suggestions, geo.geofences, outbox.events, audit.audit_events
+ * IDEMPOTENCY: UNIQUE(operating_company_id, load_number) loads_operating_company_id_load_number_key — INSERT under SAVEPOINT, 23505 becomes a 409 (no ON CONFLICT); driver bill mint under ADVISORY LOCK hashtextextended(load id); a booking with no typed number mints a new load each call
+ * OVERLAP: two bookings with the same number — the second gets 409 duplicate_load_number; two with no number each get their own number and create two loads
+ * REVERSE: dispatch/cancellation.service.ts:cancelLoad
+ * NEVER: must never post a journal entry or an invoice at booking, and never enqueue QuickBooks write-back
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { randomUUID } from "node:crypto";
 import { appendCrudAudit } from "../audit/crud-audit.js";

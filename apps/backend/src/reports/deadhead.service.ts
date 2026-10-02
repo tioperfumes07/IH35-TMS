@@ -1,3 +1,13 @@
+/**
+ * ENGINE: deadhead cache — recomputes 12 weeks of per-unit loaded / deadhead miles, fleet average and rank from mdata.loads
+ * SCHEDULE: on demand — reports/deadhead-refresh.job.ts (0 3 * * 1 America/Chicago) and POST /api/v1/reports/deadhead/refresh (reports/deadhead.routes.ts)
+ * WRITES: reports.deadhead_cache
+ * IDEMPOTENCY: UNIQUE(operating_company_id, unit_id, week_starting) ON CONFLICT (uq_deadhead_company_unit_week, migration 202615300900)
+ * OVERLAP: both upsert the same rows with the same computed values; last writer wins
+ * REVERSE: NOT-A-DOCUMENT — a derived report cache rebuilt from loads
+ * NEVER: must never write mdata.* or any accounting row — it reads loads and writes only the cache
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { PoolClient } from "pg";
 import { estimateCityPairMiles } from "./city-centroids.js";
 

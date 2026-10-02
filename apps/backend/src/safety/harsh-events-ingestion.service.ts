@@ -1,3 +1,13 @@
+/**
+ * ENGINE: harsh-event ingestion — parses Samsara harsh / safety events from a vehicle payload into safety.harsh_events with the paired driver
+ * SCHEDULE: on demand — integrations/samsara/webhook-projectors/vehicle-projector.ts (webhook projection, every minute) and safety/harsh-events-poll.cron.ts (0 3 * * *)
+ * WRITES: safety.harsh_events
+ * IDEMPOTENCY: UNIQUE(operating_company_id, raw_samsara_id) ON CONFLICT (harsh_events_per_tenant_unique, migration 0231)
+ * OVERLAP: the second insert of the same Samsara id does nothing
+ * REVERSE: NOT-A-DOCUMENT — immutable telematics evidence from Samsara
+ * NEVER: must never insert an event without a Samsara event id — no synthetic rows
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { getDriverForVehicleAtTime } from "../telematics/vehicle-driver-lookup.service.js";
 
 type DbClient = {

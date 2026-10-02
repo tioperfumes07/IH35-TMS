@@ -5,6 +5,8 @@
  * IDEMPOTENCY: UNIQUE(operating_company_id, driver_id, duty_status, started_at, source) ON CONFLICT plus ADVISORY LOCK pg_advisory_xact_lock per company
  * OVERLAP: second run waits on the lock, then inserts 0 events
  * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ * REVERSE: NOT-A-DOCUMENT — a mirror of Samsara ELD duty-status events (Samsara is the source of truth)
+ * NEVER: must never write back to Samsara or update/delete existing hos.duty_status_events rows; insert-only
  */
 import type { FastifyInstance } from "fastify";
 import type { PoolClient } from "pg";

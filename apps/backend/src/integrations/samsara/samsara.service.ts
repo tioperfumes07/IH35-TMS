@@ -1,3 +1,13 @@
+/**
+ * ENGINE: Samsara connection config — upserts the encrypted API token / webhook secret per company and records live health-check results
+ * SCHEDULE: on demand — integrations/samsara/samsara-config.routes.ts (POST / DELETE /api/v1/integrations/samsara/config); health check from cron/samsara-health-cron.ts (0 * * * *) and admin/admin-jobs.service.ts
+ * WRITES: integrations.samsara_config; external: Samsara GET /fleet/vehicles?limit=1 (read-only connection test)
+ * IDEMPOTENCY: UNIQUE(operating_company_id) ON CONFLICT (samsara_config UNIQUE, migration 0137) for the upsert; disable / health UPDATEs are a DETERMINISTIC OVERWRITE of status columns
+ * OVERLAP: two upserts land on the one company row (last writer's token wins); two health checks both overwrite last_health_* (last finisher wins)
+ * REVERSE: samsara.service.ts:disableSamsaraConfig (clears token and secret; a re-POST overwrites the prior token, which is not kept)
+ * NEVER: must never store or log the plaintext API token or webhook secret — only encryptSamsaraSecret output is written
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import type { QueryResult } from "pg";
 import { decryptSamsaraSecret, encryptSamsaraSecret } from "../../lib/samsara-crypto.js";
 import { SamsaraClient } from "./samsara-client.js";

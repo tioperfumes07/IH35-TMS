@@ -1,3 +1,13 @@
+/**
+ * ENGINE: detention accrual — opens detention events from confirmed stop arrivals, closes them on departure, bridges the accrual into the load rate and sends the threshold notice
+ * SCHEDULE: on demand — POST /api/v1/dispatch/detention/sync, /events/:id/close, /events/:id/bridge-billing, /events/:id/notify-customer (dispatch/detention.routes.ts); bridge also from dispatch/detention-approval.service.ts
+ * WRITES: dispatch.detention_events, mdata.loads (rate_total_cents, quicksave_pending_fields), proforma invoice resync, audit.audit_events; external sendEmail
+ * IDEMPOTENCY: SAME-STATEMENT WHERE status <> 'billed' after SELECT ... FOR UPDATE OF de, l in bridgeDetentionToBillingInClientTx (ROUND 337 fix); sync UNIQUE(operating_company_id, stop_id) WHERE accruing ON CONFLICT DO NOTHING (uq_detention_events_active_stop); close SAME-STATEMENT WHERE status = 'accruing'; notify ADVISORY LOCK + WHERE customer_notified_at IS NULL
+ * OVERLAP: a concurrent bridge-billing waits on the event lock, then reads 'billed' and adds nothing; sync/close/notify twins write nothing
+ * REVERSE: none — DEFECT: a bridged accrual added to rate_total_cents has no un-bridge, and a closed or billed event cannot be reopened
+ * NEVER: must never bridge a zero accrual or an event already status 'billed' into mdata.loads.rate_total_cents
+ * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
+ */
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
@@ -332,6 +342,9 @@ export async function bridgeDetentionToBillingInClientTx(
       JOIN mdata.loads l ON l.id = de.load_id
                         AND l.operating_company_id = de.operating_company_id
       WHERE de.id = $1 AND de.operating_company_id = $2::uuid
+      -- ROUND 337: lock the event (and its load) — two concurrent bridges both read status <> 'billed' and both added
+      -- the detention charge to rate_total_cents. The second now waits, then sees 'billed'.
+      FOR UPDATE OF de, l
     `,
     [eventId, operatingCompanyId]
   );
@@ -420,7 +433,7 @@ export async function bridgeDetentionToBillingInClientTx(
             accrued_minutes = $4,
             accrued_amount_cents = $5,
             updated_at = now()
-        WHERE id = $1 AND operating_company_id = $2::uuid
+        WHERE id = $1 AND operating_company_id = $2::uuid AND status <> 'billed'
         RETURNING *
       `,
       [eventId, operatingCompanyId, JSON.stringify(bridge), billable, amount]
@@ -430,7 +443,9 @@ export async function bridgeDetentionToBillingInClientTx(
     // this UPDATE) would fall through to appendCrudAudit + `{ok:true, event:undefined}` anyway,
     // asserting the bridge succeeded when the canonical event row was never actually stamped.
     if (!updated.rows[0]) {
-      return { ok: false as const, error: "event_billed_stamp_failed" as const };
+      // ROUND 337: THROW, not return — the load's rate_total_cents was already raised above; returning ok:false let that
+      // half commit without the event stamp. Throwing rolls the whole bridge back.
+      throw new Error("detention_event_billed_stamp_failed");
     }
 
     await appendCrudAudit(
