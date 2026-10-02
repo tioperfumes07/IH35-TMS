@@ -1,5 +1,5 @@
 import { FactoringPurchaseError, voidPurchase } from "../factoring/purchase.service.js";
-import { BANKING_MATCH_OR_CATEGORIZE, LEGACY_FACTORING_WRITERS_RETIRED, sendRetiredFactoringWriter } from "../factoring/retired-factoring-writers.js";
+import { BANKING_MATCH_OR_CATEGORIZE, FACTORING_RESERVE_ENGINE, LEGACY_FACTORING_WRITERS_RETIRED, sendRetiredFactoringWriter } from "../factoring/retired-factoring-writers.js";
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
@@ -226,6 +226,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
   app.get("/api/v1/accounting/factoring-advances/reserve-tracker", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
+    if (LEGACY_FACTORING_WRITERS_RETIRED) return sendRetiredFactoringWriter(reply, "GET /api/v1/accounting/factoring-advances/reserve-tracker (second reserve reader)", FACTORING_RESERVE_ENGINE);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     // ACCT-F5594: no backstop -- same class as GET /factoring-reserve-balances above.

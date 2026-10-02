@@ -8,6 +8,7 @@
 import type { FastifyReply } from "fastify";
 
 export const FACTORING_PURCHASE_ENGINE = "POST /api/v1/factoring/purchases (Factoring -> Submit to Factor)";
+export const FACTORING_RESERVE_ENGINE = "GET /api/v1/factoring/kpis (book reserve: Faro Escrow + Cash Reserve GL)";
 export const BANKING_MATCH_OR_CATEGORIZE = "match or categorize the bank line on the Faro reserve account in Banking";
 
 export function sendRetiredFactoringWriter(reply: FastifyReply, writer: string, use: string = FACTORING_PURCHASE_ENGINE) {

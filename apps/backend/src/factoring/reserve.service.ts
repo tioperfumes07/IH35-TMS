@@ -1,3 +1,5 @@
+import { activeFactorId, factoringBookReserveCents, factoringReservePostings } from "./factoring-kpi.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 export type ReserveMovementDirection = "credit" | "debit";
 
 type Queryable = {
@@ -196,21 +198,28 @@ export async function listReserveMovementsForBatch(
   return result.rows.map(mapReserveMovementRow);
 }
 
+// OWNER LAW 2026-10-02 competing-engine audit — every reserve READER below reads the factoring KPI engine (the GL balances of
+// the Faro Escrow Reserve + Faro Cash Reserve role accounts), the same figure Factoring, Banking and Reports show. The
+// factoring.reserve_movement ledger these used to read has no live writer (the Faro CSV commit is retired) and is never
+// read again. Shapes are unchanged so ReserveDashboard / ReserveTracker / FactorAdmin need no change.
+type EngineClient = Parameters<typeof factoringReservePostings>[0];
+
 export async function getFactorReserveBalances(
   tenantId: string,
   deps: { client: Queryable }
 ): Promise<FactorReserveBalanceRow[]> {
-  const result = await deps.client.query<Record<string, unknown>>(
-    `
-      SELECT tenant_id, factor_id, balance_cents, last_movement_at, movement_count
-      FROM factoring.v_factor_reserve_balance
-      WHERE tenant_id = $1::uuid
-      ORDER BY balance_cents DESC, last_movement_at DESC NULLS LAST, factor_id ASC
-    `,
-    [tenantId]
-  );
-
-  return result.rows.map(mapFactorReserveBalanceRow);
+  const client = deps.client as unknown as EngineClient;
+  const factorId = await activeFactorId(client, tenantId);
+  if (!factorId) return [];
+  const book = await factoringBookReserveCents(client, tenantId, companyBusinessDate());
+  const postings = await factoringReservePostings(client, tenantId);
+  return [{
+    tenant_id: tenantId,
+    factor_id: factorId,
+    balance_cents: book.total,
+    last_movement_at: postings.length ? postings[postings.length - 1]!.entry_date : null,
+    movement_count: postings.length,
+  }];
 }
 
 export async function getReserveBalanceHistory(
@@ -222,72 +231,28 @@ export async function getReserveBalanceHistory(
 ): Promise<ReserveBalanceHistoryPage> {
   const limit = Math.min(250, Math.max(1, Math.floor(deps.limit ?? 50)));
   const offset = Math.max(0, Math.floor(deps.offset ?? 0));
-  const values: unknown[] = [tenantId, factorId];
-
-  const conditions = ["tenant_id = $1::uuid", "factor_id = $2::uuid"];
-  if (fromDate) {
-    values.push(fromDate);
-    conditions.push(`created_at >= $${values.length}::timestamptz`);
-  }
-  if (toDate) {
-    values.push(toDate);
-    conditions.push(`created_at <= $${values.length}::timestamptz`);
-  }
-
-  const whereSql = conditions.join(" AND ");
-  const listValues = [...values, limit, offset];
-  const list = await deps.client.query<Record<string, unknown>>(
-    `
-      WITH filtered AS (
-        SELECT
-          id,
-          tenant_id,
-          batch_id,
-          factor_id,
-          direction,
-          amount_cents,
-          reason,
-          created_at,
-          CASE WHEN direction = 'credit' THEN amount_cents ELSE amount_cents * -1 END AS signed_amount_cents,
-          SUM(CASE WHEN direction = 'credit' THEN amount_cents ELSE amount_cents * -1 END)
-            OVER (ORDER BY created_at ASC, id ASC) AS running_balance_cents
-        FROM factoring.reserve_movement
-        WHERE ${whereSql}
-      )
-      SELECT *
-      FROM filtered
-      ORDER BY created_at DESC, id DESC
-      LIMIT $${values.length + 1}::int
-      OFFSET $${values.length + 2}::int
-    `,
-    listValues
-  );
-
-  const totalRes = await deps.client.query<Record<string, unknown>>(
-    `
-      SELECT COUNT(*)::bigint AS total
-      FROM factoring.reserve_movement
-      WHERE ${whereSql}
-    `,
-    values
-  );
-
-  const movements = list.rows.map((row) => {
-    const movement = mapReserveMovementRow(row);
-    const signed = toSignedAmount(movement.direction, movement.amount_cents);
+  const client = deps.client as unknown as EngineClient;
+  if ((await activeFactorId(client, tenantId)) !== factorId) return { movements: [], total: 0, limit, offset };
+  let running = 0;
+  const all = (await factoringReservePostings(client, tenantId)).map((p) => {
+    running += p.signed_cents;
     return {
-      ...movement,
-      signed_amount_cents: Number(row.signed_amount_cents ?? signed),
-      running_balance_cents: toNumber(row.running_balance_cents),
+      id: p.id,
+      tenant_id: tenantId,
+      batch_id: null,
+      factor_id: factorId,
+      // "credit" = added to the reserve (a GL debit on the asset), "debit" = taken out — the screen's existing meaning.
+      direction: (p.signed_cents >= 0 ? "credit" : "debit") as ReserveMovementDirection,
+      amount_cents: Math.abs(p.signed_cents),
+      reason: `${p.pool === "escrow" ? "Escrow" : "Cash reserve"} · ${p.memo ?? "journal entry"}`,
+      created_at: p.entry_date,
+      signed_amount_cents: p.signed_cents,
+      running_balance_cents: running,
     };
   });
-
-  return {
-    movements,
-    total: toNumber(totalRes.rows[0]?.total),
-    limit,
-    offset,
-  };
+  const inRange = all.filter((m) => (!fromDate || m.created_at >= fromDate.slice(0, 10)) && (!toDate || m.created_at <= toDate.slice(0, 10)));
+  const newestFirst = inRange.reverse();
+  return { movements: newestFirst.slice(offset, offset + limit), total: newestFirst.length, limit, offset };
 }
 
 const DEFAULT_RESERVE_HOLD_DAYS = 60;
@@ -299,57 +264,33 @@ export async function forecastReserveReleases(
   deps: { client: Queryable }
 ): Promise<ReserveReleaseForecast> {
   const normalizedLookahead = Math.min(365, Math.max(1, Math.floor(lookaheadDays ?? 30)));
-
-  const scheduleRes = await deps.client.query<Record<string, unknown>>(
-    `
-      WITH credits AS (
-        SELECT
-          created_at,
-          amount_cents,
-          created_at + make_interval(days => $3::int) AS release_at
-        FROM factoring.reserve_movement
-        WHERE tenant_id = $1::uuid
-          AND factor_id = $2::uuid
-          AND direction = 'credit'
-      )
-      SELECT
-        release_at::date::text AS release_date,
-        SUM(amount_cents)::bigint AS projected_release_cents,
-        COUNT(*)::bigint AS source_movement_count
-      FROM credits
-      WHERE release_at >= now()
-        AND release_at < now() + make_interval(days => $4::int)
-      GROUP BY release_at::date
-      ORDER BY release_at::date ASC
-    `,
-    [tenantId, factorId, DEFAULT_RESERVE_HOLD_DAYS, normalizedLookahead]
-  );
-
-  const balanceRes = await deps.client.query<Record<string, unknown>>(
-    `
-      SELECT COALESCE(balance_cents, 0)::bigint AS balance_cents
-      FROM factoring.v_factor_reserve_balance
-      WHERE tenant_id = $1::uuid
-        AND factor_id = $2::uuid
-      LIMIT 1
-    `,
-    [tenantId, factorId]
-  );
-
-  const schedule = scheduleRes.rows.map((row) => ({
-    release_date: String(row.release_date),
-    projected_release_cents: toNumber(row.projected_release_cents),
-    source_movement_count: toNumber(row.source_movement_count),
+  const client = deps.client as unknown as EngineClient;
+  const isActive = (await activeFactorId(client, tenantId)) === factorId;
+  const postings = isActive ? await factoringReservePostings(client, tenantId) : [];
+  const now = Date.now();
+  const horizon = now + normalizedLookahead * 86_400_000;
+  const byDay = new Map<string, { cents: number; n: number }>();
+  for (const p of postings) {
+    if (p.signed_cents <= 0) continue;
+    const release = new Date(`${p.entry_date}T00:00:00Z`).getTime() + DEFAULT_RESERVE_HOLD_DAYS * 86_400_000;
+    if (release < now || release >= horizon) continue;
+    const day = new Date(release).toISOString().slice(0, 10);
+    const cur = byDay.get(day) ?? { cents: 0, n: 0 };
+    byDay.set(day, { cents: cur.cents + p.signed_cents, n: cur.n + 1 });
+  }
+  const schedule = [...byDay.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([release_date, v]) => ({
+    release_date,
+    projected_release_cents: v.cents,
+    source_movement_count: v.n,
   }));
-
-  const totalProjected = schedule.reduce((sum, row) => sum + row.projected_release_cents, 0);
+  const book = isActive ? await factoringBookReserveCents(client, tenantId, companyBusinessDate()) : { total: 0 };
   return {
     factor_id: factorId,
     as_of: new Date().toISOString(),
     hold_period_days: DEFAULT_RESERVE_HOLD_DAYS,
     lookahead_days: normalizedLookahead,
-    starting_balance_cents: toNumber(balanceRes.rows[0]?.balance_cents),
-    total_projected_release_cents: totalProjected,
+    starting_balance_cents: book.total,
+    total_projected_release_cents: schedule.reduce((sum, row) => sum + row.projected_release_cents, 0),
     schedule,
   };
 }
