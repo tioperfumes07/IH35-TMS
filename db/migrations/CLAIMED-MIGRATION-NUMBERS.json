@@ -1531,6 +1531,11 @@
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-02",
       "purpose": "Lead ROUND 330.6 — a factor.faro_daily_imports header can never outlive all its live lines (deferred constraint trigger)"
+    },
+    "202615280600": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-02",
+      "purpose": "Owner ruling 2026-10-02 (short-pay = two entries with a shared link): faro_reserve_entries short-pay resolution columns (reason account, customer-side JE, keep-open) + 6920 Bad Debt Expense (USMCA, role bad_debt_expense)."
     }
   },
   "202613590001": {
