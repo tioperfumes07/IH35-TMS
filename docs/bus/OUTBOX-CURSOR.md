@@ -1,3 +1,8 @@
+**2026-10-02T10:34Z · BANK-F91025 B-1 register ✓ factoring+cash advance MERGED #24075 · tip `032b550f9b`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91025 MERGED FAST-MERGE | GO
+match_info laterals join matched_factoring_advance_id + matched_advance_id so Faro wire / cash advance matches light ✓=C. Also #24073 Edit hops. money-pr-local-gate PASS → #24075 squash-admin.
+NEXT: next ORDERS leftover · Lead Chrome · bank_transaction_splits USMCA flag HH 12–23 · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T10:29Z · BANK-F91024 B-1 Cash/Driver Advance + Check Edit hops MERGED #24073 · tip `d4682cbf70`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91024 MERGED FAST-MERGE | GO
 Register sourceRoute: cash_advance/driver_advance → /cash-advances?advance_id=; expense+payment_type=check → /accounting/checks/:id; BE expense_payment_type + Check TYPE/filter. money-pr-local-gate PASS → #24073 squash-admin.
