@@ -1,6 +1,8 @@
 // TABLE_DATE_OMIT: this table has no date column by design (not a time-series view).
 
 import { useMemo, useState } from "react";
+import { catalogListSearchQueryOptions } from "../../hooks/catalogListSearchQueryOptions";
+import { CatalogListSearchInput } from "../../components/lists/CatalogListSearchInput";
 import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
 import { getLocationsList, type LocationRow } from "../../api/lists-locations";
@@ -212,6 +214,7 @@ export function LocationsListPage() {
         source: sourceFilter === "all" ? undefined : sourceFilter,
       }),
     enabled: Boolean(companyId),
+    ...catalogListSearchQueryOptions,
   });
 
   const allRows = listQuery.data?.rows ?? [];
@@ -258,10 +261,10 @@ export function LocationsListPage() {
       >
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Search
-          <input
-            type="text"
+          {/* Server-side search over the route's full location set: debounced (LISTS-CATALOG-SEARCH-FLAKY). */}
+          <CatalogListSearchInput
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={setSearch}
             placeholder="Search name, code, or city"
             className="h-8 rounded-sm border border-gray-300 px-2 text-xs"
             data-testid="locations-list-filter-search"

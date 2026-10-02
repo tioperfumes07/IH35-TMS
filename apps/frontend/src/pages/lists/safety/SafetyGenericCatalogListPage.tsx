@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CatalogListSearchInput } from "../../../components/lists/CatalogListSearchInput";
+import { fetchAllCatalogPages } from "../../../lib/fetchAllCatalogPages";
 import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQueryOptions";
 import { useQuery } from "@tanstack/react-query";
 import type { SafetyGenericCatalogRow } from "../../../api/catalogs-safety";
@@ -63,12 +63,10 @@ const COLUMNS: Array<ParityColumn<SafetyGenericCatalogRow>> = [
 export function SafetyGenericCatalogListPage({ client, displayName, breadcrumbPath }: Props) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"true" | "false" | "all">("true");
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [selectedRow, setSelectedRow] = useState<SafetyGenericCatalogRow | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [showInactive, setShowInactive] = useState(false);
 
   // LST-F5214 — Lists hub ?create=1 must open create modal (accounting catalog parity).
   useCreateQueryParam({
@@ -81,21 +79,17 @@ export function SafetyGenericCatalogListPage({ client, displayName, breadcrumbPa
   });
 
   const query = useQuery({
-    queryKey: ["catalogs", "safety-generic", displayName, companyId, search, status],
-    queryFn: () =>
-      client.list({
-        operating_company_id: companyId,
-        search: search || undefined,
-        is_active: status,
-        limit: 200,
-        offset: 0,
-      }),
+    // Round 296: every row of the catalog (status narrows server-side on the indexed is_active; the route caps at
+    // max(200) per page, so read page after page), then the house toolbar (ParityTable's UniversalListToolbar) is the
+    // one search over all of it with "N of M". No page search box, no "Show inactive" double filter.
+    queryKey: ["catalogs", "safety-generic", displayName, companyId, status],
+    queryFn: () => fetchAllCatalogPages(client.list, { operating_company_id: companyId, is_active: status }),
     enabled: Boolean(companyId),
     ...catalogListSearchQueryOptions,
   });
 
   const allRows = query.data?.rows ?? [];
-  const rows = showInactive ? allRows : allRows.filter((r) => r.is_active !== false);
+  const rows = allRows;
   const total = query.data?.total ?? 0;
 
   return (
@@ -119,20 +113,9 @@ export function SafetyGenericCatalogListPage({ client, displayName, breadcrumbPa
       />
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
 
-      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
-        <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by code or display name" className="h-9 rounded-sm border border-gray-300 px-2 text-xs md:col-span-2" />
+      <div className="flex items-end gap-2 rounded-sm border border-gray-200 bg-white p-3">
         <CatalogStatusFilterCombobox value={status} onChange={setStatus} />
       </div>
-
-      <label className="flex items-center gap-1 text-xs text-gray-600">
-        <input
-          type="checkbox"
-          checked={showInactive}
-          onChange={(e) => setShowInactive(e.target.checked)}
-          className="h-3.5 w-3.5 rounded-sm border-gray-300"
-        />
-        Show inactive
-      </label>
 
       <ParityTable
         columns={COLUMNS}
@@ -142,7 +125,6 @@ export function SafetyGenericCatalogListPage({ client, displayName, breadcrumbPa
         emptyText={`No ${displayName.toLowerCase()} found.`}
         storageKey="safety-generic-catalog-list"
         tableTestId="safety-generic-catalog-list-table"
-        suppressToolbarSearch
         onRowClick={(row) => {
           setModalMode("edit");
           setSelectedRow(row);

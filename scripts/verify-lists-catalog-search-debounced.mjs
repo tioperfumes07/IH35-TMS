@@ -12,7 +12,8 @@ const INPUT = "apps/frontend/src/components/lists/CatalogListSearchInput.tsx";
 const OPTIONS = "apps/frontend/src/hooks/catalogListSearchQueryOptions.ts";
 const ANCHOR_PAGES = [
   "apps/frontend/src/pages/lists/accounting/AccountingCatalogListPage.tsx",
-  "apps/frontend/src/pages/lists/safety/SafetyGenericCatalogListPage.tsx",
+  // SafetyGenericCatalogListPage left the anchor set 2026-10-02 (round 296 filter law): it loads the whole catalog via
+  // lib/fetchAllCatalogPages and the house toolbar is its one search -- locked by verify-filter-surfaces-full-set.
   "apps/frontend/src/pages/lists/driver/DriverCatalogListPage.tsx",
 ];
 
