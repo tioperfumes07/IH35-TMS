@@ -79,7 +79,8 @@ export function FuelTransactionsReverseSection({
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-xs font-semibold text-slate-900">
           Fuel transactions
-          {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
+          {/* ROUND 297 audit: the server's total, not the first page's length (capped at 50). */}
+          {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({fuelQ.data?.total_count ?? rows.length})</span> : null}
         </h3>
         <EntityLink
           kind={FUEL_HISTORY_KIND[filterKey]}

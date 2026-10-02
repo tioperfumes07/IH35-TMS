@@ -81,7 +81,8 @@ export function FuelFraudAlertsReverseSection({
   });
   // A failed refetch can retain the last successful React Query payload — never render that
   // stale payload beside the failure state (same discipline as every sibling reverse section).
-  const rows = query.isError ? [] : (query.data?.alerts ?? []);
+  // ROUND 297 audit (reverse): an alert on a voided / archived fuel purchase leaves this section.
+  const rows = query.isError ? [] : (query.data?.alerts ?? []).filter((a) => !a.fuel_transaction_voided);
 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
@@ -90,7 +91,11 @@ export function FuelFraudAlertsReverseSection({
           Fuel fraud alerts
           {rows.length > 0 ? <span className="ml-2 text-xs font-normal text-gray-600">({rows.length})</span> : null}
         </h3>
-        <Link to="/fuel/fraud-alerts" className="text-xs font-semibold text-slate-700 hover:underline">
+        {/* ROUND 297 audit (drill): land on the same record's alerts (the list page reads the scope param). */}
+        <Link
+          to={`/fuel/fraud-alerts?${new URLSearchParams(Object.entries(filter).filter(([, v]) => Boolean(v)) as Array<[string, string]>).toString()}`}
+          className="text-xs font-semibold text-slate-700 hover:underline"
+        >
           Open Fraud Alerts
         </Link>
       </div>

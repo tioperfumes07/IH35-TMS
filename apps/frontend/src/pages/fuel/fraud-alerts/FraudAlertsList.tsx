@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { Modal } from "../../../components/Modal";
@@ -103,9 +103,13 @@ function parseRecoverCents(input: string): { cents: number | undefined } | { err
   return { cents };
 }
 
-async function listAlerts(companyId: string, status?: string, severity?: string) {
+// ROUND 297 audit (drill): a reverse section (vendor / unit / driver / load) lands here scoped to its record.
+const SCOPE_KEYS = ["vendor_id", "unit_id", "driver_id", "load_id"] as const;
+
+async function listAlerts(companyId: string, status?: string, severity?: string, scope?: { key: string; value: string } | null) {
   const params = new URLSearchParams({ operating_company_id: companyId });
-  if (status) params.set("status", status);
+  if (scope) params.set(scope.key, scope.value);
+  if (status && status !== "all") params.set("status", status);
   if (severity) params.set("severity", severity);
   return apiRequest<{ alerts: FraudAlertRow[] }>(`/api/v1/fuel/fraud-alerts?${params.toString()}`);
 }
@@ -115,7 +119,11 @@ export function FraudAlertsListPage() {
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
-  const [statusFilter, setStatusFilter] = useState("open");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const scopeKey = SCOPE_KEYS.find((k) => searchParams.get(k));
+  const scope = scopeKey ? { key: scopeKey, value: searchParams.get(scopeKey)! } : null;
+  // A drilled view opens on ALL statuses — the set the reverse section counted.
+  const [statusFilter, setStatusFilter] = useState(scope ? "all" : "open");
   const [dismissTarget, setDismissTarget] = useState<FraudAlertRow | null>(null);
   const [dismissReason, setDismissReason] = useState("");
   const [attemptDismissClose, setAttemptDismissClose] = useState<() => void>(() => () => {});
@@ -127,8 +135,8 @@ export function FraudAlertsListPage() {
   const lifecycleGenerationRef = useRef(0);
 
   const alertsQuery = useQuery({
-    queryKey: ["fuel", "fraud-alerts", companyId, statusFilter],
-    queryFn: () => listAlerts(companyId, statusFilter),
+    queryKey: ["fuel", "fraud-alerts", companyId, statusFilter, scope?.key ?? "", scope?.value ?? ""],
+    queryFn: () => listAlerts(companyId, statusFilter, undefined, scope),
     enabled: Boolean(companyId),
   });
 
@@ -344,7 +352,17 @@ export function FraudAlertsListPage() {
       />
 
       <div className="flex flex-wrap items-center gap-2">
-        {["open", "investigating", "dismissed", "confirmed_fraud"].map((status) => (
+        {scope ? (
+          <button
+            type="button"
+            className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-xs"
+            data-testid="fraud-alerts-scope-chip"
+            onClick={() => setSearchParams((prev) => { const next = new URLSearchParams(prev); next.delete(scope.key); return next; })}
+          >
+            {scope.key.replace("_id", "")} only · clear ×
+          </button>
+        ) : null}
+        {["all", "open", "investigating", "dismissed", "confirmed_fraud"].map((status) => (
           <button
             key={status}
             type="button"

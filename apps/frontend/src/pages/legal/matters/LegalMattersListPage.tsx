@@ -61,6 +61,16 @@ export function LegalMattersListPage() {
   const equipmentId = searchParams.get("equipment_id")?.trim() || "";
   const insuranceClaimId = searchParams.get("insurance_claim_id")?.trim() || "";
   const insuranceLawsuitId = searchParams.get("insurance_lawsuit_id")?.trim() || "";
+  // ROUND 297 audit (forward): the vendor / customer profile drills here with ?vendor_id= / ?customer_id=; the list
+  // used to drop it and show every matter of the company.
+  const partyVendorId = searchParams.get("vendor_id")?.trim() || "";
+  const partyCustomerId = searchParams.get("customer_id")?.trim() || "";
+  function clearPartyScope() {
+    const p = new URLSearchParams(searchParams);
+    p.delete("vendor_id");
+    p.delete("customer_id");
+    setSearchParams(p, { replace: true });
+  }
   // LST-F5181 — visible EntityPicker (URL-only unit_id is not reverse chrome).
   // CLS-ADJACENT-ENTITY-FILTER-SILENT-APPLY — unit FK stages with sibling filters; URL mutates only on Apply.
   const deepLinkUnitId = searchParams.get("unit_id")?.trim() || "";
@@ -107,6 +117,8 @@ export function LegalMattersListPage() {
       equipmentId,
       insuranceClaimId,
       insuranceLawsuitId,
+      partyVendorId,
+      partyCustomerId,
     ],
     queryFn: () =>
       legalMattersApi.list(companyId, {
@@ -118,6 +130,8 @@ export function LegalMattersListPage() {
         equipment_id: equipmentId || undefined,
         insurance_claim_id: insuranceClaimId || undefined,
         insurance_lawsuit_id: insuranceLawsuitId || undefined,
+        vendor_id: partyVendorId || undefined,
+        customer_id: partyCustomerId || undefined,
         limit: PAGE_SIZE,
         offset: page * PAGE_SIZE,
       }),
@@ -203,6 +217,11 @@ export function LegalMattersListPage() {
         <div className="mb-2 flex items-center justify-between text-xs text-slate-600">
           <span data-testid="legal-matters-range">
             {total === 0 ? "No matters" : `Showing ${rangeStart}\u2013${rangeEnd} of ${total}`}
+            {partyVendorId || partyCustomerId ? (
+              <button type="button" data-testid="legal-matters-party-scope" onClick={clearPartyScope} className="ml-2 rounded-sm border border-gray-300 px-2 py-0.5">
+                {partyVendorId ? "This vendor only" : "This customer only"} ×
+              </button>
+            ) : null}
           </span>
           <span className="flex items-center gap-2">
             <button
