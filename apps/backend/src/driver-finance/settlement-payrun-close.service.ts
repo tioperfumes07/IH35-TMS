@@ -84,6 +84,7 @@ type Actor = { userId: string };
 const POSTABLE_STATUSES = new Set(["locked", "final", "closed", "paid", "approved", "ready"]);
 
 export type PayRunCloseErrorCode =
+  | "DEDUCTION_STATE_TRANSITION_FAILED"
   | "SETTLEMENT_NOT_FOUND"
   | "SETTLEMENT_NOT_POSTABLE"
   | "PAYMENT_METHOD_INVALID"
@@ -229,7 +230,9 @@ async function loadSettlement(client: DbClient, operatingCompanyId: string, sett
 async function loadOtherDeductionsByRole(
   client: DbClient,
   operatingCompanyId: string,
-  settlementId: string
+  settlementId: string,
+  /** ROUND 297 — filled with the ids of the deductions this close COLLECTS (the rows summed into the map). */
+  collectedIds: string[] = []
 ): Promise<Map<string, number>> {
   // ROUND 16.24 (found live, not asked for): this query had NO voided_at filter — a duplicate or
   // out-of-entity deduction voided AFTER being attached to a settlement (DED-DUP / TRANSPORTATION-
@@ -240,9 +243,9 @@ async function loadOtherDeductionsByRole(
   // S-13647 $320, S-13648 $35.25, S-13650 $10, S-13652 $10) — reported to the owner, not corrected
   // here (a posted JE is WORM; the correction is a driver-favorable credit on a future settlement,
   // gated on the owner's read, exactly like every other settlement money correction this session).
-  const res = await client.query<{ deduction_type: string; bucket_type: string | null; amount_cents: string }>(
+  const res = await client.query<{ id: string; deduction_type: string; bucket_type: string | null; amount_cents: string }>(
     `
-      SELECT dsd.deduction_type, ddb.bucket_type, dsd.amount_cents::bigint AS amount_cents
+      SELECT dsd.id::text AS id, dsd.deduction_type, ddb.bucket_type, dsd.amount_cents::bigint AS amount_cents
       FROM driver_finance.driver_settlement_deductions dsd
       LEFT JOIN driver_finance.driver_deduction_buckets ddb ON ddb.id = dsd.bucket_id
       WHERE dsd.operating_company_id = $1::uuid
@@ -262,6 +265,7 @@ async function loadOtherDeductionsByRole(
     if (t.includes("abandon") || t.includes("chargeback")) continue;
     const roleKey = bucketRecoveryRoleKey(r.deduction_type);
     byRole.set(roleKey, (byRole.get(roleKey) ?? 0) + cents);
+    collectedIds.push(r.id);
   }
   return byRole;
 }
@@ -658,7 +662,8 @@ export async function closeSettlementPayRun(
     const reimbursementsByType = await loadReimbursementsByType(client, opco, settlementId);
     const reimbursementsCents = Array.from(reimbursementsByType.values()).reduce((s, v) => s + v, 0);
     const detentionPayCents = await loadDetentionPayCents(client, opco, settlementId);
-    const deductionsByRole = await loadOtherDeductionsByRole(client, opco, settlementId);
+    const collectedDeductionIds: string[] = [];
+    const deductionsByRole = await loadOtherDeductionsByRole(client, opco, settlementId, collectedDeductionIds);
     const deductionsCents = Array.from(deductionsByRole.values()).reduce((s, v) => s + v, 0);
     const chargebacksCents = await loadChargebacksCents(client, opco, settlementId);
 
@@ -1246,6 +1251,25 @@ export async function closeSettlementPayRun(
         WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
       [settlementId, opco, actor.userId]
     );
+
+    // ROUND 297 driver-profile audit (CC-1): the deductions this close just COLLECTED (applied to the load bills as
+    // non-cash bill payments in the chain above) are no longer owed — they read 'applied' with nothing remaining.
+    // Before, apply-time only stamped applied_to_settlement_id, so every collected deduction read 'pending' at its full
+    // amount forever (all 67 on prod; 45 already on closed settlements). The settlement reverser
+    // (restoreSettlementDeductionsInClientTx) returns them to 'pending' with the full amount.
+    if (collectedDeductionIds.length) {
+      const stamped = await client.query<{ id: string }>(
+        `UPDATE driver_finance.driver_settlement_deductions
+            SET status = 'applied', remaining_balance_cents = 0, updated_at = now()
+          WHERE operating_company_id = $1::uuid AND applied_to_settlement_id = $2::uuid
+            AND id = ANY($3::uuid[]) AND voided_at IS NULL
+          RETURNING id::text`,
+        [opco, settlementId, collectedDeductionIds]
+      );
+      if (stamped.rows.length !== collectedDeductionIds.length) {
+        throw new SettlementPayRunError("DEDUCTION_STATE_TRANSITION_FAILED", `${label}: ${stamped.rows.length} of ${collectedDeductionIds.length} collected deductions could be marked applied`);
+      }
+    }
 
     // ACCT-F26307 — same gap as SETL-POST-01 immediately above, on the header's MONEY fields this
     // time: this function computes grossCents/deductionsCents(+escrow+advance+chargeback)/
