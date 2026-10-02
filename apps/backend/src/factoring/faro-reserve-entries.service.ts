@@ -11,7 +11,9 @@
 //   escrow_held      no entry of its own: it is the DR 1230 inside the purchase's funding JE; the bank line is matched to
 //                    that JE, and Faro's amount must equal the purchase line's escrow reserve
 //   escrow_to_cash   DR 1235 / CR 1230 — one JE for the pair (same Faro ID on both reports), both bank lines matched to it
-//   schedule_fee     DR 6405 factor_transaction_fee / CR 1235 — a contract Transaction Fee, charged at collection
+//   schedule_fee     Faro's "Schedule Fee" IS the contract Default Interest (proven 11/11 on Faro's report): interest
+//                    through the fee date is accrued first (event run, maker <> checker), then DR 2155 / CR 1235 with
+//                    any difference to Faro's figure trued up to 6830 — never 6405
 //   short_pay        DR 2150 factoring_advance_liability / CR 1235 — Faro satisfies the unpaid part of its advance from our
 //                    reserve; the customer's A/R keeps the unpaid part open (customer-pays-Faro relieved only what was
 //                    paid), so the variance stays visible on the customer, with Faro's Balance / Paid recorded here
@@ -23,6 +25,7 @@ import { createHash } from "node:crypto";
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
 import { writeFactoringSpineLinks } from "./factoring-spine-links.js";
+import { interestPositionThrough, proposeEventInterestAccrual } from "./interest-accrual.service.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }>;
@@ -374,7 +377,10 @@ async function stampPosted(client: DbClient, oci: string, entry: EntryRow, jeId:
 export async function postFaroReserveEntryOnClient(
   client: DbClient,
   input: { operating_company_id: string; entry_id: string; actor_user_id: string; actor_role: string }
-): Promise<{ entry_id: string; journal_entry_id: string; paired_entry_id?: string }> {
+): Promise<
+  | { entry_id: string; journal_entry_id: string; paired_entry_id?: string }
+  | { entry_id: string; status: "interest_accrual_awaiting_approval"; interest_run_id: string; interest_due_cents: number }
+> {
   const oci = input.operating_company_id;
   const entry = await loadEntry(client, oci, input.entry_id);
   if (entry.journal_entry_id) throw new FaroReserveError("faro_entry_already_posted");
@@ -402,8 +408,8 @@ export async function postFaroReserveEntryOnClient(
   const role = (r: Parameters<typeof resolveRoleAccount>[2]) => resolveRoleAccount(client as never, oci, r);
   const cash = await role("factor_cash_reserve_held");
   let pair: EntryRow | null = null;
-  let debit: { account: string; entry: EntryRow };
-  let credit: { account: string; entry: EntryRow };
+  type Leg = { account: string; dc: "debit" | "credit"; amount: number; entry: EntryRow };
+  let legs: Leg[];
   let memo: string;
 
   if (entry.entry_kind === "escrow_to_cash") {
@@ -420,20 +426,53 @@ export async function postFaroReserveEntryOnClient(
     if (!pair.bank_transaction_id) throw new FaroReserveError("faro_entry_has_no_bank_line");
     const cashSide = entry.register === "cash" ? entry : pair;
     const escrowSide = entry.register === "escrow" ? entry : pair;
-    debit = { account: cash, entry: cashSide };
-    credit = { account: await role("factor_reserve_held"), entry: escrowSide };
+    legs = [
+      { account: cash, dc: "debit", amount, entry: cashSide },
+      { account: await role("factor_reserve_held"), dc: "credit", amount, entry: escrowSide },
+    ];
     memo = `Faro transfer escrow to cash — Inv ${entry.faro_invoice_number}`;
   } else if (entry.entry_kind === "schedule_fee") {
-    debit = { account: await role("factor_transaction_fee"), entry };
-    credit = { account: cash, entry };
-    memo = `Faro schedule fee — Inv ${entry.faro_invoice_number}`;
+    // PROVEN on Faro's own Cash Reserve report (11 of 11 rows): the "Schedule Fee" is the contract's DEFAULT INTEREST —
+    // 0.067%/day compounded for the days past day 35, charged against the cash reserve on the collection date. So it is
+    // never an expense of its own (that would book the interest twice). Interest through the fee date must be accrued
+    // first — an EVENT run, same maker <> checker path, DR 6830 / CR 2155 — then the fee relieves 2155; any difference
+    // to Faro's figure is trued up to 6830.
+    const pos = await interestPositionThrough(client, oci, link!.purchase_line_id, entry.entry_date);
+    if (pos.due_cents > 0) {
+      const run = await proposeEventInterestAccrual(client, {
+        operating_company_id: oci,
+        purchase_line_id: link!.purchase_line_id,
+        event_date: entry.entry_date,
+        actor_user_id: input.actor_user_id,
+      });
+      return { entry_id: entry.id, status: "interest_accrual_awaiting_approval", interest_run_id: run!.run_id, interest_due_cents: pos.due_cents };
+    }
+    const accruedAll = Number((await client.query<{ c: string }>(
+      `SELECT COALESCE(sum(rl.accrual_cents), 0)::text AS c FROM accounting.factoring_interest_accrual_run_lines rl
+         JOIN accounting.factoring_interest_accrual_runs r ON r.id = rl.run_id
+        WHERE rl.purchase_line_id = $1::uuid AND r.state = 'posted'`,
+      [link!.purchase_line_id]
+    )).rows[0]?.c ?? 0);
+    const interestExpense = await role("default_interest_expense");
+    const diff = amount - accruedAll;
+    legs = [
+      ...(accruedAll > 0 ? [{ account: await role("factor_default_interest_payable"), dc: "debit" as const, amount: accruedAll, entry }] : []),
+      ...(diff > 0 ? [{ account: interestExpense, dc: "debit" as const, amount: diff, entry }] : []),
+      ...(diff < 0 ? [{ account: interestExpense, dc: "credit" as const, amount: -diff, entry }] : []),
+      { account: cash, dc: "credit", amount, entry },
+    ];
+    memo = `Faro default interest charged to cash reserve (Faro "Schedule Fee") — Inv ${entry.faro_invoice_number}`;
   } else if (entry.entry_kind === "short_pay") {
-    debit = { account: await role("factoring_advance_liability"), entry };
-    credit = { account: cash, entry };
+    legs = [
+      { account: await role("factoring_advance_liability"), dc: "debit", amount, entry },
+      { account: cash, dc: "credit", amount, entry },
+    ];
     memo = `Faro short-pay charged to reserve — Inv ${entry.faro_invoice_number}`;
   } else {
-    debit = { account: await role("intercompany_receivable_ih35_transportation"), entry };
-    credit = { account: cash, entry };
+    legs = [
+      { account: await role("intercompany_receivable_ih35_transportation"), dc: "debit", amount, entry },
+      { account: cash, dc: "credit", amount, entry },
+    ];
     memo = "Faro client payable to IH 35 TRANSPORTATION reserve — due from affiliate";
   }
 
@@ -444,10 +483,7 @@ export async function postFaroReserveEntryOnClient(
       entry_date: entry.entry_date,
       memo,
       source: "auto",
-      postings: [
-        { account_id: debit.account, debit_or_credit: "debit", amount_cents: amount, description: memo, ...stamp(debit.entry) },
-        { account_id: credit.account, debit_or_credit: "credit", amount_cents: amount, description: memo, ...stamp(credit.entry) },
-      ],
+      postings: legs.map((l) => ({ account_id: l.account, debit_or_credit: l.dc, amount_cents: l.amount, description: memo, ...stamp(l.entry) })),
     },
     { userId: input.actor_user_id, role: input.actor_role }
   );

@@ -65,7 +65,9 @@ export function FactoringInterestAccrualPanel({ companyId, period }: { companyId
     enabled: Boolean(companyId),
   });
   const periodEnd = preview.data?.period_end;
-  const live = (runs.data ?? []).find((r) => r.period_end === periodEnd && r.state !== "rejected") ?? null;
+  const live = (runs.data ?? []).find((r) => (r.run_kind ?? "period_close") === "period_close" && r.period_end === periodEnd && r.state !== "rejected") ?? null;
+  // Owner ruling 2026-10-02: interest also accrues at collection / repurchase — one-invoice event runs, same approval path.
+  const pendingEvents = (runs.data ?? []).filter((r) => r.run_kind === "event" && r.state === "proposed");
 
   async function act(fn: () => Promise<unknown>) {
     setBusy(true);
@@ -127,6 +129,38 @@ export function FactoringInterestAccrualPanel({ companyId, period }: { companyId
           ) : null}
         </span>
       </div>
+      {pendingEvents.length ? (
+        <div className="mt-3 text-xs text-slate-700" data-testid="faro-interest-event-runs">
+          <div className="mb-1 font-semibold uppercase text-slate-600">Interest at collection / repurchase — awaiting approval</div>
+          <ul className="space-y-1">
+            {pendingEvents.map((r) => (
+              <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 tabular-nums">
+                <span>
+                  {r.event_invoice_id ? (
+                    <EntityLink kind="invoice" id={r.event_invoice_id} label={r.event_invoice_display_id ?? "Invoice"} />
+                  ) : (
+                    "Invoice"
+                  )}
+                  {r.event_faro_invoice_number ? ` (Faro Inv ${r.event_faro_invoice_number})` : ""} · through {formatDateUS(r.period_end)} ·{" "}
+                  {formatUsdCents(r.total_cents)}
+                </span>
+                {r.proposed_by_user_id === user?.uuid ? (
+                  <span className="text-slate-600">You proposed this — a different person approves it.</span>
+                ) : (
+                  <span className="inline-flex gap-2">
+                    <Button size="sm" loading={busy} onClick={() => void act(() => decideInterestAccrual(companyId, r.id, "approve"))}>
+                      Approve and post
+                    </Button>
+                    <Button size="sm" variant="secondary" loading={busy} onClick={() => void act(() => decideInterestAccrual(companyId, r.id, "reject"))}>
+                      Reject
+                    </Button>
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       {error ? <p className="mt-2 text-xs text-red-700" role="alert">{error}</p> : null}
     </DataPanel>
   );

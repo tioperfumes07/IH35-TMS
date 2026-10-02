@@ -43,6 +43,12 @@ export function checkStatic(src, cronSources) {
       fails.push(`${file}: a scheduled job reaches the interest accrual — it posts only at close, with approval`);
     }
   }
+  if (!/\(interestRunState === "posted" \|\| interestLines\.length === 0\) && pendingEventRuns === 0/.test(src.close)) {
+    fails.push(`${F.close}: month close can lock while an event (collection / repurchase) accrual awaits its second approver`);
+  }
+  if (!/run_kind, event_purchase_line_id\)\s*VALUES \(\$1::uuid, \$2::date, \$2::date, 1, \$3, \$4::uuid, 'event', \$5::uuid\)/.test(src.engine)) {
+    fails.push(`${F.engine}: the event-time accrual (owner ruling 2026-10-02) is gone or no longer a maker <> checker run`);
+  }
   if (!/fuelTaxComplete && factoringInterest\.complete/.test(src.close)) {
     fails.push(`${F.close}: month close can lock while Faro interest is due and unposted`);
   }
@@ -71,6 +77,7 @@ if (process.argv.includes("--selftest")) {
     ["maker can approve", { engine: good.engine.replace('throw new InterestAccrualError("interest_accrual_maker_cannot_approve")', "void 0") }],
     ["migration check dropped", { migration: good.migration.replace("decided_by_user_id IS NULL OR decided_by_user_id <> proposed_by_user_id", "true") }],
     ["close ignores interest", { close: good.close.replace("fuelTaxComplete && factoringInterest.complete", "fuelTaxComplete") }],
+    ["close ignores pending event runs", { close: good.close.replace("&& pendingEventRuns === 0", "") }],
   ];
   if (checkStatic(good, []).length) { console.error(`${LABEL} --selftest FAIL: tree not clean: ${checkStatic(good, []).join("; ")}`); process.exit(1); }
   const missed = plants.filter(([, over]) => checkStatic({ ...good, ...over }, []).length === 0).map(([n]) => n);
@@ -125,7 +132,7 @@ try {
     for (const r of drift) console.error(`  company ${r.oci}: 2150 ${r.gl} vs open Net ${r.open_net} (cents)`);
     process.exit(1);
   }
-  console.log(`${LABEL}: PASS — static 4/4; live: ${res.rows.length} company(ies) with 2150 or open purchases, every one ties; positive control: ${bound} active 2150 role binding(s)`);
+  console.log(`${LABEL}: PASS — static 6/6; live: ${res.rows.length} company(ies) with 2150 or open purchases, every one ties; positive control: ${bound} active 2150 role binding(s)`);
 } catch (err) {
   console.error(`${LABEL}: FAIL — live check could not run: ${err.message}`);
   process.exit(1);

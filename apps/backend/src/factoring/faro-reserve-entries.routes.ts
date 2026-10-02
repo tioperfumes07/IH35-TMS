@@ -16,6 +16,7 @@ import {
   postFaroReserveEntryOnClient,
   previewFaroReserveImport,
 } from "./faro-reserve-entries.service.js";
+import { InterestAccrualError } from "./interest-accrual.service.js";
 
 const POSTERS = new Set(["Owner", "Administrator", "Accountant"]);
 const register = z.enum(["escrow", "cash"]);
@@ -30,6 +31,7 @@ const postBody = z.object({ operating_company_id: z.string().uuid() });
 const idParams = z.object({ id: z.string().uuid() });
 
 function sendError(reply: FastifyReply, err: unknown) {
+  if (err instanceof InterestAccrualError) return reply.code(409).send({ error: err.code });
   if (err instanceof FaroReserveError) {
     return reply.code(err.code === "faro_entry_not_found" ? 404 : err.code.startsWith("faro_report_") ? 400 : 409).send({ error: err.code });
   }

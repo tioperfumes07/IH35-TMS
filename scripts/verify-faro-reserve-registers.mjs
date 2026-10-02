@@ -27,10 +27,11 @@ export function check(src) {
   const fails = [];
   const s = src.svc;
   const need = [
-    [/entry_kind === "schedule_fee"\) \{\s*debit = \{ account: await role\("factor_transaction_fee"\)/, "schedule fee must debit factor_transaction_fee (6405)"],
-    [/entry_kind === "short_pay"\) \{\s*debit = \{ account: await role\("factoring_advance_liability"\)/, "short-pay must debit factoring_advance_liability (2150)"],
-    [/debit = \{ account: await role\("intercompany_receivable_ih35_transportation"\)/, "client payable to IH 35 must debit the intercompany receivable (8000)"],
-    [/debit = \{ account: cash, entry: cashSide \};\s*credit = \{ account: await role\("factor_reserve_held"\)/, "escrow -> cash must be DR 1235 / CR 1230"],
+    [/const pos = await interestPositionThrough\(client, oci, link!\.purchase_line_id, entry\.entry_date\);\s*if \(pos\.due_cents > 0\) \{\s*const run = await proposeEventInterestAccrual/, "schedule fee (= Faro's Default Interest) must accrue interest through its date first (event run)"],
+    [/account: await role\("factor_default_interest_payable"\), dc: "debit" as const, amount: accruedAll/, "schedule fee must relieve 2155 (factor_default_interest_payable)"],
+    [/entry_kind === "short_pay"\) \{\s*legs = \[\s*\{ account: await role\("factoring_advance_liability"\), dc: "debit"/, "short-pay must debit factoring_advance_liability (2150)"],
+    [/\{ account: await role\("intercompany_receivable_ih35_transportation"\), dc: "debit"/, "client payable to IH 35 must debit the intercompany receivable (8000)"],
+    [/\{ account: cash, dc: "debit", amount, entry: cashSide \},\s*\{ account: await role\("factor_reserve_held"\), dc: "credit"/, "escrow -> cash must be DR 1235 / CR 1230"],
     [/throw new FaroReserveError\("faro_rsv_deposit_posts_with_its_payment_match"\)/, "a Rsv Deposit must refuse here"],
     [/throw new FaroReserveError\("faro_client_payable_to_us_posts_as_a_transfer"\)/, "a client payable to us must refuse here"],
     [/"inv_po_swapped"/, "the Inv/PO swap must be rejected"],
@@ -42,6 +43,7 @@ export function check(src) {
   if (!/FROM accounting\.transaction_source_links tsl\s+WHERE tsl\.journal_entry_posting_id = jp\.id AND tsl\.linked_object_type = 'invoice'/.test(src.reader)) {
     fails.push(`${F.reader}: the per-customer reserve must read each leg's invoice off the spine`);
   }
+  if (/role\("factor_transaction_fee"\)/.test(s)) fails.push(`${F.svc}: a Faro poster expenses to 6405 — Faro's Schedule Fee is the Default Interest already accrued in 2155`);
   if (/role\("ar_control"\)|"ar_control"/.test(s)) fails.push(`${F.svc}: a Faro poster resolves ar_control — A/R never left under secured borrowing`);
   if (!/user\.role !== "Owner"\) return reply\.code\(403\)\.send\(\{ error: "faro_reserve_import_owner_only" \}\)/.test(src.routes)) {
     fails.push(`${F.routes}: the report import is not Owner-only`);
@@ -54,8 +56,9 @@ const read = () => Object.fromEntries(Object.entries(F).map(([k, p]) => [k, fs.r
 if (process.argv.includes("--selftest")) {
   const g = read();
   const plants = [
-    ["short-pay to A/R", { svc: g.svc.replace('debit = { account: await role("factoring_advance_liability"), entry };', 'debit = { account: await role("ar_control"), entry };') }],
-    ["fee to 6400", { svc: g.svc.replace('await role("factor_transaction_fee")', 'await role("factor_fee_expense")') }],
+    ["short-pay to A/R", { svc: g.svc.replace('{ account: await role("factoring_advance_liability"), dc: "debit", amount, entry }', '{ account: await role("ar_control"), dc: "debit", amount, entry }') }],
+    ["fee expensed to 6405", { svc: g.svc.replace('account: await role("factor_default_interest_payable"), dc: "debit" as const, amount: accruedAll', 'account: await role("factor_transaction_fee"), dc: "debit" as const, amount: accruedAll') }],
+    ["fee posts without accrual", { svc: g.svc.replace("if (pos.due_cents > 0) {", "if (false) {") }],
     ["deposit posts", { svc: g.svc.replace('throw new FaroReserveError("faro_rsv_deposit_posts_with_its_payment_match")', "void 0") }],
     ["swap accepted", { svc: g.svc.replace('"inv_po_swapped"', '"ok"') }],
     ["spine write dropped", { svc: g.svc.replace("await writeFactoringSpineLinks(client, oci, je.id,", "void (client, oci, je.id,") }],
@@ -111,7 +114,7 @@ try {
     console.error(`${LABEL}: LIVE FAIL — ${bad.length} entr(ies) off their register or posted without a stamped register leg: ${bad.slice(0, 5).map((r) => `${r.id} ${r.entry_kind}`).join(", ")}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: PASS — static 11/11; live: ${n} Faro entr(ies), all on their register and stamped; positive control 2/2 register roles bound`);
+  console.log(`${LABEL}: PASS — static 13/13; live: ${n} Faro entr(ies), all on their register and stamped; positive control 2/2 register roles bound`);
 } catch (err) {
   console.error(`${LABEL}: FAIL — live check could not run: ${err.message}`);
   process.exit(1);
