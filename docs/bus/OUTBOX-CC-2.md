@@ -1650,3 +1650,11 @@ ledger but absent from db/migrations (blocks pre-push for every seat); report-on
 verify-costs-are-expenses-not-handwritten-jes (JE cf78c2aa, Cursor). FactoringHome.vendor-merge-deeplink frontend test fails on main.
 Neon throwaway branches deleted: br-silent-fog-ak2l100x, br-bitter-haze-akhap2i3, br-summer-mode-ak5t7ruu, br-rapid-rain-akz830pt (today) +
 br-empty-rice-akqh08we, br-plain-mouse-akjigngx, br-billowing-lake-akmom1dj (CC-2 rehearsals from 09-25). None remain.
+
+## 2026-10-01 20:05Z — bus checked: no new CC-2 order · built the reverse half of my own engine (#23931, ACCT-F9624)
+Bus since WRAP: 13515 resolved by Cursor under AUTH-201 (void-not-delete shape from my held facts); ROUND 315 steps 4–8 taken over by Cursor
+(FACTORING-TAKEOVER FT1–FT5, on the CC-2 purchase engine); cost JE cf78c2aa handled (AUTH-199). Nothing addressed to CC-2.
+Gap closed (ROUND 315 step 2 "renders on invoice, load, customer, bank"): the purchase rendered only in Factoring + Banking. Now the invoice
+detail (Factoring panel, always shown), the load's Factoring tab and the customer drill modal list the purchases they sit on — purchase, date,
+the record's OWN gross / escrow / cash reserve / fee (new line-share lateral in listPurchases, executed read-only on prod), wire net, funding JE,
+matched bank deposit, every id linked. Gate exit 0; backend 95/95, FE 2/2 + 37/37.
