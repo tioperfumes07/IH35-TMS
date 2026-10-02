@@ -20,6 +20,7 @@ const SOURCE_TYPE_LABELS: Record<string, string> = {
   settlement: "Settlement",
   transfer: "Transfer",
   expense: "Expense",
+  bank_deposit: "Deposit",
   bank_categorization: "Bank Categorization",
 };
 
@@ -275,6 +276,7 @@ export async function getAccountRegister(
               NULLIF(btrim(pay.display_id), ''),
               NULLIF(btrim(ex.expense_number), ''),
               CASE WHEN p.source_transaction_type = 'expense' THEN 'Expense' END,
+              NULLIF(btrim(dep.display_id), ''),
               NULLIF(btrim(ds.display_id), ''),
               NULLIF(btrim(bpay.bill_number), ''),
               NULLIF(btrim(btx_lbl.display_label), '')
@@ -312,6 +314,9 @@ export async function getAccountRegister(
         AND bpp.operating_company_id = p.operating_company_id
        LEFT JOIN accounting.bills bpay
          ON bpay.id = bpp.bill_id AND bpay.operating_company_id = p.operating_company_id
+       LEFT JOIN accounting.deposits dep
+         ON p.source_transaction_type = 'bank_deposit' AND dep.id::text = p.source_transaction_id
+        AND dep.operating_company_id = p.operating_company_id
        LEFT JOIN LATERAL (
          SELECT COALESCE(NULLIF(btrim(bt.merchant_name), ''), NULLIF(btrim(bt.description), '')) AS display_label
            FROM banking.bank_transactions bt

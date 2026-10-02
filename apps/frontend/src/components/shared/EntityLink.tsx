@@ -365,7 +365,7 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
     case "payment":
       return `/accounting/payments/${id}`;
     case "deposit":
-      return `/banking/deposits`;
+      return `/banking/deposits/${id}`;
     case "bill_payment":
       return `/accounting/bill-payments/${id}`;
     case "transfer":

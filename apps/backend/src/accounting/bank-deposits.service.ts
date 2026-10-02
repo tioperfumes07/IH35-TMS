@@ -503,9 +503,22 @@ export async function getBankDeposit(operatingCompanyId: string, userId: string,
   return withCompanyTx(userId, operatingCompanyId, async (client) => {
     const header = await client.query(
       `
-      SELECT d.*, ba.account_name AS bank_account_name
+      SELECT d.*, ba.account_name AS bank_account_name,
+             bt.id::text AS matched_bank_transaction_id,
+             bt.transaction_date AS matched_bank_transaction_date,
+             COALESCE(NULLIF(bt.merchant_name, ''), NULLIF(bt.description, '')) AS matched_bank_transaction_description,
+             bt.amount_cents::text AS matched_bank_transaction_amount_cents
       FROM accounting.deposits d
       LEFT JOIN banking.bank_accounts ba ON ba.id = d.bank_account_id
+      LEFT JOIN LATERAL (
+        SELECT id, transaction_date, merchant_name, description, amount_cents
+          FROM banking.bank_transactions
+         WHERE operating_company_id = d.operating_company_id
+           AND d.journal_entry_id IS NOT NULL
+           AND matched_journal_entry_id = d.journal_entry_id
+         ORDER BY transaction_date DESC, created_at DESC
+         LIMIT 1
+      ) bt ON TRUE
       WHERE d.id = $1::uuid AND d.operating_company_id = $2::uuid
       `,
       [depositId, operatingCompanyId]
@@ -513,11 +526,41 @@ export async function getBankDeposit(operatingCompanyId: string, userId: string,
     if (!header.rows[0]) return null;
     const lines = await client.query(
       `
-      SELECT * FROM accounting.deposit_lines
-      WHERE deposit_id = $1::uuid
-      ORDER BY sort_order ASC, created_at ASC
+      SELECT dl.id::text, dl.line_type, dl.amount_cents::bigint AS amount_cents, dl.memo,
+             dl.source_payment_id::text AS source_payment_id,
+             dl.source_factoring_advance_id::text AS source_factoring_advance_id,
+             p.display_id AS payment_display_id,
+             p.customer_id::text AS customer_id,
+             COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(p.customer_id, p.operating_company_id)) AS customer_name,
+             inv.id::text AS invoice_id,
+             inv.display_id AS invoice_display_id,
+             COALESCE(inv.source_load_id, fa.source_load_id)::text AS load_id,
+             l.load_number AS load_number,
+             fa.display_id AS factoring_advance_display_id,
+             fa.faro_invoice_number AS faro_invoice_number
+        FROM accounting.deposit_lines dl
+        LEFT JOIN accounting.payments p
+          ON p.id = dl.source_payment_id AND p.operating_company_id = $2::uuid
+        LEFT JOIN mdata.customers c
+          ON c.id = p.customer_id AND c.operating_company_id = p.operating_company_id
+        LEFT JOIN LATERAL (
+          SELECT pa.invoice_id
+            FROM accounting.payment_applications pa
+           WHERE pa.payment_id = p.id AND pa.unapplied_at IS NULL
+           ORDER BY pa.created_at ASC
+           LIMIT 1
+        ) pa0 ON TRUE
+        LEFT JOIN accounting.invoices inv
+          ON inv.id = pa0.invoice_id AND inv.operating_company_id = $2::uuid
+        LEFT JOIN accounting.factoring_advances fa
+          ON fa.id = dl.source_factoring_advance_id AND fa.operating_company_id = $2::uuid
+        LEFT JOIN mdata.loads l
+          ON l.id = COALESCE(inv.source_load_id, fa.source_load_id)
+         AND l.operating_company_id = $2::uuid
+       WHERE dl.deposit_id = $1::uuid
+       ORDER BY dl.sort_order ASC, dl.created_at ASC
       `,
-      [depositId]
+      [depositId, operatingCompanyId]
     );
     return { ...header.rows[0], lines: lines.rows };
   });

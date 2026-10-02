@@ -38,6 +38,7 @@ function main() {
     "apps/frontend/src/pages/accounting/BillDetailPage.tsx",
     "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx",
     "apps/frontend/src/pages/accounting/checks/CheckDetailPage.tsx",
+    "apps/frontend/src/pages/banking/DepositDetailPage.tsx",
   ]) {
     assertIncludes(read(file), "OnlineBankingMatchBanner", file);
   }
@@ -45,6 +46,23 @@ function main() {
   const checksRoute = read("apps/backend/src/accounting/checks/checks.routes.ts");
   assertIncludes(checksRoute, "matched_expense_id = e.id", "checks.routes.ts");
   assertIncludes(checksRoute, "matched_bank_transaction_id", "checks.routes.ts");
+
+  assertIncludes(read("apps/frontend/src/pages/banking/DepositDetailPage.tsx"), 'kind="customer"', "DepositDetailPage.tsx");
+  assertIncludes(read("apps/frontend/src/pages/banking/DepositDetailPage.tsx"), 'kind="load"', "DepositDetailPage.tsx");
+  assertIncludes(read("apps/frontend/src/pages/banking/DepositDetailPage.tsx"), 'kind="invoice"', "DepositDetailPage.tsx");
+
+  const depositsService = read("apps/backend/src/accounting/bank-deposits.service.ts");
+  assertIncludes(depositsService, "matched_journal_entry_id = d.journal_entry_id", "bank-deposits.service.ts");
+  assertIncludes(depositsService, "matched_bank_transaction_id", "bank-deposits.service.ts");
+  assertIncludes(depositsService, "payment_applications", "bank-deposits.service.ts");
+  assertIncludes(depositsService, "source_load_id", "bank-deposits.service.ts");
+
+  const registerPage = read("apps/frontend/src/pages/accounting/AccountRegisterPage.tsx");
+  assertIncludes(registerPage, 't === "bank_deposit"', "AccountRegisterPage.tsx");
+  assertIncludes(registerPage, "/banking/deposits/${reference}", "AccountRegisterPage.tsx");
+
+  const entityLink = read("apps/frontend/src/components/shared/EntityLink.tsx");
+  assertIncludes(entityLink, "`/banking/deposits/${id}`", "EntityLink.tsx");
 
   const recon = read("apps/backend/src/accounting/bank-recon/recon-worklist.routes.ts");
   assertIncludes(recon, 'app.post("/api/v1/bank-recon/unmatch"', "recon-worklist.routes.ts");

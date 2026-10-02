@@ -88,6 +88,8 @@ function sourceRoute(
   if (t === "bill_payment") return "/accounting/bill-payments";
   if (t === "expense" && reference) return `/accounting/expenses/${reference}`;
   if (t === "expense") return "/accounting/expenses/list";
+  if (t === "bank_deposit" && reference) return `/banking/deposits/${reference}`;
+  if (t === "bank_deposit") return "/banking/deposits";
   if (t === "settlement" && reference) return `/driver-finance/settlements?settlement_id=${reference}`;
   if (t === "settlement") return "/driver-finance/settlements";
   // Law §9 transfer reverse: banking transfers list (QBO Transfer / fund move).
