@@ -1606,6 +1606,11 @@
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-02",
       "purpose": "ROUND 340 step 3 (split: the runner runs an IH35_MIGRATION_NO_TRANSACTION file as ONE statement): ALTER TABLE telematics.unit_stop_events DROP CONSTRAINT IF EXISTS unit_stop_events_unit_start_unique (unit_id, started_at) — replaced by 202615301100."
+    },
+    "202615310600": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-02",
+      "purpose": "ROUND 342 Phase 4 — drop the three duplicate tenant_id RLS policies (factoring.customer_factor_assignment / factor / letter_of_release); permissive policies OR together, so a row was visible if EITHER scope column matched. operating_company_id is canonical."
     }
   },
   "202613590001": {
