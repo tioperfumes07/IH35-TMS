@@ -1551,6 +1551,11 @@
       "claimed_by": "CURSOR",
       "claimed_at": "2026-10-02",
       "purpose": "BANK-F91038 Amount to Credit → vendor credit on bill-payment overpay: additive source_bill_payment_id on accounting.vendor_credits (FK bill_payments; source_payment_id already FKs AR payments only)."
+    },
+    "202615300100": {
+      "claimed_by": "CC-1",
+      "claimed_at": "2026-10-02",
+      "purpose": "Lead ROUND 332 item 3 — a load enters 'invoiced' only with a live issued invoice; voiding / deleting its invoice reverts the load (triggers)"
     }
   },
   "202613590001": {
