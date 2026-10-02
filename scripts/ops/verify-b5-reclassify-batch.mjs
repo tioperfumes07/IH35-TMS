@@ -40,6 +40,12 @@ function main() {
 
   assertIncludes(reclassify, 'data-b5-reclassify="1"', RECLASSIFY);
   assertIncludes(reclassify, 'data-b5-period-balances="1"', RECLASSIFY);
+  // BANK-F91048 — ORDERS §B-5 left pane PERIOD BALANCES (From/To)
+  assertIncludes(reclassify, 'data-b5-period-from-to="1"', RECLASSIFY);
+  assertIncludes(reclassify, 'data-testid="reclassify-period-from-to"', RECLASSIFY);
+  assertIncludes(reclassify, 'data-testid="reclassify-period-from"', RECLASSIFY);
+  assertIncludes(reclassify, 'data-testid="reclassify-period-to"', RECLASSIFY);
+  assertIncludes(reclassify, "Accounts · period balances", RECLASSIFY);
   assertIncludes(reclassify, 'data-b5-selection-bar="1"', RECLASSIFY);
   assertIncludes(reclassify, "transaction line", RECLASSIFY);
   assertIncludes(reclassify, "selected:", RECLASSIFY);
