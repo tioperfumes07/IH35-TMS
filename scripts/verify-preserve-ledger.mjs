@@ -28,6 +28,10 @@ for (const t of TABLES) {
   if (!/pre_reset jsonb/.test(m[1])) fails.push(`preserve.${t} does not carry the dead pre_reset reference`);
   if (!SVC.includes(`INSERT INTO preserve.${t} `)) fails.push(`the copy engine does not preserve ${t}`);
 }
+// ROUND 340: preserve.unit_stop_events moved to a ledger-generated surrogate id + UNIQUE on the full observation grain
+// (company_code, unit_number, started_at, ended_at) — migration 202615301000 must keep that natural unique key.
+const MIG_USE = readFileSync("db/migrations/202615301000_preserve_unit_stop_events_observation_key.sql", "utf8");
+if (!/UNIQUE INDEX IF NOT EXISTS uq_preserve_unit_stop_events_observation\s+ON preserve\.unit_stop_events \(company_code, unit_number, started_at, ended_at\)/.test(MIG_USE)) fails.push("preserve.unit_stop_events lost its natural observation key (company_code, unit_number, started_at, ended_at)");
 if (!/BEFORE UPDATE OR DELETE ON preserve\.%I/.test(MIG) || !/BEFORE TRUNCATE ON preserve\.%I/.test(MIG)) fails.push("WORM triggers (UPDATE / DELETE / TRUNCATE) are missing");
 if (!/FORCE ROW LEVEL SECURITY/.test(MIG)) fails.push("preserve tables must have FORCED RLS");
 if (!/ON CONFLICT DO NOTHING/.test(SVC)) fails.push("the copy engine must be idempotent (ON CONFLICT DO NOTHING)");
