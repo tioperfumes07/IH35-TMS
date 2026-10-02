@@ -36,6 +36,11 @@ export function LeaseContractCreator({ open, onClose, onCreated, defaultType = "
   const [deposit, setDeposit] = useState<number | null>(null);
   const [escPct, setEscPct] = useState("");
   const [escEvery, setEscEvery] = useState("");
+  // ROUND 321 lease-to-own (ASC 842 lessee): FMV purchase option -> operating, fixed price -> finance (owner B1 rule).
+  const [ratePct, setRatePct] = useState("");
+  const [optKind, setOptKind] = useState<"" | "none" | "fmv" | "fixed">("");
+  const [optPrice, setOptPrice] = useState<number | null>(null);
+  const isLto = leaseType === "lease_to_own";
   const [election, setElection] = useState<"operating" | "sales_type">("operating");
   const [accountId, setAccountId] = useState<string | null>(null);
   const [displayId, setDisplayId] = useState("");
@@ -94,6 +99,9 @@ export function LeaseContractCreator({ open, onClose, onCreated, defaultType = "
         election,
         expense_account_id: accountId,
         display_id: displayId.trim() || null,
+        ...(isLto
+          ? { discount_rate_bps: Math.round(Number(ratePct) * 100), purchase_option_kind: optKind || null, purchase_option_price_cents: optKind === "fixed" ? optPrice : null }
+          : {}),
         assets: selected.map(([id, cents]) => {
           const a = assets.find((x) => x.id === id);
           return a?.kind === "equipment" ? { equipment_id: id, monthly_amount_cents: cents ?? 0 } : { unit_id: id, monthly_amount_cents: cents ?? 0 };
@@ -113,6 +121,9 @@ export function LeaseContractCreator({ open, onClose, onCreated, defaultType = "
     !end && "end date",
     !selected.length && "at least one unit / trailer",
     selected.some(([, c]) => c == null) && "a monthly amount for every selected unit / trailer",
+    isLto && (ratePct === "" || !(Number(ratePct) >= 0)) && "discount rate",
+    isLto && !optKind && "purchase option",
+    isLto && optKind === "fixed" && optPrice == null && "purchase price",
   ].filter(Boolean) as string[];
 
   return (
@@ -155,6 +166,21 @@ export function LeaseContractCreator({ open, onClose, onCreated, defaultType = "
           <label className="flex flex-col gap-1 font-semibold text-gray-600">Contract number<input className="rounded-sm border border-gray-300 px-2 py-1" value={displayId} onChange={(e) => setDisplayId(e.target.value)} placeholder="optional" /></label>
           <label className="flex flex-col gap-1 font-semibold text-gray-600">Escalation %<input className="rounded-sm border border-gray-300 px-2 py-1" inputMode="decimal" value={escPct} onChange={(e) => setEscPct(e.target.value)} placeholder="e.g. 3" /></label>
           <label className="flex flex-col gap-1 font-semibold text-gray-600">Every (months)<input className="rounded-sm border border-gray-300 px-2 py-1" inputMode="numeric" value={escEvery} onChange={(e) => setEscEvery(e.target.value)} placeholder="e.g. 12" /></label>
+          {isLto ? (
+            <>
+              <label className="flex flex-col gap-1 font-semibold text-gray-600">Discount rate % (annual)<input className="rounded-sm border border-gray-300 px-2 py-1" inputMode="decimal" value={ratePct} onChange={(e) => setRatePct(e.target.value)} placeholder="rate in the contract, e.g. 8" /></label>
+              <label className="flex flex-col gap-1 font-semibold text-gray-600">
+                Purchase option
+                <select className="rounded-sm border border-gray-300 px-2 py-1" value={optKind} onChange={(e) => setOptKind(e.target.value as "" | "none" | "fmv" | "fixed")}>
+                  <option value="">Choose…</option>
+                  <option value="fmv">Fair market value at the end (operating lease)</option>
+                  <option value="fixed">Fixed price (finance lease)</option>
+                  <option value="none">No purchase option (operating lease)</option>
+                </select>
+              </label>
+              {optKind === "fixed" ? <label className="flex flex-col gap-1 font-semibold text-gray-600">Purchase price<MoneyInput valueCents={optPrice} onChangeCents={setOptPrice} /></label> : null}
+            </>
+          ) : null}
           <label className="flex flex-col gap-1 font-semibold text-gray-600">
             ASC 842 class
             <select className="rounded-sm border border-gray-300 px-2 py-1" value={election} onChange={(e) => setElection(e.target.value as "operating" | "sales_type")}>

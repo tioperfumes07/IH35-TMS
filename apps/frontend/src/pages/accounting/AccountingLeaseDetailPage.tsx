@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
-import { leasesApi, type LeaseAssetRow, type LeaseBillRow } from "../../api/leases";
+import { leasesApi, type LeaseAssetRow, type LeaseBillRow, type LesseeSchedulePeriodRow } from "../../api/leases";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { companyToday } from "../../lib/businessDate";
 import { formatDateUS, formatDateTimeUS } from "../../lib/formatDate";
@@ -42,6 +43,23 @@ const billColumns: Array<ParityColumn<LeaseBillRow>> = [
   { key: "last_payment_id", label: "Payment", render: (r) => (r.last_payment_id ? <EntityLink kind="bill_payment" id={r.last_payment_id} label="Payment" className="underline" /> : "—") },
 ];
 
+// ROUND 321: the ASC 842 lessee schedule (lease-to-own) — each period with its bill and JE, both ways.
+function scheduleColumns(labels: Map<string, string>): Array<ParityColumn<LesseeSchedulePeriodRow>> {
+  return [
+    { key: "period_start", label: "Month", alwaysVisible: true, render: (r) => `${r.period_start.slice(5, 7)}/${r.period_start.slice(0, 4)}` },
+    { key: "lease_asset_line_id", label: "Unit / trailer", render: (r) => labels.get(r.lease_asset_line_id) ?? "—" },
+    { key: "payment_cents", label: "Payment", className: "text-right", render: (r) => formatUsdCentsTable(r.payment_cents) },
+    { key: "interest_cents", label: "Interest", className: "text-right", render: (r) => formatUsdCentsTable(r.interest_cents) },
+    { key: "principal_cents", label: "Principal", className: "text-right", render: (r) => formatUsdCentsTable(r.principal_cents) },
+    { key: "liability_close_cents", label: "Lease liability", className: "text-right", render: (r) => formatUsdCentsTable(r.liability_close_cents) },
+    { key: "rou_amortization_cents", label: "ROU amortization", className: "text-right", render: (r) => formatUsdCentsTable(r.rou_amortization_cents) },
+    { key: "rou_close_cents", label: "ROU asset", className: "text-right", render: (r) => formatUsdCentsTable(r.rou_close_cents) },
+    { key: "lease_cost_cents", label: "Lease cost", className: "text-right", render: (r) => formatUsdCentsTable(r.lease_cost_cents) },
+    { key: "bill_id", label: "Bill", render: (r) => (r.bill_id ? <EntityLink kind="bill" id={r.bill_id} label={r.bill_display_id ?? "Bill"} className="underline" /> : "—") },
+    { key: "accretion_je_id", label: "Journal entry", render: (r) => (r.accretion_je_id ? <EntityLink kind="journal_entry" id={r.accretion_je_id} label="JE" className="underline" /> : r.posted_at ? "posted (zero)" : "—") },
+  ];
+}
+
 export function AccountingLeaseDetailPage() {
   const { id = "" } = useParams();
   const { selectedCompanyId } = useCompanyContext();
@@ -72,7 +90,14 @@ export function AccountingLeaseDetailPage() {
     onSuccess: (r) => { setMsg(`${r.created.length} bill(s) created, ${r.skipped_existing.length} already existed${r.refused.length ? `; refused: ${r.refused.map((x) => x.reason).join("; ")}` : ""}.`); refresh(); },
     onError: (e) => setMsg(userFacingApiError(e, "Could not generate bills.")),
   });
+  const [buyout, setBuyout] = useState<{ on: string; price: number | null } | null>(null);
+  const buy = useMutation({
+    mutationFn: () => leasesApi.buyout(companyId, id, String(buyout?.on), buyout?.price ?? null),
+    onSuccess: (r) => { setBuyout(null); setMsg(`Bought out. Purchase bill created for ${formatUsdCentsTable(r.price_cents)}; ${r.assets.length} asset(s) moved to owned fixed assets.`); refresh(); },
+    onError: (e) => setMsg(userFacingApiError(e, "Could not buy out the lease.")),
+  });
   const l = query.data?.lease;
+  const assetLabels = new Map((query.data?.assets ?? []).map((a) => [a.id, String((a as Record<string, unknown>).unit_number ?? (a as Record<string, unknown>).equipment_number ?? "—")]));
   const monthly = (query.data?.assets ?? []).reduce((s, a) => s + (a.monthly_amount_cents ?? 0), 0);
 
   return (
@@ -89,7 +114,14 @@ export function AccountingLeaseDetailPage() {
               ["Lessor company", l.lessor_company ?? "—"],
               ["Monthly total", formatUsdCentsTable(monthly)],
               ["Deposit", l.deposit_cents != null ? formatUsdCentsTable(l.deposit_cents) : "—"],
-              ["ASC 842 class", l.election],
+              ["ASC 842 class", l.lessee_classification ? `Lessee — ${l.lessee_classification}` : l.election],
+              ...(l.lease_type === "lease_to_own"
+                ? ([
+                    ["Purchase option", l.purchase_option_kind === "fixed" ? `Fixed ${formatUsdCentsTable(Number(l.purchase_option_price_cents ?? 0))}` : l.purchase_option_kind === "fmv" ? "Fair market value" : l.purchase_option_kind === "none" ? "None" : "—"],
+                    ["Discount rate", l.discount_rate_bps != null ? `${(Number(l.discount_rate_bps) / 100).toFixed(2)}%` : "—"],
+                    ["Lease liability at commencement", l.lessee_liability_initial_cents != null ? formatUsdCentsTable(Number(l.lessee_liability_initial_cents)) : "—"],
+                  ] as Array<[string, string]>)
+                : []),
               ["Signed", l.signed_at ? formatDateTimeUS(String(l.signed_at)) : "Not signed"],
               ["Expense account", l.expense_account_name ?? "rent_expense role"],
             ].map(([k, v]) => (
@@ -112,6 +144,22 @@ export function AccountingLeaseDetailPage() {
                 <Button onClick={() => { setMsg(null); sign.mutate(); }} disabled={sign.isPending}>{sign.isPending ? "Signing…" : "Sign lease (Owner)"}</Button>
               </>
             ) : null}
+            {l.status === "active" && l.lease_type === "lease_to_own" && l.lessee_classification ? (
+              buyout ? (
+                <>
+                  <label className="flex flex-col gap-1 font-semibold text-gray-600">Buyout date<DatePicker value={buyout.on} onChange={(v) => setBuyout({ ...buyout, on: v })} /></label>
+                  {l.purchase_option_kind === "fixed" ? (
+                    <span className="text-gray-700">Price: {formatUsdCentsTable(Number(l.purchase_option_price_cents ?? 0))} (fixed in the contract)</span>
+                  ) : (
+                    <label className="flex flex-col gap-1 font-semibold text-gray-600">Purchase price (fair market value)<MoneyInput valueCents={buyout.price} onChangeCents={(c) => setBuyout({ ...buyout, price: c })} /></label>
+                  )}
+                  <Button onClick={() => { setMsg(null); buy.mutate(); }} disabled={buy.isPending || (l.purchase_option_kind !== "fixed" && buyout.price == null)}>{buy.isPending ? "Buying out…" : "Buy out (Owner)"}</Button>
+                  <Button variant="secondary" onClick={() => setBuyout(null)}>Cancel</Button>
+                </>
+              ) : (
+                <Button variant="secondary" onClick={() => setBuyout({ on: companyToday(), price: null })}>Buy out…</Button>
+              )
+            ) : null}
             {l.status === "active" ? (
               <>
                 <Button variant="secondary" onClick={() => { setMsg(null); bills.mutate(); }} disabled={bills.isPending}>Generate this month's bill(s)</Button>
@@ -131,6 +179,16 @@ export function AccountingLeaseDetailPage() {
           </section>
 
           <ParityTable embedded rows={query.data?.assets ?? []} columns={assetColumns} rowKey={(r) => r.id} storageKey="lease-assets" exportFilename="lease-assets" tableTestId="lease-assets-table" emptyText="No units or trailers on this lease." />
+          {l.lessee_commencement_je_id || l.buyout_bill_id || l.buyout_je_id ? (
+            <section className="flex flex-wrap gap-4 rounded-sm border border-gray-200 bg-white p-3">
+              {l.lessee_commencement_je_id ? <span>Commencement: <EntityLink kind="journal_entry" id={String(l.lessee_commencement_je_id)} label="ROU / lease liability JE" className="font-semibold underline" /></span> : null}
+              {l.buyout_bill_id ? <span>Buyout: <EntityLink kind="bill" id={String(l.buyout_bill_id)} label="purchase bill" className="font-semibold underline" /></span> : null}
+              {l.buyout_je_id ? <span><EntityLink kind="journal_entry" id={String(l.buyout_je_id)} label="ROU to fixed asset JE" className="font-semibold underline" /></span> : null}
+            </section>
+          ) : null}
+          {(query.data?.schedule ?? []).length ? (
+            <ParityTable embedded rows={query.data?.schedule ?? []} columns={scheduleColumns(assetLabels)} rowKey={(r) => r.id} storageKey="lease-lessee-schedule" exportFilename="lease-asc842-schedule" tableTestId="lease-lessee-schedule-table" emptyText="No ASC 842 schedule." />
+          ) : null}
           <ParityTable embedded rows={query.data?.bills ?? []} columns={billColumns} rowKey={(r) => r.id} storageKey="lease-bills" exportFilename="lease-bills" tableTestId="lease-bills-table" emptyText="No lease bills yet — they are created when the lease is signed and every month after." />
         </div>
       ) : null}
