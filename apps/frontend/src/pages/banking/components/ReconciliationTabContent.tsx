@@ -545,10 +545,12 @@ export function ReconciliationTabContent({
                 <button
                   key={session.id}
                   type="button"
+                  data-testid={`recon-view-report-${session.id}`}
+                  data-b2-recon-view-report="1"
                   className="w-full rounded-sm border border-gray-100 px-2 py-1 text-left text-xs hover:bg-gray-50"
                   onClick={() => openWorkspace(session)}
                 >
-                  {session.period_start} to {session.period_end} · ending{" "}
+                  View report: {session.period_start} to {session.period_end} · ending{" "}
                   {money(session.statement_balance_cents)} · difference {money(session.variance_cents)}
                 </button>
               ))}
