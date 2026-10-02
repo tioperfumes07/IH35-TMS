@@ -72,6 +72,11 @@ function main() {
   assertIncludes(page, "statusFilter", PAGE);
   assertIncludes(page, "filteredRows", PAGE);
   assertIncludes(page, "printList", PAGE);
+  // BANK-F91044 — ORDERS §B-1 "Go to page N of M" via shared ParityTable pager label
+  const parityTable = read("apps/frontend/src/components/parity/ParityTable.tsx");
+  assertIncludes(parityTable, 'data-parity-goto-page="1"', "ParityTable.tsx");
+  assertIncludes(parityTable, "Go to page", "ParityTable.tsx");
+  assertIncludes(parityTable, 'aria-label="Go to page"', "ParityTable.tsx");
   // Print must honor the same payee/status filter as the on-screen table (BANK-F91012 follow-on).
   if (!/const rowsHtml = filteredRows/.test(page)) {
     throw new Error(`${PAGE}: printList must map filteredRows (not report.rows)`);
