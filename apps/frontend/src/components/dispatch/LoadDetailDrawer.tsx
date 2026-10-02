@@ -27,6 +27,7 @@ import { TourPreSettlementTab } from "./TourPreSettlementTab";
 import { getTourReadoutForLoad } from "../../api/tourReadout";
 import { TourSettlementTab } from "./TourSettlementTab";
 import { LoadDetailGeofenceTimelineTab } from "./LoadDetailGeofenceTimelineTab";
+import { TelematicsLinksPanel } from "../telematics/TelematicsLinksPanel";
 import { LoadStopsRecordTab } from "./LoadStopsRecordTab";
 import { LoadAuditTab } from "./LoadAuditTab";
 import { STATUS_LABEL, formatMoneyCents } from "./constants";
@@ -1487,10 +1488,14 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
 
           {activeTab === "Geofence Timeline" ? (
             load ? (
-              <LoadDetailGeofenceTimelineTab
-                loadId={load.id}
-                operatingCompanyId={load.operating_company_id}
-              />
+              <div className="space-y-2">
+                <LoadDetailGeofenceTimelineTab
+                  loadId={load.id}
+                  operatingCompanyId={load.operating_company_id}
+                />
+                {/* E-31 / linkage: the load's telematics (stop arrivals, DVIRs, faults, fuel, HOS) -- reverse of /units/:id. */}
+                <TelematicsLinksPanel kind="load" id={load.id} operatingCompanyId={load.operating_company_id} />
+              </div>
             ) : (
               <div className="text-xs text-gray-500">Loading…</div>
             )
