@@ -67,9 +67,16 @@ function verifySourceFiles() {
   if (!src.includes("net cash") && !src.includes("Net cash") && !src.includes("net_cash")) {
     fail('FactoringTab.tsx missing "net cash" in the money card');
   }
-  // GL account references (2150 = Factoring Advance liability, 1230 = Factoring Reserves)
+  // GL account references — 2150 = Factoring Advance liability.
+  // Escrow reserve: OWNER 2026-10-02 rebound factor_reserve_held → 1236 Faro Escrow Reserve
+  // (ACCT-F9330). Labels must name the role / Faro Escrow Reserve — never hard-code retired 1230.
   if (!src.includes("2150")) fail('FactoringTab.tsx missing "2150" (Factoring Advance liability account)');
-  if (!src.includes("1230")) fail('FactoringTab.tsx missing "1230" (Factoring Reserves account)');
+  if (src.includes("1230")) {
+    fail('FactoringTab.tsx still hard-codes "1230" — escrow is role factor_reserve_held → 1236 Faro Escrow Reserve (ACCT-F9330)');
+  }
+  if (!/Faro Escrow Reserve|escrow role/i.test(src)) {
+    fail('FactoringTab.tsx missing Faro Escrow Reserve / escrow role label (ACCT-F9330)');
+  }
 
   // 3. Packet card with real attachment chips — no "upload under Documents" text
   if (!src.includes("Packet")) fail('FactoringTab.tsx missing "Packet" card');

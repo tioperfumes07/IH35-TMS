@@ -7,9 +7,9 @@
 //   1. reconcile obligation_type enum accepts "expense"
 //   2. loadObligationCandidates emits obligation_type "expense" rows read from accounting.expenses
 //   3. OBLIGATION_EXISTENCE_SQL validates an expense id belongs to the company before Accept writes it
-//   4. the Accept path routes "expense" through the generic linked_entity_id + category_kind pair
-//      (Accept marks the txn reconciled; it never posts a JE here — never auto-post)
-// It never asserts a new GL/posting path — reconcile only marks a match.
+//   4. Accept for expense goes through acceptReconMatch (OWNER LAW 2026-10-02 competing-engine —
+//      never a local matched_* / linked_entity stamp)
+// It never asserts a new GL/posting path — reconcile only marks a match via the one Match engine.
 import { readFileSync } from "node:fs";
 
 const ROUTES = "apps/backend/src/banking/obligation-reconcile.routes.ts";
@@ -18,13 +18,25 @@ const fail = (m) => { console.error(`FAIL verify-banking-reconcile-expense-candi
 const CHECKS = [
   // 1 — enum
   { id: "enum", ok: (s) => /obligation_type:\s*z\.enum\(\[[^\]]*"expense"[^\]]*\]\)/.test(s) },
-  // 2 — candidate loader reads accounting.expenses and pushes obligation_type "expense"
-  { id: "candidate-select", ok: (s) => /SELECT id, expense_number, total_amount_cents, transaction_date::text/.test(s) },
+  // 2 — candidate loader reads accounting.expenses (aliased e. or bare) and pushes obligation_type "expense"
+  {
+    id: "candidate-select",
+    ok: (s) =>
+      /SELECT\s+(?:e\.)?id,\s*(?:e\.)?expense_number,\s*(?:e\.)?total_amount_cents,\s*(?:e\.)?transaction_date::text/.test(
+        s
+      ),
+  },
   { id: "candidate-push", ok: (s) => /obligation_type:\s*"expense"/.test(s) },
   // 3 — existence allow-list entry
   { id: "existence-sql", ok: (s) => /expense:\s*`SELECT 1 FROM accounting\.expenses/.test(s) },
-  // 4 — accept path routes expense through the linked (generic) path
-  { id: "accept-linked", ok: (s) => /obligation_type === "expense"/.test(s) },
+  // 4 — accept path: expense is a canonical kind that reaches acceptReconMatch
+  {
+    id: "accept-linked",
+    ok: (s) =>
+      /obligation_type === "expense"/.test(s) &&
+      /acceptReconMatch\s*\(/.test(s) &&
+      !/matched_expense_id\s*=\s*COALESCE\s*\(\s*\$/.test(s),
+  },
 ];
 
 function verify(text) {
@@ -41,10 +53,11 @@ if (process.argv.includes("--selftest")) {
   if (baseline.length) fail(`baseline is not green — real checks failing: ${baseline.join(", ")}`);
   const mutations = [
     source.replace('"expense", "factoring_batch"', '"factoring_batch"'),
-    source.replace("SELECT id, expense_number, total_amount_cents, transaction_date::text", "SELECT id, broken_col"),
+    source.replace(/SELECT\s+(?:e\.)?id,\s*(?:e\.)?expense_number,\s*(?:e\.)?total_amount_cents,\s*(?:e\.)?transaction_date::text/, "SELECT id, broken_col"),
     source.replaceAll('obligation_type: "expense"', 'obligation_type: "NOPE"'),
     source.replace("expense: `SELECT 1 FROM accounting.expenses", "expenseNOPE: `SELECT 1 FROM accounting.expenses"),
     source.replaceAll('obligation_type === "expense"', 'obligation_type === "NOPE"'),
+    source.replace(/acceptReconMatch\s*\(/g, "retiredAccept("),
   ];
   for (const m of mutations) {
     if (m === source) fail("a selftest mutation did not change the source — the check is stale");
@@ -56,4 +69,4 @@ if (process.argv.includes("--selftest")) {
 
 const failures = verify(readFileSync(ROUTES, "utf8"));
 if (failures.length) fail(`expense reconcile-candidate wiring missing: ${failures.join(", ")}`);
-console.log("OK verify-banking-reconcile-expense-candidate: expense is a first-class reconcile-match candidate (enum + candidate + existence + Accept).");
+console.log("OK verify-banking-reconcile-expense-candidate: expense is a first-class reconcile-match candidate (enum + candidate + existence + acceptReconMatch).");
