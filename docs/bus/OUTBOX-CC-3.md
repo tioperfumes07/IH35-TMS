@@ -1942,3 +1942,18 @@ CC-3 | WRAP 2026-10-01 | DONE: see the table below | LIVE PROOF: see the list be
 **Ambient reds, not caused by CC-3** (not patched):
 - `verify-no-test-markers-in-live-tables`: 38 maintenance test survivors (Lead purge).
 - `verify-driver-attribution-is-time-boxed`: fuel-scorecard fixtures fail identically on origin/main.
+
+## 2026-10-02 00:25Z — WRAP follow-up (bus checked: no new CC-3 orders since the 14:45 CT wrap)
+
+**Fuel push, first scheduled run 2026-10-01 23:00:15Z** (`integration_sync_log` sync_kind `fuel_purchase_push`): **646 rows evaluated, 0 pushed to Samsara.**
+
+| Outcome | Rows | transaction_at min → max |
+|---|---|---|
+| skipped `date_only_precision` | **526** | 2026-08-01 → 2026-09-21; every one is stamped 00:00:00 (card import carries the date only) |
+| skipped `not_motor_fuel` | **120** | 2026-08-10 → 2026-09-24 (DEF / non-fuel) |
+| **zero-gallon diesel** | **0** | |
+
+- Samsara needs the real pump time. No fuel row on file has one, and none reached a high-confidence derived time (CC-2's `transaction_at_derived` / `computeFuelTimeDerivations`), so the engine sent nothing rather than inventing a time.
+- Rows start pushing as soon as fuel arrives with a pump time, or CC-2's derivation reaches high confidence on a row.
+
+**Other first events, still 0 (engines live, nothing has happened yet):** `chat.messages` 0 (no message sent yet; owner: later), Samsara POD `docs.files` 0, `samsara_webhook_events` 0. `load_odometer_segments` is 49; the 10-day catch-up first runs at 02:41 CT.
