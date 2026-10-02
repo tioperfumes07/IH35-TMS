@@ -1769,8 +1769,19 @@ async function buildFactoringAdvanceDepositSweepLines(client: DbClient, operatin
       SELECT ba.ledger_account_id::text AS bank_ledger_account_id
       FROM banking.bank_transactions bt
       JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id
-      WHERE bt.matched_factoring_advance_id = $1::uuid
-        AND bt.operating_company_id = $2::uuid
+      WHERE bt.operating_company_id = $2::uuid
+        AND (
+          bt.matched_factoring_advance_id = $1::uuid
+          -- ROUND 326 queue item 12: a batch wire matched to several advances carries ONE pointer (the first
+          -- advance); every advance on it is found by its own reconciliation match row.
+          OR EXISTS (
+            SELECT 1 FROM banking.reconciliation_matches rm
+             WHERE rm.bank_transaction_id = bt.id
+               AND rm.ledger_entry_kind = 'factoring_advance'
+               AND rm.ledger_entry_id::text = $1::text
+               AND rm.match_state <> 'rejected'
+          )
+        )
       LIMIT 1
     `,
     [advance.id, operatingCompanyId]

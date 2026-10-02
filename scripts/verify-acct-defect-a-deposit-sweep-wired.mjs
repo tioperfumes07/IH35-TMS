@@ -47,13 +47,17 @@ function analyze(engine, match) {
   if (!/import\s*\{\s*ensureOpenPeriod,\s*postSourceTransactionInClientTx,\s*PostingEngineError\s*\}\s*from\s*"\.\.\/posting-engine\.service\.js"/.test(match)) {
     failures.push(`${MATCH_FILE}: does not import postSourceTransactionInClientTx + PostingEngineError from posting-engine.service.js`);
   }
-  if (!/source_transaction_type: "customer_payment_deposit"/.test(match)) {
+  // ROUND 326 queue item 12: the sweep may run through the shared sweepMatchedReceiptToBank helper (1:1 AND multi-match).
+  if (!/source_transaction_type: "customer_payment_deposit"/.test(match) && !/sweepMatchedReceiptToBank\(client, input\.operating_company_id, "customer_payment_deposit"/.test(match)) {
     failures.push(`${MATCH_FILE}: does not call the deposit-sweep poster on match accept`);
   }
   if (!/"DEPOSIT_ALREADY_AT_BANK"/.test(match) || !/"PAYMENT_NOT_POSTING_ELIGIBLE"/.test(match)) {
     failures.push(`${MATCH_FILE}: skippable-error list is missing the expected no-op codes`);
   }
-  if (!/if \(!\(sweepError instanceof PostingEngineError\) \|\| !skippable\.includes\(sweepError\.code\)\) \{\s*\n\s*throw sweepError;/.test(match)) {
+  if (
+    !/if \(!\(sweepError instanceof PostingEngineError\) \|\| !skippable\.includes\(sweepError\.code\)\) \{\s*\n\s*throw sweepError;/.test(match) &&
+    !/if \(!\(sweepError instanceof PostingEngineError\) \|\| !\(DEPOSIT_SWEEP_SKIPPABLE as readonly string\[\]\)\.includes\(sweepError\.code\)\) \{\s*\n\s*throw sweepError;/.test(match)
+  ) {
     failures.push(`${MATCH_FILE}: an unexpected sweep error is not re-thrown (would silently swallow a real posting failure)`);
   }
 
@@ -93,20 +97,25 @@ function selftest() {
     },
     {
       name: "match.service.ts loses the deposit-sweep call",
-      apply: (e, m) => [e, m.replace('source_transaction_type: "customer_payment_deposit",', 'source_transaction_type: "transfer",')],
+      apply: (e, m) => [e, m.replace('source_transaction_type: "customer_payment_deposit",', 'source_transaction_type: "transfer",').replaceAll('sweepMatchedReceiptToBank(client, input.operating_company_id, "customer_payment_deposit"', 'noop(client, input.operating_company_id, "x"')],
     },
     {
       name: "match.service.ts's skippable list drops DEPOSIT_ALREADY_AT_BANK",
-      apply: (e, m) => [e, m.replace('"DEPOSIT_ALREADY_AT_BANK",\n', "")],
+      apply: (e, m) => [e, m.replace('"DEPOSIT_ALREADY_AT_BANK",\n', "").replace('["DEPOSIT_ALREADY_AT_BANK", ', "[")],
     },
     {
       name: "match.service.ts silently swallows ANY sweep error (never re-throws)",
       apply: (e, m) => [
         e,
-        m.replace(
-          "if (!(sweepError instanceof PostingEngineError) || !skippable.includes(sweepError.code)) {\n          throw sweepError;\n        }",
-          "// swallowed"
-        ),
+        m
+          .replace(
+            "if (!(sweepError instanceof PostingEngineError) || !skippable.includes(sweepError.code)) {\n          throw sweepError;\n        }",
+            "// swallowed"
+          )
+          .replace(
+            "if (!(sweepError instanceof PostingEngineError) || !(DEPOSIT_SWEEP_SKIPPABLE as readonly string[]).includes(sweepError.code)) {\n      throw sweepError;\n    }",
+            "// swallowed"
+          ),
       ],
     },
   ];
