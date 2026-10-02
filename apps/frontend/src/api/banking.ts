@@ -240,11 +240,30 @@ export type ReconciliationSession = {
   updated_at: string;
 };
 
+export type ReconciliationGlLine = {
+  posting_id: string;
+  journal_entry_id: string;
+  entry_date: string;
+  amount_cents: number;
+  /** true = deposit (debit to bank); false = payment (credit to bank). */
+  is_credit: boolean;
+  memo: string | null;
+  description: string | null;
+  type_label: string;
+  source_transaction_type: string | null;
+  register_cleared: boolean;
+  ref: string | null;
+  payee: string | null;
+  split_account: string | null;
+};
+
 export type ReconciliationWorkspacePayload = {
   session: ReconciliationSession;
   bank_account_label: string;
   matched_transactions: PlaidBankTransaction[];
   unmatched_transactions: PlaidBankTransaction[];
+  /** B-2 — JE / GL lines on the bank ledger not already covered by a bank-feed row. */
+  gl_lines?: ReconciliationGlLine[];
   candidates: {
     loads: Array<{ id: string; event_date: string; event_type: "load"; display_label: string }>;
     bills: Array<{ id: string; event_date: string; event_type: "bill"; display_label: string }>;
@@ -264,6 +283,7 @@ export type ReconciliationWorkspacePayload = {
     matched_debits_cents: number;
     book_balance_cents: number;
     variance_cents: number;
+    gl_line_count?: number;
   };
   cleared_transactions?: PlaidBankTransaction[];
   uncleared_transactions?: PlaidBankTransaction[];
@@ -1506,16 +1526,19 @@ export function unmatchReconciliationTransaction(
   });
 }
 
-/** B-2 / BANK-DOM-03 — toggle ● cleared on a bank row for this open session (not Finish). */
+/** B-2 / BANK-DOM-03 — toggle ● cleared on a bank row OR a JE line for this open session (not Finish). */
 export function clearReconciliationTransaction(
   sessionId: string,
   operatingCompanyId: string,
-  payload: { transaction_id: string; cleared: boolean }
+  payload: { transaction_id?: string; posting_id?: string; cleared: boolean }
 ) {
-  return apiRequest<{ ok: true }>(`/api/v1/banking/reconciliation/${sessionId}/clear?${q(operatingCompanyId)}`, {
-    method: "POST",
-    body: payload,
-  });
+  return apiRequest<{ ok: true; transaction_id?: string; posting_id?: string; cleared: boolean; row_kind?: "gl_line" }>(
+    `/api/v1/banking/reconciliation/${sessionId}/clear?${q(operatingCompanyId)}`,
+    {
+      method: "POST",
+      body: payload,
+    }
+  );
 }
 
 export function completeReconciliationSession(

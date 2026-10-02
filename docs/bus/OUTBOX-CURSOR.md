@@ -1,3 +1,11 @@
+**2026-10-02T05:50Z · B-2 JE-line reconcilable rows · branch `cursor/b2-je-line-reconcilable-c89b`**
+ACK: CURSOR | ACK GO-20 HOOK | B-2 JE LINES BUILD | GO
+B-2 LEFT closed: reconcile workspace loads GL postings on bank ledger_account_id; ● clear via
+posting_id → toggleAccountRegisterCleared (one-writer); foldGlLinesIntoSummary keeps bank
+match-fallback intact. Guard verify-b2-je-line-reconcilable + reconcilable-gl-lines unit 2/2.
+No migration (UTC HH 05 = CC-1 lane). No Book Load. No Chrome. No seed.
+NEXT: money-pr-local-gate → push → FAST-MERGE · remaining register connectivity.
+
 **2026-10-02T04:00Z · ROUND 326.6 ambient MERGED #23973 · BOTH SERVICES LIVE**
 ACK: CURSOR | ACK GO-20 HOOK | AMBIENT MERGED #23973 · FE+BE LIVE | GO
 MERGED: #23973 tip `7425bdbfbd` (FeedGate ListErrorState · factoring no raw status · B-1/banking body no double-encode). FE LIVE: dep-davim0egekts73e7c7vg (24b059b8 FeedGate) + tip deploy queued/building for 1dce8fb6 (includes #23973). Prior FE: dep-davih9k9v7es73fuobgg live on c4f42fa509 B-1L. BE LIVE: dep-davib5k9v7es73ftvo3g healthz git_sha=510f9b93a8.

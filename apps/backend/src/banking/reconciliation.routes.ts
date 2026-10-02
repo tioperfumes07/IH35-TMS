@@ -30,6 +30,12 @@ import { computeAdjustedBalanceSummary } from "./adjusted-balance-rec.js";
 import { postReconciliationAdjustments } from "./recon-adjustments.service.js";
 import { ageUnclearedTransactions, type ReconcilingItemClass } from "./reconciling-item-aging.js";
 import { acceptReconMatch } from "../accounting/bank-recon/recon-worklist.service.js";
+import {
+  AccountRegisterToggleError,
+  clearReconcilableGlLine,
+  foldGlLinesIntoSummary,
+  listReconcilableGlLines,
+} from "./reconcilable-gl-lines.js";
 
 const startBodySchema = z.object({
   bank_account_id: z.string().uuid(),
@@ -730,13 +736,21 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       );
 
       const transactions = txnRes.rows;
+      // B-2 LEFT — JE lines on the bank GL are reconcilable too (QBO §6 / ORDERS §6).
+      const glLines = await listReconcilableGlLines(client, {
+        operating_company_id: companyId,
+        bank_account_id: session.bank_account_id,
+        period_start: session.period_start,
+        period_end: session.period_end,
+      });
       const beginningBalanceCents = Number(
         (session as { beginning_balance_cents?: number | string | null }).beginning_balance_cents ?? 0
       );
-      const summary = computeSummaryFromTransactions(transactions, {
+      const bankSummary = computeSummaryFromTransactions(transactions, {
         beginningBalanceCents,
         statementEndingCents: Number(session.statement_balance_cents ?? 0),
       });
+      const summary = foldGlLinesIntoSummary(bankSummary, glLines);
       const varianceCents = summary.varianceCents;
 
       try {
@@ -884,6 +898,8 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         },
         matched_transactions: matchedTransactions,
         unmatched_transactions: unmatchedTransactions,
+        /** B-2 — GL postings on the bank ledger account not already covered by a bank-feed row. */
+        gl_lines: glLines,
         bank_account_label: accountLabel.rows[0]?.account_label ?? "Bank account",
         reconciling_items: reconcilingItems,
         escalated_reconciling_items: escalatedReconcilingItems,
@@ -907,6 +923,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           variance_cents: varianceCents,
           reconciling_item_count: reconcilingItems.length,
           escalated_reconciling_item_count: escalatedReconcilingItems.length,
+          gl_line_count: glLines.length,
         },
         cleared_transactions: transactions.filter((row) => Boolean(row.reconciliation_cleared)),
         uncleared_transactions: transactions.filter((row) => !row.reconciliation_cleared),
@@ -992,8 +1009,13 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     if (!query.success) return sendValidationError(reply, query.error);
     const body = z
       .object({
-        transaction_id: z.string().uuid(),
+        transaction_id: z.string().uuid().optional(),
+        /** B-2 — clear a JE posting on the bank GL (register_cleared via one-writer). */
+        posting_id: z.string().uuid().optional(),
         cleared: z.boolean(),
+      })
+      .refine((b) => Boolean(b.transaction_id) !== Boolean(b.posting_id), {
+        message: "exactly_one_of_transaction_id_or_posting_id",
       })
       .safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
@@ -1002,6 +1024,42 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     if (!session) return reply.code(404).send({ error: "session_not_found" });
     if (session.status === "reconciled") {
       return reply.code(409).send({ error: "reconciled_session_locked" });
+    }
+
+    // JE-line path — delegates to account-register.service (register_cleared one-writer).
+    if (body.data.posting_id) {
+      try {
+        const cleared = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
+          // Guard: posting must be a reconcilable GL line for this session's bank account/period.
+          const lines = await listReconcilableGlLines(client, {
+            operating_company_id: query.data.operating_company_id,
+            bank_account_id: session.bank_account_id,
+            period_start: session.period_start,
+            period_end: session.period_end,
+          });
+          if (!lines.some((l) => l.posting_id === body.data.posting_id)) {
+            return null;
+          }
+          return clearReconcilableGlLine(client, {
+            operating_company_id: query.data.operating_company_id,
+            posting_id: body.data.posting_id!,
+            cleared: body.data.cleared,
+            actor_user_id: user.uuid,
+          });
+        });
+        if (!cleared) return reply.code(404).send({ error: "posting_not_found" });
+        return {
+          ok: true,
+          posting_id: cleared.posting_id,
+          cleared: cleared.register_cleared,
+          row_kind: "gl_line" as const,
+        };
+      } catch (err) {
+        if (err instanceof AccountRegisterToggleError) {
+          return reply.code(err.httpStatus).send({ error: err.message });
+        }
+        throw err;
+      }
     }
 
     const updated = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
@@ -1334,12 +1392,22 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
         `,
         [session.bank_account_id, query.data.operating_company_id, session.period_start, session.period_end]
       );
+      const glLines = await listReconcilableGlLines(client, {
+        operating_company_id: query.data.operating_company_id,
+        bank_account_id: session.bank_account_id,
+        period_start: session.period_start,
+        period_end: session.period_end,
+      });
       const beginningBalanceCents = Number(
         (session as { beginning_balance_cents?: number | string | null }).beginning_balance_cents ?? 0
       );
-      const summaryInner = computeSummaryFromTransactions(txnRes.rows, {
+      const bankSummary = computeSummaryFromTransactions(txnRes.rows, {
         beginningBalanceCents,
         statementEndingCents: Number(session.statement_balance_cents ?? 0),
+        serviceChargeCents,
+        interestEarnedCents,
+      });
+      const summaryInner = foldGlLinesIntoSummary(bankSummary, glLines, {
         serviceChargeCents,
         interestEarnedCents,
       });
