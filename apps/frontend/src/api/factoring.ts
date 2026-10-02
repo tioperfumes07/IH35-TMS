@@ -46,6 +46,8 @@ export type LoadCostRollupFields = {
   lc_driver_name: string | null;
   lc_unit_number: string | null;
   lc_settlement_number: string | null;
+  /** D-H2 / BANK-F91021 — same rollup settlement as Loads Report; enables EntityLink drill. */
+  lc_settlement_id: string | null;
   lc_revenue_cents: string | number | null;
   lc_costs_cents: string | number | null;
   lc_driver_pay_cents: string | number | null;
