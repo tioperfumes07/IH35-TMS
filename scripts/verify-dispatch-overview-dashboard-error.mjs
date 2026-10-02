@@ -15,7 +15,8 @@ const original = fs.readFileSync(path.join(process.cwd(), relative), "utf8");
 
 function failures(source) {
   const found = [];
-  if (!source.includes("dashboardQ.isLoading || dashboardQ.isError ? \"—\"")) {
+  // Both dashboard tiles (Active loads + Delivered — pending docs) read dashboardQ; each must show "—" on load/error.
+  if (source.split("dashboardQ.isLoading || dashboardQ.isError ? \"—\"").length - 1 < 2) {
     found.push("dashboard KPI must retain its non-fabricated error value");
   }
   if (!source.includes("dashboardQ.isError ? (")) {

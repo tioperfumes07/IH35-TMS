@@ -62,9 +62,11 @@ function kpiCardBlock(source, label) {
 function panelBlock(source, testId) {
   const start = source.indexOf(`data-testid="${testId}"`);
   if (start === -1) return "";
-  const close = source.indexOf("</DataPanel>", start);
-  if (close === -1) return "";
-  return source.slice(start, close + "</DataPanel>".length);
+  // Re-anchored 2026-10-02: each panel is one self-closing <OverviewTable ... /> (owner design law, board table).
+  // The wrapper <div data-testid=...> holds exactly one panel; it ends at its own closing </div>.
+  const own = source.indexOf("<OverviewTable", start);
+  const close = own === -1 ? -1 : source.indexOf("</div>", own);
+  return close === -1 ? "" : source.slice(start, close);
 }
 
 const contracts = [
@@ -87,20 +89,20 @@ const contracts = [
     }),
   ],
   [
-    "each of the 4 REG-038 panels mounts a real Unit/Driver/Load KpiColumnHeader, not a concatenated span",
+    "each of the 4 REG-038 panels is a table with real Unit/Driver/Load columns, not a concatenated span",
     (files) => {
       for (const testId of REG038_PANEL_TESTIDS) {
         const block = panelBlock(files.frontend, testId);
         if (!block) return false;
-        if (!/<KpiColumnHeader columns=\{\[[^\]]*"Unit"[^\]]*"Driver"[^\]]*"Load"[^\]]*\]\}/.test(block)) return false;
+        if (!/columns=\{(\[\.\.\.)?UNIT_DRIVER_LOAD\b/.test(block)) return false;
       }
-      return true;
+      return /const UNIT_DRIVER_LOAD: PanelColumn\[\] = \[\{ label: "Unit" \}, \{ label: "Driver" \}, \{ label: "Load" \}\];/.test(files.frontend);
     },
     (files) => ({
       ...files,
       frontend: files.frontend.replace(
-        /(data-testid="dispatch-days-since-last-delivery-panel"[\s\S]*?)<KpiColumnHeader/,
-        "$1<KpiColumnHeaderREMOVED"
+        /(data-testid="dispatch-days-since-last-delivery-panel"[\s\S]*?)columns=\{\[\.\.\.UNIT_DRIVER_LOAD/,
+        "$1columns={[{ label: \"Unit · Driver · Load\" }"
       ),
     }),
   ],

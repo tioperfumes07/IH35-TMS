@@ -29,60 +29,37 @@ const LABEL = "verify-dispatch-overview-panel-error-states";
 
 const QUERIES = ["exposureLoadsQ", "atRiskLateQ", "detentionQ", "borderQ", "oosLoadsQ"];
 
+// Re-anchored 2026-10-02 (owner design law: every overview panel is one board table, OverviewTable). The state ladder now
+// lives once in OverviewTable — loading, then ERROR, then empty — and each of the five queries must be handed to it as
+// `query={q}` with its own errorMessage, so a failed fetch can never render the panel's empty copy.
 export function checkDispatchOverviewPanelErrorStates(src) {
   const problems = [];
-
+  const table = (src.match(/function OverviewTable\([\s\S]*?\n}\n/) ?? [""])[0];
+  if (!/query\.isLoading \?[\s\S]{0,120}query\.isError \?[\s\S]{0,400}rows\.length === 0 \?/.test(table)) {
+    problems.push("OverviewTable must gate the error state on query.isError BEFORE its empty-state check");
+  }
   for (const q of QUERIES) {
-    const loadIdx = src.indexOf(`{${q}.isLoading ?`);
-    if (loadIdx === -1) {
-      problems.push(`${q}'s panel render block (\`{${q}.isLoading ?\`) not found — file structure changed unexpectedly`);
-      continue;
-    }
-    const errRe = new RegExp(`\\{${q}\\.isLoading \\?[\\s\\S]{0,150}${q}\\.isError \\?[\\s\\S]{0,100}PanelError\\(`);
-    if (!errRe.test(src.slice(loadIdx, loadIdx + 400))) {
-      problems.push(
-        `${q}'s panel does not gate PanelError() on ${q}.isError before its empty-state check — a failed fetch renders identically to a genuinely empty panel`
-      );
+    if (!new RegExp(`query=\\{${q}\\}\\s*\\n\\s*errorMessage="[^"]+"`).test(src)) {
+      problems.push(`${q} is not handed to an OverviewTable with its own errorMessage — its failure would read as "nothing to review"`);
     }
   }
-
   return problems;
 }
 
 if (process.argv.includes("--selftest")) {
   const failures = [];
 
-  const bad = `
-    {exposureLoadsQ.isLoading ? (<PanelLoading />) : exposureLoads.length === 0 ? (PanelEmpty("x")) : (rows)}
-    {atRiskLateQ.isLoading ? (<PanelLoading />) : atRiskLoads.length === 0 ? (PanelEmpty("x")) : (rows)}
-    {detentionQ.isLoading ? (<PanelLoading />) : detentionEvents.length === 0 ? (PanelEmpty("x")) : (rows)}
-    {borderQ.isLoading ? (<PanelLoading />) : borderEvents.length === 0 ? (PanelEmpty("x")) : (rows)}
-    {oosLoadsQ.isLoading ? (<PanelLoading />) : oosLoads.length === 0 ? (PanelEmpty("x")) : (rows)}
-  `;
-  const badProblems = checkDispatchOverviewPanelErrorStates(bad);
-  if (badProblems.length !== 5) {
-    failures.push(
-      `the real pre-fix defect verbatim expected 5 problems, got ${badProblems.length}: ${badProblems.join("; ")}`
-    );
-  }
-
   const good = fs.readFileSync(FILE_PATH, "utf8");
   const goodProblems = checkDispatchOverviewPanelErrorStates(good);
-  if (goodProblems.length !== 0) {
-    failures.push(`the real fixed file was flagged: ${goodProblems.join("; ")}`);
-  }
+  if (goodProblems.length !== 0) failures.push(`the real file was flagged: ${goodProblems.join("; ")}`);
 
-  // Partial fix: only exposureLoadsQ fixed, the other four still not — proves independence.
-  const partial = bad.replace(
-    '{exposureLoadsQ.isLoading ? (<PanelLoading />) : exposureLoads.length === 0 ? (PanelEmpty("x")) : (rows)}',
-    'function PanelError(m, r) { return null; }\n{exposureLoadsQ.isLoading ? (<PanelLoading />) : exposureLoadsQ.isError ? PanelError("x", r) : exposureLoads.length === 0 ? (PanelEmpty("x")) : (rows)}'
-  );
-  const partialProblems = checkDispatchOverviewPanelErrorStates(partial);
-  if (partialProblems.length !== 4) {
-    failures.push(
-      `a partial fix (one of five panels scoped) expected 4 problems, got ${partialProblems.length}: ${partialProblems.join("; ")}`
-    );
-  }
+  // The pre-fix defect: the shared table checks loading then empty, never error.
+  const noError = good.replace(/query\.isError \?/, "false ?");
+  if (checkDispatchOverviewPanelErrorStates(noError).length === 0) failures.push("a table without its isError branch was not caught");
+
+  // One panel loses its query wiring (falls back to a bare rows list with no error state).
+  const unwired = good.replace("query={detentionQ}", "query={{ isLoading: false, isError: false, refetch: () => undefined }}");
+  if (checkDispatchOverviewPanelErrorStates(unwired).length !== 1) failures.push("an unwired detention panel was not caught exactly once");
 
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
