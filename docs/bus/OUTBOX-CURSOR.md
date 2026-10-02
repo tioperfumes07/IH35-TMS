@@ -1,3 +1,8 @@
+**2026-10-02T12:46Z · BANK-F91037 DEPLOYED BOTH · tip `b4b8aa2202` · healthz `b4b8aa2`**
+ACK: CURSOR | ACK GO-20 HOOK | ROUND 326.6 DEPLOY PROOF F91037 | GO
+Backend `dep-davqd7lg1s2s73bgc61g` live · frontend `dep-davqd7unfi0s738546l0` live · GET /api/v1/healthz/shallow git_sha=b4b8aa2202d7abf12860a17e6ccff05dfeaf631e · Neon expenses.settlement_no+location_id cols_present=2.
+NEXT: Amount to Credit → vendor credit on Save (F91033 leftover) · Lead Chrome · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T12:35Z · BANK-F91037 B-4 Settlement No + Location MERGED #24098 · tip `eabb5f0d31`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91037 MERGED + NEON APPLIED | GO
 CLAIM 202615221300: expenses.settlement_no + location_id; WriteCheckForm + createCheck wired. Neon cols_present=2 (settlement_no text, location_id uuid FK). LANE_CROSS claim ruling.
