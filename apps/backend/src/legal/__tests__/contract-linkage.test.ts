@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { LINK_TARGETS, mergeLinks, signerLinks, typedForeignKeys } from "../contract-linkage.service.js";
+import {
+  LINK_TARGETS,
+  mergeLinks,
+  signerLinks,
+  typedForeignKeys,
+  linksFromInstanceRow,
+  parseContractUnlinkedReason,
+  parseMatterUnlinkedReason,
+  matterHasSubjectFk,
+  MATTER_UNLINKED_REASON_PREFIX,
+} from "../contract-linkage.service.js";
 import { reserveDelta } from "../matters.service.js";
 
 describe("contract linkage (§10-B)", () => {
@@ -22,6 +32,26 @@ describe("contract linkage (§10-B)", () => {
       expect(t.scope).toMatch(/\$2::uuid|user_accessible_company_ids/);
     }
     expect(LINK_TARGETS.unit_ids.scope).toMatch(/user_accessible_company_ids/);
+  });
+});
+
+describe("ROUND 326 linkage sync helpers", () => {
+  it("linksFromInstanceRow prefers typed FKs and fills from signer", () => {
+    const links = linksFromInstanceRow({
+      signer_type: "driver",
+      signer_entity_id: "D1",
+      unit_id: "U9",
+    });
+    expect(links.driver_id).toBe("D1");
+    expect(links.unit_ids).toEqual(["U9"]);
+  });
+  it("parses contract + matter unlinked reasons", () => {
+    expect(parseContractUnlinkedReason({ _linkage_unlinked_reason: "source PDF names no party" })).toBe(
+      "source PDF names no party"
+    );
+    expect(parseMatterUnlinkedReason(`${MATTER_UNLINKED_REASON_PREFIX} no subject in source`)).toBe("no subject in source");
+    expect(matterHasSubjectFk({ related_driver_id: "D1" })).toBe(true);
+    expect(matterHasSubjectFk({})).toBe(false);
   });
 });
 

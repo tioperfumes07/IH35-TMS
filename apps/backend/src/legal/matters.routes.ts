@@ -200,6 +200,9 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
         return reply.code(400).send({ error: "linked_entity_not_in_operating_company" });
       }
       const msg = err instanceof Error ? err.message : "";
+      if (msg === "legal_matter_requires_subject_or_unlinked_reason") {
+        return reply.code(422).send({ error: msg });
+      }
       if (msg.includes("unique") || msg.includes("duplicate")) {
         return reply.code(409).send({ error: "matter_number_conflict" });
       }
