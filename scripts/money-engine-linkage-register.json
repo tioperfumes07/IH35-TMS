@@ -1,0 +1,312 @@
+{
+  "note": "THE MONEY ENGINE LINKAGE REGISTER. Every path that writes a journal entry or posting, the linkage stamps it carries, and the engine that reverses it. Stamp debt may only SHRINK. A new money writer must be declared here or the push fails. Regenerate with --emit-register, then fill reverse by hand \u2014 it is a ruling, not a measurement.",
+  "law": "docs/bus \u2014 owner linkage law: complete wiring, linkage, connectivity, double route and reverse to customer, vendor, driver, truck, trailer, load, settlement, factoring, A/P, A/R, chart of accounts, JE, GL.",
+  "stamps": [
+    "operating_company_id",
+    "load_id",
+    "driver_id",
+    "unit_id",
+    "trailer_id",
+    "customer_id",
+    "vendor_id",
+    "settlement_id",
+    "invoice_id",
+    "journal_entry_id",
+    "account_id",
+    "item_id"
+  ],
+  "measured_at": "2026-10-02T16:23:54.734Z",
+  "engines": [
+    {
+      "file": "accounting/amortization-posting/amortization-posting.service.ts",
+      "stamps": [
+        "operating_company_id",
+        "journal_entry_id",
+        "account_id"
+      ],
+      "missing_stamps": [
+        "load_id",
+        "driver_id",
+        "unit_id",
+        "trailer_id",
+        "customer_id",
+        "vendor_id",
+        "settlement_id",
+        "invoice_id",
+        "item_id"
+      ],
+      "reverse": "accounting/void.service.ts",
+      "reverse_waived_reason": null,
+      "note": null
+    },
+    {
+      "file": "accounting/bank-recon/match.service.ts",
+      "stamps": [
+        "operating_company_id",
+        "customer_id",
+        "vendor_id",
+        "settlement_id",
+        "invoice_id",
+        "journal_entry_id",
+        "account_id"
+      ],
+      "missing_stamps": [
+        "load_id",
+        "driver_id",
+        "unit_id",
+        "trailer_id",
+        "item_id"
+      ],
+      "reverse": "accounting/void.service.ts",
+      "reverse_waived_reason": null,
+      "note": null
+    },
+    {
+      "file": "accounting/fuel-posting/poster.service.ts",
+      "stamps": [
+        "operating_company_id",
+        "driver_id",
+        "unit_id",
+        "trailer_id",
+        "journal_entry_id",
+        "account_id"
+      ],
+      "missing_stamps": [
+        "load_id",
+        "customer_id",
+        "vendor_id",
+        "settlement_id",
+        "invoice_id",
+        "item_id"
+      ],
+      "reverse": "accounting/void.service.ts",
+      "reverse_waived_reason": null,
+      "note": null
+    },
+    {
+      "file": "accounting/journal-entries.service.ts",
+      "stamps": [
+        "operating_company_id",
+        "unit_id",
+        "journal_entry_id",
+        "account_id"
+      ],
+      "missing_stamps": [
+        "load_id",
+        "driver_id",
+        "trailer_id",
+        "customer_id",
+        "vendor_id",
+        "settlement_id",
+        "invoice_id",
+        "item_id"
+      ],
+      "reverse": "accounting/void.service.ts",
+      "reverse_waived_reason": null,
+      "note": null
+    },
+    {
+      "file": "accounting/journal-entry-type-resolver.ts",
+      "stamps": [],
+      "missing_stamps": [
+        "operating_company_id",
+        "load_id",
+        "driver_id",
+        "unit_id",
+        "trailer_id",
+        "customer_id",
+        "vendor_id",
+        "settlement_id",
+        "invoice_id",
+        "journal_entry_id",
+        "account_id",
+        "item_id"
+      ],
+      "reverse": null,
+      "reverse_waived_reason": "RESOLVER, NOT A POSTER \u2014 it classifies an entry's type; it writes no money of its own. Confirm and remove from the register if the INSERT it matches is a type lookup, not a posting.",
+      "note": "RESOLVER, NOT A POSTER \u2014 it classifies an entry's type; it writes no money of its own. Confirm and remove from the register if the INSERT it matches is a type lookup, not a posting."
+    },
+    {
+      "file": "accounting/lease-asc842/lease-posting.service.ts",
+      "stamps": [
+        "operating_company_id",
+        "customer_id",
+        "vendor_id",
+        "journal_entry_id",
+        "account_id"
+      ],
+      "missing_stamps": [
+        "load_id",
+        "driver_id",
+        "unit_id",
+        "trailer_id",
+        "settlement_id",
+        "invoice_id",
+        "item_id"
+      ],
+      "reverse": null,
+      "reverse_waived_reason": null,
+      "note": "NO REVERSE \u2014 ASC 842 lease postings can be created and not undone. OPEN DEFECT, assigned."
+    },
+    {
+      "file": "accounting/period-close-retained-earnings.service.ts",
+      "stamps": [
+        "operating_company_id",
+        "journal_entry_id",
+        "account_id"
+      ],
+      "missing_stamps": [
+        "load_id",
+        "driver_id",
+        "unit_id",
+        "trailer_id",
+        "customer_id",
+        "vendor_id",
+        "settlement_id",
+        "invoice_id",
+        "item_id"
+      ],
+      "reverse": "accounting/void.service.ts",
+      "reverse_waived_reason": null,
+      "note": null
+    },
+    {
+      "file": "accounting/posting-engine.service.ts",
+      "stamps": [
+        "operating_company_id",
+        "load_id",
+        "invoice_id",
+        "journal_entry_id",
+        "account_id",
+        "item_id"
+      ],
+      "missing_stamps": [
+        "driver_id",
+        "unit_id",
+        "trailer_id",
+        "customer_id",
+        "vendor_id",
+        "settlement_id"
+      ],
+      "reverse": "accounting/void.service.ts",
+      "reverse_waived_reason": null,
+      "note": null
+    },
+    {
+      "file": "accounting/recurring.worker.ts",
+      "stamps": [
+        "operating_company_id",
+        "load_id",
+        "customer_id",
+        "vendor_id",
+        "invoice_id",
+        "account_id"
+      ],
+      "missing_stamps": [
+        "driver_id",
+        "unit_id",
+        "trailer_id",
+        "settlement_id",
+        "journal_entry_id",
+        "item_id"
+      ],
+      "reverse": null,
+      "reverse_waived_reason": null,
+      "note": "NO REVERSE, AND IT IS A WORKER \u2014 a scheduled path that writes money with no undo. Highest risk in the register: the owner's standing law is that nothing posts from a timer. OPEN DEFECT, assigned."
+    },
+    {
+      "file": "accounting/settlement-posting/settlement-posting.service.ts",
+      "stamps": [
+        "operating_company_id",
+        "driver_id",
+        "settlement_id",
+        "journal_entry_id",
+        "account_id"
+      ],
+      "missing_stamps": [
+        "load_id",
+        "unit_id",
+        "trailer_id",
+        "customer_id",
+        "vendor_id",
+        "invoice_id",
+        "item_id"
+      ],
+      "reverse": "accounting/void.service.ts",
+      "reverse_waived_reason": null,
+      "note": null
+    },
+    {
+      "file": "accounting/void.service.ts",
+      "stamps": [
+        "operating_company_id",
+        "load_id",
+        "driver_id",
+        "unit_id",
+        "trailer_id",
+        "customer_id",
+        "vendor_id",
+        "settlement_id",
+        "invoice_id",
+        "journal_entry_id",
+        "account_id",
+        "item_id"
+      ],
+      "missing_stamps": [],
+      "reverse": "accounting/void.service.ts",
+      "reverse_waived_reason": null,
+      "note": "the canonical reverse engine; it reverses itself by design \u2014 a void of a void is a re-post through the same path"
+    },
+    {
+      "file": "banking/manual-je.routes.deprecated.ts",
+      "stamps": [
+        "operating_company_id",
+        "journal_entry_id",
+        "account_id"
+      ],
+      "missing_stamps": [
+        "load_id",
+        "driver_id",
+        "unit_id",
+        "trailer_id",
+        "customer_id",
+        "vendor_id",
+        "settlement_id",
+        "invoice_id",
+        "item_id"
+      ],
+      "reverse": null,
+      "reverse_waived_reason": null,
+      "note": "NO REVERSE, and the filename says deprecated. A deprecated route that can still write a journal entry is live money. OPEN DEFECT: confirm it is unmounted, then delete it \u2014 deprecated is not unmounted."
+    },
+    {
+      "file": "driver-finance/settlement-contract-terms.service.ts",
+      "stamps": [
+        "operating_company_id",
+        "load_id",
+        "driver_id",
+        "settlement_id"
+      ],
+      "missing_stamps": [
+        "unit_id",
+        "trailer_id",
+        "customer_id",
+        "vendor_id",
+        "invoice_id",
+        "journal_entry_id",
+        "account_id",
+        "item_id"
+      ],
+      "reverse": "accounting/void.service.ts",
+      "reverse_waived_reason": null,
+      "note": null
+    }
+  ],
+  "open_reverse_debt": [
+    "accounting/journal-entry-type-resolver.ts",
+    "accounting/lease-asc842/lease-posting.service.ts",
+    "accounting/recurring.worker.ts",
+    "banking/manual-je.routes.deprecated.ts"
+  ],
+  "open_reverse_debt_note": "SHRINK-ONLY. Money writers with no reverse path, found 2026-10-02. A NEW money writer with no reverse FAILS the push; adding a file here to silence it is forbidden. Remove each as its reverse lands."
+}
