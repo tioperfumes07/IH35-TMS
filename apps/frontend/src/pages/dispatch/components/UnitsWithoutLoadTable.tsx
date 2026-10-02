@@ -101,7 +101,7 @@ export function UnitsWithoutLoadTable({ rows, onRowClick, loading, errorState }:
           sortable: true,
           numeric: true,
           render: (row) => (
-            <span className={idleClass(row.hours_since_last_delivery)}>{row.hours_since_last_delivery ?? "-"}</span>
+            <span className={idleClass(row.hours_since_last_delivery)}>{row.hours_since_last_delivery ?? "—"}</span>
           ),
         },
         {
@@ -114,7 +114,7 @@ export function UnitsWithoutLoadTable({ rows, onRowClick, loading, errorState }:
           numeric: true,
           render: (row) => (
             <span className={idleClass(row.hours_since_last_delivery)}>
-              {row.hours_since_last_delivery !== null ? `${row.hours_since_last_delivery}h idle` : "-"}
+              {row.hours_since_last_delivery !== null ? `${row.hours_since_last_delivery}h idle` : "—"}
             </span>
           ),
         },
