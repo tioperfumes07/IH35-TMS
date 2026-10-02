@@ -21,6 +21,7 @@ import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../../auth/db.js";
 import { tryXactSingleFlight } from "../../lib/single-flight.js";
+import { wrapBackgroundJobTick } from "../../lib/background-jobs.js";
 import { assertTenantContext } from "../../cron/_helpers/tenant-context-guard.js";
 import { runFuelPurchasePush } from "./fuel-purchase-push.service.js";
 import { SamsaraClient } from "./samsara-client.js";
@@ -110,14 +111,8 @@ export function initializeFuelPurchasePushCron(app: FastifyInstance) {
 
   cron.schedule(
     "0 6,18 * * *",
-    async () => {
-      try {
-        await runFuelPurchasePushCronTick();
-      } catch (error) {
-        app.log.error({ err: error }, "[SAMSARA_FUEL_PURCHASE_PUSH_CRON] tick failed");
-        throw error;
-      }
-    },
+    // ROUND 330.1: through the shared wrapper (run recorded; failure logged, sent to Sentry, then re-thrown).
+    async () => wrapBackgroundJobTick("integrations.samsara_fuel_purchase_push", runFuelPurchasePushCronTick, app.log, { rethrow: true }),
     {
       maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
