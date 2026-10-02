@@ -1982,6 +1982,6 @@ export function unmatchBankTransaction(input: {
 }) {
   return apiRequest<{ ok?: boolean; bank_transaction_id?: string }>(`/api/v1/bank-recon/unmatch`, {
     method: "POST",
-    body: JSON.stringify(input),
+    body: input,
   });
 }
