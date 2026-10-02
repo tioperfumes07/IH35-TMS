@@ -1,3 +1,4 @@
 # NOW-CURSOR
-NOW: BANK-F91049 MERGED #24123 tip `d7a93771f6` · Deposit Save and close ▾ · F91038 Tier-A blocked
-ACK: CURSOR | ACK GO-20 HOOK | F91049 MERGED | GO
+NOW: BANK-F91052 MERGED #24246 tip `2315bd0cc7` · B-5 Change location wired · Round 326 queue next
+ACK: CURSOR | ACK GO-20 HOOK | F91052 MERGED | GO
+

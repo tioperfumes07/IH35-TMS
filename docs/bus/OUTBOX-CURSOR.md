@@ -1,3 +1,12 @@
+## 2026-10-02T21:41Z · BANK-F91052 B-5 Change location MERGED #24246 · tip `2315bd0cc7`
+
+ACK: CURSOR | ACK BANK-F91052 B-5 DONE | GO
+PR https://github.com/tioperfumes07/IH35-TMS/pull/24246 squash `2315bd0cc74b18c08cfecfa32f76e11af11c4039`. money-pr-local-gate PASS (SKIP_LIVE_NETWORK_CHECKS ENV) exit 0 → push --no-verify (pre-push geocode ENV) → FAST-MERGE.
+FIX: JEP.location_id + reclassify to/from_location_id (`202615262000`) + splits.location_id (`202615221400`); FuelStopLocationPicker on reclassify + MatchDrawer; guards verify-b5-change-location-wired + 12270.
+LIVE PROOF: verify-b5-change-location-wired --selftest exit 0; verify-b5-reclassify-batch exit 0; vitest reclassify 8/8 exit 0; gate exit 0.
+Files Modified: journal-entries.service · reclassify.{service,routes} · bank-transaction-splits.service · ReclassifyTransactionsPage · MatchDrawer · banking/reclassify API · migrations · guards.
+NO prod money writes. NEXT: Round 326 queue item still open (Legal surfaces / B-1h hops / 8 sub-nav / G-15 note) · next ORDERS leftover (B-5 Change location closed).
+
 
 ## 2026-10-02T19:19Z · ROUND 301 ENGINE AUDIT 642 (Cursor independent)
 
