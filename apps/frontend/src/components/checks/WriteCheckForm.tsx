@@ -16,7 +16,7 @@
 // own law ("no map row -> CATEGORY_UNMAPPED, never a guessed account") also means a check form is not
 // the place to mint a new mapping — that is a chart-of-accounts governance action, done elsewhere.
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Modal } from "../Modal";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
@@ -24,6 +24,8 @@ import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { DriverPickerWithCreate } from "../drivers/DriverPickerWithCreate";
 import { EntityPicker } from "../EntityPicker";
 import { EntityLink } from "../shared/EntityLink";
+import { MoreActionsMenu } from "../shared/MoreActionsMenu";
+import { VoidReasonModal } from "../accounting/VoidReasonModal";
 import { DatePicker } from "../forms/DatePicker";
 import { MoneyInput } from "../forms/MoneyInput";
 import { Button } from "../Button";
@@ -35,6 +37,7 @@ import { getCashGlMapping, getBankingTiles, type CashGlBankAccount } from "../..
 import { listVendors, listCustomers } from "../../api/mdata";
 import { useAccountingItemsQuery } from "../../hooks/useAccountingItemsQuery";
 import { UploadZone } from "../UploadZone";
+import { useToast } from "../Toast";
 import {
   createCheck,
   getCheck,
@@ -42,6 +45,7 @@ import {
   getCheckNumberStatus,
   payCheckBills,
   resolveCheckPayeePreview,
+  voidCheckApi,
   type CheckLineInput,
   type CheckPayeeKind,
   type CheckRemitToAddress,
@@ -270,6 +274,8 @@ export type WriteCheckFormProps = {
 };
 
 export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onSavedKeepOpen, initialPayee, copyFromCheckId }: WriteCheckFormProps) {
+  const navigate = useNavigate();
+  const { pushToast } = useToast();
   const [payeeKind, setPayeeKind] = useState<CheckPayeeKind>(initialPayee?.kind ?? "vendor");
   const [payeeId, setPayeeId] = useState<string | null>(initialPayee?.id ?? null);
   const [bankAccountId, setBankAccountId] = useState<string | null>(null);
@@ -297,6 +303,10 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
   // B-4 §15 — auto-draft / Restore draft (local only; never a money write).
   const [restoreDraftOffer, setRestoreDraftOffer] = useState<PersistedCheckDraft | null>(null);
   const [draftHydrated, setDraftHydrated] = useState(false);
+  /** BANK-F91041 — ORDERS §B-4 More(Void / Transaction journal / Audit history) after Save. */
+  const [lastSavedCheckId, setLastSavedCheckId] = useState<string | null>(null);
+  const [lastSavedJournalEntryId, setLastSavedJournalEntryId] = useState<string | null>(null);
+  const [voidOpen, setVoidOpen] = useState(false);
 
   const bankAccountsQuery = useQuery({
     queryKey: ["checks", "bank-accounts", operatingCompanyId],
@@ -890,6 +900,8 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
     setBillToPayAmounts({});
     setDraftAttachmentEntityId(crypto.randomUUID());
     setSaveError(null);
+    setLastSavedCheckId(null);
+    setLastSavedJournalEntryId(null);
     clearPersistedDraft();
   }
 
@@ -985,11 +997,16 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
         });
         savedId = result.payment_batch_id;
       } else {
-        savedId = await saveExpenseCheck(forcePrintLater);
+        const created = await saveExpenseCheck(forcePrintLater);
+        savedId = created.id;
+        setLastSavedCheckId(created.id);
+        setLastSavedJournalEntryId(created.journal_entry_id);
       }
       clearPersistedDraft();
       if (after === "new") {
         resetForm();
+        setLastSavedCheckId(null);
+        setLastSavedJournalEntryId(null);
         onSavedKeepOpen?.(savedId);
       } else if (after === "keep_open") {
         onSavedKeepOpen?.(savedId);
@@ -1003,7 +1020,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
     }
   }
 
-  async function saveExpenseCheck(forcePrintLater: boolean): Promise<string> {
+  async function saveExpenseCheck(forcePrintLater: boolean): Promise<{ id: string; journal_entry_id: string | null }> {
       if (!payeeId || !bankAccountId) throw new Error("Payee and bank account are required.");
       const effectivePrintLater = forcePrintLater || printLater;
       const lineInputs: CheckLineInput[] = lines.map((l) => {
@@ -1060,7 +1077,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
         attachment_draft_id: draftAttachmentEntityId,
         lines: lineInputs,
       });
-      return result.id;
+      return { id: result.id, journal_entry_id: result.journal_entry_id };
   }
 
   return (
@@ -1597,6 +1614,64 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
         )}
 
         <div className="flex items-center justify-end gap-2 border-t border-gray-200 pt-3">
+          {/* BANK-F91041 — ORDERS §B-4 More(Void · Delete=void · Transaction journal · Audit history). Enabled after expense-check Save. */}
+          <div data-b4-check-more="1" data-testid="b4-check-more">
+            <MoreActionsMenu
+              data-testid="check-write-more-menu"
+              trigger={({ toggle, triggerTestId }) => (
+                <button
+                  type="button"
+                  className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs font-semibold text-[#1F2A44] hover:bg-[#F7F8FA] disabled:opacity-50"
+                  onClick={toggle}
+                  data-testid={triggerTestId}
+                  disabled={!lastSavedCheckId}
+                  title={lastSavedCheckId ? "More actions" : "Save the check first to unlock More"}
+                >
+                  More
+                </button>
+              )}
+              items={[
+                {
+                  key: "journal",
+                  label: "Transaction journal",
+                  disabled: !lastSavedJournalEntryId,
+                  onSelect: () => {
+                    if (lastSavedJournalEntryId) navigate(`/accounting/journal-entries/${lastSavedJournalEntryId}`);
+                  },
+                },
+                {
+                  key: "audit",
+                  label: "Audit history",
+                  disabled: !lastSavedCheckId,
+                  onSelect: () => {
+                    if (lastSavedCheckId) navigate(`/accounting/audit-trail?source_type=expense&source_id=${lastSavedCheckId}`);
+                  },
+                },
+                {
+                  key: "copy",
+                  label: "Copy",
+                  disabled: !lastSavedCheckId,
+                  onSelect: () => {
+                    if (lastSavedCheckId) navigate(`/accounting/checks/new?copy_from=${lastSavedCheckId}`);
+                  },
+                },
+                {
+                  key: "void",
+                  label: "Void",
+                  disabled: !lastSavedCheckId,
+                  destructive: true,
+                  onSelect: () => setVoidOpen(true),
+                },
+                {
+                  key: "delete",
+                  label: "Delete",
+                  disabled: !lastSavedCheckId,
+                  destructive: true,
+                  onSelect: () => setVoidOpen(true),
+                },
+              ]}
+            />
+          </div>
           <Button variant="tertiary" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
@@ -1640,6 +1715,20 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
           </Button>
         </div>
       </div>
+      <VoidReasonModal
+        open={voidOpen}
+        title="Void Check"
+        onClose={() => setVoidOpen(false)}
+        onSubmit={async (reason) => {
+          if (!lastSavedCheckId) return;
+          await voidCheckApi(operatingCompanyId, lastSavedCheckId, reason);
+          pushToast("Check voided (reversing entry — never deleted).", "success");
+          setVoidOpen(false);
+          setLastSavedCheckId(null);
+          setLastSavedJournalEntryId(null);
+          onClose();
+        }}
+      />
     </Modal>
   );
 }
