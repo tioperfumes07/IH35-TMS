@@ -1466,6 +1466,11 @@
       "claimed_by": "cursor",
       "claimed_at": "2026-10-02",
       "purpose": "B-3 §19c resolve-the-difference: banking.bank_transaction_splits.location_id uuid FK mdata.locations (ORDERS LOCATION column on MatchDrawer mini-grid)."
+    },
+    "202615220700": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-02",
+      "purpose": "Lead ruling 2026-10-02 FACTORING-RECOURSE-RESERVE-ONE-SOURCE: accounting.factoring_recourse_events — the day-95 recourse EVENT record (invoice, customer, advance, purchase, factor, day-95 date, face, reserve at date, state expected->deducted->recovered/written_off). Registers the event, posts nothing; RLS + WORM refuse-delete + audit."
     }
   },
   "202613590001": {
