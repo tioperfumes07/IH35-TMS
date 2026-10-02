@@ -108,6 +108,14 @@ function main() {
   const batchSettlements = read("apps/frontend/src/pages/driver-finance/BatchSettlementsPage.tsx");
   assertIncludes(batchSettlements, 'data-b5-batch-settlements="1"', "BatchSettlementsPage");
   assertIncludes(batchSettlements, "postBatchSettlements", "BatchSettlementsPage");
+  // BANK-F91051 — ORDERS §B-5 batch settlements Save all ▾ (Save and close / Save and new)
+  assertIncludes(batchSettlements, 'data-b5-batch-settlements-save="1"', "BatchSettlementsPage");
+  assertIncludes(batchSettlements, 'data-testid="b5-batch-settlements-save"', "BatchSettlementsPage");
+  assertIncludes(batchSettlements, "SaveDropdown", "BatchSettlementsPage");
+  assertIncludes(batchSettlements, 'primaryLabel="Save all"', "BatchSettlementsPage");
+  assertIncludes(batchSettlements, 'save_and_close: "Save and close"', "BatchSettlementsPage");
+  assertIncludes(batchSettlements, 'save_and_add_another: "Save and new"', "BatchSettlementsPage");
+  assertIncludes(batchSettlements, 'navigate("/driver-finance/settlements")', "BatchSettlementsPage");
 
   assertIncludes(api, "applyReclassify", API);
   assertIncludes(api, 'to_entity_type?: "customer" | "vendor"', API);
