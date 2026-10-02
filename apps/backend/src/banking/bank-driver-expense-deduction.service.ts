@@ -37,6 +37,7 @@ import {
 import { hasSignedDeductionAuthorization } from "../legal/signed-finance-handoff.service.js";
 import { getOrCreateBucket, chargeBucket } from "../accounting/settlement-posting/bucket-ledger.service.js";
 import { createSettlementDeduction, type SettlementDeductionSourceType } from "../driver-finance/deductions.service.js";
+import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 
 export const BANK_DRIVER_EXPENSE_DEDUCTION_FLAG_KEY = "BANK_DRIVER_EXPENSE_DEDUCTION_ENABLED";
 
@@ -48,6 +49,7 @@ export type BankDriverExpenseDeductionSkipReason =
   | "flag_off"
   | "no_driver"
   | "not_recover_from_driver"
+  | "factoring_chargeback_company_absorbs"
   | "driver_advance_branch"
   | "bank_txn_not_found"
   | "not_a_debit"
@@ -98,6 +100,12 @@ function normalizeBucketType(raw: string | null | undefined): SettlementDeductio
  * IDEMPOTENT: short-circuits (reason: already_charged) when this bank_transaction_id already carries
  * categorization_deduction_id — a re-run/retry/replay never double-charges the driver's bucket.
  */
+/** ROUND 296 6: every factoring role — a bank line on one of these accounts is the company's loss, never a driver's. */
+export const FACTORING_ROLES = [
+  "factor_reserve_held", "factor_cash_reserve_held", "factor_reserve_default", "factoring_advance_liability",
+  "factoring_recoursed_ar", "factor_fee_expense", "factor_transaction_fee", "factor_wire_fee", "factor_default_interest_payable",
+] as const;
+
 export async function maybeCreateBankCategorizationDriverDeduction(
   input: MaybeCreateBankExpenseDeductionInput
 ): Promise<BankDriverExpenseDeductionResult> {
@@ -109,6 +117,17 @@ export async function maybeCreateBankCategorizationDriverDeduction(
     if (!flagOn) return { posted: false, reason: "flag_off" };
     if (!input.driverId) return { posted: false, reason: "no_driver" };
     if (!input.recoverFromDriver) return { posted: false, reason: "not_recover_from_driver" };
+
+    // ROUND 296 6 of 6 — CPA ANSWERS C5 (corrected): "the COMPANY absorbs factoring chargebacks, NOT the driver.
+    // Drivers are company drivers, not owner-operators." A bank line categorized to ANY factoring account (reserve,
+    // advance liability, recoursed A/R, factoring fees / interest) is never recovered from a driver. Fuel overage,
+    // damage and fines are driver-fault recoveries and stay.
+    if (input.glAccountId) {
+      for (const role of FACTORING_ROLES) {
+        const acct = await resolveRoleAccountOptional(client as never, input.companyId, role as never);
+        if (acct && acct === input.glAccountId) return { posted: false, reason: "factoring_chargeback_company_absorbs" };
+      }
+    }
 
     // CEDE to the driver-advance path: if the chosen account IS the entity's driver-advance receivable
     // account, that is a loan disbursement (bank-driver-advance.service.ts owns it), NOT an expense
