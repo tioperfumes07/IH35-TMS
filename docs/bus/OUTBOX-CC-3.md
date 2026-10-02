@@ -1986,3 +1986,23 @@ CC-3 | QUEUE EMPTY | all 16 SEAT-SEQUENCE rows built and merged (proof in the en
   - LINKED: load, unit (with CTPAT status), driver, customs broker (vendor, via the declaration), the declaration ↔ the detected event both ways.
   - N/A: money (a crossing posts nothing).
 - **Merge blocked by an ambient red, not CC-3's:** `verify-bank-match-suggest-is-read-only` LIVE FAIL, "bank_transactions count changed: 938 → 951" (USMCA `banking.bank_transactions` grew; that is the banking lane's feed, `scripts/verify-bank-match-suggest-is-read-only.mjs` baseline). CC-3 does not patch that baseline and does not `--admin`. **Lead: please `--admin` merge this PR.** This diff touches no banking path; its own guards and the migration guards are green.
+
+## 2026-10-02 E-10 addition — a fault code proposes its catalog repair item; auto work order root fix
+
+- **Samsara already names the component.** Each live fault carries `spnDescription` / `fmiDescription` in its payload, for example SPN 3251 FMI 2 = "Aftertreatment 1 Diesel Particulate Filter Differential Pressure — Erratic, Intermittent, or Incorrect". It is shown from the payload; no reference table is seeded.
+- **Migration 202615200900** (claim #23930): the owner's fault rules (`maintenance.fault_code_severity_rules`) gain `service_task_id` → `catalogs.maintenance_service_tasks` and `labor_code_id` → `catalogs.maintenance_labor_codes`. They are set through the existing rules routes (company-scoped ids).
+  - A rule may name an exact code or a whole SPN (any FMI); the exact code wins.
+  - Rules stay owner-entered: none are seeded.
+- **One shared definition** (`maintenance/fault-catalog-proposal.ts`) used by the fault alerts route, the truck panel and the driver profile: component description + proposed task / labor. The panels show "Component — failure", "Proposed task" and "Proposed labor".
+- **Auto work order:** the processor's rule lookup uses the same exact-or-SPN match. The draft WO now carries `fault_code` and names the proposed task and labor in its body.
+- **Root defect fixed:** the de-dup check ran AFTER the fault row was inserted and matched that same row, so **no rule could ever open a work order**. The fault's own new row is now excluded; an older unresolved one within 24 h still de-duplicates.
+- **Throwaway-branch proof** (`br-odd-paper-ak1xsgix`, deleted): rule 'SPN 3251' → PM-B checklist + Electrical repair, auto WO, high.
+  - Read: SPN 3251 FMI 2 shows the DPF description + both proposals; SPN 103 FMI 18 (no rule) shows its description and no proposal.
+  - Processor run 1: `draft_wos_created 1`, WO "AUTO: Fault Code SPN 3251 FMI 2 — DPF differential pressure", fault_code set, priority urgent, body naming both proposals.
+  - Processor run 2: de-duplicated, 0.
+- **Guard:** `verify-fault-code-proposes-catalog-item` (9 checks).
+- **§10-B:**
+  - LINKED: unit, driver at time (with source), work order (fault ↔ WO via `origin_fault_history_id` + `fault_code`), catalog service task + labor code, vendor (`suggested_shop_id`).
+  - N/A: money (a draft WO posts nothing; the bill comes later through the WO engine).
+
+**Registry additions for CC-3's engines: all built.** E-11 Faults view and E-12 dashcam viewer were registry-assigned to Cursor.

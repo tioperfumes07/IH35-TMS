@@ -10,6 +10,7 @@
  * Fuel verdicts are CC-2's (fuel.fraud_alerts, safety.fuel_gps_matches) — composed, not recomputed.
  */
 import { driverAtTimeSql, driverAtTimeWithLoadFallbackSql } from "../maintenance/driver-attribution.js";
+import { faultDescriptionSql, faultProposalJoinSql } from "../maintenance/fault-catalog-proposal.js";
 import { fuelPurchaseIneligibleReason, FUEL_ROWS_WITH_STAMP_COUNT_SQL, type FuelRowForEligibility } from "../fuel/fuel-purchase-eligibility.js";
 import { computeUnitStops } from "../telematics/unit-stops.service.js";
 
@@ -114,10 +115,12 @@ export async function driverSafety(client: Db, oc: string, driverId: string, w: 
   // Sequential: one pg client cannot run queries concurrently.
   const faults = await client.query(
       `SELECT h.id::text, h.unit_id::text, u.unit_number, h.fault_code, h.severity, h.occurred_at, h.resolved_at, h.auto_wo_id::text,
-              driver_at_time.attribution_source
+              driver_at_time.attribution_source, ${faultDescriptionSql("h")} AS fault_description,
+              fault_proposal.proposed_service_task_name, fault_proposal.proposed_labor_code_name
          FROM maintenance.samsara_fault_code_history h
          JOIN mdata.units u ON u.id = h.unit_id
          ${driverAtTimeWithLoadFallbackSql("h.unit_id", "h.occurred_at")}
+         ${faultProposalJoinSql("h")}
         WHERE h.operating_company_id = $1::uuid AND driver_at_time.driver_id = $2::uuid
           AND h.occurred_at >= $3::timestamptz AND h.occurred_at < $4::timestamptz
         ORDER BY h.occurred_at DESC`,

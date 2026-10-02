@@ -20,6 +20,11 @@ type SeverityRule = {
   suggested_priority: string | null;
   estimated_repair_hours: number | null;
   suggested_shop_id: string | null;
+  /** E-10 addition: catalog items the rule proposes (service task, labor code), with their names. */
+  service_task_id: string | null;
+  service_task_name: string | null;
+  labor_code_id: string | null;
+  labor_code_name: string | null;
 };
 
 function asObject(value: unknown): Record<string, unknown> | null {
@@ -132,12 +137,18 @@ async function lookupRule(
         description,
         suggested_priority,
         estimated_repair_hours,
-        suggested_shop_id::text
-      FROM maintenance.fault_code_severity_rules
+        suggested_shop_id::text,
+        r.service_task_id::text,
+        (SELECT st.display_name FROM catalogs.maintenance_service_tasks st WHERE st.id = r.service_task_id) AS service_task_name,
+        r.labor_code_id::text,
+        (SELECT lc.display_name FROM catalogs.maintenance_labor_codes lc WHERE lc.id = r.labor_code_id) AS labor_code_name
+      FROM maintenance.fault_code_severity_rules r
       WHERE operating_company_id = $1::uuid
-        AND fault_code = $2
+        -- E-10 addition: an exact code wins; else a whole-SPN rule ('SPN 3251' matches 'SPN 3251 FMI 2')
+        AND (fault_code = $2 OR $2 LIKE fault_code || ' FMI %')
         AND source = $3
         AND active = true
+      ORDER BY (fault_code = $2) DESC
       LIMIT 1
     `,
     [operatingCompanyId, faultCode, source]
@@ -149,7 +160,9 @@ async function hasRecentUnresolvedFault(
   client: DbClient,
   operatingCompanyId: string,
   unitId: string,
-  faultCode: string
+  faultCode: string,
+  /** E-10: the history row this event just inserted -- it is not its own "recent duplicate". */
+  excludeHistoryId: string
 ): Promise<boolean> {
   const res = await client.query<{ id: string }>(
     `
@@ -160,9 +173,10 @@ async function hasRecentUnresolvedFault(
         AND fault_code = $3
         AND resolved_at IS NULL
         AND occurred_at >= (now() - interval '24 hours')
+        AND id <> $4::uuid
       LIMIT 1
     `,
-    [operatingCompanyId, unitId, faultCode]
+    [operatingCompanyId, unitId, faultCode, excludeHistoryId]
   );
   return Boolean(res.rows[0]);
 }
@@ -232,6 +246,8 @@ async function createDraftWorkOrder(
     occurred_at: string;
     origin_fault_history_id: string;
     vendor_id: string | null;
+    proposed_service_task?: string | null;
+    proposed_labor_code?: string | null;
   }
 ): Promise<string | null> {
   const display = await client.query<{ display_id: string; sequence: number }>(
@@ -244,19 +260,20 @@ async function createDraftWorkOrder(
   const displayId = display.rows[0]?.display_id ?? null;
   const sequence = Number(display.rows[0]?.sequence ?? 0) || null;
   const title = `AUTO: Fault Code ${input.fault_code} — ${input.description}`;
-  const body = `Triggered by Samsara fault event at ${input.occurred_at}. Severity: ${input.severity}. Suggested priority: ${input.suggested_priority ?? "routine"}. ETA: ${input.estimated_repair_hours ?? "—"}h`;
+  const proposal = [input.proposed_service_task ? `Proposed service task: ${input.proposed_service_task}.` : "", input.proposed_labor_code ? `Proposed labor code: ${input.proposed_labor_code}.` : ""].filter(Boolean).join(" ");
+  const body = `Triggered by Samsara fault event at ${input.occurred_at}. Severity: ${input.severity}. Suggested priority: ${input.suggested_priority ?? "routine"}. ETA: ${input.estimated_repair_hours ?? "—"}h${proposal ? ` ${proposal}` : ""}`;
 
   const woRes = await client.query<{ id: string }>(
     `
       INSERT INTO maintenance.work_orders (
         operating_company_id, wo_type, source_type, status, unit_id, opened_at,
         repair_location, vendor_id, description, wo_title, wo_priority, labor_hours,
-        display_id, unit_sequence, origin, origin_fault_history_id, bucket
+        display_id, unit_sequence, origin, origin_fault_history_id, bucket, fault_code
       )
       VALUES (
         $1::uuid, 'repair', 'IS', 'draft', $2::uuid, $3::timestamptz,
         'in_house', $4::uuid, $5, $6, $7, $8,
-        $9, $10, 'fault_auto', $11::uuid, 'in_house'
+        $9, $10, 'fault_auto', $11::uuid, 'in_house', $12
       )
       RETURNING id::text
     `,
@@ -272,6 +289,7 @@ async function createDraftWorkOrder(
       displayId,
       sequence,
       input.origin_fault_history_id,
+      input.fault_code,
     ]
   );
   return woRes.rows[0]?.id ?? null;
@@ -353,7 +371,9 @@ export async function processVehicleFaultCodeWebhookEvent(
       rule?.auto_create_wo === true && (severity === "high" || severity === "critical");
     if (!shouldAutoWo) continue;
 
-    const recentDup = await hasRecentUnresolvedFault(client, event.operating_company_id, localUnitId, fault.code);
+    // E-10 root fix: this ran AFTER the history insert and matched the row just inserted, so no rule could ever
+    // open a work order. The new row is excluded; an older unresolved one within 24 h still de-duplicates.
+    const recentDup = await hasRecentUnresolvedFault(client, event.operating_company_id, localUnitId, fault.code, history.id);
     if (recentDup) continue;
 
     const woId = await createDraftWorkOrder(client, {
@@ -367,6 +387,8 @@ export async function processVehicleFaultCodeWebhookEvent(
       occurred_at: occurredAt,
       origin_fault_history_id: history.id,
       vendor_id: rule?.suggested_shop_id ?? null,
+      proposed_service_task: rule?.service_task_name ?? null,
+      proposed_labor_code: rule?.labor_code_name ?? null,
     });
     if (!woId) continue;
     draftWosCreated += 1;

@@ -12,6 +12,7 @@
  */
 import { driverAtTimeSql, driverAtTimeWithLoadFallbackSql, loadAtTimeSql } from "../maintenance/driver-attribution.js";
 import { STOP_ARRIVAL_EVENTS_SQL } from "./stop-arrival-events.js";
+import { faultDescriptionSql, faultProposalJoinSql } from "../maintenance/fault-catalog-proposal.js";
 
 /** Display labels so a screen never renders a uuid (verify-no-uuid-label-rendering). */
 const LN = (col: string) => `(SELECT x.load_number FROM mdata.loads x WHERE x.id = ${col}) AS load_number`;
@@ -96,9 +97,11 @@ export async function unitTelematicsLinks(client: Db, oc: string, unitId: string
                                 FROM telematics.geofence_odometer_captures c JOIN geo.geofences g ON g.id = c.geofence_id
                                WHERE c.operating_company_id = $1::uuid AND c.unit_id = $2::uuid AND c.occurred_at >= ${since} ORDER BY c.occurred_at DESC`),
     engine_faults: await q(`SELECT h.id::text, h.fault_code, h.severity, h.occurred_at, h.resolved_at, h.auto_wo_id::text,
+                                   ${faultDescriptionSql("h")} AS fault_description, fault_proposal.proposed_service_task_name, fault_proposal.proposed_labor_code_name,
                                    driver_at_time.driver_id::text AS driver_id, driver_at_time.attribution_source, ${DL("driver_at_time.driver_id")}
                               FROM maintenance.samsara_fault_code_history h
                               ${driverAtTimeWithLoadFallbackSql("h.unit_id", "h.occurred_at")}
+                              ${faultProposalJoinSql("h")}
                              WHERE h.operating_company_id = $1::uuid AND h.unit_id = $2::uuid AND h.occurred_at >= ${since} ORDER BY h.occurred_at DESC`),
     harsh_events: await q(`SELECT e.id::text, e.event_kind, e.event_at, e.g_force,
                                   COALESCE(e.driver_id, driver_at_time.driver_id)::text AS driver_id,
