@@ -1,10 +1,10 @@
 {
-  "healthzSha": "5eb52a7",
-  "generated_at": "2026-10-02T00:51:24.988Z",
+  "healthzSha": "0a9f4ff",
+  "generated_at": "2026-10-02T06:23:30.471Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "5eb52a7",
+    "deployedSha": "0a9f4ff",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 23933,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL -- E-10 addition: fault code proposes its catalog task + labor (owner rules, exact or whole-SPN), Samsara component description on every fault; auto work order de-dup root fix",
+      "number": 24018,
+      "title": "FINDING: ACCT-F9769 LANE: FINANCIAL (ROUND 326 queue item 12, G-06: 1090 undeposited funds — every matched receipt sweeps out of 1090 including batch-wire multi-matches, sweep config gaps refuse instead of skipping, payments default to the operating bank)",
       "state": "merged",
-      "mergedAtCt": "10/01/2026, 07:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23933",
-      "sha": "5eb52a70e8",
-      "committedAtIso": "2026-10-01T19:47:27-05:00"
+      "mergedAtCt": "10/02/2026, 01:22 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24018",
+      "sha": "e723eeb277",
+      "committedAtIso": "2026-10-02T01:22:05-05:00"
     },
     {
-      "number": 23932,
-      "title": "FINDING: N/A LANE: DOCS (OUTBOX CC-2: bus checked, no new order; purchase reverse drill on invoice/load/customer shipped #23931)",
+      "number": 24017,
+      "title": "FINDING: N/A LANE: DOCS (OUTBOX CC-3: queue progress — items 1, 2, 3, 4, 5, 7, 11 built; CC-1 board items: IFTA engine, driver pay engines, segment readers, extra-pay route, held-trigger alias allowance, purge must skip preserve)",
       "state": "merged",
-      "mergedAtCt": "10/01/2026, 07:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23932",
-      "sha": "bbe8985cb1",
-      "committedAtIso": "2026-10-01T19:41:59-05:00"
+      "mergedAtCt": "10/02/2026, 01:21 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24017",
+      "sha": "4daafa0ba0",
+      "committedAtIso": "2026-10-02T01:21:34-05:00"
     },
     {
-      "number": 23931,
-      "title": "FINDING: ACCT-F9624 LANE: FINANCIAL (LINKAGE LAW 10-B reverse drill: invoice, load and customer screens show the factoring purchases they sit on, with the record's OWN share of the wire -- ROUND 315 step 2 \"renders on invoice, load, customer, bank\")",
+      "number": 24016,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL (CC-3 queue item 11: the telematics + geocode preservation ledger — natural keys only, no FK to anything purgeable, append-only, daily engine + one-command Excel)",
       "state": "merged",
-      "mergedAtCt": "10/01/2026, 07:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23931",
-      "sha": "19e6e62dd2",
-      "committedAtIso": "2026-10-01T19:41:37-05:00"
+      "mergedAtCt": "10/02/2026, 01:19 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24016",
+      "sha": "1e17ebb892",
+      "committedAtIso": "2026-10-02T01:19:12-05:00"
     },
     {
-      "number": 23930,
-      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migration 202615200900 for CC-3 E-10 addition: fault code -> maintenance catalog item)",
+      "number": 24015,
+      "title": "FINDING: ACCT-F9332 LANE: FINANCIAL (OWNER LAW 2026-10-02 competing-engine audit, factoring reserve READERS: reserve dashboard / tracker / forecast / factor list read the factoring KPI engine; the dead reserve_movement ledger is never read)",
       "state": "merged",
-      "mergedAtCt": "10/01/2026, 07:39 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23930",
-      "sha": "9b598b5d4c",
-      "committedAtIso": "2026-10-01T19:39:43-05:00"
+      "mergedAtCt": "10/02/2026, 01:18 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24015",
+      "sha": "0a9f4ff1d9",
+      "committedAtIso": "2026-10-02T01:18:28-05:00"
     },
     {
-      "number": 23929,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL -- E-29 addition: detected border crossing linked to its declared customs record (manifest / e-manifest / broker / port), both ways; CC-3 QUEUE EMPTY",
+      "number": 24014,
+      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: verify-steps for CC-1 ROUND 326 queue items 12-18 and 23)",
       "state": "merged",
-      "mergedAtCt": "10/01/2026, 07:38 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23929",
-      "sha": "a89a8ebd2f",
-      "committedAtIso": "2026-10-01T19:38:08-05:00"
+      "mergedAtCt": "10/02/2026, 01:14 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24014",
+      "sha": "f221d63927",
+      "committedAtIso": "2026-10-02T01:14:37-05:00"
     },
     {
-      "number": 23928,
-      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migrations 202615210000 + 202615210100, verify-steps 12093 + 12097 for CC-1 ROUND 321 lease-to-own money side)",
+      "number": 24013,
+      "title": "FINDING: ACCT-F9767 LANE: FINANCIAL (ROUND 326 queue item 11, G-08: 9000 Ask My Accountant — the one bill-line resolver now resolves a line's catalog item to the item's own expense account before the uncategorized tier; an item with no account is refused by name)",
       "state": "merged",
-      "mergedAtCt": "10/01/2026, 07:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23928",
-      "sha": "37fcfe7806",
-      "committedAtIso": "2026-10-01T19:32:42-05:00"
+      "mergedAtCt": "10/02/2026, 01:11 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24013",
+      "sha": "71ba3fbbd6",
+      "committedAtIso": "2026-10-02T01:11:00-05:00"
     },
     {
-      "number": 23927,
-      "title": "FINDING: N/A LANE: NON-FINANCIAL (Spanish truck lease print design + derived Spanish trailer lease; library revision for unedited truck_lease copies)",
+      "number": 24012,
+      "title": "FINDING: N/A LANE: DOCS (OUTBOX CC-1: ROUND 326 queue items 6-10 merged + deployed, 2-5 draft #24000, 24 done, 25 unrecoverable, GitHub Actions billing lock)",
       "state": "merged",
-      "mergedAtCt": "10/01/2026, 07:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23927",
-      "sha": "90115a015c",
-      "committedAtIso": "2026-10-01T19:31:48-05:00"
+      "mergedAtCt": "10/02/2026, 01:05 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24012",
+      "sha": "6e68886a60",
+      "committedAtIso": "2026-10-02T01:05:23-05:00"
     },
     {
-      "number": 23926,
-      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migration 202615191100 for CC-3 E-29 addition: detected crossing -> customs record)",
+      "number": 24011,
+      "title": "FINDING: N/A LANE: DOCS (OUTBOX: BANK-F91005 B-2 JE-line reconcilable MERGED #24009)",
       "state": "merged",
-      "mergedAtCt": "10/01/2026, 07:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23926",
-      "sha": "af31faa729",
-      "committedAtIso": "2026-10-01T19:28:40-05:00"
+      "mergedAtCt": "10/02/2026, 01:04 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24011",
+      "sha": "e3a9eeebc9",
+      "committedAtIso": "2026-10-02T01:04:56-05:00"
     },
     {
-      "number": 23925,
-      "title": "FINDING: N/A LANE: DOCS -- CC-3 wrap follow-up: fuel push first run 23:00Z evaluated 646, pushed 0 (526 date-only, 120 non-fuel, zero-gallon diesel 0)",
+      "number": 24010,
+      "title": "FINDING: ACCT-F9765 LANE: FINANCIAL (ROUND 326 queue item 10, G-05: one settlement-line categorizer — both closes give every line its account, category and catalog item before they read the lines)",
       "state": "merged",
-      "mergedAtCt": "10/01/2026, 07:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23925",
-      "sha": "d4da5dfa44",
-      "committedAtIso": "2026-10-01T19:26:34-05:00"
+      "mergedAtCt": "10/02/2026, 01:04 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24010",
+      "sha": "813748189d",
+      "committedAtIso": "2026-10-02T01:04:24-05:00"
     },
     {
-      "number": 23924,
-      "title": "docs(bus): B-1i #23923 MERGED tip 8cb5332877 — redeploy after FT",
+      "number": 24009,
+      "title": "FINDING: BANK-F91005 B-2 LEFT JE-line reconcilable rows on reconcile workspace",
       "state": "merged",
-      "mergedAtCt": "10/01/2026, 07:19 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/23924",
-      "sha": "58244ce553",
-      "committedAtIso": "2026-10-01T19:19:23-05:00"
+      "mergedAtCt": "10/02/2026, 01:03 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24009",
+      "sha": "f76ad8f33d",
+      "committedAtIso": "2026-10-02T01:03:34-05:00"
     }
   ]
 }

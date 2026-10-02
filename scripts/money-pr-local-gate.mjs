@@ -92,6 +92,8 @@ const STEPS = [
   ["verify-load-status-machines-agree", "scripts/verify-load-status-machines-agree.mjs"],
   // CC-3 2g — loaded_miles is derived (shortest > 0, else practical); every miles writer recomputes it.
   ["verify-loaded-miles-derived", "scripts/verify-loaded-miles-derived.mjs"],
+  // CC-3 2b/6 — every mdata.loads.status write is compare-and-set (no writer overwrites a newer status).
+  ["verify-load-status-writers-cas", "scripts/verify-load-status-writers-cas.mjs"],
   // ROUND 326.5 owner design law — boards built on the tokens: no off-token hex, 34/40/44/132/120 sizes, no column borders, KPI rows across.
   ["verify-design-token-parity", "scripts/verify-design-token-parity.mjs"],
   ["verify-no-money-theater", "scripts/verify-no-money-theater.mjs"],
