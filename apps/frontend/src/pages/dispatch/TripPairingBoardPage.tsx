@@ -374,15 +374,16 @@ export function TripPairingBoardPage() {
       <PageHeader title="Trip Pairing Board" subtitle="Northbound · Triangulation(s) · Southbound — settlement closes on return to Laredo." />
 
       {data ? (
-        <div className="mb-3 grid grid-cols-3 gap-2 md:grid-cols-6">
+        // OWNER DESIGN LAW rule 6: board tiles across (ih-kpi-row, 6 across), 78px, left-aligned figure.
+        <div className="ih-kpi-row mb-3" data-testid="trip-pairing-kpis">
           {/* C8: each KPI selects the board segment holding the rows it counted — the board below IS
               the drill target, so a click filters instead of navigating away. */}
-          <DrillKpiCard label="Active trucks" value={data.kpis.active_trucks} onClick={() => setSegment("All")} active={segment === "All"} />
-          <DrillKpiCard label="Northbound" value={data.kpis.northbound} accent={TRIP_COLOR.NB} onClick={() => setSegment("NB")} active={segment === "NB"} />
-          <DrillKpiCard label="NB unbooked" value={data.kpis.nb_unbooked} onClick={() => setSegment("NB")} active={segment === "NB"} />
-          <DrillKpiCard label="Southbound" value={data.kpis.southbound} accent={TRIP_COLOR.SB} onClick={() => setSegment("SB")} active={segment === "SB"} />
-          <DrillKpiCard label="SB unbooked" value={data.kpis.sb_unbooked} onClick={() => setSegment("open")} active={segment === "open"} />
-          <DrillKpiCard label="Up north 30d+" value={data.kpis.up_north_30d} onClick={() => setSegment("upnorth")} active={segment === "upnorth"} />
+          <DrillKpiCard variant="board" label="Active trucks" value={data.kpis.active_trucks} onClick={() => setSegment("All")} active={segment === "All"} />
+          <DrillKpiCard variant="board" label="Northbound" value={data.kpis.northbound} accent={TRIP_COLOR.NB} onClick={() => setSegment("NB")} active={segment === "NB"} />
+          <DrillKpiCard variant="board" label="NB unbooked" value={data.kpis.nb_unbooked} onClick={() => setSegment("NB")} active={segment === "NB"} />
+          <DrillKpiCard variant="board" label="Southbound" value={data.kpis.southbound} accent={TRIP_COLOR.SB} onClick={() => setSegment("SB")} active={segment === "SB"} />
+          <DrillKpiCard variant="board" label="SB unbooked" value={data.kpis.sb_unbooked} onClick={() => setSegment("open")} active={segment === "open"} />
+          <DrillKpiCard variant="board" label="Up north 30d+" value={data.kpis.up_north_30d} onClick={() => setSegment("upnorth")} active={segment === "upnorth"} />
         </div>
       ) : null}
 

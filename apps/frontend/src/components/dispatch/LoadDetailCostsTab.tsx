@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import "../../design/ih35-design-tokens.css";
+import "../layout/board-kpi.css";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
@@ -311,7 +313,8 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
 
     <>
       {/* KPI strip — kept (live element), same numbers as the footer */}
-      <section data-testid="load-costs-kpis" className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+      {/* OWNER DESIGN LAW rule 6: board tiles across, 78px, left-aligned 21px figure (4 across). */}
+      <section data-testid="load-costs-kpis" className="ih-kpi-row" style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}>
         <Kpi label="Line haul revenue" value={formatMoneyCents(revenue, currency)} />
         <Kpi label="Costs on this load" value={formatMoneyCents(savedCosts + draftTotal, currency)} />
         <Kpi label="Driver pay" value={formatMoneyCents(driverPay, currency)} />
@@ -621,10 +624,12 @@ function statusLabel(status: string | null | undefined): { label: string; tone: 
 }
 
 function Kpi({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
-  return <div data-testid="load-costs-kpi" className={`ldt-card ${strong ? "" : ""}`} style={{ padding: "8px 10px", textAlign: "center" }}>
-    <div className="ldt-muted" style={{ textTransform: "uppercase", letterSpacing: ".04em", fontSize: 10 }}>{label}</div>
-    <div className={`ldt-mono ${strong ? "font-semibold" : ""}`} style={{ fontSize: 13 }}>{value}</div>
-  </div>;
+  return (
+    <div data-testid="load-costs-kpi" className={`ih-kpi board-kpi${strong ? " ih-kpi--navy" : ""}`} style={{ cursor: "default" }}>
+      <div className="ih-hd">{label}</div>
+      <div className="ih-kpi__value">{value}</div>
+    </div>
+  );
 }
 
 /** ONE QuickBooks "+ New" button with a drop-down (owner 2026-09-05: "1 button with drop down, just like

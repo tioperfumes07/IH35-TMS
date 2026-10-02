@@ -1,0 +1,9 @@
+/* OWNER DESIGN LAW 2026-10-02 rule 6 — KPI tiles run across, 78px, never stacked bars; figure 21px/600 left-aligned.
+   Only var(--ih-*) tokens from src/design/ih35-design-tokens.css. Used by DrillKpiCard variant="board". */
+.board-kpi { display: block; text-align: left; min-height: 78px; box-sizing: border-box; width: 100%; min-width: 0; text-decoration: none; color: var(--ih-ink); font: inherit; cursor: pointer; }
+.board-kpi[aria-pressed="true"] { border-color: var(--ih-navy); box-shadow: inset 0 0 0 1px var(--ih-navy); }
+.board-kpi[aria-disabled="true"] { cursor: not-allowed; opacity: .72; }
+.board-kpi--critical .ih-kpi__value { color: var(--ih-red); }
+.board-kpi--warning .ih-kpi__value { color: var(--ih-amber); }
+.board-kpi-hint { font-size: var(--ih-fs-sub); color: var(--ih-muted); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.board-kpi.ih-kpi--navy { color: var(--ih-card); }

@@ -1,10 +1,10 @@
 {
-  "healthzSha": "b4b8aa2",
-  "generated_at": "2026-10-02T12:59:00.746Z",
+  "healthzSha": "9a738dd",
+  "generated_at": "2026-10-02T18:41:20.552Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "b4b8aa2",
+    "deployedSha": "9a738dd",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 24102,
-      "title": "FINDING: MEMORY_BANK BANK-F91037 Settlement No/Location + F91038 overpay gate",
+      "number": 24181,
+      "title": "FINDING: ACCT-F9801 LANE: FINANCIAL (ROUND 326 item 18 slice 1: the Settlement Creator previews and posts through the close engine — one calculator; the totals the owner checks are the totals Post writes)",
       "state": "merged",
-      "mergedAtCt": "10/02/2026, 07:49 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24102",
-      "sha": "cca77ed687",
-      "committedAtIso": "2026-10-02T07:49:28-05:00"
+      "mergedAtCt": "10/02/2026, 01:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24181",
+      "sha": "958d732399",
+      "committedAtIso": "2026-10-02T13:39:05-05:00"
     },
     {
-      "number": 24101,
-      "title": "FINDING: OUTBOX deploy-proof block BANK-F91037 both services LIVE",
+      "number": 24180,
+      "title": "FINDING: N/A LANE: CLAIM-RESERVE (verify-steps 12221 12225 12229 12233 — CC-1 ROUND 326 item 18 + ROUND 297 driver-profile defects)",
       "state": "merged",
-      "mergedAtCt": "10/02/2026, 07:47 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24101",
-      "sha": "fcaa7b8609",
-      "committedAtIso": "2026-10-02T07:47:00-05:00"
+      "mergedAtCt": "10/02/2026, 01:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24180",
+      "sha": "8f5fc29cbc",
+      "committedAtIso": "2026-10-02T13:35:11-05:00"
     },
     {
-      "number": 24100,
-      "title": "FINDING: OUTBOX ack BANK-F91037 both services LIVE tip b4b8aa2202",
+      "number": 24179,
+      "title": "FINDING: LST-F3282 LANE: NON-FINANCIAL -- round 297 audit: customer / vendor tab drills land on the counted set; voided rows leave the tabs",
       "state": "merged",
-      "mergedAtCt": "10/02/2026, 07:46 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24100",
-      "sha": "2a488723fb",
-      "committedAtIso": "2026-10-02T07:46:27-05:00"
+      "mergedAtCt": "10/02/2026, 01:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24179",
+      "sha": "9a738dd0b0",
+      "committedAtIso": "2026-10-02T13:35:03-05:00"
     },
     {
-      "number": 24099,
-      "title": "FINDING: OUTBOX ack BANK-F91037 Settlement No + Location MERGED #24098 tip eabb5f0d31",
+      "number": 24178,
+      "title": "FINDING: N/A LANE: DOCS -- CC-3 OUTBOX rounds 296 + 297 (filter surfaces, money format, variant duplicates, tab linkage audit)",
       "state": "merged",
-      "mergedAtCt": "10/02/2026, 07:40 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24099",
-      "sha": "b4b8aa2202",
-      "committedAtIso": "2026-10-02T07:40:35-05:00"
+      "mergedAtCt": "10/02/2026, 01:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24178",
+      "sha": "b2d96d4107",
+      "committedAtIso": "2026-10-02T13:28:25-05:00"
     },
     {
-      "number": 24098,
-      "title": "FINDING: BANK-F91037 CLAIM 202615221300 expenses missing settlement_no + location_id for B-4 QBO header",
+      "number": 24177,
+      "title": "FINDING: N/A LANE: NON-FINANCIAL -- queue 6: one stop entry = one fence event (duplicated stop fences + out-of-order Samsara fixes)",
       "state": "merged",
-      "mergedAtCt": "10/02/2026, 07:33 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24098",
-      "sha": "eabb5f0d31",
-      "committedAtIso": "2026-10-02T07:33:42-05:00"
+      "mergedAtCt": "10/02/2026, 01:24 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24177",
+      "sha": "9f94496ca1",
+      "committedAtIso": "2026-10-02T13:24:31-05:00"
     },
     {
-      "number": 24097,
-      "title": "FINDING: OUTBOX ack BANK-F91035 Class #24095 + CLAIM 202615221300 #24096",
+      "number": 24176,
+      "title": "FINDING: ACCT-F2971 — money table cells app-wide render ragged — no right-align + tabular-nums on financial statements",
       "state": "merged",
-      "mergedAtCt": "10/02/2026, 07:22 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24097",
-      "sha": "9e65c8a661",
-      "committedAtIso": "2026-10-02T07:22:56-05:00"
+      "mergedAtCt": "10/02/2026, 01:22 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24176",
+      "sha": "76efa8cf73",
+      "committedAtIso": "2026-10-02T13:22:47-05:00"
     },
     {
-      "number": 24096,
-      "title": "FINDING: BANK-F91036 CLAIM-RESERVE 202615221300 B-4 Settlement No + Location columns",
+      "number": 24175,
+      "title": "FINDING: LST-F3281 LANE: NON-FINANCIAL -- round 297: \"Factored\" on the Customers board means an invoice was actually sold to the factor",
       "state": "merged",
-      "mergedAtCt": "10/02/2026, 07:20 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24096",
-      "sha": "bf915da325",
-      "committedAtIso": "2026-10-02T07:20:14-05:00"
+      "mergedAtCt": "10/02/2026, 01:19 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24175",
+      "sha": "32b93ef7b6",
+      "committedAtIso": "2026-10-02T13:19:33-05:00"
     },
     {
-      "number": 24095,
-      "title": "FINDING: BANK-F91035 B-4 Check creator missing Class header (ORDERS §B-4 / QBO §13)",
+      "number": 24174,
+      "title": "FINDING: ACCT-F9799 LANE: FINANCIAL (ROUND 296 5 of 6: the driver-finance surfaces format money through lib/money — QBO format, accounting parentheses, em dash for missing, 120px money / 132px date columns)",
       "state": "merged",
-      "mergedAtCt": "10/02/2026, 07:15 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24095",
-      "sha": "8d396b2b98",
-      "committedAtIso": "2026-10-02T07:15:42-05:00"
+      "mergedAtCt": "10/02/2026, 01:17 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24174",
+      "sha": "e5680e1c36",
+      "committedAtIso": "2026-10-02T13:17:15-05:00"
     },
     {
-      "number": 24094,
-      "title": "FINDING: OUTBOX ack BANK-F91034 BANK_TX_SPLIT USMCA overrides MERGED #24093 tip 0dcedd33c8",
+      "number": 24173,
+      "title": "FINDING: BANK-F91298 LANE: FINANCIAL (round 297: one open-invoice definition -- Customers 104 vs Factoring 105 vs \"110 live\" named)",
       "state": "merged",
-      "mergedAtCt": "10/02/2026, 07:10 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24094",
-      "sha": "13d4903b98",
-      "committedAtIso": "2026-10-02T07:10:31-05:00"
+      "mergedAtCt": "10/02/2026, 01:16 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24173",
+      "sha": "aebc638f6a",
+      "committedAtIso": "2026-10-02T13:16:15-05:00"
     },
     {
-      "number": 24093,
-      "title": "FINDING: BANK-F91034 CLAIM 202615221200 USMCA missing BANK_TX_SPLIT overrides (Rule 50)",
+      "number": 24172,
+      "title": "FINDING: ACCT-F9340 LANE: FINANCIAL (Lead ROUND 297 audit: the Factoring \"Duplicate factoring vendors\" banner paired every vendor (60 driver pairs) — scan scoped to factoring-company vendors)",
       "state": "merged",
-      "mergedAtCt": "10/02/2026, 07:07 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24093",
-      "sha": "0dcedd33c8",
-      "committedAtIso": "2026-10-02T07:07:05-05:00"
+      "mergedAtCt": "10/02/2026, 01:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24172",
+      "sha": "675b7f0f06",
+      "committedAtIso": "2026-10-02T13:15:56-05:00"
     }
   ]
 }
