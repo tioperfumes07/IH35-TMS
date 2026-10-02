@@ -1,4 +1,4 @@
-import { useMemo, type CSSProperties, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
@@ -19,9 +19,8 @@ import {
 } from "../../api/dispatch";
 import { listLoadsNeedingDriverBillRemint } from "../../api/loads";
 import { DispatchLoadCostsPanel } from "../../components/dispatch/DispatchLoadCostsPanel";
-import { DataPanel } from "../../components/layout/DataPanel";
-import { DataPanelRow } from "../../components/layout/DataPanelRow";
-import { colors, spacing, typography } from "../../design/tokens";
+import "../../design/ih35-design-tokens.css";
+import "./dispatch-board.css";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 
 type Props = {
@@ -78,6 +77,10 @@ const CROSSING_LABELS: Record<string, string> = {
   other: "Other",
 };
 
+// OWNER DESIGN LAW 2026-10-02 (docs/design/00-OWNER-DESIGN-LAW-READ-BEFORE-ANY-SCREEN.md): the app is built identical to
+// the boards. KPI blocks are tiles ACROSS at 78px with a left-aligned 21px figure (rule 6, supersedes the 2026-09-04
+// "centered" ruling); every panel is a real table with lines for rows, never columns (rule 1); missing renders as "—"
+// (rules 7, 13); a correct empty screen says so (rule 14). Tile value = the drill table's row count.
 function KpiCard({
   label,
   value,
@@ -94,146 +97,105 @@ function KpiCard({
   disabledReason?: string;
 }) {
   const testId = `dispatch-overview-kpi-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
-  // KPI tiles: centered content, light tile bg + darker border (owner ruling 2026-09-04 — no
-  // white-on-white, all KPI values centered). Tokens transcribed from GLOBAL-TYPE-SIZE-BASELINE.
-  const style: CSSProperties = {
-    border: `1px solid ${colors.kpiTileBorder}`,
-    backgroundColor: colors.kpiTileBg,
-    borderRadius: spacing.radiusCard,
-    padding: `${spacing.panelPaddingY}px ${spacing.panelPaddingX}px`,
-    textAlign: "center",
-    opacity: disabled ? 0.72 : 1,
-  };
   const body = (
     <>
-      <p
-        className="uppercase"
-        style={{
-          fontSize: typography.sectionSubhead,
-          fontWeight: 700,
-          letterSpacing: typography.tightUpper,
-          color: colors.mutedText,
-        }}
-      >
-        {label}
-      </p>
-      <p style={{ fontSize: typography.pageHeading, fontWeight: 600, color: colors.pageHeading, lineHeight: 1.2 }}>{value}</p>
-      {hint ? <p style={{ fontSize: typography.bodyTextSmall, color: colors.mutedText }}>{hint}</p> : null}
+      <div className="ih-hd">{label}</div>
+      <div className="ih-kpi__value">{value}</div>
+      {hint ? <div className="dpo-kpi-hint" title={hint}>{hint}</div> : null}
     </>
   );
-  // B10 dead-click rollout: `to` drills into the existing dispatch board/queue that already owns this
-  // metric's data (e.g. the At-Risk queue panel just below uses the same /dispatch/at-risk href).
   if (disabled) {
     return (
-      <div
-        className="cursor-not-allowed"
-        style={style}
-        data-testid={testId}
-        aria-disabled="true"
-        title={disabledReason}
-        data-kpi-disabled="true"
-      >
+      <div className="ih-kpi dpo-kpi" data-testid={testId} aria-disabled="true" title={disabledReason} data-kpi-disabled="true">
         {body}
       </div>
     );
   }
   if (to) {
     return (
-      <Link to={to} data-testid={testId} className="block transition hover:shadow-xs" style={style}>
+      <Link to={to} className="ih-kpi dpo-kpi" data-testid={testId}>
         {body}
       </Link>
     );
   }
   return (
-    <div style={style} data-testid={testId}>
+    <div className="ih-kpi dpo-kpi" data-testid={testId}>
       {body}
     </div>
   );
 }
 
-function PanelRow({
-  unit,
-  driver,
-  loadCustomer,
-  onClick,
+const DASH = <span className="ih-empty">—</span>;
+
+type PanelState = { isLoading: boolean; isError: boolean; refetch: () => unknown };
+type PanelColumn = { label: string; num?: boolean };
+type PanelRowData = { key: string; cells: ReactNode[]; onOpen?: () => void };
+
+/** One overview panel = one card holding one table: header row of column labels, one line per row. */
+function OverviewTable({
+  title,
+  hint,
+  viewAllHref,
+  columns,
+  query,
+  errorMessage,
+  emptyMessage,
+  rows,
 }: {
-  unit: ReactNode;
-  driver: ReactNode;
-  loadCustomer: ReactNode;
-  onClick?: () => void;
+  title: string;
+  hint?: string;
+  viewAllHref?: string;
+  columns: PanelColumn[];
+  query: PanelState;
+  errorMessage: string;
+  emptyMessage: string;
+  rows: PanelRowData[];
 }) {
-  const content = (
-    <>
-      <span style={{ color: colors.bodyText }} className="truncate">
-        <span className="font-medium">{unit}</span>
-        <span style={{ color: colors.mutedText }}> · </span>
-        {driver}
-        <span style={{ color: colors.mutedText }}> · </span>
-        {loadCustomer}
-      </span>
-      {onClick ? <button type="button" onClick={onClick} className="shrink-0 text-[11px] text-slate-700 hover:underline">open →</button> : null}
-    </>
-  );
-
-  return <DataPanelRow>{content}</DataPanelRow>;
-}
-
-// REG-038 (owner 2026-09-10/11, verbatim: "each kpi must have its own columns and look clean" /
-// "one column each for Unit, Driver, Load"): PanelRow above concatenates unit/driver/load into ONE
-// span joined by " · " -- readable, but not actually columns. KpiColumnHeader + KpiColumnRow render a
-// real CSS grid with a labeled header row, reused by every REG-038 panel below (Units needing return,
-// Unassigned units, Round-trip exposure, Days since last delivery) so all four share one column
-// contract instead of four hand-rolled layouts.
-function KpiColumnHeader({ columns }: { columns: string[] }) {
+  const withOpen = rows.some((r) => r.onOpen);
   return (
-    <div
-      className="grid gap-2 border-b pb-1"
-      style={{
-        gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))`,
-        borderBottomColor: colors.cardBorder,
-        marginBottom: 2,
-      }}
-    >
-      {columns.map((column) => (
-        <span
-          key={column}
-          className="truncate uppercase"
-          style={{ fontSize: typography.panelHeader, fontWeight: 700, letterSpacing: typography.tightUpper, color: colors.columnHeader }}
-        >
-          {column}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function KpiColumnRow({ cells, onClick }: { cells: ReactNode[]; onClick?: () => void }) {
-  const content = (
-    <div className="grid min-w-0 flex-1 items-center gap-2" style={{ gridTemplateColumns: `repeat(${cells.length}, minmax(0, 1fr))` }}>
-      {cells.map((cell, i) => (
-        <span key={i} className="truncate" style={{ color: colors.bodyText }}>
-          {cell}
-        </span>
-      ))}
-    </div>
-  );
-  return (
-    <DataPanelRow>
-      {content}
-      {/* GLOBAL-TYPE-SIZE-BASELINE ratchet (verify-ui-design-system-ratchet.mjs): no NEW raw
-          text-[Npx] bracket class, even an on-scale one -- token-driven inline style instead,
-          matching this same "open →" affordance's own token elsewhere in this file. */}
-      {onClick ? (
-        <button
-          type="button"
-          onClick={onClick}
-          className="shrink-0 text-slate-700 hover:underline"
-          style={{ fontSize: typography.bodyTextSmall }}
-        >
-          open →
-        </button>
-      ) : null}
-    </DataPanelRow>
+    <section className="ih-card dpo-card">
+      <div className="ih-card-header dpo-card-head">
+        <div>
+          <div className="dpo-card-title">{title}</div>
+          {hint ? <div className="dpo-card-sub">{hint}</div> : null}
+        </div>
+        {viewAllHref ? <Link to={viewAllHref} className="dpo-link">View all →</Link> : null}
+      </div>
+      {query.isLoading ? (
+        <div className="dpo-state">Loading…</div>
+      ) : query.isError ? (
+        // DISPATCH-OVERVIEW-PANEL-ISERROR-SWALLOWED: a failed fetch is never shown as an all-clear empty panel.
+        <div className="dpo-state dpo-state--error">
+          {errorMessage}{" "}
+          <button type="button" className="dpo-retry" onClick={() => void query.refetch()}>Retry</button>
+        </div>
+      ) : rows.length === 0 ? (
+        <div className="dpo-state">{emptyMessage}</div>
+      ) : (
+        <table className="ih-table">
+          <thead>
+            <tr>
+              {columns.map((c) => (
+                <th key={c.label} className={c.num ? "ih-hd ih-num" : "ih-hd"}>{c.label}</th>
+              ))}
+              {withOpen ? <th className="ih-hd" aria-label="Open" /> : null}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.key}>
+                {r.cells.map((cell, i) => (
+                  <td key={i} className={columns[i]?.num ? "ih-num" : undefined}>{cell ?? DASH}</td>
+                ))}
+                {withOpen ? (
+                  <td>{r.onOpen ? <button type="button" className="dpo-open" onClick={r.onOpen}>open →</button> : null}</td>
+                ) : null}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
   );
 }
 
@@ -241,7 +203,7 @@ function KpiColumnRow({ cells, onClick }: { cells: ReactNode[]; onClick?: () => 
  * delivered one (a brand-new/leased-in truck). REG-038: replaces the placeholder strings
  * "Return load not booked" / "Need load" that told the dispatcher nothing concrete to click. */
 function LastLoadCell({ unit }: { unit: UnitsWithoutLoad }) {
-  if (!unit.last_delivered_load_id) return <span style={{ color: colors.mutedText }}>—</span>;
+  if (!unit.last_delivered_load_id) return DASH;
   return (
     <EntityLinkOrTombstone
       kind="load"
@@ -252,40 +214,9 @@ function LastLoadCell({ unit }: { unit: UnitsWithoutLoad }) {
   );
 }
 
-function PanelLoading() {
-  return (
-    <DataPanelRow>
-      <span style={{ color: colors.mutedText, fontSize: typography.bodyTextSmall }}>Loading…</span>
-    </DataPanelRow>
-  );
-}
-
-function PanelEmpty(message: string) {
-  return (
-    <DataPanelRow>
-      <span style={{ color: colors.mutedText, fontSize: typography.bodyTextSmall }}>{message}</span>
-    </DataPanelRow>
-  );
-}
-
-// DISPATCH-OVERVIEW-PANEL-ISERROR-SWALLOWED: five panels below checked isLoading but never
-// isError, so a failed fetch fell through to the PanelEmpty branch — a false all-clear
-// indistinguishable from "genuinely nothing to review" on a dispatcher-facing home dashboard.
-function PanelError(message: string, onRetry: () => void) {
-  return (
-    <DataPanelRow>
-      <span style={{ color: colors.crit.strong, fontSize: typography.bodyTextSmall }}>
-        {message}{" "}
-        <button
-          type="button"
-          onClick={onRetry}
-          style={{ color: colors.crit.strong, textDecoration: "underline", cursor: "pointer" }}
-        >
-          Retry
-        </button>
-      </span>
-    </DataPanelRow>
-  );
+/** Whole days since a unit's last delivery — "—" when the backend has no delivery time (never a fake 0d). */
+function daysIdle(unit: UnitsWithoutLoad): ReactNode {
+  return unit.hours_since_last_delivery == null ? DASH : `${Math.floor(unit.hours_since_last_delivery / 24)}d`;
 }
 
 export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
@@ -387,7 +318,10 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
     () => [...returnUnits].sort((a, b) => (b.hours_since_last_delivery ?? 0) - (a.hours_since_last_delivery ?? 0)),
     [returnUnits]
   );
-  const maxDaysIdle = sortedByDaysIdle.length > 0 ? Math.floor((sortedByDaysIdle[0]!.hours_since_last_delivery ?? 0) / 24) : null;
+  // Unknown hours sort last; the headline is null (renders "—") unless some unit has a real delivery time.
+  const worstIdleHours = sortedByDaysIdle[0]?.hours_since_last_delivery;
+  const maxDaysIdle = worstIdleHours == null ? null : Math.floor(worstIdleHours / 24);
+
 
   const atRiskLateTotal = atRiskLateQ.data?.count ?? 0;
 
@@ -403,342 +337,248 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
 
   if (!enabled) {
     return (
-      <div className="rounded-sm border bg-white p-4 text-xs text-slate-600" data-testid="dispatch-overview-page">
-        Select an operating company.
+      <div className="dpo" data-testid="dispatch-overview-page">
+        <div className="dpo-state">Select an operating company.</div>
       </div>
     );
   }
 
+  const openLoad = (loadId: string | null | undefined) => (loadId && onLoadClick ? () => onLoadClick(loadId) : undefined);
+  const UNIT_DRIVER_LOAD: PanelColumn[] = [{ label: "Unit" }, { label: "Driver" }, { label: "Load" }];
+
   return (
-    <div className="space-y-3" data-testid="dispatch-overview-page">
-      <section className="space-y-1">
-        <h2 className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">Loads — live board</h2>
-        <p className="text-[11px] text-gray-500">
-          Tile value must equal the drill table row count. At-risk / late counts each load once (union, not a sum).
-        </p>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8">
-        <KpiCard
-          label="Active loads"
-          value={dashboardQ.isLoading || dashboardQ.isError ? "—" : (dashboardQ.data?.on_load ?? 0)}
-          hint={dashboardQ.data ? `${dashboardQ.data.in_transit} in transit · trucks with a load out` : undefined}
-          to={ACTIVE_LOAD_DRILL_HREF}
-        />
-        <KpiCard
-          label="Delivered — pending docs"
-          value={dashboardQ.isLoading || dashboardQ.isError ? "—" : (dashboardQ.data?.delivered ?? 0)}
-          hint="delivered — factoring / billing queue"
-          to={DELIVERED_DRILL_HREF}
-        />
-        <KpiCard
-          label="At-risk / late"
-          value={
-            atRiskLateQ.isLoading || atRiskLateQ.isError ? "—" : atRiskLateTotal
-          }
-          hint="Union of at-risk and late — each load once. Detention is its own tile."
-          to="/dispatch/at-risk"
-        />
-        <KpiCard
-          label="Detention"
-          value={detentionQ.isLoading || detentionQ.isError ? "—" : (detentionQ.data?.count ?? 0)}
-          hint={detentionQ.data ? `${detentionQ.data.active_count} actively accruing` : undefined}
-          to="/dispatch/detention"
-        />
-        <KpiCard
-          label="Units available"
-          value={unitsWithoutLoadQ.isLoading || unitsWithoutLoadQ.isError ? "—" : unitsAvailable}
-          hint="idle, no active load"
-          to="/dispatch#unassigned-units"
-        />
-        <KpiCard
-          label="Units needing return"
-          value={unitsWithoutLoadQ.isLoading || unitsWithoutLoadQ.isError ? "—" : unitsNeedingReturn}
-          hint="recent drop, no return booked"
-          to="/dispatch#units-needing-return"
-        />
-        {/* REG-038 (owner 2026-09-10/11): "Round-trip exposure" already existed as a drill panel
-            below with real data, but had no top-level tile of its own -- a dispatcher scanning the
-            KPI strip could not see the count without scrolling. */}
-        <KpiCard
-          label="Round-trip exposure"
-          value={exposureLoadsQ.isLoading || exposureLoadsQ.isError ? "—" : exposureLoads.length}
-          hint="dispatched/in-transit, no return leg confirmed"
-          to="/dispatch#round-trip-exposure"
-        />
-        {/* REG-038: net-new KPI. hours_since_last_delivery was already computed live by the backend
-            but only ever shown as inline text inside "Units needing return"; it had no tile and no
-            own breakdown. maxDaysIdle is null (never a fake 0) when no unit is currently idle. */}
-        <KpiCard
-          label="Days since last delivery"
-          value={unitsWithoutLoadQ.isLoading || unitsWithoutLoadQ.isError ? "—" : maxDaysIdle == null ? "—" : `${maxDaysIdle}d`}
-          hint={maxDaysIdle == null ? "no idle units" : "longest idle unit, no return booked"}
-          to="/dispatch#days-since-last-delivery"
-        />
-      </div>
+    <div className="dpo" data-testid="dispatch-overview-page">
+      <section>
+        <div className="dpo-kpis">
+          <KpiCard
+            label="Active loads"
+            value={dashboardQ.isLoading || dashboardQ.isError ? "—" : (dashboardQ.data?.on_load ?? 0)}
+            hint={dashboardQ.data ? `${dashboardQ.data.in_transit} in transit · trucks with a load out` : undefined}
+            to={ACTIVE_LOAD_DRILL_HREF}
+          />
+          <KpiCard
+            label="Delivered — pending docs"
+            value={dashboardQ.isLoading || dashboardQ.isError ? "—" : (dashboardQ.data?.delivered ?? 0)}
+            hint="delivered — factoring / billing queue"
+            to={DELIVERED_DRILL_HREF}
+          />
+          <KpiCard
+            label="At-risk / late"
+            value={atRiskLateQ.isLoading || atRiskLateQ.isError ? "—" : atRiskLateTotal}
+            hint="each load once; detention is its own tile"
+            to="/dispatch/at-risk"
+          />
+          <KpiCard
+            label="Detention"
+            value={detentionQ.isLoading || detentionQ.isError ? "—" : (detentionQ.data?.count ?? 0)}
+            hint={detentionQ.data ? `${detentionQ.data.active_count} actively accruing` : undefined}
+            to="/dispatch/detention"
+          />
+          <KpiCard
+            label="Units available"
+            value={unitsWithoutLoadQ.isLoading || unitsWithoutLoadQ.isError ? "—" : unitsAvailable}
+            hint="idle, no active load"
+            to="/dispatch#unassigned-units"
+          />
+          <KpiCard
+            label="Units needing return"
+            value={unitsWithoutLoadQ.isLoading || unitsWithoutLoadQ.isError ? "—" : unitsNeedingReturn}
+            hint="recent drop, no return booked"
+            to="/dispatch#units-needing-return"
+          />
+          <KpiCard
+            label="Round-trip exposure"
+            value={exposureLoadsQ.isLoading || exposureLoadsQ.isError ? "—" : exposureLoads.length}
+            hint="out on the road, no return leg confirmed"
+            to="/dispatch#round-trip-exposure"
+          />
+          <KpiCard
+            label="Days since last delivery"
+            value={unitsWithoutLoadQ.isLoading || unitsWithoutLoadQ.isError ? "—" : maxDaysIdle == null ? "—" : `${maxDaysIdle}d`}
+            hint={maxDaysIdle == null ? "no idle unit with a delivery" : "longest idle unit, no return booked"}
+            to="/dispatch#days-since-last-delivery"
+          />
+        </div>
       </section>
 
       {dashboardQ.isError ? (
-        <div data-testid="dispatch-overview-dashboard-error">
-          {PanelError("Couldn't load the Dispatch overview totals.", () => void dashboardQ.refetch())}
+        <div className="dpo-state dpo-state--error" data-testid="dispatch-overview-dashboard-error">
+          {"Couldn't load the Dispatch overview totals."}{" "}
+          <button type="button" className="dpo-retry" onClick={() => void dashboardQ.refetch()}>Retry</button>
         </div>
       ) : null}
 
       <DispatchLoadCostsPanel operatingCompanyId={operatingCompanyId} />
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+      {/* Tile-value law: each tile above drills to the panel below that renders EVERY row it counted (no slice). */}
+      <div className="dpo-grid">
         <div id="units-needing-return" data-testid="dispatch-units-needing-return-panel">
-          <DataPanel title="Units needing return" accentColor={colors.dispatch.strong}>
-            {unitsWithoutLoadQ.isLoading ? (
-              <PanelLoading />
-            ) : unitsWithoutLoadQ.isError ? (
-              PanelError("Couldn't load units needing return.", () => void unitsWithoutLoadQ.refetch())
-            ) : returnUnits.length === 0 ? (
-              PanelEmpty("No delivered units are waiting for a return load.")
-            ) : (
-              <>
-                {/* REG-038: own columns (Unit/Driver/Load), Load = the real last-delivered load via
-                    LastLoadCell -- replaces the old "Return load not booked" placeholder string. */}
-                <KpiColumnHeader columns={["Unit", "Driver", "Load"]} />
-                {/* Tile-value law (this file, above): the "Units needing return" KPI drills straight to
-                    THIS panel (no separate list page exists for a fleet-bounded dataset), so the panel
-                    must render every row the tile counted -- a PANEL_ROW_LIMIT slice here would silently
-                    hide units past the 6th once the fleet has more than that many, breaking the promise. */}
-                {returnUnits.map((unit) => (
-                  <KpiColumnRow
-                    key={unit.id}
-                    cells={[
-                      <EntityLinkOrTombstone kind="unit" id={unit.id} name={unit.unit_number} noun="Unit" />,
-                      <EntityLinkOrTombstone kind="driver" id={unit.driver_id} name={unit.driver_name} noun="Driver" />,
-                      <LastLoadCell unit={unit} />,
-                    ]}
-                  />
-                ))}
-              </>
-            )}
-          </DataPanel>
+          <OverviewTable
+            title="Units needing return"
+            columns={UNIT_DRIVER_LOAD}
+            query={unitsWithoutLoadQ}
+            errorMessage="Couldn't load units needing return."
+            emptyMessage="No delivered units are waiting for a return load."
+            rows={returnUnits.map((unit) => ({
+              key: unit.id,
+              cells: [
+                <EntityLinkOrTombstone kind="unit" id={unit.id} name={unit.unit_number} noun="Unit" />,
+                <EntityLinkOrTombstone kind="driver" id={unit.driver_id} name={unit.driver_name} noun="Driver" />,
+                <LastLoadCell unit={unit} />,
+              ],
+            }))}
+          />
         </div>
         <div id="unassigned-units" data-testid="dispatch-unassigned-units-panel">
-          <DataPanel title="Unassigned units" viewAllHref="/dispatch?view=list" accentColor={colors.dispatch.strong}>
-            {unitsWithoutLoadQ.isLoading ? (
-              <PanelLoading />
-            ) : unitsWithoutLoadQ.isError ? (
-              PanelError("Couldn't load unassigned units.", () => void unitsWithoutLoadQ.refetch())
-            ) : unitsWithoutLoad.length === 0 ? (
-              PanelEmpty("All units currently have active loads.")
-            ) : (
-              <>
-                {/* REG-038: own columns (Unit/Driver/Load); Load shows the unit's real last-delivered
-                    load (LastLoadCell), an honest "—" for a unit that has never delivered one --
-                    replaces the old unconditional "Need load" placeholder string. */}
-                <KpiColumnHeader columns={["Unit", "Driver", "Load"]} />
-                {/* Tile-value law: the "Units available" KPI (unitsAvailable = unitsWithoutLoad.length)
-                    now drills straight to THIS panel via #unassigned-units, so every counted unit must
-                    render here -- see the matching comment on "Units needing return" above. */}
-                {unitsWithoutLoad.map((unit: UnitsWithoutLoad) => (
-                  <KpiColumnRow
-                    key={unit.id}
-                    cells={[
-                      <EntityLinkOrTombstone kind="unit" id={unit.id} name={unit.unit_number} noun="Unit" />,
-                      <EntityLinkOrTombstone kind="driver" id={unit.driver_id} name={unit.driver_name} noun="Driver" />,
-                      <LastLoadCell unit={unit} />,
-                    ]}
-                  />
-                ))}
-              </>
-            )}
-          </DataPanel>
+          <OverviewTable
+            title="Unassigned units" viewAllHref="/dispatch?view=list"
+            columns={UNIT_DRIVER_LOAD}
+            query={unitsWithoutLoadQ}
+            errorMessage="Couldn't load unassigned units."
+            emptyMessage="All units currently have active loads."
+            rows={unitsWithoutLoad.map((unit: UnitsWithoutLoad) => ({
+              key: unit.id,
+              cells: [
+                <EntityLinkOrTombstone kind="unit" id={unit.id} name={unit.unit_number} noun="Unit" />,
+                <EntityLinkOrTombstone kind="driver" id={unit.driver_id} name={unit.driver_name} noun="Driver" />,
+                <LastLoadCell unit={unit} />,
+              ],
+            }))}
+          />
         </div>
         <div id="days-since-last-delivery" data-testid="dispatch-days-since-last-delivery-panel">
-          {/* REG-038: net-new KPI + panel. hours_since_last_delivery was already computed live by the
-              backend but had no tile and no breakdown of its own -- only ever inline text buried
-              inside "Units needing return". Own columns per the owner's ask, PLUS a 4th "Days idle"
-              column since the day-count IS this KPI's whole point, sorted worst-first so the unit
-              most overdue for a return is always the top row. Same "must render every counted row,
-              no PANEL_ROW_LIMIT slice" law as the two panels above -- the tile is this list's own
-              worst-case entry, not a separately-fetched count, so they can never disagree. */}
-          <DataPanel
+          <OverviewTable
             title="Days since last delivery"
-            accentColor={colors.dispatch.strong}
-            titleHint="Idle units (no active load), sorted by longest since their last confirmed delivery first."
-          >
-            {unitsWithoutLoadQ.isLoading ? (
-              <PanelLoading />
-            ) : unitsWithoutLoadQ.isError ? (
-              PanelError("Couldn't load days since last delivery.", () => void unitsWithoutLoadQ.refetch())
-            ) : sortedByDaysIdle.length === 0 ? (
-              PanelEmpty("No idle units — every unit either has a load or has never delivered one yet.")
-            ) : (
-              <>
-                <KpiColumnHeader columns={["Unit", "Driver", "Load", "Days idle"]} />
-                {sortedByDaysIdle.map((unit) => (
-                  <KpiColumnRow
-                    key={unit.id}
-                    cells={[
-                      <EntityLinkOrTombstone kind="unit" id={unit.id} name={unit.unit_number} noun="Unit" />,
-                      <EntityLinkOrTombstone kind="driver" id={unit.driver_id} name={unit.driver_name} noun="Driver" />,
-                      <LastLoadCell unit={unit} />,
-                      `${Math.floor((unit.hours_since_last_delivery ?? 0) / 24)}d`,
-                    ]}
-                  />
-                ))}
-              </>
-            )}
-          </DataPanel>
+            hint="Idle units, longest since their last confirmed delivery first."
+            columns={[...UNIT_DRIVER_LOAD, { label: "Days idle", num: true }]}
+            query={unitsWithoutLoadQ}
+            errorMessage="Couldn't load days since last delivery."
+            emptyMessage="No idle units — every unit either has a load or has never delivered one yet."
+            rows={sortedByDaysIdle.map((unit) => ({
+              key: unit.id,
+              cells: [
+                <EntityLinkOrTombstone kind="unit" id={unit.id} name={unit.unit_number} noun="Unit" />,
+                <EntityLinkOrTombstone kind="driver" id={unit.driver_id} name={unit.driver_name} noun="Driver" />,
+                <LastLoadCell unit={unit} />,
+                daysIdle(unit),
+              ],
+            }))}
+          />
         </div>
-
         <div id="round-trip-exposure" data-testid="dispatch-round-trip-exposure-panel">
-          <DataPanel
+          <OverviewTable
             title="Round-trip exposure" viewAllHref="/dispatch?view=list"
-            titleHint="Loads whose truck is currently dispatched or in transit — out on the road, no return leg confirmed complete yet."
-            accentColor={colors.dispatch.strong}
-          >
-            {exposureLoadsQ.isLoading ? (
-              <PanelLoading />
-            ) : exposureLoadsQ.isError ? (
-              PanelError("Couldn't load round-trip exposure.", () => void exposureLoadsQ.refetch())
-            ) : exposureLoads.length === 0 ? (
-              PanelEmpty("No in-transit or dispatched loads.")
-            ) : (
-              <>
-                {/* REG-038: own columns (Unit/Driver/Load) -- was one PanelRow concatenating unit ·
-                    driver · load · customer into a single span. Customer now rides as a muted
-                    parenthetical inside the Load cell so no information is dropped, while the KPI
-                    still keeps exactly the three columns the owner named as the reference pattern.
-                    Tile-value law: the top "Round-trip exposure" KPI tile is exposureLoads.length,
-                    so this panel can no longer PANEL_ROW_LIMIT-slice -- see the query limit bump on
-                    exposureLoadsQ above. */}
-                <KpiColumnHeader columns={["Unit", "Driver", "Load"]} />
-                {exposureLoads.map((load: DispatchLoad) => (
-                  <KpiColumnRow
-                    key={load.id}
-                    cells={[
-                      <EntityLinkOrTombstone kind="unit" id={load.assigned_unit_id} name={load.unit_number} noun="Unit" />,
-                      <EntityLinkOrTombstone kind="driver" id={load.assigned_primary_driver_id} name={load.driver_short_name} noun="Driver" />,
-                      <>
-                        <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} />{" "}
-                        <span style={{ color: colors.mutedText }}>
-                          (<EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" />)
-                        </span>
-                      </>,
-                    ]}
-                    onClick={onLoadClick ? () => onLoadClick(load.id) : undefined}
-                  />
-                ))}
-              </>
-            )}
-          </DataPanel>
+            hint="Dispatched or in transit, no return leg confirmed complete yet."
+            columns={[...UNIT_DRIVER_LOAD, { label: "Customer" }]}
+            query={exposureLoadsQ}
+            errorMessage="Couldn't load round-trip exposure."
+            emptyMessage="No in-transit or dispatched loads."
+            rows={exposureLoads.map((load: DispatchLoad) => ({
+              key: load.id,
+              cells: [
+                <EntityLinkOrTombstone kind="unit" id={load.assigned_unit_id} name={load.unit_number} noun="Unit" />,
+                <EntityLinkOrTombstone kind="driver" id={load.assigned_primary_driver_id} name={load.driver_short_name} noun="Driver" />,
+                <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} />,
+                <EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" />,
+              ],
+              onOpen: openLoad(load.id),
+            }))}
+          />
         </div>
-
-        <DataPanel title="At-risk / late loads" viewAllHref="/dispatch/at-risk" accentColor={colors.crit.strong}>
-          {atRiskLateQ.isLoading ? (
-            <PanelLoading />
-          ) : atRiskLateQ.isError ? (
-            PanelError("Couldn't load at-risk or late loads.", () => void atRiskLateQ.refetch())
-          ) : atRiskLoads.length === 0 ? (
-            PanelEmpty("No at-risk or late loads right now.")
-          ) : (
-            atRiskLoads.slice(0, PANEL_ROW_LIMIT).map((load: DispatchAlertLoadRow) => (
-              <PanelRow
-                key={load.id}
-                unit={<EntityLinkOrTombstone kind="unit" id={load.unit_id} name={load.unit_number} noun="Unit" />}
-                driver={<EntityLinkOrTombstone kind="driver" id={load.driver_id} name={load.driver_name} noun="Driver" />}
-                loadCustomer={<><EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} /> · <EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" /></>}
-                onClick={onLoadClick ? () => onLoadClick(load.id) : undefined}
-              />
-            ))
-          )}
-        </DataPanel>
-
-        <DataPanel
+        <OverviewTable
+          title="At-risk / late loads"
+          viewAllHref="/dispatch/at-risk"
+          columns={[...UNIT_DRIVER_LOAD, { label: "Customer" }]}
+          query={atRiskLateQ}
+          errorMessage="Couldn't load at-risk or late loads."
+          emptyMessage="No at-risk or late loads right now."
+          rows={atRiskLoads.slice(0, PANEL_ROW_LIMIT).map((load: DispatchAlertLoadRow) => ({
+            key: load.id,
+            cells: [
+              <EntityLinkOrTombstone kind="unit" id={load.unit_id} name={load.unit_number} noun="Unit" />,
+              <EntityLinkOrTombstone kind="driver" id={load.driver_id} name={load.driver_name} noun="Driver" />,
+              <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} />,
+              <EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" />,
+            ],
+            onOpen: openLoad(load.id),
+          }))}
+        />
+        <OverviewTable
           title="Missing driver bill"
           viewAllHref="/dispatch/driver-bill-remint"
-          accentColor={colors.warn.strong}
-        >
-          {needsDriverBillRemintQ.isLoading ? (
-            <PanelLoading />
-          ) : needsDriverBillRemintQ.isError ? (
-            PanelError("Couldn't load the driver-bill remint queue.", () => void needsDriverBillRemintQ.refetch())
-          ) : (needsDriverBillRemintQ.data?.real_count ?? 0) === 0 ? (
-            PanelEmpty("Every delivered load has a driver bill.")
-          ) : (
-            (needsDriverBillRemintQ.data?.loads ?? [])
-              .filter((load) => !load.is_sample_data)
-              .slice(0, PANEL_ROW_LIMIT)
-              .map((load) => (
-                <PanelRow
-                  key={load.id}
-                  unit={<EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" />}
-                  driver={<EntityLinkOrTombstone kind="driver" id={load.driver_id} name={load.driver_name} noun="Driver" />}
-                  loadCustomer={load.status.replace(/_/g, " ")}
-                />
-              ))
-          )}
-        </DataPanel>
-
-        <DataPanel title="Detention board" viewAllHref="/dispatch/detention" accentColor={colors.warn.strong}>
-          {detentionQ.isLoading ? (
-            <PanelLoading />
-          ) : detentionQ.isError ? (
-            PanelError("Couldn't load detention board.", () => void detentionQ.refetch())
-          ) : detentionEvents.length === 0 ? (
-            PanelEmpty("No active detention events.")
-          ) : (
-            detentionEvents.slice(0, PANEL_ROW_LIMIT).map((event: DetentionBoardEvent) => (
-              <PanelRow
-                key={event.id}
-                unit={<EntityLinkOrTombstone kind="unit" id={event.unit_id} name={event.unit_number} noun="Unit" />}
-                driver={<EntityLinkOrTombstone kind="driver" id={event.driver_id} name={event.driver_name} noun="Driver" />}
-                loadCustomer={<><EntityLink kind="load" id={event.load_id} label={entityLabel(event.load_number, event.load_id, "Load")} /> · <EntityLinkOrTombstone kind="customer" id={event.customer_id} name={event.customer_name} noun="Customer" /></>}
-                onClick={onLoadClick ? () => onLoadClick(event.load_id) : undefined}
-              />
-            ))
-          )}
-        </DataPanel>
-
-        <DataPanel title="Border crossings" viewAllHref="/dispatch/border-crossing" accentColor={colors.info.strong}>
-          {borderQ.isLoading ? (
-            <PanelLoading />
-          ) : borderQ.isError ? (
-            PanelError("Couldn't load border crossings.", () => void borderQ.refetch())
-          ) : borderEvents.length === 0 ? (
-            PanelEmpty("No border crossings in the last 7 days.")
-          ) : (
-            borderEvents.slice(0, PANEL_ROW_LIMIT).map((event) => (
-              <PanelRow
-                key={event.uuid}
-                unit={event.unit_id
-                  ? <EntityLinkOrTombstone kind="unit" id={event.unit_id} name={event.unit_number} noun="Unit" />
-                  : event.vehicle_id || "Unassigned"}
-                driver={<EntityLinkOrTombstone kind="driver" id={event.driver_uuid} name={event.driver_name} noun="Driver" />}
-                loadCustomer={
-                  event.load_uuid
-                    ? <EntityLinkOrTombstone kind="load" id={event.load_uuid} name={event.load_number} noun="Load" />
-                    : `${CROSSING_LABELS[event.crossing_point] ?? event.crossing_point} · ${event.direction}`
-                }
-                onClick={event.load_uuid && onLoadClick ? () => onLoadClick(event.load_uuid!) : undefined}
-              />
-            ))
-          )}
-        </DataPanel>
-
-        <DataPanel title="Out-of-service" viewAllHref="/dispatch/in-transit-issues" accentColor={colors.crit.strong}>
-          {oosLoadsQ.isLoading ? (
-            <PanelLoading />
-          ) : oosLoadsQ.isError ? (
-            PanelError("Couldn't load out-of-service loads.", () => void oosLoadsQ.refetch())
-          ) : oosLoads.length === 0 ? (
-            PanelEmpty("No dispatch-blocked units on active loads.")
-          ) : (
-            oosLoads.slice(0, PANEL_ROW_LIMIT).map((load: DispatchLoad) => (
-              <PanelRow
-                key={load.id}
-                unit={<EntityLinkOrTombstone kind="unit" id={load.assigned_unit_id} name={load.unit_number} noun="Unit" />}
-                driver={<EntityLinkOrTombstone kind="driver" id={load.assigned_primary_driver_id} name={load.driver_short_name} noun="Driver" />}
-                loadCustomer={<><EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} /> · {load.dispatch_block_reason ?? "Blocked"}</>}
-                onClick={onLoadClick ? () => onLoadClick(load.id) : undefined}
-              />
-            ))
-          )}
-        </DataPanel>
+          columns={[{ label: "Load" }, { label: "Driver" }, { label: "Status" }]}
+          query={needsDriverBillRemintQ}
+          errorMessage="Couldn't load the driver-bill remint queue."
+          emptyMessage="Every delivered load has a driver bill."
+          rows={(needsDriverBillRemintQ.data?.loads ?? [])
+            .filter((load) => !load.is_sample_data)
+            .slice(0, PANEL_ROW_LIMIT)
+            .map((load) => ({
+              key: load.id,
+              cells: [
+                <EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" />,
+                <EntityLinkOrTombstone kind="driver" id={load.driver_id} name={load.driver_name} noun="Driver" />,
+                load.status.replace(/_/g, " "),
+              ],
+            }))}
+        />
+        <OverviewTable
+          title="Detention board"
+          viewAllHref="/dispatch/detention"
+          columns={[...UNIT_DRIVER_LOAD, { label: "Customer" }]}
+          query={detentionQ}
+          errorMessage="Couldn't load detention board."
+          emptyMessage="No active detention events."
+          rows={detentionEvents.slice(0, PANEL_ROW_LIMIT).map((event: DetentionBoardEvent) => ({
+            key: event.id,
+            cells: [
+              <EntityLinkOrTombstone kind="unit" id={event.unit_id} name={event.unit_number} noun="Unit" />,
+              <EntityLinkOrTombstone kind="driver" id={event.driver_id} name={event.driver_name} noun="Driver" />,
+              <EntityLink kind="load" id={event.load_id} label={entityLabel(event.load_number, event.load_id, "Load")} />,
+              <EntityLinkOrTombstone kind="customer" id={event.customer_id} name={event.customer_name} noun="Customer" />,
+            ],
+            onOpen: openLoad(event.load_id),
+          }))}
+        />
+        <OverviewTable
+          title="Border crossings"
+          hint="Last 7 days."
+          viewAllHref="/dispatch/border-crossing"
+          columns={[...UNIT_DRIVER_LOAD, { label: "Crossing" }]}
+          query={borderQ}
+          errorMessage="Couldn't load border crossings."
+          emptyMessage="No border crossings in the last 7 days."
+          rows={borderEvents.slice(0, PANEL_ROW_LIMIT).map((event) => ({
+            key: event.uuid,
+            cells: [
+              event.unit_id
+                ? <EntityLinkOrTombstone kind="unit" id={event.unit_id} name={event.unit_number} noun="Unit" />
+                : event.vehicle_id || "Unassigned",
+              <EntityLinkOrTombstone kind="driver" id={event.driver_uuid} name={event.driver_name} noun="Driver" />,
+              event.load_uuid ? <EntityLinkOrTombstone kind="load" id={event.load_uuid} name={event.load_number} noun="Load" /> : null,
+              `${CROSSING_LABELS[event.crossing_point] ?? event.crossing_point} · ${event.direction}`,
+            ],
+            onOpen: openLoad(event.load_uuid),
+          }))}
+        />
+        <OverviewTable
+          title="Out-of-service"
+          viewAllHref="/dispatch/in-transit-issues"
+          columns={[...UNIT_DRIVER_LOAD, { label: "Reason" }]}
+          query={oosLoadsQ}
+          errorMessage="Couldn't load out-of-service loads."
+          emptyMessage="No dispatch-blocked units on active loads."
+          rows={oosLoads.slice(0, PANEL_ROW_LIMIT).map((load: DispatchLoad) => ({
+            key: load.id,
+            cells: [
+              <EntityLinkOrTombstone kind="unit" id={load.assigned_unit_id} name={load.unit_number} noun="Unit" />,
+              <EntityLinkOrTombstone kind="driver" id={load.assigned_primary_driver_id} name={load.driver_short_name} noun="Driver" />,
+              <EntityLink kind="load" id={load.id} label={entityLabel(load.load_number, load.id, "Load")} />,
+              load.dispatch_block_reason ?? null,
+            ],
+            onOpen: openLoad(load.id),
+          }))}
+        />
       </div>
     </div>
   );

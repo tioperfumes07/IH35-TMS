@@ -1,88 +1,61 @@
 #!/usr/bin/env node
 /**
- * DISPATCH KPI TREATMENT (owner ruling 2026-09-04): "ALL KPI BOXES ... CENTERED" and KPI cards must
- * be a light tile with a darker border — not white-on-white. The dispatch overview KpiCard rendered
- * left-aligned on a plain bg-white with the faint cardBorder. This guard fails if the KpiCard style
- * drops centered text, the light kpiTileBg, or the darker kpiTileBorder — or if bg-white creeps back
- * onto the tile (which would paint over the light-tile token).
+ * DISPATCH KPI TREATMENT — re-anchored 2026-10-02 to the OWNER DESIGN LAW
+ * (docs/design/00-OWNER-DESIGN-LAW-READ-BEFORE-ANY-SCREEN.md, rule 6 + tokens): "KPI blocks are tiles across, never bars
+ * down. 78px, not 216." The KPI figure is 21px/600, LEFT-aligned inside the tile. This supersedes the 2026-09-04
+ * "centered, light tile" ruling this guard used to lock (the filename is kept: it is a registered verify-step target).
+ *
+ * FAILS IF the dispatch overview tiles stop using the board's tile classes (ih-kpi / ih-kpi__value / dpo-kpi), the
+ * tile row stops running across (dpo-kpis grid), the 78px tile height goes, centring comes back, or a tile paints
+ * bg-white / Tailwind sizing over the board token.
  *
  * Self-testing static guard. Run: node scripts/verify-dispatch-kpi-centered-light.mjs [--selftest]
  */
 import fs from "node:fs";
 
-const file = "apps/frontend/src/pages/dispatch/DispatchOverview.tsx";
-const original = fs.readFileSync(file, "utf8");
+const TSX = "apps/frontend/src/pages/dispatch/DispatchOverview.tsx";
+const CSS = "apps/frontend/src/pages/dispatch/dispatch-board.css";
 
-// Isolate the KpiCard style block so we don't match unrelated cards elsewhere in the file.
-const styleBlock = (() => {
-  const start = original.indexOf("const style: CSSProperties = {");
-  return start === -1 ? "" : original.slice(start, start + 320);
-})();
-
-const contracts = [
-  [
-    "KpiCard tile uses the darker kpiTileBorder (not the faint cardBorder)",
-    () => /border: `1px solid \$\{colors\.kpiTileBorder\}`/.test(styleBlock),
-    (s) => s.replace("border: `1px solid ${colors.kpiTileBorder}`", "border: `1px solid ${colors.cardBorder}`"),
-  ],
-  [
-    "KpiCard tile uses the light kpiTileBg (not white-on-white)",
-    () => /backgroundColor: colors\.kpiTileBg/.test(styleBlock),
-    (s) => s.replace("backgroundColor: colors.kpiTileBg,", ""),
-  ],
-  [
-    "KpiCard content is centered (textAlign: center)",
-    () => /textAlign: "center"/.test(styleBlock),
-    (s) => s.replace('textAlign: "center",', ""),
-  ],
-  [
-    "KpiCard tile no longer paints bg-white over the light tile",
-    (s) => !/data-testid=\{testId\}[^>]*className="[^"]*bg-white/.test(s) && !/className="block bg-white transition/.test(s) && !/className="cursor-not-allowed bg-white"/.test(s),
-    (s) => s.replace('className="block transition hover:shadow-xs"', 'className="block bg-white transition hover:shadow-xs"'),
-  ],
-];
-
-function audit(s) {
-  const block = (() => {
-    const start = s.indexOf("const style: CSSProperties = {");
-    return start === -1 ? "" : s.slice(start, start + 320);
-  })();
-  return contracts
-    .filter(([, test]) => !test(s, block))
-    .map(([name]) => name);
+export function audit(tsx, css) {
+  const fails = [];
+  const tile = (tsx.match(/function KpiCard\([\s\S]*?\n}\n/) ?? [""])[0];
+  if (!tile) fails.push("KpiCard component is gone");
+  if (!/className="ih-kpi dpo-kpi"/.test(tile)) fails.push("tile must use the board tile class (ih-kpi dpo-kpi)");
+  if (!/className="ih-kpi__value"/.test(tile)) fails.push("figure must use ih-kpi__value (21px/600, left-aligned)");
+  if (!/className="ih-hd"/.test(tile)) fails.push("label must use the board column label (ih-hd)");
+  if (/text-?[Aa]lign:\s*"?center|text-center/.test(tile)) fails.push("tiles are left-aligned — centring is the superseded 2026-09-04 rule");
+  if (/bg-white|className="[^"]*\b(p|px|py|text)-\[/.test(tile)) fails.push("no Tailwind paint or size over the board tile");
+  if (!/import "\.\.\/\.\.\/design\/ih35-design-tokens\.css";/.test(tsx)) fails.push("overview must load the owner tokens css");
+  if (!/className="dpo-kpis"/.test(tsx)) fails.push("tiles must sit in the dpo-kpis row");
+  if (!/\.dpo-kpis\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*repeat\(8,/.test(css)) fails.push("dpo-kpis must run 8 tiles across");
+  if (!/\.dpo-kpi\s*\{[^}]*min-height:\s*78px/.test(css)) fails.push("tile height is 78px (never a 216px bar)");
+  if (/\.dpo-kpi\b[^{]*\{[^}]*text-align:\s*center/.test(css)) fails.push("no centred tile in css");
+  return fails;
 }
 
-// The first three contracts read the module-level styleBlock closure; re-evaluate against a passed
-// block for mutation testing.
-function auditWith(s) {
-  const start = s.indexOf("const style: CSSProperties = {");
-  const block = start === -1 ? "" : s.slice(start, start + 320);
-  const failing = [];
-  if (!/border: `1px solid \$\{colors\.kpiTileBorder\}`/.test(block)) failing.push(contracts[0][0]);
-  if (!/backgroundColor: colors\.kpiTileBg/.test(block)) failing.push(contracts[1][0]);
-  if (!/textAlign: "center"/.test(block)) failing.push(contracts[2][0]);
-  if (
-    /className="block bg-white transition/.test(s) ||
-    /className="cursor-not-allowed bg-white"/.test(s)
-  )
-    failing.push(contracts[3][0]);
-  return failing;
-}
-
-const failures = auditWith(original);
+const tsx = fs.readFileSync(TSX, "utf8");
+const css = fs.readFileSync(CSS, "utf8");
+const failures = audit(tsx, css);
 if (failures.length) {
   console.error(`[verify-dispatch-kpi-centered-light] FAILED\n${failures.map((f) => ` - ${f}`).join("\n")}`);
   process.exit(1);
 }
 
 if (process.argv.includes("--selftest")) {
-  let caught = 0;
-  for (const [name, , mutate] of contracts) {
-    if (auditWith(mutate(original)).includes(name)) caught += 1;
-    else throw new Error(`selftest failed to catch: ${name}`);
+  const mutations = [
+    ["centre the figure", tsx.replace('className="ih-kpi__value"', 'className="ih-kpi__value" style={{ textAlign: "center" }}'), css],
+    ["drop the board tile", tsx.replaceAll('className="ih-kpi dpo-kpi"', 'className="rounded border bg-white p-3"'), css],
+    ["stack the tiles", tsx, css.replace("repeat(8, minmax(0, 1fr))", "minmax(0, 1fr)")],
+    ["216px bars", tsx, css.replace("min-height: 78px", "min-height: 216px")],
+    ["drop tokens css", tsx.replace('import "../../design/ih35-design-tokens.css";', ""), css],
+  ];
+  for (const [name, t, c] of mutations) {
+    if (audit(t, c).length === 0) {
+      console.error(`[verify-dispatch-kpi-centered-light] selftest FAILED — mutation survived: ${name}`);
+      process.exit(1);
+    }
   }
-  console.log(`[verify-dispatch-kpi-centered-light] SELFTEST PASS — ${caught}/${contracts.length} mutations detected`);
-  process.exit(0);
+  console.log(`[verify-dispatch-kpi-centered-light] selftest ${mutations.length}/${mutations.length} caught`);
 }
 
-console.log("[verify-dispatch-kpi-centered-light] OK");
+console.log("[verify-dispatch-kpi-centered-light] OK — dispatch KPI tiles are board tiles: across, 78px, left-aligned 21px figure");

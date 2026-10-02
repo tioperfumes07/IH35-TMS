@@ -43,7 +43,9 @@ const SECTION_RE =
 const ASSIGNMENT_RE =
   /<UnitsWithoutLoadTable[\s\S]{0,300}errorState=\{dataTableErrorState\(unitsWithoutLoadQuery\.error/;
 const FORWARD_RE = /<DataTable[\s\S]{0,200}errorState=\{errorState\}/;
-const OVERVIEW_RE = /unitsWithoutLoadQ\.isLoading[\s\S]{0,180}unitsWithoutLoadQ\.isError[\s\S]{0,220}PanelError\("Couldn't load unassigned units\.",[\s\S]{0,120}unitsWithoutLoadQ\.refetch\(\)[\s\S]{0,180}unitsWithoutLoad\.length === 0/;
+// Re-anchored 2026-10-02 (owner design law: overview panels are one OverviewTable, whose ladder is loading -> ERROR with
+// Retry (query.refetch) -> empty). The unassigned panel must hand unitsWithoutLoadQ to it with its own error copy.
+const OVERVIEW_RE = /query=\{unitsWithoutLoadQ\}\s*errorMessage="Couldn't load unassigned units\."[\s\S]*function OverviewTable|function OverviewTable[\s\S]*query\.isError \?[\s\S]{0,300}query\.refetch\(\)[\s\S]{0,300}rows\.length === 0[\s\S]*query=\{unitsWithoutLoadQ\}\s*errorMessage="Couldn't load unassigned units\."/;
 
 export function checkUnassignedUnitsErrorState(boardSrc, tableSrc, overviewSrc) {
   const problems = [];
