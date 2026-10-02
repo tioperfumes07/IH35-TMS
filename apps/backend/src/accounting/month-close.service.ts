@@ -4,6 +4,7 @@ import { withCompanyScope } from "./shared.js";
 import { insertRetainedEarningsClosingJournalIfNeeded } from "./period-close-retained-earnings.service.js";
 import { writePeriodCashBasisSnapshotAtClose } from "./cash-basis/period-close-snapshot.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { computeInterestAccrualLines } from "../factoring/interest-accrual.service.js";
 
 // ACCT-F5656 — AF-7 money-control gate. `POST /api/v1/accounting/periods/:id/close`
 // (p7-wave2.routes.ts) already refuses to close/lock a period or post the retained-earnings JE
@@ -50,6 +51,14 @@ export type MonthCloseStatus = {
   };
   adjusting_entries: {
     count: number;
+  };
+  // Lead ROUND 296: Faro Default Interest posts once, at close, with approval (DR 6830 / CR 2155). The period cannot lock
+  // while interest is due and its accrual run is not posted.
+  factoring_interest: {
+    complete: boolean;
+    due_cents: number;
+    line_count: number;
+    run_state: string | null;
   };
   can_lock: boolean;
 };
@@ -268,8 +277,23 @@ async function loadChecklist(client: Client, input: { operatingCompanyId: string
   const apComplete = apOverdueCount === 0 || acknowledgments.ap_aging_review;
   // Nothing is due for a non-quarter-end month; only the quarter's closing month can block on it.
   const fuelTaxComplete = !iftaDueThisMonth || iftaFiled;
+  const interestLines = await computeInterestAccrualLines(client, input.operatingCompanyId, input.periodEnd);
+  const interestRunRes = await client.query<{ state: string }>(
+    `SELECT state FROM accounting.factoring_interest_accrual_runs
+      WHERE operating_company_id = $1::uuid AND period_end = $2::date AND state IN ('proposed', 'posted')
+      ORDER BY proposed_at DESC LIMIT 1`,
+    [input.operatingCompanyId, input.periodEnd]
+  );
+  const interestRunState = interestRunRes.rows[0]?.state ?? null;
+  const factoringInterest = {
+    complete: interestRunState === "posted" || interestLines.length === 0,
+    due_cents: interestLines.reduce((sum, line) => sum + line.accrual_cents, 0),
+    line_count: interestLines.length,
+    run_state: interestRunState,
+  };
   const periodOpen = period?.status === "open";
-  const canLock = periodOpen && bankReconComplete && arComplete && apComplete && fuelTaxComplete;
+  const canLock =
+    periodOpen && bankReconComplete && arComplete && apComplete && fuelTaxComplete && factoringInterest.complete;
 
   return {
     period,
@@ -280,6 +304,7 @@ async function loadChecklist(client: Client, input: { operatingCompanyId: string
     iftaQuarterLabel,
     iftaDueThisMonth,
     adjustingCount,
+    factoringInterest,
     canLock,
     acknowledgments,
   };
@@ -325,6 +350,7 @@ export async function getMonthCloseStatus(input: { userId: string; operatingComp
       adjusting_entries: {
         count: checklist.adjustingCount,
       },
+      factoring_interest: checklist.factoringInterest,
       can_lock: checklist.canLock,
     };
   });
@@ -414,6 +440,7 @@ export async function lockMonthClose(input: {
             ap_review_acknowledged: checklist.acknowledgments.ap_aging_review,
             ifta_filed: checklist.iftaFiled,
             adjusting_entries: checklist.adjustingCount,
+            factoring_interest_run_state: checklist.factoringInterest.run_state,
           },
         },
         "info",
