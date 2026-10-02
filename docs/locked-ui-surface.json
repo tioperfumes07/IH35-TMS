@@ -513,17 +513,18 @@
       "Settlements"
     ],
     "maintenance": [
-      "R&M Status Board",
+      "Home",
       "Fleet Table",
       "Active WOs",
+      "PM Due",
+      "Faults",
+      "In Shop",
       "Service / Location",
-      "Arriving Soon",
-      "In-Transit Issues",
-      "Damage Reports",
       "Driver Reports",
-      "Severe Repairs",
       "Road Service",
       "Parts Inventory",
+      "Cost/mi",
+      "Integrity Report",
       "Settings"
     ],
     "fuel": [
@@ -542,17 +543,25 @@
       "Settlements \u25be",
       "Pre-settlements",
       "Cash advances",
-      "Permits",
+      "Cash advance requests",
       "Pay rate templates",
-      "Deductions",
-      "Leave"
+      "Leave",
+      "Team Splits"
     ],
     "banking": [
+      "Home",
       "Accounts",
+      "Register",
+      "Deposits",
       "Transactions",
+      "Link suggestions",
       "Reconciliation",
       "Driver Escrow",
-      "Reports"
+      "Relay card",
+      "Reports",
+      "Statement Import",
+      "Plaid Connections",
+      "Settings"
     ],
     "banking_transactions_review_tabs": [
       "All",

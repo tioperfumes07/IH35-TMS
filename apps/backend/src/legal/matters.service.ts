@@ -295,6 +295,8 @@ export async function listMatters(
     equipment_id?: string | undefined;
     insurance_claim_id?: string | undefined;
     insurance_lawsuit_id?: string | undefined;
+    customer_id?: string | undefined;
+    vendor_id?: string | undefined;
     limit?: number | undefined;
     offset?: number | undefined;
     requesterUserId: string;
@@ -339,6 +341,14 @@ export async function listMatters(
   if (args.insurance_lawsuit_id) {
     values.push(args.insurance_lawsuit_id);
     where.push(`m.insurance_lawsuit_id = $${values.length}`);
+  }
+  if (args.customer_id) {
+    values.push(args.customer_id);
+    where.push(`m.customer_id = $${values.length}`);
+  }
+  if (args.vendor_id) {
+    values.push(args.vendor_id);
+    where.push(`m.vendor_id = $${values.length}`);
   }
   const orderRank = severityRankSql();
 

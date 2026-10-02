@@ -227,6 +227,8 @@ export type EntityKind =
   | "legal_matters_equipment"
   | "legal_matters_claim"
   | "legal_matters_lawsuit"
+  | "legal_matters_customer"
+  | "legal_matters_vendor"
   | "insurance_claims_driver"
   | "insurance_claims_unit"
   | "insurance_claims_load"
@@ -681,6 +683,10 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/legal/matters?insurance_claim_id=${id}`;
     case "legal_matters_lawsuit":
       return `/legal/matters?insurance_lawsuit_id=${id}`;
+    case "legal_matters_customer":
+      return `/legal/matters?customer_id=${id}`;
+    case "legal_matters_vendor":
+      return `/legal/matters?vendor_id=${id}`;
     case "insurance_claims_driver":
       return `/safety/insurance/claims?driver_id=${id}`;
     case "insurance_claims_unit":

@@ -58,6 +58,7 @@ import { WarrantyClaimsReverseSection } from "../components/maintenance/Warranty
 import { SafetyAlertsReverseSection } from "../components/safety/SafetyAlertsReverseSection";
 import { VendorInsurancePoliciesReverseSection } from "../components/insurance/VendorInsurancePoliciesReverseSection";
 import { VendorLegalContractsReverseSection } from "../components/legal/VendorLegalContractsReverseSection";
+import { LegalMattersReverseSection } from "../components/legal/LegalMattersReverseSection";
 import { CashForecastReverseSection } from "../components/cash-flow/CashForecastReverseSection";
 import { VendorEquipmentLoansReverseSection } from "../components/vendors/VendorEquipmentLoansReverseSection";
 import { VendorMergesReverseSection } from "../components/vendors/VendorMergesReverseSection";
@@ -913,6 +914,12 @@ export function VendorDetailPage() {
           data-testid="vendor-warranty-claims-reverse"
         />
         <VendorInsurancePoliciesReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
+        <LegalMattersReverseSection
+          operatingCompanyId={companyId}
+          filter={{ vendor_id: vendor.id }}
+          contextLabel="this vendor"
+          data-testid="vendor-profile-legal-matters"
+        />
         <VendorLegalContractsReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <VendorBorderCrossingsReverseSection operatingCompanyId={companyId} vendorId={vendor.id} />
         <VendorPartsHistorySection operatingCompanyId={companyId} vendorId={vendor.id} />

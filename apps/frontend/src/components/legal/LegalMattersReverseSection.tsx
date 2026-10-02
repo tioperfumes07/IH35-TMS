@@ -2,18 +2,21 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { legalMattersApi } from "../../api/legal-matters";
 import { useAuth } from "../../auth/useAuth";
-import { EntityLink, resolveEntityRoute } from "../shared/EntityLink";
+import { EntityLink, resolveEntityRoute, type EntityKind } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
 
 type Filter =
-  | { unit_id: string; insurance_claim_id?: never; related_driver_id?: never; equipment_id?: never }
-  | { insurance_claim_id: string; unit_id?: never; related_driver_id?: never; equipment_id?: never }
-  | { insurance_lawsuit_id: string; insurance_claim_id?: never; unit_id?: never; related_driver_id?: never; equipment_id?: never }
-  | { related_driver_id: string; unit_id?: never; insurance_claim_id?: never; equipment_id?: never }
+  | { unit_id: string; insurance_claim_id?: never; related_driver_id?: never; equipment_id?: never; insurance_lawsuit_id?: never; customer_id?: never; vendor_id?: never }
+  | { insurance_claim_id: string; unit_id?: never; related_driver_id?: never; equipment_id?: never; insurance_lawsuit_id?: never; customer_id?: never; vendor_id?: never }
+  | { insurance_lawsuit_id: string; insurance_claim_id?: never; unit_id?: never; related_driver_id?: never; equipment_id?: never; customer_id?: never; vendor_id?: never }
+  | { related_driver_id: string; unit_id?: never; insurance_claim_id?: never; equipment_id?: never; insurance_lawsuit_id?: never; customer_id?: never; vendor_id?: never }
   // Trailers are mdata.equipment rows, not mdata.units - passing a trailer id as unit_id would
   // query the wrong key space and render a permanently-empty panel that looks correctly wired.
-  | { equipment_id: string; unit_id?: never; insurance_claim_id?: never; related_driver_id?: never };
+  | { equipment_id: string; unit_id?: never; insurance_claim_id?: never; related_driver_id?: never; insurance_lawsuit_id?: never; customer_id?: never; vendor_id?: never }
+  // ROUND 326 item 5 — customer / vendor profile reverse.
+  | { customer_id: string; unit_id?: never; insurance_claim_id?: never; related_driver_id?: never; equipment_id?: never; insurance_lawsuit_id?: never; vendor_id?: never }
+  | { vendor_id: string; unit_id?: never; insurance_claim_id?: never; related_driver_id?: never; equipment_id?: never; insurance_lawsuit_id?: never; customer_id?: never };
 
 type Props = {
   operatingCompanyId: string;
@@ -23,6 +26,16 @@ type Props = {
   /** Optional test id for the section root. */
   "data-testid"?: string;
 };
+
+function openKindForFilter(filter: Filter): EntityKind {
+  if ("unit_id" in filter && filter.unit_id) return "legal_matters_unit";
+  if ("insurance_claim_id" in filter && filter.insurance_claim_id) return "legal_matters_claim";
+  if ("insurance_lawsuit_id" in filter && filter.insurance_lawsuit_id) return "legal_matters_lawsuit";
+  if ("related_driver_id" in filter && filter.related_driver_id) return "legal_matters_driver";
+  if ("equipment_id" in filter && filter.equipment_id) return "legal_matters_equipment";
+  if ("customer_id" in filter && filter.customer_id) return "legal_matters_customer";
+  return "legal_matters_vendor";
+}
 
 /**
  * Owner/Administrator-gated reverse drill-through to legal.matters
@@ -47,16 +60,7 @@ export function LegalMattersReverseSection({
   if (!canView) return null;
 
   const matters = query.isError ? [] : (query.data?.matters ?? []);
-  const openKind =
-    "unit_id" in filter
-      ? ("legal_matters_unit" as const)
-      : "insurance_claim_id" in filter
-        ? ("legal_matters_claim" as const)
-        : "insurance_lawsuit_id" in filter
-          ? ("legal_matters_lawsuit" as const)
-          : "related_driver_id" in filter
-            ? ("legal_matters_driver" as const)
-            : ("legal_matters_equipment" as const);
+  const openKind = openKindForFilter(filter);
   const openId = String(Object.values(filter)[0] ?? "");
   // DRV-12: "the large boxes ... go NOWHERE when clicked" -- only the small "Open Legal" corner
   // link navigated; the card body looked clickable but did nothing. Same FleetTable.tsx pattern

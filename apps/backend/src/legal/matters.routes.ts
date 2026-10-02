@@ -45,6 +45,9 @@ const listQuerySchema = operatingCompanyQuerySchema.extend({
   equipment_id: z.string().uuid().optional(),
   insurance_claim_id: z.string().uuid().optional(),
   insurance_lawsuit_id: z.string().uuid().optional(),
+  // ROUND 326 item 5 — customer / vendor profile reverse drill-through.
+  customer_id: z.string().uuid().optional(),
+  vendor_id: z.string().uuid().optional(),
   // CLS-SILENT-CAP — caller-controlled paging. Bounded at 500 (the old hard cap) so this cannot
   // become an unbounded scan, and defaulted to 200 so existing callers get a sane page.
   limit: z.coerce.number().int().min(1).max(500).optional(),
@@ -142,6 +145,8 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
         equipment_id: parsed.data.equipment_id,
         insurance_claim_id: parsed.data.insurance_claim_id,
         insurance_lawsuit_id: parsed.data.insurance_lawsuit_id,
+        customer_id: parsed.data.customer_id,
+        vendor_id: parsed.data.vendor_id,
         requesterUserId: authUser.uuid,
         requesterRole: String(authUser.role ?? ""),
         limit: parsed.data.limit,

@@ -11,7 +11,7 @@ export const BANKING_MODULE_TABS = [
   { id: "transactions", label: "Transactions" },
   { id: "link_suggestions", label: "Link suggestions" },
   { id: "reconciliation", label: "Reconciliation" },
-  { id: "driver_escrow", label: "Driver escrow" },
+  { id: "driver_escrow", label: "Driver Escrow" },
   { id: "relay_card", label: "Relay card" },
   { id: "reports", label: "Reports" },
   { id: "statement_import", label: "Statement Import" },
