@@ -6979,3 +6979,18 @@ proof_query: USMCA load-stop labels with more than one ACTIVE fence: 22 before -
   the 22 ids in the audit event.
 THIS AUTHORIZATION DOES NOT COVER: any company other than USMCA; deleting any geofence or geofence event; any fence
 that is not a duplicated load-stop label; any money posting or JE.
+
+## AUTH-204
+issued_at: 2026-10-02T23:30:00Z
+scope: USMCA ONLY (5c854333-6ea5-4faa-af31-67cb272fef80). Follow-up to AUTH-203 (duplicate load-stop fences).
+  Owner, in CC-3 chat 2026-10-02, verbatim: "yes i follow your recommendations i approve" — the recommendation was:
+  acknowledge the 6 twin safety.geofence_breach_events on the 22 deactivated duplicate fences (exact twins of open
+  alerts on the kept fences; breach events are append-only, only acknowledged_at / acknowledged_by may change), and
+  resolve the 6 open safety.integrity_findings of class duplicate_fire on those fences with a note naming the fix
+  (#24177 + AUTH-203). Acknowledgement attributed to the owner as approver (no system user exists), as AUTH-202.
+action: DATABASE_URL=<prod> npx tsx scripts/ops/2026-10-02-cc3-stop-fence-twins.mts --apply --auth AUTH-204
+  Dry-run first (default, no --apply): twin_breaches 6, duplicate_fire_findings 6.
+expires_at: 2026-10-04T23:00:00Z
+status: OPEN
+THIS AUTHORIZATION DOES NOT COVER: any company other than USMCA; deleting any breach event, finding, fence or geofence
+event; any breach or finding not on a fence deactivated under AUTH-203; any money posting or JE.
