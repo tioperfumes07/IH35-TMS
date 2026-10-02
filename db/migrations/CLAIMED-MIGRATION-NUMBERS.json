@@ -1556,6 +1556,11 @@
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-02",
       "purpose": "Lead ROUND 332 item 3 — a load enters 'invoiced' only with a live issued invoice; voiding / deleting its invoice reverts the load (triggers)"
+    },
+    "202615300600": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-02",
+      "purpose": "ROUND 336 rule 7: a factored invoice's amount is not editable while its Faro purchase is open — BEFORE UPDATE trigger on accounting.invoices (and invoice lines) refusing amount changes, naming the purchase and the Faro invoice number; non-amount fields stay editable."
     }
   },
   "202613590001": {
