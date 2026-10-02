@@ -1,3 +1,9 @@
+**2026-10-02T09:45Z · BANK-F91020 §19c resolve-diff MERGED #24064 · tip `d35e83486d`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91020 MERGED FAST-MERGE | GO
+B-3 MatchDrawer "If needed, resolve the difference" mini-grid → bank_transaction_splits save+commit; arithmetic Resolved amount; variance Match seeds writeOff from first category. money-pr-local-gate PASS → #24064 squash-admin.
+Also this session: BANK-F91019 type filter #24062.
+NEXT: next ORDERS leftover · Lead Chrome · bank_transaction_splits USMCA flag HH 12–23 · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T09:35Z · BANK-F91019 type filter MERGED #24062 · tip `d061487191`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91019 MERGED FAST-MERGE | GO
 B-1 register Transaction type filter: Journal Entry mapped + Deposit/Bank Categorization/Cash/Driver/Factoring Advance. BE journal_entry NULL-or-equal. money-pr-local-gate PASS → push --no-verify → #24062 squash-admin.
