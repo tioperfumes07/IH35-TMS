@@ -238,9 +238,10 @@ export async function cancelLoadInClientTx(
                 updated_at = now()
             WHERE id = $1
               AND operating_company_id = $2::uuid
+              AND status::text = $3
             RETURNING id
           `,
-          [input.load_id, input.operating_company_id]
+          [input.load_id, input.operating_company_id, String(loadRes.rows[0].status)]
         );
         if (!cancelledLoad.rows[0]?.id) throw new Error("E_CANCELLATION_LOAD_WRITE_FAILED");
         // ROUND 326: a cancelled load carries no recognized revenue — deleted, not reversed (owner law 2026-10-02).

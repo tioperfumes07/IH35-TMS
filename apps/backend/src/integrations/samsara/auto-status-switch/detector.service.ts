@@ -429,7 +429,7 @@ export async function applyAutoSwitch(
   }
 
   const loadRes = await client.query<{ status: string }>(
-    `SELECT status::text FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL LIMIT 1`,
+    `SELECT status::text FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL LIMIT 1 FOR UPDATE`,
     [loadUuid, operatingCompanyId]
   );
   const current = loadRes.rows[0];
@@ -457,10 +457,12 @@ export async function applyAutoSwitch(
      SET status = $2, updated_at = now()
      WHERE id = $1::uuid
        AND operating_company_id = $3::uuid
+       AND status::text = $4
      RETURNING id`,
-    [loadUuid, newStatus, operatingCompanyId]
+    [loadUuid, newStatus, operatingCompanyId, current.status]
   );
-  if (!statusUpdate.rows[0]?.id) return { applied: false, skipped: "load_not_found" };
+  // Compare-and-set (CC-3 2b/6): a dispatcher, the driver app or bulk moved the load since this GPS decision — skip.
+  if (!statusUpdate.rows[0]?.id) return { applied: false, skipped: "status_changed" };
 
   const eventRes = await client.query<{ uuid: string }>(
     `

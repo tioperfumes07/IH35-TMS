@@ -349,9 +349,10 @@ async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promi
             updated_at = now()
         WHERE id = $1::uuid
           AND operating_company_id = $2::uuid
+          AND status::text = $3
         RETURNING *
       `,
-      [id, operatingCompanyId]
+      [id, operatingCompanyId, String(oldRow.status)]
     );
     if (updateRes.rows.length === 0) {
       return { ok: false, code: "E_UPDATE_FAILED", message: "Load mark paid failed" };
