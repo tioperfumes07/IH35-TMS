@@ -12,6 +12,17 @@
  *                             clean-app leftover). Docrefs 5817 / 5818 are EXCLUDED by name (unidentified, not void
  *                             — they stay for the owner).
  *
+ *   --scope=zero-reset        ROUND 326 queue item 22 — THE ZERO-RESET: every created document and transaction of the
+ *                             company (loads, dispatch, stops, driver bills, settlements + lines, A/P bills + payments,
+ *                             invoices + lines, advances, reimbursements, deductions, every expense incl. fuel / DEF /
+ *                             tolls, every JE + posting). MASTER DATA SURVIVES UNTOUCHED (customers, drivers, vendors,
+ *                             locations, units, trailers, equipment, chart of accounts, items, pay rate templates,
+ *                             factors, users): a master / preserve / identity / catalog table that would be touched is a
+ *                             BLOCKER. Bank lines are KEPT — their links into deleted documents are cleared and they go
+ *                             back to the categorization queue. Refuses unless the preservation engine (CC-3, preserve.*)
+ *                             has recorded its rows. After the delete, in the same transaction, it PROVES: GL postings 0,
+ *                             every deleted table 0 for the company, master-data counts unchanged. Owner-run only.
+ *
  * HOW (no hand-typed child list — the live FK graph decides): starting from the roots, every row that references a
  * collected row through a foreign key is collected too, recursively (pg_constraint, single-column FKs). The plan
  * prints each table and count; a SET NULL / multi-column reference to a collected row is reported, never silently
@@ -66,10 +77,44 @@ const DOC_SOURCE: Record<string, string[]> = {
   "driver_finance.driver_settlements": ["driver_settlement"], "mdata.loads": ["load"], "accounting.factoring_advances": ["factoring_advance"],
 };
 const WORM = new Set(["accounting.journal_entries", "accounting.journal_entry_postings", "accounting.invoices", "accounting.invoice_lines"]);
+// ROUND 326 queue item 22 — zero-reset roots (every row of the company), master data that must survive, bank lines kept.
+const ZERO_RESET_ROOTS = [
+  "mdata.loads", "accounting.journal_entries", "accounting.bills", "accounting.bill_payments", "accounting.invoices", "accounting.payments",
+  "accounting.expenses", "accounting.factoring_advances", "accounting.credit_memos", "accounting.vendor_credits", "accounting.broker_advances",
+  "accounting.company_settlements", "accounting.deposits", "driver_finance.driver_bills", "driver_finance.driver_settlements",
+  "driver_finance.settlement_lines", "driver_finance.driver_advances", "driver_finance.driver_reimbursements",
+  "driver_finance.driver_settlement_deductions", "driver_finance.driver_liabilities", "fuel.fuel_transactions",
+];
+const ZERO_RESET_DELETE_SCHEMAS = new Set(["accounting", "driver_finance", "dispatch", "fuel", "expense_attribution", "factoring", "docs", "geo", "integrations", "legal", "telematics", "maintenance"]);
+const MASTER_TABLES = [
+  "mdata.customers", "mdata.drivers", "mdata.vendors", "mdata.locations", "mdata.units", "mdata.equipment",
+  "catalogs.accounts", "catalogs.items", "identity.users", "org.companies", "banking.bank_accounts",
+];
+const PRESERVED_SCHEMAS = new Set(["identity", "org", "catalogs", "preserve", "audit", "_system", "lib", "mdata", "banking"]);
+const RESET_TABLES = new Set(["banking.bank_transactions"]);
+function zeroResetPreserved(table: string): boolean {
+  if (table === "mdata.loads" || table === "mdata.load_stops") return false;
+  if (RESET_TABLES.has(table)) return false;
+  return PRESERVED_SCHEMAS.has(table.split(".")[0]) || !ZERO_RESET_DELETE_SCHEMAS.has(table.split(".")[0]) || MASTER_TABLES.includes(table)
+    || /(^|\.)(pay_rate|driver_pay_rate|factors?$|factor_)/.test(table);
+}
+// bank = a bank line kept and sent back to the queue; unlink = a non-master operational row's nullable link cleared;
+// rows = a child with no single-column primary key, deleted by its foreign key (before its parent).
+type ResetRef = { table: string; col: string; vals: string[]; kind: "bank" | "unlink" | "rows" };
+const RESETS: ResetRef[] = [];
+function isMasterOrPreserve(table: string): boolean {
+  const schema = table.split(".")[0];
+  if (table === "mdata.loads" || table === "mdata.load_stops") return false;
+  return MASTER_TABLES.includes(table) || ["identity", "org", "catalogs", "preserve", "audit", "_system", "lib", "mdata"].includes(schema)
+    || /(^|\.)(pay_rate|driver_pay_rate|factors?$|factor_)/.test(table);
+}
+function pushReset(r: ResetRef) {
+  if (!RESETS.some((x) => x.table === r.table && x.col === r.col && x.kind === r.kind && x.vals.length === r.vals.length)) RESETS.push(r);
+}
 
 type Q = { query: <T = Record<string, unknown>>(sql: string, v?: unknown[]) => Promise<{ rows: T[]; rowCount?: number | null }> };
 type Plan = Map<string, Set<string>>; // table -> primary-key values
-type Fk = { child: string; childCol: string; parent: string; parentCol: string; onDelete: string; childPk: string | null; cols: number };
+type Fk = { child: string; childCol: string; parent: string; parentCol: string; onDelete: string; childPk: string | null; cols: number; nullable?: boolean; childCol2?: string | null; parentCol2?: string | null };
 
 function add(plan: Plan, table: string, ids: string[], why: Map<string, string>, reason: string) {
   const s = plan.get(table) ?? new Set<string>();
@@ -167,7 +212,22 @@ async function roots(c: Q, plan: Plan, why: Map<string, string>) {
     }
     return;
   }
-  throw new Error("--scope=transportation21 | --scope=usmca-clean | --scope=orphan-postings is required");
+  if (SCOPE === "zero-reset") {
+    for (const t of ZERO_RESET_ROOTS) {
+      if (!(await c.query<{ ok: boolean }>(`SELECT to_regclass($1) IS NOT NULL AS ok`, [t])).rows[0]?.ok) continue;
+      add(plan, t, await ids(c, `SELECT id::text AS id FROM ${t} WHERE operating_company_id = $1::uuid`, [USMCA]), why, "ROUND 326 zero-reset: every created document / transaction");
+    }
+    // Every dispatch table row of the company (dispatches, stops, assignments, ...).
+    const dispatchTables = (await c.query<{ t: string }>(
+      `SELECT c.table_schema || '.' || c.table_name AS t FROM information_schema.columns c
+         JOIN information_schema.tables t ON t.table_schema = c.table_schema AND t.table_name = c.table_name AND t.table_type = 'BASE TABLE'
+        WHERE c.table_schema = 'dispatch' AND c.column_name = 'operating_company_id'
+          AND EXISTS (SELECT 1 FROM information_schema.columns k WHERE k.table_schema = c.table_schema AND k.table_name = c.table_name AND k.column_name = 'id')`
+    )).rows.map((r) => r.t);
+    for (const t of dispatchTables) add(plan, t, await ids(c, `SELECT id::text AS id FROM ${t} WHERE operating_company_id = $1::uuid`, [USMCA]), why, "ROUND 326 zero-reset: dispatch record");
+    return;
+  }
+  throw new Error("--scope=transportation21 | --scope=usmca-clean | --scope=orphan-postings | --scope=zero-reset is required");
 }
 
 async function fkGraph(c: Q): Promise<Fk[]> {
@@ -177,7 +237,10 @@ async function fkGraph(c: Q): Promise<Fk[]> {
             CASE con.confdeltype WHEN 'c' THEN 'cascade' WHEN 'n' THEN 'set null' WHEN 'd' THEN 'set default' ELSE 'no action' END AS "onDelete",
             (SELECT a.attname FROM pg_index i JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = i.indkey[0]
               WHERE i.indrelid = cr.oid AND i.indisprimary AND i.indnkeyatts = 1) AS "childPk",
-            array_length(con.conkey, 1) AS cols
+            array_length(con.conkey, 1) AS cols,
+            NOT ca.attnotnull AS nullable,
+            (SELECT a2.attname FROM pg_attribute a2 WHERE a2.attrelid = con.conrelid AND a2.attnum = con.conkey[2]) AS "childCol2",
+            (SELECT a3.attname FROM pg_attribute a3 WHERE a3.attrelid = con.confrelid AND a3.attnum = con.confkey[2]) AS "parentCol2"
        FROM pg_constraint con
        JOIN pg_class cr ON cr.oid = con.conrelid
        JOIN pg_class pr ON pr.oid = con.confrelid
@@ -212,6 +275,34 @@ async function expand(c: Q, plan: Plan, why: Map<string, string>, report: string
       const vals = fk.parentCol === parentPk ? [...parentIds]
         : (await c.query<{ v: string }>(`SELECT ${fk.parentCol}::text AS v FROM ${fk.parent} WHERE ${parentPk}::text = ANY($1::text[]) AND ${fk.parentCol} IS NOT NULL`, [[...parentIds]])).rows.map((r) => r.v);
       if (!vals.length) continue;
+      if (SCOPE === "zero-reset") {
+        // A composite (operating_company_id, x) FK: the meaningful column is the second one.
+        const composite = fk.cols > 1 && fk.childCol === "operating_company_id" && fk.childCol2 && fk.parentCol2;
+        const childCol = composite ? fk.childCol2! : fk.childCol;
+        const pcol = composite ? fk.parentCol2! : fk.parentCol;
+        const zvals = pcol === parentPk ? [...parentIds]
+          : (await c.query<{ v: string }>(`SELECT ${pcol}::text AS v FROM ${fk.parent} WHERE ${parentPk}::text = ANY($1::text[]) AND ${pcol} IS NOT NULL`, [[...parentIds]])).rows.map((r) => r.v);
+        if (!zvals.length) continue;
+        const n = Number((await c.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${fk.child} WHERE ${childCol}::text = ANY($1::text[])`, [zvals])).rows[0]?.n);
+        if (!n) continue;
+        if (RESET_TABLES.has(fk.child)) { pushReset({ table: fk.child, col: childCol, vals: zvals, kind: "bank" }); continue; }
+        if (zeroResetPreserved(fk.child)) {
+          if (isMasterOrPreserve(fk.child) || !fk.nullable) {
+            report.push(`BLOCKER ${fk.child}.${childCol} -> ${fk.parent}: ${n} row(s) of a PRESERVED table would be touched — the zero-reset refuses (master data / preserve survive untouched)`);
+          } else {
+            pushReset({ table: fk.child, col: childCol, vals: zvals, kind: "unlink" });
+          }
+          continue;
+        }
+        if (!fk.childPk) { pushReset({ table: fk.child, col: childCol, vals: zvals, kind: "rows" }); continue; }
+        if (composite && plan.get(fk.child)?.size) continue; // its rows arrive through the single-column FK
+        const zkids = (await c.query<{ id: string }>(`SELECT ${fk.childPk}::text AS id FROM ${fk.child} WHERE ${childCol}::text = ANY($1::text[])`, [zvals])).rows.map((r) => r.id);
+        if (add(plan, fk.child, zkids, why, `zero-reset: references ${fk.parent} (${childCol})`)) {
+          changed = true;
+          depth.set(fk.child, Math.max(depth.get(fk.child) ?? 0, (depth.get(fk.parent) ?? 0) + 1));
+        }
+        continue;
+      }
       if (fk.cols > 1 || !fk.childPk) {
         const n = (await c.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${fk.child} WHERE ${fk.childCol}::text = ANY($1::text[])`, [vals])).rows[0]?.n;
         if (Number(n) > 0) report.push(`UNHANDLED ${fk.child}.${fk.childCol} -> ${fk.parent}: ${n} row(s) (no single-column primary key / multi-column FK) — resolve before APPLY`);
@@ -244,7 +335,20 @@ async function expand(c: Q, plan: Plan, why: Map<string, string>, report: string
     const partners = await ids(c, `SELECT x.id::text AS id FROM (SELECT reversed_by_je_id AS id FROM accounting.journal_entries WHERE id::text = ANY($1::text[]) UNION SELECT id FROM accounting.journal_entries WHERE reverses_je_id::text = ANY($1::text[])) x WHERE x.id IS NOT NULL`, [[...jes]]);
     if (add(plan, "accounting.journal_entries", partners, why, "reversal partner of a deleted JE")) return expand(c, plan, why, report);
   }
-  return [...plan.keys()].sort((a, b) => (depth.get(b) ?? 0) - (depth.get(a) ?? 0));
+  const byDepth = [...plan.keys()].sort((a, b) => (depth.get(b) ?? 0) - (depth.get(a) ?? 0));
+  if (SCOPE !== "zero-reset") return byDepth;
+  // ROUND 326 queue item 22: delete order is TOPOLOGICAL over the FK graph — a table goes only after every table
+  // referencing it (children first); a cycle falls back to the depth order for what remains.
+  const inPlan = new Set(byDepth);
+  const edges = fks.filter((f) => inPlan.has(f.child) && inPlan.has(f.parent) && f.child !== f.parent);
+  const order: string[] = [];
+  const left = new Set(byDepth);
+  while (left.size) {
+    const ready = byDepth.filter((t) => left.has(t) && !edges.some((e) => e.parent === t && left.has(e.child)));
+    const pick = ready.length ? ready : [byDepth.find((t) => left.has(t))!];
+    for (const t of pick) { order.push(t); left.delete(t); }
+  }
+  return order;
 }
 
 /** References with no foreign key (polymorphic text ids): document links and JE source links to a deleted record. */
@@ -264,6 +368,15 @@ async function polymorphic(c: Q, plan: Plan, why: Map<string, string>): Promise<
     }
   }
   return n;
+}
+
+async function masterCounts(c: Q): Promise<Record<string, number>> {
+  const out: Record<string, number> = {};
+  for (const t of MASTER_TABLES) {
+    if (!(await c.query<{ ok: boolean }>(`SELECT to_regclass($1) IS NOT NULL AS ok`, [t])).rows[0]?.ok) continue;
+    out[t] = Number((await c.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${t}`)).rows[0]?.n);
+  }
+  return out;
 }
 
 async function main() {
@@ -296,9 +409,21 @@ async function main() {
          FROM accounting.journal_entry_postings WHERE journal_entry_uuid::text = ANY($1::text[])`, [planJes])).rows[0];
     console.log(`SCOPE ${SCOPE} — PLAN (delete order, deepest first):`);
     for (const t of order) console.log(`  ${t.padEnd(55)} ${plan.get(t)?.size ?? 0}`);
-    for (const r of report) console.log(`  ! ${r}`);
+    for (const r of [...new Set(report)]) console.log(`  ! ${r}`);
     console.log(`LEDGER (USMCA) before: DR ${ledgerBefore.dr} CR ${ledgerBefore.cr} unbalanced JEs ${ledgerBefore.unb}; removed by plan: DR ${removed.dr} CR ${removed.cr} (must be equal)`);
     if (removed.dr !== removed.cr) throw new Error("PLAN REFUSED: the JEs in scope do not net to zero — the ledger would not balance");
+    if (SCOPE === "zero-reset") {
+      // The preservation engine (CC-3 queue item 11, preserve.*) must have recorded its rows BEFORE anything is reset.
+      const pres = (await client.query<{ t: string; n: string }>(
+        `SELECT table_name AS t, (xpath('/row/n/text()', query_to_xml(format('SELECT count(*) AS n FROM preserve.%I', table_name), false, true, '')))[1]::text AS n
+           FROM information_schema.tables WHERE table_schema = 'preserve' AND table_type = 'BASE TABLE'`
+      )).rows;
+      const presBlock: string[] = [];
+      if (!pres.length) presBlock.push("BLOCKER preservation engine: the preserve schema does not exist — run the preservation engine first");
+      for (const p of pres) if (Number(p.n) === 0) presBlock.push(`BLOCKER preservation engine has not recorded preserve.${p.t} (0 rows) — run it before the zero-reset`);
+      for (const b of presBlock) { report.push(b); console.log(`  ! ${b}`); }
+      for (const r of RESETS) console.log(`  ${r.kind === "bank" ? "bank line kept, unlinked" : r.kind === "unlink" ? "operational row kept, link cleared" : "child rows deleted by FK"}: ${r.table}.${r.col} — ${r.vals.length} parent id(s)`);
+    }
     const effect = (await client.query<{ acct: string; bank: boolean; net: string }>(
       `SELECT a.account_number || ' ' || a.account_name AS acct,
               (a.account_type ILIKE 'bank%' OR EXISTS (SELECT 1 FROM accounting.chart_of_accounts_roles r WHERE r.account_id = a.id AND r.role = 'operating_bank')) AS bank,
@@ -321,6 +446,46 @@ async function main() {
 
     const ready = (await client.query<{ ok: boolean }>(`SELECT to_regclass('_system.purge_authorized_rows') IS NOT NULL AND to_regclass('audit.record_deletions') IS NOT NULL AS ok`)).rows[0]?.ok;
     if (!ready) throw new Error("migration 202615210200 is not applied — the listed-row purge arm does not exist");
+    const masterBefore = SCOPE === "zero-reset" ? await masterCounts(client) : null;
+    if (SCOPE === "zero-reset") {
+      // Bank lines kept, unlinked from the deleted documents, back in the categorization queue.
+      for (const r of RESETS) {
+        if (r.kind === "bank") {
+          await client.query(
+            `UPDATE ${r.table} SET ${r.col} = NULL,
+                    status = CASE WHEN status = 'categorized' THEN 'pending_categorization' ELSE status END,
+                    review_state = CASE WHEN review_state = 'matched' THEN 'for_review' ELSE review_state END,
+                    updated_at = now()
+              WHERE ${r.col}::text = ANY($1::text[]) AND operating_company_id = $2::uuid`,
+            [r.vals, USMCA]
+          );
+        } else if (r.kind === "unlink") {
+          await client.query(`UPDATE ${r.table} SET ${r.col} = NULL WHERE ${r.col}::text = ANY($1::text[])`, [r.vals]);
+        } else {
+          await client.query(
+            `INSERT INTO audit.record_deletions (operating_company_id, deletion_route, auth_id, table_name, row_pk, reason, row_data)
+             SELECT $1::uuid, 'auth_purge', $2, $3, d.${r.col}::text, $4, to_jsonb(d) FROM ${r.table} d WHERE d.${r.col}::text = ANY($5::text[])`,
+            [USMCA, AUTH_ID, r.table, "ROUND 326 zero-reset (child row without a primary key)", r.vals]);
+          await client.query(`DELETE FROM ${r.table} WHERE ${r.col}::text = ANY($1::text[])`, [r.vals]);
+        }
+      }
+      // Every bank line of the company goes back to the queue: most matched_* pointers carry no FK, so the graph
+      // cannot see them — clear them all (the documents they pointed at are being deleted) and un-categorize.
+      const matchedCols = (await client.query<{ c: string }>(
+        `SELECT column_name AS c FROM information_schema.columns WHERE table_schema = 'banking' AND table_name = 'bank_transactions' AND column_name LIKE 'matched\\_%\\_id'`
+      )).rows.map((r) => r.c);
+      if (matchedCols.length) {
+        await client.query(
+          `UPDATE banking.bank_transactions
+              SET ${matchedCols.map((c) => `${c} = NULL`).join(", ")},
+                  status = CASE WHEN status = 'categorized' THEN 'pending_categorization' ELSE status END,
+                  review_state = CASE WHEN review_state IN ('matched', 'categorized') THEN 'for_review' ELSE review_state END,
+                  updated_at = now()
+            WHERE operating_company_id = $1::uuid AND (${matchedCols.map((c) => `${c} IS NOT NULL`).join(" OR ")} OR status = 'categorized')`,
+          [USMCA]
+        );
+      }
+    }
     await client.query(`SELECT set_config('app.purge_auth_id', $1, true)`, [AUTH_ID]);
     for (const t of order) {
       const pk = await pkOf(client, t);
@@ -348,6 +513,22 @@ async function main() {
                 HAVING sum(CASE WHEN debit_or_credit::text = 'debit' THEN amount_cents ELSE -amount_cents END) <> 0) u)::text AS unb
          FROM accounting.journal_entry_postings WHERE operating_company_id = $1::uuid`, [USMCA])).rows[0];
     if (after.dr !== after.cr || Number(after.unb) !== 0) throw new Error(`LEDGER CHECK FAILED after delete: DR ${after.dr} CR ${after.cr} unbalanced ${after.unb} — rolled back`);
+    if (SCOPE === "zero-reset") {
+      // PROOF, same transaction: GL to zero, every deleted table to zero for the company, master data unchanged.
+      const gl = Number((await client.query<{ n: string }>(`SELECT count(*)::text AS n FROM accounting.journal_entry_postings WHERE operating_company_id = $1::uuid`, [USMCA])).rows[0]?.n);
+      if (gl !== 0) throw new Error(`ZERO-RESET PROOF FAILED: ${gl} GL posting(s) remain — rolled back`);
+      for (const t of new Set([...order, ...ZERO_RESET_ROOTS])) {
+        const hasCo = (await client.query<{ ok: boolean }>(`SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema || '.' || table_name = $1 AND column_name = 'operating_company_id') AS ok`, [t])).rows[0]?.ok;
+        if (!hasCo) continue;
+        const left = Number((await client.query<{ n: string }>(`SELECT count(*)::text AS n FROM ${t} WHERE operating_company_id = $1::uuid`, [USMCA])).rows[0]?.n);
+        if (left !== 0) throw new Error(`ZERO-RESET PROOF FAILED: ${t} still has ${left} row(s) — rolled back`);
+      }
+      const masterAfter = await masterCounts(client);
+      for (const [t, n] of Object.entries(masterBefore ?? {})) {
+        if (masterAfter[t] !== n) throw new Error(`ZERO-RESET PROOF FAILED: master table ${t} changed ${n} -> ${masterAfter[t]} — rolled back`);
+      }
+      console.log("ZERO-RESET PROOF: GL postings 0; every deleted table 0; master data unchanged:", JSON.stringify(masterAfter));
+    }
     await client.query(`SELECT audit.append_event('owner_purge', 'warning', $1::jsonb, NULL, $2)`, [JSON.stringify({ scope: SCOPE, auth_id: AUTH_ID, counts, ledger_after: after }), `OWNER-PURGE-${AUTH_ID}`]).catch(() => undefined);
     await client.query("COMMIT");
     console.log("DELETED:", JSON.stringify(counts));
