@@ -45,8 +45,13 @@ const FLOORS = {
   // of that purge had already landed, so they sat 1 above the post-purge truth and turned the gate
   // red for every seat on 2026-10-01. Same deliberate, reviewed, one-time floor drop as AUTH-101
   // above -- not a silent lowering. Deletes stay forbidden for every non-AUTH write path.
-  "mdata.customers": { floor: 1238 },
-  "mdata.vendors": { floor: 622 },
+  // LOWERED 2026-10-02 (CC-3, live-verified 1216 / 619 after the apply): AUTH-202 (owner order, CC-3 queue item 1 —
+  // remove the duplicates before the purge) merged 22 duplicate customer groups and 3 duplicate vendor groups through the
+  // canonical engine. Every removed row is preserved as a live alias (mdata.customer_aliases 22, mdata.vendor_aliases 3:
+  // name, full snapshot, exact repoint log — reversible), A/R and A/P unchanged to the cent. Same deliberate, reviewed,
+  // one-time floor drop as AUTH-101 / AUTH-177 above; a drop without a matching alias still fails.
+  "mdata.customers": { floor: 1216 },
+  "mdata.vendors": { floor: 619 },
   "catalogs.accounts": { floor: 193 },
   "mdata.drivers": { floor: 167 },
   "catalogs.items": { floor: 148 },
