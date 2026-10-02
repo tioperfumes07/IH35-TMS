@@ -38,6 +38,18 @@ function main() {
   assertIncludes(form, 'label: "Payment"', FORM);
   assertIncludes(form, 'data-b4-amount-to-apply="1"', FORM);
   assertIncludes(form, "Amount to Apply:", FORM);
+  // BANK-F91029 — Clear Payment is a real button; Add all + Open on open-bill cards (ORDERS §B-4 / spec §9–§10)
+  assertIncludes(form, 'data-b4-clear-payment="1"', FORM);
+  assertIncludes(form, "Clear Payment", FORM);
+  assertIncludes(form, "clearBillPayments", FORM);
+  assertIncludes(form, 'data-b4-add-all="1"', FORM);
+  assertIncludes(form, "Add all", FORM);
+  assertIncludes(form, "addAllOpenBillsToPay", FORM);
+  assertIncludes(form, 'data-b4-open-bill="1"', FORM);
+  assertIncludes(form, 'to={`/accounting/bills/${b.id}`}', FORM);
+  if (!/<button[\s\S]*data-b4-clear-payment="1"[\s\S]*Clear Payment[\s\S]*<\/button>/.test(form)) {
+    throw new Error(`${FORM}: Clear Payment must be a <button>, not a dead span`);
+  }
   assertIncludes(form, 'data-b4-restore-draft="1"', FORM);
   assertIncludes(form, "You have a draft saved. Restore draft", FORM);
   assertIncludes(form, "checkDraftStorageKey", FORM);

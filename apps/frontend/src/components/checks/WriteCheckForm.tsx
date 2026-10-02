@@ -16,6 +16,7 @@
 // own law ("no map row -> CATEGORY_UNMAPPED, never a guessed account") also means a check form is not
 // the place to mint a new mapping — that is a chart-of-accounts governance action, done elsewhere.
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Modal } from "../Modal";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
@@ -476,12 +477,27 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
     const remaining = bill.balance_cents ?? bill.amount_cents - bill.paid_cents;
     setBillToPayAmounts((prev) => ({ ...prev, [bill.id]: Math.max(remaining, 0) }));
   }
+  /** B-4 §9 — Add all open bills for this payee into Outstanding Transactions. */
+  function addAllOpenBillsToPay() {
+    setBillToPayAmounts((prev) => {
+      const next = { ...prev };
+      for (const bill of openBills) {
+        if (bill.id in next) continue;
+        const remaining = bill.balance_cents ?? bill.amount_cents - bill.paid_cents;
+        next[bill.id] = Math.max(remaining, 0);
+      }
+      return next;
+    });
+  }
   function removeBillToPay(billId: string) {
     setBillToPayAmounts((prev) => {
       const next = { ...prev };
       delete next[billId];
       return next;
     });
+  }
+  function clearBillPayments() {
+    setBillToPayAmounts({});
   }
   function setBillToPayAmount(billId: string, cents: number) {
     setBillToPayAmounts((prev) => ({ ...prev, [billId]: cents }));
@@ -1132,7 +1148,15 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                     Amount to Apply: <strong>{formatMoneyCents(billPaymentTotalCents)}</strong>
                   </span>
                   <span>Amount to Credit: <strong>$0.00</strong></span>
-                  <span>Clear Payment</span>
+                  <button
+                    type="button"
+                    className="font-semibold text-blue-700 hover:underline"
+                    data-b4-clear-payment="1"
+                    data-testid="b4-clear-payment"
+                    onClick={clearBillPayments}
+                  >
+                    Clear Payment
+                  </button>
                 </div>
               </div>
             ) : null}
@@ -1142,6 +1166,19 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
               <div className="text-xs text-gray-400">{billsToPay.length > 0 ? "No other open bills." : "No open bills for this payee."}</div>
             ) : (
               <div className="max-h-40 overflow-y-auto rounded border border-gray-100">
+                {openBills.filter((b) => !(b.id in billToPayAmounts)).length > 0 ? (
+                  <div className="flex justify-end border-b border-gray-100 px-2 py-1">
+                    <button
+                      type="button"
+                      className="text-xs font-semibold text-blue-700 hover:underline"
+                      data-b4-add-all="1"
+                      data-testid="b4-add-all"
+                      onClick={addAllOpenBillsToPay}
+                    >
+                      Add all
+                    </button>
+                  </div>
+                ) : null}
                 {openBills
                   .filter((b) => !(b.id in billToPayAmounts))
                   .map((b) => {
@@ -1151,9 +1188,19 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                         <span>
                           <EntityLink kind="bill" id={b.id} label={b.display_id ?? b.bill_number ?? undefined} /> · {formatDateUS(b.bill_date)} · {formatMoneyCents(remaining)}
                         </span>
-                        <button type="button" className="font-semibold text-blue-700 hover:underline" onClick={() => addBillToPay(b)}>
-                          Add
-                        </button>
+                        <span className="flex items-center gap-2">
+                          <button type="button" className="font-semibold text-blue-700 hover:underline" onClick={() => addBillToPay(b)}>
+                            Add
+                          </button>
+                          <Link
+                            to={`/accounting/bills/${b.id}`}
+                            className="font-semibold text-gray-600 hover:underline"
+                            data-b4-open-bill="1"
+                            data-testid="b4-open-bill"
+                          >
+                            Open
+                          </Link>
+                        </span>
                       </div>
                     );
                   })}
