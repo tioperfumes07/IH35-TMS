@@ -71,6 +71,10 @@ function main() {
   assertIncludes(workspace, '"Expense"', WORKSPACE);
   assertIncludes(workspace, '"Settlement"', WORKSPACE);
   assertIncludes(workspace, "tx.type_label !== appliedTxnType", WORKSPACE);
+  assertIncludes(workspace, "reconDocumentHref", WORKSPACE);
+  assertIncludes(workspace, "data-b2-recon-row-open", WORKSPACE);
+  assertIncludes(workspace, "/accounting/expenses/", WORKSPACE);
+  assertIncludes(workspace, "/dispatch/loads/", WORKSPACE);
   assertIncludes(workspace, 'data-testid="recon-filter-apply"', WORKSPACE);
   assertIncludes(workspace, 'data-testid="recon-filter-reset"', WORKSPACE);
   assertIncludes(workspace, "applyReconFilters", WORKSPACE);
