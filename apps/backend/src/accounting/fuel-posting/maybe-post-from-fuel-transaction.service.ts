@@ -53,6 +53,7 @@ export type FuelTxnGlPostCandidate = {
 };
 
 export type MaybePostFuelTxnResult =
+  | { status: "skipped_posts_on_bank_match" }
   | { status: "skipped_flag_off" }
   | { status: "skipped_zero_amount" }
   | { status: "posted"; posting: FuelPostingResult }
@@ -254,9 +255,20 @@ async function markRelayPostedToGl(relayFuelTransactionId: string, operatingComp
  * Flag-gated TMS GL post for one canonical fuel transaction. Safe to call repeatedly (idempotent).
  * Must run AFTER the ingest transaction that wrote fuel.fuel_transactions has committed.
  */
+/**
+ * OWNER RULING 2026-10-02 ("THEY ARE IMPORTED AND WORK AS A BANKING OR CREDIT CARD BANK. THEY MUST BE MATCHED TO A
+ * TRANSACTION OR CATEGORIZED IN BANKING.") + OWNER LAW competing-engine audit: a fuel fill does NOT post when it is
+ * imported. It posts when its card bank line (Dreamline Diesel Card / Relay Fuel Wallet) is matched to it in Banking —
+ * the match engine calls postFuelExpenseOnClient (poster.service.ts) inside the match transaction. This import-time
+ * auto-poster competed with that path (it credited the card account directly, so the card's own bank line could only be
+ * flag-matched or categorized a second time). Typed boolean so the retired body stays type-checked.
+ */
+export const FUEL_POSTS_ON_BANK_MATCH_ONLY: boolean = true;
+
 export async function maybePostFuelExpenseFromCanonicalTxn(
   candidate: FuelTxnGlPostCandidate
 ): Promise<MaybePostFuelTxnResult> {
+  if (FUEL_POSTS_ON_BANK_MATCH_ONLY) return { status: "skipped_posts_on_bank_match" };
   const amountCents = Math.round(Number(candidate.amount_cents ?? 0));
   if (!Number.isFinite(amountCents) || amountCents <= 0) {
     return { status: "skipped_zero_amount" };
@@ -361,8 +373,8 @@ export async function maybePostFuelExpenseFromCanonicalTxn(
 export async function flushFuelGlPostsAfterCommit(
   candidates: FuelTxnGlPostCandidate[],
   log?: { warn?: (obj: unknown, msg?: string) => void; info?: (obj: unknown, msg?: string) => void }
-): Promise<{ attempted: number; posted: number; skipped_flag_off: number; errors: number }> {
-  const stats = { attempted: 0, posted: 0, skipped_flag_off: 0, errors: 0 };
+): Promise<{ attempted: number; posted: number; skipped_flag_off: number; skipped_posts_on_bank_match: number; errors: number }> {
+  const stats = { attempted: 0, posted: 0, skipped_flag_off: 0, skipped_posts_on_bank_match: 0, errors: 0 };
   for (const candidate of candidates) {
     if (!candidate.fuel_transaction_id) continue;
     stats.attempted += 1;
@@ -371,6 +383,8 @@ export async function flushFuelGlPostsAfterCommit(
       stats.posted += 1;
     } else if (result.status === "skipped_flag_off") {
       stats.skipped_flag_off += 1;
+    } else if (result.status === "skipped_posts_on_bank_match") {
+      stats.skipped_posts_on_bank_match += 1;
     } else if (result.status === "error") {
       stats.errors += 1;
       log?.warn?.(

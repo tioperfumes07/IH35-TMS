@@ -131,160 +131,16 @@ describe("maybePostFuelExpenseFromCanonicalTxn", () => {
     expect(FUEL_EXPENSE_GL_POSTING_FLAG_KEY).toBe("EXPENSE_GL_POSTING_ENABLED");
   });
 
-  it("flag OFF → no-op (does not call poster)", async () => {
-    mockIsEnabled.mockResolvedValue(false);
-    const result = await maybePostFuelExpenseFromCanonicalTxn(BASE);
-    expect(result).toEqual({ status: "skipped_flag_off" });
+  // OWNER RULING 2026-10-02 + competing-engine audit: a fuel fill never posts at import. It posts when its card bank line
+  // is matched in Banking (postFuelExpenseOnClient inside the match transaction). The import-time path is a no-op for
+  // every input — flag on or off, any amount, any rail.
+  it("import never posts: returns skipped_posts_on_bank_match without reading the flag or calling the poster", async () => {
+    mockIsEnabled.mockResolvedValue(true);
+    for (const candidate of [BASE, { ...BASE, amount_cents: 0 }, { ...BASE, cash_advance: true, driver_id: "d1" }]) {
+      expect(await maybePostFuelExpenseFromCanonicalTxn(candidate)).toEqual({ status: "skipped_posts_on_bank_match" });
+    }
     expect(mockPostFuelExpenseFromEvent).not.toHaveBeenCalled();
-    expect(mockIsEnabled).toHaveBeenCalledWith(
-      expect.anything(),
-      "EXPENSE_GL_POSTING_ENABLED",
-      expect.objectContaining({ operating_company_id: BASE.operating_company_id })
-    );
-  });
-
-  it("flag ON → posts once via postFuelExpenseFromEvent", async () => {
-    mockIsEnabled.mockResolvedValue(true);
-    mockPostFuelExpenseFromEvent.mockResolvedValue({
-      result: "posted",
-      posting_batch_id: "batch-1",
-      journal_entry_id: "je-1",
-      journal_entry_posting_ids: ["jep-1", "jep-2"],
-      idempotency_key: "ih35:fuel-posting:v1:...",
-      account_resolution_trace: [],
-    });
-
-    const result = await maybePostFuelExpenseFromCanonicalTxn(BASE);
-    expect(result.status).toBe("posted");
-    expect(mockPostFuelExpenseFromEvent).toHaveBeenCalledTimes(1);
-    expect(mockPostFuelExpenseFromEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        operating_company_id: BASE.operating_company_id,
-        fuel_event_id: BASE.fuel_transaction_id,
-        fuel_kind: "diesel",
-        amount_cents: 18244,
-        posting_path: "company_direct",
-        company_direct_credit: "cash",
-      })
-    );
-  });
-
-  it("RANK2-FUEL-JE-CLASS: threads unit_id/trailer_id read from fuel.fuel_transactions into the poster", async () => {
-    mockIsEnabled.mockResolvedValue(true);
-    mockPostFuelExpenseFromEvent.mockResolvedValue({
-      result: "posted",
-      posting_batch_id: "batch-1",
-      journal_entry_id: "je-1",
-      journal_entry_posting_ids: ["jep-1", "jep-2"],
-      idempotency_key: "k",
-      account_resolution_trace: [],
-    });
-    mockWithLuciaBypass.mockImplementationOnce(async (fn: (client: { query: (sql: string) => Promise<{ rows: unknown[] }> }) => unknown) =>
-      fn({
-        query: async () => ({ rows: [] }),
-      })
-    );
-    mockWithLuciaBypass.mockImplementationOnce(async (fn: (client: { query: (sql: string) => Promise<{ rows: unknown[] }> }) => unknown) =>
-      fn({
-        query: async (sql: string) => {
-          if (sql.includes("FROM fuel.fuel_transactions")) {
-            return {
-              rows: [
-                {
-                  fuel_card_id: null,
-                  notes: null,
-                  source: "relay_ingest",
-                  unit_id: "77777777-7777-4777-8777-777777777777",
-                  trailer_id: "88888888-8888-4888-8888-888888888888",
-                },
-              ],
-            };
-          }
-          return { rows: [] };
-        },
-      })
-    );
-
-    await maybePostFuelExpenseFromCanonicalTxn(BASE);
-
-    expect(mockPostFuelExpenseFromEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        unit_id: "77777777-7777-4777-8777-777777777777",
-        trailer_id: "88888888-8888-4888-8888-888888888888",
-      })
-    );
-  });
-
-  it("FUEL-08 / R-30.1-A: Relay settle credits relay_fuel_wallet -- never cash, never ap_control", async () => {
-    mockIsEnabled.mockResolvedValue(true);
-    mockPostFuelExpenseFromEvent.mockResolvedValue({
-      result: "posted",
-      posting_batch_id: "batch-1",
-      journal_entry_id: "je-1",
-      journal_entry_posting_ids: ["jep-1"],
-      idempotency_key: "k",
-      account_resolution_trace: [],
-    });
-    await maybePostFuelExpenseFromCanonicalTxn({
-      ...BASE,
-      relay_fuel_transaction_id: "66666666-6666-4666-8666-666666666666",
-      has_fuel_card: true,
-    });
-    expect(mockPostFuelExpenseFromEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        posting_path: "company_direct",
-        company_direct_credit: "relay_fuel_wallet",
-      })
-    );
-  });
-
-  it("flag ON + second call → already_posted (idempotent, still one logical post)", async () => {
-    mockIsEnabled.mockResolvedValue(true);
-    mockPostFuelExpenseFromEvent
-      .mockResolvedValueOnce({
-        result: "posted",
-        posting_batch_id: "batch-1",
-        journal_entry_id: "je-1",
-        journal_entry_posting_ids: ["jep-1"],
-        idempotency_key: "k",
-        account_resolution_trace: [],
-      })
-      .mockResolvedValueOnce({
-        result: "already_posted",
-        posting_batch_id: "batch-1",
-        journal_entry_id: "je-1",
-        journal_entry_posting_ids: ["jep-1"],
-        idempotency_key: "k",
-        account_resolution_trace: [],
-      });
-
-    const first = await maybePostFuelExpenseFromCanonicalTxn(BASE);
-    const second = await maybePostFuelExpenseFromCanonicalTxn(BASE);
-    expect(first.status).toBe("posted");
-    expect(second.status).toBe("already_posted");
-    expect(mockPostFuelExpenseFromEvent).toHaveBeenCalledTimes(2);
-  });
-
-  it("zero amount → skip without flag check posting", async () => {
-    const result = await maybePostFuelExpenseFromCanonicalTxn({ ...BASE, amount_cents: 0 });
-    expect(result).toEqual({ status: "skipped_zero_amount" });
-    expect(mockPostFuelExpenseFromEvent).not.toHaveBeenCalled();
-  });
-
-  it("cash_advance + driver → driver_advance path", async () => {
-    mockIsEnabled.mockResolvedValue(true);
-    mockPostFuelExpenseFromEvent.mockResolvedValue({
-      result: "posted",
-      posting_batch_id: "batch-1",
-      journal_entry_id: "je-1",
-      journal_entry_posting_ids: ["jep-1"],
-      idempotency_key: "k",
-      account_resolution_trace: [],
-    });
-    await maybePostFuelExpenseFromCanonicalTxn({ ...BASE, cash_advance: true });
-    expect(mockPostFuelExpenseFromEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ posting_path: "driver_advance" })
-    );
+    expect(mockIsEnabled).not.toHaveBeenCalled();
   });
 });
 
@@ -294,10 +150,10 @@ describe("flushFuelGlPostsAfterCommit", () => {
     mockPostFuelExpenseFromEvent.mockReset();
   });
 
-  it("counts flag-off skips and does not throw", async () => {
-    mockIsEnabled.mockResolvedValue(false);
+  it("counts every candidate as posting on bank match, never posts, does not throw", async () => {
+    mockIsEnabled.mockResolvedValue(true);
     const stats = await flushFuelGlPostsAfterCommit([BASE, BASE]);
-    expect(stats).toEqual({ attempted: 2, posted: 0, skipped_flag_off: 2, errors: 0 });
+    expect(stats).toEqual({ attempted: 2, posted: 0, skipped_flag_off: 0, skipped_posts_on_bank_match: 2, errors: 0 });
     expect(mockPostFuelExpenseFromEvent).not.toHaveBeenCalled();
   });
 });

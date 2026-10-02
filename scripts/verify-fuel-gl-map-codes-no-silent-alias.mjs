@@ -107,7 +107,8 @@ if (poster) {
   if (!/FUEL_CATEGORY_CODES\s*=\s*\[\s*"diesel"\s*,\s*"def"\s*,\s*"reefer"\s*,\s*"oil"\s*,\s*"misc"\s*\]/.test(poster)) {
     errors.push(`${posterRel} must keep FUEL_CATEGORY_CODES = diesel|def|reefer|oil|misc (exact order)`);
   }
-  if (!/resolveAccountForCategory\(\s*input\.operating_company_id,\s*"fuel",\s*fuelKind\s*\)/.test(poster)) {
+  // Optional 4th argument: the caller's client (postFuelExpenseOnClient posts inside the bank-match transaction).
+  if (!/resolveAccountForCategory\(\s*input\.operating_company_id,\s*"fuel",\s*fuelKind\s*(,\s*client[^)]*)?\)/.test(poster)) {
     errors.push(`${posterRel} must resolve debit via resolveAccountForCategory(..., "fuel", fuelKind)`);
   }
   // Forbidden: silent alias of missing kind → category_code "fuel" (fake-post / invent mapping).

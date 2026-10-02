@@ -552,6 +552,18 @@ const LIVE_DOMAIN_GUARDS = [
       "scripts/verify-bank-line-posts-in-same-transaction.mjs",
     ],
   ],
+  // OWNER RULING 2026-10-02 (fuel cards are bank accounts) — a fill never posts at import; it posts when its card bank
+  // line is matched in Banking (postFuelExpenseOnClient); relay posted_to_gl is derived, never hand-set.
+  [
+    "verify-fuel-posts-only-on-bank-match",
+    [
+      "apps/backend/src/accounting/fuel-posting/",
+      "apps/backend/src/fuel/",
+      "apps/backend/src/integrations/relay-payments/",
+      "apps/backend/src/feed/",
+      "scripts/verify-fuel-posts-only-on-bank-match.mjs",
+    ],
+  ],
   // ROUND 326.2 items 3-4 — banking / factoring surfaces: every table tabular-nums, and Banking's
   // factoring reserve reads the factoring KPI engine (one reserve engine, no duplicate math).
   [
