@@ -231,7 +231,7 @@ const querySchema = z.object({
 
 export async function registerThreeMileCpmRoutes(app: FastifyInstance) {
   app.get("/api/v1/reports/three-mile-cpm", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const user = req.user;
     if (!user) return;
     const parsed = querySchema.safeParse(req.query ?? {});

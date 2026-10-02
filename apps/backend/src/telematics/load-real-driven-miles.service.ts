@@ -325,7 +325,7 @@ const loadQuery = z.object({ operating_company_id: z.string().uuid() });
 
 export async function registerLoadRealDrivenMilesRoutes(app: FastifyInstance) {
   app.get("/api/v1/loads/:id/real-driven-miles", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const user = req.user;
     if (!user) return;
     const params = loadParams.safeParse(req.params ?? {});

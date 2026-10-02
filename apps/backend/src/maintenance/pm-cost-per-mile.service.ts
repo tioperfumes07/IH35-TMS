@@ -244,7 +244,7 @@ const querySchema = z.object({
 
 export async function registerPmCostPerMileRoutes(app: FastifyInstance) {
   app.get("/api/v1/maintenance/pm-cost-per-mile", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const user = req.user;
     if (!user) return;
     const parsed = querySchema.safeParse(req.query ?? {});

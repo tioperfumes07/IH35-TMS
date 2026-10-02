@@ -15,7 +15,7 @@ const querySchema = z.object({
 
 export async function registerAwaitingBolInvoiceRoutes(app: FastifyInstance) {
   app.get("/api/v1/dispatch/awaiting-bol-invoice", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const user = (req as FastifyRequest & { user?: { uuid: string } }).user;
     if (!user?.uuid) return reply.code(401).send({ error: "unauthorized" });
 

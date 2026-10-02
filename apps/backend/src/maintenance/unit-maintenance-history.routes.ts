@@ -9,7 +9,7 @@ const querySchema = z.object({ operating_company_id: z.string().uuid() });
 
 export async function registerUnitMaintenanceHistoryRoutes(app: FastifyInstance) {
   app.get("/api/v1/maintenance/units/:unitId/work-order-history", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const user = req.user;
     if (!user) return;
     const params = paramsSchema.safeParse(req.params);
