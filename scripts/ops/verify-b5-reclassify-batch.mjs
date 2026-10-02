@@ -60,6 +60,10 @@ function main() {
   assertIncludes(reclassify, "Account no.", RECLASSIFY);
   assertIncludes(reclassify, 'data-b5-account-no="1"', RECLASSIFY);
   assertIncludes(reclassify, "showNumber: false", RECLASSIFY);
+  // House law: Account no. cell gated by showAccountNumbers (verify-account-number-hidden-by-default)
+  if (!/data-b5-account-no="1">\{showAccountNumbers \?/.test(reclassify) && !/showAccountNumbers \? \(\(l\.account_number/.test(reclassify)) {
+    throw new Error(`${RECLASSIFY}: Account no. cell must gate on showAccountNumbers`);
+  }
 
   assertIncludes(batch, 'data-b5-batch-transactions="1"', BATCH);
   assertIncludes(batch, 'data-b5-batch-type="1"', BATCH);

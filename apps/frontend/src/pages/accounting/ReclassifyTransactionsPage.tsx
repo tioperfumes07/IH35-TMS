@@ -229,8 +229,8 @@ export function ReclassifyTransactionsPage() {
                         <td className="p-2">{l.source_transaction_id ? <EntityLink kind={docKind(l.source_transaction_type)} id={l.source_transaction_type && docKind(l.source_transaction_type) !== "journal_entry" ? l.source_transaction_id : l.journal_entry_id} label={l.document_number ?? l.source_transaction_id.slice(0, 8)} /> : <EntityLink kind="journal_entry" id={l.journal_entry_id} label="JE" />}</td>
                         <td className="p-2">{l.entity_uuid && l.entity_type === "vendor" ? <EntityLink kind="vendor" id={l.entity_uuid} label={l.entity_name ?? l.entity_uuid} /> : l.entity_name ?? "—"}</td>
                         <td className="p-2 max-w-[22rem] truncate" title={l.description ?? ""}>{l.description ?? "—"}</td>
-                        {/* BANK-F91042 — ORDERS §B-5 ACCOUNT NO. separate from ACCOUNT name */}
-                        <td className="p-2 whitespace-nowrap tabular-nums" data-b5-account-no="1">{(l.account_number ?? "").trim() || "—"}</td>
+                        {/* BANK-F91042 — ORDERS §B-5 ACCOUNT NO. column; value gated by Show account numbers (house law). */}
+                        <td className="p-2 whitespace-nowrap tabular-nums" data-b5-account-no="1">{showAccountNumbers ? ((l.account_number ?? "").trim() || "—") : "—"}</td>
                         <td className="p-2"><EntityLink kind="account" id={l.account_id} label={formatAccountDisplayLabel({ account_name: l.account_name, account_number: l.account_number }, { showNumber: false })} /></td>
                         <td className="p-2">{l.class_name ?? "—"}</td>
                         <td className="p-2 text-right tabular-nums">{formatCurrencyFromCents(l.net_amount_cents)}</td>
