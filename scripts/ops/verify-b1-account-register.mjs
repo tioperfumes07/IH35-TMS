@@ -105,6 +105,11 @@ function main() {
   assertIncludes(service, "matched_invoice_id::text = p.source_transaction_id", SERVICE);
   assertIncludes(service, "matched_payment_id::text = p.source_transaction_id", SERVICE);
   assertIncludes(service, "matched_bill_payment_id::text = p.source_transaction_id", SERVICE);
+  // BANK-F91025 — register ✓ from Faro wire + cash/driver advance bank match pointers
+  assertIncludes(service, "matched_factoring_advance_id::text = p.source_transaction_id", SERVICE);
+  assertIncludes(service, "matched_advance_id::text = p.source_transaction_id", SERVICE);
+  assertIncludes(service, "p.source_transaction_type = 'factoring_advance'", SERVICE);
+  assertIncludes(service, "p.source_transaction_type IN ('cash_advance', 'driver_advance')", SERVICE);
   assertIncludes(service, "bank_deposit: \"Deposit\"", SERVICE);
   assertIncludes(service, "source_transaction_type = 'bank_deposit'", SERVICE);
   assertIncludes(service, 'journal_entry: "Journal Entry"', SERVICE);
