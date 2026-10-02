@@ -1,3 +1,18 @@
+**2026-10-02T16:22Z · ROUND 297 — FUEL MATCH ENGINE MEASURED $20,942.94 · DatePicker portal**
+ACK: CURSOR | ACK ROUND 297 | GO
+MEASURED (Neon bypass_rls=lucia, USMCA, same SQL as PartyBoard /vendors): integrations.relay_fuel_transactions posted_to_gl IS NOT TRUE → **44 txs / $20,942.94 / since 2026-08-03**. Engine that clears it is ON TIP from #24158 (`a9d5446a14`): match → `postFuelFillOnBankMatch` → `postFuelExpenseOnClient` SAME txn + JE stamp. Survivors match=`acceptMatchWithResolveDifference` / unmatch=`unmatchBankTransaction`. GUARD verify-one-bank-match-writer-writes-je + verify-fuel-posts-only-on-bank-match PASS. DateTimePicker.test 15/15 + DatePicker.test PASS after portal sibling fix (DatePicker was still `absolute`/w-56 — same modal clip owner fixed on DateTimePicker d47a908929).
+NO post/seed/match/categorize live — owner must authorize Chrome match of the 44. NEXT: money-pr-local-gate → PR DatePicker portal → FAST-MERGE · FE tip deploy · owner-auth match the $20,942.94.
+
+**2026-10-02T16:13Z · ROUND 296 / BANK-F9335 MERGED #24158 · tip `a9d5446a14`**
+ACK: CURSOR | ACK ROUND 296 DONE | GO
+PR https://github.com/tioperfumes07/IH35-TMS/pull/24158 squash `a9d5446a1461faaa45769962777aa0f2066f643d`. money-pr-local-gate PASS (exit 0) → push → FAST-MERGE.
+1/4 Cash Rsv+Dispatch+Sch Fee on tip; net_advance identity; Discount=FACTORING FEE; Sch Fee+Wire=TRANSACTION FEES; 1230 Escrow ≠ 1235 Cash Rsv (1236 retired). Live verify-factor-reserve-roles: 1230+1235 active.
+2/4 Fuel match → `postFuelFillOnBankMatch` → `postFuelExpenseOnClient` SAME txn + JE stamp (null unit/load = engine defect).
+3/4 Survivors: match=`acceptMatchWithResolveDifference`; unmatch=`unmatchBankTransaction`. DELETED: session recon inline unmatch; accounting rejectReconMatch-as-unmatch. GUARD=`verify-one-bank-match-writer-writes-je`. GL 1230 repurchase → `postFactoringChargebackEvent({client})` same txn. Auto-match forbidden.
+4/4 DateTimePicker calendars + QBO presets + lib/money ManualJE/BookLoad + Legal due_at 132px + FeedGate/DrugAlcohol/Training filters.
+Files Modified: bank-match-fuel-post.service.ts (new); match.service.ts; poster.service.ts; reconciliation.routes (banking+accounting); ManualJEModal×2; BookLoadModalV4; UniversalListToolbar; RunnerFilters; LegalDeadlineAlertsPage; FeedGatePage; DrugAlcoholTable; TrainingTable; verify-one-bank-match-writer-writes-je.mjs (new); MEMORY_BANK; money-pr-local-gate.
+NO post/seed/match/categorize live. NEXT: FE tip deploy · Lead Chrome · owner-auth live fuel match prove · next ORDERS leftover.
+
 **2026-10-02T15:40Z · ROUND 296 CURSOR — Cash Rsv approved + match engine + calendars**
 ACK: CURSOR | ACK ROUND 296 | GO
 1/4 Cash Rsv+Dispatch+Sch Fee — ALREADY ON TIP (`parseFaroCsv` + `verify-faro-deduction-capture`); face−escrow−cash_rsv−discount−fees−dispatch−sch_fee=net. Discount=FACTORING FEE; Sch Fee+Wire=TRANSACTION FEES (separate). 1230 Escrow/Security ≠ 1235 Cash Rsv; 1236 retires. CC-2 owns restore-1235 migration claim #24142.

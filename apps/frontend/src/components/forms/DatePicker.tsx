@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Calendar } from "lucide-react";
 import { formatDateUS, parseDateUS, DATE_PLACEHOLDER_US } from "../../lib/formatDate";
 import "../../design/ih35-design-tokens.css";
@@ -6,6 +7,12 @@ import "../../design/ih35-design-tokens.css";
 // Shared QuickBooks-style date field. Value is "YYYY-MM-DD".
 // MOD-02/03 (GO-MECH-0901): typed MM/DD/YYYY + month/year jump + Escape closes
 // picker only (not parent wizard) — same pattern as DateTimePicker (#19067).
+//
+// ROUND 297 / UI-F9637 sibling: DateTimePicker (d47a908929) portaled to document.body because
+// `absolute` inside the field wrapper was clipped by every modal's overflow. DatePicker had the
+// same defect — CustomerDetail quality-event modal, Amortization, Loan wizard, MonthClose. Same
+// fix: portal + fixed placement measured from the trigger, flip above when no room below, clamp
+// to viewport, outside-click tests the popover node, w-72 + min 7.5rem month select.
 type Props = {
   value: string;
   onChange: (value: string) => void;
@@ -131,9 +138,45 @@ export function DatePicker({
     }
   }, [value]);
 
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  const placePopover = useCallback(() => {
+    const anchor = ref.current;
+    if (!anchor) return;
+    const r = anchor.getBoundingClientRect();
+    const PANEL_W = 288; // w-72 — full month name beside year (was w-56 → ~50px month)
+    const PANEL_H = popoverRef.current?.offsetHeight ?? 280;
+    const GAP = 4;
+    const roomBelow = window.innerHeight - r.bottom;
+    const top =
+      roomBelow < PANEL_H + GAP && r.top > PANEL_H + GAP
+        ? Math.max(GAP, r.top - PANEL_H - GAP)
+        : Math.min(r.bottom + GAP, Math.max(GAP, window.innerHeight - PANEL_H - GAP));
+    const left = Math.min(Math.max(GAP, r.left), Math.max(GAP, window.innerWidth - PANEL_W - GAP));
+    setPopoverPos({ top, left, width: PANEL_W });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setPopoverPos(null);
+      return;
+    }
+    placePopover();
+    window.addEventListener("scroll", placePopover, true);
+    window.addEventListener("resize", placePopover);
+    return () => {
+      window.removeEventListener("scroll", placePopover, true);
+      window.removeEventListener("resize", placePopover);
+    };
+  }, [open, placePopover]);
+
   useEffect(() => {
     function onDoc(e: PointerEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      const t = e.target as Node;
+      const inField = ref.current?.contains(t) ?? false;
+      const inPopover = popoverRef.current?.contains(t) ?? false;
+      if (!inField && !inPopover) {
         // DATEPICKER-LABEL-CLICKTHROUGH-REOPEN: label text click → outside close → synthetic
         // activate of associated control. Suppress one follow-up toggle.
         if (open) {
@@ -271,12 +314,14 @@ export function DatePicker({
           <Calendar className="h-3.5 w-3.5 text-gray-400" />
         </button>
       </div>
-      {open && (
+      {open && popoverPos && createPortal(
         <div
+          ref={popoverRef}
           role="dialog"
           aria-label="Choose date"
           data-date-picker-popover="open"
-          className="absolute z-50 mt-1 w-56 rounded-sm border border-gray-300 bg-white p-2 shadow-lg"
+          className="fixed z-[1000] rounded-sm border border-gray-300 bg-white p-2 shadow-lg"
+          style={{ top: popoverPos.top, left: popoverPos.left, width: popoverPos.width }}
           onMouseDown={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -292,13 +337,13 @@ export function DatePicker({
           }}
         >
           <div className="mb-1 flex items-center justify-between gap-1">
-            <button type="button" className="rounded-sm px-2 hover:bg-gray-100" onClick={prevMonth} aria-label="Previous month">
+            <button type="button" className="min-h-[34px] rounded-sm px-2 hover:bg-gray-100 sm:min-h-0" onClick={prevMonth} aria-label="Previous month">
               ‹
             </button>
             <div className="flex min-w-0 flex-1 items-center gap-1">
               <select
                 aria-label="Month"
-                className="dp-select min-w-0 flex-1 rounded-sm border border-gray-200 px-1 py-0.5 text-[11px]"
+                className="dp-select min-w-[7.5rem] flex-1 rounded-sm border border-gray-200 px-1 py-0.5 text-xs tabular-nums"
                 value={viewM}
                 onChange={(e) => setViewM(Number(e.target.value))}
               >
@@ -310,7 +355,7 @@ export function DatePicker({
               </select>
               <select
                 aria-label="Year"
-                className="dp-select w-16 rounded-sm border border-gray-200 px-1 py-0.5 text-[11px]"
+                className="dp-select w-16 rounded-sm border border-gray-200 px-1 py-0.5 text-xs tabular-nums"
                 value={viewY}
                 onChange={(e) => setViewY(Number(e.target.value))}
               >
@@ -321,7 +366,7 @@ export function DatePicker({
                 ))}
               </select>
             </div>
-            <button type="button" className="rounded-sm px-2 hover:bg-gray-100" onClick={nextMonth} aria-label="Next month">
+            <button type="button" className="min-h-[34px] rounded-sm px-2 hover:bg-gray-100 sm:min-h-0" onClick={nextMonth} aria-label="Next month">
               ›
             </button>
           </div>
@@ -346,7 +391,7 @@ export function DatePicker({
                       disabled={outOfRange}
                       aria-label={iso}
                       aria-current={selected ? "date" : undefined}
-                      className={`rounded py-1 text-xs ${
+                      className={`min-h-[34px] rounded py-1 text-xs sm:min-h-0 ${
                         outOfRange
                           ? "cursor-not-allowed text-gray-300"
                           : `hover:bg-slate-100 ${selected ? "bg-slate-700 text-white hover:bg-slate-700" : ""}`
@@ -367,7 +412,8 @@ export function DatePicker({
               )
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

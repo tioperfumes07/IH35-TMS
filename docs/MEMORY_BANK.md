@@ -112,6 +112,22 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
 
 ## Active Architectural Decisions
 
+### Active Architectural Decisions — Fuel match JE same-txn + DatePicker portal (Cursor, ROUND 297 / 296, 2026-10-02)
+
+- **Measured gap:** `/vendors` PartyBoard KPI — `integrations.relay_fuel_transactions` where
+  `posted_to_gl IS NOT TRUE` = **44 txs / $20,942.94 / since 2026-08-03** (Neon USMCA, bypass_rls=lucia).
+- **Engine (merged #24158):** CC-2 #24027 = no post at import. Match writer
+  `acceptMatchWithResolveDifference` calls `postFuelFillOnBankMatch` → `postFuelExpenseOnClient` on the
+  **same client/txn**, stamps `matched_journal_entry_id` in the same UPDATE as `review_state='matched'`.
+  Null unit or null load = `FuelMatchPostError` (engine defect). Unmatch survivor =
+  `unmatchBankTransaction` (void/reversal, never flag-flip). Guard:
+  `verify-one-bank-match-writer-writes-je` + `verify-fuel-posts-only-on-bank-match` + `verify-no-automatch`.
+- **DatePicker portal (ROUND 297):** UI-F9637 fixed DateTimePicker; DatePicker still rendered `absolute`
+  inside the field (modal overflow clipped calendars; w-56 month unreadable). Portaled to
+  `document.body` with fixed placement / flip-above / viewport clamp / popover outside-click — same
+  pattern as DateTimePicker. Vitest DatePicker+DateTimePicker 19/19 PASS.
+- **Build-only:** nobody matches the 44 live until owner authorizes Chrome.
+
 ### Active Architectural Decisions — Legal economic wiring via bill/invoice engines (Cursor, ROUND 326 item 3, 2026-10-02)
 
 - **Law:** Lead 10-02 Cursor LEGAL queue item 3 — settlement/claim/judgment/legal fee/retainer/insurance
