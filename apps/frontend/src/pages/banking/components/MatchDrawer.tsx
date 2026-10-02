@@ -4,8 +4,10 @@ import {
   acceptBankReconMatch,
   acceptBankReconMultiMatch,
   categorizeBankTransaction,
+  commitBankTransactionSplit,
   getCoaAccounts,
   getMatchCandidates,
+  saveBankTransactionSplitDraft,
   type BankMatchCandidate,
   type BankMatchCandidateKind,
 } from "../../../api/banking";
@@ -16,16 +18,51 @@ import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { coaAccountReferenceOption, vendorReferenceOption } from "../../../components/parity/referenceOptionLabels";
 import { DatePicker } from "../../../components/forms/DatePicker";
+import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { UnitAutocomplete } from "../../../components/banking/UnitAutocomplete";
+import { Button } from "../../../components/Button";
 import { useToast } from "../../../components/Toast";
 import { useListState } from "../../../components/list-state";
 import { formatUsdCents } from "../../../lib/money";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { ApiError } from "../../../api/client";
 
 // ROUND 206 Resolve (owner asked 4×): exact Confirm stays link-and-clear; variance Confirm is enabled
 // when a write-off / difference account is selected (posts via acceptMatchWithResolveDifference);
 // multi-select exact sum → acceptExactMultiDocumentMatch (one bank line → many documents).
 // "bill" still held (CHAIN-04 Part 2b).
+// B-3 §19c — "If needed, resolve the difference" mini-grid = bank_transaction_splits rows
+// (payee/category/class/memo/amount). Variance Match still uses first row's category as
+// variance_account_id; full-bank resolve (no candidate) saves+commits the split draft.
 const VARIANCE_NEEDS_WRITEOFF = "Select a write-off / difference account to resolve this variance";
+
+type ResolveDiffRow = {
+  _key: string;
+  date: string;
+  vendorId: string;
+  glAccountId: string;
+  unitId: string;
+  memo: string;
+  amountCents: number;
+};
+
+let resolveKeySeq = 0;
+function nextResolveKey() {
+  resolveKeySeq += 1;
+  return `resolve-${resolveKeySeq}`;
+}
+
+function blankResolveRow(bankDate: string): ResolveDiffRow {
+  return {
+    _key: nextResolveKey(),
+    date: bankDate.slice(0, 10) || new Date().toISOString().slice(0, 10),
+    vendorId: "",
+    glAccountId: "",
+    unitId: "",
+    memo: "",
+    amountCents: 0,
+  };
+}
 
 /** ROUND 189 Resolve — named difference accounts only (never a generic "adjustment").
  * Match by account_name (not account_number) so the Account-Numbers-Hidden law stays green.
@@ -156,6 +193,10 @@ export function MatchDrawer({
   const [categorizeGlAccountId, setCategorizeGlAccountId] = useState("");
   /** ROUND 206 Resolve — write-off / difference CoA for non-zero variance accept. */
   const [writeOffAccountId, setWriteOffAccountId] = useState("");
+  /** B-3 §19c — expandable resolve-the-difference mini-grid (bank_transaction_splits). */
+  const [resolveOpen, setResolveOpen] = useState(false);
+  const [resolveRows, setResolveRows] = useState<ResolveDiffRow[]>([]);
+  const [resolvingSplit, setResolvingSplit] = useState(false);
   /** ORDERS §19 — Suggested chip (auto_match / high-confidence only). */
   const [suggestedOnly, setSuggestedOnly] = useState(false);
   /** ORDERS §19 — Record type chip; null = all types. */
@@ -183,6 +224,8 @@ export function MatchDrawer({
     setSelectedId(null);
     setSelectedIds(new Set());
     setWriteOffAccountId("");
+    setResolveOpen(false);
+    setResolveRows([]);
     setSuggestedOnly(false);
     setRecordKind(null);
     // B-3 §19 — Find Other Matches default date range is ±90 d from the bank line (not 3/7 cascade).
@@ -234,14 +277,18 @@ export function MatchDrawer({
   });
 
   const confirmMutation = useMutation({
-    mutationFn: (candidate: BankMatchCandidate) =>
-      acceptBankReconMatch({
+    mutationFn: (candidate: BankMatchCandidate) => {
+      const fromResolve =
+        resolveRows.find((r) => r.glAccountId && Number(r.amountCents) > 0)?.glAccountId ?? "";
+      const varianceId = writeOffAccountId || fromResolve;
+      return acceptBankReconMatch({
         operating_company_id: operatingCompanyId,
         bank_transaction_id: String(bankTransactionId),
         ledger_entry_kind: candidate.ledger_entry_kind as "payment" | "bill_payment" | "transfer" | "je" | "expense",
         ledger_entry_id: candidate.ledger_entry_id,
-        variance_account_id: candidate.amount_gap_cents !== 0 ? writeOffAccountId || undefined : undefined,
-      }),
+        variance_account_id: candidate.amount_gap_cents !== 0 ? varianceId || undefined : undefined,
+      });
+    },
     onMutate: (candidate) => setConfirmingId(candidate.ledger_entry_id),
     onSuccess: async () => {
       pushToast("Match confirmed — transaction cleared.", "success");
@@ -319,7 +366,20 @@ export function MatchDrawer({
       : singleSelected
         ? Number(singleSelected.amount_cents ?? 0)
         : 0;
-  const differenceCents = bankAmountCents - selectedAmountCents;
+  const differenceBeforeResolve = bankAmountCents - selectedAmountCents;
+  const resolvedCents = resolveRows.reduce((s, r) => s + Math.max(0, Number(r.amountCents) || 0), 0);
+  const differenceCents = differenceBeforeResolve - resolvedCents;
+  // §19c — first resolve row with a category drives variance_account_id (existing match engine).
+  const resolveCategoryId =
+    resolveRows.find((r) => r.glAccountId && Number(r.amountCents) > 0)?.glAccountId ?? "";
+  const effectiveWriteOffId = writeOffAccountId || resolveCategoryId;
+  const resolveBalanced = Math.abs(differenceCents) === 0 && resolvedCents > 0;
+  const fullBankResolveOnly =
+    selectedAmountCents === 0 &&
+    resolveRows.length > 0 &&
+    resolvedCents === bankAmountCents &&
+    bankAmountCents > 0 &&
+    resolveRows.every((r) => r.glAccountId && Number(r.amountCents) > 0);
 
   if (!bankTransactionId) return null;
 
@@ -373,6 +433,11 @@ export function MatchDrawer({
             <span>
               Selected amount: <strong>{formatMoneyCents(selectedAmountCents)}</strong>
             </span>
+            {resolvedCents > 0 ? (
+              <span data-testid="match-drawer-resolved-amount">
+                Resolved amount: <strong>{formatMoneyCents(resolvedCents)}</strong>
+              </span>
+            ) : null}
             <span className={differenceCents === 0 ? "text-[#027A48]" : "text-red-700"}>
               Difference: <strong>{formatMoneyCents(Math.abs(differenceCents))}</strong>
               {differenceCents !== 0 ? " (resolve below or select exact sum)" : ""}
@@ -448,6 +513,227 @@ export function MatchDrawer({
             Named only: Reserve Deposit · Factoring Fees · Wire Fee · Chargeback · Quick-Pay Discount.
             Never a generic adjustment.
           </p>
+        </div>
+
+        {/* B-3 §19c — If needed, resolve the difference → bank_transaction_splits mini-grid. */}
+        <div className="mb-3" data-testid="match-drawer-resolve-difference" data-b3-resolve-difference="1">
+          <button
+            type="button"
+            className="mb-1 flex w-full items-center gap-1 text-left text-xs font-semibold text-[#14314F]"
+            data-testid="match-resolve-difference-toggle"
+            aria-expanded={resolveOpen}
+            onClick={() => {
+              setResolveOpen((v) => {
+                const next = !v;
+                if (next && resolveRows.length === 0) {
+                  const bankDate = (bankTransactionDate ?? "").slice(0, 10);
+                  const seed = blankResolveRow(bankDate);
+                  seed.amountCents = Math.max(0, Math.abs(differenceBeforeResolve));
+                  setResolveRows([seed]);
+                }
+                return next;
+              });
+            }}
+          >
+            <span aria-hidden>{resolveOpen ? "▾" : "›"}</span> If needed, resolve the difference
+          </button>
+          {resolveOpen ? (
+            <div className="space-y-2 rounded-sm border border-[#E5E7EB] bg-white p-2" data-testid="match-resolve-difference-grid">
+              <p className="text-xs text-slate-500">
+                Add resolving line(s) so Selected + Resolved equals the bank amount. Lines persist as{" "}
+                <span className="font-medium">bank transaction splits</span> (payee, category, class/unit, memo,
+                amount). Location is not on the split engine yet — omitted honestly. Match / Commit only at
+                Difference $0.00.
+              </p>
+              {resolveRows.map((row, idx) => (
+                <div
+                  key={row._key}
+                  className="grid gap-1 border-b border-[#E5E7EB] pb-2 last:border-b-0 md:grid-cols-6"
+                  data-testid="match-resolve-difference-row"
+                >
+                  <label className="text-section-header font-bold uppercase text-[#4B5563]">
+                    Date
+                    <DatePicker
+                      value={row.date}
+                      onChange={(d) =>
+                        setResolveRows((rows) => rows.map((r, i) => (i === idx ? { ...r, date: d } : r)))
+                      }
+                      className="mt-0.5 h-7"
+                    />
+                  </label>
+                  <label className="text-section-header font-bold uppercase text-[#4B5563] md:col-span-1">
+                    Payee
+                    <div className="mt-0.5">
+                      <ReferenceSelect
+                        value={row.vendorId || null}
+                        onChange={(vid) =>
+                          setResolveRows((rows) =>
+                            rows.map((r, i) => (i === idx ? { ...r, vendorId: vid ?? "" } : r))
+                          )
+                        }
+                        options={(vendorsQuery.data?.vendors ?? []).map(vendorReferenceOption)}
+                        createKind="vendor"
+                        operatingCompanyId={operatingCompanyId}
+                        placeholder="Payee"
+                        onOptionCreated={() => void vendorsQuery.refetch()}
+                      />
+                    </div>
+                  </label>
+                  <label className="text-section-header font-bold uppercase text-[#4B5563]">
+                    Category
+                    <div className="mt-0.5">
+                      <ReferenceSelect
+                        value={row.glAccountId || null}
+                        onChange={(aid) => {
+                          const next = aid ?? "";
+                          setResolveRows((rows) =>
+                            rows.map((r, i) => (i === idx ? { ...r, glAccountId: next } : r))
+                          );
+                          if (idx === 0 && next) setWriteOffAccountId(next);
+                        }}
+                        options={(coaQuery.data?.accounts ?? []).map(coaAccountReferenceOption)}
+                        createKind="category"
+                        operatingCompanyId={operatingCompanyId}
+                        placeholder="Category"
+                        onOptionCreated={() => void coaQuery.refetch()}
+                      />
+                    </div>
+                  </label>
+                  <label className="text-section-header font-bold uppercase text-[#4B5563]">
+                    Class
+                    <div className="mt-0.5">
+                      <UnitAutocomplete
+                        companyId={operatingCompanyId}
+                        value={row.unitId}
+                        onChange={(unitId) =>
+                          setResolveRows((rows) =>
+                            rows.map((r, i) => (i === idx ? { ...r, unitId } : r))
+                          )
+                        }
+                        placeholder="Unit (class)"
+                      />
+                    </div>
+                  </label>
+                  <label className="text-section-header font-bold uppercase text-[#4B5563]">
+                    Memo
+                    <input
+                      type="text"
+                      value={row.memo}
+                      onChange={(e) =>
+                        setResolveRows((rows) =>
+                          rows.map((r, i) => (i === idx ? { ...r, memo: e.target.value } : r))
+                        )
+                      }
+                      className="mt-0.5 h-7 w-full rounded-sm border border-[#E5E7EB] px-1.5 text-xs text-[#0F1219]"
+                      placeholder="Memo"
+                    />
+                  </label>
+                  <div className="flex items-end gap-1">
+                    <label className="flex-1 text-section-header font-bold uppercase text-[#4B5563]">
+                      Amount
+                      <div className="mt-0.5">
+                        <MoneyInput
+                          valueCents={row.amountCents}
+                          onChangeCents={(cents) =>
+                            setResolveRows((rows) =>
+                              rows.map((r, i) => (i === idx ? { ...r, amountCents: cents ?? 0 } : r))
+                            )
+                          }
+                        />
+                      </div>
+                    </label>
+                    <Button
+                      type="button"
+                      variant="tertiary"
+                      size="sm"
+                      data-testid="match-resolve-row-delete"
+                      title="Remove row"
+                      onClick={() => setResolveRows((rows) => rows.filter((_, i) => i !== idx))}
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="tertiary"
+                  size="sm"
+                  data-testid="match-resolve-add-row"
+                  onClick={() =>
+                    setResolveRows((rows) => [
+                      ...rows,
+                      blankResolveRow((bankTransactionDate ?? "").slice(0, 10)),
+                    ])
+                  }
+                >
+                  Add new row
+                </Button>
+                <Button
+                  type="button"
+                  variant="tertiary"
+                  size="sm"
+                  data-testid="match-resolve-clear-all"
+                  disabled={resolveRows.length === 0}
+                  onClick={() => {
+                    setResolveRows([]);
+                    setWriteOffAccountId("");
+                  }}
+                >
+                  Clear all
+                </Button>
+                {fullBankResolveOnly ? (
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    data-testid="match-resolve-commit-split"
+                    disabled={resolvingSplit}
+                    onClick={async () => {
+                      setResolvingSplit(true);
+                      try {
+                        await saveBankTransactionSplitDraft(String(bankTransactionId), operatingCompanyId, {
+                          mode: "multi_vendor",
+                          lines: resolveRows.map((r) => ({
+                            amount_cents: Math.max(1, Number(r.amountCents) || 0),
+                            gl_account_id: r.glAccountId || null,
+                            vendor_id: r.vendorId || null,
+                            unit_id: r.unitId || null,
+                            memo: r.memo || null,
+                          })),
+                        });
+                        await commitBankTransactionSplit(String(bankTransactionId), operatingCompanyId);
+                        pushToast("Difference resolved — split committed on the bank line.", "success");
+                        setResolveRows([]);
+                        setResolveOpen(false);
+                        onAccepted?.();
+                        onClose();
+                      } catch (error) {
+                        if (error instanceof ApiError && error.status === 409) {
+                          pushToast(
+                            "Split transactions are not enabled for this company yet (BANK_TX_SPLIT_ENABLED is OFF).",
+                            "error",
+                          );
+                        } else {
+                          pushToast(userFacingApiError(error, "Resolve difference failed"), "error");
+                        }
+                      } finally {
+                        setResolvingSplit(false);
+                      }
+                    }}
+                  >
+                    {resolvingSplit ? "Committing…" : "Match (commit split)"}
+                  </Button>
+                ) : null}
+                {resolveBalanced && !fullBankResolveOnly ? (
+                  <span className="text-xs text-[#027A48]" data-testid="match-resolve-balanced-hint">
+                    Difference $0.00 — confirm the candidate Match (category drives variance account).
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {multiSelected.length >= 2 ? (
@@ -603,7 +889,7 @@ export function MatchDrawer({
             const isMultiChecked = selectedIds.has(c.ledger_entry_id);
             const isBill = c.ledger_entry_kind === "bill";
             const isExactMatch = c.amount_gap_cents === 0;
-            const canConfirmVariance = !isBill && !isExactMatch && Boolean(writeOffAccountId);
+            const canConfirmVariance = !isBill && !isExactMatch && Boolean(effectiveWriteOffId);
             const canConfirm = !isBill && (isExactMatch || canConfirmVariance);
             const isConfirming = confirmMutation.isPending && confirmingId === c.ledger_entry_id;
             return (
@@ -681,7 +967,7 @@ export function MatchDrawer({
                 <div className="mt-2 flex items-center justify-end gap-2">
                   {isBill ? (
                     <span className="text-xs text-slate-400">Posting available after CHAIN-04</span>
-                  ) : !isExactMatch && !writeOffAccountId ? (
+                  ) : !isExactMatch && !effectiveWriteOffId ? (
                     <span className="text-xs text-slate-400" data-testid="match-candidate-variance-held">
                       {VARIANCE_NEEDS_WRITEOFF}
                     </span>
@@ -698,7 +984,7 @@ export function MatchDrawer({
                     title={
                       isBill
                         ? "Recording the bill payment is CHAIN-04 (Part 2b)"
-                        : !isExactMatch && !writeOffAccountId
+                        : !isExactMatch && !effectiveWriteOffId
                         ? VARIANCE_NEEDS_WRITEOFF
                         : isExactMatch
                         ? "Confirm this match — links and clears the transaction, no journal entry posted"
