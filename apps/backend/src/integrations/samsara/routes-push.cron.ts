@@ -15,6 +15,7 @@ import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../../auth/db.js";
 import { tryXactSingleFlight } from "../../lib/single-flight.js";
+import { wrapBackgroundJobTick } from "../../lib/background-jobs.js";
 import { assertTenantContext } from "../../cron/_helpers/tenant-context-guard.js";
 import { pushAllChangedRoutes, readBackSamsaraRoutes, samsaraRouteApiFor, samsaraRoutesPushEnabled } from "./routes-integration.service.js";
 
@@ -47,15 +48,12 @@ export function initializeSamsaraRoutesPushCron(app: FastifyInstance) {
   }
   cron.schedule(
     "*/15 * * * *",
-    async () => {
-      try {
+    // ROUND 330.1: through the shared wrapper (run recorded; failure logged, sent to Sentry, then re-thrown).
+    async () =>
+      wrapBackgroundJobTick(CRON_NAME, async () => {
         const summary = await runSamsaraRoutesPushTick();
         app.log.info({ ...summary, results: summary.results.length }, `${CRON_NAME} tick`);
-      } catch (error) {
-        app.log.error({ err: error }, `[${CRON_NAME}] tick failed`);
-        throw error;
-      }
-    },
+      }, app.log, { rethrow: true }),
     { maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
   app.log.info(`${CRON_NAME} scheduled (every 15 min, America/Chicago)`);

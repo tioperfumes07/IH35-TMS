@@ -14,6 +14,7 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../../../auth/db.js";
+import { wrapBackgroundJobTick } from "../../../lib/background-jobs.js";
 import { deliverChatMessageAfterCommit } from "./driver-message-delivery.service.js";
 import { driverPromptsEnabled, postDriverPromptsForRecentFenceEvents } from "./driver-prompts.service.js";
 
@@ -29,8 +30,9 @@ export function initializeDriverPromptsCron(app: FastifyInstance) {
   }
   cron.schedule(
     "*/15 * * * *",
-    async () => {
-      try {
+    // ROUND 330.1: through the shared wrapper (run recorded; failure logged, sent to Sentry, then re-thrown).
+    async () =>
+      wrapBackgroundJobTick("integrations.samsara_driver_prompts", async () => {
         const out = await withLuciaBypass(async (client) => {
           // membership-scope-exempt: USMCA-only worker
           await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [USMCA]);
@@ -40,11 +42,7 @@ export function initializeDriverPromptsCron(app: FastifyInstance) {
           await deliverChatMessageAfterCommit(USMCA, id).catch((err: unknown) => app.log.error({ err }, "driver_prompt_samsara_delivery_failed"));
         }
         app.log.info({ posted: out.posted.length, skipped: out.skipped }, "driver prompts tick");
-      } catch (error) {
-        app.log.error({ err: error }, "[DRIVER_PROMPTS_CRON] tick failed");
-        throw error;
-      }
-    },
+      }, app.log, { rethrow: true }),
     { maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
   app.log.info("driver prompts cron scheduled (every 15 min, America/Chicago)");

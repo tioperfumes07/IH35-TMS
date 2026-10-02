@@ -189,15 +189,19 @@ describe("geofence breach cron tick", () => {
 });
 
 describe("geofence breach cron single-flight guard (H6-3)", () => {
-  it("acquires and releases a Postgres advisory lock around the tick loop", async () => {
-    // Static guard so the horizontal-scale single-flight can't silently regress.
+  it("takes a transaction-scoped advisory lock around the tick loop (released by Postgres, never leaked)", async () => {
+    // Static guard so the horizontal-scale single-flight can't silently regress. ROUND 330.1: the lock is
+    // TRANSACTION-scoped (tryXactSingleFlight -> pg_try_advisory_xact_lock) — Postgres frees it at commit / rollback.
+    // A session lock behind pgbouncer transaction pooling could not be unlocked once the tick's transaction aborted and
+    // stayed on the server connection, skipping every later tick.
     const src = readFileSync(
       new URL("../../../cron/geofence-breach-detector.cron.ts", import.meta.url),
       "utf8"
     );
-    expect(src).toContain("pg_try_advisory_lock(hashtext($1::text))");
-    expect(src).toContain("pg_advisory_unlock(hashtext($1::text))");
-    // Release must be in a finally so a mid-tick throw still frees the lock.
-    expect(src).toMatch(/finally\s*{[\s\S]*pg_advisory_unlock/);
+    expect(src).toMatch(/tryXactSingleFlight\(client,\s*GEOFENCE_CRON_LOCK_KEY\)/);
+    expect(src).not.toContain("pg_try_advisory_lock(");
+    expect(src).not.toContain("pg_advisory_unlock(");
+    // and the tick goes through the shared wrapper (run recorded; the single-fire lease lands there)
+    expect(src).toMatch(/wrapBackgroundJobTick\("safety\.geofence_breach_cron"/);
   });
 });

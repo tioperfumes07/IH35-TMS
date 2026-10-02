@@ -2,13 +2,15 @@
  * ENGINE: geofence breach detector
  * SCHEDULE: *\/1 * * * *
  * WRITES: safety.geofence_breach_events, outbox.events
- * IDEMPOTENCY: ADVISORY LOCK pg_try_advisory_lock(GEOFENCE_CRON_LOCK_KEY) single-flight per tick; breach insert gated WHERE NOT EXISTS in the 5-minute window
+ * IDEMPOTENCY: ADVISORY LOCK pg_try_advisory_xact_lock(GEOFENCE_CRON_LOCK_KEY) single-flight per tick (transaction-scoped); breach insert gated WHERE NOT EXISTS in the 5-minute window
  * OVERLAP: a second replica fails the lock and skips the tick
  * (ROUND 329 standard — docs/specs/ENGINE-HEADER-TEMPLATE.md)
  */
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
+import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { tryXactSingleFlight } from "../lib/single-flight.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { detectGeofenceBreaches } from "../safety/geofence-breach-detector.service.js";
 
@@ -305,24 +307,18 @@ export function initializeGeofenceBreachDetectorCron(app: FastifyInstance) {
 
   cron.schedule(
     "*/1 * * * *",
-    async () => {
-      await withLuciaBypass(async (client) => {
-        // Single-flight guard for horizontal scaling: under multiple backend instances the
-        // 60s cron fires on every replica, so without a cross-process lock they all scan the
-        // same window and race to insert duplicate breach events. A session-level Postgres
-        // advisory lock (keyed by a stable name via hashtext) lets exactly one instance run
-        // each tick; the others skip. The lock is held on THIS connection and released in the
-        // finally below; if the process dies mid-tick Postgres frees it on disconnect.
-        const lockRes = await client.query<{ locked: boolean }>(
-          `SELECT pg_try_advisory_lock(hashtext($1::text)) AS locked`,
-          [GEOFENCE_CRON_LOCK_KEY]
-        );
-        if (!lockRes.rows[0]?.locked) {
-          app.log.info("[GEOFENCE_BREACH_CRON] skipped tick — another instance holds the single-flight lock");
-          return;
-        }
-
-        try {
+    // ROUND 330.1: through the shared wrapper (run recorded; failure logged, sent to Sentry, then re-thrown).
+    async () =>
+      wrapBackgroundJobTick("safety.geofence_breach_cron", async () => {
+        await withLuciaBypass(async (client) => {
+          // Single-flight guard for horizontal scaling: both replicas fire this 60s cron. A TRANSACTION-scoped advisory
+          // lock (ROUND 330.1 — was a session lock): Postgres releases it at commit / rollback / disconnect. The session
+          // lock's unlock ran in a finally on the same transaction, so a failed tick (aborted txn) could not unlock and
+          // the lock stayed on the pgbouncer server connection, skipping every later tick until that connection recycled.
+          if (!(await tryXactSingleFlight(client, GEOFENCE_CRON_LOCK_KEY))) {
+            app.log.info("[GEOFENCE_BREACH_CRON] skipped tick — another instance holds the single-flight lock");
+            return;
+          }
           const companies = await client.query<{ id: string }>(
             `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
           );
@@ -346,11 +342,8 @@ export function initializeGeofenceBreachDetectorCron(app: FastifyInstance) {
               "[GEOFENCE_BREACH_CRON] run complete"
             );
           }
-        } finally {
-          await client.query(`SELECT pg_advisory_unlock(hashtext($1::text))`, [GEOFENCE_CRON_LOCK_KEY]);
-        }
-      });
-    },
+        });
+      }, app.log, { rethrow: true }),
     {
       maxRandomDelay: 20000 /* cron-stagger (code only) — see PROD-OUTAGE-STEADY-STATE-CRON-PILEUP-CONFIRMED */, timezone: "America/Chicago" }
   );
