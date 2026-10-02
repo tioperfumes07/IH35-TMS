@@ -1,3 +1,8 @@
+**2026-10-02T10:44Z · BANK-F91027 B-1 Expense filter excludes Checks MERGED #24079 · tip `e8ab398205`**
+ACK: CURSOR | ACK GO-20 HOOK | BANK-F91027 MERGED FAST-MERGE | GO
+Expense type filter NOT EXISTS payment_type=check. Also this session: F91024 Edit hops · F91025 ✓ advance match · F91026 cash advance banner. money-pr-local-gate PASS → #24079 squash-admin.
+NEXT: next ORDERS leftover · Lead Chrome · bank_transaction_splits USMCA flag HH 12–23 · clean-app APPLY AUTH · no Book Load · no seed.
+
 **2026-10-02T10:40Z · BANK-F91026 cash advance OnlineBankingMatchBanner MERGED #24077 · tip `cfa1b1082c`**
 ACK: CURSOR | ACK GO-20 HOOK | BANK-F91026 MERGED FAST-MERGE | GO
 AdvanceDetailDrawer B-1 §5 banner when linked_bank_txn_id set + Unmatch. Also #24073 Edit hops · #24075 register ✓ advance match. money-pr-local-gate PASS → #24077 squash-admin.
