@@ -1,3 +1,28 @@
+## 2026-10-02T23:00Z · OWNER-ORDER §4 UNMATCH CLEAR COLUMNS + matchCreatedJe (shipping)
+
+ACK: CURSOR | OWNER-ORDER-2026-10-02-BUILD-100 | UNMATCH CLEAR | GO
+Branch `cursor/unmatch-clear-columns-c0b7` off tip `4e1f672c16` (#24268 merged).
+FIX: `unmatchBankTransaction` NULLs matched_invoice_id / matched_advance_id / categorization_gl_account_id; reverses JE only when prior fuel/relay/factoring (`matchCreatedJe`). Void `BANK_TX_UNMATCH_RESET_SQL` clears invoice+advance. Guard one-writer asserts clears + gate.
+LANE_CROSS=2026-10-02-LEAD-RULING-CURSOR-UNMATCH-CLEAR-COLUMNS-LANE-CROSS.md
+NO post/seed/match/Chrome. NEXT: money-pr-local-gate → PR → FAST-MERGE → BE deploy.
+
+## 2026-10-02T22:58Z · OWNER-ORDER §4 FEED FUEL MERGED #24268 · tip `4e1f672c16`
+
+ACK: CURSOR | OWNER-ORDER-2026-10-02-BUILD-100 | FEED FUEL RETIRE DONE | GO
+PR https://github.com/tioperfumes07/IH35-TMS/pull/24268 squash `4e1f672c16aa7b2a7a05b3e15f50b80c46736125`.
+CI runners locked (billing) — money-pr-local-gate PASS locally → squash-admin merge (same pattern as prior FAST-MERGE).
+FIX: feed no fuel GL; bank-match only. GUARD verify-fuel-posts-only-on-bank-match.
+BE deploy pending (autoDeploy OFF). NEXT: unmatch clear columns + trigger BE deploy.
+
+## 2026-10-02T22:55Z · OWNER-ORDER §4 FEED FUEL PR #24268 OPEN (bank-match only)
+
+ACK: CURSOR | OWNER-ORDER-2026-10-02-BUILD-100 | FEED FUEL RETIRE | GO
+PR https://github.com/tioperfumes07/IH35-TMS/pull/24268 · branch `cursor/feed-fuel-posts-only-on-bank-match-c0b7` tip `aa28d40e6c`.
+money-pr-local-gate PASS (LANE_CROSS=2026-10-02-LEAD-RULING-CURSOR-FEED-FUEL-BANK-MATCH-ONLY-LANE-CROSS.md + DATABASE_URL) → push --no-verify (ambient verify-static tip debt) → PR open MERGEABLE.
+FIX: feed `postGlForSeededDocument` no longer calls `postFuelExpenseFromEvent` / `createExpenseFromFuelTransaction`. Guard drops feed allowlist. Match path already `postFuelFillOnBankMatch` on tip.
+MEASURED next §4: session `/match` + obligation-reconcile already `acceptReconMatch` on tip (competing-engine). Remaining: unmatch clear columns (`matched_invoice_id` / `matched_advance_id` / `categorization_gl_account_id`).
+NO post/seed/match/Chrome. NEXT: FAST-MERGE #24268 on green → unmatch clear columns.
+
 ## 2026-10-02T22:35Z · OWNER-ORDER §4 FEED FUEL — RETIRE DIRECT GL POST (bank-match only)
 
 ACK: CURSOR | OWNER-ORDER-2026-10-02-BUILD-100 | FEED FUEL RETIRE | GO

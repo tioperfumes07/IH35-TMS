@@ -132,6 +132,13 @@ about settlements in "weeks" or calendar date-windows, STOP — you are wrong. R
   `fuel.fuel_transactions` only (composition / cost attribution). GL posts solely when Banking
   matches the card line via `postFuelFillOnBankMatch`. Guard
   `verify-fuel-posts-only-on-bank-match` asserts the feed has no poster calls (no lane allowlist).
+  Merged #24268 (`4e1f672c16`).
+- **Unmatch clear columns + match-created JE only (2026-10-02, OWNER-ORDER §4):**
+  `unmatchBankTransaction` must NULL `matched_invoice_id`, `matched_advance_id`,
+  `categorization_gl_account_id`. Reverse JE only when prior fuel/relay/factoring match
+  (`matchCreatedJe`) — never reverse a JE that was merely the match target (kind=je) or that
+  categorize wrote. Void twin `BANK_TX_UNMATCH_RESET_SQL` also clears invoice + advance.
+  Guard: `verify-one-bank-match-writer-writes-je` asserts the three clears + `matchCreatedJe`.
 - **Measured gap:** `/vendors` PartyBoard KPI — `integrations.relay_fuel_transactions` where
   `posted_to_gl IS NOT TRUE` = **44 txs / $20,942.94 / since 2026-08-03** (Neon USMCA, bypass_rls=lucia).
 - **Engine (merged #24158):** CC-2 #24027 = no post at import. Match writer
