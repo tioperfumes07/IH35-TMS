@@ -82,6 +82,9 @@ export type ObligationRow = {
   counterparty_name?: string | null;
 };
 
+/** Typed boolean so the retired label-only categorize branches stay type-checked (not unreachable). */
+const LABEL_ONLY_CATEGORIZE_RETIRED: boolean = true;
+
 export async function loadObligationCandidates(
   client: { query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }> },
   companyId: string
@@ -670,6 +673,10 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
         );
         return res.rows.length;
       }
+      // OWNER LAW 2026-10-02 competing-engine audit: the categorize_* actions set status='categorized' with a text label
+      // only — no account and no journal entry, a second categorize engine that books nothing. Retired: categorize on
+      // POST /api/v1/banking/transactions/bulk-categorize (account required, entry posted in the same transaction).
+      if (LABEL_ONLY_CATEGORIZE_RETIRED) return -1;
       if (body.data.action === "categorize_fuel") {
         const res = await client.query(
           `
@@ -737,6 +744,12 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
       return null;
     });
 
+    if (updated === -1) {
+      return reply.code(410).send({
+        error: "label_only_categorize_retired",
+        message: "Categorize on Banking → Transactions (POST /api/v1/banking/transactions/bulk-categorize): an account is required and the entry posts in the same transaction.",
+      });
+    }
     return { ok: true, updated_count: updated };
   });
 }

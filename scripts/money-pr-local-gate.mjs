@@ -548,6 +548,7 @@ const LIVE_DOMAIN_GUARDS = [
     [
       "apps/backend/src/banking/bank-feed-gl-posting.service.ts",
       "apps/backend/src/banking/categorization.routes.ts",
+      "apps/backend/src/banking/obligation-reconcile.routes.ts",
       "scripts/verify-bank-line-posts-in-same-transaction.mjs",
     ],
   ],
