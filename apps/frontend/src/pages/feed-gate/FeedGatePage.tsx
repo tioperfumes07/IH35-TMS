@@ -9,6 +9,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { ListErrorState } from "../../components/ListErrorState";
 import { closeFeedIntake, getFeedIntake, listFeedIntakes, runFeedGate, type FeedCheck, type FeedIntake, type FeedKind } from "../../api/feedGate";
 
 const STATUS_CLS: Record<string, string> = {
@@ -67,6 +68,7 @@ export function FeedGateIntakePage() {
       </div>
       {error ? <div className="mb-2 rounded border border-red-600 bg-red-50 p-2 text-xs text-red-800" role="alert">{error}</div> : null}
       {detail.isLoading ? <p className="text-xs text-slate-500">Loading…</p> : null}
+      {detail.isError ? <ListErrorState status={0} message="Failed to load this feed intake." onRetry={() => void detail.refetch()} /> : null}
       {groups.map((g) => (
         <div key={g} className="mb-4">
           <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-600">{GROUP_LABEL[g] ?? g} · {checks.filter((c) => c.check_group === g && c.status === "fail").length} red</h2>
@@ -95,10 +97,11 @@ export function FeedGatePage() {
       <h1 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-700">Feed gate</h1>
       <p className="mb-3 text-xs text-slate-600">Every feed — a settlement, a load, an invoice, an expense, a bill, a fuel purchase — is verified for full linkage, wiring, accounts and date stamps before it is accepted. A settlement commits only when every check is green and the next settlement for the same driver cannot open until the previous one is closed; an invoice is sent and an expense is saved only through this gate. Red rows carry the link to the screen that fixes them.</p>
       {error ? <div className="mb-2 rounded border border-red-600 bg-red-50 p-2 text-xs text-red-800" role="alert">{error}</div> : null}
+      {list.isError ? <ListErrorState status={0} message="Failed to load the feed gate list." onRetry={() => void list.refetch()} /> : null}
       <table className="w-full border-collapse">
         <thead><tr className="text-left text-xs text-slate-500"><th className="p-2">Feed</th><th className="p-2">Driver</th><th className="p-2">Status</th><th className="p-2">Red / total</th><th className="p-2">Last run</th><th className="p-2"></th></tr></thead>
         <tbody>
-          {rows.length === 0 && !list.isLoading ? <tr><td className="p-2 text-xs text-slate-500" colSpan={6}>No feed has been run yet. Approving a settlement runs its gate automatically.</td></tr> : null}
+          {rows.length === 0 && !list.isLoading && !list.isError ? <tr><td className="p-2 text-xs text-slate-500" colSpan={6}>No feed has been run yet. Approving a settlement runs its gate automatically.</td></tr> : null}
           {rows.map((i) => (
             <tr key={i.id} className="border-t border-slate-200" data-testid="feed-gate-row">
               <td className="p-2 text-xs"><Link className="underline" to={`/feed-gate/${i.id}`}>{i.subject_label ?? `${i.feed_kind} ${i.subject_id.slice(0, 8)}`}</Link></td>
