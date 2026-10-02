@@ -14,6 +14,7 @@ import { readCustomerBoard, readVendorBoard } from "./party-board.service.js";
 import { readDriverHub, readDriverHubPanel } from "./driver-hub.service.js";
 import { readDriverOverview } from "./driver-overview.service.js";
 import { mergeIntoCanonical, planCanonical, reverseCanonicalMerge, type CanonicalKind } from "./canonical-entities.service.js";
+import { readVariantCandidates } from "./variant-candidates.service.js";
 
 const kindSchema = z.enum(["customers", "vendors"]);
 const toKind = (k: "customers" | "vendors"): CanonicalKind => (k === "customers" ? "customer" : "vendor");
@@ -109,17 +110,32 @@ export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
     return withCompanyScope(req.user!.uuid, qy.data.operating_company_id, (client) => planCanonical(client, qy.data.operating_company_id, toKind(p.data.kind)));
   });
 
+  // ROUND 297 — variant duplicate candidates across ONE namespace (customers + vendors + Faro debtors), each pair with
+  // both records' document counts, totals and open balances. Read only: the owner approves each merge below.
+  app.get("/api/v1/mdata/canonical/variant-candidates", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
+    if (!requireAuth(req, reply)) return reply;
+    const qy = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
+    if (!qy.success) return reply.code(400).send({ error: "validation_error" });
+    await assertCompanyMembership(req.user!.uuid, qy.data.operating_company_id);
+    return withCompanyScope(req.user!.uuid, qy.data.operating_company_id, (client) => readVariantCandidates(client, qy.data.operating_company_id));
+  });
+
   app.post("/api/v1/mdata/canonical/:kind/merge", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return reply;
     if (req.user!.role !== "Owner") return reply.code(403).send({ error: "owner_only" });
     const p = z.object({ kind: kindSchema }).safeParse(req.params ?? {});
-    const b = z.object({ operating_company_id: z.string().uuid(), survivor_id: z.string().uuid(), duplicate_id: z.string().uuid(), reason: z.string().trim().min(5) }).safeParse(req.body ?? {});
+    const b = z.object({
+      operating_company_id: z.string().uuid(), survivor_id: z.string().uuid(), duplicate_id: z.string().uuid(), reason: z.string().trim().min(5),
+      // ROUND 297: the owner approved THIS variant pair (names that never normalise equal); Owner-only route above.
+      evidence: z.literal("owner_approved_variant").optional(),
+    }).safeParse(req.body ?? {});
     if (!p.success || !b.success) return reply.code(400).send({ error: "validation_error" });
     await assertCompanyMembership(req.user!.uuid, b.data.operating_company_id);
     try {
       return await withCompanyScope(req.user!.uuid, b.data.operating_company_id, (client) =>
         mergeIntoCanonical(client, b.data.operating_company_id, toKind(p.data.kind), {
           survivorId: b.data.survivor_id, duplicateId: b.data.duplicate_id, actorUserId: req.user!.uuid, authId: null, reason: b.data.reason,
+          evidence: b.data.evidence,
         }));
     } catch (e) {
       const m = String((e as Error).message);
