@@ -85,6 +85,18 @@ function main() {
   assertIncludes(form, "FuelStopLocationPicker", FORM);
   assertIncludes(form, "location_id: locationId", FORM);
   assertIncludes(form, "fuelStopOnly={false}", FORM);
+  // BANK-F91039 — ORDERS §B-4 §14 driver bill = settlement chrome (NB-Load / Settlement / Truck / miles / OD / WO)
+  assertIncludes(form, 'data-b4-driver-settlement-chrome="1"', FORM);
+  assertIncludes(form, 'data-testid="b4-driver-settlement-chrome"', FORM);
+  assertIncludes(form, "NB-Load Number", FORM);
+  assertIncludes(form, "Truck / Trailer", FORM);
+  assertIncludes(form, "Empty / Loaded miles", FORM);
+  assertIncludes(form, "Origin → Destination", FORM);
+  assertIncludes(form, "Paid to date", FORM);
+  assertIncludes(form, "Open balance:", FORM);
+  assertIncludes(form, "linked_settlement_display_id", FORM);
+  assertIncludes(form, "linked_empty_miles", FORM);
+  assertIncludes(form, "linked_trailer_number", FORM);
   assertIncludes(form, 'data-b4-restore-draft="1"', FORM);
   assertIncludes(form, "You have a draft saved. Restore draft", FORM);
   assertIncludes(form, "checkDraftStorageKey", FORM);
