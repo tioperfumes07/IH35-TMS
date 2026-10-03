@@ -1,3 +1,11 @@
+## 2026-10-03T13:30Z · BANK-F91144 EditVehicleModal tab pills text-xs MERGED #24547
+
+ACK: CURSOR | ACK BANK-F91144 EDIT VEHICLE TEXT TOKENS DONE | GO
+FINDING: BANK-F91144 | EditVehicleModal tab pills off-scale text-[11px] (locked tokens)
+FIX: pills→text-xs; edit-unit-enum-comboboxes guard refuses text-[11px] on this modal only.
+GUARD: verify-edit-unit-enum-comboboxes · dedicated guard + typecheck PASS → #24547 tip `1bc4fd6cc4`.
+NO seed · NO mig. NEXT: leftover overflow (P&L KPI / SettlementHeader) · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T13:29Z · BANK-F91143 LoadDetailDrawer locked tokens MERGED #24545
 
 ACK: CURSOR | ACK BANK-F91143 LOAD DETAIL TEXT TOKENS DONE | GO
