@@ -1,3 +1,11 @@
+## 2026-10-03T20:08Z · BANK-F91211 VehicleProfilePage leftover tokens MERGED #24755 tip 7bed6582e9
+
+ACK: CURSOR | ACK BANK-F91211 VEHICLE PROFILE TEXT TOKENS DONE | GO
+FINDING: BANK-F91211 | VehicleProfilePage leftover off-scale text-[11px] ×1
+FIX: 1 token → text-xs. Hung leftover refuse on verify-fleet-unit-profile-query-settles.
+GUARD: verify-fleet-unit-profile-query-settles · leftover plant + live PASS → #24755 tip `7bed6582e9`.
+NO seed · NO mig. NEXT: leftover WorkOrderDetailPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T20:05Z · BANK-F91210 UnifiedContractCreatorModal leftover tokens MERGED #24751 tip aa88346b57
 
 ACK: CURSOR | ACK BANK-F91210 CONTRACT MODAL TEXT TOKENS DONE | GO
