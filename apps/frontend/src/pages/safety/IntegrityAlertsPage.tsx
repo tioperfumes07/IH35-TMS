@@ -295,7 +295,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
         <button
           type="button"
           className="rounded-sm border px-3 py-1 text-xs font-semibold"
-          style={pageTab === "inbox" ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#334155" }}
+          style={pageTab === "inbox" ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#4B5563" }}
           onClick={() => setPageTab("inbox")}
         >
           Alerts inbox
@@ -303,7 +303,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
         <button
           type="button"
           className="rounded-sm border px-3 py-1 text-xs font-semibold"
-          style={pageTab === "rules" ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#334155" }}
+          style={pageTab === "rules" ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#4B5563" }}
           onClick={() => setPageTab("rules")}
         >
           Rules
@@ -388,7 +388,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
                 <option value="confirmed_action_taken">Confirmed action taken</option>
                 <option value="dismissed">Dismissed</option>
               </SelectCombobox>
-              <label className="text-[11px] text-slate-600">
+              <label className="text-xs text-slate-600">
                 Driver
                 <EntityPicker
                   kind="driver"
@@ -401,7 +401,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
                   dataTestId="integrity-alerts-filter-driver"
                 />
               </label>
-              <label className="text-[11px] text-slate-600">
+              <label className="text-xs text-slate-600">
                 Unit
                 <EntityPicker
                   kind="unit"
@@ -414,7 +414,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
                   dataTestId="integrity-alerts-filter-unit"
                 />
               </label>
-              <label className="text-[11px] text-slate-600">
+              <label className="text-xs text-slate-600">
                 Vendor
                 <EntityPicker
                   kind="vendor"
