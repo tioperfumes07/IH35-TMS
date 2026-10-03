@@ -7,16 +7,16 @@
   "202615230100": {
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-02",
-    "purpose": "ROUND 326 audit M2: maintenance.pm_schedules.last_service_date \u2014 the auto PM engine evaluates days-based PMs through evaluatePmDue (it had no last-service date, so a days PM never auto-created a WO). Additive, nullable."
+    "purpose": "ROUND 326 audit M2: maintenance.pm_schedules.last_service_date — the auto PM engine evaluates days-based PMs through evaluatePmDue (it had no last-service date, so a days PM never auto-created a WO). Additive, nullable."
   },
   "_band": {
-    "claude": "HH 00\u201311 (morning)",
-    "cursor": "HH 12\u201323 (afternoon)",
+    "claude": "HH 00–11 (morning)",
+    "cursor": "HH 12–23 (afternoon)",
     "locked": "2026-08-10",
     "note": "Mirrors scripts/verify-steps/CLAIMED-NUMBERS.json for migration timestamps. Claim-before-author required."
   },
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
-  "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
+  "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00–11 / 12–23) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
     "202615201000": {
       "claimed_by": "claude",
@@ -151,7 +151,7 @@
     "202615171200": {
       "claimed_by": "cursor",
       "claimed_at": "2026-10-01",
-      "purpose": "ROUND 312 B-2 Bank Deposits (QBO Make Deposit): accounting.deposits + accounting.deposit_lines \u2014 header + receipt/cash-back lines linked to customer payments / factoring advances; void=reversal never delete. Additive CREATE IF NOT EXISTS + RLS."
+      "purpose": "ROUND 312 B-2 Bank Deposits (QBO Make Deposit): accounting.deposits + accounting.deposit_lines — header + receipt/cash-back lines linked to customer payments / factoring advances; void=reversal never delete. Additive CREATE IF NOT EXISTS + RLS."
     },
     "202615170100": {
       "claimed_by": "claude",
@@ -301,7 +301,7 @@
     "202614760000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-30",
-      "purpose": "WORM purge: a true CHILD row (invoice_lines, payment_applications) is deletable when its PARENT document is voided \u2014 stricter than the detail arm, which asks only for an auth id"
+      "purpose": "WORM purge: a true CHILD row (invoice_lines, payment_applications) is deletable when its PARENT document is voided — stricter than the detail arm, which asks only for an auth id"
     },
     "202614740000": {
       "claimed_by": "claude",
@@ -311,22 +311,22 @@
     "202614730000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-30",
-      "purpose": "extend the AUTH-gated WORM purge bypass to the remaining tables in AUTH-177's scope \u2014 the owner ordered every voided and sample record deleted and the engine refuses, because one un-whitelisted table (accounting.expenses_review_queue) FK-locks the whole chain"
+      "purpose": "extend the AUTH-gated WORM purge bypass to the remaining tables in AUTH-177's scope — the owner ordered every voided and sample record deleted and the engine refuses, because one un-whitelisted table (accounting.expenses_review_queue) FK-locks the whole chain"
     },
     "202614720000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-30",
-      "purpose": "downtime schema + table grants to ih35_app \u2014 verify:aggregate-schema-grants is RED on main; production already has the grant but NO migration creates it, so a fresh database (CI, DR restore, new branch) would not"
+      "purpose": "downtime schema + table grants to ih35_app — verify:aggregate-schema-grants is RED on main; production already has the grant but NO migration creates it, so a fresh database (CI, DR restore, new branch) would not"
     },
     "202614661200": {
       "claimed_by": "cursor",
       "claimed_at": "2026-09-30",
-      "purpose": "ROUND 285 board-agree / TRUCK-INVISIBLE follow-through: views.live_loads driver_bills half must require parent settlement status='closed' (join driver_settlements), matching canonicalActiveLoadNotFinishedByMoneyCte after Lead #23294. Live: 13633/13634 dispatched+open bills attached to OPEN settlement \u2014 view still excludes them via settled_in_settlement_id IS NOT NULL alone; verify-load-boards-agree FAIL. DROP+CREATE view, additive predicate only."
+      "purpose": "ROUND 285 board-agree / TRUCK-INVISIBLE follow-through: views.live_loads driver_bills half must require parent settlement status='closed' (join driver_settlements), matching canonicalActiveLoadNotFinishedByMoneyCte after Lead #23294. Live: 13633/13634 dispatched+open bills attached to OPEN settlement — view still excludes them via settled_in_settlement_id IS NOT NULL alone; verify-load-boards-agree FAIL. DROP+CREATE view, additive predicate only."
     },
     "202614651200": {
       "claimed_by": "cursor",
       "claimed_at": "2026-09-30",
-      "purpose": "ROUND 285.4.9 #59: ADD COLUMN dispatch.detention_requests.approval_method text NULL \u2014 how the detention/layover was approved (e.g. telephone call / email); captured on approve path; printed under APPROVED BY \u00b7 METHOD on invoice PDF. Additive IF NOT EXISTS, no backfill."
+      "purpose": "ROUND 285.4.9 #59: ADD COLUMN dispatch.detention_requests.approval_method text NULL — how the detention/layover was approved (e.g. telephone call / email); captured on approve path; printed under APPROVED BY · METHOD on invoice PDF. Additive IF NOT EXISTS, no backfill."
     },
     "202614640000": {
       "claimed_by": "claude",
@@ -501,7 +501,7 @@
     "202613800000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-06",
-      "purpose": "ACC-50 (LAW \u00a72, ROUND 5): additive posting_hold_reason text column on accounting.expenses and accounting.bills -- open-tour-posts-nothing gate needs somewhere to record WHY a document is held unposted"
+      "purpose": "ACC-50 (LAW §2, ROUND 5): additive posting_hold_reason text column on accounting.expenses and accounting.bills -- open-tour-posts-nothing gate needs somewhere to record WHY a document is held unposted"
     },
     "202613780000": {
       "claimed_by": "claude",
@@ -516,12 +516,12 @@
     "202613740001": {
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-04",
-      "purpose": "LOAD-COSTS-COMPLETE-VERTICAL spec 09-04-2026 \u00a71.2: widen accounting.chart_of_accounts_roles_role_check to admit two role values -- 'company_fuel_advance_expense' (NEW, so the fuel-advance account can be bound by role instead of name-matched, per owner ruling 'the fuel advance from us to the driver is a company expense... bind by role, never by name') and 'detention_pay_expense' (a real, currently-live drift found while investigating: already a first-class CoaRole in resolver.service.ts's COA_ROLE_VALUES since DWELL-01-D3, 2026-08-30, but never added to the live DB CHECK constraint -- designating it today would fail the INSERT). DROP+ADD CONSTRAINT, full reproduced superset, idempotent, matching the 202612811700 pattern."
+      "purpose": "LOAD-COSTS-COMPLETE-VERTICAL spec 09-04-2026 §1.2: widen accounting.chart_of_accounts_roles_role_check to admit two role values -- 'company_fuel_advance_expense' (NEW, so the fuel-advance account can be bound by role instead of name-matched, per owner ruling 'the fuel advance from us to the driver is a company expense... bind by role, never by name') and 'detention_pay_expense' (a real, currently-live drift found while investigating: already a first-class CoaRole in resolver.service.ts's COA_ROLE_VALUES since DWELL-01-D3, 2026-08-30, but never added to the live DB CHECK constraint -- designating it today would fail the INSERT). DROP+ADD CONSTRAINT, full reproduced superset, idempotent, matching the 202612811700 pattern."
     },
     "202613750001": {
       "claimed_by": "cc-1",
       "claimed_at": "2026-09-04",
-      "purpose": "LOAD-COSTS-COMPLETE-VERTICAL spec 09-04-2026 \u00a71.2: seed accounting.chart_of_accounts_roles for USMCA, role='company_fuel_advance_expense' -> catalogs.accounts id 353fbd5b-d39c-4709-ac19-60cae52018f7 (account 5000 'Fuel & Diesel', CostOfGoodsSold, postable, active), resolved by org.companies.code='USMCA' (never a hardcoded UUID), idempotent ON CONFLICT (operating_company_id, role) WHERE is_active DO UPDATE, matching the 202612880000 pattern. Depends on 202613740001 landing first (the CHECK-widen)."
+      "purpose": "LOAD-COSTS-COMPLETE-VERTICAL spec 09-04-2026 §1.2: seed accounting.chart_of_accounts_roles for USMCA, role='company_fuel_advance_expense' -> catalogs.accounts id 353fbd5b-d39c-4709-ac19-60cae52018f7 (account 5000 'Fuel & Diesel', CostOfGoodsSold, postable, active), resolved by org.companies.code='USMCA' (never a hardcoded UUID), idempotent ON CONFLICT (operating_company_id, role) WHERE is_active DO UPDATE, matching the 202612880000 pattern. Depends on 202613740001 landing first (the CHECK-widen)."
     },
     "202613760001": {
       "claimed_by": "cc-1",
@@ -586,7 +586,7 @@
     "202613611500": {
       "claimed_by": "cursor",
       "claimed_at": "2026-09-03",
-      "purpose": "usmca_customer_mojibake_and_active (repair Latin-1 UTF-8 names; NCC M\u00e9xico reactivate; align status with deactivated_at)"
+      "purpose": "usmca_customer_mojibake_and_active (repair Latin-1 UTF-8 names; NCC México reactivate; align status with deactivated_at)"
     },
     "202613480001": {
       "claimed_by": "cc-1",
@@ -1120,12 +1120,12 @@
     "202613311300": {
       "claimed_by": "devin",
       "claimed_at": "2026-09-01",
-      "purpose": "insurance_driver_schedule_revoke_delete_grants (REVOKE DELETE on driver_schedule + REVOKE UPDATE/DELETE on schedule_confirmations \u2014 ALTER DEFAULT PRIVILEGES in insurance schema granted arwd, append-only/WORM tables need narrow grants)"
+      "purpose": "insurance_driver_schedule_revoke_delete_grants (REVOKE DELETE on driver_schedule + REVOKE UPDATE/DELETE on schedule_confirmations — ALTER DEFAULT PRIVILEGES in insurance schema granted arwd, append-only/WORM tables need narrow grants)"
     },
     "202613312000": {
       "claimed_by": "cursor",
       "claimed_at": "2026-09-01",
-      "purpose": "permission_model (dual is_primary_owner seed tioperfumes07+jpm \u00b7 no lucia escalation escape \u00b7 allow_owner_bootstrap recovery \u00b7 PERMISSION_MODEL_ENFORCED OFF)"
+      "purpose": "permission_model (dual is_primary_owner seed tioperfumes07+jpm · no lucia escalation escape · allow_owner_bootstrap recovery · PERMISSION_MODEL_ENFORCED OFF)"
     },
     "202613340001": {
       "claimed_by": "cc-1",
@@ -1230,12 +1230,12 @@
     "202613540001": {
       "claimed_by": "cursor",
       "claimed_at": "2026-09-02",
-      "purpose": "go18_gap5_worm_expenses_factoring_advances \u2014 attach trg_worm_refuse_delete -> accounting.refuse_financial_row_delete() on accounting.expenses + accounting.factoring_advances (2 of 7 display-id MAX+1 tables missing live WORM); COMMENT ON COLUMN bills.driver_id + expenses.driver_uuid twin docs (no rename this pass)"
+      "purpose": "go18_gap5_worm_expenses_factoring_advances — attach trg_worm_refuse_delete -> accounting.refuse_financial_row_delete() on accounting.expenses + accounting.factoring_advances (2 of 7 display-id MAX+1 tables missing live WORM); COMMENT ON COLUMN bills.driver_id + expenses.driver_uuid twin docs (no rename this pass)"
     },
     "202609022351": {
       "claimed_by": "cursor",
       "claimed_at": "2026-09-02",
-      "purpose": "go18_gap5_worm_expenses_factoring_advances \u2014 trg_worm_refuse_delete on accounting.expenses + accounting.factoring_advances (display-id MAX+1); COMMENT ON COLUMN driver twin; Cursor HH=23 band"
+      "purpose": "go18_gap5_worm_expenses_factoring_advances — trg_worm_refuse_delete on accounting.expenses + accounting.factoring_advances (display-id MAX+1); COMMENT ON COLUMN driver twin; Cursor HH=23 band"
     },
     "202613550001": {
       "claimed_by": "claude",
@@ -1260,12 +1260,12 @@
     "202613612300": {
       "claimed_by": "cursor",
       "claimed_at": "2026-09-03",
-      "purpose": "company_settlements WORM \u2014 trg_worm_refuse_delete on accounting.company_settlements + accounting.company_settlement_driver_settlements (ratchet 91->93)"
+      "purpose": "company_settlements WORM — trg_worm_refuse_delete on accounting.company_settlements + accounting.company_settlement_driver_settlements (ratchet 91->93)"
     },
     "202613640001": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-04",
-      "purpose": "FLT-08 unit evidence categories \u2014 seed registration, IFTA, Form 2290 and title document types for the canonical shared uploader; require expiry where compliance is date-bound"
+      "purpose": "FLT-08 unit evidence categories — seed registration, IFTA, Form 2290 and title document types for the canonical shared uploader; require expiry where compliance is date-bound"
     },
     "202613881200": {
       "claimed_by": "cursor",
@@ -1405,7 +1405,7 @@
     "202614380000": {
       "claimed_by": "claude",
       "claimed_at": "2026-09-26",
-      "purpose": "Lead, live finding: mdata.driver_samsara_accounts (202614350000) has no operating_company_id \u2014 walled only through driver_id. Adds operating_company_id uuid NOT NULL + FK org.companies(id), backfilled from mdata.drivers, a trigger that sets/re-derives it from driver_id on INSERT/UPDATE, and an opco-scoped FORCE RLS policy; removes the entity-isolation remediation_backlog entry."
+      "purpose": "Lead, live finding: mdata.driver_samsara_accounts (202614350000) has no operating_company_id — walled only through driver_id. Adds operating_company_id uuid NOT NULL + FK org.companies(id), backfilled from mdata.drivers, a trigger that sets/re-derives it from driver_id on INSERT/UPDATE, and an opco-scoped FORCE RLS policy; removes the entity-isolation remediation_backlog entry."
     },
     "202614410000": {
       "claimed_by": "claude",
@@ -1420,12 +1420,12 @@
     "202610011200": {
       "claimed_by": "cursor",
       "claimed_at": "2026-10-01",
-      "purpose": "Widen docs.file_links.entity_type CHECK to admit work_order (Maintenance WO documents Law \u00a79 both-way). Loop-drop all entity_type CHECKs; re-add full prior set + work_order + restore cash_advance dropped by invoice_dispute widen. No data touch."
+      "purpose": "Widen docs.file_links.entity_type CHECK to admit work_order (Maintenance WO documents Law §9 both-way). Loop-drop all entity_type CHECKs; re-add full prior set + work_order + restore cash_advance dropped by invoice_dispute widen. No data touch."
     },
     "202610011900": {
       "claimed_by": "cursor",
       "claimed_at": "2026-10-01",
-      "purpose": "Lead ruling 17:20Z: banking.reconciliation_sessions.service_charge_expense_id FK to accounting.expenses \u2014 recon service charge posts as expense document, never bare cost JE."
+      "purpose": "Lead ruling 17:20Z: banking.reconciliation_sessions.service_charge_expense_id FK to accounting.expenses — recon service charge posts as expense document, never bare cost JE."
     },
     "202615210000": {
       "claimed_by": "claude",
@@ -1450,12 +1450,12 @@
     "202615220900": {
       "claimed_by": "claude",
       "claimed_at": "2026-10-02",
-      "purpose": "ROUND 326 CC-3 queue item 11: preserve schema \u2014 telematics + geocode preservation engine (natural keys only, no FK to anything purgeable; positions, geofences + events, stop events, odometer captures/segments/readings, samsara addresses, route stop progress, DVIR, HOS snapshots)."
+      "purpose": "ROUND 326 CC-3 queue item 11: preserve schema — telematics + geocode preservation engine (natural keys only, no FK to anything purgeable; positions, geofences + events, stop events, odometer captures/segments/readings, samsara addresses, route stop progress, DVIR, HOS snapshots)."
     },
     "202615221000": {
       "claimed_by": "claude",
       "claimed_at": "2026-10-02",
-      "purpose": "CC-3 queue 2a: canonical merge delete path \u2014 RLS DELETE policy on mdata.customers / mdata.vendors for ih35_app scoped to a row named by a live (unreversed) customer_aliases / vendor_aliases row in the same company; nothing else deletable."
+      "purpose": "CC-3 queue 2a: canonical merge delete path — RLS DELETE policy on mdata.customers / mdata.vendors for ih35_app scoped to a row named by a live (unreversed) customer_aliases / vendor_aliases row in the same company; nothing else deletable."
     },
     "202615221200": {
       "claimed_by": "cursor",
@@ -1470,12 +1470,12 @@
     "202615221400": {
       "claimed_by": "cursor",
       "claimed_at": "2026-10-02",
-      "purpose": "B-3 \u00a719c resolve-the-difference: banking.bank_transaction_splits.location_id uuid FK mdata.locations (ORDERS LOCATION column on MatchDrawer mini-grid)."
+      "purpose": "B-3 §19c resolve-the-difference: banking.bank_transaction_splits.location_id uuid FK mdata.locations (ORDERS LOCATION column on MatchDrawer mini-grid)."
     },
     "202615220700": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-02",
-      "purpose": "Lead ruling 2026-10-02 FACTORING-RECOURSE-RESERVE-ONE-SOURCE: accounting.factoring_recourse_events \u2014 the day-95 recourse EVENT record (invoice, customer, advance, purchase, factor, day-95 date, face, reserve at date, state expected->deducted->recovered/written_off). Registers the event, posts nothing; RLS + WORM refuse-delete + audit."
+      "purpose": "Lead ruling 2026-10-02 FACTORING-RECOURSE-RESERVE-ONE-SOURCE: accounting.factoring_recourse_events — the day-95 recourse EVENT record (invoice, customer, advance, purchase, factor, day-95 date, face, reserve at date, state expected->deducted->recovered/written_off). Registers the event, posts nothing; RLS + WORM refuse-delete + audit."
     },
     "202615220800": {
       "claimed_by": "CC-2",
@@ -1485,27 +1485,27 @@
     "202615230600": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-02",
-      "purpose": "Lead ROUND 296 FINAL: 1230 = Faro Escrow report (restricted, per invoice), 1235 = Faro Cash report (on deposit, releasable) \u2014 restore factor_cash_reserve_held -> 1235 and the Faro Cash Reserve register (202615220800 merged them). 1236 stays retired. Config only."
+      "purpose": "Lead ROUND 296 FINAL: 1230 = Faro Escrow report (restricted, per invoice), 1235 = Faro Cash report (on deposit, releasable) — restore factor_cash_reserve_held -> 1235 and the Faro Cash Reserve register (202615220800 merged them). 1236 stays retired. Config only."
     },
     "202615240600": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-02",
-      "purpose": "Lead ROUND 296 approval (FARO-LIFECYCLE-APPROVED-THREE-CORRECTIONS): accounting.factoring_interest_accrual_runs \u2014 the month-end Faro Default Interest accrual (DR 6830 / CR 2155) proposed by one user and approved by a second (maker != checker) before it posts; lines per open Purchased Account. RLS + WORM refuse-delete + audit."
+      "purpose": "Lead ROUND 296 approval (FARO-LIFECYCLE-APPROVED-THREE-CORRECTIONS): accounting.factoring_interest_accrual_runs — the month-end Faro Default Interest accrual (DR 6830 / CR 2155) proposed by one user and approved by a second (maker != checker) before it posts; lines per open Purchased Account. RLS + WORM refuse-delete + audit."
     },
     "202615250600": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-02",
-      "purpose": "Lead 2026-10-02 FARO-REPORTS-ARE-THE-BANK-FEED: accounting.faro_reserve_entries \u2014 one document row per Faro Escrow / Cash Reserve report line (the event the reserve posters stamp), factoring_purchase_lines.faro_invoice_number (Faro's Inv, the deterministic link), intercompany receivable role -> 8000. RLS + WORM + audit."
+      "purpose": "Lead 2026-10-02 FARO-REPORTS-ARE-THE-BANK-FEED: accounting.faro_reserve_entries — one document row per Faro Escrow / Cash Reserve report line (the event the reserve posters stamp), factoring_purchase_lines.faro_invoice_number (Faro's Inv, the deterministic link), intercompany receivable role -> 8000. RLS + WORM + audit."
     },
     "202615260100": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-02",
-      "purpose": "ROUND 300 \u2014 multi-JE void: one reversing JE may be linked from every original it reverses (drop uq_je_reversed_by_je_id, keep a plain index)"
+      "purpose": "ROUND 300 — multi-JE void: one reversing JE may be linked from every original it reverses (drop uq_je_reversed_by_je_id, keep a plain index)"
     },
     "202615260600": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-02",
-      "purpose": "Lead 2026-10-02 (TWO-RESERVE-POOLS-ARE-REAL): a negative Faro Cash Reserve is a liability, never a negative asset \u2014 2156 Due to Faro (role factor_cash_reserve_deficit_payable, USMCA) + accounting.faro_cash_reserve_reclasses (period-end reclass DR 1235 / CR 2156, reversed the next day). RLS + WORM + audit."
+      "purpose": "Lead 2026-10-02 (TWO-RESERVE-POOLS-ARE-REAL): a negative Faro Cash Reserve is a liability, never a negative asset — 2156 Due to Faro (role factor_cash_reserve_deficit_payable, USMCA) + accounting.faro_cash_reserve_reclasses (period-end reclass DR 1235 / CR 2156, reversed the next day). RLS + WORM + audit."
     },
     "202615262000": {
       "claimed_by": "Cursor",
@@ -1515,17 +1515,17 @@
     "202615270100": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-02",
-      "purpose": "Lead ROUND 330.6 ruling 1 \u2014 driver_settlements predecessor / successor link (a re-posted settlement names the reversed one; never reuses its bill numbers)"
+      "purpose": "Lead ROUND 330.6 ruling 1 — driver_settlements predecessor / successor link (a re-posted settlement names the reversed one; never reuses its bill numbers)"
     },
     "202615270600": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-02",
-      "purpose": "Owner ruling 2026-10-02 (CC2-ACCEPTED-PLUS-FOUR-RULINGS): event-time Faro default-interest accrual \u2014 factoring_interest_accrual_runs.run_kind ('period_close'|'event') + event_purchase_line_id; one live period-close run per period, one live event run per (purchase line, date); same maker/checker path and account pair."
+      "purpose": "Owner ruling 2026-10-02 (CC2-ACCEPTED-PLUS-FOUR-RULINGS): event-time Faro default-interest accrual — factoring_interest_accrual_runs.run_kind ('period_close'|'event') + event_purchase_line_id; one live period-close run per period, one live event run per (purchase line, date); same maker/checker path and account pair."
     },
     "202615280100": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-02",
-      "purpose": "Lead ROUND 330.6 \u2014 a factor.faro_daily_imports header can never outlive all its live lines (deferred constraint trigger)"
+      "purpose": "Lead ROUND 330.6 — a factor.faro_daily_imports header can never outlive all its live lines (deferred constraint trigger)"
     },
     "202615280600": {
       "claimed_by": "CC-2",
@@ -1535,27 +1535,27 @@
     "202615290100": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-02",
-      "purpose": "Lead ROUND 332 item 2 \u2014 backfill invoice/source_transaction spine links for postings that carry the invoice as their source"
+      "purpose": "Lead ROUND 332 item 2 — backfill invoice/source_transaction spine links for postings that carry the invoice as their source"
     },
     "202615290200": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-02",
-      "purpose": "Lead ROUND 332 item 6 \u2014 package the ROUND 331 purge route (br-late-grass-akgve11z) with the to_regprocedure hardening"
+      "purpose": "Lead ROUND 332 item 6 — package the ROUND 331 purge route (br-late-grass-akgve11z) with the to_regprocedure hardening"
     },
     "202615292200": {
       "claimed_by": "CURSOR",
       "claimed_at": "2026-10-02",
-      "purpose": "BANK-F91038 Amount to Credit \u2192 vendor credit on bill-payment overpay: additive source_bill_payment_id on accounting.vendor_credits (FK bill_payments; source_payment_id already FKs AR payments only)."
+      "purpose": "BANK-F91038 Amount to Credit → vendor credit on bill-payment overpay: additive source_bill_payment_id on accounting.vendor_credits (FK bill_payments; source_payment_id already FKs AR payments only)."
     },
     "202615300100": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-02",
-      "purpose": "Lead ROUND 332 item 3 \u2014 a load enters 'invoiced' only with a live issued invoice; voiding / deleting its invoice reverts the load (triggers)"
+      "purpose": "Lead ROUND 332 item 3 — a load enters 'invoiced' only with a live issued invoice; voiding / deleting its invoice reverts the load (triggers)"
     },
     "202615300600": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-02",
-      "purpose": "ROUND 336 rule 7: a factored invoice's amount is not editable while its Faro purchase is open \u2014 BEFORE UPDATE trigger on accounting.invoices (and invoice lines) refusing amount changes, naming the purchase and the Faro invoice number; non-amount fields stay editable."
+      "purpose": "ROUND 336 rule 7: a factored invoice's amount is not editable while its Faro purchase is open — BEFORE UPDATE trigger on accounting.invoices (and invoice lines) refusing amount changes, naming the purchase and the Faro invoice number; non-amount fields stay editable."
     },
     "202615300900": {
       "claimed_by": "CC-3",
@@ -1570,7 +1570,7 @@
     "202615301000": {
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-02",
-      "purpose": "ROUND 340 step 1: preserve.unit_stop_events \u2014 surrogate id primary key + UNIQUE (company_code, unit_number, started_at, ended_at), the full observation grain (the old PK (company_code, unit_number, started_at) had no slot for a stop that grew). Nothing deleted."
+      "purpose": "ROUND 340 step 1: preserve.unit_stop_events — surrogate id primary key + UNIQUE (company_code, unit_number, started_at, ended_at), the full observation grain (the old PK (company_code, unit_number, started_at) had no slot for a stop that grew). Nothing deleted."
     },
     "202615301100": {
       "claimed_by": "CC-3",
@@ -1580,22 +1580,22 @@
     "202615310100": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-02",
-      "purpose": "Lead ROUND 339 order 1 \u2014 nothing posts to a deactivated / non-postable account: journal_entry_postings guard + roles / item-default companions (reactivate 5010, repoint expense_default before arming)"
+      "purpose": "Lead ROUND 339 order 1 — nothing posts to a deactivated / non-postable account: journal_entry_postings guard + roles / item-default companions (reactivate 5010, repoint expense_default before arming)"
     },
     "202615310200": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-02",
-      "purpose": "Lead ROUND 339 order 2 \u2014 one role, one account, one normal balance: split driver_payroll_clearing, UNIQUE (operating_company_id, role) WHERE is_active, no two active roles on one account"
+      "purpose": "Lead ROUND 339 order 2 — one role, one account, one normal balance: split driver_payroll_clearing, UNIQUE (operating_company_id, role) WHERE is_active, no two active roles on one account"
     },
     "202615310300": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-02",
-      "purpose": "Lead ROUND 339 order 4 \u2014 declare unroled posted accounts (fuel_card_payable_dreamline 2510, fuel_wallet_relay 1295, escrow / reimbursement parents)"
+      "purpose": "Lead ROUND 339 order 4 — declare unroled posted accounts (fuel_card_payable_dreamline 2510, fuel_wallet_relay 1295, escrow / reimbursement parents)"
     },
     "202615301059": {
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-02",
-      "purpose": "ROUND 340 step 3 (split: the runner runs an IH35_MIGRATION_NO_TRANSACTION file as ONE statement): refuse (transactional DO block) while telematics.unit_stop_events still holds copies on (operating_company_id, unit_id, ended_at) \u2014 runs before the concurrent builds, so none can leave an INVALID index."
+      "purpose": "ROUND 340 step 3 (split: the runner runs an IH35_MIGRATION_NO_TRANSACTION file as ONE statement): refuse (transactional DO block) while telematics.unit_stop_events still holds copies on (operating_company_id, unit_id, ended_at) — runs before the concurrent builds, so none can leave an INVALID index."
     },
     "202615301101": {
       "claimed_by": "CC-3",
@@ -1605,32 +1605,32 @@
     "202615301102": {
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-02",
-      "purpose": "ROUND 340 step 3 (split: the runner runs an IH35_MIGRATION_NO_TRANSACTION file as ONE statement): ALTER TABLE telematics.unit_stop_events DROP CONSTRAINT IF EXISTS unit_stop_events_unit_start_unique (unit_id, started_at) \u2014 replaced by 202615301100."
+      "purpose": "ROUND 340 step 3 (split: the runner runs an IH35_MIGRATION_NO_TRANSACTION file as ONE statement): ALTER TABLE telematics.unit_stop_events DROP CONSTRAINT IF EXISTS unit_stop_events_unit_start_unique (unit_id, started_at) — replaced by 202615301100."
     },
     "202615310600": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-02",
-      "purpose": "ROUND 342 Phase 4 \u2014 drop the three duplicate tenant_id RLS policies (factoring.customer_factor_assignment / factor / letter_of_release); permissive policies OR together, so a row was visible if EITHER scope column matched. operating_company_id is canonical."
+      "purpose": "ROUND 342 Phase 4 — drop the three duplicate tenant_id RLS policies (factoring.customer_factor_assignment / factor / letter_of_release); permissive policies OR together, so a row was visible if EITHER scope column matched. operating_company_id is canonical."
     },
     "202615312200": {
       "claimed_by": "CURSOR",
       "claimed_at": "2026-10-02",
-      "purpose": "ROUND 342 Class D \u2014 company-scope unique codes: mdata.customers(customer_code), mdata.vendors(vendor_code), mdata.locations(location_code) \u2192 UNIQUE(operating_company_id, code); drop global *_code_key indexes."
+      "purpose": "ROUND 342 Class D — company-scope unique codes: mdata.customers(customer_code), mdata.vendors(vendor_code), mdata.locations(location_code) → UNIQUE(operating_company_id, code); drop global *_code_key indexes."
     },
     "202615312300": {
       "claimed_by": "CURSOR",
       "claimed_at": "2026-10-02",
-      "purpose": "ROUND 342.1 \u2014 company-scope mdata.unit_plates + equipment_plates active uniques + drivers.identity_user_id partial UNIQUE(operating_company_id, identity_user_id) WHERE NOT NULL (owner: one person can be a driver in two carriers)."
+      "purpose": "ROUND 342.1 — company-scope mdata.unit_plates + equipment_plates active uniques + drivers.identity_user_id partial UNIQUE(operating_company_id, identity_user_id) WHERE NOT NULL (owner: one person can be a driver in two carriers)."
     },
     "202615310700": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-02",
-      "purpose": "ROUND 342 Phase 2 step 2a (expand) \u2014 on the 17 double-scoped tables: assert 0 disagreements, backfill operating_company_id from tenant_id, SET NOT NULL, FK to org.companies, an operating_company_id twin of every tenant_id index (incl. uq_factoring_factor (operating_company_id, id) for CC-1's same-entity FK), opco policies replacing the tenant-only B1 policies, tenant_id DROP NOT NULL. Nothing dropped."
+      "purpose": "ROUND 342 Phase 2 step 2a (expand) — on the 17 double-scoped tables: assert 0 disagreements, backfill operating_company_id from tenant_id, SET NOT NULL, FK to org.companies, an operating_company_id twin of every tenant_id index (incl. uq_factoring_factor (operating_company_id, id) for CC-1's same-entity FK), opco policies replacing the tenant-only B1 policies, tenant_id DROP NOT NULL. Nothing dropped."
     },
     "202615320900": {
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-03",
-      "purpose": "ROUND 345 the block, phase 1 (financial): UNIQUE INDEX CONCURRENTLY accounting.payments (operating_company_id, id) \u2014 the target a same-entity FK needs"
+      "purpose": "ROUND 345 the block, phase 1 (financial): UNIQUE INDEX CONCURRENTLY accounting.payments (operating_company_id, id) — the target a same-entity FK needs"
     },
     "202615320901": {
       "claimed_by": "CC-3",
@@ -1655,27 +1655,27 @@
     "202615320905": {
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-03",
-      "purpose": "ROUND 345 the block, phase 1b: UNIQUE INDEX CONCURRENTLY accounting.bill_lines (operating_company_id, id) \u2014 target of the parent_line_uuid self FK"
+      "purpose": "ROUND 345 the block, phase 1b: UNIQUE INDEX CONCURRENTLY accounting.bill_lines (operating_company_id, id) — target of the parent_line_uuid self FK"
     },
     "202615320906": {
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-03",
-      "purpose": "ROUND 345 the block, phase 1b: UNIQUE INDEX CONCURRENTLY accounting.expense_lines (operating_company_id, id) \u2014 target of the parent_line_uuid self FK"
+      "purpose": "ROUND 345 the block, phase 1b: UNIQUE INDEX CONCURRENTLY accounting.expense_lines (operating_company_id, id) — target of the parent_line_uuid self FK"
     },
     "202615320907": {
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-03",
-      "purpose": "ROUND 345 the block, phase 1b: UNIQUE INDEX CONCURRENTLY maintenance.work_orders (operating_company_id, id) \u2014 target of expense_lines.linked_work_order_uuid"
+      "purpose": "ROUND 345 the block, phase 1b: UNIQUE INDEX CONCURRENTLY maintenance.work_orders (operating_company_id, id) — target of expense_lines.linked_work_order_uuid"
     },
     "202615320908": {
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-03",
-      "purpose": "ROUND 345 the block, phase 1b: composite same-entity FKs bill_lines.parent_line_uuid, expense_lines.parent_line_uuid, expense_lines.linked_work_order_uuid (0 references today) \u2014 the three phase 1 left uncovered"
+      "purpose": "ROUND 345 the block, phase 1b: composite same-entity FKs bill_lines.parent_line_uuid, expense_lines.parent_line_uuid, expense_lines.linked_work_order_uuid (0 references today) — the three phase 1 left uncovered"
     },
     "202615330400": {
       "claimed_by": "CC-1",
       "claimed_at": "2026-10-03",
-      "purpose": "Lead ROUND 342 phases 1 / 3 / 5 \u2014 tenant_id RENAMED to operating_company_id on the 17 tenant-only tables (+ v_factor_reserve_balance output), audit.tg_audit_row / prevent_canonical_factor_agreement_term_mutation repointed, coi_request sync trigger dropped, profile same-entity FK onto factoring.factor(operating_company_id, id) + policy tautology fixed, ddl event trigger refusing a new tenant_id column or policy"
+      "purpose": "Lead ROUND 342 phases 1 / 3 / 5 — tenant_id RENAMED to operating_company_id on the 17 tenant-only tables (+ v_factor_reserve_balance output), audit.tg_audit_row / prevent_canonical_factor_agreement_term_mutation repointed, coi_request sync trigger dropped, profile same-entity FK onto factoring.factor(operating_company_id, id) + policy tautology fixed, ddl event trigger refusing a new tenant_id column or policy"
     },
     "202615330900": {
       "claimed_by": "CC-3",
@@ -1700,12 +1700,17 @@
     "202615330904": {
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-03",
-      "purpose": "ROUND 345 the block, phase 2: composite same-entity FKs on settlement_lines / escrow_balances / driver_advance_accounts (13; the two with one cross-company row each \u2014 awaiting owner rulings \u2014 added NOT VALID) + settlement_lines company-required CHECK"
+      "purpose": "ROUND 345 the block, phase 2: composite same-entity FKs on settlement_lines / escrow_balances / driver_advance_accounts (13; the two with one cross-company row each — awaiting owner rulings — added NOT VALID) + settlement_lines company-required CHECK"
     },
     "202615321200": {
       "claimed_by": "cursor",
       "claimed_at": "2026-10-03",
-      "purpose": "ROUND 348: remaster mdata.equipment (112) + mdata.units (3) USMCA-owned\u2192TRK owned leased-to-USMCA; populate mdata.assets.owning_entity from hub; add owning_company_id uuid FK + same-entity constraint vs linked unit/equipment (CC-3 composite shape). Leave 9 unlinked assets NULL. No insurance/factoring touch."
+      "purpose": "ROUND 348: remaster mdata.equipment (112) + mdata.units (3) USMCA-owned→TRK owned leased-to-USMCA; populate mdata.assets.owning_entity from hub; add owning_company_id uuid FK + same-entity constraint vs linked unit/equipment (CC-3 composite shape). Leave 9 unlinked assets NULL. No insurance/factoring touch."
+    },
+    "202615330600": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 352 F-2 + F-3 (one-leg family): declare role fuel_wallet_relay (1295); a deferred constraint trigger on journal_entry_postings refuses a non-reversal credit that leaves an account bound to undeposited_funds (1090) or fuel_wallet_relay (1295) with a credit balance — an asset holding money cannot be negative."
     }
   },
   "202613590001": {
@@ -1791,6 +1796,6 @@
   "202615201200": {
     "claimed_by": "cursor",
     "claimed_at": "2026-10-01",
-    "purpose": "B-1b Account Register \u2713 blank\u2194C: accounting.journal_entry_postings.register_cleared (+at/by) so register can toggle cleared without inventing a second engine; R stays locked via closed reconciliation."
+    "purpose": "B-1b Account Register ✓ blank↔C: accounting.journal_entry_postings.register_cleared (+at/by) so register can toggle cleared without inventing a second engine; R stays locked via closed reconciliation."
   }
 }
