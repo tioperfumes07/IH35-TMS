@@ -54,6 +54,22 @@ for (const resetFn of ["resetContestMutation", "resetDismissMutation", "resetRed
   }
 }
 
+if (src.includes("text-[11px]")) failures.push(`${filePath}: leftover text-[11px]`);
+if (src.includes("#8A92AB") || src.includes("#334155")) failures.push(`${filePath}: leftover off-scale muted`);
+
+if (process.argv.includes("--selftest")) {
+  const leftoverPlant = `${src}\n<div className="text-[11px] text-[#8A92AB] hover:bg-[#334155]">plant</div>`;
+  const leftoverFails = [];
+  if (leftoverPlant.includes("text-[11px]")) leftoverFails.push("leftover text-[11px]");
+  if (leftoverPlant.includes("#8A92AB") || leftoverPlant.includes("#334155")) leftoverFails.push("leftover off-scale muted");
+  if (leftoverFails.length < 2) {
+    console.error("verify-fine-lifecycle-scope-snapshot: SELFTEST FAIL leftover plant escaped");
+    process.exit(1);
+  }
+  console.log("verify-fine-lifecycle-scope-snapshot: --selftest PASS — leftover plant rejected");
+  process.exit(0);
+}
+
 if (failures.length > 0) {
   console.error("verify-fine-lifecycle-scope-snapshot: FAIL");
   for (const f of failures) console.error(`  - ${f}`);

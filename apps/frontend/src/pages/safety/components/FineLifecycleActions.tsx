@@ -235,7 +235,7 @@ export function FineLifecycleActions({ fine, operatingCompanyId, onUpdated }: Pr
           </button>
           <button
             type="button"
-            className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white hover:bg-[#334155] disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-sm bg-slate-700 px-3 py-1 text-xs font-semibold text-white hover:bg-[#4B5563] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={Boolean(statusBlockedReason) || dismissMutation.isPending}
             title={statusBlockedReason ?? undefined}
             onClick={() => dismissMutation.mutate({ fineId, operatingCompanyId, generation: scopeGenerationRef.current, notes })}
