@@ -1877,6 +1877,11 @@
       "claimed_at": "2026-10-03",
       "purpose": "ROUND 373 ordering (writers, then arm): DISABLE the 26 document-side triggers of 202615360600 until every void path releases the bank lines that name its document; the bank-line and match-row refusals stay armed."
     },
+    "202615370600": {
+      "claimed_by": "CC-2",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 367.2 / 367.8 (CC-2): a fuel purchase is unique per provider transaction ID — refuse a second live fuel.fuel_transactions row carrying the same digits-only transaction_reference for the same company and vendor (BEFORE INSERT/UPDATE, advisory-locked); the 3 pre-existing pairs are named for an owner AUTH, never silently voided."
+    },
     "202615360800": {
       "claimed_by": "CC-2",
       "claimed_at": "2026-10-03",
