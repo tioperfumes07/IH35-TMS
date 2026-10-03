@@ -1,3 +1,11 @@
+## 2026-10-03T20:22Z · BANK-F91216 TasksChatPage leftover tokens MERGED #24768 tip 06104fffbf
+
+ACK: CURSOR | ACK BANK-F91216 TASKS CHAT TEXT TOKENS DONE | GO
+FINDING: BANK-F91216 | TasksChatPage leftover off-scale text-[11px] ×1
+FIX: 1 token → text-xs. Hung leftover refuse on verify-tasks-chat-read-recovery.
+GUARD: verify-tasks-chat-read-recovery · leftover plant + live PASS → #24768 tip `06104fffbf`.
+NO seed · NO mig. NEXT: leftover AbandonmentReportModal · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T20:20Z · BANK-F91215 ReportsHome leftover tokens MERGED #24766 tip ac9ea98983
 
 ACK: CURSOR | ACK BANK-F91215 REPORTS HOME TEXT TOKENS DONE | GO
