@@ -72,7 +72,7 @@ export function FreshnessIndicator({ lastFetchedAt, cacheTier }: FreshnessIndica
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${COLOR_CLASS[color]}`}
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${COLOR_CLASS[color]}`}
       title={`Samsara data: ${age} ago (${tier})`}
       data-freshness-color={color}
       data-cache-tier={cacheTier ?? "unknown"}
