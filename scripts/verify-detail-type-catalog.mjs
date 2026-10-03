@@ -37,6 +37,12 @@ const manifest = read("apps/frontend/src/routes/manifest.tsx");
 if (!/path="\/lists\/accounting\/account-types"/.test(manifest)) failures.push("manifest must route /lists/accounting/account-types");
 if (!/path="\/lists\/accounting\/detail-types"/.test(manifest) || !/<DetailTypesListPage \/>/.test(manifest)) failures.push("manifest must route /lists/accounting/detail-types → DetailTypesListPage");
 
+// BANK-F91105 — ORDERS chrome: Detail Types capped-list hint uses text-xs, not text-[11px].
+const detailTypesPage = read("apps/frontend/src/pages/lists/accounting/DetailTypesListPage.tsx");
+if (detailTypesPage.includes("text-[11px]")) {
+  failures.push("DetailTypesListPage must not use text-[11px] — use text-xs");
+}
+
 // Dual-path lock: JE/inline New Account must use the live account-type catalog (CoA AccountDrawer).
 // LST-F3354 — NewAccountDrawerForm may be a thin embedded AccountDrawer wrapper (single chrome).
 const newAccount = read("apps/frontend/src/components/parity/drawers/NewAccountDrawerForm.tsx");
