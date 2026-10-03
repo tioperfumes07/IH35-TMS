@@ -759,6 +759,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-factoring-writers-write-the-spine",
     ["apps/backend/src/factoring/", "scripts/verify-factoring-writers-write-the-spine.mjs"],
   ],
+  // ROUND 342 Phase 2 step 2a — operating_company_id complete + authoritative on the 17 double-scoped tables.
+  [
+    "verify-r342-opco-canonical-on-double-scoped",
+    ["db/migrations/202615310700_r342_phase2a_expand_operating_company_id.sql", "scripts/verify-r342-opco-canonical-on-double-scoped.mjs"],
+  ],
   // ROUND 342 Phase 4 — one scope column, one RLS policy on the factoring tables that carried a duplicate tenant policy.
   [
     "verify-factoring-one-scope-policy",
