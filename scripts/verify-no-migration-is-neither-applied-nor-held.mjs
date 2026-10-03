@@ -10,8 +10,11 @@
  * Every db/migrations/*.sql is exactly one of:
  *   APPLIED   — in _system._schema_migrations on production
  *   HELD      — in db/migrations/.held-migrations.json (held / applied_held / superseded): a written decision
- *   PENDING   — numbered AFTER the newest applied migration: merged, applies in order at the next deploy
- * RULE 1 (live)  — 0 files in NEITHER state: unapplied, unheld and numbered before the newest applied migration.
+ *   PENDING   — added to the repository AFTER the last deploy applied anything (git add time > newest applied_at):
+ *               merged, not yet deployed. Numbers are claimed per seat band, so a pending file can legitimately sort
+ *               before one already applied — time, not number, decides (fixed 2026-10-03: 202615380000 sorted before
+ *               the applied 202615380600 and read as "neither" for the minutes between merge and deploy).
+ * RULE 1 (live)  — 0 files in NEITHER state: unapplied, unheld, and already in the repository when a later deploy ran.
  * RULE 2 (static) — every file the held registry names exists on disk (a decision about a file that is not there is
  *                   not a decision about anything).
  * Required value (380.2): 0 migrations in neither state. Measured 2026-10-03 on prod: 1401 on disk, 1391 applied,
@@ -19,6 +22,7 @@
  * --selftest exercises every rule.
  */
 import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -33,16 +37,32 @@ export function heldUnion(registry) {
   return out;
 }
 
-/** Pure: classify every disk migration against the ledger and the held registry. */
-export function classify(disk, ledger, held) {
+/**
+ * Pure: classify every disk migration against the ledger and the held registry.
+ * addedAt(f) → ISO time the file entered the repository (null when unknown); lastDeployAt → newest applied_at.
+ * With no times available it falls back to the number order (a file after the newest applied is pending).
+ */
+export function classify(disk, ledger, held, addedAt = () => null, lastDeployAt = null) {
   const applied = [...ledger].sort();
   const newest = applied[applied.length - 1] ?? "";
   const neither = [], pending = [];
   for (const f of disk) {
     if (ledger.has(f) || held.has(f)) continue;
-    (f > newest ? pending : neither).push(f);
+    const added = addedAt(f);
+    const isPending = added && lastDeployAt ? new Date(added) > new Date(lastDeployAt) : f > newest;
+    (isPending ? pending : neither).push(f);
   }
   return { newest, neither, pending };
+}
+
+/** ISO commit time at which each file was first added to the repository (git), or null. */
+export function gitAddedAt(file) {
+  try {
+    const out = execFileSync("git", ["log", "--diff-filter=A", "--format=%cI", "--", join("db/migrations", file)], { cwd: ROOT, encoding: "utf8" }).trim().split("\n").filter(Boolean);
+    return out.length ? out[out.length - 1] : null;
+  } catch {
+    return null;
+  }
 }
 
 export function staticProblems(diskSet, held) {
@@ -72,6 +92,14 @@ if (isMain) {
       ["all applied or held → 0 neither", c1.neither.length === 0 && c1.pending.length === 0],
       ["an unapplied, unheld file older than the newest applied → neither", c2.neither.join() === "202601040000_d.sql"],
       ["a file after the newest applied → pending, not neither", c3.pending.join() === "202601060000_f.sql" && c3.neither.length === 0],
+      ["a LOWER-numbered file added after the last deploy → pending (band numbering), not neither", (() => {
+        const c = classify(["202601040000_d.sql"], L, H, () => "2026-10-03T22:00:00Z", "2026-10-03T21:59:00Z");
+        return c.pending.join() === "202601040000_d.sql" && c.neither.length === 0;
+      })()],
+      ["a file that was in the repo at the last deploy and still is not applied → neither", (() => {
+        const c = classify(["202601040000_d.sql"], L, H, () => "2026-10-01T00:00:00Z", "2026-10-03T21:59:00Z");
+        return c.neither.join() === "202601040000_d.sql";
+      })()],
       ["a held entry with no file → RULE 2", staticProblems(new Set(["202601010000_a.sql"]), new Set(["202601099999_gone.sql"])).length === 1],
       ["registry object and string entries both read", heldUnion({ held: [{ file: "x.sql" }], superseded: ["y.sql"] }).size === 2],
     ];
@@ -89,9 +117,11 @@ if (isMain) {
     // ledgered, so there it is reported, not enforced (a local report is not a live pass; the gate's prod read is).
     const { branchId } = await queryLiveNeonIdentity(client).catch(() => ({ branchId: null }));
     const isProd = branchId === KNOWN_PRODUCTION_BRANCH_ID;
-    const ledger = new Set((await client.query(`SELECT filename FROM _system._schema_migrations`)).rows.map((r) => r.filename));
+    const ledgerRows = (await client.query(`SELECT filename, applied_at FROM _system._schema_migrations`)).rows;
+    const ledger = new Set(ledgerRows.map((r) => r.filename));
+    const lastDeployAt = ledgerRows.reduce((m, r) => (r.applied_at && (!m || new Date(r.applied_at) > new Date(m)) ? r.applied_at : m), null);
     const disk = readDisk();
-    const { newest, neither, pending } = classify(disk, ledger, readHeld());
+    const { newest, neither, pending } = classify(disk, ledger, readHeld(), gitAddedAt, lastDeployAt);
     const lines = neither.map((f) => `RULE 1 ${f} is neither applied nor held and sorts before the newest applied (${newest}) — it would run itself at the next deploy. Hold it with a reason, or apply it deliberately.`);
     if (isProd) problems.push(...lines);
     else if (lines.length) console.log(`${LABEL}: REPORT-ONLY on non-production branch ${branchId ?? "(unknown)"} — its ledger is not production's:\n  ${lines.join("\n  ")}`);
