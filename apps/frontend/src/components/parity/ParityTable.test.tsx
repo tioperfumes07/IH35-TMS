@@ -963,6 +963,21 @@ describe("ParityTable (A1 grammar)", () => {
       window.localStorage.clear();
     });
 
+    // U1 (owner, 2026-10-03): "nothing resizes — full screen or any width". Columns render as SHARES of the table, so
+    // the table follows the window; the table keeps a legibility floor of 48 px per column.
+    it("U1: column widths render as percentage shares that add up to the whole table, with a per-column floor", () => {
+      const { container } = render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} storageKey="test-u1-shares" />);
+      const ths = Array.from(container.querySelectorAll("thead tr:last-child th")) as HTMLElement[];
+      const shares = ths.map((th) => th.style.width).filter(Boolean);
+      expect(shares.length).toBeGreaterThan(0);
+      for (const w of shares) expect(w.endsWith("%")).toBe(true);
+      const total = shares.reduce((sum, w) => sum + parseFloat(w), 0);
+      expect(total).toBeGreaterThan(99.9);
+      expect(total).toBeLessThan(100.1);
+      const table = container.querySelector("table") as HTMLElement;
+      expect(parseFloat(table.style.minWidth)).toBeGreaterThanOrEqual(48 * shares.length);
+    });
+
     it("a manual resize wins over auto-fit and is never overwritten by it", () => {
       window.localStorage.clear();
       render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} storageKey="test-autofit-override" />);
@@ -970,7 +985,7 @@ describe("ParityTable (A1 grammar)", () => {
       fireEvent.keyDown(handle, { key: "ArrowRight" });
       fireEvent.keyDown(handle, { key: "ArrowRight" });
       const nameHeader = screen.getAllByRole("columnheader")[0] as HTMLElement;
-      const manualWidth = parseFloat(nameHeader.style.width || "0");
+      const manualWidth = Number(nameHeader.getAttribute("data-col-width-px") || "0");
       expect(manualWidth).toBeGreaterThan(48);
       const persisted = JSON.parse(window.localStorage.getItem("paritytable:test-autofit-override") ?? "{}");
       expect(persisted.colWidths?.name).toBe(manualWidth);
@@ -986,7 +1001,7 @@ describe("ParityTable (A1 grammar)", () => {
       window.localStorage.setItem("paritytable:test-collapsed-width", JSON.stringify({ colWidths: { name: 0 } }));
       render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} storageKey="test-collapsed-width" />);
       const nameHeader = screen.getAllByRole("columnheader")[0] as HTMLElement;
-      const width = parseFloat(nameHeader.style.width || "0");
+      const width = Number(nameHeader.getAttribute("data-col-width-px") || "0");
       expect(width).toBeGreaterThanOrEqual(48);
       window.localStorage.clear();
     });

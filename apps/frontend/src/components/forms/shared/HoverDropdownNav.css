@@ -1,20 +1,24 @@
 @import "../../../design/design-tokens.css";
 
+/* U2 (owner, 2026-10-03): "the Accounting tab bar runs off screen, cut at BILL PAYM…". The bar was ONE row that
+   never wrapped (flex-wrap: nowrap + min-width: max-content) inside a horizontally scrolling strip, so every tab past
+   the window's width was hidden off the right edge. The tabs now WRAP onto a second row — every tab visible at any
+   width — and the strip no longer scrolls. */
 .hover-dropdown-nav {
   background: #1A1F36;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   padding: 0 var(--space-7);
-  overflow-x: auto;
+  overflow-x: visible;
 }
 
 .hover-dropdown-nav ul[role="menubar"] {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 0;
   list-style: none;
   margin: 0;
   padding: 0;
-  min-width: max-content;
+  min-width: 0;
 }
 
 .nav-item-with-dropdown {

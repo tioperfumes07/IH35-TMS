@@ -869,6 +869,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-reclassify-by-item-and-load",
     ["apps/backend/src/accounting/reclassify/", "apps/backend/src/accounting/journal-entries.service.ts", "apps/frontend/src/pages/accounting/ReclassifyTransactionsPage.tsx", "db/migrations/202615380600_reclassify_by_item_and_load.sql", "scripts/verify-reclassify-by-item-and-load.mjs"],
   ],
+  // U1 + U2 (owner) — tables size to the window (column shares); the tab bar wraps instead of running off screen.
+  [
+    "verify-tables-and-tab-bars-follow-the-window",
+    ["apps/frontend/src/components/parity/ParityTable.tsx", "apps/frontend/src/components/forms/shared/HoverDropdownNav.css", "scripts/verify-tables-and-tab-bars-follow-the-window.mjs"],
+  ],
   // ROUND 368.2(b) — a bank line may not sit matched to nothing (deferred constraint triggers, both sides).
   [
     "verify-no-bank-line-is-matched-to-nothing",
