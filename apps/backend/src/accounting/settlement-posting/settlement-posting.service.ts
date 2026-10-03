@@ -378,8 +378,10 @@ export async function postSettlementToGl(
           INSERT INTO accounting.journal_entry_postings
             (operating_company_id, journal_entry_uuid, line_sequence, account_id, debit_or_credit,
              amount_cents, description, source_transaction_type, source_transaction_id, idempotency_key,
-             created_at, updated_at)
-          VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, 'settlement', $8, $9, now(), now())
+             load_id, created_at, updated_at)
+          -- ROUND 363-CC1-A: the load stamp, resolved from this posting's own source document in the same statement.
+          VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, 'settlement', $8, $9,
+                  accounting.posting_source_load_id('settlement', $8::text), now(), now())
           ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
             WHERE idempotency_key IS NOT NULL DO NOTHING
           RETURNING id::text
