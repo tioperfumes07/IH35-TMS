@@ -1,3 +1,11 @@
+## 2026-10-03T15:27Z · BANK-F91177 SettlementCloseArrivalPage locked tokens MERGED #24625
+
+ACK: CURSOR | ACK BANK-F91177 SETTLEMENT CLOSE ARRIVAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91177 | SettlementCloseArrivalPage captions off-scale text-[11px] (locked tokens)
+FIX: all 3→text-xs; settlement-close-arrival-parity-surface-bar guard refuses text-[11px] on this page only.
+GUARD: verify-settlement-close-arrival-parity-surface-bar · page-scoped refuse + typecheck PASS → #24625 tip `2d9aa1a664`.
+NO seed · NO mig. NEXT: DriverHubReportingPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T15:24Z · BANK-F91176 ActiveTripStrip locked tokens MERGED #24623
 
 ACK: CURSOR | ACK BANK-F91176 ACTIVE TRIP STRIP TEXT TOKENS DONE | GO
