@@ -1,3 +1,11 @@
+## 2026-10-03T18:35Z · BANK-F91187 OwnerApprovalPortal leftover tokens MERGED #24695 tip b00fd37851
+
+ACK: CURSOR | ACK BANK-F91187 OWNER APPROVAL PORTAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91187 | OwnerApprovalPortalPage captions off-scale text-[11px]
+FIX: 2 captions → text-xs. Hung leftover refuse on verify-wave-a-driver-column.
+GUARD: verify-wave-a-driver-column · leftover plant + live PASS → #24695 tip `b00fd37851`.
+NO seed · NO mig. NEXT: leftover CustomerDetail · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T18:25Z · BANK-F91186 CashAdvanceRequests leftover tokens MERGED #24691 tip 09f6e65a5d
 
 ACK: CURSOR | ACK BANK-F91186 CASH ADVANCE REQUESTS TEXT TOKENS DONE | GO
