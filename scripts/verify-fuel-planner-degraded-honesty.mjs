@@ -46,6 +46,10 @@ if (source.summary.includes("text-[11px]")) {
   console.error("TripPlanSummaryBanner.tsx: must not use text-[11px] — use text-xs or text-section-header");
   process.exit(1);
 }
+if (source.activeStrip.includes("text-[11px]")) {
+  console.error("ActiveTripStrip.tsx: must not use text-[11px] — use text-xs or text-section-header");
+  process.exit(1);
+}
 
 if (process.argv.includes("--selftest")) {
   const mutations = [

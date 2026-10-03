@@ -61,7 +61,7 @@ export function ActiveTripStrip({ route, operatingCompanyId }: Props) {
 function Cell({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <div className="text-[11px] uppercase text-gray-500">{label}</div>
+      <div className="text-section-header uppercase text-gray-500">{label}</div>
       <div className="font-semibold text-gray-900">{children}</div>
     </div>
   );
