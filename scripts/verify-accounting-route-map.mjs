@@ -28,17 +28,20 @@ try {
   const accountingSubNav = read("apps/frontend/src/pages/accounting/subnav-manifest.ts");
 
   const parityMap = [
-    { from: "/accounting/vendors", to: "/vendors", targetPage: "VendorsPage" },
-    { from: "/accounting/customers", to: "/customers", targetPage: "CustomersPage" },
-    { from: "/accounting/reports", to: "/reports", targetPage: "ReportsHomePage" },
+    // U13 (owner, 2026-10-03): Vendors and Customers are their own sidebar modules, not Accounting tabs — they left the
+    // Accounting bar; the /accounting/* paths stay as redirects for old links.
+    { from: "/accounting/vendors", to: "/vendors", targetPage: "VendorsPage", inSubnav: false },
+    { from: "/accounting/customers", to: "/customers", targetPage: "CustomersPage", inSubnav: false },
+    { from: "/accounting/reports", to: "/reports", targetPage: "ReportsHomePage", inSubnav: true },
   ];
 
-  for (const { from, to, targetPage } of parityMap) {
-    assertMatches(
-      accountingSubNav,
-      new RegExp(`(?:href|path):\\s*"${escapeRegex(from)}"`),
-      `Accounting sub-nav item missing for ${from}`,
-    );
+  for (const { from, to, targetPage, inSubnav } of parityMap) {
+    const navRe = new RegExp(`(?:href|path):\\s*"${escapeRegex(from)}"`);
+    if (inSubnav) {
+      assertMatches(accountingSubNav, navRe, `Accounting sub-nav item missing for ${from}`);
+    } else if (navRe.test(accountingSubNav)) {
+      throw new Error(`${from} is back on the Accounting bar — U13 moved it to its own module`);
+    }
 
     assertMatches(
       appSource,
