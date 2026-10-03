@@ -294,15 +294,20 @@ export async function materializeSettlementLines(
     status: string;
   }>(
     `
-      SELECT id::text, amount_cents, reason, load_id::text, deduction_type, status
-        FROM driver_finance.driver_settlement_deductions
-       WHERE operating_company_id = $1::uuid
-         AND driver_id = $2::uuid
-         AND load_id = ANY($3::uuid[])
-         AND applied_to_settlement_id IS NULL
-         AND voided_at IS NULL
-       ORDER BY created_at ASC, id ASC
-       FOR UPDATE
+      -- KILL THE SECOND SYSTEM: the amount materialized is the DERIVED remaining (amount minus the deduction's active
+      -- settlement lines — driver_finance.v_settlement_deduction_balances), never the stored remaining_balance_cents.
+      -- A deduction already taken on any settlement derives to 0 and is skipped below, so it can never be deducted twice.
+      SELECT d.id::text,
+             (SELECT v.remaining_cents FROM driver_finance.v_settlement_deduction_balances v WHERE v.deduction_id = d.id) AS amount_cents,
+             d.reason, d.load_id::text, d.deduction_type, d.status
+        FROM driver_finance.driver_settlement_deductions d
+       WHERE d.operating_company_id = $1::uuid
+         AND d.driver_id = $2::uuid
+         AND d.load_id = ANY($3::uuid[])
+         AND d.applied_to_settlement_id IS NULL
+         AND d.voided_at IS NULL
+       ORDER BY d.created_at ASC, d.id ASC
+       FOR UPDATE OF d
     `,
     [input.operatingCompanyId, settlement.driver_id, loadIds]
   );

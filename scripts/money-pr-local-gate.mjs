@@ -794,6 +794,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-relay-fuel-webhook-receiver",
     ["apps/backend/src/integrations/relay-payments/", "apps/backend/src/index.ts", "scripts/verify-relay-fuel-webhook-receiver.mjs"],
   ],
+  // KILL THE SECOND SYSTEM — settlement deduction balance is derived from its settlement lines (CC-2).
+  [
+    "verify-settlement-deduction-balance-derived",
+    ["db/migrations/", "apps/backend/src/driver-finance/", "apps/backend/src/accounting/settlement-posting/", "apps/backend/src/payroll/", "apps/backend/src/settlements/", "apps/backend/src/mdata/canonical/", "scripts/verify-settlement-deduction-balance-derived.mjs"],
+  ],
   // Standing order point 9 — every CC-2 scheduled tick runs under a lease (withJobLease) or a named own claim.
   [
     "verify-cc2-crons-single-fire",
