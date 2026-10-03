@@ -25,6 +25,13 @@ function assertFile(rel, needles) {
   return needles.filter((n) => !src.includes(n)).map((n) => `${rel}: missing ${n}`);
 }
 
+function leftoverErrors(src) {
+  const errors = [];
+  if (src.includes("text-[11px]")) errors.push("leftover text-[11px]");
+  if (src.includes("#8A92AB") || src.includes("#334155")) errors.push("leftover off-scale muted");
+  return errors;
+}
+
 function selftest() {
   const bad = `<SafetyKpiRow kpis={kpisQuery.data} />`;
   const good = NEEDLES.join("\n");
@@ -47,6 +54,11 @@ function selftest() {
   } finally {
     fs.unlinkSync(tmp);
   }
+  const leftover = leftoverErrors(`${good}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`);
+  if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted")) {
+    console.error(`${LABEL} SELFTEST FAIL leftover plant escaped`, leftover);
+    process.exit(1);
+  }
   console.log(`${LABEL} selftest PASS`);
 }
 
@@ -59,7 +71,11 @@ if (!fs.existsSync(path.join(process.cwd(), FILE))) {
   console.error(`${LABEL} FAIL: missing ${FILE}`);
   process.exit(1);
 }
-const errors = assertFile(FILE, NEEDLES);
+const src = fs.readFileSync(path.join(process.cwd(), FILE), "utf8");
+const errors = [
+  ...assertFile(FILE, NEEDLES),
+  ...leftoverErrors(src).map((e) => `${FILE}: ${e}`),
+];
 if (errors.length) {
   console.error(`${LABEL} FAIL:`);
   for (const e of errors) console.error(`  - ${e}`);
