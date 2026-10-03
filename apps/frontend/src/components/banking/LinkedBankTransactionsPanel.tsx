@@ -54,9 +54,9 @@ export function LinkedBankTransactionsPanel({ companyId, linkage, entityLabel }:
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
           Linked bank transactions{entityLabel ? ` · ${entityLabel}` : ""}
         </p>
-        <span className="text-[11px] text-gray-500">{query.data?.total_count ?? rows.length} tagged</span>
+        <span className="text-xs text-gray-500">{query.data?.total_count ?? rows.length} tagged</span>
       </div>
-      <p className="mb-2 text-[11px] text-gray-600">
+      <p className="mb-2 text-xs text-gray-600">
         Reverse Law §9: bank feed rows with this {linkage.kind.replace("_id", "")} categorization tag. Open a row to
         Match/Categorize on Banking → Transactions.
       </p>
@@ -86,7 +86,7 @@ export function LinkedBankTransactionsPanel({ companyId, linkage, entityLabel }:
                     id={row.bank_transaction_id}
                     label={formatEntityLabel(row.description?.trim() || null, row.bank_transaction_id, "Bank transaction")}
                   />
-                  <div className="mt-0.5 text-[11px] text-gray-500">
+                  <div className="mt-0.5 text-xs text-gray-500">
                     {formatDateUS(row.transaction_date) || "—"}
                     {row.category_kind ? ` · ${row.category_kind}` : ""}
                     {row.matched_journal_entry_id ? (
@@ -125,7 +125,7 @@ export function LinkedBankTransactionsPanel({ companyId, linkage, entityLabel }:
       ) : null}
       {splitRows.length > 0 ? (
         <div className="mt-3 border-t border-gray-100 pt-2" data-testid="linked-bank-split-lines">
-          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Tagged split lines</p>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Tagged split lines</p>
           <ul className="divide-y divide-gray-100">
             {splitRows.map((row) => (
               <li key={row.split_line_id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-xs">
@@ -135,7 +135,7 @@ export function LinkedBankTransactionsPanel({ companyId, linkage, entityLabel }:
                     id={row.bank_transaction_id}
                     label={formatEntityLabel(row.description?.trim() || null, row.bank_transaction_id, `Bank transaction · split ${row.line_no}`)}
                   />
-                  <div className="mt-0.5 flex flex-wrap gap-x-2 text-[11px] text-gray-500">
+                  <div className="mt-0.5 flex flex-wrap gap-x-2 text-xs text-gray-500">
                     <span>{formatDateUS(row.transaction_date) || "—"} · line {row.line_no}</span>
                     {row.result_bill_id ? <EntityLink kind="bill" id={row.result_bill_id} label="Posted bill" /> : null}
                     {row.result_driver_advance_id ? <EntityLink kind="cash_advance" id={row.result_driver_advance_id} label="Driver advance" /> : null}
