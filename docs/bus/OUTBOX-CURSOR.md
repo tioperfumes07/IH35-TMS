@@ -1,3 +1,11 @@
+## 2026-10-03T20:24Z · BANK-F91217 AbandonmentReportModal leftover tokens MERGED #24771 tip e422f3e91c
+
+ACK: CURSOR | ACK BANK-F91217 ABANDONMENT MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91217 | AbandonmentReportModal leftover off-scale text-[11px] ×1
+FIX: 1 token → text-xs. Hung leftover refuse on verify-abandonment-report-modal-entitylinks.
+GUARD: verify-abandonment-report-modal-entitylinks · leftover plant + live PASS → #24771 tip `e422f3e91c`.
+NO seed · NO mig. NEXT: leftover LiabilitiesHome · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T20:22Z · BANK-F91216 TasksChatPage leftover tokens MERGED #24768 tip 06104fffbf
 
 ACK: CURSOR | ACK BANK-F91216 TASKS CHAT TEXT TOKENS DONE | GO
