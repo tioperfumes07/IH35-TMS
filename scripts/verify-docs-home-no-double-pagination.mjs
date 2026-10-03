@@ -45,6 +45,8 @@ function audit(text) {
   // is about killing the DUPLICATE, not the only real one.
   need(/setPage\(\(current\) => Math\.min\(totalPages, current \+ 1\)\)/.test(text), "the real totalPages-driven Next handler must still be present");
   need(/setPage\(\(current\) => Math\.max\(1, current - 1\)\)/.test(text), "the real totalPages-driven Previous handler must still be present");
+  if (text.includes("text-[11px]")) failures.push("leftover text-[11px]");
+  if (text.includes("#8A92AB") || text.includes("#334155")) failures.push("leftover off-scale muted");
   return failures;
 }
 
@@ -68,7 +70,12 @@ if (process.argv.includes("--selftest")) {
     if (audit(mutated).length === 0) throw new Error(`mutation escaped: "${name}" was not caught`);
     caught += 1;
   }
-  console.log(`verify-docs-home-no-double-pagination SELFTEST PASS — ${caught}/${mutations.length} mutations detected`);
+  const leftoverPlant = `${source}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftover = audit(leftoverPlant);
+  if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted")) {
+    throw new Error("leftover plant escaped");
+  }
+  console.log(`verify-docs-home-no-double-pagination SELFTEST PASS — ${caught}/${mutations.length} mutations detected + leftover plant rejected`);
 }
 
 console.log("verify-docs-home-no-double-pagination PASS — ParityTable is hidePager+pageSize-pinned, real page pager intact, no duplicate/conflicting pagination on /docs");

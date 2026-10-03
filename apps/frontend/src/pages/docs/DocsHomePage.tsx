@@ -488,7 +488,7 @@ export function DocsHomePage() {
 function KpiCard({ label, value, onClick }: { label: string; value: string; onClick?: () => void }) {
   const content = (
     <>
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</div>
       <div className="text-page-title font-semibold text-gray-900">{value}</div>
     </>
   );
