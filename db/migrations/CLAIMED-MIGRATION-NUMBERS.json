@@ -1712,6 +1712,36 @@
       "claimed_at": "2026-10-03",
       "purpose": "Standing order — the invoice spine path: a live journal_entry_posting can never lose its last transaction_source_links row (deferred constraint trigger; the AUTH-177 purge stripped 48)"
     },
+    "202615330907": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D1 (block, dispatch core): UNIQUE INDEX CONCURRENTLY docs.files (operating_company_id, id)"
+    },
+    "202615330908": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D1: UNIQUE INDEX CONCURRENTLY mdata.locations (operating_company_id, id)"
+    },
+    "202615330909": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D1: UNIQUE INDEX CONCURRENTLY catalogs.pickup_time_types (operating_company_id, id)"
+    },
+    "202615330910": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D1: UNIQUE INDEX CONCURRENTLY catalogs.lumper_providers (operating_company_id, id)"
+    },
+    "202615330911": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D1: mdata.load_stops gets operating_company_id — derived from its load by trigger, backfilled, company-required CHECK"
+    },
+    "202615330912": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "Dispatch D1: composite same-company FKs on mdata.loads (7) and mdata.load_stops (4)"
+    },
     "202615321200": {
       "claimed_by": "cursor",
       "claimed_at": "2026-10-03",
