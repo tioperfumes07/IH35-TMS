@@ -266,7 +266,7 @@ export function TaskPlannerGrid() {
             <thead className="sticky top-0 z-10 bg-gray-50">
               <tr>
                 <th
-                  className="relative border border-gray-200 px-2 py-1 text-left text-[11px] font-semibold text-gray-600 select-none"
+                  className="relative border border-gray-200 px-2 py-1 text-left text-xs font-semibold text-gray-600 select-none"
                   style={{ width: empColWidth }}
                 >
                   Employee
@@ -280,7 +280,7 @@ export function TaskPlannerGrid() {
                   return (
                     <th
                       key={d}
-                      className={`border border-gray-200 px-1 py-1 text-center text-[11px] font-semibold ${isToday ? "bg-slate-100 text-slate-700" : "text-gray-600"}`}
+                      className={`border border-gray-200 px-1 py-1 text-center text-xs font-semibold ${isToday ? "bg-slate-100 text-slate-700" : "text-gray-600"}`}
                     >
                       <div>{fmtDow(d)}</div>
                       <div className="text-xs font-normal opacity-70">{fmtMD(d)}</div>
