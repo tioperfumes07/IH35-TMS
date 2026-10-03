@@ -10,6 +10,8 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { entityLabel } from "../../lib/entity-label";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { statusOptions } from "../../lib/statusListParams";
 
 type Step = "choose" | "from_load" | "blank";
 
@@ -24,7 +26,8 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
   const { pushToast } = useToast();
   const [step, setStep] = useState<Step>("choose");
   const [loadSearch, setLoadSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<LoadStatusFilter>("all");
+  // U12 (owner UI register 2026-10-03) — the load status filter is a multi-select; none picked = every status.
+  const [statusFilter, setStatusFilter] = useState<LoadStatusFilter[]>([]);
   const [loadPage, setLoadPage] = useState(1);
   const pageSize = 25;
   // LINK-F5191: hold the just-created invoice instead of firing handleCreated() (which
@@ -43,7 +46,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
   const resetAndClose = () => {
     setStep("choose");
     setLoadSearch("");
-    setStatusFilter("all");
+    setStatusFilter([]);
     setLoadPage(1);
     setCreatedFromLoad(null);
     onClose();
@@ -136,18 +139,17 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
                 placeholder="Search load # or customer"
                 className="h-9 min-w-[200px] flex-1 rounded-sm border border-gray-300 px-2 text-xs"
               />
-              <select
-                value={statusFilter}
-                onChange={(event) => {
-                  setStatusFilter(event.target.value as LoadStatusFilter);
+              <MultiSelectDropdown
+                label="Status"
+                options={statusOptions({ "delivered": "Delivered", "in_transit": "In transit" })}
+                selected={statusFilter}
+                onChange={(next) => {
+                  setStatusFilter(next as LoadStatusFilter[]);
                   setLoadPage(1);
                 }}
-                className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
-              >
-                <option value="all">All statuses</option>
-                <option value="delivered">Delivered</option>
-                <option value="in_transit">In transit</option>
-              </select>
+                allLabel="All statuses"
+                data-testid="invoice-create-load-status-filter"
+              />
             </div>
             {/* ACCT-F3594: embedded ParityTable owns Search+Range+gear on from-load pick list.
                 PARITYTABLE-MISSING-HIDEPAGER-CLASS: this list is already server-paginated

@@ -154,7 +154,7 @@ export async function getLastRemoteCountAt(
  */
 export async function listQboModifyCaptures(
   client: QueryClient,
-  opts: { operatingCompanyId: string; status?: string; entityType?: string; limit: number; offset: number },
+  opts: { operatingCompanyId: string; status?: string | readonly string[]; entityType?: string; limit: number; offset: number },
 ): Promise<{ items: QboModifyCapture[]; total: number }> {
   const where: string[] = [];
   const params: unknown[] = [];
@@ -167,9 +167,10 @@ export async function listQboModifyCaptures(
   params.push(opts.operatingCompanyId);
   where.push(`operating_company_id = $${params.length}::uuid`);
 
-  if (opts.status) {
-    params.push(opts.status);
-    where.push(`status = $${params.length}`);
+  const statuses = Array.isArray(opts.status) ? opts.status : opts.status ? [opts.status as string] : [];
+  if (statuses.length) {
+    params.push(statuses);
+    where.push(`status::text = ANY($${params.length}::text[])`);
   }
   if (opts.entityType) {
     params.push(opts.entityType);

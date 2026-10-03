@@ -24,9 +24,10 @@ import {
 } from "../../api/qbo-reconcile";
 import { fetchReconRuns, fetchReconExceptions, type ReconRun, type ReconExceptionRow } from "../../api/recon";
 import { ApiError } from "../../api/client";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { statusOptions } from "../../lib/statusListParams";
 
 const FLAG = "QBO_RECONCILE_UI_ENABLED";
-const SELECT_CLASS = "h-9 rounded-sm border border-gray-300 px-2 text-xs focus:outline-hidden focus:ring-1 focus:ring-slate-400";
 
 const fmtDt = (s: string | null) => (s ? new Date(s).toLocaleString("en-US") : "—");
 const titleize = (s: string | null) => (s ? s.replace(/_/g, " ") : "—");
@@ -278,13 +279,14 @@ const CAPTURE_COLUMNS: Array<ParityColumn<QboModifyCapture>> = [
 ];
 
 function CapturesTab({ companyId }: { companyId: string }) {
-  const [status, setStatus] = useState("");
+  // U12 (owner UI register 2026-10-03) — status is a multi-select; none picked = every status.
+  const [status, setStatus] = useState<string[]>([]);
   const [offset, setOffset] = useState(0);
   const limit = 50;
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["qbo-modify-captures", companyId, status, offset],
-    queryFn: () => getQboModifyCaptures({ operating_company_id: companyId, status: status || undefined, limit, offset }),
+    queryFn: () => getQboModifyCaptures({ operating_company_id: companyId, status, limit, offset }),
     enabled: Boolean(companyId),
   });
 
@@ -294,15 +296,14 @@ function CapturesTab({ companyId }: { companyId: string }) {
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <select value={status} onChange={(e) => { setStatus(e.target.value); setOffset(0); }} className={SELECT_CLASS}>
-          <option value="">All statuses</option>
-          <option value="received">Received</option>
-          <option value="fetched">Fetched</option>
-          <option value="applied">Applied</option>
-          <option value="conflict">Conflict</option>
-          <option value="error">Error</option>
-          <option value="duplicate">Duplicate</option>
-        </select>
+        <MultiSelectDropdown
+          label="Status"
+          options={statusOptions({ "received": "Received", "fetched": "Fetched", "applied": "Applied", "conflict": "Conflict", "error": "Error", "duplicate": "Duplicate" })}
+          selected={status}
+          onChange={(next) => { setStatus(next); setOffset(0); }}
+          allLabel="All statuses"
+          data-testid="qbo-captures-status-filter"
+        />
         <span className="text-xs text-gray-500">{total.toLocaleString()} capture{total !== 1 ? "s" : ""}</span>
       </div>
 
@@ -640,10 +641,11 @@ const EXCEPTION_COLUMNS: Array<ParityColumn<ReconExceptionRow>> = [
 ];
 
 function ReconExceptionsTab({ companyId }: { companyId: string }) {
-  const [status, setStatus] = useState("");
+  // U12 (owner UI register 2026-10-03) — status is a multi-select; none picked = every status.
+  const [status, setStatus] = useState<string[]>([]);
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["recon-exceptions", companyId, status],
-    queryFn: () => fetchReconExceptions(companyId, { status: status || undefined, limit: 100 }),
+    queryFn: () => fetchReconExceptions(companyId, { status, limit: 100 }),
     enabled: Boolean(companyId),
     retry: false,
   });
@@ -652,12 +654,14 @@ function ReconExceptionsTab({ companyId }: { companyId: string }) {
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <select value={status} onChange={(e) => setStatus(e.target.value)} className={SELECT_CLASS}>
-          <option value="">All statuses</option>
-          <option value="open">Open</option>
-          <option value="explained">Explained</option>
-          <option value="resolved">Resolved</option>
-        </select>
+        <MultiSelectDropdown
+          label="Status"
+          options={statusOptions({ "open": "Open", "explained": "Explained", "resolved": "Resolved" })}
+          selected={status}
+          onChange={setStatus}
+          allLabel="All statuses"
+          data-testid="recon-exceptions-status-filter"
+        />
       </div>
       {error ? (
         <ListErrorState

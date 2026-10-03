@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import { appendStatusList } from "../lib/statusListParams";
 
 export type PrepaidAmortRow = {
   id: string;
@@ -61,14 +62,14 @@ export type PrepaidList = { total: number; limit: number; offset: number; items:
 
 export function getPrepaidExpenses(input: {
   operating_company_id: string;
-  status?: string;
+  status?: string | readonly string[];
   date_from?: string;
   date_to?: string;
   limit?: number;
   offset?: number;
 }) {
   const q = new URLSearchParams({ operating_company_id: input.operating_company_id });
-  if (input.status) q.set("status", input.status);
+  appendStatusList(q, "status", input.status);
   if (input.date_from) q.set("date_from", input.date_from);
   if (input.date_to) q.set("date_to", input.date_to);
   if (input.limit != null) q.set("limit", String(input.limit));

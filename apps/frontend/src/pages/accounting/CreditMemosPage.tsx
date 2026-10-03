@@ -41,6 +41,8 @@ import { MoneyProofTrailPanel } from "../../components/accounting/MoneyProofTrai
 const WRITE_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
 
 import { formatUsdCents } from "../../lib/money";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { statusOptions } from "../../lib/statusListParams";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -73,10 +75,11 @@ export function CreditMemosPage() {
   // R-102-B item 5 ("DEFAULT FILTERS" — owner, ROUND 117: "lists default to live with 'Show
   // voided' off on fresh load"). This page had NO default-hide at all — the empty-string state
   // meant "all statuses," mixing voided credit memos into a fresh load with no way to hide them.
-  const [statusFilter, setStatusFilter] = useState<CreditMemoStatus | "active" | "">("active");
+  // U12 (owner UI register 2026-10-03) — status is a multi-select (same component as every list); default Active.
+  const [statusFilter, setStatusFilter] = useState<Array<CreditMemoStatus | "active">>(["active"]);
   const staged = useStagedListFilters({
     applied: { statusFilter, customerId: customerFilter },
-    empty: { statusFilter: "active" as const, customerId: "" },
+    empty: { statusFilter: ["active"] as Array<CreditMemoStatus | "active">, customerId: "" },
     onApply: (next) => {
       setStatusFilter(next.statusFilter);
       setCustomerFilter(next.customerId);
@@ -124,7 +127,7 @@ export function CreditMemosPage() {
     queryFn: () =>
       listCreditMemos(companyId, {
         customer_id: customerFilter || undefined,
-        status: statusFilter || undefined,
+        status: statusFilter,
       }),
     enabled: Boolean(companyId),
   });
@@ -258,7 +261,7 @@ export function CreditMemosPage() {
 
   const filterBar = (
     <div className="flex flex-wrap items-end gap-3" data-credit-memos-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={(statusFilter && statusFilter !== "active" ? 1 : 0) + (customerFilter ? 1 : 0)} testIdPrefix="credit-memos" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
+      <CollapsedListFilters activeFilterCount={(statusFilter.length === 1 && statusFilter[0] === "active" ? 0 : 1) + (customerFilter ? 1 : 0)} testIdPrefix="credit-memos" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
         <div className="flex flex-wrap gap-2">
           <label className="text-xs text-slate-600">
             Customer
@@ -273,18 +276,14 @@ export function CreditMemosPage() {
               dataTestId="credit-memos-filter-customer"
             />
           </label>
-          <SelectCombobox
-            value={staged.draft.statusFilter}
-            onChange={(e) => staged.setDraft({ ...staged.draft, statusFilter: e.target.value as CreditMemoStatus | "active" | "" })}
-            aria-label="Credit memo status filter"
-          >
-            <option value="active">Active (hide voided)</option>
-            <option value="">All statuses (include voided)</option>
-            <option value="draft">Draft</option>
-            <option value="issued">Issued</option>
-            <option value="applied">Applied</option>
-            <option value="voided">Voided</option>
-          </SelectCombobox>
+          <MultiSelectDropdown
+            label="Status"
+            options={statusOptions({ "active": "Active (hide voided)", "draft": "Draft", "issued": "Issued", "applied": "Applied", "voided": "Voided" })}
+            selected={staged.draft.statusFilter}
+            onChange={(next) => staged.setDraft({ ...staged.draft, statusFilter: next as Array<CreditMemoStatus | "active"> })}
+            allLabel="All statuses (include voided)"
+            data-testid="credit-memos-status-filter"
+          />
         </div>
       </CollapsedListFilters>
       {customerFilter ? (
@@ -324,7 +323,7 @@ export function CreditMemosPage() {
         <>
           {/* R-102-B item 5 — owner: "a list that silently hides is the same class of defect as
               a badge that never renders." Company-wide, independent of every non-status filter. */}
-          {statusFilter === "active" && typeof creditMemosQuery.data?.voided_count === "number" && creditMemosQuery.data.voided_count > 0 ? (
+          {statusFilter.length === 1 && statusFilter[0] === "active" && typeof creditMemosQuery.data?.voided_count === "number" && creditMemosQuery.data.voided_count > 0 ? (
             <p className="text-xs text-gray-500" data-testid="credit-memos-voided-count">
               {(creditMemosQuery.data?.credit_memos ?? []).length} live, {creditMemosQuery.data.voided_count} voided (hidden)
             </p>

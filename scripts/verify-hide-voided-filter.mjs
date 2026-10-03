@@ -60,7 +60,8 @@ if (!/BILL_PAYMENT_LIST_SORT_SQL[\s\S]*?status:\s*`\(CASE WHEN bp\.revoked_at/.t
 }
 
 const payments = read("apps/frontend/src/pages/accounting/PaymentsListPage.tsx");
-if (!/useState<"all" \| "active" \| "voided">\("active"\)/.test(payments)) {
+// U12 — status is a multi-select; the default must still be exactly Active.
+if (!/useState<"all" \| "active" \| "voided">\("active"\)/.test(payments) && !/useState<Array<"active" \| "voided">>\(\["active"\]\)/.test(payments)) {
   failures.push("PaymentsListPage must default status filter to active (hide voided)");
 }
 
@@ -103,12 +104,13 @@ const invoicesPage = read("apps/frontend/src/pages/accounting/InvoicesListPage.t
 if (!/value: "active", label: "Active \(hide voided\)"/.test(invoicesPage)) {
   failures.push("FLT-03: InvoicesListPage must expose Active (hide voided) status option");
 }
-if (!/let status: InvoiceListFilter = "active"/.test(invoicesPage)) {
+// U12 — status is a multi-select: no ?status= still means Active.
+if (!/let status: InvoiceListFilter = "active"/.test(invoicesPage) && !/picked\.length === 0[^\n]{0,120}\? \["active"\]/.test(invoicesPage)) {
   failures.push("FLT-03: InvoicesListPage must default status filter to active (hide voided)");
 }
 
 const invRoutes = read("apps/backend/src/accounting/invoices.routes.ts");
-if (!/q\.status === "active"[\s\S]{0,200}i\.status NOT IN \('void', 'voided'\)/.test(invRoutes)) {
+if (!/q\.status === "active"[\s\S]{0,200}i\.status NOT IN \('void', 'voided'\)/.test(invRoutes) && !/pickedStatuses\.includes\("active"\)[\s\S]{0,200}i\.status NOT IN \('void', 'voided'\)/.test(invRoutes)) {
   failures.push("FLT-03: listInvoices must map status=active → hide voided invoices");
 }
 
@@ -126,7 +128,7 @@ if (!/VIS-02 — void as first-class Status column/.test(billsPage) || !/statusB
 if (!/value: "posted", label: "Posted \(GL\)"/.test(invoicesPage)) {
   failures.push("FLT-02: InvoicesListPage must expose Posted (GL) status filter option");
 }
-if (!/q\.status === "posted"[\s\S]{0,800}source_transaction_type = 'invoice'/.test(invRoutes)) {
+if (!/(?:q\.status === "posted"|pickedStatuses\.includes\("posted"\))[\s\S]{0,800}source_transaction_type = 'invoice'/.test(invRoutes)) {
   failures.push("FLT-02: listInvoices must map status=posted → GL-posted invoices EXISTS");
 }
 if (!/value="posted">Posted \(GL\)/.test(billsPage) && !/value: "posted", label: "Posted \(GL\)"/.test(billsPage)) {

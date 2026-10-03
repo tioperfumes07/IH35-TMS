@@ -10,6 +10,7 @@ import {
   reinstateDocumentThenVoidReversal,
   ReinstateDocumentError,
 } from "./reinstate-document.service.js";
+import { statusListCondition, statusListParam } from "../lib/status-list.js";
 
 // ACCT-F5606 — AR credit memo CRUD + apply-to-invoice + void, mirroring vendor-credits.routes.ts's
 // proven AP shape (CUSTVEND-PAR-1) column-for-column and check-for-check. Closes LV-CREDITMEMO-NOPATH's
@@ -76,7 +77,8 @@ const listQuerySchema = companyQuerySchema.extend({
   // R-102-B item 5 ("DEFAULT FILTERS") — "active" is a frontend-facing pseudo-status (not a real
   // credit_memos.status value): draft/issued/applied are all live states, voided is the only dead
   // one, so "active" means "exclude voided" rather than matching one literal status column value.
-  status: z.enum(["draft", "issued", "applied", "voided", "active"]).optional(),
+  // U12 — multi-select: ?status=a&status=b (one value still accepted).
+  status: statusListParam(["draft", "issued", "applied", "voided", "active"] as const),
 });
 
 function canWriteCreditMemos(role: string) {
@@ -99,12 +101,11 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
         params.push(query.data.customer_id);
         conditions.push(`cm.customer_id = $${params.length}::uuid`);
       }
-      if (query.data.status === "active") {
-        conditions.push(`cm.status <> 'voided'`);
-      } else if (query.data.status) {
-        params.push(query.data.status);
-        conditions.push(`cm.status = $${params.length}`);
-      }
+      const statusCond = statusListCondition("cm.status", query.data.status, (v) => {
+        params.push(v);
+        return `$${params.length}`;
+      }, { notVoidedPseudo: { value: "active", excludes: ["voided"] } });
+      if (statusCond) conditions.push(statusCond);
 
       const res = await client.query(
         `SELECT

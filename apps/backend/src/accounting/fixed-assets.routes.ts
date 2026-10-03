@@ -27,6 +27,7 @@ import {
   registerOwnedUnitAsFixedAsset,
   registerRealTrkOwnedUnits,
 } from "./owned-unit-fixed-asset-register.service.js";
+import { statusListCondition, statusListParam } from "../lib/status-list.js";
 
 const AUTOPOST_FLAG = "FIXED_ASSET_AUTOPOST_ENABLED";
 
@@ -35,7 +36,8 @@ function accountingRoles(role: string) {
 }
 
 const listQuerySchema = companyQuerySchema.extend({
-  status: z.enum(["active", "fully_depreciated", "disposed", "voided"]).optional(),
+  // U12 — multi-select: ?status=a&status=b (one value still accepted).
+  status: statusListParam(["active", "fully_depreciated", "disposed", "voided"] as const),
   class_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
@@ -141,7 +143,11 @@ async function registerFixedAssetsRoutes(app: FastifyInstance) {
       const conds = ["fa.operating_company_id = $1::uuid", "fa.is_active = true"];
       const params: unknown[] = [operating_company_id];
       let pi = 2;
-      if (status) { conds.push(`fa.status = $${pi++}`); params.push(status); }
+      const statusCond = statusListCondition("fa.status", status, (v) => {
+        params.push(v);
+        return `$${pi++}`;
+      });
+      if (statusCond) conds.push(statusCond);
       if (class_id) { conds.push(`fa.class_id = $${pi++}`); params.push(class_id); }
       const where = conds.join(" AND ");
 

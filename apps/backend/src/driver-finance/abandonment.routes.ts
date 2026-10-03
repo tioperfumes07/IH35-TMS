@@ -3,10 +3,12 @@ import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { validationError, withCompanyScope } from "../accounting/shared.js";
 import { loadAbandonmentDefaults, upsertAbandonmentDefaults } from "./abandonment.service.js";
+import { statusListCondition, statusListParam } from "../lib/status-list.js";
 
 const listQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
-  status: z.enum(["pending", "approved", "disputed", "applied", "reversed", "all"]).optional(),
+  // U12 — multi-select: ?status=a&status=b (one value still accepted); none / "all" = every status.
+  status: statusListParam(["pending", "approved", "disputed", "applied", "reversed", "all"] as const),
   driver_id: z.string().uuid().optional(),
 });
 
@@ -50,11 +52,13 @@ export async function registerAbandonmentRoutes(app: FastifyInstance) {
     const payload = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
       const values: unknown[] = [q.operating_company_id];
       const where = [`ac.operating_company_id = $1::uuid`];
-      const statusFilter = q.status && q.status !== "all" ? q.status : null;
-      if (statusFilter) {
-        values.push(statusFilter);
-        where.push(`ac.status = $${values.length}`);
-      }
+      const statusCond = q.status?.includes("all")
+        ? null
+        : statusListCondition("ac.status", q.status, (v) => {
+            values.push(v);
+            return `$${values.length}`;
+          });
+      if (statusCond) where.push(statusCond);
       if (q.driver_id) {
         values.push(q.driver_id);
         where.push(`ac.driver_id = $${values.length}`);

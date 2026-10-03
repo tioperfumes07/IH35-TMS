@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import { appendStatusList } from "../lib/statusListParams";
 
 export type SettlementDisputeStatus =
   | "draft"
@@ -44,10 +45,10 @@ export type DecideDisputeBody = {
 
 export function listDisputeQueue(
   operatingCompanyId: string,
-  opts: { status?: string; driver_id?: string; limit?: number; offset?: number } = {},
+  opts: { status?: string | readonly string[]; driver_id?: string; limit?: number; offset?: number } = {},
 ) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
-  if (opts.status && opts.status !== "all") q.set("status", opts.status);
+  appendStatusList(q, "status", Array.isArray(opts.status) ? opts.status : opts.status && opts.status !== "all" ? [opts.status as string] : []);
   if (opts.driver_id) q.set("driver_id", opts.driver_id);
   if (opts.limit != null) q.set("limit", String(opts.limit));
   if (opts.offset != null) q.set("offset", String(opts.offset));

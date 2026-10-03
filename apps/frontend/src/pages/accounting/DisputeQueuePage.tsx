@@ -20,6 +20,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { statusPill } from "../../components/shared/statusPill";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 
 const DECIDE_ROLES = new Set(["Owner", "Administrator", "Accountant"]);
 
@@ -164,8 +165,9 @@ export function DisputeQueuePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const canDecide = DECIDE_ROLES.has(String(auth.user?.role ?? ""));
-  const [status, setStatus] = useState<string>("submitted");
-  const staged = useStagedListFilters({ applied: { status }, empty: { status: "submitted" }, onApply: (next) => setStatus(next.status) });
+  // U12 (owner UI register 2026-10-03) — status is a multi-select; default Submitted; none picked = every status.
+  const [status, setStatus] = useState<string[]>(["submitted"]);
+  const staged = useStagedListFilters({ applied: { status }, empty: { status: ["submitted"] as string[] }, onApply: (next) => setStatus(next.status) });
   const [decideRow, setDecideRow] = useState<SettlementDisputeQueueRow | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -314,26 +316,19 @@ export function DisputeQueuePage() {
     <AccountingSubNavWrapper title="Settlement dispute queue" subtitle="Office workflows for P6 settlement disputes">
       <div className="flex flex-wrap items-end gap-3">
         <CollapsedListFilters
-          activeFilterCount={status !== "submitted" ? 1 : 0}
+          activeFilterCount={status.length === 1 && status[0] === "submitted" ? 0 : 1}
           onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
           testIdPrefix="dispute-queue"
           dataAttributes={{ "data-dispute-queue-filter-toolbar": "collapsed" }}
         >
-          <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
-            Status
-            <SelectCombobox
-              value={staged.draft.status}
-              onChange={(e) => staged.setDraft({ status: e.target.value })}
-              className="h-9 rounded-sm border border-gray-300 px-2 text-xs"
-              aria-label="Dispute status filter"
-            >
-              {STATUS_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </SelectCombobox>
-          </label>
+          <MultiSelectDropdown
+            label="Status"
+            options={STATUS_OPTIONS.filter((opt) => opt.value !== "all").map((opt) => ({ value: opt.value, label: opt.label }))}
+            selected={staged.draft.status}
+            onChange={(next) => staged.setDraft({ status: next })}
+            allLabel="All statuses"
+            data-testid="dispute-queue-status-filter"
+          />
         </CollapsedListFilters>
         <Button size="sm" variant="secondary" disabled={query.isFetching} onClick={() => void query.refetch()}>
           Refresh

@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import { appendStatusList } from "../lib/statusListParams";
 
 export type FixedAssetListItem = {
   id: string;
@@ -104,13 +105,13 @@ export type RegisterTrkUnitsResult = {
 
 export function getFixedAssets(input: {
   operating_company_id: string;
-  status?: string;
+  status?: string | readonly string[];
   class_id?: string;
   limit?: number;
   offset?: number;
 }) {
   const q = new URLSearchParams({ operating_company_id: input.operating_company_id });
-  if (input.status) q.set("status", input.status);
+  appendStatusList(q, "status", input.status);
   if (input.class_id) q.set("class_id", input.class_id);
   if (input.limit != null) q.set("limit", String(input.limit));
   if (input.offset != null) q.set("offset", String(input.offset));

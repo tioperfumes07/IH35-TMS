@@ -74,8 +74,8 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/accounting/broker-advances/:id/disburse-to-driver-bill` | `apps/backend/src/accounting/broker-advances.routes.ts:76` | — | — | — |
 | nested | `/api/v1/accounting/collections/:taskId/contact` | `apps/backend/src/accounting/collections.routes.ts:92` | — | — | — |
 | create | `/api/v1/accounting/company-settlements/open` | `apps/backend/src/accounting/company-settlement-open-close.routes.ts:40` | — | — | — |
-| create | `/api/v1/accounting/credit-memos` | `apps/backend/src/accounting/credit-memos.routes.ts:239` | — | — | — |
-| nested | `/api/v1/accounting/credit-memos/:id/unvoid` | `apps/backend/src/accounting/credit-memos.routes.ts:596` | — | — | — |
+| create | `/api/v1/accounting/credit-memos` | `apps/backend/src/accounting/credit-memos.routes.ts:240` | — | — | — |
+| nested | `/api/v1/accounting/credit-memos/:id/unvoid` | `apps/backend/src/accounting/credit-memos.routes.ts:597` | — | — | — |
 | create | `/api/v1/accounting/escrow/deposit` | `apps/backend/src/accounting/escrow/routes.ts:119` | — | — | — |
 | create | `/api/v1/accounting/escrow/open` | `apps/backend/src/accounting/escrow/routes.ts:42` | — | — | — |
 | create | `/api/v1/accounting/expense-category-map` | `apps/backend/src/accounting/expense-category-map/routes.ts:222` | — | — | — |
@@ -84,14 +84,14 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/accounting/factoring-advances/:id/recourse-return` | `apps/backend/src/accounting/factoring-advances.routes.ts:1114` | — | — | — |
 | nested | `/api/v1/accounting/factoring-advances/:id/reserve-held` | `apps/backend/src/accounting/factoring-advances.routes.ts:870` | — | — | — |
 | create | `/api/v1/accounting/fixed-assets/dispose` | `apps/backend/src/accounting/amortization-posting/amortization-posting.routes.ts:104` | — | — | — |
-| create | `/api/v1/accounting/fixed-assets/register-trk-units` | `apps/backend/src/accounting/fixed-assets.routes.ts:409` | — | — | — |
-| create | `/api/v1/accounting/fixed-assets/register-unit` | `apps/backend/src/accounting/fixed-assets.routes.ts:375` | — | — | — |
+| create | `/api/v1/accounting/fixed-assets/register-trk-units` | `apps/backend/src/accounting/fixed-assets.routes.ts:415` | — | — | — |
+| create | `/api/v1/accounting/fixed-assets/register-unit` | `apps/backend/src/accounting/fixed-assets.routes.ts:381` | — | — | — |
 | nested | `/api/v1/accounting/invoice-disputes/:id/fault` | `apps/backend/src/accounting/invoice-disputes.routes.ts:186` | — | — | — |
-| create | `/api/v1/accounting/invoices` | `apps/backend/src/accounting/invoices.routes.ts:524` | — | — | — |
+| create | `/api/v1/accounting/invoices` | `apps/backend/src/accounting/invoices.routes.ts:529` | — | — | — |
 | nested | `/api/v1/accounting/invoices/:id/disputes` | `apps/backend/src/accounting/invoice-disputes.routes.ts:107` | — | — | — |
 | nested | `/api/v1/accounting/invoices/:id/lines` | `apps/backend/src/accounting/invoice-lines.routes.ts:96` | — | — | — |
-| nested | `/api/v1/accounting/invoices/:id/unvoid` | `apps/backend/src/accounting/invoices.routes.ts:1311` | — | — | — |
-| create | `/api/v1/accounting/invoices/from-load` | `apps/backend/src/accounting/invoices.routes.ts:752` | — | — | — |
+| nested | `/api/v1/accounting/invoices/:id/unvoid` | `apps/backend/src/accounting/invoices.routes.ts:1316` | — | — | — |
+| create | `/api/v1/accounting/invoices/from-load` | `apps/backend/src/accounting/invoices.routes.ts:757` | — | — | — |
 | create | `/api/v1/accounting/journal-entries` | `apps/backend/src/accounting/journal-entries.routes.ts:105` | — | — | — |
 | create | `/api/v1/accounting/lease-posting/leases` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:99` | — | — | — |
 | nested | `/api/v1/accounting/lease-posting/leases/:lease_id/assets` | `apps/backend/src/accounting/lease-asc842/lease-posting.routes.ts:140` | — | — | — |
@@ -106,27 +106,27 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/opening-balance-register/finality` | `apps/backend/src/accounting/opening-balance-register/opening-balance-register.routes.ts:194` | — | — | — |
 | create | `/api/v1/accounting/opening-balance-register/import-from-fixture` | `apps/backend/src/accounting/opening-balance-register/opening-balance-register.routes.ts:150` | — | — | — |
 | create | `/api/v1/accounting/opening-balance-register/import-from-qbo` | `apps/backend/src/accounting/opening-balance-register/opening-balance-register.routes.ts:132` | — | — | — |
-| create | `/api/v1/accounting/payments` | `apps/backend/src/accounting/payments.routes.ts:399` | — | — | — |
-| nested | `/api/v1/accounting/payments/:id/unvoid` | `apps/backend/src/accounting/payments.routes.ts:825` | — | — | — |
+| create | `/api/v1/accounting/payments` | `apps/backend/src/accounting/payments.routes.ts:405` | — | — | — |
+| nested | `/api/v1/accounting/payments/:id/unvoid` | `apps/backend/src/accounting/payments.routes.ts:831` | — | — | — |
 | nested | `/api/v1/accounting/payments/:paymentId/applications` | `apps/backend/src/accounting/payment-applications.routes.ts:42` | — | — | — |
 | create | `/api/v1/accounting/periods` | `apps/backend/src/accounting/p7-wave2.routes.ts:182` | — | — | — |
 | create | `/api/v1/accounting/posting-engine-mvp/remediate-bank-ledger-repoint` | `apps/backend/src/accounting/posting-engine.routes.ts:218` | — | — | — |
-| create | `/api/v1/accounting/prepaid-expenses` | `apps/backend/src/accounting/prepaid-expenses.routes.ts:386` | — | — | — |
-| nested | `/api/v1/accounting/prepaid-expenses/:id/unvoid` | `apps/backend/src/accounting/prepaid-expenses.routes.ts:701` | — | — | — |
+| create | `/api/v1/accounting/prepaid-expenses` | `apps/backend/src/accounting/prepaid-expenses.routes.ts:392` | — | — | — |
+| nested | `/api/v1/accounting/prepaid-expenses/:id/unvoid` | `apps/backend/src/accounting/prepaid-expenses.routes.ts:707` | — | — | — |
 | create | `/api/v1/accounting/pse-mirror/enforce` | `apps/backend/src/accounting/pse-mirror.routes.ts:44` | — | — | — |
 | create | `/api/v1/accounting/pse-mirror/sync-now` | `apps/backend/src/accounting/pse-mirror.routes.ts:33` | — | — | — |
 | nested | `/api/v1/accounting/reclassify/batches/:batchId/undo` | `apps/backend/src/accounting/reclassify/reclassify.routes.ts:125` | — | — | — |
 | create | `/api/v1/accounting/recurring-bill-templates` | `apps/backend/src/accounting/bills/recurring/routes.ts:73` | — | — | — |
 | nested | `/api/v1/accounting/recurring-bill-templates/:uuid/generate-now` | `apps/backend/src/accounting/bills/recurring/routes.ts:217` | — | — | — |
 | create | `/api/v1/accounting/recurring-templates` | `apps/backend/src/accounting/recurring-template-detail.routes.ts:150` | — | — | — |
-| create | `/api/v1/accounting/related-party-loans` | `apps/backend/src/accounting/related-party-loan-posting/routes.ts:336` | — | — | — |
+| create | `/api/v1/accounting/related-party-loans` | `apps/backend/src/accounting/related-party-loan-posting/routes.ts:339` | — | — | — |
 | create | `/api/v1/accounting/sales-tax/agencies` | `apps/backend/src/accounting/sales-tax/routes.ts:79` | — | — | — |
 | nested | `/api/v1/accounting/sales-tax/returns/:id/file` | `apps/backend/src/accounting/sales-tax/routes.ts:292` | — | — | — |
 | nested | `/api/v1/accounting/sales-tax/returns/:id/mark-paid` | `apps/backend/src/accounting/sales-tax/routes.ts:332` | — | — | — |
 | create | `/api/v1/accounting/sales-tax/returns/prepare` | `apps/backend/src/accounting/sales-tax/routes.ts:179` | — | — | — |
 | create | `/api/v1/accounting/settlement-posting/bill-payment-post` | `apps/backend/src/accounting/settlement-posting/settlement-posting.routes.ts:141` | — | — | — |
 | create | `/api/v1/accounting/settlement-posting/recover-from-driver` | `apps/backend/src/accounting/settlement-posting/settlement-posting.routes.ts:158` | — | — | — |
-| create | `/api/v1/accounting/vendor-credits` | `apps/backend/src/accounting/vendor-credits.routes.ts:231` | — | — | — |
+| create | `/api/v1/accounting/vendor-credits` | `apps/backend/src/accounting/vendor-credits.routes.ts:232` | — | — | — |
 | create | `/api/v1/accounting/vendors/batch-categorize` | `apps/backend/src/accounting/vendor-category.routes.ts:45` | — | — | — |
 
 ### safety — 67 create-surface(s)
@@ -267,7 +267,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/banking/accounts/visibility` | `apps/backend/src/banking/banking.routes.ts:394` | — | — | — |
 | create | `/api/v1/banking/categorization-rules` | `apps/backend/src/banking/categorization-rules.routes.ts:164` | — | — | — |
 | nested | `/api/v1/banking/categorization-rules/:id/apply-historical` | `apps/backend/src/banking/categorization-rules.routes.ts:318` | — | — | — |
-| create | `/api/v1/banking/cc-payments` | `apps/backend/src/banking/transfers.routes.ts:160` | — | — | — |
+| create | `/api/v1/banking/cc-payments` | `apps/backend/src/banking/transfers.routes.ts:161` | — | — | — |
 | create | `/api/v1/banking/drift-alerts/detect` | `apps/backend/src/banking/drift-alerts.routes.ts:125` | — | — | — |
 | create | `/api/v1/banking/equipment-loans` | `apps/backend/src/data-infra/data-infra.routes.ts:205` | — | — | — |
 | nested | `/api/v1/banking/equipment-loans/:id/attributions` | `apps/backend/src/data-infra/data-infra.routes.ts:240` | — | — | — |
@@ -300,8 +300,8 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/banking/transactions/post-categorized-backlog` | `apps/backend/src/banking/categorization.routes.ts:1224` | — | — | — |
 | create | `/api/v1/banking/transactions/suggest` | `apps/backend/src/banking/p7-wave2.routes.ts:286` | — | — | — |
 | create | `/api/v1/banking/transactions/undo-categorization` | `apps/backend/src/banking/categorization.routes.ts:1466` | — | — | — |
-| create | `/api/v1/banking/transfers` | `apps/backend/src/banking/transfers.routes.ts:100` | — | — | — |
-| create | `/api/v1/banking/transfers/intercompany` | `apps/backend/src/banking/transfers.routes.ts:215` | — | — | — |
+| create | `/api/v1/banking/transfers` | `apps/backend/src/banking/transfers.routes.ts:101` | — | — | — |
+| create | `/api/v1/banking/transfers/intercompany` | `apps/backend/src/banking/transfers.routes.ts:216` | — | — | — |
 | create | `/api/v1/banking/upload-statement` | `apps/backend/src/banking/reconciliation.routes.ts:1586` | — | — | — |
 
 ### maintenance — 41 create-surface(s)
@@ -888,8 +888,8 @@ after creation; a GL/posting failure goes to CC-1.
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
-| nested | `/api/v1/disputes/:disputeId/decide` | `apps/backend/src/accounting/disputes.routes.ts:127` | — | — | — |
-| nested | `/api/v1/disputes/:disputeId/start-review` | `apps/backend/src/accounting/disputes.routes.ts:104` | — | — | — |
+| nested | `/api/v1/disputes/:disputeId/decide` | `apps/backend/src/accounting/disputes.routes.ts:128` | — | — | — |
+| nested | `/api/v1/disputes/:disputeId/start-review` | `apps/backend/src/accounting/disputes.routes.ts:105` | — | — | — |
 
 ### ap — 1 create-surface(s)
 
@@ -1045,7 +1045,7 @@ after creation; a GL/posting failure goes to CC-1.
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
-| nested | `/api/v1/abandonment-chargebacks/:id/dispute` | `apps/backend/src/driver-finance/abandonment.routes.ts:134` | — | — | — |
+| nested | `/api/v1/abandonment-chargebacks/:id/dispute` | `apps/backend/src/driver-finance/abandonment.routes.ts:138` | — | — | — |
 
 ### equipment-transfers — 1 create-surface(s)
 

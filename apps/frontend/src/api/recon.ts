@@ -33,9 +33,13 @@ export type ReconExceptionRow = {
   created_at: string | null;
 };
 
-function qs(params: Record<string, string | number | undefined>): string {
+function qs(params: Record<string, string | number | readonly string[] | undefined>): string {
   const sp = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== "") sp.set(k, String(v));
+  // U12 — a list (multi-select status) repeats the key.
+  for (const [k, v] of Object.entries(params)) {
+    if (Array.isArray(v)) for (const item of v) sp.append(k, String(item));
+    else if (v !== undefined && v !== "") sp.set(k, String(v));
+  }
   const s = sp.toString();
   return s ? `?${s}` : "";
 }
@@ -51,7 +55,7 @@ export function fetchReconRuns(
 
 export function fetchReconExceptions(
   operatingCompanyId: string,
-  filters?: { run_id?: string; status?: string; exception_class?: string; limit?: number; offset?: number }
+  filters?: { run_id?: string; status?: string | readonly string[]; exception_class?: string; limit?: number; offset?: number }
 ) {
   return apiRequest<{ exceptions: ReconExceptionRow[] }>(
     `/api/v1/accounting/recon/exceptions${qs({ operating_company_id: operatingCompanyId, ...filters })}`

@@ -13,12 +13,13 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/Combobox";
 import {
   getRevenueContracts, getRevenueContractDetail, getRevenueLeakage,
   type RevenueContractListItem, type RevenueContractDetail, type RevenueObligation,
   type RevenueLeakageRow,
 } from "../../api/revenue-recognition";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { statusOptions } from "../../lib/statusListParams";
 
 const fmtCents = (c: number) => formatUsdCents(c);
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -276,15 +277,16 @@ export function RevenueRecognitionPage() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag("REVENUE_RECOGNITION_ENABLED", operatingCompanyId || undefined);
-  const [statusFilter, setStatusFilter] = useState("");
-  const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: "" }, onApply: (next) => { setStatusFilter(next.statusFilter); setOffset(0); } });
+  // U12 (owner UI register 2026-10-03) — status is a multi-select (same component as every list); none = all.
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: [] as string[] }, onApply: (next) => { setStatusFilter(next.statusFilter); setOffset(0); } });
   const [offset, setOffset] = useState(0);
   const [detailId, setDetailId] = useState<string | null>(null);
   const limit = 50;
 
   const listQuery = useQuery({
     queryKey: ["revenue-contracts", operatingCompanyId, statusFilter, offset],
-    queryFn: () => getRevenueContracts({ operating_company_id: operatingCompanyId, status: statusFilter || undefined, limit, offset }),
+    queryFn: () => getRevenueContracts({ operating_company_id: operatingCompanyId, status: statusFilter, limit, offset }),
     enabled: Boolean(selectedCompanyId) && enabled,
   });
   const { data, isLoading, isError } = listQuery;
@@ -379,17 +381,15 @@ export function RevenueRecognitionPage() {
 
   const filterBar = (
     <div className="flex flex-wrap gap-2 items-center" data-revrec-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={statusFilter ? 1 : 0} testIdPrefix="revrec" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
-        <SelectCombobox
-          value={staged.draft.statusFilter}
-          onChange={(e) => staged.setDraft({ statusFilter: e.target.value })}
-        >
-          <option value="">All statuses</option>
-          <option value="draft">Draft</option>
-          <option value="active">Active</option>
-          <option value="fully_recognized">Fully Recognized</option>
-          <option value="voided">Voided</option>
-        </SelectCombobox>
+      <CollapsedListFilters activeFilterCount={statusFilter.length ? 1 : 0} testIdPrefix="revrec" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
+        <MultiSelectDropdown
+          label="Status"
+          options={statusOptions({ "draft": "Draft", "active": "Active", "fully_recognized": "Fully Recognized", "voided": "Voided" })}
+          selected={staged.draft.statusFilter}
+          onChange={(next) => staged.setDraft({ statusFilter: next })}
+          allLabel="All statuses"
+          data-testid="revrec-status-filter"
+        />
       </CollapsedListFilters>
       <span className="text-xs text-gray-500">
         {total.toLocaleString()} contract{total !== 1 ? "s" : ""}

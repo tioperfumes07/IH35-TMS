@@ -18,8 +18,9 @@ import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/Combobox";
 import { useUrlSort } from "../../hooks/useUrlSort";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { statusOptions } from "../../lib/statusListParams";
 
 const fmtCents = (c: number) => formatUsdCents(c);
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
@@ -339,8 +340,9 @@ export function PrepaidExpensesPage() {
   const operatingCompanyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [statusFilter, setStatusFilter] = useState("");
-  const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: "" }, onApply: (next) => { setStatusFilter(next.statusFilter); setOffset(0); } });
+  // U12 (owner UI register 2026-10-03) — status is a multi-select (same component as every list); none = all.
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: [] as string[] }, onApply: (next) => { setStatusFilter(next.statusFilter); setOffset(0); } });
   const [offset, setOffset] = useState(0);
   const [detailId, setDetailId] = useState<string | null>(searchParams.get("asset_id"));
   const [showCreate, setShowCreate] = useState(false);
@@ -369,7 +371,7 @@ export function PrepaidExpensesPage() {
 
   const listQuery = useQuery({
     queryKey: ["prepaid-expenses", operatingCompanyId, statusFilter, offset],
-    queryFn: () => getPrepaidExpenses({ operating_company_id: operatingCompanyId, status: statusFilter || undefined, limit, offset }),
+    queryFn: () => getPrepaidExpenses({ operating_company_id: operatingCompanyId, status: statusFilter, limit, offset }),
     enabled: Boolean(selectedCompanyId),
   });
   const { data, isPending, isFetching, isError } = listQuery;
@@ -439,16 +441,15 @@ export function PrepaidExpensesPage() {
 
   const filterBar = (
     <div className="flex flex-wrap gap-2 items-center" data-prepaid-filter-toolbar="collapsed">
-      <CollapsedListFilters activeFilterCount={statusFilter ? 1 : 0} testIdPrefix="prepaid" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
-        <SelectCombobox
-          value={staged.draft.statusFilter}
-          onChange={(e) => staged.setDraft({ statusFilter: e.target.value })}
-        >
-          <option value="">All statuses</option>
-          <option value="active">Active</option>
-          <option value="fully_amortized">Fully Amortized</option>
-          <option value="voided">Voided</option>
-        </SelectCombobox>
+      <CollapsedListFilters activeFilterCount={statusFilter.length ? 1 : 0} testIdPrefix="prepaid" onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
+        <MultiSelectDropdown
+          label="Status"
+          options={statusOptions({ "active": "Active", "fully_amortized": "Fully Amortized", "voided": "Voided" })}
+          selected={staged.draft.statusFilter}
+          onChange={(next) => staged.setDraft({ statusFilter: next })}
+          allLabel="All statuses"
+          data-testid="prepaid-status-filter"
+        />
       </CollapsedListFilters>
       <span className="text-xs text-gray-500">
         {total.toLocaleString()} asset{total !== 1 ? "s" : ""}

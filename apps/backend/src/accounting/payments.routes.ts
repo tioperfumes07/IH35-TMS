@@ -35,7 +35,11 @@ const idParamsSchema = z.object({
 });
 
 const listQuerySchema = companyQuerySchema.extend({
-  status: z.enum(["active", "voided", "all"]).default("active"),
+  // U12 — multi-select: ?status=a&status=b (one value still accepted); absent = active (unchanged default).
+  status: z
+    .union([z.enum(["active", "voided", "all"]), z.array(z.enum(["active", "voided", "all"]))])
+    .optional()
+    .transform((v) => (v === undefined ? ["active" as const] : Array.isArray(v) ? v : [v])),
   customer_id: z.string().uuid().optional(),
   payment_method: paymentMethodSchema.optional(),
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -251,8 +255,10 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
       const where: string[] = ["p.operating_company_id = $1::uuid"];
       const values: unknown[] = [q.operating_company_id];
 
-      if (q.status === "active") where.push("p.voided_at IS NULL");
-      if (q.status === "voided") where.push("p.voided_at IS NOT NULL");
+      // Active and Voided together (or All, or nothing picked) = every payment.
+      const wantActive = q.status.includes("active");
+      const wantVoided = q.status.includes("voided");
+      if (!q.status.includes("all") && wantActive !== wantVoided) where.push(wantActive ? "p.voided_at IS NULL" : "p.voided_at IS NOT NULL");
       if (q.customer_id) {
         values.push(q.customer_id);
         where.push(`p.customer_id = $${values.length}`);

@@ -32,6 +32,8 @@ import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { RegisterInlineEditPanel } from "./RegisterInlineEditPanel";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { statusOptions } from "../../lib/statusListParams";
 
 const fmtCents = (cents: number) => formatUsdCents(cents);
 
@@ -269,7 +271,8 @@ export function AccountRegisterPage() {
   const [typeLabel, setTypeLabel] = useState("");
   // B-1 ORDERS filter chips: status (✓ blank/C/R) + payee — client-side on the period report.
   const [payeeFilter, setPayeeFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"" | "blank" | "C" | "R">("");
+  // U12 (owner UI register 2026-10-03) — the ✓ status filter is a multi-select; none picked = every row.
+  const [statusFilter, setStatusFilter] = useState<Array<"blank" | "C" | "R">>([]);
   // B-1c — controlled expand so Cancel can collapse the inline edit panel.
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
   // ROUND 83 RULING 1 (owner, verbatim: "I DO NOT LIKE TO SEE THE ACCOUNT NUMBERS SHOWING
@@ -372,7 +375,7 @@ export function AccountRegisterPage() {
     setSearch("");
     setTypeLabel("");
     setPayeeFilter("");
-    setStatusFilter("");
+    setStatusFilter([]);
     setFilterOpen(false);
   };
 
@@ -381,10 +384,7 @@ export function AccountRegisterPage() {
     if (typeLabel) chips.push({ key: "type", label: `Type: ${typeLabel}`, clear: () => setTypeLabel("") });
     if (search.trim()) chips.push({ key: "search", label: `Search: ${search.trim()}`, clear: () => setSearch("") });
     if (payeeFilter.trim()) chips.push({ key: "payee", label: `Payee: ${payeeFilter.trim()}`, clear: () => setPayeeFilter("") });
-    if (statusFilter === "blank") chips.push({ key: "status", label: "✓: blank", clear: () => setStatusFilter("") });
-    else if (statusFilter === "C" || statusFilter === "R") {
-      chips.push({ key: "status", label: `✓: ${statusFilter}`, clear: () => setStatusFilter("") });
-    }
+    if (statusFilter.length) chips.push({ key: "status", label: `✓: ${statusFilter.join(", ")}`, clear: () => setStatusFilter([]) });
     return chips;
   }, [typeLabel, search, payeeFilter, statusFilter]);
 
@@ -393,9 +393,10 @@ export function AccountRegisterPage() {
     const payeeQ = payeeFilter.trim().toLowerCase();
     return rows.filter((r) => {
       if (payeeQ && !(r.payee ?? "").toLowerCase().includes(payeeQ)) return false;
-      if (statusFilter === "blank" && (r.reconcile_status === "C" || r.reconcile_status === "R")) return false;
-      if (statusFilter === "C" && r.reconcile_status !== "C") return false;
-      if (statusFilter === "R" && r.reconcile_status !== "R") return false;
+      if (statusFilter.length) {
+        const rowStatus = r.reconcile_status === "C" || r.reconcile_status === "R" ? r.reconcile_status : "blank";
+        if (!statusFilter.includes(rowStatus)) return false;
+      }
       return true;
     });
   }, [report?.rows, payeeFilter, statusFilter]);
@@ -806,17 +807,14 @@ export function AccountRegisterPage() {
               </label>
               <label className="mb-2 flex flex-col gap-1 text-xs font-semibold text-gray-600" data-b1-filter-status="1">
                 ✓ status
-                <SelectCombobox
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter((e.target.value || "") as "" | "blank" | "C" | "R")}
-                  className={inputCls}
+                <MultiSelectDropdown
+                  label="✓ status"
+                  options={statusOptions({ "blank": "Blank", "C": "C (cleared)", "R": "R (reconciled)" })}
+                  selected={statusFilter}
+                  onChange={(next) => setStatusFilter(next as Array<"blank" | "C" | "R">)}
+                  allLabel="All"
                   data-testid="b1-register-filter-status"
-                >
-                  <option value="">All</option>
-                  <option value="blank">Blank</option>
-                  <option value="C">C (cleared)</option>
-                  <option value="R">R (reconciled)</option>
-                </SelectCombobox>
+                />
               </label>
               {/* ROUND 83 RULING 1 (owner, verbatim: "IN FILTERS ADD OPTION TO SHOW") — same
                   global toggle as Chart of Accounts, exposed locally too. */}

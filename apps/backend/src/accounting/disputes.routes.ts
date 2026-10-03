@@ -19,7 +19,8 @@ const settlementIdParamsSchema = z.object({ settlementId: z.string().uuid() });
 
 const queueQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
-  status: z.string().trim().min(1).optional(),
+  // U12 — multi-select: ?status=a&status=b (one value still accepted).
+  status: z.union([z.string().trim().min(1), z.array(z.string().trim().min(1))]).optional(),
   driver_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),

@@ -15,6 +15,7 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { getRevenueLeakage } from "./revenue-leakage.service.js";
+import { statusListCondition, statusListParam } from "../lib/status-list.js";
 
 const POST_FLAG = "REVENUE_RECOGNITION_POST_ENABLED";
 
@@ -23,7 +24,8 @@ function accountingRoles(role: string) {
 }
 
 const listQuerySchema = companyQuerySchema.extend({
-  status: z.enum(["draft", "active", "fully_recognized", "voided"]).optional(),
+  // U12 — multi-select: ?status=a&status=b (one value still accepted).
+  status: statusListParam(["draft", "active", "fully_recognized", "voided"] as const),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -190,7 +192,11 @@ async function registerRevenueRecognitionRoutes(app: FastifyInstance) {
       const conds = ["rc.operating_company_id = $1::uuid", "rc.is_active = true"];
       const params: unknown[] = [operating_company_id];
       let pi = 2;
-      if (status) { conds.push(`rc.status = $${pi++}`); params.push(status); }
+      const statusCond = statusListCondition("rc.status", status, (v) => {
+        params.push(v);
+        return `$${pi++}`;
+      });
+      if (statusCond) conds.push(statusCond);
       const where = conds.join(" AND ");
 
       const countRes = await client.query(

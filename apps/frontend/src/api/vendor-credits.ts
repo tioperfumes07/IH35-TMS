@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import { appendStatusList } from "../lib/statusListParams";
 
 export type VendorCreditStatus = "open" | "applied" | "voided";
 
@@ -46,11 +47,11 @@ export function listVendorCredits(
   operatingCompanyId: string,
   // R-102-B item 5 — "active" is a backend-recognized pseudo-status meaning "exclude voided"
   // (open/applied are both live states); see vendor-credits.routes.ts's listQuerySchema.
-  params: { vendor_id?: string; status?: VendorCreditStatus | "active" }
+  params: { vendor_id?: string; status?: VendorCreditStatus | "active" | ReadonlyArray<VendorCreditStatus | "active"> }
 ): Promise<{ credits: VendorCredit[]; voided_count?: number }> {
   const qs = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (params.vendor_id) qs.set("vendor_id", params.vendor_id);
-  if (params.status) qs.set("status", params.status);
+  appendStatusList(qs, "status", params.status);
   return apiRequest<{ credits: VendorCredit[]; voided_count?: number }>(`/api/v1/accounting/vendor-credits?${qs.toString()}`);
 }
 

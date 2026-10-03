@@ -1,30 +1,32 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { approveAbandonmentChargeback, listAbandonmentChargebacks, type AbandonmentChargebackRow } from "../../api/abandonment";
+import { approveAbandonmentChargeback, listAbandonmentChargebacks, type AbandonmentChargebackRow, type AbandonmentStatusFilter } from "../../api/abandonment";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { SelectCombobox } from "../../components/Combobox";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatDateUS } from "../../lib/formatDate";
 import { settlementLabel } from "../../lib/settlementNumber";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { statusOptions } from "../../lib/statusListParams";
 
 export function AbandonmentQueuePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
-  const [status, setStatus] = useState<"pending" | "all">("pending");
-  const staged = useStagedListFilters({ applied: { status }, empty: { status: "pending" as const }, onApply: (next) => setStatus(next.status) });
+  // U12 (owner UI register 2026-10-03) — status is a multi-select; default Pending; none picked = every status.
+  const [status, setStatus] = useState<string[]>(["pending"]);
+  const staged = useStagedListFilters({ applied: { status }, empty: { status: ["pending"] as string[] }, onApply: (next) => setStatus(next.status) });
 
   const listQuery = useQuery({
     queryKey: ["abandonment-chargebacks", companyId, status],
-    queryFn: () => listAbandonmentChargebacks({ operating_company_id: companyId, status }),
+    queryFn: () => listAbandonmentChargebacks({ operating_company_id: companyId, status: status as AbandonmentStatusFilter[] }),
     enabled: Boolean(companyId),
   });
 
@@ -133,15 +135,19 @@ export function AbandonmentQueuePage() {
         loading={listQuery.isPending || (listQuery.isFetching && rows.length === 0)}
         filterBar={
           <CollapsedListFilters
-            activeFilterCount={status !== "pending" ? 1 : 0}
+            activeFilterCount={status.length === 1 && status[0] === "pending" ? 0 : 1}
             onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}
             testIdPrefix="abandonment"
             dataAttributes={{ "data-abandonment-filter-toolbar": "collapsed" }}
           >
-            <SelectCombobox className="h-9 rounded-sm border border-gray-300 px-2 text-xs" value={staged.draft.status} onChange={(e) => staged.setDraft({ status: e.target.value as typeof status })}>
-              <option value="pending">Pending</option>
-              <option value="all">All</option>
-            </SelectCombobox>
+            <MultiSelectDropdown
+              label="Status"
+              options={statusOptions({ "pending": "Pending", "approved": "Approved", "disputed": "Disputed", "applied": "Applied", "reversed": "Reversed" })}
+              selected={staged.draft.status}
+              onChange={(next) => staged.setDraft({ status: next })}
+              allLabel="All statuses"
+              data-testid="abandonment-status-filter"
+            />
           </CollapsedListFilters>
         }
         storageKey="abandonment-queue"

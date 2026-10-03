@@ -70,10 +70,12 @@ export type QboReconAlert = {
   notified_at: string | null;
 };
 
-function qs(params: Record<string, string | number | undefined>): string {
+function qs(params: Record<string, string | number | readonly string[] | undefined>): string {
   const sp = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
-    if (v !== undefined && v !== "") sp.set(k, String(v));
+    // U12 — a list (multi-select status) repeats the key.
+    if (Array.isArray(v)) for (const item of v) sp.append(k, String(item));
+    else if (v !== undefined && v !== "") sp.set(k, String(v));
   }
   const s = sp.toString();
   return s ? `?${s}` : "";
@@ -87,7 +89,7 @@ export function getQboReconcileOverview(operatingCompanyId: string): Promise<Qbo
 
 export function getQboModifyCaptures(args: {
   operating_company_id: string;
-  status?: string;
+  status?: string | readonly string[];
   entity_type?: string;
   limit?: number;
   offset?: number;

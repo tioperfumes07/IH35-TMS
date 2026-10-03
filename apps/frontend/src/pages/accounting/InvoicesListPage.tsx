@@ -133,23 +133,21 @@ export function invoiceFactoredBadge(row: Pick<Invoice, "factoring_status" | "fa
 
 function invoiceFilterFromSearchParams(searchParams: URLSearchParams): {
   customerId: string;
-  status: InvoiceListFilter;
+  statuses: string[];
   hasBalance: boolean;
+  notSent: boolean;
 } {
+  // U12 (owner UI register 2026-10-03) — status is a multi-select: ?status= repeats; "With balance" (has_balance) and
+  // "Not sent" (not_sent) are their own toggles, not statuses. No status param = Active (FLT-03: lists open live, voided
+  // hidden); status=all = every status.
   const customerId = searchParams.get("customer_id") ?? "";
-  const hasBalanceParam = searchParams.get("has_balance") === "true";
-  const statusRaw = searchParams.get("status") ?? "";
-  // Legacy deep-link status=with_balance → treat as has_balance (UI still shows "With balance").
-  const hasBalance = hasBalanceParam || statusRaw === "with_balance";
-  let status: InvoiceListFilter = "active";
-  if (hasBalance) status = "with_balance";
-  else if (statusRaw === "not_sent") status = "not_sent";
-  else if (statusRaw === "active") status = "active";
-  else if (statusRaw === "posted") status = "posted";
-  else if (statusRaw === "all") status = "";
-  else if (isRealInvoiceStatus(statusRaw)) status = statusRaw;
-  else if (statusRaw === "") status = "";
-  return { customerId, status, hasBalance };
+  const raw = searchParams.getAll("status").map((s) => s.trim()).filter(Boolean);
+  // Legacy deep-links status=with_balance / status=not_sent keep working.
+  const hasBalance = searchParams.get("has_balance") === "true" || raw.includes("with_balance");
+  const notSent = searchParams.get("not_sent") === "true" || raw.includes("not_sent");
+  const picked = raw.filter((s) => s === "active" || s === "posted" || isRealInvoiceStatus(s));
+  const statuses = raw.includes("all") ? [] : picked.length === 0 && !raw.some((s) => s === "with_balance" || s === "not_sent") ? ["active"] : picked;
+  return { customerId, statuses, hasBalance, notSent };
 }
 
 export function InvoicesListPage() {
@@ -168,7 +166,7 @@ export function InvoicesListPage() {
   const [batchId, setBatchId] = useState("");
   // Bidirectional URL sync: customer_id / status / has_balance are searchParams-driven so
   // same-route updates and browser back/forward stay truthful (no local-only stale seed).
-  const { customerId, status, hasBalance } = invoiceFilterFromSearchParams(searchParams);
+  const { customerId, statuses, hasBalance, notSent } = invoiceFilterFromSearchParams(searchParams);
   // ACCT-F5049 — reverse Open Invoices keeps source_load_id (listInvoices already filters).
   const deepLinkSourceLoadId = searchParams.get("source_load_id");
   const [search, setSearch] = useState("");
@@ -179,6 +177,14 @@ export function InvoicesListPage() {
   // back/forward + reverse-link compatibility (a 2+ selection is a same-page-session refinement,
   // not something an inbound deep link ever names more than one of).
   const [customerFilter, setCustomerFilter] = useState<string[]>(() => (customerId ? [customerId] : []));
+  // U12 — back / forward to a different ?customer_id= re-reads it (the selection was seeded once and went stale). A 2+
+  // selection has no URL form, so an absent customer_id keeps it.
+  useEffect(() => {
+    setCustomerFilter((prev) => {
+      if (customerId) return prev.length === 1 && prev[0] === customerId ? prev : [customerId];
+      return prev.length > 1 ? prev : prev.length === 0 ? prev : [];
+    });
+  }, [customerId]);
   function setCustomerFilterAndUrl(next: string[]) {
     setCustomerFilter(next);
     setSearchParams(
@@ -194,12 +200,16 @@ export function InvoicesListPage() {
 
   // One-shot migrate legacy ?status=with_balance → ?has_balance=true (replace, no history spam).
   useEffect(() => {
-    if (searchParams.get("status") !== "with_balance") return;
+    const legacy = searchParams.getAll("status");
+    if (!legacy.includes("with_balance") && !legacy.includes("not_sent")) return;
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
+        const kept = next.getAll("status").filter((s) => s !== "with_balance" && s !== "not_sent");
         next.delete("status");
-        next.set("has_balance", "true");
+        for (const s of kept) next.append("status", s);
+        if (legacy.includes("with_balance")) next.set("has_balance", "true");
+        if (legacy.includes("not_sent")) next.set("not_sent", "true");
         return next;
       },
       { replace: true }
@@ -220,16 +230,23 @@ export function InvoicesListPage() {
   // LV-INVOICES-FILTER-APPLY-DROPS-FIELDS's own fix already required (a single combined write per
   // call); customer_id moved to setCustomerFilterAndUrl above, its own independent call for the
   // same reason.
-  function applyStatusFilter(next: InvoiceListFilter) {
+  function applyStatusFilters(next: { statuses?: string[]; hasBalance?: boolean; notSent?: boolean }) {
     setSearchParams(
       (prev) => {
         const params = new URLSearchParams(prev);
-        params.delete("status");
-        params.delete("has_balance");
-        if (next === "with_balance") params.set("has_balance", "true");
-        else if (next === "") params.set("status", "all");
-        else if (next === "active") params.set("status", "active");
-        else if (next) params.set("status", next);
+        if (next.statuses) {
+          params.delete("status");
+          if (next.statuses.length === 0) params.set("status", "all");
+          else for (const s of next.statuses) params.append("status", s);
+        }
+        if (next.hasBalance !== undefined) {
+          if (next.hasBalance) params.set("has_balance", "true");
+          else params.delete("has_balance");
+        }
+        if (next.notSent !== undefined) {
+          if (next.notSent) params.set("not_sent", "true");
+          else params.delete("not_sent");
+        }
         return params;
       },
       { replace: true },
@@ -303,7 +320,7 @@ export function InvoicesListPage() {
       "accounting",
       "invoices",
       selectedCompanyId,
-      status,
+      statuses,
       hasBalance,
       customerFilter,
       search,
@@ -317,16 +334,8 @@ export function InvoicesListPage() {
     ],
     queryFn: () =>
       listInvoices(selectedCompanyId!, {
-        status:
-          status === "active"
-            ? "active"
-            : status === "posted"
-              ? "posted"
-            : status === "" || status === "not_sent" || status === "with_balance"
-              ? undefined
-              : isRealInvoiceStatus(status)
-                ? status
-                : undefined,
+        // U12 — every picked status goes to the server (active / posted pseudo-statuses + real ones); none = all.
+        status: statuses,
         has_balance: hasBalance || undefined,
         customer_id: customerParam,
         search: search || undefined,
@@ -347,9 +356,9 @@ export function InvoicesListPage() {
     if (customerFilter.length > 1) all = all.filter((row) => customerFilter.includes(row.customer_id ?? ""));
     // Client-side QBO pseudo-filter only for not_sent (no server contract).
     // with_balance / has_balance is server-filtered before LIMIT — do not re-slice a page.
-    if (status === "not_sent") return all.filter((row) => row.status === "draft" || !row.sent_at);
+    if (notSent) return all.filter((row) => row.status === "draft" || !row.sent_at);
     return all;
-  }, [query.data?.invoices, status, customerFilter]);
+  }, [query.data?.invoices, notSent, customerFilter]);
 
   const listMeta = useMemo(
     () => ({
@@ -553,7 +562,7 @@ export function InvoicesListPage() {
   );
 
   const invoicesActiveFilterCount =
-    (status ? 1 : 0) + customerFilter.length + (fromDate || toDate ? 1 : 0) + (deepLinkSourceLoadId ? 1 : 0);
+    (statuses.length ? 1 : 0) + (hasBalance ? 1 : 0) + (notSent ? 1 : 0) + customerFilter.length + (fromDate || toDate ? 1 : 0) + (deepLinkSourceLoadId ? 1 : 0);
 
   const filterBar = (
     <div className="space-y-2">
@@ -570,7 +579,7 @@ export function InvoicesListPage() {
         searchTestId="invoices-search-input"
         onClearAll={() => {
           setSearch("");
-          applyStatusFilter("active");
+          applyStatusFilters({ statuses: ["active"], hasBalance: false, notSent: false });
           setCustomerFilterAndUrl([]);
           setFromDate("");
           setToDate("");
@@ -592,16 +601,32 @@ export function InvoicesListPage() {
             dataTestId="invoices-filter-load"
           />
         </label>
-        <div>
-          <span className="text-xs text-slate-600">Status</span>
-          <SelectCombobox value={status} onChange={(event) => applyStatusFilter(event.target.value as InvoiceListFilter)} className="mt-1 h-9 rounded-sm border border-gray-300 px-2 text-xs">
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option.label} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </SelectCombobox>
-        </div>
+        <MultiSelectDropdown
+          label="Status"
+          options={STATUS_OPTIONS.filter((o) => o.value !== "" && o.value !== "not_sent" && o.value !== "with_balance").map((o) => ({ value: o.value, label: o.label }))}
+          selected={statuses}
+          onChange={(next) => applyStatusFilters({ statuses: next })}
+          allLabel="All statuses (include voided)"
+          data-testid="invoices-status-filter"
+        />
+        <label className="flex items-center gap-1 text-xs text-slate-600">
+          <input
+            type="checkbox"
+            checked={hasBalance}
+            onChange={(e) => applyStatusFilters({ hasBalance: e.target.checked })}
+            data-testid="invoices-filter-with-balance"
+          />
+          With balance
+        </label>
+        <label className="flex items-center gap-1 text-xs text-slate-600">
+          <input
+            type="checkbox"
+            checked={notSent}
+            onChange={(e) => applyStatusFilters({ notSent: e.target.checked })}
+            data-testid="invoices-filter-not-sent"
+          />
+          Not sent
+        </label>
         {/* A3/FIX-06: options still come from the canonical mdata.customers read
             customerFilterOptions was already built from — same table, now rendered as checkboxes. */}
         <MultiSelectDropdown
@@ -633,7 +658,7 @@ export function InvoicesListPage() {
         </span>
         {/* R-102-B item 5 — owner, ROUND 121: "a list that silently hides is the same class of
             defect as a badge that never renders." */}
-        {status === "active" && typeof listMeta.voidedCount === "number" && listMeta.voidedCount > 0 ? (
+        {statuses.length === 1 && statuses[0] === "active" && typeof listMeta.voidedCount === "number" && listMeta.voidedCount > 0 ? (
           <span className="text-gray-500" data-testid="invoices-voided-count">
             {listMeta.total ?? invoices.length} live, {listMeta.voidedCount} voided (hidden)
           </span>

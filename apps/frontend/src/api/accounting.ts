@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import { appendStatusList } from "../lib/statusListParams";
 
 // ROUND-20.2 — "proforma" added: verified live (Neon tiny-field-89581227, accounting.invoices)
 // this is a real, currently-used status value the prior union never declared; the Round Trips
@@ -498,7 +499,8 @@ export function createManualInvoice(operatingCompanyId: string, payload: Expande
 export function listInvoices(
   operatingCompanyId: string,
   params: {
-    status?: string;
+    /** U12 — one status or several (repeated ?status=); active / posted are server pseudo-statuses. */
+    status?: string | readonly string[];
     search?: string;
     customer_id?: string;
     source_load_id?: string;
@@ -514,7 +516,7 @@ export function listInvoices(
   } = {}
 ) {
   const query = new URLSearchParams();
-  if (params.status) query.set("status", params.status);
+  appendStatusList(query, "status", params.status);
   if (params.search) query.set("search", params.search);
   if (params.customer_id) query.set("customer_id", params.customer_id);
   if (params.source_load_id) query.set("source_load_id", params.source_load_id);
@@ -752,7 +754,7 @@ export function deleteInvoiceLine(invoiceId: string, lineId: string, operatingCo
 export function listPayments(
   operatingCompanyId: string,
   filters: {
-    status?: "active" | "voided" | "all";
+    status?: "active" | "voided" | "all" | ReadonlyArray<"active" | "voided" | "all">;
     customer_id?: string;
     payment_method?: PaymentMethod;
     date_from?: string;
@@ -766,7 +768,7 @@ export function listPayments(
   } = {}
 ) {
   const query = new URLSearchParams();
-  if (filters.status) query.set("status", filters.status);
+  appendStatusList(query, "status", filters.status);
   if (filters.customer_id) query.set("customer_id", filters.customer_id);
   if (filters.payment_method) query.set("payment_method", filters.payment_method);
   if (filters.date_from) query.set("date_from", filters.date_from);
@@ -1671,7 +1673,7 @@ export function listFactoringAdvances(
   operatingCompanyId: string,
   filters: {
     // "active" = any status except voided (GO-23 row16, owner FINISH LAW 2026-09-03).
-    status?: FactoringStatus | "all" | "active";
+    status?: FactoringStatus | "all" | "active" | ReadonlyArray<FactoringStatus | "all" | "active">;
     factoring_company_vendor_id?: string;
     date_from?: string;
     date_to?: string;
@@ -1681,7 +1683,7 @@ export function listFactoringAdvances(
   } = {}
 ) {
   const query = new URLSearchParams();
-  if (filters.status) query.set("status", filters.status);
+  appendStatusList(query, "status", filters.status);
   if (filters.factoring_company_vendor_id) query.set("factoring_company_vendor_id", filters.factoring_company_vendor_id);
   if (filters.date_from) query.set("date_from", filters.date_from);
   if (filters.date_to) query.set("date_to", filters.date_to);
