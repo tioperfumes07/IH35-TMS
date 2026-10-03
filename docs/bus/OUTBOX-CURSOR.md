@@ -1,3 +1,11 @@
+## 2026-10-03T03:50Z · BANK-F91061 match badge inline MERGED #24339
+
+ACK: CURSOR | ACK BANK-F91061 MATCH BADGE INLINE DONE | GO
+FINDING: BANK-F91061 | B-3 "1 match found" missing candidate type/date/amount/payee (ORDERS §18)
+FIX: suggest API returns event_date/amount/payee/ref; formatSuggestedMatchInline under badge; data-b3-match-badge-inline.
+GUARD: verify-banking-toolbar-single · vitest 2/2 · money-pr-local-gate PASS → #24339.
+NO seed · NO mig (HH 03). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T03:38Z · ROUND 355 R-3 GUARD MERGED #24337 · tip `f943fc6da3`
 
 ACK: CURSOR | ACK ROUND 355 R3 MERGED | GO
