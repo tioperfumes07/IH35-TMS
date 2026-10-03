@@ -108,6 +108,13 @@ function runChecks(root = ROOT) {
     const home = fs.readFileSync(homeAbs, "utf8");
     if (home.includes("text-[11px]")) fails.push(`${homeRel}: must not use text-[11px] — use text-xs`);
   }
+  // BANK-F91098 — ORDERS chrome: SubmissionQueue filter labels use text-xs, not text-[11px].
+  const queueRel = "apps/frontend/src/pages/factoring/SubmissionQueue.tsx";
+  const queueAbs = path.join(root, queueRel);
+  if (fs.existsSync(queueAbs)) {
+    const queue = fs.readFileSync(queueAbs, "utf8");
+    if (queue.includes("text-[11px]")) fails.push(`${queueRel}: must not use text-[11px] — use text-xs`);
+  }
   return fails;
 }
 
