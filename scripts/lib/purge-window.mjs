@@ -40,7 +40,8 @@ export const PURGE_WINDOW_GUARDS = Object.freeze([
   "verify-fuel-transactions-per-load",
   "verify-no-empty-zero-settlement",
   "verify-control-totals",
-  "verify-void-is-whole",
+  // verify-void-is-whole REMOVED (Lead ROUND 347, 2026-10-03): it measures documents that exist (ledger vs header), not
+  // an empty table, and under the open-ended seeding freeze it reported EMPTY BY PURGE indefinitely over real findings.
   "verify-settled-load-carries-settled-status",
 ]);
 

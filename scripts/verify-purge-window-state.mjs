@@ -4,7 +4,7 @@
 //
 // The mass void leaves rows in place (#22384; Law 7: nothing is deleted), so the window is read by the
 // STATE of its rows, never by their absence:
-//   STATIC  1. exactly the ten named arms may skip EMPTY BY PURGE, and each still calls the helper
+//   STATIC  1. exactly the nine named arms may skip EMPTY BY PURGE (ROUND 347 removed verify-void-is-whole), and each still calls the helper
 //              (the tenth, verify-settled-load-carries-settled-status, was ruled in with #22467 on 2026-09-23);
 //           2. the three arms that once counted every row count by the generated live_predicate;
 //           3. every generated entry states live_predicate (null stated, never missing);
@@ -33,7 +33,8 @@ const LIVE_ARMS = [
 export function staticViolations({ readScript, spec, state }) {
   const v = [];
   // STALE-LITERAL-OK: ruled arm count — the owner-ruled exemption list size, not a live measurement (tenth arm #22467)
-  if (PURGE_WINDOW_GUARDS.length !== 10) v.push(`the exemption lists ${PURGE_WINDOW_GUARDS.length} arms; exactly 10 are ruled`);
+  // Lead ROUND 347 (2026-10-03) removed verify-void-is-whole from the window: ten -> nine.
+  if (PURGE_WINDOW_GUARDS.length !== 9) v.push(`the exemption lists ${PURGE_WINDOW_GUARDS.length} arms; exactly 9 are ruled (ROUND 347 removed verify-void-is-whole)`);
   for (const arm of PURGE_WINDOW_GUARDS) {
     const src = readScript(arm);
     if (src == null) v.push(`${arm}: file missing`);
@@ -174,4 +175,4 @@ if (violations.length > 0) {
   for (const x of violations) console.error(`  ✗ ${x}`);
   process.exit(1);
 }
-console.log(`${LABEL}: PASS — purge-window state violations: 0 (required 0). Static: 10 arms, 3 on the generated live_predicate, every entry states live_predicate, purge_state.json consistent. Live: ${live.counted.join(", ")}; every voided row carries a reason; no dangling reversal link.`);
+console.log(`${LABEL}: PASS — purge-window state violations: 0 (required 0). Static: ${PURGE_WINDOW_GUARDS.length} arms, 3 on the generated live_predicate, every entry states live_predicate, purge_state.json consistent. Live: ${live.counted.join(", ")}; every voided row carries a reason; no dangling reversal link.`);

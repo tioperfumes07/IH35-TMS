@@ -1996,3 +1996,31 @@ guard's purge window so it FAILS and the load gets a queue number. Not changed h
 **→ OWNER-ATTENTION (unowned, from prod logs 01:30–01:37Z):** `owner/todays-attention/aggregator.service.ts:539` selects
 `maintenance.predictive_alerts.predicted_failure_date`; the column is `projected_failure_date` (42703 on every tick, worker
 and the owner route). Introduced #635 (2026-06-06).
+
+## ROUND 347 — 2c preconditions re-measured by me · the purge window closed for void-is-whole · 13515 handed off
+
+**2c preconditions (prod, bypass=lucia, 2026-10-03 01:56:17Z; catalog reads — RLS cannot mask them):**
+`coi_sync_trigger_still_present = 1` (and the function `insurance.coi_request_sync_operating_company_id` = 1);
+`canonical_factor_agreements_profile_same_entity_fkey (tenant_id, factor_profile_id) → factoring.factor(tenant_id, id)`,
+`canonical_factor_agreements_vendor_same_entity_fkey (tenant_id, factor_vendor_id) → mdata.vendors(operating_company_id, id)`,
+`canonical_factor_agreements_tenant_id_fkey (tenant_id) → org.companies(id)`. **NOT met — 2c HELD.** I will re-measure when
+CC-1 reports, not take the report.
+**Item 4 (the NULL writer):** already fixed and live — #24293 (payment-schedule.routes.ts + refund-obligation.service.ts
+set operating_company_id; fork-proven: old writer RLS-refused, under bypass it wrote opco NULL). It ships again, re-proven,
+with 2c.
+
+**The purge window — what it WAS set to:** `purge_state.json` verified_at = 2026-09-28T04:52:00Z → by the 72-hour rule
+it would have closed **2026-10-01T04:52:00Z**; but `seeding_freeze` (declared 2026-10-01T03:30:00Z, owner verbatim,
+recorded by the Lead; `lifted_at: null`) makes `purgeWindow()` return `expiresAt: null` — open with no expiry. The freeze
+branch was added in a92503c35e (2026-10-01). verify-void-is-whole was the ninth arm (ROUND 117: Direction 1 "transient
+during a void run").
+**What I changed it to:** verify-void-is-whole is REMOVED from PURGE_WINDOW_GUARDS (10 → 9) and no longer calls the
+window helper — a Direction-1 silent void beyond the baseline is a HARD FAIL. The other nine arms are untouched: they
+measure tables that really are empty under the freeze; this guard measures documents that exist. The baseline is NOT
+widened (0 entries). verify-purge-window-exemption + verify-purge-window-state updated ten → nine.
+BEFORE: `EMPTY BY PURGE … 131 NEW Direction-1 silent-void(s)` (exit 75; 130 false — fixed in #24308).
+AFTER: `FAIL — 1 NEW Direction-1 silent-void(s) beyond the 0-violation baseline: loads|1-silent-void|44eae7f5…` (exit 1).
+**13515 handoff:** board row `LOAD-13515-SILENT-VOID-2026100301` (docs/audit/GUARD-WORKORDERS.md), OWNER DISPATCH. Retired
+under AUTH-201 (duplicate billing of 13513) — ledger reversed, header never stamped voided_at / void_reason /
+voided_by_user_id. Not fixed by me (dispatch lane). Gate impact: red for every diff under accounting/ driver-finance/
+factoring/ fuel/ db/migrations/ scripts/purge/ until that row closes.
