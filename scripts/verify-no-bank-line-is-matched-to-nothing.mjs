@@ -77,11 +77,21 @@ const r = await withUnscopedReadOnly(LABEL, async (c) => {
   const present = applied
     ? (await c.query(`SELECT c.relnamespace::regnamespace::text || '.' || c.relname AS t, tg.tgname FROM pg_trigger tg JOIN pg_class c ON c.oid = tg.tgrelid WHERE tg.tgname LIKE 'trg_%' AND tg.tgconstraint <> 0`)).rows.map((x) => `${x.t}|${x.tgname}`)
     : [];
-  return { applied, lines, dead, staleRows, present };
+  // ROUND 373 ordering: the document side may be DISARMED (202615360700) until every void path releases its lines;
+  // the bank-line and match-row refusals must always be ARMED.
+  const disabled = applied
+    ? (await c.query(`SELECT tg.tgname FROM pg_trigger tg WHERE tg.tgconstraint <> 0 AND tg.tgenabled = 'D' AND (tg.tgname LIKE '%_not_dead_under_bank_line' OR tg.tgname LIKE '%_delete_not_under_bank_line' OR tg.tgname IN ('trg_bank_line_not_matched_to_nothing', 'trg_live_match_row_has_a_linked_line'))`)).rows.map((x) => x.tgname)
+    : [];
+  return { applied, lines, dead, staleRows, present, disabled };
 });
 const fails = [
   ...r.dead.map((d) => `${d.n} live line(s) whose ${d.col} names a missing / not-live document (e.g. ${d.ids.join(", ")})`),
   ...(r.staleRows ? [`${r.staleRows} live match row(s) on a released or voided line`] : []),
 ];
 if (r.applied) for (const [t, trg] of expectedTriggers()) if (!r.present.includes(`${t}|${trg}`)) fails.push(`${trg} on ${t} is not installed — a refusal that is not installed is not a refusal`);
+for (const armed of ["trg_bank_line_not_matched_to_nothing", "trg_live_match_row_has_a_linked_line"]) {
+  if ((r.disabled ?? []).includes(armed)) fails.push(`${armed} is DISABLED — the bank-line and match-row refusals must always be armed`);
+}
+const docDisarmed = (r.disabled ?? []).filter((n) => !["trg_bank_line_not_matched_to_nothing", "trg_live_match_row_has_a_linked_line"].includes(n));
+if (docDisarmed.length) console.log(`${LABEL}: DOCUMENT SIDE DISARMED (ROUND 373 ordering, 202615360700) — ${docDisarmed.length} trigger(s) wait for every void path to release its lines: ${docDisarmed.join(", ")}`);
 report(LABEL, fails, `${r.lines} live bank lines (every non-frozen company, bypass=${r.bypass}); ${r.applied ? `0 matched to a missing / not-live document; ${expectedTriggers().length} constraint triggers installed` : "202615360600 not yet applied — dead-link check runs once it is"}; 0 live match rows on a released line`);
