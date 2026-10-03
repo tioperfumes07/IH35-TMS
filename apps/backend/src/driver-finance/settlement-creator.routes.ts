@@ -93,6 +93,10 @@ const draftSchema = z.object({
         card: z.enum(["dreamline", "relay"]),
         load_number: z.string().trim().max(40).nullable().optional(),
         fuel_type: z.enum(["diesel", "def", "reefer_diesel"]).optional(),
+        // ROUND 363-CC2-D — the item, the account and the load, picked at creation (ids, never free text).
+        item_id: z.string().uuid().nullable().optional(),
+        account_id: z.string().uuid().nullable().optional(),
+        load_id: z.string().uuid().nullable().optional(),
       }),
     )
     .default([]),
@@ -106,6 +110,10 @@ const draftSchema = z.object({
         load_number: z.string().trim().max(40).nullable().optional(),
         is_company_expense: z.boolean(),
         is_reimbursable: z.boolean(),
+        // ROUND 363-CC2-D — the item, the account and the load, picked at creation (ids, never free text).
+        item_id: z.string().uuid().nullable().optional(),
+        account_id: z.string().uuid().nullable().optional(),
+        load_id: z.string().uuid().nullable().optional(),
         card: z.enum(["dreamline", "relay"]).nullable().optional(),
       }),
     )

@@ -408,8 +408,8 @@ async function loadSettlementPayItems(
     [operatingCompanyId, settlementId, [...SETTLEMENT_EARNINGS_LINE_TYPES]]
   );
   for (const r of earn.rows) items.push({ kind: "pay", cents: dollarsToCents(r.amount), accountId: accounts.driverPay, loadId: r.load_id, date: r.d, description: r.description || r.line_type.replace(/_/g, " ") });
-  const reimb = await client.query<{ amount: string; reimbursement_type: string | null; load_id: string | null; d: string | null }>(
-    `SELECT ABS(sl.amount)::text AS amount, dr.reimbursement_type, COALESCE(sl.load_id, dr.load_id)::text AS load_id,
+  const reimb = await client.query<{ amount: string; reimbursement_type: string | null; posting_account_id: string | null; load_id: string | null; d: string | null }>(
+    `SELECT ABS(sl.amount)::text AS amount, dr.reimbursement_type, sl.posting_account_id::text AS posting_account_id, COALESCE(sl.load_id, dr.load_id)::text AS load_id,
             COALESCE(dr.posting_date, sl.created_at::date)::text AS d
        FROM driver_finance.settlement_lines sl
        JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
@@ -418,7 +418,8 @@ async function loadSettlementPayItems(
     [operatingCompanyId, settlementId]
   );
   for (const r of reimb.rows) {
-    const acct = await accounts.reimbursementByType(r.reimbursement_type);
+    // ROUND 363-CC2-D — the account picked on the line at creation wins; the type map is the fallback.
+    const acct = r.posting_account_id ?? (await accounts.reimbursementByType(r.reimbursement_type));
     if (!acct) throw new SettlementPayRunError("REIMBURSEMENT_EXPENSE_ACCOUNT_MISSING", `No active reimbursement expense account resolved for type '${r.reimbursement_type ?? "unknown"}'`);
     items.push({ kind: "reimbursement", cents: dollarsToCents(r.amount), accountId: acct, loadId: r.load_id, date: r.d, description: `${r.reimbursement_type ?? "driver"} reimbursement` });
   }

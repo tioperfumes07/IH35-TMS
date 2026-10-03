@@ -118,7 +118,7 @@ export function findReclassifyLines(
   operatingCompanyId: string,
   params: {
     from_date: string; to_date: string; account_ids?: string[]; source_types?: string[]; class_id?: string; entity_uuid?: string; search?: string;
-    item_ids?: string[]; load_ids?: string[]; sort_key?: string; sort_dir?: "asc" | "desc"; limit?: number; offset?: number;
+    item_ids?: string[]; load_ids?: string[]; source_transaction_ids?: string[]; sort_key?: string; sort_dir?: "asc" | "desc"; limit?: number; offset?: number;
   },
 ) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId, from_date: params.from_date, to_date: params.to_date });
@@ -129,6 +129,7 @@ export function findReclassifyLines(
   if (params.search) q.set("search", params.search);
   if (params.item_ids?.length) q.set("item_ids", params.item_ids.join(","));
   if (params.load_ids?.length) q.set("load_ids", params.load_ids.join(","));
+  if (params.source_transaction_ids?.length) q.set("source_transaction_ids", params.source_transaction_ids.join(","));
   if (params.sort_key) q.set("sort_key", params.sort_key);
   if (params.sort_dir) q.set("sort_dir", params.sort_dir);
   if (params.limit != null) q.set("limit", String(params.limit));

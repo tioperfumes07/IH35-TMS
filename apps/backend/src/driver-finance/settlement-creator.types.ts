@@ -57,6 +57,10 @@ export type SettlementCreatorFuelLine = {
   card: SettlementCreatorFuelCard;
   load_number?: string | null;
   fuel_type?: "diesel" | "def" | "reefer_diesel";
+  /** ROUND 363-CC2-D — picked at creation. The account wins over the item's default; load_id wins over load_number. */
+  item_id?: string | null;
+  account_id?: string | null;
+  load_id?: string | null;
 };
 
 export type SettlementCreatorExpenseLine = {
@@ -70,6 +74,10 @@ export type SettlementCreatorExpenseLine = {
   /** PDF flag Reimb. (Drv) — paid back on driver settlement; never Cr 1000 cash. */
   is_reimbursable: boolean;
   card?: SettlementCreatorFuelCard | null;
+  /** ROUND 363-CC2-D — picked at creation. The account wins over the item's default; load_id wins over load_number. */
+  item_id?: string | null;
+  account_id?: string | null;
+  load_id?: string | null;
 };
 
 export type SettlementCreatorMoneyLine = {

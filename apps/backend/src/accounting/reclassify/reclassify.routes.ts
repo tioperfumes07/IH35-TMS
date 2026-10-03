@@ -46,12 +46,12 @@ export async function registerAccountingReclassifyRoutes(app: FastifyInstance) {
       operating_company_id: z.string().uuid(), from_date: DATE, to_date: DATE,
       account_ids: z.string().optional(), source_types: z.string().optional(), class_id: z.string().uuid().optional(), entity_uuid: z.string().uuid().optional(),
       search: z.string().max(200).optional(), limit: z.coerce.number().int().min(1).max(500).optional(), offset: z.coerce.number().int().min(0).optional(),
-      item_ids: z.string().optional(), load_ids: z.string().optional(),
+      item_ids: z.string().optional(), load_ids: z.string().optional(), source_transaction_ids: z.string().optional(),
       sort_key: z.string().max(20).optional(), sort_dir: z.enum(["asc", "desc"]).optional(),
     }).safeParse(req.query ?? {});
     if (!q.success) return validationError(reply, q.error);
     await assertCompanyMembership(user.uuid, q.data.operating_company_id);
-    const out = await findReclassifyLines(user.uuid, { ...q.data, account_ids: csv(q.data.account_ids), source_types: csv(q.data.source_types), item_ids: csv(q.data.item_ids), load_ids: csv(q.data.load_ids) });
+    const out = await findReclassifyLines(user.uuid, { ...q.data, account_ids: csv(q.data.account_ids), source_types: csv(q.data.source_types), item_ids: csv(q.data.item_ids), load_ids: csv(q.data.load_ids), source_transaction_ids: csv(q.data.source_transaction_ids) });
     return reply.send(out);
   });
 

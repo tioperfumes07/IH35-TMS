@@ -80,6 +80,7 @@ import {
   resolveCompanyDirectCreditPreference,
 } from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/poster.service.js";
+import { resolveLineItemAndAccount } from "../accounting/line-item-account.js";
 
 export type QueryableClient = {
   query: <T = Record<string, unknown>>(
@@ -98,6 +99,9 @@ export type FuelExpenseDocumentInput = {
   requesting_user_uuid?: string | null;
   /** Dry run: resolve and validate everything, write nothing, report what would happen. */
   dry_run?: boolean;
+  /** ROUND 363-CC2-D — the item / account picked on the wizard line; absent = the fuel-type item map. */
+  item_id?: string | null;
+  account_id?: string | null;
 };
 
 // R-169 fix 2 — fuel.fuel_transactions.fuel_type CHECK: 'diesel' | 'def' | 'gas' | 'reefer_diesel' |
@@ -148,6 +152,28 @@ async function resolveFuelItem(
     return { refused: `fuel_type "${fuelType}" has no mapped catalogs.items entry — refusing rather than posting to a default (only diesel/def/reefer_diesel are mapped)` };
   }
   return resolveItemByName(client, operatingCompanyId, itemName);
+}
+
+/**
+ * ROUND 363-CC2-D — the account a fuel line WILL post to, for a preview: the same rule createExpenseFromFuelTransaction
+ * applies (the picked item / account, else the fuel-type item's account). One rule, so a preview cannot disagree with
+ * the post (it used to show company_fuel_advance_expense / 5000 while the post used the item's account).
+ */
+export async function resolveFuelLineAccount(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  line: { fuel_type?: string | null; item_id?: string | null; account_id?: string | null },
+): Promise<{ account_id: string; account_number: string | null; account_name: string | null } | { refused: string }> {
+  const picked = await resolveLineItemAndAccount(client, operatingCompanyId, line);
+  if (picked && "refused" in picked) return picked;
+  if (picked) return { account_id: picked.account_id, account_number: picked.account_number, account_name: picked.account_name };
+  const mapped = await resolveFuelItem(client, operatingCompanyId, line.fuel_type ?? "diesel");
+  if ("refused" in mapped) return mapped;
+  const a = await client.query<{ account_number: string | null; account_name: string | null }>(
+    `SELECT account_number, account_name FROM catalogs.accounts WHERE id = $1::uuid`,
+    [mapped.expenseAccountId],
+  );
+  return { account_id: mapped.expenseAccountId, account_number: a.rows[0]?.account_number ?? null, account_name: a.rows[0]?.account_name ?? mapped.itemName };
 }
 
 /** resolveFeeItem — the "Fuel Card Fee" item, resolved by name exactly like resolveFuelItem.
@@ -278,10 +304,20 @@ export async function createExpenseFromFuelTransaction(
   // missing catalog item instead of writing a document that would later fail the ledger rule
   // "a GL-posted expense's lines must sum to its total" (measured live: R-167 had to hand-add 6
   // lines this class of gap left behind).
-  const fuelItem = await resolveFuelItem(client, input.operating_company_id, fuel.fuel_type);
-  if ("refused" in fuelItem) {
-    return { outcome: "refused", reason: `fuel transaction ${fuel.id}: ${fuelItem.refused}` };
+  // ROUND 363-CC2-D — an item / account the user picked on the line wins (resolveLineItemAndAccount, the one resolver
+  // every wizard line and its preview use); with no pick, the fuel-type item map below stays the default.
+  const picked = await resolveLineItemAndAccount(client, input.operating_company_id, { item_id: input.item_id, account_id: input.account_id });
+  if (picked && "refused" in picked) {
+    return { outcome: "refused", reason: `fuel transaction ${fuel.id}: ${picked.refused}` };
   }
+  const mapped = picked?.item_id ? null : await resolveFuelItem(client, input.operating_company_id, fuel.fuel_type);
+  if (mapped && "refused" in mapped) {
+    return { outcome: "refused", reason: `fuel transaction ${fuel.id}: ${mapped.refused}` };
+  }
+  const fuelItem = {
+    itemId: picked?.item_id ?? mapped!.itemId,
+    expenseAccountId: picked?.account_id ?? mapped!.expenseAccountId,
+  };
 
   // Cents is the authoritative spine everywhere in this codebase; the legacy numeric column
   // mirrors it in dollars. Rounding happens once, here, not at three call sites.
