@@ -5,7 +5,6 @@ import {
   createTransfer,
   getAllAccounts,
   listIntercompanyPairs,
-  markBankTransactionTransfer,
   type TransferAccountKind,
 } from "../../api/banking";
 import { Button } from "../../components/Button";
@@ -159,7 +158,7 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
         });
         pushToast("Intercompany transfer recorded (both entity legs)", "success");
       } else {
-        const created = await createTransfer(operatingCompanyId, {
+        await createTransfer(operatingCompanyId, {
           transfer_type: "bank_to_bank",
           from_account_id: fromAccountId,
           from_account_kind: "bank" as TransferAccountKind,
@@ -168,22 +167,18 @@ export function TransferModal({ open, operatingCompanyId, onClose, onSaved, pref
           amount_cents: amountCents,
           transfer_date: transferDate,
           memo: memo.trim() || undefined,
+          // ROUND 360 — linkBankTransactionId is the bank-feed row for the OUTGOING leg: the transfer is created, the
+          // line linked and the JE posted in ONE request, so Undo on that line can remove what it created.
+          ...(linkBankTransactionId
+            ? {
+                from_bank_line: {
+                  bank_transaction_id: linkBankTransactionId,
+                  destination_bank_account_id: toAccountId,
+                  transfer_kind: "out" as const,
+                },
+              }
+            : {}),
         });
-        if (linkBankTransactionId) {
-          try {
-            // linkBankTransactionId is the bank-feed row for the OUTGOING leg (money leaving fromAccountId);
-            // tag it as an inter-account transfer to toAccountId so bank-feed GL posting skips it.
-            // existing_transfer_id: the ledger row was ALREADY minted above — this call must only LINK
-            // (matched_transfer_id), never mint a second banking.transfers row (BANK-ECON-03).
-            await markBankTransactionTransfer(linkBankTransactionId, operatingCompanyId, {
-              destination_bank_account_id: toAccountId,
-              transfer_kind: "out",
-              existing_transfer_id: created.transfer.id,
-            });
-          } catch {
-            /* optional — the createTransfer ledger entry above is the source of truth either way */
-          }
-        }
         pushToast("Transfer recorded", "success");
       }
       onSaved();

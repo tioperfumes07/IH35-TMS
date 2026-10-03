@@ -463,7 +463,7 @@ export async function commitSplit(
       // categorized_at / re-fire the parent's own downstream effects every time).
       await client.query(
         `UPDATE banking.bank_transactions
-         SET status = 'split', category = 'split_transaction', category_kind = 'split_transaction',
+         SET status = 'split', resolution_kind = 'split', category = 'split_transaction', category_kind = 'split_transaction',
              categorized_at = now(), updated_at = now()
          WHERE id = $1 AND operating_company_id = $2::uuid AND status <> 'split'`,
         [bankTransactionId, companyId]

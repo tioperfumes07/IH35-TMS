@@ -5,7 +5,6 @@ import {
   createTransfer,
   getAllAccounts,
   getCoaAccounts,
-  markBankTransactionTransfer,
   type TransferAccountKind,
   type TransferType,
 } from "../../api/banking";
@@ -216,6 +215,9 @@ export function RecordTransferModal({
     if (!valid) return;
     setSaving(true);
     try {
+      // ROUND 360 — a Bank<->Bank transfer recorded from a bank-feed row is created, linked and posted in ONE request.
+      const bankToBankFromLine =
+        Boolean(linkBankTransactionId) && transferType === "bank_to_bank" && fromAccountKind === "bank" && toAccountKind === "bank";
       const response = await createTransfer(operatingCompanyId, {
         transfer_type: transferType,
         from_account_id: fromAccountId,
@@ -226,11 +228,20 @@ export function RecordTransferModal({
         transfer_date: transferDate,
         memo: memo.trim() || undefined,
         reference_number: referenceNumber.trim() || undefined,
+        ...(bankToBankFromLine && linkBankTransactionId
+          ? {
+              from_bank_line: {
+                bank_transaction_id: linkBankTransactionId,
+                destination_bank_account_id: seedAccountSide === "to" ? fromAccountId : toAccountId,
+                transfer_kind: seedAccountSide === "to" ? ("in" as const) : ("out" as const),
+              },
+            }
+          : {}),
       });
       pushToast(`Transfer recorded (${response.transfer.id})`, "success");
       // Best-effort: link the originating bank-feed row so it clears "for review".
       // Bank<->CoA legs use /categorize (gl_account_id = catalogs.accounts id).
-      // Bank<->Bank legs use markBankTransactionTransfer → POST …/transfer (TransferModal parity).
+      // Bank<->Bank legs ride createTransfer's from_bank_line (ROUND 360 — one request, one transaction).
       if (linkBankTransactionId) {
         const coaSideId = fromAccountKind === "coa" ? fromAccountId : toAccountKind === "coa" ? toAccountId : null;
         if (coaSideId) {
@@ -243,21 +254,8 @@ export function RecordTransferModal({
           } catch {
             // Best-effort only — the transfer itself already posted; leave the row for manual review.
           }
-        } else if (transferType === "bank_to_bank" && fromAccountKind === "bank" && toAccountKind === "bank") {
-          try {
-            const destinationBankAccountId = seedAccountSide === "to" ? fromAccountId : toAccountId;
-            const transferKind = seedAccountSide === "to" ? "in" : "out";
-            // existing_transfer_id: the ledger row was ALREADY minted above — this call must only LINK
-            // (matched_transfer_id), never mint a second banking.transfers row (BANK-ECON-03).
-            await markBankTransactionTransfer(linkBankTransactionId, operatingCompanyId, {
-              destination_bank_account_id: destinationBankAccountId,
-              transfer_kind: transferKind,
-              existing_transfer_id: response.transfer.id,
-            });
-          } catch {
-            // Best-effort only — createTransfer ledger entry above is source of truth.
-          }
         }
+        // Bank<->Bank: linked inside createTransfer above (from_bank_line), same transaction.
       }
       onSaved();
       onClose();

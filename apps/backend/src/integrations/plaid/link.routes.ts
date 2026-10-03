@@ -715,6 +715,8 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
           -- status='categorized' or review_state='excluded' still rendered as "For review" forever.
           bt.status,
           bt.review_state,
+          bt.review_bucket,
+          bt.resolution_kind,
           bt.is_credit,
           bt.matched_load_id,
           matched_load.load_number AS matched_load_number,

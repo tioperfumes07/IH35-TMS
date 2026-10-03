@@ -799,6 +799,36 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-relay-fuel-webhook-receiver",
     ["apps/backend/src/integrations/relay-payments/", "apps/backend/src/index.ts", "scripts/verify-relay-fuel-webhook-receiver.mjs"],
   ],
+  // ROUND 360 — the bank feed state machine: three tabs, kind + live link, undo removes what it created, unmatch
+  // breaks the link only (document back in the match pool), match posts nothing, every transition one transaction.
+  [
+    "verify-bank-line-buckets-are-the-three-tabs",
+    ["db/migrations/202615350600_bank_feed_bucket_and_kind.sql", "apps/backend/src/banking/", "apps/backend/src/accounting/bank-recon/", "apps/backend/src/factoring/faro-reserve-entries.service.ts", "apps/backend/src/integrations/plaid/link.routes.ts", "scripts/lib/bank-feed-state-machine.mjs", "scripts/verify-bank-line-buckets-are-the-three-tabs.mjs"],
+  ],
+  [
+    "verify-categorized-has-a-document",
+    ["db/migrations/202615350600_bank_feed_bucket_and_kind.sql", "apps/backend/src/banking/", "apps/backend/src/accounting/bank-recon/", "apps/backend/src/factoring/faro-reserve-entries.service.ts", "apps/backend/src/integrations/plaid/link.routes.ts", "scripts/lib/bank-feed-state-machine.mjs", "scripts/verify-categorized-has-a-document.mjs"],
+  ],
+  [
+    "verify-for-review-has-no-document",
+    ["db/migrations/202615350600_bank_feed_bucket_and_kind.sql", "apps/backend/src/banking/", "apps/backend/src/accounting/bank-recon/", "apps/backend/src/factoring/faro-reserve-entries.service.ts", "apps/backend/src/integrations/plaid/link.routes.ts", "scripts/lib/bank-feed-state-machine.mjs", "scripts/verify-for-review-has-no-document.mjs"],
+  ],
+  [
+    "verify-undo-leaves-no-document-behind",
+    ["db/migrations/202615350600_bank_feed_bucket_and_kind.sql", "apps/backend/src/banking/", "apps/backend/src/accounting/bank-recon/", "apps/backend/src/factoring/faro-reserve-entries.service.ts", "apps/backend/src/integrations/plaid/link.routes.ts", "scripts/lib/bank-feed-state-machine.mjs", "scripts/verify-undo-leaves-no-document-behind.mjs"],
+  ],
+  [
+    "verify-unmatched-document-is-matchable-again",
+    ["db/migrations/202615350600_bank_feed_bucket_and_kind.sql", "apps/backend/src/banking/", "apps/backend/src/accounting/bank-recon/", "apps/backend/src/factoring/faro-reserve-entries.service.ts", "apps/backend/src/integrations/plaid/link.routes.ts", "scripts/lib/bank-feed-state-machine.mjs", "scripts/verify-unmatched-document-is-matchable-again.mjs"],
+  ],
+  [
+    "verify-match-posts-nothing",
+    ["db/migrations/202615350600_bank_feed_bucket_and_kind.sql", "apps/backend/src/banking/", "apps/backend/src/accounting/bank-recon/", "apps/backend/src/factoring/faro-reserve-entries.service.ts", "apps/backend/src/integrations/plaid/link.routes.ts", "scripts/lib/bank-feed-state-machine.mjs", "scripts/verify-match-posts-nothing.mjs"],
+  ],
+  [
+    "verify-undo-is-single-transaction",
+    ["db/migrations/202615350600_bank_feed_bucket_and_kind.sql", "apps/backend/src/banking/", "apps/backend/src/accounting/bank-recon/", "apps/backend/src/factoring/faro-reserve-entries.service.ts", "apps/backend/src/integrations/plaid/link.routes.ts", "scripts/lib/bank-feed-state-machine.mjs", "scripts/verify-undo-is-single-transaction.mjs"],
+  ],
   // KILL THE SECOND SYSTEM — settlement deduction balance is derived from its settlement lines (CC-2).
   [
     "verify-settlement-deduction-balance-derived",

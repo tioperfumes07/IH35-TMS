@@ -390,7 +390,10 @@ function hasPersistedMatch(tx: PlaidBankTransaction) {
 // `status === 'categorized'` are now checked FIRST, directly; the matched_kind-based checks stay as
 // a fallback only for older rows this account's history may still carry from before those two
 // columns existed on this endpoint's SELECT.
+// ROUND 360 — the tabs read review_bucket, the database's own three-value bucket. The heuristics below remain only for
+// a row with no bucket (a frozen company's unwritten rows).
 function looksExcludedTx(tx: PlaidBankTransaction) {
+  if (tx.review_bucket) return tx.review_bucket === "excluded";
   return (
     tx.review_state === "excluded" ||
     String(tx.matched_kind ?? "").toLowerCase() === "excluded" ||
@@ -399,6 +402,7 @@ function looksExcludedTx(tx: PlaidBankTransaction) {
 }
 
 function looksCategorizedTx(tx: PlaidBankTransaction) {
+  if (tx.review_bucket) return tx.review_bucket === "categorized";
   return (
     tx.status === "categorized" ||
     hasPersistedMatch(tx) ||
@@ -468,15 +472,18 @@ export function categorizedProvenanceText(tx: PlaidBankTransaction): string | nu
   }
 
   const kinds = (tx.matched_kinds ?? []).map((k) => String(k).toLowerCase()).filter(Boolean);
-  if (kinds.includes("split") || String(tx.matched_kind ?? "").toLowerCase() === "split") {
+  if (tx.resolution_kind === "split" || kinds.includes("split") || String(tx.matched_kind ?? "").toLowerCase() === "split") {
     return "-Split-";
   }
 
   const dateLabel = formatBankTransactionDate(tx.categorized_at ?? tx.transaction_date);
-  const review = String(tx.review_state ?? "").toLowerCase();
+  // ROUND 360 — resolution_kind says how the line got here; review_state is only a compatibility echo now.
+  if (tx.resolution_kind === "transfer") return docs[0] ? `Transfer: ${docs[0].label}` : "Transfer";
+  const review = tx.resolution_kind ? (tx.resolution_kind === "matched" ? "matched" : "categorized") : String(tx.review_state ?? "").toLowerCase();
   const isAdded =
+    tx.resolution_kind === "added" ||
     review === "categorized" ||
-    (tx.status === "categorized" && review !== "matched" && review !== "transfer");
+    (!tx.resolution_kind && tx.status === "categorized" && review !== "matched" && review !== "transfer");
 
   if (docs.length >= 2) {
     // Distinct document families (expense+bill, etc.) — not expense+its JE.
@@ -554,6 +561,9 @@ export const TRANSACTION_TYPE_FILTER_OPTIONS = [
   { id: "rules", label: "Rules" },
   { id: "missing_from_to", label: "Missing From/To" },
   { id: "uncategorized", label: "Uncategorized" },
+  // ROUND 360 — the matched view is a FILTER over resolution_kind inside Categorized, never a fourth tab.
+  { id: "resolution_added", label: "Action: Added" },
+  { id: "resolution_matched", label: "Action: Matched" },
   { id: "requests_waiting_reply", label: "Requests: Waiting For Reply" },
   { id: "requests_reply_received", label: "Requests: Reply Received" },
   { id: "requests_completed", label: "Requests: Completed" },
@@ -707,6 +717,10 @@ export function matchesTransactionTypeFilter(type: string, tx: PlaidBankTransact
       return !String(tx.merchant_name ?? tx.description ?? "").trim();
     case "uncategorized":
       return !tx.matched_kind && !hasPersistedMatch(tx);
+    case "resolution_added":
+      return tx.resolution_kind === "added";
+    case "resolution_matched":
+      return tx.resolution_kind === "matched";
     case "requests_waiting_reply":
       return String(tx.notes ?? "").toLowerCase().includes("waiting for reply");
     case "requests_reply_received":

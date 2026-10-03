@@ -189,6 +189,7 @@ export async function postFaroRsvDepositsOnPaymentMatch(
           SET matched_journal_entry_id = COALESCE(matched_journal_entry_id, $1::uuid),
               matched_payment_id = COALESCE(matched_payment_id, $4::uuid),
               review_state = CASE WHEN review_state = 'matched' THEN review_state ELSE 'matched' END,
+              resolution_kind = COALESCE(bt.resolution_kind, 'added'), -- ROUND 360: this JE was created for the line
               reviewed_at = COALESCE(reviewed_at, now()),
               updated_at = now()
          FROM accounting.faro_reserve_entries e
