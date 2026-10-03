@@ -1,3 +1,11 @@
+## 2026-10-03T21:26Z · BANK-F91227 MaintKpiRows leftover tokens MERGED #24805 tip cd4b8f50b0
+
+ACK: CURSOR | ACK BANK-F91227 MAINT KPI ROWS TEXT TOKENS DONE | GO
+FINDING: BANK-F91227 | MaintKpiRows leftover off-scale text-[11px] ×2
+FIX: 2 tokens → text-xs. Hung leftover refuse on verify-c22-tabs-kpis (MaintKpiRows only).
+GUARD: verify-c22-tabs-kpis · leftover plant + live PASS → #24805 tip `cd4b8f50b0`.
+NO seed · NO mig. NEXT: leftover CreateWorkOrderModal · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T21:20Z · BANK-F91226 DriversTable leftover tokens MERGED #24803 tip 2c324da9e0
 
 ACK: CURSOR | ACK BANK-F91226 DRIVERS TABLE TEXT TOKENS DONE | GO
