@@ -24,6 +24,7 @@ import { EntityPicker } from "../../components/EntityPicker";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 
 import { formatUsdCents } from "../../lib/money";
+import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -82,7 +83,9 @@ export function APAgingPage() {
     const day0_30 = rows.reduce((s, r) => s + r.current_cents + r.bucket_1_30_cents, 0);
     const day31_60 = rows.reduce((s, r) => s + r.bucket_31_60_cents, 0);
     const day61p = rows.reduce((s, r) => s + r.bucket_61_90_cents + r.bucket_91_plus_cents, 0);
-    return { total, day0_30, day31_60, day61p };
+    const cleared = rows.reduce((s, r) => s + r.cleared_open_cents, 0);
+    const uncleared = rows.reduce((s, r) => s + r.uncleared_cents, 0);
+    return { total, day0_30, day31_60, day61p, cleared, uncleared };
   }, [rows]);
 
   const minCents = appliedFilters.minBal.trim() === "" ? 0 : Math.round(Number(appliedFilters.minBal) * 100) || 0;
@@ -178,6 +181,8 @@ export function APAgingPage() {
     () => [
       { key: "vendor_name", label: "Vendor", sortable: true, render: (r) => <EntityLink kind="vendor" id={r.vendor_id} label={entityLabel(r.vendor_name, r.vendor_id, "Vendor")} className="font-medium text-gray-900" onClick={(event) => event.stopPropagation()} /> },
       { key: "total_open_cents", label: "Total", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.total_open_cents) },
+      { key: "cleared_open_cents", label: "Cleared", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.cleared_open_cents) },
+      { key: "uncleared_cents", label: "Not cleared", sortable: true, render: (r) => <UnclearedDocumentsNote docs={r.uncleared_documents} /> },
       { key: "bucket_0_30_cents", label: "0–30", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_0_30_cents) },
       { key: "bucket_31_60_cents", label: "31–60", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_31_60_cents) },
       { key: "bucket_61_90_cents", label: "61–90", sortable: true, className: "text-right", cellClass: "text-right", render: (r) => money(r.bucket_61_90_cents) },
@@ -318,10 +323,20 @@ export function APAgingPage() {
         </label>
       </ReportFilterBar>
 
-      <div className="grid gap-2 md:grid-cols-4">
+      {kpis.uncleared > 0 ? (
+        <p className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-slate-700">
+          Cleared {money(kpis.cleared)}. Applied payments that have not been matched or categorized in Banking are named not cleared beside each vendor.
+        </p>
+      ) : null}
+
+      <div className="grid gap-2 md:grid-cols-5">
         <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
           <div className="text-section-header font-semibold uppercase text-gray-500">Total owed</div>
           <div className="text-page-title font-semibold">{money(kpis.total)}</div>
+        </div>
+        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
+          <div className="text-section-header font-semibold uppercase text-gray-500">Cleared</div>
+          <div className="text-page-title font-semibold">{money(kpis.cleared)}</div>
         </div>
         <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
           <div className="text-section-header font-semibold uppercase text-gray-500">0–30 days</div>
