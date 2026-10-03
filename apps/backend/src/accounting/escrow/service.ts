@@ -101,10 +101,9 @@ export async function openEscrow(
           holder_type,
           purpose,
           coa_account_id,
-          balance_cents,
           status
         )
-        VALUES ($1::uuid,$2::uuid,$3,$4,$5::uuid,0,'active')
+        VALUES ($1::uuid,$2::uuid,$3,$4,$5::uuid,'active')
         RETURNING
           id::text,
           operating_company_id::text,
@@ -112,7 +111,7 @@ export async function openEscrow(
           holder_type::text,
           purpose::text,
           coa_account_id::text,
-          0::bigint AS balance_cents,
+          0::bigint AS balance_cents, -- a new escrow has no postings yet; the balance is its 2100-00-nnn GL
           status::text,
           created_at::text,
           updated_at::text

@@ -7,11 +7,12 @@
  * LIVE (fails closed without a database), every company, under the bypass:
  *   1. no driver_finance.escrow_balances row with current_balance_cents < 0
  *   2. no driver_finance.escrow_balances row with total_released_cents > total_held_cents
- *   3. no driver accounting.escrow_accounts row with balance_cents < 0
+ *   3. (retired 2026-10-03 with accounting.escrow_accounts.balance_cents — the GL rule below is the same fact)
  *   4. no driver escrow GL sub-account (accounting.escrow_accounts.coa_account_id, holder driver) with a DEBIT balance
  * STATIC:
- *   5. the last migration touching each (re)creates the three refusals: trg_refuse_escrow_over_release,
- *      trg_refuse_driver_escrow_account_negative, and the DEFERRABLE trg_refuse_driver_escrow_gl_debit_balance.
+ *   5. the last migration touching each (re)creates the refusals trg_refuse_escrow_over_release and the DEFERRABLE
+ *      trg_refuse_driver_escrow_gl_debit_balance; trg_refuse_driver_escrow_account_negative (on the stored column) is
+ *      retired by 202615380000 and must stay DROPPED.
  *
  * DEBT — shrink-only, every entry named and reasoned. A new over-released driver fails; an entry that no longer
  * violates FAILS too ("remove it so the ceiling drops") — a debt list that cannot shrink is not a ratchet.
@@ -41,8 +42,14 @@ export const CEILING = Object.keys(DEBT).length;
 const stripSql = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--[^\n]*/g, "");
 const TRIGGERS = [
   ["trg_refuse_escrow_over_release", /CREATE\s+TRIGGER\s+trg_refuse_escrow_over_release\s+BEFORE\s+INSERT\s+OR\s+UPDATE[^;]*ON\s+driver_finance\.escrow_balances/i],
-  ["trg_refuse_driver_escrow_account_negative", /CREATE\s+TRIGGER\s+trg_refuse_driver_escrow_account_negative\s+BEFORE\s+INSERT\s+OR\s+UPDATE[^;]*ON\s+accounting\.escrow_accounts/i],
   ["trg_refuse_driver_escrow_gl_debit_balance", /CREATE\s+CONSTRAINT\s+TRIGGER\s+trg_refuse_driver_escrow_gl_debit_balance\s+AFTER\s+INSERT\s+OR\s+UPDATE[^;]*ON\s+accounting\.journal_entry_postings\s+DEFERRABLE\s+INITIALLY\s+DEFERRED/i],
+];
+
+/** KILL THE SECOND SYSTEM table 1 (202615380000): refusals on the stored escrow_accounts.balance_cents died with the
+ *  column; the GL refusals (trg_refuse_driver_escrow_gl_debit_balance, trg_driver_escrow_gl_never_negative) own the fact.
+ *  The last migration touching each must DROP it, so it can never come back. */
+const RETIRED = [
+  ["trg_refuse_driver_escrow_account_negative", /DROP\s+TRIGGER\s+IF\s+EXISTS\s+trg_refuse_driver_escrow_account_negative\s+ON\s+accounting\.escrow_accounts/i],
 ];
 
 export function staticFailures({ files, read }) {
@@ -52,6 +59,11 @@ export function staticFailures({ files, read }) {
     let hit = null;
     for (const f of sorted) { const s = stripSql(read(f)); if (new RegExp(name, "i").test(s)) hit = { f, s }; }
     if (!hit || !shape.test(hit.s)) out.push(`RULE 5: ${hit?.f ?? "no migration"} — ${name} must be (re)created with its full shape by the last migration touching it.`);
+  }
+  for (const [name, dropped] of RETIRED) {
+    let hit = null;
+    for (const f of sorted) { const s = stripSql(read(f)); if (new RegExp(name, "i").test(s)) hit = { f, s }; }
+    if (hit && !dropped.test(hit.s)) out.push(`RULE 5: ${hit.f} — ${name} was retired with accounting.escrow_accounts.balance_cents; the last migration touching it must DROP it.`);
   }
   return out;
 }
@@ -79,7 +91,7 @@ async function measure(client) {
   await client.query("SELECT set_config('app.bypass_rls', 'lucia', true)");
   const { rows } = await client.query(`
     WITH acct AS (
-      SELECT ea.id AS ea_id, ea.holder_id, ea.operating_company_id, ea.balance_cents, ea.coa_account_id,
+      SELECT ea.id AS ea_id, ea.holder_id, ea.operating_company_id, ea.coa_account_id,
              c.code || ':' || a.account_number AS key
         FROM accounting.escrow_accounts ea
         JOIN catalogs.accounts a ON a.id = ea.coa_account_id
@@ -94,8 +106,8 @@ async function measure(client) {
       FROM driver_finance.escrow_balances eb JOIN acct ON acct.holder_id = eb.driver_id AND acct.operating_company_id = eb.operating_company_id
      WHERE eb.total_released_cents > eb.total_held_cents
     UNION ALL
-    SELECT key, 'NEGATIVE_ESCROW_ACCOUNT', 'escrow_accounts.balance_cents=' || balance_cents FROM acct WHERE balance_cents < 0
-    UNION ALL
+    -- (rule 3, a stored accounting.escrow_accounts.balance_cents below zero, died with the column — KILL THE SECOND
+    -- SYSTEM table 1, migration 202615380000; the GL rule below is the same fact read from the books)
     SELECT acct.key, 'GL_DEBIT_BALANCE', 'GL net debit ' || sum(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END) || ' cents'
       FROM acct JOIN accounting.journal_entry_postings p ON p.account_id = acct.coa_account_id
       JOIN accounting.journal_entries j ON j.id = p.journal_entry_uuid AND j.status = 'posted'

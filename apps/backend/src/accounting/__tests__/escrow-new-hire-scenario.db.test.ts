@@ -128,7 +128,7 @@ run("stage-3 · new-hire driver escrow (real engine)", () => {
     const credit = legs.find((r:any)=>r.debit_or_credit==="credit");
     expect(credit.account_type).toBe("Liability");
 
-    const [bal] = await read(`SELECT balance_cents::text AS balance_cents FROM accounting.escrow_accounts WHERE id=$1::uuid`, [escrowAccountId]);
+    const [bal] = await read(`SELECT COALESCE((SELECT balance_cents FROM driver_finance.v_driver_escrow_balance WHERE escrow_account_id=$1::uuid), 0)::text AS balance_cents`, [escrowAccountId]);
     expect(Number(bal.balance_cents)).toBe(DEPOSIT_CENTS);
   });
 
@@ -137,7 +137,7 @@ run("stage-3 · new-hire driver escrow (real engine)", () => {
       { operating_company_id: companyId, escrow_account_id: escrowAccountId, amount_cents: RELEASE_CENTS, source_type: "manual" as never, note: "TEST DATA — partial escrow return" },
       actor
     );
-    const [bal] = await read(`SELECT balance_cents::text AS balance_cents FROM accounting.escrow_accounts WHERE id=$1::uuid`, [escrowAccountId]);
+    const [bal] = await read(`SELECT COALESCE((SELECT balance_cents FROM driver_finance.v_driver_escrow_balance WHERE escrow_account_id=$1::uuid), 0)::text AS balance_cents`, [escrowAccountId]);
     expect(Number(bal.balance_cents)).toBe(DEPOSIT_CENTS - RELEASE_CENTS);
 
     const legs = await read(`
@@ -155,7 +155,7 @@ run("stage-3 · new-hire driver escrow (real engine)", () => {
       actor
     )).rejects.toThrow();
 
-    const [after] = await read(`SELECT balance_cents::text AS balance_cents FROM accounting.escrow_accounts WHERE id=$1::uuid`, [escrowAccountId]);
+    const [after] = await read(`SELECT COALESCE((SELECT balance_cents FROM driver_finance.v_driver_escrow_balance WHERE escrow_account_id=$1::uuid), 0)::text AS balance_cents`, [escrowAccountId]);
     expect(Number(after.balance_cents)).toBe(DEPOSIT_CENTS - RELEASE_CENTS);
     expect(Number(after.balance_cents)).toBeGreaterThanOrEqual(0);
   });

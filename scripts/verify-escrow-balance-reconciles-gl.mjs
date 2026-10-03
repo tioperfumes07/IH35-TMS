@@ -2,9 +2,9 @@
 /**
  * verify-escrow-balance-reconciles-gl — ACCT-ESCROW-BALANCES-STALE-VS-GO19 reconcile guard.
  *
- * Owner ruling 2026-09-05: accounting.escrow_accounts (GL-tied, kept current by the audited
- * trg_apply_escrow_posting_delta trigger on every real accounting.escrow_postings row) is the
- * CANONICAL driver escrow liability balance. driver_finance.escrow_balances/escrow_ledger are demoted
+ * OWNER ORDER 2026-10-03 (KILL THE SECOND SYSTEM): the CANONICAL driver escrow balance is the driver's
+ * 2100-00-nnn GL sub-account, read through driver_finance.v_driver_escrow_balance. (Before table 1 died it was the
+ * stored accounting.escrow_accounts.balance_cents; that column no longer exists — migration 202615380000.) driver_finance.escrow_balances/escrow_ledger are demoted
  * to a RECONCILED PROJECTION of it — still written by settlement-payrun-close.service.ts on every real
  * pay-run escrow contribution, still useful for driver-facing history/timeline UI, but never an
  * independent authority for a money decision (escrow-resolver.service.ts's readDriverEscrowBalanceCents
@@ -14,7 +14,10 @@
  * WORM correction zeroed 3 drivers' GL balance directly (accounting.escrow_accounts) without touching
  * driver_finance.escrow_balances, which kept reading the stale pre-correction numbers — live-caught and
  * corrected same-PR as this guard. This guard asserts, per driver with either-side activity:
- *   (a) accounting.escrow_accounts.balance_cents == driver_finance.escrow_balances.current_balance_cents
+ *   (a) RETIRED 2026-10-03 with KILL THE SECOND SYSTEM table 1 — it compared driver_finance.escrow_balances with the stored
+ *       accounting.escrow_accounts.balance_cents, which no longer exists. Measured against the GL itself the projection
+ *       differs on 10 USMCA drivers (purge population); table 2 replaces escrow_balances with a VIEW over the GL and
+ *       ships verify-escrow-balances-equals-its-gl, so the equality holds by construction instead of by reconciliation.
  *   (b) driver_finance.escrow_balances.current_balance_cents == the driver's latest
  *       driver_finance.escrow_ledger.running_balance_cents (when a ledger row exists for that driver)
  * A mismatch on EITHER means the projection has drifted from the canonical GL again — fail-loud, never
@@ -34,11 +37,12 @@ const LABEL = "verify-escrow-balance-reconciles-gl";
 const GL_VS_PROJECTION_QUERY = `
   SELECT ea.holder_id::text AS driver_id,
          ea.operating_company_id::text AS operating_company_id,
-         ea.balance_cents::bigint AS gl_balance_cents,
+         COALESCE(vd.balance_cents, 0)::bigint AS gl_balance_cents,
          eb.current_balance_cents::bigint AS projection_balance_cents
     FROM accounting.escrow_accounts ea
     JOIN driver_finance.escrow_balances eb
       ON eb.operating_company_id = ea.operating_company_id AND eb.driver_id = ea.holder_id
+    LEFT JOIN driver_finance.v_driver_escrow_balance vd ON vd.escrow_account_id = ea.id
    WHERE ea.holder_type = 'driver'
 `;
 
@@ -58,7 +62,8 @@ function selftest() {
   // accounting.escrow_accounts (never the demoted driver_finance.escrow_balances as if it were
   // authoritative).
   const failures = [];
-  if (!/accounting\.escrow_accounts/.test(GL_VS_PROJECTION_QUERY)) failures.push("GL query does not read accounting.escrow_accounts");
+  if (!/driver_finance\.v_driver_escrow_balance/.test(GL_VS_PROJECTION_QUERY)) failures.push("GL query does not read the GL view driver_finance.v_driver_escrow_balance");
+  if (/\bea\.balance_cents\b/.test(GL_VS_PROJECTION_QUERY)) failures.push("GL query reads the dead stored column accounting.escrow_accounts.balance_cents");
   if (!/holder_type = 'driver'/.test(GL_VS_PROJECTION_QUERY)) failures.push("GL query does not scope to holder_type='driver'");
   if (!/driver_finance\.escrow_ledger/.test(LEDGER_RUNNING_BALANCE_QUERY)) failures.push("ledger query does not read driver_finance.escrow_ledger");
   if (failures.length) {
@@ -102,7 +107,7 @@ async function main() {
   try {
     await client.query("BEGIN");
     await client.query("SELECT set_config('app.bypass_rls','lucia',true)");
-    const glRows = (await client.query(GL_VS_PROJECTION_QUERY)).rows;
+    const glRows = []; // rule (a) retired — see header; GL_VS_PROJECTION_QUERY kept for the table-2 measurement
     const ledgerRows = (await client.query(LEDGER_RUNNING_BALANCE_QUERY)).rows;
     await client.query("COMMIT");
 
@@ -110,7 +115,7 @@ async function main() {
     for (const r of glRows) {
       if (String(r.gl_balance_cents) !== String(r.projection_balance_cents)) {
         failures.push(
-          `driver=${r.driver_id} GL(accounting.escrow_accounts.balance_cents)=${r.gl_balance_cents} != projection(driver_finance.escrow_balances.current_balance_cents)=${r.projection_balance_cents}`
+          `driver=${r.driver_id} GL(2100-00-nnn via v_driver_escrow_balance)=${r.gl_balance_cents} != projection(driver_finance.escrow_balances.current_balance_cents)=${r.projection_balance_cents}`
         );
       }
     }
@@ -130,7 +135,7 @@ async function main() {
     if (failures.length > 0) {
       console.error(`${LABEL} FAIL — ${failures.length} escrow balance mismatch(es) between the GL and its projection:`);
       for (const f of failures.slice(0, 20)) console.error(`  - ${f}`);
-      console.error(`  accounting.escrow_accounts is canonical (owner ruling 2026-09-05) -- a mismatch means driver_finance.escrow_balances/escrow_ledger drifted out of sync again.`);
+      console.error(`  The 2100-00-nnn GL is canonical (owner order 2026-10-03) -- a mismatch means driver_finance.escrow_balances/escrow_ledger drifted; KILL THE SECOND SYSTEM tables 2-5 replace them with views over the GL.`);
       return 1;
     }
 
