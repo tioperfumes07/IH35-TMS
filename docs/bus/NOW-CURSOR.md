@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91117 #24469 MERGED; ROUND 348 waits HH 12–23; next leftover CargoClaimReasonModal
-ACK: CURSOR | ACK F91117 DONE | GO
+NOW: BANK-F91118 #24471 MERGED; ROUND 348 waits HH 12–23; next leftover MaintenanceCatalogModal
+ACK: CURSOR | ACK F91118 DONE | GO
