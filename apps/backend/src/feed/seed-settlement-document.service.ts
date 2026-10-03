@@ -71,6 +71,7 @@ import { postFactoringAdvanceEvent } from "../accounting/factoring-posting/poste
 import { generateExpenseNumber } from "../expense-attribution/expense-number.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { resolveSettlementPdfItem, SettlementPdfItemError } from "../catalogs/settlement-pdf-item-map.js";
+import { findLiveFuelByProviderTransactionId, FuelProviderTransactionDuplicateError } from "../fuel/fuel-provider-reference.js";
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────
 // TYPES — truth-JSON shape (data/alwaystrack/settlements-truth-2026-09-13.json), verbatim field
@@ -930,6 +931,16 @@ async function seedFuel(
   if (existing.rows[0]) return { fuelTransactionId: existing.rows[0].id, postedAt: line.date, amountCents: line.amountCents };
 
   const vendorId = await resolveByName(client, "mdata.vendors", "vendor_name", operatingCompanyId, line.vendor).catch(() => null);
+
+  // ROUND 367.2 — the hash above carries the LOAD, so it cannot see the same AlwaysTrack invoice printed on a second
+  // driver's settlement for another load (99530579, 1848853, 99794138 were recorded and posted twice that way). The
+  // provider's transaction ID is the key: the same purchase on the same load is this re-run; on another load it is
+  // refused by name, never recorded twice and never silently merged.
+  const sameProviderTxn = await findLiveFuelByProviderTransactionId(client, { operatingCompanyId, vendorId, reference: line.invoice });
+  if (sameProviderTxn) {
+    if (sameProviderTxn.load_id === loadId) return { fuelTransactionId: sameProviderTxn.id, postedAt: line.date, amountCents: line.amountCents };
+    throw new FuelProviderTransactionDuplicateError(String(line.invoice).trim(), sameProviderTxn.id, sameProviderTxn.load_number);
+  }
   const { city: locationCity, state: locationState } = sanitizeFuelLocation(line.location);
 
   // ROUND 143.3 — linkage written at creation, not backfilled. Every fuel transaction carries

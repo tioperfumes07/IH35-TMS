@@ -817,6 +817,15 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-list-count-matches-its-own-banner-count",
     ["apps/frontend/src/pages/accounting/ExpensesListPage.tsx", "apps/backend/src/accounting/expenses.routes.ts", "scripts/verify-list-count-matches-its-own-banner-count.mjs"],
   ],
+  // ROUND 367.2 / 367.8 — one provider transaction is one fuel purchase: writers refuse it by name, the database refuses it.
+  [
+    "verify-fuel-expense-is-unique-per-provider-transaction",
+    ["apps/backend/src/fuel/", "apps/backend/src/feed/seed-settlement-document.service.ts", "apps/backend/src/driver-finance/settlement-creator.service.ts", "apps/backend/src/integrations/relay-payments/", "db/migrations/202615370600_fuel_purchase_unique_per_provider_transaction.sql", "scripts/verify-fuel-expense-is-unique-per-provider-transaction.mjs"],
+  ],
+  [
+    "verify-duplicate-expense-is-refused-or-ruled-never-silent",
+    ["apps/backend/src/fuel/", "apps/backend/src/feed/seed-settlement-document.service.ts", "apps/backend/src/driver-finance/settlement-creator.service.ts", "apps/backend/src/integrations/relay-payments/", "db/migrations/202615370600_fuel_purchase_unique_per_provider_transaction.sql", "scripts/verify-duplicate-expense-is-refused-or-ruled-never-silent.mjs"],
+  ],
   // ROUND 368.2(b) — a bank line may not sit matched to nothing (deferred constraint triggers, both sides).
   [
     "verify-no-bank-line-is-matched-to-nothing",
