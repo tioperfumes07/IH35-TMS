@@ -1827,6 +1827,11 @@
       "claimed_at": "2026-10-03",
       "purpose": "Dispatch D3: row audit (audit.tg_audit_row) on the 28 unaudited dispatch tables + FORCE ROW LEVEL SECURITY on dispatch.manual_delivery_authorizations"
     },
+    "202615330931": {
+      "claimed_by": "CC-3",
+      "claimed_at": "2026-10-03",
+      "purpose": "ROUND 363-CC3-A: refuse a load-born posting (resolver names a load) or a load-born document (from_load invoice, driver bill, revenue-recognition posting, load charge line) written with a NULL load"
+    },
     "202615330930": {
       "claimed_by": "CC-3",
       "claimed_at": "2026-10-03",
