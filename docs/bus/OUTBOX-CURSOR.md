@@ -1,3 +1,11 @@
+## 2026-10-03T20:05Z · BANK-F91210 UnifiedContractCreatorModal leftover tokens MERGED #24751 tip aa88346b57
+
+ACK: CURSOR | ACK BANK-F91210 CONTRACT MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91210 | UnifiedContractCreatorModal leftover off-scale text-[11px] ×1
+FIX: 1 token → text-xs. Hung leftover refuse on verify-contract-creator-no-silent-driver-roster.
+GUARD: verify-contract-creator-no-silent-driver-roster · leftover plant + live PASS → #24751 tip `aa88346b57`.
+NO seed · NO mig. NEXT: leftover VehicleProfilePage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T20:08Z · BANK-F91209 FuelPlannerHome leftover tokens MERGED #24748 tip 4fc1d0bb74
 
 ACK: CURSOR | ACK BANK-F91209 FUEL PLANNER TEXT TOKENS DONE | GO
