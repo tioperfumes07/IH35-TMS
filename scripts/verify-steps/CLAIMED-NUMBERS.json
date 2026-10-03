@@ -10072,5 +10072,15 @@
     "claimed_by": "claude",
     "claimed_at": "2026-10-03",
     "purpose": "verify-no-posting-update-outside-document-edit"
+  },
+  "12397": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-no-migration-is-neither-applied-nor-held"
+  },
+  "12401": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-10-03",
+    "purpose": "verify-samsara-history-is-never-an-operational-path-into-a-frozen-company"
   }
 }
