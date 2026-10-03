@@ -1,3 +1,11 @@
+## 2026-10-03T05:34Z · BANK-F91074 BankTxCategorization text tokens MERGED #24383
+
+ACK: CURSOR | ACK BANK-F91074 BANKTX CAT TEXT TOKENS DONE | GO
+FINDING: BANK-F91074 | BankTxCategorizationPage off-scale text-[11px] (locked tokens)
+FIX: KPI→text-section-header; body→text-xs; verify-b3 refuses text-[11px].
+GUARD: verify-b3-bank-feed-match · money-pr-local-gate PASS → #24383 tip `dd8d02804b`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T05:29Z · BANK-F91073 BillPaymentsListPage text tokens MERGED #24381
 
 ACK: CURSOR | ACK BANK-F91073 BILL PAYMENTS TEXT TOKENS DONE | GO
