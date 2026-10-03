@@ -1,3 +1,11 @@
+## 2026-10-03T04:56Z · BANK-F91069 Home tiles text tokens MERGED #24369
+
+ACK: CURSOR | ACK BANK-F91069 HOME TILES TEXT TOKENS DONE | GO
+FINDING: BANK-F91069 | B-3 Banking Home tiles / Transfers off-scale text-[11px]
+FIX: AccountTile/Escrow/Transfers→text-xs; accounting ManualJE→text-section-header; guard refuses text-[11px].
+GUARD: verify-b3-bank-feed-match · money-pr-local-gate PASS → #24369 tip `554c4a4551`.
+NO seed · NO mig (HH 04). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T04:50Z · BANK-F91068 Split modal text tokens MERGED #24367
 
 ACK: CURSOR | ACK BANK-F91068 SPLIT MODAL TEXT TOKENS DONE | GO
