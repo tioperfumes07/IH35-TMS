@@ -584,7 +584,7 @@ export function ComplaintsTab() {
               + Create
             </button>
           </div>
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs">
             {missingFields.length > 0 ? (
               <span className="text-slate-500">Add {missingFields.join(", ")} to file this complaint.</span>
             ) : (
@@ -595,7 +595,7 @@ export function ComplaintsTab() {
             </Link>
           </div>
           {createErrorCurrent ? (
-            <p className="mt-1 text-[11px] text-red-700">
+            <p className="mt-1 text-xs text-red-700">
               {createMutation.error instanceof ApiError
                 ? String((createMutation.error.data as { error?: string })?.error ?? "Could not file complaint.")
                 : "Could not file complaint."}
@@ -627,7 +627,7 @@ export function ComplaintsTab() {
         hidePager
         filterBar={
           <div className="relative flex flex-wrap items-end gap-2" data-testid="complaints-filters">
-            <label className="text-[11px] text-slate-600">
+            <label className="text-xs text-slate-600">
               Driver
               <EntityPicker
                 kind="driver"
