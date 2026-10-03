@@ -19,7 +19,6 @@ export type CustomerTermsHistoryRow = {
   uuid: string;
   customer_uuid: string;
   operating_company_id: string;
-  tenant_id: string;
   free_time_minutes: number;
   detention_rate_per_hour: string;
   detention_currency: string;
@@ -95,18 +94,16 @@ export async function updateTerms(
       INSERT INTO master_data.customer_terms_history (
         customer_uuid,
         operating_company_id,
-        tenant_id,
         free_time_minutes,
         detention_rate_per_hour,
         detention_currency,
         detention_requires_approval,
         terms_updated_at,
         terms_updated_by_user_uuid
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, now(), $8)
+      ) VALUES ($1, $2, $3, $4, $5, $6, now(), $7)
     `,
     [
       customerUuid,
-      operatingCompanyId,
       operatingCompanyId,
       current.free_time_minutes,
       current.detention_rate_per_hour,
@@ -167,7 +164,6 @@ export async function listTermsHistory(
         uuid::text,
         customer_uuid::text,
         operating_company_id::text,
-        operating_company_id::text AS tenant_id,
         free_time_minutes,
         detention_rate_per_hour::text,
         detention_currency,

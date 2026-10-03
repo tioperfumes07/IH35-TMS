@@ -26,7 +26,7 @@ export async function applyLateFee(scheduleId: string, today: string) {
         WITH candidate AS (
           SELECT
             ps.id,
-            ps.operating_company_id AS tenant_id,
+            ps.operating_company_id,
             ps.amount_cents,
             p.late_fee_pct
           FROM insurance.payment_schedule ps

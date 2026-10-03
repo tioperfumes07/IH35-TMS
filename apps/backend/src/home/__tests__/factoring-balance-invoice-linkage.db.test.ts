@@ -144,7 +144,7 @@ describeIntegration("0280-05 factoring-balance-invoice-linkage (real Postgres)",
     const agreementId = opts.agreementId ?? randomUUID();
     await db.query(
       `INSERT INTO factoring.factor (
-         id, tenant_id, name, advance_rate, fee_rate, reserve_rate, recourse_days, active
+         id, operating_company_id, name, advance_rate, fee_rate, reserve_rate, recourse_days, active
        ) VALUES ($1::uuid,$2::uuid,$3,$4,$5,$6,$7,true)
        ON CONFLICT (id) DO NOTHING`,
       [

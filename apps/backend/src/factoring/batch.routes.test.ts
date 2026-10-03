@@ -29,7 +29,7 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
       rows: [
         {
           id: batchId,
-          tenant_id: String(values?.[0] ?? batchTenant),
+          operating_company_id: String(values?.[0] ?? batchTenant),
           batch_number: String(values?.[1] ?? "BATCH-TEST-001"),
           status: "draft",
           invoice_ids: values?.[2] ?? [],
@@ -60,7 +60,7 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
       rows: [
         {
           id: String(values?.[0] ?? batchId),
-          tenant_id: String(values?.[1] ?? batchTenant),
+          operating_company_id: String(values?.[1] ?? batchTenant),
           batch_number: "BATCH-TEST-001",
           status: "submitted",
           invoice_ids: [invoiceA, invoiceB],
@@ -82,7 +82,7 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
       rows: [
         {
           id: batchId,
-          tenant_id: String(values?.[0] ?? batchTenant),
+          operating_company_id: String(values?.[0] ?? batchTenant),
           batch_number: "BATCH-TEST-001",
           status: "draft",
           invoice_ids: [invoiceA, invoiceB],
@@ -106,7 +106,7 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
       rows: [
         {
           id,
-          tenant_id: String(values?.[1] ?? batchTenant),
+          operating_company_id: String(values?.[1] ?? batchTenant),
           batch_number: "BATCH-TEST-001",
           status: "submitted",
           invoice_ids: [invoiceA, invoiceB],

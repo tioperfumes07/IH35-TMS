@@ -8,7 +8,7 @@ type Queryable = {
 
 export type FactoringBatchRow = {
   id: string;
-  tenant_id: string;
+  operating_company_id: string;
   batch_number: string;
   status: FactoringBatchStatus;
   invoice_ids: string[];
@@ -58,10 +58,10 @@ function toNumber(value: unknown): number {
 }
 
 function mapBatchRow(row: Record<string, unknown>): FactoringBatchRow {
-  const companyId = String(row.operating_company_id ?? row.tenant_id ?? "");
+  const companyId = String(row.operating_company_id ?? "");
   return {
     id: String(row.id),
-    tenant_id: companyId,
+    operating_company_id: companyId,
     batch_number: String(row.batch_number),
     status: String(row.status) as FactoringBatchStatus,
     invoice_ids: Array.isArray(row.invoice_ids) ? row.invoice_ids.map((v) => String(v)) : [],
@@ -199,12 +199,9 @@ export async function createDraftBatch(
 
   const insert = await deps.client.query<Record<string, unknown>>(
     `
-        -- LV-TXN-016: prod RLS on this table gates WITH CHECK on operating_company_id, and the
-        -- column is NULLABLE, so omitting it leaves NULL, the check yields NULL, and the write
-        -- aborts 42501. tenant_id and operating_company_id are the same company id here
-        -- (tenant_id REFERENCES org.companies(id)), so both are written from the same value.
+        -- LV-TXN-016: prod RLS on this table gates WITH CHECK on operating_company_id — the one scope
+        -- column (ROUND 342, NOT NULL) — so it is always written, from $1.
       INSERT INTO factoring.batch (
-        tenant_id,
         operating_company_id,
         batch_number,
         status,
@@ -219,7 +216,6 @@ export async function createDraftBatch(
         factor_id
       )
       VALUES (
-        $1::uuid,
         $1::uuid,
         $2,
         'draft',

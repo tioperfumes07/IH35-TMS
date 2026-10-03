@@ -12,7 +12,7 @@ const factorB = "f1f1f1f1-1111-4111-8111-f1f1f1f1f1f1";
 function buildFactorRow(overrides: Record<string, unknown> = {}) {
   return {
     id: factorA,
-    tenant_id: tenantId,
+    operating_company_id: tenantId,
     name: "Northwind",
     advance_rate: "0.95",
     fee_rate: "0.025",
@@ -95,7 +95,7 @@ describe("factor service", () => {
           rows: [
             {
               id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
-              tenant_id: tenantId,
+              operating_company_id: tenantId,
               customer_id: customerA,
               factor_id: factorA,
               effective_from: "2026-06-01",
@@ -123,7 +123,7 @@ describe("factor service", () => {
           rows: [
             {
               id: factorA,
-              tenant_id: tenantId,
+              operating_company_id: tenantId,
               name: "Northwind",
               advance_rate: "0.95",
               fee_rate: "0.025",

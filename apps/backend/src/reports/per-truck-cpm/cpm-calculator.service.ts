@@ -96,7 +96,7 @@ export async function calculatePerTruckCpm(
         -- The unit-keyed insurance.insurance_policy_units / insurance.insurance_policies this query assumed
         -- NEVER existed in any migration -> Postgres 42P01 -> the whole report 500'd. The REAL schema is
         -- insurance.policy + insurance.policy_unit, which is ASSET-keyed (asset_id -> mdata.assets), with a
-        -- policy-level total_premium_cents (not per-unit annual), tenant_id, and status (no cancelled_at).
+        -- policy-level total_premium_cents (not per-unit annual), operating_company_id, and status (no cancelled_at).
         -- Real per-truck insurance (policy -> policy_unit(asset) -> unit + premium allocation by
         -- insured_value_cents share + policy-term annualization) is a separate [HOLD-FOR-JORGE] follow-up.
         -- Until then insurance contributes 0 so reports/per-truck-cpm returns 200 (honest 0).

@@ -118,10 +118,8 @@ export type FactoringBatchStatus = "draft" | "submitted" | "funded" | "rejected"
 
 export type FactoringBatch = {
   id: string;
-  /** ROUND 342 — canonical company scope. */
-  operating_company_id?: string;
-  /** @deprecated ROUND 342 — alias; prefer operating_company_id after CC-1 rename. */
-  tenant_id: string;
+  /** ROUND 342 — the one company column. */
+  operating_company_id: string;
   batch_number: string;
   status: FactoringBatchStatus;
   invoice_ids: string[];
@@ -150,10 +148,8 @@ export type FactoringReserveMovementDirection = "credit" | "debit";
 
 export type FactoringReserveMovement = {
   id: string;
-  /** ROUND 342 — canonical. Survives v_factor_reserve_balance / reserve_movement column rename. */
-  operating_company_id?: string;
-  /** @deprecated ROUND 342 — alias of operating_company_id. */
-  tenant_id: string;
+  /** ROUND 342 — the one company column. */
+  operating_company_id: string;
   batch_id: string | null;
   factor_id: string | null;
   direction: FactoringReserveMovementDirection;
@@ -278,7 +274,7 @@ export function getReserveMovements(batchId: string, companyId: string) {
 }
 
 export type FactoringReserveBalance = {
-  tenant_id: string;
+  operating_company_id: string;
   factor_id: string;
   balance_cents: number;
   last_movement_at: string | null;
@@ -346,10 +342,8 @@ export function getReserveReleaseForecast(factorId: string, companyId: string, l
 
 export type Factor = {
   id: string;
-  /** ROUND 342 — canonical company scope. */
-  operating_company_id?: string;
-  /** @deprecated ROUND 342 — alias; prefer operating_company_id after CC-1 rename. */
-  tenant_id: string;
+  /** ROUND 342 — the one company column. */
+  operating_company_id: string;
   name: string;
   advance_rate: number;
   fee_rate: number;
@@ -370,17 +364,14 @@ export type Factor = {
   created_at: string;
   updated_at: string;
   /** LIABILITY column-wave: current $ reserve/liability balance Faro holds for this factor.
-   * ROUND 342: readers use the KPI GL engine (not factoring.v_factor_reserve_balance). The view's
-   * OUTPUT field renames tenant_id→operating_company_id with CC-1 — never key UI off .tenant_id alone. */
+   * ROUND 342: readers use the KPI GL engine (not factoring.v_factor_reserve_balance). */
   reserve_balance_cents?: number | null;
 };
 
 export type LetterOfRelease = {
   id: string;
-  /** ROUND 342 — canonical company scope. */
-  operating_company_id?: string;
-  /** @deprecated ROUND 342 — alias; prefer operating_company_id after CC-1 rename. */
-  tenant_id: string;
+  /** ROUND 342 — the one company column. */
+  operating_company_id: string;
   factor_id: string;
   issued_date: string;
   effective_release_date: string;
@@ -391,10 +382,8 @@ export type LetterOfRelease = {
 
 export type CustomerFactorAssignment = {
   id: string;
-  /** ROUND 342 — canonical company scope. */
-  operating_company_id?: string;
-  /** @deprecated ROUND 342 — alias; prefer operating_company_id after CC-1 rename. */
-  tenant_id: string;
+  /** ROUND 342 — the one company column. */
+  operating_company_id: string;
   customer_id: string;
   factor_id: string;
   factor_name: string;

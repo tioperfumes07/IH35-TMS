@@ -8,7 +8,7 @@
  *     policy is
  *       (identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true))
  *     on polcmd '*' — so it is the WITH CHECK for INSERT too. The column is nullable with NO
- *     default, and every claim writer in this repo sets only tenant_id. A row with a NULL
+ *     default, and every claim writer once set only the legacy column. A row with a NULL
  *     operating_company_id therefore fails the WITH CHECK and the INSERT is REJECTED (the route
  *     sets app.operating_company_id, never app.bypass_rls='lucia', so the bypass leg is false).
  *     insurance.claim.n_tup_ins on prod is 0 — no claim has ever been successfully inserted.

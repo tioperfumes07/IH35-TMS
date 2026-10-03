@@ -322,7 +322,7 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
       );
       await db.query(
         `INSERT INTO factoring.factor (
-           id, tenant_id, name, advance_rate, fee_rate, reserve_rate, recourse_days, active
+           id, operating_company_id, name, advance_rate, fee_rate, reserve_rate, recourse_days, active
          ) VALUES ($1::uuid,$2::uuid,$3,0.9700,0.0150,0.0150,95,true)`,
         [seededFaroProfileId, companyId, `Chain-06 Faro Full Recourse ${suffix}`]
       );
@@ -399,7 +399,7 @@ describeIntegration("CHAIN-06 invoice -> A/R -> factoring tie-out proof (real Po
           );
         }
         if (seededFaroProfileId) {
-          await db.query(`UPDATE factoring.factor SET active = false WHERE id = $1::uuid AND tenant_id = $2::uuid`, [
+          await db.query(`UPDATE factoring.factor SET active = false WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [
             seededFaroProfileId,
             companyId,
           ]);

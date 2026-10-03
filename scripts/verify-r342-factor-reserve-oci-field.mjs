@@ -6,10 +6,10 @@
  * factoring.v_factor_reserve_balance OUTPUT field renames with it. Reading row.tenant_id alone
  * yields undefined — a blank reserve balance is indistinguishable from zero.
  *
- * Static contract:
- *  - reserve.service maps company via operating_company_id ?? tenant_id (companyIdFromRow)
- *  - FactorReserveBalanceRow / ReserveMovementRow expose operating_company_id
- *  - FE api/factoring.ts Factor / Batch / ReserveMovement types expose operating_company_id
+ * Static contract (ROUND 342 step 2c: operating_company_id is the ONE company column):
+ *  - reserve.service maps company from operating_company_id only (companyIdFromRow) — no tenant_id fallback
+ *  - FactorReserveBalanceRow / ReserveMovementRow expose operating_company_id and no tenant_id field
+ *  - FE api/factoring.ts Factor / Batch / ReserveMovement types expose operating_company_id (required), no tenant_id
  *  - No live SELECT of tenant_id FROM factoring.v_factor_reserve_balance in apps/
  */
 export const ALLOW_OFFLINE_SKIP =
@@ -43,10 +43,19 @@ function assertNotIncludes(hay, needle, why) {
 function selftest() {
   const reserve = read("apps/backend/src/factoring/reserve.service.ts");
   const fe = read("apps/frontend/src/api/factoring.ts");
-  assertIncludes(reserve, "companyIdFromRow", "mapper must accept OCI or tenant_id");
-  assertIncludes(reserve, "operating_company_id ?? row.tenant_id", "fallback order OCI first");
+  assertIncludes(reserve, "companyIdFromRow", "reserve rows map their company through one helper");
+  assertIncludes(reserve, "return String(row.operating_company_id ?? \"\");", "company read from operating_company_id only");
+  assertNotIncludes(reserve, "row.tenant_id", "no tenant_id fallback (ROUND 342 step 2c)");
+  if (/^\s*tenant_id:/m.test(reserve)) {
+    console.error(`${LABEL}: FAIL — reserve rows still emit a tenant_id field (ROUND 342 step 2c)`);
+    process.exit(1);
+  }
   assertIncludes(reserve, "operating_company_id: companyId", "balance/movement rows emit OCI");
-  assertIncludes(fe, "operating_company_id?: string", "FE Factor/Batch types expose OCI");
+  assertIncludes(fe, "operating_company_id: string", "FE Factor/Batch types expose OCI");
+  if (/\btenant_id\b/.test(fe)) {
+    console.error(`${LABEL}: FAIL — FE api/factoring.ts still types a tenant_id field (ROUND 342 step 2c)`);
+    process.exit(1);
+  }
   // Live SELECT of the view by tenant_id alone is the blank-balance trap.
   const appsDir = path.join(ROOT, "apps");
   const offenders = [];
