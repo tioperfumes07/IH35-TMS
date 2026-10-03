@@ -190,7 +190,7 @@ export function AccountingCatalogModal({
         {mode === "edit" ? (
           <span className="mt-1 block text-xs font-normal text-slate-400">Stable identifier — immutable after create.</span>
         ) : null}
-        {errors.code ? <div className="mt-1 text-[11px] text-red-700">{errors.code}</div> : null}
+        {errors.code ? <div className="mt-1 text-xs text-red-700">{errors.code}</div> : null}
       </label>
 
       {singleCodeNameField ? null : (
@@ -203,7 +203,7 @@ export function AccountingCatalogModal({
             onChange={(event) => setForm((value) => ({ ...value, display_name: event.target.value }))}
             className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-slate-100"
           />
-          {errors.display_name ? <div className="mt-1 text-[11px] text-red-700">{errors.display_name}</div> : null}
+          {errors.display_name ? <div className="mt-1 text-xs text-red-700">{errors.display_name}</div> : null}
         </label>
       )}
 
@@ -226,7 +226,7 @@ export function AccountingCatalogModal({
                   </option>
                 ))}
               </SelectCombobox>
-              {errors[`metadata.${field.key}`] ? <div className="mt-1 text-[11px] text-red-700">{errors[`metadata.${field.key}`]}</div> : null}
+              {errors[`metadata.${field.key}`] ? <div className="mt-1 text-xs text-red-700">{errors[`metadata.${field.key}`]}</div> : null}
             </label>
           );
         }
@@ -248,7 +248,7 @@ export function AccountingCatalogModal({
               }
               className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs disabled:bg-slate-100"
             />
-            {errors[`metadata.${field.key}`] ? <div className="mt-1 text-[11px] text-red-700">{errors[`metadata.${field.key}`]}</div> : null}
+            {errors[`metadata.${field.key}`] ? <div className="mt-1 text-xs text-red-700">{errors[`metadata.${field.key}`]}</div> : null}
           </label>
         );
       })}
