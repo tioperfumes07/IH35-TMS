@@ -21,6 +21,7 @@ import { vendorIdentitySetSql } from "./vendor-identity.js";
 import { cascadeVoidChildren } from "./cascade-void-engine.service.js";
 import { EXPENSE_MATCHED_BANK_TRANSACTION_ID_SQL } from "./expenses.routes.js";
 import {
+  releaseBankLinesNamingDocument,
   auditVoid,
   canVoid,
   isVoidEnforcementEnabled,
@@ -3814,6 +3815,11 @@ export async function voidBillPaymentInClientTx(
         )
       : null;
 
+  // ROUND 368.2(b) — a bank line that names this bill payment goes back to For review (match kept, release recorded) before it dies.
+    await releaseBankLinesNamingDocument(client as never, { operatingCompanyId: input.operatingCompanyId, pointerColumn: "matched_bill_payment_id", documentId: input.paymentId }, {
+      userId: input.userId,
+      reason: `void: bill_payment ${input.paymentId} — ${input.reason}`,
+    });
     // ACCT-SETL-BILLPAY-VOID-MIRROR — owner ruling (docs/bus/OUTBOX-CURSOR.md, CURSOR -> CC-1):
     // write BOTH column sets in the SAME transaction. revoked_* stays the functional truth (GL
     // exemption checks, posting-engine.service.ts:1699, still key off it — unchanged); voided_at/
@@ -3952,6 +3958,11 @@ export async function voidBillInClientTx(
       )
     : null;
 
+  // ROUND 368.2(b) — a bank line that names this bill goes back to For review (match kept, release recorded) before it dies.
+  await releaseBankLinesNamingDocument(client as never, { operatingCompanyId: input.operatingCompanyId, pointerColumn: "matched_bill_id", documentId: input.billId }, {
+    userId: input.userId,
+    reason: `void: bill ${input.billId} — ${input.reason}`,
+  });
   // R-191 — write BOTH revoked_* AND voided_* in the SAME UPDATE (parity with
   // voidBillPaymentInClientTx's ACCT-SETL-BILLPAY-VOID-MIRROR). reinstateDocument clears both.
   const updated = await client.query<{ id: string }>(

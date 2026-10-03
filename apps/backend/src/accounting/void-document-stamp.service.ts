@@ -40,6 +40,7 @@ export type QueryableClient = {
 // Wiring it HERE means every existing caller of stampDocumentVoided (dispatch/cancellation
 // .service.ts, the governance executors, the E10 runner) gets the cascade automatically, with no
 // per-caller change needed, for every family that has a CASCADE_CHILDREN entry.
+import { releaseBankLinesNamingDocument } from "./void.service.js";
 import { cascadeVoidChildren, type CascadeParentFamily } from "./cascade-void-engine.service.js";
 const CASCADE_ELIGIBLE_FAMILIES: ReadonlySet<string> = new Set<CascadeParentFamily>(["invoice", "expense", "factoring_advance"]);
 
@@ -132,6 +133,16 @@ export class VoidDocumentStampError extends Error {
     this.name = "VoidDocumentStampError";
   }
 }
+
+/** The bank-line pointer that names each family (driver_reimbursement has none). */
+const BANK_LINE_POINTER_BY_FAMILY: Partial<Record<VoidDocumentFamily, string>> = {
+  load: "matched_load_id",
+  invoice: "matched_invoice_id",
+  expense: "matched_expense_id",
+  factoring_advance: "matched_factoring_advance_id",
+  fuel_transaction: "matched_fuel_transaction_id",
+  journal_entry: "matched_journal_entry_id",
+};
 
 export type StampDocumentVoidedParams = {
   operatingCompanyId: string;
@@ -253,6 +264,16 @@ export async function stampDocumentVoided(
       "already_voided_different_reason",
       `stampDocumentVoided: document ${documentId} (${family}) is already voided (reason="${existing.void_reason}", actor=${existing.voided_by_user_id}); refusing to overwrite with a different reason/actor (reason="${voidReason}", actor=${voidedByUserId}).`
     );
+  }
+
+  // ROUND 368.2(b) — a bank line that still names this document through its matched_* pointer goes back to For review
+  // (match kept, release recorded) in the same transaction, after every refusal above, before the document stops being live.
+  const pointer = BANK_LINE_POINTER_BY_FAMILY[family];
+  if (pointer) {
+    await releaseBankLinesNamingDocument(client as never, { operatingCompanyId, pointerColumn: pointer, documentId }, {
+      userId: voidedByUserId,
+      reason: `void: ${family} ${documentId} — ${voidReason}`,
+    });
   }
 
   // ROUND 122 FIX: the status value is per-family (see FamilyTableSpec.voidStatusValue's own

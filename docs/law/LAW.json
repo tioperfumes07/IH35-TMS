@@ -922,5 +922,12 @@
     "source_file": "docs/bus/10-03-2026-CC-3-ROUND-363-LOAD-LINEAGE-THE-SEND-BACK-AND-THE-DERIVED-ARTIFACT-REGISTRY.md",
     "guard": "scripts/verify-every-load-born-document-and-posting-traces-to-its-load.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-10-03-EVERY-VOID-RELEASES-ITS-BANK-LINES",
+    "title": "ROUND 368.2(b) \u2014 every path that makes a document stop being live (void, revoke, soft-delete, reversal) first releases the bank lines that name it through a matched_* pointer (releaseBankLinesNamingDocument / the void cascade / stampDocumentVoided), and the 26 document-side refusals of 202615360600 stay armed (re-armed by 202615360930)",
+    "source_file": "docs/bus/10-03-2026-ALL-SEATS-ROUND-368-RECLASSIFY-FIRST-AND-TWO-PERMANENT-REFUSALS.md",
+    "guard": "scripts/verify-every-void-releases-its-bank-lines.mjs",
+    "type": "enforced"
   }
 ]

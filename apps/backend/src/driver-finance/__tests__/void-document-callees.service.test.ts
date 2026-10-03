@@ -10,6 +10,8 @@ vi.mock("../../accounting/settlement-posting/settlement-bill-payment-posting.ser
 }));
 vi.mock("../../accounting/void.service.js", () => ({
   unmatchBankTransactionById: vi.fn(async () => false),
+  // ROUND 368.2(b) — the settlement void releases bank lines matched to the settlement (matched_settlement_id).
+  releaseBankLinesNamingDocument: vi.fn(async () => 0),
 }));
 vi.mock("../../audit/crud-audit.js", () => ({
   appendCrudAudit: vi.fn(async () => undefined),

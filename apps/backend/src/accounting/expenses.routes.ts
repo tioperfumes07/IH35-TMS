@@ -14,7 +14,7 @@ import { openAndRunIntake } from "../driver-finance/feed-gate/feed-gate.service.
 /** OWNER LAW 2026-10-01: an expense created in the app always posts; a poster failure refuses the create (transaction rolls back). */
 class ExpensePostRefused extends Error { constructor(public code: string, public detail: string) { super(`expense_post_refused_gl_post_failed:${code}`); } }
 import { todayIso } from "./void.service.js";
-import { canVoid, isVoidEnforcementEnabled } from "./void.service.js";
+import { canVoid, isVoidEnforcementEnabled, releaseBankLinesNamingDocument } from "./void.service.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { listExpenseDuplicateGroups } from "./expense-duplicate.service.js";
@@ -1784,6 +1784,11 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           }
         }
 
+        // ROUND 368.2(b) — a bank line that names this expense goes back to For review (match kept, release recorded) before it dies.
+        await releaseBankLinesNamingDocument(client as never, { operatingCompanyId: oci, pointerColumn: "matched_expense_id", documentId: expenseId }, {
+          userId: String(user.uuid),
+          reason: `void: expense ${expenseId} — ${body.data.reason}`,
+        });
         await client.query(
           `UPDATE accounting.expenses
            SET status='void',
