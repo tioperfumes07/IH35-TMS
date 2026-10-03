@@ -42,6 +42,8 @@ export function verify(source) {
   need("page", "id={row.local_driver_id}", "canonical local_driver_id must drive the link");
   need("page", 'storageKey="system:samsara-hos-driver-map"', "table preferences must be surface-stable");
   if (source.page.includes("<table")) failures.push(`${FILES.page}: raw table bypasses shared search/range/gear chrome`);
+  if (source.page.includes("text-[11px]")) failures.push(`${FILES.page}: leftover text-[11px]`);
+  if (source.page.includes("#8A92AB") || source.page.includes("#334155")) failures.push(`${FILES.page}: leftover off-scale muted`);
   if (/Jorge[- ](?:approval|approved|gated)/i.test(source.page + source.route + source.service)) failures.push("Samsara preview must not carry a superseded owner-approval hold");
 
   need("api", "new URLSearchParams({ operating_company_id: operatingCompanyId })", "API read must bind operating_company_id");
@@ -121,6 +123,7 @@ if (process.argv.includes("--self-test")) {
     ["mapRoute", "SELECT id::text AS id FROM mdata.drivers WHERE operating_company_id = $1::uuid AND id = $2::uuid LIMIT 1"],
   ]) mutations.push(() => ({ ...source, [key]: source[key].replaceAll(token, "BROKEN_DRIVER_CONTRACT") }));
   mutations.push(() => ({ ...source, page: source.page.replace("<ParityTable", "<table><ParityTable") }));
+  mutations.push(() => ({ ...source, page: `${source.page}\n<div className="text-[11px] text-[#8A92AB]">plant</div>` }));
   mutations.push(() => ({ ...source, service: `${source.service}\nawait client.query(\"UPDATE mdata.drivers SET samsara_driver_id = NULL\")` }));
   mutations.push(() => ({ ...source, route: `${source.route}\napp.patch(\"/api/v1/telematics/hos-driver-map/preview\", handler)` }));
   mutations.push(() => ({ ...source, matrix: source.matrix.replace('"id": "system.samsara_hos_driver_map"', '"id": "broken.samsara_hos_driver_map"') }));
