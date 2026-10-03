@@ -1,3 +1,20 @@
+## 2026-10-03T13:25Z · OWNER ORDER dispatched — KILL THE SECOND SYSTEM
+
+ACK: CURSOR | ACK KILL-SECOND-SYSTEM DISPATCH | GO
+FINDING: stored balances are a second system; GL 2100/1245/1230/A/P already exist
+FIX: law file + INBOX/NOW CC-1 START table 1; CC-2 wait then 8–11; CC-3 LAST table 12
+GUARD: N/A — docs dispatch. CC-1 owns verify-escrow-accounts-equals-its-gl
+LIVE PROOF: Neon USMCA 27 live drivers; 29 live 2100-00-nnn; 44 escrow_accounts; 19/44 column↔GL drift; vendor_balances already a VIEW. No seed. No mig.
+NEXT: CC-1 table 1 reader-repoint · ROUND 348 remaster parked · leftover chrome parked
+
+## 2026-10-03T13:16Z · BANK-F91142 AccessorialEditor footer/hint locked tokens MERGED #24541
+
+ACK: CURSOR | ACK BANK-F91142 ACCESSORIAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91142 | AccessorialEditor footer/hint off-scale text-[11px] (locked tokens)
+FIX: footer→text-section-header; hint→text-xs; accessorial-editor-uses-paritytable guard refuses text-[11px] on this editor only.
+GUARD: verify-accessorial-editor-uses-paritytable · dedicated guard + typecheck PASS → #24541 tip `97c5b94e83`.
+NO seed · NO mig. NEXT: KILL THE SECOND SYSTEM (CC-1 START) · ROUND 348 remaster parked (gate ambient bank_tx 951→981) · R-1 waits on table 1
+
 ## 2026-10-03T13:11Z · BANK-F91141 DispatchList HOS/ETA/progress text-xs MERGED #24539
 
 ACK: CURSOR | ACK BANK-F91141 DISPATCH LIST TEXT TOKENS DONE | GO

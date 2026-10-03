@@ -1,22 +1,21 @@
-# NOW — CC-1 — ROUND 355 (2026-10-03)
+# NOW — CC-1 — KILL THE SECOND SYSTEM TABLE 1 (2026-10-03)
 
-READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-ROUND-355-THREE-RULINGS-CLOSED.md`
+READ FIRST: `docs/bus/00-OWNER-ORDER-2026-10-03-KILL-THE-SECOND-SYSTEM.md`
 
 ## YOUR QUEUE RIGHT NOW (ordered)
 
-1. **R-1 — Driver Damage Loss escrow chain** (OWNER RULED — never ask again)
-   - Create 6176 Driver Damage Loss + role `driver_damage_loss` via resolveRoleAccount
-   - Wire settlement deduction: escrow → net pay (5% floor) → 6176 remainder
-   - Never net against 7210. Guard `verify-driver-damage-loss-chain` ceiling 0
-   - PROOF: $3000/$500/$1500 fork — escrow exactly $0.00, spine same txn
-   - Migration in YOUR band HH 00–11
+1. **TABLE 1 — `accounting.escrow_accounts.balance_cents` DIES as authority.**
+   GL: `2100-00-nnn`. Mapping row stays.
+   PR1 = REPOINT READERS to `journal_entry_postings` (no migration this hour).
+   Guard `verify-escrow-accounts-equals-its-gl` ceiling 0. No hand-repair of the 19 drifted rows.
+   Deadline 2026-10-03 15:30Z.
 
-2. **R-3 guard ownership** — Lead already proved CoA shape on prod and shipped
-   `verify-factoring-fees-are-financing-costs`. You own ongoing enforcement; extend only
-   if a writer can reintroduce Bank Charges subtype. Do NOT revive 6820.
+2. Tables 2–5 escrow_balances + escrow_ledger.running_balance — after PR1 on tip, one PR each.
 
-3. Continue your prior ORDERS rows after R-1 is DONE with live proof.
+3. Tables 6–7 `driver_advances.outstanding_balance` · `driver_liabilities.current_balance`.
 
-ACK: append to OUTBOX-CC-1: `CC-1 | ACK ROUND 355 R-1 | GO`
+4. **R-1 — Driver Damage Loss 6176** — AFTER table 1. Read 2100, never the dying column.
+
+ACK: `CC-1 | ACK KILL-SECOND-SYSTEM TABLE-1 | GO`
 
 NO seed. NO Chrome. Fix writers. USMCA only.
