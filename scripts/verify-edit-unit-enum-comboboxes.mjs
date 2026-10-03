@@ -29,6 +29,9 @@ function assertContract(source) {
   ]) {
     if (!source.includes(token)) throw new Error(`missing Edit Unit enum contract: ${token}`);
   }
+  if (source.includes("text-[11px]")) {
+    throw new Error(`${REL}: must not use text-[11px] — use text-xs`);
+  }
 }
 
 if (process.argv.includes("--selftest")) {

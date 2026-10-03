@@ -395,7 +395,7 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
             <button
               key={tab}
               type="button"
-              className={`rounded px-2 py-1 text-[11px] font-medium ${
+              className={`rounded px-2 py-1 text-xs font-medium ${}
                 activeTab === tab ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
               onClick={() => setActiveTab(tab)}
