@@ -247,15 +247,15 @@ export function BalanceSheetPage() {
       {query.data ? (
         <div className="grid gap-2 md:grid-cols-3">
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-            <div className="text-[11px] font-semibold uppercase text-gray-500">Assets</div>
+            <div className="text-section-header font-semibold uppercase text-gray-500">Assets</div>
             <div className="text-page-title font-semibold">{money(query.data.assets.total)}</div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white px-3 py-2">
-            <div className="text-[11px] font-semibold uppercase text-gray-500">Liabilities + equity</div>
+            <div className="text-section-header font-semibold uppercase text-gray-500">Liabilities + equity</div>
             <div className="text-page-title font-semibold">{money(query.data.total_liabilities_and_equity)}</div>
           </div>
           <div className={`rounded-sm border bg-white px-3 py-2 ${query.data.balanced ? "border-gray-200" : "border-2 border-[#dc2626]"}`}>
-            <div className="text-[11px] font-semibold uppercase text-gray-500">Balance check</div>
+            <div className="text-section-header font-semibold uppercase text-gray-500">Balance check</div>
             <div className={`text-page-title font-semibold ${query.data.balanced ? "text-[#1f2a44]" : "text-[#dc2626]"}`}>
               {query.data.balanced ? "Balanced" : "Out of balance"}
             </div>
@@ -270,7 +270,7 @@ export function BalanceSheetPage() {
           <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
             <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold">Assets</div>
             <table className="min-w-full text-left text-xs">
-              <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+              <thead className="border-b border-gray-200 bg-gray-50 text-section-header font-semibold uppercase tracking-wide text-gray-600">
                 <tr>
                   {showCodes ? <th className="px-3 py-2">Account #</th> : null}
                   <th className="px-3 py-2">Account</th>
@@ -315,7 +315,7 @@ export function BalanceSheetPage() {
             <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
               <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold">Liabilities</div>
               <table className="min-w-full text-left text-xs">
-                <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                <thead className="border-b border-gray-200 bg-gray-50 text-section-header font-semibold uppercase tracking-wide text-gray-600">
                   <tr>
                     {showCodes ? <th className="px-3 py-2">Account #</th> : null}
                     <th className="px-3 py-2">Account</th>
@@ -359,7 +359,7 @@ export function BalanceSheetPage() {
             <div className="overflow-auto rounded-sm border border-gray-200 bg-white">
               <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold">Equity</div>
               <table className="min-w-full text-left text-xs">
-                <thead className="border-b border-gray-200 bg-gray-50 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                <thead className="border-b border-gray-200 bg-gray-50 text-section-header font-semibold uppercase tracking-wide text-gray-600">
                   <tr>
                     {showCodes ? <th className="px-3 py-2">Account #</th> : null}
                     <th className="px-3 py-2">Account</th>
