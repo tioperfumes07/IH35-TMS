@@ -17,6 +17,7 @@
  */
 import fs from "node:fs";
 import os from "node:os";
+import { resolveGateReadonlyDbUrl } from "./lib/gate-db-credential.mjs";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -1747,31 +1748,35 @@ function touchesMoneyPath() {
 // string from its own dedicated "READONLY GATE CREDENTIAL (ih35_ci_readonly)" section (a fenced
 // code block, not the whole file) so a stray edit elsewhere in that doc can't be misread as this
 // credential. Read once, memoized, never logged (it's a live credential).
-const MASTER_KEYS_FILE = path.join(
-  os.homedir(),
-  "Desktop/09-28-2026-IH35-MASTER-KEYS-ENVS-SINGLE-SOURCE-OF-TRUTH.md"
-);
-const READONLY_SECTION_RE =
-  /## READONLY GATE CREDENTIAL[^\n]*\n(?:(?!\n## )[^\n]*\n)*?\s*(postgresql:\/\/\S+)/;
-let cachedReadonlyDbUrl;
+// ROUND 386 (Lead) — this block used to carry its OWN copy of the credential-resolution logic,
+// byte-for-byte duplicating scripts/lib/gate-db-credential.mjs, which lib/require-live-db.mjs
+// already imports. Two copies of one rule is one rule that will drift. The lib is now the only
+// implementation; this is the gate's view of it.
+//
+// The caller's WRITE credential is captured BEFORE anything below can replace process.env.
+// verify-workflow-requests-entity-scoped is the one gated guard that must INSERT / SET ROLE
+// ih35_app, and it is handed this value explicitly — never the read-only one.
+const CALLER_WRITER_DATABASE_URL = process.env.DATABASE_URL;
+
 function resolveGuardDatabaseUrl() {
-  if (cachedReadonlyDbUrl !== undefined) return cachedReadonlyDbUrl;
-  // An explicit env var always wins — lets a seat without the file (or CI, which injects its own
-  // scoped secret) opt in without touching this file.
-  if (process.env.DATABASE_URL_READONLY) {
-    cachedReadonlyDbUrl = process.env.DATABASE_URL_READONLY;
-    return cachedReadonlyDbUrl;
+  return resolveGateReadonlyDbUrl() ?? CALLER_WRITER_DATABASE_URL;
+}
+
+// ROUND 386 — the substitution below used to be gated on `env.DATABASE_URL` ALREADY being set, so
+// it could only ever REPLACE a connection string, never SUPPLY one. .husky/pre-push deliberately
+// does not source .env (Rule 18 / CURSOR-PIPELINE-REPAIR P0-1), so on every push DATABASE_URL was
+// unset, the substitution never fired, and every live guard failed with "needs DATABASE_URL — a
+// guard that cannot look is not a pass". Measured on this branch: 30 gate phases passed and
+// verify-every-load-born-document-and-posting-traces-to-its-load failed for exactly that reason,
+// with a working read-only credential sitting unread two files away. Resolving once here means a
+// live guard either looks at production or fails closed — it can no longer be blocked by the
+// absence of an environment variable the hook is designed not to set.
+if (!process.env.DATABASE_URL) {
+  const gateDbUrl = resolveGuardDatabaseUrl();
+  if (gateDbUrl) {
+    process.env.DATABASE_URL = gateDbUrl;
+    console.log(`[${LABEL}] resolved the read-only gate credential for this run (value never logged).`);
   }
-  try {
-    const doc = fs.readFileSync(MASTER_KEYS_FILE, "utf8");
-    const match = doc.match(READONLY_SECTION_RE);
-    cachedReadonlyDbUrl = match ? match[1].trim() : undefined;
-  } catch {
-    cachedReadonlyDbUrl = undefined;
-  }
-  // No readonly credential available locally — fall back to whatever DATABASE_URL the caller
-  // already set (unchanged behavior; never block a seat that hasn't fetched the readonly role yet).
-  return cachedReadonlyDbUrl ?? process.env.DATABASE_URL;
 }
 
 const localOutcomes = { passed: 0, failed: 0, skipped: 0 };
@@ -1787,10 +1792,11 @@ function runNode(rel, extraEnv = {}, args = []) {
   const script = path.join(ROOT, rel);
   console.log(`[${LABEL}] RUN ${rel}${args.length ? ` ${args.join(" ")}` : ""}`);
   const env = { ...process.env, ...extraEnv };
-  // Only override when a live DB is actually in play (DATABASE_URL set) and the caller didn't
-  // already pin a specific connection string via extraEnv (e.g. a test harness).
-  if (env.DATABASE_URL && !extraEnv.DATABASE_URL) {
-    env.DATABASE_URL = resolveGuardDatabaseUrl();
+  // ROUND 386 — SUPPLY the read-only credential when the caller pinned none, rather than only
+  // replacing one that already exists. A test harness that pins DATABASE_URL via extraEnv still wins.
+  if (!extraEnv.DATABASE_URL) {
+    const resolved = resolveGuardDatabaseUrl();
+    if (resolved) env.DATABASE_URL = resolved;
   }
   // Every guard reads the DIRECT endpoint — never the pooler, where the app's SET ROLE ih35_app leaks.
   const res = spawnSync(process.execPath, [script, ...args], {
@@ -1884,7 +1890,9 @@ for (const [name, rel] of STEPS) {
 {
   const name = "verify-workflow-requests-entity-scoped";
   const rel = "scripts/verify-workflow-requests-entity-scoped.mjs";
-  const writerUrl = process.env.DATABASE_URL;
+  // ROUND 386 — the CALLER's writer URL, captured before the gate put the read-only one on the
+  // environment. Reading process.env here would hand this writing guard a read-only role.
+  const writerUrl = CALLER_WRITER_DATABASE_URL;
   const code = writerUrl ? runNode(rel, { DATABASE_URL: writerUrl }) : runNode(rel);
   if (code !== 0) {
     failStep(name);

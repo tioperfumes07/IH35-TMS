@@ -840,7 +840,7 @@ export function BillsPage() {
             another status the list is NOT narrowed by it, and says so rather than quietly dropping
             or quietly keeping rows. */}
         {statusFilterNeedsServerNarrowing(statusFilter) ? (
-          <p className="text-xs text-amber-800" data-testid="bills-status-server-only-notice">
+          <p className="text-xs text-slate-700" data-testid="bills-status-server-only-notice">
             “Posted (GL)” narrows only when selected on its own — these results are not filtered by GL posting.
           </p>
         ) : null}
