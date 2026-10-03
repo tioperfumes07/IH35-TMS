@@ -329,10 +329,12 @@ async function materializeJournal(client: PoolClient, tmpl: Record<string, unkno
           amount_cents,
           description,
           idempotency_key,
+          load_id,
           created_at,
           updated_at
         )
-        VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,$6::uuid,$7,$8,$9,$10,now(),now())
+        -- ROUND 363-CC1-A: a recurring-template JE has no source document and so no load — NULL by design.
+        VALUES ($1::uuid,$2::uuid,$3,$4::uuid,$5::uuid,$6::uuid,$7,$8,$9,$10,NULL,now(),now())
         ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
           WHERE idempotency_key IS NOT NULL DO NOTHING
         RETURNING id::text

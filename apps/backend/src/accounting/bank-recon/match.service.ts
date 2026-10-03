@@ -1041,12 +1041,14 @@ async function postDifferenceJournalEntry(
         description,
         line_sequence,
         idempotency_key,
+        load_id,
         created_at,
         updated_at
       )
+      -- ROUND 363-CC1-A: a reconciliation variance belongs to the bank account, not to any load — NULL by design.
       VALUES
-        ($1::uuid, $2::uuid, $3::uuid, $4::text, $5::int, 'Bank reconciliation variance leg', 1, concat('bank-recon-var:', $2::text), now(), now()),
-        ($1::uuid, $2::uuid, $6::uuid, $7::text, $5::int, 'Bank reconciliation offset leg',  2, concat('bank-recon-off:', $2::text), now(), now())
+        ($1::uuid, $2::uuid, $3::uuid, $4::text, $5::int, 'Bank reconciliation variance leg', 1, concat('bank-recon-var:', $2::text), NULL, now(), now()),
+        ($1::uuid, $2::uuid, $6::uuid, $7::text, $5::int, 'Bank reconciliation offset leg',  2, concat('bank-recon-off:', $2::text), NULL, now(), now())
       RETURNING id::text
     `,
     [input.operating_company_id, journalEntryId, cashAccountId, cashSide, magnitude, input.difference_account_id, diffSide]

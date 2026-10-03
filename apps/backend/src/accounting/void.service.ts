@@ -700,8 +700,10 @@ export async function postVoidReversal(
     const lineRes = await client.query<{ id: string }>(
       `
         INSERT INTO accounting.journal_entry_postings
-          (operating_company_id, journal_entry_uuid, line_sequence, account_id, class_id, entity_uuid, debit_or_credit, amount_cents, description, idempotency_key, source_transaction_type, source_transaction_id, reversal_of_line_id)
-        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, $6, $7, $8::bigint, $9, $10, $11, $12, $13::uuid)
+          (operating_company_id, journal_entry_uuid, line_sequence, account_id, class_id, entity_uuid, debit_or_credit, amount_cents, description, idempotency_key, source_transaction_type, source_transaction_id, reversal_of_line_id, load_id)
+        -- ROUND 363-CC1-A: a reversal carries the load of the line it reverses (its document may already be gone).
+        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5::uuid, $6, $7, $8::bigint, $9, $10, $11, $12, $13::uuid,
+                accounting.posting_source_load_id($11::text, $12::text, NULL, $13::uuid))
         ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
           WHERE idempotency_key IS NOT NULL DO NOTHING
         RETURNING id::text

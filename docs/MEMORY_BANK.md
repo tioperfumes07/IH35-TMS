@@ -1451,6 +1451,16 @@ Full coder instructions: `claude/2026-09-13-ABSORPTION-INGEST-AND-DISPUTE-WINDOW
 - CC-2 ships R-2 gallon fuel cap + F-3 Relay wallet package (policy — stays).
 - Cursor finishes ROUND 348 TRK ownership hub remaster (mig 202615321200) when HH 12–23 / rebase clean.
 
+## Active Architectural Decisions — 363-CUR-A cleared vs uncleared (Cursor, 2026-10-03)
+
+Owner: cleared means CATEGORIZED or MATCHED in Banking (or `register_cleared` on the payment JE).
+No stored cleared total. Aging open already subtracts applied payments; an unmatched payment is
+added back onto `cleared_open_cents` and named **not cleared**.
+
+- Helper: `apps/backend/src/accounting/uncleared-applied-documents.ts`
+- Owner example: $2,000 bill + $500 unmatched payment → cleared $2,000, payment named not cleared
+- On tip #24639 `15324b5234` for Reports A/R + A/P aging. Finance hub + other balances still open.
+
 ## Active Architectural Decisions — KILL THE SECOND SYSTEM (Cursor, 2026-10-03)
 
 Owner, verbatim: the ledger is the balance; policies stay; this is a deletion, not a build.

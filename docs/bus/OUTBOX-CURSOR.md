@@ -1,3 +1,11 @@
+## 2026-10-03T16:15Z · 363-CUR-A aging slice MERGED #24639 tip 15324b5234
+
+ACK: CURSOR | ACK 363-CUR-A AGING CLEARED/UNCLEARED DONE | GO
+FINDING: ACCT-F3631 | Reports A/R + A/P aging hid uncleared applied payments
+FIX: uncleared-applied-documents.ts (derived; no stored cleared total) + both aging routes + UnclearedDocumentsNote + print-letter refuse. attachUncleared $1500+$500=$2000.
+GUARD: verify-ar-aging-print-letter + verify-reports-ap-aging-print-letter live+selftest 0 → #24639 tip `15324b5234`.
+NO seed · NO mig. NEXT: finance ArApAgingPage + AccountsPayableAgingPage + every other balance · leftover DriverHubReportingPage · ROUND 348 parked. 363-CUR-D already on tip (11737).
+
 ## 2026-10-03T16:00Z · ROUND 363 LAW MERGED #24634 tip daa40a2c6a
 
 ACK: CURSOR | ACK ROUND-363 LAW ON TIP | GO

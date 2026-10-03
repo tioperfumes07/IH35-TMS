@@ -502,10 +502,13 @@ export async function postFuelExpenseOnClient(client: DbClient, input: FuelPosti
           posting_batch_id,
           idempotency_key,
           class_id,
+          load_id,
           created_at,
           updated_at
         )
-        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, 'fuel_event', $8, NULL, $9::uuid, $10, $11::uuid, now(), now())
+        -- ROUND 363-CC1-A: the load stamp, resolved from this posting's own source document in the same statement.
+        VALUES ($1::uuid, $2::uuid, $3, $4::uuid, $5, $6, $7, 'fuel_event', $8, NULL, $9::uuid, $10, $11::uuid,
+                accounting.posting_source_load_id('fuel_event', $8::text), now(), now())
         RETURNING id::text
       `,
       [

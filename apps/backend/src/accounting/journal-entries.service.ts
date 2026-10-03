@@ -270,10 +270,13 @@ export async function createJournalEntryOnClient(
           idempotency_key,
           source_transaction_type,
           source_transaction_id,
+          load_id,
           created_at,
           updated_at
         )
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,now(),now())
+        -- ROUND 363-CC1-A: the load stamp, resolved from this posting's own source document in the same statement.
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,
+                accounting.posting_source_load_id($13::text, $14::text),now(),now())
         ON CONFLICT (operating_company_id, idempotency_key, line_sequence)
           WHERE idempotency_key IS NOT NULL DO NOTHING
         RETURNING id::text

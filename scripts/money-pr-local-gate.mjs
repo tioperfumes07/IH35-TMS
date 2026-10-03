@@ -904,6 +904,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-no-row-escapes-its-company",
     ["db/migrations/", "apps/backend/src/accounting/", "apps/backend/src/dispatch/", "apps/backend/src/driver-finance/", "scripts/verify-no-row-escapes-its-company.mjs"],
   ],
+  // ROUND 363-CC1-A (CC-1) — every posting carries the load its source document names, stamped by the poster.
+  [
+    "verify-every-load-born-posting-carries-its-load",
+    ["db/migrations/", "apps/backend/src/accounting/", "scripts/verify-every-load-born-posting-carries-its-load.mjs"],
+  ],
   // Kill the second system (CC-1) — a driver escrow balance is the 2100-00-<nnn> GL balance, derived; no stored reader.
   [
     "verify-escrow-equals-its-gl",
