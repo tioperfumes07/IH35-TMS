@@ -22,7 +22,7 @@
  * dispatched loads / 33 geocoded stops / 1 stamped. See load-stop-geofence-geometry.ts.
  */
 import { bindLoadToGeofences } from "../dispatch/geofences/load-geofence-binding.service.js";
-import { CANONICAL_ACTIVE_LOAD_STATUSES } from "../dispatch/canonical-active-load-set.js";
+import { canonicalDispatchWorkStatusClause } from "../dispatch/canonical-active-load-set.js";
 import { processGeofenceDetectionsForGpsPoint } from "./geofence-detector.service.js";
 import { normalizeVertices, pointInPolygon } from "./geofence.js";
 import { geocodeStopsWithClient } from "./stops-geocode-backfill.service.js";
@@ -68,10 +68,10 @@ export async function syncLoadStopGeofences(
        WHERE l.operating_company_id = $1::uuid
          AND l.soft_deleted_at IS NULL
          AND COALESCE(l.is_sample_data, false) = false
-         AND l.status::text = ANY($2::text[])
+         AND ${canonicalDispatchWorkStatusClause("l")}
        ORDER BY l.created_at
     `,
-    [operatingCompanyId, [...CANONICAL_ACTIVE_LOAD_STATUSES]]
+    [operatingCompanyId]
   );
   const newFenceIds: string[] = [];
   let created = 0, refreshed = 0, unchanged = 0, skipped = 0;
@@ -91,7 +91,7 @@ export async function syncLoadStopGeofences(
 }
 
 /**
- * A fence whose load left the board (terminal status, soft-deleted, cancelled) is retired, so the
+ * A fence whose load left dispatch work (delivered or later, soft-deleted, cancelled) is retired, so the
  * per-point containment scan and the customer-site breach alerts only ever see live stops.
  * Events already written stay (immutable); only is_active flips.
  */
@@ -109,10 +109,10 @@ export async function retireLoadStopGeofencesForInactiveLoads(client: DbClient, 
             WHERE l.operating_company_id = $1::uuid
               AND l.id::text = substring(g.label from 'load-(.*)-stop-')
               AND l.soft_deleted_at IS NULL
-              AND l.status::text = ANY($2::text[])
+              AND ${canonicalDispatchWorkStatusClause("l")}
          )
     `,
-    [operatingCompanyId, [...CANONICAL_ACTIVE_LOAD_STATUSES]]
+    [operatingCompanyId]
   );
   return r.rowCount ?? 0;
 }
@@ -274,7 +274,7 @@ export async function resweepUngeocodedActiveStops(
        JOIN mdata.load_stops s ON s.load_id = l.id AND s.soft_deleted_at IS NULL
       WHERE l.operating_company_id = $1::uuid
         AND l.soft_deleted_at IS NULL
-        AND l.status NOT IN ('cancelled','delivered')
+        AND ${canonicalDispatchWorkStatusClause("l")}
         AND (
           ((s.latitude IS NULL OR s.longitude IS NULL)
             AND (s.geocode_attempted_at IS NULL OR s.geocode_attempted_at < now() - interval '6 hours'))

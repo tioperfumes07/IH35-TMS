@@ -16,7 +16,7 @@ import { z } from "zod";
 import { currentAuthUser, withCompanyScope } from "../../accounting/shared.js";
 import { openWorkOrderPredicateSql } from "../../maintenance/in-shop-condition.js";
 import { CURRENT_TRUCK_LINE_LOAD_SQL } from "../current-truck-line-load.js";
-import { DISPATCH_WORK_LOAD_STATUSES } from "../canonical-active-load-set.js";
+import { assertCanonicalSubset, DISPATCH_WORK_LOAD_STATUSES } from "../canonical-active-load-set.js";
 import { groupTruckLineByUnit } from "./group-by-unit.js";
 import { deriveTruckLineStation, STATION_KEYS, STATION_LABELS, type StampSource } from "./station.js";
 
@@ -109,6 +109,7 @@ type PendingRow = {
 // load promotes the instant its status crosses into ACTIVE_DISPATCH_STATUSES -- no separate
 // "promote" write path to build or keep in sync).
 export const ACTIVE_DISPATCH_STATUSES = ["dispatched", "at_pickup", "in_transit", "at_delivery"] as const;
+assertCanonicalSubset("ACTIVE_DISPATCH_STATUSES", ACTIVE_DISPATCH_STATUSES);
 export const PENDING_LOAD_STATUSES = DISPATCH_WORK_LOAD_STATUSES.filter(
   (s) => !(ACTIVE_DISPATCH_STATUSES as readonly string[]).includes(s)
 );

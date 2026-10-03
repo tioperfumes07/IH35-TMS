@@ -6,7 +6,7 @@
  * (sort/resize/gear), not a hand-rolled <table>. Financial surface — owner-greenlit
  * DISPLAY-ONLY migration of a READ-ONLY props-fed breakdown grid (no mutation, no
  * posting, no query). Columns Type / Source / Original / Paid / Balance / Schedule,
- * the `$` + toFixed(2) amount formatting, the TOTAL ACTIVE / EXCLUDING PENDING ACK
+ * the canonical formatUsdTable amount formatting, the TOTAL ACTIVE / EXCLUDING PENDING ACK
  * totals footer, and the pending-ack recompute note must be preserved 1:1.
  */
 import fs from "node:fs";
@@ -47,9 +47,12 @@ function assertMigrated(src) {
   if (!src.includes('tableTestId="driver-finance-liability-breakdown-table"')) {
     errors.push(`${PAGE}: must set tableTestId="driver-finance-liability-breakdown-table"`);
   }
+  // ACCT-F9799 (2026-10-02) moved every driver-finance money cell to the canonical formatter: a real amount renders
+  // as accounting dollars, a missing one as "—" (owner design law: never 0, never -$0.00). `$` + toFixed(2) printed
+  // "$0.00" / "$NaN" for a missing value, so the canonical formatter is the stricter rule this guard now pins.
   for (const amount of ["original", "paid", "balance"]) {
-    if (!src.includes(`\`$\${item.${amount}.toFixed(2)}\``)) {
-      errors.push(`${PAGE}: must keep \`$\` + toFixed(2) formatting for ${amount}`);
+    if (!src.includes(`formatUsdTable(item.${amount})`)) {
+      errors.push(`${PAGE}: must format ${amount} with the canonical formatUsdTable(item.${amount}) (missing renders "—")`);
     }
   }
   if (!src.includes("TOTAL ACTIVE:")) {
@@ -70,9 +73,9 @@ function selftest() {
     const COLUMNS = [
       { key: "type", label: "Type" },
       { key: "source_description", label: "Source" },
-      { key: "original", label: "Original", render: (item) => \`$\${item.original.toFixed(2)}\` },
-      { key: "paid", label: "Paid", render: (item) => \`$\${item.paid.toFixed(2)}\` },
-      { key: "balance", label: "Balance", render: (item) => \`$\${item.balance.toFixed(2)}\` },
+      { key: "original", label: "Original", render: (item) => formatUsdTable(item.original) },
+      { key: "paid", label: "Paid", render: (item) => formatUsdTable(item.paid) },
+      { key: "balance", label: "Balance", render: (item) => formatUsdTable(item.balance) },
       { key: "schedule", label: "Schedule" },
     ];
     <ParityTable

@@ -8,7 +8,7 @@
  * NEVER: must never push when SAMSARA_ROUTES_PUSH_ENABLED is not true, and never push a stop without its own coordinates
  * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
  */
-import { canonicalDispatchWorkStatusClause } from "../../dispatch/canonical-active-load-set.js";
+import { assertCanonicalSubset, canonicalDispatchWorkStatusClause } from "../../dispatch/canonical-active-load-set.js";
 import { stopFenceTimeSql } from "../../telematics/stop-arrival-events.js";
 import { resolveSamsaraApiToken } from "./samsara-token.js";
 import { SamsaraClient } from "./samsara-client.js";
@@ -44,6 +44,7 @@ function encryptedToken(row: Record<string, unknown>): Buffer | null {
 
 export const ROUTE_PUSH_SYNC_KIND = "route_push";
 export const ROUTE_ON_ROAD_STATUSES = ["dispatched", "at_pickup", "in_transit", "at_delivery"] as const;
+assertCanonicalSubset("ROUTE_ON_ROAD_STATUSES", ROUTE_ON_ROAD_STATUSES);
 
 export function samsaraRoutesPushEnabled(): boolean {
   return process.env.SAMSARA_ROUTES_PUSH_ENABLED === "true";

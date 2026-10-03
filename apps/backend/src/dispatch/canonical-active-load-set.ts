@@ -331,6 +331,15 @@ export type DispatchWorkLoadStatus = (typeof DISPATCH_WORK_LOAD_STATUSES)[number
 
 assertCanonicalSubset("canonical-active-load-set.ts DISPATCH_WORK_LOAD_STATUSES", DISPATCH_WORK_LOAD_STATUSES);
 
+/**
+ * NOT CANCELLED — "this load really happened": every load except a cancelled one, whatever stage it
+ * reached. Not an active-load set (a settled load passes); profiles and history read it to show a
+ * driver's or a customer's real loads. Defined here so no reader inlines its own cancelled test.
+ */
+export function canonicalNotCancelledLoadClause(alias = "l"): string {
+  return `${alias}.status::text <> 'cancelled'`;
+}
+
 /** `l.status IN (...)` fragment for the dispatch-work set, aliasable to match the caller's query. */
 export function canonicalDispatchWorkStatusClause(alias = "l"): string {
   return `${alias}.status IN (${statusInClause(DISPATCH_WORK_LOAD_STATUSES)})`;

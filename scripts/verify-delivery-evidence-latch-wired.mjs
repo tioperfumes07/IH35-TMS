@@ -45,6 +45,10 @@ const EXEMPT = new Set([
   "apps/backend/src/dispatch/delivery-evidence-latch.ts", // the helper that DOES the latching
   "apps/backend/src/accounting/revrec-delivery-posting/poster.service.ts", // the poster itself
   "apps/backend/src/dispatch/stamp-final-delivery-departure.ts", // stamps the stop, not the load status
+  // Never writes a load status itself: it names "delivered_pending_docs" only as the target it hands to
+  // transitionDispatchLoadInClientTx (dispatch/load-transition.service.ts), which calls latchOnDeliveryEvidence
+  // for every delivery-evidence status. Checked by reading both files: no UPDATE mdata.loads in this one.
+  "apps/backend/src/dispatch/geofence-auto-delivery.service.ts",
   "apps/backend/src/driver-finance/settlements-load-bookended.service.ts", // reads a status set upstream
   // Pure status MAPPERS / read-side classifiers — they name the status but never write it to a load.
   // Verified by reading each: load-state-machine returns a normalised status from a status

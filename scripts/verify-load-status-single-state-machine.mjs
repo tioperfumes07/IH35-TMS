@@ -90,7 +90,9 @@ export function auditDetector(src) {
   if (!/UPDATE\s+mdata\.loads[\s\S]{0,300}AND\s+operating_company_id\s*=\s*\$3::uuid[\s\S]{0,100}RETURNING\s+id/i.test(code)) {
     problems.push(`${DETECTOR} status UPDATE must bind the selected company and return the changed row.`);
   }
-  if (!/if\s*\(!statusUpdate\.rows\[0\]\?\.id\)\s*return\s*\{\s*applied:\s*false,\s*skipped:\s*["']load_not_found["']\s*\}/.test(code)) {
+  // The stop is the control; the reason names why. "status_changed" is the compare-and-set skip (LST-F3271: the
+  // UPDATE also binds the status it read, so a dispatcher, driver app or bulk move in between matches 0 rows).
+  if (!/if\s*\(!statusUpdate\.rows\[0\]\?\.id\)\s*return\s*\{\s*applied:\s*false,\s*skipped:\s*["'](?:load_not_found|status_changed)["']\s*\}/.test(code)) {
     problems.push(`${DETECTOR} must stop before event/audit writes when the scoped status UPDATE changes no row.`);
   }
   return problems;
@@ -181,6 +183,7 @@ function selftest() {
   // A canonical fixture must carry a load-domain marker, or file-level scoping correctly ignores it.
   const SM_FIXTURE =
     'export const allowedTransitions = { in_transit: ["delivered_pending_docs"] };\n' +
+    'export const MDATA_STATUS_TRANSITIONS = { in_transit: ["delivered_pending_docs"] };\n' +
     "export const dispatchStatusSchema = z.enum([]);\n" +
     "export function fromMdataStatus(s) {}\n" +
     "export function toMdataStatus(s) {}";
@@ -215,6 +218,13 @@ function selftest() {
     .replace('if (!statusUpdate.rows[0]?.id) return { applied: false, skipped: "load_not_found" };', "");
   if (!auditDetector(detectorUnchecked).some((p) => p.includes("changes no row")))
     failures.push("case2c FAIL — an unchecked scoped GPS status write was NOT caught");
+
+  // case2d — the compare-and-set skip (LST-F3271) is the same stop under its accurate name; removing it still fails.
+  const detectorCas = detectorFixed.replace('skipped: "load_not_found" };', 'skipped: "status_changed" };');
+  if (auditDetector(detectorCas).length !== 0)
+    failures.push(`case2d FAIL — the compare-and-set skip was flagged: ${auditDetector(detectorCas).join(" | ")}`);
+  if (!auditDetector(detectorCas.replace('if (!statusUpdate.rows[0]?.id) return { applied: false, skipped: "status_changed" };', "")).some((p) => p.includes("changes no row")))
+    failures.push("case2d FAIL — removing the compare-and-set stop was NOT caught");
 
   // case3 — validated but AFTER the write: the row already moved.
   const detectorAfter = `
