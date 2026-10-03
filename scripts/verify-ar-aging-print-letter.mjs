@@ -23,6 +23,7 @@ function assertSource() {
   const page = fs.readFileSync(PAGE, "utf8");
   if (!page.includes("printLetterHtml")) fail("ARAgingPage must use printLetterHtml");
   if (/onClick=\{\(\) => window\.print\(\)\}/.test(page)) fail("must not window.print() on SPA");
+  if (page.includes("text-[11px]")) fail("ARAgingPage.tsx: must not use text-[11px] — use text-section-header");
 }
 
 function selftest() {
