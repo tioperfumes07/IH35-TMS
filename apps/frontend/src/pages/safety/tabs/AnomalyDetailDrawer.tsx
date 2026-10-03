@@ -199,7 +199,7 @@ export function AnomalyDetailDrawer({
 
             <div>
               <div className="mb-1 text-xs font-semibold text-gray-700">Evidence</div>
-              <pre className="max-h-80 overflow-auto rounded-sm border border-gray-200 bg-slate-950 p-3 text-[11px] text-slate-100">
+              <pre className="max-h-80 overflow-auto rounded-sm border border-gray-200 bg-slate-950 p-3 text-xs text-slate-100">
                 {JSON.stringify(anomaly.evidence ?? {}, null, 2)}
               </pre>
             </div>
