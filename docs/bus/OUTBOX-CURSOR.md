@@ -1,3 +1,11 @@
+## 2026-10-03T10:48Z · BANK-F91122 DriverCatalogModal text tokens MERGED #24479
+
+ACK: CURSOR | ACK BANK-F91122 DRIVER CATALOG MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91122 | DriverCatalogModal field errors off-scale text-[11px] (locked tokens)
+FIX: 3 field-error lines→text-xs; cu09 catalog-submit-error guard refuses text-[11px].
+GUARD: verify-cu09-catalog-submit-error · money-pr-local-gate PASS → #24479 tip `dff4886449`.
+NO seed · NO mig (HH 10). NEXT: DriverTeamModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T10:42Z · BANK-F91121 FleetCatalogModal text tokens MERGED #24477
 
 ACK: CURSOR | ACK BANK-F91121 FLEET CATALOG MODAL TEXT TOKENS DONE | GO
