@@ -98,6 +98,11 @@ function main() {
   assertIncludes(tokens, 'recordCcPayment: "Record as credit card payment"', TOKENS);
   assertIncludes(tokens, 'findOtherMatches: "Find other matches"', TOKENS);
 
+  // BANK-F91064 — MatchDrawer body/actions use locked text-xs (12px), not off-scale text-[11px].
+  if (match.includes("text-[11px]")) {
+    throw new Error(`${MATCH}: must not use text-[11px] (GLOBAL-TYPE-SIZE-BASELINE body 12px = text-xs)`);
+  }
+
   console.log(`${LABEL}: PASS`);
 }
 
