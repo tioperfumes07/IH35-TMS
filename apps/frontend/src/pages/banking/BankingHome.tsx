@@ -53,6 +53,8 @@ import { LinkSuggestionsPanel } from "./components/LinkSuggestionsPanel";
 import { MoneyKpiTile } from "../../components/money/MoneyKpiTile";
 import { BankingKpiPanel } from "../../components/banking/BankingKpiPanel";
 import { getFactoringKpis } from "../../api/factoring-kpis";
+import { getBankingLedgerKpis } from "../../api/banking-kpis";
+import { DriverEscrowSummaryCard } from "./components/DriverEscrowSummaryCard";
 import { NotApplicable } from "../../components/money/NotApplicable";
 import { WhereTheMoneyIsRail, type MoneyRailRow } from "./components/WhereTheMoneyIsRail";
 import { NeedsCategorizingQueue, type NeedsCategorizingRow } from "./components/NeedsCategorizingQueue";
@@ -84,7 +86,10 @@ type Props = {
 // route each virtual tile to the page that already shows its REAL underlying ledger instead.
 function virtualTileRoute(tile: { tile_kind?: string; account_type?: string } | undefined): string | null {
   if (!tile || tile.tile_kind !== "virtual") return null;
-  if (tile.account_type === "virtual_factoring") return "/banking/factoring";
+  // ROUND-20.8 B3 (#21962) deleted Banking's factoring tab — /banking/factoring now redirects to /banking, so this tile
+  // landed back on Banking home. The virtual bank opens the factoring detail it summarises (approved preview, Banking
+  // Feature 1): reserves held, advances, chargebacks — the Factoring Reserve view.
+  if (tile.account_type === "virtual_factoring") return "/factoring/reserve";
   if (tile.account_type === "virtual_escrow") return "/banking/driver-escrow";
   if (tile.account_type === "virtual_advance") return "/cash-advances";
   return null;
@@ -225,6 +230,38 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     queryFn: () => getFactoringKpis(companyId),
     enabled: Boolean(companyId),
   });
+  // ROUND 335 item 2 / ROUND 326.2 item 3 — the factoring virtual-bank card's month-to-date lines come from the SAME KPI
+  // engine Factoring uses (ledger-tied, verify-factoring-banking-kpis-tie-to-ledger), never a placeholder.
+  const monthToDate = useMemo(() => {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    return { from: `${today.slice(0, 8)}01`, to: today };
+  }, []);
+  const factoringKpiMtdQuery = useQuery({
+    queryKey: ["factoring", "kpis", companyId, monthToDate.from, monthToDate.to],
+    queryFn: () => getFactoringKpis(companyId, monthToDate.from, monthToDate.to),
+    enabled: Boolean(companyId),
+  });
+  // Driver escrow (preview Feature 2) — the banking KPI engine, same month-to-date range: held as of today, flows MTD.
+  const bankingKpiMtdQuery = useQuery({
+    queryKey: ["banking", "kpis", companyId, monthToDate.from, monthToDate.to],
+    queryFn: () => getBankingLedgerKpis(companyId, monthToDate.from, monthToDate.to),
+    enabled: Boolean(companyId),
+  });
+  const escrowMtd = useMemo(() => {
+    const kpis = bankingKpiMtdQuery.data?.kpis;
+    const pick = (key: string) => (kpis?.find((k) => k.key === key) as import("../../api/banking-kpis").BankingKpi | undefined) ?? null;
+    return { held: pick("escrow_held"), contributions: pick("escrow_contributions"), deductions: pick("escrow_deductions"), failed: bankingKpiMtdQuery.isError };
+  }, [bankingKpiMtdQuery.data?.kpis, bankingKpiMtdQuery.isError]);
+  const factoringMtd = useMemo(() => {
+    const kpis = factoringKpiMtdQuery.data?.kpis;
+    return {
+      purchased: kpis?.find((k) => k.key === "purchased_volume") ?? null,
+      defaultInterest: kpis?.find((k) => k.key === "default_interest_accrued") ?? null,
+      failed: factoringKpiMtdQuery.isError,
+    };
+  }, [factoringKpiMtdQuery.data?.kpis, factoringKpiMtdQuery.isError]);
   const factoringReserve = useMemo(() => {
     const kpis = factoringKpiQuery.data?.kpis;
     if (!kpis) return null;
@@ -723,6 +760,13 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 reserve={factoringReserve}
                 outstandingLiability={factoringOutstandingLiability}
                 lastAdvanceAt={factoringVirtualSummary.lastAdvanceAt}
+                mtd={factoringMtd}
+              />
+              <DriverEscrowSummaryCard
+                held={escrowMtd.held}
+                contributions={escrowMtd.contributions}
+                deductions={escrowMtd.deductions}
+                failed={escrowMtd.failed}
               />
               {companyId ? (
                 <FactoringReservesSharedPanel companyId={companyId} host="banking" />

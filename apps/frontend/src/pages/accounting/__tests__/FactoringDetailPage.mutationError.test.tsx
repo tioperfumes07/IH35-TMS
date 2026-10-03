@@ -9,6 +9,7 @@ import { FactoringDetailPage } from "../FactoringDetailPage";
 const getFactoringAdvanceMock = vi.fn();
 const listFactoringReserveBalancesMock = vi.fn();
 const markAdvancedMock = vi.fn();
+const voidFactoringMock = vi.fn();
 
 vi.mock("../../../api/accounting", () => ({
   getFactoringAdvance: (...args: unknown[]) => getFactoringAdvanceMock(...args),
@@ -17,7 +18,7 @@ vi.mock("../../../api/accounting", () => ({
   markReserveHeld: vi.fn(),
   releaseReserve: vi.fn(),
   recourseReturn: vi.fn(),
-  voidFactoring: vi.fn(),
+  voidFactoring: (...args: unknown[]) => voidFactoringMock(...args),
 }));
 
 vi.mock("../../../contexts/CompanyContext", () => ({
@@ -50,6 +51,7 @@ describe("FactoringDetailPage lifecycle mutation error handling", () => {
     getFactoringAdvanceMock.mockReset();
     listFactoringReserveBalancesMock.mockReset();
     markAdvancedMock.mockReset();
+    voidFactoringMock.mockReset();
 
     listFactoringReserveBalancesMock.mockResolvedValue({ rows: [], recent_events: [] });
     getFactoringAdvanceMock.mockResolvedValue({
@@ -89,20 +91,28 @@ describe("FactoringDetailPage lifecycle mutation error handling", () => {
     });
   });
 
-  it("surfaces a toast instead of failing silently when markAdvanced rejects", async () => {
-    markAdvancedMock.mockRejectedValue(new Error("Advance blocked: posting flag is OFF"));
+  // OWNER LAW 2026-10-02 competing-engine audit (ACCT-F9331, #24002): "Mark Advanced" is a RETIRED writer — the one purchase
+  // engine posts the funding. It must never be offered, so it can never be clicked.
+  it("does not offer the retired Mark Advanced writer", async () => {
+    render(wrap(<FactoringDetailPage />));
+    await screen.findByRole("button", { name: "Void" });
+    expect(screen.queryByRole("button", { name: "Mark Advanced" })).toBeNull();
+    expect(markAdvancedMock).not.toHaveBeenCalled();
+  });
+
+  // The intent this test always carried: a rejected lifecycle mutation surfaces a toast, never fails silently — now on
+  // Void, the one writer that remains (it runs the purchase engine's void).
+  it("surfaces a toast instead of failing silently when Void rejects", async () => {
+    voidFactoringMock.mockRejectedValue(new Error("Void blocked: the purchase has a matched bank wire"));
 
     render(wrap(<FactoringDetailPage />));
 
-    const markAdvancedButton = await screen.findByRole("button", { name: "Mark Advanced" });
-    fireEvent.click(markAdvancedButton);
+    fireEvent.click(await screen.findByRole("button", { name: "Void" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Confirm" }));
 
-    const confirmButton = await screen.findByRole("button", { name: "Confirm" });
-    fireEvent.click(confirmButton);
-
-    await waitFor(() => expect(markAdvancedMock).toHaveBeenCalledOnce());
+    await waitFor(() => expect(voidFactoringMock).toHaveBeenCalledOnce());
     await waitFor(() =>
-      expect(screen.getByTestId("toast-message")).toHaveTextContent("Advance blocked: posting flag is OFF")
+      expect(screen.getByTestId("toast-message")).toHaveTextContent("Void blocked: the purchase has a matched bank wire")
     );
   });
 });

@@ -212,11 +212,12 @@ export function FactoringDetailPage() {
           <div className="flex items-center gap-2">
             <span className={statusPill(detail.status)}>{detail.status.replaceAll("_", " ")}</span>
             <Link
-              to="/banking/factoring"
+              to="/banking"
               className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-800 hover:bg-slate-50"
               data-testid="factoring-advance-banking-reverse-link"
+              title="Banking home — the factoring virtual bank (ROUND-20.8 B3 retired /banking/factoring)"
             >
-              Banking · Factoring entry
+              Banking · Factoring virtual bank
             </Link>
             <Link
               to="/factoring/statements"
