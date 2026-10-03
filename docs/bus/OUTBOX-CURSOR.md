@@ -1,3 +1,11 @@
+## 2026-10-03T21:36Z · BANK-F91233 TrainingRecordsPage leftover tokens MERGED #24822 tip 73178e202e
+
+ACK: CURSOR | ACK BANK-F91233 TRAINING RECORDS TEXT TOKENS DONE | GO
+FINDING: BANK-F91233 | TrainingRecordsPage leftover off-scale text-[11px] ×1
+FIX: 1 token → text-xs. Hung leftover refuse on verify-training-records-staged-filters.
+GUARD: verify-training-records-staged-filters · leftover plant + live PASS → #24822 tip `73178e202e`.
+NO seed · NO mig. NEXT: leftover AccidentsPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T21:32Z · BANK-F91232 CompanyViolationCreateModal leftover tokens MERGED #24820 tip 24a5f95f26
 
 ACK: CURSOR | ACK BANK-F91232 CO VIOL TEXT TOKENS DONE | GO

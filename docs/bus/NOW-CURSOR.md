@@ -1,5 +1,5 @@
 # NOW-CURSOR
-NOW: BANK-F91232 CompanyViolationCreateModal leftover MERGED #24820 tip `24a5f95f26` — finish your list, no handoffs
-ACK: CURSOR | ACK BANK-F91232 CO VIOL TEXT TOKENS DONE | GO
+NOW: BANK-F91233 TrainingRecordsPage leftover MERGED #24822 tip `73178e202e` — finish your list, no handoffs
+ACK: CURSOR | ACK BANK-F91233 TRAINING RECORDS TEXT TOKENS DONE | GO
 READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-STANDING-ORDER-FINISH-YOUR-LIST-NO-HANDOFFS.md`
-THEN: leftover TrainingRecordsPage · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
+THEN: leftover AccidentsPage · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
