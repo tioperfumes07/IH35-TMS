@@ -64,6 +64,8 @@ export function checkFrontend(text) {
   if (!/total_closed_matters/.test(cardMatch[0])) {
     problems.push('the "Closed matters (count)" card does not read total_closed_matters.');
   }
+  if (text.includes("text-[11px]")) problems.push("leftover text-[11px]");
+  if (text.includes("#8A92AB") || text.includes("#334155")) problems.push("leftover off-scale muted");
   return problems;
 }
 
@@ -111,12 +113,18 @@ function selftest() {
     failures.push(`offender-3 (Legal Reports retry no-op) NOT caught: ${p3.join(" | ") || "none"}`);
   }
 
+  const leftoverPlant = `${feReal}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const p4 = checkFrontend(leftoverPlant);
+  if (!p4.some((m) => m.includes("leftover"))) {
+    failures.push(`offender-4 (leftover 11px) NOT caught: ${p4.join(" | ") || "none"}`);
+  }
+
   if (failures.length) {
     console.error(`${LABEL} --selftest FAIL:`);
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS — 3/3 offenders caught, baseline clean`);
+  console.log(`${LABEL} --selftest PASS — 4/4 offenders caught, baseline clean`);
 }
 
 if (process.argv.includes("--selftest")) {
