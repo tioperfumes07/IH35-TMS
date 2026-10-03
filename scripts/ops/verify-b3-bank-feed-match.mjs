@@ -69,6 +69,10 @@ function main() {
   assertIncludes(match, "kinds: recordKind ? [recordKind] : undefined", MATCH);
 
   assertIncludes(feed, "bankTransactionDate=", FEED);
+  // BANK-F91058 — ORDERS §18 GEAR Groups · Turn off grouping (same turnOffGrouping as toolbar).
+  assertIncludes(feed, 'data-testid="banking-gear-groups"', FEED);
+  assertIncludes(feed, "Turn off grouping", FEED);
+  assertIncludes(feed, "turnOffGrouping: checked", FEED);
   // B-3 §19 — Categorized tab ADDED OR MATCHED provenance + RULE + Undo (Undo already wired).
   assertIncludes(feed, "categorizedProvenanceText", FEED);
   assertIncludes(feed, 'data-b3-categorized-provenance="1"', FEED);
