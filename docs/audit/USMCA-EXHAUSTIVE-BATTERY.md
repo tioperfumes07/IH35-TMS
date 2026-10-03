@@ -600,7 +600,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/fuel/card-overage-events/reprocess` | `apps/backend/src/fuel/fuel-card-overage.routes.ts:363` | — | — | — |
 | create | `/api/v1/fuel/gl/reflush-unposted` | `apps/backend/src/fuel/fuel-gl-reflush.routes.ts:26` | — | — | — |
 | nested | `/api/v1/fuel/planner/recommendations/:id/send-to-driver` | `apps/backend/src/fuel/planner.routes.ts:284` | — | — | — |
-| create | `/api/v1/fuel/transactions` | `apps/backend/src/fuel/fuel-transactions.routes.ts:346` | — | — | — |
+| create | `/api/v1/fuel/transactions` | `apps/backend/src/fuel/fuel-transactions.routes.ts:347` | — | — | — |
 
 ### settlements — 7 create-surface(s)
 

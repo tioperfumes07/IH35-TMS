@@ -6,6 +6,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { flushFuelGlPostsAfterCommit } from "../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
+import { enteredFuelRowHash, findLiveFuelByProviderTransactionId } from "./fuel-provider-reference.js";
 
 // A10 — GET list read-model for the frontend FuelTransactionsTable
 // (apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx), which takes a `rows: FuelTransactionRow[]`
@@ -425,6 +426,14 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
         if (!trailerRes.rows[0]) return { error: "trailer_not_found_for_company" as const };
       }
 
+      // ROUND 367.2 — one provider transaction is one purchase (database side: 202615370600).
+      const sameProviderTxn = await findLiveFuelByProviderTransactionId(client, {
+        operatingCompanyId: b.operating_company_id,
+        vendorId: b.vendor_id ?? null,
+        reference: b.transaction_reference,
+      });
+      if (sameProviderTxn) return { error: "fuel_provider_transaction_already_recorded" as const, existing: sameProviderTxn };
+
       const insertRes = (await client.query(
         `
           INSERT INTO fuel.fuel_transactions (
@@ -449,11 +458,12 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
             load_required,
             load_exemption_reason,
             created_by_user_id,
-            source_doc_id
+            source_doc_id,
+            source_row_hash
           )
           VALUES (
             $1::uuid, $2::timestamptz, $2::timestamptz, $3, $4, $5, $6, $7, $8, $9,
-            $10, $11, $12, $13, $14, $15, 'manual', $16, $18, $17, $19::uuid, $20::uuid
+            $10, $11, $12, $13, $14, $15, 'manual', $16, $18, $17, $19::uuid, $20::uuid, $21
           )
           RETURNING id::text AS id
         `,
@@ -483,6 +493,8 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           Boolean(b.load_id),
           authUser.uuid,
           b.source_doc_id ?? null,
+          // NOT NULL since 202614220000; this INSERT never set it, so every manual fuel entry failed with 23502.
+          enteredFuelRowHash(b.operating_company_id, b.vendor_id ?? null, b.transaction_reference),
         ]
       )) as { rows: Array<{ id: string }> };
       const fuelTransactionId = insertRes.rows[0]?.id;
@@ -522,6 +534,9 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
 
     if ("unavailable" in result) return reply.code(501).send({ error: "fuel_transactions_unavailable" });
     if ("error" in result) {
+      if (result.error === "fuel_provider_transaction_already_recorded") {
+        return reply.code(409).send({ error: result.error, existing_fuel_transaction_id: result.existing.id, existing_load_number: result.existing.load_number });
+      }
       const status = result.error === "fuel_transaction_create_failed" ? 500 : 400;
       return reply.code(status).send({ error: result.error });
     }

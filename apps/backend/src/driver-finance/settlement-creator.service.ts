@@ -10,6 +10,7 @@
 import { stampDocumentVoided } from "../accounting/void-document-stamp.service.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { createExpenseFromFuelTransaction } from "../fuel/fuel-expense-document.service.js";
+import { enteredFuelRowHash, FuelProviderTransactionDuplicateError, refuseDuplicateProviderTransaction } from "../fuel/fuel-provider-reference.js";
 import {
   createDriverCashAdvanceCore,
   reverseDriverAdvanceInClientTx,
@@ -1093,6 +1094,16 @@ export async function postSettlementCreatorInClientTx(
       );
     }
 
+    // ROUND 367.2 — one provider transaction is one purchase: refused by name before the INSERT (the database refuses it
+    // too, 202615370600). source_row_hash is NOT NULL since 202614220000 and this INSERT never set it (every Settlement
+    // Creator fuel line failed with 23502); it is keyed on the provider ID when there is one.
+    try {
+      await refuseDuplicateProviderTransaction(client, { operatingCompanyId: draft.operating_company_id, vendorId: vendor.id, reference: fuel.invoice });
+    } catch (err) {
+      if (err instanceof FuelProviderTransactionDuplicateError) throw new SettlementCreatorError(err.code, `Fuel line ${fuel.date}: ${err.message}`);
+      throw err;
+    }
+
     const fuelType = fuel.fuel_type ?? "diesel";
     const inserted = await client.query<{ id: string }>(
       `
@@ -1100,13 +1111,13 @@ export async function postSettlementCreatorInClientTx(
           operating_company_id, vendor_id, load_id, driver_id, unit_id,
           fuel_type, gallons, price_per_gallon, total_cost,
           purchased_at, transaction_at, transaction_reference, location_city,
-          source, load_required, load_exemption_reason, created_by_user_id
+          source, load_required, load_exemption_reason, created_by_user_id, source_row_hash
         )
         VALUES (
           $1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid,
           $6, $7, $8, $9,
           $10::timestamptz, $10::timestamptz, $11, $12,
-          'manual', $13, $14, $15::uuid
+          'manual', $13, $14, $15::uuid, $16
         )
         RETURNING id::text
       `,
@@ -1126,6 +1137,7 @@ export async function postSettlementCreatorInClientTx(
         Boolean(loadId),
         loadId ? null : "Settlement Creator fuel line with no load number on the PDF row.",
         actorUserId,
+        enteredFuelRowHash(draft.operating_company_id, vendor.id, fuel.invoice),
       ],
     );
     const fuelId = inserted.rows[0]!.id;
