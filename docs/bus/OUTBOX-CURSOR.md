@@ -1,3 +1,11 @@
+## 2026-10-03T07:24Z · BANK-F91094 ExpenseCategoryMap text tokens MERGED #24423
+
+ACK: CURSOR | ACK BANK-F91094 EXPENSE MAP TEXT TOKENS DONE | GO
+FINDING: BANK-F91094 | ExpenseCategoryMap hint off-scale text-[11px] (locked tokens)
+FIX: hint→text-xs; reference-select guard refuses text-[11px].
+GUARD: verify-money-reference-select-plus · money-pr-local-gate PASS → #24423 tip `f403c0c10f`.
+NO seed · NO mig (HH 07). NEXT: BillDetail leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T07:15Z · BANK-F91093 FactoringDetail pill text tokens MERGED #24421
 
 ACK: CURSOR | ACK BANK-F91093 FACTORING DETAIL PILL TEXT TOKENS DONE | GO
