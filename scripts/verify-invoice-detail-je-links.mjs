@@ -76,6 +76,13 @@ function assertInvoiceDetailJeLinks() {
   if (!/kind="payment"/.test(detailPage)) {
     errors.push("InvoiceDetailPage: must keep payment EntityLink on applications");
   }
+  // BANK-F91092 — ORDERS chrome: factoring status pill uses named 11px token, never raw text-[11px].
+  if (detailPage.includes("text-[11px]")) {
+    errors.push("InvoiceDetailPage: must not use text-[11px] — use text-section-header");
+  }
+  if (!detailPage.includes("text-section-header")) {
+    errors.push("InvoiceDetailPage: factoring status pill must use text-section-header");
+  }
 
   if (!/`\/accounting\/invoices\/\$\{id\}`/.test(entityLink) && !/"\/accounting\/invoices\/${id}"/.test(entityLink)) {
     // EntityLink uses template: `/accounting/invoices/${id}`
