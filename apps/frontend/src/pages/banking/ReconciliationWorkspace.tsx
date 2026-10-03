@@ -812,17 +812,17 @@ export function ReconciliationWorkspacePage() {
           data-testid="recon-balance-header"
         >
           <div>
-            <div className="text-[11px] uppercase tracking-wide text-gray-500">Beginning balance</div>
+            <div className="text-section-header uppercase tracking-wide text-gray-500">Beginning balance</div>
             <div className="text-xs font-semibold text-gray-900">{money(balanceHeader.beginningCents)}</div>
           </div>
           <div>
-            <div className="text-[11px] uppercase tracking-wide text-gray-500">Ending balance</div>
+            <div className="text-section-header uppercase tracking-wide text-gray-500">Ending balance</div>
             <div className="text-xs font-semibold text-gray-900">
               {balanceHeader.endingCents != null ? money(balanceHeader.endingCents) : "—"}
             </div>
           </div>
           <div>
-            <div className="text-[11px] uppercase tracking-wide text-gray-500">Last reconciled</div>
+            <div className="text-section-header uppercase tracking-wide text-gray-500">Last reconciled</div>
             <div className="text-xs font-semibold text-gray-900">
               {formatReconciledDate(balanceHeader.lastReconciledAt)}
             </div>
@@ -934,7 +934,7 @@ export function ReconciliationWorkspacePage() {
               <button
                 key={label}
                 type="button"
-                className="rounded-sm border border-gray-300 px-2 py-0.5 text-[11px] text-gray-700 hover:bg-gray-50"
+                className="rounded-sm border border-gray-300 px-2 py-0.5 text-xs text-gray-700 hover:bg-gray-50"
                 onClick={apply}
               >
                 {label}
@@ -1481,7 +1481,7 @@ export function ReconciliationWorkspacePage() {
 
               <div className="mt-3 grid grid-cols-1 gap-2 border-t border-gray-100 pt-2 sm:grid-cols-2">
                 <div>
-                  <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Service charge</label>
+                  <label className="text-section-header font-semibold uppercase tracking-wide text-gray-500">Service charge</label>
                   <MoneyInput
                     valueDollars={serviceChargeInput}
                     onChangeDollars={setServiceChargeInput}
@@ -1506,7 +1506,7 @@ export function ReconciliationWorkspacePage() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Interest earned</label>
+                  <label className="text-section-header font-semibold uppercase tracking-wide text-gray-500">Interest earned</label>
                   <MoneyInput
                     valueDollars={interestEarnedInput}
                     onChangeDollars={setInterestEarnedInput}
