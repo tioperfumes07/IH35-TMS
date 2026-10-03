@@ -18,6 +18,10 @@
  *            scripts/ops/2026-09-28-cc1-round148-ap-adoption-setbased.ts (#22918) — August/September documents, closed
  *            periods (claude/00-AUGUST-AND-SEPTEMBER-ARE-CLOSED-NO-SEAT-TOUCHES-THEM.md) and purge population; they are
  *            never posted by hand. A new one is a writer that regressed.
+ *   RULE 4 — once migration 202615360100 is applied, the refusal itself is live: trigger
+ *            trg_bill_payment_requires_postings exists on accounting.bill_payments, is enabled, and is a deferrable
+ *            constraint trigger, initially deferred (fires at COMMIT). Rehearsed with real commits on a Neon fork: a cash
+ *            payment with no postings is refused; a sample payment and a payment voided in the same transaction commit.
  * --selftest exercises every rule.
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
@@ -73,10 +77,17 @@ export function run() {
   return r;
 }
 
-export function liveFailures(unposted) {
-  return unposted > UNPOSTED_CASH_BASELINE
+export function liveFailures(unposted, refusal = null) {
+  const out = unposted > UNPOSTED_CASH_BASELINE
     ? [`RULE 3 ${unposted} cash bill payment(s) with no posting > baseline ${UNPOSTED_CASH_BASELINE} — a writer committed a payment without its postings`]
     : [];
+  if (refusal && refusal.applied) {
+    if (!refusal.trigger) out.push("RULE 4 migration 202615360100 is applied but trg_bill_payment_requires_postings does not exist");
+    else if (refusal.trigger.enabled === "D" || !refusal.trigger.deferrable || !refusal.trigger.initdeferred) {
+      out.push(`RULE 4 trg_bill_payment_requires_postings is not a live deferred constraint trigger (enabled=${refusal.trigger.enabled}, deferrable=${refusal.trigger.deferrable}, initially_deferred=${refusal.trigger.initdeferred})`);
+    }
+  }
+  return out;
 }
 
 async function measure(client) {
@@ -93,8 +104,12 @@ async function measure(client) {
        AND bp.qbo_bill_payment_id IS NULL
        AND NOT EXISTS (SELECT 1 FROM accounting.journal_entry_postings p
                         WHERE p.source_transaction_type = 'bill_payment' AND p.source_transaction_id = bp.id::text)`);
+  const applied = (await client.query(`SELECT 1 FROM _system._schema_migrations WHERE filename LIKE '202615360100%'`)).rows.length > 0;
+  const trig = (await client.query(`
+    SELECT t.tgenabled AS enabled, t.tgdeferrable AS deferrable, t.tginitdeferred AS initdeferred
+      FROM pg_trigger t WHERE t.tgrelid = 'accounting.bill_payments'::regclass AND t.tgname = 'trg_bill_payment_requires_postings'`)).rows[0] ?? null;
   await client.query("ROLLBACK");
-  return r.rows[0].n;
+  return { n: r.rows[0].n, refusal: { applied, trigger: trig } };
 }
 
 const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
@@ -111,6 +126,10 @@ if (isMain) {
       ["QBO puller exempt", f([{ rel: "apps/backend/src/qbo-sync/ap-bill-payments-puller.ts", src: ins }]).length === 0],
       ["live at baseline passes", liveFailures(UNPOSTED_CASH_BASELINE).length === 0],
       ["live above baseline fails", liveFailures(UNPOSTED_CASH_BASELINE + 1).length === 1],
+      ["refusal applied + live deferred trigger passes", liveFailures(0, { applied: true, trigger: { enabled: "O", deferrable: true, initdeferred: true } }).length === 0],
+      ["refusal applied but trigger missing fails", liveFailures(0, { applied: true, trigger: null }).some((x) => x.startsWith("RULE 4"))],
+      ["refusal applied but trigger disabled fails", liveFailures(0, { applied: true, trigger: { enabled: "D", deferrable: true, initdeferred: true } }).some((x) => x.startsWith("RULE 4"))],
+      ["refusal applied but not deferred fails", liveFailures(0, { applied: true, trigger: { enabled: "O", deferrable: false, initdeferred: false } }).some((x) => x.startsWith("RULE 4"))],
     ];
     for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
     const bad = cases.filter(([, ok]) => !ok).length;
@@ -120,10 +139,10 @@ if (isMain) {
   const { failures: sf, inserters } = run();
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
-    const n = await measure(client);
-    const all = [...sf, ...liveFailures(n)];
+    const { n, refusal } = await measure(client);
+    const all = [...sf, ...liveFailures(n, refusal)];
     if (all.length) { console.error(`${LABEL}: FAIL\n  ${all.join("\n  ")}`); process.exitCode = 1; }
-    else console.log(`${LABEL}: OK — ${inserters} bill-payment inserters, each posts on its own transaction; ${n} unposted cash bill payment(s) (baseline ${UNPOSTED_CASH_BASELINE}, shrink-only, purge population).`);
+    else console.log(`${LABEL}: OK — ${inserters} bill-payment inserters, each posts on its own transaction; ${n} unposted cash bill payment(s) (baseline ${UNPOSTED_CASH_BASELINE}, shrink-only, purge population); refusal ${refusal.applied ? "LIVE (deferred, fires at COMMIT)" : "not yet applied on this database"}.`);
   } finally {
     client.release?.();
     await pool?.end?.();
