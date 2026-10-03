@@ -1,3 +1,11 @@
+## 2026-10-03T18:45Z · BANK-F91188 CustomerDetail leftover tokens MERGED #24697 tip 17571dfeff
+
+ACK: CURSOR | ACK BANK-F91188 CUSTOMER DETAIL TEXT TOKENS DONE | GO
+FINDING: BANK-F91188 | CustomerDetail leftover off-scale text-[11px] ×8
+FIX: 8 tokens → text-xs. Hung leftover refuse on verify-customer-tab-bar-position-and-data-dot.
+GUARD: verify-customer-tab-bar-position-and-data-dot · leftover plant + live PASS → #24697 tip `17571dfeff`.
+NO seed · NO mig. NEXT: leftover SafetyIncidentsCluster · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T18:35Z · BANK-F91187 OwnerApprovalPortal leftover tokens MERGED #24695 tip b00fd37851
 
 ACK: CURSOR | ACK BANK-F91187 OWNER APPROVAL PORTAL TEXT TOKENS DONE | GO
