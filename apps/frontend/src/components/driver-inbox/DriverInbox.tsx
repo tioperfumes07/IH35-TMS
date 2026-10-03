@@ -13,7 +13,7 @@ import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 
 // B6 — Driver Inbox (inside Driver Hub Home). Built to APPROVED-PREVIEW-driver-inbox.html.
 // Locked tokens: navy banner #1A1F36, white active-tab underline; cards #fff / #e5e7eb 4px;
-// labels 9px uppercase #6B7280; green #16A34A; text #1A1F36/#4A5170/#8A92AB; base 12px.
+// labels 9px uppercase #6B7280; green #16A34A; text #1A1F36/#4A5170/#4B5563; base 12px.
 // Only "Cash advances" has a backend; other tabs are honest empty states (no fake data).
 // "Approve & post" calls the OFFICE endpoint = the B5 cascade.
 
@@ -108,8 +108,8 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
     },
   });
 
-  if (!canReview) return <p className="text-xs text-[#8A92AB]">Reviewing requests requires a Manager, Accountant, or Owner role.</p>;
-  if (!companyId) return <p className="text-xs text-[#8A92AB]">Select an operating company to view the inbox.</p>;
+  if (!canReview) return <p className="text-xs text-[#4B5563]">Reviewing requests requires a Manager, Accountant, or Owner role.</p>;
+  if (!companyId) return <p className="text-xs text-[#4B5563]">Select an operating company to view the inbox.</p>;
 
   const showCash = tab === "all" || tab === "cash_advance";
 
@@ -117,7 +117,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
     <div className="overflow-hidden rounded-sm border border-[#e5e7eb] bg-[#f8f8f4]">
       <div className="px-[18px] pt-[14px] pb-[10px]">
         <span className="text-page-title font-semibold text-[#1A1F36]">Inbox</span>
-        <span className="ml-[10px] text-xs text-[#8A92AB]">Driver Hub · requests from the driver app</span>
+        <span className="ml-[10px] text-xs text-[#4B5563]">Driver Hub · requests from the driver app</span>
       </div>
 
       {/* Navy filter strip — NavyPageSubNav locked tokens, as client-side filter buttons with counts */}
@@ -139,7 +139,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
 
       <div className="px-[18px] py-[14px]">
         {pendingQuery.isLoading ? (
-          <p className="text-xs text-[#8A92AB]">Loading…</p>
+          <p className="text-xs text-[#4B5563]">Loading…</p>
         ) : pendingQuery.isError ? (
           <ListErrorBanner
             message="Could not load cash-advance requests for this operating company."
@@ -156,14 +156,14 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
             return (
               <div key={id} className="mb-[10px] rounded-sm border border-[#e5e7eb] bg-white px-[14px] py-3">
                 <button type="button" className="flex w-full items-start gap-[10px] text-left" onClick={() => setOpenId(open ? null : id)}>
-                  <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-[#eef0f4] text-[11px] font-semibold text-[#4A5170]">
+                  <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-[#eef0f4] text-xs font-semibold text-[#4A5170]">
                     {initials(name)}
                   </span>
                   <span className="flex-1">
                     <span className="block">
                       <EntityLink kind="driver" id={String(row.driver_id ?? "")} label={name} className="text-xs font-semibold text-[#1A1F36] hover:underline" />{" "}
-                      <span className="rounded-xs bg-[#fef3e2] px-[6px] py-[2px] text-[11px] font-semibold uppercase tracking-[0.25px] text-[#854f0b]">Cash advance</span>{" "}
-                      <span className="text-[11px] text-[#8A92AB]">
+                      <span className="rounded-xs bg-[#fef3e2] px-[6px] py-[2px] text-xs font-semibold uppercase tracking-[0.25px] text-[#854f0b]">Cash advance</span>{" "}
+                      <span className="text-xs text-[#4B5563]">
                         {String(row.submitted_at ?? "").replace("T", " ").slice(0, 16)}
                         {timeline?.viewed_at ? " · viewed" : ""}
                       </span>
@@ -175,7 +175,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
 
                 {open ? (
                   <div className="mt-[10px] rounded-sm border border-[#e5e7eb] bg-[#f8f8f4] px-[11px] py-[9px]">
-                    <div className="mb-[7px] text-[11px] font-semibold uppercase tracking-[0.25px] text-[#6B7280]">
+                    <div className="mb-[7px] text-xs font-semibold uppercase tracking-[0.25px] text-[#6B7280]">
                       Linkage — what posts on approve
                     </div>
                     {detailQuery.isError ? <ListErrorBanner message="Could not record or load request detail." onRetry={() => void detailQuery.refetch()} /> : null}
@@ -184,10 +184,10 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                     {previewQuery.isError ? (
                       <ListErrorBanner message="Could not compute the cascade preview." onRetry={() => void previewQuery.refetch()} />
                     ) : previewQuery.isLoading ? (
-                      <p className="text-[11px] text-[#8A92AB]">Computing…</p>
+                      <p className="text-xs text-[#4B5563]">Computing…</p>
                     ) : preview ? (
                       <div className="grid grid-cols-[auto_1fr] gap-x-[12px] gap-y-[5px] text-xs">
-                        <span className="text-[#8A92AB]">Linked to</span>
+                        <span className="text-[#4B5563]">Linked to</span>
                         <span className="text-[#1A1F36]">
                           {preview.branch === "load_bill" ? (
                             <>
@@ -199,17 +199,17 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                             "— No active bill: creates an employee loan (recovered on future settlements) —"
                           )}
                         </span>
-                        <span className="text-[#8A92AB]">Posts as</span>
+                        <span className="text-[#4B5563]">Posts as</span>
                         <span className="text-[#1A1F36]">
                           {preview.resolved_account
                             ? `${preview.resolved_account.posting_side} → ${preview.resolved_account.account_name ?? ""}`
                             : "account mapping not found"}
                         </span>
-                        <span className="text-[#8A92AB]">Pay from</span>
+                        <span className="text-[#4B5563]">Pay from</span>
                         <span>
                           <SelectCombobox
                             aria-label="Pay from account"
-                            className="h-[28px] w-full rounded-xs border border-[#e5e7eb] text-[11px]"
+                            className="h-[28px] w-full rounded-xs border border-[#e5e7eb] text-xs"
                             value={payFrom[id] ?? ""}
                             onChange={(e) => setPayFrom((p) => ({ ...p, [id]: e.target.value }))}
                           >
@@ -221,7 +221,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                             ))}
                           </SelectCombobox>
                         </span>
-                        <span className="text-[#8A92AB]">Also</span>
+                        <span className="text-[#4B5563]">Also</span>
                         <span className="text-[#1A1F36]">Settlement deduction on next pay</span>
                       </div>
                     ) : null}
@@ -229,7 +229,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                     <div className="mt-[10px] flex justify-end gap-2">
                       <button
                         type="button"
-                        className="rounded-xs border border-[#e5e7eb] bg-white px-3 py-[5px] text-[11px] text-[#4A5170]"
+                        className="rounded-xs border border-[#e5e7eb] bg-white px-3 py-[5px] text-xs text-[#4A5170]"
                         onClick={() => setDenyForId(id)}
                       >
                         Deny
@@ -237,20 +237,20 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
                       <button
                         type="button"
                         disabled={approveMut.isPending}
-                        className="rounded-xs border border-[#1f2a44] bg-[#1f2a44] px-[14px] py-[5px] text-[11px] font-semibold text-white hover:bg-[#0f1729] disabled:opacity-70"
+                        className="rounded-xs border border-[#1f2a44] bg-[#1f2a44] px-[14px] py-[5px] text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-70"
                         onClick={() => approveMut.mutate(id)}
                       >
                         Approve &amp; post
                       </button>
                     </div>
-                    {approveMut.isError ? <p className="mt-1 text-[11px] text-red-600">Approve &amp; post failed — try again.</p> : null}
+                    {approveMut.isError ? <p className="mt-1 text-xs text-red-600">Approve &amp; post failed — try again.</p> : null}
                   </div>
                 ) : null}
               </div>
             );
           })
         ) : (
-          <p className="text-xs text-[#8A92AB]">
+          <p className="text-xs text-[#4B5563]">
             {tab === "all" || tab === "cash_advance" ? "No pending cash-advance requests." : "No requests of this type yet."}
           </p>
         )}
@@ -260,7 +260,7 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
         <div className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/40 p-4">
           <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-4 shadow-lg">
             <h2 className="text-xs font-semibold text-[#1A1F36]">Deny request</h2>
-            <p className="mt-1 text-xs text-[#8A92AB]">Reason is recorded to the audit trail and shared with the driver.</p>
+            <p className="mt-1 text-xs text-[#4B5563]">Reason is recorded to the audit trail and shared with the driver.</p>
             <textarea
               className="mt-3 w-full rounded-sm border border-[#e5e7eb] p-2 text-xs"
               rows={4}
@@ -269,13 +269,13 @@ export function DriverInbox({ companyId, canReview }: { companyId: string; canRe
               placeholder="Denial reason (required)"
             />
             <div className="mt-3 flex justify-end gap-2">
-              <button type="button" className="rounded-xs border border-[#e5e7eb] bg-white px-3 py-[5px] text-[11px] text-[#4A5170]" onClick={() => setDenyForId(null)}>
+              <button type="button" className="rounded-xs border border-[#e5e7eb] bg-white px-3 py-[5px] text-xs text-[#4A5170]" onClick={() => setDenyForId(null)}>
                 Cancel
               </button>
               <button
                 type="button"
                 disabled={denyReason.trim().length < 1 || denyMut.isPending}
-                className="rounded-xs border border-[#1f2a44] bg-[#1f2a44] px-[14px] py-[5px] text-[11px] font-semibold text-white hover:bg-[#0f1729] disabled:opacity-60"
+                className="rounded-xs border border-[#1f2a44] bg-[#1f2a44] px-[14px] py-[5px] text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-60"
                 onClick={() => void denyMut.mutate()}
               >
                 Confirm deny

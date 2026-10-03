@@ -72,6 +72,12 @@ function assertWiring(readSourceFn = readSource) {
   if (overview.includes("#334155") || overview.includes("#8A92AB")) {
     problems.push(`${FILES.overview}: leftover chrome must not use off-scale #334155 / #8A92AB`);
   }
+  if (inbox.includes("text-[11px]")) {
+    problems.push(`${FILES.inbox}: leftover chrome must use text-xs, not text-[11px]`);
+  }
+  if (inbox.includes("#334155") || inbox.includes("#8A92AB")) {
+    problems.push(`${FILES.inbox}: leftover chrome must not use off-scale #334155 / #8A92AB`);
+  }
 
   return problems;
 }
@@ -105,6 +111,11 @@ function selftest() {
   const leftoverProblems = assertWiring((rel) => (rel === FILES.overview ? leftoverPlant : originals[rel]));
   if (!leftoverProblems.some((p) => p.includes("text-[11px]") || p.includes("#8A92AB"))) {
     throw new Error(`${LABEL}: selftest did not reject leftover text-[11px] / #8A92AB on overview`);
+  }
+  const inboxPlant = `${originals[FILES.inbox]}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const inboxProblems = assertWiring((rel) => (rel === FILES.inbox ? inboxPlant : originals[rel]));
+  if (!inboxProblems.some((p) => p.includes("driver-inbox") && (p.includes("text-[11px]") || p.includes("#8A92AB")))) {
+    throw new Error(`${LABEL}: selftest did not reject leftover text-[11px] / #8A92AB on inbox`);
   }
   console.log(`${LABEL}: selftest PASS (${cases.length} mutations + leftover plant)`);
 }
