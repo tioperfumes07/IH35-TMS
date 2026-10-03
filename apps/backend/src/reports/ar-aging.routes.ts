@@ -3,6 +3,11 @@ import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, reportBasisSchema, validationError, withCompanyScope } from "./shared.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import {
+  attachUncleared,
+  listUnclearedCustomerPayments,
+  type UnclearedDocument,
+} from "../accounting/uncleared-applied-documents.js";
 
 // REPORTS-1 — the Reports-module A/R aging report is now sourced from the CANONICAL aging objects
 // (the same bucket math the Finance Hub FIN-20 screen and the statement exports trace to), instead of
@@ -35,6 +40,9 @@ type ArAgingRow = {
   bucket_91_plus_cents: number;
   last_payment_date: string | null;
   invoice_count: number;
+  uncleared_documents: UnclearedDocument[];
+  uncleared_cents: number;
+  cleared_open_cents: number;
 };
 
 type ArAgingPayload = {
@@ -145,25 +153,31 @@ export async function registerReportsArAgingRoutes(app: FastifyInstance) {
       );
       const lastPayRows = lastPay.rows as Array<{ customer_id: string; last_payment_date: string | null }>;
       const lastPayMap = new Map(lastPayRows.map((r) => [r.customer_id, r.last_payment_date]));
+      const uncleared = await listUnclearedCustomerPayments(client, query.data.operating_company_id, asOf);
 
-      const rows: ArAgingRow[] = rawRows.map((row) => {
-        const current = num(row.current_cents);
-        const b1_30 = num(row.bucket_1_30_cents);
-        const customerId = String(row.customer_id);
-        return {
-          customer_id: customerId,
-          customer_name: String(row.customer_name ?? ""),
-          total_cents: num(row.total_open_cents),
-          current_cents: current,
-          bucket_1_30_cents: b1_30,
-          bucket_0_30_cents: current + b1_30,
-          bucket_31_60_cents: num(row.bucket_31_60_cents),
-          bucket_61_90_cents: num(row.bucket_61_90_cents),
-          bucket_91_plus_cents: num(row.bucket_91_plus_cents),
-          last_payment_date: lastPayMap.get(customerId) ?? null,
-          invoice_count: num(row.open_invoice_count),
-        };
-      });
+      const rows: ArAgingRow[] = attachUncleared(
+        rawRows.map((row) => {
+          const current = num(row.current_cents);
+          const b1_30 = num(row.bucket_1_30_cents);
+          const customerId = String(row.customer_id);
+          return {
+            customer_id: customerId,
+            customer_name: String(row.customer_name ?? ""),
+            total_cents: num(row.total_open_cents),
+            current_cents: current,
+            bucket_1_30_cents: b1_30,
+            bucket_0_30_cents: current + b1_30,
+            bucket_31_60_cents: num(row.bucket_31_60_cents),
+            bucket_61_90_cents: num(row.bucket_61_90_cents),
+            bucket_91_plus_cents: num(row.bucket_91_plus_cents),
+            last_payment_date: lastPayMap.get(customerId) ?? null,
+            invoice_count: num(row.open_invoice_count),
+          };
+        }),
+        uncleared,
+        "customer_id",
+        (row) => row.total_cents,
+      );
 
       const totals = rows.reduce(
         (acc, row) => {
