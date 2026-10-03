@@ -232,7 +232,7 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
         // empty, same visual read as the old 2-column span) so the total stays under "amount_cents"
         // even if the operator reorders/hides a column.
         footerCells={{
-          code: <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-600">Amounts total</span>,
+          code: <span className="text-section-header font-semibold uppercase tracking-[0.4px] text-gray-600">Amounts total</span>,
           amount_cents: (visibleRows) => (
             <span data-testid="accessorial-amounts-column-total" className="text-gray-900">
               {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(sumAccessorialCents(visibleRows) / 100)}
@@ -250,7 +250,7 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
         limit={200}
         total={catalogQuery.data?.total ?? null}
         hint="Type to search for an accessorial code that is not listed."
-        className="text-[11px] text-slate-600"
+        className="text-xs text-slate-600"
       />
     </div>
   );

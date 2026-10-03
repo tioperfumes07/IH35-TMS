@@ -45,6 +45,10 @@ function assertMigrated(src) {
   if (!src.includes("No accessorial charges yet.")) {
     errors.push(`${PAGE}: must keep emptyText`);
   }
+  // BANK-F91142 — ORDERS chrome: footer/hint use text-section-header / text-xs, not text-[11px].
+  if (src.includes("text-[11px]")) {
+    errors.push(`${PAGE}: must not use text-[11px] — use text-section-header / text-xs`);
+  }
   return errors;
 }
 
