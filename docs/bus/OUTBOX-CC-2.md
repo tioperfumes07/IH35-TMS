@@ -2082,3 +2082,40 @@ The original lines DO carry reversed_by_line_id (4 of the 8 lines — the origin
 to 'cancelled' outside the cancellation engine) and the void stamps are missing. So the fix is steps 2–4 only: write the
 cancellation row with a reason, stamp the void through the governed executor, close the bypass that set the status.
 My board row `LOAD-13515-SILENT-VOID-2026100301` already says this ("ledger reversed, header never stamped"); it stands.
+
+## ROUND 352 F-2 + F-3 — one-leg asset accounts (1090, 1295) refused at the database (migration 202615330600, claim #24330)
+
+**F-2 — 1090 Undeposited Funds −$151,736.34 — WHICH:** neither double-posting nor a missing deposit side in an engine —
+two MANUAL "TB close" journal entries (36223f47… ACCT-F20260925j $125.00 and 43d6f4bf… ACCT-F20260925i $166,743.94,
+both 2026-09-24, DR 1000 / CR 1090) swept a 1090 balance to the bank; the receipts that made up that balance were later
+reversed at source (every fuel_event / journal_entry debit on 1090 sits in a reversal pair); the sweeps were never
+reversed. Live debits left: customer payments $15,507.60. One leg (the sweep) without its pair (the receipt).
+**F-3 — 1295 Relay Fuel Wallet −$33,839.80 — the funding path and why it does not post:** 1295 has ONLY spend
+postings — 101 credits $36,067.97, 27 of them reversed (the 27 debits, $2,228.17). Not one funding debit, ever. The
+wallet is funded by Relay top-ups that hit the operating account as card purchases ("PURCHASE … RELAY ATLANTA GA …1662",
+8 shown, $6,711.25 / $6,195.00 / $5,162.50 …) and every one sits in FOR REVIEW — never recorded as a transfer into the
+wallet, so the wallet only ever drains. 1295 also had NO role; the fuel poster found it by account number.
+**FIX (writers, not rows):**
+- Role `fuel_wallet_relay` added to the CHECK and bound to each company's Relay wallet (USMCA + TRANSP 1295); the fuel
+  poster resolves it via `resolveRoleAccount(…, "fuel_wallet_relay")` — fails closed, never by account number.
+- `trg_refuse_one_leg_asset_credit` (deferred constraint trigger on journal_entry_postings): a non-reversal CREDIT that
+  leaves an account bound to `undeposited_funds` or `fuel_wallet_relay` with a credit balance is refused at COMMIT,
+  naming the account, the balance and the missing leg. Debits always pass; reversals pass (the governed purge reverses
+  GL first). Shared shape for the one-leg family — CC-1's F-1 (escrow liability never debit) can reuse it inverted.
+**FORK br-small-cherry-ak2ixtt9 (real runner, prod mode; applied, second pass skipped; DELETED):**
+  A manual sweep CR 1090 → REFUSED "1090 Undeposited Funds would hold a credit balance of -151,737.34 … HINT: Record the
+    receipt into Undeposited Funds before it is deposited or swept to the bank." (rolled back — no row)
+  B debit to 1090 → committed · C reversal crediting 1090 → committed
+  D Relay spend CR 1295 → REFUSED "1295 Relay Fuel Wallet would hold a credit balance of -33,840.80 … HINT: Record the
+    Relay top-up (the card purchase on the operating account) as a transfer into the wallet first" (no row)
+  E1 TRANSP Undeposited Funds credit $3.00 against +$5.00 → committed (balance $2.00) · E2 credit $3.00 more → REFUSED (-1.00)
+**GUARD:** `verify-one-leg-asset-never-credit` (money gate) — static shape + live: no new credit balance, USMCA 1090 and
+1295 as COMMITTED named debt with floors at today's balance (shrink-only; purge population). Selftest 6/6.
+**Also fixed (found here, mine):** `verify-coa-role-values-registered-in-check-constraint` had crashed since MY
+202615280600 (dynamic CHECK rebuild it could not parse). It now reads the CHECK cumulatively (two literal shapes + the
+dynamic `roles || ARRAY[…]` shape, held migrations excluded) — validated against prod: its static set equals prod's 64
+roles exactly. Restored, it found a real gap: 4 lease roles in code but not in the prod CHECK → board
+`LEASE-ROLES-AHEAD-OF-HELD-MIGRATION-2026100301` (lease lane), committed as named shrink-only debt.
+**Consequence, stated plainly:** USMCA's 1090 and 1295 are negative today, so any new non-reversal credit to them is
+refused until the missing legs post (Relay top-ups categorised as transfers into the wallet; the 1090 sweeps reversed) —
+or until the purge resets them. That is the intended behaviour: the next spend must follow its funding.

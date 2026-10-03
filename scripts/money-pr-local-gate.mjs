@@ -769,6 +769,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-factoring-writers-write-the-spine",
     ["apps/backend/src/factoring/", "scripts/verify-factoring-writers-write-the-spine.mjs"],
   ],
+  // ROUND 352 F-2 / F-3 — an asset holding money (1090 Undeposited Funds, 1295 Relay Fuel Wallet) never credit-balanced.
+  [
+    "verify-one-leg-asset-never-credit",
+    ["db/migrations/202615330600_one_leg_asset_accounts_never_credit.sql", "apps/backend/src/accounting/fuel-posting/", "scripts/verify-one-leg-asset-never-credit.mjs"],
+  ],
   // KPI engines' operator-facing strings (label / source / empty_reason / GL) in business language — runtime check.
   [
     "verify-kpi-provenance-business-language",
