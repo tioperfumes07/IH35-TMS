@@ -5,7 +5,7 @@
  * premium refund are not mapped, we persist a DURABLE obligation row instead of
  * silently skipping. The obligation carries everything required to post the
  * refund later via the existing createJournalEntry() service:
- *   tenant_id, policy_id, amount_cents, debit_role, credit_role,
+ *   operating_company_id, policy_id, amount_cents, debit_role, credit_role,
  *   deterministic_memo, entry_date.
  *
  * Draining (auto-/one-click post) resolves the roles and, when available, posts
@@ -35,7 +35,7 @@ export type RecordRefundObligationInput = {
 };
 
 /**
- * Upsert a pending refund obligation. Idempotent on (tenant_id,
+ * Upsert a pending refund obligation. Idempotent on (operating_company_id,
  * deterministic_memo): a retry never creates a duplicate.
  */
 export async function recordPendingRefundObligation(
@@ -45,8 +45,7 @@ export async function recordPendingRefundObligation(
   const res = await client.query<{ id: string }>(
     `
       INSERT INTO insurance.refund_obligation (
-        tenant_id,
-        -- ROUND 342 Phase 2: the canonical scope column, set explicitly (same company as tenant_id, $1).
+        -- ROUND 342: the one scope column, written from $1.
         operating_company_id,
         policy_id,
         amount_cents,
@@ -56,7 +55,7 @@ export async function recordPendingRefundObligation(
         entry_date,
         status
       )
-      VALUES ($1::uuid, $1::uuid, $2::uuid, $3, $4, $5, $6, $7::date, 'pending')
+      VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6, $7::date, 'pending')
       ON CONFLICT (operating_company_id, deterministic_memo) DO NOTHING
       RETURNING id::text
     `,

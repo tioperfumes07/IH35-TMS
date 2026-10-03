@@ -85,7 +85,7 @@ function claimSelectColumns(caps: ClaimColumnCapabilities, alias = "c") {
 
   return `
     ${a}id::text,
-    ${a}operating_company_id::text AS tenant_id,
+    ${a}operating_company_id::text AS operating_company_id,
     ${a}claim_number,
     ${a}policy_id::text,
     ${a}asset_id::text,
@@ -121,13 +121,13 @@ function claimSelectColumns(caps: ClaimColumnCapabilities, alias = "c") {
 // (RLS-immune information_schema/pg_catalog reads), not assumed:
 //   insurance.claim -> operating_company_id EXISTS and is the live forced-RLS key; the policy is
 //                      (identity.is_lucia_bypass() OR operating_company_id::text = current_setting(...))
-//                      on polcmd '*'. tenant_id also exists and is what every writer fills in today.
+//                      on polcmd '*'. It is the one company column (ROUND 342); the legacy twin is unread.
 //   mdata.assets    -> operating_company_id     (ROUND 342: renamed from tenant_id, its only company column)
 //   mdata.equipment -> owner_company_id + currently_leased_to_company_id  (the owner/leased pair;
 //                      a trailer TRK owns and leases to TRANSP must still resolve for TRANSP)
 //
 // ROUND 342: the claim side of each predicate is c.operating_company_id — migration 202615310700
-// made it NOT NULL and the canonical company-scope column (tenant_id is slated to be dropped).
+// made it NOT NULL and the one company-scope column (step 2c drops the legacy twin).
 function claimFrom(caps: ClaimColumnCapabilities) {
   const scope = `c.operating_company_id`;
   const trailerJoin = caps.economics
@@ -543,11 +543,9 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
       // CHECK for INSERT too — is
       //   identity.is_lucia_bypass() OR operating_company_id::text = current_setting('app.operating_company_id', true)
       // The column is nullable with no default and this route sets app.operating_company_id, never
-      // app.bypass_rls='lucia'. Writing only tenant_id therefore leaves operating_company_id NULL,
-      // the WITH CHECK evaluates NULL (not true), and Postgres REJECTS the row. Prod
-      // insurance.claim.n_tup_ins is 0 — claim creation has never once succeeded in production.
-      // Both columns get the same value: tenant_id is what every existing read filters on, and
-      // operating_company_id is what RLS enforces.
+      // app.bypass_rls='lucia'. A writer that left operating_company_id NULL had every row REJECTED by
+      // the WITH CHECK (prod insurance.claim.n_tup_ins was 0). ROUND 342: it is the one company column
+      // and NOT NULL — always written, unconditionally.
       //
       // Lockstep INSERT (skill §2): columns / expressions / values grow together, so a column that
       // this database does not have yet is simply never emitted and no placeholder can drift.
@@ -561,8 +559,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         exprs.push(expr ? expr(placeholder) : placeholder);
       };
 
-      put("tenant_id", body.operating_company_id, (p) => `${p}::uuid`);
-      if (caps.operatingCompanyId) put("operating_company_id", body.operating_company_id, (p) => `${p}::uuid`);
+      put("operating_company_id", body.operating_company_id, (p) => `${p}::uuid`);
       put("claim_number", body.claim_number);
       put("policy_id", body.policy_id, (p) => `${p}::uuid`);
       put("asset_id", body.asset_id ? resolvedAssetId : null, (p) => `${p}::uuid`);

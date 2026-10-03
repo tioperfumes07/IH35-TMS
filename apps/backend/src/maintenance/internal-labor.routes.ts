@@ -163,12 +163,12 @@ export async function internalLaborRoutes(app: FastifyInstance) {
       if (!linked.rows[0]) return null;
       const { rows } = await client.query(`
         INSERT INTO maintenance.internal_labor_log (
-          operating_company_id, tenant_id,
+          operating_company_id,
           work_order_id, mechanic_user_id, mechanic_employee_id,
           unit_id, start_time, end_time,
           hourly_rate_cents,
           parts_used, total_parts_cost_cents, notes
-        ) VALUES ($1,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
         RETURNING *
       `, [
         body.operating_company_id,

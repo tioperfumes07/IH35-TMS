@@ -24,7 +24,7 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
       rows: [
         {
           id: "11111111-1111-4111-8111-111111111111",
-          tenant_id: String(values?.[0] ?? ""),
+          operating_company_id: String(values?.[0] ?? ""),
           claim_number: "CLM-001",
           policy_id: String(values?.[1] ?? "22222222-2222-4222-8222-222222222222"),
           asset_id: String(values?.[3] ?? "33333333-3333-4333-8333-333333333333"),
@@ -53,7 +53,7 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
       rows: [
         {
           id: claimId,
-          tenant_id: String(values?.[0] ?? ""),
+          operating_company_id: String(values?.[0] ?? ""),
           claim_number: isCreate ? "CLM-100" : "CLM-001",
           policy_id: "22222222-2222-4222-8222-222222222222",
           asset_id: "33333333-3333-4333-8333-333333333333",
@@ -418,11 +418,10 @@ describe("insurance claim routes", () => {
       expect(exprFor("recovery_rail")).toMatch(/COALESCE\(\$\d+, 'ask'\)/);
       expect(exprFor("repair_books_treatment")).toMatch(/COALESCE\(\$\d+, 'ask'\)/);
       // Prod RLS keys INSERT on operating_company_id; omitting it silently rejects every claim.
-      // Both columns must carry the SAME operating company id (compared on the bound values, since
-      // the lockstep builder gives each column its own placeholder).
+      // ROUND 342 step 2c: it is the ONE company column — written unconditionally, the legacy twin never.
       expect(columns).toContain("operating_company_id");
+      expect(columns).not.toContain("tenant_id");
       const boundValues = insertCall?.[1] as unknown[];
-      expect(boundValues[columns.indexOf("operating_company_id")]).toBe(boundValues[columns.indexOf("tenant_id")]);
       expect(boundValues[columns.indexOf("operating_company_id")]).toBe("11111111-1111-4111-8111-111111111111");
     });
 

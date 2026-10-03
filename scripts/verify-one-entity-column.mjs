@@ -70,7 +70,9 @@ export function staticFailures({ files, read }) {
   if (!ev || !/CREATE\s+EVENT\s+TRIGGER\s+trg_refuse_tenant_id_column\s+ON\s+ddl_command_end/i.test(ev.sql)) {
     failures.push(`RULE 5: ${ev?.file ?? "no migration"} — the event trigger trg_refuse_tenant_id_column ON ddl_command_end must be (re)created by the last migration touching it; it is what keeps the column from coming back.`);
   }
-  const au = last(/FUNCTION\s+audit\.tg_audit_row\s*\(/i);
+  // The function's DEFINITION — not a trigger that merely calls it (`EXECUTE FUNCTION audit.tg_audit_row()` in a later
+  // CREATE TRIGGER is a use, and must not be read as the latest body).
+  const au = last(/CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+audit\.tg_audit_row\s*\(/i);
   if (!au || !/INSERT\s+INTO\s+audit\.row_changes\s*\(\s*operating_company_id/i.test(au.sql)) {
     failures.push(`RULE 6: ${au?.file ?? "no migration"} — audit.tg_audit_row (behind 203 audit triggers) must write audit.row_changes.operating_company_id.`);
   }
@@ -151,6 +153,16 @@ if (isMain) {
       ["scoping the shared catalog fails", liveFailures({ ...base, sharedPolicies: [{ rel: "insurance.type_catalog", name: "insurance_type_catalog_shared_rw", qual: "(operating_company_id = x)", check: "true" }] }).failures.some((f) => f.startsWith("RULE 4"))],
       ["phase-2 table gone is a note, not a failure", (() => { const r = liveFailures({ ...base, tenantRelations: PHASE_2.slice(1) }); return r.failures.length === 0 && r.notes.length === 1; })()],
       ["ceiling is the debt list", CEILING === 35],
+      ...(() => {
+        const def = "CREATE OR REPLACE FUNCTION audit.tg_audit_row() RETURNS trigger AS $f$ BEGIN INSERT INTO audit.row_changes (operating_company_id, op) VALUES (NULL, TG_OP); RETURN NULL; END $f$ LANGUAGE plpgsql; CREATE EVENT TRIGGER trg_refuse_tenant_id_column ON ddl_command_end EXECUTE FUNCTION x();";
+        const use = "CREATE TRIGGER trg_audit_t AFTER INSERT ON s.t FOR EACH ROW EXECUTE FUNCTION audit.tg_audit_row();";
+        const bad = "CREATE OR REPLACE FUNCTION audit.tg_audit_row() RETURNS trigger AS $f$ BEGIN INSERT INTO audit.row_changes (tenant_id, op) VALUES (NULL, TG_OP); RETURN NULL; END $f$ LANGUAGE plpgsql;";
+        const mk = (m) => ({ files: Object.keys(m), read: (f) => m[f] });
+        return [
+          ["RULE 6: a later trigger that only CALLS tg_audit_row is not its definition", !staticFailures(mk({ "202601010000_a.sql": def, "202601020000_b.sql": use })).some((f) => f.startsWith("RULE 6"))],
+          ["RULE 6: a later REDEFINITION without operating_company_id fails", staticFailures(mk({ "202601010000_a.sql": def, "202601020000_b.sql": bad })).some((f) => f.startsWith("RULE 6"))],
+        ];
+      })(),
     ];
     for (const [n, ok] of cases) console.log(`  ${ok ? "✓" : "✗"} ${n}`);
     const bad = cases.filter(([, ok]) => !ok).length;

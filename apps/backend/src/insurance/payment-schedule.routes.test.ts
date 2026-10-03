@@ -12,7 +12,7 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
       rows: [
         {
           id: "11111111-1111-4111-8111-111111111111",
-          tenant_id: String(values?.[0] ?? ""),
+          operating_company_id: String(values?.[0] ?? ""),
           policy_id: String(values?.[1] ?? "22222222-2222-4222-8222-222222222222"),
           due_date: "2026-06-17",
           amount_cents: 125000,
@@ -37,7 +37,7 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
       rows: [
         {
           id: "33333333-3333-4333-8333-333333333333",
-          tenant_id: String(values?.[0]),
+          operating_company_id: String(values?.[0]),
           policy_id: String(values?.[1]),
           due_date: String(values?.[2]),
           amount_cents: Number(values?.[3]),
@@ -58,7 +58,7 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
       rows: [
         {
           id: String(values?.[0]),
-          tenant_id: String(values?.[1]),
+          operating_company_id: String(values?.[1]),
           policy_id: "22222222-2222-4222-8222-222222222222",
           due_date: "2026-06-17",
           amount_cents: 125000,

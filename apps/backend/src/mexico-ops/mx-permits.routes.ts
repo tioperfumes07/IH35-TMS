@@ -102,12 +102,12 @@ export async function mxPermitsRoutes(app: FastifyInstance) {
     const row = await withCompany(user.uuid, body.operating_company_id, async (client) => {
       const { rows } = await client.query(`
         INSERT INTO mdata.mx_permits (
-          operating_company_id, tenant_id,
+          operating_company_id,
           permit_type, unit_id, driver_id,
           issued_date, expires_date,
           permit_number, issuing_authority,
           cost_cents, attachment_url
-        ) VALUES ($1,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
         RETURNING *
       `, [
         body.operating_company_id,

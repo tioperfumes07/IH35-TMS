@@ -7,9 +7,7 @@ type Queryable = {
 
 export type FactorRow = {
   id: string;
-  /** @deprecated ROUND 342 — prefer operating_company_id; kept for FE back-compat. */
-  tenant_id: string;
-  /** ROUND 342 — canonical company id (OCI ?? tenant_id). */
+  /** ROUND 342 — the one company column. */
   operating_company_id: string;
   name: string;
   advance_rate: number;
@@ -38,7 +36,7 @@ export type FactorRow = {
 
 export type LetterOfReleaseRow = {
   id: string;
-  tenant_id: string;
+  operating_company_id: string;
   factor_id: string;
   issued_date: string;
   effective_release_date: string;
@@ -55,7 +53,7 @@ export class FactorLorError extends Error {
 
 export type CustomerFactorAssignmentRow = {
   id: string;
-  tenant_id: string;
+  operating_company_id: string;
   customer_id: string;
   factor_id: string;
   factor_name: string;
@@ -85,7 +83,7 @@ function mapLorRow(row: Record<string, unknown>): LetterOfReleaseRow {
   const companyId = companyIdFromDualScopedRow(row);
   return {
     id: String(row.id),
-    tenant_id: companyId,
+    operating_company_id: companyId,
     factor_id: String(row.factor_id),
     issued_date: String(row.issued_date),
     effective_release_date: String(row.effective_release_date),
@@ -105,7 +103,6 @@ function mapFactorRow(row: Record<string, unknown>): FactorRow {
   const companyId = companyIdFromDualScopedRow(row);
   return {
     id: String(row.id),
-    tenant_id: companyId,
     operating_company_id: companyId,
     name: String(row.name),
     advance_rate: toNumber(row.advance_rate),
@@ -133,7 +130,7 @@ function mapAssignmentRow(row: Record<string, unknown>): CustomerFactorAssignmen
   const companyId = companyIdFromDualScopedRow(row);
   return {
     id: String(row.id),
-    tenant_id: companyId,
+    operating_company_id: companyId,
     customer_id: String(row.customer_id),
     factor_id: String(row.factor_id),
     factor_name: String(row.factor_name),
@@ -169,7 +166,7 @@ export async function listFactors(
     `
       SELECT
         f.id::text,
-        f.operating_company_id::text AS tenant_id,
+        f.operating_company_id::text,
         f.name,
         f.advance_rate::numeric,
         f.fee_rate::numeric,
@@ -218,7 +215,7 @@ export async function getFactorForCustomer(
     `
       SELECT
         f.id::text,
-        f.operating_company_id::text AS tenant_id,
+        f.operating_company_id::text,
         f.name,
         f.advance_rate::numeric,
         f.fee_rate::numeric,
@@ -294,7 +291,7 @@ export async function createFactor(
     const insert = await deps.client.query<Record<string, unknown>>(
       `
         INSERT INTO factoring.factor (
-          tenant_id,
+          operating_company_id,
           name,
           advance_rate,
           fee_rate,
@@ -311,12 +308,8 @@ export async function createFactor(
           noa_remit_to_wire_ref,
           notes,
           created_at,
-          updated_at,
-          -- ROUND 342 Phase 4: operating_company_id is the canonical scope column and the ONLY one RLS checks once the
-          -- duplicate tenant_id policy is dropped. This INSERT used to set tenant_id alone and relied on that second
-          -- policy's WITH CHECK; a NULL here would now be refused (and, if bypassed, invisible to every carrier).
-          -- Same company as tenant_id ($1) — not a new lookup.
-          operating_company_id
+          updated_at
+          -- ROUND 342: operating_company_id ($1) is the one scope column RLS checks; a NULL is refused.
         )
         VALUES (
           $1::uuid,
@@ -336,12 +329,11 @@ export async function createFactor(
           $15,
           $16,
           now(),
-          now(),
-          $1::uuid
+          now()
         )
         RETURNING
           id::text,
-          operating_company_id::text AS tenant_id,
+          operating_company_id::text,
           name,
           advance_rate::numeric,
           fee_rate::numeric,
@@ -485,7 +477,7 @@ export async function updateFactor(
       `
         SELECT
           id::text,
-          operating_company_id::text AS tenant_id,
+          operating_company_id::text,
           name,
           advance_rate::numeric,
           fee_rate::numeric,
@@ -526,7 +518,7 @@ export async function updateFactor(
           AND id = $2::uuid
         RETURNING
           id::text,
-          operating_company_id::text AS tenant_id,
+          operating_company_id::text,
           name,
           advance_rate::numeric,
           fee_rate::numeric,
@@ -598,7 +590,7 @@ export async function deactivateFactor(tenantId: string, factorId: string, deps:
         AND id = $2::uuid
       RETURNING
         id::text,
-        operating_company_id::text AS tenant_id,
+        operating_company_id::text,
         name,
         advance_rate::numeric,
         fee_rate::numeric,
@@ -639,15 +631,13 @@ export async function createLetterOfRelease(
   const res = await deps.client.query<Record<string, unknown>>(
     `
       INSERT INTO factoring.letter_of_release (
-        tenant_id,
+        operating_company_id,
         factor_id,
         issued_date,
         effective_release_date,
         released_by_user_id,
         notes,
-        created_at,
-        -- ROUND 342 Phase 4: the canonical scope column, set explicitly (see the factor INSERT above).
-        operating_company_id
+        created_at
       )
       VALUES (
         $1::uuid,
@@ -656,12 +646,11 @@ export async function createLetterOfRelease(
         $4::date,
         $5::uuid,
         $6,
-        now(),
-        $1::uuid
+        now()
       )
       RETURNING
         id::text,
-        operating_company_id::text AS tenant_id,
+        operating_company_id::text,
         factor_id::text,
         issued_date::text,
         effective_release_date::text,
@@ -690,7 +679,7 @@ export async function listLetterOfReleases(
     `
       SELECT
         id::text,
-        operating_company_id::text AS tenant_id,
+        operating_company_id::text,
         factor_id::text,
         issued_date::text,
         effective_release_date::text,
@@ -741,21 +730,15 @@ export async function assignCustomerToFactor(
   const inserted = await deps.client.query<Record<string, unknown>>(
     `
       INSERT INTO factoring.customer_factor_assignment (
-        tenant_id,
+        -- FACT-ASSIGN-05 (2026-08-30): this INSERT once left operating_company_id NULL — the column the
+        -- table's own factoring_customer_factor_assignment_opco_scope RLS policy gates on. It is the one
+        -- scope column (ROUND 342) and is written first, from $1.
+        operating_company_id,
         customer_id,
         factor_id,
         effective_from,
         effective_to,
-        created_at,
-        -- FACT-ASSIGN-05 correction (2026-08-30) -- operating_company_id is nullable and this
-        -- INSERT never set it, so every row this function ever wrote left it NULL. The table's
-        -- own factoring_customer_factor_assignment_opco_scope RLS policy gates on this exact
-        -- column (the same hazard class documented at batch.service.ts LV-TXN-016); a second,
-        -- newer tenant_id-keyed policy happened to also cover writes so this never surfaced as a
-        -- write failure, but every row was left unscoped by its own intended column. tenant_id IS
-        -- the operating_company_id for this table (tenant_id references org.companies(id)) --
-        -- same value, not a new lookup.
-        operating_company_id
+        created_at
       )
       VALUES (
         $1::uuid,
@@ -763,12 +746,11 @@ export async function assignCustomerToFactor(
         $3::uuid,
         $4::date,
         NULL,
-        now(),
-        $1::uuid
+        now()
       )
       RETURNING
         id::text,
-        operating_company_id::text AS tenant_id,
+        operating_company_id::text,
         customer_id::text,
         factor_id::text,
         effective_from::text,
@@ -836,7 +818,7 @@ export async function listFactorAssignmentsForCustomer(
     `
       SELECT
         a.id::text,
-        a.operating_company_id::text AS tenant_id,
+        a.operating_company_id::text,
         a.customer_id::text,
         a.factor_id::text,
         f.name AS factor_name,

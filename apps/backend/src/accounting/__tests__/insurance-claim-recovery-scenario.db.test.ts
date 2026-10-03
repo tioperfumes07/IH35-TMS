@@ -80,8 +80,8 @@ run("stage-3 · insurer claim recovery (real engine)", () => {
       await db.query(`INSERT INTO lib.feature_flag_overrides (flag_key,operating_company_id,enabled,set_by_user_uuid) VALUES ($1,$2::uuid,true,$3::uuid) ON CONFLICT DO NOTHING`, [INSURANCE_CLAIM_RECOVERY_GL_POSTING_FLAG, companyId, userId]);
       // Policy + claim. amount_claimed_cents is the recorded loss the cap is measured against.
       await db.query(`INSERT INTO insurance.type_catalog (id,operating_company_id,code,name) VALUES ($1::uuid,$2::uuid,$3,'Auto Liability')`, [id.covType, companyId, `AL-${s}`]);
-      await db.query(`INSERT INTO insurance.policy (id,tenant_id,insurer_name,policy_number,coverage_type,coverage_type_id,effective_date,expiry_date) VALUES ($1::uuid,$2::uuid,'Progressive',$3,'auto_liability',$4::uuid,CURRENT_DATE - 30, CURRENT_DATE + 300)`, [id.policy, companyId, `POL-${s}`, id.covType]);
-      await db.query(`INSERT INTO insurance.claim (id,tenant_id,claim_number,policy_id,accident_date,reported_date,amount_claimed_cents,status) VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE,CURRENT_DATE,$5,'open')`, [id.claim, companyId, `CLM-${s}`, id.policy, CLAIMED_CENTS]);
+      await db.query(`INSERT INTO insurance.policy (id,operating_company_id,insurer_name,policy_number,coverage_type,coverage_type_id,effective_date,expiry_date) VALUES ($1::uuid,$2::uuid,'Progressive',$3,'auto_liability',$4::uuid,CURRENT_DATE - 30, CURRENT_DATE + 300)`, [id.policy, companyId, `POL-${s}`, id.covType]);
+      await db.query(`INSERT INTO insurance.claim (id,operating_company_id,claim_number,policy_id,accident_date,reported_date,amount_claimed_cents,status) VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE,CURRENT_DATE,$5,'open')`, [id.claim, companyId, `CLM-${s}`, id.policy, CLAIMED_CENTS]);
     });
   });
 

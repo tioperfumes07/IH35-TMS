@@ -72,7 +72,7 @@ run("cross-module scenario battery (real engine)", () => {
       await db.query(`INSERT INTO mdata.load_stops (id,load_id,sequence_number,stop_type) VALUES ($1::uuid,$2::uuid,2,'delivery')`,[id.stop,id.load]);
       // insurance policy for cargo claim
       await db.query(`INSERT INTO insurance.type_catalog (id,operating_company_id,code,name) VALUES ($1::uuid,$2::uuid,$3,'Cargo')`,[id.covType,companyId,`CG-${s}`]);
-      await db.query(`INSERT INTO insurance.policy (id,tenant_id,insurer_name,policy_number,coverage_type,coverage_type_id,effective_date,expiry_date) VALUES ($1::uuid,$2::uuid,'Progressive',$3,'cargo',$4::uuid,CURRENT_DATE-30,CURRENT_DATE+300)`,[id.policy,companyId,`POL-${s}`,id.covType]);
+      await db.query(`INSERT INTO insurance.policy (id,operating_company_id,insurer_name,policy_number,coverage_type,coverage_type_id,effective_date,expiry_date) VALUES ($1::uuid,$2::uuid,'Progressive',$3,'cargo',$4::uuid,CURRENT_DATE-30,CURRENT_DATE+300)`,[id.policy,companyId,`POL-${s}`,id.covType]);
     });
   });
   afterAll(async () => { if(!db) return; try { await tx(async()=>{ await db.query(`DELETE FROM accounting.chart_of_accounts_roles WHERE operating_company_id=$1::uuid`,[companyId]); if(isolated) await deactivateIsolatedOperatingCompany(db,isolated);});}catch{} await db.end(); });
@@ -137,7 +137,7 @@ run("cross-module scenario battery (real engine)", () => {
       // shared/global row with no operating_company_id scope in a fixture that then FKs it).
       await db.query(`INSERT INTO catalogs.cargo_claim_reasons (id,operating_company_id,reason_code,display_name) VALUES ($1::uuid,$2::uuid,$3,'Battery Test Reason')`,[reason,companyId,`BATTERY-${s}`]);
       await db.query(`INSERT INTO safety.incidents (id,operating_company_id,incident_type,status,driver_id,unit_id,load_id,claimant_customer_id,claim_reason_id,incident_at,reported_at) VALUES ($1::uuid,$2::uuid,'cargo_claim','open',$3::uuid,$4::uuid,$5::uuid,$6::uuid,$7::uuid,now(),now())`,[inc,companyId,id.driver,id.unit,id.load,id.customer,reason]);
-      await db.query(`INSERT INTO insurance.claim (id,tenant_id,claim_number,policy_id,accident_date,reported_date,driver_id,load_id,fault,status) VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE,CURRENT_DATE,$5::uuid,$6::uuid,'undetermined','open')`,[claim,companyId,`CARGO-${s}`,id.policy,id.driver,id.load]);
+      await db.query(`INSERT INTO insurance.claim (id,operating_company_id,claim_number,policy_id,accident_date,reported_date,driver_id,load_id,fault,status) VALUES ($1::uuid,$2::uuid,$3,$4::uuid,CURRENT_DATE,CURRENT_DATE,$5::uuid,$6::uuid,'undetermined','open')`,[claim,companyId,`CARGO-${s}`,id.policy,id.driver,id.load]);
       await db.query(`UPDATE safety.incidents SET insurance_claim_id=$1::uuid, auto_created_claim_id=$1::uuid WHERE id=$2::uuid`,[claim,inc]);
     });
     const r = await read(`SELECT i.incident_type, c.claim_number, c.status, l.load_number FROM safety.incidents i JOIN insurance.claim c ON c.id=i.insurance_claim_id JOIN mdata.loads l ON l.id=i.load_id WHERE i.id=$1::uuid`,[inc]);

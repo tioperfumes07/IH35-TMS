@@ -47,7 +47,7 @@ function lawsuitSelectColumns(alias = "", includeClaimLinks = false) {
   const p = alias ? `${alias}.` : "";
   return `
     ${p}id::text,
-    ${p}operating_company_id::text AS tenant_id,
+    ${p}operating_company_id::text AS operating_company_id,
     ${p}case_number,
     ${p}plaintiff,
     ${p}defendant,
@@ -157,7 +157,6 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
       const result = await client.query(
         `
           INSERT INTO insurance.lawsuit (
-            tenant_id,
             operating_company_id,
             case_number,
             plaintiff,
@@ -173,7 +172,7 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
             notes
           )
           VALUES (
-            $1::uuid, $1::uuid, $2, $3, $4, $5, $6::date, $7, $8::uuid, $9, $10, $11, $12, $13
+            $1::uuid, $2, $3, $4, $5, $6::date, $7, $8::uuid, $9, $10, $11, $12, $13
           )
           RETURNING ${lawsuitSelectColumns()}
         `,

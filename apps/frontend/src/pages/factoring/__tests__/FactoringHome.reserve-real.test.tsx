@@ -72,7 +72,7 @@ describe("FactoringHomePage Reserve tab (real, owner mega-report 2026-09-09)", (
       movements: [
         {
           id: "mv-1",
-          tenant_id: companyId,
+          operating_company_id: companyId,
           batch_id: null,
           factor_id: "factor-1",
           direction: "credit",

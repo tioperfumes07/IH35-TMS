@@ -2,8 +2,9 @@
 /**
  * CUST-LINK-02 — COI Requests tab honest empty + create writer stamps operating_company_id.
  *
- * Live Neon: coi_request RLS WITH CHECK keys operating_company_id. INSERT that only sets
- * tenant_id leaves operating_company_id NULL → 42501 on every + Create COI (blocks reverse_link).
+ * Live Neon: coi_request RLS WITH CHECK keys operating_company_id. An INSERT that leaves it NULL
+ * → 42501 on every + Create COI (blocks reverse_link). ROUND 342 step 2c: it is the one company
+ * column; the writer must not write the legacy tenant_id.
  *
  *   node scripts/verify-cust-link-02-coi-honest-empty.mjs
  *   node scripts/verify-cust-link-02-coi-honest-empty.mjs --selftest
@@ -52,11 +53,11 @@ function assertWriter(src) {
   const cols = insert[1];
   if (!/\boperating_company_id\b/.test(cols)) {
     problems.push(
-      `${SERVICE}: INSERT must stamp operating_company_id (RLS WITH CHECK) — tenant_id alone → 42501`,
+      `${SERVICE}: INSERT must stamp operating_company_id (RLS WITH CHECK) — a NULL → 42501`,
     );
   }
-  if (!/\btenant_id\b/.test(cols)) {
-    problems.push(`${SERVICE}: INSERT must keep tenant_id for legacy readers`);
+  if (/\btenant_id\b/.test(cols)) {
+    problems.push(`${SERVICE}: INSERT writes tenant_id — ROUND 342 step 2c retires it; operating_company_id is the one company column`);
   }
   return problems;
 }
@@ -85,6 +86,11 @@ if (SELFTEST) {
   const caughtSvc = assertWriter(plantedSvc);
   if (!caughtSvc.length) {
     console.error(`${LABEL} SELFTEST FAIL — planted missing operating_company_id not caught`);
+    process.exit(1);
+  }
+  const plantedLegacy = svcSrc.replace(/INSERT INTO insurance\.coi_request \(\s*\n(\s*)operating_company_id,/, (m, ind) => m.replace(`${ind}operating_company_id,`, `${ind}tenant_id,\n${ind}operating_company_id,`));
+  if (plantedLegacy === svcSrc || !assertWriter(plantedLegacy).length) {
+    console.error(`${LABEL} SELFTEST FAIL — planted legacy tenant_id write not caught`);
     process.exit(1);
   }
   console.log(`${LABEL} SELFTEST PASS`);

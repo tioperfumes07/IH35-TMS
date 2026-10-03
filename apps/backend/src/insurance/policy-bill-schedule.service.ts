@@ -246,7 +246,7 @@ export async function createPolicyBillSchedule(
       committedBillIds.push(bill.id);
 
       // ROUND 20.9 ITEM 1 — insurance.payment_schedule's RLS policy (payment_schedule_opco_scope)
-      // enforces on operating_company_id, not tenant_id; this INSERT set only tenant_id, leaving
+      // enforces on operating_company_id; this INSERT once set only the legacy company column, leaving
       // operating_company_id NULL (the column is nullable, no default) and the WITH CHECK clause
       // (`operating_company_id::text = current_setting('app.operating_company_id', true)`)
       // evaluating NULL = <uuid> -> NULL -> reject. Every real, non-bypass-scoped call (i.e. every
@@ -257,7 +257,6 @@ export async function createPolicyBillSchedule(
       const schedRes = await client.query<{ id: string }>(
         `
           INSERT INTO insurance.payment_schedule (
-            tenant_id,
             operating_company_id,
             policy_id,
             due_date,
@@ -266,7 +265,7 @@ export async function createPolicyBillSchedule(
             bill_status,
             bill_uuid
           )
-          VALUES ($1::uuid, $1::uuid, $2::uuid, $3::date, $4, 'scheduled', 'issued', $5::uuid)
+          VALUES ($1::uuid, $2::uuid, $3::date, $4, 'scheduled', 'issued', $5::uuid)
           RETURNING id::text
         `,
         [policy.operating_company_id, policyId, row.dueDate, row.amountCents, bill.id]

@@ -167,7 +167,6 @@ describe("customer free-time detention routes (GAP-32)", () => {
               uuid: "33333333-3333-4333-8333-333333333333",
               customer_uuid: CUSTOMER,
               operating_company_id: COMPANY,
-              tenant_id: COMPANY,
               free_time_minutes: 120,
               detention_rate_per_hour: "55.00",
               detention_currency: "USD",

@@ -102,26 +102,27 @@ describe("createPolicyBillSchedule (forward-fix)", () => {
     expect(result.billUuids).toEqual(["bill-1", "bill-2", "bill-3", "bill-4", "bill-5"]);
   });
 
-  it("stamps operating_company_id (not just tenant_id) on every insurance.payment_schedule INSERT", async () => {
+  it("stamps operating_company_id — the one company column — on every insurance.payment_schedule INSERT", async () => {
     // ROUND 20.9 ITEM 1 — insurance.payment_schedule's RLS policy enforces on
     // operating_company_id, which this INSERT left NULL (nullable, no default) before the fix,
     // so a real (non-bypass) tenant-scoped transaction — i.e. every genuine production request —
     // failed with "new row violates row-level security policy for table payment_schedule",
-    // confirmed live against Neon prod. tenant_id and operating_company_id must both be stamped
-    // to the same value, mirroring insurance.policy's own INSERT.
+    // confirmed live against Neon prod. ROUND 342 step 2c: operating_company_id is the one company
+    // column; the legacy twin is never written.
     const client = makeClient();
     const insertCalls: unknown[][] = [];
     const wrappedQuery = vi.fn(async (sql: string, values?: unknown[]) => {
       if (sql.includes("INSERT INTO insurance.payment_schedule")) {
         insertCalls.push(values ?? []);
         expect(sql).toContain("operating_company_id");
+        expect(sql).not.toMatch(/\btenant_id\b/);
       }
       return client.query(sql, values);
     });
     await createPolicyBillSchedule(POLICY_ID, "user-1", { query: wrappedQuery });
     expect(insertCalls.length).toBe(5);
     for (const values of insertCalls) {
-      expect(values[0]).toBe(OC); // the single $1::uuid now bound to BOTH tenant_id and operating_company_id
+      expect(values[0]).toBe(OC); // $1::uuid is operating_company_id
     }
   });
 
