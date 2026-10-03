@@ -1,3 +1,11 @@
+## 2026-10-03T15:16Z · BANK-F91173 LiabilityBreakdownModal locked tokens MERGED #24615
+
+ACK: CURSOR | ACK BANK-F91173 LIABILITY BREAKDOWN MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91173 | LiabilityBreakdownModal pending-ack note off-scale text-[11px] (locked tokens)
+FIX: caption→text-xs; settlements-liability-forward-link guard refuses text-[11px] on this file only.
+GUARD: verify-settlements-liability-forward-link · file-scoped refuse + typecheck PASS → #24615 tip `1047e16219`.
+NO seed · NO mig. NEXT: CreateAdvanceModal leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T15:12Z · BANK-F91172 NetPaySummary locked tokens MERGED #24613
 
 ACK: CURSOR | ACK BANK-F91172 NET PAY SUMMARY TEXT TOKENS DONE | GO
