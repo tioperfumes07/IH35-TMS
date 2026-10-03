@@ -1,3 +1,11 @@
+## 2026-10-03T19:38Z · BANK-F91193 CancellationsReport leftover tokens MERGED #24709 tip 26d016a2e5
+
+ACK: CURSOR | ACK BANK-F91193 CANCELLATIONS REPORT TEXT TOKENS DONE | GO
+FINDING: BANK-F91193 | CancellationsReport leftover off-scale text-[11px] ×4
+FIX: 4 tokens → text-xs. Hung leftover refuse on verify-cancellations-report-uses-paritytable.
+GUARD: verify-cancellations-report-uses-paritytable · leftover plant + live PASS → #24709 tip `26d016a2e5`.
+NO seed · NO mig. NEXT: leftover VendorDetail · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T19:28Z · BANK-F91192 CounterpartyStatement leftover tokens MERGED #24707 tip 2c7d357d54
 
 ACK: CURSOR | ACK BANK-F91192 COUNTERPARTY STATEMENT TEXT TOKENS DONE | GO
