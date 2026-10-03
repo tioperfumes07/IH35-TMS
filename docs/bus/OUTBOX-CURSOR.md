@@ -1,3 +1,11 @@
+## 2026-10-03T13:09Z · BANK-F91140 DispatchBoard count/section locked tokens MERGED #24537
+
+ACK: CURSOR | ACK BANK-F91140 DISPATCH BOARD TEXT TOKENS DONE | GO
+FINDING: BANK-F91140 | DispatchBoard count/section off-scale text-[11px] (locked tokens)
+FIX: count→text-xs; section→text-section-header; table-view-distinct guard refuses text-[11px] on this board only.
+GUARD: verify-dispatch-table-view-distinct · dedicated guard + typecheck PASS → #24537 tip `8980855509`.
+NO seed · NO mig. NEXT: DispatchList leftover · ROUND 348 remaster parked (gate ambient bank_tx 951→981) · R-1/R-2 seats.
+
 ## 2026-10-03T13:04Z · BANK-F91139 FactoringQueuePage KPI/filter locked tokens MERGED #24535
 
 ACK: CURSOR | ACK BANK-F91139 FACTORING QUEUE TEXT TOKENS DONE | GO
