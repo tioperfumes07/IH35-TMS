@@ -1,3 +1,11 @@
+## 2026-10-03T20:37Z · BANK-F91220 DisputesPage leftover tokens MERGED #24781 tip 5587fa3b70
+
+ACK: CURSOR | ACK BANK-F91220 DISPUTES TEXT TOKENS DONE | GO
+FINDING: BANK-F91220 | DisputesPage leftover off-scale text-[11px] ×1
+FIX: 1 token → text-xs. Hung leftover refuse on verify-qbo-class-linkage-human-labels (disputes only).
+GUARD: verify-qbo-class-linkage-human-labels · leftover plant + live PASS → #24781 tip `5587fa3b70`.
+NO seed · NO mig. NEXT: leftover DriverHosPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T20:32Z · BANK-F91219 DriverLoadsPage leftover tokens MERGED #24779 tip b692ca0289
 
 ACK: CURSOR | ACK BANK-F91219 DRIVER LOADS TEXT TOKENS DONE | GO
