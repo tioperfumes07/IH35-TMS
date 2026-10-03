@@ -303,7 +303,12 @@ export async function createFactor(
           noa_remit_to_wire_ref,
           notes,
           created_at,
-          updated_at
+          updated_at,
+          -- ROUND 342 Phase 4: operating_company_id is the canonical scope column and the ONLY one RLS checks once the
+          -- duplicate tenant_id policy is dropped. This INSERT used to set tenant_id alone and relied on that second
+          -- policy's WITH CHECK; a NULL here would now be refused (and, if bypassed, invisible to every carrier).
+          -- Same company as tenant_id ($1) — not a new lookup.
+          operating_company_id
         )
         VALUES (
           $1::uuid,
@@ -323,7 +328,8 @@ export async function createFactor(
           $15,
           $16,
           now(),
-          now()
+          now(),
+          $1::uuid
         )
         RETURNING
           id::text,
@@ -631,7 +637,9 @@ export async function createLetterOfRelease(
         effective_release_date,
         released_by_user_id,
         notes,
-        created_at
+        created_at,
+        -- ROUND 342 Phase 4: the canonical scope column, set explicitly (see the factor INSERT above).
+        operating_company_id
       )
       VALUES (
         $1::uuid,
@@ -640,7 +648,8 @@ export async function createLetterOfRelease(
         $4::date,
         $5::uuid,
         $6,
-        now()
+        now(),
+        $1::uuid
       )
       RETURNING
         id::text,
