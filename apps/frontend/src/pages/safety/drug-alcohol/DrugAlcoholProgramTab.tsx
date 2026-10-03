@@ -155,7 +155,7 @@ export function DrugAlcoholProgramTab() {
         <h2 className="mb-3 text-xs font-semibold text-slate-900">
           Consortium Enrollments
           {enrollmentRows.length > 0 ? (
-            <span className="ml-2 rounded-sm bg-slate-100 px-1.5 py-0.5 text-[11px] font-normal text-slate-600">
+            <span className="ml-2 rounded-sm bg-slate-100 px-1.5 py-0.5 text-xs font-normal text-slate-600">
               {enrollmentRows.length} active
             </span>
           ) : null}
@@ -186,7 +186,7 @@ export function DrugAlcoholProgramTab() {
         <h2 className="mb-3 text-xs font-semibold text-red-900">
           Positive Results — SAP Referral Queue
           {positiveRows.length > 0 ? (
-            <span className="ml-2 rounded-sm bg-red-100 px-1.5 py-0.5 text-[11px] font-normal text-red-800">
+            <span className="ml-2 rounded-sm bg-red-100 px-1.5 py-0.5 text-xs font-normal text-red-800">
               {positiveRows.length} pending
             </span>
           ) : null}

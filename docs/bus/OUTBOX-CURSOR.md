@@ -1,3 +1,35 @@
+## 2026-10-03T23:35Z · BANK-F91251 DrugAlcoholProgramTab leftover tokens MERGED #24881 tip 23ba9b1e56
+
+## BANK-F91253 ExpiryDashboard leftover MERGED #24885 tip `be786ea985`
+DONE: ExpiryDashboard text-[11px]→text-xs (1); leftover refuse+plant on verify-safety-cert-expiry-filter-comboboxes.
+NEXT: CSAMitigationQueue · FineLifecycleActions · SafetyLayout · SafetyHome
+
+## 2026-10-03 22:52 UTC — BANK-F91252 Audit425cPage leftover MERGED #24883 tip `663c316f38`
+DONE: Audit425cPage `text-[11px]`→`text-xs` (1); leftover refuse+plant on verify-audit-425c-staged-filters.
+NEXT: leftover ExpiryDashboard · CSAMitigationQueue · FineLifecycleActions · SafetyLayout · SafetyHome
+
+ACK: CURSOR | ACK BANK-F91251 DA PROGRAM TEXT TOKENS DONE | GO
+FINDING: BANK-F91251 | DrugAlcoholProgramTab leftover off-scale text-[11px] ×2
+FIX: 2 tokens → text-xs. Hung leftover refuse on verify-drug-alcohol-program-uses-paritytable.
+GUARD: verify-drug-alcohol-program-uses-paritytable · leftover plant + live PASS → #24881 tip `23ba9b1e56`.
+NO seed · NO mig. NEXT: leftover Audit425cPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
+## 2026-10-03T23:30Z · BANK-F91250 DOTComplianceTab leftover tokens MERGED #24879 tip f13eb1c610
+
+ACK: CURSOR | ACK BANK-F91250 DOT COMP TEXT TOKENS DONE | GO
+FINDING: BANK-F91250 | DOTComplianceTab leftover off-scale text-[11px] ×3
+FIX: 3 tokens → text-xs. Hung leftover refuse on verify-safety-dot-compliance-hooks.
+GUARD: verify-safety-dot-compliance-hooks · leftover plant + live PASS → #24879 tip `f13eb1c610`.
+NO seed · NO mig. NEXT: leftover DrugAlcoholProgramTab · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
+## 2026-10-03T23:25Z · BANK-F91249 DOTInspectionsTab leftover tokens MERGED #24877 tip 3b1eaf34fb
+
+ACK: CURSOR | ACK BANK-F91249 DOT TAB TEXT TOKENS DONE | GO
+FINDING: BANK-F91249 | DOTInspectionsTab leftover off-scale text-[11px] ×3
+FIX: 3 tokens → text-xs. Hung leftover refuse on verify-dot-inspections-staged-filters.
+GUARD: verify-dot-inspections-staged-filters · leftover plant + live PASS → #24877 tip `3b1eaf34fb`.
+NO seed · NO mig. NEXT: leftover DOTComplianceTab · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T23:20Z · BANK-F91248 DotInspectionsPage leftover tokens MERGED #24872 tip c1af743653
 
 ACK: CURSOR | ACK BANK-F91248 DOT INSP TEXT TOKENS DONE | GO

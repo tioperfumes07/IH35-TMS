@@ -20,6 +20,8 @@ function inspect(value) {
     [/\{completeErrorCurrent \? \([\s\S]*data-testid="csa-mitigation-complete-error"/, "complete banner does not use the current-generation predicate"],
   ];
   for (const [pattern, message] of checks) if (!pattern.test(value)) failures.push(message);
+  if (value.includes("text-[11px]")) failures.push("leftover text-[11px]");
+  if (value.includes("#8A92AB") || value.includes("#334155")) failures.push("leftover off-scale muted");
   return failures;
 }
 
@@ -38,6 +40,11 @@ if (process.argv.includes("--selftest")) {
   for (const token of mutations) {
     if (!source.includes(token)) throw new Error(`fixture missing ${token}`);
     if (inspect(source.split(token).join("REMOVED_BY_SELFTEST")).length === 0) throw new Error(`missed ${token}`);
+  }
+  const leftoverPlant = `${source}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`;
+  const leftover = inspect(leftoverPlant);
+  if (!leftover.includes("leftover text-[11px]") || !leftover.includes("leftover off-scale muted")) {
+    throw new Error(`leftover plant escaped: ${leftover.join(", ")}`);
   }
   console.log(`verify-csa-mitigation-company-lifecycle --selftest PASS (${mutations.length}/${mutations.length})`);
 } else {

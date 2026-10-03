@@ -114,7 +114,7 @@ export function ExpiryDashboard({ breadcrumbLabel = "Cert Expiry" }: ExpiryDashb
         label: "Severity",
         sortable: true,
         render: (row) => (
-          <span className={`rounded-sm px-2 py-0.5 text-[11px] font-semibold ${severityClassName(row.severity)}`}>{row.severity}</span>
+          <span className={`rounded-sm px-2 py-0.5 text-xs font-semibold ${severityClassName(row.severity)}`}>{row.severity}</span>
         ),
       },
     ],
