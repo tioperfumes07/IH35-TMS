@@ -278,13 +278,17 @@ export function assertExpensesListRoute({
       subnavManifest.match(/export const SUBNAV_ITEMS[\s\S]*?\]\s*as const;/)?.[0] ?? "";
     const flatBlock =
       subnavManifest.match(/export const ACCOUNTING_CLEAN_TABS[\s\S]*?\]\s*as const;/)?.[0] ?? "";
-    const orderedChildren =
-      /label:\s*["']Expenses List["'],\s*path:\s*["']\/accounting\/expenses\/list["'],\s*section:\s*["']expenses["'][\s\S]{0,180}?label:\s*["']Expenses["'],\s*path:\s*["']\/accounting\/expenses["'],\s*section:\s*["']expenses["']/;
-    if (!orderedChildren.test(itemBlock)) {
-      errors.push("subnav-manifest: expense children must expose list first and Expenses second");
+    // U4 (owner, 2026-10-03): "Expenses List" rendered the same ExpensesListPage as "Expenses" — ONE tab now. The
+    // /accounting/expenses/list ROUTE stays for old links (asserted above); the tab bar shows Expenses once and the group
+    // opens the list at /accounting/expenses.
+    if (!/label:\s*["']Expenses["'],\s*path:\s*["']\/accounting\/expenses["'],\s*section:\s*["']expenses["']/.test(itemBlock)) {
+      errors.push("subnav-manifest: expense children must expose Expenses (/accounting/expenses)");
     }
-    if (!/label:\s*GROUP_LABELS\.expenses,\s*href:\s*["']\/accounting\/expenses\/list["']/.test(subnavManifest)) {
-      errors.push("subnav-manifest: Expenses group href must be /accounting/expenses/list");
+    if (/path:\s*["']\/accounting\/expenses\/list["']/.test(itemBlock)) {
+      errors.push("subnav-manifest: Expenses must be one tab — a second tab for /accounting/expenses/list is back (U4)");
+    }
+    if (!/label:\s*GROUP_LABELS\.expenses,\s*href:\s*["']\/accounting\/expenses["']/.test(subnavManifest)) {
+      errors.push("subnav-manifest: Expenses group href must be /accounting/expenses");
     }
     for (const expected of [
       /label:\s*["']Expenses List["'],\s*to:\s*["']\/accounting\/expenses\/list["']/,
@@ -350,7 +354,6 @@ function selftest() {
   `;
   const childrenBlock = `
     export const SUBNAV_ITEMS = [
-      { label: "Expenses List", path: "/accounting/expenses/list", section: "expenses" },
       { label: "Expenses", path: "/accounting/expenses", section: "expenses" },
     ] as const;
   `;
@@ -360,7 +363,7 @@ function selftest() {
       { label: "Expenses", to: "/accounting/expenses" },
     ] as const;
   `;
-  const groupEntry = `{ label: GROUP_LABELS.expenses, href: "/accounting/expenses/list" }`;
+  const groupEntry = `{ label: GROUP_LABELS.expenses, href: "/accounting/expenses" }`;
   const good = {
     manifest: goodManifest,
     topbar: `[t("topbar.create_expense", "Expense"), "/accounting/expenses?create=1"]`,
@@ -398,7 +401,8 @@ function selftest() {
     ["home create alias", { ...good, home: good.home.replace('to: "/accounting/expenses"', 'to: "/accounting/expenses/new"') }, "CREATE_ACTIONS"],
     ["wrapper create list", { ...good, subnavWrapper: good.subnavWrapper.replace('expenses?create=1"', 'expenses/list"') }, "CREATE_MENU"],
     ["wrapper create bare list", { ...good, subnavWrapper: good.subnavWrapper.replace("?create=1", "") }, "CREATE_MENU"],
-    ["group reversed", { ...good, subnavManifest: `${childrenBlock}${flatBlock}{ label: GROUP_LABELS.expenses, href: "/accounting/expenses" }` }, "group href"],
+    ["group reversed", { ...good, subnavManifest: `${childrenBlock}${flatBlock}{ label: GROUP_LABELS.expenses, href: "/accounting/expenses/list" }` }, "group href"],
+    ["duplicate list tab", { ...good, subnavManifest: `${childrenBlock.replace("] as const;", '{ label: "Expenses List", path: "/accounting/expenses/list", section: "expenses" },\n] as const;')}${flatBlock}${groupEntry}` }, "one tab"],
     ["missing children", { ...good, subnavManifest: `export const SUBNAV_ITEMS = [] as const;${flatBlock}${groupEntry}` }, "expense children"],
     ["missing flat metadata", { ...good, subnavManifest: `${childrenBlock}export const ACCOUNTING_CLEAN_TABS = [] as const;${groupEntry}` }, "flat metadata"],
     ["exposed legacy alias", { ...good, subnavManifest: `${childrenBlock.replace("] as const;", '{ label: "Legacy", path: "/accounting/expenses/new", section: "expenses" },\\n] as const;')}${flatBlock}${groupEntry}` }, "route-only"],

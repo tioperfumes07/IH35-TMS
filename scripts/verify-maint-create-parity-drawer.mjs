@@ -64,13 +64,16 @@ export function assertMaintenanceParityDrawer({ expense, bill, subnav, routes })
   } else {
     const itemBlock = subnav.match(/export const SUBNAV_ITEMS[\s\S]*?\]\s*as const;/)?.[0] ?? "";
     const flatBlock = subnav.match(/export const ACCOUNTING_CLEAN_TABS[\s\S]*?\]\s*as const;/)?.[0] ?? "";
-    if (!/label:\s*GROUP_LABELS\.expenses,\s*href:\s*["']\/accounting\/expenses\/list["']/.test(subnav)) {
-      failures.push("subnav-manifest: Expenses group href must be /accounting/expenses/list");
+    // U4 (owner, 2026-10-03): "Expenses List" duplicated "Expenses" (same ExpensesListPage) — ONE tab; the /list route
+    // stays for old links (asserted under routes below).
+    if (!/label:\s*GROUP_LABELS\.expenses,\s*href:\s*["']\/accounting\/expenses["']/.test(subnav)) {
+      failures.push("subnav-manifest: Expenses group href must be /accounting/expenses");
     }
-    const childrenOrder =
-      /label:\s*["']Expenses List["'],\s*path:\s*["']\/accounting\/expenses\/list["'][\s\S]{0,180}?label:\s*["']Expenses["'],\s*path:\s*["']\/accounting\/expenses["']/;
-    if (!childrenOrder.test(itemBlock)) {
-      failures.push('subnav-manifest: dropdown must expose "Expenses List" then "Expenses"');
+    if (!/label:\s*["']Expenses["'],\s*path:\s*["']\/accounting\/expenses["']/.test(itemBlock)) {
+      failures.push('subnav-manifest: dropdown must expose "Expenses"');
+    }
+    if (/path:\s*["']\/accounting\/expenses\/list["']/.test(itemBlock)) {
+      failures.push("subnav-manifest: Expenses must be one tab — the duplicate list tab is back (U4)");
     }
     if (/\/accounting\/expenses\/new/.test(itemBlock) || /\/accounting\/expenses\/new/.test(flatBlock)) {
       failures.push("subnav-manifest: legacy /new alias must not be exposed in rendered/retained UI metadata");
@@ -112,14 +115,13 @@ function selftest() {
     bill: billDrawer,
     subnav: `
       export const SUBNAV_ITEMS = [
-        { label: "Expenses List", path: "/accounting/expenses/list", section: "expenses" },
         { label: "Expenses", path: "/accounting/expenses", section: "expenses" },
       ] as const;
       export const ACCOUNTING_CLEAN_TABS = [
         { label: "Expenses List", to: "/accounting/expenses/list" },
         { label: "Expenses", to: "/accounting/expenses" },
       ] as const;
-      { label: GROUP_LABELS.expenses, href: "/accounting/expenses/list" }
+      { label: GROUP_LABELS.expenses, href: "/accounting/expenses" }
     `,
     routes: `
       path="/accounting/expenses/new" element={<ExpenseCreatePage />}
@@ -130,8 +132,8 @@ function selftest() {
   const reversed = {
     ...good,
     subnav: good.subnav.replace(
-      "GROUP_LABELS.expenses, href: \"/accounting/expenses/list\"",
       "GROUP_LABELS.expenses, href: \"/accounting/expenses\"",
+      "GROUP_LABELS.expenses, href: \"/accounting/expenses/list\"",
     ),
   };
   const exposedAlias = {
@@ -142,8 +144,17 @@ function selftest() {
         + '        { label: "Legacy", path: "/accounting/expenses/new", section: "expenses" },',
     ),
   };
+  const duplicateListTab = {
+    ...good,
+    subnav: good.subnav.replace(
+      '{ label: "Expenses", path: "/accounting/expenses", section: "expenses" },',
+      '{ label: "Expenses", path: "/accounting/expenses", section: "expenses" },\n'
+        + '        { label: "Expenses List", path: "/accounting/expenses/list", section: "expenses" },',
+    ),
+  };
   if (
     assertMaintenanceParityDrawer(good).length
+    || !assertMaintenanceParityDrawer(duplicateListTab).length
     || !assertMaintenanceParityDrawer({ ...good, expense: drawer.replaceAll("ParityDrawer", "Modal") }).length
     || !assertMaintenanceParityDrawer(reversed).length
     || !assertMaintenanceParityDrawer(exposedAlias).length

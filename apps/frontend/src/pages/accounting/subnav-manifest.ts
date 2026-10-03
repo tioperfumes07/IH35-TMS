@@ -68,7 +68,9 @@ export const SUBNAV_ITEMS: readonly AccountingSubNavItem[] = [
   { label: "Accounting", path: "/accounting", section: "home" },
 
   // Bills ▾ (PNG order)
-  { label: "Bill", path: "/accounting/bills", section: "bills" },
+  // U11 (owner, 2026-10-03): "Bill" vs "Vendor bill" measured — not the same: this tab is EVERY bill (the list); "Vendor
+  // bill" creates a vendor bill (same VendorBillForm / createVendorBill writer as the other bill-type tabs). Relabelled.
+  { label: "All bills", path: "/accounting/bills", section: "bills" },
   { label: "Maintenance bill", path: "/accounting/bills/maintenance", section: "bills" },
   { label: "Repair bill", path: "/accounting/bills/repair", section: "bills" },
   { label: "Fuel bill", path: "/accounting/bills/fuel", section: "bills" },
