@@ -41,8 +41,9 @@ const FORBIDDEN = {
   // ACCT-F5873 (2026-09-05, #20731) legitimately wired real driver + load EntityLinks onto
   // bills.list (a dedicated "Driver bills" section, kind=driver/kind=load drill-through to their
   // canonical rows, live-verified against 50 real driver_finance.driver_bills rows) — driver/load
-  // are no longer forbidden here. "unit" stays forbidden: no unit EntityLink exists on this page.
-  "bills.list": ["unit"],
+  // are no longer forbidden here. U16 (owner UI register 2026-10-03, "work order, unit and trailer on every bill list")
+  // added a real Unit column (EntityLink kind="unit" to the bill's own / its lines' unit) — "unit" is no longer forbidden.
+  "bills.list": [],
   "bills.create.vendor": ["load", "driver"],
   "bills.create.maintenance": ["driver", "load"],
   "bills.create.fuel": ["driver", "load"],
@@ -72,15 +73,17 @@ function fail(msg) {
 
 function runSelftest() {
   const doc = loadJson(REQ);
-  const leaf = doc.leaves.find((l) => l.id === "bills.list");
-  if (!leaf) fail("selftest: bills.list missing");
+  // Poison the first leaf that still forbids something (bills.list forbids nothing since U16).
+  const [poisonLeafId, poisonCols] = Object.entries(FORBIDDEN).find(([, cols]) => cols.length > 0);
+  const leaf = doc.leaves.find((l) => l.id === poisonLeafId);
+  if (!leaf) fail(`selftest: ${poisonLeafId} missing`);
   const poisoned = structuredClone(doc);
-  const pl = poisoned.leaves.find((l) => l.id === "bills.list");
-  pl.required = [...pl.required, "driver", "unit", "load"];
+  const pl = poisoned.leaves.find((l) => l.id === poisonLeafId);
+  pl.required = [...pl.required, ...poisonCols];
   const tmp = path.join(ROOT, "scripts/.tmp-acct-req-poison.json");
   fs.writeFileSync(tmp, JSON.stringify(poisoned));
   // inline check
-  for (const col of FORBIDDEN["bills.list"]) {
+  for (const col of poisonCols) {
     if (!pl.required.includes(col)) {
       fs.unlinkSync(tmp);
       fail("selftest setup failed");
@@ -147,8 +150,9 @@ if (!/EntityLink kind="vendor"/.test(bills)) {
 if (!/EntityLink kind="driver"/.test(bills) || !/EntityLink kind="load"/.test(bills)) {
   failures.push("BillsPage lost its driver/load EntityLink (ACCT-F5873 regression) — re-check before removing");
 }
-if (/EntityLink kind="unit"/.test(bills)) {
-  failures.push("BillsPage gained a unit EntityLink — update FORBIDDEN/MUST_KEEP intentionally");
+// U16 — the Unit column is an owner order: the bills list must keep its unit EntityLink.
+if (!/<EntityLink kind="unit"/.test(bills)) {
+  failures.push("BillsPage lost its unit EntityLink (U16 — work order, unit and trailer on every bill list)");
 }
 
 const exp = fs.readFileSync(EXPENSE_FORM, "utf8");

@@ -249,6 +249,8 @@ export type ExpenseListRow = {
   driver_uuid: string | null;
   trailer_id: string | null;
   trailer_display_id: string | null;
+  unit_id: string | null;
+  unit_display_id: string | null;
   created_at: string;
   vendor_name: string | null;
   driver_first_name: string | null;
@@ -386,11 +388,15 @@ export async function queryExpensesList(
         e.load_id::text                              AS load_id,
         e.vendor_uuid::text                          AS vendor_uuid,
         e.driver_uuid::text                          AS driver_uuid,
-        e.trailer_id::text                           AS trailer_id,
+        -- U16 (owner) — work order, unit and trailer on every expense list: the expense's own, else the one value all of
+        -- its lines carry (expense_lines hold unit / trailer / work order too).
+        COALESCE(e.trailer_id, line_dims.trailer_id)::text AS trailer_id,
         tr.equipment_number                          AS trailer_display_id,
+        COALESCE(e.unit_id, line_dims.unit_id)::text AS unit_id,
+        un.unit_number                               AS unit_display_id,
         e.journal_entry_id::text                     AS journal_entry_id,
         je.memo                                       AS journal_entry_memo,
-        e.linked_work_order_uuid::text               AS linked_work_order_uuid,
+        COALESCE(e.linked_work_order_uuid, line_dims.work_order_id)::text AS linked_work_order_uuid,
         e.created_at                                 AS created_at,
         -- ACCT-EXPENSES-VENDOR-DEACTIVATED-TOMBSTONE: mdata.vendors' RLS policy hard-excludes any
         -- row with deactivated_at IS NOT NULL for a non-bypass reader, so a plain join silently
@@ -448,10 +454,21 @@ export async function queryExpensesList(
       ) ca ON true
       LEFT JOIN mdata.drivers dr ON dr.id = e.driver_uuid AND dr.operating_company_id = e.operating_company_id
       LEFT JOIN mdata.loads l ON l.id = e.load_id AND l.operating_company_id = e.operating_company_id
-      LEFT JOIN mdata.equipment tr ON tr.id = e.trailer_id
+      LEFT JOIN LATERAL (
+        SELECT CASE WHEN count(DISTINCT el_dim.unit_id) = 1 THEN (array_agg(el_dim.unit_id) FILTER (WHERE el_dim.unit_id IS NOT NULL))[1] END AS unit_id,
+               CASE WHEN count(DISTINCT el_dim.trailer_id) = 1 THEN (array_agg(el_dim.trailer_id) FILTER (WHERE el_dim.trailer_id IS NOT NULL))[1] END AS trailer_id,
+               CASE WHEN count(DISTINCT COALESCE(el_dim.linked_work_order_uuid, wol.work_order_uuid)) = 1
+                    THEN (array_agg(COALESCE(el_dim.linked_work_order_uuid, wol.work_order_uuid))
+                            FILTER (WHERE COALESCE(el_dim.linked_work_order_uuid, wol.work_order_uuid) IS NOT NULL))[1] END AS work_order_id
+          FROM accounting.expense_lines el_dim
+          LEFT JOIN maintenance.work_order_lines wol ON wol.uuid = el_dim.linked_wo_line_uuid
+         WHERE el_dim.expense_id = e.id
+      ) line_dims ON true
+      LEFT JOIN mdata.equipment tr ON tr.id = COALESCE(e.trailer_id, line_dims.trailer_id)
         AND (tr.owner_company_id = e.operating_company_id OR tr.currently_leased_to_company_id = e.operating_company_id)
+      LEFT JOIN mdata.units un ON un.id = COALESCE(e.unit_id, line_dims.unit_id)
       LEFT JOIN maintenance.work_orders wo
-        ON wo.id = e.linked_work_order_uuid
+        ON wo.id = COALESCE(e.linked_work_order_uuid, line_dims.work_order_id)
        AND wo.operating_company_id = e.operating_company_id
       LEFT JOIN accounting.journal_entries je ON je.id = e.journal_entry_id AND je.operating_company_id = e.operating_company_id
       WHERE ${where.join(" AND ")}

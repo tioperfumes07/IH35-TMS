@@ -710,9 +710,9 @@ after creation; a GL/posting failure goes to CC-1.
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
-| create | `/api/v1/expenses` | `apps/backend/src/accounting/expenses.routes.ts:723` | — | — | — |
-| nested | `/api/v1/expenses/:expenseId/reattribute` | `apps/backend/src/accounting/expenses.routes.ts:1478` | — | — | — |
-| nested | `/api/v1/expenses/:expenseId/unvoid` | `apps/backend/src/accounting/expenses.routes.ts:1817` | — | — | — |
+| create | `/api/v1/expenses` | `apps/backend/src/accounting/expenses.routes.ts:740` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/reattribute` | `apps/backend/src/accounting/expenses.routes.ts:1495` | — | — | — |
+| nested | `/api/v1/expenses/:expenseId/unvoid` | `apps/backend/src/accounting/expenses.routes.ts:1834` | — | — | — |
 
 ### finance — 3 create-surface(s)
 
@@ -873,8 +873,8 @@ after creation; a GL/posting failure goes to CC-1.
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
-| create | `/api/v1/work-orders` | `apps/backend/src/work-orders/work-orders.routes.ts:685` | — | — | — |
-| nested | `/api/v1/work-orders/:id/photos` | `apps/backend/src/work-orders/work-orders.routes.ts:1409` | — | — | — |
+| create | `/api/v1/work-orders` | `apps/backend/src/work-orders/work-orders.routes.ts:701` | — | — | — |
+| nested | `/api/v1/work-orders/:id/photos` | `apps/backend/src/work-orders/work-orders.routes.ts:1425` | — | — | — |
 
 ### units — 2 create-surface(s)
 

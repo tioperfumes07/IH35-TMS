@@ -19,6 +19,7 @@ import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBank
 import { ListErrorState } from "../../components/ListErrorState";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
+import { WorkOrderCopyLinks } from "../../components/accounting/WorkOrderCopyLinks";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -417,6 +418,8 @@ export function BillDetailPage() {
             <EntityLink kind="work_order" id={bill.linked_work_order_uuid} label={entityLabel(bill.linked_work_order_display_id, bill.linked_work_order_uuid, "Work order")} />
           </DataPanelRow>
         ) : null}
+        {/* U16 — the stored copy of the work order, as it was when this bill was linked (header or line link). */}
+        {selectedCompanyId ? <WorkOrderCopyLinks kind="bill" documentId={bill.id} operatingCompanyId={selectedCompanyId} /> : null}
         {/* AP_BILL column-wave: reverse of AdvanceDetailDrawer.tsx's linked_bill_id forward link —
             a bill funded by a cash advance previously had no way to show which advance funded it. */}
         {bill.linked_cash_advance_id ? (
