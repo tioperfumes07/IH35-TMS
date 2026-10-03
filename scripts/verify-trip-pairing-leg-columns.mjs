@@ -102,6 +102,7 @@ const src = fs.readFileSync(PAGE_PATH, "utf8");
 const failures = [];
 if (!hasNoCollapsedStacking(src)) failures.push(`"↳ leg" collapsed-stacking text found — triangulation legs must render as SEPARATE columns, never stacked in one cell`);
 if (!hasExpandingTriangulationColumns(src)) failures.push(`triangulation columns are not built as one-per-leg-index from a data-derived count (computeMaxTriangulationLegs -> Array.from({length: trCount}, ...) -> ...triangulationColumns spread)`);
+if (src.includes("text-[11px]")) failures.push(`${PAGE_PATH}: must not use text-[11px] — use text-xs or text-section-header`);
 
 if (failures.length) {
   console.error(`${LABEL}: FAIL`);
