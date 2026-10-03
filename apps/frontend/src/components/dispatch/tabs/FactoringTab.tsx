@@ -518,7 +518,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
             </div>
           ) : null}
           {!isDeliverable ? (
-            <p className="mt-2 text-[11px] text-slate-700">
+            <p className="mt-2 text-xs text-slate-700">
               Packet assembles once load status is delivered or later.
             </p>
           ) : null}
@@ -604,7 +604,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
                 {candidateQ.isError ? (
                   <QueryErrorNote label="submission eligibility" onRetry={() => candidateQ.refetch()} />
                 ) : linkedInvoice && !candidateIds.has(linkedInvoice.id) ? (
-                  <p className="mt-1 text-[11px] text-slate-700">Invoice may already be in a batch or already factored.</p>
+                  <p className="mt-1 text-xs text-slate-700">Invoice may already be in a batch or already factored.</p>
                 ) : null}
               </div>
             ) : null}
@@ -639,7 +639,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
                   </Button>
                 </div>
                 {!hasPod ? (
-                  <p className="mt-1 text-[11px] text-red-600">POD required before submission.</p>
+                  <p className="mt-1 text-xs text-red-600">POD required before submission.</p>
                 ) : null}
               </div>
             ) : null}
