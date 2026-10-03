@@ -107,6 +107,9 @@ contains("apps/frontend/src/components/dispatch/LiveEtaColumns.tsx", liveEtaColu
   { pattern: /samsara-eta-column/, label: "samsara eta test id" },
   { pattern: /on-time-prediction-column/, label: "on-time prediction test id" },
 ]);
+if (liveEtaColumns.includes("text-[11px]")) {
+  fail("apps/frontend/src/components/dispatch/LiveEtaColumns.tsx: must not use text-[11px] — use text-xs or text-section-header");
+}
 
 read("apps/frontend/src/components/dispatch/LiveEtaColumns.test.tsx");
 const telematicsEta = read("apps/backend/src/telematics/dispatch-live-eta.service.ts");
