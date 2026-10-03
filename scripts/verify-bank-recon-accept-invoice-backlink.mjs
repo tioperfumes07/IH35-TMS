@@ -21,7 +21,9 @@ const FILE = "apps/backend/src/accounting/bank-recon/match.service.ts";
 
 const IMPORT_MARKER = 'import { backlinkBankTransactionToInvoice } from "../payments/bank-invoice-backlink.service.js";';
 const INVOICE_QUERY_MARKER = "FROM accounting.payment_applications";
-const CALL_MARKER = "await backlinkBankTransactionToInvoice(\n        client,\n        input.operating_company_id,\n        input.ledger_entry_id,\n        invoiceRes.rows.map((r) => r.invoice_id)\n      );";
+// The matched payment's id is matchLedgerEntryId (= input.ledger_entry_id; it differs only when a Faro reserve row turns
+// the match into kind 'je', which never reaches this payment branch).
+const CALL_MARKER = "await backlinkBankTransactionToInvoice(\n        client,\n        input.operating_company_id,\n        matchLedgerEntryId,\n        invoiceRes.rows.map((r) => r.invoice_id)\n      );";
 
 function assertAll(src) {
   const problems = [];

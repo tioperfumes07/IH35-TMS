@@ -78,8 +78,17 @@ export function check(escrowVisSrcRaw, bankingSrcRaw, factoringSrcRaw) {
   if (/RETURNING id\s*`,\s*\[params\.data\.id, companyId\]\s*\)\s*\.catch\(\s*\(\)\s*=>\s*\(\{\s*rows:\s*\[\]/.test(bankingSrc)) {
     failures.push(`${BANKING_FILE}: undo-categorization's UPDATE...RETURNING .catch() reappeared (BANK-F9517)`);
   }
-  if (!/if \(!res\.rows\[0\]\) return false;/.test(bankingSrc)) {
-    failures.push(`${BANKING_FILE}: undo-categorization not-found branch not found — guard out of sync`);
+  // ROUND 360: the route delegates to the bank-line state machine (which has no .catch at all). The invariant is the
+  // same: ONLY the engine's own "not found" becomes a 404; any other error is rethrown so the transaction fails.
+  const undoAt = bankingSrc.indexOf('"/api/v1/banking/transactions/:id/undo-categorization"');
+  const undoHandler = undoAt < 0 ? "" : bankingSrc.slice(undoAt, bankingSrc.indexOf("app.get(", undoAt));
+  if (!undoHandler) {
+    failures.push(`${BANKING_FILE}: undo-categorization route not found — guard out of sync`);
+  } else {
+    if (/\.catch\(\s*\(\)\s*=>/.test(undoHandler)) failures.push(`${BANKING_FILE}: undo-categorization swallows an error with .catch() (BANK-F9517)`);
+    if (!/if \(e\.message === "bank_transaction_not_found"\) return reply\.code\(404\)/.test(undoHandler) || !/\n\s*throw err;\n\s*\}\n\s*\}\);/.test(undoHandler)) {
+      failures.push(`${BANKING_FILE}: undo-categorization must map ONLY "bank_transaction_not_found" to 404 and rethrow every other error (BANK-F9517)`);
+    }
   }
 
   // F9518 — 4 view reads.
@@ -154,10 +163,10 @@ function selftest() {
     process.exit(1);
   }
 
-  // Offender C: reintroduce F9517's undo-categorization catch.
+  // Offender C: F9517's shape — every undo error answered as a plain 404 instead of failing the transaction.
   const offenderC = bankingSrc.replace(
-    "RETURNING id\n        `,\n        [params.data.id, companyId]\n      );",
-    "RETURNING id\n        `,\n        [params.data.id, companyId]\n      ).catch(() => ({ rows: [] }));"
+    "      throw err;\n    }\n  });",
+    "      return reply.code(404).send({ error: \"transaction_not_found\" });\n    }\n  });"
   );
   if (offenderC === bankingSrc) {
     console.error("FAIL(selftest): offender C mutation did not change the file — pattern out of sync");

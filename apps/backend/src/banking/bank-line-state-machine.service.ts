@@ -360,8 +360,20 @@ export async function undoBankLineOnClient(
       [input.operatingCompanyId, line.id]
     );
   } else {
-    // added / split — the line CREATED what it carries. Release the line first (so no void cascade can find it by its
-    // links), then remove every document and journal entry it created.
+    // added / split — the line CREATED what it carries. BANK-F01 order: reverse the entry it posted FIRST (same client,
+    // so a refused reversal — closed period, integrity conflict — rolls the whole undo back), then release the line,
+    // then void the documents it created (after the release, so no void cascade finds the line by its links).
+    if (line.matched_journal_entry_id) {
+      const r = await reverseOnceOnClient(client, {
+        operatingCompanyId: input.operatingCompanyId,
+        journalEntryId: line.matched_journal_entry_id,
+        actorUserId: input.actorUserId,
+        reason: `Undo bank categorization — release bank_transaction ${line.id}`,
+      });
+      (r === "reversed" ? outcome.reversed_journal_entry_ids : outcome.already_reversed_journal_entry_ids).push(
+        line.matched_journal_entry_id
+      );
+    }
     await client.query(
       `UPDATE banking.bank_transactions SET ${RELEASE_CATEGORIZATION_SET_SQL}
         WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
@@ -373,17 +385,6 @@ export async function undoBankLineOnClient(
             SET voided_at = now(), posting_status = 'void', updated_at = now(), updated_by_user_id = $3::uuid
           WHERE bank_transaction_id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL`,
         [line.id, input.operatingCompanyId, input.actorUserId]
-      );
-    }
-    if (line.matched_journal_entry_id) {
-      const r = await reverseOnceOnClient(client, {
-        operatingCompanyId: input.operatingCompanyId,
-        journalEntryId: line.matched_journal_entry_id,
-        actorUserId: input.actorUserId,
-        reason: `Undo bank categorization — release bank_transaction ${line.id}`,
-      });
-      (r === "reversed" ? outcome.reversed_journal_entry_ids : outcome.already_reversed_journal_entry_ids).push(
-        line.matched_journal_entry_id
       );
     }
     await voidDocumentsCreatedByLine(

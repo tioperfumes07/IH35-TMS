@@ -92,13 +92,27 @@ for (const [name, src] of [
   }
 }
 
-// 6. Frontend: both callers that mint via createTransfer() BEFORE tagging the feed row must pass
-//    existing_transfer_id.
-if (!/existing_transfer_id:\s*created\.transfer\.id/.test(transferModal)) {
-  fail("TransferModal.tsx must pass existing_transfer_id: created.transfer.id to markBankTransactionTransfer");
+// 6. Frontend: a caller that mints via createTransfer() must never let the feed line mint a SECOND transfer.
+//    Two accepted shapes:
+//      (a) legacy two-request: createTransfer, then markBankTransactionTransfer({ existing_transfer_id }) —
+//          link-only;
+//      (b) ROUND 360 one-request: createTransfer({ from_bank_line }) — the service links the line inside the SAME
+//          transaction under the same advisory lock + matched_transfer_id IS NULL stamp, so there is no second call.
+const oneRequest = (src) => /from_bank_line:\s*\{/.test(src);
+if (!/existing_transfer_id:\s*created\.transfer\.id/.test(transferModal) && !oneRequest(transferModal)) {
+  fail("TransferModal.tsx must link the line it minted for: existing_transfer_id: created.transfer.id, or createTransfer({ from_bank_line })");
 }
-if (!/existing_transfer_id:\s*response\.transfer\.id/.test(recordTransferModal)) {
-  fail("RecordTransferModal.tsx must pass existing_transfer_id: response.transfer.id to markBankTransactionTransfer");
+if (!/existing_transfer_id:\s*response\.transfer\.id/.test(recordTransferModal) && !oneRequest(recordTransferModal)) {
+  fail("RecordTransferModal.tsx must link the line it minted for: existing_transfer_id: response.transfer.id, or createTransfer({ from_bank_line })");
+}
+if (oneRequest(transferModal) || oneRequest(recordTransferModal)) {
+  const create = service.slice(service.indexOf("export async function createTransfer("), service.indexOf("export async function createTransfer(") + 4000);
+  if (!/if \(input\.fromBankLine\) \{[\s\S]{0,300}pg_advisory_xact_lock\(hashtext[\s\S]{0,400}stampBankTransactionTransferLink\(client/.test(create)) {
+    fail("createTransfer({ from_bank_line }) must stamp the line inside its own transaction under the feed-line advisory lock (stampBankTransactionTransferLink on the same client)");
+  }
+  if (!/if \(!stamped\) throw new Error\("bank_line_already_linked_to_a_transfer"\)/.test(create)) {
+    fail("createTransfer({ from_bank_line }) must refuse (and roll back the transfer) when the line is already linked — never a second transfer");
+  }
 }
 if (!/existing_transfer_id\?:\s*string/.test(bankingApi)) {
   fail("api/banking.ts markBankTransactionTransfer body type must accept existing_transfer_id");

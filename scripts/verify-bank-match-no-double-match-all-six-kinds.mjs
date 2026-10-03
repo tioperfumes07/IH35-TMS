@@ -46,7 +46,17 @@ export function checkAllSixKindsGuarded(source) {
   const fnEnd = source.indexOf("\nasync function", fnStart + 10);
   const fnBody = fnEnd > fnStart ? source.slice(fnStart, fnEnd) : source.slice(fnStart);
 
-  for (const kind of KINDS) {
+  // ROUND 365.6: the WRITE-point refusal in storeMatch covers all six kinds (accept takes transfer / je ids from routes
+  // with no candidate step). Required unconditionally.
+  const store = source.slice(source.indexOf("async function storeMatch("), source.indexOf("INSERT INTO banking.reconciliation_matches", source.indexOf("async function storeMatch(")));
+  if (!/AND m\.ledger_entry_kind = \$2::text\s*AND m\.ledger_entry_id = \$3::uuid\s*AND m\.bank_transaction_id <> \$4::uuid\s*AND m\.voided_at IS NULL\s*AND m\.match_state IN \('auto_matched', 'user_matched'\)/.test(store)
+      || !/throw new Error\(`document_already_matched:/.test(store)) {
+    failures.push("storeMatch must refuse a document already held by a live match on another bank line (all six kinds) — the write-point half of BANK-F4");
+  }
+  // The candidate half: every kind fetchLedgerCandidates actually queries must exclude already-matched documents.
+  // A kind with no candidate branch cannot be offered twice (ROUND 157-C removed transfer / je); bill is re-offered on
+  // purpose until its open balance is zero (ROUND 155.25) and is not a persistable match kind.
+  for (const kind of KINDS.filter((k) => new RegExp(`wants\\("${k}"\\)`).test(fnBody) && k !== "bill")) {
     // Each kind's own NOT EXISTS block must reference its OWN ledger_entry_kind literal — a regex
     // that just checked "NOT EXISTS appears somewhere AND 'payment' appears somewhere" would pass
     // even if the guard were only wired for one kind and copy-pasted with the wrong literal.
@@ -61,60 +71,24 @@ export function checkAllSixKindsGuarded(source) {
 }
 
 function runSelftest() {
-  const oneKind = (kind, alias) => `
-    const ${kind}s = await client.query(\`
-      SELECT id::text
-      FROM accounting.${kind}s ${alias}
-      WHERE operating_company_id = $1::uuid
-        AND NOT EXISTS (
-          SELECT 1 FROM banking.reconciliation_matches m
-          WHERE m.ledger_entry_kind = '${kind}'
-            AND m.ledger_entry_id = ${alias}.id
-            AND m.match_state IN ('auto_matched', 'user_matched')
-        )
-      LIMIT $2
-    \`, [operatingCompanyId, rowLimit]);`;
-
-  const goodSource = `
-async function fetchLedgerCandidates(client, operatingCompanyId, txnDate, isCredit, bankAccountId, options = {}) {
-  ${oneKind("payment", "p")}
-  ${oneKind("bill_payment", "bp")}
-  ${oneKind("transfer", "t")}
-  ${oneKind("je", "je")}
-  ${oneKind("bill", "b")}
-  ${oneKind("expense", "e")}
-}
-async function acceptMatchWithResolveDifference() {}
-`;
-  const goodFailures = checkAllSixKindsGuarded(goodSource);
-  if (goodFailures.length !== 0) {
-    throw new Error(`selftest: fully-guarded fixture must pass with zero failures — got ${JSON.stringify(goodFailures)}`);
+  // ROUND 365.6: plants on the REAL file (the old synthetic fixtures modelled neither the wants() branches nor storeMatch).
+  const real = read(SERVICE_REL);
+  const fails = [];
+  if (checkAllSixKindsGuarded(real).length) fails.push(`real tree not clean: ${checkAllSixKindsGuarded(real).join("; ")}`);
+  const plants = [
+    ["write-point refusal removed", real.replace("throw new Error(`document_already_matched:", "console.warn(`document_already_matched:")],
+    ["expense branch exclusion removed", real.replace(/WHERE m\.ledger_entry_kind = 'expense'/, "WHERE m.ledger_entry_kind = 'nothing'")],
+    ["payment branch uses the wrong literal", real.replace(/WHERE m\.ledger_entry_kind = 'payment'/, "WHERE m.ledger_entry_kind = 'bill_payment'")],
+  ];
+  for (const [name, planted] of plants) {
+    if (planted === real) fails.push(`plant did not change the source: ${name}`);
+    else if (checkAllSixKindsGuarded(planted).length === 0) fails.push(`plant escaped: ${name}`);
   }
-
-  // Planted mutation: exactly the original bug — 4 of 6 kinds have no guard (only bill/expense did,
-  // pre-BANK-F4). Must be flagged for each unguarded kind, not just one.
-  const droppedFour = `
-async function fetchLedgerCandidates(client, operatingCompanyId, txnDate, isCredit, bankAccountId, options = {}) {
-  const payments = await client.query(\`SELECT id::text FROM accounting.payments p WHERE operating_company_id = $1::uuid LIMIT $2\`, [operatingCompanyId, rowLimit]);
-  const billPayments = await client.query(\`SELECT id::text FROM accounting.bill_payments bp WHERE operating_company_id = $1::uuid LIMIT $2\`, [operatingCompanyId, rowLimit]);
-  const transfers = await client.query(\`SELECT id::text FROM accounting.transfers t WHERE operating_company_id = $1::uuid LIMIT $2\`, [operatingCompanyId, rowLimit]);
-  const jes = await client.query(\`SELECT id::text FROM accounting.jes je WHERE operating_company_id = $1::uuid LIMIT $2\`, [operatingCompanyId, rowLimit]);
-  ${oneKind("bill", "b")}
-  ${oneKind("expense", "e")}
-}
-async function acceptMatchWithResolveDifference() {}
-`;
-  const droppedFailures = checkAllSixKindsGuarded(droppedFour);
-  for (const kind of ["payment", "bill_payment", "transfer", "je"]) {
-    if (!droppedFailures.some((f) => f.includes(`'${kind}'`))) {
-      throw new Error(`selftest: dropping the guard for '${kind}' must be flagged — it was not (got ${JSON.stringify(droppedFailures)})`);
-    }
+  if (fails.length) {
+    console.error(`selftest: ${fails.join("; ")}`);
+    process.exit(1);
   }
-  if (droppedFailures.some((f) => f.includes("'bill'") || f.includes("'expense'"))) {
-    throw new Error("selftest: bill/expense still have their guard in this fixture and must NOT be flagged");
-  }
-
-  console.log(`[${LABEL}] --selftest OK (fully-guarded fixture passes; dropping 4 of 6 kinds — the original pre-fix shape — correctly flags exactly those 4)`);
+  console.log(`${LABEL} --selftest PASS (real tree clean; ${plants.length}/${plants.length} plants caught)`);
 }
 
 if (process.argv.includes("--selftest")) {
