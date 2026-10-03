@@ -1,10 +1,10 @@
 {
-  "healthzSha": "6a3b96e",
-  "generated_at": "2026-10-03T19:46:42.394Z",
+  "healthzSha": "72db0ca",
+  "generated_at": "2026-10-03T20:57:57.407Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "6a3b96e",
+    "deployedSha": "72db0ca",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 24741,
-      "title": "Cursor- feat(ui): leftover MaintenanceHome text-xs BANK-F91206",
+      "number": 0,
+      "title": "Cursor- docs(bus): OUTBOX BANK-F91224 Complaints #24796 a0c0b117e6",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 02:45 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24741",
-      "sha": "dfa93d0803",
-      "committedAtIso": "2026-10-03T14:45:18-05:00"
-    },
-    {
-      "number": 24740,
-      "title": "Cursor- docs(bus): OUTBOX BANK-F91205 DispatchChat #24739 37c2a1763a",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 02:43 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24740",
-      "sha": "715890834c",
-      "committedAtIso": "2026-10-03T14:43:01-05:00"
+      "mergedAtCt": "10/03/2026, 03:56 PM CT",
+      "url": "",
+      "sha": "c9c5f66218",
+      "committedAtIso": "2026-10-03T15:56:50-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- BANK-F91205 DispatchChat leftover text tokens",
+      "title": "Cursor- feat(ui): leftover ComplaintsTab text-xs BANK-F91224",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 02:39 PM CT",
+      "mergedAtCt": "10/03/2026, 03:56 PM CT",
       "url": "",
-      "sha": "37c2a1763a",
-      "committedAtIso": "2026-10-03T14:39:15-05:00"
+      "sha": "a0c0b117e6",
+      "committedAtIso": "2026-10-03T15:56:05-05:00"
     },
     {
-      "number": 24738,
-      "title": "FINDING: ACCT-F9866 LANE: FINANCIAL (ROUND 373.4: the Deposit — the fifth step of the accrual chain — is now a bank-feed match target: a bank deposit line matches the Deposit that already moved its receipts out of Undeposited Funds, the match links and posts nothing, and a receipt on a deposit can no longer be swept a second time)",
+      "number": 24795,
+      "title": "FINDING: ACCT-F3706 LANE: FINANCIAL (U17 — the Expenses list is read-only and reclassify could not be reached from it; selected expenses now open the one reclassify engine in a drawer — same writer, same batch, same audit record, undo from Accounting > Reclassify)",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 02:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24738",
-      "sha": "d7b338af32",
-      "committedAtIso": "2026-10-03T14:32:43-05:00"
+      "mergedAtCt": "10/03/2026, 03:54 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24795",
+      "sha": "76a87760bf",
+      "committedAtIso": "2026-10-03T15:54:33-05:00"
+    },
+    {
+      "number": 24794,
+      "title": "FINDING: N/A LANE: DOCS (CC-2 UI register results — U27, U23, U21, U22, U26, U8 closed with mechanism, proof and PR; both legs of a reversed pair answered)",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 03:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24794",
+      "sha": "72db0ca737",
+      "committedAtIso": "2026-10-03T15:51:20-05:00"
+    },
+    {
+      "number": 24793,
+      "title": "FINDING: ACCT-F3705 LANE: FINANCIAL (U8 — Create Check \"offers no open bills\": the whole Add-to-Check panel vanished whenever the payee had no resolvable payable vendor or the lookup failed — 7 of 27 active USMCA drivers have no linked vendor — so a check paying a bill could be saved as an expense; the panel now says why there is nothing to pay)",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 03:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24793",
+      "sha": "070fc72860",
+      "committedAtIso": "2026-10-03T15:51:07-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- docs(bus): OUTBOX BANK-F91204 PlannerCalendar #24736 8cf6731af3",
+      "title": "Cursor- docs(bus): OUTBOX BANK-F91223 PlannerGrid #24791 0b3400f41d",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 02:31 PM CT",
+      "mergedAtCt": "10/03/2026, 03:48 PM CT",
       "url": "",
-      "sha": "5880219e7b",
-      "committedAtIso": "2026-10-03T14:31:59-05:00"
+      "sha": "d8b970884a",
+      "committedAtIso": "2026-10-03T15:48:42-05:00"
+    },
+    {
+      "number": 24790,
+      "title": "FINDING: BANK-F3704 LANE: NON-FINANCIAL (U26 — the bank feed filters: the description filter wiped itself when its box closed, Uncategorized / Suggested matches / Transfers / Rules / Missing From-To read the wrong fields, tab badges counted before the filters, date presets were a day off in the evening, and the KPI pre-filter stuck)",
+      "state": "merged",
+      "mergedAtCt": "10/03/2026, 03:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24790",
+      "sha": "0aa21b46ad",
+      "committedAtIso": "2026-10-03T15:47:54-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- BANK-F91204 PlannerCalendar leftover text tokens",
+      "title": "Cursor- feat(ui): leftover TaskPlannerGrid text-xs BANK-F91223",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 02:30 PM CT",
+      "mergedAtCt": "10/03/2026, 03:47 PM CT",
       "url": "",
-      "sha": "8cf6731af3",
-      "committedAtIso": "2026-10-03T14:30:29-05:00"
+      "sha": "0b3400f41d",
+      "committedAtIso": "2026-10-03T15:47:49-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- docs(bus): OUTBOX BANK-F91203 LegalReports #24734 bb0a6d566e",
+      "title": "Cursor- docs(bus): OUTBOX BANK-F91222 LoadDetail #24788 3cc0ea3093",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 02:25 PM CT",
+      "mergedAtCt": "10/03/2026, 03:46 PM CT",
       "url": "",
-      "sha": "ac0886fb5a",
-      "committedAtIso": "2026-10-03T14:25:39-05:00"
+      "sha": "ef7db8c612",
+      "committedAtIso": "2026-10-03T15:46:14-05:00"
     },
     {
       "number": 0,
-      "title": "Cursor- BANK-F91203 LegalReports leftover text tokens",
+      "title": "Cursor- feat(ui): leftover DriverLoadDetailPage text-xs BANK-F91222",
       "state": "merged",
-      "mergedAtCt": "10/03/2026, 02:24 PM CT",
+      "mergedAtCt": "10/03/2026, 03:45 PM CT",
       "url": "",
-      "sha": "bb0a6d566e",
-      "committedAtIso": "2026-10-03T14:24:39-05:00"
-    },
-    {
-      "number": 24733,
-      "title": "FINDING: N/A LANE: DOCS (CLAIM-RESERVE: migration 202615360930 for CC-3 ROUND 368.2(b) re-arm — renumbered so it sorts after 202615360700)",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 02:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/24733",
-      "sha": "7a07801132",
-      "committedAtIso": "2026-10-03T14:23:38-05:00"
-    },
-    {
-      "number": 0,
-      "title": "Cursor- docs(bus): OUTBOX BANK-F91202 CancelLoadModal #24730 0f568f3351",
-      "state": "merged",
-      "mergedAtCt": "10/03/2026, 02:22 PM CT",
-      "url": "",
-      "sha": "9ecaa27217",
-      "committedAtIso": "2026-10-03T14:22:41-05:00"
+      "sha": "3cc0ea3093",
+      "committedAtIso": "2026-10-03T15:45:02-05:00"
     }
   ]
 }

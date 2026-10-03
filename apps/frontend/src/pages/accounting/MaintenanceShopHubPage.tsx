@@ -131,7 +131,7 @@ export function MaintenanceShopHubPage() {
       <div className="px-2 py-1 text-xs text-gray-500">
           {hasFilter
             ? "Scoped to one work order. Clear to see every linked shop bill and expense."
-            : "Work orders linked to vendor bills and shop expenses across Maintenance & shop."}
+            : "Work orders linked to vendor bills and shop expenses across Work orders & bills."}
       </div>
       {hasFilter ? (
         <button
@@ -150,7 +150,7 @@ export function MaintenanceShopHubPage() {
 
   return (
     <AccountingSubNavWrapper
-      title="Maintenance & shop"
+      title="Work orders & bills"
       subtitle="Shop work orders linked to bills and expenses — accounting view"
       actions={
         <Link
