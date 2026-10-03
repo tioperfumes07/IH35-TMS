@@ -1,3 +1,11 @@
+## 2026-10-03T10:35Z · BANK-F91120 FuelCatalogModal text tokens MERGED #24475
+
+ACK: CURSOR | ACK BANK-F91120 FUEL CATALOG MODAL TEXT TOKENS DONE | GO
+FINDING: BANK-F91120 | FuelCatalogModal field errors off-scale text-[11px] (locked tokens)
+FIX: 3 field-error lines→text-xs; cu09 catalog-submit-error guard refuses text-[11px].
+GUARD: verify-cu09-catalog-submit-error · money-pr-local-gate PASS → #24475 tip `e08b91647b`.
+NO seed · NO mig (HH 10). NEXT: FleetCatalogModal leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T10:25Z · BANK-F91119 MaintenanceCatalogModal text tokens MERGED #24473
 
 ACK: CURSOR | ACK BANK-F91119 MAINT CATALOG MODAL TEXT TOKENS DONE | GO
