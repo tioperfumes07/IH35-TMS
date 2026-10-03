@@ -450,7 +450,7 @@ export function ArApAgingPage() {
               testIdPrefix="finance-ar-ap-aging"
               className="rounded-sm border border-gray-200 bg-white p-2"
             >
-              <label className="text-[11px] font-medium text-gray-500">
+              <label className="text-xs font-medium text-gray-500">
                 As of
                 <DatePicker
                   value={staged.draft.asOfDate}
@@ -542,7 +542,7 @@ export function ArApAgingPage() {
               <span className="mr-auto font-semibold text-gray-900">Grand total</span>
               {BUCKET_COLS.map((c) => (
                 <span key={c.key} className="whitespace-nowrap">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{c.label}</span>{" "}
+                  <span className="text-section-header font-semibold uppercase tracking-wide text-gray-500">{c.label}</span>{" "}
                   <span className="tabular-nums font-semibold text-gray-900">{fmtCents(totals[c.key])}</span>
                 </span>
               ))}
