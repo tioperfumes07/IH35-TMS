@@ -1,6 +1,6 @@
 import { withLuciaBypass } from "../../auth/db.js";
 import { resolveAccountForCategory } from "../expense-category-map/resolver.service.js";
-import { resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
+import { resolveRoleAccount, resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
 // ACCT-PERIOD-CLOSE-01: reuse the shared, exported ensureOpenPeriod (posting-engine.service.ts's
 // own PostingEngineError("PERIOD_LOCKED", ...) class) instead of this file's own local copy, which
 // had drifted: it silently swallowed a closed_period_cutoff() query failure into cutoff=null
@@ -130,7 +130,12 @@ async function resolveFuelCardRailAccount(
   operatingCompanyId: string,
   rail: "dreamline_card_payable" | "relay_fuel_wallet"
 ): Promise<{ account_id: string; source: string }> {
-  const accountNumber = rail === "dreamline_card_payable" ? "2510" : "1295";
+  // ROUND 352 F-3: the Relay wallet resolves through its declared role (fuel_wallet_relay), never by account number —
+  // 1295 had no role, which is how it drifted to -$33,839.80 unseen. resolveRoleAccount fails closed.
+  if (rail === "relay_fuel_wallet") {
+    return { account_id: await resolveRoleAccount(client, operatingCompanyId, "fuel_wallet_relay"), source: "role:fuel_wallet_relay" };
+  }
+  const accountNumber = "2510";
   const byNumber = await client.query<{ id: string }>(
     `
       SELECT id::text
