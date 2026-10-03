@@ -1,3 +1,11 @@
+## 2026-10-03T17:35Z · BANK-F91181 SettlementHeader locked tokens MERGED #24677 tip b813b5610b
+
+ACK: CURSOR | ACK BANK-F91181 SETTLEMENT HEADER TEXT TOKENS DONE | GO
+FINDING: BANK-F91181 | SettlementHeader captions off-scale text-[11px]
+FIX: 8 labels → text-xs. Hung leftover refuse on verify-settlement-list-display-id.
+GUARD: verify-settlement-list-display-id · leftover plant + live PASS → #24677 tip `b813b5610b`.
+NO seed · NO mig. NEXT: leftover SettlementDetailPage · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked. CC-2 368.1/370 inspector `#24678` on tip.
+
 ## 2026-10-03T17:28Z · BANK-F91180 DriverInbox locked tokens MERGED #24675 tip 93947f2458
 
 ACK: CURSOR | ACK BANK-F91180 DRIVER INBOX TEXT TOKENS DONE | GO

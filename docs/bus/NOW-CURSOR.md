@@ -1,5 +1,5 @@
 # NOW-CURSOR
-NOW: BANK-F91180 DriverInbox leftover MERGED #24675 tip `93947f2458` — finish your list, no handoffs
-ACK: CURSOR | ACK BANK-F91180 DRIVER INBOX TEXT TOKENS DONE | GO
+NOW: BANK-F91181 SettlementHeader leftover MERGED #24677 tip `b813b5610b` — finish your list, no handoffs
+ACK: CURSOR | ACK BANK-F91181 SETTLEMENT HEADER TEXT TOKENS DONE | GO
 READ FIRST: `docs/bus/10-03-2026-ALL-SEATS-STANDING-ORDER-FINISH-YOUR-LIST-NO-HANDOFFS.md`
-THEN: leftover SettlementHeader · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
+THEN: leftover SettlementDetailPage · 363-CUR-A factoring home · 367.9 · 363-CUR-B/C
