@@ -140,6 +140,10 @@ function analyze(src) {
     errors.push("Vendors detail must name uncleared payments not cleared");
   if (!vlist.includes("UnclearedDocumentsNote") || !vlist.includes('label: "Not cleared"') || !vlist.includes('label: "Cleared"'))
     errors.push("Vendors list must show Cleared and name documents not cleared");
+  if (!csidebar.includes("UnclearedDocumentsNote") || !csidebar.includes("Cleared"))
+    errors.push("Customer sidebar must show Cleared and name documents not cleared");
+  if (!vsidebar.includes("UnclearedDocumentsNote") || !vsidebar.includes("Cleared"))
+    errors.push("Vendor sidebar must show Cleared and name documents not cleared");
 
   return errors;
 }
@@ -195,6 +199,8 @@ if (process.argv.includes("--selftest")) {
     ["customer detail drops Status badge", withField("cpage", (s) => s.replace(/customer-detail-status/g, "gone"))],
     ["customer detail drops uncleared note", withField("cpage", (s) => s.replace(/UnclearedDocumentsNote/g, "GoneNote"))],
     ["vendor detail drops uncleared note", withField("vpage", (s) => s.replace(/UnclearedDocumentsNote/g, "GoneNote"))],
+    ["customer sidebar drops uncleared note", withField("csidebar", (s) => s.replace(/UnclearedDocumentsNote/g, "GoneNote"))],
+    ["vendor sidebar drops uncleared note", withField("vsidebar", (s) => s.replace(/UnclearedDocumentsNote/g, "GoneNote"))],
   ];
   let caught = 0;
   for (const [label, mutated] of mutations) {

@@ -26,6 +26,9 @@ function assertAll(srcs) {
     if (file.endsWith("VendorBalancesPage.tsx") && src.includes("text-[11px]")) {
       problems.push(`${file}: must not use text-[11px] — use text-xs`);
     }
+    if (file.endsWith("VendorBalancesPage.tsx") && (!src.includes("UnclearedDocumentsNote") || !src.includes("not cleared") || !src.includes("bg-slate-100"))) {
+      problems.push(`${file}: 363-CUR-A must name uncleared payments not cleared on slate`);
+    }
     // BANK-F91083 — ORDERS chrome: VendorCreditsPage uses text-xs, not text-[11px].
     if (file.endsWith("VendorCreditsPage.tsx") && src.includes("text-[11px]")) {
       problems.push(`${file}: must not use text-[11px] — use text-xs`);
@@ -40,7 +43,7 @@ if (SELFTEST) {
   const srcs = read();
   const planted = { ...srcs };
   const vb = FILES[0];
-  planted[vb] = planted[vb].replace(/entityLabel\(bill\.bill_number[\s\S]*?\)/, "bill.bill_number || bill.id.slice(0, 8)");
+  planted[vb] = planted[vb].replace(/UnclearedDocumentsNote/g, "GoneNote");
   if (!assertAll(planted).length) {
     console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
     process.exit(1);

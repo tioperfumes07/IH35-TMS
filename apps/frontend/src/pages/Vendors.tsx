@@ -840,6 +840,7 @@ export function VendorsPage() {
             sortByName={sortByName}
             selectedVendorId={selectedVendor?.id ?? ""}
             openByVendorId={openByVendorId}
+            unclearedByVendorId={unclearedByVendorId}
             onSearchChange={setSearch}
             onSortChange={setSortByName}
             onPageChange={setSidebarPage}

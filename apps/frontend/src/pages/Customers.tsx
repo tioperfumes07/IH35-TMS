@@ -1379,6 +1379,7 @@ export function CustomersPage() {
             sortByName={sortByName}
             selectedCustomerId={selectedCustomer?.id ?? ""}
             openByCustomerId={openByCustomerId}
+            unclearedByCustomerId={unclearedByCustomerId}
             openBalancesAvailable={!allInvoicesQuery.isError}
             onSearchChange={setSearch}
             onSortChange={setSortByName}
