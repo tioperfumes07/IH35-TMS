@@ -218,6 +218,8 @@ export function RecordTransferModal({
       // ROUND 360 — a Bank<->Bank transfer recorded from a bank-feed row is created, linked and posted in ONE request.
       const bankToBankFromLine =
         Boolean(linkBankTransactionId) && transferType === "bank_to_bank" && fromAccountKind === "bank" && toAccountKind === "bank";
+      // The feed line's side of the transfer: money in on the 'to' leg, money out on the 'from' leg.
+      const transferKind = seedAccountSide === "to" ? "in" : "out";
       const response = await createTransfer(operatingCompanyId, {
         transfer_type: transferType,
         from_account_id: fromAccountId,
@@ -233,7 +235,7 @@ export function RecordTransferModal({
               from_bank_line: {
                 bank_transaction_id: linkBankTransactionId,
                 destination_bank_account_id: seedAccountSide === "to" ? fromAccountId : toAccountId,
-                transfer_kind: seedAccountSide === "to" ? ("in" as const) : ("out" as const),
+                transfer_kind: transferKind,
               },
             }
           : {}),

@@ -32,6 +32,28 @@ import { readFileSync, existsSync } from "node:fs";
 
 const LABEL = "verify:undo-categorization-reverses-je";
 const ROUTES = "apps/backend/src/banking/banking.routes.ts";
+// ROUND 360 — the route delegates to the bank-line state machine; A/B/C are then enforced on the engine's
+// categorize-Undo branch (kind added / split), which is where the reversal and the release now live.
+const ENGINE = "apps/backend/src/banking/bank-line-state-machine.service.ts";
+
+/** The engine's categorize-Undo branch, rewritten into the shape A/B/C read: its single reversal primitive (which must
+ *  itself call reverseJournalEntryNoFlip on the caller's client) and its release UPDATE (whose SET list must clear
+ *  matched_journal_entry_id). Returns { problems, subject }. */
+export function engineSubject(engine) {
+  const problems = [];
+  if (engine == null) return { problems: [`${ENGINE} is missing — the route delegates to it.`], subject: null };
+  const prim = engine.slice(engine.indexOf("async function reverseOnceOnClient("), engine.indexOf("async function voidDocumentsCreatedByLine("));
+  if (!/await reverseJournalEntryNoFlip\(client,/.test(prim)) problems.push(`${ENGINE}: reverseOnceOnClient no longer reverses through reverseJournalEntryNoFlip on the caller's client`);
+  const set = engine.slice(engine.indexOf("export const RELEASE_CATEGORIZATION_SET_SQL"), engine.indexOf("export const RELEASE_CATEGORIZATION_SET_SQL") + 3000);
+  const clears = /matched_journal_entry_id\s*=\s*NULL/i.test(set.slice(0, set.indexOf("`;") + 2));
+  const start = engine.indexOf("// added / split — the line CREATED what it carries.");
+  if (start < 0) return { problems: [...problems, `${ENGINE}: the categorize-Undo (added / split) branch was not found — repoint this guard`], subject: null };
+  const branch = engine.slice(start, engine.indexOf("// NO STRANDING", start));
+  const subject = branch
+    .replace(/reverseOnceOnClient\(/g, "reverseJournalEntryNoFlip(")
+    .replace(/UPDATE banking\.bank_transactions SET \$\{RELEASE_CATEGORIZATION_SET_SQL\}/g, clears ? "UPDATE banking.bank_transactions SET matched_journal_entry_id = NULL" : "UPDATE banking.bank_transactions SET status = 'x'");
+  return { problems, subject };
+}
 
 /** Isolate the undo-categorization handler body so assertions cannot pass on some other route. */
 export function extractUndoHandler(src) {
@@ -63,7 +85,14 @@ export function analyse(files) {
     return problems;
   }
 
-  const reversalIdx = handler.indexOf("reverseJournalEntryNoFlip");
+  let subject = handler;
+  if (/undoBankLineOnClient\(client/.test(handler)) {
+    const e = engineSubject(files[ENGINE]);
+    problems.push(...e.problems);
+    if (e.subject == null) return problems;
+    subject = e.subject;
+  }
+  const reversalIdx = subject.indexOf("reverseJournalEntryNoFlip");
   if (reversalIdx < 0) {
     problems.push(
       `${ROUTES} undo-categorization does not call reverseJournalEntryNoFlip. Clearing the ` +
@@ -73,7 +102,7 @@ export function analyse(files) {
     );
   }
 
-  const clearsLink = /matched_journal_entry_id\s*=\s*NULL/i.test(handler);
+  const clearsLink = /matched_journal_entry_id\s*=\s*NULL/i.test(subject);
   if (!clearsLink) {
     problems.push(
       `${ROUTES} undo-categorization does not clear matched_journal_entry_id. Leaving it set makes the ` +
@@ -84,7 +113,7 @@ export function analyse(files) {
 
   // (C) ordering: the reversal must precede the UPDATE that clears the fields, so a throwing reversal
   // rolls the whole undo back.
-  const updateIdx = handler.search(/UPDATE\s+banking\.bank_transactions/i);
+  const updateIdx = subject.search(/UPDATE\s+banking\.bank_transactions/i);
   if (reversalIdx >= 0 && updateIdx >= 0 && reversalIdx > updateIdx) {
     problems.push(
       `${ROUTES} undo-categorization reverses the JE AFTER clearing the categorization. The reversal ` +
@@ -100,6 +129,7 @@ export function analyse(files) {
 function readAll() {
   const out = {};
   out[ROUTES] = existsSync(ROUTES) ? readFileSync(ROUTES, "utf8") : null;
+  out[ENGINE] = existsSync(ENGINE) ? readFileSync(ENGINE, "utf8") : null;
   return out;
 }
 
@@ -146,6 +176,20 @@ function selftest() {
         `app.post("/api/v1/other", async () => { await reverseJournalEntryNoFlip(client, {}); });\n`,
     }).length === 2);
 
+  // ROUND 360 delegation: the real engine passes; reordering it (release before reversal) or dropping the link clear FAILS.
+  const realEngine = existsSync(ENGINE) ? readFileSync(ENGINE, "utf8") : "";
+  const delegating = { [ROUTES]: `app.post("/api/v1/banking/transactions/:id/undo-categorization", async () => {\n undoBankLineOnClient(client as never, {});\n});\napp.get("/x", async () => {});\n` };
+  t("the real engine passes when the route delegates", analyse({ ...delegating, [ENGINE]: realEngine }).length === 0);
+  const branchStart = realEngine.indexOf("// added / split — the line CREATED what it carries.");
+  const branch = realEngine.slice(branchStart, realEngine.indexOf("// NO STRANDING", branchStart));
+  const relIdx = branch.indexOf("    await client.query(\n      `UPDATE banking.bank_transactions SET ${RELEASE_CATEGORIZATION_SET_SQL}");
+  const relEnd = branch.indexOf(");\n", relIdx) + 3;
+  const release = branch.slice(relIdx, relEnd);
+  const reordered = branch.replace(release, "").replace("    if (line.matched_journal_entry_id) {", release + "    if (line.matched_journal_entry_id) {");
+  t("the engine releasing BEFORE reversing FAILS", relIdx > 0 && analyse({ ...delegating, [ENGINE]: realEngine.replace(branch, reordered) }).length === 1);
+  t("the engine release no longer clearing matched_journal_entry_id FAILS",
+    analyse({ ...delegating, [ENGINE]: realEngine.replace("            matched_journal_entry_id = NULL,\n            category = NULL,", "            category = NULL,") }).length === 1);
+
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:\n  - ${failures.join("\n  - ")}`);
     process.exit(1);
@@ -155,7 +199,7 @@ function selftest() {
 
 if (process.argv.includes("--selftest")) {
   selftest();
-  console.log(`${LABEL} selftest OK — 7 cases (1 pass-shape, 6 fail-shapes incl. the real pre-fix handler, the fail-open ordering, and cross-route leakage)`);
+  console.log(`${LABEL} selftest OK — 10 cases (2 pass-shapes, 8 fail-shapes incl. the real pre-fix handler, the fail-open ordering, and cross-route leakage)`);
   process.exit(0);
 }
 const problems = analyse(readAll());

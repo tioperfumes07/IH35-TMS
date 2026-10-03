@@ -822,6 +822,26 @@ async function storeMatch(
     actor_user_uuid: string;
   }
 ): Promise<string> {
+  // BANK-F4 at the WRITE point (ROUND 365.6): one document, one live bank match. The candidate queries exclude matched
+  // documents, but accept also takes ids from routes with no candidate step (transfer / je), so the refusal lives here,
+  // where every accept passes. A row on THIS line (re-match after unmatch) is revived by the upsert below.
+  if (input.match_state === "user_matched" || input.match_state === "auto_matched") {
+    const held = await client.query<{ bank_transaction_id: string }>(
+      `SELECT m.bank_transaction_id::text
+         FROM banking.reconciliation_matches m
+        WHERE m.operating_company_id = $1::uuid
+          AND m.ledger_entry_kind = $2::text
+          AND m.ledger_entry_id = $3::uuid
+          AND m.bank_transaction_id <> $4::uuid
+          AND m.voided_at IS NULL
+          AND m.match_state IN ('auto_matched', 'user_matched')
+        LIMIT 1`,
+      [input.operating_company_id, input.ledger_entry_kind, input.ledger_entry_id, input.bank_transaction_id]
+    );
+    if (held.rows[0]) {
+      throw new Error(`document_already_matched:${input.ledger_entry_kind}:${held.rows[0].bank_transaction_id}`);
+    }
+  }
   const res = await client.query<{ id: string }>(
     `
       INSERT INTO banking.reconciliation_matches (
@@ -1402,7 +1422,6 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
         ? await client.query(
             `UPDATE banking.bank_transactions
                 SET review_state = 'matched',
-                    resolution_kind = 'matched',
                     reviewed_at = now(),
                     categorized_by_user_id = $4::uuid,
                     categorized_at = now(),
@@ -1423,7 +1442,6 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
         : await client.query(
             `UPDATE banking.bank_transactions
                 SET review_state = 'matched',
-                    resolution_kind = 'matched',
                     reviewed_at = now(),
                     categorized_by_user_id = $4::uuid,
                     categorized_at = now(),
@@ -1437,6 +1455,14 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
       if (cleared.rowCount === 0) {
         throw new Error("bank_transaction_already_matched");
       }
+      // ROUND 360 — declare HOW the line got here: it was LINKED to a document that already existed. The classifier
+      // trigger keeps a declared kind; without it, a line that once carried a categorization account would be labelled
+      // 'added' and Undo would remove a document this match never created. Same transaction as the clearing UPDATE.
+      await client.query(
+        `UPDATE banking.bank_transactions SET resolution_kind = 'matched'
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+        [input.bank_transaction_id, input.operating_company_id]
+      );
     } else if (faroPosterClearedBank) {
       await client.query(
         `UPDATE banking.bank_transactions

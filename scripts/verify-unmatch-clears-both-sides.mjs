@@ -46,7 +46,11 @@ const ALL_EIGHT_COLUMNS = [
 export function checkUnmatchClearsBothSides(source) {
   const failures = [];
 
-  const fnMarker = /export async function unmatchBankTransaction/;
+  // ROUND 360: unmatchBankTransaction is a thin wrapper over the bank-line state machine; the clearing body is
+  // unmatchBankTransactionOnClient. Check that one when it exists.
+  const fnMarker = /export async function unmatchBankTransactionOnClient\b/.test(source)
+    ? /export async function unmatchBankTransactionOnClient\b/
+    : /export async function unmatchBankTransaction\b/;
   const fnMatch = fnMarker.exec(source);
   if (!fnMatch) {
     failures.push("unmatchBankTransaction() not found — guard assumption changed, review.");
@@ -78,10 +82,14 @@ export function checkUnmatchClearsBothSides(source) {
     );
   }
 
-  if (!/rejectedKinds\.push\(\{\s*kind:\s*"payment"/.test(body)) {
+  // ROUND 360: one UPDATE retires (voids as 'rejected') EVERY live match row of the line, whatever its kind — payment and
+  // bill_payment included by construction. Accepted in place of the per-kind pushes.
+  const retiresEveryKind = /UPDATE banking\.reconciliation_matches\s+SET match_state = 'rejected',[\s\S]{0,400}AND match_state IN \('auto_matched', 'user_matched'\)/.test(body)
+    && !/ledger_entry_kind\s*=\s*\$/.test(body.slice(0, body.indexOf("RETURNING ledger_entry_kind")));
+  if (!retiresEveryKind && !/rejectedKinds\.push\(\{\s*kind:\s*"payment"/.test(body)) {
     failures.push("rejectedKinds never includes 'payment' — an unmatched payment-kind match is never recorded as rejected.");
   }
-  if (!/rejectedKinds\.push\(\{\s*kind:\s*"bill_payment"/.test(body)) {
+  if (!retiresEveryKind && !/rejectedKinds\.push\(\{\s*kind:\s*"bill_payment"/.test(body)) {
     failures.push("rejectedKinds never includes 'bill_payment' — an unmatched bill_payment-kind match is never recorded as rejected.");
   }
 
@@ -154,7 +162,18 @@ function main() {
       console.error(`[${LABEL}] SELFTEST FAILED: expected bad fixture to fail, got none`);
       process.exit(1);
     }
-    console.log(`[${LABEL}] selftest OK (good=0 failures, bad=${badFailures.length} failures)`);
+    // ROUND 360 real-file plants: the engine path passes; scoping its retire UPDATE back to one kind FAILS.
+    const real = fs.readFileSync(TARGET, "utf8");
+    if (checkUnmatchClearsBothSides(real).length !== 0) {
+      console.error(`[${LABEL}] SELFTEST FAILED: the real file must pass`);
+      process.exit(1);
+    }
+    const scoped = real.replace("AND match_state IN ('auto_matched', 'user_matched')\n      RETURNING", "AND ledger_entry_kind = $4 AND match_state IN ('auto_matched', 'user_matched')\n      RETURNING");
+    if (scoped === real || checkUnmatchClearsBothSides(scoped).length === 0) {
+      console.error(`[${LABEL}] SELFTEST FAILED: a retire UPDATE scoped to one kind must fail`);
+      process.exit(1);
+    }
+    console.log(`[${LABEL}] selftest OK (good=0 failures, bad=${badFailures.length} failures, real file passes, one-kind retire caught)`);
     process.exit(0);
   }
 
