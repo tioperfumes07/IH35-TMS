@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { HoverDropdownNav } from "../../components/forms/shared/HoverDropdownNav";
 import { ACCOUNTING_SUB_NAV_ITEMS } from "./subnav-manifest";
-import { hasInAppHistory } from "../../lib/smart-back";
+import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAccountingNavKpis } from "./useAccountingNavKpis";
 import { formatUsdCents } from "../../lib/money";
@@ -33,6 +33,11 @@ type Props = {
   createControl?: ReactNode;
   children: ReactNode;
   kpiStrip?: ReactNode;
+  /**
+   * U18 (owner UI register 2026-10-03) — "Back is browser history — becomes a breadcrumb, parent always the module home".
+   * Optional parents between Accounting and this page (e.g. Bills for a recurring bill); Accounting is always first.
+   */
+  crumbs?: Array<{ label: string; href: string }>;
 };
 
 /** True when `to` is the active tab for `pathname` (exact, or a nested detail route under it). */
@@ -66,9 +71,13 @@ export function AccountingSubNavWrapper({
   createControl,
   children,
   kpiStrip,
+  crumbs,
 }: Props) {
   const { pathname } = useLocation();
-  const navigate = useNavigate();
+  const breadcrumb =
+    pathname === "/accounting"
+      ? [{ label: "Accounting" }]
+      : [{ label: "Accounting", href: "/accounting" }, ...(crumbs ?? []), { label: title }];
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
   const createMenuRef = useRef<HTMLDivElement | null>(null);
   const { selectedCompanyId } = useCompanyContext();
@@ -104,22 +113,11 @@ export function AccountingSubNavWrapper({
     <div className="space-y-4" data-accounting-subnav-wrapper="true">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-2">
-          <button
-            type="button"
-            aria-label="Back"
-            onClick={() => {
-              if (hasInAppHistory(window.history.state)) {
-                navigate(-1);
-                return;
-              }
-              navigate("/home");
-            }}
-            className="mt-0.5 inline-flex items-center gap-1 rounded-xs border-0 bg-transparent px-1 py-0.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-          >
-            <span aria-hidden>←</span>
-            <span>Back</span>
-          </button>
           <div>
+            {/* U18 — the way back is the module path, never browser history: Accounting / [parent] / this page. */}
+            <div data-testid="accounting-breadcrumb">
+              <Breadcrumb items={breadcrumb} />
+            </div>
             <h1 className="text-page-title font-semibold text-gray-900">{title}</h1>
             {subtitle ? <p className="text-xs text-gray-600">{subtitle}</p> : null}
           </div>

@@ -691,7 +691,8 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
         <header className="z-20 shrink-0 border-b border-gray-200 bg-white p-4">
           {isPage ? (
             <nav className="mb-2 text-xs text-gray-500" data-testid="load-costs-load-breadcrumb" aria-label="Breadcrumb">
-              <Link className="hover:underline" to="/accounting">Accounting</Link> <span aria-hidden="true">›</span>{" "}
+              {/* U18 + U3 — Load costs lives in Dispatch; the breadcrumb parent is the module home, Dispatch. */}
+              <Link className="hover:underline" to="/dispatch">Dispatch</Link> <span aria-hidden="true">›</span>{" "}
               <Link className="hover:underline" to="/dispatch/load-costs">Load costs</Link> <span aria-hidden="true">›</span>{" "}
               <span className="font-semibold text-gray-800">{load?.load_number ?? "…"}</span>
             </nav>

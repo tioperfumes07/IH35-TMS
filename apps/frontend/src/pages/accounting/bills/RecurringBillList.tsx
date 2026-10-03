@@ -7,7 +7,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import { ArrowLeft, RefreshCw, ToggleLeft, Zap } from "lucide-react";
+import { RefreshCw, ToggleLeft, Zap } from "lucide-react";
 import {
   listRecurringBillTemplates,
   deactivateRecurringBillTemplate,
@@ -16,7 +16,6 @@ import {
 } from "../../../api/accounting";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useToast } from "../../../components/Toast";
-import { hasInAppHistory } from "../../../lib/smart-back";
 
 function money(amount: string | number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(amount));
@@ -177,26 +176,7 @@ export function RecurringBillList() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-xs text-gray-500">
-        {/*
-          UI-BACK-BUTTON-IGNORES-REAL-NAVIGATION-HISTORY: this was hardcoded to /accounting/bills
-          regardless of where the user actually came from -- missed by the earlier waves of this
-          audit because its aria-label was "Back to Bills", not the exact "Back" string those
-          waves' detection matched on. Same smart-back fix as the rest of the app.
-        */}
-        <button
-          onClick={() => {
-            if (hasInAppHistory(window.history.state)) {
-              navigate(-1);
-              return;
-            }
-            navigate("/accounting/bills");
-          }}
-          className="inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-xs font-semibold text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-          aria-label="Back to Bills"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          <span>Back</span>
-        </button>
+        {/* U18 (owner UI register 2026-10-03) — the way back is the breadcrumb (module path), never browser history. */}
         <Link to="/accounting" className="hover:underline">Accounting</Link>
         <span>/</span>
         <Link to="/accounting/bills" className="hover:underline">Bills</Link>

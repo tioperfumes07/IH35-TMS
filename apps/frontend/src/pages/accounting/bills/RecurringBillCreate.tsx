@@ -1,8 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
-import { hasInAppHistory } from "../../../lib/smart-back";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { createRecurringBillTemplate, type RecurringBillFrequency, type RecurringBillLineItem } from "../../../api/accounting";
 import { listCatalogAccounts } from "../../../api/catalog-accounts";
 import { listVendors } from "../../../api/mdata";
@@ -45,9 +44,9 @@ export function RecurringBillCreate() {
   const { pushToast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  // REG-007 — smart back: honor real in-app history, else land on the recurring-bill list (never a
-  // bare navigate(-1) that leaves the SPA on a direct load/refresh). Reuses lib/smart-back.ts.
-  const goBack = () => { if (hasInAppHistory(window.history.state)) { navigate(-1); return; } navigate("/accounting/bills/recurring"); };
+  // U18 (owner UI register 2026-10-03) — the way back is the parent page, never browser history: the breadcrumb above
+  // (Accounting / Bills / Recurring Bills / Create) and Cancel both lead to the recurring-bill list.
+  const goBack = () => navigate("/accounting/bills/recurring");
 
   const [vendorUuid, setVendorUuid] = useState("");
   const [templateName, setTemplateName] = useState("");
@@ -149,15 +148,6 @@ export function RecurringBillCreate() {
         <span className="text-gray-700">Create</span>
       </div>
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={goBack}
-          className="inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-xs font-semibold text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-          aria-label="Back"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          <span>Back</span>
-        </button>
         <h1 className="text-page-title font-semibold text-gray-900">Create Recurring Bill Template</h1>
       </div>
 

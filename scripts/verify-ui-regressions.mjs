@@ -73,8 +73,9 @@ try {
   const statementsPrint = read("apps/frontend/src/pages/finance/FinancialStatementsPage.tsx");
   assertIncludes(statementsPrint, "getShowAccountNumbers", "Financial statements print must respect CoA number toggle");
   const accountingChrome = read("apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx");
-  if (!accountingChrome.includes("<PageHeader") && !accountingChrome.includes('aria-label="Back"')) {
-    throw new Error("Accounting wrapper must render a back control");
+  // U18 (owner UI register 2026-10-03) — the way back is a breadcrumb to the module home, never browser history.
+  if (!accountingChrome.includes("<PageHeader") && !accountingChrome.includes('aria-label="Back"') && !/<Breadcrumb items=\{breadcrumb\}/.test(accountingChrome)) {
+    throw new Error("Accounting wrapper must render a way back (breadcrumb to the Accounting home)");
   }
   const fuelPlanner = read("apps/frontend/src/pages/fuel/FuelPlannerHome.tsx");
   assertIncludes(fuelPlanner, 'backHref="/home"', "Fuel module header must have a module-parent backHref");
