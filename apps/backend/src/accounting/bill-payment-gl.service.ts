@@ -8,7 +8,7 @@
 // gate (bill-gl-draft.routes.ts). No new GL math is introduced here. Tier-1 financial — build-and-hold.
 
 import { withCurrentUser } from "../auth/db.js";
-import { postSourceTransaction } from "./posting-engine.service.js";
+import { postSourceTransaction, postSourceTransactionInClientTx } from "./posting-engine.service.js";
 
 export const BILL_PAYMENT_GL_POSTING_FLAG_KEY = "BILL_PAYMENT_GL_POSTING_ENABLED";
 
@@ -63,6 +63,32 @@ export async function postBillPaymentGlIfEnabled(
       source_transaction_type: "bill_payment",
       source_transaction_id: billPaymentId,
     },
+    { userId: actor.userId }
+  );
+  return { posted: true, result };
+}
+
+/**
+ * ROUND 363-CC1-B (LAW 363.6 / ROUND 369.6) — the IN-TRANSACTION entrypoint. A bill payment posts WHEN IT IS
+ * CREATED, on the creating transaction: the payment row, its postings and its spine link commit together or not at
+ * all. Callers that used postBillPaymentGlIfEnabled AFTER their insert had committed (and swallowed a failure into a
+ * log line) could leave a committed bill payment with no postings — the 130-document hole. This variant reads the
+ * flag and posts on the caller's own client; a posting failure THROWS and rolls the payment back with it.
+ */
+export async function postBillPaymentGlIfEnabledInClientTx(
+  client: Parameters<typeof postSourceTransactionInClientTx>[0],
+  operatingCompanyId: string,
+  billPaymentId: string,
+  actor: { userId: string }
+): Promise<BillPaymentGlPostOutcome> {
+  const enabled = await isEnabled(client as never, BILL_PAYMENT_GL_POSTING_FLAG_KEY, {
+    operating_company_id: operatingCompanyId,
+    user_uuid: actor.userId,
+  });
+  if (!enabled) return { posted: false, reason: "posting_disabled" };
+  const result = await postSourceTransactionInClientTx(
+    client,
+    { operating_company_id: operatingCompanyId, source_transaction_type: "bill_payment", source_transaction_id: billPaymentId },
     { userId: actor.userId }
   );
   return { posted: true, result };

@@ -6,6 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // correctly posts via postSourceTransactionInClientTx. This proves the fix: postBillPaymentGlIfEnabled
 // (the SAME poster cc-payment.routes.ts already uses for this exact data shape) is called with the
 // real bill_payment id when linked_bill_id is present, and is NEVER called when it is not.
+// ROUND 363-CC1-B: it now posts ON the disbursement's own transaction (postBillPaymentGlIfEnabledInClientTx, same
+// client) — a bill payment is never committed without its postings, so a posting failure fails the disbursement.
 
 const mockQuery = vi.fn();
 const mockAssertMembership = vi.fn().mockResolvedValue(undefined);
@@ -30,7 +32,7 @@ vi.mock("./cash-advance-create.js", () => ({
   resolveCompanyCashAdvanceThresholdDollars: vi.fn().mockResolvedValue(500),
 }));
 vi.mock("../accounting/bill-payment-gl.service.js", () => ({
-  postBillPaymentGlIfEnabled: (...args: unknown[]) => mockPostBillPaymentGl(...args),
+  postBillPaymentGlIfEnabledInClientTx: (...args: unknown[]) => mockPostBillPaymentGl(...args),
 }));
 
 const { registerCashAdvancesRoutes } = await import("./cash-advances.routes.js");
@@ -84,7 +86,7 @@ describe("PATCH /cash-advances/:id/mark-disbursed — C6 bill_payment GL post", 
     vi.clearAllMocks();
   });
 
-  it("calls postBillPaymentGlIfEnabled with the real bill_payment id when linked_bill_id is set", async () => {
+  it("posts the real bill_payment id on the disbursement's own transaction when linked_bill_id is set", async () => {
     const app = await buildApp(advanceRow({ linked_bill_id: "bill-1" }));
     const res = await app.inject({
       method: "PATCH",
@@ -92,10 +94,11 @@ describe("PATCH /cash-advances/:id/mark-disbursed — C6 bill_payment GL post", 
       payload: {},
     });
     expect(res.statusCode).toBe(200);
-    expect(mockPostBillPaymentGl).toHaveBeenCalledWith(OC, BILL_PAYMENT_ID, { userId: "user-1" });
+    // first argument is the SAME client the insert ran on (the in-transaction entrypoint), then company, id, actor
+    expect(mockPostBillPaymentGl).toHaveBeenCalledWith(expect.objectContaining({ query: mockQuery }), OC, BILL_PAYMENT_ID, { userId: "user-1" });
   });
 
-  it("never calls postBillPaymentGlIfEnabled when there is no linked bill", async () => {
+  it("never posts a bill payment when there is no linked bill", async () => {
     const app = await buildApp(advanceRow({ linked_bill_id: null }));
     const res = await app.inject({
       method: "PATCH",
@@ -106,7 +109,7 @@ describe("PATCH /cash-advances/:id/mark-disbursed — C6 bill_payment GL post", 
     expect(mockPostBillPaymentGl).not.toHaveBeenCalled();
   });
 
-  it("a poster failure does not fail the disbursement response (best-effort)", async () => {
+  it("a poster failure FAILS the disbursement — the bill payment is never committed without its postings", async () => {
     mockPostBillPaymentGl.mockRejectedValueOnce(new Error("boom"));
     const app = await buildApp(advanceRow({ linked_bill_id: "bill-1" }));
     const res = await app.inject({
@@ -114,7 +117,7 @@ describe("PATCH /cash-advances/:id/mark-disbursed — C6 bill_payment GL post", 
       url: `/api/v1/cash-advances/${ADVANCE_ID}/mark-disbursed?operating_company_id=${OC}`,
       payload: {},
     });
-    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBeGreaterThanOrEqual(500);
     expect(mockPostBillPaymentGl).toHaveBeenCalledTimes(1);
   });
 });

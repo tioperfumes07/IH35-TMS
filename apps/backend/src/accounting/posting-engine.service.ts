@@ -2006,7 +2006,32 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
     );
   }
 
-  const apAccountId = await resolveApAccountForCompany(client, operatingCompanyId);
+  // ROUND 363-CC1-B — the payment clears the payable ITS OWN BILL credited, not a hard-wired ap_control. QuickBooks:
+  // a bill payment debits the A/P account on the bill. A driver bill from the settlement chain credits the account
+  // the pay-run designated (historically 2170 Driver Net-Pay Clearing); debiting 2000 for it would leave 2000 with a
+  // wrong-side debit and the bill's own payable never cleared. Read from the bill's posted, unreversed credit leg;
+  // exactly one PAYABLE account -> that account, otherwise (none / several) the company's ap_control, as before.
+  // "Payable" is a liability the bill owes through: subtype Accounts Payable (A/P), or the liability bound to the
+  // driver_payroll_clearing role. Never an asset, income or escrow line a mis-posted legacy bill credited (measured
+  // 2026-10-03: the #22918 adoption bills credit 7200 / 1245 / 2100-00-nnn — those are refused here, ap_control used).
+  const billPayable = await client.query<{ account_id: string }>(
+    `
+      SELECT DISTINCT p.account_id::text AS account_id
+        FROM accounting.journal_entry_postings p
+        JOIN accounting.journal_entries j ON j.id = p.journal_entry_uuid AND j.status = 'posted' AND j.voided_at IS NULL
+        JOIN catalogs.accounts a ON a.id = p.account_id AND a.account_type = 'Liability'
+       WHERE p.operating_company_id = $1::uuid
+         AND p.source_transaction_type = 'bill' AND p.source_transaction_id = $2
+         AND p.debit_or_credit = 'credit'
+         AND p.reversal_of_line_id IS NULL AND p.reversed_by_line_id IS NULL
+         AND (a.account_subtype = 'Accounts Payable (A/P)'
+              OR EXISTS (SELECT 1 FROM accounting.chart_of_accounts_roles r
+                          WHERE r.account_id = a.id AND r.role = 'driver_payroll_clearing' AND r.is_active))
+    `,
+    [operatingCompanyId, payment.bill_id]
+  );
+  const apAccountId =
+    billPayable.rows.length === 1 ? billPayable.rows[0].account_id : await resolveApAccountForCompany(client, operatingCompanyId);
   if (!apAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AP account mapping is missing");
 
   // CHAIN-04 GAP #2 — bank leg fix. The engine used to CR resolveCashLikeAccountForCompany
