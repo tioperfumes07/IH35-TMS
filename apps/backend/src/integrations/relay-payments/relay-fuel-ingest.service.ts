@@ -30,7 +30,8 @@ export type { DbClient } from "./db-client.type.js";
 export type RelayIngestSource = "daily_pull" | "webhook" | "csv_import";
 
 export type RelayIngestResult = {
-  relay_fuel_transaction_id: string;
+  /** null when the fill was not stored under this company (see skipped_reason). */
+  relay_fuel_transaction_id: string | null;
   transaction_id: string;
   matched_driver_id: string | null;
   matched_unit_id: string | null;
@@ -44,7 +45,34 @@ export type RelayIngestResult = {
   fuel_transaction_id: null;
   /** Always null now — see fuel_transaction_id's comment. */
   gl_post_candidate: null;
+  /**
+   * Lead ruling (ROUND 310 / 10-01): ONE fill = ONE live row = ONE company — the company operating the unit that took
+   * the fuel. Every Relay fill arrives through one Relay org ("IH 35 TRANSPORTATION LLC"), so each company's pull sees
+   * every fill; set when this company is not the fill's owner and nothing was written.
+   *   owned_by_other_company        the fill's unit is operated by another company
+   *   already_held_by_other_company  the unit is unresolved and another company already holds the fill
+   */
+  skipped_reason: "owned_by_other_company" | "already_held_by_other_company" | null;
 };
+
+/**
+ * The company that owns a fill: the operator of the unit named in the fill's "Truck #" prompt — the lessee when the
+ * unit is leased, else its owner — and only when exactly one active unit carries that number. null = unresolved.
+ */
+export async function resolveRelayFillOwnerCompany(client: DbClient, truckNumber: string | null): Promise<string | null> {
+  if (!truckNumber) return null;
+  const res = await client.query<{ company: string | null }>(
+    `
+      SELECT COALESCE(currently_leased_to_company_id, owner_company_id)::text AS company
+        FROM mdata.units
+       WHERE unit_number = $1
+         AND deactivated_at IS NULL
+       LIMIT 2
+    `,
+    [truckNumber]
+  );
+  return res.rows.length === 1 ? res.rows[0].company : null;
+}
 
 /** Relay sends dollar amounts as strings (e.g. "182.44"). Converts to integer cents; never silently
  *  coerces a garbage value to 0 — an unparsable amount throws so the row is dead-lettered/surfaced,
@@ -110,6 +138,30 @@ export async function upsertRelayFuelTransaction(
 ): Promise<RelayIngestResult> {
   const truckNumber = findTruckNumberPrompt(tx.prompts ?? []);
   const relayDriverIntegrationId = tx.driver?.integration_id ?? null;
+
+  // ONE fill = ONE company (Lead ruling). Decide before anything is written — no row, no lines, no bank line.
+  const skipped = (reason: NonNullable<RelayIngestResult["skipped_reason"]>): RelayIngestResult => ({
+    relay_fuel_transaction_id: null,
+    transaction_id: tx.transaction_id,
+    matched_driver_id: null,
+    matched_unit_id: null,
+    line_count: 0,
+    fuel_transaction_id: null,
+    gl_post_candidate: null,
+    skipped_reason: reason,
+  });
+  const ownerCompanyId = await resolveRelayFillOwnerCompany(client, truckNumber);
+  if (ownerCompanyId && ownerCompanyId !== operatingCompanyId) return skipped("owned_by_other_company");
+  if (!ownerCompanyId) {
+    const heldElsewhere = await client.query<{ ok: boolean }>(
+      `SELECT EXISTS (
+         SELECT 1 FROM integrations.relay_fuel_transactions
+          WHERE transaction_id = $1 AND operating_company_id <> $2::uuid
+       ) AS ok`,
+      [tx.transaction_id, operatingCompanyId]
+    );
+    if (heldElsewhere.rows[0]?.ok) return skipped("already_held_by_other_company");
+  }
 
   const matchedDriverId = await resolveMatchedDriverId(client, operatingCompanyId, {
     integration_id: relayDriverIntegrationId,
@@ -326,5 +378,6 @@ export async function upsertRelayFuelTransaction(
     line_count: fuelItems.length,
     fuel_transaction_id: null,
     gl_post_candidate: null,
+    skipped_reason: null,
   };
 }

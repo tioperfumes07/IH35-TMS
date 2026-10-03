@@ -794,6 +794,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-relay-fuel-webhook-receiver",
     ["apps/backend/src/integrations/relay-payments/", "apps/backend/src/index.ts", "scripts/verify-relay-fuel-webhook-receiver.mjs"],
   ],
+  // Lead ruling ROUND 310: one Relay fill = one live row = one company (the unit's operator).
+  [
+    "verify-relay-fill-one-company",
+    ["apps/backend/src/integrations/relay-payments/", "scripts/verify-relay-fill-one-company.mjs"],
+  ],
   // Insurance guards that existed but were registered nowhere — they drifted red on main unnoticed (ROUND 342 rename).
   [
     "verify-insurance-claim-graph-complete-reverse",
