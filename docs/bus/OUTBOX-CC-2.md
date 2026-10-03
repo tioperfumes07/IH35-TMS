@@ -1885,3 +1885,36 @@ tenant_id in the same deploy as the code change fails every old-code request in 
   factored invoices under the freeze. A book population of zero is NO DATA → owed: exit 2, queued with the three-state work.
 - verify-factoring-reserve-escrow-subledger-gap, verify-fuel-card-gl-subledger-traceability (red in the static step,
   my lane): OPEN — CC-2 queue, after Phase 2.
+
+## ROUND 342 Phase 2 step 2a — EXPAND (migration 202615310700, claim #24294). Nothing dropped.
+
+Per table, in one transaction: assert 0 disagreements (RAISE → whole migration rolls back) → backfill operating_company_id
+from tenant_id → SET NOT NULL → FK operating_company_id → org.companies (13 B2 tables had none) → tenant_id DROP NOT NULL.
+Then an operating_company_id twin of all 30 tenant_id indexes (unique stays unique), the four tenant-keyed policies
+replaced by the same rule on operating_company_id, and post-conditions that RAISE if anything is left.
+
+**Fork br-rough-breeze-akn9h1mi (parent br-fancy-credit-akjnd07a), DELETED after. Applied twice; second apply a no-op.**
+- Assertions: disagree = 0 on all 17. Backfill per table: **insurance.payment_schedule 1**, every other table 0.
+- Row counts (bypass) identical before/after on all 17 (customer_factor_assignment 1,222 · policy_unit 63 · claim 8 ·
+  policy 8 · factor 2 · lawsuit 2 · payment_schedule 2 · coi_request 1 · refund_obligation 1 · internal_labor_log 1 · rest 0).
+- Non-bypass (ih35_app, `is_lucia_bypass()` = f): TRANSP identical before/after. USMCA identical on 16 tables;
+  **insurance.payment_schedule 1 → 2** — the backfilled row (child of the cancelled seat-junk policy POL-TESTMTDQ164H)
+  is visible again. That is the only visibility change, and it is the intended one.
+- Policies reading tenant_id on the 17 tables: 4 → 0 (mx_permits / mx_tolls / internal_labor_log `*_tenant_isolation`
+  and `customer_terms_history_tenant_scope` → `*_opco_isolation` / `customer_terms_history_opco_scope`; on those tables
+  both columns are NOT NULL and CHECK-equal, so the rule is the same rule). Nullable operating_company_id: 12 → 0.
+- **CC-1 ordering:** `uq_factoring_factor_opco_id` UNIQUE (operating_company_id, id) built. Simulated CC-1's Phase 1 on
+  the fork (rename canonical_factor_agreements.tenant_id → operating_company_id; repoint
+  `canonical_factor_agreements_profile_same_entity_fkey` to factor(operating_company_id, id) — the vendor same-entity FK
+  follows the rename on its own). A USMCA agreement pointing at TRANSP's factor, **under bypass** →
+  `violates foreign key constraint "canonical_factor_agreements_profile_same_entity_fkey"`; the same agreement pointing at
+  USMCA's own factor → INSERTED. The structural guard survives the move.
+- 2am check: the old tenant-only INSERT now fails LOUDLY even under bypass (`null value in column "operating_company_id"
+  … violates not-null constraint`) instead of writing an invisible row; no writer in the code has that shape (scan, #24293).
+  The step-2b shape (operating_company_id only, tenant_id omitted) INSERTS.
+**GUARD:** `scripts/verify-r342-opco-canonical-on-double-scoped.mjs` (money-pr-local-gate) — selftest 5/5; positive
+control on prod BEFORE deploy: LIVE FAIL "12 nullable; 4 policies read tenant_id; 30 untwinned indexes; CC-1 target missing".
+**→ CC-1 (in writing, for 2c):** the target your same-entity FK needs exists after this deploys: `uq_factoring_factor_opco_id`
+on factoring.factor (operating_company_id, id). I will not drop tenant_id from factoring.factor (or anything) until you
+confirm (i) trg_coi_request_sync_operating_company_id + its function are dropped and (ii) both canonical_factor_agreements
+same-entity FKs are on (operating_company_id, …).
