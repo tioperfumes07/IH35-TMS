@@ -828,6 +828,16 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-duplicate-expense-is-refused-or-ruled-never-silent",
     ["apps/backend/src/fuel/", "apps/backend/src/feed/seed-settlement-document.service.ts", "apps/backend/src/driver-finance/settlement-creator.service.ts", "apps/backend/src/integrations/relay-payments/", "db/migrations/202615370600_fuel_purchase_unique_per_provider_transaction.sql", "scripts/verify-duplicate-expense-is-refused-or-ruled-never-silent.mjs"],
   ],
+  // U27 (owner) — balances render in natural sign (no negative income / liabilities) on every surface fed debit − credit.
+  [
+    "verify-balances-render-in-natural-sign",
+    ["apps/frontend/src/lib/naturalBalance.ts", "apps/frontend/src/pages/accounting/ReclassifyTransactionsPage.tsx", "apps/frontend/src/pages/lists/accounting/coa-list-utils.ts", "apps/backend/src/accounting/reclassify/", "scripts/verify-balances-render-in-natural-sign.mjs"],
+  ],
+  // ROUND 370 (owner) — every register column filters multi-select; a Columns chooser adds Truck / Driver / Trailer / Vendor.
+  [
+    "verify-register-columns-are-filterable-multi-select",
+    ["apps/frontend/src/pages/accounting/ReclassifyTransactionsPage.tsx", "apps/frontend/src/api/reclassify.ts", "apps/backend/src/accounting/reclassify/", "scripts/verify-register-columns-are-filterable-multi-select.mjs"],
+  ],
   // ROUND 363-CC2-D — the Settlement Creator codes item / account / load at creation and reclassifies in place through
   // the one reclassify engine (no wizard-local copy).
   [

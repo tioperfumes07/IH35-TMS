@@ -24,6 +24,8 @@ export type ReclassifyLine = {
   account_id: string;
   account_number: string | null;
   account_name: string | null;
+  /** U27 — the account's type, so the screen can present the line in the account's natural sign. */
+  account_type?: string | null;
   class_id: string | null;
   class_name: string | null;
   location_id: string | null;
@@ -43,6 +45,14 @@ export type ReclassifyLine = {
   item_name: string | null;
   load_id: string | null;
   load_number: string | null;
+  unit_id?: string | null;
+  unit_number?: string | null;
+  driver_id?: string | null;
+  driver_name?: string | null;
+  trailer_id?: string | null;
+  trailer_number?: string | null;
+  vendor_id?: string | null;
+  vendor_name?: string | null;
   debit_cents: number;
   credit_cents: number;
   running_balance_cents: number;
@@ -81,6 +91,14 @@ export type ReclassifyTreeAccount = {
   period_line_count: number;
 };
 
+/** ROUND 370 (owner) — the values each register column holds in the window: the multi-select filter options. */
+export type ReclassifyFacet = { id: string; label: string; n: number };
+export type ReclassifyFacets = Record<"types" | "classes" | "items" | "loads" | "trucks" | "drivers" | "trailers" | "vendors", ReclassifyFacet[]>;
+export function getReclassifyFacets(operatingCompanyId: string, fromDate: string, toDate: string) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId, from_date: fromDate, to_date: toDate });
+  return apiRequest<ReclassifyFacets>(`/api/v1/accounting/reclassify/facets?${q}`);
+}
+
 export function getReclassifyAccountTree(operatingCompanyId: string, fromDate: string, toDate: string) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId, from_date: fromDate, to_date: toDate });
   return apiRequest<{ from_date: string; to_date: string; accounts: ReclassifyTreeAccount[]; longest_account_name_chars: number }>(
@@ -118,7 +136,8 @@ export function findReclassifyLines(
   operatingCompanyId: string,
   params: {
     from_date: string; to_date: string; account_ids?: string[]; source_types?: string[]; class_id?: string; entity_uuid?: string; search?: string;
-    item_ids?: string[]; load_ids?: string[]; source_transaction_ids?: string[]; sort_key?: string; sort_dir?: "asc" | "desc"; limit?: number; offset?: number;
+    item_ids?: string[]; load_ids?: string[]; source_transaction_ids?: string[];
+    class_ids?: string[]; unit_ids?: string[]; driver_ids?: string[]; trailer_ids?: string[]; vendor_ids?: string[]; sort_key?: string; sort_dir?: "asc" | "desc"; limit?: number; offset?: number;
   },
 ) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId, from_date: params.from_date, to_date: params.to_date });
@@ -130,6 +149,10 @@ export function findReclassifyLines(
   if (params.item_ids?.length) q.set("item_ids", params.item_ids.join(","));
   if (params.load_ids?.length) q.set("load_ids", params.load_ids.join(","));
   if (params.source_transaction_ids?.length) q.set("source_transaction_ids", params.source_transaction_ids.join(","));
+  for (const k of ["class_ids", "unit_ids", "driver_ids", "trailer_ids", "vendor_ids"] as const) {
+    const v = params[k];
+    if (v?.length) q.set(k, v.join(","));
+  }
   if (params.sort_key) q.set("sort_key", params.sort_key);
   if (params.sort_dir) q.set("sort_dir", params.sort_dir);
   if (params.limit != null) q.set("limit", String(params.limit));

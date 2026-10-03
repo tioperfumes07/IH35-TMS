@@ -23,7 +23,7 @@ export function check({ service, page }) {
   const where = service.slice(service.indexOf("export function buildLineWhere("), service.indexOf("const LINE_FROM"));
   if (!/je\.status <> 'voided'/.test(where) || !/\(p\.posting_batch_id IS NULL OR pb\.batch_status IN \('posted', 'reversed'\)\)/.test(where)) f.push(`${SERVICE}: buildLineWhere must use the balance function's predicate (status <> 'voided' + batch posted/reversed)`);
   if (/reversed_by_line_id IS NULL|reversal_of_line_id IS NULL|je\.status = 'posted'/.test(where)) f.push(`${SERVICE}: buildLineWhere hides rows the balance counts (reversed / reversal / posted-only)`);
-  if (!/const openAccount = \(id: string \| null\) => \{ setAccountId\(id\); runFind\(id\); \}/.test(page)) f.push(`${PAGE}: clicking an account must load its transactions (openAccount -> runFind)`);
+  if (!/const openAccount = \(id: string \| null\) => \{ const ids = id \? \[id\] : \[\]; setFilter\("accountIds", ids\); runFind\(ids\); \}/.test(page)) f.push(`${PAGE}: clicking an account must load its transactions (openAccount -> runFind)`);
   if (!/onClick=\{\(\) => openAccount\(a\.account_id\)\}/.test(page)) f.push(`${PAGE}: the account rows must call openAccount on click`);
   // The register loads on open, and its default window is fiscal year to date (a last-month window cannot list what an
   // all-time-through-To-date balance counts).
@@ -39,7 +39,7 @@ if (process.argv.includes("--selftest")) {
   const plants = [
     ["list hides reversed lines again", { ...real, service: real.service.replace("`je.status <> 'voided'`,", "`je.status <> 'voided'`, `p.reversed_by_line_id IS NULL`,") }],
     ["list posted-only again", { ...real, service: real.service.replace("`je.status <> 'voided'`,", "`je.status = 'posted'`,") }],
-    ["click only highlights", { ...real, page: real.page.replace("const openAccount = (id: string | null) => { setAccountId(id); runFind(id); };", "const openAccount = (id: string | null) => { setAccountId(id); };") }],
+    ["click only highlights", { ...real, page: real.page.replace('const openAccount = (id: string | null) => { const ids = id ? [id] : []; setFilter("accountIds", ids); runFind(ids); };', 'const openAccount = (id: string | null) => { const ids = id ? [id] : []; setFilter("accountIds", ids); };') }],
   ];
   for (const [n, s] of plants) if (JSON.stringify(s) === JSON.stringify(real)) fails.push(`plant did not change the source: ${n}`); else if (!check(s).length) fails.push(`plant escaped: ${n}`);
   if (fails.length) { console.error(`${LABEL} --selftest FAIL: ${fails.join("; ")}`); process.exit(1); }
