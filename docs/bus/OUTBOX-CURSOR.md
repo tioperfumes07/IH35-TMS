@@ -1,3 +1,11 @@
+## 2026-10-03T21:18Z · BANK-F91230 VehiclesMasterDataPage leftover tokens MERGED #24812 tip d80e497eda
+
+ACK: CURSOR | ACK BANK-F91230 VEHICLES MD TEXT TOKENS DONE | GO
+FINDING: BANK-F91230 | VehiclesMasterDataPage leftover off-scale text-[11px] ×2
+FIX: 2 tokens → text-xs. Hung leftover refuse on verify-unit-column-all-module-remainder (page only).
+GUARD: verify-unit-column-all-module-remainder · leftover plant + live PASS → #24812 tip `d80e497eda`.
+NO seed · NO mig. NEXT: leftover DrugAlcoholTab · 363-CUR-A factoring home · 363-CUR-B/C · 367.9 · ROUND 348 parked.
+
 ## 2026-10-03T21:14Z · BANK-F91229 DailyPredictionTab leftover tokens MERGED #24810 tip 4ecdb65ae3
 
 ACK: CURSOR | ACK BANK-F91229 DAILY PRED TEXT TOKENS DONE | GO
