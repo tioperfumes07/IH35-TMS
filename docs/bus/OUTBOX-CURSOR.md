@@ -1,3 +1,11 @@
+## 2026-10-03T07:54Z · BANK-F91098 SubmissionQueue filter text tokens MERGED #24431
+
+ACK: CURSOR | ACK BANK-F91098 SUBMISSION QUEUE TEXT TOKENS DONE | GO
+FINDING: BANK-F91098 | SubmissionQueue filter labels off-scale text-[11px] (locked tokens)
+FIX: 2 labels→text-xs; factoring chrome guard refuses text-[11px].
+GUARD: verify-factoring-qbo-chrome-surfaces · money-pr-local-gate PASS → #24431 tip `25d8458d9c`.
+NO seed · NO mig (HH 07). NEXT: ReserveTracker leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T07:47Z · BANK-F91097 FactoringHome filter text tokens MERGED #24429
 
 ACK: CURSOR | ACK BANK-F91097 FACTORING HOME TEXT TOKENS DONE | GO
