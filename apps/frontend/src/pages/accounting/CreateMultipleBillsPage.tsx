@@ -354,7 +354,7 @@ export function CreateMultipleBillsPage() {
           {
             key: "source",
             label: "Source tx",
-            cellClass: "font-mono text-[11px] text-gray-600",
+            cellClass: "font-mono text-xs text-gray-600",
             render: (row) =>
               row.bank_transaction_id ? entityLabel(null, row.bank_transaction_id, "Bank transaction") : "manual",
           },
@@ -534,7 +534,7 @@ export function CreateMultipleBillsPage() {
             render: (row) => (
               <button
                 type="button"
-                className="rounded-sm border border-gray-300 px-2 py-1 text-[11px] text-gray-700 hover:bg-gray-50"
+                className="rounded-sm border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50"
                 onClick={() => setRows((current) => current.filter((item) => item.id !== row.id))}
                 disabled={rows.length <= 1}
               >

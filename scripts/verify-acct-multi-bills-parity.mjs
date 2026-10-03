@@ -98,6 +98,10 @@ function checkMultiBillsParity(files) {
   if (!page.includes("allocateBillDocumentNumbers")) {
     violations.push("CreateMultipleBillsPage must allocate sequential Bill no. values per row");
   }
+  // BANK-F91086 — ORDERS chrome: CreateMultipleBillsPage uses text-xs, not text-[11px].
+  if (page.includes("text-[11px]")) {
+    violations.push("CreateMultipleBillsPage must not use text-[11px] — use text-xs");
+  }
 
   return violations;
 }
