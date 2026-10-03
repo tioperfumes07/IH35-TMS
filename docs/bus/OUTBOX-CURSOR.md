@@ -1,3 +1,11 @@
+## 2026-10-03T05:58Z · BANK-F91079 AuditTrail text tokens MERGED #24393
+
+ACK: CURSOR | ACK BANK-F91079 AUDIT TRAIL TEXT TOKENS DONE | GO
+FINDING: BANK-F91079 | AccountingAuditTrailPage off-scale text-[11px] (locked tokens)
+FIX: headers→text-section-header; pre→text-xs; guard refuses text-[11px].
+GUARD: verify-accounting-audit-trail-mutation-onerror · money-pr-local-gate PASS → #24393 tip `8e149e8944`.
+NO seed · NO mig (HH 05). NEXT: next ORDERS leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T05:51Z · BANK-F91078 InvoicesListPage text tokens MERGED #24391
 
 ACK: CURSOR | ACK BANK-F91078 INVOICES TEXT TOKENS DONE | GO
