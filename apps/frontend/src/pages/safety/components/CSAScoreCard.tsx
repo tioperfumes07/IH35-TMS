@@ -10,7 +10,7 @@ export function CSAScoreCard({ latest }: Props) {
       <div className="mb-1 text-xs font-semibold">Internal inspection-point rollup</div>
       <div>Points: {points != null && Number.isFinite(points) ? points : "Unavailable"}</div>
       <div>Cached at: {String(latest?.cached_at ?? "n/a")}</div>
-      <div className="mt-2 text-[11px] text-gray-500">
+      <div className="mt-2 text-xs text-gray-500">
         Not an FMCSA BASIC percentile. Hazmat requires authenticated carrier SMS.
       </div>
     </div>

@@ -82,6 +82,11 @@ function collectFailures(source) {
   requireText("legacyUi", 'row.total_violations ?? "Unavailable"', "history_null_coerced_to_zero");
   requireText("sourceUi", "No authenticated scraping is performed", "source_ui_scraping_disclaimer_missing");
   requireText("legacyCard", "latest?.total_violations", "legacy_card_reads_phantom_score_field");
+  // BANK-F91243 — leftover refuse scoped to CSAScoreCard (legacyCard) only
+  if (source.legacyCard.includes("text-[11px]")) failures.push("leftover text-[11px]");
+  if (source.legacyCard.includes("#8A92AB") || source.legacyCard.includes("#334155")) {
+    failures.push("leftover off-scale muted");
+  }
   requireText("safetyHome", "latest?.total_violations", "safety_home_reads_phantom_score_field");
   requireText("reportUi", "Not an FMCSA percentile", "report_ui_percentile_deception_present");
   requireText("reportUi", 'BASICS.filter((basic) => basic.key !== "basic_hazmat")', "hazmat_affects_report_scale");
@@ -152,7 +157,20 @@ function runSelfTest(source) {
     console.error("verify:csa-hazmat-source-integrity SELFTEST FAIL: planted source/counting regression escaped");
     process.exit(1);
   }
-  console.log("verify:csa-hazmat-source-integrity SELFTEST PASS (planted regression rejected)");
+  // BANK-F91243 leftover plant on CSAScoreCard only
+  const leftoverPlanted = {
+    ...source,
+    legacyCard: `${source.legacyCard}\n<div className="text-[11px] text-[#8A92AB]">plant</div>`,
+  };
+  const leftoverFailures = collectFailures(leftoverPlanted);
+  if (
+    !leftoverFailures.includes("leftover text-[11px]")
+    || !leftoverFailures.includes("leftover off-scale muted")
+  ) {
+    console.error("verify:csa-hazmat-source-integrity SELFTEST FAIL: leftover plant escaped", leftoverFailures);
+    process.exit(1);
+  }
+  console.log("verify:csa-hazmat-source-integrity SELFTEST PASS (planted regression + leftover plant rejected)");
 }
 
 const source = readSources();
