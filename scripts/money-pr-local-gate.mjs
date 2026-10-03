@@ -799,6 +799,11 @@ const LIVE_DOMAIN_GUARDS = [
     "verify-relay-fuel-webhook-receiver",
     ["apps/backend/src/integrations/relay-payments/", "apps/backend/src/index.ts", "scripts/verify-relay-fuel-webhook-receiver.mjs"],
   ],
+  // ROUND 368.2(b) — a bank line may not sit matched to nothing (deferred constraint triggers, both sides).
+  [
+    "verify-no-bank-line-is-matched-to-nothing",
+    ["db/migrations/202615360600_bank_line_matched_to_nothing_refusal.sql", "apps/backend/src/banking/", "apps/backend/src/accounting/bank-recon/", "scripts/lib/bank-feed-state-machine.mjs", "scripts/verify-no-bank-line-is-matched-to-nothing.mjs"],
+  ],
   // ROUND 360 — the bank feed state machine: three tabs, kind + live link, undo removes what it created, unmatch
   // breaks the link only (document back in the match pool), match posts nothing, every transition one transaction.
   [
