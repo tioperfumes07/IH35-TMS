@@ -119,6 +119,10 @@ export function collectFailures(opts = {}) {
     if (!/POSTING_TEMPLATE_SOURCE_CODES/.test(modal) || !/fuel_event/.test(modal)) {
       failures.push(`${MODAL}: must document PostingSourceType + fuel_event template codes`);
     }
+    // BANK-F91102 — ORDERS chrome: field errors + capped-list hint use text-xs, not text-[11px].
+    if (modal.includes("text-[11px]")) {
+      failures.push(`${MODAL}: must not use text-[11px] — use text-xs`);
+    }
   }
 
   if (!opts.skipWiredGuard) {

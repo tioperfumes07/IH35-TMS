@@ -203,7 +203,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
               </option>
             ))}
           </SelectCombobox>
-          {errors.code ? <div className="mt-1 text-[11px] text-red-700">{errors.code}</div> : null}
+          {errors.code ? <div className="mt-1 text-xs text-red-700">{errors.code}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
@@ -214,7 +214,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
             onChange={(event) => setForm((v) => ({ ...v, displayName: event.target.value }))}
             className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2 text-xs"
           />
-          {errors.displayName ? <div className="mt-1 text-[11px] text-red-700">{errors.displayName}</div> : null}
+          {errors.displayName ? <div className="mt-1 text-xs text-red-700">{errors.displayName}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
@@ -238,7 +238,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
               placeholder="Select debit account…"
             />
           </div>
-          {errors.debitAccount ? <div className="mt-1 text-[11px] text-red-700">{errors.debitAccount}</div> : null}
+          {errors.debitAccount ? <div className="mt-1 text-xs text-red-700">{errors.debitAccount}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600">
@@ -253,7 +253,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
               placeholder="Select credit account…"
             />
           </div>
-          {errors.creditAccount ? <div className="mt-1 text-[11px] text-red-700">{errors.creditAccount}</div> : null}
+          {errors.creditAccount ? <div className="mt-1 text-xs text-red-700">{errors.creditAccount}</div> : null}
         </label>
 
         <label className="block text-xs font-semibold text-gray-600" data-testid="posting-template-default-class">
@@ -267,7 +267,7 @@ export function PostingTemplateModal({ open, mode, row, operatingCompanyId, clie
               shown={classOptions.length}
               limit={CLASS_PICKER_CAP}
               total={classesQuery.data?.total ?? null}
-              className="mb-1 text-[11px] text-slate-600"
+              className="mb-1 text-xs text-slate-600"
             />
             <ReferenceSelect
               createKind="class"
