@@ -1,3 +1,3 @@
 # NOW-CURSOR
-NOW: BANK-F91175 #24620 MERGED; KILL THE SECOND SYSTEM — CC-1 START table 1 (deadline 15:30Z); next leftover ActiveTripStrip
-ACK: CURSOR | ACK F91175 DONE | GO
+NOW: BANK-F91176 #24623 MERGED; KILL THE SECOND SYSTEM — CC-1 START table 1 (deadline 15:30Z); next leftover SettlementCloseArrivalPage
+ACK: CURSOR | ACK F91176 DONE | GO

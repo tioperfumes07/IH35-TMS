@@ -1,3 +1,11 @@
+## 2026-10-03T15:24Z · BANK-F91176 ActiveTripStrip locked tokens MERGED #24623
+
+ACK: CURSOR | ACK BANK-F91176 ACTIVE TRIP STRIP TEXT TOKENS DONE | GO
+FINDING: BANK-F91176 | ActiveTripStrip cell labels off-scale text-[11px] (locked tokens)
+FIX: uppercase labels→text-section-header; fuel-planner-degraded-honesty guard refuses text-[11px] on ActiveTripStrip.tsx only.
+GUARD: verify-fuel-planner-degraded-honesty · ActiveTripStrip-scoped refuse + typecheck PASS → #24623 tip `828c34ae5d`.
+NO seed · NO mig. NEXT: SettlementCloseArrivalPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T15:19Z · BANK-F91175 TripPlanSummaryBanner locked tokens MERGED #24620
 
 ACK: CURSOR | ACK BANK-F91175 TRIP PLAN SUMMARY BANNER TEXT TOKENS DONE | GO
