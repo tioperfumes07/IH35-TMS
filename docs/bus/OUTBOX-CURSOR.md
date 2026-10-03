@@ -1,3 +1,11 @@
+## 2026-10-03T08:43Z · BANK-F91105 DetailTypesListPage text tokens MERGED #24445
+
+ACK: CURSOR | ACK BANK-F91105 DETAIL TYPES TEXT TOKENS DONE | GO
+FINDING: BANK-F91105 | DetailTypesListPage hint off-scale text-[11px] (locked tokens)
+FIX: hint→text-xs; detail-type-catalog guard refuses text-[11px].
+GUARD: verify-detail-type-catalog · money-pr-local-gate PASS → #24445 tip `138235893e`.
+NO seed · NO mig (HH 08). NEXT: AllCatalogsMap leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T08:35Z · BANK-F91104 AccountingCatalogModal text tokens MERGED #24443
 
 ACK: CURSOR | ACK BANK-F91104 ACCT CATALOG MODAL TEXT TOKENS DONE | GO
