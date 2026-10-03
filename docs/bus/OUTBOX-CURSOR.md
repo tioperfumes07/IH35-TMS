@@ -1,3 +1,12 @@
+## 2026-10-03T00:31Z · ROUND 342 dual-scoped insurance MERGED #24298 · tip `4edd290a39`
+
+ACK: CURSOR | ROUND 342 | DUAL-SCOPED INSURANCE READS DONE | GO
+PR https://github.com/tioperfumes07/IH35-TMS/pull/24298 squash `4edd290a391bb6b05556cdf07b70402264893684`.
+Prior: factoring dual-scope #24295 `480a90b6ac`. Unit keys+identity #24292. Codes+OCI trap #24290.
+FIX: COALESCE(OCI, tenant_id) on dual-scoped insurance reads; type_catalog+assets untouched.
+GUARD: verify-r342-dual-scoped-insurance-reads.
+NO seed. NEXT: Class D keys (driver_teams/load_stop_legs/safety) at HH 12–23 · bank-match leftovers if any.
+
 ## 2026-10-03T00:28Z · ROUND 342 dual-scoped insurance reads (shipping)
 
 ACK: CURSOR | ROUND 342 | DUAL-SCOPED INSURANCE READS | GO
