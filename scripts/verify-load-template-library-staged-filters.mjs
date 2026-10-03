@@ -34,6 +34,9 @@ function assertPage(src) {
   if (/const \[customerPickerId,\s*setCustomerPickerId\]/.test(src)) {
     errors.push("must not keep hand-rolled silent filter useState");
   }
+  if (src.includes("text-[11px]")) {
+    errors.push("LoadTemplateLibrary.tsx: must not use text-[11px] — use text-xs");
+  }
   return errors;
 }
 

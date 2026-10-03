@@ -293,7 +293,7 @@ export function LoadTemplateLibrary({ open, onClose, operatingCompanyId }: Libra
     <Modal open={open} onClose={onClose} title="Load templates">
       <div className="max-h-[360px] space-y-2 overflow-y-auto text-xs">
         <div className="relative space-y-2" data-testid="load-template-library-filters">
-          <label className="block text-[11px] text-slate-600">
+          <label className="block text-xs text-slate-600">
             Customer
             <EntityPicker
               kind="customer"
@@ -343,7 +343,7 @@ export function LoadTemplateLibrary({ open, onClose, operatingCompanyId }: Libra
         {rows.map((t) => (
           <div key={t.id} className="rounded-sm border border-gray-200 p-2" data-load-template-id={t.id}>
             <div className="font-semibold text-gray-800">{t.name}</div>
-            <div className="text-[11px] text-gray-500">Updated {t.updated_at ? new Date(t.updated_at).toLocaleString() : "—"}</div>
+            <div className="text-xs text-gray-500">Updated {t.updated_at ? new Date(t.updated_at).toLocaleString() : "—"}</div>
           </div>
         ))}
       </div>
@@ -434,7 +434,7 @@ export function SaveLoadTemplateModal({ open, onClose, operatingCompanyId, initi
 
         {(loadId || customerId) ? (
           <div
-            className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] text-slate-700"
+            className="flex flex-wrap gap-x-3 gap-y-1 rounded-sm border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-700"
             data-testid="save-load-template-modal-entitylinks"
           >
             {loadId ? (
@@ -451,7 +451,7 @@ export function SaveLoadTemplateModal({ open, onClose, operatingCompanyId, initi
             ) : null}
           </div>
         ) : null}
-        <label className="block text-[11px] text-slate-600">
+        <label className="block text-xs text-slate-600">
           Template customer (editable — defaults to the source load's customer above; clear for a generic template)
           <EntityPicker
             kind="customer"
