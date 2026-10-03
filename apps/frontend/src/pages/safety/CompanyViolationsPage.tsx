@@ -196,7 +196,7 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
           hidePager
           filterBar={
             <div className="relative flex flex-wrap items-end gap-2" data-testid="company-violations-filters">
-              <label className="text-[11px] text-slate-600">
+              <label className="text-xs text-slate-600">
                 Driver
                 <EntityPicker
                   kind="driver"
@@ -209,7 +209,7 @@ export function CompanyViolationsPage({ operatingCompanyId }: Props) {
                   dataTestId="company-violations-filter-driver"
                 />
               </label>
-              <label className="text-[11px] text-slate-600">
+              <label className="text-xs text-slate-600">
                 Unit
                 <EntityPicker
                   kind="unit"
