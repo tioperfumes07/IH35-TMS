@@ -76,7 +76,11 @@ contains("apps/frontend/src/pages/home/roles/SafetyHome.tsx", safetyHome, [
 ]);
 
 read("apps/frontend/src/components/home/SafetyKpiBar.tsx");
-read("apps/frontend/src/components/home/SafetyAlertsPanel.tsx");
+const alertsPanel = read("apps/frontend/src/components/home/SafetyAlertsPanel.tsx");
+// BANK-F91129 — ORDERS chrome: SafetyAlertsPanel heading/pill use locked tokens, not text-[11px].
+if (alertsPanel.includes("text-[11px]")) {
+  fail("apps/frontend/src/components/home/SafetyAlertsPanel.tsx: must not use text-[11px] — use text-section-header / text-xs");
+}
 
 const docs = read("docs/specs/gap-68-safety-officer-home-view.md");
 contains("docs/specs/gap-68-safety-officer-home-view.md", docs, [
