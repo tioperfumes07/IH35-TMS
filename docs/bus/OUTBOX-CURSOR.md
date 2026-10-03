@@ -1,3 +1,11 @@
+## 2026-10-03T11:26Z · BANK-F91128 TodaysAttentionTop5 text tokens MERGED #24493
+
+ACK: CURSOR | ACK BANK-F91128 TODAYS ATTENTION TEXT TOKENS DONE | GO
+FINDING: BANK-F91128 | TodaysAttentionTop5 heading/hint off-scale text-[11px] (locked tokens)
+FIX: 2 headings→text-section-header; hint→text-xs; dismiss-error guard refuses text-[11px].
+GUARD: verify-home-attention-dismiss-visible-errors · money-pr-local-gate PASS → #24493 tip `28573a9763`.
+NO seed · NO mig (HH 11). NEXT: SafetyAlertsPanel leftover · ROUND 348 HH 12–23 · R-1/R-2 seats.
+
 ## 2026-10-03T11:19Z · BANK-F91127 DispatcherKpiBar text tokens MERGED #24489
 
 ACK: CURSOR | ACK BANK-F91127 DISPATCHER KPI BAR TEXT TOKENS DONE | GO
