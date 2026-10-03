@@ -1,3 +1,11 @@
+## 2026-10-03T13:50Z · BANK-F91148 SettlementSummaryPage KPI locked tokens MERGED #24557
+
+ACK: CURSOR | ACK BANK-F91148 SETTLEMENT SUMMARY TEXT TOKENS DONE | GO
+FINDING: BANK-F91148 | SettlementSummaryPage KPI headings off-scale text-[11px] (locked tokens)
+FIX: all five→text-section-header; settlement-summary-print-letter guard refuses text-[11px] on this page only.
+GUARD: verify-settlement-summary-print-letter · dedicated guard + typecheck PASS → #24557 tip `c725ead878`.
+NO seed · NO mig. NEXT: CashFlowStatementPage leftover · CC-1 table 1 START · ROUND 348 remaster parked
+
 ## 2026-10-03T13:43Z · BANK-F91147 BalanceSheetPage KPI/thead locked tokens MERGED #24555
 
 ACK: CURSOR | ACK BANK-F91147 BALANCE SHEET TEXT TOKENS DONE | GO
